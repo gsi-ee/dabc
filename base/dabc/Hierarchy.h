@@ -82,8 +82,6 @@ namespace dabc {
 
          BinData    fBinData;           ///< binary data, assigned with element
 
-         void*      fUserPtr;           ///< user pointer, can be freely changed, not propogated with update
-
          HierarchyContainer* TopParent();
 
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
@@ -182,9 +180,6 @@ namespace dabc {
 
       /** kind = 0 in html format, 1 - in ajax format */
       std::string SaveToJSON(bool compact = false, bool excludetop = false);
-
-      void SetUserPtr(void* ptr) { if (GetObject()) GetObject()->fUserPtr = ptr; }
-      void* GetUserPtr() { return GetObject() ? GetObject()->fUserPtr : 0; }
    };
 
 

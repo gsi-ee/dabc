@@ -57,8 +57,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fHierarchyVersion(0),
    fNodeChanged(false),
    fHierarchyChanged(false),
-   fBinData(),
-   fUserPtr(0)
+   fBinData()
 {
 }
 

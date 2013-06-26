@@ -89,11 +89,14 @@ namespace dabc_root {
 
          virtual double ProcessTimeout(double last_diff);
 
-         static void AddObjectToHierarchy(dabc::Hierarchy& parent, TObject* obj, int lvl);
+         static void* AddObjectToHierarchy(dabc::Hierarchy& parent, const char* searchpath, TObject* obj, int lvl);
 
-         static void FillListHieararchy(dabc::Hierarchy& h, TSeqCollection* lst, int lvl, const std::string& foldername = "");
+         static void* ScanListHierarchy(dabc::Hierarchy& h, const char* searchpath, TSeqCollection* lst, int lvl, const std::string& foldername = "");
 
-         static void FillROOTHieararchy(dabc::Hierarchy& h);
+         /* Method is used to scan ROOT objects.
+          * If path is empty, than hierarchy structure will be created.
+          * If path specified, object with provided path name will be searched */
+         static void* ScanRootHierarchy(dabc::Hierarchy& h, const char* searchpath = 0);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 

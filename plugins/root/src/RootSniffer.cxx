@@ -151,7 +151,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
    // this is fake element, which is need to be requested before first
    h.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
-   FillROOTHieararchy(h);
+   ScanRootHierarchy(h);
 
    DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
@@ -216,84 +216,153 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 }
 
 
-void dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, TObject* obj, int lvl)
+void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, const char* searchpath, TObject* obj, int lvl)
 {
-   if (obj==0) return;
+   if (obj==0) return 0;
 
-   std::string itemname = obj->GetName();
-   size_t pos = (itemname.find_last_of("/#<>"));
-   if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
-   if (itemname.empty()) itemname = "item";
-   int cnt = 0;
-   std::string basename = itemname;
+   void *res = 0;
 
-   // prevent that same item appears many time
-   while (!parent.FindChild(itemname.c_str()).null()) {
-      itemname = basename + dabc::format("%d", cnt++);
-   }
+   dabc::Hierarchy chld;
 
-   dabc::Hierarchy chld = parent.CreateChild(itemname);
+   if (searchpath==0) {
 
-   if (itemname.compare(obj->GetName()) != 0)
-      chld.Field(dabc::prop_realname).SetStr(obj->GetName());
+      std::string itemname = obj->GetName();
 
-   if (IsDrawableClass(obj->IsA())) {
-      chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+      size_t pos = (itemname.find_last_of("/#<>"));
+      if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
+      if (itemname.empty()) itemname = "item";
+      int cnt = 0;
+      std::string basename = itemname;
 
-      std::string master;
-      for (int n=0;n<lvl;n++) master +="../";
-
-      chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
-
-      if (obj->InheritsFrom(TH1::Class())) {
-         chld.Field(dabc::prop_content_hash).SetDouble(((TH1*)obj)->Integral());
+      // prevent that same item appears many time
+      while (!parent.FindChild(itemname.c_str()).null()) {
+         itemname = basename + dabc::format("%d", cnt++);
       }
-      chld.SetUserPtr(obj);
-   } else
-   if (IsBrowsableClass(obj->IsA())) {
-      chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+
+      chld = parent.CreateChild(itemname);
+
+      if (itemname.compare(obj->GetName()) != 0)
+         chld.Field(dabc::prop_realname).SetStr(obj->GetName());
+
+      if (IsDrawableClass(obj->IsA())) {
+         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+
+         std::string master;
+         for (int n=0;n<lvl;n++) master +="../";
+
+         chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
+
+         if (obj->InheritsFrom(TH1::Class())) {
+            chld.Field(dabc::prop_content_hash).SetDouble(((TH1*)obj)->Integral());
+         }
+      } else
+      if (IsBrowsableClass(obj->IsA())) {
+         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+      }
+   } else {
+      chld = parent;
    }
 
    if (obj->InheritsFrom(TDirectory::Class())) {
-      FillListHieararchy(chld, ((TDirectory*) obj)->GetList(), lvl+1);
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TDirectory*) obj)->GetList(), lvl+1);
    } else
    if (obj->InheritsFrom(TTree::Class())) {
-      FillListHieararchy(chld, ((TTree*) obj)->GetListOfBranches(), lvl+1);
-      FillListHieararchy(chld, ((TTree*) obj)->GetListOfLeaves(), lvl+1);
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfLeaves(), lvl+1);
    } else
    if (obj->InheritsFrom(TBranch::Class())) {
-      FillListHieararchy(chld, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
-      FillListHieararchy(chld, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
    }
+
+   return res;
 }
 
 
-void dabc_root::RootSniffer::FillListHieararchy(dabc::Hierarchy& parent, TSeqCollection* lst, int lvl, const std::string& foldername)
+void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const char* searchpath, TSeqCollection* lst, int lvl, const std::string& foldername)
 {
-   if ((lst==0) || (lst->GetSize()==0)) return;
+   if ((lst==0) || (lst->GetSize()==0)) return 0;
+
+   void* res = 0;
 
    dabc::Hierarchy top = parent;
+
    if (!foldername.empty()) {
-      top = parent.CreateChild(foldername);
+
+      if (searchpath) {
+
+         // DOUT0("SEARCH folder %s in path %s", foldername.c_str(), searchpath);
+
+         if (strncmp(searchpath, foldername.c_str(), foldername.length())!=0) return 0;
+         searchpath+=foldername.length();
+         if (*searchpath!='/') return 0;
+         searchpath++;
+         top = parent.FindChild(foldername.c_str());
+         if (top.null()) return 0;
+
+         // DOUT0("FOUND folder %s ", foldername.c_str());
+
+
+      } else {
+         top = parent.CreateChild(foldername);
+      }
       lvl++;
    }
 
    TIter iter(lst);
    TObject* obj(0);
-   while ((obj = iter())!=0) {
-      AddObjectToHierarchy(top, obj, lvl);
+
+   if (searchpath==0) {
+      while ((obj = iter())!=0)
+         AddObjectToHierarchy(top, searchpath, obj, lvl);
+   } else {
+      // while item name can be changed, we find first item itself and than
+      // try to find object name
+
+      const char* separ = strchr(searchpath, '/');
+      std::string itemname = searchpath;
+      if (separ!=0) {
+         itemname.resize(separ - searchpath);
+      }
+
+      // DOUT0("SEARCH item %s in path %s", itemname.c_str(), searchpath);
+
+      dabc::Hierarchy chld = top.FindChild(itemname.c_str());
+      if (chld.null()) return 0;
+
+      // DOUT0("FOUND item %s ", itemname.c_str());
+
+      if (chld.HasField(dabc::prop_realname)) itemname = chld.Field(dabc::prop_realname).AsStdStr();
+
+      // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
+
+      while ((obj = iter())!=0) {
+         if (obj->GetName() && (itemname == obj->GetName())) {
+            if (separ==0) return obj;
+            res = AddObjectToHierarchy(chld, separ+1, obj, lvl);
+            if (!res) return res;
+         }
+      }
    }
+
+   return res;
 }
 
-void dabc_root::RootSniffer::FillROOTHieararchy(dabc::Hierarchy& h)
+void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* searchpath)
 {
-   if (h.null()) h.Create("ROOT");
+   void *res = 0;
 
-   FillListHieararchy(h, gROOT->GetList(), 0);
+   if (h.null()) return res;
 
-   FillListHieararchy(h, gROOT->GetListOfCanvases(), 0, "Canvases");
+//   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
 
-   FillListHieararchy(h, gROOT->GetListOfFiles(), 0, "Files");
+   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetList(), 0);
+
+   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfCanvases(), 0, "Canvases");
+
+   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfFiles(), 0, "Files");
+
+   return res;
 }
 
 
@@ -515,19 +584,13 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    if (itemname=="StreamerInfo") {
       sbuf = ProduceStreamerInfosMem();
    } else {
-      dabc::Hierarchy item = fRoot.FindChild(itemname.c_str());
-      if (item.null()) {
-         EOUT("Item %s not found", itemname.c_str());
-         return dabc::cmd_false;
-      }
 
-      TObject* obj = (TObject*) item.GetUserPtr();
+      TObject* obj = (TObject*) ScanRootHierarchy(fRoot, itemname.c_str());
 
       if (obj==0) {
          EOUT("Object for item %s not specified", itemname.c_str());
          return dabc::cmd_false;
       }
-
 
       if (fMemFile == 0) {
          EOUT("Mem file is not exists");
@@ -601,11 +664,11 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
       si.Field(dabc::prop_content_hash).SetInt(fSinfoSize);
 
-      FillROOTHieararchy(fRoot);
+      ScanRootHierarchy(fRoot);
 
       fLastUpdate.GetNow();
 
-      DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
+      // DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
 
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.Update(fRoot);

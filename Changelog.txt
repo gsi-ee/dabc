@@ -14,6 +14,10 @@ of the framework.
    Now arbitrary ROOT script can be monitored via web broser!
 4. Add support of TProfile and, partially, TCanvas. TCanvas cannot be updated.   
 5. Provide only browsing for TTree/TBranch/TLeaf classes
+6. When ROOT object requested from the browser, it is located again in ROOT structures.
+   This is needed while object may disapper and full hierarchy scan may take too much time.
+   Commands from browser executed about every 0.1 s, hierarchy update performed once a 3 s. 
+
 
 25.06.2013
 1. Generate dictionary and rootmap for libDabcRoot. This will allow to use

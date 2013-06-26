@@ -398,8 +398,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    }
    
    if ((ver < 0) || !arg) {
-      $("#report").append("<br> RootDrawElement get error " + this.itemname);
+      $("#report").append("<br> RootDrawElement get error " + this.itemname + "  reload list");
       this.state = this.StateEnum.stInit;
+      // most probably, objects structure is changed, therefore reload it
+      DABC.mgr.ReloadTree();
       return;
    }
 
