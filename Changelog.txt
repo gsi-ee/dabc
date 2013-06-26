@@ -7,6 +7,9 @@ of the framework.
    that such master object should be updated together with item itself (when master is
    changed). Server-client protocol will provide information about actual master version
    as well.  
+2. Browser request streamer info only when we sure that streamer info is required.
+   Potentially many streamerinfos can be used - will be required when many ROOT analysis
+   connected to same http server. 
 
 
 25.06.2013

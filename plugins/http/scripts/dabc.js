@@ -12,7 +12,6 @@ DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
    this.frameid = 0;    // id of top frame, where item is drawn
    this.version = 0;    // check which version of element is drawn
-   this.ready = false;   // indicate that element completed with drawing
    return this;
 }
 
@@ -21,8 +20,13 @@ DABC.DrawElement = function() {
 DABC.DrawElement.prototype.simple = function() { return false; }
 
 // method regularly called by the manager
-// it is responsibility of item itself create request and perform update
-DABC.DrawElement.prototype.CheckComplexRequest = function() { return; }
+// it is responsibility of item perform any action
+DABC.DrawElement.prototype.RegularCheck = function() { return; }
+
+// method called when item is activated (clicked)
+// each item can react by itself
+DABC.DrawElement.prototype.ClickItem = function() { return; }
+
 
 DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
    this.frameid = "dabc_dummy_" + cnt;
@@ -77,8 +81,6 @@ DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
       max: 100,
       title: this.itemname
    }); 
-   
-   this.ready = true;
 }
 
 DABC.GaugeDrawElement.prototype.SetValue = function(val) {
@@ -93,6 +95,8 @@ DABC.GaugeDrawElement.prototype.SetValue = function(val) {
 DABC.HierarchyDrawElement = function() {
    DABC.DrawElement.call(this);
    this.xmldoc = 0;
+   this.ready = false;
+   this.req = 0;             // this is current request
 }
 
 // TODO: check how it works in different older browsers
@@ -104,12 +108,9 @@ DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
 
    this.frameid = topid;
    
-   this.ready = false;
-
-   this.req = 0;             // this is current request
 }
 
-DABC.HierarchyDrawElement.prototype.CheckComplexRequest = function() {
+DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    if (this.ready || this.req) return;
    
    var url = "h.xml";
@@ -200,7 +201,7 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
 }
 
 
-DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
+DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    this.req = 0;
 
    if ((ver<0) || !arg) { this.ready = false; return; }
@@ -239,12 +240,11 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
    $("#" + this.frameid).html(content);
    
    DABC.dabc_tree.openAll();
-
    
    this.ready = true;
 }
 
-// ======== end of GaugeDrawElement ======================
+// ======== end of HierarchyDrawElement ======================
 
 
 
@@ -253,13 +253,26 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
 DABC.RootDrawElement = function(_clname) {
    DABC.DrawElement.call(this);
 
-   this.clname = _clname; // ROOT class name
-   this.obj = 0;          // object itself
-   this.sinfo = 0;        // used to refer to the streamer info record
-   this.req = 0;          // this is current request
+   this.clname = _clname;    // ROOT class name
+   this.obj = null;          // object itself, for streamer info is file instance
+   this.sinfo = null;        // used to refer to the streamer info record
+   this.req = null;          // this is current request
    this.titleid = "";     
    this.drawid = 0;       // numeric id of pad, where ROOT object is drawn
    this.first_draw = true;  // one should enable flag only when all ROOT scripts are loaded
+   
+   this.raw_data = null;  // raw data kept in the item when object cannot be reconstructed immediately
+   this.raw_data_version = 0;   // verison of object in the raw data, will be copied into object when completely reconstructed
+   this.need_master_version = 0; // this is version, required for the master item (streamer info)
+   
+   this.StateEnum = {
+         stInit        : 0,
+         stWaitRequest : 1,
+         stWaitSinfo   : 2,
+         stReady       : 3
+   };
+   
+   this.state = this.StateEnum.stInit;   
 }
 
 // TODO: check how it works in different older browsers
@@ -286,45 +299,115 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
 //   $("#report").append("is " + $("#"+this.titleid).schemaTypeInfo); 
 }
 
-DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
+DABC.RootDrawElement.prototype.ClickItem = function() {
+   if (this.state != this.StateEnum.stReady) return; 
+   if (!this.IsDrawn()) this.CreateFrames("#report", this.cnt++);
+   this.state = this.StateEnum.stInit;
+   this.RegularCheck();
+}
+
+// force item to get newest version of the object
+DABC.RootDrawElement.prototype.Update = function() {
+   if (this.state != this.StateEnum.stReady) return;
+   this.state = this.StateEnum.stInit;
+   this.RegularCheck();
+}
+
+DABC.RootDrawElement.prototype.HasVersion = function(ver) {
+   if (!this.obj) return false;
+   return this.version >= ver;
+}
+
+// if frame created and exists
+DABC.RootDrawElement.prototype.DrawObject = function() {
+   if ((this.drawid==0) || !this.obj) return;
+
+   var child = document.getElementById(this.titleid + "_text");
+   // if (child) $("#report").append("<br>child " + child.innerHTML);
+   if (child) child.innerHTML = this.itemname + ",   version = " + this.version; 
+   
+   if (this.sinfo) 
+      JSROOTPainter.drawObject(this.obj, this.drawid);
+   else
+      JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
+   
+   if (this.first_draw) addCollapsible("#"+this.titleid);
+   this.first_draw = false;
+}
+
+DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
+   if (!this.raw_data) {
+      this.state = this.StateEnum.stInit;
+      return;
+   }
+
+   this.obj = {};
+   this.obj['_typename'] = 'JSROOTIO.' + this.clname;
+
+   // $("#report").append("<br>make streaming " + arg.length + " for class "+ this.clname);
+
+   gFile = this.sinfo.obj;
+   
+   if (!JSROOTIO.GetStreamer(this.clname))
+      $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
+
+   JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
+
+   JSROOTCore.addMethods(this.obj);
+
+   this.state = this.StateEnum.stReady;
+   this.version = this.raw_data_version;
+   
+   this.raw_data = null;
+   this.raw_data_version = 0;
+   
+   this.DrawObject();
+   
+}
+
+DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // in any case, request pointer will be reseted
    // delete this.req;
    this.req = 0;
    
+   if (this.state != this.StateEnum.stWaitRequest) {
+      alert("item not in wait request state");
+      this.state = this.StateEnum.stInit;
+      return;
+   }
+   
    if ((ver < 0) || !arg) {
       $("#report").append("<br> RootDrawElement get error " + this.itemname);
+      this.state = this.StateEnum.stInit;
       return;
    }
 
-   // we mark that communication is completed
-   this.ready = true;
-
    // if we got same version, do nothing - we are happy!!!
    if ((ver > 0) && (this.version == ver)) {
-//      $("#report").append("<br> Get same version of object " + ver);
-//      if (arg) $("#report").append(" with data " + arg.length);
-//          else $("#report").append(" without data");
+      this.state = this.StateEnum.stReady;
+      if (this.first_draw) this.DrawObject();
+      // $("#report").append("<br> Get same version of object " + ver);
       return;
    } 
-
-   this.version = ver;
    
 //   $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
 
    if (!this.sinfo) {
       // we are doing sreamer infos
       // if (gFile) $("#report").append("<br> gFile already exists???"); else 
-      gFile = new JSROOTIO.RootFile;
+      gFile = new JSROOTIO.RootFile; 
 
       gFile.fStreamerInfo.ExtractStreamerInfo(arg);
+      
+      this.obj = gFile;
 
+      this.version = ver;
+      
 //      $("#report").append("<br> Streamer infos unpacked!!!");
       
       // this indicates that object was clicked and want to be drawn
-      if (this.drawid > 0) {
-         JSROOTPainter.displayStreamerInfos(gFile.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
-         addCollapsible("#"+this.titleid);
-      }
+      
+      this.DrawObject();
 
       // with streamer info one could try to update complex fields
       DABC.mgr.UpdateComplexFields();
@@ -332,70 +415,54 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
       return;
    } 
 
-   this.obj = {};
-   this.obj['_typename'] = 'JSROOTIO.' + this.clname;
-
-   // $("#report").append("<br>make streaming " + arg.length + " for class "+ this.clname);
-
-   if (!JSROOTIO.GetStreamer(this.clname))
-      $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
-
-   JSROOTIO.GetStreamer(this.clname).Stream(this.obj, arg, 0);
-
-   JSROOTCore.addMethods(this.obj);
-
-//   if (!this.IsDrawn()) {
-//      $("#report").append("<br>Object " + this.itemname + "  was closed");
-//      return;
-//   }
+   this.raw_data_version = ver;
+   this.raw_data = arg;
    
-//   $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
-
-   var child = document.getElementById(this.titleid + "_text");
-   // if (child) $("#report").append("<br>child " + child.innerHTML);
-   if (child) child.innerHTML = this.itemname + ",   version = " + this.version; 
+   if (mver) this.need_master_version = mver;
    
-   JSROOTPainter.drawObject(this.obj, this.drawid);
-   if (this.first_draw) addCollapsible("#"+this.titleid);
+   if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
+      $("#report").append("<br> Streamer info is required of vers " + this.need_master_version);
+      this.state = this.StateEnum.stWaitSinfo;
+      this.sinfo.Update();
+      return;
+   }
    
-   this.first_draw = false;
+   this.ReconstructRootObject();
 }
 
-DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
-   // in any case streamer info is required before normal request can be submitted
+DABC.RootDrawElement.prototype.RegularCheck = function() {
 
-   // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
+   if (DABC.load_root_js==0) {
+      DABC.load_root_js = 1;
+      AssertPrerequisites(function() { 
+         DABC.load_root_js = 2; 
+         // $("#report").append("<br> load all JSRootIO scripts");
+         DABC.mgr.UpdateComplexFields();
+      });
+   }
 
    // in any case, complete JSRootIO is required before we could start 
    if (DABC.load_root_js < 2) return;
    
-   if (this.sinfo) {
-    // $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
-   } else {
-    // $("#report").append("<br> sinfo itself " + (this.ready ? "true" : "false"));
+   switch (this.state) {
+     case this.StateEnum.stInit: break;
+     case this.StateEnum.stWaitRequest: return;
+     case this.StateEnum.stWaitSinfo: { 
+        if (this.sinfo.HasVersion(this.need_master_version))
+           this.ReconstructRootObject();
+        return;
+     }
+     case this.StateEnum.stReady: {
+        // if item ready, verify that we want to send request again
+        if (!this.IsDrawn()) return;
+        var chkbox = document.getElementById("monitoring");
+        if (!chkbox || !chkbox.checked) return;
+        break;
+     }
+     default: return;
    }
-
-   // in any case one should wait streamer info
-   if (this.sinfo && !this.sinfo.ready) return;
-
-   // when streamer info ready, than ignore request 
-   if (!this.sinfo && this.ready) return;
-
-   // if request is created and running, do nothing
-   if (this.req) return;
-
-   // new request will be started only when ready flag is not null
-   if (this.ready) {
-
-      // we do not monitor streamer info
-      if (!this.sinfo) return;
-      
-      var chkbox  = document.getElementById("monitoring");
-
-      if (!chkbox || !chkbox.checked) return;
-      
-      this.ready = false;
-   }
+   
+   // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
    var url = "getbinary?" + this.itemname;
    
@@ -406,6 +473,8 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
 //   $("#report").append("<br> Send request " + url);
 
    this.req.send(null);
+   
+   this.state = this.StateEnum.stWaitRequest;
 }
 
 // ======== end of RootDrawElement ======================
@@ -489,9 +558,12 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                   ver = -1;
                   $("#report").append("<br> Response version not specified");
                }
+               
+               var mver = this.getResponseHeader("Master-Version");
+               
                // $("#report").append("<br> IE response ver = " + ver);
 
-               this.dabc_item.RequestCallback(filecontent, ver);
+               this.dabc_item.RequestCallback(filecontent, ver, mver);
                delete filecontent;
                filecontent = null;
             } else {
@@ -545,7 +617,9 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                   $("#report").append("<br> Response version not specified");
                }
 
-               this.dabc_item.RequestCallback(filecontent, ver);
+               var mver = this.getResponseHeader("Master-Version");
+
+               this.dabc_item.RequestCallback(filecontent, ver, mver);
 
                delete filecontent;
                filecontent = null;
@@ -617,8 +691,7 @@ DABC.Manager.prototype.UpdateComplexFields = function() {
    if (this.empty()) return;
 
    for (var i in this.arr) 
-      if (!this.arr[i].simple())
-         this.arr[i].CheckComplexRequest();
+     this.arr[i].RegularCheck();
 }
 
 DABC.Manager.prototype.UpdateAll = function() {
@@ -645,81 +718,41 @@ DABC.Manager.prototype.display = function(itemname) {
    var elem = this.FindItem(itemname);
 
    if (elem) {
-      // indicate what we want to update it
-      if (!elem.simple() && elem.ready) {
-         elem.ready = false; 
-         
-         if (!elem.IsDrawn()) {
-            elem.CreateFrames("#report", this.cnt++);
-            elem.version = 0; // force to get complete version
-         }
-         
-         this.UpdateComplexFields();
-      }
+      elem.ClickItem();
       return;
    }
 
-   var check_compl = false;
-
+   // ratemeter
    if (kind == "rate") {
       elem = new DABC.GaugeDrawElement();
-   } else
-   if (kind.indexOf("ROOT.") == 0) {
-
-      var sinfoname = this.FindMasterName(itemname, xmlnode);
-      
-      if (!sinfoname) {
-         // most probably, it is streamer info itself
-         // TODO: implement handling of objects, which do not require master
-         
-         if (itemname.indexOf("StreamerInfo")<0) return;
-         
-         sinfoname = itemname;
-         
-      } else {
-         $("#report").append("<br> FOUND infoname = " + sinfoname);
-      }
-      
-      // this element is only required 
-      var sinfo = this.FindItem(sinfoname);
-      
-      if (!sinfo) {
-         sinfo = new DABC.RootDrawElement(kind.substr(5));
-         sinfo.itemname = sinfoname;
-         this.arr.push(sinfo);
-         if (DABC.load_root_js==0) {
-            DABC.load_root_js = 1;
-            AssertPrerequisites(function() { 
-               DABC.load_root_js = 2; 
-               // $("#report").append("<br> load all JSRootIO scripts");
-               DABC.mgr.UpdateComplexFields();
-            });
-         }
-         
-      }
-
-      check_compl = true;
-      
-      // if we clicked info, just ensure that it was created (but not drawn)
-      if (itemname == sinfoname) {
-         elem = sinfo;
-      } else {
-         elem = new DABC.RootDrawElement(kind.substr(5));
-         elem.sinfo = sinfo;
-      }
+      elem.itemname = itemname;
+      elem.CreateFrames("#report", this.cnt++);
+      elem.SetValue(xmlnode.getAttribute("value"));
+      this.arr.push(elem);
+      return;
    }
-
-   if (elem==0) return;
-
-   elem.itemname = itemname;
-
-   elem.CreateFrames("#report", this.cnt++);
-
-   elem.SetValue(xmlnode.getAttribute("value"));
    
+   // any non-ROOT is ignored for the moment
+   if (kind.indexOf("ROOT.") != 0) return; 
+         
+   var sinfoname = this.FindMasterName(itemname, xmlnode);
+   
+   var sinfo = this.FindItem(sinfoname);
+   
+   if (sinfoname && !sinfo) {
+      sinfo = new DABC.RootDrawElement(kind.substr(5));
+      sinfo.itemname = sinfoname;
+      this.arr.push(sinfo);
+      sinfo.RegularCheck();
+   }
+      
+   elem = new DABC.RootDrawElement(kind.substr(5));
+   elem.itemname = itemname;
+   elem.sinfo = sinfo;
+   elem.CreateFrames("#report", this.cnt++);
    this.arr.push(elem);
    
-   if (check_compl) this.UpdateComplexFields();
+   elem.RegularCheck();
 }
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
@@ -736,9 +769,8 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    elem.CreateFrames(holder, this.cnt++);
    
    this.arr.push(elem);
-
    
-   this.UpdateComplexFields();
+   elem.RegularCheck();
 }
 
 DABC.Manager.prototype.FindXmlNode = function(itemname) {
