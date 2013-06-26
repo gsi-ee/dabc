@@ -261,10 +261,21 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
 
    fParEventsReceivers = new ParamEventReceiverList;
 
+
    // this should automatically add all factories to the manager
    ProcessFactory(new dabc::StdManagerFactory("std"));
 
    ProcessFactory(new dabc::SocketFactory("sockets"));
+
+   // append factories, which are created too fast
+   if (fFirstFactoriesId == MagicInstanceId) {
+      for (unsigned n=0;n<sizeof(fFirstFactories)/sizeof(void*); n++)
+         if (fFirstFactories[n]) {
+            ProcessFactory(fFirstFactories[n]);
+            fFirstFactories[n] = 0;
+         }
+   }
+
 
    MakeThreadForWorker(MgrThrdName());
 
@@ -1438,15 +1449,32 @@ double dabc::Manager::ProcessTimeout(double last_diff)
 dabc::Manager* dabc::Manager::fInstance = 0;
 int dabc::Manager::fInstanceId = 0;
 
+dabc::Factory* dabc::Manager::fFirstFactories[10];
+int dabc::Manager::fFirstFactoriesId;
 
 void dabc::Manager::ProcessFactory(Factory* factory)
 {
    if (factory==0) return;
-   if ((fInstance==0) || (fInstanceId!=MagicInstanceId)) {
-      printf("Manager is not exists when factory %s is created - abort\n", factory->GetName());
-      exit(1);
+   if (fInstance && (fInstanceId==MagicInstanceId)) {
+      fInstance->GetFactoriesFolder(true).AddChild(factory, true);
+      return;
    }
-   fInstance->GetFactoriesFolder(true).AddChild(factory, true);
+
+   printf("Manager is not exists when factory %s is created\n", factory->GetName());
+
+   if (fFirstFactoriesId == MagicInstanceId) {
+      for (unsigned n=0;n<sizeof(fFirstFactories)/sizeof(void*); n++)
+         if (fFirstFactories[n] == 0) {
+            fFirstFactories[n] = factory;
+            break;
+         }
+   } else {
+      printf("Init first factories arrary %u\n", (unsigned) (sizeof(fFirstFactories)/sizeof(void*)));
+      fFirstFactoriesId = MagicInstanceId;
+      fFirstFactories[0] = factory;
+      for (unsigned n=1;n<sizeof(fFirstFactories)/sizeof(void*); n++) fFirstFactories[n] = 0;
+   }
+
 }
 
 void dabc::Manager::ProcessCtrlCSignal()

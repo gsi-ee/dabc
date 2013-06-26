@@ -42,7 +42,7 @@ static const char* open_file_handler(const struct mg_connection* conn,
 }
 
 
-http::Server::Server(const std::string& name) :
+http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fHttpPort(0),
    fEnabled(false),
@@ -56,8 +56,8 @@ http::Server::Server(const std::string& name) :
    fCallbacks.begin_request = begin_request_handler;
    fCallbacks.open_file = open_file_handler;
 
-   fHttpPort = Cfg("port").AsUInt(8080);
-   fEnabled = Cfg("enabled").AsBool(true);
+   fHttpPort = Cfg("port", cmd).AsUInt(8080);
+   fEnabled = Cfg("enabled", cmd).AsBool(false);
    if (fHttpPort<=0) fEnabled = false;
 
    if (!fEnabled) return;
@@ -339,7 +339,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    std::string itemname = query ? query : "";
    std::string sver;
    long unsigned query_version(0);
-   uint64_t item_version(0);
+   uint64_t item_version(0), master_version(0);
 
    size_t pos = itemname.find("&");
    if (pos != std::string::npos) {
@@ -357,7 +357,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
    }
 
-   dabc::Hierarchy item;
+   dabc::Hierarchy item, master;
    dabc::BinData bindata;
    std::string producer_name, request_name;
    dabc::WorkerRef wrk;
@@ -383,8 +383,13 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
             return 0;
          }
 
+         master = item.FindMaster();
+
          // take data under lock that we are sure - nothing change for me
          item_version = item.GetVersion();
+
+         if (!master.null()) master_version = master.GetVersion();
+
          bindata = item()->bindata();
       }
 
@@ -408,12 +413,14 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
          mg_printf(conn,
                "HTTP/1.1 200 OK\r\n"
-               "Content-Type: application/x-binary\r\n"
-               "Content-Version: %u\r\n"
+               "Content-Type: application/x-binary\r\n");
+         if (master_version>0)
+            mg_printf(conn,  "Master-Version: %lu\r\n", (long unsigned) master_version);
+         mg_printf(conn,
+               "Content-Version: %lu\r\n"
                "Content-Length: %u\r\n"
                "Connection: keep-alive\r\n"
-               "\r\n",
-               (unsigned) bindata.version(), reply_length);
+               "\r\n", (long unsigned) bindata.version(), reply_length);
          if (reply_length>0)
             mg_write(conn, bindata.data(), (size_t) reply_length);
          return 1;
@@ -458,7 +465,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
                        "Content-Length: 0\r\n"
-                        "Connection: close\r\n\r\n");
+                       "Connection: close\r\n\r\n");
       return 1;
    }
 
@@ -482,6 +489,24 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       if (!bindata.null()) {
          bindata()->SetVersion(item_version);
          item()->bindata() = bindata;
+
+         if (!master.null()) {
+
+            master_version = master.GetVersion();
+
+            // master hash can let us know if something changed in the master
+            std::string masterhash = cmd.GetStdStr("MasterHash");
+
+            if (!masterhash.empty() && (master.Field(dabc::prop_content_hash).AsStdStr()!=masterhash)) {
+               master_version = fHierarchy.GetVersion()+1;
+               fHierarchy.SetNodeVersion(master_version);
+               master.SetNodeVersion(master_version);
+               master.Field(dabc::prop_content_hash).SetStr(masterhash);
+
+               DOUT0("!!!!!!!!!!!!! MASTER ITEM CHANGED new version = %u!!!!!!!!", (unsigned) master_version);
+            }
+         }
+
       } else {
          resok = false;
       }
@@ -492,12 +517,17 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
       mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
-            "Content-Type: application/x-binary\r\n"
-            "Content-Version: %u\r\n"
+            "Content-Type: application/x-binary\r\n");
+
+      if (master_version>0)
+         mg_printf(conn,  "Master-Version: %lu\r\n", (long unsigned) master_version);
+
+      mg_printf(conn,
+            "Content-Version: %lu\r\n"
             "Content-Length: %u\r\n"
             "Connection: keep-alive\r\n"
             "\r\n",
-            (unsigned) bindata.version(), bindata.length());
+            (long unsigned) bindata.version(), bindata.length());
       mg_write(conn, bindata.data(), (size_t) bindata.length());
    } else {
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"

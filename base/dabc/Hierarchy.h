@@ -25,6 +25,8 @@
 namespace dabc {
 
    extern const char* prop_kind;
+   extern const char* prop_realname;      // real name property specified, when xml node can not have such name
+   extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
    extern const char* prop_binary_producer;
    extern const char* prop_content_hash;  // content hash, which should describe if object is changed
 
@@ -78,7 +80,9 @@ namespace dabc {
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
-         BinData    fBinData;
+         BinData    fBinData;           ///< binary data, assigned with element
+
+         void*      fUserPtr;           ///< user pointer, can be freely changed, not propogated with update
 
          HierarchyContainer* TopParent();
 
@@ -154,6 +158,10 @@ namespace dabc {
        * \details If par indx specified, child will be created at specified position */
       Hierarchy CreateChild(const std::string& name, int indx = -1);
 
+      /** \brief Find master item
+       * It is used in ROOT to specify position of streamer info */
+      Hierarchy FindMaster();
+
       /** \brief Build full hierarchy of the objects structure, provided in reference */
       void Build(const std::string& topname, Reference top);
 
@@ -168,10 +176,15 @@ namespace dabc {
 
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }
 
+      void SetNodeVersion(uint64_t v) { if (GetObject()) GetObject()->fNodeVersion = v; }
+
       bool UpdateFromXml(const std::string& xml);
 
       /** kind = 0 in html format, 1 - in ajax format */
       std::string SaveToJSON(bool compact = false, bool excludetop = false);
+
+      void SetUserPtr(void* ptr) { if (GetObject()) GetObject()->fUserPtr = ptr; }
+      void* GetUserPtr() { return GetObject() ? GetObject()->fUserPtr : 0; }
    };
 
 

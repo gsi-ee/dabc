@@ -27,6 +27,7 @@
 #include "TStreamerInfo.h"
 #include "TBufferFile.h"
 #include "TROOT.h"
+#include "TTimer.h"
 
 #include "dabc/Iterator.h"
 
@@ -52,20 +53,53 @@ unsigned dabc_root::RootBinDataContainer::length() const
    return fBuf ? fBuf->Length() : 0;
 }
 
+// =========================================================================
+
+class TDabcTimer : public TTimer {
+   public:
+
+      dabc_root::RootSniffer* fSniffer;
+
+      TDabcTimer(Long_t milliSec, Bool_t mode) : TTimer(milliSec, mode), fSniffer(0) {}
+
+      virtual ~TDabcTimer() {
+         if (fSniffer) fSniffer->fTimer = 0;
+      }
+
+      void SetSniffer(dabc_root::RootSniffer* sniff) { fSniffer = sniff; }
+
+      virtual void Timeout() {
+         if (fSniffer) fSniffer->ProcessActionsInRootContext();
+      }
+
+};
+
+
 // ==============================================================================
 
-dabc_root::RootSniffer::RootSniffer(const std::string& name) :
+dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
+   fBatch(true),
+   fTimer(0),
+   fRoot(),
    fHierarchy(),
-   fHierarchyMutex()
+   fHierarchyMutex(),
+   fRootCmds(dabc::CommandsQueue::kindPostponed),
+   fMemFile(0),
+   fSinfoSize(0)
 {
-   fEnabled = Cfg("enabled").AsBool(true);
+   fEnabled = Cfg("enabled", cmd).AsBool(false);
    if (!fEnabled) return;
+
+   fBatch = Cfg("batch", cmd).AsBool(true);
+
+   if (fBatch) gROOT->SetBatch(kTRUE);
 }
 
 dabc_root::RootSniffer::~RootSniffer()
 {
+   if (fTimer) fTimer->fSniffer = 0;
 }
 
 
@@ -79,113 +113,174 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    fHierarchy.Create("ROOT");
    DOUT2("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
-   gROOT->SetBatch(kTRUE);
+   if (fTimer==0) {
+      ActivateTimeout(0);
 
+      TH1* h1 = new TH1F("histo1","Tilte of histo1", 100, -10., 10.);
+      h1->FillRandom("gaus", 10000);
 
-   ActivateTimeout(0);
-   TH1* h1 = new TH1F("histo1","Tilte of histo1", 100, -10., 10.);
-   h1->FillRandom("gaus", 10000);
-
-   Double_t x[100], y[100];
-   Int_t n = 20;
-   for (Int_t i=0;i<n;i++) {
-     x[i] = i*0.1;
-     y[i] = 10*sin(x[i]+0.2);
+      Double_t x[100], y[100];
+      Int_t n = 20;
+      for (Int_t i=0;i<n;i++) {
+        x[i] = i*0.1;
+        y[i] = 10*sin(x[i]+0.2);
+      }
+      TGraph* gr = new TGraph(n,x,y);
+      gr->SetName("graph");
+      gROOT->Add(gr);
    }
-   TGraph* gr = new TGraph(n,x,y);
-   gr->SetName("graph");
-   DOUT0("***************************** Graph histogram = %p", gr->GetHistogram());
-   gROOT->Add(gr);
+
+
+   // if timer not installed, emulate activity in ROOT by regular timeouts
+
 }
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
+
+   TH1* h1 = (TH1*) gROOT->FindObject("histo1");
+   if (h1) h1->FillRandom("gaus", 100000);
+
    dabc::Hierarchy h;
    h.Create("ROOT");
    // this is fake element, which is need to be requested before first
    h.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
-   FillHieararchy(h, gROOT);
+   FillROOTHieararchy(h);
 
    DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
+   dabc::LockGuard lock(fHierarchyMutex);
+
    fHierarchy.Update(h);
-
-//   dabc::LockGuard lock(fHierarchyMutex);
-
-//   dabc::Hierarchy local = fHierarchy.FindChild("localhost");
-
-//   if (local.null()) {
-//      EOUT("Did not find localhost in hierarchy");
-//   } else {
-//      // TODO: make via XML file like as for remote node!!
-//   }
 
    return 10.;
 }
+
+int dabc_root::RootSniffer::SimpleGetBinary(dabc::Command cmd)
+{
+   std::string item = cmd.GetStdStr("Item");
+
+   TBufferFile* sbuf = 0;
+
+   if (item=="StreamerInfo") {
+      sbuf = ProduceStreamerInfos();
+   } else {
+      TObject* obj = gROOT->FindObject(item.c_str());
+
+      if (obj!=0) {
+
+         // TH1* h1 = dynamic_cast<TH1*> (obj);
+
+         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+         gFile = 0;
+         sbuf->MapObject(obj);
+         obj->Streamer(*sbuf);
+      }
+
+
+   }
+
+   if (sbuf!=0) {
+      //         dabc::Hierarchy h = fHierarchy.FindChild(item.c_str());
+      //         DOUT0("BINARY Item %s version %u", item.c_str(), h.GetVersion());
+      DOUT0("Produced buffer length %d", sbuf->Length());
+
+      cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+   }
+
+   return dabc::cmd_true;
+}
+
 
 int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string item = cmd.GetStdStr("Item");
+      // keep simple case for testing
+      if (fTimer==0) return SimpleGetBinary(cmd);
 
-      TBufferFile* sbuf = 0;
+      dabc::LockGuard lock(fHierarchyMutex);
 
-      if (item=="StreamerInfo") {
-         sbuf = ProduceStreamerInfos();
-      } else {
-         TObject* obj = gROOT->FindObject(item.c_str());
+      fRootCmds.Push(cmd);
 
-         if (obj!=0) {
-
-            // TH1* h1 = dynamic_cast<TH1*> (obj);
-
-            sbuf = new TBufferFile(TBuffer::kWrite, 100000);
-            gFile = 0;
-            sbuf->MapObject(obj);
-            obj->Streamer(*sbuf);
-         }
-
-         DOUT0("Produced buffer length %d", sbuf->Length());
-      }
-
-      if (sbuf!=0) {
-//         dabc::Hierarchy h = fHierarchy.FindChild(item.c_str());
-//         DOUT0("BINARY Item %s version %u", item.c_str(), h.GetVersion());
-
-         cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
-      }
-
-      return dabc::cmd_true;
+      return dabc::cmd_postponed;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
 
-void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
+void dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, TObject* obj, int lvl)
 {
-   if (dir==0) return;
+   if (obj==0) return;
 
-   TIter iter(dir ? dir->GetList() : 0);
-   TObject* obj(0);
-   while ((obj = iter())!=0) {
-      DOUT2("Find ROOT object %s", obj->GetName());
-      dabc::Hierarchy chld = h.CreateChild(obj->GetName());
+   std::string itemname = obj->GetName();
+   size_t pos = (itemname.find_last_of("/#<>"));
+   if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
+   if (itemname.empty()) itemname = "item";
+   int cnt = 0;
+   std::string basename = itemname;
 
-      if (IsSupportedClass(obj->IsA())) {
-         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+   // prevent that same item appears many time
+   while (!parent.FindChild(itemname.c_str()).null()) {
+      itemname = basename + dabc::format("%d", cnt++);
+   }
 
-         if (obj->InheritsFrom(TH1::Class())) {
-            TH1* h1 = (TH1*) obj;
-            h1->FillRandom("gaus", 100000);
+   dabc::Hierarchy chld = parent.CreateChild(itemname);
 
-            chld.Field(dabc::prop_content_hash).SetDouble(h1->Integral());
-         }
+   if (itemname.compare(obj->GetName()) != 0)
+      chld.Field(dabc::prop_realname).SetStr(obj->GetName());
+
+   if (IsSupportedClass(obj->IsA())) {
+      chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+
+      std::string master;
+      for (int n=0;n<lvl;n++) master +="../";
+
+      chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
+
+      if (obj->InheritsFrom(TH1::Class())) {
+         chld.Field(dabc::prop_content_hash).SetDouble(((TH1*)obj)->Integral());
       }
+      chld.SetUserPtr(obj);
+   }
+
+   if (obj->InheritsFrom(TDirectory::Class())) {
+      FillListHieararchy(chld, ((TDirectory*) obj)->GetList(), lvl+1);
    }
 }
+
+
+void dabc_root::RootSniffer::FillListHieararchy(dabc::Hierarchy& parent, TSeqCollection* lst, int lvl, const std::string& foldername)
+{
+   if ((lst==0) || (lst->GetSize()==0)) return;
+
+   dabc::Hierarchy top = parent;
+   if (!foldername.empty()) {
+      top = parent.CreateChild(foldername);
+      lvl++;
+   }
+
+   TIter iter(lst);
+   TObject* obj(0);
+   while ((obj = iter())!=0) {
+      AddObjectToHierarchy(top, obj, lvl);
+   }
+}
+
+void dabc_root::RootSniffer::FillROOTHieararchy(dabc::Hierarchy& h)
+{
+   if (h.null()) h.Create("ROOT");
+
+   FillListHieararchy(h, gROOT->GetList(), 0);
+
+   FillListHieararchy(h, gROOT->GetListOfCanvases(), 0, "Canvases");
+
+   FillListHieararchy(h, gROOT->GetListOfFiles(), 0, "Files");
+}
+
+
 
 bool dabc_root::RootSniffer::IsSupportedClass(TClass* cl)
 {
@@ -193,15 +288,15 @@ bool dabc_root::RootSniffer::IsSupportedClass(TClass* cl)
 
    if (cl->InheritsFrom(TH1::Class())) return true;
    if (cl->InheritsFrom(TGraph::Class())) return true;
-   if (cl->InheritsFrom(TCanvas::Class())) return true;
-   if (cl->InheritsFrom(TProfile::Class())) return true;
+//   if (cl->InheritsFrom(TCanvas::Class())) return true;
+//   if (cl->InheritsFrom(TProfile::Class())) return true;
 
    return false;
 }
 
-
 TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
 {
+
    dabc::Iterator iter(fHierarchy);
 
    dabc::HierarchyContainer* cont = 0;
@@ -233,9 +328,11 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
 
    if (arr.GetSize()==0) arr.Add(TH1F::Class());
 
+   TDirectory* olddir = gDirectory; gDirectory = 0;
+   TFile* oldfile = gFile; gFile = 0;
 
    TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
-
+   gROOT->GetListOfFiles()->Remove(mem);
 
    // here we are creating dummy objects to fill streamer infos
    // works for TH1/TGraph, should always be tested with new classes
@@ -264,12 +361,18 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
    l->Print("*");
 
    TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+   // sbuf->SetParent(mem);
    sbuf->MapObject(l);
    l->Streamer(*sbuf);
 
    delete l;
 
    delete mem;
+
+   DOUT0("Finish with streamer info");
+
+   gDirectory = olddir;
+   gFile  = oldfile;
 
    return sbuf;
 }
@@ -281,6 +384,210 @@ void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
    // do it here, while all properties of main node are ignored when hierarchy is build
    dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
 
+   // we protect hierarchy with mutex, while it may be changed from ROOT process
+   dabc::LockGuard lock(fHierarchyMutex);
+
    if (!fHierarchy.null()) fHierarchy()->BuildHierarchy(cont);
 }
 
+
+void dabc_root::RootSniffer::InstallSniffTimer()
+{
+   if (fTimer==0) {
+      fTimer = new TDabcTimer(3000, kTRUE);
+      fTimer->SetSniffer(this);
+      fTimer->TurnOn();
+   }
+
+
+   if (fMemFile==0) {
+
+      TDirectory* olddir = gDirectory; gDirectory = 0;
+      TFile* oldfile = gFile; gFile = 0;
+
+      fMemFile = new TMemFile("dummy.file", "RECREATE");
+      gROOT->GetListOfFiles()->Remove(fMemFile);
+
+      TH1F* d = new TH1F("d","d", 10, 0, 10);
+      fMemFile->WriteObject(d, "h1");
+      delete d;
+
+      TGraph* gr = new TGraph(10);
+      gr->SetName("abc");
+      //      // gr->SetDrawOptions("AC*");
+      fMemFile->WriteObject(gr, "gr1");
+      delete gr;
+
+      fMemFile->WriteStreamerInfo();
+
+      // make primary list of streamer infos
+      TList* l = new TList();
+
+      l->Add(gROOT->GetListOfStreamerInfo()->FindObject("TGraph"));
+      l->Add(gROOT->GetListOfStreamerInfo()->FindObject("TH1F"));
+      l->Add(gROOT->GetListOfStreamerInfo()->FindObject("TH1"));
+      l->Add(gROOT->GetListOfStreamerInfo()->FindObject("TNamed"));
+      l->Add(gROOT->GetListOfStreamerInfo()->FindObject("TObject"));
+
+      fMemFile->WriteObject(l, "ll");
+      delete l;
+
+      fMemFile->WriteStreamerInfo();
+
+      l = fMemFile->GetStreamerInfoList();
+      l->Print("*");
+      fSinfoSize = l->GetSize();
+      delete l;
+
+      gDirectory = olddir;
+      gFile = oldfile;
+   }
+}
+
+TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfosMem()
+{
+   // method called from ROOT context
+
+   TDirectory* olddir = gDirectory; gDirectory = 0;
+   TFile* oldfile = gFile; gFile = 0;
+
+   if (fMemFile==0) {
+
+      EOUT("No mem file is exists!!!!");
+      return 0;
+   }
+
+   fMemFile->WriteStreamerInfo();
+   TList* l = fMemFile->GetStreamerInfoList();
+   l->Print("*");
+
+   fSinfoSize = l->GetSize();
+
+   TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+   sbuf->SetParent(fMemFile);
+   sbuf->MapObject(l);
+   l->Streamer(*sbuf);
+
+   delete l;
+
+   gDirectory = olddir;
+   gFile = oldfile;
+
+   return sbuf;
+}
+
+
+int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
+{
+   // command executed in ROOT context without locked mutex,
+   // one can use as much ROOT as we want
+
+   std::string itemname = cmd.GetStdStr("Item");
+
+   TBufferFile* sbuf = 0;
+
+   if (itemname=="StreamerInfo") {
+      sbuf = ProduceStreamerInfosMem();
+   } else {
+      dabc::Hierarchy item = fRoot.FindChild(itemname.c_str());
+      if (item.null()) {
+         EOUT("Item %s not found", itemname.c_str());
+         return dabc::cmd_false;
+      }
+
+      TObject* obj = (TObject*) item.GetUserPtr();
+
+      if (obj==0) {
+         EOUT("Object for item %s not specified", itemname.c_str());
+         return dabc::cmd_false;
+      }
+
+
+      if (fMemFile == 0) {
+         EOUT("Mem file is not exists");
+      } else {
+
+         TDirectory* olddir = gDirectory; gDirectory = 0;
+         TFile* oldfile = gFile; gFile = 0;
+
+         TList* l1 = fMemFile->GetStreamerInfoList();
+
+         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+         sbuf->SetParent(fMemFile);
+         sbuf->MapObject(obj);
+         obj->Streamer(*sbuf);
+
+         if (fMemFile->GetClassIndex()==0) {
+            DOUT0("SEEMS to be, streamer info was not changed");
+         }
+
+         fMemFile->WriteStreamerInfo();
+         TList* l2 = fMemFile->GetStreamerInfoList();
+
+         DOUT0("STREAM LIST Before %d After %d", l1->GetSize(), l2->GetSize());
+
+         DOUT0("=================== BEFORE ========================");
+         l1->Print("*");
+
+         DOUT0("=================== AFTER ========================");
+         l2->Print("*");
+
+         fSinfoSize = l2->GetSize();
+
+         delete l1; delete l2;
+
+         gDirectory = olddir;
+         gFile = oldfile;
+      }
+   }
+
+   DOUT0("GETBINARY item %s  data %p", itemname.c_str(), sbuf);
+
+   if (sbuf!=0) {
+      cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+      cmd.SetInt("MasterHash", fSinfoSize);
+   }
+
+   return dabc::cmd_true;
+}
+
+
+void dabc_root::RootSniffer::ProcessActionsInRootContext()
+{
+   DOUT0("Get timeout from ROOT");
+
+   fRoot.Release();
+   fRoot.Create("ROOT");
+   // this is fake element, whic.h is need to be requested before first
+   dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
+   si.Field(dabc::prop_kind).SetStr("ROOT.TList");
+   si.Field(dabc::prop_content_hash).SetInt(fSinfoSize);
+
+   FillROOTHieararchy(fRoot);
+
+   DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
+
+   {
+      dabc::LockGuard lock(fHierarchyMutex);
+      fHierarchy.Update(fRoot);
+   }
+
+   bool doagain(true);
+   dabc::Command cmd;
+
+   while (doagain) {
+
+      if (cmd.IsName("GetBinary")) {
+         cmd.Reply(ProcessGetBinary(cmd));
+      } else
+      if (!cmd.null()) {
+         EOUT("Not processed command %s", cmd.GetName());
+         cmd.ReplyFalse();
+      }
+
+      dabc::LockGuard lock(fHierarchyMutex);
+
+      if (fRootCmds.Size()>0) cmd = fRootCmds.Pop();
+      doagain = !cmd.null();
+   }
+}

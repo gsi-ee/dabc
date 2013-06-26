@@ -31,3 +31,10 @@ void http::Factory::Initialize()
    }
 }
 
+dabc::Reference http::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+{
+   if (classname == "http::Server")
+      return new http::Server(objname, cmd);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}

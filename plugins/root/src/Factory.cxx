@@ -34,6 +34,14 @@ void dabc_root::Factory::Initialize()
    }
 }
 
+dabc::Reference dabc_root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+{
+   if (classname=="dabc_root::RootSniffer")
+      return new dabc_root::RootSniffer(objname, cmd);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
+
 
 dabc::DataInput* dabc_root::Factory::CreateDataInput(const std::string& typ)
 {

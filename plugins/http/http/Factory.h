@@ -30,6 +30,8 @@ namespace http {
       public:
          Factory(const std::string& name) : dabc::Factory(name) {}
 
+         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+
          virtual void Initialize();
 
       protected:

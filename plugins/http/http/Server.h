@@ -77,7 +77,7 @@ namespace http {
          int ProcessGetBinary(struct mg_connection* conn, const char *query);
 
       public:
-         Server(const std::string& name);
+         Server(const std::string& name, dabc::Command cmd = 0);
 
          virtual ~Server();
 

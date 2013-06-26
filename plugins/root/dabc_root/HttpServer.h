@@ -16,12 +16,19 @@
 #ifndef DABC_ROOT_HttpServer
 #define DABC_ROOT_HttpServer
 
+   class TestServer {
+      public:
+         TestServer() {}
+         virtual ~TestServer() {}
+
+         static void Start(int port = 8080);
+   };
+
+
 
 namespace dabc_root {
 
-   /** \brief %Inetrface class to start HTTP server from ROOT
-    *
-    */
+   /** \brief %Interface class to start HTTP server from ROOT */
 
    class HttpServer {
       public:
@@ -29,6 +36,8 @@ namespace dabc_root {
          virtual ~HttpServer() {}
 
          static void Start(int port = 8080);
+
+
    };
 
 

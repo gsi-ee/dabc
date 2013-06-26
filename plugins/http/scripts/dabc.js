@@ -6,7 +6,7 @@ DABC.mgr = 0;
 
 DABC.dabc_tree = 0;   // variable to display hierarchy
 
-DABC.load_root_js = false;
+DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
@@ -259,7 +259,7 @@ DABC.RootDrawElement = function(_clname) {
    this.req = 0;          // this is current request
    this.titleid = "";     
    this.drawid = 0;       // numeric id of pad, where ROOT object is drawn
-   this.drawfirst = true;  // one should enable flag only when all ROOT scripts are loaded
+   this.first_draw = true;  // one should enable flag only when all ROOT scripts are loaded
 }
 
 // TODO: check how it works in different older browsers
@@ -270,7 +270,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.frameid = "histogram" + this.drawid;
    this.titleid = "uid_accordion_" + this.drawid; 
    
-   this.drawfirst = true;
+   this.first_draw = true;
    
    var entryInfo = "";
    if (this.sinfo) {
@@ -356,9 +356,9 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
    if (child) child.innerHTML = this.itemname + ",   version = " + this.version; 
    
    JSROOTPainter.drawObject(this.obj, this.drawid);
-   if (this.drawfirst) addCollapsible("#"+this.titleid);
+   if (this.first_draw) addCollapsible("#"+this.titleid);
    
-   this.drawfirst = false;
+   this.first_draw = false;
 }
 
 DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
@@ -367,7 +367,7 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
    // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
    // in any case, complete JSRootIO is required before we could start 
-   if (!DABC.load_root_js) return;
+   if (DABC.load_root_js < 2) return;
    
    if (this.sinfo) {
     // $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
@@ -666,15 +666,20 @@ DABC.Manager.prototype.display = function(itemname) {
    } else
    if (kind.indexOf("ROOT.") == 0) {
 
-      // one need to find item with StreamerInfo
-      // FIXME: later one need to find streamer info without any naming conventions
-      var pos = itemname.indexOf("ROOT/");
-      if (!pos) {
-         alert("String ROOT/ not found in ROOT item name - requiered to find StreamerInfo.");
-         return;
+      var sinfoname = this.FindMasterName(itemname, xmlnode);
+      
+      if (!sinfoname) {
+         // most probably, it is streamer info itself
+         // TODO: implement handling of objects, which do not require master
+         
+         if (itemname.indexOf("StreamerInfo")<0) return;
+         
+         sinfoname = itemname;
+         
+      } else {
+         $("#report").append("<br> FOUND infoname = " + sinfoname);
       }
-      var sinfoname = itemname.substr(0, pos+5) + "StreamerInfo";
-
+      
       // this element is only required 
       var sinfo = this.FindItem(sinfoname);
       
@@ -682,11 +687,15 @@ DABC.Manager.prototype.display = function(itemname) {
          sinfo = new DABC.RootDrawElement(kind.substr(5));
          sinfo.itemname = sinfoname;
          this.arr.push(sinfo);
-         AssertPrerequisites(function() { 
-            DABC.load_root_js = true; 
-            // $("#report").append("<br> load all JSRootIO scripts");
-            DABC.mgr.UpdateComplexFields();
-         });
+         if (DABC.load_root_js==0) {
+            DABC.load_root_js = 1;
+            AssertPrerequisites(function() { 
+               DABC.load_root_js = 2; 
+               // $("#report").append("<br> load all JSRootIO scripts");
+               DABC.mgr.UpdateComplexFields();
+            });
+         }
+         
       }
 
       check_compl = true;
@@ -737,5 +746,33 @@ DABC.Manager.prototype.FindXmlNode = function(itemname) {
    if (!elem) return;
    return elem.FindNode(itemname);
 }
+
+/** \brief Method finds element in structure, which must be loaded before item itself can be loaded
+ *   In case of ROOT objects it is StreamerInfo */
+
+DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
+   if (!itemnode) return;
+   
+   var master = itemnode.getAttribute("master");
+   if (!master) return;
+   
+   var newname = itemname;
+
+   while (newname) {
+      var separ = newname.lastIndexOf("/");
+      if (separ<=0) {
+         alert("Name " + itemname + " is not long enouth for master " + itemnode.getAttribute("master"));
+         return;
+      }
+      newname = newname.substr(0, separ);
+      
+      if (master.indexOf("../")<0) break;
+      master = master.substr(3);
+   }
+   
+   return newname + "/" + master;
+}
+
+
 
 // ============= end of DABC.Manager =============== 

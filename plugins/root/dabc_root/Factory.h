@@ -26,6 +26,8 @@ namespace dabc_root {
 
          virtual void Initialize();
 
+         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+
          virtual dabc::DataInput* CreateDataInput(const std::string&);
 
          virtual dabc::DataOutput* CreateDataOutput(const std::string&);

@@ -9,7 +9,7 @@ else
 DABCMBSROOTDIR = .
 endif
 
-ROOTCINTDABC   = echo "Generating dictionary $@ ..."; $(DABC_ROOTBIN)rootcint -f  $@ -c -p $(INCLUDES:%=-I%) -I$(DABCSYS)/include $(DEFINITIONS)  
+ROOTCINTDABC   = echo "Generating dictionary $@ ..."; if [ "$$ROOTSYS" = "" ]; then export ROOTSYS=$(DABC_ROOTSYS); fi;  $(DABC_ROOTBIN)rootcint -f  $@ -c -p $(INCLUDES:%=-I%) -I$(DABCSYS)/include $(DEFINITIONS)  
 
 DABCMBSROOTDIRI         = $(DABCMBSROOTDIR)/mbs_root
 DABCMBSROOTDIRS         = $(DABCMBSROOTDIR)/src
@@ -55,7 +55,7 @@ $(DABCMBSROOT_LIB):   $(DABCMBSROOT_O) $(DABCMBSROOT_DO)
 	@$(MakeLib) $(DABCMBSROOT_LIBNAME) "$(DABCMBSROOT_O) $(DABCMBSROOT_DO)" $(TGTDLLPATH)
 
 $(DABCMBSROOT_DS): $(DABCMBSROOT_H)  $(DABCMBSROOT_LINKDEF)
-	$(ROOTCINTDABC)  $(DABCMBSROOT_H) $(DABCMBSROOT_LINKDEF)
+	@$(ROOTCINTDABC)  $(DABCMBSROOT_H) $(DABCMBSROOT_LINKDEF)
 
 
 ########### extra roles #############

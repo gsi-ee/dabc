@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of the framework.
 
+26.06.2013
+1. Now is possible define master for any item in the hierarchy. Idea of master item is
+   that such master object should be updated together with item itself (when master is
+   changed). Server-client protocol will provide information about actual master version
+   as well.  
+
+
 25.06.2013
 1. Generate dictionary and rootmap for libDabcRoot. This will allow to use
    part of DABC functionality directly from ROOT.

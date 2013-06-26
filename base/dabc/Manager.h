@@ -299,8 +299,11 @@ namespace dabc {
          // this method is used from Factory to register factory when it created
          static void ProcessFactory(Factory* factory);
 
-         static Manager* fInstance; //! pointer on current manager instance
-         static int fInstanceId; //! magic number which indicates that instance is initialized
+         static Manager* fInstance;  ///< pointer on current manager instance
+         static int fInstanceId;     ///< magic number which indicates that instance is initialized
+         static Factory* fFirstFactories[10]; ///< first factories, which are comming before manager is created
+         static int fFirstFactoriesId;  ///< magic number which should be set when fFirstFactories initialized for the first time
+
 
       protected:
 

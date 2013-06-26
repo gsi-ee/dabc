@@ -24,6 +24,8 @@
 
 
 const char* dabc::prop_kind = "kind";
+const char* dabc::prop_realname = "realname";
+const char* dabc::prop_masteritem = "master";
 const char* dabc::prop_binary_producer = "binary_producer";
 const char* dabc::prop_content_hash = "hash";
 
@@ -54,7 +56,9 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fNodeVersion(0),
    fHierarchyVersion(0),
    fNodeChanged(false),
-   fHierarchyChanged(false)
+   fHierarchyChanged(false),
+   fBinData(),
+   fUserPtr(0)
 {
 }
 
@@ -432,6 +436,17 @@ dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
    return GetObject()->CreateChildAt(name, indx);
 
    return FindChild(name.c_str());
+}
+
+dabc::Hierarchy dabc::Hierarchy::FindMaster()
+{
+   if (null() || (GetParent()==0) || !HasField(dabc::prop_masteritem)) return dabc::Hierarchy();
+
+   std::string masteritem = Field(dabc::prop_masteritem).AsStdStr();
+
+   if (masteritem.empty()) return dabc::Hierarchy();
+
+   return GetParent()->FindChildRef(masteritem.c_str());
 }
 
 bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
