@@ -97,7 +97,8 @@ namespace dabc_root {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         static bool IsSupportedClass(TClass* cl);
+         static bool IsDrawableClass(TClass* cl);
+         static bool IsBrowsableClass(TClass* cl);
 
          TBufferFile* ProduceStreamerInfos();
          TBufferFile* ProduceStreamerInfosMem();

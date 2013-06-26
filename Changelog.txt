@@ -13,7 +13,7 @@ of the framework.
 3. First time continiousely running hsimple.C with web server! 
    Now arbitrary ROOT script can be monitored via web broser!
 4. Add support of TProfile and, partially, TCanvas. TCanvas cannot be updated.   
-
+5. Provide only browsing for TTree/TBranch/TLeaf classes
 
 25.06.2013
 1. Generate dictionary and rootmap for libDabcRoot. This will allow to use

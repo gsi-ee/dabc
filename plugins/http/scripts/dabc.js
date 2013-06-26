@@ -156,10 +156,14 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind.match(/\bTCanvas/)) nodeimg = source_dir+'img/canvas.png'; else
          if (kind.match(/\bTProfile/)) nodeimg = source_dir+'img/profile.png'; else
          if (kind.match(/\bTGraph/)) nodeimg = source_dir+'img/graph.png'; else
-         if (kind.match(/\bTList/) && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif';
+         if (kind.match(/\bTTree/)) { nodeimg = source_dir+'img/tree.png'; html = ""; }  else
+         if (kind.match(/\bTNtuple/)) { nodeimg = source_dir+'img/tree_t.png'; html = ""; }  else
+         if (kind.match(/\bTBranch/)) { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
+         if (kind.match(/\bTLeaf/)) { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
+         if (kind.match(/\bTList/) && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
       }
       
-      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg);
+      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg, nodeimg);
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       

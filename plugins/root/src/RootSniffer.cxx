@@ -29,6 +29,9 @@
 #include "TBufferFile.h"
 #include "TROOT.h"
 #include "TTimer.h"
+#include "TTree.h"
+#include "TBranch.h"
+#include "TLeaf.h"
 
 #include "dabc/Iterator.h"
 
@@ -234,7 +237,7 @@ void dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, TObje
    if (itemname.compare(obj->GetName()) != 0)
       chld.Field(dabc::prop_realname).SetStr(obj->GetName());
 
-   if (IsSupportedClass(obj->IsA())) {
+   if (IsDrawableClass(obj->IsA())) {
       chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
 
       std::string master;
@@ -246,10 +249,21 @@ void dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, TObje
          chld.Field(dabc::prop_content_hash).SetDouble(((TH1*)obj)->Integral());
       }
       chld.SetUserPtr(obj);
+   } else
+   if (IsBrowsableClass(obj->IsA())) {
+      chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
    }
 
    if (obj->InheritsFrom(TDirectory::Class())) {
       FillListHieararchy(chld, ((TDirectory*) obj)->GetList(), lvl+1);
+   } else
+   if (obj->InheritsFrom(TTree::Class())) {
+      FillListHieararchy(chld, ((TTree*) obj)->GetListOfBranches(), lvl+1);
+      FillListHieararchy(chld, ((TTree*) obj)->GetListOfLeaves(), lvl+1);
+   } else
+   if (obj->InheritsFrom(TBranch::Class())) {
+      FillListHieararchy(chld, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
+      FillListHieararchy(chld, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
    }
 }
 
@@ -283,15 +297,25 @@ void dabc_root::RootSniffer::FillROOTHieararchy(dabc::Hierarchy& h)
 }
 
 
-
-bool dabc_root::RootSniffer::IsSupportedClass(TClass* cl)
+bool dabc_root::RootSniffer::IsDrawableClass(TClass* cl)
 {
    if (cl==0) return false;
-
    if (cl->InheritsFrom(TH1::Class())) return true;
    if (cl->InheritsFrom(TGraph::Class())) return true;
    if (cl->InheritsFrom(TCanvas::Class())) return true;
    if (cl->InheritsFrom(TProfile::Class())) return true;
+   return false;
+}
+
+
+
+bool dabc_root::RootSniffer::IsBrowsableClass(TClass* cl)
+{
+   if (cl==0) return false;
+
+   if (cl->InheritsFrom(TTree::Class())) return true;
+   if (cl->InheritsFrom(TBranch::Class())) return true;
+   if (cl->InheritsFrom(TLeaf::Class())) return true;
 
    return false;
 }
@@ -320,7 +344,7 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
 
       TClass* cl = TClass::GetClass(kind+5, kFALSE);
 
-      if (!IsSupportedClass(cl)) continue;
+      if (!IsDrawableClass(cl)) continue;
 
       if (!arr.FindObject(cl)) {
          arr.Add(cl);
@@ -569,7 +593,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 void dabc_root::RootSniffer::ProcessActionsInRootContext()
 {
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
-      DOUT0("Update ROOT structures");
+      DOUT3("Update ROOT structures");
       fRoot.Release();
       fRoot.Create("ROOT");
       // this is fake element, whic.h is need to be requested before first
@@ -581,7 +605,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       fLastUpdate.GetNow();
 
-      //DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
+      DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
 
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.Update(fRoot);
