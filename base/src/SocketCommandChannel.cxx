@@ -45,7 +45,13 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fRecvHdr(),
    fRecvBuf(0),
    fRecvBufSize(0),
-   fCurrentCmd()
+   fMainCmd(),
+   fExeCmd(),
+   fSendQueue(),
+   fRecvState(recvInit),
+   fRemoteObserver(false),
+   fRemReqTime(),
+   fRemoteHierarchy()
 {
    AssignAddon(addon);
 
@@ -53,16 +59,21 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
 
    // we are getting I/O in the constructor, means connection is established
    if (io!=0) {
+      fRecvState = recvHeader;
       io->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
-      fState = stWaitCmd;
    }
-
 }
 
 dabc::SocketCommandClient::~SocketCommandClient()
 {
    EnsureRecvBuffer(0);
 }
+
+void dabc::SocketCommandClient::OnThreadAssigned()
+{
+   ActivateTimeout(1.);
+}
+
 
 bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
 {
@@ -118,7 +129,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
          return dabc::cmd_false;
       }
 
-      fState = stWaitCmd;
+      fState = stWorking;
 
       SocketIOAddon* addon = new SocketIOAddon(fd);
       addon->SetDeliverEventsToWorker(true);
@@ -129,6 +140,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
 
       // DOUT0("Did addon assign numrefs:%u", NumReferences());
 
+      fRecvState = recvHeader;
       // start receiving of header immediately
       addon->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
 
@@ -160,7 +172,7 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 
       std::string diff = channel->fHierarchy.SaveToXml(false, lastversion + 1);
 
-      DOUT0("Produce hierarchy %u", channel->fHierarchy.GetVersion());
+//      DOUT0("Produce hierarchy %u  diff = %s", channel->fHierarchy.GetVersion(), diff.c_str());
 
       cmd.SetRawData(diff.c_str(), diff.length(), false, true);
 
@@ -169,8 +181,24 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
       return true;
    }
 
-   return false;
 
+   if (cmd.IsName("AcceptClient")) {
+      DOUT0("We allow to transform connection to the monitoring channel");
+      cmd.SetResult(cmd_true);
+
+      fRemoteObserver = true;
+      fRemReqTime.Reset();
+      fRemoteHierarchy.Create("Remote");
+
+      Command cmd("GetHierarchy");
+      Assign(cmd);
+      fCmds.Push(cmd);
+      FireEvent(evntActivate);
+
+      return true;
+   }
+
+   return false;
 }
 
 
@@ -195,55 +223,67 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
       }
    }
 
-   DOUT0("Worker: %s get command %s from remote", ItemName().c_str(), cmd.GetName());
+   DOUT0("Worker: %s get command %s from remote kind %u ", ItemName().c_str(), cmd.GetName(), (unsigned) fRecvHdr.data_kind);
 
-   if (IsClient()) {
+   switch (fRecvHdr.data_kind) {
 
-      if (fRecvHdr.data_kind == kindCancel) {
-         // this is situation when server was not able to process command in time
-         fCurrentCmd.Reply(cmd_timedout);
-
-      } else {
-         fCurrentCmd.AddValuesFrom(cmd);
-
-         if (!fCurrentCmd.null() && (fRecvHdr.data_rawsize>0)) {
-            fCurrentCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+      case kindCommand:
+         if (!fExeCmd.null()) {
+            CloseClient(true, "Command send without previous is completed");
+            break;
          }
 
-         fCurrentCmd.Reply(cmd.GetResult());
-      }
+         fExeCmd = cmd;
 
-      fState = stWaitCmd;
+         if (!fExeCmd.null() && (fRecvHdr.data_rawsize>0))
+            fExeCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
 
-   } else {
-      fState = stExecuting;
+         if (ExecuteCommandByItself(fExeCmd)) {
 
-      fCurrentCmd = cmd;
+            fExeCmd.RemoveReceiver();
 
-      if (!fCurrentCmd.null() && (fRecvHdr.data_rawsize>0)) {
-         fCurrentCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
-      }
+            SubmitCommandSend(fExeCmd, true);
+            fExeCmd.Release();
 
-      if (ExecuteCommandByItself(fCurrentCmd)) {
+         } else {
 
-         fCurrentCmd.RemoveReceiver();
+            double tmout = fRecvHdr.data_timeout * 0.001;
 
-         SendCurrentCommand();
+            if (tmout>0) fExeCmd.SetTimeout(tmout);
 
-      } else {
+            DOUT0("Submit command %s for execution", fExeCmd.GetName());
 
-         double tmout = fRecvHdr.data_timeout * 0.001;
+            dabc::mgr.Submit(Assign(cmd));
+         }
 
-         if (tmout>0) fCurrentCmd.SetTimeout(tmout);
+         break;
 
-         DOUT0("Submit command %s for execution", fCurrentCmd.GetName());
+      case kindReply:
+         if (fMainCmd.null()) {
+            CloseClient(true, "Command reply at wrong time");
+            return;
+         }
 
-         ActivateTimeout(tmout > 0. ? tmout + 0.1 : 10.);
+         fMainCmd.AddValuesFrom(cmd);
 
-         dabc::mgr.Submit(Assign(cmd));
-      }
+         if (!fMainCmd.null() && (fRecvHdr.data_rawsize>0))
+            fMainCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+
+         fMainCmd.Reply(cmd.GetResult());
+         break;
+
+      case kindCancel:
+         // this is reply from server that command is canceled
+         if (fMainCmd.null())
+            CloseClient(true, "Command cancel at wrong time");
+         else
+            fMainCmd.Reply(cmd_timedout);
+
+         break;
+
    }
 
+   fRecvState = recvHeader;
    // first of all, sumbit next recv header operation
    SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
    io->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
@@ -251,19 +291,34 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
 bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 {
+   if (cmd == fExeCmd) {
 
-   // DOUT0("Worker: %s get command %s reply curr %s iscurr %s", ItemName().c_str(), cmd.GetName(), fCurrentCmd.GetName(), DBOOL(cmd == fCurrentCmd));
+      SubmitCommandSend(fExeCmd, true);
+      fExeCmd.Release();
 
-   if (IsServer() && (cmd == fCurrentCmd)) {
+      return true;
+   }
 
-      if (fState != stExecuting) {
-         CloseClient(true, "Get reply not in execution state");
-         return false;
+   if (cmd.IsName("GetHierarchy")) {
+
+      if (!fRemoteObserver) {
+         EOUT("Get reply with hierarchy - why???");
+         return true;
       }
 
-      SendCurrentCommand();
+      fRemReqTime.GetNow();
 
-      // we will release command when operation completed while raw buffer may be used during transfer
+      if (cmd.GetRawDataSize() > 0) {
+         // DOUT0("Get raw data %p %u", cmd2.GetRawData(), cmd2.GetRawDataSize());
+
+         std::string diff;
+         diff.append((const char*)cmd.GetRawData(), cmd.GetRawDataSize());
+         //DOUT0("length %d diff = %s", diff.length(), diff.c_str());
+         if (fRemoteHierarchy.UpdateFromXml(diff)) {
+            //DOUT0("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
+            //DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
+         }
+      }
 
       return true;
    }
@@ -280,14 +335,14 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
          // DOUT0("Worker:%s complete sending!!!", GetName());
 
-         if (fState != stSending) {
+         if (fSendQueue.Size() == 0) {
             CloseClient(true, "get send complete at wrong state");
             return;
          }
 
-         fState = IsClient() ? stWaitReply : stWaitCmd;
+         fSendQueue.Pop().Release();
 
-         if (IsServer()) fCurrentCmd.Release();
+         PerformCommandSend();
 
          break;
 
@@ -295,13 +350,19 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
          // DOUT0("Recv something via socket!");
 
-         if (fState == stReceiving) {
+         if (fRecvState == recvInit) {
+            CloseClient(true, "Receive data in init state");
+            return;
+         }
+
+         if (fRecvState == recvData) {
+            fRecvState = recvInit;
             // here raw buffer is received and must be processed
             ProcessRecvPacket();
             return;
          }
 
-         if ((IsClient() && (fState == stWaitReply)) || (IsServer() && (fState == stWaitCmd))) {
+         if (fRecvState == recvHeader) {
             // received header
 
             if (fRecvHdr.dabc_header != headerDabc) {
@@ -310,6 +371,7 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
              }
 
             if (fRecvHdr.data_size == 0) {
+               fRecvState = recvInit;
                // when no additional data, process packet
                ProcessRecvPacket();
                return;
@@ -320,7 +382,7 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
                return;
             }
 
-            fState = stReceiving;
+            fRecvState = recvData;
             SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
             io->StartRecv(fRecvBuf, fRecvHdr.data_size);
 
@@ -340,22 +402,19 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
          break;
 
       case evntActivate:
-         if ((fState==stWaitCmd) && (fCmds.Size()>0)) {
+         if (fMainCmd.null() && (fCmds.Size()>0)) {
 
-            fCurrentCmd = fCmds.Pop();
-            double tmout = fCurrentCmd.TimeTillTimeout();
+            fMainCmd = fCmds.Pop();
+            double tmout = fMainCmd.TimeTillTimeout();
             if (tmout==0.) {
-               fCurrentCmd.Reply(cmd_timedout);
+               fMainCmd.Reply(cmd_timedout);
                FireEvent(evntActivate);
                break;
             }
 
-            DOUT4("Client sends current cmd %s tmout:%5.3f", fCurrentCmd.GetName(), tmout);
+            DOUT4("Client sends current cmd %s tmout:%5.3f", fMainCmd.GetName(), tmout);
 
-            SendCurrentCommand(tmout);
-
-            // activate timeout to await response
-            ActivateTimeout(tmout > 0 ? tmout + ExtraClientTimeout() : 10.);
+            SubmitCommandSend(fMainCmd, false, tmout);
          }
 
          break;
@@ -376,27 +435,44 @@ void dabc::SocketCommandClient::AppendCmd(Command cmd)
 
    fCmds.Push(cmd);
 
-   if (fCurrentCmd.null()) FireEvent(evntActivate);
+   if (fMainCmd.null()) FireEvent(evntActivate);
 }
 
-void dabc::SocketCommandClient::SendCurrentCommand(double send_tmout)
+void dabc::SocketCommandClient::SubmitCommandSend(dabc::Command cmd, bool asreply, double send_tmout)
 {
+   cmd.SetBool("##dabc_send_kind_reply##", asreply);
+   cmd.SetDouble("##dabc_send_tmout##", send_tmout);
+   fSendQueue.Push(cmd);
+
+   if (fSendQueue.Size()==1) PerformCommandSend();
+}
+
+void dabc::SocketCommandClient::PerformCommandSend()
+{
+   if (fSendQueue.Size()==0) return;
+   bool asreply = fSendQueue.Front().GetBool("##dabc_send_kind_reply##");
+   double send_tmout = fSendQueue.Front().GetDouble("##dabc_send_tmout##");
+
+   fSendQueue.Front().RemoveField("##dabc_send_kind_reply##");
+   fSendQueue.Front().RemoveField("##dabc_send_tmout##");
+
    fSendHdr.dabc_header = headerDabc;
-   fSendHdr.data_kind = IsClient() ? kindCommand : kindReply;
+   fSendHdr.data_kind = asreply ? kindReply : kindCommand;
    fSendHdr.data_timeout = send_tmout > 0 ? (unsigned) send_tmout*1000. : 0;
    fSendHdr.data_size = 0;
    fSendHdr.data_cmdsize = 0;
    fSendHdr.data_rawsize = 0;
 
    fSendBuf.clear();
-   if (!fCurrentCmd.null()) {
-      fSendBuf = fCurrentCmd.SaveToXml(true);
+
+   if (fSendQueue.Front().IsCanceled()) {
+      fSendHdr.data_kind = kindCancel;
+   } else {
+      fSendBuf = fSendQueue.Front().SaveToXml(true);
       fSendHdr.data_cmdsize = fSendBuf.length();
-      fSendHdr.data_rawsize = fCurrentCmd.GetRawDataSize();
+      fSendHdr.data_rawsize = fSendQueue.Front().GetRawDataSize();
       fSendHdr.data_size = fSendHdr.data_cmdsize + fSendHdr.data_rawsize;
    }
-
-   if (fSendBuf.length() == 0) fSendHdr.data_kind = kindCancel;
 
    SocketIOAddon* addon = dynamic_cast<SocketIOAddon*> (fAddon());
 
@@ -409,45 +485,47 @@ void dabc::SocketCommandClient::SendCurrentCommand(double send_tmout)
 
    if (!addon->StartSend(&fSendHdr, sizeof(fSendHdr),
                          fSendBuf.c_str(), fSendHdr.data_cmdsize,
-                         fCurrentCmd.GetRawData(), fSendHdr.data_rawsize)) {
+                         fSendQueue.Front().GetRawData(), fSendHdr.data_rawsize)) {
       CloseClient(true, "Fail to send data");
       return;
    }
 
    // DOUT0("Worker:%s numrefs:%d Send command buffer len %u via addon:%p \n %s", ItemName().c_str(), NumReferences(), fSendHdr.data_size, addon, fSendBuf.c_str());
-
-   fState = stSending;
 }
 
 
 double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 {
-   if (fCurrentCmd.null()) return -1.;
-
-   double tmout = fCurrentCmd.TimeTillTimeout();
-
-   // if no timeout was specified, repeat timeout not very often
-   if (tmout<0.) {
-      DOUT0("Command %s is executing too long", fCurrentCmd.GetName());
-      return 10.;
+   if (!fMainCmd.null()) {
+      double tmout = fMainCmd.TimeTillTimeout();
+      if (tmout==0.) {
+         fMainCmd.Reply(cmd_timedout);
+         CloseClient(true, "timeout and server is hanging");
+      }
    }
 
-   if (tmout>0.) return tmout + IsClient() ? ExtraClientTimeout() : ExtraServerTimeout();
+   if (!fExeCmd.null()) {
+      double tmout = fExeCmd.TimeTillTimeout();
 
-   // from this point command was timed out, one need to do something with it
-
-   if (IsServer()) {
-      EOUT("Cancel command %s !!!", fCurrentCmd.GetName());
-      fCurrentCmd.Cancel();
-      SendCurrentCommand();
-   } else {
-      fCurrentCmd.Reply(cmd_timedout);
-      CloseClient(true, "timeout and server is hanging");
+      if (tmout==0.) {
+         fExeCmd.Cancel();
+         SubmitCommandSend(fExeCmd, true);
+         fExeCmd.Release();
+      }
    }
 
-   return -1.;
+   if (!fRemReqTime.null() && fRemReqTime.Expired(2.)) {
+      fRemReqTime.Reset();
+
+      Command cmd("GetHierarchy");
+      cmd.SetInt("version", fRemoteHierarchy.GetVersion());
+      Assign(cmd);
+      fCmds.Push(cmd);
+      FireEvent(evntActivate);
+   }
+
+   return 1.;
 }
-
 
 // =======================================================================================
 
@@ -464,6 +542,8 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
    SetOwner(true);
 
    AssignAddon(connaddon);
+
+   fHierarchy.Create("Full");
 }
 
 dabc::SocketCommandChannel::~SocketCommandChannel()
@@ -611,3 +691,25 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
    return dabc::Worker::ExecuteCommand(cmd);
 }
+
+
+void dabc::SocketCommandChannel::BuildHierarchy(HierarchyContainer* cont)
+{
+   // do it here, while all properties of main node are ignored when hierarchy is build
+   dabc::Hierarchy top(cont);
+   top.Field(dabc::prop_binary_producer).SetStr(ItemName());
+
+   for (unsigned n=0;n<NumChilds();n++) {
+      WorkerRef w = GetChildRef(n);
+
+      SocketCommandClient* cl = dynamic_cast<SocketCommandClient*> (w.GetObject());
+      if ((cl==0) || !cl->fRemoteObserver) continue;
+
+      std::string name = dabc::format("Slave%u", n);
+
+      dabc::Hierarchy chld = top.CreateChild(name);
+
+      cl->fRemoteHierarchy()->BuildHierarchy(chld());
+   }
+}
+

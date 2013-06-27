@@ -296,7 +296,7 @@ namespace dabc {
 
       int SearchFor(const char* str)
       {
-         // Serach for specified string in the stream
+         // Search for specified string in the stream
          // return number of symbols before string was found, -1 if error
          int len = strlen(str);
 
@@ -335,7 +335,7 @@ namespace dabc {
             ok = ((symb>='a') && (symb<='z')) ||
                   ((symb>='A') && (symb<='Z')) ||
                   ((symb>='0') && (symb<='9')) ||
-                  (symb==':') || (symb=='_') || (symb=='-');
+                  (symb==':') || (symb=='_') || (symb=='-') || (symb=='.');
             if (!ok) return curr-fCurrent;
          } while (curr<fMaxAddr);
          return 0;

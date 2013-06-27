@@ -9,12 +9,22 @@ of the framework.
 2. Fix error in dabc.js, when object version number was kept in string form. In this
    case comparasion between versions was not working correctly. One should use
    explicit conversion to number like MyCall(Number(ver)).
-3. Change function which must be called from ROOT script. 
+3. Change functions name which must be called from ROOT script. 
    Now user should do from ROOT session:
      root [0] gSystem->Load("libDabcRoot")
      root [1] dabc_root::StartHttpServer(8095);
      root [2] .x $ROOTSYS/tutorials/hsimple.C
    Reduce debug output.   
+4. First try to connect ROOT analysis with DABC application, which has web server running.
+   With commands:
+     root [0] gSystem->Load("libDabcRoot")
+     root [1] dabc_root::ConnectMaster("localhost:4444");
+     root [2] .x $ROOTSYS/tutorials/hsimple.C
+   One create communication channel, which can be used from server side to browse
+   objects in the analysis. Theoretically, it should be transporent for the user
+   if objects exists in the same application as server or objects received from
+   such special channel from remote.
+
 
 26.06.2013
 1. Now is possible define master for any item in the hierarchy. Idea of master item is
