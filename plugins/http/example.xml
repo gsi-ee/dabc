@@ -4,7 +4,7 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
-      <lib value="libDabcRoot.so"/>
+      <!--lib value="libDabcRoot.so"/-->
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
@@ -13,6 +13,8 @@
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
+       <select value=""/>
+       <top value="${Context}"/>
     </HttpServer>
 
     <RootSniffer name="ROOT">

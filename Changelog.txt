@@ -6,7 +6,15 @@ of the framework.
 1. In http::Server add possibility to select part of objects hierarchy, displayed 
    in the browser. One also can specify how top folder is called. This allows in case
    of ROOT browser shows only ROOT-relevant structures with name "ROOT". 
-
+2. Fix error in dabc.js, when object version number was kept in string form. In this
+   case comparasion between versions was not working correctly. One should use
+   explicit conversion to number like MyCall(Number(ver)).
+3. Change function which must be called from ROOT script. 
+   Now user should do from ROOT session:
+     root [0] gSystem->Load("libDabcRoot")
+     root [1] dabc_root::StartHttpServer(8095);
+     root [2] .x $ROOTSYS/tutorials/hsimple.C
+   Reduce debug output.   
 
 26.06.2013
 1. Now is possible define master for any item in the hierarchy. Idea of master item is

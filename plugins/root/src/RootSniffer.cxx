@@ -137,7 +137,6 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
 
    // if timer not installed, emulate activity in ROOT by regular timeouts
-
 }
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
@@ -182,8 +181,6 @@ int dabc_root::RootSniffer::SimpleGetBinary(dabc::Command cmd)
          sbuf->MapObject(obj);
          obj->Streamer(*sbuf);
       }
-
-
    }
 
    if (sbuf!=0) {
@@ -453,7 +450,7 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
    mem->WriteStreamerInfo();
 
    TList* l = mem->GetStreamerInfoList();
-   l->Print("*");
+   //l->Print("*");
 
    TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
    // sbuf->SetParent(mem);
@@ -530,7 +527,7 @@ void dabc_root::RootSniffer::InstallSniffTimer()
       fMemFile->WriteStreamerInfo();
 
       l = fMemFile->GetStreamerInfoList();
-      l->Print("*");
+      // l->Print("*");
       fSinfoSize = l->GetSize();
       delete l;
 
@@ -554,7 +551,7 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfosMem()
 
    fMemFile->WriteStreamerInfo();
    TList* l = fMemFile->GetStreamerInfoList();
-   l->Print("*");
+   //l->Print("*");
 
    fSinfoSize = l->GetSize();
 
@@ -618,19 +615,18 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
          DOUT0("STREAM LIST Before %d After %d", l1->GetSize(), l2->GetSize());
 
-         DOUT0("=================== BEFORE ========================");
-         l1->Print("*");
-
-         DOUT0("=================== AFTER ========================");
-         l2->Print("*");
+         //DOUT0("=================== BEFORE ========================");
+         //l1->Print("*");
+         //DOUT0("=================== AFTER ========================");
+         //l2->Print("*");
 
          if (believe_not_changed && (l1->GetSize() != l2->GetSize())) {
-            EOUT("Changed when we were expecting no changes!!!!!!!!!");
+            EOUT("StreamerInfo changed when we were expecting no changes!!!!!!!!!");
             exit(444);
          }
 
          if (believe_not_changed && (l1->GetSize() == l2->GetSize())) {
-            DOUT0("+++++++++++++++++++++++++ NOT CHANGED AS WE EXPECTED ++++++++++++++++++++++++++++++ ");
+            DOUT0("++ STREAMER INFO NOT CHANGED AS EXPECTED +++ ");
          }
 
          fSinfoSize = l2->GetSize();

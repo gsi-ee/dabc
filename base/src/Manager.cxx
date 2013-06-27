@@ -1460,7 +1460,7 @@ void dabc::Manager::ProcessFactory(Factory* factory)
       return;
    }
 
-   printf("Manager is not exists when factory %s is created\n", factory->GetName());
+   // printf("Manager is not exists when factory %s is created\n", factory->GetName());
 
    if (fFirstFactoriesId == MagicInstanceId) {
       for (unsigned n=0;n<sizeof(fFirstFactories)/sizeof(void*); n++)
@@ -1469,7 +1469,7 @@ void dabc::Manager::ProcessFactory(Factory* factory)
             break;
          }
    } else {
-      printf("Init first factories arrary %u\n", (unsigned) (sizeof(fFirstFactories)/sizeof(void*)));
+      // printf("Init first factories arrary %u\n", (unsigned) (sizeof(fFirstFactories)/sizeof(void*)));
       fFirstFactoriesId = MagicInstanceId;
       fFirstFactories[0] = factory;
       for (unsigned n=1;n<sizeof(fFirstFactories)/sizeof(void*); n++) fFirstFactories[n] = 0;

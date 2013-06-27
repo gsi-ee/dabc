@@ -18,6 +18,7 @@
 #include "dabc/Command.h"
 #include "dabc/Url.h"
 #include "dabc/Manager.h"
+#include "dabc/Configuration.h"
 
 #include "dabc_root/RootSniffer.h"
 
@@ -62,3 +63,59 @@ dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const std::string& typ)
 
    return 0;
 }
+
+
+
+void dabc_root::StartHttpServer(int port)
+{
+   if (!dabc::mgr.null()) return;
+
+   static dabc::Configuration dabc_root_cfg;
+
+   new dabc::Manager("dabc", &dabc_root_cfg);
+
+   dabc::mgr.SyncWorker();
+
+   DOUT2("Create manager");
+
+   // dabc::mgr.Execute("InitFactories");
+
+   dabc::mgr.CreateThread("MainThread");
+
+
+   dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+   cmd2.SetBool("enabled", true);
+   cmd2.SetBool("batch", false);
+
+   if (!dabc::mgr.Execute(cmd2)) return;
+
+   dabc::WorkerRef w2 = cmd2.GetRef("Object");
+
+   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (w2());
+   if (sniff) sniff->InstallSniffTimer();
+
+   w2.MakeThreadForWorker("MainThread");
+
+   DOUT2("Create root sniffer");
+
+
+   dabc::CmdCreateObject cmd1("http::Server","/http");
+   cmd1.SetBool("enabled", true);
+   cmd1.SetInt("port", port);
+   cmd1.SetStr("top", "ROOT");
+   cmd1.SetStr("select", "ROOT");
+
+   if (!dabc::mgr.Execute(cmd1)) return;
+
+   dabc::WorkerRef w1 = cmd1.GetRef("Object");
+   w1.MakeThreadForWorker("MainThread");
+
+   DOUT2("Create http server");
+}
+
+void dabc_root::ConnectMaster(const char* master_url)
+{
+
+}
+
+

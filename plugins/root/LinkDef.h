@@ -6,9 +6,11 @@
 
 #pragma link C++ nestedclasses;
 
-#pragma link C++ class TestServer+;
-
 #pragma link C++ namespace dabc_root;
-#pragma link C++ class dabc_root::HttpServer+;
+
+#pragma link C++ class dabc_root::Test+;
+
+#pragma link C++ function dabc_root::StartHttpServer;
+#pragma link C++ function dabc_root::ConnectMaster;
 
 #endif

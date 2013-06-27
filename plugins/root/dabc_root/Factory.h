@@ -33,6 +33,21 @@ namespace dabc_root {
          virtual dabc::DataOutput* CreateDataOutput(const std::string&);
    };
 
+
+   /** This is dummy class, required that rootmap file is not empty and
+    * ROOT knows which extra library should be load */
+   class Test {
+       Test() {}
+       ~Test() {}
+   };
+
+
+   /** Method need to start HTTP server in ROOT session */
+   void StartHttpServer(int port = 8080);
+
+   /** Method need to connect to master application,
+    * which is normally HTTP server for many client processes */
+   void ConnectMaster(const char* master_url);
 }
 
 #endif
