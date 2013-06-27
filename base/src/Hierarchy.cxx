@@ -81,7 +81,7 @@ bool dabc::HierarchyContainer::SetField(const std::string& name, const char* val
    return dabc::RecordContainer::SetField(name, value, kind);
 }
 
-dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, uint64_t version)
+dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, uint64_t version, bool withversion)
 {
    XMLNodePointer_t objnode = SaveInXmlNode(parentnode, WasNodeModifiedAfter(version));
 
@@ -91,11 +91,12 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
 
    unsigned mask = ModifiedMask(version);
    if (mask!=maskDefaultValue) Xml::NewAttr(objnode, 0, "dabc:mask", dabc::format("%u", mask).c_str());
+   if (withversion) Xml::NewAttr(objnode, 0, "v", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
    if (WasHierarchyModifiedAfter(version))
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child) child->SaveHierarchyInXmlNode(objnode, version);
+         if (child) child->SaveHierarchyInXmlNode(objnode, version, withversion);
       }
 
    return objnode;
@@ -111,6 +112,18 @@ void dabc::HierarchyContainer::SetVersion(uint64_t version, bool recursive, bool
          if (child) child->SetVersion(version, recursive, force);
       }
 }
+
+void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recursive)
+{
+   if (node) fNodeChanged = true;
+   if (hierarchy) fHierarchyChanged = true;
+   if (recursive)
+      for (unsigned n=0;n<NumChilds();n++) {
+         dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
+         if (child) child->SetModified(node, hierarchy, recursive);
+      }
+}
+
 
 bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 {
@@ -161,6 +174,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
          // if child did not found, just take it out form source container and place at proper position
 
          cont->RemoveChild(cont_child());
+
+         cont_child()->SetModified(true, true, true);
 
          AddChildAt(cont_child(), cnt2);
 
@@ -414,7 +429,14 @@ std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 {
    Iterator iter2(Ref());
 
-   XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, version);
+   bool withversion = false;
+
+   if (version == (uint64_t)-1) {
+      withversion = true;
+      version = 0;
+   }
+
+   XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, version, withversion);
 
    Xml::NewAttr(topnode, 0, "dabc:version", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 

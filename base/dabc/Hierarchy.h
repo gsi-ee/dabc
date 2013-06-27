@@ -103,12 +103,15 @@ namespace dabc {
           * \returns true when something was changed */
          bool UpdateHierarchyFrom(HierarchyContainer* cont);
 
+         /** Switch on node or hierarchy modified flags */
+         void SetModified(bool node, bool hierarchy, bool recursive = false);
+
       public:
          HierarchyContainer(const std::string& name);
 
          virtual const char* ClassName() const { return "Hierarchy"; }
 
-         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, uint64_t version = 0);
+         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, uint64_t version = 0, bool withversion = false);
 
          bool UpdateHierarchyFromXmlNode(XMLNodePointer_t objnode);
 

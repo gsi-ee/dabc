@@ -24,7 +24,10 @@ of the framework.
    objects in the analysis. Theoretically, it should be transporent for the user
    if objects exists in the same application as server or objects received from
    such special channel from remote.
-
+5. Fix error in version control of hierarchy. Now one really see in browser
+   all objects from slave process. Last small step - provide getbinary request
+   to remote node.
+    
 
 26.06.2013
 1. Now is possible define master for any item in the hierarchy. Idea of master item is
