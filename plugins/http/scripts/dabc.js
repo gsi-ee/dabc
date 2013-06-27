@@ -10,8 +10,8 @@ DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
-   this.frameid = 0;    // id of top frame, where item is drawn
-   this.version = 0;    // check which version of element is drawn
+   this.frameid = new Number(0);    // id of top frame, where item is drawn
+   this.version = new Number(0);    // check which version of element is drawn
    return this;
 }
 
@@ -408,12 +408,12 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // if we got same version, do nothing - we are happy!!!
    if ((ver > 0) && (this.version == ver)) {
       this.state = this.StateEnum.stReady;
-      $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
+      // $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 
    
-//   $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
+   // $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + ver);
 
    if (!this.sinfo) {
       
@@ -524,7 +524,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 // ============= start of DABC.Manager =============== 
 
 DABC.Manager = function() {
-   this.cnt = 0;            // counter to create new element 
+   this.cnt = new Number(0);            // counter to create new element 
    this.arr = new Array();  // array of DrawElement
 
    DABC.dabc_tree = new dTree('DABC.dabc_tree');
@@ -597,15 +597,13 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                if (!ver) {
                   ver = -1;
                   $("#report").append("<br> Response version not specified");
-               } else
-                  ver = new Number(ver);
+               } 
                
                var mver = this.getResponseHeader("Master-Version");
-               if (mver) mver = new Number(mver);
                
                // $("#report").append("<br> IE response ver = " + ver);
 
-               this.dabc_item.RequestCallback(filecontent, ver, mver);
+               this.dabc_item.RequestCallback(filecontent, Number(ver), Number(mver));
                delete filecontent;
                filecontent = null;
             } else {
@@ -657,13 +655,11 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                if (!ver) {
                   ver = -1;
                   $("#report").append("<br> Response version not specified");
-               } else
-                  ver = new Number(ver);
+               } 
                
                var mver = this.getResponseHeader("Master-Version");
-               if (mver) mver = new Number(mver);
 
-               this.dabc_item.RequestCallback(filecontent, ver, mver);
+               this.dabc_item.RequestCallback(filecontent, Number(ver), Number(mver));
 
                delete filecontent;
                filecontent = null;
