@@ -29,17 +29,6 @@ void dabc_root::HttpServer::Start(int port)
 
    dabc::mgr.CreateThread("MainThread");
 
-   dabc::CmdCreateObject cmd1("http::Server","/http");
-   cmd1.SetBool("enabled", true);
-   cmd1.SetInt("port", port);
-
-   if (!dabc::mgr.Execute(cmd1)) return;
-
-   dabc::WorkerRef w1 = cmd1.GetRef("Object");
-   w1.MakeThreadForWorker("MainThread");
-
-   DOUT0("Create http server");
-
 
    dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
    cmd2.SetBool("enabled", true);
@@ -49,13 +38,28 @@ void dabc_root::HttpServer::Start(int port)
 
    dabc::WorkerRef w2 = cmd2.GetRef("Object");
 
-
    dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (w2());
    if (sniff) sniff->InstallSniffTimer();
 
    w2.MakeThreadForWorker("MainThread");
 
    DOUT0("Create root sniffer");
+
+
+   dabc::CmdCreateObject cmd1("http::Server","/http");
+   cmd1.SetBool("enabled", true);
+   cmd1.SetInt("port", port);
+   cmd1.SetStr("top", "ROOT");
+   cmd1.SetStr("select", "ROOT");
+
+   if (!dabc::mgr.Execute(cmd1)) return;
+
+   dabc::WorkerRef w1 = cmd1.GetRef("Object");
+   w1.MakeThreadForWorker("MainThread");
+
+   DOUT0("Create http server");
+
+
 
 
 }

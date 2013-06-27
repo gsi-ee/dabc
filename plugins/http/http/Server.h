@@ -55,8 +55,10 @@ namespace http {
       typedef std::map<std::string, FileBuf> FilesMap;
 
       protected:
-         int fHttpPort;
-         bool fEnabled;
+         bool fEnabled;           ///< is server enabled
+         int fHttpPort;           ///< port number for HTTP server
+         std::string fTopName;    ///< name of top folder, which is appeared in browser
+         std::string fSelPath;    ///< selected path in dabc::Manager structures
 
          /** \brief Complete description of node(s) hierarchy
           *  \details Can be updated independently from user requests  */

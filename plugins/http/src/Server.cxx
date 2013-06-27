@@ -44,8 +44,10 @@ static const char* open_file_handler(const struct mg_connection* conn,
 
 http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
-   fHttpPort(0),
    fEnabled(false),
+   fHttpPort(0),
+   fTopName("localhost"),
+   fSelPath(""),
    fHierarchy(),
    fHierarchyMutex(),
    fCtx(0),
@@ -61,6 +63,9 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    if (fHttpPort<=0) fEnabled = false;
 
    if (!fEnabled) return;
+
+   fTopName = Cfg("top", cmd).AsStdStr(fTopName);
+   fSelPath = Cfg("select", cmd).AsStdStr(fSelPath);
 
    fHttpSys = ".";
 }
@@ -97,7 +102,7 @@ void http::Server::OnThreadAssigned()
 
    fHierarchy.Create("Full");
 
-   fHierarchy.CreateChild("localhost");
+   fHierarchy.CreateChild(fTopName);
 
    ActivateTimeout(0);
 }
@@ -106,14 +111,18 @@ double http::Server::ProcessTimeout(double last_diff)
 {
    // dabc::LockGuard lock(fHierarchyMutex);
 
-   dabc::Hierarchy local = fHierarchy.FindChild("localhost");
+   dabc::Hierarchy local = fHierarchy.FindChild(fTopName.c_str());
 
    if (local.null()) {
-      EOUT("Did not find localhost in hierarchy");
+      EOUT("Did not find name %s in hierarchy", fTopName.c_str());
    } else {
       // TODO: make via XML file like as for remote node!!
 
-      local.UpdateHierarchy(dabc::mgr);
+      dabc::Reference main = dabc::mgr;
+      if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
+      if (main.null()) main = dabc::mgr;
+
+      local.UpdateHierarchy(main);
    }
 
    return 1.;
