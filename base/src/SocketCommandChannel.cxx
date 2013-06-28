@@ -53,8 +53,9 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fRemoteObserver(false),
    fRemReqTime(),
    fRemoteHierarchy(),
-   fRemoteName("Slave"),
-   fMasterConn(false)
+   fRemoteName(),
+   fMasterConn(false),
+   fClientNameSufix()
 {
    AssignAddon(addon);
 
@@ -161,6 +162,13 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
 
       if (fMasterConn) {
          dabc::Command cmd("AcceptClient");
+         std::string myname = dabc::SocketThread::DefineHostName();
+         if (myname.empty()) myname = "Client";
+         if (!fClientNameSufix.empty())
+            myname+="_"+fClientNameSufix;
+
+         cmd.SetStr("name", myname);
+
          AppendCmd(cmd);
       }
 
@@ -188,8 +196,6 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
          return false;
       }
 
-      channel->fHierarchy.UpdateHierarchy(dabc::mgr);
-
       std::string diff = channel->fHierarchy.SaveToXml(true, lastversion + 1);
 
       //DOUT0("Produce hierarchy %u  diff = %s", channel->fHierarchy.GetVersion(), diff.c_str());
@@ -210,6 +216,8 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 
       fRemoteObserver = true;
       fRemReqTime.Reset();
+      std::string name = cmd.GetStdStr("name");
+      if (!name.empty()) fRemoteName = name;
       fRemoteHierarchy.Create("Remote");
 
       Command cmd("GetHierarchy");
@@ -245,7 +253,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
       }
    }
 
-   DOUT0("Worker: %s get command %s from remote kind %u ", ItemName().c_str(), cmd.GetName(), (unsigned) fRecvHdr.data_kind);
+   // DOUT0("Worker: %s get command %s from remote kind %u ", ItemName().c_str(), cmd.GetName(), (unsigned) fRecvHdr.data_kind);
 
    switch (fRecvHdr.data_kind) {
 
@@ -277,21 +285,21 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
             if (channel!=0) {
                std::string itemname = fExeCmd.GetStdStr("Item");
 
-               DOUT0("GetBinary command from master for item %s - we need specially process it", itemname.c_str());
+               // DOUT0("GetBinary command from master for item %s - we need specially process it", itemname.c_str());
 
                dabc::Hierarchy item = channel->fHierarchy.FindChild(itemname.c_str());
 
                std::string request_name;
                std::string producer_name = item.FindBinaryProducer(request_name);
 
-               DOUT0("GetBinary command PRODUCER %s - REQUEST %s", producer_name.c_str(), request_name.c_str());
+               // DOUT0("GetBinary command PRODUCER %s - REQUEST %s", producer_name.c_str(), request_name.c_str());
 
                fExeCmd.SetStr("Item", request_name);
                fExeCmd.SetReceiver(producer_name);
 
                double tmout = fRecvHdr.data_timeout * 0.001;
                if (tmout>0) fExeCmd.SetTimeout(tmout);
-               DOUT0("GetBinary TIMEOUT %f", tmout);
+               // DOUT0("GetBinary TIMEOUT %f", tmout);
 
                //dabc::WorkerRef wrk = dabc::mgr.FindItem(producer_name);
                //DOUT0("GetBinary WORKER %s cmd %s", wrk.GetName(), cmd.GetName());
@@ -355,7 +363,7 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
       if (fExeCmd.IsName("GetBinary")) {
          // TODO: bindata, binary command data and dabc::Buffer should be done with same logic
 
-         DOUT0("!!!!!! REPACK BINARY DATA!!!!!!");
+         // DOUT0("!!!!!! REPACK BINARY DATA!!!!!!");
 
          fLastBinData = cmd.GetRef("#BinData");
 
@@ -388,7 +396,7 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
          diff.append((const char*)cmd.GetRawData(), cmd.GetRawDataSize());
          //DOUT0("length %d diff = %s", diff.length(), diff.c_str());
          if (fRemoteHierarchy.UpdateFromXml(diff)) {
-            DOUT0("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
+            DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
             // DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
          }
       }
@@ -459,7 +467,7 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
             SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
             io->StartRecv(fRecvBuf, fRecvHdr.data_size);
 
-            DOUT0("Start command recv data_size %u", fRecvHdr.data_size);
+            // DOUT0("Start command recv data_size %u", fRecvHdr.data_size);
          }
 
          break;
@@ -548,7 +556,7 @@ void dabc::SocketCommandClient::PerformCommandSend()
       return;
    }
 
-   DOUT0("Start command send fullsize:%u cmd:%u raw:%u", fSendHdr.data_size, fSendHdr.data_cmdsize, fSendHdr.data_rawsize);
+   // DOUT0("Start command send fullsize:%u cmd:%u raw:%u", fSendHdr.data_size, fSendHdr.data_cmdsize, fSendHdr.data_rawsize);
 
    if (!addon->StartSend(&fSendHdr, sizeof(fSendHdr),
                          fSendBuf.c_str(), fSendHdr.data_cmdsize,
@@ -569,7 +577,7 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 
       SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(fRemoteHostName);
 
-      DOUT0("Create client %p to host %s", client, fRemoteHostName.c_str());
+      // DOUT0("Create client %p to host %s", client, fRemoteHostName.c_str());
 
       if (client!=0) {
          client->SetRetryOpt(2000000000, fReconnectPeriod);
@@ -617,11 +625,13 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 
 
 
-dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon) :
+dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd) :
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
    fClientCnt(0),
-   fHierarchy()
+   fHierarchy(),
+   fUpdateHierarchy(connaddon!=0),
+   fSelPath()
 {
    fNodeId = dabc::mgr()->cfg()->MgrNodeId();
 
@@ -629,12 +639,20 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
 
    AssignAddon(connaddon);
 
+   fSelPath = Cfg("select", cmd).AsStdStr();
+
    fHierarchy.Create("Full");
 }
 
 dabc::SocketCommandChannel::~SocketCommandChannel()
 {
 }
+
+void dabc::SocketCommandChannel::OnThreadAssigned()
+{
+   if (fUpdateHierarchy) ActivateTimeout(0.);
+}
+
 
 std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str, int* nodeid)
 {
@@ -742,7 +760,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       SocketIOAddon* io = new SocketIOAddon(fd);
       io->SetDeliverEventsToWorker(true);
 
-      DOUT0("SocketCommand - create server side fd:%d worker:%s", fd, worker_name.c_str());
+      // DOUT0("SocketCommand - create server side fd:%d worker:%s", fd, worker_name.c_str());
 
       worker = new SocketCommandClient(this, worker_name, io);
 
@@ -785,7 +803,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       std::string remname = itemname.substr(0, pos);
 
-      DOUT0("Binary is requested %s", itemname.c_str());
+      // DOUT0("Binary is requested %s", itemname.c_str());
 
       SocketCommandClientRef wrk;
 
@@ -799,7 +817,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       itemname.erase(0, pos);
 
-      DOUT0("Remote %s binary is requested %s", remname.c_str(), itemname.c_str());
+      // DOUT0("Remote %s binary is requested %s", remname.c_str(), itemname.c_str());
 
       cmd.SetStr("Item", itemname);
 
@@ -813,13 +831,17 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       dabc::SocketCommandClientRef worker = ProvideWorker(remnode, 3.);
 
-      DOUT0("Start worker %s to connect with master %s", worker.GetName(), remnode.c_str());
+      // DOUT0("Start worker %s to connect with master %s", worker.GetName(), remnode.c_str());
 
       if (worker.null()) return dabc::cmd_true;
 
       // indicate that this is special connection to master node
       // each time it is reconnected, it will append special command to register itself in remote master
       worker()->fMasterConn = true;
+      worker()->fClientNameSufix = cmd.GetStdStr("NameSufix");
+
+      fUpdateHierarchy = true;
+      ActivateTimeout(0.);
 
       return dabc::cmd_true;
    }
@@ -839,9 +861,36 @@ void dabc::SocketCommandChannel::BuildHierarchy(HierarchyContainer* cont)
 
       if (w.null() || !w()->fRemoteObserver) continue;
 
-      dabc::Hierarchy chld = top.CreateChild(w()->fRemoteName);
+      if (w()->fRemoteName.empty()) w()->fRemoteName = "Slave";
+
+      dabc::Hierarchy chld;
+      int cnt(0);
+      std::string name;
+
+      do {
+         name = w()->fRemoteName;
+         if (cnt>0) name+=dabc::format("_%d", cnt);
+         chld = top.FindChild(name.c_str());
+         cnt++;
+      } while (!chld.null());
+
+      w()->fRemoteName = name;
+      chld = top.CreateChild(name);
 
       w()->fRemoteHierarchy()->BuildHierarchy(chld());
    }
+}
+
+double dabc::SocketCommandChannel::ProcessTimeout(double last_diff)
+{
+   if (!fUpdateHierarchy) return -1;
+
+   dabc::Reference main = dabc::mgr;
+   if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
+   if (main.null()) main = dabc::mgr;
+
+   fHierarchy.UpdateHierarchy(main);
+
+   return 2.;
 }
 

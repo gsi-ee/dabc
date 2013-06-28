@@ -475,8 +475,10 @@ namespace dabc {
          /** Return name of node */
          std::string GetNodeName(int nodeid);
 
-         /** \brief Create command channel */
-         bool CreateControl(bool withserver);
+         /** \brief Create command channel
+          * Parameter withserver defines if server socket will be created, which accepts client connections
+          * Parameter toppath specifies which part of objects hierarchy will be seen by the clients */
+         bool CreateControl(bool withserver, const std::string& toppath = "");
 
 
          /** Returns true if node with specified id is active */

@@ -726,7 +726,7 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
    }
 }
 
-bool dabc::Manager::CreateControl(bool withserver)
+bool dabc::Manager::CreateControl(bool withserver, const std::string& toppath)
 {
    WorkerRef ref = GetCommandChannel();
    if (!ref.null()) return true;
@@ -735,6 +735,8 @@ bool dabc::Manager::CreateControl(bool withserver)
    cmd.SetBool("WithServer", withserver);
    if (withserver && cfg())
       cmd.SetInt("ServerPort", cfg()->MgrPort());
+   cmd.SetStr("select", toppath);
+
 
    ref = DoCreateObject("SocketCommandChannel", CmdChlName(), cmd);
 
@@ -1706,7 +1708,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
             diff.append((const char*)cmd2.GetRawData(), cmd2.GetRawDataSize());
             // DOUT0("diff = %s", diff.c_str());
             if (rem_hierarchy.UpdateFromXml(diff)) {
-               DOUT0("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
+               DOUT2("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
             }
          }
 

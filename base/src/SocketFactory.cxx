@@ -45,7 +45,7 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          addon->SetDeliverEventsToWorker(true);
       }
 
-      return new SocketCommandChannel(objname, addon);
+      return new SocketCommandChannel(objname, addon, cmd);
    }
 
    return 0;

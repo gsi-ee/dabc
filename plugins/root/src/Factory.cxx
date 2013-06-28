@@ -102,7 +102,7 @@ bool dabc_root::StartHttpServer(int port)
    dabc::CmdCreateObject cmd1("http::Server","/http");
    cmd1.SetBool("enabled", true);
    cmd1.SetInt("port", port);
-   cmd1.SetStr("top", "ROOT");
+   cmd1.SetStr("topname", "ROOT");
    cmd1.SetStr("select", "ROOT");
 
    if (!dabc::mgr.Execute(cmd1)) return false;
@@ -150,7 +150,8 @@ bool dabc_root::ConnectMaster(const char* master_url)
 
    DOUT0("Create root sniffer done");
 
-   if (!dabc::mgr()->CreateControl(false)) {
+   // we selecting ROOT sniffer as the only objects, seen from the server
+   if (!dabc::mgr()->CreateControl(false, "ROOT")) {
       DOUT0("Cannot create control instance");
       return false;
    }
@@ -162,6 +163,7 @@ bool dabc_root::ConnectMaster(const char* master_url)
 
    dabc::Command cmd("ConfigureMaster");
    cmd.SetStr("Master", master);
+   cmd.SetStr("NameSufix", "ROOT");
    if (dabc::mgr.GetCommandChannel().Execute(cmd) != dabc::cmd_true) {
       DOUT0("FAIL to activate connection to master %s", master.c_str());
       return false;

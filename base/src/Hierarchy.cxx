@@ -494,7 +494,7 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
       res = false;
       EOUT("Not found topnode version");
    } else {
-      DOUT0("Hierarchy version is %lu", version);
+      DOUT3("Hierarchy version is %lu", version);
       Xml::FreeAttr(topnode, "dabc:version");
    }
 

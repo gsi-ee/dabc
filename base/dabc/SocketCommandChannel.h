@@ -127,6 +127,7 @@ namespace dabc {
          // indicate that this is special connection to master node
          // each time it is reconnected, it will append special command to register itself in remote master
          bool               fMasterConn;
+         std::string        fClientNameSufix;  ///< name suffix, which will be append to name seen on the server side
 
          virtual void OnThreadAssigned();
 
@@ -188,6 +189,8 @@ namespace dabc {
          int             fNodeId;        ///<  current node id
          int             fClientCnt;     ///<  counter for new clients
          Hierarchy       fHierarchy;     ///<  current hierarchy as seen by the channel
+         bool            fUpdateHierarchy; ///< if true, channel will update internal hierarchy regularly
+         std::string     fSelPath;       ///<  selected path, shown in hierarchy
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);
@@ -200,8 +203,13 @@ namespace dabc {
 
          SocketCommandClientRef ProvideWorker(const std::string& remnodename, double conn_tmout);
 
+         virtual void OnThreadAssigned();
+
+         /** timeout used in channel to update node hierarchy, which than can be requested from remote */
+         virtual double ProcessTimeout(double last_diff);
+
       public:
-         SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon);
+         SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd);
          virtual ~SocketCommandChannel();
 
          /** \brief As name said, command channel requires socket thread for the work */

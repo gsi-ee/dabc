@@ -46,8 +46,11 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fHttpPort(0),
-   fTopName("localhost"),
+   fServerFolder("localhost"),
+   fTop2Name(),
    fSelPath(""),
+   fClientsFolder("Clients"),
+   fShowClients(false),
    fHierarchy(),
    fHierarchyMutex(),
    fCtx(0),
@@ -64,8 +67,10 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
 
    if (!fEnabled) return;
 
-   fTopName = Cfg("top", cmd).AsStdStr(fTopName);
+   fServerFolder = Cfg("topname", cmd).AsStdStr(fServerFolder);
    fSelPath = Cfg("select", cmd).AsStdStr(fSelPath);
+   fShowClients = Cfg("clients", cmd).AsBool(fShowClients);
+
 
    fHttpSys = ".";
 }
@@ -102,7 +107,26 @@ void http::Server::OnThreadAssigned()
 
    fHierarchy.Create("Full");
 
-   fHierarchy.CreateChild(fTopName);
+   if (fSelPath.empty() && fShowClients) fShowClients = false;
+
+   if (!fShowClients) {
+      fClientsFolder = "";
+      if (fServerFolder.empty()) fServerFolder = "localhost";
+   } else {
+      if (fSelPath.empty()) fSelPath = "---";
+      if (!fServerFolder.empty()) {
+         fTop2Name = fServerFolder;
+         fServerFolder = "Server";
+      }
+   }
+
+   if (!fServerFolder.empty()) {
+      dabc::Hierarchy h = fHierarchy.CreateChild(fServerFolder);
+      if (!fTop2Name.empty()) h.CreateChild(fTop2Name.c_str());
+   }
+
+   if (!fClientsFolder.empty())
+      fHierarchy.CreateChild(fClientsFolder);
 
    ActivateTimeout(0);
 }
@@ -111,18 +135,25 @@ double http::Server::ProcessTimeout(double last_diff)
 {
    // dabc::LockGuard lock(fHierarchyMutex);
 
-   dabc::Hierarchy local = fHierarchy.FindChild(fTopName.c_str());
+   dabc::Hierarchy top;
+   dabc::Reference main;
 
-   if (local.null()) {
-      EOUT("Did not find name %s in hierarchy", fTopName.c_str());
-   } else {
-      // TODO: make via XML file like as for remote node!!
+   if (!fServerFolder.empty()) {
+      top = fHierarchy.FindChild(fServerFolder.c_str());
 
-      dabc::Reference main = dabc::mgr;
+      main = dabc::mgr;
       if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
-      if (main.null()) main = dabc::mgr;
 
-      local.UpdateHierarchy(main);
+      if (!fTop2Name.empty()) top = top.FindChild(fTop2Name.c_str());
+
+      if (!main.null() && !top.null()) top.UpdateHierarchy(main);
+   }
+
+   // we build extra slaves when they not shown in main structure anyway
+   if (fShowClients && (main!=dabc::mgr) && !fClientsFolder.empty()) {
+      dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
+      top = fHierarchy.FindChild(fClientsFolder.c_str());
+      if (!chl.null() && !top.null()) top.UpdateHierarchy(chl);
    }
 
    return 1.;
@@ -407,7 +438,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          bindata = item()->bindata();
       }
 
-      DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
+      // DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
       // user can always force new buffer if he provide too big qyery version number
@@ -495,7 +526,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          void* ptr = cmd.GetRawData(&owner);
          bindata = new dabc::BinDataContainer(ptr, len, owner, cmd.GetUInt("RawDataVersion"));
 
-         DOUT0("REPACK BINARY REQUEST len %u", len);
+         // DOUT0("REPACK BINARY REQUEST len %u", len);
       }
 
       dabc::LockGuard lock(fHierarchyMutex);

@@ -13,8 +13,9 @@
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
-       <select value=""/>
-       <top value="${Context}"/>
+       <topname value="${Context}"/>
+       <select value="App"/>
+       <clients value="true"/>
     </HttpServer>
 
     <RootSniffer name="ROOT">
