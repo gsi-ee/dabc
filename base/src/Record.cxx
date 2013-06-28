@@ -423,7 +423,7 @@ void dabc::Record::AddFieldsFrom(const Record& src, bool can_owerwrite)
 
 std::string dabc::Record::SaveToXml(bool compact)
 {
-   XMLNodePointer_t node = GetObject()->SaveInXmlNode(0, true);
+   XMLNodePointer_t node = GetObject() ? GetObject()->SaveInXmlNode(0, true) : 0;
 
    std::string res;
 

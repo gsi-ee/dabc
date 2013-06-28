@@ -450,12 +450,13 @@ void dabc::Command::ClearRawData()
    cont->ClearRawData();
 }
 
-void* dabc::Command::GetRawData()
+void* dabc::Command::GetRawData(bool* ownership)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
    if (cont==0) return 0;
 
    LockGuard lock(ObjectMutex());
+   if (ownership) { *ownership = cont->fRawDataOwner; cont->fRawDataOwner = false; }
    return cont->fRawData;
 }
 

@@ -199,6 +199,8 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
+      DOUT0("COMMAND GETBINARY RECEIVED BY dabc_root::RootSniffer");
+
       // keep simple case for testing
       if (fTimer==0) return SimpleGetBinary(cmd);
 

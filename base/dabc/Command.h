@@ -170,8 +170,9 @@ namespace dabc {
          /** \brief Clear raw-data pointer, release memory if required */
          void ClearRawData();
 
-         /** \brief Returns pointer on raw data */
-         void* GetRawData();
+         /** \brief Returns pointer on raw data
+          * If ownership pointer specified, ownership (if any) will be transfered to the caller*/
+         void* GetRawData(bool* ownership = 0);
 
          /** \brief Returns size of raw data */
          unsigned GetRawDataSize();

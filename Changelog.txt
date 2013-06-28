@@ -1,6 +1,15 @@
 This is log of changes in the dabc project, which is started in winter 2013. 
-In some cases it is best place to find documentation about current functionality 
+In some cases it is the best place to find documentation about current functionality 
 of the framework.
+
+28.06.2013
+1. Implement automatic reconnect of command channel when server disappears. 
+2. Objects request via command channel works! It means, one could access data
+   from running ROOT analysis, which automatically connects to http server and
+   provides its hierarchy and objects via such connection. One could have many 
+   such connection in the http server. This if first, but most important step to
+   control many-node application (ROOT, Go4, DABC) via single http server!   
+
 
 27.06.2013
 1. In http::Server add possibility to select part of objects hierarchy, displayed 
@@ -25,8 +34,8 @@ of the framework.
    if objects exists in the same application as server or objects received from
    such special channel from remote.
 5. Fix error in version control of hierarchy. Now one really see in browser
-   all objects from slave process. Last small step - provide getbinary request
-   to remote node.
+   all objects from slave process. Last small step remains - 
+   provide getbinary request to remote node.
     
 
 26.06.2013

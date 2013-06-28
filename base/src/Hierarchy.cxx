@@ -30,12 +30,12 @@ const char* dabc::prop_binary_producer = "binary_producer";
 const char* dabc::prop_content_hash = "hash";
 
 
-dabc::BinDataContainer::BinDataContainer(void* data, unsigned len, bool owner) :
+dabc::BinDataContainer::BinDataContainer(void* data, unsigned len, bool owner, uint64_t v) :
    Object(0, "bindata", flAutoDestroy),
    fData(data),
    fLength(len),
    fOwner(owner),
-   fVersion(0)
+   fVersion(v)
 {
 }
 
@@ -539,4 +539,21 @@ std::string dabc::Hierarchy::SaveToJSON(bool compact, bool excludetop)
    res.append(compact ? "]" : "\n]\n");
 
    return res;
+}
+
+std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
+{
+   dabc::Hierarchy parent = *this;
+   std::string producer_name;
+
+   // we need to find parent on the most-top position with binary_producer property
+   while (!parent.null()) {
+      if (parent.HasField(dabc::prop_binary_producer)) {
+         producer_name = parent.Field(dabc::prop_binary_producer).AsStdStr();
+         request_name = RelativeName(parent);
+      }
+      parent = (dabc::HierarchyContainer*) parent.GetParent();
+   }
+
+   return producer_name;
 }

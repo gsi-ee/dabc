@@ -241,7 +241,8 @@ void dabc::Worker::AssignAddon(WorkerAddon* addon)
    if (!fAddon.null()) {
       // first remove addon from thread itself
 
-      thrd()->WorkerAddonChanged(this, false);
+      if (!thrd.null())
+         thrd()->WorkerAddonChanged(this, false);
 
       // clean worker pointer
       fAddon()->fWorker.Release();
@@ -256,8 +257,10 @@ void dabc::Worker::AssignAddon(WorkerAddon* addon)
 //      addon->fWorker.SetTransient(false);
    }
 
-   if (!thrd.null())
+   if (!thrd.null()) {
       thrd()->WorkerAddonChanged(this, true);
+      if (addon) addon->OnThreadAssigned();
+   }
 }
 
 

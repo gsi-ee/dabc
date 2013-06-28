@@ -97,10 +97,8 @@ namespace dabc {
             recvData      // command is sends back, one need to release command only when it is replied
          };
 
-         bool               fIsClient;          ///< true - client side, false - server side
-
          std::string        fRemoteHostName;    ///<  host name and port number
-         bool               fConnected;         ///<  true when connection is established
+         double             fReconnectPeriod;   ///<  interval how often reconnect will be tried
 
          CommandsQueue      fCmds;              ///< commands to be submitted to the remote
 
@@ -114,17 +112,21 @@ namespace dabc {
 
          dabc::Command      fMainCmd;           ///< command which was send to other side for execution
          dabc::Command      fExeCmd;            ///< command which was received from remote for execution
+         dabc::BinData      fLastBinData;       ///< keep last binary data of the command to allow transfer of data
 
          CommandsQueue      fSendQueue;         ///< queue to keep commands needed for sending
 
          ERecvState         fRecvState;         ///< state that happens with receiver (server)
 
-
          // these are fields, used to manage information about remote node
          bool               fRemoteObserver;   ///< if true, channel automatically used to update information from remote
          TimeStamp          fRemReqTime;       ///< last time when request was send to remote
          Hierarchy          fRemoteHierarchy;  ///< actual remote hierarchy
+         std::string        fRemoteName;       ///< name of connection, appeared in the browser
 
+         // indicate that this is special connection to master node
+         // each time it is reconnected, it will append special command to register itself in remote master
+         bool               fMasterConn;
 
          virtual void OnThreadAssigned();
 
@@ -158,14 +160,11 @@ namespace dabc {
       public:
          SocketCommandClient(Reference parent, const std::string& name,
                              SocketAddon* addon,
-                             const std::string& hostname = "");
+                             const std::string& hostname = "",
+                             double reconnect = 0.);
          virtual ~SocketCommandClient();
 
          void AppendCmd(Command cmd);
-
-         bool IsClient() const { return fIsClient; }
-         bool IsServer() const { return !fIsClient; }
-
    };
 
    class SocketCommandClientRef : public WorkerRef {
@@ -198,6 +197,8 @@ namespace dabc {
 
          /** \brief Provides name of worker, which should handle client side of the connection */
          std::string ClientWorkerName(const std::string& remnodename);
+
+         SocketCommandClientRef ProvideWorker(const std::string& remnodename, double conn_tmout);
 
       public:
          SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon);

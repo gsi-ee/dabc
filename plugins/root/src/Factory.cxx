@@ -148,15 +148,31 @@ bool dabc_root::ConnectMaster(const char* master_url)
 
    w2.MakeThreadForWorker("MainThread");
 
-   DOUT0("Create root sniffer");
+   DOUT0("Create root sniffer done");
 
-   dabc::mgr()->CreateControl(false);
-
+   if (!dabc::mgr()->CreateControl(false)) {
+      DOUT0("Cannot create control instance");
+      return false;
+   }
 
    std::string master = master_url;
    if (master.find("dabc://") != 0) master = std::string("dabc://") + master;
 
    DOUT0("Create command channel for %s ", master.c_str());
+
+   dabc::Command cmd("ConfigureMaster");
+   cmd.SetStr("Master", master);
+   if (dabc::mgr.GetCommandChannel().Execute(cmd) != dabc::cmd_true) {
+      DOUT0("FAIL to activate connection to master %s", master.c_str());
+      return false;
+   }
+
+   DOUT0("Master %s configured !!!", master.c_str());
+
+   return true;
+
+
+   /*
 
    dabc::Command cmd("Ping");
    cmd.SetReceiver(master);
@@ -185,6 +201,7 @@ bool dabc_root::ConnectMaster(const char* master_url)
    DOUT0("Master %s get control over local process!!!", master.c_str());
 
    return true;
+*/
 }
 
 

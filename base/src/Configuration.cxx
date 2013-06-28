@@ -154,7 +154,7 @@ int dabc::Configuration::GetRunTime()
 
 bool dabc::Configuration::NormalMainThread()
 {
-   if (fSelected==0) return false;
+   if (fSelected==0) return true;
    return Find1(fSelected, "", xmlRunNode, xmlNormalMainThrd) == xmlTrueValue;
 }
 

@@ -440,16 +440,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          return 1;
       }
 
-      dabc::Hierarchy parent = item;
-
-      while (!parent.null()) {
-         if (parent.HasField(dabc::prop_binary_producer)) {
-            producer_name = parent.Field(dabc::prop_binary_producer).AsStdStr();
-            request_name = item.RelativeName(parent);
-            break;
-         }
-         parent = (dabc::HierarchyContainer*) parent.GetParent();
-      }
+      producer_name = item.FindBinaryProducer(request_name);
 
       if (!producer_name.empty()) wrk = dabc::mgr.FindItem(producer_name);
 
@@ -497,6 +488,15 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       resok = false;
    } else {
       bindata = cmd.GetRef("#BinData");
+
+      if (bindata.null() && (cmd.GetRawData()!=0)) {
+         bool owner = false;
+         unsigned len = cmd.GetRawDataSize();
+         void* ptr = cmd.GetRawData(&owner);
+         bindata = new dabc::BinDataContainer(ptr, len, owner, cmd.GetUInt("RawDataVersion"));
+
+         DOUT0("REPACK BINARY REQUEST len %u", len);
+      }
 
       dabc::LockGuard lock(fHierarchyMutex);
 

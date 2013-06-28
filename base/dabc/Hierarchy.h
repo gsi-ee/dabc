@@ -39,7 +39,7 @@ namespace dabc {
          bool       fOwner;          ///< is owner of binary data
          uint64_t   fVersion;        ///< version of binary data
       public:
-         BinDataContainer(void* data = 0, unsigned len = 0, bool owner = false);
+         BinDataContainer(void* data = 0, unsigned len = 0, bool owner = false, uint64_t v = 0);
          virtual ~BinDataContainer();
 
          virtual void* data() const { return fData; }
@@ -162,6 +162,10 @@ namespace dabc {
       /** \brief Find master item
        * It is used in ROOT to specify position of streamer info */
       Hierarchy FindMaster();
+
+      /** Search for parent element, where binary_producer property is specified
+       * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
+      std::string FindBinaryProducer(std::string& request_name);
 
       /** \brief Build full hierarchy of the objects structure, provided in reference */
       void Build(const std::string& topname, Reference top);
