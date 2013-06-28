@@ -118,6 +118,11 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    fHierarchy.Create("ROOT");
    DOUT2("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
+
+   printf("ROOOOOOOT sniffer assign to the thread timer = %p!!!!!", fTimer);
+
+
+
    if (fTimer==0) {
       ActivateTimeout(0);
 
@@ -141,6 +146,8 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
+
+   printf("ROOOOOOOT sniffer process timeout");
 
    TH1* h1 = (TH1*) gROOT->FindObject("histo1");
    if (h1) h1->FillRandom("gaus", 100000);
@@ -354,6 +361,7 @@ void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* 
    if (h.null()) return res;
 
 //   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
+//              else DOUT0("ROOT START SCAN");
 
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetList(), 0);
 
@@ -653,6 +661,8 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
 void dabc_root::RootSniffer::ProcessActionsInRootContext()
 {
+//   printf("ROOOOOOOT sniffer ProcessActionsInRootContext\n");
+
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
       DOUT3("Update ROOT structures");
       fRoot.Release();

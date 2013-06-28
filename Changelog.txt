@@ -13,7 +13,13 @@ of the framework.
    Organize better folders for browser, suppress main debug output.
 4. Prepare DABC code for using within go4analysis. Idea to reuse RootSniffer
    and just provide information from go4 object manager.
-
+5. Today a first day when ROOT, Go4 and DABC with arbitrary combination of nodes
+   can provide data via central DABC web server to any normal browser like Mozilla
+   or IE or Chrome. This allows to build complex heterogene  systems with unified 
+   user monitoring and control interface! It took only 17 days to implement!
+   A huge amount of work need to be done, but all building blocks are already exist 
+   and proved to be working.
+     
 
 27.06.2013
 1. In http::Server add possibility to select part of objects hierarchy, displayed 
