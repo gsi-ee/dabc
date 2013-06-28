@@ -36,16 +36,16 @@ DABCROOT_DD        = $(DABCROOT_DICT).$(DepSuf)
 
 # used in the main Makefile
 
-#ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
+ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
 ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) 
 
 libs:: $(DABCROOT_LIB) $(DABCROOT_MAP)
 
 ##### local rules #####
 
-#$(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
-#	@echo "Header: $@" 
-#	@cp -f $< $@
+$(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
+	@echo "Header: $@" 
+	@cp -f $< $@
 
 $(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS)
 

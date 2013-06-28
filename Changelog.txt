@@ -11,6 +11,9 @@ of the framework.
    control many-node application (ROOT, Go4, DABC) via single http server!   
 3. First real test to run two ROOT analsysis, connected to the same http server.
    Organize better folders for browser, suppress main debug output.
+4. Prepare DABC code for using within go4analysis. Idea to reuse RootSniffer
+   and just provide information from go4 object manager.
+
 
 27.06.2013
 1. In http::Server add possibility to select part of objects hierarchy, displayed 
