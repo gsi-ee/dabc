@@ -144,6 +144,16 @@ dabc::ThreadRef dabc::Worker::thread()
 }
 
 
+bool dabc::Worker::IsOwnThread() const
+{
+   LockGuard lock(fThreadMutex);
+
+   if (fThread.null()) return false;
+
+   return fThread.IsItself();
+}
+
+
 std::string dabc::Worker::ThreadName() const
 {
    LockGuard lock(fThreadMutex);
@@ -585,14 +595,32 @@ int dabc::Worker::PreviewCommand(Command cmd)
       cmd_res = cmd_true;
    } else
 
-   if (cmd.IsName("BuildHierarchy")) {
+   if (cmd.IsName("BuildWorkerHierarchy")) {
       HierarchyContainer* cont = (HierarchyContainer*) cmd.GetPtr("Container");
-      if (cont!=0) BuildHierarchy(cont);
+      if (cont!=0) BuildWorkerHierarchy(cont);
       cmd_res = cmd_true;
    }
 
    return cmd_res;
 }
+
+void dabc::Worker::BuildWorkerHierarchy(HierarchyContainer* cont)
+{
+   dabc::Object::BuildHierarchy(cont);
+}
+
+void dabc::Worker::BuildHierarchy(HierarchyContainer* cont)
+{
+   if (IsOwnThread()) {
+      BuildWorkerHierarchy(cont);
+   } else {
+      dabc::Command cmd("BuildWorkerHierarchy");
+      cmd.SetPtr("Container", cont);
+      Execute(cmd);
+   }
+}
+
+
 
 int dabc::Worker::ExecuteCommand(Command cmd)
 {
@@ -710,7 +738,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
          // command execution possible without thread,
          // but only manager allows to do it without warnings
-         if ((this != dabc::mgr()) && !cmd.IsName("BuildHierarchy"))
+         if ((this != dabc::mgr()) && !cmd.IsName("BuildWorkerHierarchy"))
             EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
          exe_direct = true;
       } else

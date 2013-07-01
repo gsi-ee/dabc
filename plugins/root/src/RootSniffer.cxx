@@ -487,7 +487,7 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
    return sbuf;
 }
 
-void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
+void dabc_root::RootSniffer::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
 {
    // indicate that we are bin producer of down objects
 

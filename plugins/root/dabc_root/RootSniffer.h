@@ -112,6 +112,8 @@ namespace dabc_root {
 
          int ProcessGetBinary(dabc::Command cmd);
 
+         /** Should deliver hierarchy of the ROOT objects */
+         virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
 
       public:
          RootSniffer(const std::string& name, dabc::Command cmd = 0);
@@ -122,8 +124,6 @@ namespace dabc_root {
 
          bool IsEnabled() const { return fEnabled; }
 
-         /** Should deliver hierarchy of the ROOT objects */
-         virtual void BuildHierarchy(dabc::HierarchyContainer* cont);
 
          /** Create TTimer object, which allows to perform action in ROOT context */
          void InstallSniffTimer();

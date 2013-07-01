@@ -760,11 +760,11 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       SocketIOAddon* io = new SocketIOAddon(fd);
       io->SetDeliverEventsToWorker(true);
 
-      // DOUT0("SocketCommand - create server side fd:%d worker:%s", fd, worker_name.c_str());
-
       worker = new SocketCommandClient(this, worker_name, io);
 
       worker()->AssignToThread(thread());
+
+      DOUT0("SocketCommand - create server side fd:%d worker:%s thread:%s", fd, worker_name.c_str(), thread().GetName());
 
       worker.Release();
 
@@ -850,7 +850,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 }
 
 
-void dabc::SocketCommandChannel::BuildHierarchy(HierarchyContainer* cont)
+void dabc::SocketCommandChannel::BuildWorkerHierarchy(HierarchyContainer* cont)
 {
    // do it here, while all properties of main node are ignored when hierarchy is build
    dabc::Hierarchy top(cont);
@@ -876,6 +876,8 @@ void dabc::SocketCommandChannel::BuildHierarchy(HierarchyContainer* cont)
 
       w()->fRemoteName = name;
       chld = top.CreateChild(name);
+
+      if (!w()->IsOwnThread()) EOUT("Call method from wrong thread current ischlthrd:%s thrd:%s", DBOOL(IsOwnThread()), dabc::mgr.CurrentThread().GetName());
 
       w()->fRemoteHierarchy()->BuildHierarchy(chld());
    }

@@ -427,19 +427,21 @@ bool dabc::Module::Find(ConfigIO &cfg)
    return false;
 }
 
-void dabc::Module::BuildHierarchy(HierarchyContainer* cont)
+void dabc::Module::BuildWorkerHierarchy(HierarchyContainer* cont)
 {
    if (cont==0) {
       EOUT("Empty container - how it can happens");
       return;
    }
 
+   if (!IsOwnThread()) EOUT("Call method from wrong thread");
+
    dabc::Hierarchy rec(cont);
 
    rec.Field(xmlNumInputs).SetInt(NumInputs());
    rec.Field(xmlNumOutputs).SetInt(NumOutputs());
 
-   dabc::Worker::BuildHierarchy(cont);
+   dabc::Worker::BuildWorkerHierarchy(cont);
 }
 
 void dabc::Module::ObjectCleanup()

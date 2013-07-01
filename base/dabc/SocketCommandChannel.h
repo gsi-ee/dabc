@@ -208,6 +208,8 @@ namespace dabc {
          /** timeout used in channel to update node hierarchy, which than can be requested from remote */
          virtual double ProcessTimeout(double last_diff);
 
+         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
+
       public:
          SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd);
          virtual ~SocketCommandChannel();
@@ -215,7 +217,6 @@ namespace dabc {
          /** \brief As name said, command channel requires socket thread for the work */
          virtual std::string RequiredThrdClass() const { return typeSocketThread; }
 
-         virtual void BuildHierarchy(HierarchyContainer* cont);
    };
 
 

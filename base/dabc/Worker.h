@@ -211,6 +211,9 @@ namespace dabc {
          /** \brief Indicates if pointer on thread is not zero; thread-safe */
          bool HasThread() const;
 
+         /** \brief Retutns true if called from thread. If thread not assigned, also returns true */
+         bool IsOwnThread() const;
+
          /** \brief Assign worker to thread, worker becomes active immediately */
          bool AssignToThread(ThreadRef thrd, bool sync = true);
 
@@ -279,6 +282,10 @@ namespace dabc {
          /** Assigns addon to the worker
           * Should be called before worker assigned to the thread */
          void AssignAddon(WorkerAddon* addon);
+
+         /** \brief Builds hierarchy of worker objects
+          *  BuildWorkerHierarchy will be called in worker thread */
+         virtual void BuildHierarchy(HierarchyContainer* cont);
 
       protected:
 
@@ -386,6 +393,9 @@ namespace dabc {
 
          /** Interface method to retrieve subscribed parameter events */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
+
+         /** Produces hierarchy of worker objects */
+         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
 
       private:
 
