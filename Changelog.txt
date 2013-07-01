@@ -2,6 +2,18 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+1.07.2013
+1. Move DABC/ROOT interface methods to DabcRoot class (instead of using  
+   dabc_root namespace). It is necessary, while rootmap for libraries works only
+   when at least one class is specified. All methods in DabcRoot are static.
+   Actiavte http server in ROOT will look like:
+     root [0] DabcRoot::StartHttpServer(8095);
+   Actiavte connection to DABC master node:
+     root [1] DabcRoot::ConnectMaster("localhost:4444");
+     
+    
+
+
 28.06.2013
 1. Implement automatic reconnect of command channel when server disappears. 
 2. Objects request via command channel works! It means, one could access data
