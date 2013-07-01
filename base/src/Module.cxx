@@ -429,13 +429,17 @@ bool dabc::Module::Find(ConfigIO &cfg)
 
 void dabc::Module::BuildHierarchy(HierarchyContainer* cont)
 {
+   if (cont==0) {
+      EOUT("Empty container - how it can happens");
+      return;
+   }
+
    dabc::Hierarchy rec(cont);
 
    rec.Field(xmlNumInputs).SetInt(NumInputs());
    rec.Field(xmlNumOutputs).SetInt(NumOutputs());
 
    dabc::Worker::BuildHierarchy(cont);
-
 }
 
 void dabc::Module::ObjectCleanup()

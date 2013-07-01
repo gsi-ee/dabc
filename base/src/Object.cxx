@@ -1160,16 +1160,16 @@ void dabc::Object::BuildHierarchy(HierarchyContainer* cont)
       Reference child_obj = GetChildRef(cnt);
       if (child_obj.null()) continue;
 
-      dabc::HierarchyContainer* child = new dabc::HierarchyContainer(child_obj.GetName());
-      cont->AddChild(child);
+      dabc::Hierarchy child = new dabc::HierarchyContainer(child_obj.GetName());
+      cont->AddChild(child());
 
       Worker* wrk = dynamic_cast<Worker*> (child_obj());
 
       if (wrk==0) {
-         child_obj()->BuildHierarchy(child);
+         child_obj()->BuildHierarchy(child());
       } else {
          dabc::Command cmd("BuildHierarchy");
-         cmd.SetPtr("Container", child);
+         cmd.SetPtr("Container", child());
          wrk->Execute(cmd, 1.);
       }
    }
