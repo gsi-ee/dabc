@@ -165,7 +165,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; html = ""; }  else
          if (kind == "ROOT.TNtuple") { nodeimg = source_dir+'img/tree_t.png'; html = ""; }  else
          if (kind == "ROOT.TBranch") { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
-         if (kind == "ROOT.TLeaf") { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
+         if (kind.match(/\bROOT.TLeaf/)) { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
          if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
       }
       
