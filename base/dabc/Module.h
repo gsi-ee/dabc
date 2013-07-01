@@ -112,7 +112,6 @@ namespace dabc {
 
          virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
 
-
          /** \brief Starts execution of the module code */
          bool Start();
 

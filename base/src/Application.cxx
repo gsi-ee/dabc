@@ -377,6 +377,13 @@ bool dabc::ApplicationBase::DefaultInitFunc()
    return true;
 }
 
+void dabc::ApplicationBase::BuildWorkerHierarchy(HierarchyContainer* cont)
+{
+   dabc::Hierarchy(cont).Field(dabc::prop_kind).SetStr("DABC.Application");
+
+   dabc::Worker::BuildWorkerHierarchy(cont);
+}
+
 // ==============================================================
 
 

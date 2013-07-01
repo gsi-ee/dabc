@@ -154,7 +154,8 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          // $("#report").append("<br>See kind = " + kind);
          
          if (kind == "ROOT.Session") { nodeimg = source_dir+'img/globe.gif'; html = ""; }  else
-         if (kind == "Go4.Analysis") { nodeimg = 'go4sys/icons/go4logo2_small.png'; html = ""; }  else
+         if (kind == "DABC.Application") { nodeimg = 'httpsys/img/dabcicon.png'; html = ""; }  else
+         if (kind == "GO4.Analysis") { nodeimg = 'go4sys/icons/go4logo2_small.png'; html = ""; }  else
          if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
          if (kind.match(/\bROOT.TH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
          if (kind.match(/\bROOT.TH3/)) nodeimg = source_dir+'img/histo3d.png'; else
