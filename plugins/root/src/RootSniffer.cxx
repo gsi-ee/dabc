@@ -363,10 +363,12 @@ void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* 
 //   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
 //              else DOUT0("ROOT START SCAN");
 
-   TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root"));
+//   TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root"));
 
-   if (topf!=0)
-      return ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0);
+//   if (topf!=0)
+//      return ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0);
+
+   if (searchpath==0) h.Field(dabc::prop_kind).SetStr("ROOT.Session");
 
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetList(), 0);
 
