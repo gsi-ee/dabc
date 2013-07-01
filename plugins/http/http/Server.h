@@ -74,12 +74,17 @@ namespace http {
 
          FilesMap fFiles;       ///< map with read into memory files
          std::string fHttpSys;  ///< location of http plugin, need to read special files
+         std::string fGo4Sys;   ///< location of go4 (if any)
+         std::string fRootSys;  ///< location of go4 (if any)
+
 
          virtual void OnThreadAssigned();
 
          virtual double ProcessTimeout(double last_diff);
 
          int ProcessGetBinary(struct mg_connection* conn, const char *query);
+
+         bool MakeRealFileName(std::string& fname);
 
       public:
          Server(const std::string& name, dabc::Command cmd = 0);

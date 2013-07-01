@@ -29,6 +29,7 @@
 #include "TBufferFile.h"
 #include "TROOT.h"
 #include "TTimer.h"
+#include "TFolder.h"
 #include "TTree.h"
 #include "TBranch.h"
 #include "TLeaf.h"
@@ -107,7 +108,6 @@ dabc_root::RootSniffer::~RootSniffer()
    if (fTimer) fTimer->fSniffer = 0;
 }
 
-
 void dabc_root::RootSniffer::OnThreadAssigned()
 {
    if (!IsEnabled()) {
@@ -118,9 +118,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    fHierarchy.Create("ROOT");
    DOUT2("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
-
    printf("ROOOOOOOT sniffer assign to the thread timer = %p!!!!!", fTimer);
-
 
 
    if (fTimer==0) {
@@ -269,6 +267,9 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
       chld = parent;
    }
 
+   if (obj->InheritsFrom(TFolder::Class())) {
+      if (!res) res = ScanListHierarchy(chld, searchpath, ((TFolder*) obj)->GetListOfFolders(), lvl+1);
+   } else
    if (obj->InheritsFrom(TDirectory::Class())) {
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TDirectory*) obj)->GetList(), lvl+1);
    } else
@@ -280,12 +281,11 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
    }
-
    return res;
 }
 
 
-void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const char* searchpath, TSeqCollection* lst, int lvl, const std::string& foldername)
+void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const char* searchpath, TCollection* lst, int lvl, const std::string& foldername)
 {
    if ((lst==0) || (lst->GetSize()==0)) return 0;
 
@@ -363,6 +363,11 @@ void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* 
 //   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
 //              else DOUT0("ROOT START SCAN");
 
+   TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root"));
+
+   if (topf!=0)
+      return ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0);
+
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetList(), 0);
 
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfCanvases(), 0, "Canvases");
@@ -392,6 +397,7 @@ bool dabc_root::RootSniffer::IsBrowsableClass(TClass* cl)
    if (cl->InheritsFrom(TTree::Class())) return true;
    if (cl->InheritsFrom(TBranch::Class())) return true;
    if (cl->InheritsFrom(TLeaf::Class())) return true;
+   if (cl->InheritsFrom(TFolder::Class())) return true;
 
    return false;
 }
@@ -667,7 +673,8 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       DOUT3("Update ROOT structures");
       fRoot.Release();
       fRoot.Create("ROOT");
-      // this is fake element, whic.h is need to be requested before first
+
+      // this is fake element, which is need to be requested before first
       dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
       si.Field(dabc::prop_content_hash).SetInt(fSinfoSize);

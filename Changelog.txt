@@ -10,7 +10,7 @@ of the framework.
      root [0] DabcRoot::StartHttpServer(8095);
    Actiavte connection to DABC master node:
      root [1] DabcRoot::ConnectMaster("localhost:4444");
-     
+2. Adjustment to be able use RootSniffer and browser with go4.     
     
 
 

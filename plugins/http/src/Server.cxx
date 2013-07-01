@@ -55,7 +55,9 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fHierarchyMutex(),
    fCtx(0),
    fFiles(),
-   fHttpSys()
+   fHttpSys(),
+   fGo4Sys(),
+   fRootSys()
 {
    memset(&fCallbacks, 0, sizeof(fCallbacks));
    fCallbacks.begin_request = begin_request_handler;
@@ -91,6 +93,12 @@ void http::Server::OnThreadAssigned()
    }
    const char* dabcsys = getenv("DABCSYS");
    if (dabcsys!=0) fHttpSys = dabc::format("%s/plugins/http", dabcsys);
+
+   const char* go4sys = getenv("GO4SYS");
+   if (go4sys!=0) fGo4Sys = go4sys;
+
+   const char* rootsys = getenv("ROOTSYS");
+   if (rootsys!=0) fRootSys = rootsys;
 
    DOUT0("Starting HTTP server on port %d", fHttpPort);
    DOUT0("HTTPSYS = %s", fHttpSys.c_str());
@@ -238,6 +246,39 @@ int http::Server::begin_request(struct mg_connection *conn)
    return 1;
 }
 
+bool http::Server::MakeRealFileName(std::string& fname)
+{
+   if (fname.empty()) return false;
+   size_t pos = fname.rfind("httpsys/");
+   if (pos!=std::string::npos) {
+      fname.erase(0, pos+7);
+      fname = fHttpSys + fname;
+      return true;
+   }
+
+   if (!fRootSys.empty()) {
+      pos = fname.rfind("rootsys/");
+      if (pos!=std::string::npos) {
+         fname.erase(0, pos+7);
+         fname = fRootSys + fname;
+         return true;
+      }
+   }
+
+   if (!fGo4Sys.empty()) {
+      pos = fname.rfind("go4sys/");
+      if (pos!=std::string::npos) {
+         fname.erase(0, pos+6);
+         fname = fGo4Sys + fname;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+
 const char* http::Server::open_file(const struct mg_connection* conn,
                                     const char *path, size_t *data_len)
 {
@@ -312,10 +353,8 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    }
 
    if (buf==0) {
-      size_t pos = fname.rfind("httpsys/");
-      if (pos==std::string::npos) return 0;
-      fname.erase(0, pos+7);
-      fname = fHttpSys + fname;
+
+      if (!MakeRealFileName(fname)) return 0;
 
       if (!force) {
          dabc::LockGuard lock(ObjectMutex());
@@ -323,7 +362,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
          FilesMap::iterator iter = fFiles.find(fname);
          if (iter!=fFiles.end()) {
             if (data_len) *data_len = iter->second.size;
-            DOUT0("Return file %s len %d", fname.c_str(), iter->second.size);
+            DOUT2("Return file %s len %d", fname.c_str(), iter->second.size);
             return (const char*) iter->second.ptr;
          }
       }
@@ -339,7 +378,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
       buf = (char*) malloc(length+1);
       is.read(buf, length);
       if (is)
-         DOUT0("all characters read successfully from file.");
+         DOUT2("all characters read successfully from file.");
       else
         EOUT("only %d could be read from %s", is.gcount(), path);
    }
@@ -364,7 +403,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
       if (data_len) *data_len = iter->second.size;
 
-      DOUT0("Return file %s len %u", path, iter->second.size);
+      DOUT2("Return file %s len %u", path, iter->second.size);
 
       return (const char*) iter->second.ptr;
    }

@@ -146,24 +146,31 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var nodefullname  = fullname + "/" + node.nodeName; 
       
       var nodeimg = "";
+      var node2img = "";
       
       if (kind) {
          html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+
+         // $("#report").append("<br>See kind = " + kind);
          
-         if (kind.match(/\bTH1/)) nodeimg = source_dir+'img/histo.png'; else
-         if (kind.match(/\bTH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
-         if (kind.match(/\bTH3/)) nodeimg = source_dir+'img/histo3d.png'; else
-         if (kind.match(/\bTCanvas/)) nodeimg = source_dir+'img/canvas.png'; else
-         if (kind.match(/\bTProfile/)) nodeimg = source_dir+'img/profile.png'; else
-         if (kind.match(/\bTGraph/)) nodeimg = source_dir+'img/graph.png'; else
-         if (kind.match(/\bTTree/)) { nodeimg = source_dir+'img/tree.png'; html = ""; }  else
-         if (kind.match(/\bTNtuple/)) { nodeimg = source_dir+'img/tree_t.png'; html = ""; }  else
-         if (kind.match(/\bTBranch/)) { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
-         if (kind.match(/\bTLeaf/)) { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
-         if (kind.match(/\bTList/) && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
+         if (kind == "Go4.Analysis") { nodeimg = 'go4sys/icons/go4logo2_small.png'; html = ""; }  else
+         if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
+         if (kind.match(/\bROOT.TH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
+         if (kind.match(/\bROOT.TH3/)) nodeimg = source_dir+'img/histo3d.png'; else
+         if (kind == "ROOT.TCanvas") nodeimg = source_dir+'img/canvas.png'; else
+         if (kind == "ROOT.TProfile") nodeimg = source_dir+'img/profile.png'; else
+         if (kind.match(/\bROOT.TGraph/)) nodeimg = source_dir+'img/graph.png'; else
+         if (kind == "ROOT.TTree") { nodeimg = source_dir+'img/tree.png'; html = ""; }  else
+         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; html = ""; }  else
+         if (kind == "ROOT.TNtuple") { nodeimg = source_dir+'img/tree_t.png'; html = ""; }  else
+         if (kind == "ROOT.TBranch") { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
+         if (kind == "ROOT.TLeaf") { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
+         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
       }
       
-      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg, nodeimg);
+      if (node2img == "") node2img = nodeimg;
+      
+      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg, node2img);
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
