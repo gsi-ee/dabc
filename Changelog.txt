@@ -11,7 +11,8 @@ of the framework.
    Actiavte connection to DABC master node:
      root [1] DabcRoot::ConnectMaster("localhost:4444");
 2. Adjustment to be able use RootSniffer and browser with go4.     
-    
+3. Fix problem with thread usage when hierarchy was created. Now method really
+   called from the proper thread context and one not need to use locking.     
 
 
 28.06.2013
