@@ -186,6 +186,8 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 {
    if (cmd.IsName("GetHierarchy")) {
 
+//      DOUT0("GETCMD GetHierarchy debugid %d", cmd.GetInt("debugid"));
+
       unsigned lastversion = cmd.GetUInt("version");
       cmd.RemoveField("version");
 
@@ -221,6 +223,7 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
       fRemoteHierarchy.Create("Remote");
 
       Command cmd("GetHierarchy");
+//      cmd.SetInt("debugid", 0);
       Assign(cmd);
       fCmds.Push(cmd);
       FireEvent(evntActivate);
@@ -318,7 +321,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
             if (tmout>0) fExeCmd.SetTimeout(tmout);
 
-            DOUT0("Submit command %s for execution", fExeCmd.GetName());
+            // DOUT0("Submit command %s for execution", fExeCmd.GetName());
 
             dabc::mgr.Submit(Assign(cmd));
          }
@@ -337,6 +340,10 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
             fMainCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
 
          fMainCmd.Reply(cmd.GetResult());
+
+         // if any new commands are in the queue, submit them
+         if (fCmds.Size()>0) FireEvent(evntActivate);
+
          break;
 
       case kindCancel:
@@ -345,6 +352,9 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
             CloseClient(true, "Command cancel at wrong time");
          else
             fMainCmd.Reply(cmd_timedout);
+
+         // if any new commands are in the queue, submit them
+         if (fCmds.Size()>0) FireEvent(evntActivate);
 
          break;
 
@@ -382,6 +392,8 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 
    if (cmd.IsName("GetHierarchy")) {
 
+//      DOUT0("RECEIVE GetHierarchy command reply debugid %d", cmd.GetInt("debugid"));
+
       if (!fRemoteObserver) {
          EOUT("Get reply with hierarchy - why???");
          return true;
@@ -399,6 +411,8 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
             DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
             // DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
          }
+
+//         DOUT0("SocketCommandClient REMOTE hierarchy \n%s", fRemoteHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
       }
 
       return true;
@@ -528,6 +542,8 @@ void dabc::SocketCommandClient::PerformCommandSend()
    bool asreply = fSendQueue.Front().GetBool("##dabc_send_kind_reply##");
    double send_tmout = fSendQueue.Front().GetDouble("##dabc_send_tmout##");
 
+//   DOUT0("RAWSEND cmd %s debugid %d", fSendQueue.Front().GetName(), fSendQueue.Front().GetInt("debugid"));
+
    fSendQueue.Front().RemoveField("##dabc_send_kind_reply##");
    fSendQueue.Front().RemoveField("##dabc_send_tmout##");
 
@@ -571,6 +587,8 @@ void dabc::SocketCommandClient::PerformCommandSend()
 
 double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 {
+//   DOUT0("dabc::SocketCommandClient::ProcessTimeout");
+
    double next_tmout = 1.;
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0) && fAddon.null()) {
@@ -611,7 +629,12 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
    if (!fRemReqTime.null() && fRemReqTime.Expired(2.)) {
       fRemReqTime.Reset();
 
+
       Command cmd("GetHierarchy");
+//      static int debugid = 1;
+//      cmd.SetInt("debugid", debugid++);
+//      DOUT0("SEND GetHierarchy command debugid %d", cmd.GetInt("debugid"));
+
       cmd.SetInt("version", fRemoteHierarchy.GetVersion());
       Assign(cmd);
       fCmds.Push(cmd);
@@ -892,6 +915,8 @@ double dabc::SocketCommandChannel::ProcessTimeout(double last_diff)
    if (main.null()) main = dabc::mgr;
 
    fHierarchy.UpdateHierarchy(main);
+
+//   DOUT0("SocketChannel LOCAL hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 
    return 2.;
 }

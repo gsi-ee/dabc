@@ -1,8 +1,8 @@
 
 # following lines define the packaging:
 PACKAGE_DIR    = ./packages
-DABCPACK_VERS  = dabc-$(MAJOR).$(MINOR)
-DABCTAR_NAME   = dabc-$(MAJOR).$(MINOR).tar
+DABCPACK_VERS  = dabc-$(DABC_VERSION)
+DABCTAR_NAME   = dabc-$(DABC_VERSION).tar
 
 DISTR_DIR  = ~/dabc_temp_packaging
 DABCDISTR_DIR  = $(DISTR_DIR)/$(DABCPACK_VERS)

@@ -689,6 +689,8 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.Update(fRoot);
+
+      // DOUT0("ROOT hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
    }
 
    bool doagain(true);

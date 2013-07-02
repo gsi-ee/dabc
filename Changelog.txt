@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+2.07.2013
+1. Fix error in command channel - submitted commands not always was send to remote.
+2. Tag version number 2.2.0 - this is mark for important milestone achieved.
+
+
 1.07.2013
 1. Move DABC/ROOT interface methods to DabcRoot class (instead of using  
    dabc_root namespace). It is necessary, while rootmap for libraries works only

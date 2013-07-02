@@ -365,13 +365,10 @@ void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
 
 void dabc::Hierarchy::Build(const std::string& topname, Reference top)
 {
-   Destroy();
+   if (null() && !topname.empty()) Create(topname);
 
-   Create(topname);
-
-   if (!top.null())
-
-   top()->BuildHierarchy(GetObject());
+   if (!top.null() && !null())
+      top()->BuildHierarchy(GetObject());
 }
 
 bool dabc::Hierarchy::Update(dabc::Hierarchy& src)

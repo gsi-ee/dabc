@@ -143,26 +143,30 @@ double http::Server::ProcessTimeout(double last_diff)
 {
    // dabc::LockGuard lock(fHierarchyMutex);
 
-   dabc::Hierarchy top;
+   dabc::Hierarchy server_hierarchy;
+   server_hierarchy.Create("Full");
+
    dabc::Reference main;
 
    if (!fServerFolder.empty()) {
-      top = fHierarchy.FindChild(fServerFolder.c_str());
-
+      dabc::Hierarchy h = server_hierarchy.CreateChild(fServerFolder);
+      if (!fTop2Name.empty()) h = h.CreateChild(fTop2Name.c_str());
       main = dabc::mgr;
       if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
-
-      if (!fTop2Name.empty()) top = top.FindChild(fTop2Name.c_str());
-
-      if (!main.null() && !top.null()) top.UpdateHierarchy(main);
+      h.Build("", main);
    }
 
    // we build extra slaves when they not shown in main structure anyway
    if (fShowClients && (main!=dabc::mgr) && !fClientsFolder.empty()) {
       dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
-      top = fHierarchy.FindChild(fClientsFolder.c_str());
-      if (!chl.null() && !top.null()) top.UpdateHierarchy(chl);
+      dabc::Hierarchy h = server_hierarchy.CreateChild(fClientsFolder);
+      h.Build("", chl);
    }
+
+   dabc::LockGuard lock(fHierarchyMutex);
+   fHierarchy.Update(server_hierarchy);
+
+//   DOUT0("SERVER OVERALL hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 
    return 1.;
 }
@@ -477,7 +481,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          bindata = item()->bindata();
       }
 
-      // DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
+      DOUT0("BINARY REQUEST name:%s CURR_ITEM:%u CURR_BINARY:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) bindata.version(), (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
       // user can always force new buffer if he provide too big qyery version number

@@ -417,7 +417,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // if we got same version, do nothing - we are happy!!!
    if ((ver > 0) && (this.version == ver)) {
       this.state = this.StateEnum.stReady;
-      // $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
+      $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 
