@@ -33,8 +33,20 @@ Following modifications were done:
   
     Correspondent scripts should be places in scripts/ subdirectory. 
 
+3. in JSROOTIOEvolution.js, JSROOTIO.RootFile.prototype.R__unzip,
+   One can skip tgtsize argument - result string will be allocated 
+   by RawInflate.inflate(data) anyway. It is used only to cross-check expected size. 
+      
+4. in JSROOTIOEvolution.js one could add method which checks if ROOT zip header 
+   is availible. Or just optionally suppress alert in 
+   JSROOTIO.RootFile.prototype.R__unzip_header method. 
+   By the way, in JSROOTIO.RootFile.prototype.R__unzip_header one could check
+   that off + HDRSIZE <= str.length  
 
-3. General wish - provide more clear names for global variables and functions, 
+5. Remove JSROOTIO.RootFile.R__unzip_header and JSROOTIO.RootFile.R__unzip from 
+   RootFile class, they should be placed in JSROOTIO. 
+
+6. General wish - provide more clear names for global variables and functions, 
     especially for:
     
     source_dir
@@ -49,3 +61,6 @@ To do:
 1. reading canvas should work in the same way as other objects.
 2. Redraw of canvas do not work at all.    
 3. That to do with histogram infobox - it can be generated only in ROOT after Draw
+4. In JSROOTIO.RootFile.prototype.R__unzip buffers bigger than 16 MB (0xfffffff) are not 
+   treated correctly. In TKey.cxx, lines 259-275, big raw buffer cutted on blocks of 16MB.
+    

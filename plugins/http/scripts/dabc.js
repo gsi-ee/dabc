@@ -278,6 +278,7 @@ DABC.RootDrawElement = function(_clname) {
    
    this.raw_data = null;  // raw data kept in the item when object cannot be reconstructed immediately
    this.raw_data_version = 0;   // verison of object in the raw data, will be copied into object when completely reconstructed
+   this.raw_data_size = 0;      // size of raw data, can be displayed
    this.need_master_version = 0; // this is version, required for the master item (streamer info)
    
    this.StateEnum = {
@@ -344,7 +345,8 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
 
    var child = document.getElementById(this.titleid + "_text");
    // if (child) $("#report").append("<br>child " + child.innerHTML);
-   if (child) child.innerHTML = this.itemname + ",   version = " + this.version; 
+   if (child) child.innerHTML = 
+      this.itemname + ",   version = " + this.version + ", size = " + this.raw_data_size; 
    
    if (this.sinfo) 
       JSROOTPainter.drawObject(this.obj, this.drawid);
@@ -358,6 +360,29 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    this.first_draw = false;
 }
 
+DABC.RootDrawElement.prototype.UnzipRawData = function() {
+   
+   // method returns true if unpacked data can be used
+   
+   if (!this.raw_data) return false;
+
+   var ziphdr = gFile.R__unzip_header(this.raw_data, 0, true);
+   
+   if (!ziphdr) return true;
+  
+   var unzip_buf = gFile.R__unzip(ziphdr['srcsize'], this.raw_data, 0, ziphdr['tgtsize']);
+   if (!unzip_buf) {
+      alert("fail to unzip data");
+      return false;
+   } 
+   
+   this.raw_data = unzip_buf['unzipdata'];
+   // $("#report").append("<br>unpzip buffer " + this.raw_data_size + " to length "+ this.raw_data.length);
+   unzip_buf = null;
+   return true;
+}
+
+
 DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    if (!this.raw_data) {
       this.state = this.StateEnum.stInit;
@@ -367,22 +392,22 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    this.obj = {};
    this.obj['_typename'] = 'JSROOTIO.' + this.clname;
 
-   // $("#report").append("<br>make streaming " + arg.length + " for class "+ this.clname);
-
    gFile = this.sinfo.obj;
-   
+
+   // one need gFile to unzip data
+   if (!this.UnzipRawData()) return;
+
    if (this.clname == "TCanvas") {
       this.obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
       if (this.obj && this.obj['fPrimitives']) {
          if (this.obj['fName'] == "") this.obj['fName'] = "anyname";
       }
+   } else 
+   if (JSROOTIO.GetStreamer(this.clname)) {
+      JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
+      JSROOTCore.addMethods(this.obj);
    } else {
-      if (!JSROOTIO.GetStreamer(this.clname)) {
-         $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
-      } else {
-         JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
-         JSROOTCore.addMethods(this.obj);
-      }
+      $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
    }
 
    this.state = this.StateEnum.stReady;
@@ -431,22 +456,27 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       // we are doing sreamer infos
       // if (gFile) $("#report").append("<br> gFile already exists???"); else 
       this.obj = new JSROOTIO.RootFile;
-      
-      gFile = this.obj; 
 
-      this.obj.fStreamerInfo.ExtractStreamerInfo(arg);
+      // one need gFile to unzip data
+      gFile = this.obj;
       
+      this.raw_data = arg;
+      
+      if (this.UnzipRawData()) {
+         this.obj.fStreamerInfo.ExtractStreamerInfo(this.raw_data);
+         this.version = ver;
+         this.state = this.StateEnum.stReady;
+         this.raw_data = null;
+         // this indicates that object was clicked and want to be drawn
+         this.DrawObject();
+      } else {
+         this.obj = null;
+      }
+         
       gFile = null;
 
-      this.version = ver;
-      this.state = this.StateEnum.stReady;
-      
       // $("#report").append("<br> Unpacked streamer infos of version " + ver);
       if (!this.obj) $("#report").append("<br> No file in streamer infos!!!");
-      
-      // this indicates that object was clicked and want to be drawn
-      
-      this.DrawObject();
 
       // with streamer info one could try to update complex fields
       DABC.mgr.UpdateComplexFields();
@@ -456,6 +486,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
 
    this.raw_data_version = ver;
    this.raw_data = arg;
+   this.raw_data_size = arg.length;
    
    if (mver) this.need_master_version = mver;
    

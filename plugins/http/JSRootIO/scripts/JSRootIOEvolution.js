@@ -2002,21 +2002,28 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
          return key;
       };
-
-      JSROOTIO.RootFile.prototype.R__unzip_header = function(str, off) {
+      
+      JSROOTIO.RootFile.prototype.R__unzip_header = function(str, off, noalert) {
          // Reads header envelope, and determines target size.
 
-         var header = {};
-         header['srcsize'] = HDRSIZE;
-         header['tgtsize'] = 0;
-
+         if (off + HDRSIZE > str.length) {
+            if (!noalert) alert("Error R__unzip_header: too small size for header");
+            return null;
+         }
+         
          /*   C H E C K   H E A D E R   */
          if (!(str.charAt(off) == 'Z' && str.charAt(off+1) == 'L' && str.charCodeAt(off+2) == Z_DEFLATED) &&
              !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == Z_DEFLATED) &&
              !(str.charAt(off) == 'X' && str.charAt(off+1) == 'Z' && str.charCodeAt(off+2) == 0)) {
-            alert("Error R__unzip_header: error in header");
+            if (!noalert) alert("Error R__unzip_header: error in header");
             return null;
          }
+
+         var header = {};
+         
+         header['srcsize'] = HDRSIZE;
+         header['tgtsize'] = 0;
+
          header['srcsize'] += ((str.charCodeAt(off+3) & 0xff) |
                               ((str.charCodeAt(off+4) & 0xff) << 8) |
                               ((str.charCodeAt(off+5) & 0xff) << 16));
@@ -2025,7 +2032,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                               ((str.charCodeAt(off+8) & 0xff) << 16));
          return header;
       };
-
+      
       JSROOTIO.RootFile.prototype.R__unzip = function(srcsize, str, off, tgtsize) {
 
          var obj_buf = {};

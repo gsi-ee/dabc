@@ -65,6 +65,7 @@ namespace dabc_root {
       protected:
          bool fEnabled;
          bool fBatch;           ///< if true, batch mode will be activated
+         int  fCompression;      ///< compression level, default 5
 
          ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context
 

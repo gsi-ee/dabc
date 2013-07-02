@@ -34,6 +34,8 @@
 #include "TBranch.h"
 #include "TLeaf.h"
 
+extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
+
 #include "dabc/Iterator.h"
 
 dabc_root::RootBinDataContainer::RootBinDataContainer(TBufferFile* buf) :
@@ -86,6 +88,7 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fBatch(true),
+   fCompression(5),
    fTimer(0),
    fRoot(),
    fHierarchy(),
@@ -99,6 +102,7 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    if (!fEnabled) return;
 
    fBatch = Cfg("batch", cmd).AsBool(true);
+   fCompression = Cfg("compress", cmd).AsInt(5);
 
    if (fBatch) gROOT->SetBatch(kTRUE);
 }
@@ -659,7 +663,55 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    DOUT0("GETBINARY item %s  data %p", itemname.c_str(), sbuf);
 
    if (sbuf!=0) {
-      cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+
+      bool with_zip = true;
+
+      Int_t noutot = 0;
+      char* fBuffer = 0;
+
+      if (with_zip) {
+         Int_t cxAlgorithm = 0;
+         const Int_t kMAXBUF = 0xffffff;
+         Int_t fObjlen = sbuf->Length();
+         Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
+         Int_t buflen = TMath::Max(512,fObjlen + 9*nbuffers + 28);
+
+         fBuffer = (char*) malloc(buflen);
+
+         char *objbuf = sbuf->Buffer();
+         char *bufcur = fBuffer; // start writing from beginning
+
+         Int_t nzip   = 0;
+         Int_t bufmax = 0;
+         Int_t nout = 0;
+
+         for (Int_t i = 0; i < nbuffers; ++i) {
+            if (i == nbuffers - 1) bufmax = fObjlen - nzip;
+                else               bufmax = kMAXBUF;
+            R__zipMultipleAlgorithm(fCompression, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
+            if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
+               DOUT0("Fail to zip buffer");
+               free(fBuffer);
+               fBuffer = 0;
+               noutot = 0;
+               break;
+            }
+            bufcur += nout;
+            noutot += nout;
+            objbuf += kMAXBUF;
+            nzip   += kMAXBUF;
+         }
+      }
+
+      if (fBuffer!=0) {
+         DOUT0("ZIP compression produced buffer of total length %d from %d", noutot, sbuf->Length());
+         cmd.SetRef("#BinData", dabc::BinData(new dabc::BinDataContainer(fBuffer, noutot, true)));
+         delete sbuf;
+      } else {
+         DOUT0("Produce uncompressed data of length %d", sbuf->Length());
+         cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+      }
+
       cmd.SetInt("MasterHash", fSinfoSize);
    }
 
