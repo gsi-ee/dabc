@@ -8,7 +8,8 @@ of the framework.
 3. Implement compression/uncompression of ROOT data. 
    Compression level can be configured (now only via xml file).
 4. Fix CPU consumption problem with MBS server transport.
-
+5. Add tmout argument to mbs generator input - reduce CPU load of examples.
+   
 
 1.07.2013
 1. Move DABC/ROOT interface methods to DabcRoot class (instead of using  

@@ -45,7 +45,8 @@ mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
    fIsGo4RandomFormat(true),
    fFullId(0),
    fTotalSize(0),
-   fTotalSizeLimit(0)
+   fTotalSizeLimit(0),
+   fGenerTimeout(0.)
 {
    fEventCount = url.GetOptionInt("first", 0);
 
@@ -55,6 +56,8 @@ mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
    fIsGo4RandomFormat = url.GetOptionStr("go4","true") == "true";
    fFullId = url.GetOptionInt("fullid", 0);
    fTotalSizeLimit = url.GetOptionInt("total", 0);
+   fGenerTimeout = url.GetOptionInt("tmout", 0)*0.001;
+   fTimeoutSwitch = false;
 }
 
 bool mbs::GeneratorInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
@@ -64,6 +67,11 @@ bool mbs::GeneratorInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Comm
 
 unsigned mbs::GeneratorInput::Read_Size()
 {
+   if (fGenerTimeout > 0.) {
+      fTimeoutSwitch = !fTimeoutSwitch;
+      if (fTimeoutSwitch) return dabc::di_RepeatTimeOut;
+   }
+
    if ((fTotalSizeLimit>0) && (fTotalSize / 1024. / 1024. > fTotalSizeLimit)) return dabc::di_EndOfStream;
 
    return dabc::di_DfltBufSize;

@@ -20,7 +20,21 @@
 
 namespace mbs {
 
-   /** \brief Input object for MBS-events generator */
+   /** \brief Input object for MBS-events generator
+    *
+    * It can generate MBS events for testing. Configuration in xml file look like:
+    *
+    * <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=10" queue="5"/>
+    *
+    * Following parameters are supported:
+    *   numsub  - number of subevents
+    *   procid  - procid of first subevent
+    *   size    - size of each subevent
+    *   go4     - if true (default), generates go4-specific data, used in all examples
+    *   fullid  - fullid of first subevent
+    *   total   - size limit of generated events in MB
+    *   tmout   - delay between two generated buffers (in ms)
+    * */
 
    class GeneratorInput : public dabc::DataInput {
       protected:
@@ -32,6 +46,8 @@ namespace mbs {
          uint32_t    fFullId;              ///< subevent id, if number subevents==1 and nonzero
          uint64_t    fTotalSize;           ///< total size of generated events
          uint64_t    fTotalSizeLimit;      ///< limit of generated events size
+         double      fGenerTimeout;        ///< timeout used to avoid 100% CPU load
+         bool        fTimeoutSwitch;       ///< boolean used to generate timeouts
 
       public:
          GeneratorInput(const dabc::Url& url);
@@ -42,6 +58,9 @@ namespace mbs {
          virtual unsigned Read_Size();
 
          virtual unsigned Read_Complete(dabc::Buffer& buf);
+
+         virtual double Read_Timeout() { return fGenerTimeout; }
+
    };
 
 }

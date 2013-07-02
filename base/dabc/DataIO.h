@@ -84,11 +84,11 @@ namespace dabc {
          /** \brief Defines required buffer size for next operation
           *
           * \returns
-          *   - <di_ValidSize     - size of buffer for next read operation (di_ValidSize = 0xFFFFFFF0)
+          *   - 0..di_ValidSize  - size of buffer for next read operation (di_ValidSize = 0xFFFFFFF0)
           *   - di_EndOfStream   - this is end of stream, normal close of the input
           *   - di_DfltBufSize   - any non-zero buffer can be provided
           *   - di_Repeat        - nothing to read now, try again as soon as possible
-          *   - di_RepeatTimeout - nothing to read now, try again after timeout
+          *   - di_RepeatTimeOut - nothing to read now, try again after timeout
           *   - di_Error         - error, close input */
          virtual unsigned Read_Size() { return di_EndOfStream; }
 
@@ -107,7 +107,7 @@ namespace dabc {
           *   - di_SkipBuffer    - skip buffer
           *   - di_Error         - error, skip buffer and close input
           *   - di_Repeat        - not ready, call again as soon as possible
-          *   - di_RepeatTimeout - not ready, call again after timeout */
+          *   - di_RepeatTimeOut - not ready, call again after timeout */
          virtual unsigned Read_Complete(Buffer& buf) { return di_EndOfStream; }
 
          /** \brief Provide timeout value
