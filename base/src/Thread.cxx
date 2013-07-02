@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 
 #include "dabc/Worker.h"
 #include "dabc/Command.h"
@@ -271,7 +273,7 @@ void* dabc::Thread::MainLoop()
    EventId evid;
    double tmout;
 
-   DOUT3("*** Thrd:%s Starting MainLoop", GetName());
+   DOUT0("*** Thrd:%s Starting MainLoop ID = %u %u", GetName(), (unsigned) getpid(), (unsigned) syscall(SYS_gettid));
 
    while (fThrdWorking) {
 
@@ -799,7 +801,6 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 
       if (worker==dabc::mgr())
          DOUT2("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
-
 
       try {
 

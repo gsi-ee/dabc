@@ -479,6 +479,9 @@ bool hadaq::CombinerModule::BuildEvent()
    //static unsigned ccount=0;
 
 
+//   DOUT0("hadaq::CombinerModule::BuildEvent() starts");
+
+
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
    uint32_t mineventid(0), maxeventid(0);
@@ -637,7 +640,6 @@ bool hadaq::CombinerModule::BuildEvent()
             sequencenumber=syncnum;
             hascorrectsync=true;
          }
-
 
       } // if (syncsub->GetId() != fSyncSubeventId)
 

@@ -63,8 +63,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
    // means as long as any buffer in the recv queue exists or
    // any new buffer to send queue can be provided
 
-   DOUT5("MbsTransmitterModule::retransmit() starts");
-
+//   DOUT0("MbsTransmitterModule::retransmit() starts");
 
    // nothing to do
    if (!CanSendToAllOutputs()) return false;
@@ -75,12 +74,18 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
       SendToAllOutputs(feofbuf);
 
+//      DOUT0("MbsTransmitterModule::retransmit() exit with false 77");
+
       return false;
    }
 
    // is source do not have pointer, reset it to read new buffer
    if (!fSrcIter.IsData()) {
-      if (!CanRecv()) return false;
+
+      if (!CanRecv()) {
+//         DOUT0("MbsTransmitterModule::retransmit() exit with false 86");
+         return false;
+      }
 
       dabc::Buffer buf = Recv();
 
@@ -108,6 +113,8 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
          SendToAllOutputs(feofbuf);
 
+//         DOUT0("MbsTransmitterModule::retransmit() exit with false 116");
+
          return false;
       }
 
@@ -116,6 +123,9 @@ bool hadaq::MbsTransmitterModule::retransmit()
       fSrcIter.Reset(buf);
       // locate to the first event
       fSrcIter.NextEvent();
+
+//      DOUT0("MbsTransmitterModule::retransmit() done while starts with new buffer");
+
       return true; // we could try next buffer as soon as possible
    }
 
@@ -123,7 +133,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
    if (isIgnoreEvent) {
       if (fIgnoreEvent == fSrcIter.evnt()->GetSeqNr()) {
          fSrcIter.NextEvent();
-         DOUT0("Ignore event %u", (unsigned) fIgnoreEvent);
+//         DOUT0("Ignore event %u", (unsigned) fIgnoreEvent);
          return true;
       }
       isIgnoreEvent = false;
@@ -133,7 +143,11 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
    if (!fTgtIter.IsBuffer()) {
        dabc::Buffer buf = TakeBuffer();
-       if (buf.null()) return false;
+       if (buf.null()) {
+//          DOUT0("MbsTransmitterModule::retransmit() exit with false 147");
+          return false;
+       }
+
        fTgtIter.Reset(buf);
     }
 
@@ -165,17 +179,24 @@ bool hadaq::MbsTransmitterModule::retransmit()
       if (!has_required_place && !fTgtIter.IsAnyData()) {
          fIgnoreEvent = fSrcIter.evnt()->GetSeqNr();
          isIgnoreEvent = true;
+//         DOUT0("MbsTransmitterModule::retransmit() wants to ignore %u", (unsigned) fIgnoreEvent);
          return true;
       }
 
       // no sense to make flush when no any data
-      if (doflush && !fTgtIter.IsAnyEvent()) return false;
+      if (doflush && !fTgtIter.IsAnyEvent()) {
+//         DOUT0("MbsTransmitterModule::retransmit() exit with false 188");
+         return false;
+      }
 
       dabc::Buffer sendbuf;
 
       if (fTgtIter.IsAnyUncompleteData()) {
          dabc::Buffer buf = TakeBuffer();
-         if (buf.null()) return false;
+         if (buf.null()) {
+//            DOUT0("MbsTransmitterModule::retransmit() exit with false 197");
+            return false;
+         }
 
          sendbuf = fTgtIter.CloseAndTransfer(buf);
       } else {
@@ -188,6 +209,8 @@ bool hadaq::MbsTransmitterModule::retransmit()
       Par("TransmitBufs").SetDouble(1.);
       Par("TransmitEvents").SetDouble(fEvCounter);
       fEvCounter = 0;
+
+//      DOUT0("MbsTransmitterModule::retransmit() dosend");
 
       SendToAllOutputs(sendbuf);
       return true;
@@ -218,6 +241,8 @@ bool hadaq::MbsTransmitterModule::retransmit()
          fEvCounter++;
       }
    }
+
+//   DOUT0("MbsTransmitterModule::retransmit() done and want build next event");
 
    return true;
 }

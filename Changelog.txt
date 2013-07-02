@@ -7,6 +7,8 @@ of the framework.
 2. Tag version number 2.2.0 - this is mark for important milestone achieved.
 3. Implement compression/uncompression of ROOT data. 
    Compression level can be configured (now only via xml file).
+4. Fix CPU consumption problem with MBS server transport.
+
 
 1.07.2013
 1. Move DABC/ROOT interface methods to DabcRoot class (instead of using  

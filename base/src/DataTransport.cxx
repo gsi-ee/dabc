@@ -490,6 +490,8 @@ void dabc::OutputTransport::ObjectCleanup()
 
 void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 {
+ //  DOUT0("%s dabc::OutputTransport::ProcessEvent %u  state %u", GetName(), (unsigned) evnt.GetCode(), fState);
+
    if (evnt.GetCode() == evCallBack) {
 
       if (evnt.GetArg() != do_Ok) {
@@ -524,11 +526,13 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 
 bool dabc::OutputTransport::ProcessRecv(unsigned port)
 {
+//   if (IsName("_OnlineServer_Output0_Transport_Slave0_Transport"))
+//      DOUT0("dabc::OutputTransport::ProcessRecv  %s state %u", GetName(), fState);
+
    if (fOutput==0) {
       EOUT("Output object not specified");
       fState = outError;
    }
-
 
    if (fState == outInit) {
 
@@ -580,6 +584,10 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
       return false;
    }
 
+   if (fState == outWaitCallback) {
+      return false;
+   }
+
    if (fState == outStartWriting) {
 
       fCurrentBuf = Recv(port);
@@ -607,6 +615,11 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
             EOUT("Wrong return value %u for the Write_Buffer", ret);
             fState = outError;
       }
+   }
+
+   if (fState == outWaitFinishCallback) {
+      // if we wait for call back, ignore all possible events
+      return false;
    }
 
    if (fState == outFinishWriting) {

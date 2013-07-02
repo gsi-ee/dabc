@@ -47,7 +47,7 @@ void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool isnewformat)
 
 void mbs::ServerOutputAddon::OnThreadAssigned()
 {
-   DOUT0("mbs::ServerOutputAddon::OnThreadAssigned - send info");
+//   DOUT0("mbs::ServerOutputAddon::OnThreadAssigned - send info");
 
    if (fState == oInit)
       StartSend(&fServInfo, sizeof(fServInfo));
@@ -60,7 +60,7 @@ void mbs::ServerOutputAddon::OnThreadAssigned()
 
 double mbs::ServerOutputAddon::ProcessTimeout(double last_diff)
 {
-   DOUT0("mbs::ServerOutputAddon::ProcessTimeout inp:%s out:%s", DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
+//   DOUT0("mbs::ServerOutputAddon::ProcessTimeout inp:%s out:%s", DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
    return 1.;
 }
 
@@ -292,6 +292,8 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
 bool mbs::ServerTransport::SendNextBuffer()
 {
+   if (!CanRecv()) return false;
+
    // unconnected transport server will block until any connection is established
    if ((NumOutputs()==0) && fBlocking && (fKind == mbs::TransportServer)) return false;
 
