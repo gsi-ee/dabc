@@ -30,7 +30,7 @@
     <Module name="Multi" class="dabc::MultiplexerModule">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
-       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=10" queue="5" rate="GRate"/>
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=100" queue="5" rate="GRate"/>
        <OutputPort name="Output0" url="mbs://Stream:6767" queue="5"/>
        <GRate width="5" prec="3" low="0" up="50" debug="1"/>
      </Module>

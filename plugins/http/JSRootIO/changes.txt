@@ -40,7 +40,14 @@ Following modifications were done:
   
     Correspondent scripts should be places in scripts/ subdirectory. 
 
-4. General wish - provide more clear names for global variables and functions, 
+4. In JSRootD3Painter.js new method is introduced to generate drawn bins of
+   histogram, called JSROOTPainter.fillbinsHistogram1D. Method called also
+   by JSROOTPainter.drawHistogram1D. Also 'bins' and 'binswidth' fields 
+   were introduced to histo object to keep it for other code places. "var bin"
+   and "var binwidth" removed from drawHistogram1D. 
+
+
+5. General wish - provide more clear names for global variables and functions, 
     especially for:
     
     source_dir
@@ -50,11 +57,12 @@ Following modifications were done:
     
     It would be much clear, if everywhere "ROOT" as part of name is used.  
 
+
     
 To do:
 1. reading canvas should work in the same way as other objects.
 2. Redraw of canvas do not work at all.    
 3. That to do with histogram infobox - it can be generated only in ROOT after Draw
-4. In JSROOTIO.RootFile.prototype.R__unzip buffers bigger than 16 MB (0xfffffff) are not 
+4. In JSROOTIO.R__unzip buffers bigger than 16 MB (0xfffffff) are not 
    treated correctly. In TKey.cxx, lines 259-275, big raw buffer cutted on blocks of 16MB.
     

@@ -2952,10 +2952,25 @@ function createFillPatterns(svg, id, color) {
             .style("stroke-dasharray", root_line_styles[11]);
       }
    };
+   
+   JSROOTPainter.fillbinsHistogram1D = function(histo) {
+      var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
+      histo['bins'] = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
+         var offset = (histo.options.Error > 0) ? (p * binwidth) - (binwidth / 2.0) : (p * binwidth);
+         return {
+            x:  histo['fXaxis']['fXmin'] + offset,
+            y:  histo['fArray'][p],
+            xerr: binwidth / 2.0,
+            yerr: histo.getBinError(p)
+         };
+      });
+      histo['binwidth'] = binwidth; 
+   }
 
    JSROOTPainter.drawHistogram1D = function(vis, pad, histo, hframe) {
       var i, gridx = false, gridy = false;
       var options = JSROOTPainter.decodeOptions(histo['fOption'], histo, pad);
+      histo['options'] = options;
       var draw_all = false;
       if (hframe == null || (hframe['xmin'] < 1e-300 && hframe['xmax'] < 1e-300 &&
           hframe['ymin'] < 1e-300 && hframe['ymax'] < 1e-300)) {
@@ -3028,7 +3043,10 @@ function createFillPatterns(svg, id, color) {
       if (histo['fMaximum'] != -1111) hmax = histo['fMaximum'];
       histo['fYaxis']['fXmin'] = hmin * mul;
       histo['fYaxis']['fXmax'] = hmax * 1.05;
-      var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
+   
+      this.fillbinsHistogram1D(histo);
+      
+/*      var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
       var bins = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
          var offset = (options.Error > 0) ? (p * binwidth) - (binwidth / 2.0) : (p * binwidth);
          return {
@@ -3038,6 +3056,7 @@ function createFillPatterns(svg, id, color) {
             yerr: histo.getBinError(p)
          };
       });
+*/      
       var ret = hframe != null ? hframe : this.createFrame(vis, pad, histo, null);
       var frame = ret['frame'];
       var svg_frame = d3.select(ret['id']);
@@ -3074,10 +3093,10 @@ function createFillPatterns(svg, id, color) {
 
       histo['x'] = x;
       histo['y'] = y;
-      histo['bins'] = bins;
+//      histo['bins'] = bins;
 
       if (options.Error > 0) {
-         this.drawErrors(svg_frame, bins, histo, pad, x, y);
+         this.drawErrors(svg_frame, histo.bins, histo, pad, x, y);
       }
       else if (options.Bar == 0 && options.Hist == 0) {
          histo['redraw'] = function() {
@@ -3109,7 +3128,7 @@ function createFillPatterns(svg, id, color) {
                   createFillPatterns(vis, histo['fFillStyle'], histo['fFillColor']);
                   g.append("svg:path")
                      .attr("class", "area")
-                     .attr("d", area(bins))
+                     .attr("d", area(histo.bins))
                      .style("stroke", linecolor)
                      .style("stroke-width", histo['fLineWidth'])
                      .style("fill", "url(#pat" + histo['fFillStyle'] + "_" + histo['fFillColor'] + ")")
@@ -3118,7 +3137,7 @@ function createFillPatterns(svg, id, color) {
                else {
                   g.append("svg:path")
                      .attr("class", "area")
-                     .attr("d", area(bins))
+                     .attr("d", area(histo.bins))
                      .style("stroke", linecolor)
                      .style("stroke-width", histo['fLineWidth'])
                      .style("fill", fillcolor)
@@ -3134,7 +3153,7 @@ function createFillPatterns(svg, id, color) {
 
                g.append("svg:path")
                   .attr("class", "line")
-                  .attr("d", line(bins))
+                  .attr("d", line(histo.bins))
                   .style("stroke", linecolor)
                   .style("stroke-width", histo['fLineWidth'])
                   .style("fill", "none")
@@ -3142,9 +3161,9 @@ function createFillPatterns(svg, id, color) {
                   .style("antialias", "false");
             }
             // add tooltips
-            var selwidth = x(2*binwidth)-x(binwidth);
+            var selwidth = x(2*histo.binwidth)-x(histo.binwidth);
             g.selectAll("selections")
-               .data(bins)
+               .data(histo.bins)
                .enter()
                .append("svg:line")
                .attr("x1", function(d) { return x(d.x-d.xerr) } )

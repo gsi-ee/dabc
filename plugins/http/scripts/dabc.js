@@ -348,9 +348,16 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    if (child) child.innerHTML = 
       this.itemname + ",   version = " + this.version + ", size = " + this.raw_data_size; 
    
-   if (this.sinfo) 
-      JSROOTPainter.drawObject(this.obj, this.drawid);
-   else {
+   if (this.sinfo) {
+      
+      if (!this.first_draw && this.clname.match(/\bTH1/)) {
+//         $("#report").append("<br>call direct redraw");
+         this.obj.redraw();
+      } else {
+         JSROOTPainter.drawObject(this.obj, this.drawid);
+      }
+      
+   } else {
       gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
       gFile = 0;
@@ -389,8 +396,9 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       return;
    }
 
-   this.obj = {};
-   this.obj['_typename'] = 'JSROOTIO.' + this.clname;
+   var obj = {};
+   
+   obj['_typename'] = 'JSROOTIO.' + this.clname;
 
    // one need gFile to unzip data
    if (!this.UnzipRawData()) return;
@@ -398,16 +406,28 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    gFile = this.sinfo.obj;
 
    if (this.clname == "TCanvas") {
-      this.obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
-      if (this.obj && this.obj['fPrimitives']) {
-         if (this.obj['fName'] == "") this.obj['fName'] = "anyname";
+      obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
+      if (obj && obj['fPrimitives']) {
+         if (obj['fName'] == "") obj['fName'] = "anyname";
       }
    } else 
    if (JSROOTIO.GetStreamer(this.clname)) {
-      JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
-      JSROOTCore.addMethods(this.obj);
+      JSROOTIO.GetStreamer(this.clname).Stream(obj, this.raw_data, 0);
+      JSROOTCore.addMethods(obj);
    } else {
       $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
+   }
+   
+   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
+//      $("#report").append("<br> try to update only array");
+      this.obj['fArray'] = obj['fArray'];
+
+//      $("#report").append("<br> forget about new object");
+      obj = null;
+
+      JSROOTPainter.fillbinsHistogram1D(this.obj);
+   } else {
+      this.obj = obj;
    }
 
    this.state = this.StateEnum.stReady;
@@ -442,7 +462,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // if we got same version, do nothing - we are happy!!!
    if ((ver > 0) && (this.version == ver)) {
       this.state = this.StateEnum.stReady;
-      $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
+      // $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 

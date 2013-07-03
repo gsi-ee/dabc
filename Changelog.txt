@@ -7,7 +7,10 @@ of the framework.
    Only when clients="true" is specified, server will provide view of
    remote structures.
 2. Set default DABC command channel port to 1237.   
-
+3. In JSRootIO found simple way to update histogram content on drawn object
+   without redraw of complete canvas - it is really simple. Tested with TH1 objects,
+   but should work with all kinds of objects beside TCanvas.
+   
 
 2.07.2013
 1. Fix error in command channel - submitted commands not always was send to remote.

@@ -63,9 +63,6 @@ const char* SocketErr(int err)
    return "UNCKNOWN";
 }
 
-#define ShowSocketError(info, err) EOUT("SocketError fd:%d %d:%s %s", Socket(), err, SocketErr(err), info)
-
-
 // _____________________________________________________________________
 
 dabc::SocketAddon::SocketAddon(int fd) :
@@ -150,7 +147,7 @@ void dabc::SocketAddon::OnConnectionClosed()
 
 void dabc::SocketAddon::OnSocketError(int errnum, const std::string& info)
 {
-   ShowSocketError(info.c_str(), errnum);
+   EOUT("SocketError fd:%d %d:%s %s", Socket(), errnum, SocketErr(errnum), info.c_str());
 
    if (IsDeliverEventsToWorker()) {
       FireWorkerEvent(evntSocketErrorInfo);
@@ -899,15 +896,14 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
              return;
           }
 
-          ShowSocketError("Postponed connect", myerrno);
+          DOUT3("Postponed connect socket err:%d %s", myerrno, SocketErr(myerrno));
 
           break;
        }
 
        case evntSocketError: {
           int myerrno = TakeSocketError();
-          ShowSocketError("Doing connect", myerrno);
-
+          DOUT3("Doing connect socket err:%d %s", myerrno, SocketErr(myerrno));
           break;
        }
 
@@ -942,7 +938,7 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
                 return;
              }
 
-             ShowSocketError("When calling connection", errno);
+             DOUT3("When calling connection socket err:%d %s", errno, SocketErr(errno));
           }
 
           break;

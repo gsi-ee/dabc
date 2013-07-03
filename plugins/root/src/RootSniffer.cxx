@@ -236,9 +236,12 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
 
       std::string itemname = obj->GetName();
 
-      size_t pos = (itemname.find_last_of("/#<>"));
+      size_t pos = (itemname.find_last_of("/"));
       if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
       if (itemname.empty()) itemname = "item";
+      while ((pos = itemname.find_first_of("/#<>:")) != std::string::npos)
+         itemname.replace(pos, 1, "_");
+
       int cnt = 0;
       std::string basename = itemname;
 
