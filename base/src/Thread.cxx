@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
 
@@ -273,7 +274,7 @@ void* dabc::Thread::MainLoop()
    EventId evid;
    double tmout;
 
-   DOUT0("*** Thrd:%s Starting MainLoop ID = %u %u", GetName(), (unsigned) getpid(), (unsigned) syscall(SYS_gettid));
+   DOUT3("*** Thrd:%s Starting MainLoop PROCID = %u THRDID %u", GetName(), (unsigned) getpid(), (unsigned) syscall(SYS_gettid));
 
    while (fThrdWorking) {
 
