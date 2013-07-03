@@ -20,8 +20,15 @@ Following modifications were done:
      if (fileurl) {
        this.fEND = this.GetSize(fileurl);
      }
+
+2. in JSROOTIOEvolution.js one could add method which checks if ROOT zip header 
+   is availible. Or just optionally suppress alert in 
+   JSROOTIO.RootFile.prototype.R__unzip_header method. 
+   By the way, in JSROOTIO.RootFile.prototype.R__unzip_header one could check
+   that off + HDRSIZE <= str.length  
+
      
-2. Avoid usage of external scripts. In many use cases web-server and web-browser
+3. Avoid usage of external scripts. In many use cases web-server and web-browser
    will run in Intranet without connection to Internet. This is a case in our 
    special accelerator network.
      
@@ -33,20 +40,7 @@ Following modifications were done:
   
     Correspondent scripts should be places in scripts/ subdirectory. 
 
-3. in JSROOTIOEvolution.js, JSROOTIO.RootFile.prototype.R__unzip,
-   One can skip tgtsize argument - result string will be allocated 
-   by RawInflate.inflate(data) anyway. It is used only to cross-check expected size. 
-      
-4. in JSROOTIOEvolution.js one could add method which checks if ROOT zip header 
-   is availible. Or just optionally suppress alert in 
-   JSROOTIO.RootFile.prototype.R__unzip_header method. 
-   By the way, in JSROOTIO.RootFile.prototype.R__unzip_header one could check
-   that off + HDRSIZE <= str.length  
-
-5. Remove JSROOTIO.RootFile.R__unzip_header and JSROOTIO.RootFile.R__unzip from 
-   RootFile class, they should be placed in JSROOTIO. 
-
-6. General wish - provide more clear names for global variables and functions, 
+4. General wish - provide more clear names for global variables and functions, 
     especially for:
     
     source_dir

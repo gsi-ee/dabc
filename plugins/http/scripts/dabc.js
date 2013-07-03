@@ -366,11 +366,11 @@ DABC.RootDrawElement.prototype.UnzipRawData = function() {
    
    if (!this.raw_data) return false;
 
-   var ziphdr = gFile.R__unzip_header(this.raw_data, 0, true);
+   var ziphdr = JSROOTIO.R__unzip_header(this.raw_data, 0, true);
    
    if (!ziphdr) return true;
   
-   var unzip_buf = gFile.R__unzip(ziphdr['srcsize'], this.raw_data, 0, ziphdr['tgtsize']);
+   var unzip_buf = JSROOTIO.R__unzip(ziphdr['srcsize'], this.raw_data, 0, true);
    if (!unzip_buf) {
       alert("fail to unzip data");
       return false;
@@ -392,10 +392,10 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    this.obj = {};
    this.obj['_typename'] = 'JSROOTIO.' + this.clname;
 
-   gFile = this.sinfo.obj;
-
    // one need gFile to unzip data
    if (!this.UnzipRawData()) return;
+
+   gFile = this.sinfo.obj;
 
    if (this.clname == "TCanvas") {
       this.obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
@@ -458,11 +458,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       this.obj = new JSROOTIO.RootFile;
 
       // one need gFile to unzip data
-      gFile = this.obj;
-      
       this.raw_data = arg;
       
       if (this.UnzipRawData()) {
+         gFile = this.obj;
          this.obj.fStreamerInfo.ExtractStreamerInfo(this.raw_data);
          this.version = ver;
          this.state = this.StateEnum.stReady;
