@@ -79,6 +79,8 @@ namespace dabc {
    extern const char* xmlSocketHost;
    extern const char* xmlUseControl;
 
+   enum { defaultDabcPort = 1237 };
+
    class ConfigIO;
 
    /** \brief Base class to read configuration from xml file

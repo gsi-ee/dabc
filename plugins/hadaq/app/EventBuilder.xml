@@ -14,18 +14,35 @@ To enable transmitter, one should specify auto="true" in configuration which say
 to automatically create module when starting application. 
 First output of the module reserved for stream server, second output can be used to
 store data in lmd files. 
-  
+
+One can enable HTTP server, ucommenting line with libDabcHttp.so library.
+This will start server with configured port, which also able to accept connection from clients.
+Means server can provide access not only to data from current process, but also to clients.
+In this particular case one can connect go4 analsys to dabc with command:
+   [shell] go4analysis -stream dabc_node -dabc dabc_node:4444 
+When running from gui, extra argument "-dabc dabc_node:4444" should be specified.
+At the moment http server provides view of ratemeters and display of ROOT histograms and graphs 
+
 -->
 
 <dabc version="2">
-  <Context host="localhost" name="EventBuilder">
+  <Context host="localhost" name="EventBuilder" port="4444">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
+      <!--lib value="libDabcHttp.so"/-->  
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
       <!--affinity value="-1"/-->
     </Run>
+    
+    <HttpServer name="http">
+       <enabled value="true"/>
+       <port value="8090"/>
+       <topname value="${Context}"/>
+       <select value="App"/>
+       <clients value="true"/>
+    </HttpServer>
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>

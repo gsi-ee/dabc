@@ -112,15 +112,13 @@ std::string dabc::Url::GetPortStr() const
    return dabc::format("%d", fPort);
 }
 
-std::string dabc::Url::GetHostNameWithPort() const
+std::string dabc::Url::GetHostNameWithPort(int dfltport) const
 {
-   std::string res = fHostName;
+   int port = fPort;
+   if (port <= 0) port = dfltport;
 
-   if (fPort>0) res += dabc::format(":%d", fPort);
-
-   return res;
+   return (port>0) ?  fHostName + dabc::format(":%d", port) : fHostName;
 }
-
 
 std::string dabc::Url::ComposeItemName(int nodeid, const std::string& itemname)
 {

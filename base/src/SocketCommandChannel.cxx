@@ -703,7 +703,7 @@ std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str
 
    if (remnodename.empty()) return std::string();
 
-   if (remport <= 0) remport = 1237;
+   if (remport <= 0) remport = defaultDabcPort;
 
    return remnodename + dabc::format(":%d", remport);
 }
@@ -727,13 +727,13 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
    dabc::Url url(remnodename);
    if (!url.IsValid() || (url.GetProtocol()!="dabc")) return 0;
 
-   std::string worker_name = ClientWorkerName(url.GetHostNameWithPort());
+   std::string worker_name = ClientWorkerName(url.GetHostNameWithPort(defaultDabcPort));
 
    SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
 
    if (!worker.null()) return worker;
 
-   worker = new SocketCommandClient(this, worker_name, 0, url.GetHostNameWithPort(), conn_tmout);
+   worker = new SocketCommandClient(this, worker_name, 0, url.GetHostNameWithPort(defaultDabcPort), conn_tmout);
 
    worker()->AssignToThread(thread());
 
@@ -801,7 +801,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       dabc::Url url(remnodename);
       if (url.IsValid() && (url.GetProtocol()=="dabc")) {
 
-         std::string worker_name = ClientWorkerName(url.GetHostNameWithPort());
+         std::string worker_name = ClientWorkerName(url.GetHostNameWithPort(defaultDabcPort));
 
          SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
 
@@ -867,13 +867,19 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       ActivateTimeout(0.);
 
       return dabc::cmd_true;
+   } else
+
+   if (cmd.IsName("BuildClientsHierarchy")) {
+      HierarchyContainer* cont = (HierarchyContainer*) cmd.GetPtr("Container");
+      if (cont!=0) BuildClientsHierarchy(cont);
+      return dabc::cmd_true;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
 
-void dabc::SocketCommandChannel::BuildWorkerHierarchy(HierarchyContainer* cont)
+void dabc::SocketCommandChannel::BuildClientsHierarchy(HierarchyContainer* cont)
 {
    // do it here, while all properties of main node are ignored when hierarchy is build
    dabc::Hierarchy top(cont);

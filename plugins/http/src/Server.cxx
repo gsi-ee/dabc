@@ -115,13 +115,10 @@ void http::Server::OnThreadAssigned()
 
    fHierarchy.Create("Full");
 
-   if (fSelPath.empty() && fShowClients) fShowClients = false;
-
    if (!fShowClients) {
       fClientsFolder = "";
       if (fServerFolder.empty()) fServerFolder = "localhost";
    } else {
-      if (fSelPath.empty()) fSelPath = "---";
       if (!fServerFolder.empty()) {
          fTop2Name = fServerFolder;
          fServerFolder = "Server";
@@ -160,7 +157,10 @@ double http::Server::ProcessTimeout(double last_diff)
    if (fShowClients && (main!=dabc::mgr) && !fClientsFolder.empty()) {
       dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
       dabc::Hierarchy h = server_hierarchy.CreateChild(fClientsFolder);
-      h.Build("", chl);
+
+      dabc::Command cmd("BuildClientsHierarchy");
+      cmd.SetPtr("Container", h());
+      chl.Execute(cmd);
    }
 
    dabc::LockGuard lock(fHierarchyMutex);

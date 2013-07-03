@@ -34,13 +34,14 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
       dabc::SocketServerAddon* addon = 0;
 
       if (cmd.GetBool("WithServer", true)) {
-         int nport = cmd.GetInt("ServerPort", 1237);
+         int nport = cmd.GetInt("ServerPort");
+         if (nport <= 0) nport = dabc::defaultDabcPort;
          int fd = dabc::SocketThread::StartServer(nport);
          if (fd<=0) {
             EOUT("Cannot open cmd socket on port %d", nport);
             return 0;
          }
-         DOUT1("Start CMD SOCKET port:%d", nport);
+         DOUT1("Start command channel with port %d", nport);
          addon = new dabc::SocketServerAddon(fd, nport);
          addon->SetDeliverEventsToWorker(true);
       }

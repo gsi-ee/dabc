@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Gener" port="4444">
+  <Context name="Gener">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>

@@ -208,7 +208,8 @@ namespace dabc {
          /** timeout used in channel to update node hierarchy, which than can be requested from remote */
          virtual double ProcessTimeout(double last_diff);
 
-         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
+         /** \brief Method fill hierarchy of remote objects for connected clients */
+         void BuildClientsHierarchy(HierarchyContainer* cont);
 
       public:
          SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd);
