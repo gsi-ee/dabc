@@ -3,13 +3,13 @@
 ifndef Dabc_Makefile_rules
 Dabc_Makefile_rules = true
 
-AUTO_DIRS = $(sort $(CREATE_DIRS) $(dir $(ALLDEPENDENC))) 
-
-build-init::
 
 ifdef DABCMAINMAKE
-AUTO_DIRS += $(sort $(dir $(ALLHDRS))) 
+AUTO_DIRS = $(sort $(CREATE_DIRS) $(dir $(ALLDEPENDENC)) $(dir $(ALLHDRS))) 
 build-init:: $(ALLHDRS)
+else
+AUTO_DIRS = $(sort $(CREATE_DIRS) $(dir $(ALLDEPENDENC))) 
+build-init::
 endif
 
 ifneq ($(APPLICATIONS_DIRS),)

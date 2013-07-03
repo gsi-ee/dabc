@@ -1,3 +1,4 @@
+ifndef noverbs
 
 # switch to enable OFED library support 
 ifndef USEOFEDVERBS
@@ -69,5 +70,7 @@ $(VERBS_O) $(VERBS_D): INCLUDES += $(OFED_INCLUDES)
 $(VERBS_O) $(VERBS_D): DEFINITIONS += $(VERBS_DEFINITIONS)
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif
 
 endif

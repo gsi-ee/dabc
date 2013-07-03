@@ -12,7 +12,7 @@ include config/Makefile.config
 ## disable possibility, that rules included many times 
 Dabc_Makefile_rules = true
 
-CREATE_DIRS += $(DABCDLLPATH) $(DABCINCPATH) $(DABCBINPATH)
+CREATE_DIRS += $(DABCDLLPATH) $(DABCBINPATH) $(DABCINCPATH)/
 
 
 include base/Makefile.mk
@@ -41,7 +41,7 @@ clean-doxy:
 	rm -rf html
 
 dabclogin: build/dabclogin.sh config/Makefile.config
-	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(VERSSUF)|" \
+	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(DABC_VERSION)|" \
 	< build/dabclogin.sh > dabclogin; chmod 755 dabclogin; echo "Create dabclogin"
 
 Dabc_Makefile_rules :=

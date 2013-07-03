@@ -33,37 +33,33 @@ This package was tested on:
   
 INSTALLATION:
 
-1. Unpack this DABC distribution in the future DABC System directory,
-   e.g. /usr/local/pub/dabc 
-   ("cd /usr/local/pub/dabc; tar xzvf dabc.tar.gz")
+1. Unpack this DABC distribution in the future DABC System directory.
    
+      [shell] cd /usr/local/pub/dabc 
+      [shell] tar xzvf /path/to/the/file/dabc.tar.gz 
+  
    or checkout DABC from repository:
    
-   cd /usr/local/pub; svn co https://subversion.gsi.de/dabc/trunk dabc
+      [shell] cd /usr/local/pub 
+      [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
    
-
-2. To compile DIM with Java extensions, JDK_INCLUDE variable should be set.
-   By default, $JAVA_HOME/include path is used by DABC. This means, that
-   JAVA_HOME should point on JDK installation, JVM is not sufficient.
-   One can set JDK_INCLUDE explicitly before starting compilation.  
+3. To compile dabc, just call make:
    
-3. Change to the dabc installation directory and start the build:
-   "cd your_dabc_path; make"
-
+       [shell] make
+       
+    One could specify following options:
+    
+       noverbs=1 - disable compilation of IB VERBS plugin. In some situation
+                   plugin can have problem during compilation and can be disabled
+                   with such option
+       
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used 
 
 5. Use executable "dabc_exe you_file.xml" for single node applications, 
    "dabc_run you_file.xml" for multi-node applications
 
-6. For DIM GUI controls: 
-    * Start the DIM name server _once_ (by typing dimDns)
-    * Specify node where name server is running with 
-      export DIM_DNS_NODE=nodename 
-    * start the dabc GUI in another shell by typing "dabc"
-      (do not forget to call ". dabclogin.sh" first!)
-
-7. Read the DABC online documentation (on dabc.gsi.de) 
+6. Read the DABC online documentation (on dabc.gsi.de) 
    for further information how to configure the DABC and how to use the GUI!
 
 Please contact the DABC developer team for any bug reports and wishes!
