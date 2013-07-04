@@ -9,6 +9,8 @@ of the framework.
    master branch will contain actual code, used in dabc.
 3. Allow in http::Server specify JSROOTIOSYS directory - location of JSRootIO files.
    If not specified, local copy in plugins/http/JSRootIO will be used
+4. For TH1 classes found correct way to redraw histogram with selected range.
+
 
 3.07.2013
 1. In full browser do not automatically show hierarchy of remote clients.

@@ -350,10 +350,12 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    
    if (this.sinfo) {
       
-//      if (!this.first_draw && this.clname.match(/\bTH1/)) {
-//         this.obj.redraw();
-//      } else {
-      JSROOTPainter.drawObject(this.obj, this.drawid);
+      if (!this.first_draw && this.clname.match(/\bTH1/)) {
+         this.obj['rebuild_redraw'] = true;
+         this.obj.redraw();
+      } else {
+        JSROOTPainter.drawObject(this.obj, this.drawid);
+      }
    } else {
       gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
@@ -415,12 +417,13 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
    }
    
-//   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
-//      this.obj['fArray'] = obj['fArray'];
-//      obj = null;
-//      JSROOTPainter.fillbinsHistogram1D(this.obj);
-//   } 
+   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
+      this.obj['fArray'] = obj['fArray'];
+      // $("#report").append("<br>try to exchange content");
+      obj = null;
+   } else { 
       this.obj = obj;
+   }
 
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;

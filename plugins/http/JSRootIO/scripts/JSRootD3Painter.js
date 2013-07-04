@@ -1523,7 +1523,11 @@ function createFillPatterns(svg, id, color) {
             zoom.x(vis['objects'][i].x.domain([xmin, xmax]))
                 .y(vis['objects'][i].y.domain([ymin, ymax]));
             if ('ys' in vis['objects'][i])
-               vis['objects'][i].ys.domain([ymin, ymax])
+               vis['objects'][i].ys.domain([ymin, ymax]);
+             vis['objects'][i]['zoom_xmin'] = 0;
+             vis['objects'][i]['zoom_xmax'] = 0;
+             vis['objects'][i]['zoom_ymin'] = 0;
+             vis['objects'][i]['zoom_ymax'] = 0;
          }
          refresh();
       };
@@ -1559,6 +1563,10 @@ function createFillPatterns(svg, id, color) {
                 ymax = Math.max(vis['objects'][0].y.invert(origin[1]),
                                 vis['objects'][0].y.invert(m[1]));
             for (var i=0;i<vis['objects'].length;++i) {
+               vis['objects'][i]['zoom_xmin'] = xmin;
+               vis['objects'][i]['zoom_xmax'] = xmax;
+               vis['objects'][i]['zoom_ymin'] = ymin;
+               vis['objects'][i]['zoom_ymax'] = ymax;
                zoom.x(vis['objects'][i].x.domain([xmin, xmax]))
                    .y(vis['objects'][i].y.domain([ymin, ymax]));
                if ('ys' in vis['objects'][i])
@@ -1693,6 +1701,21 @@ function createFillPatterns(svg, id, color) {
       var moreloglabelsx = histo['fXaxis'].TestBit(EAxisBits.kMoreLogLabels);
       var moreloglabelsy = histo['fYaxis'].TestBit(EAxisBits.kMoreLogLabels);
 
+      // Sergey Linev: remove old axis elements before we create new one
+      // we cannot call vis.empty while histogram content is on same level 
+      var g_id = histo['fName'];
+      if (g_id != "") {
+         g_id = format_id(g_id);
+         var child = document.getElementById(g_id + "_x_label");
+         if (child) child.parentNode.removeChild(child);
+         child = document.getElementById(g_id + "_y_label");
+         if (child) child.parentNode.removeChild(child);
+         child = document.getElementById(g_id + "_x_axis");
+         if (child) child.parentNode.removeChild(child);
+         child = document.getElementById(g_id + "_y_axis");
+         if (child) child.parentNode.removeChild(child);
+      }
+
       if (histo['fXaxis']['fXmax'] < 100 && histo['fXaxis']['fXmax']/histo['fXaxis']['fXmin'] < 100) noexpx = true;
       if (histo['fYaxis']['fXmax'] < 100 && histo['fYaxis']['fXmax']/histo['fYaxis']['fXmin'] < 100) noexpy = true;
 
@@ -1715,6 +1738,7 @@ function createFillPatterns(svg, id, color) {
 
       vis.append("text")
          .attr("class", "X axis label")
+         .attr("id", g_id+"_x_label")
          .attr("x", w)
          .attr("y", h)
          .attr("text-anchor", "end")
@@ -1734,6 +1758,7 @@ function createFillPatterns(svg, id, color) {
 
       vis.append("text")
          .attr("class", "Y axis label")
+         .attr("id", g_id+"_y_label")
          .attr("x", 0)
          .attr("y", -yAxisLabelFontSize - yAxisTitleFontSize - yAxisLabelOffset * histo['fYaxis']['fTitleOffset'])
          .attr("font-family", yAxisFontDetails['name'])
@@ -1883,11 +1908,13 @@ function createFillPatterns(svg, id, color) {
       }
       var xax = vis.append("svg:g")
          .attr("class", "xaxis")
+         .attr("id", g_id+"_x_axis")
          .attr("transform", "translate(0," + h + ")")
          .call(x_axis);
 
       var yax = vis.append("svg:g")
          .attr("class", "yaxis")
+         .attr("id", g_id+"_y_axis")
          .call(y_axis);
 
 
@@ -2988,7 +3015,6 @@ function createFillPatterns(svg, id, color) {
 
          if (histo['rebuild_redraw']) {
 
-            histo['rebuild_redraw'] = false;
             empty_content = false;
             
             // check content of histogram
@@ -3023,11 +3049,24 @@ function createFillPatterns(svg, id, color) {
             
             // special case used for drawing multiple graphs in the same frame
             var w = frame.attr("width"), h = frame.attr("height");
-            
+
+            var xmin = histo['fXaxis']['fXmin'], xmax = histo['fXaxis']['fXmax']; 
+
+            // Sergey Linev: if zoom was selected before, apply it again
+            if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax'])) {
+               xmin = histo['zoom_xmin'];
+               xmax = histo['zoom_xmax'];
+            }
+
+            if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) {
+               ymin = histo['zoom_ymin'];
+               ymax = histo['zoom_ymax'];
+            }
+
             if (options.Logx)
-               histo['x'] = d3.scale.log().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
+               histo['x'] = d3.scale.log().domain([xmin,xmax]).range([0, w]);
             else
-               histo['x'] = d3.scale.linear().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
+               histo['x'] = d3.scale.linear().domain([xmin,xmax]).range([0, w]);
             if (options.Logy)
                histo['y'] = d3.scale.log().domain([ymin, ymax]).range([h, 0]);
             else
@@ -3157,17 +3196,23 @@ function createFillPatterns(svg, id, color) {
                        ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
                });
          }
+
+         if (histo['rebuild_redraw'] && draw_all) 
+            JSROOTPainter.drawAxes(frame, histo, pad, histo.x, histo.y);
+
+         // mark that redraw not repeated again
+         histo['rebuild_redraw'] = false;
+         
       }
       
       histo['redraw'] = do_histogram_redraw;
+
       histo['rebuild_redraw'] = true;
-      
       do_histogram_redraw();
-      
-      if (draw_all) 
-         this.drawAxes(frame, histo, pad, histo.x, histo.y);
-      this.drawTitle(vis, histo, pad);
+
       this.addInteraction(frame, histo);
+
+      this.drawTitle(vis, histo, pad);
       this.drawFunctions(vis, histo, pad, ret);
    };
    
