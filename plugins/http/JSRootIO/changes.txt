@@ -3,32 +3,8 @@ https://root.cern.ch/svn/root/trunk/js
 
 Following modifications were done:
 
-1. To be able use dummy file instance.
-   gFile is used now as storage for the streamer infos.
-   In fact one should avoid that file access data from network 
-   when no url is specified.
-
-    JSRootIOEvolution.js, line ~2439
-
-     if (this.fURL) {
-       this.fEND = this.GetSize(this.fURL);
-       this.ReadKeys();
-     }
-
-
-     JSRootIOEvolution.js, line ~2395
-     if (fileurl) {
-       this.fEND = this.GetSize(fileurl);
-     }
-
-2. in JSROOTIOEvolution.js one could add method which checks if ROOT zip header 
-   is availible. Or just optionally suppress alert in 
-   JSROOTIO.RootFile.prototype.R__unzip_header method. 
-   By the way, in JSROOTIO.RootFile.prototype.R__unzip_header one could check
-   that off + HDRSIZE <= str.length  
-
      
-3. Avoid usage of external scripts. In many use cases web-server and web-browser
+1. Avoid usage of external scripts. In many use cases web-server and web-browser
    will run in Intranet without connection to Internet. This is a case in our 
    special accelerator network.
      
@@ -40,14 +16,8 @@ Following modifications were done:
   
     Correspondent scripts should be places in scripts/ subdirectory. 
 
-4. In JSRootD3Painter.js new method is introduced to generate drawn bins of
-   histogram, called JSROOTPainter.fillbinsHistogram1D. Method called also
-   by JSROOTPainter.drawHistogram1D. Also 'bins' and 'binswidth' fields 
-   were introduced to histo object to keep it for other code places. "var bin"
-   and "var binwidth" removed from drawHistogram1D. 
 
-
-5. General wish - provide more clear names for global variables and functions, 
+2. General wish - provide more clear names for global variables and functions, 
     especially for:
     
     source_dir
@@ -57,6 +27,10 @@ Following modifications were done:
     
     It would be much clear, if everywhere "ROOT" as part of name is used.  
 
+
+3. In JSRootD3Painter.js in many places 
+
+var g_id = format_id(histo['fName']);
 
     
 To do:
