@@ -31,7 +31,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.0 2013/04/29";
+   JSROOTIO.version = "2.1 2013/07/03";
 
    JSROOTIO.BIT = function(bits, index) {
       var mask = 1 << index;
@@ -1824,7 +1824,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
 
 (function(){
 
-   var version = "1.7 2012/11/28";
+   var version = "1.8 2013/07/03";
 
    if (typeof JSROOTCore != "object") {
       var e1 = new Error("This extension requires JSROOTCore.js");
