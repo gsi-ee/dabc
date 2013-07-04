@@ -3052,26 +3052,23 @@ function createFillPatterns(svg, id, color) {
 
             var xmin = histo['fXaxis']['fXmin'], xmax = histo['fXaxis']['fXmax']; 
 
-            // Sergey Linev: if zoom was selected before, apply it again
-            if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax'])) {
-               xmin = histo['zoom_xmin'];
-               xmax = histo['zoom_xmax'];
-            }
-
-            if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) {
-               ymin = histo['zoom_ymin'];
-               ymax = histo['zoom_ymax'];
-            }
-
             if (options.Logx)
                histo['x'] = d3.scale.log().domain([xmin,xmax]).range([0, w]);
             else
                histo['x'] = d3.scale.linear().domain([xmin,xmax]).range([0, w]);
+            
+            // Sergey Linev: if zoom was selected before, apply it again
+            if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax']))
+               d3.behavior.zoom().x(histo.x).x(histo.x.domain([histo['zoom_xmin'], histo['zoom_xmax']]));
+
             if (options.Logy)
                histo['y'] = d3.scale.log().domain([ymin, ymax]).range([h, 0]);
             else
                histo['y'] = d3.scale.linear().domain([ymin, ymax]).range([h, 0]);
 
+            if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) 
+               d3.behavior.zoom().y(histo.y).y(histo.y.domain([histo['zoom_ymin'], histo['zoom_ymax']]));
+            
             if (!empty_content) {
                
                var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
