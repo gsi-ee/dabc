@@ -72,10 +72,11 @@ namespace http {
          struct mg_context *   fCtx;
          struct mg_callbacks   fCallbacks;
 
-         FilesMap fFiles;       ///< map with read into memory files
-         std::string fHttpSys;  ///< location of http plugin, need to read special files
-         std::string fGo4Sys;   ///< location of go4 (if any)
-         std::string fRootSys;  ///< location of go4 (if any)
+         FilesMap fFiles;          ///< map with read into memory files
+         std::string fHttpSys;     ///< location of http plugin, need to read special files
+         std::string fGo4Sys;      ///< location of go4 (if any)
+         std::string fRootSys;     ///< location of ROOT (if any)
+         std::string fJSRootIOSys; ///< location of JSRootIO (if any)
 
 
          virtual void OnThreadAssigned();

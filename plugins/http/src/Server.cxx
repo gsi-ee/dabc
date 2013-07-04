@@ -57,7 +57,8 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fFiles(),
    fHttpSys(),
    fGo4Sys(),
-   fRootSys()
+   fRootSys(),
+   fJSRootIOSys()
 {
    memset(&fCallbacks, 0, sizeof(fCallbacks));
    fCallbacks.begin_request = begin_request_handler;
@@ -99,6 +100,12 @@ void http::Server::OnThreadAssigned()
 
    const char* rootsys = getenv("ROOTSYS");
    if (rootsys!=0) fRootSys = rootsys;
+
+   const char* jsrootiosys = getenv("JSROOTIOSYS");
+   if (jsrootiosys!=0) fJSRootIOSys = jsrootiosys;
+   if (fJSRootIOSys.empty()) fJSRootIOSys = fHttpSys + "/JSRootIO";
+
+   DOUT0("JSROOTIOSYS = %s ", fJSRootIOSys.c_str());
 
    DOUT0("Starting HTTP server on port %d", fHttpPort);
    DOUT0("HTTPSYS = %s", fHttpSys.c_str());
@@ -265,6 +272,15 @@ bool http::Server::MakeRealFileName(std::string& fname)
       if (pos!=std::string::npos) {
          fname.erase(0, pos+7);
          fname = fRootSys + fname;
+         return true;
+      }
+   }
+
+   if (!fJSRootIOSys.empty()) {
+      pos = fname.rfind("jsrootiosys/");
+      if (pos!=std::string::npos) {
+         fname.erase(0, pos+11);
+         fname = fJSRootIOSys + fname;
          return true;
       }
    }

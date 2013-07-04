@@ -268,7 +268,6 @@ bool dabc::Thread::CompatibleClass(const std::string& clname) const
    return clname == typeThread;
 }
 
-
 void* dabc::Thread::MainLoop()
 {
    EventId evid;

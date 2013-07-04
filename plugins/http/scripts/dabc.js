@@ -1,6 +1,6 @@
 DABC = {};
 
-DABC.version = "2.1.2";
+DABC.version = "2.2.1";
 
 DABC.mgr = 0;
 
@@ -350,13 +350,10 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    
    if (this.sinfo) {
       
-      if (!this.first_draw && this.clname.match(/\bTH1/)) {
-//         $("#report").append("<br>call direct redraw");
-         this.obj.redraw();
-      } else {
-         JSROOTPainter.drawObject(this.obj, this.drawid);
-      }
-      
+//      if (!this.first_draw && this.clname.match(/\bTH1/)) {
+//         this.obj.redraw();
+//      } else {
+      JSROOTPainter.drawObject(this.obj, this.drawid);
    } else {
       gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
@@ -418,17 +415,12 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
    }
    
-   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
-//      $("#report").append("<br> try to update only array");
-      this.obj['fArray'] = obj['fArray'];
-
-//      $("#report").append("<br> forget about new object");
-      obj = null;
-
-      JSROOTPainter.fillbinsHistogram1D(this.obj);
-   } else {
+//   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
+//      this.obj['fArray'] = obj['fArray'];
+//      obj = null;
+//      JSROOTPainter.fillbinsHistogram1D(this.obj);
+//   } 
       this.obj = obj;
-   }
 
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;

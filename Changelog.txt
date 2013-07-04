@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+4.07.2013
+1. Way to update histogram content was too simple and do not scale in the future.
+   Therefore code was ralled back to previous state
+2. Clone of Bertrand repository was created in https://github.com/linev/JSRootIO.git
+   master branch will contain actual code, used in dabc.
+3. Allow in http::Server specify JSROOTIOSYS directory - location of JSRootIO files.
+   If not specified, local copy in plugins/http/JSRootIO will be used
+
 3.07.2013
 1. In full browser do not automatically show hierarchy of remote clients.
    Only when clients="true" is specified, server will provide view of
