@@ -738,13 +738,13 @@ function createFillPatterns(svg, id, color) {
 
    if (typeof JSROOTPainter == 'object'){
       var e1 = new Error('JSROOTPainter is already defined');
-      e1.source = 'JSROOTPainter.js';
+      e1.source = 'JSROOTD3Painter.js';
       throw e1;
    }
 
    if (typeof d3 != 'object') {
-      var e1 = new Error('This extension requires d3.js.js');
-      e1.source = 'JSROOTPainter.js';
+      var e1 = new Error('This extension requires d3.v2.js');
+      e1.source = 'JSROOTD3Painter.js';
       throw e1;
    }
 
@@ -1491,7 +1491,19 @@ function createFillPatterns(svg, id, color) {
       var zoom = d3.behavior.zoom().x(obj.x).y(obj.y);
       vis.on("touchstart", startRectSel);
       vis.on("mousedown", startRectSel);
+      vis.on("contextmenu", showContextMenu);
 
+      function showContextMenu(data, index) {
+          $("#report").append("<br> Conext menu should appear");
+         // d3.select("#menu_div")
+         //  .style('position', 'absolute')
+         //  .style('left', d3.event.x + "px")
+         //  .style('top', d3.event.y + "px")
+         //  .style('display', 'block');
+         
+         d3.event.preventDefault();
+       }
+      
       function startRectSel() {
          d3.event.preventDefault();
          vis.select("#zoom_rect").remove();
@@ -3010,104 +3022,9 @@ function createFillPatterns(svg, id, color) {
       var svg_frame = d3.select(ret['id']);
 
       var empty_content = false;
+      var binwidth = 0;
       
-      function do_histogram_redraw() {
-
-         if (histo['rebuild_redraw']) {
-
-            empty_content = false;
-            
-            // check content of histogram
-            
-            var hmin = 1.0e32, hmax = -1.0e32;
-            for (var i=0;i<histo['fXaxis']['fNbins'];++i) {
-               if (histo['fArray'][i+1] < hmin) hmin = histo['fArray'][i+1];
-               if (histo['fArray'][i+1] > hmax) hmax = histo['fArray'][i+1];
-            }
-            var mul = (hmin < 0) ? 1.05 : 1.0;
-            
-            var ymin = histo['fYaxis']['fXmin'], ymax = histo['fYaxis']['fXmax'];
-            
-            if (Math.abs(hmin) < 1e-300 && Math.abs(hmax) < 1e-300) {
-               if (histo['fMinimum'] != -1111) ymin = histo['fMinimum'];
-               if (histo['fMaximum'] != -1111) ymax = histo['fMaximum'];
-               empty_content = true;
-            } else {
-               if (histo['fMinimum'] != -1111) hmin = histo['fMinimum'];
-               if (histo['fMaximum'] != -1111) hmax = histo['fMaximum'];
-               ymin = hmin * mul;
-               ymax = hmax * 1.05;
-            }
-            // avoid this!
-            histo['fYaxis']['fXmin'] = ymin;
-            histo['fYaxis']['fXmax'] = ymax;
-            
-            histo['x_min'] = histo['fXaxis']['fXmin'];
-            histo['x_max'] = histo['fXaxis']['fXmax'];
-            histo['y_min'] = histo['fYaxis']['fXmin'];
-            histo['y_max'] = histo['fYaxis']['fXmax'];
-            
-            // special case used for drawing multiple graphs in the same frame
-            var w = frame.attr("width"), h = frame.attr("height");
-
-            var xmin = histo['fXaxis']['fXmin'], xmax = histo['fXaxis']['fXmax']; 
-
-            if (options.Logx)
-               histo['x'] = d3.scale.log().domain([xmin,xmax]).range([0, w]);
-            else
-               histo['x'] = d3.scale.linear().domain([xmin,xmax]).range([0, w]);
-            
-            // Sergey Linev: if zoom was selected before, apply it again
-            if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax']))
-               d3.behavior.zoom().x(histo.x).x(histo.x.domain([histo['zoom_xmin'], histo['zoom_xmax']]));
-
-            if (options.Logy)
-               histo['y'] = d3.scale.log().domain([ymin, ymax]).range([h, 0]);
-            else
-               histo['y'] = d3.scale.linear().domain([ymin, ymax]).range([h, 0]);
-
-            if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) 
-               d3.behavior.zoom().y(histo.y).y(histo.y.domain([histo['zoom_ymin'], histo['zoom_ymax']]));
-            
-            if (!empty_content) {
-               
-               var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
-               histo['bins'] = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
-                  var offset = (options.Error > 0) ? (p * binwidth) - (binwidth / 2.0) : (p * binwidth);
-                  return {
-                     x:  histo['fXaxis']['fXmin'] + offset,
-                     y:  histo['fArray'][p],
-                     xerr: binwidth / 2.0,
-                     yerr: histo.getBinError(p)
-                  };
-               });
-               
-               if (options.Same) {
-                  histo.x.domain([ret['xmin'],ret['xmax']]);
-                  histo.y.domain([ret['ymin'],ret['ymax']]);
-               }
-               else {
-                  ret['xmin'] = histo['fXaxis']['fXmin'],
-                  ret['xmax'] = histo['fXaxis']['fXmax'],
-                  ret['ymin'] = histo['fYaxis']['fXmin'];
-                  ret['ymax'] = histo['fYaxis']['fXmax'];
-               }
-               if (histo['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
-                  ret['xmin'] = histo.getBinLowEdge(histo['fXaxis']['fFirst']);
-                  ret['xmax'] = histo.getBinUpEdge(histo['fXaxis']['fLast']);
-                  histo.x.domain([ret['xmin'],ret['xmax']]);
-                  histo.y.domain([ret['ymin'],ret['ymax']]);
-               }
-
-               if (options.Error > 0) {
-                  this.drawErrors(svg_frame, histo.bins, histo, pad, histo.x, histo.y);
-               }
-               
-            } // end of non_empty content treatment
-            
-         } // end of histogram rebuild
-         
-         // now code that was used in previous redraw
+      function redraw_histogram() {
 
          if (empty_content) {
             JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
@@ -3119,13 +3036,13 @@ function createFillPatterns(svg, id, color) {
          } else {
             if (draw_all)
                JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
-
+            
             if (histo['fName'] == '') histo['fName'] = "random_histo_" + random_id++;
             var g_id = format_id(histo['fName']);
 
             svg_frame.selectAll("#"+g_id).remove();
             var g = svg_frame.append("svg:g").attr("id", g_id);
-
+            
             if ((histo['fFillStyle'] < 4000 || histo['fFillStyle'] > 4100) && histo['fFillColor'] != 0) {
 
                /* histogram filling */
@@ -3133,8 +3050,8 @@ function createFillPatterns(svg, id, color) {
                   .x(function(d) { return histo.x(d.x);})
                   .y0(function(d) { return histo.y(0);})
                   .y1(function(d) { return histo.y(d.y);})
-                  .interpolate("step-before")
-
+                  .interpolate("step-before");
+                  
                if (histo['fFillStyle'] > 3000 && histo['fFillStyle'] <= 3025) {
                   createFillPatterns(vis, histo['fFillStyle'], histo['fFillColor']);
 
@@ -3193,33 +3110,117 @@ function createFillPatterns(svg, id, color) {
                        ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
                });
          }
-
-         if (histo['rebuild_redraw'] && draw_all) 
-            JSROOTPainter.drawAxes(frame, histo, pad, histo.x, histo.y);
-
-         // mark that redraw not repeated again
-         histo['rebuild_redraw'] = false;
-         
       }
       
-      histo['redraw'] = do_histogram_redraw;
+      function rebuild_histogram() {
+         empty_content = false;
+         
+         // check content of histogram
+         
+         var hmin = 1.0e32, hmax = -1.0e32;
+         for (var i=0;i<histo['fXaxis']['fNbins'];++i) {
+            if (histo['fArray'][i+1] < hmin) hmin = histo['fArray'][i+1];
+            if (histo['fArray'][i+1] > hmax) hmax = histo['fArray'][i+1];
+         }
+         var mul = (hmin < 0) ? 1.05 : 1.0;
+         
+         var ymin = histo['fYaxis']['fXmin'], ymax = histo['fYaxis']['fXmax'];
+         
+         if (Math.abs(hmin) < 1e-300 && Math.abs(hmax) < 1e-300) {
+            if (histo['fMinimum'] != -1111) ymin = histo['fMinimum'];
+            if (histo['fMaximum'] != -1111) ymax = histo['fMaximum'];
+            empty_content = true;
+         } else {
+            if (histo['fMinimum'] != -1111) hmin = histo['fMinimum'];
+            if (histo['fMaximum'] != -1111) hmax = histo['fMaximum'];
+            ymin = hmin * mul;
+            ymax = hmax * 1.05;
+         }
+         // avoid this!
+         histo['fYaxis']['fXmin'] = ymin;
+         histo['fYaxis']['fXmax'] = ymax;
+         
+         histo['x_min'] = histo['fXaxis']['fXmin'];
+         histo['x_max'] = histo['fXaxis']['fXmax'];
+         histo['y_min'] = histo['fYaxis']['fXmin'];
+         histo['y_max'] = histo['fYaxis']['fXmax'];
+         
+         // special case used for drawing multiple graphs in the same frame
+         var w = frame.attr("width"), h = frame.attr("height");
 
-      histo['rebuild_redraw'] = true;
-      do_histogram_redraw();
+         var xmin = histo['fXaxis']['fXmin'], xmax = histo['fXaxis']['fXmax']; 
+
+         if (options.Logx)
+            histo['x'] = d3.scale.log().domain([xmin,xmax]).range([0, w]);
+         else
+            histo['x'] = d3.scale.linear().domain([xmin,xmax]).range([0, w]);
+         
+         // Sergey Linev: if zoom was selected before, apply it again
+         if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax']))
+            d3.behavior.zoom().x(histo.x).x(histo.x.domain([histo['zoom_xmin'], histo['zoom_xmax']]));
+
+         if (options.Logy)
+            histo['y'] = d3.scale.log().domain([ymin, ymax]).range([h, 0]);
+         else
+            histo['y'] = d3.scale.linear().domain([ymin, ymax]).range([h, 0]);
+
+         if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) 
+            d3.behavior.zoom().y(histo.y).y(histo.y.domain([histo['zoom_ymin'], histo['zoom_ymax']]));
+         
+         if (!empty_content) {
+            
+            binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
+            histo['bins'] = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
+               var offset = (options.Error > 0) ? (p * binwidth) - (binwidth / 2.0) : (p * binwidth);
+               return {
+                  x:  histo['fXaxis']['fXmin'] + offset,
+                  y:  histo['fArray'][p],
+                  xerr: binwidth / 2.0,
+                  yerr: histo.getBinError(p)
+               };
+            });
+            
+            if (options.Same) {
+               histo.x.domain([ret['xmin'],ret['xmax']]);
+               histo.y.domain([ret['ymin'],ret['ymax']]);
+            }
+            else {
+               ret['xmin'] = histo['fXaxis']['fXmin'],
+               ret['xmax'] = histo['fXaxis']['fXmax'],
+               ret['ymin'] = histo['fYaxis']['fXmin'];
+               ret['ymax'] = histo['fYaxis']['fXmax'];
+            }
+            if (histo['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
+               ret['xmin'] = histo.getBinLowEdge(histo['fXaxis']['fFirst']);
+               ret['xmax'] = histo.getBinUpEdge(histo['fXaxis']['fLast']);
+               histo.x.domain([ret['xmin'],ret['xmax']]);
+               histo.y.domain([ret['ymin'],ret['ymax']]);
+            }
+
+            if (options.Error > 0) {
+               this.drawErrors(svg_frame, histo.bins, histo, pad, histo.x, histo.y);
+            }
+            
+         } // end of non_empty content treatment
+            
+         // now draw it
+
+         histo.redraw();
+         
+         if (draw_all) 
+            JSROOTPainter.drawAxes(frame, histo, pad, histo.x, histo.y);
+      }
+      
+      histo['redraw'] = redraw_histogram;
+      histo['rebuild'] = rebuild_histogram;
+
+      rebuild_histogram();
 
       this.addInteraction(frame, histo);
 
       this.drawTitle(vis, histo, pad);
       this.drawFunctions(vis, histo, pad, ret);
    };
-   
-   
-   
-   
-   
-   
-   
-
    
    
    JSROOTPainter.drawHistogram1Dold = function(vis, pad, histo, hframe) {

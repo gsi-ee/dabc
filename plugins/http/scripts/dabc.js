@@ -301,18 +301,20 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    
    this.first_draw = true;
    
-   var entryInfo = "";
+   var entryInfo = ""; //"<div style='width:50%'>";
    if (this.sinfo) {
-      entryInfo = "<h5 id='"+this.titleid+"'><a id='"+this.titleid + "_text'>" + this.itemname + "</a></h5>";
-      entryInfo += "<div id='" + this.frameid + "'>";
+      entryInfo += "<h5 id='"+this.titleid+"'><a id='"+this.titleid + "_text'>" + this.itemname + "</a></h5>";
+      entryInfo += "<div id='" + this.frameid + "'/>";
    } else {
-      entryInfo = "<h5 id=\""+this.titleid+"\"><a> Streamer Infos </a>&nbsp; </h5><div><br>";
-      entryInfo += "<h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div><br>";
-
+      entryInfo += "<h5 id='"+this.titleid+"'><a> Streamer Infos </a>&nbsp; </h5>";
+      entryInfo += "<div><h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>";
    }
+   //entryInfo+="</div>";
    $(topid).append(entryInfo);
    
-//   $("#report").append("is " + $("#"+this.titleid).schemaTypeInfo); 
+//   $(topid).data('any', 10);
+//   $("#report").append("<br>something = " + $(topid).data('any'));
+   
 }
 
 DABC.RootDrawElement.prototype.ClickItem = function() {
@@ -351,8 +353,7 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    if (this.sinfo) {
       
       if (!this.first_draw && this.clname.match(/\bTH1/)) {
-         this.obj['rebuild_redraw'] = true;
-         this.obj.redraw();
+         this.obj.rebuild();
       } else {
         JSROOTPainter.drawObject(this.obj, this.drawid);
       }
@@ -795,9 +796,19 @@ DABC.Manager.prototype.UpdateAll = function() {
 
 DABC.Manager.prototype.display = function(itemname) {
    if (!itemname) return;
-   
-//   $("#report").append("<br> display click "+itemname);
-  
+
+/*   
+   $("#report").append("<br> display click "+itemname);
+   if (JSROOT.elements) $("#report").append("<br> elements are there ");
+   var topid = JSROOT.elements.generateNewFrame("report");
+   var elem = new JSROOT.DrawElement();
+   JSROOT.elements.initElement(topid, elem, true);
+   elem.makeCollapsible();
+   elem.setInfo("Any Element");
+   elem.appendText("<br>somethiung to see");
+   elem.appendText("<br>somethiung to see");
+   $("#report").append("<br> source "+JSROOT.source_dir );
+*/  
    var xmlnode = this.FindXmlNode(itemname);
    if (!xmlnode) {
       $("#report").append("<br> cannot find xml node "+itemname);
