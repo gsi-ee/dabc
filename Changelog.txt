@@ -5,9 +5,13 @@ of the framework.
 5.07.2013
 1. Implement context menu for drawn object. This allows to implement different
    functionality without complex gui with collapsibles.
-2. With few modifications allow to work with local files.
+2. Change hist paint mathod - keep hist.redraw() as it was, 
+   introduce hist.rebuild() method which should recreate histogram.   
+3. With few modifications allow to work with local files.
    Web server, which does not support ranges, should also work now.
-   
+4. First try to generate stats box on browser side.
+   Question, how far one should go with duplication of ROOT functionality?
+      
 
 4.07.2013
 1. Way to update histogram content was too simple and do not scale in the future.
