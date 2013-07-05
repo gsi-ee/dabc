@@ -64,10 +64,9 @@ input.tb {
 .ui-icon-triangle-1-s { background-position: -64px -16px; }
 
 .ui-accordion { 
-   width: 100%; margin-right: 5px;
+   width: 100%; margin-right: 15px;
 }
 .ui-accordion-header {
-   margin-right: -2px;
    background-color: #c0c8ff;
    border: 1px solid #aaaaaa;
    color: #7a7a7a;
@@ -188,3 +187,4 @@ button.closeButton {
    margin-left:5px;
    overflow:hidden;
 }
+

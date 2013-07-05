@@ -5,6 +5,8 @@ of the framework.
 5.07.2013
 1. Implement context menu for drawn object. This allows to implement different
    functionality without complex gui with collapsibles.
+2. With few modifications allow to work with local files.
+   Web server, which does not support ranges, should also work now.
    
 
 4.07.2013

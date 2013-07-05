@@ -1859,6 +1859,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       this.fEND = 0;
       this.fURL = url;
       this.fLogMsg = "";
+      this.fAcceptRanges = true;  
+      this.fFullFileContent = ""; // this will full content of the file
 
       this.ERelativeTo = {
          kBeg : 0,
@@ -1874,13 +1876,16 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          if (xhr.status == 200 || xhr.status == 0) {
             var header = xhr.getResponseHeader("Content-Length");
             var accept_ranges = xhr.getResponseHeader("Accept-Ranges");
+            if (!accept_ranges) this.fAcceptRanges = false; 
             return parseInt(header);
          }
+
          xhr = null;
          return -1;
       }
 
       JSROOTIO.RootFile.prototype.ReadBuffer = function(len, callback, object) {
+
          // Read specified byte range from remote file
          var ie9 = function(url, pos, len, file, callbk, obj) {
             // IE9 Fallback
@@ -1892,6 +1897,14 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                   for (var i = 0; i < array.length; i++) {
                      filecontent = filecontent + String.fromCharCode(array[i]);
                   }
+
+                  if (!file.fAcceptRanges && (filecontent.length != len) &&
+                      (file.fEND == filecontent.length)) {
+                     // $('#report').append("<br> seems to be, we get full file");
+                     file.fFullFileContent = filecontent;
+                     filecontent = file.fFullFileContent.substr(pos, len);
+                  }
+
                   callbk(file, filecontent, obj); // Call callback func with data
                   delete filecontent;
                   filecontent = null;
@@ -1908,7 +1921,6 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             xhr = null;
          }
          var other = function(url, pos, len, file, callbk, obj) {
-            //
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
                if (this.readyState == 4 && (this.status == 0 || this.status == 200 ||
@@ -1934,6 +1946,14 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                   } else {
                      var filecontent = Buf;
                   }
+                  
+                  if (!file.fAcceptRanges && (filecontent.length != len) &&
+                      (file.fEND == filecontent.length)) {
+                    // $('#report').append("<br> seems to be, we get full file");
+                    file.fFullFileContent = filecontent;
+                    filecontent = file.fFullFileContent.substr(pos, len);
+                  }
+
                   callbk(file, filecontent, obj); // Call callback func with data
                   delete filecontent;
                   filecontent = null;
@@ -1957,6 +1977,12 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             xhr.send(null);
             xhr = null;
          }
+         
+         if (!this.fAcceptRanges && (this.fFullFileContent.length>0)) {
+            var res = this.fFullFileContent.substr(this.fOffset,len);
+            callback(this, res, object);
+         }
+         else
          // Multi-browser support
          if (typeof ActiveXObject == "function")
             return ie9(this.fURL, this.fOffset, len, this, callback, object);
