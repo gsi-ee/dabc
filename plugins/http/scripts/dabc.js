@@ -425,6 +425,60 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    } else { 
       this.obj = obj;
    }
+   if (this.clname.match(/\bTH1/)) {
+      
+      var stats = {};
+      stats['_typename'] = 'JSROOTIO.TPaveStats';
+      stats['fX1NDC'] = 0.7;
+      stats['fY1NDC'] = 0.7;
+      stats['fX2NDC'] = 0.98;
+      stats['fY2NDC'] = 0.5;
+
+      stats['fOptFit'] = 0;
+      stats['fOptStat'] = 1111;
+      stats['fLongest'] = 17;
+      stats['fMargin'] = 0.05;
+
+      stats['fBorderSize'] = 1;
+      stats['fInit'] = 1;
+      stats['fShadowColor'] = 1;
+      stats['fCornerRadius'] = 0;
+
+      stats['fX1'] = 2;
+      stats['fY1'] = 718;
+      stats['fX2'] = 5;
+      stats['fY2'] = 888;
+
+      stats['fResizing'] = false;
+      stats['fUniqueID'] = 0;
+      stats['fBits'] = 0x03000009;
+      stats['fLineColor'] = 1;
+      stats['fLineStyle'] = 1;
+      stats['fLineWidth'] = 1;
+
+      stats['fFillColor'] = 0;
+      stats['fFillStyle'] = 1001;
+      
+      stats['fTextAngle'] = 0;
+      stats['fTextSize'] = 0;
+      stats['fTextAlign'] = 12;
+      stats['fTextColor'] = 1;
+      stats['fTextFont'] = 42;
+      
+      stats['fLines'] = new Array;
+
+      stats['fLines'].push({'fTitle': "Name", "fTextColor": 1});
+      stats['fLines'].push({'fTitle': "Entries = 4075", "fTextColor": 1});
+      stats['fLines'].push({'fTitle': "Mean = 2000", "fTextColor": 1});
+      stats['fLines'].push({'fTitle': "RMS = 3000", "fTextColor": 1});
+
+      stats['fLines'][0]['fTitle'] = this.obj['fName']; 
+      
+      if (!'fFunctions' in this.obj) this.obj['fFunctions'] = {};
+
+      if (this.obj.fFunctions.length == 0) 
+         this.obj['fFunctions'].push(stats);
+   }
 
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;
