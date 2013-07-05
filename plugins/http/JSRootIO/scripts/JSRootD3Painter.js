@@ -1456,6 +1456,75 @@ function createFillPatterns(svg, id, color) {
          renderer.render( scene, camera );
       });
    };
+   
+   JSROOTPainter.histoDialog = function(item) {
+      // $("#report").append("<br> Actiavte object in dialog " + obj['fName']);
+      
+      var obj = $("#dialog").data("Object"); 
+      var vis = $("#dialog").data("Frame");
+
+      $("#dialog").dialog("close");
+      $("#dialog").empty();
+      
+      if (item=="unzoomxy") {
+         JSROOTPainter.unzoomXFrame(vis);
+         JSROOTPainter.unzoomYFrame(vis);
+         JSROOTPainter.redrawFrame(vis);
+      } else
+      if (item=="unzoomx") {
+         JSROOTPainter.unzoomXFrame(vis);
+         JSROOTPainter.redrawFrame(vis);
+      } else
+      if (item=="unzoomy") {
+         JSROOTPainter.unzoomYFrame(vis);
+         JSROOTPainter.redrawFrame(vis);
+      }
+   }
+   
+   JSROOTPainter.unzoomXFrame = function(vis)
+   {
+      var xmin = vis['objects'][0]['x_min'],
+          xmax = vis['objects'][0]['x_max'];
+      for (var i=0;i<vis['objects'].length;++i) {
+        d3.behavior.zoom().x(vis['objects'][i].x.domain([xmin, xmax]));
+         vis['objects'][i]['zoom_xmin'] = 0;
+         vis['objects'][i]['zoom_xmax'] = 0;
+      }
+   }
+
+   JSROOTPainter.unzoomYFrame = function(vis)
+   {
+      var ymin = vis['objects'][0]['y_min'],
+          ymax = vis['objects'][0]['y_max'];
+      for (var i=0;i<vis['objects'].length;++i) {
+        d3.behavior.zoom().y(vis['objects'][i].y.domain([ymin, ymax]));
+        if ('ys' in vis['objects'][i])
+           vis['objects'][i].ys.domain([ymin, ymax]);
+         vis['objects'][i]['zoom_ymin'] = 0;
+         vis['objects'][i]['zoom_ymax'] = 0;
+      }
+   }
+   
+   JSROOTPainter.redrawFrame = function(vis)
+   {
+      if (vis.x_axis && vis.y_axis) {
+         vis.select(".xaxis").call(vis.x_axis);
+         vis.select(".yaxis").call(vis.y_axis);
+      }
+      vis.select(".xaxis").selectAll("text")
+         .attr("font-size", vis['x_fsize'])
+         .attr("font-family", vis['x_font']['name'])
+         .attr("font-weight", vis['x_font']['weight'])
+         .attr("font-style", vis['x_font']['style']);
+      vis.select(".yaxis").selectAll("text")
+         .attr("font-size", vis['y_fsize'])
+         .attr("font-family", vis['y_font']['name'])
+         .attr("font-weight", vis['y_font']['weight'])
+         .attr("font-style", vis['y_font']['style']);
+      for (var i=0;i<vis['objects'].length;++i) {
+         vis['objects'][i].redraw();
+      }
+   }
 
    JSROOTPainter.addInteraction = function(vis, obj) {
       var width = vis.attr("width"), height = vis.attr("height");
@@ -1468,40 +1537,36 @@ function createFillPatterns(svg, id, color) {
       if (vis['objects'].indexOf(obj) != -1) return;
       vis['objects'].push(obj);
 
-      function refresh() {
-         if (vis.x_axis && vis.y_axis) {
-            vis.select(".xaxis").call(vis.x_axis);
-            vis.select(".yaxis").call(vis.y_axis);
-         }
-         vis.select(".xaxis").selectAll("text")
-            .attr("font-size", vis['x_fsize'])
-            .attr("font-family", vis['x_font']['name'])
-            .attr("font-weight", vis['x_font']['weight'])
-            .attr("font-style", vis['x_font']['style']);
-         vis.select(".yaxis").selectAll("text")
-            .attr("font-size", vis['y_fsize'])
-            .attr("font-family", vis['y_font']['name'])
-            .attr("font-weight", vis['y_font']['weight'])
-            .attr("font-style", vis['y_font']['style']);
-         for (var i=0;i<vis['objects'].length;++i) {
-            vis['objects'][i].redraw();
-         }
-      };
-      //var zoom = d3.behavior.zoom().x(obj.x).y(obj.y).on("zoom", refresh());
       var zoom = d3.behavior.zoom().x(obj.x).y(obj.y);
       vis.on("touchstart", startRectSel);
       vis.on("mousedown", startRectSel);
       vis.on("contextmenu", showContextMenu);
 
-      function showContextMenu(data, index) {
-          $("#report").append("<br> Conext menu should appear");
-         // d3.select("#menu_div")
-         //  .style('position', 'absolute')
-         //  .style('left', d3.event.x + "px")
-         //  .style('top', d3.event.y + "px")
-         //  .style('display', 'block');
-         
+      function showContextMenu() {
+
          d3.event.preventDefault();
+
+         $("#dialog").empty();
+         
+         $("#dialog").append("<a href='javascript: JSROOTPainter.histoDialog(\"unzoomx\")'>unzoom X</a><br>");
+         $("#dialog").append("<a href='javascript: JSROOTPainter.histoDialog(\"unzoomy\")'>unzoom Y</a><br>");
+         $("#dialog").append("<a href='javascript: JSROOTPainter.histoDialog(\"unzoomxy\")'>unzoom XY</a>");
+         
+         $("#dialog").data("Object", obj);
+         $("#dialog").data("Frame", vis);
+         
+         $("#dialog").dialog({ 
+            title: "histogram",
+            closeOnEscape: true,
+            autoOpen: false,
+            resizable: false,
+            modal: false,
+            width: "auto",
+            height: "auto",
+            position : {my: "left+3 top+3", of: d3.event, collision:"fit"}  
+         });
+         
+         $( "#dialog" ).dialog("open");
        }
       
       function startRectSel() {
@@ -1527,21 +1592,10 @@ function createFillPatterns(svg, id, color) {
 
       function unZoom() {
          d3.event.preventDefault();
-         var xmin = vis['objects'][0]['x_min'],
-             xmax = vis['objects'][0]['x_max'],
-             ymin = vis['objects'][0]['y_min'],
-             ymax = vis['objects'][0]['y_max'];
-         for (var i=0;i<vis['objects'].length;++i) {
-            zoom.x(vis['objects'][i].x.domain([xmin, xmax]))
-                .y(vis['objects'][i].y.domain([ymin, ymax]));
-            if ('ys' in vis['objects'][i])
-               vis['objects'][i].ys.domain([ymin, ymax]);
-             vis['objects'][i]['zoom_xmin'] = 0;
-             vis['objects'][i]['zoom_xmax'] = 0;
-             vis['objects'][i]['zoom_ymin'] = 0;
-             vis['objects'][i]['zoom_ymax'] = 0;
-         }
-         refresh();
+
+         JSROOTPainter.unzoomXFrame(vis);
+         JSROOTPainter.unzoomYFrame(vis);
+         JSROOTPainter.redrawFrame(vis);
       };
 
       function moveRectSel() {
@@ -1586,7 +1640,9 @@ function createFillPatterns(svg, id, color) {
             }
          }
          rect.remove();
-         refresh();
+         
+         JSROOTPainter.redrawFrame(vis);
+         
          d3.select("body").style("-webkit-user-select", "auto");
       };
    };
@@ -1924,11 +1980,11 @@ function createFillPatterns(svg, id, color) {
          .attr("transform", "translate(0," + h + ")")
          .call(x_axis);
 
+      
       var yax = vis.append("svg:g")
          .attr("class", "yaxis")
          .attr("id", g_id+"_y_axis")
          .call(y_axis);
-
 
       var xAxisLabelFontDetails = getFontDetails(root_fonts[Math.floor(histo['fXaxis']['fLabelFont']/10)]);
       var yAxisLabelFontDetails = getFontDetails(root_fonts[Math.floor(histo['fXaxis']['fLabelFont']/10)]);

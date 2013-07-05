@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+5.07.2013
+1. Implement context menu for drawn object. This allows to implement different
+   functionality without complex gui with collapsibles.
+   
+
 4.07.2013
 1. Way to update histogram content was too simple and do not scale in the future.
    Therefore code was ralled back to previous state

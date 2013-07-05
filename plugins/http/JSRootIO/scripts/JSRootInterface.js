@@ -342,6 +342,7 @@ function BuildSimpleGUI() {
       +'</div>'
 
       +'<div id="reportHolder" class="column">'
+      +'<div id="dialog"> </div>'
       +'<div id="report"> </div>'
       +'</div>';
       $('#simpleGUI').append(guiCode);
