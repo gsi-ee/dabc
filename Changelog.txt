@@ -9,6 +9,9 @@ of the framework.
 2. Try to introduce gStyle object in JSRootD3Painter.js - use to create stat box for
    histogram. 
 3. Provide possibility to select between experimental and normal painter.   
+4. Very-very first HistPainter class in JSRootD3ExpPainter.js - try to move
+   all graphical handling out of histogram itself. Painter will keep all options,
+   which we could change later interactive. 
 
 
 5.07.2013
