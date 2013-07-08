@@ -5,21 +5,11 @@
    <head>
       <title>Read a ROOT file in Javascript (Demonstration)</title>
       <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-      <link rel="stylesheet" type="text/css" href="style/jquery-ui.css" />
-      <link rel="stylesheet" type="text/css" href="style/JSRootInterface.css" />
-      <script type="text/javascript" src="scripts/JSRootInterface.js"></script>
-
-   <script type='text/javascript'>
-      function localGuiInit() {
-         var pos = document.URL.lastIndexOf("/"); 
-         source_dir = document.URL.substr(0, pos+1);
-         BuildSimpleGUI();
-      }
-   </script>
-      
+      <link rel="stylesheet" type="text/css" href="http://root.cern.ch/js/style/JSRootInterface.css" />
+      <script type="text/javascript" src="http://root.cern.ch/js/scripts/JSRootInterface.js"></script>
    </head>
 
-   <body onload="localGuiInit()">
+   <body onload="BuildSimpleGUI()">
    <div id="simpleGUI" files="files/ct.root;files/exclusion.root;files/fillrandom.root;files/glbox.root;files/graph.root;files/hsimple.root;files/legends.root;files/rf107.root;files/stacks.root;files/zdemo.root"></div>
 
    </body>
