@@ -11,6 +11,20 @@ var kWhite = 0, kBlack = 1, kGray = 920, kRed = 632, kGreen = 416, kBlue = 600,
     kYellow = 400, kMagenta = 616, kCyan = 432, kOrange = 800, kSpring = 820,
     kTeal = 840, kAzure = 860, kViolet = 880, kPink = 900;
 
+var gStyle = {
+   'OptStat'       : 1111,
+   'StatX'         : 0.7, 
+   'StatY'         : 0.7, 
+   'StatW'         : 0.28, 
+   'StatH'         : 0.28,
+   'StatColor'     : 0,
+   'StatStyle'     : 1001,
+   'StatFont'      : 42,
+   'StatFontSize'  : 0,
+   'StatTextColor' : 1,
+};
+
+
 var symbols_map = {
    // greek letters
    '#alpha' : '\u03B1',
@@ -1545,6 +1559,23 @@ function createFillPatterns(svg, id, color) {
       function showContextMenu() {
 
          d3.event.preventDefault();
+         
+/*         $("#dialog").empty();
+         $("#dialog").append("<li><a href='javascript: JSROOTPainter.histoDialog(\"unzoomx\")'>unzoom X</a></li>");
+         $("#dialog").append("<li><a href='javascript: JSROOTPainter.histoDialog(\"unzoomy\")'>unzoom Y</a></li>");
+         $("#dialog").append("<li><a href='javascript: JSROOTPainter.histoDialog(\"unzoomxy\")'>unzoom XY</a></li>");
+
+         $("#dialog").data("Object", obj);
+         $("#dialog").data("Frame", vis);
+
+         var mymenu = $("#dialog").menu({ 
+               position : {my: "left+3 top+3", of: d3.event, collision:"fit"}  
+         });
+         
+         mymenu.show();
+         
+         $(document ).one( "click", function() { mymenu.hide(); });
+*/
 
          $("#dialog").empty();
          
@@ -1554,9 +1585,10 @@ function createFillPatterns(svg, id, color) {
          
          $("#dialog").data("Object", obj);
          $("#dialog").data("Frame", vis);
+         $("#dialog").data("shown", true);
          
          $("#dialog").dialog({ 
-            title: "histogram",
+            title: obj['fName'],
             closeOnEscape: true,
             autoOpen: false,
             resizable: false,
@@ -1567,10 +1599,18 @@ function createFillPatterns(svg, id, color) {
          });
          
          $( "#dialog" ).dialog("open");
+        
+         
        }
       
       function startRectSel() {
          d3.event.preventDefault();
+         
+         if ($("#dialog").data("shown")) {
+            $( "#dialog" ).dialog("close");
+            $( "#dialog" ).empty();
+         }
+         
          vis.select("#zoom_rect").remove();
          e = this;
          var t = d3.event.changedTouches;
@@ -1619,6 +1659,8 @@ function createFillPatterns(svg, id, color) {
          var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
          m[0] = Math.max(0, Math.min(width, m[0]));
          m[1] = Math.max(0, Math.min(height, m[1]));
+         var do_redraw = true;
+         
          if (Math.abs(m[0] - origin[0]) > 10 && Math.abs(m[1] - origin[1]) > 10) {
             var xmin = Math.min(vis['objects'][0].x.invert(origin[0]),
                                 vis['objects'][0].x.invert(m[0])),
@@ -1638,10 +1680,33 @@ function createFillPatterns(svg, id, color) {
                if ('ys' in vis['objects'][i])
                   vis['objects'][i].ys.domain([ymin, ymax])
             }
+         } else {
+            do_redraw = false;
          }
          rect.remove();
          
-         JSROOTPainter.redrawFrame(vis);
+         if (do_redraw && ('x_axis' in vis) && ('y_axis' in vis) && 
+             ('x_axis_draw' in vis) && ('y_axis_draw' in vis) &&
+             (vis['objects'].length==1) && ('newredraw' in vis['objects'][0])) {
+
+            vis.x_axis.scale(vis['objects'][0].x);
+            vis.y_axis.scale(vis['objects'][0].y);
+
+            // var svg = d3.select("root_canvas").transition();
+
+            vis.x_axis_draw.transition().duration(750).call(vis.x_axis);
+            vis.y_axis_draw.transition().duration(750).call(vis.y_axis);
+            
+            vis['objects'][0].newredraw();
+
+            //svg.select("xaxis").duration(750).call(vis.x_axis);
+            //svg.select("yaxis").duration(750).call(vis.y_axis);
+            
+            do_redraw = false;
+         }
+         
+         if (do_redraw) 
+            JSROOTPainter.redrawFrame(vis);
          
          d3.select("body").style("-webkit-user-select", "auto");
       };
@@ -1653,7 +1718,9 @@ function createFillPatterns(svg, id, color) {
       d3.select(render_to).style("background-color", 'white');
       d3.select(render_to).style("width", "100%");
 
-      var svg = d3.select(render_to).append("svg")
+      var svg = d3.select(render_to)
+                  .append("svg")
+                  .attr("class","root_canvas")
                   .attr("width", w)
                   .attr("height", h)
                   .style("background-color", 'white');
@@ -1771,9 +1838,10 @@ function createFillPatterns(svg, id, color) {
 
       // Sergey Linev: remove old axis elements before we create new one
       // we cannot call vis.empty while histogram content is on same level 
-      var g_id = histo['fName'];
-      if (g_id != "") {
-         g_id = format_id(g_id);
+      var g_id;
+      
+      if ('g_id' in histo) {
+         g_id = histo.g_id;
          var child = document.getElementById(g_id + "_x_label");
          if (child) child.parentNode.removeChild(child);
          child = document.getElementById(g_id + "_y_label");
@@ -1782,8 +1850,10 @@ function createFillPatterns(svg, id, color) {
          if (child) child.parentNode.removeChild(child);
          child = document.getElementById(g_id + "_y_axis");
          if (child) child.parentNode.removeChild(child);
+      } else {
+         g_id = format_id(histo['fName']);
       }
-
+      
       if (histo['fXaxis']['fXmax'] < 100 && histo['fXaxis']['fXmax']/histo['fXaxis']['fXmin'] < 100) noexpx = true;
       if (histo['fYaxis']['fXmax'] < 100 && histo['fYaxis']['fXmax']/histo['fYaxis']['fXmin'] < 100) noexpy = true;
 
@@ -2002,6 +2072,8 @@ function createFillPatterns(svg, id, color) {
 
       vis['x_axis']  = x_axis;
       vis['y_axis']  = y_axis;
+      vis['x_axis_draw']  = xax;
+      vis['y_axis_draw']  = yax;
       vis['x_fsize'] = xAxisLabelFontSize;
       vis['y_fsize'] = yAxisLabelFontSize;
       vis['x_font'] = xAxisLabelFontDetails;
@@ -3079,11 +3151,76 @@ function createFillPatterns(svg, id, color) {
 
       var empty_content = false;
       var binwidth = 0;
+      var selwidth = 0;
+      var draw_body = null;
+      var draw_tooltip = null;
+      
+      if (histo['fName'] == '') histo['fName'] = "random_histo_" + random_id++;
+      var g_id = format_id(histo['fName']);
+      // Sergey Linev: generate g_id for histogram which is unique,
+      // In on all other places one need to use histo['g_id']   
+      if (document.getElementById(g_id) || document.getElementById(g_id + "_x_axis")) g_id += "_" + random_id++;
+      histo['g_id'] = g_id;
+      
+      function newredraw_histogram()
+      {
+         
+         if ((histo['fFillStyle'] < 4000 || histo['fFillStyle'] > 4100) 
+               && histo['fFillColor'] != 0) {
+
+            // histogram filling
+            var area = d3.svg.area()
+               .x(function(d) { return histo.x(d.x);})
+               .y0(function(d) { return histo.y(0);})
+               .y1(function(d) { return histo.y(d.y);})
+               .interpolate("step-before");
+               
+            if (histo['fFillStyle'] > 3000 && histo['fFillStyle'] <= 3025) {
+               draw_body.transition().duration(750)
+                  .attr("d", area(histo.bins));
+            }
+            else {
+               draw_body.transition().duration(750)
+                  .attr("d", area(histo.bins));
+            }
+         }
+         else {
+
+            // histogram contour lines only
+            var line = d3.svg.line()
+               .x(function(d) { return histo.x(d.x);})
+               .y(function(d) { return histo.y(d.y);})
+               .interpolate("step-before");
+
+            draw_body.transition().duration(750)
+               .attr("d", line(histo.bins));
+         }
+         
+         
+         if (draw_tooltip)
+           draw_tooltip.transition().duration(750)
+            .attr("x1", function(d) { return histo.x(d.x-d.xerr) } )
+            .attr("y1", function(d) { return histo.y(d.y) } )
+            .attr("x2", function(d) { return histo.x(d.x-d.xerr) } )
+            .attr("y2", function(d) { return histo.y(0) } )
+            .attr("opacity", 0)
+            .style("stroke", "#4572A7")
+            .style("stroke-width", selwidth)
+            .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
+            .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
+            .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
+                    ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
+            });
+
+         
+      }
+      
       
       function redraw_histogram() {
 
          if (empty_content) {
             JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
+
          } else if (options.Error > 0) {
             // Sergey: no any redraw was specified, why it is ???
          }
@@ -3092,9 +3229,6 @@ function createFillPatterns(svg, id, color) {
          } else {
             if (draw_all)
                JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
-            
-            if (histo['fName'] == '') histo['fName'] = "random_histo_" + random_id++;
-            var g_id = format_id(histo['fName']);
 
             svg_frame.selectAll("#"+g_id).remove();
             var g = svg_frame.append("svg:g").attr("id", g_id);
@@ -3111,8 +3245,8 @@ function createFillPatterns(svg, id, color) {
                if (histo['fFillStyle'] > 3000 && histo['fFillStyle'] <= 3025) {
                   createFillPatterns(vis, histo['fFillStyle'], histo['fFillColor']);
 
-                  g.append("svg:path")
-                     .attr("class", "area")
+                  draw_body = g.append("svg:path")
+                     .attr("class", g_id + "_body")
                      .attr("d", area(histo.bins))
                      .style("stroke", linecolor)
                      .style("stroke-width", histo['fLineWidth'])
@@ -3120,13 +3254,14 @@ function createFillPatterns(svg, id, color) {
                      .style("antialias", "false");
                }
                else {
-                  g.append("svg:path")
-                     .attr("class", "area")
+                  draw_body = g.append("svg:path")
+                     .attr("class", g_id + "_body")
                      .attr("d", area(histo.bins))
                      .style("stroke", linecolor)
                      .style("stroke-width", histo['fLineWidth'])
                      .style("fill", fillcolor)
                      .style("antialias", "false");
+
                }
             }
             else {
@@ -3137,8 +3272,8 @@ function createFillPatterns(svg, id, color) {
                   .y(function(d) { return histo.y(d.y);})
                   .interpolate("step-before");
 
-               g.append("svg:path")
-                  .attr("class", "line")
+               draw_body = g.append("svg:path")
+                  .attr("class", g_id + "_body")
                   .attr("d", line(histo.bins))
                   .style("stroke", linecolor)
                   .style("stroke-width", histo['fLineWidth'])
@@ -3148,11 +3283,13 @@ function createFillPatterns(svg, id, color) {
             }
 
             // add tooltips
-            var selwidth = histo.x(2*binwidth)-histo.x(binwidth);
-            g.selectAll("selections")
+            selwidth = histo.x(2*binwidth)-histo.x(binwidth);
+            draw_tooltip = g.selectAll("selections")
                .data(histo.bins)
                .enter()
-               .append("svg:line")
+               .append("svg:line");
+            
+            draw_tooltip
                .attr("x1", function(d) { return histo.x(d.x-d.xerr) } )
                .attr("y1", function(d) { return histo.y(d.y) } )
                .attr("x2", function(d) { return histo.x(d.x-d.xerr) } )
@@ -3269,8 +3406,11 @@ function createFillPatterns(svg, id, color) {
       
       histo['redraw'] = redraw_histogram;
       histo['rebuild'] = rebuild_histogram;
-
+      
       rebuild_histogram();
+
+      if (draw_body!=null)
+         histo['newredraw'] = newredraw_histogram;
 
       this.addInteraction(frame, histo);
 

@@ -429,13 +429,13 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       
       var stats = {};
       stats['_typename'] = 'JSROOTIO.TPaveStats';
-      stats['fX1NDC'] = 0.7;
-      stats['fY1NDC'] = 0.7;
-      stats['fX2NDC'] = 0.98;
-      stats['fY2NDC'] = 0.5;
+      stats['fX1NDC'] = gStyle.StatX;
+      stats['fY1NDC'] = gStyle.StatY;
+      stats['fX2NDC'] = gStyle.StatX + gStyle.StatW;
+      stats['fY2NDC'] = gStyle.StatY + gStyle.StatH;
 
       stats['fOptFit'] = 0;
-      stats['fOptStat'] = 1111;
+      stats['fOptStat'] = gStyle.OptStat;
       stats['fLongest'] = 17;
       stats['fMargin'] = 0.05;
 
@@ -444,10 +444,10 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       stats['fShadowColor'] = 1;
       stats['fCornerRadius'] = 0;
 
-      stats['fX1'] = 2;
-      stats['fY1'] = 718;
-      stats['fX2'] = 5;
-      stats['fY2'] = 888;
+      stats['fX1'] = 1;
+      stats['fY1'] = 100;
+      stats['fX2'] = 1;
+      stats['fY2'] = 100;
 
       stats['fResizing'] = false;
       stats['fUniqueID'] = 0;
@@ -456,14 +456,14 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       stats['fLineStyle'] = 1;
       stats['fLineWidth'] = 1;
 
-      stats['fFillColor'] = 0;
-      stats['fFillStyle'] = 1001;
+      stats['fFillColor'] = gStyle.StatColor;
+      stats['fFillStyle'] = gStyle.StatStyle;
       
       stats['fTextAngle'] = 0;
-      stats['fTextSize'] = 0;
+      stats['fTextSize'] = gStyle.StatFontSize;
       stats['fTextAlign'] = 12;
-      stats['fTextColor'] = 1;
-      stats['fTextFont'] = 42;
+      stats['fTextColor'] = gStyle.StatTextColor;
+      stats['fTextFont'] = gStyle.StatFont;
       
       stats['fLines'] = new Array;
 

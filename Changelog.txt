@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+8.07.2013
+1. Experimental code in JSRootD3Painter.js. Try to zoom in without remake of drawn objects, 
+   but via d3.transition approach. One should get better control how objects are
+   modified.
+2. Try to introduce gStyle object in JSRootD3Painter.js - use to create stat box for
+   histogram. 
+
+
 5.07.2013
 1. Implement context menu for drawn object. This allows to implement different
    functionality without complex gui with collapsibles.
