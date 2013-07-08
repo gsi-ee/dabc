@@ -212,6 +212,27 @@ function displayMappedObject(obj_name, list_name, offset) {
    obj_index++;
 };
 
+function AssertDrawPrerequisites(exp_painter)
+{
+   if (typeof JSROOTPainter == "undefined") {
+      
+      var chkbox = document.getElementById("experimental_painter");
+      
+      if (!exp_painter)
+         if (chkbox && chkbox.checked) exp_painter = true;
+      
+      if (chkbox) {
+         chkbox.disabled = true;
+         chkbox.checked = exp_painter; 
+      }
+      
+      if (exp_painter)
+         loadScript(source_dir+'scripts/JSRootD3ExpPainter.js');
+      else
+         loadScript(source_dir+'scripts/JSRootD3Painter.js');
+   }
+}
+
 function AssertPrerequisites(andThen) {
    if (typeof JSROOTIO == "undefined") {
       // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
@@ -224,7 +245,6 @@ function AssertPrerequisites(andThen) {
       loadScript(source_dir+'scripts/JSRootCore.js', function() {
       loadScript(source_dir+'scripts/three.min.js', function() {
       loadScript(source_dir+'fonts/helvetiker_regular.typeface.js', function() {
-      loadScript(source_dir+'scripts/JSRootD3Painter.js', function() { 
       loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
          if (andThen) {
             andThen();
@@ -240,7 +260,7 @@ function AssertPrerequisites(andThen) {
             $(version).prependTo("body");
          }
          $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
-      }) }) }) }) }) }) }) }) }) }) });
+      }) }) }) }) }) }) }) }) }) });
       return true;
    }
    return false;
@@ -265,7 +285,9 @@ function ReadFile() {
          return;
       }
    }
-   if (AssertPrerequisites()) return;
+   if (AssertPrerequisites(AssertDrawPrerequisites())) return;
+   
+   AssertDrawPrerequisites();
    // else simply open the file
    var url = $("#urlToLoad").val();
    if (url == "" || url == " ") return;
@@ -335,6 +357,7 @@ function BuildSimpleGUI() {
       +' onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
       +'<input style="padding:2px; margin-left:10px;"'
       +'onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
+      +'<input style="padding:2px; margin-left:10px;" type="checkbox" name="painter_selection" id="experimental_painter"/> experimental painter<br/>'
       +'</form>'
 
       +'<br/>'

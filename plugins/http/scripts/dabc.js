@@ -573,8 +573,12 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 
    if (DABC.load_root_js==0) {
       DABC.load_root_js = 1;
-      AssertPrerequisites(function() { 
+      AssertPrerequisites(function() {
+         
+         AssertDrawPrerequisites(true);
+         
          DABC.load_root_js = 2; 
+         
          // $("#report").append("<br> load all JSRootIO scripts");
          DABC.mgr.UpdateComplexFields();
       });

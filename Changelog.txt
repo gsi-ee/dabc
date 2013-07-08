@@ -8,6 +8,7 @@ of the framework.
    modified.
 2. Try to introduce gStyle object in JSRootD3Painter.js - use to create stat box for
    histogram. 
+3. Provide possibility to select between experimental and normal painter.   
 
 
 5.07.2013
