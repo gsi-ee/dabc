@@ -275,6 +275,7 @@ DABC.RootDrawElement = function(_clname) {
    this.titleid = "";     
    this.drawid = 0;       // numeric id of pad, where ROOT object is drawn
    this.first_draw = true;  // one should enable flag only when all ROOT scripts are loaded
+   this.painter = null;      // pointer on painter, can be used for update
    
    this.raw_data = null;  // raw data kept in the item when object cannot be reconstructed immediately
    this.raw_data_version = 0;   // verison of object in the raw data, will be copied into object when completely reconstructed
@@ -352,10 +353,16 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    
    if (this.sinfo) {
       
-      if (!this.first_draw && this.clname.match(/\bTH1/)) {
-         this.obj.rebuild();
+      if (this.painter != null) {
+         this.painter.UpdateObject(this.obj);
+         this.painter.RedrawFrame();
       } else {
-        JSROOTPainter.drawObject(this.obj, this.drawid);
+//         if (gStyle) gStyle.AutoStat = true;
+//                else $("#report").append("<br>no gStyle");
+
+         this.painter = JSROOTPainter.drawObject(this.obj, this.drawid);
+
+         // if (this.painter)  $("#report").append("<br>painter is created");
       }
    } else {
       gFile = this.obj;
@@ -400,6 +407,8 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    
    obj['_typename'] = 'JSROOTIO.' + this.clname;
 
+//   $("#report").append("<br>Calling JSROOTIO function");
+   
    // one need gFile to unzip data
    if (!this.UnzipRawData()) return;
 
@@ -414,72 +423,18 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    if (JSROOTIO.GetStreamer(this.clname)) {
       JSROOTIO.GetStreamer(this.clname).Stream(obj, this.raw_data, 0);
       JSROOTCore.addMethods(obj);
+
    } else {
       $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
    }
    
    if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
       this.obj['fArray'] = obj['fArray'];
-      // $("#report").append("<br>try to exchange content");
       obj = null;
    } else { 
       this.obj = obj;
    }
-   if (this.clname.match(/\bTH1/)) {
-      
-      var stats = {};
-      stats['_typename'] = 'JSROOTIO.TPaveStats';
-      stats['fX1NDC'] = gStyle.StatX;
-      stats['fY1NDC'] = gStyle.StatY;
-      stats['fX2NDC'] = gStyle.StatX + gStyle.StatW;
-      stats['fY2NDC'] = gStyle.StatY + gStyle.StatH;
-
-      stats['fOptFit'] = 0;
-      stats['fOptStat'] = gStyle.OptStat;
-      stats['fLongest'] = 17;
-      stats['fMargin'] = 0.05;
-
-      stats['fBorderSize'] = 1;
-      stats['fInit'] = 1;
-      stats['fShadowColor'] = 1;
-      stats['fCornerRadius'] = 0;
-
-      stats['fX1'] = 1;
-      stats['fY1'] = 100;
-      stats['fX2'] = 1;
-      stats['fY2'] = 100;
-
-      stats['fResizing'] = false;
-      stats['fUniqueID'] = 0;
-      stats['fBits'] = 0x03000009;
-      stats['fLineColor'] = 1;
-      stats['fLineStyle'] = 1;
-      stats['fLineWidth'] = 1;
-
-      stats['fFillColor'] = gStyle.StatColor;
-      stats['fFillStyle'] = gStyle.StatStyle;
-      
-      stats['fTextAngle'] = 0;
-      stats['fTextSize'] = gStyle.StatFontSize;
-      stats['fTextAlign'] = 12;
-      stats['fTextColor'] = gStyle.StatTextColor;
-      stats['fTextFont'] = gStyle.StatFont;
-      
-      stats['fLines'] = new Array;
-
-      stats['fLines'].push({'fTitle': "Name", "fTextColor": 1});
-      stats['fLines'].push({'fTitle': "Entries = 4075", "fTextColor": 1});
-      stats['fLines'].push({'fTitle': "Mean = 2000", "fTextColor": 1});
-      stats['fLines'].push({'fTitle': "RMS = 3000", "fTextColor": 1});
-
-      stats['fLines'][0]['fTitle'] = this.obj['fName']; 
-      
-      if (!'fFunctions' in this.obj) this.obj['fFunctions'] = {};
-
-      if (this.obj.fFunctions.length == 0) 
-         this.obj['fFunctions'].push(stats);
-   }
-
+   
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;
    
@@ -487,7 +442,6 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    this.raw_data_version = 0;
    
    this.DrawObject();
-   
 }
 
 DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
@@ -524,7 +478,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       delete this.obj; 
       
       // we are doing sreamer infos
-      // if (gFile) $("#report").append("<br> gFile already exists???"); else 
+      if (gFile) $("#report").append("<br> gFile already exists???"); 
       this.obj = new JSROOTIO.RootFile;
 
       // one need gFile to unzip data
@@ -544,7 +498,6 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
          
       gFile = null;
 
-      // $("#report").append("<br> Unpacked streamer infos of version " + ver);
       if (!this.obj) $("#report").append("<br> No file in streamer infos!!!");
 
       // with streamer info one could try to update complex fields
@@ -574,16 +527,14 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    if (DABC.load_root_js==0) {
       DABC.load_root_js = 1;
       AssertPrerequisites(function() {
-         
+      
          AssertDrawPrerequisites(true);
-         
+         // $("#report").append("<br> load main scripts done");
+
          DABC.load_root_js = 2; 
-         
-         // $("#report").append("<br> load all JSRootIO scripts");
-         DABC.mgr.UpdateComplexFields();
       });
    }
-
+   
    // in any case, complete JSRootIO is required before we could start 
    if (DABC.load_root_js < 2) return;
    
@@ -594,7 +545,6 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
         // $("#report").append("<br> item " + this.itemname+ " requires streamer info ver " + this.need_master_version  +  "  available is = " + this.sinfo.version);
 
         if (this.sinfo.HasVersion(this.need_master_version)) {
-           // $("#report").append("<br> try to reconstruct");
            this.ReconstructRootObject();
         } else {
            // $("#report").append("<br> version is not ok");
@@ -623,7 +573,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
-   // $("#report").append("<br> Send request " + url);
+//   $("#report").append("<br> Send request " + url);
 
    this.req.send(null);
    
