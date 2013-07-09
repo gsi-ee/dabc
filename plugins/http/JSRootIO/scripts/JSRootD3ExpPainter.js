@@ -496,8 +496,9 @@ function stringWidth(svg, line, font_name, font_weight, font_size, font_style) {
        .attr("font-size", font_size)
        .style("opacity", 0)
        .text(line);
-   w = text.node().getBBox().width;
-   text.remove();
+   var w = text.node().getBBox().width;
+   d3.select(text).remove();
+   text = null;
    return w;
 }
 
@@ -3508,6 +3509,7 @@ function createFillPatterns(svg, id, color) {
       
       var ret = hframe != null ? hframe : JSROOTPainter.createFrame(vis, pad, this.histo, null);
       this.frame = ret['frame'];
+
       this.svg_frame = d3.select(ret['id']);
       this.pad = pad;
       
@@ -3797,41 +3799,6 @@ function createFillPatterns(svg, id, color) {
             .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
             .style("antialias", "false");
       }
-
-      // add tooltips
-      var selwidth = this.x(2*this.binwidth) - this.x(this.binwidth);
-      
-      
-      if ('draw_tooltip' in this) { 
-         this.draw_tooltip.remove();
-         this.draw_tooltip = null;
-      }
-      
-//      this.bins_g.select("histogram_tooltip").remove();
-//      this.bins_g.select(".histogram_tooltip").remove();
-      
-      this['draw_tooltip'] = this.bins_g.selectAll("selections")
-                             .data(this.bins)
-                             .enter()
-                             .append("svg:line").attr("class", "histogram_tooltip");
-      
-      // TODO: reduce tooltip and bins size to actual number of pixels drawn
-      this.draw_tooltip
-         .attr("x1", function(d) { return pthis.x(d.x-d.xerr) } )
-         .attr("y1", function(d) { return pthis.y(d.y) } )
-         .attr("x2", function(d) { return pthis.x(d.x-d.xerr) } )
-         .attr("y2", function(d) { return pthis.y(0) } )
-         .attr("opacity", 0)
-         .style("stroke", "#4572A7")
-         .style("stroke-width", selwidth)
-         .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
-         .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-         .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
-                 ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
-         });
-      
-      // $("#report").append("<br> adding tooltip done");
-
    }
    
    JSROOTPainter.HistPainter.prototype.DrawAxes = function() {
@@ -4229,11 +4196,25 @@ function createFillPatterns(svg, id, color) {
    }
    
    JSROOTPainter.HistPainter.prototype.Redraw = function() {
+      if (console) console.time("XY");
       this.CreateXY();
+      if (console) console.timeEnd("XY");
+
+      if (console) console.time("Grid");
       this.DrawGrids();
+      if (console) console.timeEnd("Grid");
+
+      if (console) console.time("Bins");
       this.DrawBins();
+      if (console) console.timeEnd("Bins");
+
+      if (console) console.time("Axes");
       this.DrawAxes();
+      if (console) console.timeEnd("Axes");
+      
+      if (console) console.time("Title");
       this.DrawTitle();
+      if (console) console.timeEnd("Title");
    }
    
    JSROOTPainter.HistPainter.prototype.AddInteractive = function() {
@@ -4243,13 +4224,105 @@ function createFillPatterns(svg, id, color) {
       var width = this.frame.attr("width"), height = this.frame.attr("height");
       var e, origin, rect;
 
+      
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
       this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
+      this.frame.on("mousemove", moveTooltip);
+      this.frame.on("mouseout", finishTooltip);
+//      this.frame.on("mouseover", finishTooltip);
       this.frame.on("contextmenu", showContextMenu);
+
       
       var pthis = this;
+      
+      var mycnt = 0;
+      
+      var tool_tmout = null;
+      var tool_pos = null;
+      var tool_changed = false;
+      var tool_moving_inside = false;
+      var tool_visible = false;
 
+      function checkTooltip() {
+         tool_tmout = null;
+
+         if (tool_visible) return;
+
+         if (tool_changed) {
+            // restart timer, hope it will not changes next time
+
+            // during last changes cursor leave area and we could ignore  
+            if (!tool_moving_inside) return;
+            
+            tool_changed = false;
+            tool_tmout = setTimeout(checkTooltip, 1000);
+            return;
+         }
+
+         var posx = pthis.x.invert(tool_pos[0]);
+         var posy = pthis.y.invert(tool_pos[1]);
+
+         // clear old tool boxes
+         d3.selectAll(".tooltipbox").remove();
+         
+         pthis.frame.append("svg:rect")
+         .attr("class", "tooltipbox")
+         .attr("x", tool_pos[0]-5)
+         .attr("y", tool_pos[1]-50)
+         .attr("width", 10)
+         .attr("height", 100)
+         .attr("fill", "black")
+         .style("opacity", "0.3")
+         .style("stroke", "black")
+         .style("stroke-width", 1);
+
+         pthis.frame.append("svg:text")
+         .attr("class", "tooltipbox")
+         .attr("x", tool_pos[0])
+         .attr("y", tool_pos[1])
+         .text("tool tip x:" + posx.toPrecision(3) + " y: " + posy.toPrecision(3));
+         
+//         $("#report").append("  show tooltip");
+         
+         tool_tmout = setTimeout(closeTooltip, 2000);
+         
+         tool_visible = true;
+      }
+      
+      function closeTooltip(force) {
+         if (tool_visible) {
+            if (force)
+               d3.selectAll(".tooltipbox").remove();
+            else
+               d3.selectAll(".tooltipbox").transition().duration(1000).style("opacity", 0);
+            // $("#report").append("  hide tooltip");
+            tool_visible = false;
+         }
+         clearTimeout(tool_tmout);
+         tool_tmout = null;
+      }
+      
+      function moveTooltip() {
+
+         tool_moving_inside = true;
+         
+         // one could detect if mouse moved too far away, disable it faster
+         if (tool_visible) return;
+         
+         tool_pos = d3.mouse(this);
+         
+         if (tool_tmout == null) {
+            tool_changed = false;
+            tool_tmout = setTimeout(checkTooltip, 1000);
+         } else
+            tool_changed = true;
+      }
+
+      function finishTooltip() {
+         tool_moving_inside = false;
+      }
+      
       function showContextMenu() {
 
          d3.event.preventDefault();
@@ -4284,7 +4357,7 @@ function createFillPatterns(svg, id, color) {
             $( "#dialog" ).empty();
          }
          
-         if (pthis.draw_tooltip) pthis.draw_tooltip.style("display", "none");
+         closeTooltip(true);
          
          pthis.frame.select("#zoom_rect").remove();
          e = this;
@@ -4345,9 +4418,6 @@ function createFillPatterns(svg, id, color) {
 //         $("#report").append("<br> End select x:" + m[0] + "  y:" + m[1]);
 
          d3.select("body").style("-webkit-user-select", "auto");
-
-         if (pthis.draw_tooltip) pthis.draw_tooltip.style("display", "block");
-
          
          rect.remove();
          rect = null;
@@ -4386,8 +4456,13 @@ function createFillPatterns(svg, id, color) {
 
       painter.SetFrame(vis, pad, hframe);
 
+      if (console) console.time("CreateBins");
+
       painter.CreateBins();
 
+      if (console) console.timeEnd("CreateBins");
+
+      
       painter.CreateXY();
 
       painter.DrawGrids();

@@ -77,7 +77,7 @@ function loadScript(url, callback) {
       };
    } else { // Other browsers
       script.onload = function(){
-         callback();
+         if (callback!=null) callback();
       };
    }
    var rnd = Math.floor(Math.random()*80000);
@@ -218,18 +218,21 @@ function AssertDrawPrerequisites(exp_painter)
       
       var chkbox = document.getElementById("experimental_painter");
       
-      if (!exp_painter)
+      if (exp_painter==null)
          if (chkbox && chkbox.checked) exp_painter = true;
+      
+      // exp_painter = true;
       
       if (chkbox) {
          chkbox.disabled = true;
          chkbox.checked = exp_painter; 
       }
       
-      if (exp_painter)
+      if (exp_painter) {
          loadScript(source_dir+'scripts/JSRootD3ExpPainter.js');
-      else
+      } else {
          loadScript(source_dir+'scripts/JSRootD3Painter.js');
+      }
    }
 }
 
@@ -287,7 +290,7 @@ function ReadFile() {
    }
    if (AssertPrerequisites(AssertDrawPrerequisites())) return;
    
-   AssertDrawPrerequisites();
+//   AssertDrawPrerequisites();
    // else simply open the file
    var url = $("#urlToLoad").val();
    if (url == "" || url == " ") return;
@@ -357,7 +360,7 @@ function BuildSimpleGUI() {
       +' onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
       +'<input style="padding:2px; margin-left:10px;"'
       +'onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
-      +'<input style="padding:2px; margin-left:10px;" type="checkbox" name="painter_selection" id="experimental_painter"/> experimental painter<br/>'
+      +'<input style="padding:2px; margin-left:10px;" type="checkbox" name="painter_selection" checked="true" id="experimental_painter"/> experimental painter<br/>'
       +'</form>'
 
       +'<br/>'

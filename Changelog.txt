@@ -6,7 +6,7 @@ of the framework.
 1. First approximation for HistPainter and PavePainter. One could select ranges,
    create and toggle stat box. Information in stat box can be updated.
    One could extend menu items.  
-   
+2. Remove tooltip from Bertrand - it eat full time and cannot be used as is.   
 
 8.07.2013
 1. Experimental code in JSRootD3Painter.js. Try to zoom in without remake of drawn objects, 
