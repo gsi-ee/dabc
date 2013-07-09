@@ -4370,8 +4370,10 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter.HistPainter.prototype.ExeContextMenu = function(cmd) {
       if (cmd == "togstat") {
          this.ToggleStat();
-      } else
-         JSROOTPainter.HistPainter.prototype.ExeContextMenu.call(this, cmd);
+         return;
+      } 
+      
+      JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
 
    
