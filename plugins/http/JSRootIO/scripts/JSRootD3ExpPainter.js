@@ -4292,7 +4292,7 @@ function createFillPatterns(svg, id, color) {
               .attr("y", tool_pos[1] + 30 + n*15)
               .text(tip.text[n]);
          
-         pthis.frame.selectAll(".tips").transition().duration(500).style("opacity", 0.5);
+         pthis.frame.selectAll(".tips").transition().duration(500).style("opacity", 1);
          
          if (('x1' in tip) && ('y1' in tip)) {
             var x1 = pthis.x(tip.x1);
@@ -4352,7 +4352,7 @@ function createFillPatterns(svg, id, color) {
          
          if (tool_tmout == null) {
             tool_changed = false;
-            tool_tmout = setTimeout(checkTooltip, 1000);
+            tool_tmout = setTimeout(checkTooltip, 300);
          } else
             tool_changed = true;
       }
@@ -4742,8 +4742,8 @@ function createFillPatterns(svg, id, color) {
       if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
 
-      var nbinsx = this.histo['fXaxis']['fNbins'];
-      var nbinsy = this.histo['fYaxis']['fNbins'];
+      this.nbinsx = this.histo['fXaxis']['fNbins'];
+      this.nbinsy = this.histo['fYaxis']['fNbins'];
       
       // used in CreateXY method
       this.xmin = this.histo['fXaxis']['fXmin'];
@@ -4751,21 +4751,21 @@ function createFillPatterns(svg, id, color) {
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax']; 
       
-      this.scalex = (this.xmax - this.xmin) / nbinsx;
-      this.scaley = (this.ymax - this.ymin) / nbinsy;
+      this.scalex = (this.xmax - this.xmin) / this.nbinsx;
+      this.scaley = (this.ymax - this.ymin) / this.nbinsy;
       
       var maxbin = -1e32, minbin = 1e32;
       // used in drawing
       this.maxbin = d3.max(this.histo['fArray']);
       this.minbin = d3.min(this.histo['fArray']);
       this.bins = new Array();
-      for (var i=0; i<nbinsx; ++i) {
-         for (var j=0; j<nbinsy; ++j) {
+      for (var i=0; i<this.nbinsx; ++i) {
+         for (var j=0; j<this.nbinsy; ++j) {
             var bin_content = this.histo.getBinContent(i, j);
             if (bin_content > this.minbin) {
                var point = {
-                  x:this.histo['fXaxis']['fXmin'] + (i*this.scalex),
-                  y:this.histo['fYaxis']['fXmin'] + (j*this.scaley),
+                  x:this.xmin + (i*this.scalex),
+                  y:this.ymin + (j*this.scaley),
                   z:bin_content
                };
                this.bins.push(point);
@@ -4940,6 +4940,47 @@ function createFillPatterns(svg, id, color) {
 */             
       }
    }
+
+   JSROOTPainter.Hist2DPainter.prototype.ProvideTooltip = function(tip)
+   {
+      var i = Math.round((tip.x - this.scalex/2 - this.xmin) / this.scalex);
+      var j = Math.round((tip.y - this.scaley/2 - this.ymin) / this.scaley);
+/*
+      $("#report").append("<br> tip    " + tip.x.toPrecision(4) + " " + tip.y.toPrecision(4));
+      $("#report").append("<br> min    " + this.xmin.toPrecision(4) + " " + this.ymin.toPrecision(4));
+      $("#report").append("<br> scale  " + this.scalex.toPrecision(4) + " " + this.scaley.toPrecision(4));
+      $("#report").append("<br> nbins  " + this.nbinsx.toPrecision(4) + " " + this.nbinsy.toPrecision(4));
+      $("#report").append("<br> i,j  "   + i.toPrecision(4) + " " + j.toPrecision(4));
+
+      for (var n=0;n<5;n++)
+         $("#report").append("<br> bin "   + this.bins[n].x.toPrecision(4) + " " + this.bins[n].y.toPrecision(4));
+      $("#report").append("<br> i,j  "   + i.toPrecision(4) + " " + j.toPrecision(4));
+*/      
+
+      if ((i<0) || (i>=this.nbinsx) || (j<0) || (j>=this.nbinsy)) return;
+      
+      var value = this.histo.getBinContent(i, j);
+      
+      if (value <= this.minbin) return;
+            
+      tip['empty'] = false;
+      
+      tip['dist'] = 0; 
+      tip['text'].push("histo: "+this.histo['fName']);
+      tip['text'].push("binx:"+ i + " biny:" + j);
+      tip['text'].push("cont: " + value); 
+      
+//      $("#report").append("<br> found " + bin.x.toPrecision(4) + " " + bin.y.toPrecision(4));
+      
+      tip['x1'] = this.xmin + i*this.scalex;
+      tip['x2'] = this.xmin + (i+1)*this.scalex;
+      tip['y1'] = this.ymin + (j+1)*this.scaley;
+      tip['y2'] = this.ymin + j*this.scaley;
+      
+      // basic method, painter can provide tooltip at specified coordinates
+      // range.x1 .. range.x2, range.y1 .. range.y2
+   }
+
    
    JSROOTPainter.drawHistogram2Dnew = function(vis, pad, histo, hframe) {
 
@@ -4978,232 +5019,6 @@ function createFillPatterns(svg, id, color) {
       
       return painter;
    }
-   
-   
-
-   JSROOTPainter.drawHistogram2D = function(vis, pad, histo, hframe) {
-      var i, gridx = false, gridy = false;
-      var options = JSROOTPainter.decodeOptions(histo['fOption'], histo, pad);
-      if (pad && typeof(pad) != 'undefined') {
-         gridx = pad['fGridx'];
-         gridy = pad['fGridy'];
-      }
-      var fillcolor = root_colors[histo['fFillColor']];
-      var linecolor = root_colors[histo['fLineColor']];
-      if (histo['fFillColor'] == 0) {
-         fillcolor = '#4572A7';
-      }
-      if (histo['fLineColor'] == 0) {
-         linecolor = '#4572A7';
-      }
-      var nbinsx = histo['fXaxis']['fNbins'];
-      var nbinsy = histo['fYaxis']['fNbins'];
-      var scalex = (histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) /
-                    histo['fXaxis']['fNbins'];
-      var scaley = (histo['fYaxis']['fXmax'] - histo['fYaxis']['fXmin']) /
-                    histo['fYaxis']['fNbins'];
-      var maxbin = -1e32, minbin = 1e32;
-      maxbin = d3.max(histo['fArray']);
-      minbin = d3.min(histo['fArray']);
-      var bins = new Array();
-      for (i=0; i<nbinsx; ++i) {
-         for (var j=0; j<nbinsy; ++j) {
-            var bin_content = histo.getBinContent(i, j);
-            if (bin_content > minbin) {
-               var point = {
-                  x:histo['fXaxis']['fXmin'] + (i*scalex),
-                  y:histo['fYaxis']['fXmin'] + (j*scaley),
-                  z:bin_content
-               };
-               bins.push(point);
-            }
-         }
-      }
-      var ret = hframe != null ? hframe : this.createFrame(vis, pad, histo, null);
-      var frame = ret['frame'];
-      var svg_frame = d3.select(ret['id']);
-      var w = frame.attr("width"), h = frame.attr("height");
-      if (options.Logx)
-         var x = d3.scale.log().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
-      else
-         var x = d3.scale.linear().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
-      if (options.Logy)
-         var y = d3.scale.log().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([h, 0]);
-      else
-         var y = d3.scale.linear().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([h, 0]);
-
-      var c = d3.scale.linear().domain([minbin, maxbin]).range(['red', 'blue']);
-
-      histo['x_min'] = histo['fXaxis']['fXmin'];
-      histo['x_max'] = histo['fXaxis']['fXmax'];
-      histo['y_min'] = histo['fYaxis']['fXmin'];
-      histo['y_max'] = histo['fYaxis']['fXmax'];
-
-      histo['x'] = x;
-      histo['y'] = y;
-      histo['bins'] = bins;
-
-      function do_redraw() {
-
-         JSROOTPainter.drawGrid(frame, histo, pad, x, y);
-
-         if (histo['fName'] == '') histo['fName'] = "random_histo_" + random_id++;
-         var g_id = format_id(histo['fName']);
-         svg_frame.selectAll("#"+g_id).remove();
-         var g = svg_frame.append("svg:g")
-            .attr("id", g_id);
-
-         var constx = (w / histo['fXaxis']['fNbins']) / maxbin;
-         var consty = (h / histo['fYaxis']['fNbins']) / maxbin;
-         var xdom = histo.x.domain();
-         var ydom = histo.y.domain();
-         var xfactor = Math.abs(histo['fXaxis']['fXmax']-histo['fXaxis']['fXmin']) / Math.abs(xdom[1]-xdom[0]);
-         var yfactor = Math.abs(histo['fYaxis']['fXmax']-histo['fYaxis']['fXmin']) / Math.abs(ydom[1]-ydom[0]);
-
-         if (options.Scat > 0 && histo['fMarkerStyle'] > 1) {
-            /* Add markers */
-            var filled = false;
-            if ((histo['fMarkerStyle'] == 8) ||
-                (histo['fMarkerStyle'] > 19 && histo['fMarkerStyle'] < 24) ||
-                (histo['fMarkerStyle'] == 29))
-               filled = true;
-
-            var info_marker = getRootMarker(root_markers, histo['fMarkerStyle']);
-
-            var shape = info_marker['shape'];
-            var filled = info_marker['toFill'];
-            var toRotate = info_marker['toRotate'];
-            var markerSize = histo['fMarkerSize'];
-            var markerScale = (shape == 0) ? 32 : 64;
-            if (histo['fMarkerStyle'] == 1) markerScale = 1;
-
-            switch (shape) {
-               case 6:
-                  var marker = "M " + (-4 * markerSize) + " " + (-1 * markerSize)
-                              + " L " + 4 * markerSize + " " + (-1 * markerSize)
-                              + " L " + (-2.4 * markerSize) + " " + 4 * markerSize
-                              + " L 0 " + (-4 * markerSize) + " L " + 2.8 * markerSize
-                              + " " + 4 * markerSize + " z";
-                  break;
-               case 7:
-                  var marker = "M " + (- 4 * markerSize) + " " + (-4 * markerSize)
-                              + " L " + 4 * markerSize + " " + 4 * markerSize + " M 0 "
-                              + (-4 * markerSize) + " 0 " + 4 * markerSize + " M "
-                              + 4 * markerSize + " " + (-4 * markerSize) + " L "
-                              + (-4 * markerSize) + " " + 4 * markerSize + " M "
-                              + (-4 * markerSize) + " 0 L " + 4 * markerSize + " 0";
-                  break;
-               default:
-                  var marker = d3.svg.symbol()
-                              .type(d3.svg.symbolTypes[shape])
-                              .size(markerSize * markerScale);
-                  break;
-            }
-            g.selectAll("markers")
-               .data(histo.bins)
-               .enter()
-               .append("svg:path")
-               .attr("class", "marker")
-               .attr("transform", function(d) {
-                  return "translate(" + histo.x(d.x) + "," + histo.y(d.y) + ")"
-               })
-               .style("fill", root_colors[histo['fMarkerColor']])
-               .style("stroke", root_colors[histo['fMarkerColor']])
-               .attr("d", marker)
-               .append("svg:title")
-               .text(function(d) { return "x = " + d.x.toPrecision(4) + " \ny = " +
-                                   d.y.toPrecision(4) + " \nentries = " + d.z; });
-         }
-         else {
-            g.selectAll("bins")
-               .data(histo.bins)
-               .enter()
-               .append("svg:rect")
-               .attr("class", "bins")
-               .attr("x", function(d) { 
-                  return histo.x(d.x + (scalex / 2)) - (0.5 * d.z * ((w / histo['fXaxis']['fNbins']) / maxbin) * xfactor);
-               })
-               .attr("y", function(d) { 
-                  return histo.y(d.y + (scaley / 2)) - (0.5 * d.z * ((h / histo['fYaxis']['fNbins']) / maxbin) * yfactor);
-               })
-               .attr("width", function(d) {
-                  if (options.Color > 0)
-                     return (w / histo['fXaxis']['fNbins']) * xfactor;
-                  else
-                     return d.z * ((w / histo['fXaxis']['fNbins']) / maxbin) * xfactor;
-               })
-               .attr("height", function(d) {
-                  if (options.Color > 0)
-                     return (h / histo['fYaxis']['fNbins']) * yfactor;
-                  else
-                     return d.z * ((h / histo['fYaxis']['fNbins']) / maxbin) * yfactor;
-               })
-               .style("stroke", function(d) {
-                  if (options.Color > 0)
-                     return JSROOTPainter.getValueColor(histo, d.z, pad);
-                  else
-                     return "black";
-               })
-               .style("fill", function(d) {
-                  if (options.Color > 0)
-                     return JSROOTPainter.getValueColor(histo, d.z, pad);
-                  else
-                     return "none";
-               });
-            g.selectAll("selections")
-               .data(bins)
-               .enter()
-               .append("svg:rect")
-               .attr("x", function(d) { 
-                  return histo.x(d.x + (scalex / 2)) - (0.5 * d.z * ((w / histo['fXaxis']['fNbins']) / maxbin) * xfactor);
-               })
-               .attr("y", function(d) { 
-                  return histo.y(d.y + (scaley / 2)) - (0.5 * d.z * ((h / histo['fYaxis']['fNbins']) / maxbin) * yfactor);
-               })
-               .attr("width", function(d) {
-                  if (options.Color > 0)
-                     return (w / histo['fXaxis']['fNbins']) * xfactor;
-                  else
-                     return d.z * ((w / histo['fXaxis']['fNbins']) / maxbin) * xfactor;
-               })
-               .attr("height", function(d) {
-                  if (options.Color > 0)
-                     return (h / histo['fYaxis']['fNbins']) * yfactor;
-                  else
-                     return d.z * ((h / histo['fYaxis']['fNbins']) / maxbin) * yfactor;
-               })
-               .attr("opacity", 0)
-               .style("stroke", "#4572A7")
-               .style("fill", "#4572A7")
-               .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
-               .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-               .append("svg:title")
-               .text(function(d) { 
-                  return "x = [" + d.x.toPrecision(4) + ", " + (d.x + scalex).toPrecision(4) + 
-                  "] \ny = [" + d.y.toPrecision(4) + ", " + (d.y + scaley).toPrecision(4) + 
-                  "] \nentries = " + d.z;
-                });
-         }
-      };
-      histo['redraw'] = do_redraw;
-      do_redraw();
-
-      if (options.Color > 0 && options.Zscale > 0) {
-         // just to initialize the default palette
-         this.getValueColor(histo, 0, pad);
-         for (i=0; i<histo['fFunctions'].length; ++i) {
-            if (histo['fFunctions'][i]['_typename'] == 'JSROOTIO.TPaletteAxis')
-               this.drawPaletteAxis(vis, histo['fFunctions'][i], minbin, maxbin);
-         }
-      }
-
-      this.drawAxes(frame, histo, pad, x, y);
-      this.drawTitle(vis, histo, pad);
-      this.addInteraction(frame, histo);
-      this.drawFunctions(vis, histo, pad, ret);
-      if (!pad || typeof(pad) == 'undefined')
-         this.drawStat(vis, histo);
-   };
 
    JSROOTPainter.drawHistogram2D3D = function(vis, pad, histo, hframe) {
       var i, j, k, logx = false, logy = false, logz = false, 
@@ -6338,7 +6153,7 @@ function createFillPatterns(svg, id, color) {
          return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TH2/)) {
-         var renderer = 0;
+/*         var renderer = 0;
          var vid = 'view3d_' + obj['fName'];
          $('<div><input type="checkbox" id='+vid+' /><label for='+vid+'>View in 3D</label></div>')
          .css('padding', '10px').css('position', 'absolute').insertBefore( svg[0][0] );
@@ -6349,6 +6164,7 @@ function createFillPatterns(svg, id, color) {
                $( svg[0][0] ).show().parent().find( renderer.domElement ).remove();
             }
          });
+         */
          JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TH3/)) {

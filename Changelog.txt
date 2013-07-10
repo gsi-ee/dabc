@@ -8,7 +8,8 @@ of the framework.
    One may need to improve speed of tooltip generation, and also graphic.
 2. Split HistPainter on generic part and Hist1DPainter and Hist2DPainter.
    Many functions remain in basic class.
-       
+3. Implement Hist2DPainter.  Linear code (no any long loops) for producing
+   tooltip information.   
 
 9.07.2013
 1. First approximation for HistPainter and PavePainter. One could select ranges,
