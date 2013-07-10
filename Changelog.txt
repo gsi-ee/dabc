@@ -6,7 +6,9 @@ of the framework.
 1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph
    drawing. Do not use tooltip (svg:title) for graphs.
    One may need to improve speed of tooltip generation, and also graphic.
-    
+2. Split HistPainter on generic part and Hist1DPainter and Hist2DPainter.
+   Many functions remain in basic class.
+       
 
 9.07.2013
 1. First approximation for HistPainter and PavePainter. One could select ranges,

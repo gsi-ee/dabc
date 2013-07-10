@@ -1397,6 +1397,14 @@ function createFillPatterns(svg, id, color) {
       if (!('painters' in vis)) {
          vis['painters'] = new Array();
          doubleTap(vis[0][0]); // ????
+         
+         // only first object in list can have zoom selection
+         // create dummy here and not need to check if it exists or not
+         this['zoom_xmin'] = 0;
+         this['zoom_xmax'] = 0;
+         this['zoom_ymin'] = 0;
+         this['zoom_ymax'] = 0;
+         
       } else {
          this.first = vis['painters'][0];
       }
@@ -1475,7 +1483,6 @@ function createFillPatterns(svg, id, color) {
       if (cmd=="uny") this.Unzoom(false, true); else
       if (cmd=="unxy") this.Unzoom(true, true);
    }
-
    
    JSROOTPainter.ObjectPainter.prototype.Unzoom = function(dox,doy) {
       var obj = this.first;
@@ -1506,14 +1513,7 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter.ObjectPainter.prototype.UpdateObject = function(obj) {
       alert("JSROOTPainter.ObjectPainter.UpdateObject not implemented");  
    }
-   
-
-   
-   
-   
-   
-   
-   
+      
    
    
    /**
@@ -1624,51 +1624,6 @@ function createFillPatterns(svg, id, color) {
          renderer.render( scene, camera );
       });
    };
-   
-   JSROOTPainter.unzoomXFrame = function(vis)
-   {
-      var xmin = vis['objects'][0]['x_min'],
-          xmax = vis['objects'][0]['x_max'];
-      for (var i=0;i<vis['objects'].length;++i) {
-        d3.behavior.zoom().x(vis['objects'][i].x.domain([xmin, xmax]));
-         vis['objects'][i]['zoom_xmin'] = 0;
-         vis['objects'][i]['zoom_xmax'] = 0;
-      }
-   }
-
-   JSROOTPainter.unzoomYFrame = function(vis)
-   {
-      var ymin = vis['objects'][0]['y_min'],
-          ymax = vis['objects'][0]['y_max'];
-      for (var i=0;i<vis['objects'].length;++i) {
-        d3.behavior.zoom().y(vis['objects'][i].y.domain([ymin, ymax]));
-        if ('ys' in vis['objects'][i])
-           vis['objects'][i].ys.domain([ymin, ymax]);
-         vis['objects'][i]['zoom_ymin'] = 0;
-         vis['objects'][i]['zoom_ymax'] = 0;
-      }
-   }
-   
-   JSROOTPainter.redrawFrame = function(vis)
-   {
-      if (vis.x_axis && vis.y_axis) {
-         vis.select(".xaxis").call(vis.x_axis);
-         vis.select(".yaxis").call(vis.y_axis);
-      }
-      vis.select(".xaxis").selectAll("text")
-         .attr("font-size", vis['x_fsize'])
-         .attr("font-family", vis['x_font']['name'])
-         .attr("font-weight", vis['x_font']['weight'])
-         .attr("font-style", vis['x_font']['style']);
-      vis.select(".yaxis").selectAll("text")
-         .attr("font-size", vis['y_fsize'])
-         .attr("font-family", vis['y_font']['name'])
-         .attr("font-weight", vis['y_font']['weight'])
-         .attr("font-style", vis['y_font']['style']);
-      for (var i=0;i<vis['objects'].length;++i) {
-         vis['objects'][i].redraw();
-      }
-   }
 
    JSROOTPainter.addInteraction = function(vis, obj) {
       var width = vis.attr("width"), height = vis.attr("height");
@@ -1745,10 +1700,6 @@ function createFillPatterns(svg, id, color) {
 
       function unZoom() {
          d3.event.preventDefault();
-
-         JSROOTPainter.unzoomXFrame(vis);
-         JSROOTPainter.unzoomYFrame(vis);
-         JSROOTPainter.redrawFrame(vis);
       };
 
       function moveRectSel() {
@@ -1784,10 +1735,6 @@ function createFillPatterns(svg, id, color) {
                 ymax = Math.max(vis['objects'][0].y.invert(origin[1]),
                                 vis['objects'][0].y.invert(m[1]));
             for (var i=0;i<vis['objects'].length;++i) {
-               vis['objects'][i]['zoom_xmin'] = xmin;
-               vis['objects'][i]['zoom_xmax'] = xmax;
-               vis['objects'][i]['zoom_ymin'] = ymin;
-               vis['objects'][i]['zoom_ymax'] = ymax;
                zoom.x(vis['objects'][i].x.domain([xmin, xmax]))
                    .y(vis['objects'][i].y.domain([ymin, ymax]));
                if ('ys' in vis['objects'][i])
@@ -1817,9 +1764,6 @@ function createFillPatterns(svg, id, color) {
             
             do_redraw = false;
          }
-         
-         if (do_redraw) 
-            JSROOTPainter.redrawFrame(vis);
          
          d3.select("body").style("-webkit-user-select", "auto");
       };
@@ -3246,6 +3190,13 @@ function createFillPatterns(svg, id, color) {
    }
 
    
+   JSROOTPainter.GraphPainter.prototype.UpdateObject = function(obj) {
+      
+      this.graph = obj;
+      this.CreateBins();
+   }
+
+   
    JSROOTPainter.drawGraphNew = function(vis, pad, graph, frame) 
    {
       
@@ -3628,11 +3579,18 @@ function createFillPatterns(svg, id, color) {
       JSROOTPainter.ObjectPainter.call(this);
       this.histo = histo;
    }
-   
+
    JSROOTPainter.HistPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
+   
+   
    JSROOTPainter.HistPainter.prototype.IsObject = function(obj) {
       return this.histo == obj;
+   }
+   
+   JSROOTPainter.HistPainter.prototype.Dimension = function() {
+      if (!this.histo) return 0;
+      return this.histo['fDimension'];
    }
    
    JSROOTPainter.HistPainter.prototype.SetFrame = function(vis, pad, hframe) {
@@ -3658,65 +3616,9 @@ function createFillPatterns(svg, id, color) {
    }
 
    JSROOTPainter.HistPainter.prototype.CreateBins = function() {
-      
-      // from here we analyze object content
-      // therefore code will be moved 
-      this.fillcolor = root_colors[this.histo['fFillColor']];
-      this.linecolor = root_colors[this.histo['fLineColor']];
-
-      if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
-      if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
-      
-      this.hmin = 1.0e32;
-      this.hmax = -1.0e32;
-      this.stat_integral = 0;
-      for (var i=0;i<this.histo['fXaxis']['fNbins'];++i) {
-         var value = this.histo['fArray'][i+1];
-         this.stat_integral += value;
-         if (value < this.hmin) this.hmin = value;
-         if (value > this.hmax) this.hmax = value;
-      }
-      var mul = (this.hmin < 0) ? 1.05 : 1.0;
-
-      this.ymin = this.histo['fYaxis']['fXmin'];
-      this.ymax = this.histo['fYaxis']['fXmax'];
-      
-      if ((this.histo['fXaxis']['fNbins']==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
-         if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
-         if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
-         this.empty_content = true;
-      } else {
-         if (this.histo['fMinimum'] != -1111) this.hmin = this.histo['fMinimum'];
-         if (this.histo['fMaximum'] != -1111) this.hmax = this.histo['fMaximum'];
-         this.ymin = this.hmin * mul;
-         this.ymax = this.hmax * 1.05;
-         this.empty_content = false;
-      }
-      
-      if (this.empty_content) {
-         this['bins'] = null;
-         return;
-      }
-
-      // TODO: reduce bins size to actual number of pixels drawn
-      
-      // TODO: later x coordinate one should extract from axis array - it may be non-linear
-      
-      this['binwidth'] = ((this.histo['fXaxis']['fXmax'] - this.histo['fXaxis']['fXmin']) / this.histo['fXaxis']['fNbins']);
-      
-      var pthis = this;
-      
-      this['bins'] = d3.range(pthis.histo['fXaxis']['fNbins']).map(function(p) {
-         var offset = (pthis.options.Error > 0) ? (p * pthis.binwidth) - (pthis.binwidth / 2.0) : (p * pthis.binwidth);
-         return {
-            x:  pthis.histo['fXaxis']['fXmin'] + offset,
-            y:  pthis.histo['fArray'][p+1],
-            xerr: pthis.binwidth / 2.0,
-            yerr: pthis.histo.getBinError(p+1)
-         };
-      });
+      alert("HistPainter.prototype.CreateBins not implemented");
    }
-   
+
    
    
    JSROOTPainter.HistPainter.prototype.UpdateObject = function(obj) 
@@ -3746,19 +3648,13 @@ function createFillPatterns(svg, id, color) {
       // special case used for drawing multiple graphs in the same frame
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
-      this.xmin = this.histo['fXaxis']['fXmin'];
-      this.xmax = this.histo['fXaxis']['fXmax']; 
-
       if (this.options.Logx)
          this['x'] = d3.scale.log().domain([this.xmin, this.xmax]).range([0, w]);
       else
          this['x'] = d3.scale.linear().domain([this.xmin,this.xmax]).range([0, w]);
 
-      var select_x = false;
-      if (('zoom_xmin' in this) && ('zoom_xmax' in this) && (this.zoom_xmin != this.zoom_xmax)) {
+      if (this.zoom_xmin != this.zoom_xmax) 
          this.x.domain([this.zoom_xmin, this.zoom_xmax]);
-         select_x = true;
-      }
 
       // $("#report").append("<br> ymin " + this.ymin + "  ymax " + this.ymax);
       
@@ -3767,24 +3663,18 @@ function createFillPatterns(svg, id, color) {
       else
          this['y'] = d3.scale.linear().domain([this.ymin, this.ymax]).range([h, 0]);
 
-      if (('zoom_ymin' in this) && ('zoom_ymax' in this) && (this.zoom_ymin!=this.zoom_ymax)) 
+      if (this.zoom_ymin!=this.zoom_ymax)  
          this.y.domain([this.zoom_ymin, this.zoom_ymax]);
       
-      this.stat_sum0 = 0;
-      this.stat_sum1 = 0;
-      this.stat_sum2 = 0;
-      
-      if (this.bins)
-         for (var i=0;i<this.bins.length;i++) {
-            var pnt = this.bins[i];
-            if (select_x && (pnt.x<this.zoom_xmin || pnt.x>=this.zoom_xmax)) continue;
-            this.stat_sum0 += pnt.y;
-            this.stat_sum1 += pnt.x * pnt.y;
-            this.stat_sum2 += pnt.x * pnt.x * pnt.y;
-         }
+   }
+   
+   JSROOTPainter.HistPainter.prototype.CountStat = function()
+   {
+      alert("CountStat not implemented");
    }
 
    JSROOTPainter.HistPainter.prototype.GetStat = function(name) {
+      // probably, can keep general for all TH kinds
       
       var pthis = this;
       
@@ -3884,72 +3774,10 @@ function createFillPatterns(svg, id, color) {
          .style("stroke-width", this.histo['fLineWidth'])
          .style("stroke-dasharray", root_line_styles[11]);
       }
-
-
    }
-
+   
    JSROOTPainter.HistPainter.prototype.DrawBins = function() {
-
-      if (this.empty_content) return;
-
-      // No idea why, keep as in original code
-      if ((this.options.Error > 0) ||
-          (this.options.Bar == 0 && this.options.Hist == 0)) return;
-
-      // TODO: check if we really need it here
-      if (!('bins_g' in this))
-         this['bins_g'] = this.svg_frame.append("svg:g");
-
-      if (!('draw_body' in this))
-         this['draw_body'] = this.bins_g.append("svg:path")
-                                .attr("class", "histogram_body");
-      
-      var pthis = this;
-      
-      if ((this.histo['fFillStyle'] < 4000 || this.histo['fFillStyle'] > 4100) && this.histo['fFillColor'] != 0) {
-
-         // histogram filling 
-         var area = d3.svg.area()
-            .x(function(d) { return pthis.x(d.x);})
-            .y0(function(d) { return pthis.y(0);})
-            .y1(function(d) { return pthis.y(d.y);})
-            .interpolate("step-before");
-            
-         if (this.histo['fFillStyle'] > 3000 && this.histo['fFillStyle'] <= 3025) {
-            createFillPatterns(this.vis, this.histo['fFillStyle'], this.histo['fFillColor']);
-
-            this.draw_body
-               .attr("d", area(this.bins))
-               .style("stroke", this.linecolor)
-               .style("stroke-width", this.histo['fLineWidth'])
-               .style("fill", "url(#pat" + this.histo['fFillStyle'] + "_" + this.histo['fFillColor'] + ")")
-               .style("antialias", "false");
-         }
-         else {
-            this.draw_body
-               .attr("d", area(this.bins))
-               .style("stroke", this.linecolor)
-               .style("stroke-width", this.histo['fLineWidth'])
-               .style("fill", this.fillcolor)
-               .style("antialias", "false");
-         }
-      }
-      else {
-
-         // histogram contour lines only 
-         var line = d3.svg.line()
-            .x(function(d) { return pthis.x(d.x);})
-            .y(function(d) { return pthis.y(d.y);})
-            .interpolate("step-before");
-
-         this.draw_body
-            .attr("d", line(this.bins))
-            .style("stroke", this.linecolor)
-            .style("stroke-width", this.histo['fLineWidth'])
-            .style("fill", "none")
-            .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
-            .style("antialias", "false");
-      }
+      alert("HistPainter.DrawBins not implemented");
    }
    
    JSROOTPainter.HistPainter.prototype.DrawAxes = function() {
@@ -4354,6 +4182,10 @@ function createFillPatterns(svg, id, color) {
       this.CreateXY();
 //      if (console) console.timeEnd("XY");
 
+//    if (console) console.time("Stat");
+      this.CountStat();
+//    if (console) console.time("Stat");
+      
 //      if (console) console.time("Grid");
       this.DrawGrids();
 //      if (console) console.timeEnd("Grid");
@@ -4637,7 +4469,184 @@ function createFillPatterns(svg, id, color) {
       }
    }
    
-   JSROOTPainter.HistPainter.prototype.ProvideTooltip = function(tip)
+
+
+   JSROOTPainter.HistPainter.prototype.FillContextMenu = function(menu)
+   {
+      JSROOTPainter.ObjectPainter.prototype.FillContextMenu.call(this, menu);
+      if (!this.empty_content)
+         this.AddMenuItem(menu,"Toggle stat","togstat");
+   }
+      
+   JSROOTPainter.HistPainter.prototype.ExeContextMenu = function(cmd) {
+      if (cmd == "togstat") {
+         this.ToggleStat();
+         return;
+      } 
+      
+      JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
+   } 
+
+   
+   // ======= TH1 painter =======================================================
+   
+   JSROOTPainter.Hist1DPainter = function(histo) {
+      JSROOTPainter.HistPainter.call(this, histo);
+   }
+
+   JSROOTPainter.Hist1DPainter.prototype = Object.create( JSROOTPainter.HistPainter.prototype );
+
+
+   JSROOTPainter.Hist1DPainter.prototype.CreateBins = function() {
+      
+      // from here we analyze object content
+      // therefore code will be moved 
+      this.fillcolor = root_colors[this.histo['fFillColor']];
+      this.linecolor = root_colors[this.histo['fLineColor']];
+
+      if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
+      if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
+      
+      this.hmin = 1.0e32;
+      this.hmax = -1.0e32;
+      this.stat_integral = 0;
+      for (var i=0;i<this.histo['fXaxis']['fNbins'];++i) {
+         var value = this.histo['fArray'][i+1];
+         this.stat_integral += value;
+         if (value < this.hmin) this.hmin = value;
+         if (value > this.hmax) this.hmax = value;
+      }
+      var mul = (this.hmin < 0) ? 1.05 : 1.0;
+      
+      // used in CreateXY
+      this.xmin = this.histo['fXaxis']['fXmin'];
+      this.xmax = this.histo['fXaxis']['fXmax']; 
+      
+      this.ymin = this.histo['fYaxis']['fXmin'];
+      this.ymax = this.histo['fYaxis']['fXmax'];
+      
+      if ((this.histo['fXaxis']['fNbins']==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
+         if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
+         if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
+         this.empty_content = true;
+      } else {
+         if (this.histo['fMinimum'] != -1111) this.hmin = this.histo['fMinimum'];
+         if (this.histo['fMaximum'] != -1111) this.hmax = this.histo['fMaximum'];
+         this.ymin = this.hmin * mul;
+         this.ymax = this.hmax * 1.05;
+         this.empty_content = false;
+      }
+      
+      if (this.empty_content) {
+         this['bins'] = null;
+         return;
+      }
+
+      // TODO: reduce bins size to actual number of pixels drawn
+      
+      // TODO: later x coordinate one should extract from axis array - it may be non-linear
+      
+      this['binwidth'] = ((this.histo['fXaxis']['fXmax'] - this.histo['fXaxis']['fXmin']) / this.histo['fXaxis']['fNbins']);
+      
+      var pthis = this;
+      
+      this['bins'] = d3.range(pthis.histo['fXaxis']['fNbins']).map(function(p) {
+         var offset = (pthis.options.Error > 0) ? (p * pthis.binwidth) - (pthis.binwidth / 2.0) : (p * pthis.binwidth);
+         return {
+            x:  pthis.histo['fXaxis']['fXmin'] + offset,
+            y:  pthis.histo['fArray'][p+1],
+            xerr: pthis.binwidth / 2.0,
+            yerr: pthis.histo.getBinError(p+1)
+         };
+      });
+   }
+   
+   JSROOTPainter.Hist1DPainter.prototype.CountStat = function()
+   {
+      var obj = this.first;
+      if (obj==null) obj = this;
+      
+      var select_x = (obj.zoom_xmin != obj.zoom_xmax);
+      
+      this.stat_sum0 = 0;
+      this.stat_sum1 = 0;
+      this.stat_sum2 = 0;
+      
+      if (this.bins)
+         for (var i=0;i<this.bins.length;i++) {
+            var pnt = this.bins[i];
+            if (select_x && (pnt.x<obj.zoom_xmin || pnt.x>=obj.zoom_xmax)) continue;
+            this.stat_sum0 += pnt.y;
+            this.stat_sum1 += pnt.x * pnt.y;
+            this.stat_sum2 += pnt.x * pnt.x * pnt.y;
+         }
+   }
+   
+   JSROOTPainter.Hist1DPainter.prototype.DrawBins = function() {
+
+      if (this.empty_content) return;
+
+      // No idea why, keep as in original code
+      if ((this.options.Error > 0) ||
+          (this.options.Bar == 0 && this.options.Hist == 0)) return;
+
+      // TODO: check if we really need it here
+      if (!('bins_g' in this))
+         this['bins_g'] = this.svg_frame.append("svg:g");
+
+      if (!('draw_body' in this))
+         this['draw_body'] = this.bins_g.append("svg:path")
+                                .attr("class", "histogram_body");
+      
+      var pthis = this;
+      
+      if ((this.histo['fFillStyle'] < 4000 || this.histo['fFillStyle'] > 4100) && this.histo['fFillColor'] != 0) {
+
+         // histogram filling 
+         var area = d3.svg.area()
+            .x(function(d) { return pthis.x(d.x);})
+            .y0(function(d) { return pthis.y(0);})
+            .y1(function(d) { return pthis.y(d.y);})
+            .interpolate("step-before");
+            
+         if (this.histo['fFillStyle'] > 3000 && this.histo['fFillStyle'] <= 3025) {
+            createFillPatterns(this.vis, this.histo['fFillStyle'], this.histo['fFillColor']);
+
+            this.draw_body
+               .attr("d", area(this.bins))
+               .style("stroke", this.linecolor)
+               .style("stroke-width", this.histo['fLineWidth'])
+               .style("fill", "url(#pat" + this.histo['fFillStyle'] + "_" + this.histo['fFillColor'] + ")")
+               .style("antialias", "false");
+         }
+         else {
+            this.draw_body
+               .attr("d", area(this.bins))
+               .style("stroke", this.linecolor)
+               .style("stroke-width", this.histo['fLineWidth'])
+               .style("fill", this.fillcolor)
+               .style("antialias", "false");
+         }
+      }
+      else {
+
+         // histogram contour lines only 
+         var line = d3.svg.line()
+            .x(function(d) { return pthis.x(d.x);})
+            .y(function(d) { return pthis.y(d.y);})
+            .interpolate("step-before");
+
+         this.draw_body
+            .attr("d", line(this.bins))
+            .style("stroke", this.linecolor)
+            .style("stroke-width", this.histo['fLineWidth'])
+            .style("fill", "none")
+            .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
+            .style("antialias", "false");
+      }
+   }
+
+   JSROOTPainter.Hist1DPainter.prototype.ProvideTooltip = function(tip)
    {
       if (this.empty_content) return;
 
@@ -4678,30 +4687,11 @@ function createFillPatterns(svg, id, color) {
       // range.x1 .. range.x2, range.y1 .. range.y2
    }
 
-
-   JSROOTPainter.HistPainter.prototype.FillContextMenu = function(menu)
-   {
-      JSROOTPainter.ObjectPainter.prototype.FillContextMenu.call(this, menu);
-      if (!this.empty_content)
-         this.AddMenuItem(menu,"Toggle stat","togstat");
-   }
-      
-   JSROOTPainter.HistPainter.prototype.ExeContextMenu = function(cmd) {
-      if (cmd == "togstat") {
-         this.ToggleStat();
-         return;
-      } 
-      
-      JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
-   } 
-
-   
-   ///
    
    JSROOTPainter.drawHistogram1Dnew = function(vis, pad, histo, hframe) {
 
       // create painter and add it to canvas
-      var painter = new JSROOTPainter.HistPainter(histo);
+      var painter = new JSROOTPainter.Hist1DPainter(histo);
 
       painter.SetFrame(vis, pad, hframe);
 
@@ -4712,6 +4702,8 @@ function createFillPatterns(svg, id, color) {
 //      if (console) console.timeEnd("CreateBins");
       
       painter.CreateXY();
+      
+      painter.CountStat();
 
       painter.DrawGrids();
 
@@ -4734,300 +4726,259 @@ function createFillPatterns(svg, id, color) {
       return painter;
    }
    
+   // ==================== painter for TH2 histograms ==============================
    
-   JSROOTPainter.drawHistogram1D = function(vis, pad, histo, hframe) {
-      var i, gridx = false, gridy = false;
-      var options = JSROOTPainter.decodeOptions(histo['fOption'], histo, pad);
-      var draw_all = false;
-      if (hframe == null || (hframe['xmin'] < 1e-300 && hframe['xmax'] < 1e-300 &&
-          hframe['ymin'] < 1e-300 && hframe['ymax'] < 1e-300)) {
-         draw_all = true;
-      }
-      if (pad && typeof(pad) != 'undefined') {
-         gridx = pad['fGridx'];
-         gridy = pad['fGridy'];
-      }
-      var fillcolor = root_colors[histo['fFillColor']];
-      var linecolor = root_colors[histo['fLineColor']];
-      if (histo['fFillColor'] == 0) {
-         fillcolor = '#4572A7';
-      }
-      if (histo['fLineColor'] == 0) {
-         linecolor = '#4572A7';
-      }
-      
-      var ret = hframe != null ? hframe : this.createFrame(vis, pad, histo, null);
-      var frame = ret['frame'];
-      var svg_frame = d3.select(ret['id']);
+   JSROOTPainter.Hist2DPainter = function(histo) {
+      JSROOTPainter.HistPainter.call(this, histo);
+   }
 
-      var empty_content = false;
-      var binwidth = 0;
-      var selwidth = 0;
-      var draw_body = null;
-      var draw_tooltip = null;
-      
-      if (histo['fName'] == '') histo['fName'] = "random_histo_" + random_id++;
-      var g_id = format_id(histo['fName']);
-      // Sergey Linev: generate g_id for histogram which is unique,
-      // In on all other places one need to use histo['g_id']   
-      if (document.getElementById(g_id) || document.getElementById(g_id + "_x_axis")) g_id += "_" + random_id++;
-      histo['g_id'] = g_id;
-      
-      function newredraw_histogram()
-      {
-         
-         if ((histo['fFillStyle'] < 4000 || histo['fFillStyle'] > 4100) 
-               && histo['fFillColor'] != 0) {
+   JSROOTPainter.Hist2DPainter.prototype = Object.create( JSROOTPainter.HistPainter.prototype );
 
-            // histogram filling
-            var area = d3.svg.area()
-               .x(function(d) { return histo.x(d.x);})
-               .y0(function(d) { return histo.y(0);})
-               .y1(function(d) { return histo.y(d.y);})
-               .interpolate("step-before");
-               
-            if (histo['fFillStyle'] > 3000 && histo['fFillStyle'] <= 3025) {
-               draw_body.transition().duration(750)
-                  .attr("d", area(histo.bins));
-            }
-            else {
-               draw_body.transition().duration(750)
-                  .attr("d", area(histo.bins));
+
+   JSROOTPainter.Hist2DPainter.prototype.CreateBins = function() {
+      this.fillcolor = root_colors[this.histo['fFillColor']];
+      this.linecolor = root_colors[this.histo['fLineColor']];
+
+      if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
+      if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
+
+      var nbinsx = this.histo['fXaxis']['fNbins'];
+      var nbinsy = this.histo['fYaxis']['fNbins'];
+      
+      // used in CreateXY method
+      this.xmin = this.histo['fXaxis']['fXmin'];
+      this.xmax = this.histo['fXaxis']['fXmax']; 
+      this.ymin = this.histo['fYaxis']['fXmin'];
+      this.ymax = this.histo['fYaxis']['fXmax']; 
+      
+      this.scalex = (this.xmax - this.xmin) / nbinsx;
+      this.scaley = (this.ymax - this.ymin) / nbinsy;
+      
+      var maxbin = -1e32, minbin = 1e32;
+      // used in drawing
+      this.maxbin = d3.max(this.histo['fArray']);
+      this.minbin = d3.min(this.histo['fArray']);
+      this.bins = new Array();
+      for (var i=0; i<nbinsx; ++i) {
+         for (var j=0; j<nbinsy; ++j) {
+            var bin_content = this.histo.getBinContent(i, j);
+            if (bin_content > this.minbin) {
+               var point = {
+                  x:this.histo['fXaxis']['fXmin'] + (i*this.scalex),
+                  y:this.histo['fYaxis']['fXmin'] + (j*this.scaley),
+                  z:bin_content
+               };
+               this.bins.push(point);
             }
          }
-         else {
+      }
+   }
+   
+   JSROOTPainter.Hist2DPainter.prototype.CountStat = function()
+   {
+      var obj = this.first;
+      if (obj==null) obj = this;
 
-            // histogram contour lines only
-            var line = d3.svg.line()
-               .x(function(d) { return histo.x(d.x);})
-               .y(function(d) { return histo.y(d.y);})
-               .interpolate("step-before");
+      var select_x = (obj.zoom_xmin != obj.zoom_xmax);
+      var select_y = (obj.zoom_xmin != obj.zoom_xmax);
+      // TODO: statistic filling
+   }
 
-            draw_body.transition().duration(750)
-               .attr("d", line(histo.bins));
+   
+   JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() {
+
+      if (('bins_g' in this) && (this.bins_g!=null)) {
+         // do we need it, may be only when object is changed!!!
+         // TODO: verify that we could keep created bins
+         //       anyhow, with x/y slection one could reduce number of drawn bins
+         
+         this.bins_g.selectAll(".marker").remove();
+         this.bins_g.selectAll(".bins").remove();
+         this.bins_g.selectAll(".selections").remove();
+
+      } else {
+         this['bins_g'] = this.svg_frame.append("svg:g");
+      }
+
+      var w = this.frame.attr("width"), h = this.frame.attr("height");
+
+      var constx = (w / this.histo['fXaxis']['fNbins']) / this.maxbin;
+      var consty = (h / this.histo['fYaxis']['fNbins']) / this.maxbin;
+      var xdom = this.x.domain();
+      var ydom = this.y.domain();
+      var xfactor = Math.abs(this.histo['fXaxis']['fXmax']-this.histo['fXaxis']['fXmin']) / Math.abs(xdom[1]-xdom[0]);
+      var yfactor = Math.abs(this.histo['fYaxis']['fXmax']-this.histo['fYaxis']['fXmin']) / Math.abs(ydom[1]-ydom[0]);
+
+      var pthis = this;
+      
+      if (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1) {
+         /* Add markers */
+         var filled = false;
+         if ((this.histo['fMarkerStyle'] == 8) ||
+             (this.histo['fMarkerStyle'] > 19 && this.histo['fMarkerStyle'] < 24) ||
+             (this.histo['fMarkerStyle'] == 29))
+            filled = true;
+
+         var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
+
+         var shape = info_marker['shape'];
+         var filled = info_marker['toFill'];
+         var toRotate = info_marker['toRotate'];
+         var markerSize = this.histo['fMarkerSize'];
+         var markerScale = (shape == 0) ? 32 : 64;
+         if (this.histo['fMarkerStyle'] == 1) markerScale = 1;
+
+         var marker = null;
+         
+         switch (shape) {
+            case 6:
+               marker = "M " + (-4 * markerSize) + " " + (-1 * markerSize)
+                         + " L " + 4 * markerSize + " " + (-1 * markerSize)
+                         + " L " + (-2.4 * markerSize) + " " + 4 * markerSize
+                         + " L 0 " + (-4 * markerSize) + " L " + 2.8 * markerSize
+                         + " " + 4 * markerSize + " z";
+               break;
+            case 7:
+               marker = "M " + (- 4 * markerSize) + " " + (-4 * markerSize)
+                        + " L " + 4 * markerSize + " " + 4 * markerSize + " M 0 "
+                        + (-4 * markerSize) + " 0 " + 4 * markerSize + " M "
+                        + 4 * markerSize + " " + (-4 * markerSize) + " L "
+                        + (-4 * markerSize) + " " + 4 * markerSize + " M "
+                        + (-4 * markerSize) + " 0 L " + 4 * markerSize + " 0";
+               break;
+            default:
+               marker = d3.svg.symbol()
+                       .type(d3.svg.symbolTypes[shape])
+                       .size(markerSize * markerScale);
+               break;
          }
-         
-         
-         if (draw_tooltip)
-           draw_tooltip.transition().duration(750)
-            .attr("x1", function(d) { return histo.x(d.x-d.xerr) } )
-            .attr("y1", function(d) { return histo.y(d.y) } )
-            .attr("x2", function(d) { return histo.x(d.x-d.xerr) } )
-            .attr("y2", function(d) { return histo.y(0) } )
+         this.bins_g.selectAll(".marker")
+            .data(this.bins)
+            .enter()
+            .append("svg:path")
+            .attr("class", "marker")
+            .attr("transform", function(d) {
+               return "translate(" + pthis.x(d.x) + "," + pthis.y(d.y) + ")"
+            })
+            .style("fill", root_colors[this.histo['fMarkerColor']])
+            .style("stroke", root_colors[this.histo['fMarkerColor']])
+            .attr("d", marker);
+//            .append("svg:title")
+//            .text(function(d) { return "x = " + d.x.toPrecision(4) + " \ny = " +
+//                                d.y.toPrecision(4) + " \nentries = " + d.z; });
+      }
+      else {
+         this.bins_g.selectAll(".bins")
+            .data(this.bins)
+            .enter()
+            .append("svg:rect")
+            .attr("class", "bins")
+            .attr("x", function(d) { 
+               return pthis.x(d.x + (pthis.scalex / 2)) - (0.5 * d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor);
+            })
+            .attr("y", function(d) { 
+               return pthis.y(d.y + (pthis.scaley / 2)) - (0.5 * d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor);
+            })
+            .attr("width", function(d) {
+               if (pthis.options.Color > 0)
+                  return (w / pthis.histo['fXaxis']['fNbins']) * xfactor;
+               else
+                  return d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor;
+            })
+            .attr("height", function(d) {
+               if (pthis.options.Color > 0)
+                  return (h / pthis.histo['fYaxis']['fNbins']) * yfactor;
+               else
+                  return d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor;
+            })
+            .style("stroke", function(d) {
+               if (pthis.options.Color > 0)
+                  return JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
+               else
+                  return "black";
+            })
+            .style("fill", function(d) {
+               if (pthis.options.Color > 0)
+                  return JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
+               else
+                  return "none";
+            });
+/*         this.bins_g.selectAll(".selections")
+            .data(this.bins)
+            .enter()
+            .append("svg:rect")
+            .attr("class", "selections")
+            .attr("x", function(d) { 
+               return pthis.x(d.x + (pthis.scalex / 2)) - (0.5 * d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor);
+            })
+            .attr("y", function(d) { 
+               return pthis.y(d.y + (pthis.scaley / 2)) - (0.5 * d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor);
+            })
+            .attr("width", function(d) {
+               if (pthis.options.Color > 0)
+                  return (w / pthis.histo['fXaxis']['fNbins']) * xfactor;
+               else
+                  return d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor;
+            })
+            .attr("height", function(d) {
+               if (pthis.options.Color > 0)
+                  return (h / pthis.histo['fYaxis']['fNbins']) * yfactor;
+               else
+                  return d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor;
+            })
             .attr("opacity", 0)
             .style("stroke", "#4572A7")
-            .style("stroke-width", selwidth)
+            .style("fill", "#4572A7")
             .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
             .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-            .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
-                    ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
-            });
-
-         
+            .append("svg:title")
+            .text(function(d) { 
+               return "x = [" + d.x.toPrecision(4) + ", " + (d.x + pthis.scalex).toPrecision(4) + 
+               "] \ny = [" + d.y.toPrecision(4) + ", " + (d.y + pthis.scaley).toPrecision(4) + 
+               "] \nentries = " + d.z;
+             });
+*/             
       }
+   }
+   
+   JSROOTPainter.drawHistogram2Dnew = function(vis, pad, histo, hframe) {
+
+      // create painter and add it to canvas
+      var painter = new JSROOTPainter.Hist2DPainter(histo);
+
+      painter.SetFrame(vis, pad, hframe);
+
+//      if (console) console.time("CreateBins");
+
+      painter.CreateBins();
+
+//      if (console) console.timeEnd("CreateBins");
       
+      painter.CreateXY();
+
+      painter.CountStat();
+
+      painter.DrawGrids();
+
+      painter.DrawBins();
+
+      painter.DrawAxes();
       
-      function redraw_histogram() {
+      //$("#report").append("<br> title");
+      painter.DrawTitle();
 
-         if (empty_content) {
-            JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
+      //$("#report").append("<br> stat");
+      //if (gStyle.AutoStat) painter.CreateStat();
 
-         } else if (options.Error > 0) {
-            // Sergey: no any redraw was specified, why it is ???
-         }
-         else if (options.Bar == 0 && options.Hist == 0) {
-            JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
-         } else {
-            if (draw_all)
-               JSROOTPainter.drawGrid(frame, histo, pad, histo.x, histo.y);
+      //$("#report").append("<br> func");
+      painter.DrawFunctions();
 
-            svg_frame.selectAll("#"+g_id).remove();
-            var g = svg_frame.append("svg:g").attr("id", g_id);
-            
-            if ((histo['fFillStyle'] < 4000 || histo['fFillStyle'] > 4100) && histo['fFillColor'] != 0) {
-
-               /* histogram filling */
-               var area = d3.svg.area()
-                  .x(function(d) { return histo.x(d.x);})
-                  .y0(function(d) { return histo.y(0);})
-                  .y1(function(d) { return histo.y(d.y);})
-                  .interpolate("step-before");
-                  
-               if (histo['fFillStyle'] > 3000 && histo['fFillStyle'] <= 3025) {
-                  createFillPatterns(vis, histo['fFillStyle'], histo['fFillColor']);
-
-                  draw_body = g.append("svg:path")
-                     .attr("class", g_id + "_body")
-                     .attr("d", area(histo.bins))
-                     .style("stroke", linecolor)
-                     .style("stroke-width", histo['fLineWidth'])
-                     .style("fill", "url(#pat" + histo['fFillStyle'] + "_" + histo['fFillColor'] + ")")
-                     .style("antialias", "false");
-               }
-               else {
-                  draw_body = g.append("svg:path")
-                     .attr("class", g_id + "_body")
-                     .attr("d", area(histo.bins))
-                     .style("stroke", linecolor)
-                     .style("stroke-width", histo['fLineWidth'])
-                     .style("fill", fillcolor)
-                     .style("antialias", "false");
-
-               }
-            }
-            else {
-
-               /* histogram contour lines only */
-               var line = d3.svg.line()
-                  .x(function(d) { return histo.x(d.x);})
-                  .y(function(d) { return histo.y(d.y);})
-                  .interpolate("step-before");
-
-               draw_body = g.append("svg:path")
-                  .attr("class", g_id + "_body")
-                  .attr("d", line(histo.bins))
-                  .style("stroke", linecolor)
-                  .style("stroke-width", histo['fLineWidth'])
-                  .style("fill", "none")
-                  .style("stroke-dasharray", histo['fLineStyle'] > 1 ? root_line_styles[histo['fLineStyle']] : null)
-                  .style("antialias", "false");
-            }
-
-            // add tooltips
-            selwidth = histo.x(2*binwidth)-histo.x(binwidth);
-            draw_tooltip = g.selectAll("selections")
-               .data(histo.bins)
-               .enter()
-               .append("svg:line");
-            
-            draw_tooltip
-               .attr("x1", function(d) { return histo.x(d.x-d.xerr) } )
-               .attr("y1", function(d) { return histo.y(d.y) } )
-               .attr("x2", function(d) { return histo.x(d.x-d.xerr) } )
-               .attr("y2", function(d) { return histo.y(0) } )
-               .attr("opacity", 0)
-               .style("stroke", "#4572A7")
-               .style("stroke-width", selwidth)
-               .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
-               .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-               .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
-                       ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
-               });
-         }
-      }
+      //$("#report").append("<br> interact");
+      painter.AddInteractive();
       
-      function rebuild_histogram() {
-         empty_content = false;
-         
-         // check content of histogram
-         
-         var hmin = 1.0e32, hmax = -1.0e32;
-         for (var i=0;i<histo['fXaxis']['fNbins'];++i) {
-            if (histo['fArray'][i+1] < hmin) hmin = histo['fArray'][i+1];
-            if (histo['fArray'][i+1] > hmax) hmax = histo['fArray'][i+1];
-         }
-         var mul = (hmin < 0) ? 1.05 : 1.0;
-         
-         var ymin = histo['fYaxis']['fXmin'], ymax = histo['fYaxis']['fXmax'];
-         
-         if (Math.abs(hmin) < 1e-300 && Math.abs(hmax) < 1e-300) {
-            if (histo['fMinimum'] != -1111) ymin = histo['fMinimum'];
-            if (histo['fMaximum'] != -1111) ymax = histo['fMaximum'];
-            empty_content = true;
-         } else {
-            if (histo['fMinimum'] != -1111) hmin = histo['fMinimum'];
-            if (histo['fMaximum'] != -1111) hmax = histo['fMaximum'];
-            ymin = hmin * mul;
-            ymax = hmax * 1.05;
-         }
-         // avoid this!
-         histo['fYaxis']['fXmin'] = ymin;
-         histo['fYaxis']['fXmax'] = ymax;
-         
-         histo['x_min'] = histo['fXaxis']['fXmin'];
-         histo['x_max'] = histo['fXaxis']['fXmax'];
-         histo['y_min'] = histo['fYaxis']['fXmin'];
-         histo['y_max'] = histo['fYaxis']['fXmax'];
-         
-         // special case used for drawing multiple graphs in the same frame
-         var w = frame.attr("width"), h = frame.attr("height");
-
-         var xmin = histo['fXaxis']['fXmin'], xmax = histo['fXaxis']['fXmax']; 
-
-         if (options.Logx)
-            histo['x'] = d3.scale.log().domain([xmin,xmax]).range([0, w]);
-         else
-            histo['x'] = d3.scale.linear().domain([xmin,xmax]).range([0, w]);
-         
-         // Sergey Linev: if zoom was selected before, apply it again
-         if (('zoom_xmin' in histo) && ('zoom_xmax' in histo) && (histo['zoom_xmin']!=histo['zoom_xmax']))
-            d3.behavior.zoom().x(histo.x).x(histo.x.domain([histo['zoom_xmin'], histo['zoom_xmax']]));
-
-         if (options.Logy)
-            histo['y'] = d3.scale.log().domain([ymin, ymax]).range([h, 0]);
-         else
-            histo['y'] = d3.scale.linear().domain([ymin, ymax]).range([h, 0]);
-
-         if (('zoom_ymin' in histo) && ('zoom_ymax' in histo) && (histo['zoom_ymin']!=histo['zoom_ymax'])) 
-            d3.behavior.zoom().y(histo.y).y(histo.y.domain([histo['zoom_ymin'], histo['zoom_ymax']]));
-         
-         if (!empty_content) {
-            
-            binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
-            histo['bins'] = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
-               var offset = (options.Error > 0) ? (p * binwidth) - (binwidth / 2.0) : (p * binwidth);
-               return {
-                  x:  histo['fXaxis']['fXmin'] + offset,
-                  y:  histo['fArray'][p],
-                  xerr: binwidth / 2.0,
-                  yerr: histo.getBinError(p)
-               };
-            });
-            
-            if (options.Same) {
-               histo.x.domain([ret['xmin'],ret['xmax']]);
-               histo.y.domain([ret['ymin'],ret['ymax']]);
-            }
-            else {
-               ret['xmin'] = histo['fXaxis']['fXmin'],
-               ret['xmax'] = histo['fXaxis']['fXmax'],
-               ret['ymin'] = histo['fYaxis']['fXmin'];
-               ret['ymax'] = histo['fYaxis']['fXmax'];
-            }
-            if (histo['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
-               ret['xmin'] = histo.getBinLowEdge(histo['fXaxis']['fFirst']);
-               ret['xmax'] = histo.getBinUpEdge(histo['fXaxis']['fLast']);
-               histo.x.domain([ret['xmin'],ret['xmax']]);
-               histo.y.domain([ret['ymin'],ret['ymax']]);
-            }
-
-            if (options.Error > 0) {
-               this.drawErrors(svg_frame, histo.bins, histo, pad, histo.x, histo.y);
-            }
-            
-         } // end of non_empty content treatment
-            
-         // now draw it
-
-         histo.redraw();
-         
-         if (draw_all) 
-            JSROOTPainter.drawAxes(frame, histo, pad, histo.x, histo.y);
-      }
-      
-      histo['redraw'] = redraw_histogram;
-      histo['rebuild'] = rebuild_histogram;
-      
-      rebuild_histogram();
-
-      if (draw_body!=null)
-         histo['newredraw'] = newredraw_histogram;
-
-      this.addInteraction(frame, histo);
-
-      this.drawTitle(vis, histo, pad);
-      this.drawFunctions(vis, histo, pad, ret);
-   };
+      return painter;
+   }
+   
    
 
    JSROOTPainter.drawHistogram2D = function(vis, pad, histo, hframe) {
@@ -5886,13 +5837,9 @@ function createFillPatterns(svg, id, color) {
                histo['fOption'] += stack['fOption'];
          }
          if (histo['_typename'].match(/\bJSROOTIO.TH1/))
-            this.drawHistogram1D(vis, pad, histo, hframe);
+            JSROOTPainter.drawHistogram1Dnew(vis, pad, histo, hframe);
          else if (histo['_typename'].match(/\bJSROOTIO.TH2/))
-            this.drawHistogram2D(vis, pad, histo, hframe);
-         hframe['xmin'] = histo['fXaxis']['fXmin'];
-         hframe['xmax'] = histo['fXaxis']['fXmax'];
-         hframe['ymin'] = histo['fYaxis']['fXmin'];
-         hframe['ymax'] = histo['fYaxis']['fXmax'];
+            JSROOTPainter.drawHistogram2Dnew(vis, pad, histo, hframe);
       }
       if (nostack) {
          for (var i=0; i<nhists; ++i) {
@@ -5908,7 +5855,7 @@ function createFillPatterns(svg, id, color) {
             h['fOption'] += "same";
             // only draw TH1s (for the time being)
             if (h['_typename'].match(/\bJSROOTIO.TH1/))
-               this.drawHistogram1D(vis, pad, h, hframe);
+               JSROOTPainter.drawHistogram1Dnew(vis, pad, h, hframe);
          }
       } else {
          var h1;
@@ -5925,7 +5872,7 @@ function createFillPatterns(svg, id, color) {
             h1['fOption'] += "same";
             // only draw TH1s (for the time being)
             if (h1['_typename'].match(/\bJSROOTIO.TH1/))
-               this.drawHistogram1D(vis, pad, h1, hframe);
+               JSROOTPainter.drawHistogram1Dnew(vis, pad, h1, hframe);
          }
       }
    };
@@ -6402,7 +6349,7 @@ function createFillPatterns(svg, id, color) {
                $( svg[0][0] ).show().parent().find( renderer.domElement ).remove();
             }
          });
-         JSROOTPainter.drawHistogram2D(svg, null, obj, null);
+         JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TH3/)) {
          JSROOTPainter.drawHistogram3D(svg, null, obj, null);
@@ -6829,20 +6776,10 @@ function createFillPatterns(svg, id, color) {
             this.drawText(vis, pad, primitives[i]);
          }
          if (classname.match(/\bJSROOTIO.TH1/)) {
-            this.drawHistogram1D(vis, pad, primitives[i], frame);
-            if (fframe) {
-               fframe['xmin'] = primitives[i]['fXaxis']['fXmin'];
-               fframe['xmax'] = primitives[i]['fXaxis']['fXmax'];
-               fframe['ymin'] = primitives[i]['fYaxis']['fXmin'];
-               fframe['ymax'] = primitives[i]['fYaxis']['fXmax'];
-               if (primitives[i]['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
-                  fframe['xmin'] = primitives[i].getBinLowEdge(primitives[i]['fXaxis']['fFirst']);
-                  fframe['xmax'] = primitives[i].getBinUpEdge(primitives[i]['fXaxis']['fLast']);
-               }
-            }
+            JSROOTPainter.drawHistogram1Dnew(vis, pad, primitives[i], frame);
          }
          if (classname.match(/\bJSROOTIO.TH2/)) {
-            this.drawHistogram2D(vis, pad, primitives[i], frame);
+            JSROOTPainter.drawHistogram2Dnew(vis, pad, primitives[i], frame);
          }
          if (classname.match(/\bJSROOTIO.THStack/)) {
             this.drawHStack(vis, pad, primitives[i], frame)
@@ -6859,10 +6796,10 @@ function createFillPatterns(svg, id, color) {
          if (classname.match(/\bTGraph/) ||
              classname.match(/\bRooHist/) ||
              classname.match(/\RooCurve/)) {
-            this.drawGraphNew(vis, pad, primitives[i], frame);
+            JSROOTPainter.drawGraphNew(vis, pad, primitives[i], frame);
          }
          if (classname == 'JSROOTIO.TMultiGraph') {
-            this.drawMultiGraphNew(vis, pad, primitives[i], frame);
+            JSROOTPainter.drawMultiGraphNew(vis, pad, primitives[i], frame);
          }
       }
    };
