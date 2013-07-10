@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+10.07.2013
+1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph
+   drawing. Do not use tooltip (svg:title) for graphs.
+   One may need to improve speed of tooltip generation, and also graphic.
+    
+
 9.07.2013
 1. First approximation for HistPainter and PavePainter. One could select ranges,
    create and toggle stat box. Information in stat box can be updated.

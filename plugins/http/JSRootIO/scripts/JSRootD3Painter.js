@@ -2319,7 +2319,8 @@ function createFillPatterns(svg, id, color) {
 
       // if no drawing option is selected and if chopt<>' ' nothing is done.
       if (optionLine + optionFill + optionCurve + optionStar + optionMark + optionBar + optionE == 0) {
-         if (chopt.length == 0) optionLine = 1;
+         // Sergey: chopt was not defined, probably opt here
+         if (opt.length == 0) optionLine = 1;
          else return;
       }
       if (optionStar) graph['fMarkerStyle'] = 3;
