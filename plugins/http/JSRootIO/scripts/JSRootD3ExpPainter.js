@@ -3479,7 +3479,7 @@ function createFillPatterns(svg, id, color) {
       var dostat = new Number(this.pavetext['fOptStat']);
       if (!dostat) dostat = new Number(gStyle.OptStat);
 
-      if (histo['fDimension'] == 1) {
+      if ((histo['fDimension'] == 1) || (histo['_typename'] == "JSROOTIO.TProfile")) {
          // clear lines
 
          this.pavetext['fLines'].length = 0;
@@ -3548,7 +3548,7 @@ function createFillPatterns(svg, id, color) {
       
       // fill statistic
       if (!this.FillStatistic()) return;
-      
+
       this.DrawPaveText();
    }
 
@@ -3593,6 +3593,9 @@ function createFillPatterns(svg, id, color) {
 
       // here we deciding how histogram will look like and that and how will be shown 
       this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, pad);
+      
+      if (this.histo['_typename'] == "JSROOTIO.TProfile")
+         this.options.Error = 11;
       
       this.frame = frame;
       
@@ -3668,45 +3671,6 @@ function createFillPatterns(svg, id, color) {
    {
       alert("CountStat not implemented");
    }
-
-   JSROOTPainter.HistPainter.prototype.GetStat = function(name) {
-      // probably, can keep general for all TH kinds
-      
-      var pthis = this;
-      
-      var res = 0;
-      var digits = 0;
-      
-      if (name == "Entries") { res = this.stat_entries; digits = 0; } 
-
-      if (name == "Mean") {
-         if (this.stat_sum0 > 0) res = this.stat_sum1/this.stat_sum0;
-         digits = 2;
-      }
-
-      if (name == "RMS") {
-         if (this.stat_sum0 > 0) 
-            res = Math.sqrt(this.stat_sum2/this.stat_sum0 - Math.pow(this.stat_sum1/this.stat_sum0, 2));
-         digits = 3;
-      }
-      
-      if (name == "Underflow") {
-         if (this.histo['fArray'].length > 0) res = this.histo['fArray'][0];
-         digits = 0;
-      }
-
-      if (name == "Overflow") {
-         if (this.histo['fArray'].length > 0) res = this.histo['fArray'][this.histo['fArray'].length-1];
-         digits = 0;
-      }
-
-      if (name == "Integral") { res = this.stat_sum0; digits = 0; }
-      
-      if (res>1e8) return res.toExponential(3);
-
-      return res.toFixed(digits);
-   }
-
 
    JSROOTPainter.HistPainter.prototype.DrawGrids = function() {
       // grid can only be drawn by first painter
@@ -4508,7 +4472,7 @@ function createFillPatterns(svg, id, color) {
       this.stat_entries = d3.sum(this.histo['fArray']);
       
       for (var i=0;i<this.histo['fXaxis']['fNbins'];++i) {
-         var value = this.histo['fArray'][i+1];
+         var value = this.histo.getBinContent(i+1);
          if (value < this.hmin) this.hmin = value;
          if (value > this.hmax) this.hmax = value;
       }
@@ -4550,7 +4514,7 @@ function createFillPatterns(svg, id, color) {
          var offset = (pthis.options.Error > 0) ? (p * pthis.binwidth) - (pthis.binwidth / 2.0) : (p * pthis.binwidth);
          return {
             x:  pthis.histo['fXaxis']['fXmin'] + offset,
-            y:  pthis.histo['fArray'][p],
+            y:  pthis.histo.getBinContent(p),
             xerr: pthis.binwidth / 2.0,
             yerr: pthis.histo.getBinError(p)
          };
@@ -4588,8 +4552,8 @@ function createFillPatterns(svg, id, color) {
    }
 
    JSROOTPainter.Hist1DPainter.prototype.getY = function(i) {
-      if ((i<=0) || (i>this.histo['fArray'].length - 2)) this.y(0.);
-      return this.y(this.histo['fArray'][i+1]);
+      if ((i<=0) || (i>this.histo['fXaxis']['fNbins'] - 1)) this.y(0.);
+      return this.y(this.histo.getBinContent(i+1));
    }
 
    JSROOTPainter.Hist1DPainter.prototype.CountStat = function()
@@ -4599,16 +4563,57 @@ function createFillPatterns(svg, id, color) {
       this.stat_sum2 = 0;
 
       var left = this.GetLeftIndex();
-      var right = this.GetRightIndex();;
+      var right = this.GetRightIndex();
+      
+      // $("#report").append("<br> count statistic " + left + "  " + right);
       
       for (var i=left;i<right;i++) {
          var xx = this.xmin + i*this.binwidth;
-         var yy = this.histo['fArray'][i+1];
+         var yy = this.histo.getBinContent(i+1);
          this.stat_sum0 += yy;
          this.stat_sum1 += xx * yy;
          this.stat_sum2 += xx * xx * yy;
       }
    }
+   
+   JSROOTPainter.Hist1DPainter.prototype.GetStat = function(name) {
+      // probably, can keep general for all TH kinds
+      
+      var pthis = this;
+      
+      var res = 0;
+      var digits = 0;
+      
+      if (name == "Entries") { res = this.stat_entries; digits = 0; } 
+
+      if (name == "Mean") {
+         if (this.stat_sum0 > 0) res = this.stat_sum1/this.stat_sum0;
+         digits = 2;
+      }
+
+      if (name == "RMS") {
+         if (this.stat_sum0 > 0) 
+            res = Math.sqrt(this.stat_sum2/this.stat_sum0 - Math.pow(this.stat_sum1/this.stat_sum0, 2));
+         digits = 3;
+      }
+      
+      if (name == "Underflow") {
+         if (this.histo['fArray'].length > 0) res = this.histo['fArray'][0];
+         digits = 0;
+      }
+
+      if (name == "Overflow") {
+         if (this.histo['fArray'].length > 0) res = this.histo['fArray'][this.histo['fArray'].length-1];
+         digits = 0;
+      }
+
+      if (name == "Integral") { res = this.stat_sum0; digits = 0; }
+      
+      if (res>1e8) return res.toExponential(3);
+
+      return res.toFixed(digits);
+   }
+
    
    JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() {
       var w = this.svg_frame.attr("width"), h = this.svg_frame.attr("height");
@@ -4812,7 +4817,7 @@ function createFillPatterns(svg, id, color) {
       var nbin = Math.round((tip.x - this.xmin)/this.binwidth - 0.5);
       if ((nbin<0) || (nbin>=this.histo['fXaxis']['fNbins'])) return;
 
-      var value = this.histo['fArray'][nbin+1];
+      var value = this.histo.getBinContent(nbin+1);
 
       var dist = value - tip.y;
       
@@ -6277,18 +6282,6 @@ function createFillPatterns(svg, id, color) {
          return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TH2/)) {
-/*         var renderer = 0;
-         var vid = 'view3d_' + obj['fName'];
-         $('<div><input type="checkbox" id='+vid+' /><label for='+vid+'>View in 3D</label></div>')
-         .css('padding', '10px').css('position', 'absolute').insertBefore( svg[0][0] );
-         $('#'+vid).click(function(e) {
-            if ( $(this).prop('checked') ) {
-               renderer = JSROOTPainter.drawHistogram2D3D(svg, null, obj, null);
-            } else {
-               $( svg[0][0] ).show().parent().find( renderer.domElement ).remove();
-            }
-         });
-         */
          JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TH3/)) {
@@ -6298,7 +6291,7 @@ function createFillPatterns(svg, id, color) {
          JSROOTPainter.drawHStack(svg, null, obj, null)
       }
       else if (obj['_typename'].match(/\bJSROOTIO.TProfile/)) {
-         JSROOTPainter.drawProfile(svg, null, obj, null);
+         return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
       }
       else if (obj['_typename'] == 'JSROOTIO.TF1') {
          $("#report").append("<br> draw tf1");
@@ -6715,7 +6708,8 @@ function createFillPatterns(svg, id, color) {
          if (classname == 'JSROOTIO.TText') {
             this.drawText(vis, pad, primitives[i]);
          }
-         if (classname.match(/\bJSROOTIO.TH1/)) {
+         if (classname.match(/\bJSROOTIO.TH1/) || 
+             (classname=="JSROOTIO.TProfile")) {
             JSROOTPainter.drawHistogram1Dnew(vis, pad, primitives[i], frame);
          }
          if (classname.match(/\bJSROOTIO.TH2/)) {
@@ -6723,9 +6717,6 @@ function createFillPatterns(svg, id, color) {
          }
          if (classname.match(/\bJSROOTIO.THStack/)) {
             this.drawHStack(vis, pad, primitives[i], frame)
-         }
-         if (classname.match(/\bJSROOTIO.TProfile/)) {
-            this.drawProfile(vis, pad, primitives[i], frame);
          }
          if (classname == 'JSROOTIO.TF1') {
             $("#report").append("<br> draw tf1");
@@ -6736,180 +6727,16 @@ function createFillPatterns(svg, id, color) {
          if (classname.match(/\bTGraph/) ||
              classname.match(/\bRooHist/) ||
              classname.match(/\RooCurve/)) {
-            $("#report").append("<br> draw graph");
+            //$("#report").append("<br> draw graph");
             JSROOTPainter.drawGraphNew(vis, pad, primitives[i], frame);
          }
          if (classname == 'JSROOTIO.TMultiGraph') {
-            $("#report").append("<br> draw multigraph");
+            //$("#report").append("<br> draw multigraph");
             JSROOTPainter.drawMultiGraphNew(vis, pad, primitives[i], frame);
          }
       }
    };
 
-   JSROOTPainter.drawProfile = function(vis, pad, histo, frame) {
-      var i, logx = false, logy = false, logz = false, gridx = false, gridy = false;
-      if (pad && typeof(pad) != 'undefined') {
-         logx = pad['fLogx'];
-         logy = pad['fLogy'];
-         logz = pad['fLogz'];
-         gridx = pad['fGridx'];
-         gridy = pad['fGridy'];
-      }
-      var fillcolor = root_colors[histo['fFillColor']];
-      var linecolor = root_colors[histo['fLineColor']];
-      if (histo['fFillColor'] == 0) {
-         fillcolor = '#4572A7';
-      }
-      if (histo['fLineColor'] == 0) {
-         linecolor = '#4572A7';
-      }
-      //histo['fgApproximate'] = true;
-      var binwidth = ((histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) / histo['fXaxis']['fNbins']);
-      var bins = d3.range(histo['fXaxis']['fNbins']).map(function(p) {
-         return {
-            x:  histo['fXaxis']['fXmin'] + (p * binwidth) + (binwidth / 2.0),
-            y:  histo.getBinContent(p+1),
-            xerr: binwidth / 2.0,
-            yerr: histo.getBinError(p+1)
-         };
-      });
-      if (frame==null) frame = this.createFrame(vis, pad, histo, null);
-      var svg_frame = frame.root_svg_frame;
-      var w = frame.attr("width"), h = frame.attr("height");
-      if (logx)
-         var x = d3.scale.log().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
-      else
-         var x = d3.scale.linear().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([0, w]);
-      if (logy)
-         var y = d3.scale.log().domain([histo['fYmin'], histo['fYmax']]).range([h, 0]);
-      else
-         var y = d3.scale.linear().domain([histo['fYmin'], histo['fYmax']]).range([h, 0]);
-
-      histo['x_min'] = histo['fXaxis']['fXmin'];
-      histo['x_max'] = histo['fXaxis']['fXmax'];
-      histo['y_min'] = histo['fYmin'];
-      histo['y_max'] = histo['fYmax'];
-
-      histo['x'] = x;
-      histo['y'] = y;
-      histo['bins'] = bins;
-
-      this.drawGrid(frame, histo, pad, x, y);
-      this.drawErrors(svg_frame, bins, histo, pad, x, y);
-      this.drawAxes(frame, histo, pad, x, y);
-      this.drawTitle(vis, histo, pad);
-      this.addInteraction(frame, histo);
-      this.drawFunctions(vis, histo, pad, ret);
-      if (!pad || typeof(pad) == 'undefined')
-         this.drawStat(vis, histo);
-      return null;
-   };
-
-   JSROOTPainter.drawStat = function(vis, histo) {
-      var w = vis.attr("width"), h = vis.attr("height");
-      var lcount=0, nlines = 4; // name, entries, mean, rms
-      if (histo['_typename'] && histo['_typename'].match(/\bTProfile/))
-         nlines += 2; // mean y, rms y
-      if (histo['_typename'] && histo['_typename'].match(/\bTH2/))
-         nlines += 2; // mean y, rms y
-
-      var statx = 0.980;
-      var staty = 0.935;
-      var statw = 0.2;
-      var stath = 0.25 * nlines * 0.16;
-
-      var pos_x = (statx - statw) * w;
-      var pos_y = (1.0 - staty) * h;
-      var width = statw * w;
-      var height = stath * h;
-      var font_size = Math.round(height / (nlines * 1.7));
-      var fontDetails = getFontDetails(root_fonts[4]);
-
-      var pave = vis.append("svg:g")
-         .attr("width", width)
-         .attr("height", height)
-         .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
-
-      var stat_rect = pave.append("svg:rect")
-         .attr("class", "frame")
-         .attr("x", 0)
-         .attr("y", 0)
-         .attr("width", width)
-         .attr("height", height)
-         .attr("fill", 'white')
-         .style("stroke-width", 1)
-         .style("stroke", 'black');
-
-      var  line = histo['fName'];
-      pave.append("svg:text")
-            .attr("x", width/2)
-            .attr("y", ++lcount * (font_size * 1.4))
-            .attr("font-size", font_size)
-            .attr("text-anchor", "middle")
-            .attr("vertical-anchor", "bottom")
-            .text(line);
-
-      line = 'Entries = ' + histo['fEntries'];
-      pave.append("svg:text")
-            .attr("x", 5)
-            .attr("y", ((font_size * 0.06)) + (++lcount * (font_size * 1.6)))
-            .attr("font-size", font_size)
-            .attr("text-anchor", "start")
-            .attr("vertical-anchor", "bottom")
-            .text(line);
-
-      if (histo['_typename'] && histo['_typename'].match(/\bTH2/))
-         line = 'Mean x = ' + histo.getMean(1).toFixed(6.4);
-      else
-         line = 'Mean = ' + histo.getMean(1).toFixed(6.4);
-      pave.append("svg:text")
-            .attr("x", 5)
-            .attr("y", ((font_size * 0.06)) + (++lcount * (font_size * 1.6)))
-            .attr("font-size", font_size)
-            .attr("text-anchor", "start")
-            .attr("vertical-anchor", "bottom")
-            .text(line);
-      if ((histo['_typename'] && histo['_typename'].match(/\bTProfile/)) ||
-           (histo['_typename'] && histo['_typename'].match(/\bTH2/))) {
-         line = 'Mean y = ' + histo.getMean(2).toFixed(6.4);
-         pave.append("svg:text")
-               .attr("x", 5)
-               .attr("y", ((font_size * 0.06)) + (++lcount * (font_size * 1.6)))
-               .attr("font-size", font_size)
-               .attr("text-anchor", "start")
-               .attr("vertical-anchor", "bottom")
-               .text(line);
-      }
-      if (histo['_typename'] && histo['_typename'].match(/\bTH2/))
-         line = 'RMS x = ' + histo.getRMS(1).toFixed(6.4);
-      else
-         line = 'RMS = ' + histo.getRMS(1).toFixed(6.4);
-      pave.append("svg:text")
-            .attr("x", 5)
-            .attr("y", ((font_size * 0.06)) + (++lcount * (font_size * 1.6)))
-            .attr("font-size", font_size)
-            .attr("text-anchor", "start")
-            .attr("vertical-anchor", "bottom")
-            .text(line);
-      if ((histo['_typename'] && histo['_typename'].match(/\bTProfile/)) ||
-           (histo['_typename'] && histo['_typename'].match(/\bTH2/))){
-         line = 'RMS y = ' + histo.getRMS(2).toFixed(6.4);
-         pave.append("svg:text")
-               .attr("x", 5)
-               .attr("y", ((font_size * 0.06)) + (++lcount * (font_size * 1.6)))
-               .attr("font-size", font_size)
-               .attr("text-anchor", "start")
-               .attr("vertical-anchor", "bottom")
-               .text(line);
-      }
-      pave.append("svg:line")
-          .attr("x1", 0)
-          .attr("y1", font_size * 2)
-          .attr("x2", width)
-          .attr("y2", font_size * 2)
-          .style("stroke", 'black')
-          .style("stroke-width", 1);
-   };
 
    JSROOTPainter.drawText = function(vis, pad, text) {
       // align = 10*HorizontalAlign + VerticalAlign
@@ -6967,23 +6794,6 @@ function createFillPatterns(svg, id, color) {
          .attr("text-anchor", align)
          .attr("fill", tcolor)
          .text(string);
-   };
-
-   JSROOTPainter.drawTitle = function(vis, histo, pad) {
-      /* draw the title only if we don't draw from a pad (see Olivier for details) */
-      var w = vis.attr("width"), h = vis.attr("height");
-      var font_size = Math.round(0.050 * h);
-      var l_title = this.translateLaTeX(histo['fTitle']);
-      if (!pad || typeof(pad) == 'undefined') {
-         vis.append("text")
-            .attr("class", "title")
-            .attr("text-anchor", "middle")
-            .attr("x", w/2)
-            .attr("y", 0.07 * vis.attr("height"))
-            .attr("font-family", "Arial")
-            .attr("font-size", font_size)
-            .text(l_title);
-      }
    };
 
    /**

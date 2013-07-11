@@ -6,7 +6,7 @@ of the framework.
 1. Implement drawing of THStack. 
 2. Try to avoid bins array usage and generate draw elements directly and only
    required amount. Done as test for TH1 with line drawing
-
+3. Add support for TProfile - via normal hist painter.
 
 10.07.2013
 1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph
