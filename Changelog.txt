@@ -10,6 +10,8 @@ of the framework.
 4. Fix several problems with TGraph draw, 
    files/rf107.root, files/ct.root are now working. 
 5. Add support for TF1 - create Func1DPainter class.
+6. Put protection when TF1.evalPar() returns NaN value. 
+   At least, fillrandom.root file with such funstion now working.
 
 
 10.07.2013

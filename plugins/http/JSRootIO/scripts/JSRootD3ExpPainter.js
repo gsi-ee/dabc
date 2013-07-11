@@ -1774,8 +1774,8 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.Func1DPainter.prototype.Eval = function(x)
    {
-      return (x-5)*(x-5);
-      //return this.tf1.evalPar(x);
+      //return (x-5)*(x-5);
+      return this.tf1.evalPar(x);
    }
    
    JSROOTPainter.Func1DPainter.prototype.CreateDummyHisto = function()
@@ -1801,16 +1801,25 @@ function createFillPatterns(svg, id, color) {
          
          var nb_points = Math.max(this.tf1['fNpx'], this.tf1['fNpfits']);
          
-         // $("#report").append("<br> calculate points " + nb_points);
-
-         var binwidth = ((xmax - xmin) / nb_points);
+         var binwidth = ((xmax - xmin) / (nb_points-1));
+         var left = -1, right = -1;
          for (var i=0;i<nb_points;++i) {
             var h = this.Eval(xmin + (i * binwidth));
-            if ((i==0) || (h > ymax)) ymax = h;
-            if ((i==0) || (h < ymin)) ymin = h;
+            if (isNaN(h)) continue;
+            
+            if (left<0) { left = i; ymax = h; ymin = h; }
+            if ((right<0) || (right == i-1)) right = i;
+
+            if (h > ymax) ymax = h;
+            if (h < ymin) ymin = h;
          }
          
-         // $("#report").append("<br> find ymin " + ymin + "  ymax " + ymax);
+         if (left<right) { 
+            xmax = xmin + right*binwidth;
+            xmin = xmin + left*binwidth;
+         }
+         
+//         $("#report").append("<br> find ymin " + ymin + "  ymax " + ymax);
       }
       
       if (ymax > 0.0) ymax *= 1.05;
@@ -1855,9 +1864,12 @@ function createFillPatterns(svg, id, color) {
          var nb_points = Math.max(this.tf1['fNpx'], this.tf1['fNpfits']);
          var binwidth = (xmax - xmin) / nb_points;
          this['bins'] = d3.range(nb_points).map(function(p) {
+            var xx = xmin + (p * binwidth);
+            var yy = pthis.Eval(xx);
+            if (isNaN(yy)) yy = 0;
             return {
-               x: xmin + (p * binwidth),
-               y: pthis.Eval(xmin + (p * binwidth))
+               x: xx,
+               y: yy 
             };
          });
          this['interpolate_method'] = 'cardinal-open';
