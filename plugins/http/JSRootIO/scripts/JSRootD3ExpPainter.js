@@ -2691,9 +2691,11 @@ function createFillPatterns(svg, id, color) {
          }
       });
       
-      
+
+      this.bins_lw = this.graph['fLineWidth']; // line width
+
       this.exclusionGraph = false;
-      if (this.graph['fLineWidth'] <= 99) return;
+      if (this.bins_lw <= 99) return;
 
       // special handling of exclusion graphs
 
@@ -2915,7 +2917,7 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.GraphPainter.prototype.ProvideTooltip = function(tip)
    {
-      if (this.empty_content) return;
+      if (!this.draw_content) return;
 
       if (!('bins' in this) || (this.bins==null)) return;
       
@@ -2961,8 +2963,8 @@ function createFillPatterns(svg, id, color) {
 
       var pthis = this;
       
-      var x = pthis.first.x;
-      var y = pthis.first.y;
+      var x = this.first.x;
+      var y = this.first.y;
       
       if (this.seriesType == 'line') {
          /* contour lines only */
@@ -2978,7 +2980,6 @@ function createFillPatterns(svg, id, color) {
          var xdom = this.first.x.domain();
          var xfactor = xdom[1]-xdom[0];
          
-         $("#report").append("<br>draw bar - check one construct");
          this.bins_g
             .selectAll("bar_graph")
             .data(this.bins)
@@ -2988,7 +2989,7 @@ function createFillPatterns(svg, id, color) {
             .attr("x", function(d) { return x(d.x)} )
             .attr("y", function(d) { return y(d.y)} )
             .attr("width", function(d) { return (w / (xdom[1]-xdom[0]))-1} )
-            .attr("height", function(d) { return y(d.bh)} ) // FIXME: here was ys - why??
+            .attr("height", function(d) { return y(d.y) - y(d.y+d.bh); } )
             .style("fill", fillcolor);
 //            .append("svg:title").text(function(d) {
 //               return "x = " + d.x.toPrecision(4) + " \nentries = " + d.y.toPrecision(4);
@@ -3029,7 +3030,6 @@ function createFillPatterns(svg, id, color) {
             this.graph['_typename'] == 'JSROOTIO.TGraphAsymmErrors' ||
             this.graph['_typename'].match(/\bRooHist/)) && this.draw_errors && !this.optionBar) {
 
-         $("#report").append("<br>draw gr2");
          /* Add x-error indicators */
          this.bins_g.selectAll("error_x")
             .data(this.bins)
@@ -3040,10 +3040,9 @@ function createFillPatterns(svg, id, color) {
             .attr("y1", function(d) { return y(d.y)} )
             .attr("x2", function(d) { return x(d.x+d.exhigh)} )
             .attr("y2", function(d) { return y(d.y)} )
-            .style("stroke", root_colors[graph['fLineColor']])
-            .style("stroke-width", graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
 
-         $("#report").append("<br>draw gr3");
          this.bins_g.selectAll("e1_x")
             .data(this.bins)
             .enter()
@@ -3053,10 +3052,9 @@ function createFillPatterns(svg, id, color) {
             .attr("x1", function(d) { return x(d.x-d.exlow)})
             .attr("y2", function(d) { return y(d.y)+3})
             .attr("x2", function(d) { return x(d.x-d.exlow)})
-            .style("stroke", root_colors[pthis.graph['fLineColor']])
-            .style("stroke-width", pthis.graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
 
-         $("#report").append("<br>draw gr4");
          this.bins_g.selectAll("e1_x")
             .data(this.bins)
             .enter()
@@ -3066,10 +3064,9 @@ function createFillPatterns(svg, id, color) {
             .attr("x1", function(d) { return x(d.x+d.exhigh) })
             .attr("y2", function(d) { return y(d.y)+3})
             .attr("x2", function(d) { return x(d.x+d.exhigh) })
-            .style("stroke", root_colors[pthis.graph['fLineColor']])
-            .style("stroke-width", pthis.graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
 
-         $("#report").append("<br>draw gr5");
          /* Add y-error indicators */
          this.bins_g.selectAll("error_y")
             .data(this.bins)
@@ -3080,11 +3077,9 @@ function createFillPatterns(svg, id, color) {
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)})
             .attr("y2", function(d) { return y(d.y+d.eyhigh) })
-            .style("stroke", root_colors[pthis.graph['fLineColor']])
-            .style("stroke-width", pthis.graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
 
-         
-         $("#report").append("<br>draw gr6");
          this.bins_g.selectAll("e1_y")
             .data(this.bins)
             .enter()
@@ -3094,10 +3089,9 @@ function createFillPatterns(svg, id, color) {
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)+3})
             .attr("y2", function(d) { return y(d.y-d.eylow) })
-            .style("stroke", root_colors[pthis.graph['fLineColor']])
-            .style("stroke-width", pthis.graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
          
-         $("#report").append("<br>draw gr7");
          this.bins_g.selectAll("e1_y")
             .data(this.bins)
             .enter()
@@ -3107,8 +3101,8 @@ function createFillPatterns(svg, id, color) {
             .attr("y1", function(d) { return y(d.y+d.eyhigh) })
             .attr("x2", function(d) { return x(d.x)+3})
             .attr("y2", function(d) { return y(d.y+d.eyhigh) })
-            .style("stroke", root_colors[graph['fLineColor']])
-            .style("stroke-width", graph['fLineWidth']);
+            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke-width", this.graph['fLineWidth']);
 
 //         this.bins_g.selectAll("line")
 //           .append("svg:title")
@@ -3587,7 +3581,7 @@ function createFillPatterns(svg, id, color) {
    }
    
    JSROOTPainter.HistPainter.prototype.SetFrame = function(vis, pad, frame) {
-      this.empty_content = true;
+      this.draw_content = false;
 
       this.SetVis(vis);
 
@@ -4047,7 +4041,7 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.HistPainter.prototype.CreateStat = function() {
       
-      if (this.empty_content) return null;
+      if (!this.draw_content) return null;
       if (this.HasStat() != null) return null;
       
       var stats = {};
@@ -4167,7 +4161,7 @@ function createFillPatterns(svg, id, color) {
       // only first painter in list allowed to add interactive functionality to the main pad
       if (this.first) return;
 
-//      if (this.empty_content) return;
+//      if (!this.draw_content) return;
       
       var width = this.frame.attr("width"), height = this.frame.attr("height");
       var e, origin, rect;
@@ -4434,7 +4428,7 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter.HistPainter.prototype.FillContextMenu = function(menu)
    {
       JSROOTPainter.ObjectPainter.prototype.FillContextMenu.call(this, menu);
-      if (!this.empty_content)
+      if (this.draw_content)
          this.AddMenuItem(menu,"Toggle stat","togstat");
    }
       
@@ -4488,16 +4482,21 @@ function createFillPatterns(svg, id, color) {
       if ((this.histo['fXaxis']['fNbins']==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
          if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
-         this.empty_content = true;
+         this.draw_content = false;
       } else {
          if (this.histo['fMinimum'] != -1111) this.hmin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) this.hmax = this.histo['fMaximum'];
          this.ymin = this.hmin * mul;
          this.ymax = this.hmax * 1.05;
-         this.empty_content = false;
+         this.draw_content = true;
       }
       
-      if (this.empty_content) {
+      // If no any draw options specified, do not try draw histogram
+      if (this.options.Bar == 0 && this.options.Hist == 0) {
+         this.draw_content = false;
+      }
+      
+      if (!this.draw_content) {
          this['bins'] = null;
          return;
       }
@@ -4732,13 +4731,7 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.Hist1DPainter.prototype.DrawBins = function() {
 
-      if (this.empty_content) return;
-
-      // No idea why, keep as in original code
-      if (this.options.Bar == 0 && this.options.Hist == 0) {
-         $("#report").append("<br>do not draw - why??");
-         return;
-      }
+      if (!this.draw_content) return;
 
       if (!('bins_id' in this))
          this['bins_id'] = "random_bins_id" + random_id++;
@@ -4810,7 +4803,7 @@ function createFillPatterns(svg, id, color) {
 
    JSROOTPainter.Hist1DPainter.prototype.ProvideTooltip = function(tip)
    {
-      if (this.empty_content) return;
+      if (!this.draw_content) return;
 
       if (!('bins' in this) || (this.bins==null)) return;
       
@@ -6727,7 +6720,6 @@ function createFillPatterns(svg, id, color) {
          if (classname.match(/\bTGraph/) ||
              classname.match(/\bRooHist/) ||
              classname.match(/\RooCurve/)) {
-            //$("#report").append("<br> draw graph");
             JSROOTPainter.drawGraphNew(vis, pad, primitives[i], frame);
          }
          if (classname == 'JSROOTIO.TMultiGraph') {

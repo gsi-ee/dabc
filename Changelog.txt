@@ -7,6 +7,7 @@ of the framework.
 2. Try to avoid bins array usage and generate draw elements directly and only
    required amount. Done as test for TH1 with line drawing
 3. Add support for TProfile - via normal hist painter.
+4. Fix several problems with TGraph draw, files/rf107.root is now working. 
 
 10.07.2013
 1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph
@@ -16,12 +17,14 @@ of the framework.
    Many functions remain in basic class.
 3. Implement Hist2DPainter.  Linear code (no any long loops) for producing
    tooltip information.   
+   
 
 9.07.2013
 1. First approximation for HistPainter and PavePainter. One could select ranges,
    create and toggle stat box. Information in stat box can be updated.
    One could extend menu items.  
 2. Remove tooltip from Bertrand - it eat full time and cannot be used as is.   
+
 
 8.07.2013
 1. Experimental code in JSRootD3Painter.js. Try to zoom in without remake of drawn objects, 
