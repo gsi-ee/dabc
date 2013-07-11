@@ -9,6 +9,7 @@ of the framework.
 3. Add support for TProfile - via normal hist painter.
 4. Fix several problems with TGraph draw, 
    files/rf107.root, files/ct.root are now working. 
+5. Add support for TF1 - create Func1DPainter class.
 
 
 10.07.2013
