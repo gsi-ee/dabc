@@ -1100,6 +1100,10 @@ function createFillPatterns(svg, id, color) {
          option.Logx = pad['fLogx'];
          option.Logy = pad['fLogy'];
          option.Logz = pad['fLogz'];
+      } else {
+         option.Logx = false;
+         option.Logy = false;
+         option.Logz = false;
       }
       //  Check options incompatibilities
       if (option.Bar == 1) option.Hist = -1;
@@ -3214,13 +3218,7 @@ function createFillPatterns(svg, id, color) {
       
       var axis_frame = this.frame;
       
-      var w = axis_frame.attr("width"), h = axis_frame.attr("height"),
-          logx = false, logy = false, logz = false;
-      if (this.pad && typeof(this.pad) != 'undefined') {
-         logx = this.pad['fLogx'];
-         logy = this.pad['fLogy'];
-         logz = this.pad['fLogz'];
-      }
+      var w = axis_frame.attr("width"), h = axis_frame.attr("height");
       var noexpx = this.histo['fXaxis'].TestBit(EAxisBits.kNoExponent);
       var noexpy = this.histo['fYaxis'].TestBit(EAxisBits.kNoExponent);
       var moreloglabelsx = this.histo['fXaxis'].TestBit(EAxisBits.kMoreLogLabels);
@@ -3321,7 +3319,7 @@ function createFillPatterns(svg, id, color) {
                  return dfx(datime); })
              .ticks(n1ax);
       }
-      else if (logx) {
+      else if (this.options.Logx) {
          this['x_axis'] = d3.svg.axis()
             .scale(this.x)
             .orient("bottom")
@@ -3386,7 +3384,7 @@ function createFillPatterns(svg, id, color) {
                    return dfy(datime); })
                .ticks(n1ay);
       }
-      else if (logy) {
+      else if (this.options.Logy) {
          this['y_axis'] = d3.svg.axis()
             .scale(this.y)
             .orient("left")
@@ -4350,9 +4348,36 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.Hist2DPainter = function(histo) {
       JSROOTPainter.HistPainter.call(this, histo);
+      this.is3D = false;
    }
 
    JSROOTPainter.Hist2DPainter.prototype = Object.create( JSROOTPainter.HistPainter.prototype );
+
+   
+   JSROOTPainter.Hist2DPainter.prototype.FillContextMenu = function(menu)
+   {
+      JSROOTPainter.HistPainter.prototype.FillContextMenu.call(this, menu);
+      if (this.is3D)
+         this.AddMenuItem(menu,"Draw in 2D","draw2d");
+      else
+         this.AddMenuItem(menu,"Draw in 3D","draw3d");
+   }
+      
+   JSROOTPainter.HistPainter.prototype.ExeContextMenu = function(cmd) {
+      if (cmd == "draw2d") {
+         this.is3D = false;
+         this.RedrawFrame();
+         return;
+      } 
+
+      if (cmd == "draw3d") {
+         this.is3D = true;
+         this.RedrawFrame();
+         return;
+      } 
+
+      JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
+   } 
 
 
    JSROOTPainter.Hist2DPainter.prototype.CreateBins = function() {
@@ -4374,8 +4399,6 @@ function createFillPatterns(svg, id, color) {
       this.scalex = (this.xmax - this.xmin) / this.nbinsx;
       this.scaley = (this.ymax - this.ymin) / this.nbinsy;
       
-      var maxbin = -1e32, minbin = 1e32;
-      // used in drawing
       this.maxbin = d3.max(this.histo['fArray']);
       this.minbin = d3.min(this.histo['fArray']);
       this.bins = new Array();
@@ -4404,9 +4427,8 @@ function createFillPatterns(svg, id, color) {
       // TODO: statistic filling
    }
 
-   
-   JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() {
-
+   JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() 
+   {
       if (!('bins_id' in this))
          this['bins_id'] = "random_bins_id" + random_id++;
       
@@ -4634,76 +4656,51 @@ function createFillPatterns(svg, id, color) {
       return painter;
    }
 
-   JSROOTPainter.drawHistogram2D3D = function(vis, pad, histo, hframe) {
-      var i, j, k, logx = false, logy = false, logz = false, 
-          gridx = false, gridy = false, girdz = false;
-      var opt = histo['fOption'].toLowerCase();
-      if (pad && typeof(pad) != 'undefined') {
-         logx = pad['fLogx'];
-         logy = pad['fLogy'];
-         logz = pad['fLogz'];
-         gridx = pad['fGridx'];
-         gridy = pad['fGridy'];
-         gridz = pad['fGridz'];
+   JSROOTPainter.Hist2DPainter.prototype.Redraw = function() {
+      if (!this.is3D) {
+         JSROOTPainter.HistPainter.prototype.Redraw.call(this);
+         return;
       }
-      var fillcolor = root_colors[histo['fFillColor']];
-      var linecolor = root_colors[histo['fLineColor']];
-      if (histo['fFillColor'] == 0) {
-         fillcolor = '#4572A7';
+      
+      this.Draw3D();
+   }
+
+   
+   JSROOTPainter.Hist2DPainter.prototype.Draw3D = function() 
+   {
+      if ('bins_id' in this) {
+         d3.selectAll("#" + this.bins_id).remove();
+         this['bins_g'] = null;
       }
-      if (histo['fLineColor'] == 0) {
-         linecolor = '#4572A7';
-      }
-      var nbinsx = histo['fXaxis']['fNbins'];
-      var nbinsy = histo['fYaxis']['fNbins'];
-      var scalex = (histo['fXaxis']['fXmax'] - histo['fXaxis']['fXmin']) /
-                    histo['fXaxis']['fNbins'];
-      var scaley = (histo['fYaxis']['fXmax'] - histo['fYaxis']['fXmin']) /
-                    histo['fYaxis']['fNbins'];
-      var maxbin = -1e32, minbin = 1e32;
-      for (i=0; i<nbinsx; ++i) {
-         for (j=0; j<nbinsy; ++j) {
-            var bin_content = histo.getBinContent(i, j);
-            if (bin_content < minbin) minbin = bin_content;
-            if (bin_content > maxbin) maxbin = bin_content;
-         }
-      }
-      maxbin *= 1.05;
-      var bins = new Array();
-      for (i=0; i<nbinsx; ++i) {
-         for (j=0; j<nbinsy; ++j) {
-            var bin_content = histo.getBinContent(i, j);
-            if (bin_content > minbin) {
-               var point = {
-                  x:histo['fXaxis']['fXmin'] + (i*scalex),
-                  y:histo['fYaxis']['fXmin'] + (j*scaley),
-                  z:bin_content
-               };
-               bins.push(point);
-            }
-         }
-      }
-      var w = vis.attr("width"), h = vis.attr("height"), size = 100;
-      if (logx) {
-         var tx = d3.scale.log().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([-size, size]);
-         var utx = d3.scale.log().domain([-size, size]).range([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]);
+      
+      var w = this.frame.attr("width"), h = this.frame.attr("height"), size = 100;
+      
+      var xmin = this.xmin, xmax = this.xmax;
+      if (this.zoom_xmin != this.zoom_xmax) { xmin = this.zoom_xmin; xmax = this.zoom_xmax; }
+      var ymin = this.ymin, ymax = this.ymax;
+      if (this.zoom_ymin != this.zoom_ymax) { ymin = this.zoom_ymin; ymax = this.zoom_ymax; }
+      
+
+      if (this.options.Logx) {
+         var tx = d3.scale.log().domain([xmin, xmax]).range([-size, size]);
+         var utx = d3.scale.log().domain([-size, size]).range([xmin, xmax]);
       } else {
-         var tx = d3.scale.linear().domain([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]).range([-size, size]);
-         var utx = d3.scale.linear().domain([-size, size]).range([histo['fXaxis']['fXmin'], histo['fXaxis']['fXmax']]);
+         var tx = d3.scale.linear().domain([xmin, xmax]).range([-size, size]);
+         var utx = d3.scale.linear().domain([-size, size]).range([xmin, xmax]);
       }
-      if (logy) {
-         var ty = d3.scale.log().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([-size, size]);
-         var uty = d3.scale.log().domain([size, -size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
+      if (this.options.Logy) {
+         var ty = d3.scale.log().domain([ymin, ymax]).range([-size, size]);
+         var uty = d3.scale.log().domain([size, -size]).range([ymin, ymax]);
       } else {
-         var ty = d3.scale.linear().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([-size, size]);
-         var uty = d3.scale.linear().domain([size, -size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
+         var ty = d3.scale.linear().domain([ymin, ymax]).range([-size, size]);
+         var uty = d3.scale.linear().domain([size, -size]).range([ymin, ymax]);
       }
-      if (logz) {
-         var tz = d3.scale.log().domain([minbin, Math.ceil( maxbin/10 )*10]).range([0, size*2]);
-         var utz = d3.scale.log().domain([0, size*2]).range([minbin, Math.ceil( maxbin/10 )*10]);
+      if (this.options.Logz) {
+         var tz = d3.scale.log().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
+         var utz = d3.scale.log().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
       } else {
-         var tz = d3.scale.linear().domain([minbin, Math.ceil( maxbin/10 )*10]).range([0, size*2]);
-         var utz = d3.scale.linear().domain([0, size*2]).range([minbin, Math.ceil( maxbin/10 )*10]);
+         var tz = d3.scale.linear().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
+         var utz = d3.scale.linear().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
       }
 
       // three.js 3D drawing
@@ -4859,26 +4856,28 @@ function createFillPatterns(svg, id, color) {
       toplevel.add( line );
 
       // create the bin cubes
-      var constx = (size*2 / histo['fXaxis']['fNbins']) / maxbin;
-      var consty = (size*2 / histo['fYaxis']['fNbins']) / maxbin;
+      var constx = (size*2 / this.nbinsx) / this.maxbin;
+      var consty = (size*2 / this.nbinsy) / this.maxbin;
 
-      var optFlag = ( opt.indexOf('colz') != -1 || opt.indexOf('col') != -1 );
-      var fcolor = d3.rgb(root_colors[histo['fFillColor']]);
+      var colorFlag = ( this.options.Color > 0);
+      var fcolor = d3.rgb(root_colors[this.histo['fFillColor']]);
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
-      var bin, wei;
-      for ( i = 0; i < bins.length; ++i ) {
-         wei = tz( optFlag ? maxbin : bins[i].z );
+      var bin, wei, hh;
+      for (var i = 0; i < this.bins.length; ++i ) {
+         hh = this.bins[i];
+         if ((hh.x < xmin) || (hh.x > xmax) || (hh.y < ymin) || (hh.y > ymax)) continue;
+         
          bin = THREE.SceneUtils.createMultiMaterialObject(
-            new THREE.CubeGeometry( 2*size/nbinsx, wei, 2*size/nbinsy ),
+            new THREE.CubeGeometry( 2*size/this.nbinsx, hh.z, 2*size/this.nbinsy ),
             [ new THREE.MeshLambertMaterial( { color: fillcolor.getHex(), shading: THREE.NoShading } ),
               wireMaterial ] );
-         bin.position.x = tx( bins[i].x + (scalex/2));
-         bin.position.y = wei/2;
-         bin.position.z = -(ty( bins[i].y + (scaley/2)));
-         bin.name = "x: [" + bins[i].x.toPrecision(4) + ", " + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
-                    "y: [" + bins[i].y.toPrecision(4) + ", " + (bins[i].y + scaley).toPrecision(4) + "]<br>" + 
-                    "entries: " + bins[i].z.toFixed();
+         bin.position.x = tx(hh.x + this.scalex/2);
+         bin.position.y = hh.z/2;
+         bin.position.z = -(ty(hh.y + this.scaley/2));
+//         bin.name = "x: [" + hh.x.toPrecision(4) + ", " + (hh.x + this.scalex).toPrecision(4) + "]<br>" +
+//                    "y: [" + hh.y.toPrecision(4) + ", " + (hh.y + this.scaley).toPrecision(4) + "]<br>" + 
+//                    "entries: " + hh.z.toFixed();
          toplevel.add( bin );
       }
       // create a point light
@@ -4897,12 +4896,13 @@ function createFillPatterns(svg, id, color) {
       var renderer = Detector.webgl ? new THREE.WebGLRenderer( { antialias: true } ) :
                      new THREE.CanvasRenderer( { antialias: true } );
       renderer.setSize( w, h );
-      $( vis[0][0] ).hide().parent().append( renderer.domElement );
+      $( this.vis[0][0] ).hide().parent().append( renderer.domElement );
       renderer.render( scene, camera );
-
-      this.add3DInteraction(renderer, scene, camera, toplevel);
-      return renderer;
+      
+      JSROOTPainter.add3DInteraction(renderer, scene, camera, toplevel);
    }
+
+   
 
    JSROOTPainter.drawHistogram3D = function(vis, pad, histo, hframe) {
       var i, j, k, logx = false, logy = false, logz = false,
@@ -5757,9 +5757,9 @@ function createFillPatterns(svg, id, color) {
 
       if (obj['_typename'].match(/\bTCanvas/)) {
          svg = JSROOTPainter.drawCanvas(obj, idx);
-         // window.setTimeout(function() { $(render_to)[0].scrollIntoView(); }, 50);
          return;
       }
+      
       svg = JSROOTPainter.createCanvas($(render_to), idx);
       if (svg == null) return false;
       if (obj['_typename'].match(/\bJSROOTIO.TH1/)) {
@@ -6171,7 +6171,7 @@ function createFillPatterns(svg, id, color) {
       for (i=0; i<primitives.length; ++i) {
          var classname = primitives[i]['_typename'];
          
-         $("#report").append("<br> draw primitive " + classname);
+         // $("#report").append("<br> draw primitive " + classname);
          
          if (classname == 'JSROOTIO.TFrame') {
             frame = JSROOTPainter.createFrame(vis, pad, null, primitives[i]);
@@ -6205,7 +6205,6 @@ function createFillPatterns(svg, id, color) {
             this.drawHStack(vis, pad, primitives[i], frame)
          }
          if (classname == 'JSROOTIO.TF1') {
-            $("#report").append("<br> draw tf1");
             JSROOTPainter.drawFunctionNew(vis, pad, primitives[i], frame);
          }
          if (classname.match(/\bTGraph/) ||

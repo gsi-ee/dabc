@@ -12,6 +12,8 @@ of the framework.
 5. Add support for TF1 - create Func1DPainter class.
 6. Put protection when TF1.evalPar() returns NaN value. 
    At least, fillrandom.root file with such funstion now working.
+7. Move functionality to draw TH2 histograms in 3D to Hist2DPainter.
+   One can reuse range, selected in 2D view. 
 
 
 10.07.2013
