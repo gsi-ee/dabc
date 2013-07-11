@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+11.07.2013
+1. Implement drawing of THStack. 
+2. Try to avoid bins array usage and generate draw elements directly and only
+   required amount. Done as test for TH1 with line drawing
+
+
 10.07.2013
 1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph
    drawing. Do not use tooltip (svg:title) for graphs.
