@@ -7,7 +7,9 @@ of the framework.
 2. Try to avoid bins array usage and generate draw elements directly and only
    required amount. Done as test for TH1 with line drawing
 3. Add support for TProfile - via normal hist painter.
-4. Fix several problems with TGraph draw, files/rf107.root is now working. 
+4. Fix several problems with TGraph draw, 
+   files/rf107.root, files/ct.root are now working. 
+
 
 10.07.2013
 1. Introduce GraphPainter for TGraph objects. Implement graph and multigraph

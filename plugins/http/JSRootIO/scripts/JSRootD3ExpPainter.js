@@ -3186,20 +3186,15 @@ function createFillPatterns(svg, id, color) {
    
    JSROOTPainter.drawGraphNew = function(vis, pad, graph, frame) 
    {
-      
-      if (frame==null) {
-         // we need to create frame and draw hitogram first
-         
-         if (!('fHistogram' in graph)) {
-            alert("drawing graphs without fHistogram field not (yet) supported");
-            return;
-         }
-         
-         var hpainter = JSROOTPainter.drawHistogram1Dnew(vis, pad, graph['fHistogram'], frame);
-         
-         frame = hpainter.frame;
+      if (!('fHistogram' in graph)) {
+         alert("drawing graphs without fHistogram field not (yet) supported");
+         return;
       }
       
+      if ((frame==null) || !('painters' in vis)) {
+         var hpainter = JSROOTPainter.drawHistogram1Dnew(vis, pad, graph['fHistogram'], frame);
+         frame = hpainter.frame;
+      } 
       
       var painter = new JSROOTPainter.GraphPainter(graph);
       
@@ -6680,6 +6675,9 @@ function createFillPatterns(svg, id, color) {
       var primitives = pad['fPrimitives'];
       for (i=0; i<primitives.length; ++i) {
          var classname = primitives[i]['_typename'];
+         
+         $("#report").append("<br> draw primitive " + classname);
+         
          if (classname == 'JSROOTIO.TFrame') {
             frame = JSROOTPainter.createFrame(vis, pad, null, primitives[i]);
          }
