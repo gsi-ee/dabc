@@ -386,6 +386,8 @@ function getFontDetails(fontName) {
    var weight = "";
    var style = "";
    var name = "Arial";
+   
+   if (fontName==null) fontName = ""; 
 
    if (fontName.indexOf("bold") != -1) {
       weight = "bold";
@@ -1589,19 +1591,22 @@ var gStyle = {
       });
    };
 
-   JSROOTPainter.createFrame = function(vis, pad, histo, frame) {
+   JSROOTPainter.createFrame = function(vis, frame) {
       var w = vis.attr("width"), h = vis.attr("height");
       var width = w, height = h;
       var lm = w*0.12, rm = w*0.05, tm = h*0.12, bm = h*0.12;
-      if (histo && histo['fOption'] && histo['fOption'].toLowerCase() == 'colz')
-         rm = w * 0.13;
+      
+      // TODO: should we analyze it here or can move frame when really colz option will be necessary 
+      
+      //if (histo && histo['fOption'] && histo['fOption'].toLowerCase() == 'colz')
+      //   rm = w * 0.13;
+      
+      var pad = vis['ROOT:pad'];
+      
       var framecolor = 'white', bordermode = 0,
-          bordersize = 0, linecolor = 'black',//root_colors[0],
+          bordersize = 0, linecolor = 'black',
           linestyle = 0, linewidth = 1;
-      if (histo && histo['_typename'] == 'JSROOTIO.TF1') {
-         linecolor = 'black';
-         linewidth = 1;
-      }
+      
       if (frame) {
          bordermode = frame['fBorderMode'];
          bordersize = frame['fBorderSize'];
@@ -1650,8 +1655,6 @@ var gStyle = {
       if (typeof(framecolor) == 'undefined')
          framecolor = 'white';
 
-      // Sergey: no idea why we need three levels of objects, but lets do it  
-      
       var hframe = vis.append("svg:g")
             .attr("x", lm)
             .attr("y", tm)
@@ -1678,8 +1681,17 @@ var gStyle = {
             .attr("height", h)
             .attr("viewBox", "0 0 "+w+" "+h);
       
+      // this is svg:g object - container for every other items belonging to frame
+      vis['ROOT:frame'] = hframe;
+
+      // this is alredy graphical object, corrseponding to the TFrame 
+      vis['ROOT:svg_frame'] = d3.select("#svg_frame_" + frame_id);
+
+      // it is ROOT TPad object
+      vis['ROOT:pad'] = pad;
+      
       // keep svg frame inside 
-      hframe['root_svg_frame'] = d3.select("#svg_frame_" + frame_id);
+      hframe['ROOT:svg_frame'] = d3.select("#svg_frame_" + frame_id);
 
       return hframe;
    }
@@ -1697,12 +1709,12 @@ var gStyle = {
       return this.tf1 == obj;
    }
    
-   JSROOTPainter.Func1DPainter.prototype.SetFrame = function(vis, pad, frame) {
+   JSROOTPainter.Func1DPainter.prototype.SetFrame = function(vis) {
       this.SetVis(vis);
-      this.pad = pad;
-      this.frame = frame;
+      this.pad = vis['ROOT:pad'];
+      this.frame = vis['ROOT:frame'];
       if (!this.frame) {
-         alert("frame for the graph was not specified");
+         alert("frame for the TF1 was not specified");
          return;
       }
       
@@ -1919,19 +1931,16 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawFunctionNew = function(vis, pad, tf1, frame) 
+   JSROOTPainter.drawFunctionNew = function(vis, tf1) 
    {
       var painter = new JSROOTPainter.Func1DPainter(tf1);
       
       if (!('painters' in vis)) {
          var histo = painter.CreateDummyHisto();
-         var hpainter = JSROOTPainter.drawHistogram1Dnew(vis, pad, histo, frame);
-         frame = hpainter.frame;
-      } else {
-         if (frame==null) frame = vis['painters'][0].frame;
-      }
+         JSROOTPainter.drawHistogram1Dnew(vis, histo);
+      } 
       
-      painter.SetFrame(vis, pad, frame);
+      painter.SetFrame(vis);
       
       painter.CreateBins();
       
@@ -1954,10 +1963,10 @@ var gStyle = {
       return this.graph == obj;
    }
    
-   JSROOTPainter.GraphPainter.prototype.SetFrame = function(vis, pad, frame) {
+   JSROOTPainter.GraphPainter.prototype.SetFrame = function(vis) {
       this.SetVis(vis);
-      this.pad = pad;
-      this.frame = frame;
+      this.pad = vis['ROOT:pad'];
+      this.frame = vis['ROOT:frame'];
       if (!this.frame) {
          alert("frame for the graph was not specified");
          return;
@@ -2617,21 +2626,19 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawGraphNew = function(vis, pad, graph, frame) 
+   JSROOTPainter.drawGraphNew = function(vis, graph) 
    {
       if (!('fHistogram' in graph)) {
          alert("drawing graphs without fHistogram field not (yet) supported");
          return;
       }
       
-      if ((frame==null) || !('painters' in vis)) {
-         var hpainter = JSROOTPainter.drawHistogram1Dnew(vis, pad, graph['fHistogram'], frame);
-         frame = hpainter.frame;
-      } 
+      if (!('painters' in vis)) 
+         JSROOTPainter.drawHistogram1Dnew(vis, graph['fHistogram']);
       
       var painter = new JSROOTPainter.GraphPainter(graph);
       
-      painter.SetFrame(vis, pad, frame);
+      painter.SetFrame(vis);
       
       painter.DecodeOptions();
       
@@ -3009,25 +3016,30 @@ var gStyle = {
       return this.histo['fDimension'];
    }
    
-   JSROOTPainter.HistPainter.prototype.SetFrame = function(vis, pad, frame) {
+   JSROOTPainter.HistPainter.prototype.SetFrame = function(vis) {
       this.draw_content = false;
 
       this.SetVis(vis);
+      
+      if (vis['ROOT:frame']==null)
+         JSROOTPainter.createFrame(vis);
+
+      if (vis['ROOT:svg_frame']==null) {
+         alert("missing svg_frame");
+         return;
+      }
+      
+      this.frame = vis['ROOT:frame'];
+      this.svg_frame = vis['ROOT:svg_frame'];
+      this.pad = vis['ROOT:pad'];
 
       // here we deciding how histogram will look like and that and how will be shown 
-      this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, pad);
+      this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, this.pad);
       
       if (this.histo['_typename'] == "JSROOTIO.TProfile")
          this.options.Error = 11;
       
-      this.frame = frame;
-      
-      if (this.frame==null)
-         this.frame = JSROOTPainter.createFrame(vis, pad, this.histo, null);
 
-      this.svg_frame = this.frame['root_svg_frame'];
-      
-      this.pad = pad;
       
       this.show_gridx = false;
       this.show_gridy = false;
@@ -3549,7 +3561,7 @@ var gStyle = {
           if (func['_typename'] == 'JSROOTIO.TF1') {
             if ((!this.pad && !func.TestBit(kNotDraw)) ||
                (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
-                  JSROOTPainter.drawFunctionNew(this.vis, this.pad, func, this.frame);
+                  JSROOTPainter.drawFunctionNew(this.vis, func);
          }
       }
    }
@@ -4288,12 +4300,14 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawHistogram1Dnew = function(vis, pad, histo, hframe) {
+   JSROOTPainter.drawHistogram1Dnew = function(vis, histo) {
 
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist1DPainter(histo);
 
-      painter.SetFrame(vis, pad, hframe);
+      var hadframe = (vis['ROOT:frame'] != null);
+      
+      painter.SetFrame(vis);
 
 //      if (console) console.time("CreateBins");
 
@@ -4315,7 +4329,7 @@ var gStyle = {
       painter.DrawTitle();
 
       //$("#report").append("<br> stat");
-      if (gStyle.AutoStat && (hframe==null)) painter.CreateStat();
+      if (gStyle.AutoStat && !hadframe) painter.CreateStat();
 
       //$("#report").append("<br> func");
       painter.DrawFunctions();
@@ -4620,12 +4634,13 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawHistogram2Dnew = function(vis, pad, histo, hframe) {
+   JSROOTPainter.drawHistogram2Dnew = function(vis, histo) 
+   {
 
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist2DPainter(histo);
 
-      painter.SetFrame(vis, pad, hframe);
+      painter.SetFrame(vis);
 
 //      if (console) console.time("CreateBins");
 
@@ -4908,7 +4923,15 @@ var gStyle = {
 
    
 
-   JSROOTPainter.drawHistogram3D = function(vis, pad, histo, hframe) {
+   JSROOTPainter.drawHistogram3D = function(vis, histo) 
+   {
+      
+      if (vis['ROOT:frame'] == null)
+         JSROOTPainter.createFrame(vis);
+      
+      var pad = vis['ROOT:pad'];
+      var frame = vis['ROOT:frame'];
+      
       var i, j, k, logx = false, logy = false, logz = false,
           gridx = false, gridy = false, gridz = false;
       var opt = histo['fOption'].toLowerCase();
@@ -5185,7 +5208,7 @@ var gStyle = {
       this.add3DInteraction(renderer, scene, camera, toplevel);
    }
 
-   JSROOTPainter.drawHStack = function(vis, pad, stack, frame) {
+   JSROOTPainter.drawHStack = function(vis, stack) {
       // paint the list of histograms
       // By default, histograms are shown stacked.
       //    -the first histogram is paint
@@ -5193,6 +5216,7 @@ var gStyle = {
 
       if (!'fHists' in stack) return;
       if (stack['fHists'].length == 0) return;
+      var pad = vis['ROOT:pad'];
       var histos = stack['fHists'];
       var nhists = stack['fHists'].length;
       if (nhists == 0) return;
@@ -5268,14 +5292,10 @@ var gStyle = {
                histo['fOption'] += stack['fOption'];
          }
          
-         var painter = null;
-         
          if (histo['_typename'].match(/\bJSROOTIO.TH1/))
-            painter = JSROOTPainter.drawHistogram1Dnew(vis, pad, histo, frame);
+            JSROOTPainter.drawHistogram1Dnew(vis, histo);
          else if (histo['_typename'].match(/\bJSROOTIO.TH2/))
-            painter = JSROOTPainter.drawHistogram2Dnew(vis, pad, histo, frame);
-         
-         if (painter!=null) frame = painter.frame;
+            JSROOTPainter.drawHistogram2Dnew(vis, histo);
       }
       for (var i=0; i<nhists; ++i) {
          if (nostack) 
@@ -5291,7 +5311,7 @@ var gStyle = {
          h['fOption'] += "same";
 
          if (h['_typename'].match(/\bJSROOTIO.TH1/))
-            JSROOTPainter.drawHistogram1Dnew(vis, pad, h, frame);
+            JSROOTPainter.drawHistogram1Dnew(vis, h);
       }
    };
 
@@ -5325,7 +5345,9 @@ var gStyle = {
       return true;
    };
 
-   JSROOTPainter.drawLegend = function(vis, pad, pave) {
+   JSROOTPainter.drawLegend = function(vis, pave) {
+      var pad = vis['ROOT:pad'];
+      
       var x=0, y=0, w=0, h=0;
       if (pave['fInit'] == 0) {
           x = pave['fX1'] * vis.attr("width")
@@ -5620,7 +5642,7 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawMultiGraphNew = function(vis, pad, mgraph, frame) {
+   JSROOTPainter.drawMultiGraphNew = function(vis, mgraph) {
       var i, maximum, minimum, rwxmin=0, rwxmax=0, rwymin=0, rwymax=0, uxmin=0, uxmax=0, dx, dy;
       var npt = 100;
       var histo = mgraph['fHistogram'];
@@ -5628,20 +5650,23 @@ var gStyle = {
       var scalex = 1, scaley = 1;
       var logx = false, logy = false, logz = false, gridx = false, gridy = false;
       var draw_all = true;
-      if (pad && typeof(pad) != 'undefined') {
-         rwxmin = pad.fUxmin;
-         rwxmax = pad.fUxmax;
-         rwymin = pad.fUymin;
-         rwymax = pad.fUymax;
-         logx = pad['fLogx']; logy = pad['fLogy']; logz = pad['fLogz'];
-         gridx = pad['fGridx']; gridy = pad['fGridy'];
+      if (vis['ROOT:pad'] && typeof(vis['ROOT:pad']) != 'undefined') {
+         rwxmin = vis['ROOT:pad'].fUxmin;
+         rwxmax = vis['ROOT:pad'].fUxmax;
+         rwymin = vis['ROOT:pad'].fUymin;
+         rwymax = vis['ROOT:pad'].fUymax;
+         logx = vis['ROOT:pad']['fLogx']; 
+         logy = vis['ROOT:pad']['fLogy']; 
+         logz = vis['ROOT:pad']['fLogz'];
+         gridx = vis['ROOT:pad']['fGridx']; 
+         gridy = vis['ROOT:pad']['fGridy'];
       }
       if ('fHistogram' in mgraph && mgraph['fHistogram']) {
          minimum = mgraph['fHistogram']['fYaxis']['fXmin'];
          maximum = mgraph['fHistogram']['fYaxis']['fXmax'];
-         if (pad && typeof(pad) != 'undefined') {
-            uxmin   = this.padtoX(pad, rwxmin);
-            uxmax   = this.padtoX(pad, rwxmax);
+         if (vis['ROOT:pad'] && typeof(vis['ROOT:pad']) != 'undefined') {
+            uxmin   = JSROOTPainter.padtoX(vis['ROOT:pad'], rwxmin);
+            uxmax   = JSROOTPainter.padtoX(vis['ROOT:pad'], rwxmax);
          }
       } else {
          var g = graphs[0];
@@ -5720,10 +5745,10 @@ var gStyle = {
       }
 
       // histogram painter will be first in the pad, will define axis and interactive actions
-      var hpainter = JSROOTPainter.drawHistogram1Dnew(vis, pad, histo, frame);
+      JSROOTPainter.drawHistogram1Dnew(vis, histo);
       
       for (var i=0; i<graphs.length; ++i) 
-         JSROOTPainter.drawGraphNew(vis, pad, graphs[i], hpainter.frame);
+         JSROOTPainter.drawGraphNew(vis, graphs[i]);
    };
    
    
@@ -5763,40 +5788,43 @@ var gStyle = {
       }
       $(render_to).empty();
       
-      var svg = JSROOTPainter.createCanvas($(render_to), idx, obj);
-      if (svg == null) return false;
+      var vis = JSROOTPainter.createCanvas($(render_to), idx, obj);
+      if (vis == null) return false;
 
-      if (obj['_typename'].match(/\bTCanvas/)) 
-         return JSROOTPainter.drawPrimitives(svg, obj);
+      if (obj['_typename'].match(/\bTCanvas/)) {
+         vis['ROOT:canvas'] = obj;
+         vis['ROOT:pad'] = obj;
+         return JSROOTPainter.drawPrimitives(vis, obj);
+      }
       
       if (obj['_typename'].match(/\bJSROOTIO.TH1/)) 
-         return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
+         return JSROOTPainter.drawHistogram1Dnew(vis, obj);
       
       if (obj['_typename'].match(/\bJSROOTIO.TH2/)) 
-         return JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
+         return JSROOTPainter.drawHistogram2Dnew(vis, obj);
       
       if (obj['_typename'].match(/\bJSROOTIO.TH3/)) 
-         return JSROOTPainter.drawHistogram3D(svg, null, obj, null);
+         return JSROOTPainter.drawHistogram3D(vis, obj);
       
       if (obj['_typename'].match(/\bJSROOTIO.THStack/)) 
-         return JSROOTPainter.drawHStack(svg, null, obj, null);
+         return JSROOTPainter.drawHStack(vis, obj);
          
       if (obj['_typename'].match(/\bJSROOTIO.TProfile/))
-         return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
+         return JSROOTPainter.drawHistogram1Dnew(vis, obj);
       
       if (obj['_typename'] == 'JSROOTIO.TF1') 
-         return JSROOTPainter.drawFunctionNew(svg, null, obj, null);
+         return JSROOTPainter.drawFunctionNew(vis, obj);
      
       if (obj['_typename'].match(/\bTGraph/) ||
             obj['_typename'].match(/\bRooHist/) ||
             obj['_typename'].match(/\RooCurve/))
-         return JSROOTPainter.drawGraphNew(svg, null, obj, null);
+         return JSROOTPainter.drawGraphNew(vis, obj);
       
       if (obj['_typename'] == 'JSROOTIO.TMultiGraph') 
-         return JSROOTPainter.drawMultiGraphNew(svg, null, obj, null);
+         return JSROOTPainter.drawMultiGraphNew(vis, obj);
          
       if (typeof(drawUserObject) == 'function') 
-         return drawUserObject(obj, svg);
+         return drawUserObject(obj, vis);
    };
    
 
@@ -5985,7 +6013,9 @@ var gStyle = {
          .style("stroke-width", lwidth ? 1 : 0)
          .style("stroke", lcolor);
 
-      var line = this.translateLaTeX(pavelabel['fLabel']);
+      
+      var line = JSROOTPainter.translateLaTeX(pavelabel['fLabel']);
+      
 
       var lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                            font_size, fontDetails['style']);
@@ -6024,64 +6054,62 @@ var gStyle = {
 
 
    JSROOTPainter.drawPrimitives = function(vis, pad) {
-      var i, j, frame = null;
       var primitives = pad['fPrimitives'];
-      for (i=0; i<primitives.length; ++i) {
+      for (var i=0; i<primitives.length; ++i) {
          var classname = primitives[i]['_typename'];
          
-//         $("#report").append("<br> draw primitive " + classname);
+         // $("#report").append("<br> draw primitive " + classname);
          
-         if (classname == 'JSROOTIO.TFrame') {
-            frame = JSROOTPainter.createFrame(vis, pad, null, primitives[i]);
-         }
-         if (classname == 'JSROOTIO.TPad') {
-            this.drawPad(vis, primitives[i])
-         }
-         if (classname == 'JSROOTIO.TPaveLabel') {
-            this.drawPaveLabel(vis, primitives[i]);
-         }
-         if (classname == 'JSROOTIO.TLegend') {
-            this.drawLegend(vis, pad, primitives[i]);
-         }
-         if (classname == 'JSROOTIO.TPaveText') {
+         if (classname == 'JSROOTIO.TFrame') 
+            JSROOTPainter.createFrame(vis, primitives[i]);
+         
+         if (classname == 'JSROOTIO.TPad') 
+            JSROOTPainter.drawPad(vis, primitives[i]);
+            
+         if (classname == 'JSROOTIO.TPaveLabel') 
+            JSROOTPainter.drawPaveLabel(vis, primitives[i]);
+         
+         if (classname == 'JSROOTIO.TLegend') 
+            JSROOTPainter.drawLegend(vis, primitives[i]);
+         
+         if (classname == 'JSROOTIO.TPaveText') 
             JSROOTPainter.DrawPaveTextNew(vis, primitives[i]);
-         }
-         if (classname == 'JSROOTIO.TLatex') {
-            this.drawText(vis, pad, primitives[i]);
-         }
-         if (classname == 'JSROOTIO.TText') {
-            this.drawText(vis, pad, primitives[i]);
-         }
-         if (classname.match(/\bJSROOTIO.TH1/) || 
-             (classname=="JSROOTIO.TProfile")) {
-            JSROOTPainter.drawHistogram1Dnew(vis, pad, primitives[i], frame);
-         }
-         if (classname.match(/\bJSROOTIO.TH2/)) {
-            JSROOTPainter.drawHistogram2Dnew(vis, pad, primitives[i], frame);
-         }
-         if (classname.match(/\bJSROOTIO.THStack/)) {
-            this.drawHStack(vis, pad, primitives[i], frame)
-         }
-         if (classname == 'JSROOTIO.TF1') {
-            JSROOTPainter.drawFunctionNew(vis, pad, primitives[i], frame);
-         }
+         
+         if ((classname == 'JSROOTIO.TLatex') || (classname == 'JSROOTIO.TText')) 
+            JSROOTPainter.drawText(vis, primitives[i]);
+         
+         if (classname.match(/\bJSROOTIO.TH1/) || (classname=="JSROOTIO.TProfile")) 
+            JSROOTPainter.drawHistogram1Dnew(vis, primitives[i]);
+         
+         if (classname.match(/\bJSROOTIO.TH2/)) 
+            JSROOTPainter.drawHistogram2Dnew(vis, primitives[i]);
+         
+         if (classname.match(/\bJSROOTIO.THStack/)) 
+            JSROOTPainter.drawHStack(vis, primitives[i])
+            
+         if (classname == 'JSROOTIO.TF1') 
+            JSROOTPainter.drawFunctionNew(vis, primitives[i]);
+         
          if (classname.match(/\bTGraph/) ||
              classname.match(/\bRooHist/) ||
-             classname.match(/\RooCurve/)) {
-            JSROOTPainter.drawGraphNew(vis, pad, primitives[i], frame);
-         }
-         if (classname == 'JSROOTIO.TMultiGraph') {
-            //$("#report").append("<br> draw multigraph");
-            JSROOTPainter.drawMultiGraphNew(vis, pad, primitives[i], frame);
-         }
+             classname.match(/\RooCurve/)) 
+            JSROOTPainter.drawGraphNew(vis, primitives[i]);
+         
+         if (classname == 'JSROOTIO.TMultiGraph') 
+            JSROOTPainter.drawMultiGraphNew(vis, primitives[i]);
+         
       }
    };
 
 
-   JSROOTPainter.drawText = function(vis, pad, text) {
+   JSROOTPainter.drawText = function(vis, text) 
+   {
       // align = 10*HorizontalAlign + VerticalAlign
       // 1=left adjusted, 2=centered, 3=right adjusted
       // 1=bottom adjusted, 2=centered, 3=top adjusted
+      
+      var pad = vis['ROOT:pad'];
+      
       var i, w = vis.attr("width"), h = vis.attr("height");
       var align = 'start', halign = Math.round(text['fTextAlign']/10);
       var baseline = 'bottom', valign = text['fTextAlign']%10;

@@ -7,6 +7,10 @@ of the framework.
    improve drawing performace - avoid creation of double number of elements. 
 2. Add into context menu switch for "col" options. Fix problem with TH2 draw. 
 3. Fix drawing errors and problems with TH2 and TAxis classes.
+4. Bring together vis (svg:g)  frame(svg:frame)  and pad - all are collected 
+   in top svg:g entity. Therefore only single arguments need to be deliver in
+   all draw methods. This makes much more easier to understand logic behind. 
+
 
 
 11.07.2013
