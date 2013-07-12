@@ -3563,6 +3563,10 @@ var gStyle = {
                (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
                   JSROOTPainter.drawFunctionNew(this.vis, func);
          }
+          
+          if (func['_typename'] == 'JSROOTIO.TPaletteAxis') {
+             JSROOTPainter.drawPaletteAxis(this.vis, func);
+          }
       }
    }
    
@@ -5868,7 +5872,12 @@ var gStyle = {
       return new_pad;
    };
 
-   JSROOTPainter.drawPaletteAxis = function(vis, palette, minbin, maxbin) {
+   JSROOTPainter.drawPaletteAxis = function(vis, palette) {
+      
+      var painter = vis['painters'][0];
+      var minbin = painter.minbin;
+      var maxbin = painter.maxbin;
+      
       var width = vis.attr("width");
       var height = vis.attr("height");
 
