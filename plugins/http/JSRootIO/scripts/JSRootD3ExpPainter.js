@@ -1589,22 +1589,6 @@ var gStyle = {
       });
    };
 
-   JSROOTPainter.createCanvas = function(element, idx) {
-      var w = element.width(), h = w * 0.6666666;
-      var render_to = '#histogram' + idx;
-      d3.select(render_to).style("background-color", 'white');
-      d3.select(render_to).style("width", "100%");
-
-      var svg = d3.select(render_to)
-                  .append("svg")
-                  .attr("class","root_canvas")
-                  .attr("width", w)
-                  .attr("height", h)
-                  .style("background-color", 'white');
-      defs = svg.append('svg:defs');
-      return svg;
-   };
-
    JSROOTPainter.createFrame = function(vis, pad, histo, frame) {
       var w = vis.attr("width"), h = vis.attr("height");
       var width = w, height = h;
@@ -3605,32 +3589,41 @@ var gStyle = {
       var width = this.frame.attr("width"), height = this.frame.attr("height");
       var e, origin, rect;
       
+      
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
       this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
       if (gStyle.Tooltip == 1) {
          this.frame.on("mousemove", moveTooltip);
          this.frame.on("mouseout", finishTooltip);
+         
+//         var tool_text = this.frame.append("svg:text")
+//         .attr("id", "tool_text")
+//         .attr("class", "tips")
+//         .style("opacity", "1")
+//         .attr("x", 100)
+//         .attr("y", 100)
+//         .text("anything important");
+
+         var tool_rec = this.frame.append("svg:rect")
+         .attr("class", "tooltipbox")
+         .attr("fill", "black")
+         .style("opacity", "0")
+         .style("stroke", "black")
+         .style("stroke-width", 1);
+
+         var tool_tmout = null;
+         var tool_pos = null;
+         var tool_changed = false;
+         var tool_moving_inside = false;
+         var tool_visible = false;
       }
 //      this.frame.on("mouseover", finishTooltip);
       this.frame.on("contextmenu", showContextMenu);
       
       var pthis = this;
       
-      var mycnt = 0;
       
-      var tool_tmout = null;
-      var tool_pos = null;
-      var tool_changed = false;
-      var tool_moving_inside = false;
-      var tool_visible = false;
-      
-      var tool_rec = this.frame.append("svg:rect")
-         .attr("class", "tooltipbox")
-         .attr("fill", "black")
-         .style("opacity", "0")
-         .style("stroke", "black")
-         .style("stroke-width", 1);
 
 //      var tool_text = this.frame.append("svg:text")
 //          .attr("class", "tooltipbox")
@@ -3735,7 +3728,9 @@ var gStyle = {
       }
       
       function moveTooltip() {
-
+         //var pos = d3.mouse(this);
+         //tool_text.attr("x",pos[0]).attr("y",pos[1] + 15);
+         
          tool_moving_inside = true;
          
          // one could detect if mouse moved too far away, disable it faster
@@ -3959,14 +3954,14 @@ var gStyle = {
       });
    }
    
-   JSROOTPainter.Hist1DPainter.prototype.GetLeftIndex = function() {
+   JSROOTPainter.Hist1DPainter.prototype.GetLeftIndex = function(add) {
       // be aware - here index starts from 0
       var left = 0;
       var obj = this.first;
       if (obj==null) obj = this;
       
       if (obj.zoom_xmin != obj.zoom_xmax) 
-         left = Math.floor((obj.zoom_xmin - this.xmin) / this.binwidth);
+         left = Math.floor((obj.zoom_xmin - this.xmin) / this.binwidth + (add ? add : 0));
       
       if (left<0) left = 0;
       
@@ -4214,7 +4209,7 @@ var gStyle = {
          
          // lets try to build line without any intermediate bins array
          
-         var left = this.GetLeftIndex();
+         var left = this.GetLeftIndex(-1);
          var right = this.GetRightIndex(1);
          
          // histogram contour lines only 
@@ -5732,28 +5727,31 @@ var gStyle = {
    };
    
    
-   JSROOTPainter.drawCanvas = function(canvas, idx) {
-      var render_to = '#histogram' + idx,
-          w = $(render_to).width(),
-          factor = w / Math.abs(canvas['fUtoPixel']),
-          h = Math.abs(canvas['fVtoPixel']) * factor,
-          fillcolor = root_colors[canvas['fFillColor']];
-      if (canvas['fFillStyle'] > 4000 && canvas['fFillStyle'] < 4100)
-         fillcolor = 'none';
-
+   JSROOTPainter.createCanvas = function(element, idx, obj) {
+      var render_to = '#histogram' + idx;
+      var fillcolor = 'white';
+      var factor = 0.66666;
+      
+      if ((obj!=null) && (obj['_typename'] == "JSROOTIO.TCanvas")) {
+         factor = Math.abs(obj['fVtoPixel']/ obj['fUtoPixel']);
+         fillcolor = root_colors[obj['fFillColor']];
+         if (obj['fFillStyle'] > 4000 && obj['fFillStyle'] < 4100)
+            fillcolor = 'none';
+      }
+      
+      var w = element.width(), h = w * factor;
+      
       d3.select(render_to).style("background-color", fillcolor);
       d3.select(render_to).style("width", "100%");
 
-      var svg = d3.select(render_to).append("svg")
-          .attr("width", w)
-          .attr("height", h)
-          .style("background-color", fillcolor);
+      var svg = d3.select(render_to)
+                  .append("svg")
+                  .attr("width", w)
+                  .attr("height", h)
+                  .style("background-color", fillcolor);
       defs = svg.append('svg:defs');
-
-      JSROOTPainter.drawPrimitives(svg, canvas);
       return svg;
-   };
-
+   }
    
    JSROOTPainter.drawObject = function(obj, idx) 
    {
@@ -5764,43 +5762,41 @@ var gStyle = {
          return;
       }
       $(render_to).empty();
-
-      if (obj['_typename'].match(/\bTCanvas/)) {
-         svg = JSROOTPainter.drawCanvas(obj, idx);
-         return;
-      }
       
-      svg = JSROOTPainter.createCanvas($(render_to), idx);
+      var svg = JSROOTPainter.createCanvas($(render_to), idx, obj);
       if (svg == null) return false;
-      if (obj['_typename'].match(/\bJSROOTIO.TH1/)) {
+
+      if (obj['_typename'].match(/\bTCanvas/)) 
+         return JSROOTPainter.drawPrimitives(svg, obj);
+      
+      if (obj['_typename'].match(/\bJSROOTIO.TH1/)) 
          return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
-      }
-      else if (obj['_typename'].match(/\bJSROOTIO.TH2/)) {
-         JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
-      }
-      else if (obj['_typename'].match(/\bJSROOTIO.TH3/)) {
-         JSROOTPainter.drawHistogram3D(svg, null, obj, null);
-      }
-      else if (obj['_typename'].match(/\bJSROOTIO.THStack/)) {
-         JSROOTPainter.drawHStack(svg, null, obj, null)
-      }
-      else if (obj['_typename'].match(/\bJSROOTIO.TProfile/)) {
+      
+      if (obj['_typename'].match(/\bJSROOTIO.TH2/)) 
+         return JSROOTPainter.drawHistogram2Dnew(svg, null, obj, null);
+      
+      if (obj['_typename'].match(/\bJSROOTIO.TH3/)) 
+         return JSROOTPainter.drawHistogram3D(svg, null, obj, null);
+      
+      if (obj['_typename'].match(/\bJSROOTIO.THStack/)) 
+         return JSROOTPainter.drawHStack(svg, null, obj, null);
+         
+      if (obj['_typename'].match(/\bJSROOTIO.TProfile/))
          return JSROOTPainter.drawHistogram1Dnew(svg, null, obj, null);
-      }
-      else if (obj['_typename'] == 'JSROOTIO.TF1') {
-         JSROOTPainter.drawFunctionNew(svg, null, obj, null);
-      }
-      else if (obj['_typename'].match(/\bTGraph/) ||
+      
+      if (obj['_typename'] == 'JSROOTIO.TF1') 
+         return JSROOTPainter.drawFunctionNew(svg, null, obj, null);
+     
+      if (obj['_typename'].match(/\bTGraph/) ||
             obj['_typename'].match(/\bRooHist/) ||
-            obj['_typename'].match(/\RooCurve/)) {
-         JSROOTPainter.drawGraphNew(svg, null, obj, null);
-      }
-      else if (obj['_typename'] == 'JSROOTIO.TMultiGraph') {
-         JSROOTPainter.drawMultiGraphNew(svg, null, obj, null);
-      }
-      else if (typeof(drawUserObject) == 'function') {
-         drawUserObject(obj, svg);
-      }
+            obj['_typename'].match(/\RooCurve/))
+         return JSROOTPainter.drawGraphNew(svg, null, obj, null);
+      
+      if (obj['_typename'] == 'JSROOTIO.TMultiGraph') 
+         return JSROOTPainter.drawMultiGraphNew(svg, null, obj, null);
+         
+      if (typeof(drawUserObject) == 'function') 
+         return drawUserObject(obj, svg);
    };
    
 
@@ -5838,7 +5834,9 @@ var gStyle = {
          .style("stroke-width", border_width)
          .style("stroke", border_color);
 
-      this.drawPrimitives(new_pad, pad);
+      new_pad['ROOT:pad'] = pad;
+      
+      JSROOTPainter.drawPrimitives(new_pad, pad);
       return new_pad;
    };
 
