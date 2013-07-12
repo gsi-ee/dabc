@@ -11,23 +11,6 @@ var kWhite = 0, kBlack = 1, kGray = 920, kRed = 632, kGreen = 416, kBlue = 600,
     kYellow = 400, kMagenta = 616, kCyan = 432, kOrange = 800, kSpring = 820,
     kTeal = 840, kAzure = 860, kViolet = 880, kPink = 900;
 
-
-var gStyle = {
-   'Tooltip'       : 1,    // 0 - off, 1 - fast version, 2 - full but slow   
-   'AutoStat'      : true,
-   'OptStat'       : 1111,
-   'StatX'         : 0.7, 
-   'StatY'         : 0.7, 
-   'StatW'         : 0.28, 
-   'StatH'         : 0.28,
-   'StatColor'     : 0,
-   'StatStyle'     : 1001,
-   'StatFont'      : 42,
-   'StatFontSize'  : 0,
-   'StatTextColor' : 1,
-};
-
-
 var symbols_map = {
    // greek letters
    '#alpha' : '\u03B1',
@@ -752,6 +735,23 @@ function createFillPatterns(svg, id, color) {
    }
 };
 
+var gStyle = {
+      'Tooltip'       : 2,    // 0 - off, 1 - event info, 2 - full but may be slow   
+      'AutoStat'      : true,
+      'OptStat'       : 1111,
+      'StatX'         : 0.7, 
+      'StatY'         : 0.7, 
+      'StatW'         : 0.28, 
+      'StatH'         : 0.28,
+      'StatColor'     : 0,
+      'StatStyle'     : 1001,
+      'StatFont'      : 42,
+      'StatFontSize'  : 0,
+      'StatTextColor' : 1,
+   };
+
+
+
 (function(){
 
    if (typeof JSROOTPainter == 'object'){
@@ -795,7 +795,7 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter = {};
 
    JSROOTPainter.version = '3.0 2013/07/8';
-
+   
    /*
     * Helper functions
     */
@@ -1741,7 +1741,7 @@ function createFillPatterns(svg, id, color) {
       JSROOTPainter.ObjectPainter.call(this);
       this.tf1 = tf1;
    }
-   ui-bg_glass
+
    JSROOTPainter.Func1DPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
    JSROOTPainter.Func1DPainter.prototype.IsObject = function(obj) {
@@ -1950,19 +1950,18 @@ function createFillPatterns(svg, id, color) {
          .style("fill", "none");
 
       // add tooltips
-      /*
-       g.selectAll("line") 
-         .data(this.bins) 
-         .enter() 
-         .append("svg:circle") 
-         .attr("cx", function(d) { return x(d.x); }) 
-         .attr("cy", function(d) { return y(d.y); }) 
-         .attr("r", 3) 
-         .attr("opacity", 0) 
-         .append("svg:title").text(function(d) {
-            return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4);
-         });
-        */
+      if (gStyle.Tooltip > 1)
+         this.bins_g.selectAll("line") 
+            .data(this.bins) 
+            .enter() 
+            .append("svg:circle") 
+            .attr("cx", function(d) { return x(d.x); }) 
+            .attr("cy", function(d) { return y(d.y); }) 
+            .attr("r", 4) 
+            .attr("opacity", 0) 
+            .append("svg:title").text(function(d) {
+               return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4);
+            });
    }
 
    JSROOTPainter.Func1DPainter.prototype.UpdateObject = function(obj) {
@@ -2449,6 +2448,15 @@ function createFillPatterns(svg, id, color) {
 
       var pthis = this;
       
+      function TooltipText(d) {
+         if (pthis.draw_errors && ('exlow' in d))
+            return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
+                   "\nerror x = -" + d.exlow.toPrecision(4) + "/+" + d.exhigh.toPrecision(4) +
+                   "\nerror y = -" + d.eylow.toPrecision(4) + "/+" + d.eyhigh.toPrecision(4);
+         else 
+            return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4);
+      }
+      
       var x = this.first.x;
       var y = this.first.y;
       
@@ -2465,21 +2473,23 @@ function createFillPatterns(svg, id, color) {
          /* filled bar graph */
          var xdom = this.first.x.domain();
          var xfactor = xdom[1]-xdom[0];
+         this.draw_errors = false;
          
-         this.bins_g
+         var nodes = this.bins_g
             .selectAll("bar_graph")
-            .data(this.bins)
+            .data(pthis.bins)
             .enter()
             .append("svg:rect")
-            .attr("class", "graphdraw")
             .attr("x", function(d) { return x(d.x)} )
             .attr("y", function(d) { return y(d.y)} )
             .attr("width", function(d) { return (w / (xdom[1]-xdom[0]))-1} )
             .attr("height", function(d) { return y(d.y) - y(d.y+d.bh); } )
             .style("fill", fillcolor);
-//            .append("svg:title").text(function(d) {
-//               return "x = " + d.x.toPrecision(4) + " \nentries = " + d.y.toPrecision(4);
-//            });
+         
+         if (gStyle.Tooltip > 1)
+            nodes.append("svg:title").text(function(d) {
+                    return "x = " + d.x.toPrecision(4) + " \nentries = " + d.y.toPrecision(4);
+                   });
       }
       if (this.exclusionGraph) {
          /* first draw exclusion area, and then the line */
@@ -2487,7 +2497,6 @@ function createFillPatterns(svg, id, color) {
          if (this.graph['fFillStyle'] > 3000 && this.graph['fFillStyle'] <= 3025) {
             createFillPatterns(this.vis, this.graph['fFillStyle'], this.graph['fFillColor']);
             this.bins_g.append("svg:path")
-               .attr("class", "graphdraw")
                .attr("d", line(pthis.excl))
                .style("stroke", "none")
                .style("stroke-width", pthis.excl_ff)
@@ -2496,7 +2505,6 @@ function createFillPatterns(svg, id, color) {
          }
          else {
             this.bins_g.append("svg:path")
-               .attr("class", "graphdraw")
                .attr("d", line(pthis.excl))
                .style("stroke", "none")
                .style("stroke-width", pthis.excl_ff)
@@ -2505,60 +2513,65 @@ function createFillPatterns(svg, id, color) {
       }
       if (this.seriesType == 'line') {
          this.bins_g.append("svg:path")
-            .attr("class", "graphdraw")
             .attr("d", line(pthis.bins))
+            .attr("class", "draw_line")
             .style("stroke", (pthis.optionLine == 1) ? root_colors[pthis.graph['fLineColor']] : "none")
             .style("stroke-width", pthis.bins_lw)
             .style("stroke-dasharray", root_line_styles[pthis.graph['fLineStyle']])
             .style("fill", (pthis.optionFill == 1) ? root_colors[pthis.graph['fFillColor']] : "none");
+
+         if (gStyle.Tooltip > 1)
+            this.bins_g.selectAll("draw_line")
+              .data(pthis.bins).enter()
+              .append("svg:circle") 
+              .attr("cx", function(d) { return x(d.x); }) 
+              .attr("cy", function(d) { return y(d.y); }) 
+              .attr("r", 3) 
+              .attr("opacity", 0) 
+              .append("svg:title").text(TooltipText);
       }
       if ((this.graph['_typename'] == 'JSROOTIO.TGraphErrors' ||
             this.graph['_typename'] == 'JSROOTIO.TGraphAsymmErrors' ||
             this.graph['_typename'].match(/\bRooHist/)) && this.draw_errors && !this.optionBar) {
 
-         /* Add x-error indicators */
-         this.bins_g.selectAll("error_x")
-            .data(this.bins)
-            .enter()
-            .append("svg:line")
-            .attr("class", "graphdraw")
-            .attr("x1", function(d) { return x(d.x-d.exlow)} )
-            .attr("y1", function(d) { return y(d.y)} )
-            .attr("x2", function(d) { return x(d.x+d.exhigh)} )
-            .attr("y2", function(d) { return y(d.y)} )
-            .style("stroke", root_colors[this.graph['fLineColor']])
-            .style("stroke-width", this.graph['fLineWidth']);
+         // here are up to five elements are collected, try to group them
+         
+         var nodes = this.bins_g.selectAll("g.node").data(this.bins).enter().append("svg:g");
 
-         this.bins_g.selectAll("e1_x")
-            .data(this.bins)
-            .enter()
-            .append("svg:line")
-            .attr("class", "graphdraw")
-            .attr("y1", function(d) { return y(d.y)-3} )
-            .attr("x1", function(d) { return x(d.x-d.exlow)})
-            .attr("y2", function(d) { return y(d.y)+3})
-            .attr("x2", function(d) { return x(d.x-d.exlow)})
-            .style("stroke", root_colors[this.graph['fLineColor']])
-            .style("stroke-width", this.graph['fLineWidth']);
+         // Add x-error indicators
 
-         this.bins_g.selectAll("e1_x")
-            .data(this.bins)
-            .enter()
-            .append("svg:line")
-            .attr("class", "graphdraw")
-            .attr("y1", function(d) { return y(d.y)-3} )
-            .attr("x1", function(d) { return x(d.x+d.exhigh) })
-            .attr("y2", function(d) { return y(d.y)+3})
-            .attr("x2", function(d) { return x(d.x+d.exhigh) })
-            .style("stroke", root_colors[this.graph['fLineColor']])
-            .style("stroke-width", this.graph['fLineWidth']);
+         // than doing filer append error bars
+         var xerr = nodes.filter(function(d) { return (d.exlow>0) || (d.exhigh>0); })
+              .append("svg:line")
+               .attr("x1", function(d) { return x(d.x-d.exlow)} )
+               .attr("y1", function(d) { return y(d.y)} )
+               .attr("x2", function(d) { return x(d.x+d.exhigh)} )
+               .attr("y2", function(d) { return y(d.y)} )
+               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke-width", this.graph['fLineWidth']);
 
-         /* Add y-error indicators */
-         this.bins_g.selectAll("error_y")
-            .data(this.bins)
-            .enter()
+         nodes.filter(function(d) { return (d.exlow>0); })
+              .append("svg:line")
+               .attr("y1", function(d) { return y(d.y)-3} )
+               .attr("x1", function(d) { return x(d.x-d.exlow)})
+               .attr("y2", function(d) { return y(d.y)+3})
+               .attr("x2", function(d) { return x(d.x-d.exlow)})
+               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke-width", this.graph['fLineWidth']);
+         
+         nodes.filter(function(d) { return (d.exhigh>0); })
+              .append("svg:line")
+               .attr("y1", function(d) { return y(d.y)-3} )
+               .attr("x1", function(d) { return x(d.x+d.exhigh) })
+               .attr("y2", function(d) { return y(d.y)+3})
+               .attr("x2", function(d) { return x(d.x+d.exhigh) })
+               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke-width", this.graph['fLineWidth']);
+               
+         // Add y-error indicators
+
+         var yerr = nodes.filter(function(d) { return (d.eylow>0) || (d.eyhigh>0); })
             .append("svg:line")
-            .attr("class", "graphdraw")
             .attr("x1", function(d) { return x(d.x)})
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)})
@@ -2566,23 +2579,17 @@ function createFillPatterns(svg, id, color) {
             .style("stroke", root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
 
-         this.bins_g.selectAll("e1_y")
-            .data(this.bins)
-            .enter()
+         nodes.filter(function(d) { return (d.eylow>0); })
             .append("svg:line")
-            .attr("class", "graphdraw")
             .attr("x1", function(d) { return x(d.x)-3})
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)+3})
             .attr("y2", function(d) { return y(d.y-d.eylow) })
             .style("stroke", root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
-         
-         this.bins_g.selectAll("e1_y")
-            .data(this.bins)
-            .enter()
+
+         nodes.filter(function(d) { return (d.eyhigh>0); })
             .append("svg:line")
-            .attr("class", "graphdraw")
             .attr("x1", function(d) { return x(d.x)-3})
             .attr("y1", function(d) { return y(d.y+d.eyhigh) })
             .attr("x2", function(d) { return x(d.x)+3})
@@ -2590,16 +2597,13 @@ function createFillPatterns(svg, id, color) {
             .style("stroke", root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
 
-//         this.bins_g.selectAll("line")
-//           .append("svg:title")
-//           .attr("class", "graphdraw")
-//           .text(function(d) {
-//               return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-//                      "\nerror x = -" + d.exlow.toPrecision(4) + "/+" + d.exhigh.toPrecision(4) +
-//                      "\nerror y = -" + d.eylow.toPrecision(4) + "/+" + d.eyhigh.toPrecision(4);
-//            });
-      }
-      else this.draw_errors = false;
+
+         if (gStyle.Tooltip > 1) {
+            xerr.append("svg:title").text(TooltipText);
+            yerr.append("svg:title").text(TooltipText);
+         }
+      } else this.draw_errors = false;
+      
       if (this.showMarker) {
          /* Add markers */
          var filled = false;
@@ -2640,25 +2644,20 @@ function createFillPatterns(svg, id, color) {
                break;
          }
          
-         this.bins_g.selectAll("markers")
+         var markers = this.bins_g.selectAll("markers")
             .data(this.bins)
             .enter()
             .append("svg:path")
-            .attr("class", "graphdraw")
             .attr("transform", function(d) {return "translate(" + x(d.x) + "," + y(d.y) + ")"})
             .style("fill", filled ? root_colors[this.graph['fMarkerColor']] : "none")
             .style("stroke", root_colors[this.graph['fMarkerColor']])
             .attr("d", marker);
-//            .append("svg:title")
-//            .attr("class", "graphdraw")
-//            .text(function(d) {
-//               if (pthis.draw_errors)
-//                  return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-//                         "\nerror x = -" + d.exlow.toPrecision(4) + "/+" + d.exhigh.toPrecision(4) +
-//                         "\nerror y = -" + d.eylow.toPrecision(4) + "/+" + d.eyhigh.toPrecision(4);
-//               else 
-//                  return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4);
-//            });
+         
+         
+         if (gStyle.Tooltip > 1) 
+            markers
+            .append("svg:title")
+            .text(TooltipText);
       }
    }
 
@@ -3636,16 +3635,16 @@ function createFillPatterns(svg, id, color) {
       
       var width = this.frame.attr("width"), height = this.frame.attr("height");
       var e, origin, rect;
-
       
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
       this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
-      this.frame.on("mousemove", moveTooltip);
-      this.frame.on("mouseout", finishTooltip);
+      if (gStyle.Tooltip == 1) {
+         this.frame.on("mousemove", moveTooltip);
+         this.frame.on("mouseout", finishTooltip);
+      }
 //      this.frame.on("mouseover", finishTooltip);
       this.frame.on("contextmenu", showContextMenu);
-
       
       var pthis = this;
       
@@ -4099,9 +4098,15 @@ function createFillPatterns(svg, id, color) {
           .size(marker_size);
 
       var pthis = this;
-      
+
+      function TooltipText(d) {
+         return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
+                " \nerror x = " + d.xerr.toPrecision(4) +
+                " \nerror y = " + d.yerr.toPrecision(4);
+      }
+
       /* Draw x-error indicators */
-      this.bins_g.selectAll("error_x")
+      var xerr = this.bins_g.selectAll("error_x")
             .data(this.bins)
             .enter()
             .append("svg:line")
@@ -4135,7 +4140,7 @@ function createFillPatterns(svg, id, color) {
                .style("stroke-width", this.histo['fLineWidth']);
       }
          /* Draw y-error indicators */
-      this.bins_g.selectAll("error_y")
+      var yerr = this.bins_g.selectAll("error_y")
             .data(this.bins)
             .enter()
             .append("svg:line")
@@ -4168,7 +4173,7 @@ function createFillPatterns(svg, id, color) {
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
       }
-      this.bins_g.selectAll("markers")
+      var marks = this.bins_g.selectAll("markers")
             .data(this.bins)
             .enter()
             .append("svg:path")
@@ -4181,27 +4186,20 @@ function createFillPatterns(svg, id, color) {
             .attr("d", marker);
       
       
-       // TODO: this is tooltips from Bertrand, one could optionally enable them
-       // but they are really slow :(
-      
-       //            .append("svg:title")
-       //             .text(function(d) {
-       //               return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-       //                      " \nerror x = " + d.xerr.toPrecision(4) +
-       //                      " \nerror y = " + d.yerr.toPrecision(4);
-       //            });
-       // this.bins_g.selectAll("line")
-       //    .append("svg:title")
-       //    .text(function(d) {
-       //       return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-       //              " \nerror x = " + d.xerr.toPrecision(4) +
-       //              " \nerror y = " + d.yerr.toPrecision(4);
-       //    });
+      if (gStyle.Tooltip > 1) {
+         marks.append("svg:title").text(TooltipText);
+         xerr.append("svg:title").text(TooltipText);
+         yerr.append("svg:title").text(TooltipText);
+      }
    }
 
    
    JSROOTPainter.Hist1DPainter.prototype.DrawBins = function() {
 
+      // TODO: limit number of drawn by number of visible pixels
+      // one could select every second bin, for instance
+
+      
       if (!this.draw_content) return;
 
       if (!('bins_id' in this))
@@ -4212,12 +4210,6 @@ function createFillPatterns(svg, id, color) {
       this['bins_g'] = this.svg_frame.append("svg:g").attr("id", this.bins_id);
       
       if (this.options.Error > 0) { this.DrawErrors(); return; }
-      
-      // TODO: check if we really need it here
-
-      //if (!('draw_body' in this))
-         this['draw_body'] = this.bins_g.append("svg:path")
-                                .attr("class", "histogram_body");
       
       var pthis = this;
       
@@ -4233,7 +4225,7 @@ function createFillPatterns(svg, id, color) {
          if (this.histo['fFillStyle'] > 3000 && this.histo['fFillStyle'] <= 3025) {
             createFillPatterns(this.vis, this.histo['fFillStyle'], this.histo['fFillColor']);
 
-            this.draw_body
+            this.bins_g.append("svg:path")
                .attr("d", area(this.bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
@@ -4241,7 +4233,7 @@ function createFillPatterns(svg, id, color) {
                .style("antialias", "false");
          }
          else {
-            this.draw_body
+            this.bins_g.append("svg:path")
                .attr("d", area(this.bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
@@ -4262,7 +4254,7 @@ function createFillPatterns(svg, id, color) {
             .y(function(d,i) { return pthis.getY(left+i);} )
             .interpolate("step-before");
 
-         this.draw_body
+         this.bins_g.append("svg:path")
             .attr("d", line(d3.range(right-left+1))) // to draw one bar, one need two points
             .style("stroke", this.linecolor)
             .style("stroke-width", this.histo['fLineWidth'])
@@ -4270,6 +4262,30 @@ function createFillPatterns(svg, id, color) {
             .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
             .style("antialias", "false");
       }
+      
+      if (gStyle.Tooltip > 1) {
+         // TODO: limit number of tooltips by number of visible pixels
+         var selwidth = this.x(2*this.binwidth)-this.x(this.binwidth);
+         if (selwidth<2) selwidth = 1; 
+         this.bins_g.selectAll("selections")
+            .data(this.bins)
+            .enter()
+            .append("svg:line")
+            .attr("x1", function(d) { return pthis.x(d.x-d.xerr) } )
+            .attr("y1", function(d) { return pthis.y(d.y) } )
+            .attr("x2", function(d) { return pthis.x(d.x-d.xerr) } )
+            .attr("y2", function(d) { return pthis.y(0) } )
+            .attr("opacity", 0)
+            .style("stroke", "#4572A7")
+            .style("stroke-width", selwidth)
+            .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
+            .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
+            .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
+                    ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
+            });
+
+      }
+      
    }
 
    JSROOTPainter.Hist1DPainter.prototype.ProvideTooltip = function(tip)
@@ -4490,7 +4506,7 @@ function createFillPatterns(svg, id, color) {
                        .size(markerSize * markerScale);
                break;
          }
-         this.bins_g.selectAll(".marker")
+         var markers = this.bins_g.selectAll(".marker")
             .data(this.bins)
             .enter()
             .append("svg:path")
@@ -4501,12 +4517,14 @@ function createFillPatterns(svg, id, color) {
             .style("fill", root_colors[this.histo['fMarkerColor']])
             .style("stroke", root_colors[this.histo['fMarkerColor']])
             .attr("d", marker);
-//            .append("svg:title")
-//            .text(function(d) { return "x = " + d.x.toPrecision(4) + " \ny = " +
-//                                d.y.toPrecision(4) + " \nentries = " + d.z; });
+         
+         if (gStyle.Tooltip > 1)
+            markers.append("svg:title")
+                   .text(function(d) { return "x = " + d.x.toPrecision(4) + " \ny = " +
+                                d.y.toPrecision(4) + " \nentries = " + d.z; });
       }
       else {
-         this.bins_g.selectAll(".bins")
+         var drawn_bins = this.bins_g.selectAll(".bins")
             .data(this.bins)
             .enter()
             .append("svg:rect")
@@ -4536,46 +4554,23 @@ function createFillPatterns(svg, id, color) {
                   return "black";
             })
             .style("fill", function(d) {
+               var fillcol = "none";
                if (pthis.options.Color > 0)
-                  return JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
-               else
-                  return "none";
+                  fillcol = JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
+               this['origin'] = fillcol; 
+               return fillcol;
             });
-/*         this.bins_g.selectAll(".selections")
-            .data(this.bins)
-            .enter()
-            .append("svg:rect")
-            .attr("class", "selections")
-            .attr("x", function(d) { 
-               return pthis.x(d.x + (pthis.scalex / 2)) - (0.5 * d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor);
-            })
-            .attr("y", function(d) { 
-               return pthis.y(d.y + (pthis.scaley / 2)) - (0.5 * d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor);
-            })
-            .attr("width", function(d) {
-               if (pthis.options.Color > 0)
-                  return (w / pthis.histo['fXaxis']['fNbins']) * xfactor;
-               else
-                  return d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor;
-            })
-            .attr("height", function(d) {
-               if (pthis.options.Color > 0)
-                  return (h / pthis.histo['fYaxis']['fNbins']) * yfactor;
-               else
-                  return d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor;
-            })
-            .attr("opacity", 0)
-            .style("stroke", "#4572A7")
-            .style("fill", "#4572A7")
-            .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
-            .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-            .append("svg:title")
-            .text(function(d) { 
-               return "x = [" + d.x.toPrecision(4) + ", " + (d.x + pthis.scalex).toPrecision(4) + 
-               "] \ny = [" + d.y.toPrecision(4) + ", " + (d.y + pthis.scaley).toPrecision(4) + 
-               "] \nentries = " + d.z;
-             });
-*/             
+         
+         if (gStyle.Tooltip > 1)
+            drawn_bins 
+             .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", "black"); } )
+             .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['origin']); } )
+             .append("svg:title")
+             .text(function(d) { 
+                return "x = [" + d.x.toPrecision(4) + ", " + (d.x + pthis.scalex).toPrecision(4) + 
+                "] \ny = [" + d.y.toPrecision(4) + ", " + (d.y + pthis.scaley).toPrecision(4) + 
+                "] \nentries = " + d.z;
+              });
       }
    }
 

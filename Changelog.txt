@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+12.07.2013
+1. Provide optionally normal style for tooltips. In case of TH2 objects
+   improve drawing performace - avoid creation of double number of elements. 
+
+
 11.07.2013
 1. Implement drawing of THStack. 
 2. Try to avoid bins array usage and generate draw elements directly and only
