@@ -1210,41 +1210,6 @@ var gStyle = {
       if (what == 'min') return minimum;
    }
 
-   JSROOTPainter.getValueColor = function(hist, zc, options) {
-      var wmin = this.getMinMax(hist, 'min'),
-          wmax = this.getMinMax(hist, 'max'),
-          wlmin = wmin,
-          wlmax = wmax,
-          ndivz = hist['fContour'].length,
-          scale = ndivz / (wlmax - wlmin);
-      if (options && options['logz']) {
-         if (wmin <= 0 && wmax > 0) wmin = Math.min(1.0, 0.001 * wmax);
-         wlmin = Math.log(wmin)/Math.log(10);
-         wlmax = Math.log(wmax)/Math.log(10);
-      }
-      if (default_palette.length == 0) {
-         var saturation = 1,
-             lightness = 0.5,
-             maxHue = 280,
-             minHue = 0,
-             maxPretty = 50,
-             hue;
-         for (var i=0 ; i<maxPretty ; i++) {
-            hue = (maxHue - (i + 1) * ((maxHue - minHue) / maxPretty))/360.0;
-            var rgbval = this.HLStoRGB(hue, lightness, saturation);
-            default_palette.push(rgbval);
-         }
-      }
-      if (options && options['logz']) zc = Math.log(zc)/Math.log(10);
-      if (zc < wlmin) zc = wlmin;
-      var ncolors = default_palette.length
-      var color = Math.round(0.01 + (zc - wlmin) * scale);
-      var theColor = Math.round((color + 0.99) * ncolors / ndivz);
-      var icol = theColor % ncolors;
-      if (icol < 0) icol = 0;
-      return default_palette[icol];
-   };
-
    JSROOTPainter.getTimeOffset = function(axis) {
 
       var timeFormat = axis['fTimeFormat'];
@@ -4379,6 +4344,8 @@ var gStyle = {
          this.AddMenuItem(menu,"Draw in 2D","draw2d");
       else
          this.AddMenuItem(menu,"Draw in 3D","draw3d");
+      this.AddMenuItem(menu,"Toggle col","col");
+
    }
       
    JSROOTPainter.HistPainter.prototype.ExeContextMenu = function(cmd) {
@@ -4393,6 +4360,13 @@ var gStyle = {
          this.RedrawFrame();
          return;
       } 
+      
+      if (cmd == "col") {
+         if (this.options.Color > 0) this.options.Color = 0;
+                                     this.options.Color = 1;
+         this.RedrawFrame();
+         return;
+      }
 
       JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
@@ -4445,6 +4419,43 @@ var gStyle = {
       // TODO: statistic filling
    }
 
+   JSROOTPainter.Hist2DPainter.prototype.getValueColor = function(zc) {
+      var wmin = this.minbin, wmax = this.maxbin; 
+          wlmin = wmin, wlmax = wmax;
+      var ndivz = 16;
+      if ('fContour' in this.histo) ndivz = this.histo['fContour'].length;
+      if (ndivz<16) ndivz = 16;
+      
+      var scale = ndivz / (wlmax - wlmin);
+      if (this.options.Logz) {
+         if (wmin <= 0 && wmax > 0) wmin = Math.min(1.0, 0.001 * wmax);
+         wlmin = Math.log(wmin)/Math.log(10);
+         wlmax = Math.log(wmax)/Math.log(10);
+      }
+   
+      if (default_palette.length == 0) {
+         var saturation = 1,
+             lightness = 0.5,
+             maxHue = 280,
+             minHue = 0,
+             maxPretty = 50;
+         for (var i=0 ; i<maxPretty ; i++) {
+            var hue = (maxHue - (i + 1) * ((maxHue - minHue) / maxPretty))/360.0;
+            var rgbval = JSROOTPainter.HLStoRGB(hue, lightness, saturation);
+            default_palette.push(rgbval);
+         }
+      }
+      if (this.options.Logz) zc = Math.log(zc)/Math.log(10);
+      if (zc < wlmin) zc = wlmin;
+      var ncolors = default_palette.length
+      var color = Math.round(0.01 + (zc - wlmin) * scale);
+      var theColor = Math.round((color + 0.99) * ncolors / ndivz);
+      var icol = theColor % ncolors;
+      if (icol < 0) icol = 0;
+
+      return default_palette[icol];
+   }
+   
    JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() 
    {
       if (!('bins_id' in this))
@@ -4549,21 +4560,21 @@ var gStyle = {
             })
             .style("stroke", function(d) {
                if (pthis.options.Color > 0)
-                  return JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
+                  return pthis.getValueColor(d.z);
                else
                   return "black";
             })
             .style("fill", function(d) {
                var fillcol = "none";
                if (pthis.options.Color > 0)
-                  fillcol = JSROOTPainter.getValueColor(pthis.histo, d.z, pad);
+                  fillcol = pthis.getValueColor(d.z);
                this['origin'] = fillcol; 
                return fillcol;
             });
          
          if (gStyle.Tooltip > 1)
             drawn_bins 
-             .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", "black"); } )
+             .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", (this['origin'] == "black") ? "grey" : "black"); } )
              .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['origin']); } )
              .append("svg:title")
              .text(function(d) { 
@@ -4578,17 +4589,6 @@ var gStyle = {
    {
       var i = Math.round((tip.x - this.scalex/2 - this.xmin) / this.scalex);
       var j = Math.round((tip.y - this.scaley/2 - this.ymin) / this.scaley);
-/*
-      $("#report").append("<br> tip    " + tip.x.toPrecision(4) + " " + tip.y.toPrecision(4));
-      $("#report").append("<br> min    " + this.xmin.toPrecision(4) + " " + this.ymin.toPrecision(4));
-      $("#report").append("<br> scale  " + this.scalex.toPrecision(4) + " " + this.scaley.toPrecision(4));
-      $("#report").append("<br> nbins  " + this.nbinsx.toPrecision(4) + " " + this.nbinsy.toPrecision(4));
-      $("#report").append("<br> i,j  "   + i.toPrecision(4) + " " + j.toPrecision(4));
-
-      for (var n=0;n<5;n++)
-         $("#report").append("<br> bin "   + this.bins[n].x.toPrecision(4) + " " + this.bins[n].y.toPrecision(4));
-      $("#report").append("<br> i,j  "   + i.toPrecision(4) + " " + j.toPrecision(4));
-*/      
 
       if ((i<0) || (i>=this.nbinsx) || (j<0) || (j>=this.nbinsy)) return;
       
