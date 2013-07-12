@@ -1383,6 +1383,10 @@ var gStyle = {
 
       vis['painters'].push(this);
       this.vis = vis;    // remember main pad 
+      
+      this.frame = vis['ROOT:frame'];
+      this.svg_frame = vis['ROOT:svg_frame'];
+      this.pad = vis['ROOT:pad'];
    }
    
    JSROOTPainter.ObjectPainter.prototype.RedrawFrame = function(selobj) {
@@ -1591,15 +1595,13 @@ var gStyle = {
       });
    };
 
-   JSROOTPainter.createFrame = function(vis, frame) {
+   JSROOTPainter.createFrame = function(vis, frame, histo) {
       var w = vis.attr("width"), h = vis.attr("height");
       var width = w, height = h;
       var lm = w*0.12, rm = w*0.05, tm = h*0.12, bm = h*0.12;
       
-      // TODO: should we analyze it here or can move frame when really colz option will be necessary 
-      
-      //if (histo && histo['fOption'] && histo['fOption'].toLowerCase() == 'colz')
-      //   rm = w * 0.13;
+      if (histo && histo['fOption'] && histo['fOption'].toLowerCase() == 'colz')
+         rm = w * 0.13;
       
       var pad = vis['ROOT:pad'];
       
@@ -1711,8 +1713,7 @@ var gStyle = {
    
    JSROOTPainter.Func1DPainter.prototype.SetFrame = function(vis) {
       this.SetVis(vis);
-      this.pad = vis['ROOT:pad'];
-      this.frame = vis['ROOT:frame'];
+
       if (!this.frame) {
          alert("frame for the TF1 was not specified");
          return;
@@ -1965,8 +1966,6 @@ var gStyle = {
    
    JSROOTPainter.GraphPainter.prototype.SetFrame = function(vis) {
       this.SetVis(vis);
-      this.pad = vis['ROOT:pad'];
-      this.frame = vis['ROOT:frame'];
       if (!this.frame) {
          alert("frame for the graph was not specified");
          return;
@@ -2751,14 +2750,16 @@ var gStyle = {
       // 1=bottom adjusted, 2=centered, 3=top adjusted
       // "middle", "start", "end"
 
+      
       var align = 'start', halign = Math.round(pavetext['fTextAlign']/10);
       var baseline = 'bottom', valign = pavetext['fTextAlign']%10;
-      if (halign == 1) align = 'start';
-      else if (halign == 2) align = 'middle';
-      else if (halign == 3) align = 'end';
-      if (valign == 1) baseline = 'bottom';
-      else if (valign == 2) baseline = 'middle';
-      else if (valign == 3) baseline = 'top';
+      if (halign == 1) align = 'start';  else 
+      if (halign == 2) align = 'middle';  else 
+      if (halign == 3) align = 'end';
+      if (valign == 1) baseline = 'bottom'; else 
+      if (valign == 2) baseline = 'middle'; else 
+      if (valign == 3) baseline = 'top';
+      
       var lmargin = 0;
       switch (halign) {
          case 1:
@@ -2771,6 +2772,10 @@ var gStyle = {
             lmargin = width - (pavetext['fMargin'] * width);
             break;
       }
+      
+
+      // for now ignore all align parameters, draw as is
+      if (nlines>1) lmargin = pavetext['fMargin'] * width / 2;
       
       var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
@@ -2793,13 +2798,28 @@ var gStyle = {
          .style("stroke-width", lwidth ? 1 : 0)
          .style("stroke", lcolor);
 
+      var first_stat = 0;
+      var num_cols = 0;
+      var max_len = 0;
+      
+      for (var j=0; j<nlines; ++j) {
+         var line = pavetext['fLines'][j]['fTitle'];
+         line = JSROOTPainter.translateLaTeX(line);
+         var parts = line.split("|");
+         if (parts && (parts.length>1)) {
+            if (first_stat == 0) first_stat =j;
+            if (parts.length > num_cols) num_cols = parts.length;
+         }
+         var lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
+                   font_size, fontDetails['style']);
+         if (lw > max_len) max_len = lw;
+      }
+      
+      if (max_len > width)
+         font_size *= 0.98 * (width / max_len);
+      
       if (nlines == 1) {
          line = JSROOTPainter.translateLaTeX(pavetext['fLines'][0]['fTitle']);
-
-         lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                          font_size, fontDetails['style']);
-         if (lw > width)
-            font_size *= 0.98 * (width / lw);
 
          this.pave.append("text")
             .attr("class", "pavetext")
@@ -2815,36 +2835,57 @@ var gStyle = {
       }
       else {
          
-         var max_len = 0;
-         for (j=0; j<nlines; ++j) {
-            line = JSROOTPainter.translateLaTeX(pavetext['fLines'][j]['fTitle']);
-            lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                                       font_size, fontDetails['style']);
-            if (lw > max_len) max_len = lw;
-         }
-         if (max_len > width)
-            font_size *= 0.98 * (width / max_len);
-         
          for (j=0; j<nlines; ++j) {
             var jcolor = root_colors[pavetext['fLines'][j]['fTextColor']];
-            if (pavetext['fLines'][j]['fTextColor'] == 0)
-               jcolor = tcolor;
+            if (pavetext['fLines'][j]['fTextColor'] == 0)  jcolor = tcolor;
             line = JSROOTPainter.translateLaTeX(pavetext['fLines'][j]['fTitle']);
             if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
-               var off_y = (j == 0) ? 0 : (font_size * 0.05);
-               this.pave.append("text")
-                  .attr("class", "pavetext")
-                  .attr("text-anchor", (j == 0) ? "middle" : "start")
-                  .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
-                  .attr("y", ((j == 0) ? off_y + (font_size * 1.2) : off_y + ((j+1) * (font_size * 1.4))))
-                  .attr("font-family", fontDetails['name'])
-                  .attr("font-weight", fontDetails['weight'])
-                  .attr("font-style", fontDetails['style'])
-                  .attr("font-size", font_size)
-                  .attr("fill", jcolor)
-                  .text(line);
-            }
-            else {
+               var posy = (j == 0) ? (font_size * 1.2) : 
+                                     font_size * (0.05 + (j+1)*1.4);
+               if ((first_stat>0) && (j>=first_stat)) {
+                  posy -= font_size*0.3; // dut to middle allignment
+                  var parts = line.split("|");
+                  for (var n=0;n<parts.length;n++)
+                     this.pave.append("text")
+                     .attr("class", "pavetext")
+                     .attr("text-anchor", "middle")
+                     .attr("x",  width*(n+0.5)/num_cols)
+                     .attr("y", posy + font_size*0.6)
+                     .attr("font-family", fontDetails['name'])
+                     .attr("font-weight", fontDetails['weight'])
+                     .attr("font-style", fontDetails['style'])
+                     .attr("font-size", font_size)
+                     .attr("fill", jcolor)
+                     .text(parts[n]);
+               } else
+               if ((j==0) || (line.indexOf('=')<0)) {
+                  this.pave.append("text")
+                     .attr("class", "pavetext")
+                     .attr("text-anchor", (j == 0) ? "middle" : "start")
+                     .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
+                     .attr("y", posy)
+                     .attr("font-family", fontDetails['name'])
+                     .attr("font-weight", fontDetails['weight'])
+                     .attr("font-style", fontDetails['style'])
+                     .attr("font-size", font_size)
+                     .attr("fill", jcolor)
+                     .text(line);
+               } else {
+                  var parts = line.split("=");
+                  for (var n=0;n<2;n++)
+                     this.pave.append("text")
+                     .attr("class", "pavetext")
+                     .attr("text-anchor", (n==0) ? "start" : "end")
+                     .attr("x", (n==0) ? pavetext['fMargin'] * width : (1-pavetext['fMargin']) * width)
+                     .attr("y", posy)
+                     .attr("font-family", fontDetails['name'])
+                     .attr("font-weight", fontDetails['weight'])
+                     .attr("font-style", fontDetails['style'])
+                     .attr("font-size", font_size)
+                     .attr("fill", jcolor)
+                     .text(parts[n]);
+               }
+            } else {
                this.pave.append("text")
                   .attr("class", "pavetext")
                   .attr("text-anchor", "start")
@@ -2860,7 +2901,7 @@ var gStyle = {
          }
       }
 
-      if (pavetext['fBorderSize'] && pavetext['_typename'] == 'JSROOTIO.TPaveStats')
+      if (pavetext['fBorderSize'] && pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
          this.pave.append("svg:line")
             .attr("class", "pavedraw")
             .attr("x1", 0)
@@ -2869,6 +2910,34 @@ var gStyle = {
             .attr("y2", font_size * 1.6)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth ? 1 : 'none');
+      }
+      
+      if ((first_stat>0) && (num_cols>1)) {
+         var yy = (1.4 * first_stat + 0.6) * font_size; 
+         
+         this.pave.append("svg:line")
+         .attr("class", "pavedraw")
+         .attr("x1", 0)
+         .attr("y1", yy)
+         .attr("x2", width)
+         .attr("y2", yy)
+         .style("stroke", lcolor)
+         .style("stroke-width", lwidth ? 1 : 'none');
+         
+         for (var ncol = 0; ncol<num_cols-1; ncol++) 
+            this.pave.append("svg:line")
+            .attr("class", "pavedraw")
+            .attr("x1", width/num_cols*(ncol+1))
+            .attr("y1", yy)
+            .attr("x2", width/num_cols*(ncol+1) )
+            .attr("y2", height)
+            .style("stroke", lcolor)
+            .style("stroke-width", lwidth ? 1 : 'none');
+            
+      }
+
+      
+      
 
       if (lwidth && lwidth > 1) {
          this.pave.append("svg:line")
@@ -3019,27 +3088,21 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.SetFrame = function(vis) {
       this.draw_content = false;
 
-      this.SetVis(vis);
-      
       if (vis['ROOT:frame']==null)
          JSROOTPainter.createFrame(vis);
+
+      this.SetVis(vis);
 
       if (vis['ROOT:svg_frame']==null) {
          alert("missing svg_frame");
          return;
       }
-      
-      this.frame = vis['ROOT:frame'];
-      this.svg_frame = vis['ROOT:svg_frame'];
-      this.pad = vis['ROOT:pad'];
 
       // here we deciding how histogram will look like and that and how will be shown 
       this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, this.pad);
       
       if (this.histo['_typename'] == "JSROOTIO.TProfile")
          this.options.Error = 11;
-      
-
       
       this.show_gridx = false;
       this.show_gridy = false;

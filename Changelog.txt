@@ -13,6 +13,8 @@ of the framework.
 5. Provide drawing (not yet update) of colz axis.
 6. Define central drawObjectInFrame function, where all different classes must be 
    handled only once. Therefore from now it should be easy to add any new classes.
+7. Better drawing of strat box (alignment, 2d statistic)   
+   
 
 11.07.2013
 1. Implement drawing of THStack. 
