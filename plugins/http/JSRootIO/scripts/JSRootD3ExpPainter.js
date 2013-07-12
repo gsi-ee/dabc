@@ -13,6 +13,7 @@ var kWhite = 0, kBlack = 1, kGray = 920, kRed = 632, kGreen = 416, kBlue = 600,
 
 
 var gStyle = {
+   'Tooltip'       : 1,    // 0 - off, 1 - fast version, 2 - full but slow   
    'AutoStat'      : true,
    'OptStat'       : 1111,
    'StatX'         : 0.7, 
@@ -1533,7 +1534,7 @@ function createFillPatterns(svg, id, color) {
                renderer.render( scene, camera );
             }
             INTERSECTED = null;
-            tooltip.hide();
+            if (gStyle.Tooltip > 1) tooltip.hide();
             return;
          }
          var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
@@ -1554,7 +1555,7 @@ function createFillPatterns(svg, id, color) {
                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
                INTERSECTED.material.emissive.setHex( 0x5f5f5f );
                renderer.render( scene, camera );
-               tooltip.show(INTERSECTED.name.length > 0 ? INTERSECTED.name : INTERSECTED.parent.name, 200);
+               if (gStyle.Tooltip > 1) tooltip.show(INTERSECTED.name.length > 0 ? INTERSECTED.name : INTERSECTED.parent.name, 200);
             }
          } else {
             if ( INTERSECTED ) {
@@ -1562,13 +1563,13 @@ function createFillPatterns(svg, id, color) {
                renderer.render( scene, camera );
             }
             INTERSECTED = null;
-            tooltip.hide();
+            if (gStyle.Tooltip > 1) tooltip.hide();
          }
       };
 
       $( renderer.domElement ).on('touchstart mousedown',function (e) {
          //var touch = e.changedTouches[0] || {};
-         tooltip.hide();
+         if (gStyle.Tooltip > 1) tooltip.hide();
          e.preventDefault();
          var touch = e;
          if ('changedTouches' in e) touch = e.changedTouches[0];
@@ -1615,6 +1616,7 @@ function createFillPatterns(svg, id, color) {
       $( renderer.domElement ).on('touchend mouseup', function(e) {
          mouseDowned = false;
       });
+      
       $( renderer.domElement ).on('mousewheel', function(e, d) {
          e.preventDefault();
          camera.position.z += d * 20;
@@ -1739,7 +1741,7 @@ function createFillPatterns(svg, id, color) {
       JSROOTPainter.ObjectPainter.call(this);
       this.tf1 = tf1;
    }
-   
+   ui-bg_glass
    JSROOTPainter.Func1DPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
    JSROOTPainter.Func1DPainter.prototype.IsObject = function(obj) {
