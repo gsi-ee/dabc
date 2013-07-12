@@ -10,8 +10,9 @@ of the framework.
 4. Bring together vis (svg:g)  frame(svg:frame)  and pad - all are collected 
    in top svg:g entity. Therefore only single arguments need to be deliver in
    all draw methods. This makes much more easier to understand logic behind. 
-
-
+5. Provide drawing (not yet update) of colz axis.
+6. Define central drawObjectInFrame function, where all different classes must be 
+   handled only once. Therefore from now it should be easy to add any new classes.
 
 11.07.2013
 1. Implement drawing of THStack. 

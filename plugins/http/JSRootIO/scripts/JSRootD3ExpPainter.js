@@ -5795,43 +5795,72 @@ var gStyle = {
       var vis = JSROOTPainter.createCanvas($(render_to), idx, obj);
       if (vis == null) return false;
 
-      if (obj['_typename'].match(/\bTCanvas/)) {
-         vis['ROOT:canvas'] = obj;
-         vis['ROOT:pad'] = obj;
-         return JSROOTPainter.drawPrimitives(vis, obj);
-      }
+      var res = JSROOTPainter.drawObjectInFrame(vis, obj);
       
-      if (obj['_typename'].match(/\bJSROOTIO.TH1/)) 
-         return JSROOTPainter.drawHistogram1Dnew(vis, obj);
-      
-      if (obj['_typename'].match(/\bJSROOTIO.TH2/)) 
-         return JSROOTPainter.drawHistogram2Dnew(vis, obj);
-      
-      if (obj['_typename'].match(/\bJSROOTIO.TH3/)) 
-         return JSROOTPainter.drawHistogram3D(vis, obj);
-      
-      if (obj['_typename'].match(/\bJSROOTIO.THStack/)) 
-         return JSROOTPainter.drawHStack(vis, obj);
-         
-      if (obj['_typename'].match(/\bJSROOTIO.TProfile/))
-         return JSROOTPainter.drawHistogram1Dnew(vis, obj);
-      
-      if (obj['_typename'] == 'JSROOTIO.TF1') 
-         return JSROOTPainter.drawFunctionNew(vis, obj);
-     
-      if (obj['_typename'].match(/\bTGraph/) ||
-            obj['_typename'].match(/\bRooHist/) ||
-            obj['_typename'].match(/\RooCurve/))
-         return JSROOTPainter.drawGraphNew(vis, obj);
-      
-      if (obj['_typename'] == 'JSROOTIO.TMultiGraph') 
-         return JSROOTPainter.drawMultiGraphNew(vis, obj);
+      if (res != -1) return res;
          
       if (typeof(drawUserObject) == 'function') 
          return drawUserObject(obj, vis);
    };
    
+   JSROOTPainter.drawObjectInFrame = function(vis, obj)
+   {
+      var classname = obj['_typename'];
+      
+      // $("#report").append("<br> draw primitive " + classname);
 
+      if (obj['_typename'].match(/\bTCanvas/)) {
+         vis['ROOT:canvas'] = obj;
+         vis['ROOT:pad'] = obj;
+         for (var i=0; i<obj['fPrimitives'].length; ++i)
+            JSROOTPainter.drawObjectInFrame(vis, obj['fPrimitives'][i]);
+         return 1;
+      }
+      
+      if (classname == 'JSROOTIO.TFrame') 
+         return JSROOTPainter.createFrame(vis, obj);
+      
+      if (classname == 'JSROOTIO.TPad') 
+         return JSROOTPainter.drawPad(vis, obj);
+         
+      if (classname == 'JSROOTIO.TPaveLabel') 
+         return JSROOTPainter.drawPaveLabel(vis, obj);
+      
+      if (classname == 'JSROOTIO.TLegend') 
+         return JSROOTPainter.drawLegend(vis, obj);
+      
+      if (classname == 'JSROOTIO.TPaveText') 
+         return JSROOTPainter.DrawPaveTextNew(vis, obj);
+      
+      if ((classname == 'JSROOTIO.TLatex') || (classname == 'JSROOTIO.TText')) 
+         return JSROOTPainter.drawText(vis, obj);
+      
+      if (classname.match(/\bJSROOTIO.TH1/) || (classname=="JSROOTIO.TProfile")) 
+         return JSROOTPainter.drawHistogram1Dnew(vis, obj);
+      
+      if (classname.match(/\bJSROOTIO.TH2/)) 
+         return JSROOTPainter.drawHistogram2Dnew(vis, obj);
+      
+      if (classname.match(/\bJSROOTIO.TH3/)) 
+         return JSROOTPainter.drawHistogram3D(vis, obj);
+      
+      if (classname.match(/\bJSROOTIO.THStack/)) 
+         return JSROOTPainter.drawHStack(vis, obj);
+         
+      if (classname == 'JSROOTIO.TF1') 
+         return JSROOTPainter.drawFunctionNew(vis, obj);
+      
+      if (classname.match(/\bTGraph/) ||
+          classname.match(/\bRooHist/) ||
+          classname.match(/\RooCurve/)) 
+         return JSROOTPainter.drawGraphNew(vis, obj);
+      
+      if (classname == 'JSROOTIO.TMultiGraph') 
+         return JSROOTPainter.drawMultiGraphNew(vis, obj);
+      
+      return -1;
+   }
+   
    JSROOTPainter.drawPad = function(vis, pad) {
       var width = vis.attr("width"), height = vis.attr("height");
       var x = pad['fAbsXlowNDC'] * width;
@@ -5868,7 +5897,9 @@ var gStyle = {
 
       new_pad['ROOT:pad'] = pad;
       
-      JSROOTPainter.drawPrimitives(new_pad, pad);
+      for (var i=0; i<pad['fPrimitives'].length; ++i)
+         JSROOTPainter.drawObjectInFrame(new_pad, pad['fPrimitives'][i]);
+
       return new_pad;
    };
 
@@ -6062,53 +6093,6 @@ var gStyle = {
    };
 
 
-   JSROOTPainter.drawPrimitives = function(vis, pad) {
-      var primitives = pad['fPrimitives'];
-      for (var i=0; i<primitives.length; ++i) {
-         var classname = primitives[i]['_typename'];
-         
-         // $("#report").append("<br> draw primitive " + classname);
-         
-         if (classname == 'JSROOTIO.TFrame') 
-            JSROOTPainter.createFrame(vis, primitives[i]);
-         
-         if (classname == 'JSROOTIO.TPad') 
-            JSROOTPainter.drawPad(vis, primitives[i]);
-            
-         if (classname == 'JSROOTIO.TPaveLabel') 
-            JSROOTPainter.drawPaveLabel(vis, primitives[i]);
-         
-         if (classname == 'JSROOTIO.TLegend') 
-            JSROOTPainter.drawLegend(vis, primitives[i]);
-         
-         if (classname == 'JSROOTIO.TPaveText') 
-            JSROOTPainter.DrawPaveTextNew(vis, primitives[i]);
-         
-         if ((classname == 'JSROOTIO.TLatex') || (classname == 'JSROOTIO.TText')) 
-            JSROOTPainter.drawText(vis, primitives[i]);
-         
-         if (classname.match(/\bJSROOTIO.TH1/) || (classname=="JSROOTIO.TProfile")) 
-            JSROOTPainter.drawHistogram1Dnew(vis, primitives[i]);
-         
-         if (classname.match(/\bJSROOTIO.TH2/)) 
-            JSROOTPainter.drawHistogram2Dnew(vis, primitives[i]);
-         
-         if (classname.match(/\bJSROOTIO.THStack/)) 
-            JSROOTPainter.drawHStack(vis, primitives[i])
-            
-         if (classname == 'JSROOTIO.TF1') 
-            JSROOTPainter.drawFunctionNew(vis, primitives[i]);
-         
-         if (classname.match(/\bTGraph/) ||
-             classname.match(/\bRooHist/) ||
-             classname.match(/\RooCurve/)) 
-            JSROOTPainter.drawGraphNew(vis, primitives[i]);
-         
-         if (classname == 'JSROOTIO.TMultiGraph') 
-            JSROOTPainter.drawMultiGraphNew(vis, primitives[i]);
-         
-      }
-   };
 
 
    JSROOTPainter.drawText = function(vis, text) 
