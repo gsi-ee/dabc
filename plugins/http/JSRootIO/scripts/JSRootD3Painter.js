@@ -1191,10 +1191,10 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter.getValueColor = function(hist, zc, options) {
       var wmin = this.getMinMax(hist, 'min'),
           wmax = this.getMinMax(hist, 'max'),
-          wlmin = wmin,
-          wlmax = wmax,
-          ndivz = hist['fContour'].length,
-          scale = ndivz / (wlmax - wlmin);
+          wlmin = wmin, wlmax = wmax;
+      var ndivz = hist['fContour'].length;
+      if (ndivz<16) ndivz = 16;
+      var scale = ndivz / (wlmax - wlmin);
       if (options && options['logz']) {
          if (wmin <= 0 && wmax > 0) wmin = Math.min(1.0, 0.001 * wmax);
          wlmin = Math.log(wmin)/Math.log(10);

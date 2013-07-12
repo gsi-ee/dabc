@@ -6,6 +6,7 @@ of the framework.
 1. Provide optionally normal style for tooltips. In case of TH2 objects
    improve drawing performace - avoid creation of double number of elements. 
 2. Add into context menu switch for "col" options. Fix problem with TH2 draw. 
+3. Fix drawing errors and problems with TH2 and TAxis classes.
 
 
 11.07.2013

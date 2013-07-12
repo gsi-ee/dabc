@@ -3259,20 +3259,20 @@ var gStyle = {
        * Define the scales, according to the information from the pad
        */
       var dfx = d3.format(",.f"), dfy = d3.format(",.f");
+      var xrange = this.histo['fXaxis']['fXmax'] - this.histo['fXaxis']['fXmin'];
       if (this.histo['fXaxis']['fTimeDisplay']) {
          if (n1ax > 8) n1ax = 8;
          var timeoffset = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
-         var range = this.histo['fXaxis']['fXmax'] - this.histo['fXaxis']['fXmin'];
          dfx = d3.time.format("%Mm%S");
-         if (range>31536000)
+         if (xrange>31536000)
             dfx = d3.time.format("%Y");
-         else if (range>2419200)
+         else if (xrange>2419200)
             dfx = d3.time.format("%Y/%m");
-         else if (range>86400)
+         else if (xrange>86400)
             dfx = d3.time.format("%Y/%m/%d");
-         else if (range>3600)
+         else if (xrange>3600)
             dfx = d3.time.format("%Hh%Mm%S");
-         else if (range>60)
+         else if (xrange>60)
             dfx = d3.time.format("%Hh%M");
 
           this['x_axis'] = d3.svg.axis()
@@ -3280,7 +3280,7 @@ var gStyle = {
              .orient("bottom")
              .tickPadding(xAxisLabelOffset)
              .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
-             .tickFormat(function(d, i) {
+             .tickFormat(function(d) {
                  var datime = new Date(timeoffset + (d * 1000));
                  return dfx(datime); })
              .ticks(n1ax);
@@ -3291,7 +3291,8 @@ var gStyle = {
             .orient("bottom")
             .tickPadding(xAxisLabelOffset)
             .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
-            .tickFormat(function(d, i) { var val = parseFloat(d);
+            .tickFormat(function(d) { 
+                var val = parseFloat(d);
                 var vlog = Math.abs(JSROOTMath.log10(val));
                 if (moreloglabelsx) {
                   if (vlog % 1 < 0.7 || vlog % 1 > 0.9999) {
@@ -3316,28 +3317,30 @@ var gStyle = {
             .tickPadding(xAxisLabelOffset)
             .tickSubdivide(n2ax-1)
             .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
-            .tickFormat(function(d,i) {
-               if (pthis.histo['fXaxis']['fTimeDisplay']) return dfx;
-               return parseFloat(d.toPrecision(12));
+            .tickFormat(function(d) {
+                // avoid rounding problems around 0
+                if ((Math.abs(d)<1e-14) && (Math.abs(xrange)>1e-5)) d = 0;
+                return parseFloat(d.toPrecision(12));
              })
             .ticks(n1ax);
       }
 
+      var yrange = this.histo['fYaxis']['fXmax'] - this.histo['fYaxis']['fXmin'];
+
       if (this.histo['fYaxis']['fTimeDisplay']) {
          if (n1ay > 8) n1ay = 8;
          var timeoffset = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
-         var range = this.histo['fYaxis']['fXmax'] - this.histo['fYaxis']['fXmin'];
          dfy = d3.time.format("%Mm%S");
 
-         if (range>31536000)
+         if (yrange>31536000)
             dfy = d3.time.format("%Y");
-         else if (range>2419200)
+         else if (yrange>2419200)
             dfy = d3.time.format("%Y/%m");
-         else if (range>86400)
+         else if (yrange>86400)
             dfy = d3.time.format("%Y/%m/%d");
-         else if (range>3600)
+         else if (yrange>3600)
             dfy = d3.time.format("%Hh%Mm%S");
-         else if (range>60)
+         else if (yrange>60)
             dfy = d3.time.format("%Hh%M");
 
          this['y_axis'] = d3.svg.axis()
@@ -3345,7 +3348,7 @@ var gStyle = {
                .orient("left")
                .tickPadding(yAxisLabelOffset)
                .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
-               .tickFormat(function(d, i) {
+               .tickFormat(function(d) {
                    var datime = new Date(timeoffset + (d * 1000));
                    return dfy(datime); })
                .ticks(n1ay);
@@ -3356,7 +3359,7 @@ var gStyle = {
             .orient("left")
             .tickPadding(yAxisLabelOffset)
             .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
-            .tickFormat(function(d, i) { 
+            .tickFormat(function(d) { 
                var val = parseFloat(d);
                var vlog = Math.abs(JSROOTMath.log10(val));
                if (moreloglabelsy) {
@@ -3382,8 +3385,8 @@ var gStyle = {
            .tickPadding(yAxisLabelOffset)
            .tickSubdivide(n2ay-1)
            .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
-           .tickFormat(function(d,i) {
-              if (pthis.histo['fYaxis']['fTimeDisplay']) return dfy;
+           .tickFormat(function(d) {
+              if ((Math.abs(d)<1e-14) && (Math.abs(yrange)>1e-5)) d = 0;
               return parseFloat(d.toPrecision(12));
            })
            .ticks(n1ay);
@@ -4362,8 +4365,10 @@ var gStyle = {
       } 
       
       if (cmd == "col") {
-         if (this.options.Color > 0) this.options.Color = 0;
-                                     this.options.Color = 1;
+         if (this.options.Color > 0) 
+            this.options.Color = 0;
+         else
+            this.options.Color = 1;
          this.RedrawFrame();
          return;
       }
@@ -4396,7 +4401,7 @@ var gStyle = {
       this.bins = new Array();
       for (var i=0; i<this.nbinsx; ++i) {
          for (var j=0; j<this.nbinsy; ++j) {
-            var bin_content = this.histo.getBinContent(i, j);
+            var bin_content = this.histo.getBinContent(i+1, j+1);
             if (bin_content > this.minbin) {
                var point = {
                   x:this.xmin + (i*this.scalex),
@@ -4422,10 +4427,8 @@ var gStyle = {
    JSROOTPainter.Hist2DPainter.prototype.getValueColor = function(zc) {
       var wmin = this.minbin, wmax = this.maxbin; 
           wlmin = wmin, wlmax = wmax;
-      var ndivz = 16;
-      if ('fContour' in this.histo) ndivz = this.histo['fContour'].length;
+      var ndivz = this.histo['fContour'].length;
       if (ndivz<16) ndivz = 16;
-      
       var scale = ndivz / (wlmax - wlmin);
       if (this.options.Logz) {
          if (wmin <= 0 && wmax > 0) wmin = Math.min(1.0, 0.001 * wmax);
@@ -4541,31 +4544,37 @@ var gStyle = {
             .append("svg:rect")
             .attr("class", "bins")
             .attr("x", function(d) { 
-               return pthis.x(d.x + (pthis.scalex / 2)) - (0.5 * d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor);
+               if (pthis.options.Color > 0)
+                  return pthis.x(d.x);
+               else
+                  return pthis.x(d.x + (pthis.scalex / 2)) - (0.5 * d.z * ((w / pthis.nbinsx) / pthis.maxbin) * xfactor);
             })
             .attr("y", function(d) { 
-               return pthis.y(d.y + (pthis.scaley / 2)) - (0.5 * d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor);
+               if (pthis.options.Color > 0)
+                  return pthis.y(d.y + pthis.scaley);
+               else
+                  return pthis.y(d.y + (pthis.scaley / 2)) - (0.5 * d.z * ((h / pthis.nbinsy) / pthis.maxbin) * yfactor);
             })
             .attr("width", function(d) {
                if (pthis.options.Color > 0)
-                  return (w / pthis.histo['fXaxis']['fNbins']) * xfactor;
+                  return pthis.x(d.x + pthis.scalex) - pthis.x(d.x);
                else
-                  return d.z * ((w / pthis.histo['fXaxis']['fNbins']) / pthis.maxbin) * xfactor;
+                  return d.z * ((w / pthis.nbinsx) / pthis.maxbin) * xfactor;
             })
             .attr("height", function(d) {
                if (pthis.options.Color > 0)
-                  return (h / pthis.histo['fYaxis']['fNbins']) * yfactor;
+                  return pthis.y(d.y) - pthis.y(d.y + pthis.scaley);
                else
-                  return d.z * ((h / pthis.histo['fYaxis']['fNbins']) / pthis.maxbin) * yfactor;
+                  return d.z * ((h / pthis.nbinsy) / pthis.maxbin) * yfactor;
             })
             .style("stroke", function(d) {
                if (pthis.options.Color > 0)
-                  return pthis.getValueColor(d.z);
+                  return "none";
                else
-                  return "black";
+                  return pthis.linecolor;
             })
             .style("fill", function(d) {
-               var fillcol = "none";
+               var fillcol = pthis.fillcolor;
                if (pthis.options.Color > 0)
                   fillcol = pthis.getValueColor(d.z);
                this['origin'] = fillcol; 
