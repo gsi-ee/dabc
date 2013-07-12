@@ -2803,7 +2803,7 @@ var gStyle = {
          .style("stroke", lcolor);
 
       if (nlines == 1) {
-         line = this.translateLaTeX(pavetext['fLines'][0]['fTitle']);
+         line = JSROOTPainter.translateLaTeX(pavetext['fLines'][0]['fTitle']);
 
          lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                           font_size, fontDetails['style']);
@@ -2991,7 +2991,8 @@ var gStyle = {
    }
 
 
-   JSROOTPainter.DrawPaveTextNew = function(vis, pavetext) {
+   JSROOTPainter.DrawPaveTextNew = function(vis, pavetext) 
+   {
       var painter = new JSROOTPainter.PavePainter(pavetext);
       
       painter.SetFrame(vis);
@@ -4881,9 +4882,11 @@ var gStyle = {
          bin.position.x = tx(hh.x + this.scalex/2);
          bin.position.y = hh.z/2;
          bin.position.z = -(ty(hh.y + this.scaley/2));
-//         bin.name = "x: [" + hh.x.toPrecision(4) + ", " + (hh.x + this.scalex).toPrecision(4) + "]<br>" +
-//                    "y: [" + hh.y.toPrecision(4) + ", " + (hh.y + this.scaley).toPrecision(4) + "]<br>" + 
-//                    "entries: " + hh.z.toFixed();
+         
+         if (gStyle.Tooltip > 1)
+            bin.name = "x: [" + hh.x.toPrecision(4) + ", " + (hh.x + this.scalex).toPrecision(4) + "]<br>" +
+                       "y: [" + hh.y.toPrecision(4) + ", " + (hh.y + this.scaley).toPrecision(4) + "]<br>" + 
+                       "entries: " + hh.z.toFixed();
          toplevel.add( bin );
       }
       // create a point light
@@ -5372,7 +5375,7 @@ var gStyle = {
 
       var max_len = 0, mul = 1.4;
       for (var j=0; j<nlines; ++j) {
-         line = this.translateLaTeX(pave['fPrimitives'][j]['fLabel']);
+         line = JSROOTPainter.translateLaTeX(pave['fPrimitives'][j]['fLabel']);
          lw = tpos_x + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                                    font_size, fontDetails['style']);
          if (lw > max_len) max_len = lw;
@@ -5400,7 +5403,8 @@ var gStyle = {
             var tpos_y = h * 0.75;
          }
 
-         var mo = gFile.GetMappedObject(leg['fObject']);
+         var mo = null;
+         if (gFile!=null) mo = gFile.GetMappedObject(leg['fObject']);
          if (mo) {
             leg['fFillColor']   = mo['fFillColor'];
             leg['fFillStyle']   = mo['fFillStyle'];
@@ -6020,156 +6024,6 @@ var gStyle = {
       }
    };
 
-   JSROOTPainter.drawPaveText = function(vis, pavetext) {
-      var i, j, lw, w = vis.attr("width"), h = vis.attr("height");
-      var pos_x = pavetext['fX1NDC'] * w;
-      var pos_y = (1.0 - pavetext['fY1NDC']) * h;
-      var width = Math.abs(pavetext['fX2NDC'] - pavetext['fX1NDC']) * w;
-      var height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
-      pos_y -= height;
-      var line, nlines = pavetext['fLines'].length;
-      var font_size = Math.round(height / (nlines * 1.5));
-      var fcolor = root_colors[pavetext['fFillColor']];
-      var lcolor = root_colors[pavetext['fLineColor']];
-      var tcolor = root_colors[pavetext['fTextColor']];
-      var scolor = root_colors[pavetext['fShadowColor']];
-      if (pavetext['fFillStyle'] == 0) fcolor = 'none';
-      // align = 10*HorizontalAlign + VerticalAlign
-      // 1=left adjusted, 2=centered, 3=right adjusted
-      // 1=bottom adjusted, 2=centered, 3=top adjusted
-      // "middle", "start", "end"
-      var align = 'start', halign = Math.round(pavetext['fTextAlign']/10);
-      var baseline = 'bottom', valign = pavetext['fTextAlign']%10;
-      if (halign == 1) align = 'start';
-      else if (halign == 2) align = 'middle';
-      else if (halign == 3) align = 'end';
-      if (valign == 1) baseline = 'bottom';
-      else if (valign == 2) baseline = 'middle';
-      else if (valign == 3) baseline = 'top';
-      var lmargin = 0;
-      switch (halign) {
-         case 1:
-            lmargin = pavetext['fMargin'] * width;
-            break;
-         case 2:
-            lmargin = width/2;
-            break;
-         case 3:
-            lmargin = width - (pavetext['fMargin'] * width);
-            break;
-      }
-      var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
-      var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
-
-      var pave = vis.append("svg:g")
-         .attr("x", pos_x)
-         .attr("y", pos_y)
-         .attr("width", width)
-         .attr("height", height)
-         .attr("transform", "translate(" + pos_x + "," + pos_y + ")");
-
-      pave.append("svg:rect")
-         .attr("class", "frame")
-         .attr("x", 0)
-         .attr("y", 0)
-         .attr("height", height)
-         .attr("width", width)
-         .attr("fill", fcolor)
-         .style("stroke-width", lwidth ? 1 : 0)
-         .style("stroke", lcolor);
-
-      if (nlines == 1) {
-         line = this.translateLaTeX(pavetext['fLines'][0]['fTitle']);
-
-         lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                          font_size, fontDetails['style']);
-         if (lw > width)
-            font_size *= 0.98 * (width / lw);
-
-         pave.append("text")
-            .attr("class", "stat text")
-            .attr("text-anchor", align)
-            .attr("x", lmargin)
-            .attr("y", (height/2) + (font_size/3))
-            .attr("font-family", fontDetails['name'])
-            .attr("font-weight", fontDetails['weight'])
-            .attr("font-style", fontDetails['style'])
-            .attr("font-size", font_size)
-            .attr("fill", tcolor)
-            .text(line);
-      }
-      else {
-         var max_len = 0;
-         for (j=0; j<nlines; ++j) {
-            line = this.translateLaTeX(pavetext['fLines'][j]['fTitle']);
-            lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                                       font_size, fontDetails['style']);
-            if (lw > max_len) max_len = lw;
-         }
-         if (max_len > width)
-            font_size *= 0.98 * (width / max_len);
-
-         for (j=0; j<nlines; ++j) {
-            var jcolor = root_colors[pavetext['fLines'][j]['fTextColor']];
-            if (pavetext['fLines'][j]['fTextColor'] == 0)
-               jcolor = tcolor;
-            line = this.translateLaTeX(pavetext['fLines'][j]['fTitle']);
-            if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
-               var off_y = (j == 0) ? 0 : (font_size * 0.05);
-               pave.append("text")
-                  .attr("class", "stat text")
-                  .attr("text-anchor", (j == 0) ? "middle" : "start")
-                  .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
-                  .attr("y", ((j == 0) ? off_y + (font_size * 1.2) : off_y + ((j+1) * (font_size * 1.4))))
-                  .attr("font-family", fontDetails['name'])
-                  .attr("font-weight", fontDetails['weight'])
-                  .attr("font-style", fontDetails['style'])
-                  .attr("font-size", font_size)
-                  .attr("fill", jcolor)
-                  .text(line);
-            }
-            else {
-               pave.append("text")
-                  .attr("class", "stat text")
-                  .attr("text-anchor", "start")
-                  .attr("x", lmargin)
-                  .attr("y", (j+1) * (font_size * 1.4))
-                  .attr("font-family", fontDetails['name'])
-                  .attr("font-weight", fontDetails['weight'])
-                  .attr("font-style", fontDetails['style'])
-                  .attr("font-size", font_size)
-                  .attr("fill", jcolor)
-                  .text(line);
-            }
-         }
-      }
-
-      if (pavetext['fBorderSize'] && pavetext['_typename'] == 'JSROOTIO.TPaveStats')
-         pave.append("svg:line")
-            .attr("x1", 0)
-            .attr("y1", font_size * 1.6)
-            .attr("x2", width)
-            .attr("y2", font_size * 1.6)
-            .style("stroke", lcolor)
-            .style("stroke-width", lwidth ? 1 : 'none');
-
-      if (lwidth && lwidth > 1) {
-         pave.append("svg:line")
-            .attr("x1", width+(lwidth/2))
-            .attr("y1", lwidth+1)
-            .attr("x2", width+(lwidth/2))
-            .attr("y2", height+lwidth-1)
-            .style("stroke", lcolor)
-            .style("stroke-width", lwidth);
-         pave.append("svg:line")
-            .attr("x1", lwidth+1)
-            .attr("y1", height+(lwidth/2))
-            .attr("x2", width+lwidth-1)
-            .attr("y2", height+(lwidth/2))
-            .style("stroke", lcolor)
-            .style("stroke-width", lwidth);
-      }
-   };
 
    JSROOTPainter.drawPrimitives = function(vis, pad) {
       var i, j, frame = null;
@@ -6177,7 +6031,7 @@ var gStyle = {
       for (i=0; i<primitives.length; ++i) {
          var classname = primitives[i]['_typename'];
          
-         // $("#report").append("<br> draw primitive " + classname);
+//         $("#report").append("<br> draw primitive " + classname);
          
          if (classname == 'JSROOTIO.TFrame') {
             frame = JSROOTPainter.createFrame(vis, pad, null, primitives[i]);
@@ -6192,7 +6046,7 @@ var gStyle = {
             this.drawLegend(vis, pad, primitives[i]);
          }
          if (classname == 'JSROOTIO.TPaveText') {
-            this.drawPaveText(vis, primitives[i]);
+            JSROOTPainter.DrawPaveTextNew(vis, primitives[i]);
          }
          if (classname == 'JSROOTIO.TLatex') {
             this.drawText(vis, pad, primitives[i]);
