@@ -1462,7 +1462,8 @@ var gStyle = {
    }
    
    JSROOTPainter.ObjectPainter.prototype.UpdateObject = function(obj) {
-      alert("JSROOTPainter.ObjectPainter.UpdateObject not implemented");  
+      alert("JSROOTPainter.ObjectPainter.UpdateObject not implemented");
+      return false;
    }
       
    
@@ -1894,8 +1895,11 @@ var gStyle = {
    }
 
    JSROOTPainter.Func1DPainter.prototype.UpdateObject = function(obj) {
+      if (obj['_typename'] != this.tf1['_typename']) return false;
+      // TODO: realy update object content
       this.tf1 = obj;
       this.CreateBins();
+      return true;
    }
 
    
@@ -2571,13 +2575,14 @@ var gStyle = {
             .text(TooltipText);
       }
    }
-
    
    JSROOTPainter.GraphPainter.prototype.UpdateObject = function(obj) {
+      if (obj['_typename']!= this.graph['_typename']) return false;
+      // TODO: make real update of TGraph object content 
       this.graph = obj;
       this.CreateBins();
+      return true;
    }
-
    
    JSROOTPainter.drawGraphNew = function(vis, graph) 
    {
@@ -3129,14 +3134,23 @@ var gStyle = {
    
    JSROOTPainter.HistPainter.prototype.UpdateObject = function(obj) 
    {
-      if (obj['_typename'].indexOf("JSROOTIO.TH1") != 0) {
+      if (obj['_typename'] != this.histo['_typename']) {
          alert("JSROOTPainter.HistPainter.UpdateObject - wrong class " + obj['_typename']);
-         return;
+         return false;
       }
       
-      this.histo = obj;
+      // TODO: simple replace of object does not help - one can have different
+      // complex relations between histo and stat box, histo and colz axis,
+      // on could have THStack or TMultiGraph object
+      // The only that could be done is update of content
+      
+      // this.histo = obj;
+      
+      this.histo['fArray'] = obj['fArray'];
       
       this.CreateBins();
+      
+      return true;
    }
       
 

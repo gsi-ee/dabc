@@ -354,7 +354,6 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    if (this.sinfo) {
       
       if (this.painter != null) {
-         this.painter.UpdateObject(this.obj);
          this.painter.RedrawFrame();
       } else {
 //         if (gStyle) gStyle.AutoStat = true;
@@ -427,12 +426,13 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    } else {
       $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
    }
-   
-   if (this.clname.match(/\bTH1/) && (this.obj!=null)) {
-      this.obj['fArray'] = obj['fArray'];
+
+   if (this.painter && this.painter.UpdateObject(obj)) {
+      // if painter accepted object update, we need later just redraw frame
       obj = null;
    } else { 
       this.obj = obj;
+      this.painter = null;
    }
    
    this.state = this.StateEnum.stReady;
@@ -529,7 +529,8 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
       AssertPrerequisites(function() {
       
          AssertDrawPrerequisites(true);
-         // $("#report").append("<br> load main scripts done");
+         
+         $("#report").append("<br> load main scripts done");
 
          DABC.load_root_js = 2; 
       });
