@@ -483,8 +483,7 @@ function stringWidth(svg, line, font_name, font_weight, font_size, font_style) {
        .style("opacity", 0)
        .text(line);
    var w = text.node().getBBox().width;
-   d3.select(text).remove();
-   text = null;
+   text.remove();
    return w;
 }
 
@@ -1338,7 +1337,7 @@ var gStyle = {
       return false;
    }
    
-   JSROOTPainter.ObjectPainter.prototype.SetVis = function(vis) {
+   JSROOTPainter.ObjectPainter.prototype.SetFrame = function(vis, check_not_first) {
       if (!('painters' in vis)) {
          vis['painters'] = new Array();
          doubleTap(vis[0][0]); // ????
@@ -1360,6 +1359,16 @@ var gStyle = {
       this.frame = vis['ROOT:frame'];
       this.svg_frame = vis['ROOT:svg_frame'];
       this.pad = vis['ROOT:pad'];
+      
+      if (check_not_first && !this.frame) {
+         alert("frame for the " +  (typeof this) + " was not specified");
+         return;
+      }
+      
+      if (check_not_first && !this.first) {
+         alert("first painter is not defined - it is a must for " + (typeof this));
+         return;
+      }
    }
    
    JSROOTPainter.ObjectPainter.prototype.RedrawFrame = function(selobj) {
@@ -1683,20 +1692,6 @@ var gStyle = {
       return this.tf1 == obj;
    }
    
-   JSROOTPainter.Func1DPainter.prototype.SetFrame = function(vis) {
-      this.SetVis(vis);
-
-      if (!this.frame) {
-         alert("frame for the TF1 was not specified");
-         return;
-      }
-      
-      if (!this.first) {
-         alert("first painter is not defined - it is a must for TF1");
-         return;
-      }
-   }
-   
    JSROOTPainter.Func1DPainter.prototype.Redraw = function() 
    {
       this.DrawBins();
@@ -1913,7 +1908,7 @@ var gStyle = {
          JSROOTPainter.drawHistogram1Dnew(vis, histo);
       } 
       
-      painter.SetFrame(vis);
+      painter.SetFrame(vis, true);
       
       painter.CreateBins();
       
@@ -1934,19 +1929,6 @@ var gStyle = {
 
    JSROOTPainter.GraphPainter.prototype.IsObject = function(obj) {
       return this.graph == obj;
-   }
-   
-   JSROOTPainter.GraphPainter.prototype.SetFrame = function(vis) {
-      this.SetVis(vis);
-      if (!this.frame) {
-         alert("frame for the graph was not specified");
-         return;
-      }
-      
-      if (!this.first) {
-         alert("first painter is not defined - it is a must for graph");
-         return;
-      }
    }
    
    JSROOTPainter.GraphPainter.prototype.Redraw = function() 
@@ -2609,7 +2591,7 @@ var gStyle = {
       
       var painter = new JSROOTPainter.GraphPainter(graph);
       
-      painter.SetFrame(vis);
+      painter.SetFrame(vis, true);
       
       painter.DecodeOptions();
       
@@ -2693,11 +2675,6 @@ var gStyle = {
    JSROOTPainter.PavePainter.prototype.IsObject = function(obj) {
       return this.pavetext == obj;
    }
-
-   
-   JSROOTPainter.PavePainter.prototype.SetFrame = function(vis) {
-      this.SetVis(vis);
-   } 
    
    JSROOTPainter.PavePainter.prototype.DrawPaveText = function() {
       var pavetext = this.pavetext;
@@ -2959,12 +2936,8 @@ var gStyle = {
 
    JSROOTPainter.PavePainter.prototype.Redraw = function() {
 
-//      $("#report").append("<br> redraw pave");
-      
       if (('pave' in this) && (this.pave!=null)) {
-         this.pave.selectAll(".pavetext").remove();
-         this.pave.selectAll(".pavedraw").remove();
-         d3.select(this.pave).remove();
+         this.pave.remove();
          this.pave = null;
       }
 
@@ -2992,7 +2965,7 @@ var gStyle = {
       
       var painter = new JSROOTPainter.PavePainter(pavetext);
       
-      painter.SetFrame(vis);
+      painter.SetFrame(vis, true);
       
       if ('_AutoCreated' in pavetext) painter.FillStatistic();
       
@@ -3001,6 +2974,105 @@ var gStyle = {
       return painter;
    }
    
+   
+   // ===========================================================================
+   
+   JSROOTPainter.drawPaletteAxis = function(vis, palette) {
+      
+      var painter = vis['painters'][0];
+      var minbin = painter.minbin;
+      var maxbin = painter.maxbin;
+      
+      var width = vis.attr("width");
+      var height = vis.attr("height");
+
+      var pos_x = palette['fX1NDC'] * width;
+      var pos_y = height - palette['fY1NDC'] * height;
+      var s_width = Math.abs(palette['fX2NDC'] - palette['fX1NDC']) * width;
+      var s_height = Math.abs(palette['fY2NDC'] - palette['fY1NDC']) * height;
+      pos_y -= s_height;
+
+      /*
+       * Draw palette pad
+       */
+      var pal = vis.append("svg:g")
+          .attr("height", s_height)
+          .attr("width", s_width)
+          .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
+
+      var axis = palette['fAxis'];
+
+      /*
+       * Draw the default palette
+       */
+      var rectHeight = s_height / default_palette.length;
+      pal.selectAll("colorRect")
+         .data(default_palette)
+         .enter()
+         .append("svg:rect")
+         .attr("class", "colorRect")
+         .attr("x", 0)
+         .attr("y", function(d, i) { return s_height - (i + 1)* rectHeight;})
+         .attr("width", s_width)
+         .attr("height", rectHeight)
+         .attr("fill", function(d) { return d;})
+         .attr("stroke", function(d) {return d;});
+      /*
+       * Build and draw axes
+       */
+      var nbr1 = 8;//Math.max((ndiv % 10000) % 100, 1);
+      var nbr2 = 0;//Math.max(Math.round((ndiv % 10000) / 100), 1);
+      var nbr3 = 0;//Math.max(Math.round(ndiv / 10000), 1);
+
+      var z = d3.scale.linear().clamp(true)
+               .domain([minbin, maxbin])
+               .range([s_height, 0])
+               .nice();
+
+      var axisOffset = axis['fLabelOffset'] * width;
+      var tickSize = axis['fTickSize'] * width;
+      var z_axis = d3.svg.axis()
+                  .scale(z)
+                  .orient("right")
+                  .tickSubdivide(nbr2)
+                  .tickPadding(axisOffset)
+                  .tickSize(-tickSize, -tickSize/2, 0)
+                  .ticks(nbr1);
+
+       var zax = pal.append("svg:g")
+               .attr("class", "zaxis")
+               .attr("transform", "translate(" + s_width + ", 0)")
+               .call(z_axis);
+
+      var axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fLabelFont'] /10)]);
+      var axisLabelFontSize = axis['fLabelSize'] * height;
+      zax.selectAll("text")
+         .attr("font-size", axisLabelFontSize)
+         .attr("font-weight", axisFontDetails['weight'])
+         .attr("font-style", axisFontDetails['style'])
+         .attr("font-family", axisFontDetails['name'])
+         .attr("fill", root_colors[axis['fLabelColor']]);
+
+      /*
+       * Add palette axis title
+       */
+      var title = axis['fTitle'];
+      if (title != "") {
+         axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fTitleFont'] /10)]);
+         var axisTitleFontSize = axis['fTitleSize'] * height;
+         pal.append("text")
+               .attr("class", "Z axis label")
+               .attr("x", s_width + axisLabelFontSize + axisLabelOffset)
+               .attr("y", s_height)
+               .attr("text-anchor", "end")
+               .attr("font-family", axisFontDetails['name'])
+               .attr("font-weight", axisFontDetails['weight'])
+               .attr("font-style", axisFontDetails['style'])
+               .attr("font-size", axisTitleFontSize )
+               .text(title);
+      }
+   };
+
 
    // =============================================================
    
@@ -3028,14 +3100,14 @@ var gStyle = {
       if (vis['ROOT:frame']==null)
          JSROOTPainter.createFrame(vis);
 
-      this.SetVis(vis);
+      JSROOTPainter.ObjectPainter.prototype.SetFrame.call(this, vis)
 
       if (vis['ROOT:svg_frame']==null) {
          alert("missing svg_frame");
          return;
       }
 
-      // here we deciding how histogram will look like and that and how will be shown 
+      // here we deciding how histogram will look like and how will be shown 
       this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, this.pad);
       
       if (this.histo['_typename'] == "JSROOTIO.TProfile")
@@ -6072,102 +6144,6 @@ var gStyle = {
          JSROOTPainter.drawObjectInFrame(new_pad, pad['fPrimitives'][i]);
 
       return new_pad;
-   };
-
-   JSROOTPainter.drawPaletteAxis = function(vis, palette) {
-      
-      var painter = vis['painters'][0];
-      var minbin = painter.minbin;
-      var maxbin = painter.maxbin;
-      
-      var width = vis.attr("width");
-      var height = vis.attr("height");
-
-      var pos_x = palette['fX1NDC'] * width;
-      var pos_y = height - palette['fY1NDC'] * height;
-      var s_width = Math.abs(palette['fX2NDC'] - palette['fX1NDC']) * width;
-      var s_height = Math.abs(palette['fY2NDC'] - palette['fY1NDC']) * height;
-      pos_y -= s_height;
-
-      /*
-       * Draw palette pad
-       */
-      var pal = vis.append("svg:g")
-          .attr("height", s_height)
-          .attr("width", s_width)
-          .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
-
-      var axis = palette['fAxis'];
-
-      /*
-       * Draw the default palette
-       */
-      var rectHeight = s_height / default_palette.length;
-      pal.selectAll("colorRect")
-         .data(default_palette)
-         .enter()
-         .append("svg:rect")
-         .attr("class", "colorRect")
-         .attr("x", 0)
-         .attr("y", function(d, i) { return s_height - (i + 1)* rectHeight;})
-         .attr("width", s_width)
-         .attr("height", rectHeight)
-         .attr("fill", function(d) { return d;})
-         .attr("stroke", function(d) {return d;});
-      /*
-       * Build and draw axes
-       */
-      var nbr1 = 8;//Math.max((ndiv % 10000) % 100, 1);
-      var nbr2 = 0;//Math.max(Math.round((ndiv % 10000) / 100), 1);
-      var nbr3 = 0;//Math.max(Math.round(ndiv / 10000), 1);
-
-      var z = d3.scale.linear().clamp(true)
-               .domain([minbin, maxbin])
-               .range([s_height, 0])
-               .nice();
-
-      var axisOffset = axis['fLabelOffset'] * width;
-      var tickSize = axis['fTickSize'] * width;
-      var z_axis = d3.svg.axis()
-                  .scale(z)
-                  .orient("right")
-                  .tickSubdivide(nbr2)
-                  .tickPadding(axisOffset)
-                  .tickSize(-tickSize, -tickSize/2, 0)
-                  .ticks(nbr1);
-
-       var zax = pal.append("svg:g")
-               .attr("class", "zaxis")
-               .attr("transform", "translate(" + s_width + ", 0)")
-               .call(z_axis);
-
-      var axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fLabelFont'] /10)]);
-      var axisLabelFontSize = axis['fLabelSize'] * height;
-      zax.selectAll("text")
-         .attr("font-size", axisLabelFontSize)
-         .attr("font-weight", axisFontDetails['weight'])
-         .attr("font-style", axisFontDetails['style'])
-         .attr("font-family", axisFontDetails['name'])
-         .attr("fill", root_colors[axis['fLabelColor']]);
-
-      /*
-       * Add palette axis title
-       */
-      var title = axis['fTitle'];
-      if (title != "") {
-         axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fTitleFont'] /10)]);
-         var axisTitleFontSize = axis['fTitleSize'] * height;
-         pal.append("text")
-               .attr("class", "Z axis label")
-               .attr("x", s_width + axisLabelFontSize + axisLabelOffset)
-               .attr("y", s_height)
-               .attr("text-anchor", "end")
-               .attr("font-family", axisFontDetails['name'])
-               .attr("font-weight", axisFontDetails['weight'])
-               .attr("font-style", axisFontDetails['style'])
-               .attr("font-size", axisTitleFontSize )
-               .text(title);
-      }
    };
 
    JSROOTPainter.drawPaveLabel = function(vis, pavelabel) {
