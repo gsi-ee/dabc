@@ -1331,10 +1331,22 @@ var gStyle = {
    {
       this.vis   = null;  // canvas where object is drawn
       this.first = null;  // pointer on first painter
+      this.draw_g = null;  // container for all draw objects
    }
    
    JSROOTPainter.ObjectPainter.prototype.IsObject = function(obj) {
       return false;
+   }
+   
+   JSROOTPainter.ObjectPainter.prototype.RemoveDraw = function()
+   {
+      // generic method to delete all graphical elements, associated with painter
+      // may not work for all cases
+      
+      if (this.draw_g!=null) {
+         this.draw_g.remove();
+         this.draw_g = null;
+      }
    }
    
    JSROOTPainter.ObjectPainter.prototype.SetFrame = function(vis, check_not_first) {
@@ -1401,6 +1413,22 @@ var gStyle = {
       }
       
       return null;
+   }
+   
+   JSROOTPainter.ObjectPainter.prototype.PlacePainterAfterMe = function(next) {
+      if (!this.vis) return;
+      
+      var arr = this.vis['painters'];
+      
+      var indx1 = arr.indexOf(this);
+      var indx2 = arr.indexOf(next);
+      
+      if ((indx1>=0) && (indx2>=0) && (indx2 != indx1+1)) {
+         arr.splice(indx2, 1); // remove 
+         if (indx2<indx1) indx1--;
+         arr.splice(indx1+1, 0, next);
+      }
+      
    }
    
    JSROOTPainter.ObjectPainter.prototype.CollectTooltips = function(tip) {
@@ -1593,13 +1621,10 @@ var gStyle = {
       });
    };
 
-   JSROOTPainter.createFrame = function(vis, frame, histo) {
+   JSROOTPainter.createFrame = function(vis, frame) {
       var w = vis.attr("width"), h = vis.attr("height");
       var width = w, height = h;
       var lm = w*0.12, rm = w*0.05, tm = h*0.12, bm = h*0.12;
-      
-      if (histo && histo['fOption'] && histo['fOption'].toLowerCase() == 'colz')
-         rm = w * 0.13;
       
       var pad = vis['ROOT:pad'];
       
@@ -1662,7 +1687,7 @@ var gStyle = {
             .attr("height", h)
             .attr("transform", "translate(" + lm + "," + tm + ")");
 
-      hframe.append("svg:rect")
+      var top_rect = hframe.append("svg:rect")
             .attr("x", 0)
             .attr("y", 0)
             .attr("width", w)
@@ -1671,9 +1696,7 @@ var gStyle = {
             .style("stroke", linecolor)
             .style("stroke-width", linewidth);
 
-      // TODO: find a way to localize svg_frame without id 
-      
-      var svg_frame = hframe.append("svg:g")
+      var svg_frame = hframe.append("svg")
             .attr("x", 0)
             .attr("y", 0)
             .attr("width", w)
@@ -1684,13 +1707,36 @@ var gStyle = {
       vis['ROOT:frame'] = hframe;
 
       // this is alredy graphical object, corrseponding to the TFrame 
-      vis['ROOT:svg_frame'] = svg_frame; 
+      vis['ROOT:svg_frame'] = svg_frame;  
+
+      vis['ROOT:top_rect'] = top_rect;  
 
       // it is ROOT TPad object
       vis['ROOT:pad'] = pad;
-      
 
       return hframe;
+   }
+   
+   JSROOTPainter.shrinkFrame = function(vis, fact)
+   {
+      if (vis == null) return 0;
+      
+      var width = vis['ROOT:frame'].attr('width');
+      
+      var height = vis['ROOT:frame'].attr('height');
+
+      var shrink = width*fact;
+      width -= shrink;
+      
+      vis['ROOT:frame'].attr('width', width);
+      
+      vis['ROOT:svg_frame']
+           .attr('width', width)
+           .attr("viewBox", "0 0 "+width+" "+height);
+
+      vis['ROOT:top_rect'].attr('width', width);
+      
+      return shrink;
    }
 
    // =========================================================================
@@ -1859,12 +1905,9 @@ var gStyle = {
    {
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
-      if (!('bins_id' in this))
-         this['bins_id'] = "random_bins_id" + random_id++;
+      this.RemoveDraw();
       
-      d3.selectAll("#" + this.bins_id).remove();
-         
-      this['bins_g'] = this.first.svg_frame.append("svg:g").attr("id",this.bins_id);
+      this.draw_g = this.first.svg_frame.append("svg:g");
 
       var pthis = this;
       var x = this.first.x;
@@ -1884,7 +1927,7 @@ var gStyle = {
          .y(function(d) { return y(d.y);})
          .interpolate(this.interpolate_method);
 
-      this.bins_g.append("svg:path")
+      this.draw_g.append("svg:path")
          .attr("class", "line")
          .attr("d", line(this.bins))
          .style("stroke", linecolor)
@@ -1894,7 +1937,7 @@ var gStyle = {
 
       // add tooltips
       if (gStyle.Tooltip > 1)
-         this.bins_g.selectAll("line") 
+         this.draw_g.selectAll("line") 
             .data(this.bins) 
             .enter() 
             .append("svg:circle") 
@@ -2367,12 +2410,8 @@ var gStyle = {
    {
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
-      if (!('bins_id' in this))
-         this['bins_id'] = "random_bins_id" + random_id++;
-      
-      d3.selectAll("#" + this.bins_id).remove();
-         
-      this['bins_g'] = this.first.svg_frame.append("svg:g").attr("id",this.bins_id);
+      this.RemoveDraw();
+      this.draw_g = this.first.svg_frame.append("svg:g");
 
       var pthis = this;
       
@@ -2403,7 +2442,7 @@ var gStyle = {
          var xfactor = xdom[1]-xdom[0];
          this.draw_errors = false;
          
-         var nodes = this.bins_g
+         var nodes = this.draw_g
             .selectAll("bar_graph")
             .data(pthis.bins)
             .enter()
@@ -2424,7 +2463,7 @@ var gStyle = {
          this.showMarker = false;
          if (this.graph['fFillStyle'] > 3000 && this.graph['fFillStyle'] <= 3025) {
             createFillPatterns(this.vis, this.graph['fFillStyle'], this.graph['fFillColor']);
-            this.bins_g.append("svg:path")
+            this.draw_g.append("svg:path")
                .attr("d", line(pthis.excl))
                .style("stroke", "none")
                .style("stroke-width", pthis.excl_ff)
@@ -2432,7 +2471,7 @@ var gStyle = {
                .style("antialias", "false");
          }
          else {
-            this.bins_g.append("svg:path")
+            this.draw_g.append("svg:path")
                .attr("d", line(pthis.excl))
                .style("stroke", "none")
                .style("stroke-width", pthis.excl_ff)
@@ -2440,7 +2479,7 @@ var gStyle = {
          }
       }
       if (this.seriesType == 'line') {
-         this.bins_g.append("svg:path")
+         this.draw_g.append("svg:path")
             .attr("d", line(pthis.bins))
             .attr("class", "draw_line")
             .style("stroke", (pthis.optionLine == 1) ? root_colors[pthis.graph['fLineColor']] : "none")
@@ -2449,7 +2488,7 @@ var gStyle = {
             .style("fill", (pthis.optionFill == 1) ? root_colors[pthis.graph['fFillColor']] : "none");
 
          if (gStyle.Tooltip > 1)
-            this.bins_g.selectAll("draw_line")
+            this.draw_g.selectAll("draw_line")
               .data(pthis.bins).enter()
               .append("svg:circle") 
               .attr("cx", function(d) { return x(d.x); }) 
@@ -2464,7 +2503,7 @@ var gStyle = {
 
          // here are up to five elements are collected, try to group them
          
-         var nodes = this.bins_g.selectAll("g.node").data(this.bins).enter().append("svg:g");
+         var nodes = this.draw_g.selectAll("g.node").data(this.bins).enter().append("svg:g");
 
          // Add x-error indicators
 
@@ -2572,7 +2611,7 @@ var gStyle = {
                break;
          }
          
-         var markers = this.bins_g.selectAll("markers")
+         var markers = this.draw_g.selectAll("markers")
             .data(this.bins)
             .enter()
             .append("svg:path")
@@ -2748,16 +2787,16 @@ var gStyle = {
       var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
 
-      this['pave'] = vis.append("svg:g")
-         .attr("class", "pavestatbox")
+      // $("#report").append("<br> draw pave");
+
+      this.draw_g = vis.append("svg:g")
          .attr("x", pos_x)
          .attr("y", pos_y)
          .attr("width", width)
          .attr("height", height)
          .attr("transform", "translate(" + pos_x + "," + pos_y + ")");
 
-      this.pave.append("svg:rect")
-         .attr("class", "pavedraw")
+      this.draw_g.append("svg:rect")
          .attr("x", 0)
          .attr("y", 0)
          .attr("height", height)
@@ -2789,8 +2828,7 @@ var gStyle = {
       if (nlines == 1) {
          line = JSROOTPainter.translateLaTeX(pavetext['fLines'][0]['fTitle']);
 
-         this.pave.append("text")
-            .attr("class", "pavetext")
+         this.draw_g.append("text")
             .attr("text-anchor", align)
             .attr("x", lmargin)
             .attr("y", (height/2) + (font_size/3))
@@ -2814,8 +2852,7 @@ var gStyle = {
                   posy -= font_size*0.3; // dut to middle allignment
                   var parts = line.split("|");
                   for (var n=0;n<parts.length;n++)
-                     this.pave.append("text")
-                     .attr("class", "pavetext")
+                     this.draw_g.append("text")
                      .attr("text-anchor", "middle")
                      .attr("x",  width*(n+0.5)/num_cols)
                      .attr("y", posy + font_size*0.6)
@@ -2827,8 +2864,7 @@ var gStyle = {
                      .text(parts[n]);
                } else
                if ((j==0) || (line.indexOf('=')<0)) {
-                  this.pave.append("text")
-                     .attr("class", "pavetext")
+                  this.draw_g.append("text")
                      .attr("text-anchor", (j == 0) ? "middle" : "start")
                      .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
                      .attr("y", posy)
@@ -2841,8 +2877,7 @@ var gStyle = {
                } else {
                   var parts = line.split("=");
                   for (var n=0;n<2;n++)
-                     this.pave.append("text")
-                     .attr("class", "pavetext")
+                     this.draw_g.append("text")
                      .attr("text-anchor", (n==0) ? "start" : "end")
                      .attr("x", (n==0) ? pavetext['fMargin'] * width : (1-pavetext['fMargin']) * width)
                      .attr("y", posy)
@@ -2854,8 +2889,7 @@ var gStyle = {
                      .text(parts[n]);
                }
             } else {
-               this.pave.append("text")
-                  .attr("class", "pavetext")
+               this.draw_g.append("text")
                   .attr("text-anchor", "start")
                   .attr("x", lmargin)
                   .attr("y", (j+1) * (font_size * 1.4))
@@ -2870,7 +2904,7 @@ var gStyle = {
       }
 
       if (pavetext['fBorderSize'] && pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
-         this.pave.append("svg:line")
+         this.draw_g.append("svg:line")
             .attr("class", "pavedraw")
             .attr("x1", 0)
             .attr("y1", font_size * 1.6)
@@ -2883,8 +2917,7 @@ var gStyle = {
       if ((first_stat>0) && (num_cols>1)) {
          var yy = (1.4 * first_stat + 0.6) * font_size; 
          
-         this.pave.append("svg:line")
-         .attr("class", "pavedraw")
+         this.draw_g.append("svg:line")
          .attr("x1", 0)
          .attr("y1", yy)
          .attr("x2", width)
@@ -2893,8 +2926,7 @@ var gStyle = {
          .style("stroke-width", lwidth ? 1 : 'none');
          
          for (var ncol = 0; ncol<num_cols-1; ncol++) 
-            this.pave.append("svg:line")
-            .attr("class", "pavedraw")
+            this.draw_g.append("svg:line")
             .attr("x1", width/num_cols*(ncol+1))
             .attr("y1", yy)
             .attr("x2", width/num_cols*(ncol+1) )
@@ -2905,16 +2937,14 @@ var gStyle = {
       }
 
       if (lwidth && lwidth > 1) {
-         this.pave.append("svg:line")
-            .attr("class", "pavedraw")
+         this.draw_g.append("svg:line")
             .attr("x1", width+(lwidth/2))
             .attr("y1", lwidth+1)
             .attr("x2", width+(lwidth/2))
             .attr("y2", height+lwidth-1)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth);
-         this.pave.append("svg:line")
-            .attr("class", "pavedraw")
+         this.draw_g.append("svg:line")
             .attr("x1", lwidth+1)
             .attr("y1", height+(lwidth/2))
             .attr("x2", width+lwidth-1)
@@ -2955,10 +2985,7 @@ var gStyle = {
 
    JSROOTPainter.PavePainter.prototype.Redraw = function() {
 
-      if (('pave' in this) && (this.pave!=null)) {
-         this.pave.remove();
-         this.pave = null;
-      }
+      this.RemoveDraw();
 
       // if pavetext artificially disabled, do not redraw it
       if (!this.Enabled) return;
@@ -3022,10 +3049,10 @@ var gStyle = {
       var s_height = Math.abs(palette['fY2NDC'] - palette['fY1NDC']) * height;
       pos_y -= s_height;
 
-      /*
-       * Draw palette pad
-       */
-      this['pal'] = vis.append("svg:g")
+      // $("#report").append("<br> draw palette");
+      
+      // Draw palette pad
+      this.draw_g = vis.append("svg:g")
             .attr("height", s_height)
             .attr("width", s_width)
             .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
@@ -3036,7 +3063,7 @@ var gStyle = {
        * Draw the default palette
        */
       var rectHeight = s_height / default_palette.length;
-      this.pal.selectAll("colorRect")
+      this.draw_g.selectAll("colorRect")
          .data(default_palette)
          .enter()
          .append("svg:rect")
@@ -3069,7 +3096,7 @@ var gStyle = {
                   .tickSize(-tickSize, -tickSize/2, 0)
                   .ticks(nbr1);
 
-      var zax = this.pal.append("svg:g")
+      var zax = this.draw_g.append("svg:g")
                .attr("class", "zaxis")
                .attr("transform", "translate(" + s_width + ", 0)")
                .call(z_axis);
@@ -3090,7 +3117,7 @@ var gStyle = {
       if (title != "") {
          axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fTitleFont'] /10)]);
          var axisTitleFontSize = axis['fTitleSize'] * height;
-         this.pal.append("text")
+         this.draw_g.append("text")
                .attr("class", "Z axis label")
                .attr("x", s_width + axisLabelFontSize + axisLabelOffset)
                .attr("y", s_height)
@@ -3105,10 +3132,7 @@ var gStyle = {
 
    JSROOTPainter.ColzPalettePainter.prototype.Redraw = function() {
 
-      if (('pal' in this) && (this.pal!=null)) {
-         this.pal.remove();
-         this.pal = null;
-      }
+      this.RemoveDraw();
 
       // if palette artificially disabled, do not redraw it
       if (!this.Enabled) return;
@@ -3340,20 +3364,22 @@ var gStyle = {
       var xAxisLabelFontSize = this.histo['fXaxis']['fLabelSize'] * h;
       var xAxisFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fXaxis']['fTitleFont']/10)]);
 
-      if (!('x_axis_label' in this)) 
-         this['x_axis_label'] = 
-            axis_frame.append("text").attr("class", "x_axis_label"); 
-      
-      this.x_axis_label
-       .attr("x", w)
-       .attr("y", h)
-       .attr("text-anchor", "end")
-       .attr("font-family", xAxisFontDetails['name'])
-       .attr("font-weight", xAxisFontDetails['weight'])
-       .attr("font-style", xAxisFontDetails['style'])
-       .attr("font-size", xAxisTitleFontSize)
-       .text(label)
-       .attr("transform", "translate(0," + (xAxisLabelFontSize + xAxisLabelOffset * this.histo['fXaxis']['fTitleOffset'] + xAxisTitleFontSize) + ")");
+      if (label.length > 0) {
+         if (!('x_axis_label' in this)) 
+            this['x_axis_label'] = 
+               axis_frame.append("text").attr("class", "x_axis_label"); 
+
+         this.x_axis_label
+         .attr("x", w)
+         .attr("y", h)
+         .attr("text-anchor", "end")
+         .attr("font-family", xAxisFontDetails['name'])
+         .attr("font-weight", xAxisFontDetails['weight'])
+         .attr("font-style", xAxisFontDetails['style'])
+         .attr("font-size", xAxisTitleFontSize)
+         .text(label)
+         .attr("transform", "translate(0," + (xAxisLabelFontSize + xAxisLabelOffset * this.histo['fXaxis']['fTitleOffset'] + xAxisTitleFontSize) + ")");
+      }
 
       /* Y-axis label */
       label = JSROOTPainter.translateLaTeX(this.histo['fYaxis']['fTitle']);
@@ -3362,21 +3388,23 @@ var gStyle = {
       var yAxisLabelFontSize = this.histo['fYaxis']['fLabelSize'] * h;
       var yAxisFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fYaxis']['fTitleFont'] /10)]);
 
-      if (!('y_axis_label' in this)) 
-         this['y_axis_label'] = 
-            axis_frame.append("text").attr("class", "y_axis_label"); 
+      if (label.length > 0) {
+         if (!('y_axis_label' in this)) 
+            this['y_axis_label'] = 
+               axis_frame.append("text").attr("class", "y_axis_label"); 
 
-      this.y_axis_label
-        .attr("x", 0)
-        .attr("y", -yAxisLabelFontSize - yAxisTitleFontSize - yAxisLabelOffset * this.histo['fYaxis']['fTitleOffset'])
-        .attr("font-family", yAxisFontDetails['name'])
-        .attr("font-size", yAxisTitleFontSize)
-        .attr("font-weight", yAxisFontDetails['weight'])
-        .attr("font-style", yAxisFontDetails['style'])
-        .attr("fill", "black")
-        .attr("text-anchor", "end")
-        .text(label)
-        .attr("transform", "rotate(270, 0, 0)");
+         this.y_axis_label
+         .attr("x", 0)
+         .attr("y", -yAxisLabelFontSize - yAxisTitleFontSize - yAxisLabelOffset * this.histo['fYaxis']['fTitleOffset'])
+         .attr("font-family", yAxisFontDetails['name'])
+         .attr("font-size", yAxisTitleFontSize)
+         .attr("font-weight", yAxisFontDetails['weight'])
+         .attr("font-style", yAxisFontDetails['style'])
+         .attr("fill", "black")
+         .attr("text-anchor", "end")
+         .text(label)
+         .attr("transform", "rotate(270, 0, 0)");
+      }
 
       var xAxisColor = this.histo['fXaxis']['fAxisColor'];
       var xDivLength = this.histo['fXaxis']['fTickLength'] * h;
@@ -3581,7 +3609,7 @@ var gStyle = {
          // when statbox created first time, one need to draw it 
          stat = this.CreateStat();
          
-         JSROOTPainter.DrawPaveTextNew(this.vis, stat);
+         this.Redraw();
          
          return;
       }
@@ -3594,6 +3622,8 @@ var gStyle = {
       
       painter.Enabled = !painter.Enabled;
       
+      // when stat box is drawed, it always can be draw individualy while it should be last
+      // for colz RedrawFrame is used
       painter.Redraw();
    }
 
@@ -3737,6 +3767,8 @@ var gStyle = {
       
       if (!('fFunctions' in this.histo)) return;
       
+      var lastpainter = this;
+      
       for (i=0; i<this.histo['fFunctions'].length; ++i) {
 
          var func = this.histo['fFunctions'][i];
@@ -3745,20 +3777,32 @@ var gStyle = {
          
          // no need to do something if painter for object was already done
          // object will be redraw automatically
-         if (funcpainter!=null) continue;
+         if (funcpainter==null) {
 
-         if (func['_typename'] == 'JSROOTIO.TPaveText' ||
-               func['_typename'] == 'JSROOTIO.TPaveStats') 
-            JSROOTPainter.DrawPaveTextNew(this.vis, func);
+            if (func['_typename'] == 'JSROOTIO.TPaveText' ||
+                  func['_typename'] == 'JSROOTIO.TPaveStats') 
+               funcpainter = JSROOTPainter.DrawPaveTextNew(this.vis, func);
 
-         if (func['_typename'] == 'JSROOTIO.TF1') {
-            if ((!this.pad && !func.TestBit(kNotDraw)) ||
-                  (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
-               JSROOTPainter.drawFunctionNew(this.vis, func);
+            if (func['_typename'] == 'JSROOTIO.TF1') {
+               if ((!this.pad && !func.TestBit(kNotDraw)) ||
+                     (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
+                  funcpainter = JSROOTPainter.drawFunctionNew(this.vis, func);
+            }
+
+            if (func['_typename'] == 'JSROOTIO.TPaletteAxis') {
+               funcpainter = JSROOTPainter.drawPaletteAxis(this.vis, func);
+            }
          }
-
-         if (func['_typename'] == 'JSROOTIO.TPaletteAxis') {
-            JSROOTPainter.drawPaletteAxis(this.vis, func);
+         
+         if (func['_typename'] == 'JSROOTIO.TPaletteAxis' && funcpainter) {
+            funcpainter.Enabled = (this.options.Zscale > 0) && (this.options.Color>0); 
+         }
+         
+         // we do it to preserve oder in which objects are drawn
+         // therefore we need to guarantee that painters are in the same order
+         if (funcpainter!=null) {
+            lastpainter.PlacePainterAfterMe(funcpainter);
+            lastpainter = funcpainter; 
          }
       }
    }
@@ -4292,7 +4336,7 @@ var gStyle = {
       }
 
       /* Draw x-error indicators */
-      var xerr = this.bins_g.selectAll("error_x")
+      var xerr = this.draw_g.selectAll("error_x")
             .data(this.bins)
             .enter()
             .append("svg:line")
@@ -4304,7 +4348,7 @@ var gStyle = {
             .style("stroke-width", this.histo['fLineWidth']);
 
       if (this.options.Error == 11) {
-           this.bins_g.selectAll("e1_x")
+           this.draw_g.selectAll("e1_x")
                .data(this.bins)
                .enter()
                .append("svg:line")
@@ -4314,7 +4358,7 @@ var gStyle = {
                .attr("x2", function(d) { return pthis.x(d.x-d.xerr)})
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
-           this.bins_g.selectAll("e1_x")
+           this.draw_g.selectAll("e1_x")
                .data(this.bins)
                .enter()
                .append("svg:line")
@@ -4326,7 +4370,7 @@ var gStyle = {
                .style("stroke-width", this.histo['fLineWidth']);
       }
          /* Draw y-error indicators */
-      var yerr = this.bins_g.selectAll("error_y")
+      var yerr = this.draw_g.selectAll("error_y")
             .data(this.bins)
             .enter()
             .append("svg:line")
@@ -4338,7 +4382,7 @@ var gStyle = {
             .style("stroke-width", this.histo['fLineWidth']);
 
       if (this.options.Error == 11) {
-         this.bins_g.selectAll("e1_y")
+         this.draw_g.selectAll("e1_y")
                .data(this.bins)
                .enter()
                .append("svg:line")
@@ -4348,7 +4392,7 @@ var gStyle = {
                .attr("y2", function(d) { return pthis.y(d.y-d.yerr) })
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
-         this.bins_g.selectAll("e1_y")
+         this.draw_g.selectAll("e1_y")
                .data(this.bins)
                .enter()
                .append("svg:line")
@@ -4359,7 +4403,7 @@ var gStyle = {
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
       }
-      var marks = this.bins_g.selectAll("markers")
+      var marks = this.draw_g.selectAll("markers")
             .data(this.bins)
             .enter()
             .append("svg:path")
@@ -4385,15 +4429,11 @@ var gStyle = {
       // TODO: limit number of drawn by number of visible pixels
       // one could select every second bin, for instance
 
-      
-      if (!this.draw_content) return;
+      this.RemoveDraw();
 
-      if (!('bins_id' in this))
-         this['bins_id'] = "random_bins_id" + random_id++;
+      if (!this.draw_content) return;
       
-      d3.selectAll("#" + this.bins_id).remove();
-         
-      this['bins_g'] = this.svg_frame.append("svg:g").attr("id", this.bins_id);
+      this.draw_g = this.svg_frame.append("svg:g");
       
       if (this.options.Error > 0) { this.DrawErrors(); return; }
       
@@ -4411,7 +4451,7 @@ var gStyle = {
          if (this.histo['fFillStyle'] > 3000 && this.histo['fFillStyle'] <= 3025) {
             createFillPatterns(this.vis, this.histo['fFillStyle'], this.histo['fFillColor']);
 
-            this.bins_g.append("svg:path")
+            this.draw_g.append("svg:path")
                .attr("d", area(this.bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
@@ -4419,7 +4459,7 @@ var gStyle = {
                .style("antialias", "false");
          }
          else {
-            this.bins_g.append("svg:path")
+            this.draw_g.append("svg:path")
                .attr("d", area(this.bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
@@ -4440,7 +4480,7 @@ var gStyle = {
             .y(function(d,i) { return pthis.getY(left+i);} )
             .interpolate("step-before");
 
-         this.bins_g.append("svg:path")
+         this.draw_g.append("svg:path")
             .attr("d", line(d3.range(right-left+1))) // to draw one bar, one need two points
             .style("stroke", this.linecolor)
             .style("stroke-width", this.histo['fLineWidth'])
@@ -4453,7 +4493,7 @@ var gStyle = {
          // TODO: limit number of tooltips by number of visible pixels
          var selwidth = this.x(2*this.binwidthx)-this.x(this.binwidthx);
          if (selwidth<2) selwidth = 1; 
-         this.bins_g.selectAll("selections")
+         this.draw_g.selectAll("selections")
             .data(this.bins)
             .enter()
             .append("svg:line")
@@ -4596,28 +4636,26 @@ var gStyle = {
       }
       
       if (cmd == "colz") {
-         var pal = this.FindPalette();
-         
-         if (pal==null) {
-            pal = this.CreatePalette();
-            
-            JSROOTPainter.drawPaletteAxis(this.vis, pal);
-            return;
+         if (this.FindPalette()==null) {
+            JSROOTPainter.shrinkFrame(this.vis, 0.08);
+            this.CreatePalette(0.08);
+            this.options.Zscale = 1;
+         } else {
+            if (this.options.Zscale>0) this.options.Zscale = 0;
+            else this.options.Zscale = 1;
          }
          
-         var pnt = this.FindPainterFor(pal);
-         if (pnt != null) {
-            pnt.Enabled = !pnt.Enabled;
-            pnt.Redraw();
-         }
+         this.RedrawFrame();
       }
 
       JSROOTPainter.HistPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
    
-   JSROOTPainter.Hist2DPainter.prototype.CreatePalette = function()
+   JSROOTPainter.Hist2DPainter.prototype.CreatePalette = function(rel_width)
    {
       if (this.FindPalette() != null) return null;
+      
+      if (!rel_width) rel_width = 0.08;
       
       var pal = {};
       pal['_typename'] = 'JSROOTIO.TPaletteAxis';
@@ -4625,9 +4663,9 @@ var gStyle = {
       
       pal['_AutoCreated'] = true;
       
-      pal['fX1NDC'] = 0.905;
+      pal['fX1NDC'] = 0.98 - rel_width;
       pal['fY1NDC'] = 0.1;
-      pal['fX2NDC'] = 0.95;
+      pal['fX2NDC'] = 0.98 - rel_width/2; // use half of the width for labels
       pal['fY2NDC'] = 0.9;
       pal['fInit'] = 1;
       pal['fShadowColor'] = 1;
@@ -4672,7 +4710,8 @@ var gStyle = {
       
       if (!'fFunctions' in this.histo) this.histo['fFunctions'] = {};
 
-      this.histo['fFunctions'].push(pal);
+      // place colz in the beginning, that stat box is always drawn on the top
+      this.histo['fFunctions'].unshift(pal);
       
       return pal;
    }
@@ -4868,12 +4907,9 @@ var gStyle = {
    
    JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() 
    {
-      if (!('bins_id' in this))
-         this['bins_id'] = "random_bins_id" + random_id++;
+      this.RemoveDraw();
       
-      d3.selectAll("#" + this.bins_id).remove();
-
-      this['bins_g'] = this.svg_frame.append("svg:g").attr("id", this.bins_id);
+      this.draw_g = this.svg_frame.append("svg:g");
 
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
@@ -4927,7 +4963,7 @@ var gStyle = {
                        .size(markerSize * markerScale);
                break;
          }
-         var markers = this.bins_g.selectAll(".marker")
+         var markers = this.draw_g.selectAll(".marker")
             .data(this.bins)
             .enter()
             .append("svg:path")
@@ -4945,7 +4981,7 @@ var gStyle = {
                                 d.y.toPrecision(4) + " \nentries = " + d.z; });
       }
       else {
-         var drawn_bins = this.bins_g.selectAll(".bins")
+         var drawn_bins = this.draw_g.selectAll(".bins")
             .data(this.bins)
             .enter()
             .append("svg:rect")
@@ -5044,6 +5080,16 @@ var gStyle = {
 //      if (console) console.time("CreateBins");
 
       painter.CreateBins();
+      
+      // check if we need to create palette
+      if ((painter.FindPalette() == null) && !hadframe && (painter.options.Zscale>0)) {
+         JSROOTPainter.shrinkFrame(vis, 0.08);
+         painter.CreatePalette(0.08);
+      }
+
+      // check if we need to create statbox
+      if (gStyle.AutoStat && !hadframe) painter.CreateStat();
+
 
 //      if (console) console.timeEnd("CreateBins");
       
@@ -5057,16 +5103,10 @@ var gStyle = {
 
       painter.DrawAxes();
       
-      //$("#report").append("<br> title");
       painter.DrawTitle();
 
-      //$("#report").append("<br> stat");
-      if (gStyle.AutoStat && !hadframe) painter.CreateStat();
-
-      //$("#report").append("<br> func");
       painter.DrawFunctions();
 
-      //$("#report").append("<br> interact");
       painter.AddInteractive();
       
       return painter;
@@ -5084,10 +5124,7 @@ var gStyle = {
    
    JSROOTPainter.Hist2DPainter.prototype.Draw3D = function() 
    {
-      if ('bins_id' in this) {
-         d3.selectAll("#" + this.bins_id).remove();
-         this['bins_g'] = null;
-      }
+      this.RemoveDraw();
       
       var w = this.frame.attr("width"), h = this.frame.attr("height"), size = 100;
       

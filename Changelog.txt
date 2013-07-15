@@ -4,6 +4,7 @@ of the framework.
 
 15.07.2013
 1. Fix problem with stat-box drawing, fix cleanup problem by stat box redraw
+2. Implement toggling of col, colz, stat-box properly
  
 
 12.07.2013
