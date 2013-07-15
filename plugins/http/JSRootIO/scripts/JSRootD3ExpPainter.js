@@ -1387,6 +1387,22 @@ var gStyle = {
       }
    }
    
+   JSROOTPainter.ObjectPainter.prototype.FindPainterFor = function(selobj) 
+   {
+      // try to find painter for sepcified object
+      // can be used to find painter for some special objects, registered as histogram functions 
+      
+      if (!this.vis) return null;
+      
+      for (var n=0;n<this.vis['painters'].length;n++) {
+         painter = this.vis['painters'][n];
+         
+         if (painter.IsObject(selobj)) return painter;
+      }
+      
+      return null;
+   }
+   
    JSROOTPainter.ObjectPainter.prototype.CollectTooltips = function(tip) {
       if (!this.vis) return false;
       
@@ -1657,8 +1673,7 @@ var gStyle = {
 
       // TODO: find a way to localize svg_frame without id 
       
-      var svg_frame = hframe.append("svg")
-            .attr("id", "svg_frame_" + (++frame_id))
+      var svg_frame = hframe.append("svg:g")
             .attr("x", 0)
             .attr("y", 0)
             .attr("width", w)
@@ -1669,13 +1684,11 @@ var gStyle = {
       vis['ROOT:frame'] = hframe;
 
       // this is alredy graphical object, corrseponding to the TFrame 
-      vis['ROOT:svg_frame'] = d3.select("#svg_frame_" + frame_id);
+      vis['ROOT:svg_frame'] = svg_frame; 
 
       // it is ROOT TPad object
       vis['ROOT:pad'] = pad;
       
-      // keep svg frame inside 
-      hframe['ROOT:svg_frame'] = d3.select("#svg_frame_" + frame_id);
 
       return hframe;
    }
@@ -2672,6 +2685,7 @@ var gStyle = {
    JSROOTPainter.PavePainter = function(pave) {
       JSROOTPainter.ObjectPainter.call(this);
       this.pavetext = pave;
+      this.Enabled = true;
    }
 
    JSROOTPainter.PavePainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
@@ -2947,9 +2961,7 @@ var gStyle = {
       }
 
       // if pavetext artificially disabled, do not redraw it
-      if ('_Enabled' in this.pavetext) {
-         if (!this.pavetext._Enabled) return;
-      }
+      if (!this.Enabled) return;
       
       // fill statistic
       this.FillStatistic();
@@ -2981,15 +2993,28 @@ var gStyle = {
    
    
    // ===========================================================================
+
+   JSROOTPainter.ColzPalettePainter = function(palette) {
+      JSROOTPainter.ObjectPainter.call(this);
+      this.palette = palette;
+      this.Enabled = true;
+   }
+
+   JSROOTPainter.ColzPalettePainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
+
    
-   JSROOTPainter.drawPaletteAxis = function(vis, palette) {
-      
-      var painter = vis['painters'][0];
-      var minbin = painter.minbin;
-      var maxbin = painter.maxbin;
-      
-      var width = vis.attr("width");
-      var height = vis.attr("height");
+   JSROOTPainter.ColzPalettePainter.prototype.IsObject = function(obj) {
+      return this.palette == obj;
+   }
+
+   JSROOTPainter.ColzPalettePainter.prototype.DrawPalette = function() {
+      var palette  = this.palette;
+      var vis = this.vis;
+
+      var minbin = this.first.minbin;
+      var maxbin = this.first.maxbin;
+
+      var width = vis.attr("width"), height = vis.attr("height");
 
       var pos_x = palette['fX1NDC'] * width;
       var pos_y = height - palette['fY1NDC'] * height;
@@ -3000,10 +3025,10 @@ var gStyle = {
       /*
        * Draw palette pad
        */
-      var pal = vis.append("svg:g")
-          .attr("height", s_height)
-          .attr("width", s_width)
-          .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
+      this['pal'] = vis.append("svg:g")
+            .attr("height", s_height)
+            .attr("width", s_width)
+            .attr("transform", "translate(" + pos_x + ", " + pos_y + ")");
 
       var axis = palette['fAxis'];
 
@@ -3011,7 +3036,7 @@ var gStyle = {
        * Draw the default palette
        */
       var rectHeight = s_height / default_palette.length;
-      pal.selectAll("colorRect")
+      this.pal.selectAll("colorRect")
          .data(default_palette)
          .enter()
          .append("svg:rect")
@@ -3044,7 +3069,7 @@ var gStyle = {
                   .tickSize(-tickSize, -tickSize/2, 0)
                   .ticks(nbr1);
 
-       var zax = pal.append("svg:g")
+      var zax = this.pal.append("svg:g")
                .attr("class", "zaxis")
                .attr("transform", "translate(" + s_width + ", 0)")
                .call(z_axis);
@@ -3065,7 +3090,7 @@ var gStyle = {
       if (title != "") {
          axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fTitleFont'] /10)]);
          var axisTitleFontSize = axis['fTitleSize'] * height;
-         pal.append("text")
+         this.pal.append("text")
                .attr("class", "Z axis label")
                .attr("x", s_width + axisLabelFontSize + axisLabelOffset)
                .attr("y", s_height)
@@ -3076,8 +3101,30 @@ var gStyle = {
                .attr("font-size", axisTitleFontSize )
                .text(title);
       }
-   };
+   }
 
+   JSROOTPainter.ColzPalettePainter.prototype.Redraw = function() {
+
+      if (('pal' in this) && (this.pal!=null)) {
+         this.pal.remove();
+         this.pal = null;
+      }
+
+      // if palette artificially disabled, do not redraw it
+      if (!this.Enabled) return;
+
+      this.DrawPalette();
+   }
+
+   JSROOTPainter.drawPaletteAxis = function(vis, palette) {
+      var painter = new JSROOTPainter.ColzPalettePainter(palette);
+      
+      painter.SetFrame(vis, true);
+      
+      painter.DrawPalette();
+      
+      return painter;
+   }
 
    // =============================================================
    
@@ -3529,7 +3576,6 @@ var gStyle = {
 
       var stat = this.FindStat();
       
-      
       if (stat == null) {
          
          // when statbox created first time, one need to draw it 
@@ -3540,14 +3586,15 @@ var gStyle = {
          return;
       }
       
-      if (!('_Enabled' in stat)) {
-         stat['_Enabled'] = true;
+      var painter = this.FindPainterFor(stat);
+      if (painter == null) {
+         alert("Did not found painter for existing stat??");
+         return;
       }
       
-      if (stat._Enabled) stat._Enabled = false;
-                    else stat._Enabled = true;
+      painter.Enabled = !painter.Enabled;
       
-      this.RedrawFrame(stat);
+      painter.Redraw();
    }
 
    JSROOTPainter.HistPainter.prototype.GetSelectIndex = function(axis,size,add) {
@@ -3593,27 +3640,16 @@ var gStyle = {
 
    JSROOTPainter.HistPainter.prototype.FindStat = function() {
       
-      // first of all, look in functions list
       if ('fFunctions' in this.histo)
-      for (i=0; i<this.histo['fFunctions'].length; ++i) {
+         for (i=0; i<this.histo['fFunctions'].length; ++i) {
          
-         var func = this.histo['fFunctions'][i];
+            var func = this.histo['fFunctions'][i];
          
-         if (func['_typename'] == 'JSROOTIO.TPaveText' ||
-             func['_typename'] == 'JSROOTIO.TPaveStats') {
-            return func;
+            if (func['_typename'] == 'JSROOTIO.TPaveText' ||
+                func['_typename'] == 'JSROOTIO.TPaveStats') {
+               return func;
+            }
          }
-      }
-      
-/*      
-      // second, check painters - not needed, they always should be in histogram
-      for (var i=0;i<this.vis['painters'].length;i++) {
-         pp = this.vis['painters'][i];
-         if ('pavetext' in pp)
-            if (pp.pavetext["_typename"] == "JSROOTIO.TPaveStats")
-               if (pp.pavetext["fName"] == "stats") return pp.pavetext;
-      }
-*/      
 
       return null;
    }
@@ -3681,6 +3717,18 @@ var gStyle = {
       return stats;
    }
    
+   JSROOTPainter.HistPainter.prototype.FindPalette = function() {
+      
+      if ('fFunctions' in this.histo)
+         for (i=0; i<this.histo['fFunctions'].length; ++i) {
+            var func = this.histo['fFunctions'][i];
+            if (func['_typename'] == 'JSROOTIO.TPaletteAxis') return func;
+         }
+
+      return null;
+   }
+
+   
    JSROOTPainter.HistPainter.prototype.DrawFunctions = function() {
       
       /// draw statistics box & other TPaveTexts, which are belongs to histogram
@@ -3690,22 +3738,28 @@ var gStyle = {
       if (!('fFunctions' in this.histo)) return;
       
       for (i=0; i<this.histo['fFunctions'].length; ++i) {
-          
+
          var func = this.histo['fFunctions'][i];
          
-          if (func['_typename'] == 'JSROOTIO.TPaveText' ||
-              func['_typename'] == 'JSROOTIO.TPaveStats') 
-                  JSROOTPainter.DrawPaveTextNew(this.vis, func);
-          
-          if (func['_typename'] == 'JSROOTIO.TF1') {
+         var funcpainter = this.FindPainterFor(func);
+         
+         // no need to do something if painter for object was already done
+         // object will be redraw automatically
+         if (funcpainter!=null) continue;
+
+         if (func['_typename'] == 'JSROOTIO.TPaveText' ||
+               func['_typename'] == 'JSROOTIO.TPaveStats') 
+            JSROOTPainter.DrawPaveTextNew(this.vis, func);
+
+         if (func['_typename'] == 'JSROOTIO.TF1') {
             if ((!this.pad && !func.TestBit(kNotDraw)) ||
-               (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
-                  JSROOTPainter.drawFunctionNew(this.vis, func);
+                  (this.pad && func.TestBit(EStatusBits.kObjInCanvas)))
+               JSROOTPainter.drawFunctionNew(this.vis, func);
          }
-          
-          if (func['_typename'] == 'JSROOTIO.TPaletteAxis') {
-             JSROOTPainter.drawPaletteAxis(this.vis, func);
-          }
+
+         if (func['_typename'] == 'JSROOTIO.TPaletteAxis') {
+            JSROOTPainter.drawPaletteAxis(this.vis, func);
+         }
       }
    }
    
@@ -3733,6 +3787,8 @@ var gStyle = {
 //      if (console) console.time("Title");
       this.DrawTitle();
 //      if (console) console.timeEnd("Title");
+      
+      this.DrawFunctions();
    }
    
    JSROOTPainter.HistPainter.prototype.AddInteractive = function() {
@@ -4213,7 +4269,8 @@ var gStyle = {
    }
          
    
-   JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() {
+   JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() 
+   {
       var w = this.svg_frame.attr("width"), h = this.svg_frame.attr("height");
       /* Add a panel for each data point */
       var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
@@ -4512,6 +4569,8 @@ var gStyle = {
          this.AddMenuItem(menu,"Draw in 3D","draw3d");
       this.AddMenuItem(menu,"Toggle col","col");
 
+      if (this.options.Color > 0)
+         this.AddMenuItem(menu,"Toggle colz","colz");
    }
       
    JSROOTPainter.Hist2DPainter.prototype.ExeContextMenu = function(cmd) {
@@ -4535,9 +4594,88 @@ var gStyle = {
          this.RedrawFrame();
          return;
       }
+      
+      if (cmd == "colz") {
+         var pal = this.FindPalette();
+         
+         if (pal==null) {
+            pal = this.CreatePalette();
+            
+            JSROOTPainter.drawPaletteAxis(this.vis, pal);
+            return;
+         }
+         
+         var pnt = this.FindPainterFor(pal);
+         if (pnt != null) {
+            pnt.Enabled = !pnt.Enabled;
+            pnt.Redraw();
+         }
+      }
 
       JSROOTPainter.HistPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
+   
+   JSROOTPainter.Hist2DPainter.prototype.CreatePalette = function()
+   {
+      if (this.FindPalette() != null) return null;
+      
+      var pal = {};
+      pal['_typename'] = 'JSROOTIO.TPaletteAxis';
+      pal['fName'] = 'palette';
+      
+      pal['_AutoCreated'] = true;
+      
+      pal['fX1NDC'] = 0.905;
+      pal['fY1NDC'] = 0.1;
+      pal['fX2NDC'] = 0.95;
+      pal['fY2NDC'] = 0.9;
+      pal['fInit'] = 1;
+      pal['fShadowColor'] = 1;
+      pal['fCorenerRadius'] = 0;
+      pal['fResizing'] = false;
+      pal['fBorderSize'] = 4;
+      pal['fName'] = "TPave";
+      pal['fOption'] = "br";
+      pal['fLineColor'] = 1;
+      pal['fLineSyle'] = 1;
+      pal['fLineWidth'] = 1;
+      pal['fFillColor'] = 1;
+      pal['fFillSyle'] = 1;
+
+      var axis = {};
+
+      axis['fTickSize'] =    0.03;
+      axis['fLabelOffset'] = 0.005;
+      axis['fLabelSize'] =   0.035;
+      axis['fTitleOffset'] = 1;    
+      axis['fTitleSize'] =   0.035;
+      axis['fNdiv'] =        0;    
+      axis['fLabelColor'] =  1;    
+      axis['fLabelFont'] =   42;   
+      axis['fChopt'] =       "";   
+      axis['fName'] =        "";   
+      axis['fTitle'] =       "";   
+      axis['fTimeFormat'] =  "";   
+      axis['fFunctionName'] = "";  
+      axis['fWmin'] = 0;
+      axis['fWmax'] = 100;
+      axis['fLineColor'] = 1;
+      axis['fLineSyle'] = 1;
+      axis['fLineWidth'] = 1;
+      axis['fTextAngle'] = 0;
+      axis['fTextSize'] = 0.04;
+      axis['fTextAlign'] = 11;
+      axis['fTextColor'] = 1;
+      axis['fTextFont'] = 42;
+      
+      pal['fAxis'] = axis;
+      
+      if (!'fFunctions' in this.histo) this.histo['fFunctions'] = {};
+
+      this.histo['fFunctions'].push(pal);
+      
+      return pal;
+   }
 
 
    JSROOTPainter.Hist2DPainter.prototype.CreateBins = function() 
