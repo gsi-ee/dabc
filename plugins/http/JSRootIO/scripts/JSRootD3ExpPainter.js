@@ -1182,35 +1182,6 @@ var gStyle = {
       return 'rgb('+Math.round(r * 255)+', '+Math.round(g * 255)+', '+Math.round(b * 255)+')';
    };
 
-   JSROOTPainter.getMinMax = function(hist, what) {
-      if (what == 'max' && hist['fMaximum'] != -1111) return hist['fMaximum'];
-      if (what == 'min' && hist['fMinimum'] != -1111) return hist['fMinimum'];
-      var bin, binx, biny, binz;
-      var xfirst  = 1;;
-      var xlast   = hist['fXaxis']['fNbins'];
-      var yfirst  = 1;
-      var ylast   = hist['fYaxis']['fNbins'];
-      var zfirst  = 1;
-      var zlast   = hist['fZaxis']['fNbins'];
-      var maximum = Number.NEGATIVE_INFINITY;
-      var minimum = Number.POSITIVE_INFINITY;
-      var tmp_value;
-      for (binz=zfirst;binz<=zlast;binz++) {
-         for (biny=yfirst;biny<=ylast;biny++) {
-            for (binx=xfirst;binx<=xlast;binx++) {
-               //bin = hist.getBin(binx,biny,binz);
-               //tmp_value = hist.getBinContent(bin);
-               tmp_value = hist.getBinContent(binx, biny);
-               if (tmp_value > maximum) maximum = tmp_value;
-               if (tmp_value < minimum) minimum = tmp_value;
-            }
-         }
-      }
-      hist['fMaximum'] = maximum;
-      hist['fMinimum'] = minimum;
-      if (what == 'max') return maximum;
-      if (what == 'min') return minimum;
-   }
 
    JSROOTPainter.getTimeOffset = function(axis) {
 
@@ -1354,6 +1325,8 @@ var gStyle = {
 
       painter.ExeContextMenu(item);
    }
+   
+   // ==============================================================================
    
    JSROOTPainter.ObjectPainter = function()
    {
@@ -2959,9 +2932,15 @@ var gStyle = {
       this.pavetext['fLines'].push( {'fTitle': txt, "fTextColor": 1} );
    }
    
+   JSROOTPainter.PavePainter.prototype.IsStats = function() {
+      if (!this.pavetext) return false;
+      return this.pavetext['fName'] == "stats";
+   }
+   
+   
    JSROOTPainter.PavePainter.prototype.FillStatistic = function() 
    {
-      if (!this.pavetext) return false;
+      if (!this.IsStats()) return false;
 
       var dostat = new Number(this.pavetext['fOptStat']);
       if (!dostat) dostat = new Number(gStyle.OptStat);
@@ -2980,7 +2959,7 @@ var gStyle = {
 
    JSROOTPainter.PavePainter.prototype.Redraw = function() {
 
-      // $("#report").append("<br> redraw pave");
+//      $("#report").append("<br> redraw pave");
       
       if (('pave' in this) && (this.pave!=null)) {
          this.pave.selectAll(".pavetext").remove();
@@ -2995,7 +2974,7 @@ var gStyle = {
       }
       
       // fill statistic
-      if (!this.FillStatistic()) return;
+      this.FillStatistic();
 
       this.DrawPaveText();
    }
@@ -3003,6 +2982,14 @@ var gStyle = {
 
    JSROOTPainter.DrawPaveTextNew = function(vis, pavetext) 
    {
+      // $("#report").append("<br> JSROOTPainter.DrawPaveTextNew " + pavetext['fName']);
+      
+      if (pavetext['fX1NDC'] < 0.0 || pavetext['fY1NDC'] < 0.0 ||
+          pavetext['fX1NDC'] > 1.0 || pavetext['fY1NDC'] > 1.0) {
+         $("#report").append("<br> JSROOTPainter.DrawPaveTextNew suppress painitng of " + pavetext['fName']); 
+         return;
+      }
+      
       var painter = new JSROOTPainter.PavePainter(pavetext);
       
       painter.SetFrame(vis);
@@ -3459,7 +3446,7 @@ var gStyle = {
       
       if (stat == null) {
          
-         // when histogram created first time, one need to draw it 
+         // when statbox created first time, one need to draw it 
          stat = this.CreateStat();
          
          JSROOTPainter.DrawPaveTextNew(this.vis, stat);
@@ -3621,12 +3608,8 @@ var gStyle = {
          var func = this.histo['fFunctions'][i];
          
           if (func['_typename'] == 'JSROOTIO.TPaveText' ||
-              func['_typename'] == 'JSROOTIO.TPaveStats') {
-               if (func['fX1NDC'] < 1.0 && func['fY1NDC'] < 1.0 &&
-                   func['fX1NDC'] > 0.0 && func['fY1NDC'] > 0.0) {
+              func['_typename'] == 'JSROOTIO.TPaveStats') 
                   JSROOTPainter.DrawPaveTextNew(this.vis, func);
-               }
-            }
           
           if (func['_typename'] == 'JSROOTIO.TF1') {
             if ((!this.pad && !func.TestBit(kNotDraw)) ||
