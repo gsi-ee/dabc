@@ -1498,10 +1498,14 @@ var gStyle = {
    JSROOTPainter.ObjectPainter.prototype.Zoom = function(xmin, xmax, ymin, ymax) {
       var obj = this.first;
       if (!obj) obj = this;
-      obj['zoom_xmin'] = xmin;
-      obj['zoom_xmax'] = xmax;
-      obj['zoom_ymin'] = ymin;
-      obj['zoom_ymax'] = ymax;
+      if (xmin!=xmax) {
+         obj['zoom_xmin'] = xmin;
+         obj['zoom_xmax'] = xmax;
+      }
+      if (ymin!=ymax) {
+         obj['zoom_ymin'] = ymin;
+         obj['zoom_ymax'] = ymax;
+      }
       this.RedrawFrame();
    }
    
@@ -3336,9 +3340,7 @@ var gStyle = {
       // axes can be drawn only for main (first) histogram
       if (this.first) return;
       
-      var axis_frame = this.frame;
-      
-      var w = axis_frame.attr("width"), h = axis_frame.attr("height");
+      var w = this.frame.attr("width"), h = this.frame.attr("height");
       var noexpx = this.histo['fXaxis'].TestBit(EAxisBits.kNoExponent);
       var noexpy = this.histo['fYaxis'].TestBit(EAxisBits.kNoExponent);
       var moreloglabelsx = this.histo['fXaxis'].TestBit(EAxisBits.kMoreLogLabels);
@@ -3367,7 +3369,7 @@ var gStyle = {
       if (label.length > 0) {
          if (!('x_axis_label' in this)) 
             this['x_axis_label'] = 
-               axis_frame.append("text").attr("class", "x_axis_label"); 
+               this.frame.append("text").attr("class", "x_axis_label"); 
 
          this.x_axis_label
          .attr("x", w)
@@ -3391,7 +3393,7 @@ var gStyle = {
       if (label.length > 0) {
          if (!('y_axis_label' in this)) 
             this['y_axis_label'] = 
-               axis_frame.append("text").attr("class", "y_axis_label"); 
+               this.frame.append("text").attr("class", "y_axis_label"); 
 
          this.y_axis_label
          .attr("x", 0)
@@ -3417,7 +3419,7 @@ var gStyle = {
        * Define the scales, according to the information from the pad
        */
       var dfx = d3.format(",.f"), dfy = d3.format(",.f");
-      var xrange = this.histo['fXaxis']['fXmax'] - this.histo['fXaxis']['fXmin'];
+      var xrange = this.xmax - this.ymin;
       if (this.histo['fXaxis']['fTimeDisplay']) {
          if (n1ax > 8) n1ax = 8;
          var timeoffset = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
@@ -3483,7 +3485,7 @@ var gStyle = {
             .ticks(n1ax);
       }
 
-      var yrange = this.histo['fYaxis']['fXmax'] - this.histo['fYaxis']['fXmin'];
+      var yrange = this.ymax - this.ymin;
 
       if (this.histo['fYaxis']['fTimeDisplay']) {
          if (n1ay > 8) n1ay = 8;
@@ -3551,14 +3553,14 @@ var gStyle = {
       }
       
       if (!('xax' in this))
-         this['xax'] = axis_frame.append("svg:g")
+         this['xax'] = this.frame.append("svg:g")
                                  .attr("class", "xaxis");
 
       this.xax.attr("transform", "translate(0," + h + ")")
               .call(this.x_axis);
 
       if (!('yax' in this))
-         this['yax'] = axis_frame.append("svg:g")
+         this['yax'] = this.frame.append("svg:g")
                                  .attr("class", "yaxis");
 
       this.yax.call(this.y_axis);
@@ -3576,6 +3578,32 @@ var gStyle = {
         .attr("font-size", yAxisLabelFontSize)
         .attr("font-weight", yAxisLabelFontDetails['weight'])
         .attr("font-style", yAxisLabelFontDetails['style']);
+
+      if ('xax_zoom_rect' in this)
+         this.xax_zoom_rect.remove();
+
+      // we will use such rect for zoom selection
+      this['xax_zoom_rect'] = 
+         this.frame.append("svg:rect")
+                   .attr("class", "xaxis_zoom")
+                   .attr("x", 0)
+                   .attr("y", h)
+                   .attr("width", w)
+                   .attr("height", xAxisLabelFontSize + 3)
+                   .style('opacity', 0);
+
+      if ('yax_zoom_rect' in this)
+         this.yax_zoom_rect.remove();
+
+      // we will use such rect for zoom selection
+      this['yax_zoom_rect'] = 
+         this.frame.append("svg:rect")
+                   .attr("class", "yaxis_zoom")
+                   .attr("x", - 2*yAxisLabelFontSize - 3)
+                   .attr("y", 0)
+                   .attr("width", 2*yAxisLabelFontSize + 3)
+                   .attr("height", h)
+                   .style('opacity', 0);
    }
 
    
@@ -3842,12 +3870,15 @@ var gStyle = {
 //      if (!this.draw_content) return;
       
       var width = this.frame.attr("width"), height = this.frame.attr("height");
-      var e, origin, rect;
+      var e, origin, curr, rect;
       
+      var zoom_kind = 0;  // 0 - none, 1 - xy, 2 - only x, 3 - only y
       
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
       this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
+      this.frame.on("dblclick", unZoom);
+      
       if (gStyle.Tooltip == 1) {
          this.frame.on("mousemove", moveTooltip);
          this.frame.on("mouseout", finishTooltip);
@@ -4030,32 +4061,70 @@ var gStyle = {
          $( "#dialog" ).dialog("open");
        }
       
-      function startRectSel() {
-         d3.event.preventDefault();
-         
+      function closeAllExtras() {
          if ($("#dialog").data("shown")) {
             $( "#dialog" ).dialog("close");
             $( "#dialog" ).empty();
          }
-         
          closeTooltip(true);
          
-         pthis.frame.select("#zoom_rect").remove();
+         if (rect != null) rect.remove();
+         
+         zoom_kind = 0;
+      }
+      
+      
+      function startRectSel() {
+         d3.event.preventDefault();
+         
+         closeAllExtras();
+         
          e = this;
          var t = d3.event.changedTouches;
          origin = t ? d3.touches(e, t)[0] : d3.mouse(e);
-         rect = pthis.frame.append("rect").attr("class", "zoom").attr("id", "zoom_rect");
+         
+         // $("#report").append("<br> Start select " + origin[1]);
+         curr = new Array;
+         curr.push(Math.max(0, Math.min(width, origin[0])));
+         curr.push(Math.max(0, Math.min(height, origin[1])));
+         
+         if (origin[0] < 0) {
+            zoom_kind = 3; // only y
+            origin[0] = 0;
+            origin[1] = curr[1];
+            curr[0] = width;
+            curr[1] += 1;
+            //$("#report").append("<br> Start only Y " + origin[1]);
+         } else 
+         if (origin[1] > height) {
+            zoom_kind = 2; // only x
+            origin[0] = curr[0];
+            origin[1] = 0;
+            curr[0] += 1;
+            curr[1] = height;
+            //$("#report").append("<br> Start only X " + origin[0]);
+         } else {
+            zoom_kind = 1; // x and y
+            origin[0] = curr[0];
+            origin[1] = curr[1];
+            
+            //$("#report").append("<br> Start  X and Y ");
+         }
+
+         rect = pthis.frame
+                 .append("rect")
+                 .attr("class", "zoom")
+                 .attr("id", "zoomRect")
+                 .attr("x", Math.min(origin[0], curr[0]))
+                 .attr("y", Math.min(origin[1], curr[1]))
+                 .attr("width", Math.abs(curr[0] - origin[0]))
+                 .attr("height", Math.abs(curr[1] - origin[1]));
+
          d3.select("body").classed("noselect", true);
          d3.select("body").style("-webkit-user-select", "none");
          
 //         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
          
-         origin[0] = Math.max(0, Math.min(width, origin[0]));
-         origin[1] = Math.max(0, Math.min(height, origin[1]));
-         
-//         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
-         
-         pthis.frame.on("dblclick", unZoom);
          d3.select(window)
             .on("mousemove.zoomRect", moveRectSel)
             .on("mouseup.zoomRect", endRectSel, true);
@@ -4067,23 +4136,46 @@ var gStyle = {
 
       function unZoom() {
          d3.event.preventDefault();
+         
+         var t = d3.event.changedTouches;
+         var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
 
+         closeAllExtras();
+         
+         if (m[0] < 0) pthis.Unzoom(false,true); else
+         if (m[1] > height) pthis.Unzoom(true,false); else
          pthis.Unzoom(true,true);
+         
+         // $("#report").append("<br> Try unzoom");
       };
 
       function moveRectSel() {
+         
+         if (zoom_kind==0) return;
+         
          d3.event.preventDefault();
          var t = d3.event.changedTouches;
          var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
+         
          m[0] = Math.max(0, Math.min(width, m[0]));
          m[1] = Math.max(0, Math.min(height, m[1]));
-         rect.attr("x", Math.min(origin[0], m[0]))
-             .attr("y", Math.min(origin[1], m[1]))
-             .attr("width", Math.abs(m[0] - origin[0]))
-             .attr("height", Math.abs(m[1] - origin[1]));
+         
+         switch (zoom_kind) {
+            case 1: curr[0] = m[0]; curr[1] = m[1]; break;
+            case 2: curr[0] = m[0]; break;
+            case 3: curr[1] = m[1]; break;
+         }
+         
+         rect.attr("x", Math.min(origin[0], curr[0]))
+             .attr("y", Math.min(origin[1], curr[1]))
+             .attr("width", Math.abs(curr[0] - origin[0]))
+             .attr("height", Math.abs(curr[1] - origin[1]));
       };
 
       function endRectSel() {
+         
+         if (zoom_kind==0) return;
+         
          d3.event.preventDefault();
          d3.select(window).on("touchmove.zoomRect", null).on("touchend.zoomRect", null);
          d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
@@ -4091,25 +4183,39 @@ var gStyle = {
          var t = d3.event.changedTouches;
          var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
          
-//         $("#report").append("<br> End select x:" + m[0] + "  y:" + m[1]);
-         
          m[0] = Math.max(0, Math.min(width, m[0]));
          m[1] = Math.max(0, Math.min(height, m[1]));
 
-//         $("#report").append("<br> End select x:" + m[0] + "  y:" + m[1]);
+         switch (zoom_kind) {
+            case 1: curr[0] = m[0]; curr[1] = m[1]; break;
+            case 2: curr[0] = m[0]; break; // only X
+            case 3: curr[1] = m[1]; break; // only Y
+         }
+
+//         $("#report").append("<br> End select x:" + origin[0] + " -> " + curr[0] + 
+//                                 " y:" + origin[1] + " -> " + curr[1]);
+         
+         var xmin=0., xmax = 0, ymin = 0, ymax = 0;
+         
+         if ((zoom_kind != 3) && (Math.abs(curr[0] - origin[0]) > 10)) {
+            xmin = Math.min(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
+            xmax = Math.max(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
+         }
+         
+         if ((zoom_kind != 2) && (Math.abs(curr[1] - origin[1]) > 10)) {
+            ymin = Math.min(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
+            ymax = Math.max(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
+         } 
 
          d3.select("body").style("-webkit-user-select", "auto");
          
          rect.remove();
          rect = null;
-         
-         if ((Math.abs(m[0] - origin[0]) < 10) || (Math.abs(m[1] - origin[1]) < 10)) return;
+         zoom_kind = 0;
 
-         pthis.Zoom(Math.min(pthis.x.invert(origin[0]), pthis.x.invert(m[0])),
-                    Math.max(pthis.x.invert(origin[0]), pthis.x.invert(m[0])),
-                    Math.min(pthis.y.invert(origin[1]), pthis.y.invert(m[1])),
-                    Math.max(pthis.y.invert(origin[1]), pthis.y.invert(m[1])));
+         pthis.Zoom(xmin, xmax, ymin, ymax);
       }
+      
    }
    
 

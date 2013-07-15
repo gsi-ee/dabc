@@ -5,6 +5,7 @@ of the framework.
 15.07.2013
 1. Fix problem with stat-box drawing, fix cleanup problem by stat box redraw
 2. Implement toggling of col, colz, stat-box properly
+3. Improve zooming selection - now one could select only X or only Y axis. 
  
 
 12.07.2013
