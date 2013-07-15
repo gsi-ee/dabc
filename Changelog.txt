@@ -7,7 +7,8 @@ of the framework.
 2. Implement toggling of col, colz, stat-box properly
 3. Improve zooming selection - now one could select only X or only Y axis. 
 4. Implement autozoom for 1-d and 2-d histograms
- 
+5. Try to optimize 2-D histo draw - create bins array with necessary info. 
+
 
 12.07.2013
 1. Provide optionally normal style for tooltips. In case of TH2 objects

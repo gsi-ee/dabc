@@ -4209,7 +4209,7 @@ var gStyle = {
          rect = null;
          zoom_kind = 0;
 
-         pthis.frame.on("dblclick", unZoom);
+//         pthis.frame.on("dblclick", unZoom);
 
          pthis.Zoom(xmin, xmax, ymin, ymax);
       }
@@ -4932,28 +4932,21 @@ var gStyle = {
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax']; 
       
-      this.binwidthx = (this.xmax - this.xmin) / (this.nbinsx - 1);
-      this.binwidthy = (this.ymax - this.ymin) / (this.nbinsy - 1);
+      this.binwidthx = (this.xmax - this.xmin) / this.nbinsx;
+      this.binwidthy = (this.ymax - this.ymin) / this.nbinsy;
       
-      this.maxbin = d3.max(this.histo['fArray']);
-      this.minbin = d3.min(this.histo['fArray']);
-      this.bins = new Array();
+      this.maxbin = 0;
+      this.minbin = 0;
       for (var i=0; i<this.nbinsx; ++i) {
          for (var j=0; j<this.nbinsy; ++j) {
             var bin_content = this.histo.getBinContent(i+1, j+1);
-            if (bin_content > this.minbin) {
-               var point = {
-                  x:this.xmin + (i*this.binwidthx),
-                  y:this.ymin + (j*this.binwidthy),
-                  z:bin_content
-               };
-               this.bins.push(point);
-            }
+            if (bin_content < this.minbin) this.minbin = bin_content; else
+            if (bin_content > this.maxbin) this.maxbin = bin_content;
          }
       }
       
       // used to enable/disable stat box
-      this.draw_content = this.bins.length>0; 
+      this.draw_content = this.maxbin>0; 
    }
    
    JSROOTPainter.Hist2DPainter.prototype.CountStat = function()
@@ -5111,17 +5104,90 @@ var gStyle = {
 
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
-      var constx = (w / this.histo['fXaxis']['fNbins']) / this.maxbin;
-      var consty = (h / this.histo['fYaxis']['fNbins']) / this.maxbin;
-      var xdom = this.x.domain();
-      var ydom = this.y.domain();
-      var xfactor = Math.abs(this.histo['fXaxis']['fXmax']-this.histo['fXaxis']['fXmin']) / Math.abs(xdom[1]-xdom[0]);
-      var yfactor = Math.abs(this.histo['fYaxis']['fXmax']-this.histo['fYaxis']['fXmin']) / Math.abs(ydom[1]-ydom[0]);
-
-      var pthis = this;
+//    this.options.Scat =1;
+//    this.histo['fMarkerStyle'] = 2;
+    
+      var draw_markers = (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1);
+      var normal_coordiantes = (this.options.Color > 0) || draw_markers;
       
-      if (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1) {
-         /* Add markers */
+      var i1 = this.GetSelectIndex("x","left",0);
+      var i2 = this.GetSelectIndex("x","right",1);
+      var j1 = this.GetSelectIndex("y","left",0);
+      var j2 = this.GetSelectIndex("y","right",1);
+
+      var xfactor = 1, yfactor = 1;
+      if (!normal_coordiantes) {
+         xfactor = 0.5* w / (i2-i1) / (this.maxbin - this.minbin);
+         yfactor = 0.5* h / (j2-j1) / (this.maxbin - this.minbin);
+      }
+
+      var x1, y2, x2, y2, grx1, gry1, grx2, gry2, fillcol, shrx, shry;
+      var point;
+      
+      var local_bins = new Array;
+      
+      x2 = this.xmin + i1*this.binwidthx;
+      grx2 = this.x(x2);
+      for (var i=i1;i<i2;i++) { 
+         x1 = x2; grx1 = grx2;
+         x2 += this.binwidthx;
+         grx2 = this.x(x2);
+
+         y2 = this.ymin + j1*this.binwidthy;
+         gry2 = this.y(y2);
+         for (var j=j1;j<j2;j++) {
+            y1 = y2; gry1 = gry2;
+            y2 += this.binwidthy;
+            gry2 = this.y(y2);
+            binz = this.histo.getBinContent(i+1, j+1);
+            if (binz <= this.minbin) continue;
+            
+            if (normal_coordiantes) {
+               point = {
+                 x: grx1,
+                 y: gry2,
+                 width: grx2-grx1,
+                 height: gry1-gry2,
+                 stroke: "none",
+                 fill: this.getValueColor(binz)
+               }
+            } else {
+               shrx = xfactor * (this.maxbin - binz);
+               shry = yfactor * (this.maxbin - binz);
+               
+               point = {
+                 x: grx1 + shrx,
+                 y: gry1 - shry,
+                 width: grx2-grx1-2*shrx,
+                 height: gry1-gry2-2*shry,
+                 stroke: this.linecolor,
+                 fill: this.fillcolor
+               }
+            }
+
+            point['tipcolor'] = (point['fill'] == "black") ? "grey" : "black";
+
+            if (gStyle.Tooltip > 1) {
+
+               if (draw_markers)
+                  point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " +
+                                   y1.toPrecision(4) + " \nentries = " + binz; 
+               else                     
+                  point['tip'] = "x = [" + x1.toPrecision(4) + ", " + x2.toPrecision(4) + 
+                           "] \ny = [" + y1.toPrecision(4) + ", " + y2.toPrecision(4) + 
+                           "] \nentries = " + binz;
+            }
+
+            local_bins.push(point);
+         }
+      }
+
+      
+      if (draw_markers) {
+         
+         // Add markers
+         
+         // TODO: fill is not used
          var filled = false;
          if ((this.histo['fMarkerStyle'] == 8) ||
              (this.histo['fMarkerStyle'] > 19 && this.histo['fMarkerStyle'] < 24) ||
@@ -5162,76 +5228,39 @@ var gStyle = {
                break;
          }
          var markers = this.draw_g.selectAll(".marker")
-            .data(this.bins)
+            .data(local_bins)
             .enter()
             .append("svg:path")
             .attr("class", "marker")
             .attr("transform", function(d) {
-               return "translate(" + pthis.x(d.x) + "," + pthis.y(d.y) + ")"
+               return "translate(" + d.x + "," + d.y + ")"
             })
             .style("fill", root_colors[this.histo['fMarkerColor']])
             .style("stroke", root_colors[this.histo['fMarkerColor']])
             .attr("d", marker);
          
          if (gStyle.Tooltip > 1)
-            markers.append("svg:title")
-                   .text(function(d) { return "x = " + d.x.toPrecision(4) + " \ny = " +
-                                d.y.toPrecision(4) + " \nentries = " + d.z; });
+            markers.append("svg:title").text(function(d) { return d.tip; });
       }
       else {
+
          var drawn_bins = this.draw_g.selectAll(".bins")
-            .data(this.bins)
-            .enter()
-            .append("svg:rect")
-            .attr("class", "bins")
-            .attr("x", function(d) { 
-               if (pthis.options.Color > 0)
-                  return pthis.x(d.x);
-               else
-                  return pthis.x(d.x + (pthis.binwidthx / 2)) - (0.5 * d.z * ((w / pthis.nbinsx) / pthis.maxbin) * xfactor);
-            })
-            .attr("y", function(d) { 
-               if (pthis.options.Color > 0)
-                  return pthis.y(d.y + pthis.binwidthy);
-               else
-                  return pthis.y(d.y + (pthis.binwidthy / 2)) - (0.5 * d.z * ((h / pthis.nbinsy) / pthis.maxbin) * yfactor);
-            })
-            .attr("width", function(d) {
-               if (pthis.options.Color > 0)
-                  return pthis.x(d.x + pthis.binwidthx) - pthis.x(d.x);
-               else
-                  return d.z * ((w / pthis.nbinsx) / pthis.maxbin) * xfactor;
-            })
-            .attr("height", function(d) {
-               if (pthis.options.Color > 0)
-                  return pthis.y(d.y) - pthis.y(d.y + pthis.binwidthy);
-               else
-                  return d.z * ((h / pthis.nbinsy) / pthis.maxbin) * yfactor;
-            })
-            .style("stroke", function(d) {
-               if (pthis.options.Color > 0)
-                  return "none";
-               else
-                  return pthis.linecolor;
-            })
-            .style("fill", function(d) {
-               var fillcol = pthis.fillcolor;
-               if (pthis.options.Color > 0)
-                  fillcol = pthis.getValueColor(d.z);
-               this['origin'] = fillcol; 
-               return fillcol;
-            });
-         
+               .data(local_bins)
+               .enter()
+               .append("svg:rect")
+               .attr("class", "bins")
+               .attr("x", function(d) { return d.x; }) 
+               .attr("y", function(d) { return d.y; }) 
+               .attr("width", function(d) { return d.width; })
+               .attr("height", function(d) { return d.height; })
+               .style("stroke", function(d) { return d.stroke; })
+               .style("fill", function(d) { this['f0'] = d.fill; this['f1'] = d.tipcolor; return d.fill; });
+      
          if (gStyle.Tooltip > 1)
             drawn_bins 
-             .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", (this['origin'] == "black") ? "grey" : "black"); } )
-             .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['origin']); } )
-             .append("svg:title")
-             .text(function(d) { 
-                return "x = [" + d.x.toPrecision(4) + ", " + (d.x + pthis.binwidthx).toPrecision(4) + 
-                "] \ny = [" + d.y.toPrecision(4) + ", " + (d.y + pthis.binwidthy).toPrecision(4) + 
-                "] \nentries = " + d.z;
-              });
+              .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", this['f1']); })
+              .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['f0']); })
+              .append("svg:title") .text(function(d) { return d.tip; });
       }
    }
 
