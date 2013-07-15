@@ -4116,10 +4116,6 @@ var gStyle = {
                  .append("rect")
                  .attr("class", "zoom")
                  .attr("id", "zoom_rect");
-/*                 .attr("x", Math.min(origin[0], curr[0]))
-                 .attr("y", Math.min(origin[1], curr[1]))
-                 .attr("width", Math.abs(curr[0] - origin[0]))
-                 .attr("height", Math.abs(curr[1] - origin[1])); */
 
          pthis.frame.on("dblclick", unZoom);
          
@@ -4140,13 +4136,13 @@ var gStyle = {
          var t = d3.event.changedTouches;
          var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
 
+         // $("#report").append("<br> Try unzoom");
+         
          closeAllExtras();
          
          if (m[0] < 0) pthis.Unzoom(false,true); else
          if (m[1] > height) pthis.Unzoom(true,false); else
          pthis.Unzoom(true,true);
-         
-         // $("#report").append("<br> Try unzoom");
       };
 
       function moveRectSel() {
@@ -4208,17 +4204,17 @@ var gStyle = {
          } 
 
          d3.select("body").style("-webkit-user-select", "auto");
-         
+
          rect.remove();
          rect = null;
          zoom_kind = 0;
+
+         pthis.frame.on("dblclick", unZoom);
 
          pthis.Zoom(xmin, xmax, ymin, ymax);
       }
       
    }
-   
-
 
    JSROOTPainter.HistPainter.prototype.FillContextMenu = function(menu)
    {
@@ -4656,6 +4652,46 @@ var gStyle = {
    }
 
    
+   JSROOTPainter.Hist1DPainter.prototype.FillContextMenu = function(menu)
+   {
+      JSROOTPainter.HistPainter.prototype.FillContextMenu.call(this, menu);
+      if (this.draw_content)
+         this.AddMenuItem(menu,"Auto zoom-in","autozoom");
+   }
+      
+   JSROOTPainter.Hist1DPainter.prototype.ExeContextMenu = function(cmd) {
+      if (cmd == "autozoom") {
+         this.AutoZoom();
+         return;
+      } 
+      
+      JSROOTPainter.HistPainter.prototype.ExeContextMenu.call(this, cmd);
+   } 
+   
+   JSROOTPainter.Hist1DPainter.prototype.AutoZoom = function()
+   {
+      var left = this.GetSelectIndex("x","left",-1);
+      var right = this.GetSelectIndex("x","right",1);
+
+      var dist = (right - left);
+
+      if (dist==0) return;
+
+      var min = this.histo.getBinContent(left+1);
+
+      // first find minimum
+      for (var indx = left; indx<right; indx++) 
+         if (this.histo.getBinContent(indx+1) < min) 
+            min = this.histo.getBinContent(indx+1);
+
+      while ((left<right) && (this.histo.getBinContent(left+1) <= min)) left++;
+      while ((left<right) && (this.histo.getBinContent(right) <= min)) right--;
+
+      if ((right - left < dist) && (left < right)) 
+         this.Zoom(this.xmin + left*this.binwidthx, this.xmin + right*this.binwidthx, 0, 0);
+   }
+
+   
    JSROOTPainter.drawHistogram1Dnew = function(vis, histo) {
 
       // create painter and add it to canvas
@@ -4696,6 +4732,7 @@ var gStyle = {
       return painter;
    }
    
+   
    // ==================== painter for TH2 histograms ==============================
    
    JSROOTPainter.Hist2DPainter = function(histo) {
@@ -4709,6 +4746,7 @@ var gStyle = {
    JSROOTPainter.Hist2DPainter.prototype.FillContextMenu = function(menu)
    {
       JSROOTPainter.HistPainter.prototype.FillContextMenu.call(this, menu);
+      this.AddMenuItem(menu,"Auto zoom-in","autozoom");
       if (this.is3D)
          this.AddMenuItem(menu,"Draw in 2D","draw2d");
       else
@@ -4752,11 +4790,65 @@ var gStyle = {
          }
          
          this.RedrawFrame();
+         return;
+      }
+      
+      if (cmd == "autozoom") {
+         this.AutoZoom();
+         return;
       }
 
       JSROOTPainter.HistPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
    
+   JSROOTPainter.Hist2DPainter.prototype.AutoZoom = function()
+   {
+      var i1 = this.GetSelectIndex("x","left",-1);
+      var i2 = this.GetSelectIndex("x","right",1);
+      var j1 = this.GetSelectIndex("y","left",-1);
+      var j2 = this.GetSelectIndex("y","right",1);
+
+      if ((i1==i2) || (j1==j2)) return;
+      
+      var min = this.histo.getBinContent(i1+1, j1+1);
+
+      // first find minimum
+      for (var i=i1;i<i2;i++)
+         for (var j=j1;j<j2;j++) 
+            if (this.histo.getBinContent(i+1, j+1)<min)
+               min = this.histo.getBinContent(i+1, j+1);
+
+      // $("#report").append("<br> found min " + min);
+      
+      var ileft = i2, iright = i1, jleft = j2, jright = j1;
+      
+      for (var i=i1;i<i2;i++)
+         for (var j=j1;j<j2;j++) 
+            if (this.histo.getBinContent(i+1, j+1)>min) {
+               if (i<ileft) ileft = i;
+               if (i>=iright) iright = i+1;
+               if (j<jleft) jleft = j;
+               if (j>=jright) jright = j+1;
+            }
+
+      // $("#report").append("<br> found indexes " + ileft + iright + jleft + jright);
+      
+      var xmin = 0, xmax = 0, ymin = 0, ymax = 0;
+      
+      if ((ileft>i1 || iright<i2) && (ileft < iright-1)) {
+         xmin = this.xmin + ileft*this.binwidthx;
+         xmax = this.xmin + iright*this.binwidthx;
+      }
+
+      if ((jleft>j1 || jright<j2) && (jleft < jright-1)) {
+         ymin = this.ymin + jleft*this.binwidthy;
+         ymax = this.ymin + jright*this.binwidthy;
+      }
+
+      this.Zoom(xmin, xmax, ymin, ymax);
+   }
+
+
    JSROOTPainter.Hist2DPainter.prototype.CreatePalette = function(rel_width)
    {
       if (this.FindPalette() != null) return null;
