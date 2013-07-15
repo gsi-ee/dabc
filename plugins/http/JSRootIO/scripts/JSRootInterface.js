@@ -72,7 +72,7 @@ function loadScript(url, callback) {
          if (script.readyState == "loaded" ||
              script.readyState == "complete") {
             script.onreadystatechange = null;
-            callback();
+            if (callback!=null) callback();
          }
       };
    } else { // Other browsers

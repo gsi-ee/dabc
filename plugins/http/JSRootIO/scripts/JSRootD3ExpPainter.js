@@ -3877,7 +3877,6 @@ var gStyle = {
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
       this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
-      this.frame.on("dblclick", unZoom);
       
       if (gStyle.Tooltip == 1) {
          this.frame.on("mousemove", moveTooltip);
@@ -4067,10 +4066,8 @@ var gStyle = {
             $( "#dialog" ).empty();
          }
          closeTooltip(true);
-         
-         if (rect != null) rect.remove();
-         
-         zoom_kind = 0;
+         //if (rect != null) rect.remove();
+         //zoom_kind = 0;
       }
       
       
@@ -4084,6 +4081,7 @@ var gStyle = {
          origin = t ? d3.touches(e, t)[0] : d3.mouse(e);
          
          // $("#report").append("<br> Start select " + origin[1]);
+         
          curr = new Array;
          curr.push(Math.max(0, Math.min(width, origin[0])));
          curr.push(Math.max(0, Math.min(height, origin[1])));
@@ -4111,17 +4109,19 @@ var gStyle = {
             //$("#report").append("<br> Start  X and Y ");
          }
 
+         d3.select("body").classed("noselect", true);
+         d3.select("body").style("-webkit-user-select", "none");
+         
          rect = pthis.frame
                  .append("rect")
                  .attr("class", "zoom")
-                 .attr("id", "zoomRect")
-                 .attr("x", Math.min(origin[0], curr[0]))
+                 .attr("id", "zoom_rect");
+/*                 .attr("x", Math.min(origin[0], curr[0]))
                  .attr("y", Math.min(origin[1], curr[1]))
                  .attr("width", Math.abs(curr[0] - origin[0]))
-                 .attr("height", Math.abs(curr[1] - origin[1]));
+                 .attr("height", Math.abs(curr[1] - origin[1])); */
 
-         d3.select("body").classed("noselect", true);
-         d3.select("body").style("-webkit-user-select", "none");
+         pthis.frame.on("dblclick", unZoom);
          
 //         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
          
@@ -4195,7 +4195,7 @@ var gStyle = {
 //         $("#report").append("<br> End select x:" + origin[0] + " -> " + curr[0] + 
 //                                 " y:" + origin[1] + " -> " + curr[1]);
          
-         var xmin=0., xmax = 0, ymin = 0, ymax = 0;
+         var xmin=0, xmax = 0, ymin = 0, ymax = 0;
          
          if ((zoom_kind != 3) && (Math.abs(curr[0] - origin[0]) > 10)) {
             xmin = Math.min(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
