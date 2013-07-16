@@ -737,7 +737,8 @@ function createFillPatterns(svg, id, color) {
 };
 
 var gStyle = {
-      'Tooltip'       : 2,    // 0 - off, 1 - event info, 2 - full but may be slow   
+      'Tooltip'       : 2,    // 0 - off, 1 - event info, 2 - full but may be slow
+      'OptimizeDraw'  : true,  // if true, drawing of 1-D histogram will be optimized to exclude too-many points   
       'AutoStat'      : true,
       'OptStat'       : 1111,
       'StatX'         : 0.7, 
@@ -1466,13 +1467,26 @@ var gStyle = {
       this.AddMenuItem(menu,"Unzoom X","unx");
       this.AddMenuItem(menu,"Unzoom Y","uny");
       this.AddMenuItem(menu,"Unzoom","unxy");
+      if (gStyle.Tooltip > 0)
+         this.AddMenuItem(menu,"Disable tooltip","disable_tooltip");
+      else
+         this.AddMenuItem(menu,"Enable tooltip","enable_tooltip");
+      
    }
       
    JSROOTPainter.ObjectPainter.prototype.ExeContextMenu = function(cmd) 
    {
       if (cmd=="unx") this.Unzoom(true, false); else
       if (cmd=="uny") this.Unzoom(false, true); else
-      if (cmd=="unxy") this.Unzoom(true, true);
+      if (cmd=="unxy") this.Unzoom(true, true); else
+      if (cmd=="disable_tooltip") {
+         gStyle.Tooltip = 0;
+         this.RedrawFrame();
+      } else
+      if (cmd=="enable_tooltip") {
+         gStyle.Tooltip = 2;
+         this.RedrawFrame();
+      }
    }
    
    JSROOTPainter.ObjectPainter.prototype.Unzoom = function(dox,doy) {
@@ -3201,8 +3215,12 @@ var gStyle = {
       }
    }
 
-   JSROOTPainter.HistPainter.prototype.CreateBins = function() {
-      alert("HistPainter.prototype.CreateBins not implemented");
+   JSROOTPainter.HistPainter.prototype.ScanContent = function() {
+      // function will be called once new histogram or 
+      // new histogram content is assigned
+      // one should find min,max,nbins, maxcontent values
+      
+      alert("HistPainter.prototype.ScanContent not implemented");
    }
 
    
@@ -3223,7 +3241,7 @@ var gStyle = {
       
       this.histo['fArray'] = obj['fArray'];
       
-      this.CreateBins();
+      this.ScanContent();
       
       return true;
    }
@@ -3243,8 +3261,11 @@ var gStyle = {
       // special case used for drawing multiple graphs in the same frame
       var w = this.frame.attr("width"), h = this.frame.attr("height");
 
-      if (this.options.Logx)
-         this['x'] = d3.scale.log().domain([this.xmin, this.xmax]).range([0, w]);
+      if (this.options.Logx) {
+         this.xlogmax = this.xmax <= 0 ? 1 : this.xmax;
+         this.xlogmin = this.xmin <= 0 ? this.xlogmax * 0.0001 : this.xmin;  
+         this['x'] = d3.scale.log().domain([this.xlogmin, this.xlogmax]).range([0, w]);
+      }
       else
          this['x'] = d3.scale.linear().domain([this.xmin,this.xmax]).range([0, w]);
 
@@ -3253,14 +3274,17 @@ var gStyle = {
 
       // $("#report").append("<br> ymin " + this.ymin + "  ymax " + this.ymax);
       
-      if (this.options.Logy)
-         this['y'] = d3.scale.log().domain([this.ymin, this.ymax]).range([h, 0]);
-      else
+      if (this.options.Logy) {
+         this.ylogmax = this.ymax <= 0 ? 1 : this.ymax;
+         this.ylogmin = this.ymin <= 0 ? this.ylogmax * 0.0001 : this.ymin;
+         this['y'] = d3.scale.log().domain([this.ylogmin, this.ylogmax]).range([h, 0]);
+      } else
          this['y'] = d3.scale.linear().domain([this.ymin, this.ymax]).range([h, 0]);
 
       if (this.zoom_ymin!=this.zoom_ymax)  
          this.y.domain([this.zoom_ymin, this.zoom_ymax]);
-      
+
+      // console.log("creating X-Y done");
    }
    
    JSROOTPainter.HistPainter.prototype.CountStat = function()
@@ -3552,17 +3576,13 @@ var gStyle = {
            .ticks(n1ay);
       }
       
-      if (!('xax' in this))
-         this['xax'] = this.frame.append("svg:g")
-                                 .attr("class", "xaxis");
-
+      if ('xax' in this) this['xax'].remove();
+      this['xax'] = this.frame.append("svg:g").attr("class", "xaxis");
       this.xax.attr("transform", "translate(0," + h + ")")
               .call(this.x_axis);
 
-      if (!('yax' in this))
-         this['yax'] = this.frame.append("svg:g")
-                                 .attr("class", "yaxis");
-
+      if ('yax' in this) this['yax'].remove();
+      this['yax'] = this.frame.append("svg:g").attr("class", "yaxis");
       this.yax.call(this.y_axis);
 
       var xAxisLabelFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fXaxis']['fLabelFont']/10)]);
@@ -3836,31 +3856,16 @@ var gStyle = {
    }
    
    JSROOTPainter.HistPainter.prototype.Redraw = function() {
-//      if (console) console.time("XY");
+//      if (console) console.time("Redraw");
       this.CreateXY();
-//      if (console) console.timeEnd("XY");
-
-//    if (console) console.time("Stat");
       this.CountStat();
-//    if (console) console.time("Stat");
-      
-//      if (console) console.time("Grid");
       this.DrawGrids();
-//      if (console) console.timeEnd("Grid");
-
-//      if (console) console.time("Bins");
       this.DrawBins();
-//      if (console) console.timeEnd("Bins");
-
-//      if (console) console.time("Axes");
       this.DrawAxes();
-//      if (console) console.timeEnd("Axes");
-      
-//      if (console) console.time("Title");
       this.DrawTitle();
-//      if (console) console.timeEnd("Title");
-      
       this.DrawFunctions();
+//    if (console) console.timeEnd("Redraw");
+
    }
    
    JSROOTPainter.HistPainter.prototype.AddInteractive = function() {
@@ -4136,7 +4141,7 @@ var gStyle = {
          var t = d3.event.changedTouches;
          var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
 
-         // $("#report").append("<br> Try unzoom");
+//         $("#report").append("<br> Try unzoom");
          
          closeAllExtras();
          
@@ -4188,19 +4193,23 @@ var gStyle = {
             case 3: curr[1] = m[1]; break; // only Y
          }
 
-//         $("#report").append("<br> End select x:" + origin[0] + " -> " + curr[0] + 
-//                                 " y:" + origin[1] + " -> " + curr[1]);
+//         console.log("End select x:" + origin[0] + " -> " + curr[0] + 
+//                               " y:" + origin[1] + " -> " + curr[1]);
          
          var xmin=0, xmax = 0, ymin = 0, ymax = 0;
+         
+         var isany = false;
          
          if ((zoom_kind != 3) && (Math.abs(curr[0] - origin[0]) > 10)) {
             xmin = Math.min(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
             xmax = Math.max(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
+            isany = true;
          }
          
          if ((zoom_kind != 2) && (Math.abs(curr[1] - origin[1]) > 10)) {
             ymin = Math.min(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
             ymax = Math.max(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
+            isany = true;
          } 
 
          d3.select("body").style("-webkit-user-select", "auto");
@@ -4211,7 +4220,7 @@ var gStyle = {
 
 //         pthis.frame.on("dblclick", unZoom);
 
-         pthis.Zoom(xmin, xmax, ymin, ymax);
+         if (isany) pthis.Zoom(xmin, xmax, ymin, ymax);
       }
       
    }
@@ -4219,6 +4228,16 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.FillContextMenu = function(menu)
    {
       JSROOTPainter.ObjectPainter.prototype.FillContextMenu.call(this, menu);
+      if (this.options) {
+         if (this.options.Logx > 0)
+            this.AddMenuItem(menu,"Linear X","linx");
+         else
+            this.AddMenuItem(menu,"Log X","logx");
+         if (this.options.Logy > 0)
+            this.AddMenuItem(menu,"Linear Y","liny");
+         else
+            this.AddMenuItem(menu,"Log Y","logy");
+      }
       if (this.draw_content)
          this.AddMenuItem(menu,"Toggle stat","togstat");
    }
@@ -4227,8 +4246,32 @@ var gStyle = {
       if (cmd == "togstat") {
          this.ToggleStat();
          return;
-      } 
+      }
       
+      if (cmd == "linx") {
+         this.options.Logx = 0;
+         this.RedrawFrame();
+         return;
+      }
+
+      if (cmd == "logx") {
+         this.options.Logx = 1;
+         this.RedrawFrame();
+         return;
+      }
+
+      if (cmd == "liny") {
+         this.options.Logy = 0;
+         this.RedrawFrame();
+         return;
+      }
+
+      if (cmd == "logy") {
+         this.options.Logy = 1;
+         this.RedrawFrame();
+         return;
+      }
+
       JSROOTPainter.ObjectPainter.prototype.ExeContextMenu.call(this, cmd);
    } 
 
@@ -4237,12 +4280,13 @@ var gStyle = {
    
    JSROOTPainter.Hist1DPainter = function(histo) {
       JSROOTPainter.HistPainter.call(this, histo);
+      this.draw_bins = null;
    }
 
    JSROOTPainter.Hist1DPainter.prototype = Object.create( JSROOTPainter.HistPainter.prototype );
 
 
-   JSROOTPainter.Hist1DPainter.prototype.CreateBins = function() {
+   JSROOTPainter.Hist1DPainter.prototype.ScanContent = function() {
       
       // from here we analyze object content
       // therefore code will be moved 
@@ -4257,7 +4301,6 @@ var gStyle = {
       this.stat_entries = d3.sum(this.histo['fArray']);
       
       this.nbinsx = this.histo['fXaxis']['fNbins'];
-      this.binwidthx = 1; 
       
       for (var i=0;i<this.nbinsx;++i) {
          var value = this.histo.getBinContent(i+1);
@@ -4270,6 +4313,9 @@ var gStyle = {
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
       this.xmax = this.histo['fXaxis']['fXmax'];
+      
+      this.binwidthx = (this.xmax - this.xmin) / this.nbinsx; 
+
       
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax'];
@@ -4300,7 +4346,7 @@ var gStyle = {
       
       // TODO: later x coordinate one should extract from axis array - it may be non-linear
       
-      this['binwidthx'] = (this.xmax - this.xmin) / (this.nbinsx-1);
+      /* this['binwidthx'] = (this.xmax - this.xmin) / (this.nbinsx-1);
       
       var pthis = this;
 
@@ -4314,17 +4360,9 @@ var gStyle = {
             yerr: pthis.histo.getBinError(p)
          };
       });
+      */
    }
-
-   JSROOTPainter.Hist1DPainter.prototype.getX = function(i) {
-      return this.x(this.xmin + i*this.binwidthx);
-   }
-
-   JSROOTPainter.Hist1DPainter.prototype.getY = function(i) {
-      if ((i<=0) || (i>this.histo['fXaxis']['fNbins'] - 1)) this.y(0.);
-      return this.y(this.histo.getBinContent(i+1));
-   }
-
+   
    JSROOTPainter.Hist1DPainter.prototype.CountStat = function()
    {
       this.stat_sum0 = 0;
@@ -4414,7 +4452,86 @@ var gStyle = {
       return true;
    }
          
-   
+
+   JSROOTPainter.Hist1DPainter.prototype.CreateDrawBins = function()
+   {
+      // method is called directly before bins must be drawn
+      
+      var left = this.GetSelectIndex("x","left",-1);
+      var right = this.GetSelectIndex("x","right",2);
+      var width = this.svg_frame.attr("width");
+      var stepi = 1;
+
+      this.draw_bins = new Array;
+      
+      var draw_err = (this.options.Error > 0);
+      
+      // reduce number of drawn points 
+      while (gStyle.OptimizeDraw && ((right - left)/stepi > width)) stepi++;
+
+      var x1, x2 = this.xmin + left*this.binwidthx;
+      var grx1, grx2 = -11111;
+      
+      var point;
+      
+      // console.log("left " + left + " right " + right + " step " +  stepi);
+      
+      for (var i = left; i<right; i+=stepi) {
+         
+         x1 = x2; x2 += stepi*this.binwidthx;
+         
+         // protect againt logx scale
+         if ((this.options.Logx>0) && (x1<=this.xlogmin)) continue;
+         
+         grx1 = grx2; 
+         if (grx1 < 0) grx1 = this.x(x1);
+         grx2 = this.x(x2);
+         
+         var cont = this.histo.getBinContent(i+1);
+         if ((this.options.Logy>0) && (cont<=0)) cont = this.ylogmin; 
+         
+         // if ((this.options.Logy>0) && (cont < 1e-10)) console.log("Bin " + i + "  cont = " + cont.toPrecision(10));
+         
+         var gry = this.y(cont);
+         
+         point = { x: grx1, y: gry };
+         
+         if (draw_err) {
+            point['xerr'] = (grx2 - grx1) / 2; 
+            point['yerr'] =  gry - this.y(cont + this.histo.getBinError(i+1));
+         } 
+         
+         if (gStyle.Tooltip > 1) {
+            if (draw_err) {
+               point['x'] = (grx1 + grx2)/2;
+               point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " + cont.toPrecision(4) +
+                             " \nerror x = " + ((x2-x1)/2).toPrecision(4) +
+                             " \nerror y = " + this.histo.getBinError(i+1).toPrecision(4);
+            }  else { 
+               point['width'] = grx2-grx1;
+                 
+               point['tip'] = "bin = " + (i+1) + "\n" +  
+                              "x = [" + x1.toPrecision(4) +", " + x2.toPrecision(4) + "]\n" + 
+                              "entries = " + cont;
+               
+//               if (this.options.Logy>0)
+//                  if ((i<3) || (i>96))
+//                     console.log(point['tip'] + cont.toPrecision(3));
+            }
+         }
+         
+         this.draw_bins.push(point);
+      }
+      
+      // if we need to draw line or area, we need extra point for correct drawing
+      if ((right == this.nbinsx) && !draw_err) {
+         var extrapoint = jQuery.extend(true, {}, point);
+         extrapoint.x = grx2;
+         this.draw_bins.push(extrapoint); 
+      }
+   }
+
+
    JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() 
    {
       var w = this.svg_frame.attr("width"), h = this.svg_frame.attr("height");
@@ -4431,88 +4548,82 @@ var gStyle = {
 
       var pthis = this;
 
-      function TooltipText(d) {
-         return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-                " \nerror x = " + d.xerr.toPrecision(4) +
-                " \nerror y = " + d.yerr.toPrecision(4);
-      }
+      function TooltipText(d) { return d.tip; }
 
       /* Draw x-error indicators */
       var xerr = this.draw_g.selectAll("error_x")
-            .data(this.bins)
+            .data(this.draw_bins)
             .enter()
             .append("svg:line")
-            .attr("x1", function(d) { return pthis.x(d.x-d.xerr)} )
-            .attr("y1", function(d) { return pthis.y(d.y)} )
-            .attr("x2", function(d) { return pthis.x(d.x+d.xerr)} )
-            .attr("y2", function(d) { return pthis.y(d.y)} )
+            .attr("x1", function(d) { return d.x-d.xerr; })
+            .attr("y1", function(d) { return d.y; })
+            .attr("x2", function(d) { return d.x+d.xerr; })
+            .attr("y2", function(d) { return d.y; })
             .style("stroke", root_colors[this.histo['fLineColor']])
             .style("stroke-width", this.histo['fLineWidth']);
 
       if (this.options.Error == 11) {
            this.draw_g.selectAll("e1_x")
-               .data(this.bins)
+               .data(this.draw_bins)
                .enter()
                .append("svg:line")
-               .attr("y1", function(d) { return pthis.y(d.y)-3} )
-               .attr("x1", function(d) { return pthis.x(d.x-d.xerr)})
-               .attr("y2", function(d) { return pthis.y(d.y)+3})
-               .attr("x2", function(d) { return pthis.x(d.x-d.xerr)})
+               .attr("y1", function(d) { return d.y-3; })
+               .attr("x1", function(d) { return d.x-d.xerr; })
+               .attr("y2", function(d) { return d.y+3; })
+               .attr("x2", function(d) { return d.x-d.xerr; })
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
            this.draw_g.selectAll("e1_x")
-               .data(this.bins)
+               .data(this.draw_bins)
                .enter()
                .append("svg:line")
-               .attr("y1", function(d) { return pthis.y(d.y)-3} )
-               .attr("x1", function(d) { return pthis.x(d.x+d.xerr) })
-               .attr("y2", function(d) { return pthis.y(d.y)+3})
-               .attr("x2", function(d) { return pthis.x(d.x+d.xerr) })
+               .attr("y1", function(d) { return d.y-3; })
+               .attr("x1", function(d) { return d.x+d.xerr; })
+               .attr("y2", function(d) { return d.y+3; })
+               .attr("x2", function(d) { return d.x+d.xerr; })
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
       }
          /* Draw y-error indicators */
       var yerr = this.draw_g.selectAll("error_y")
-            .data(this.bins)
+            .data(this.draw_bins)
             .enter()
             .append("svg:line")
-            .attr("x1", function(d) { return pthis.x(d.x)})
-            .attr("y1", function(d) { return pthis.y(d.y-d.yerr) })
-            .attr("x2", function(d) { return pthis.x(d.x)})
-            .attr("y2", function(d) { return pthis.y(d.y+d.yerr) })
+            .attr("x1", function(d) { return d.x; })
+            .attr("y1", function(d) { return d.y-d.yerr; })
+            .attr("x2", function(d) { return d.x; })
+            .attr("y2", function(d) { return d.y+d.yerr;  })
             .style("stroke", root_colors[this.histo['fLineColor']])
             .style("stroke-width", this.histo['fLineWidth']);
 
       if (this.options.Error == 11) {
          this.draw_g.selectAll("e1_y")
-               .data(this.bins)
+               .data(this.draw_bins)
                .enter()
                .append("svg:line")
-               .attr("x1", function(d) { return pthis.x(d.x)-3})
-               .attr("y1", function(d) { return pthis.y(d.y-d.yerr) })
-               .attr("x2", function(d) { return pthis.x(d.x)+3})
-               .attr("y2", function(d) { return pthis.y(d.y-d.yerr) })
+               .attr("x1", function(d) { return d.x-3; })
+               .attr("y1", function(d) { return d.y-d.yerr; })
+               .attr("x2", function(d) { return d.x+3; })
+               .attr("y2", function(d) { return d.y-d.yerr; })
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
          this.draw_g.selectAll("e1_y")
-               .data(this.bins)
+               .data(this.draw_bins)
                .enter()
                .append("svg:line")
-               .attr("x1", function(d) { return pthis.x(d.x)-3})
-               .attr("y1", function(d) { return pthis.y(d.y+d.yerr) })
-               .attr("x2", function(d) { return pthis.x(d.x)+3})
-               .attr("y2", function(d) { return pthis.y(d.y+d.yerr) })
+               .attr("x1", function(d) { return d.x-3; })
+               .attr("y1", function(d) { return d.y+d.yerr; })
+               .attr("x2", function(d) { return d.x+3; })
+               .attr("y2", function(d) { return d.y+d.yerr; })
                .style("stroke", root_colors[this.histo['fLineColor']])
                .style("stroke-width", this.histo['fLineWidth']);
       }
       var marks = this.draw_g.selectAll("markers")
-            .data(this.bins)
+            .data(this.draw_bins)
             .enter()
             .append("svg:path")
             .attr("class", "marker")
-            .attr("transform", function(d) {
-               return "translate(" + pthis.x(d.x) + "," + pthis.y(d.y) + ")"
-             })
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
             .style("fill", root_colors[this.histo['fMarkerColor']])
             .style("stroke", root_colors[this.histo['fMarkerColor']])
             .attr("d", marker);
@@ -4532,12 +4643,18 @@ var gStyle = {
       // one could select every second bin, for instance
 
       this.RemoveDraw();
+      
+      delete this.draw_bins; this.draw_bins = null;
 
       if (!this.draw_content) return;
+      
+      this.CreateDrawBins();
       
       this.draw_g = this.svg_frame.append("svg:g");
       
       if (this.options.Error > 0) { this.DrawErrors(); return; }
+      
+      var width = this.svg_frame.attr("width"), height = this.svg_frame.attr("height");
       
       var pthis = this;
       
@@ -4545,16 +4662,16 @@ var gStyle = {
 
          // histogram filling 
          var area = d3.svg.area()
-            .x(function(d) { return pthis.x(d.x);})
-            .y0(function(d) { return pthis.y(0);})
-            .y1(function(d) { return pthis.y(d.y);})
-            .interpolate("step-before");
+            .x(function(d) { return d.x; })
+            .y0(function(d) { return d.y; })
+            .y1(function(d) { return height; })
+            .interpolate("step-after");
             
          if (this.histo['fFillStyle'] > 3000 && this.histo['fFillStyle'] <= 3025) {
             createFillPatterns(this.vis, this.histo['fFillStyle'], this.histo['fFillColor']);
 
             this.draw_g.append("svg:path")
-               .attr("d", area(this.bins))
+               .attr("d", area(this.draw_bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
                .style("fill", "url(#pat" + this.histo['fFillStyle'] + "_" + this.histo['fFillColor'] + ")")
@@ -4562,7 +4679,7 @@ var gStyle = {
          }
          else {
             this.draw_g.append("svg:path")
-               .attr("d", area(this.bins))
+               .attr("d", area(this.draw_bins))
                .style("stroke", this.linecolor)
                .style("stroke-width", this.histo['fLineWidth'])
                .style("fill", this.fillcolor)
@@ -4571,49 +4688,37 @@ var gStyle = {
       }
       else {
          
-         // lets try to build line without any intermediate bins array
-         
-         var left = this.GetSelectIndex("x","left",-1);
-         var right = this.GetSelectIndex("x","right",1);
-         
-         // histogram contour lines only 
          var line = d3.svg.line()
-            .x(function(d,i) { return pthis.getX(left+i+1);} )
-            .y(function(d,i) { return pthis.getY(left+i);} )
-            .interpolate("step-before");
+            .x(function(d) { return d.x; } )
+            .y(function(d) { return d.y; } )
+            .interpolate("step-after");
 
          this.draw_g.append("svg:path")
-            .attr("d", line(d3.range(right-left+1))) // to draw one bar, one need two points
-            .style("stroke", this.linecolor)
-            .style("stroke-width", this.histo['fLineWidth'])
-            .style("fill", "none")
-            .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
-            .style("antialias", "false");
+           .attr("d", line(this.draw_bins)) // to draw one bar, one need two points
+           .style("stroke", this.linecolor)
+           .style("stroke-width", this.histo['fLineWidth'])
+           .style("fill", "none")
+           .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
+           .style("antialias", "false");
       }
       
       if (gStyle.Tooltip > 1) {
          // TODO: limit number of tooltips by number of visible pixels
-         var selwidth = this.x(2*this.binwidthx)-this.x(this.binwidthx);
-         if (selwidth<2) selwidth = 1; 
          this.draw_g.selectAll("selections")
-            .data(this.bins)
+            .data(this.draw_bins)
             .enter()
             .append("svg:line")
-            .attr("x1", function(d) { return pthis.x(d.x-d.xerr) } )
-            .attr("y1", function(d) { return pthis.y(d.y) } )
-            .attr("x2", function(d) { return pthis.x(d.x-d.xerr) } )
-            .attr("y2", function(d) { return pthis.y(0) } )
+            .attr("x1", function(d) { return d.x + d.width/2; } )
+            .attr("y1", function(d) { return Math.max(0, d.y); } )
+            .attr("x2", function(d) { return d.x + d.width/2; } )
+            .attr("y2", function(d) { return height; } )
             .attr("opacity", 0)
             .style("stroke", "#4572A7")
-            .style("stroke-width", selwidth)
+            .style("stroke-width", function(d) { return d.width; })
             .on('mouseover', function() { d3.select(this).transition().duration(100).style("opacity", 0.3) } )
             .on('mouseout', function() { d3.select(this).transition().duration(100).style("opacity", 0) } )
-            .append("svg:title").text(function(d) { return "x = [" + (d.x-(2*d.xerr)).toPrecision(4) + 
-                    ", " + d.x.toPrecision(4) + "] \nentries = " + d.y;
-            });
-
+            .append("svg:title").text(function(d) { return d.tip; });
       }
-      
    }
 
    JSROOTPainter.Hist1DPainter.prototype.ProvideTooltip = function(tip)
@@ -4701,11 +4806,7 @@ var gStyle = {
       
       painter.SetFrame(vis);
 
-//      if (console) console.time("CreateBins");
-
-      painter.CreateBins();
-
-//      if (console) console.timeEnd("CreateBins");
+      painter.ScanContent();
       
       painter.CreateXY();
       
@@ -4915,7 +5016,7 @@ var gStyle = {
    }
 
 
-   JSROOTPainter.Hist2DPainter.prototype.CreateBins = function() 
+   JSROOTPainter.Hist2DPainter.prototype.ScanContent = function() 
    {
       this.fillcolor = root_colors[this.histo['fFillColor']];
       this.linecolor = root_colors[this.histo['fLineColor']];
@@ -5117,8 +5218,8 @@ var gStyle = {
 
       var xfactor = 1, yfactor = 1;
       if (!normal_coordiantes) {
-         xfactor = 0.5* w / (i2-i1) / (this.maxbin - this.minbin);
-         yfactor = 0.5* h / (j2-j1) / (this.maxbin - this.minbin);
+         xfactor = 0.4 * w / (i2-i1) / (this.maxbin - this.minbin);
+         yfactor = 0.4 * h / (j2-j1) / (this.maxbin - this.minbin);
       }
 
       var x1, y2, x2, y2, grx1, gry1, grx2, gry2, fillcol, shrx, shry;
@@ -5127,17 +5228,23 @@ var gStyle = {
       var local_bins = new Array;
       
       x2 = this.xmin + i1*this.binwidthx;
-      grx2 = this.x(x2);
+      grx2 = -11111;
       for (var i=i1;i<i2;i++) { 
-         x1 = x2; grx1 = grx2;
-         x2 += this.binwidthx;
+         x1 = x2; x2 += this.binwidthx;
+         
+         if (this.options.Logx && (x1<=0)) continue; 
+         
+         grx1 = grx2;
+         if (grx1 < 0) grx1 = this.x(x1); 
          grx2 = this.x(x2);
 
          y2 = this.ymin + j1*this.binwidthy;
-         gry2 = this.y(y2);
+         gry2 = -1111;
          for (var j=j1;j<j2;j++) {
-            y1 = y2; gry1 = gry2;
-            y2 += this.binwidthy;
+            y1 = y2; y2 += this.binwidthy;
+            if (this.options.Logy && (y1<=0)) continue; 
+            gry1 = gry2;
+            if (gry1 < 0) gry1 = this.y(y1);
             gry2 = this.y(y2);
             binz = this.histo.getBinContent(i+1, j+1);
             if (binz <= this.minbin) continue;
@@ -5304,9 +5411,7 @@ var gStyle = {
       
       painter.SetFrame(vis);
 
-//      if (console) console.time("CreateBins");
-
-      painter.CreateBins();
+      painter.ScanContent();
       
       // check if we need to create palette
       if ((painter.FindPalette() == null) && !hadframe && (painter.options.Zscale>0)) {
@@ -5317,9 +5422,6 @@ var gStyle = {
       // check if we need to create statbox
       if (gStyle.AutoStat && !hadframe) painter.CreateStat();
 
-
-//      if (console) console.timeEnd("CreateBins");
-      
       painter.CreateXY();
 
       painter.CountStat();

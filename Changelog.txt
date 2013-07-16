@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+16.07.2013
+1. Improve log-scales handling, add appropriate context-menu commands.
+2. Implement draw optimization for TH1 histograms - at maximum draw array
+   with number of points on window will be created.
+
+
 15.07.2013
 1. Fix problem with stat-box drawing, fix cleanup problem by stat box redraw
 2. Implement toggling of col, colz, stat-box properly
