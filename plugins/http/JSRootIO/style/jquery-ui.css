@@ -457,15 +457,17 @@ button.ui-button::-moz-focus-inner {
 	margin: 0;
 	display: block;
 	outline: none;
+	width: 200 px;
 }
 .ui-menu .ui-menu {
 	margin-top: -3px;
 	position: absolute;
+	width: 200 px;
 }
 .ui-menu .ui-menu-item {
 	margin: 0;
 	padding: 0;
-	width: 100%;
+	width: 200 px;
 	/* support: IE10, see #8844 */
 	list-style-image: url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7);
 }

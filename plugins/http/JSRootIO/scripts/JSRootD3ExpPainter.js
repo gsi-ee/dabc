@@ -6517,8 +6517,9 @@ var gStyle = {
    };
    
    
-   JSROOTPainter.createCanvas = function(element, idx, obj) {
-      var render_to = '#histogram' + idx;
+   JSROOTPainter.createCanvas = function(element, obj) {
+      var render_to = "#" + element.attr("id"); 
+         
       var fillcolor = 'white';
       var factor = 0.66666;
       
@@ -6533,13 +6534,13 @@ var gStyle = {
       
       d3.select(render_to).style("background-color", fillcolor);
       d3.select(render_to).style("width", "100%");
-
+      
       var svg = d3.select(render_to)
                   .append("svg")
                   .attr("width", w)
                   .attr("height", h)
                   .style("background-color", fillcolor);
-      defs = svg.append('svg:defs');
+      // defs = svg.append('svg:defs');
       return svg;
    }
    
@@ -6553,7 +6554,7 @@ var gStyle = {
       }
       $(render_to).empty();
       
-      var vis = JSROOTPainter.createCanvas($(render_to), idx, obj);
+      var vis = JSROOTPainter.createCanvas($(render_to), obj);
       if (vis == null) return false;
 
       var res = JSROOTPainter.drawObjectInFrame(vis, obj);

@@ -7,7 +7,9 @@ of the framework.
 2. Implement draw optimization for TH1 histograms - at maximum draw array
    with number of points on window will be created.
 3. Improve algorithm of loading necessary scripts. 
-
+4. Go away from ROOT style of drawing - one could not see more than one histogram. 
+   First try to use HTML tabele to display more than one object at once.
+   
 
 15.07.2013
 1. Fix problem with stat-box drawing, fix cleanup problem by stat box redraw
