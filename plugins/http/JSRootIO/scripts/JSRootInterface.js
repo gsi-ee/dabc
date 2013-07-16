@@ -212,31 +212,22 @@ function displayMappedObject(obj_name, list_name, offset) {
    obj_index++;
 };
 
-function AssertDrawPrerequisites(exp_painter)
-{
-   if (typeof JSROOTPainter == "undefined") {
-      
-      var chkbox = document.getElementById("experimental_painter");
-      
-      if (exp_painter==null)
-         if (chkbox && chkbox.checked) exp_painter = true;
-      
-      // exp_painter = true;
-      
-      if (chkbox) {
-         chkbox.disabled = true;
-         chkbox.checked = exp_painter; 
-      }
-      
-      if (exp_painter) {
-         loadScript(source_dir+'scripts/JSRootD3ExpPainter.js');
+function AssertPrerequisites(andThen, exp_painter) {
+
+   function AssertPainter() {
+      if ((typeof JSROOTPainter == "undefined") && (exp_painter!=null)) {
+         // exp_painter = true;
+         if (exp_painter) {
+            loadScript(source_dir+'scripts/JSRootD3ExpPainter.js', andThen);
+         } else {
+            loadScript(source_dir+'scripts/JSRootD3Painter.js', andThen);
+         }
       } else {
-         loadScript(source_dir+'scripts/JSRootD3Painter.js');
+         if (andThen!=null) andThen();
       }
    }
-}
-
-function AssertPrerequisites(andThen) {
+   
+   
    if (typeof JSROOTIO == "undefined") {
       // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
       loadScript(source_dir+'scripts/jquery.min.js', function() {
@@ -249,24 +240,17 @@ function AssertPrerequisites(andThen) {
       loadScript(source_dir+'scripts/three.min.js', function() {
       loadScript(source_dir+'fonts/helvetiker_regular.typeface.js', function() {
       loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
-         if (andThen) {
-            andThen();
-         }
-         else {
-            var url = $("#urlToLoad").val();
-            if (url == "" || url == " ") return;
-            $("#status").html("file: " + url + "<br/>");
-            ResetUI();
-            gFile = new JSROOTIO.RootFile(url);
-            $('#report').append("</body></html>");
-            var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
-            $(version).prependTo("body");
-         }
+
+         AssertPainter();
+
+         var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
+         $(version).prependTo("body");
          $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
+         
       }) }) }) }) }) }) }) }) }) });
-      return true;
+   } else {
+      AssertPainter();
    }
-   return false;
 };
 
 function ReadFile() {
@@ -288,20 +272,27 @@ function ReadFile() {
          return;
       }
    }
-   if (AssertPrerequisites(AssertDrawPrerequisites())) return;
+
+   var chkbox = document.getElementById("experimental_painter");
+   var exp_painter = false;
+   if ((chkbox!=null) && chkbox.checked) exp_painter = true;
    
-//   AssertDrawPrerequisites();
-   // else simply open the file
-   var url = $("#urlToLoad").val();
-   if (url == "" || url == " ") return;
-   $("#status").html("file: " + url + "<br/>");
-   if (gFile) {
-      gFile.Delete();
-      delete gFile;
-   }
-   gFile = null;
-   gFile = new JSROOTIO.RootFile(url);
-   $('#report').append("</body></html>");
+   AssertPrerequisites(function() {
+      
+      if (chkbox!=null) {
+         chkbox.disabled = true;
+         chkbox.checked = exp_painter; 
+      }
+
+      var url = $("#urlToLoad").val();
+      if (url == "" || url == " ") return;
+      $("#status").html("file: " + url + "<br/>");
+      if (gFile) {
+         gFile.Delete();
+         delete gFile;
+      }
+      gFile = new JSROOTIO.RootFile(url);
+   }, exp_painter);
 };
 
 function ResetUI() {

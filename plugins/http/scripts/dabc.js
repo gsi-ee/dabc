@@ -527,13 +527,9 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    if (DABC.load_root_js==0) {
       DABC.load_root_js = 1;
       AssertPrerequisites(function() {
-      
-         AssertDrawPrerequisites(true);
-         
          $("#report").append("<br> load main scripts done");
-
          DABC.load_root_js = 2; 
-      });
+      }, true);
    }
    
    // in any case, complete JSRootIO is required before we could start 

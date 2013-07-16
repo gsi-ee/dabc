@@ -6,6 +6,7 @@ of the framework.
 1. Improve log-scales handling, add appropriate context-menu commands.
 2. Implement draw optimization for TH1 histograms - at maximum draw array
    with number of points on window will be created.
+3. Improve algorithm of loading necessary scripts. 
 
 
 15.07.2013
