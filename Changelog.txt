@@ -4,6 +4,7 @@ of the framework.
 
 17.07.2013
 1. Use proper method to create patterns in canvas.
+2. Fix several small problems with TH2 drawing.
 
 
 16.07.2013

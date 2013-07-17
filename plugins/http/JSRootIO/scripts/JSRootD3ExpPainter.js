@@ -5202,29 +5202,17 @@ var gStyle = {
       return default_palette[icol];
    }
    
-   JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() 
+   JSROOTPainter.Hist2DPainter.prototype.CreateDrawBins = function(w,h,coordiantes_kind,tipkind)
    {
-      this.RemoveDraw();
-      
-      this.draw_g = this.svg_frame.append("svg:g");
-
-      var w = this.frame.attr("width"), h = this.frame.attr("height");
-
-//    this.options.Scat =1;
-//    this.histo['fMarkerStyle'] = 2;
-    
-      var draw_markers = (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1);
-      var normal_coordiantes = (this.options.Color > 0) || draw_markers;
-      
       var i1 = this.GetSelectIndex("x","left",0);
-      var i2 = this.GetSelectIndex("x","right",1);
+      var i2 = this.GetSelectIndex("x","right",0);
       var j1 = this.GetSelectIndex("y","left",0);
-      var j2 = this.GetSelectIndex("y","right",1);
+      var j2 = this.GetSelectIndex("y","right",0);
 
       var xfactor = 1, yfactor = 1;
-      if (!normal_coordiantes) {
-         xfactor = 0.4 * w / (i2-i1) / (this.maxbin - this.minbin);
-         yfactor = 0.4 * h / (j2-j1) / (this.maxbin - this.minbin);
+      if (coordiantes_kind == 1) {
+         xfactor = 0.5 * w / (i2-i1) / (this.maxbin - this.minbin);
+         yfactor = 0.5 * h / (j2-j1) / (this.maxbin - this.minbin);
       }
 
       var x1, y2, x2, y2, grx1, gry1, grx2, gry2, fillcol, shrx, shry;
@@ -5254,46 +5242,77 @@ var gStyle = {
             binz = this.histo.getBinContent(i+1, j+1);
             if (binz <= this.minbin) continue;
             
-            if (normal_coordiantes) {
-               point = {
-                 x: grx1,
-                 y: gry2,
-                 width: grx2-grx1,
-                 height: gry1-gry2,
-                 stroke: "none",
-                 fill: this.getValueColor(binz)
-               }
-            } else {
-               shrx = xfactor * (this.maxbin - binz);
-               shry = yfactor * (this.maxbin - binz);
-               
-               point = {
-                 x: grx1 + shrx,
-                 y: gry1 - shry,
-                 width: grx2-grx1-2*shrx,
-                 height: gry1-gry2-2*shry,
-                 stroke: this.linecolor,
-                 fill: this.fillcolor
-               }
+            switch (coordiantes_kind) {
+              case 0:
+                point = {
+                  x: grx1,
+                  y: gry2,
+                  width: grx2-grx1,
+                  height: gry1-gry2,
+                  stroke: "none",
+                  fill: this.getValueColor(binz)
+                 }
+                 point['tipcolor'] = (point['fill'] == "black") ? "grey" : "black";
+                 break;
+                
+               case 1: 
+                 shrx = xfactor * (this.maxbin - binz);
+                 shry = yfactor * (this.maxbin - binz);
+ 
+                 point = {
+                     x: grx1 + shrx,
+                     y: gry2 + shry,
+                     width: grx2-grx1-2*shrx,
+                     height: gry1-gry2-2*shry,
+                     stroke: this.linecolor,
+                     fill: this.fillcolor
+                 }
+                 point['tipcolor'] = (point['fill'] == "black") ? "grey" : "black";
+                 break;
+                
+               case 2: 
+                 point = {
+                    x: (x1+x2)/2,
+                    y: (y1+y2)/2,
+                    z: binz
+                 }
+               break;    
             }
-
-            point['tipcolor'] = (point['fill'] == "black") ? "grey" : "black";
-
-            if (gStyle.Tooltip > 1) {
-
-               if (draw_markers)
-                  point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " +
-                                   y1.toPrecision(4) + " \nentries = " + binz; 
-               else                     
-                  point['tip'] = "x = [" + x1.toPrecision(4) + ", " + x2.toPrecision(4) + 
-                           "] \ny = [" + y1.toPrecision(4) + ", " + y2.toPrecision(4) + 
-                           "] \nentries = " + binz;
-            }
+            
+            if (tipkind == 1)
+               point['tip'] = "x = [" + x1.toPrecision(4) + ", " + x2.toPrecision(4) + 
+                             "] \ny = [" + y1.toPrecision(4) + ", " + y2.toPrecision(4) + 
+                            "] \nentries = " + binz;
+            else 
+            if (tipkind == 2)
+                point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " +
+                                y1.toPrecision(4) + " \nentries = " + binz; 
 
             local_bins.push(point);
          }
       }
 
+      return local_bins;
+   }
+   
+   JSROOTPainter.Hist2DPainter.prototype.DrawBins = function() 
+   {
+      this.RemoveDraw();
+      
+      this.draw_g = this.svg_frame.append("svg:g");
+
+      var w = this.frame.attr("width"), h = this.frame.attr("height");
+
+//    this.options.Scat =1;
+//    this.histo['fMarkerStyle'] = 2;
+    
+      var draw_markers = (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1);
+      var normal_coordiantes = (this.options.Color > 0) || draw_markers;
+
+      var tipkind = 0;
+      if (gStyle.Tooltip > 1) tipkind = draw_markers ? 2 : 1; 
+      
+      var local_bins = this.CreateDrawBins(w,h,normal_coordiantes ? 0 : 1, tipkind);
       
       if (draw_markers) {
          
@@ -5374,6 +5393,9 @@ var gStyle = {
               .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['f0']); })
               .append("svg:title") .text(function(d) { return d.tip; });
       }
+      
+      delete local_bins;
+      local_bins = null;
    }
 
    JSROOTPainter.Hist2DPainter.prototype.ProvideTooltip = function(tip)
@@ -5651,24 +5673,27 @@ var gStyle = {
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei, hh;
-      for (var i = 0; i < this.bins.length; ++i ) {
-         hh = this.bins[i];
-         if ((hh.x < xmin) || (hh.x > xmax) || (hh.y < ymin) || (hh.y > ymax)) continue;
+      
+      var local_bins = this.CreateDrawBins(100, 100, 2, (gStyle.Tooltip > 1 ? 1 : 0));
+      
+      for (var i = 0; i < local_bins.length; ++i ) {
+         hh = local_bins[i];
          
          bin = THREE.SceneUtils.createMultiMaterialObject(
             new THREE.CubeGeometry( 2*size/this.nbinsx, hh.z, 2*size/this.nbinsy ),
             [ new THREE.MeshLambertMaterial( { color: fillcolor.getHex(), shading: THREE.NoShading } ),
               wireMaterial ] );
-         bin.position.x = tx(hh.x + this.binwidthx/2);
+         bin.position.x = tx(hh.x);
          bin.position.y = hh.z/2;
-         bin.position.z = -(ty(hh.y + this.binwidthy/2));
+         bin.position.z = -(ty(hh.y));
          
-         if (gStyle.Tooltip > 1)
-            bin.name = "x: [" + hh.x.toPrecision(4) + ", " + (hh.x + this.binwidthx).toPrecision(4) + "]<br>" +
-                       "y: [" + hh.y.toPrecision(4) + ", " + (hh.y + this.binwidthy).toPrecision(4) + "]<br>" + 
-                       "entries: " + hh.z.toFixed();
+         if (gStyle.Tooltip > 1) bin.name = hh.tip;
          toplevel.add( bin );
       }
+      
+      delete local_bins;
+      local_bins = null;
+      
       // create a point light
       var pointLight = new THREE.PointLight( 0xcfcfcf );
       pointLight.position.set(0, 50, 250);
