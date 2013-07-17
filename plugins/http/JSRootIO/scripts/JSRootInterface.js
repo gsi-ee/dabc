@@ -243,9 +243,12 @@ function AssertPrerequisites(andThen, exp_painter) {
 
          AssertPainter();
 
-         var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
-         $(version).prependTo("body");
-         $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
+         // if report element exists - this is standard ROOT layout
+         if (document.getElementById("report")) {
+            var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
+            $(version).prependTo("body");
+            $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
+         }
          
       }) }) }) }) }) }) }) }) }) });
    } else {
