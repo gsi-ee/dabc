@@ -428,7 +428,6 @@ namespace dabc {
          virtual bool Find(ConfigIO &cfg);
 
          /** \brief Method could be used to save any attributes of the object
-
           *  Implementation should look like:
           *
           *      dabc::Record rec(cont);

@@ -4,6 +4,7 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
+      <lib value="libDabcFesa.so"/>
       <!--lib value="libDabcRoot.so"/-->
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
@@ -14,9 +15,12 @@
        <enabled value="true"/>
        <port value="8090"/>
        <topname value="${Context}"/>
-       <select value="App"/>
+       <select value=""/>
        <clients value="true"/>
     </HttpServer>
+
+    <Module name="fesa" class="fesa::Player">
+    </Module>
 
     <RootSniffer name="ROOT">
        <enabled value="true"/>

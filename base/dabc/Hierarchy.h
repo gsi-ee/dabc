@@ -185,7 +185,6 @@ namespace dabc {
 
       bool UpdateFromXml(const std::string& xml);
 
-      /** kind = 0 in html format, 1 - in ajax format */
       std::string SaveToJSON(bool compact = false, bool excludetop = false);
    };
 

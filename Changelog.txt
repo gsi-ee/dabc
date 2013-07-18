@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+18.07.2013
+1. Introduce FESA plugin in DABC. At the moment it is just dummy code,
+   which create simple 2D beam profile object. Plugin dose to demonstrate how
+   arbitrary binary data (not necessarly ROOT) can be created in DABC and 
+   exported to the browser. Version control is provided.    
+2. Provide in dabc.js code to display FESA.2D objects. 
+   ROOT painter is used to draw profile in form of 2D histopgram in col mode
+
+
 17.07.2013
 1. Use proper method to create patterns in canvas.
 2. Fix several small problems with TH2 drawing.

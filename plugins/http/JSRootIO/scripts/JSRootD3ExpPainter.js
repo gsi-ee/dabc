@@ -1843,7 +1843,7 @@ var gStyle = {
       if (ymax > 0.0) ymax *= 1.05;
       if (ymin < 0.0) ymin *= 1.05;
 
-      var histo = JSROOTPainter.CreateDummyHisto();
+      var histo = JSROOTPainter.Create1DHisto();
       
       histo['fName'] = this.tf1['fName'] + "_hist";
       histo['fTitle'] = this.tf1['fTitle'];
@@ -5050,7 +5050,7 @@ var gStyle = {
             if (bin_content > this.maxbin) this.maxbin = bin_content;
          }
       }
-      
+
       // used to enable/disable stat box
       this.draw_content = this.maxbin>0; 
    }
@@ -5309,11 +5309,12 @@ var gStyle = {
       var draw_markers = (this.options.Scat > 0 && this.histo['fMarkerStyle'] > 1);
       var normal_coordiantes = (this.options.Color > 0) || draw_markers;
 
+      
       var tipkind = 0;
       if (gStyle.Tooltip > 1) tipkind = draw_markers ? 2 : 1; 
       
       var local_bins = this.CreateDrawBins(w,h,normal_coordiantes ? 0 : 1, tipkind);
-      
+
       if (draw_markers) {
          
          // Add markers
@@ -6411,9 +6412,9 @@ var gStyle = {
       return axis;
    }
 
-   JSROOTPainter.CreateDummyHisto = function() {
+   JSROOTPainter.Create1DHisto = function(nbinsx) {
       var histo = {};
-      histo['_typename'] = "ROOTIO.TH1I";
+      histo['_typename'] = "JSROOTIO.TH1I";
       histo['fBits'] = 0x3000008;
       histo['fName'] = "dummy_histo_" + random_id++;
       histo['fTitle'] = "dummytitle";
@@ -6428,9 +6429,60 @@ var gStyle = {
       histo['fN'] = 0;
       histo['fArray'] = new Array;
       histo['fSumw2'] = new Array;
+      histo['fFunctions'] = new Array;
 
       histo['fXaxis'] = JSROOTPainter.CreateDummyAxis();
       histo['fYaxis'] = JSROOTPainter.CreateDummyAxis();
+      
+      if (nbinsx!=null) {
+         histo['fNcells'] = nbinsx+2; 
+         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
+         histo['fXaxis']['fNbins'] = nbinsx; 
+         histo['fXaxis']['fXmin'] = 0;
+         histo['fXaxis']['fXmax'] = nbinsx;
+      }
+
+      JSROOTCore.addMethods(histo);
+
+      return histo;
+   }
+
+   JSROOTPainter.Create2DHisto = function(nbinsx, nbinsy) {
+      var histo = {};
+      histo['_typename'] = "JSROOTIO.TH2I";
+      histo['fBits'] = 0x3000008;
+      histo['fName'] = "dummy_histo_" + random_id++;
+      histo['fTitle'] = "dummytitle";
+      histo['fMinimum'] = -1111;
+      histo['fMaximum'] = -1111;
+      histo['fOption'] = "";
+      histo['fFillColor'] = 0;
+      histo['fLineColor'] = 0;
+      histo['fLineWidth'] = 1;
+      histo['fBinStatErrOpt'] = 0;
+      histo['fNcells'] = 0;
+      histo['fN'] = 0;
+      histo['fArray'] = new Array;
+      histo['fSumw2'] = new Array;
+      histo['fFunctions'] = new Array;
+      histo['fContour'] = new Array;
+
+      histo['fXaxis'] = JSROOTPainter.CreateDummyAxis();
+      histo['fYaxis'] = JSROOTPainter.CreateDummyAxis();
+      histo['fZaxis'] = JSROOTPainter.CreateDummyAxis();
+      
+      if ((nbinsx!=null) && (nbinsy!=null)) {
+         histo['fNcells'] = (nbinsx+2) * (nbinsy+2);
+         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
+         histo['fXaxis']['fNbins'] = nbinsx; 
+         histo['fYaxis']['fNbins'] = nbinsy;
+         
+         histo['fXaxis']['fXmin'] = 0;
+         histo['fXaxis']['fXmax'] = nbinsx;
+         histo['fYaxis']['fXmin'] = 0;
+         histo['fYaxis']['fXmax'] = nbinsy;
+      }
+      
       JSROOTCore.addMethods(histo);
 
       return histo;
@@ -6532,7 +6584,7 @@ var gStyle = {
       // Create a temporary histogram to draw the axis (if necessary)
       if (!histo) {
          // $("#report").append("<br> create dummy histo");
-         histo = JSROOTPainter.CreateDummyHisto(); 
+         histo = JSROOTPainter.Create1DHisto(); 
          histo['fXaxis']['fXmin'] = rwxmin;
          histo['fXaxis']['fXmax'] = rwxmax;
          histo['fYaxis']['fXmin'] = rwymin;

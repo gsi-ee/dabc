@@ -288,6 +288,172 @@ DABC.HierarchyDrawElement.prototype.Clear = function() {
 
 // ======== end of HierarchyDrawElement ======================
 
+// ================ start of FesaDrawElement
+
+DABC.FesaDrawElement = function(_clname) {
+   DABC.DrawElement.call(this);
+   this.clname = _clname;     // FESA class name
+   this.data = null;          // raw data
+   this.root_obj = null;      // root object, required for draw
+   this.root_painter = null;  // root object, required for draw
+   this.req = null;           // request to get raw data
+}
+
+DABC.FesaDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.FesaDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+
+   this.clname = "";         // ROOT class name
+   this.root_obj = null;     // object itself, for streamer info is file instance
+   this.root_painter = null;
+   this.data = null;          // raw data
+   if (this.req) this.req.abort(); 
+   this.req = null;          // this is current request
+   this.force = true;
+}
+
+DABC.FesaDrawElement.prototype.CreateFrames = function(topid, id) {
+   this.frameid = "dabcobj" + id;
+   
+   var entryInfo = "<div id='" + this.frameid + "'/>";
+   $(topid).append(entryInfo);
+   
+   var render_to = "#" + this.frameid;
+   var element = $(render_to);
+      
+   var fillcolor = 'white';
+   var factor = 0.66666;
+      
+   d3.select(render_to).style("background-color", fillcolor);
+   d3.select(render_to).style("width", "100%");
+
+   var w = element.width(), h = w * factor; 
+
+   this.vis = d3.select(render_to)
+                   .append("svg")
+                   .attr("width", w)
+                   .attr("height", h)
+                   .style("background-color", fillcolor);
+      
+   this.vis.append("svg:title").text(this.itemname);
+}
+
+DABC.FesaDrawElement.prototype.ClickItem = function() {
+   if (this.req != null) return; 
+
+   if (!this.IsDrawn()) 
+      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
+   this.force = true;
+   
+   this.RegularCheck();
+}
+
+DABC.FesaDrawElement.prototype.RegularCheck = function() {
+
+   if (DABC.load_root_js==0) {
+      DABC.load_root_js = 1;
+      AssertPrerequisites(function() {
+         // $("#dabc_draw").append("<br> load main scripts done");
+         DABC.load_root_js = 2; 
+      }, true);
+   }
+   
+   // in any case, complete JSRootIO is required before we could start 
+   if (DABC.load_root_js < 2) return;
+   
+   // no need to do something when req not completed
+   if (this.req!=null) return;
+ 
+   // do update when monitoring enabled
+   if ((this.version > 0) && !this.force) {
+      var chkbox = document.getElementById("monitoring");
+      if (!chkbox || !chkbox.checked) return;
+   }
+        
+   var url = "getbinary?" + this.itemname;
+   
+   if (this.version>0) url += "&ver=" + this.version;
+
+   this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
+
+   this.req.send(null);
+
+   this.force = false;
+}
+
+
+DABC.FesaDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
+   // in any case, request pointer will be reseted
+   // delete this.req;
+   this.req = null;
+   
+   if (this.version == ver) {
+      console.log("Same version of beam profile " + ver);
+      return;
+   }
+   
+   if (arg==null) {
+      alert("no data for beamprofile when expected");
+      return;
+   } 
+
+   this.data = arg;
+   this.version = ver;
+
+   this.vis.select("title").text(this.itemname + 
+         "\nversion = " + this.version + ", size = " + this.data.length);
+
+   if (!this.ReconstructObject()) return;
+   
+   if (this.root_painter != null) {
+      this.root_painter.RedrawFrame();
+   } else {
+      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, this.root_obj);
+      
+      if (this.root_painter == -1) this.root_painter = null;
+   }
+}
+
+DABC.ntou4 = function(b, o) {
+   // convert (read) four bytes of buffer b into a uint32_t
+   var n  = (b.charCodeAt(o)   & 0xff);
+       n += (b.charCodeAt(o+1) & 0xff) << 8;
+       n += (b.charCodeAt(o+2) & 0xff) << 16;
+       n += (b.charCodeAt(o+3) & 0xff) << 24;
+   return n;
+}
+
+DABC.FesaDrawElement.prototype.ReconstructObject = function()
+{
+   if (this.clname != "2D") return false;
+   
+   if (this.root_obj == null) {
+      this.root_obj = JSROOTPainter.Create2DHisto(16, 16);
+      this.root_obj['fName']  = "BeamProfile";
+      this.root_obj['fTitle'] = "Beam profile from FESA";
+      this.root_obj['fOption'] = "col";
+//      console.log("Create histogram");
+   }
+   
+   if ((this.data==null) || (this.data.length != 16*16*4)) {
+      alert("no proper data for beam profile");
+      return false;
+   }
+   
+   var o = 0;
+   for (var iy=0;iy<16;iy++)
+      for (var ix=0;ix<16;ix++) {
+         var value = DABC.ntou4(this.data, o); o+=4;
+         var bin = this.root_obj.getBin(ix+1, iy+1);
+         this.root_obj.setBinContent(bin, value);
+//         if (iy==5) console.log("Set content " + value);
+      }
+   
+   return true;
+}
+
 
 
 // ======== start of RootDrawElement ======================
@@ -299,12 +465,10 @@ DABC.RootDrawElement = function(_clname) {
    this.obj = null;          // object itself, for streamer info is file instance
    this.sinfo = null;        // used to refer to the streamer info record
    this.req = null;          // this is current request
-   this.titleid = "";     
-   this.drawid = 0;          // numeric id of pad, where ROOT object is drawn
    this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
    this.painter = null;      // pointer on painter, can be used for update
    
-   this.raw_data = null;  // raw data kept in the item when object cannot be reconstructed immediately
+   this.raw_data = null;    // raw data kept in the item when object cannot be reconstructed immediately
    this.raw_data_version = 0;   // verison of object in the raw data, will be copied into object when completely reconstructed
    this.raw_data_size = 0;      // size of raw data, can be displayed
    this.need_master_version = 0; // this is version, required for the master item (streamer info)
@@ -319,23 +483,34 @@ DABC.RootDrawElement = function(_clname) {
    this.state = this.StateEnum.stInit;   
 }
 
-// TODO: check how it works in different older browsers
 DABC.RootDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
+DABC.RootDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+
+   this.clname = "";         // ROOT class name
+   this.obj = null;          // object itself, for streamer info is file instance
+   this.sinfo = null;        // used to refer to the streamer info record
+   if (this.req) this.req.abort(); 
+   this.req = null;          // this is current request
+   this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
+   this.painter = null;      // pointer on painter, can be used for update
+}
+
+
+
 DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.drawid = id;
-   this.frameid = "dabcobj" + this.drawid;
-   this.titleid = "dabctitle" + this.drawid; 
+   this.frameid = "dabcobj" + id;
    
    this.first_draw = true;
    
-   var entryInfo = ""; //"<div style='width:50%'>";
+   var entryInfo = ""; 
    if (this.sinfo) {
-      entryInfo += "<h5 id='"+this.titleid+"'><a id='"+this.titleid + "_text'>" + this.itemname + "</a></h5>";
       entryInfo += "<div id='" + this.frameid + "'/>";
    } else {
-      entryInfo += "<h5 id='"+this.titleid+"'><a> Streamer Infos </a>&nbsp; </h5>";
-      entryInfo += "<div><h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>";
+      entryInfo += "<h5><a> Streamer Infos </a>&nbsp; </h5>";
+      entryInfo += "<div style='overflow:auto'><h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>";
    }
    //entryInfo+="</div>";
    $(topid).append(entryInfo);
@@ -358,6 +533,8 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
                    .attr("height", h)
                    .style("background-color", fillcolor);
       
+      this.vis.append("svg:title").text(this.itemname);
+      
 //      console.log("create visual pane of width " + w + "  height " + h)
    }
    
@@ -373,7 +550,7 @@ DABC.RootDrawElement.prototype.ClickItem = function() {
    if (this.clname == "TCanvas") return;
 
    if (!this.IsDrawn()) 
-      this.CreateFrames(this.NextCell(), this.cnt++);
+      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
       
    this.state = this.StateEnum.stInit;
    this.RegularCheck();
@@ -392,14 +569,13 @@ DABC.RootDrawElement.prototype.HasVersion = function(ver) {
 
 // if frame created and exists
 DABC.RootDrawElement.prototype.DrawObject = function() {
-   if ((this.drawid==0) || !this.obj) return;
+   if (this.obj == null) return;
 
-   var child = document.getElementById(this.titleid + "_text");
-   // if (child) $("#dabc_draw").append("<br>child " + child.innerHTML);
-   if (child) child.innerHTML = 
-      this.itemname + ",   version = " + this.version + ", size = " + this.raw_data_size; 
-   
    if (this.sinfo) {
+   
+      if (this.vis!=null)
+        this.vis.select("title").text(this.itemname + 
+                                      "\nversion = " + this.version + ", size = " + this.raw_data_size);
       
       if (this.painter != null) {
          this.painter.RedrawFrame();
@@ -419,7 +595,6 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
       gFile = 0;
    }
    
-//   if (this.first_draw) addCollapsible("#"+this.titleid);
    this.first_draw = false;
 }
 
@@ -501,7 +676,7 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
 DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // in any case, request pointer will be reseted
    // delete this.req;
-   this.req = 0;
+   this.req = null;
    
    if (this.state != this.StateEnum.stWaitRequest) {
       alert("item not in wait request state");
@@ -629,21 +804,6 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    this.req.send(null);
    
    this.state = this.StateEnum.stWaitRequest;
-}
-
-DABC.RootDrawElement.prototype.Clear = function() {
-   
-   DABC.DrawElement.prototype.Clear.call(this);
-
-   this.clname = _clname;    // ROOT class name
-   this.obj = null;          // object itself, for streamer info is file instance
-   this.sinfo = null;        // used to refer to the streamer info record
-   if (this.req) this.req.abort(); 
-   this.req = null;          // this is current request
-   this.titleid = "";     
-   this.drawid = 0;          // numeric id of pad, where ROOT object is drawn
-   this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
-   this.painter = null;      // pointer on painter, can be used for update
 }
 
 
@@ -951,6 +1111,16 @@ DABC.Manager.prototype.display = function(itemname) {
       this.arr.push(elem);
       return;
    }
+   
+   if (kind.indexOf("FESA.") == 0) {
+      elem = new DABC.FesaDrawElement(kind.substr(5));
+      elem.itemname = itemname;
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      this.arr.push(elem);
+      elem.RegularCheck();
+      return;
+   }
+   
    
    // any non-ROOT is ignored for the moment
    if (kind.indexOf("ROOT.") != 0) return; 
