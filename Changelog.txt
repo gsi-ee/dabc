@@ -4,14 +4,17 @@ of the framework.
 
 18.07.2013
 1. Introduce FESA plugin in DABC. At the moment it is just dummy code,
-   which create simple 2D beam profile object. Plugin dose to demonstrate how
+   which creates simple 2D beam profile array. Plugin demonstrates how
    arbitrary binary data (not necessarly ROOT) can be created in DABC and 
    exported to the browser. Version control is provided.    
 2. Provide in dabc.js code to display FESA.2D objects. 
    ROOT painter is used to draw profile in form of 2D histopgram in col mode
 3. In RootSniffer extract code which responds for master production and 
    placed it in separate class BinaryProducer. Idea to reuse code at other places,
-   where ROOT classes need to be involved 
+   where ROOT classes need to be involved
+4. Add in FESA plugin demonstrator showing how arbitrary ROOT objects
+   can be add to hierarchy and provided to browser. This solution could simplify GUI
+   development - one could use ROOT graphics directly.  
 
 
 17.07.2013

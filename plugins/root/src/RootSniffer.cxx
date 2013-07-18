@@ -85,6 +85,8 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
 dabc_root::RootSniffer::~RootSniffer()
 {
    if (fTimer) fTimer->fSniffer = 0;
+
+   if (fProducer) { delete fProducer; fProducer = 0; }
 }
 
 void dabc_root::RootSniffer::OnThreadAssigned()

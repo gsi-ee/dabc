@@ -4,8 +4,8 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
+      <lib value="libDabcRoot.so"/>
       <lib value="libDabcFesa.so"/>
-      <!--lib value="libDabcRoot.so"/-->
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
@@ -23,7 +23,7 @@
     </Module>
 
     <RootSniffer name="ROOT">
-       <enabled value="true"/>
+       <enabled value="false"/>
     </RootSniffer>
 
     <MemoryPool name="Pool">

@@ -24,7 +24,6 @@
 #endif
 
 
-
 namespace fesa {
 
    /** \brief Player of FESA data
@@ -43,6 +42,9 @@ namespace fesa {
          dabc::Hierarchy fHierarchy;
 
          unsigned fCounter;
+
+         dabc::Reference fProducer;   ///< binary producer for ROOT objects
+         void* fHist;                 ///< ROOT histogram
 
       public:
 
