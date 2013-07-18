@@ -38,21 +38,8 @@ class TDabcTimer;
 
 namespace dabc_root {
 
-   /** \brief %RootBinDataContainer provides access to ROOT TBuffer object for DABC
-    *
-    */
 
-   class RootBinDataContainer : public dabc::BinDataContainer {
-      protected:
-         TBufferFile* fBuf;
-      public:
-         RootBinDataContainer(TBufferFile* buf);
-         virtual ~RootBinDataContainer();
-
-         virtual void* data() const;
-         virtual unsigned length() const;
-   };
-
+   class BinaryProducer;
 
    /** \brief %RootSniffer provides access to ROOT objects for DABC
     *
@@ -64,8 +51,10 @@ namespace dabc_root {
 
       protected:
          bool fEnabled;
-         bool fBatch;           ///< if true, batch mode will be activated
-         int  fCompression;      ///< compression level, default 5
+         bool fBatch;             ///< if true, batch mode will be activated
+         int  fCompression;       ///< compression level, default 5
+
+         BinaryProducer*  fProducer;  ///< object which will convert ROOT objects into binary data
 
          ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context
 
@@ -79,10 +68,6 @@ namespace dabc_root {
          dabc::Mutex fHierarchyMutex; ///< used to protect content of hierarchy
 
          dabc::CommandsQueue fRootCmds; ///< list of commands, which must be executed in the ROOT context
-
-         TMemFile*   fMemFile;         ///< file used to generate streamer infos
-
-         int         fSinfoSize;       ///< size of last generated streamer info
 
          dabc::TimeStamp fLastUpdate;
 
@@ -104,12 +89,7 @@ namespace dabc_root {
          static bool IsDrawableClass(TClass* cl);
          static bool IsBrowsableClass(TClass* cl);
 
-         TBufferFile* ProduceStreamerInfos();
-         TBufferFile* ProduceStreamerInfosMem();
-
          void ProcessActionsInRootContext();
-
-         int SimpleGetBinary(dabc::Command cmd);
 
          int ProcessGetBinary(dabc::Command cmd);
 
@@ -124,7 +104,6 @@ namespace dabc_root {
          virtual const char* ClassName() const { return "RootSniffer"; }
 
          bool IsEnabled() const { return fEnabled; }
-
 
          /** Create TTimer object, which allows to perform action in ROOT context */
          void InstallSniffTimer();

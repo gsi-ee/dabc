@@ -9,6 +9,9 @@ of the framework.
    exported to the browser. Version control is provided.    
 2. Provide in dabc.js code to display FESA.2D objects. 
    ROOT painter is used to draw profile in form of 2D histopgram in col mode
+3. In RootSniffer extract code which responds for master production and 
+   placed it in separate class BinaryProducer. Idea to reuse code at other places,
+   where ROOT classes need to be involved 
 
 
 17.07.2013

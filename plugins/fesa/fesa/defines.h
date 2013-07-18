@@ -16,6 +16,7 @@
 #define FESA_defines
 
 #include <stdint.h>
+#include <math.h>
 
 namespace fesa {
 
@@ -41,7 +42,7 @@ namespace fesa {
                   case 2: arr[x][y] = sizex - x + y; break;
                   case 3: arr[x][y] = x + sizey-y; break;
                   default: {
-                     arr[x][y] = (x-sizex/2)*(x-sizex/2) + (y-sizey/2)*(y-sizey/2);
+                     arr[x][y] = (unsigned) (sizex + sizey - 3*sqrt((x-sizex/2)*(x-sizex/2) + (y-sizey/2)*(y-sizey/2)));
                   }
                }
       }
