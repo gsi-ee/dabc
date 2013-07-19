@@ -398,6 +398,82 @@ void dabc::MemoryPool::_TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, un
    }
 }
 
+dabc::BufferNew dabc::MemoryPool::_TakeBufferNew(BufferSize_t size, bool except, bool reserve_memory) throw()
+{
+   BufferNew res;
+
+//   DOUT0("_TakeBuffer obj %p", &res);
+
+   // if no memory is available, try to allocate it
+   if ((fMem==0) || (fSeg==0)) _Allocate();
+
+   if ((fMem==0) || (fSeg==0)) {
+      if (except) throw dabc::Exception(ex_Pool, "No memory allocated in the pool", ItemName());
+      return res;
+   }
+
+   if (!fMem->IsAnyFree() && reserve_memory) {
+      if (except) throw dabc::Exception(ex_Pool, "No any memory is available in the pool", ItemName());
+      return res;
+   }
+
+   if ((size==0) && reserve_memory) size = fMem->fArr[fMem->fFree.Front()].size;
+
+   // first check if required size is available
+   BufferSize_t sum(0);
+   unsigned cnt(0);
+   while (sum<size) {
+      if (cnt>=fMem->fFree.Size()) {
+         if (except) throw dabc::Exception(ex_Pool, "Cannot reserve buffer of requested size", ItemName());
+         return res;
+      }
+
+      unsigned id = fMem->fFree.Item(cnt);
+      sum += fMem->fArr[id].size;
+      cnt++;
+   }
+
+   res.AllocateContainer(cnt < 8 ? 8 : cnt);
+
+   sum = 0;
+   cnt = 0;
+   MemSegment* segs = res.Segments();
+
+   while (sum<size) {
+      unsigned id = fMem->fFree.Pop();
+
+      if (fMem->fArr[id].refcnt!=0)
+         throw dabc::Exception(ex_Pool, "Buffer is not free even is declared so", ItemName());
+
+      if (cnt>=res.GetObject()->fCapacity)
+         throw dabc::Exception(ex_Pool, "All mem segments does not fit into preallocated list", ItemName());
+
+      segs[cnt].buffer = fMem->fArr[id].buf;
+      segs[cnt].datasize = fMem->fArr[id].size;
+      segs[cnt].id = id;
+
+      // Provide buffer of exactly requested size
+      BufferSize_t restsize = size - sum;
+      if (restsize < segs[cnt].datasize) segs[cnt].datasize = restsize;
+
+      sum += fMem->fArr[id].size;
+
+      // increment reference counter on the memory space
+      fMem->fArr[id].refcnt++;
+
+      cnt++;
+   }
+
+   res.GetObject()->fPool.SetObject(this, false);
+
+   res.GetObject()->fNumSegments = cnt;
+
+   res.SetTypeId(mbt_Generic);
+
+   return res;
+}
+
+
 
 dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool reserve_memory) throw()
 {
@@ -486,6 +562,21 @@ dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
 
    return res;
 }
+
+
+dabc::BufferNew dabc::MemoryPool::TakeBufferNew(BufferSize_t size) throw()
+{
+   dabc::BufferNew res;
+
+   {
+      LockGuard lock(ObjectMutex());
+
+      res = _TakeBufferNew(size, true);
+   }
+
+   return res;
+}
+
 
 dabc::Buffer dabc::MemoryPool::TakeEmpty(unsigned capacity) throw()
 {
@@ -588,7 +679,6 @@ void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num) throw()
 
       fMem->fArr[id].refcnt--;
    }
-
 }
 
 bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)

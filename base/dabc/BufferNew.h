@@ -15,10 +15,12 @@
 namespace dabc {
    class BufferNew;
 
+   class MemoryPool;
    class Pointer;
 
    class BufferContainer : public Object {
       friend class BufferNew;
+      friend class MemoryPool;
 
       protected:
          unsigned     fTypeId;       ///< buffer type, identifies content of the buffer
@@ -47,6 +49,8 @@ namespace dabc {
 
 
    class BufferNew : public Reference {
+
+      friend class MemoryPool;
 
       static bool transient_refs() { return false; }
 

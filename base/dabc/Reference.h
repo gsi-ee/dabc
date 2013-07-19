@@ -94,8 +94,6 @@ namespace dabc {
 
          Reference(bool withmutex, Object* obj) throw();
 
-         void SetObject(Object* obj, bool owner = false, bool withmutex = true) throw();
-
          Mutex* ObjectMutex() const;
 
          /** \brief Method used in copy constructor and assigned operations */
@@ -143,6 +141,10 @@ namespace dabc {
 
          /** \brief Set ownership flag for reference  */
          inline void SetOwner(bool on = true) { SetFlag(flOwner, on); }
+
+         /** \brief Direct set of object to reference.
+          * withmutex = false means that user already lock object mutex */
+         void SetObject(Object* obj, bool owner = false, bool withmutex = true) throw();
 
          /** \brief Returns number of references on the object */
          unsigned NumReferences() const;

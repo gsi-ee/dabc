@@ -28,6 +28,10 @@
 #include "dabc/Buffer.h"
 #endif
 
+#ifndef DABC_BufferNew
+#include "dabc/BufferNew.h"
+#endif
+
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif
@@ -111,6 +115,9 @@ namespace dabc {
          static void _TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, unsigned numsegm);
 
          Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true) throw();
+
+         /** Central method, which reserves memory from pool and fill structures of buffer */
+         BufferNew _TakeBufferNew(BufferSize_t size, bool except, bool reserve_memory = true) throw();
 
          /** Method to allocate memory for the pool, mutex should be locked */
          bool _Allocate(BufferSize_t bufsize = 0, unsigned number = 0, unsigned refcoef = 0) throw();
@@ -227,6 +234,15 @@ namespace dabc {
           * Returned object will have at least specified size (means, size can be bigger).
           * In case when memory pool cannot provide specified memory exception will be thrown */
          Buffer TakeBuffer(BufferSize_t size = 0) throw();
+
+         /** \brief Returns Buffer object with exclusive access rights
+          *
+          * \param[in] size defines requested buffer area, if = 0 returns next empty buffer
+          * If size longer as single buffer, memory pool will try to produce segmented list.
+          * Returned object will have at least specified size (means, size can be bigger).
+          * In case when memory pool cannot provide specified memory exception will be thrown */
+         BufferNew TakeBufferNew(BufferSize_t size = 0) throw();
+
 
          /** \brief Returns Buffer object without any memory reserved.
           *

@@ -47,8 +47,9 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
       return false;
    }
 
-   // put here a dummy event into file:
+   fReadingMode = false;
 
+   // put here a dummy event into file:
    hadaq::RawEvent evnt;
    evnt.Init(0, runid, EvtId_runStart);
    if(!WriteBuffer(&evnt, sizeof(evnt))) {
@@ -56,7 +57,6 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
       return false;
    }
 
-   fReadingMode = false;
    fRunNumber = runid;
 
    return true;
