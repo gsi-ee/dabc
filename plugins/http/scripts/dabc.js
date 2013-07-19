@@ -1,6 +1,6 @@
 DABC = {};
 
-DABC.version = "2.3.0";
+DABC.version = "2.3.1";
 
 DABC.mgr = 0;
 

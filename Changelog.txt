@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+19.07.2013
+1. Create tag with version 2.3.0. Start small redesign of buffer classes.
+
+
 18.07.2013
 1. Introduce FESA plugin in DABC. At the moment it is just dummy code,
    which creates simple 2D beam profile array. Plugin demonstrates how

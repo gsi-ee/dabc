@@ -18,8 +18,8 @@
 
 #include <stdint.h>
 
-#ifndef DABC_Reference
-#include "dabc/Reference.h"
+#ifndef DABC_Object
+#include "dabc/Object.h"
 #endif
 
 namespace dabc {
@@ -50,6 +50,8 @@ namespace dabc {
       unsigned        id;        ///< id of the buffer
       unsigned        datasize;  ///< length of data
       void*           buffer;    ///< pointer on the beginning of buffer (must be in the area of id)
+      void copy_from(MemSegment* src)
+        { id = src->id; datasize = src->datasize; buffer = src->buffer; }
    };
 
    /** \brief Contains reference on memory from memory pool
@@ -280,6 +282,7 @@ namespace dabc {
           * Therefore it can be used in standalone case */
          static Buffer CreateBuffer(const void* ptr, unsigned size, bool owner = false) throw();
    };
+
 
 };
 

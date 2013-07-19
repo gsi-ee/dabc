@@ -50,10 +50,15 @@ namespace dabc {
     * Allocates and manage memory, which than can be accessed via \ref dabc::Buffer class
     */
 
+   class BufferNew;
+   class BufferContainer;
+
    class MemoryPool : public ModuleAsync {
       friend class Manager;
       friend class Buffer;
       friend class MemoryPoolRef;
+      friend class BufferNew;
+      friend class BufferContainer;
 
       struct RequesterReq {
          BufferSize_t   size;
