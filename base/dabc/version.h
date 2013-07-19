@@ -29,7 +29,7 @@
  *
 */
 
-#define DABC_RELEASE "2.2.1"
+#define DABC_RELEASE "2.3.0"
 #define DABC_VERSION_CODE 0x20201
 #define DABC_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 
