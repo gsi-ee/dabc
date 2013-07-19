@@ -56,6 +56,16 @@ namespace dabc {
 
       DABC_REFERENCE(BufferNew, Reference, BufferContainer)
 
+      protected:
+
+         void Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shift) const;
+
+         void AllocateContainer(unsigned capacity);
+
+         MemoryPool* PoolPtr() const;
+
+      public:
+
       void SetTypeId(unsigned tid) { if (!null()) GetObject()->fTypeId = tid; }
       inline unsigned GetTypeId() const { return null() ? 0 : GetObject()->fTypeId; }
 
@@ -204,15 +214,6 @@ namespace dabc {
        * TODO: one can exclude pointer and just cut buffer pieces until buffer is empty
        */
       BufferNew GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented = true) throw();
-
-
-      protected:
-
-      void Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shift) const;
-
-      void AllocateContainer(unsigned capacity);
-
-      MemoryPool* PoolPtr() const;
 
 
       // ===================================================================================

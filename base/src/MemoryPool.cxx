@@ -464,7 +464,8 @@ dabc::BufferNew dabc::MemoryPool::_TakeBufferNew(BufferSize_t size, bool except,
       cnt++;
    }
 
-   res.GetObject()->fPool.SetObject(this, false);
+
+   res.GetObject()->fPool.SetObject(this, false, false);
 
    res.GetObject()->fNumSegments = cnt;
 

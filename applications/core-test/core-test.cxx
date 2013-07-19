@@ -20,6 +20,7 @@
 #include "dabc/ModuleSync.h"
 #include "dabc/Parameter.h"
 #include "dabc/Buffer.h"
+#include "dabc/BufferNew.h"
 #include "dabc/BuffersQueue.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
@@ -37,6 +38,7 @@
 
 long global_cnt = 0;
 bool global_cnt_fill = false;
+
 
 class TestModuleAsync : public dabc::ModuleAsync {
    protected:
@@ -1081,72 +1083,84 @@ extern "C" void RunPoolTest()
 
       pool1.Allocate(0x1000, 1000, 2);
 
+      DOUT0("Allocate pool done");
 
-      dabc::Buffer buf1;
-      buf1 = pool1.TakeBuffer(0x4000);
+
+      dabc::BufferNew buf1;
+
+      DOUT0("Taking buffer ");
+
+
+      buf1 = pool1.TakeBufferNew(0x4000);
 
       DOUT0("buf1 = %p", &buf1);
 
-      DOUT0("Full size = %u numsegm %u", buf1.GetTotalSize(), buf1.NumSegments());
+      DOUT0("Full size1 = %u numsegm %u", buf1.GetTotalSize(), buf1.NumSegments());
 
-      dabc::Buffer buf2 = buf1.Duplicate();
+      dabc::BufferNew buf2 = buf1.Duplicate();
 
-      DOUT0("Full size1 = %u size2 = %u", buf1.GetTotalSize(), buf2.GetTotalSize());
+      DOUT0("Full size2 = %u size2 = %u", buf1.GetTotalSize(), buf2.GetTotalSize());
 
-      unsigned cnt(0);
+//      buf1.Release(); buf2.Release();
+
+/*      unsigned cnt(0);
       dabc::Buffer hdr;
       dabc::Pointer ptr = buf2;
-
       while (!(hdr = buf2.GetNextPart(ptr, 16)).null()) cnt++;
-
       DOUT0("Get %u number of small parts, expected %u", cnt, 0x4000/16);
 
       ptr = buf2;
-
       hdr = buf2.GetNextPart(ptr, 16);
       hdr.CopyFromStr("First second");
-
       dabc::Buffer hdr2 = buf2.GetNextPart(ptr, 16);
-
       hdr2.CopyFromStr(" in between");
       hdr2.SetTotalSize(11);
-
       hdr.Insert(5, hdr2);
-
       DOUT0("Result of insertion is: %s", hdr.AsStdString().c_str());
+*/
 
       const char* mystr = "This is example of external buffer";
 
-      buf1 = dabc::Buffer::CreateBuffer(mystr, strlen(mystr), false);
+      buf1 = dabc::BufferNew::CreateBuffer(mystr, strlen(mystr), false);
 
       DOUT0("Ext buffer: %s", buf1.AsStdString().c_str());
+
+
+      char* newbuf = (char*) malloc(256);
+      strcpy(newbuf,"This is own buffer");
+
+      buf2 = dabc::BufferNew::CreateBuffer(newbuf, strlen(newbuf), true);
+
+      DOUT0("Ext buffer: %s", buf2.AsStdString().c_str());
+
+      /*
 
       DOUT0(" ============================= create queue ======================= ");
 
       dabc::BuffersQueue queue(50);
       for (int n=0;n<50;n++) {
-         dabc::Buffer buf = pool1.TakeBuffer(0x4000);
-         queue.PushBuffer(buf);
+         dabc::BufferNew buf = pool1.TakeBufferNew(0x4000);
+         // queue.PushBuffer(buf);
       }
 
       DOUT0("1.Size = %u", queue.Item(5).GetTotalSize());
 
-      buf1 = queue.Item(5);
+      //buf1 = queue.Item(5);
 
       DOUT0("2.Size = %u", queue.Item(5).GetTotalSize());
 
-      buf1 = queue.Item(5).Duplicate();
+      //buf1 = queue.Item(5).Duplicate();
 
       DOUT0("3.Size = %u", queue.Item(5).GetTotalSize());
 
-      buf1 = queue.Item(5);
+      //buf1 = queue.Item(5);
 
       DOUT0("4.Size = %u", queue.Item(5).GetTotalSize());
 
-      queue.Cleanup();
+      //queue.Cleanup();
 
       DOUT0(" ============================= cleanup queue ======================= ");
-
+*/
    }
 
    pool1.Release();
@@ -1348,6 +1362,43 @@ extern "C" void RunCPPTest()
 
 
    }
+}
+
+class MyClass {
+   public:
+
+      int fValue;
+      float arr[3];
+
+      MyClass() : fValue(0) {}
+      virtual ~MyClass() {}
+
+      virtual void SetValue(int a) { fValue = a; }
+
+//      void* operator new(size_t sz) {
+//         printf ("Allocate size %d\n", (int) sz);
+//         return malloc(sz);
+//      }
+      void operator delete(void* ptr)
+      {
+         printf ("delete ptr\n");
+         free(ptr);
+      }
+
+};
+
+
+extern "C" void TestNew()
+{
+   printf("Sizeof = %d\n", (int) sizeof(MyClass));
+
+   void* ptr = malloc(sizeof(MyClass));
+
+   MyClass* a = new (ptr) MyClass;
+
+   a->SetValue(123);
+
+   delete a;
 }
 
 
