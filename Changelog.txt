@@ -34,7 +34,10 @@ of the framework.
    No need of Reference::Ref() method - now assignment operator works as expected 
    (no any more transient objects) 
 9. Go back to non-recursive mutexes - using them, one has better chance to detect deadlocks.
-       
+10.First step in implementing history recording for dabc::Hierarchy. 
+   If attribute of hierarchy item changes, one can produce diff string with only
+   changed attributes and adding time stamp when change was record. Just in debug output.
+          
 
 22.07.2013
 1. Replace Hierarchy::BinData and Command::RawData by the dabc::Buffer class

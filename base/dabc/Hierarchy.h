@@ -31,8 +31,10 @@ namespace dabc {
    extern const char* prop_kind;
    extern const char* prop_realname;      // real name property specified, when xml node can not have such name
    extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
-   extern const char* prop_binary_producer;
+   extern const char* prop_binary_producer; // identifies item, which can deliver binary data for all its
    extern const char* prop_content_hash;  // content hash, which should describe if object is changed
+   extern const char* prop_history;        // indicates that history for that element is kept
+   extern const char* prop_time;           // time property, supplied when history is created
 
    class Hierarchy;
 
@@ -83,6 +85,7 @@ namespace dabc {
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
          Buffer     fBinData;           ///< binary data, assigned with element
+         int        fHistory;           ///< configuration of history
 
          HierarchyContainer* TopParent();
 
@@ -177,6 +180,9 @@ namespace dabc {
 
       /** \brief Update from objects structure */
       bool UpdateHierarchy(Reference top);
+
+      /** \brief Activate history production for selected element */
+      void EnableHistory(int length = 100);
 
       std::string SaveToXml(bool compact = false, uint64_t version = 0);
 

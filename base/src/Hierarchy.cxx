@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "dabc/Iterator.h"
+#include "dabc/timing.h"
 #include "dabc/logging.h"
 #include "dabc/Exception.h"
 
@@ -28,6 +29,8 @@ const char* dabc::prop_realname = "realname";
 const char* dabc::prop_masteritem = "master";
 const char* dabc::prop_binary_producer = "binary_producer";
 const char* dabc::prop_content_hash = "hash";
+const char* dabc::prop_history = "history";
+const char* dabc::prop_time = "time";
 
 
 // ===============================================================================
@@ -38,7 +41,8 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fHierarchyVersion(0),
    fNodeChanged(false),
    fHierarchyChanged(false),
-   fBinData()
+   fBinData(),
+   fHistory(0)
 {
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Hierarchy", this, 10);
@@ -119,7 +123,6 @@ void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recur
       }
 }
 
-
 bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 {
    fNodeChanged = false;
@@ -130,10 +133,16 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
-   // we need to recognize if any attribute disappear or changed
+   if (fHistory>0) cont->Field(prop_history).SetInt(fHistory);
 
-   if (!CompareFields(cont->GetFieldsMap())) {
+   // we need to recognize if any attribute disappear or changed
+   if (!CompareFields(cont->GetFieldsMap(), (fHistory>0 ? prop_time : 0))) {
       fNodeChanged = true;
+      if (fHistory>0) {
+         cont->Field(prop_time).SetStr(dabc::format("%5.3f", dabc::Now().AsDouble()));
+         std::string str = BuildDiff(cont->GetFieldsMap());
+         DOUT0("DIFF = %s", str.c_str());
+      }
       SetFieldsMap(cont->TakeFieldsMap());
    }
 
@@ -420,6 +429,20 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
 
    // src.Destroy();
 }
+
+void dabc::Hierarchy::EnableHistory(int length)
+{
+   if (null()) return;
+
+   GetObject()->fHistory = length;
+
+   if (length>0) {
+      Field(prop_history).SetInt(length);
+   } else {
+      RemoveField(prop_history);
+   }
+}
+
 
 std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 {

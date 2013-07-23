@@ -178,6 +178,10 @@ double http::Server::ProcessTimeout(double last_diff)
 
    fHierarchy.Update(server_hierarchy);
 
+//   dabc::Hierarchy item = fHierarchy.FindChild("Server/Gener/App/Multi/GRate");
+//   if (!item.null()) item.EnableHistory(100);
+
+
    //server_hierarchy.Destroy();
 
    return 1.;

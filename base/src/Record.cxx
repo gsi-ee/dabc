@@ -189,21 +189,68 @@ void dabc::RecordContainer::CopyFieldsMap(RecordContainerMap* src)
 }
 
 
-bool dabc::RecordContainer::CompareFields(RecordContainerMap* oldmap)
+bool dabc::RecordContainer::CompareFields(RecordContainerMap* newmap, const char* extra_field)
 {
-   if ((oldmap==0) || (fPars->size() != oldmap->size())) return false;
+   if (newmap == 0) return (fPars==0) || (fPars->size()==0);
 
-   for (RecordContainerMap::iterator iter = fPars->begin(); iter != fPars->end(); iter++) {
+   // first check that all fields in new map are present and do not changed
+   for (RecordContainerMap::iterator iter = newmap->begin(); iter != newmap->end(); iter++) {
 
-      RecordContainerMap::iterator iter2 = oldmap->find(iter->first);
+      RecordContainerMap::iterator iter2 = fPars->find(iter->first);
 
-      if (iter2==oldmap->end()) return false;
+      if (iter2==fPars->end()) return false;
 
       if (iter->second != iter2->second) return false;
    }
 
-   return true;
+   unsigned sz1 = fPars->size();
+   unsigned sz2 = newmap->size();
+
+   // in case of extra field like "time", check that it only present in the old map
+   if (extra_field && (fPars->find(extra_field)!=fPars->end()) && (newmap->find(extra_field)==newmap->end())) sz1--;
+
+   return sz1==sz2;
 }
+
+
+
+std::string dabc::RecordContainer::BuildDiff(RecordContainerMap* newmap)
+{
+   XMLNodePointer_t node = 0;
+
+   if (newmap!=0) {
+
+      // one will need to put fields marking them as deleted
+      if (fPars==0) fPars = new RecordContainerMap();
+
+      for (RecordContainerMap::iterator iter = newmap->begin(); iter != newmap->end(); iter++) {
+         RecordContainerMap::iterator iter2 = fPars->find(iter->first);
+
+         // first of all just exclude all fields, which are the same
+         if ((iter2!=fPars->end()) && (iter->second == iter2->second)) {
+            fPars->erase(iter2);
+            continue;
+         }
+
+         // second, mark fields which are new - in reverse direction it means delete
+         if (iter2 == fPars->end()) {
+            (*fPars)[iter->first] = "dabc_del";
+         }
+      }
+
+      node = SaveInXmlNode(0, true);
+   } else {
+      node = Xml::NewChild(0, 0, GetName(), 0);
+   }
+
+   std::string res;
+
+   Xml::SaveSingleNode(node, &res, 1);
+   Xml::FreeNode(node);
+
+   return res;
+}
+
 
 void dabc::RecordContainer::SetFieldsMap(RecordContainerMap* newmap)
 {

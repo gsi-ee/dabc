@@ -145,7 +145,10 @@ namespace dabc {
 
          /** \brief Compare if field changed
           * \returns true when either number of fields or any field value is changed */
-         bool CompareFields(RecordContainerMap* oldmap);
+         bool CompareFields(RecordContainerMap* newmap, const char* extra_field = 0);
+
+         /** Produces diff between old and new map */
+         std::string BuildDiff(RecordContainerMap* newmap);
 
          /** \brief Copy all fields of from specified map */
          void CopyFieldsMap(RecordContainerMap* src);
