@@ -250,18 +250,17 @@ dabc::Reference dabc::Reference::FindChild(const char* name) const
    return GetObject() ? GetObject()->FindChildRef(name) : Reference();
 }
 
-dabc::Reference dabc::Reference::RemoveChild(const char* name)
+bool dabc::Reference::RemoveChild(const char* name, bool cleanup)
 {
-   dabc::Reference res = FindChild(name);
-   if (!res.null())
-      GetObject()->RemoveChild(res());
-   return res;
+   if (!GetObject()) return false;
+
+   return GetObject()->RemoveChild(GetObject()->FindChild(name), cleanup);
 }
 
 
-void dabc::Reference::DeleteChilds()
+bool dabc::Reference::RemoveChilds(bool cleanup)
 {
-   if (GetObject()) GetObject()->DeleteChilds();
+   return GetObject() ?  GetObject()->RemoveChilds(cleanup) : true;
 }
 
 

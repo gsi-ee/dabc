@@ -136,6 +136,15 @@ bool dabc::ReferencesVector::ExtractRef(unsigned n, Reference& ref)
    return true;
 }
 
+bool dabc::ReferencesVector::ExtractRef(Object* obj, Reference& ref)
+{
+   for (unsigned n=0;n<GetSize();n++)
+      if (fVector->at(n).GetObject() == obj)
+         return ExtractRef(n, ref);
+   return false;
+}
+
+
 
 dabc::Reference dabc::ReferencesVector::TakeLast()
 {

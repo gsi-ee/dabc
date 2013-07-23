@@ -33,13 +33,27 @@ const char* dabc::prop_content_hash = "hash";
 // ===============================================================================
 
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
-   dabc::RecordContainer(name, flNoMutex), // disable default ownership and no mutex is required
+   dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
    fHierarchyVersion(0),
    fNodeChanged(false),
    fHierarchyChanged(false),
    fBinData()
 {
+   #ifdef DABC_EXTRA_CHECKS
+   DebugObject("Hierarchy", this, 10);
+   #endif
+
+//   DOUT0("Constructor %s %p", GetName(), this);
+}
+
+dabc::HierarchyContainer::~HierarchyContainer()
+{
+   #ifdef DABC_EXTRA_CHECKS
+   DebugObject("Hierarchy", this, -10);
+   #endif
+
+//   DOUT0("Destructor %s %p", GetName(), this);
 }
 
 
@@ -130,7 +144,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 
    while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
       if (cnt1 >= cont->NumChilds()) {
-         DeleteChild(cnt2);
+         RemoveChildAt(cnt2, true);
          fHierarchyChanged = true;
          continue;
       }
@@ -154,7 +168,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
       if (!findchild) {
          // if child did not found, just take it out form source container and place at proper position
 
-         cont->RemoveChild(cont_child());
+         // remove object and do not cleanup (destroy) it
+         cont->RemoveChild(cont_child(), false);
 
          cont_child()->SetModified(true, true, true);
 
@@ -166,7 +181,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
          continue;
       }
 
-      while (findindx > cnt2) { DeleteChild(cnt2); findindx--; fHierarchyChanged = true; }
+      while (findindx > cnt2) { RemoveChildAt(cnt2, true); findindx--; fHierarchyChanged = true; }
 
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) (GetChild(cnt2));
 
@@ -189,7 +204,7 @@ dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::str
    while ((indx>=0) && (indx<(int) NumChilds())) {
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
       if (child->IsName(name.c_str())) return child;
-      DeleteChild(indx);
+      RemoveChildAt(indx, true);
    }
 
    dabc::HierarchyContainer* res = new dabc::HierarchyContainer(name);
@@ -237,7 +252,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
 
       if (childnode==0) {
          // special case at the end - one should delete childs at the end
-         DeleteChild(cnt);
+         RemoveChildAt(cnt, true);
          continue;
       }
 
@@ -261,7 +276,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
 
       if (findchild) {
          // delete all child with non-matching names
-         while (findindx > cnt) { DeleteChild(cnt); findindx--; }
+         while (findindx > cnt) { RemoveChildAt(cnt, true); findindx--; }
          child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(cnt));
       } else {
          child = new dabc::HierarchyContainer(childnodename);
@@ -400,7 +415,11 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
 
    src.Build(top.GetName(), top);
 
-   return Update(src);
+   bool res = Update(src);
+
+   src.Destroy();
+
+   return res;
 }
 
 std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)

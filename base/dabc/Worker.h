@@ -287,7 +287,6 @@ namespace dabc {
           *  BuildWorkerHierarchy will be called in worker thread */
          virtual void BuildHierarchy(HierarchyContainer* cont);
 
-         static void DebugWorkers(Worker* instance = 0, int id = 0);
       protected:
 
          /** This method called before command will be executed.

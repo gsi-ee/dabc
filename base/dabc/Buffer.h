@@ -80,6 +80,9 @@ namespace dabc {
             fPool(),
             fSegm(0)
             {
+              #ifdef DABC_EXTRA_CHECKS
+                 DebugObject("Buffer", this, 1);
+              #endif
             }
 
          void* operator new(size_t sz) {

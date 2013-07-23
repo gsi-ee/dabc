@@ -16,7 +16,14 @@ of the framework.
 2. Remove owner flag from reference - ownership is only can be set for child objects.
    User can always call dabc::Reference::Destroy to initiate object destroy, but
    real destructor will be called only when all reference are disapper.
+3. Fix memory leak with Hierarchy class - in present state Reference could not 
+   automatically cleanup object, which has children. Will be implemented soon. 
+4. Try to provide more logical methods to operate with childs in object. Now all kind
+   of remove methods call RemoveChild or RemoveChilds. If cleanup flag specified (default),
+   object will be destroyed when parent is owner of the object.
    
+    
+       
 
 22.07.2013
 1. Replace Hierarchy::BinData and Command::RawData by the dabc::Buffer class

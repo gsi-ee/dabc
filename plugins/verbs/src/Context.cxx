@@ -407,7 +407,7 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 
    dabc::Reference folder = GetFolder("PoolReg", true);
 
-   folder.RemoveChild(pool->GetName()).Destroy();
+   folder.RemoveChild(pool->GetName(), true);
 
    PoolRegistryRef ref = new PoolRegistry(Ref(), pool);
 

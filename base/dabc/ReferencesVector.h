@@ -82,6 +82,10 @@ namespace dabc {
          /** \brief Remove reference at specified position. operator << is used to avoid child locking */
          bool ExtractRef(unsigned n, Reference& ref);
 
+         /** \brief Remove reference at specified position. operator << is used to avoid child locking */
+         bool ExtractRef(Object* obj, Reference& ref);
+
+
          /** \brief Simple search of object by name, no any subfolder structures */
          Object* FindObject(const char* name, int len = -1) const;
 

@@ -341,7 +341,7 @@ void dabc::Manager::HaltManager()
 
    DettachFromThread();
 
-   DeleteChilds();
+   RemoveChilds();
 
    // run dummy event loop several seconds to complete event which may be submitted there
 
@@ -371,9 +371,12 @@ void dabc::Manager::HaltManager()
 
    if (dabc::Thread::NumThreadInstances() > 0) {
       EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted cnt = %d  %5.3f !!!!!!", dabc::Thread::NumThreadInstances(), cnt, tm2 - tm1);
-      dabc::Worker::DebugWorkers();
    } else
       DOUT1(" ALL THREADS STOP AFTER %d tries tm %5.3f", maxcnt-cnt, tm2-tm1);
+
+#ifdef DABC_EXTRA_CHECKS
+   dabc::Object::DebugObject();
+#endif
 
    dabc::Object::InspectGarbageCollector();
 

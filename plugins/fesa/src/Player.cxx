@@ -65,6 +65,8 @@ fesa::Player::~Player()
       fHist = 0;
    }
 #endif
+
+   fHierarchy.Destroy();
 }
 
 void fesa::Player::ProcessTimerEvent(unsigned timer)

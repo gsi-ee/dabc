@@ -226,8 +226,7 @@ void dabc::Object::Destructor()
    #endif
 
    Mutex* m = 0;
-   ReferencesVector* chlds(0);
-   bool isowner = false;
+   bool delchilds = false;
 
    {
       LockGuard lock(fObjectMutex);
@@ -250,23 +249,14 @@ void dabc::Object::Destructor()
          if (fObjectBlock > 0)
             EOUT("!!!! CHILDS ARE STILL BLOCKED %d!!!!!!!", fObjectBlock);
 
-         chlds = fObjectChilds;
-         fObjectChilds = 0;
-         isowner = GetFlag(flIsOwner);
+         delchilds = true;
       }
 
       m = fObjectMutex;
       fObjectMutex = 0;
    }
 
-
-   // from this point on children are not seen to outer world,
-   // one can destroy them one after another
-
-   if (chlds!=0) {
-      chlds->Clear(isowner);
-      delete chlds;
-   }
+   if (delchilds) RemoveChilds();
 
    // release reference on parent, remove from child should be already done
    fObjectParent.Release();
@@ -374,8 +364,9 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
             return false;
 
          case stNormal:
-            // if autodestroy flag specified, object will be destroyed when no more references are existing
-            if (GetFlag(flAutoDestroy) && (fObjectRefCnt==0)) ask_to_destroy = true;
+            // if autodestroy flag specified, object will be destroyed when no more external references are existing
+            // if (GetFlag(flAutoDestroy) && (fObjectRefCnt <= (int)(fObjectChilds ? fObjectChilds->GetSize() : 0))) ask_to_destroy = true;
+            if (GetFlag(flAutoDestroy) && (fObjectRefCnt == 0)) ask_to_destroy = true;
             if (!ask_to_destroy) return false;
             viathrd = GetFlag(flHasThread);
             break;
@@ -542,63 +533,24 @@ void dabc::Object::DeleteThis()
 
 void dabc::Object::ObjectCleanup()
 {
-   ReferencesVector* chlds = 0;
-
-   int cnt = 1000000;
-
-   bool isowner = false;
-
-   while (--cnt>0) {
-      dabc::LockGuard lock(fObjectMutex);
-      if (GetState() != stDoingDestroy) {
-         EOUT("obj:%p name:%s class:%s Something completely wrong - cleanup in wrong state %u ", this, GetName(), ClassName(), GetState());
-      }
-
-      if (fObjectChilds == 0) break;
-
-      if (fObjectBlock>0) continue;
-
-      // we deleting childs immediately
-      chlds = fObjectChilds;
-      fObjectChilds = 0;
-      isowner = GetFlag(flIsOwner);
-      break;
-   }
-
-   #ifdef DABC_EXTRA_CHECKS
-   if (cnt < 999990)
-      DOUT0("Object %s Retry %d time before childs were unblocked", 1000000-cnt);
-   #endif
-
-   if (cnt==0) {
-      EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
-      exit(055);
-   }
-
-   // first we delete all childs !!!!
-   if (chlds!=0) {
-      if (IsLogging()) DOUT0("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize());
-      chlds->Clear(isowner);
-      delete chlds;
-      if (IsLogging()) DOUT0("Obj:%p %s Deleting childs done", this, GetName());
-   }
+   RemoveChilds();
 
    if (IsLogging()) {
       DOUT0("Obj:%p %s refcnt %u Before remove from parent %p", this, GetName(), fObjectRefCnt, fObjectParent());
-
-      DOUT0("++++++++++++++++ AT DELETING APP %p +++++++++++++", dabc::mgr.app().GetObject());
-
    }
 
    // Than we remove reference on the object from parent
    if (!fObjectParent.null())
-      fObjectParent()->RemoveFromChildsList(this);
+      fObjectParent()->RemoveChild(this, false);
+
+   if (!fObjectParent.null()) {
+      EOUT("Parent still not yet cleaned !!!!");
+      fObjectParent.Release();
+   }
 
    if (IsLogging()) {
       DOUT0("Obj:%p %s refcnt %u after remove from parent", this, GetName(), fObjectRefCnt);
-      DOUT0("++++++++++++++++ AT DELETING APP %p +++++++++++++", dabc::mgr.app().GetObject());
    }
-
 
    DOUT3("Obj:%s Class:%s Finish cleanup numrefs %u", GetName(), ClassName(), NumReferences());
 
@@ -671,32 +623,38 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
    return true;
 }
 
-bool dabc::Object::RemoveChild(Object* child) throw()
+bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 {
-   if ((child==0) || (child->fObjectParent() != this)) return false;
-   child->fObjectParent.Release();
-   RemoveFromChildsList(child);
-   return true;
-}
+   if (child==0) return false;
 
-void dabc::Object::RemoveFromChildsList(Object* child) throw()
-{
-   if (child==0) return;
+   if (child->fObjectParent() != this) return false;
+
+   // TODO: one can reuse mutex below
+   child->fObjectParent.Release();
 
    int cnt = 1000000;
+
+   bool isowner = false;
+
+   dabc::Reference childref;
 
    while (--cnt>0) {
       LockGuard guard(fObjectMutex);
 
-      if (fObjectChilds==0) return;
+      if (fObjectChilds==0) return false;
 
       if (fObjectBlock>0) continue;
 
-      // FIXME: seems to be mutex here locked second time
-      fObjectChilds->Remove(child);
+      isowner = GetFlag(flIsOwner);
 
-      break;
+      if (fObjectChilds->ExtractRef(child, childref)) break;
+
+      EOUT("Not able to extract child reference!!!");
+      exit(333);
    }
+
+   if (cleanup && isowner) childref.Destroy();
+                      else childref.Release();
 
    #ifdef DABC_EXTRA_CHECKS
    if (cnt < 999990)
@@ -707,6 +665,13 @@ void dabc::Object::RemoveFromChildsList(Object* child) throw()
       EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
+
+   return true;
+}
+
+bool dabc::Object::RemoveChildAt(unsigned n, bool cleanup) throw()
+{
+   return RemoveChild(GetChild(n), cleanup);
 }
 
 unsigned dabc::Object::NumChilds() const
@@ -860,26 +825,7 @@ dabc::Reference dabc::Object::GetFolder(const char* name, bool force) throw()
    return SearchForChild(ref, name, true, force);
 }
 
-void dabc::Object::DeleteChild(unsigned n)
-{
-   Reference ref;
-   bool isowner = false;
-
-   {
-      LockGuard guard(fObjectMutex);
-
-      // nothing to do
-      if (fObjectChilds!=0) fObjectChilds->ExtractRef(n, ref);
-
-      isowner = GetFlag(flIsOwner);
-   }
-
-   if (isowner) ref.Destroy();
-           else ref.Release();
-}
-
-
-void dabc::Object::DeleteChilds()
+bool dabc::Object::RemoveChilds(bool cleanup)
 {
    ReferencesVector* del_vect = 0;
 
@@ -891,7 +837,7 @@ void dabc::Object::DeleteChilds()
       LockGuard guard(fObjectMutex);
 
       // nothing to do
-      if (fObjectChilds==0) return;
+      if (fObjectChilds==0) return true;
 
       if (fObjectBlock>0) continue;
 
@@ -915,9 +861,18 @@ void dabc::Object::DeleteChilds()
       DOUT1("Obj:%s Deleting childs:%u", GetName(), del_vect ? del_vect->GetSize() : 0);
 
    if (del_vect) {
-      del_vect->Clear(isowner);
+
+      // ensure that object do not longer reference parent
+      for (unsigned n=0;n<del_vect->GetSize();n++) {
+         Object* obj = del_vect->GetObject(n);
+         if (obj) obj->fObjectParent.Release();
+      }
+
+      del_vect->Clear(isowner && cleanup);
       delete del_vect;
    }
+
+   return true;
 }
 
 void dabc::Object::SetName(const char* name)
@@ -1169,3 +1124,47 @@ void dabc::Object::InspectGarbageCollector()
 #endif
 
 }
+
+
+
+#ifdef DABC_EXTRA_CHECKS
+
+#include <list>
+#include <stdio.h>
+#include <map>
+
+void dabc::Object::DebugObject(const char* classname, Object* instance, int kind)
+{
+
+   typedef std::list<dabc::Object*> obj_list;
+   typedef std::map<std::string,obj_list> full_map;
+   typedef std::map<std::string,int> counts_map;
+
+
+   static counts_map cnts;
+   static full_map objs;
+   static dabc::Mutex mutex(true);
+
+   dabc::LockGuard lock(mutex);
+
+   if (classname == 0) {
+      printf("NUM ENTRIES = %u\n", (unsigned) cnts.size());
+      for (counts_map::iterator iter = cnts.begin(); iter != cnts.end(); iter++) {
+         printf("   CLASS = %s  NUM = %d \n", iter->first.c_str(), iter->second);
+
+         full_map::iterator iter2 = objs.find(iter->first);
+         if (iter2!=objs.end())
+            for (obj_list::iterator iter3 = iter2->second.begin(); iter3 != iter2->second.end(); iter3++)
+               printf("      OBJ:%p NAME = %s\n", *iter3, (*iter3)->GetName());
+      }
+   } else {
+      std::string name(classname);
+      if (kind<0) cnts[name]--;
+             else cnts[name]++;
+
+      if (kind==10) objs[name].push_back(instance); else
+      if (kind==-10) objs[name].remove(instance);
+   }
+}
+
+#endif

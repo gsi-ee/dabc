@@ -93,9 +93,9 @@ namespace dabc {
          ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "");
          virtual ~ParameterContainer();
 
-         inline void Modified() { FireEvent(parModified); }
+         inline void Modified() { FireParEvent(parModified); }
 
-         void FireEvent(int id);
+         void FireParEvent(int id);
 
          virtual void ObjectCleanup();
 

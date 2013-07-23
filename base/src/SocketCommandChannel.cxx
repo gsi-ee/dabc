@@ -73,6 +73,8 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
 dabc::SocketCommandClient::~SocketCommandClient()
 {
    EnsureRecvBuffer(0);
+
+   fRemoteHierarchy.Destroy();
 }
 
 void dabc::SocketCommandClient::OnThreadAssigned()
@@ -401,6 +403,7 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
          std::string diff;
          diff.append((const char*)buf.SegmentPtr(), buf.GetTotalSize());
          //DOUT0("length %d diff = %s", diff.length(), diff.c_str());
+
          if (fRemoteHierarchy.UpdateFromXml(diff)) {
             DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
             // DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
@@ -670,6 +673,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
 
 dabc::SocketCommandChannel::~SocketCommandChannel()
 {
+   fHierarchy.Destroy();
 }
 
 void dabc::SocketCommandChannel::OnThreadAssigned()

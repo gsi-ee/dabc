@@ -16,6 +16,10 @@
 #ifndef DABC_Object
 #define DABC_Object
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
 #ifndef DABC_Reference
 #include "dabc/Reference.h"
 #endif
@@ -159,9 +163,6 @@ namespace dabc {
          /** Method set cleanup bit that object will be cleaned up in all registered objects
           * Used only by manager therefore private */
          void SetCleanupBit();
-
-         /** \brief Remove object from list of child objects, __thread safe__ */
-         void RemoveFromChildsList(Object* child) throw();
 
       protected:
 
@@ -346,8 +347,17 @@ namespace dabc {
           * \returns               true if successful */
          bool AddChildAt(Object* child, unsigned pos, bool withmutex = true);
 
-         /** \brief Dettach child from parent object */
-         bool RemoveChild(Object* child) throw();
+         /** \brief Dettach child from parent object
+          *  If cleanup==true and parent is owner of child, child will be destroyed*/
+         bool RemoveChild(Object* child, bool cleanup = true) throw();
+
+         /** \brief Dettach child object from paraent at specified position
+          *  If cleanup==true and object is owner of child, child will be destroyed*/
+         bool RemoveChildAt(unsigned n, bool cleanup = true) throw();
+
+         /** \brief Remove all childs.
+          * If object is owner and cleanup flag (default) is specified, when childs will be destroyed.  */
+         bool RemoveChilds(bool cleanup = true);
 
          /** \brief returns number of child objects */
          unsigned NumChilds() const;
@@ -368,12 +378,6 @@ namespace dabc {
 
          /** \brief returns reference on child object with given name */
          Reference FindChildRef(const char* name, bool force = false) const throw();
-
-         /** \brief Delete all childs. If object owner, when childs will be destroyed.  */
-         void DeleteChilds();
-
-         /** \brief Delete child with specified index */
-         void DeleteChild(unsigned n);
 
          /** \brief Return folder of specified name, no special symbols allowed.
           *
@@ -449,6 +453,10 @@ namespace dabc {
           *
           * Mask can be a list of masks separated by semicolon like `name1*:name2*:??name??` */
          static bool NameMatchM(const std::string& name, const std::string& mask);
+
+#ifdef DABC_EXTRA_CHECKS
+         static void DebugObject(const char* classname = 0, Object* instance = 0, int kind = 0);
+#endif
 
       protected:
          /** \brief Changes object name. Should not be used if any references exists on the object */

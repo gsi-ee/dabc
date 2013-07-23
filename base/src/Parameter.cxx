@@ -42,10 +42,16 @@ dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string
    fRateWidth(5),
    fRatePrec(1)
 {
+   #ifdef DABC_EXTRA_CHECKS
+   DebugObject("Parameter", this, 10);
+   #endif
 }
 
 dabc::ParameterContainer::~ParameterContainer()
 {
+   #ifdef DABC_EXTRA_CHECKS
+   DebugObject("Parameter", this, -10);
+   #endif
    DOUT4("-------- Destroy Parameter %s %p", GetName(), this);
 }
 
@@ -170,7 +176,7 @@ bool dabc::ParameterContainer::SetField(const std::string& name, const char* val
 
 void dabc::ParameterContainer::FireModified(const char* value)
 {
-   FireEvent(parModified);
+   FireParEvent(parModified);
 
    int doout = GetDebugLevel();
 
@@ -185,16 +191,16 @@ const char* dabc::ParameterContainer::GetField(const std::string& name, const ch
 }
 
 
-void dabc::ParameterContainer::FireEvent(int id)
+void dabc::ParameterContainer::FireParEvent(int id)
 {
-   if (dabc::mgr() && IsParent(dabc::mgr()))
+   if (!dabc::mgr.null())
       dabc::mgr()->ProduceParameterEvent(this, id);
 }
 
 
 void dabc::ParameterContainer::ObjectCleanup()
 {
-   FireEvent(parDestroy);
+   FireParEvent(parDestroy);
 
    dabc::RecordContainer::ObjectCleanup();
 }
@@ -517,7 +523,7 @@ const std::string dabc::Parameter::GetActualUnits() const
 
 void dabc::Parameter::FireConfigured()
 {
-   if (GetObject()) GetObject()->FireEvent(parConfigured);
+   if (GetObject()) GetObject()->FireParEvent(parConfigured);
 }
 
 void dabc::Parameter::FireModified()

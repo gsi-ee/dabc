@@ -902,8 +902,8 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
        }
 
        case evntSocketError: {
-          int myerrno = TakeSocketError();
-          DOUT3("Doing connect socket err:%d %s", myerrno, SocketErr(myerrno));
+          // int myerrno = TakeSocketError();
+          // DOUT3("Doing connect socket err:%d %s", myerrno, SocketErr(myerrno));
           break;
        }
 

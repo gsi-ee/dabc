@@ -83,7 +83,7 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
 
    io.ReadRecord(this, dabc::ConnectionObject::ObjectName(), req());
 
-   req()->FireEvent(parCreated);
+   req()->FireParEvent(parCreated);
 
    return req;
 }

@@ -82,6 +82,8 @@ http::Server::~Server()
    if (fCtx!=0) mg_stop(fCtx);
 
    fCtx = 0;
+
+   fHierarchy.Destroy();
 }
 
 
@@ -148,15 +150,16 @@ double http::Server::ProcessTimeout(double last_diff)
 {
    // dabc::LockGuard lock(fHierarchyMutex);
 
+//   DOUT0("\n\n\n========================= START BUILDING ================");
+
+
    dabc::Hierarchy server_hierarchy;
    server_hierarchy.Create("Full");
-
-   dabc::Reference main;
 
    if (!fServerFolder.empty()) {
       dabc::Hierarchy h = server_hierarchy.CreateChild(fServerFolder);
       if (!fTop2Name.empty()) h = h.CreateChild(fTop2Name.c_str());
-      main = dabc::mgr;
+      dabc::Reference main = dabc::mgr;
       if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
       h.Build("", main);
    }
@@ -172,7 +175,20 @@ double http::Server::ProcessTimeout(double last_diff)
    }
 
    dabc::LockGuard lock(fHierarchyMutex);
+
+//   DOUT0("BEFORE \n%s", fHierarchy.SaveToXml().c_str());
+
+//   DOUT0("========================= START UPDATE ================");
    fHierarchy.Update(server_hierarchy);
+//   DOUT0("========================= DID UPDATE ================");
+
+//   DOUT0("========================= BEFORE DESTROY ================\n%s", server_hierarchy.SaveToXml().c_str());
+//   DOUT0("========================= DOING DESTROY ================");
+
+   server_hierarchy.Destroy();
+
+//   DOUT0("========================= DID DESTROY ================");
+
 
 //   DOUT0("SERVER OVERALL hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 

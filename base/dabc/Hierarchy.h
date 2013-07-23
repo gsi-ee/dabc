@@ -110,6 +110,7 @@ namespace dabc {
 
       public:
          HierarchyContainer(const std::string& name);
+         virtual ~HierarchyContainer();
 
          virtual const char* ClassName() const { return "Hierarchy"; }
 

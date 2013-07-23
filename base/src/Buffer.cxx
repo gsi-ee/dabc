@@ -36,10 +36,16 @@ namespace dabc {
             Object(0, "", flAutoDestroy),
             fPtr(ptr)
          {
+           #ifdef DABC_EXTRA_CHECKS
+             DebugObject("Memory", this, 1);
+           #endif
          }
 
          virtual ~MemoryContainer()
          {
+           #ifdef DABC_EXTRA_CHECKS
+              DebugObject("Memory", this, -1);
+           #endif
             // printf("Destroy container %p\n", fPtr);
             // if (fPtr) { free(fPtr); fPtr = 0; }
          }
@@ -49,7 +55,6 @@ namespace dabc {
 
 dabc::BufferContainer::~BufferContainer()
 {
-
    dabc::MemoryPool* pool = dynamic_cast<dabc::MemoryPool*> (fPool());
 
 //   DOUT0("~dabc::BufferContainer %p  THRD %s\n", this, dabc::mgr.CurrentThread().GetName());
@@ -62,6 +67,11 @@ dabc::BufferContainer::~BufferContainer()
    }
 
    fPool.Release();
+
+#ifdef DABC_EXTRA_CHECKS
+   DebugObject("Buffer", this, -1);
+#endif
+
 }
 
 

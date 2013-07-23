@@ -174,10 +174,11 @@ namespace dabc {
          Reference FindChild(const char* name) const;
 
          /** Remove child with given name and return reference on that child */
-         Reference RemoveChild(const char* name);
+         bool RemoveChild(const char* name, bool cleanup = true);
 
-         /** \brief Delete all childs in referenced object */
-         void DeleteChilds();
+         /** \brief Remove all childs in referenced object
+          * If cleanup true (default) and object is owner, all objects will be destroyed */
+         bool RemoveChilds(bool cleanup = true);
 
          /** \brief Assignment operator - copy reference */
          Reference& operator=(const Reference& src) throw();

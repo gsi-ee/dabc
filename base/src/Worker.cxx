@@ -76,40 +76,6 @@ void dabc::WorkerAddon::SubmitWorkerCmd(const std::string& cmdname)
 // ================================================================================
 
 
-#ifdef DABC_EXTRA_CHECKS
-
-#include <list>
-#include <stdio.h>
-
-void dabc::Worker::DebugWorkers(Worker* instance, int id)
-{
-
-   static std::list<dabc::Worker*> wrks ;
-   static dabc::Mutex mutex(true);
-
-   dabc::LockGuard lock(mutex);
-
-   if (instance == 0) {
-      printf("NUM WORKERS = %u\n", wrks.size());
-      std::list<dabc::Worker*>::iterator iter = wrks.begin();
-      while (iter != wrks.end()) {
-         printf("   REMAINED = %s\n", (*iter)->GetName());
-         iter++;
-      }
-   } else
-   if (id==0) wrks.push_back(instance);
-         else wrks.remove(instance)
-}
-
-#else
-
-void dabc::Worker::DebugWorkers(Worker* instance, int id)
-{
-}
-
-#endif
-
-
 dabc::Worker::Worker(Reference parent, const std::string& name) :
    Object(parent, name),
    fThread(),
@@ -127,7 +93,9 @@ dabc::Worker::Worker(Reference parent, const std::string& name) :
 {
    SetFlag(flHasThread, false);
 
-   dabc::Worker::DebugWorkers(this, 0);
+#ifdef DABC_EXTRA_CHECKS
+   DebugObject("Worker", this, 10);
+#endif
 }
 
 
@@ -146,9 +114,11 @@ dabc::Worker::Worker(const ConstructorPair& pair) :
 
    fWorkerCommandsLevel(0)
 {
-   dabc::Worker::DebugWorkers(this, 0);
-
    SetFlag(flHasThread, false);
+
+#ifdef DABC_EXTRA_CHECKS
+   DebugObject("Worker", this, 10);
+#endif
 }
 
 dabc::Worker::~Worker()
@@ -164,7 +134,9 @@ dabc::Worker::~Worker()
 
    DOUT3("~Worker %p %d thrd:%p done", this, fWorkerId, fThread());
 
-   dabc::Worker::DebugWorkers(this, 1);
+   #ifdef DABC_EXTRA_CHECKS
+   DebugObject("Worker", this, -10);
+   #endif
 }
 
 bool dabc::Worker::HasThread() const
@@ -548,7 +520,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
 
       par = cont;
 
-      cont->FireEvent(parCreated);
+      cont->FireParEvent(parCreated);
    }
    return par;
 }
