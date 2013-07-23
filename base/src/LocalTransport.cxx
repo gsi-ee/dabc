@@ -108,7 +108,7 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       // make reference under mutex - insure that something will not change in between
       if (makesig) {
-         mdl = fInp.Ref();
+         mdl = fInp;
          id = fInpId;
       }
    }
@@ -156,7 +156,7 @@ bool dabc::LocalTransport::Recv(Buffer& buf)
       // signal output event only if sender did something after previous event
       if (makesig) {
          // make reference under mutex - insure that something will not change in between
-         mdl = fOut.Ref();
+         mdl = fOut;
          id = fOutId;
       }
    }
@@ -183,7 +183,7 @@ void dabc::LocalTransport::SignalWhenFull()
       dabc::LockGuard lock(QueueMutex());
 
       if (fQueue.Full()) {
-         mdl = fInp.Ref();
+         mdl = fInp;
          id = fInpId;
          evnt = evntInput;
       } else {
@@ -214,7 +214,7 @@ void dabc::LocalTransport::SignalWhenFull()
             DOUT3("Producing output signal from DummyRecv");
 
             // make reference under mutex - insure that something will not change in between
-            mdl = fOut.Ref();
+            mdl = fOut;
             id = fOutId;
             evnt = evntOutput;
          }
@@ -306,10 +306,10 @@ void dabc::LocalTransport::PortActivated(int itemkind, bool on)
       dabc::LockGuard lock(QueueMutex());
 
       if (itemkind == mitOutPort) {
-         other = fInp.Ref();
+         other = fInp;
          otherid = fInpId;
       } else {
-         other = fOut.Ref();
+         other = fOut;
          otherid = fOutId;
       }
    }
@@ -340,11 +340,11 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 
    LocalTransportRef q = new LocalTransport(queuesize, withmutex);
 
-   q()->fOut = m1.Ref();
+   q()->fOut = m1;
    q()->fOutId = port_out.ItemId();
    q()->fOutSignKind = port_out.GetSignallingKind();
 
-   q()->fInp = m2.Ref();
+   q()->fInp = m2;
    q()->fInpId = port_inp.ItemId();
    q()->fInpSignKind = port_inp.GetSignallingKind();
 
@@ -354,7 +354,7 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    // first of all, we must connect input port
    dabc::Command cmd2("SetQueue");
    cmd2.SetStr("Port", port_inp.GetName());
-   cmd2.SetRef("Queue", q.Ref());
+   cmd2.SetRef("Queue", q);
    if (!m2.Execute(cmd2)) return cmd_false;
 
    // than output port

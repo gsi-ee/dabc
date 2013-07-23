@@ -53,7 +53,7 @@ namespace dabc {
          virtual ~Iterator();
          Object* next(bool goinside = true);
          Object* current() const { return fCurrent(); }
-         Reference ref() const { return fCurrent.Ref(); }
+         Reference ref() const { return fCurrent; }
          unsigned level() const { return fIndexes.size(); }
          /** \brief Returns parents of current object
           * \param[in] lvl  - level of parent, 0 - top-level folder, 1 - first-level folder and so on

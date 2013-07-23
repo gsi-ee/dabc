@@ -109,6 +109,11 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    }
 #endif
 
+
+//#ifdef DABC_EXTRA_CHECKS
+//   dabc::Object::DebugObject();
+//#endif
+
 }
 
 

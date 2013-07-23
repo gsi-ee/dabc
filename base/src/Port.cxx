@@ -159,7 +159,7 @@ void dabc::Port::ObjectCleanup()
 
 void dabc::Port::SetRateMeter(const Parameter& ref)
 {
-   fRate = ref.Ref();
+   fRate = ref;
 
    if (fRate.GetUnits().empty())
       fRate.SetUnits("MB");

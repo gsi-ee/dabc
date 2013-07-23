@@ -209,7 +209,7 @@ void dabc::Object::Constructor()
    // FIXME: should we use recursive in final version?
 
    if (!GetFlag(flNoMutex))
-      fObjectMutex = new Mutex(true);
+      fObjectMutex = new Mutex(false);
 
    SetState(stNormal);
 
@@ -570,49 +570,19 @@ unsigned dabc::Object::NumReferences()
    return fObjectRefCnt;
 }
 
-dabc::Reference dabc::Object::_MakeRef()
-{
-   return dabc::Reference(false, this);
-}
-
 
 bool dabc::Object::AddChild(Object* child, bool withmutex) throw()
 {
-   if (child==0) return false;
-
-   if (child->fObjectParent.null()) {
-      child->fObjectParent.SetObject(this, withmutex);
-   } else
-   if (child->GetParent() != this) {
-      EOUT("Cannot move child from other parent");
-      throw dabc::Exception(ex_Object, "Cannot move child from other parent", GetName());
-      return false;
-   }
-
-   Reference ref(child);
-
-   LockGuard guard(withmutex ? fObjectMutex : 0);
-
-   // if object is owner of all childs, any child will get autodestroy flag
-   if (GetFlag(flIsOwner)) child->SetAutoDestroy(true);
-
-   if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
-
-   fObjectChilds->Add(ref);
-
-   return true;
+   return AddChildAt(child, (unsigned) -1, withmutex);
 }
 
 bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 {
    if (child==0) return false;
 
-   if (child->fObjectParent.null()) {
-      child->fObjectParent.SetObject(this, withmutex);
-   } else
-   if (child->GetParent() != this) {
-      EOUT("Cannot move child from other parent");
-      throw dabc::Exception(ex_Object, "Cannot move child from other parent", GetName());
+   if (!child->fObjectParent.null() && (child->GetParent() != this)) {
+      EOUT("Cannot add child from other parent directly - first remove from old");
+      throw dabc::Exception(ex_Object, "Cannot add child from other parent", GetName());
       return false;
    }
 
@@ -620,12 +590,20 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 
    LockGuard guard(withmutex ? fObjectMutex : 0);
 
+   if (child->fObjectParent.null()) {
+      child->fObjectParent.fObj = this; // not very nice, but will work
+      fObjectRefCnt++;
+   }
+
    // if object is owner of all childs, any child will get autodestroy flag
    if (GetFlag(flIsOwner)) child->SetAutoDestroy(true);
 
    if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
 
-   fObjectChilds->AddAt(ref, pos);
+   if (pos == (unsigned) -1)
+      fObjectChilds->Add(ref);
+   else
+      fObjectChilds->AddAt(ref, pos);
 
    return true;
 }
@@ -657,7 +635,7 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
          // IMPORTANT: we are under object mutex and can do anything
 
          if ((fObjectRefCnt>1) && (child->fObjectParent.fObj==this))  {
-            child->fObjectParent.Forget(); // not very nice, but will
+            child->fObjectParent.fObj = 0; // not very nice, but will work
             fObjectRefCnt--;
          } else {
             // do not decrease counter - we leave parent reference till object destructor

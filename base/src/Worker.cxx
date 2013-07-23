@@ -143,17 +143,24 @@ bool dabc::Worker::HasThread() const
 {
    LockGuard lock(fThreadMutex);
 
-   return fThread() != 0;
+   return !fThread.null();
 }
 
 dabc::ThreadRef dabc::Worker::thread()
 {
-   // this is lock over thread main mutex,
-   // if we can get it, we also can increment ref counter directly by the thread
-   LockGuard lock(fThreadMutex);
 
-   // we can acquire new reference without additional lock of the mutex
-   return fThread.Ref(false);
+   dabc::ThreadRef res;
+
+   {
+      // this is lock over thread main mutex,
+      // if we can get it, we also can increment ref counter directly by the thread
+      LockGuard lock(fThreadMutex);
+
+      // we can acquire new reference without additional lock of the mutex
+      fThread.AcquireThreadRef(res);
+   }
+
+   return res;
 }
 
 
@@ -752,7 +759,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
       } else
       if (fThread.IsItself()) {
          // DOUT0("Mutex = %p thrdmutex %p locked %s", fThreadMutex, fThread()->ThreadMutex(), DBOOL(fThreadMutex->IsLocked()));
-         thrd = fThread.Ref(false);
+         fThread.AcquireThreadRef(thrd);
       }
    }
 

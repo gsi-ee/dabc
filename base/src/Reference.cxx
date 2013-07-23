@@ -24,11 +24,6 @@
 #include <string.h>
 
 
-dabc::Reference::Reference() :
-   fObj(0)
-{
-}
-
 dabc::Reference::Reference(Object* obj) throw() :
    fObj(0)
 {
@@ -153,18 +148,14 @@ void dabc::Reference::SetAutoDestroy(bool on)
    if (GetObject()) GetObject()->SetAutoDestroy(on);
 }
 
-
-dabc::Reference::Reference(bool withmutex, Object* obj) throw() :
-   fObj(0)
+bool dabc::Reference::AcquireRefWithoutMutex(Reference& ref)
 {
-   if (obj) {
-      if (obj->IncReference(withmutex))
-         fObj = obj;
-      else
-         throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p mutex %s", obj, DBOOL(withmutex)), DNAME(obj));
-   }
+   if (null() || !ref.null()) return false;
+   if (fObj->IncReference(false))
+      ref.fObj = fObj;
+   else
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p without mutex", fObj), DNAME(fObj));
 }
-
 
 dabc::Reference::~Reference()
 {

@@ -438,6 +438,8 @@ namespace dabc {
          bool _ActivateWorkerTimeout(unsigned workerid, int priority, double tmout);
          bool _ActivateAddonTimeout(unsigned workerid, int priority, double tmout);
 
+         bool AcquireThreadRef(ThreadRef& ref) { return AcquireRefWithoutMutex(ref); }
+
       public:
          bool IsItself() const { return GetObject() ? GetObject()->IsItself() : false; }
 

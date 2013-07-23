@@ -196,10 +196,6 @@ namespace dabc {
          /** \brief Return number of references on the object */
          unsigned NumReferences();
 
-         /** \brief Create reference on the object without mutex lock.
-          * Should be used when mutex is already locked before. */
-         Reference _MakeRef();
-
          /** \brief Internal DABC method, used to activate object cleanup via object thread
           * Returns: false - object cannot be cleanup by the thread,
           *          true  - thread guarantees that CallDestroyFromThread() will be called from thread context */
@@ -288,7 +284,7 @@ namespace dabc {
          Object* GetParent() const { return fObjectParent(); }
 
          /** \brief \returns reference on parent object, __thread safe__ */
-         Reference GetParentRef() const { return fObjectParent.Ref(); }
+         Reference GetParentRef() const { return fObjectParent; }
 
          /** \brief Checks if specified argument is in the list of object parents */
          bool IsParent(Object* obj) const;

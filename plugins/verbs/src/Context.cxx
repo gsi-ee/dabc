@@ -409,7 +409,7 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 
    folder.RemoveChild(pool->GetName(), true);
 
-   PoolRegistryRef ref = new PoolRegistry(Ref(), pool);
+   PoolRegistryRef ref = new PoolRegistry(*this, pool);
 
    if (ref.null()) {
       EOUT("Error - cannot create pool registry object for pool %s", pool->GetName());

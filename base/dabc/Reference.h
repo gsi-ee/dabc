@@ -79,12 +79,14 @@ namespace dabc {
 
          Object*    fObj;       ///< pointer on the object
 
-         Reference(bool withmutex, Object* obj) throw();
-
          Mutex* ObjectMutex() const;
 
          /** \brief Method used in copy constructor and assigned operations */
          void Assign(const Reference& src) throw();
+
+         /** \brief Special method, which allows to generate new reference when object mutex is locked.
+          *   It may be necessary when non-recursive mutexes are used. */
+         bool AcquireRefWithoutMutex(Reference& ref);
 
          /** \brief Convert reference to string, one should be able to recover reference from the string */
          bool ConvertToString(char* buf, int buflen);
@@ -96,17 +98,10 @@ namespace dabc {
          template<class T>
          bool verify_object(Object* src, T* &tgt) { return (tgt=dynamic_cast<T*>(src))!=0; }
 
-      private:
-         /** \brief Forget object - reference counter will be decrement by other means */
-         void Forget() { fObj = 0; }
-
       public:
 
-         /** \brief Default constructor, creates empty reference */
-         Reference();
-
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */
-         Reference(Object* obj) throw();
+         Reference(Object* obj = 0) throw();
 
          /** \brief Copy constructor, if source is transient than source reference will be emptied */
          Reference(const Reference& src) throw();
@@ -205,9 +200,6 @@ namespace dabc {
          /** \brief Compare operator - return true if reference refer to different objects */
          inline bool operator!=(Object* obj) const { return GetObject() != obj; }
 
-         /** \brief Return new reference on the object disregard to transient status */
-         Reference Ref(bool withmutex = true) const { return Reference(withmutex, GetObject()); }
-
          /** \brief Show on debug output content of reference */
          void Print(int lvl=0, const char* from = 0) const;
 
@@ -230,13 +222,9 @@ namespace dabc {
 
 
 #define DABC_REFERENCE(RefClass, ParentClass, T) \
-      protected: \
-         RefClass(bool withmutex, T* obj) : ParentClass(withmutex, obj) {} \
       public: \
-         /** \brief Default constructor, creates empty reference */ \
-         RefClass() : ParentClass() {} \
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */ \
-         RefClass(T* obj) throw() : ParentClass(obj) {} \
+         RefClass(T* obj = 0) throw() : ParentClass(obj) {} \
          /** \brief Copy constructor */ \
          RefClass(const RefClass& src) throw() : ParentClass(src) {} \
          /** \brief Copy constructor */ \
@@ -269,10 +257,7 @@ namespace dabc {
             if (verify_object(src(),res)) dabc::Reference::operator<<(src); \
                else { Release(); src.Release(); } \
             return *this; \
-         } \
-         /** \brief Return new reference on the object - old reference will remain */ \
-         /** \param[in] withmutex   if false, no mutex locking will be performed, it is supposed that mutex already locked */ \
-         RefClass Ref(bool withmutex = true) const { return RefClass(withmutex, GetObject()); }
+         }
 
 
 #endif

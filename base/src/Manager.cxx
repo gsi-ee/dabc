@@ -553,7 +553,7 @@ bool dabc::Manager::ProcessParameterEvents()
          if (fTimedPars==0)
             fTimedPars = new ReferencesVector;
          if (!fTimedPars->HasObject(rec.par())) {
-            Reference ref = rec.par.Ref();
+            Reference ref = rec.par;
             fTimedPars->Add(ref);
          }
       }

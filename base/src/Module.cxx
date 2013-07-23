@@ -335,7 +335,7 @@ int dabc::Module::PreviewCommand(Command cmd)
          if (cnt>0) { cnt--; continue; }
 
          cmd.SetRef("Port", PortRef(pool));
-         cmd.SetRef("Pool", pool->fPool.Ref());
+         cmd.SetRef("Pool", pool->fPool);
          break;
       }
    } else
@@ -527,7 +527,7 @@ unsigned dabc::Module::CreatePoolHandle(const std::string& poolname, unsigned qu
       return (unsigned) -1;
    }
 
-   PoolHandle* handle = new PoolHandle(this, pool.Ref(), poolname, queue);
+   PoolHandle* handle = new PoolHandle(this, pool, poolname, queue);
 
    AddModuleItem(handle);
 

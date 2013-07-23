@@ -423,7 +423,7 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
 
 std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 {
-   Iterator iter2(Ref());
+   Iterator iter2(*this);
 
    bool withversion = false;
 

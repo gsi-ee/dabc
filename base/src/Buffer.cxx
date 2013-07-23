@@ -203,7 +203,7 @@ dabc::Buffer dabc::Buffer::Duplicate() const
 
    res.AllocateContainer(GetObject()->fCapacity);
 
-   res.GetObject()->fPool = GetObject()->fPool.Ref();
+   res.GetObject()->fPool = GetObject()->fPool;
 
    res.SetTypeId(GetTypeId());
 
