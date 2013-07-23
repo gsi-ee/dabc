@@ -15,7 +15,7 @@ to automatically create module when starting application.
 First output of the module reserved for stream server, second output can be used to
 store data in lmd files. 
 
-One can enable HTTP server, ucommenting line with libDabcHttp.so library.
+One can enable HTTP server, uncommenting line with libDabcHttp.so library.
 This will start server with configured port, which also able to accept connection from clients.
 Means server can provide access not only to data from current process, but also to clients.
 In this particular case one can connect go4 analsys to dabc with command:
@@ -33,7 +33,7 @@ At the moment http server provides view of ratemeters and display of ROOT histog
       <!--lib value="libDabcHttp.so"/-->  
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
-      <!--affinity value="-1"/-->
+      <!--control value="true"/-->
     </Run>
     
     <HttpServer name="http">
