@@ -70,7 +70,7 @@ class IbTestApplication : public dabc::Application {
          int bufsize = 16*1024;
          while (bufsize < connect_packet_size) bufsize*=2;
 
-         dabc::mgr.CreateMemoryPool("SendPool", bufsize, NumNodes() * 4, 2);
+         dabc::mgr.CreateMemoryPool("SendPool", bufsize, NumNodes() * 4);
 
          dabc::CmdCreateModule cmd("IbTestWorkerModule", IBTEST_WORKERNAME, "IbTestThrd");
          cmd.Field("NodeNumber").SetInt(dabc::mgr()->NodeId());

@@ -157,7 +157,7 @@ bool bnet::BnetRunnable::Configure(const dabc::ModuleRef& m, const dabc::EventId
    fSegmPerOper = 8;
 
    fHeaderBufSize = 128;
-   fHeaderPool.Allocate(fHeaderBufSize, fNumRecs, 2);
+   fHeaderPool.Allocate(fHeaderBufSize, fNumRecs);
 
    fDoTimeSync = false;
    fDoScaleSync = false;

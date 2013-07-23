@@ -28,10 +28,6 @@
 #include "dabc/Buffer.h"
 #endif
 
-#ifndef DABC_BufferNew
-#include "dabc/BufferNew.h"
-#endif
-
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif
@@ -54,14 +50,12 @@ namespace dabc {
     * Allocates and manage memory, which than can be accessed via \ref dabc::Buffer class
     */
 
-   class BufferNew;
    class BufferContainer;
 
    class MemoryPool : public ModuleAsync {
       friend class Manager;
       friend class Buffer;
       friend class MemoryPoolRef;
-      friend class BufferNew;
       friend class BufferContainer;
 
       struct RequesterReq {
@@ -74,28 +68,23 @@ namespace dabc {
 
       protected:
 
-         MemoryBlock* fMem;    ///< list of preallocated memory
+         MemoryBlock*              fMem;    ///< list of preallocated memory
 
-         MemoryBlock* fSeg;    ///< list of preallocated segmented lists
+         unsigned                  fAlignment;      ///< alignment boundary for memory
 
-         unsigned        fAlignment;      ///< alignment border for memory
-         unsigned        fMaxNumSegments; ///< maximum number of segments in Buffer objects
+         std::vector<RequesterReq> fReqests;        ///< configuration for each output
 
-         std::vector<RequesterReq>     fReqests;        ///< configuration for each output
+         Queue<unsigned, true>    fPending;    ///< queue with requester indexes which are waiting release of the memory
 
-         Queue<unsigned, true>         fPending;    ///< queue with requester indexes which are waiting release of the memory
+         bool                     fEvntFired;      ///< indicates if event was fired to process memory requests
+         bool                     fWaitingRelease; ///< flag indicate that memory pool waiting release of next buffer
 
-         bool            fEvntFired;      ///< indicates if event was fired to process memory requests
-         bool            fWaitingRelease; ///< flag indicate that memory pool waiting release of next buffer
+         unsigned                 fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
 
-         unsigned        fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
-
-         bool            fUseThread;      ///< indicate if thread functionality should be used to process supplied requests
+         bool                     fUseThread;      ///< indicate if thread functionality should be used to process supplied requests
          
-         static unsigned fDfltAlignment;   ///< default alignment for memory allocation
-         static unsigned fDfltNumSegments; ///< default number of segments in memory pool
-         static unsigned fDfltRefCoeff;    ///< default coefficient for reference creation
-         static unsigned fDfltBufSize;     ///< default buffer size
+         static unsigned          fDfltAlignment;   ///< default alignment for memory allocation
+         static unsigned          fDfltBufSize;     ///< default buffer size
 
          virtual bool Find(ConfigIO &cfg);
 
@@ -105,27 +94,11 @@ namespace dabc {
          /** Release raw buffer, allocated before by TakeRawBuffer */
          void ReleaseRawBuffer(unsigned indx);
 
-         /** Release all references, used in the record (under pool mutex).
-          * If return trues, new space is available in the memory pool */
-         bool _ReleaseBufferRec(dabc::Buffer::BufferRec* rec);
-
-         /** Release all references, used in the record */
-         void ReleaseBufferRec(dabc::Buffer::BufferRec* rec);
-
-         static void _TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, unsigned numsegm);
-
+         /** Central method, which reserves memory from pool and fill structures of buffer */
          Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true) throw();
 
-         /** Central method, which reserves memory from pool and fill structures of buffer */
-         BufferNew _TakeBufferNew(BufferSize_t size, bool except, bool reserve_memory = true) throw();
-
          /** Method to allocate memory for the pool, mutex should be locked */
-         bool _Allocate(BufferSize_t bufsize = 0, unsigned number = 0, unsigned refcoef = 0) throw();
-
-         /** Method called by assignment operator of Buffer class to
-          * create copy of existing buffer - means same segments list and
-          * increase refcounter for all used segments */
-         static void DuplicateBuffer(const Buffer& src, Buffer& tgt, unsigned firstseg = 0, unsigned numsegm = 0) throw();
+         bool _Allocate(BufferSize_t bufsize = 0, unsigned number = 0) throw();
 
          /** Process submitted requests, if returns true if any requests was processed */
          bool _ProcessRequests();
@@ -138,6 +111,9 @@ namespace dabc {
 
          /** Decrease references of specified segments */
          void DecreaseSegmRefs(MemSegment* segm, unsigned num) throw();
+
+         /** Return true when all segments has refcnt==1 */
+         bool IsSingleSegmRefs(MemSegment* segm, unsigned num) throw();
 
          virtual void OnThreadAssigned() { fUseThread = HasThread(); }
 
@@ -172,21 +148,17 @@ namespace dabc {
          /** Set alignment of allocated memory */
          bool SetAlignment(unsigned align);
 
-         /** Set number of preallocated segments in the buffer.
-          * Buffer cannot contain list bigger than this number */
-         bool SetMaxNumSegments(unsigned num);
-
          /** Allocates memory for the memory pool and creates references.
           * Only can be called for empty memory pool.
           * If no values are specified, requested values, configured by modules are used.
           * TODO: Another alternative is to configure memory pool via xml file */
-         bool Allocate(BufferSize_t bufsize = 0, unsigned number = 0, unsigned refcoef = 0) throw();
+         bool Allocate(BufferSize_t bufsize = 0, unsigned number = 0) throw();
 
          /** This is alternative method to supply memory to the pool.
           * User could allocate buffers itself and provide it to this method.
           * If specified, memory pool will take ownership over this memory -
           * means free() function will be called to release this memory */
-         bool Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes, unsigned refcoef = 0) throw();
+         bool Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes) throw();
 
          /** Return pointers and sizes of all memory buffers in the pool
           * Could be used by devices and transport to map all buffers into internal structures.
@@ -227,6 +199,7 @@ namespace dabc {
          /** \brief Return minimum buffer size in the pool */
          unsigned GetMinBufSize() const;
 
+
          /** \brief Returns Buffer object with exclusive access rights
           *
           * \param[in] size defines requested buffer area, if = 0 returns next empty buffer
@@ -234,26 +207,6 @@ namespace dabc {
           * Returned object will have at least specified size (means, size can be bigger).
           * In case when memory pool cannot provide specified memory exception will be thrown */
          Buffer TakeBuffer(BufferSize_t size = 0) throw();
-
-         /** \brief Returns Buffer object with exclusive access rights
-          *
-          * \param[in] size defines requested buffer area, if = 0 returns next empty buffer
-          * If size longer as single buffer, memory pool will try to produce segmented list.
-          * Returned object will have at least specified size (means, size can be bigger).
-          * In case when memory pool cannot provide specified memory exception will be thrown */
-         BufferNew TakeBufferNew(BufferSize_t size = 0) throw();
-
-
-         /** \brief Returns Buffer object without any memory reserved.
-          *
-          * Instance can be used in later code to add references on
-          * the memory from other buffers */
-         Buffer TakeEmpty(unsigned capacity = 0) throw();
-
-         /**\brief  Method used to produce deep copy of source buffer.
-          *
-          * In any case new space will be reserved and content will be copied */
-         Buffer CopyBuffer(const Buffer& src, bool except = true) throw();
 
          /** \brief Check if memory pool structure was changed since last call, do not involves memory pool mutex */
          bool CheckChangeCounter(unsigned &cnt);
@@ -267,13 +220,9 @@ namespace dabc {
          // these are static methods to change default configuration for all newly created pools
 
          static unsigned GetDfltAlignment() { return fDfltAlignment; }
-         static unsigned GetDfltNumSegments() { return  fDfltNumSegments; }
-         static unsigned GetDfltRefCoeff() { return fDfltRefCoeff; }
          static unsigned GetDfltBufSize() { return fDfltBufSize; }
 
          static void SetDfltAlignment(unsigned v) { fDfltAlignment = v; }
-         static void SetDfltNumSegments(unsigned v) { fDfltNumSegments = v; }
-         static void SetDfltRefCoeff(unsigned v) { fDfltRefCoeff = v; }
          static void SetDfltBufSize(unsigned v) { fDfltBufSize = v; }
    };
 
@@ -296,13 +245,6 @@ namespace dabc {
 
          if (align) SetUInt(xmlAlignment, align);
       }
-
-      void SetRefs(unsigned refcoeff, unsigned numsegm = 0)
-      {
-         if (refcoeff) SetUInt(xmlRefCoeff, refcoeff);
-         if (numsegm) SetUInt(xmlNumSegments, numsegm);
-      }
-
    };
 
    // ________________________________________________________________________________
@@ -337,11 +279,6 @@ namespace dabc {
       Buffer TakeBuffer(BufferSize_t size = 0)
       {
          return GetObject() ? GetObject()->TakeBuffer(size) : Buffer();
-      }
-
-      Buffer TakeEmpty(unsigned capacity = 0)
-      {
-         return GetObject() ? GetObject()->TakeEmpty(capacity) : Buffer();
       }
 
       Reference CreateNewRequester();

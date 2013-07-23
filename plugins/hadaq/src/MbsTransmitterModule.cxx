@@ -26,6 +26,14 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
    dabc::ModuleAsync(name, cmd),
    fSrcIter(),
    fTgtIter(),
+   fCurrentEventNumber(0),
+   isCurrentEventNumber(false),
+   fIgnoreEvent(0),
+   isIgnoreEvent(false),
+   fEvCounter(0),
+   fSubeventId(0),
+   fMergeSyncedEvents(false),
+   fFlushCnt(0),
    feofbuf()
 {
    // we need at least one input and one output port
@@ -88,6 +96,9 @@ bool hadaq::MbsTransmitterModule::retransmit()
       }
 
       dabc::Buffer buf = Recv();
+
+      // DOUT0("+++++++++++++++ RECV %u  ++++++++++++++", buf.GetTotalSize());
+
 
       if (buf.GetTypeId() == dabc::mbt_EOF) {
 
@@ -222,6 +233,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
       isCurrentEventNumber = true;
 
       // create proper MBS event header and
+
       fTgtIter.NewEvent(fCurrentEventNumber);
       fTgtIter.NewSubevent2(fSubeventId);
    }

@@ -20,77 +20,74 @@ void dabc::CommandsQueue::Cleanup(Mutex* m, Worker* proc, int res)
 {
    do {
 
-      QueueRec rec;
+      Command cmd;
+      int kind;
 
       {
          LockGuard lock(m);
 
          if (fList.size()==0) return;
 
-         rec = fList.front();
+         cmd << fList.front().cmd;
+         kind = fList.front().kind;
          fList.pop_front();
       }
 
-      switch (rec.kind) {
+      switch (kind) {
          case kindNone:
             break;
          case kindPostponed:
          case kindSubmit:
-            rec.cmd.Reply(res);
+            cmd.Reply(res);
             break;
          case kindReply:
             // we should reply on the command without changing result
-            rec.cmd.Reply();
+            cmd.Reply();
             break;
          case kindAssign:
-            rec.cmd.RemoveCaller(proc);
+            cmd.RemoveCaller(proc);
             break;
       }
-
+      cmd.Release();
    } while (true);
 }
 
 
-uint32_t dabc::CommandsQueue::Push(Command& cmd, EKind kind)
+uint32_t dabc::CommandsQueue::Push(Command cmd, EKind kind)
 {
    if (kind == kindNone) kind = fKind;
 
    // exclude zero id
    do { fIdCounter++; } while (fIdCounter==0);
 
-   fList.push_back(QueueRec(cmd, kind, fIdCounter));
+   fList.push_back(QueueRec());
+
+   fList.back().cmd << cmd;
+   fList.back().kind = kind;
+   fList.back().id = fIdCounter;
 
    return fIdCounter;
 }
-
-uint32_t dabc::CommandsQueue::PushD(Command cmd)
-{
-   // exclude zero id
-   do { fIdCounter++; } while (fIdCounter==0);
-
-   fList.push_back(QueueRec(cmd, kindNone, fIdCounter));
-
-   return fIdCounter;
-}
-
-
 
 dabc::Command dabc::CommandsQueue::Pop()
 {
    if (fList.size()==0) return dabc::Command();
 
-   QueueRec rec(fList.front());
+   dabc::Command cmd;
+
+   cmd << fList.front().cmd;
 
    fList.pop_front();
 
-   return rec.cmd;
+   return cmd;
 }
 
 dabc::Command dabc::CommandsQueue::PopWithKind(EKind kind)
 {
    for (QueueRecsList::iterator iter = fList.begin(); iter != fList.end(); iter++) {
       if (iter->kind==kind) {
-         dabc::Command cmd = iter->cmd;
+         dabc::Command cmd;
+         cmd << iter->cmd;
          fList.erase(iter);
          return cmd;
       }
@@ -103,7 +100,8 @@ dabc::Command dabc::CommandsQueue::PopWithId(uint32_t id)
 {
    for (QueueRecsList::iterator iter = fList.begin(); iter != fList.end(); iter++) {
       if (iter->id==id) {
-         dabc::Command cmd = iter->cmd;
+         dabc::Command cmd;
+         cmd << iter->cmd;
          fList.erase(iter);
          return cmd;
       }

@@ -25,15 +25,12 @@
 
 
 dabc::Reference::Reference() :
-   fObj(0),
-   fFlags(flTransient)
+   fObj(0)
 {
-//   DOUT0("From default constructor");
 }
 
-dabc::Reference::Reference(Object* obj, bool owner) throw() :
-   fObj(0),
-   fFlags(flTransient | (owner ? flOwner : 0))
+dabc::Reference::Reference(Object* obj) throw() :
+   fObj(0)
 {
    // this is empty reference
    if (obj==0) return;
@@ -46,7 +43,7 @@ dabc::Reference::Reference(Object* obj, bool owner) throw() :
 
 bool dabc::Reference::ConvertToString(char* buf, int buflen)
 {
-   int res = snprintf(buf, buflen, "%p:%u", fObj, fFlags);
+   int res = snprintf(buf, buflen, "%p", fObj);
 
    if ((res<0) || (res==buflen)) {
       EOUT("To small buffer len %d to convert reference!!!", buflen);
@@ -54,30 +51,25 @@ bool dabc::Reference::ConvertToString(char* buf, int buflen)
    }
 
    fObj = 0;
-   fFlags = 0;
    return true;
 }
 
 
 dabc::Reference::Reference(const char* buf, int buflen) throw() :
-   fObj(0),
-   fFlags(flTransient)
+   fObj(0)
 {
    if (buf==0 || (buflen==0)) return;
 
-   if ((strchr(buf,':')==0) || (sscanf(buf,"%p:%u", &fObj, &fFlags)!=2)) {
+   if (sscanf(buf,"%p", &fObj)!=1) {
       fObj = 0;
-      fFlags = 0;
       throw dabc::Exception(ex_Object, dabc::format("Cannot reconstruct reference from string %s", buf), "Reference" );
    }
 }
 
 
-void dabc::Reference::SetObject(Object* obj, bool owner, bool withmutex) throw()
+void dabc::Reference::SetObject(Object* obj, bool withmutex) throw()
 {
    Release();
-
-   SetFlag(flOwner, owner);
 
    fObj = obj;
 
@@ -92,32 +84,17 @@ void dabc::Reference::SetObject(Object* obj, bool owner, bool withmutex) throw()
 
 void dabc::Reference::Assign(const Reference& src) throw()
 {
-   if (src.IsTransient()) {
+   if (src.fObj->IncReference())
       fObj = src.fObj;
-      SetFlag(flOwner, src.IsOwner());
-      (const_cast<Reference*> (&src))->fObj = 0;
-   } else
-   if (src.fObj->IncReference()) {
-      fObj = src.fObj;
-      SetFlag(flOwner, false);
-   } else
-      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", src.fObj), src.GetName() );
+   else
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", src.fObj), src.GetName());
 }
 
 dabc::Reference::Reference(const Reference& src) throw() :
-   fObj(0),
-   fFlags(flTransient)
+   fObj(0)
 {
    if (!src.null()) Assign(src);
 }
-
-dabc::Reference::Reference(const Reference& src, bool transient) throw() :
-   fObj(0),
-   fFlags(transient ? flTransient : 0)
-{
-   if (!src.null()) Assign(src);
-}
-
 
 dabc::Reference& dabc::Reference::operator=(const Reference& src) throw()
 {
@@ -130,17 +107,29 @@ dabc::Reference& dabc::Reference::operator=(const Reference& src) throw()
    return *this;
 }
 
-dabc::Reference& dabc::Reference::operator<<(const Reference& src) throw()
+dabc::Reference& dabc::Reference::operator=(Object* obj) throw()
 {
    Release();
 
-   fObj = src.fObj; (const_cast<Reference*> (&src))->fObj = 0;
+   if (obj!=0) {
+      Reference ref(obj);
+      *this << ref;
+   }
 
-   // we move only ownership flag, transient status remains as before
-   SetOwner(src.IsOwner());
+   return *this;
+}
 
-   // there is no need to change ownership flag, it has no meaning without object pointer
-   //src.SetOwner(false);
+
+dabc::Reference& dabc::Reference::operator<<(Reference& src) throw()
+{
+   Release();
+
+   // we are trying to avoid situation, that both references have same pointer in a time
+   Object* temp = src.fObj;
+
+   src.fObj = 0;
+
+   fObj = temp;
 
    return *this;
 }
@@ -161,9 +150,14 @@ unsigned dabc::Reference::NumReferences() const
 }
 
 
+void dabc::Reference::SetAutoDestroy(bool on)
+{
+   if (GetObject()) GetObject()->SetAutoDestroy(on);
+}
+
+
 dabc::Reference::Reference(bool withmutex, Object* obj) throw() :
-   fObj(0),
-   fFlags(flTransient)
+   fObj(0)
 {
    if (obj) {
       if (obj->IncReference(withmutex))
@@ -182,11 +176,10 @@ dabc::Reference::~Reference()
 void dabc::Reference::Release() throw()
 {
    if (fObj==0) return;
-   if (fObj->DecReference(IsOwner()))
+   if (fObj->DecReference(false))
       // special case - object is not referenced and want to be destroyed - let help him
       delete fObj;
    fObj = 0;
-   SetFlag(flOwner, false);
 }
 
 
@@ -201,7 +194,6 @@ void dabc::Reference::Destroy() throw()
       delete fObj;
 
    fObj = 0;
-   SetFlag(flOwner, false);
 }
 
 
@@ -231,14 +223,9 @@ dabc::Mutex* dabc::Reference::ObjectMutex() const
    return GetObject() ? GetObject()->ObjectMutex() : 0;
 }
 
-bool dabc::Reference::AddChild(Object* obj, bool setparent)
+bool dabc::Reference::AddChild(Object* obj)
 {
-   return GetObject() ? GetObject()->AddChild(obj, true, setparent) : false;
-}
-
-dabc::Reference dabc::Reference::PutChild(Object* obj, bool delduplicate)
-{
-   return GetObject() ? GetObject()->PutChild(obj, delduplicate) : 0;
+   return GetObject() ? GetObject()->AddChild(obj, true) : false;
 }
 
 
@@ -263,6 +250,15 @@ dabc::Reference dabc::Reference::FindChild(const char* name) const
    return GetObject() ? GetObject()->FindChildRef(name) : Reference();
 }
 
+dabc::Reference dabc::Reference::RemoveChild(const char* name)
+{
+   dabc::Reference res = FindChild(name);
+   if (!res.null())
+      GetObject()->RemoveChild(res());
+   return res;
+}
+
+
 void dabc::Reference::DeleteChilds()
 {
    if (GetObject()) GetObject()->DeleteChilds();
@@ -271,9 +267,7 @@ void dabc::Reference::DeleteChilds()
 
 void dabc::Reference::Print(int lvl, const char* from) const
 {
-   std::string s;
-   dabc::formats(s,"%s REF:%p obj:%p transient:%s owner:%s", (from ? from : ""), this, fObj, DBOOL(IsTransient()), DBOOL(IsOwner()));
-   dabc::lgr()->Debug(lvl,"filename",1,"funcname", s.c_str());
+   dabc::lgr()->Debug(lvl,"filename",1,"funcname", dabc::format("%s REF:%p obj:%p", (from ? from : ""), this, fObj).c_str());
 }
 
 dabc::Reference dabc::Reference::GetFolder(const char* name, bool force) throw()

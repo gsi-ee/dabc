@@ -30,25 +30,6 @@ const char* dabc::prop_binary_producer = "binary_producer";
 const char* dabc::prop_content_hash = "hash";
 
 
-dabc::BinDataContainer::BinDataContainer(void* data, unsigned len, bool owner, uint64_t v) :
-   Object(0, "bindata", flAutoDestroy),
-   fData(data),
-   fLength(len),
-   fOwner(owner),
-   fVersion(v)
-{
-}
-
-dabc::BinDataContainer::~BinDataContainer()
-{
-   if (fData && fOwner) free(fData);
-   fData = 0;
-   fLength = 0;
-   fOwner = false;
-   fVersion = 0;
-}
-
-
 // ===============================================================================
 
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
@@ -386,7 +367,7 @@ bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
    if (GetObject()->UpdateHierarchyFrom(src())) {
 
       Hierarchy top = *this;
-      while (top.GetParent()) top = (HierarchyContainer*) top.GetParent();
+      while (top.GetParent()) top = top.GetParentRef();
 
       uint64_t next_ver = top.GetVersion() + 1;
 
@@ -394,8 +375,8 @@ bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 
       top = *this;
       while (top.GetParent()) {
-         top = (HierarchyContainer*) top.GetParent();
-         top()->SetVersion(next_ver, false, true);
+         top = top.GetParentRef();
+         if (!top.null()) top()->SetVersion(next_ver, false, true);
       }
    }
 
@@ -452,8 +433,7 @@ void dabc::Hierarchy::Create(const std::string& name)
 {
    Release();
    SetObject(new HierarchyContainer(name));
-   SetOwner(true); // top level is owner
-   SetTransient(false);
+   SetAutoDestroy(true); // top level is owner
 }
 
 dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
@@ -549,7 +529,7 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
          producer_name = parent.Field(dabc::prop_binary_producer).AsStdStr();
          request_name = RelativeName(parent);
       }
-      parent = (dabc::HierarchyContainer*) parent.GetParent();
+      parent = parent.GetParentRef();
    }
 
    return producer_name;

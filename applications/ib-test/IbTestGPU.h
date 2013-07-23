@@ -44,8 +44,6 @@ namespace opencl {
 
    class ContextRef : public dabc::Reference {
 
-      static bool transient_refs() { return false; }
-
       DABC_REFERENCE(ContextRef, dabc::Reference, Context)
 
       public:

@@ -35,13 +35,13 @@ namespace dabc {
     *
     *  void func(Object* obj)
     *  {
-    *     Object* obj = new Object;
-    *     dabc::Reference ref(obj);
+    *     dabc::Reference ref(new Object);
+    *     ref.SetAutoDestroy(true);
     *     ref()->Print();
     *  }
     *
     *  When function is finishing its work, reference will be automatically released.
-    *  If ownership is specified, object also will be destroyed
+    *  If autodestroy flag was specified, object also will be destroyed.
     *
     *  Reference object cannot be used from several threads simultaneously,
     *  one should create new reference to work such way
@@ -58,7 +58,7 @@ namespace dabc {
     *    };
     *
     *  Macro defines all nice-to-have methods which should be presented in the reference
-    *  class - default constructor, copy constructor, assignment operator, some other.
+    *  class - default constructor, copy constructor, assignment operator, shift operator, some other.
     *
     *  Typically such reference class should be a friend for object class to have access to the
     *  object protected-private methods and members.
@@ -75,22 +75,9 @@ namespace dabc {
       friend class Object;
       friend class Command;
 
-      private:
-         enum EFlags {
-            flTransient = 0x01, ///< reference will be moved by any next copy operation
-            flOwner     = 0x02  ///< indicates if reference also is object owner
-         };
+      protected:
 
          Object*    fObj;       ///< pointer on the object
-         unsigned   fFlags;     ///< flags, see EFlags
-
-         /** \brief Return value of selected flag, non thread safe  */
-         inline bool GetFlag(unsigned fl) const { return (fFlags & fl) != 0; }
-
-         /** \brief Change value of selected flag, non thread safe  */
-         inline void SetFlag(unsigned fl, bool on = true) { fFlags = on ? (fFlags | fl) : (fFlags & ~fl); }
-
-      protected:
 
          Reference(bool withmutex, Object* obj) throw();
 
@@ -109,42 +96,27 @@ namespace dabc {
          template<class T>
          bool verify_object(Object* src, T* &tgt) { return (tgt=dynamic_cast<T*>(src))!=0; }
 
-         /** Indicates default kind for created references */
-         static bool transient_refs() { return true; }
-
       public:
 
          /** \brief Default constructor, creates empty reference */
          Reference();
 
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */
-         Reference(Object* obj, bool owner = false) throw();
+         Reference(Object* obj) throw();
 
          /** \brief Copy constructor, if source is transient than source reference will be emptied */
          Reference(const Reference& src) throw();
 
-         /** \brief Copy constructor, if source is transient than source reference will be emptied
-          * One also can specify if new reference will be transient or not - useful in constructors */
-         Reference(const Reference& src, bool transient) throw();
-
          /** \brief Destructor, releases reference on the object */
          virtual ~Reference();
 
-         /** \brief Returns true if reference is transient - any reference assign operation will remove object pointer */
-         inline bool IsTransient() const { return GetFlag(flTransient); }
-
-         /** \brief Set transient status of reference */
-         inline void SetTransient(bool on = true) { SetFlag(flTransient,on); }
-
-         /** \brief Returns true if reference is owner of the object */
-         inline bool IsOwner() const { return GetFlag(flOwner); }
-
-         /** \brief Set ownership flag for reference  */
-         inline void SetOwner(bool on = true) { SetFlag(flOwner, on); }
+         /** \brief Set autodestroy flag for the object
+          * Once enabled, object will be destroyed when last reference will be cleared */
+         void SetAutoDestroy(bool on = true);
 
          /** \brief Direct set of object to reference.
           * withmutex = false means that user already lock object mutex */
-         void SetObject(Object* obj, bool owner = false, bool withmutex = true) throw();
+         void SetObject(Object* obj, bool withmutex = true) throw();
 
          /** \brief Returns number of references on the object */
          unsigned NumReferences() const;
@@ -152,15 +124,22 @@ namespace dabc {
          /** \brief Releases reference on the object */
          void Release() throw();
 
-         /** Copy reference to output object (disregard of transient flag).
-          * Source reference will be empty after call */
+         /** \brief Copy reference to output object.
+          * Source reference will be empty after the call.
+          * One probably could use left shift operator - this will save many intermediate operations */
          Reference Take();
+
+         /** \brief Release reference and starts destroyment of  referenced object */
+         void Destroy() throw();
 
          /** \brief Return pointer on the object */
          inline Object* GetObject() const { return fObj; }
 
          /** \brief Returns pointer on parent object */
          Object* GetParent() const;
+
+         /** \brief Returns reference on parent object */
+         Reference GetParentRef() const { return dabc::Reference(GetParent()); }
 
          /** \brief Return name of referenced object, if object not assigned, returns "---" */
          const char* GetName() const;
@@ -178,11 +157,7 @@ namespace dabc {
          inline bool null() const { return GetObject() == 0; }
 
          /** \brief Add child to list of object children */
-         bool AddChild(Object* obj, bool setparent = true);
-
-         /** Puts child into list of children.
-          * See dabc::Object::PutChild for more details */
-         Reference PutChild(Object* obj, bool delduplicate = true);
+         bool AddChild(Object* obj);
 
          /** \brief Return number of childs in referenced object.
           * If object null, always return 0 */
@@ -198,18 +173,20 @@ namespace dabc {
           * If object null, always return null reference */
          Reference FindChild(const char* name) const;
 
+         /** Remove child with given name and return reference on that child */
+         Reference RemoveChild(const char* name);
+
          /** \brief Delete all childs in referenced object */
          void DeleteChilds();
-
-         /** \brief Release reference and destroy referenced object
-          * It also happens with Release call when reference is object owner */
-         void Destroy() throw();
 
          /** \brief Assignment operator - copy reference */
          Reference& operator=(const Reference& src) throw();
 
+         /** \brief Assignment operator - copy reference */
+         Reference& operator=(Object* obj) throw();
+
          /** \brief Move operator - reference moved from source to target */
-         Reference& operator<<(const Reference& src) throw();
+         Reference& operator<<(Reference& src) throw();
 
          /** \brief Compare operator - return true if references refer to same object */
          inline bool operator==(const Reference& src) const { return GetObject() == src(); }
@@ -250,28 +227,42 @@ namespace dabc {
 #define DABC_REFERENCE(RefClass, ParentClass, T) \
       protected: \
          RefClass(bool withmutex, T* obj) : ParentClass(withmutex, obj) {} \
-         inline void check_transient() { if (!null() && !transient_refs()) SetTransient(false); } \
       public: \
          /** \brief Default constructor, creates empty reference */ \
          RefClass() : ParentClass() {} \
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */ \
-         RefClass(T* obj, bool owner = false) throw() : ParentClass(obj, owner) { check_transient(); } \
-         /** \brief Copy constructor, if source is transient than source reference will be emptied */ \
-         RefClass(const RefClass& src) throw() : ParentClass(src) { check_transient(); } \
-         /** \brief Copy constructor, if source is transient than source reference will be emptied */ \
+         RefClass(T* obj) throw() : ParentClass(obj) {} \
+         /** \brief Copy constructor */ \
+         RefClass(const RefClass& src) throw() : ParentClass(src) {} \
+         /** \brief Copy constructor */ \
          RefClass(const Reference& src) throw() : ParentClass() \
-            { T* res(0); if (verify_object(src(),res)) { Assign(src); check_transient(); } } \
+            { T* res(0); if (verify_object(src(),res)) { Assign(src); } } \
          /** \brief Return pointer on the object */ \
          inline T* GetObject() const { return (T*) ParentClass::GetObject(); } \
          /** \brief Return pointer on the object */ \
          inline T* operator()() const { return (T*) ParentClass::GetObject(); } \
          /** \brief Assignment operator - copy reference */ \
-         RefClass& operator=(const RefClass& src) throw() { ParentClass::operator=(src); check_transient(); return *this; } \
+         RefClass& operator=(const RefClass& src) throw() { ParentClass::operator=(src); return *this; } \
          /** \brief Assignment operator - copy reference. Also check dynamic_cast that type is supported */ \
-         RefClass& operator=(Reference& src) throw() \
+         RefClass& operator=(const Reference& src) throw() \
          { \
             Release(); T* res(0); \
-            if (verify_object(src(),res)) { Assign(src); check_transient(); } \
+            if (verify_object(src(),res)) Assign(src);  \
+            return *this; \
+         } \
+         /** \brief Assignment operator - create reference for object */ \
+         RefClass& operator=(dabc::Object* obj) throw() \
+         { \
+            Release(); T* res(0); \
+            if (verify_object(obj,res)) { RefClass ref((T*)obj); *this << ref; } \
+            return *this; \
+         } \
+         /** \brief Move operator - reference moved from source to target */ \
+         RefClass& operator<<(Reference& src) throw() \
+         { \
+            T* res(0); \
+            if (verify_object(src(),res)) dabc::Reference::operator<<(src); \
+               else { Release(); src.Release(); } \
             return *this; \
          } \
          /** \brief Return new reference on the object - old reference will remain */ \

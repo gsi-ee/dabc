@@ -25,7 +25,7 @@ void http::Factory::Initialize()
    http::Server* serv = new http::Server("/http");
    if (!serv->IsEnabled()) {
       dabc::WorkerRef ref = serv;
-      ref.SetOwner(true);
+      ref.SetAutoDestroy(true);
    } else {
       DOUT0("Initialize HTTP server");
       dabc::WorkerRef(serv).MakeThreadForWorker("HttpThread");

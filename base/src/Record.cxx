@@ -380,8 +380,7 @@ bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overw
 
 bool dabc::Record::CreateContainer(const std::string& name)
 {
-   SetObject(new dabc::RecordContainer(name), false);
-   SetTransient(false);
+   SetObject(new dabc::RecordContainer(name));
    return true;
 }
 

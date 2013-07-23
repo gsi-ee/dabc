@@ -39,7 +39,6 @@ dabc::ApplicationBase::ApplicationBase() :
 
 dabc::ApplicationBase::~ApplicationBase()
 {
-   DOUT0("#### ~ApplicationBase");
 }
 
 void dabc::ApplicationBase::ObjectCleanup()

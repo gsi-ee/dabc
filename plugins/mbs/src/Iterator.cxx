@@ -230,14 +230,17 @@ dabc::Buffer mbs::WriteIterator::Close()
    if (!fSubPtr.null()) FinishEvent();
    unsigned full_size = fEvPtr.distance_to_ownbuf();
    if (full_size != fFullSize)
-      EOUT("Sizes missmatch");
+      EOUT("Sizes mismatch");
+
    fEvPtr.reset();
 
    if ((fFullSize>0) && (fBuffer.GetTotalSize() >= fFullSize))
       fBuffer.SetTotalSize(fFullSize);
    fFullSize = 0;
 
-   return fBuffer.HandOver();
+   dabc::Buffer res;
+   res << fBuffer;
+   return res;
 }
 
 dabc::Buffer mbs::WriteIterator::CloseAndTransfer(dabc::Buffer& newbuf)
@@ -276,7 +279,9 @@ dabc::Buffer mbs::WriteIterator::CloseAndTransfer(dabc::Buffer& newbuf)
    fSubPtr.reset(fEvPtr, subptr_shift);
    if (subdata_shift>0) fSubData.reset(fSubPtr, subdata_shift);
 
-   return fBuffer.HandOver();
+   dabc::Buffer res;
+   res << fBuffer;
+   return res;
 }
 
 
@@ -288,6 +293,7 @@ bool mbs::WriteIterator::IsPlaceForEvent(uint32_t subeventssize, bool add_subev_
 
 bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeventssize)
 {
+
    if (!fSubPtr.null()) {
       EOUT("Previous event not closed");
       return false;
@@ -376,8 +382,6 @@ bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 
    if (rawdatasz==0) rawdatasz = filled_rawsize;
 
-//   DOUT0("raw data size %u maxrawdata size %u", rawdatasz, maxrawdatasize());
-
    if (rawdatasz > maxrawdatasize()) {
       EOUT("So big raw data size %u not possible, maximum is %u", rawdatasz, maxrawdatasize());
       rawdatasz  = maxrawdatasize();
@@ -425,6 +429,7 @@ bool mbs::WriteIterator::FinishEvent()
 
    evnt()->SetFullSize(fullsize);
    fEvPtr.shift(fullsize);
+
    fSubPtr.reset();
    fFullSize += fullsize;
 

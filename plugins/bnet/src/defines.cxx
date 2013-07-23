@@ -63,7 +63,7 @@ dabc::Buffer bnet::TestEventHandling::BuildFullEvent(const bnet::EventId& evid, 
 
    if (pool.null()) return res;
 
-   res = pool.TakeEmpty(numsegm);
+   res.MakeEmpty(numsegm);
 
    for (int n=0;n<numbufs;n++)
       res.Append(bufs[n], true);

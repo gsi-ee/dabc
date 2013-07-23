@@ -31,12 +31,9 @@ namespace dabc {
     * \ref dabc::Pointer class provides method which let work with such segmented memory as with contiguous region.
     */
 
-   class BufferNew;
-
    class Pointer {
 
       friend class Buffer;
-      friend class BufferNew;
 
       protected:
          Buffer            fBuf;      ///< we keep reference on the buffer, could be only used in same thread

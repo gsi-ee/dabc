@@ -121,8 +121,6 @@ hadaq::CombinerModule::~CombinerModule()
 
 void hadaq::CombinerModule::ModuleCleanup()
 {
-   DOUT1("hadaq::CombinerModule::ModuleCleanup()");
-
    fOut.Close().Release();
    
    for (unsigned n=0;n<fInp.size();n++)
@@ -146,8 +144,9 @@ void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 
 void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
-   if (fFlushFlag)
+   if (fFlushFlag) {
       FlushOutputBuffer();
+   }
    fFlushFlag = true;
    if (fUpdateCountersFlag)
       UpdateExportedCounters();
@@ -165,7 +164,7 @@ bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 
 void hadaq::CombinerModule::BeforeModuleStart()
 {
-   DOUT0("hadaq::CombinerModule::BeforeModuleStart name: %s ", GetName());
+   DOUT3("hadaq::CombinerModule::BeforeModuleStart name: %s ", GetName());
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -189,11 +188,10 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       return false;
    }
    if (!CanSendToAllOutputs()) {
-      DOUT0("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s", NumOutputs(), DBOOL(CanSend(0)));
+      DOUT0("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s CanSend(1) = %s", NumOutputs(), DBOOL(CanSend(0)), DBOOL(CanSend(1)));
       return false;
    }
    dabc::Buffer buf = fOut.Close();
-   DOUT3("HADAQ: FlushOutputBuffer() Send buffer of size = %d", buf.GetTotalSize());
    SendToAllOutputs(buf);
    fFlushFlag = false; // indicate that next flush timeout one not need to send buffer
 
@@ -657,6 +655,7 @@ bool hadaq::CombinerModule::BuildEvent()
             DOUT0("Could not flush buffer");
             return false;
          }
+
       }
       // after flushing last buffer, take next one:
       if (!fOut.IsBuffer()) {

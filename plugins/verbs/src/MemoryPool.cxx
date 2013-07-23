@@ -37,7 +37,7 @@ verbs::MemoryPool::MemoryPool(ContextRef ctx,
 
    SetAlignment((bufsize<0x100) ? 0x10 : 0x100);
 
-   Allocate(bufsize, number, 1);
+   Allocate(bufsize, number);
 
    fReg = new PoolRegistry(ctx, this);
    fReg()->SyncMRStructure();

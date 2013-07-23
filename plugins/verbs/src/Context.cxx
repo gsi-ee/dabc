@@ -299,6 +299,7 @@ bool verbs::ContextRef::OpenVerbs(bool withmulticast, const char* devicename, in
    DOUT1("Creating new context object");
 
    Context* ctx = new Context;
+   ctx->SetAutoDestroy(true);
 
    DOUT1("Creating new context done");
 
@@ -307,8 +308,8 @@ bool verbs::ContextRef::OpenVerbs(bool withmulticast, const char* devicename, in
       return false;
    }
 
-   SetObject(ctx, true);
-   SetTransient(false);
+   SetObject(ctx);
+   SetAutoDestroy(true);
    return true;
 }
 
@@ -406,12 +407,16 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 
    dabc::Reference folder = GetFolder("PoolReg", true);
 
-   PoolRegistryRef ref = folder.PutChild(new PoolRegistry(Ref(), pool));
+   folder.RemoveChild(pool->GetName()).Destroy();
+
+   PoolRegistryRef ref = new PoolRegistry(Ref(), pool);
 
    if (ref.null()) {
       EOUT("Error - cannot create pool registry object for pool %s", pool->GetName());
       return 0;
    }
+
+   folder.AddChild(ref.GetObject());
 
    if (ref()->GetPool() != pool) {
       EOUT("Registry entry for name %s exists but pool pointer mismatch", pool->GetName());

@@ -215,6 +215,7 @@ unsigned hadaq::DataSocketAddon::Read_Complete(dabc::Buffer& buf)
 
    if (fill_sz==0) EOUT("Zero bytes was read");
    buf.SetTypeId(hadaq::mbt_HadaqTransportUnit);
+
    buf.SetTotalSize(fill_sz);
 
    fSendCnt++;

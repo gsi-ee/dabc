@@ -20,7 +20,6 @@
 #include "dabc/ModuleSync.h"
 #include "dabc/Parameter.h"
 #include "dabc/Buffer.h"
-#include "dabc/BufferNew.h"
 #include "dabc/BuffersQueue.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
@@ -291,7 +290,7 @@ void TestChain(bool isM, int number, int testkind = 0, double test_tm = 2.)
    DOUT0("Test chain of %d %s modules, using %d threads",
             number, (isM ? "Sync" : "Async"), (testkind==0 ? number : testkind));
 
-   dabc::mgr.CreateMemoryPool("Pool", BUFFERSIZE, number*QUEUESIZE*2, 2);
+   dabc::mgr.CreateMemoryPool("Pool", BUFFERSIZE, number*QUEUESIZE*2);
 
    for (int n=0;n<number;n++) {
       int kind = 1;
@@ -474,7 +473,7 @@ void TestMemoryPool()
 
    dabc::MemoryPool mem_pool("Test", true);
 
-   mem_pool.Allocate(bufsize, numbuf, 2);
+   mem_pool.Allocate(bufsize, numbuf);
 
    DOUT1("Manager thread = %s", dabc::mgr()->ThreadName().c_str());
    mem_pool.AssignToThread(dabc::mgr()->thread());
@@ -1081,29 +1080,33 @@ extern "C" void RunPoolTest()
 
    {
 
-      pool1.Allocate(0x1000, 1000, 2);
+      pool1.Allocate(0x1000, 1000);
 
       DOUT0("Allocate pool done");
 
-
-      dabc::BufferNew buf1;
+      dabc::Buffer buf1;
 
       DOUT0("Taking buffer ");
 
-
-      buf1 = pool1.TakeBufferNew(0x4000);
+      buf1 = pool1.TakeBuffer(0x4000);
 
       DOUT0("buf1 = %p", &buf1);
 
       DOUT0("Full size1 = %u numsegm %u", buf1.GetTotalSize(), buf1.NumSegments());
 
-      dabc::BufferNew buf2 = buf1.Duplicate();
+      // when we call duplicate, new segments list is created - one can send such object anywhere
+      dabc::Buffer buf2 = buf1.Duplicate();
 
-      DOUT0("Full size2 = %u size2 = %u", buf1.GetTotalSize(), buf2.GetTotalSize());
+      DOUT0("Full size1 = %u size2 = %u issame %s", buf1.GetTotalSize(), buf2.GetTotalSize(), DBOOL(buf2==buf1));
 
-//      buf1.Release(); buf2.Release();
+      // when assign operator used, only reference is copied
+      // such buffers only can be used inside same thread
+      dabc::Buffer buf3 = buf1;
 
-/*      unsigned cnt(0);
+      DOUT0("Full size1 = %u size3 = %u issame %s", buf1.GetTotalSize(), buf3.GetTotalSize(), DBOOL(buf3==buf1));
+
+
+      unsigned cnt(0);
       dabc::Buffer hdr;
       dabc::Pointer ptr = buf2;
       while (!(hdr = buf2.GetNextPart(ptr, 16)).null()) cnt++;
@@ -1111,17 +1114,21 @@ extern "C" void RunPoolTest()
 
       ptr = buf2;
       hdr = buf2.GetNextPart(ptr, 16);
+
+      DOUT0("Full size hdr = %u", hdr.GetTotalSize());
+
+
       hdr.CopyFromStr("First second");
       dabc::Buffer hdr2 = buf2.GetNextPart(ptr, 16);
       hdr2.CopyFromStr(" in between");
       hdr2.SetTotalSize(11);
       hdr.Insert(5, hdr2);
       DOUT0("Result of insertion is: %s", hdr.AsStdString().c_str());
-*/
+
 
       const char* mystr = "This is example of external buffer";
 
-      buf1 = dabc::BufferNew::CreateBuffer(mystr, strlen(mystr), false);
+      buf1 = dabc::Buffer::CreateBuffer(mystr, strlen(mystr), false);
 
       DOUT0("Ext buffer: %s", buf1.AsStdString().c_str());
 
@@ -1129,9 +1136,13 @@ extern "C" void RunPoolTest()
       char* newbuf = (char*) malloc(256);
       strcpy(newbuf,"This is own buffer");
 
-      buf2 = dabc::BufferNew::CreateBuffer(newbuf, strlen(newbuf), true);
+      DOUT0("Create memory %p", newbuf);
+
+
+      buf2 = dabc::Buffer::CreateBuffer(newbuf, strlen(newbuf), true);
 
       DOUT0("Ext buffer: %s", buf2.AsStdString().c_str());
+
 
       /*
 
@@ -1139,7 +1150,7 @@ extern "C" void RunPoolTest()
 
       dabc::BuffersQueue queue(50);
       for (int n=0;n<50;n++) {
-         dabc::BufferNew buf = pool1.TakeBufferNew(0x4000);
+         dabc::Buffer buf = pool1.TakeBuffer(0x4000);
          // queue.PushBuffer(buf);
       }
 

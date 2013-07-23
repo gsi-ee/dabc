@@ -26,7 +26,7 @@ void dabc_root::Factory::Initialize()
    dabc_root::RootSniffer* serv = new dabc_root::RootSniffer("/ROOT");
    if (!serv->IsEnabled()) {
       dabc::WorkerRef ref = serv;
-      ref.SetOwner(true);
+      ref.SetAutoDestroy(true);
    } else {
       DOUT0("Initialize ROOT sniffer");
       dabc::WorkerRef(serv).MakeThreadForWorker("RootThread");

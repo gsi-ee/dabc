@@ -65,7 +65,6 @@ dabc::Transport* dabc::Factory::CreateTransport(const Reference& port, const std
    dabc::PortRef portref = port;
 
    if (portref.IsInput()) {
-//      inpport.SetTransient(false);
       dabc::DataInput* inp = CreateDataInput(typ);
       if (inp!=0) {
          if (!inp->Read_Init(portref, cmd)) {
@@ -79,14 +78,13 @@ dabc::Transport* dabc::Factory::CreateTransport(const Reference& port, const std
    }
 
    if (portref.IsOutput()) {
-//      outport.SetTransient(false);
       dabc::DataOutput* out = CreateDataOutput(typ);
       if (out!=0) {
          if (!out->Write_Init(portref, cmd)) {
             EOUT("Output object %s cannot be initialized", typ.c_str());
             delete out;
          } else {
-            DOUT0("Creating output transport for port %p", portref());
+            DOUT3("Creating output transport for port %p", portref());
             return new dabc::OutputTransport(cmd, portref, out, true);
          }
       }

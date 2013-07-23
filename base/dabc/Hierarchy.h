@@ -20,6 +20,10 @@
 #include "dabc/Record.h"
 #endif
 
+#ifndef DABC_Buffer
+#include "dabc/Buffer.h"
+#endif
+
 #include <stdint.h>
 
 namespace dabc {
@@ -32,32 +36,30 @@ namespace dabc {
 
    class Hierarchy;
 
-   class BinDataContainer : public Object {
-      protected:
-         void*      fData;           ///< binary data, assigned with the node
-         unsigned   fLength;         ///< length of binary data
-         bool       fOwner;          ///< is owner of binary data
-         uint64_t   fVersion;        ///< version of binary data
-      public:
-         BinDataContainer(void* data = 0, unsigned len = 0, bool owner = false, uint64_t v = 0);
-         virtual ~BinDataContainer();
+   /** This is header, which should be supplied for every binary data,
+    * created in Hierarchy classes
+    *
+    */
 
-         virtual void* data() const { return fData; }
-         virtual unsigned length() const { return fLength; }
+#pragma pack(push, 4)
 
-         uint64_t  GetVersion() const { return fVersion; }
-         void SetVersion(uint64_t ver) { fVersion = ver; }
+   struct BinDataHeader {
+      uint32_t typ;              ///< type of the binary header (1 for the moment)
+      uint32_t version;          ///< version of data in binary data
+      uint32_t master_version;   ///< version of master object for that binary data
+      uint32_t zipped;           ///< length of unzipped data
+      uint32_t payload;          ///< length of payload (not including header)
+
+      void reset() {
+         typ = 1;
+         version = 0;
+         master_version = 0;
+         zipped = 0;
+         payload = 0;
+      }
    };
 
-   class BinData : public Reference {
-      static bool transient_refs() { return false; }
-
-      DABC_REFERENCE(BinData, Reference, BinDataContainer)
-
-      void* data() const { return null() ? 0 : GetObject()->data(); }
-      unsigned length() const { return null() ? 0 : GetObject()->length(); }
-      uint64_t version() const { return null() ? 0 : GetObject()->GetVersion(); }
-   };
+#pragma pack(pop)
 
 
    // ===================================================================================
@@ -80,7 +82,7 @@ namespace dabc {
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
-         BinData    fBinData;           ///< binary data, assigned with element
+         Buffer     fBinData;           ///< binary data, assigned with element
 
          HierarchyContainer* TopParent();
 
@@ -92,7 +94,7 @@ namespace dabc {
 
          std::string ItemName();
 
-         /** \brief Create child with specified name, when indx < 0
+         /** \brief Create child with specified name
           * \details If indx value specified, child will be created or kept at this position
           * All intermediate childs will be removed
           * \returns pointer on the child */
@@ -134,7 +136,7 @@ namespace dabc {
          /** \brief Method used to create copy of hierarchy again */
          virtual void BuildHierarchy(HierarchyContainer* cont);
 
-         BinData& bindata() { return fBinData; }
+         Buffer& bindata() { return fBinData; }
    };
 
    // ______________________________________________________________
@@ -148,8 +150,6 @@ namespace dabc {
     */
 
    class Hierarchy : public Record {
-
-      static bool transient_refs() { return false; }
 
       DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 

@@ -79,10 +79,7 @@ namespace dabc {
          /** Add reference on the command in the queue.
           * Kind of command can be specified, if not - default queue kind is used
           * Returns unique id for the command inside this queue */
-         uint32_t Push(Command& cmd, EKind kind = kindNone);
-
-         /** FIXME: is command should be supplied with reference ??? */
-         uint32_t PushD(Command cmd);
+         uint32_t Push(Command cmd, EKind kind = kindNone);
 
          /** Change kind of the entry for specified command.
           * If entry not exists, command will be add to the queue.

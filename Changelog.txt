@@ -2,8 +2,44 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+23.07.2013
+1. Remove transient flag in reference class. By this C++-conform code can be used.
+   Main problem was assignment operator - it requires increment of reference counter.
+   But in most cases original object will be cleared and reference counter will be 
+   decreased. To optimize this, transient flag in reference class was introduced.
+   But one cannot really control code where and when reference from source object
+   can be MOVED and when COPIED. Therefore only left-shift operator allows to 
+   move reference, all other operations will create copy of reference class. In most
+   importnat case of dabc::Buffer class this does not lead to performance penalty,
+   while dabc::Buffer is created without mutex - instance can be used only inside single
+   thread.   
+2. Remove owner flag from reference - ownership is only can be set for child objects.
+   User can always call dabc::Reference::Destroy to initiate object destroy, but
+   real destructor will be called only when all reference are disapper.
+   
+
+22.07.2013
+1. Replace Hierarchy::BinData and Command::RawData by the dabc::Buffer class
+2. Provide special header for BinData, where version, master_version and
+   other binary-data relevant fields are collected.
+3. In dabc.js script automatically unzip data, which are compressed on server side.
+   Means, not only ROOT objects but any future components in DABC can be zipped
+   before transported to the browser. 
+
+
 19.07.2013
-1. Create tag with version 2.3.0. Start small redesign of buffer classes.
+1. Create tag with version 2.3.0. Start redesign of buffer classes.
+2. Buffer is now normal reference on BufferContainer class.
+   One can use same buffer only in the same thread - buffer fields are
+   not protected with the mutex. When buffer sends to other thread,
+   it's disappers from sending thread. One can do buf.Duplicate() - in
+   this case new BufferContainer will be created and one can keep original
+   buffer in sending thread. One should not forget - if buffers reference
+   same memory, one not allowed to change memory from both threads.
+3. Buffer::CanSafelyChange() returns true when user can modify buffer 
+   content without any doubts. It happens when refcnt==1 for each memory segments. 
+4. Main motivation for Buffer changes - allow to use Buffer class in other places
+   like RawData in command or BinData of hierarchy.  
 
 
 18.07.2013

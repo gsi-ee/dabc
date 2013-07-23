@@ -122,7 +122,7 @@ namespace dabc {
 
       bool CanSend() const { return GetObject() ? GetObject()->CanSend() : true; }
 
-      bool Send(Buffer& buf) { return GetObject() ? GetObject()->Send(buf) : true; }
+      bool Send(Buffer& buf) { if (GetObject()) return GetObject()->Send(buf); buf.Release(); return true; }
 
       bool CanRecv() const { return GetObject() ? GetObject()->CanRecv() : false; }
 

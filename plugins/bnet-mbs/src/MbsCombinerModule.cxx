@@ -53,7 +53,7 @@ void bnet::MbsCombinerModule::SkipNotUsedBuffers()
    }
 }
 
-dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
+dabc::Buffer bnet::MbsCombinerModule::ProduceOutputBuffer()
 {
    // here we check if any event information was accumulated
    // if not, just skip no longer used buffers and return
@@ -175,8 +175,9 @@ void bnet::MbsCombinerModule::MainLoop()
       if (isstopacq) {
 
          DOUT1("Send EOL buffer and wait for resume");
-         dabc::BufferGuard eolbuf = fOutPool->TakeEmptyBuffer();
-         eolbuf()->SetTypeId(dabc::mbt_EOL);
+         dabc::Buffer eolbuf;
+         eolbuf.MakeEmpty();
+         eolbuf.SetTypeId(dabc::mbt_EOL);
          Send(fOutPort, eolbuf);
 
          StopUntilRestart();

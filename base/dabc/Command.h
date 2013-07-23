@@ -77,13 +77,9 @@ namespace dabc {
 
          typedef std::list<CallerRec> CallersList;
 
-
          CallersList   fCallers;     ///< list of callers
          TimeStamp     fTimeout;     ///< absolute time when timeout will be expired
          bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
-         void*         fRawData;     ///< pointer on raw data
-         unsigned      fRawDataSize; ///< size of raw data
-         bool          fRawDataOwner;  ///< ownership flag of raw data
 
          // make destructor protected that nobody can delete command directly
          CommandContainer(const char* name = "Command");
@@ -91,8 +87,6 @@ namespace dabc {
          virtual ~CommandContainer();
 
          virtual const char* ClassName() const { return "Command"; }
-
-         void ClearRawData();
    };
 
    /** \brief Represents command with its arguments
@@ -110,8 +104,6 @@ namespace dabc {
       friend class Thread;
 
       private:
-
-         static bool transient_refs() { return false; }
 
          void AddCaller(Reference worker, bool* exe_ready = 0);
          void RemoveCaller(Worker* worker, bool* exe_ready = 0);
@@ -165,17 +157,11 @@ namespace dabc {
          Reference GetRef(const std::string& name);
 
          /** \brief Set raw data to the command, which can be transported also between nodes */
-         bool SetRawData(const void* ptr, unsigned len, bool owner = false, bool makecopy = false);
+         bool SetRawData(Reference rawdata);
 
-         /** \brief Clear raw-data pointer, release memory if required */
-         void ClearRawData();
-
-         /** \brief Returns pointer on raw data
-          * If ownership pointer specified, ownership (if any) will be transfered to the caller*/
-         void* GetRawData(bool* ownership = 0);
-
-         /** \brief Returns size of raw data */
-         unsigned GetRawDataSize();
+         /** \brief Returns reference on raw data
+          * Can be called only once - raw data reference will be cleaned */
+         Reference GetRawData();
 
          void AddValuesFrom(const Command& cmd, bool canoverwrite = true);
 

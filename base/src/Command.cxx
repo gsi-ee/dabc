@@ -31,15 +31,12 @@ dabc::CommandContainer::CommandContainer(const char* name) :
    RecordContainer(name),
    fCallers(),
    fTimeout(),
-   fCanceled(false),
-   fRawData(0),
-   fRawDataSize(0),
-   fRawDataOwner(false)
+   fCanceled(false)
 {
    // object will be destroy as long no references are existing
    SetFlag(flAutoDestroy, true);
 
-   DOUT3("CMD:%p name %s created", this, GetName());
+   DOUT4("CMD:%p name %s created", this, GetName());
 }
 
 
@@ -51,8 +48,6 @@ dabc::CommandContainer::~CommandContainer()
       fCallers.clear();
       EOUT("Did clear callers in cmd %s", GetName());
    }
-
-   ClearRawData();
 
    // check if reference is remaining !!!
    std::string field;
@@ -71,8 +66,7 @@ dabc::CommandContainer::~CommandContainer()
 
    } while (!field.empty());
 
-
-   DOUT3("CMD:%p name %s deleted", this, GetName());
+   DOUT4("CMD:%p name %s deleted", this, GetName());
 }
 
 
@@ -81,27 +75,15 @@ const std::string dabc::CommandContainer::DefaultFiledName() const
    return dabc::Command::ResultParName();
 }
 
-void dabc::CommandContainer::ClearRawData()
-{
-   if (fRawDataOwner && fRawData) free(fRawData);
-   fRawData = 0;
-   fRawDataSize = 0;
-   fRawDataOwner = false;
-}
-
-
 dabc::Command::Command(const std::string& name) throw()
 {
-   if (!name.empty()) {
+   if (!name.empty())
       SetObject(new dabc::CommandContainer(name.c_str()));
-      SetTransient(false);
-   }
 }
 
 bool dabc::Command::CreateContainer(const std::string& name)
 {
-   SetObject(new dabc::CommandContainer(name.c_str()), false);
-   SetTransient(false);
+   SetObject(new dabc::CommandContainer(name.c_str()));
    return true;
 }
 
@@ -410,62 +392,14 @@ bool dabc::Command::ReadFromCmdString(const std::string& str)
 }
 
 
-bool dabc::Command::SetRawData(const void* ptr, unsigned len, bool owner, bool makecopy)
+bool dabc::Command::SetRawData(Reference rawdata)
 {
-   CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return false;
-
-   LockGuard lock(ObjectMutex());
-
-   cont->ClearRawData();
-
-   if ((ptr==0) || (len==0)) return true;
-
-   if (owner) {
-      cont->fRawData = (void*) ptr;
-      cont->fRawDataSize = len;
-      cont->fRawDataOwner = true;
-   } else
-   if (makecopy) {
-      cont->fRawData = malloc(len);
-      memcpy(cont->fRawData, ptr, len);
-      cont->fRawDataSize = len;
-      cont->fRawDataOwner = true;
-   } else {
-      cont->fRawData = (void*) ptr;
-      cont->fRawDataSize = len;
-      cont->fRawDataOwner = false;
-   }
-
+   SetRef("RawData", rawdata);
    return true;
 }
 
-void dabc::Command::ClearRawData()
+
+dabc::Reference dabc::Command::GetRawData()
 {
-   CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return;
-
-   LockGuard lock(ObjectMutex());
-
-   cont->ClearRawData();
+   return GetRef("RawData");
 }
-
-void* dabc::Command::GetRawData(bool* ownership)
-{
-   CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return 0;
-
-   LockGuard lock(ObjectMutex());
-   if (ownership) { *ownership = cont->fRawDataOwner; cont->fRawDataOwner = false; }
-   return cont->fRawData;
-}
-
-unsigned dabc::Command::GetRawDataSize()
-{
-   CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return 0;
-
-   LockGuard lock(ObjectMutex());
-   return cont->fRawDataSize;
-}
-

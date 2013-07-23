@@ -29,35 +29,8 @@
 #include "TH1.h"
 #include "TGraph.h"
 
-
-
 extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
 
-
-
-dabc_root::RootBinDataContainer::RootBinDataContainer(TBufferFile* buf) :
-   dabc::BinDataContainer(),
-   fBuf(buf)
-{
-}
-
-dabc_root::RootBinDataContainer::~RootBinDataContainer()
-{
-    delete fBuf;
-    fBuf = 0;
-}
-
-void* dabc_root::RootBinDataContainer::data() const
-{
-   return fBuf ? fBuf->Buffer() : 0;
-}
-
-unsigned dabc_root::RootBinDataContainer::length() const
-{
-   return fBuf ? fBuf->Length() : 0;
-}
-
-// =============================================================================
 
 dabc_root::BinaryProducer::BinaryProducer(const std::string& name, int compr) :
    dabc::Object(0, name),
@@ -118,23 +91,34 @@ void dabc_root::BinaryProducer::CreateMemFile()
 }
 
 
-dabc::BinData dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
+dabc::Buffer dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
 {
-   if (sbuf==0) return dabc::BinData();
+   if (sbuf==0) return dabc::Buffer();
 
    bool with_zip = true;
 
+   const Int_t kMAXBUF = 0xffffff;
    Int_t noutot = 0;
-   char* fBuffer = 0;
+   Int_t fObjlen = sbuf->Length();
+   Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
+   Int_t buflen = TMath::Max(512,fObjlen + 9*nbuffers + 28);
+   if (buflen<fObjlen) buflen = fObjlen;
+
+   // TODO: in future one could acquire buffers from memory pool here
+   dabc::Buffer buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader)+buflen);
+
+   if (buf.null()) {
+      EOUT("Cannot request buffer of specified length");
+      return buf;
+   }
+
+   dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
+   hdr->reset();
+
+   char* fBuffer = ((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader);
 
    if (with_zip) {
       Int_t cxAlgorithm = 0;
-      const Int_t kMAXBUF = 0xffffff;
-      Int_t fObjlen = sbuf->Length();
-      Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
-      Int_t buflen = TMath::Max(512,fObjlen + 9*nbuffers + 28);
-
-      fBuffer = (char*) malloc(buflen);
 
       char *objbuf = sbuf->Buffer();
       char *bufcur = fBuffer; // start writing from beginning
@@ -149,9 +133,8 @@ dabc::BinData dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
          R__zipMultipleAlgorithm(fCompression, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
          if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
             DOUT0("Fail to zip buffer");
-            free(fBuffer);
-            fBuffer = 0;
             noutot = 0;
+            with_zip = false;
             break;
          }
          bufcur += nout;
@@ -161,18 +144,23 @@ dabc::BinData dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
       }
    }
 
-   if (fBuffer!=0) {
-      DOUT0("ZIP compression produced buffer of total length %d from %d", noutot, sbuf->Length());
-      delete sbuf;
-      return dabc::BinData(new dabc::BinDataContainer(fBuffer, noutot, true));
+   if (with_zip) {
+      hdr->zipped = (uint32_t) fObjlen;
+      hdr->payload = (uint32_t) noutot;
+   } else {
+      memcpy(fBuffer, sbuf->Buffer(), fObjlen);
+      hdr->zipped = 0;
+      hdr->payload = (uint32_t) fObjlen;
    }
 
-   return dabc::BinData(new RootBinDataContainer(sbuf));
+   buf.SetTotalSize(sizeof(dabc::BinDataHeader) + hdr->payload);
+
+   return buf;
 }
 
 
 
-dabc::BinData dabc_root::BinaryProducer::GetStreamerInfoBinary()
+dabc::Buffer dabc_root::BinaryProducer::GetStreamerInfoBinary()
 {
    CreateMemFile();
 
@@ -185,6 +173,8 @@ dabc::BinData dabc_root::BinaryProducer::GetStreamerInfoBinary()
 
    fSinfoSize = l->GetSize();
 
+   // TODO: one could reuse memory from dabc::MemoryPool here
+   //       now keep as it is and copy data at least once
    TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
    sbuf->SetParent(fMemFile);
    sbuf->MapObject(l);
@@ -199,7 +189,7 @@ dabc::BinData dabc_root::BinaryProducer::GetStreamerInfoBinary()
 
 }
 
-dabc::BinData dabc_root::BinaryProducer::GetBinary(TObject* obj)
+dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj)
 {
    CreateMemFile();
 
@@ -208,6 +198,8 @@ dabc::BinData dabc_root::BinaryProducer::GetBinary(TObject* obj)
 
    TList* l1 = fMemFile->GetStreamerInfoList();
 
+   // TODO: one could reuse memory from dabc::MemoryPool here
+   //       now keep as it is and copy data at least once
    TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
    sbuf->SetParent(fMemFile);
    sbuf->MapObject(obj);

@@ -106,13 +106,13 @@ namespace dabc {
 
          SocketCmdPacket    fSendHdr;           ///< header for send command
          std::string        fSendBuf;           ///< content of transported command
+         dabc::Buffer       fSendRawData;       ///< raw data, which should be send with command
          SocketCmdPacket    fRecvHdr;           ///< buffer for receiving header
          char*              fRecvBuf;           ///< raw buffer for receiving command
          unsigned           fRecvBufSize;       ///< currently allocated size of recv buffer
 
          dabc::Command      fMainCmd;           ///< command which was send to other side for execution
          dabc::Command      fExeCmd;            ///< command which was received from remote for execution
-         dabc::BinData      fLastBinData;       ///< keep last binary data of the command to allow transfer of data
 
          CommandsQueue      fSendQueue;         ///< queue to keep commands needed for sending
 

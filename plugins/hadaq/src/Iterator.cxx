@@ -62,8 +62,6 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    if (buf.null()) return false;
 
-//   DOUT0("Assign buffer size %u", (unsigned) buf.GetTotalSize());
-
    fBufType = buf.GetTypeId();
 
    if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) ) {
@@ -274,6 +272,7 @@ bool hadaq::WriteIterator::Reset(const dabc::Buffer& buf)
    }
 
    fBuffer = buf;
+
    fBuffer.SetTypeId(mbt_HadaqEvents);
    return true;
 }
@@ -288,7 +287,6 @@ dabc::Buffer hadaq::WriteIterator::Close()
 
    dabc::Buffer res;
    res << fBuffer;
-
    return res;
 }
 

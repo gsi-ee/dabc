@@ -64,11 +64,13 @@ bool UpdateHierarchy()
       return false;
    }
 
-   if (cmd.GetRawDataSize() > 0) {
-      // DOUT0("Get raw data %p %u", cmd2.GetRawData(), cmd2.GetRawDataSize());
+   dabc::Buffer buf = cmd.GetRawData();
+
+   if (!buf.null()) {
+      // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
 
       std::string diff;
-      diff.append((const char*)cmd.GetRawData(), cmd.GetRawDataSize());
+      diff.append((const char*) buf.SegmentPtr(), buf.GetTotalSize());
       // DOUT0("diff = %s", diff.c_str());
       if (hierarchy.UpdateFromXml(diff)) {
          DOUT0("Update of hierarchy to version %u done", hierarchy.GetVersion());

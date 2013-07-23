@@ -24,6 +24,7 @@
 #include "dabc/Queue.h"
 #endif
 
+#include <vector>
 
 namespace dabc {
 
@@ -32,51 +33,119 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class BuffersQueue : protected Queue<Buffer, false> {
+      class BuffersQueue {
 
-      protected:
-         typedef Queue<Buffer, false> Parent;
+         protected:
+            std::vector<dabc::Buffer> vect;
 
-      public:
-         BuffersQueue(unsigned capacity) : Parent(capacity) {}
+            unsigned front;
+            unsigned tail;
+            unsigned size;
 
-         virtual ~BuffersQueue() { Cleanup(); }
-
-         bool PushBuffer(Buffer& buf)
-         {
-            Buffer* tgt = Parent::PushEmpty();
-            if (tgt) {
-               *tgt << buf;
-               return true;
+         public:
+            BuffersQueue(unsigned capacity) :
+               vect(),
+               front(0),
+               tail(0),
+               size(0)
+            {
+               for (unsigned n=0;n<capacity;n++)
+                  vect.push_back(dabc::Buffer());
             }
-            return false;
-         }
 
-         void PopBuffer(Buffer& buf) { buf << Front(); Parent::PopOnly(); }
+            virtual ~BuffersQueue() { Cleanup(); }
 
-         unsigned Size() const { return Parent::Size(); }
+            bool PushBuffer(Buffer& buf)
+            {
+               if (size<vect.size()) {
+                  vect[tail] << buf;
+                  size++;
+                  tail = (tail+1) % vect.size();
+                  return true;
+               }
+               return false;
+            }
 
-         unsigned Capacity() const { return Parent::Capacity(); }
+            bool PopBuffer(Buffer& buf)
+            {
+               if (size>0) {
+                  buf << vect[front];
+                  size--;
+                  front = (front+1) % vect.size();
+                  return true;
+               }
+               return false;
+            }
 
-         bool Full() const { return Parent::Full(); }
+            unsigned Size() const { return size; }
 
-         bool Empty() const { return Parent::Empty(); }
+            unsigned Capacity() const { return vect.size(); }
 
-         void Cleanup();
+            bool Full() const { return Size() == Capacity(); }
 
-         void Cleanup(Mutex* m);
+            bool Empty() const { return size == 0; }
 
-         /** Returns reference on the Buffer in the queue,
-          * one can create any kind of buffer copies from it */
-         Buffer& Item(unsigned n) const { return Parent::Item(n); }
+            void Cleanup();
 
-         /** Return reference on the first item */
-         Buffer& Front() const { return Parent::Front(); }
+            void Cleanup(Mutex* m);
 
-         /** Return reference on the last item */
-         Buffer& Back() const { return Parent::Back(); }
+            /** Returns reference on the Buffer in the queue,
+             * one can create any kind of buffer copies from it */
+            Buffer Item(unsigned n) const
+            {
+               n+=front;
+               if (n>=vect.size()) n = n % vect.size();
+               return this->vect[n];
+            }
 
-   };
+      };
+
+
+
+//   class BuffersQueue : protected Queue<Buffer, false> {
+//
+//      protected:
+//         typedef Queue<Buffer, false> Parent;
+//
+//      public:
+//         BuffersQueue(unsigned capacity) : Parent(capacity) {}
+//
+//         virtual ~BuffersQueue() { Cleanup(); }
+//
+//         bool PushBuffer(Buffer& buf)
+//         {
+//            Buffer* tgt = Parent::PushEmpty();
+//            if (tgt) {
+//               *tgt << buf;
+//               return true;
+//            }
+//            return false;
+//         }
+//
+//         void PopBuffer(Buffer& buf) { buf << Front(); Parent::PopOnly(); }
+//
+//         unsigned Size() const { return Parent::Size(); }
+//
+//         unsigned Capacity() const { return Parent::Capacity(); }
+//
+//         bool Full() const { return Parent::Full(); }
+//
+//         bool Empty() const { return Parent::Empty(); }
+//
+//         void Cleanup();
+//
+//         void Cleanup(Mutex* m);
+//
+//         /** Returns reference on the Buffer in the queue,
+//          * one can create any kind of buffer copies from it */
+//         Buffer& Item(unsigned n) const { return Parent::Item(n); }
+//
+//         /** Return reference on the first item */
+//         Buffer& Front() const { return Parent::Front(); }
+//
+//         /** Return reference on the last item */
+//         Buffer& Back() const { return Parent::Back(); }
+//   };
 
 }
 

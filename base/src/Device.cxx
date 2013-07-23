@@ -45,8 +45,6 @@ int dabc::Device::ExecuteCommand(Command cmd)
 
       if (port.null()) return cmd_false;
 
-      port.SetTransient(false);
-
       TransportRef tr = CreateTransport(cmd, port);
 
       if (tr==0) return cmd_false;

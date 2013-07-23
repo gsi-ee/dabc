@@ -57,8 +57,6 @@ namespace dabc {
    const char* xmlCleanupTimeout    = "CleanupTimeout";
    const char* xmlBufferSize        = "BufferSize";
    const char* xmlNumBuffers        = "NumBuffers";
-   const char* xmlRefCoeff          = "RefCoeff";
-   const char* xmlNumSegments       = "NumSegments";
    const char* xmlAlignment         = "Alignment";
    const char* xmlShowInfo          = "ShowInfo";
 
@@ -123,11 +121,10 @@ dabc::Object::Object(const std::string& name, unsigned flags) :
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   DOUT3("Created object %s %p", GetName(), this);
+   DOUT5("Created object %s %p", GetName(), this);
 
    Constructor();
 }
-
 
 dabc::Object::Object(Reference parent, const std::string& name, unsigned flags) :
    fObjectFlags(flags),
@@ -138,7 +135,7 @@ dabc::Object::Object(Reference parent, const std::string& name, unsigned flags) 
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   DOUT3("Object created %s %p", GetName(), this);
+   DOUT5("Object created %s %p", GetName(), this);
 
    Constructor();
 }
@@ -153,7 +150,7 @@ dabc::Object::Object(const ConstructorPair& pair, unsigned flags) :
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   DOUT3("Object created %s %p", GetName(), this);
+   DOUT5("Object created %s %p", GetName(), this);
 
    Constructor();
 }
@@ -163,7 +160,7 @@ dabc::Object::~Object()
 {
    Destructor();
 
-   DOUT3("Object destroyed %p", this);
+   DOUT5("Object destroyed %s %p", GetName(), this);
 }
 
 void dabc::Object::SetOwner(bool on)
@@ -171,6 +168,13 @@ void dabc::Object::SetOwner(bool on)
    LockGuard lock(fObjectMutex);
    SetFlag(flIsOwner, on);
 }
+
+void dabc::Object::SetAutoDestroy(bool on)
+{
+   LockGuard lock(fObjectMutex);
+   SetFlag(flAutoDestroy, on);
+}
+
 
 bool dabc::Object::IsOwner() const
 {
@@ -205,7 +209,7 @@ void dabc::Object::Constructor()
    // FIXME: should we use recursive in final version?
 
    if (!GetFlag(flNoMutex))
-      fObjectMutex = new Mutex(false);
+      fObjectMutex = new Mutex(true);
 
    SetState(stNormal);
 
@@ -223,6 +227,7 @@ void dabc::Object::Destructor()
 
    Mutex* m = 0;
    ReferencesVector* chlds(0);
+   bool isowner = false;
 
    {
       LockGuard lock(fObjectMutex);
@@ -247,6 +252,7 @@ void dabc::Object::Destructor()
 
          chlds = fObjectChilds;
          fObjectChilds = 0;
+         isowner = GetFlag(flIsOwner);
       }
 
       m = fObjectMutex;
@@ -258,7 +264,7 @@ void dabc::Object::Destructor()
    // one can destroy them one after another
 
    if (chlds!=0) {
-      chlds->Clear();
+      chlds->Clear(isowner);
       delete chlds;
    }
 
@@ -277,7 +283,7 @@ bool dabc::Object::IncReference(bool withmutex)
       dabc::LockGuard lock(fObjectMutex);
 
       if (GetState() == stDestructor) {
-         EOUT("OBJ:%p %s %s Inc reference during destructor", this, GetName(), ClassName());
+         EOUT("OBJ:%p %s Inc reference during destructor", this, GetName());
          return false;
 //         EOUT("Obj:%p %s Class:%s IncReference %u inside destructor :(",
 //               this, GetName(), ClassName(), fObjectRefCnt);
@@ -292,13 +298,12 @@ bool dabc::Object::IncReference(bool withmutex)
    }
 
 
-   if (fObjectMutex==0) return false;
-
-   if (!fObjectMutex->IsLocked()) {
-      EOUT("Obj:%p %s Class:%s IncReference mutex is not lock but declared so",
-            this, GetName(), ClassName());
-      return false;
-   }
+//   if (fObjectMutex==0) return false;
+//   if (!fObjectMutex->IsLocked()) {
+//      EOUT("Obj:%p %s Class:%s IncReference mutex is not lock but declared so",
+//            this, GetName(), ClassName());
+//      return false;
+//   }
 
    if (GetFlag(flLogging))
       DOUT0("Obj:%s %p Class:%s IncReference -+---- %u", GetName(), this, ClassName(), fObjectRefCnt);
@@ -389,12 +394,13 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
          // if object already so far, it can be destroyed when no references remained
          case stWaitForDestructor:
-            if ((fObjectRefCnt == 0) && _NoOtherReferences()) {
+            if (fObjectRefCnt == 0) {
                if (_DoDeleteItself()) return false;
 
                // once return true, never do it again
                // returning true means that destructor will be immediately call
                SetState(stDestructor);
+
                return true;
             }
 
@@ -459,7 +465,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          if (GetFlag(flLogging))
             DOUT0("Obj:%s %p Class:%s IncReference ---+-- %u", GetName(), this, ClassName(), fObjectRefCnt);
       } else
-      if ((fObjectRefCnt==0) && _NoOtherReferences()) {
+      if (fObjectRefCnt==0) {
          // no need to deal with manager - can call destructor immediately
          DOUT3("Obj:%p can be destroyed", this);
          if (_DoDeleteItself()) {
@@ -491,7 +497,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
    LockGuard guard(fObjectMutex);
 
-   if ((fObjectRefCnt==0) && _NoOtherReferences()) {
+   if (fObjectRefCnt==0) {
       // no need to deal with manager - can call destructor immediately
       if (_DoDeleteItself()) {
          SetState(stWaitForDestructor);
@@ -540,6 +546,8 @@ void dabc::Object::ObjectCleanup()
 
    int cnt = 1000000;
 
+   bool isowner = false;
+
    while (--cnt>0) {
       dabc::LockGuard lock(fObjectMutex);
       if (GetState() != stDoingDestroy) {
@@ -551,7 +559,9 @@ void dabc::Object::ObjectCleanup()
       if (fObjectBlock>0) continue;
 
       // we deleting childs immediately
-      chlds = fObjectChilds; fObjectChilds = 0;
+      chlds = fObjectChilds;
+      fObjectChilds = 0;
+      isowner = GetFlag(flIsOwner);
       break;
    }
 
@@ -568,6 +578,7 @@ void dabc::Object::ObjectCleanup()
    // first we delete all childs !!!!
    if (chlds!=0) {
       if (IsLogging()) DOUT0("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize());
+      chlds->Clear(isowner);
       delete chlds;
       if (IsLogging()) DOUT0("Obj:%p %s Deleting childs done", this, GetName());
    }
@@ -606,13 +617,12 @@ dabc::Reference dabc::Object::_MakeRef()
 }
 
 
-bool dabc::Object::AddChild(Object* child, bool withmutex, bool setparent) throw()
+bool dabc::Object::AddChild(Object* child, bool withmutex) throw()
 {
    if (child==0) return false;
 
-   if (child->GetParent() == 0) {
-      if (setparent)
-         child->fObjectParent.SetObject(this, false, withmutex);
+   if (child->fObjectParent.null()) {
+      child->fObjectParent.SetObject(this, withmutex);
    } else
    if (child->GetParent() != this) {
       EOUT("Cannot move child from other parent");
@@ -624,8 +634,8 @@ bool dabc::Object::AddChild(Object* child, bool withmutex, bool setparent) throw
 
    LockGuard guard(withmutex ? fObjectMutex : 0);
 
-   // one can set owner flag under mutex - reference itself does not uses mutexes
-   ref.SetOwner(GetFlag(flIsOwner));
+   // if object is owner of all childs, any child will get autodestroy flag
+   if (GetFlag(flIsOwner)) child->SetAutoDestroy(true);
 
    if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
 
@@ -634,15 +644,12 @@ bool dabc::Object::AddChild(Object* child, bool withmutex, bool setparent) throw
    return true;
 }
 
-bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex, bool setparent)
+bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
 {
    if (child==0) return false;
 
-   DOUT2("Adding child %p prnt %p", child, child->GetParent());
-
-   if (child->GetParent() == 0) {
-      if (setparent)
-         child->fObjectParent.SetObject(this, false, withmutex);
+   if (child->fObjectParent.null()) {
+      child->fObjectParent.SetObject(this, withmutex);
    } else
    if (child->GetParent() != this) {
       EOUT("Cannot move child from other parent");
@@ -654,8 +661,8 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex, bool 
 
    LockGuard guard(withmutex ? fObjectMutex : 0);
 
-   // one can set owner flag under mutex - reference itself does not uses mutexes
-   ref.SetOwner(GetFlag(flIsOwner));
+   // if object is owner of all childs, any child will get autodestroy flag
+   if (GetFlag(flIsOwner)) child->SetAutoDestroy(true);
 
    if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
 
@@ -750,8 +757,10 @@ bool dabc::Object::GetAllChildRef(ReferencesVector* vect) const
 
    UnlockGuard unlock(fObjectMutex);
 
-   for (unsigned n=0;n<ptrs.size();n++)
-     vect->Add(Reference((Object*)ptrs[n]));
+   for (unsigned n=0;n<ptrs.size();n++) {
+      Reference ref((Object*)ptrs[n]);
+      vect->Add(ref);
+   }
 
    return true;
 
@@ -836,7 +845,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
       }
    }
 
-   ref = newref;
+   ref << newref;
 
    if (*ptok==0) return ref;
 
@@ -851,42 +860,32 @@ dabc::Reference dabc::Object::GetFolder(const char* name, bool force) throw()
    return SearchForChild(ref, name, true, force);
 }
 
-dabc::Reference dabc::Object::PutChild(Object* obj, bool delduplicate)
+void dabc::Object::DeleteChild(unsigned n)
 {
-   Reference newref;
-   if (obj==0) return newref;
-
-   Object* oldobj = 0;
+   Reference ref;
+   bool isowner = false;
 
    {
-      LockGuard guard(ObjectMutex());
+      LockGuard guard(fObjectMutex);
 
-      if (fObjectChilds)
-         oldobj = fObjectChilds->FindObject(obj->GetName());
+      // nothing to do
+      if (fObjectChilds!=0) fObjectChilds->ExtractRef(n, ref);
 
-      // if object was not exists, add child create new object under parent mutex - no one can create double entries simultaneously
-      if (oldobj==0) { oldobj = obj; AddChild(obj, false); }
-
-      IntGuard block(fObjectBlock);
-
-      UnlockGuard unlock(fObjectMutex);
-
-      // make reference outside parent mutex
-      newref << dabc::Reference(oldobj);
+      isowner = GetFlag(flIsOwner);
    }
 
-   // instance will be automatically deleted when object with givven name already exists
-   if ((oldobj!=obj) && delduplicate) dabc::Object::Destroy(obj);
-
-   return newref;
+   if (isowner) ref.Destroy();
+           else ref.Release();
 }
 
 
-void dabc::Object::DeleteChilds(const std::string& exclude_mask)
+void dabc::Object::DeleteChilds()
 {
-   ReferencesVector del_vect;
+   ReferencesVector* del_vect = 0;
 
    int cnt = 1000000;
+
+   bool isowner = false;
 
    while (--cnt>0) {
       LockGuard guard(fObjectMutex);
@@ -896,18 +895,9 @@ void dabc::Object::DeleteChilds(const std::string& exclude_mask)
 
       if (fObjectBlock>0) continue;
 
-      unsigned n = fObjectChilds->GetSize();
-
-      while (n-->0) {
-         Object* obj = fObjectChilds->GetObject(n);
-
-         if (!exclude_mask.empty() && obj->IsNameMatch(exclude_mask)) continue;
-
-         del_vect.Add(fObjectChilds->TakeRef(n));
-      }
-
-      if (fObjectChilds->GetSize()==0) { delete fObjectChilds; fObjectChilds = 0; }
-
+      isowner = GetFlag(flIsOwner);
+      del_vect = fObjectChilds;
+      fObjectChilds = 0;
       break;
    }
 
@@ -922,27 +912,12 @@ void dabc::Object::DeleteChilds(const std::string& exclude_mask)
    }
 
    if (IsLogging())
-      DOUT1("Obj:%s Deleting childs:%u", GetName(), del_vect.GetSize());
+      DOUT1("Obj:%s Deleting childs:%u", GetName(), del_vect ? del_vect->GetSize() : 0);
 
-   if (IsLogging())
-      while (del_vect.GetSize()>0) {
-         Reference ref = del_vect.TakeLast();
-         DOUT1("    Del Child %s owner %s", ref.GetName(), DBOOL(ref.IsOwner()));
-      }
-
-   del_vect.Clear();
-
-/*
-   if (recursive) {
-
-      GetAllChildRef(&del_vect);
-
-      for(unsigned n=0; n<del_vect.GetSize(); n++)
-         del_vect.GetObject(n)->DeleteChilds();
-
-      del_vect.Clear();
+   if (del_vect) {
+      del_vect->Clear(isowner);
+      delete del_vect;
    }
-*/
 }
 
 void dabc::Object::SetName(const char* name)

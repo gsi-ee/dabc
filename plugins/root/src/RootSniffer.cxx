@@ -365,10 +365,10 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
    std::string itemname = cmd.GetStdStr("Item");
 
-   dabc::BinData data;
+   dabc::Buffer buf;
 
    if (itemname=="StreamerInfo") {
-      data = fProducer->GetStreamerInfoBinary();
+      buf = fProducer->GetStreamerInfoBinary();
    } else {
 
       TObject* obj = (TObject*) ScanRootHierarchy(fRoot, itemname.c_str());
@@ -378,10 +378,10 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
          return dabc::cmd_false;
       }
 
-      data = fProducer->GetBinary(obj);
+      buf = fProducer->GetBinary(obj);
    }
 
-   cmd.SetRef("#BinData", data);
+   cmd.SetRawData(buf);
    cmd.SetInt("MasterHash", fProducer->GetStreamerInfoHash());
 
    return dabc::cmd_true;

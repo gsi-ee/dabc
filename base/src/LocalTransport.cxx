@@ -70,15 +70,17 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       // ignore all send operations when connection is not established
       if (fConnected != MaskConn) {
-         DOUT4("Local transport ignore buffer while not fully connected inp %s out %s",
-               (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
+         DOUT1("Local transport %s ignore buffer while not fully connected mask %u inp %s out %s",
+               GetName(), fConnected, (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
          return false;
       }
 
-      if (buf.RefCnt() > 1)
-         EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.RefCnt());
+      if (buf.NumReferences() > 1)
+         EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.NumReferences());
 
-      fQueue.PushBuffer(buf);
+      if (!fQueue.PushBuffer(buf)) {
+         EOUT("Not able to push buffer into the queue");
+      }
 
       if (!buf.null()) { EOUT("Something went wrong - buffer is not null here"); exit(3); }
 
@@ -123,6 +125,8 @@ bool dabc::LocalTransport::Recv(Buffer& buf)
 
    {
       dabc::LockGuard lock(QueueMutex());
+
+      if (!buf.null()) { EOUT("AAAAAAAAAA"); exit(432); }
 
       fQueue.PopBuffer(buf);
 

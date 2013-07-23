@@ -28,7 +28,7 @@ dabc::ConfigContainer::ConfigContainer(const std::string& name, Command cmd, Ref
    fWorker(worker),
    fReadFlag(-1)
 {
-//   DOUT0("Create config container %p for %s", this, name.c_str());
+   DOUT4("Create config container %p for %s", this, name.c_str());
 }
 
 const char* dabc::ConfigContainer::GetField(const std::string& name, const char* dflt)
@@ -63,11 +63,11 @@ const char* dabc::ConfigContainer::GetField(const std::string& name, const char*
       // indicate that setfield method could be applied
       fReadFlag = 0;
 
-      DOUT2("Start reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
+      DOUT3("Start reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
 
       io.ReadRecord(fWorker(), fName, this);
 
-      DOUT2("Did reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
+      DOUT3("Did reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
 
       fReadFlag = 1;
    }

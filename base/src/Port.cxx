@@ -118,8 +118,8 @@ void dabc::Port::SetQueue(Reference& ref)
    fQueue << ref;
    if (fQueue.null()) return;
 
+   // DOUT0("Port %s SetQUEUE", ItemName().c_str());
    fQueue()->SetConnected(IsInput());
-
 
    // change capacity field under mutex, while it can be accessed outside the thread
    dabc::LockGuard lock(ObjectMutex());
@@ -280,6 +280,14 @@ unsigned dabc::InputPort::NumStartEvents()
    return 0;
 }
 
+dabc::Buffer dabc::InputPort::Recv()
+{
+   Buffer buf;
+   fQueue.Recv(buf);
+   fRate.SetDouble(buf.GetTotalSize()/1024./1024.);
+   return buf;
+}
+
 
 // ====================================================================================
 
@@ -296,6 +304,25 @@ dabc::OutputPort::~OutputPort()
 {
    DOUT4("PORT: destructor %p", this);
 }
+
+
+bool dabc::OutputPort::Send(dabc::Buffer& buf)
+{
+   fRate.SetDouble(buf.GetTotalSize()/1024./1024.);
+
+   bool res = fQueue.Send(buf);
+
+   if (!buf.null() && !fQueue.null() && res)
+      EOUT("Should not happen queue %p  buf %p", fQueue.GetObject(), buf.GetObject());
+
+   if (!res) {
+      EOUT("PORT %s fail to send buffer %u", ItemName().c_str(), buf.GetTotalSize());
+      buf.Release();
+   }
+
+   return res;
+}
+
 
 unsigned dabc::OutputPort::NumStartEvents()
 {
@@ -347,10 +374,6 @@ unsigned dabc::PoolHandle::NumStartEvents()
    return 0;
 }
 
-dabc::Buffer dabc::PoolHandle::TakeEmpty()
-{
-   return ((MemoryPool*)fPool())->TakeEmpty();
-}
 
 dabc::Buffer dabc::PoolHandle::TakeBuffer(BufferSize_t size)
 {

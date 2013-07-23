@@ -224,13 +224,11 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fThrLayout(layoutBalanced),
    fLastCreatedDevName()
 {
-
    fInstance = this;
    fInstanceId = MagicInstanceId;
 
    if (dabc::mgr.null()) {
       dabc::mgr = dabc::ManagerRef(this);
-      dabc::mgr.SetTransient(false);
       dabc::SetDebugPrefix(GetName());
    }
 
@@ -335,7 +333,8 @@ dabc::Manager::~Manager()
 void dabc::Manager::HaltManager()
 {
    ThreadRef thrd = thread();
-   // only for case, when treads does not run its own main loop, we should help him to finish processing
+   // only for case, when manager thread does not run its own main loop,
+   // we could help it to finish processing
    if (thrd.IsRealThrd()) thrd.Release();
 
    FindModule(ConnMgrName()).Destroy();
@@ -370,9 +369,10 @@ void dabc::Manager::HaltManager()
 
    TimeStamp tm2 = dabc::Now();
 
-   if (dabc::Thread::NumThreadInstances() > 0)
+   if (dabc::Thread::NumThreadInstances() > 0) {
       EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted cnt = %d  %5.3f !!!!!!", dabc::Thread::NumThreadInstances(), cnt, tm2 - tm1);
-   else
+      dabc::Worker::DebugWorkers();
+   } else
       DOUT1(" ALL THREADS STOP AFTER %d tries tm %5.3f", maxcnt-cnt, tm2-tm1);
 
    dabc::Object::InspectGarbageCollector();
@@ -455,7 +455,7 @@ bool dabc::Manager::ProcessDestroyQueue()
    //      for(unsigned n=0;n<vect->GetSize();n++)
    //         fTimedPars->Remove(vect->GetObject(n));
 
-   vect->DestroyAll();
+   vect->Clear(true);
    delete vect;
 
    return true;
@@ -492,7 +492,7 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
       ParamRec* rec = fParsQueue.PushEmpty();
 
       if (rec!=0) {
-         memset(rec, 0, sizeof(ParamRec));
+         // memset(rec, 0, sizeof(ParamRec));
          rec->par << parref; // we are trying to avoid parameter locking under locked queue mutex
          rec->event = evid;
       }
@@ -549,8 +549,10 @@ bool dabc::Manager::ProcessParameterEvents()
          rec.par()->SetCleanupBit();
          if (fTimedPars==0)
             fTimedPars = new ReferencesVector;
-         if (!fTimedPars->HasObject(rec.par()))
-            fTimedPars->Add(rec.par.Ref());
+         if (!fTimedPars->HasObject(rec.par())) {
+            Reference ref = rec.par.Ref();
+            fTimedPars->Add(ref);
+         }
       }
 
       if (checkremove && fTimedPars) {
@@ -1006,9 +1008,8 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       } else {
 
          cmd_res = cmd_false;
-         port.SetTransient(false);
 
-         DOUT0("Request transport for port %p kind %s", port(), trkind.c_str());
+         DOUT0("Request transport for port %s kind %s", port.ItemName().c_str(), trkind.c_str());
 
          TransportRef tr;
          FOR_EACH_FACTORY(
@@ -1028,7 +1029,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
                   default: thrdname = port.GetModule().ThreadName(); break;
                }
 
-            DOUT0("Creating thread %s for transport", thrdname.c_str());
+            DOUT3("Creating thread %s for transport", thrdname.c_str());
 
             // TODO: be aware that in future simple transport can be bidirectional!
 
@@ -1458,7 +1459,7 @@ void dabc::Manager::ProcessFactory(Factory* factory)
 {
    if (factory==0) return;
    if (fInstance && (fInstanceId==MagicInstanceId)) {
-      fInstance->GetFactoriesFolder(true).AddChild(factory, true);
+      fInstance->GetFactoriesFolder(true).AddChild(factory);
       return;
    }
 
@@ -1701,11 +1702,13 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
             continue;
          }
 
-         if (cmd2.GetRawDataSize() > 0) {
-            // DOUT0("Get raw data %p %u", cmd2.GetRawData(), cmd2.GetRawDataSize());
+         dabc::Buffer buf = cmd2.GetRawData();
+
+         if (!buf.null()) {
+            // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
 
             std::string diff;
-            diff.append((const char*)cmd2.GetRawData(), cmd2.GetRawDataSize());
+            diff.append((const char*)buf.SegmentPtr(), buf.GetTotalSize());
             // DOUT0("diff = %s", diff.c_str());
             if (rem_hierarchy.UpdateFromXml(diff)) {
                DOUT2("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
@@ -1804,18 +1807,20 @@ dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const
       exit(765);
    }
 
-   DOUT2("CreateThread %s of class %s, is any %p", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd());
+   DOUT3("CreateThread %s of class %s, is any %p", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd());
 
    FOR_EACH_FACTORY(
       thrd = factory->CreateThread(GetThreadsFolder(true), thrdclass, newname, thrddev, cmd);
       if (!thrd.null()) break;
    )
 
+   DOUT3("CreateThread %s done %p", newname.c_str(), thrd());
+
    bool noraml_thread = true;
    if ((newname == MgrThrdName()) && cfg())
       noraml_thread = cfg()->NormalMainThread();
 
-   DOUT2("Starting thread %s as normal %s refcnt %d", thrd.GetName(), DBOOL(noraml_thread), thrd()->fObjectRefCnt);
+   DOUT3("Starting thread %s as normal %s refcnt %d", thrd.GetName(), DBOOL(noraml_thread), thrd.NumReferences());
 
    if (!thrd.null())
       if (!thrd()->Start(10, noraml_thread)) {
@@ -1823,7 +1828,7 @@ dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const
          thrd.Destroy();
       }
 
-   DOUT2("Create thread %s of class %s thrd %p refcnt %d done", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd(), thrd()->fObjectRefCnt);
+   DOUT3("Create thread %s of class %s thrd %p refcnt %d done", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd(), thrd.NumReferences());
 
    return thrd;
 }
@@ -2100,15 +2105,12 @@ void dabc::ManagerRef::StopApplication()
 
 bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,
                                         unsigned buffersize,
-                                        unsigned numbuffers,
-                                        unsigned refcoeff)
+                                        unsigned numbuffers)
 {
 
    CmdCreateMemoryPool cmd(poolname);
 
    cmd.SetMem(buffersize, numbuffers);
-
-   cmd.SetRefs(refcoeff);
 
    return Execute(cmd);
 }

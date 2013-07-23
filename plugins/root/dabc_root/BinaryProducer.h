@@ -24,36 +24,11 @@
 #include "dabc/Hierarchy.h"
 #endif
 
-
-class TDirectory;
 class TBufferFile;
 class TMemFile;
-class TClass;
-class TCollection;
 class TObject;
-class TDabcTimer;
-
 
 namespace dabc_root {
-
-
-   /** \brief %RootBinDataContainer provides access to ROOT TBuffer object for DABC
-    *
-    */
-
-   class RootBinDataContainer : public dabc::BinDataContainer {
-      protected:
-         TBufferFile* fBuf;
-
-      public:
-         RootBinDataContainer(TBufferFile* buf);
-         virtual ~RootBinDataContainer();
-
-         virtual void* data() const;
-         virtual unsigned length() const;
-   };
-
-
 
    /** \brief %BinaryProducer convert ROOT objects to binary data, which can be transformed to browser
     *
@@ -66,20 +41,19 @@ namespace dabc_root {
          TMemFile*   fMemFile;        ///< file used to generate streamer infos
          int         fSinfoSize;      ///< number of entries in streamer infos
 
-
          void CreateMemFile();
 
-         dabc::BinData CreateBindData(TBufferFile* sbuf);
+         dabc::Buffer CreateBindData(TBufferFile* sbuf);
 
       public:
          BinaryProducer(const std::string& name, int compr = 5);
          virtual ~BinaryProducer();
 
-         dabc::BinData GetStreamerInfoBinary();
+         dabc::Buffer GetStreamerInfoBinary();
 
          int GetStreamerInfoHash() const { return fSinfoSize; }
 
-         dabc::BinData GetBinary(TObject* obj);
+         dabc::Buffer GetBinary(TObject* obj);
    };
 
 }

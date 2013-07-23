@@ -234,7 +234,9 @@ namespace dabc {
          /** Returns true if user can get (receive) buffer from the port */
          inline bool CanRecv() const { return fQueue.CanRecv(); }
 
-         Buffer Recv() { Buffer buf; fQueue.Recv(buf); fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return buf; }
+         //Buffer Recv() { Buffer buf; fQueue.Recv(buf); fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return buf; }
+
+         Buffer Recv();
 
          /** This method say framework that signal must be issued when queue will be fulled */
          void SignalWhenFull() { fQueue.SignalWhenFull(); }
@@ -284,7 +286,9 @@ namespace dabc {
          /** Returns true if user can send get buffer via the port */
          bool CanSend() const { return fQueue.CanSend(); }
 
-         bool Send(dabc::Buffer& buf) { fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return fQueue.Send(buf); }
+//         bool Send(dabc::Buffer& buf) { fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return fQueue.Send(buf); }
+
+         bool Send(dabc::Buffer& buf);
 
       public:
 
@@ -342,8 +346,6 @@ namespace dabc {
          {
             return (QueueCapacity()==0) ? true : fQueue.CanRecv();
          }
-
-         Buffer TakeEmpty();
 
          Buffer TakeBuffer(BufferSize_t size = 0);
 

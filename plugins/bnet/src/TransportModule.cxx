@@ -128,65 +128,65 @@ bnet::TransportModule::TransportModule(const std::string& name, dabc::Command cm
    CreateTimer("AllToAll"); //timer for all-to-all test, shooted individually
 
    if (IsMaster()) {
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, 0.3)); // master wait 0.3 seconds
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_ACTIVENODES)); // first collect active nodes
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_TEST)); // test connection
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_MEASURE)); // reset first measurement
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 0.3)); // master wait 0.3 seconds
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_ACTIVENODES)); // first collect active nodes
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_TEST)); // test connection
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_MEASURE)); // reset first measurement
 
-      for (int n=0;n<10;n++) fCmdsQueue.PushD(CmdTransport(BNET_CMD_TEST)); // test connection
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_MEASURE)); // do real measurement of test loop
+      for (int n=0;n<10;n++) fCmdsQueue.Push(CmdTransport(BNET_CMD_TEST)); // test connection
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_MEASURE)); // do real measurement of test loop
 
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_CREATEQP));
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_CONNECTQP));
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_CONNECTDONE));
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_TEST)); // test that slaves are there
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_MEASURE)); // reset single measurement
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_CREATEQP));
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_CONNECTQP));
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_CONNECTDONE));
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_TEST)); // test that slaves are there
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_MEASURE)); // reset single measurement
 
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, 1.)); // master wait 1 second
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 1.)); // master wait 1 second
 
       CmdTransport cmd_sync1(BNET_CMD_TIMESYNC, 5.);
       cmd_sync1.SetSyncArg(200, true, false);
-      fCmdsQueue.PushD(cmd_sync1);
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_EXECSYNC));
+      fCmdsQueue.Push(cmd_sync1);
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_EXECSYNC));
 
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, 2.)); // master wait 2 seconds
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 2.)); // master wait 2 seconds
 
       CmdTransport cmd_sync2(BNET_CMD_TIMESYNC, 5.);
       cmd_sync2.SetSyncArg(200, true, true);
-      fCmdsQueue.PushD(cmd_sync2);
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_EXECSYNC));
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_GETSYNC));
+      fCmdsQueue.Push(cmd_sync2);
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_EXECSYNC));
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_GETSYNC));
 
       if (Cfg("TestKind", cmd).AsStdStr() == "TimeSync") {
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, 10.)); // master wait 10 seconds
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 10.)); // master wait 10 seconds
       } else {
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_ALLTOALL)); // configure and start all to all execution
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_ALLTOALL)); // configure and start all to all execution
 
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
 
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_GETRUNRES));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_GETRUNRES));
          CmdTransport cmd_coll1(BNET_CMD_COLLECT);
          cmd_coll1.SetInt("SetSize", 14*sizeof(double));
-         fCmdsQueue.PushD(cmd_coll1);
+         fCmdsQueue.Push(cmd_coll1);
 
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_SHOWRUNRES));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_SHOWRUNRES));
 
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_ASKQUEUE));
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_CLEANUP));
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_WAIT, 1.)); // master waits 1 second to let all operations run
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_ASKQUEUE));
-         fCmdsQueue.PushD(CmdTransport(BNET_CMD_CLEANUP));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_ASKQUEUE));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_CLEANUP));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 1.)); // master waits 1 second to let all operations run
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_ASKQUEUE));
+         fCmdsQueue.Push(CmdTransport(BNET_CMD_CLEANUP));
       }
 
       CmdTransport cmd_sync3(BNET_CMD_TIMESYNC, 5.);
       cmd_sync3.SetSyncArg(200, false, false);
-      fCmdsQueue.PushD(cmd_sync3);
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_EXECSYNC));
+      fCmdsQueue.Push(cmd_sync3);
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_EXECSYNC));
 
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_CLOSEQP)); // close connections
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_TEST)); // test that slaves are there
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_CLOSEQP)); // close connections
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_TEST)); // test that slaves are there
 
-      fCmdsQueue.PushD(CmdTransport(BNET_CMD_EXIT)); // master wait 1 seconds
+      fCmdsQueue.Push(CmdTransport(BNET_CMD_EXIT)); // master wait 1 seconds
    }
 }
 

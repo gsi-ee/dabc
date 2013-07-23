@@ -603,15 +603,13 @@ namespace dabc {
 
          /** Generic method to create memory pool.
            * Creates memory pool with numbuffers buffers of size buffersize.
-           * Together with buffers memory pool creates number of reference objects.
            * If zero arguments are specified, configuration from xml file will be used.
            * If none (arguments or xml file) provides non-zero values, only pool instance
            * without buffers will be created.
            * For more sophisticated configuration of memory pool CmdCreateMemoryPool should be used */
          bool CreateMemoryPool(const std::string& poolname,
                                unsigned buffersize = 0,
-                               unsigned numbuffers = 0,
-                               unsigned refcoeff = 0);
+                               unsigned numbuffers = 0);
 
          bool DeletePool(const std::string& name);
 

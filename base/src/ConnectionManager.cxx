@@ -111,7 +111,6 @@ void dabc::ConnectionManager::ObjectCleanup()
 
    while (fRecs.GetSize()>0) {
       ConnectionRequest req = fRecs.TakeLast();
-
       req.ChangeState(ConnectionObject::sFailed, true);
    }
 

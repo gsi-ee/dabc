@@ -315,8 +315,9 @@ bool opencl::ContextRef::OpenGPU()
       return false;
    }
 
-   SetObject(ctx, true);
-   SetTransient(false);
+
+   SetObject(ctx);
+   SetAutoDestroy(true);
    return true;
 }
 

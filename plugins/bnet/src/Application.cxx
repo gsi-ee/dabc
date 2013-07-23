@@ -57,11 +57,11 @@ bool bnet::Application::CreateAppModules()
    int connect_packet_size = 50000;
    int bufsize = 16*1024;
    while (bufsize < connect_packet_size) bufsize*=2;
-   dabc::mgr.CreateMemoryPool("BnetCtrlPool", bufsize, NumNodes() * 4, 2);
+   dabc::mgr.CreateMemoryPool("BnetCtrlPool", bufsize, NumNodes() * 4);
 
    bufsize = Cfg(dabc::xmlBufferSize).AsInt(65536);
    int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
-   dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf, 2);
+   dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf);
 
    dabc::CmdCreateModule cmd("bnet::TransportModule", names::WorkerModule(), "BnetModuleThrd");
    cmd.Field("NodeNumber").SetInt(dabc::mgr.NodeId());

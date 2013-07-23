@@ -84,7 +84,7 @@ namespace dabc {
 
          double ProcessConnTimer(ConnTimer* timer);
 
-         Buffer TakeDfltBuffer(bool empty = false);
+         Buffer TakeDfltBuffer();
 
          inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }
          inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : 0; }

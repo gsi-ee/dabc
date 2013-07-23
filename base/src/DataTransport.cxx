@@ -407,9 +407,8 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       CloseInput();
       fNextDataSize = 0;
 
-      fCurrentBuf.Release();
+      fCurrentBuf.MakeEmpty();
 
-      fCurrentBuf = TakeEmpty();
       if (fCurrentBuf.null()) {
          EOUT("Fatal error - cannot get empty buffer, try after 1 sec");
          ShootTimer("SysTimer", 1.);

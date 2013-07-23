@@ -74,7 +74,6 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fSelPath = Cfg("select", cmd).AsStdStr(fSelPath);
    fShowClients = Cfg("clients", cmd).AsBool(fShowClients);
 
-
    fHttpSys = ".";
 }
 
@@ -122,6 +121,8 @@ void http::Server::OnThreadAssigned()
 
    fHierarchy.Create("Full");
 
+   DOUT0("CLIENTS = %s", DBOOL(fShowClients));
+
    if (!fShowClients) {
       fClientsFolder = "";
       if (fServerFolder.empty()) fServerFolder = "localhost";
@@ -161,7 +162,7 @@ double http::Server::ProcessTimeout(double last_diff)
    }
 
    // we build extra slaves when they not shown in main structure anyway
-   if (fShowClients && (main!=dabc::mgr) && !fClientsFolder.empty()) {
+   if (fShowClients && !fClientsFolder.empty()) {
       dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
       dabc::Hierarchy h = server_hierarchy.CreateChild(fClientsFolder);
 
@@ -457,7 +458,9 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    }
 
    dabc::Hierarchy item, master;
-   dabc::BinData bindata;
+   dabc::Buffer bindata;
+   dabc::BinDataHeader* bindatahdr = 0;
+   dabc::BinDataHeader dummyhdr; // this header used to send only dummy reply that nothing changed
    std::string producer_name, request_name;
    dabc::WorkerRef wrk;
 
@@ -495,38 +498,45 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          }
 
          bindata = item()->bindata();
+         if (!bindata.null())
+            bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
       }
 
-      DOUT0("BINARY REQUEST name:%s CURR_ITEM:%u CURR_BINARY:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) bindata.version(), (unsigned) query_version);
+      DOUT0("BINARY REQUEST name:%s CURR_ITEM:%u CURR_BINARY:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) (bindatahdr ? bindatahdr->version : 0), (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
       // user can always force new buffer if he provide too big qyery version number
 
-      bool can_reply = !bindata.null() && (item_version==bindata.version()) && (query_version<=item_version) && !force;
+      bool can_reply = (bindatahdr!=0) && (item_version==bindatahdr->version) && (query_version<=item_version) && !force;
 
       if (can_reply) {
          //DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
 
-         unsigned reply_length = bindata.length();
+         unsigned reply_length = 0;
 
-         // we do not need to send data again while requester give as same number again
-         if ((query_version>0) && (query_version==bindata.version())) {
-            reply_length = 0;
-            //DOUT0("!!!! NO NEED TO SEND DATA AGAIN");
+         // we do not need to send full data again while requester give us same number again
+         if ((query_version>0) && (query_version==bindatahdr->version)) {
+            reply_length = sizeof(dummyhdr);
+            dummyhdr.reset();
+            dummyhdr.version = bindatahdr->version;
+            dummyhdr.master_version = master_version;
+         } else {
+            bindatahdr->master_version = master_version;
+            reply_length = bindata.GetTotalSize();
          }
+
+         DOUT0("Send reply ion binary request size %u", reply_length);
 
          mg_printf(conn,
                "HTTP/1.1 200 OK\r\n"
-               "Content-Type: application/x-binary\r\n");
-         if (master_version>0)
-            mg_printf(conn,  "Master-Version: %lu\r\n", (long unsigned) master_version);
-         mg_printf(conn,
-               "Content-Version: %lu\r\n"
+               "Content-Type: application/x-binary\r\n"
                "Content-Length: %u\r\n"
                "Connection: keep-alive\r\n"
-               "\r\n", (long unsigned) bindata.version(), reply_length);
-         if (reply_length>0)
-            mg_write(conn, bindata.data(), (size_t) reply_length);
+               "\r\n", reply_length);
+         if (reply_length == sizeof(dummyhdr))
+            mg_write(conn, &dummyhdr, (size_t) reply_length);
+         else
+            mg_write(conn, bindata.SegmentPtr(), (size_t) reply_length);
          return 1;
       }
 
@@ -576,18 +586,11 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    if (wrk.Execute(cmd, 5.) != dabc::cmd_true) {
       EOUT("Fail to get binary data");
       resok = false;
+   } else
+   if ((bindata = cmd.GetRawData()).null()) {
+      EOUT("GetBinary command reply does not contain raw data");
+      resok = false;
    } else {
-      bindata = cmd.GetRef("#BinData");
-
-      if (bindata.null() && (cmd.GetRawData()!=0)) {
-         bool owner = false;
-         unsigned len = cmd.GetRawDataSize();
-         void* ptr = cmd.GetRawData(&owner);
-         bindata = new dabc::BinDataContainer(ptr, len, owner, cmd.GetUInt("RawDataVersion"));
-
-         // DOUT0("REPACK BINARY REQUEST len %u", len);
-      }
-
       dabc::LockGuard lock(fHierarchyMutex);
 
       item_version = item.GetVersion();
@@ -596,51 +599,38 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
       //DOUT0("BINARY REQUEST AFTER VERSION %u", (unsigned) item_version);
 
-      if (!bindata.null()) {
-         bindata()->SetVersion(item_version);
-         item()->bindata() = bindata;
+      bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
+      bindatahdr->version = item_version;
 
-         if (!master.null()) {
+      item()->bindata() = bindata;
 
-            master_version = master.GetVersion();
+      master_version = master.GetVersion();
 
-            //DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
+      //DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
 
-            // master hash can let us know if something changed in the master
-            std::string masterhash = cmd.GetStdStr("MasterHash");
+      // master hash can let us know if something changed in the master
+      std::string masterhash = cmd.GetStdStr("MasterHash");
 
-            if (!masterhash.empty() && (master.Field(dabc::prop_content_hash).AsStdStr()!=masterhash)) {
-               master_version = fHierarchy.GetVersion()+1;
-               fHierarchy.SetNodeVersion(master_version);
-               master.SetNodeVersion(master_version);
-               master.Field(dabc::prop_content_hash).SetStr(masterhash);
-
-               //DOUT0("!!!!!!!!!!!!! MASTER ITEM CHANGED new version = %u!!!!!!!!", (unsigned) master_version);
-            }
-         }
-
-      } else {
-         resok = false;
+      if (!masterhash.empty() && (master.Field(dabc::prop_content_hash).AsStdStr()!=masterhash)) {
+         master_version = fHierarchy.GetVersion()+1;
+         fHierarchy.SetNodeVersion(master_version);
+         master.SetNodeVersion(master_version);
+         master.Field(dabc::prop_content_hash).SetStr(masterhash);
+         //DOUT0("!!!!!!!!!!!!! MASTER ITEM CHANGED new version = %u!!!!!!!!", (unsigned) master_version);
       }
+      bindatahdr->master_version = master_version;
    }
 
    if (resok) {
-      DOUT0("SEND BINARY data item %s length %u version %u itemversion %u !!!!", itemname.c_str(), bindata.length(), bindata.version(), (unsigned) item.GetVersion());
+      DOUT0("SEND BINARY data item %s length %u version %u itemversion %u !!!!", itemname.c_str(), (unsigned)  bindata.GetTotalSize(), (unsigned) bindatahdr->version, (unsigned) item.GetVersion());
 
       mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
-            "Content-Type: application/x-binary\r\n");
-
-      if (master_version>0)
-         mg_printf(conn,  "Master-Version: %lu\r\n", (long unsigned) master_version);
-
-      mg_printf(conn,
-            "Content-Version: %lu\r\n"
+            "Content-Type: application/x-binary\r\n"
             "Content-Length: %u\r\n"
             "Connection: keep-alive\r\n"
-            "\r\n",
-            (long unsigned) bindata.version(), bindata.length());
-      mg_write(conn, bindata.data(), (size_t) bindata.length());
+            "\r\n", (unsigned) bindata.GetTotalSize());
+      mg_write(conn, bindata.SegmentPtr(), (size_t) bindata.GetTotalSize());
    } else {
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
                        "Content-Length: 0\r\n"
@@ -649,5 +639,3 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
    return 1;
 }
-
-

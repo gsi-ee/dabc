@@ -109,10 +109,6 @@ namespace dabc {
          Buffer TakeBuffer(unsigned pool = 0)
          { return (pool < fPools.size()) ? fPools[pool]->TakeBuffer() : ((pool==0) ? TakeDfltBuffer() : Buffer()); }
 
-         /** \brief Take empty buffer (without memory region) from memory pool */
-         Buffer TakeEmpty(unsigned pool = 0)
-         { return (pool < fPools.size()) ? fPools[pool]->TakeEmpty() : ((pool==0) ? TakeDfltBuffer() : Buffer()); }
-
          /** \brief Produces event for specified pool handle.
           * \details Should be used when processing was stopped due to return false in ProcessBuffer method */
          void ActivatePool(unsigned pool);

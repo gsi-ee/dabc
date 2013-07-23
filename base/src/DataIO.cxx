@@ -123,7 +123,7 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
 
 dabc::FileInput::~FileInput()
 {
-   DOUT0("Destroy file input %p", this);
+   DOUT3("Destroy file input %p", this);
 
    if (fIO!=0) {
       delete fIO;
@@ -165,7 +165,7 @@ bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
       new dabc::Object(fFilesList(), fFileName);
    }
 
-   fFilesList.SetOwner(true);
+   fFilesList.SetAutoDestroy(true);
 
    return fFilesList.NumChilds() > 0;
 }

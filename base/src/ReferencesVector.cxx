@@ -22,33 +22,69 @@
 #include "dabc/Object.h"
 
 dabc::ReferencesVector::ReferencesVector() throw() :
-   fVector()
+   fVector(new refs_vector())
 {
+   if (fVector->capacity() < 8) fVector->reserve(8);
 }
 
 dabc::ReferencesVector::~ReferencesVector() throw()
 {
    Clear();
+   delete fVector;
+   fVector = 0;
 }
 
-bool dabc::ReferencesVector::Add(Reference ref) throw()
+void dabc::ReferencesVector::ExpandVector()
+{
+   if ((fVector->size() == 0) || (fVector->size() < fVector->capacity())) return;
+
+   unsigned new_capacity = fVector->capacity()*2;
+
+   refs_vector* vect = new refs_vector();
+   vect->reserve(new_capacity);
+
+   // make shift, which does not require any locking
+   for (unsigned n=0;n<fVector->size();n++) {
+      vect->push_back(dabc::Reference());
+      vect->back() << fVector->at(n);
+   }
+
+   fVector->clear();
+   delete fVector;
+   fVector = vect;
+}
+
+
+bool dabc::ReferencesVector::Add(Reference& ref) throw()
 {
    if (ref.GetObject()==0) return false;
 
-   fVector.push_back(ref);
+   ExpandVector();
+
+   fVector->push_back(Reference());
+
+   // by such action no any locking is required -
+   fVector->back() << ref;
 
    return true;
 }
 
 
-bool dabc::ReferencesVector::AddAt(Reference ref, unsigned pos) throw()
+bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
 {
    if (ref.GetObject()==0) return false;
 
-   if (pos >= fVector.size())
-      fVector.push_back(ref);
-   else
-      fVector.insert(fVector.begin() + pos, ref);
+   ExpandVector();
+
+   fVector->push_back(Reference());
+
+   if (pos >= fVector->size()) {
+      fVector->back() << ref;
+   } else {
+      for (unsigned n=pos+1; n<fVector->size();n++)
+         fVector->at(n) << fVector->at(n-1);
+      fVector->at(pos) << ref;
+   }
 
    return true;
 }
@@ -59,59 +95,79 @@ bool dabc::ReferencesVector::Remove(Object* obj) throw()
    if ((obj==0) || (GetSize()==0)) return false;
 
    unsigned n = GetSize();
-   while (n-->0) {
-      if (fVector[n].GetObject()==obj) {
-         fVector[n] = 0;
-         fVector.erase(fVector.begin()+n);
-      }
-   }
+   while (n-->0)
+      if (fVector->at(n).GetObject()==obj) RemoveAt(n);
 
    return true;
 }
 
-bool dabc::ReferencesVector::DestroyAll()
-{
-   for (unsigned n=0; n < GetSize(); n++)
-      fVector[n].Destroy();
-
-   fVector.clear();
-
-   return true;
-}
 
 void dabc::ReferencesVector::RemoveAt(unsigned n) throw()
 {
-   if (n<GetSize()) fVector.erase(fVector.begin()+n);
+   if (n>=fVector->size()) return;
+
+   Reference ref;
+   ref << fVector->at(n);
+   ref.Release();
+
+   for (unsigned indx = n; indx < fVector->size()-1;indx++)
+      fVector->at(indx) << fVector->at(indx+1);
+
+   fVector->pop_back();
 }
 
 dabc::Reference dabc::ReferencesVector::TakeRef(unsigned n)
 {
-   if (n>=GetSize()) return dabc::Reference();
+   dabc::Reference ref;
 
-   // by this action reference will be removed from the vector
-
-//   fVector[n].SetTransient(true);
-   dabc::Reference ref(fVector[n]);
-
-   fVector.erase(fVector.begin()+n);
+   ExtractRef(n, ref);
 
    return ref;
 }
 
-bool dabc::ReferencesVector::Clear() throw()
-{
-   for (unsigned n=0;n<GetSize();n++)
-      fVector[n].Release();
 
-   fVector.clear();
+bool dabc::ReferencesVector::ExtractRef(unsigned n, Reference& ref)
+{
+   if (n>=GetSize()) return false;
+
+   // by this action reference will be removed from the vector
+   ref << fVector->at(n);
+   RemoveAt(n);
+   return true;
+}
+
+
+dabc::Reference dabc::ReferencesVector::TakeLast()
+{
+   dabc::Reference ref;
+
+   if (GetSize()>0) {
+      ref << fVector->back();
+      fVector->pop_back();
+   }
+
+   return ref;
+}
+
+
+bool dabc::ReferencesVector::Clear(bool isowner) throw()
+{
+   for (unsigned n=0;n<fVector->size();n++) {
+      dabc::Reference ref;
+      ref << fVector->at(n);
+      if (isowner) ref.Destroy();
+              else ref.Release();
+   }
+
+   fVector->clear();
 
    return true;
 }
 
 dabc::Object* dabc::ReferencesVector::FindObject(const char* name, int len) const
 {
-   for (unsigned n=0; n<fVector.size(); n++) {
-      dabc::Object* obj = GetObject(n);
+   for (unsigned n=0; n<fVector->size(); n++) {
+      dabc::Object* obj = fVector->at(n).GetObject();
       if (obj && obj->IsName(name, len)) return obj;
    }
    return 0;
@@ -120,8 +176,8 @@ dabc::Object* dabc::ReferencesVector::FindObject(const char* name, int len) cons
 bool dabc::ReferencesVector::HasObject(Object* ptr)
 {
    if (ptr==0) return false;
-   for (unsigned n=0; n<fVector.size(); n++)
-      if (GetObject(n) == ptr) return true;
+   for (unsigned n=0; n<fVector->size(); n++)
+      if (fVector->at(n).GetObject() == ptr) return true;
 
    return false;
 }

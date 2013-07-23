@@ -75,6 +75,41 @@ void dabc::WorkerAddon::SubmitWorkerCmd(const std::string& cmdname)
 
 // ================================================================================
 
+
+#ifdef DABC_EXTRA_CHECKS
+
+#include <list>
+#include <stdio.h>
+
+void dabc::Worker::DebugWorkers(Worker* instance, int id)
+{
+
+   static std::list<dabc::Worker*> wrks ;
+   static dabc::Mutex mutex(true);
+
+   dabc::LockGuard lock(mutex);
+
+   if (instance == 0) {
+      printf("NUM WORKERS = %u\n", wrks.size());
+      std::list<dabc::Worker*>::iterator iter = wrks.begin();
+      while (iter != wrks.end()) {
+         printf("   REMAINED = %s\n", (*iter)->GetName());
+         iter++;
+      }
+   } else
+   if (id==0) wrks.push_back(instance);
+         else wrks.remove(instance)
+}
+
+#else
+
+void dabc::Worker::DebugWorkers(Worker* instance, int id)
+{
+}
+
+#endif
+
+
 dabc::Worker::Worker(Reference parent, const std::string& name) :
    Object(parent, name),
    fThread(),
@@ -91,6 +126,8 @@ dabc::Worker::Worker(Reference parent, const std::string& name) :
    fWorkerCommandsLevel(0)
 {
    SetFlag(flHasThread, false);
+
+   dabc::Worker::DebugWorkers(this, 0);
 }
 
 
@@ -109,6 +146,8 @@ dabc::Worker::Worker(const ConstructorPair& pair) :
 
    fWorkerCommandsLevel(0)
 {
+   dabc::Worker::DebugWorkers(this, 0);
+
    SetFlag(flHasThread, false);
 }
 
@@ -124,6 +163,8 @@ dabc::Worker::~Worker()
    ClearThreadRef();
 
    DOUT3("~Worker %p %d thrd:%p done", this, fWorkerId, fThread());
+
+   dabc::Worker::DebugWorkers(this, 1);
 }
 
 bool dabc::Worker::HasThread() const
@@ -188,7 +229,7 @@ void dabc::Worker::ClearThreadRef()
 
    {
       LockGuard lock(fThreadMutex);
-      ref = fThread;
+      ref << fThread;
 
       fThreadMutex = 0;
       fWorkerId = 0;
@@ -215,8 +256,6 @@ void dabc::Worker::ObjectCleanup()
    dabc::Object::ObjectCleanup();
 
    // from this moment on no new commands/events
-   // ClearThreadRef();
-
    DettachFromThread();
 
    // now process old commands
@@ -262,10 +301,7 @@ void dabc::Worker::AssignAddon(WorkerAddon* addon)
    }
 
    fAddon = addon;
-   if (addon) {
-      addon->fWorker = this;
-//      addon->fWorker.SetTransient(false);
-   }
+   if (addon) addon->fWorker = this;
 
    if (!thrd.null()) {
       thrd()->WorkerAddonChanged(this, true);
@@ -964,6 +1000,9 @@ bool dabc::WorkerRef::SyncWorker(double tmout)
    dabc::Command cmd("SyncWorker");
    cmd.SetPriority(dabc::Worker::priorityMinimum);
    if (tmout>=0) cmd.SetTimeout(tmout);
-
-   return Execute(cmd);
+   return Execute(cmd) == cmd_true;
 }
+
+
+
+

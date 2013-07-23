@@ -32,7 +32,11 @@ namespace dabc {
    class ReferencesVector {
       private:
 
-         std::vector<Reference>  fVector;  ///< vector with references
+         typedef std::vector<Reference> refs_vector;
+
+         refs_vector* fVector;  ///< vector with references
+
+         void ExpandVector();
 
       public:
          /** \brief Constructor */
@@ -42,10 +46,10 @@ namespace dabc {
          virtual ~ReferencesVector() throw();
 
          /** \brief Add reference to the vector */
-         bool Add(Reference ref) throw();
+         bool Add(Reference& ref) throw();
 
          /** \brief Add reference to the vector at specified position */
-         bool AddAt(Reference ref, unsigned pos) throw();
+         bool AddAt(Reference& ref, unsigned pos) throw();
 
          /** \brief Remove reference on specified object  */
          bool Remove(Object* obj) throw();
@@ -54,20 +58,17 @@ namespace dabc {
          void RemoveAt(unsigned n) throw();
 
          /** \brief Clear all references, if owner specified objects will be destroyed */
-         bool Clear() throw();
+         bool Clear(bool asowner = false) throw();
 
          /** \brief Returns number of items in vector */
-         unsigned GetSize() const { return fVector.size(); }
+         unsigned GetSize() const { return fVector->size(); }
 
          /** \brief Returns pointer on the object */
          inline Object* GetObject(unsigned n) const
-            { return (n<GetSize()) ? fVector[n].GetObject() : 0; }
-
-         /** \brief destroy referenced objects */
-         bool DestroyAll();
+            { return (n<GetSize()) ? fVector->at(n).GetObject() : 0; }
 
          /** \brief Returns new reference on object with index n */
-         inline Reference Get(unsigned n) const { return Reference(n<GetSize() ? fVector[n].GetObject() : 0); }
+         inline Reference Get(unsigned n) const { return Reference(n<GetSize() ? fVector->at(n).GetObject() : 0); }
 
          /** \brief Returns new reference on object with index n */
          inline Reference operator[](unsigned n) const { return Get(n); }
@@ -76,7 +77,10 @@ namespace dabc {
          Reference TakeRef(unsigned n);
 
          /** \brief Remove last reference from vector */
-         Reference TakeLast() { return GetSize() == 0 ? Reference() : TakeRef(GetSize()-1); }
+         Reference TakeLast();
+
+         /** \brief Remove reference at specified position. operator << is used to avoid child locking */
+         bool ExtractRef(unsigned n, Reference& ref);
 
          /** \brief Simple search of object by name, no any subfolder structures */
          Object* FindObject(const char* name, int len = -1) const;

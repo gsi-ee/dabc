@@ -57,15 +57,17 @@ dabc::Module::Module(const std::string& name, Command cmd) :
 //   CreateCmdDef("SetPriority").AddArg("Priority", "int", true);
 //
 //   CreateCmdDef(CmdSetParameter::CmdName()).AddArg("ParName", "string", true).AddArg("ParValue", "string", true);
+
+   DOUT3("++++++++++ dabc::Module::Module() %s done", GetName());
 }
 
 dabc::Module::~Module()
 {
-   DOUT2( "dabc::Module::~Module() %s starts", GetName());
+   DOUT3("+++++++++++ dabc::Module::~Module() %s starts", GetName());
 
-   if (fRunState) EOUT("Module %s destructed in running state", GetName());
+   if (fRunState) EOUT("Module %s destroyed in running state", GetName());
 
-   DOUT2(" dabc::Module::~Module() %s done", GetName());
+   DOUT3(" dabc::Module::~Module() %s done", GetName());
 }
 
 void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::string& poolname)
@@ -230,15 +232,13 @@ bool dabc::Module::Stop()
    return Execute("StopModule") == cmd_true;
 }
 
-dabc::Buffer dabc::Module::TakeDfltBuffer(bool empty)
+dabc::Buffer dabc::Module::TakeDfltBuffer()
 {
    if (fDfltPool.null()) fDfltPool = dabc::mgr.FindPool(xmlWorkPool);
 
    MemoryPool* pool = dynamic_cast<MemoryPool*> (fDfltPool());
 
-   if (pool!=0) {
-      return empty ? pool->TakeEmpty() : pool->TakeBuffer();
-   }
+   if (pool!=0) return pool->TakeBuffer();
 
    return dabc::Buffer();
 }
@@ -839,10 +839,17 @@ void dabc::Module::SendToAllOutputs(Buffer& buf)
 
       if (n==last_can_send) {
          Output(n)->Send(buf);
+         if (!buf.null()) { EOUT("buffer not null after sending to output %u", n); exit(333); }
       } else {
          dabc::Buffer dupl = buf.Duplicate();
          Output(n)->Send(dupl);
+         if (!dupl.null()) { EOUT("buffer not null after sending to output %u", n); exit(333); }
       }
+   }
+
+   if ((last_can_send != NumOutputs()) && !buf.null()) {
+      EOUT("Should never happens buf %u!!!", buf.GetTotalSize());
+      exit(333);
    }
 
    buf.Release();

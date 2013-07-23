@@ -8,6 +8,67 @@ DABC.dabc_tree = 0;   // variable to display hierarchy
 
 DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
+DABC.ntou4 = function(b, o) {
+   // convert (read) four bytes of buffer b into a uint32_t
+   var n  = (b.charCodeAt(o)   & 0xff);
+       n += (b.charCodeAt(o+1) & 0xff) << 8;
+       n += (b.charCodeAt(o+2) & 0xff) << 16;
+       n += (b.charCodeAt(o+3) & 0xff) << 24;
+   return n;
+}
+
+
+DABC.UnpackBinaryHeader = function(arg) {
+   if ((arg==null) || (arg.length < 20)) return null;
+   
+   var o = 0;
+   var typ = DABC.ntou4(arg, o); o+=4;
+   if (typ!=1) return null;
+   
+   var hdr = {};
+   
+   hdr['typ'] = typ;
+   hdr['version'] = DABC.ntou4(arg, o); o+=4;
+   hdr['master_version'] = DABC.ntou4(arg, o); o+=4;
+   hdr['zipped'] = DABC.ntou4(arg, o); o+=4;
+   hdr['payload'] = DABC.ntou4(arg, o); o+=4;
+   
+   hdr['rawdata'] = "";
+   
+   // if no payload specified, ignore
+   if (hdr.payload == 0) return hdr;
+   
+   if (hdr.zipped == 0) {
+      hdr['rawdata'] = arg.slice(o);
+      if (hdr['rawdata'].length != hdr.payload)
+         alert("mismatch between payload value and actual data length");
+      return hdr;
+   }
+
+   var ziphdr = JSROOTIO.R__unzip_header(arg, o, true);
+   
+   if (!ziphdr) {
+      alert("no zip header but it was specified!!!");
+      return null;
+   }
+  
+   var unzip_buf = JSROOTIO.R__unzip(ziphdr['srcsize'], arg, o, true);
+   if (!unzip_buf) {
+      alert("fail to unzip data");
+      return false;
+   } 
+   
+   hdr['rawdata'] = unzip_buf['unzipdata'];
+   
+   if (hdr['rawdata'].length != hdr.zipped)
+      alert("mismatch between length of buffer before zip and actual data length");
+   
+   unzip_buf = null;
+   return hdr;
+}
+
+
+
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
    this.frameid = new Number(0);    // id of top frame, where item is drawn
@@ -15,6 +76,7 @@ DABC.DrawElement = function() {
    this.frameid = "";
    return this;
 }
+
 
 // indicates if element operates with simple text fields, 
 // which can be processed by SetValue() method
@@ -231,15 +293,13 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
 }
 
 
-DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
+DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    this.req = 0;
 
-   if ((ver<0) || !arg) { this.ready = false; return; }
+   if (arg==null) { this.ready = false; return; }
 
    // $("#dabc_draw").append("<br> Get XML request callback "+ver);
 
-   this.version = ver;
-   
    this.xmldoc = arg;
    
    // $("#dabc_draw").append("<br> xml doc is there");
@@ -261,7 +321,6 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       // $("#dabc_draw").append("<br> found dabc:version " + this.version);
       // $("#dabc_draw").append("<br> found node " + top.nodeName);
    }
-
    
    this.createNode(0, -1, top.firstChild, "");
 
@@ -384,24 +443,38 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
 }
 
 
-DABC.FesaDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
+DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    // in any case, request pointer will be reseted
    // delete this.req;
    this.req = null;
    
-   if (this.version == ver) {
+   console.log("Get response from server " + arg.length);
+   
+   var hdr = DABC.UnpackBinaryHeader(arg);
+   
+   if (hdr == null) {
+      alert("cannot extract binary header");
+      return;
+   }
+   
+   if (this.version == hdr.version) {
       console.log("Same version of beam profile " + ver);
       return;
    }
    
-   if (arg==null) {
+   if (hdr.rawdata == null) {
       alert("no data for beamprofile when expected");
       return;
    } 
 
-   this.data = arg;
-   this.version = ver;
+   this.data = hdr.rawdata;
+   this.version = hdr.version;
 
+   console.log("Data length is " + this.data.length);
+
+   
+
+   
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", size = " + this.data.length);
 
@@ -416,14 +489,6 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    }
 }
 
-DABC.ntou4 = function(b, o) {
-   // convert (read) four bytes of buffer b into a uint32_t
-   var n  = (b.charCodeAt(o)   & 0xff);
-       n += (b.charCodeAt(o+1) & 0xff) << 8;
-       n += (b.charCodeAt(o+2) & 0xff) << 16;
-       n += (b.charCodeAt(o+3) & 0xff) << 24;
-   return n;
-}
 
 DABC.FesaDrawElement.prototype.ReconstructObject = function()
 {
@@ -598,29 +663,6 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    this.first_draw = false;
 }
 
-DABC.RootDrawElement.prototype.UnzipRawData = function() {
-   
-   // method returns true if unpacked data can be used
-   
-   if (!this.raw_data) return false;
-
-   var ziphdr = JSROOTIO.R__unzip_header(this.raw_data, 0, true);
-   
-   if (!ziphdr) return true;
-  
-   var unzip_buf = JSROOTIO.R__unzip(ziphdr['srcsize'], this.raw_data, 0, true);
-   if (!unzip_buf) {
-      alert("fail to unzip data");
-      return false;
-   } 
-   
-   this.raw_data = unzip_buf['unzipdata'];
-   // $("#dabc_draw").append("<br>unpzip buffer " + this.raw_data_size + " to length "+ this.raw_data.length);
-   unzip_buf = null;
-   return true;
-}
-
-
 DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    if (!this.raw_data) {
       this.state = this.StateEnum.stInit;
@@ -632,9 +674,6 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    obj['_typename'] = 'JSROOTIO.' + this.clname;
 
 //   $("#dabc_draw").append("<br>Calling JSROOTIO function");
-   
-   // one need gFile to unzip data
-   if (!this.UnzipRawData()) return;
 
    gFile = this.sinfo.obj;
 
@@ -662,8 +701,6 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       this.painter = null;
    }
    
-   
-   
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;
    
@@ -673,7 +710,7 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    this.DrawObject();
 }
 
-DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
+DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    // in any case, request pointer will be reseted
    // delete this.req;
    this.req = null;
@@ -684,7 +721,9 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       return;
    }
    
-   if ((ver < 0) || !arg) {
+   var hdr = DABC.UnpackBinaryHeader(arg);
+   
+   if (hdr==null) {
       $("#dabc_draw").append("<br> RootDrawElement get error " + this.itemname + "  reload list");
       this.state = this.StateEnum.stInit;
       // most probably, objects structure is changed, therefore reload it
@@ -693,7 +732,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    }
 
    // if we got same version, do nothing - we are happy!!!
-   if ((ver > 0) && (this.version == ver)) {
+   if ((hdr.version > 0) && (this.version == hdr.version)) {
       this.state = this.StateEnum.stReady;
       // $("#dabc_draw").append("<br> Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
@@ -710,24 +749,17 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       if (gFile) $("#dabc_draw").append("<br> gFile already exists???"); 
       this.obj = new JSROOTIO.RootFile;
 
-      // one need gFile to unzip data
-      this.raw_data = arg;
-      
-      if (this.UnzipRawData()) {
-         gFile = this.obj;
-         this.obj.fStreamerInfo.ExtractStreamerInfo(this.raw_data);
-         this.version = ver;
-         this.state = this.StateEnum.stReady;
-         this.raw_data = null;
-         // this indicates that object was clicked and want to be drawn
-         this.DrawObject();
-      } else {
-         this.obj = null;
-      }
+      gFile = this.obj;
+      this.obj.fStreamerInfo.ExtractStreamerInfo(hdr.rawdata);
+      this.version = hdr.version;
+      this.state = this.StateEnum.stReady;
+      this.raw_data = null;
+      // this indicates that object was clicked and want to be drawn
+      this.DrawObject();
          
       gFile = null;
 
-      if (!this.obj) $("#dabc_draw").append("<br> No file in streamer infos!!!");
+      if (!this.obj) alert("Cannot reconstruct streamer infos!!!");
 
       // with streamer info one could try to update complex fields
       DABC.mgr.UpdateComplexFields();
@@ -735,11 +767,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
       return;
    } 
 
-   this.raw_data_version = ver;
-   this.raw_data = arg;
-   this.raw_data_size = arg.length;
-   
-   if (mver) this.need_master_version = mver;
+   this.raw_data_version = hdr.version;
+   this.raw_data = hdr.rawdata;
+   this.raw_data_size = hdr.rawdata.length;
+   this.need_master_version = hdr.master_version;
    
    if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
       // $("#dabc_draw").append("<br> Streamer info is required of vers " + this.need_master_version);
@@ -922,25 +953,17 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                for (var i = 0; i < array.length; i++) {
                   filecontent = filecontent + String.fromCharCode(array[i]);
                }
-
-               var ver = this.getResponseHeader("Content-Version");
-               if (!ver) {
-                  ver = -1;
-                  $("#dabc_draw").append("<br> Response version not specified");
-               } 
-               
-               var mver = this.getResponseHeader("Master-Version");
                
                // $("#dabc_draw").append("<br> IE response ver = " + ver);
 
-               this.dabc_item.RequestCallback(filecontent, Number(ver), Number(mver));
+               this.dabc_item.RequestCallback(filecontent);
                delete filecontent;
                filecontent = null;
             } else {
-               this.dabc_item.RequestCallback(this.responseXML, 0);
+               this.dabc_item.RequestCallback(this.responseXML);
             }
          } else {
-            this.dabc_item.RequestCallback(null, -1);
+            this.dabc_item.RequestCallback(null);
          } 
          this.dabc_item = null;
       }
@@ -980,24 +1003,15 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                } else {
                   var filecontent = Buf;
                }
-
-               var ver = this.getResponseHeader("Content-Version");
-               if (!ver) {
-                  ver = -1;
-                  $("#dabc_draw").append("<br> Response version not specified");
-               } 
-               
-               var mver = this.getResponseHeader("Master-Version");
-
-               this.dabc_item.RequestCallback(filecontent, Number(ver), Number(mver));
+               this.dabc_item.RequestCallback(filecontent);
 
                delete filecontent;
                filecontent = null;
             } else {
-               this.dabc_item.RequestCallback(this.responseXML, 0);
+               this.dabc_item.RequestCallback(this.responseXML);
             }
          } else {
-            this.dabc_item.RequestCallback(null, -1);
+            this.dabc_item.RequestCallback(null);
          }
          this.dabc_item = 0;
       }

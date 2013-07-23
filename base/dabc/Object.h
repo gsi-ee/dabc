@@ -58,7 +58,6 @@ namespace dabc {
    extern const char* xmlCleanupTimeout;
    extern const char* xmlBufferSize;
    extern const char* xmlNumBuffers;
-   extern const char* xmlRefCoeff;
    extern const char* xmlNumSegments;
    extern const char* xmlAlignment;
    extern const char* xmlShowInfo;
@@ -221,14 +220,12 @@ namespace dabc {
           * object responsibility to delete itself. */
          virtual bool _DoDeleteItself() { return false; }
 
-         /** This method indicates that there are no any kind of references exists on this object.
-          * Typical example is memory pool, which provides pointer on itself to many other instances.
-          * For a moment it is work around, but could be used also in very special case when object
-          * instance should be preserved until other references exists on it. */
-         virtual bool _NoOtherReferences() { return true; }
-
          /** Specifies if object will be owner of its new childs */
          void SetOwner(bool on = true);
+
+         /** \brief Set autodestroy flag for the object
+          * Once enabled, object will be destroyed when last reference will be cleared */
+         void SetAutoDestroy(bool on = true);
 
          /** \brief Method called by the manager when registered dependent object is destroyed
           *  Should be used in user class to clear all references on the object to let destroy it
@@ -338,7 +335,7 @@ namespace dabc {
           * \param[in] withmutex    true if object mutex should be locked
           * \param[in] setparent    true if parent field of child should be set
           * \returns                true if successful */
-         bool AddChild(Object* child, bool withmutex = true, bool setparent = true) throw();
+         bool AddChild(Object* child, bool withmutex = true) throw();
 
          /** \brief Add object to list of child objects at specified position
           *
@@ -347,17 +344,7 @@ namespace dabc {
           * \param[in] withmutex   true if object mutex should be locked
           * \param[in] setparent   true if parent field of child should be set
           * \returns               true if successful */
-         bool AddChildAt(Object* child, unsigned pos, bool withmutex = true, bool setparent = true);
-
-         /** \brief Alternative way to add child to the object.
-          *
-          * Here is main difference that object instance obj will be placed into the children list
-          * only if no other objects with that name exists. If child with name is existing
-          * and delduplicate == true (default), provided object will be deleted.
-          * \param[in]  obj          child object to add
-          * \param[in] delduplicate  delete object if object with same name exists
-          * \returns                 reference on the child object */
-         Reference PutChild(Object* obj, bool delduplicate = true);
+         bool AddChildAt(Object* child, unsigned pos, bool withmutex = true);
 
          /** \brief Dettach child from parent object */
          bool RemoveChild(Object* child) throw();
@@ -382,11 +369,11 @@ namespace dabc {
          /** \brief returns reference on child object with given name */
          Reference FindChildRef(const char* name, bool force = false) const throw();
 
-         /** \brief Delete childs, if exclude mask is specified, object which are match with the mask, will not be deleted */
-         void DeleteChilds(const std::string& exclude_mask = "");
+         /** \brief Delete all childs. If object owner, when childs will be destroyed.  */
+         void DeleteChilds();
 
          /** \brief Delete child with specified index */
-         void DeleteChild(unsigned n) { GetChildRef(n).Destroy(); }
+         void DeleteChild(unsigned n);
 
          /** \brief Return folder of specified name, no special symbols allowed.
           *

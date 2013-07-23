@@ -38,11 +38,10 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    fCounter = 0;
 
-
    #ifdef WITH_ROOT
 
    fProducer = new dabc_root::BinaryProducer("root_bin");
-   fProducer.SetOwner(true);
+   fProducer.SetAutoDestroy(true);
 
    fHierarchy.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
@@ -74,16 +73,21 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    fCounter++;
 
-   fesa::BeamProfile* rec = (fesa::BeamProfile*) malloc(sizeof(fesa::BeamProfile));
+   dabc::Buffer buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader)+sizeof(fesa::BeamProfile));
+
+   dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
+   hdr->reset();
+   hdr->zipped = 0; // no ziping (yet)
+   hdr->payload = sizeof(fesa::BeamProfile);
+
+   fesa::BeamProfile* rec = (fesa::BeamProfile*)  (((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader));
    rec->fill(fCounter % 7);
-
-   dabc::BinData bindata;
-
-   bindata = new dabc::BinDataContainer(rec, sizeof(fesa::BeamProfile), true, fCounter);
 
    dabc::Hierarchy item = fHierarchy.FindChild("BeamProfile");
 
-   item()->bindata() = bindata;
+   DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
+
+   item()->bindata() = buf;
    item.Field(dabc::prop_content_hash).SetInt(fCounter);
 
 
@@ -122,28 +126,28 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
          return dabc::cmd_false;
       }
 
-      dabc::BinData bindata;
+      dabc::Buffer buf;
 
       std::string kind = item.Field(dabc::prop_kind).AsStdStr();
       if (kind.find("ROOT.")==0) {
 #ifdef WITH_ROOT
          dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
          if (itemname=="StreamerInfo")
-            bindata = pr->GetStreamerInfoBinary();
+            buf = pr->GetStreamerInfoBinary();
          else
-            bindata = pr->GetBinary((TH2I*)fHist);
+            buf = pr->GetBinary((TH2I*)fHist);
 
          cmd.SetInt("MasterHash", pr->GetStreamerInfoHash());
 #endif
       } else
-         bindata = item()->bindata();
+         buf = item()->bindata();
 
-      if (bindata.null()) {
+      if (buf.null()) {
          EOUT("No find binary data for item %s", itemname.c_str());
          return dabc::cmd_false;
       }
 
-      cmd.SetRef("#BinData", bindata);
+      cmd.SetRawData(buf);
 
       return dabc::cmd_true;
    }

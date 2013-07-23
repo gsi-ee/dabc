@@ -40,6 +40,8 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          dabc::Worker(0, "Exec")
       {
          fWorkerPriority = 0;
+         // special case - thread keep only pointer
+         SetAutoDestroy(false);
       }
 
       virtual int ExecuteCommand(Command cmd)
@@ -102,6 +104,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
    }
 
    std::string affinity = fExec->Cfg(xmlAffinity, cmd).AsStdStr();
+
    if (!affinity.empty()) {
       SetAffinity(affinity.c_str());
       char sbuf[200];
@@ -113,7 +116,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
 
 //   SetLogging(true);
 
-   DOUT2("---------------- THRD %s Constructed REFCNT %u------------------ ", GetName(), fObjectRefCnt);
+   DOUT2("-------- THRD %s Constructed -------------- ", GetName());
 }
 
 dabc::Thread::~Thread()
@@ -151,7 +154,6 @@ dabc::Thread::~Thread()
       Kill();
       fState = stStopped;
    }
-
 
 #ifdef DABC_EXTRA_CHECKS
    unsigned totalsize = 0;
@@ -222,7 +224,7 @@ void dabc::Thread::ProcessNoneEvent()
    DOUT3("Thrd:%s Shrink processors size to %u normal state %s refcnt %d", GetName(), new_size, DBOOL(_IsNormalState()), fObjectRefCnt);
 
    // we check that object is in normal state,
-   // otherwise it means that destryment is already started and will be done in other means
+   // otherwise it means that destroyment is already started and will be done in other means
    if ((new_size==2) && _IsNormalState()) {
       DOUT3("THREAD %s generate cleanup", GetName());
       _Fire(EventId(evntCleanupThrd, 0, 0), priorityLowest);
@@ -655,7 +657,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
    DOUT2("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id);
 
    if ((id>=fWorkers.size()) || (fWorkers[id]->work==0)) {
-      DOUT2("THRD:%s Worker %u no longer exists", GetName(), id);
+      DOUT3("THRD:%s Worker %u no longer exists", GetName(), id);
 
       return cmd_false;
    }
@@ -950,12 +952,12 @@ bool dabc::Thread::HaltWorker(Worker* work)
    if (work==0) return false;
 
    if (IsItself())
-      return CheckWorkerCanBeHalted(work->fWorkerId, actHalt);
+      return CheckWorkerCanBeHalted(work->fWorkerId, actHalt) == cmd_true;
 
    Command cmd("HaltWorker");
    cmd.SetUInt("WorkerId", work->fWorkerId);
    cmd.SetPriority(Worker::priorityMaximum);
-   return fExec->Execute(cmd);
+   return fExec->Execute(cmd) == cmd_true;
 }
 
 

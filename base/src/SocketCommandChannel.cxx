@@ -47,7 +47,6 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fRecvBufSize(0),
    fMainCmd(),
    fExeCmd(),
-   fLastBinData(),
    fSendQueue(),
    fRecvState(recvInit),
    fRemoteObserver(false),
@@ -58,6 +57,8 @@ dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::stri
    fClientNameSufix()
 {
    AssignAddon(addon);
+
+   SetAutoDestroy(true);
 
    SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (addon);
 
@@ -204,7 +205,9 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 
       //DOUT0("Now hierarchy is \n %s", channel->fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 
-      cmd.SetRawData(diff.c_str(), diff.length(), false, true);
+      dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(diff.c_str(), diff.length(), false, true);
+
+      cmd.SetRawData(rawdata);
 
       cmd.SetResult(cmd_true);
 
@@ -268,8 +271,10 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
          fExeCmd = cmd;
 
-         if (!fExeCmd.null() && (fRecvHdr.data_rawsize>0))
-            fExeCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+         if (!fExeCmd.null() && (fRecvHdr.data_rawsize>0)) {
+            dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+            fExeCmd.SetRawData(rawdata);
+         }
 
          if (ExecuteCommandByItself(fExeCmd)) {
 
@@ -336,8 +341,10 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
          fMainCmd.AddValuesFrom(cmd);
 
-         if (!fMainCmd.null() && (fRecvHdr.data_rawsize>0))
-            fMainCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+         if (!fMainCmd.null() && (fRecvHdr.data_rawsize>0)) {
+            dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+            fMainCmd.SetRawData(rawdata);
+         }
 
          fMainCmd.Reply(cmd.GetResult());
 
@@ -370,23 +377,8 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 {
    if (cmd == fExeCmd) {
 
-      if (fExeCmd.IsName("GetBinary")) {
-         // TODO: bindata, binary command data and dabc::Buffer should be done with same logic
-
-         // DOUT0("!!!!!! REPACK BINARY DATA!!!!!!");
-
-         fLastBinData = cmd.GetRef("#BinData");
-
-         cmd.SetRawData(fLastBinData.data(), fLastBinData.length(), false, false);
-
-         cmd.SetUInt("RawDataVersion", fLastBinData.version());
-
-      }
-
-
       SubmitCommandSend(fExeCmd, true);
       fExeCmd.Release();
-
       return true;
    }
 
@@ -401,11 +393,13 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 
       fRemReqTime.GetNow();
 
-      if (cmd.GetRawDataSize() > 0) {
-         // DOUT0("Get raw data %p %u", cmd2.GetRawData(), cmd2.GetRawDataSize());
+      dabc::Buffer buf = cmd.GetRawData();
+
+      if (!buf.null()) {
+         // DOUT0("Get raw data %p len %u", buf.SegmentPtr(), buf.GetTotalSize());
 
          std::string diff;
-         diff.append((const char*)cmd.GetRawData(), cmd.GetRawDataSize());
+         diff.append((const char*)buf.SegmentPtr(), buf.GetTotalSize());
          //DOUT0("length %d diff = %s", diff.length(), diff.c_str());
          if (fRemoteHierarchy.UpdateFromXml(diff)) {
             DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
@@ -555,13 +549,19 @@ void dabc::SocketCommandClient::PerformCommandSend()
    fSendHdr.data_rawsize = 0;
 
    fSendBuf.clear();
+   fSendRawData.Release();
+
+   void* rawdata = 0;
 
    if (fSendQueue.Front().IsCanceled()) {
       fSendHdr.data_kind = kindCancel;
    } else {
       fSendBuf = fSendQueue.Front().SaveToXml(true);
+      fSendRawData = fSendQueue.Front().GetRawData();
+
       fSendHdr.data_cmdsize = fSendBuf.length();
-      fSendHdr.data_rawsize = fSendQueue.Front().GetRawDataSize();
+      fSendHdr.data_rawsize = fSendRawData.GetTotalSize();
+      if (fSendHdr.data_rawsize > 0) rawdata = fSendRawData.SegmentPtr();
       fSendHdr.data_size = fSendHdr.data_cmdsize + fSendHdr.data_rawsize;
    }
 
@@ -576,7 +576,7 @@ void dabc::SocketCommandClient::PerformCommandSend()
 
    if (!addon->StartSend(&fSendHdr, sizeof(fSendHdr),
                          fSendBuf.c_str(), fSendHdr.data_cmdsize,
-                         fSendQueue.Front().GetRawData(), fSendHdr.data_rawsize)) {
+                         rawdata, fSendHdr.data_rawsize)) {
       CloseClient(true, "Fail to send data");
       return;
    }
@@ -658,9 +658,10 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
 {
    fNodeId = dabc::mgr()->cfg()->MgrNodeId();
 
-   SetOwner(true);
-
    AssignAddon(connaddon);
+
+   // object is owner its childs - autodestroy flag will be automatically set to the new add object
+   SetOwner(true);
 
    fSelPath = Cfg("select", cmd).AsStdStr();
 
