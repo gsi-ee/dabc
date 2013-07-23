@@ -21,8 +21,14 @@ of the framework.
 4. Try to provide more logical methods to operate with childs in object. Now all kind
    of remove methods call RemoveChild or RemoveChilds. If cleanup flag specified (default),
    object will be destroyed when parent is owner of the object.
-   
-    
+5. Add DebugObject method, which could help to understand which objects are not
+   cleaned correctly. Activated only with make extrachecks=true compile flags.
+   Actually, only this helped to find memory leak.    
+6. Provide automatic cleanup of objects with auto-destroy flag even if such objects
+   has childs. Before any child was blocking its parent while parent refcounter was always 
+   bigger than 1. Now cleanup can be started if refcounter equal to number of childs. 
+7. Use auto-destroy with hierarchy classes - now any release will case deletion of
+   not-used hierarchy structures - elegant solution for memory-leas problem.     
        
 
 22.07.2013

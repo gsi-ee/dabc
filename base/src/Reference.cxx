@@ -71,8 +71,6 @@ void dabc::Reference::SetObject(Object* obj, bool withmutex) throw()
 {
    Release();
 
-   fObj = obj;
-
    // this is empty reference
    if (obj==0) return;
 

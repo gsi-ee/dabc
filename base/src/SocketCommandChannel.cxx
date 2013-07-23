@@ -74,7 +74,7 @@ dabc::SocketCommandClient::~SocketCommandClient()
 {
    EnsureRecvBuffer(0);
 
-   fRemoteHierarchy.Destroy();
+   // fRemoteHierarchy.Destroy();
 }
 
 void dabc::SocketCommandClient::OnThreadAssigned()
@@ -673,7 +673,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
 
 dabc::SocketCommandChannel::~SocketCommandChannel()
 {
-   fHierarchy.Destroy();
+   // fHierarchy.Destroy();
 }
 
 void dabc::SocketCommandChannel::OnThreadAssigned()

@@ -370,7 +370,8 @@ void dabc::Hierarchy::Build(const std::string& topname, Reference top)
 bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 {
    if (src.null()) {
-      Destroy();
+      // Destroy();
+      Release(); // now release will work - any hierarchy will be deleted once noa ny other refs exists
       return true;
    }
 
@@ -415,11 +416,9 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
 
    src.Build(top.GetName(), top);
 
-   bool res = Update(src);
+   return Update(src);
 
-   src.Destroy();
-
-   return res;
+   // src.Destroy();
 }
 
 std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
@@ -452,7 +451,7 @@ void dabc::Hierarchy::Create(const std::string& name)
 {
    Release();
    SetObject(new HierarchyContainer(name));
-   SetAutoDestroy(true); // top level is owner
+   // SetAutoDestroy(true); // top level is owner
 }
 
 dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)

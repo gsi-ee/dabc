@@ -365,8 +365,15 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
          case stNormal:
             // if autodestroy flag specified, object will be destroyed when no more external references are existing
+
             // if (GetFlag(flAutoDestroy) && (fObjectRefCnt <= (int)(fObjectChilds ? fObjectChilds->GetSize() : 0))) ask_to_destroy = true;
             if (GetFlag(flAutoDestroy) && (fObjectRefCnt == 0)) ask_to_destroy = true;
+
+            if (do_decrement && (fObjectChilds!=0) && ((unsigned) fObjectRefCnt == fObjectChilds->GetSize()) && GetFlag(flAutoDestroy)) {
+               ask_to_destroy = true;
+               // DOUT0("One could destroy object %s %p anyhow numrefs %u numchilds %u", GetName(), this, fObjectRefCnt, fObjectChilds->GetSize());
+            }
+
             if (!ask_to_destroy) return false;
             viathrd = GetFlag(flHasThread);
             break;
@@ -629,9 +636,6 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 
    if (child->fObjectParent() != this) return false;
 
-   // TODO: one can reuse mutex below
-   child->fObjectParent.Release();
-
    int cnt = 1000000;
 
    bool isowner = false;
@@ -647,7 +651,21 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 
       isowner = GetFlag(flIsOwner);
 
-      if (fObjectChilds->ExtractRef(child, childref)) break;
+      if (fObjectChilds->ExtractRef(child, childref)) {
+         // IMPORTANT: parent reference can be released only AFTER childs are decreased,
+         // otherwise reference will try to destroy parent
+         // IMPORTANT: we are under object mutex and can do anything
+
+         if ((fObjectRefCnt>1) && (child->fObjectParent.fObj==this))  {
+            child->fObjectParent.Forget(); // not very nice, but will
+            fObjectRefCnt--;
+         } else {
+            // do not decrease counter - we leave parent reference till object destructor
+            // than, probably object will be automatically destroyed
+            DOUT0("Object %p %s refcnt==1 when deleting child", this, GetName());
+         }
+         break;
+      }
 
       EOUT("Not able to extract child reference!!!");
       exit(333);

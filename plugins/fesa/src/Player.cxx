@@ -66,7 +66,7 @@ fesa::Player::~Player()
    }
 #endif
 
-   fHierarchy.Destroy();
+   //fHierarchy.Destroy();
 }
 
 void fesa::Player::ProcessTimerEvent(unsigned timer)
@@ -87,7 +87,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    dabc::Hierarchy item = fHierarchy.FindChild("BeamProfile");
 
-   DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
+   // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
 
    item()->bindata() = buf;
    item.Field(dabc::prop_content_hash).SetInt(fCounter);

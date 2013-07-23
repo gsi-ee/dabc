@@ -96,6 +96,10 @@ namespace dabc {
          template<class T>
          bool verify_object(Object* src, T* &tgt) { return (tgt=dynamic_cast<T*>(src))!=0; }
 
+      private:
+         /** \brief Forget object - reference counter will be decrement by other means */
+         void Forget() { fObj = 0; }
+
       public:
 
          /** \brief Default constructor, creates empty reference */

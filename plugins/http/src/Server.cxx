@@ -83,7 +83,7 @@ http::Server::~Server()
 
    fCtx = 0;
 
-   fHierarchy.Destroy();
+   //fHierarchy.Destroy();
 }
 
 
@@ -176,21 +176,9 @@ double http::Server::ProcessTimeout(double last_diff)
 
    dabc::LockGuard lock(fHierarchyMutex);
 
-//   DOUT0("BEFORE \n%s", fHierarchy.SaveToXml().c_str());
-
-//   DOUT0("========================= START UPDATE ================");
    fHierarchy.Update(server_hierarchy);
-//   DOUT0("========================= DID UPDATE ================");
 
-//   DOUT0("========================= BEFORE DESTROY ================\n%s", server_hierarchy.SaveToXml().c_str());
-//   DOUT0("========================= DOING DESTROY ================");
-
-   server_hierarchy.Destroy();
-
-//   DOUT0("========================= DID DESTROY ================");
-
-
-//   DOUT0("SERVER OVERALL hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
+   //server_hierarchy.Destroy();
 
    return 1.;
 }

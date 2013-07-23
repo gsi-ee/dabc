@@ -88,8 +88,8 @@ dabc_root::RootSniffer::~RootSniffer()
 
    if (fProducer) { delete fProducer; fProducer = 0; }
 
-   fHierarchy.Destroy();
-   fRoot.Destroy();
+   //fHierarchy.Destroy();
+   //fRoot.Destroy();
 }
 
 void dabc_root::RootSniffer::OnThreadAssigned()
@@ -125,7 +125,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 
    fHierarchy.Update(h);
 
-   h.Destroy();
+   //h.Destroy();
 
    return 10.;
 }
@@ -398,7 +398,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
       DOUT3("Update ROOT structures");
-      fRoot.Destroy();
+      fRoot.Release();
       fRoot.Create("ROOT");
 
       // this is fake element, which is need to be requested before first
