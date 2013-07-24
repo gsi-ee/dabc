@@ -179,13 +179,22 @@ int dabc::Url::ExtractNodeId(const std::string& url)
    return -1;
 }
 
+std::string dabc::Url::GetOptionsPart(int number) const
+{
+   std::string res;
+   GetOption("", number, &res);
+   return res;
+}
 
-bool dabc::Url::GetOption(const std::string& optname, std::string* value) const
+
+bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::string* value) const
 {
    if (value) value->clear();
 
-   if (optname.empty() || fOptions.empty()) return false;
+   if (fOptions.empty()) return false;
+   if ((optionnumber<0) && optname.empty()) return false;
 
+   int cnt = 0;
    size_t p = 0;
 
    while (p < fOptions.length()) {
@@ -196,6 +205,13 @@ bool dabc::Url::GetOption(const std::string& optname, std::string* value) const
 
 //      printf("Search for option %s  fullstr %s p=%d separ=%d\n", optname.c_str(), fOptions.c_str(), p, separ);
 
+      if (optionnumber>=0) {
+         if (cnt==optionnumber) {
+            if (value) *value = fOptions.substr(p, separ-p);
+            return true;
+         }
+         cnt++;
+      } else
       if (separ-p >= optname.length()) {
          bool find = fOptions.compare(p, optname.length(), optname)==0;
          if (find) {
@@ -225,7 +241,7 @@ std::string dabc::Url::GetOptionStr(const std::string& optname, const std::strin
 {
    std::string res;
 
-   if (GetOption(optname, &res)) return res;
+   if (GetOption(optname, -1, &res)) return res;
 
    return dflt;
 }

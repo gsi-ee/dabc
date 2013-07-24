@@ -85,6 +85,8 @@ namespace http {
 
          int ProcessGetBinary(struct mg_connection* conn, const char *query);
 
+         int ProcessGetHistory(struct mg_connection* conn, const char *query);
+
          bool MakeRealFileName(std::string& fname);
 
       public:

@@ -67,6 +67,18 @@ DABC.UnpackBinaryHeader = function(arg) {
    return hdr;
 }
 
+DABC.nextXmlNode = function(node)
+{
+   while (node && (node.nodeType!=1)) node = node.nextSibling;
+   return node;
+}
+
+DABC.TopXmlNode = function(xmldoc) 
+{
+   if (!xmldoc) return;
+   
+   return DABC.nextXmlNode(xmldoc.firstChild);
+}
 
 
 DABC.DrawElement = function() {
@@ -201,15 +213,9 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    this.req.send(null);
 }
 
-DABC.HierarchyDrawElement.prototype.nextNode = function(node)
-{
-   while (node && (node.nodeType!=1)) node = node.nextSibling;
-   return node;
-}
-
 DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname) 
 {
-   node = this.nextNode(node);
+   node = DABC.nextXmlNode(node);
 
    while (node) {
 
@@ -253,7 +259,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
-      node = this.nextNode(node.nextSibling);
+      node = DABC.nextXmlNode(node.nextSibling);
    }
    
    return nodeid;
@@ -264,9 +270,9 @@ DABC.HierarchyDrawElement.prototype.TopNode = function()
 {
    if (!this.xmldoc) return;
    
-   var lvl1 = this.nextNode(this.xmldoc.firstChild);
+   var lvl1 = DABC.nextXmlNode(this.xmldoc.firstChild);
    
-   if (lvl1) return this.nextNode(lvl1.firstChild);
+   if (lvl1) return DABC.nextXmlNode(lvl1.firstChild);
 }
 
 
@@ -280,10 +286,10 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
    
    var pos = fullname.indexOf("/", 1);
    var localname = pos>0 ? fullname.substr(1, pos-1) : fullname.substr(1);  
-   var child = this.nextNode(top.firstChild);
+   var child = DABC.nextXmlNode(top.firstChild);
    while (child) {
       if (child.nodeName == localname) break;
-      child = this.nextNode(child.nextSibling);
+      child = DABC.nextXmlNode(child.nextSibling);
    }
    
    if (!child  || (pos<=0)) return child;
@@ -519,6 +525,220 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
    return true;
 }
 
+
+// ========== start of HistoryDrawElement
+
+DABC.HistoryDrawElement = function(_clname) {
+   DABC.DrawElement.call(this);
+   this.clname = _clname;
+   this.req = null;           // request to get raw data
+   this.xmlnode = null;       // xml node with current values 
+   this.xmlhistory = null;    // array with previous history
+   this.xmllimit = 100;       // maximum number of history entries
+   this.root_painter = null;  // root painter, required for draw
+   this.force = true;
+}
+
+DABC.HistoryDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.HistoryDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+
+   this.xmlnode = null;       // xml node with current values 
+   this.xmlhistory = null;    // array with previous history
+   this.xmllimit = 100;       // maximum number of history entries  
+   if (this.req) this.req.abort(); 
+   this.req = null;          // this is current request
+   this.root_painter = null;  // root painter, required for draw
+   this.force = true;
+}
+
+DABC.HistoryDrawElement.prototype.CreateFrames = function(topid, id) {
+   this.frameid = "dabcobj" + id;
+   
+   var entryInfo = "<div id='" + this.frameid + "'/>";
+   $(topid).append(entryInfo);
+   
+   var render_to = "#" + this.frameid;
+   var element = $(render_to);
+      
+   var fillcolor = 'white';
+   var factor = 0.66666;
+      
+   d3.select(render_to).style("background-color", fillcolor);
+   d3.select(render_to).style("width", "100%");
+
+   var w = element.width(), h = w * factor; 
+
+   this.vis = d3.select(render_to)
+                   .append("svg")
+                   .attr("width", w)
+                   .attr("height", h)
+                   .style("background-color", fillcolor);
+      
+   this.vis.append("svg:title").text(this.itemname);
+}
+
+DABC.HistoryDrawElement.prototype.ClickItem = function() {
+   if (this.req != null) return; 
+
+   if (!this.IsDrawn()) 
+      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
+   this.force = true;
+   
+   this.RegularCheck();
+}
+
+DABC.HistoryDrawElement.prototype.RegularCheck = function() {
+
+   if (DABC.load_root_js==0) {
+      DABC.load_root_js = 1;
+      AssertPrerequisites(function() {
+         // $("#dabc_draw").append("<br> load main scripts done");
+         DABC.load_root_js = 2; 
+      }, true);
+   }
+   
+   // in any case, complete JSRootIO is required before we could start 
+   if (DABC.load_root_js < 2) return;
+   
+   // no need to do something when req not completed
+   if (this.req!=null) return;
+ 
+   // do update when monitoring enabled
+   if ((this.version > 0) && !this.force) {
+      var chkbox = document.getElementById("monitoring");
+      if (!chkbox || !chkbox.checked) return;
+   }
+        
+   var url = "gethistory?" + this.itemname;
+   
+   if (this.version>0) url += "&ver=" + this.version;
+   if (this.xmllimit>0) url += "&limit=" + this.xmllimit;
+   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+
+   this.req.send(null);
+
+   this.force = false;
+}
+
+DABC.HistoryDrawElement.prototype.ExtractSeries = function(name) {
+   if (!this.xmlnode) return;
+   
+   // xml node must have attribute, which will be extracted
+   var val = this.xmlnode.getAttribute(name);
+   if (!val) return;
+   
+   var arr = new Array();
+   arr.push(Number(val));
+   
+   if (this.xmlhistory) 
+      for (var n=this.xmlhistory.length-1;n>=0;n--) {
+         var newval = this.xmlhistory[n].getAttribute(name);
+         if (newval) val = newval;
+         arr.push(Number(val));
+      }
+
+   arr.reverse();
+   return arr;
+}
+
+
+DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
+   // in any case, request pointer will be reseted
+   // delete this.req;
+   this.req = null;
+   
+   if (arg==null) {
+      console.log("no xml response from server");
+      return;
+   }
+   
+   var top = DABC.TopXmlNode(arg);
+   
+   var new_version = Number(top.getAttribute("version"));
+   
+   var modified = (this.version != new_version);
+
+   this.version = new_version;
+
+   // gap indicates that we could not get full history relative to provided version number
+   var gap = top.getAttribute("gap");
+   
+   this.xmlnode = DABC.nextXmlNode(top.firstChild);
+   
+   var hnode = DABC.nextXmlNode(this.xmlnode.nextSibling);
+   
+   var arr = new Array
+   while (hnode!=null) {
+      arr.push(hnode);
+      hnode = DABC.nextXmlNode(hnode.nextSibling);
+   }
+   arr.reverse();
+
+   // join both arrays with history entries
+   if ((this.xmlhistory == null) || (arr.length >= this.xmllimit) || (gap!=null)) {
+      this.xmlhistory = arr;
+   } else
+   if (arr.length>0) {
+      modified = true;
+      var total = this.xmlhistory.length + arr.length; 
+      if (total > this.xmllimit) 
+         this.xmlhistory.splice(0, total - this.xmllimit);
+      
+      this.xmlhistory = this.xmlhistory.concat(arr);
+   }
+
+//   console.log("History length = " + this.xmlhistory.length);
+   
+   this.vis.select("title").text(this.itemname + 
+         "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
+   
+   if (!modified) {
+      // console.log("element not modified");
+      return;
+   }
+   
+   var obj = this.ReconstructObject();
+   
+   if (obj==null) return;
+   
+   if (this.root_painter && this.root_painter.UpdateObject(obj)) {
+      this.root_painter.RedrawFrame();
+   } else {
+      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, obj);
+      
+      if (this.root_painter == -1) this.root_painter = null;
+   }
+}
+
+
+DABC.HistoryDrawElement.prototype.ReconstructObject = function()
+{
+   if (this.clname != "rate") return;
+
+   var x = this.ExtractSeries("time");
+   var y = this.ExtractSeries("value");
+   
+   // if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
+
+   // here we should create TGraph object
+
+   var gr = JSROOTPainter.CreateTGraph();
+   
+   gr['fX'] = x;
+   gr['fY'] = y;
+   gr['fNpoints'] = x.length;
+   
+   JSROOTPainter.AdjustTGraphRanges(gr);
+
+   gr['fHistogram']['fTitle'] = this.itemname;
+   gr['fHistogram']['fYaxis']['fXmin'] = 0;
+   gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
+   
+   return gr;
+}
 
 
 // ======== start of RootDrawElement ======================
@@ -1105,6 +1325,7 @@ DABC.Manager.prototype.display = function(itemname) {
    }
    
    var kind = xmlnode.getAttribute("kind");
+   var history = xmlnode.getAttribute("history");
    if (!kind) return;
 
 //   $("#dabc_draw").append("<br> find kind of node "+itemname + " " + kind);
@@ -1117,13 +1338,21 @@ DABC.Manager.prototype.display = function(itemname) {
    }
 
    // ratemeter
-   if (kind == "rate") {
-      elem = new DABC.GaugeDrawElement();
-      elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      elem.SetValue(xmlnode.getAttribute("value"));
-      this.arr.push(elem);
-      return;
+   if (kind == "rate") { 
+     if (history == null) {
+        elem = new DABC.GaugeDrawElement();
+        elem.itemname = itemname;
+        elem.CreateFrames(this.NextCell(), this.cnt++);
+        elem.SetValue(xmlnode.getAttribute("value"));
+        this.arr.push(elem);
+        return;
+      } else {
+         elem = new DABC.HistoryDrawElement(kind);
+         elem.itemname = itemname;
+         elem.CreateFrames(this.NextCell(), this.cnt++);
+         this.arr.push(elem);
+         return;
+      }
    }
    
    if (kind.indexOf("FESA.") == 0) {

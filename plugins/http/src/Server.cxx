@@ -22,6 +22,7 @@
 
 #include "dabc/Hierarchy.h"
 #include "dabc/Manager.h"
+#include "dabc/Url.h"
 
 
 static int begin_request_handler(struct mg_connection *conn)
@@ -178,8 +179,8 @@ double http::Server::ProcessTimeout(double last_diff)
 
    fHierarchy.Update(server_hierarchy);
 
-//   dabc::Hierarchy item = fHierarchy.FindChild("Server/Gener/App/Multi/GRate");
-//   if (!item.null()) item.EnableHistory(100);
+   dabc::Hierarchy item = fHierarchy.FindChild("Server/Gener/App/Multi/GRate");
+   if (!item.null()) item.EnableHistory(100);
 
 
    //server_hierarchy.Destroy();
@@ -224,6 +225,11 @@ int http::Server::begin_request(struct mg_connection *conn)
    } else
    if (strstr(request_info->uri, "getbinary")!=0) {
       if (ProcessGetBinary(conn, request_info->query_string)) return 1;
+
+      iserror = true;
+   } else
+   if (strstr(request_info->uri, "gethistory")!=0) {
+      if (ProcessGetHistory(conn, request_info->query_string)) return 1;
 
       iserror = true;
    } else {
@@ -442,30 +448,91 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    return 0;
 }
 
-int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
+int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *query)
 {
-   std::string itemname = query ? query : "";
-   std::string sver;
-   long unsigned query_version(0);
-   uint64_t item_version(0), master_version(0);
+   dabc::Url url(std::string("gethistory?") + (query ? query : ""));
 
-   size_t pos = itemname.find("&");
-   if (pos != std::string::npos) {
-      sver = itemname.substr(pos+1);
-      itemname.erase(pos);
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+      return 0;
    }
 
+   std::string itemname = url.GetOptionsPart(0);
+   if (itemname.empty()) {
+      EOUT("Item is not specified in gethistory request");
+      return 0;
+   }
+
+   std::string sver = url.GetOptionStr("ver");
+   long unsigned query_version(0);
+   if (sver.length()>0)
+      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
+   int limit = url.GetOptionInt("limit", 0);
+
+   int check_requester_counter = 100;
+
+   std::string sbuf;
+
+   while (check_requester_counter-- > 0) {
+
+      {
+         dabc::LockGuard lock(fHierarchyMutex);
+         dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
+
+         if (item.null()) {
+            EOUT("Wrong request for non-existing item %s", itemname.c_str());
+            return 0;
+         }
+
+         if (!item.HasHistory()) {
+            EOUT("Item %s do not provides history", itemname.c_str());
+            return 0;
+         }
+
+         sbuf = item()->RequestHistory(query_version, limit);
+      }
+
+      //DOUT0("REPLY \n%s", sbuf.c_str());
+
+      mg_printf(conn,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Type: text/xml\r\n"
+                 "Content-Length: %u\r\n"
+                 "Connection: keep-alive\r\n"
+                  "\r\n", (unsigned) sbuf.length());
+      mg_write(conn, sbuf.c_str(), (size_t) sbuf.length());
+      return 1;
+
+   }
+
+
+   return 0;
+}
+
+
+
+int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
+{
+   dabc::Url url(std::string("getbinary?") + (query ? query : ""));
+
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+      return 0;
+   }
+
+   std::string itemname = url.GetOptionsPart(0);
    if (itemname.empty()) {
       EOUT("Item is not specified in getbinary request");
       return 0;
    }
 
-   if  (sver.find("ver=") == 0) {
-      sver.erase(0,4);
+   std::string sver = url.GetOptionStr("ver");
+   long unsigned query_version(0);
+   if (sver.length()>0)
       if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
-   }
 
    dabc::Hierarchy item, master;
+   uint64_t item_version(0), master_version(0);
    dabc::Buffer bindata;
    dabc::BinDataHeader* bindatahdr = 0;
    dabc::BinDataHeader dummyhdr; // this header used to send only dummy reply that nothing changed

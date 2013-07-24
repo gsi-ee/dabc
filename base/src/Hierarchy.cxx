@@ -42,7 +42,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fNodeChanged(false),
    fHierarchyChanged(false),
    fBinData(),
-   fHistory(0)
+   fHistory()
 {
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Hierarchy", this, 10);
@@ -123,6 +123,44 @@ void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recur
       }
 }
 
+std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit)
+{
+   XMLNodePointer_t topnode = Xml::NewChild(0, 0, "gethistory", 0);
+
+   Xml::NewAttr(topnode, 0, "version", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
+
+   SaveInXmlNode(topnode, true);
+
+   int cnt(0);
+   bool reach_boundary = false;
+
+   for (unsigned n=0; n<fHistory.Size();n++) {
+      HistoryItem& item = fHistory.Item(fHistory.Size() - n - 1);
+
+      // we achieved last pointed
+      if ((version>0) && (item.version < version)) { reach_boundary = true; break; }
+
+      if ((limit>0) && (cnt>=limit)) break;
+
+      dabc::Xml::AddRawLine(topnode, item.content.c_str());
+      cnt++;
+   }
+
+   // if specific version was defined, and we cannot provide information up that version
+   // we need to indicate this to the client
+   // Client in this case should cleanup its buffers while with gap
+   // one cannot correctly reconstruct history backwards
+   if ((version>0) && !reach_boundary)
+      Xml::NewAttr(topnode, 0, "gap", "true");
+
+   std::string res;
+
+   Xml::SaveSingleNode(topnode, &res, 1);
+   Xml::FreeNode(topnode);
+
+   return res;
+}
+
 bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 {
    fNodeChanged = false;
@@ -133,15 +171,26 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
-   if (fHistory>0) cont->Field(prop_history).SetInt(fHistory);
+   bool dohistory = fHistory.Capacity()>0;
+
+   if (dohistory) cont->Field(prop_history).SetUInt(fHistory.Capacity());
 
    // we need to recognize if any attribute disappear or changed
-   if (!CompareFields(cont->GetFieldsMap(), (fHistory>0 ? prop_time : 0))) {
+   if (!CompareFields(cont->GetFieldsMap(), (dohistory ? prop_time : 0))) {
       fNodeChanged = true;
-      if (fHistory>0) {
+      if (dohistory) {
          cont->Field(prop_time).SetStr(dabc::format("%5.3f", dabc::Now().AsDouble()));
          std::string str = BuildDiff(cont->GetFieldsMap());
-         DOUT0("DIFF = %s", str.c_str());
+
+         if (fHistory.Full()) fHistory.PopOnly();
+         HistoryItem* h = fHistory.PushEmpty();
+
+         // DOUT0("Capacity:%u Size:%u Full:%s", fHistory.Capacity(), fHistory.Size(), DBOOL(fHistory.Full()));
+
+         h->version = fNodeVersion;
+         h->content = str;
+
+         // DOUT0("Sum:%3u Ver:%3u DIFF = %s ", fHistory.Size(), (unsigned) fNodeVersion, str.c_str());
       }
       SetFieldsMap(cont->TakeFieldsMap());
    }
@@ -434,13 +483,23 @@ void dabc::Hierarchy::EnableHistory(int length)
 {
    if (null()) return;
 
-   GetObject()->fHistory = length;
+   if (GetObject()->fHistory.Capacity() == (unsigned) length) return;
 
    if (length>0) {
+      GetObject()->fHistory.Allocate(length);
       Field(prop_history).SetInt(length);
    } else {
+      GetObject()->fHistory.Allocate(0);
       RemoveField(prop_history);
    }
+}
+
+
+bool dabc::Hierarchy::HasHistory() const
+{
+   if (null()) return false;
+
+   return GetObject()->fHistory.Capacity() > 0;
 }
 
 

@@ -1394,13 +1394,13 @@ var gStyle = {
       // if selobj specifief, painter with selected object will be redrawn
       
       if (!this.vis) return;
-      
+
       for (var n=0;n<this.vis['painters'].length;n++) {
          
          painter = this.vis['painters'][n];
          
          if ((selobj!=null) && !painter.IsObject(selobj)) continue;
-            
+
          painter.Redraw();
       }
    }
@@ -2653,23 +2653,34 @@ var gStyle = {
    
    JSROOTPainter.GraphPainter.prototype.UpdateObject = function(obj) {
       if (obj['_typename']!= this.graph['_typename']) return false;
+      
+      // if our own histogram was used as axis drawing, we need update histogram as well
+      if (this.ownhisto) this.first.UpdateObject(obj['fHistogram']);
+
       // TODO: make real update of TGraph object content 
-      this.graph = obj;
+      this.graph['fX'] = obj['fX'];
+      this.graph['fY'] = obj['fY'];
+      this.graph['fNpoints'] = obj['fNpoints'];
       this.CreateBins();
       return true;
    }
    
    JSROOTPainter.drawGraphNew = function(vis, graph) 
    {
-      if (!('fHistogram' in graph)) {
-         alert("drawing graphs without fHistogram field not (yet) supported");
-         return;
+      var ownhisto = false;
+      if (!('painters' in vis)) {
+         if (!('fHistogram' in graph)) {
+            alert("drawing first graphs without fHistogram field not (yet) supported");
+            return -1;
+         } else {
+            JSROOTPainter.drawHistogram1Dnew(vis, graph['fHistogram']);
+            ownhisto = true;
+         }
       }
       
-      if (!('painters' in vis)) 
-         JSROOTPainter.drawHistogram1Dnew(vis, graph['fHistogram']);
-      
       var painter = new JSROOTPainter.GraphPainter(graph);
+      
+      painter['ownhisto'] = ownhisto; 
       
       painter.SetFrame(vis, true);
       
@@ -3245,6 +3256,13 @@ var gStyle = {
       // this.histo = obj;
       
       this.histo['fArray'] = obj['fArray'];
+      this.histo['fN'] = obj['fN'];
+      this.histo['fTitle'] = obj['fTitle'];
+      this.histo['fXaxis']['fNbins'] = obj['fXaxis']['fNbins'];
+      this.histo['fXaxis']['fXmin'] = obj['fXaxis']['fXmin'];
+      this.histo['fXaxis']['fXmax'] = obj['fXaxis']['fXmax'];
+      this.histo['fYaxis']['fXmin'] = obj['fYaxis']['fXmin'];
+      this.histo['fYaxis']['fXmax'] = obj['fYaxis']['fXmax'];
       
       this.ScanContent();
       
@@ -3367,8 +3385,9 @@ var gStyle = {
    
    JSROOTPainter.HistPainter.prototype.DrawAxes = function() {
       // axes can be drawn only for main (first) histogram
-      if (this.first) return;
       
+      if (this.first) return;
+
       var w = this.frame.attr("width"), h = this.frame.attr("height");
       var noexpx = this.histo['fXaxis'].TestBit(EAxisBits.kNoExponent);
       var noexpy = this.histo['fYaxis'].TestBit(EAxisBits.kNoExponent);
@@ -3861,7 +3880,7 @@ var gStyle = {
    }
    
    JSROOTPainter.HistPainter.prototype.Redraw = function() {
-//      if (console) console.time("Redraw");
+      //if (console) console.time("Redraw");
       this.CreateXY();
       this.CountStat();
       this.DrawGrids();
@@ -4314,18 +4333,18 @@ var gStyle = {
       }
       var mul = (this.hmin < 0) ? 1.05 : 1.0;
       
-      
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
       this.xmax = this.histo['fXaxis']['fXmax'];
       
-      this.binwidthx = (this.xmax - this.xmin) / this.nbinsx; 
-
+      this.binwidthx = (this.xmax - this.xmin);
+      if (this.nbinsx>0)
+         this.binwidthx = this.binwidthx / this.nbinsx; 
       
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax'];
       
-      if ((this.histo['fXaxis']['fNbins']==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
+      if ((this.nbinsx==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
          if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
          this.draw_content = false;
@@ -4341,31 +4360,6 @@ var gStyle = {
       if (this.options.Bar == 0 && this.options.Hist == 0) {
          this.draw_content = false;
       }
-      
-      if (!this.draw_content) {
-         this['bins'] = null;
-         return;
-      }
-
-      // TODO: reduce bins size to actual number of pixels drawn
-      
-      // TODO: later x coordinate one should extract from axis array - it may be non-linear
-      
-      /* this['binwidthx'] = (this.xmax - this.xmin) / (this.nbinsx-1);
-      
-      var pthis = this;
-
-      var offset = (pthis.options.Error > 0) ? -0.5*pthis.binwidthx : 0;
-      
-      this['bins'] = d3.range(this.histo['fXaxis']['fNbins']+1).map(function(p) {
-         return {
-            x:  pthis.xmin + p * pthis.binwidthx + offset,
-            y:  pthis.histo.getBinContent(p),
-            xerr: pthis.binwidthx / 2.0,
-            yerr: pthis.histo.getBinError(p)
-         };
-      });
-      */
    }
    
    JSROOTPainter.Hist1DPainter.prototype.CountStat = function()
@@ -5038,8 +5032,11 @@ var gStyle = {
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax']; 
       
-      this.binwidthx = (this.xmax - this.xmin) / this.nbinsx;
-      this.binwidthy = (this.ymax - this.ymin) / this.nbinsy;
+      this.binwidthx = (this.xmax - this.xmin);
+      if (this.nbinsx>0) this.binwidthx = this.binwidthx / this.nbinsx;
+      
+      this.binwidthy = (this.ymax - this.ymin);
+      if (this.nbinsy>0) this.binwidthy = this.binwidthy / this.nbinsy 
       
       this.maxbin = 0;
       this.minbin = 0;
@@ -6051,11 +6048,8 @@ var gStyle = {
       else themin = stack['fMinimum'];
       if (!('fHistogram' in stack)) {
          h = stack['fHists'][0];
-         stack['fHistogram'] = new Object();
-         stack['fHistogram']['_typename'] = stack['fHists'][0]['_typename'];
+         stack['fHistogram'] = JSROOTPainter.Create1DHisto();
          stack['fHistogram']['fName'] = "unnamed";
-         stack['fHistogram']['fBits'] = 0;
-         stack['fHistogram']['TestBit'] = function(bit) { return false };
          stack['fHistogram']['fOption'] = "";
          stack['fHistogram']['fXaxis'] = JSROOTCore.clone(h['fXaxis']);
          stack['fHistogram']['fYaxis'] = JSROOTCore.clone(h['fYaxis']);
@@ -6063,10 +6057,7 @@ var gStyle = {
          stack['fHistogram']['fXaxis']['fXmax'] = xmax;
          stack['fHistogram']['fYaxis']['fXmin'] = ymin;
          stack['fHistogram']['fYaxis']['fXmax'] = ymax;
-         stack['fHistogram']['fXaxis']['fNbins'] = 0;
-         stack['fHistogram']['fYaxis']['fNbins'] = 0;
-         stack['fHistogram']['fArray'] = new Array();
-      }
+      } 
       stack['fHistogram']['fTitle'] = stack['fTitle'];
       //var histo = JSROOTCore.clone(stack['fHistogram']);
       var histo = stack['fHistogram'];
@@ -6487,6 +6478,65 @@ var gStyle = {
 
       return histo;
    }
+
+   JSROOTPainter.CreateTGraph = function(npoints) {
+      var graph = {};
+      graph['_typename'] = "JSROOTIO.TGraph";
+      graph['fBits'] = 0x3000408;
+      graph['fName'] = "dummy_graph_" + random_id++;
+      graph['fTitle'] = "dummytitle";
+      graph['fMinimum'] = -1111;
+      graph['fMaximum'] = -1111;
+      graph['fOption'] = "";
+      graph['fFillColor'] = 0;
+      graph['fFillStyle'] = 1001;
+      graph['fLineColor'] = 2;
+      graph['fLineStyle'] = 1;
+      graph['fLineWidth'] = 2;
+      graph['fMarkerColor'] = 4;
+      graph['fMarkerStyle'] = 21;
+      graph['fMarkerSize'] = 1;
+      graph['fMaxSize'] = 0;
+      graph['fNpoints'] = 0;
+      graph['fX'] = new Array;
+      graph['fY'] = new Array;
+      graph['fFunctions'] = new Array;
+      graph['fHistogram'] = JSROOTPainter.Create1DHisto();
+
+      if (npoints>0) {
+         graph['fMaxSize'] = npoints;
+         graph['fNpoints'] = npoints;
+         for (var i=0;i<npoints;i++) {
+            graph['fX'].push(i);
+            graph['fY'].push(i);
+         }
+         JSROOTPainter.AdjustTGraphRanges(graph);
+      }
+      
+      JSROOTCore.addMethods(graph);
+      return graph;
+   }
+   
+   JSROOTPainter.AdjustTGraphRanges = function(graph) {
+      if (graph['fNpoints']==0) return;
+      
+      var minx = graph['fX'][0], maxx = minx;
+      var miny = graph['fY'][0], maxy = miny;
+      
+      for (var i=1;i<graph['fNpoints'];i++) {
+         if (graph['fX'][i] < minx) minx = graph['fX'][i];
+         if (graph['fX'][i] > maxx) maxx = graph['fX'][i];
+         if (graph['fY'][i] < miny) miny = graph['fY'][i];
+         if (graph['fY'][i] > maxy) maxy = graph['fY'][i];
+      }
+      
+      graph['fHistogram']['fXaxis']['fXmin'] = minx;
+      graph['fHistogram']['fXaxis']['fXmax'] = maxx;
+
+      graph['fHistogram']['fYaxis']['fXmin'] = miny;
+      graph['fHistogram']['fYaxis']['fXmax'] = maxy;
+   }
+      
 
    
    JSROOTPainter.drawMultiGraphNew = function(vis, mgraph) {

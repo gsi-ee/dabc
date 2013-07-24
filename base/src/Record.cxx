@@ -216,7 +216,7 @@ bool dabc::RecordContainer::CompareFields(RecordContainerMap* newmap, const char
 
 std::string dabc::RecordContainer::BuildDiff(RecordContainerMap* newmap)
 {
-   XMLNodePointer_t node = 0;
+   XMLNodePointer_t node = Xml::NewChild(0, 0, "h", 0);
 
    if (newmap!=0) {
 
@@ -238,14 +238,12 @@ std::string dabc::RecordContainer::BuildDiff(RecordContainerMap* newmap)
          }
       }
 
-      node = SaveInXmlNode(0, true);
-   } else {
-      node = Xml::NewChild(0, 0, GetName(), 0);
+      SaveAttributesInXmlNode(node);
    }
 
    std::string res;
 
-   Xml::SaveSingleNode(node, &res, 1);
+   Xml::SaveSingleNode(node, &res, 0);
    Xml::FreeNode(node);
 
    return res;
@@ -356,11 +354,9 @@ const std::string dabc::RecordContainer::FieldName(unsigned cnt) const
    return std::string();
 }
 
-dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t parent, bool withattr)
+bool dabc::RecordContainer::SaveAttributesInXmlNode(XMLNodePointer_t node)
 {
-   XMLNodePointer_t node = Xml::NewChild(parent, 0, GetName(), 0);
-
-   if (!withattr) return node;
+   if (node == 0) return false;
 
    for(RecordContainerMap::const_iterator iter = fPars->begin();
          iter!=fPars->end();iter++) {
@@ -379,6 +375,16 @@ dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t par
          Xml::NewAttr(node,0,iter->first.c_str(),iter->second.c_str());
       }
    }
+
+   return true;
+}
+
+
+dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t parent, bool withattr)
+{
+   XMLNodePointer_t node = Xml::NewChild(parent, 0, GetName(), 0);
+
+   if (withattr) SaveAttributesInXmlNode(node);
 
    return node;
 }

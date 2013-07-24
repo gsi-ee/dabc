@@ -24,6 +24,10 @@
 #include "dabc/Buffer.h"
 #endif
 
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
+#endif
+
 #include <stdint.h>
 
 namespace dabc {
@@ -66,6 +70,15 @@ namespace dabc {
 
    // ===================================================================================
 
+
+   struct HistoryItem {
+      public:
+         uint64_t version;
+         std::string content;
+         HistoryItem() : version(0), content() {}
+         void reset() { version = 0; content.clear(); }
+   };
+
    class HierarchyContainer : public RecordContainer {
 
       friend class Hierarchy;
@@ -85,7 +98,8 @@ namespace dabc {
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
          Buffer     fBinData;           ///< binary data, assigned with element
-         int        fHistory;           ///< configuration of history
+
+         RecordsQueue<HistoryItem> fHistory; ///< container with item history
 
          HierarchyContainer* TopParent();
 
@@ -108,7 +122,7 @@ namespace dabc {
           * \returns true when something was changed */
          bool UpdateHierarchyFrom(HierarchyContainer* cont);
 
-         /** Switch on node or hierarchy modified flags */
+         /** \brief Switch on node or hierarchy modified flags */
          void SetModified(bool node, bool hierarchy, bool recursive = false);
 
       public:
@@ -136,6 +150,9 @@ namespace dabc {
          }
 
          uint64_t GetVersion() const { return fNodeVersion > fHierarchyVersion ? fNodeVersion : fHierarchyVersion; }
+
+         /** \brief Produces string with xml code */
+         std::string RequestHistory(uint64_t version = 0, int limit = 0);
 
          /** \brief Method used to create copy of hierarchy again */
          virtual void BuildHierarchy(HierarchyContainer* cont);
@@ -183,6 +200,9 @@ namespace dabc {
 
       /** \brief Activate history production for selected element */
       void EnableHistory(int length = 100);
+
+      /** \brief Returns true if item provides history */
+      bool HasHistory() const;
 
       std::string SaveToXml(bool compact = false, uint64_t version = 0);
 

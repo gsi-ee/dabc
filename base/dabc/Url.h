@@ -40,7 +40,7 @@ namespace dabc {
          std::string fFileName; ///< file name
          std::string fOptions;  ///< list of options
 
-         bool GetOption(const std::string& optname, std::string* value = 0) const;
+         bool GetOption(const std::string& optname, int optionnumber = -1, std::string* value = 0) const;
 
       public:
          Url();
@@ -63,6 +63,7 @@ namespace dabc {
          std::string GetOptions() const  { return fOptions; }
          std::string GetFullName() const;
 
+         std::string GetOptionsPart(int number = 0) const;
          bool HasOption(const std::string& optname) const { return GetOption(optname); }
          std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;
          int GetOptionInt(const std::string& optname, int dflt = 0) const;

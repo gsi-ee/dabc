@@ -2,6 +2,18 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+24.07.2013
+1. In dabc::Url class provide method to extract options part like name?part1&var=3 
+2. Implement history generation for simple hierarchy item with any attributes.
+   Provide simple time stamp for each element in history
+3. Implement gethistory request for items, which are providing history.
+   One can limit number of items in request. One can detect if there is gap in history 
+   data relative to previous dataset. Works only for local hierarchy objects. Request
+   look like:  http://server:8090/gethistory?/Server/App/Rate&ver=100&limit=100 
+4. In dabc.js implement drawing of hidtory in form of TGraph object. Fix several issues
+   with graph update in painter.   
+
+
 23.07.2013
 1. Remove transient flag in reference class. By this C++-conform code can be used.
    Main problem was assignment operator - it requires increment of reference counter.

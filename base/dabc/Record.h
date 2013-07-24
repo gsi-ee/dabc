@@ -184,6 +184,8 @@ namespace dabc {
 
          XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent, bool withattr = true);
 
+         bool SaveAttributesInXmlNode(XMLNodePointer_t node);
+
          bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
    };
 
