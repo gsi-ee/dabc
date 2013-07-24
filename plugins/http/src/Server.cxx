@@ -182,6 +182,8 @@ double http::Server::ProcessTimeout(double last_diff)
    dabc::Hierarchy item = fHierarchy.FindChild("Server/Gener/App/Multi/GRate");
    if (!item.null()) item.EnableHistory(100);
 
+   item = fHierarchy.FindChild("Server/Gener/App/fesa/BeamRate");
+   if (!item.null()) item.EnableHistory(100);
 
    //server_hierarchy.Destroy();
 
@@ -470,43 +472,72 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
    int limit = url.GetOptionInt("limit", 0);
 
    int check_requester_counter = 100;
-
-   std::string sbuf;
+   std::string reply;
+   dabc::Hierarchy item;
+   dabc::Command cmd;
 
    while (check_requester_counter-- > 0) {
 
       {
          dabc::LockGuard lock(fHierarchyMutex);
-         dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
+         item = fHierarchy.FindChild(itemname.c_str());
 
          if (item.null()) {
             EOUT("Wrong request for non-existing item %s", itemname.c_str());
-            return 0;
+            check_requester_counter = 0;
+            break;
          }
 
-         if (!item.HasHistory()) {
-            EOUT("Item %s do not provides history", itemname.c_str());
-            return 0;
+         // process request locally
+         if (item.HasLocalHistory() || item.HasActualRemoteHistory()) {
+            reply = item()->RequestHistory(query_version, limit);
+            break;
          }
 
-         sbuf = item()->RequestHistory(query_version, limit);
+         if (!item.HasField("#doingreq")) {
+
+            cmd = item.GetRemoteHierarchyRequest();
+            if (cmd.null()) {
+               EOUT("Cannot formulate request for the remote history");
+               check_requester_counter = 0;
+            } else
+               item.SetField("#doingreq","1");
+
+            break;
+         }
       }
+      item.Release();
+      DOUT2("There is running request - loop again");
+      WorkerSleep(0.05);
+   }
 
-      //DOUT0("REPLY \n%s", sbuf.c_str());
+   if (!cmd.null()) {
+      // try to execute command, which should obtain request
+      dabc::mgr.Execute(cmd, 5.);
 
+      dabc::LockGuard lock(fHierarchyMutex);
+      item.SetField("#doingreq",0);
+
+      if (item.ApplyHierarchyRequest(cmd))
+         reply = item()->RequestHistory(query_version, limit);
+   }
+
+   if (reply.empty()) {
+      EOUT("HISTORY REQUESTER FAILS %s", itemname.c_str());
+
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: close\r\n\r\n");
+   } else {
       mg_printf(conn,
                  "HTTP/1.1 200 OK\r\n"
                  "Content-Type: text/xml\r\n"
                  "Content-Length: %u\r\n"
                  "Connection: keep-alive\r\n"
-                  "\r\n", (unsigned) sbuf.length());
-      mg_write(conn, sbuf.c_str(), (size_t) sbuf.length());
-      return 1;
-
+                  "\r\n", (unsigned) reply.length());
+      mg_write(conn, reply.c_str(), (size_t) reply.length());
    }
-
-
-   return 0;
+   return 1;
 }
 
 
@@ -580,7 +611,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       DOUT0("BINARY REQUEST name:%s CURR_ITEM:%u CURR_BINARY:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) (bindatahdr ? bindatahdr->version : 0), (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
-      // user can always force new buffer if he provide too big qyery version number
+      // user can always force new buffer if he provide too big query version number
 
       bool can_reply = (bindatahdr!=0) && (item_version==bindatahdr->version) && (query_version<=item_version) && !force;
 

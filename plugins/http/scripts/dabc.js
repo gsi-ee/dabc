@@ -636,7 +636,7 @@ DABC.HistoryDrawElement.prototype.ExtractSeries = function(name) {
    if (this.xmlhistory) 
       for (var n=this.xmlhistory.length-1;n>=0;n--) {
          var newval = this.xmlhistory[n].getAttribute(name);
-         if (newval) val = newval;
+         if (newval && (newval != "dabc_del")) val = newval;
          arr.push(Number(val));
       }
 
@@ -675,7 +675,6 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
       arr.push(hnode);
       hnode = DABC.nextXmlNode(hnode.nextSibling);
    }
-   arr.reverse();
 
    // join both arrays with history entries
    if ((this.xmlhistory == null) || (arr.length >= this.xmllimit) || (gap!=null)) {

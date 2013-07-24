@@ -16,6 +16,7 @@
 #include "fesa/defines.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 
 #ifdef WITH_ROOT
@@ -33,6 +34,12 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    // this is just emulation, later one need list of real variables
    fHierarchy.CreateChild("BeamProfile").Field(dabc::prop_kind).SetStr("FESA.2D");
+
+   fHierarchy.CreateChild("BeamRate").Field(dabc::prop_kind).SetStr("rate");
+
+   dabc::Hierarchy item = fHierarchy.CreateChild("BeamRate2");
+   item.Field(dabc::prop_kind).SetStr("rate");
+   item.EnableHistory(100,"value");
 
    CreateTimer("update", 1., false);
 
@@ -82,7 +89,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    hdr->zipped = 0; // no ziping (yet)
    hdr->payload = sizeof(fesa::BeamProfile);
 
-   fesa::BeamProfile* rec = (fesa::BeamProfile*)  (((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader));
+   fesa::BeamProfile* rec = (fesa::BeamProfile*) (((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader));
    rec->fill(fCounter % 7);
 
    dabc::Hierarchy item = fHierarchy.FindChild("BeamProfile");
@@ -91,6 +98,16 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    item()->bindata() = buf;
    item.Field(dabc::prop_content_hash).SetInt(fCounter);
+
+
+   double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
+
+   item = fHierarchy.FindChild("BeamRate");
+   item.Field("value").SetStr(dabc::format("%4.2f", v1));
+
+   v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
+   item = fHierarchy.FindChild("BeamRate2");
+   item.Field("value").SetStr(dabc::format("%4.2f", v1));
 
 
 #ifdef WITH_ROOT
@@ -135,19 +152,23 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       dabc::Buffer buf;
 
-      std::string kind = item.Field(dabc::prop_kind).AsStdStr();
-      if (kind.find("ROOT.")==0) {
+      if (cmd.GetBool("history"))
+         buf = item.ExecuteHistoryRequest(cmd);
+      else {
+         std::string kind = item.Field(dabc::prop_kind).AsStdStr();
+         if (kind.find("ROOT.")==0) {
 #ifdef WITH_ROOT
-         dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
-         if (itemname=="StreamerInfo")
-            buf = pr->GetStreamerInfoBinary();
-         else
-            buf = pr->GetBinary((TH2I*)fHist);
+            dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
+            if (itemname=="StreamerInfo")
+               buf = pr->GetStreamerInfoBinary();
+            else
+               buf = pr->GetBinary((TH2I*)fHist);
 
-         cmd.SetInt("MasterHash", pr->GetStreamerInfoHash());
+            cmd.SetInt("MasterHash", pr->GetStreamerInfoHash());
 #endif
-      } else
-         buf = item()->bindata();
+         } else
+            buf = item()->bindata();
+      }
 
       if (buf.null()) {
          EOUT("No find binary data for item %s", itemname.c_str());

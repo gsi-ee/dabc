@@ -2519,6 +2519,7 @@ var gStyle = {
               .attr("r", 3) 
               .attr("opacity", 0) 
               .append("svg:title").text(TooltipText);
+              
       }
       if ((this.graph['_typename'] == 'JSROOTIO.TGraphErrors' ||
             this.graph['_typename'] == 'JSROOTIO.TGraphAsymmErrors' ||
@@ -2683,16 +2684,15 @@ var gStyle = {
       painter['ownhisto'] = ownhisto; 
       
       painter.SetFrame(vis, true);
-      
+
       painter.DecodeOptions();
-      
+
       painter.CreateBins();
-      
+
       painter.DrawBins();
       
       return painter;
    }
-
 
    JSROOTPainter.drawGrid = function(vis, histo, pad, x, y) {
       var gridx = false, gridy = false;
@@ -4320,18 +4320,17 @@ var gStyle = {
       if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
       
-      this.hmin = 1.0e32;
-      this.hmax = -1.0e32;
+      var hmin = 1.0e32, hmax = -1.0e32;
       this.stat_entries = d3.sum(this.histo['fArray']);
       
       this.nbinsx = this.histo['fXaxis']['fNbins'];
       
       for (var i=0;i<this.nbinsx;++i) {
          var value = this.histo.getBinContent(i+1);
-         if (value < this.hmin) this.hmin = value;
-         if (value > this.hmax) this.hmax = value;
+         if (value < hmin) hmin = value;
+         if (value > hmax) hmax = value;
       }
-      var mul = (this.hmin < 0) ? 1.05 : 1.0;
+      var mul = (hmin < 0) ? 1.05 : 1.0;
       
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
@@ -4344,17 +4343,20 @@ var gStyle = {
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax'];
       
-      if ((this.nbinsx==0) || ((Math.abs(this.hmin) < 1e-300 && Math.abs(this.hmax) < 1e-300))) {
+      if ((this.nbinsx==0) || ((Math.abs(hmin) < 1e-300 && Math.abs(hmax) < 1e-300))) {
          if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
          this.draw_content = false;
       } else {
-         if (this.histo['fMinimum'] != -1111) this.hmin = this.histo['fMinimum'];
-         if (this.histo['fMaximum'] != -1111) this.hmax = this.histo['fMaximum'];
-         this.ymin = this.hmin * mul;
-         this.ymax = this.hmax * 1.05;
+         if (this.histo['fMinimum'] != -1111) hmin = this.histo['fMinimum'];
+         if (this.histo['fMaximum'] != -1111) hmax = this.histo['fMaximum'];
+         this.ymin = hmin * mul;
+         this.ymax = hmax * 1.05;
          this.draw_content = true;
       }
+      
+      // console.log("xmin = " + this.xmin + "  xmax = " + this.xmax + "  nbins = " + this.nbinsx);
+      // console.log("ymin = " + this.ymin + "  ymax = " + this.ymax);
       
       // If no any draw options specified, do not try draw histogram
       if (this.options.Bar == 0 && this.options.Hist == 0) {
@@ -6529,6 +6531,8 @@ var gStyle = {
          if (graph['fY'][i] < miny) miny = graph['fY'][i];
          if (graph['fY'][i] > maxy) maxy = graph['fY'][i];
       }
+   
+      // console.log("search minx = " + minx + " maxx = " + maxx);
       
       graph['fHistogram']['fXaxis']['fXmin'] = minx;
       graph['fHistogram']['fXaxis']['fXmax'] = maxx;

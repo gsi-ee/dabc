@@ -99,11 +99,16 @@ namespace dabc {
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
+         //TODO: all this should go in extra class, while not many elements require history
+
+         bool       fHistoryEnabled;         ///< true if history enabled and created locally, in this case no any external requests are required
          RecordsQueue<HistoryItem> fHistory; ///< container with item history
+         bool       fRecordTime;             ///< if true, time will be recorded when value is modified
+         std::string fAutoRecord;            ///< field name, which change trigger automatic record of the history (when enabled)
+         uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
+         uint64_t    fLocalReqVersion;       ///< local version, when request was done
 
          HierarchyContainer* TopParent();
-
-         virtual bool SetField(const std::string& name, const char* value, const char* kind);
 
          bool SaveToJSON(std::string& sbuf, bool isfirstchild = true, int level = 0);
 
@@ -124,6 +129,22 @@ namespace dabc {
 
          /** \brief Switch on node or hierarchy modified flags */
          void SetModified(bool node, bool hierarchy, bool recursive = false);
+
+         /** \brief method called every time when field should be changed
+          * Used to detect important changes and to mark new version */
+         virtual bool SetField(const std::string& name, const char* value, const char* kind);
+
+         /** \brief produces simple diff, where only value is changing (and optionally time) */
+         std::string MakeSimpleDiff(const char* oldvalue);
+
+         /** \brief Add new entry to history */
+         void AddHistory(uint64_t ver, const std::string& diff);
+
+         /** \brief Return current time in format, which goes to history */
+         std::string GetTimeStr();
+
+         /** \brief Marks item and all its parents with changed version */
+         void MarkWithChangedVersion();
 
       public:
          HierarchyContainer(const std::string& name);
@@ -199,10 +220,13 @@ namespace dabc {
       bool UpdateHierarchy(Reference top);
 
       /** \brief Activate history production for selected element */
-      void EnableHistory(int length = 100);
+      void EnableHistory(int length = 100, const std::string& autorec = "");
 
-      /** \brief Returns true if item provides history */
-      bool HasHistory() const;
+      /** \brief Returns true if item records history local, no need to request any other sources */
+      bool HasLocalHistory() const;
+
+      /** \brief Returns true if remote history is recorded and it is up-to-date */
+      bool HasActualRemoteHistory() const;
 
       std::string SaveToXml(bool compact = false, uint64_t version = 0);
 
@@ -213,6 +237,12 @@ namespace dabc {
       bool UpdateFromXml(const std::string& xml);
 
       std::string SaveToJSON(bool compact = false, bool excludetop = false);
+
+      Command GetRemoteHierarchyRequest();
+
+      Buffer ExecuteHistoryRequest(Command cmd);
+
+      bool ApplyHierarchyRequest(Command cmd);
    };
 
 
