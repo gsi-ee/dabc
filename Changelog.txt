@@ -22,6 +22,9 @@ of the framework.
 7. As result, flexible history book-keeping is possible now. Depending from application 
    needs, one could record and display history over arbitrary variable in the system 
    with arbitrary (~ms) time precision. 
+8. Cleanup code how Server produces binary and history requests. Now complex logic
+   is moved to the place where it should be - to Hierarchy class. By this one could 
+   reuse such code in other implementations.
 
 
 23.07.2013

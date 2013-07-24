@@ -238,7 +238,18 @@ namespace dabc {
 
       std::string SaveToJSON(bool compact = false, bool excludetop = false);
 
-      Command GetRemoteHierarchyRequest();
+
+      /** \brief If possible, returns buffer with binary data, which can be send as reply */
+      Buffer GetBinaryData(uint64_t query_version = 0);
+
+      /** \brief Create bin request, which should be submitted to get bindata */
+      Command ProduceBinaryRequest();
+
+      /** \brief Analyzes result of request and returns buffer which can be send to remote */
+      Buffer ApplyBinaryRequest(Command cmd);
+
+
+      Command ProduceHistoryRequest();
 
       Buffer ExecuteHistoryRequest(Command cmd);
 

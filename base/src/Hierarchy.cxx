@@ -697,6 +697,105 @@ std::string dabc::Hierarchy::SaveToJSON(bool compact, bool excludetop)
    return res;
 }
 
+
+
+dabc::Buffer dabc::Hierarchy::GetBinaryData(uint64_t query_version)
+{
+   if (null()) return 0;
+
+   dabc::Hierarchy master = FindMaster();
+
+   // take data under lock that we are sure - nothing change for me
+   uint64_t item_version = GetVersion();
+   uint64_t master_version(0);
+
+   if (!master.null()) {
+      master_version = master.GetVersion();
+   }
+
+   Buffer& bindata = GetObject()->bindata();
+
+   dabc::BinDataHeader* bindatahdr = 0;
+
+   if (!bindata.null())
+      bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
+
+   bool can_reply = (bindatahdr!=0) && (item_version==bindatahdr->version) && (query_version<=item_version);
+
+   if (!can_reply) return 0;
+
+   if ((query_version>0) && (query_version==bindatahdr->version)) {
+      dabc::BinDataHeader dummyhdr;
+      dummyhdr.reset();
+      dummyhdr.version = bindatahdr->version;
+      dummyhdr.master_version = master_version;
+
+      // create temporary buffer with header only indicating that version is not changed
+      return dabc::Buffer::CreateBuffer(&dummyhdr, sizeof(dummyhdr), false, true);
+   }
+
+   bindatahdr->master_version = master_version;
+   return bindata;
+}
+
+
+dabc::Command dabc::Hierarchy::ProduceBinaryRequest()
+{
+   if (null()) return 0;
+
+   std::string request_name;
+   std::string producer_name = FindBinaryProducer(request_name);
+
+   if (request_name.empty()) return 0;
+
+   dabc::Command cmd("GetBinary");
+   cmd.SetReceiver(producer_name);
+   cmd.SetStr("Item", request_name);
+
+   return cmd;
+}
+
+dabc::Buffer dabc::Hierarchy::ApplyBinaryRequest(Command cmd)
+{
+   if (null() || (cmd.GetResult() != cmd_true)) return 0;
+
+   Buffer bindata = cmd.GetRawData();
+   if (bindata.null()) return 0;
+
+   uint64_t item_version = GetVersion();
+
+   dabc::BinDataHeader* bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
+   bindatahdr->version = item_version;
+
+   GetObject()->bindata() = bindata;
+
+   dabc::Hierarchy master = FindMaster();
+
+   uint64_t master_version = master.GetVersion();
+
+   //DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
+
+   // master hash can let us know if something changed in the master
+   std::string masterhash = cmd.GetStdStr("MasterHash");
+
+   if (!master.null() && !masterhash.empty() && (master.Field(dabc::prop_content_hash).AsStdStr()!=masterhash)) {
+
+      master()->fNodeChanged = true;
+
+      master()->MarkWithChangedVersion();
+
+      // DOUT0("MASTER VERSION WAS %u NOW %u", (unsigned) master_version, (unsigned) master.GetVersion());
+
+      master_version = master.GetVersion();
+      master.Field(dabc::prop_content_hash).SetStr(masterhash);
+   }
+
+   bindatahdr->master_version = master_version;
+
+   return bindata;
+}
+
+
 std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
 {
    dabc::Hierarchy parent = *this;
@@ -715,7 +814,7 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
 }
 
 
-dabc::Command dabc::Hierarchy::GetRemoteHierarchyRequest()
+dabc::Command dabc::Hierarchy::ProduceHistoryRequest()
 {
    // STEP1. Create request which can be send to remote
 
