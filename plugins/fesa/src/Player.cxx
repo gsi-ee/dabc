@@ -132,8 +132,8 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 
 #ifdef DABC_EXTRA_CHECKS
-   if (fCounter % 10 == 0)
-      dabc::Object::DebugObject();
+//   if (fCounter % 10 == 0)
+//      dabc::Object::DebugObject();
 #endif
 
 }

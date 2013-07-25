@@ -26,6 +26,8 @@
          
          DABC.mgr.DisplayHiearchy("dabc_tree_holder");
          
+         $("#grid_spinner").spinner({ min:1, max:5});
+         
 //         $("#dialog").dialog({ autoOpen: false });
 //         $( "#opener" ).click(function() {
 //           $( "#dialog" ).dialog( "open" );
@@ -51,7 +53,7 @@
 
       Hierarchy in <a href="/h.xml">xml</a> format<br><br>
 
-      <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring<br/>
+      <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring        Grid <input id="grid_spinner" style='width:60px' value="3"/>    
       
       <div id="dabc_tree_holder"> </div>
   </div>

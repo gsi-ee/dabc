@@ -6,6 +6,8 @@ of the framework.
 1. Introduce hidden flag for the object. It hides object from hierarchy scan.
    Use that flag for some special parameters like command definitions.
 2. Fix very old memory leak in XmlOutputStream. Need to be fixed in ROOT.
+3. Load ROOT scripts ourselfs, excluding duplication. Provide spinner to
+   be able change number of items in grid. 
 
 
 24.07.2013

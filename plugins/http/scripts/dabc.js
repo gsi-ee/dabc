@@ -17,6 +17,23 @@ DABC.ntou4 = function(b, o) {
    return n;
 }
 
+DABC.AssertRootPrerequisites = function() {
+   if (DABC.load_root_js == 0) {
+      DABC.load_root_js = 1;
+      loadScript('jsrootiosys/scripts/jquery.mousewheel.js', function() {
+      loadScript('jsrootiosys/scripts/rawinflate.js', function() {
+      loadScript('jsrootiosys/scripts/JSRootCore.js', function() {
+      loadScript('jsrootiosys/scripts/three.min.js', function() {
+      loadScript('jsrootiosys/fonts/helvetiker_regular.typeface.js', function() {
+      loadScript('jsrootiosys/scripts/JSRootIOEvolution.js', function() {
+      loadScript('jsrootiosys/scripts/JSRootD3ExpPainter.js', function() {
+         DABC.load_root_js = 2;
+      }) }) }) }) }) }) });
+   }
+   
+   return (DABC.load_root_js == 2);
+};
+
 
 DABC.UnpackBinaryHeader = function(arg) {
    if ((arg==null) || (arg.length < 20)) return null;
@@ -417,16 +434,7 @@ DABC.FesaDrawElement.prototype.ClickItem = function() {
 
 DABC.FesaDrawElement.prototype.RegularCheck = function() {
 
-   if (DABC.load_root_js==0) {
-      DABC.load_root_js = 1;
-      AssertPrerequisites(function() {
-         // $("#dabc_draw").append("<br> load main scripts done");
-         DABC.load_root_js = 2; 
-      }, true);
-   }
-   
-   // in any case, complete JSRootIO is required before we could start 
-   if (DABC.load_root_js < 2) return;
+   if (!DABC.AssertRootPrerequisites()) return;
    
    // no need to do something when req not completed
    if (this.req!=null) return;
@@ -592,16 +600,7 @@ DABC.HistoryDrawElement.prototype.ClickItem = function() {
 
 DABC.HistoryDrawElement.prototype.RegularCheck = function() {
 
-   if (DABC.load_root_js==0) {
-      DABC.load_root_js = 1;
-      AssertPrerequisites(function() {
-         // $("#dabc_draw").append("<br> load main scripts done");
-         DABC.load_root_js = 2; 
-      }, true);
-   }
-   
-   // in any case, complete JSRootIO is required before we could start 
-   if (DABC.load_root_js < 2) return;
+   if (!DABC.AssertRootPrerequisites()) return;
    
    // no need to do something when req not completed
    if (this.req!=null) return;
@@ -1003,16 +1002,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
 
 DABC.RootDrawElement.prototype.RegularCheck = function() {
 
-   if (DABC.load_root_js==0) {
-      DABC.load_root_js = 1;
-      AssertPrerequisites(function() {
-         // $("#dabc_draw").append("<br> load main scripts done");
-         DABC.load_root_js = 2; 
-      }, true);
-   }
-   
-   // in any case, complete JSRootIO is required before we could start 
-   if (DABC.load_root_js < 2) return;
+   if (!DABC.AssertRootPrerequisites()) return;
    
    switch (this.state) {
      case this.StateEnum.stInit: break;
@@ -1417,6 +1407,8 @@ DABC.Manager.prototype.ReloadTree = function()
 
 DABC.Manager.prototype.ClearWindow = function()
 {
+   var num = $("#grid_spinner").spinner( "value" );
+   
    $("#dialog").empty();
    
    var elem = this.FindItem("ObjectsTree");
@@ -1429,7 +1421,7 @@ DABC.Manager.prototype.ClearWindow = function()
    this.arr.splice(0, this.arr.length);
    this.arr.push(elem);
    
-   this.CreateTable(3,3);
+   this.CreateTable(num,num);
    
    elem.ready = false;
    elem.RegularCheck();
