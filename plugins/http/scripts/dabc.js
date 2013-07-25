@@ -195,6 +195,35 @@ DABC.GaugeDrawElement.prototype.SetValue = function(val) {
 
 // ======== end of GaugeDrawElement ======================
 
+//======== start of LogDrawElement ======================
+
+DABC.LogDrawElement = function() {
+   DABC.DrawElement.call(this);
+}
+
+DABC.LogDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.LogDrawElement.prototype.simple = function() { return true; }
+
+DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
+
+   this.frameid = "dabc_log_" + id;
+
+   var entryInfo = 
+      "<div id='"+this.frameid+ "'/>";
+   $(topid).append(entryInfo);
+}
+
+DABC.LogDrawElement.prototype.SetValue = function(val) {
+   var element = $("#" + this.frameid);
+   element.empty();
+   element.append(this.itemname + "<br>");
+   element.append("<h5>"+val +"</h5>");
+}
+
+// ======== end of GaugeDrawElement ======================
+
+
 
 //======== start of HierarchyDrawElement ======================
 
@@ -1399,6 +1428,12 @@ DABC.Manager.prototype.display = function(itemname) {
    
    if (kind == "log") { 
       if (history == null) {
+         elem = new DABC.LogDrawElement();
+         elem.itemname = itemname;
+         elem.CreateFrames(this.NextCell(), this.cnt++);
+         elem.SetValue(xmlnode.getAttribute("value"));
+         this.arr.push(elem);
+         return;
       } else {
          elem = new DABC.LogHistoryDrawElement();
          elem.itemname = itemname;

@@ -15,6 +15,7 @@ of the framework.
    LogHistoryDrawElement provides specific output.
 6. Primitive but working implementation for LogHistoryDrawElement - 
    show arbitrary log text in table cell. 
+7. Even more primitive LogDrawElement - just text output.    
     
 
 24.07.2013
