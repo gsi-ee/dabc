@@ -94,6 +94,10 @@ namespace dabc {
          uint64_t   fNodeVersion;       ///< version number of node itself
          uint64_t   fHierarchyVersion;  ///< version number of hierarchy below
 
+         /** when true, element cannot be removed during update
+          * only first childs with such flag could remain */
+         bool       fPermanent;         ///<
+
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
@@ -221,6 +225,9 @@ namespace dabc {
 
       /** \brief Activate history production for selected element */
       void EnableHistory(int length = 100, const std::string& autorec = "");
+
+      /** \brief Set permanent flag for hierarchy item */
+      void SetPermanent(bool on=true) { if (!null()) GetObject()->fPermanent = on; }
 
       /** \brief Returns true if item records history local, no need to request any other sources */
       bool HasLocalHistory() const;

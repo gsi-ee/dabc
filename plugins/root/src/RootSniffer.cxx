@@ -103,7 +103,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
    // identify ourself as bin objects producer
    fHierarchy.Create("ROOT");
-   DOUT2("Root sniffer %s is bin producer!!!", ItemName().c_str());
+   InitializeHierarchy();
 
    if (fTimer==0) ActivateTimeout(0);
 
@@ -136,6 +136,27 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("GetBinary")) {
 
       // DOUT0("COMMAND GETBINARY RECEIVED BY dabc_root::RootSniffer");
+
+      if (cmd.GetBool("history")) {
+         dabc::Buffer buf;
+
+         std::string itemname = cmd.GetStdStr("Item");
+
+//         DOUT0("Request history for item %s", itemname.c_str());
+
+         {
+            dabc::LockGuard lock(fHierarchyMutex);
+
+            dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
+
+            buf = item.ExecuteHistoryRequest(cmd);
+         }
+
+//         DOUT0("Request history for item %s res %u", itemname.c_str(), buf.GetTotalSize());
+
+         cmd.SetRawData(buf);
+         return dabc::cmd_true;
+      }
 
       // keep simple case for testing
       if (fTimer==0) return ProcessGetBinary(cmd);

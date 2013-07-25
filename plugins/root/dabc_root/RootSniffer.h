@@ -73,6 +73,8 @@ namespace dabc_root {
 
          virtual void OnThreadAssigned();
 
+         virtual void InitializeHierarchy() {}
+
          virtual double ProcessTimeout(double last_diff);
 
          static void* AddObjectToHierarchy(dabc::Hierarchy& parent, const char* searchpath, TObject* obj, int lvl);

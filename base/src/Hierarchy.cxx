@@ -40,6 +40,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
    fHierarchyVersion(0),
+   fPermanent(false),
    fNodeChanged(false),
    fHierarchyChanged(false),
    fBinData(),
@@ -186,10 +187,13 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
       SetFieldsMap(cont->TakeFieldsMap());
    }
 
-   // now we should check if any childs was changed
+   // now we should check if any childs were changed
 
    unsigned cnt1(0); // counter over source container
    unsigned cnt2(0); // counter over existing childs
+
+   // skip first permanent childs from update procedure
+   while (cnt2 < NumChilds() && ((HierarchyContainer*) GetChild(cnt2))->fPermanent) cnt2++;
 
    while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
       if (cnt1 >= cont->NumChilds()) {
@@ -503,8 +507,8 @@ void dabc::HierarchyContainer::MarkWithChangedVersion()
 bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 {
    if (src.null()) {
-      // Destroy();
-      Release(); // now release will work - any hierarchy will be deleted once noa ny other refs exists
+      // now release will work - any hierarchy will be deleted once no any other refs exists
+      Release();
       return true;
    }
 
@@ -537,8 +541,6 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
    src.Build(top.GetName(), top);
 
    return Update(src);
-
-   // src.Destroy();
 }
 
 void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec)
@@ -612,7 +614,6 @@ void dabc::Hierarchy::Create(const std::string& name)
 {
    Release();
    SetObject(new HierarchyContainer(name));
-   // SetAutoDestroy(true); // top level is owner
 }
 
 dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
