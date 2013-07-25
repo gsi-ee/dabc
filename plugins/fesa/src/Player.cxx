@@ -41,6 +41,10 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100,"value");
 
+   item = fHierarchy.CreateChild("TestRate");
+   item.Field(dabc::prop_kind).SetStr("rate");
+   item.EnableHistory(100,"value");
+
    CreateTimer("update", 1., false);
 
    fCounter = 0;
@@ -101,14 +105,14 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-
-   item = fHierarchy.FindChild("BeamRate");
-   item.Field("value").SetStr(dabc::format("%4.2f", v1));
+   fHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
 
    v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-   item = fHierarchy.FindChild("BeamRate2");
-   item.Field("value").SetStr(dabc::format("%4.2f", v1));
+   fHierarchy.FindChild("BeamRate2").Field("value").SetStr(dabc::format("%4.2f", v1));
 
+   int test = fCounter % 100;
+   v1 = 20 + (test & 0xfffffc) + (test & 3)*0.01;
+   fHierarchy.FindChild("TestRate").Field("value").SetStr(dabc::format("%4.2f", v1));
 
 #ifdef WITH_ROOT
 
@@ -138,8 +142,6 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 int fesa::Player::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
-
-      DOUT0("Process getbinary");
 
       std::string itemname = cmd.GetStdStr("Item");
 

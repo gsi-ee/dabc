@@ -341,7 +341,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
       if (request_info->request_method) meth = request_info->request_method;
    }
 
-   DOUT0("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
+   DOUT4("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
 
    char* buf = 0;
    int length = 0;
@@ -519,12 +519,15 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
    }
 
    if (reply.empty()) {
-      EOUT("HISTORY REQUESTER FAILS %s", itemname.c_str());
+      EOUT("HISTORY REQUEST FAILS %s", itemname.c_str());
 
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
                        "Content-Length: 0\r\n"
                        "Connection: close\r\n\r\n");
    } else {
+
+      // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
+
       mg_printf(conn,
                  "HTTP/1.1 200 OK\r\n"
                  "Content-Type: text/xml\r\n"

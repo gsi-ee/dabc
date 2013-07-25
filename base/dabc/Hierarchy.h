@@ -138,7 +138,7 @@ namespace dabc {
          std::string MakeSimpleDiff(const char* oldvalue);
 
          /** \brief Add new entry to history */
-         void AddHistory(uint64_t ver, const std::string& diff);
+         void AddHistory(const std::string& diff);
 
          /** \brief Return current time in format, which goes to history */
          std::string GetTimeStr();
@@ -248,6 +248,8 @@ namespace dabc {
       /** \brief Analyzes result of request and returns buffer which can be send to remote */
       Buffer ApplyBinaryRequest(Command cmd);
 
+      /** \brief Return child element from hierarchy */
+      Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
 
       Command ProduceHistoryRequest();
 

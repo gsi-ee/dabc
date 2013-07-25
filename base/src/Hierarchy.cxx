@@ -142,12 +142,12 @@ std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit
       // we have longer history as requested
       if ((version>0) && (item.version < version)) { cross_boundary = true; continue; }
 
-      if ((limit>0) && ((fHistory.Size()-n) >(unsigned)limit)) continue;
+      if ((limit>0) && ((fHistory.Size()-n) > (unsigned)limit)) continue;
 
       dabc::Xml::AddRawLine(topnode, item.content.c_str());
    }
 
-   // if specific version was defined, and we cannot provide information up that version
+   // if specific version was defined, and we do not have history backward to that version
    // we need to indicate this to the client
    // Client in this case should cleanup its buffers while with gap
    // one cannot correctly reconstruct history backwards
@@ -181,7 +181,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
       fNodeChanged = true;
       if (dohistory) {
          if (fRecordTime) cont->Field(prop_time).SetStr(GetTimeStr());
-         AddHistory(fNodeVersion, BuildDiff(cont->GetFieldsMap()));
+         AddHistory(BuildDiff(cont->GetFieldsMap()));
       }
       SetFieldsMap(cont->TakeFieldsMap());
    }
@@ -430,12 +430,12 @@ std::string dabc::HierarchyContainer::GetTimeStr()
 }
 
 
-void dabc::HierarchyContainer::AddHistory(uint64_t ver, const std::string& diff)
+void dabc::HierarchyContainer::AddHistory(const std::string& diff)
 {
    if (fHistory.Capacity()==0) return;
    if (fHistory.Full()) fHistory.PopOnly();
    HistoryItem* h = fHistory.PushEmpty();
-   h->version = ver;
+   h->version = fNodeVersion;
    h->content = diff;
 }
 
@@ -449,7 +449,7 @@ bool dabc::HierarchyContainer::SetField(const std::string& name, const char* val
          if ((oldvalue!=0) && (value!=0) && (strcmp(oldvalue, value)!=0)) {
             // record history
             if ((fHistory.Capacity()>0) && fHistoryEnabled)
-               AddHistory(fNodeVersion, MakeSimpleDiff(oldvalue));
+               AddHistory(MakeSimpleDiff(oldvalue));
 
             // record time
             if (fRecordTime)
@@ -833,8 +833,6 @@ dabc::Command dabc::Hierarchy::ProduceHistoryRequest()
    if (GetObject()->fHistory.Capacity()==0)
       GetObject()->fHistory.Allocate(history_size);
 
-//   DOUT0("STEP1 - create request");
-
    dabc::Command cmd("GetBinary");
    cmd.SetStr("Item", request_name);
    cmd.SetBool("history", true); // indicate that we are requesting history
@@ -853,8 +851,6 @@ dabc::Buffer dabc::Hierarchy::ExecuteHistoryRequest(Command cmd)
 
    unsigned ver = cmd.GetUInt("version");
    int limit = cmd.GetInt("limit");
-
-//   DOUT0("STEP2 - process request");
 
    std::string res = GetObject()->RequestHistory(ver, limit);
 
@@ -889,26 +885,29 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
 
    XMLNodePointer_t child = Xml::GetChild(node);
 
+   // TODO: force all fields from xml
    if (!IsName(Xml::GetNodeName(child)) || !GetObject()->ReadFieldsFromNode(child, true)) {
       EOUT("First item in reply should be node itself");
       child = 0; res = false;
    }
 
-   uint64_t myver = GetVersion();
-
    // this is all about history
+   // we are adding history with previous number while
    while ((child = Xml::GetNext(child)) != 0) {
       std::string sbuf;
       Xml::SaveSingleNode(child, &sbuf, 0);
-      GetObject()->AddHistory(myver, sbuf);
+      GetObject()->AddHistory(sbuf);
    }
+
+   GetObject()->fNodeChanged = true;
+   GetObject()->MarkWithChangedVersion();
 
    Xml::FreeNode(node);
 
    // remember when reply comes back
    if (res) {
       GetObject()->fRemoteReqVersion = cmd.GetUInt("version");
-      GetObject()->fLocalReqVersion = myver;
+      GetObject()->fLocalReqVersion = GetVersion();
    }
 
    return res;
