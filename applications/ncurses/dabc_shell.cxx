@@ -69,10 +69,7 @@ bool UpdateHierarchy()
    if (!buf.null()) {
       // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
 
-      std::string diff;
-      diff.append((const char*) buf.SegmentPtr(), buf.GetTotalSize());
-      // DOUT0("diff = %s", diff.c_str());
-      if (hierarchy.UpdateFromXml(diff)) {
+      if (hierarchy.UpdateFromXml((const char*) buf.SegmentPtr())) {
          DOUT0("Update of hierarchy to version %u done", hierarchy.GetVersion());
       }
    }

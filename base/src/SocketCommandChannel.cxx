@@ -207,7 +207,8 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 
       //DOUT0("Now hierarchy is \n %s", channel->fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 
-      dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(diff.c_str(), diff.length(), false, true);
+      // copy string with terminated 0 -
+      dabc::Buffer rawdata = dabc::Buffer::CreateBuffer(diff.c_str(), diff.length()+1, false, true);
 
       cmd.SetRawData(rawdata);
 
@@ -398,18 +399,10 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
       dabc::Buffer buf = cmd.GetRawData();
 
       if (!buf.null()) {
-         // DOUT0("Get raw data %p len %u", buf.SegmentPtr(), buf.GetTotalSize());
-
-         std::string diff;
-         diff.append((const char*)buf.SegmentPtr(), buf.GetTotalSize());
-         //DOUT0("length %d diff = %s", diff.length(), diff.c_str());
-
-         if (fRemoteHierarchy.UpdateFromXml(diff)) {
+         if (fRemoteHierarchy.UpdateFromXml((const char*)buf.SegmentPtr())) {
             DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
             // DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
          }
-
-//         DOUT0("SocketCommandClient REMOTE hierarchy \n%s", fRemoteHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
       }
 
       return true;

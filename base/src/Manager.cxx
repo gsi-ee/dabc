@@ -1709,11 +1709,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
 
          if (!buf.null()) {
             // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-
-            std::string diff;
-            diff.append((const char*)buf.SegmentPtr(), buf.GetTotalSize());
-            // DOUT0("diff = %s", diff.c_str());
-            if (rem_hierarchy.UpdateFromXml(diff)) {
+            if (rem_hierarchy.UpdateFromXml((const char*)buf.SegmentPtr())) {
                DOUT2("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
             }
          }
