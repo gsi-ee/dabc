@@ -93,7 +93,8 @@ namespace dabc {
       virtual ~XmlOutputStream()
       {
          if (fCurrent!=fBuf) OutputCurrent();
-         delete fOut;
+         delete fOut; fOut = 0;
+         delete fBuf; fBuf = 0;
       }
 
       void OutputCurrent()

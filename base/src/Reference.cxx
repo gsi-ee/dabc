@@ -151,10 +151,11 @@ void dabc::Reference::SetAutoDestroy(bool on)
 bool dabc::Reference::AcquireRefWithoutMutex(Reference& ref)
 {
    if (null() || !ref.null()) return false;
-   if (fObj->IncReference(false))
-      ref.fObj = fObj;
-   else
+   if (!fObj->IncReference(false))
       throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p without mutex", fObj), DNAME(fObj));
+
+   ref.fObj = fObj;
+   return true;
 }
 
 dabc::Reference::~Reference()

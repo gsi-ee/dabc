@@ -43,11 +43,10 @@ namespace dabc {
 
          virtual ~MemoryContainer()
          {
+            if (fPtr) { free(fPtr); fPtr = 0; }
            #ifdef DABC_EXTRA_CHECKS
               DebugObject("Memory", this, -1);
            #endif
-            // printf("Destroy container %p\n", fPtr);
-            // if (fPtr) { free(fPtr); fPtr = 0; }
          }
    };
 }

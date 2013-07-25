@@ -51,7 +51,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fLocalReqVersion(0)
 {
    #ifdef DABC_EXTRA_CHECKS
-   DebugObject("Hierarchy", this, 10);
+   DebugObject("Hierarchy", this, 1);
    #endif
 
 //   DOUT0("Constructor %s %p", GetName(), this);
@@ -60,7 +60,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
 dabc::HierarchyContainer::~HierarchyContainer()
 {
    #ifdef DABC_EXTRA_CHECKS
-   DebugObject("Hierarchy", this, -10);
+   DebugObject("Hierarchy", this, -1);
    #endif
 
 //   DOUT0("Destructor %s %p", GetName(), this);

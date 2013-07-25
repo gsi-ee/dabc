@@ -9,6 +9,7 @@
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
+      <runtime value="20"/>
     </Run>
 
     <HttpServer name="http">

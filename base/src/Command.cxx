@@ -37,6 +37,11 @@ dabc::CommandContainer::CommandContainer(const char* name) :
    SetFlag(flAutoDestroy, true);
 
    DOUT4("CMD:%p name %s created", this, GetName());
+
+#ifdef DABC_EXTRA_CHECKS
+  DebugObject("Command", this, 1);
+#endif
+
 }
 
 
@@ -67,6 +72,11 @@ dabc::CommandContainer::~CommandContainer()
    } while (!field.empty());
 
    DOUT4("CMD:%p name %s deleted", this, GetName());
+
+#ifdef DABC_EXTRA_CHECKS
+  DebugObject("Command", this, -1);
+#endif
+
 }
 
 
