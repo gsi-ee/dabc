@@ -1086,6 +1086,9 @@ void dabc::Object::BuildHierarchy(HierarchyContainer* cont)
       Reference child_obj = GetChildRef(cnt);
       if (child_obj.null()) continue;
 
+      // exclude childs with hidden flag set
+      if (child_obj()->GetFlag(flHidden)) continue;
+
       dabc::Hierarchy child = new dabc::HierarchyContainer(child_obj.GetName());
       cont->AddChild(child());
 

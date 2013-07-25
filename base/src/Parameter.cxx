@@ -26,8 +26,8 @@
 #include "dabc/ConfigBase.h"
 #include "dabc/Hierarchy.h"
 
-dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind) :
-   dabc::RecordContainer(worker, name),
+dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind, bool hidden) :
+   dabc::RecordContainer(worker, name, flIsOwner | (hidden ? flHidden : 0)),
    fKind(parkind),
    fLastChangeTm(),
    fInterval(1.),
@@ -52,7 +52,6 @@ dabc::ParameterContainer::~ParameterContainer()
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Parameter", this, -10);
    #endif
-   DOUT4("-------- Destroy Parameter %s %p", GetName(), this);
 }
 
 const std::string dabc::ParameterContainer::GetActualUnits() const

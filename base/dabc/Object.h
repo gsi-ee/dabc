@@ -173,7 +173,8 @@ namespace dabc {
             flHasThread      = 0x040,  ///< flag indicates that object has thread and should be cleaned up via thread
             flAutoDestroy    = 0x080,  ///< object will be automatically destroyed when no references exists, normally set in constructor, example Command
             flLogging        = 0x100,  ///< object is marked to provide logging information, for debug purposes only
-            flNoMutex        = 0x200   ///< object will be created without mutex, only can be used in contructor
+            flNoMutex        = 0x200,  ///< object will be created without mutex, only can be used in constructor
+            flHidden         = 0x400   ///< hide object from hierarchy scan
          };
 
          unsigned           fObjectFlags;    ///< flag, protected by the mutex

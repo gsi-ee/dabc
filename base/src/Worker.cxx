@@ -516,14 +516,14 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
 {
    Parameter par = Par(name);
    if (par.null()) {
-      ParameterContainer* cont = new ParameterContainer(this, name, kind);
+
+      bool hidden = (kind == CommandDefinition::cmddefkind());
+
+      ParameterContainer* cont = new ParameterContainer(this, name, kind, hidden);
 
       ConfigIO io(dabc::mgr()->cfg());
 
       io.ReadRecord(this, name, cont);
-
-//      DOUT0("Printout of parameter %s", name.c_str());
-//      cont->Print();
 
       par = cont;
 
@@ -545,7 +545,7 @@ bool dabc::Worker::DestroyPar(const std::string& name)
 
 dabc::CommandDefinition dabc::Worker::CreateCmdDef(const std::string& name)
 {
-   return CreatePar(name, "cmddef");
+   return CreatePar(name, CommandDefinition::cmddefkind());
 }
 
 

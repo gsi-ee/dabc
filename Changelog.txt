@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+25.07.2013
+1. Introduce hidden flag for the object. It hides object from hierarchy scan.
+   Use that flag for some special parameters like command definitions.
+
+
 24.07.2013
 1. In dabc::Url class provide method to extract options part like name?part1&var=3 
 2. Implement history generation for simple hierarchy item with any attributes.
@@ -10,21 +15,21 @@ of the framework.
    One can limit number of items in request. One can detect if there is gap in history 
    data relative to previous dataset. Works only for local hierarchy objects. Request
    look like:  http://server:8090/gethistory?/Server/App/Rate&ver=100&limit=100 
-4. In dabc.js implement drawing of hidtory in form of TGraph object. Fix several issues
+4. In dabc.js implement drawing of history in form of TGraph object. Fix several issues
    with graph update in painter.   
 5. Implement automatic recording of history when selected attribute is changed.
-   Normally "value" attribute is controlled, but can be any. By such feature not only
+   Normally "value" recorded, but can be any. By such feature not only
    changes during hierarchy update can be detected (update done about every second), 
    but also by arbitrary number of direct write operations. One can also record time.
-6. Implement duplication of history on server side - if gethistory request should
-   goes to remote node, local history cache will be produced first. By such feature 
+6. Implement duplication of history on server side - if gethistory request goes to 
+   remote node, local history cache will be produced first. By such feature 
    any browser requests between two hierarchy updates can be processed locally.
 7. As result, flexible history book-keeping is possible now. Depending from application 
    needs, one could record and display history over arbitrary variable in the system 
    with arbitrary (~ms) time precision. 
-8. Cleanup code how Server produces binary and history requests. Now complex logic
-   is moved to the place where it should be - to Hierarchy class. By this one could 
-   reuse such code in other implementations.
+8. Cleanup code how http::Server produces binary and history requests. Now complex logic
+   is moved to the place where it should be - to dabc::Hierarchy class. By this change
+   one could easily reuse code in other than http implementations.
 
 
 23.07.2013

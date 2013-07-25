@@ -90,7 +90,7 @@ namespace dabc {
           * TODO: should be invocation of parModified events generally done from the manager thread, or keep it only for asynchron parameters? */
          void ProcessTimeout(double last_dif);
 
-         ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "");
+         ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "", bool hidden = false);
          virtual ~ParameterContainer();
 
          inline void Modified() { FireParEvent(parModified); }

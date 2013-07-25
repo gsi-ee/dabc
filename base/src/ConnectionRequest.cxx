@@ -17,7 +17,7 @@
 
 
 dabc::ConnectionObject::ConnectionObject(Reference port, const std::string& localurl) :
-   ParameterContainer(port, ObjectName(), "connection"),
+   ParameterContainer(port, ObjectName(), "connection", true),
    fConnState(sInit), // specify non-init state to be able change it
    fLocalUrl(localurl),
    fProgress(0),
