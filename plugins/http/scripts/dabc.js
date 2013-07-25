@@ -543,49 +543,24 @@ DABC.HistoryDrawElement = function(_clname) {
    this.xmlnode = null;       // xml node with current values 
    this.xmlhistory = null;    // array with previous history
    this.xmllimit = 100;       // maximum number of history entries
-   this.root_painter = null;  // root painter, required for draw
    this.force = true;
 }
 
+
 DABC.HistoryDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.HistoryDrawElement.prototype.Clear = function() {
-   
-   DABC.DrawElement.prototype.Clear.call(this);
 
+DABC.HistoryDrawElement.prototype.Clear = function() {
+   DABC.DrawElement.prototype.Clear.call(this);
    this.xmlnode = null;       // xml node with current values 
    this.xmlhistory = null;    // array with previous history
    this.xmllimit = 100;       // maximum number of history entries  
    if (this.req) this.req.abort(); 
    this.req = null;          // this is current request
-   this.root_painter = null;  // root painter, required for draw
    this.force = true;
 }
 
 DABC.HistoryDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = "dabcobj" + id;
-   
-   var entryInfo = "<div id='" + this.frameid + "'/>";
-   $(topid).append(entryInfo);
-   
-   var render_to = "#" + this.frameid;
-   var element = $(render_to);
-      
-   var fillcolor = 'white';
-   var factor = 0.66666;
-      
-   d3.select(render_to).style("background-color", fillcolor);
-   d3.select(render_to).style("width", "100%");
-
-   var w = element.width(), h = w * factor; 
-
-   this.vis = d3.select(render_to)
-                   .append("svg")
-                   .attr("width", w)
-                   .attr("height", h)
-                   .style("background-color", fillcolor);
-      
-   this.vis.append("svg:title").text(this.itemname);
 }
 
 DABC.HistoryDrawElement.prototype.ClickItem = function() {
@@ -600,8 +575,6 @@ DABC.HistoryDrawElement.prototype.ClickItem = function() {
 
 DABC.HistoryDrawElement.prototype.RegularCheck = function() {
 
-   if (!DABC.AssertRootPrerequisites()) return;
-   
    // no need to do something when req not completed
    if (this.req!=null) return;
  
@@ -622,7 +595,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    this.force = false;
 }
 
-DABC.HistoryDrawElement.prototype.ExtractSeries = function(name) {
+DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, isnumber) {
    if (!this.xmlnode) return;
    
    // xml node must have attribute, which will be extracted
@@ -630,13 +603,15 @@ DABC.HistoryDrawElement.prototype.ExtractSeries = function(name) {
    if (!val) return;
    
    var arr = new Array();
-   arr.push(Number(val));
+   if (isnumber) arr.push(Number(val));
+            else arr.push(val);
    
    if (this.xmlhistory) 
       for (var n=this.xmlhistory.length-1;n>=0;n--) {
          var newval = this.xmlhistory[n].getAttribute(name);
          if (newval && (newval != "dabc_del")) val = newval;
-         arr.push(Number(val));
+         if (isnumber) arr.push(Number(val));
+                  else arr.push(val);
       }
 
    arr.reverse();
@@ -690,34 +665,107 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
 
 //   console.log("History length = " + this.xmlhistory.length);
    
-   this.vis.select("title").text(this.itemname + 
-         "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
-   
-   if (!modified) {
-      // console.log("element not modified");
-      return;
-   }
-   
-   var obj = this.ReconstructObject();
-   
-   if (obj==null) return;
-   
-   if (this.root_painter && this.root_painter.UpdateObject(obj)) {
-      this.root_painter.RedrawFrame();
-   } else {
-      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, obj);
-      
-      if (this.root_painter == -1) this.root_painter = null;
-   }
+   if (modified) this.DrawHistoryElement();
 }
 
 
-DABC.HistoryDrawElement.prototype.ReconstructObject = function()
+DABC.HistoryDrawElement.prototype.DrawHistoryElement = function()
 {
-   if (this.clname != "rate") return;
+   // should be implemented in derived class
+   alert("HistoryDrawElement.DrawHistoryElement not implemented");
+}
 
-   var x = this.ExtractSeries("time");
-   var y = this.ExtractSeries("value");
+//========== start of LogHistoryDrawElement
+
+DABC.LogHistoryDrawElement = function() {
+   DABC.HistoryDrawElement.call(this, "log");
+}
+
+DABC.LogHistoryDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
+
+DABC.LogHistoryDrawElement.prototype.Clear = function() {
+   DABC.HistoryDrawElement.prototype.Clear.call(this);
+}
+
+DABC.LogHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
+
+   this.frameid = "dabcobj" + id;
+
+   var w = $(topid).width();
+   var h = $(topid).height();
+
+   var entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; max-height:" + h + "px'/>";
+   
+   $(topid).append(entryInfo);
+}
+
+DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
+   var txt = this.ExtractSeries("value");
+   
+   var element = $("#" + this.frameid);
+   
+   element.empty();
+   
+   // element.title = "My TITILE";
+   
+   for (var i=0;i<txt.length;i++)
+      element.append(txt[i] + "<br>");
+}
+
+//========== start of RateHistoryDrawElement
+
+DABC.RateHistoryDrawElement = function() {
+   DABC.HistoryDrawElement.call(this, "rate");
+   this.root_painter = null;  // root painter, required for draw
+}
+
+DABC.RateHistoryDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
+
+DABC.RateHistoryDrawElement.prototype.Clear = function() {
+   
+   DABC.HistoryDrawElement.prototype.Clear.call(this);
+   this.root_painter = null;  // root painter, required for draw
+}
+
+DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
+
+   DABC.AssertRootPrerequisites();
+   
+   this.frameid = "dabcobj" + id;
+   
+   var entryInfo = "<div id='" + this.frameid + "'/>";
+   $(topid).append(entryInfo);
+   
+   var render_to = "#" + this.frameid;
+   var element = $(render_to);
+      
+   var fillcolor = 'white';
+   var factor = 0.66666;
+      
+   d3.select(render_to).style("background-color", fillcolor);
+   d3.select(render_to).style("width", "100%");
+
+   var w = element.width(), h = w * factor; 
+
+   this.vis = d3.select(render_to)
+                   .append("svg")
+                   .attr("width", w)
+                   .attr("height", h)
+                   .style("background-color", fillcolor);
+      
+   this.vis.append("svg:title").text(this.itemname);
+}
+
+
+DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
+
+   if (!DABC.AssertRootPrerequisites()) return;
+   
+   this.vis.select("title").text(this.itemname + 
+         "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
+   
+   var x = this.ExtractSeries("time", true);
+   var y = this.ExtractSeries("value", true);
    
    // if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
 
@@ -735,9 +783,14 @@ DABC.HistoryDrawElement.prototype.ReconstructObject = function()
    gr['fHistogram']['fYaxis']['fXmin'] = 0;
    gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
    
-   return gr;
+   if (this.root_painter && this.root_painter.UpdateObject(gr)) {
+      this.root_painter.RedrawFrame();
+   } else {
+      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, gr);
+      
+      if (this.root_painter == -1) this.root_painter = null;
+   }
 }
-
 
 // ======== start of RootDrawElement ======================
 
@@ -1336,7 +1389,18 @@ DABC.Manager.prototype.display = function(itemname) {
         this.arr.push(elem);
         return;
       } else {
-         elem = new DABC.HistoryDrawElement(kind);
+         elem = new DABC.RateHistoryDrawElement();
+         elem.itemname = itemname;
+         elem.CreateFrames(this.NextCell(), this.cnt++);
+         this.arr.push(elem);
+         return;
+      }
+   }
+   
+   if (kind == "log") { 
+      if (history == null) {
+      } else {
+         elem = new DABC.LogHistoryDrawElement();
          elem.itemname = itemname;
          elem.CreateFrames(this.NextCell(), this.cnt++);
          this.arr.push(elem);
