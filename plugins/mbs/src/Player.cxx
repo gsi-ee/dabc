@@ -149,19 +149,19 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    item = fHierarchy.CreateChild("rate_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value");
+   item.EnableHistory(200,"value",true);
 
    item = fHierarchy.CreateChild("rash_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value");
+   item.EnableHistory(200,"value",true);
 
    item = fHierarchy.CreateChild("rast_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value");
+   item.EnableHistory(200,"value",true);
 
    item = fHierarchy.CreateChild("ratf_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value");
+   item.EnableHistory(200,"value",true);
 
    CreateTimer("update", fPeriod, false);
 

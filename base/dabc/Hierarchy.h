@@ -109,6 +109,7 @@ namespace dabc {
          RecordsQueue<HistoryItem> fHistory; ///< container with item history
          bool       fRecordTime;             ///< if true, time will be recorded when value is modified
          std::string fAutoRecord;            ///< field name, which change trigger automatic record of the history (when enabled)
+         bool        fForceAutoRecord;       ///< if true, even same value will be recorded in history
          uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
          uint64_t    fLocalReqVersion;       ///< local version, when request was done
 
@@ -224,7 +225,7 @@ namespace dabc {
       bool UpdateHierarchy(Reference top);
 
       /** \brief Activate history production for selected element */
-      void EnableHistory(int length = 100, const std::string& autorec = "");
+      void EnableHistory(int length = 100, const std::string& autorec = "", bool force = false);
 
       /** \brief Set permanent flag for hierarchy item */
       void SetPermanent(bool on=true) { if (!null()) GetObject()->fPermanent = on; }

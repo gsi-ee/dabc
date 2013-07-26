@@ -48,6 +48,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fHistory(),
    fRecordTime(false),
    fAutoRecord(),
+   fForceAutoRecord(false),
    fRemoteReqVersion(0),
    fLocalReqVersion(0)
 {
@@ -450,7 +451,7 @@ bool dabc::HierarchyContainer::SetField(const std::string& name, const char* val
 
       if (usename == fAutoRecord) {
          const char* oldvalue = GetField(name);
-         if ((oldvalue!=0) && (value!=0) && (strcmp(oldvalue, value)!=0)) {
+         if ((oldvalue!=0) && (value!=0) && (fForceAutoRecord || (strcmp(oldvalue, value)!=0))) {
             // record history
             if ((fHistory.Capacity()>0) && fHistoryEnabled)
                AddHistory(MakeSimpleDiff(oldvalue));
@@ -543,7 +544,7 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
    return Update(src);
 }
 
-void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec)
+void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec, bool force)
 {
    if (null()) return;
 
@@ -554,12 +555,14 @@ void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec)
       GetObject()->fHistory.Allocate(length);
       GetObject()->fRecordTime = true;
       GetObject()->fAutoRecord = autorec;
+      GetObject()->fForceAutoRecord = force;
       Field(prop_history).SetInt(length);
    } else {
       GetObject()->fHistoryEnabled = false;
       GetObject()->fHistory.Allocate(0);
       GetObject()->fRecordTime = false;
       GetObject()->fAutoRecord.clear();
+      GetObject()->fForceAutoRecord = false;
       RemoveField(prop_history);
    }
 }

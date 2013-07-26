@@ -1443,7 +1443,7 @@ DABC.Manager.prototype.display = function(itemname) {
    }
    
    if (kind == "log") { 
-      if (history == null) {
+      if ((history == null) || !document.getElementById("show_history").checked) {
          elem = new DABC.LogDrawElement();
          elem.itemname = itemname;
          elem.CreateFrames(this.NextCell(), this.cnt++);

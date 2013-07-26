@@ -7,10 +7,13 @@ of the framework.
 2. Copy code from MBS m_daq_rate to show different ratemeters, 
    based on the status record. Provide four different logs for showing rate output.
 3. Found proper way to display log messages in browser, using <PRE> </PRE> tags
-4. Provide checkbox to enable/disable history drawing.
+4. Provide checkbox to enable/disable history drawing. 
+   Works for ratemeter and log messages. 
 5. Read MBS status via SocketAddon. This prevents from thread blocking due to any 
    communication problem. 
-
+6. Add possibility to force log recording even when value is not 
+   changed by next SetField call. Works only for so-called autofields.
+   
 
 25.07.2013
 1. Introduce hidden flag for the object. It hides object from hierarchy scan.
