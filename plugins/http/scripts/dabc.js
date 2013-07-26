@@ -100,7 +100,6 @@ DABC.TopXmlNode = function(xmldoc)
 
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
-   this.frameid = new Number(0);    // id of top frame, where item is drawn
    this.version = new Number(0);    // check which version of element is drawn
    this.frameid = "";
    return this;
@@ -174,23 +173,39 @@ DABC.GaugeDrawElement.prototype.simple = function() { return true; }
 
 DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
-   this.frameid = "dabc_gauge_" + id;
-
-   var entryInfo = 
-      "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+   if (!('topid' in this)) {
+      this.topid = topid;
+      this.frameid = "dabc_gauge_" + id;
+      this.min = 0;
+      this.max = 100;
+      this.value = 0;
+   }
+   
+//   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+   var entryInfo = "<div id='"+this.frameid+ "'/>";
    $(topid).append(entryInfo);
 
    this.gauge = new JustGage({
       id: this.frameid, 
-      value: 0,
-      min: 0,
-      max: 100,
+      value: this.value,
+      min: this.min,
+      max: this.max,
       title: this.itemname
-   }); 
+   });
 }
 
 DABC.GaugeDrawElement.prototype.SetValue = function(val) {
-   if (val) this.gauge.refresh(val);
+   if (val) {
+      if (val > this.max) {
+         this.gauge = null;
+         $(this.topid).empty();
+         while (val > this.max) this.max = this.max*10;
+         this.value = val;
+         this.CreateFrames(this.topid, 0);
+      } else {
+         this.gauge.refresh(val);
+      }
+   }
 }
 
 // ======== end of GaugeDrawElement ======================
