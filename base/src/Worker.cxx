@@ -48,6 +48,11 @@ void dabc::WorkerAddon::DeleteWorker()
                  else fWorker.Destroy();
 }
 
+void dabc::WorkerAddon::DeleteAddonItself()
+{
+   if (fWorker.null()) DeleteThis();
+                else SubmitWorkerCmd("DeleteAddon");
+}
 
 void dabc::WorkerAddon::FireWorkerEvent(unsigned evid)
 {
@@ -608,6 +613,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
    if (cmd.IsName("SyncWorker")) {
       // this is just dummy command, which is submitted with minimum priority
       cmd_res = cmd_true;
+   } else
+
+   if (cmd.IsName("DeleteAddon")) {
+     // this is way to delete addon
+     AssignAddon(0);
+     cmd_res = cmd_true;
    } else
 
    if (cmd.IsName("BuildWorkerHierarchy")) {

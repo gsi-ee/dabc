@@ -8,6 +8,8 @@ of the framework.
    based on the status record. Provide four different logs for showing rate output.
 3. Found proper way to display log messages in browser, using <PRE> </PRE> tags
 4. Provide checkbox to enable/disable history drawing.
+5. Read MBS status via SocketAddon. This prevents from thread blocking due to any 
+   communication problem. 
 
 
 25.07.2013

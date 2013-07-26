@@ -22,6 +22,10 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+#ifndef DABC_SocketThread
+#include "dabc/SocketThread.h"
+#endif
+
 #ifndef DABC_timing
 #include "dabc/timing.h"
 #endif
@@ -32,6 +36,44 @@
 
 
 namespace mbs {
+
+
+   class DaqStatusAddon : public dabc::SocketIOAddon {
+
+      protected:
+
+         enum IOState {
+            ioInit,          // initial state
+            ioRecvHeader,      // receiving server info
+            ioRecvData,
+            ioDone,
+            ioError
+         };
+
+         enum EEvents {
+            evDataInput = evntSocketLast,
+            evReactivate
+         };
+
+         IOState              fState;
+         mbs::DaqStatus       fStatus;
+         bool                 fSwapping;
+         uint32_t             fSendCmd;
+
+         virtual void OnThreadAssigned();
+
+         virtual double ProcessTimeout(double last_diff);
+
+         virtual void OnRecvCompleted();
+
+      public:
+
+         DaqStatusAddon(int fd);
+
+         mbs::DaqStatus& GetStatus() { return fStatus; }
+   };
+
+
 
    /** \brief Player of MBS data
     *
@@ -52,27 +94,22 @@ namespace mbs {
 
          dabc::TimeStamp   fStamp;
 
-         bool ReadSetup(int fd, mbs::DaqSetup* setup);
-         bool ReadMO(int fd, mbs::StatusMO* stat);
-         bool ReadStatus(int fd, mbs::DaqStatus* stat);
-
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
-
 
       public:
 
          Player(const std::string& name, dabc::Command cmd = 0);
          virtual ~Player();
 
-         // TODO: read status in async mode
-//         virtual std::string RequiredThrdClass() const
-//         {  return dabc::typeSocketThread; }
+         virtual std::string RequiredThrdClass() const
+           {  return dabc::typeSocketThread; }
 
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
+
    };
 }
 

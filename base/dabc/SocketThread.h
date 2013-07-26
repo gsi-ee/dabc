@@ -65,6 +65,7 @@ namespace dabc {
          bool          fDoingInput;
          bool          fDoingOutput;
          bool          fDeliverEventsToWorker;  ///< if true, completion events will be delivered to the worker
+         bool          fDeleteWorkerOnClose;    ///< if true, worker will be deleted when socket closed or socket in error
 
          virtual void ProcessEvent(const EventId&);
 
@@ -83,6 +84,10 @@ namespace dabc {
          ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);
          ssize_t DoSendBuffer(void* buf, ssize_t len);
          ssize_t DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr = 0, unsigned tgtaddrlen = 0);
+
+         bool IsDeleteWorkerOnClose() const { return fDeleteWorkerOnClose; }
+         void SetDeleteWorkerOnClose(bool on = true) { fDeleteWorkerOnClose = on; }
+
 
       public:
 

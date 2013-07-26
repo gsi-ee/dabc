@@ -63,7 +63,11 @@ namespace dabc {
 
          virtual void ProcessEvent(const EventId&) {}
 
+         /** This is way to delete worker with addon inclusive */
          void DeleteWorker();
+
+         /** This is possibility to delete addon itself, invoking worker command */
+         void DeleteAddonItself();
 
          void SubmitWorkerCmd(const std::string& cmdname);
 

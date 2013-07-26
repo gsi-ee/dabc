@@ -47,6 +47,82 @@
 #define VERSION__SET_MO 1
 
 
+mbs::DaqStatusAddon::DaqStatusAddon(int fd) :
+   dabc::SocketIOAddon(fd),
+   fState(ioInit),
+   fStatus(),
+   fSwapping(false),
+   fSendCmd(0)
+{
+   SetDeleteWorkerOnClose(false);
+}
+
+
+void mbs::DaqStatusAddon::OnThreadAssigned()
+{
+   dabc::SocketIOAddon::OnThreadAssigned();
+
+   if (fState != ioInit) {
+      EOUT("Get thread assigned in not-init state - check why");
+      exit(234);
+   }
+
+   fState = ioRecvHeader;
+
+   memset(&fStatus, 0, sizeof(mbs::DaqStatus));
+   StartRecv(&fStatus, 28);
+
+   fSendCmd=1;
+   StartSend(&fSendCmd, sizeof(fSendCmd));
+
+   // check that status data are received in reasonable time
+   ActivateTimeout(5.);
+}
+
+double mbs::DaqStatusAddon::ProcessTimeout(double last_diff)
+{
+   EOUT("Status timeout - delete addon");
+   DeleteAddonItself();
+   return -1;
+}
+
+void mbs::DaqStatusAddon::OnRecvCompleted()
+{
+   if (fState == ioRecvHeader) {
+
+      if(fStatus.l_endian != 1) fSwapping = true;
+      if(fSwapping) mbs::SwapData(&fStatus, 28);
+
+      fState = ioRecvData;
+
+      if(fStatus.l_version != 51) {
+         EOUT("Unsupported status version %u", (unsigned) fStatus.l_version);
+         DeleteAddonItself();
+         return;
+      }
+
+      StartRecv(&fStatus.bh_daqst_initalized, (fStatus.l_fix_lw-7)*4);
+      return;
+   }
+
+   if (fState == ioRecvData) {
+
+      if (fSwapping)
+         mbs::SwapData(&fStatus.bh_daqst_initalized, (fStatus.l_fix_lw-7)*4 - (19 * fStatus.l_sbs__str_len_64));
+
+      fState = ioDone;
+
+      SubmitWorkerCmd("ProcessDaqStatus");
+      return;
+   }
+
+   EOUT("Wrong state when recv data");
+   DeleteAddonItself();
+}
+
+// =========================================================================
+
+
 mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fHierarchy(),
@@ -99,148 +175,6 @@ mbs::Player::~Player()
 {
 }
 
-
-bool mbs::Player::ReadSetup(int fd, mbs::DaqSetup* setup)
-{
-   memset(setup,0,sizeof(mbs::DaqSetup));
-   int32_t l_cmd = 2;
-   int l_status = dabc::SocketThread::SendBuffer(fd, &l_cmd, 4);
-   if (l_status != 4) { EOUT("here1"); return false; }
-
-   l_status = dabc::SocketThread::RecvBuffer(fd, setup, 16);
-   if (l_status!=16) { EOUT("here2"); return false; }
-
-   bool l_swap = (setup->l_endian != 1);
-   if(l_swap) mbs::SwapData(setup,16);
-
-   if(setup->l_version != VERSION__SETUP) { EOUT("here3 %x", (unsigned) setup->l_version); return false; }
-
-   uint32_t l_items(0),l_size(0);
-
-   dabc::SocketThread::RecvBuffer(fd, &setup->bl_sbs__n_cr, (setup->l_fix_lw-4)*4);
-   dabc::SocketThread::RecvBuffer(fd, &l_items,4);
-   dabc::SocketThread::RecvBuffer(fd, &l_size,4);
-
-   if(l_swap) mbs::SwapData(&setup->bl_sbs__n_cr, (setup->l_fix_lw-4)*4);
-   if(l_swap) mbs::SwapData(&l_items,4);
-   if(l_swap) mbs::SwapData(&l_size,4);
-   uint32_t* pl_b = new uint32_t[l_size * l_items];
-
-   dabc::SocketThread::RecvBuffer(fd, pl_b, l_size * l_items * 4);
-   if(l_swap==1) mbs::SwapData(pl_b, l_size * l_items * 4);
-
-   uint32_t* pl_o = pl_b;
-   for(uint32_t i=0;i<l_items;i++) {
-     uint32_t l_crate = *pl_o++;
-     setup->lp_rem_mem_base[l_crate] = *pl_o++;
-     setup->bl_rem_mem_off[l_crate] = *pl_o++;
-     setup->bl_rem_mem_len[l_crate] = *pl_o++;
-     setup->lp_rem_cam_base[l_crate] = *pl_o++;
-     setup->bl_rem_cam_off[l_crate] = *pl_o++;
-     setup->bl_rem_cam_len[l_crate] = *pl_o++;
-     setup->lp_loc_mem_base[l_crate] = *pl_o++;
-     setup->bl_loc_mem_len[l_crate] = *pl_o++;
-     setup->lp_loc_pipe_base[l_crate] = *pl_o++;
-     setup->bl_pipe_off[l_crate] = *pl_o++;
-     setup->bl_pipe_seg_len[l_crate] = *pl_o++;
-     setup->bl_pipe_len[l_crate] = *pl_o++;
-     setup->bh_controller_id[l_crate] = *pl_o++;
-     setup->bh_sy_asy_flg[l_crate] = *pl_o++;
-     setup->bh_trig_stat_nr[l_crate] = *pl_o++;
-     setup->bl_trig_cvt[l_crate] = *pl_o++;
-     setup->bl_trig_fct[l_crate] = *pl_o++;
-     setup->i_se_typ[l_crate] = *pl_o++;
-     setup->i_se_subtyp[l_crate] = *pl_o++;
-     setup->i_se_procid[l_crate] = *pl_o++;
-     setup->bh_rd_flg[l_crate] = *pl_o++;
-     setup->bl_init_tab_off[l_crate] = *pl_o++;
-     setup->bi_init_tab_len[l_crate] = *pl_o++;
-     for(uint32_t k=0;k<setup->bl_sbs__n_trg_typ;k++) setup->bl_max_se_len[l_crate][k] = *pl_o++;
-     for(uint32_t k=0;k<setup->bl_sbs__n_trg_typ;k++) setup->bl_rd_tab_off[l_crate][k] = *pl_o++;
-     for(uint32_t k=0;k<setup->bl_sbs__n_trg_typ;k++) setup->bi_rd_tab_len[l_crate][k] = *pl_o++;
-   } /* setup */
-   delete[] pl_b;
-   return true;
-}
-
-
-bool mbs::Player::ReadMO(int fd, mbs::StatusMO* stat)
-{
-   bool l_swap = false;
-   uint32_t l_cmd=4;
-   int l_status = dabc::SocketThread::SendBuffer(fd, &l_cmd, 4);
-   if (l_status != 4) return false;
-
-   l_status = dabc::SocketThread::RecvBuffer(fd, stat, 16);
-   if (l_status!=16) return false;
-
-   if(stat->l_endian != 1) l_swap = true;
-   if(l_swap) mbs::SwapData(stat,16);
-
-   dabc::SocketThread::RecvBuffer(fd, &stat->l_max_nodes,(stat->l_set_mo_lw-4)*4);
-   if(l_swap) mbs::SwapData(&stat->l_max_nodes, (stat->l_swap_lw-4)*4);
-
-   return true;
-}
-
-
-bool mbs::Player::ReadStatus(int fd, mbs::DaqStatus* stat)
-{
-  int l_swap=0;
-
-  int32_t len_64, n_trg, max_proc, l_cmd;
-
-  int l_status;
-
-  memset(stat, 0, sizeof(mbs::DaqStatus));
-  l_cmd=1;
-  l_status = dabc::SocketThread::SendBuffer(fd, &l_cmd, 4);
-  if (l_status != 4) { stat->clear(); return false; }
-
-  l_status = dabc::SocketThread::RecvBuffer(fd, &stat->l_endian, 28);
-  if (l_status != 28) { stat->clear(); return false; }
-
-  if(stat->l_endian != 1) l_swap = 1;
-  if(l_swap == 1) mbs::SwapData(&stat->l_endian, 28);
-
-  len_64 = stat->l_sbs__str_len_64;
-  n_trg = stat->l_sbs__n_trg_typ;
-  max_proc = stat->l_sys__n_max_procs;
-  if(stat->l_version == 1)
-  {
-     // MBS v44 and previous no longer supported
-     stat->clear();
-     return false;
-  }
-
-  // MBS v50
-  if(stat->l_version == 2) {
-     int k = (48+n_trg*3)*4; // up to bl_n_evt inclusive
-     l_status = dabc::SocketThread::RecvBuffer(fd, &stat->bh_daqst_initalized, k);
-     k = (24+max_proc*5)*4; // bh_running up to bl_event_build_on inclusive
-     l_status = dabc::SocketThread::RecvBuffer(fd, &stat->bh_running[0], k);
-     k = len_64*15; // strings up to c_file_name inclusive
-     l_status = dabc::SocketThread::RecvBuffer(fd, &stat->c_user[0], k);
-     l_status = dabc::SocketThread::RecvBuffer(fd, &stat->c_out_chan[0], len_64);
-
-     stat->l_fix_lw += n_trg*3 + 212 + len_64/4*3;
-     if(l_swap == 1)
-        mbs::SwapData(&stat->bh_daqst_initalized, (stat->l_fix_lw-7)*4 - (19 * len_64));
-  }
-
-  // MBS v51
-  if(stat->l_version == 51) {
-     l_status = dabc::SocketThread::RecvBuffer(fd, &stat->bh_daqst_initalized, (stat->l_fix_lw-7)*4);
-     if(l_swap == 1)
-        mbs::SwapData(&stat->bh_daqst_initalized, (stat->l_fix_lw-7)*4 - (19 * len_64));
-  }
-
-  //l_status = f_stc_read (&stat->c_pname[0], stat->l_procs_run * len_64, l_tcp,-1);
-  // workaround:
-  l_status = dabc::SocketThread::RecvBuffer(fd, &stat->c_pname[0], stat->l_procs_run * len_64 -1);
-
-  return true;
-}
 
 void mbs::Player::FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
 {
@@ -734,63 +668,29 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 
 }
 
-
-
 void mbs::Player::ProcessTimerEvent(unsigned timer)
 {
+   if (fMbsNode.empty()) {
+       fCounter++;
 
-   //mbs::DaqSetup setup;
-   mbs::DaqStatus stat;
-   //mbs::StatusMO mo;
-   dabc::TimeStamp stamp;
-   stat.clear();
-   bool isnew = false;
+       double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
+       fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%4.2f", v1));
 
-   if (!fMbsNode.empty()) {
-      int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008, false);
-      if (fd>0) {
-         if (ReadStatus(fd, &stat) /* && ReadSetup(fd, &setup)*/) isnew = true;
-         close(fd);
-         stamp.GetNow();
-      }
-   } else {
+       v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
+       fHierarchy.FindChild("EventRate").Field("value").SetStr(dabc::format("%4.2f", v1));
 
-      fCounter++;
-
-      double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-      fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%4.2f", v1));
-
-      v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-      fHierarchy.FindChild("EventRate").Field("value").SetStr(dabc::format("%4.2f", v1));
-
-      fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("| Header  |   Entry      |      Rate  |"));
-      fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
-      return;
-   }
-
-   if (!fStatus.null() && !stat.null() && isnew) {
-
-      double tmdiff = stamp.AsDouble() - fStamp.AsDouble();
-      if (tmdiff<=0) {
-         EOUT("Wrong time calculation");
-         return;
-      }
-
-      // DOUT0("Diff = %f", tmdiff);
-      FillStatistic("-u", "rate_log", &fStatus, &stat, tmdiff);
-      FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
-      FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
-      FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
-
-      fCounter++;
-   }
+       fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("| Header  |   Entry      |      Rate  |"));
+       fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
+       return;
+    }
 
 
-   if (!stat.null()) {
-      memcpy(&fStatus, &stat, sizeof(mbs::DaqStatus));
-      fStamp = stamp;
-   }
+   if (!fAddon.null()) return;
 
+   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
+   if (fd<=0) return;
+
+   AssignAddon(new DaqStatusAddon(fd));
 }
 
 
@@ -821,6 +721,41 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
 
       return dabc::cmd_true;
    }
+
+   if (cmd.IsName("ProcessDaqStatus")) {
+
+      mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon());
+
+      if (tr) {
+         dabc::TimeStamp stamp;
+         stamp.GetNow();
+
+         mbs::DaqStatus& stat = tr->GetStatus();
+
+         double tmdiff = stamp.AsDouble() - fStamp.AsDouble();
+         if (tmdiff<=0) {
+            EOUT("Wrong time calculation");
+            return dabc::cmd_true;
+         }
+
+         if (!fStatus.null() && (tmdiff>0)) {
+            FillStatistic("-u", "rate_log", &fStatus, &stat, tmdiff);
+            FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
+            FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
+            FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
+            fCounter++;
+         }
+
+         memcpy(&fStatus, &stat, sizeof(stat));
+
+         fStamp = stamp;
+      }
+
+      AssignAddon(0);
+
+      return dabc::cmd_true;
+   }
+
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
