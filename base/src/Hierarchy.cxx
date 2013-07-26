@@ -44,13 +44,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fNodeChanged(false),
    fHierarchyChanged(false),
    fBinData(),
-   fHistoryEnabled(false),
-   fHistory(),
-   fRecordTime(false),
-   fAutoRecord(),
-   fForceAutoRecord(false),
-   fRemoteReqVersion(0),
-   fLocalReqVersion(0)
+   fHist()
 {
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Hierarchy", this, 1);
@@ -128,7 +122,7 @@ void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recur
 
 std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit)
 {
-   if (fHistory.Capacity()==0) return "";
+   if (fHist.Capacity()==0) return "";
 
    XMLNodePointer_t topnode = Xml::NewChild(0, 0, "gethistory", 0);
 
@@ -138,13 +132,13 @@ std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit
 
    bool cross_boundary = false;
 
-   for (unsigned n=0; n<fHistory.Size();n++) {
-      HistoryItem& item = fHistory.Item(n);
+   for (unsigned n=0; n<fHist()->fArr.Size();n++) {
+      HistoryItem& item = fHist()->fArr.Item(n);
 
       // we have longer history as requested
       if ((version>0) && (item.version < version)) { cross_boundary = true; continue; }
 
-      if ((limit>0) && ((fHistory.Size()-n) > (unsigned)limit)) continue;
+      if ((limit>0) && ((fHist()->fArr.Size()-n) > (unsigned)limit)) continue;
 
       dabc::Xml::AddRawLine(topnode, item.content.c_str());
    }
@@ -174,15 +168,15 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
-   bool dohistory = (fHistory.Capacity()>0) && fHistoryEnabled;
+   bool dohistory = fHist.DoHistory();
 
-   if (dohistory) cont->Field(prop_history).SetUInt(fHistory.Capacity());
+   if (dohistory) cont->Field(prop_history).SetUInt(fHist.Capacity());
 
    // we need to recognize if any attribute disappear or changed
    if (!CompareFields(cont->GetFieldsMap(), (dohistory ? prop_time : 0))) {
       fNodeChanged = true;
       if (dohistory) {
-         if (fRecordTime) cont->Field(prop_time).SetStr(GetTimeStr());
+         if (fHist()->fRecordTime) cont->Field(prop_time).SetStr(GetTimeStr());
          AddHistory(BuildDiff(cont->GetFieldsMap()));
       }
       SetFieldsMap(cont->TakeFieldsMap());
@@ -414,12 +408,12 @@ std::string dabc::HierarchyContainer::MakeSimpleDiff(const char* oldvalue)
 {
    XMLNodePointer_t node = Xml::NewChild(0, 0, "h", 0);
 
-   if (fRecordTime) {
+   if (fHist() && fHist()->fRecordTime) {
       const char* tvalue = GetField(prop_time);
       if (tvalue) Xml::NewAttr(node, 0, prop_time, tvalue);
    }
 
-   Xml::NewAttr(node, 0, fAutoRecord.c_str(), oldvalue);
+   Xml::NewAttr(node, 0, fHist()->fAutoRecord.c_str(), oldvalue);
 
    std::string res;
 
@@ -437,27 +431,27 @@ std::string dabc::HierarchyContainer::GetTimeStr()
 
 void dabc::HierarchyContainer::AddHistory(const std::string& diff)
 {
-   if (fHistory.Capacity()==0) return;
-   if (fHistory.Full()) fHistory.PopOnly();
-   HistoryItem* h = fHistory.PushEmpty();
+   if (fHist.Capacity()==0) return;
+   if (fHist()->fArr.Full()) fHist()->fArr.PopOnly();
+   HistoryItem* h = fHist()->fArr.PushEmpty();
    h->version = fNodeVersion;
    h->content = diff;
 }
 
 bool dabc::HierarchyContainer::SetField(const std::string& name, const char* value, const char* kind)
 {
-   if (!fAutoRecord.empty()) {
+   if (fHist() && !fHist()->fAutoRecord.empty()) {
       const std::string usename = name.empty() ? DefaultFiledName() : name;
 
-      if (usename == fAutoRecord) {
+      if (usename == fHist()->fAutoRecord) {
          const char* oldvalue = GetField(name);
-         if ((oldvalue!=0) && (value!=0) && (fForceAutoRecord || (strcmp(oldvalue, value)!=0))) {
+         if ((oldvalue!=0) && (value!=0) && (fHist()->fForceAutoRecord || (strcmp(oldvalue, value)!=0))) {
             // record history
-            if ((fHistory.Capacity()>0) && fHistoryEnabled)
+            if (fHist.DoHistory())
                AddHistory(MakeSimpleDiff(oldvalue));
 
             // record time
-            if (fRecordTime)
+            if (fHist()->fRecordTime)
                dabc::RecordContainer::SetField(prop_time, GetTimeStr().c_str(), 0);
 
             fNodeChanged = true;
@@ -548,21 +542,18 @@ void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec, bool
 {
    if (null()) return;
 
-   if (GetObject()->fHistory.Capacity() == (unsigned) length) return;
+   if (GetObject()->fHist.Capacity() == (unsigned) length) return;
 
    if (length>0) {
-      GetObject()->fHistoryEnabled = true;
-      GetObject()->fHistory.Allocate(length);
-      GetObject()->fRecordTime = true;
-      GetObject()->fAutoRecord = autorec;
-      GetObject()->fForceAutoRecord = force;
+      GetObject()->fHist.Allocate();
+      GetObject()->fHist()->fEnabled = true;
+      GetObject()->fHist()->fArr.Allocate(length);
+      GetObject()->fHist()->fRecordTime = true;
+      GetObject()->fHist()->fAutoRecord = autorec;
+      GetObject()->fHist()->fForceAutoRecord = force;
       Field(prop_history).SetInt(length);
    } else {
-      GetObject()->fHistoryEnabled = false;
-      GetObject()->fHistory.Allocate(0);
-      GetObject()->fRecordTime = false;
-      GetObject()->fAutoRecord.clear();
-      GetObject()->fForceAutoRecord = false;
+      GetObject()->fHist.Release();
       RemoveField(prop_history);
    }
 }
@@ -570,20 +561,17 @@ void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec, bool
 
 bool dabc::Hierarchy::HasLocalHistory() const
 {
-   if (null()) return false;
-
-   return (GetObject()->fHistory.Capacity() > 0) && GetObject()->fHistoryEnabled;
+   return null() ? false : GetObject()->fHist.DoHistory();
 }
 
 
 bool dabc::Hierarchy::HasActualRemoteHistory() const
 {
-   if (null()) return false;
+   if (null() || (GetObject()->fHist.Capacity() == 0)) return false;
 
    // we have actual copy of remote history when request was done after last hierarchy update
-   return ((GetObject()->fHistory.Capacity() > 0) &&
-           (GetObject()->fRemoteReqVersion > 0) &&
-           (GetObject()->fLocalReqVersion == GetObject()->GetVersion()));
+   return ((GetObject()->fHist()->fRemoteReqVersion > 0) &&
+           (GetObject()->fHist()->fLocalReqVersion == GetObject()->GetVersion()));
 }
 
 
@@ -834,14 +822,14 @@ dabc::Command dabc::Hierarchy::ProduceHistoryRequest()
 
    if (producer_name.empty() && request_name.empty()) return 0;
 
-   if (GetObject()->fHistory.Capacity()==0)
-      GetObject()->fHistory.Allocate(history_size);
+   if (GetObject()->fHist.null())
+      GetObject()->fHist.Allocate(history_size);
 
    dabc::Command cmd("GetBinary");
    cmd.SetStr("Item", request_name);
    cmd.SetBool("history", true); // indicate that we are requesting history
    cmd.SetInt("limit", history_size);
-   cmd.SetUInt("version", GetObject()->fRemoteReqVersion);
+   cmd.SetUInt("version", GetObject()->fHist()->fRemoteReqVersion);
    cmd.SetReceiver(producer_name);
 
    return cmd;
@@ -872,6 +860,9 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
    // STEP3. Unfold reply from remote and reproduce history recording here
 
    if (cmd.GetResult() != cmd_true) return false;
+
+   if (null() || GetObject()->fHist.null()) return false;
+
 
 //   DOUT0("STEP3 - analyze reply");
 
@@ -910,8 +901,8 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
 
    // remember when reply comes back
    if (res) {
-      GetObject()->fRemoteReqVersion = cmd.GetUInt("version");
-      GetObject()->fLocalReqVersion = GetVersion();
+      GetObject()->fHist()->fRemoteReqVersion = cmd.GetUInt("version");
+      GetObject()->fHist()->fLocalReqVersion = GetVersion();
    }
 
    return res;

@@ -173,38 +173,40 @@ DABC.GaugeDrawElement.prototype.simple = function() { return true; }
 
 DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
-   if (!('topid' in this)) {
-      this.topid = topid;
-      this.frameid = "dabc_gauge_" + id;
-      this.min = 0;
-      this.max = 100;
-      this.value = 0;
-   }
+   this.frameid = "dabc_gauge_" + id;
+   this.min = 0;
+   this.max = 10;
+   this.gauge = null;
    
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
    var entryInfo = "<div id='"+this.frameid+ "'/>";
    $(topid).append(entryInfo);
-
-   this.gauge = new JustGage({
-      id: this.frameid, 
-      value: this.value,
-      min: this.min,
-      max: this.max,
-      title: this.itemname
-   });
 }
 
 DABC.GaugeDrawElement.prototype.SetValue = function(val) {
-   if (val) {
-      if (val > this.max) {
+   if (!val) return;
+
+   if (val > this.max) {
+      if (this.gauge!=null) {
          this.gauge = null;
-         $(this.topid).empty();
-         while (val > this.max) this.max = this.max*10;
-         this.value = val;
-         this.CreateFrames(this.topid, 0);
-      } else {
-         this.gauge.refresh(val);
+         $("#" + this.frameid).empty();
       }
+      this.max = 10;
+      var cnt = 0;
+      while (val > this.max) 
+         this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
+   }
+   
+   if (this.gauge==null) {
+      this.gauge = new JustGage({
+         id: this.frameid, 
+         value: val,
+         min: this.min,
+         max: this.max,
+         title: this.itemname
+      });
+   } else {
+      this.gauge.refresh(val);
    }
 }
 

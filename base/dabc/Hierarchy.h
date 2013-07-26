@@ -79,6 +79,51 @@ namespace dabc {
          void reset() { version = 0; content.clear(); }
    };
 
+
+   class HistoryContainer : public Object {
+      public:
+
+         bool        fEnabled;               ///< indicates if history recordnig is enabled
+         RecordsQueue<HistoryItem> fArr;     ///< container with item history
+         bool        fRecordTime;             ///< if true, time will be recorded when value is modified
+         std::string fAutoRecord;            ///< field name, which change trigger automatic record of the history (when enabled)
+         bool        fForceAutoRecord;       ///< if true, even same value will be recorded in history
+         uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
+         uint64_t    fLocalReqVersion;       ///< local version, when request was done
+
+
+         HistoryContainer() :
+            Object(0,"cont", flAutoDestroy | flIsOwner),
+            fEnabled(false),
+            fArr(),
+            fRecordTime(false),
+            fAutoRecord(),
+            fForceAutoRecord(false),
+            fRemoteReqVersion(0),
+            fLocalReqVersion(0)
+            {}
+         virtual ~HistoryContainer() {}
+
+
+   };
+
+
+   class History : public Reference {
+      DABC_REFERENCE(History, Reference, HistoryContainer)
+
+      void Allocate(unsigned sz = 0) {
+         SetObject(new HistoryContainer);
+         if (sz>0) GetObject()->fArr.Allocate(sz);
+      }
+
+      bool DoHistory() const { return null() ? false : GetObject()->fEnabled && (GetObject()->fArr.Capacity()>0); }
+
+      unsigned Capacity() const { return null() ? 0 : GetObject()->fArr.Capacity(); }
+   };
+
+   // =================================================================
+
+
    class HierarchyContainer : public RecordContainer {
 
       friend class Hierarchy;
@@ -103,15 +148,8 @@ namespace dabc {
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
-         //TODO: all this should go in extra class, while not many elements require history
+         History    fHist;              ///< special object with history data
 
-         bool       fHistoryEnabled;         ///< true if history enabled and created locally, in this case no any external requests are required
-         RecordsQueue<HistoryItem> fHistory; ///< container with item history
-         bool       fRecordTime;             ///< if true, time will be recorded when value is modified
-         std::string fAutoRecord;            ///< field name, which change trigger automatic record of the history (when enabled)
-         bool        fForceAutoRecord;       ///< if true, even same value will be recorded in history
-         uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
-         uint64_t    fLocalReqVersion;       ///< local version, when request was done
 
          HierarchyContainer* TopParent();
 

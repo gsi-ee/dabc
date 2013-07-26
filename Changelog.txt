@@ -13,7 +13,10 @@ of the framework.
    communication problem. 
 6. Add possibility to force log recording even when value is not 
    changed by next SetField call. Works only for so-called autofields.
-   
+7. Extract all history-relevant variables into special class - it instantiated
+   only when history is configured for the hierarchy item.
+8. Improve ratemeter drawing.
+        
 
 25.07.2013
 1. Introduce hidden flag for the object. It hides object from hierarchy scan.
