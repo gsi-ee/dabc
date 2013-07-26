@@ -8,13 +8,13 @@ of the framework.
 2. Fix very old memory leak in XmlOutputStream. Need to be fixed in ROOT.
 3. Load ROOT scripts ourselfs, excluding duplication. Provide spinner to
    be able change number of items in grid. 
-4. Introduce permanent flag for dabc::Hierarchy, which protect element to be 
+4. Introduce permanent flag for dabc::Hierarchy, which protect element from be 
    deleted when synchronization with other hierarchy is done.
 5. In dabc.js provide generic HistoryDrawElement which communicates with server to get 
    history records. Specialized implementations like RateHistoryDrawElement and
    LogHistoryDrawElement provides specific output.
 6. Primitive but working implementation for LogHistoryDrawElement - 
-   show arbitrary log text in table cell. 
+   show arbitrary log text in scrolled space. 
 7. Even more primitive LogDrawElement - just text output.    
     
 

@@ -94,7 +94,7 @@ namespace dabc {
       {
          if (fCurrent!=fBuf) OutputCurrent();
          delete fOut; fOut = 0;
-         delete fBuf; fBuf = 0;
+         free(fBuf); fBuf = 0;
       }
 
       void OutputCurrent()
