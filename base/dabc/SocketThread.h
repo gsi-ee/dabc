@@ -350,7 +350,13 @@ namespace dabc {
 
          static bool SetNonBlockSocket(int fd);
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
-         static int StartClient(const char* host, int nport);
+         static int StartClient(const char* host, int nport, bool nonblocking = true);
+
+         /** \brief Wrapper for send method, should be used for blocking sockets */
+         static int SendBuffer(int fd, void* buf, int len);
+
+         /** \brief Wrapper for recv method, should be used for blocking sockets */
+         static int RecvBuffer(int fd, void* buf, int len);
 
 
          /** \brief Create datagram (udp) socket

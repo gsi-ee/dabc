@@ -27,6 +27,8 @@
 
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
+   fHierarchy(),
+   fCounter(0),
    fProducer(),
    fHist(0)
 {

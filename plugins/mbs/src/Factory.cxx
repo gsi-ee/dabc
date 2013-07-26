@@ -29,6 +29,7 @@
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
 #include "mbs/CombinerModule.h"
+#include "mbs/Player.h"
 
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
 
@@ -187,6 +188,9 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 {
    if (classname == "mbs::CombinerModule")
       return new mbs::CombinerModule(modulename, cmd);
+
+   if (classname == "mbs::Player")
+      return new mbs::Player(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

@@ -210,6 +210,7 @@ ssize_t dabc::SocketAddon::DoSendBuffer(void* buf, ssize_t len)
    return res;
 }
 
+
 ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr, unsigned tgtaddrlen)
 {
    struct iovec iov[2];
@@ -1177,7 +1178,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(int nport, int po
    return fd < 0 ? 0 : new SocketServerAddon(fd, nport);
 }
 
-int dabc::SocketThread::StartClient(const char* host, int nport)
+int dabc::SocketThread::StartClient(const char* host, int nport, bool nonblocking)
 {
    char service[100];
 
@@ -1200,6 +1201,7 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
       if (sockfd<=0) { sockfd = -1; continue; }
 
       if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0) {
+         if (!nonblocking) break;
          if (dabc::SocketThread::SetNonBlockSocket(sockfd))
             break; // socket is initialized - one could return it
          else
@@ -1214,6 +1216,16 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    freeaddrinfo(info);
 
    return sockfd;
+}
+
+int dabc::SocketThread::SendBuffer(int fd, void* buf, int len)
+{
+   return send(fd, buf, len, MSG_NOSIGNAL);
+}
+
+int dabc::SocketThread::RecvBuffer(int fd, void* buf, int len)
+{
+   return recv(fd, buf, len, MSG_NOSIGNAL);
 }
 
 bool dabc::SocketThread::AttachMulticast(int socket_descriptor, const std::string& host)

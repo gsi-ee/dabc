@@ -723,8 +723,8 @@ DABC.LogHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
    var w = $(topid).width();
    var h = $(topid).height();
 
-   var entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; max-height:" + h + "px'/>";
-   
+   var entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
+
    $(topid).append(entryInfo);
 }
 
@@ -738,6 +738,7 @@ DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
    // element.title = "My TITILE";
    
    for (var i=0;i<txt.length;i++)
+      //element.append(txt[i].replace("|","_") + "<br>");
       element.append(txt[i] + "<br>");
 }
 

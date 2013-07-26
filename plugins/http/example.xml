@@ -19,7 +19,11 @@
        <clients value="true"/>
     </HttpServer>
 
-    <Module name="fesa" class="fesa::Player">
+    <Module name="fesa" class="fesa::Player"/>
+
+    <Module name="mbs" class="mbs::Player">
+       <node value="X86G-45"/>
+       <period value="1"/>
     </Module>
 
     <RootSniffer name="ROOT">
