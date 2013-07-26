@@ -576,7 +576,7 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
    double r_rate_strsrv_buf = (r_new_strsrv_buf - r_old_strsrv_buf) / diff_time;
    double r_rate_strsrv_kb = (r_new_strsrv_kb - r_old_strsrv_kb) / diff_time;
 
-   strcpy (c_out, " ");
+   strcpy (c_out, "");
    if (bl_mbs)
    {
      if (bData_n)
@@ -727,7 +727,8 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 
    if (options=="-u") {
       // printf("%s\n",c_out);
-      fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_buf));
+      fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_kb));
+      fHierarchy.FindChild("EventRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_evt));
       fHierarchy.FindChild("ServerRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_strsrv_kb));
    }
 

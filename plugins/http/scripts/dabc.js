@@ -738,8 +738,8 @@ DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
    // element.title = "My TITILE";
    
    for (var i=0;i<txt.length;i++)
-      //element.append(txt[i].replace("|","_") + "<br>");
-      element.append(txt[i] + "<br>");
+      element.append("<PRE>"+txt[i]+"</PRE>");
+      //element.append("|&nbsp;       &nbsp;|  : " + txt[i] + "<br>");
 }
 
 //========== start of RateHistoryDrawElement
@@ -1411,7 +1411,7 @@ DABC.Manager.prototype.display = function(itemname) {
 
    // ratemeter
    if (kind == "rate") { 
-     if (history == null) {
+     if ((history == null) || !document.getElementById("show_history").checked) {
         elem = new DABC.GaugeDrawElement();
         elem.itemname = itemname;
         elem.CreateFrames(this.NextCell(), this.cnt++);
