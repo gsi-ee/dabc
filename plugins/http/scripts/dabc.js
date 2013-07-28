@@ -397,7 +397,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    content += DABC.dabc_tree;
    $("#" + this.frameid).html(content);
    
-   DABC.dabc_tree.openAll();
+//   DABC.dabc_tree.openAll();
    
    this.ready = true;
 }
