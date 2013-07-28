@@ -23,6 +23,14 @@ In this particular case one can connect go4 analsys to dabc with command:
 When running from gui, extra argument "-dabc dabc_node:4444" should be specified.
 At the moment http server provides view of ratemeters and display of ROOT histograms and graphs 
 
+There is well-known problem with using VNC viewer and mbs stream server. 
+Both by default are using port 6002. One could change port number for stream server.
+Just set other number in configuration of output port of transmitter module, for instance
+       <OutputPort name="Output0" url="mbs://Stream:6789"/>
+In this case one should specify that port number when starting go4 analysis like:
+   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
+When starting analysis from the go4 gui, one should specify stream server with port number too.
+
 -->
 
 <dabc version="2">
@@ -92,7 +100,7 @@ At the moment http server provides view of ratemeters and display of ROOT histog
 
        <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
 
-       <OutputPort name="Output0" url="mbs://Stream"/>
+       <OutputPort name="Output0" url="mbs://Stream:6002"/>
        <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
 
        <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
