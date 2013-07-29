@@ -78,6 +78,7 @@ namespace dabc {
    const char* xmlCpuInfo          = "cpuinfo";
    const char* xmlSocketHost       = "sockethost";
    const char* xmlUseControl       = "control";
+   const char* xmlMasterProcess    = "master";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :

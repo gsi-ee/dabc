@@ -73,6 +73,12 @@ namespace dabc {
           *           0 - control parameter undefined, control will be used when NumNodes() > 1
           *          +1 - when control="true" specified */
          int UseControl();
+
+         /** \brief Defines master DABC process, to which application will be connected
+          * Master means all control and monitoring functions will be delegated to master.
+          * Typically master provide http-server, which allows to control also all clients */
+         std::string MasterName();
+
          int GetRunTime();
          bool NormalMainThread();
          std::string ThreadsLayout();

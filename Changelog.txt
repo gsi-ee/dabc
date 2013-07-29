@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+29.07.2013
+1. In xml file in <Run> parameters list add <master> parameter. This activates
+   connection to master DABC process. It works similar to ROOT or Go4 connections.
+
+
 26.07.2013
 1. Introduce mbs::Player class to display MBS status record. 
 2. Copy code from MBS m_daq_rate to show different ratemeters, 

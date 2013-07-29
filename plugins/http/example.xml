@@ -13,7 +13,7 @@
 
     <HttpServer name="http">
        <enabled value="true"/>
-       <port value="8090"/>
+       <port value="8099"/>
        <topname value="${Context}"/>
        <select value=""/>
        <clients value="true"/>

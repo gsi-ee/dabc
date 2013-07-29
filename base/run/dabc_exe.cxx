@@ -76,13 +76,25 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
    }
 
    int ctrl = cfg.UseControl();
+   std::string master = cfg.MasterName();
+
    if ((ctrl==0) && (cfg.NumNodes()>1)) ctrl = 1;
 
-   if (ctrl > 0) {
+   if ((ctrl > 0) || !master.empty()) {
       DOUT2("Connecting control");
-      if (!dabc::mgr()->CreateControl(true)) {
+      if (!dabc::mgr()->CreateControl(ctrl>0)) {
          EOUT("Cannot establish connection to command system");
          return 1;
+      }
+
+      if (!master.empty()) {
+         dabc::Command cmd("ConfigureMaster");
+         cmd.SetStr("Master", master);
+         cmd.SetStr("NameSufix", "DABC");
+         if (dabc::mgr.GetCommandChannel().Execute(cmd) != dabc::cmd_true) {
+            DOUT0("FAIL to activate connection to master %s", master.c_str());
+            return 1;
+         }
       }
    }
 

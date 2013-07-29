@@ -723,7 +723,7 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
    if (remnodename.empty()) return 0;
 
    dabc::Url url(remnodename);
-   if (!url.IsValid() || (url.GetProtocol()!="dabc")) return 0;
+   if (!url.IsValid()) return 0;
 
    std::string worker_name = ClientWorkerName(url.GetHostNameWithPort(defaultDabcPort));
 

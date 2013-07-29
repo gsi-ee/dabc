@@ -143,6 +143,13 @@ int dabc::Configuration::UseControl()
    return 0;
 }
 
+std::string dabc::Configuration::MasterName()
+{
+   if (fSelected==0) return std::string("");
+
+   return Find1(fSelected, "", xmlRunNode, xmlMasterProcess);
+}
+
 int dabc::Configuration::GetRunTime()
 {
    if (fSelected==0) return 0;

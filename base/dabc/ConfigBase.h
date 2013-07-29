@@ -78,6 +78,7 @@ namespace dabc {
    extern const char* xmlCpuInfo;
    extern const char* xmlSocketHost;
    extern const char* xmlUseControl;
+   extern const char* xmlMasterProcess;
 
    enum { defaultDabcPort = 1237 };
 
