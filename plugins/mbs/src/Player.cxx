@@ -131,37 +131,38 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    fMbsNode = Cfg("node", cmd).AsStdStr();
    fPeriod = Cfg("period", cmd).AsDouble(1.);
+   int history = Cfg("history", cmd).AsInt(200);
 
    fHierarchy.Create("MBS");
 
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   item.EnableHistory(100,"value");
+   if (history>1) item.EnableHistory(history,"value");
 
    item = fHierarchy.CreateChild("EventRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   item.EnableHistory(100,"value");
+   if (history>1) item.EnableHistory(history,"value");
 
    item = fHierarchy.CreateChild("ServerRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   item.EnableHistory(100,"value");
+   if (history>1) item.EnableHistory(history,"value");
 
    item = fHierarchy.CreateChild("rate_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value",true);
+   if (history>1) item.EnableHistory(history,"value", true);
 
    item = fHierarchy.CreateChild("rash_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value",true);
+   if (history>1) item.EnableHistory(history,"value", true);
 
    item = fHierarchy.CreateChild("rast_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value",true);
+   if (history>1) item.EnableHistory(history,"value", true);
 
    item = fHierarchy.CreateChild("ratf_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   item.EnableHistory(200,"value",true);
+   if (history>1) item.EnableHistory(history,"value", true);
 
    CreateTimer("update", fPeriod, false);
 

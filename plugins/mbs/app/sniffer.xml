@@ -3,10 +3,10 @@
   <Context name="Sniffer">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <!-- lib value="libDabcHttp.so"/ -->
+      <lib value="libDabcHttp.so"/>
       <logfile value="Sniffer.log"/>
       <loglimit value="1000000"/>
-      <master value="lxg0538"/>
+      <master value=""/>
     </Run>
 
     <!-- only enabled when library is loaded -->
@@ -14,13 +14,14 @@
        <enabled value="true"/>
        <port value="8095"/>
        <topname value="${Context}"/>
-       <select value=""/>
-       <clients value="true"/>
+       <select value="App/mbs"/>
+       <clients value="false"/>
     </HttpServer>
 
     <Module name="mbs" class="mbs::Player">
        <node value="X86G-45"/>
        <period value="1"/>
+       <history value="200"/>
     </Module>
   </Context>
 </dabc>
