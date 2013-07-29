@@ -951,7 +951,7 @@ extern "C" void RunCmdTest()
 
 
    dabc::Command cmd2;
-   cmd2.ReadFromXml(s1);
+   cmd2.ReadFromXml(s1.c_str());
    s2 = cmd2.SaveToXml(false);
 
    DOUT1("CMD2: \n%s", s2.c_str());

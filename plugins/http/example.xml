@@ -13,7 +13,7 @@
 
     <HttpServer name="http">
        <enabled value="true"/>
-       <port value="8099"/>
+       <port value="8090"/>
        <topname value="${Context}"/>
        <select value=""/>
        <clients value="true"/>
@@ -24,6 +24,7 @@
     <Module name="mbs" class="mbs::Player">
        <node value="X86G-45"/>
        <period value="1"/>
+       <history value="100"/>
     </Module>
 
     <RootSniffer name="ROOT">

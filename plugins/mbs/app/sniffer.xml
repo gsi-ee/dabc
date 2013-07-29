@@ -3,10 +3,13 @@
   <Context name="Sniffer">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHttp.so"/>
+      <!--lib value="libDabcHttp.so"/-->
+      <lib value="libDabcRoot.so"/>
+      <lib value="libDabcFesa.so"/>
       <logfile value="Sniffer.log"/>
       <loglimit value="1000000"/>
-      <master value=""/>
+      <master value="lxg0538"/>
+      <runtime value="300"/>
     </Run>
 
     <!-- only enabled when library is loaded -->
@@ -23,5 +26,8 @@
        <period value="1"/>
        <history value="200"/>
     </Module>
+    
+    <Module name="fesa" class="fesa::Player"/>
+      
   </Context>
 </dabc>

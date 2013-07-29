@@ -5,6 +5,9 @@ of the framework.
 29.07.2013
 1. In xml file in <Run> parameters list add <master> parameter. This activates
    connection to master DABC process. It works similar to ROOT or Go4 connections.
+2. Fix memory leak in dabc_root::BinaryProducer and improve command channel 
+   processing (avoid several intermediate buffers).
+3. Fix small error in XmlEngine.   
 
 
 26.07.2013

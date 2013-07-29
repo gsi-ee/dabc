@@ -109,6 +109,7 @@ dabc::Buffer dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
 
    if (buf.null()) {
       EOUT("Cannot request buffer of specified length");
+      delete sbuf;
       return buf;
    }
 
@@ -154,6 +155,8 @@ dabc::Buffer dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
    }
 
    buf.SetTotalSize(sizeof(dabc::BinDataHeader) + hdr->payload);
+
+   delete sbuf;
 
    return buf;
 }

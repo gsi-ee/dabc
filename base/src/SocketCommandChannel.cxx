@@ -251,12 +251,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
    dabc::Command cmd;
 
    if (fRecvHdr.data_cmdsize > 0) {
-
-      std::string sbuf;
-
-      sbuf.append(fRecvBuf, fRecvHdr.data_cmdsize);
-
-      if (!cmd.ReadFromXml(std::string(fRecvBuf))) {
+      if (!cmd.ReadFromXml(fRecvBuf)) {
          CloseClient(true, "command format error");
          return;
       }
@@ -555,7 +550,7 @@ void dabc::SocketCommandClient::PerformCommandSend()
       fSendBuf = fSendQueue.Front().SaveToXml(true);
       fSendRawData = fSendQueue.Front().GetRawData();
 
-      fSendHdr.data_cmdsize = fSendBuf.length();
+      fSendHdr.data_cmdsize = fSendBuf.length() + 1; // transport 0-terminated string as is
       fSendHdr.data_rawsize = fSendRawData.GetTotalSize();
       if (fSendHdr.data_rawsize > 0) rawdata = fSendRawData.SegmentPtr();
       fSendHdr.data_size = fSendHdr.data_cmdsize + fSendHdr.data_rawsize;
@@ -662,6 +657,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
    fSelPath = Cfg("select", cmd).AsStdStr();
 
    fHierarchy.Create("Full");
+   fHierarchy.Field(dabc::prop_kind).SetStr("DABC.Session");
 }
 
 dabc::SocketCommandChannel::~SocketCommandChannel()

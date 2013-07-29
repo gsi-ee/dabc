@@ -227,7 +227,7 @@ namespace dabc {
          void AddFieldsFrom(const Record& src, bool can_owerwrite = true);
 
          std::string SaveToXml(bool compact=true);
-         bool ReadFromXml(const std::string& xml);
+         bool ReadFromXml(const char* xmlcode);
 
       protected:
 

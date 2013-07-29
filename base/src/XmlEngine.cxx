@@ -259,6 +259,8 @@ namespace dabc {
       bool ShiftCurrent(int sz = 1)
       {
          for(int n=0;n<sz;n++) {
+            if (fCurrent>=fMaxAddr) EOUT("Error remains???");
+
             if (*fCurrent==10) fCurrentLine++;
             if (fCurrent>=fLimitAddr) {
                ShiftStream();
@@ -272,14 +274,14 @@ namespace dabc {
 
       bool SkipSpaces(bool tillendl = false)
       {
-         do {
+         while(fCurrent<fMaxAddr) {
             char symb = *fCurrent;
             if ((symb>26) && (symb!=' ')) return true;
 
             if (!ShiftCurrent()) return false;
 
             if (tillendl && (symb==10)) return true;
-         } while (fCurrent<fMaxAddr);
+         }
          return false;
       }
 

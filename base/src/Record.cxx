@@ -489,11 +489,11 @@ std::string dabc::Record::SaveToXml(bool compact)
 
 
 
-bool dabc::Record::ReadFromXml(const std::string& v)
+bool dabc::Record::ReadFromXml(const char* xmlcode)
 {
-   if (v.empty()) return false;
+   if ((xmlcode==0) || (*xmlcode==0)) return false;
 
-   XMLNodePointer_t node = Xml::ReadSingleNode(v.c_str());
+   XMLNodePointer_t node = Xml::ReadSingleNode(xmlcode);
 
    if (node==0) return false;
 
