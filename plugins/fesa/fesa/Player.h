@@ -45,6 +45,7 @@ namespace fesa {
 
          dabc::Reference fProducer;   ///< binary producer for ROOT objects
          void* fHist;                 ///< ROOT histogram
+         void* fCanvas;               ///< canvas for image generation
 
       public:
 

@@ -403,7 +403,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
          return dabc::cmd_false;
       }
 
-      buf = fProducer->GetBinary(obj);
+      buf = fProducer->GetBinary(obj, cmd.GetBool("image", false));
    }
 
    cmd.SetRawData(buf);

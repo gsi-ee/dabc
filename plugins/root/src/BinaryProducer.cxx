@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <fstream>
 
 
 #include "dabc/logging.h"
@@ -28,6 +29,10 @@
 #include "TROOT.h"
 #include "TH1.h"
 #include "TGraph.h"
+#include "TPad.h"
+#include "TImage.h"
+#include "TSystem.h"
+
 
 extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
 
@@ -189,11 +194,52 @@ dabc::Buffer dabc_root::BinaryProducer::GetStreamerInfoBinary()
    gFile = oldfile;
 
    return CreateBindData(sbuf);
-
 }
 
-dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj)
+
+
+dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
 {
+   if (asimage) {
+
+      DOUT0("BinaryProducer::GetBinary process with image");
+
+      if (!obj->InheritsFrom(TPad::Class())) return 0;
+
+      TImage* img = TImage::Create();
+      if (img==0) return 0;
+
+      static int imgcnt = 0;
+      std::string fname = dabc::format("/tmp/test%d.png", imgcnt++);
+
+      DOUT0("Crate IMAGE from canvas");
+
+      img->FromPad((TPad*) obj);
+
+      DOUT0("Store IMAGE as %s file", fname.c_str());
+
+      img->WriteImage(fname.c_str());
+      delete img;
+
+      std::ifstream is(fname.c_str());
+      if (!is) return 0;
+      is.seekg (0, is.end);
+      long length = is.tellg();
+      is.seekg (0, is.beg);
+
+      dabc::Buffer buf = dabc::Buffer::CreateBuffer(length);
+      is.read((char*)buf.SegmentPtr(), length);
+
+      is.close();
+
+      gSystem->Unlink(fname.c_str());
+
+      DOUT0("Reload image from file length %ld", length);
+
+      return buf;
+   }
+
+
    CreateMemFile();
 
    TDirectory* olddir = gDirectory; gDirectory = 0;

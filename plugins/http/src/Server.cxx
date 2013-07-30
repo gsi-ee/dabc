@@ -239,6 +239,10 @@ int http::Server::begin_request(struct mg_connection *conn)
       if (ProcessGetHistory(conn, request_info->query_string)) return 1;
 
       iserror = true;
+   } else
+   if (strstr(request_info->uri, "getimage.png")!=0) {
+      if (ProcessGetImage(conn, request_info->query_string)) return 1;
+      iserror = true;
    } else {
       // let load some files
 
@@ -539,6 +543,87 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
    return 1;
 }
 
+
+int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
+{
+   dabc::Url url(std::string("getimage.png?") + (query ? query : ""));
+
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+      return 0;
+   }
+
+   std::string itemname = url.GetOptionsPart(0);
+   if (itemname.empty()) {
+      EOUT("Item is not specified in gethistory request");
+      return 0;
+   }
+
+   std::string sver = url.GetOptionStr("ver");
+   long unsigned query_version(0);
+   if (sver.length()>0)
+      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
+
+   int check_requester_counter = 0;
+   dabc::Buffer reply;
+   dabc::Hierarchy item;
+   dabc::Command cmd;
+
+   while (check_requester_counter < 100) {
+
+      if (check_requester_counter++>0) WorkerSleep(0.05);
+
+      dabc::LockGuard lock(fHierarchyMutex);
+      item = fHierarchy.FindChild(itemname.c_str());
+
+      if (item.null()) {
+         EOUT("Wrong request for non-existing item %s", itemname.c_str());
+         break;
+      }
+
+      if (item.HasField("#doingreq")) { item.Release(); continue; }
+
+      // process request locally
+      reply = item.GetLocalImage(query_version);
+      if (!reply.null()) break;
+
+      cmd = item.ProduceImageRequest();
+      if (!cmd.null()) item.SetField("#doingreq","1");
+
+      break;
+   }
+
+   if (!cmd.null()) {
+      // try to execute command, which should obtain request
+      dabc::mgr.Execute(cmd, 5.);
+
+      dabc::LockGuard lock(fHierarchyMutex);
+      item.SetField("#doingreq",0);
+
+      if (item.ApplyImageRequest(cmd))
+         reply = item.GetLocalImage(query_version);
+   }
+
+   if (reply.null()) {
+      EOUT("IMAGE REQUEST FAILS %s", itemname.c_str());
+
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: close\r\n\r\n");
+   } else {
+
+      // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
+
+      mg_printf(conn,
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Type: image/png\r\n"
+                 "Content-Length: %u\r\n"
+                 "Connection: keep-alive\r\n"
+                  "\r\n", (unsigned) reply.GetTotalSize());
+      mg_write(conn, reply.SegmentPtr(0), (size_t) reply.GetTotalSize());
+   }
+   return 1;
+}
 
 
 int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)

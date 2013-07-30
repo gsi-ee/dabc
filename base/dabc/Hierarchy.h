@@ -298,10 +298,12 @@ namespace dabc {
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
 
       Command ProduceHistoryRequest();
-
       Buffer ExecuteHistoryRequest(Command cmd);
-
       bool ApplyHierarchyRequest(Command cmd);
+
+      Buffer GetLocalImage(uint64_t version = 0);
+      Command ProduceImageRequest();
+      bool ApplyImageRequest(Command cmd);
    };
 
 

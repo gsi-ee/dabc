@@ -169,8 +169,6 @@ DABC.GaugeDrawElement = function() {
 // TODO: check how it works in different older browsers
 DABC.GaugeDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.GaugeDrawElement.prototype.simple = function() { return true; }
-
 DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
    this.frameid = "dabc_gauge_" + id;
@@ -211,6 +209,36 @@ DABC.GaugeDrawElement.prototype.SetValue = function(val) {
 }
 
 // ======== end of GaugeDrawElement ======================
+
+//======== start of ImageDrawElement ======================
+
+DABC.ImageDrawElement = function() {
+   DABC.DrawElement.call(this);
+}
+
+// TODO: check how it works in different older browsers
+DABC.ImageDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.ImageDrawElement.prototype.simple = function() { return true; }
+
+DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
+
+   this.frameid = "dabc_image_" + id;
+   
+   var width = $(topid).width();
+   
+   var url = "getimage.png?" + this.itemname;
+//   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+   var entryInfo = 
+      "<div id='"+this.frameid+ "'>" +
+      "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
+      "</div>";
+   $(topid).append(entryInfo);
+}
+
+
+// ======== end of ImageDrawElement ======================
+
 
 //======== start of LogDrawElement ======================
 
@@ -301,6 +329,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          
          if (kind == "ROOT.Session") { nodeimg = source_dir+'img/globe.gif'; html = ""; }  else
          if (kind == "DABC.Application") { nodeimg = 'httpsys/img/dabcicon.png'; html = ""; }  else
+         if (kind == "image.png") { nodeimg = 'httpsys/img/dabcicon.png'; }  else
          if (kind == "GO4.Analysis") { nodeimg = 'go4sys/icons/go4logo2_small.png'; html = ""; }  else
          if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
          if (kind.match(/\bROOT.TH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
@@ -1423,6 +1452,14 @@ DABC.Manager.prototype.display = function(itemname) {
 
    if (elem) {
       elem.ClickItem();
+      return;
+   }
+   
+   if (kind == "image.png") {
+      elem = new DABC.ImageDrawElement();
+      elem.itemname = itemname;
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      this.arr.push(elem);
       return;
    }
 

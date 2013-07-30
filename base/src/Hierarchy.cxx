@@ -908,3 +908,42 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
    return res;
 }
 
+
+dabc::Buffer dabc::Hierarchy::GetLocalImage(uint64_t version)
+{
+   if (null()) return 0;
+   if (Field(prop_kind).AsStdStr()!="image.png") return 0;
+
+   return GetObject()->bindata();
+}
+
+dabc::Command dabc::Hierarchy::ProduceImageRequest()
+{
+   std::string producer_name, request_name;
+
+   producer_name = FindBinaryProducer(request_name);
+
+   if (producer_name.empty() && request_name.empty()) return 0;
+
+   dabc::Command cmd("GetBinary");
+   cmd.SetStr("Item", request_name);
+   cmd.SetBool("image", true); // indicate that we are requesting image
+   cmd.SetReceiver(producer_name);
+
+   return cmd;
+}
+
+bool dabc::Hierarchy::ApplyImageRequest(Command cmd)
+{
+   if (null() || (cmd.GetResult() != cmd_true)) return false;
+
+   Buffer bindata = cmd.GetRawData();
+   if (bindata.null()) return false;
+
+   GetObject()->fNodeChanged = true;
+   GetObject()->MarkWithChangedVersion();
+   GetObject()->bindata() = bindata;
+
+   return true;
+}
+

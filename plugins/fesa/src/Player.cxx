@@ -18,11 +18,12 @@
 #include <stdlib.h>
 #include <math.h>
 
-
 #ifdef WITH_ROOT
 #include "dabc_root/BinaryProducer.h"
 #include "TH2.h"
 #include "TRandom.h"
+#include "TCanvas.h"
+#include "TROOT.h"
 #endif
 
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
@@ -30,7 +31,8 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fHierarchy(),
    fCounter(0),
    fProducer(),
-   fHist(0)
+   fHist(0),
+   fCanvas(0)
 {
    fHierarchy.Create("FESA");
 
@@ -62,9 +64,16 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    h1.Field(dabc::prop_kind).SetStr("ROOT.TH2I");
    h1.Field(dabc::prop_masteritem).SetStr("StreamerInfo");
 
+   fHierarchy.CreateChild("ImageRoot").Field(dabc::prop_kind).SetStr("image.png");
+
    TH2I* h2 = new TH2I("BeamRoot","Root beam profile", 32, 0, 32, 32, 0, 32);
    h2->SetDirectory(0);
    fHist = h2;
+
+   gROOT->SetBatch(kTRUE);
+   TCanvas* can = new TCanvas("can1", "can1", 3);
+   fCanvas = can;
+
 
    #endif
 
@@ -73,6 +82,10 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 fesa::Player::~Player()
 {
 #ifdef WITH_ROOT
+   if (fCanvas) {
+      delete (TCanvas*) fCanvas;
+      fCanvas = 0;
+   }
    if (fHist) {
       delete (TH2I*) fHist;
       fHist = 0;
@@ -130,6 +143,14 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
          h2->Fill(gRandom->Gaus(16,2), gRandom->Gaus(16,1));
       item.Field(dabc::prop_content_hash).SetInt(h2->GetEntries());
    }
+
+   TCanvas* can = (TCanvas*) fCanvas;
+   if ((can!=0) && (h2!=0)) {
+      can->cd();
+      h2->Draw();
+      can->Modified();
+      can->Update();
+   }
 #endif
 
 
@@ -161,13 +182,17 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
          buf = item.ExecuteHistoryRequest(cmd);
       else {
          std::string kind = item.Field(dabc::prop_kind).AsStdStr();
-         if (kind.find("ROOT.")==0) {
+         DOUT0("GetBinary for item %s kind %s", itemname.c_str(), kind.c_str());
+         if ((kind.find("ROOT.")==0) || (kind=="image.png")) {
 #ifdef WITH_ROOT
             dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
             if (itemname=="StreamerInfo")
                buf = pr->GetStreamerInfoBinary();
-            else
-               buf = pr->GetBinary((TH2I*)fHist);
+            else {
+               TObject* obj = (TH2I*) fHist;
+               if (itemname =="ImageRoot") obj = (TCanvas*) fCanvas;
+               buf = pr->GetBinary(obj, cmd.GetBool("image", false));
+            }
 
             cmd.SetInt("MasterHash", pr->GetStreamerInfoHash());
 #endif

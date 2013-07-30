@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+30.07.2013
+1. Primitive, non-flexible but working way to generate png image from ROOT canvas.
+   One could think to implement images generation with other kind of libraries in
+   the future, but for a momement just reuse existing ROOT ASImage functionality. 
+
+
 29.07.2013
 1. In xml file in <Run> parameters list add <master> parameter. This activates
    connection to master DABC process. It works similar to ROOT or Go4 connections.
