@@ -4,11 +4,26 @@
 #include <TProfile.h>
 #include <TCanvas.h>
 #include <TFrame.h>
+#include <TTimer.h>
 #include <TROOT.h>
 #include <TSystem.h>
 #include <TRandom3.h>
 #include <TBenchmark.h>
 #include <TInterpreter.h>
+
+
+class MyTimer : public TTimer {
+   public:
+
+      int fCnt;
+
+      MyTimer(Long_t milliSec, Bool_t mode) : TTimer(milliSec, mode) , fCnt(0){ }
+      virtual void Timeout() { fCnt++; }
+
+      ClassDef(MyTimer,1)
+
+};
+
 
 TFile *hsimple(Int_t get=0)
 {
@@ -79,7 +94,13 @@ TFile *hsimple(Int_t get=0)
    TRandom3 random;
    Float_t px, py, pz;
    const Int_t kUPDATE = 1000;
-   for (Int_t i = 0; i < 250000000; i++) {
+
+   MyTimer* t = new MyTimer(100, kFALSE);
+   t->TurnOn();
+
+   printf("Timer counter begin = %d\n", t->fCnt);
+
+   for (Int_t i = 0; i < 25000000; i++) {
       random.Rannor(px,py);
       pz = px*px + py*py;
       Float_t rnd = random.Rndm(1);
@@ -91,11 +112,14 @@ TFile *hsimple(Int_t get=0)
          if (i == kUPDATE) hpx->Draw();
          c1->Modified();
          c1->Update();
-         if (gSystem->ProcessEvents())
-            break;
+         // if (gSystem->ProcessEvents()) break;
       }
    }
+
    gBenchmark->Show("hsimple");
+
+   printf("Timer counter end = %d\n", t->fCnt);
+
 
    // Save all objects in this file
    hpx->SetFillColor(0);

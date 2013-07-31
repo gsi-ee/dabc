@@ -64,6 +64,7 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fBatch(true),
+   fSyncTimer(true),
    fCompression(5),
    fProducer(0),
    fTimer(0),
@@ -71,12 +72,14 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    fHierarchy(),
    fHierarchyMutex(),
    fRootCmds(dabc::CommandsQueue::kindPostponed),
-   fLastUpdate()
+   fLastUpdate(),
+   fStartThrdId(0)
 {
    fEnabled = Cfg("enabled", cmd).AsBool(false);
    if (!fEnabled) return;
 
    fBatch = Cfg("batch", cmd).AsBool(true);
+   fSyncTimer = Cfg("synctimer", cmd).AsBool(true);
    fCompression = Cfg("compress", cmd).AsInt(5);
 
    if (fBatch) gROOT->SetBatch(kTRUE);
@@ -377,9 +380,11 @@ void dabc_root::RootSniffer::BuildWorkerHierarchy(dabc::HierarchyContainer* cont
 void dabc_root::RootSniffer::InstallSniffTimer()
 {
    if (fTimer==0) {
-      fTimer = new TDabcTimer(100, kTRUE);
+      fTimer = new TDabcTimer(100, fSyncTimer);
       fTimer->SetSniffer(this);
       fTimer->TurnOn();
+
+      fStartThrdId = dabc::PosixThread::Self();
    }
 }
 
@@ -416,6 +421,10 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 void dabc_root::RootSniffer::ProcessActionsInRootContext()
 {
 //   printf("ROOOOOOOT sniffer ProcessActionsInRootContext\n");
+
+   if ((fStartThrdId!=0) && ( fStartThrdId != dabc::PosixThread::Self())) {
+      EOUT("Called from other thread as when timer was started");
+   }
 
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
       DOUT3("Update ROOT structures");

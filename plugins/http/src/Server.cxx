@@ -614,13 +614,15 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
 
       // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
 
+      unsigned image_size = reply.GetTotalSize() - sizeof(dabc::BinDataHeader);
+
       mg_printf(conn,
                  "HTTP/1.1 200 OK\r\n"
                  "Content-Type: image/png\r\n"
                  "Content-Length: %u\r\n"
                  "Connection: keep-alive\r\n"
-                  "\r\n", (unsigned) reply.GetTotalSize());
-      mg_write(conn, reply.SegmentPtr(0), (size_t) reply.GetTotalSize());
+                  "\r\n", image_size);
+      mg_write(conn, ((char*) reply.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
    }
    return 1;
 }

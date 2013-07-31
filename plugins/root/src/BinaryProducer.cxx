@@ -197,48 +197,53 @@ dabc::Buffer dabc_root::BinaryProducer::GetStreamerInfoBinary()
 }
 
 
+dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
+{
+   DOUT0("BinaryProducer::GetBinary process with image");
+
+   if (!obj->InheritsFrom(TPad::Class())) return 0;
+
+   TImage* img = TImage::Create();
+   if (img==0) return 0;
+
+   static int imgcnt = 0;
+   std::string fname = dabc::format("/tmp/test%d.png", imgcnt++);
+
+   DOUT0("Crate IMAGE from canvas");
+
+   img->FromPad((TPad*) obj);
+
+   DOUT0("Store IMAGE as %s file", fname.c_str());
+
+   img->WriteImage(fname.c_str());
+   delete img;
+
+   std::ifstream is(fname.c_str());
+   if (!is) return 0;
+   is.seekg (0, is.end);
+   long length = is.tellg();
+   is.seekg (0, is.beg);
+
+   dabc::Buffer buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader) + length);
+
+   dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
+   hdr->reset();
+
+   is.read(((char*)buf.SegmentPtr()) + sizeof(dabc::BinDataHeader), length);
+
+   is.close();
+
+   gSystem->Unlink(fname.c_str());
+
+   DOUT0("Reload image from file length %ld", length);
+
+   return buf;
+}
+
 
 dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
 {
-   if (asimage) {
-
-      DOUT0("BinaryProducer::GetBinary process with image");
-
-      if (!obj->InheritsFrom(TPad::Class())) return 0;
-
-      TImage* img = TImage::Create();
-      if (img==0) return 0;
-
-      static int imgcnt = 0;
-      std::string fname = dabc::format("/tmp/test%d.png", imgcnt++);
-
-      DOUT0("Crate IMAGE from canvas");
-
-      img->FromPad((TPad*) obj);
-
-      DOUT0("Store IMAGE as %s file", fname.c_str());
-
-      img->WriteImage(fname.c_str());
-      delete img;
-
-      std::ifstream is(fname.c_str());
-      if (!is) return 0;
-      is.seekg (0, is.end);
-      long length = is.tellg();
-      is.seekg (0, is.beg);
-
-      dabc::Buffer buf = dabc::Buffer::CreateBuffer(length);
-      is.read((char*)buf.SegmentPtr(), length);
-
-      is.close();
-
-      gSystem->Unlink(fname.c_str());
-
-      DOUT0("Reload image from file length %ld", length);
-
-      return buf;
-   }
-
+   if (asimage) return CreateImage(obj);
 
    CreateMemFile();
 

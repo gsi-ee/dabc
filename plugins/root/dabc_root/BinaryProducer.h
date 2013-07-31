@@ -45,6 +45,8 @@ namespace dabc_root {
 
          dabc::Buffer CreateBindData(TBufferFile* sbuf);
 
+         dabc::Buffer CreateImage(TObject* obj);
+
       public:
          BinaryProducer(const std::string& name, int compr = 5);
          virtual ~BinaryProducer();

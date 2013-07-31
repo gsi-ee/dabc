@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+31.07.2013
+1. In RootSniffer try to use asynchronous timer - it is working! Means one can
+   get access to all ROOT objects without frequent calling of gSystem->ProcessEvents().
+   Significant drawback - one never can be sure that object (like histogram or canvas)
+   is consistent during such interrupted call, but there is no other chance to get
+   in between. If user wants, he could always introduce gSystem->ProcessEvents call
+   and be on the safe side. 
+
+
 30.07.2013
 1. Primitive, non-flexible but working way to generate png image from ROOT canvas.
    One could think to implement images generation with other kind of libraries in

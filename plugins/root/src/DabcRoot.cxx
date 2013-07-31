@@ -6,7 +6,7 @@
 
 #include "dabc_root/RootSniffer.h"
 
-bool DabcRoot::StartHttpServer(int port)
+bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 {
    if (!dabc::mgr.null()) return false;
 
@@ -26,6 +26,7 @@ bool DabcRoot::StartHttpServer(int port)
    dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
    cmd2.SetBool("enabled", true);
    cmd2.SetBool("batch", false);
+   cmd2.SetBool("synctimer", sync_timer);
 
    if (!dabc::mgr.Execute(cmd2)) return false;
 
@@ -37,7 +38,6 @@ bool DabcRoot::StartHttpServer(int port)
    w2.MakeThreadForWorker("MainThread");
 
    DOUT2("Create root sniffer");
-
 
    dabc::CmdCreateObject cmd1("http::Server","/http");
    cmd1.SetBool("enabled", true);
@@ -54,7 +54,7 @@ bool DabcRoot::StartHttpServer(int port)
    return true;
 }
 
-bool DabcRoot::ConnectMaster(const char* master_url)
+bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 {
    if (!dabc::mgr.null()) return false;
 
@@ -78,6 +78,7 @@ bool DabcRoot::ConnectMaster(const char* master_url)
    dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
    cmd2.SetBool("enabled", true);
    cmd2.SetBool("batch", false);
+   cmd2.SetBool("synctimer", sync_timer);
 
    if (!dabc::mgr.Execute(cmd2)) return false;
 

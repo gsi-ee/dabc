@@ -52,6 +52,7 @@ namespace dabc_root {
       protected:
          bool fEnabled;
          bool fBatch;             ///< if true, batch mode will be activated
+         bool fSyncTimer;         ///< is timer will run in synchronous mode (only within gSystem->ProcessEvents())
          int  fCompression;       ///< compression level, default 5
 
          BinaryProducer*  fProducer;  ///< object which will convert ROOT objects into binary data
@@ -70,6 +71,8 @@ namespace dabc_root {
          dabc::CommandsQueue fRootCmds; ///< list of commands, which must be executed in the ROOT context
 
          dabc::TimeStamp fLastUpdate;
+
+         dabc::Thread_t fStartThrdId;   ///< remember thread id where sniffer was started, can be used to check how timer processing is working
 
          virtual void OnThreadAssigned();
 
