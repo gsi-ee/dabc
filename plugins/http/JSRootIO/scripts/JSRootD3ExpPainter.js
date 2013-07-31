@@ -4452,7 +4452,6 @@ var gStyle = {
       
       return true;
    }
-         
 
    JSROOTPainter.Hist1DPainter.prototype.CreateDrawBins = function()
    {
@@ -4465,59 +4464,59 @@ var gStyle = {
 
       this.draw_bins = new Array;
       
-      var draw_err = (this.options.Error > 0);
+      // reduce number of drawn points - we define interval where two points will be selected - max and min
+      if (gStyle.OptimizeDraw && (right - left > width)) 
+         while ((right - left)/stepi > width) stepi++;
       
-      // reduce number of drawn points 
-      while (gStyle.OptimizeDraw && ((right - left)/stepi > width)) stepi++;
-
       var x1, x2 = this.xmin + left*this.binwidthx;
-      var grx1, grx2 = -11111;
-      
-      var point;
+      var grx1 = -1111, grx2 = -1111, gry;
       
       // console.log("left " + left + " right " + right + " step " +  stepi);
       
+      var point;
+      
       for (var i = left; i<right; i+=stepi) {
-         
+         // if interval wider than specified range, make it shorter 
+         if ((stepi>1) && (i+stepi>right)) stepi = (right-i); 
          x1 = x2; x2 += stepi*this.binwidthx;
          
          // protect againt logx scale
          if ((this.options.Logx>0) && (x1<=this.xlogmin)) continue;
          
-         grx1 = grx2; 
+         grx1 = grx2; grx2 = this.x(x2);
          if (grx1 < 0) grx1 = this.x(x1);
-         grx2 = this.x(x2);
+
+         var pmax = i, cont = this.histo.getBinContent(i+1);
+
+         for (var ii=1;ii<stepi;ii++) {
+            var ccc = this.histo.getBinContent(i+ii+1);
+            if (ccc>cont) { cont = ccc; pmax = i + ii; }
+         }
          
-         var cont = this.histo.getBinContent(i+1);
-         if ((this.options.Logy>0) && (cont<=0)) cont = this.ylogmin; 
-         
-         // if ((this.options.Logy>0) && (cont < 1e-10)) console.log("Bin " + i + "  cont = " + cont.toPrecision(10));
-         
-         var gry = this.y(cont);
+         // protect agains logy scale
+         if ((this.options.Logy>0) && (cont<=this.ylogmin)) cont = this.ylogmin; 
+
+         gry = this.y(cont);
          
          point = { x: grx1, y: gry };
          
-         if (draw_err) {
+         if (this.options.Error > 0) {
             point['xerr'] = (grx2 - grx1) / 2; 
-            point['yerr'] =  gry - this.y(cont + this.histo.getBinError(i+1));
+            point['yerr'] =  gry - this.y(cont + this.histo.getBinError(pmax+1));
          } 
          
          if (gStyle.Tooltip > 1) {
-            if (draw_err) {
+            if (this.options.Error > 0) {
                point['x'] = (grx1 + grx2)/2;
                point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " + cont.toPrecision(4) +
                              " \nerror x = " + ((x2-x1)/2).toPrecision(4) +
-                             " \nerror y = " + this.histo.getBinError(i+1).toPrecision(4);
+                             " \nerror y = " + this.histo.getBinError(pmax+1).toPrecision(4);
             }  else { 
                point['width'] = grx2-grx1;
                  
-               point['tip'] = "bin = " + (i+1) + "\n" +  
+               point['tip'] = "bin = " + (pmax+1) + "\n" +  
                               "x = [" + x1.toPrecision(4) +", " + x2.toPrecision(4) + "]\n" + 
                               "entries = " + cont;
-               
-//               if (this.options.Logy>0)
-//                  if ((i<3) || (i>96))
-//                     console.log(point['tip'] + cont.toPrecision(3));
             }
          }
          
@@ -4525,7 +4524,7 @@ var gStyle = {
       }
       
       // if we need to draw line or area, we need extra point for correct drawing
-      if ((right == this.nbinsx) && !draw_err) {
+      if ((right == this.nbinsx) && (this.options.Error == 0)) {
          var extrapoint = jQuery.extend(true, {}, point);
          extrapoint.x = grx2;
          this.draw_bins.push(extrapoint); 
@@ -4800,6 +4799,8 @@ var gStyle = {
    
    JSROOTPainter.drawHistogram1Dnew = function(vis, histo) {
 
+      //if (console) console.time("DrawTH1");
+      
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist1DPainter(histo);
 
@@ -4830,6 +4831,8 @@ var gStyle = {
 
       //$("#report").append("<br> interact");
       painter.AddInteractive();
+
+      //if (console) console.timeEnd("DrawTH1");
       
       return painter;
    }

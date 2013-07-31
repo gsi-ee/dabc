@@ -9,7 +9,10 @@ of the framework.
    is consistent during such interrupted call, but there is no other chance to get
    in between. If user wants, he could always introduce gSystem->ProcessEvents call
    and be on the safe side. 
-
+2. In Hist1DPainter, when do optimization, draw maximum value from interval.
+   It is little bit longer, but shows real histogram content. Anyhow, 200000 bins 
+   histogram drawn in 7 sec (old code was never finished)
+   
 
 30.07.2013
 1. Primitive, non-flexible but working way to generate png image from ROOT canvas.
