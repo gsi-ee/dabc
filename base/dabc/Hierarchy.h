@@ -143,6 +143,8 @@ namespace dabc {
           * only first childs with such flag could remain */
          bool       fPermanent;         ///<
 
+         // bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
+
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
 
@@ -182,9 +184,6 @@ namespace dabc {
 
          /** \brief Add new entry to history */
          void AddHistory(const std::string& diff);
-
-         /** \brief Return current time in format, which goes to history */
-         std::string GetTimeStr();
 
          /** \brief Marks item and all its parents with changed version */
          void MarkWithChangedVersion();

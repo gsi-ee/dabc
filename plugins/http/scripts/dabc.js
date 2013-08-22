@@ -169,6 +169,8 @@ DABC.GaugeDrawElement = function() {
 // TODO: check how it works in different older browsers
 DABC.GaugeDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
+DABC.GaugeDrawElement.prototype.simple = function() { return true; }
+
 DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
    this.frameid = "dabc_gauge_" + id;
@@ -218,8 +220,6 @@ DABC.ImageDrawElement = function() {
 
 // TODO: check how it works in different older browsers
 DABC.ImageDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.ImageDrawElement.prototype.simple = function() { return true; }
 
 DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
 
@@ -282,12 +282,8 @@ DABC.HierarchyDrawElement = function() {
 // TODO: check how it works in different older browsers
 DABC.HierarchyDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.HierarchyDrawElement.prototype.simple = function() { return false; }
-
 DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
-
    this.frameid = topid;
-   
 }
 
 DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
@@ -670,7 +666,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    this.force = false;
 }
 
-DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, isnumber) {
+DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
    if (!this.xmlnode) return;
    
    // xml node must have attribute, which will be extracted
@@ -678,15 +674,28 @@ DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, isnumber) {
    if (!val) return;
    
    var arr = new Array();
-   if (isnumber) arr.push(Number(val));
-            else arr.push(val);
+   if (kind=="number") arr.push(Number(val)); else
+   if (kind=="time") {
+      arr.push(Number(val));
+//      var d  = new Date(val);
+//      arr.push(d.getTime());
+//      console.log("Adding time " + val);
+   } else {
+      arr.push(val);
+   }
    
    if (this.xmlhistory) 
       for (var n=this.xmlhistory.length-1;n>=0;n--) {
          var newval = this.xmlhistory[n].getAttribute(name);
          if (newval && (newval != "dabc_del")) val = newval;
-         if (isnumber) arr.push(Number(val));
-                  else arr.push(val);
+         if (kind=="number") arr.push(Number(val)); else
+         if (kind=="time") {
+            arr.push(Number(val));
+            //var d  = new Date(val);
+            //arr.push(d.getTime()); 
+         } else {
+            arr.push(val);
+         }
       }
 
    arr.reverse();
@@ -775,7 +784,7 @@ DABC.LogHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 }
 
 DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
-   var txt = this.ExtractSeries("value");
+   var txt = this.ExtractSeries("value","string");
    
    var element = $("#" + this.frameid);
    
@@ -840,8 +849,8 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
    
-   var x = this.ExtractSeries("time", true);
-   var y = this.ExtractSeries("value", true);
+   var x = this.ExtractSeries("time", "time");
+   var y = this.ExtractSeries("value", "number");
    
    // if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
 
@@ -858,6 +867,11 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    gr['fHistogram']['fTitle'] = this.itemname;
    gr['fHistogram']['fYaxis']['fXmin'] = 0;
    gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
+   
+   gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
+   gr['fHistogram']['fXaxis']['fTimeFormat'] = "";
+   // gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
+   gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
    
    if (this.root_painter && this.root_painter.UpdateObject(gr)) {
       this.root_painter.RedrawFrame();

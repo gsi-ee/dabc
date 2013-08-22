@@ -153,6 +153,34 @@ namespace dabc {
          static void SetUseSlow() { gFast = false; }
    };
 
+   // ==========================================================================
+
+   /** \brief Class for holding GMT time with precision of nanoseconds
+    *
+    * \ingroup dabc_all_classes
+    *
+    * For time measurement function like gettimeofday is used.
+    */
+
+   struct DateTime {
+      protected:
+         unsigned tv_sec;   // GMT time in seconds, since 1.1.1970
+         unsigned tv_nsec;  // fractional part of time in nanoseconds
+      public:
+         DateTime() : tv_sec(0), tv_nsec(0) {}
+
+         bool null() const { return (tv_sec==0) && (tv_nsec==0); }
+
+         bool GetNow();
+
+         // convert string into human-readable format, cannot be interpret directly in JavaScript
+         bool AsString(char* sbuf, int len, int ndecimal = 0) const;
+
+         // convert string into sec.frac format, can be interpret directly in JavaScript
+         bool AsJSString(char* sbuf, int len) const;
+
+   };
+
    inline TimeStamp Now() { return TimeStamp::Now(); }
 
    void Sleep(double tm);

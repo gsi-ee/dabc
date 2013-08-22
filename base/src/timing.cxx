@@ -143,4 +143,60 @@ void dabc::Sleep(double tm)
       nanosleep (&t, 0);
 }
 
+// ====================================================
+
+
+bool dabc::DateTime::GetNow()
+{
+   timespec tm;
+   clock_gettime(CLOCK_REALTIME, &tm);
+
+   tv_sec = tm.tv_sec;
+   tv_nsec = tm.tv_nsec;
+
+
+   return true;
+}
+
+bool dabc::DateTime::AsString(char* sbuf, int len, int ndecimal) const
+{
+   if (null()) return false;
+
+   time_t src = tv_sec;
+   int frac = 0;
+
+   if ((ndecimal>0) && (tv_nsec>0)) {
+      if (ndecimal>9) ndecimal = 9;
+      frac = tv_nsec;
+      int maxfrac = 1000000000;
+      int dec_cnt = ndecimal;
+      while (dec_cnt++<9) {
+         // this is rounding rule - if last digit 5 or more, we must increment by 1
+         frac = frac / 10 + ((frac % 10 >= 5) ? 1 : 0);
+         maxfrac = maxfrac / 10;
+         // DOUT0("NSEC = %u FRAC = %d MAXFRAC = %d", tv_nsec, frac, maxfrac);
+      }
+      if (frac >= maxfrac) { src++; frac = 0; }
+   }
+
+   struct tm res;
+
+   gmtime_r(&src, &res);
+
+   strftime(sbuf, len, "%Y-%m-%d %H:%M:%S", &res);
+
+   if (frac>0) {
+      int rlen = strlen(sbuf);
+      if (len - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+   }
+
+   return true;
+}
+
+bool dabc::DateTime::AsJSString(char* sbuf, int len) const
+{
+   double val = tv_sec + tv_nsec*1e-9;
+   snprintf(sbuf, len,"%5.3f", val);
+   return true;
+}
 

@@ -21,7 +21,7 @@
 
 
 #include "dabc/logging.h"
-
+#include "dabc/timing.h"
 
 #include "TMemFile.h"
 #include "TStreamerInfo.h"
@@ -281,8 +281,13 @@ dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
       exit(444);
    }
 
+   dabc::DateTime tm;
+   tm.GetNow();
+   char sbuf2[100];
+   tm.AsString(sbuf2, sizeof(sbuf2), 3);
+
    if (believe_not_changed && (l1->GetSize() == l2->GetSize())) {
-      DOUT0("++ STREAMER INFO NOT CHANGED AS EXPECTED +++ ");
+      DOUT0("+++ STREAMER INFO NOT CHANGED AS EXPECTED tm:%s  +++ ", sbuf2);
    }
 
    fSinfoSize = l2->GetSize();

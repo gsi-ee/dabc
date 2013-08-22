@@ -813,8 +813,12 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          if (evnt.GetCode() < Worker::evntFirstSystem) {
             if (evnt.GetCode() < Worker::evntFirstAddOn)
                worker->ProcessCoreEvent(evnt);
-            else
-               worker->fAddon()->ProcessEvent(evnt);
+            else {
+               if (worker->fAddon.null())
+                  EOUT("Get event for non-existing addon");
+               else
+                  worker->fAddon()->ProcessEvent(evnt);
+            }
          } else
             worker->ProcessEvent(evnt);
 

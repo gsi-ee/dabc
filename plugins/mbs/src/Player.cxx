@@ -72,7 +72,7 @@ void mbs::DaqStatusAddon::OnThreadAssigned()
    memset(&fStatus, 0, sizeof(mbs::DaqStatus));
    StartRecv(&fStatus, 28);
 
-   fSendCmd=1;
+   fSendCmd = 1;
    StartSend(&fSendCmd, sizeof(fSendCmd));
 
    // check that status data are received in reasonable time
@@ -83,6 +83,7 @@ double mbs::DaqStatusAddon::ProcessTimeout(double last_diff)
 {
    EOUT("Status timeout - delete addon");
    DeleteAddonItself();
+   EOUT("Status timeout - delete addon called");
    return -1;
 }
 
@@ -750,9 +751,9 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
          memcpy(&fStatus, &stat, sizeof(stat));
 
          fStamp = stamp;
-      }
 
-      AssignAddon(0);
+         AssignAddon(0);
+      }
 
       return dabc::cmd_true;
    }

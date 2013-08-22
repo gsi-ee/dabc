@@ -598,6 +598,7 @@ var gStyle = {
       'StatFont'      : 42,
       'StatFontSize'  : 0,
       'StatTextColor' : 1,
+      'TimeOffset'    : 788918400000 // UTC time at 01/01/95
    };
 
 
@@ -1187,25 +1188,27 @@ var gStyle = {
       return 'rgb('+Math.round(r * 255)+', '+Math.round(g * 255)+', '+Math.round(b * 255)+')';
    };
 
+   JSROOTPainter.getTimeFormat = function(axis) {
+      var timeFormat = axis['fTimeFormat'];
+      var idF = timeFormat.indexOf('%F');
+      if (idF >= 0) return timeFormat.substr(0, idF);
+      return timeFormat;
+   };
 
    JSROOTPainter.getTimeOffset = function(axis) {
-
       var timeFormat = axis['fTimeFormat'];
-      var i, timeoffset = 0;
+      
       var idF = timeFormat.indexOf('%F');
-
-      if (idF >= 0) {
-         timeformat = timeFormat.substr(0, idF);
-      } else {
-         timeformat = timeFormat;
-      }
 
       if (idF >= 0) {
          var lnF = timeFormat.length;
          var stringtimeoffset = timeFormat.substr(idF+2, lnF);
-         for (i=0;i<3;++i) stringtimeoffset = stringtimeoffset.replace('-', '/');
+         for (var i=0;i<3;++i) stringtimeoffset = stringtimeoffset.replace('-', '/');
+         // special case, used from DABC painters 
+         if ((stringtimeoffset=="0") || (stringtimeoffset=="")) return 0;
+         
          var stimeoffset = new Date(stringtimeoffset);
-         timeoffset = stimeoffset.getTime();
+         var timeoffset = stimeoffset.getTime();
          var ids = stringtimeoffset.indexOf('s');
          if (ids >= 0) {
             var lns = stringtimeoffset.length;
@@ -1213,10 +1216,10 @@ var gStyle = {
             var dp = parseFloat(sdp);
             timeoffset += dp;
          }
-      } else {
-         timeoffset = 788918400000; // UTC time at 01/01/95
-      }
-      return timeoffset;
+         return timeoffset;
+      } 
+
+      return gStyle['TimeOffset'];
    };
 
    JSROOTPainter.formatExp = function(label) {
@@ -3466,31 +3469,28 @@ var gStyle = {
       /*
        * Define the scales, according to the information from the pad
        */
-      var dfx = d3.format(",.f"), dfy = d3.format(",.f");
-      var xrange = this.xmax - this.ymin;
+      var xrange = this.xmax - this.xmin;
       if (this.histo['fXaxis']['fTimeDisplay']) {
          if (n1ax > 8) n1ax = 8;
-         var timeoffset = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
-         dfx = d3.time.format("%Mm%S");
-         if (xrange>31536000)
-            dfx = d3.time.format("%Y");
-         else if (xrange>2419200)
-            dfx = d3.time.format("%Y/%m");
-         else if (xrange>86400)
-            dfx = d3.time.format("%Y/%m/%d");
-         else if (xrange>3600)
-            dfx = d3.time.format("%Hh%Mm%S");
-         else if (xrange>60)
-            dfx = d3.time.format("%Hh%M");
+         var timeformatx = JSROOTPainter.getTimeFormat(this.histo['fXaxis']);
+         var timeoffsetx = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
+         
+         if (timeformatx.length == 0) {
+            if (xrange>315360000) timeformatx = "%Y"; else
+            if (xrange>24192000)  timeformatx = "%Y-%m"; else
+            if (xrange>864000)    timeformatx = "%Y-%m-%d"; else
+            if (xrange>36000)     timeformatx = "%H:%M"; else 
+                                  timeformatx = "%H:%M:%S";
+         }
+
+         var dfx = d3.time.format(timeformatx);
 
           this['x_axis'] = d3.svg.axis()
              .scale(this.x)
              .orient("bottom")
              .tickPadding(xAxisLabelOffset)
              .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
-             .tickFormat(function(d) {
-                 var datime = new Date(timeoffset + (d * 1000));
-                 return dfx(datime); })
+             .tickFormat(function(d) { return dfx(new Date(timeoffsetx + d*1000)); })
              .ticks(n1ax);
       }
       else if (this.options.Logx) {
@@ -3534,31 +3534,26 @@ var gStyle = {
       }
 
       var yrange = this.ymax - this.ymin;
-
       if (this.histo['fYaxis']['fTimeDisplay']) {
          if (n1ay > 8) n1ay = 8;
-         var timeoffset = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
-         dfy = d3.time.format("%Mm%S");
-
-         if (yrange>31536000)
-            dfy = d3.time.format("%Y");
-         else if (yrange>2419200)
-            dfy = d3.time.format("%Y/%m");
-         else if (yrange>86400)
-            dfy = d3.time.format("%Y/%m/%d");
-         else if (yrange>3600)
-            dfy = d3.time.format("%Hh%Mm%S");
-         else if (yrange>60)
-            dfy = d3.time.format("%Hh%M");
+         var timeformaty = JSROOTPainter.getTimeFormat(this.histo['fYaxis']);
+         var timeoffsety = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
+         
+         if (timeformaty.length == 0) {
+            if (yrange>315360000) timeformaty = "%Y"; else
+            if (yrange>24192000)  timeformaty= "%Y-%m"; else
+            if (yrange>864000)    timeformaty = "%Y-%m-%d"; else
+            if (yrange>36000)     timeformaty = "%H:%M"; else 
+                                  timeformaty = "%H:%M:%S";
+         }
+         var dfy = d3.time.format(timeformaty);
 
          this['y_axis'] = d3.svg.axis()
                .scale(this.y)
                .orient("left")
                .tickPadding(yAxisLabelOffset)
                .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
-               .tickFormat(function(d) {
-                   var datime = new Date(timeoffset + (d * 1000));
-                   return dfy(datime); })
+               .tickFormat(function(d) { return dfy(new Date(timeoffsety + d * 1000)); })
                .ticks(n1ay);
       }
       else if (this.options.Logy) {

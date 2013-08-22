@@ -176,7 +176,13 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    if (!CompareFields(cont->GetFieldsMap(), (dohistory ? prop_time : 0))) {
       fNodeChanged = true;
       if (dohistory) {
-         if (fHist()->fRecordTime) cont->Field(prop_time).SetStr(GetTimeStr());
+         if (fHist()->fRecordTime) {
+            dabc::DateTime tm;
+            tm.GetNow();
+            char sbuf[100];
+            tm.AsJSString(sbuf, sizeof(sbuf));
+            cont->Field(prop_time).SetStr(sbuf);
+         }
          AddHistory(BuildDiff(cont->GetFieldsMap()));
       }
       SetFieldsMap(cont->TakeFieldsMap());
@@ -423,12 +429,6 @@ std::string dabc::HierarchyContainer::MakeSimpleDiff(const char* oldvalue)
    return res;
 }
 
-std::string dabc::HierarchyContainer::GetTimeStr()
-{
-   return dabc::format("%5.3f", dabc::Now().AsDouble());
-}
-
-
 void dabc::HierarchyContainer::AddHistory(const std::string& diff)
 {
    if (fHist.Capacity()==0) return;
@@ -451,8 +451,14 @@ bool dabc::HierarchyContainer::SetField(const std::string& name, const char* val
                AddHistory(MakeSimpleDiff(oldvalue));
 
             // record time
-            if (fHist()->fRecordTime)
-               dabc::RecordContainer::SetField(prop_time, GetTimeStr().c_str(), 0);
+            if (fHist()->fRecordTime) {
+               dabc::DateTime tm;
+               tm.GetNow();
+               char sbuf[100];
+               tm.AsJSString(sbuf, sizeof(sbuf));
+
+               dabc::RecordContainer::SetField(prop_time, sbuf, 0);
+            }
 
             fNodeChanged = true;
 

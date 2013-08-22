@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+22.08.2013
+1. Fix small problem with gauge display.
+2. Introduce UTC time for any kind of time recording.
+3. Fix several problems with time display on JavaScript side. 
+
+
 31.07.2013
 1. In RootSniffer try to use asynchronous timer - it is working! Means one can
    get access to all ROOT objects without frequent calling of gSystem->ProcessEvents().
