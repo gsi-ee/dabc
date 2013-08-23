@@ -262,7 +262,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    TCanvas* can = (TCanvas*) fCanvas;
    if ((can!=0) && (h2!=0)) {
       can->cd();
-      h2->Draw("colz");
+      h2->Draw("col");
       can->Modified();
       can->Update();
    }

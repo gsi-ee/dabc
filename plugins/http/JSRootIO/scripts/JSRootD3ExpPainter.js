@@ -3393,6 +3393,11 @@ var gStyle = {
          if ('dfx' in this) {
             return this.dfx(new Date(this.timeoffsetx + value*1000));            
          }
+         
+         // if (Math.abs(value)<1e-14) console.log("Small x = " + value + "  range = " + this.xrange);
+         
+         if (Math.abs(value)<1e-14) 
+            if (Math.abs(this.xmax - this.xmin)>1e-5) value = 0;
          return value.toPrecision(4);
       }
       
@@ -3400,6 +3405,8 @@ var gStyle = {
          if ('dfy' in this) {
             return this.dfy(new Date(this.timeoffsety + value*1000));            
          }
+         if (Math.abs(value)<1e-14) 
+            if (Math.abs(this.ymax - this.ymin)>1e-5) value = 0;
          return value.toPrecision(4);
       }
 
@@ -3902,8 +3909,8 @@ var gStyle = {
       this.CreateXY();
       this.CountStat();
       this.DrawGrids();
-      this.DrawBins();
       this.DrawAxes();
+      this.DrawBins();
       this.DrawTitle();
       this.DrawFunctions();
 //    if (console) console.timeEnd("Redraw");
@@ -4531,7 +4538,7 @@ var gStyle = {
                              " \nerror y = " + this.histo.getBinError(pmax+1).toPrecision(4);
             }  else { 
                point['width'] = grx2-grx1;
-                 
+               
                point['tip'] = "bin = " + (pmax+1) + "\n" +  
                               "x = [" + this.AxisAsText("x",x1) +", " + this.AxisAsText("x",x2) + "]\n" + 
                               "entries = " + cont;
@@ -4834,10 +4841,10 @@ var gStyle = {
 
       painter.DrawGrids();
 
+      painter.DrawAxes();
+
       painter.DrawBins();
 
-      painter.DrawAxes();
-      
       //$("#report").append("<br> title");
       painter.DrawTitle();
 
@@ -5477,10 +5484,10 @@ var gStyle = {
 
       painter.DrawGrids();
 
+      painter.DrawAxes();
+
       painter.DrawBins();
 
-      painter.DrawAxes();
-      
       painter.DrawTitle();
 
       painter.DrawFunctions();

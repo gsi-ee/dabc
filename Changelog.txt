@@ -7,6 +7,7 @@ of the framework.
 2. Also asynchronous readout of FESA double variable is implemented. 
    Introduce mutex to allow work from several threads.
 3. Show correct time format in tooltip (when time axis is specified).
+   Fix problem for axis value near 0 - now it is shown as 0 in tooltip.
 
 
 22.08.2013
