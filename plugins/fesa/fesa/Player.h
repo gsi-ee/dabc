@@ -25,6 +25,7 @@
 
 class rdaDeviceHandle;
 class rdaRDAService;
+class DabcReportHandler;
 
 namespace fesa {
 
@@ -41,6 +42,7 @@ namespace fesa {
 
          virtual void AfterModuleStop() {}
 
+         dabc::Mutex     fHierarchyMutex;
          dabc::Hierarchy fHierarchy;
 
          unsigned fCounter;
@@ -58,6 +60,7 @@ namespace fesa {
          
          rdaRDAService* fRDAService;
          rdaDeviceHandle* fDevice;
+         DabcReportHandler* fHandler;
          
          double doGet(const std::string& service, const std::string& field);
 
@@ -73,6 +76,8 @@ namespace fesa {
          virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
+         
+         void ReportServiceChanged(const std::string& name, double v);
    };
 }
 

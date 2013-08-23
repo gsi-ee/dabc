@@ -20,7 +20,7 @@
     </HttpServer>
 
     <Module name="fesa" class="fesa::Player">
-       <Synchron value="true"/>
+       <Synchron value="false"/>
        <Server value="DummyDevice_DU.linev.asl732"/>
        <Device value="MyDevice"/>
        <Cycles value=""/>

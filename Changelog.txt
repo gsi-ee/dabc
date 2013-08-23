@@ -4,6 +4,8 @@ of the framework.
 
 23.08.2013
 1. First working code for synchronous readout of FESA variable from test server.
+2. Also asynchronous readout of FESA double variable is implemented. 
+   Introduce mutex to allow work from several threads.
 
 
 22.08.2013

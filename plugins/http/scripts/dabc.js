@@ -865,7 +865,11 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    JSROOTPainter.AdjustTGraphRanges(gr);
 
    gr['fHistogram']['fTitle'] = this.itemname;
-   gr['fHistogram']['fYaxis']['fXmin'] = 0;
+   if (gr['fHistogram']['fYaxis']['fXmin']>0)
+      gr['fHistogram']['fYaxis']['fXmin'] = 0;
+   else
+      gr['fHistogram']['fYaxis']['fXmin'] *= 1.2;
+
    gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
    
    gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
