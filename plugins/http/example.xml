@@ -19,7 +19,14 @@
        <clients value="true"/>
     </HttpServer>
 
-    <Module name="fesa" class="fesa::Player"/>
+    <Module name="fesa" class="fesa::Player">
+       <Synchron value="true"/>
+       <Server value="DummyDevice_DU.linev.asl732"/>
+       <Device value="MyDevice"/>
+       <Cycles value=""/>
+       <Service value="GetMeasVoltage"/>
+       <Field value="measVoltage"/>
+    </Module>
 
     <Module name="mbs" class="mbs::Player">
        <node value="X86G-45"/>

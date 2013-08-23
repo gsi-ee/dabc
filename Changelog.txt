@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+23.08.2013
+1. First working code for synchronous readout of FESA variable from test server.
+
+
 22.08.2013
 1. Fix small problem with gauge display.
 2. Introduce UTC time for any kind of time recording.

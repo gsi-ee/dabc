@@ -20,6 +20,24 @@ FESA_DEFINITIONS += WITH_ROOT
 FESA_INCLUDES += $(DABC_ROOTINCDIR) 
 endif
 
+ifndef RDA_HOME
+RDA_HOME = /opt/fesa/fesa-3rdparty/1.0.0
+endif
+
+ifneq  ($(wildcard $(RDA_HOME)/*),)
+FESA_DEFINITIONS += WITH_FESA
+FESA_INCLUDES += $(RDA_HOME)/include
+FESA_LIBS += -lomniORB4 -lomnithread -lcrypto -lcurl -lpthread
+FESA_STATIC += $(RDA_HOME)/lib/x86_64/libcmw-rda.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-rbac.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-directory-client.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-serializer.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-log-stomp.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-stomp.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-log.a \
+               $(RDA_HOME)/lib/x86_64/libcmw-util.a \
+               $(RDA_HOME)/lib/x86_64/libiceutil.a
+endif
 
 FESADIRI         = $(FESADIR)/fesa
 FESADIRS         = $(FESADIR)/src
@@ -51,10 +69,11 @@ libs:: $(DABCFESA_LIB)
 #$(DABCFESA_LIB): LDFLAGS += -lrt
 
 $(DABCFESA_LIB):   $(DABCFESA_O)
-	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O)" $(TGTDLLPATH) 
+	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) 
 
 ########### extra rules #############
 $(FESA_O) $(FESA_D) : DEFINITIONS += $(FESA_DEFINITIONS) 
 $(FESA_O) $(FESA_D) : INCLUDES += $(FESA_INCLUDES) $(FESADIR)
+$(DABCFESA_LIB): LDFLAGS += $(FESA_LIBS)
 
 include $(DABCSYS)/config/Makefile.rules

@@ -18,6 +18,13 @@
 #include <stdlib.h>
 #include <math.h>
 
+#ifdef WITH_FESA
+#include <cmw-rda/RDAService.h>
+#include <cmw-rda/Config.h>
+#include <cmw-rda/DeviceHandle.h>
+#include <cmw-rda/ReplyHandler.h>
+#endif
+
 #ifdef WITH_ROOT
 #include "dabc_root/BinaryProducer.h"
 #include "TH2.h"
@@ -32,7 +39,9 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fCounter(0),
    fProducer(),
    fHist(0),
-   fCanvas(0)
+   fCanvas(0),
+   fRDAService(0),
+   fDevice(0)
 {
    fHierarchy.Create("FESA");
 
@@ -48,10 +57,35 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item = fHierarchy.CreateChild("TestRate");
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100,"value");
+   
+   fSynchron = Cfg("Synchron", cmd).AsBool(true);
+   fServerName = Cfg("Server", cmd).AsStdStr();
+   fDeviceName = Cfg("Device", cmd).AsStdStr();
+   fCycles = Cfg("Cycles", cmd).AsStdStr();
+   fService = Cfg("Service", cmd).AsStdStr();
+   fField = Cfg("Field", cmd).AsStdStr();
 
    CreateTimer("update", 1., false);
 
    fCounter = 0;
+   
+   #ifdef WITH_FESA
+   if (!fServerName.empty() && !fDeviceName.empty()) {
+      fRDAService = rdaRDAService::init();
+
+      try {
+         fDevice = fRDAService->getDeviceHandle(fDeviceName.c_str(), fServerName.c_str());
+      } catch (...) {
+         EOUT("Device %s on server %s not found", fDeviceName.c_str(), fServerName.c_str());
+      }
+      
+      if ((fDevice!=0) && !fService.empty()) {
+         item = fHierarchy.CreateChild(fService);
+         item.Field(dabc::prop_kind).SetStr("rate");
+         item.EnableHistory(100,"value");
+      }
+   }
+   #endif
 
    #ifdef WITH_ROOT
 
@@ -73,15 +107,16 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    gROOT->SetBatch(kTRUE);
    TCanvas* can = new TCanvas("can1", "can1", 3);
    fCanvas = can;
-
-
    #endif
-
 }
 
 fesa::Player::~Player()
 {
-#ifdef WITH_ROOT
+   #ifdef WITH_FESA
+   
+   #endif
+  
+   #ifdef WITH_ROOT
    if (fCanvas) {
       delete (TCanvas*) fCanvas;
       fCanvas = 0;
@@ -90,7 +125,7 @@ fesa::Player::~Player()
       delete (TH2I*) fHist;
       fHist = 0;
    }
-#endif
+   #endif
 
    //fHierarchy.Destroy();
 }
@@ -152,6 +187,15 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
       can->Update();
    }
 #endif
+
+
+   #ifdef WITH_FESA
+   if ((fDevice!=0) && !fService.empty()) {
+      double res = doGet(fService, fField);
+      fHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
+      DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
+   }
+   #endif
 
 
 #ifdef DABC_EXTRA_CHECKS
@@ -222,5 +266,33 @@ void fesa::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
    dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
 
    fHierarchy()->BuildHierarchy(cont);
+}
+
+
+
+double fesa::Player::doGet(const std::string& service, const std::string& field)
+{
+   double res = 0.;
+  
+   #ifdef WITH_FESA
+      if (fDevice==0) return 0.;
+      try {
+        rdaData context;
+        rdaData* value = fDevice->get(service.c_str(), fCycles.c_str(), context);
+        if (value!=0) {
+          res = value->extractDouble(field.c_str());
+          delete value;
+        }
+   }
+   catch (const rdaException& ex)
+   {
+     EOUT("Exception caught in doGet: %s  %s", ex.getType(), ex.getMessage());
+   }
+   catch (...)
+   {
+        EOUT("Uncknown exception caught in doGet");;
+   }
+   #endif
+   return res;
 }
 

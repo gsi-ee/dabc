@@ -23,6 +23,8 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+class rdaDeviceHandle;
+class rdaRDAService;
 
 namespace fesa {
 
@@ -46,6 +48,18 @@ namespace fesa {
          dabc::Reference fProducer;   ///< binary producer for ROOT objects
          void* fHist;                 ///< ROOT histogram
          void* fCanvas;               ///< canvas for image generation
+         
+         bool  fSynchron;            ///< is request synchron or asynchron
+         std::string fServerName;    ///< FESA server name
+         std::string fDeviceName;    ///< FESA device name
+         std::string fCycles;        ///< cycles parameter
+         std::string fService;       ///< service name
+         std::string fField;         ///< field name in the service
+         
+         rdaRDAService* fRDAService;
+         rdaDeviceHandle* fDevice;
+         
+         double doGet(const std::string& service, const std::string& field);
 
       public:
 
