@@ -2443,11 +2443,11 @@ var gStyle = {
       
       function TooltipText(d) {
          if (pthis.draw_errors && ('exlow' in d))
-            return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4) +
-                   "\nerror x = -" + d.exlow.toPrecision(4) + "/+" + d.exhigh.toPrecision(4) +
-                   "\nerror y = -" + d.eylow.toPrecision(4) + "/+" + d.eyhigh.toPrecision(4);
+            return "x = " + pthis.first.AxisAsText("x", d.x) + " \ny = " + pthis.first.AxisAsText("y", d.y) +
+                   "\nerror x = -" + pthis.first.AxisAsText("x", d.exlow) + "/+" + pthis.first.AxisAsText("x", d.exhigh) +
+                   "\nerror y = -" + pthis.first.AxisAsText("y", d.eylow) + "/+" + pthis.first.AxisAsText("y", d.eyhigh);
          else 
-            return "x = " + d.x.toPrecision(4) + " \ny = " + d.y.toPrecision(4);
+            return "x = " + pthis.first.AxisAsText("x", d.x) + " \ny = " + pthis.first.AxisAsText("y", d.y);
       }
       
       var x = this.first.x;
@@ -3386,6 +3386,26 @@ var gStyle = {
       alert("HistPainter.DrawBins not implemented");
    }
    
+   JSROOTPainter.HistPainter.prototype.AxisAsText = function(axis, value)
+   {
+      if (axis=="x") {
+         // this is indication  
+         if ('dfx' in this) {
+            return this.dfx(new Date(this.timeoffsetx + value*1000));            
+         }
+         return value.toPrecision(4);
+      }
+      
+      if (axis=="y") {
+         if ('dfy' in this) {
+            return this.dfy(new Date(this.timeoffsety + value*1000));            
+         }
+         return value.toPrecision(4);
+      }
+
+      return value.toPrecision(4);
+   }
+   
    JSROOTPainter.HistPainter.prototype.DrawAxes = function() {
       // axes can be drawn only for main (first) histogram
       
@@ -3473,7 +3493,8 @@ var gStyle = {
       if (this.histo['fXaxis']['fTimeDisplay']) {
          if (n1ax > 8) n1ax = 8;
          var timeformatx = JSROOTPainter.getTimeFormat(this.histo['fXaxis']);
-         var timeoffsetx = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
+
+         this['timeoffsetx'] = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
          
          if (timeformatx.length == 0) {
             if (xrange>315360000) timeformatx = "%Y"; else
@@ -3483,14 +3504,14 @@ var gStyle = {
                                   timeformatx = "%H:%M:%S";
          }
 
-         var dfx = d3.time.format(timeformatx);
+         this['dfx'] = d3.time.format(timeformatx);
 
-          this['x_axis'] = d3.svg.axis()
+         this['x_axis'] = d3.svg.axis()
              .scale(this.x)
              .orient("bottom")
              .tickPadding(xAxisLabelOffset)
              .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
-             .tickFormat(function(d) { return dfx(new Date(timeoffsetx + d*1000)); })
+             .tickFormat(function(d) { return pthis.dfx(new Date(pthis.timeoffsetx + d*1000)); })
              .ticks(n1ax);
       }
       else if (this.options.Logx) {
@@ -3537,7 +3558,8 @@ var gStyle = {
       if (this.histo['fYaxis']['fTimeDisplay']) {
          if (n1ay > 8) n1ay = 8;
          var timeformaty = JSROOTPainter.getTimeFormat(this.histo['fYaxis']);
-         var timeoffsety = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
+         
+         this['timeoffsety'] = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
          
          if (timeformaty.length == 0) {
             if (yrange>315360000) timeformaty = "%Y"; else
@@ -3546,14 +3568,15 @@ var gStyle = {
             if (yrange>36000)     timeformaty = "%H:%M"; else 
                                   timeformaty = "%H:%M:%S";
          }
-         var dfy = d3.time.format(timeformaty);
+         
+         this['dfy'] = d3.time.format(timeformaty);
 
          this['y_axis'] = d3.svg.axis()
                .scale(this.y)
                .orient("left")
                .tickPadding(yAxisLabelOffset)
                .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
-               .tickFormat(function(d) { return dfy(new Date(timeoffsety + d * 1000)); })
+               .tickFormat(function(d) { return pthis.dfy(new Date(pthis.timeoffsety + d * 1000)); })
                .ticks(n1ay);
       }
       else if (this.options.Logy) {
@@ -4503,14 +4526,14 @@ var gStyle = {
          if (gStyle.Tooltip > 1) {
             if (this.options.Error > 0) {
                point['x'] = (grx1 + grx2)/2;
-               point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " + cont.toPrecision(4) +
+               point['tip'] = "x = " + this.AxisAsText("x", x1) + " \ny = " + this.AxisAsText("y",cont) +
                              " \nerror x = " + ((x2-x1)/2).toPrecision(4) +
                              " \nerror y = " + this.histo.getBinError(pmax+1).toPrecision(4);
             }  else { 
                point['width'] = grx2-grx1;
                  
                point['tip'] = "bin = " + (pmax+1) + "\n" +  
-                              "x = [" + x1.toPrecision(4) +", " + x2.toPrecision(4) + "]\n" + 
+                              "x = [" + this.AxisAsText("x",x1) +", " + this.AxisAsText("x",x2) + "]\n" + 
                               "entries = " + cont;
             }
          }
@@ -5277,13 +5300,14 @@ var gStyle = {
             }
             
             if (tipkind == 1)
-               point['tip'] = "x = [" + x1.toPrecision(4) + ", " + x2.toPrecision(4) + 
-                             "] \ny = [" + y1.toPrecision(4) + ", " + y2.toPrecision(4) + 
-                            "] \nentries = " + binz;
+               point['tip'] = "x = [" + this.AxisAsText("x", x1) + ", " + this.AxisAsText("x", x2) + "]\n"+ 
+                              "y = [" + this.AxisAsText("y", y1) + ", " + this.AxisAsText("y", y2) + "]\n"+ 
+                              "entries = " + binz;
             else 
             if (tipkind == 2)
-                point['tip'] = "x = " + x1.toPrecision(4) + " \ny = " +
-                                y1.toPrecision(4) + " \nentries = " + binz; 
+                point['tip'] = "x = " + this.AxisAsText("x", x1) + "\n" + 
+                               "y = " + this.AxisAsText("y", y1) + "\n" +
+                               "entries = " + binz; 
 
             local_bins.push(point);
          }

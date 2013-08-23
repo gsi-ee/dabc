@@ -6,6 +6,7 @@ of the framework.
 1. First working code for synchronous readout of FESA variable from test server.
 2. Also asynchronous readout of FESA double variable is implemented. 
    Introduce mutex to allow work from several threads.
+3. Show correct time format in tooltip (when time axis is specified).
 
 
 22.08.2013
