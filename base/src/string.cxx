@@ -102,7 +102,8 @@ std::string dabc::size_to_str(unsigned long sz, int prec, int select)
 
 bool dabc::str_to_int(const char* val, int* res)
 {
-   if (val==0) return false;
+   if ((val==0) || (res==0)) return false;
+
    while (*val==' ') val++;
    if (*val==0) return false;
 
@@ -119,7 +120,8 @@ bool dabc::str_to_int(const char* val, int* res)
 
 bool dabc::str_to_uint(const char* val, unsigned* res)
 {
-   if (val==0) return false;
+   if ((val==0) || (res==0)) return false;
+
    while (*val==' ') val++;
    if (*val==0) return false;
 
@@ -132,7 +134,8 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
 
 bool dabc::str_to_luint(const char* val, long unsigned* res)
 {
-   if (val==0) return false;
+   if ((val==0) || (res==0)) return false;
+
    while (*val==' ') val++;
    if (*val==0) return false;
 
@@ -145,6 +148,8 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
 
 bool dabc::str_to_double(const char* val, double* res)
 {
+   if ((val==0) || (res==0)) return false;
+
    if (sscanf(val, "%lf", res) == 1) return true;
 
    unsigned ures(0);
@@ -153,4 +158,13 @@ bool dabc::str_to_double(const char* val, double* res)
 
    return false;
 }
+
+bool dabc::str_to_bool(const char* val, bool* res)
+{
+   if ((val==0) || (res==0)) return false;
+   if (strcmp(val, "true")==0) { *res = true; return true; }
+   if (strcmp(val, "false")==0) { *res = false; return true; }
+   return false;
+}
+
 

@@ -23,69 +23,6 @@
 #include <cmw-rda/Config.h>
 #include <cmw-rda/DeviceHandle.h>
 #include <cmw-rda/ReplyHandler.h>
-
-
-class DabcReportHandler : public rdaReplyHandler
-{
-  public:
-    fesa::Player* fPlayer;
-    std::string fService;
-    std::string fField;
-    rdaRequest* fRequest;
-    rdaData fContext;
-  
-    DabcReportHandler(fesa::Player* p, const std::string& serv, const std::string& fld) :
-       rdaReplyHandler(),
-       fPlayer(p),
-       fService(serv),
-       fField(fld),
-       fRequest(0),
-       fContext()
-       {
-       }
-  
-       bool subscribe(rdaDeviceHandle* device, const std::string& cycle)
-       {
-         try {
-           fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
-           return fRequest!=0;
-         } catch (const rdaException& ex) {
-            EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
-         }
-         return false;
-      }
-      
-      bool unsubscribe(rdaDeviceHandle* device)
-      {
-         try {
-           if (fRequest) device->monitorOff(fRequest);
-           fRequest = 0;
-           return true;
-        }  catch (const rdaException& ex) {
-           EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
-        }
-        return false;
-      }
-
-  
-      virtual void handleReply(const rdaRequest& rq, const rdaData& value)
-      {
-          try
-          {
-            double v = value.extractDouble(fField.c_str());
-            if (fPlayer) fPlayer->ReportServiceChanged(fService, v);
-          }
-          catch (const rdaException& ex)
-          {
-            EOUT( "Exception caught in GSIVoltageHandler: %s %s", ex.getType(), ex.getMessage());
-          }
-          catch (...)
-          {
-             EOUT("Uncknown exception caught in handleReply");
-          }
-      }
-};
-
 #endif
 
 #ifdef WITH_ROOT
@@ -105,8 +42,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fHist(0),
    fCanvas(0),
    fRDAService(0),
-   fDevice(0),
-   fHandler(0)
+   fDevice(0)
 {
    fHierarchy.Create("FESA");
 
@@ -123,7 +59,6 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100,"value");
    
-   fSynchron = Cfg("Synchron", cmd).AsBool(true);
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
    fCycles = Cfg("Cycles", cmd).AsStdStr();
@@ -148,13 +83,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
          item = fHierarchy.CreateChild(fService);
          item.Field(dabc::prop_kind).SetStr("rate");
          item.EnableHistory(100,"value");
-         
-         if (!fSynchron) {
-           fHandler = new DabcReportHandler(this, fService, fField);
-           fHandler->subscribe(fDevice, fCycles);
-         }
       }
-      
       
    }
    #endif
@@ -184,14 +113,6 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
 fesa::Player::~Player()
 {
-   #ifdef WITH_FESA
-      if (fHandler!=0) {
-         fHandler->unsubscribe(fDevice);
-         delete fHandler;
-         fHandler = 0;
-      }
-   
-   #endif
   
    #ifdef WITH_ROOT
    if (fCanvas) {
@@ -223,7 +144,15 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    fesa::BeamProfile* rec = (fesa::BeamProfile*) (((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader));
    rec->fill(fCounter % 7);
 
-   
+#ifdef WITH_FESA
+   if ((fDevice!=0) && !fService.empty()) {
+      double res = doGet(fService, fField);
+      dabc::LockGuard lock(fHierarchyMutex);
+      fHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
+      DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
+   }
+#endif
+
    dabc::LockGuard lock(fHierarchyMutex);
    
    dabc::Hierarchy item = fHierarchy.FindChild("BeamProfile");
@@ -233,9 +162,15 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    item()->bindata() = buf;
    item.Field(dabc::prop_content_hash).SetInt(fCounter);
 
-
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
    fHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+   int arr[5] = {1,7,4,2,3};
+   fHierarchy.FindChild("BeamRate").Field("arr").SetIntArray(arr,5);
+
+//   std::vector<int> res;
+//   res = fHierarchy.FindChild("BeamRate").Field("arr").AsIntVector();
+//   DOUT0("Get vector of size %u", res.size());
+//   for (unsigned n=0;n<res.size();n++) DOUT0("   arr[%u] = %d", n, res[n]);
 
    v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
    fHierarchy.FindChild("BeamRate2").Field("value").SetStr(dabc::format("%4.2f", v1));
@@ -267,15 +202,6 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
       can->Update();
    }
 #endif
-
-   #ifdef WITH_FESA
-   if ((fDevice!=0) && !fService.empty() && fSynchron) {
-      double res = doGet(fService, fField);
-      fHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
-      DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
-   }
-   #endif
-
 
 #ifdef DABC_EXTRA_CHECKS
 //   if (fCounter % 10 == 0)
@@ -349,14 +275,6 @@ void fesa::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
    dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
 
    fHierarchy()->BuildHierarchy(cont);
-}
-
-void fesa::Player::ReportServiceChanged(const std::string& name, double v)
-{
-   DOUT0("REPORT FESA SERVICE %s = %5.3f", name.c_str(), v);
-
-   dabc::LockGuard lock(fHierarchyMutex);
-   fHierarchy.FindChild(name.c_str()).Field("value").SetDouble(v);
 }
 
 

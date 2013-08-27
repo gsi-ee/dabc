@@ -24,6 +24,8 @@
 #include "dabc/XmlEngine.h"
 #endif
 
+#include <vector>
+
 namespace dabc {
 
    class RecordContainerMap;
@@ -55,6 +57,17 @@ namespace dabc {
          virtual bool IsEmpty() const;
          virtual bool Set(const char* val, const char* kind);
 
+         /** \brief Method analyzes which kind of quotes is needed to add element to the array:
+          * returns 0 - when no quotes is needed
+          *         1 - when just quotes in the begin and in the end
+          *         2 - when with quotes content should be reformatted */
+         static int NeedQuotes(const char* value);
+
+         /** \brief Expands value, that every special symbol like , or \ or " marked with precidind \
+          * Later such special marks will be removed */
+         static std::string ExpandValue(const char* value);
+
+
       public:
 
          // TODO: one should try to 'hide' this constructor signature while user can think to keep record field for longer time
@@ -66,17 +79,31 @@ namespace dabc {
 
          const char* AsStr(const char* dflt = 0) const { return Get(dflt); }
          const std::string AsStdStr(const std::string& dflt = "") const;
+         std::vector<std::string> AsStrVector(const std::string& dflt = "") const;
          int AsInt(int dflt = 0) const;
+         std::vector<int> AsIntVector(const std::string& dflt = "") const;
          double AsDouble(double dflt = 0.) const;
+         std::vector<double> AsDoubleVector(const std::string& dflt = "") const;
          bool AsBool(bool dflt = false) const;
+         std::vector<bool> AsBoolVector(const std::string& dflt = "") const;
          unsigned AsUInt(unsigned dflt = 0) const;
+         std::vector<unsigned> AsUIntVector(const std::string& dflt = "") const;
 
          bool SetStr(const char* value);
          bool SetStr(const std::string& value);
+         bool SetStrVector(const std::vector<std::string>& vect);
          bool SetInt(int v);
+         bool SetIntVector(const std::vector<int>& vect);
+         bool SetIntArray(int* arr, unsigned size);
          bool SetDouble(double v);
+         bool SetDoubleVector(const std::vector<double>& vect);
+         bool SetDoubleArray(double* arr, unsigned size);
          bool SetBool(bool v);
+         bool SetBoolVector(const std::vector<bool>& vect);
+         bool SetBoolArray(bool* arr, unsigned size);
          bool SetUInt(unsigned v);
+         bool SetUIntVector(const std::vector<unsigned>& vect);
+         bool SetUIntArray(unsigned* arr, unsigned size);
 
          bool DfltStr(const char* value) { return IsEmpty() ? SetStr(value) : false; }
          bool DfltStr(const std::string& value) { return IsEmpty() ? SetStr(value) : false; }
@@ -186,7 +213,9 @@ namespace dabc {
 
          bool SaveAttributesInXmlNode(XMLNodePointer_t node);
 
-         bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
+         bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = true, bool checkarray = false, const ResolveFunc& func = 0);
+
+         std::string ReadArrayFromNode(XMLNodePointer_t node, const ResolveFunc& func);
    };
 
    // ______________________________________________________________________________

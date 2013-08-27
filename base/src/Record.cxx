@@ -57,6 +57,54 @@ const std::string dabc::RecordField::AsStdStr(const std::string& dflt) const
    return res==0 ? dflt : std::string(res);
 }
 
+std::vector<std::string> dabc::RecordField::AsStrVector(const std::string& dflt) const
+{
+   std::string sarr = AsStdStr(dflt);
+
+   std::vector<std::string> res;
+
+   if (sarr.empty()) return res;
+
+   if (sarr[0] != '[') { res.push_back(sarr); return res; }
+
+   size_t pos = 1;
+
+   while (pos < sarr.length()) {
+
+      while (sarr[pos] == ' ') pos++;
+
+      if (sarr[pos] != '\"') {
+         // simple case, just find next ',' symbol
+         size_t p0 = pos;
+         while ((pos < sarr.length()) && (sarr[pos]!=',')) pos++;
+         if (pos==sarr.length()) pos--;
+         res.push_back(sarr.substr(p0, pos-p0));
+         pos++;
+      } else {
+         std::string item;
+         pos++;
+         while (pos < sarr.length()) {
+            if (sarr[pos] == '\"') { pos++; break; }
+            if (sarr[pos] == '\\') pos++; // every first backslash is mark for special symbol
+            item+=sarr[pos++]; // now just add any symbol
+         }
+         if (pos>=sarr.length()) {
+            EOUT("Problem in array %s decoding", sarr.c_str());
+            break;
+         }
+         if ((sarr[pos]!=',') && (sarr[pos]!=']')) {
+            EOUT("Problem in array %s decoding", sarr.c_str());
+            break;
+         }
+         res.push_back(item);
+         pos++;
+      }
+   }
+
+   return res;
+}
+
+
 int dabc::RecordField::AsInt(int dflt) const
 {
    const char* val = Get();
@@ -65,6 +113,24 @@ int dabc::RecordField::AsInt(int dflt) const
    if (dabc::str_to_int(val, &res)) return res;
    return dflt;
 }
+
+#define GET_VECTOR_MACRO(typ,conv)                           \
+   std::vector<std::string> svect = AsStrVector(dflt);       \
+   std::vector<typ> res;                                     \
+   for (unsigned n=0;n<svect.size();n++) {                   \
+      typ val(0);                                            \
+      if (!conv(svect[n].c_str(), &val)) val = 0;            \
+      res.push_back(val);                                    \
+   }                                                         \
+   return res;
+
+
+
+std::vector<int> dabc::RecordField::AsIntVector(const std::string& dflt) const
+{
+   GET_VECTOR_MACRO(int,dabc::str_to_int)
+}
+
 
 double dabc::RecordField::AsDouble(double dflt) const
 {
@@ -75,17 +141,26 @@ double dabc::RecordField::AsDouble(double dflt) const
    return dflt;
 }
 
+std::vector<double> dabc::RecordField::AsDoubleVector(const std::string& dflt) const
+{
+   GET_VECTOR_MACRO(double,dabc::str_to_double)
+}
+
 bool dabc::RecordField::AsBool(bool dflt) const
 {
    const char* val = Get();
    if (val==0) return dflt;
 
-   if (strcmp(val, xmlTrueValue)==0) return true; else
-   if (strcmp(val, xmlFalseValue)==0) return false;
-
+   bool res(false);
+   if (dabc::str_to_bool(val, &res)) return res;
    return dflt;
-
 }
+
+std::vector<bool> dabc::RecordField::AsBoolVector(const std::string& dflt) const
+{
+   GET_VECTOR_MACRO(bool,dabc::str_to_bool)
+}
+
 
 unsigned dabc::RecordField::AsUInt(unsigned dflt) const
 {
@@ -97,22 +172,97 @@ unsigned dabc::RecordField::AsUInt(unsigned dflt) const
    return dflt;
 }
 
+std::vector<unsigned> dabc::RecordField::AsUIntVector(const std::string& dflt) const
+{
+   GET_VECTOR_MACRO(unsigned,dabc::str_to_uint)
+}
+
+
 bool dabc::RecordField::SetStr(const char* value)
 {
    return Set(value, kind_str());
 }
-
 
 bool dabc::RecordField::SetStr(const std::string& value)
 {
    return Set(value.c_str(), kind_str());
 }
 
+int dabc::RecordField::NeedQuotes(const char* value)
+{
+   if (value==0) return 0;
+   if (*value==0) return 1;
+   return strpbrk(value,"\"\\ ,[]")!=0 ? 2 : 1;
+}
+
+std::string dabc::RecordField::ExpandValue(const char* value)
+{
+   std::string res = "";
+   const char* p = value;
+
+   while (*p != 0) {
+      switch(*p) {
+         case '\\': res+="\\\\"; break;
+         case '\"': res+="\\\""; break;
+         default: res += *p;
+      }
+      p++;
+   }
+
+   return res;
+}
+
+bool dabc::RecordField::SetStrVector(const std::vector<std::string>& arr)
+{
+   if (arr.size()==0) return SetStr("");
+
+   if (arr.size()==1) return SetStr(arr[0]);
+
+   std::string sarr;
+   for (unsigned n=0;n<arr.size();n++) {
+      sarr += sarr.empty() ? "[" : ", ";
+      switch (NeedQuotes(arr[n].c_str())) {
+         case 1: sarr += "\""; sarr += arr[n]; sarr += "\""; break;
+         case 2: sarr += "\""; sarr += ExpandValue(arr[n].c_str()); sarr += "\""; break;
+         default: sarr+=arr[n]; break;
+      }
+   }
+   sarr+=']';
+   return SetStr(sarr);
+}
+
+
 bool dabc::RecordField::SetInt(int v)
 {
    char buf[100];
    sprintf(buf,"%d",v);
    return Set(buf, kind_int());
+}
+
+#define SET_ARRAY_MACRO(SZ,FMT,func)        \
+      std::string sarr;                     \
+      char sbuf[100];                       \
+      for (unsigned n=0;n<SZ;n++) {         \
+         sarr += sarr.empty() ? "[" : ", "; \
+         func(sbuf,FMT,arr[n]);             \
+         sarr += sbuf;                      \
+      }                                     \
+      sarr+=']';                            \
+      return SetStr(sarr);
+
+
+bool dabc::RecordField::SetIntVector(const std::vector<int>& arr)
+{
+   if (arr.size()==0) return SetStr("");
+   if (arr.size()==1) return SetInt(arr[0]);
+   SET_ARRAY_MACRO(arr.size(), "%d", sprintf)
+}
+
+bool dabc::RecordField::SetIntArray(int* arr, unsigned size)
+{
+   if ((arr==0) || (size==0)) return SetStr("");
+   if (size==1) return SetInt(arr[0]);
+   SET_ARRAY_MACRO(size, "%d", sprintf)
 }
 
 bool dabc::RecordField::SetDouble(double v)
@@ -122,10 +272,45 @@ bool dabc::RecordField::SetDouble(double v)
    return Set(buf, kind_double());
 }
 
+bool dabc::RecordField::SetDoubleVector(const std::vector<double>& arr)
+{
+   if (arr.size()==0) return SetStr("");
+   if (arr.size()==1) return SetDouble(arr[0]);
+   SET_ARRAY_MACRO(arr.size(), "%g", sprintf)
+}
+
+bool dabc::RecordField::SetDoubleArray(double* arr, unsigned size)
+{
+   if ((arr==0) || (size==0)) return SetStr("");
+   if (size==1) return SetDouble(arr[0]);
+   SET_ARRAY_MACRO(size, "%g", sprintf)
+}
+
 bool dabc::RecordField::SetBool(bool v)
 {
    return Set(v ? xmlTrueValue : xmlFalseValue, kind_bool());
 }
+
+void scopybool(char* tgt, const char* fmt, bool val)
+{
+   strcpy(tgt, val ? dabc::xmlTrueValue : dabc::xmlFalseValue);
+}
+
+
+bool dabc::RecordField::SetBoolVector(const std::vector<bool>& arr)
+{
+   if (arr.size()==0) return SetStr("");
+   if (arr.size()==1) return SetBool(arr[0]);
+   SET_ARRAY_MACRO(arr.size(), "%b", scopybool)
+}
+
+bool dabc::RecordField::SetBoolArray(bool* arr, unsigned size)
+{
+   if ((arr==0) || (size==0)) return SetStr("");
+   if (size==1) return SetBool(arr[0]);
+   SET_ARRAY_MACRO(size, "%b", scopybool)
+}
+
 
 bool dabc::RecordField::SetUInt(unsigned v)
 {
@@ -133,6 +318,21 @@ bool dabc::RecordField::SetUInt(unsigned v)
    sprintf(buf, "%u", v);
    return Set(buf, kind_unsigned());
 }
+
+bool dabc::RecordField::SetUIntVector(const std::vector<unsigned>& arr)
+{
+   if (arr.size()==0) return SetStr("");
+   if (arr.size()==1) return SetDouble(arr[0]);
+   SET_ARRAY_MACRO(arr.size(), "%u", sprintf)
+}
+
+bool dabc::RecordField::SetUIntArray(unsigned* arr, unsigned size)
+{
+   if ((arr==0) || (size==0)) return SetStr("");
+   if (size==1) return SetDouble(arr[0]);
+   SET_ARRAY_MACRO(size, "%u", sprintf)
+}
+
 
 // --------------------------------------------------------------------------------------
 
@@ -389,7 +589,7 @@ dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t par
    return node;
 }
 
-bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite, const ResolveFunc& func)
+bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite,  bool checkarray, const ResolveFunc& func)
 {
    if (node==0) return false;
 
@@ -407,6 +607,11 @@ bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overw
       attr = Xml::GetNextAttr(attr);
    }
 
+   if (checkarray) {
+      std::string arr = ReadArrayFromNode(node, func);
+      if (!arr.empty()) SetField("", arr.c_str(), 0);
+   }
+
    XMLNodePointer_t child = Xml::GetChild(node);
 
    while (child!=0) {
@@ -414,11 +619,18 @@ bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overw
       if (strcmp(Xml::GetNodeName(child), "dabc:field")==0) {
 
          const char* attrname = Xml::GetAttr(child,"name");
-         const char* attrvalue = Xml::GetAttr(child,"value");
 
          if (attrname!=0)
-            if (overwrite || (GetField(attrname)==0))
-               SetField(attrname, func.Resolve(attrvalue), 0);
+            if (overwrite || (GetField(attrname)==0)) {
+               const char* attrvalue = Xml::GetAttr(child,"value");
+
+               if (attrvalue!=0)
+                  SetField(attrname, func.Resolve(attrvalue), 0);
+               else {
+                  std::string arr = ReadArrayFromNode(child, func);
+                  if (!arr.empty()) SetField(attrname, arr.c_str(), 0);
+               }
+            }
       }
 
       child = Xml::GetNext(child);
@@ -428,6 +640,52 @@ bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overw
    return true;
 }
 
+std::string dabc::RecordContainer::ReadArrayFromNode(XMLNodePointer_t node, const ResolveFunc& func)
+{
+   std::string arr;
+   int size(0);
+
+   XMLNodePointer_t child = Xml::GetChild(node);
+
+   while (child!=0) {
+
+      if (strcmp(Xml::GetNodeName(child), "item")==0) {
+
+         const char* itemvalue = Xml::GetAttr(child,"value");
+
+         if (itemvalue!=0) {
+            itemvalue = func.Resolve(itemvalue);
+            size++;
+
+            if (arr.empty())
+               arr += "[";
+            else
+               arr += ", ";
+
+            switch (RecordField::NeedQuotes(itemvalue)) {
+               case 1:
+                  arr +="\"";
+                  arr += itemvalue;
+                  arr +="\"";
+                  break;
+               case 2:
+                  arr +="\"";
+                  arr += RecordField::ExpandValue(itemvalue);
+                  arr +="\"";
+               default:
+                  arr += itemvalue;
+            }
+         }
+      }
+
+      child = Xml::GetNext(child);
+   }
+
+   if (size==1) arr.erase(0,1); else
+   if (size>1) arr += "]";
+
+   return arr;
+}
 
 //-------------------------------------------------------------------------
 
@@ -488,7 +746,6 @@ std::string dabc::Record::SaveToXml(bool compact)
 }
 
 
-
 bool dabc::Record::ReadFromXml(const char* xmlcode)
 {
    if ((xmlcode==0) || (*xmlcode==0)) return false;
@@ -499,7 +756,7 @@ bool dabc::Record::ReadFromXml(const char* xmlcode)
 
    CreateContainer(Xml::GetNodeName(node));
 
-   GetObject()->ReadFieldsFromNode(node, true);
+   GetObject()->ReadFieldsFromNode(node, true, true);
 
    Xml::FreeNode(node);
 

@@ -56,6 +56,12 @@ namespace dabc {
     * \param[out] res   pointer on result value
     *\returns true if succeed */
    extern bool str_to_double(const char* val, double* res);
+
+   /** \brief Convert string to bool value
+    * \param[in]  val   source string
+    * \param[out] res   pointer on result value
+    *\returns true if succeed */
+   extern bool str_to_bool(const char* val, bool* res);
 };
 
 #endif

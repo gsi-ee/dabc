@@ -229,9 +229,9 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
             if (fCurrItem!=0) {
                DOUT2("Find searched item %s, try to read attributes cont:%p", itemname.c_str(), cont);
 
-               ConfigIOResolve res(fCfg);
+               ConfigIOResolve resolve(fCfg);
 
-               cont->ReadFieldsFromNode(fCurrItem, false, res);
+               cont->ReadFieldsFromNode(fCurrItem, false, !isany, resolve);
 
                isany = true;
             }

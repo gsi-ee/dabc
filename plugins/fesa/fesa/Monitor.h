@@ -11,9 +11,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef FESA_Player
-#define FESA_Player
-
+#ifndef FESA_Monitor
+#define FESA_Monitor
 
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
@@ -25,6 +24,8 @@
 
 class rdaDeviceHandle;
 class rdaRDAService;
+class rdaDabcHandler;
+class rdaData;
 
 namespace fesa {
 
@@ -35,7 +36,7 @@ namespace fesa {
     *
     **/
 
-   class Player : public dabc::ModuleAsync {
+   class Monitor : public dabc::ModuleAsync {
       protected:
          virtual void BeforeModuleStart() {}
 
@@ -44,27 +45,20 @@ namespace fesa {
          dabc::Mutex     fHierarchyMutex;
          dabc::Hierarchy fHierarchy;
 
-         unsigned fCounter;
-
-         dabc::Reference fProducer;   ///< binary producer for ROOT objects
-         void* fHist;                 ///< ROOT histogram
-         void* fCanvas;               ///< canvas for image generation
-         
          std::string fServerName;    ///< FESA server name
          std::string fDeviceName;    ///< FESA device name
-         std::string fCycles;        ///< cycles parameter
-         std::string fService;       ///< service name
-         std::string fField;         ///< field name in the service
-         
+         std::string fCycle;         ///< cycle parameter
+
          rdaRDAService* fRDAService;
          rdaDeviceHandle* fDevice;
-         
+         std::vector<rdaDabcHandler*> fHandlers;
+
          double doGet(const std::string& service, const std::string& field);
 
       public:
 
-         Player(const std::string& name, dabc::Command cmd = 0);
-         virtual ~Player();
+         Monitor(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Monitor();
 
          virtual void ModuleCleanup() {}
 
@@ -73,6 +67,8 @@ namespace fesa {
          virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
+
+         void ReportServiceChanged(const std::string& name, const rdaData* v);
    };
 }
 

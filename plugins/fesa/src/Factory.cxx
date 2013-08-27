@@ -13,16 +13,8 @@
 
 #include "fesa/Factory.h"
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
-#include "dabc/SocketThread.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Url.h"
-#include "dabc/DataTransport.h"
-
 #include "fesa/Player.h"
+#include "fesa/Monitor.h"
 
 dabc::FactoryPlugin fesafactory(new fesa::Factory("fesa"));
 
@@ -32,10 +24,13 @@ dabc::Module* fesa::Factory::CreateModule(const std::string& classname, const st
    if (classname == "fesa::Player")
       return new fesa::Player(modulename, cmd);
 
+   if (classname == "fesa::Monitor")
+      return new fesa::Monitor(modulename, cmd);
+
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
 
-/** \page fesa_plugin FESA plugin for DABC (libDabcMbs.so)
+/** \page fesa_plugin FESA plugin for DABC (libDabcFesa.so)
  *
  *  \subpage fesa_plugin_doc
  *

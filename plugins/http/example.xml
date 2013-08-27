@@ -19,6 +19,13 @@
        <clients value="true"/>
     </HttpServer>
 
+    <Module name="fesa_monitor" class="fesa::Monitor">
+       <Server value="DummyDevice_DU.linev.asl732"/>
+       <Device value="MyDevice"/>
+       <Cycle value=""/>
+       <Services value="[GetMeasVoltage,GetMeasCurrent,GetMeasWeight]"/>
+    </Module>
+
     <Module name="fesa" class="fesa::Player">
        <Synchron value="false"/>
        <Server value="DummyDevice_DU.linev.asl732"/>

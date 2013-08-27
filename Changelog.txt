@@ -2,6 +2,38 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+27.08.2013
+1. Introduce arrays in the record fields. Array implemented in JSON-like style.
+   Integer array will look like [1,5,7,10], string array like ["abc", "cdf"].
+   Special symbols like '"' or '\' or '[' or ']' should be treated correctly.
+2. In xml syntax there are two variants to set field as array. First variant is
+   as before - via attribute:
+        <Array value="[1,2,3,4]"/>
+   or via list of items like:
+   <Array>
+      <item value="1"/>
+      <item value="2"/>
+      <item value="3"/>
+      <item value="4"/>
+   </Array>     
+   Internally and on any transport cases array will be presented in JSON-like form.
+3. Introduce fesa::Monitor module, which can monitor any number of 
+   FESA services in asynchron mode. List of services should be specified in 
+   form of array in Services field of module. Example is:
+   <Module name="fesa_monitor" class="fesa::Monitor">
+       <Server value="DummyDevice_DU.linev.asl732"/>
+       <Device value="MyDevice"/>
+       <Cycle value=""/>
+       <Services value="[GetMeasVoltage,GetMeasCurrent,GetMeasWeight]"/>
+    </Module>
+    As one could see, not necessaraly quotes should be used - only if special symbols
+    are necessary.   
+4. In fesa::Monitor module all availible fields in each service entry will be published.
+   Maybe it is overkill and in the future only small fields (up to certain size) will be
+   exported. Need to be tested.
+5. In fesa::Player remove asynchronous mode of parameter request.   
+
+
 23.08.2013
 1. First working code for synchronous readout of FESA variable from test server.
 2. Also asynchronous readout of FESA double variable is implemented. 

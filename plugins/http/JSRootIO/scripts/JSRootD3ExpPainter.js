@@ -3394,8 +3394,6 @@ var gStyle = {
             return this.dfx(new Date(this.timeoffsetx + value*1000));            
          }
          
-         // if (Math.abs(value)<1e-14) console.log("Small x = " + value + "  range = " + this.xrange);
-         
          if (Math.abs(value)<1e-14) 
             if (Math.abs(this.xmax - this.xmin)>1e-5) value = 0;
          return value.toPrecision(4);

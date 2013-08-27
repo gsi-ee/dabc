@@ -294,7 +294,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
 
    if (fNodeChanged) {
       ClearFields();
-      if (!ReadFieldsFromNode(objnode, true)) return false;
+      if (!ReadFieldsFromNode(objnode, true, false)) return false;
    }
 
    if (!fHierarchyChanged) return true;
@@ -887,7 +887,7 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
    XMLNodePointer_t child = Xml::GetChild(node);
 
    // TODO: force all fields from xml
-   if (!IsName(Xml::GetNodeName(child)) || !GetObject()->ReadFieldsFromNode(child, true)) {
+   if (!IsName(Xml::GetNodeName(child)) || !GetObject()->ReadFieldsFromNode(child, true, false)) {
       EOUT("First item in reply should be node itself");
       child = 0; res = false;
    }
