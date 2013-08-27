@@ -94,16 +94,16 @@ namespace dabc {
          bool SetStrVector(const std::vector<std::string>& vect);
          bool SetInt(int v);
          bool SetIntVector(const std::vector<int>& vect);
-         bool SetIntArray(int* arr, unsigned size);
+         bool SetIntArray(const int* arr, unsigned size);
          bool SetDouble(double v);
          bool SetDoubleVector(const std::vector<double>& vect);
-         bool SetDoubleArray(double* arr, unsigned size);
+         bool SetDoubleArray(const double* arr, unsigned size);
          bool SetBool(bool v);
          bool SetBoolVector(const std::vector<bool>& vect);
-         bool SetBoolArray(bool* arr, unsigned size);
+         bool SetBoolArray(const bool* arr, unsigned size);
          bool SetUInt(unsigned v);
          bool SetUIntVector(const std::vector<unsigned>& vect);
-         bool SetUIntArray(unsigned* arr, unsigned size);
+         bool SetUIntArray(const unsigned* arr, unsigned size);
 
          bool DfltStr(const char* value) { return IsEmpty() ? SetStr(value) : false; }
          bool DfltStr(const std::string& value) { return IsEmpty() ? SetStr(value) : false; }

@@ -149,7 +149,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
       double res = doGet(fService, fField);
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
-      DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
+      // DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
    }
 #endif
 

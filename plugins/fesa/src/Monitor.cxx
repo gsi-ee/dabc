@@ -127,8 +127,10 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       if (fDevice!=0) {
          #ifdef WITH_FESA
          rdaDabcHandler* handler = new rdaDabcHandler(this, services[n]);
-         handler->subscribe(fDevice, fCycle);
-         fHandlers.push_back(handler);
+         if (handler->subscribe(fDevice, fCycle))
+           fHandlers.push_back(handler);
+         else
+           delete handler;
          #endif
       }
    }
@@ -205,7 +207,7 @@ void fesa::Monitor::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
 
 void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData* value)
 {
-   DOUT0("REPORT FESA SERVICE %s = %5.3f", name.c_str());
+   // DOUT0("REPORT FESA SERVICE %s = %5.3f", name.c_str());
 
    dabc::LockGuard lock(fHierarchyMutex);
 
@@ -224,6 +226,8 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          EOUT("There is no tag specified in field of service %s", name.c_str());
          continue;
       }
+      
+      // DOUT0("Service %s tag %s", name.c_str(), tag);
 
       switch (entry->getValueType()) {
          /// indicates that a DataEntry does not contain anything.
@@ -288,7 +292,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a long long array value.
          case rdaDataEntry::TYPE_LONG_ARRAY: {
             unsigned long size(0);
-            const long* arr = entry->getLongArray(size);
+            const long long* arr = entry->getLongArray(size);
             std::vector<int> vect;
             for (unsigned n=0;n<size;n++) vect.push_back((int)arr[n]);
             item.Field(tag).SetIntVector(vect);

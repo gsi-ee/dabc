@@ -258,7 +258,7 @@ bool dabc::RecordField::SetIntVector(const std::vector<int>& arr)
    SET_ARRAY_MACRO(arr.size(), "%d", sprintf)
 }
 
-bool dabc::RecordField::SetIntArray(int* arr, unsigned size)
+bool dabc::RecordField::SetIntArray(const int* arr, unsigned size)
 {
    if ((arr==0) || (size==0)) return SetStr("");
    if (size==1) return SetInt(arr[0]);
@@ -279,7 +279,7 @@ bool dabc::RecordField::SetDoubleVector(const std::vector<double>& arr)
    SET_ARRAY_MACRO(arr.size(), "%g", sprintf)
 }
 
-bool dabc::RecordField::SetDoubleArray(double* arr, unsigned size)
+bool dabc::RecordField::SetDoubleArray(const double* arr, unsigned size)
 {
    if ((arr==0) || (size==0)) return SetStr("");
    if (size==1) return SetDouble(arr[0]);
@@ -304,7 +304,7 @@ bool dabc::RecordField::SetBoolVector(const std::vector<bool>& arr)
    SET_ARRAY_MACRO(arr.size(), "%b", scopybool)
 }
 
-bool dabc::RecordField::SetBoolArray(bool* arr, unsigned size)
+bool dabc::RecordField::SetBoolArray(const bool* arr, unsigned size)
 {
    if ((arr==0) || (size==0)) return SetStr("");
    if (size==1) return SetBool(arr[0]);
@@ -326,7 +326,7 @@ bool dabc::RecordField::SetUIntVector(const std::vector<unsigned>& arr)
    SET_ARRAY_MACRO(arr.size(), "%u", sprintf)
 }
 
-bool dabc::RecordField::SetUIntArray(unsigned* arr, unsigned size)
+bool dabc::RecordField::SetUIntArray(const unsigned* arr, unsigned size)
 {
    if ((arr==0) || (size==0)) return SetStr("");
    if (size==1) return SetDouble(arr[0]);
