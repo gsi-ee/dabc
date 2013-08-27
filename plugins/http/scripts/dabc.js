@@ -308,7 +308,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
 
       // $("#dabc_draw").append("<br> Work with node " + node.nodeName);
       
-      var kind = node.getAttribute("kind");
+      var kind = node.getAttribute("dabc:kind");
       var value = node.getAttribute("value");
       
       var html = "";
@@ -714,9 +714,13 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
    }
    
    var top = DABC.TopXmlNode(arg);
+
+//   console.log("Get request callback " + top.getAttribute("dabc:version") + "  or " + top.getAttribute("version"));
    
-   var new_version = Number(top.getAttribute("version"));
-   
+   var new_version = Number(top.getAttribute("dabc:version"));
+
+//   console.log("Get request callback version = " + new_version);
+
    var modified = (this.version != new_version);
 
    this.version = new_version;
@@ -747,7 +751,7 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
       this.xmlhistory = this.xmlhistory.concat(arr);
    }
 
-//   console.log("History length = " + this.xmlhistory.length);
+   console.log("History length = " + this.xmlhistory.length);
    
    if (modified) this.DrawHistoryElement();
 }
@@ -849,10 +853,12 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
    
+//   console.log("Extract series");
+   
    var x = this.ExtractSeries("time", "time");
    var y = this.ExtractSeries("value", "number");
    
-   // if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
+//   if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
 
    // here we should create TGraph object
 
@@ -1460,8 +1466,8 @@ DABC.Manager.prototype.display = function(itemname) {
       return;
    }
    
-   var kind = xmlnode.getAttribute("kind");
-   var history = xmlnode.getAttribute("history");
+   var kind = xmlnode.getAttribute("dabc:kind");
+   var history = xmlnode.getAttribute("dabc:history");
    if (!kind) return;
 
 //   $("#dabc_draw").append("<br> find kind of node "+itemname + " " + kind);
@@ -1612,7 +1618,7 @@ DABC.Manager.prototype.FindXmlNode = function(itemname) {
 DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    if (!itemnode) return;
    
-   var master = itemnode.getAttribute("master");
+   var master = itemnode.getAttribute("dabc:master");
    if (!master) return;
    
    var newname = itemname;
@@ -1620,7 +1626,7 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    while (newname) {
       var separ = newname.lastIndexOf("/");
       if (separ<=0) {
-         alert("Name " + itemname + " is not long enouth for master " + itemnode.getAttribute("master"));
+         alert("Name " + itemname + " is not long enouth for master " + itemnode.getAttribute("dabc:master"));
          return;
       }
       newname = newname.substr(0, separ);

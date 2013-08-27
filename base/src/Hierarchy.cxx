@@ -25,12 +25,13 @@
 #include "dabc/Command.h"
 
 
-const char* dabc::prop_kind = "kind";
-const char* dabc::prop_realname = "realname";
-const char* dabc::prop_masteritem = "master";
-const char* dabc::prop_binary_producer = "binary_producer";
-const char* dabc::prop_content_hash = "hash";
-const char* dabc::prop_history = "history";
+const char* dabc::prop_version = "dabc:version";
+const char* dabc::prop_kind = "dabc:kind";
+const char* dabc::prop_realname = "dabc:realname";
+const char* dabc::prop_masteritem = "dabc:master";
+const char* dabc::prop_binary_producer = "dabc:binary_producer";
+const char* dabc::prop_content_hash = "dabc:hash";
+const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";
 
 
@@ -126,7 +127,8 @@ std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit
 
    XMLNodePointer_t topnode = Xml::NewChild(0, 0, "gethistory", 0);
 
-   Xml::NewAttr(topnode, 0, "version", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
+   Xml::NewAttr(topnode, 0, "xmlns:dabc", "http://dabc.gsi.de/xhtml");
+   Xml::NewAttr(topnode, 0, prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
    SaveInXmlNode(topnode, true);
 
@@ -594,7 +596,7 @@ std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 
    XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, version, withversion);
 
-   Xml::NewAttr(topnode, 0, "dabc:version", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
+   Xml::NewAttr(topnode, 0, dabc::prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
    std::string res;
 
@@ -644,12 +646,12 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
    bool res = true;
    long unsigned version(0);
 
-   if (!Xml::HasAttr(topnode,"dabc:version") || !dabc::str_to_luint(Xml::GetAttr(topnode,"dabc:version"), &version)) {
+   if (!Xml::HasAttr(topnode,dabc::prop_version) || !dabc::str_to_luint(Xml::GetAttr(topnode,"dabc:version"), &version)) {
       res = false;
       EOUT("Not found topnode version");
    } else {
       DOUT3("Hierarchy version is %lu", version);
-      Xml::FreeAttr(topnode, "dabc:version");
+      Xml::FreeAttr(topnode, dabc::prop_version);
    }
 
    if (res) {

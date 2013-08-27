@@ -32,6 +32,8 @@ of the framework.
    Maybe it is overkill and in the future only small fields (up to certain size) will be
    exported. Need to be tested.
 5. In fesa::Player remove asynchronous mode of parameter request.   
+6. For all dabc-relevant hierarchy attributes add 'dabc:' prefix. It allow
+   to distinguish them from all other non-dabc attributes.
 
 
 23.08.2013
