@@ -35,8 +35,8 @@
        <Field value="measVoltage"/>
     </Module>
 
-    <Module name="mbs" class="mbs::Player">
-       <node value="X86G-45"/>
+    <Module name="x86_46" class="mbs::Player">
+       <node value="X86-46"/>
        <period value="1"/>
        <history value="100"/>
     </Module>

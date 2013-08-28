@@ -216,6 +216,17 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 
 #ifdef WITH_FESA
 
+   // TODO: mark here that we start change hierarchy item, but not immidiately change version
+
+   unsigned n = 0;
+   // first of all, delete non-existing fields
+   while (n < item.NumFields()) {
+      std::string fname = item.FieldName(n++);
+      if ((fname.find("dabc:") == 0) || value->contains(fname.c_str())) continue;
+      item.RemoveField(fname);
+      n = 0; // start search from beginning
+   }
+
    rdaDataIterator iter(*value);
 
    while (iter.hasNext()) {
@@ -340,6 +351,9 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          }
       }
    }
+
+   // TODO: here apply new version and create history entry
+
 
 #endif
 }
