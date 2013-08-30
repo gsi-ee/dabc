@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 
 void dabc::formats(std::string& sbuf, const char *fmt, ...)
@@ -117,6 +118,25 @@ bool dabc::str_to_int(const char* val, int* res)
 
    return sscanf(val, "%d", res) == 1;
 }
+
+bool dabc::str_to_lint(const char* val, long* res)
+{
+   if ((val==0) || (res==0)) return false;
+
+   while (*val==' ') val++;
+   if (*val==0) return false;
+
+   if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
+      long unsigned ures = 0;
+      if (sscanf(val+2, "%lx", &ures) == 1) {
+         *res = ures;
+         return true;
+      }
+   }
+
+   return sscanf(val, "%ld", res) == 1;
+}
+
 
 bool dabc::str_to_uint(const char* val, unsigned* res)
 {

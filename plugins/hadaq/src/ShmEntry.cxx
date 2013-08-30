@@ -36,8 +36,7 @@ hadaq::ShmEntry::~ShmEntry()
 
 void hadaq::ShmEntry::UpdateValue(const std::string& value)
 {
-
-         *fShmPtr = dabc::RecordValue(value).AsInt();
+    *fShmPtr = dabc::RecordValue(value).AsInt();
 }
 
 void hadaq::ShmEntry::UpdateParameter()

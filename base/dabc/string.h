@@ -37,6 +37,12 @@ namespace dabc {
     * \returns true if succeed */
    extern bool str_to_int(const char* val, int* res);
 
+   /** \brief Convert string to long integer value
+    * \param[in]  val   source string
+    * \param[out] res   pointer on result value
+    * \returns true if succeed */
+   extern bool str_to_lint(const char* val, long* res);
+
    /** \brief Convert string to unsigned integer value
     * One could use hexadecimal (in form 0xabc100)  or decimal format
     * \param[in]  val   source string
@@ -62,6 +68,7 @@ namespace dabc {
     * \param[out] res   pointer on result value
     *\returns true if succeed */
    extern bool str_to_bool(const char* val, bool* res);
+
 };
 
 #endif
