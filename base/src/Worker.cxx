@@ -512,10 +512,51 @@ dabc::Parameter dabc::Worker::Par(const std::string& name) const
    return FindChildRef(name.c_str());
 }
 
-dabc::Config dabc::Worker::Cfg(const std::string& name, Command cmd) const
+dabc::Config dabc::Worker::CfgOld(const std::string& name, Command cmd) const
 {
    return dabc::Config(new ConfigContainer(name, cmd, (Worker*)this));
 }
+
+dabc::RecordFieldNew dabc::Worker::Cfg(const std::string& name, Command cmd) const
+{
+
+   DOUT2("Worker %s Cfg %s", ItemName().c_str(), name.c_str());
+
+   // first check in the command
+   if (cmd.HasField(name)) return cmd.Field(name);
+
+   DOUT2("Check Cfg %s in own parameters", name.c_str());
+
+   dabc::RecordFieldNew res = Par(name).Value();
+
+   // second - as parameter
+   if (!res.null()) return res;
+
+   DOUT2("Check Cfg %s in xml file", name.c_str());
+
+   // third - in xml file
+   ConfigIO io(dabc::mgr()->cfg());
+   if (io.ReadRecordNew((Object*) this, name, &res, 0)) {
+
+      DOUT0("Worker %s Cfg %s xml %s", ItemName().c_str(), name.c_str(), res.AsStr().c_str());
+      return res;
+   }
+
+   DOUT2("Check Cfg %s in parent parameters", name.c_str());
+
+   // forth - in all parents
+   Object* prnt = GetParent();
+   while (prnt!=0) {
+      res = WorkerRef(prnt).Par(name).Value();
+      if (!res.null()) return res;
+
+      prnt = prnt->GetParent();
+   }
+
+   return res;
+}
+
+
 
 dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::string& kind)
 {
@@ -528,7 +569,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
 
       ConfigIO io(dabc::mgr()->cfg());
 
-      io.ReadRecord(this, name, cont);
+      io.ReadRecordNew(this, name, 0, &(cont->Fields()));
 
       par = cont;
 
@@ -570,7 +611,7 @@ void dabc::Worker::WorkerParameterChanged(Parameter par)
 {
    if (!par.IsMonitored()) return;
 
-   Submit(CmdParameterEvent(par.GetName(), par.AsStdStr(), parModified));
+   Submit(CmdParameterEvent(par.GetName(), par.Value().AsStr(), parModified));
 }
 
 
@@ -957,11 +998,11 @@ dabc::Parameter dabc::WorkerRef::Par(const std::string& name) const
    return GetObject()->Par(name);
 }
 
-dabc::Config dabc::WorkerRef::Cfg(const std::string& name, Command cmd) const
+dabc::Config dabc::WorkerRef::CfgOld(const std::string& name, Command cmd) const
 {
    if (GetObject()==0) return dabc::Config(new ConfigContainer(name, cmd, 0));
 
-   return GetObject()->Cfg(name, cmd);
+   return GetObject()->CfgOld(name, cmd);
 }
 
 bool dabc::WorkerRef::HasThread() const

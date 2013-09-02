@@ -106,7 +106,7 @@ namespace dabc {
           * In some situation change is allowed via fAllowedField  */
          virtual bool _CanChangeField(const std::string&);
 
-         virtual const std::string DefaultFiledName() const;
+         virtual std::string DefaultFiledName() const;
 
          /** Change state of connection object.
           * State change can be observed by connection manager and
@@ -201,40 +201,40 @@ namespace dabc {
       void SetPoolName(const std::string& name) { SET_PAR_FIELD(fPoolName, name) }
 
       /** Return url of data source to which connection should be established */
-      std::string GetRemoteUrl() const { return Field("url").AsStdStr(); }
+      std::string GetRemoteUrl() const { return GetField("url").AsStr(); }
 
       /** Indicates if local node in connection is server or client */
-      bool IsServerSide() const { return Field("server").AsBool(false); }
+      bool IsServerSide() const { return GetField("server").AsBool(false); }
 
       /** indicate if connection is optional and therefore may be ignored during failure or long timeout */
-      bool IsOptional() const { return Field(xmlOptionalAttr).AsBool(false); }
+      bool IsOptional() const { return GetField(xmlOptionalAttr).AsBool(false); }
 
       /** Device name which may be used to create connection (depends from url) */
-      std::string GetConnDevice() const { return Field(xmlDeviceAttr).AsStdStr(); }
+      std::string GetConnDevice() const { return GetField(xmlDeviceAttr).AsStr(); }
 
       /** Thread name for transport */
-      std::string GetConnThread() const { return Field(xmlThreadAttr).AsStdStr(); }
+      std::string GetConnThread() const { return GetField(xmlThreadAttr).AsStr(); }
 
       /** Use of acknowledge in protocol */
-      bool GetUseAckn() const { return Field(xmlUseacknAttr).AsBool(false); }
+      bool GetUseAckn() const { return GetField(xmlUseacknAttr).AsBool(false); }
 
       /** time required to establish connection, if expired connection will be switched to "failed" state */
-      double GetConnTimeout() const { return Field(xmlTimeoutAttr).AsDouble(10.); }
+      double GetConnTimeout() const { return GetField(xmlTimeoutAttr).AsDouble(10.); }
 
       // fields can be changed only in initial state right after creation of the request
-      void SetRemoteUrl(const std::string& url) { Field("url").SetStr(url); }
+      void SetRemoteUrl(const std::string& url) { SetField("url", url); }
 
-      void SetServerSide(bool isserver = true) { Field("server").SetBool(isserver); }
+      void SetServerSide(bool isserver = true) { SetField("server", isserver); }
 
-      void SetConnDevice(const std::string& dev) { Field(xmlDeviceAttr).SetStr(dev); }
+      void SetConnDevice(const std::string& dev) { SetField(xmlDeviceAttr, dev); }
 
-      void SetOptional(bool on = true) { Field(xmlOptionalAttr).SetBool(on); }
+      void SetOptional(bool on = true) { SetField(xmlOptionalAttr, on); }
 
-      void SetUseAckn(bool on = true) { Field(xmlUseacknAttr).SetBool(on); }
+      void SetUseAckn(bool on = true) { SetField(xmlUseacknAttr, on); }
 
-      void SetConnTimeout(double tm) { Field(xmlTimeoutAttr).SetDouble(tm); }
+      void SetConnTimeout(double tm) { SetField(xmlTimeoutAttr, tm); }
 
-      void SetConnThread(const std::string& name) { Field(xmlThreadAttr).SetStr(name); }
+      void SetConnThread(const std::string& name) { SetField(xmlThreadAttr, name); }
 
       void SetConfigFromXml(XMLNodePointer_t node);
 

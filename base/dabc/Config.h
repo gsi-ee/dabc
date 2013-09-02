@@ -50,6 +50,8 @@ namespace dabc {
 
          Command       fCmd;      ///< value from the command
 
+         std::string   fCmdBuf;   ///< temporary buffer for command value
+
          Record        fPar;      ///< reference on parameter (if exists) of specified config name
 
          Reference     fWorker;   ///<  reference on the worker where config requested

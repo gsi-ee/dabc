@@ -32,6 +32,10 @@ namespace dabc {
    class Configuration;
    class RecordContainer;
 
+   class RecordFieldNew;
+   class RecordFieldsMap;
+
+
    /** \brief Interface class between xml configuration and dabc objects
     *
     * \ingroup dabc_all_classes
@@ -66,6 +70,9 @@ namespace dabc {
          bool CheckAttr(const char* name, const char* value);
 
          bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
+
+         bool ReadRecordNew(Object* obj, const std::string& name, RecordFieldNew* field, RecordFieldsMap* fieldsmap);
+
    };
 
 }

@@ -57,7 +57,7 @@ bool dabc::ConnectionObject::_CanChangeField(const std::string& name)
    return false;
 }
 
-const std::string dabc::ConnectionObject::DefaultFiledName() const
+std::string dabc::ConnectionObject::DefaultFiledName() const
 {
    return "state";
 }
@@ -105,7 +105,7 @@ void dabc::ConnectionObject::ChangeState(EState state, bool force)
    DOUT3("Change connection state to %s", GetStateName(state));
 
    if (signal)
-      SetField("", GetStateName(state), RecordField::kind_str());
+      SetField("", GetStateName(state));
 }
 
 // ------------------------------------------------------------------

@@ -104,7 +104,7 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fDeviceName = Cfg("Device", cmd).AsStdStr();
    fCycle = Cfg("Cycle", cmd).AsStdStr();
 
-   std::vector<std::string> services = Cfg("Services", cmd).AsStrVector();
+   std::vector<std::string> services = Cfg("Services", cmd).AsStrVect();
 
    CreateTimer("update", 1., false);
 

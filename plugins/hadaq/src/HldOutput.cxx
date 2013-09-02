@@ -68,7 +68,7 @@ uint32_t hadaq::HldOutput::GetRunId()
    uint32_t nextrunid =0;
    unsigned counter=0;
    do{
-      nextrunid=fRunidPar.AsUInt();
+      nextrunid=fRunidPar.Value().AsUInt();
       if(nextrunid) break;
       dabc::Sleep(0.1);
       counter++;
@@ -90,7 +90,7 @@ bool hadaq::HldOutput::StartNewFile()
    if (!fEpicsControl || fRunNumber == 0) {
       fRunNumber = hadaq::RawEvent::CreateRunId();
       DOUT0("HldOutput Generates New Runid %d ", fRunNumber);
-      fRunidPar.SetUInt(fRunNumber);
+      fRunidPar.Value().SetUInt(fRunNumber);
    }
 
    ProduceNewFileName();
@@ -144,7 +144,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          return dabc::do_Error;
       }
 
-   fBytesWrittenPar.SetUInt(fCurrentFileSize);
+   fBytesWrittenPar.SetValue((int)fCurrentFileSize);
 
    for (unsigned n=0;n<buf.NumSegments();n++)
       if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))

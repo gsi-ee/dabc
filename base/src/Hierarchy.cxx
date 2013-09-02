@@ -353,58 +353,6 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
    return true;
 }
 
-std::string dabc::HierarchyContainer::HtmlBrowserText()
-{
-   if (NumChilds()>0) return GetName();
-
-   const char* kind = GetField(dabc::prop_kind);
-
-   if (kind!=0) {
-      std::string res = dabc::format("<a href='#' onClick='DABC.mgr.click(this);' kind='%s' fullname='%s'", kind, ItemName().c_str());
-
-      const char* val = GetField("value");
-      if (val!=0) res += dabc::format(" value='%s'", val);
-
-      return res + dabc::format(">%s</a>", GetName());
-   }
-
-   return GetName();
-}
-
-bool dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, bool isfirstchild, int level)
-{
-   if (GetField("hidden")!=0) return false;
-
-   bool compact = level==0;
-   const char* nl = compact ? "" : "\n";
-
-   if (!isfirstchild) sbuf += dabc::format(",%s", nl);
-
-   if (NumChilds()==0) {
-      sbuf += dabc::format("%*s{\"text\":\"%s\"}", level*3, "", HtmlBrowserText().c_str());
-      return true;
-   }
-
-   sbuf += dabc::format("%*s{\"text\":\"%s\",%s", level*3, "",  HtmlBrowserText().c_str(), nl);
-   sbuf += dabc::format("%*s\"children\":[%s", level*3, "", nl);
-   if (!compact) level++;
-
-   bool isfirst = true;
-   for (unsigned n=0;n<NumChilds();n++) {
-      dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-
-      if (child==0) continue;
-
-      if (child->SaveToJSON(sbuf, isfirst, compact ? 0 : level+1)) isfirst = false;
-   }
-
-   sbuf+= dabc::format("%s%*s]%s", nl, level*3, "", nl);
-   if (!compact) level--;
-   sbuf+= dabc::format("%*s}", level*3, "");
-
-   return true;
-}
-
 void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
 {
    cont->CopyFieldsMap(GetFieldsMap());
@@ -443,7 +391,7 @@ void dabc::HierarchyContainer::AddHistory(const std::string& diff)
 bool dabc::HierarchyContainer::SetField(const std::string& name, const char* value, const char* kind)
 {
    if (fHist() && !fHist()->fAutoRecord.empty()) {
-      const std::string usename = name.empty() ? DefaultFiledName() : name;
+      std::string usename = name.empty() ? DefaultFiledName() : name;
 
       if (usename == fHist()->fAutoRecord) {
          const char* oldvalue = GetField(name);
@@ -670,33 +618,6 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
 
    return res;
 }
-
-std::string dabc::Hierarchy::SaveToJSON(bool compact, bool excludetop)
-{
-   if (null()) return "";
-
-   std::string res;
-
-   res.append(compact ? "[" : "[\n");
-
-   if (excludetop) {
-      bool isfirst = true;
-      for (unsigned n=0;n<NumChilds();n++) {
-         dabc::Hierarchy child = GetChild(n);
-
-         if (child.null()) continue;
-
-         if (child()->SaveToJSON(res, isfirst, compact ? 0 : 1)) isfirst = false;
-      }
-   } else {
-      GetObject()->SaveToJSON(res, true, compact ? 0 : 1);
-   }
-
-   res.append(compact ? "]" : "\n]\n");
-
-   return res;
-}
-
 
 
 dabc::Buffer dabc::Hierarchy::GetBinaryData(uint64_t query_version)

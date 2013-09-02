@@ -100,7 +100,7 @@ void mbs::CombinerModule::ModuleCleanup()
 void mbs::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
 
-   Par(fInfoName).SetStr(info);
+   Par(fInfoName).SetValue(info);
 
    if (forceinfo) Par(fInfoName).FireModified();
 
@@ -520,8 +520,8 @@ bool mbs::CombinerModule::BuildEvent()
 
          DOUT4("Produced event %d subevents %u", buildevid, subeventssize);
 
-         Par(fEventRateName).SetInt(1);
-         Par(fDataRateName).SetDouble((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
+         Par(fEventRateName).SetValue(1);
+         Par(fDataRateName).SetValue((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
 
          // if output buffer filled already, flush it immediately
          if (!fOut.IsPlaceForEvent(0))

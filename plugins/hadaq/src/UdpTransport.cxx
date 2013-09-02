@@ -353,7 +353,7 @@ void hadaq::DataTransport::CreateNetmemPar(const std::string& name)
 
 void hadaq::DataTransport::SetNetmemPar(const std::string& name, unsigned value)
 {
-   Par(GetNetmemParName(name)).SetUInt(value);
+   Par(GetNetmemParName(name)).SetValue(value);
 }
 
 void hadaq::DataTransport::ClearExportedCounters()
@@ -378,7 +378,7 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    float ratio = 100.;
    if (capacity>0) ratio-= 100.* NumCanSend()/capacity;
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
-   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).AsDouble() * 1024 * 1024);
+   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
 
    return true;
 }

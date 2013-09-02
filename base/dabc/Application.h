@@ -42,7 +42,7 @@ namespace dabc {
       DABC_COMMAND(CmdInvokeTransition, "InvokeTransition");
 
       void SetTransition(const std::string& cmd) { Field("Transition").SetStr(cmd); }
-      std::string GetTransition() const { return Field("Transition").AsStdStr(); }
+      std::string GetTransition() const { return Field("Transition").AsStr(); }
    };
 
 
@@ -93,7 +93,7 @@ namespace dabc {
          virtual bool PerformApplicationFinish();
 
          /** Directly changes value of the state parameter */
-         void SetState(const std::string& name) { Par(StateParName()).SetStr(name); }
+         void SetState(const std::string& name) { Par(StateParName()).SetValue(name); }
 
          /** Set external function, which creates all necessary components of the application */
          void SetInitFunc(ExternalFunction* initfunc);
@@ -140,7 +140,7 @@ namespace dabc {
 
          static const char* StateParName() { return "State"; }
 
-         std::string GetState() const { return Par(StateParName()).AsStdStr(); }
+         std::string GetState() const { return Par(StateParName()).Value().AsStr(); }
 
          /** Execute transition command */
          bool ExecuteStateTransition(const std::string& cmd, double tmout = -1.);

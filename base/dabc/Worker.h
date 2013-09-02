@@ -265,7 +265,16 @@ namespace dabc {
           * 3. In xml file
           * 4. In parameter of all parents
           * */
-         Config Cfg(const std::string& name, Command cmd = 0) const;
+         Config CfgOld(const std::string& name, Command cmd = 0) const;
+
+         /** \brief Returns configuration field of specified name
+          * Configuration value of specified name searched in following places:
+          * 1. As field in command
+          * 2. As parameter value in the worker itself
+          * 3. As value in xml file
+          * 4. As parameter value of all parents
+          * */
+         RecordFieldNew Cfg(const std::string& name, Command cmd = 0) const;
 
          /** ! Assign command with processor before command be submitted to other processor
           * This produce ReplyCommand() call when command execution is finished
@@ -441,7 +450,13 @@ namespace dabc {
          Parameter Par(const std::string& name) const;
 
          /** \brief Returns configuration record of specified name */
-         Config Cfg(const std::string& name, Command cmd = 0) const;
+         Config CfgOld(const std::string& name, Command cmd = 0) const;
+
+         /** \brief Returns configuration record of specified name */
+         RecordFieldNew Cfg(const std::string& name, Command cmd = 0) const
+         {
+            return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.Field(name);
+         }
 
          /** \brief Returns true when thread is assigned to the worker */
          bool HasThread() const;
@@ -502,8 +517,8 @@ namespace dabc {
 
       public:
 
-         std::string ParName() const { return Field("ParName").AsStdStr(); }
-         std::string ParValue() const { return Field("ParValue").AsStdStr(); }
+         std::string ParName() const { return Field("ParName").AsStr(); }
+         std::string ParValue() const { return Field("ParValue").AsStr(); }
          int EventId() const { return Field("Event").AsInt(parModified); }
          bool AttrModified() const { return Field("AttrMod").AsBool(false); }
    };

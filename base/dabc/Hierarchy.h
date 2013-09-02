@@ -156,10 +156,6 @@ namespace dabc {
 
          HierarchyContainer* TopParent();
 
-         bool SaveToJSON(std::string& sbuf, bool isfirstchild = true, int level = 0);
-
-         std::string HtmlBrowserText();
-
          std::string ItemName();
 
          /** \brief Create child with specified name
@@ -281,8 +277,6 @@ namespace dabc {
       void SetNodeVersion(uint64_t v) { if (GetObject()) GetObject()->fNodeVersion = v; }
 
       bool UpdateFromXml(const std::string& xml);
-
-      std::string SaveToJSON(bool compact = false, bool excludetop = false);
 
 
       /** \brief If possible, returns buffer with binary data, which can be send as reply */

@@ -57,7 +57,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
-   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);//0x8000;
+   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);        //0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
 
    if (fUseSyncSeqNumber)
@@ -137,7 +137,7 @@ void hadaq::CombinerModule::ModuleCleanup()
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
-   Par(fInfoName).SetStr(info);
+   Par(fInfoName).SetValue(info);
    if (forceinfo)
       Par(fInfoName).FireModified();
 }
@@ -561,7 +561,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
 //            DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
-            Par(fDataDroppedRateName).SetInt(droppedsize/1024/1024);
+            Par(fDataDroppedRateName).SetValue(droppedsize/1024/1024);
             fTotalDroppedData+=droppedsize;
 
             if(!ShiftToNextSubEvent(ninp)) return false;
@@ -711,20 +711,20 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastTrigNr = buildevid;
 
-      Par(fEventRateName).SetInt(1);
+      Par(fEventRateName).SetValue(1);
       if (diff>1) {
          DOUT2("Events gap %d", diff);
-         Par(fLostEventRateName).SetInt(diff);
+         Par(fLostEventRateName).SetValue(diff);
          fTotalDiscEvents+=diff;
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
       fTotalRecvBytes += currentbytes;
-      Par(fDataRateName).SetDouble(currentbytes / 1024. / 1024.);
+      Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
    } else {
       EOUT("Event dropped hassync %s subevsize %u", DBOOL(hascorrectsync), subeventssize);
-      Par(fLostEventRateName).SetInt(1);
+      Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents+=1;
    } // ensure outputbuffer
 
@@ -785,12 +785,12 @@ void hadaq::CombinerModule::CreateEvtbuildPar(const std::string& name)
 
 void hadaq::CombinerModule::SetEvtbuildPar(const std::string& name, unsigned value)
 {
-    Par(GetEvtbuildParName(name)).SetUInt(value);
+    Par(GetEvtbuildParName(name)).SetValue(value);
 }
 
 unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string& name)
 {
-   return Par(GetEvtbuildParName(name)).AsUInt();
+   return Par(GetEvtbuildParName(name)).Value().AsUInt();
 }
 
 
@@ -804,10 +804,9 @@ void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)
    CreatePar(GetNetmemParName(name));
 }
 
-void hadaq::CombinerModule::SetNetmemPar(const std::string& name,
-      unsigned value)
+void hadaq::CombinerModule::SetNetmemPar(const std::string& name, unsigned value)
 {
-   Par(GetNetmemParName(name)).SetUInt(value);
+   Par(GetNetmemParName(name)).SetValue(value);
 }
 
 

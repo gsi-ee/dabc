@@ -52,13 +52,11 @@ namespace dabc {
     * All operations should be performed with dabc::Command class
     * which is reference to this container */
 
-   class CommandContainer : public RecordContainer {
+   class CommandContainer : public RecordContainerNew {
 
       friend class Command;
 
       protected:
-
-         virtual const std::string DefaultFiledName() const;
 
          struct CallerRec {
             Reference  worker;
@@ -82,7 +80,7 @@ namespace dabc {
          bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
 
          // make destructor protected that nobody can delete command directly
-         CommandContainer(const char* name = "Command");
+         CommandContainer(const std::string& name = "Command");
 
          virtual ~CommandContainer();
 
@@ -94,9 +92,9 @@ namespace dabc {
     * \ingroup dabc_core_classes
     */
 
-   class Command : public Record {
+   class Command : public RecordNew {
 
-      DABC_REFERENCE(Command, Record, CommandContainer)
+      DABC_REFERENCE(Command, RecordNew, CommandContainer)
 
       friend class CommandContainer;
       friend class CommandsQueue;
@@ -112,10 +110,6 @@ namespace dabc {
 
          static Reference MakeRef(const std::string& buf);
 
-      protected:
-
-         virtual bool CreateContainer(const std::string& name);
-
       public:
          /** \brief Default constructor, creates empty reference on the command */
 //         Command() {}
@@ -126,12 +120,25 @@ namespace dabc {
          friend int operator==(const Command& cmd1, const Command& cmd2)
                          { return cmd1() == cmd2(); }
 
+         bool HasField(const std::string& name) const { return GetObject() ? GetObject()->Fields().HasField(name) : false; }
+         bool RemoveField(const std::string& name) { return GetObject() ? GetObject()->Fields().RemoveField(name) : false; }
+
+         unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
+         std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
+
+         RecordFieldNew& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
+         const RecordFieldNew& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
+
+         std::string SaveToXml(bool compact=true);
+         bool ReadFromXml(const char* xmlcode);
+
          // set of methods to keep old interface, it is preferable to use field methods
 
-         void SetStr(const std::string& name, const char* value) { Field(name).SetStr(value); }
-         void SetStr(const std::string& name, const std::string& value) { Field(name).SetStr(value); }
-         const char* GetStr(const std::string& name, const char* dflt = 0) const { return Field(name).AsStr(dflt); }
-         const std::string GetStdStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStdStr(dflt); }
+         bool SetStr(const std::string& name, const char* value) { return Field(name).SetStr(value); }
+         bool SetStr(const std::string& name, const std::string& value) { return Field(name).SetStr(value); }
+         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStr(dflt); }
+         // TODO: remove after a while
+         std::string GetStdStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStr(dflt); }
 
          bool SetInt(const std::string& name, int v) { return Field(name).SetInt(v); }
          int GetInt(const std::string& name, int dflt = 0) const { return Field(name).AsInt(dflt); }
@@ -257,7 +264,7 @@ namespace dabc {
          Command& SetReceiver(int nodeid, const std::string& itemname = "");
          Command& SetReceiver(Object* rcv);
          Command& SetReceiver(int nodeid, Object* rcv);
-         std::string GetReceiver() const { return Field(ReceiverParName()).AsStdStr(); }
+         std::string GetReceiver() const { return Field(ReceiverParName()).AsStr(); }
          void RemoveReceiver() { RemoveField(ReceiverParName()); }
 
          /** Name of the parameter, used to specified command receiver.

@@ -27,8 +27,8 @@
 #include "dabc/XmlEngine.h"
 
 
-dabc::CommandContainer::CommandContainer(const char* name) :
-   RecordContainer(name),
+dabc::CommandContainer::CommandContainer(const std::string& name) :
+   RecordContainerNew(name),
    fCallers(),
    fTimeout(),
    fCanceled(false)
@@ -58,15 +58,14 @@ dabc::CommandContainer::~CommandContainer()
    std::string field;
 
    do {
-      field = FindField("##REF##*");
+      field = Fields().FindFieldWichStarts("##REF##");
       if (!field.empty()) {
          EOUT("Reference %s not cleared correctly", field.c_str());
 
-         const char* value = GetField(field);
-         if (value!=0) dabc::Command::MakeRef(value).Release();
+         std::string value = Fields().Field(field).AsStr();
+         dabc::Command::MakeRef(value).Release();
 
-         // TODO: release of remaining reference
-         SetField(field, 0, 0);
+         Fields().RemoveField(field);
       }
 
    } while (!field.empty());
@@ -79,24 +78,11 @@ dabc::CommandContainer::~CommandContainer()
 
 }
 
-
-const std::string dabc::CommandContainer::DefaultFiledName() const
-{
-   return dabc::Command::ResultParName();
-}
-
 dabc::Command::Command(const std::string& name) throw()
 {
    if (!name.empty())
       SetObject(new dabc::CommandContainer(name.c_str()));
 }
-
-bool dabc::Command::CreateContainer(const std::string& name)
-{
-   SetObject(new dabc::CommandContainer(name.c_str()));
-   return true;
-}
-
 
 void dabc::Command::AddCaller(Reference worker, bool* exe_ready)
 {
@@ -184,16 +170,16 @@ void dabc::Command::SetPtr(const std::string& name, void* p)
 {
    char buf[100];
    sprintf(buf,"%p",p);
-   SetField(name, buf, "pointer");
+   SetStr(name, buf);
 }
 
 void* dabc::Command::GetPtr(const std::string& name, void* deflt) const
 {
-   const char* val = GetField(name);
-   if (val==0) return deflt;
+   std::string val = GetStr(name);
+   if (val.empty()) return deflt;
 
    void* p = 0;
-   int res = sscanf(val,"%p", &p);
+   int res = sscanf(val.c_str(),"%p", &p);
    return res>0 ? p : deflt;
 }
 
@@ -214,26 +200,27 @@ dabc::Reference dabc::Command::MakeRef(const std::string& buf)
 dabc::Reference dabc::Command::GetRef(const std::string& name)
 {
    std::string field = dabc::format("##REF##%s", name.c_str());
-   std::string value = GetStdStr(field.c_str());
+   std::string value = Field(field).AsStr();
    RemoveField(field);
 
-   return Reference(value.c_str(), value.length());
+   return MakeRef(value);
 }
 
 
 void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
 {
-   Record::AddFieldsFrom(cmd, canoverwrite);
+   if (!null() && !cmd.null())
+      GetObject()->Fields().CopyFrom(cmd.GetObject()->Fields(), canoverwrite);
 }
 
 void dabc::Command::Print(int lvl, const char* from) const
 {
-   Record::Print(lvl, from);
+   RecordNew::Print(lvl, from);
 }
 
 void dabc::Command::Release()
 {
-   dabc::Record::Release();
+   dabc::RecordNew::Release();
 }
 
 void dabc::Command::Cancel()
@@ -244,7 +231,7 @@ void dabc::Command::Cancel()
       cont->fCanceled = true;
    }
 
-   dabc::Record::Release();
+   dabc::RecordNew::Release();
 }
 
 bool dabc::Command::IsCanceled()
@@ -260,6 +247,8 @@ bool dabc::Command::IsCanceled()
 
 void dabc::Command::Reply(int res)
 {
+   if (null()) return;
+
    if (res>=0) SetResult(res);
 
    bool process = false;
@@ -377,7 +366,10 @@ bool dabc::Command::ReadFromCmdString(const std::string& str)
       std::string part = str.substr(pos, next-pos);
       pos = next;
 
-      if (null()) { CreateContainer(part); continue; }
+      if (null()) {
+         SetObject(new dabc::CommandContainer(part));
+         continue;
+      }
 
       size_t separ = find_symbol(part, 0, '=');
 
@@ -412,4 +404,36 @@ bool dabc::Command::SetRawData(Reference rawdata)
 dabc::Reference dabc::Command::GetRawData()
 {
    return GetRef("RawData");
+}
+
+
+std::string dabc::Command::SaveToXml(bool compact)
+{
+   XMLNodePointer_t node = GetObject() ? GetObject()->SaveInXmlNode(0) : 0;
+
+   std::string res;
+
+   if (node) {
+      Xml::SaveSingleNode(node, &res, compact ? 0 : 1);
+      Xml::FreeNode(node);
+   }
+
+   return res;
+}
+
+bool dabc::Command::ReadFromXml(const char* xmlcode)
+{
+   if ((xmlcode==0) || (*xmlcode==0)) return false;
+
+   XMLNodePointer_t node = Xml::ReadSingleNode(xmlcode);
+
+   if (node==0) return false;
+
+   SetObject(new dabc::CommandContainer(Xml::GetNodeName(node)));
+
+   GetObject()->Fields().ReadFromXml(node, true);
+
+   Xml::FreeNode(node);
+
+   return true;
 }

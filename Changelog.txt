@@ -2,6 +2,17 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+30.08.2013
+1. Introduce new RecordField, which can preserve native data types like int or
+   doubles. In addition, 1-dim arrays are supported. 
+2. RecordFieldsMap organizes map between field name (std::string) and
+   field value, stored in RecordField class.      
+3. Introduce dabc::iostream class, which will be used to stream RecordField 
+   and RecordFieldsMap to/from binary form. Main motivation - in addition to xml 
+   representation one should be able to store Record in compact binary form.
+4. Use new record class for Command, Cfg and Parameter cases.    
+
+
 27.08.2013
 1. Introduce arrays in the record fields. Array implemented in JSON-like style.
    Integer array will look like [1,5,7,10], string array like ["abc", "cdf"].

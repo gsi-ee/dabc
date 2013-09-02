@@ -27,7 +27,7 @@
 #include "dabc/Hierarchy.h"
 
 dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind, bool hidden) :
-   dabc::RecordContainer(worker, name, flIsOwner | (hidden ? flHidden : 0)),
+   dabc::RecordContainerNew(worker, name, flIsOwner | (hidden ? flHidden : 0)),
    fKind(parkind),
    fLastChangeTm(),
    fInterval(1.),
@@ -54,9 +54,10 @@ dabc::ParameterContainer::~ParameterContainer()
    #endif
 }
 
+
 const std::string dabc::ParameterContainer::GetActualUnits() const
 {
-   std::string units = Field("units").AsStdStr();
+   std::string units = GetField("units").AsStr();
 
    LockGuard lock(ObjectMutex());
    if (fStatistic==kindRate) {
@@ -73,16 +74,31 @@ bool dabc::ParameterContainer::IsDeliverAllEvents() const
    return fDeliverAllEvents;
 }
 
+std::string dabc::ParameterContainer::DefaultFiledName() const
+{
+   return xmlValueAttr;
+}
 
-bool dabc::ParameterContainer::SetField(const std::string& name, const char* value, const char* kind)
+
+dabc::RecordFieldNew dabc::ParameterContainer::GetField(const std::string& name) const
+{
+   LockGuard lock(ObjectMutex());
+
+   return name.empty() ? Fields().Field(DefaultFiledName()) : Fields().Field(name);
+}
+
+
+bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFieldNew& value)
 {
 
-   DOUT4("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value ? value : "---", kind ? kind : "---");
-
    bool res(false), fire(false), doset(false), doworker(false);
-   std::string sbuf;
+   double ratevalue(0.);
+   std::string svalue;
 
-   bool is_dflt_name = name.empty() || (name == DefaultFiledName());
+   std::string name = _name.empty() ? DefaultFiledName() : _name;
+   bool is_dflt_name = (name == DefaultFiledName());
+
+   DOUT4("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value.AsStr().c_str());
 
    {
       LockGuard lock(ObjectMutex());
@@ -92,101 +108,75 @@ bool dabc::ParameterContainer::SetField(const std::string& name, const char* val
       doworker = fMonitored;
 
       // remember parameter kind
-      if (fKind.empty() && is_dflt_name && (kind!=0))
-         fKind = kind;
 
-      if ((fStatistic!=kindNone) && is_dflt_name && (value!=0)) {
-         bool isint = strpbrk(value,".eE")==0;
-         double value_double(0);
-         int value_int(0);
+      if ((fStatistic!=kindNone) && is_dflt_name && !value.null()) {
 
-         if (isint && dabc::str_to_int(value,&value_int)) {
-            value_double = value_int;
-            res = true;
-         }
-
-         if (!res)
-            if (dabc::str_to_double(value,&value_double)) res = true;
-
-         if (res) {
-            fRateValueSum += value_double;
-            fRateNumSum+=1.;
-         }
+         fRateValueSum += value.AsDouble();
+         fRateNumSum += 1.;
 
          // if rate calculated asynchron, do rest in timeout processing
-         if (fAsynchron) return res;
+         if (fAsynchron) return true;
 
-         if (res) {
+         TimeStamp tm = dabc::Now();
 
-            TimeStamp tm = dabc::Now();
+         if (fLastChangeTm.null()) fLastChangeTm = tm;
 
-            if (fLastChangeTm.null()) fLastChangeTm = tm;
+         fRateTimeSum = tm - fLastChangeTm;
 
-            fRateTimeSum = tm - fLastChangeTm;
+         fire = _CalcRate(ratevalue, svalue);
 
-            fire = _CalcRate(sbuf);
-
-            if (fire) {
-               fLastChangeTm = tm;
-               doset = true;
-               value = sbuf.c_str();
-            }
+         if (fire) {
+            fLastChangeTm = tm;
+            doset = false;
+            res = Fields().Field(name).SetDouble(ratevalue);
          }
 
       } else {
 
-         doset = true;
+         res = Fields().Field(name).SetValue(value);
 
          if (is_dflt_name) {
             TimeStamp tm = dabc::Now();
 
             if (!fAsynchron)
-               if (fLastChangeTm.null() || (fInterval<=0.) || (tm > fLastChangeTm+fInterval)) fire = true;
+               if (fLastChangeTm.null() || (fInterval<=0.) || (tm > fLastChangeTm+fInterval)) {
+                  fire = true;
+                  svalue = Fields().Field(name).AsStr();
+               }
 
             if (fire) fLastChangeTm = tm;
          }
       }
-   }
-
-   if (doset) {
-      res = dabc::RecordContainer::SetField(name, value, kind);
 
       if (res && !is_dflt_name) {
          // indicate that not only central value, but also parameter attributes were modified
-         LockGuard lock(ObjectMutex());
          fAttrModified = true;
       }
+
    }
 
    // inform worker that parameter is changed
-   if (doset && res && fire && doworker) {
+   if (res && fire && doworker) {
       Worker* w = GetWorker();
       if (w) w->WorkerParameterChanged(this);
    }
 
-   if (fire && res) FireModified(value);
-
+   if (fire && res) FireModified(svalue);
 
    DOUT4("ParameterContainer::SetField %s = %s  doset %s res %s fire %s",
-         name.c_str(), value ? value : "---", DBOOL(doset), DBOOL(res),DBOOL(fire));
+         name.c_str(), value.AsStr().c_str(), DBOOL(doset), DBOOL(res),DBOOL(fire));
 
    return res;
 }
 
-void dabc::ParameterContainer::FireModified(const char* value)
+void dabc::ParameterContainer::FireModified(const std::string& svalue)
 {
    FireParEvent(parModified);
 
    int doout = GetDebugLevel();
 
    if (doout>=0)
-      dabc::Logger::Debug(doout, __FILE__, __LINE__, __func__, dabc::format("%s = %s %s", GetName(), value ? value : "(null)", GetActualUnits().c_str()).c_str() );
-}
-
-const char* dabc::ParameterContainer::GetField(const std::string& name, const char* dflt)
-{
-   // FIXME: one should not use const char* as return value - it is not thread safe
-   return RecordContainer::GetField(name, dflt);
+      dabc::Logger::Debug(doout, __FILE__, __LINE__, __func__, dabc::format("%s = %s %s", GetName(), svalue.c_str(), GetActualUnits().c_str()).c_str() );
 }
 
 
@@ -201,14 +191,14 @@ void dabc::ParameterContainer::ObjectCleanup()
 {
    FireParEvent(parDestroy);
 
-   dabc::RecordContainer::ObjectCleanup();
+   dabc::RecordContainerNew::ObjectCleanup();
 }
 
 void dabc::ParameterContainer::ProcessTimeout(double last_dif)
 {
-   bool fire(false), doset(false);
-   std::string value;
-   const char* cvalue(0);
+   bool fire(false);
+   double value(0);
+   std::string svalue;
 
 //   DOUT0("Par %s Process timeout !!!", GetName());
 
@@ -217,8 +207,11 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
 
       if ((fStatistic!=kindNone) && fAsynchron) {
          fRateTimeSum += last_dif;
-         fire = _CalcRate(value);
-         if (fire) { fLastChangeTm = dabc::Now(); doset = true; }
+         fire = _CalcRate(value, svalue);
+         if (fire) {
+            fLastChangeTm = dabc::Now();
+            Fields().Field(DefaultFiledName()).SetDouble(value);
+         }
       } else
 
       if (fAsynchron) {
@@ -228,38 +221,31 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
             fire = true;
             fLastChangeTm.Reset();
             fRateTimeSum = 0.;
+            svalue = Fields().Field(DefaultFiledName()).AsStr();
          }
       }
    }
 
-   if (doset) {
-      dabc::RecordContainer::SetField("", value.c_str(), RecordField::kind_double());
-      cvalue = value.c_str();
-   } else
-      cvalue = dabc::RecordContainer::GetField("");
-
    if (fire)
-      FireModified(cvalue);
+      FireModified(svalue);
 }
 
-bool dabc::ParameterContainer::_CalcRate(std::string& value)
+bool dabc::ParameterContainer::_CalcRate(double& value, std::string& svalue)
 {
    if ((fRateTimeSum < fInterval) || (fRateTimeSum<1e-6)) return false;
 
-   double res = 0.;
-
    if (fStatistic==kindRate)
-      res = fRateValueSum / fRateTimeSum;
+      value = fRateValueSum / fRateTimeSum;
    else
    if ((fStatistic==kindAverage) && (fRateNumSum>0)) {
-      res = fRateValueSum / fRateNumSum;
+      value = fRateValueSum / fRateNumSum;
    }
 
    fRateValueSum = 0.;
    fRateTimeSum = 0.;
    fRateNumSum = 0.;
 
-   dabc::formats(value, "%*.*f", fRateWidth, fRatePrec, res);
+   dabc::formats(svalue, "%*.*f", fRateWidth, fRatePrec, value);
 
    return true;
 }
@@ -296,8 +282,8 @@ void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
 {
    dabc::Hierarchy rec(cont);
 
-   const char* val = GetField("");
-   if (val) rec.Field("value").SetStr(val);
+   std::string val = GetField("").AsStr();
+   if (!val.empty()) rec.Field("value").SetStr(val);
 
    LockGuard lock(ObjectMutex());
 
@@ -307,6 +293,36 @@ void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
 
 
 // --------------------------------------------------------------------------------
+
+
+bool dabc::Parameter::HasField(const std::string& name) const
+{
+   if (null()) return false;
+   LockGuard lock(ObjectMutex());
+   return GetObject()->Fields().HasField(name);
+}
+
+bool dabc::Parameter::RemoveField(const std::string& name)
+{
+   if (null()) return false;
+   if (name == "value") return false;
+   LockGuard lock(ObjectMutex());
+   return GetObject()->Fields().RemoveField(name);
+}
+
+unsigned dabc::Parameter::NumFields() const
+{
+   if (null()) return 0;
+   LockGuard lock(ObjectMutex());
+   return GetObject()->Fields().NumFields();
+}
+
+std::string dabc::Parameter::FieldName(unsigned cnt) const
+{
+   if (null()) return std::string();
+   LockGuard lock(ObjectMutex());
+   return GetObject()->Fields().FieldName(cnt);
+}
 
 bool dabc::Parameter::NeedTimeout()
 {
@@ -339,8 +355,8 @@ dabc::Parameter& dabc::Parameter::SetRatemeter(bool synchron, double interval)
 
    if (GetObject()==0) return *this;
 
-   GetObject()->fRateWidth = Field("width").AsInt(GetObject()->fRateWidth);
-   GetObject()->fRatePrec = Field("prec").AsInt(GetObject()->fRatePrec);
+   GetObject()->fRateWidth = GetField("width").AsInt(GetObject()->fRateWidth);
+   GetObject()->fRatePrec = GetField("prec").AsInt(GetObject()->fRatePrec);
 
    {
       LockGuard lock(ObjectMutex());
@@ -391,8 +407,8 @@ bool dabc::Parameter::IsRatemeter() const
 
 dabc::Parameter& dabc::Parameter::SetWidthPrecision(unsigned width, unsigned prec)
 {
-   Field("width").SetInt(width);
-   Field("prec").SetInt(prec);
+   SetField("width", width);
+   SetField("prec", prec);
 
    if (GetObject()) {
       LockGuard lock(ObjectMutex());
@@ -407,8 +423,8 @@ dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
 {
    if (GetObject()==0) return *this;
 
-   GetObject()->fRateWidth = Field("width").AsInt(GetObject()->fRateWidth);
-   GetObject()->fRatePrec = Field("prec").AsInt(GetObject()->fRatePrec);
+   GetObject()->fRateWidth = GetField("width").AsInt(GetObject()->fRateWidth);
+   GetObject()->fRatePrec = GetField("prec").AsInt(GetObject()->fRatePrec);
 
    {
       LockGuard lock(ObjectMutex());
@@ -480,7 +496,7 @@ int dabc::Parameter::ExecuteChange(Command cmd)
 {
    CmdSetParameter setcmd = cmd;
 
-   bool res = SetStr(setcmd.ParValue().AsStr());
+   bool res = SetValue(setcmd.ParValue().AsStr());
 
    return res ? cmd_true : cmd_false;
 }
@@ -528,14 +544,14 @@ void dabc::Parameter::FireConfigured()
 void dabc::Parameter::FireModified()
 {
    if (GetObject())
-      GetObject()->FireModified(AsStr());
+      GetObject()->FireModified(Value().AsStr());
 }
 
 // ========================================================================================
 
 std::string dabc::CommandDefinition::ArgName(int n) const
 {
-   return Field(dabc::format("#Arg%d",n)).AsStdStr();
+   return GetField(dabc::format("#Arg%d",n)).AsStr();
 }
 
 bool dabc::CommandDefinition::HasArg(const std::string& name) const
@@ -555,13 +571,13 @@ dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name
 
    if (!HasArg(name)) {
       int num = NumArgs();
-      Field(dabc::format("#Arg%d",num)).SetStr(name);
-      Field("#NumArgs").SetInt(num+1);
+      SetField(dabc::format("#Arg%d",num), name);
+      SetField("#NumArgs", num+1);
    }
 
-   Field(name).SetStr(dflt);
-   Field(name+"_kind").SetStr(kind);
-   Field(name+"_req").SetBool(required);
+   SetField(name, dflt);
+   SetField(name+"_kind", kind);
+   SetField(name+"_req", required);
 
    FireConfigured();
 
@@ -570,7 +586,7 @@ dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name
 
 int dabc::CommandDefinition::NumArgs() const
 {
-   return Field("#NumArgs").AsInt(0);
+   return GetField("#NumArgs").AsInt(0);
 }
 
 bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const
@@ -578,9 +594,9 @@ bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind
    name = ArgName(n);
    if (name.empty()) return false;
 
-   dflt = Field(name).AsStdStr();
-   kind = Field(name+"_kind").AsStdStr();
-   required = Field(name+"_req").AsBool();
+   dflt = GetField(name).AsStr();
+   kind = GetField(name+"_kind").AsStr();
+   required = GetField(name+"_req").AsBool();
 
    return true;
 }

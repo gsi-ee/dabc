@@ -44,7 +44,7 @@ void dabc::Port::ReadPortConfiguration()
    fQueueCapacity = Cfg(xmlQueueAttr).AsInt(fQueueCapacity);
    fMapLoopLength = Cfg(xmlLoopAttr).AsInt(fMapLoopLength);
    std::string signal = Cfg(xmlSignalAttr).AsStdStr();
-   if (signal=="none") fSignal = SignalNone; else
+   if (signal == "none") fSignal = SignalNone; else
    if ((signal == "confirm") || (signal == "normal")) fSignal = SignalConfirm; else
    if (signal == "oper")  fSignal = SignalConfirm; else
    if (signal == "every") fSignal = SignalEvery;
@@ -81,7 +81,7 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
 
    ConfigIO io(dabc::mgr()->cfg());
 
-   io.ReadRecord(this, dabc::ConnectionObject::ObjectName(), req());
+   io.ReadRecordNew(this, dabc::ConnectionObject::ObjectName(), 0, &(req()->Fields()));
 
    req()->FireParEvent(parCreated);
 
@@ -284,7 +284,7 @@ dabc::Buffer dabc::InputPort::Recv()
 {
    Buffer buf;
    fQueue.Recv(buf);
-   fRate.SetDouble(buf.GetTotalSize()/1024./1024.);
+   fRate.SetValue(buf.GetTotalSize()/1024./1024.);
    return buf;
 }
 
@@ -308,7 +308,7 @@ dabc::OutputPort::~OutputPort()
 
 bool dabc::OutputPort::Send(dabc::Buffer& buf)
 {
-   fRate.SetDouble(buf.GetTotalSize()/1024./1024.);
+   fRate.SetValue(buf.GetTotalSize()/1024./1024.);
 
    bool res = fQueue.Send(buf);
 

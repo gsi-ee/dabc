@@ -44,7 +44,7 @@ void hadaq::ShmEntry::UpdateParameter()
    if(!fPar.null())
       {
          //std::cout <<"ShmEntry updated parameter  "<<fPar.GetName() << std::endl;
-         fPar.SetUInt(GetValue());
+         fPar.SetValue((int)GetValue());
       }
 }
 

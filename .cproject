@@ -116,8 +116,10 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="dabc.null.1297625351" name="dabc"/>
 	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/dabc"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Linux GCC">
+			<resource resourceType="PROJECT" workspacePath="/dabc"/>
+		</configuration>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
@@ -643,4 +645,5 @@
 			</profile>
 		</scannerConfigBuildInfo>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 </cproject>

@@ -53,13 +53,13 @@ void dabc::CpuInfoModule::ProcessTimerEvent(unsigned timer)
 
    if (fStat.NumCPUs()==0) return;
 
-   Par("CPUutil").SetDouble(fStat.CPUutil(0)*100.);
+   Par("CPUutil").SetValue(fStat.CPUutil(0)*100.);
 
    if ((fStat.NumCPUs() > 2) && (fKind & 6))
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
-        Par(dabc::format("CPU%u", n)).SetDouble(fStat.CPUutil(n+1)*100.);
+        Par(dabc::format("CPU%u", n)).SetValue(fStat.CPUutil(n+1)*100.);
 
-   Par("VmSize").SetDouble(fStat.GetVmSize());
+   Par("VmSize").SetValue((int)fStat.GetVmSize());
 //   Par("VmPeak").SetInt(fStat.GetVmPeak());
 //   Par("NumThreads").SetInt(fStat.GetNumThreads());
 }

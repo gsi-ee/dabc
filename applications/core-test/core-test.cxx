@@ -226,16 +226,16 @@ class CoreTestApplication : public dabc::Application {
       {
          DOUT0("Create net test application");
 
-         CreatePar("TestKind").DfltStr("sync");
+         CreatePar("TestKind").Dflt("sync");
 
-         CreatePar(dabc::xmlBufferSize).DfltInt(1024);
+         CreatePar(dabc::xmlBufferSize).Dflt(1024);
 
-         DOUT0("Test application was build bufsize = %d", Par(dabc::xmlBufferSize).AsUInt());
+         DOUT0("Test application was build bufsize = %d", Par(dabc::xmlBufferSize).Value().AsInt());
       }
 
       bool IsSync()
       {
-         return Par("TestKind").AsStdStr() == "sync";
+         return Par("TestKind").Value().AsStr() == "sync";
       }
 
       virtual bool CreateAppModules()
@@ -394,7 +394,6 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
    protected:
       long                fCounter1;
       long                fCounter2;
-      bool                fWithRate;
 
    public:
       TimeoutTestModuleAsync(const std::string& name, bool withrate = false) :
@@ -413,7 +412,7 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
       {
          if (TimerName(timer) == "Timer1") {
             fCounter1++;
-            Par("Rate").SetDouble(1.);
+            Par("Rate").SetValue(1.);
          } else
             fCounter2++;
       }

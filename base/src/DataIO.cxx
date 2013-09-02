@@ -81,7 +81,7 @@ void dabc::DataOutput::ShowInfo(const std::string& info, bool important)
        DOUT1(info.c_str());
    } else {
       dabc::Parameter par = dabc::mgr.FindPar(fInfoName);
-      par.SetStr(info);
+      par.SetValue(info);
       if (important) par.FireModified();
    }
 }
@@ -92,7 +92,7 @@ void dabc::DataOutput::ShowError(const std::string& info)
        DOUT0(info.c_str());
    } else {
       dabc::Parameter par = dabc::mgr.FindPar(fInfoName);
-      par.SetStr(info);
+      par.SetValue(info);
       par.FireModified();
    }
 }

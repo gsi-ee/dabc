@@ -157,7 +157,7 @@ namespace dabc {
 
          RecordContainer(Reference parent, const std::string& name, unsigned flags = flIsOwner);
 
-         virtual const std::string DefaultFiledName() const;
+         virtual std::string DefaultFiledName() const;
 
          std::string FindField(const std::string& mask) const;
 
@@ -360,6 +360,7 @@ namespace dabc {
    class RecordFieldWatcher {
       public:
          virtual ~RecordFieldWatcher() {}
+         virtual bool CanChangeField(RecordFieldNew* field) { return true; }
          virtual void FieldModified(RecordFieldNew* field) {}
    };
 
@@ -410,6 +411,7 @@ namespace dabc {
          }
 
          bool isreadonly() const { return fReadonly; }
+         bool cannot_modify();
 
          void SetArrStrDirect(int64_t size, char* arr, bool owner = false);
 
@@ -418,9 +420,21 @@ namespace dabc {
 
          bool Stream(iostream& s);
 
+         void constructor() { fKind = kind_none; fWatcher = 0; fReadonly = false; fModified = false; }
+
       public:
          RecordFieldNew();
          RecordFieldNew(const RecordFieldNew& src);
+         RecordFieldNew(const std::string& v) { constructor(); SetStr(v); }
+         RecordFieldNew(const int& v) { constructor(); SetInt(v); }
+         RecordFieldNew(const unsigned& v) { constructor(); SetUInt(v); }
+         RecordFieldNew(const double& v) { constructor(); SetDouble(v); }
+         RecordFieldNew(const bool& v) { constructor(); SetBool(v); }
+
+         RecordFieldNew& operator=(const RecordFieldNew& src) { SetValue(src); return *this; }
+
+
+
          virtual ~RecordFieldNew();
 
          bool null() const { return fKind == kind_none; }
@@ -439,11 +453,13 @@ namespace dabc {
          uint64_t AsUInt(uint64_t dflt = 0) const;
          double AsDouble(double dflt = 0.) const;
          std::string AsStr(const std::string& dflt = "") const;
+         std::string AsStdStr(const std::string& dflt = "") const { return AsStr(dflt); }
          std::vector<int64_t> AsIntVect() const;
          std::vector<uint64_t> AsUIntVect() const;
          std::vector<double> AsDoubleVect() const;
          std::vector<std::string> AsStrVect() const;
 
+         bool SetValue(const RecordFieldNew& src);
          bool SetNull();
          bool SetBool(bool v);
          bool SetUInt(uint64_t v);
@@ -462,6 +478,9 @@ namespace dabc {
          bool SetArrDouble(int64_t size, double* arr, bool owner = false);
          bool SetVectDouble(const std::vector<double>& v);
 
+         /** Sets as array of string, placed one after another in memory */
+         bool SetArrStr(int64_t size, char* arr, bool owner = false);
+
          static int NeedQuotes(const std::string& str);
          static std::string ExpandValue(const std::string& str);
          static std::string CompressValue(const char* str, int len);
@@ -472,6 +491,8 @@ namespace dabc {
          typedef std::map<std::string, dabc::RecordFieldNew> FieldsMap;
 
          FieldsMap fMap;
+
+         RecordFieldWatcher*  fWatcher;  ///! watcher, which will be supplied to each field
 
          uint64_t StoreSize() const;
 
@@ -489,6 +510,8 @@ namespace dabc {
 
          RecordFieldsMap();
          virtual ~RecordFieldsMap();
+
+         void SetWatcher(RecordFieldWatcher* w) { fWatcher = w; };
 
          bool Stream(iostream& s);
 
@@ -558,33 +581,7 @@ namespace dabc {
 
       DABC_REFERENCE(RecordNew, Reference, RecordContainerNew)
 
-      public:
-
-         bool HasField(const std::string& name) const { return GetObject() ? GetObject()->Fields().HasField(name) : false; }
-         bool RemoveField(const std::string& name) { return GetObject() ? GetObject()->Fields().RemoveField(name) : false; }
-
-         unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
-         const std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
-
-         RecordFieldNew& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
-         const RecordFieldNew& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
-
-         void AddFieldsFrom(const RecordNew& src, bool can_owerwrite = true);
-
-         std::string SaveToXml(bool compact=true);
-         bool ReadFromXml(const char* xmlcode);
-
-      protected:
-
-         virtual bool CreateContainer(const std::string& name)
-         {
-            SetObject(new dabc::RecordContainerNew(name));
-            return true;
-         }
    };
-
-
-
 
 }
 

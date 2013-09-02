@@ -37,8 +37,14 @@ const char* dabc::ConfigContainer::GetField(const std::string& name, const char*
 
    // first search if command has specified argument
 
-   if (!fName.empty() && name.empty()) res = fCmd.GetField(fName, 0); else
-   if (fName.empty() && !name.empty()) res = fCmd.GetField(name, 0);
+   if (!fName.empty() && name.empty() && fCmd.HasField(fName)) {
+      fCmdBuf = fCmd.GetStr(fName);
+      res = fCmdBuf.c_str();
+   } else
+   if (fName.empty() && !name.empty() && fCmd.HasField(name)) {
+      fCmdBuf = fCmd.GetStr(name);
+      res = fCmdBuf.c_str();
+   }
 
    DOUT3("CFG1: GETFIELD name:%s  fName:%s  res = %s", name.c_str(), fName.c_str(), (res ? res : "---"));
 

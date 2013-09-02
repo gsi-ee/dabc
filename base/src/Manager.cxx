@@ -586,7 +586,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
          // TODO: provide complete list of fields - mean complete xml record ?????
          if (value.length()==0)
-            value = rec.par.AsStdStr();
+            value = rec.par.Value().AsStr();
 
          if (iter->queue > 1000) {
             EOUT("Too many events for receiver %s - block any following", iter->recv.GetName());
@@ -869,7 +869,7 @@ dabc::Reference dabc::Manager::DoCreateObject(const std::string& classname, cons
 
 int dabc::Manager::ExecuteCommand(Command cmd)
 {
-   DOUT5("MGR: Execute %s", cmd.GetName());
+   DOUT5("MGR: Execute %s\n%s", cmd.GetName(), cmd.SaveToXml(false).c_str());
 
    int cmd_res = cmd_true;
 
@@ -968,7 +968,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
    } else
    if (cmd.IsName(CmdDestroyDevice::CmdName())) {
-      const char* devname = cmd.GetStr("DevName");
+      std::string devname = cmd.GetStr("DevName");
 
       Reference dev = FindDevice(devname);
 
@@ -1125,7 +1125,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
    } else
    if (cmd.IsName(CmdDeletePool::CmdName())) {
-      FindPool(cmd.GetField("PoolName")).Destroy();
+      FindPool(cmd.GetStr("PoolName")).Destroy();
    } else
    if (cmd.IsName("Print")) {
       dabc::Iterator iter1(GetThreadsFolder());

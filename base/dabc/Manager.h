@@ -229,9 +229,9 @@ namespace dabc {
 
       DABC_COMMAND(CmdSetParameter, "SetParameter");
 
-      RecordField ParName() { return Field("ParName"); }
+      RecordFieldNew& ParName() { return Field("ParName"); }
 
-      RecordField ParValue() { return Field("ParValue"); }
+      RecordFieldNew& ParValue() { return Field("ParValue"); }
    };
 
    /** \brief %Command to request current state of known nodes */

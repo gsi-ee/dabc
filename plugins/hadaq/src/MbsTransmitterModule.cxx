@@ -216,9 +216,9 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
       fFlushCnt = 2; // two timout without sending should happen before flush will appear
 
-      Par("TransmitData").SetDouble(sendbuf.GetTotalSize() / 1024./1024.);
-      Par("TransmitBufs").SetDouble(1.);
-      Par("TransmitEvents").SetDouble(fEvCounter);
+      Par("TransmitData").SetValue(sendbuf.GetTotalSize() / 1024./1024.);
+      Par("TransmitBufs").SetValue(1.);
+      Par("TransmitEvents").SetValue(fEvCounter);
       fEvCounter = 0;
 
 //      DOUT0("MbsTransmitterModule::retransmit() dosend");

@@ -362,7 +362,6 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
          if (fCmds.Size()>0) FireEvent(evntActivate);
 
          break;
-
    }
 
    fRecvState = recvHeader;

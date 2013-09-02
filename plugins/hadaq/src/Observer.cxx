@@ -131,7 +131,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
    }
 
    if(!par.null())
-      entry->UpdateValue(par.AsStdStr());
+      entry->UpdateValue(par.Value().AsStr());
 
 
    return true;

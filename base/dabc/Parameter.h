@@ -53,7 +53,7 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class ParameterContainer : public RecordContainer {
+   class ParameterContainer : public RecordContainerNew {
       friend class Parameter;
       friend class Worker;
       friend class Manager;
@@ -77,8 +77,12 @@ namespace dabc {
          int           fRateWidth;    ///< display width of rate variable
          int           fRatePrec;     ///< display precision of rate variable
 
-         virtual bool SetField(const std::string& name, const char* value, const char* kind);
-         virtual const char* GetField(const std::string& name, const char* dflt = 0);
+
+         virtual std::string DefaultFiledName() const;
+
+         RecordFieldNew GetField(const std::string& name) const;
+
+         bool SetField(const std::string& name, const RecordFieldNew& v);
 
          /** Method could be used to reject changes of some fields of the parameter
           * Method called under object mutex */
@@ -99,7 +103,7 @@ namespace dabc {
 
          virtual void ObjectCleanup();
 
-         bool _CalcRate(std::string& value);
+         bool _CalcRate(double& value, std::string& svalue);
 
          /** Specifies that parameter produce 'modified' events synchronous with changes of parameter.
           * If on=false (asynchronous), events are produced by timeout from manager (with granularity of 1 sec).
@@ -109,7 +113,7 @@ namespace dabc {
 
          Worker* GetWorker() const;
 
-         int GetDebugLevel() const { return Field("debug").AsInt(-1); }
+         int GetDebugLevel() const { return GetField("debug").AsInt(-1); }
 
          const std::string GetActualUnits() const;
 
@@ -118,7 +122,7 @@ namespace dabc {
 
          /** Internal method, used to inform system that parameter is modified
           * If configured, also debug output will be produced */
-         void FireModified(const char* value);
+         void FireModified(const std::string& svalue);
 
          /** \brief Save parameter attributes into container */
          virtual void BuildHierarchy(HierarchyContainer* cont);
@@ -143,7 +147,7 @@ namespace dabc {
     */
 
 
-   class Parameter : public Record {
+   class Parameter : public RecordNew {
 
       friend class Worker;
       friend class Manager;
@@ -180,7 +184,26 @@ namespace dabc {
          }
 
 
-         DABC_REFERENCE(Parameter, Record, ParameterContainer)
+         DABC_REFERENCE(Parameter, RecordNew, ParameterContainer)
+
+         bool HasField(const std::string& name) const;
+         bool RemoveField(const std::string& name);
+         unsigned NumFields() const;
+         std::string FieldName(unsigned cnt) const;
+         RecordFieldNew GetField(const std::string& name) const
+           { return null() ? RecordFieldNew() : GetObject()->GetField(name); }
+
+         bool SetField(const std::string& name, const RecordFieldNew& v)
+           { return null() ? false : GetObject()->SetField(name, v); }
+
+         RecordFieldNew Value() const
+          { return null() ? RecordFieldNew() : GetObject()->GetField(""); }
+
+         bool SetValue(const RecordFieldNew& v)
+          { return null() ? false : GetObject()->SetField("", v); }
+
+         bool Dflt(const RecordFieldNew& v)
+          { return (null() || !Value().null()) ? false : SetValue(v); }
 
          bool NeedTimeout();
 
@@ -218,25 +241,25 @@ namespace dabc {
 
          /** Enable/disable debug output when parameter value is changed */
          Parameter& SetDebugOutput(bool on = true, int level = 1) { return SetDebugLevel(on ? level : -1); }
-         Parameter& SetDebugLevel(int level = 1) { Field("debug").SetInt(level); return *this; }
+         Parameter& SetDebugLevel(int level = 1) { SetField("debug", level); return *this; }
          int GetDebugLevel() const;
 
          /** Set parameter to convert double values to the string - used for ratemeter */
          Parameter& SetWidthPrecision(unsigned width, unsigned prec);
 
-         Parameter& SetUnits(const std::string& unit) { Field("units").SetStr(unit); return *this; }
+         Parameter& SetUnits(const std::string& unit) { SetField("units", unit); return *this; }
 
          /** Return units of parameter value */
-         const std::string GetUnits() const { return Field("units").AsStdStr(); }
+         const std::string GetUnits() const { return GetField("units").AsStr(); }
 
          /** Return actual units of parameter value, taking into account rate (1/s) unit when enabled */
          const std::string GetActualUnits() const;
 
-         void SetLowerLimit(double low) { Field("low").SetDouble(low); }
-         double GetLowerLimit() const { return Field("low").AsDouble(); }
+         void SetLowerLimit(double low) { SetField("low", low); }
+         double GetLowerLimit() const { return GetField("low").AsDouble(); }
 
-         void SetUpperLimit(double up) { Field("up").SetDouble(up); }
-         double GetUpperLimit() const { return Field("up").AsDouble(); }
+         void SetUpperLimit(double up) { SetField("up", up); }
+         double GetUpperLimit() const { return GetField("up").AsDouble(); }
 
          Parameter& SetLimits(double low, double up) { SetLowerLimit(low); SetUpperLimit(up); return *this; }
 
@@ -268,14 +291,14 @@ namespace dabc {
 
          DABC_REFERENCE(InfoParameter, Parameter, ParameterContainer)
 
-         void SetInfo(const std::string& info) { SetStr(info); }
-         std::string GetInfo() const { return AsStdStr(); }
+         void SetInfo(const std::string& info) { SetValue(info); }
+         std::string GetInfo() const { return Value().AsStr(); }
 
-         void SetColor(const std::string& name) { Field("color").SetStr(name); }
-         std::string GetColor() const { return Field("color").AsStdStr("Green"); }
+         void SetColor(const std::string& name) { SetField("color", name); }
+         std::string GetColor() const { return GetField("color").AsStr("Green"); }
 
-         void SetVerbosity(int level) { Field("verbosity").SetInt(level); }
-         int GetVerbosity() const { return Field("verbosity").AsInt(1); }
+         void SetVerbosity(int level) { SetField("verbosity", level); }
+         int GetVerbosity() const { return GetField("verbosity").AsInt(1); }
 
          static const char* infokind() { return "info"; }
    };

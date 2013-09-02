@@ -34,24 +34,24 @@ class IbTestApplication : public dabc::Application {
       {
          DOUT2("Create ib-test application");
 
-         CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
+         CreatePar("NetDevice").Dflt(dabc::typeSocketDevice);
 
-         CreatePar("TestKind").DfltStr("OnlyConnect");
-         CreatePar("TestReliable").DfltBool(true);
-         CreatePar("TestTimeSyncShort").DfltBool(false);
+         CreatePar("TestKind").Dflt("OnlyConnect");
+         CreatePar("TestReliable").Dflt(true);
+         CreatePar("TestTimeSyncShort").Dflt(false);
 
-         CreatePar("TestOutputQueue").DfltInt(5);
-         CreatePar("TestInputQueue").DfltInt(10);
-         CreatePar("TestBufferSize").DfltInt(128*1024);
-         CreatePar("TestPoolSize").DfltInt(250);
-         CreatePar("TestRate").DfltInt(1000);
-         CreatePar("TestTime").DfltInt(10);
-         CreatePar("TestPattern").DfltInt(0);
-         CreatePar("TestNumLids").DfltInt(1);
+         CreatePar("TestOutputQueue").Dflt(5);
+         CreatePar("TestInputQueue").Dflt(10);
+         CreatePar("TestBufferSize").Dflt(128*1024);
+         CreatePar("TestPoolSize").Dflt(250);
+         CreatePar("TestRate").Dflt(1000);
+         CreatePar("TestTime").Dflt(10);
+         CreatePar("TestPattern").Dflt(0);
+         CreatePar("TestNumLids").Dflt(1);
          CreatePar("TestSchedule");
-         CreatePar("TestTimeout").DfltDouble(20);
-         CreatePar("TestRead").DfltBool(true);
-         CreatePar("TestWrite").DfltBool(true);
+         CreatePar("TestTimeout").Dflt(20);
+         CreatePar("TestRead").Dflt(true);
+         CreatePar("TestWrite").Dflt(true);
 
          DOUT2("ib-test application was build");
       }
@@ -62,11 +62,11 @@ class IbTestApplication : public dabc::Application {
 
       virtual bool CreateAppModules()
       {
-         std::string devclass = Par("NetDevice").AsStdStr();
+         std::string devclass = Par("NetDevice").Value().AsStr();
          
          if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
-         int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").AsInt() * sizeof(IbTestConnRec);
+         int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").Value().AsInt() * sizeof(IbTestConnRec);
          int bufsize = 16*1024;
          while (bufsize < connect_packet_size) bufsize*=2;
 
@@ -103,7 +103,7 @@ class IbTestApplication : public dabc::Application {
          // all slaves should be able to connect inside 10 seconds, master timeout could be configurable
          if (dabc::mgr()->NodeId()>0) return 10;
 
-         return Par("TestTimeout").AsInt(20);
+         return Par("TestTimeout").Value().AsInt(20);
       }
 
 };

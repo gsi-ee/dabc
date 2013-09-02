@@ -124,7 +124,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       {
          double tmout = cmd.TimeTillTimeout();
          if (fSendCnt != (unsigned) dabc::mgr.NodeId())
-            Par("CmdExeTime").SetDouble((1.- tmout)*1000.);
+            Par("CmdExeTime").SetValue((1.- tmout)*1000.);
 
          //DOUT0("********************** Get command reply res = %d! ************************* ", cmd.GetResult());
          //dabc::mgr.StopApplication();

@@ -395,11 +395,11 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
    } else
 
    if (cmd.IsName("SocketConnect")) {
-      const char* typ = cmd.GetStr("Type");
-      std::string connid = cmd.GetStdStr("ConnId");
+      std::string typ = cmd.GetStr("Type");
+      std::string connid = cmd.GetStr("ConnId");
       int fd = cmd.GetInt("fd", -1);
 
-      if (strcmp(typ, "Server")==0) {
+      if (typ == "Server") {
          DOUT2("SocketDevice:: create server protocol for socket %d connid %s", fd, connid.c_str());
 
          SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, 0);
@@ -409,7 +409,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
          LockGuard guard(DeviceMutex());
          fProtocols.push_back(proto);
       } else
-      if (strcmp(typ, "Client")==0) {
+      if (typ == "Client") {
          SocketProtocolAddon* proto = 0;
 
          {
@@ -429,7 +429,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
          }
          if (proto) thread().MakeWorkerFor(proto, connid);
       } else
-      if (strcmp(typ, "Error")==0) {
+      if (typ == "Error") {
          NewConnectRec* rec = 0;
          {
             LockGuard guard(DeviceMutex());

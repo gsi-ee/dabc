@@ -473,7 +473,7 @@ void dabc::RecordContainer::Print(int lvl)
    }
 }
 
-const std::string dabc::RecordContainer::DefaultFiledName() const
+std::string dabc::RecordContainer::DefaultFiledName() const
 {
    return xmlValueAttr;
 }
@@ -865,14 +865,19 @@ bool dabc::memstream::read(void* tgt, uint64_t len)
 // ===========================================================================
 
 
-
-
 dabc::RecordFieldNew::RecordFieldNew() :
    fKind(kind_none),
    fWatcher(0),
    fReadonly(false),
    fModified(false)
 {
+}
+
+bool dabc::RecordFieldNew::cannot_modify()
+{
+   if (isreadonly()) return true;
+   if (fWatcher && !fWatcher->CanChangeField(this)) return true;
+   return false;
 }
 
 dabc::RecordFieldNew::RecordFieldNew(const RecordFieldNew& src)
@@ -895,7 +900,6 @@ dabc::RecordFieldNew::RecordFieldNew(const RecordFieldNew& src)
       case kind_arrstr: SetArrStrDirect(src.valueInt, src.valueStr); break;
    }
 }
-
 
 dabc::RecordFieldNew::~RecordFieldNew()
 {
@@ -1055,8 +1059,8 @@ bool dabc::RecordFieldNew::AsBool(bool dflt) const
       case kind_arrdouble: if (valueInt>0) return arrDouble[0]!=0; break;
       case kind_string:
       case kind_arrstr: {
-         if (strcmp(valueStr,xmlTrueValue)) return true;
-         if (strcmp(valueStr,xmlFalseValue)) return false;
+         if (strcmp(valueStr,xmlTrueValue)==0) return true;
+         if (strcmp(valueStr,xmlFalseValue)==0) return false;
          break;
       }
    }
@@ -1430,10 +1434,27 @@ std::vector<std::string> dabc::RecordFieldNew::AsStrVect() const
    return res;
 }
 
+bool dabc::RecordFieldNew::SetValue(const RecordFieldNew& src)
+{
+   switch (src.fKind) {
+      case kind_none: return SetNull();
+      case kind_bool: return SetBool(src.valueInt!=0);
+      case kind_int: return SetInt(src.valueInt);
+      case kind_uint: return SetUInt(src.valueUInt);
+      case kind_double: return SetDouble(src.valueDouble);
+      case kind_arrint: return SetArrInt(src.valueInt, (int64_t*) src.arrInt);
+      case kind_arruint: return SetArrUInt(src.valueInt, (uint64_t*) src.arrUInt);
+      case kind_arrdouble: return SetArrDouble(src.valueInt, (double*) src.arrDouble);
+      case kind_string: return SetStr(src.valueStr);
+      case kind_arrstr: return SetArrStr(src.valueInt, src.valueStr);
+   }
+   return false;
+}
+
 
 bool dabc::RecordFieldNew::SetNull()
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
    if (fKind == kind_none) return modified(false);
    release();
    return modified();
@@ -1442,7 +1463,7 @@ bool dabc::RecordFieldNew::SetNull()
 
 bool dabc::RecordFieldNew::SetBool(bool v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_bool) && (valueInt == (v ? 1 : 0))) return modified(false);
 
@@ -1455,7 +1476,7 @@ bool dabc::RecordFieldNew::SetBool(bool v)
 
 bool dabc::RecordFieldNew::SetInt(int64_t v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
    if ((fKind == kind_int) && (valueInt == v)) return modified(false);
    release();
    fKind = kind_int;
@@ -1465,7 +1486,7 @@ bool dabc::RecordFieldNew::SetInt(int64_t v)
 
 bool dabc::RecordFieldNew::SetUInt(uint64_t v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_uint) &&  (valueUInt == v)) return modified(false);
 
@@ -1478,7 +1499,7 @@ bool dabc::RecordFieldNew::SetUInt(uint64_t v)
 
 bool dabc::RecordFieldNew::SetDouble(double v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_double) && (valueDouble == v)) return modified(false);
 
@@ -1491,7 +1512,7 @@ bool dabc::RecordFieldNew::SetDouble(double v)
 
 bool dabc::RecordFieldNew::SetStr(const std::string& v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_string) && (v==valueStr)) return modified(false);
 
@@ -1505,7 +1526,7 @@ bool dabc::RecordFieldNew::SetStr(const std::string& v)
 
 bool dabc::RecordFieldNew::SetStr(const char* v)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_string) && (v!=0) && (strcmp(v,valueStr)==0)) return modified(false);
 
@@ -1521,7 +1542,7 @@ bool dabc::RecordFieldNew::SetStr(const char* v)
 
 bool dabc::RecordFieldNew::SetStrVect(const std::vector<std::string>& vect)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
 
    if ((fKind == kind_arrstr) && (valueInt == (int64_t) vect.size())) {
       std::vector<std::string> vect0 = AsStrVect();
@@ -1566,7 +1587,7 @@ bool dabc::RecordFieldNew::SetVectInt(const std::vector<int64_t>& v)
 
 bool dabc::RecordFieldNew::SetArrInt(int64_t size, int64_t* arr, bool owner)
 {
-   if (isreadonly() || (size<=0)) {
+   if (cannot_modify() || (size<=0)) {
       if (owner) delete[] arr;
       return false;
    }
@@ -1593,7 +1614,7 @@ bool dabc::RecordFieldNew::SetArrInt(int64_t size, int64_t* arr, bool owner)
 
 bool dabc::RecordFieldNew::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
    if (size<=0) return false;
 
    if ((fKind == kind_arruint) && (valueInt == size))
@@ -1630,7 +1651,7 @@ bool dabc::RecordFieldNew::SetVectDouble(const std::vector<double>& v)
 
 bool dabc::RecordFieldNew::SetArrDouble(int64_t size, double* arr, bool owner)
 {
-   if (isreadonly()) return false;
+   if (cannot_modify()) return false;
    if (size<=0) return false;
 
    if ((fKind == kind_arrdouble) && (valueInt == size))
@@ -1651,6 +1672,17 @@ bool dabc::RecordFieldNew::SetArrDouble(int64_t size, double* arr, bool owner)
 
    return modified();
 }
+
+bool dabc::RecordFieldNew::SetArrStr(int64_t size, char* arr, bool owner)
+{
+   if (cannot_modify()) return false;
+   if (size<=0) return false;
+   // TODO: check if content was not changed
+   release();
+   SetArrStrDirect(size, arr, owner);
+   return modified();
+}
+
 
 void dabc::RecordFieldNew::SetArrStrDirect(int64_t size, char* arr, bool owner)
 {
@@ -1675,7 +1707,8 @@ void dabc::RecordFieldNew::SetArrStrDirect(int64_t size, char* arr, bool owner)
 // =========================================================================
 
 dabc::RecordFieldsMap::RecordFieldsMap() :
-   fMap()
+   fMap(),
+   fWatcher(0)
 {
 }
 
@@ -1724,6 +1757,7 @@ std::string dabc::RecordFieldsMap::FindFieldWichStarts(const std::string& name)
 dabc::RecordFieldNew& dabc::RecordFieldsMap::Field(const std::string& name)
 {
    dabc::RecordFieldNew& res = fMap[name];
+   if (fWatcher) res.fWatcher = fWatcher;
 
    return res;
 }
@@ -1910,43 +1944,3 @@ dabc::XMLNodePointer_t dabc::RecordContainerNew::SaveInXmlNode(XMLNodePointer_t 
    return node;
 }
 
-
-// =======================================================
-
-
-void dabc::RecordNew::AddFieldsFrom(const RecordNew& src, bool can_owerwrite)
-{
-   if (!null() && !src.null())
-      GetObject()->Fields().CopyFrom(src.GetObject()->Fields(), can_owerwrite);
-}
-
-std::string dabc::RecordNew::SaveToXml(bool compact)
-{
-   XMLNodePointer_t node = GetObject() ? GetObject()->SaveInXmlNode(0) : 0;
-
-   std::string res;
-
-   if (node) {
-      Xml::SaveSingleNode(node, &res, compact ? 0 : 1);
-      Xml::FreeNode(node);
-   }
-
-   return res;
-}
-
-bool dabc::RecordNew::ReadFromXml(const char* xmlcode)
-{
-   if ((xmlcode==0) || (*xmlcode==0)) return false;
-
-   XMLNodePointer_t node = Xml::ReadSingleNode(xmlcode);
-
-   if (node==0) return false;
-
-   CreateContainer(Xml::GetNodeName(node));
-
-   GetObject()->Fields().ReadFromXml(node, true);
-
-   Xml::FreeNode(node);
-
-   return true;
-}
