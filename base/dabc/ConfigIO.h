@@ -30,11 +30,9 @@ namespace dabc {
 
    class Object;
    class Configuration;
-   class RecordContainer;
 
-   class RecordFieldNew;
+   class RecordField;
    class RecordFieldsMap;
-
 
    /** \brief Interface class between xml configuration and dabc objects
     *
@@ -69,10 +67,7 @@ namespace dabc {
          /** \brief Check if item, found by FindItem routine, has attribute with specified value */
          bool CheckAttr(const char* name, const char* value);
 
-         bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
-
-         bool ReadRecordNew(Object* obj, const std::string& name, RecordFieldNew* field, RecordFieldsMap* fieldsmap);
-
+         bool ReadRecordField(Object* obj, const std::string& name, RecordField* field, RecordFieldsMap* fieldsmap);
    };
 
 }

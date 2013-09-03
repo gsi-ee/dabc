@@ -30,240 +30,7 @@
 
 namespace dabc {
 
-   class RecordContainerMap;
-   class Record;
-   class RecordField;
-   class RecordContainer;
    class ConfigIO;
-
-   /** \brief Represent single field of the record
-    *
-    * \ingroup dabc_all_classes
-    */
-
-   class RecordField {
-      friend class Record;
-      friend class RecordContainer;
-
-      protected:
-         RecordContainer* rec;
-         const std::string& name;
-         static std::string nullname;
-
-         RecordField() : rec(0), name(nullname) {}
-         RecordField(RecordContainer* _rec, const std::string& _name) : rec(_rec), name(_name) {}
-
-         virtual RecordContainer* GetContainer() const { return 0; }
-
-         virtual const char* Get(const char* dflt = 0) const;
-         virtual bool IsEmpty() const;
-         virtual bool Set(const char* val, const char* kind);
-
-         /** \brief Method analyzes which kind of quotes is needed to add element to the array:
-          * returns 0 - when no quotes is needed
-          *         1 - when just quotes in the begin and in the end
-          *         2 - when with quotes content should be reformatted */
-         static int NeedQuotes(const char* value);
-
-         /** \brief Expands value, that every special symbol like , or \ or " marked with preceding \
-          * Later such special marks will be removed */
-         static std::string ExpandValue(const char* value);
-
-
-      public:
-
-         // TODO: one should try to 'hide' this constructor signature while user can think to keep record field for longer time
-         RecordField(const RecordField& src) : rec(src.rec), name(src.name) {}
-         virtual ~RecordField() {}
-
-         /** Return true if any value exists for the field */
-         bool IsValue() const { return !IsEmpty(); }
-
-         const char* AsStr(const char* dflt = 0) const { return Get(dflt); }
-         const std::string AsStdStr(const std::string& dflt = "") const;
-         std::vector<std::string> AsStrVector(const std::string& dflt = "") const;
-         int AsInt(int dflt = 0) const;
-         std::vector<int> AsIntVector(const std::string& dflt = "") const;
-         double AsDouble(double dflt = 0.) const;
-         std::vector<double> AsDoubleVector(const std::string& dflt = "") const;
-         bool AsBool(bool dflt = false) const;
-         std::vector<bool> AsBoolVector(const std::string& dflt = "") const;
-         unsigned AsUInt(unsigned dflt = 0) const;
-         std::vector<unsigned> AsUIntVector(const std::string& dflt = "") const;
-
-         bool SetStr(const char* value);
-         bool SetStr(const std::string& value);
-         bool SetStrVector(const std::vector<std::string>& vect);
-         bool SetInt(int v);
-         bool SetIntVector(const std::vector<int>& vect);
-         bool SetIntArray(const int* arr, unsigned size);
-         bool SetDouble(double v);
-         bool SetDoubleVector(const std::vector<double>& vect);
-         bool SetDoubleArray(const double* arr, unsigned size);
-         bool SetBool(bool v);
-         bool SetBoolVector(const std::vector<bool>& vect);
-         bool SetBoolArray(const bool* arr, unsigned size);
-         bool SetUInt(unsigned v);
-         bool SetUIntVector(const std::vector<unsigned>& vect);
-         bool SetUIntArray(const unsigned* arr, unsigned size);
-
-         bool DfltStr(const char* value) { return IsEmpty() ? SetStr(value) : false; }
-         bool DfltStr(const std::string& value) { return IsEmpty() ? SetStr(value) : false; }
-         bool DfltInt(int v) { return IsEmpty() ? SetInt(v) : false; }
-         bool DfltDouble(double v) { return IsEmpty() ? SetDouble(v) : false; }
-         bool DfltBool(bool v) { return IsEmpty() ? SetBool(v) : false; }
-         bool DfltUInt(unsigned v) { return IsEmpty() ? SetUInt(v) : false; }
-
-         static const char* kind_int() { return "int"; }
-         static const char* kind_double() { return "double"; }
-         static const char* kind_bool() { return "bool"; }
-         static const char* kind_unsigned() { return "unsigned"; }
-         static const char* kind_str() { return "str"; }
-   };
-
-   // __________________________________________________________________________________
-
-   /** \brief Helper class to interpret value as record field
-    *
-    * \ingroup dabc_all_classes
-    */
-
-   class RecordValue : public RecordField {
-      protected:
-         virtual const char* Get(const char* dflt = 0) const;
-         virtual bool IsEmpty() const { return false; }
-         virtual bool Set(const char* val, const char* kind) { return false; }
-      public:
-         RecordValue(const std::string& value) : RecordField(0, value) {}
-         virtual ~RecordValue() {}
-   };
-
-   // __________________________________________________________________________________
-
-   /** \brief Container for records fields
-    *
-    * \ingroup dabc_all_classes
-    */
-
-   class RecordContainer : public Object {
-      friend class Record;
-      friend class RecordField;
-      friend class ConfigIO;
-
-      protected:
-         RecordContainerMap* fPars;
-
-         RecordContainer(const std::string& name, unsigned flags = flIsOwner);
-
-         RecordContainer(Reference parent, const std::string& name, unsigned flags = flIsOwner);
-
-         virtual std::string DefaultFiledName() const;
-
-         std::string FindField(const std::string& mask) const;
-
-         virtual const char* GetField(const std::string& name, const char* dflt = 0);
-         virtual bool SetField(const std::string& name, const char* value, const char* kind);
-         virtual void ClearFields();
-
-         /** \brief Returns pointer on field maps*/
-         RecordContainerMap* GetFieldsMap();
-
-         /** \brief Remove map and returns to the user.
-          * It is user responsibility to correctly destroy it */
-         RecordContainerMap* TakeFieldsMap();
-
-         /** \brief Compare if field changed
-          * \returns true when either number of fields or any field value is changed */
-         bool CompareFields(RecordContainerMap* newmap, const char* extra_field = 0);
-
-         /** Produces diff between old and new map */
-         std::string BuildDiff(RecordContainerMap* newmap);
-
-         /** \brief Copy all fields from specified map */
-         void CopyFieldsMap(RecordContainerMap* src);
-
-         /** \brief Replaces existing fields map */
-         void SetFieldsMap(RecordContainerMap* newmap);
-
-         /** \brief returns true when object field is exists */
-         bool HasField(const std::string& name) { return GetField(name)!=0; }
-
-         unsigned NumFields() const;
-         const std::string FieldName(unsigned cnt) const;
-
-         RecordField Field(const std::string& name) { return RecordField(this, name); }
-         const RecordField Field(const std::string& name) const { return RecordField((RecordContainer*) this, name); }
-
-      public:
-
-         class ResolveFunc {
-            public:
-               ResolveFunc(unsigned = 0) {}
-               virtual ~ResolveFunc() {}
-
-               virtual const char* Resolve(const char* arg) const { return arg; }
-         };
-
-
-         virtual ~RecordContainer();
-
-         virtual const char* ClassName() const { return "Record"; }
-
-         virtual void Print(int lvl = 0);
-
-         XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent, bool withattr = true);
-
-         bool SaveAttributesInXmlNode(XMLNodePointer_t node);
-
-         bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = true, bool checkarray = false, const ResolveFunc& func = 0);
-
-         std::string ReadArrayFromNode(XMLNodePointer_t node, const ResolveFunc& func);
-   };
-
-   // ______________________________________________________________________________
-
-   /** \brief Structured data with possibility of converting to/from xml
-    *
-    * \ingroup dabc_core_classes
-    * \ingroup dabc_all_classes
-    *
-    * Naming convention for record fields :
-    *    1. Any field started with `#` will not be stored to the xml string
-    *    2. Any field started with `_` will be stored as extra node in xml
-    *    3. All other fields will be present attribute in main xml tag  `<Record attr=""/>`
-    */
-
-   class Record : public Reference, public RecordField  {
-
-      DABC_REFERENCE(Record, Reference, RecordContainer)
-
-      protected:
-
-         virtual RecordContainer* GetContainer() const { return GetObject(); }
-
-      public:
-
-         virtual const char* GetField(const std::string& name, const char* dflt = 0) const;
-         virtual bool SetField(const std::string& name, const char* value, const char* kind = 0);
-
-         bool HasField(const std::string& name) const { return GetField(name) != 0; }
-         bool RemoveField(const std::string& name) { return SetField(name, 0); }
-
-         unsigned NumFields() const;
-         const std::string FieldName(unsigned cnt) const;
-
-         RecordField Field(const std::string& name) { return RecordField(GetObject(), name); }
-         const RecordField Field(const std::string& name) const { return RecordField(GetObject(), name); }
-
-         void AddFieldsFrom(const Record& src, bool can_owerwrite = true);
-
-         std::string SaveToXml(bool compact=true);
-         bool ReadFromXml(const char* xmlcode);
-
-      protected:
-
-         virtual bool CreateContainer(const std::string& name);
-   };
 
    // =================================================================================
 
@@ -388,18 +155,7 @@ namespace dabc {
 
    // =========================================================
 
-
-   class RecordFieldNew;
-
-   class RecordFieldWatcher {
-      public:
-         virtual ~RecordFieldWatcher() {}
-         virtual bool CanChangeField(RecordFieldNew* field) { return true; }
-         virtual void FieldModified(RecordFieldNew* field) {}
-   };
-
-
-   class RecordFieldNew {
+   class RecordField {
       friend class RecordFieldsMap;
 
       protected:
@@ -431,7 +187,6 @@ namespace dabc {
             char* valueStr;        ///! string or array of strings
          };
 
-         RecordFieldWatcher* fWatcher;
          bool                fReadonly;   ///! if true, field cannot be changed
          bool                fModified;   ///! when true, field was modified at least once
 
@@ -440,7 +195,6 @@ namespace dabc {
          bool modified(bool reallychanged = true)
          {
             if (reallychanged) fModified = true;
-            if (fWatcher) fWatcher->FieldModified(this);
             return true;
          }
 
@@ -449,20 +203,20 @@ namespace dabc {
 
          void SetArrStrDirect(int64_t size, char* arr, bool owner = false);
 
-         void constructor() { fKind = kind_none; fWatcher = 0; fReadonly = false; fModified = false; }
+         void constructor() { fKind = kind_none; fReadonly = false; fModified = false; }
 
       public:
-         RecordFieldNew();
-         RecordFieldNew(const RecordFieldNew& src);
-         RecordFieldNew(const std::string& v) { constructor(); SetStr(v); }
-         RecordFieldNew(const int& v) { constructor(); SetInt(v); }
-         RecordFieldNew(const unsigned& v) { constructor(); SetUInt(v); }
-         RecordFieldNew(const double& v) { constructor(); SetDouble(v); }
-         RecordFieldNew(const bool& v) { constructor(); SetBool(v); }
+         RecordField();
+         RecordField(const RecordField& src);
+         RecordField(const std::string& v) { constructor(); SetStr(v); }
+         RecordField(const int& v) { constructor(); SetInt(v); }
+         RecordField(const unsigned& v) { constructor(); SetUInt(v); }
+         RecordField(const double& v) { constructor(); SetDouble(v); }
+         RecordField(const bool& v) { constructor(); SetBool(v); }
 
-         RecordFieldNew& operator=(const RecordFieldNew& src) { SetValue(src); return *this; }
+         RecordField& operator=(const RecordField& src) { SetValue(src); return *this; }
 
-         virtual ~RecordFieldNew();
+         virtual ~RecordField();
 
          bool null() const { return fKind == kind_none; }
 
@@ -489,7 +243,7 @@ namespace dabc {
          std::vector<double> AsDoubleVect() const;
          std::vector<std::string> AsStrVect() const;
 
-         bool SetValue(const RecordFieldNew& src);
+         bool SetValue(const RecordField& src);
          bool SetNull();
          bool SetBool(bool v);
          bool SetUInt(uint64_t v);
@@ -522,11 +276,9 @@ namespace dabc {
 
    class RecordFieldsMap {
       protected:
-         typedef std::map<std::string, dabc::RecordFieldNew> FieldsMap;
+         typedef std::map<std::string, dabc::RecordField> FieldsMap;
 
          FieldsMap fMap;
-
-         RecordFieldWatcher*  fWatcher;  ///< watcher, which will be supplied to each field
 
          bool   fChanged;               ///< true when field was removed
 
@@ -545,8 +297,6 @@ namespace dabc {
          RecordFieldsMap();
          virtual ~RecordFieldsMap();
 
-         void SetWatcher(RecordFieldWatcher* w) { fWatcher = w; };
-
          uint64_t StoreSize();
          bool Stream(iostream& s);
 
@@ -557,7 +307,7 @@ namespace dabc {
          std::string FieldName(unsigned n) const;
          std::string FindFieldWichStarts(const std::string& name);
 
-         RecordFieldNew& Field(const std::string& name);
+         RecordField& Field(const std::string& name) { return fMap[name]; }
 
          bool SaveInXml(XMLNodePointer_t node);
          bool ReadFromXml(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
@@ -590,18 +340,18 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class RecordContainerNew : public Object {
-      friend class RecordNew;
-      friend class RecordFieldNew;
+   class RecordContainer : public Object {
+      friend class Record;
+      friend class RecordField;
       friend class ConfigIO;
       friend class RecordFieldsMap;
 
       protected:
          RecordFieldsMap* fFields;
 
-         RecordContainerNew(const std::string& name, unsigned flags = flIsOwner);
+         RecordContainer(const std::string& name, unsigned flags = flIsOwner);
 
-         RecordContainerNew(Reference parent, const std::string& name, unsigned flags = flIsOwner);
+         RecordContainer(Reference parent, const std::string& name, unsigned flags = flIsOwner);
 
          /** \brief Remove map and returns to the user.
           * It is user responsibility to correctly destroy it */
@@ -612,7 +362,7 @@ namespace dabc {
 
       public:
 
-         virtual ~RecordContainerNew();
+         virtual ~RecordContainer();
 
          virtual const char* ClassName() const { return "Record"; }
 
@@ -626,9 +376,9 @@ namespace dabc {
    // ===================================================================================
 
 
-   class RecordNew : public Reference  {
+   class Record : public Reference  {
 
-      DABC_REFERENCE(RecordNew, Reference, RecordContainerNew)
+      DABC_REFERENCE(Record, Reference, RecordContainer)
 
    };
 

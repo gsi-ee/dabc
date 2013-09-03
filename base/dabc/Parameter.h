@@ -53,7 +53,7 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class ParameterContainer : public RecordContainerNew {
+   class ParameterContainer : public RecordContainer {
       friend class Parameter;
       friend class Worker;
       friend class Manager;
@@ -80,13 +80,9 @@ namespace dabc {
 
          virtual std::string DefaultFiledName() const;
 
-         RecordFieldNew GetField(const std::string& name) const;
+         RecordField GetField(const std::string& name) const;
 
-         bool SetField(const std::string& name, const RecordFieldNew& v);
-
-         /** Method could be used to reject changes of some fields of the parameter
-          * Method called under object mutex */
-         virtual bool _CanChangeField(const std::string&) { return true; }
+         bool SetField(const std::string& name, const RecordField& v);
 
          /** Method called from manager thread when parameter configured as asynchronous.
           * It is done intentionally to avoid situation that in non-deterministic way event processing
@@ -98,6 +94,9 @@ namespace dabc {
          virtual ~ParameterContainer();
 
          inline void Modified() { FireParEvent(parModified); }
+
+         /** Method allows in derived classes to block changes of some fields */
+         virtual bool _CanChangeField(const std::string&) { return true; }
 
          void FireParEvent(int id);
 
@@ -147,7 +146,7 @@ namespace dabc {
     */
 
 
-   class Parameter : public RecordNew {
+   class Parameter : public Record {
 
       friend class Worker;
       friend class Manager;
@@ -184,25 +183,25 @@ namespace dabc {
          }
 
 
-         DABC_REFERENCE(Parameter, RecordNew, ParameterContainer)
+         DABC_REFERENCE(Parameter, Record, ParameterContainer)
 
          bool HasField(const std::string& name) const;
          bool RemoveField(const std::string& name);
          unsigned NumFields() const;
          std::string FieldName(unsigned cnt) const;
-         RecordFieldNew GetField(const std::string& name) const
-           { return null() ? RecordFieldNew() : GetObject()->GetField(name); }
+         RecordField GetField(const std::string& name) const
+           { return null() ? RecordField() : GetObject()->GetField(name); }
 
-         bool SetField(const std::string& name, const RecordFieldNew& v)
+         bool SetField(const std::string& name, const RecordField& v)
            { return null() ? false : GetObject()->SetField(name, v); }
 
-         RecordFieldNew Value() const
-          { return null() ? RecordFieldNew() : GetObject()->GetField(""); }
+         RecordField Value() const
+          { return null() ? RecordField() : GetObject()->GetField(""); }
 
-         bool SetValue(const RecordFieldNew& v)
+         bool SetValue(const RecordField& v)
           { return null() ? false : GetObject()->SetField("", v); }
 
-         bool Dflt(const RecordFieldNew& v)
+         bool Dflt(const RecordField& v)
           { return (null() || !Value().null()) ? false : SetValue(v); }
 
          bool NeedTimeout();

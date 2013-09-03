@@ -113,10 +113,11 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
 
 
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
-   dabc::RecordContainerNew(name, flNoMutex | flIsOwner),
+   dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
    fHierarchyVersion(0),
    fAutoTime(false),
+   fPermanent(false),
    fNodeChanged(false),
    fHierarchyChanged(false),
    fDiffNode(false),
@@ -383,6 +384,9 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    unsigned cnt1(0); // counter over source container
    unsigned cnt2(0); // counter over existing childs
 
+   // skip first permanent childs from update procedure
+   while (cnt2 < NumChilds() && ((HierarchyContainer*) GetChild(cnt2))->fPermanent) cnt2++;
+
    while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
       if (cnt1 >= cont->NumChilds()) {
          RemoveChildAt(cnt2, true);
@@ -466,7 +470,7 @@ void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
 {
    cont->Fields().CopyFrom(Fields());
 
-   dabc::RecordContainerNew::BuildHierarchy(cont);
+   dabc::RecordContainer::BuildHierarchy(cont);
 }
 
 void dabc::HierarchyContainer::AddHistory(RecordFieldsMap* diff)

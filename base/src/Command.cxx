@@ -28,7 +28,7 @@
 
 
 dabc::CommandContainer::CommandContainer(const std::string& name) :
-   RecordContainerNew(name),
+   RecordContainer(name),
    fCallers(),
    fTimeout(),
    fCanceled(false)
@@ -215,12 +215,12 @@ void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
 
 void dabc::Command::Print(int lvl, const char* from) const
 {
-   RecordNew::Print(lvl, from);
+   Record::Print(lvl, from);
 }
 
 void dabc::Command::Release()
 {
-   dabc::RecordNew::Release();
+   dabc::Record::Release();
 }
 
 void dabc::Command::Cancel()
@@ -231,7 +231,7 @@ void dabc::Command::Cancel()
       cont->fCanceled = true;
    }
 
-   dabc::RecordNew::Release();
+   dabc::Record::Release();
 }
 
 bool dabc::Command::IsCanceled()

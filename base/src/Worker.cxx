@@ -512,12 +512,7 @@ dabc::Parameter dabc::Worker::Par(const std::string& name) const
    return FindChildRef(name.c_str());
 }
 
-dabc::Config dabc::Worker::CfgOld(const std::string& name, Command cmd) const
-{
-   return dabc::Config(new ConfigContainer(name, cmd, (Worker*)this));
-}
-
-dabc::RecordFieldNew dabc::Worker::Cfg(const std::string& name, Command cmd) const
+dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
 {
 
    DOUT2("Worker %s Cfg %s", ItemName().c_str(), name.c_str());
@@ -527,7 +522,7 @@ dabc::RecordFieldNew dabc::Worker::Cfg(const std::string& name, Command cmd) con
 
    DOUT2("Check Cfg %s in own parameters", name.c_str());
 
-   dabc::RecordFieldNew res = Par(name).Value();
+   dabc::RecordField res = Par(name).Value();
 
    // second - as parameter
    if (!res.null()) return res;
@@ -536,9 +531,8 @@ dabc::RecordFieldNew dabc::Worker::Cfg(const std::string& name, Command cmd) con
 
    // third - in xml file
    ConfigIO io(dabc::mgr()->cfg());
-   if (io.ReadRecordNew((Object*) this, name, &res, 0)) {
-
-      DOUT0("Worker %s Cfg %s xml %s", ItemName().c_str(), name.c_str(), res.AsStr().c_str());
+   if (io.ReadRecordField((Object*) this, name, &res, 0)) {
+      DOUT2("Worker %s Cfg %s xml %s", ItemName().c_str(), name.c_str(), res.AsStr().c_str());
       return res;
    }
 
@@ -569,7 +563,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
 
       ConfigIO io(dabc::mgr()->cfg());
 
-      io.ReadRecordNew(this, name, 0, &(cont->Fields()));
+      io.ReadRecordField(this, name, 0, &(cont->Fields()));
 
       par = cont;
 
@@ -998,13 +992,6 @@ dabc::Parameter dabc::WorkerRef::Par(const std::string& name) const
    return GetObject()->Par(name);
 }
 
-dabc::Config dabc::WorkerRef::CfgOld(const std::string& name, Command cmd) const
-{
-   if (GetObject()==0) return dabc::Config(new ConfigContainer(name, cmd, 0));
-
-   return GetObject()->CfgOld(name, cmd);
-}
-
 bool dabc::WorkerRef::HasThread() const
 {
    return GetObject() ? GetObject()->HasThread() : false;
@@ -1033,7 +1020,3 @@ bool dabc::WorkerRef::SyncWorker(double tmout)
    if (tmout>=0) cmd.SetTimeout(tmout);
    return Execute(cmd) == cmd_true;
 }
-
-
-
-

@@ -27,7 +27,7 @@
 #include "dabc/Hierarchy.h"
 
 dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind, bool hidden) :
-   dabc::RecordContainerNew(worker, name, flIsOwner | (hidden ? flHidden : 0)),
+   dabc::RecordContainer(worker, name, flIsOwner | (hidden ? flHidden : 0)),
    fKind(parkind),
    fLastChangeTm(),
    fInterval(1.),
@@ -80,7 +80,7 @@ std::string dabc::ParameterContainer::DefaultFiledName() const
 }
 
 
-dabc::RecordFieldNew dabc::ParameterContainer::GetField(const std::string& name) const
+dabc::RecordField dabc::ParameterContainer::GetField(const std::string& name) const
 {
    LockGuard lock(ObjectMutex());
 
@@ -88,7 +88,7 @@ dabc::RecordFieldNew dabc::ParameterContainer::GetField(const std::string& name)
 }
 
 
-bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFieldNew& value)
+bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordField& value)
 {
 
    bool res(false), fire(false), doset(false), doworker(false);
@@ -191,7 +191,7 @@ void dabc::ParameterContainer::ObjectCleanup()
 {
    FireParEvent(parDestroy);
 
-   dabc::RecordContainerNew::ObjectCleanup();
+   dabc::RecordContainer::ObjectCleanup();
 }
 
 void dabc::ParameterContainer::ProcessTimeout(double last_dif)

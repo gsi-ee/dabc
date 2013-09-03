@@ -143,7 +143,7 @@ namespace dabc {
    // =================================================================
 
 
-   class HierarchyContainer : public RecordContainerNew {
+   class HierarchyContainer : public RecordContainer {
 
       friend class Hierarchy;
 
@@ -161,9 +161,12 @@ namespace dabc {
 
          bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
 
+         bool       fPermanent;         ///< indicate that item is permamnent and should be excluded from update
+
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
          bool       fDiffNode;          ///< if true, indicates that it is diff version
+
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
@@ -249,9 +252,9 @@ namespace dabc {
     * Idea to create such hierarchy is to able provide different clients to monitor and control DABC process.
     */
 
-   class Hierarchy : public RecordNew {
+   class Hierarchy : public Record {
 
-      DABC_REFERENCE(Hierarchy, RecordNew, HierarchyContainer)
+      DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 
       void Create(const std::string& name);
 
@@ -273,11 +276,14 @@ namespace dabc {
       unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
       std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
 
-      RecordFieldNew& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
-      const RecordFieldNew& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
+      RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
+      const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
 
       /** \brief Build full hierarchy of the objects structure, provided in reference */
       void Build(const std::string& topname, Reference top);
+
+      /** \brief Mark item as permanent - it will not be touched when update from other places will be done */
+      void SetPermanent(bool on = true) { if (GetObject()) GetObject()->fPermanent = on; }
 
       /** \brief Reconstruct complete hierarchy, setting node/structure modifications fields correctly
        * \details source hierarchy can be modified to reuse fields inside */
@@ -328,7 +334,7 @@ namespace dabc {
       Buffer ApplyBinaryRequest(Command cmd);
 
       /** \brief Return child element from hierarchy */
-      Hierarchy FindChild(const char* name) { return RecordNew::FindChild(name); }
+      Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
 
       Command ProduceHistoryRequest();
       Buffer ExecuteHistoryRequest(Command cmd);

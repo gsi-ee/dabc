@@ -32,10 +32,6 @@
 #include "dabc/Parameter.h"
 #endif
 
-#ifndef DABC_Config
-#include "dabc/Config.h"
-#endif
-
 namespace dabc {
 
    class ParameterEvent;
@@ -258,15 +254,6 @@ namespace dabc {
          /** \brief Returns reference on worker parameter object */
          Parameter Par(const std::string& name) const;
 
-         /** \brief Returns configuration record of specified name
-          * Configuration value of specified name searched in following places:
-          * 1. In command parameter
-          * 2. In parameter of such name in the worker itself
-          * 3. In xml file
-          * 4. In parameter of all parents
-          * */
-         Config CfgOld(const std::string& name, Command cmd = 0) const;
-
          /** \brief Returns configuration field of specified name
           * Configuration value of specified name searched in following places:
           * 1. As field in command
@@ -274,7 +261,7 @@ namespace dabc {
           * 3. As value in xml file
           * 4. As parameter value of all parents
           * */
-         RecordFieldNew Cfg(const std::string& name, Command cmd = 0) const;
+         RecordField Cfg(const std::string& name, Command cmd = 0) const;
 
          /** ! Assign command with processor before command be submitted to other processor
           * This produce ReplyCommand() call when command execution is finished
@@ -450,13 +437,8 @@ namespace dabc {
          Parameter Par(const std::string& name) const;
 
          /** \brief Returns configuration record of specified name */
-         Config CfgOld(const std::string& name, Command cmd = 0) const;
-
-         /** \brief Returns configuration record of specified name */
-         RecordFieldNew Cfg(const std::string& name, Command cmd = 0) const
-         {
-            return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.Field(name);
-         }
+         RecordField Cfg(const std::string& name, Command cmd = 0) const
+         { return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.Field(name); }
 
          /** \brief Returns true when thread is assigned to the worker */
          bool HasThread() const;

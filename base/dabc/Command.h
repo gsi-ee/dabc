@@ -52,7 +52,7 @@ namespace dabc {
     * All operations should be performed with dabc::Command class
     * which is reference to this container */
 
-   class CommandContainer : public RecordContainerNew {
+   class CommandContainer : public RecordContainer {
 
       friend class Command;
 
@@ -92,9 +92,9 @@ namespace dabc {
     * \ingroup dabc_core_classes
     */
 
-   class Command : public RecordNew {
+   class Command : public Record {
 
-      DABC_REFERENCE(Command, RecordNew, CommandContainer)
+      DABC_REFERENCE(Command, Record, CommandContainer)
 
       friend class CommandContainer;
       friend class CommandsQueue;
@@ -126,8 +126,8 @@ namespace dabc {
          unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
          std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
 
-         RecordFieldNew& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
-         const RecordFieldNew& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
+         RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
+         const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
 
          std::string SaveToXml(bool compact=true);
          bool ReadFromXml(const char* xmlcode);
