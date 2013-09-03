@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+3.09.2013
+1. Use new dabc::Record class for hierarchy. Main change - now user explicitely
+   should mark his/her changes in hierarchy. There is no autofield, which was
+   used before to trigger version tagging and increment.
+2. History now preserved and recorded in binary form. Any kind of fields will 
+   be recorded in history.
+3. Automatic creation of time field is now possible without history object.
+
+
 30.08.2013
 1. Introduce new RecordField, which can preserve native data types like int or
    doubles. In addition, 1-dim arrays are supported. 

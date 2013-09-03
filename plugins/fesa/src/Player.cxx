@@ -53,11 +53,11 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    dabc::Hierarchy item = fHierarchy.CreateChild("BeamRate2");
    item.Field(dabc::prop_kind).SetStr("rate");
-   item.EnableHistory(100,"value");
+   item.EnableHistory(100);
 
    item = fHierarchy.CreateChild("TestRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   item.EnableHistory(100,"value");
+   item.EnableHistory(100);
    
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
@@ -82,7 +82,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
       if ((fDevice!=0) && !fService.empty()) {
          item = fHierarchy.CreateChild(fService);
          item.Field(dabc::prop_kind).SetStr("rate");
-         item.EnableHistory(100,"value");
+         item.EnableHistory(100);
       }
       
    }
@@ -164,8 +164,8 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
    fHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
-   int arr[5] = {1,7,4,2,3};
-   fHierarchy.FindChild("BeamRate").Field("arr").SetIntArray(arr,5);
+   int64_t arr[5] = {1,7,4,2,3};
+   fHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
 
 //   std::vector<int> res;
 //   res = fHierarchy.FindChild("BeamRate").Field("arr").AsIntVector();
@@ -202,6 +202,11 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
       can->Update();
    }
 #endif
+
+   fHierarchy.MarkChangedItems();
+
+//   if (fCounter % 10 == 0)
+//      DOUT0("History BeamRate2 \n%s", fHierarchy.FindChild("BeamRate2").GetObject()->RequestHistoryAsXml().c_str());
 
 #ifdef DABC_EXTRA_CHECKS
 //   if (fCounter % 10 == 0)

@@ -1709,7 +1709,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
 
          if (!buf.null()) {
             // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-            if (rem_hierarchy.UpdateFromXml((const char*)buf.SegmentPtr())) {
+            if (rem_hierarchy.UpdateFromBuffer(buf)) {
                DOUT2("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
             }
          }

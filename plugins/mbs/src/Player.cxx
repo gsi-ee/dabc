@@ -139,31 +139,31 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   if (history>1) item.EnableHistory(history,"value");
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("EventRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   if (history>1) item.EnableHistory(history,"value");
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("ServerRate");
    item.Field(dabc::prop_kind).SetStr("rate");
-   if (history>1) item.EnableHistory(history,"value");
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("rate_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   if (history>1) item.EnableHistory(history,"value", true);
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("rash_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   if (history>1) item.EnableHistory(history,"value", true);
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("rast_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   if (history>1) item.EnableHistory(history,"value", true);
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("ratf_log");
    item.Field(dabc::prop_kind).SetStr("log");
-   if (history>1) item.EnableHistory(history,"value", true);
+   if (history>1) item.EnableHistory(history);
 
    CreateTimer("update", fPeriod, false);
 
@@ -683,6 +683,8 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
 
        fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("| Header  |   Entry      |      Rate  |"));
        fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
+
+       fHierarchy.MarkChangedItems();
        return;
     }
 
@@ -745,6 +747,8 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
             FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
             FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
             FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
+
+            fHierarchy.MarkChangedItems();
             fCounter++;
          }
 

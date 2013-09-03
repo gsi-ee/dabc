@@ -74,45 +74,61 @@ namespace dabc {
 
    struct HistoryItem {
       public:
-         uint64_t version;
-         std::string content;
-         HistoryItem() : version(0), content() {}
-         void reset() { version = 0; content.clear(); }
+         uint64_t version;          ///< version number
+         RecordFieldsMap* fields;   ///< all fields, which are preserved
+         HistoryItem() : version(0), fields(0) {}
+         ~HistoryItem() { reset(); }
+         void reset() { version = 0; delete fields; fields = 0; }
+         RecordFieldsMap* take() { RecordFieldsMap* res = fields; fields = 0; return res; }
    };
 
 
    class HistoryContainer : public Object {
       public:
 
-         bool        fEnabled;               ///< indicates if history recordnig is enabled
-         RecordsQueue<HistoryItem> fArr;     ///< container with item history
-         bool        fRecordTime;             ///< if true, time will be recorded when value is modified
-         std::string fAutoRecord;            ///< field name, which change trigger automatic record of the history (when enabled)
-         bool        fForceAutoRecord;       ///< if true, even same value will be recorded in history
+         bool        fEnabled;               ///< indicates if history recording is enabled
+         bool        fChildsEnabled;          ///< true if history recording also was enabled for childs
+         RecordFieldsMap* fPrev;             ///< map with previous set of attributes
+         RecordsQueue<HistoryItem> fArr;     ///< container with history items
          uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
          uint64_t    fLocalReqVersion;       ///< local version, when request was done
-
+         bool        fCrossBoundary;         ///< flag set when recover from binary, indicates that history is complete for specified version
 
          HistoryContainer() :
             Object(0,"cont", flAutoDestroy | flIsOwner),
             fEnabled(false),
+            fChildsEnabled(false),
+            fPrev(0),
             fArr(),
-            fRecordTime(false),
-            fAutoRecord(),
-            fForceAutoRecord(false),
             fRemoteReqVersion(0),
-            fLocalReqVersion(0)
+            fLocalReqVersion(0),
+            fCrossBoundary(false)
             {}
-         virtual ~HistoryContainer() {}
 
+         virtual ~HistoryContainer()
+         {
+            delete fPrev; fPrev = 0;
+         }
 
+         uint64_t StoreSize(uint64_t version, int hist_limit = -1);
+
+         bool Stream(iostream& s, uint64_t version, int hist_limit = -1);
+
+         RecordFieldsMap* TakeNext()
+         {
+            if (fArr.Size()==0) return 0;
+            RecordFieldsMap* next = fArr.Front().take();
+            fArr.PopOnly();
+            return next;
+         }
    };
 
 
    class History : public Reference {
       DABC_REFERENCE(History, Reference, HistoryContainer)
 
-      void Allocate(unsigned sz = 0) {
+      void Allocate(unsigned sz = 0)
+      {
          SetObject(new HistoryContainer);
          if (sz>0) GetObject()->fArr.Allocate(sz);
       }
@@ -120,12 +136,14 @@ namespace dabc {
       bool DoHistory() const { return null() ? false : GetObject()->fEnabled && (GetObject()->fArr.Capacity()>0); }
 
       unsigned Capacity() const { return null() ? 0 : GetObject()->fArr.Capacity(); }
+
+      unsigned Size() const { return null() ? 0 : GetObject()->fArr.Size(); }
    };
 
    // =================================================================
 
 
-   class HierarchyContainer : public RecordContainer {
+   class HierarchyContainer : public RecordContainerNew {
 
       friend class Hierarchy;
 
@@ -134,25 +152,22 @@ namespace dabc {
          enum {
             maskNodeChanged = 1,
             maskChildsChanged = 2,
-            maskDefaultValue = 3
+            maskDiffStored = 4,
+            maskHistory = 8
          };
 
          uint64_t   fNodeVersion;       ///< version number of node itself
          uint64_t   fHierarchyVersion;  ///< version number of hierarchy below
 
-         /** when true, element cannot be removed during update
-          * only first childs with such flag could remain */
-         bool       fPermanent;         ///<
-
-         // bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
+         bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
 
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
+         bool       fDiffNode;          ///< if true, indicates that it is diff version
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
          History    fHist;              ///< special object with history data
-
 
          HierarchyContainer* TopParent();
 
@@ -172,18 +187,31 @@ namespace dabc {
          /** \brief Switch on node or hierarchy modified flags */
          void SetModified(bool node, bool hierarchy, bool recursive = false);
 
-         /** \brief method called every time when field should be changed
-          * Used to detect important changes and to mark new version */
-         virtual bool SetField(const std::string& name, const char* value, const char* kind);
-
-         /** \brief produces simple diff, where only value is changing (and optionally time) */
-         std::string MakeSimpleDiff(const char* oldvalue);
-
          /** \brief Add new entry to history */
-         void AddHistory(const std::string& diff);
+         void AddHistory(RecordFieldsMap* diff);
 
-         /** \brief Marks item and all its parents with changed version */
-         void MarkWithChangedVersion();
+         /** \brief Clear all entries in history, but not history object itself */
+         void ClearHistoryEntries();
+
+         /** \brief Returns true if any node field was changed or removed/inserted
+          * If specified, all childs will be checked */
+         bool IsNodeChanged(bool withchilds = true);
+
+         /** Return true if history activated for the node
+          * If necessary, history object will be initialized */
+         bool CheckIfDoingHistory();
+
+         /** \brief If item changed, marked with version, time stamp applied, history recording  */
+         void MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds, bool force = false);
+
+         /** \brief Central method, which analyzes all possible changes in node (and its childs)
+          * If any changes found, node marked with new version
+          * If enabled, history item will be created.
+          * If enabled, time stamp will be provided for changed items */
+         void MarkChangedItems(bool withchilds = true, double tm = 0.);
+
+         /** \brief Enable time recording for hierarchy element every time when item is changed */
+         void EnableTimeRecording(bool withchilds = true);
 
       public:
          HierarchyContainer(const std::string& name);
@@ -191,28 +219,19 @@ namespace dabc {
 
          virtual const char* ClassName() const { return "Hierarchy"; }
 
-         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, uint64_t version = 0, bool withversion = false);
+         uint64_t StoreSize(uint64_t v = 0, int hist_limit = -1);
 
-         bool UpdateHierarchyFromXmlNode(XMLNodePointer_t objnode);
+         bool Stream(iostream& s, uint64_t v = 0, int hist_limit = -1);
 
-         void SetVersion(uint64_t version, bool recursive = false, bool force = false);
-
-         bool WasHierarchyModifiedAfter(uint64_t version) const
-            { return fHierarchyVersion >= version; }
-
-         bool WasNodeModifiedAfter(uint64_t version) const
-            { return fNodeVersion >= version; }
-
-         unsigned ModifiedMask(uint64_t version) const
-         {
-            return (WasNodeModifiedAfter(version) ? maskNodeChanged : 0) |
-                   (WasHierarchyModifiedAfter(version) ? maskChildsChanged : 0);
-         }
+         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent);
 
          uint64_t GetVersion() const { return fNodeVersion > fHierarchyVersion ? fNodeVersion : fHierarchyVersion; }
 
-         /** \brief Produces string with xml code */
-         std::string RequestHistory(uint64_t version = 0, int limit = 0);
+         /** \brief Produces string with xml code, containing history */
+         std::string RequestHistoryAsXml(uint64_t version = 0, int limit = 0);
+
+         /** \brief Produces history in binary form */
+         dabc::Buffer RequestHistory(uint64_t version = 0, int limit = 0);
 
          /** \brief Method used to create copy of hierarchy again */
          virtual void BuildHierarchy(HierarchyContainer* cont);
@@ -230,9 +249,9 @@ namespace dabc {
     * Idea to create such hierarchy is to able provide different clients to monitor and control DABC process.
     */
 
-   class Hierarchy : public Record {
+   class Hierarchy : public RecordNew {
 
-      DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
+      DABC_REFERENCE(Hierarchy, RecordNew, HierarchyContainer)
 
       void Create(const std::string& name);
 
@@ -248,6 +267,15 @@ namespace dabc {
        * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
       std::string FindBinaryProducer(std::string& request_name);
 
+      bool HasField(const std::string& name) const { return GetObject() ? GetObject()->Fields().HasField(name) : false; }
+      bool RemoveField(const std::string& name) { return GetObject() ? GetObject()->Fields().RemoveField(name) : false; }
+
+      unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
+      std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
+
+      RecordFieldNew& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
+      const RecordFieldNew& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
+
       /** \brief Build full hierarchy of the objects structure, provided in reference */
       void Build(const std::string& topname, Reference top);
 
@@ -258,11 +286,16 @@ namespace dabc {
       /** \brief Update from objects structure */
       bool UpdateHierarchy(Reference top);
 
-      /** \brief Activate history production for selected element */
-      void EnableHistory(int length = 100, const std::string& autorec = "", bool force = false);
+      /** \brief Activate history production for selected element and its childs */
+      void EnableHistory(unsigned length = 100, bool withchilds = false);
 
-      /** \brief Set permanent flag for hierarchy item */
-      void SetPermanent(bool on=true) { if (!null()) GetObject()->fPermanent = on; }
+      /** \brief Enable time recording for hierarchy element every time when item is changed */
+      void EnableTimeRecording(bool withchilds = true)
+      { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
+
+      /** \brief If any field was modified, item will be marked with new version */
+      void MarkChangedItems(bool withchilds = true, double tm = 0.)
+      { if (GetObject()) GetObject()->MarkChangedItems(withchilds, tm); }
 
       /** \brief Returns true if item records history local, no need to request any other sources */
       bool HasLocalHistory() const;
@@ -270,13 +303,19 @@ namespace dabc {
       /** \brief Returns true if remote history is recorded and it is up-to-date */
       bool HasActualRemoteHistory() const;
 
-      std::string SaveToXml(bool compact = false, uint64_t version = 0);
+      /** Save hierarchy in binary form, relative to specified version */
+      dabc::Buffer SaveToBuffer(uint64_t version = 0);
+
+      /** Read hierarchy from buffer */
+      bool ReadFromBuffer(const dabc::Buffer& buf);
+
+      /** Apply modification to hierarchy, using stored binary data  */
+      bool UpdateFromBuffer(const dabc::Buffer& buf);
+
+      /** \brief Store hierarchy in form of xml */
+      std::string SaveToXml(bool compact = false);
 
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }
-
-      void SetNodeVersion(uint64_t v) { if (GetObject()) GetObject()->fNodeVersion = v; }
-
-      bool UpdateFromXml(const std::string& xml);
 
 
       /** \brief If possible, returns buffer with binary data, which can be send as reply */
@@ -289,11 +328,11 @@ namespace dabc {
       Buffer ApplyBinaryRequest(Command cmd);
 
       /** \brief Return child element from hierarchy */
-      Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
+      Hierarchy FindChild(const char* name) { return RecordNew::FindChild(name); }
 
       Command ProduceHistoryRequest();
       Buffer ExecuteHistoryRequest(Command cmd);
-      bool ApplyHierarchyRequest(Command cmd);
+      bool ApplyHistoryRequest(Command cmd);
 
       Buffer GetLocalImage(uint64_t version = 0);
       Command ProduceImageRequest();

@@ -455,7 +455,6 @@ namespace dabc {
 
          T* PushEmpty() { return Parent::PushEmpty(); }
 
-
          void Reset()
          {
             if (Parent::fCapacity != Parent::fInitSize)

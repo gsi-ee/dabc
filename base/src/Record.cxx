@@ -772,6 +772,17 @@ bool dabc::iostream::verify_size(uint64_t pos, uint64_t sz)
 
    if (actualsz==sz) return true;
 
+   if (pos % 8 != 0) { EOUT("start position not 8-byte aligned!!!"); return false; }
+
+   if (!is_real()) {
+      // special case for size stream, we just shift until 8-byte alignment
+      uint64_t rest = size() % 8;
+      if (rest > 0) shift(8 - rest);
+      return true;
+   }
+
+   if (sz % 8 != 0) { EOUT("size is not 8-byte aligned!!!"); return false; }
+
    if (actualsz > sz) {
       EOUT("Too many bytes %lu was accessed in stream compared to provided %lu", (long unsigned) actualsz, (long unsigned) sz);
       return false;
@@ -802,7 +813,8 @@ bool dabc::iostream::write_str(const std::string& str)
 {
    uint64_t sz = str_storesize(str);
    if (sz > maxstoresize()) {
-      EOUT("Cannot store string in the buffer");
+      EOUT("Cannot store string in the buffer sz %lu  maxsize %lu  pos %lu real %s",
+            (long unsigned) sz, (long unsigned) maxstoresize(), (long unsigned) size(), DBOOL(is_real()));
       return 0;
    }
 
@@ -843,7 +855,7 @@ bool dabc::memstream::shift(uint64_t len)
    return true;
 }
 
-bool dabc::memstream::write(void* src, uint64_t len)
+bool dabc::memstream::write(const void* src, uint64_t len)
 {
    if (len > fRemains) return false;
    memcpy(fCurr, src, len);
@@ -906,35 +918,11 @@ dabc::RecordFieldNew::~RecordFieldNew()
    release();
 }
 
-uint64_t dabc::RecordFieldNew::StoreSize() const
+uint64_t dabc::RecordFieldNew::StoreSize()
 {
-   uint64_t sz = sizeof(int32_t) + sizeof(int32_t); // this is required for the size and kind
-
-   switch (fKind) {
-      case kind_none: break;
-      case kind_bool:
-      case kind_int: sz += sizeof(int64_t); break;
-      case kind_uint: sz += sizeof(uint64_t); break;
-      case kind_double: sz += sizeof(double); break;
-      case kind_arrint: sz += sizeof(int64_t) + valueInt*sizeof(int64_t); break;
-      case kind_arruint: sz += sizeof(int64_t) + valueInt*sizeof(uint64_t); break;
-      case kind_arrdouble: sz += sizeof(int64_t) + valueInt*sizeof(double); break;
-      case kind_string: sz += strlen(valueStr)+1; break;
-      case kind_arrstr: {
-         sz += sizeof(int64_t);
-         char* p = valueStr;
-         for (int64_t n=0;n<valueInt;n++) {
-            int len = strlen(p) + 1;
-            sz += len; p += len;
-         }
-         break;
-      }
-   }
-
-   // all sizes round to 8 bytes boundary, such size value will be stored
-   while (sz % 8 != 0) sz++;
-
-   return sz;
+   sizestream s;
+   Stream(s);
+   return s.size();
 }
 
 bool dabc::RecordFieldNew::Stream(iostream& s)
@@ -945,7 +933,7 @@ bool dabc::RecordFieldNew::Stream(iostream& s)
    uint32_t storesz(0), storekind(0), storeversion(0);
 
    if (s.is_output()) {
-      sz = StoreSize();
+      sz = s.is_real() ? StoreSize() : 0;
       storesz = sz / 8;
       storekind = ((uint32_t)fKind & 0xffffff) | (storeversion << 24);
       s.write_uint32(storesz);
@@ -1708,7 +1696,8 @@ void dabc::RecordFieldNew::SetArrStrDirect(int64_t size, char* arr, bool owner)
 
 dabc::RecordFieldsMap::RecordFieldsMap() :
    fMap(),
-   fWatcher(0)
+   fWatcher(0),
+   fChanged(false)
 {
 }
 
@@ -1726,6 +1715,7 @@ bool dabc::RecordFieldsMap::RemoveField(const std::string& name)
    FieldsMap::iterator iter = fMap.find(name);
    if (iter==fMap.end()) return false;
    fMap.erase(iter);
+   fChanged = true;
    return true;
 }
 
@@ -1752,8 +1742,6 @@ std::string dabc::RecordFieldsMap::FindFieldWichStarts(const std::string& name)
    return "";
 }
 
-
-
 dabc::RecordFieldNew& dabc::RecordFieldsMap::Field(const std::string& name)
 {
    dabc::RecordFieldNew& res = fMap[name];
@@ -1762,17 +1750,39 @@ dabc::RecordFieldNew& dabc::RecordFieldsMap::Field(const std::string& name)
    return res;
 }
 
-uint64_t dabc::RecordFieldsMap::StoreSize() const
+bool dabc::RecordFieldsMap::WasChanged() const
 {
+   if (fChanged) return true;
+   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      if (iter->second.IsModified()) return true;
 
-   uint64_t sz = sizeof(uint32_t) + sizeof(uint32_t); // for full length, num fields and version
+   return false;
+}
 
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      sz += iostream::str_storesize(iter->first);
-      sz += iter->second.StoreSize();
-   }
+void dabc::RecordFieldsMap::ClearChangeFlags()
+{
+   fChanged = false;
+   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      iter->second.SetModified(false);
+}
 
-   return sz;
+dabc::RecordFieldsMap* dabc::RecordFieldsMap::Clone()
+{
+   dabc::RecordFieldsMap* res = new dabc::RecordFieldsMap;
+
+   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+      res->Field(iter->first).SetValue(iter->second);
+
+   return res;
+}
+
+
+
+uint64_t dabc::RecordFieldsMap::StoreSize()
+{
+   sizestream s;
+   Stream(s);
+   return s.size();
 }
 
 bool dabc::RecordFieldsMap::Stream(iostream& s)
@@ -1783,7 +1793,7 @@ bool dabc::RecordFieldsMap::Stream(iostream& s)
    uint64_t pos = s.size();
 
    if (s.is_output()) {
-      sz = StoreSize();
+      sz = s.is_real() ? StoreSize() : 0;
       storesz = sz/8;
       storenum = ((uint32_t) fMap.size()) | (storevers<<24);
 
@@ -1872,6 +1882,29 @@ void dabc::RecordFieldsMap::CopyFrom(const RecordFieldsMap& src, bool overwrite)
       if (overwrite || !HasField(iter->first))
          fMap[iter->first] = iter->second;
 }
+
+void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src, const std::string& exclude_prefix)
+{
+   int elen = exclude_prefix.length();
+
+   std::vector<std::string> delfields;
+
+   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      if ((elen>0) && (iter->first.compare(0,elen,exclude_prefix) == 0)) continue;
+
+      if (!src.HasField(iter->first)) delfields.push_back(iter->first);
+   }
+
+   for (unsigned n=0;n<delfields.size();n++)
+      RemoveField(delfields[n]);
+
+   for (FieldsMap::iterator iter = src.fMap.begin(); iter!=src.fMap.end(); iter++) {
+      if ((elen>0) && (iter->first.compare(0,elen,exclude_prefix) == 0)) continue;
+
+      fMap[iter->first].SetValue(iter->second);
+   }
+}
+
 
 void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
 {

@@ -193,10 +193,15 @@ bool dabc::DateTime::AsString(char* sbuf, int len, int ndecimal) const
    return true;
 }
 
+double dabc::DateTime::AsDouble() const
+{
+   return tv_sec + tv_nsec*1e-9;
+}
+
+
 bool dabc::DateTime::AsJSString(char* sbuf, int len) const
 {
-   double val = tv_sec + tv_nsec*1e-9;
-   snprintf(sbuf, len,"%5.3f", val);
+   snprintf(sbuf, len,"%5.3f", AsDouble());
    return true;
 }
 

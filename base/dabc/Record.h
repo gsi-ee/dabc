@@ -269,6 +269,8 @@ namespace dabc {
 
    class RecordFieldsMap;
 
+   /** \brief class to stream binary data */
+
    class iostream {
       protected:
          bool fInput;
@@ -286,6 +288,7 @@ namespace dabc {
 
          bool is_input() const { return fInput; }
          bool is_output() const { return !fInput; }
+         virtual bool is_real() const { return true; }
 
          bool verify_size(uint64_t pos, uint64_t sz);
 
@@ -298,7 +301,6 @@ namespace dabc {
          /** \brief return maximum size of data which can be stored in the stream */
          virtual uint64_t maxstoresize() const { return 0; }
 
-
          bool write_int32(int32_t v) { return write(&v, sizeof(int32_t)); }
          bool write_uint32(uint32_t v) { return write(&v, sizeof(uint32_t)); }
          bool write_int64(int64_t v) { return write(&v, sizeof(int64_t)); }
@@ -307,9 +309,9 @@ namespace dabc {
 
          bool read_int32(int32_t& v) { return read(&v, sizeof(int32_t)); }
          bool read_uint32(uint32_t& v) { return read(&v, sizeof(uint32_t)); }
-         bool read_int64(int64_t v) { return read(&v, sizeof(int64_t)); }
-         bool read_uint64(uint64_t v) { return read(&v, sizeof(uint64_t)); }
-         bool read_double(double v) { return read(&v, sizeof(double)); }
+         bool read_int64(int64_t& v) { return read(&v, sizeof(int64_t)); }
+         bool read_uint64(uint64_t& v) { return read(&v, sizeof(uint64_t)); }
+         bool read_double(double& v) { return read(&v, sizeof(double)); }
 
 
          /** \brief Returns bytes count, required to store string. Bytes count rounded to 64 bit */
@@ -322,6 +324,37 @@ namespace dabc {
          bool read_str(std::string& str);
    };
 
+   /** \brief special class only to define how many data will be written to the stream */
+   class sizestream : public iostream {
+      protected:
+         uint64_t fLength;
+
+      public:
+
+         sizestream() :
+            iostream(false),
+            fLength(0)
+         {
+         }
+
+         virtual ~sizestream() {}
+
+         virtual uint64_t size() const { return fLength; }
+         virtual uint64_t maxstoresize() const { return 0xffffffffLLU; }
+
+         virtual bool is_real() const { return false; }
+
+         virtual bool shift(uint64_t len) { fLength += len; return true; }
+
+         virtual bool write(const void* src, uint64_t len) { fLength += len; return true; }
+
+         virtual bool read(void* tgt, uint64_t len) { return true; }
+
+   };
+
+
+   /** \brief iostream class, which write and read data from memory */
+
    class memstream : public iostream {
       protected:
          char* fMem;
@@ -329,18 +362,17 @@ namespace dabc {
          char* fCurr;
          uint64_t fRemains;
 
-         virtual uint64_t size() const { return fCurr - fMem; }
-         virtual uint64_t maxstoresize() const { return fRemains; }
          virtual uint64_t tmpbuf_size() const { return fRemains; }
          virtual char* tmpbuf() const { return fCurr; }
 
-         virtual bool shift(uint64_t len);
-
-         virtual bool write(void* src, uint64_t len);
-
-         virtual bool read(void* tgt, uint64_t len);
-
       public:
+
+         virtual uint64_t size() const { return fCurr - fMem; }
+         virtual uint64_t maxstoresize() const { return fRemains; }
+
+         virtual bool shift(uint64_t len);
+         virtual bool write(const void* src, uint64_t len);
+         virtual bool read(void* tgt, uint64_t len);
 
          memstream(bool isinp, char* buf, uint64_t len) :
             iostream(isinp),
@@ -353,6 +385,8 @@ namespace dabc {
 
          virtual ~memstream() {}
    };
+
+   // =========================================================
 
 
    class RecordFieldNew;
@@ -415,11 +449,6 @@ namespace dabc {
 
          void SetArrStrDirect(int64_t size, char* arr, bool owner = false);
 
-         /** \return Total size, which is required to stream object */
-         uint64_t StoreSize() const;
-
-         bool Stream(iostream& s);
-
          void constructor() { fKind = kind_none; fWatcher = 0; fReadonly = false; fModified = false; }
 
       public:
@@ -433,11 +462,12 @@ namespace dabc {
 
          RecordFieldNew& operator=(const RecordFieldNew& src) { SetValue(src); return *this; }
 
-
-
          virtual ~RecordFieldNew();
 
          bool null() const { return fKind == kind_none; }
+
+         bool IsModified() const { return fModified; }
+         void SetModified(bool on = true) { fModified = on; }
 
          bool IsArray() const
          {
@@ -481,6 +511,10 @@ namespace dabc {
          /** Sets as array of string, placed one after another in memory */
          bool SetArrStr(int64_t size, char* arr, bool owner = false);
 
+         /** \return Total size, which is required to stream object */
+         uint64_t StoreSize();
+         bool Stream(iostream& s);
+
          static int NeedQuotes(const std::string& str);
          static std::string ExpandValue(const std::string& str);
          static std::string CompressValue(const char* str, int len);
@@ -492,9 +526,9 @@ namespace dabc {
 
          FieldsMap fMap;
 
-         RecordFieldWatcher*  fWatcher;  ///! watcher, which will be supplied to each field
+         RecordFieldWatcher*  fWatcher;  ///< watcher, which will be supplied to each field
 
-         uint64_t StoreSize() const;
+         bool   fChanged;               ///< true when field was removed
 
          void clear() { fMap.clear(); }
 
@@ -513,6 +547,7 @@ namespace dabc {
 
          void SetWatcher(RecordFieldWatcher* w) { fWatcher = w; };
 
+         uint64_t StoreSize();
          bool Stream(iostream& s);
 
          bool HasField(const std::string& name) const;
@@ -527,11 +562,25 @@ namespace dabc {
          bool SaveInXml(XMLNodePointer_t node);
          bool ReadFromXml(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
 
+         /** \brief Copy fields from source map */
          void CopyFrom(const RecordFieldsMap& src, bool overwrite = true);
 
-         /** In the map only modified fields are remained
+         /** \brief Move fields from source map, delete no longer existing,
+          * one could exclude field names with prefix - typically 'dabc:' */
+         void MoveFrom(RecordFieldsMap& src, const std::string& eclude_prefix = "");
+
+         /** \brief  In the map only modified fields are remained
           * Also dabc:delete field can appear which marks all removed fields */
          void MakeAsDiffTo(const RecordFieldsMap& src);
+
+         /** \brief Create complete copy of fields map */
+         RecordFieldsMap* Clone();
+
+         /** \brief Return true if any field was changed or map was modified (removed filed) */
+         bool WasChanged() const;
+
+         /** \brief Clear all change flags */
+         void ClearChangeFlags();
    };
 
    // ===========================================================================

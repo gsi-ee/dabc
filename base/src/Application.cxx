@@ -520,6 +520,35 @@ bool dabc::Application::IsTransitionAllowed(const std::string& cmd)
 }
 
 
+void TestHistory()
+{
+
+   dabc::Hierarchy h;
+   h.Create("test");
+   h.EnableHistory(100);
+   h.EnableTimeRecording();
+
+   h.Field("a").SetInt(5);
+   h.Field("b").SetDouble(3.5);
+   h.MarkChangedItems();
+
+   DOUT0("First xml:\n%s", h.SaveToXml().c_str());
+
+   for (int n=0;n<50;n++) {
+      h.Field("a").SetInt(5+n);
+      h.Field("b").SetDouble(3.5+n);
+      dabc::Sleep(0.01);
+      h.MarkChangedItems();
+   }
+   DOUT0("Last xml:\n%s", h.SaveToXml().c_str());
+
+   std::string hist0 = h()->RequestHistoryAsXml(0);
+   DOUT0("History:\n%s", hist0.c_str());
+
+   std::string hist30 = h()->RequestHistoryAsXml(30);
+   DOUT0("History 30:\n%s", hist30.c_str());
+}
+
 bool dabc::Application::DoStateTransition(const std::string& cmd)
 {
    // method called from application thread
@@ -530,44 +559,61 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
 
    if (cmd == stcmdDoConfigure()) {
 
-/*      dabc::Hierarchy h;
+/*      DOUT0("Start building");
+
+      TestHistory(); exit(54);
+
+      dabc::Hierarchy h;
+      //h.Create("test");
+      //h.Field("a").SetInt(5);
+      //h.Field("b").SetDouble(3.5);
+
       h.UpdateHierarchy(dabc::mgr);
 
-      std::string s1 = h.SaveToXml(false);
+      DOUT0("Create buf1");
+
+      dabc::Buffer buf1 = h.SaveToBuffer();
       uint64_t v1 = h.GetVersion();
 
-      DOUT0("First xml = ver %u \n%s", (unsigned) v1 , s1.c_str());
+      DOUT0("First version = ver %u bufsize %u", (unsigned) v1, (unsigned) buf1.GetTotalSize());
+      DOUT0("First xml:\n%s", h.SaveToXml().c_str());
+
+      dabc::Hierarchy h2;
+      h2.ReadFromBuffer(buf1);
+      DOUT0("Restore xml\n%s", h2.SaveToXml().c_str());
+
 */
       res = CreateAppModules();
 /*
       h.UpdateHierarchy(dabc::mgr);
 
-      std::string s2 = h.SaveToXml(false);
+      dabc::Buffer buf2 = h.SaveToBuffer();
       uint64_t v2 = h.GetVersion();
 
-      DOUT0("Second xml = ver %u \n%s", (unsigned) v2, s2.c_str());
+      DOUT0("Second buffer = ver %u size %u", (unsigned) v2, (unsigned) buf2.GetTotalSize());
+      std::string xml2 = h.SaveToXml();
+      DOUT0("Second xml len %u:\n%s", (unsigned) xml2.length(), xml2.c_str());
 
-      std::string sdiff1 = h.SaveToXml(false, v1+1);
+      dabc::Buffer diff1 = h.SaveToBuffer(v1+1);
+      DOUT0("DIFF1 ver %u size %u", (unsigned) v1+1, (unsigned)diff1.GetTotalSize());
 
-      DOUT0("DIFF1 xml = ver %u \n%s", (unsigned) v1+1, sdiff1.c_str());
-
-      std::string sdiff2 = h.SaveToXml(false, v2+1);
-
-      DOUT0("DIFF2 xml = ver %u \n%s", (unsigned) v2+1, sdiff2.c_str());
-
+      dabc::Buffer diff2 = h.SaveToBuffer(v2+1);
+      DOUT0("DIFF2 ver %u size %u", (unsigned) v2+1, (unsigned)diff2.GetTotalSize());
 
       dabc::Hierarchy hrem;
-      hrem.UpdateFromXml(s1);
+      hrem.UpdateFromBuffer(buf1);
 
-      DOUT0("REM0 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+      DOUT0("REM0 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
 
-      hrem.UpdateFromXml(sdiff1);
+      hrem.UpdateFromBuffer(diff1);
 
-      DOUT0("REM1 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+      DOUT0("REM1 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
 
-      hrem.UpdateFromXml(sdiff2);
+      hrem.UpdateFromBuffer(diff2);
 
-      DOUT0("REM12 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+      DOUT0("REM2 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+
+      exit(7);
 */
 
       tgtstate = stConfigured();

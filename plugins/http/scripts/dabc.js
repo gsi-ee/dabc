@@ -656,6 +656,8 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    }
         
    var url = "gethistory?" + this.itemname;
+
+   console.log("GetHistory current version = " + this.version);
    
    if (this.version>0) url += "&ver=" + this.version;
    if (this.xmllimit>0) url += "&limit=" + this.xmllimit;
@@ -719,7 +721,7 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
    
    var new_version = Number(top.getAttribute("dabc:version"));
 
-//   console.log("Get request callback version = " + new_version);
+   console.log("Get history request callback version = " + new_version);
 
    var modified = (this.version != new_version);
 
@@ -855,7 +857,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
 //   console.log("Extract series");
    
-   var x = this.ExtractSeries("time", "time");
+   var x = this.ExtractSeries("dabc:time", "time");
    var y = this.ExtractSeries("value", "number");
    
 //   if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);

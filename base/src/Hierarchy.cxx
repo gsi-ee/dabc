@@ -32,18 +32,94 @@ const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_binary_producer = "dabc:binary_producer";
 const char* dabc::prop_content_hash = "dabc:hash";
 const char* dabc::prop_history = "dabc:history";
-const char* dabc::prop_time = "time";
+const char* dabc::prop_time = "dabc:time";
 
 
 // ===============================================================================
 
+
+uint64_t dabc::HistoryContainer::StoreSize(uint64_t version, int hlimit)
+{
+   sizestream s;
+   Stream(s, version, hlimit);
+   return s.size();
+}
+
+bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
+{
+   uint64_t pos = s.size();
+   uint64_t sz = 0;
+
+   uint32_t storesz(0), storenum(0), storevers(0);
+
+   if (s.is_output()) {
+      sz = s.is_real() ? StoreSize(version, hlimit) : 0;
+      storesz = sz / 8;
+
+      uint32_t first = 0;
+      if ((hlimit>0) && (fArr.Size() > (unsigned) hlimit)) first = fArr.Size() - hlimit;
+      storenum = 0;
+      bool cross_boundary = false;
+      for (unsigned n=first; n<fArr.Size();n++) {
+         // we have longer history as requested
+         if ((version>0) && (fArr.Item(n).version < version)) {
+            cross_boundary = true;
+            continue;
+         }
+         storenum++;
+      }
+
+      s.write_uint32(storesz);
+      s.write_uint32(storenum | (storevers<<24));
+
+      uint64_t mask = cross_boundary ? 1 : 0;
+      s.write_uint64(mask);
+
+      for (uint32_t n=first;n<fArr.Size();n++) {
+         if ((version>0) && (fArr.Item(n).version < version)) continue;
+         fArr.Item(n).fields->Stream(s);
+      }
+
+   } else {
+      s.read_uint32(storesz);
+      sz = ((uint64_t) storesz)*8;
+      s.read_uint32(storenum);
+      // storevers = storenum >> 24;
+      storenum = storenum & 0xffffff;
+
+      uint64_t mask(0);
+      s.read_uint64(mask);
+      fCrossBoundary = (mask & 1) != 0;
+
+      if (fArr.Capacity()==0)
+         fArr.Allocate((int)storenum > hlimit ? (int) storenum : hlimit);
+
+      for (uint32_t n=0;n<storenum;n++) {
+         RecordFieldsMap* fields = new RecordFieldsMap;
+         fields->Stream(s);
+
+         if (fArr.Full()) fArr.PopOnly();
+         HistoryItem* h = fArr.PushEmpty();
+         h->version = 0; // here is not matter, when applied to other structure will be set
+         h->fields = fields;
+      }
+   }
+
+   return s.verify_size(pos, sz);
+
+}
+
+// ===============================================================================
+
+
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
-   dabc::RecordContainer(name, flNoMutex | flIsOwner),
+   dabc::RecordContainerNew(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
    fHierarchyVersion(0),
-   fPermanent(false),
+   fAutoTime(false),
    fNodeChanged(false),
    fHierarchyChanged(false),
+   fDiffNode(false),
    fBinData(),
    fHist()
 {
@@ -78,37 +154,118 @@ dabc::HierarchyContainer* dabc::HierarchyContainer::TopParent()
    return this;
 }
 
-dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, uint64_t version, bool withversion)
+uint64_t dabc::HierarchyContainer::StoreSize(uint64_t version, int hlimit)
 {
-   XMLNodePointer_t objnode = SaveInXmlNode(parentnode, WasNodeModifiedAfter(version));
+   sizestream s;
+   Stream(s, version, hlimit);
+   //DOUT0("HierarchyContainer::StoreSize %s %u", GetName(), (unsigned) s.size());
+   return s.size();
+}
 
-   // provide information about node
-   // sometime node just shows that it is there
-   // provide mask attribute only when it is not 3
+bool dabc::HierarchyContainer::Stream(iostream& s, uint64_t version, int hlimit)
+{
+   uint64_t pos = s.size();
+   uint64_t sz = 0;
 
-   unsigned mask = ModifiedMask(version);
-   if (mask!=maskDefaultValue) Xml::NewAttr(objnode, 0, "dabc:mask", dabc::format("%u", mask).c_str());
-   if (withversion) Xml::NewAttr(objnode, 0, "v", dabc::format("%lu", (long unsigned) GetVersion()).c_str());
+   uint32_t storesz(0), storenum(0), storevers(0);
 
-   if (WasHierarchyModifiedAfter(version))
-      for (unsigned n=0;n<NumChilds();n++) {
-         dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child) child->SaveHierarchyInXmlNode(objnode, version, withversion);
+   //DOUT0("dabc::HierarchyContainer::Stream %s isout %s isreal %s", GetName(), DBOOL(s.is_output()), DBOOL(s.is_real()));
+
+   if (s.is_output()) {
+      bool store_fields = fNodeVersion>=version;
+      bool store_childs = (fHierarchyVersion >= version) && (hlimit<0);
+      bool store_diff = version > 0;
+      bool store_history = !fHist.null() && (hlimit>=0);
+      uint64_t mask = (store_fields ? maskNodeChanged : 0) |
+                      (store_childs ? maskChildsChanged : 0) |
+                      (store_diff ? maskDiffStored : 0) |
+                      (store_history ? maskHistory : 0);
+
+      sz = s.is_real() ? StoreSize(version, hlimit) : 0;
+
+      //if (s.is_real()) DOUT0("dabc::HierarchyContainer %s storesize %u", GetName(), (unsigned) sz);
+
+      storesz = sz / 8;
+      if (store_childs) storenum = ((uint32_t) NumChilds());
+      storenum = storenum | (storevers<<24);
+
+      s.write_uint32(storesz);
+      s.write_uint32(storenum);
+
+      //DOUT0("Write header size %u", (unsigned) s.size());
+
+      s.write_str(GetName());
+      s.write_uint64(mask);
+
+      //DOUT0("Write name %u", (unsigned) s.size());
+
+      if (store_fields) Fields().Stream(s);
+
+      if (store_history) fHist()->Stream(s, version, hlimit);
+
+      if (store_childs)
+         for (unsigned n=0;n<NumChilds();n++) {
+            dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
+            if (child) child->Stream(s, version);
+         }
+
+      //DOUT0("Write childs %u", (unsigned) s.size());
+
+   } else {
+      s.read_uint32(storesz);
+      sz = ((uint64_t) storesz)*8;
+      s.read_uint32(storenum);
+      // storevers = storenum >> 24;
+      storenum = storenum & 0xffffff;
+
+      std::string name;
+      uint64_t mask;
+
+      s.read_str(name);
+      s.read_uint64(mask);
+
+      SetName(name.c_str());
+
+      // indicate that it is special node, flag should be treated in update
+      if (mask & maskDiffStored)
+         fDiffNode = true;
+
+      if (mask & maskNodeChanged) {
+         fNodeChanged = true;
+         Fields().Stream(s);
       }
+
+      if (mask & maskHistory) {
+         if (fHist.null()) fHist.Allocate();
+         fHist()->Stream(s, version, hlimit);
+      }
+
+      if (mask & maskChildsChanged) {
+         fHierarchyChanged = true;
+         for (unsigned n=0;n<storenum;n++) {
+            dabc::HierarchyContainer* child = new dabc::HierarchyContainer("");
+            child->Stream(s,0);
+            AddChild(child);
+         }
+      }
+   }
+
+   return s.verify_size(pos, sz);
+}
+
+
+dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode)
+{
+   XMLNodePointer_t objnode = SaveInXmlNode(parentnode);
+
+  for (unsigned n=0;n<NumChilds();n++) {
+     dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
+     if (child) child->SaveHierarchyInXmlNode(objnode);
+  }
 
    return objnode;
 }
 
-void dabc::HierarchyContainer::SetVersion(uint64_t version, bool recursive, bool force)
-{
-   if (force || fNodeChanged) fNodeVersion = version;
-   if (force || fHierarchyChanged) fHierarchyVersion = version;
-   if (recursive)
-      for (unsigned n=0;n<NumChilds();n++) {
-         dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child) child->SetVersion(version, recursive, force);
-      }
-}
 
 void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recursive)
 {
@@ -121,8 +278,35 @@ void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recur
       }
 }
 
-std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit)
+dabc::Buffer dabc::HierarchyContainer::RequestHistory(uint64_t version, int hlimit)
 {
+   dabc::Buffer res;
+
+   if ((fHist.Capacity()==0) || (hlimit<0)) return res;
+
+   uint64_t size = StoreSize(version, hlimit);
+
+   res = dabc::Buffer::CreateBuffer(size);
+
+   memstream outs(false, (char*) res.SegmentPtr(), res.SegmentSize());
+
+   if (Stream(outs, version, hlimit)) {
+
+      if (size != outs.size()) { EOUT("Sizes mismatch %lu %lu", (long unsigned) size, (long unsigned) outs.size()); }
+
+      res.SetTotalSize(size);
+   }
+
+   return res;
+
+
+}
+
+
+std::string dabc::HierarchyContainer::RequestHistoryAsXml(uint64_t version, int limit)
+{
+//   DOUT0("RequestHistoryAsXml capacity %u", (unsigned) fHist.Capacity());
+
    if (fHist.Capacity()==0) return "";
 
    XMLNodePointer_t topnode = Xml::NewChild(0, 0, "gethistory", 0);
@@ -130,19 +314,29 @@ std::string dabc::HierarchyContainer::RequestHistory(uint64_t version, int limit
    Xml::NewAttr(topnode, 0, "xmlns:dabc", "http://dabc.gsi.de/xhtml");
    Xml::NewAttr(topnode, 0, prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
-   SaveInXmlNode(topnode, true);
+   SaveInXmlNode(topnode);
 
    bool cross_boundary = false;
 
-   for (unsigned n=0; n<fHist()->fArr.Size();n++) {
+//   DOUT0("RequestHistoryAsXml req_version %u", (unsigned) version);
+
+   unsigned first = 0;
+   if ((limit>0) && (fHist()->fArr.Size() > (unsigned) limit))
+      first = fHist()->fArr.Size() - limit;
+
+   for (unsigned n=first; n<fHist()->fArr.Size();n++) {
       HistoryItem& item = fHist()->fArr.Item(n);
 
       // we have longer history as requested
-      if ((version>0) && (item.version < version)) { cross_boundary = true; continue; }
+      if ((version>0) && (item.version < version)) {
+         cross_boundary = true;
+//         DOUT0("    ignore item %u version %u", n, (unsigned) item.version);
+         continue;
+      }
 
-      if ((limit>0) && ((fHist()->fArr.Size()-n) > (unsigned)limit)) continue;
-
-      dabc::Xml::AddRawLine(topnode, item.content.c_str());
+      XMLNodePointer_t hnode = Xml::NewChild(topnode, 0, "h", 0);
+      item.fields->SaveInXml(hnode);
+//      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
    }
 
    // if specific version was defined, and we do not have history backward to that version
@@ -170,33 +364,24 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
-   bool dohistory = fHist.DoHistory();
+   // we do like we manually set/remove all fields, excluding fields starting from 'dabc:'
 
-   if (dohistory) cont->Field(prop_history).SetUInt(fHist.Capacity());
-
-   // we need to recognize if any attribute disappear or changed
-   if (!CompareFields(cont->GetFieldsMap(), (dohistory ? prop_time : 0))) {
-      fNodeChanged = true;
-      if (dohistory) {
-         if (fHist()->fRecordTime) {
-            dabc::DateTime tm;
-            tm.GetNow();
-            char sbuf[100];
-            tm.AsJSString(sbuf, sizeof(sbuf));
-            cont->Field(prop_time).SetStr(sbuf);
-         }
-         AddHistory(BuildDiff(cont->GetFieldsMap()));
+   if (cont->fDiffNode) {
+      if (cont->fNodeChanged) {
+         SetFieldsMap(cont->TakeFieldsMap());
+         fNodeChanged = true;
       }
-      SetFieldsMap(cont->TakeFieldsMap());
+      if (!cont->fHierarchyChanged) return fNodeChanged;
+
+   } else {
+      Fields().MoveFrom(cont->Fields(), "dabc:"); // FIXME: probably have no need to filter fields
+      if (Fields().WasChanged()) fNodeChanged = true;
    }
 
    // now we should check if any childs were changed
 
    unsigned cnt1(0); // counter over source container
    unsigned cnt2(0); // counter over existing childs
-
-   // skip first permanent childs from update procedure
-   while (cnt2 < NumChilds() && ((HierarchyContainer*) GetChild(cnt2))->fPermanent) cnt2++;
 
    while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
       if (cnt1 >= cont->NumChilds()) {
@@ -270,7 +455,6 @@ dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::str
 }
 
 
-
 std::string dabc::HierarchyContainer::ItemName()
 {
    std::string res;
@@ -278,148 +462,134 @@ std::string dabc::HierarchyContainer::ItemName()
    return res;
 }
 
-bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objnode)
-{
-   // we do not check node name - it is done when childs are selected
-   // for top-level node name can differ
-
-   // if (!IsName(Xml::GetNodeName(objnode))) return false;
-
-   unsigned mask = maskDefaultValue;
-   if (Xml::HasAttr(objnode,"dabc:mask")) {
-      mask = (unsigned) Xml::GetIntAttr(objnode, "dabc:mask");
-      Xml::FreeAttr(objnode, "dabc:mask");
-   }
-
-   fNodeChanged = (mask & maskNodeChanged) != 0;
-   fHierarchyChanged = (mask & maskChildsChanged) != 0;
-
-   if (fNodeChanged) {
-      ClearFields();
-      if (!ReadFieldsFromNode(objnode, true, false)) return false;
-   }
-
-   if (!fHierarchyChanged) return true;
-
-   XMLNodePointer_t childnode = Xml::GetChild(objnode);
-   unsigned cnt = 0;
-
-   while ((childnode!=0) || (cnt<NumChilds())) {
-
-      if (childnode==0) {
-         // special case at the end - one should delete childs at the end
-         RemoveChildAt(cnt, true);
-         continue;
-      }
-
-      const char* childnodename = Xml::GetNodeName(childnode);
-      if (strcmp(childnodename, "dabc:field") == 0) {
-         Xml::ShiftToNext(childnode);
-         continue;
-      }
-
-      bool findchild(false);
-      unsigned findindx(0);
-
-      for (unsigned n=cnt;n<NumChilds();n++)
-         if (GetChild(n)->IsName(childnodename)) {
-            findchild = true;
-            findindx = n;
-            break;
-         }
-
-      dabc::HierarchyContainer* child = 0;
-
-      if (findchild) {
-         // delete all child with non-matching names
-         while (findindx > cnt) { RemoveChildAt(cnt, true); findindx--; }
-         child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(cnt));
-      } else {
-         child = new dabc::HierarchyContainer(childnodename);
-         AddChildAt(child, cnt);
-      }
-
-      if ((child==0) || !child->IsName(childnodename)) {
-         EOUT("Internal error - did not create or found child for node %s", childnodename);
-         return false;
-      }
-
-      if (!child->UpdateHierarchyFromXmlNode(childnode)) return false;
-
-      Xml::ShiftToNext(childnode);
-      cnt++;
-   }
-
-   return true;
-}
-
 void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
 {
-   cont->CopyFieldsMap(GetFieldsMap());
+   cont->Fields().CopyFrom(Fields());
 
-   dabc::RecordContainer::BuildHierarchy(cont);
+   dabc::RecordContainerNew::BuildHierarchy(cont);
 }
 
-std::string dabc::HierarchyContainer::MakeSimpleDiff(const char* oldvalue)
-{
-   XMLNodePointer_t node = Xml::NewChild(0, 0, "h", 0);
-
-   if (fHist() && fHist()->fRecordTime) {
-      const char* tvalue = GetField(prop_time);
-      if (tvalue) Xml::NewAttr(node, 0, prop_time, tvalue);
-   }
-
-   Xml::NewAttr(node, 0, fHist()->fAutoRecord.c_str(), oldvalue);
-
-   std::string res;
-
-   Xml::SaveSingleNode(node, &res, 0);
-   Xml::FreeNode(node);
-
-   return res;
-}
-
-void dabc::HierarchyContainer::AddHistory(const std::string& diff)
+void dabc::HierarchyContainer::AddHistory(RecordFieldsMap* diff)
 {
    if (fHist.Capacity()==0) return;
    if (fHist()->fArr.Full()) fHist()->fArr.PopOnly();
    HistoryItem* h = fHist()->fArr.PushEmpty();
    h->version = fNodeVersion;
-   h->content = diff;
+   h->fields = diff;
 }
 
-bool dabc::HierarchyContainer::SetField(const std::string& name, const char* value, const char* kind)
+void dabc::HierarchyContainer::ClearHistoryEntries()
 {
-   if (fHist() && !fHist()->fAutoRecord.empty()) {
-      std::string usename = name.empty() ? DefaultFiledName() : name;
+   if (fHist.Capacity()==0) return;
+   while (fHist()->fArr.Size() > 0) fHist()->fArr.PopOnly();
+}
 
-      if (usename == fHist()->fAutoRecord) {
-         const char* oldvalue = GetField(name);
-         if ((oldvalue!=0) && (value!=0) && (fHist()->fForceAutoRecord || (strcmp(oldvalue, value)!=0))) {
-            // record history
-            if (fHist.DoHistory())
-               AddHistory(MakeSimpleDiff(oldvalue));
 
-            // record time
-            if (fHist()->fRecordTime) {
-               dabc::DateTime tm;
-               tm.GetNow();
-               char sbuf[100];
-               tm.AsJSString(sbuf, sizeof(sbuf));
+bool dabc::HierarchyContainer::IsNodeChanged(bool withchilds)
+{
+   if (fNodeChanged || fHierarchyChanged) return true;
 
-               dabc::RecordContainer::SetField(prop_time, sbuf, 0);
-            }
+   if (Fields().WasChanged()) { fNodeChanged = true; return true; }
 
-            fNodeChanged = true;
-
-            // we detect change of important field and mark it with new version
-            MarkWithChangedVersion();
-         }
+   if (withchilds)
+      for (unsigned indx=0; indx < NumChilds(); indx++) {
+         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+         if (child && child->IsNodeChanged(withchilds)) return true;
       }
+
+   return false;
+}
+
+bool dabc::HierarchyContainer::CheckIfDoingHistory()
+{
+   if (!fHist.null()) return fHist.DoHistory();
+
+   HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (GetParent());
+   while (prnt != 0) {
+
+      if (prnt->fHist.DoHistory() && prnt->fHist()->fChildsEnabled) {
+         fHist.Allocate(prnt->fHist.Capacity());
+         fHist()->fEnabled = true;
+         fHist()->fChildsEnabled = true;
+         return true;
+      }
+
+      prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
    }
 
+   return false;
+}
 
-   return dabc::RecordContainer::SetField(name, value, kind);
+void dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds, bool force)
+{
+   if (force || IsNodeChanged(false)) {
+
+      if (force || fNodeChanged) fNodeVersion = ver;
+      if (force || fHierarchyChanged) fHierarchyVersion = ver;
+
+      if (fNodeChanged && fAutoTime) {
+         if (tm<=0) {
+            dabc::DateTime dt;
+            if (dt.GetNow()) tm = dt.AsDouble();
+         }
+         Fields().Field(prop_time).SetStr(dabc::format("%5.3f",tm));
+      }
+
+      if (CheckIfDoingHistory()) {
+         RecordFieldsMap* prev = fHist()->fPrev;
+         if (prev!=0) {
+            prev->MakeAsDiffTo(Fields());
+            AddHistory(prev);
+         }
+
+         fHist()->fPrev = Fields().Clone();
+      }
+
+      Fields().ClearChangeFlags();
+      fNodeChanged = false;
+      fHierarchyChanged = false;
+   }
+
+   if (withchilds)
+      for (unsigned indx=0; indx < NumChilds(); indx++) {
+         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+         if (child) child->MarkVersionIfChanged(ver, tm, withchilds, force);
+      }
+}
+
+
+void dabc::HierarchyContainer::MarkChangedItems(bool withchilds, double tm)
+{
+   if (!IsNodeChanged(withchilds)) return;
+
+   HierarchyContainer* top = this, *prnt = this;
+
+   while (prnt!=0) {
+     top = prnt;
+     prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
+   }
+
+   uint64_t next_ver = top->GetVersion() + 1;
+
+   // mark node and childs (if specified)
+   MarkVersionIfChanged(next_ver, tm, withchilds, false);
+
+   // mark changes in parent
+   prnt = this;
+   while (prnt != 0) {
+      prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
+      if (prnt) prnt->MarkVersionIfChanged(next_ver, tm, false, true);
+   }
+}
+
+void dabc::HierarchyContainer::EnableTimeRecording(bool withchilds)
+{
+   fAutoTime = true;
+   if (withchilds)
+      for (unsigned indx=0; indx < NumChilds(); indx++) {
+         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+         if (child) child->EnableTimeRecording(withchilds);
+      }
 }
 
 
@@ -433,27 +603,6 @@ void dabc::Hierarchy::Build(const std::string& topname, Reference top)
    if (!top.null() && !null())
       top()->BuildHierarchy(GetObject());
 }
-
-void dabc::HierarchyContainer::MarkWithChangedVersion()
-{
-   HierarchyContainer* top = this, *prnt = this;
-
-   while (prnt!=0) {
-      top = prnt;
-      prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
-   }
-
-   uint64_t next_ver = top->GetVersion() + 1;
-
-   SetVersion(next_ver, true, false);
-
-   prnt = this;
-   while (prnt != 0) {
-      prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
-      if (prnt) prnt->SetVersion(next_ver, false, true);
-   }
-}
-
 
 bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 {
@@ -469,7 +618,7 @@ bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
    }
 
    if (GetObject()->UpdateHierarchyFrom(src()))
-      GetObject()->MarkWithChangedVersion();
+      GetObject()->MarkChangedItems();
 
    return true;
 }
@@ -494,23 +643,22 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
    return Update(src);
 }
 
-void dabc::Hierarchy::EnableHistory(int length, const std::string& autorec, bool force)
+void dabc::Hierarchy::EnableHistory(unsigned length, bool withchilds)
 {
    if (null()) return;
 
-   if (GetObject()->fHist.Capacity() == (unsigned) length) return;
+   if (length>0) GetObject()->EnableTimeRecording(withchilds);
 
-   if (length>0) {
-      GetObject()->fHist.Allocate();
-      GetObject()->fHist()->fEnabled = true;
-      GetObject()->fHist()->fArr.Allocate(length);
-      GetObject()->fHist()->fRecordTime = true;
-      GetObject()->fHist()->fAutoRecord = autorec;
-      GetObject()->fHist()->fForceAutoRecord = force;
-      Field(prop_history).SetInt(length);
-   } else {
-      GetObject()->fHist.Release();
-      RemoveField(prop_history);
+   if (GetObject()->fHist.Capacity() != length) {
+      if (length>0) {
+         GetObject()->fHist.Allocate(length);
+         GetObject()->fHist()->fEnabled = true;
+         GetObject()->fHist()->fChildsEnabled = withchilds;
+         Field(prop_history).SetUInt(length);
+      } else {
+         GetObject()->fHist.Release();
+         RemoveField(prop_history);
+      }
    }
 }
 
@@ -531,18 +679,71 @@ bool dabc::Hierarchy::HasActualRemoteHistory() const
 }
 
 
-std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
+dabc::Buffer dabc::Hierarchy::SaveToBuffer(uint64_t version)
 {
-   Iterator iter2(*this);
+   if (null()) return dabc::Buffer();
 
-   bool withversion = false;
+   uint64_t size = GetObject()->StoreSize(version);
 
-   if (version == (uint64_t)-1) {
-      withversion = true;
-      version = 0;
+   dabc::Buffer res = dabc::Buffer::CreateBuffer(size);
+
+   memstream outs(false, (char*) res.SegmentPtr(), res.SegmentSize());
+
+   if (GetObject()->Stream(outs, version)) {
+
+      if (size != outs.size()) { EOUT("Sizes mismatch %lu %lu", (long unsigned) size, (long unsigned) outs.size()); }
+
+      res.SetTotalSize(size);
    }
 
-   XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, version, withversion);
+   return res;
+}
+
+bool dabc::Hierarchy::ReadFromBuffer(const dabc::Buffer& buf)
+{
+   if (buf.null()) return false;
+
+   memstream inps(true, (char*) buf.SegmentPtr(), buf.SegmentSize());
+
+   dabc::HierarchyContainer* cont = new dabc::HierarchyContainer("");
+
+   if (!cont->Stream(inps)) {
+      EOUT("Cannot reconstruct hierarchy from the binary data!");
+      delete cont;
+      return false;
+   }
+
+   SetObject(cont);
+
+   return true;
+}
+
+bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf)
+{
+   if (null()) return ReadFromBuffer(buf);
+
+   dabc::Hierarchy src;
+
+   if (!src.ReadFromBuffer(buf)) return false;
+
+   if (!GetObject()->UpdateHierarchyFrom(src.GetObject())) return false;
+
+   uint64_t next_ver = GetVersion() + 1;
+
+   double tm = 0;
+
+   // mark node and its childs
+   GetObject()->MarkVersionIfChanged(next_ver, tm, true, false);
+
+   return true;
+}
+
+
+
+
+std::string dabc::Hierarchy::SaveToXml(bool compact)
+{
+   XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0);
 
    Xml::NewAttr(topnode, 0, dabc::prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
@@ -581,42 +782,6 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster()
    if (masteritem.empty()) return dabc::Hierarchy();
 
    return GetParent()->FindChildRef(masteritem.c_str());
-}
-
-bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
-{
-   if (src.empty()) return false;
-
-   XMLNodePointer_t topnode = Xml::ReadSingleNode(src.c_str());
-
-   if (topnode==0) return false;
-
-   bool res = true;
-   long unsigned version(0);
-
-   if (!Xml::HasAttr(topnode,dabc::prop_version) || !dabc::str_to_luint(Xml::GetAttr(topnode,"dabc:version"), &version)) {
-      res = false;
-      EOUT("Not found topnode version");
-   } else {
-      DOUT3("Hierarchy version is %lu", version);
-      Xml::FreeAttr(topnode, dabc::prop_version);
-   }
-
-   if (res) {
-
-      if (null()) Create(Xml::GetNodeName(topnode));
-
-      if (!GetObject()->UpdateHierarchyFromXmlNode(topnode)) {
-         EOUT("Fail to update hierarchy from xml");
-         res = false;
-      } else {
-         GetObject()->SetVersion(version, true, false);
-      }
-   }
-
-   Xml::FreeNode(topnode);
-
-   return res;
 }
 
 
@@ -703,7 +868,7 @@ dabc::Buffer dabc::Hierarchy::ApplyBinaryRequest(Command cmd)
 
       master()->fNodeChanged = true;
 
-      master()->MarkWithChangedVersion();
+      master()->MarkChangedItems();
 
       // DOUT0("MASTER VERSION WAS %u NOW %u", (unsigned) master_version, (unsigned) master.GetVersion());
 
@@ -751,8 +916,10 @@ dabc::Command dabc::Hierarchy::ProduceHistoryRequest()
 
    if (producer_name.empty() && request_name.empty()) return 0;
 
-   if (GetObject()->fHist.null())
+   if (GetObject()->fHist.null()) {
+//      DOUT0("Allocate history %u for the object %p", history_size, GetObject());
       GetObject()->fHist.Allocate(history_size);
+   }
 
    dabc::Command cmd("GetBinary");
    cmd.SetStr("Item", request_name);
@@ -773,25 +940,27 @@ dabc::Buffer dabc::Hierarchy::ExecuteHistoryRequest(Command cmd)
    unsigned ver = cmd.GetUInt("version");
    int limit = cmd.GetInt("limit");
 
-   std::string res = GetObject()->RequestHistory(ver, limit);
+   dabc::Buffer buf = GetObject()->RequestHistory(ver, limit);
 
-   if (res.empty()) return 0;
+   if (!buf.null()) cmd.SetUInt("version", GetVersion());
 
-   cmd.SetUInt("version", GetVersion());
-
-   // we transport trailing 0 to avoid problem on receiver side
-   return dabc::Buffer::CreateBuffer(res.c_str(), res.length()+1, false, true);
+   return buf;
 }
 
 
-bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
+bool dabc::Hierarchy::ApplyHistoryRequest(Command cmd)
 {
    // STEP3. Unfold reply from remote and reproduce history recording here
 
-   if (cmd.GetResult() != cmd_true) return false;
+   if (cmd.GetResult() != cmd_true) {
+      EOUT("Command executed not correctly");
+      return false;
+   }
 
-   if (null() || GetObject()->fHist.null()) return false;
-
+   if (null() || GetObject()->fHist.null()) {
+      EOUT("History object missing");
+      return false;
+   }
 
 //   DOUT0("STEP3 - analyze reply");
 
@@ -799,42 +968,45 @@ bool dabc::Hierarchy::ApplyHierarchyRequest(Command cmd)
 
    if (buf.null()) { EOUT("No raw data in history reply"); return false; }
 
-   // decode reply
-   XMLNodePointer_t node = Xml::ReadSingleNode((const char*) buf.SegmentPtr());
-
-   // can not decode xml code
-   if (node==0) { EOUT("Bad XML syntax in history reply"); return false; }
-
-   bool res = true;
-
-   XMLNodePointer_t child = Xml::GetChild(node);
-
-   // TODO: force all fields from xml
-   if (!IsName(Xml::GetNodeName(child)) || !GetObject()->ReadFieldsFromNode(child, true, false)) {
-      EOUT("First item in reply should be node itself");
-      child = 0; res = false;
+   dabc::Hierarchy hreq;
+   if (!hreq.ReadFromBuffer(buf)) {
+      EOUT("Fail read hrequest from binary buffer");
+      return false;
    }
+
+   RecordFieldsMap& src_fields = hreq.GetObject()->Fields();
+
+   RecordFieldsMap& tgt_fields = GetObject()->Fields();
+
+   tgt_fields.MoveFrom(src_fields);
 
    // this is all about history
    // we are adding history with previous number while
-   while ((child = Xml::GetNext(child)) != 0) {
-      std::string sbuf;
-      Xml::SaveSingleNode(child, &sbuf, 0);
-      GetObject()->AddHistory(sbuf);
+   if (!hreq()->fHist.null())  {
+      RecordFieldsMap* entry = 0;
+
+//      DOUT0("Object %p capacity %u", GetObject(), GetObject()->fHist.Capacity());
+
+      // if request was not able to deliver all items up to specified version,
+      // we need to remove all previous items, while history will not be correct
+      if (!hreq()->fHist()->fCrossBoundary)
+         GetObject()->ClearHistoryEntries();
+
+//     DOUT0("SRC num entries %u TGT numentries %u TGT capacity %u",
+//        hreq()->fHist.Size(), GetObject()->fHist.Size(), GetObject()->fHist.Capacity());
+
+      while ((entry = hreq()->fHist()->TakeNext())!=0)
+         GetObject()->AddHistory(entry);
    }
 
    GetObject()->fNodeChanged = true;
-   GetObject()->MarkWithChangedVersion();
-
-   Xml::FreeNode(node);
+   GetObject()->MarkChangedItems();
 
    // remember when reply comes back
-   if (res) {
-      GetObject()->fHist()->fRemoteReqVersion = cmd.GetUInt("version");
-      GetObject()->fHist()->fLocalReqVersion = GetVersion();
-   }
+   GetObject()->fHist()->fRemoteReqVersion = cmd.GetUInt("version");
+   GetObject()->fHist()->fLocalReqVersion = GetVersion();
 
-   return res;
+   return true;
 }
 
 
@@ -870,7 +1042,7 @@ bool dabc::Hierarchy::ApplyImageRequest(Command cmd)
    if (bindata.null()) return false;
 
    GetObject()->fNodeChanged = true;
-   GetObject()->MarkWithChangedVersion();
+   GetObject()->MarkChangedItems();
    GetObject()->bindata() = bindata;
 
    return true;

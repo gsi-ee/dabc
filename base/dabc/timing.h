@@ -173,10 +173,13 @@ namespace dabc {
 
          bool GetNow();
 
-         // convert string into human-readable format, cannot be interpret directly in JavaScript
+         /** \brief Return date and time in seconds since 1.1.1970 */
+         double AsDouble() const;
+
+         /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
          bool AsString(char* sbuf, int len, int ndecimal = 0) const;
 
-         // convert string into sec.frac format, can be interpret directly in JavaScript
+         /** \brief convert string into sec.frac format, can be interpret directly in JavaScript */
          bool AsJSString(char* sbuf, int len) const;
 
    };

@@ -382,7 +382,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
          if (chld.null()) { EOUT("Didnot find child %s", part.c_str()); }
 
          if (!chld.null() && chld.HasField("value")) {
-            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.GetField("value"));
+            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.Field("value").AsStr().c_str());
             first = false;
          }
       }
@@ -501,12 +501,12 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
 
       // process request locally
       if (item.HasLocalHistory() || item.HasActualRemoteHistory()) {
-         reply = item()->RequestHistory(query_version, limit);
+         reply = item()->RequestHistoryAsXml(query_version, limit);
          break;
       }
 
       cmd = item.ProduceHistoryRequest();
-      if (!cmd.null()) item.SetField("#doingreq","1");
+      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
 
       break;
    }
@@ -516,10 +516,10 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
       dabc::mgr.Execute(cmd, 5.);
 
       dabc::LockGuard lock(fHierarchyMutex);
-      item.SetField("#doingreq",0);
+      item.RemoveField("#doingreq");
 
-      if (item.ApplyHierarchyRequest(cmd))
-         reply = item()->RequestHistory(query_version, limit);
+      if (item.ApplyHistoryRequest(cmd))
+         reply = item()->RequestHistoryAsXml(query_version, limit);
    }
 
    if (reply.empty()) {
@@ -588,7 +588,7 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
       if (!reply.null()) break;
 
       cmd = item.ProduceImageRequest();
-      if (!cmd.null()) item.SetField("#doingreq","1");
+      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
 
       break;
    }
@@ -598,7 +598,7 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
       dabc::mgr.Execute(cmd, 5.);
 
       dabc::LockGuard lock(fHierarchyMutex);
-      item.SetField("#doingreq",0);
+      item.RemoveField("#doingreq");
 
       if (item.ApplyImageRequest(cmd))
          reply = item.GetLocalImage(query_version);
@@ -682,7 +682,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       if (!replybuf.null()) break;
 
       cmd = item.ProduceBinaryRequest();
-      if (!cmd.null()) item.SetField("#doingreq","1");
+      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
       break;
    } // end of check_requester_counter
 
@@ -692,7 +692,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
       dabc::LockGuard lock(fHierarchyMutex);
 
-      item.SetField("#doingreq",0);
+      item.RemoveField("#doingreq");
 
       replybuf = item.ApplyBinaryRequest(cmd);
    }
