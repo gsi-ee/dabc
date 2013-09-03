@@ -375,7 +375,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
       if (!cont->fHierarchyChanged) return fNodeChanged;
 
    } else {
-      Fields().MoveFrom(cont->Fields(), "dabc:"); // FIXME: probably have no need to filter fields
+      Fields().MoveFrom(cont->Fields()/*, "dabc:"*/); // FIXME: probably have no need to filter fields
       if (Fields().WasChanged()) fNodeChanged = true;
    }
 
@@ -791,7 +791,7 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster()
 
 dabc::Buffer dabc::Hierarchy::GetBinaryData(uint64_t query_version)
 {
-   if (null()) return 0;
+   if (null()) return dabc::Buffer();
 
    dabc::Hierarchy master = FindMaster();
 
@@ -812,7 +812,7 @@ dabc::Buffer dabc::Hierarchy::GetBinaryData(uint64_t query_version)
 
    bool can_reply = (bindatahdr!=0) && (item_version==bindatahdr->version) && (query_version<=item_version);
 
-   if (!can_reply) return 0;
+   if (!can_reply) return dabc::Buffer();
 
    if ((query_version>0) && (query_version==bindatahdr->version)) {
       dabc::BinDataHeader dummyhdr;
@@ -835,6 +835,8 @@ dabc::Command dabc::Hierarchy::ProduceBinaryRequest()
 
    std::string request_name;
    std::string producer_name = FindBinaryProducer(request_name);
+
+   DOUT0("ProduceBinaryRequest request_name %s producer_name %s", request_name.c_str(), producer_name.c_str());
 
    if (request_name.empty()) return 0;
 

@@ -630,6 +630,8 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
 
 int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
 {
+//   DOUT0("ProcessGetBinary %s", query);
+
    dabc::Url url(std::string("getbinary?") + (query ? query : ""));
 
    if (!url.IsValid()) {
@@ -679,6 +681,8 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
       if (!force) replybuf = item.GetBinaryData(query_version);
 
+//      DOUT0("GetBinaryData ver %u start replybuf %u null %s", (unsigned)query_version, (unsigned) replybuf.GetTotalSize(), DBOOL(replybuf.null()));
+
       if (!replybuf.null()) break;
 
       cmd = item.ProduceBinaryRequest();
@@ -688,13 +692,20 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
 
 
    if (!cmd.null()) {
+
+//      DOUT0("GetBinaryData start command");
+
       dabc::mgr.Execute(cmd, 5.);
+
+//      DOUT0("GetBinaryData did command");
 
       dabc::LockGuard lock(fHierarchyMutex);
 
       item.RemoveField("#doingreq");
 
       replybuf = item.ApplyBinaryRequest(cmd);
+
+//      DOUT0("GetBinaryData ver %u apply replybuf %u", (unsigned)query_version, (unsigned) replybuf.GetTotalSize());
    }
 
 

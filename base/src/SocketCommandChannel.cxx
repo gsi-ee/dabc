@@ -203,6 +203,8 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
 
       dabc::Buffer rawdata = channel->fHierarchy.SaveToBuffer(lastversion + 1);
 
+      // DOUT0("SEND HIERARCHY \n%s",channel->fHierarchy.SaveToXml().c_str());
+
       cmd.SetRawData(rawdata);
 
       cmd.SetResult(cmd_true);
@@ -388,7 +390,7 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
       if (!buf.null()) {
          if (fRemoteHierarchy.UpdateFromBuffer(buf)) {
             DOUT2("Update of hierarchy to version %u done", fRemoteHierarchy.GetVersion());
-            // DOUT0("Now \n%s", fRemoteHierarchy.SaveToXml().c_str());
+            // DOUT0("Remote now \n%s", fRemoteHierarchy.SaveToXml().c_str());
          }
       }
 
@@ -907,6 +909,11 @@ double dabc::SocketCommandChannel::ProcessTimeout(double last_diff)
    if (main.null()) main = dabc::mgr;
 
    fHierarchy.UpdateHierarchy(main);
+
+//   DOUT0("BUILD LOCAL sel:%s \n%s", fSelPath.c_str(), fHierarchy.SaveToXml().c_str());
+//   dabc::Hierarchy h;
+//   h.UpdateHierarchy(dabc::mgr);
+//   DOUT0("GLOBAL\n%s", h.SaveToXml().c_str());
 
 //   DOUT0("SocketChannel LOCAL hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
 
