@@ -642,30 +642,46 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
       case kind_string: {
          // TODO: check that valueStr correspond to vector syntax
          int len = strlen(valueStr);
-         if ((len>1) && (valueStr[0]=='[') && (valueStr[len-1]==']')) {
-            // try to extract string vector
-            char* pos = valueStr + 1;
-            while (*pos==' ') pos++; // exclude possible spaces in the begin
-            if (*pos=='\'') {
-               char* p1 = strchr(pos+1, '\'');
-               if (p1==0) {
-                  EOUT("Syntax error in array");
-                  break;
-               }
-               res.push_back(CompressValue(pos+1, p1 - pos - 1));
-            } else {
-               char* p1 = strpbrk(pos+1, ",]");
-               if (p1==0) {
-                  EOUT("Syntax error in array");
-               }
-               int spaces = 0;
-               while ((p1 - spaces > pos + 1) && (*(p1-spaces-1)==' ')) spaces++;
-               res.push_back(std::string(pos, p1 - pos - spaces));
-            }
+
+         if ((len<3) || (valueStr[0]!='[') || (valueStr[len-1]!=']')) {
+            res.push_back(valueStr);
             break;
          }
-         res.push_back(valueStr);
-         break;
+
+          char* pos = valueStr + 1;
+
+          while (*pos != 0) {
+             while (*pos==' ') pos++; // exclude possible spaces in the begin
+             if (*pos=='\'') {
+                char* p1 = strchr(pos+1, '\'');
+                if (p1==0) {
+                   EOUT("Error syntax in array %s after char:%u - closing quote ' not found ", valueStr, (unsigned) (pos - valueStr));
+                   break;
+                }
+                res.push_back(CompressValue(pos+1, p1 - pos - 1));
+                pos = p1 + 1;
+             } else {
+                char* p1 = strpbrk(pos+1, ",]");
+                if (p1==0) {
+                   EOUT("Error syntax in array %s after char:%u - ',' or ']' not found ", valueStr, (unsigned) (pos - valueStr));
+                }
+                int spaces = 0;
+                while ((p1 - spaces > pos + 1) && (*(p1-spaces-1)==' ')) spaces++;
+                res.push_back(std::string(pos, p1 - pos - spaces));
+                pos = p1;
+             }
+             while (*pos==' ') pos++; // exclude possible spaces at the end
+
+             // this is end of the array
+             if (*pos==']') break;
+
+             if (*pos != ',') {
+                EOUT("Error syntax in array %s char:%u - expected ',' ", valueStr, (unsigned) (pos - valueStr));
+                break;
+             }
+             pos++;
+          }
+          break;
       }
       case kind_arrstr: {
          char* p = valueStr;
