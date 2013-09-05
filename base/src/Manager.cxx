@@ -32,7 +32,6 @@
 #include "dabc/Transport.h"
 #include "dabc/Module.h"
 #include "dabc/Command.h"
-#include "dabc/CommandsSet.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Device.h"
 #include "dabc/Url.h"
@@ -48,6 +47,7 @@
 #include "dabc/MultiplexerModule.h"
 #include "dabc/SocketFactory.h"
 #include "dabc/Hierarchy.h"
+#include "dabc/Publisher.h"
 
 namespace dabc {
 
@@ -135,6 +135,9 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname
    if (classname == "dabc::RepeaterModule")
       return new dabc::RepeaterModule(modulename, cmd);
 
+   if (classname == "dabc::Publisher")
+      return new dabc::Publisher(modulename, cmd);
+
    return 0;
 }
 
@@ -221,6 +224,7 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fCfgHost(),
    fNodeId(0),
    fNumNodes(1),
+   fLocalHostId("local"),
    fThrLayout(layoutBalanced),
    fLastCreatedDevName()
 {
@@ -231,6 +235,9 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       dabc::mgr = dabc::ManagerRef(this);
       dabc::SetDebugPrefix(GetName());
    }
+
+   fLocalHostId = dabc::format("localhost_pid%d", (int) getpid());
+   DOUT0("MGR localid is %s", fLocalHostId.c_str());
 
    if (cfg) {
       fCfgHost = cfg->MgrHost();
@@ -259,7 +266,6 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
 
    fParEventsReceivers = new ParamEventReceiverList;
 
-
    // this should automatically add all factories to the manager
    ProcessFactory(new dabc::StdManagerFactory("std"));
 
@@ -273,7 +279,6 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
             fFirstFactories[n] = 0;
          }
    }
-
 
    MakeThreadForWorker(MgrThrdName());
 
@@ -653,17 +658,17 @@ bool dabc::Manager::IsAnyModuleRunning()
    return false;
 }
 
+
 dabc::Reference dabc::Manager::FindItem(const std::string& name, bool islocal)
 {
    Reference ref;
-   std::string itemname;
-   int nodeid(-1);
+   std::string server, itemname;
 
    if (islocal) {
       itemname = name;
    } else {
-      if (!Url::DecomposeItemName(name, nodeid, itemname)) return ref;
-      if ((nodeid>=0) && (nodeid!=NodeId())) return ref;
+      if (!DecomposeAddress(name, islocal, server, itemname)) return ref;
+      if (!islocal) return ref;
    }
 
    if (itemname.empty()) return ref;
@@ -742,7 +747,6 @@ bool dabc::Manager::CreateControl(bool withserver, const std::string& toppath)
       cmd.SetInt("ServerPort", cfg()->MgrPort());
    cmd.SetStr("select", toppath);
 
-
    ref = DoCreateObject("SocketCommandChannel", CmdChlName(), cmd);
 
    ref.MakeThreadForWorker("CmdThrd");
@@ -759,19 +763,22 @@ int dabc::Manager::PreviewCommand(Command cmd)
    //          ..            - command is executed
 
    std::string url = cmd.GetReceiver();
-   int tgtnode(-1);
-   std::string itemname;
 
-   if (!url.empty() && Url::DecomposeItemName(url, tgtnode, itemname)) {
+   bool islocal(true);
+   std::string server,itemname;
+
+   if (!url.empty() && DecomposeAddress(url, islocal, server, itemname)) {
 
       DOUT5("MGR: Preview command %s item %s tgtnode %d", cmd.GetName(), url.c_str(), tgtnode);
 
-      if ((tgtnode>=0) && (tgtnode != NodeId())) {
+      if (!islocal) {
 
-         if (!GetCommandChannel().Submit(cmd))
-            EOUT("Cannot submit command to remote node %d", tgtnode);
+         if (GetCommandChannel().Submit(cmd)) return cmd_postponed;
 
-         return cmd_postponed;
+         EOUT("Cannot submit command to remote server %s", server.c_str());
+         return cmd_false;
+
+
       } else
       if (!itemname.empty()) {
 
@@ -874,8 +881,8 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    int cmd_res = cmd_true;
 
    if (cmd.IsName(CmdCreateModule::CmdName())) {
-      std::string classname = cmd.GetStdStr(xmlClassAttr);
-      std::string modulename = cmd.GetStdStr(CmdCreateModule::ModuleArg());
+      std::string classname = cmd.GetStr(xmlClassAttr);
+      std::string modulename = cmd.GetStr(CmdCreateModule::ModuleArg());
 
       ModuleRef ref = DoCreateModule(classname, modulename, cmd);
       cmd_res = cmd_bool(!ref.null());
@@ -888,7 +895,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_true;
    } else
    if (cmd.IsName(CmdCreateApplication::CmdName())) {
-      std::string classname = cmd.GetStdStr("AppClass");
+      std::string classname = cmd.GetStr("AppClass");
 
       if (classname.empty()) classname = typeApplication;
 
@@ -934,8 +941,8 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
 
    if (cmd.IsName(CmdCreateDevice::CmdName())) {
-      std::string classname = cmd.GetStdStr("DevClass");
-      std::string devname = cmd.GetStdStr("DevName");
+      std::string classname = cmd.GetStr("DevClass");
+      std::string devname = cmd.GetStr("DevName");
       if (devname.empty()) devname = classname;
 
       WorkerRef dev = FindDevice(devname);
@@ -1051,14 +1058,14 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       }
    } else
    if (cmd.IsName(CmdDestroyTransport::CmdName())) {
-      PortRef portref = FindPort(cmd.GetStdStr("PortName"));
+      PortRef portref = FindPort(cmd.GetStr("PortName"));
       if (!portref.Disconnect())
         cmd_res = cmd_false;
    } else
    if (cmd.IsName(CmdCreateThread::CmdName())) {
-      const std::string& thrdname = cmd.GetStdStr(CmdCreateThread::ThrdNameArg());
-      const std::string& thrdclass = cmd.GetStdStr("ThrdClass");
-      const std::string& thrddev = cmd.GetStdStr("ThrdDev");
+      const std::string& thrdname = cmd.GetStr(CmdCreateThread::ThrdNameArg());
+      const std::string& thrdclass = cmd.GetStr("ThrdClass");
+      const std::string& thrddev = cmd.GetStr("ThrdDev");
 
       ThreadRef thrd = DoCreateThread(thrdname, thrdclass, thrddev, cmd);
 
@@ -1074,7 +1081,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
    } else
    if (cmd.IsName(CmdCreateObject::CmdName())) {
-      cmd.SetRef("Object", DoCreateObject(cmd.GetStdStr("ClassName"), cmd.GetStdStr("ObjName"), cmd));
+      cmd.SetRef("Object", DoCreateObject(cmd.GetStr("ClassName"), cmd.GetStr("ObjName"), cmd));
       cmd_res = cmd_true;
    } else
    if (cmd.IsName(CmdCleanupApplication::CmdName())) {
@@ -1108,12 +1115,12 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          while (iter.next_cast(m))
             m->Stop();
       } else {
-         ModuleRef m = FindModule(cmd.GetStdStr("Module"));
+         ModuleRef m = FindModule(cmd.GetStr("Module"));
          cmd_res = cmd_bool(m.Stop());
       }
    } else
    if (cmd.IsName(CmdDeleteModule::CmdName())) {
-      ModuleRef ref = FindModule(cmd.GetStdStr(CmdDeleteModule::ModuleArg()));
+      ModuleRef ref = FindModule(cmd.GetStr(CmdDeleteModule::ModuleArg()));
 
       cmd_res = cmd_bool(!ref.null());
 
@@ -1151,8 +1158,8 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("ParameterEventSubscription")) {
       Worker* worker = (Worker*) cmd.GetPtr("Worker");
-      std::string mask = cmd.GetStdStr("Mask");
-      std::string remote = cmd.GetStdStr("RemoteWorker");
+      std::string mask = cmd.GetStr("Mask");
+      std::string remote = cmd.GetStr("RemoteWorker");
 
       DOUT2("Subscription with mask %s", mask.c_str());
 
@@ -1356,39 +1363,84 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
 }
 
 
-int dabc::Manager::NumActiveNodes()
+std::string dabc::Manager::GetNodeAddress(int nodeid)
 {
-   int cnt = 0;
-   for (int n=0;n<NumNodes();n++)
-      if (IsNodeActive(n)) cnt++;
-   return cnt;
-}
-
-bool dabc::Manager::TestActiveNodes(double tmout)
-{
-   CommandsSet cli(thread());
-
-   for (int node=0; node<NumNodes(); node++)
-      if ((node!=NodeId()) && IsNodeActive(node)) {
-         Command cmd("Ping");
-         cmd.SetReceiver(node);
-         cli.Add(cmd, this);
-      }
-
-   return cli.ExecuteSet(tmout);
-}
-
-std::string dabc::Manager::GetNodeName(int nodeid)
-{
-   if ((nodeid<0) || (nodeid>=NumNodes())) return std::string();
-
    LockGuard lock(fMgrMutex);
+
+   if ((nodeid<0) || (nodeid>=fNumNodes)) return std::string();
 
    if (fCfg==0) return std::string();
 
-   return fCfg->NodeName(nodeid);
+   if ((nodeid==fNodeId) && !fLocalHostId.empty()) return fLocalHostId;
 
+   Url url(fCfg->NodeName(nodeid));
+   return url.GetHostNameWithPort(defaultDabcPort);
 }
+
+std::string dabc::Manager::GetLocalAddress()
+{
+   LockGuard lock(fMgrMutex);
+   return fLocalHostId;
+}
+
+std::string dabc::Manager::ComposeAddress(const std::string& server, const std::string& itemname)
+{
+   std::string res = server;
+   if (res.empty()) res = GetLocalAddress();
+   if (res.empty()) res = "localhost";
+
+   if (res.find("dabc://")!=0) res = std::string("dabc://") + res;
+
+   if (!itemname.empty()) {
+      if (itemname[0]!='/') res += "/";
+      res += itemname;
+   }
+   return res;
+}
+
+bool dabc::Manager::DecomposeAddress(const std::string& addr, bool& islocal, std::string& server, std::string& itemtname)
+{
+
+   dabc::Url url;
+
+//   DOUT0("Url %s valid %d protocol %s host %s file %s", name, url.IsValid(), url.GetProtocol().c_str(), url.GetHostName().c_str(), url.GetFileName().c_str());
+
+   if (!url.SetUrl(addr, false)) return false;
+
+   if (url.GetProtocol().length()==0) {
+      islocal = true;
+      server.clear();
+      itemtname = addr;
+      return true;
+   }
+
+   if (url.GetProtocol().compare("dabc")!=0) return false;
+
+   islocal = false;
+   server = url.GetHostNameWithPort();
+   itemtname = url.GetFileName();
+
+   if (server == "localhost") {
+      islocal = true;
+      return true;
+   }
+
+   int nodeid = -1;
+   if (server.compare(0, 4, "node")==0) {
+      if (!str_to_int(server.c_str() + 4, &nodeid)) nodeid = -1;
+   }
+
+   if (nodeid>=0) server = GetNodeAddress(nodeid);
+
+   LockGuard lock(fMgrMutex);
+
+   if ((nodeid>=0) && (fNodeId==nodeid)) islocal = true; else
+
+   if (server==fLocalHostId) islocal = true;
+
+   return true;
+}
+
 
 bool dabc::Manager::RegisterDependency(Object* src, Object* tgt, bool bidirectional)
 {
@@ -1655,7 +1707,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
       }
 
       if (cmd.IsName("connect")) {
-         std::string node = cmd.GetStdStr("Arg0");
+         std::string node = cmd.GetStr("Arg0");
 
          if (node.empty()) {
             EOUT("Node not specified");
@@ -1977,11 +2029,6 @@ int dabc::ManagerRef::NumNodes() const
    return GetObject() ? GetObject()->NumNodes() : 0;
 }
 
-std::string dabc::ManagerRef::ComposeUrl(Object* ptr)
-{
-   return Url::ComposeItemName(NodeId(), ptr->ItemName());
-}
-
 bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string& mask, bool onlychangeevent)
 {
    if (ptr == 0) return false;
@@ -1990,10 +2037,10 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
    //       only then submit registration to remote.
    //       One should avoid multiple parallel subscription to remote node
 
-   int nodeid(-1);
-   std::string itemname;
+   std::string server, itemname;
+   bool islocal(true);
 
-   if (!Url::DecomposeItemName(mask, nodeid, itemname)) {
+   if (!DecomposeAddress(mask, islocal, server, itemname)) {
       EOUT("Wrong parameter mask %s", mask.c_str());
       return false;
    }
@@ -2004,14 +2051,14 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
    cmd.SetStr("Mask", mask);
    cmd.SetBool("OnlyChange", onlychangeevent);
 
-   if ((nodeid<0) || (nodeid==NodeId())) {
+   if (islocal) {
       // this is registration for local parameters
       cmd.SetPtr("Worker", ptr);
       return Execute(cmd);
    }
 
-   cmd.SetStr("RemoteWorker", Url::ComposeItemName(NodeId(), ptr->ItemName()));
-   cmd.SetReceiver(nodeid);
+   cmd.SetStr("RemoteWorker", ComposeAddress("", ptr->ItemName()));
+   cmd.SetReceiver(ComposeAddress(server));
 
    // do registration asynchron
    return Submit(cmd);
@@ -2123,6 +2170,17 @@ dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, con
    return cmd.GetRef("Object");
 }
 
+bool dabc::ManagerRef::SetLocalHostId(const std::string& name)
+{
+   if (null()) return false;
+
+   LockGuard lock(GetObject()->fMgrMutex);
+   GetObject()->fLocalHostId = name;
+
+   DOUT0("MGR localid is %s", name.c_str());
+
+   return true;
+}
 
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 {

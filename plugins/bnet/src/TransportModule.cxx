@@ -855,7 +855,7 @@ void bnet::TransportModule::ShowAllToAllResults()
           sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
 
        DOUT0("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s",
-             n, dabc::mgr()->GetNodeName(n).c_str(),
+             n, dabc::mgr()->GetNodeAddress(n).c_str(),
            allres[n*setsize+0], allres[n*setsize+1], fTimeScheduled ? allres[n*setsize+2]*1e6 : 0., allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf);
        totallost += allres[n*setsize+4];
        totalrecv += allres[n*setsize+5];

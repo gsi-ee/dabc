@@ -2164,7 +2164,7 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
    for (int n=0;n<NumNodes();n++) {
 
        DOUT0("%3d |%10s | %7.1f | %7.1f",
-             n, dabc::mgr()->GetNodeName(n).c_str(),
+             n, dabc::mgr()->GetNodeAddress(n).c_str(),
              allres[n*setsize+0], allres[n*setsize+1]);
        sum1 += allres[n*setsize+0];
        sum2 += allres[n*setsize+1];
@@ -2436,7 +2436,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
           sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
 
        DOUT0("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
-             n, dabc::mgr()->GetNodeName(n).c_str(),
+             n, dabc::mgr()->GetNodeAddress(n).c_str(),
            allres[n*setsize+0], allres[n*setsize+1], allres[n*setsize+2]*1e6, allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf, allres[n*setsize+8], allres[n*setsize+7]);
        totallost += allres[n*setsize+4];
        totalrecv += allres[n*setsize+5];

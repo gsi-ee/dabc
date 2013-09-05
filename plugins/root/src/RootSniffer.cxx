@@ -143,7 +143,7 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
       if (cmd.GetBool("history")) {
          dabc::Buffer buf;
 
-         std::string itemname = cmd.GetStdStr("Item");
+         std::string itemname = cmd.GetStr("Item");
 
 //         DOUT0("Request history for item %s", itemname.c_str());
 
@@ -215,7 +215,7 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
          chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
 
          if (obj->InheritsFrom(TH1::Class())) {
-            chld.Field(dabc::prop_content_hash).SetDouble(((TH1*)obj)->GetEntries());
+            chld.Field(dabc::prop_hash).SetDouble(((TH1*)obj)->GetEntries());
          }
       } else
       if (IsBrowsableClass(obj->IsA())) {
@@ -368,7 +368,7 @@ void dabc_root::RootSniffer::BuildWorkerHierarchy(dabc::HierarchyContainer* cont
    // indicate that we are bin producer of down objects
 
    // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
+   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    // we protect hierarchy with mutex, while it may be changed from ROOT process
    dabc::LockGuard lock(fHierarchyMutex);
@@ -393,7 +393,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
 
-   std::string itemname = cmd.GetStdStr("Item");
+   std::string itemname = cmd.GetStr("Item");
 
    dabc::Buffer buf;
 
@@ -434,7 +434,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       // this is fake element, which is need to be requested before first
       dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-      si.Field(dabc::prop_content_hash).SetInt(fProducer->GetStreamerInfoHash());
+      si.Field(dabc::prop_hash).SetInt(fProducer->GetStreamerInfoHash());
 
       ScanRootHierarchy(fRoot);
 

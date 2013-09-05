@@ -263,9 +263,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
             cmd.SetUrl2(req.GetLocalUrl());
             cmd.SetStr("ClientId", req.GetClientId());
 
-            int remotenode = dabc::Url::ExtractNodeId(req.GetRemoteUrl());
-
-            cmd.SetReceiver(remotenode, dabc::Manager::ConnMgrName());
+            cmd.SetReceiver(dabc::mgr.ComposeAddress(req.GetRemoteUrl(), dabc::Manager::ConnMgrName()));
 
             req.SetProgress(progrWaitReply);
 

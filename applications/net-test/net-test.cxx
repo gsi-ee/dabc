@@ -114,7 +114,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       {
          dabc::Command cmd("Test");
          fSendCnt = (fSendCnt + 1) % dabc::mgr.NumNodes();
-         cmd.SetReceiver(dabc::Url::ComposeItemName(fSendCnt, "Receiver"));
+         cmd.SetReceiver(dabc::mgr.ComposeAddress(dabc::mgr.GetNodeAddress(fSendCnt), "Receiver"));
          cmd.SetTimeout(1);
 
          dabc::mgr.Submit(Assign(cmd));

@@ -170,7 +170,11 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
          if (!fClientNameSufix.empty())
             myname+="_"+fClientNameSufix;
 
+         // this name is used somewhere in hierarchy
          cmd.SetStr("name", myname);
+
+         // this name will be used to identify our node and deliver commands
+         cmd.SetStr("globalname", dabc::mgr.GetLocalAddress());
 
          AppendCmd(cmd);
       }
@@ -212,15 +216,19 @@ bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
       return true;
    }
 
-
    if (cmd.IsName("AcceptClient")) {
       DOUT0("We allow to transform connection to the monitoring channel");
       cmd.SetResult(cmd_true);
 
       fRemoteObserver = true;
       fRemReqTime.Reset();
-      std::string name = cmd.GetStdStr("name");
+      std::string name = cmd.GetStr("name");
+      std::string globalname = cmd.GetStr("globalname");
       if (!name.empty()) fRemoteName = name;
+      if (!globalname.empty() && fRemoteHostName.empty()) {
+         fRemoteHostName = globalname;
+         DOUT0("ACCEPT remote %s", fRemoteHostName.c_str());
+      }
       fRemoteHierarchy.Create("Remote");
 
       Command cmd("GetHierarchy");
@@ -284,7 +292,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
             SocketCommandChannel* channel = dynamic_cast<SocketCommandChannel*> (GetParent());
 
             if (channel!=0) {
-               std::string itemname = fExeCmd.GetStdStr("Item");
+               std::string itemname = fExeCmd.GetStr("Item");
 
                // DOUT0("GetBinary command from master for item %s - we need specially process it", itemname.c_str());
 
@@ -665,63 +673,39 @@ void dabc::SocketCommandChannel::OnThreadAssigned()
 }
 
 
-std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str, int* nodeid)
+std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str)
 {
-   if (url_str.empty()) return std::string();
+   std::string server, itemname;
+   bool islocal(true);
 
-   int remnode = Url::ExtractNodeId(url_str);
-   if (nodeid) *nodeid = remnode;
+   if (dabc::mgr()->DecomposeAddress(url_str, islocal, server, itemname))
+      if (!islocal) return server;
 
-   if ((remnode >=0) && (remnode == fNodeId)) return std::string();
-
-   std::string remnodename;
-   int remport(0);
-
-   if (remnode>=0) {
-      remnodename = dabc::mgr()->cfg()->NodeName(remnode);
-      remport = dabc::mgr()->cfg()->NodePort(remnode);
-   } else {
-      dabc::Url url(url_str);
-
-      if (url.IsValid() && (url.GetProtocol()=="dabc")) {
-         remnodename = url.GetHostName();
-         remport = url.GetPort();
-      }
-   }
-
-   if (remnodename.empty()) return std::string();
-
-   if (remport <= 0) remport = defaultDabcPort;
-
-   return remnodename + dabc::format(":%d", remport);
+   return std::string();
 }
 
-
-std::string dabc::SocketCommandChannel::ClientWorkerName(const std::string& remnodename)
-{
-   std::string res = remnodename;
-
-   std::size_t pos = 0;
-
-   while ((pos = res.find_first_of(":/. ")) != std::string::npos) res[pos] = '_';
-
-   return res;
-}
 
 dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std::string& remnodename, double conn_tmout)
 {
-   if (remnodename.empty()) return 0;
+   SocketCommandClientRef worker;
 
+   if (remnodename.empty()) return worker;
+
+   for (unsigned n=0;n<NumChilds();n++) {
+      worker = GetChildRef(n);
+      if (!worker.null() && (worker()->fRemoteHostName == remnodename)) break;
+      worker.Release();
+   }
+
+   if (!worker.null() || (conn_tmout<0)) return worker;
+
+   // we create worker only if address with port is specified
    dabc::Url url(remnodename);
-   if (!url.IsValid()) return 0;
+   if (url.GetPort()<=0) return worker;
 
-   std::string worker_name = ClientWorkerName(url.GetHostNameWithPort(defaultDabcPort));
+   std::string worker_name = dabc::format("Client%d", fClientCnt++);
 
-   SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
-
-   if (!worker.null()) return worker;
-
-   worker = new SocketCommandClient(this, worker_name, 0, url.GetHostNameWithPort(defaultDabcPort), conn_tmout);
+   worker = new SocketCommandClient(this, worker_name, 0, remnodename, conn_tmout);
 
    worker()->AssignToThread(thread());
 
@@ -732,12 +716,14 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
 
 int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 {
-   int nodeid(-1);
+   std::string receiver = cmd.GetReceiver();
+   if (receiver.empty()) return dabc::Worker::PreviewCommand(cmd);
 
-   std::string remnodename = GetRemoteNode(cmd.GetReceiver(), &nodeid);
+   std::string remnodename = GetRemoteNode(receiver);
 
-   dabc::SocketCommandClientRef worker =
-         ProvideWorker(remnodename, nodeid>=0 ? 0.1 : 1);
+   dabc::SocketCommandClientRef worker = ProvideWorker(remnodename, 1);
+
+   DOUT0("SEARCH node %s receiver %s worker %p", remnodename.c_str(), cmd.GetReceiver().c_str(), worker());
 
    if (worker.null()) return dabc::Worker::PreviewCommand(cmd);
 
@@ -782,16 +768,14 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("disconnect") || cmd.IsName("close")) {
-      std::string remnodename = GetRemoteNode(cmd.GetStdStr("host"));
+      std::string remnodename = GetRemoteNode(cmd.GetStr("host"));
 
       if (remnodename.empty()) return dabc::cmd_false;
 
       dabc::Url url(remnodename);
       if (url.IsValid() && (url.GetProtocol()=="dabc")) {
 
-         std::string worker_name = ClientWorkerName(url.GetHostNameWithPort(defaultDabcPort));
-
-         SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
+         SocketCommandClientRef worker = ProvideWorker(url.GetHostNameWithPort(defaultDabcPort));
 
          if (!worker.null()) {
             DOUT0("Close connection to %s", remnodename.c_str());
@@ -805,7 +789,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       return dabc::cmd_false;
    } else
    if (cmd.IsName("GetBinary")) {
-      std::string itemname = cmd.GetStdStr("Item");
+      std::string itemname = cmd.GetStr("Item");
 
       while ((itemname.length()>0) && (itemname[0]=='/')) itemname.erase(0,1);
       size_t pos = itemname.find('/');
@@ -838,7 +822,11 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("ConfigureMaster")) {
 
-      std::string remnode = cmd.GetStdStr("Master");
+      Url url(cmd.GetStr("Master"));
+
+      // std::string dabc::Manager::ComposeAddress(const std::string& server, const std::string& itemname)
+
+      std::string remnode = url.GetHostNameWithPort(defaultDabcPort);
 
       dabc::SocketCommandClientRef worker = ProvideWorker(remnode, 3.);
 
@@ -849,7 +837,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       // indicate that this is special connection to master node
       // each time it is reconnected, it will append special command to register itself in remote master
       worker()->fMasterConn = true;
-      worker()->fClientNameSufix = cmd.GetStdStr("NameSufix");
+      worker()->fClientNameSufix = cmd.GetStr("NameSufix");
 
       fUpdateHierarchy = true;
       ActivateTimeout(0.);
@@ -871,7 +859,7 @@ void dabc::SocketCommandChannel::BuildClientsHierarchy(HierarchyContainer* cont)
 {
    // do it here, while all properties of main node are ignored when hierarchy is build
    dabc::Hierarchy top(cont);
-   top.Field(dabc::prop_binary_producer).SetStr(ItemName());
+   top.Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    for (unsigned n=0;n<NumChilds();n++) {
       SocketCommandClientRef w = GetChildRef(n);

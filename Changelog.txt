@@ -2,11 +2,43 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+5.09.2013
+1. Unify address convention of dabc application. Now any module in the system can
+   be identify with address like: "dabc://nodename:port/module". Such address can
+   be supplied to any command as receiver. If command channel do not have 
+   connection to remote dabc node, it will try to establish it. 
+2. In case of master/client connection client not necessarly have socket port open
+   for connection. In such case address formed from nodename_pidNNN, where NNN is
+   process id (unique on the same host). Such address can only be used from the 
+   master like: "dabc://nodename_pid127/module". Command channel will never try
+   automatically create connection if port number in address is not specified.
+3. In hierarchy add additional version, which is changed only when names list is
+   changed (so-called DNS version). It will be used to request only names list
+   (and its changes) by publisher.         
+4. First step in introducing publisher/subscriber mechanism for hierarchy 
+   structure. Up to know only http::Server was managing global hierarchies, in future
+   any module will be able to subscribe for any item in hierarchy. Also direct
+   get methods will be implemented.
+5. Hierarchy in subscriber will be organized in other way. Each module will publish
+   its hierarchy, using some global 'mount' point. Publisher will be able to
+   combine all independent hierarchies in global structure, merging such hierarchies together.
+   For instance, two mbs::StatusReadout modules could publish there hierarchies like:
+       Publish(fHierarchy1,"/MBS/server1");
+       Publish(fHierarchy2,"/MBS/server2");
+   Accordingly, subscriber will use global names disregard of actual server which 
+   provides structures. This will be the of publisher to collect necessary description 
+   (names lists).
+6. Old scheme is still woring (for demonstarion purposes). I expect smooth transition
+   in next weeks from old to new scheme, adding more new features. 
+7. Main motivation for new functionality - also be able to provide clear storage facility
+   for all published hierarchies. 
+
+
 3.09.2013
 1. Use new dabc::Record class for hierarchy. Main change - now user explicitely
    should mark his/her changes in hierarchy. There is no autofield, which was
    used before to trigger version tagging and increment.
-2. History now preserved and recorded in binary form. Any kind of fields will 
+2. History now preserved and recorded in binary form. Any kind of fields can 
    be recorded in history.
 3. Automatic creation of time field is now possible without history object.
 

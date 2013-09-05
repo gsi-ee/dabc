@@ -167,6 +167,9 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    CreateTimer("update", fPeriod, false);
 
+   // from this point on Publisher want to get regular update for the hierarchy
+   Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+
    fCounter = 0;
 
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
@@ -522,17 +525,17 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
      }
      if (bEvents_n)
      {
-       sprintf (c_line, "%10d ", new_daqst->bl_n_events);
+       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_events);
        strcat (c_out, c_line);
      }
      if (bBuffers_n)
      {
-       sprintf (c_line, "%10d ", new_daqst->bl_n_buffers);
+       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_buffers);
        strcat (c_out, c_line);
      }
      if (bStreams_n)
      {
-       sprintf (c_line, "%7d ", new_daqst->bl_n_bufstream);
+       sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_bufstream);
        strcat (c_out, c_line);
      }
      if (bData_r)
@@ -566,17 +569,17 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
      }
      if (bSrvEvents_n)
      {
-       sprintf (c_line, "%10d ", new_daqst->bl_n_evserv_events);
+       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_evserv_events);
        strcat (c_out, c_line);
      }
      if (bSrvBuffers_n)
      {
-       sprintf (c_line, "%10d ", new_daqst->bl_n_strserv_bufs);
+       sprintf (c_line, "%10u ", (unsigned) new_daqst->bl_n_strserv_bufs);
        strcat (c_out, c_line);
      }
      if (bSrvStreams_n)
      {
-       sprintf (c_line, "%7d ", new_daqst->bl_n_strserv_bufs / bl_n_ev_buf);
+       sprintf (c_line, "%7u ", (unsigned) new_daqst->bl_n_strserv_bufs / bl_n_ev_buf);
        strcat (c_out, c_line);
      }
      if (bSrvData_r)
@@ -639,7 +642,7 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
      }
      if (bFileIndex)
      {
-       sprintf (c_line, " %04d ", new_daqst->l_file_cur);
+       sprintf (c_line, " %04u ", (unsigned) new_daqst->l_file_cur);
        strcat (c_out, c_line);
      }
      if (bFilename)
@@ -657,7 +660,9 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 
    if (fCounter % 20 == 0) {
       item.Field("value").SetStr(c_head0);
+      item.MarkChangedItems();
       item.Field("value").SetStr(c_head);
+      item.MarkChangedItems();
    }
    item.Field("value").SetStr(c_out);
 
@@ -668,6 +673,12 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
       fHierarchy.FindChild("ServerRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_strsrv_kb));
    }
 
+
+//   DOUT0("Set %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
+
+   fHierarchy.MarkChangedItems();
+
+//   DOUT0("After %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
 }
 
 void mbs::Player::ProcessTimerEvent(unsigned timer)
@@ -702,7 +713,7 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string itemname = cmd.GetStdStr("Item");
+      std::string itemname = cmd.GetStr("Item");
 
       dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
 
@@ -748,7 +759,8 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
             FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
             FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
 
-            fHierarchy.MarkChangedItems();
+            //DOUT0("MBS version is %u", fHierarchy.GetVersion());
+
             fCounter++;
          }
 
@@ -772,7 +784,7 @@ void mbs::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
    // indicate that we are bin producer of down objects
 
    // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
+   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    fHierarchy()->BuildHierarchy(cont);
 }

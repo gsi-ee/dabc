@@ -1018,11 +1018,25 @@ std::string dabc::RecordFieldsMap::FindFieldWichStarts(const std::string& name)
 bool dabc::RecordFieldsMap::WasChanged() const
 {
    if (fChanged) return true;
+
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
       if (iter->second.IsModified()) return true;
 
    return false;
 }
+
+bool dabc::RecordFieldsMap::WasChangedWith(const std::string& prefix)
+{
+   // returns true when field with specified prefix was modified
+
+   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+      if (iter->second.IsModified())
+         if (iter->first.find(prefix)==0) return true;
+   }
+
+   return false;
+}
+
 
 void dabc::RecordFieldsMap::ClearChangeFlags()
 {
@@ -1043,14 +1057,14 @@ dabc::RecordFieldsMap* dabc::RecordFieldsMap::Clone()
 
 
 
-uint64_t dabc::RecordFieldsMap::StoreSize()
+uint64_t dabc::RecordFieldsMap::StoreSize(const std::string& nameprefix)
 {
    sizestream s;
-   Stream(s);
+   Stream(s, nameprefix);
    return s.size();
 }
 
-bool dabc::RecordFieldsMap::Stream(iostream& s)
+bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
 {
    uint32_t storesz(0), storenum(0), storevers(0);
    uint64_t sz;
@@ -1058,14 +1072,19 @@ bool dabc::RecordFieldsMap::Stream(iostream& s)
    uint64_t pos = s.size();
 
    if (s.is_output()) {
-      sz = s.is_real() ? StoreSize() : 0;
+      sz = s.is_real() ? StoreSize(nameprefix) : 0;
       storesz = sz/8;
-      storenum = ((uint32_t) fMap.size()) | (storevers<<24);
+      storenum = (uint32_t) fMap.size();
+      if (nameprefix.length()>0)
+         for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+            if (iter->first.find(nameprefix) != 0) storenum--;
+         }
 
       s.write_uint32(storesz);
-      s.write_uint32(storenum);
+      s.write_uint32(storenum  | (storevers<<24));
 
       for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+         if ((nameprefix.length()>0) && (iter->first.find(nameprefix) != 0)) continue;
          s.write_str(iter->first);
          iter->second.Stream(s);
       }

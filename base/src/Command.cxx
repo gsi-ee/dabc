@@ -288,38 +288,6 @@ void dabc::Command::Reply(int res)
    Release();
 }
 
-dabc::Command& dabc::Command::SetReceiver(const std::string& itemname)
-{
-   // we set receiver parameter to be able identify receiver for the command
-
-   SetStr(ReceiverParName(), itemname);
-
-   return *this;
-}
-
-dabc::Command& dabc::Command::SetReceiver(int nodeid, const std::string& itemname)
-{
-   if (nodeid<0) return SetReceiver(itemname);
-
-   return SetReceiver(Url::ComposeItemName(nodeid, itemname.c_str()));
-}
-
-dabc::Command& dabc::Command::SetReceiver(int nodeid, Object* rcv)
-{
-   if (rcv==0) return SetReceiver(nodeid, "");
-
-   std::string s = rcv->ItemName();
-
-   if (dynamic_cast<Worker*>(rcv)==0)
-      EOUT("Object %s cannot be used to receive commands", s.c_str());
-
-   return SetReceiver(nodeid, s);
-}
-
-dabc::Command& dabc::Command::SetReceiver(Object* rcv)
-{
-   return SetReceiver(-1, rcv);
-}
 
 size_t find_symbol(const std::string& str, size_t pos, char symb)
 {

@@ -598,7 +598,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
 //         DOUT0("Do2 input configure %u size %u", ninp, fCfg.size());
 
-         std::string ratename = cmd.GetStdStr("RateName", "");
+         std::string ratename = cmd.GetStr("RateName", "");
          if (!ratename.empty())
             SetPortRatemeter(InputName(ninp), CreatePar(ratename).SetRatemeter(false,1.));
 

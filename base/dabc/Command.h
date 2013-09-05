@@ -137,8 +137,6 @@ namespace dabc {
          bool SetStr(const std::string& name, const char* value) { return Field(name).SetStr(value); }
          bool SetStr(const std::string& name, const std::string& value) { return Field(name).SetStr(value); }
          std::string GetStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStr(dflt); }
-         // TODO: remove after a while
-         std::string GetStdStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStr(dflt); }
 
          bool SetInt(const std::string& name, int v) { return Field(name).SetInt(v); }
          int GetInt(const std::string& name, int dflt = 0) const { return Field(name).AsInt(dflt); }
@@ -258,12 +256,14 @@ namespace dabc {
            * command to the manager like:
            *    dabc::mgr.Submit(Command("Start").SetReceiver("Generator"));
            * Command will be queued in manager queue and than submitted to specified
-           * object. If object has own thread, it will be used for command execution */
+           * object. If object has own thread, it will be used for command execution
+           * name can include node address in form:
+           * dabc://node.domain:8765/Item
+           * If connection with such node established, command will be delivered */
 
-         Command& SetReceiver(const std::string& itemname);
-         Command& SetReceiver(int nodeid, const std::string& itemname = "");
-         Command& SetReceiver(Object* rcv);
-         Command& SetReceiver(int nodeid, Object* rcv);
+         Command& SetReceiver(const std::string& itemname)
+           { SetStr(ReceiverParName(), itemname); return *this; }
+
          std::string GetReceiver() const { return Field(ReceiverParName()).AsStr(); }
          void RemoveReceiver() { RemoveField(ReceiverParName()); }
 

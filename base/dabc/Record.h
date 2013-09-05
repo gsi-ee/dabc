@@ -297,8 +297,8 @@ namespace dabc {
          RecordFieldsMap();
          virtual ~RecordFieldsMap();
 
-         uint64_t StoreSize();
-         bool Stream(iostream& s);
+         uint64_t StoreSize(const std::string& nameprefix = "");
+         bool Stream(iostream& s, const std::string& nameprefix = "");
 
          bool HasField(const std::string& name) const;
          bool RemoveField(const std::string& name);
@@ -328,6 +328,9 @@ namespace dabc {
 
          /** \brief Return true if any field was changed or map was modified (removed filed) */
          bool WasChanged() const;
+
+         /** \brief Returns true when fields with specified prefix were changed */
+         bool WasChangedWith(const std::string& prefix);
 
          /** \brief Clear all change flags */
          void ClearChangeFlags();

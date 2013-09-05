@@ -667,7 +667,7 @@ bool dabc::Application::MakeSystemSnapshot(double tmout)
 
    if (!Execute(cmd)) return false;
 
-   std::string sbuf = cmd.GetStdStr(CmdGetNodesState::States());
+   std::string sbuf = cmd.GetStr(CmdGetNodesState::States());
 
    for (unsigned n=0; n<NumNodes(); n++)
       NodeRec(n)->active = dabc::CmdGetNodesState::GetState(sbuf, n);

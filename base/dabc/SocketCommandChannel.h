@@ -196,12 +196,11 @@ namespace dabc {
          virtual int ExecuteCommand(Command cmd);
 
          /** \brief Provide string for connection to remote node */
-         std::string GetRemoteNode(const std::string& url, int* nodeid = 0);
+         std::string GetRemoteNode(const std::string& url);
 
-         /** \brief Provides name of worker, which should handle client side of the connection */
-         std::string ClientWorkerName(const std::string& remnodename);
-
-         SocketCommandClientRef ProvideWorker(const std::string& remnodename, double conn_tmout);
+         /** \brief Provide client for remote node.
+          * If conn_tmout>0 and address include port number, new worker will be forced */
+         SocketCommandClientRef ProvideWorker(const std::string& remnodename, double conn_tmout = -1);
 
          virtual void OnThreadAssigned();
 

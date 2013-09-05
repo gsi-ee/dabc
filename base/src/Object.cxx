@@ -792,7 +792,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 
       // create new object under parent mutex - no one can create double entries simultaneously
       if ((obj==0) && force) {
-         obj = new Object(0, std::string(name, ptok-name));
+         obj = ref()->CreateObject(std::string(name, ptok-name));
          ref()->AddChild(obj, false);
       }
 
@@ -814,11 +814,11 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 }
 
 
-dabc::Reference dabc::Object::GetFolder(const char* name, bool force) throw()
+dabc::Reference dabc::Object::GetFolder(const std::string& name, bool force) throw()
 {
    Reference ref(this);
 
-   return SearchForChild(ref, name, true, force);
+   return SearchForChild(ref, name.c_str(), true, force);
 }
 
 bool dabc::Object::RemoveChilds(bool cleanup)

@@ -31,7 +31,7 @@
 // __________________________________________________________________
 
 dabc::Module::Module(const std::string& name, Command cmd) :
-   Worker(MakePair(name.empty() ? cmd.GetStdStr("Name","module") : name)),
+   Worker(MakePair(name.empty() ? cmd.GetStr("Name","module") : name)),
    fRunState(false),
    fInputs(),
    fOutputs(),
@@ -254,7 +254,7 @@ int dabc::Module::PreviewCommand(Command cmd)
    DOUT3("Module:%s PreviewCommand %s", GetName(), cmd.GetName());
 
    if (cmd.IsName("SetQueue")) {
-      PortRef port = FindPort(cmd.GetStdStr("Port"));
+      PortRef port = FindPort(cmd.GetStr("Port"));
       Reference q = cmd.GetRef("Queue");
       if (port.null()) {
          EOUT("Wrong port id when assigning queue");
@@ -293,7 +293,7 @@ int dabc::Module::PreviewCommand(Command cmd)
       cmd_res = cmd_bool((nout<NumOutputs()) && Output(nout)->IsConnected());
    } else
    if (cmd.IsName("DisconnectPort")) {
-      PortRef port = FindPort(cmd.GetStdStr("Port"));
+      PortRef port = FindPort(cmd.GetStr("Port"));
 
       if (!port.null()) {
          port()->Disconnect();
@@ -306,14 +306,14 @@ int dabc::Module::PreviewCommand(Command cmd)
       }
    } else
    if (cmd.IsName("IsPortConnected")) {
-      PortRef port = FindPort(cmd.GetStdStr("Port"));
+      PortRef port = FindPort(cmd.GetStr("Port"));
       if (!port.null())
          cmd_res = cmd_bool(port()->IsConnected());
       else
          cmd_res = cmd_false;
    } else
    if (cmd.IsName("GetSignallingKind")) {
-      PortRef port = FindPort(cmd.GetStdStr("Port"));
+      PortRef port = FindPort(cmd.GetStr("Port"));
       if (!port.null()) {
          cmd_res = cmd_true;
          cmd.SetInt("Kind", port()->SignallingKind());
@@ -367,14 +367,14 @@ int dabc::Module::PreviewCommand(Command cmd)
       }
    } else
    if (cmd.IsName("MakeConnReq")) {
-      dabc::PortRef port = FindPort(cmd.GetStdStr("Port"));
+      dabc::PortRef port = FindPort(cmd.GetStr("Port"));
 
       if (!port.null()) {
          dabc::ConnectionRequest req = port()->GetConnReq(true);
 
          req.SetInitState();
 
-         req.SetRemoteUrl(cmd.GetStdStr("Url"));
+         req.SetRemoteUrl(cmd.GetStr("Url"));
          req.SetServerSide(cmd.GetBool("IsServer"));
 
          std::string thrdname = port.Cfg(xmlThreadAttr).AsStdStr();
@@ -958,7 +958,7 @@ std::string dabc::ModuleRef::InputName(unsigned n, bool itemname)
    cmd.SetUInt("Id", n);
    cmd.SetBool("AsItem", itemname);
 
-   if (Execute(cmd)==cmd_true) return cmd.GetStdStr("Name");
+   if (Execute(cmd)==cmd_true) return cmd.GetStr("Name");
    return std::string();
 }
 
@@ -968,6 +968,6 @@ std::string dabc::ModuleRef::OutputName(unsigned n, bool itemname)
    cmd.SetUInt("Id", n);
    cmd.SetBool("AsItem", itemname);
 
-   if (Execute(cmd)==cmd_true) return cmd.GetStdStr("Name");
+   if (Execute(cmd)==cmd_true) return cmd.GetStr("Name");
    return std::string();
 }

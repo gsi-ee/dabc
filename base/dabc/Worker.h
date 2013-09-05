@@ -32,6 +32,10 @@
 #include "dabc/Parameter.h"
 #endif
 
+#ifndef DABC_Hierarchy
+#include "dabc/Hierarchy.h"
+#endif
+
 namespace dabc {
 
    class ParameterEvent;
@@ -164,6 +168,10 @@ namespace dabc {
 
          int              fWorkerCommandsLevel;      /** Number of process commands recursion */
 
+         Hierarchy        fWorkerPublishedHierarchy;  ///< hierarchy which is published by worker
+         std::string      fWorkerPublishedName;       ///< global name for published hierarchy
+
+
          virtual bool AskToDestroyByThread();
 
          virtual void ObjectCleanup();
@@ -278,6 +286,10 @@ namespace dabc {
          bool Execute(Command cmd, double tmout = -1.);
 
          bool Execute(const std::string& cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
+
+         /** \brief Return address, which can be used to submit command to the worker
+          * If full specified, command can be submitted from any node, which has connection to this node */
+         std::string WorkerAddress(bool full = true);
 
          /** Assigns addon to the worker
           * Should be called before worker assigned to the thread */
@@ -396,6 +408,10 @@ namespace dabc {
 
          /** Produces hierarchy of worker objects */
          virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
+
+         virtual bool Publish(Hierarchy& h, const std::string& path);
+
+         virtual bool Unpublish(Hierarchy& h, const std::string& path);
 
       private:
 

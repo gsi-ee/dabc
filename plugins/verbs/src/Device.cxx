@@ -349,7 +349,7 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
 
 int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 {
-   std::string reqitem = cmd.GetStdStr(dabc::CmdConnectionManagerHandle::ReqArg());
+   std::string reqitem = cmd.GetStr(dabc::CmdConnectionManagerHandle::ReqArg());
 
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(reqitem);
 

@@ -161,7 +161,7 @@ int fesa::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string itemname = cmd.GetStdStr("Item");
+      std::string itemname = cmd.GetStr("Item");
 
       dabc::LockGuard lock(fHierarchyMutex);
 
@@ -200,7 +200,7 @@ void fesa::Monitor::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
    dabc::LockGuard lock(fHierarchyMutex);
 
    // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
+   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    fHierarchy()->BuildHierarchy(cont);
 }

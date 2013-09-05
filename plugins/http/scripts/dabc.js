@@ -291,6 +291,8 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    
    var url = "h.xml";
    
+   // this.cnt++;
+   // url += "&cnt="+this.cnt;
    // if (this.version>0) url += "&ver=" + this.version;
 
    // $("#dabc_draw").append("<br> Create xml request");

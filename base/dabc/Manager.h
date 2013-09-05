@@ -174,7 +174,7 @@ namespace dabc {
             SetStr("ThrdDev", devname);
          }
 
-         std::string GetThrdName() const { return GetStdStr(ThrdNameArg()); }
+         std::string GetThrdName() const { return GetStr(ThrdNameArg()); }
    };
 
    class CmdCreateObject : public Command {
@@ -207,9 +207,9 @@ namespace dabc {
 
       void SetPoolName(const std::string& name) { if (!name.empty()) SetStr(xmlPoolName, name); }
 
-      std::string PortName() const { return GetStdStr(PortArg()); }
-      std::string TransportKind() const { return GetStdStr(KindArg()); }
-      std::string PoolName() const { return GetStdStr(xmlPoolName); }
+      std::string PortName() const { return GetStr(PortArg()); }
+      std::string TransportKind() const { return GetStr(KindArg()); }
+      std::string PoolName() const { return GetStr(xmlPoolName); }
    };
 
 
@@ -356,7 +356,12 @@ namespace dabc {
          int                   fNodeId;
          int                   fNumNodes;
 
-         ThreadsLayout          fThrLayout; ///< defines distribution of threads
+         /** \brief Identifier for the current application
+          * Often it is host:port of command channel. If command channel not exists
+          * or not allows client connections, port number should not be provided */
+         std::string           fLocalHostId;
+
+         ThreadsLayout         fThrLayout; ///< defines distribution of threads
 
          std::string fLastCreatedDevName;  ///< name of last created device, automatically used for connection establishing
 
@@ -472,21 +477,23 @@ namespace dabc {
          int NodeId() const { return fNodeId; }
          /** Returns number of nodes in the cluster FIXME:probably must be removed*/
          int NumNodes() { return fNumNodes; }
-         /** Return name of node */
-         std::string GetNodeName(int nodeid);
+
+         /** Return address of current application */
+         std::string GetLocalAddress();
+
+         /** Return address of the node to be able communicate with it */
+         std::string GetNodeAddress(int nodeid);
+         /** From address like dabc://nodeabc:988/item/subtim extracts server (with port) and itemname
+          * If server name corresponds to local name, islocal set to true */
+         bool DecomposeAddress(const std::string& url, bool& islocal, std::string& server, std::string& itemtname);
+         /** Provides string, which can be used as receiver argument */
+         std::string ComposeAddress(const std::string& server, const std::string& itemtname = "");
 
          /** \brief Create command channel
           * Parameter withserver defines if server socket will be created, which accepts client connections
           * Parameter toppath specifies which part of objects hierarchy will be seen by the clients */
          bool CreateControl(bool withserver, const std::string& toppath = "");
 
-
-         /** Returns true if node with specified id is active */
-         virtual bool IsNodeActive(int num) { return num==0; }
-         /** Returns number of currently active nodes */
-         int NumActiveNodes();
-         /** Test active nodes - try to execute simpe ping command on each active node */
-         bool TestActiveNodes(double tmout = 5.);
 
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 
@@ -583,8 +590,18 @@ namespace dabc {
 
          int NumNodes() const;
 
-         /** Produces unique url of the object which can be used on other nodes too */
-         std::string ComposeUrl(Object* ptr);
+         /** Return identifier of local host, which can be used everywhere for node addressing */
+         std::string GetLocalAddress()
+         {  return null() ? std::string() : GetObject()->GetLocalAddress(); }
+
+         std::string GetNodeAddress(int nodeid)
+            { return null() ? std::string() : GetObject()->GetNodeAddress(nodeid); }
+
+         bool DecomposeAddress(const std::string& url, bool& islocal, std::string& server, std::string& itemtname)
+           { return null() ? false : GetObject()->DecomposeAddress(url, islocal, server, itemtname); }
+
+         std::string ComposeAddress(const std::string& server, const std::string& itemname = "")
+           {  return null() ? std::string() : GetObject()->ComposeAddress(server, itemname); }
 
          bool CreateApplication(const std::string& classname = "", const std::string& appthrd = "");
 
@@ -667,6 +684,9 @@ namespace dabc {
 
          WorkerRef GetCommandChannel()
            { return GetObject() ? GetObject()->GetCommandChannel() : WorkerRef();  }
+
+         /** Defines identifier for local host */
+         bool SetLocalHostId(const std::string& name);
 
    };
 

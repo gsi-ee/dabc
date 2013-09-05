@@ -120,7 +120,7 @@ namespace dabc {
 
       CmdConnectionManagerHandle(ConnectionRequestFull& req);
 
-      std::string GetReq() const { return GetStdStr(ReqArg()); }
+      std::string GetReq() const { return GetStr(ReqArg()); }
    };
 
 
@@ -131,8 +131,8 @@ namespace dabc {
       void SetUrl1(const std::string& url1) { SetStr("Url1", url1); }
       void SetUrl2(const std::string& url2) { SetStr("Url2", url2); }
 
-      std::string GetUrl1() const { return GetStdStr("Url1"); }
-      std::string GetUrl2() const { return GetStdStr("Url2"); }
+      std::string GetUrl1() const { return GetStr("Url1"); }
+      std::string GetUrl2() const { return GetStr("Url2"); }
    };
 
    // ____________________________________________________________________________________

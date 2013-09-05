@@ -259,7 +259,7 @@ void dabc::Reference::Print(int lvl, const char* from) const
    dabc::lgr()->Debug(lvl,"filename",1,"funcname", dabc::format("%s REF:%p obj:%p", (from ? from : ""), this, fObj).c_str());
 }
 
-dabc::Reference dabc::Reference::GetFolder(const char* name, bool force) throw()
+dabc::Reference dabc::Reference::GetFolder(const std::string& name, bool force) throw()
 {
    if (GetObject()==0) return Reference();
 

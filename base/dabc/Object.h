@@ -242,6 +242,12 @@ namespace dabc {
          /** \brief Same as IsNormalState() but without mutex lock - user should lock mutex himself */
          bool _IsNormalState();
 
+         /** \brief Method used to create new item to be placed as child of the object */
+         virtual Object* CreateObject(const std::string& name) { return new Object(0, name); }
+
+         /** \brief Method called when new childs are add or old are removed */
+         virtual void _ChildsChanged() {}
+
          /** Structure used to specify arguments for object constructor */
          struct ConstructorPair {
             friend class Object;
@@ -381,7 +387,7 @@ namespace dabc {
           * \param[in] name    folder name
           * \param[in] force   if true, missing folder will be created
           * \returns           reference on the folder */
-         Reference GetFolder(const char* name, bool force = false) throw();
+         Reference GetFolder(const std::string& name, bool force = false) throw();
 
          /** \brief Print object content on debug output */
          virtual void Print(int lvl = 0);

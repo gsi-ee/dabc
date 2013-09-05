@@ -36,8 +36,8 @@ namespace dabc {
    extern const char* prop_version;       // version number of hierarchy item
    extern const char* prop_realname;      // real name property specified, when xml node can not have such name
    extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
-   extern const char* prop_binary_producer; // identifies item, which can deliver binary data for all its
-   extern const char* prop_content_hash;  // content hash, which should describe if object is changed
+   extern const char* prop_producer; // identifies item, which can deliver binary data for all its
+   extern const char* prop_hash;  // content hash, which should describe if object is changed
    extern const char* prop_history;        // indicates that history for that element is kept
    extern const char* prop_time;           // time property, supplied when history is created
 
@@ -156,17 +156,28 @@ namespace dabc {
             maskHistory = 8
          };
 
+         /** \brief Version number of the node
+          * Any changes in the node will cause changes of the version */
          uint64_t   fNodeVersion;       ///< version number of node itself
-         uint64_t   fHierarchyVersion;  ///< version number of hierarchy below
+
+         /** \brief Version used in DNS requests.
+          * Changed when any childs add/removed or dns-relevant fields are changed
+          * This version is used by name services to detect and update possible changes in hierarchy
+          * and do not care about any other values changes */
+         uint64_t   fDNSVersion;
+
+         /** \brief Version of hierarchy structure
+          * Childs version is changed when any childs is changed or insrted/removed */
+         uint64_t   fChildsVersion;  ///< version number of hierarchy below
 
          bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
 
-         bool       fPermanent;         ///< indicate that item is permamnent and should be excluded from update
+         bool       fPermanent;         ///< indicate that item is permanent and should be excluded from update
 
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
-         bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
+         bool       fDNSChanged;        ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
+         bool       fChildsChanged;  ///< indicate if something was changed in the hierarchy
          bool       fDiffNode;          ///< if true, indicates that it is diff version
-
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
@@ -196,25 +207,27 @@ namespace dabc {
          /** \brief Clear all entries in history, but not history object itself */
          void ClearHistoryEntries();
 
-         /** \brief Returns true if any node field was changed or removed/inserted
-          * If specified, all childs will be checked */
-         bool IsNodeChanged(bool withchilds = true);
-
          /** Return true if history activated for the node
           * If necessary, history object will be initialized */
          bool CheckIfDoingHistory();
 
-         /** \brief If item changed, marked with version, time stamp applied, history recording  */
-         void MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds, bool force = false);
+         /** \brief If item changed, marked with version, time stamp applied, history recording
+          * returns mask with changes - 1 - any child node was changed, 2 - hierarchy was changed */
+         unsigned MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds);
 
          /** \brief Central method, which analyzes all possible changes in node (and its childs)
           * If any changes found, node marked with new version
           * If enabled, history item will be created.
           * If enabled, time stamp will be provided for changed items */
-         void MarkChangedItems(bool withchilds = true, double tm = 0.);
+         void MarkChangedItems(double tm = 0.);
 
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
+
+         virtual Object* CreateObject(const std::string& name) { return new HierarchyContainer(name); }
+
+         virtual void _ChildsChanged() { fDNSChanged = true; fChildsChanged = true; fNodeChanged = true;  }
+
 
       public:
          HierarchyContainer(const std::string& name);
@@ -226,9 +239,13 @@ namespace dabc {
 
          bool Stream(iostream& s, uint64_t v = 0, int hist_limit = -1);
 
+         /** \brief Returns true if any node field was changed or removed/inserted
+          * If specified, all childs will be checked */
+         bool IsNodeChanged(bool withchilds = true);
+
          XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent);
 
-         uint64_t GetVersion() const { return fNodeVersion > fHierarchyVersion ? fNodeVersion : fHierarchyVersion; }
+         uint64_t GetVersion() const { return fNodeVersion; }
 
          /** \brief Produces string with xml code, containing history */
          std::string RequestHistoryAsXml(uint64_t version = 0, int limit = 0);
@@ -300,8 +317,8 @@ namespace dabc {
       { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
 
       /** \brief If any field was modified, item will be marked with new version */
-      void MarkChangedItems(bool withchilds = true, double tm = 0.)
-      { if (GetObject()) GetObject()->MarkChangedItems(withchilds, tm); }
+      void MarkChangedItems(double tm = 0.)
+      { if (GetObject()) GetObject()->MarkChangedItems(tm); }
 
       /** \brief Returns true if item records history local, no need to request any other sources */
       bool HasLocalHistory() const;

@@ -79,10 +79,6 @@ namespace dabc {
 
          /** \brief Method decompose from url nodeid and full item name, which includes all parents */
          static bool DecomposeItemName(const std::string& url, int& nodeid, std::string& itemtname);
-
-         /** \brief Extracts only nodeid from url, if node is not specified or url is invalid, -1 is returned */
-         static int ExtractNodeId(const std::string& url);
-
    };
 }
 

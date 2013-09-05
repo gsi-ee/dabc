@@ -29,8 +29,8 @@ const char* dabc::prop_version = "dabc:version";
 const char* dabc::prop_kind = "dabc:kind";
 const char* dabc::prop_realname = "dabc:realname";
 const char* dabc::prop_masteritem = "dabc:master";
-const char* dabc::prop_binary_producer = "dabc:binary_producer";
-const char* dabc::prop_content_hash = "dabc:hash";
+const char* dabc::prop_producer = "dabc:producer";
+const char* dabc::prop_hash = "dabc:hash";
 const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "dabc:time";
 
@@ -115,11 +115,13 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
-   fHierarchyVersion(0),
+   fDNSVersion(0),
+   fChildsVersion(0),
    fAutoTime(false),
    fPermanent(false),
    fNodeChanged(false),
-   fHierarchyChanged(false),
+   fDNSChanged(false),
+   fChildsChanged(false),
    fDiffNode(false),
    fBinData(),
    fHist()
@@ -173,10 +175,22 @@ bool dabc::HierarchyContainer::Stream(iostream& s, uint64_t version, int hlimit)
    //DOUT0("dabc::HierarchyContainer::Stream %s isout %s isreal %s", GetName(), DBOOL(s.is_output()), DBOOL(s.is_real()));
 
    if (s.is_output()) {
-      bool store_fields = fNodeVersion>=version;
-      bool store_childs = (fHierarchyVersion >= version) && (hlimit<0);
+      bool store_fields(true), store_childs(true), store_history(false);
+      std::string fields_prefix;
+
+      if (hlimit<0) {
+         // this is DNS case
+         fields_prefix = "dabc:";
+         store_fields = fDNSVersion >= version;
+         store_childs = fDNSVersion >= version;
+         store_history = false;
+      } else {
+         store_fields = fNodeVersion>=version;
+         store_childs = fChildsVersion >= version;
+         store_history = !fHist.null() && (hlimit>0);
+      }
+
       bool store_diff = version > 0;
-      bool store_history = !fHist.null() && (hlimit>=0);
       uint64_t mask = (store_fields ? maskNodeChanged : 0) |
                       (store_childs ? maskChildsChanged : 0) |
                       (store_diff ? maskDiffStored : 0) |
@@ -200,14 +214,14 @@ bool dabc::HierarchyContainer::Stream(iostream& s, uint64_t version, int hlimit)
 
       //DOUT0("Write name %u", (unsigned) s.size());
 
-      if (store_fields) Fields().Stream(s);
+      if (store_fields) Fields().Stream(s, fields_prefix);
 
       if (store_history) fHist()->Stream(s, version, hlimit);
 
       if (store_childs)
          for (unsigned n=0;n<NumChilds();n++) {
             dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-            if (child) child->Stream(s, version);
+            if (child) child->Stream(s, version, hlimit);
          }
 
       //DOUT0("Write childs %u", (unsigned) s.size());
@@ -242,7 +256,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, uint64_t version, int hlimit)
       }
 
       if (mask & maskChildsChanged) {
-         fHierarchyChanged = true;
+         fChildsChanged = true;
          for (unsigned n=0;n<storenum;n++) {
             dabc::HierarchyContainer* child = new dabc::HierarchyContainer("");
             child->Stream(s,0);
@@ -271,7 +285,7 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
 void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recursive)
 {
    if (node) fNodeChanged = true;
-   if (hierarchy) fHierarchyChanged = true;
+   if (hierarchy) fChildsChanged = true;
    if (recursive)
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
@@ -358,7 +372,7 @@ std::string dabc::HierarchyContainer::RequestHistoryAsXml(uint64_t version, int 
 bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 {
    fNodeChanged = false;
-   fHierarchyChanged = false;
+   fChildsChanged = false;
 
    if (cont==0) throw dabc::Exception(ex_Hierarchy, "empty container", ItemName());
 
@@ -372,7 +386,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
          SetFieldsMap(cont->TakeFieldsMap());
          fNodeChanged = true;
       }
-      if (!cont->fHierarchyChanged) return fNodeChanged;
+      if (!cont->fChildsChanged) return fNodeChanged;
 
    } else {
       Fields().MoveFrom(cont->Fields()/*, "dabc:"*/); // FIXME: probably have no need to filter fields
@@ -390,7 +404,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
       if (cnt1 >= cont->NumChilds()) {
          RemoveChildAt(cnt2, true);
-         fHierarchyChanged = true;
+         fChildsChanged = true;
          continue;
       }
 
@@ -420,13 +434,13 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 
          AddChildAt(cont_child(), cnt2);
 
-         fHierarchyChanged = true;
+         fChildsChanged = true;
          cnt2++;
 
          continue;
       }
 
-      while (findindx > cnt2) { RemoveChildAt(cnt2, true); findindx--; fHierarchyChanged = true; }
+      while (findindx > cnt2) { RemoveChildAt(cnt2, true); findindx--; fChildsChanged = true; }
 
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) (GetChild(cnt2));
 
@@ -435,13 +449,13 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
          return false;
       }
 
-      if (child->UpdateHierarchyFrom(cont_child())) fHierarchyChanged = true;
+      if (child->UpdateHierarchyFrom(cont_child())) fChildsChanged = true;
 
       cnt1++;
       cnt2++;
    }
 
-   return fHierarchyChanged || fNodeChanged;
+   return fChildsChanged || fNodeChanged;
 }
 
 dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::string& name, int indx)
@@ -491,14 +505,17 @@ void dabc::HierarchyContainer::ClearHistoryEntries()
 
 bool dabc::HierarchyContainer::IsNodeChanged(bool withchilds)
 {
-   if (fNodeChanged || fHierarchyChanged) return true;
+   if (fNodeChanged || fChildsChanged) return true;
 
    if (Fields().WasChanged()) { fNodeChanged = true; return true; }
 
    if (withchilds)
       for (unsigned indx=0; indx < NumChilds(); indx++) {
          dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
-         if (child && child->IsNodeChanged(withchilds)) return true;
+         if (child && child->IsNodeChanged(withchilds)) {
+            fChildsChanged = true;
+            return true;
+         }
       }
 
    return false;
@@ -515,6 +532,7 @@ bool dabc::HierarchyContainer::CheckIfDoingHistory()
          fHist.Allocate(prnt->fHist.Capacity());
          fHist()->fEnabled = true;
          fHist()->fChildsEnabled = true;
+         Fields().Field(prop_history).SetUInt(prnt->fHist.Capacity());
          return true;
       }
 
@@ -524,12 +542,33 @@ bool dabc::HierarchyContainer::CheckIfDoingHistory()
    return false;
 }
 
-void dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds, bool force)
+unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds)
 {
-   if (force || IsNodeChanged(false)) {
+   unsigned mask = 0;
 
-      if (force || fNodeChanged) fNodeVersion = ver;
-      if (force || fHierarchyChanged) fHierarchyVersion = ver;
+   if (withchilds)
+      for (unsigned indx=0; indx < NumChilds(); indx++) {
+         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+         if (child)
+            mask = mask | child->MarkVersionIfChanged(ver, tm, withchilds);
+      }
+
+   if (mask != 0) fNodeChanged = true;
+
+   if (mask & 2) fDNSChanged = true;
+
+   if (mask & 4) fChildsChanged = true;
+
+   if (Fields().WasChanged()) {
+      fNodeChanged = true;
+      if (Fields().WasChangedWith("dabc:")) fDNSChanged = true;
+   }
+
+   if (fNodeChanged) {
+
+      if (fNodeChanged) { fNodeVersion = ver; mask = mask | 1; }
+      if (fDNSChanged) { fDNSVersion = ver; mask = mask | 2; }
+      if (fChildsChanged) { fChildsVersion = ver; mask = mask | 4; }
 
       if (fNodeChanged && fAutoTime) {
          if (tm<=0) {
@@ -551,21 +590,16 @@ void dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm, bo
 
       Fields().ClearChangeFlags();
       fNodeChanged = false;
-      fHierarchyChanged = false;
+      fDNSChanged = false;
+      fChildsChanged = false;
    }
 
-   if (withchilds)
-      for (unsigned indx=0; indx < NumChilds(); indx++) {
-         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
-         if (child) child->MarkVersionIfChanged(ver, tm, withchilds, force);
-      }
+   return mask;
 }
 
 
-void dabc::HierarchyContainer::MarkChangedItems(bool withchilds, double tm)
+void dabc::HierarchyContainer::MarkChangedItems(double tm)
 {
-   if (!IsNodeChanged(withchilds)) return;
-
    HierarchyContainer* top = this, *prnt = this;
 
    while (prnt!=0) {
@@ -575,14 +609,20 @@ void dabc::HierarchyContainer::MarkChangedItems(bool withchilds, double tm)
 
    uint64_t next_ver = top->GetVersion() + 1;
 
-   // mark node and childs (if specified)
-   MarkVersionIfChanged(next_ver, tm, withchilds, false);
+   // mark node and childs
+   unsigned mask = MarkVersionIfChanged(next_ver, tm, true);
+
+   if (mask == 0) return;
 
    // mark changes in parent
-   prnt = this;
+   prnt = dynamic_cast<HierarchyContainer*> (GetParent());
    while (prnt != 0) {
+      if (mask & 2) prnt->fDNSChanged = true;
+      prnt->fNodeChanged = true;
+      prnt->fChildsChanged = true;
+
+      prnt->MarkVersionIfChanged(next_ver, tm, false);
       prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
-      if (prnt) prnt->MarkVersionIfChanged(next_ver, tm, false, true);
    }
 }
 
@@ -690,6 +730,7 @@ dabc::Buffer dabc::Hierarchy::SaveToBuffer(uint64_t version)
    uint64_t size = GetObject()->StoreSize(version);
 
    dabc::Buffer res = dabc::Buffer::CreateBuffer(size);
+   if (res.null()) return res;
 
    memstream outs(false, (char*) res.SegmentPtr(), res.SegmentSize());
 
@@ -737,7 +778,7 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf)
    double tm = 0;
 
    // mark node and its childs
-   GetObject()->MarkVersionIfChanged(next_ver, tm, true, false);
+   GetObject()->MarkVersionIfChanged(next_ver, tm, true);
 
    return true;
 }
@@ -868,9 +909,9 @@ dabc::Buffer dabc::Hierarchy::ApplyBinaryRequest(Command cmd)
    //DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
 
    // master hash can let us know if something changed in the master
-   std::string masterhash = cmd.GetStdStr("MasterHash");
+   std::string masterhash = cmd.GetStr("MasterHash");
 
-   if (!master.null() && !masterhash.empty() && (master.Field(dabc::prop_content_hash).AsStdStr()!=masterhash)) {
+   if (!master.null() && !masterhash.empty() && (master.Field(dabc::prop_hash).AsStdStr()!=masterhash)) {
 
       master()->fNodeChanged = true;
 
@@ -879,7 +920,7 @@ dabc::Buffer dabc::Hierarchy::ApplyBinaryRequest(Command cmd)
       // DOUT0("MASTER VERSION WAS %u NOW %u", (unsigned) master_version, (unsigned) master.GetVersion());
 
       master_version = master.GetVersion();
-      master.Field(dabc::prop_content_hash).SetStr(masterhash);
+      master.Field(dabc::prop_hash).SetStr(masterhash);
    }
 
    bindatahdr->master_version = master_version;
@@ -895,8 +936,8 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
 
    // we need to find parent on the most-top position with binary_producer property
    while (!parent.null()) {
-      if (parent.HasField(dabc::prop_binary_producer)) {
-         producer_name = parent.Field(dabc::prop_binary_producer).AsStdStr();
+      if (parent.HasField(dabc::prop_producer)) {
+         producer_name = parent.Field(dabc::prop_producer).AsStdStr();
          request_name = RelativeName(parent);
       }
       parent = parent.GetParentRef();

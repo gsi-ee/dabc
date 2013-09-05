@@ -25,7 +25,6 @@
 #include "dabc/timing.h"
 #include "dabc/statistic.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/CommandsSet.h"
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
 #include "dabc/Application.h"
@@ -842,64 +841,6 @@ void TestCmdChain(int number, bool timeout = false, bool samecmd = true)
    DOUT0("Did manager cleanup");
 }
 
-void TestCmdSet(int number, bool sync, int numtest = 1, bool errtmout = false)
-{
-   DOUT0("===============================================");
-   DOUT0("Test cmd set with %d modules", number);
-
-   for (int n=0;n<number;n++) {
-      dabc::ModuleRef m = new TestModuleCmd(dabc::format("SetModule%d",n), -1, errtmout);
-
-      m.MakeThreadForWorker((n % 2) ? "SetThread0" : "SetThread1");
-   }
-
-   dabc::mgr.StartAllModules();
-
-   for (int ntry=0;ntry<numtest;ntry++) {
-
-      DOUT0("================ NTRY = %d ===============================", ntry);
-      DOUT0("Create set");
-
-      dabc::CommandsSet* set = new dabc::CommandsSet(dabc::mgr()->thread());
-
-      set->SetParallelExe(true);
-
-      for (int n=0;n<number;n++) {
-         dabc::Command cmd("MyCommand");
-         cmd.SetReceiver(dabc::format("SetModule%d",n));
-         set->Add(cmd);
-      }
-
-      DOUT0("Inject set");
-
-//      if (ntry == numtest-1) dabc::SetDebugLevel(5);
-
-      if (sync) {
-         int res = set->ExecuteSet(2.);
-         dabc::Object::Destroy(set);
-         DOUT0("SET result = %d", res);
-      } else {
-         set->SubmitSet(0, 2.);
-         dabc::mgr.Sleep(3.);
-         DOUT0("SET result = unknown");
-      }
-   }
-
-
-   DOUT0("Do stop modules");
-
-   dabc::mgr.StopAllModules();
-
-   DOUT0("Did stop modules");
-
-//   for (int n=0;n<number;n++)
-//      dabc::mgr.DeleteModule(dabc::format("SetModule%d",n));
-
-   dabc::mgr.CleanupApplication();
-
-   DOUT0("Did manager cleanup");
-}
-
 void TestGuard(dabc::Mutex* m, int& b)
 {
    dabc::IntGuard block1(b);
@@ -971,17 +912,6 @@ extern "C" void RunCmdTest()
    TestCmdChain(20, false); // without timeout and same command
 
    TestCmdChain(20, false, false); // without timeout and every time new command
-
-
-   return;
-
-
-   TestCmdSet(5, true);
-
-   TestCmdSet(10, false);
-
-   TestCmdSet(15, true);
-
 }
 
 

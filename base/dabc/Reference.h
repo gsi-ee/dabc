@@ -207,7 +207,7 @@ namespace dabc {
           * \param[in] name     requested folder name
           * \param[in] force    if true, missing folder will be created
           * \returns            reference on the folder */
-         Reference GetFolder(const char* name, bool force = false) throw();
+         Reference GetFolder(const std::string& name, bool force = false) throw();
 
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call */

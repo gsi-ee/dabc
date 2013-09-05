@@ -23,7 +23,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Iterator.h"
 #include "dabc/ReferencesVector.h"
-
+#include "dabc/Publisher.h"
 
 dabc::WorkerAddon::WorkerAddon(const std::string& name) :
    Object(0, name),
@@ -660,6 +660,16 @@ int dabc::Worker::PreviewCommand(Command cmd)
       HierarchyContainer* cont = (HierarchyContainer*) cmd.GetPtr("Container");
       if (cont!=0) BuildWorkerHierarchy(cont);
       cmd_res = cmd_true;
+   } else
+
+   if (cmd.IsName(CmdPublisher::CmdName())) {
+      CmdPublisher cmdp = cmd;
+
+      Buffer diff = fWorkerPublishedHierarchy.SaveToBuffer(cmdp.GetVersion());
+
+      cmdp.SetRes(diff);
+      cmdp.SetVersion(fWorkerPublishedHierarchy.GetVersion());
+      cmd_res = cmd_true;
    }
 
    return cmd_res;
@@ -963,6 +973,38 @@ bool dabc::Worker::UnregisterForParameterEvent(const std::string& mask)
    return dabc::mgr.ParameterEventSubscription(this, false, mask);
 }
 
+std::string dabc::Worker::WorkerAddress(bool full)
+{
+   return full ? dabc::mgr.ComposeAddress("",ItemName()) : ItemName();
+}
+
+
+bool dabc::Worker::Publish(Hierarchy& h, const std::string& path)
+{
+   Unpublish(fWorkerPublishedHierarchy, fWorkerPublishedName);
+
+   PublisherRef m = dabc::mgr.FindModule(dabc::Publisher::DfltName());
+
+   if (!m.Register(path, ItemName())) return false;
+
+   fWorkerPublishedHierarchy = h;
+   fWorkerPublishedName = path;
+   return true;
+}
+
+bool dabc::Worker::Unpublish(Hierarchy& h, const std::string& path)
+{
+   if (h!=fWorkerPublishedHierarchy) return false;
+
+   if (!fWorkerPublishedName.empty()) {
+      PublisherRef m = dabc::mgr.FindModule(dabc::Publisher::DfltName());
+      m.Unregister(fWorkerPublishedName, ItemName());
+   }
+
+   fWorkerPublishedHierarchy.Release();
+   fWorkerPublishedName.clear();
+   return true;
+}
 
 // ===========================================================================================
 

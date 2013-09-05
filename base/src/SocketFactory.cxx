@@ -15,6 +15,9 @@
 
 #include "dabc/SocketFactory.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "dabc/SocketDevice.h"
 #include "dabc/SocketThread.h"
 #include "dabc/SocketTransport.h"
@@ -22,9 +25,17 @@
 #include "dabc/NetworkTransport.h"
 #include "dabc/Port.h"
 #include "dabc/Url.h"
+#include "dabc/Manager.h"
 
 // as long as sockets integrated in libDabcBase, SocketFactory should be created directly by manager
 // dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));
+
+
+void dabc::SocketFactory::Initialize()
+{
+   // when socket factory is initialized, use host name for local address initialization
+   dabc::mgr.SetLocalHostId(dabc::SocketThread::DefineHostName() + dabc::format("_pid%d", (int) getpid()));
+}
 
 
 dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, const std::string& objname, Command cmd)
@@ -32,6 +43,8 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
    if (classname == "SocketCommandChannel") {
 
       dabc::SocketServerAddon* addon = 0;
+
+      std::string mgrid = dabc::SocketThread::DefineHostName();
 
       if (cmd.GetBool("WithServer", true)) {
          int nport = cmd.GetInt("ServerPort");
@@ -41,10 +54,16 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
             EOUT("Cannot open cmd socket on port %d", nport);
             return 0;
          }
-         DOUT1("Start command channel with port %d", nport);
+
+         mgrid += dabc::format(":%d", nport);
          addon = new dabc::SocketServerAddon(fd, nport);
          addon->SetDeliverEventsToWorker(true);
+      } else {
+         mgrid += dabc::format("_pid%d", (int) getpid());
       }
+
+      DOUT1("Start command channel with id %s", mgrid.c_str());
+      dabc::mgr.SetLocalHostId(mgrid);
 
       return new SocketCommandChannel(objname, addon, cmd);
    }

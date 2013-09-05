@@ -160,7 +160,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
 
    item()->bindata() = buf;
-   item.Field(dabc::prop_content_hash).SetInt(fCounter);
+   item.Field(dabc::prop_hash).SetInt(fCounter);
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
    fHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
@@ -184,14 +184,14 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
 
    item = fHierarchy.FindChild("StreamerInfo");
-   item.Field(dabc::prop_content_hash).SetInt(pr->GetStreamerInfoHash());
+   item.Field(dabc::prop_hash).SetInt(pr->GetStreamerInfoHash());
 
    item = fHierarchy.FindChild("BeamRoot");
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
          h2->Fill(gRandom->Gaus(16,2), gRandom->Gaus(16,1));
-      item.Field(dabc::prop_content_hash).SetInt(h2->GetEntries());
+      item.Field(dabc::prop_hash).SetInt(h2->GetEntries());
    }
 
    TCanvas* can = (TCanvas*) fCanvas;
@@ -221,7 +221,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string itemname = cmd.GetStdStr("Item");
+      std::string itemname = cmd.GetStr("Item");
 
       dabc::LockGuard lock(fHierarchyMutex);
 
@@ -277,7 +277,7 @@ void fesa::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
    dabc::LockGuard lock(fHierarchyMutex);
 
    // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
+   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    fHierarchy()->BuildHierarchy(cont);
 }

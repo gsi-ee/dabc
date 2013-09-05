@@ -77,7 +77,7 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
    // connection manager is activated
    dabc::mgr.CreateConnectionManager();
 
-   req = new dabc::ConnectionObject(this, dabc::mgr.ComposeUrl(this));
+   req = new dabc::ConnectionObject(this, dabc::mgr.ComposeAddress("",ItemName()));
 
    ConfigIO io(dabc::mgr()->cfg());
 

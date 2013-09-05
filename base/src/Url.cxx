@@ -168,17 +168,6 @@ bool dabc::Url::DecomposeItemName(const std::string& name, int& nodeid, std::str
    return true;
 }
 
-
-int dabc::Url::ExtractNodeId(const std::string& url)
-{
-   int nodeid(-1);
-   std::string itemname;
-
-   if (DecomposeItemName(url, nodeid, itemname)) return nodeid;
-
-   return -1;
-}
-
 std::string dabc::Url::GetOptionsPart(int number) const
 {
    std::string res;
