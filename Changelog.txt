@@ -2,6 +2,28 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+11.09.2013
+1. Major functionality of managing of published hierarchies implemented in 
+   dabc::Publisher class. It creates and updates central hierarchy (only nameslist),
+   which is later used to discover which entries are availible and to which 
+   modules/workers they are belong.
+2. Every slave connection provide dabc::Publisher with remote hierarchy, 
+   which mare anaged separately. As result, dabc::Publisher has N separate hierarchies,
+   where top branches like /MBS or /FESA or /Go4 can be the same. Here main task
+   of publisher correctly merge them in one big structure.
+3. dabc::PublisherRef::Get method implemented, which runs synchron (blocking) and
+   return all fields of requested entry. Behind the scene publisher first identify
+   node and module where entry is published, than redirect command to the module
+   and finally in respective module thread command is executed. 
+4. dabc::PublisherRef::Get also can be used to request recorded history for the 
+   entry. The result returned in binary form and can be used for analysis.
+5. dabc::PublisherRef::GetBinary implemented to provide special data which is not
+   published as field. 
+6. As result, hierarchy management moved from http::Server and can be used 
+   in different parts of application code. In the future subscription (asynchron)
+   modus will be implemented.          
+
+
 5.09.2013
 1. Unify address convention of dabc application. Now any module in the system can
    be identify with address like: "dabc://nodename:port/module". Such address can

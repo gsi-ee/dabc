@@ -187,8 +187,8 @@ namespace dabc {
             char* valueStr;        ///! string or array of strings
          };
 
-         bool                fReadonly;   ///! if true, field cannot be changed
          bool                fModified;   ///! when true, field was modified at least once
+         bool                fTouched;    ///! flag, used to detect in streamer when field was touched at all
 
          void release();
 
@@ -198,12 +198,12 @@ namespace dabc {
             return true;
          }
 
-         bool isreadonly() const { return fReadonly; }
+         bool isreadonly() const { return false; }
          bool cannot_modify();
 
          void SetArrStrDirect(int64_t size, char* arr, bool owner = false);
 
-         void constructor() { fKind = kind_none; fReadonly = false; fModified = false; }
+         void constructor() { fKind = kind_none; fModified = false; fTouched = false; }
 
       public:
          RecordField();

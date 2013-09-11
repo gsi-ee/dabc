@@ -52,6 +52,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <clients value="true"/>
     </HttpServer>
     
+    <!--Module name="Publisher" class="dabc::Publisher">
+       <manager value="true"/>
+    </Module-->
+    
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>

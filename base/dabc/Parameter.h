@@ -126,6 +126,9 @@ namespace dabc {
          /** \brief Save parameter attributes into container */
          virtual void BuildHierarchy(HierarchyContainer* cont);
 
+         /** \brief Save parameter attributes into container */
+         virtual void BuildFieldsMap(RecordFieldsMap* cont);
+
       public:
 
          virtual const char* ClassName() const { return "Parameter"; }

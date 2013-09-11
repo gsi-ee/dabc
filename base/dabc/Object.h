@@ -326,6 +326,9 @@ namespace dabc {
          /** \brief Sets logging flag, __thread safe__ */
          void SetLogging(bool on = true);
 
+         /** \brief Return true if object wants to be hidden from hierarchy scan, __thread safe__ */
+         bool IsHidden() const;
+
          // List of children is __thread safe__ BUT may change in any time in between two calls
          // To perform some complex actions, references on child objects should be used
 
@@ -431,6 +434,10 @@ namespace dabc {
           *  ParentClass::BuildHierarchy(cont) must be called to store
           *  hierarchy of child objects */
          virtual void BuildHierarchy(HierarchyContainer* cont);
+
+         /** \brief Fill fields map, which is relevant for the object */
+         virtual void BuildFieldsMap(RecordFieldsMap* cont) {}
+
 
          // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,

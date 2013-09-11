@@ -224,7 +224,8 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fCfgHost(),
    fNodeId(0),
    fNumNodes(1),
-   fLocalHostId("local"),
+   fLocalId(),
+   fLocalAddress(),
    fThrLayout(layoutBalanced),
    fLastCreatedDevName()
 {
@@ -236,8 +237,10 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       dabc::SetDebugPrefix(GetName());
    }
 
-   fLocalHostId = dabc::format("localhost_pid%d", (int) getpid());
-   DOUT0("MGR localid is %s", fLocalHostId.c_str());
+   fLocalId = dabc::format("localhost_pid%d", (int) getpid());
+   fLocalAddress = fLocalId;
+
+   DOUT0("MGR localid is %s", fLocalId.c_str());
 
    if (cfg) {
       fCfgHost = cfg->MgrHost();
@@ -1371,16 +1374,23 @@ std::string dabc::Manager::GetNodeAddress(int nodeid)
 
    if (fCfg==0) return std::string();
 
-   if ((nodeid==fNodeId) && !fLocalHostId.empty()) return fLocalHostId;
+   if ((nodeid==fNodeId) && !fLocalAddress.empty()) return fLocalAddress;
 
    Url url(fCfg->NodeName(nodeid));
    return url.GetHostNameWithPort(defaultDabcPort);
 }
 
+std::string dabc::Manager::GetLocalId()
+{
+   LockGuard lock(fMgrMutex);
+   return fLocalId;
+}
+
+
 std::string dabc::Manager::GetLocalAddress()
 {
    LockGuard lock(fMgrMutex);
-   return fLocalHostId;
+   return fLocalAddress;
 }
 
 std::string dabc::Manager::ComposeAddress(const std::string& server, const std::string& itemname)
@@ -1420,11 +1430,6 @@ bool dabc::Manager::DecomposeAddress(const std::string& addr, bool& islocal, std
    server = url.GetHostNameWithPort();
    itemtname = url.GetFileName();
 
-   if (server == "localhost") {
-      islocal = true;
-      return true;
-   }
-
    int nodeid = -1;
    if (server.compare(0, 4, "node")==0) {
       if (!str_to_int(server.c_str() + 4, &nodeid)) nodeid = -1;
@@ -1435,8 +1440,10 @@ bool dabc::Manager::DecomposeAddress(const std::string& addr, bool& islocal, std
    LockGuard lock(fMgrMutex);
 
    if ((nodeid>=0) && (fNodeId==nodeid)) islocal = true; else
+   if (server == fLocalAddress) islocal = true; else
+   if (server == "localhost") islocal = true;
 
-   if (server==fLocalHostId) islocal = true;
+   if (islocal) server = fLocalAddress;
 
    return true;
 }
@@ -1771,7 +1778,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
 
       if (cmd.IsName("ls")) {
          if (!rem_hierarchy.null())
-            DOUT0("xml = ver %u \n%s", (unsigned) rem_hierarchy.GetVersion(), rem_hierarchy.SaveToXml(false).c_str());
+            DOUT0("xml = ver %u \n%s", (unsigned) rem_hierarchy.GetVersion(), rem_hierarchy.SaveToXml().c_str());
          else
             DOUT0("No hierarchy available");
          continue;
@@ -2170,17 +2177,26 @@ dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, con
    return cmd.GetRef("Object");
 }
 
-bool dabc::ManagerRef::SetLocalHostId(const std::string& name)
+bool dabc::ManagerRef::SetLocalAddress(const std::string& name)
 {
    if (null()) return false;
 
    LockGuard lock(GetObject()->fMgrMutex);
-   GetObject()->fLocalHostId = name;
-
-   DOUT0("MGR localid is %s", name.c_str());
-
+   GetObject()->fLocalAddress = name;
+   DOUT0("MGR local address is %s", name.c_str());
    return true;
 }
+
+bool dabc::ManagerRef::SetLocalId(const std::string& name)
+{
+   if (null()) return false;
+
+   LockGuard lock(GetObject()->fMgrMutex);
+   GetObject()->fLocalId = name;
+   DOUT0("MGR local id is %s", name.c_str());
+   return true;
+}
+
 
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 {
@@ -2188,5 +2204,19 @@ void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
       GetObject()->Sleep(tmout, prefix);
    else
       dabc::Sleep(tmout);
+}
+
+bool dabc::ManagerRef::CreatePublisher()
+{
+   PublisherRef ref = FindModule(dabc::Publisher::DfltName());
+   if (!ref.null()) return true;
+
+   CmdCreateModule cmd("dabc::Publisher", dabc::Publisher::DfltName(), "PublisherThrd");
+
+   if (Execute(cmd) != cmd_true) return false;
+
+   StartModule(dabc::Publisher::DfltName());
+
+   return true;
 }
 

@@ -19,7 +19,9 @@
        <clients value="true"/>
     </HttpServer>
     
-    <Module name="Publisher" class="dabc::Publisher"/>
+    <Module name="Publisher" class="dabc::Publisher">
+       <manager value="true"/>
+    </Module>
 
     <Module name="fesa_monitor" class="fesa::Monitor">
        <Server value="DummyDevice_DU.linev.asl732"/>

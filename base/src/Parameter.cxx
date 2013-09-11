@@ -291,6 +291,18 @@ void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
       rec.Field(dabc::prop_kind).SetStr("rate");
 }
 
+void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
+{
+   LockGuard lock(ObjectMutex());
+
+   // mark that we are wor
+   if (fStatistic == ParameterContainer::kindRate)
+      cont->Field(dabc::prop_kind).SetStr("rate");
+
+   // just copy all fields, including value
+   cont->CopyFrom(Fields());
+}
+
 
 // --------------------------------------------------------------------------------
 

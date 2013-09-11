@@ -33,6 +33,8 @@
 #include "TROOT.h"
 #endif
 
+#include "dabc/Publisher.h"
+
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fHierarchyMutex(),
@@ -109,6 +111,8 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    TCanvas* can = new TCanvas("can1", "can1", 3);
    fCanvas = can;
    #endif
+
+   Publish(fHierarchy, "FESA/Test", &fHierarchyMutex);
 }
 
 fesa::Player::~Player()
@@ -184,7 +188,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
 
    item = fHierarchy.FindChild("StreamerInfo");
-   item.Field(dabc::prop_hash).SetInt(pr->GetStreamerInfoHash());
+   item.Field(dabc::prop_hash).SetStr(pr->GetStreamerInfoHash());
 
    item = fHierarchy.FindChild("BeamRoot");
    TH2I* h2 = (TH2I*) fHist;
@@ -216,12 +220,11 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 }
 
 
-
 int fesa::Player::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetBinary")) {
+   if (cmd.IsName("GetBinary") || cmd.IsName(dabc::CmdGetBinary::CmdName())) {
 
-      std::string itemname = cmd.GetStr("Item");
+      std::string itemname = cmd.GetStr("subitem");
 
       dabc::LockGuard lock(fHierarchyMutex);
 
@@ -233,6 +236,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       }
 
       dabc::Buffer buf;
+      std::string mhash;
 
       if (cmd.GetBool("history"))
          buf = item.ExecuteHistoryRequest(cmd);
@@ -242,15 +246,15 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
          if ((kind.find("ROOT.")==0) || (kind=="image.png")) {
 #ifdef WITH_ROOT
             dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
-            if (itemname=="StreamerInfo")
+            if (itemname=="StreamerInfo") {
                buf = pr->GetStreamerInfoBinary();
-            else {
+            } else {
                TObject* obj = (TH2I*) fHist;
                if (itemname =="ImageRoot") obj = (TCanvas*) fCanvas;
-               buf = pr->GetBinary(obj, cmd.GetBool("image", false));
+               buf = pr->GetBinary(obj, (kind=="image.png"));
+               mhash = pr->GetStreamerInfoHash();
+               cmd.SetStr("MasterHash", mhash);
             }
-
-            cmd.SetInt("MasterHash", pr->GetStreamerInfoHash());
 #endif
          } else
             buf = item()->bindata();
@@ -260,6 +264,8 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
          EOUT("No find binary data for item %s", itemname.c_str());
          return dabc::cmd_false;
       }
+
+      item.FillBinHeader("", buf, mhash);
 
       cmd.SetRawData(buf);
 

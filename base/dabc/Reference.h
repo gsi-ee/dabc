@@ -166,7 +166,7 @@ namespace dabc {
          Reference GetChild(unsigned n) const;
 
          /** \brief Return references for all childs */
-         bool GetAllChildRef(ReferencesVector* vect);
+         bool GetAllChildRef(ReferencesVector* vect) const;
 
          /** \brief Searches for child in referenced object.
           * If object null, always return null reference */

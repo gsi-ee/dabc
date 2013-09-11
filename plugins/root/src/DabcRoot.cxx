@@ -18,15 +18,17 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 
    DOUT2("Create manager");
 
-   // dabc::mgr.Execute("InitFactories");
+   dabc::mgr.Execute("InitFactories");
 
    dabc::mgr.CreateThread("MainThread");
 
+   dabc::mgr.CreatePublisher();
 
    dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
    cmd2.SetBool("enabled", true);
    cmd2.SetBool("batch", false);
    cmd2.SetBool("synctimer", sync_timer);
+   cmd2.SetStr("prefix", "ROOT");
 
    if (!dabc::mgr.Execute(cmd2)) return false;
 
@@ -71,14 +73,17 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 
    DOUT0("Create manager");
 
-   // dabc::mgr.Execute("InitFactories");
+   dabc::mgr.Execute("InitFactories");
 
    dabc::mgr.CreateThread("MainThread");
+
+   dabc::mgr.CreatePublisher();
 
    dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
    cmd2.SetBool("enabled", true);
    cmd2.SetBool("batch", false);
    cmd2.SetBool("synctimer", sync_timer);
+   cmd2.SetStr("prefix", "ROOT/"+dabc::mgr.GetLocalId());
 
    if (!dabc::mgr.Execute(cmd2)) return false;
 

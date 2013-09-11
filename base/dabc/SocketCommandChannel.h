@@ -122,6 +122,7 @@ namespace dabc {
          bool               fRemoteObserver;   ///< if true, channel automatically used to update information from remote
          TimeStamp          fRemReqTime;       ///< last time when request was send to remote
          Hierarchy          fRemoteHierarchy;  ///< actual remote hierarchy
+         uint64_t           fRemoteHierarchyVer; ///< last version of remote hierarchy
          std::string        fRemoteName;       ///< name of connection, appeared in the browser
 
          // indicate that this is special connection to master node

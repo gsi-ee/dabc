@@ -89,6 +89,10 @@ namespace http {
 
          int ProcessGetImage(struct mg_connection* conn, const char *query);
 
+         int ProcessGetItem(struct mg_connection* conn, const char *query);
+
+         int ProcessGetBin(struct mg_connection* conn, const char *query);
+
          bool MakeRealFileName(std::string& fname);
 
       public:

@@ -161,7 +161,7 @@ int fesa::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string itemname = cmd.GetStr("Item");
+      std::string itemname = cmd.GetStr("subitem");
 
       dabc::LockGuard lock(fHierarchyMutex);
 

@@ -85,6 +85,7 @@ dabc::Worker::Worker(Reference parent, const std::string& name) :
    Object(parent, name),
    fThread(),
    fAddon(),
+   fPublisher(),
    fWorkerId(0),
    fWorkerPriority(-1), // minimum priority per default
 
@@ -235,6 +236,13 @@ void dabc::Worker::ClearThreadRef()
 void dabc::Worker::ObjectCleanup()
 {
    // TODO: that is correct sequence - first delete child, than clean ourself  (current) or vice-versa
+
+   if (!fPublisher.null()) {
+      // clean reference on publisher
+      PublisherRef(fPublisher).RemoveWorker(ItemName(), false);
+      fPublisher.Release();
+   }
+
 
    // we do standard object cleanup - remove all our childs and remove ourself from parent
    dabc::Object::ObjectCleanup();
@@ -663,13 +671,45 @@ int dabc::Worker::PreviewCommand(Command cmd)
    } else
 
    if (cmd.IsName(CmdPublisher::CmdName())) {
-      CmdPublisher cmdp = cmd;
+      dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
+      unsigned version = cmd.GetUInt("version");
 
-      Buffer diff = fWorkerPublishedHierarchy.SaveToBuffer(cmdp.GetVersion());
+      // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
-      cmdp.SetRes(diff);
-      cmdp.SetVersion(fWorkerPublishedHierarchy.GetVersion());
+      Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
+
+      // DOUT0("Request DNS version %u sizelen %u", (unsigned) cmdp.GetVersion(), (unsigned) diff.GetTotalSize());
+      // DOUT0("CURRENT ver %u\n%s", (unsigned) h.GetVersion(), h.SaveToXml().c_str());
+
+      cmd.SetRawData(diff);
+      cmd.SetUInt("version", h.GetVersion());
       cmd_res = cmd_true;
+   } else
+   if (cmd.IsName(CmdPublisherGet::CmdName())) {
+      dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
+      Mutex* m = (Mutex*) cmd.GetPtr("mutex");
+      std::string item = cmd.GetStr("subitem");
+      unsigned hlimit = cmd.GetUInt("history");
+      unsigned version = cmd.GetUInt("version");
+      if (!h.null()) {
+
+         LockGuard lock(m);
+
+         dabc::Hierarchy sub = h.GetFolder(item);
+         if (sub.null()) {
+            EOUT("Did not found requested item %s in published hierarchy", item.c_str());
+            return cmd_false;
+         }
+
+         // we record only fields, everything else is ignored - even name of entry is not stored
+         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+
+         DOUT0("GET worker %s item %s hlimit %u size %u", GetName(), item.c_str(), hlimit, raw.GetTotalSize());
+
+         cmd.SetRawData(raw);
+         cmd.SetUInt("version", sub.GetVersion());
+         cmd_res = cmd_true;
+      }
    }
 
    return cmd_res;
@@ -690,7 +730,6 @@ void dabc::Worker::BuildHierarchy(HierarchyContainer* cont)
       Execute(cmd);
    }
 }
-
 
 
 int dabc::Worker::ExecuteCommand(Command cmd)
@@ -979,31 +1018,40 @@ std::string dabc::Worker::WorkerAddress(bool full)
 }
 
 
-bool dabc::Worker::Publish(Hierarchy& h, const std::string& path)
+dabc::Reference dabc::Worker::GetPublisher()
 {
-   Unpublish(fWorkerPublishedHierarchy, fWorkerPublishedName);
-
-   PublisherRef m = dabc::mgr.FindModule(dabc::Publisher::DfltName());
-
-   if (!m.Register(path, ItemName())) return false;
-
-   fWorkerPublishedHierarchy = h;
-   fWorkerPublishedName = path;
-   return true;
+   if (fPublisher.null()) fPublisher = dabc::mgr.FindModule(dabc::Publisher::DfltName());
+   return fPublisher;
 }
 
-bool dabc::Worker::Unpublish(Hierarchy& h, const std::string& path)
+
+bool dabc::Worker::Publish(const Hierarchy& h, const std::string& path, Mutex* mutex)
 {
-   if (h!=fWorkerPublishedHierarchy) return false;
+   return PublisherRef(GetPublisher()).Register(path, ItemName(), h(), mutex);
+}
 
-   if (!fWorkerPublishedName.empty()) {
-      PublisherRef m = dabc::mgr.FindModule(dabc::Publisher::DfltName());
-      m.Unregister(fWorkerPublishedName, ItemName());
+bool dabc::Worker::Unpublish(const Hierarchy& h, const std::string& path)
+{
+   return PublisherRef(GetPublisher()).Unregister(path, ItemName(), h());
+}
+
+bool dabc::Worker::Subscribe(const std::string& path)
+{
+   return PublisherRef(GetPublisher()).Subscribe(path, ItemName());
+}
+
+bool dabc::Worker::Unsubscribe(const std::string& path)
+{
+   return PublisherRef(GetPublisher()).Unsubscribe(path, ItemName());
+}
+
+void dabc::Worker::CleanupPublisher()
+{
+   if (!fPublisher.null()) {
+      // clean reference on publisher
+      PublisherRef(fPublisher).RemoveWorker(ItemName(), true);
+      fPublisher.Release();
    }
-
-   fWorkerPublishedHierarchy.Release();
-   fWorkerPublishedName.clear();
-   return true;
 }
 
 // ===========================================================================================

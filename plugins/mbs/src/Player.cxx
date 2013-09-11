@@ -135,6 +135,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    int history = Cfg("history", cmd).AsInt(200);
 
    fHierarchy.Create("MBS");
+   //fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");
@@ -673,10 +674,14 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
       fHierarchy.FindChild("ServerRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_strsrv_kb));
    }
 
-
 //   DOUT0("Set %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
 
    fHierarchy.MarkChangedItems();
+
+//   if (item.IsName("rate_log")) {
+//      std::string res = item.SaveToXml(dabc::xmlmask_History);
+//      DOUT0("RATE\n%s", res.c_str());
+//   }
 
 //   DOUT0("After %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
 }
@@ -713,7 +718,7 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetBinary")) {
 
-      std::string itemname = cmd.GetStr("Item");
+      std::string itemname = cmd.GetStr("subitem");
 
       dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
 

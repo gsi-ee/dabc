@@ -55,6 +55,8 @@ namespace dabc_root {
          bool fSyncTimer;         ///< is timer will run in synchronous mode (only within gSystem->ProcessEvents())
          int  fCompression;       ///< compression level, default 5
 
+         std::string fPrefix;     ///< name prefix for hierarchy like ROOT or Go4
+
          BinaryProducer*  fProducer;  ///< object which will convert ROOT objects into binary data
 
          ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context

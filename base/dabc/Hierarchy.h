@@ -138,9 +138,27 @@ namespace dabc {
       unsigned Capacity() const { return null() ? 0 : GetObject()->fArr.Capacity(); }
 
       unsigned Size() const { return null() ? 0 : GetObject()->fArr.Size(); }
+
+      bool SaveInXmlNode(XMLNodePointer_t histnode, uint64_t version = 0, unsigned hlimit = 0);
    };
 
    // =================================================================
+
+
+   enum HierarchyStreamKind {
+      stream_NamesList, // only names list is stored
+      stream_Value,     // only selected entry (plus history, if specified)
+      stream_Full       // full hierarchy (plus history, if specified)
+   };
+
+   enum HierarchyXmlStreamMask {
+      xmlmask_Compact = 1, // create compact code of xml
+      xmlmask_Version = 2, // write all versions
+      xmlmask_TopVersion = 4, // write version only for top node
+      xmlmask_NameSpace = 8,  // write artificial namespace on top node
+      xmlmask_History = 16,   // write full history in xml output
+      xmlmask_NoChilds = 32   // do not write childs in xml file
+   };
 
 
    class HierarchyContainer : public RecordContainer {
@@ -150,8 +168,8 @@ namespace dabc {
       protected:
 
          enum {
-            maskNodeChanged = 1,
-            maskChildsChanged = 2,
+            maskFieldsStored = 1,
+            maskChildsStored = 2,
             maskDiffStored = 4,
             maskHistory = 8
          };
@@ -177,7 +195,6 @@ namespace dabc {
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fDNSChanged;        ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
          bool       fChildsChanged;  ///< indicate if something was changed in the hierarchy
-         bool       fDiffNode;          ///< if true, indicates that it is diff version
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
@@ -197,6 +214,11 @@ namespace dabc {
           * \details Some field or childs could be extracted and change there ownership
           * \returns true when something was changed */
          bool UpdateHierarchyFrom(HierarchyContainer* cont);
+
+         /** \brief Duplicate  hierarchy from provided container
+          * \details Childs or fields can be updated or inserted, nothing will be deleted
+          * \returns true when something was changed */
+         bool DuplicateHierarchyFrom(HierarchyContainer* cont);
 
          /** \brief Switch on node or hierarchy modified flags */
          void SetModified(bool node, bool hierarchy, bool recursive = false);
@@ -228,6 +250,9 @@ namespace dabc {
 
          virtual void _ChildsChanged() { fDNSChanged = true; fChildsChanged = true; fNodeChanged = true;  }
 
+         uint64_t GetNextVersion() const;
+
+         void SetVersion(uint64_t v) { fNodeVersion = v; }
 
       public:
          HierarchyContainer(const std::string& name);
@@ -235,15 +260,20 @@ namespace dabc {
 
          virtual const char* ClassName() const { return "Hierarchy"; }
 
-         uint64_t StoreSize(uint64_t v = 0, int hist_limit = -1);
+         uint64_t StoreSize(unsigned kind = stream_Full, uint64_t v = 0, unsigned hist_limit = 0);
 
-         bool Stream(iostream& s, uint64_t v = 0, int hist_limit = -1);
+         bool Stream(iostream& s, unsigned kind = stream_Full, uint64_t v = 0, unsigned hist_limit = 0);
 
          /** \brief Returns true if any node field was changed or removed/inserted
           * If specified, all childs will be checked */
          bool IsNodeChanged(bool withchilds = true);
 
-         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent);
+         /** \brief Save hierarchy with childs in xml node.
+          * mask select that is saved. Following values can be used
+          * xmlmask_Version - store version attributes
+          * xmlmask_History - write history (when available)
+          * xmlmask_NoChilds - excludes childs saving */
+         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask);
 
          uint64_t GetVersion() const { return fNodeVersion; }
 
@@ -255,6 +285,8 @@ namespace dabc {
 
          /** \brief Method used to create copy of hierarchy again */
          virtual void BuildHierarchy(HierarchyContainer* cont);
+
+         void BuildObjectsHierarchy(const Reference& top);
 
          Buffer& bindata() { return fBinData; }
    };
@@ -296,8 +328,13 @@ namespace dabc {
       RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
       const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
 
+      bool IsAnyFieldChanged() const { return GetObject() ? GetObject()->Fields().WasChanged() : false; }
+
       /** \brief Build full hierarchy of the objects structure, provided in reference */
       void Build(const std::string& topname, Reference top);
+
+      /** \brief Build objects hierarchy, referenced by top */
+      void BuildNew(Reference top);
 
       /** \brief Mark item as permanent - it will not be touched when update from other places will be done */
       void SetPermanent(bool on = true) { if (GetObject()) GetObject()->fPermanent = on; }
@@ -305,6 +342,10 @@ namespace dabc {
       /** \brief Reconstruct complete hierarchy, setting node/structure modifications fields correctly
        * \details source hierarchy can be modified to reuse fields inside */
       bool Update(Hierarchy& src);
+
+      /** \brief Duplicate hierarchy from the source.
+       *  Existing items are preserved */
+      bool Duplicate(const Hierarchy& src);
 
       /** \brief Update from objects structure */
       bool UpdateHierarchy(Reference top);
@@ -327,7 +368,7 @@ namespace dabc {
       bool HasActualRemoteHistory() const;
 
       /** Save hierarchy in binary form, relative to specified version */
-      dabc::Buffer SaveToBuffer(uint64_t version = 0);
+      dabc::Buffer SaveToBuffer(unsigned kind = stream_Full, uint64_t version = 0, unsigned hlimit = 0);
 
       /** Read hierarchy from buffer */
       bool ReadFromBuffer(const dabc::Buffer& buf);
@@ -335,11 +376,21 @@ namespace dabc {
       /** Apply modification to hierarchy, using stored binary data  */
       bool UpdateFromBuffer(const dabc::Buffer& buf);
 
-      /** \brief Store hierarchy in form of xml */
-      std::string SaveToXml(bool compact = false);
+      /** \brief Store hierarchy in form of xml
+       *  mask select that is saved. Following values are used
+          * xmlmask_Compact - use compact form of
+          * xmlmask_Version - store version attributes for all nodes
+          * xmlmask_TopVersion - append hierarchy version to the top node
+          * xmlmask_NameSpace - append artificial namespace to the top node
+          * xmlmask_History - write history (when available)
+          * xmlmask_NoChilds - excludes childs saving */
+      std::string SaveToXml(unsigned mask = 0);
 
+      /** \brief Returns actual version of hierarchy entry */
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }
 
+      /** \brief Change version of the item, only for advanced usage */
+      void SetVersion(uint64_t v) { if (GetObject()) GetObject()->SetVersion(v); }
 
       /** \brief If possible, returns buffer with binary data, which can be send as reply */
       Buffer GetBinaryData(uint64_t query_version = 0);
@@ -349,6 +400,9 @@ namespace dabc {
 
       /** \brief Analyzes result of request and returns buffer which can be send to remote */
       Buffer ApplyBinaryRequest(Command cmd);
+
+      /** \brief Fill binary header with item and master versions */
+      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, const std::string& mhash = 0);
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
@@ -360,6 +414,9 @@ namespace dabc {
       Buffer GetLocalImage(uint64_t version = 0);
       Command ProduceImageRequest();
       bool ApplyImageRequest(Command cmd);
+
+      /** Removes folder and its parents as long as no other childs are present */
+      bool RemoveEmptyFolders(const std::string& path);
    };
 
 

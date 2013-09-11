@@ -37,6 +37,7 @@
 #include "dabc_root/BinaryProducer.h"
 
 #include "dabc/Iterator.h"
+#include "dabc/Publisher.h"
 
 class TDabcTimer : public TTimer {
    public:
@@ -81,6 +82,7 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    fBatch = Cfg("batch", cmd).AsBool(true);
    fSyncTimer = Cfg("synctimer", cmd).AsBool(true);
    fCompression = Cfg("compress", cmd).AsInt(5);
+   fPrefix = Cfg("prefix", cmd).AsStr("ROOT");
 
    if (fBatch) gROOT->SetBatch(kTRUE);
 }
@@ -104,11 +106,15 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
    fProducer = new dabc_root::BinaryProducer("producer", fCompression);
 
-   // identify ourself as bin objects producer
    fHierarchy.Create("ROOT");
+   // identify ourself as bin objects producer
+   // fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
    InitializeHierarchy();
 
    if (fTimer==0) ActivateTimeout(0);
+
+   DOUT0("Calling Publish of ROOT hierarchy");
+   Publish(fHierarchy, fPrefix, &fHierarchyMutex);
 
    // if timer not installed, emulate activity in ROOT by regular timeouts
 }
@@ -143,7 +149,7 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
       if (cmd.GetBool("history")) {
          dabc::Buffer buf;
 
-         std::string itemname = cmd.GetStr("Item");
+         std::string itemname = cmd.GetStr("subitem");
 
 //         DOUT0("Request history for item %s", itemname.c_str());
 
@@ -165,9 +171,12 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
       if (fTimer==0) return ProcessGetBinary(cmd);
 
       dabc::LockGuard lock(fHierarchyMutex);
-
       fRootCmds.Push(cmd);
-
+      return dabc::cmd_postponed;
+   } else
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
+      dabc::LockGuard lock(fHierarchyMutex);
+      fRootCmds.Push(cmd);
       return dabc::cmd_postponed;
    }
 
@@ -393,7 +402,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
 
-   std::string itemname = cmd.GetStr("Item");
+   std::string itemname = cmd.GetStr("subitem");
 
    dabc::Buffer buf;
 
@@ -404,15 +413,25 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
       TObject* obj = (TObject*) ScanRootHierarchy(fRoot, itemname.c_str());
 
       if (obj==0) {
-         EOUT("Object for item %s not specified", itemname.c_str());
+         EOUT("Object for item %s not found", itemname.c_str());
          return dabc::cmd_false;
       }
 
       buf = fProducer->GetBinary(obj, cmd.GetBool("image", false));
    }
 
+   std::string mhash = fProducer->GetStreamerInfoHash();
+
+
+   {
+      dabc::LockGuard lock(fHierarchyMutex);
+
+      // here correct version number for item and master item will be filled
+      fHierarchy.FillBinHeader(itemname, buf, mhash);
+   }
+
    cmd.SetRawData(buf);
-   cmd.SetInt("MasterHash", fProducer->GetStreamerInfoHash());
+   cmd.SetStr("MasterHash", mhash); // not necessary in the near future
 
    return dabc::cmd_true;
 }
@@ -430,11 +449,12 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       DOUT3("Update ROOT structures");
       fRoot.Release();
       fRoot.Create("ROOT");
+      // fRoot.Field(dabc::prop_producer).SetStr(WorkerAddress());
 
       // this is fake element, which is need to be requested before first
       dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-      si.Field(dabc::prop_hash).SetInt(fProducer->GetStreamerInfoHash());
+      si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
 
       ScanRootHierarchy(fRoot);
 
@@ -442,10 +462,16 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       // DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
 
+
+      // DOUT0("Current ROOT hierarchy %p has producer %s", fRoot(), DBOOL(fRoot.HasField(dabc::prop_producer)));
+
+      // we lock mutex only at the moment when synchronize hierarchy with main
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.Update(fRoot);
 
-      // DOUT0("ROOT hierarchy \n%s", fHierarchy.SaveToXml(false, (uint64_t) -1).c_str());
+      // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));
+
+      // DOUT0("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml(2).c_str());
    }
 
    bool doagain(true);
@@ -453,7 +479,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
    while (doagain) {
 
-      if (cmd.IsName("GetBinary")) {
+      if (cmd.IsName("GetBinary") || cmd.IsName(dabc::CmdGetBinary::CmdName())) {
          cmd.Reply(ProcessGetBinary(cmd));
       } else
       if (!cmd.null()) {

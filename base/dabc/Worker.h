@@ -154,6 +154,7 @@ namespace dabc {
       protected:
          ThreadRef        fThread;                     ///< reference on the thread, once assigned remain whole time
          WorkerAddonRef   fAddon;                      ///< extension of worker for some special events
+         Reference        fPublisher;                  ///< reference on publisher, once found, remain until end of object live
 
          uint32_t         fWorkerId;
          int              fWorkerPriority;             ///< priority of events, submitted by worker to the thread
@@ -167,9 +168,6 @@ namespace dabc {
          CommandsQueue    fWorkerCommands;             ///< all kinds of commands, processed by the worker
 
          int              fWorkerCommandsLevel;      /** Number of process commands recursion */
-
-         Hierarchy        fWorkerPublishedHierarchy;  ///< hierarchy which is published by worker
-         std::string      fWorkerPublishedName;       ///< global name for published hierarchy
 
 
          virtual bool AskToDestroyByThread();
@@ -409,9 +407,27 @@ namespace dabc {
          /** Produces hierarchy of worker objects */
          virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
 
-         virtual bool Publish(Hierarchy& h, const std::string& path);
 
-         virtual bool Unpublish(Hierarchy& h, const std::string& path);
+         /** \brief Return reference on publisher.
+          * First time publisher is searched in objects hierarchy and reference
+          * stored in the internal structures.
+          * User can call CleanupPublisher to clean reference and unsubscribe/unpublish
+          * all registered structures.    */
+         Reference GetPublisher();
+
+         virtual bool Publish(const Hierarchy& h, const std::string& path, Mutex* m = 0);
+
+         virtual bool Unpublish(const Hierarchy& h, const std::string& path);
+
+         virtual bool Subscribe(const std::string& path);
+
+         virtual bool Unsubscribe(const std::string& path);
+
+         /** \brief Release reference on publisher and unsubscribe/unpublish all registered entries */
+         void CleanupPublisher();
+
+
+
 
       private:
 

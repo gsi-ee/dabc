@@ -443,6 +443,12 @@ void dabc::Module::BuildWorkerHierarchy(HierarchyContainer* cont)
    dabc::Worker::BuildWorkerHierarchy(cont);
 }
 
+void dabc::Module::BuildFieldsMap(RecordFieldsMap* cont)
+{
+   cont->Field(xmlNumInputs).SetInt(NumInputs());
+   cont->Field(xmlNumOutputs).SetInt(NumOutputs());
+}
+
 void dabc::Module::ObjectCleanup()
 {
    if (IsRunning()) DoStop();

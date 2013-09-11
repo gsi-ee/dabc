@@ -188,6 +188,13 @@ bool dabc::Object::IsLogging() const
    return GetFlag(flLogging);
 }
 
+bool dabc::Object::IsHidden() const
+{
+   LockGuard lock(fObjectMutex);
+   return GetFlag(flHidden);
+}
+
+
 void dabc::Object::SetLogging(bool on)
 {
    LockGuard lock(fObjectMutex);
@@ -1006,7 +1013,7 @@ bool dabc::Object::NameMatch(const std::string& name, const std::string& mask)
 
    if (separ!=std::string::npos) {
       do {
-
+        // FIXME!!!! code missing
 
 
 

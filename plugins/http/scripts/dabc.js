@@ -98,6 +98,8 @@ DABC.TopXmlNode = function(xmldoc)
 }
 
 
+// ============= start of DrawElement ================================= 
+
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
    this.version = new Number(0);    // check which version of element is drawn
@@ -105,18 +107,13 @@ DABC.DrawElement = function() {
    return this;
 }
 
-
-// indicates if element operates with simple text fields, 
-// which can be processed by SetValue() method
-DABC.DrawElement.prototype.simple = function() { return false; }
+//method called when item is activated (clicked)
+//each item can react by itself
+DABC.DrawElement.prototype.ClickItem = function() { return; }
 
 // method regularly called by the manager
 // it is responsibility of item perform any action
 DABC.DrawElement.prototype.RegularCheck = function() { return; }
-
-// method called when item is activated (clicked)
-// each item can react by itself
-DABC.DrawElement.prototype.ClickItem = function() { return; }
 
 
 DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
@@ -127,11 +124,6 @@ DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
       "<h2> CreateFrames for item " + this.itemname + " not implemented </h2>"+
       "</div>"; 
    $(topid).append(entryInfo);
-}
-
-DABC.DrawElement.prototype.SetValue = function(val) {
-   if (!val || (this.frameid.length==0)) return;
-   document.getElementById(this.frameid).innerHTML = "Value = " + val;
 }
 
 DABC.DrawElement.prototype.IsDrawn = function() {
@@ -157,25 +149,207 @@ DABC.DrawElement.prototype.Clear = function() {
 }
 
 
+//========== start of HistoryDrawElement
+
+DABC.HistoryDrawElement = function(_clname) {
+   DABC.DrawElement.call(this);
+
+   this.clname = _clname;
+   this.req = null;           // request to get raw data
+   this.xmlnode = null;       // xml node with current values 
+   this.xmlhistory = null;    // array with previous history
+   this.xmllimit = 0;         // maximum number of history entries
+   this.force = true;
+   
+   return this;
+}
+
+DABC.HistoryDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.HistoryDrawElement.prototype.EnableHistory = function(hlimit) {
+   this.xmllimit = hlimit;
+}
+
+DABC.HistoryDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+   
+   this.xmlnode = null;       // xml node with current values 
+   this.xmlhistory = null;    // array with previous history
+   this.xmllimit = 100;       // maximum number of history entries  
+   if (this.req) this.req.abort(); 
+   this.req = null;          // this is current request
+   this.force = true;
+}
+
+DABC.HistoryDrawElement.prototype.CreateFrames = function(topid, id) {
+}
+
+DABC.HistoryDrawElement.prototype.ClickItem = function() {
+   if (this.req != null) return; 
+
+   if (!this.IsDrawn()) 
+      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
+   this.force = true;
+   
+   this.RegularCheck();
+}
+
+DABC.HistoryDrawElement.prototype.RegularCheck = function() {
+
+   // no need to do something when req not completed
+   if (this.req!=null) return;
+ 
+   // do update when monitoring enabled
+   if ((this.version > 0) && !this.force) {
+      var chkbox = document.getElementById("monitoring");
+      if (!chkbox || !chkbox.checked) return;
+   }
+        
+   var url = "getitem?" + this.itemname;
+
+   // console.log("GetHistory current version = " + this.version);
+   
+   if (this.version>0) url += "&version=" + this.version;
+   if (this.xmllimit>0) url += "&history=" + this.xmllimit;
+   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+
+   this.req.send(null);
+
+   this.force = false;
+}
+
+DABC.HistoryDrawElement.prototype.ExtractField = function(name, kind, node) {
+   
+   if (!node) node = this.xmlnode;    
+   if (!node) return;
+
+   var val = node.getAttribute(name);
+   if (!val) return;
+   
+   if (kind=="number") return Number(val); 
+   if (kind=="time") {
+      return Number(val);
+//    var d  = new Date(val);
+//    return d.getTime();
+   }
+   
+   return val;
+}
+
+DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
+
+   // xml node must have attribute, which will be extracted
+   var val = this.ExtractField(name, kind, this.xmlnode);
+   if (!val) return;
+   
+   var arr = new Array();
+   arr.push(val);
+   
+   if (this.xmlhistory) 
+      for (var n=this.xmlhistory.length-1;n>=0;n--) {
+         var newval = this.ExtractField(name, kind, this.xmlhistory[n]);
+         if (newval) val = newval;
+         arr.push(val);
+      }
+
+   arr.reverse();
+   return arr;
+}
+
+
+DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
+   // in any case, request pointer will be reseted
+   // delete this.req;
+   this.req = null;
+   
+   if (arg==null) {
+      console.log("no xml response from server");
+      return;
+   }
+   
+   var top = DABC.TopXmlNode(arg);
+
+//   console.log("Get request callback " + top.getAttribute("dabc:version") + "  or " + top.getAttribute("version"));
+   
+   var new_version = Number(top.getAttribute("dabc:version"));
+   
+   // top.getAttribute("itemname")  // one could rechek itemname
+
+   console.log("Get history request callback version = " + new_version);
+
+   var modified = (this.version != new_version);
+
+   this.version = new_version;
+
+   // this is xml node with all fields
+   this.xmlnode = DABC.nextXmlNode(top.firstChild);
+
+   if (this.xmlnode == null) {
+      console.log("Did not found node with item attributes");
+      return;
+   }
+   
+   // this is node <history> 
+   var historynode = DABC.nextXmlNode(this.xmlnode.firstChild);
+   
+   if ((historynode!=null) && (this.xmllimit>0)) {
+  
+      // gap indicates that we could not get full history relative to provided version number
+      var gap = historynode.getAttribute("gap");
+      
+      // this is first node of kind <h value="abc" time="aaa"> 
+      var hnode = DABC.nextXmlNode(historynode.firstChild);
+   
+      var arr = new Array
+      while (hnode!=null) {
+         arr.push(hnode);
+         hnode = DABC.nextXmlNode(hnode.nextSibling);
+      }
+
+      // join both arrays with history entries
+      if ((this.xmlhistory == null) || (arr.length >= this.xmllimit) || (gap!=null)) {
+         this.xmlhistory = arr;
+      } else
+         if (arr.length>0) {
+            modified = true;
+            var total = this.xmlhistory.length + arr.length; 
+            if (total > this.xmllimit) 
+               this.xmlhistory.splice(0, total - this.xmllimit);
+
+            this.xmlhistory = this.xmlhistory.concat(arr);
+         }
+
+      console.log("History length = " + this.xmlhistory.length);
+   }
+   
+   if (modified) this.DrawHistoryElement();
+}
+
+
+DABC.HistoryDrawElement.prototype.DrawHistoryElement = function()
+{
+   // should be implemented in derived class
+   alert("HistoryDrawElement.DrawHistoryElement not implemented for item " + this.itemname);
+}
+
 // ======== end of DrawElement ======================
 
 // ======== start of GaugeDrawElement ======================
 
 DABC.GaugeDrawElement = function() {
-   DABC.DrawElement.call(this);
+   DABC.HistoryDrawElement.call(this, "gauge");
    this.gauge = 0;
 }
 
 // TODO: check how it works in different older browsers
-DABC.GaugeDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.GaugeDrawElement.prototype.simple = function() { return true; }
+DABC.GaugeDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
 DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
    this.frameid = "dabc_gauge_" + id;
    this.min = 0;
-   this.max = 10;
+   this.max = 1;
    this.gauge = null;
    
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
@@ -183,8 +357,9 @@ DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
    $(topid).append(entryInfo);
 }
 
-DABC.GaugeDrawElement.prototype.SetValue = function(val) {
-   if (!val) return;
+DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
+   
+   val = this.ExtractField("value", "number");
 
    if (val > this.max) {
       if (this.gauge!=null) {
@@ -243,12 +418,10 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
 //======== start of LogDrawElement ======================
 
 DABC.LogDrawElement = function() {
-   DABC.DrawElement.call(this);
+   DABC.HistoryDrawElement.call(this,"log");
 }
 
-DABC.LogDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.LogDrawElement.prototype.simple = function() { return true; }
+DABC.LogDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
 DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
 
@@ -259,7 +432,10 @@ DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
    $(topid).append(entryInfo);
 }
 
-DABC.LogDrawElement.prototype.SetValue = function(val) {
+DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
+   
+   val = this.ExtractField("value");
+   
    var element = $("#" + this.frameid);
    element.empty();
    element.append(this.itemname + "<br>");
@@ -403,21 +579,10 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    var top = this.TopNode();
    
    if (!top) { 
-      $("#dabc_draw").append("<br> XML top node not found");
+      // console.log("XML top node not found");
       return;
    }
-
-   var top_version = top.getAttribute("dabc:version");
-
-   if (!top_version) {
-      $("#dabc_draw").append("<br> dabc:version not found");
-      return;
-   } else {
-      this.version = top_version;
-      // $("#dabc_draw").append("<br> found dabc:version " + this.version);
-      // $("#dabc_draw").append("<br> found node " + top.nodeName);
-   }
-   
+      
    this.createNode(0, -1, top.firstChild, "");
 
    var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
@@ -518,9 +683,9 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = "getbinary?" + this.itemname;
+   var url = "getbin?" + this.itemname;
    
-   if (this.version>0) url += "&ver=" + this.version;
+   if (this.version>0) url += "&version=" + this.version;
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
@@ -535,7 +700,7 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    // delete this.req;
    this.req = null;
    
-   console.log("Get response from server " + arg.length);
+   // console.log("Get response from server " + arg.length);
    
    var hdr = DABC.UnpackBinaryHeader(arg);
    
@@ -558,9 +723,6 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    this.version = hdr.version;
 
    console.log("Data length is " + this.data.length);
-
-   
-
    
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", size = " + this.data.length);
@@ -607,177 +769,15 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
 }
 
 
-// ========== start of HistoryDrawElement
-
-DABC.HistoryDrawElement = function(_clname) {
-   DABC.DrawElement.call(this);
-   this.clname = _clname;
-   this.req = null;           // request to get raw data
-   this.xmlnode = null;       // xml node with current values 
-   this.xmlhistory = null;    // array with previous history
-   this.xmllimit = 100;       // maximum number of history entries
-   this.force = true;
-}
-
-
-DABC.HistoryDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-
-DABC.HistoryDrawElement.prototype.Clear = function() {
-   DABC.DrawElement.prototype.Clear.call(this);
-   this.xmlnode = null;       // xml node with current values 
-   this.xmlhistory = null;    // array with previous history
-   this.xmllimit = 100;       // maximum number of history entries  
-   if (this.req) this.req.abort(); 
-   this.req = null;          // this is current request
-   this.force = true;
-}
-
-DABC.HistoryDrawElement.prototype.CreateFrames = function(topid, id) {
-}
-
-DABC.HistoryDrawElement.prototype.ClickItem = function() {
-   if (this.req != null) return; 
-
-   if (!this.IsDrawn()) 
-      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
-   this.force = true;
-   
-   this.RegularCheck();
-}
-
-DABC.HistoryDrawElement.prototype.RegularCheck = function() {
-
-   // no need to do something when req not completed
-   if (this.req!=null) return;
- 
-   // do update when monitoring enabled
-   if ((this.version > 0) && !this.force) {
-      var chkbox = document.getElementById("monitoring");
-      if (!chkbox || !chkbox.checked) return;
-   }
-        
-   var url = "gethistory?" + this.itemname;
-
-   console.log("GetHistory current version = " + this.version);
-   
-   if (this.version>0) url += "&ver=" + this.version;
-   if (this.xmllimit>0) url += "&limit=" + this.xmllimit;
-   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
-
-   this.req.send(null);
-
-   this.force = false;
-}
-
-DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
-   if (!this.xmlnode) return;
-   
-   // xml node must have attribute, which will be extracted
-   var val = this.xmlnode.getAttribute(name);
-   if (!val) return;
-   
-   var arr = new Array();
-   if (kind=="number") arr.push(Number(val)); else
-   if (kind=="time") {
-      arr.push(Number(val));
-//      var d  = new Date(val);
-//      arr.push(d.getTime());
-//      console.log("Adding time " + val);
-   } else {
-      arr.push(val);
-   }
-   
-   if (this.xmlhistory) 
-      for (var n=this.xmlhistory.length-1;n>=0;n--) {
-         var newval = this.xmlhistory[n].getAttribute(name);
-         if (newval && (newval != "dabc_del")) val = newval;
-         if (kind=="number") arr.push(Number(val)); else
-         if (kind=="time") {
-            arr.push(Number(val));
-            //var d  = new Date(val);
-            //arr.push(d.getTime()); 
-         } else {
-            arr.push(val);
-         }
-      }
-
-   arr.reverse();
-   return arr;
-}
-
-
-DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
-   // in any case, request pointer will be reseted
-   // delete this.req;
-   this.req = null;
-   
-   if (arg==null) {
-      console.log("no xml response from server");
-      return;
-   }
-   
-   var top = DABC.TopXmlNode(arg);
-
-//   console.log("Get request callback " + top.getAttribute("dabc:version") + "  or " + top.getAttribute("version"));
-   
-   var new_version = Number(top.getAttribute("dabc:version"));
-
-   console.log("Get history request callback version = " + new_version);
-
-   var modified = (this.version != new_version);
-
-   this.version = new_version;
-
-   // gap indicates that we could not get full history relative to provided version number
-   var gap = top.getAttribute("gap");
-   
-   this.xmlnode = DABC.nextXmlNode(top.firstChild);
-   
-   var hnode = DABC.nextXmlNode(this.xmlnode.nextSibling);
-   
-   var arr = new Array
-   while (hnode!=null) {
-      arr.push(hnode);
-      hnode = DABC.nextXmlNode(hnode.nextSibling);
-   }
-
-   // join both arrays with history entries
-   if ((this.xmlhistory == null) || (arr.length >= this.xmllimit) || (gap!=null)) {
-      this.xmlhistory = arr;
-   } else
-   if (arr.length>0) {
-      modified = true;
-      var total = this.xmlhistory.length + arr.length; 
-      if (total > this.xmllimit) 
-         this.xmlhistory.splice(0, total - this.xmllimit);
-      
-      this.xmlhistory = this.xmlhistory.concat(arr);
-   }
-
-   console.log("History length = " + this.xmlhistory.length);
-   
-   if (modified) this.DrawHistoryElement();
-}
-
-
-DABC.HistoryDrawElement.prototype.DrawHistoryElement = function()
-{
-   // should be implemented in derived class
-   alert("HistoryDrawElement.DrawHistoryElement not implemented");
-}
 
 //========== start of LogHistoryDrawElement
 
 DABC.LogHistoryDrawElement = function() {
    DABC.HistoryDrawElement.call(this, "log");
+   this.EnableHistory(100);
 }
 
 DABC.LogHistoryDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
-
-DABC.LogHistoryDrawElement.prototype.Clear = function() {
-   DABC.HistoryDrawElement.prototype.Clear.call(this);
-}
 
 DABC.LogHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 
@@ -810,6 +810,7 @@ DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
 DABC.RateHistoryDrawElement = function() {
    DABC.HistoryDrawElement.call(this, "rate");
    this.root_painter = null;  // root painter, required for draw
+   this.EnableHistory(100);
 }
 
 DABC.RateHistoryDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
@@ -859,7 +860,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
 //   console.log("Extract series");
    
-   var x = this.ExtractSeries("dabc:time", "time");
+   var x = this.ExtractSeries("time", "time");
    var y = this.ExtractSeries("value", "number");
    
 //   if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
@@ -1190,9 +1191,9 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    
    // $("#dabc_draw").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
-   var url = "getbinary?" + this.itemname;
+   var url = "getbin?" + this.itemname;
    
-   if (this.version>0) url += "&ver=" + this.version;
+   if (this.version>0) url += "&version=" + this.version;
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
@@ -1399,43 +1400,6 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
    return xhr;
 }
 
-// This method used to update all simple fields together
-DABC.Manager.prototype.UpdateSimpleFields = function() {
-   if (this.empty()) return;
-
-   var url = "chartreq.htm?";
-   var cnt = 0;
-
-   for (var i in this.arr) {
-      if (!this.arr[i].simple()) continue;
-      if (cnt++>0) url+="&";
-      url += this.arr[i].itemname;
-   }
-
-   if (cnt==0) return;
-
-   var req = this.NewRequest();
-   if (!req) return;
-
-   // $("#dabc_draw").append("<br> Send request " + url);
-
-   req.open("POST", url, false);
-   req.send();
-
-   var repl = JSON && JSON.parse(req.responseText) || $.parseJSON(req.responseText);
-
-   // $("#dabc_draw").append("<br> Get reply " + req.responseText);
-
-   req = 0;
-   if (!repl) return;
-
-   for (var indx in repl) {
-      var elem = this.FindItem(repl[indx].name);
-      // $("#dabc_draw").append("<br> Check reply for " + repl[indx].name);
-
-      if (elem) elem.SetValue(repl[indx].value);
-   }
-}
 
 DABC.Manager.prototype.UpdateComplexFields = function() {
    if (this.empty()) return;
@@ -1445,7 +1409,7 @@ DABC.Manager.prototype.UpdateComplexFields = function() {
 }
 
 DABC.Manager.prototype.UpdateAll = function() {
-   this.UpdateSimpleFields();
+   
    this.UpdateComplexFields();
 }
 
@@ -1497,7 +1461,6 @@ DABC.Manager.prototype.display = function(itemname) {
         elem = new DABC.GaugeDrawElement();
         elem.itemname = itemname;
         elem.CreateFrames(this.NextCell(), this.cnt++);
-        elem.SetValue(xmlnode.getAttribute("value"));
         this.arr.push(elem);
         return;
       } else {
@@ -1514,7 +1477,6 @@ DABC.Manager.prototype.display = function(itemname) {
          elem = new DABC.LogDrawElement();
          elem.itemname = itemname;
          elem.CreateFrames(this.NextCell(), this.cnt++);
-         elem.SetValue(xmlnode.getAttribute("value"));
          this.arr.push(elem);
          return;
       } else {

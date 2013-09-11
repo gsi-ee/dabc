@@ -23,7 +23,7 @@
 #include "dabc/Hierarchy.h"
 #include "dabc/Manager.h"
 #include "dabc/Url.h"
-
+#include "dabc/Publisher.h"
 
 static int begin_request_handler(struct mg_connection *conn)
 {
@@ -212,7 +212,7 @@ int http::Server::begin_request(struct mg_connection *conn)
       std::string content_type = "text/html";
       content = open_file(0, "httpsys/files/main.htm");
    } else
-   if (strstr(request_info->uri,"/h.xml")!=0) {
+   if (strstr(request_info->uri,"/oldh.xml")!=0) {
       content_type = "text/xml";
 
       dabc::LockGuard lock(fHierarchyMutex);
@@ -220,8 +220,21 @@ int http::Server::begin_request(struct mg_connection *conn)
       content =
             std::string("<?xml version=\"1.0\"?>\n") +
             std::string("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\">\n")+
-            fHierarchy.SaveToXml(false) +
+            fHierarchy.SaveToXml() +
             std::string("</dabc>\n");
+   } else
+   if (strstr(request_info->uri,"/h.xml")!=0) {
+      content_type = "text/xml";
+
+      std::string xmlcode;
+
+      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(xmlcode))
+         content = std::string("<?xml version=\"1.0\"?>\n") +
+                   std::string("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\">\n")+
+                   xmlcode +
+                   std::string("</dabc>\n");
+      else
+         iserror = true;
    } else
    if (strstr(request_info->uri, "chartreq.htm")!=0) {
       content_type = "text/plain";
@@ -235,6 +248,11 @@ int http::Server::begin_request(struct mg_connection *conn)
 
       iserror = true;
    } else
+   if (strstr(request_info->uri, "getbin")!=0) {
+      if (ProcessGetBin(conn, request_info->query_string)) return 1;
+
+      iserror = true;
+   } else
    if (strstr(request_info->uri, "gethistory")!=0) {
       if (ProcessGetHistory(conn, request_info->query_string)) return 1;
 
@@ -242,6 +260,10 @@ int http::Server::begin_request(struct mg_connection *conn)
    } else
    if (strstr(request_info->uri, "getimage.png")!=0) {
       if (ProcessGetImage(conn, request_info->query_string)) return 1;
+      iserror = true;
+   } else
+   if (strstr(request_info->uri, "getitem")!=0) {
+      if (ProcessGetItem(conn, request_info->query_string)) return 1;
       iserror = true;
    } else {
       // let load some files
@@ -546,65 +568,27 @@ int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *quer
 
 int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
 {
-   dabc::Url url(std::string("getimage.png?") + (query ? query : ""));
+   dabc::Url url(std::string("getbin?") + (query ? query : ""));
+
+   std::string itemname;
+   uint64_t version(0);
 
    if (!url.IsValid()) {
       EOUT("Cannot decode query url %s", query);
-      return 0;
-   }
-
-   std::string itemname = url.GetOptionsPart(0);
-   if (itemname.empty()) {
-      EOUT("Item is not specified in gethistory request");
-      return 0;
-   }
-
-   std::string sver = url.GetOptionStr("ver");
-   long unsigned query_version(0);
-   if (sver.length()>0)
-      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
-
-   int check_requester_counter = 0;
-   dabc::Buffer reply;
-   dabc::Hierarchy item;
-   dabc::Command cmd;
-
-   while (check_requester_counter < 100) {
-
-      if (check_requester_counter++>0) WorkerSleep(0.05);
-
-      dabc::LockGuard lock(fHierarchyMutex);
-      item = fHierarchy.FindChild(itemname.c_str());
-
-      if (item.null()) {
-         EOUT("Wrong request for non-existing item %s", itemname.c_str());
-         break;
+   } else {
+      itemname = url.GetOptionsPart(0);
+      if (url.HasOption("version")) {
+         int v = url.GetOptionInt("version", 0);
+         if (v>0) version = (unsigned) v;
       }
-
-      if (item.HasField("#doingreq")) { item.Release(); continue; }
-
-      // process request locally
-      reply = item.GetLocalImage(query_version);
-      if (!reply.null()) break;
-
-      cmd = item.ProduceImageRequest();
-      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
-
-      break;
    }
 
-   if (!cmd.null()) {
-      // try to execute command, which should obtain request
-      dabc::mgr.Execute(cmd, 5.);
+   dabc::Buffer replybuf;
 
-      dabc::LockGuard lock(fHierarchyMutex);
-      item.RemoveField("#doingreq");
+   if (!itemname.empty())
+      replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
 
-      if (item.ApplyImageRequest(cmd))
-         reply = item.GetLocalImage(query_version);
-   }
-
-   if (reply.null()) {
+   if (replybuf.null()) {
       EOUT("IMAGE REQUEST FAILS %s", itemname.c_str());
 
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
@@ -614,7 +598,7 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
 
       // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
 
-      unsigned image_size = reply.GetTotalSize() - sizeof(dabc::BinDataHeader);
+      unsigned image_size = replybuf.GetTotalSize() - sizeof(dabc::BinDataHeader);
 
       mg_printf(conn,
                  "HTTP/1.1 200 OK\r\n"
@@ -622,8 +606,115 @@ int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
                  "Content-Length: %u\r\n"
                  "Connection: keep-alive\r\n"
                   "\r\n", image_size);
-      mg_write(conn, ((char*) reply.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
+      mg_write(conn, ((char*) replybuf.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
    }
+
+   return 1;
+}
+
+
+int http::Server::ProcessGetItem(struct mg_connection* conn, const char *query)
+{
+   dabc::Url url(std::string("getitem?") + (query ? query : ""));
+
+   std::string itemname;
+   unsigned hlimit(0);
+   uint64_t version(0);
+
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+   } else {
+      itemname = url.GetOptionsPart(0);
+      if (itemname.empty()) {
+         EOUT("Item is not specified in getitem request");
+      }
+      if (url.HasOption("history")) {
+         int hist = url.GetOptionInt("history", 0);
+         if (hist>0) hlimit = (unsigned) hist;
+      }
+      if (url.HasOption("version")) {
+         int v = url.GetOptionInt("version", 0);
+         if (v>0) version = (unsigned) v;
+      }
+
+   }
+
+   DOUT0("HLIMIT = %u query = %s", hlimit, query);
+
+   std::string replybuf;
+
+   if (!itemname.empty()) {
+      dabc::Hierarchy res;
+
+      res = dabc::PublisherRef(GetPublisher()).Get(itemname, version, hlimit);
+
+      if (!res.null()) {
+         // result is only item fields, we need to decorate it with some more attributes
+
+         replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n",itemname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
+
+         replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
+         replybuf += "</Reply>";
+         // DOUT0("getitem %s\n%s", itemname.c_str(), replybuf.c_str());
+      }
+   }
+
+   if (replybuf.empty()) {
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: close\r\n\r\n");
+   } else {
+
+      mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/xml\r\n"
+            "Content-Length: %u\r\n"
+            "Connection: keep-alive\r\n"
+            "\r\n", (unsigned) replybuf.length());
+      mg_write(conn, replybuf.c_str(), (size_t) replybuf.length());
+   }
+
+   return 1;
+}
+
+
+int http::Server::ProcessGetBin(struct mg_connection* conn, const char *query)
+{
+   dabc::Url url(std::string("getbin?") + (query ? query : ""));
+
+   std::string itemname;
+   uint64_t version(0);
+
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+   } else {
+      itemname = url.GetOptionsPart(0);
+      if (url.HasOption("version")) {
+         int v = url.GetOptionInt("version", 0);
+         if (v>0) version = (unsigned) v;
+      }
+   }
+
+   dabc::Buffer replybuf;
+
+   if (!itemname.empty())
+      replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
+
+   if (replybuf.null()) {
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: close\r\n\r\n");
+   } else {
+
+      mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/x-binary\r\n"
+            "Content-Length: %u\r\n"
+            "Connection: keep-alive\r\n"
+            "\r\n", (unsigned) replybuf.GetTotalSize());
+      mg_write(conn, replybuf.SegmentPtr(), (size_t) replybuf.GetTotalSize());
+   }
+
    return 1;
 }
 

@@ -140,8 +140,8 @@ bool dabc::memstream::read(void* tgt, uint64_t len)
 
 dabc::RecordField::RecordField() :
    fKind(kind_none),
-   fReadonly(false),
-   fModified(false)
+   fModified(false),
+   fTouched(false)
 {
 }
 
@@ -154,8 +154,8 @@ bool dabc::RecordField::cannot_modify()
 dabc::RecordField::RecordField(const RecordField& src)
 {
    fKind = kind_none;
-   fReadonly = false; // readonly also not copied
    fModified = false;
+   fTouched = false;
 
    switch (src.fKind) {
       case kind_none: break;
@@ -235,6 +235,7 @@ bool dabc::RecordField::Stream(iostream& s)
       s.read_uint32(storekind);
       sz = ((uint64_t) storesz) * 8;
       // storeversion = storekind >> 24;
+
 
       fKind = (ValueKind) (storekind & 0xffffff);
       switch (fKind) {
@@ -750,7 +751,7 @@ bool dabc::RecordField::SetUInt(uint64_t v)
 {
    if (cannot_modify()) return false;
 
-   if ((fKind == kind_uint) &&  (valueUInt == v)) return modified(false);
+   if ((fKind == kind_uint) && (valueUInt == v)) return modified(false);
 
    release();
    fKind = kind_uint;
@@ -1090,16 +1091,38 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
       }
 
    } else {
+      // depending on nameprefix argument, two strategy are followed
+      // if nameprefix.empty(),  we need to detect changed, removed or new fields
+      // at the end full list should be exactly to that we try to read from the stream
+      // if not nameprefix.empty(), we need just to detect if fields with provided prefix are changed,
+      // all other fields can remain as is
+
       s.read_uint32(storesz);
       sz = ((uint64_t) storesz)*8;
       s.read_uint32(storenum);
       // storevers = storenum >> 24;
       storenum = storenum & 0xffffff;
+
+      // first clear touch flags
+      for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
+         iter->second.fTouched = false;
+
       for (uint32_t n=0;n<storenum;n++) {
          std::string name;
          s.read_str(name);
-         fMap[name].Stream(s);
+         RecordField& fld = fMap[name];
+         fld.Stream(s);
+         fld.fTouched = true;
       }
+
+      FieldsMap::iterator iter = fMap.begin();
+      // now we should remove all fields, which were not touched
+      while (iter!=fMap.end()) {
+         if (iter->second.fTouched) { iter++; continue; }
+         if (!nameprefix.empty() && (iter->first.find(nameprefix) != 0)) { iter++; continue; }
+         fMap.erase(iter++);
+      }
+
    }
 
    return s.verify_size(pos, sz);

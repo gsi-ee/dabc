@@ -53,7 +53,7 @@ namespace dabc_root {
 
          dabc::Buffer GetStreamerInfoBinary();
 
-         int GetStreamerInfoHash() const { return fSinfoSize; }
+         std::string GetStreamerInfoHash() const;
 
          dabc::Buffer GetBinary(TObject* obj, bool asimage = false);
    };

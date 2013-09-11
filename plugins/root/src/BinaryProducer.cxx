@@ -300,4 +300,9 @@ dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
    return CreateBindData(sbuf);
 }
 
+std::string dabc_root::BinaryProducer::GetStreamerInfoHash() const
+{
+   return dabc::format("%d", fSinfoSize);
+}
+
 

@@ -60,7 +60,7 @@ dabc::CommandContainer::~CommandContainer()
    do {
       field = Fields().FindFieldWichStarts("##REF##");
       if (!field.empty()) {
-         EOUT("Reference %s not cleared correctly", field.c_str());
+         EOUT("CMD:%s Reference %s not cleared correctly", GetName(), field.c_str());
 
          std::string value = Fields().Field(field).AsStr();
          dabc::Command::MakeRef(value).Release();

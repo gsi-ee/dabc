@@ -229,7 +229,7 @@ dabc::Reference dabc::Reference::GetChild(unsigned n) const
    return GetObject() ? GetObject()->GetChildRef(n) : Reference();
 }
 
-bool dabc::Reference::GetAllChildRef(ReferencesVector* vect)
+bool dabc::Reference::GetAllChildRef(ReferencesVector* vect) const
 {
    if ((GetObject()==0) || (vect==0)) return false;
    return GetObject()->GetAllChildRef(vect);

@@ -133,6 +133,8 @@ namespace dabc {
          /** \brief Fill application objects hierarchy */
          virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
 
+         virtual void BuildFieldsMap(RecordFieldsMap* cont);
+
       public:
 
          ApplicationBase();

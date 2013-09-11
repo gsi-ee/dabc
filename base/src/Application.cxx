@@ -383,6 +383,12 @@ void dabc::ApplicationBase::BuildWorkerHierarchy(HierarchyContainer* cont)
    dabc::Worker::BuildWorkerHierarchy(cont);
 }
 
+void dabc::ApplicationBase::BuildFieldsMap(RecordFieldsMap* cont)
+{
+   cont->Field(dabc::prop_kind).SetStr("DABC.Application");
+}
+
+
 // ==============================================================
 
 
@@ -594,10 +600,10 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
       std::string xml2 = h.SaveToXml();
       DOUT0("Second xml len %u:\n%s", (unsigned) xml2.length(), xml2.c_str());
 
-      dabc::Buffer diff1 = h.SaveToBuffer(v1+1);
+      dabc::Buffer diff1 = h.SaveToBuffer(dabc::stream_Full, v1+1);
       DOUT0("DIFF1 ver %u size %u", (unsigned) v1+1, (unsigned)diff1.GetTotalSize());
 
-      dabc::Buffer diff2 = h.SaveToBuffer(v2+1);
+      dabc::Buffer diff2 = h.SaveToBuffer(dabc::stream_Full, v2+1);
       DOUT0("DIFF2 ver %u size %u", (unsigned) v2+1, (unsigned)diff2.GetTotalSize());
 
       dabc::Hierarchy hrem;

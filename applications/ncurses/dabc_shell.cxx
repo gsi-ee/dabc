@@ -33,6 +33,8 @@ bool ConnectNode(const char* nodename)
    // ensure that all submitted events are processed
    dabc::mgr.SyncWorker();
 
+   dabc::mgr.CreatePublisher();
+
    dabc::mgr()->CreateControl(false);
 
    fNodeName = std::string("dabc://") + nodename;

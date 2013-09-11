@@ -33,8 +33,13 @@
 
 void dabc::SocketFactory::Initialize()
 {
+   std::string id = dabc::SocketThread::DefineHostName() + dabc::format("_pid%d", (int) getpid());
+
+   DOUT0("dabc::SocketFactory::Initialize Setting local id %s", id.c_str());
+
    // when socket factory is initialized, use host name for local address initialization
-   dabc::mgr.SetLocalHostId(dabc::SocketThread::DefineHostName() + dabc::format("_pid%d", (int) getpid()));
+   dabc::mgr.SetLocalId(id);
+   dabc::mgr.SetLocalAddress(id);
 }
 
 
@@ -60,10 +65,11 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          addon->SetDeliverEventsToWorker(true);
       } else {
          mgrid += dabc::format("_pid%d", (int) getpid());
+         dabc::mgr.SetLocalId(mgrid);
       }
 
       DOUT1("Start command channel with id %s", mgrid.c_str());
-      dabc::mgr.SetLocalHostId(mgrid);
+      dabc::mgr.SetLocalAddress(mgrid);
 
       return new SocketCommandChannel(objname, addon, cmd);
    }
