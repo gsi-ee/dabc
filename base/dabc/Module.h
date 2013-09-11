@@ -110,8 +110,6 @@ namespace dabc {
 
          virtual bool Find(ConfigIO &cfg);
 
-         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
-
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
 
          /** \brief Starts execution of the module code */

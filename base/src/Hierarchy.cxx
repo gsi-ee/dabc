@@ -572,13 +572,6 @@ std::string dabc::HierarchyContainer::ItemName()
    return res;
 }
 
-void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
-{
-   cont->Fields().CopyFrom(Fields());
-
-   dabc::RecordContainer::BuildHierarchy(cont);
-}
-
 void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
 {
 
@@ -771,14 +764,6 @@ void dabc::Hierarchy::BuildNew(Reference top)
 }
 
 
-void dabc::Hierarchy::Build(const std::string& topname, Reference top)
-{
-   if (null() && !topname.empty()) Create(topname);
-
-   if (!top.null() && !null())
-      top()->BuildHierarchy(GetObject());
-}
-
 bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 {
    if (src.null()) {
@@ -813,26 +798,6 @@ bool dabc::Hierarchy::Duplicate(const Hierarchy& src)
    return true;
 }
 
-
-
-bool dabc::Hierarchy::UpdateHierarchy(Reference top)
-{
-   if (null()) {
-      Build(top.GetName(), top);
-      return true;
-   }
-
-   if (top.null()) {
-      EOUT("Objects structure must be provided");
-      return false;
-   }
-
-   dabc::Hierarchy src;
-
-   src.Build(top.GetName(), top);
-
-   return Update(src);
-}
 
 void dabc::Hierarchy::EnableHistory(unsigned length, bool withchilds)
 {
@@ -931,8 +896,6 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf)
 }
 
 
-
-
 std::string dabc::Hierarchy::SaveToXml(unsigned mask)
 {
    XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, mask);
@@ -953,7 +916,6 @@ std::string dabc::Hierarchy::SaveToXml(unsigned mask)
 
    return res;
 }
-
 
 void dabc::Hierarchy::Create(const std::string& name)
 {
@@ -981,104 +943,6 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster()
    return GetParent()->FindChildRef(masteritem.c_str());
 }
 
-
-dabc::Buffer dabc::Hierarchy::GetBinaryData(uint64_t query_version)
-{
-   if (null()) return dabc::Buffer();
-
-   dabc::Hierarchy master = FindMaster();
-
-   // take data under lock that we are sure - nothing change for me
-   uint64_t item_version = GetVersion();
-   uint64_t master_version(0);
-
-   if (!master.null()) {
-      master_version = master.GetVersion();
-   }
-
-   Buffer& bindata = GetObject()->bindata();
-
-   dabc::BinDataHeader* bindatahdr = 0;
-
-   if (!bindata.null())
-      bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
-
-   bool can_reply = (bindatahdr!=0) && (item_version==bindatahdr->version) && (query_version<=item_version);
-
-   if (!can_reply) return dabc::Buffer();
-
-   if ((query_version>0) && (query_version==bindatahdr->version)) {
-      dabc::BinDataHeader dummyhdr;
-      dummyhdr.reset();
-      dummyhdr.version = bindatahdr->version;
-      dummyhdr.master_version = master_version;
-
-      // create temporary buffer with header only indicating that version is not changed
-      return dabc::Buffer::CreateBuffer(&dummyhdr, sizeof(dummyhdr), false, true);
-   }
-
-   bindatahdr->master_version = master_version;
-   return bindata;
-}
-
-
-dabc::Command dabc::Hierarchy::ProduceBinaryRequest()
-{
-   if (null()) return 0;
-
-   std::string request_name;
-   std::string producer_name = FindBinaryProducer(request_name);
-
-   DOUT0("ProduceBinaryRequest request_name %s producer_name %s", request_name.c_str(), producer_name.c_str());
-
-   if (request_name.empty()) return 0;
-
-   dabc::Command cmd("GetBinary");
-   cmd.SetReceiver(producer_name);
-   cmd.SetStr("subitem", request_name);
-
-   return cmd;
-}
-
-dabc::Buffer dabc::Hierarchy::ApplyBinaryRequest(Command cmd)
-{
-   if (null() || (cmd.GetResult() != cmd_true)) return 0;
-
-   Buffer bindata = cmd.GetRawData();
-   if (bindata.null()) return 0;
-
-   uint64_t item_version = GetVersion();
-
-   dabc::BinDataHeader* bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
-   bindatahdr->version = item_version;
-
-   GetObject()->bindata() = bindata;
-
-   dabc::Hierarchy master = FindMaster();
-
-   uint64_t master_version = master.GetVersion();
-
-   //DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
-
-   // master hash can let us know if something changed in the master
-   std::string masterhash = cmd.GetStr("MasterHash");
-
-   if (!master.null() && !masterhash.empty() && (master.Field(dabc::prop_hash).AsStr()!=masterhash)) {
-
-      master()->fNodeChanged = true;
-
-      master()->MarkChangedItems();
-
-      // DOUT0("MASTER VERSION WAS %u NOW %u", (unsigned) master_version, (unsigned) master.GetVersion());
-
-      master_version = master.GetVersion();
-      master.Field(dabc::prop_hash).SetStr(masterhash);
-   }
-
-   bindatahdr->master_version = master_version;
-
-   return bindata;
-}
 
 bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, const std::string& mhash)
 {
@@ -1128,155 +992,6 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
    }
 
    return producer_name;
-}
-
-
-dabc::Command dabc::Hierarchy::ProduceHistoryRequest()
-{
-   // STEP1. Create request which can be send to remote
-
-   if (null()) return 0;
-
-   int history_size = Field(dabc::prop_history).AsInt(0);
-
-   if (history_size<=0) return 0;
-
-   std::string producer_name, request_name;
-
-   producer_name = FindBinaryProducer(request_name);
-
-   if (producer_name.empty() && request_name.empty()) return 0;
-
-   if (GetObject()->fHist.null()) {
-//      DOUT0("Allocate history %u for the object %p", history_size, GetObject());
-      GetObject()->fHist.Allocate(history_size);
-   }
-
-   dabc::Command cmd("GetBinary");
-   cmd.SetStr("subitem", request_name);
-   cmd.SetBool("history", true); // indicate that we are requesting history
-   cmd.SetInt("limit", history_size);
-   cmd.SetUInt("version", GetObject()->fHist()->fRemoteReqVersion);
-   cmd.SetReceiver(producer_name);
-
-   return cmd;
-}
-
-dabc::Buffer dabc::Hierarchy::ExecuteHistoryRequest(Command cmd)
-{
-   // STEP2. Process request in the structure, which really records history
-
-   if (null()) return 0;
-
-   unsigned ver = cmd.GetUInt("version");
-   int limit = cmd.GetInt("limit");
-
-   dabc::Buffer buf = GetObject()->RequestHistory(ver, limit);
-
-   if (!buf.null()) cmd.SetUInt("version", GetVersion());
-
-   return buf;
-}
-
-
-bool dabc::Hierarchy::ApplyHistoryRequest(Command cmd)
-{
-   // STEP3. Unfold reply from remote and reproduce history recording here
-
-   if (cmd.GetResult() != cmd_true) {
-      EOUT("Command executed not correctly");
-      return false;
-   }
-
-   if (null() || GetObject()->fHist.null()) {
-      EOUT("History object missing");
-      return false;
-   }
-
-//   DOUT0("STEP3 - analyze reply");
-
-   dabc::Buffer buf = cmd.GetRawData();
-
-   if (buf.null()) { EOUT("No raw data in history reply"); return false; }
-
-   dabc::Hierarchy hreq;
-   if (!hreq.ReadFromBuffer(buf)) {
-      EOUT("Fail read hrequest from binary buffer");
-      return false;
-   }
-
-   RecordFieldsMap& src_fields = hreq.GetObject()->Fields();
-
-   RecordFieldsMap& tgt_fields = GetObject()->Fields();
-
-   tgt_fields.MoveFrom(src_fields);
-
-   // this is all about history
-   // we are adding history with previous number while
-   if (!hreq()->fHist.null())  {
-      RecordFieldsMap* entry = 0;
-
-//      DOUT0("Object %p capacity %u", GetObject(), GetObject()->fHist.Capacity());
-
-      // if request was not able to deliver all items up to specified version,
-      // we need to remove all previous items, while history will not be correct
-      if (!hreq()->fHist()->fCrossBoundary)
-         GetObject()->ClearHistoryEntries();
-
-//     DOUT0("SRC num entries %u TGT numentries %u TGT capacity %u",
-//        hreq()->fHist.Size(), GetObject()->fHist.Size(), GetObject()->fHist.Capacity());
-
-      while ((entry = hreq()->fHist()->TakeNext())!=0)
-         GetObject()->AddHistory(entry);
-   }
-
-   GetObject()->fNodeChanged = true;
-   GetObject()->MarkChangedItems();
-
-   // remember when reply comes back
-   GetObject()->fHist()->fRemoteReqVersion = cmd.GetUInt("version");
-   GetObject()->fHist()->fLocalReqVersion = GetVersion();
-
-   return true;
-}
-
-
-dabc::Buffer dabc::Hierarchy::GetLocalImage(uint64_t version)
-{
-   if (null()) return 0;
-   if (Field(prop_kind).AsStdStr()!="image.png") return 0;
-
-   return GetObject()->bindata();
-}
-
-dabc::Command dabc::Hierarchy::ProduceImageRequest()
-{
-   std::string producer_name, request_name;
-
-   producer_name = FindBinaryProducer(request_name);
-
-   if (producer_name.empty() && request_name.empty()) return 0;
-
-   dabc::Command cmd("GetBinary");
-   cmd.SetStr("subitem", request_name);
-   cmd.SetBool("image", true); // indicate that we are requesting image
-   cmd.SetReceiver(producer_name);
-
-   return cmd;
-}
-
-bool dabc::Hierarchy::ApplyImageRequest(Command cmd)
-{
-   if (null() || (cmd.GetResult() != cmd_true)) return false;
-
-   Buffer bindata = cmd.GetRawData();
-   if (bindata.null()) return false;
-
-   GetObject()->fNodeChanged = true;
-   GetObject()->MarkChangedItems();
-   GetObject()->bindata() = bindata;
-
-   return true;
 }
 
 

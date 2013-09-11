@@ -293,10 +293,6 @@ namespace dabc {
           * Should be called before worker assigned to the thread */
          void AssignAddon(WorkerAddon* addon);
 
-         /** \brief Builds hierarchy of worker objects
-          *  BuildWorkerHierarchy will be called in worker thread */
-         virtual void BuildHierarchy(HierarchyContainer* cont);
-
       protected:
 
          /** This method called before command will be executed.
@@ -403,10 +399,6 @@ namespace dabc {
 
          /** Interface method to retrieve subscribed parameter events */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
-
-         /** Produces hierarchy of worker objects */
-         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
-
 
          /** \brief Return reference on publisher.
           * First time publisher is searched in objects hierarchy and reference

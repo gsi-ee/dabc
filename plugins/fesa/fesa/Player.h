@@ -71,8 +71,6 @@ namespace fesa {
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
-
-         virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
    };
 }
 

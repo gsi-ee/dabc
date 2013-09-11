@@ -134,6 +134,8 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
          #endif
       }
    }
+
+   Publish(fHierarchy, "FESA/Monitor", &fHierarchyMutex);
 }
 
 fesa::Monitor::~Monitor()
@@ -155,55 +157,6 @@ void fesa::Monitor::ProcessTimerEvent(unsigned timer)
 //   DOUT0("Process timer");
 }
 
-
-
-int fesa::Monitor::ExecuteCommand(dabc::Command cmd)
-{
-   if (cmd.IsName("GetBinary")) {
-
-      std::string itemname = cmd.GetStr("subitem");
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
-
-      if (item.null()) {
-         EOUT("No find item %s to get binary", itemname.c_str());
-         return dabc::cmd_false;
-      }
-
-      dabc::Buffer buf;
-
-      if (cmd.GetBool("history"))
-         buf = item.ExecuteHistoryRequest(cmd);
-      else {
-      }
-
-      if (buf.null()) {
-         EOUT("No find binary data for item %s", itemname.c_str());
-         return dabc::cmd_false;
-      }
-
-      cmd.SetRawData(buf);
-
-      return dabc::cmd_true;
-   }
-
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
-}
-
-
-void fesa::Monitor::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
-{
-   // indicate that we are bin producer of down objects
-
-   dabc::LockGuard lock(fHierarchyMutex);
-
-   // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
-
-   fHierarchy()->BuildHierarchy(cont);
-}
 
 void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData* value)
 {

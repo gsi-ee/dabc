@@ -47,13 +47,6 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fHttpPort(0),
-   fServerFolder("localhost"),
-   fTop2Name(),
-   fSelPath(""),
-   fClientsFolder("Clients"),
-   fShowClients(false),
-   fHierarchy(),
-   fHierarchyMutex(),
    fCtx(0),
    fFiles(),
    fHttpSys(),
@@ -71,10 +64,6 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
 
    if (!fEnabled) return;
 
-   fServerFolder = Cfg("topname", cmd).AsStdStr(fServerFolder);
-   fSelPath = Cfg("select", cmd).AsStdStr(fSelPath);
-   fShowClients = Cfg("clients", cmd).AsBool(fShowClients);
-
    fHttpSys = ".";
 }
 
@@ -83,8 +72,6 @@ http::Server::~Server()
    if (fCtx!=0) mg_stop(fCtx);
 
    fCtx = 0;
-
-   //fHierarchy.Destroy();
 }
 
 
@@ -122,76 +109,11 @@ void http::Server::OnThreadAssigned()
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
 
-   fHierarchy.Create("Full");
-
-   DOUT0("CLIENTS = %s", DBOOL(fShowClients));
-
-   if (!fShowClients) {
-      fClientsFolder = "";
-      if (fServerFolder.empty()) fServerFolder = "localhost";
-   } else {
-      if (!fServerFolder.empty()) {
-         fTop2Name = fServerFolder;
-         fServerFolder = "Server";
-      }
-   }
-
-   if (!fServerFolder.empty()) {
-      dabc::Hierarchy h = fHierarchy.CreateChild(fServerFolder);
-      if (!fTop2Name.empty()) h.CreateChild(fTop2Name.c_str());
-   }
-
-   if (!fClientsFolder.empty())
-      fHierarchy.CreateChild(fClientsFolder);
-
    ActivateTimeout(0);
 }
 
 double http::Server::ProcessTimeout(double last_diff)
 {
-   // dabc::LockGuard lock(fHierarchyMutex);
-
-//   DOUT0("\n\n\n========================= START BUILDING ================");
-
-
-   dabc::Hierarchy server_hierarchy;
-   server_hierarchy.Create("Full");
-
-   if (!fServerFolder.empty()) {
-      dabc::Hierarchy h = server_hierarchy.CreateChild(fServerFolder);
-      if (!fTop2Name.empty()) h = h.CreateChild(fTop2Name.c_str());
-      dabc::Reference main = dabc::mgr;
-      if (!fSelPath.empty()) main = main.FindChild(fSelPath.c_str());
-      h.Build("", main);
-   }
-
-   // we build extra slaves when they not shown in main structure anyway
-   if (fShowClients && !fClientsFolder.empty()) {
-      dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
-      dabc::Hierarchy h = server_hierarchy.CreateChild(fClientsFolder);
-
-      dabc::Command cmd("BuildClientsHierarchy");
-      cmd.SetPtr("Container", h());
-      chl.Execute(cmd);
-   }
-
-   dabc::LockGuard lock(fHierarchyMutex);
-
-   fHierarchy.Update(server_hierarchy);
-
-
-   // this is method to enable history recording on server side -
-   // via configuration one could record history for all ratemeters, for instance
-   // TODO: implement such configuration
-
-//   dabc::Hierarchy item = fHierarchy.FindChild("Server/Gener/App/Multi/GRate");
-//   if (!item.null()) item.EnableHistory(100);
-
-//   item = fHierarchy.FindChild("Server/Gener/App/fesa/BeamRate");
-//   if (!item.null()) item.EnableHistory(100);
-
-   //server_hierarchy.Destroy();
-
    return 1.;
 }
 
@@ -212,17 +134,6 @@ int http::Server::begin_request(struct mg_connection *conn)
       std::string content_type = "text/html";
       content = open_file(0, "httpsys/files/main.htm");
    } else
-   if (strstr(request_info->uri,"/oldh.xml")!=0) {
-      content_type = "text/xml";
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      content =
-            std::string("<?xml version=\"1.0\"?>\n") +
-            std::string("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\">\n")+
-            fHierarchy.SaveToXml() +
-            std::string("</dabc>\n");
-   } else
    if (strstr(request_info->uri,"/h.xml")!=0) {
       content_type = "text/xml";
 
@@ -236,25 +147,8 @@ int http::Server::begin_request(struct mg_connection *conn)
       else
          iserror = true;
    } else
-   if (strstr(request_info->uri, "chartreq.htm")!=0) {
-      content_type = "text/plain";
-
-      const char* res = open_file(conn, request_info->uri, 0);
-      if (res) content = res;
-
-   } else
-   if (strstr(request_info->uri, "getbinary")!=0) {
-      if (ProcessGetBinary(conn, request_info->query_string)) return 1;
-
-      iserror = true;
-   } else
    if (strstr(request_info->uri, "getbin")!=0) {
       if (ProcessGetBin(conn, request_info->query_string)) return 1;
-
-      iserror = true;
-   } else
-   if (strstr(request_info->uri, "gethistory")!=0) {
-      if (ProcessGetHistory(conn, request_info->query_string)) return 1;
 
       iserror = true;
    } else
@@ -373,53 +267,6 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    int length = 0;
    std::string fname(path);
 
-   if (strstr(path,"chartreq.htm")!=0) {
-
-      // DOUT0("Request chartreq.htm processed");
-
-      force = true;
-
-      std::string rates = query ? query : "";
-
-      std::string content = "[\n";
-      bool first = true;
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      while (rates.length() > 0) {
-         size_t pos = rates.find('&');
-         std::string part;
-         if (pos==std::string::npos) {
-            part = rates;
-            rates.clear();
-         } else {
-            part.append(rates, 0, pos);
-            rates.erase(0, pos+1);
-         }
-
-         if (!first) content+=",\n";
-
-         dabc::Hierarchy chld = fHierarchy.FindChild(part.c_str());
-
-         if (chld.null()) { EOUT("Didnot find child %s", part.c_str()); }
-
-         if (!chld.null() && chld.HasField("value")) {
-            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.Field("value").AsStr().c_str());
-            first = false;
-         }
-      }
-
-      content += "\n]\n";
-
-
-      length = content.length();
-      buf = (char*) malloc(length+1);
-      strncpy(buf, content.c_str(), length+1);
-      buf[length] = 0;
-
-      // DOUT0("Produced buffer = %s", buf);
-   }
-
    if (buf==0) {
 
       if (!MakeRealFileName(fname)) return 0;
@@ -479,90 +326,6 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    EOUT("Did not find file %s %s", path, fname.c_str());
 
    return 0;
-}
-
-int http::Server::ProcessGetHistory(struct mg_connection* conn, const char *query)
-{
-   dabc::Url url(std::string("gethistory?") + (query ? query : ""));
-
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-      return 0;
-   }
-
-   std::string itemname = url.GetOptionsPart(0);
-   if (itemname.empty()) {
-      EOUT("Item is not specified in gethistory request");
-      return 0;
-   }
-
-   std::string sver = url.GetOptionStr("ver");
-   long unsigned query_version(0);
-   if (sver.length()>0)
-      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
-   int limit = url.GetOptionInt("limit", 0);
-
-   int check_requester_counter = 0;
-   std::string reply;
-   dabc::Hierarchy item;
-   dabc::Command cmd;
-
-   while (check_requester_counter < 100) {
-
-      if (check_requester_counter++>0) WorkerSleep(0.05);
-
-      dabc::LockGuard lock(fHierarchyMutex);
-      item = fHierarchy.FindChild(itemname.c_str());
-
-      if (item.null()) {
-         EOUT("Wrong request for non-existing item %s", itemname.c_str());
-         break;
-      }
-
-      if (item.HasField("#doingreq")) { item.Release(); continue; }
-
-      // process request locally
-      if (item.HasLocalHistory() || item.HasActualRemoteHistory()) {
-         reply = item()->RequestHistoryAsXml(query_version, limit);
-         break;
-      }
-
-      cmd = item.ProduceHistoryRequest();
-      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
-
-      break;
-   }
-
-   if (!cmd.null()) {
-      // try to execute command, which should obtain request
-      dabc::mgr.Execute(cmd, 5.);
-
-      dabc::LockGuard lock(fHierarchyMutex);
-      item.RemoveField("#doingreq");
-
-      if (item.ApplyHistoryRequest(cmd))
-         reply = item()->RequestHistoryAsXml(query_version, limit);
-   }
-
-   if (reply.empty()) {
-      EOUT("HISTORY REQUEST FAILS %s", itemname.c_str());
-
-      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
-                       "Content-Length: 0\r\n"
-                       "Connection: close\r\n\r\n");
-   } else {
-
-      // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
-
-      mg_printf(conn,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Type: text/xml\r\n"
-                 "Content-Length: %u\r\n"
-                 "Connection: keep-alive\r\n"
-                  "\r\n", (unsigned) reply.length());
-      mg_write(conn, reply.c_str(), (size_t) reply.length());
-   }
-   return 1;
 }
 
 
@@ -699,106 +462,6 @@ int http::Server::ProcessGetBin(struct mg_connection* conn, const char *query)
 
    if (!itemname.empty())
       replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
-
-   if (replybuf.null()) {
-      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
-                       "Content-Length: 0\r\n"
-                       "Connection: close\r\n\r\n");
-   } else {
-
-      mg_printf(conn,
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: application/x-binary\r\n"
-            "Content-Length: %u\r\n"
-            "Connection: keep-alive\r\n"
-            "\r\n", (unsigned) replybuf.GetTotalSize());
-      mg_write(conn, replybuf.SegmentPtr(), (size_t) replybuf.GetTotalSize());
-   }
-
-   return 1;
-}
-
-
-int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
-{
-//   DOUT0("ProcessGetBinary %s", query);
-
-   dabc::Url url(std::string("getbinary?") + (query ? query : ""));
-
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-      return 0;
-   }
-
-   std::string itemname = url.GetOptionsPart(0);
-   if (itemname.empty()) {
-      EOUT("Item is not specified in getbinary request");
-      return 0;
-   }
-
-   std::string sver = url.GetOptionStr("ver");
-   long unsigned query_version(0);
-   if (sver.length()>0)
-      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
-
-   dabc::Hierarchy item;
-   dabc::Buffer replybuf;
-   dabc::Command cmd;
-
-   bool force = false;
-
-   int check_requester_counter = 0;
-
-   // we need this loop in the case, when several threads want to get new
-   // binary data from item
-
-   // in this case one thread will initiate it and other threads should loop and wait until
-   // version of binary data is changed
-
-   while (check_requester_counter < 100) {
-
-      if (check_requester_counter++>0) WorkerSleep(0.05);
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      item = fHierarchy.FindChild(itemname.c_str());
-
-      if (item.null()) {
-         EOUT("Wrong request for non-existing item %s", itemname.c_str());
-         return 0;
-      }
-
-      if (item.HasField("#doingreq")) { item.Release(); continue; }
-
-      if (!force) replybuf = item.GetBinaryData(query_version);
-
-//      DOUT0("GetBinaryData ver %u start replybuf %u null %s", (unsigned)query_version, (unsigned) replybuf.GetTotalSize(), DBOOL(replybuf.null()));
-
-      if (!replybuf.null()) break;
-
-      cmd = item.ProduceBinaryRequest();
-      if (!cmd.null()) item.Field("#doingreq").SetInt(1);
-      break;
-   } // end of check_requester_counter
-
-
-   if (!cmd.null()) {
-
-//      DOUT0("GetBinaryData start command");
-
-      dabc::mgr.Execute(cmd, 5.);
-
-//      DOUT0("GetBinaryData did command");
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      item.RemoveField("#doingreq");
-
-      replybuf = item.ApplyBinaryRequest(cmd);
-
-//      DOUT0("GetBinaryData ver %u apply replybuf %u", (unsigned)query_version, (unsigned) replybuf.GetTotalSize());
-   }
-
 
    if (replybuf.null()) {
       mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"

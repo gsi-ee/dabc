@@ -664,12 +664,6 @@ int dabc::Worker::PreviewCommand(Command cmd)
      cmd_res = cmd_true;
    } else
 
-   if (cmd.IsName("BuildWorkerHierarchy")) {
-      HierarchyContainer* cont = (HierarchyContainer*) cmd.GetPtr("Container");
-      if (cont!=0) BuildWorkerHierarchy(cont);
-      cmd_res = cmd_true;
-   } else
-
    if (cmd.IsName(CmdPublisher::CmdName())) {
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
       unsigned version = cmd.GetUInt("version");
@@ -713,22 +707,6 @@ int dabc::Worker::PreviewCommand(Command cmd)
    }
 
    return cmd_res;
-}
-
-void dabc::Worker::BuildWorkerHierarchy(HierarchyContainer* cont)
-{
-   dabc::Object::BuildHierarchy(cont);
-}
-
-void dabc::Worker::BuildHierarchy(HierarchyContainer* cont)
-{
-   if (IsOwnThread()) {
-      BuildWorkerHierarchy(cont);
-   } else {
-      dabc::Command cmd("BuildWorkerHierarchy");
-      cmd.SetPtr("Container", cont);
-      Execute(cmd);
-   }
 }
 
 
@@ -848,7 +826,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
          // command execution possible without thread,
          // but only manager allows to do it without warnings
-         if ((this != dabc::mgr()) && !cmd.IsName("BuildWorkerHierarchy"))
+         if ((this != dabc::mgr()) && !cmd.IsName("OwnCommand"))
             EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
          exe_direct = true;
       } else

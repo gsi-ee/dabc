@@ -14,9 +14,6 @@
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
-       <topname value="${Context}"/>
-       <select value=""/>
-       <clients value="true"/>
     </HttpServer>
     
     <Module name="Publisher" class="dabc::Publisher">

@@ -47,9 +47,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
-       <topname value="${Context}"/>
-       <select value="App"/>
-       <clients value="true"/>
     </HttpServer>
     
     <!--Module name="Publisher" class="dabc::Publisher">

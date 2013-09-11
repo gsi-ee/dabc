@@ -57,17 +57,6 @@ namespace http {
       protected:
          bool fEnabled;              ///< is server enabled
          int fHttpPort;              ///< port number for HTTP server
-         std::string fServerFolder;  ///< name of top folder, which is appeared in browser
-         std::string fTop2Name;      ///< name of top folder, which is appeared in browser
-         std::string fSelPath;       ///< selected path in dabc::Manager structures
-         std::string fClientsFolder; ///< name of top folder, which is appeared in browser
-         bool fShowClients;         ///< if true, all clients, connected to command channel, will be selected
-
-         /** \brief Complete description of node(s) hierarchy
-          *  \details Can be updated independently from user requests  */
-         dabc::Hierarchy fHierarchy;
-
-         dabc::Mutex fHierarchyMutex; ///< used to protect content of hierarchy
 
          struct mg_context *   fCtx;
          struct mg_callbacks   fCallbacks;
@@ -82,10 +71,6 @@ namespace http {
          virtual void OnThreadAssigned();
 
          virtual double ProcessTimeout(double last_diff);
-
-         int ProcessGetBinary(struct mg_connection* conn, const char *query);
-
-         int ProcessGetHistory(struct mg_connection* conn, const char *query);
 
          int ProcessGetImage(struct mg_connection* conn, const char *query);
 

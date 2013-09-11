@@ -278,31 +278,17 @@ const std::string& dabc::ParameterContainer::Kind() const
    return fKind;
 }
 
-void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
-{
-   dabc::Hierarchy rec(cont);
-
-   std::string val = GetField("").AsStr();
-   if (!val.empty()) rec.Field("value").SetStr(val);
-
-   LockGuard lock(ObjectMutex());
-
-   if (fStatistic == ParameterContainer::kindRate)
-      rec.Field(dabc::prop_kind).SetStr("rate");
-}
-
 void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
 {
    LockGuard lock(ObjectMutex());
 
-   // mark that we are wor
+   // mark that we are producing rate
    if (fStatistic == ParameterContainer::kindRate)
       cont->Field(dabc::prop_kind).SetStr("rate");
 
    // just copy all fields, including value
    cont->CopyFrom(Fields());
 }
-
 
 // --------------------------------------------------------------------------------
 

@@ -124,9 +124,6 @@ namespace dabc {
          void FireModified(const std::string& svalue);
 
          /** \brief Save parameter attributes into container */
-         virtual void BuildHierarchy(HierarchyContainer* cont);
-
-         /** \brief Save parameter attributes into container */
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
 
       public:

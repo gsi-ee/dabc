@@ -120,9 +120,6 @@ namespace dabc {
 
          // these are fields, used to manage information about remote node
          bool               fRemoteObserver;   ///< if true, channel automatically used to update information from remote
-         TimeStamp          fRemReqTime;       ///< last time when request was send to remote
-         Hierarchy          fRemoteHierarchy;  ///< actual remote hierarchy
-         uint64_t           fRemoteHierarchyVer; ///< last version of remote hierarchy
          std::string        fRemoteName;       ///< name of connection, appeared in the browser
 
          // indicate that this is special connection to master node
@@ -189,9 +186,6 @@ namespace dabc {
       protected:
          int             fNodeId;        ///<  current node id
          int             fClientCnt;     ///<  counter for new clients
-         Hierarchy       fHierarchy;     ///<  current hierarchy as seen by the channel
-         bool            fUpdateHierarchy; ///< if true, channel will update internal hierarchy regularly
-         std::string     fSelPath;       ///<  selected path, shown in hierarchy
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);
@@ -207,9 +201,6 @@ namespace dabc {
 
          /** timeout used in channel to update node hierarchy, which than can be requested from remote */
          virtual double ProcessTimeout(double last_diff);
-
-         /** \brief Method fill hierarchy of remote objects for connected clients */
-         void BuildClientsHierarchy(HierarchyContainer* cont);
 
       public:
          SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd);

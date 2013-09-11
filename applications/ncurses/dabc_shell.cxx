@@ -56,6 +56,7 @@ bool ConnectNode(const char* nodename)
 
 bool UpdateHierarchy()
 {
+   // TODO: hierarchy must be requested from the publisher
    dabc::Command cmd("GetHierarchy");
    cmd.SetInt("version", hierarchy.GetVersion());
    cmd.SetReceiver(fNodeName);

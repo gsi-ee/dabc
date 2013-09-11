@@ -22,7 +22,10 @@ of the framework.
 6. As result, hierarchy management moved from http::Server and can be used 
    in different parts of application code. In the future subscription (asynchron)
    modus will be implemented.          
-
+7. Remove old code with hierarchy, created in command channel and with "GetBinary"
+   request. Now everything handled via publisher with new and much more powerfull 
+   interface.
+   
 
 5.09.2013
 1. Unify address convention of dabc application. Now any module in the system can

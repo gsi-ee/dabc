@@ -100,9 +100,6 @@ namespace dabc_root {
 
          int ProcessGetBinary(dabc::Command cmd);
 
-         /** Should deliver hierarchy of the ROOT objects */
-         virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
-
       public:
          RootSniffer(const std::string& name, dabc::Command cmd = 0);
 

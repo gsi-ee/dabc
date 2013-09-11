@@ -44,8 +44,6 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
    dabc::CmdCreateObject cmd1("http::Server","/http");
    cmd1.SetBool("enabled", true);
    cmd1.SetInt("port", port);
-   cmd1.SetStr("topname", "ROOT");
-   cmd1.SetStr("select", "ROOT");
 
    if (!dabc::mgr.Execute(cmd1)) return false;
 
@@ -97,7 +95,7 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
    DOUT0("Create root sniffer done");
 
    // we selecting ROOT sniffer as the only objects, seen from the server
-   if (!dabc::mgr()->CreateControl(false, "ROOT")) {
+   if (!dabc::mgr()->CreateControl(false)) {
       DOUT0("Cannot create control instance");
       return false;
    }

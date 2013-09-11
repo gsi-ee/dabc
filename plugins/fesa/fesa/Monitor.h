@@ -64,10 +64,6 @@ namespace fesa {
 
          virtual void ProcessTimerEvent(unsigned timer);
 
-         virtual int ExecuteCommand(dabc::Command cmd);
-
-         virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
-
          void ReportServiceChanged(const std::string& name, const rdaData* v);
    };
 }

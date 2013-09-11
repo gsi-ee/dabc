@@ -142,38 +142,6 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 
 int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetBinary")) {
-
-      // DOUT0("COMMAND GETBINARY RECEIVED BY dabc_root::RootSniffer");
-
-      if (cmd.GetBool("history")) {
-         dabc::Buffer buf;
-
-         std::string itemname = cmd.GetStr("subitem");
-
-//         DOUT0("Request history for item %s", itemname.c_str());
-
-         {
-            dabc::LockGuard lock(fHierarchyMutex);
-
-            dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
-
-            buf = item.ExecuteHistoryRequest(cmd);
-         }
-
-//         DOUT0("Request history for item %s res %u", itemname.c_str(), buf.GetTotalSize());
-
-         cmd.SetRawData(buf);
-         return dabc::cmd_true;
-      }
-
-      // keep simple case for testing
-      if (fTimer==0) return ProcessGetBinary(cmd);
-
-      dabc::LockGuard lock(fHierarchyMutex);
-      fRootCmds.Push(cmd);
-      return dabc::cmd_postponed;
-   } else
    if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
       dabc::LockGuard lock(fHierarchyMutex);
       fRootCmds.Push(cmd);
@@ -372,20 +340,6 @@ bool dabc_root::RootSniffer::IsBrowsableClass(TClass* cl)
 }
 
 
-void dabc_root::RootSniffer::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
-{
-   // indicate that we are bin producer of down objects
-
-   // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
-
-   // we protect hierarchy with mutex, while it may be changed from ROOT process
-   dabc::LockGuard lock(fHierarchyMutex);
-
-   if (!fHierarchy.null()) fHierarchy()->BuildHierarchy(cont);
-}
-
-
 void dabc_root::RootSniffer::InstallSniffTimer()
 {
    if (fTimer==0) {
@@ -421,7 +375,6 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    }
 
    std::string mhash = fProducer->GetStreamerInfoHash();
-
 
    {
       dabc::LockGuard lock(fHierarchyMutex);
@@ -479,7 +432,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
    while (doagain) {
 
-      if (cmd.IsName("GetBinary") || cmd.IsName(dabc::CmdGetBinary::CmdName())) {
+      if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
          cmd.Reply(ProcessGetBinary(cmd));
       } else
       if (!cmd.null()) {

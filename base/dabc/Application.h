@@ -130,9 +130,6 @@ namespace dabc {
          /** Default state machine command timeout */
          virtual int SMCommandTimeout() const { return 10; }
 
-         /** \brief Fill application objects hierarchy */
-         virtual void BuildWorkerHierarchy(HierarchyContainer* cont);
-
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
 
       public:

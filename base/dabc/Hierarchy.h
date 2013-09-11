@@ -283,9 +283,6 @@ namespace dabc {
          /** \brief Produces history in binary form */
          dabc::Buffer RequestHistory(uint64_t version = 0, int limit = 0);
 
-         /** \brief Method used to create copy of hierarchy again */
-         virtual void BuildHierarchy(HierarchyContainer* cont);
-
          void BuildObjectsHierarchy(const Reference& top);
 
          Buffer& bindata() { return fBinData; }
@@ -330,9 +327,6 @@ namespace dabc {
 
       bool IsAnyFieldChanged() const { return GetObject() ? GetObject()->Fields().WasChanged() : false; }
 
-      /** \brief Build full hierarchy of the objects structure, provided in reference */
-      void Build(const std::string& topname, Reference top);
-
       /** \brief Build objects hierarchy, referenced by top */
       void BuildNew(Reference top);
 
@@ -346,9 +340,6 @@ namespace dabc {
       /** \brief Duplicate hierarchy from the source.
        *  Existing items are preserved */
       bool Duplicate(const Hierarchy& src);
-
-      /** \brief Update from objects structure */
-      bool UpdateHierarchy(Reference top);
 
       /** \brief Activate history production for selected element and its childs */
       void EnableHistory(unsigned length = 100, bool withchilds = false);
@@ -392,28 +383,11 @@ namespace dabc {
       /** \brief Change version of the item, only for advanced usage */
       void SetVersion(uint64_t v) { if (GetObject()) GetObject()->SetVersion(v); }
 
-      /** \brief If possible, returns buffer with binary data, which can be send as reply */
-      Buffer GetBinaryData(uint64_t query_version = 0);
-
-      /** \brief Create bin request, which should be submitted to get bindata */
-      Command ProduceBinaryRequest();
-
-      /** \brief Analyzes result of request and returns buffer which can be send to remote */
-      Buffer ApplyBinaryRequest(Command cmd);
-
       /** \brief Fill binary header with item and master versions */
       bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, const std::string& mhash = 0);
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
-
-      Command ProduceHistoryRequest();
-      Buffer ExecuteHistoryRequest(Command cmd);
-      bool ApplyHistoryRequest(Command cmd);
-
-      Buffer GetLocalImage(uint64_t version = 0);
-      Command ProduceImageRequest();
-      bool ApplyImageRequest(Command cmd);
 
       /** Removes folder and its parents as long as no other childs are present */
       bool RemoveEmptyFolders(const std::string& path);

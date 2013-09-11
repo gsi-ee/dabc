@@ -496,9 +496,8 @@ namespace dabc {
          std::string ComposeAddress(const std::string& server, const std::string& itemtname = "");
 
          /** \brief Create command channel
-          * Parameter withserver defines if server socket will be created, which accepts client connections
-          * Parameter toppath specifies which part of objects hierarchy will be seen by the clients */
-         bool CreateControl(bool withserver, const std::string& toppath = "");
+          * Parameter withserver defines if server socket will be created, which accepts client connections */
+         bool CreateControl(bool withserver);
 
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 

@@ -424,20 +424,9 @@ namespace dabc {
           * Can be reimplemented in derived classes to check more attributes like class name */
          virtual bool Find(ConfigIO &cfg);
 
-         /** \brief Method could be used to save any attributes of the object
-          *  Implementation should look like:
-          *
-          *      dabc::Record rec(cont);
-          *      rec.Field("number").SetInt(12);
-          *
-          *  If overwritten in derived class,
-          *  ParentClass::BuildHierarchy(cont) must be called to store
-          *  hierarchy of child objects */
-         virtual void BuildHierarchy(HierarchyContainer* cont);
-
-         /** \brief Fill fields map, which is relevant for the object */
+         /** \brief Fill fields map, which is relevant for the object
+          * Objects hierarchy produced from dabc::Manager */
          virtual void BuildFieldsMap(RecordFieldsMap* cont) {}
-
 
          // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,

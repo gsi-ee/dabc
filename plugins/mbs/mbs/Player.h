@@ -108,8 +108,6 @@ namespace mbs {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         virtual void BuildWorkerHierarchy(dabc::HierarchyContainer* cont);
-
    };
 }
 

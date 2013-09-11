@@ -222,7 +222,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 int fesa::Player::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetBinary") || cmd.IsName(dabc::CmdGetBinary::CmdName())) {
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
 
       std::string itemname = cmd.GetStr("subitem");
 
@@ -238,27 +238,23 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       dabc::Buffer buf;
       std::string mhash;
 
-      if (cmd.GetBool("history"))
-         buf = item.ExecuteHistoryRequest(cmd);
-      else {
-         std::string kind = item.Field(dabc::prop_kind).AsStdStr();
-         DOUT0("GetBinary for item %s kind %s", itemname.c_str(), kind.c_str());
-         if ((kind.find("ROOT.")==0) || (kind=="image.png")) {
+      std::string kind = item.Field(dabc::prop_kind).AsStdStr();
+      DOUT0("GetBinary for item %s kind %s", itemname.c_str(), kind.c_str());
+      if ((kind.find("ROOT.")==0) || (kind=="image.png")) {
 #ifdef WITH_ROOT
-            dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
-            if (itemname=="StreamerInfo") {
-               buf = pr->GetStreamerInfoBinary();
-            } else {
-               TObject* obj = (TH2I*) fHist;
-               if (itemname =="ImageRoot") obj = (TCanvas*) fCanvas;
-               buf = pr->GetBinary(obj, (kind=="image.png"));
-               mhash = pr->GetStreamerInfoHash();
-               cmd.SetStr("MasterHash", mhash);
-            }
+         dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
+         if (itemname=="StreamerInfo") {
+            buf = pr->GetStreamerInfoBinary();
+         } else {
+            TObject* obj = (TH2I*) fHist;
+            if (itemname =="ImageRoot") obj = (TCanvas*) fCanvas;
+            buf = pr->GetBinary(obj, (kind=="image.png"));
+            mhash = pr->GetStreamerInfoHash();
+            cmd.SetStr("MasterHash", mhash);
+         }
 #endif
-         } else
-            buf = item()->bindata();
-      }
+      } else
+         buf = item()->bindata();
 
       if (buf.null()) {
          EOUT("No find binary data for item %s", itemname.c_str());
@@ -274,20 +270,6 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
-
-
-void fesa::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
-{
-   // indicate that we are bin producer of down objects
-
-   dabc::LockGuard lock(fHierarchyMutex);
-
-   // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
-
-   fHierarchy()->BuildHierarchy(cont);
-}
-
 
 double fesa::Player::doGet(const std::string& service, const std::string& field)
 {

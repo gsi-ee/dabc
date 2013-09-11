@@ -716,32 +716,6 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
 
 int mbs::Player::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetBinary")) {
-
-      std::string itemname = cmd.GetStr("subitem");
-
-      dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
-
-      if (item.null()) {
-         EOUT("No find item %s to get binary", itemname.c_str());
-         return dabc::cmd_false;
-      }
-
-      dabc::Buffer buf;
-
-      if (cmd.GetBool("history"))
-         buf = item.ExecuteHistoryRequest(cmd);
-
-      if (buf.null()) {
-         EOUT("No find binary data for item %s", itemname.c_str());
-         return dabc::cmd_false;
-      }
-
-      cmd.SetRawData(buf);
-
-      return dabc::cmd_true;
-   }
-
    if (cmd.IsName("ProcessDaqStatus")) {
 
       mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon());
@@ -781,15 +755,4 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
 
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
-}
-
-
-void mbs::Player::BuildWorkerHierarchy(dabc::HierarchyContainer* cont)
-{
-   // indicate that we are bin producer of down objects
-
-   // do it here, while all properties of main node are ignored when hierarchy is build
-   dabc::Hierarchy(cont).Field(dabc::prop_producer).SetStr(WorkerAddress());
-
-   fHierarchy()->BuildHierarchy(cont);
 }
