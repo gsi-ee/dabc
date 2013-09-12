@@ -290,7 +290,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          case rdaDataEntry::TYPE_DOUBLE_ARRAY: {
             unsigned long size(0);
             const double* arr = entry->getDoubleArray(size);
-            item.Field(tag).SetArrDouble(size, arr);
+            item.Field(tag).SetArrDouble(size, (double*) arr);
             break;
          }
          /// indicates a string value.
@@ -304,14 +304,14 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const char** arr = entry->getStringArray(size);
             std::vector<std::string> vect;
             for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
-            item.Field(tag).SetStrVector(vect);
+            item.Field(tag).SetStrVect(vect);
             break;
          }
       }
    }
 
    // TODO: here apply new version and create history entry
-
-
 #endif
+
+   item.MarkChangedItems();
 }
