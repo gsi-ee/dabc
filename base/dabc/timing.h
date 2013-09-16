@@ -16,6 +16,8 @@
 #ifndef DABC_timing
 #define DABC_timing
 
+#include <stdint.h>
+
 namespace dabc {
 
    /** \brief Class for acquiring and holding timestamps.
@@ -169,6 +171,8 @@ namespace dabc {
       public:
          DateTime() : tv_sec(0), tv_nsec(0) {}
 
+         DateTime(uint64_t jstime) : tv_sec(jstime / 1000), tv_nsec((jstime % 1000)*1000000) {}
+
          bool null() const { return (tv_sec==0) && (tv_nsec==0); }
 
          bool GetNow();
@@ -176,11 +180,16 @@ namespace dabc {
          /** \brief Return date and time in seconds since 1.1.1970 */
          double AsDouble() const;
 
+         /** \brief Return date and time in JS format - number of millisecond  since 1.1.1970 */
+         uint64_t AsJSDate() const;
+
          /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
          bool AsString(char* sbuf, int len, int ndecimal = 0) const;
 
-         /** \brief convert string into sec.frac format, can be interpret directly in JavaScript */
-         bool AsJSString(char* sbuf, int len) const;
+         /** \brief convert string into sec.frac format, can be interpret directly in JavaScript
+          * ISO 8601 standard is used and produces string like  '2013-09-16T12:42:30.884Z'
+          * Time in GMT time zone */
+         bool AsJSString(char* sbuf, int len, int ndecimal = 3) const;
 
    };
 

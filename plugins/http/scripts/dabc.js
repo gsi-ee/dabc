@@ -102,7 +102,7 @@ DABC.TopXmlNode = function(xmldoc)
 
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
-   this.version = new Number(0);    // check which version of element is drawn
+   this.version = new Number(-1);    // check which version of element is drawn
    this.frameid = "";
    return this;
 }
@@ -144,7 +144,7 @@ DABC.DrawElement.prototype.Clear = function() {
    
    this.itemname = "";
    this.frameid = 0; 
-   this.version = 0;
+   this.version = -1;
    this.frameid = "";
 }
 
@@ -206,7 +206,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    if (this.req!=null) return;
  
    // do update when monitoring enabled
-   if ((this.version > 0) && !this.force) {
+   if ((this.version >= 0) && !this.force) {
       var chkbox = document.getElementById("monitoring");
       if (!chkbox || !chkbox.checked) return;
    }
@@ -234,9 +234,9 @@ DABC.HistoryDrawElement.prototype.ExtractField = function(name, kind, node) {
    
    if (kind=="number") return Number(val); 
    if (kind=="time") {
-      return Number(val);
-//    var d  = new Date(val);
-//    return d.getTime();
+      //return Number(val);
+      var d  = new Date(val);
+      return d.getTime() / 1000.;
    }
    
    return val;
@@ -734,7 +734,7 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
    if (this.req!=null) return;
  
    // do update when monitoring enabled
-   if ((this.version > 0) && !this.force) {
+   if ((this.version >= 0) && !this.force) {
       var chkbox = document.getElementById("monitoring");
       if (!chkbox || !chkbox.checked) return;
    }
@@ -1477,13 +1477,12 @@ DABC.Manager.prototype.display = function(itemname) {
 
    // ratemeter
    if (kind == "rate") { 
-     if ((history == null) || !document.getElementById("show_history").checked) {
-        // elem = new DABC.GaugeDrawElement();
-        elem = new DABC.GenericDrawElement();
-        elem.itemname = itemname;
-        elem.CreateFrames(this.NextCell(), this.cnt++);
-        this.arr.push(elem);
-        return;
+      if ((history == null) || !document.getElementById("show_history").checked) {
+         elem = new DABC.GaugeDrawElement();
+         elem.itemname = itemname;
+         elem.CreateFrames(this.NextCell(), this.cnt++);
+         this.arr.push(elem);
+         return;
       } else {
          elem = new DABC.RateHistoryDrawElement();
          elem.itemname = itemname;

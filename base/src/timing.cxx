@@ -154,9 +154,14 @@ bool dabc::DateTime::GetNow()
    tv_sec = tm.tv_sec;
    tv_nsec = tm.tv_nsec;
 
-
    return true;
 }
+
+uint64_t dabc::DateTime::AsJSDate() const
+{
+   return ((uint64_t) tv_sec) * 1000 + tv_nsec / 1000000;
+}
+
 
 bool dabc::DateTime::AsString(char* sbuf, int len, int ndecimal) const
 {
@@ -199,9 +204,45 @@ double dabc::DateTime::AsDouble() const
 }
 
 
-bool dabc::DateTime::AsJSString(char* sbuf, int len) const
+bool dabc::DateTime::AsJSString(char* sbuf, int len, int ndecimal) const
 {
-   snprintf(sbuf, len,"%5.3f", AsDouble());
+   if (null()) return false;
+   if (len < 22 + ndecimal) return false;
+
+   time_t src = tv_sec;
+   int frac = 0;
+
+   if ((ndecimal>0) && (tv_nsec>0)) {
+      if (ndecimal>9) ndecimal = 9;
+      frac = tv_nsec;
+      int maxfrac = 1000000000;
+      int dec_cnt = ndecimal;
+      while (dec_cnt++<9) {
+         // this is rounding rule - if last digit 5 or more, we must increment by 1
+         frac = frac / 10 + ((frac % 10 >= 5) ? 1 : 0);
+         maxfrac = maxfrac / 10;
+         // DOUT0("NSEC = %u FRAC = %d MAXFRAC = %d", tv_nsec, frac, maxfrac);
+      }
+      if (frac >= maxfrac) { src++; frac = 0; }
+   }
+
+   struct tm res;
+
+   gmtime_r(&src, &res);
+
+   strftime(sbuf, len, "%Y-%m-%dT%H:%M:%S", &res);
+
+   if (frac>0) {
+      int rlen = strlen(sbuf);
+      if (len - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+   }
+
+   int rlen = strlen(sbuf);
+   if (rlen >= len-1) return false;
+
+   sbuf[rlen] = 'Z';
+   sbuf[rlen+1] = 0;
+
    return true;
 }
 

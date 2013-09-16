@@ -163,13 +163,14 @@ namespace dabc {
             kind_none      = 0,
             kind_bool      = 1,
             kind_int       = 2,
-            kind_uint      = 3,
-            kind_double    = 4,
-            kind_arrint    = 5,
-            kind_arruint   = 6,
-            kind_arrdouble = 7,
-            kind_string    = 8,
-            kind_arrstr    = 9
+            kind_datime    = 3,
+            kind_uint      = 4,
+            kind_double    = 5,
+            kind_arrint    = 6,
+            kind_arruint   = 7,
+            kind_arrdouble = 8,
+            kind_string    = 9,
+            kind_arrstr    = 10
          };
 
          ValueKind fKind;
@@ -246,8 +247,9 @@ namespace dabc {
          bool SetValue(const RecordField& src);
          bool SetNull();
          bool SetBool(bool v);
-         bool SetUInt(uint64_t v);
          bool SetInt(int64_t v);
+         bool SetDatime(uint64_t v);
+         bool SetUInt(uint64_t v);
          bool SetDouble(double v);
          bool SetStr(const std::string& v);
          bool SetStr(const char* v);

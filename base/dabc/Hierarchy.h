@@ -236,13 +236,13 @@ namespace dabc {
 
          /** \brief If item changed, marked with version, time stamp applied, history recording
           * returns mask with changes - 1 - any child node was changed, 2 - hierarchy was changed */
-         unsigned MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds);
+         unsigned MarkVersionIfChanged(uint64_t ver, uint64_t& tm, bool withchilds);
 
          /** \brief Central method, which analyzes all possible changes in node (and its childs)
           * If any changes found, node marked with new version
           * If enabled, history item will be created.
           * If enabled, time stamp will be provided for changed items */
-         void MarkChangedItems(double tm = 0.);
+         void MarkChangedItems(uint64_t tm = 0.);
 
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
@@ -350,7 +350,7 @@ namespace dabc {
       { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
 
       /** \brief If any field was modified, item will be marked with new version */
-      void MarkChangedItems(double tm = 0.)
+      void MarkChangedItems(uint64_t tm = 0.)
       { if (GetObject()) GetObject()->MarkChangedItems(tm); }
 
       /** \brief Returns true if item records history local, no need to request any other sources */

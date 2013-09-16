@@ -7,6 +7,11 @@ of the framework.
 2. Introduce GenericDrawElement - text output of all availible fields in element.
    Used when kind of the element is not specified.
 3. In fesa::Monitor set dabc:error field when any error is detected.
+4. Use JavaSscript-like date format in record to store date and time.
+   It is number of milliseconds since 1.1.1970 in GMT. When converted into
+   string (xml), human-readable format (ISO 8601) is used. It is like
+   '2013-09-16T12:42:30.884Z' and directly can be interpreted in the JavaScript,
+   using 'Date' class. 
    
 
 11.09.2013

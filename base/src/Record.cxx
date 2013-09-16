@@ -161,6 +161,7 @@ dabc::RecordField::RecordField(const RecordField& src)
       case kind_none: break;
       case kind_bool: SetBool(src.valueInt!=0); break;
       case kind_int: SetInt(src.valueInt); break;
+      case kind_datime: SetDatime(src.valueUInt); break;
       case kind_uint: SetUInt(src.valueUInt); break;
       case kind_double: SetDouble(src.valueDouble); break;
       case kind_arrint: SetArrInt(src.valueInt, (int64_t*) src.arrInt); break;
@@ -200,6 +201,7 @@ bool dabc::RecordField::Stream(iostream& s)
          case kind_none: break;
          case kind_bool:
          case kind_int: s.write_int64(valueInt); break;
+         case kind_datime:
          case kind_uint: s.write_uint64(valueUInt); break;
          case kind_double: s.write_double(valueDouble); break;
          case kind_arrint:
@@ -242,6 +244,7 @@ bool dabc::RecordField::Stream(iostream& s)
          case kind_none: break;
          case kind_bool:
          case kind_int: s.read_int64(valueInt); break;
+         case kind_datime:
          case kind_uint: s.read_uint64(valueUInt); break;
          case kind_double: s.read_double(valueDouble); break;
          case kind_arrint:
@@ -281,6 +284,7 @@ void dabc::RecordField::release()
       case kind_none: break;
       case kind_bool: break;
       case kind_int: break;
+      case kind_datime: break;
       case kind_uint: break;
       case kind_double: break;
       case kind_arrint: delete [] arrInt; break;
@@ -299,6 +303,7 @@ bool dabc::RecordField::AsBool(bool dflt) const
       case kind_none: return dflt;
       case kind_bool:
       case kind_int: return valueInt!=0;
+      case kind_datime:
       case kind_uint: return valueUInt!=0;
       case kind_double: return valueDouble!=0.;
       case kind_arrint: if (valueInt>0) return arrInt[0]!=0; break;
@@ -320,6 +325,7 @@ int64_t dabc::RecordField::AsInt(int64_t dflt) const
       case kind_none: return dflt;
       case kind_bool:
       case kind_int: return valueInt;
+      case kind_datime:
       case kind_uint: return (int64_t) valueUInt;
       case kind_double: return (int64_t) valueDouble;
       case kind_arrint: if (valueInt>0) return arrInt[0]; break;
@@ -341,6 +347,7 @@ uint64_t dabc::RecordField::AsUInt(uint64_t dflt) const
       case kind_none: return dflt;
       case kind_bool:
       case kind_int: return (uint64_t) valueInt;
+      case kind_datime:
       case kind_uint: return valueUInt;
       case kind_double: return (uint64_t) valueDouble;
       case kind_arrint: if (valueInt>0) return (uint64_t) arrInt[0]; break;
@@ -362,6 +369,7 @@ double dabc::RecordField::AsDouble(double dflt) const
       case kind_none: return dflt;
       case kind_bool:
       case kind_int: return (double) valueInt;
+      case kind_datime:
       case kind_uint: return (double) valueUInt;
       case kind_double: return valueDouble;
       case kind_arrint: if (valueInt>0) return (double) arrInt[0]; break;
@@ -385,6 +393,7 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
       case kind_none: break;
       case kind_bool:
       case kind_int: res.push_back(valueInt); break;
+      case kind_datime:
       case kind_uint: res.push_back((int64_t) valueUInt); break;
       case kind_double: res.push_back((int64_t) valueDouble); break;
       case kind_arrint:
@@ -433,6 +442,7 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
       case kind_none: break;
       case kind_bool:
       case kind_int: res.push_back((uint64_t) valueInt); break;
+      case kind_datime:
       case kind_uint: res.push_back(valueUInt); break;
       case kind_double: res.push_back((uint64_t) valueDouble); break;
       case kind_arrint:
@@ -481,6 +491,7 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
       case kind_none: break;
       case kind_bool:
       case kind_int: res.push_back((double) valueInt); break;
+      case kind_datime:
       case kind_uint: res.push_back((double) valueUInt); break;
       case kind_double: res.push_back(valueDouble); break;
       case kind_arrint:
@@ -573,6 +584,12 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
       case kind_none: return dflt;
       case kind_bool: return valueInt!=0 ? xmlTrueValue : xmlFalseValue;
       case kind_int: return dabc::format("%ld", (long) valueInt);
+      case kind_datime: {
+         char sbuf[35];
+         if (dabc::DateTime(valueUInt).AsJSString(sbuf, sizeof(sbuf), 3))
+            return std::string(sbuf);
+         return dflt;
+      }
       case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);
       case kind_double: return dabc::format("%g", valueDouble);
       case kind_arrint:
@@ -623,6 +640,7 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
       case kind_none: break;
       case kind_bool:
       case kind_int:
+      case kind_datime:
       case kind_uint:
       case kind_double: res.push_back(AsStr()); break;
       case kind_arrint: {
@@ -703,6 +721,7 @@ bool dabc::RecordField::SetValue(const RecordField& src)
       case kind_none: return SetNull();
       case kind_bool: return SetBool(src.valueInt!=0);
       case kind_int: return SetInt(src.valueInt);
+      case kind_datime: return SetDatime(src.valueUInt);
       case kind_uint: return SetUInt(src.valueUInt);
       case kind_double: return SetDouble(src.valueDouble);
       case kind_arrint: return SetArrInt(src.valueInt, (int64_t*) src.arrInt);
@@ -744,6 +763,18 @@ bool dabc::RecordField::SetInt(int64_t v)
    release();
    fKind = kind_int;
    valueInt = v;
+   return modified();
+}
+
+bool dabc::RecordField::SetDatime(uint64_t v)
+{
+   if (cannot_modify()) return false;
+   if ((fKind == kind_datime) && (valueUInt == v)) return modified(false);
+
+   release();
+   fKind = kind_datime;
+   valueUInt = v;
+
    return modified();
 }
 

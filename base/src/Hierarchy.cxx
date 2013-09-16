@@ -649,7 +649,7 @@ bool dabc::HierarchyContainer::CheckIfDoingHistory()
    return false;
 }
 
-unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm, bool withchilds)
+unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& tm, bool withchilds)
 {
    unsigned mask = 0;
 
@@ -680,11 +680,11 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, double& tm
       if (fChildsChanged) { fChildsVersion = ver; mask = mask | 4; }
 
       if (fNodeChanged && fAutoTime) {
-         if (tm<=0) {
+         if (tm==0) {
             dabc::DateTime dt;
-            if (dt.GetNow()) tm = dt.AsDouble();
+            if (dt.GetNow()) tm = dt.AsJSDate();
          }
-         Fields().Field(prop_time).SetStr(dabc::format("%5.3f",tm));
+         Fields().Field(prop_time).SetDatime(tm);
       }
 
       if (CheckIfDoingHistory() && fields_were_chaneged) {
@@ -723,7 +723,7 @@ uint64_t dabc::HierarchyContainer::GetNextVersion() const
 }
 
 
-void dabc::HierarchyContainer::MarkChangedItems(double tm)
+void dabc::HierarchyContainer::MarkChangedItems(uint64_t tm)
 {
    uint64_t next_ver = GetNextVersion();
 
