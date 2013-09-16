@@ -6,6 +6,7 @@ of the framework.
 1. Optimize LogDrawElement - it is now derived from HistoryDrawElement
 2. Introduce GenericDrawElement - text output of all availible fields in element.
    Used when kind of the element is not specified.
+3. In fesa::Monitor set dabc:error field when any error is detected.
    
 
 11.09.2013

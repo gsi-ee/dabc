@@ -65,6 +65,9 @@ namespace fesa {
          virtual void ProcessTimerEvent(unsigned timer);
 
          void ReportServiceChanged(const std::string& name, const rdaData* v);
+
+         void ReportServiceError(const std::string& name, const std::string& err);
+
    };
 }
 

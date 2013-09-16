@@ -31,6 +31,7 @@ const char* dabc::prop_kind = "dabc:kind";
 const char* dabc::prop_realname = "dabc:realname";
 const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_producer = "dabc:producer";
+const char* dabc::prop_error = "dabc:error";
 const char* dabc::prop_hash = "dabc:hash";
 const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";

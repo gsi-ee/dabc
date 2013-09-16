@@ -45,11 +45,13 @@ class rdaDabcHandler : public rdaReplyHandler
        bool subscribe(rdaDeviceHandle* device, const std::string& cycle)
        {
          try {
-           fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
-           return fRequest!=0;
+            fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
+            return fRequest!=0;
          } catch (const rdaException& ex) {
+            if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
             EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
          } catch (...) {
+            if (fPlayer) fPlayer->ReportServiceError(fService, "subscribe - unknown error");
             EOUT("Unknown exception caught in subscribe");
          }
 
@@ -63,8 +65,10 @@ class rdaDabcHandler : public rdaReplyHandler
            fRequest = 0;
            return true;
         } catch (const rdaException& ex) {
+           if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
            EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
         } catch (...) {
+           if (fPlayer) fPlayer->ReportServiceError(fService, "unsubscribe - unknown error");
            EOUT("Unknown exception caught in unsubscribe");
         }
         return false;
@@ -79,10 +83,12 @@ class rdaDabcHandler : public rdaReplyHandler
           }
           catch (const rdaException& ex)
           {
+             if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
             EOUT( "Exception caught in GSIVoltageHandler: %s %s", ex.getType(), ex.getMessage());
           }
           catch (...)
           {
+             if (fPlayer) fPlayer->ReportServiceError(fService, "handleReply - unknown error");
              EOUT("Unknown exception caught in handleReply");
           }
       }
@@ -157,6 +163,18 @@ void fesa::Monitor::ProcessTimerEvent(unsigned timer)
 //   DOUT0("Process timer");
 }
 
+void fesa::Monitor::ReportServiceError(const std::string& name, const std::string& err)
+{
+   dabc::LockGuard lock(fHierarchyMutex);
+
+   dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
+   if (item.null()) return;
+
+   item.Field(dabc::prop_error).SetStr(err);
+
+   item.MarkChangedItems();
+}
+
 
 void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData* value)
 {
@@ -166,6 +184,9 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 
    dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
    if (item.null()) return;
+
+   if (item.HasField(dabc::prop_error))
+      item.RemoveField(dabc::prop_error);
 
 #ifdef WITH_FESA
 

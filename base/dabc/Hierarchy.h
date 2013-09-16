@@ -36,8 +36,9 @@ namespace dabc {
    extern const char* prop_version;       // version number of hierarchy item
    extern const char* prop_realname;      // real name property specified, when xml node can not have such name
    extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
-   extern const char* prop_producer; // identifies item, which can deliver binary data for all its
-   extern const char* prop_hash;  // content hash, which should describe if object is changed
+   extern const char* prop_producer;     // identifies item, which can deliver binary data for all its
+   extern const char* prop_error;        // indicates any kind of error - typically in text form
+   extern const char* prop_hash;         // content hash, which should describe if object is changed
    extern const char* prop_history;        // indicates that history for that element is kept
    extern const char* prop_time;           // time property, supplied when history is created
 
