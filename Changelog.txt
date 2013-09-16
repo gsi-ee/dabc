@@ -4,7 +4,9 @@ of the framework.
 
 16.09.2013
 1. Optimize LogDrawElement - it is now derived from HistoryDrawElement
-
+2. Introduce GenericDrawElement - text output of all availible fields in element.
+   Used when kind of the element is not specified.
+   
 
 11.09.2013
 1. Major functionality of managing of published hierarchies implemented in 

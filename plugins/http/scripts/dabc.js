@@ -456,7 +456,50 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
    }
 }
 
-//======== start of HierarchyDrawElement ======================
+// ========= start of GenericDrawElement ===========================
+
+
+DABC.GenericDrawElement = function() {
+   DABC.HistoryDrawElement.call(this,"generic");
+}
+
+DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
+
+DABC.GenericDrawElement.prototype.CreateFrames = function(topid, id) {
+   this.frameid = "dabc_generic_" + id;
+   var entryInfo;
+//   if (this.isHistory()) {
+//      var w = $(topid).width();
+//      var h = $(topid).height();
+//      entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
+//   } else {
+      entryInfo = "<div id='"+this.frameid+ "'/>";
+//   }
+   $(topid).append(entryInfo);
+}
+
+DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
+   var element = $("#" + this.frameid);
+   element.empty();
+   element.append(this.itemname + "<br>");
+   for (var i=0; i< this.xmlnode.attributes.length; i++) {
+      var attr = this.xmlnode.attributes.item(i);
+      element.append("<h5><PRE>" + attr.name + " = " + attr.value + "</PRE></h5>");
+   }
+
+//   if (this.isHistory()) {
+//      var txt = this.ExtractSeries("value","string");
+//      for (var i=0;i<txt.length;i++)
+//         element.append("<PRE>"+txt[i]+"</PRE>");
+//   } else {
+//      var val = this.ExtractField("value");
+//      element.append(this.itemname + "<br>");
+//      element.append("<h5>"+val +"</h5>");
+//   }
+}
+
+
+//======== start of HierarchyDrawElement =============================
 
 DABC.HierarchyDrawElement = function() {
    DABC.DrawElement.call(this);
@@ -527,7 +570,10 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind == "ROOT.TBranch") { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
          if (kind.match(/\bROOT.TLeaf/)) { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
          if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
-      }
+      } else 
+      if (!node.hasChildNodes()) {
+         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+      }   
       
       if (node2img == "") node2img = nodeimg;
       
@@ -1410,7 +1456,7 @@ DABC.Manager.prototype.display = function(itemname) {
    
    var kind = xmlnode.getAttribute("dabc:kind");
    var history = xmlnode.getAttribute("dabc:history");
-   if (!kind) return;
+   if (!kind) kind = "";
 
 //   $("#dabc_draw").append("<br> find kind of node "+itemname + " " + kind);
    
@@ -1432,7 +1478,8 @@ DABC.Manager.prototype.display = function(itemname) {
    // ratemeter
    if (kind == "rate") { 
      if ((history == null) || !document.getElementById("show_history").checked) {
-        elem = new DABC.GaugeDrawElement();
+        // elem = new DABC.GaugeDrawElement();
+        elem = new DABC.GenericDrawElement();
         elem.itemname = itemname;
         elem.CreateFrames(this.NextCell(), this.cnt++);
         this.arr.push(elem);
@@ -1489,6 +1536,12 @@ DABC.Manager.prototype.display = function(itemname) {
       elem.RegularCheck();
       return;
    }
+
+   // create generic draw element, which just shows all attributes 
+   elem = new DABC.GenericDrawElement();
+   elem.itemname = itemname;
+   elem.CreateFrames(this.NextCell(), this.cnt++);
+   this.arr.push(elem);
 }
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
