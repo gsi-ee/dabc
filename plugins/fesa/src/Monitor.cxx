@@ -48,7 +48,7 @@ class rdaDabcHandler : public rdaReplyHandler
             fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
             return fRequest!=0;
          } catch (const rdaException& ex) {
-            if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
+            if (fPlayer) fPlayer->ReportServiceError(fService, dabc::format("%s : %s", ex.getType(),ex.getMessage()));
             EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
          } catch (...) {
             if (fPlayer) fPlayer->ReportServiceError(fService, "subscribe - unknown error");
@@ -65,7 +65,7 @@ class rdaDabcHandler : public rdaReplyHandler
            fRequest = 0;
            return true;
         } catch (const rdaException& ex) {
-           if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
+            if (fPlayer) fPlayer->ReportServiceError(fService, dabc::format("%s : %s", ex.getType(),ex.getMessage()));
            EOUT("Exception caught in subscribe: %s %s", ex.getType(), ex.getMessage());
         } catch (...) {
            if (fPlayer) fPlayer->ReportServiceError(fService, "unsubscribe - unknown error");
@@ -79,12 +79,12 @@ class rdaDabcHandler : public rdaReplyHandler
       {
           try
           {
-            if (fPlayer) fPlayer->ReportServiceChanged(fService, &value);
+             if (fPlayer) fPlayer->ReportServiceChanged(fService, &value);
           }
           catch (const rdaException& ex)
           {
-             if (fPlayer) fPlayer->ReportServiceError(fService, ex.getType() + " " + ex.getMessage());
-            EOUT( "Exception caught in GSIVoltageHandler: %s %s", ex.getType(), ex.getMessage());
+             if (fPlayer) fPlayer->ReportServiceError(fService, dabc::format("%s : %s", ex.getType(),ex.getMessage()));
+             EOUT( "Exception caught in GSIVoltageHandler: %s %s", ex.getType(), ex.getMessage());
           }
           catch (...)
           {
