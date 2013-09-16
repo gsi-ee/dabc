@@ -23,7 +23,7 @@ dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
 
 void dabc_root::Factory::Initialize()
 {
-   dabc_root::RootSniffer* serv = new dabc_root::RootSniffer("/ROOT");
+/*   dabc_root::RootSniffer* serv = new dabc_root::RootSniffer("/ROOT");
    if (!serv->IsEnabled()) {
       dabc::WorkerRef ref = serv;
       ref.SetAutoDestroy(true);
@@ -31,6 +31,7 @@ void dabc_root::Factory::Initialize()
       DOUT0("Initialize ROOT sniffer");
       dabc::WorkerRef(serv).MakeThreadForWorker("RootThread");
    }
+*/
 }
 
 dabc::Reference dabc_root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)

@@ -392,7 +392,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
 void dabc_root::RootSniffer::ProcessActionsInRootContext()
 {
-//   printf("ROOOOOOOT sniffer ProcessActionsInRootContext\n");
+   // DOUT0("ROOOOOOOT sniffer ProcessActionsInRootContext %p %s active %s", this, ClassName(), DBOOL(fWorkerActive));
 
    if ((fStartThrdId!=0) && ( fStartThrdId != dabc::PosixThread::Self())) {
       EOUT("Called from other thread as when timer was started");

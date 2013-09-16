@@ -355,6 +355,7 @@ bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
    // this indicates that we are not in the thread, any events/commands will be rejected
    fWorkerId = 0;
    fWorkerActive = false;
+
    fWorkerFiredEvents = 0;
 
    fThread = thrd; // we copy reference, no extra locks required

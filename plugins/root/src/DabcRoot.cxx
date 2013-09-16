@@ -30,16 +30,13 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
    cmd2.SetBool("synctimer", sync_timer);
    cmd2.SetStr("prefix", "ROOT");
 
-   if (!dabc::mgr.Execute(cmd2)) return false;
+   dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
+   sniff->InstallSniffTimer();
 
-   dabc::WorkerRef w2 = cmd2.GetRef("Object");
-
-   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (w2());
-   if (sniff) sniff->InstallSniffTimer();
-
+   dabc::WorkerRef w2 = sniff;
    w2.MakeThreadForWorker("MainThread");
 
-   DOUT2("Create root sniffer");
+   DOUT0("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
 
    dabc::CmdCreateObject cmd1("http::Server","/http");
    cmd1.SetBool("enabled", true);

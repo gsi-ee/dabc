@@ -12,7 +12,7 @@ of the framework.
    string (xml), human-readable format (ISO 8601) is used. It is like
    '2013-09-16T12:42:30.884Z' and directly can be interpreted in the JavaScript,
    using 'Date' class. 
-   
+
 
 11.09.2013
 1. Major functionality of managing of published hierarchies implemented in 

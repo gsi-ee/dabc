@@ -600,7 +600,7 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
          worker->fWorkerActive = true;
 
-         DOUT2("----------------THRD %s WORKER %p %s  PROCESSORID %u REFCNT %u------------------ ", GetName(), worker, worker->GetName(), worker->fWorkerId, fObjectRefCnt);
+         DOUT3("----------------THRD %s WORKER %p %s  assigned ------------------ ", GetName(), worker, worker->GetName());
 
       }
 
@@ -672,6 +672,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       // it will be able to supply commands with magic priority
       if (fWorkers[id]->doinghalt)
          fWorkers[id]->work->fWorkerActive = false;
+
 
       balance = fWorkers[id]->work->fWorkerFiredEvents - fWorkers[id]->processed;
    }
