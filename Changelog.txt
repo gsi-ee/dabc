@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+16.09.2013
+1. Optimize LogDrawElement - it is now derived from HistoryDrawElement
+
+
 11.09.2013
 1. Major functionality of managing of published hierarchies implemented in 
    dabc::Publisher class. It creates and updates central hierarchy (only nameslist),

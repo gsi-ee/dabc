@@ -170,6 +170,11 @@ DABC.HistoryDrawElement.prototype.EnableHistory = function(hlimit) {
    this.xmllimit = hlimit;
 }
 
+DABC.HistoryDrawElement.prototype.isHistory = function() {
+   return this.xmllimit > 0;
+}
+
+
 DABC.HistoryDrawElement.prototype.Clear = function() {
    
    DABC.DrawElement.prototype.Clear.call(this);
@@ -424,27 +429,32 @@ DABC.LogDrawElement = function() {
 DABC.LogDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
 DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
-
    this.frameid = "dabc_log_" + id;
-
-   var entryInfo = 
-      "<div id='"+this.frameid+ "'/>";
+   var entryInfo;
+   if (this.isHistory()) {
+      var w = $(topid).width();
+      var h = $(topid).height();
+      entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
+   } else {
+      entryInfo = "<div id='"+this.frameid+ "'/>";
+   }
    $(topid).append(entryInfo);
 }
 
 DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
-   
-   val = this.ExtractField("value");
-   
    var element = $("#" + this.frameid);
    element.empty();
-   element.append(this.itemname + "<br>");
-   element.append("<h5>"+val +"</h5>");
+
+   if (this.isHistory()) {
+      var txt = this.ExtractSeries("value","string");
+      for (var i=0;i<txt.length;i++)
+         element.append("<PRE>"+txt[i]+"</PRE>");
+   } else {
+      var val = this.ExtractField("value");
+      element.append(this.itemname + "<br>");
+      element.append("<h5>"+val +"</h5>");
+   }
 }
-
-// ======== end of GaugeDrawElement ======================
-
-
 
 //======== start of HierarchyDrawElement ======================
 
@@ -768,42 +778,6 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
    return true;
 }
 
-
-
-//========== start of LogHistoryDrawElement
-
-DABC.LogHistoryDrawElement = function() {
-   DABC.HistoryDrawElement.call(this, "log");
-   this.EnableHistory(100);
-}
-
-DABC.LogHistoryDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
-
-DABC.LogHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
-
-   this.frameid = "dabcobj" + id;
-
-   var w = $(topid).width();
-   var h = $(topid).height();
-
-   var entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
-
-   $(topid).append(entryInfo);
-}
-
-DABC.LogHistoryDrawElement.prototype.DrawHistoryElement = function() {
-   var txt = this.ExtractSeries("value","string");
-   
-   var element = $("#" + this.frameid);
-   
-   element.empty();
-   
-   // element.title = "My TITILE";
-   
-   for (var i=0;i<txt.length;i++)
-      element.append("<PRE>"+txt[i]+"</PRE>");
-      //element.append("|&nbsp;       &nbsp;|  : " + txt[i] + "<br>");
-}
 
 //========== start of RateHistoryDrawElement
 
@@ -1472,20 +1446,16 @@ DABC.Manager.prototype.display = function(itemname) {
       }
    }
    
-   if (kind == "log") { 
-      if ((history == null) || !document.getElementById("show_history").checked) {
-         elem = new DABC.LogDrawElement();
-         elem.itemname = itemname;
-         elem.CreateFrames(this.NextCell(), this.cnt++);
-         this.arr.push(elem);
-         return;
-      } else {
-         elem = new DABC.LogHistoryDrawElement();
-         elem.itemname = itemname;
-         elem.CreateFrames(this.NextCell(), this.cnt++);
-         this.arr.push(elem);
-         return;
-      }
+   if (kind == "log") {
+      elem = new DABC.LogDrawElement();
+      elem.itemname = itemname;
+
+      if ((history != null) && document.getElementById("show_history").checked)
+         elem.EnableHistory(100);
+      
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      this.arr.push(elem);
+      return;
    }
    
    if (kind.indexOf("FESA.") == 0) {
@@ -1496,30 +1466,29 @@ DABC.Manager.prototype.display = function(itemname) {
       elem.RegularCheck();
       return;
    }
-   
-   
-   // any non-ROOT is ignored for the moment
-   if (kind.indexOf("ROOT.") != 0) return; 
-         
-   var sinfoname = this.FindMasterName(itemname, xmlnode);
-   
-   var sinfo = this.FindItem(sinfoname);
-   
-   if (sinfoname && !sinfo) {
-      sinfo = new DABC.RootDrawElement(kind.substr(5));
-      sinfo.itemname = sinfoname;
-      this.arr.push(sinfo);
-      // mark sinfo item as ready - it will not be requested until is not really required
-      sinfo.state = sinfo.StateEnum.stReady;
+
+   if (kind.indexOf("ROOT.") == 0) {
+      // procesing of ROOT classes 
+      var sinfoname = this.FindMasterName(itemname, xmlnode);
+      var sinfo = this.FindItem(sinfoname);
+
+      if (sinfoname && !sinfo) {
+         sinfo = new DABC.RootDrawElement(kind.substr(5));
+         sinfo.itemname = sinfoname;
+         this.arr.push(sinfo);
+         // mark sinfo item as ready - it will not be requested until is not really required
+         sinfo.state = sinfo.StateEnum.stReady;
+      }
+
+      elem = new DABC.RootDrawElement(kind.substr(5));
+      elem.itemname = itemname;
+      elem.sinfo = sinfo;
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      this.arr.push(elem);
+
+      elem.RegularCheck();
+      return;
    }
-      
-   elem = new DABC.RootDrawElement(kind.substr(5));
-   elem.itemname = itemname;
-   elem.sinfo = sinfo;
-   elem.CreateFrames(this.NextCell(), this.cnt++);
-   this.arr.push(elem);
-   
-   elem.RegularCheck();
 }
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
