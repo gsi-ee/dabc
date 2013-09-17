@@ -267,3 +267,46 @@ bool dabc::DateTime::OnlyTimeAsString(char* sbuf, int len) const
    return true;
 }
 
+bool dabc::DateTime::SetOnlyDate(const char* sbuf)
+{
+   if ((sbuf==0) || (strlen(sbuf)!=10)) return false;
+
+   unsigned year(0), month(0), day(0);
+   if (sscanf(sbuf,"%4u-%02u-%02u", &year, &month, &day)!=3) return false;
+   if ((year<1970) || (year>2100) || (month>12) || (month==0) || (day>31) || (day==0)) return false;
+
+   struct tm res;
+   time_t src = tv_sec;
+   gmtime_r(&src, &res);
+   res.tm_year = year - 1900;
+   res.tm_mon = month - 1;
+   res.tm_mday = day;
+   res.tm_isdst = 0;
+   tv_sec = timegm(&res); // SHOULD we implement timegm ourself??
+   return true;
+}
+
+bool dabc::DateTime::SetOnlyTime(const char* sbuf)
+{
+   if ((sbuf==0) || (strlen(sbuf)!=8)) return false;
+
+   unsigned hour(0), min(0), sec(0);
+   if (sscanf(sbuf,"%02u:%02u:%02u", &hour, &min, &sec)!=3) return false;
+   if ((hour>23) || (min>59) || (sec>59)) return false;
+
+   struct tm res;
+   if (null()) {
+     memset(&res, 0, sizeof(res));
+   } else {
+      time_t src = tv_sec;
+      gmtime_r(&src, &res);
+   }
+
+   res.tm_hour = hour;
+   res.tm_min = min;
+   res.tm_sec = sec;
+
+   tv_sec = timegm(&res); // SHOULD we implement timegm ourself??
+   return true;
+}
+

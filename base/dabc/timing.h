@@ -173,6 +173,15 @@ namespace dabc {
 
          DateTime(uint64_t jstime) : tv_sec(jstime / 1000), tv_nsec((jstime % 1000)*1000000) {}
 
+         DateTime(const DateTime& src) : tv_sec(src.tv_sec), tv_nsec(src.tv_nsec) {}
+
+         DateTime& operator=(const DateTime& src)
+         {
+            tv_sec = src.tv_sec;
+            tv_nsec = src.tv_nsec;
+            return *this;
+         }
+
          bool null() const { return (tv_sec==0) && (tv_nsec==0); }
 
          bool GetNow();
@@ -197,6 +206,11 @@ namespace dabc {
          /** \brief Fills only time as string */
          bool OnlyTimeAsString(char* sbuf, int len) const;
 
+         /** \brief Set only date part from the string */
+         bool SetOnlyDate(const char* sbuf);
+
+         /** \brief Set only time part of DateTime */
+         bool SetOnlyTime(const char* sbuf);
    };
 
    inline TimeStamp Now() { return TimeStamp::Now(); }

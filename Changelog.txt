@@ -10,6 +10,8 @@ of the framework.
    At the moment storage is triggered by the Publisher, but performed in
    module where hierarchy is created. One can specify interval how often 
    storage file should be recreated and full hierarchy must be dump again.
+3. Start implementation of HierarchyReading class to read data, stored in
+   by HierarchyStorage
 
 
 16.09.2013

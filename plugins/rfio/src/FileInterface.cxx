@@ -46,7 +46,7 @@ bool rfio::FileInterface::fflush(Handle f)
 }
 
          /** Produce list of files, object must be explicitely destroyed with ref.Destroy call */
-dabc::Object* rfio::FileInterface::fmatch(const char* fmask)
+dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)
 {
    return 0;
 }

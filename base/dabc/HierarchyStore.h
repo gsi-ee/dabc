@@ -36,16 +36,16 @@ namespace dabc {
 
    class HierarchyStore {
       protected:
-         std::string fBasePath;
-         FileInterface* fIO;      // file interface
-         dabc::BinaryFile fFile; // file used to write data
+         std::string fBasePath;      ///! base directory for data store
+
+         FileInterface* fIO;         ///! file interface
+         dabc::BinaryFile fFile;     ///! file used to write data
          TimeStamp   fLastStoreTm;   ///! time when last store was done
          TimeStamp   fLastFlushTm;   ///! time when last store flush was done
 
-         bool      fDoStore;   ///! indicate if store diff should be done
-         bool      fDoFlush;   ///! indicate if store flush should be done
-         uint64_t  fLastVersion; ///! last stored version
-
+         bool      fDoStore;         ///! indicate if store diff should be done
+         bool      fDoFlush;         ///! indicate if store flush should be done
+         uint64_t  fLastVersion;     ///! last stored version
          Buffer    fStoreBuf;
          Buffer    fFlushBuf;
 
@@ -71,6 +71,34 @@ namespace dabc {
 
          /** \brief Write extracted data to files, performed outside hierarchy mutex */
          bool WriteExtractedData();
+   };
+
+
+   // =====================================================================
+
+
+   class HierarchyReading {
+      protected:
+         std::string fBasePath;      ///! base directory
+
+         FileInterface* fIO;         ///! file interface
+
+         dabc::Hierarchy  fTree;     ///! scanned files tree
+
+         bool ScanTreeDir(dabc::Hierarchy& h, const std::string& dirname);
+
+         bool ScanOnlyTime(const std::string& dirname,  DateTime& tm, bool isminimum);
+
+      public:
+
+         HierarchyReading();
+         virtual ~HierarchyReading();
+
+         /** Set top directory for all recorded data */
+         void SetBasePath(const std::string& path);
+
+         /** Scan only directories, do not open any files */
+         bool ScanTree(dabc::Hierarchy& tgt);
 
    };
 

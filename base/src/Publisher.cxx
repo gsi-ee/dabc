@@ -97,6 +97,22 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
 
    bool is_any_global(false);
    bool rebuild_global = fLocal.GetVersion() > fLastLocalVers;
+/*
+   static int mycnt = 0;
+   if ((mycnt++ % 20 == 0) && !fStoreDir.empty()) {
+      HierarchyReading rr;
+      rr.SetBasePath(fStoreDir);
+      Hierarchy h;
+
+      DOUT0("-------------- DO SCAN -------------");
+
+      rr.ScanTree(h);
+
+      DOUT0("-------------- DIDI SCAN -------------");
+
+      h.Release();
+   }
+*/
 
    TimeStamp storetm; // stamp  used to mark time when next store operation was triggered
 

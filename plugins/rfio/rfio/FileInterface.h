@@ -28,7 +28,7 @@ namespace rfio {
 
          virtual bool fseek(Handle f, long int offset, bool realtive = true);
 
-         virtual dabc::Object* fmatch(const char* fmask);
+         virtual dabc::Object* fmatch(const char* fmask, bool select_files = true);
    };
 
 }

@@ -14,10 +14,6 @@
 #include "hadaq/HldFile.h"
 
 
-// dabc::Object* dabc::FileInterface::fmatch(const char* fmask) { return 0; }
-
-
-
 hadaq::HldFile::HldFile() :
    dabc::BasicFile(),
    fRunNumber(0),

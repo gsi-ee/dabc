@@ -190,4 +190,143 @@ bool dabc::HierarchyStore::WriteExtractedData()
    return true;
 }
 
+// =================================================================================
+
+
+// =====================================================================
+
+
+dabc::HierarchyReading::HierarchyReading() :
+   fBasePath(),
+   fIO(0)
+{
+}
+
+dabc::HierarchyReading::~HierarchyReading()
+{
+   if (fIO!=0) {
+      delete fIO;
+      fIO = 0;
+   }
+}
+
+void dabc::HierarchyReading::SetBasePath(const std::string& path)
+{
+   fBasePath = path;
+   if ((fBasePath.length()>0) && (fBasePath[fBasePath.length()-1] != '/')) fBasePath.append("/");
+}
+
+bool dabc::HierarchyReading::ScanOnlyTime(const std::string& dirname,  DateTime& tm, bool isminimum)
+{
+   std::string subdir = dirname;
+
+   if (!tm.null()) {
+      char sbuf[100];
+      tm.OnlyDateAsString(sbuf, sizeof(sbuf));
+      subdir.append(sbuf);
+      subdir.append("/");
+   }
+
+   std::string mask = subdir + "*.dabc";
+
+   Reference files = fIO->fmatch(mask.c_str(), true);
+   DateTime mindt, maxdt;
+
+   for (unsigned n=0;n<files.NumChilds();n++) {
+      std::string fname = files.GetChild(n).GetName();
+      fname.erase(0, subdir.length());
+
+      size_t pos = fname.find(".dabc");
+      if (pos == fname.npos) {
+         EOUT("Wrong time file name %s", fname.c_str());
+         return false;
+      }
+      fname.erase(pos);
+
+      DateTime dt = tm;
+      if (!dt.SetOnlyTime(fname.c_str())) {
+         EOUT("Wrong time file name %s", fname.c_str());
+         return false;
+      }
+
+      if (mindt.null() || (mindt.AsDouble() > dt.AsDouble())) mindt = dt;
+      if (maxdt.null() || (maxdt.AsDouble() < dt.AsDouble())) maxdt = dt;
+   }
+
+   if (isminimum && !mindt.null()) tm = mindt;
+   if (!isminimum && !maxdt.null()) tm = maxdt;
+
+   return true;
+
+}
+
+
+bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& dirname)
+{
+   if (h.null() || dirname.empty()) return false;
+
+   DOUT0("SCAN %s", dirname.c_str());
+
+   std::string mask = dirname + "*";
+
+   Reference dirs = fIO->fmatch(mask.c_str(), false);
+
+   DateTime mindt, maxdt;
+
+   bool isanysubdir(false), isanydatedir(false);
+
+   for (unsigned n=0;n<dirs.NumChilds();n++) {
+      std::string fullsubname = dirs.GetChild(n).GetName();
+
+      std::string itemname = fullsubname;
+      itemname.erase(0, dirname.length());
+
+      DateTime dt;
+
+      DOUT0("FOUND %s PART %s", fullsubname.c_str(), itemname.c_str());
+
+      if (dt.SetOnlyDate(itemname.c_str())) {
+         isanydatedir = true;
+         if (mindt.null() || (mindt.AsDouble() > dt.AsDouble())) mindt = dt;
+         if (maxdt.null() || (maxdt.AsDouble() < dt.AsDouble())) maxdt = dt;
+      } else {
+         isanysubdir = true;
+         dabc::Hierarchy subh = h.CreateChild(itemname.c_str());
+         if (!ScanTreeDir(subh, fullsubname + "/")) return false;
+      }
+   }
+
+   dirs.Release();
+
+   if (isanysubdir && isanydatedir) {
+      EOUT("DIR %s Cannot combine subdirs with date dirs!!!", dirname.c_str());
+      return false;
+   }
+
+   if (isanydatedir) {
+      if (!ScanOnlyTime(dirname, mindt, true) ||
+          !ScanOnlyTime(dirname, maxdt, false)) return false;
+
+      char buf1[100], buf2[100];
+      mindt.AsJSString(buf1, sizeof(buf1));
+      maxdt.AsJSString(buf2, sizeof(buf2));
+
+      DOUT0("DIR: %s mintm: %s maxtm: %s", dirname.c_str(), buf1, buf2);
+
+      h.Field("dabc:path").SetStr(dirname);
+      h.Field("dabc:mindt").SetDatime(mindt.AsJSDate());
+      h.Field("dabc:maxdt").SetDatime(maxdt.AsJSDate());
+   }
+
+
+   return true;
+}
+
+
+bool dabc::HierarchyReading::ScanTree(dabc::Hierarchy& tgt)
+{
+   if (tgt.null()) tgt.Create("TOP");
+   if (fIO==0) fIO = new FileInterface;
+   return ScanTreeDir(tgt, fBasePath);
+}
 
