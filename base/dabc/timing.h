@@ -191,6 +191,12 @@ namespace dabc {
           * Time in GMT time zone */
          bool AsJSString(char* sbuf, int len, int ndecimal = 3) const;
 
+         /** \brief Fills only date as string */
+         bool OnlyDateAsString(char* sbuf, int len) const;
+
+         /** \brief Fills only time as string */
+         bool OnlyTimeAsString(char* sbuf, int len) const;
+
    };
 
    inline TimeStamp Now() { return TimeStamp::Now(); }

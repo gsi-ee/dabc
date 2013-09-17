@@ -59,6 +59,8 @@ namespace dabc {
 
          /** Produce list of files, object must be explicitly destroyed with ref.Destroy call */
          virtual Object* fmatch(const char* fmask);
+
+         virtual bool mkdir(const char* path);
    };
 
    // ==============================================================================
@@ -150,7 +152,7 @@ namespace dabc {
       BinaryFileBufHeader() : datalength(0), buftype(0) {}
    };
 
-   enum { BinaryFileMagicValue  = 1234 };
+   enum { BinaryFileMagicValue  = 1237 };
 
 
    /** \brief Generic file storage for DABC buffers

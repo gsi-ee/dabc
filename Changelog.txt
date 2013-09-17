@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+17.09.2013
+1. Implement FileInterface::mkdir method, which able to create new directory,
+   including all missing parents directories. Normally one should not
+   use ".." symbol inside full path. 
+2. Very first implementation of hieararchy storage in binary files.
+   At the moment storage is triggered by the Publisher, but performed in
+   module where hierarchy is created. One can specify interval how often 
+   storage file should be recreated and full hierarchy must be dump again.
+
+
 16.09.2013
 1. Optimize LogDrawElement - it is now derived from HistoryDrawElement
 2. Introduce GenericDrawElement - text output of all availible fields in element.
@@ -12,7 +22,9 @@ of the framework.
    string (xml), human-readable format (ISO 8601) is used. It is like
    '2013-09-16T12:42:30.884Z' and directly can be interpreted in the JavaScript,
    using 'Date' class. 
-
+5. Introduce dabc::HierarchyStore class which will be used to write hierarchy 
+   log into the binary files.
+   
 
 11.09.2013
 1. Major functionality of managing of published hierarchies implemented in 

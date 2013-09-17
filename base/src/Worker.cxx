@@ -24,6 +24,8 @@
 #include "dabc/Iterator.h"
 #include "dabc/ReferencesVector.h"
 #include "dabc/Publisher.h"
+#include "dabc/HierarchyStore.h"
+
 
 dabc::WorkerAddon::WorkerAddon(const std::string& name) :
    Object(0, name),
@@ -667,18 +669,27 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
    if (cmd.IsName(CmdPublisher::CmdName())) {
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
+      Mutex* m = (Mutex*) cmd.GetPtr("mutex");
+      HierarchyStore* store = (HierarchyStore*) cmd.GetPtr("store");
       unsigned version = cmd.GetUInt("version");
-
       // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
-      Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
+      if (!h.null()) {
+         LockGuard lock(m);
+         Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
+         cmd.SetRawData(diff);
+         cmd.SetUInt("version", h.GetVersion());
+
+         if (store) store->ExtractData(h);
+
+         cmd_res = cmd_true;
+      }
+
+      if (store) store->WriteExtractedData();
 
       // DOUT0("Request DNS version %u sizelen %u", (unsigned) cmdp.GetVersion(), (unsigned) diff.GetTotalSize());
       // DOUT0("CURRENT ver %u\n%s", (unsigned) h.GetVersion(), h.SaveToXml().c_str());
 
-      cmd.SetRawData(diff);
-      cmd.SetUInt("version", h.GetVersion());
-      cmd_res = cmd_true;
    } else
    if (cmd.IsName(CmdPublisherGet::CmdName())) {
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");

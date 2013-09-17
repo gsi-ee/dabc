@@ -18,6 +18,12 @@
     
     <Module name="Publisher" class="dabc::Publisher">
        <manager value="true"/>
+       <store value="false"/>
+       <storedir value="/data.local1/hstore/"/>
+       <storesel value="FESA/Test"/>
+       <filelimit value="100"/>
+       <timelimit value="600"/>
+       <period value="10"/>
     </Module>
 
     <Module name="fesa_monitor" class="fesa::Monitor">

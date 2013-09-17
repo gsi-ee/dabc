@@ -246,3 +246,24 @@ bool dabc::DateTime::AsJSString(char* sbuf, int len, int ndecimal) const
    return true;
 }
 
+
+bool dabc::DateTime::OnlyDateAsString(char* sbuf, int len) const
+{
+   if (null()) return false;
+   time_t src = tv_sec;
+   struct tm res;
+   gmtime_r(&src, &res);
+   strftime(sbuf, len, "%Y-%m-%d", &res);
+   return true;
+}
+
+bool dabc::DateTime::OnlyTimeAsString(char* sbuf, int len) const
+{
+   if (null()) return false;
+   time_t src = tv_sec;
+   struct tm res;
+   gmtime_r(&src, &res);
+   strftime(sbuf, len, "%H:%M:%S", &res);
+   return true;
+}
+

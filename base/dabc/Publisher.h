@@ -25,6 +25,7 @@
 namespace dabc {
 
    class PublisherRef;
+   class HierarchyStore;
 
    class CmdPublisher : public Command {
       DABC_COMMAND(CmdPublisher, "CmdPublisher");
@@ -63,10 +64,27 @@ namespace dabc {
       int  errcnt;          // counter of consequent errors
       bool waiting_publisher; // indicate if next request is submitted
       Hierarchy rem;        // remote hierarchy
+      HierarchyStore* store; // store object for the registered hierarchy
 
       PublisherEntry() :
          id(0), path(), worker(), fulladdr(), hier(0), mutex(0),
-         version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem() {}
+         version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
+         store(0) {}
+
+      // implement copy constructor to avoid any extra copies which are not necessary
+      PublisherEntry(const PublisherEntry& src) :
+         id(src.id), path(), worker(), fulladdr(), hier(0), mutex(0),
+         version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
+         store(0) {}
+
+      ~PublisherEntry();
+
+      // implement assign operator to avoid any extra copies which are not necessary
+      PublisherEntry& operator=(const PublisherEntry& src)
+      {
+         id = src.id;
+         return *this;
+      }
    };
 
    struct SubscriberEntry {
@@ -113,6 +131,12 @@ namespace dabc {
 
          Hierarchy fMgrHiearchy; ///! this is manager hierarchy, published by ourselfs
 
+         std::string fStoreDir;   ///! directory to store data
+         std::string fStoreSel;   ///! selected hierarchy path for storage like 'MBS' or 'FESA/server'
+         int         fFileLimit;  ///! maximum size of store file, in MB
+         int         fTimeLimit;  ///! maximum time of store file, in seconds
+         double      fStorePeriod; ///! how often storage is triggered
+
          virtual int ExecuteCommand(Command cmd);
 
          virtual bool ReplyCommand(Command cmd);
@@ -127,6 +151,8 @@ namespace dabc {
          virtual void BeforeModuleStart();
 
          bool ApplyEntryDiff(unsigned recid, dabc::Buffer& buf, uint64_t version, bool witherror = false);
+
+         bool DoStorage() const { return !fStoreDir.empty(); }
 
       public:
 

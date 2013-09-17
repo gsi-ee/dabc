@@ -148,7 +148,7 @@ namespace dabc {
 
    enum HierarchyStreamKind {
       stream_NamesList, // only names list is stored
-      stream_Value,     // only selected entry (plus history, if specified)
+      stream_Value,     // only selected entry without childs (plus history, if specified)
       stream_Full       // full hierarchy (plus history, if specified)
    };
 
@@ -183,10 +183,10 @@ namespace dabc {
           * Changed when any childs add/removed or dns-relevant fields are changed
           * This version is used by name services to detect and update possible changes in hierarchy
           * and do not care about any other values changes */
-         uint64_t   fDNSVersion;
+         uint64_t   fNamesVersion;
 
          /** \brief Version of hierarchy structure
-          * Childs version is changed when any childs is changed or insrted/removed */
+          * Childs version is changed when any childs is changed or inserted/removed */
          uint64_t   fChildsVersion;  ///< version number of hierarchy below
 
          bool       fAutoTime;          ///< when enabled, by node change (not hierarchy) time attribute will be set
@@ -194,7 +194,7 @@ namespace dabc {
          bool       fPermanent;         ///< indicate that item is permanent and should be excluded from update
 
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
-         bool       fDNSChanged;        ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
+         bool       fNamesChanged;        ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
          bool       fChildsChanged;  ///< indicate if something was changed in the hierarchy
 
          Buffer     fBinData;           ///< binary data, assigned with element
@@ -249,7 +249,7 @@ namespace dabc {
 
          virtual Object* CreateObject(const std::string& name) { return new HierarchyContainer(name); }
 
-         virtual void _ChildsChanged() { fDNSChanged = true; fChildsChanged = true; fNodeChanged = true;  }
+         virtual void _ChildsChanged() { fNamesChanged = true; fChildsChanged = true; fNodeChanged = true;  }
 
          uint64_t GetNextVersion() const;
 
@@ -277,6 +277,8 @@ namespace dabc {
          XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask);
 
          uint64_t GetVersion() const { return fNodeVersion; }
+
+         uint64_t GetChildsVersion() const { return fChildsVersion; }
 
          /** \brief Produces string with xml code, containing history */
          std::string RequestHistoryAsXml(uint64_t version = 0, int limit = 0);

@@ -24,8 +24,38 @@
 #include <string.h>
 
 #include "dabc/Object.h"
-
 #include "dabc/logging.h"
+
+bool dabc::FileInterface::mkdir(const char* path)
+{
+   if ((path==0) || (*path==0)) return false;
+
+   const char* part = path;
+
+   // we should ensure that part is exists
+   while (part != 0) {
+      part = strchr(part+1, '/');
+
+      std::string subname;
+      if (part == 0)
+         subname = path;
+      else
+         subname.append(path, part - path);
+
+      struct stat buf;
+      if (stat(subname.c_str(), &buf) < 0) {
+         if (::mkdir(subname.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) return false;
+      } else {
+         if (!S_ISDIR(buf.st_mode)) {
+            EOUT("Existing path %s is not a directory", subname.c_str());
+            return false;
+         }
+      }
+   }
+
+   return true;
+}
+
 
 dabc::Object* dabc::FileInterface::fmatch(const char* fmask)
 {

@@ -19,9 +19,6 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/Pointer.h"
 
-#define BinaryFileCurrentVersion 1
-#define BinaryFileMagicValue 1234
-
 
 dabc::BinaryFileInput::BinaryFileInput(const dabc::Url& url) :
    FileInput(url),

@@ -16,6 +16,19 @@
 #include "dabc/Publisher.h"
 
 #include "dabc/Manager.h"
+#include "dabc/HierarchyStore.h"
+
+
+dabc::PublisherEntry::~PublisherEntry()
+{
+   if (store!=0) {
+      store->CloseFile();
+      delete store;
+      store = 0;
+   }
+}
+
+// ======================================================================
 
 dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -34,12 +47,19 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    if (Cfg("manager",cmd).AsBool(false))
       fMgrHiearchy.Create("Manager");
 
+   fStoreDir = Cfg("storedir", cmd).AsStr();
+   fStoreSel = Cfg("storesel", cmd).AsStr();
+   fFileLimit = Cfg("filelimit", cmd).AsInt(100);
+   fTimeLimit = Cfg("timelimit", cmd).AsInt(600);
+   fStorePeriod = Cfg("period",cmd).AsDouble(5.);
+
+   if (!Cfg("store", cmd).AsBool()) fStoreDir.clear();
+
    DOUT0("Create publisher");
 }
 
 void dabc::Publisher::BeforeModuleStart()
 {
-
    if (!fMgrHiearchy.null()) {
       std::string path = "DABC/";
       std::string addr = dabc::mgr.GetLocalAddress();
@@ -78,6 +98,8 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
    bool is_any_global(false);
    bool rebuild_global = fLocal.GetVersion() > fLastLocalVers;
 
+   TimeStamp storetm; // stamp  used to mark time when next store operation was triggered
+
    for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
 
       if (!iter->local) {
@@ -110,11 +132,17 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
       } else
       if (iter->local) {
          CmdPublisher cmd;
+         bool dostore = false;
          cmd.SetReceiver(iter->worker);
          cmd.SetUInt("version", iter->version);
          cmd.SetPtr("hierarchy", iter->hier);
+         cmd.SetPtr("mutex", iter->mutex);
          cmd.SetUInt("recid", iter->id);
-         cmd.SetTimeout(5.);
+         if (iter->store && iter->store->CheckForNextStore(storetm, fStorePeriod, fTimeLimit)) {
+            cmd.SetPtr("store", iter->store);
+            dostore = true;
+         }
+         cmd.SetTimeout(dostore ? 50. : 5.);
          dabc::mgr.Submit(Assign(cmd));
       } else {
          Command cmd("GetLocalHierarchy");
@@ -265,6 +293,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                return cmd_false;
             }
 
+            DOUT0("PUBLISH folder %s", path.c_str());
+
             fPublishers.push_back(PublisherEntry());
             fPublishers.back().id = fCnt++;
             fPublishers.back().path = path;
@@ -274,7 +304,13 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             fPublishers.back().mutex = cmd.GetPtr("Mutex");
             fPublishers.back().local = true;
 
-            DOUT0("PUBLISH folder %s", path.c_str());
+            if (!fStoreDir.empty()) {
+               if (fStoreSel.empty() || (path.find(fStoreSel) == 0)) {
+                  DOUT0("Create store for %s", path.c_str());
+                  fPublishers.back().store = new HierarchyStore();
+                  fPublishers.back().store->SetBasePath(fStoreDir + path);
+               }
+            }
 
             fLocal.GetFolder(path, true);
 
@@ -414,6 +450,9 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string itemname = cmd.GetStr("Item");
       std::string producer_name, request_name;
       bool islocal(true);
+
+      DOUT0("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+
 
       // first look in local structures
       dabc::Hierarchy h = fLocal.GetFolder(itemname);

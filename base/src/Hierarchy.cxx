@@ -155,12 +155,12 @@ bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, un
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
-   fDNSVersion(0),
+   fNamesVersion(0),
    fChildsVersion(0),
    fAutoTime(false),
    fPermanent(false),
    fNodeChanged(false),
-   fDNSChanged(false),
+   fNamesChanged(false),
    fChildsChanged(false),
    fBinData(),
    fHist()
@@ -224,8 +224,8 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       switch (kind) {
          case stream_NamesList: // this is DNS case - only names list
             fields_prefix = "dabc:";
-            store_fields = fDNSVersion >= version;
-            store_childs = fDNSVersion >= version;
+            store_fields = fNamesVersion >= version;
+            store_childs = fNamesVersion >= version;
             store_history = false;
             store_diff = store_fields; // we indicate if only selected fields are stored
             break;
@@ -288,7 +288,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       if (mask & maskFieldsStored) {
          fNodeChanged = true;
          std::string prefix;
-         if (mask & maskDiffStored) { prefix = "dabc:"; fDNSChanged = true; }
+         if (mask & maskDiffStored) { prefix = "dabc:"; fNamesChanged = true; }
          Fields().Stream(s, prefix);
       }
 
@@ -344,7 +344,7 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
 
    if ((mask & xmlmask_Version) != 0) {
       Xml::NewIntAttr(objnode, "node_ver", fNodeVersion);
-      Xml::NewIntAttr(objnode, "dns_ver", fDNSVersion);
+      Xml::NewIntAttr(objnode, "dns_ver", fNamesVersion);
       Xml::NewIntAttr(objnode, "chld_ver", fChildsVersion);
    }
 
@@ -649,6 +649,12 @@ bool dabc::HierarchyContainer::CheckIfDoingHistory()
    return false;
 }
 
+enum ChangeBits {
+   change_Value  = 0x1,
+   change_Names  = 0x2,
+   change_Childs = 0x4
+};
+
 unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& tm, bool withchilds)
 {
    unsigned mask = 0;
@@ -662,22 +668,23 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
 
    if (mask != 0) fNodeChanged = true;
 
-   if (mask & 2) fDNSChanged = true;
+   if (mask & change_Names) fNamesChanged = true;
 
-   if (mask & 4) fChildsChanged = true;
+   // if any child was changed directly (bit 1)
+   if (mask & (change_Value | change_Childs)) fChildsChanged = true;
 
    bool fields_were_chaneged = Fields().WasChanged();
 
    if (fields_were_chaneged) {
       fNodeChanged = true;
-      if (Fields().WasChangedWith("dabc:")) fDNSChanged = true;
+      if (Fields().WasChangedWith("dabc:")) fNamesChanged = true;
    }
 
    if (fNodeChanged) {
 
-      if (fNodeChanged) { fNodeVersion = ver; mask = mask | 1; }
-      if (fDNSChanged) { fDNSVersion = ver; mask = mask | 2; }
-      if (fChildsChanged) { fChildsVersion = ver; mask = mask | 4; }
+      if (fNodeChanged) { fNodeVersion = ver; mask = mask | change_Value; }
+      if (fNamesChanged) { fNamesVersion = ver; mask = mask | change_Names; }
+      if (fChildsChanged) { fChildsVersion = ver; mask = mask | change_Childs; }
 
       if (fNodeChanged && fAutoTime) {
          if (tm==0) {
@@ -703,7 +710,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
       // clear flags only after we produce diff
       Fields().ClearChangeFlags();
       fNodeChanged = false;
-      fDNSChanged = false;
+      fNamesChanged = false;
       fChildsChanged = false;
    }
 
@@ -735,9 +742,9 @@ void dabc::HierarchyContainer::MarkChangedItems(uint64_t tm)
    // mark changes in parent
    HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (GetParent());
    while (prnt != 0) {
-      if (mask & 2) prnt->fDNSChanged = true;
       prnt->fNodeChanged = true;
-      prnt->fChildsChanged = true;
+      if (mask & change_Names) prnt->fNamesChanged = true;
+      if (mask & (change_Value | change_Childs)) prnt->fChildsChanged = true;
 
       prnt->MarkVersionIfChanged(next_ver, tm, false);
       prnt = dynamic_cast<HierarchyContainer*> (prnt->GetParent());
