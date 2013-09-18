@@ -2,6 +2,19 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+18.09.2013
+1. When reading hierarchy data from binary data, one can avoid most part of
+   decoding. It can be used, when data series only for concrete element is produced.
+   This is possible while every object (like fields map, history, hierarchy element)
+   is streamed in standard way - size of object is always written in the front.
+   Therefore to skip it enough to read size and jump over data.
+2. For series extraction from files no-delete flag implemented for hierarchy streamer.
+   In such case none of the existing elements in hierarchy will be deleted.
+3. Implementation of HierarchyReading is very experimental and 
+   requires good user interface. But major functionality is established and
+   need to be tested.       
+
+
 17.09.2013
 1. Implement FileInterface::mkdir method, which able to create new directory,
    including all missing parents directories. Normally one should not

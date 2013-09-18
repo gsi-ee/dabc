@@ -147,9 +147,10 @@ namespace dabc {
 
 
    enum HierarchyStreamKind {
-      stream_NamesList, // only names list is stored
-      stream_Value,     // only selected entry without childs (plus history, if specified)
-      stream_Full       // full hierarchy (plus history, if specified)
+      stream_NamesList,   // store only names list
+      stream_Value,       // store only selected entry without childs (plus history, if specified)
+      stream_Full,        // store full hierarchy (plus history, if specified)
+      stream_NoDelete     // when reading, no any element will be deleted
    };
 
    enum HierarchyXmlStreamMask {
@@ -194,8 +195,11 @@ namespace dabc {
          bool       fPermanent;         ///< indicate that item is permanent and should be excluded from update
 
          bool       fNodeChanged;       ///< indicate if something was changed in the node during update
-         bool       fNamesChanged;        ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
-         bool       fChildsChanged;  ///< indicate if something was changed in the hierarchy
+         bool       fNamesChanged;      ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
+         bool       fChildsChanged;     ///< indicate if something was changed in the hierarchy
+
+         bool       fDisableReading;       ///< when true, non of data (fields and history) need to be read in streamer
+         bool       fDisableChildsReading;  ///< when true, non of childs should be read
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
@@ -237,6 +241,9 @@ namespace dabc {
          /** \brief If item changed, marked with version, time stamp applied, history recording
           * returns mask with changes - 1 - any child node was changed, 2 - hierarchy was changed */
          unsigned MarkVersionIfChanged(uint64_t ver, uint64_t& tm, bool withchilds);
+
+         /** \brief Mark reading flags */
+         void MarkReading(bool withchilds, bool readvalues, bool readchilds);
 
          /** \brief Central method, which analyzes all possible changes in node (and its childs)
           * If any changes found, node marked with new version
@@ -368,7 +375,7 @@ namespace dabc {
       bool ReadFromBuffer(const dabc::Buffer& buf);
 
       /** Apply modification to hierarchy, using stored binary data  */
-      bool UpdateFromBuffer(const dabc::Buffer& buf);
+      bool UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamKind kind = stream_Full);
 
       /** \brief Store hierarchy in form of xml
        *  mask select that is saved. Following values are used
@@ -394,6 +401,21 @@ namespace dabc {
 
       /** Removes folder and its parents as long as no other childs are present */
       bool RemoveEmptyFolders(const std::string& path);
+
+      /** \brief Name which is used as item name in hierarchy. Name of top object is not included */
+      std::string ItemName() const;
+
+      /** \brief Returns reference on the top element of the hierarchy */
+      Hierarchy GetTop() const;
+
+      /** \brief Detach from parent object */
+      bool DettachFromParent();
+
+      /** \brief Mark all elements that non of data will be read */
+      void DisableReading(bool withchlds = true);
+
+      /** \brief Enable element and all its parents to read data */
+      void EnableReading(const Hierarchy& upto = 0);
    };
 
 

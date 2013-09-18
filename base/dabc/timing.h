@@ -171,7 +171,7 @@ namespace dabc {
       public:
          DateTime() : tv_sec(0), tv_nsec(0) {}
 
-         DateTime(uint64_t jstime) : tv_sec(jstime / 1000), tv_nsec((jstime % 1000)*1000000) {}
+         DateTime(uint64_t jsdate) : tv_sec(0), tv_nsec(0) { SetJSDate(jsdate); }
 
          DateTime(const DateTime& src) : tv_sec(src.tv_sec), tv_nsec(src.tv_nsec) {}
 
@@ -182,6 +182,8 @@ namespace dabc {
             return *this;
          }
 
+         double operator-(const DateTime& src) const { return src.DistanceTo(*this); }
+
          bool null() const { return (tv_sec==0) && (tv_nsec==0); }
 
          bool GetNow();
@@ -191,6 +193,13 @@ namespace dabc {
 
          /** \brief Return date and time in JS format - number of millisecond  since 1.1.1970 */
          uint64_t AsJSDate() const;
+
+         /** \brief Set value in form of JS date - milliseconds since 1.1.1970 */
+         void SetJSDate(uint64_t jsdate)
+         {
+            tv_sec = jsdate / 1000;
+            tv_nsec = ((jsdate % 1000)*1000000);
+         }
 
          /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
          bool AsString(char* sbuf, int len, int ndecimal = 0) const;
@@ -211,6 +220,9 @@ namespace dabc {
 
          /** \brief Set only time part of DateTime */
          bool SetOnlyTime(const char* sbuf);
+
+         /** \brief Return distance in seconds to provided date */
+         double DistanceTo(const DateTime& src) const;
    };
 
    inline TimeStamp Now() { return TimeStamp::Now(); }

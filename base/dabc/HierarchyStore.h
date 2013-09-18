@@ -38,10 +38,10 @@ namespace dabc {
       protected:
          std::string fBasePath;      ///! base directory for data store
 
-         FileInterface* fIO;         ///! file interface
-         dabc::BinaryFile fFile;     ///! file used to write data
-         TimeStamp   fLastStoreTm;   ///! time when last store was done
-         TimeStamp   fLastFlushTm;   ///! time when last store flush was done
+         FileInterface* fIO;             ///! file interface
+         dabc::BinaryFile fFile;         ///! file used to write data
+         dabc::DateTime   fLastStoreTm;  ///! time when last store was done
+         dabc::DateTime   fLastFlushTm;  ///! time when last store flush was done
 
          bool      fDoStore;         ///! indicate if store diff should be done
          bool      fDoFlush;         ///! indicate if store flush should be done
@@ -64,7 +64,7 @@ namespace dabc {
          bool CloseFile();
 
          /** \brief Returns true if any new store action should be performed */
-         bool CheckForNextStore(TimeStamp& now, double store_period, double flush_period);
+         bool CheckForNextStore(DateTime& now, double store_period, double flush_period);
 
          /** \brief Extract data which is can be stored, must be called under hierarchy mutex */
          bool ExtractData(dabc::Hierarchy& h);
@@ -87,7 +87,13 @@ namespace dabc {
 
          bool ScanTreeDir(dabc::Hierarchy& h, const std::string& dirname);
 
-         bool ScanOnlyTime(const std::string& dirname,  DateTime& tm, bool isminimum);
+         bool ScanFiles(const std::string& dirname, const DateTime& onlydate, std::vector<uint64_t>& vect);
+
+         std::string MakeFileName(const std::string& fpath, const DateTime& dt);
+
+         bool ProduceStructure(Hierarchy& tree, const DateTime& from, const DateTime& till, const std::string& entry, Hierarchy& tgt);
+
+         dabc::Buffer ReadBuffer(dabc::BinaryFile& f);
 
       public:
 
@@ -98,7 +104,13 @@ namespace dabc {
          void SetBasePath(const std::string& path);
 
          /** Scan only directories, do not open any files */
-         bool ScanTree(dabc::Hierarchy& tgt);
+         bool ScanTree();
+
+         /** Get full structure at given point of time */
+         bool GetStrucutre(Hierarchy& h, const DateTime& dt = 0);
+
+         /** Get entry with history for specified time interval */
+         Hierarchy GetSerie(const std::string& entry, const DateTime& from, const DateTime& till);
 
    };
 

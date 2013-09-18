@@ -84,7 +84,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
 
    } else {
       s.read_uint32(storesz);
-      sz = ((uint64_t) storesz)*8;
+      sz = ((uint64_t) storesz) * 8;
       s.read_uint32(storenum);
       // storevers = storenum >> 24;
       storenum = storenum & 0xffffff;
@@ -108,7 +108,6 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
    }
 
    return s.verify_size(pos, sz);
-
 }
 
 bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, unsigned hlimit)
@@ -162,6 +161,8 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fNodeChanged(false),
    fNamesChanged(false),
    fChildsChanged(false),
+   fDisableReading(false),
+   fDisableChildsReading(false),
    fBinData(),
    fHist()
 {
@@ -286,51 +287,88 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       s.read_uint64(mask);
 
       if (mask & maskFieldsStored) {
-         fNodeChanged = true;
-         std::string prefix;
-         if (mask & maskDiffStored) { prefix = "dabc:"; fNamesChanged = true; }
-         Fields().Stream(s, prefix);
+         if (fDisableReading) {
+            if (!s.skip_object())
+               EOUT("FAIL to skip fields part in the streamer for %s", ItemName().c_str());
+            else
+               DOUT0("SKIP FIELDS in %s", ItemName().c_str());
+         } else {
+            fNodeChanged = true;
+            std::string prefix;
+            if (mask & maskDiffStored) { prefix = "dabc:"; fNamesChanged = true; }
+            Fields().Stream(s, prefix);
+         }
       }
 
       if (mask & maskHistory) {
-         if (fHist.null()) fHist.Allocate();
-         fHist()->Stream(s, version, hlimit);
+
+         if (fDisableReading) {
+            if (!s.skip_object())
+               EOUT("FAIL to skip history part in the streamer");
+            else
+               DOUT0("SKIP HISTORY in %s", ItemName().c_str());
+         } else {
+            if (fHist.null()) fHist.Allocate();
+            fHist()->Stream(s, version, hlimit);
+         }
       }
 
       if (mask & maskChildsStored) {
+         // when childs cannot be deleted, also order of childs may be broken
+         // therefore in that case childs just inserted in arbitrary way
+         bool candeletechilds = (kind != stream_NoDelete);
+
          fChildsChanged = true;
          unsigned tgtcnt = 0;
          // exclude from update permanent items
-         while (tgtcnt < NumChilds() && ((HierarchyContainer*) GetChild(tgtcnt))->fPermanent) tgtcnt++;
+         if (candeletechilds)
+            while ((tgtcnt < NumChilds()) && ((HierarchyContainer*) GetChild(tgtcnt))->fPermanent) tgtcnt++;
 
          for (unsigned srcnum=0; srcnum<storenum; srcnum++) {
             // first read name of next child
             std::string childname;
             s.read_str(childname);
 
-            // try to find item with such name in the corrent list
+            if (fDisableChildsReading) {
+               if (!s.skip_object())
+                  EOUT("FAIL to skip child %s in %s", childname.c_str(), ItemName().c_str());
+               else
+                  DOUT0("SKIP CHILD %s in %s", childname.c_str(), ItemName().c_str());
+
+               continue;
+            }
+
             dabc::HierarchyContainer* child = 0;
-            unsigned findindx = tgtcnt;
+
+            // try to find item with such name in the current list
+            unsigned findindx = candeletechilds ? tgtcnt : 0;
             while (findindx<NumChilds()) {
-               child = (HierarchyContainer*) GetChild(findindx);
-               if (child->IsName(childname.c_str())) break;
-               child = 0; findindx++;
+               if (GetChild(findindx)->IsName(childname.c_str())) {
+                  child = (HierarchyContainer*) GetChild(findindx);
+                  break;
+               }
+               findindx++;
             }
 
             if (child == 0) {
                // if no child with such name found, create and add it in current position
                child = new dabc::HierarchyContainer(childname);
+
+               // TODO: may be tgtcnt should not be used when !candeletechilds is specified
                AddChildAt(child, tgtcnt);
             } else {
                // we need to delete all skipped childs in between
-               while (findindx-- > tgtcnt) RemoveChildAt(tgtcnt, true);
+               if (candeletechilds)
+                  while (findindx-- > tgtcnt) RemoveChildAt(tgtcnt, true);
             }
 
             child->Stream(s, kind, version, hlimit);
             tgtcnt++;
          }
+
          // remove remained items at the end
-         while (tgtcnt < NumChilds()) RemoveChildAt(tgtcnt, true);
+         if (candeletechilds)
+            while (tgtcnt < NumChilds()) RemoveChildAt(tgtcnt, true);
       }
    }
 
@@ -655,6 +693,20 @@ enum ChangeBits {
    change_Childs = 0x4
 };
 
+
+void dabc::HierarchyContainer::MarkReading(bool withchilds, bool readvalues, bool readchilds)
+{
+   if (withchilds)
+      for (unsigned indx=0; indx < NumChilds(); indx++) {
+         dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+         if (child) child->MarkReading(withchilds, readvalues, readchilds);
+      }
+
+   fDisableReading = !readvalues;
+   fDisableChildsReading = !readchilds;
+}
+
+
 unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& tm, bool withchilds)
 {
    unsigned mask = 0;
@@ -882,7 +934,7 @@ bool dabc::Hierarchy::ReadFromBuffer(const dabc::Buffer& buf)
    return true;
 }
 
-bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf)
+bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamKind kind)
 {
    if (buf.null()) return false;
 
@@ -893,7 +945,7 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf)
 
    memstream inps(true, (char*) buf.SegmentPtr(), buf.SegmentSize());
 
-   if (!GetObject()->Stream(inps)) {
+   if (!GetObject()->Stream(inps, kind)) {
       EOUT("Cannot reconstruct hierarchy from the binary data!");
       return false;
    }
@@ -1017,4 +1069,49 @@ bool dabc::Hierarchy::RemoveEmptyFolders(const std::string& path)
       h.Destroy(); // delete as long no any other involved
    }
    return true;
+}
+
+std::string dabc::Hierarchy::ItemName() const
+{
+   if (null()) return std::string();
+   return GetObject()->ItemName();
+}
+
+dabc::Hierarchy dabc::Hierarchy::GetTop() const
+{
+   HierarchyContainer* obj = GetObject();
+   while (obj!=0) {
+      HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (obj->GetParent());
+      if (prnt == 0) break;
+      obj = prnt;
+   }
+   return dabc::Hierarchy(obj);
+}
+
+bool dabc::Hierarchy::DettachFromParent()
+{
+   Object* prnt = GetParent();
+
+   return prnt ?  prnt->RemoveChild(GetObject(), false) : true;
+}
+
+void dabc::Hierarchy::DisableReading(bool withchlds)
+{
+   if (!null()) GetObject()->MarkReading(withchlds, false, false);
+}
+
+void dabc::Hierarchy::EnableReading(const Hierarchy& upto)
+{
+   if (null()) return;
+   GetObject()->MarkReading(false, true, true);
+
+   if (upto.null()) return;
+
+   dabc::Hierarchy prnt = GetParentRef();
+
+   while (!prnt.null()) {
+      prnt()->MarkReading(false, false, true);
+      if (prnt == upto) break;
+      prnt = prnt.GetParentRef();
+   }
 }

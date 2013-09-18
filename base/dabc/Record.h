@@ -31,6 +31,7 @@
 namespace dabc {
 
    class ConfigIO;
+   class DateTime;
 
    // =================================================================================
 
@@ -56,6 +57,11 @@ namespace dabc {
          bool is_input() const { return fInput; }
          bool is_output() const { return !fInput; }
          virtual bool is_real() const { return true; }
+
+         /** \brief Insted of reading object we read size and shift on that size
+          * Only can be done where size stored as 32-bit integer in the current position
+          * and contains number of 64-bit stored values, including size itself */
+         bool skip_object();
 
          bool verify_size(uint64_t pos, uint64_t sz);
 
@@ -240,8 +246,11 @@ namespace dabc {
          std::string AsStr(const std::string& dflt = "") const;
          std::string AsStdStr(const std::string& dflt = "") const { return AsStr(dflt); }
          std::vector<int64_t> AsIntVect() const;
+         int64_t* GetIntArr() const { return fKind == kind_arrint ? arrInt : 0; }
          std::vector<uint64_t> AsUIntVect() const;
+         uint64_t* GetUIntArr() const { return fKind == kind_arruint ? arrUInt : 0; }
          std::vector<double> AsDoubleVect() const;
+         double* GetDoubleArr() const { return fKind == kind_arrdouble ? arrDouble : 0; }
          std::vector<std::string> AsStrVect() const;
 
          bool SetValue(const RecordField& src);
@@ -249,6 +258,7 @@ namespace dabc {
          bool SetBool(bool v);
          bool SetInt(int64_t v);
          bool SetDatime(uint64_t v);
+         bool SetDatime(const DateTime& v);
          bool SetUInt(uint64_t v);
          bool SetDouble(double v);
          bool SetStr(const std::string& v);
@@ -260,6 +270,7 @@ namespace dabc {
          bool SetVectInt(const std::vector<int64_t>& v);
          /** Set as array, if owner flag specified, one get ownership over array and do not need to create copy */
          bool SetArrUInt(int64_t size, uint64_t* arr, bool owner = false);
+         bool SetVectUInt(const std::vector<uint64_t>& v);
          /** Set as array, if owner flag specified, one get ownership over array and do not need to create copy */
          bool SetArrDouble(int64_t size, double* arr, bool owner = false);
          bool SetVectDouble(const std::vector<double>& v);

@@ -310,3 +310,19 @@ bool dabc::DateTime::SetOnlyTime(const char* sbuf)
    return true;
 }
 
+double dabc::DateTime::DistanceTo(const DateTime& pnt) const
+{
+   if (null()) return pnt.AsDouble();
+   if (pnt.null()) return -1. * AsDouble();
+
+   // to exclude precision lost, calculate sec and nanosec separately
+
+   double res = (pnt.tv_sec >= tv_sec) ? 1.*(pnt.tv_sec - tv_sec) : -1. * (tv_sec - pnt.tv_sec);
+
+   if (pnt.tv_nsec >= tv_nsec) res += 1e-9* (pnt.tv_nsec - tv_nsec);
+                          else res -= 1e-9 * (tv_nsec - pnt.tv_nsec);
+
+   return res;
+}
+
+

@@ -353,12 +353,12 @@ namespace dabc {
           * \returns               true if successful */
          bool AddChildAt(Object* child, unsigned pos, bool withmutex = true);
 
-         /** \brief Dettach child from parent object
-          *  If cleanup==true and parent is owner of child, child will be destroyed*/
+         /** \brief Detach child from parent object
+          *  If cleanup==true and parent is owner of child, child will be destroyed */
          bool RemoveChild(Object* child, bool cleanup = true) throw();
 
-         /** \brief Dettach child object from paraent at specified position
-          *  If cleanup==true and object is owner of child, child will be destroyed*/
+         /** \brief Detach child object from parent at specified position
+          *  If cleanup==true and object is owner of child, child will be destroyed */
          bool RemoveChildAt(unsigned n, bool cleanup = true) throw();
 
          /** \brief Remove all childs.

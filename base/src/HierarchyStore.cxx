@@ -17,6 +17,8 @@
 
 #include "dabc/logging.h"
 
+#include <algorithm>
+
 dabc::HierarchyStore::HierarchyStore() :
    fBasePath(),
    fIO(0),
@@ -122,12 +124,14 @@ bool dabc::HierarchyStore::CloseFile()
    return true;
 }
 
-bool dabc::HierarchyStore::CheckForNextStore(TimeStamp& now, double store_period, double flush_period)
+bool dabc::HierarchyStore::CheckForNextStore(DateTime& now, double store_period, double flush_period)
 {
    // if flags already set, do not touch them here
    if (fDoStore || fDoFlush) return true;
 
    if (now.null()) now.GetNow();
+
+   // DOUT0("SINCE LAST STORE = %5.1f", now - fLastStoreTm);
 
    // in the very first call trigger only write of base structure
    if (fLastStoreTm.null()) {
@@ -160,12 +164,23 @@ bool dabc::HierarchyStore::ExtractData(dabc::Hierarchy& h)
                    (unsigned) h()->GetChildsVersion(), (unsigned) fStoreBuf.GetTotalSize());
 
       fLastVersion = h.GetVersion();
+
+      DOUT0("STORE\n%s",h.SaveToXml().c_str());
    }
 
    if (fDoFlush) {
       // we record complete hierarchy without any history entry
       fFlushBuf = h.SaveToBuffer(dabc::stream_Full, 0, 0);
       fLastVersion = h.GetVersion();
+
+      DOUT0("FLUSH\n%s",h.SaveToXml().c_str());
+   }
+
+   if (fDoFlush || fDoStore) {
+      // this time will be used as raster when reading files
+      // it can be read very efficient - most decoding can be skipped
+      h.Field("storetm").SetDatime(fLastStoreTm);
+      h.MarkChangedItems(fLastStoreTm.AsJSDate());
    }
 
    return true;
@@ -180,9 +195,7 @@ bool dabc::HierarchyStore::WriteExtractedData()
    }
 
    if (fDoFlush) {
-
       if (!fFlushBuf.null()) StartFile(fFlushBuf);
-
       fFlushBuf.Release();
       fDoFlush = false;
    }
@@ -192,8 +205,6 @@ bool dabc::HierarchyStore::WriteExtractedData()
 
 // =================================================================================
 
-
-// =====================================================================
 
 
 dabc::HierarchyReading::HierarchyReading() :
@@ -216,48 +227,47 @@ void dabc::HierarchyReading::SetBasePath(const std::string& path)
    if ((fBasePath.length()>0) && (fBasePath[fBasePath.length()-1] != '/')) fBasePath.append("/");
 }
 
-bool dabc::HierarchyReading::ScanOnlyTime(const std::string& dirname,  DateTime& tm, bool isminimum)
+std::string dabc::HierarchyReading::MakeFileName(const std::string& fpath, const DateTime& dt)
 {
-   std::string subdir = dirname;
+   std::string res = fpath;
+   if ((res.length()>0) && (res[res.length()-1] != '/')) res.append("/");
 
-   if (!tm.null()) {
-      char sbuf[100];
-      tm.OnlyDateAsString(sbuf, sizeof(sbuf));
-      subdir.append(sbuf);
-      subdir.append("/");
-   }
+   char strdate[50], strtime[50];
+   dt.OnlyDateAsString(strdate, sizeof(strdate));
+   dt.OnlyTimeAsString(strtime, sizeof(strtime));
 
-   std::string mask = subdir + "*.dabc";
+   res += dabc::format("%s/%s.dabc", strdate, strtime);
+
+   return res;
+}
+
+bool dabc::HierarchyReading::ScanFiles(const std::string& dirname, const DateTime& onlydate, std::vector<uint64_t>& vect)
+{
+   std::string mask = dirname + "*.dabc";
 
    Reference files = fIO->fmatch(mask.c_str(), true);
-   DateTime mindt, maxdt;
 
    for (unsigned n=0;n<files.NumChilds();n++) {
       std::string fname = files.GetChild(n).GetName();
-      fname.erase(0, subdir.length());
+      fname.erase(0, dirname.length());
 
       size_t pos = fname.find(".dabc");
       if (pos == fname.npos) {
          EOUT("Wrong time file name %s", fname.c_str());
-         return false;
+         continue;
       }
       fname.erase(pos);
 
-      DateTime dt = tm;
+      DateTime dt = onlydate;
       if (!dt.SetOnlyTime(fname.c_str())) {
          EOUT("Wrong time file name %s", fname.c_str());
-         return false;
+         continue;
       }
 
-      if (mindt.null() || (mindt.AsDouble() > dt.AsDouble())) mindt = dt;
-      if (maxdt.null() || (maxdt.AsDouble() < dt.AsDouble())) maxdt = dt;
+      vect.push_back(dt.AsJSDate());
    }
 
-   if (isminimum && !mindt.null()) tm = mindt;
-   if (!isminimum && !maxdt.null()) tm = maxdt;
-
    return true;
-
 }
 
 
@@ -271,9 +281,9 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
 
    Reference dirs = fIO->fmatch(mask.c_str(), false);
 
-   DateTime mindt, maxdt;
-
    bool isanysubdir(false), isanydatedir(false);
+
+   std::vector<uint64_t> files;
 
    for (unsigned n=0;n<dirs.NumChilds();n++) {
       std::string fullsubname = dirs.GetChild(n).GetName();
@@ -287,8 +297,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
 
       if (dt.SetOnlyDate(itemname.c_str())) {
          isanydatedir = true;
-         if (mindt.null() || (mindt.AsDouble() > dt.AsDouble())) mindt = dt;
-         if (maxdt.null() || (maxdt.AsDouble() < dt.AsDouble())) maxdt = dt;
+         if (!ScanFiles(fullsubname + "/", dt, files)) return false;
       } else {
          isanysubdir = true;
          dabc::Hierarchy subh = h.CreateChild(itemname.c_str());
@@ -303,19 +312,22 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
       return false;
    }
 
-   if (isanydatedir) {
-      if (!ScanOnlyTime(dirname, mindt, true) ||
-          !ScanOnlyTime(dirname, maxdt, false)) return false;
+   if (isanydatedir && (files.size()>0)) {
+
+      std::sort(files.begin(), files.end());
+
+      dabc::DateTime mindt(files.front()), maxdt(files.back());
 
       char buf1[100], buf2[100];
       mindt.AsJSString(buf1, sizeof(buf1));
       maxdt.AsJSString(buf2, sizeof(buf2));
 
-      DOUT0("DIR: %s mintm: %s maxtm: %s", dirname.c_str(), buf1, buf2);
+      DOUT0("DIR: %s mintm: %s maxtm: %s files %u", dirname.c_str(), buf1, buf2, files.size());
 
       h.Field("dabc:path").SetStr(dirname);
-      h.Field("dabc:mindt").SetDatime(mindt.AsJSDate());
-      h.Field("dabc:maxdt").SetDatime(maxdt.AsJSDate());
+      h.Field("dabc:mindt").SetDatime(mindt);
+      h.Field("dabc:maxdt").SetDatime(maxdt);
+      h.Field("dabc:files").SetVectUInt(files);
    }
 
 
@@ -323,10 +335,147 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
 }
 
 
-bool dabc::HierarchyReading::ScanTree(dabc::Hierarchy& tgt)
+bool dabc::HierarchyReading::ScanTree()
 {
-   if (tgt.null()) tgt.Create("TOP");
+   fTree.Release();
+   fTree.Create("TOP");
    if (fIO==0) fIO = new FileInterface;
-   return ScanTreeDir(tgt, fBasePath);
+   return ScanTreeDir(fTree, fBasePath);
 }
+
+dabc::Buffer dabc::HierarchyReading::ReadBuffer(dabc::BinaryFile& f)
+{
+
+   dabc::Buffer buf;
+
+   if (f.eof()) return buf;
+
+   uint64_t size(0), typ(0);
+   if (!f.ReadBufHeader(&size, &typ)) return buf;
+
+   buf = dabc::Buffer::CreateBuffer(size);
+   if (buf.null()) return buf;
+
+   if (!f.ReadBufPayload(buf.SegmentPtr(), size)) { buf.Release(); return buf; }
+
+   buf.SetTotalSize(size);
+   buf.SetTypeId(typ);
+
+   return buf;
+}
+
+bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& from_date, const DateTime& till_date, const std::string& entry, Hierarchy& tgt)
+{
+   if (tree.null()) return false;
+
+   DOUT0("Produce structure for item %s", tree.ItemName().c_str());
+
+   if (!tree.HasField("dabc:path")) {
+      for (unsigned n=0;n<tree.NumChilds();n++) {
+         Hierarchy tree_chld = tree.GetChild(n);
+
+         /// we exclude building of the structures which are not interesting for us
+         if (!entry.empty())
+            if (entry.find(tree_chld.ItemName())!=0) continue;
+
+         Hierarchy tgt_chld = tgt.CreateChild(tree_chld.GetName());
+         if (!ProduceStructure(tree_chld, from_date, till_date, entry, tgt_chld)) return false;
+      }
+      return true;
+   }
+
+   std::string fpath = tree.Field("dabc:path").AsStr();
+
+   int nfiles = tree.Field("dabc:files").GetArraySize();
+   uint64_t* files = tree.Field("dabc:files").GetUIntArr();
+
+   if ((files==0) || (nfiles<=0)) return false;
+
+   DateTime dt;
+   dt.SetJSDate(files[0]);
+   if (!from_date.null()) {
+      for (int n=0;n<nfiles;n++)
+         if (files[n] <= from_date.AsJSDate())
+            dt.SetJSDate(files[n]);
+   }
+
+   std::string fname = MakeFileName(fpath, dt);
+
+   DOUT0("Opening file %s", fname.c_str());
+
+   dabc::BinaryFile f;
+   f.SetIO(fIO);
+   if (!f.OpenReading(fname.c_str())) return false;
+   dabc::Buffer buf = ReadBuffer(f);
+   if (buf.null()) return false;
+
+   if (!tgt.ReadFromBuffer(buf)) return false;
+
+   if (!entry.empty()) {
+
+      Hierarchy sel = tgt.GetTop().FindChild(entry.c_str());
+
+      if (sel.null()) {
+         EOUT("Cannot locate entry %s in the storage", entry.c_str());
+         return false;
+      }
+
+      tgt.DisableReading();    // we ignore all data
+      sel.EnableReading(tgt);  // beside selected element
+      tgt.EnableReading();     // we enable reading of top - it store time stamp
+
+      // now we need enable only that entry
+      sel.EnableHistory(100);
+
+      while (!f.eof()) {
+         buf = ReadBuffer(f);
+         if (!buf.null())
+            if (!tgt.UpdateFromBuffer(buf, stream_NoDelete)) return false;
+      }
+
+   }
+
+   return true;
+}
+
+bool dabc::HierarchyReading::GetStrucutre(Hierarchy& tgt, const DateTime& dt)
+{
+   if (fTree.null()) {
+      if (!ScanTree()) return false;
+   }
+
+   if (fIO==0) return false;
+
+   tgt.Release();
+   tgt.Create("TOP");
+
+   return ProduceStructure(fTree, dt, 0, "", tgt);
+}
+
+dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string& entry, const DateTime& from, const DateTime& till)
+{
+   dabc::Hierarchy h, res;
+
+   if (fTree.null()) {
+      if (!ScanTree()) return false;
+   }
+
+   if (fIO==0) return false;
+   h.Create("TOP");
+
+   if (!ProduceStructure(fTree, from, till, entry, h)) return res;
+
+   res = h.FindChild(entry.c_str());
+   if (res.null()) {
+      EOUT("Cannot locate entry %s in the storage", entry.c_str());
+      return res;
+   }
+
+   res.DettachFromParent();
+
+   h.Release(); // rest of hierarchy is not interesting
+
+   return res;
+}
+
 

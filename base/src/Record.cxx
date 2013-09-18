@@ -26,6 +26,15 @@
 #include <string.h>
 #include <fnmatch.h>
 
+bool dabc::iostream::skip_object()
+{
+   if (!is_input()) return false;
+   uint32_t storesz(0);
+   read_uint32(storesz);
+
+   return shift(((uint64_t) storesz)*8-4);
+}
+
 
 bool dabc::iostream::verify_size(uint64_t pos, uint64_t sz)
 {
@@ -778,6 +787,12 @@ bool dabc::RecordField::SetDatime(uint64_t v)
    return modified();
 }
 
+bool dabc::RecordField::SetDatime(const DateTime& v)
+{
+   return SetDatime(v.AsJSDate());
+}
+
+
 bool dabc::RecordField::SetUInt(uint64_t v)
 {
    if (cannot_modify()) return false;
@@ -868,17 +883,6 @@ bool dabc::RecordField::SetStrVect(const std::vector<std::string>& vect)
 
 }
 
-bool dabc::RecordField::SetVectInt(const std::vector<int64_t>& v)
-{
-   int64_t* arr = 0;
-   if (v.size()>0) {
-      arr = new int64_t[v.size()];
-      for (unsigned n=0;n<v.size();n++)
-         arr[n] = v[n];
-   }
-   return SetArrInt(v.size(), arr, true);
-}
-
 bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
 {
    if (cannot_modify() || (size<=0)) {
@@ -906,6 +910,18 @@ bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
    return modified();
 }
 
+bool dabc::RecordField::SetVectInt(const std::vector<int64_t>& v)
+{
+   int64_t* arr = 0;
+   if (v.size()>0) {
+      arr = new int64_t[v.size()];
+      for (unsigned n=0;n<v.size();n++)
+         arr[n] = v[n];
+   }
+   return SetArrInt(v.size(), arr, true);
+}
+
+
 bool dabc::RecordField::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
 {
    if (cannot_modify()) return false;
@@ -929,6 +945,18 @@ bool dabc::RecordField::SetArrUInt(int64_t size, uint64_t* arr, bool owner)
 
    return modified();
 }
+
+bool dabc::RecordField::SetVectUInt(const std::vector<uint64_t>& v)
+{
+   uint64_t* arr = 0;
+   if (v.size()>0) {
+      arr = new uint64_t[v.size()];
+      for (unsigned n=0;n<v.size();n++)
+         arr[n] = v[n];
+   }
+   return SetArrUInt(v.size(), arr, true);
+}
+
 
 bool dabc::RecordField::SetVectDouble(const std::vector<double>& v)
 {

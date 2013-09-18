@@ -102,19 +102,33 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
    if ((mycnt++ % 20 == 0) && !fStoreDir.empty()) {
       HierarchyReading rr;
       rr.SetBasePath(fStoreDir);
-      Hierarchy h;
-
       DOUT0("-------------- DO SCAN -------------");
+      rr.ScanTree();
 
-      rr.ScanTree(h);
+      dabc::Hierarchy hh;
+      rr.GetStrucutre(hh);
 
-      DOUT0("-------------- DIDI SCAN -------------");
+      DOUT0("GOT\n%s", hh.SaveToXml().c_str());
 
-      h.Release();
+      dabc::DateTime from;
+      from.SetOnlyDate("2013-09-18");
+      from.SetOnlyDate("13:05:00");
+
+      dabc::DateTime till = from;
+      till.SetOnlyDate("14:05:00");
+
+      dabc::Hierarchy sel = rr.GetSerie("/FESA/Test/TestRate", from, till);
+
+      if (!sel.null())
+         DOUT0("SELECT\n%s",sel.SaveToXml(dabc::xmlmask_History).c_str());
+      else
+         DOUT0("???????? SELECT FAILED ?????????");
+
+
+      DOUT0("-------------- DID SCAN -------------");
    }
 */
-
-   TimeStamp storetm; // stamp  used to mark time when next store operation was triggered
+   DateTime storetm; // stamp  used to mark time when next store operation was triggered
 
    for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
 
