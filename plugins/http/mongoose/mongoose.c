@@ -539,7 +539,9 @@ static int is_file_in_memory(struct mg_connection *conn, const char *path,
     // constructs like if (!mg_stat() || !mg_fopen()) ...
     filep->size = size;
   }
-  return filep->membuf != NULL;
+
+  return 1; // Sergey Linev - always return true, do not let try to access file by mongoose itself
+  // return filep->membuf != NULL;
 }
 
 static int is_file_opened(const struct file *filep) {

@@ -300,6 +300,18 @@ bool dabc::Publisher::ReplyCommand(Command cmd)
    return dabc::ModuleAsync::ReplyCommand(cmd);
 }
 
+
+dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path)
+{
+
+   dabc::Hierarchy top = fGlobal.null() ? fLocal : fGlobal;
+
+   if (path.empty() || (path=="/")) return top;
+
+   return top.FindChild(path.c_str());
+}
+
+
 int dabc::Publisher::ExecuteCommand(Command cmd)
 {
    if (cmd.IsName("OwnCommand")) {
@@ -466,10 +478,21 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_true;
    } else
    if (cmd.IsName("GetGlobalNamesListAsXml")) {
-      if (!fGlobal.null())
-         cmd.SetStr("xml", fGlobal.SaveToXml());
-      else
-         cmd.SetStr("xml", fLocal.SaveToXml());
+
+      std::string path = cmd.GetStr("path");
+
+      dabc::Hierarchy h = GetWorkItem(path);
+      if (h.null()) return cmd_false;
+
+      if (!path.empty() && (path[path.length()-1]!='/')) path.append("/");
+
+      std::string res =
+            dabc::format("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s\">\n", path.c_str())+
+            h.SaveToXml() +
+            std::string("</dabc>\n");
+
+      cmd.SetStr("xml",res);
+
       return cmd_true;
    } else
    if (cmd.IsName(CmdPublisherGet::CmdName()) ||
@@ -561,11 +584,12 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
 // ===================================================================
 
-bool dabc::PublisherRef::SaveGlobalNamesListAsXml(std::string& str)
+bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::string& str)
 {
    if (null()) return false;
 
    dabc::Command cmd("GetGlobalNamesListAsXml");
+   cmd.SetStr("path", path);
 
    if (Execute(cmd) != cmd_true) return false;
 

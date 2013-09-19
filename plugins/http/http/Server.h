@@ -72,11 +72,14 @@ namespace http {
 
          virtual double ProcessTimeout(double last_diff);
 
-         int ProcessGetImage(struct mg_connection* conn, const char *query);
+         bool ProcessGetItem(struct mg_connection* conn, const std::string& itemname, const char *query, std::string& replybuf);
 
-         int ProcessGetItem(struct mg_connection* conn, const char *query);
+         bool ProcessGetBin(struct mg_connection* conn, const std::string& itemname, const char *query);
 
-         int ProcessGetBin(struct mg_connection* conn, const char *query);
+         bool ProcessGetPng(struct mg_connection* conn, const std::string& itemname, const char *query);
+
+         /** \brief Check if file is requested. Can only be from server */
+         bool IsFileName(const char* path);
 
          bool MakeRealFileName(std::string& fname);
 

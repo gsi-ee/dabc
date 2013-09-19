@@ -211,12 +211,13 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = "getitem?" + this.itemname;
+   var url = this.itemname + "get.xml";
+   var separ = "?";
 
    // console.log("GetHistory current version = " + this.version);
    
-   if (this.version>0) url += "&version=" + this.version;
-   if (this.xmllimit>0) url += "&history=" + this.xmllimit;
+   if (this.version>0) { url += separ + "version=" + this.version; separ = "&"; } 
+   if (this.xmllimit>0) url += separ + "history=" + this.xmllimit;
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
 
    this.req.send(null);
@@ -407,7 +408,7 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
    
    var width = $(topid).width();
    
-   var url = "getimage.png?" + this.itemname;
+   var url = this.itemname + "image.png";
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
    var entryInfo = 
       "<div id='"+this.frameid+ "'>" +
@@ -540,11 +541,15 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       // $("#dabc_draw").append("<br> Work with node " + node.nodeName);
       
       var kind = node.getAttribute("dabc:kind");
-      var value = node.getAttribute("value");
+      // var value = node.getAttribute("value");
       
       var html = "";
+
+      var nodename = node.nodeName;
+      var nodefullname  = "";
       
-      var nodefullname  = fullname + "/" + node.nodeName; 
+      if (parentid>=0) 
+         nodefullname = fullname + node.nodeName + "/";
       
       var nodeimg = "";
       var node2img = "";
@@ -577,7 +582,8 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       
       if (node2img == "") node2img = nodeimg;
       
-      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg, node2img);
+      DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
+      
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
@@ -587,6 +593,12 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    return nodeid;
 }
 
+DABC.HierarchyDrawElement.prototype.GetCurrentPath = function() {
+   if (!this.xmldoc) return;
+   var lvl0 = DABC.nextXmlNode(this.xmldoc.firstChild);
+   if (!lvl0) return;
+   return lvl0.getAttribute("path");
+}
 
 DABC.HierarchyDrawElement.prototype.TopNode = function() 
 {
@@ -600,24 +612,25 @@ DABC.HierarchyDrawElement.prototype.TopNode = function()
 
 DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
 
-//   $("#dabc_draw").append("<br> Serching for " + fullname);
-
-   if (!top) top = this.TopNode();
-   if (!top || (fullname.length==0)) return;
-   if (fullname[0] != '/') return;
+   if (fullname.length==0) return top;
    
-   var pos = fullname.indexOf("/", 1);
-   var localname = pos>0 ? fullname.substr(1, pos-1) : fullname.substr(1);  
+   if (!top) top = this.TopNode();
+   var pos = fullname.indexOf("/");
+   if (pos<0) return;
+   
+   var localname = fullname.substr(0, pos);  
    var child = DABC.nextXmlNode(top.firstChild);
+   
+   // console.log("Serching for localname " + localname);
+
    while (child) {
       if (child.nodeName == localname) break;
       child = DABC.nextXmlNode(child.nextSibling);
    }
    
-   if (!child  || (pos<=0)) return child;
+   if (!child) return;
    
-   return this.FindNode(fullname.substr(pos), child);
-   
+   return this.FindNode(fullname.substr(pos+1), child);
 }
 
 
@@ -638,8 +651,9 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
       // console.log("XML top node not found");
       return;
    }
-      
-   this.createNode(0, -1, top.firstChild, "");
+   
+//   this.createNode(0, -1, top.firstChild, "");
+   this.createNode(0, -1, top, "");
 
    var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
    content += DABC.dabc_tree;
@@ -739,9 +753,9 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = "getbin?" + this.itemname;
+   var url = this.itemname + "get.bin";
    
-   if (this.version>0) url += "&version=" + this.version;
+   if (this.version>0) url += "?version=" + this.version;
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
@@ -1211,9 +1225,9 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    
    // $("#dabc_draw").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
-   var url = "getbin?" + this.itemname;
+   var url = this.itemname + "get.bin";
    
-   if (this.version>0) url += "&version=" + this.version;
+   if (this.version>0) url += "?version=" + this.version;
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
@@ -1596,8 +1610,15 @@ DABC.Manager.prototype.ClearWindow = function()
 DABC.Manager.prototype.FindXmlNode = function(itemname) {
    var elem = this.FindItem("ObjectsTree");
    if (!elem) return;
+   
    return elem.FindNode(itemname);
 }
+
+DABC.Manager.prototype.GetCurrentPath = function() {
+   var elem = this.FindItem("ObjectsTree");
+   if (elem) return elem.GetCurrentPath();
+}
+
 
 /** \brief Method finds element in structure, which must be loaded before item itself can be loaded
  *   In case of ROOT objects it is StreamerInfo */
@@ -1609,20 +1630,33 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    if (!master) return;
    
    var newname = itemname;
+   var currpath = this.GetCurrentPath();
+   
+   // console.log("item = " + itemname + "  master = " + master);
 
    while (newname) {
-      var separ = newname.lastIndexOf("/");
+      var separ = newname.lastIndexOf("/", newname.length - 2);
+      
       if (separ<=0) {
-         alert("Name " + itemname + " is not long enouth for master " + itemnode.getAttribute("dabc:master"));
+         
+         if (currpath.length>0) {
+            // if itemname too short, try to apply global path 
+            newname = currpath + newname;
+            currpath = "";
+            continue;
+         }
+         
+         alert("Name " + itemname + " is not long enough for master " + itemnode.getAttribute("dabc:master"));
          return;
       }
-      newname = newname.substr(0, separ);
+      newname = newname.substr(0, separ+1);
+
       
       if (master.indexOf("../")<0) break;
       master = master.substr(3);
    }
    
-   return newname + "/" + master;
+   return newname + master + "/";
 }
 
 

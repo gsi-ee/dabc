@@ -154,6 +154,9 @@ namespace dabc {
 
          bool DoStorage() const { return !fStoreDir.empty(); }
 
+         /** \brief Return hierarchy item selected for work */
+         Hierarchy GetWorkItem(const std::string& path);
+
       public:
 
 
@@ -185,7 +188,7 @@ namespace dabc {
       bool AddRemote(const std::string& remnode, const std::string& workername)
       {  return OwnCommand(6, remnode, workername); }
 
-      bool SaveGlobalNamesListAsXml(std::string& str);
+      bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
 
       Hierarchy Get(const std::string& fullname, double tmout = 5.);
 

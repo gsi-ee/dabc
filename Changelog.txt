@@ -2,6 +2,23 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+19.09.2013
+1. Change the way how hierarchy items addressed via http interface. Now each subdirectory
+   in hierarchy can be addressed and disaplyed just like top level directory.
+   For instance, if there is 'FESA' subdirectory, its content can be displayed like:
+      http://dabc_server:port/FESA/
+   It is important to specify slash at the end.
+2. To get hierarchy below specified selected item, just do:
+       wget http://dabc_server:port/FESA/h.xml
+3. To get value of selected item, one should do:
+       wget http://dabc_server:port/FESA/Test/BeamRate/get.xml
+   One could specify version number and history length
+4. There is also "get.bin" and "image.png" - of course, it only will work for
+   items which really provide binary data.       
+5. Small changes in mongoose server to avoid that it reads files - only 
+   http::Server class will do files reading from preselected directories.
+
+
 18.09.2013
 1. When reading hierarchy data from binary buffer, one can avoid most part of
    decoding. Feature is used, when data series only for concrete element is necessary.

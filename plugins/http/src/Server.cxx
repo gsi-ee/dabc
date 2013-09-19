@@ -122,42 +122,60 @@ int http::Server::begin_request(struct mg_connection *conn)
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
-   DOUT2("BEGIN_REQ: %s", request_info->uri);
+   DOUT0("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
+
+   // files will be proceeded by open_file requests
+   if (IsFileName(request_info->uri)) return 0;
+
+   const char* rslash = strrchr(request_info->uri,'/');
+   std::string pathname, filename;
+   if (rslash==0) {
+      filename = request_info->uri;
+   } else {
+      pathname.append(request_info->uri, rslash - request_info->uri);
+      if (pathname=="/") pathname.clear();
+      filename = rslash+1;
+   }
+
+   DOUT0("BEGIN_REQ: path:%s file:%s", pathname.c_str(), filename.c_str());
+
 
    std::string content;
    std::string content_type = "text/html";
    bool iserror = false;
 
+   if (filename.empty() || (filename == "index.htm")) {
+      const char* res = open_file(0, "httpsys/files/main.htm");
+      if (res) content = res;
+          else iserror = true;
+   } else
    if ((strcmp(request_info->uri,"/")==0) ||
        (strcmp(request_info->uri,"/main.htm")==0) || (strcmp(request_info->uri,"/main.html")==0) ||
        (strcmp(request_info->uri,"/index.htm")==0) || (strcmp(request_info->uri,"/main.html")==0)) {
-      std::string content_type = "text/html";
       content = open_file(0, "httpsys/files/main.htm");
    } else
-   if (strstr(request_info->uri,"/h.xml")!=0) {
+   if (filename == "h.xml") {
       content_type = "text/xml";
 
       std::string xmlcode;
 
-      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(xmlcode))
-         content = std::string("<?xml version=\"1.0\"?>\n") +
-                   std::string("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\">\n")+
-                   xmlcode +
-                   std::string("</dabc>\n");
+      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(pathname, xmlcode))
+         content = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
       else
          iserror = true;
    } else
-   if (strstr(request_info->uri, "getbin")!=0) {
-      if (ProcessGetBin(conn, request_info->query_string)) return 1;
-
+   if (filename == "get.xml") {
+      if (ProcessGetItem(conn, pathname, request_info->query_string, content))
+         content_type = "text/xml";
+      else
+         iserror = true;
+   } else
+   if (filename == "get.bin") {
+      if (ProcessGetBin(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
    } else
-   if (strstr(request_info->uri, "getimage.png")!=0) {
-      if (ProcessGetImage(conn, request_info->query_string)) return 1;
-      iserror = true;
-   } else
-   if (strstr(request_info->uri, "getitem")!=0) {
-      if (ProcessGetItem(conn, request_info->query_string)) return 1;
+   if (filename == "image.png") {
+      if (ProcessGetPng(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
    } else {
       // let load some files
@@ -198,6 +216,20 @@ int http::Server::begin_request(struct mg_connection *conn)
    // the client, and mongoose should not send client any more data.
    return 1;
 }
+
+
+bool http::Server::IsFileName(const char* path)
+{
+   // we only allow to load files from predefined directories
+   if ((path==0) || (strlen(path)==0)) return false;
+
+   if (strstr(path,"httpsys/")!=0) return true;
+   if (strstr(path,"jsrootiosys/")!=0) return true;
+   if (strstr(path,"rootsys/")!=0) return true;
+   if (strstr(path,"go4sys/")!=0) return true;
+   return false;
+}
+
 
 bool http::Server::MakeRealFileName(std::string& fname)
 {
@@ -244,10 +276,13 @@ bool http::Server::MakeRealFileName(std::string& fname)
 const char* http::Server::open_file(const struct mg_connection* conn,
                                     const char *path, size_t *data_len)
 {
-   if ((path==0) || (*path==0)) return 0;
+   if (path==0) return 0;
 
-   if (strstr(path,"getbinary")!=0)
-      return 0;
+   DOUT0("OPEN_FILE: %s", path);
+
+   std::string fname(path);
+
+   if (!IsFileName(path) || !MakeRealFileName(fname)) return 0;
 
    const struct mg_request_info *request_info = 0;
    if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
@@ -263,40 +298,32 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    DOUT4("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
 
-   char* buf = 0;
-   int length = 0;
-   std::string fname(path);
+   if (!force) {
+      dabc::LockGuard lock(ObjectMutex());
 
-   if (buf==0) {
-
-      if (!MakeRealFileName(fname)) return 0;
-
-      if (!force) {
-         dabc::LockGuard lock(ObjectMutex());
-
-         FilesMap::iterator iter = fFiles.find(fname);
-         if (iter!=fFiles.end()) {
-            if (data_len) *data_len = iter->second.size;
-            DOUT2("Return file %s len %d", fname.c_str(), iter->second.size);
-            return (const char*) iter->second.ptr;
-         }
+      FilesMap::iterator iter = fFiles.find(fname);
+      if (iter!=fFiles.end()) {
+         if (data_len) *data_len = iter->second.size;
+         DOUT2("Return file %s len %d", fname.c_str(), iter->second.size);
+         return (const char*) iter->second.ptr;
       }
-
-      std::ifstream is(fname.c_str());
-
-      if (!is) return 0;
-
-      is.seekg (0, is.end);
-      length = is.tellg();
-      is.seekg (0, is.beg);
-
-      buf = (char*) malloc(length+1);
-      is.read(buf, length);
-      if (is)
-         DOUT2("all characters read successfully from file.");
-      else
-        EOUT("only %d could be read from %s", is.gcount(), path);
    }
+
+   std::ifstream is(fname.c_str());
+
+   // if file cannot be open, return empty
+   if (!is) return 0;
+
+   is.seekg (0, is.end);
+   int length = is.tellg();
+   is.seekg (0, is.beg);
+
+   char* buf = (char*) malloc(length+1);
+   is.read(buf, length);
+   if (is)
+      DOUT2("all characters read successfully from file.");
+   else
+      EOUT("only %d could be read from %s", is.gcount(), path);
 
    buf[length] = 0;
 
@@ -324,159 +351,117 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    }
 
    EOUT("Did not find file %s %s", path, fname.c_str());
-
    return 0;
 }
 
 
-int http::Server::ProcessGetImage(struct mg_connection* conn, const char *query)
+
+bool http::Server::ProcessGetItem(struct mg_connection* conn, const std::string& itemname, const char *query, std::string& replybuf)
 {
-   dabc::Url url(std::string("getbin?") + (query ? query : ""));
+   if (itemname.empty()) {
+      EOUT("Item is not specified in get.xml request");
+      return false;
+   }
 
-   std::string itemname;
-   uint64_t version(0);
+   std::string surl = "getitem";
+   if (query!=0) { surl.append("?"); surl.append(query); }
 
+   dabc::Url url(surl);
    if (!url.IsValid()) {
       EOUT("Cannot decode query url %s", query);
-   } else {
-      itemname = url.GetOptionsPart(0);
-      if (url.HasOption("version")) {
-         int v = url.GetOptionInt("version", 0);
-         if (v>0) version = (unsigned) v;
-      }
+      return false;
    }
 
-   dabc::Buffer replybuf;
-
-   if (!itemname.empty())
-      replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
-
-   if (replybuf.null()) {
-      EOUT("IMAGE REQUEST FAILS %s", itemname.c_str());
-
-      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
-                       "Content-Length: 0\r\n"
-                       "Connection: close\r\n\r\n");
-   } else {
-
-      // DOUT0("HISTORY ver %u REPLY\n%s", (unsigned) query_version, reply.c_str());
-
-      unsigned image_size = replybuf.GetTotalSize() - sizeof(dabc::BinDataHeader);
-
-      mg_printf(conn,
-                 "HTTP/1.1 200 OK\r\n"
-                 "Content-Type: image/png\r\n"
-                 "Content-Length: %u\r\n"
-                 "Connection: keep-alive\r\n"
-                  "\r\n", image_size);
-      mg_write(conn, ((char*) replybuf.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
-   }
-
-   return 1;
-}
-
-
-int http::Server::ProcessGetItem(struct mg_connection* conn, const char *query)
-{
-   dabc::Url url(std::string("getitem?") + (query ? query : ""));
-
-   std::string itemname;
    unsigned hlimit(0);
    uint64_t version(0);
 
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-   } else {
-      itemname = url.GetOptionsPart(0);
-      if (itemname.empty()) {
-         EOUT("Item is not specified in getitem request");
-      }
-      if (url.HasOption("history")) {
-         int hist = url.GetOptionInt("history", 0);
-         if (hist>0) hlimit = (unsigned) hist;
-      }
-      if (url.HasOption("version")) {
-         int v = url.GetOptionInt("version", 0);
-         if (v>0) version = (unsigned) v;
-      }
-
+   if (url.HasOption("history")) {
+      int hist = url.GetOptionInt("history", 0);
+      if (hist>0) hlimit = (unsigned) hist;
+   }
+   if (url.HasOption("version")) {
+      int v = url.GetOptionInt("version", 0);
+      if (v>0) version = (unsigned) v;
    }
 
-   DOUT0("HLIMIT = %u query = %s", hlimit, query);
+   // DOUT0("HLIMIT = %u query = %s", hlimit, query);
 
-   std::string replybuf;
+   dabc::Hierarchy res = dabc::PublisherRef(GetPublisher()).Get(itemname, version, hlimit);
 
-   if (!itemname.empty()) {
-      dabc::Hierarchy res;
+   if (res.null()) return false;
+      // result is only item fields, we need to decorate it with some more attributes
 
-      res = dabc::PublisherRef(GetPublisher()).Get(itemname, version, hlimit);
-
-      if (!res.null()) {
-         // result is only item fields, we need to decorate it with some more attributes
-
-         replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n",itemname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
-
-         replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
-         replybuf += "</Reply>";
-         // DOUT0("getitem %s\n%s", itemname.c_str(), replybuf.c_str());
-      }
-   }
-
-   if (replybuf.empty()) {
-      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
-                       "Content-Length: 0\r\n"
-                       "Connection: close\r\n\r\n");
-   } else {
-
-      mg_printf(conn,
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/xml\r\n"
-            "Content-Length: %u\r\n"
-            "Connection: keep-alive\r\n"
-            "\r\n", (unsigned) replybuf.length());
-      mg_write(conn, replybuf.c_str(), (size_t) replybuf.length());
-   }
-
-   return 1;
+   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n",itemname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
+   replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
+   replybuf += "</Reply>";
+   return true;
 }
 
 
-int http::Server::ProcessGetBin(struct mg_connection* conn, const char *query)
-{
-   dabc::Url url(std::string("getbin?") + (query ? query : ""));
 
-   std::string itemname;
-   uint64_t version(0);
+bool http::Server::ProcessGetBin(struct mg_connection* conn, const std::string& itemname, const char *query)
+{
+   if (itemname.empty()) return false;
+
+   dabc::Url url(std::string("getbin?") + (query ? query : ""));
 
    if (!url.IsValid()) {
       EOUT("Cannot decode query url %s", query);
-   } else {
-      itemname = url.GetOptionsPart(0);
-      if (url.HasOption("version")) {
-         int v = url.GetOptionInt("version", 0);
-         if (v>0) version = (unsigned) v;
-      }
+      return false;
    }
 
-   dabc::Buffer replybuf;
+   uint64_t version(0);
+   if (url.HasOption("version")) {
+      int v = url.GetOptionInt("version", 0);
+      if (v>0) version = (unsigned) v;
+   }
 
-   if (!itemname.empty())
-      replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
+   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
 
-   if (replybuf.null()) {
-      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
-                       "Content-Length: 0\r\n"
-                       "Connection: close\r\n\r\n");
-   } else {
+   if (replybuf.null()) return false;
 
-      mg_printf(conn,
+   mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: application/x-binary\r\n"
             "Content-Length: %u\r\n"
             "Connection: keep-alive\r\n"
             "\r\n", (unsigned) replybuf.GetTotalSize());
-      mg_write(conn, replybuf.SegmentPtr(), (size_t) replybuf.GetTotalSize());
+   mg_write(conn, replybuf.SegmentPtr(), (size_t) replybuf.GetTotalSize());
+
+   return true;
+}
+
+bool http::Server::ProcessGetPng(struct mg_connection* conn, const std::string& itemname, const char *query)
+{
+   if (itemname.empty()) return false;
+
+   dabc::Url url(std::string("getbin?") + (query ? query : ""));
+
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+      return false;
    }
 
-   return 1;
+   uint64_t version(0);
+   if (url.HasOption("version")) {
+      int v = url.GetOptionInt("version", 0);
+      if (v>0) version = (unsigned) v;
+   }
+
+   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
+
+   if (replybuf.null()) return false;
+
+   unsigned image_size = replybuf.GetTotalSize() - sizeof(dabc::BinDataHeader);
+
+   mg_printf(conn,
+              "HTTP/1.1 200 OK\r\n"
+              "Content-Type: image/png\r\n"
+              "Content-Length: %u\r\n"
+              "Connection: keep-alive\r\n"
+               "\r\n", image_size);
+   mg_write(conn, ((char*) replybuf.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
+
+   return true;
 }
+
