@@ -525,7 +525,7 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    // url += "&cnt="+this.cnt;
    // if (this.version>0) url += "&ver=" + this.version;
 
-   // $("#dabc_draw").append("<br> Create xml request");
+   // console.log(" Create xml request");
    
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
 
@@ -538,7 +538,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
 
    while (node) {
 
-      // $("#dabc_draw").append("<br> Work with node " + node.nodeName);
+      // console.log(" Work with node " + node.nodeName);
       
       var kind = node.getAttribute("dabc:kind");
       // var value = node.getAttribute("value");
@@ -554,36 +554,36 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var nodeimg = "";
       var node2img = "";
       
-      if (kind) {
+      if (!node.hasChildNodes()) {
          html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-
-         // $("#dabc_draw").append("<br>See kind = " + kind);
+      } else {
+         html = nodefullname;
+         if (html == "") html = ".."; 
+      }   
+      
+      if (kind) {
          
-         if (kind == "ROOT.Session") { nodeimg = source_dir+'img/globe.gif'; html = ""; }  else
-         if (kind == "DABC.Application") { nodeimg = 'httpsys/img/dabcicon.png'; html = ""; }  else
-         if (kind == "image.png") { nodeimg = 'httpsys/img/dabcicon.png'; }  else
-         if (kind == "GO4.Analysis") { nodeimg = 'go4sys/icons/go4logo2_small.png'; html = ""; }  else
+         if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
+         if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
+         if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
+         if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
          if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
          if (kind.match(/\bROOT.TH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
          if (kind.match(/\bROOT.TH3/)) nodeimg = source_dir+'img/histo3d.png'; else
          if (kind == "ROOT.TCanvas") nodeimg = source_dir+'img/canvas.png'; else
          if (kind == "ROOT.TProfile") nodeimg = source_dir+'img/profile.png'; else
          if (kind.match(/\bROOT.TGraph/)) nodeimg = source_dir+'img/graph.png'; else
-         if (kind == "ROOT.TTree") { nodeimg = source_dir+'img/tree.png'; html = ""; }  else
-         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; html = ""; }  else
-         if (kind == "ROOT.TNtuple") { nodeimg = source_dir+'img/tree_t.png'; html = ""; }  else
-         if (kind == "ROOT.TBranch") { nodeimg = source_dir+'img/branch.png'; html = ""; }  else
-         if (kind.match(/\bROOT.TLeaf/)) { nodeimg = source_dir+'img/leaf.png'; html = ""; }  else
+         if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
+         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
+         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
+         if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
+         if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
          if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
-      } else 
-      if (!node.hasChildNodes()) {
-         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-      }   
+      }
       
       if (node2img == "") node2img = nodeimg;
       
       DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
-      
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
@@ -639,11 +639,11 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
 
    if (arg==null) { this.ready = false; return; }
 
-   // $("#dabc_draw").append("<br> Get XML request callback "+ver);
+   // console.log(" Get XML request callback "+ver);
 
    this.xmldoc = arg;
    
-   // $("#dabc_draw").append("<br> xml doc is there");
+   // console.log(" xml doc is there");
    
    var top = this.TopNode();
    
@@ -653,6 +653,13 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    }
    
 //   this.createNode(0, -1, top.firstChild, "");
+   
+   
+   DABC.dabc_tree = 0;
+   DABC.dabc_tree = new dTree('DABC.dabc_tree');
+   DABC.dabc_tree.config.useCookies = false;
+
+   
    this.createNode(0, -1, top, "");
 
    var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
@@ -1014,7 +1021,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    }
    
 //   $(topid).data('any', 10);
-//   $("#dabc_draw").append("<br>something = " + $(topid).data('any'));
+//   console.log("something = " + $(topid).data('any'));
    
 }
 
@@ -1056,13 +1063,13 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
          this.painter.RedrawFrame();
       } else {
 //         if (gStyle) gStyle.AutoStat = true;
-//                else $("#dabc_draw").append("<br>no gStyle");
+//                else console.log("no gStyle");
 
          this.painter = JSROOTPainter.drawObjectInFrame(this.vis, this.obj);
          
          if (this.painter == -1) this.painter = null;
 
-         // if (this.painter)  $("#dabc_draw").append("<br>painter is created");
+         // if (this.painter)  console.log("painter is created");
       }
    } else {
       gFile = this.obj;
@@ -1083,7 +1090,7 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
    
    obj['_typename'] = 'JSROOTIO.' + this.clname;
 
-//   $("#dabc_draw").append("<br>Calling JSROOTIO function");
+//   console.log("Calling JSROOTIO function");
 
    gFile = this.sinfo.obj;
 
@@ -1098,7 +1105,7 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       JSROOTCore.addMethods(obj);
 
    } else {
-      $("#dabc_draw").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
+      console.log("!!!! streamer not found !!!!!!!" + this.clname);
    }
    
    gFile = null;
@@ -1134,7 +1141,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    var hdr = DABC.UnpackBinaryHeader(arg);
    
    if (hdr==null) {
-      $("#dabc_draw").append("<br> RootDrawElement get error " + this.itemname + "  reload list");
+      console.log(" RootDrawElement get error " + this.itemname + "  reload list");
       this.state = this.StateEnum.stInit;
       // most probably, objects structure is changed, therefore reload it
       DABC.mgr.ReloadTree();
@@ -1144,19 +1151,19 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    // if we got same version, do nothing - we are happy!!!
    if ((hdr.version > 0) && (this.version == hdr.version)) {
       this.state = this.StateEnum.stReady;
-      // $("#dabc_draw").append("<br> Get same version " + ver + " of object " + this.itemname);
+      // console.log(" Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 
    
-   // $("#dabc_draw").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + ver);
+   // console.log(" RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + ver);
 
    if (!this.sinfo) {
       
       delete this.obj; 
       
       // we are doing sreamer infos
-      if (gFile) $("#dabc_draw").append("<br> gFile already exists???"); 
+      if (gFile) console.log(" gFile already exists???"); 
       this.obj = new JSROOTIO.RootFile;
 
       gFile = this.obj;
@@ -1183,7 +1190,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    this.need_master_version = hdr.master_version;
    
    if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
-      // $("#dabc_draw").append("<br> Streamer info is required of vers " + this.need_master_version);
+      // console.log(" Streamer info is required of vers " + this.need_master_version);
       this.state = this.StateEnum.stWaitSinfo;
       this.sinfo.Update();
       return;
@@ -1200,12 +1207,12 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
      case this.StateEnum.stInit: break;
      case this.StateEnum.stWaitRequest: return;
      case this.StateEnum.stWaitSinfo: { 
-        // $("#dabc_draw").append("<br> item " + this.itemname+ " requires streamer info ver " + this.need_master_version  +  "  available is = " + this.sinfo.version);
+        // console.log(" item " + this.itemname+ " requires streamer info ver " + this.need_master_version  +  "  available is = " + this.sinfo.version);
 
         if (this.sinfo.HasVersion(this.need_master_version)) {
            this.ReconstructRootObject();
         } else {
-           // $("#dabc_draw").append("<br> version is not ok");
+           // console.log(" version is not ok");
         }
         return;
      }
@@ -1223,7 +1230,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
      default: return;
    }
    
-   // $("#dabc_draw").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
+   // console.log(" checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
    var url = this.itemname + "get.bin";
    
@@ -1231,7 +1238,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
-//   $("#dabc_draw").append("<br> Send request " + url);
+//   console.log(" Send request " + url);
 
    this.req.send(null);
    
@@ -1340,10 +1347,10 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
 
 //   if (typeof ActiveXObject == "function") {
    if (window.ActiveXObject) {
-      // $("#dabc_draw").append("<br> Create IE request");
+      // console.log(" Create IE request");
       
       xhr.onreadystatechange = function() {
-         // $("#dabc_draw").append("<br> Ready IE request");
+         // console.log(" Ready IE request");
          if (this.readyState != 4) return;
          if (!this.dabc_item || (this.dabc_item==0)) return;
          
@@ -1355,7 +1362,7 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                   filecontent = filecontent + String.fromCharCode(array[i]);
                }
                
-               // $("#dabc_draw").append("<br> IE response ver = " + ver);
+               // console.log(" IE response ver = " + ver);
 
                this.dabc_item.RequestCallback(filecontent);
                delete filecontent;
@@ -1374,7 +1381,7 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
    } else {
       
       xhr.onreadystatechange = function() {
-         //$("#dabc_draw").append("<br> Response request "+this.readyState);
+         //console.log(" Response request "+this.readyState);
 
          if (this.readyState != 4) return;
          if (!this.dabc_item || (this.dabc_item==0)) return;
@@ -1451,8 +1458,8 @@ DABC.Manager.prototype.display = function(itemname) {
    if (!itemname) return;
 
 /*   
-   $("#dabc_draw").append("<br> display click "+itemname);
-   if (JSROOT.elements) $("#dabc_draw").append("<br> elements are there ");
+   console.log(" display click "+itemname);
+   if (JSROOT.elements) console.log(" elements are there ");
    var topid = JSROOT.elements.generateNewFrame("report");
    var elem = new JSROOT.DrawElement();
    JSROOT.elements.initElement(topid, elem, true);
@@ -1460,11 +1467,11 @@ DABC.Manager.prototype.display = function(itemname) {
    elem.setInfo("Any Element");
    elem.appendText("<br>somethiung to see");
    elem.appendText("<br>somethiung to see");
-   $("#dabc_draw").append("<br> source "+JSROOT.source_dir );
+   console.log(" source "+JSROOT.source_dir );
 */  
    var xmlnode = this.FindXmlNode(itemname);
    if (!xmlnode) {
-      $("#dabc_draw").append("<br> cannot find xml node "+itemname);
+      console.log(" cannot find xml node "+itemname);
       return;
    }
    
@@ -1472,7 +1479,7 @@ DABC.Manager.prototype.display = function(itemname) {
    var history = xmlnode.getAttribute("dabc:history");
    if (!kind) kind = "";
 
-//   $("#dabc_draw").append("<br> find kind of node "+itemname + " " + kind);
+//   console.log(" find kind of node "+itemname + " " + kind);
    
    var elem = this.FindItem(itemname);
 
@@ -1562,7 +1569,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    
    if (elem) return;
 
-   // $("#dabc_draw").append("<br> start2");
+   // console.log(" start2");
 
    elem = new DABC.HierarchyDrawElement();
    

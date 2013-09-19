@@ -17,6 +17,7 @@ of the framework.
    items which really provide binary data.       
 5. Small changes in mongoose server to avoid that it reads files - only 
    http::Server class will do files reading from preselected directories.
+6. In dTree add possibility to directly open subfolders (by clicking item)
 
 
 18.09.2013
