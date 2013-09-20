@@ -284,8 +284,8 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    if (!IsFileName(path) || !MakeRealFileName(fname)) return 0;
 
-   const struct mg_request_info *request_info = 0;
-   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
+//   const struct mg_request_info *request_info = 0;
+//   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
 
    bool force = true;
 
