@@ -1688,11 +1688,11 @@ bool bnet::TransportModule::ProcessControlPacket(int nodeid, uint32_t kind, dabc
          break;
 
       default:
-         EOUT("Uncknown control packet kind %u", (unsigned) kind);
+         EOUT("Unknown control packet kind %u", (unsigned) kind);
          return false;
    }
 
-   return true;
+   return res;
 }
 
 

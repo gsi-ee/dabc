@@ -28,7 +28,9 @@ bool bnet::TestEventHandling::GenerateSubEvent(const bnet::EventId& evid, int su
 
    DOUT2("Produce event %u", (unsigned) evid);
 
-   uint64_t data[2] = { evid, subid };
+   uint64_t data[2];
+   data[0] = evid;
+   data[1] = subid;
 
    dabc::Pointer(buf).copyfrom(data, sizeof(data));
 

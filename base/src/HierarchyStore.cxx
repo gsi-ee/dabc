@@ -457,10 +457,10 @@ dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string& entry, const
    dabc::Hierarchy h, res;
 
    if (fTree.null()) {
-      if (!ScanTree()) return false;
+      if (!ScanTree()) return res;
    }
 
-   if (fIO==0) return false;
+   if (fIO==0) return res;
    h.Create("TOP");
 
    if (!ProduceStructure(fTree, from, till, entry, h)) return res;

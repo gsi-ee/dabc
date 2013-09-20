@@ -91,7 +91,7 @@ dabc::RecordField dabc::ParameterContainer::GetField(const std::string& name) co
 bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordField& value)
 {
 
-   bool res(false), fire(false), doset(false), doworker(false);
+   bool res(false), fire(false), doworker(false);
    double ratevalue(0.);
    std::string svalue;
 
@@ -127,7 +127,6 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
 
          if (fire) {
             fLastChangeTm = tm;
-            doset = false;
             res = Fields().Field(name).SetDouble(ratevalue);
          }
 
@@ -163,8 +162,8 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
 
    if (fire && res) FireModified(svalue);
 
-   DOUT4("ParameterContainer::SetField %s = %s  doset %s res %s fire %s",
-         name.c_str(), value.AsStr().c_str(), DBOOL(doset), DBOOL(res),DBOOL(fire));
+   DOUT4("ParameterContainer::SetField %s = %s  res %s fire %s",
+         name.c_str(), value.AsStr().c_str(), DBOOL(res), DBOOL(fire));
 
    return res;
 }

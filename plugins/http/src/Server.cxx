@@ -289,15 +289,6 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    bool force = true;
 
-   const char* query = 0;
-   const char* meth = 0;
-   if (request_info) {
-      if (request_info->query_string) query = request_info->query_string;
-      if (request_info->request_method) meth = request_info->request_method;
-   }
-
-   DOUT4("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
-
    if (!force) {
       dabc::LockGuard lock(ObjectMutex());
 
