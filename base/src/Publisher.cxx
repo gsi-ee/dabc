@@ -495,6 +495,16 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       return cmd_true;
    } else
+   if (cmd.IsName("CmdHasChilds")) {
+      std::string path = cmd.GetStr("path");
+      dabc::Hierarchy h = GetWorkItem(path);
+      if (h.null()) return cmd_false;
+      cmd.SetBool("has_childs", h.NumChilds() > 0);
+
+      return cmd_true;
+
+   } else
+
    if (cmd.IsName(CmdPublisherGet::CmdName()) ||
        cmd.IsName(CmdGetBinary::CmdName())) {
 
@@ -597,6 +607,19 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
 
    return true;
 }
+
+bool dabc::PublisherRef::HasChilds(const std::string& path)
+{
+   if (null()) return false;
+
+   dabc::Command cmd("CmdHasChilds");
+   cmd.SetStr("path", path);
+
+   if (Execute(cmd) != cmd_true) return false;
+
+   return cmd.GetBool("has_childs");
+}
+
 
 dabc::Hierarchy dabc::PublisherRef::Get(const std::string& fullname, uint64_t version, unsigned hlimit, double tmout)
 {

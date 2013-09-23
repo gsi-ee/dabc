@@ -149,6 +149,16 @@ DABC.DrawElement.prototype.Clear = function() {
 }
 
 
+DABC.DrawElement.prototype.FullItemName = function() {
+   // method should return absolute path of the item
+   if ((this.itemname.length > 0) && (this.itemname[0] == '/')) return this.itemname;
+   
+   var curpath = DABC.mgr.GetCurrentPath();
+   if (curpath.length == 0) curpath = document.location.pathname;
+   
+   return curpath + this.itemname; 
+}
+
 //========== start of HistoryDrawElement
 
 DABC.HistoryDrawElement = function(_clname) {
@@ -384,7 +394,7 @@ DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
          value: val,
          min: this.min,
          max: this.max,
-         title: this.itemname
+         title: this.FullItemName()
       });
    } else {
       this.gauge.refresh(val);
@@ -462,6 +472,7 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
 
 DABC.GenericDrawElement = function() {
    DABC.HistoryDrawElement.call(this,"generic");
+   this.recheck = false;   // indicate that we want to redraw 
 }
 
 DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
@@ -480,6 +491,19 @@ DABC.GenericDrawElement.prototype.CreateFrames = function(topid, id) {
 }
 
 DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
+   if (this.recheck) {
+      console.log("here one need to draw element with real style");
+      this.recheck = false;
+      
+      if (this.xmlnode.getAttribute("dabc:kind")) {
+         var itemname = this.itemname;
+         var xmlnode = this.xmlnode;
+         DABC.mgr.ClearWindow();
+         DABC.mgr.DisplayItem(itemname, xmlnode);
+         return;
+      }
+   }
+   
    var element = $("#" + this.frameid);
    element.empty();
    element.append(this.itemname + "<br>");
@@ -734,7 +758,7 @@ DABC.FesaDrawElement.prototype.CreateFrames = function(topid, id) {
                    .attr("height", h)
                    .style("background-color", fillcolor);
       
-   this.vis.append("svg:title").text(this.itemname);
+   this.vis.append("svg:title").text(this.FullItemName());
 }
 
 DABC.FesaDrawElement.prototype.ClickItem = function() {
@@ -801,7 +825,7 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
 
    console.log("Data length is " + this.data.length);
    
-   this.vis.select("title").text(this.itemname + 
+   this.vis.select("title").text(this.FullItemName() + 
          "\nversion = " + this.version + ", size = " + this.data.length);
 
    if (!this.ReconstructObject()) return;
@@ -916,7 +940,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
    JSROOTPainter.AdjustTGraphRanges(gr);
 
-   gr['fHistogram']['fTitle'] = this.itemname;
+   gr['fHistogram']['fTitle'] = this.FullItemName();
    if (gr['fHistogram']['fYaxis']['fXmin']>0)
       gr['fHistogram']['fYaxis']['fXmin'] = 0;
    else
@@ -1056,7 +1080,7 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    if (this.sinfo) {
    
       if (this.vis!=null)
-        this.vis.select("title").text(this.itemname + 
+        this.vis.select("title").text(this.FullItemName() + 
                                       "\nversion = " + this.version + ", size = " + this.raw_data_size);
       
       if (this.painter != null) {
@@ -1252,14 +1276,16 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 
 // ============= start of DABC.Manager =============== 
 
-DABC.Manager = function() {
-   this.cnt = new Number(0);            // counter to create new element 
-   this.arr = new Array();  // array of DrawElement
-
-   DABC.dabc_tree = new dTree('DABC.dabc_tree');
-   DABC.dabc_tree.config.useCookies = false;
+DABC.Manager = function(with_tree) {
+   this.cnt = new Number(0);      // counter to create new element 
+   this.arr = new Array();        // array of DrawElement
+   this.with_tree = with_tree;
    
-   this.CreateTable(3,3);
+   if (this.with_tree) {
+      DABC.dabc_tree = new dTree('DABC.dabc_tree');
+      DABC.dabc_tree.config.useCookies = false;
+      this.CreateTable(3,3);
+   }
    
    return this;
 }
@@ -1294,9 +1320,12 @@ DABC.Manager.prototype.CreateTable = function(divx, divy)
 
 DABC.Manager.prototype.NextCell = function()
 {
-   var id = "#draw_place_" + this.table_counter;
-   this.table_counter++;
-   if (this.table_counter>=this.table_number) this.table_counter = 0;
+   var id = "#dabc_draw";
+   if (this.with_tree) {
+      var id = "#draw_place_" + this.table_counter;
+      this.table_counter++;
+      if (this.table_counter>=this.table_number) this.table_counter = 0;
+   }
    $(id).empty();
    return id;
 }
@@ -1454,39 +1483,19 @@ DABC.Manager.prototype.UpdateAll = function() {
    this.UpdateComplexFields();
 }
 
-DABC.Manager.prototype.display = function(itemname) {
-   if (!itemname) return;
-
-/*   
-   console.log(" display click "+itemname);
-   if (JSROOT.elements) console.log(" elements are there ");
-   var topid = JSROOT.elements.generateNewFrame("report");
-   var elem = new JSROOT.DrawElement();
-   JSROOT.elements.initElement(topid, elem, true);
-   elem.makeCollapsible();
-   elem.setInfo("Any Element");
-   elem.appendText("<br>somethiung to see");
-   elem.appendText("<br>somethiung to see");
-   console.log(" source "+JSROOT.source_dir );
-*/  
-   var xmlnode = this.FindXmlNode(itemname);
+DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
+{
+   if (!xmlnode) xmlnode = this.FindXmlNode(itemname);
    if (!xmlnode) {
-      console.log(" cannot find xml node "+itemname);
+      console.log("cannot find xml node " + itemname);
       return;
-   }
+   } 
    
    var kind = xmlnode.getAttribute("dabc:kind");
    var history = xmlnode.getAttribute("dabc:history");
    if (!kind) kind = "";
 
-//   console.log(" find kind of node "+itemname + " " + kind);
-   
-   var elem = this.FindItem(itemname);
-
-   if (elem) {
-      elem.ClickItem();
-      return;
-   }
+   var elem;
    
    if (kind == "image.png") {
       elem = new DABC.ImageDrawElement();
@@ -1556,13 +1565,63 @@ DABC.Manager.prototype.display = function(itemname) {
       elem.RegularCheck();
       return;
    }
-
+   
    // create generic draw element, which just shows all attributes 
    elem = new DABC.GenericDrawElement();
    elem.itemname = itemname;
    elem.CreateFrames(this.NextCell(), this.cnt++);
    this.arr.push(elem);
+   return elem;
 }
+
+DABC.Manager.prototype.display = function(itemname) {
+   console.log(" display click "+itemname);
+
+//   if (!itemname) return;
+
+//   console.log(" display click "+itemname);
+
+/*   
+   console.log(" display click "+itemname);
+   if (JSROOT.elements) console.log(" elements are there ");
+   var topid = JSROOT.elements.generateNewFrame("report");
+   var elem = new JSROOT.DrawElement();
+   JSROOT.elements.initElement(topid, elem, true);
+   elem.makeCollapsible();
+   elem.setInfo("Any Element");
+   elem.appendText("<br>somethiung to see");
+   elem.appendText("<br>somethiung to see");
+   console.log(" source "+JSROOT.source_dir );
+*/  
+   
+   var xmlnode = this.FindXmlNode(itemname);
+   if (!xmlnode) {
+      console.log(" cannot find xml node " + itemname);
+      return;
+   }
+
+//   console.log(" find kind of node "+itemname + " " + kind);
+   
+   var elem = this.FindItem(itemname);
+
+   if (elem) {
+      elem.ClickItem();
+      return;
+   }
+   
+   this.DisplayItem(itemname, xmlnode);
+}
+
+
+DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
+{
+   var elem = new DABC.GenericDrawElement();
+   elem.itemname = itemname;
+   elem.CreateFrames(this.NextCell(), this.cnt++);
+   if (recheck) elem.recheck = true;
+   this.arr.push(elem);
+}
+
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    var elem = this.FindItem("ObjectsTree");
@@ -1593,18 +1652,25 @@ DABC.Manager.prototype.ReloadTree = function()
 
 DABC.Manager.prototype.ClearWindow = function()
 {
-   var num = $("#grid_spinner").spinner( "value" );
-   
    $("#dialog").empty();
    
-   var elem = this.FindItem("ObjectsTree");
+   var elem = null;
+   
+   if (this.with_tree) {
+      elem = this.FindItem("ObjectsTree");
+   }
 
-   for (var i=0;i<this.arr.lentgh;i++) {
+   for (var i=0;i<this.arr.length;i++) {
       if (this.arr[i] == elem) continue;
       this.arr[i].Clear();
    }
    
    this.arr.splice(0, this.arr.length);
+
+   if (!this.with_tree) return;
+   
+   var num = $("#grid_spinner").spinner( "value" );
+
    this.arr.push(elem);
    
    this.CreateTable(num,num);
@@ -1624,6 +1690,19 @@ DABC.Manager.prototype.FindXmlNode = function(itemname) {
 DABC.Manager.prototype.GetCurrentPath = function() {
    var elem = this.FindItem("ObjectsTree");
    if (elem) return elem.GetCurrentPath();
+   return "";
+}
+
+
+DABC.Manager.prototype.ReloadSingleElement = function()
+{
+   if (this.arr.length == 0) return;
+
+   var itemname = this.arr[this.arr.length-1].itemname;
+   
+   this.ClearWindow();
+   
+   this.DisplayGeneric(itemname, true);
 }
 
 
@@ -1638,6 +1717,11 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    
    var newname = itemname;
    var currpath = this.GetCurrentPath();
+   
+   if ((newname.length==0) && (currpath.length==0)) {
+      newname = document.location.pathname;
+      console.log("find master for path " + newname);
+   }
    
    // console.log("item = " + itemname + "  master = " + master);
 
@@ -1657,7 +1741,6 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
          return;
       }
       newname = newname.substr(0, separ+1);
-
       
       if (master.indexOf("../")<0) break;
       master = master.substr(3);

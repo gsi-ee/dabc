@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+23.09.2013
+1. First try to implement display of single element without hierarchy on the left side.
+   Works with several workarounds, which should be cleaned up later. 
+   Now one can specify as url name of element like: 
+      http://dabc_server:port/FESA/Test/BeamRate/
+   With additional switches one can enable/disable history view for the elements.
+2. In different tooltips use full path to the element - this is more clear as
+   relative path to current page.
+
+
 19.09.2013
 1. Change the way how hierarchy items addressed via http interface. Now each subdirectory
    in hierarchy can be addressed and disaplyed just like top level directory.

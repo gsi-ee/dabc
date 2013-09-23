@@ -190,6 +190,8 @@ namespace dabc {
 
       bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
 
+      bool HasChilds(const std::string& path);
+
       Hierarchy Get(const std::string& fullname, double tmout = 5.);
 
       Hierarchy Get(const std::string& fullname, uint64_t version, unsigned hlimit, double tmout = 5.);

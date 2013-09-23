@@ -145,7 +145,12 @@ int http::Server::begin_request(struct mg_connection *conn)
    bool iserror = false;
 
    if (filename.empty() || (filename == "index.htm")) {
-      const char* res = open_file(0, "httpsys/files/main.htm");
+      const char* res = 0;
+
+      if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname))
+         res = open_file(0, "httpsys/files/main.htm");
+      else
+         res = open_file(0, "httpsys/files/single.htm");
       if (res) content = res;
           else iserror = true;
    } else
