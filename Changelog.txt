@@ -8,8 +8,9 @@ of the framework.
    Now one can specify as url name of element like: 
       http://dabc_server:port/FESA/Test/BeamRate/
    With additional switches one can enable/disable history view for the elements.
-2. In different tooltips use full path to the element - this is more clear as
-   relative path to current page.
+2. In different tooltips use full path to the element - this is more clear 
+   than relative path to current page.
+3. Fix small problem with log history display. 
 
 
 19.09.2013

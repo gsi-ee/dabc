@@ -443,9 +443,11 @@ DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
    this.frameid = "dabc_log_" + id;
    var entryInfo;
    if (this.isHistory()) {
-      var w = $(topid).width();
+      // var w = $(topid).width();
       var h = $(topid).height();
-      entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
+      var maxhstyle = "";
+      if (h>10) maxhstyle = "; max-height:" + h + "px"; 
+      entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace" + maxhstyle + "'/>";
    } else {
       entryInfo = "<div id='"+this.frameid+ "'/>";
    }
@@ -462,7 +464,7 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
          element.append("<PRE>"+txt[i]+"</PRE>");
    } else {
       var val = this.ExtractField("value");
-      element.append(this.itemname + "<br>");
+      element.append(this.FullItemName() + "<br>");
       element.append("<h5>"+val +"</h5>");
    }
 }
@@ -492,7 +494,7 @@ DABC.GenericDrawElement.prototype.CreateFrames = function(topid, id) {
 
 DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
    if (this.recheck) {
-      console.log("here one need to draw element with real style");
+      console.log("here one need to draw element with real style " + this.FullItemName());
       this.recheck = false;
       
       if (this.xmlnode.getAttribute("dabc:kind")) {
@@ -1526,7 +1528,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       elem = new DABC.LogDrawElement();
       elem.itemname = itemname;
 
-      if ((history != null) && document.getElementById("show_history").checked)
+      if ((history != null) && document.getElementById("show_history").checked) 
          elem.EnableHistory(100);
       
       elem.CreateFrames(this.NextCell(), this.cnt++);
