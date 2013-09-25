@@ -50,10 +50,6 @@
        <history value="100"/>
     </Module>
 
-    <RootSniffer name="ROOT">
-       <enabled value="false"/>
-    </RootSniffer>
-
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
