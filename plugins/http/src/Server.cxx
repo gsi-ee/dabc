@@ -38,10 +38,7 @@ static const char* open_file_handler(const struct mg_connection* conn,
 {
    http::Server* serv = (http::Server*) mg_get_request_info((struct mg_connection*)conn)->user_data;
 
-   DOUT0("open_file_handler  serv = %p", serv);
-
    return serv->open_file(conn, path, data_len);
-
 }
 
 
@@ -60,12 +57,17 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fCallbacks.begin_request = begin_request_handler;
    fCallbacks.open_file = open_file_handler;
 
-   fHttpPort = Cfg("port", cmd).AsUInt(8080);
+   fHttpPort = Cfg("port", cmd).AsInt(8080);
+   fHttpsPort = Cfg("ports", cmd).AsInt(0);
    fEnabled = Cfg("enabled", cmd).AsBool(false);
    fAuthFile = Cfg("auth_file", cmd).AsStr();
    fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
+   fSslCertif = Cfg("ssl_certif", cmd).AsStr("");
 
-   if (fHttpPort<=0) fEnabled = false;
+   if (!fSslCertif.empty() && (fHttpsPort<=0)) fHttpsPort = 443;
+   if (fSslCertif.empty()) fHttpsPort = 0;
+
+   if ((fHttpPort<=0) && (fHttpsPort<=0)) fEnabled = false;
 
    if (!fEnabled) return;
 
@@ -100,17 +102,28 @@ void http::Server::OnThreadAssigned()
    if (fJSRootIOSys.empty()) fJSRootIOSys = fHttpSys + "/JSRootIO";
 
    DOUT0("JSROOTIOSYS = %s ", fJSRootIOSys.c_str());
-
-   DOUT0("Starting HTTP server on port %d", fHttpPort);
    DOUT0("HTTPSYS = %s", fHttpSys.c_str());
 
-   std::string sport = dabc::format("%d", fHttpPort);
+   std::string sport;
+
+   if (fHttpPort>0) sport = dabc::format("%d",fHttpPort);
+   if (fHttpsPort>0) {
+      if (!sport.empty()) sport.append(",");
+      sport.append(dabc::format("%ds",fHttpsPort));
+   }
+   //std::string sport = dabc::format("%d", fHttpPort);
+   DOUT0("Starting HTTP server on port %s", sport.c_str());
 
    const char *options[100];
    int op(0);
 
    options[op++] = "listening_ports";
    options[op++] = sport.c_str();
+   if (!fSslCertif.empty()) {
+      options[op++] = "ssl_certificate";
+      options[op++] = fSslCertif.c_str(); // "ssl_cert.pem";
+   }
+
    if (!fAuthFile.empty() && !fAuthDomain.empty()) {
       options[op++] = "global_auth_file";
       options[op++] = "dabc_authentification";
@@ -296,9 +309,16 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 {
    if (path==0) return 0;
 
-   DOUT0("OPEN_FILE: %s", path);
-
    std::string fname(path);
+
+
+   if ((conn != 0) && fname.empty()) {
+      const struct mg_request_info *request_info = mg_get_request_info((struct mg_connection*)conn);
+//      DOUT0("FILE REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
+      if (request_info->uri!=0) fname = request_info->uri;
+   }
+
+   DOUT0("OPEN_FILE: %s orig:%s", fname.c_str(), path);
 
    if (fname == "dabc_authentification") {
 
@@ -312,8 +332,12 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
       //return mypass;
    } else {
-      if (!IsFileName(path) || !MakeRealFileName(fname)) return 0;
+      if (!IsFileName(fname.c_str())) return 0;
+      if (!MakeRealFileName(fname)) return 0;
    }
+
+//   DOUT0("READING FILE: %s", fname.c_str());
+
 
 //   const struct mg_request_info *request_info = 0;
 //   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
@@ -326,7 +350,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
       FilesMap::iterator iter = fFiles.find(fname);
       if (iter!=fFiles.end()) {
          if (data_len) *data_len = iter->second.size;
-         DOUT2("Return file %s len %d", fname.c_str(), iter->second.size);
+         //      DOUT0("Return file %s len %u", fname.c_str(), iter->second.size);
          return (const char*) iter->second.ptr;
       }
    }
@@ -367,7 +391,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
       if (data_len) *data_len = iter->second.size;
 
-      DOUT2("Return file %s len %u", path, iter->second.size);
+//      DOUT0("Return file %s len %u", fname.c_str(), iter->second.size);
 
       return (const char*) iter->second.ptr;
    }

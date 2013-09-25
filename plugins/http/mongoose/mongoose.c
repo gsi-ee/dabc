@@ -478,7 +478,7 @@ static const char *config_options[] = {
   "access_control_list", NULL,
   "extra_mime_types", NULL,
   "listening_ports", "8080",
-  "document_root",  NULL,
+  "document_root",  ".",
   "ssl_certificate", NULL,
   "num_threads", "50",
   "run_as_user", NULL,
@@ -1825,7 +1825,9 @@ static void convert_uri_to_file_name(struct mg_connection *conn, char *buf,
   // If document_root is NULL, leave the file empty.
   mg_snprintf(conn, buf, buf_len - 1, "%s%s",
               root == NULL ? "" : root,
-              root == NULL ? "" : uri);
+              uri == NULL ? "" : uri);
+
+  // printf("BUF = %s  root = %s uri = %s \n", buf, root, uri);
 
   rewrite = conn->ctx->config[REWRITE];
   while ((rewrite = next_option(rewrite, &a, &b)) != NULL) {

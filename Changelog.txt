@@ -22,6 +22,18 @@ of the framework.
    be requested to type user and password for "your@domain". Was tested with Firefox.
 2. Small fix in mongoose.c to be able open file when creating context.   
 3. Switch to mongoose 4.2 version, one problem is resolved there, another need to be fixed
+4. Fix few issues with mongoose 4.2 version, hope to get them fixed soon.
+5. Try to use https protocol. For that two parameters should be provided in config file:
+       <HttpServer name="http">
+          <enabled value="true"/>
+          <ports value="8091"/>
+          <ssl_certif value="${DABCSYS}/ssl_cert.pem"/>
+       </HttpServer>
+   After that one could use address like:
+      https://hostname:8091
+   Creation of valid certificate is still open question - fake certificate from 
+   mongoose web site IE does not like, but works 
+      
 
 
 23.09.2013
