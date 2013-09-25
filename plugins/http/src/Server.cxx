@@ -38,6 +38,8 @@ static const char* open_file_handler(const struct mg_connection* conn,
 {
    http::Server* serv = (http::Server*) mg_get_request_info((struct mg_connection*)conn)->user_data;
 
+   DOUT0("open_file_handler  serv = %p", serv);
+
    return serv->open_file(conn, path, data_len);
 
 }
@@ -60,6 +62,9 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
 
    fHttpPort = Cfg("port", cmd).AsUInt(8080);
    fEnabled = Cfg("enabled", cmd).AsBool(false);
+   fAuthFile = Cfg("auth_file", cmd).AsStr();
+   fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
+
    if (fHttpPort<=0) fEnabled = false;
 
    if (!fEnabled) return;
@@ -101,10 +106,18 @@ void http::Server::OnThreadAssigned()
 
    std::string sport = dabc::format("%d", fHttpPort);
 
-   const char *options[3];
-   options[0] = "listening_ports";
-   options[1] = sport.c_str();
-   options[2] = 0;
+   const char *options[100];
+   int op(0);
+
+   options[op++] = "listening_ports";
+   options[op++] = sport.c_str();
+   if (!fAuthFile.empty() && !fAuthDomain.empty()) {
+      options[op++] = "global_auth_file";
+      options[op++] = "dabc_authentification";
+      options[op++] = "authentication_domain";
+      options[op++] = fAuthDomain.c_str();
+   }
+   options[op++] = 0;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
@@ -287,7 +300,20 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    std::string fname(path);
 
-   if (!IsFileName(path) || !MakeRealFileName(fname)) return 0;
+   if (fname == "dabc_authentification") {
+
+      fname = fAuthFile;
+
+      // static const char* mypass = "linev:mydomain.com:$apr1$9WFy7NNd$PyUs4OgY8M2okLsfUBG9l0\n";
+
+      // use htdigest
+      // static const char* mypass = "linev:mydomain.com:9ddef69584c26bb469738bef2f565d10\n";
+      //if (data_len) *data_len = strlen(mypass);
+
+      //return mypass;
+   } else {
+      if (!IsFileName(path) || !MakeRealFileName(fname)) return 0;
+   }
 
 //   const struct mg_request_info *request_info = 0;
 //   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);

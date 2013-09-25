@@ -4,7 +4,7 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
-      <lib value="libDabcRoot.so"/>
+      <!--lib value="libDabcRoot.so"/-->
       <lib value="libDabcFesa.so"/>
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
@@ -14,6 +14,8 @@
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
+       <!--auth_file value="${DABCSYS}/.htdigest"/-->
+       <!--auth_domain value="dabc@server"/-->
     </HttpServer>
     
     <Module name="Publisher" class="dabc::Publisher">

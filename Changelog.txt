@@ -2,6 +2,27 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+25.09.2013
+1. Make first tests with authentification. 
+   At the moment global authentification file can be specified, 
+   which than will be used to access all data on the server.
+   First of all, ".htdigest" should be generated with the command:
+     [shell] htdigest -c .htdigest your@domain  username1
+     [shell] htdigest .htdigest your@domain  username2
+     [shell] htdigest .htdigest your@domain  username3
+   For each user password will be requested. 
+   Name of created file and domain name need to be specified in configuration: 
+    <HttpServer name="http">
+       <enabled value="true"/>
+       <port value="8090"/>
+       <auth_file value="${DABCSYS}/.htdigest"/>
+       <auth_domain value="your@domain"/>
+    </HttpServer>
+   After that when trying to open correspondent page in browser, one will
+   be requested to type user and password for "your@domain". Was tested with Firefox.
+2. Small fix in mongoose.c to be able open file when creating context.   
+
+
 23.09.2013
 1. First try to implement display of single element without hierarchy on the left side.
    Works with several workarounds, which should be cleaned up later. 

@@ -655,6 +655,7 @@ static void cry(struct mg_connection *conn, const char *fmt, ...) {
 static struct mg_connection *fc(struct mg_context *ctx) {
   static struct mg_connection fake_connection;
   fake_connection.ctx = ctx;
+  fake_connection.request_info.user_data = ctx->user_data;
   return &fake_connection;
 }
 
@@ -2383,12 +2384,23 @@ static char *mg_fgets(char *buf, size_t size, struct file *filep, char **p) {
   size_t len;
 
   if (filep->membuf != NULL && *p != NULL) {
+    // printf("mg_fgets filesize %d\n", filep->size);
+    // if (filep->size == 0) filep->size = strlen(filep->membuf);
+
+    if (**p == 0) return NULL;
+
     eof = memchr(*p, '\n', &filep->membuf[filep->size] - *p);
+    if (eof == NULL) return NULL;
+
     len = (size_t) (eof - *p) > size - 1 ? size - 1 : (size_t) (eof - *p);
     memcpy(buf, *p, len);
     buf[len] = '\0';
-    *p = eof;
-    return eof;
+
+//    printf("mg_fgets len = %d buf = %s *p = %p eof = %p distance = %d \n", len, buf, *p, eof, (size_t) (eof - *p));
+
+    *p = eof + 1;
+
+    return *p;
   } else if (filep->fp != NULL) {
     return fgets(buf, size, filep->fp);
   } else {
