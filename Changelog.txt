@@ -33,7 +33,7 @@ of the framework.
       https://hostname:8091
    Creation of valid certificate is still open question - fake certificate from 
    mongoose web site IE does not like, but works 
-      
+6. Link libDabcFesa with libDabcRoot directly when ROOT is used for compilation      
 
 
 23.09.2013
