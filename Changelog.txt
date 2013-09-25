@@ -21,6 +21,7 @@ of the framework.
    After that when trying to open correspondent page in browser, one will
    be requested to type user and password for "your@domain". Was tested with Firefox.
 2. Small fix in mongoose.c to be able open file when creating context.   
+3. Switch to mongoose 4.2 version, one problem is resolved there, another need to be fixed
 
 
 23.09.2013
