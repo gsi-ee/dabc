@@ -191,9 +191,9 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
 
          chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
 
-         if (obj->InheritsFrom(TH1::Class())) {
-            chld.Field(dabc::prop_hash).SetDouble(((TH1*)obj)->GetEntries());
-         }
+//         if (obj->InheritsFrom(TH1::Class())) {
+//            chld.Field(dabc::prop_hash).SetDouble(((TH1*)obj)->GetEntries());
+//         }
       } else
       if (IsBrowsableClass(obj->IsA())) {
          chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
@@ -273,7 +273,7 @@ void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const c
 
       // DOUT0("FOUND item %s ", itemname.c_str());
 
-      if (chld.HasField(dabc::prop_realname)) itemname = chld.Field(dabc::prop_realname).AsStdStr();
+      if (chld.HasField(dabc::prop_realname)) itemname = chld.Field(dabc::prop_realname).AsStr();
 
       // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
 
@@ -357,8 +357,11 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    // one can use as much ROOT as we want
 
    std::string itemname = cmd.GetStr("subitem");
+   uint64_t version = cmd.GetUInt("version");
 
    dabc::Buffer buf;
+
+   std::string objhash;
 
    if (itemname=="StreamerInfo") {
       buf = fProducer->GetStreamerInfoBinary();
@@ -371,7 +374,22 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
          return dabc::cmd_false;
       }
 
-      buf = fProducer->GetBinary(obj, cmd.GetBool("image", false));
+      objhash = fProducer->GetObjectHash(obj);
+
+      bool binchanged = false;
+
+      {
+         dabc::LockGuard lock(fHierarchyMutex);
+         binchanged = fHierarchy.IsBinItemChanged(itemname, objhash, version);
+      }
+
+      if (binchanged) {
+         buf = fProducer->GetBinary(obj, cmd.GetBool("image", false));
+      } else {
+         buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader)); // only header is required
+         dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
+         hdr->reset();
+      }
    }
 
    std::string mhash = fProducer->GetStreamerInfoHash();
@@ -384,7 +402,6 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    }
 
    cmd.SetRawData(buf);
-   cmd.SetStr("MasterHash", mhash); // not necessary in the near future
 
    return dabc::cmd_true;
 }
@@ -407,7 +424,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       // this is fake element, which is need to be requested before first
       dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-      si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
+      // si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
 
       ScanRootHierarchy(fRoot);
 

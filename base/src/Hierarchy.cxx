@@ -32,7 +32,7 @@ const char* dabc::prop_realname = "dabc:realname";
 const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_producer = "dabc:producer";
 const char* dabc::prop_error = "dabc:error";
-const char* dabc::prop_hash = "dabc:hash";
+const char* dabc::prop_hash = "hash";
 const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";
 
@@ -1003,13 +1003,34 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster()
    return GetParent()->FindChildRef(masteritem.c_str());
 }
 
+bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::string& hash, uint64_t last_version)
+{
+   if (null()) return false;
+
+   dabc::Hierarchy item;
+   if (itemname.empty()) item = *this; else item = FindChild(itemname.c_str());
+
+   if (item.null()) return false;
+
+   // if there is no hash information provided, we always think that binary data is changed
+   if (hash.empty()) return true;
+
+   if (item.Field(dabc::prop_hash).AsStr() != hash) {
+      item.Field(dabc::prop_hash).SetStr(hash);
+      item.MarkChangedItems();
+   }
+
+   return (last_version==0) || (last_version<item.GetVersion());
+}
+
+
 
 bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, const std::string& mhash)
 {
    if (null()) return false;
 
-   dabc::Hierarchy item = *this;
-   if (!itemname.empty()) item = FindChild(itemname.c_str());
+   dabc::Hierarchy item;
+   if (itemname.empty()) item = *this; else item = FindChild(itemname.c_str());
 
    if (item.null()) return false;
 
@@ -1019,18 +1040,14 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
 
       master.Field(dabc::prop_hash).SetStr(mhash);
 
-      uint64_t master_version = master.GetVersion();
-
       master.MarkChangedItems();
-
-      DOUT0("MASTER VERSION WAS %u NOW %u", (unsigned) master_version, (unsigned) master.GetVersion());
    }
 
-   if (bindata.null()) return true;
-
-   dabc::BinDataHeader* bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
-   bindatahdr->version = item.GetVersion();
-   bindatahdr->master_version = master.GetVersion();
+   if (!bindata.null()) {
+      dabc::BinDataHeader* bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
+      bindatahdr->version = item.GetVersion();
+      bindatahdr->master_version = master.GetVersion();
+   }
 
    return true;
 }

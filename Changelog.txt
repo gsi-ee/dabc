@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+26.09.2013
+1. Generate 'hash' field for the binary data only when binary data is requested.
+   If next request comes, new hash is calculated and compared with previous one.
+   Only if hash changed, new binary data is generated and returned. 'hash' attributes 
+   will be no longer propogated via names lists. 
+
+
 25.09.2013
 1. Make first tests with authentification. 
    At the moment global authentification file can be specified, 

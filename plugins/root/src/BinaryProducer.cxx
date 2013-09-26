@@ -240,6 +240,14 @@ dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
    return buf;
 }
 
+std::string dabc_root::BinaryProducer::GetObjectHash(TObject* obj)
+{
+   if ((obj!=0) && (obj->InheritsFrom(TH1::Class())))
+      return dabc::format("%g", ((TH1*)obj)->GetEntries());
+
+   return "";
+}
+
 
 dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
 {

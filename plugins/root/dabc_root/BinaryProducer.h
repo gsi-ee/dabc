@@ -30,7 +30,8 @@ class TObject;
 
 namespace dabc_root {
 
-   /** \brief %BinaryProducer convert ROOT objects to binary data, which can be transformed to browser
+   /** \brief %BinaryProducer convert ROOT objects to binary data,
+    *          which can be transformed to browser
     *
     */
 
@@ -50,6 +51,8 @@ namespace dabc_root {
       public:
          BinaryProducer(const std::string& name, int compr = 5);
          virtual ~BinaryProducer();
+
+         std::string GetObjectHash(TObject* obj);
 
          dabc::Buffer GetStreamerInfoBinary();
 

@@ -38,8 +38,13 @@ DABC.AssertRootPrerequisites = function() {
 DABC.UnpackBinaryHeader = function(arg) {
    if ((arg==null) || (arg.length < 20)) return null;
    
+   //console.log("Get header of length " + arg.length);
+   
    var o = 0;
    var typ = DABC.ntou4(arg, o); o+=4;
+
+   //console.log("Get header of typ " + typ);
+
    if (typ!=1) return null;
    
    var hdr = {};
@@ -51,6 +56,8 @@ DABC.UnpackBinaryHeader = function(arg) {
    hdr['payload'] = DABC.ntou4(arg, o); o+=4;
    
    hdr['rawdata'] = "";
+
+   //console.log("Get header with payload " + hdr.payload);
    
    // if no payload specified, ignore
    if (hdr.payload == 0) return hdr;
@@ -1177,7 +1184,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    // if we got same version, do nothing - we are happy!!!
    if ((hdr.version > 0) && (this.version == hdr.version)) {
       this.state = this.StateEnum.stReady;
-      // console.log(" Get same version " + ver + " of object " + this.itemname);
+      console.log(" Get same version " + hdr.version + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 

@@ -250,7 +250,6 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
             if (itemname =="ImageRoot") obj = (TCanvas*) fCanvas;
             buf = pr->GetBinary(obj, (kind=="image.png"));
             mhash = pr->GetStreamerInfoHash();
-            cmd.SetStr("MasterHash", mhash);
          }
 #endif
       } else
