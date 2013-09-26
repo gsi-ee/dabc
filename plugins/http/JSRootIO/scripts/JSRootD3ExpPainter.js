@@ -586,7 +586,7 @@ function doubleTap(elem, speed, distance) {
 
 var gStyle = {
       'Tooltip'       : 2,    // 0 - off, 1 - event info, 2 - full but may be slow
-      'OptimizeDraw'  : true,  // if true, drawing of 1-D histogram will be optimized to exclude too-many points   
+      'OptimizeDraw'  : false,  // if true, drawing of 1-D histogram will be optimized to exclude too-many points   
       'AutoStat'      : true,
       'OptStat'       : 1111,
       'StatX'         : 0.7, 
@@ -664,6 +664,7 @@ var gStyle = {
    };
 
    JSROOTPainter.decodeOptions = function(opt, histo, pad) {
+      
       /* decode string 'opt' and fill the option structure */
       var hdim = 1; // histo['fDimension'];
       if (histo['_typename'].match(/\bJSROOTIO.TH2/)) hdim = 2;
@@ -684,6 +685,7 @@ var gStyle = {
       if (!nch) option.Hist = 1;
       if ('fFunctions' in histo && histo['fFunctions'].length > 0) option.Func = 2;
       if ('fSumw2' in histo && histo['fSumw2'].length > 0 && hdim == 1) option.Error = 2;
+      
       var l = chopt.indexOf('SPEC');
       if (l != -1) {
          option.Scat = 0;
@@ -911,6 +913,7 @@ var gStyle = {
       if (histo['_typename'].match(/\bJSROOTIO.TH2Poly/)) {
          if (option.Fill + option.Line + option.Mark != 0 ) option.Scat = 0;
       }
+
       if (chopt.indexOf('E') != -1) {
          if (hdim == 1) {
             option.Error = 1;
@@ -959,6 +962,7 @@ var gStyle = {
       }
       //  Check options incompatibilities
       if (option.Bar == 1) option.Hist = -1;
+
       return option;
    };
 
@@ -966,9 +970,9 @@ var gStyle = {
       return root_colors[color];
    }
    
-   JSROOTPainter.createFillPattern = function (svg, id, color) {
+   JSROOTPainter.createFillPattern = function (svg, pattern, color) {
       // create fill pattern - only if they don't exists yet
-      var id = "pat" + id + "_" + color;
+      var id = "pat" + pattern + "_" + color;
       
       if (svg.attr("id") != null) id = svg.attr("id") + "_" + id;  
 
@@ -976,7 +980,7 @@ var gStyle = {
 
       var line_color = JSROOTPainter.getRootColor(color);
       
-      switch (id) {
+      switch (pattern) {
          case 3001:
             svg.append('svg:pattern')
                .attr("id", id)
@@ -3040,7 +3044,7 @@ var gStyle = {
       
       if (pavetext['fX1NDC'] < 0.0 || pavetext['fY1NDC'] < 0.0 ||
           pavetext['fX1NDC'] > 1.0 || pavetext['fY1NDC'] > 1.0) {
-         $("#report").append("<br> JSROOTPainter.DrawPaveTextNew suppress painitng of " + pavetext['fName']); 
+         // $("#report").append("<br> JSROOTPainter.DrawPaveTextNew suppress painitng of " + pavetext['fName']); 
          return;
       }
       
@@ -3223,8 +3227,8 @@ var gStyle = {
       // here we deciding how histogram will look like and how will be shown 
       this.options = JSROOTPainter.decodeOptions(this.histo['fOption'], this.histo, this.pad);
       
-      if (this.histo['_typename'] == "JSROOTIO.TProfile")
-         this.options.Error = 11;
+//      if (this.histo['_typename'] == "JSROOTIO.TProfile")
+//         this.options.Error = 11;
       
       this.show_gridx = false;
       this.show_gridy = false;
@@ -3503,10 +3507,11 @@ var gStyle = {
          
          if (timeformatx.length == 0) {
             if (xrange>315360000) timeformatx = "%Y"; else
-            if (xrange>24192000)  timeformatx = "%Y-%m"; else
-            if (xrange>864000)    timeformatx = "%Y-%m-%d"; else
-            if (xrange>36000)     timeformatx = "%H:%M"; else 
-                                  timeformatx = "%H:%M:%S";
+            if (xrange>24192000)  timeformatx = "%Y/%m"; else
+            if (xrange>864000)    timeformatx = "%Y/%m/%d"; else
+            if (xrange>36000)     timeformatx = "%Hh%M"; else 
+            if (xrange>600)       timeformatx = "%Hh%Mm%S"; else
+                                  timeformatx = "%Mm%S";
          }
 
          this['dfx'] = d3.time.format(timeformatx);
@@ -3568,10 +3573,11 @@ var gStyle = {
          
          if (timeformaty.length == 0) {
             if (yrange>315360000) timeformaty = "%Y"; else
-            if (yrange>24192000)  timeformaty= "%Y-%m"; else
-            if (yrange>864000)    timeformaty = "%Y-%m-%d"; else
-            if (yrange>36000)     timeformaty = "%H:%M"; else 
-                                  timeformaty = "%H:%M:%S";
+            if (yrange>24192000)  timeformaty = "%Y/%m"; else
+            if (yrange>864000)    timeformaty = "%Y/%m/%d"; else
+            if (yrange>36000)     timeformaty = "%Hh%M"; else 
+            if (yrange>600)       timeformaty = "%Hh%Mm%S"; else
+                                  timeformaty = "%Mm%S";
          }
          
          this['dfy'] = d3.time.format(timeformaty);
@@ -3772,6 +3778,7 @@ var gStyle = {
          
             if (func['_typename'] == 'JSROOTIO.TPaveText' ||
                 func['_typename'] == 'JSROOTIO.TPaveStats') {
+
                return func;
             }
          }
@@ -3863,20 +3870,21 @@ var gStyle = {
       if (!('fFunctions' in this.histo)) return;
       
       var lastpainter = this;
-      
+
       for (i=0; i<this.histo['fFunctions'].length; ++i) {
 
          var func = this.histo['fFunctions'][i];
          
          var funcpainter = this.FindPainterFor(func);
-         
+
          // no need to do something if painter for object was already done
          // object will be redraw automatically
          if (funcpainter==null) {
 
             if (func['_typename'] == 'JSROOTIO.TPaveText' ||
-                  func['_typename'] == 'JSROOTIO.TPaveStats') 
+                  func['_typename'] == 'JSROOTIO.TPaveStats') {
                funcpainter = JSROOTPainter.DrawPaveTextNew(this.vis, func);
+            }
 
             if (func['_typename'] == 'JSROOTIO.TF1') {
                if ((!this.pad && !func.TestBit(kNotDraw)) ||
@@ -4343,17 +4351,22 @@ var gStyle = {
       if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
       
-      var hmin = 1.0e32, hmax = -1.0e32;
-      this.stat_entries = d3.sum(this.histo['fArray']);
+      var hmin = 1.0e32, hmax = -1.0e32, hsum = 0;
+      // this.stat_entries = d3.sum(this.histo['fArray']);
+      this.stat_entries = 0;
       
       this.nbinsx = this.histo['fXaxis']['fNbins'];
       
       for (var i=0;i<this.nbinsx;++i) {
          var value = this.histo.getBinContent(i+1);
+         hsum += value;
          if (value < hmin) hmin = value;
          if (value > hmax) hmax = value;
       }
       var mul = (hmin < 0) ? 1.05 : 1.0;
+      
+      if ('fEntries' in this.histo) this.stat_entries = this.histo['fEntries'];
+      if ((this.stat_entries==0) && (hsum!=0)) this.stat_entries = hsum;
       
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
@@ -4563,6 +4576,10 @@ var gStyle = {
       var shape = info_marker['shape'], filled = info_marker['toFill'],
           toRotate = info_marker['toRotate'], marker_size = this.histo['fMarkerSize'] * 32;
 
+      var line_width = this.histo['fLineWidth'];
+      var line_color = root_colors[this.histo['fLineColor']];
+      var marker_color = root_colors[this.histo['fMarkerColor']];
+      
       if (this.histo['fMarkerStyle'] == 1) marker_size = 1;
 
       var marker = d3.svg.symbol()
@@ -4572,7 +4589,7 @@ var gStyle = {
       var pthis = this;
 
       function TooltipText(d) { return d.tip; }
-
+      
       /* Draw x-error indicators */
       var xerr = this.draw_g.selectAll("error_x")
             .data(this.draw_bins)
@@ -4582,8 +4599,8 @@ var gStyle = {
             .attr("y1", function(d) { return d.y; })
             .attr("x2", function(d) { return d.x+d.xerr; })
             .attr("y2", function(d) { return d.y; })
-            .style("stroke", root_colors[this.histo['fLineColor']])
-            .style("stroke-width", this.histo['fLineWidth']);
+            .style("stroke", line_color)
+            .style("stroke-width", line_width);
 
       if (this.options.Error == 11) {
            this.draw_g.selectAll("e1_x")
@@ -4594,8 +4611,8 @@ var gStyle = {
                .attr("x1", function(d) { return d.x-d.xerr; })
                .attr("y2", function(d) { return d.y+3; })
                .attr("x2", function(d) { return d.x-d.xerr; })
-               .style("stroke", root_colors[this.histo['fLineColor']])
-               .style("stroke-width", this.histo['fLineWidth']);
+               .style("stroke", line_color)
+               .style("stroke-width", line_width);
            this.draw_g.selectAll("e1_x")
                .data(this.draw_bins)
                .enter()
@@ -4604,10 +4621,11 @@ var gStyle = {
                .attr("x1", function(d) { return d.x+d.xerr; })
                .attr("y2", function(d) { return d.y+3; })
                .attr("x2", function(d) { return d.x+d.xerr; })
-               .style("stroke", root_colors[this.histo['fLineColor']])
-               .style("stroke-width", this.histo['fLineWidth']);
+               .style("stroke", line_color)
+               .style("stroke-width", line_width);
       }
-         /* Draw y-error indicators */
+      
+      /* Draw y-error indicators */
       var yerr = this.draw_g.selectAll("error_y")
             .data(this.draw_bins)
             .enter()
@@ -4616,8 +4634,8 @@ var gStyle = {
             .attr("y1", function(d) { return d.y-d.yerr; })
             .attr("x2", function(d) { return d.x; })
             .attr("y2", function(d) { return d.y+d.yerr;  })
-            .style("stroke", root_colors[this.histo['fLineColor']])
-            .style("stroke-width", this.histo['fLineWidth']);
+            .style("stroke", line_color)
+            .style("stroke-width", line_width);
 
       if (this.options.Error == 11) {
          this.draw_g.selectAll("e1_y")
@@ -4628,8 +4646,8 @@ var gStyle = {
                .attr("y1", function(d) { return d.y-d.yerr; })
                .attr("x2", function(d) { return d.x+3; })
                .attr("y2", function(d) { return d.y-d.yerr; })
-               .style("stroke", root_colors[this.histo['fLineColor']])
-               .style("stroke-width", this.histo['fLineWidth']);
+               .style("stroke", line_color)
+               .style("stroke-width", line_width);
          this.draw_g.selectAll("e1_y")
                .data(this.draw_bins)
                .enter()
@@ -4638,8 +4656,8 @@ var gStyle = {
                .attr("y1", function(d) { return d.y+d.yerr; })
                .attr("x2", function(d) { return d.x+3; })
                .attr("y2", function(d) { return d.y+d.yerr; })
-               .style("stroke", root_colors[this.histo['fLineColor']])
-               .style("stroke-width", this.histo['fLineWidth']);
+               .style("stroke", line_color)
+               .style("stroke-width", line_width);
       }
       var marks = this.draw_g.selectAll("markers")
             .data(this.draw_bins)
@@ -4647,10 +4665,9 @@ var gStyle = {
             .append("svg:path")
             .attr("class", "marker")
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-            .style("fill", root_colors[this.histo['fMarkerColor']])
-            .style("stroke", root_colors[this.histo['fMarkerColor']])
+            .style("fill", marker_color)
+            .style("stroke", marker_color)
             .attr("d", marker);
-      
       
       if (gStyle.Tooltip > 1) {
          marks.append("svg:title").text(TooltipText);
@@ -6710,7 +6727,7 @@ var gStyle = {
       var render_to = '#histogram' + idx;
       if (typeof($(render_to)[0]) == 'undefined') {
          obj = null;
-         $("#report").append("<br>no place for draw"); 
+         // $("#report").append("<br>no place for draw"); 
          return;
       }
       $(render_to).empty();

@@ -7,6 +7,13 @@ of the framework.
    If next request comes, new hash is calculated and compared with previous one.
    Only if hash changed, new binary data is generated and returned. 'hash' attributes 
    will be no longer propogated via names lists. 
+2. In JavaScript code make axis time format more like to original ROOT graphic.
+3. <ade gStyle.OptimizeDraw = false by default, in dabc.js optimized will be used.
+4. Fill patterns in exclusion graphs (and not only) are working
+   correctly now - pattern production is fixed.
+5. By THProfile drawing draw options is normal, before is lawys use DrawErrors=11.
+   Now it is also similar to the original ROOT.
+6. Display correct "Entries" value in stat box. Use histo['fEntries] when specified. 
 
 
 25.09.2013

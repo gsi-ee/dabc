@@ -28,6 +28,7 @@ DABC.AssertRootPrerequisites = function() {
       loadScript('jsrootiosys/scripts/JSRootIOEvolution.js', function() {
       loadScript('jsrootiosys/scripts/JSRootD3ExpPainter.js', function() {
          DABC.load_root_js = 2;
+         gStyle.OptimizeDraw = true;
       }) }) }) }) }) }) });
    }
    
