@@ -266,7 +266,14 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
 
 int http::Server::ProcessFileRequest(struct mg_connection *conn, const std::string& fname)
 {
-   DOUT0("READING FILE: %s", fname.c_str());
+   DOUT0("SEND FILE: %s", fname.c_str());
+
+   mg_send_file(conn, fname.c_str());
+
+   return 1;
+
+
+   // TODO: this is code with the file cash, ignore for the moment
 
 //   const struct mg_request_info *request_info = 0;
 //   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);

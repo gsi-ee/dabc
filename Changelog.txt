@@ -17,6 +17,8 @@ of the framework.
 7. Adopt newest mangoose version - there all server requests handled via begin_request
    method. open_file() is removed. The only limitation - one need to implement
    alternative authentification method, now only global ".htdigest" file can be used.
+8. Send files via mg_send_file() function - skip cashing for the moment, can be 
+   reactivated later.
    
 
 25.09.2013
