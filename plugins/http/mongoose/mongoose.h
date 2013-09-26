@@ -49,6 +49,17 @@ struct mg_request_info {
   } http_headers[64];         // Maximum 64 headers
 };
 
+enum mg_event {
+  MG_REQUEST_BEGIN,
+  MG_REQUEST_END,
+  MG_HTTP_ERROR,
+  MG_EVENT_LOG,
+  MG_THREAD_BEGIN,
+  MG_THREAD_END
+};
+typedef int (*mg_callback_t)(enum mg_event event,
+                             struct mg_connection *conn,
+                             void *data);
 
 struct mg_callbacks {
   int  (*begin_request)(struct mg_connection *);
@@ -59,9 +70,6 @@ struct mg_callbacks {
   void (*websocket_ready)(struct mg_connection *);
   int  (*websocket_data)(struct mg_connection *, int bits,
                          char *data, size_t data_len);
-  const char * (*open_file)(const struct mg_connection *,
-                             const char *path, size_t *data_len);
-  void (*init_lua)(struct mg_connection *, void *lua_context);
   void (*upload)(struct mg_connection *, const char *file_name);
   void (*thread_start)(void *user_data, void **conn_data);
   void (*thread_stop)(void *user_data, void **conn_data);

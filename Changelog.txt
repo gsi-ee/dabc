@@ -14,7 +14,10 @@ of the framework.
 5. By THProfile drawing draw options is normal, before is lawys use DrawErrors=11.
    Now it is also similar to the original ROOT.
 6. Display correct "Entries" value in stat box. Use histo['fEntries] when specified. 
-
+7. Adopt newest mangoose version - there all server requests handled via begin_request
+   method. open_file() is removed. The only limitation - one need to implement
+   alternative authentification method, now only global ".htdigest" file can be used.
+   
 
 25.09.2013
 1. Make first tests with authentification. 

@@ -84,9 +84,9 @@ namespace http {
          bool ProcessGetPng(struct mg_connection* conn, const std::string& itemname, const char *query);
 
          /** \brief Check if file is requested. Can only be from server */
-         bool IsFileName(const char* path);
+         bool IsFileRequested(const char* uri, std::string& fname);
 
-         bool MakeRealFileName(std::string& fname);
+         int ProcessFileRequest(struct mg_connection *conn, const std::string& fname);
 
       public:
          Server(const std::string& name, dabc::Command cmd = 0);
@@ -99,8 +99,6 @@ namespace http {
 
          int begin_request(struct mg_connection *conn);
 
-         const char* open_file(const struct mg_connection* conn,
-                               const char *path, size_t *data_len = 0);
    };
 
 }

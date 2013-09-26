@@ -32,16 +32,6 @@ static int begin_request_handler(struct mg_connection *conn)
    return serv->begin_request(conn);
 }
 
-
-static const char* open_file_handler(const struct mg_connection* conn,
-                                     const char *path, size_t *data_len)
-{
-   http::Server* serv = (http::Server*) mg_get_request_info((struct mg_connection*)conn)->user_data;
-
-   return serv->open_file(conn, path, data_len);
-}
-
-
 http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
@@ -55,7 +45,6 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
 {
    memset(&fCallbacks, 0, sizeof(fCallbacks));
    fCallbacks.begin_request = begin_request_handler;
-   fCallbacks.open_file = open_file_handler;
 
    fHttpPort = Cfg("port", cmd).AsInt(8080);
    fHttpsPort = Cfg("ports", cmd).AsInt(0);
@@ -126,7 +115,7 @@ void http::Server::OnThreadAssigned()
 
    if (!fAuthFile.empty() && !fAuthDomain.empty()) {
       options[op++] = "global_auth_file";
-      options[op++] = "dabc_authentification";
+      options[op++] = fAuthFile.c_str();
       options[op++] = "authentication_domain";
       options[op++] = fAuthDomain.c_str();
    }
@@ -150,11 +139,14 @@ int http::Server::begin_request(struct mg_connection *conn)
 
    DOUT0("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
 
-   // files will be proceeded by open_file requests
-   if (IsFileName(request_info->uri)) return 0;
+   std::string filename;
+
+   if (IsFileRequested(request_info->uri, filename))
+      return ProcessFileRequest(conn, filename);
+
+   std::string content, pathname;
 
    const char* rslash = strrchr(request_info->uri,'/');
-   std::string pathname, filename;
    if (rslash==0) {
       filename = request_info->uri;
    } else {
@@ -163,28 +155,19 @@ int http::Server::begin_request(struct mg_connection *conn)
       filename = rslash+1;
    }
 
-   DOUT0("BEGIN_REQ: path:%s file:%s", pathname.c_str(), filename.c_str());
-
-
-   std::string content;
-   std::string content_type = "text/html";
-   bool iserror = false;
-
+   // we return normal file
    if (filename.empty() || (filename == "index.htm")) {
-      const char* res = 0;
-
       if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname))
-         res = open_file(0, "httpsys/files/main.htm");
+         filename = fHttpSys + "/files/main.htm";
       else
-         res = open_file(0, "httpsys/files/single.htm");
-      if (res) content = res;
-          else iserror = true;
-   } else
-   if ((strcmp(request_info->uri,"/")==0) ||
-       (strcmp(request_info->uri,"/main.htm")==0) || (strcmp(request_info->uri,"/main.html")==0) ||
-       (strcmp(request_info->uri,"/index.htm")==0) || (strcmp(request_info->uri,"/main.html")==0)) {
-      content = open_file(0, "httpsys/files/main.htm");
-   } else
+         filename = fHttpSys + "/files/single.htm";
+
+      return ProcessFileRequest(conn, filename);
+   }
+
+   bool iserror = false;
+   std::string content_type = "text/html";
+
    if (filename == "h.xml") {
       content_type = "text/xml";
 
@@ -209,18 +192,8 @@ int http::Server::begin_request(struct mg_connection *conn)
       if (ProcessGetPng(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
    } else {
-      // let load some files
-
-      DOUT2("**** GET REQ:%s query:%s", request_info->uri, request_info->query_string ? request_info->query_string : "---");
-
-      if ((request_info->uri[0]=='/') && (strstr(request_info->uri,"httpsys")==0) && (strstr(request_info->uri,".htm")!=0) ) {
-         std::string fname = "httpsys/files";
-         fname += request_info->uri;
-         const char* res = open_file(0, fname.c_str(), 0);
-         if (res!=0) content = res;
-      }
-
-      if (content.empty()) return 0;
+      // anything else is not exists
+      iserror = true;
    }
 
    // Prepare the message we're going to send
@@ -248,27 +221,15 @@ int http::Server::begin_request(struct mg_connection *conn)
    return 1;
 }
 
-
-bool http::Server::IsFileName(const char* path)
+bool http::Server::IsFileRequested(const char* uri, std::string& res)
 {
-   // we only allow to load files from predefined directories
-   if ((path==0) || (strlen(path)==0)) return false;
+   if ((uri==0) || (strlen(uri)==0)) return false;
 
-   if (strstr(path,"httpsys/")!=0) return true;
-   if (strstr(path,"jsrootiosys/")!=0) return true;
-   if (strstr(path,"rootsys/")!=0) return true;
-   if (strstr(path,"go4sys/")!=0) return true;
-   return false;
-}
-
-
-bool http::Server::MakeRealFileName(std::string& fname)
-{
-   if (fname.empty()) return false;
+   std::string fname = uri;
    size_t pos = fname.rfind("httpsys/");
    if (pos!=std::string::npos) {
       fname.erase(0, pos+7);
-      fname = fHttpSys + fname;
+      res = fHttpSys + fname;
       return true;
    }
 
@@ -276,7 +237,7 @@ bool http::Server::MakeRealFileName(std::string& fname)
       pos = fname.rfind("rootsys/");
       if (pos!=std::string::npos) {
          fname.erase(0, pos+7);
-         fname = fRootSys + fname;
+         res = fRootSys + fname;
          return true;
       }
    }
@@ -285,7 +246,7 @@ bool http::Server::MakeRealFileName(std::string& fname)
       pos = fname.rfind("jsrootiosys/");
       if (pos!=std::string::npos) {
          fname.erase(0, pos+11);
-         fname = fJSRootIOSys + fname;
+         res = fJSRootIOSys + fname;
          return true;
       }
    }
@@ -294,7 +255,7 @@ bool http::Server::MakeRealFileName(std::string& fname)
       pos = fname.rfind("go4sys/");
       if (pos!=std::string::npos) {
          fname.erase(0, pos+6);
-         fname = fGo4Sys + fname;
+         res = fGo4Sys + fname;
          return true;
       }
    }
@@ -303,101 +264,79 @@ bool http::Server::MakeRealFileName(std::string& fname)
 }
 
 
-
-const char* http::Server::open_file(const struct mg_connection* conn,
-                                    const char *path, size_t *data_len)
+int http::Server::ProcessFileRequest(struct mg_connection *conn, const std::string& fname)
 {
-   if (path==0) return 0;
-
-   std::string fname(path);
-
-
-   if ((conn != 0) && fname.empty()) {
-      const struct mg_request_info *request_info = mg_get_request_info((struct mg_connection*)conn);
-//      DOUT0("FILE REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
-      if (request_info->uri!=0) fname = request_info->uri;
-   }
-
-   DOUT0("OPEN_FILE: %s orig:%s", fname.c_str(), path);
-
-   if (fname == "dabc_authentification") {
-
-      fname = fAuthFile;
-
-      // static const char* mypass = "linev:mydomain.com:$apr1$9WFy7NNd$PyUs4OgY8M2okLsfUBG9l0\n";
-
-      // use htdigest
-      // static const char* mypass = "linev:mydomain.com:9ddef69584c26bb469738bef2f565d10\n";
-      //if (data_len) *data_len = strlen(mypass);
-
-      //return mypass;
-   } else {
-      if (!IsFileName(fname.c_str())) return 0;
-      if (!MakeRealFileName(fname)) return 0;
-   }
-
-//   DOUT0("READING FILE: %s", fname.c_str());
-
+   DOUT0("READING FILE: %s", fname.c_str());
 
 //   const struct mg_request_info *request_info = 0;
 //   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
 
-   bool force = true;
+   void* content = 0;
+   int content_len = 0;
 
-   if (!force) {
+   {
       dabc::LockGuard lock(ObjectMutex());
 
       FilesMap::iterator iter = fFiles.find(fname);
       if (iter!=fFiles.end()) {
-         if (data_len) *data_len = iter->second.size;
-         //      DOUT0("Return file %s len %u", fname.c_str(), iter->second.size);
-         return (const char*) iter->second.ptr;
+         content_len = iter->second.size;
+         content = iter->second.ptr;
       }
    }
 
-   std::ifstream is(fname.c_str());
+   if (content == 0) {
+      std::ifstream is(fname.c_str());
 
-   // if file cannot be open, return empty
-   if (!is) return 0;
+      char* buf = 0;
+      int length = 0;
 
-   is.seekg (0, is.end);
-   int length = is.tellg();
-   is.seekg (0, is.beg);
+      if (is) {
+         is.seekg (0, is.end);
+         length = is.tellg();
+         is.seekg (0, is.beg);
 
-   char* buf = (char*) malloc(length+1);
-   is.read(buf, length);
-   if (is)
-      DOUT2("all characters read successfully from file.");
-   else
-      EOUT("only %d could be read from %s", is.gcount(), path);
+         buf = (char*) malloc(length+1);
+         is.read(buf, length);
+         if (is) {
+            buf[length] = 0; // to be able use as c-string
+            DOUT2("all characters read successfully from file.");
+         } else {
+            EOUT("only %d could be read from %s", is.gcount(), fname.c_str());
+            free(buf);
+            buf = 0; length = 0;
+         }
+      }
 
-   buf[length] = 0;
+      if (buf!=0) {
+         dabc::LockGuard lock(ObjectMutex());
 
-   dabc::LockGuard lock(ObjectMutex());
+         FileBuf& item = fFiles[fname];
+         item.release(); // in any case release buffer
 
-   FilesMap::iterator iter = fFiles.find(fname);
+         item.ptr = buf;
+         item.size = length;
 
-   if (iter == fFiles.end()) {
-      fFiles[fname] = FileBuf();
-      iter = fFiles.find(fname);
+         content = buf;
+         content_len = length;
+      }
+   }
+
+   if (content==0) {
+      mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
+                      "Content-Length: 0\r\n" // Always set Content-Length
+                      "Connection: close\r\n\r\n");
    } else {
-      iter->second.release();
+      // Send HTTP reply to the client
+      mg_printf(conn,
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Type: text\r\n"
+             "Content-Length: %d\r\n"     // Always set Content-Length
+             "\r\n", content_len);
+
+      mg_write(conn, content, (size_t) content_len);
    }
 
-   if (iter!=fFiles.end()) {
-
-      iter->second.ptr = buf;
-      iter->second.size = length;
-
-      if (data_len) *data_len = iter->second.size;
-
-//      DOUT0("Return file %s len %u", fname.c_str(), iter->second.size);
-
-      return (const char*) iter->second.ptr;
-   }
-
-   EOUT("Did not find file %s %s", path, fname.c_str());
-   return 0;
+   return 1;
 }
 
 
