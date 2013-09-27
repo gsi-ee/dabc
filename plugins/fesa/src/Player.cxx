@@ -35,6 +35,8 @@
 
 #include "dabc/Publisher.h"
 
+#include "dabc/CommandDef.h"
+
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fHierarchyMutex(),
@@ -61,6 +63,8 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100);
    
+   dabc::CommandDef def = fHierarchy.CreateCmdDef("CmdReset");
+
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
    fCycles = Cfg("Cycles", cmd).AsStdStr();
@@ -264,6 +268,12 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       cmd.SetRawData(buf);
 
+      return dabc::cmd_true;
+   } else
+   if (cmd.IsName("CmdReset")) {
+
+      DOUT0("****************** CmdReset ****************");
+      fCounter = 0;
       return dabc::cmd_true;
    }
 

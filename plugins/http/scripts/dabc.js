@@ -167,6 +167,75 @@ DABC.DrawElement.prototype.FullItemName = function() {
    return curpath + this.itemname; 
 }
 
+// ========= start of CommandDrawElement
+
+DABC.CommandDrawElement = function() {
+   DABC.DrawElement.call(this);
+   this.req = null;
+   return this;
+}
+
+DABC.CommandDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
+   this.frameid = "dabc_command_" + cnt;
+
+   var entryInfo = 
+      "<div id='" +this.frameid + "'>" +
+      "<h1>" + this.FullItemName() + "</h1>" +
+      "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>" +
+      "<div id='" +this.frameid + "_res'/>" +
+      "</div>"; 
+   $(topid).append(entryInfo);
+}
+
+DABC.CommandDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+   
+   if (this.req) this.req.abort(); 
+   this.req = null;          
+}
+
+DABC.CommandDrawElement.prototype.ClickItem = function() {
+}
+
+DABC.CommandDrawElement.prototype.RegularCheck = function() {
+}
+
+DABC.CommandDrawElement.prototype.InvokeCommand = function() {
+   if (this.req) return;
+   
+   var resdiv = $("#" + this.frameid + "_res");
+   if (resdiv) resdiv.empty();
+   
+   var url = this.itemname + "execute?arg1=1&arg2=2";
+
+   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+
+   this.req.send(null);
+}
+
+DABC.CommandDrawElement.prototype.RequestCallback = function(arg) {
+   // in any case, request pointer will be reseted
+   // delete this.req;
+   this.req = null;
+   
+   if (arg==null) {
+      console.log("no xml response from server");
+      return;
+   }
+   
+   var top = DABC.TopXmlNode(arg);
+   
+   var resdiv = $("#" + this.frameid + "_res");
+   if (resdiv) {
+      resdiv.empty();
+      resdiv.append("<h3>Get command reply!</h3>");
+   }
+}
+
+
 //========== start of HistoryDrawElement
 
 DABC.HistoryDrawElement = function(_clname) {
@@ -516,7 +585,7 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
    
    var element = $("#" + this.frameid);
    element.empty();
-   element.append(this.itemname + "<br>");
+   element.append(this.FullItemName() + "<br>");
    for (var i=0; i< this.xmlnode.attributes.length; i++) {
       var attr = this.xmlnode.attributes.item(i);
       element.append("<h5><PRE>" + attr.name + " = " + attr.value + "</PRE></h5>");
@@ -599,6 +668,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          
          if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
          if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
+         if (kind == "DABC.Command") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
          if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
@@ -1514,6 +1584,14 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       this.arr.push(elem);
       return;
    }
+   
+   if (kind == "DABC.Command") {
+      elem = new DABC.CommandDrawElement();
+      elem.itemname = itemname;
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      this.arr.push(elem);
+      return;
+   }
 
    // ratemeter
    if (kind == "rate") { 
@@ -1585,7 +1663,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
 }
 
 DABC.Manager.prototype.display = function(itemname) {
-   console.log(" display click "+itemname);
+//   console.log(" display click "+itemname);
 
 //   if (!itemname) return;
 
@@ -1621,6 +1699,13 @@ DABC.Manager.prototype.display = function(itemname) {
    
    this.DisplayItem(itemname, xmlnode);
 }
+
+DABC.Manager.prototype.ExecuteCommand = function(itemname)
+{
+   var elem = this.FindItem(itemname);
+   if (elem) elem.InvokeCommand();
+}
+
 
 
 DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)

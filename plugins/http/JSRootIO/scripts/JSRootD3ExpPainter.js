@@ -4353,7 +4353,6 @@ var gStyle = {
       
       var hmin = 1.0e32, hmax = -1.0e32, hsum = 0;
       // this.stat_entries = d3.sum(this.histo['fArray']);
-      this.stat_entries = 0;
       
       this.nbinsx = this.histo['fXaxis']['fNbins'];
       
@@ -4364,9 +4363,11 @@ var gStyle = {
          if (value > hmax) hmax = value;
       }
       var mul = (hmin < 0) ? 1.05 : 1.0;
-      
-      if ('fEntries' in this.histo) this.stat_entries = this.histo['fEntries'];
-      if ((this.stat_entries==0) && (hsum!=0)) this.stat_entries = hsum;
+
+      this.stat_entries = 0;
+      if (('fBuffer' in this.histo) && (this.histo['fBuffer'].length>0)) this.stat_entries = this.histo['fBuffer'][0];   
+      //if ((this.stat_entries == 0) && ('fEntries' in this.histo)) this.stat_entries = this.histo['fEntries'];
+      if (this.stat_entries == 0) this.stat_entries = hsum;
       
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
@@ -4438,7 +4439,10 @@ var gStyle = {
          stat.AddLine(this.histo['fName']);
          
       if (print_entries > 0)
-         stat.AddLine("Entries = " + this.stat_entries.toFixed(0));
+         if (this.stat_entries<1e7)
+            stat.AddLine("Entries = " + this.stat_entries.toFixed(0));
+         else
+            stat.AddLine("Entries = " + this.stat_entries.toExponential());
 
       if (print_mean > 0) {
          var res = 0;

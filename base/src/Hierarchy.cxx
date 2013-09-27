@@ -988,8 +988,6 @@ dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
    if (null() || name.empty()) return dabc::Hierarchy();
 
    return GetObject()->CreateChildAt(name, indx);
-
-   return FindChild(name.c_str());
 }
 
 dabc::Hierarchy dabc::Hierarchy::FindMaster()
@@ -1132,3 +1130,15 @@ void dabc::Hierarchy::EnableReading(const Hierarchy& upto)
       prnt = prnt.GetParentRef();
    }
 }
+
+dabc::Hierarchy dabc::Hierarchy::CreateCmdDef(const std::string& name)
+{
+   dabc::Hierarchy chld = FindChild(name.c_str());
+   if (chld.null()) chld = CreateChild(name);
+
+   chld.Field(prop_kind).SetStr("DABC.Command");
+
+   return chld;
+
+}
+

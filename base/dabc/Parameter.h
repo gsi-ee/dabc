@@ -168,8 +168,6 @@ namespace dabc {
          /** Fire parConfigured event for parameter */
          void FireConfigured();
 
-      public:
-
          /** \brief Method used in reference constructor/assignments to verify is object is suitable */
          template<class T>
          bool verify_object(Object* src, T* &tgt)
@@ -182,6 +180,7 @@ namespace dabc {
             return tgt->Kind() == refkind;
          }
 
+      public:
 
          DABC_REFERENCE(Parameter, Record, ParameterContainer)
 

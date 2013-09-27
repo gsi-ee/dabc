@@ -16,8 +16,8 @@
 #include "dabc/Publisher.h"
 
 #include "dabc/Manager.h"
+#include "dabc/CommandDef.h"
 #include "dabc/HierarchyStore.h"
-
 
 dabc::PublisherEntry::~PublisherEntry()
 {
@@ -495,6 +495,23 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       return cmd_true;
    } else
+   if (cmd.IsName("CreateExeCmd")) {
+      std::string path = cmd.GetStr("path");
+
+      dabc::CommandDef def = GetWorkItem(path);
+      if (def.null()) return cmd_false;
+
+      std::string request_name;
+      std::string producer_name = def.FindBinaryProducer(request_name);
+      if (producer_name.empty()) return cmd_false;
+
+      dabc::Command res = def.CreateCommand(cmd.GetStr("query"));
+      res.SetReceiver(producer_name);
+
+      cmd.SetRef("ExeCmd", res);
+
+      return cmd_true;
+   } else
    if (cmd.IsName("CmdHasChilds")) {
       std::string path = cmd.GetStr("path");
       dabc::Hierarchy h = GetWorkItem(path);
@@ -644,6 +661,26 @@ dabc::Hierarchy dabc::PublisherRef::Get(const std::string& fullname, uint64_t ve
 
    return res;
 }
+
+
+dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std::string& query)
+{
+   dabc::Command res;
+   if (null()) return res;
+
+   dabc::Command cmd("CreateExeCmd");
+   cmd.SetStr("path", fullname);
+   cmd.SetStr("query", query);
+
+   if (Execute(cmd) != cmd_true) return res;
+
+   res = cmd.GetRef("ExeCmd");
+   if (res.null()) return res;
+
+   dabc::mgr.Execute(res);
+   return res;
+}
+
 
 dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, uint64_t version, double tmout)
 {

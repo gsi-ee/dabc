@@ -108,6 +108,9 @@ void http::Server::OnThreadAssigned()
 
    options[op++] = "listening_ports";
    options[op++] = sport.c_str();
+   options[op++] = "num_threads";
+   options[op++] = "5";
+
    if (!fSslCertif.empty()) {
       options[op++] = "ssl_certificate";
       options[op++] = fSslCertif.c_str(); // "ssl_cert.pem";
@@ -191,6 +194,12 @@ int http::Server::begin_request(struct mg_connection *conn)
    if (filename == "image.png") {
       if (ProcessGetPng(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
+   } else
+   if (filename == "execute") {
+      if (ProcessExecute(conn, pathname, request_info->query_string, content))
+         content_type = "text/xml";
+      else
+         iserror = true;
    } else {
       // anything else is not exists
       iserror = true;
@@ -390,6 +399,31 @@ bool http::Server::ProcessGetItem(struct mg_connection* conn, const std::string&
 }
 
 
+bool http::Server::ProcessExecute(struct mg_connection* conn, const std::string& itemname, const char *query, std::string& replybuf)
+{
+   if (itemname.empty()) {
+      EOUT("Item is not specified in execute request");
+      return false;
+   }
+
+   std::string surl = "execute";
+   if (query!=0) { surl.append("?"); surl.append(query); }
+
+   dabc::Url url(surl);
+   if (!url.IsValid()) {
+      EOUT("Cannot decode query url %s", query);
+      return false;
+   }
+
+   dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, "");
+
+
+
+   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\">\n", itemname.c_str());
+   replybuf += "</Reply>";
+
+   return true;
+}
 
 bool http::Server::ProcessGetBin(struct mg_connection* conn, const std::string& itemname, const char *query)
 {

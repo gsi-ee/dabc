@@ -2,6 +2,17 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+27.09.2013
+1. Introduce CommandDef class. It will be used to publish command with different
+   arguments, which than can be executed by module where command was published
+2. Provide primary implementation of execute query like:
+      http://dabc_server:port/FESA/Test/CmdReset/execute
+   At the first stage command created, based on its definition. Than it is submitted
+   to the producer. Theoretically, any number of arguemnts and returns value can
+   be implemented in the future. 
+3. Provide preliminary draw element for command execution in dabc.js         
+
+
 26.09.2013
 1. Generate 'hash' field for the binary data only when binary data is requested.
    If next request comes, new hash is calculated and compared with previous one.

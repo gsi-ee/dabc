@@ -198,6 +198,9 @@ namespace dabc {
 
       Buffer GetBinary(const std::string& fullname, uint64_t version, double tmout = 5.);
 
+      /** \brief Execute item is command, providing parameters in query */
+      Command ExeCmd(const std::string& fullname, const std::string& query);
+
 
       protected:
 

@@ -420,6 +420,9 @@ namespace dabc {
 
       /** \brief Enable element and all its parents to read data */
       void EnableReading(const Hierarchy& upto = 0);
+
+      /** \brief Create element with command definition */
+      Hierarchy CreateCmdDef(const std::string& name);
    };
 
 

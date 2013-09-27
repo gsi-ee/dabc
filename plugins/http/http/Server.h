@@ -83,6 +83,8 @@ namespace http {
 
          bool ProcessGetPng(struct mg_connection* conn, const std::string& itemname, const char *query);
 
+         bool ProcessExecute(struct mg_connection* conn, const std::string& itemname, const char *query, std::string& replybuf);
+
          /** \brief Check if file is requested. Can only be from server */
          bool IsFileRequested(const char* uri, std::string& fname);
 
