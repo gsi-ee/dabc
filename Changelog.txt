@@ -11,6 +11,7 @@ of the framework.
    to the producer. Theoretically, any number of arguemnts and returns value can
    be implemented in the future. 
 3. Provide preliminary draw element for command execution in dabc.js         
+4. Delete CommandsSet class, any complex commands should be implemented individually.
 
 
 26.09.2013

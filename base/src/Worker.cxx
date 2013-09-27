@@ -889,7 +889,6 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
       fWorkerCommands.Push(cmd, CommandsQueue::kindAssign);
    }
 
-   // FIXME: can we assign caller that way - should it be reference?
    cmd.AddCaller(ref, 0);
 
    return cmd;
