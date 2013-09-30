@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+30.09.2013
+1. Implement primitive way to set arguments for the command. At the moment
+   only int argument are supported.
+2. Also result of command execution is returned. At the moment full command is 
+   stored in form of xml.
+3. Full functionality (with typing of arguments, ranges, info, return values)
+   will be implemented after clear formatting rule will be defined. 
+
+
 27.09.2013
 1. Introduce CommandDef class. It will be used to publish command with different
    arguments, which than can be executed by module where command was published

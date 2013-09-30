@@ -8,6 +8,22 @@ DABC.dabc_tree = 0;   // variable to display hierarchy
 
 DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
+/*
+if (!Object.create) {
+   Object.create = (function(){
+       function F(){}
+
+       return function(o){
+           if (arguments.length != 1) {
+               throw new Error('Object.create implementation only accepts one parameter.');
+           }
+           F.prototype = o
+           return new F()
+       }
+   })()
+}
+*/
+
 DABC.ntou4 = function(b, o) {
    // convert (read) four bytes of buffer b into a uint32_t
    var n  = (b.charCodeAt(o)   & 0xff);
@@ -172,6 +188,8 @@ DABC.DrawElement.prototype.FullItemName = function() {
 DABC.CommandDrawElement = function() {
    DABC.DrawElement.call(this);
    this.req = null;
+   this.xmlnode = null;
+   this.argcnt = 0;
    return this;
 }
 
@@ -181,12 +199,39 @@ DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
    this.frameid = "dabc_command_" + cnt;
 
    var entryInfo = 
-      "<div id='" +this.frameid + "'>" +
-      "<h1>" + this.FullItemName() + "</h1>" +
-      "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>" +
-      "<div id='" +this.frameid + "_res'/>" +
-      "</div>"; 
+      "<div id='" + this.frameid + "'>" +
+      "<h3>" + this.FullItemName() + "</h3>" +
+      "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>";
+   
+   if (this.xmlnode!=null) {
+      var chld = DABC.nextXmlNode(this.xmlnode.firstChild);
+
+      this.argcnt = 0;
+      
+      while (chld) {
+         var argname = chld.nodeName;
+         var argid = this.frameid + "_arg" + this.argcnt; 
+         
+         entryInfo += "Arg: " + argname + " "; 
+         entryInfo += "<input id='" + argid + "' style='width:60px' value='3' argname = '" + argname + "'/>";    
+         entryInfo += "<br>";
+         chld = DABC.nextXmlNode(chld.nextSibling);
+         
+         this.argcnt++;
+      }
+   }
+   
+   
+   entryInfo+= "<div id='" +this.frameid + "_res'/>" +
+               "</div>"; 
    $(topid).append(entryInfo);
+   
+   
+   for (var cnt=0;cnt<this.argcnt;cnt++) {
+      var argid = this.frameid + "_arg" + cnt;
+      $("#"+argid).spinner({ min:1, max:100});
+   }
+   
 }
 
 DABC.CommandDrawElement.prototype.Clear = function() {
@@ -209,8 +254,20 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
    var resdiv = $("#" + this.frameid + "_res");
    if (resdiv) resdiv.empty();
    
-   var url = this.itemname + "execute?arg1=1&arg2=2";
+   var url = this.itemname + "execute";
 
+   for (var cnt=0;cnt<this.argcnt;cnt++) {
+      var argid = this.frameid + "_arg" + cnt;
+      
+      var arginp = $("#"+argid);
+      
+      if (cnt==0) url+="?"; else url+="&";
+      
+      url += arginp.attr("argname");
+      url += "=";
+      url += arginp.spinner( "value" )
+   }
+   
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
 
    this.req.send(null);
@@ -227,11 +284,16 @@ DABC.CommandDrawElement.prototype.RequestCallback = function(arg) {
    }
    
    var top = DABC.TopXmlNode(arg);
+   var cmdnode = DABC.nextXmlNode(top.firstChild)
    
    var resdiv = $("#" + this.frameid + "_res");
    if (resdiv) {
       resdiv.empty();
-      resdiv.append("<h3>Get command reply!</h3>");
+      
+      if (cmdnode)
+         resdiv.append("<h5>Get reply res=" + cmdnode.getAttribute("_Result_") + "</h5>");
+      else   
+         resdiv.append("<h5>Get reply without command?</h5>");
    }
 }
 
@@ -657,18 +719,13 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var nodeimg = "";
       var node2img = "";
       
-      if (!node.hasChildNodes()) {
-         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-      } else {
-         html = nodefullname;
-         if (html == "") html = ".."; 
-      }   
+      var scan_inside = true;
       
       if (kind) {
          
          if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
          if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
-         if (kind == "DABC.Command") nodeimg = 'httpsys/img/dabcicon.png'; else
+         if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
          if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
          if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
@@ -684,12 +741,20 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
          if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
       }
+
+      if (!node.hasChildNodes() || !scan_inside) {
+         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+      } else {
+         html = nodefullname;
+         if (html == "") html = ".."; 
+      }   
       
       if (node2img == "") node2img = nodeimg;
       
       DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
-      
-      nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
+
+      if (scan_inside)
+         nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
       node = DABC.nextXmlNode(node.nextSibling);
    }
@@ -1559,7 +1624,6 @@ DABC.Manager.prototype.UpdateComplexFields = function() {
 }
 
 DABC.Manager.prototype.UpdateAll = function() {
-   
    this.UpdateComplexFields();
 }
 
@@ -1588,6 +1652,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
    if (kind == "DABC.Command") {
       elem = new DABC.CommandDrawElement();
       elem.itemname = itemname;
+      elem.xmlnode = xmlnode;
       elem.CreateFrames(this.NextCell(), this.cnt++);
       this.arr.push(elem);
       return;

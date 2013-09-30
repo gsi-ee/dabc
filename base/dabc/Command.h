@@ -136,19 +136,19 @@ namespace dabc {
 
          bool SetStr(const std::string& name, const char* value) { return Field(name).SetStr(value); }
          bool SetStr(const std::string& name, const std::string& value) { return Field(name).SetStr(value); }
-         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return Field(name).AsStr(dflt); }
+         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return HasField(name) ? Field(name).AsStr(dflt) : dflt; }
 
          bool SetInt(const std::string& name, int v) { return Field(name).SetInt(v); }
-         int GetInt(const std::string& name, int dflt = 0) const { return Field(name).AsInt(dflt); }
+         int GetInt(const std::string& name, int dflt = 0) const { return HasField(name) ? Field(name).AsInt(dflt) : dflt; }
 
          bool SetBool(const std::string& name, bool v) { return Field(name).SetBool(v); }
-         bool GetBool(const std::string& name, bool dflt = false) const { return Field(name).AsBool(dflt); }
+         bool GetBool(const std::string& name, bool dflt = false) const { return HasField(name) ? Field(name).AsBool(dflt) : dflt; }
 
          bool SetDouble(const std::string& name, double v) { return Field(name).SetDouble(v); }
-         double GetDouble(const std::string& name, double dflt = 0.) const { return Field(name).AsDouble(dflt); }
+         double GetDouble(const std::string& name, double dflt = 0.) const { return HasField(name) ? Field(name).AsDouble(dflt) : dflt; }
 
          bool SetUInt(const std::string& name, unsigned v) { return Field(name).SetUInt(v); }
-         unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return Field(name).AsUInt(dflt); }
+         unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return HasField(name) ? Field(name).AsUInt(dflt) : dflt; }
 
          /** \brief Set pointer argument for the command */
          void SetPtr(const std::string& name, void* p);
@@ -170,8 +170,8 @@ namespace dabc {
 
          void AddValuesFrom(const Command& cmd, bool canoverwrite = true);
 
-         void SetResult(int res) { Field(ResultParName()).SetInt(res); }
-         int GetResult() const { return Field(ResultParName()).AsInt(0); }
+         void SetResult(int res) { SetInt(ResultParName(), res); }
+         int GetResult() const { return GetInt(ResultParName(), cmd_false); }
          void ClearResult() { RemoveField(ResultParName()); }
          bool HasResult() const { return HasField(ResultParName()); }
 
@@ -210,7 +210,7 @@ namespace dabc {
 
          /** Set command priority, defines how fast command should be treated
           *  In special cases priority allows to execute command also in worker which is not active */
-         void SetPriority(int prio) { Field(PriorityParName()).SetInt(prio); }
+         void SetPriority(int prio) { SetInt(PriorityParName(), prio); }
 
          /** Returns command priority */
          int GetPriority() const;

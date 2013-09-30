@@ -64,6 +64,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item.EnableHistory(100);
    
    dabc::CommandDef def = fHierarchy.CreateCmdDef("CmdReset");
+   def.AddArg("counter","int");
 
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
@@ -272,8 +273,8 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
    } else
    if (cmd.IsName("CmdReset")) {
 
-      DOUT0("****************** CmdReset ****************");
-      fCounter = 0;
+      fCounter = cmd.GetInt("counter", 0);
+      DOUT0("****************** CmdReset counter=%d ****************", fCounter);
       return dabc::cmd_true;
    }
 

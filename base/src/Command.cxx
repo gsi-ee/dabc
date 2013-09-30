@@ -166,6 +166,7 @@ int dabc::Command::GetPriority() const
    return GetInt(PriorityParName(), Worker::priorityDefault);
 }
 
+
 void dabc::Command::SetPtr(const std::string& name, void* p)
 {
    char buf[100];

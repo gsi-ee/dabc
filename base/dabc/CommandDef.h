@@ -43,6 +43,10 @@ namespace dabc {
 
       DABC_REFERENCE(CommandDef, Hierarchy, HierarchyContainer)
 
+      /** \brief Add argument */
+
+      void AddArg(const std::string& name, const std::string& typ_name = "int");
+
       /** \brief Creates command according to command definition */
       Command CreateCommand(const std::string& query = "");
    };

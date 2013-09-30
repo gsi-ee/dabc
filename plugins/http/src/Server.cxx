@@ -406,21 +406,15 @@ bool http::Server::ProcessExecute(struct mg_connection* conn, const std::string&
       return false;
    }
 
-   std::string surl = "execute";
-   if (query!=0) { surl.append("?"); surl.append(query); }
-
-   dabc::Url url(surl);
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-      return false;
-   }
-
-   dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, "");
-
-
+   if (query==0) query = "";
+   dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, query);
 
    replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\">\n", itemname.c_str());
-   replybuf += "</Reply>";
+
+   if (!res.null())
+      replybuf += res.SaveToXml();
+
+   replybuf += "\n</Reply>";
 
    return true;
 }
