@@ -340,7 +340,6 @@ namespace dabc {
           *
           * \param[in] child        object to add
           * \param[in] withmutex    true if object mutex should be locked
-          * \param[in] setparent    true if parent field of child should be set
           * \returns                true if successful */
          bool AddChild(Object* child, bool withmutex = true) throw();
 
@@ -349,7 +348,6 @@ namespace dabc {
           * \param[in] child       object to add
           * \param[in] pos         position at which add object, if grater than number of childs, will be add at the end
           * \param[in] withmutex   true if object mutex should be locked
-          * \param[in] setparent   true if parent field of child should be set
           * \returns               true if successful */
          bool AddChildAt(Object* child, unsigned pos, bool withmutex = true);
 

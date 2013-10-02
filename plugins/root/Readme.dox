@@ -46,7 +46,7 @@ Running of web server
 =====================
 
 After DABC compiled and dabclogin initialization script is called,
-one just starts root and call DabcRoot::StartHttpServer() method at 
+one just starts root and call \ref DabcRoot::StartHttpServer() method at 
 any moment of macro execution. For instance:
 
     [shell] root -b -l

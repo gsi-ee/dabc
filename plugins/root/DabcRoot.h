@@ -20,6 +20,10 @@ class DabcRoot {
 
       /** \brief Method starts HTTP server in ROOT session
        *
+       * \param[in] port         http port number, 8080 is default
+       * \param[in] sync_timer   kind of TTimer object to use, default true
+       * \returns                true if successful
+       *
        * After method call one could in any web browser open page with
        * address http://your_host_name:port and browse objects registered in gROOT directory.
        * It is all histograms, canvases, files. If necessary, one could add own objects to gROOT.
@@ -34,11 +38,23 @@ class DabcRoot {
        * it is not possible to add such code, one should use asynchronous timer.
        * Such timer may lead to problems on objects streaming,
        * while asynchronous timer can interrupt program at any point of execution  */
+
       static bool StartHttpServer(int port = 8080, bool sync_timer = true);
 
-      /** Method need to connect to master DABC application,
-       * which is normally HTTP server for many client processes
-       * Meaning of sync_timer variable see in StartHttpServer() documentation */
+      /** \brief Assign master DABC node
+       *
+       * \param[in] master_url   socket address of the DABC master node
+       * \param[in] sync_timer   kind of TTimer object to use, default true
+       * \returns                true if successful
+       *
+       * Instead of providing direct http port, any ROOT analysis can deliver
+       * information to master DABC node, which is normally HTTP server for many client processes
+       *
+       * Advantage of such methods that many clients can be connected to the same server
+       * and their data will be seen in the same hierarchical structure via the browser
+       *
+       * Meaning of sync_timer variable see in \ref DabcRoot::StartHttpServer() documentation */
+
       static bool ConnectMaster(const char* master_url, bool sync_timer = true);
 
 };
