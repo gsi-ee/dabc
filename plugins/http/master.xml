@@ -1,0 +1,34 @@
+<!-- This is example of master node configuration,
+     which should provide http access to connected clients --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Master">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <logfile value="Master.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+    </Run>
+
+    <HttpServer name="http">
+       <enabled value="true"/>
+       <port value="8090"/>
+       <!--ports value="8091"/-->
+       <!--ssl_certif value="${DABCSYS}/ssl_cert.pem"/-->
+       <!--auth_file value="${DABCSYS}/.htdigest"/-->
+       <!--auth_domain value="dabc@server"/-->
+    </HttpServer>
+    
+    <Module name="Publisher" class="dabc::Publisher">
+       <manager value="true"/>
+       <store value="false"/>
+       <storedir value="/data.local1/hstore/"/>
+       <storesel value="FESA/Test"/>
+       <filelimit value="100"/>
+       <timelimit value="600"/>
+       <period value="10"/>
+    </Module>
+
+  </Context>
+</dabc>

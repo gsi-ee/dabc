@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+2.10.2013
+1. Small update of doxygen documentaion, add ROOT plugin info.
+2. Create intermediate 2.3.5 version tag.
+
+
 30.09.2013
 1. Implement primitive way to set arguments for the command. At the moment
    only int argument are supported.

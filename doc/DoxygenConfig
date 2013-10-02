@@ -37,7 +37,7 @@ PROJECT_NAME           = "DABC (Data Acquisition Backbone Core)"
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = 2.3.1
+PROJECT_NUMBER         = 2.3.5
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
@@ -542,7 +542,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = doc base plugins/mbs plugins/verbs plugins/hadaq plugins/ezca plugins/dim
+INPUT                  = doc base plugins/mbs plugins/verbs plugins/hadaq plugins/root
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 

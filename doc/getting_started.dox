@@ -9,22 +9,22 @@ Most proper way to download DABC is to check out head version from repository.
 
 Alternative, one could check out specific tag:
 
-    [shell] svn co https://subversion.gsi.de/dabc/tags/200-00 dabc200-00
+    [shell] svn co https://subversion.gsi.de/dabc/tags/203-00 dabc203
 
 
 
 \section dabc_intro_compile Compiling DABC
 
-To compile DABC, in most cases it is enough to call `make` in checout directory.
+To compile DABC, in most cases it is enough to call `make` in checkout directory.
 
     [shell] make -j4
 
 It is recommended to use -jN option to speedup compilation. 
 
-DABC includes [DIM](http://dim.web.cern.ch/dim/), which is not compiles smoothely on all platforms.
-To disable DIM compilation, one could use:
+DABC includes [OFED VERBS](http://www.openfabrics.org) support, which is not compiles smoothely on all platforms.
+To disable VERBS compilation, one could use:
 
-    [shell] make -j4 nodim=1
+    [shell] make -j4 noverbs=1
 
 
 
@@ -66,7 +66,6 @@ Running application can be always normally stopped by Ctrl-C keys combination.
 If XML files contains more than one application, one should use `dabc_run` script:
 
     [shell] dabc_run your_file.xml run
-  
 
 
 */

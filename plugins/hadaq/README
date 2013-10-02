@@ -1,14 +1,16 @@
 **********************************************************
-****** DABC plugin for hadaq 
-****** (originally HADES collaboration DAQ and data format)
+* DABC plugin for hadaq 
+* (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Version 0.08 - 08-Jul-2012
-   :  Added control of distributed runid from hades epics master
+*        Sergey Linev, s.linev@gsi.de
+* Version 2.3.5 - 02-Oct-2013
+   : Move documentation to Readme.dox, see http://dabc.gsi.de site 
+
    
 * Components:
    * HldFile - (OK) input and output of hld file format
-   * HldInput - (OK) read hadtu format from file 
-   * HldOutput- (OK) write hadtu format to file 
+   * HldInput - (OK) data input, reading data from hld files 
+   * HldOutput- (OK) data output, writing data to hld file 
    * DataSocketAddon - (Exp) receive hadtu packets from trb frontend (single stream)
    * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
@@ -22,23 +24,18 @@
 * Applications:
    * HldConverter.xml - (OK)
          configuration to read hld file and write the hadtu events wrapped in mbs events to lmd file
-   * HldServer.xml -  (OK)
-         configuration to read hld file and serve the hadtu events as mbs events at transport server
-         dabc will wait 30 seconds before start processing, so go4 may connect to inspect data
-   * NetmemServer.xml -(OK)
-         configuration to receive hadtu buffers at udp socket and serve them as mbs events at transport/stream server
 
    * EventBuilder.xml -(OK)
          configuration to receive hadtu data at n udp sockets, and do a full eventbuilding.
          Output events can be served via mbs transmitter at transport/stream server
-         In parallel, output events can be written to hld file.
+         In parallel, output events can be written to hld and/or lmd files.
          May enable export of variables via shared mem to hades EPICS-based eventbuilder control system
    
    * EventBuilderDim.xml -(OK)
          as EventBuilder.xml, but shows how to activate additionally DIM control system export.
          
 * How to use:
- TODO 
+  See Readout.dox  
  
 * Changes:     
    * Version 0.01 - 06-Jun-2012
@@ -62,7 +59,8 @@
          Tested with original hades ebctrl ioc + medm
    * Version 0.08 - 08-Jul-2012
       :  Added control of distributed runid from hades epics master
-   * Under construction
+   * Version 2.3.5 - 02-Oct-2013
+      :  Move documentation to Readme.dox, see http://dabc.gsi.de site 
    
 * DISCLAIMER:
 This program is free software; you can redistribute it and/or

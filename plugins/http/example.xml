@@ -1,11 +1,14 @@
+<!-- This is example of http server usage in DABC
+     Example provide several components plus http server --> 
+
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Gener">
+  <Context name="Example">
     <Run>
       <lib value="libDabcHttp.so"/>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcFesa.so"/>
-      <logfile value="Gener.log"/>
+      <logfile value="Example.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
     </Run>
