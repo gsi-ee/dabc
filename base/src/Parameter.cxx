@@ -37,6 +37,8 @@ dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string
    fRateTimeSum(0.),
    fRateNumSum(0.),
    fMonitored(false),
+   fRecorded(false),
+   fWaitWorker(false),
    fAttrModified(false),
    fDeliverAllEvents(false),
    fRateWidth(5),
@@ -109,7 +111,7 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
 
       if (!_CanChangeField(name)) return false;
 
-      doworker = fMonitored;
+      doworker = fMonitored || fRecorded;
 
       // remember parameter kind
 
@@ -156,12 +158,20 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
          fAttrModified = true;
       }
 
+      // we sumbit any signal to worker only when previous is processed
+      if ((fMonitored || fRecorded) && res && fire && !fWaitWorker) {
+         fWaitWorker = true;
+         doworker = true;
+      }
    }
 
    // inform worker that parameter is changed
-   if (res && fire && doworker) {
+   if (doworker) {
       Worker* w = GetWorker();
-      if (w) w->WorkerParameterChanged(this);
+      if (w)
+         w->WorkerParameterChanged(false, this, svalue);
+      else
+         ConfirmFromWorker();
    }
 
    if (fire && res) FireModified(svalue);
@@ -169,6 +179,18 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
    DOUT4("ParameterContainer::SetField %s = %s  res %s fire %s",
          name.c_str(), value.AsStr().c_str(), DBOOL(res), DBOOL(fire));
 
+   return res;
+}
+
+unsigned dabc::ParameterContainer::ConfirmFromWorker()
+{
+   LockGuard lock(ObjectMutex());
+
+   fWaitWorker = false;
+
+   unsigned res = 0;
+   if (fRecorded) res = res | 1;
+   if (fMonitored) res = res | 2;
    return res;
 }
 
@@ -208,8 +230,6 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
    {
       LockGuard lock(ObjectMutex());
 
-      doworker = fMonitored;
-
       if ((fStatistic!=kindNone) && fAsynchron) {
          fRateTimeSum += last_dif;
          fire = _CalcRate(value, svalue);
@@ -229,13 +249,18 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
             svalue = Fields().Field(DefaultFiledName()).AsStr();
          }
       }
+
+      if ((fMonitored || fRecorded) && res && fire && !fWaitWorker) {
+         fWaitWorker = true;
+         doworker = true;
+      }
    }
 
-   if (res && fire && doworker) {
+   if (doworker) {
       Worker* w = GetWorker();
-      if (w) w->WorkerParameterChanged(this);
+      if (w) w->WorkerParameterChanged(false, this, svalue);
+        else ConfirmFromWorker();
    }
-
 
    if (fire)
       FireModified(svalue);
@@ -299,6 +324,9 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
    else
    if (fKind == "cmddef")
       cont->Field(dabc::prop_kind).SetStr("DABC.Command");
+   else
+   if (fKind == "info")
+      cont->Field(dabc::prop_kind).SetStr("log");
 
    // just copy all fields, including value
    cont->CopyFrom(Fields());
@@ -558,13 +586,6 @@ void dabc::Parameter::FireModified()
    if (GetObject())
       GetObject()->FireModified(Value().AsStr());
 }
-
-void dabc::Parameter::ScanParamFields(RecordFieldsMap* cont)
-{
-   if (GetObject())
-      GetObject()->BuildFieldsMap(cont);
-}
-
 
 // ========================================================================================
 

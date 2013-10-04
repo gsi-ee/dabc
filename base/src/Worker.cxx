@@ -611,11 +611,34 @@ bool dabc::Worker::Find(ConfigIO &cfg)
    return false;
 }
 
-void dabc::Worker::WorkerParameterChanged(Parameter par)
+void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer* par, const std::string& value)
 {
-   if (!par.IsMonitored()) return;
+   if (force_call || IsOwnThread()) {
 
-   Submit(CmdParameterEvent(par.GetName(), par.Value().AsStr(), parModified));
+      unsigned mask = par->ConfirmFromWorker();
+
+      if ((mask & 1) != 0)
+         ProcessParameterRecording(par);
+
+      if ((mask & 2) != 0)
+         ProcessParameterEvent(CmdParameterEvent(par->GetName(), value, parModified));
+   } else {
+      CmdParameterEvent evnt(par->GetName(), value, parModified);
+      evnt.SetBool("local", true);
+      Submit(evnt);
+   }
+}
+
+void dabc::Worker::ProcessParameterRecording(ParameterContainer* par)
+{
+   if (fWorkerHierarchy.null()) return;
+
+   LockGuard guard(fWorkerHierarchy.GetHMutex());
+
+   Hierarchy chld = fWorkerHierarchy.FindChild(par->GetName());
+
+   if (!chld.null()) par->BuildFieldsMap(&chld()->Fields());
+   fWorkerHierarchy.MarkChangedItems();
 }
 
 
@@ -639,19 +662,19 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
       ParameterEvent evnt(cmd);
 
-      if (!fWorkerHierarchy.null()) {
-
-         Hierarchy chld = fWorkerHierarchy.FindChild(evnt.ParName().c_str());
+      if (cmd.GetBool("local")) {
          Parameter par = Par(evnt.ParName());
-         if (!chld.null() && !par.null()) {
-            par.ScanParamFields(&chld()->Fields());
-            chld.MarkChangedItems();
+         if (par.null()) {
+            EOUT("FAIL to find local parameter %s", evnt.ParName().c_str());
+            cmd_res = cmd_false;
+         } else {
+            WorkerParameterChanged(true, par(), evnt.ParValue());
+            cmd_res = cmd_true;
          }
+      } else {
+         ProcessParameterEvent(evnt);
+         cmd_res = cmd_true;
       }
-
-      ProcessParameterEvent(evnt);
-
-      cmd_res = cmd_true;
 
    } else
 
@@ -1045,8 +1068,13 @@ bool dabc::Worker::PublishPars(const std::string& path)
 
       if (par.IsRatemeter()) {
          chld.EnableHistory(100);
-         par.SetMonitored(true);
+         par()->fRecorded = true;
+      } else
+      if (par.Kind() == "info") {
+         chld.EnableHistory(100);
+         par()->fRecorded = true;
       }
+
       par.ScanParamFields(&chld()->Fields());
    }
    fWorkerHierarchy.MarkChangedItems();

@@ -2,12 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
-
 4.10.2013
 1. Allow to publish normal parameters in hierarchy. Parameters remain as they are
    and just all changes are recorded in hierarchy, which can be published under
    any path (not necessary under /DABC folder). Thus all low-level parameter
    functionality remains as it was before.
+2. Optiomize parameter events generation. Now each events from parameter to
+   worker should be confirmed. Also if parameter changed in worker thread,
+   it will be immediately processed - no any event submission/processing.
+   Same should be done in the future for global parameter events.
 
 
 2.10.2013

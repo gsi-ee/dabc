@@ -402,6 +402,7 @@ namespace dabc {
          /** Interface method to retrieve subscribed parameter events */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
 
+
          /** \brief Return reference on publisher.
           * First time publisher is searched in objects hierarchy and reference
           * stored in the internal structures.
@@ -432,11 +433,14 @@ namespace dabc {
          int ProcessCommand(dabc::Command cmd);
          bool GetCommandReply(dabc::Command& cmd, bool* exe_ready);
 
-         /** Method called by any parameter object which is belong to the worker.
+         /** Method called by parameter object which is belong to the worker.
           * Method is called from the thread where parameter is changing - it could be not a worker thread.
           * Means one should use protected by the mutex worker fields.
           * If monitoring field for parameter is specified, ParameterEvent will be to the worker thread */
-         virtual void WorkerParameterChanged(Parameter par);
+         void WorkerParameterChanged(bool forcecall, ParameterContainer* par, const std::string& value);
+
+         /** Method to process parameter recording in worker thread */
+         void ProcessParameterRecording(ParameterContainer* par);
    };
 
    // __________________________________________________________________________

@@ -72,6 +72,8 @@ namespace dabc {
          double        fRateTimeSum;  ///< sum of time
          double        fRateNumSum;   ///< sum of accumulated counts
          bool          fMonitored;    ///< if true parameter change event will be delivered to the worker
+         bool          fRecorded;     ///< if true, parameter changes should be reported to worker where it will be recorded
+         bool          fWaitWorker;   ///< if true, waiting confirmation from worker
          bool          fAttrModified; ///< indicate if attribute was modified since last parameter event
          bool          fDeliverAllEvents; ///< if true, any modification event will be delivered, default off
          int           fRateWidth;    ///< display width of rate variable
@@ -125,6 +127,10 @@ namespace dabc {
 
          /** \brief Save parameter attributes into container */
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
+
+         /** \brief Get confirmation from worker, which monitor parameters changes.
+          * One use such call to allow next generation of event */
+         unsigned ConfirmFromWorker();
 
       public:
 
@@ -268,7 +274,11 @@ namespace dabc {
           * last update may be lost. */
          void FireModified();
 
-         void ScanParamFields(RecordFieldsMap* cont);
+         void ScanParamFields(RecordFieldsMap* cont)
+         {
+            if (GetObject())
+               GetObject()->BuildFieldsMap(cont);
+         }
    };
 
    // ___________________________________________________________________________________
