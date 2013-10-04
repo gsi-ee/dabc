@@ -267,6 +267,8 @@ namespace dabc {
           * Normally happens automatically or by time interval, but with synchronous parameter
           * last update may be lost. */
          void FireModified();
+
+         void ScanParamFields(RecordFieldsMap* cont);
    };
 
    // ___________________________________________________________________________________
@@ -327,7 +329,9 @@ namespace dabc {
 
          int NumArgs() const;
 
-         bool HasArg(const std::string& name) const;
+         int FindArg(const std::string& name) const;
+
+         bool HasArg(const std::string& name) const { return FindArg(name) >=0; }
 
          bool GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const;
 

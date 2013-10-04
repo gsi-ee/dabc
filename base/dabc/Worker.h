@@ -169,6 +169,8 @@ namespace dabc {
 
          int              fWorkerCommandsLevel;      /** Number of process commands recursion */
 
+         Hierarchy        fWorkerHierarchy;            ///< place for publishing of worker parameters
+
 
          virtual bool AskToDestroyByThread();
 
@@ -407,7 +409,9 @@ namespace dabc {
           * all registered structures.    */
          Reference GetPublisher();
 
-         virtual bool Publish(const Hierarchy& h, const std::string& path, Mutex* m = 0);
+         virtual bool Publish(const Hierarchy& h, const std::string& path);
+
+         virtual bool PublishPars(const std::string& path);
 
          virtual bool Unpublish(const Hierarchy& h, const std::string& path);
 
@@ -417,9 +421,6 @@ namespace dabc {
 
          /** \brief Release reference on publisher and unsubscribe/unpublish all registered entries */
          void CleanupPublisher();
-
-
-
 
       private:
 

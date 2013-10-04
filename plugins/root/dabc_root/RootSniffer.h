@@ -67,9 +67,6 @@ namespace dabc_root {
          /** \brief hierarchy, used for version control */
          dabc::Hierarchy fHierarchy;
 
-         /** \brief Mutex, used to protect fHierarchy object, why it can be accessed from different threads */
-         dabc::Mutex fHierarchyMutex; ///< used to protect content of hierarchy
-
          dabc::CommandsQueue fRootCmds; ///< list of commands, which must be executed in the ROOT context
 
          dabc::TimeStamp fLastUpdate;

@@ -41,9 +41,6 @@ namespace fesa {
 
          virtual void AfterModuleStop() {}
 
-         dabc::Mutex     fHierarchyMutex;
-         dabc::Hierarchy fHierarchy;
-
          unsigned fCounter;
 
          dabc::Reference fProducer;   ///< binary producer for ROOT objects

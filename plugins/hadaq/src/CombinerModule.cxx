@@ -93,12 +93,18 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    CreatePar(fLostEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 5.).SetUnits("MB");
 
+   CreateCmdDef("StartHldFile").AddArg("filename");
+   CreateCmdDef("StopHldFile");
+
+
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
  
    std::string info = dabc::format(
          "HADAQ combiner module ready. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
          fRunNumber, NumInputs(), NumOutputs(), flushtmout);
-   
+
+   PublishPars("Hadaq/Combiner");
+
    SetInfo(info, true);
    DOUT0(info.c_str());
 
@@ -210,7 +216,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    dabc::PortRef port = FindPort(OutputName(1));
 
    if(!port.null()) {
-       std::string filename = port.Cfg("url").AsStdStr();
+       std::string filename = port.Cfg("url").AsStr();
        //std::cout <<"!! Has filename:"<<filename << std::endl;
        // strip leading path if any:
        size_t pos = filename.rfind("/");
@@ -230,7 +236,6 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    CreateEvtbuildPar("nrOfMsgs");
    CreateNetmemPar("nrOfMsgs");
 
-
    for (unsigned i = 0; i < NumInputs(); i++) {
       CreateEvtbuildPar(dabc::format("trigNr%u",i));
       CreateEvtbuildPar(dabc::format("errBit%u",i));
@@ -245,7 +250,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 
 
    for (int p = 0; p < HADAQ_NUMERRPATTS; p++) {
-        CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
+      CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
    }
 }
 

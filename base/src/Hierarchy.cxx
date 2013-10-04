@@ -20,9 +20,11 @@
 
 #include "dabc/Iterator.h"
 #include "dabc/timing.h"
+#include "dabc/threads.h"
 #include "dabc/logging.h"
 #include "dabc/Exception.h"
 #include "dabc/Command.h"
+// #include "dabc/CommandDef.h"
 #include "dabc/ReferencesVector.h"
 
 
@@ -164,7 +166,8 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fDisableReading(false),
    fDisableChildsReading(false),
    fBinData(),
-   fHist()
+   fHist(),
+   fHierarchyMutex(0)
 {
    #ifdef DABC_EXTRA_CHECKS
    DebugObject("Hierarchy", this, 1);
@@ -180,8 +183,18 @@ dabc::HierarchyContainer::~HierarchyContainer()
    #endif
 
 //   DOUT0("Destructor %s %p", GetName(), this);
+
+   if (fHierarchyMutex!=0) {
+      delete fHierarchyMutex;
+      fHierarchyMutex = 0;
+   }
 }
 
+
+void dabc::HierarchyContainer::CreateHMutex()
+{
+   if (fHierarchyMutex==0) fHierarchyMutex = new Mutex;
+}
 
 dabc::HierarchyContainer* dabc::HierarchyContainer::TopParent()
 {
@@ -611,9 +624,9 @@ std::string dabc::HierarchyContainer::ItemName()
    return res;
 }
 
+
 void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
 {
-
    if (!top.null())
       top()->BuildFieldsMap(&Fields());
 
@@ -629,7 +642,6 @@ void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
       chld->BuildObjectsHierarchy(chlds[n]);
    }
 }
-
 
 
 void dabc::HierarchyContainer::AddHistory(RecordFieldsMap* diff)
@@ -813,7 +825,6 @@ void dabc::HierarchyContainer::EnableTimeRecording(bool withchilds)
       }
 }
 
-
 // __________________________________________________-
 
 
@@ -977,10 +988,13 @@ std::string dabc::Hierarchy::SaveToXml(unsigned mask)
    return res;
 }
 
-void dabc::Hierarchy::Create(const std::string& name)
+void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
 {
    Release();
-   SetObject(new HierarchyContainer(name));
+
+   HierarchyContainer* cont = new HierarchyContainer(name);
+   if (withmutex) cont->CreateHMutex();
+   SetObject(cont);
 }
 
 dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
@@ -1129,16 +1143,5 @@ void dabc::Hierarchy::EnableReading(const Hierarchy& upto)
       if (prnt == upto) break;
       prnt = prnt.GetParentRef();
    }
-}
-
-dabc::Hierarchy dabc::Hierarchy::CreateCmdDef(const std::string& name)
-{
-   dabc::Hierarchy chld = FindChild(name.c_str());
-   if (chld.null()) chld = CreateChild(name);
-
-   chld.Field(prop_kind).SetStr("DABC.Command");
-
-   return chld;
-
 }
 

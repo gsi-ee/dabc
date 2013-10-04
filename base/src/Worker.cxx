@@ -97,7 +97,8 @@ dabc::Worker::Worker(Reference parent, const std::string& name) :
 
    fWorkerCommands(CommandsQueue::kindNone),
 
-   fWorkerCommandsLevel(0)
+   fWorkerCommandsLevel(0),
+   fWorkerHierarchy()
 {
    SetFlag(flHasThread, false);
 
@@ -561,8 +562,6 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
    return res;
 }
 
-
-
 dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::string& kind)
 {
    Parameter par = Par(name);
@@ -640,6 +639,16 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
       ParameterEvent evnt(cmd);
 
+      if (!fWorkerHierarchy.null()) {
+
+         Hierarchy chld = fWorkerHierarchy.FindChild(evnt.ParName().c_str());
+         Parameter par = Par(evnt.ParName());
+         if (!chld.null() && !par.null()) {
+            par.ScanParamFields(&chld()->Fields());
+            chld.MarkChangedItems();
+         }
+      }
+
       ProcessParameterEvent(evnt);
 
       cmd_res = cmd_true;
@@ -669,13 +678,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
    if (cmd.IsName(CmdPublisher::CmdName())) {
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
-      Mutex* m = (Mutex*) cmd.GetPtr("mutex");
       HierarchyStore* store = (HierarchyStore*) cmd.GetPtr("store");
       unsigned version = cmd.GetUInt("version");
       // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
       if (!h.null()) {
-         LockGuard lock(m);
+         LockGuard lock(h.GetHMutex());
          Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
          cmd.SetRawData(diff);
          cmd.SetUInt("version", h.GetVersion());
@@ -693,13 +701,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
    } else
    if (cmd.IsName(CmdPublisherGet::CmdName())) {
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
-      Mutex* m = (Mutex*) cmd.GetPtr("mutex");
       std::string item = cmd.GetStr("subitem");
       unsigned hlimit = cmd.GetUInt("history");
       unsigned version = cmd.GetUInt("version");
       if (!h.null()) {
 
-         LockGuard lock(m);
+         LockGuard lock(h.GetHMutex());
 
          dabc::Hierarchy sub = h.GetFolder(item);
          if (sub.null()) {
@@ -1014,10 +1021,39 @@ dabc::Reference dabc::Worker::GetPublisher()
 }
 
 
-bool dabc::Worker::Publish(const Hierarchy& h, const std::string& path, Mutex* mutex)
+bool dabc::Worker::Publish(const Hierarchy& h, const std::string& path)
 {
-   return PublisherRef(GetPublisher()).Register(path, ItemName(), h(), mutex);
+   return PublisherRef(GetPublisher()).Register(path, ItemName(), h());
 }
+
+bool dabc::Worker::PublishPars(const std::string& path)
+{
+   // no need to publish if publisher not exists
+   if (GetPublisher().null()) return true;
+
+   if (fWorkerHierarchy.null())
+      fWorkerHierarchy.Create("Worker");
+
+   for (unsigned n=0;n<NumChilds();n++) {
+      Parameter par = dynamic_cast<ParameterContainer*> (GetChild(n));
+      if (par.null()) continue;
+
+      Hierarchy chld = fWorkerHierarchy.FindChild(par.GetName());
+      if (!chld.null()) continue;
+
+      chld = fWorkerHierarchy.CreateChild(par.GetName());
+
+      if (par.IsRatemeter()) {
+         chld.EnableHistory(100);
+         par.SetMonitored(true);
+      }
+      par.ScanParamFields(&chld()->Fields());
+   }
+   fWorkerHierarchy.MarkChangedItems();
+
+   return Publish(fWorkerHierarchy, path);
+}
+
 
 bool dabc::Worker::Unpublish(const Hierarchy& h, const std::string& path)
 {

@@ -84,7 +84,11 @@ dabc::RecordField dabc::ParameterContainer::GetField(const std::string& name) co
 {
    LockGuard lock(ObjectMutex());
 
-   return name.empty() ? Fields().Field(DefaultFiledName()) : Fields().Field(name);
+   std::string n = name.empty() ? DefaultFiledName() : name;
+
+   if (Fields().HasField(n)) return Fields().Field(n);
+
+   return dabc::RecordField();
 }
 
 
@@ -195,7 +199,7 @@ void dabc::ParameterContainer::ObjectCleanup()
 
 void dabc::ParameterContainer::ProcessTimeout(double last_dif)
 {
-   bool fire(false);
+   bool fire(false), res(false), doworker(false);
    double value(0);
    std::string svalue;
 
@@ -204,12 +208,14 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
    {
       LockGuard lock(ObjectMutex());
 
+      doworker = fMonitored;
+
       if ((fStatistic!=kindNone) && fAsynchron) {
          fRateTimeSum += last_dif;
          fire = _CalcRate(value, svalue);
          if (fire) {
             fLastChangeTm = dabc::Now();
-            Fields().Field(DefaultFiledName()).SetDouble(value);
+            res = Fields().Field(DefaultFiledName()).SetDouble(value);
          }
       } else
 
@@ -224,6 +230,12 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
          }
       }
    }
+
+   if (res && fire && doworker) {
+      Worker* w = GetWorker();
+      if (w) w->WorkerParameterChanged(this);
+   }
+
 
    if (fire)
       FireModified(svalue);
@@ -284,6 +296,9 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
    // mark that we are producing rate
    if (fStatistic == ParameterContainer::kindRate)
       cont->Field(dabc::prop_kind).SetStr("rate");
+   else
+   if (fKind == "cmddef")
+      cont->Field(dabc::prop_kind).SetStr("DABC.Command");
 
    // just copy all fields, including value
    cont->CopyFrom(Fields());
@@ -544,56 +559,68 @@ void dabc::Parameter::FireModified()
       GetObject()->FireModified(Value().AsStr());
 }
 
+void dabc::Parameter::ScanParamFields(RecordFieldsMap* cont)
+{
+   if (GetObject())
+      GetObject()->BuildFieldsMap(cont);
+}
+
+
 // ========================================================================================
+
+int dabc::CommandDefinition::NumArgs() const
+{
+   return GetField("numargs").AsInt(0);
+}
 
 std::string dabc::CommandDefinition::ArgName(int n) const
 {
-   return GetField(dabc::format("#Arg%d",n)).AsStr();
+   return GetField(dabc::format("arg%d",n)).AsStr();
 }
 
-bool dabc::CommandDefinition::HasArg(const std::string& name) const
+int dabc::CommandDefinition::FindArg(const std::string& name) const
 {
    int num = NumArgs();
 
    for (int n=0;n<num;n++)
-      if (ArgName(n)==name) return true;
-   return false;
+      if (ArgName(n)==name) return n;
+   return -1;
 }
-
-
 
 dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name, const std::string& kind, bool required, const std::string& dflt)
 {
-   if (name.empty() || (GetObject()==0)) return *this;
+   if (name.empty() || null()) return *this;
 
-   if (!HasArg(name)) {
-      int num = NumArgs();
-      SetField(dabc::format("#Arg%d",num), name);
-      SetField("#NumArgs", num+1);
+
+   int id = FindArg(name);
+
+   if (id<0) {
+      id = NumArgs();
+      SetField("numargs", id+1);
    }
 
-   SetField(name, dflt);
-   SetField(name+"_kind", kind);
-   SetField(name+"_req", required);
+   std::string prefix = dabc::format("arg%d",id);
+   SetField(prefix, name);
+   SetField(prefix+"_dflt", dflt);
+   SetField(prefix+"_kind", kind);
+   SetField(prefix+"_req", required);
 
    FireConfigured();
 
    return *this;
 }
 
-int dabc::CommandDefinition::NumArgs() const
-{
-   return GetField("#NumArgs").AsInt(0);
-}
-
 bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const
 {
-   name = ArgName(n);
-   if (name.empty()) return false;
 
-   dflt = GetField(name).AsStr();
-   kind = GetField(name+"_kind").AsStr();
-   required = GetField(name+"_req").AsBool();
+   if ((n<0) || (n>=NumArgs())) return false;
+
+   std::string prefix = dabc::format("arg%d",n);
+
+   name = GetField(prefix).AsStr();
+   dflt = GetField(prefix+"dflt").AsStr();
+   kind = GetField(prefix+"_kind").AsStr();
+   required = GetField(prefix+"_req").AsBool();
 
    return true;
 }

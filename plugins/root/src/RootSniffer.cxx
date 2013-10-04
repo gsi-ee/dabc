@@ -71,7 +71,6 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    fTimer(0),
    fRoot(),
    fHierarchy(),
-   fHierarchyMutex(),
    fRootCmds(dabc::CommandsQueue::kindPostponed),
    fLastUpdate(),
    fStartThrdId(0)
@@ -106,7 +105,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
    fProducer = new dabc_root::BinaryProducer("producer", fCompression);
 
-   fHierarchy.Create("ROOT");
+   fHierarchy.Create("ROOT", true);
    // identify ourself as bin objects producer
    // fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
    InitializeHierarchy();
@@ -114,7 +113,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    if (fTimer==0) ActivateTimeout(0);
 
    DOUT0("Calling Publish of ROOT hierarchy");
-   Publish(fHierarchy, fPrefix, &fHierarchyMutex);
+   Publish(fHierarchy, fPrefix);
 
    // if timer not installed, emulate activity in ROOT by regular timeouts
 }
@@ -130,7 +129,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 
    DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
-   dabc::LockGuard lock(fHierarchyMutex);
+   dabc::LockGuard lock(fHierarchy.GetHMutex());
 
    fHierarchy.Update(h);
 
@@ -143,7 +142,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
-      dabc::LockGuard lock(fHierarchyMutex);
+      dabc::LockGuard lock(fHierarchy.GetHMutex());
       fRootCmds.Push(cmd);
       return dabc::cmd_postponed;
    }
@@ -379,7 +378,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
       bool binchanged = false;
 
       {
-         dabc::LockGuard lock(fHierarchyMutex);
+         dabc::LockGuard lock(fHierarchy.GetHMutex());
          binchanged = fHierarchy.IsBinItemChanged(itemname, objhash, version);
       }
 
@@ -395,7 +394,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
    std::string mhash = fProducer->GetStreamerInfoHash();
 
    {
-      dabc::LockGuard lock(fHierarchyMutex);
+      dabc::LockGuard lock(fHierarchy.GetHMutex());
 
       // here correct version number for item and master item will be filled
       fHierarchy.FillBinHeader(itemname, buf, mhash);
@@ -436,7 +435,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       // DOUT0("Current ROOT hierarchy %p has producer %s", fRoot(), DBOOL(fRoot.HasField(dabc::prop_producer)));
 
       // we lock mutex only at the moment when synchronize hierarchy with main
-      dabc::LockGuard lock(fHierarchyMutex);
+      dabc::LockGuard lock(fHierarchy.GetHMutex());
       fHierarchy.Update(fRoot);
 
       // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));
@@ -457,7 +456,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
          cmd.ReplyFalse();
       }
 
-      dabc::LockGuard lock(fHierarchyMutex);
+      dabc::LockGuard lock(fHierarchy.GetHMutex());
 
       if (fRootCmds.Size()>0) cmd = fRootCmds.Pop();
       doagain = !cmd.null();

@@ -40,6 +40,8 @@ namespace hadaq {
 
    class CombinerModule: public dabc::ModuleAsync {
 
+      protected:
+
       struct InputCfg {
 
          /** keeps current trigger sequence number */
@@ -124,64 +126,6 @@ namespace hadaq {
          }
       };
 
-      public:
-         CombinerModule(const std::string& name, dabc::Command cmd = 0);
-         virtual ~CombinerModule();
-         
-         virtual void ModuleCleanup();
-
-         virtual bool ProcessBuffer(unsigned port);
-         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
-         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
-
-         virtual void ProcessTimerEvent(unsigned timer);
-
-         virtual int ExecuteCommand(dabc::Command cmd);
-
-      protected:
-
-         bool BuildEvent();
-
-         bool FlushOutputBuffer();
-
-         void RegisterExportedCounters();
-         bool UpdateExportedCounters();
-         void ClearExportedCounters();
-
-         void DoErrorBitStatistics(unsigned ninp);
-
-         void DoInputSnapshot(unsigned ninp);
-
-         virtual void BeforeModuleStart();
-
-         virtual void AfterModuleStop();
-
-         bool ShiftToNextSubEvent(unsigned ninp);
-
-         bool ShiftToNextHadTu(unsigned ninp);
-
-         /** Method should be used to skip current buffer from the queue */
-         bool ShiftToNextBuffer(unsigned ninp);
-
-         bool SkipInputBuffer(unsigned ninp);
-
-         /* cleanup input buffers in case of too large eventnumber mismatch*/
-         bool DropAllInputBuffers();
-
-         //uint32_t CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
-
-         void SetInfo(const std::string& info, bool forceinfo = false);
-
-
-         /* helper methods to export ebctrl parameters */
-         std::string GetEvtbuildParName(const std::string& name);
-         void CreateEvtbuildPar(const std::string& name);
-         void SetEvtbuildPar(const std::string& name, unsigned value);
-         unsigned GetEvtbuildParValue(const std::string& name);
-
-         std::string GetNetmemParName(const std::string& name);
-         void CreateNetmemPar(const std::string& name);
-         void SetNetmemPar(const std::string& name, unsigned value);
 
          /* master stream for event building*/
          //unsigned fMasterChannel;
@@ -230,6 +174,66 @@ namespace hadaq {
 
          /* run id from timeofday for eventbuilding*/
          uint32_t           fRunNumber;
+
+
+         bool BuildEvent();
+
+         bool FlushOutputBuffer();
+
+         void RegisterExportedCounters();
+         bool UpdateExportedCounters();
+         void ClearExportedCounters();
+
+         void DoErrorBitStatistics(unsigned ninp);
+
+         void DoInputSnapshot(unsigned ninp);
+
+         virtual void BeforeModuleStart();
+
+         virtual void AfterModuleStop();
+
+         bool ShiftToNextSubEvent(unsigned ninp);
+
+         bool ShiftToNextHadTu(unsigned ninp);
+
+         /** Method should be used to skip current buffer from the queue */
+         bool ShiftToNextBuffer(unsigned ninp);
+
+         bool SkipInputBuffer(unsigned ninp);
+
+         /* cleanup input buffers in case of too large eventnumber mismatch*/
+         bool DropAllInputBuffers();
+
+         //uint32_t CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
+
+         void SetInfo(const std::string& info, bool forceinfo = false);
+
+
+         /* helper methods to export ebctrl parameters */
+         std::string GetEvtbuildParName(const std::string& name);
+         void CreateEvtbuildPar(const std::string& name);
+         void SetEvtbuildPar(const std::string& name, unsigned value);
+         unsigned GetEvtbuildParValue(const std::string& name);
+
+         std::string GetNetmemParName(const std::string& name);
+         void CreateNetmemPar(const std::string& name);
+         void SetNetmemPar(const std::string& name, unsigned value);
+
+
+      public:
+         CombinerModule(const std::string& name, dabc::Command cmd = 0);
+         virtual ~CombinerModule();
+         
+         virtual void ModuleCleanup();
+
+         virtual bool ProcessBuffer(unsigned port);
+         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
+         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
+
+         virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
+
    };
 
 }

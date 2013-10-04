@@ -57,7 +57,6 @@ namespace dabc {
       std::string worker;   // worker which is manages hierarchy
       std::string fulladdr;  // address, used to identify producer of the hierarchy branch
       void* hier;           // local hierarchy pointer, one not allowed to use it from publisher
-      void* mutex;          // local mutex, which must be used by worker for the hierarchy
       uint64_t version;     // last requested version
       uint64_t lastglvers;  // last version, used to build global
       bool local;           // is entry from local node
@@ -67,13 +66,13 @@ namespace dabc {
       HierarchyStore* store; // store object for the registered hierarchy
 
       PublisherEntry() :
-         id(0), path(), worker(), fulladdr(), hier(0), mutex(0),
+         id(0), path(), worker(), fulladdr(), hier(0),
          version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
          store(0) {}
 
       // implement copy constructor to avoid any extra copies which are not necessary
       PublisherEntry(const PublisherEntry& src) :
-         id(src.id), path(), worker(), fulladdr(), hier(0), mutex(0),
+         id(src.id), path(), worker(), fulladdr(), hier(0),
          version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
          store(0) {}
 
@@ -159,19 +158,18 @@ namespace dabc {
 
       public:
 
-
          Publisher(const std::string& name, dabc::Command cmd = 0);
 
          static const char* DfltName() { return "Publisher"; }
    };
 
-
+   // ==============================================================
 
    class PublisherRef : public ModuleAsyncRef {
       DABC_REFERENCE(PublisherRef, ModuleAsyncRef, Publisher)
 
-      bool Register(const std::string& path, const std::string& workername, void* hierarchy, void* mutex = 0)
-      {  return OwnCommand(1, path, workername, hierarchy, mutex); }
+      bool Register(const std::string& path, const std::string& workername, void* hierarchy)
+      {  return OwnCommand(1, path, workername, hierarchy); }
 
       bool Unregister(const std::string& path, const std::string& workername, void* hierarchy)
       {  return OwnCommand(2, path, workername, hierarchy); }
@@ -204,7 +202,7 @@ namespace dabc {
 
       protected:
 
-      bool OwnCommand(int id, const std::string& path, const std::string& workername, void* hier = 0, void* mutex = 0)
+      bool OwnCommand(int id, const std::string& path, const std::string& workername, void* hier = 0)
       {
          if (null()) return false;
 
@@ -216,7 +214,6 @@ namespace dabc {
          cmd.SetStr("Path", path);
          cmd.SetStr("Worker", workername);
          cmd.SetPtr("Hierarchy", hier);
-         cmd.SetPtr("Mutex", mutex);
 
          if (!sync) return Submit(cmd);
 

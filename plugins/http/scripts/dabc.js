@@ -190,8 +190,7 @@ DABC.DrawElement.prototype.FullItemName = function() {
 DABC.CommandDrawElement = function() {
    DABC.DrawElement.call(this);
    this.req = null;
-   this.xmlnode = null;
-   this.argcnt = 0;
+   this.xmlnode = null; // here is xml description of command, which should be first requested
    return this;
 }
 
@@ -200,41 +199,60 @@ DABC.CommandDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
    this.frameid = "dabc_command_" + cnt;
 
-   var entryInfo = 
-      "<div id='" + this.frameid + "'>" +
-      "<h3>" + this.FullItemName() + "</h3>" +
-      "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>";
+   var entryInfo = "<div id='" + this.frameid + "'/>";
    
-   if (this.xmlnode!=null) {
-      var chld = DABC.nextXmlNode(this.xmlnode.firstChild);
-
-      this.argcnt = 0;
-      
-      while (chld) {
-         var argname = chld.nodeName;
-         var argid = this.frameid + "_arg" + this.argcnt; 
-         
-         entryInfo += "Arg: " + argname + " "; 
-         entryInfo += "<input id='" + argid + "' style='width:60px' value='3' argname = '" + argname + "'/>";    
-         entryInfo += "<br>";
-         chld = DABC.nextXmlNode(chld.nextSibling);
-         
-         this.argcnt++;
-      }
-   }
-   
-   
-   entryInfo+= "<div id='" +this.frameid + "_res'/>" +
-               "</div>"; 
+   $(topid).empty();
    $(topid).append(entryInfo);
    
+   this.ShowCommand();
+}
+
+DABC.CommandDrawElement.prototype.NumArgs = function() {
+   if (this.xmlnode==null) return 0;
    
-   for (var cnt=0;cnt<this.argcnt;cnt++) {
+   return this.xmlnode.getAttribute("numargs");
+}
+
+DABC.CommandDrawElement.prototype.ArgName = function(n) {
+   if (n>=this.NumArgs()) return "";
+   
+   return this.xmlnode.getAttribute("arg"+n);
+}
+
+DABC.CommandDrawElement.prototype.ShowCommand = function() {
+   
+   var frame = $("#" + this.frameid);
+   
+   frame.empty();
+   
+   frame.append("<h3>" + this.FullItemName() + "</h3>");
+
+   if (this.xmlnode==null) {
+      frame.append("request command definition...<br>");
+      return;
+   } 
+   
+   var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>";
+
+   for (var cnt=0;cnt<this.NumArgs();cnt++) {
+      var argname = this.ArgName(cnt);
+      var argid = this.frameid + "_arg" + cnt; 
+
+      entryInfo += "Arg: " + argname + " "; 
+      entryInfo += "<input id='" + argid + "' style='width:60px' value='3' argname = '" + argname + "'/>";    
+      entryInfo += "<br>";
+   }
+   
+   entryInfo += "<div id='" +this.frameid + "_res'/>";
+   
+   frame.append(entryInfo);
+
+   for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
       $("#"+argid).spinner({ min:1, max:100});
    }
-   
 }
+
 
 DABC.CommandDrawElement.prototype.Clear = function() {
    
@@ -250,6 +268,16 @@ DABC.CommandDrawElement.prototype.ClickItem = function() {
 DABC.CommandDrawElement.prototype.RegularCheck = function() {
 }
 
+DABC.CommandDrawElement.prototype.RequestCommand = function() {
+   if (this.req) return;
+
+   var url = this.itemname + "get.xml";
+
+   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+
+   this.req.send(null);
+}
+
 DABC.CommandDrawElement.prototype.InvokeCommand = function() {
    if (this.req) return;
    
@@ -258,7 +286,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
    
    var url = this.itemname + "execute";
 
-   for (var cnt=0;cnt<this.argcnt;cnt++) {
+   for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
       
       var arginp = $("#"+argid);
@@ -267,7 +295,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       
       url += arginp.attr("argname");
       url += "=";
-      url += arginp.spinner( "value" )
+      url += arginp.spinner("value");
    }
    
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
@@ -286,7 +314,14 @@ DABC.CommandDrawElement.prototype.RequestCallback = function(arg) {
    }
    
    var top = DABC.TopXmlNode(arg);
-   var cmdnode = DABC.nextXmlNode(top.firstChild)
+   var cmdnode = DABC.nextXmlNode(top.firstChild);
+   
+   if (this.xmlnode==null) {
+      // we are waiting for the command itself
+      this.xmlnode = cmdnode;
+      this.ShowCommand();
+      return;
+   }
    
    var resdiv = $("#" + this.frameid + "_res");
    if (resdiv) {
@@ -730,9 +765,9 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
          if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-         if (kind.match(/\bROOT.TH1/)) nodeimg = source_dir+'img/histo.png'; else
-         if (kind.match(/\bROOT.TH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
-         if (kind.match(/\bROOT.TH3/)) nodeimg = source_dir+'img/histo3d.png'; else
+         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; } else
+         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; } else  
+         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; } else
          if (kind == "ROOT.TCanvas") nodeimg = source_dir+'img/canvas.png'; else
          if (kind == "ROOT.TProfile") nodeimg = source_dir+'img/profile.png'; else
          if (kind.match(/\bROOT.TGraph/)) nodeimg = source_dir+'img/graph.png'; else
@@ -757,6 +792,8 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
 
       if (scan_inside)
          nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
+      else
+         nodeid = nodeid + 1;
       
       node = DABC.nextXmlNode(node.nextSibling);
    }
@@ -1654,8 +1691,8 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
    if (kind == "DABC.Command") {
       elem = new DABC.CommandDrawElement();
       elem.itemname = itemname;
-      elem.xmlnode = xmlnode;
       elem.CreateFrames(this.NextCell(), this.cnt++);
+      elem.RequestCommand();
       this.arr.push(elem);
       return;
    }

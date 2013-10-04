@@ -98,13 +98,12 @@ class rdaDabcHandler : public rdaReplyHandler
 
 fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fHierarchyMutex(),
    fHierarchy(),
    fRDAService(0),
    fDevice(0),
    fHandlers(0)
 {
-   fHierarchy.Create("fesa-monitor");
+   fHierarchy.Create("fesa-monitor", true);
 
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
@@ -141,7 +140,7 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       }
    }
 
-   Publish(fHierarchy, "FESA/Monitor", &fHierarchyMutex);
+   Publish(fHierarchy, "FESA/Monitor");
 }
 
 fesa::Monitor::~Monitor()
@@ -165,7 +164,7 @@ void fesa::Monitor::ProcessTimerEvent(unsigned timer)
 
 void fesa::Monitor::ReportServiceError(const std::string& name, const std::string& err)
 {
-   dabc::LockGuard lock(fHierarchyMutex);
+   dabc::LockGuard lock(fHierarchy.GetHMutex());
 
    dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
    if (item.null()) return;
@@ -180,7 +179,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 {
    // DOUT0("REPORT FESA SERVICE %s = %5.3f", name.c_str());
 
-   dabc::LockGuard lock(fHierarchyMutex);
+   dabc::LockGuard lock(fHierarchy.GetHMutex());
 
    dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
    if (item.null()) return;

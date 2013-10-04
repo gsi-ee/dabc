@@ -42,7 +42,6 @@ namespace fesa {
 
          virtual void AfterModuleStop() {}
 
-         dabc::Mutex     fHierarchyMutex;
          dabc::Hierarchy fHierarchy;
 
          std::string fServerName;    ///< FESA server name

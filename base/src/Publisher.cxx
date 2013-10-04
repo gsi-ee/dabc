@@ -16,7 +16,7 @@
 #include "dabc/Publisher.h"
 
 #include "dabc/Manager.h"
-#include "dabc/CommandDef.h"
+#include "dabc/Url.h"
 #include "dabc/HierarchyStore.h"
 
 dabc::PublisherEntry::~PublisherEntry()
@@ -166,7 +166,6 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
          cmd.SetReceiver(iter->worker);
          cmd.SetUInt("version", iter->version);
          cmd.SetPtr("hierarchy", iter->hier);
-         cmd.SetPtr("mutex", iter->mutex);
          cmd.SetUInt("recid", iter->id);
          if (iter->store && iter->store->CheckForNextStore(storetm, fStorePeriod, fTimeLimit)) {
             cmd.SetPtr("store", iter->store);
@@ -343,7 +342,6 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             fPublishers.back().worker = worker;
             fPublishers.back().fulladdr = dabc::mgr.ComposeAddress("", worker);
             fPublishers.back().hier = cmd.GetPtr("Hierarchy");
-            fPublishers.back().mutex = cmd.GetPtr("Mutex");
             fPublishers.back().local = true;
 
             if (!fStoreDir.empty()) {
@@ -498,14 +496,36 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
    if (cmd.IsName("CreateExeCmd")) {
       std::string path = cmd.GetStr("path");
 
-      dabc::CommandDef def = GetWorkItem(path);
+      dabc::Hierarchy def = GetWorkItem(path);
       if (def.null()) return cmd_false;
+
+      if (def.Field(dabc::prop_kind).AsStr() !="DABC.Command") return cmd_false;
 
       std::string request_name;
       std::string producer_name = def.FindBinaryProducer(request_name);
       if (producer_name.empty()) return cmd_false;
 
-      dabc::Command res = def.CreateCommand(cmd.GetStr("query"));
+      dabc::Command res = dabc::Command(def.GetName());
+
+      dabc::Url url(std::string("execute?") + cmd.GetStr("query"));
+
+      if (url.IsValid()) {
+         int cnt = 0;
+         std::string part;
+         do {
+            part = url.GetOptionsPart(cnt++);
+            if (part.empty()) break;
+
+            size_t p = part.find("=");
+            if ((p==std::string::npos) || (p==0) || (p==part.length()-1)) break;
+
+            res.SetStr(part.substr(0,p), part.substr(p+1));
+
+            // DOUT0("************ CMD ARG %s = %s", part.substr(0,p-1).c_str(), part.substr(p+1).c_str());
+
+         } while (!part.empty());
+      }
+
       res.SetReceiver(producer_name);
 
       cmd.SetRef("ExeCmd", res);
@@ -585,7 +605,6 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             DOUT0("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
             cmd.SetReceiver(iter->worker);
             cmd.SetPtr("hierarchy", iter->hier);
-            cmd.SetPtr("mutex", iter->mutex);
             cmd.SetStr("subitem", request_name);
             dabc::mgr.Submit(cmd);
             return cmd_postponed;

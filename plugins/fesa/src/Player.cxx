@@ -35,12 +35,8 @@
 
 #include "dabc/Publisher.h"
 
-#include "dabc/CommandDef.h"
-
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fHierarchyMutex(),
-   fHierarchy(),
    fCounter(0),
    fProducer(),
    fHist(0),
@@ -48,23 +44,22 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fRDAService(0),
    fDevice(0)
 {
-   fHierarchy.Create("FESA");
+   fWorkerHierarchy.Create("FESA", true);
 
    // this is just emulation, later one need list of real variables
-   fHierarchy.CreateChild("BeamProfile").Field(dabc::prop_kind).SetStr("FESA.2D");
+   fWorkerHierarchy.CreateChild("BeamProfile").Field(dabc::prop_kind).SetStr("FESA.2D");
 
-   fHierarchy.CreateChild("BeamRate").Field(dabc::prop_kind).SetStr("rate");
+   fWorkerHierarchy.CreateChild("BeamRate").Field(dabc::prop_kind).SetStr("rate");
 
-   dabc::Hierarchy item = fHierarchy.CreateChild("BeamRate2");
+   dabc::Hierarchy item = fWorkerHierarchy.CreateChild("BeamRate2");
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100);
 
-   item = fHierarchy.CreateChild("TestRate");
+   item = fWorkerHierarchy.CreateChild("TestRate");
    item.Field(dabc::prop_kind).SetStr("rate");
    item.EnableHistory(100);
    
-   dabc::CommandDef def = fHierarchy.CreateCmdDef("CmdReset");
-   def.AddArg("counter","int");
+   CreateCmdDef("CmdReset").AddArg("counter", "int", true, "5");
 
    fServerName = Cfg("Server", cmd).AsStdStr();
    fDeviceName = Cfg("Device", cmd).AsStdStr();
@@ -87,7 +82,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
       }
       
       if ((fDevice!=0) && !fService.empty()) {
-         item = fHierarchy.CreateChild(fService);
+         item = fWorkerHierarchy.CreateChild(fService);
          item.Field(dabc::prop_kind).SetStr("rate");
          item.EnableHistory(100);
       }
@@ -100,13 +95,13 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fProducer = new dabc_root::BinaryProducer("root_bin");
    fProducer.SetAutoDestroy(true);
 
-   fHierarchy.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
+   fWorkerHierarchy.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
-   dabc::Hierarchy h1 = fHierarchy.CreateChild("BeamRoot");
+   dabc::Hierarchy h1 = fWorkerHierarchy.CreateChild("BeamRoot");
    h1.Field(dabc::prop_kind).SetStr("ROOT.TH2I");
    h1.Field(dabc::prop_masteritem).SetStr("StreamerInfo");
 
-   fHierarchy.CreateChild("ImageRoot").Field(dabc::prop_kind).SetStr("image.png");
+   fWorkerHierarchy.CreateChild("ImageRoot").Field(dabc::prop_kind).SetStr("image.png");
 
    TH2I* h2 = new TH2I("BeamRoot","Root beam profile", 32, 0, 32, 32, 0, 32);
    h2->SetDirectory(0);
@@ -117,7 +112,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fCanvas = can;
    #endif
 
-   Publish(fHierarchy, "FESA/Test", &fHierarchyMutex);
+   PublishPars("FESA/Test");
 }
 
 fesa::Player::~Player()
@@ -134,7 +129,7 @@ fesa::Player::~Player()
    }
    #endif
 
-   //fHierarchy.Destroy();
+   //fWorkerHierarchy.Destroy();
 }
 
 void fesa::Player::ProcessTimerEvent(unsigned timer)
@@ -156,15 +151,15 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 #ifdef WITH_FESA
    if ((fDevice!=0) && !fService.empty()) {
       double res = doGet(fService, fField);
-      dabc::LockGuard lock(fHierarchyMutex);
-      fHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
+      fWorkerHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
       // DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
    }
 #endif
 
-   dabc::LockGuard lock(fHierarchyMutex);
+   dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
    
-   dabc::Hierarchy item = fHierarchy.FindChild("BeamProfile");
+   dabc::Hierarchy item = fWorkerHierarchy.FindChild("BeamProfile");
 
    // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
 
@@ -172,30 +167,30 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    item.Field(dabc::prop_hash).SetInt(fCounter);
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-   fHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
    int64_t arr[5] = {1,7,4,2,3};
-   fHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
+   fWorkerHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
 
 //   std::vector<int> res;
-//   res = fHierarchy.FindChild("BeamRate").Field("arr").AsIntVector();
+//   res = fWorkerHierarchy.FindChild("BeamRate").Field("arr").AsIntVector();
 //   DOUT0("Get vector of size %u", res.size());
 //   for (unsigned n=0;n<res.size();n++) DOUT0("   arr[%u] = %d", n, res[n]);
 
    v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-   fHierarchy.FindChild("BeamRate2").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("BeamRate2").Field("value").SetStr(dabc::format("%4.2f", v1));
 
    int test = fCounter % 100;
    v1 = 20 + (test & 0xfffffc) + (test & 3)*0.01;
-   fHierarchy.FindChild("TestRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("TestRate").Field("value").SetStr(dabc::format("%4.2f", v1));
 
 #ifdef WITH_ROOT
 
    dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
 
-   item = fHierarchy.FindChild("StreamerInfo");
+   item = fWorkerHierarchy.FindChild("StreamerInfo");
    item.Field(dabc::prop_hash).SetStr(pr->GetStreamerInfoHash());
 
-   item = fHierarchy.FindChild("BeamRoot");
+   item = fWorkerHierarchy.FindChild("BeamRoot");
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
@@ -212,10 +207,10 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    }
 #endif
 
-   fHierarchy.MarkChangedItems();
+   fWorkerHierarchy.MarkChangedItems();
 
 //   if (fCounter % 10 == 0)
-//      DOUT0("History BeamRate2 \n%s", fHierarchy.FindChild("BeamRate2").GetObject()->RequestHistoryAsXml().c_str());
+//      DOUT0("History BeamRate2 \n%s", fWorkerHierarchy.FindChild("BeamRate2").GetObject()->RequestHistoryAsXml().c_str());
 
 #ifdef DABC_EXTRA_CHECKS
 //   if (fCounter % 10 == 0)
@@ -231,9 +226,9 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       std::string itemname = cmd.GetStr("subitem");
 
-      dabc::LockGuard lock(fHierarchyMutex);
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
+      dabc::Hierarchy item = fWorkerHierarchy.FindChild(itemname.c_str());
 
       if (item.null()) {
          EOUT("No find item %s to get binary", itemname.c_str());
@@ -243,7 +238,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       dabc::Buffer buf;
       std::string mhash;
 
-      std::string kind = item.Field(dabc::prop_kind).AsStdStr();
+      std::string kind = item.Field(dabc::prop_kind).AsStr();
       DOUT0("GetBinary for item %s kind %s", itemname.c_str(), kind.c_str());
       if ((kind.find("ROOT.")==0) || (kind=="image.png")) {
 #ifdef WITH_ROOT

@@ -13,12 +13,13 @@ endif
 # this is location of fesa 
 FESA_DEFINITIONS = 
 FESA_INCLUDES = 
-
+FESA_LIBDEPS = 
 
 ifdef DABC_ISROOT
 FESA_DEFINITIONS += WITH_ROOT 
 FESA_INCLUDES += $(DABC_ROOTINCDIR)
 FESA_LIBS += -L$(TGTDLLPATH) -lDabcRoot 
+# FESA_LIBDEPS += $(TGTDLLPATH)/libDabcRoot.$(DllSuf)
 endif
 
 ifndef RDA_HOME
@@ -69,7 +70,7 @@ libs:: $(DABCFESA_LIB)
 
 #$(DABCFESA_LIB): LDFLAGS += -lrt
 
-$(DABCFESA_LIB):   $(DABCFESA_O)
+$(DABCFESA_LIB):   $(DABCFESA_O)  $(FESA_LIBDEPS)
 	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) 
 
 ########### extra rules #############

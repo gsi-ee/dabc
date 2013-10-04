@@ -28,6 +28,10 @@
 #include "dabc/Queue.h"
 #endif
 
+#ifndef DABC_timing
+#include "dabc/timing.h"
+#endif
+
 #include <stdint.h>
 
 namespace dabc {
@@ -124,7 +128,6 @@ namespace dabc {
          }
    };
 
-
    class History : public Reference {
       DABC_REFERENCE(History, Reference, HistoryContainer)
 
@@ -205,6 +208,8 @@ namespace dabc {
 
          History    fHist;              ///< special object with history data
 
+         Mutex*     fHierarchyMutex;    ///< mutex, which should be use for access to hierarchy and all its childs
+
          HierarchyContainer* TopParent();
 
          std::string ItemName();
@@ -248,8 +253,9 @@ namespace dabc {
          /** \brief Central method, which analyzes all possible changes in node (and its childs)
           * If any changes found, node marked with new version
           * If enabled, history item will be created.
-          * If enabled, time stamp will be provided for changed items */
-         void MarkChangedItems(uint64_t tm = 0.);
+          * If enabled, time stamp will be provided for changed items
+          * If \param reprocess enabled, container Reprocess() method will be called to produce some extra data */
+         void MarkChangedItems(uint64_t tm = 0);
 
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
@@ -261,6 +267,8 @@ namespace dabc {
          uint64_t GetNextVersion() const;
 
          void SetVersion(uint64_t v) { fNodeVersion = v; }
+
+         void CreateHMutex();
 
       public:
          HierarchyContainer(const std::string& name);
@@ -298,6 +306,7 @@ namespace dabc {
          Buffer& bindata() { return fBinData; }
    };
 
+
    // ______________________________________________________________
 
    /** \brief Represents objects hierarchy of remote (or local) DABC process
@@ -312,7 +321,10 @@ namespace dabc {
 
       DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 
-      void Create(const std::string& name);
+      /** \brief Create top-level object with specified name */
+      void Create(const std::string& name, bool withmutex = false);
+
+      Mutex* GetHMutex() const { return null() ? 0 : GetObject()->fHierarchyMutex; }
 
       /** \brief Create child item in hierarchy with specified name
        * \details If par indx specified, child will be created at specified position */
@@ -359,7 +371,7 @@ namespace dabc {
       { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
 
       /** \brief If any field was modified, item will be marked with new version */
-      void MarkChangedItems(uint64_t tm = 0.)
+      void MarkChangedItems(uint64_t tm = 0)
       { if (GetObject()) GetObject()->MarkChangedItems(tm); }
 
       /** \brief Returns true if item records history local, no need to request any other sources */
@@ -421,8 +433,8 @@ namespace dabc {
       /** \brief Enable element and all its parents to read data */
       void EnableReading(const Hierarchy& upto = 0);
 
-      /** \brief Create element with command definition */
-      Hierarchy CreateCmdDef(const std::string& name);
+      /** \brief Create folder in hierarchy, one could use it to add new childs to it */
+      Hierarchy CreateFolder(const std::string& name) { return CreateChild(name); }
    };
 
 
