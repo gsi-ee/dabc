@@ -3930,13 +3930,14 @@ var gStyle = {
 //      if (!this.draw_content) return;
       
       var width = this.frame.attr("width"), height = this.frame.attr("height");
-      var e, origin, curr, rect;
+      var e, origin, curr = null, rect = null;
+      var lasttouch = new Date(0);
       
-      var zoom_kind = 0;  // 0 - none, 1 - xy, 2 - only x, 3 - only y
+      var zoom_kind = 0;  // 0 - none, 1 - xy, 2 - only x, 3 - only y, (+100 for touches)
       
       var zoom = d3.behavior.zoom().x(this.x).y(this.y);
-      this.frame.on("touchstart", startRectSel);
       this.frame.on("mousedown", startRectSel);
+      this.frame.on("touchstart", startTouchSel);
       
       if (gStyle.Tooltip == 1) {
          this.frame.on("mousemove", moveTooltip);
@@ -3968,12 +3969,196 @@ var gStyle = {
       
       var pthis = this;
       
+
+      function startTouchSel() {
+
+         // in case when zooming was started, block any other kind of events
+         if (zoom_kind!=0)  {
+            d3.event.preventDefault();
+            d3.event.stopPropagation();
+            return;
+         }
+         
+         e = this;
+         //var t = d3.event.changedTouches;
+         var arr = d3.touches(e);
+         
+         // only double-touch will be handled 
+         if (arr.length == 1) {
+
+            var now = new Date();
+            var diff = now.getTime() - lasttouch.getTime(); 
+
+            //$("#report").append("<br> single touch " + diff);
+            if ((diff < 300) && 
+                (curr != null) && (Math.abs(curr[0] - arr[0][0]) < 30) &&
+                (Math.abs(curr[1] - arr[0][1]) < 30)) {
+               
+               d3.event.preventDefault();
+               d3.event.stopPropagation();
+               
+               closeAllExtras();
+               pthis.Unzoom(true,true);
+               // $("#report").append("<br> unzoom " + diff);
+            } else {
+               lasttouch = now;
+               curr = arr[0];
+            }
+         }
+         
+         if (arr.length != 2) return;
+
+         // $("#report").append("<br> double-touch temp_id");
+         
+         d3.event.preventDefault();
+         
+         closeAllExtras();
+         
+         var pnt1 = arr[0];
+         var pnt2 = arr[1];
+         
+         /*
+         $("#report").append("<br> first  x:" + pnt1[0].toFixed(1) + "  y:"+pnt1[1].toFixed(1));
+         $("#report").append("<br> second x:" + pnt2[0].toFixed(1) + "  y:"+pnt2[1].toFixed(1));
+         $("#report").append("<br> height = " + height + "  width = " + width);
+
+         var abc = d3.touches(document.getElementById("temp_id"));
+         if (abc) {
+            $("#report").append("<br> abc[0] x:" + abc[0][0].toFixed(1) + "  y:"+abc[0][1].toFixed(1));
+            $("#report").append("<br> abc[1] x:" + abc[1][0].toFixed(1) + "  y:"+abc[1][1].toFixed(1));
+         } else {
+            $("#report").append("<br>abc fail");
+         }
+         */
+
+         /*
+         if (origin[0] < 0) {
+            $("#report").append("<br> Start only Y");
+         } else 
+         if (origin[1] > height) {
+            $("#report").append("<br> Start only X");
+         } else {
+            $("#report").append("<br> Start  X and Y");
+         }
+         */
+         
+         curr = new Array; // minimum
+         origin = new Array; // maximum
+         
+         curr.push(Math.min(pnt1[0], pnt2[0]));
+         curr.push(Math.min(pnt1[1], pnt2[1]));
+         origin.push(Math.max(pnt1[0], pnt2[0]));
+         origin.push(Math.max(pnt1[1], pnt2[1]));
+         
+         if (curr[0]<0) {
+            zoom_kind = 103; // only y
+            curr[0] = 0;
+            origin[0] = width;
+         } else 
+         if (origin[1] > height) {
+            zoom_kind = 102; // only x
+            curr[1] = 0;
+            origin[1] = height;
+            //$("#report").append("<br> Start only X " + origin[0]);
+         } else {
+            zoom_kind = 101; // x and y
+            //$("#report").append("<br> Start  X and Y ");
+         }
+
+         d3.select("body").classed("noselect", true);
+         d3.select("body").style("-webkit-user-select", "none");
+         
+         rect = pthis.frame
+                 .append("rect")
+                 .attr("class", "zoom")
+                 .attr("id", "zoom_rect")
+                 .attr("x", curr[0])
+                 .attr("y", curr[1])
+                 .attr("width", origin[0] - curr[0])
+                 .attr("height", origin[1] - curr[1]);
+
+         pthis.frame.on("dblclick", unZoom);
+         
+//         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
+         
+         d3.select(window)
+            .on("touchmove.zoomRect", moveTouchSel)
+            .on("touchcancel.zoomRect", endTouchSel)
+            .on("touchend.zoomRect", endTouchSel, true);
+         d3.event.stopPropagation();
+      }
+
+
+      function moveTouchSel() {
+         
+         if (zoom_kind<100) return;
+         
+         d3.event.preventDefault();
+         
+         var arr = d3.touches(e);
+         
+         if (arr.length != 2) {
+            // $("#report").append("<br> no two points");
+            closeAllExtras();
+            zoom_kind = 0;
+            return;
+         }
+
+         var pnt1 = arr[0];
+         var pnt2 = arr[1];
+         
+         if (zoom_kind != 103) {
+            curr[0] = Math.min(pnt1[0], pnt2[0]);
+            origin[0] = Math.max(pnt1[0], pnt2[0]);
+         }
+         if (zoom_kind != 102) {
+            curr[1] = Math.min(pnt1[1], pnt2[1]);
+            origin[1] = Math.max(pnt1[1], pnt2[1]);
+         }
+         
+         rect.attr("x", curr[0])
+             .attr("y", curr[1])
+             .attr("width", origin[0] - curr[0])
+             .attr("height", origin[1] - curr[1]);
+
+         d3.event.stopPropagation();
+      };
+
+      function endTouchSel() {
+         
+         if (zoom_kind<100) return;
+         
+         d3.event.preventDefault();
+         d3.select(window).on("touchmove.zoomRect", null).on("touchend.zoomRect", null).on("touchcancel.zoomRect", null);;
+         d3.select("body").classed("noselect", false);
+
+         var xmin=0, xmax = 0, ymin = 0, ymax = 0;
+         
+         var isany = false;
+         
+         if ((zoom_kind != 103) && (Math.abs(curr[0] - origin[0]) > 10)) {
+            xmin = Math.min(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
+            xmax = Math.max(pthis.x.invert(origin[0]), pthis.x.invert(curr[0]));
+            isany = true;
+         }
+         
+         if ((zoom_kind != 102) && (Math.abs(curr[1] - origin[1]) > 10)) {
+            ymin = Math.min(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
+            ymax = Math.max(pthis.y.invert(origin[1]), pthis.y.invert(curr[1]));
+            isany = true;
+         } 
+
+         d3.select("body").style("-webkit-user-select", "auto");
+
+         rect.remove();
+         rect = null;
+         zoom_kind = 0;
+
+         if (isany) pthis.Zoom(xmin, xmax, ymin, ymax);
+
+         d3.event.stopPropagation();
+      }
       
-
-//      var tool_text = this.frame.append("svg:text")
-//          .attr("class", "tooltipbox")
-//          .style("opacity", "0");
-
       
       function checkTooltip() {
          tool_tmout = null;
@@ -4097,6 +4282,10 @@ var gStyle = {
       function showContextMenu() {
 
          d3.event.preventDefault();
+         
+         // ignore context menu when touches zooming is ongoing
+         if (zoom_kind>100) return;
+         
 
          $("#dialog").empty();
          
@@ -4126,10 +4315,9 @@ var gStyle = {
             $( "#dialog" ).empty();
          }
          closeTooltip(true);
-         //if (rect != null) rect.remove();
-         //zoom_kind = 0;
+         if (rect != null) { rect.remove(); rect = null; }
+         zoom_kind = 0;
       }
-      
       
       function startRectSel() {
          d3.event.preventDefault();
@@ -4137,10 +4325,7 @@ var gStyle = {
          closeAllExtras();
          
          e = this;
-         var t = d3.event.changedTouches;
-         origin = t ? d3.touches(e, t)[0] : d3.mouse(e);
-         
-         // $("#report").append("<br> Start select " + origin[1]);
+         origin = d3.mouse(e);
          
          curr = new Array;
          curr.push(Math.max(0, Math.min(width, origin[0])));
@@ -4179,24 +4364,17 @@ var gStyle = {
 
          pthis.frame.on("dblclick", unZoom);
          
-//         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
-         
          d3.select(window)
             .on("mousemove.zoomRect", moveRectSel)
             .on("mouseup.zoomRect", endRectSel, true);
-         d3.select(window)
-            .on("touchmove.zoomRect", moveRectSel)
-            .on("touchend.zoomRect", endRectSel, true);
+
          d3.event.stopPropagation();
       };
 
       function unZoom() {
          d3.event.preventDefault();
          
-         var t = d3.event.changedTouches;
-         var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
-
-//         $("#report").append("<br> Try unzoom");
+         var m = d3.mouse(e);
          
          closeAllExtras();
          
@@ -4207,11 +4385,10 @@ var gStyle = {
 
       function moveRectSel() {
          
-         if (zoom_kind==0) return;
+         if ((zoom_kind==0) || (zoom_kind>100)) return;
          
          d3.event.preventDefault();
-         var t = d3.event.changedTouches;
-         var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
+         var m = d3.mouse(e);
          
          m[0] = Math.max(0, Math.min(width, m[0]));
          m[1] = Math.max(0, Math.min(height, m[1]));
@@ -4230,14 +4407,14 @@ var gStyle = {
 
       function endRectSel() {
          
-         if (zoom_kind==0) return;
+         if ((zoom_kind==0) || (zoom_kind>100)) return;
          
          d3.event.preventDefault();
-         d3.select(window).on("touchmove.zoomRect", null).on("touchend.zoomRect", null);
+//         d3.select(window).on("touchmove.zoomRect", null).on("touchend.zoomRect", null);
          d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
          d3.select("body").classed("noselect", false);
-         var t = d3.event.changedTouches;
-         var m = t ? d3.touches(e, t)[0] : d3.mouse(e);
+         
+         var m = d3.mouse(e);
          
          m[0] = Math.max(0, Math.min(width, m[0]));
          m[1] = Math.max(0, Math.min(height, m[1]));
@@ -4248,9 +4425,6 @@ var gStyle = {
             case 3: curr[1] = m[1]; break; // only Y
          }
 
-//         console.log("End select x:" + origin[0] + " -> " + curr[0] + 
-//                               " y:" + origin[1] + " -> " + curr[1]);
-         
          var xmin=0, xmax = 0, ymin = 0, ymax = 0;
          
          var isany = false;
@@ -4272,8 +4446,6 @@ var gStyle = {
          rect.remove();
          rect = null;
          zoom_kind = 0;
-
-//         pthis.frame.on("dblclick", unZoom);
 
          if (isany) pthis.Zoom(xmin, xmax, ymin, ymax);
       }

@@ -5,6 +5,9 @@ of the framework.
 7.10.2013
 1. Create hsimple.htm for fast JSRootIO tests - it reads hsimple.root file
    and shows automatically hpx histogram. 
+2. Introduce new handling of touches events - one could react on double-tap
+   and selection with two fingers. Not clear why coordinates in d3.touches 
+   are wrong, need to verify on iOS.
 
 
 4.10.2013
