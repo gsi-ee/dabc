@@ -112,7 +112,6 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
    if (fTimer==0) ActivateTimeout(0);
 
-   DOUT0("Calling Publish of ROOT hierarchy");
    Publish(fHierarchy, fPrefix);
 
    // if timer not installed, emulate activity in ROOT by regular timeouts

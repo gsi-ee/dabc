@@ -90,8 +90,8 @@ void http::Server::OnThreadAssigned()
    if (jsrootiosys!=0) fJSRootIOSys = jsrootiosys;
    if (fJSRootIOSys.empty()) fJSRootIOSys = fHttpSys + "/JSRootIO";
 
-   DOUT0("JSROOTIOSYS = %s ", fJSRootIOSys.c_str());
-   DOUT0("HTTPSYS = %s", fHttpSys.c_str());
+   DOUT1("JSROOTIOSYS = %s ", fJSRootIOSys.c_str());
+   DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 
    std::string sport;
 
@@ -140,7 +140,7 @@ int http::Server::begin_request(struct mg_connection *conn)
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
-   DOUT0("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
+   DOUT1("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
 
    std::string filename;
 
@@ -275,7 +275,7 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
 
 int http::Server::ProcessFileRequest(struct mg_connection *conn, const std::string& fname)
 {
-   DOUT0("SEND FILE: %s", fname.c_str());
+   DOUT1("SEND FILE: %s", fname.c_str());
 
    mg_send_file(conn, fname.c_str());
 

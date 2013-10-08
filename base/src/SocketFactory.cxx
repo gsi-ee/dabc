@@ -35,7 +35,7 @@ void dabc::SocketFactory::Initialize()
 {
    std::string id = dabc::SocketThread::DefineHostName() + dabc::format("_pid%d", (int) getpid());
 
-   DOUT0("dabc::SocketFactory::Initialize Setting local id %s", id.c_str());
+   DOUT1("dabc::SocketFactory::Initialize Setting local id %s", id.c_str());
 
    // when socket factory is initialized, use host name for local address initialization
    dabc::mgr.SetLocalId(id);

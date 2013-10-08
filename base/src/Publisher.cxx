@@ -55,7 +55,7 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
    if (!Cfg("store", cmd).AsBool()) fStoreDir.clear();
 
-   DOUT0("Create publisher");
+   DOUT2("Create publisher");
 }
 
 void dabc::Publisher::BeforeModuleStart()
@@ -334,7 +334,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                return cmd_false;
             }
 
-            DOUT0("PUBLISH folder %s", path.c_str());
+            DOUT1("PUBLISH folder %s", path.c_str());
 
             fPublishers.push_back(PublisherEntry());
             fPublishers.back().id = fCnt++;
@@ -346,7 +346,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             if (!fStoreDir.empty()) {
                if (fStoreSel.empty() || (path.find(fStoreSel) == 0)) {
-                  DOUT0("Create store for %s", path.c_str());
+                  DOUT1("Create store for %s", path.c_str());
                   fPublishers.back().store = new HierarchyStore();
                   fPublishers.back().store->SetBasePath(fStoreDir + path);
                }
@@ -551,8 +551,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string producer_name, request_name;
       bool islocal(true);
 
-      DOUT0("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
-
+      DOUT1("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
       // first look in local structures
       dabc::Hierarchy h = fLocal.GetFolder(itemname);
@@ -561,7 +560,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          // we need to redirect command to appropriate worker (or to ourself)
 
          producer_name = h.FindBinaryProducer(request_name);
-         DOUT0("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
+         DOUT1("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
 
       } else
       for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
@@ -602,7 +601,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             // we redirect command to local worker
             // manager should find proper worker for execution
 
-            DOUT0("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
+            DOUT1("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
             cmd.SetReceiver(iter->worker);
             cmd.SetPtr("hierarchy", iter->hier);
             cmd.SetStr("subitem", request_name);

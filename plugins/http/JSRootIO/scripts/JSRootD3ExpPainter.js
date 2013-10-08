@@ -3981,7 +3981,7 @@ var gStyle = {
          }
          
          e = this;
-         //var t = d3.event.changedTouches;
+         // var t = d3.event.changedTouches;
          var arr = d3.touches(e);
          
          // only double-touch will be handled 
@@ -4096,6 +4096,7 @@ var gStyle = {
          
          d3.event.preventDefault();
          
+         //var t = d3.event.changedTouches;
          var arr = d3.touches(e);
          
          if (arr.length != 2) {

@@ -240,7 +240,7 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fLocalId = dabc::format("localhost_pid%d", (int) getpid());
    fLocalAddress = fLocalId;
 
-   DOUT0("MGR localid is %s", fLocalId.c_str());
+   DOUT1("MGR localid is %s", fLocalId.c_str());
 
    if (cfg) {
       fCfgHost = cfg->MgrHost();
@@ -2183,7 +2183,7 @@ bool dabc::ManagerRef::SetLocalAddress(const std::string& name)
 
    LockGuard lock(GetObject()->fMgrMutex);
    GetObject()->fLocalAddress = name;
-   DOUT0("MGR local address is %s", name.c_str());
+   DOUT2("MGR local address is %s", name.c_str());
    return true;
 }
 
@@ -2193,7 +2193,7 @@ bool dabc::ManagerRef::SetLocalId(const std::string& name)
 
    LockGuard lock(GetObject()->fMgrMutex);
    GetObject()->fLocalId = name;
-   DOUT0("MGR local id is %s", name.c_str());
+   DOUT2("MGR local id is %s", name.c_str());
    return true;
 }
 

@@ -5,6 +5,8 @@ of the framework.
 8.10.2013
 1. Small adjustment in JSRootIO - block context menu when touch selection is
    active. Also adjust css file. 
+2. Remove most debug ouput in DabcRoot plugin. Debug ouput can be enabled
+   via DabcRoot::EnableDebug() method.
 
 
 7.10.2013

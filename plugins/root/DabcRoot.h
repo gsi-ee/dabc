@@ -57,6 +57,8 @@ class DabcRoot {
 
       static bool ConnectMaster(const char* master_url, bool sync_timer = true);
 
+      /** \brief Switch on/off DABC debug output */
+      static void EnableDebug(bool on = true);
 };
 
 #endif

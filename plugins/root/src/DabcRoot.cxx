@@ -12,11 +12,11 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 
    static dabc::Configuration dabc_root_cfg;
 
+   dabc::SetDebugLevel(0);
+
    new dabc::Manager("dabc", &dabc_root_cfg);
 
    dabc::mgr.SyncWorker();
-
-   DOUT2("Create manager");
 
    dabc::mgr.Execute("InitFactories");
 
@@ -36,7 +36,7 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
    dabc::WorkerRef w2 = sniff;
    w2.MakeThreadForWorker("MainThread");
 
-   DOUT0("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
+   DOUT1("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
 
    dabc::CmdCreateObject cmd1("http::Server","/http");
    cmd1.SetBool("enabled", true);
@@ -47,7 +47,6 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
    dabc::WorkerRef w1 = cmd1.GetRef("Object");
    w1.MakeThreadForWorker("MainThread");
 
-   DOUT2("Create http server");
    return true;
 }
 
@@ -62,11 +61,11 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 
    static dabc::Configuration dabc_root_cfg;
 
+   dabc::SetDebugLevel(0);
+
    new dabc::Manager("dabc", &dabc_root_cfg);
 
    dabc::mgr.SyncWorker();
-
-   DOUT0("Create manager");
 
    dabc::mgr.Execute("InitFactories");
 
@@ -89,7 +88,7 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 
    w2.MakeThreadForWorker("MainThread");
 
-   DOUT0("Create root sniffer done");
+   DOUT1("Create root sniffer done");
 
    // we selecting ROOT sniffer as the only objects, seen from the server
    if (!dabc::mgr()->CreateControl(false)) {
@@ -97,7 +96,7 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
       return false;
    }
 
-   DOUT0("Create command channel for %s ", master_url);
+   DOUT1("Create command channel for %s ", master_url);
 
    dabc::Command cmd("ConfigureMaster");
    cmd.SetStr("Master", master_url);
@@ -107,40 +106,14 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
       return false;
    }
 
-   DOUT0("Master %s configured !!!", master_url);
+   DOUT1("Master %s configured !!!", master_url);
 
    return true;
+}
 
 
-   /*
-
-   dabc::Command cmd("Ping");
-   cmd.SetReceiver(master);
-   cmd.SetTimeout(5.);
-
-   int res = dabc::mgr.GetCommandChannel().Execute(cmd);
-
-   if (res != dabc::cmd_true) {
-      DOUT0("FAIL connection to %s", master.c_str());
-      return false;
-   }
-
-   DOUT0("Connection to %s done", master.c_str());
-
-   dabc::Command cmd3("AcceptClient");
-   cmd3.SetReceiver(master);
-   cmd3.SetTimeout(5.);
-
-   int res3 = dabc::mgr.GetCommandChannel().Execute(cmd3);
-
-   if (res3 != dabc::cmd_true) {
-      DOUT0("FAIL to activate server-client relation to %s", master.c_str());
-      return false;
-   }
-
-   DOUT0("Master %s get control over local process!!!", master.c_str());
-
-   return true;
-*/
+void DabcRoot::EnableDebug(bool on)
+{
+   dabc::SetDebugLevel(on ? 1 : 0);
 }
 

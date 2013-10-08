@@ -270,19 +270,14 @@ dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
    bool believe_not_changed = false;
 
    if ((fMemFile->GetClassIndex()==0) || (fMemFile->GetClassIndex()->fArray[0] == 0)) {
-      DOUT0("SEEMS to be, streamer info was not changed");
+      DOUT1("SEEMS to be, streamer info was not changed");
       believe_not_changed = true;
    }
 
    fMemFile->WriteStreamerInfo();
    TList* l2 = fMemFile->GetStreamerInfoList();
 
-   DOUT0("STREAM LIST Before %d After %d", l1->GetSize(), l2->GetSize());
-
-   //DOUT0("=================== BEFORE ========================");
-   //l1->Print("*");
-   //DOUT0("=================== AFTER ========================");
-   //l2->Print("*");
+   DOUT1("STREAM LIST Before %d After %d", l1->GetSize(), l2->GetSize());
 
    if (believe_not_changed && (l1->GetSize() != l2->GetSize())) {
       EOUT("StreamerInfo changed when we were expecting no changes!!!!!!!!!");
@@ -295,7 +290,7 @@ dabc::Buffer dabc_root::BinaryProducer::GetBinary(TObject* obj, bool asimage)
    tm.AsString(sbuf2, sizeof(sbuf2), 3);
 
    if (believe_not_changed && (l1->GetSize() == l2->GetSize())) {
-      DOUT0("+++ STREAMER INFO NOT CHANGED AS EXPECTED tm:%s  +++ ", sbuf2);
+      DOUT1("+++ STREAMER INFO NOT CHANGED AS EXPECTED tm:%s  +++ ", sbuf2);
    }
 
    fSinfoSize = l2->GetSize();
