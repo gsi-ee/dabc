@@ -73,6 +73,7 @@ input.tb {
    cursor: pointer;
    margin-top: 2px;
    padding-left:3px;
+   margin-right: -2px;
    padding-top:3px;
    padding-bottom:3px;
    position: relative;
@@ -109,7 +110,7 @@ input.tb {
 
 button.closeButton {
    margin-top: -3px; 
-   margin-right: 2px; 
+   margin-right: -2px; 
    float: right;
 }
 

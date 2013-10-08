@@ -3933,9 +3933,10 @@ var gStyle = {
       var e, origin, curr = null, rect = null;
       var lasttouch = new Date(0);
       
-      var zoom_kind = 0;  // 0 - none, 1 - xy, 2 - only x, 3 - only y, (+100 for touches)
+      var zoom_kind = 0;  // 0 - none, 1 - XY, 2 - only X, 3 - only Y, (+100 for touches)
       
-      var zoom = d3.behavior.zoom().x(this.x).y(this.y);
+      // var zoom = d3.behavior.zoom().x(this.x).y(this.y);
+      
       this.frame.on("mousedown", startRectSel);
       this.frame.on("touchstart", startTouchSel);
       
@@ -4065,8 +4066,8 @@ var gStyle = {
             //$("#report").append("<br> Start  X and Y ");
          }
 
-         d3.select("body").classed("noselect", true);
-         d3.select("body").style("-webkit-user-select", "none");
+         // d3.select("body").classed("noselect", true);
+         // d3.select("body").style("-webkit-user-select", "none");
          
          rect = pthis.frame
                  .append("rect")
@@ -4077,7 +4078,7 @@ var gStyle = {
                  .attr("width", origin[0] - curr[0])
                  .attr("height", origin[1] - curr[1]);
 
-         pthis.frame.on("dblclick", unZoom);
+         // pthis.frame.on("dblclick", unZoom);
          
 //         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
          
@@ -4090,7 +4091,7 @@ var gStyle = {
 
 
       function moveTouchSel() {
-         
+
          if (zoom_kind<100) return;
          
          d3.event.preventDefault();
@@ -4320,6 +4321,10 @@ var gStyle = {
       }
       
       function startRectSel() {
+         
+         // ignore when touch selection is actiavated
+         if (zoom_kind>100) return;
+         
          d3.event.preventDefault();
          
          closeAllExtras();
@@ -4354,8 +4359,8 @@ var gStyle = {
             //$("#report").append("<br> Start  X and Y ");
          }
 
-         d3.select("body").classed("noselect", true);
-         d3.select("body").style("-webkit-user-select", "none");
+         //d3.select("body").classed("noselect", true);
+         //d3.select("body").style("-webkit-user-select", "none");
          
          rect = pthis.frame
                  .append("rect")
@@ -4379,8 +4384,10 @@ var gStyle = {
          closeAllExtras();
          
          if (m[0] < 0) pthis.Unzoom(false,true); else
-         if (m[1] > height) pthis.Unzoom(true,false); else
-         pthis.Unzoom(true,true);
+         if (m[1] > height) pthis.Unzoom(true,false); else {
+            pthis.Unzoom(true,true);
+            pthis.frame.on("dblclick", null);
+         }
       };
 
       function moveRectSel() {

@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+8.10.2013
+1. Small adjustment in JSRootIO - block context menu when touch selection is
+   active. Also adjust css file. 
+
+
 7.10.2013
 1. Create hsimple.htm for fast JSRootIO tests - it reads hsimple.root file
    and shows automatically hpx histogram. 
