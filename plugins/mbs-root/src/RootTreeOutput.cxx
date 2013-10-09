@@ -41,9 +41,9 @@ bool mbs_root::RootTreeOutput::Close()
    return true;
 }
 
-bool mbs_root::RootTreeOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool mbs_root::RootTreeOutput::Write_Init()
 {   
-   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+   if (!dabc::FileOutput::Write_Init()) return false;
 
    // TODO: member variables to contain properties for tree output   
    

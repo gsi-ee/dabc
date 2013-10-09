@@ -43,7 +43,7 @@ namespace mbs {
          LmdOutput(const dabc::Url& url);
          virtual ~LmdOutput();
 
-         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
    };
@@ -65,7 +65,7 @@ namespace mbs {
          LmdOutputNew(const dabc::Url& url);
          virtual ~LmdOutputNew();
 
-         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
    };

@@ -18,7 +18,10 @@
 #include "dabc/DataIO.h"
 #endif
 
-// This is class to access TTree interface from the DABC
+/** This class intended to use tree TTree functionality from DABC
+ *  But binary buffers is not really suited for tree-like store.
+ *  Therefore class is dummy for the moment
+ */
 
 class TTree;
 
@@ -29,8 +32,6 @@ namespace dabc_root {
 
          RootTreeOutput(const dabc::Url& url);
          virtual ~RootTreeOutput();
-
-         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) { return false; }
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
 

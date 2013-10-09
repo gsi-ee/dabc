@@ -74,7 +74,7 @@ namespace dabc {
          BinaryFileOutput(const dabc::Url& url);
          virtual ~BinaryFileOutput();
 
-         virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
+         virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(Buffer& buf);
    };

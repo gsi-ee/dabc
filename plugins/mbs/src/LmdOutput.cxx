@@ -39,9 +39,9 @@ mbs::LmdOutput::~LmdOutput()
    CloseFile();
 }
 
-bool mbs::LmdOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool mbs::LmdOutput::Write_Init()
 {
-   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+   if (!dabc::FileOutput::Write_Init()) return false;
 
    return StartNewFile();
 }
@@ -121,9 +121,9 @@ mbs::LmdOutputNew::~LmdOutputNew()
    CloseFile();
 }
 
-bool mbs::LmdOutputNew::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool mbs::LmdOutputNew::Write_Init()
 {
-   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+   if (!dabc::FileOutput::Write_Init()) return false;
 
    return StartNewFile();
 }

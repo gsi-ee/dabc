@@ -163,9 +163,10 @@ namespace dabc {
          /** \brief Method can be used to get debug info about output */
          virtual std::string ProvideInfo() { return std::string(); }
 
-         /** This is generic virtual method to initialize output,
-          * using configurations from Port or from the Command  */
-         virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
+         /** \brief This is generic virtual method to initialize output
+          * before real work is started.
+          * If returns false, object is immediately deleted */
+         virtual bool Write_Init() { return true; }
 
          /** Check if output can be done.
           * Return values:
@@ -285,7 +286,7 @@ namespace dabc {
 
          virtual std::string ProvideInfo();
 
-         virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
+         virtual bool Write_Init();
    };
 
 }

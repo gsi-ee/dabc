@@ -62,12 +62,6 @@ void dabc::DataOutput::SetInfoParName(const std::string& name)
 }
 
 
-bool dabc::DataOutput::Write_Init(const WorkerRef& wrk, const Command& cmd)
-{
-   return true;
-}
-
-
 void dabc::DataOutput::ShowInfo(int lvl, const std::string& info)
 {
    dabc::InfoParameter par;
@@ -203,9 +197,9 @@ void dabc::FileOutput::SetIO(dabc::FileInterface* io)
 }
 
 
-bool dabc::FileOutput::Write_Init(const WorkerRef& wrk, const Command& cmd)
+bool dabc::FileOutput::Write_Init()
 {
-   if (!DataOutput::Write_Init(wrk, cmd)) return false;
+   if (!DataOutput::Write_Init()) return false;
 
    if (fIO==0) fIO = new FileInterface;
 

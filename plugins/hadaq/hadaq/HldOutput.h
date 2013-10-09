@@ -43,7 +43,7 @@ namespace hadaq {
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
 
-         hadaq::HldFile       fFile;
+         hadaq::HldFile      fFile;
 
          bool CloseFile();
          bool StartNewFile();
@@ -57,7 +57,7 @@ namespace hadaq {
          HldOutput(const dabc::Url& url);
          virtual ~HldOutput();
 
-         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
 

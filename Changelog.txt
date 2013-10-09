@@ -13,6 +13,8 @@ of the framework.
    This parameter can be used for debug or error output. Aim to replase 
    DOUT/EOUT by IOUT macros, where all advantages for conditional compilation 
    can be used.
+5. Remove arguments from DataOutput::Write_Init() method. 
+   Now all transport parameters should be extracted from url string. 
 
 
 8.10.2013

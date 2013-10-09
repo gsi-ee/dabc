@@ -32,8 +32,11 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
    fEpicsControl(false),
    fRunNumber(0),
+   fRunidPar(),
+   fBytesWrittenPar(),
    fFile()
 {
+   fEpicsControl = url.HasOption("epics");
 }
 
 hadaq::HldOutput::~HldOutput()
@@ -41,22 +44,25 @@ hadaq::HldOutput::~HldOutput()
    CloseFile();
 }
 
-bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool hadaq::HldOutput::Write_Init()
 {
-   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+   if (!dabc::FileOutput::Write_Init()) return false;
 
-   fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
-   if(fRunidPar.null())
-      EOUT("HldOutput::Write_Init did not find runid parameter");
-
-   fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
-   if(fBytesWrittenPar.null())
-      EOUT("HldOutput::Write_Init did not find written bytes parameter");
-
-   fEpicsControl = wrk.Cfg(hadaq::xmlExternalRunid, cmd).AsBool(fEpicsControl);
    if (fEpicsControl) {
-      fRunNumber = GetRunId();
+      fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
+      fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+
+
       ShowInfo(0, dabc::format("EPICS control is enabled, first runid:%d",fRunNumber));
+
+      if(fRunidPar.null())
+         ShowInfo(-1, "HldOutput::Write_Init did not find runid parameter");
+      else
+         fRunNumber = GetRunId();
+
+      if(fBytesWrittenPar.null())
+         ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
+
    }
 
    return StartNewFile();
@@ -65,8 +71,11 @@ bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Comman
 
 uint32_t hadaq::HldOutput::GetRunId()
 {
+   if (fRunidPar.null())
+      return hadaq::RawEvent::CreateRunId();
+
    uint32_t nextrunid =0;
-   unsigned counter=0;
+   unsigned counter = 0;
    do{
       nextrunid = fRunidPar.Value().AsUInt();
       if(nextrunid) break;
@@ -89,8 +98,9 @@ bool hadaq::HldOutput::StartNewFile()
 
    if (!fEpicsControl || fRunNumber == 0) {
       fRunNumber = hadaq::RawEvent::CreateRunId();
-      DOUT0("HldOutput Generates New Runid %d ", fRunNumber);
-      fRunidPar.Value().SetUInt(fRunNumber);
+      ShowInfo(0, dabc::format("HldOutput Generates New Runid %d ", fRunNumber));
+      if (!fRunidPar.null())
+         fRunidPar.SetValue(fRunNumber);
    }
 
    ProduceNewFileName();
@@ -134,7 +144,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       if (nextrunid > fRunNumber) {
          fRunNumber = nextrunid;
          startnewfile = true;
-         DOUT0("HldOutput Gets New Runid %d from EPICS", fRunNumber);
+         ShowInfo(0, dabc::format("HldOutput Gets New Runid %d from EPICS", fRunNumber));
       }
    }
 
@@ -144,7 +154,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          return dabc::do_Error;
       }
 
-   fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+   if (!fBytesWrittenPar.null())
+      fBytesWrittenPar.SetValue((int)fCurrentFileSize);
 
    for (unsigned n=0;n<buf.NumSegments();n++)
       if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))

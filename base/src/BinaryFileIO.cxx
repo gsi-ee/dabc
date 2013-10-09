@@ -112,9 +112,9 @@ dabc::BinaryFileOutput::~BinaryFileOutput()
 }
 
 
-bool dabc::BinaryFileOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool dabc::BinaryFileOutput::Write_Init()
 {
-   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+   if (!dabc::FileOutput::Write_Init()) return false;
 
    fFile.SetIO(fIO, false);
 

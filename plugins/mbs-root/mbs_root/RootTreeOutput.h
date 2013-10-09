@@ -32,7 +32,7 @@ namespace mbs_root {
          RootTreeOutput(const dabc::Url& url);
          virtual ~RootTreeOutput();
 
-         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+         virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
 
