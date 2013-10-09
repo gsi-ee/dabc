@@ -128,8 +128,6 @@ bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
 {
    if (!dabc::DataInput::Read_Init(wrk,cmd)) return false;
 
-   fFileName = wrk.Cfg(dabc::xmlFileName, cmd).AsStdStr(fFileName);
-
    if (fFileName.empty()) return false;
 
    if (!fFilesList.null()) {

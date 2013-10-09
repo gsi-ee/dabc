@@ -15,13 +15,18 @@ to automatically create module when starting application.
 First output of the module reserved for stream server, second output can be used to
 store data in lmd files. 
 
-One can enable HTTP server, uncommenting line with libDabcHttp.so library.
+One can enable HTTP server, uncommenting line with libDabcHttp.so library and 
+uncomment Publisher module creation.
 This will start server with configured port, which also able to accept connection from clients.
 Means server can provide access not only to data from current process, but also to clients.
 In this particular case one can connect go4 analsys to dabc with command:
-   [shell] go4analysis -stream dabc_node -dabc dabc_node:4444 
-When running from gui, extra argument "-dabc dabc_node:4444" should be specified.
-At the moment http server provides view of ratemeters and display of ROOT histograms and graphs 
+   [shell] go4analysis -stream dabc_node -dabc dabc_node 
+When running from gui, extra argument "-dabc dabc_node" should be specified.
+At the moment http server provides:
+  - ratemeters from EventBuilder and Transmitter
+  - log fields 
+  - commands to start/stop hld and lmd files from browser
+  - histograms from go4 analysis
 
 There is well-known problem with using VNC viewer and mbs stream server. 
 Both by default are using port 6002. One could change port number for stream server.
@@ -34,7 +39,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
 -->
 
 <dabc version="2">
-  <Context host="localhost" name="EventBuilder" port="4444">
+  <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
@@ -48,9 +53,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <enabled value="true"/>
        <port value="8090"/>
     </HttpServer>
-    
+
+    <!-- Uncomment publisher module - it is necessary to publish parameters in web server -->
+  
     <!--Module name="Publisher" class="dabc::Publisher">
-       <manager value="true"/>
+       <manager value="false"/>
     </Module-->
     
     <MemoryPool name="Pool">

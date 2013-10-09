@@ -155,6 +155,8 @@ namespace hadaq {
           * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
          
+         double             fFlushTimeout;
+
          std::string        fDataRateName;
          std::string        fDataDroppedRateName;
          std::string        fEventRateName;

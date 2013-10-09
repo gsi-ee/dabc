@@ -55,6 +55,7 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
       .SetArgMinMax(dabc::xml_maxsize, 1, 1000);
    CreateCmdDef("StopLmdFile");
 
+   CreatePar("TransmitInfo","info").SetSynchron(true, 2., false);
 
    if (flushtime > 0.)
       CreateTimer("FlushTimer", flushtime, false);

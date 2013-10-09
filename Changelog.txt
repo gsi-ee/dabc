@@ -15,6 +15,7 @@ of the framework.
    can be used.
 5. Remove arguments from DataOutput::Write_Init() method. 
    Now all transport parameters should be extracted from url string. 
+6. Provide info parameter in the hadaq transmitter module.
 
 
 8.10.2013

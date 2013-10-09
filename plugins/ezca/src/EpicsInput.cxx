@@ -41,12 +41,12 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
 {
    if (!dabc::DataInput::Read_Init(wrk, cmd)) return false;
 
-   fName = wrk.Cfg(ezca::xmlEpicsName, cmd).AsStdStr(fName);
+   fName = wrk.Cfg(ezca::xmlEpicsName, cmd).AsStr(fName);
    fTimeout = wrk.Cfg(ezca::xmlTimeout, cmd).AsDouble(fTimeout);
    fSubeventId = wrk.Cfg(ezca::xmlEpicsSubeventId, cmd).AsInt(fSubeventId);
 
-   fUpdateFlagRecord = wrk.Cfg(ezca::xmlUpdateFlagRecord,cmd).AsStdStr("");
-   fIDNumberRecord = wrk.Cfg(ezca::xmlEventIDRecord,cmd).AsStdStr("");
+   fUpdateFlagRecord = wrk.Cfg(ezca::xmlUpdateFlagRecord,cmd).AsStr();
+   fIDNumberRecord = wrk.Cfg(ezca::xmlEventIDRecord,cmd).AsStr();
    fUpdateCommandReceiver = wrk.Cfg(ezca::xmlCommandReceiver,cmd).AsStdStr("");
 
    int numlongs = wrk.Cfg(ezca::xmlNumLongRecords, cmd).AsInt(0);
@@ -69,13 +69,13 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
 }
 
 
-
 bool ezca::EpicsInput::Close()
 {
    ResetDescriptors();
    DOUT1("EpicsInput::Close");
    return true;
 }
+
 
 unsigned ezca::EpicsInput::Read_Size()
 {
