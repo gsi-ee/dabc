@@ -93,9 +93,11 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    CreatePar(fLostEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 5.).SetUnits("MB");
 
-   CreateCmdDef("StartHldFile").AddArg("filename");
+   CreateCmdDef("StartHldFile")
+      .AddArg("filename", "string", true, "file.hld")
+      .AddArg("maxsize", "int", false, 50)
+      .SetArgMinMax("maxsize", 1, 1000);
    CreateCmdDef("StopHldFile");
-
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
  
@@ -774,6 +776,34 @@ void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
 
 int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
+   if (cmd.IsName("StartHldFile")) {
+
+      std::string fname = cmd.GetStr("filename");
+      int maxsize = cmd.GetInt("maxsize", 30);
+
+      std::string url = dabc::format("hld://%s?maxsize=%d", fname.c_str(), maxsize);
+
+      // we guarantee, that at least two ports will be created
+      EnsurePorts(0, 2);
+
+      bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
+
+      DOUT0("Start HLD file %s res = %s", fname.c_str(), DBOOL(res));
+
+      return cmd_bool(res);
+   } else
+   if (cmd.IsName("StopHldFile")) {
+
+      bool res = true;
+
+      if (NumOutputs()>1)
+         res = DisconnectPort(OutputName(1));
+
+      DOUT0("Stop HLD file res = %s", DBOOL(res));
+
+      return cmd_bool(res);
+   }
+
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 

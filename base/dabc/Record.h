@@ -215,6 +215,7 @@ namespace dabc {
       public:
          RecordField();
          RecordField(const RecordField& src);
+         RecordField(const char* v) { constructor(); SetStr(v); }
          RecordField(const std::string& v) { constructor(); SetStr(v); }
          RecordField(const int& v) { constructor(); SetInt(v); }
          RecordField(const unsigned& v) { constructor(); SetUInt(v); }

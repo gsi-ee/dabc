@@ -70,11 +70,14 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
 
-   CreateCmdDef(mbs::comStartFile).AddArg(dabc::xmlFileName, "string", true).AddArg(dabc::xmlFileSizeLimit, "int", false, "1000");
+   CreateCmdDef(mbs::comStartFile)
+      .AddArg(dabc::xmlFileName, "string", true)
+      .AddArg(dabc::xmlFileSizeLimit, "int", false, 1000);
 
    CreateCmdDef(mbs::comStopFile);
 
-   CreateCmdDef(mbs::comStartServer).AddArg(mbs::xmlServerKind, "string", true, mbs::ServerKindToStr(mbs::StreamServer));
+   CreateCmdDef(mbs::comStartServer)
+      .AddArg(mbs::xmlServerKind, "string", true, mbs::ServerKindToStr(mbs::StreamServer));
 
    CreateCmdDef(mbs::comStopServer);
 

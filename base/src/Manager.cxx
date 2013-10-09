@@ -993,10 +993,9 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string trkind = crcmd.TransportKind();
 
       PortRef port = FindPort(crcmd.PortName());
-      if (trkind.empty()) trkind = port.Cfg("url", cmd).AsStdStr();
+      if (trkind.empty()) trkind = port.Cfg("url", cmd).AsStr();
 
       PortRef port2 = FindPort(trkind);
-
       WorkerRef dev = FindDevice(trkind);
 
       if (port.null()) {

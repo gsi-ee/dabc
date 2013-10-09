@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+9.10.2013
+1. Implement Start/Stop HldFile commands in hadaq::CombinerModule.
+   This gives possibility to start HLD files from browser
+2. In CommandDef use RecordField class to specify dflt, min, max values 
+   for arguments.
+3. Add in dabc.js, CommandDrawElement support for min,max, dflt values.
+   Support simple string input for command argument.      
+
+
 8.10.2013
 1. Small adjustment in JSRootIO - block context menu when touch selection is
    active. Also adjust css file. 

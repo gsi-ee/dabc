@@ -608,10 +608,9 @@ int dabc::CommandDefinition::FindArg(const std::string& name) const
    return -1;
 }
 
-dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name, const std::string& kind, bool required, const std::string& dflt)
+dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name, const std::string& kind, bool required, const RecordField& dflt)
 {
    if (name.empty() || null()) return *this;
-
 
    int id = FindArg(name);
 
@@ -622,14 +621,33 @@ dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name
 
    std::string prefix = dabc::format("arg%d",id);
    SetField(prefix, name);
-   SetField(prefix+"_dflt", dflt);
+
+   if (!dflt.null())
+      SetField(prefix+"_dflt", dflt);
+
    SetField(prefix+"_kind", kind);
-   SetField(prefix+"_req", required);
+
+   if (required)
+      SetField(prefix+"_req", required);
 
    FireConfigured();
 
    return *this;
 }
+
+dabc::CommandDefinition& dabc::CommandDefinition::SetArgMinMax(const std::string& name, const RecordField& min, const RecordField& max)
+{
+   int id = FindArg(name);
+   if (id<0) return *this;
+
+   std::string prefix = dabc::format("arg%d",id);
+
+   SetField(prefix+"_min", min);
+   SetField(prefix+"_max", max);
+
+   return *this;
+}
+
 
 bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const
 {
@@ -639,9 +657,18 @@ bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind
    std::string prefix = dabc::format("arg%d",n);
 
    name = GetField(prefix).AsStr();
-   dflt = GetField(prefix+"dflt").AsStr();
+
    kind = GetField(prefix+"_kind").AsStr();
-   required = GetField(prefix+"_req").AsBool();
+
+   if (HasField(prefix+"_dflt"))
+      dflt = GetField(prefix+"_dflt").AsStr();
+   else
+      dflt = "";
+
+   if (HasField(prefix+"_req"))
+      required = GetField(prefix+"_req").AsBool();
+   else
+      required = false;
 
    return true;
 }

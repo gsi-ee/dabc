@@ -242,6 +242,20 @@ dabc::Buffer dabc::Module::TakeDfltBuffer()
    return dabc::Buffer();
 }
 
+bool dabc::Module::DisconnectPort(const std::string& portname)
+{
+   PortRef port = FindPort(portname);
+
+   if (port.null()) return false;
+
+   port()->Disconnect();
+
+   // we should process event (disregard running state) to allow module react on such action
+   ProcessItemEvent(port(), evntPortDisconnect);
+
+   return true;
+}
+
 
 int dabc::Module::PreviewCommand(Command cmd)
 {
@@ -293,17 +307,7 @@ int dabc::Module::PreviewCommand(Command cmd)
       cmd_res = cmd_bool((nout<NumOutputs()) && Output(nout)->IsConnected());
    } else
    if (cmd.IsName("DisconnectPort")) {
-      PortRef port = FindPort(cmd.GetStr("Port"));
-
-      if (!port.null()) {
-         port()->Disconnect();
-         cmd_res = cmd_true;
-         // we should process event (disregard running state) to allow module react on such action
-         ProcessItemEvent(port(), evntPortDisconnect);
-         cmd_res = cmd_true;
-      } else {
-         cmd_res = cmd_false;
-      }
+      cmd_res = cmd_bool(DisconnectPort(cmd.GetStr("Port")));
    } else
    if (cmd.IsName("IsPortConnected")) {
       PortRef port = FindPort(cmd.GetStr("Port"));

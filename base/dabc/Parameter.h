@@ -335,7 +335,10 @@ namespace dabc {
 
          DABC_REFERENCE(CommandDefinition, Parameter, ParameterContainer)
 
-         CommandDefinition& AddArg(const std::string& name, const std::string& kind = "string", bool required = true, const std::string& dflt = "");
+         CommandDefinition& AddArg(const std::string& name, const std::string& kind = "string", bool required = true, const RecordField& dflt = RecordField());
+
+         CommandDefinition& SetArgMinMax(const std::string& name, const RecordField& min, const RecordField& max);
+
 
          int NumArgs() const;
 

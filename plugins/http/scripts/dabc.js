@@ -219,6 +219,28 @@ DABC.CommandDrawElement.prototype.ArgName = function(n) {
    return this.xmlnode.getAttribute("arg"+n);
 }
 
+DABC.CommandDrawElement.prototype.ArgKind = function(n) {
+   if (n>=this.NumArgs()) return "";
+   
+   return this.xmlnode.getAttribute("arg"+n+"_kind");
+}
+
+DABC.CommandDrawElement.prototype.ArgDflt = function(n) {
+   if (n>=this.NumArgs()) return "";
+   
+   return this.xmlnode.getAttribute("arg"+n+"_dflt");
+}
+
+DABC.CommandDrawElement.prototype.ArgMin = function(n) {
+   if (n>=this.NumArgs()) return null;
+   return this.xmlnode.getAttribute("arg"+n+"_min");
+}
+
+DABC.CommandDrawElement.prototype.ArgMax = function(n) {
+   if (n>=this.NumArgs()) return null;
+   return this.xmlnode.getAttribute("arg"+n+"_max");
+}
+
 DABC.CommandDrawElement.prototype.ShowCommand = function() {
    
    var frame = $("#" + this.frameid);
@@ -236,10 +258,13 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argname = this.ArgName(cnt);
+      var argkind = this.ArgKind(cnt);
+      var argdflt = this.ArgDflt(cnt);
+      
       var argid = this.frameid + "_arg" + cnt; 
 
       entryInfo += "Arg: " + argname + " "; 
-      entryInfo += "<input id='" + argid + "' style='width:60px' value='3' argname = '" + argname + "'/>";    
+      entryInfo += "<input id='" + argid + "' style='width:100px' value='"+argdflt+"' argname = '" + argname + "'/>";    
       entryInfo += "<br>";
    }
    
@@ -249,7 +274,12 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
-      $("#"+argid).spinner({ min:1, max:100});
+      var argkind = this.ArgKind(cnt);
+      var argmin = this.ArgMin(cnt);
+      var argmax = this.ArgMax(cnt);
+
+      if ((argkind=="int") && (argmin!=null) && (argmax!=null))
+         $("#"+argid).spinner({ min:argmin, max:argmax});
    }
 }
 
@@ -288,6 +318,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
+      var argkind = this.ArgKind(cnt);
       
       var arginp = $("#"+argid);
       
@@ -295,7 +326,10 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       
       url += arginp.attr("argname");
       url += "=";
-      url += arginp.spinner("value");
+      if (argkind == "int")
+         url += arginp.spinner("value");
+      else
+         url += arginp.val();
    }
    
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
