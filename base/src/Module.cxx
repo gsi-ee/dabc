@@ -38,7 +38,9 @@ dabc::Module::Module(const std::string& name, Command cmd) :
    fPools(),
    fTimers(),
    fSysTimerIndex((unsigned)-1),
-   fAutoStop(true)
+   fAutoStop(true),
+   fDfltPool(),
+   fInfoParName()
 {
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr();
    int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(0);
@@ -127,6 +129,33 @@ unsigned dabc::Module::CreateTimer(const std::string& name, double period_sec, b
    fTimers.push_back(timer);
 
    return timer->ItemSubId();
+}
+
+dabc::Parameter dabc::Module::CreatePar(const std::string& name, const std::string& kind)
+{
+   dabc::Parameter par = dabc::Worker::CreatePar(name, kind);
+
+   if (kind == "info") {
+      std::string itemname = par.ItemName();
+      dabc::LockGuard lock(ObjectMutex());
+      if (fInfoParName.empty())
+         fInfoParName = itemname;
+   }
+
+   return par;
+}
+
+void dabc::Module::SetInfoParName(const std::string& parname)
+{
+   dabc::LockGuard lock(ObjectMutex());
+   fInfoParName = parname;
+}
+
+
+std::string dabc::Module::GetInfoParName() const
+{
+   dabc::LockGuard lock(ObjectMutex());
+   return fInfoParName;
 }
 
 

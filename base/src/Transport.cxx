@@ -43,7 +43,10 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    ModuleAsync(MakeName(inpport, outport)),
    fState(stInit),
    fIsInputTransport(false),
-   fIsOutputTransport(false)
+   fIsOutputTransport(false),
+   fTransportInfoName(),
+   fTransportInfoInterval(-1.),
+   fTransportInfoTm()
 {
    std::string poolname;
 
@@ -53,6 +56,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 //      DOUT0("Inpport %s pool %s", inpport.ItemName(false).c_str(), poolname.c_str());
 
       CreateOutput("Output", inpport.QueueCapacity());
+
+      fTransportInfoName = inpport.InfoParName();
 
       fIsInputTransport = true;
    }
@@ -65,8 +70,17 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
       CreateInput("Input", outport.QueueCapacity());
 
+      if (fTransportInfoName.empty())
+         fTransportInfoName = outport.InfoParName();
+
       fIsOutputTransport = true;
    }
+
+   if (!fTransportInfoName.empty()) {
+      fTransportInfoInterval = 1;
+      fTransportInfoTm.GetNow();
+   }
+
 
    if (fIsInputTransport && poolname.empty()) poolname = dabc::xmlWorkPool;
 
@@ -82,6 +96,26 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
 dabc::Transport::~Transport()
 {
+}
+
+bool dabc::Transport::InfoExpected() const
+{
+   if (fTransportInfoName.empty() || (fTransportInfoInterval<=0)) return false;
+
+   return fTransportInfoTm.Expired(fTransportInfoInterval);
+}
+
+void dabc::Transport::ProvideInfo(int lvl, const std::string& info)
+{
+   if (fTransportInfoName.empty()) return;
+
+   InfoParameter par = dabc::mgr.FindPar(fTransportInfoName);
+
+   fTransportInfoTm.GetNow();
+
+   if (par.null()) return;
+
+   par.SetInfo(info);
 }
 
 

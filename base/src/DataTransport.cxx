@@ -439,6 +439,9 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
 {
    AssignAddon(addon);
    CreateTimer("SysTimer");
+
+   if (!fTransportInfoName.empty() && fOutput)
+      fOutput->SetInfoParName(fTransportInfoName);
 }
 
 dabc::OutputTransport::~OutputTransport()
@@ -655,6 +658,11 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
       CloseOutput();
       CloseTransport(true);
       return false;
+   }
+
+   if (fOutput && InfoExpected()) {
+      std::string info = fOutput->ProvideInfo();
+      ProvideInfo(0, info);
    }
 
    return true;

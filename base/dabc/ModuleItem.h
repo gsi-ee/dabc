@@ -110,11 +110,13 @@ namespace dabc {
    class ModuleItemRef : public WorkerRef {
       DABC_REFERENCE(ModuleItemRef, WorkerRef, ModuleItem)
 
-      WorkerRef GetModule();
+      WorkerRef GetModule() const;
 
       unsigned ItemId() const { return GetObject() ? GetObject()->ItemId() : 0; }
 
       unsigned ItemSubId() const { return GetObject() ? GetObject()->ItemSubId() : 0; }
+
+      std::string InfoParName() const;
    };
 
    // ==================================================================================

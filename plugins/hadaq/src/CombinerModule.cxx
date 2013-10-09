@@ -95,8 +95,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreateCmdDef("StartHldFile")
       .AddArg("filename", "string", true, "file.hld")
-      .AddArg("maxsize", "int", false, 50)
-      .SetArgMinMax("maxsize", 1, 1000);
+      .AddArg(dabc::xml_maxsize, "int", false, 50)
+      .SetArgMinMax(dabc::xml_maxsize, 1, 1000);
    CreateCmdDef("StopHldFile");
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
@@ -145,6 +145,8 @@ void hadaq::CombinerModule::ModuleCleanup()
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
+   DOUT0("SET INFO: %s", info.c_str());
+
    Par(fInfoName).SetValue(info);
    if (forceinfo)
       Par(fInfoName).FireModified();
@@ -779,9 +781,9 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("StartHldFile")) {
 
       std::string fname = cmd.GetStr("filename");
-      int maxsize = cmd.GetInt("maxsize", 30);
+      int maxsize = cmd.GetInt(dabc::xml_maxsize, 30);
 
-      std::string url = dabc::format("hld://%s?maxsize=%d", fname.c_str(), maxsize);
+      std::string url = dabc::format("hld://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
 
       // we guarantee, that at least two ports will be created
       EnsurePorts(0, 2);
@@ -790,11 +792,15 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       DOUT0("Start HLD file %s res = %s", fname.c_str(), DBOOL(res));
 
+      SetInfo("Execute StartHldFile");
+
       return cmd_bool(res);
    } else
    if (cmd.IsName("StopHldFile")) {
 
       bool res = true;
+
+      SetInfo("Execute StopHldFile");
 
       if (NumOutputs()>1)
          res = DisconnectPort(OutputName(1));

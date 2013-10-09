@@ -15,12 +15,11 @@ mbs_root::RootTreeOutput::RootTreeOutput(const dabc::Url& url) :
 {
 
    // TODO: create event structure here:
-   fEvent=new DabcEvent(0,0,10);
-   fSplit=99;
-   fTreeBuf=65536;
-   fCompression=5;
-   fMaxSize=1000000000;
-
+   fEvent = new DabcEvent(0,0,10);
+   fSplit = url.GetOptionInt("split", 99);
+   fTreeBuf = url.GetOptionInt("treebuf", 65536);
+   fCompression = url.GetOptionInt("comp", 5);
+   fMaxSize = url.GetOptionInt("maxsize", 1000000000);
 }
 
 mbs_root::RootTreeOutput::~RootTreeOutput()
@@ -47,17 +46,6 @@ bool mbs_root::RootTreeOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc
    if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
 
    // TODO: member variables to contain properties for tree output   
-   // fFileName = wrk.Cfg("RootOutputFile", cmd).AsStdStr(fFileName); // parameter name is xml tag name
-   
-   
-   
-   fSplit = wrk.Cfg("RootSplitlevel", cmd).AsInt(fSplit);
-   fTreeBuf = wrk.Cfg("RootTreeBufsize", cmd).AsInt(fTreeBuf);
-   fCompression = wrk.Cfg("RootCompression", cmd).AsInt(fCompression);
-   fMaxSize = wrk.Cfg("RootMaxFileSize", cmd).AsInt(fMaxSize);
-   // fTreeBuf = ...       
-   // fMaxSize= ...
-   // TODO: open file and create tree here:   
    
    ProduceNewFileName();
 

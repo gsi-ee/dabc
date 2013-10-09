@@ -68,6 +68,8 @@ namespace hadaq {
 
       bool retransmit();
 
+      virtual int ExecuteCommand(dabc::Command cmd);
+
    public:
       MbsTransmitterModule(const std::string& name, dabc::Command cmd = 0);
 

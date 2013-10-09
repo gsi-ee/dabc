@@ -49,7 +49,7 @@ dabc::ModuleItem::~ModuleItem()
 
 // ========================================================
 
-dabc::WorkerRef dabc::ModuleItemRef::GetModule()
+dabc::WorkerRef dabc::ModuleItemRef::GetModule() const
 {
    Reference parent = GetParent();
 
@@ -60,6 +60,12 @@ dabc::WorkerRef dabc::ModuleItemRef::GetModule()
    }
 
    return dabc::WorkerRef();
+}
+
+std::string dabc::ModuleItemRef::InfoParName() const
+{
+   ModuleRef module = GetModule();
+   return module.InfoParName();
 }
 
 // ==============================================================================

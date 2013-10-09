@@ -56,7 +56,7 @@ bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Comman
    fEpicsControl = wrk.Cfg(hadaq::xmlExternalRunid, cmd).AsBool(fEpicsControl);
    if (fEpicsControl) {
       fRunNumber = GetRunId();
-      ShowInfo(dabc::format("EPICS control is enabled, first runid:%d",fRunNumber), true);
+      ShowInfo(0, dabc::format("EPICS control is enabled, first runid:%d",fRunNumber));
    }
 
    return StartNewFile();
@@ -68,7 +68,7 @@ uint32_t hadaq::HldOutput::GetRunId()
    uint32_t nextrunid =0;
    unsigned counter=0;
    do{
-      nextrunid=fRunidPar.Value().AsUInt();
+      nextrunid = fRunidPar.Value().AsUInt();
       if(nextrunid) break;
       dabc::Sleep(0.1);
       counter++;
@@ -96,11 +96,11 @@ bool hadaq::HldOutput::StartNewFile()
    ProduceNewFileName();
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
-      ShowError(dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
+      ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
 
-   ShowInfo(dabc::format("%s open for writing", CurrentFileName().c_str()), true);
+   ShowInfo(0, dabc::format("%s open for writing", CurrentFileName().c_str()));
 
    return true;
 }
@@ -108,7 +108,7 @@ bool hadaq::HldOutput::StartNewFile()
 bool hadaq::HldOutput::CloseFile()
 {
    if (fFile.isWriting())
-      ShowInfo("HLD file is CLOSED", true);
+      ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
    return true;
 }
@@ -123,7 +123,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    }
 
    if (buf.GetTypeId() != hadaq::mbt_HadaqEvents) {
-      ShowError(dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
+      ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
       return dabc::do_Error;
    }
 

@@ -49,6 +49,13 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
    CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Ev");
 
+   CreateCmdDef("StartLmdFile")
+      .AddArg("filename", "string", true, "file.lmd")
+      .AddArg(dabc::xml_maxsize, "int", false, 50)
+      .SetArgMinMax(dabc::xml_maxsize, 1, 1000);
+   CreateCmdDef("StopLmdFile");
+
+
    if (flushtime > 0.)
       CreateTimer("FlushTimer", flushtime, false);
 
@@ -60,6 +67,8 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
 
    fEvCounter = 0;
    fFlushCnt = 2;
+
+   PublishPars("Hadaq/Transmitter");
 }
 
 
@@ -263,4 +272,37 @@ bool hadaq::MbsTransmitterModule::retransmit()
 void hadaq::MbsTransmitterModule::ProcessTimerEvent(unsigned timer)
 {
    if (fFlushCnt>0) fFlushCnt--;
+}
+
+int hadaq::MbsTransmitterModule::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("StartLmdFile")) {
+
+      std::string fname = cmd.GetStr("filename");
+      int maxsize = cmd.GetInt(dabc::xml_maxsize, 30);
+
+      std::string url = dabc::format("lmd://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
+
+      // we guarantee, that at least two ports will be created
+      EnsurePorts(0, 2);
+
+      bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
+
+      DOUT0("Start LMD file %s res = %s", fname.c_str(), DBOOL(res));
+
+      return cmd_bool(res);
+   } else
+   if (cmd.IsName("StopLmdFile")) {
+
+      bool res = true;
+
+      if (NumOutputs()>1)
+         res = DisconnectPort(OutputName(1));
+
+      DOUT0("Stop LMD file res = %s", DBOOL(res));
+
+      return cmd_bool(res);
+   }
+
+   return dabc::ModuleAsync::ExecuteCommand(cmd);
 }

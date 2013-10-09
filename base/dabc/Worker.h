@@ -386,7 +386,7 @@ namespace dabc {
 
          virtual bool Find(ConfigIO &cfg);
 
-         Parameter CreatePar(const std::string& name, const std::string& kind = "");
+         virtual Parameter CreatePar(const std::string& name, const std::string& kind = "");
 
          CommandDefinition CreateCmdDef(const std::string& name);
 

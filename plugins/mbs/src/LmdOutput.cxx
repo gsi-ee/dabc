@@ -53,11 +53,11 @@ bool mbs::LmdOutput::StartNewFile()
    ProduceNewFileName();
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), 0)) {
-      ShowError(dabc::format("%s cannot open file for writing, errcode %u", CurrentFileName().c_str(), fFile.LastError()));
+      ShowInfo(-1, dabc::format("%s cannot open file for writing, errcode %u", CurrentFileName().c_str(), fFile.LastError()));
       return false;
    }
 
-   ShowInfo(dabc::format("Open %s for writing", CurrentFileName().c_str()), true);
+   ShowInfo(0, dabc::format("Open %s for writing", CurrentFileName().c_str()));
 
    return true;
 }
@@ -65,7 +65,7 @@ bool mbs::LmdOutput::StartNewFile()
 bool mbs::LmdOutput::CloseFile()
 {
    if (fFile.IsWriteMode()) {
-      ShowInfo(dabc::format("Close file %s", CurrentFileName().c_str()), true);
+      ShowInfo(0, dabc::format("Close file %s", CurrentFileName().c_str()));
       fFile.Close();
    }
    return true;
@@ -81,12 +81,12 @@ unsigned mbs::LmdOutput::Write_Buffer(dabc::Buffer& buf)
    }
 
    if (buf.GetTypeId() != mbs::mbt_MbsEvents) {
-      ShowError(dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()));
+      ShowInfo(-1, dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()));
       return dabc::do_Error;
    }
 
    if (buf.NumSegments()>1) {
-      ShowError("Segmented buffer not (yet) supported");
+      ShowInfo(-1, "Segmented buffer not (yet) supported");
       return dabc::do_Error;
    }
 
@@ -135,11 +135,11 @@ bool mbs::LmdOutputNew::StartNewFile()
    ProduceNewFileName();
 
    if (!fFile.OpenWriting(CurrentFileName().c_str())) {
-      ShowError(dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
+      ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
 
-   ShowInfo(dabc::format("Open %s for writing", CurrentFileName().c_str()), true);
+   ShowInfo(0, dabc::format("Open %s for writing", CurrentFileName().c_str()));
 
    return true;
 }
@@ -147,7 +147,7 @@ bool mbs::LmdOutputNew::StartNewFile()
 bool mbs::LmdOutputNew::CloseFile()
 {
    if (fFile.isWriting()) {
-      ShowInfo(dabc::format("Close file %s", CurrentFileName().c_str()), true);
+      ShowInfo(0, dabc::format("Close file %s", CurrentFileName().c_str()));
       fFile.Close();
    }
    return true;
@@ -163,12 +163,12 @@ unsigned mbs::LmdOutputNew::Write_Buffer(dabc::Buffer& buf)
    }
 
    if (buf.GetTypeId() != mbs::mbt_MbsEvents) {
-      ShowError(dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()));
+      ShowInfo(-1, dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()));
       return dabc::do_Error;
    }
 
    if (buf.NumSegments()>1) {
-      ShowError("Segmented buffer not (yet) supported");
+      ShowInfo(-1, "Segmented buffer not (yet) supported");
       return dabc::do_Error;
    }
 

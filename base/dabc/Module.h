@@ -73,6 +73,7 @@ namespace dabc {
          unsigned                   fSysTimerIndex; ///< index of timer, which will be used with module itself
          bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconnected
          dabc::Reference            fDfltPool;      ///< direct reference on memory pool, used when no pool handles are not created
+         std::string                fInfoParName;   ///< full name of parameter, used as info
 
       private:
 
@@ -206,6 +207,12 @@ namespace dabc {
          EventId ConstructUserItemEvent(unsigned indx = 0)
          { return EventId(evntUser, 0, indx < fUsers.size() ? fUsers[indx]->ItemId() : 0); }
 
+
+         virtual Parameter CreatePar(const std::string& name, const std::string& kind = "");
+
+         void SetInfoParName(const std::string& name);
+
+
          // TODO: move to respective module classes
          bool CanSendToAllOutputs(bool exclude_disconnected = true) const;
          void SendToAllOutputs(Buffer& buf);
@@ -253,6 +260,9 @@ namespace dabc {
       public:
 
          virtual const char* ClassName() const { return "Module"; }
+
+         std::string GetInfoParName() const;
+
    };
 
    // ___________________________________________________________________
@@ -311,6 +321,12 @@ namespace dabc {
          /** Method called by manager to establish connection to pools
           * TODO: while used from devices, made public. Should be protected later again */
          bool ConnectPoolHandles();
+
+         /** \brief Returns info parameter name,
+          *  used to provide different kind of log/debug information */
+         std::string InfoParName() const
+            {  return null() ? std::string() : GetObject()->GetInfoParName(); }
+
    };
 
 };

@@ -47,7 +47,9 @@ namespace dabc {
          ETransportState fState;
          bool fIsInputTransport;
          bool fIsOutputTransport;
-
+         std::string fTransportInfoName;
+         double fTransportInfoInterval;
+         TimeStamp fTransportInfoTm;
 
          ETransportState GetState() const { return fState; }
 
@@ -60,6 +62,14 @@ namespace dabc {
          virtual void ProcessConnectEvent(const std::string& name, bool on);
 
          virtual int ExecuteCommand(Command cmd);
+
+         /** \brief Returns true when next info can be provided
+          *  If info parameter was configured, one could use it regularly to provide information
+          *  about transport */
+         bool InfoExpected() const;
+
+         /** \brief Method provides transport info to specified parameter */
+         void ProvideInfo(int lvl, const std::string& info);
 
          static std::string MakeName(const PortRef& inpport, const PortRef& outport);
 

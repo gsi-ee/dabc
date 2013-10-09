@@ -128,11 +128,11 @@ bool dabc::BinaryFileOutput::StartNewFile()
    ProduceNewFileName();
 
    if (!fFile.OpenWriting(CurrentFileName().c_str())) {
-      ShowError(dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
+      ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
 
-   ShowInfo(dabc::format("Open %s for writing", CurrentFileName().c_str()), true);
+   ShowInfo(0, dabc::format("Open %s for writing", CurrentFileName().c_str()));
 
    return true;
 }
@@ -141,7 +141,7 @@ bool dabc::BinaryFileOutput::StartNewFile()
 bool dabc::BinaryFileOutput::CloseFile()
 {
    if (fFile.isWriting()) {
-      ShowInfo(dabc::format("Close file %s", CurrentFileName().c_str()), true);
+      ShowInfo(0, dabc::format("Close file %s", CurrentFileName().c_str()));
       fFile.Close();
    }
    return true;

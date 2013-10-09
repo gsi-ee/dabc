@@ -148,19 +148,20 @@ namespace dabc {
    class DataOutput {
       protected:
          std::string         fInfoName;     // parameter name for info settings
-         dabc::TimeStamp     fInfoTime;     // time when last info was shown
-         double              fInfoInterval; // how often info should appear
 
          DataOutput(const dabc::Url& url);
 
-         bool InfoExpected() { return (fInfoInterval>0) && fInfoTime.Expired(fInfoInterval); }
-
-         void ShowInfo(const std::string& info, bool important = false);
-         void ShowError(const std::string& info);
+         void ShowInfo(int lvl, const std::string& info);
 
       public:
 
          virtual ~DataOutput() {}
+
+         /** \brief Methods set parameter name, which could be used for debug output */
+         void SetInfoParName(const std::string& name);
+
+         /** \brief Method can be used to get debug info about output */
+         virtual std::string ProvideInfo() { return std::string(); }
 
          /** This is generic virtual method to initialize output,
           * using configurations from Port or from the Command  */
@@ -281,6 +282,8 @@ namespace dabc {
          virtual ~FileOutput();
 
          void SetIO(dabc::FileInterface* io);
+
+         virtual std::string ProvideInfo();
 
          virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
    };

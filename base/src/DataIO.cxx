@@ -52,51 +52,38 @@ dabc::Buffer dabc::DataInput::ReadBuffer()
 // ======================================================
 
 dabc::DataOutput::DataOutput(const dabc::Url& url) :
-   fInfoName(),
-   fInfoTime(),
-   fInfoInterval(1.)
+   fInfoName()
 {
-   fInfoInterval = url.GetOptionInt("log", -1);
-   if ((fInfoInterval<0) && url.HasOption("log")) fInfoInterval = 1;
-   if (url.HasOption("nolog")) fInfoInterval = -1;
 }
+
+void dabc::DataOutput::SetInfoParName(const std::string& name)
+{
+   fInfoName = name;
+}
+
 
 bool dabc::DataOutput::Write_Init(const WorkerRef& wrk, const Command& cmd)
 {
-   fInfoName = wrk.Cfg("InfoPar", cmd).AsStdStr();
-   fInfoInterval = wrk.Cfg("InfoInterval", cmd).AsDouble(fInfoInterval);
-   fInfoTime.GetNow();
    return true;
 }
 
 
-void dabc::DataOutput::ShowInfo(const std::string& info, bool important)
+void dabc::DataOutput::ShowInfo(int lvl, const std::string& info)
 {
-   if (!important) {
-      if (!InfoExpected()) return;
-      fInfoTime.GetNow();
-   }
+   dabc::InfoParameter par;
+   if (!fInfoName.empty())
+      par = dabc::mgr.FindPar(fInfoName);
 
-   if (fInfoName.empty()) {
-       DOUT1(info.c_str());
+   if (par.null()) {
+      if (lvl<0)
+         EOUT(info.c_str());
+      else
+         DOUT1(info.c_str());
    } else {
-      dabc::Parameter par = dabc::mgr.FindPar(fInfoName);
-      par.SetValue(info);
-      if (important) par.FireModified();
-   }
-}
-
-void dabc::DataOutput::ShowError(const std::string& info)
-{
-   if (fInfoName.empty()) {
-       DOUT0(info.c_str());
-   } else {
-      dabc::Parameter par = dabc::mgr.FindPar(fInfoName);
       par.SetValue(info);
       par.FireModified();
    }
 }
-
 
 
 bool dabc::DataOutput::WriteBuffer(Buffer& buf)
@@ -220,10 +207,6 @@ bool dabc::FileOutput::Write_Init(const WorkerRef& wrk, const Command& cmd)
 {
    if (!DataOutput::Write_Init(wrk, cmd)) return false;
 
-   fFileName = wrk.Cfg(dabc::xmlFileName, cmd).AsStdStr(fFileName);
-   fSizeLimitMB = wrk.Cfg(dabc::xmlFileSizeLimit, cmd).AsInt(fSizeLimitMB);
-   fCurrentFileNumber = wrk.Cfg(dabc::xmlFileNumber, cmd).AsInt(fCurrentFileNumber);
-
    if (fIO==0) fIO = new FileInterface;
 
    std::string mask = ProduceFileName("*");
@@ -255,7 +238,7 @@ bool dabc::FileOutput::Write_Init(const WorkerRef& wrk, const Command& cmd)
 
    if (fCurrentFileNumber <= maxnumber) {
       fCurrentFileNumber = maxnumber + 1;
-      ShowInfo(dabc::format("start with file number %d", fCurrentFileNumber), true);
+      ShowInfo(0, dabc::format("start with file number %d", fCurrentFileNumber));
    }
 
    return true;
@@ -278,11 +261,13 @@ std::string dabc::FileOutput::ProduceFileName(const std::string& suffix)
    return fname;
 }
 
+
 void dabc::FileOutput::ProduceNewFileName()
 {
    fCurrentFileName = ProduceFileName(dabc::format("_%04d", fCurrentFileNumber++));
    fCurrentFileSize = 0;
 }
+
 
 bool dabc::FileOutput::CheckBufferForNextFile(BufferSize_t sz)
 {
@@ -292,37 +277,39 @@ bool dabc::FileOutput::CheckBufferForNextFile(BufferSize_t sz)
    return false;
 }
 
+
 void dabc::FileOutput::AccountBuffer(BufferSize_t sz, int numev)
 {
    fCurrentFileSize += sz;
    fTotalFileSize += sz;
    fTotalNumBufs++;
-   fTotalNumEvents+=numev;
-
-   if (InfoExpected()) {
-      std::string info = fCurrentFileName;
-      size_t pos = info.rfind("/");
-      if (pos!=std::string::npos) info.erase(0, pos);
-
-      info.append(" ");
-      info.append(dabc::size_to_str(fTotalFileSize));
-
-      if (fTotalNumEvents > 0) {
-         if (fTotalNumEvents<1000000)
-            info+=dabc::format(" %ld ev", fTotalNumEvents);
-         else
-            info+=dabc::format(" %8.3e ev", 1.*fTotalNumEvents);
-      } else {
-         if (fTotalNumBufs<1000000)
-            info+=dabc::format(" %ld bufs", fTotalNumBufs);
-         else
-            info+=dabc::format(" %8.3e bufs", 1.*fTotalNumBufs);
-      }
-
-      if (fSizeLimitMB>0)
-         info += dabc::format(" (%3.1f %s)", 100./(fSizeLimitMB*1024.*1024.)*fCurrentFileSize, "%");
-
-      ShowInfo(info);
-   }
+   fTotalNumEvents += numev;
 }
 
+
+std::string dabc::FileOutput::ProvideInfo()
+{
+   std::string info = fCurrentFileName;
+   size_t pos = info.rfind("/");
+   if (pos!=std::string::npos) info.erase(0, pos);
+
+   info.append(" ");
+   info.append(dabc::size_to_str(fCurrentFileSize));
+
+   if (fSizeLimitMB>0)
+      info.append(dabc::format(" (%3.1f %s)", 100./(fSizeLimitMB*1024.*1024.)*fCurrentFileSize, "%"));
+
+   if (fTotalNumEvents > 0) {
+      if (fTotalNumEvents<1000000)
+         info.append(dabc::format(" %ld ev", fTotalNumEvents));
+      else
+         info.append(dabc::format(" %8.3e ev", 1.*fTotalNumEvents));
+   } else {
+      if (fTotalNumBufs<1000000)
+         info.append(dabc::format(" %ld bufs", fTotalNumBufs));
+      else
+         info.append(dabc::format(" %8.3e bufs", 1.*fTotalNumBufs));
+   }
+
+   return info;
+}

@@ -9,6 +9,10 @@ of the framework.
    for arguments.
 3. Add in dabc.js, CommandDrawElement support for min,max, dflt values.
    Support simple string input for command argument.      
+4. Provide possibility to configure info parameter for module, port, transport.
+   This parameter can be used for debug or error output. Aim to replase 
+   DOUT/EOUT by IOUT macros, where all advantages for conditional compilation 
+   can be used.
 
 
 8.10.2013
