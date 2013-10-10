@@ -39,8 +39,8 @@ First of all, ROOT itself should be compiled and configured.
 DABC uses ROOTSYS shell variable, therefore it should be defined before DABC compilation starts.
 One could use ". your_root_path/bin/thisroot.sh" script for that.
 
-Normal DABC compilation procedure should be performed, [details
-can be found here](\ref dabc_getting_started). 
+Normal DABC compilation procedure should be performed, 
+[details can be found here](\ref dabc_getting_started). 
 At the end of the DABC compilation libDabcRoot.so library will be created in $DABCSYS/lib subdirectory.  
 
 

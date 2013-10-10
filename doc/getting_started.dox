@@ -7,9 +7,9 @@ Most proper way to download DABC is to check out head version from repository.
 
     [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
 
-Alternative, one could check out specific tag:
+Alternative, one could check out latest release tag:
 
-    [shell] svn co https://subversion.gsi.de/dabc/tags/203-00 dabc203
+    [shell] svn co https://subversion.gsi.de/dabc/tags/203-05 dabc20305
 
 
 
@@ -21,7 +21,8 @@ To compile DABC, in most cases it is enough to call `make` in checkout directory
 
 It is recommended to use -jN option to speedup compilation. 
 
-DABC includes [OFED VERBS](http://www.openfabrics.org) support, which is not compiles smoothely on all platforms.
+DABC includes [OFED VERBS](http://www.openfabrics.org) support, 
+which is not always compiles smoothely on all platforms.
 To disable VERBS compilation, one could use:
 
     [shell] make -j4 noverbs=1
