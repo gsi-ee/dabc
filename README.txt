@@ -1,6 +1,6 @@
 --------------------------------------------------------------
          The Data Acquisition Backbone Core 
-         DABC Release v2.3.5  (2-October-2013)
+         DABC Release v2.3.6 (10-October-2013)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
@@ -33,7 +33,7 @@ This package was tested on:
   
 INSTALLATION:
 
-1. Unpack this DABC distribution in the future DABC System directory.
+1. Unpack this DABC distribution in the future DABC system directory.
    
       [shell] cd /usr/local/pub/dabc 
       [shell] tar xzvf /path/to/the/file/dabc.tar.gz 
