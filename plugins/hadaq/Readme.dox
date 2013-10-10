@@ -21,19 +21,22 @@
 
 /** \page hadaq_trb3_package Software collection for TRB3
 
+
+[TOC]
+\tableofcontents
+
 Introduction
 ============
 
-This is short instruction how dabc/go4/stream frameworks can be used for
-data taking and online/offline analysis of TRB3 data.
+This is short instruction how dabc/go4/stream frameworks can be installed and
+used for data taking and online/offline analysis of [TRB3](http://trb.gsi.de) data.
 
-There are two parts of software:
+There are two main parts of software:
   1. DABC which is required to take data from TRB3 and store to hld or lmd files
   2. ROOT/Go4/stream frameworks to analyse online/offline TRB3/TDC data
 
-The easiest way to install necessary software is to use repository
+The easiest way to install all necessary software components is use repository
    https://subversion.gsi.de/dabc/trb3
-
 
 
 Installation of all components in once
@@ -46,9 +49,9 @@ Requirements
 ------------
 
 Following packages should be installed:
-   * libqt4-devel
-   * xorg-devel
-   * g++
+* libqt4-devel
+* xorg-devel
+* g++
 
 It is recommended to use bash (at least, during compilation)
 
@@ -67,7 +70,7 @@ For instance, call thisroot.sh script:
 Compilation
 -----------
 
-To get and compile all components, just do:
+To checkout and compile all components, just do:
 
     [shell] svn co https://subversion.gsi.de/dabc/trb3 trb3
     [shell] cd trb3
@@ -167,14 +170,14 @@ Should be increased if queue sizes of input/output ports are increased
 Combiner module
 ---------------
 
-It is central functional module of DAQ application.
+It is central functional module of the DAQ application.
 It could have arbitrary number of inputs, defined by NumInputs parameter.
 Each input corresponds to separate TRB3 board which should be readout.
-For each input only correct port number should be assigned in line like:
+For each input only correct UDP port number should be specified like:
 
      <InputPort name="Input0" url="hadaq://host:10101"/>
 
-Here only port number is relevant, all other parameters must remain as is.
+Here only port number 10101 is relevant, all other parameters must remain as is.
 
 Events, produced by combiner module, can be stored in hld file or (and) delivered
 via online server to online analysis.
@@ -189,27 +192,27 @@ To write HLD files, one should specify following parameters in combiner module:
 
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
 
- Only second output port (name Output1) can be use for HLD file storage.
- maxsize defines maximum size (in MB) of file, which than will be closed and new
- file will be started
+Only second output port (name Output1) can be use for HLD file storage.
+maxsize defines maximum size (in MB) of file, which than will be closed and new
+file will be started
 
- ## Configure online server
+## Configure online server
 
- Combiner module should have at least one output and
- auto="true" should be specified for "OnlineServer" module.
- hadaq events will be delivered to "OnlineServer" module, where
- conversion into lmd format will be done(just adding lmd headers).
+Combiner module should have at least one output and
+auto="true" should be specified for "OnlineServer" module.
+hadaq events will be delivered to "OnlineServer" module, where
+conversion into lmd format will be done (just adding lmd headers).
 
- Produced data can be provided to online server - configured for Output0:
+Produced data can be provided to online server - configured for Output0:
 
         <OutputPort name="Output0" url="mbs://Stream"/>
 
- At the same time, data can be stored to lmd file. One should set two output ports
- and name of output file provide in configuration of second output port:
+At the same time, data can be stored to lmd file. One should set two output ports
+and name of output file provide in configuration of second output port:
 
         <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
 
- Here maxsize also defines maximum size of output file.
+Here maxsize also defines maximum size of output file.
 
 
 Running DABC
@@ -223,22 +226,41 @@ Execution can always be regularly stopped by Ctrl-C.
 All opened files will be closed normally.
 
 
+Usage of web-server
+-------------------
+
+To be able observer and control running DAQ application, one could
+enable http server. For that one should uncomment libDabcHttp.so loading
+and enable creation of Publisher module (auto="true").
+
+After DAQ is started, one could open in web browser address like 
+`http://your_host:8090`. Port number 8090 can be changed in configuration
+of HttpServer.
+
+In browser one should be able to see hierarchy with two folders:
+There one can see two folders: "Hadaq/Combiner" for combiner module and
+"Hadaq/Transmitter" for online server module. In the folders one will find
+published ratemeters and log messages.
+
+Most useful part of web-server now - possibility to start/stop file writings. 
+For instance, in  "Hadaq/Combiner" folder there are two commands "StartHldFile" and
+"StopHldFile".   
+
 
 Running analysis
 ================
 
-Analysis code is provided in new stream project.
+Analysis code is provided in new __stream__ project.
 It is generic analysis framework, dedicated for synchronization and
 processing of different kinds of time-stamped data streams. Classes,
-relevant for TRB3/FPGA-TDC processing situated in
-https://subversion.gsi.de/go4/app/stream/include/hadaq/ and
-https://subversion.gsi.de/go4/app/stream/framework/hadaq/
-
+relevant for TRB3/FPGA-TDC processing located in 
+[header](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
+[source](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
+ 
 In principle, in most cases it is not required to change these classes -
-all user-specific configurations provided in ROOT scripts, which can be
-found in https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/first.C.
-It is example how to process data from single TDC, many of them can be created
-if necessary. Please read comment in script itself.
+all user-specific configurations provided in ROOT script, which can be found in 
+[example](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory.
+It shows how to process data from several TDCs. Please read comment in script itself.
 One can always copy such script to any other location and modify it to specific needs.
 
 

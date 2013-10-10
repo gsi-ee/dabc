@@ -43,7 +43,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
-      <!--lib value="libDabcHttp.so"/-->  
+      <lib value="libDabcHttp.so"/>  
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
       <!--control value="true"/-->
@@ -54,11 +54,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <port value="8090"/>
     </HttpServer>
 
-    <!-- Uncomment publisher module - it is necessary to publish parameters in web server -->
-  
-    <!--Module name="Publisher" class="dabc::Publisher">
+    <!-- publisher module used by web server to get all services. Set auto="true" to enable its creation -->
+    <Module name="Publisher" class="dabc::Publisher" auto="true">
        <manager value="false"/>
-    </Module-->
+    </Module>
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>

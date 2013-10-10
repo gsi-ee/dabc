@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+10.10.2013
+1. Small changes in readme.
+
+
 9.10.2013
 1. Implement Start/Stop HldFile commands in hadaq::CombinerModule.
    This gives possibility to start HLD files from browser

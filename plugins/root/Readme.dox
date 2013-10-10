@@ -26,26 +26,28 @@
 Introduction
 ============
 
-Main aim of usage DABC in ROOT is provide web interface to the 
-running ROOT-based analysis. Therefore here functionality of DABC web server
+Main motivation for writing libDabcRoot plugin -  
+provide web interface to the arebitrary ROOT-based analysis. 
+Therefore here functionality of DABC web server
 and its usage is described
 
 
-Compilation
-===========
+DABC Compilation
+================
 
-When DABC is compiled, ROOTSYS shell variable should be configured.
-In such case provided ROOT installation will be used for creating libDabcRoot.so plugin.
-Full DABC compilation installation can be found <a href="dabc_getting_started.html">here</a>.
+First of all, ROOT itself should be compiled and configured.
+DABC uses ROOTSYS shell variable, therefore it should be defined before DABC compilation starts.
+One could use ". your_root_path/bin/thisroot.sh" script for that.
 
-At the end of DABC compilation libDabcRoot.so library will be created in lib/ subdirectory.  
-
+Normal DABC compilation procedure should be performed, [details
+can be found here](\ref dabc_getting_started). 
+At the end of the DABC compilation libDabcRoot.so library will be created in $DABCSYS/lib subdirectory.  
 
 
 Running of web server
 =====================
 
-After DABC compiled and dabclogin initialization script is called,
+After DABC compiled and ". dabclogin" initialization script is called,
 one just starts root and call \ref DabcRoot::StartHttpServer() method at 
 any moment of macro execution. For instance:
 
@@ -68,10 +70,33 @@ it will not disturb running server.
 Threads safety
 ==============
 
-Current implementation of web server uses several own threads for data organization
-and communication with clients. Interface between ROOT and server is thread-safe. 
-All access to objects is done via gROOT pointer and always performed from the main process thread,
-where ROOT code is running.     
+Current interface between ROOT application and http server is __threads safe__. 
+
+There are several threads, which are used in DABC for data organization and
+communication with clients via http protocol. But all data exchange with ROOT 
+is performed from the main process, where ROOT code is running. Therefore when 
+objects (like histograms or canvases) are streamed, no any user code is executed. 
+
+
+JSRootIO
+========
+
+Main part of the browser code based on modified [JSRootIO](http://root.cern.ch/drupal/content/trevolutionjs) project,
+devloped by Bertrand Bellenot. [Here is](http://bellenot.web.cern.ch/bellenot/Public/JSRootIO/) demonstrator, 
+repository is http://root.cern.ch/git/rootjs.git.
+
+[Modified](http://web-docs.gsi.de/~linev/JSRootIO/index_local.htm) version provides:
+- online features - update of objects content
+- drawing performance optimization
+- context-menu support
+- many bug fixes
+
+New code integrated into DABC, but also provided as separate repository on github:
+
+https://github.com/linev/JSRootIO.git
+
+Functionality of the modified code can be tested on http://web-docs.gsi.de/~linev/JSRootIO/index_local.htm
+
  
 
 For any comments and wishes contact \n 
