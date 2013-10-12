@@ -319,14 +319,16 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
       var argkind = this.ArgKind(cnt);
-      
+      var argmin = this.ArgMin(cnt);
+      var argmax = this.ArgMax(cnt);
+
       var arginp = $("#"+argid);
-      
+
       if (cnt==0) url+="?"; else url+="&";
-      
+
       url += arginp.attr("argname");
       url += "=";
-      if (argkind == "int")
+      if ((argkind=="int") && (argmin!=null) && (argmax!=null))
          url += arginp.spinner("value");
       else
          url += arginp.val();
