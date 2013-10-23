@@ -165,7 +165,9 @@ namespace dabc {
     *
     * Main aim of writing user-specific application is creation and management of
     * different application components like modules, transports, devices, which cannot
-    * be handled by standard DABC components.
+    * be handled by standard DABC method.
+    * For instance, complex connection scheme or modules creation,
+    * dependent from application parameters.
     *
     */
 

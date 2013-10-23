@@ -254,7 +254,7 @@ namespace dabc {
           * If any changes found, node marked with new version
           * If enabled, history item will be created.
           * If enabled, time stamp will be provided for changed items
-          * If \param reprocess enabled, container Reprocess() method will be called to produce some extra data */
+          * \param tm provides time which will be set for changed items, if =0 (default), current time will be used */
          void MarkChangedItems(uint64_t tm = 0);
 
          /** \brief Enable time recording for hierarchy element every time when item is changed */

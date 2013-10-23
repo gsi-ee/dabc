@@ -88,6 +88,8 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
+    * Use also in dabc_xml executable to extract basic information from xml files.
+    * For instance, number of nodes or context port number
     */
 
    class ConfigBase {

@@ -53,6 +53,8 @@ Following packages should be installed:
 * xorg-devel
 * g++
 
+[Here is full list of prerequisites for ROOT](http://root.cern.ch/drupal/content/build-prerequisites) 
+
 It is recommended to use bash (at least, during compilation)
 
 

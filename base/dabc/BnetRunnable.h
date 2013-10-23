@@ -118,6 +118,14 @@ namespace bnet {
       OperRec(const OperRec& src) {} // forbid copy constructor
    };
 
+
+   /** \brief Time stamping in bnet applications
+    *
+    * \ingroup dabc_obsolete_classes
+    *
+    * Obsolete, will be removed
+    */
+
    class TimeStamping {
       protected:
          double fTimeShift;
@@ -140,6 +148,13 @@ namespace bnet {
          void SetCoeff(void* args) { fTimeShift = ((double*) args)[0]; fTimeScale = ((double*) args)[1]; }
    };
 
+   /** \brief Vector of doubles
+    *
+    * \ingroup dabc_obsolete_classes
+    *
+    * Obsolete, will be removed
+    */
+
    class DoublesVector : public std::vector<double> {
       public:
       DoublesVector() : std::vector<double>() {}
@@ -153,6 +168,16 @@ namespace bnet {
    };
 
    class TransportModule;
+
+   /** \brief Runnable for event building net
+    *
+    * \ingroup dabc_obsolete_classes
+    *
+    * Obsolete, will be removed/modified
+    *
+    * Idea to provide generic executable, which can manage different kind of connections
+    * (VERBS or socket) directly without intermediate transports. Was ready by 80%.
+    */
 
    class BnetRunnable : public dabc::Object,
                         public dabc::Runnable {

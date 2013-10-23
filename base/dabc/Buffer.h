@@ -55,7 +55,12 @@ namespace dabc {
         { id = src->id; datasize = src->datasize; buffer = src->buffer; }
    };
 
-   /** \brief Container for data, which are provided via Buffer class
+   /** \brief Container for data, referenced by \ref Buffer class
+    *
+    * \ingroup dabc_all_classes
+    *
+    * It contains lists of memory segments from memory pool.
+    * In special case memory can be allocated and owned by container itself.
     */
 
    class BufferContainer : public Object {
@@ -104,10 +109,24 @@ namespace dabc {
          virtual ~BufferContainer();
    };
 
-   /** \brief Contains reference on memory from memory pool
+   /** \brief Reference on memory from memory pool
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes
+    *
+    * Central class for memory usage concept in DABC framework.
+    *
+    * All memory for data transfer should be pre-allocated in \ref dabc::MemoryPool.
+    * Buffer class provides access to that memory.
+    *
+    * Main concepts:
+    *   * avoid memcpy as much as possible
+    *   * exchange references between local modules
+    *   * support zero-copy where possible (like InfiniBand VERBS)
+    *   * reuse memory from memory pool, do not allocate/deallocate memory every time
+    *   * provide possibility to gather many segments together (segments list)
+    *
+    * Actual class description need to be done.
     */
 
    class Buffer : public Reference {

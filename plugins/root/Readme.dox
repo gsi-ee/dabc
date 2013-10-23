@@ -21,13 +21,13 @@
 
 
 
-/** \page root_plugin_usage  Use of DABC in ROOT
+/** \page root_plugin_usage  Usage of DABC in ROOT
 
 Introduction
 ============
 
-Main motivation for writing libDabcRoot plugin -  
-provide web interface to the arebitrary ROOT-based analysis. 
+Main motivation for writing of libDabcRoot plugin -  
+provide web interface to the arbitrary ROOT-based analysis. 
 Therefore here functionality of DABC web server
 and its usage is described
 
@@ -37,7 +37,7 @@ DABC Compilation
 
 First of all, ROOT itself should be compiled and configured.
 DABC uses ROOTSYS shell variable, therefore it should be defined before DABC compilation starts.
-One could use ". your_root_path/bin/thisroot.sh" script for that.
+One could use ". your_root_path/bin/thisroot.sh" script.
 
 Normal DABC compilation procedure should be performed, 
 [details can be found here](\ref dabc_getting_started). 

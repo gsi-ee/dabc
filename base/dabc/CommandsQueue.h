@@ -32,6 +32,8 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
+    * Specialized queue to keep commands
+    *
     */
 
    class CommandsQueue {

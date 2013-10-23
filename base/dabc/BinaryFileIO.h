@@ -29,6 +29,8 @@ namespace dabc {
    /** \brief Binary file input object
     *
     * \ingroup dabc_all_classes
+    *
+    * Implements \ref dabc::DataInput for binary dabc files.
     */
 
    class BinaryFileInput : public FileInput {
@@ -59,6 +61,8 @@ namespace dabc {
    /** \brief Binary file output object
     *
     * \ingroup dabc_all_classes
+    *
+    * Implements \ref dabc::DataOutput for binary dabc files.
     */
 
    class BinaryFileOutput : public FileOutput {

@@ -50,7 +50,8 @@ namespace dabc {
     * \ingroup dabc_all_classes
     *
     * All operations should be performed with dabc::Command class
-    * which is reference to this container */
+    * which is reference to this container
+    */
 
    class CommandContainer : public RecordContainer {
 
@@ -89,7 +90,12 @@ namespace dabc {
 
    /** \brief Represents command with its arguments
     *
+    * \ingroup dabc_all_classes
     * \ingroup dabc_core_classes
+    *
+    * Command is just container for command arguments and results.
+    * Execution of command should be implemented in dabc::Worker::ExecuteCommand() method.
+    *
     */
 
    class Command : public Record {

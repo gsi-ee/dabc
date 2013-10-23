@@ -28,124 +28,80 @@
 
 namespace dabc {
 
-   /** \brief %Queue of buffers
-    *
-    * \ingroup dabc_all_classes
-    */
+/** \brief %Queue of buffers
+ *
+ * \ingroup dabc_all_classes
+ *
+ *  Organizes queue of dabc::Buffer objects in memory.
+ *  Locking should be done outside, when necessary.
+ */
 
-      class BuffersQueue {
+   class BuffersQueue {
 
-         protected:
-            std::vector<dabc::Buffer> vect;
+      protected:
+         std::vector<dabc::Buffer> vect;
 
-            unsigned front;
-            unsigned tail;
-            unsigned size;
+         unsigned front;
+         unsigned tail;
+         unsigned size;
 
-         public:
-            BuffersQueue(unsigned capacity) :
-               vect(),
-               front(0),
-               tail(0),
-               size(0)
-            {
-               for (unsigned n=0;n<capacity;n++)
-                  vect.push_back(dabc::Buffer());
+      public:
+         BuffersQueue(unsigned capacity) :
+            vect(),
+            front(0),
+            tail(0),
+            size(0)
+         {
+            for (unsigned n=0;n<capacity;n++)
+               vect.push_back(dabc::Buffer());
+         }
+
+         virtual ~BuffersQueue() { Cleanup(); }
+
+         bool PushBuffer(Buffer& buf)
+         {
+            if (size<vect.size()) {
+               vect[tail] << buf;
+               size++;
+               tail = (tail+1) % vect.size();
+               return true;
             }
+            return false;
+         }
 
-            virtual ~BuffersQueue() { Cleanup(); }
-
-            bool PushBuffer(Buffer& buf)
-            {
-               if (size<vect.size()) {
-                  vect[tail] << buf;
-                  size++;
-                  tail = (tail+1) % vect.size();
-                  return true;
-               }
-               return false;
+         bool PopBuffer(Buffer& buf)
+         {
+            if (size>0) {
+               buf << vect[front];
+               size--;
+               front = (front+1) % vect.size();
+               return true;
             }
+            return false;
+         }
 
-            bool PopBuffer(Buffer& buf)
-            {
-               if (size>0) {
-                  buf << vect[front];
-                  size--;
-                  front = (front+1) % vect.size();
-                  return true;
-               }
-               return false;
-            }
+         unsigned Size() const { return size; }
 
-            unsigned Size() const { return size; }
+         unsigned Capacity() const { return vect.size(); }
 
-            unsigned Capacity() const { return vect.size(); }
+         bool Full() const { return Size() == Capacity(); }
 
-            bool Full() const { return Size() == Capacity(); }
+         bool Empty() const { return size == 0; }
 
-            bool Empty() const { return size == 0; }
+         void Cleanup();
 
-            void Cleanup();
+         void Cleanup(Mutex* m);
 
-            void Cleanup(Mutex* m);
+         /** Returns reference on the Buffer in the queue,
+          * one can create any kind of buffer copies from it */
+         Buffer Item(unsigned n) const
+         {
+            n+=front;
+            if (n>=vect.size()) n = n % vect.size();
+            return this->vect[n];
+         }
 
-            /** Returns reference on the Buffer in the queue,
-             * one can create any kind of buffer copies from it */
-            Buffer Item(unsigned n) const
-            {
-               n+=front;
-               if (n>=vect.size()) n = n % vect.size();
-               return this->vect[n];
-            }
-
-      };
-
-
-
-//   class BuffersQueue : protected Queue<Buffer, false> {
-//
-//      protected:
-//         typedef Queue<Buffer, false> Parent;
-//
-//      public:
-//         BuffersQueue(unsigned capacity) : Parent(capacity) {}
-//
-//         virtual ~BuffersQueue() { Cleanup(); }
-//
-//         bool PushBuffer(Buffer& buf)
-//         {
-//            Buffer* tgt = Parent::PushEmpty();
-//            if (tgt) {
-//               *tgt << buf;
-//               return true;
-//            }
-//            return false;
-//         }
-//
-//         void PopBuffer(Buffer& buf) { buf << Front(); Parent::PopOnly(); }
-//
-//         unsigned Size() const { return Parent::Size(); }
-//
-//         unsigned Capacity() const { return Parent::Capacity(); }
-//
-//         bool Full() const { return Parent::Full(); }
-//
-//         bool Empty() const { return Parent::Empty(); }
-//
-//         void Cleanup();
-//
-//         void Cleanup(Mutex* m);
-//
-//         /** Returns reference on the Buffer in the queue,
-//          * one can create any kind of buffer copies from it */
-//         Buffer& Item(unsigned n) const { return Parent::Item(n); }
-//
-//         /** Return reference on the first item */
-//         Buffer& Front() const { return Parent::Front(); }
-//
-//         /** Return reference on the last item */
-//         Buffer& Back() const { return Parent::Back(); }
-//   };
+   };
 
 }
 

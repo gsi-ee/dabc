@@ -38,6 +38,7 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
+    * Used to find xml nodes, which correspond to dabc objects like module or application
     */
 
    class ConfigIO {

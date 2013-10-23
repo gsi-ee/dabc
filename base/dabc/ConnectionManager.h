@@ -141,6 +141,9 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
+    * Required to establish connection with remote nodes.
+    * Connection are registered to connection manager and established, when remote node
+    * will be available.
     */
 
    class ConnectionManager : public ModuleAsync {
