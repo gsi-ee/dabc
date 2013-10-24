@@ -368,11 +368,11 @@ namespace dabc {
 
       /** \brief Enable time recording for hierarchy element every time when item is changed */
       void EnableTimeRecording(bool withchilds = true)
-      { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
+         { if (GetObject()) GetObject()->EnableTimeRecording(withchilds); }
 
       /** \brief If any field was modified, item will be marked with new version */
       void MarkChangedItems(uint64_t tm = 0)
-      { if (GetObject()) GetObject()->MarkChangedItems(tm); }
+         { if (GetObject()) GetObject()->MarkChangedItems(tm); }
 
       /** \brief Returns true if item records history local, no need to request any other sources */
       bool HasLocalHistory() const;

@@ -44,7 +44,7 @@ div.column {
    background-color: #E6E6FA;
    position: absolute;
    top: 3px;
-   bottom: 17px;
+   bottom: 3px;
    padding: 8px;
 }
 
@@ -56,12 +56,6 @@ input.tb {
 
 .basic div {
    background-color: #eee;
-}
-
-button.closeButton {
-   margin-top: -3px; 
-   margin-right: 2px; 
-   float: right;
 }
 
 #overlay {

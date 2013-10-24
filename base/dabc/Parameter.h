@@ -82,9 +82,21 @@ namespace dabc {
 
          virtual std::string DefaultFiledName() const;
 
-         RecordField GetField(const std::string& name) const;
+         virtual bool HasField(const std::string& name) const
+         { LockGuard guard(ObjectMutex()); return RecordContainer::HasField(name); }
 
-         bool SetField(const std::string& name, const RecordField& v);
+         virtual bool RemoveField(const std::string& name)
+         { LockGuard guard(ObjectMutex()); return RecordContainer::RemoveField(name); }
+
+         virtual unsigned NumFields() const
+           { LockGuard guard(ObjectMutex()); return RecordContainer::NumFields(); }
+
+         virtual std::string FieldName(unsigned cnt) const
+            { LockGuard guard(ObjectMutex()); return RecordContainer::FieldName(cnt); }
+
+         virtual RecordField GetField(const std::string& name) const;
+
+         virtual bool SetField(const std::string& name, const RecordField& v);
 
          /** Method called from manager thread when parameter configured as asynchronous.
           * It is done intentionally to avoid situation that in non-deterministic way event processing
@@ -190,24 +202,15 @@ namespace dabc {
 
          DABC_REFERENCE(Parameter, Record, ParameterContainer)
 
-         bool HasField(const std::string& name) const;
-         bool RemoveField(const std::string& name);
-         unsigned NumFields() const;
-         std::string FieldName(unsigned cnt) const;
-         RecordField GetField(const std::string& name) const
-           { return null() ? RecordField() : GetObject()->GetField(name); }
+         /** \brief Returns parameter value */
+         RecordField Value() const { return GetField(""); }
 
-         bool SetField(const std::string& name, const RecordField& v)
-           { return null() ? false : GetObject()->SetField(name, v); }
+         /** \brief Set parameter value */
+         bool SetValue(const RecordField& v) { return SetField("", v); }
 
-         RecordField Value() const
-          { return null() ? RecordField() : GetObject()->GetField(""); }
-
-         bool SetValue(const RecordField& v)
-          { return null() ? false : GetObject()->SetField("", v); }
-
-         bool Dflt(const RecordField& v)
-          { return (null() || !Value().null()) ? false : SetValue(v); }
+         /** \brief Set default parameter value.
+          *  \detail Only applied in parameter if parameter value was not specified before  */
+         bool Dflt(const RecordField& v) { return Value().null() ? SetValue(v) : false; }
 
          bool NeedTimeout();
 
@@ -315,30 +318,29 @@ namespace dabc {
 
    // _______________________________________________________________________________
 
-   /** \brief Special command definition parameter class
+   /** \brief Command definition class
     *
     * \ingroup dabc_all_classes
     *
-    * This parameter class can only be used with parameters,
+    * This class should be used to create command description,
+    * which than can be used to provide interactive user interface
     * created with CreatePar(name, "cmddef") call or CreateCmdDef(name)
     */
 
-   class CommandDefinition : public Parameter {
+   class CommandDefinition : public Record {
 
       protected:
          // by this we indicate that only parameter specified as info can be referenced
-         virtual const char* ParReferenceKind() { return cmddefkind(); }
 
          std::string ArgName(int n) const;
 
       public:
 
-         DABC_REFERENCE(CommandDefinition, Parameter, ParameterContainer)
+         DABC_REFERENCE(CommandDefinition, Record, RecordContainer)
 
          CommandDefinition& AddArg(const std::string& name, const std::string& kind = "string", bool required = true, const RecordField& dflt = RecordField());
 
          CommandDefinition& SetArgMinMax(const std::string& name, const RecordField& min, const RecordField& max);
-
 
          int NumArgs() const;
 
@@ -351,9 +353,6 @@ namespace dabc {
          /** Create command according command definition,
           * all default and required parameters will be specified */
          Command MakeCommand() const;
-
-         static const char* cmddefkind() { return "cmddef"; }
-
    };
 
 }

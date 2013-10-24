@@ -70,7 +70,8 @@ dabc::SocketAddon::SocketAddon(int fd) :
    fSocket(fd),
    fDoingInput(false),
    fDoingOutput(false),
-   fDeliverEventsToWorker(false)
+   fDeliverEventsToWorker(false),
+   fDeleteWorkerOnClose(false)
 {
 }
 
@@ -142,9 +143,11 @@ void dabc::SocketAddon::OnConnectionClosed()
    } else
    if (fDeleteWorkerOnClose) {
       DOUT2("Connection closed - destroy socket");
+      CloseSocket();
       DeleteWorker();
    } else {
       DOUT2("Connection closed - destroy addon");
+      CloseSocket();
       DeleteAddonItself();
    }
 }
@@ -157,8 +160,10 @@ void dabc::SocketAddon::OnSocketError(int errnum, const std::string& info)
       FireWorkerEvent(evntSocketErrorInfo);
    } else
    if (fDeleteWorkerOnClose) {
+      CloseSocket();
       DeleteWorker();
    } else {
+      CloseSocket();
       DeleteAddonItself();
    }
 }

@@ -111,7 +111,6 @@ namespace dabc {
  */
 
 
-
 dabc::Object::Object(const std::string& name, unsigned flags) :
    fObjectFlags(flags),
    fObjectParent(),

@@ -22,6 +22,10 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+#ifndef DABC_CommandsQueue
+#include "dabc/CommandsQueue.h"
+#endif
+
 #ifndef DABC_SocketThread
 #include "dabc/SocketThread.h"
 #endif
@@ -38,13 +42,18 @@
 namespace mbs {
 
 
+   /** \brief Addon class to retrieve status record from MBS server
+    *
+    **/
+
+
    class DaqStatusAddon : public dabc::SocketIOAddon {
 
       protected:
 
          enum IOState {
-            ioInit,          // initial state
-            ioRecvHeader,      // receiving server info
+            ioInit,           // initial state
+            ioRecvHeader,     // receiving server info
             ioRecvData,
             ioDone,
             ioError
@@ -73,6 +82,64 @@ namespace mbs {
          mbs::DaqStatus& GetStatus() { return fStatus; }
    };
 
+   // ======================================================================
+
+
+   class DaqCommandAddon : public dabc::SocketIOAddon {
+      protected:
+         enum IOState {
+            ioInit,           // initial state
+            ioRecvHeader,     // receiving header
+            ioRecvExtra,      // receiving extra data
+            ioDone,           // operation completed
+            ioError
+         };
+
+         IOState fState;          ///< if true, addon is active processing current command
+         char fSendBuf[256];
+         char fRecvBuf[8];
+         int  fExtraBlock;
+
+         dabc::Buffer fExtraBuf;
+
+         virtual void OnThreadAssigned();
+
+         virtual void OnRecvCompleted();
+
+         virtual void OnConnectionClosed()
+         {
+            dabc::SocketIOAddon::OnConnectionClosed();
+            EOUT("OnConnectionClosed");
+         }
+         virtual void OnSocketError(int errnum, const std::string& info)
+         {
+            dabc::SocketIOAddon::OnSocketError(errnum, info);
+            EOUT("OnSocketError");
+         }
+
+
+         virtual double ProcessTimeout(double last_diff);
+
+      public:
+         DaqCommandAddon(int fd);
+
+         bool AssignCmd(const std::string& prompter, const std::string& cmd, int extrablock = 0);
+
+         bool FinishCmd();
+
+         bool IsActive() const { return (fState==ioRecvHeader) || (fState==ioRecvExtra); }
+         bool IsResultOk() const { return (fState==ioDone); }
+         bool IsError() const { return (fState==ioError); }
+
+         int GetEndian() const;
+         int GetStatus() const;
+
+   };
+
+
+
+
+   // ======================================================================
 
 
    /** \brief Player of MBS data
@@ -90,11 +157,23 @@ namespace mbs {
          std::string       fMbsNode;
          double            fPeriod;
 
+         /** If not empty, command connection will be established
+          * Same argument should be specified when starting prompter in MBS like
+          * prm -r myvalue
+          */
+         std::string       fPrompter;
+
          mbs::DaqStatus    fStatus;
 
          dabc::TimeStamp   fStamp;
 
+         dabc::SocketAddonRef fCmdAddon;
+
+         dabc::CommandsQueue fCmds;
+
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
+
+         void ProcessNextMbsCommand();
 
       public:
 

@@ -168,7 +168,7 @@ void hadaq::DataSocketAddon::MakeCallback(unsigned arg)
 
    if (tr==0) {
       EOUT("Did not found InputTransport on other side worker %p", fWorker());
-      SubmitWorkerCmd("CloseTransport");
+      SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
       // DOUT0("Activate CallBack with arg %u", arg);
       tr->Read_CallBack(arg);

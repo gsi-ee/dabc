@@ -53,7 +53,7 @@ void dabc::WorkerAddon::DeleteWorker()
 void dabc::WorkerAddon::DeleteAddonItself()
 {
    if (fWorker.null()) DeleteThis();
-                else SubmitWorkerCmd("DeleteAddon");
+                else SubmitWorkerCmd(dabc::Command("DeleteAddon"));
 }
 
 void dabc::WorkerAddon::FireWorkerEvent(unsigned evid)
@@ -73,11 +73,11 @@ bool dabc::WorkerAddon::ActivateTimeout(double tmout_sec)
    return wrk->fThread._ActivateAddonTimeout(wrk->fWorkerId, wrk->WorkerPriority(), tmout_sec);
 }
 
-void dabc::WorkerAddon::SubmitWorkerCmd(const std::string& cmdname)
+void dabc::WorkerAddon::SubmitWorkerCmd(Command cmd)
 {
    dabc::Worker* wrk = (dabc::Worker*) fWorker();
 
-   if (wrk) wrk->Submit(cmdname);
+   if (wrk) wrk->Submit(cmd);
 }
 
 // ================================================================================
@@ -567,7 +567,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
    Parameter par = Par(name);
    if (par.null()) {
 
-      bool hidden = (kind == CommandDefinition::cmddefkind());
+      bool hidden = (kind == "cmddef");
 
       ParameterContainer* cont = new ParameterContainer(this, name, kind, hidden);
 
@@ -595,9 +595,8 @@ bool dabc::Worker::DestroyPar(const std::string& name)
 
 dabc::CommandDefinition dabc::Worker::CreateCmdDef(const std::string& name)
 {
-   return CreatePar(name, CommandDefinition::cmddefkind());
+   return CreatePar(name, "cmddef");
 }
-
 
 bool dabc::Worker::Find(ConfigIO &cfg)
 {

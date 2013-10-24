@@ -335,35 +335,6 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
 // --------------------------------------------------------------------------------
 
 
-bool dabc::Parameter::HasField(const std::string& name) const
-{
-   if (null()) return false;
-   LockGuard lock(ObjectMutex());
-   return GetObject()->Fields().HasField(name);
-}
-
-bool dabc::Parameter::RemoveField(const std::string& name)
-{
-   if (null()) return false;
-   if (name == "value") return false;
-   LockGuard lock(ObjectMutex());
-   return GetObject()->Fields().RemoveField(name);
-}
-
-unsigned dabc::Parameter::NumFields() const
-{
-   if (null()) return 0;
-   LockGuard lock(ObjectMutex());
-   return GetObject()->Fields().NumFields();
-}
-
-std::string dabc::Parameter::FieldName(unsigned cnt) const
-{
-   if (null()) return std::string();
-   LockGuard lock(ObjectMutex());
-   return GetObject()->Fields().FieldName(cnt);
-}
-
 bool dabc::Parameter::NeedTimeout()
 {
    LockGuard lock(ObjectMutex());
@@ -629,8 +600,6 @@ dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name
 
    if (required)
       SetField(prefix+"_req", required);
-
-   FireConfigured();
 
    return *this;
 }

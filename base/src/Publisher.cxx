@@ -519,7 +519,14 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             size_t p = part.find("=");
             if ((p==std::string::npos) || (p==0) || (p==part.length()-1)) break;
 
-            res.SetStr(part.substr(0,p), part.substr(p+1));
+            std::string parname = part.substr(0,p);
+            std::string parvalue = part.substr(p+1);
+
+            size_t pos;
+            while ((pos = parvalue.find("%20")) != std::string::npos)
+               parvalue.replace(pos, 3, " ");
+
+            res.SetStr(parname, parvalue);
 
             // DOUT0("************ CMD ARG %s = %s", part.substr(0,p-1).c_str(), part.substr(p+1).c_str());
 

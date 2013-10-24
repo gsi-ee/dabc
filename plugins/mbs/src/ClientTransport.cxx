@@ -170,7 +170,7 @@ void mbs::ClientTransport::OnConnectionClosed()
 //   DOUT0("Close mbs client connection");
 
    // from this moment we have nothing to do and can close transport
-   SubmitWorkerCmd("CloseTransport");
+   SubmitWorkerCmd(dabc::Command("CloseTransport"));
 
    dabc::SocketIOAddon::OnConnectionClosed();
 }
@@ -198,7 +198,7 @@ double mbs::ClientTransport::ProcessTimeout(double last_diff)
 {
    if (fState == ioRecvInfo) {
       EOUT("Did not get server info in reasonable time");
-      SubmitWorkerCmd("CloseTransport");
+      SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 
    return -1;
@@ -222,7 +222,7 @@ void mbs::ClientTransport::MakeCallback(unsigned arg)
    if (tr==0) {
       EOUT("Didnot found DataInputTransport on other side worker %p", fWorker());
       fState = ioError;
-      SubmitWorkerCmd("CloseTransport");
+      SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
       // DOUT0("Activate CallBack with arg %u", arg);
       tr->Read_CallBack(arg);

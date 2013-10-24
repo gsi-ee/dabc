@@ -69,7 +69,7 @@ namespace dabc {
          /** This is possibility to delete addon itself, invoking worker command */
          void DeleteAddonItself();
 
-         void SubmitWorkerCmd(const std::string& cmdname);
+         void SubmitWorkerCmd(Command cmd);
 
          void FireWorkerEvent(unsigned evid);
 

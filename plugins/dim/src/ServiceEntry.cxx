@@ -160,7 +160,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
       if (skind == dabc::Record::kind_unsigned()) kind = kindInt; else
       if (skind == dabc::Record::kind_str()) kind = kindString; else
       if ((skind == dabc::InfoParameter::infokind()) || par.IsName("Info")) kind = kindInfo; else
-      if (skind == dabc::CommandDefinition::cmddefkind()) kind = kindCommand; else
+      if (skind == "cmddef") kind = kindCommand; else
       if (skind == "state") kind = kindStatus;
 
       if (kind==kindNone) kind = kindString;

@@ -1,5 +1,5 @@
 --------------------------------------------------------------
-         The Data Acquisition Backbone Core 
+          The Data Acquisition Backbone Core 
          DABC Release v2.3.6 (10-October-2013)
 -------------------------------------------------------------
 Copyright (C) 2009 -      

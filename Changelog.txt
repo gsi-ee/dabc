@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+24.10.2013
+1. First try to implement communication with MBS promter.
+   In heneral works, one should decide that to do with commands like "$nodes"
+   or "$file name", which return extra information.
+2. Make CommandDefinition derived from Hierarchy class that one can 
+   publish commands directly in hierarchy. Up to now commands was possible
+   to publiched only via the parameter. 
+
+
 10.10.2013
 1. Small changes in readme.
 2. Create 203-05 tag.

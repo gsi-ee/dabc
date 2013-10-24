@@ -377,6 +377,24 @@ namespace dabc {
          /** \brief Replaces existing fields map */
          void SetFieldsMap(RecordFieldsMap* newmap);
 
+         virtual bool HasField(const std::string& name) const
+            { return Fields().HasField(name); }
+
+         virtual bool RemoveField(const std::string& name)
+            { return Fields().RemoveField(name); }
+
+         virtual unsigned NumFields() const
+            { return Fields().NumFields(); }
+
+         virtual std::string FieldName(unsigned cnt) const
+            { return Fields().FieldName(cnt); }
+
+         virtual RecordField GetField(const std::string& name) const
+            { return Fields().Field(name); }
+
+         virtual bool SetField(const std::string& name, const RecordField& v)
+            { return Fields().Field(name).SetValue(v); }
+
       public:
 
          virtual ~RecordContainer();
@@ -396,6 +414,24 @@ namespace dabc {
    class Record : public Reference  {
 
       DABC_REFERENCE(Record, Reference, RecordContainer)
+
+      bool HasField(const std::string& name) const
+        { return null() ? false : GetObject()->HasField(name); }
+
+      bool RemoveField(const std::string& name)
+        { return null() ? false : GetObject()->RemoveField(name); }
+
+      unsigned NumFields() const
+        { return null() ? 0 : GetObject()->NumFields(); }
+
+      std::string FieldName(unsigned cnt) const
+        { return null() ? std::string() : GetObject()->FieldName(cnt); }
+
+      RecordField GetField(const std::string& name) const
+        { return null() ? RecordField() : GetObject()->GetField(name); }
+
+      bool SetField(const std::string& name, const RecordField& v)
+        { return null() ? false : GetObject()->SetField(name, v); }
 
    };
 

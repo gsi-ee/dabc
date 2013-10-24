@@ -61,9 +61,9 @@ namespace dabc {
 
       protected:
 
-         int           fSocket;
-         bool          fDoingInput;
-         bool          fDoingOutput;
+         int           fSocket;                 ///< socket handle
+         bool          fDoingInput;             ///< true if input data are expected
+         bool          fDoingOutput;            ///< true if data need to be send
          bool          fDeliverEventsToWorker;  ///< if true, completion events will be delivered to the worker
          bool          fDeleteWorkerOnClose;    ///< if true, worker will be deleted when socket closed or socket in error
 
@@ -111,6 +111,7 @@ namespace dabc {
          virtual std::string RequiredThrdClass() const { return typeSocketThread; }
 
          inline int Socket() const { return fSocket; }
+         inline bool IsSocket() const { return Socket() >= 0; }
 
          inline bool IsDoingInput() const { return fDoingInput; }
          inline bool IsDoingOutput() const { return fDoingOutput; }
@@ -124,6 +125,15 @@ namespace dabc {
          bool IsDeliverEventsToWorker() const { return fDeliverEventsToWorker; }
          void SetDeliverEventsToWorker(bool on = true) { fDeliverEventsToWorker = on; }
    };
+
+
+   class SocketAddonRef : public WorkerAddonRef {
+      DABC_REFERENCE(SocketAddonRef, WorkerAddonRef, SocketAddon)
+
+      bool IsSocket() const
+         { return GetObject() ? GetObject()->IsSocket() : false; }
+   };
+
 
    // ______________________________________________________________________
 

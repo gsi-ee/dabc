@@ -330,8 +330,17 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       url += "=";
       if ((argkind=="int") && (argmin!=null) && (argmax!=null))
          url += arginp.spinner("value");
-      else
-         url += arginp.val();
+      else {
+         var str = new String(arginp.val()); 
+         
+         url += str;
+/*         
+         if (str.indexOf(" ")<0) 
+            url += str;
+         else
+            url += "'" + str + "'";
+*/            
+      }
    }
    
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);

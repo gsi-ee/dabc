@@ -207,11 +207,11 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TDirectory*) obj)->GetList(), lvl+1);
    } else
    if (obj->InheritsFrom(TTree::Class())) {
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
+      // if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfLeaves(), lvl+1);
    } else
    if (obj->InheritsFrom(TBranch::Class())) {
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
+      // if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
       if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
    }
    return res;

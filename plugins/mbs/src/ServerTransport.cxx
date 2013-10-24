@@ -102,7 +102,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
 
    if (strcmp(f_sbuf, "CLOSE")==0) {
       fState = oDoingClose;
-      SubmitWorkerCmd("CloseTransport");
+      SubmitWorkerCmd(dabc::Command("CloseTransport"));
       return;
    }
 
@@ -132,7 +132,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
       default:
          EOUT("Get request at wrong state %d", fState);
          fState = oError;
-         SubmitWorkerCmd("CloseTransport");
+         SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 }
 
@@ -143,7 +143,7 @@ void mbs::ServerOutputAddon::MakeCallback(unsigned arg)
    if (tr==0) {
       EOUT("Didnot found OutputTransport on other side worker %p", fWorker());
       fState = oError;
-      SubmitWorkerCmd("CloseTransport");
+      SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
       // DOUT0("Activate CallBack with arg %u", arg);
       tr->Write_CallBack(arg);
