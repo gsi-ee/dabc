@@ -82,11 +82,44 @@ namespace mbs {
          mbs::DaqStatus& GetStatus() { return fStatus; }
    };
 
-   // ======================================================================
+   // =====================================================================
 
-
-   class DaqCommandAddon : public dabc::SocketIOAddon {
+   class DaqLogWorker : public dabc::Worker {
       protected:
+
+         struct MbsLogRec {
+            int32_t iOrder;
+            int32_t iType;
+            int32_t iStatus;
+            char fBuffer[512];
+         };
+
+         std::string fMbsNode;
+         MbsLogRec  fRec;
+
+         bool CreateAddon();
+
+         virtual void OnThreadAssigned();
+
+         virtual double ProcessTimeout(double last_diff);
+
+         virtual void ProcessEvent(const dabc::EventId&);
+
+      public:
+         DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode);
+         virtual ~DaqLogWorker();
+
+         virtual std::string RequiredThrdClass() const
+           {  return dabc::typeSocketThread; }
+
+   };
+
+   // ========================================================================
+
+
+   class DaqCmdWorker : public dabc::Worker {
+      protected:
+
          enum IOState {
             ioInit,           // initial state
             ioRecvHeader,     // receiving header
@@ -95,48 +128,36 @@ namespace mbs {
             ioError
          };
 
-         IOState fState;          ///< if true, addon is active processing current command
-         char fSendBuf[256];
-         char fRecvBuf[8];
-         int  fExtraBlock;
+         std::string       fMbsNode;
+         std::string       fPrompter;
 
-         dabc::Buffer fExtraBuf;
+         dabc::CommandsQueue fCmds;
 
-         virtual void OnThreadAssigned();
+         IOState           fState;
+         char              fSendBuf[256];
+         char              fRecvBuf[8];
+         int               fExtraBlock;
+         dabc::Buffer      fExtraBuf;
 
-         virtual void OnRecvCompleted();
+         int GetStatus() const { return *((int32_t*) (fRecvBuf+4)); }
 
-         virtual void OnConnectionClosed()
-         {
-            dabc::SocketIOAddon::OnConnectionClosed();
-            EOUT("OnConnectionClosed");
-         }
-         virtual void OnSocketError(int errnum, const std::string& info)
-         {
-            dabc::SocketIOAddon::OnSocketError(errnum, info);
-            EOUT("OnSocketError");
-         }
+         int GetEndian() const { return *((int32_t*) (void*) fRecvBuf); }
 
+         virtual void ProcessEvent(const dabc::EventId&);
 
          virtual double ProcessTimeout(double last_diff);
 
+         virtual int ExecuteCommand(dabc::Command cmd);
+
+         void ProcessNextMbsCommand();
+
+
       public:
-         DaqCommandAddon(int fd);
+         DaqCmdWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, const std::string& prompter);
 
-         bool AssignCmd(const std::string& prompter, const std::string& cmd, int extrablock = 0);
-
-         bool FinishCmd();
-
-         bool IsActive() const { return (fState==ioRecvHeader) || (fState==ioRecvExtra); }
-         bool IsResultOk() const { return (fState==ioDone); }
-         bool IsError() const { return (fState==ioError); }
-
-         int GetEndian() const;
-         int GetStatus() const;
+         virtual ~DaqCmdWorker();
 
    };
-
-
 
 
    // ======================================================================
@@ -163,17 +184,20 @@ namespace mbs {
           */
          std::string       fPrompter;
 
+         bool              fWithLogger; ///< if true, logger will be tried to created
+
          mbs::DaqStatus    fStatus;
 
          dabc::TimeStamp   fStamp;
 
-         dabc::SocketAddonRef fCmdAddon;
-
-         dabc::CommandsQueue fCmds;
-
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
-         void ProcessNextMbsCommand();
+         virtual void OnThreadAssigned();
+
+         virtual int ExecuteCommand(dabc::Command cmd);
+
+         virtual void ProcessTimerEvent(unsigned timer);
+
 
       public:
 
@@ -183,10 +207,9 @@ namespace mbs {
          virtual std::string RequiredThrdClass() const
            {  return dabc::typeSocketThread; }
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         std::string MbsNodeName() const { return fMbsNode; }
 
-         virtual int ExecuteCommand(dabc::Command cmd);
-
+         void NewMessage(const std::string& msg);
    };
 }
 

@@ -128,135 +128,6 @@ void mbs::DaqStatusAddon::OnRecvCompleted()
 
 // =========================================================================
 
-mbs::DaqCommandAddon::DaqCommandAddon(int fd) :
-   dabc::SocketIOAddon(fd),
-   fState(ioInit),
-   fExtraBlock(0),
-   fExtraBuf()
-{
-}
-
-bool mbs::DaqCommandAddon::AssignCmd(const std::string& prompter, const std::string& cmd, int extrablock)
-{
-   if (fState != ioInit) {
-      EOUT("Addon processing previous command");
-      return false;
-   }
-
-   std::string s = dabc::format("%s:%s", prompter.c_str(), cmd.c_str());
-   if (s.length()>=sizeof(fSendBuf)) {
-      EOUT("Send command too long %u", s.length());
-      return false;
-   }
-
-   DOUT0("Start sending:%s",s.c_str());
-
-   fExtraBlock = extrablock;
-
-   memset(fSendBuf, 0, sizeof(fSendBuf));
-   memcpy(fSendBuf, s.c_str(), s.length()+1);
-   memset(fRecvBuf, 0, sizeof(fRecvBuf));
-
-   return true;
-}
-
-bool mbs::DaqCommandAddon::FinishCmd()
-{
-   if ((fState == ioDone) && (fExtraBlock>0)) {
-      dabc::Pointer ptr = fExtraBuf;
-
-      for (int n=0;n<GetStatus();n++) {
-         DOUT0("extraline %2d = %s", n, (const char*) ptr());
-         ptr.shift(fExtraBlock);
-      }
-   }
-
-   fState = ioInit;
-   return true;
-}
-
-void mbs::DaqCommandAddon::OnThreadAssigned()
-{
-   DOUT0("mbs::DaqCommandAddon::OnThreadAssigned");
-
-   StartRecv(fRecvBuf, sizeof(fRecvBuf));
-   StartSend(fSendBuf, sizeof(fSendBuf));
-
-   fState = ioRecvHeader;
-
-   ActivateTimeout(10.);
-}
-
-
-double mbs::DaqCommandAddon::ProcessTimeout(double last_diff)
-{
-   fState = ioError;
-   SubmitWorkerCmd(dabc::Command("ProcessCmdCompleted"));
-   EOUT("MBS command timeout %s", fSendBuf);
-   return -1;
-}
-
-int mbs::DaqCommandAddon::GetStatus() const
-{
-   return *((int32_t*) (fRecvBuf+4));
-}
-
-int mbs::DaqCommandAddon::GetEndian() const
-{
-   return *((int32_t*) (void*) fRecvBuf);
-}
-
-void mbs::DaqCommandAddon::OnRecvCompleted()
-{
-   DOUT0("mbs::DaqCommandAddon::OnRecvCompleted state %d", fState);
-
-   if (fState == ioRecvHeader) {
-
-      if (GetEndian()!=1)
-         mbs::SwapData(fRecvBuf, sizeof(fRecvBuf));
-
-      DOUT0("mbs::DaqCommandAddon::OnRecvCompleted endian %d status %d", GetEndian(), GetStatus());
-
-      if (GetEndian()!=1) {
-         fState = ioError; // indicate that we get wrong data
-      } else
-      if (fExtraBlock * GetStatus() == 0) {
-         fState = (GetStatus() == 0) ? ioDone : ioError; // if status==0, everything went ok
-      } else
-      if (GetStatus() < 2) {
-         fState = ioError; // when requesting extra information, status should be at least 2
-      } else {
-
-         // prompter sends endian and status after extra block again
-         unsigned extra_size = fExtraBlock * GetStatus() + 8;
-
-         if (fExtraBuf.GetTotalSize() < extra_size)
-            fExtraBuf = dabc::Buffer::CreateBuffer(extra_size);
-
-         DOUT0("start extra recv %u", extra_size);
-
-         StartRecv(fExtraBuf.SegmentPtr(), extra_size);
-
-         fState = ioRecvExtra;
-      }
-   } else
-   if (fState == ioRecvExtra) {
-      fState = ioDone;
-   } else {
-      EOUT("Get recv complete at wrong moment of time");
-      fState = ioError;
-   }
-
-   DOUT0("mbs::DaqCommandAddon::OnRecvCompleted finishing %d", fState);
-
-   if ((fState == ioDone) || (fState == ioError)) {
-      DOUT0("Finishing command execution %s", fSendBuf);
-      SubmitWorkerCmd(dabc::Command("ProcessCmdCompleted"));
-   }
-}
-
-// =========================================================================
-
 mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fHierarchy(),
@@ -264,15 +135,14 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fMbsNode(),
    fPeriod(1.),
    fStatus(),
-   fStamp(),
-   fCmdAddon(),
-   fCmds(dabc::CommandsQueue::kindPostponed)
+   fStamp()
 {
 
    fMbsNode = Cfg("node", cmd).AsStr();
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    int history = Cfg("history", cmd).AsInt(200);
    fPrompter = Cfg("prompter", cmd).AsStr();
+   fWithLogger = Cfg("logger", cmd).AsBool();
 
    fHierarchy.Create("MBS");
    //fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
@@ -290,6 +160,12 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("rate");
    if (history>1) item.EnableHistory(history);
 
+   if (fWithLogger) {
+      item = fHierarchy.CreateChild("logger");
+      item.Field(dabc::prop_kind).SetStr("log");
+      if (history>1) item.EnableHistory(history);
+   }
+
    item = fHierarchy.CreateChild("rate_log");
    item.Field(dabc::prop_kind).SetStr("log");
    if (history>1) item.EnableHistory(history);
@@ -306,7 +182,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("log");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("CmdStart");
+/*   item = fHierarchy.CreateChild("CmdStart");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 
    item = fHierarchy.CreateChild("CmdNodes");
@@ -314,7 +190,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    item = fHierarchy.CreateChild("CmdFiles");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
-
+*/
    dabc::CommandDefinition cmddef = fHierarchy.CreateChild("CmdMbs");
    cmddef.SetField(dabc::prop_kind, "DABC.Command");
    cmddef.AddArg("cmd", "string", true, "show rate");
@@ -324,18 +200,6 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fCounter = 0;
 
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
-
-   if (!fPrompter.empty()) {
-      int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6006);
-      if (fd<=0) {
-         EOUT("Fail open prompter 6006 port on node %s", fMbsNode.c_str());
-         return;
-      }
-
-      fCmdAddon = new DaqCommandAddon(fd);
-
-      // AssignAddon(new DaqStatusAddon(fd));
-   }
 
    // from this point on Publisher want to get regular update for the hierarchy
    Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
@@ -347,6 +211,15 @@ mbs::Player::~Player()
 {
 }
 
+void mbs::Player::OnThreadAssigned()
+{
+   if (fWithLogger) {
+      DaqLogWorker* logger = new DaqLogWorker(this, "DaqLogger", fMbsNode);
+      logger->AssignToThread(thread());
+   }
+
+   dabc::ModuleAsync::OnThreadAssigned();
+}
 
 void mbs::Player::FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
 {
@@ -855,6 +728,8 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 
 void mbs::Player::ProcessTimerEvent(unsigned timer)
 {
+//   DOUT0("+++++++++++++++++++++++++++ Process timer!!!");
+
    if (fMbsNode.empty()) {
        fCounter++;
 
@@ -871,12 +746,28 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
        return;
    }
 
+//   DOUT0("+++++++++++++++++++++++++++ Process timer!!!");
+
    // this indicated that addon is active and we should not touch it
    if (!fAddon.null()) return;
 
    int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
-   if (fd<=0) return;
+   if (fd<=0) { EOUT("FAIL port 6008 for node %s", fMbsNode.c_str()); return; }
+
+//   DOUT0("Create port 6008");
+
    AssignAddon(new DaqStatusAddon(fd));
+}
+
+void mbs::Player::NewMessage(const std::string& msg)
+{
+   dabc::Hierarchy item = fHierarchy.FindChild("logger");
+
+   if (!item.null()) {
+      item.Field("value").SetStr(msg);
+      item.Field("value").SetModified(true);
+      fHierarchy.MarkChangedItems();
+   }
 }
 
 
@@ -914,29 +805,7 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
          fStamp = stamp;
 
          AssignAddon(0);
-
-         ProcessNextMbsCommand();
       }
-
-      return dabc::cmd_true;
-   } else
-   if (cmd.IsName("ProcessCmdCompleted")) {
-      mbs::DaqCommandAddon* cmdadd = dynamic_cast<mbs::DaqCommandAddon*> (fCmdAddon());
-
-      if ((cmdadd==0) || cmdadd->IsError()) {
-         fCmdAddon.Release(); // socket will be destroyed
-         fCmds.Pop().Reply(dabc::cmd_false);
-      } else {
-
-         DOUT0("Get completed from command status = %d", cmdadd->GetStatus());
-         fCmds.Pop().Reply(cmd_bool(cmdadd->IsResultOk()));
-
-         cmdadd->FinishCmd();
-      }
-
-      AssignAddon(0);
-
-      ProcessNextMbsCommand();
 
       return dabc::cmd_true;
    } else
@@ -946,48 +815,258 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
        cmd.IsName("CmdNodes") ||
        cmd.IsName("CmdMbs")) {
 
-      DOUT0("Get new command %s", cmd.GetName());
+      if (fPrompter.empty()) return dabc::cmd_false;
 
-      if (!fPrompter.empty()) {
-         fCmds.Push(cmd);
-         ProcessNextMbsCommand();
-         return dabc::cmd_postponed;
-      } else
-         return dabc::cmd_false;
+      dabc::WorkerRef wrk = FindChildRef("CmdPrompt");
+
+      if (wrk.null()) {
+         DaqCmdWorker* cmdwrk = new DaqCmdWorker(this, "CmdPrompt", fMbsNode, fPrompter);
+         cmdwrk->AssignToThread(thread());
+         wrk = cmdwrk;
+      }
+
+      wrk.Submit(cmd);
+
+      // DOUT0("Get new command %s", cmd.GetName());
+
+      return dabc::cmd_postponed;
    }
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-void mbs::Player::ProcessNextMbsCommand()
+// =====================================================================
+
+mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode) :
+   dabc::Worker(parent, name),
+   fMbsNode(mbsnode)
 {
-   if ((fCmds.Size()==0) || !fAddon.null()) return;
+}
 
-   if (!fCmdAddon.IsSocket()) fCmdAddon.Release();
+mbs::DaqLogWorker::~DaqLogWorker()
+{
+   DOUT0("Destroy DaqLogWorker");
+}
 
-   if (fCmdAddon.null()) {
+
+bool mbs::DaqLogWorker::CreateAddon()
+{
+   if (!fAddon.null()) return true;
+
+   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6007);
+   if (fd<=0) {
+      EOUT("Fail open log 6007 port on node %s", fMbsNode.c_str());
+      return false;
+   }
+
+   dabc::SocketIOAddon* add = new dabc::SocketIOAddon(fd);
+   add->SetDeliverEventsToWorker(true);
+   AssignAddon(add);
+
+   memset(&fRec, 0, sizeof(fRec));
+   add->StartRecv(&fRec, sizeof(fRec));
+
+   return true;
+}
+
+
+void mbs::DaqLogWorker::OnThreadAssigned()
+{
+   if (!CreateAddon()) ActivateTimeout(5);
+
+   DOUT0("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
+}
+
+double mbs::DaqLogWorker::ProcessTimeout(double last_diff)
+{
+   return -1;
+
+   // use timeout to reconnect with the logger
+   if (CreateAddon()) return -1;
+   return 5.;
+}
+
+
+void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
+{
+   switch (evnt.GetCode()) {
+      case dabc::SocketAddon::evntSocketRecvInfo: {
+
+         DOUT0("Get MSG: %s",fRec.fBuffer);
+
+         mbs::Player* pl = dynamic_cast<mbs::Player*> (GetParent());
+         if (pl) pl->NewMessage(fRec.fBuffer);
+
+         memset(&fRec, 0, sizeof(fRec));
+
+         dabc::SocketIOAddon* add = dynamic_cast<dabc::SocketIOAddon*>(fAddon());
+         if (add) add->StartRecv(&fRec, sizeof(fRec));
+         break;
+      }
+      case dabc::SocketAddon::evntSocketErrorInfo:
+      case dabc::SocketAddon::evntSocketCloseInfo:
+         EOUT("Problem with logger - reconnect");
+         AssignAddon(0);
+         // ActivateTimeout(1);
+         break;
+      default:
+         dabc::Worker::ProcessEvent(evnt);
+   }
+
+}
+
+// =================================================================
+
+mbs::DaqCmdWorker::DaqCmdWorker(const dabc::Reference& parent, const std::string& name,
+                                const std::string& mbsnode, const std::string& prompter) :
+   dabc::Worker(parent, name),
+   fMbsNode(mbsnode),
+   fPrompter(prompter),
+   fCmds(dabc::CommandsQueue::kindPostponed),
+   fState(ioInit),
+   fExtraBlock(0),
+   fExtraBuf()
+{
+}
+
+mbs::DaqCmdWorker::~DaqCmdWorker()
+{
+   DOUT0("Destroy DaqCmdWorker");
+}
+
+
+void mbs::DaqCmdWorker::ProcessEvent(const dabc::EventId& evnt)
+{
+   switch (evnt.GetCode()) {
+      case dabc::SocketAddon::evntSocketSendInfo: {
+         // this is just confirmation that data was send
+//         dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
+
+//         addon->StartRecv(fRecvBuf, sizeof(fRecvBuf));
+
+         // DOUT0("dabc::SocketAddon::evntSocketSendInfo");
+         break;
+      }
+      case dabc::SocketAddon::evntSocketRecvInfo: {
+
+         // DOUT0("dabc::SocketAddon::evntSocketRecvInfo");
+
+         if (fState == ioRecvHeader) {
+
+            if (GetEndian()!=1)
+               mbs::SwapData(fRecvBuf, sizeof(fRecvBuf));
+
+            if (GetEndian()!=1) {
+               fState = ioError; // indicate that we get wrong data
+            } else
+            if (fExtraBlock * GetStatus() == 0) {
+               fState = (GetStatus() == 0) ? ioDone : ioError; // if status==0, everything went ok
+            } else
+            if (GetStatus() < 2) {
+               fState = ioError; // when requesting extra information, status should be at least 2
+            } else {
+
+               // prompter sends endian and status after extra block again
+               unsigned extra_size = fExtraBlock * GetStatus() + 8;
+
+               if (fExtraBuf.GetTotalSize() < extra_size)
+                  fExtraBuf = dabc::Buffer::CreateBuffer(extra_size);
+
+               dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
+
+               addon->StartRecv(fExtraBuf.SegmentPtr(), extra_size);
+
+               fState = ioRecvExtra;
+            }
+         } else
+         if (fState == ioRecvExtra) {
+            fState = ioDone;
+         } else {
+            EOUT("Get recv complete at wrong moment of time");
+            fState = ioError;
+         }
+
+         // DOUT0("mbs::DaqCmdWorker::OnRecvCompleted finishing %d", fState);
+
+         if ((fState == ioDone) || (fState == ioError)) {
+            fCmds.Pop().Reply(cmd_bool(fState == ioDone));
+            fState = ioInit;
+            ProcessNextMbsCommand();
+         }
+
+         break;
+      }
+      case dabc::SocketAddon::evntSocketErrorInfo:
+      case dabc::SocketAddon::evntSocketCloseInfo:
+         // error, we cancel command execution and issue timeout to try again
+         AssignAddon(0);
+         if ((fState!=ioInit) && (fCmds.Size()>0)) {
+            fCmds.Pop().Reply(dabc::cmd_false);
+            fState = ioInit;
+         }
+
+         ActivateTimeout(1.);
+         break;
+      default:
+         dabc::Worker::ProcessEvent(evnt);
+   }
+}
+
+double mbs::DaqCmdWorker::ProcessTimeout(double last_diff)
+{
+   ProcessNextMbsCommand();
+
+   return -1;
+}
+
+int mbs::DaqCmdWorker::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("CmdStart") ||
+       cmd.IsName("CmdFiles") ||
+       cmd.IsName("CmdNodes") ||
+       cmd.IsName("CmdMbs")) {
+
+      // DOUT0("Get new command %s", cmd.GetName());
+
+      fCmds.Push(cmd);
+      ProcessNextMbsCommand();
+      return dabc::cmd_postponed;
+   }
+
+   return dabc::Worker::ExecuteCommand(cmd);
+}
+
+void mbs::DaqCmdWorker::ProcessNextMbsCommand()
+{
+   // start next command when previous is completed
+   if (fState != ioInit) return;
+
+   if (fCmds.Size()==0) return;
+
+   dabc::SocketIOAddon* addon = 0;
+
+   if (fAddon.null()) {
       int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6006);
       if (fd<=0) {
          EOUT("Fail open prompter 6006 port on node %s", fMbsNode.c_str());
-      } else {
-
-         DOUT0("Create new socket %d to MBS prompter", fd);
-
-         fCmdAddon = new DaqCommandAddon(fd);
+         ActivateTimeout(5);
+         return;
       }
+
+      addon = new dabc::SocketIOAddon(fd);
+      addon->SetDeliverEventsToWorker(true);
+
+      DOUT0("ADDON:%p Create cmd socket %d to mbs %s:6006", addon, fd, fMbsNode.c_str());
+
+      AssignAddon(addon);
+   } else {
+     addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
    }
 
-   mbs::DaqCommandAddon* cmdadd = dynamic_cast<mbs::DaqCommandAddon*> (fCmdAddon());
-
-   if ((cmdadd==0) || !fCmdAddon.IsSocket()) {
-
-      EOUT("Reply all with false!!!!");
-      fCmdAddon.Release();
-      fCmds.ReplyAll(dabc::cmd_false);
-      return;
+   if ((addon==0) || !addon->IsSocket()) {
+      EOUT("Something went wrong");
+      exit(5);
    }
-
-   if (cmdadd->IsActive()) return;
 
    std::string mbscmd = "show rate";
    int mbsblock = 0;
@@ -1000,14 +1079,25 @@ void mbs::Player::ProcessNextMbsCommand()
    if (mbscmd.find("$nodes")==0) mbsblock = 64; else
    if (mbscmd.find("$file ")==0) mbsblock = 80;
 
-   if (!cmdadd->AssignCmd(fPrompter,mbscmd,mbsblock)) {
-      EOUT("Fail to assign command!!");
+
+   std::string s = dabc::format("%s:%s", fPrompter.c_str(), mbscmd.c_str());
+   if (s.length() >= sizeof(fSendBuf)) {
+      EOUT("Send command too long %u", s.length());
       fCmds.Pop().Reply(dabc::cmd_false);
+      ProcessNextMbsCommand();
       return;
    }
 
-   DOUT0("Submitting cmd %s", mbscmd.c_str());
+   DOUT0("MBS-CMD:  %s", s.c_str());
 
-   AssignAddon(cmdadd);
+   fExtraBlock = mbsblock;
+
+   memset(fSendBuf, 0, sizeof(fSendBuf));
+   memcpy(fSendBuf, s.c_str(), s.length()+1);
+   memset(fRecvBuf, 0, sizeof(fRecvBuf));
+
+   addon->StartRecv(fRecvBuf, sizeof(fRecvBuf));
+   addon->StartSend(fSendBuf, sizeof(fSendBuf));
+
+   fState = ioRecvHeader;
 }
-
