@@ -113,7 +113,7 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
    return 0;
 }
 
-int command_shell()
+int command_shell(const char* node)
 {
    dabc::Configuration cfg;
 
@@ -124,7 +124,7 @@ int command_shell()
 
    dabc::mgr()->CreateControl(false);
 
-   dabc::mgr.RunCmdLoop(1000);
+   dabc::mgr.RunCmdLoop(1000, node);
 
    dabc::mgr()->HaltManager();
 
@@ -142,7 +142,9 @@ int main(int numc, char* args[])
 
    DOUT2("Start  cnt = %u", dabc::Object::NumInstances());
 
-   if ((numc>1) and (strcmp(args[1],"cmd")==0)) return command_shell();
+   if ((numc>1) and (strcmp(args[1],"cmd")==0)) {
+      return command_shell(numc>2 ? args[2] : "");
+   }
 
    const char* cfgfile(0);
 
@@ -218,6 +220,9 @@ int main(int numc, char* args[])
 
    if (res==0)
       dabc::mgr.Execute("InitFactories");
+
+   if (cfg.WithPublisher() > 0)
+      dabc::mgr.CreatePublisher();
 
    dabc::Application::ExternalFunction* runfunc =
          (dabc::Application::ExternalFunction*)

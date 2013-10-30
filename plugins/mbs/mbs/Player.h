@@ -188,7 +188,7 @@ namespace mbs {
 
          mbs::DaqStatus    fStatus;
 
-         dabc::TimeStamp   fStamp;
+         dabc::TimeStamp   fStatStamp; ///< time when last status was obtained
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
@@ -210,6 +210,8 @@ namespace mbs {
          std::string MbsNodeName() const { return fMbsNode; }
 
          void NewMessage(const std::string& msg);
+
+         void NewStatus(mbs::DaqStatus& stat);
    };
 }
 

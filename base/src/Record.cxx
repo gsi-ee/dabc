@@ -1288,6 +1288,21 @@ void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
       Field("dabc:del").SetStrVect(delfields);
 }
 
+void dabc::RecordFieldsMap::ApplyDiff(const RecordFieldsMap& diff)
+{
+   for (FieldsMap::const_iterator iter = diff.fMap.begin(); iter!=diff.fMap.end(); iter++) {
+      if (iter->first != "dabc:del") {
+         fMap[iter->first] = iter->second;
+         fMap[iter->first].fModified = true;
+      } else {
+         std::vector<std::string> delfields = iter->second.AsStrVect();
+         for (unsigned n=0;n<delfields.size();n++)
+            RemoveField(delfields[n]);
+      }
+   }
+}
+
+
 // ===============================================================================
 
 
@@ -1342,4 +1357,3 @@ dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t par
 
    return node;
 }
-

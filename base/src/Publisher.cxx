@@ -31,7 +31,7 @@ dabc::PublisherEntry::~PublisherEntry()
 // ======================================================================
 
 dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd),
+   dabc::Worker(MakePair(name)),
    fGlobal(),
    fLocal(),
    fLastLocalVers(0),
@@ -41,8 +41,6 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    fMgrHiearchy()
 {
    fLocal.Create("LOCAL");
-
-   CreateTimer("Timer", 0.5);
 
    if (Cfg("manager",cmd).AsBool(false))
       fMgrHiearchy.Create("Manager");
@@ -56,9 +54,11 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    if (!Cfg("store", cmd).AsBool()) fStoreDir.clear();
 
    DOUT2("Create publisher");
+
+   DOUT0("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
 }
 
-void dabc::Publisher::BeforeModuleStart()
+void dabc::Publisher::OnThreadAssigned()
 {
    if (!fMgrHiearchy.null()) {
       std::string path = "DABC/";
@@ -79,6 +79,8 @@ void dabc::Publisher::BeforeModuleStart()
 
       fLocal.GetFolder(path, true);
    }
+
+   ActivateTimeout(0.1);
 }
 
 void dabc::Publisher::InvalidateGlobal()
@@ -91,7 +93,7 @@ void dabc::Publisher::InvalidateGlobal()
 }
 
 
-void dabc::Publisher::ProcessTimerEvent(unsigned timer)
+double dabc::Publisher::ProcessTimeout(double last_diff)
 {
 //   DOUT0("dabc::Publisher::ProcessTimerEvent");
 
@@ -221,6 +223,8 @@ void dabc::Publisher::ProcessTimerEvent(unsigned timer)
 
       // here direct request can be submitted, do it later, may be even not here
    }
+
+   return 0.5;
 }
 
 void dabc::Publisher::CheckDnsSubscribers()
@@ -296,7 +300,7 @@ bool dabc::Publisher::ReplyCommand(Command cmd)
       return true;
    }
 
-   return dabc::ModuleAsync::ReplyCommand(cmd);
+   return dabc::Worker::ReplyCommand(cmd);
 }
 
 
@@ -475,6 +479,16 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       return cmd_true;
    } else
+   if (cmd.IsName("GetGlobalNamesList")) {
+      std::string path = cmd.GetStr("path");
+      dabc::Hierarchy h = GetWorkItem(path);
+      if (h.null()) return cmd_false;
+
+      Buffer buf = h.SaveToBuffer(dabc::stream_NamesList);
+
+      cmd.SetRawData(buf);
+      return cmd_true;
+   } else
    if (cmd.IsName("GetGlobalNamesListAsXml")) {
 
       std::string path = cmd.GetStr("path");
@@ -631,7 +645,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_postponed;
    }
 
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
+   return dabc::Worker::ExecuteCommand(cmd);
 }
 
 // ===================================================================

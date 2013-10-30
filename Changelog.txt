@@ -2,6 +2,22 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+30.10.2013
+1. Provide HistoryIter class, which can be used to iterate over history.
+   Class derived from Record, therefore directly from iterator one can
+   access fields.
+2. Adjust command shell and go4gui access to dabc. One can request hierarchy
+   and single elements.    
+
+
+29.10.2013
+1. Adjustment on MBS side (v6.3). Now one can reconnect somehow to the log channel.
+   But still some messages can be lost.
+2. Derived dabc::Publisher class from worker, create it automatically when
+   http::Server is created. One can also specify <publisher value="true"/>
+   in the <Run> section.   
+
+
 28.10.2013
 1. First try to readout MBS logger (port 6007). Working, but MBS itself 
    do not allows reconnection. Need to change on MBS side.

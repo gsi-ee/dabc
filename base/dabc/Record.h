@@ -337,6 +337,10 @@ namespace dabc {
           * Also dabc:delete field can appear which marks all removed fields */
          void MakeAsDiffTo(const RecordFieldsMap& src);
 
+         /** \brief Apply diff map
+          * One should use fields, generated with MakeAsDiffTo call */
+         void ApplyDiff(const RecordFieldsMap& diff);
+
          /** \brief Create complete copy of fields map */
          RecordFieldsMap* Clone();
 

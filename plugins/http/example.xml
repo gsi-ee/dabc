@@ -22,7 +22,7 @@
        <!--auth_domain value="dabc@server"/-->
     </HttpServer>
     
-    <Module name="Publisher" class="dabc::Publisher">
+    <Publisher name="publ">
        <manager value="true"/>
        <store value="false"/>
        <storedir value="/data.local1/hstore/"/>
@@ -30,7 +30,7 @@
        <filelimit value="100"/>
        <timelimit value="600"/>
        <period value="10"/>
-    </Module>
+    </Publisher>
 
     <Module name="fesa_monitor" class="fesa::Monitor">
        <Server value="DummyDevice_DU.linev.asl732"/>
@@ -53,6 +53,7 @@
        <period value="1"/>
        <history value="100"/>
        <prompter value="lxg0538"/>
+       <logger value="true"/>
     </Module>
 
     <MemoryPool name="Pool">

@@ -605,7 +605,7 @@ int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 
    dabc::SocketCommandClientRef worker = ProvideWorker(remnodename, 1);
 
-   // DOUT0("SEARCH node %s receiver %s worker %p", remnodename.c_str(), cmd.GetReceiver().c_str(), worker());
+   DOUT2("SEARCH node %s receiver %s worker %p", remnodename.c_str(), cmd.GetReceiver().c_str(), worker());
 
    if (worker.null()) return dabc::Worker::PreviewCommand(cmd);
 

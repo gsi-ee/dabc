@@ -1025,10 +1025,12 @@ bool dabc::Worker::RegisterForParameterEvent(const std::string& mask, bool onlyc
    return dabc::mgr.ParameterEventSubscription(this, true, mask, onlychangeevent);
 }
 
+
 bool dabc::Worker::UnregisterForParameterEvent(const std::string& mask)
 {
    return dabc::mgr.ParameterEventSubscription(this, false, mask);
 }
+
 
 std::string dabc::Worker::WorkerAddress(bool full)
 {
@@ -1038,7 +1040,7 @@ std::string dabc::Worker::WorkerAddress(bool full)
 
 dabc::Reference dabc::Worker::GetPublisher()
 {
-   if (fPublisher.null()) fPublisher = dabc::mgr.FindModule(dabc::Publisher::DfltName());
+   if (fPublisher.null()) fPublisher = dabc::mgr.FindItem(dabc::Publisher::DfltName());
    return fPublisher;
 }
 
@@ -1047,6 +1049,7 @@ bool dabc::Worker::Publish(const Hierarchy& h, const std::string& path)
 {
    return PublisherRef(GetPublisher()).Register(path, ItemName(), h());
 }
+
 
 bool dabc::Worker::PublishPars(const std::string& path)
 {

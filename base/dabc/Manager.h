@@ -437,7 +437,7 @@ namespace dabc {
          void RunManagerMainLoop(double runtime = 0.);
 
          /** \brief Runs manager command loop - when command shell is used. */
-         void RunManagerCmdLoop(double runtime = 0.);
+         void RunManagerCmdLoop(double runtime = 0., const std::string& remnode = "");
 
          bool DoCleanupApplication();
 
@@ -687,8 +687,8 @@ namespace dabc {
             { if (GetObject()) GetObject()->RunManagerMainLoop(runtime); }
 
          /** \brief Run manager command loop */
-         void RunCmdLoop(double runtime = 0.)
-            { if (GetObject()) GetObject()->RunManagerCmdLoop(runtime); }
+         void RunCmdLoop(double runtime = 0., const std::string& remnode = "")
+            { if (GetObject()) GetObject()->RunManagerCmdLoop(runtime, remnode); }
 
          WorkerRef GetCommandChannel()
            { return GetObject() ? GetObject()->GetCommandChannel() : WorkerRef();  }
@@ -700,7 +700,6 @@ namespace dabc {
          /** \brief Defines unique identifier for the application.
           * Default include node name and process id */
          bool SetLocalId(const std::string& name);
-
 
          /** \brief Create publisher, which manage all published hierarchies */
          bool CreatePublisher();

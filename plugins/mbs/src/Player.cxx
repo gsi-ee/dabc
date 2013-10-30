@@ -135,7 +135,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fMbsNode(),
    fPeriod(1.),
    fStatus(),
-   fStamp()
+   fStatStamp()
 {
 
    fMbsNode = Cfg("node", cmd).AsStr();
@@ -203,7 +203,6 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    // from this point on Publisher want to get regular update for the hierarchy
    Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
-
 }
 
 
@@ -752,11 +751,10 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
    if (!fAddon.null()) return;
 
    int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
-   if (fd<=0) { EOUT("FAIL port 6008 for node %s", fMbsNode.c_str()); return; }
-
-//   DOUT0("Create port 6008");
-
-   AssignAddon(new DaqStatusAddon(fd));
+   if (fd<=0)
+      EOUT("FAIL port 6008 for node %s", fMbsNode.c_str());
+   else
+      AssignAddon(new DaqStatusAddon(fd));
 }
 
 void mbs::Player::NewMessage(const std::string& msg)
@@ -770,6 +768,33 @@ void mbs::Player::NewMessage(const std::string& msg)
    }
 }
 
+void mbs::Player::NewStatus(mbs::DaqStatus& stat)
+{
+   dabc::TimeStamp stamp;
+   stamp.GetNow();
+
+   double tmdiff = stamp.AsDouble() - fStatStamp.AsDouble();
+   if (tmdiff<=0) {
+      EOUT("Wrong time calculation");
+      return;
+   }
+
+   if (!fStatus.null() && (tmdiff>0)) {
+      FillStatistic("-u", "rate_log", &fStatus, &stat, tmdiff);
+      FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
+      FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
+      FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
+
+      //DOUT0("MBS version is %u", fHierarchy.GetVersion());
+
+      fCounter++;
+   }
+
+   memcpy(&fStatus, &stat, sizeof(stat));
+
+   fStatStamp = stamp;
+}
+
 
 int mbs::Player::ExecuteCommand(dabc::Command cmd)
 {
@@ -777,35 +802,9 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
 
       mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon());
 
-      if (tr) {
-         dabc::TimeStamp stamp;
-         stamp.GetNow();
+      if (tr) NewStatus(tr->GetStatus());
 
-         mbs::DaqStatus& stat = tr->GetStatus();
-
-         double tmdiff = stamp.AsDouble() - fStamp.AsDouble();
-         if (tmdiff<=0) {
-            EOUT("Wrong time calculation");
-            return dabc::cmd_true;
-         }
-
-         if (!fStatus.null() && (tmdiff>0)) {
-            FillStatistic("-u", "rate_log", &fStatus, &stat, tmdiff);
-            FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
-            FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
-            FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
-
-            //DOUT0("MBS version is %u", fHierarchy.GetVersion());
-
-            fCounter++;
-         }
-
-         memcpy(&fStatus, &stat, sizeof(stat));
-
-         fStamp = stamp;
-
-         AssignAddon(0);
-      }
+      AssignAddon(0);
 
       return dabc::cmd_true;
    } else
@@ -879,8 +878,6 @@ void mbs::DaqLogWorker::OnThreadAssigned()
 
 double mbs::DaqLogWorker::ProcessTimeout(double last_diff)
 {
-   return -1;
-
    // use timeout to reconnect with the logger
    if (CreateAddon()) return -1;
    return 5.;
@@ -907,7 +904,7 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
       case dabc::SocketAddon::evntSocketCloseInfo:
          EOUT("Problem with logger - reconnect");
          AssignAddon(0);
-         // ActivateTimeout(1);
+         ActivateTimeout(1);
          break;
       default:
          dabc::Worker::ProcessEvent(evnt);

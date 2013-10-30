@@ -16,8 +16,8 @@
 #ifndef DABC_Publisher
 #define DABC_Publisher
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
 #include <list>
@@ -41,15 +41,12 @@ namespace dabc {
       DABC_COMMAND(CmdGetBinary, "CmdGetBinary");
    };
 
-
    class CmdSubscriber : public Command {
       DABC_COMMAND(CmdSubscriber, "CmdSubscriber");
 
       void SetEntry(const Hierarchy& e) { SetRef("entry", e); }
       Hierarchy GetEntry() { return GetRef("entry"); }
-
    };
-
 
    struct PublisherEntry {
       unsigned id;          // unique id in the worker
@@ -106,7 +103,7 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class Publisher : public dabc::ModuleAsync {
+   class Publisher : public dabc::Worker {
 
       friend class PublisherRef;
 
@@ -136,18 +133,19 @@ namespace dabc {
          int         fTimeLimit;  ///! maximum time of store file, in seconds
          double      fStorePeriod; ///! how often storage is triggered
 
+         virtual void OnThreadAssigned();
+
+         virtual double ProcessTimeout(double last_diff);
+
          virtual int ExecuteCommand(Command cmd);
 
          virtual bool ReplyCommand(Command cmd);
 
-         virtual void ProcessTimerEvent(unsigned timer);
 
          void CheckDnsSubscribers();
 
          /** \brief Method marks that global version is out of date and should be rebuild */
          void InvalidateGlobal();
-
-         virtual void BeforeModuleStart();
 
          bool ApplyEntryDiff(unsigned recid, dabc::Buffer& buf, uint64_t version, bool witherror = false);
 
@@ -160,13 +158,15 @@ namespace dabc {
 
          Publisher(const std::string& name, dabc::Command cmd = 0);
 
-         static const char* DfltName() { return "Publisher"; }
+         static const char* DfltName() { return "/publ"; }
+
+         virtual const char* ClassName() const { return "Publisher"; }
    };
 
    // ==============================================================
 
-   class PublisherRef : public ModuleAsyncRef {
-      DABC_REFERENCE(PublisherRef, ModuleAsyncRef, Publisher)
+   class PublisherRef : public WorkerRef {
+      DABC_REFERENCE(PublisherRef, WorkerRef, Publisher)
 
       bool Register(const std::string& path, const std::string& workername, void* hierarchy)
       {  return OwnCommand(1, path, workername, hierarchy); }

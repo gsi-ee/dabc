@@ -653,6 +653,18 @@ void dabc::HierarchyContainer::AddHistory(RecordFieldsMap* diff)
    h->fields = diff;
 }
 
+bool dabc::HierarchyContainer::ExtractHistoryStep(RecordFieldsMap* fields, unsigned step)
+{
+   if (fHist.Capacity()<=step) return false;
+
+   RecordFieldsMap* hfields = fHist()->fArr.Item(fHist.Capacity()-step-1).fields;
+
+   fields->ApplyDiff(*hfields);
+
+   return true;
+}
+
+
 void dabc::HierarchyContainer::ClearHistoryEntries()
 {
    if (fHist.Capacity()==0) return;
@@ -1143,5 +1155,68 @@ void dabc::Hierarchy::EnableReading(const Hierarchy& upto)
       if (prnt == upto) break;
       prnt = prnt.GetParentRef();
    }
+}
+
+
+// =====================================================
+
+namespace dabc {
+   class HistoryIterContainer : public RecordContainer {
+      friend class HistoryIter;
+
+      protected:
+         Hierarchy fSrc;
+         int fCnt;
+
+         bool next()
+         {
+            if (fSrc.null()) return false;
+
+            if (fCnt<=0) {
+               RecordFieldsMap* fields = fSrc()->Fields().Clone();
+               SetFieldsMap(fields);
+               fCnt=1;
+               return true;
+            }
+
+            if (fSrc()->ExtractHistoryStep(&Fields(), fCnt-1)) {
+               fCnt++;
+               return true;
+            }
+
+            SetFieldsMap(new RecordFieldsMap);
+            fCnt = 0;
+
+            return false;
+         }
+
+      public:
+
+         HistoryIterContainer(Hierarchy& src) :
+            RecordContainer(src.GetName()),
+            fSrc(src),
+            fCnt(0)
+         {
+         }
+
+   };
+}
+
+
+bool dabc::HistoryIter::next()
+{
+   HistoryIterContainer* cont = dynamic_cast<HistoryIterContainer*> (GetObject());
+
+   return cont ? cont->next() : false;
+}
+
+dabc::HistoryIter dabc::Hierarchy::MakeHistoryIter()
+{
+   dabc::HistoryIter res;
+
+   if (!null())
+      res = new HistoryIterContainer(*this);
+
+   return res;
 }
 

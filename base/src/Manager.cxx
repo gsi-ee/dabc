@@ -59,6 +59,8 @@ namespace dabc {
 
          virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd);
 
+         virtual Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+
          virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
 
          virtual DataOutput* CreateDataOutput(const std::string& typ);
@@ -135,11 +137,17 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname
    if (classname == "dabc::RepeaterModule")
       return new dabc::RepeaterModule(modulename, cmd);
 
-   if (classname == "dabc::Publisher")
-      return new dabc::Publisher(modulename, cmd);
-
    return 0;
 }
+
+dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+{
+   if (classname == "dabc::Publisher")
+      return new dabc::Publisher(objname, cmd);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
+
 
 dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd)
 {
@@ -1643,7 +1651,7 @@ int inputAvailable()
 
 #include <iostream>
 
-void dabc::Manager::RunManagerCmdLoop(double runtime)
+void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode)
 {
    DOUT0("Enter dabc::Manager::RunManagerCmdLoop");
 
@@ -1695,13 +1703,18 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
 
       std::string str;
 
-      if (first) {
+      if (first && !remnode.empty()) {
          first = false;
-         str = "connect lxg0538:4444";
+         str = std::string("connect ") + remnode;
+         printf("cmd>%s\n",str.c_str());
       } else {
+         first = false;
          if (inputAvailable()<=0) continue;
+         printf("cmd>"); fflush(stdout);
          std::getline(std::cin, str);
       }
+
+      if (str.empty()) continue;
 
       if ((str=="quit") || (str=="exit") || (str==".q")) break;
 
@@ -1753,10 +1766,11 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
       if (cmd.IsName("update")) {
          // TODO: hierarchy must be requested from the publisher
 
-         Command cmd2("GetHierarchy");
-         cmd2.SetInt("version", rem_hierarchy.GetVersion());
-         cmd2.SetReceiver(tgtnode);
+         Command cmd2("GetGlobalNamesList");
+         cmd2.SetReceiver(tgtnode + dabc::Publisher::DfltName());
          cmd2.SetTimeout(5.);
+
+         DOUT0("Set receiver %s",cmd2.GetReceiver().c_str());
 
          if (GetCommandChannel().Execute(cmd2)!=cmd_true) {
             DOUT0("Fail to get hierarchy");
@@ -1766,9 +1780,12 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
          dabc::Buffer buf = cmd2.GetRawData();
 
          if (!buf.null()) {
+
+            rem_hierarchy.Release();
+
             // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-            if (rem_hierarchy.UpdateFromBuffer(buf)) {
-               DOUT2("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
+            if (rem_hierarchy.ReadFromBuffer(buf)) {
+               DOUT0("Read from remote done");
             }
          }
 
@@ -1783,6 +1800,31 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
          continue;
       }
 
+      if (cmd.IsName("get")) {
+         std::string path = cmd.GetStr("Arg0");
+         int hlimit = cmd.GetInt("Arg1");
+
+         CmdPublisherGet cmd2;
+         cmd2.SetStr("Item", path);
+         cmd2.SetUInt("history", hlimit);
+         cmd2.SetTimeout(5.);
+         cmd2.SetReceiver(tgtnode + dabc::Publisher::DfltName());
+
+         if (GetCommandChannel().Execute(cmd2)!=cmd_true) {
+            DOUT0("Fail to get item %s", path.c_str());
+            continue;
+         }
+
+         dabc::Hierarchy res;
+         res.Create("get");
+         res.SetVersion(cmd2.GetUInt("version"));
+         res.ReadFromBuffer(cmd2.GetRawData());
+
+         DOUT0("GET:%s len:%d RES = \n%s", path.c_str(), hlimit, res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0).c_str());
+
+         continue;
+      }
+
 
       cmd.SetReceiver(tgtnode);
       cmd.SetTimeout(5.);
@@ -1793,7 +1835,6 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
          DOUT0("Command %s timeout", cmd.GetName());
       else
          DOUT0("Command %s res = %d", cmd.GetName(), res);
-
    }
 }
 
@@ -2196,7 +2237,6 @@ bool dabc::ManagerRef::SetLocalId(const std::string& name)
    return true;
 }
 
-
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 {
    if (GetObject())
@@ -2207,15 +2247,11 @@ void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 
 bool dabc::ManagerRef::CreatePublisher()
 {
-   PublisherRef ref = FindModule(dabc::Publisher::DfltName());
+   PublisherRef ref = FindItem(dabc::Publisher::DfltName());
    if (!ref.null()) return true;
 
-   CmdCreateModule cmd("dabc::Publisher", dabc::Publisher::DfltName(), "PublisherThrd");
-
-   if (Execute(cmd) != cmd_true) return false;
-
-   StartModule(dabc::Publisher::DfltName());
+   ref = new dabc::Publisher(dabc::Publisher::DfltName());
+   ref.MakeThreadForWorker("PublisherThrd");
 
    return true;
 }
-

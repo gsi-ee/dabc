@@ -143,6 +143,16 @@ int dabc::Configuration::UseControl()
    return 0;
 }
 
+int dabc::Configuration::WithPublisher()
+{
+   if (fSelected==0) return 0;
+   std::string res = Find1(fSelected, "", xmlRunNode, "publisher");
+   if (res == xmlFalseValue) return -1;
+   if (res == xmlTrueValue) return 1;
+   return 0;
+}
+
+
 std::string dabc::Configuration::MasterName()
 {
    if (fSelected==0) return std::string("");

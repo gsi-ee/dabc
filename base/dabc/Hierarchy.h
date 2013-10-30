@@ -76,7 +76,6 @@ namespace dabc {
 
    // ===================================================================================
 
-
    struct HistoryItem {
       public:
          uint64_t version;          ///< version number
@@ -92,7 +91,7 @@ namespace dabc {
       public:
 
          bool        fEnabled;               ///< indicates if history recording is enabled
-         bool        fChildsEnabled;          ///< true if history recording also was enabled for childs
+         bool        fChildsEnabled;         ///< true if history recording also was enabled for childs
          RecordFieldsMap* fPrev;             ///< map with previous set of attributes
          RecordsQueue<HistoryItem> fArr;     ///< container with history items
          uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
@@ -128,6 +127,7 @@ namespace dabc {
          }
    };
 
+
    class History : public Reference {
       DABC_REFERENCE(History, Reference, HistoryContainer)
 
@@ -144,6 +144,17 @@ namespace dabc {
       unsigned Size() const { return null() ? 0 : GetObject()->fArr.Size(); }
 
       bool SaveInXmlNode(XMLNodePointer_t histnode, uint64_t version = 0, unsigned hlimit = 0);
+   };
+
+   // =======================================================
+
+   class HistoryIterContainer;
+
+   class HistoryIter : public Record {
+
+      DABC_REFERENCE(HistoryIter, Record, RecordContainer)
+
+      bool next();
    };
 
    // =================================================================
@@ -169,6 +180,8 @@ namespace dabc {
    class HierarchyContainer : public RecordContainer {
 
       friend class Hierarchy;
+      friend class HistoryIter;
+      friend class HistoryIterContainer;
 
       protected:
 
@@ -236,6 +249,9 @@ namespace dabc {
          /** \brief Add new entry to history */
          void AddHistory(RecordFieldsMap* diff);
 
+         /** \brief Extract values of specified history step */
+         bool ExtractHistoryStep(RecordFieldsMap* fields, unsigned step);
+
          /** \brief Clear all entries in history, but not history object itself */
          void ClearHistoryEntries();
 
@@ -269,6 +285,7 @@ namespace dabc {
          void SetVersion(uint64_t v) { fNodeVersion = v; }
 
          void CreateHMutex();
+
 
       public:
          HierarchyContainer(const std::string& name);
@@ -338,12 +355,6 @@ namespace dabc {
        * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
       std::string FindBinaryProducer(std::string& request_name);
 
-      bool HasField(const std::string& name) const { return GetObject() ? GetObject()->Fields().HasField(name) : false; }
-      bool RemoveField(const std::string& name) { return GetObject() ? GetObject()->Fields().RemoveField(name) : false; }
-
-      unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
-      std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
-
       RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
       const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
 
@@ -390,7 +401,7 @@ namespace dabc {
       bool UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamKind kind = stream_Full);
 
       /** \brief Store hierarchy in form of xml
-       *  mask select that is saved. Following values are used
+       *  \details mask select that is saved. Following values are used
           * xmlmask_Compact - use compact form of
           * xmlmask_Version - store version attributes for all nodes
           * xmlmask_TopVersion - append hierarchy version to the top node
@@ -435,6 +446,9 @@ namespace dabc {
 
       /** \brief Create folder in hierarchy, one could use it to add new childs to it */
       Hierarchy CreateFolder(const std::string& name) { return CreateChild(name); }
+
+      /** \brief Produce history iterator */
+      HistoryIter MakeHistoryIter();
    };
 
 

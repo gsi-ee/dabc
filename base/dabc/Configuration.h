@@ -86,6 +86,12 @@ namespace dabc {
          /** Return default affinity of any newly created thread */
          std::string Affinity();
 
+         /** \brief Returns true when publisher should be created
+          * \returns -1 - when publisher="false" specified
+          *           0 - when publisher not specified
+          *          +1 - when publisher="true" specified */
+         int  WithPublisher();
+
          /** Method is used to find xml nodes like Module, MemoryPool, Connection in
           * the xml file which should be used for autocreation */
          bool NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast);

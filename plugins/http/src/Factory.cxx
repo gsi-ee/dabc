@@ -15,6 +15,7 @@
 
 #include "http/Factory.h"
 
+#include "dabc/Manager.h"
 #include "http/Server.h"
 
 dabc::FactoryPlugin httpfactory(new http::Factory("http"));
@@ -29,6 +30,8 @@ void http::Factory::Initialize()
    } else {
       DOUT0("Initialize HTTP server");
       dabc::WorkerRef(serv).MakeThreadForWorker("HttpThread");
+
+      dabc::mgr.CreatePublisher();
    }
 }
 

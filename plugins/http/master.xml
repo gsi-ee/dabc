@@ -20,7 +20,7 @@
        <!--auth_domain value="dabc@server"/-->
     </HttpServer>
     
-    <Module name="Publisher" class="dabc::Publisher">
+    <Publisher name="publ">
        <manager value="true"/>
        <store value="false"/>
        <storedir value="/data.local1/hstore/"/>
@@ -28,7 +28,7 @@
        <filelimit value="100"/>
        <timelimit value="600"/>
        <period value="10"/>
-    </Module>
+    </Publisher>
 
   </Context>
 </dabc>

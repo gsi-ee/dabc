@@ -54,11 +54,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <port value="8090"/>
     </HttpServer>
 
-    <!-- publisher module used by web server to get all services. Set auto="true" to enable its creation -->
-    <Module name="Publisher" class="dabc::Publisher" auto="true">
-       <manager value="false"/>
-    </Module>
-    
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
