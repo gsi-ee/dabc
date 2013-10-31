@@ -69,6 +69,12 @@ namespace dabc {
          zipped = 0;
          payload = 0;
       }
+
+      /** \brief returns true if content of buffer is zipped */
+      bool is_zipped() const
+        { return (zipped>0) && (payload>0); }
+
+      void* rawdata() const { return (char*) this + sizeof(BinDataHeader); }
    };
 
 #pragma pack(pop)
