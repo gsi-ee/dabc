@@ -1,8 +1,8 @@
 #include "DabcRoot.h"
 
 #include "dabc/Command.h"
+#include "dabc/api.h"
 #include "dabc/Manager.h"
-#include "dabc/Configuration.h"
 
 #include "dabc_root/RootSniffer.h"
 
@@ -10,17 +10,11 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 {
    if (!dabc::mgr.null()) return false;
 
-   static dabc::Configuration dabc_root_cfg;
-
    dabc::SetDebugLevel(0);
 
-   new dabc::Manager("dabc", &dabc_root_cfg);
+   dabc::CreateManager("dabc", -1);
 
-   dabc::mgr.SyncWorker();
-
-   dabc::mgr.Execute("InitFactories");
-
-   dabc::mgr.CreateThread("MainThread");
+   // dabc::mgr.CreateThread("MainThread");
 
    dabc::mgr.CreatePublisher();
 
@@ -32,7 +26,6 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 
    dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
    sniff->InstallSniffTimer();
-
    dabc::WorkerRef w2 = sniff;
    w2.MakeThreadForWorker("MainThread");
 
@@ -59,17 +52,11 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
       return false;
    }
 
-   static dabc::Configuration dabc_root_cfg;
-
    dabc::SetDebugLevel(0);
 
-   new dabc::Manager("dabc", &dabc_root_cfg);
+   dabc::CreateManager("dabc", 0);
 
-   dabc::mgr.SyncWorker();
-
-   dabc::mgr.Execute("InitFactories");
-
-   dabc::mgr.CreateThread("MainThread");
+//   dabc::mgr.CreateThread("MainThread");
 
    dabc::mgr.CreatePublisher();
 

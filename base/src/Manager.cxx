@@ -28,6 +28,7 @@
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/threads.h"
+#include "dabc/api.h"
 
 #include "dabc/Transport.h"
 #include "dabc/Module.h"
@@ -747,15 +748,19 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
    }
 }
 
-bool dabc::Manager::CreateControl(bool withserver)
+bool dabc::Manager::CreateControl(bool withserver, int serv_port)
 {
    WorkerRef ref = GetCommandChannel();
    if (!ref.null()) return true;
 
    dabc::CmdCreateObject cmd("SocketCommandChannel", CmdChlName());
    cmd.SetBool("WithServer", withserver);
-   if (withserver && cfg())
-      cmd.SetInt("ServerPort", cfg()->MgrPort());
+   if (withserver && cfg()) {
+      int port = cfg()->MgrPort();
+      if (port<=0) port = serv_port;
+      if (port<=0) port = defaultDabcPort;
+      cmd.SetInt("ServerPort", port);
+   }
 
    ref = DoCreateObject("SocketCommandChannel", CmdChlName(), cmd);
 
@@ -1716,7 +1721,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
 
       if (str.empty()) continue;
 
-      if ((str=="quit") || (str=="exit") || (str==".q")) break;
+      if ((str=="quit") || (str=="exit") || (str==".q") || (str=="q")) break;
 
       dabc::Command cmd;
       if (!cmd.ReadFromCmdString(str)) {
@@ -1764,30 +1769,8 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
       }
 
       if (cmd.IsName("update")) {
-         // TODO: hierarchy must be requested from the publisher
 
-         Command cmd2("GetGlobalNamesList");
-         cmd2.SetReceiver(tgtnode + dabc::Publisher::DfltName());
-         cmd2.SetTimeout(5.);
-
-         DOUT0("Set receiver %s",cmd2.GetReceiver().c_str());
-
-         if (GetCommandChannel().Execute(cmd2)!=cmd_true) {
-            DOUT0("Fail to get hierarchy");
-            continue;
-         }
-
-         dabc::Buffer buf = cmd2.GetRawData();
-
-         if (!buf.null()) {
-
-            rem_hierarchy.Release();
-
-            // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-            if (rem_hierarchy.ReadFromBuffer(buf)) {
-               DOUT0("Read from remote done");
-            }
-         }
+         rem_hierarchy = dabc::GetNodeHierarchy(tgtnode);
 
          continue;
       }

@@ -5,9 +5,8 @@
 #include <ncurses.h>
 #include <menu.h>
 
+#include "dabc/api.h"
 #include "dabc/Manager.h"
-#include "dabc/Hierarchy.h"
-#include "dabc/Configuration.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 #define CTRLD  4
@@ -19,66 +18,7 @@ const char *choices[] = {"Choice 1",
                          "Exit",
                          0};
 
-dabc::Configuration cfg;
 std::string fNodeName;
-dabc::Hierarchy hierarchy;
-
-
-bool ConnectNode(const char* nodename)
-{
-   if ((nodename==0) || (strlen(nodename)==0)) return false;
-
-   new dabc::Manager("cmd", &cfg);
-
-   // ensure that all submitted events are processed
-   dabc::mgr.SyncWorker();
-
-   dabc::mgr.CreatePublisher();
-
-   dabc::mgr()->CreateControl(false);
-
-   fNodeName = std::string("dabc://") + nodename;
-
-   dabc::Command cmd("Ping");
-   cmd.SetReceiver(fNodeName);
-   cmd.SetTimeout(5.);
-
-   int res = dabc::mgr.GetCommandChannel().Execute(cmd);
-
-   if (res != dabc::cmd_true) {
-      printf("FAIL connection to %s\n", fNodeName.c_str());
-      fNodeName.clear();
-   }
-
-   printf("Connection to %s done\n", fNodeName.c_str());
-   return true;
-}
-
-bool UpdateHierarchy()
-{
-   // TODO: hierarchy must be requested from the publisher
-   dabc::Command cmd("GetHierarchy");
-   cmd.SetInt("version", hierarchy.GetVersion());
-   cmd.SetReceiver(fNodeName);
-   cmd.SetTimeout(5.);
-
-   if (dabc::mgr.GetCommandChannel().Execute(cmd)!=dabc::cmd_true) {
-      printf("Fail to get hierarchy\n");
-      return false;
-   }
-
-   dabc::Buffer buf = cmd.GetRawData();
-
-   if (!buf.null()) {
-      // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-
-      if (hierarchy.UpdateFromBuffer(buf)) {
-         DOUT0("Update of hierarchy to version %u done", hierarchy.GetVersion());
-      }
-   }
-
-   return true;
-}
 
 struct LevelItem {
    WINDOW *my_menu_win;
@@ -240,9 +180,14 @@ int main(int argc, char* argv[])
       return 7;
    }
 
-   if (!ConnectNode(argv[1])) return 7;
+   if (!dabc::CreateManager("shell", 0)) return 7;
 
-   if (!UpdateHierarchy()) return 7;
+   if (!dabc::ConnectDabcNode(argv[1])) return 7;
+
+   fNodeName = argv[1];
+
+   dabc::Hierarchy hierarchy = dabc::GetNodeHierarchy(fNodeName);
+   if (hierarchy.null()) return 7;
 
    /* Initialize curses */
    initscr();

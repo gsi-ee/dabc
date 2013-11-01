@@ -6,10 +6,10 @@ ifneq ($(wildcard /usr/include/menu.h),)
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
-NCURSESDIR = applications/ncurses/
+NCURSESDIR        = applications/ncurses/
 DABC_SHELLEXE     = $(DABCBINPATH)/dabc_shell
 else
-NCURSESDIR = 
+NCURSESDIR        = 
 DABC_SHELLEXE     = dabc_shell
 endif
 

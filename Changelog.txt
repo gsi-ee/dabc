@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+1.11.2013
+1. Create api.h, put there generic functions like create manager or connect
+   with dabc node. Idea to have API, which is reused by ROOT or go4 or
+   command shell applications. 
+
+
 30.10.2013
 1. Provide HistoryIter class, which can be used to iterate over history.
    Class derived from Record, therefore directly from iterator one can

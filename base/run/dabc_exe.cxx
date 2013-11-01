@@ -23,6 +23,7 @@
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
 #include "dabc/ReferencesVector.h"
+#include "dabc/api.h"
 
 #include "dabc/CpuInfoModule.h"
 
@@ -115,14 +116,7 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
 
 int command_shell(const char* node)
 {
-   dabc::Configuration cfg;
-
-   new dabc::Manager("cmd", &cfg);
-
-   // ensure that all submitted events are processed
-   dabc::mgr.SyncWorker();
-
-   dabc::mgr()->CreateControl(false);
+   dabc::CreateManager("cmd", 0);
 
    dabc::mgr.RunCmdLoop(1000, node);
 
