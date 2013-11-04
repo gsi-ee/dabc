@@ -163,7 +163,7 @@ DABC.DrawElement.prototype.Clear = function() {
    // delete objects
    // remove GUI
    
-   if (this.frameid.length>0) {
+   if (this.frameid.length > 0) {
       var elem = document.getElementById(this.frameid);
       if (elem!=null) elem.parentNode.removeChild(elem);
    }
@@ -1849,12 +1849,12 @@ DABC.Manager.prototype.display = function(itemname) {
    this.DisplayItem(itemname, xmlnode);
 }
 
+
 DABC.Manager.prototype.ExecuteCommand = function(itemname)
 {
    var elem = this.FindItem(itemname);
    if (elem) elem.InvokeCommand();
 }
-
 
 
 DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
@@ -1919,8 +1919,8 @@ DABC.Manager.prototype.ClearWindow = function()
    
    this.CreateTable(num,num);
    
-   elem.ready = false;
-   elem.RegularCheck();
+   // elem.ready = false;
+   // elem.RegularCheck();
 }
 
 

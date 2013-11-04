@@ -572,7 +572,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string producer_name, request_name;
       bool islocal(true);
 
-      DOUT1("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+      DOUT2("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
       // first look in local structures
       dabc::Hierarchy h = fLocal.GetFolder(itemname);
@@ -581,7 +581,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          // we need to redirect command to appropriate worker (or to ourself)
 
          producer_name = h.FindBinaryProducer(request_name);
-         DOUT1("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
+         DOUT2("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
 
       } else
       for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
@@ -622,7 +622,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             // we redirect command to local worker
             // manager should find proper worker for execution
 
-            DOUT1("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
+            DOUT2("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
             cmd.SetReceiver(iter->worker);
             cmd.SetPtr("hierarchy", iter->hier);
             cmd.SetStr("subitem", request_name);

@@ -140,7 +140,7 @@ int http::Server::begin_request(struct mg_connection *conn)
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
-   DOUT1("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
+   DOUT2("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
 
    std::string filename;
 

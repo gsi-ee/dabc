@@ -739,7 +739,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
          // we record only fields, everything else is ignored - even name of entry is not stored
          Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
 
-         DOUT0("GET worker %s item %s hlimit %u size %u", GetName(), item.c_str(), hlimit, raw.GetTotalSize());
+         DOUT2("GET worker %s item %s hlimit %u size %u", GetName(), item.c_str(), hlimit, raw.GetTotalSize());
 
          cmd.SetRawData(raw);
          cmd.SetUInt("version", sub.GetVersion());
