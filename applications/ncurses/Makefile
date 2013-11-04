@@ -1,5 +1,5 @@
 ifndef noncurses
-ifneq ($(wildcard /usr/inlcude/ncurses.h),)
+ifneq ($(wildcard /usr/include/ncurses.h),)
 ifneq ($(wildcard /usr/include/menu.h),)
 
 

@@ -16,9 +16,6 @@
 #ifndef DABC_api
 #define DABC_api
 
-
-#include <string>
-
 #ifndef DABC_Hierarchy
 #include "dabc/Hierarchy.h"
 #endif
@@ -32,6 +29,10 @@ namespace dabc {
     *  cmd_port == 0 - communication channel without server socket
     *  cmd_port > 0  - communication channel with specified server socket */
    extern bool CreateManager(const std::string& name, int cmd_port = -1);
+
+   /** \brief Function can be used to destroy manager
+    * \details Could be used to ensure that all dabc-relevant objects are destroyed */
+   extern bool DestroyManager();
 
    /** \brief Function establish connection with specified dabc node
     *

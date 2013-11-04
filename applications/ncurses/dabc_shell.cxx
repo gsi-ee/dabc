@@ -289,4 +289,6 @@ int main(int argc, char* argv[])
       items[n].Delete();
 
    endwin();
+
+   dabc::DestroyManager();
 }

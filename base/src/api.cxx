@@ -38,6 +38,18 @@ bool dabc::CreateManager(const std::string& name, int cmd_port)
    return true;
 }
 
+bool dabc::DestroyManager()
+{
+   if (dabc::mgr.null()) return true;
+
+   dabc::mgr()->HaltManager();
+
+   dabc::mgr.Destroy();
+
+   return true;
+}
+
+
 bool dabc::ConnectDabcNode(const std::string& nodeaddr)
 {
    if (dabc::mgr.null()) {

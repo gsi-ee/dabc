@@ -120,9 +120,7 @@ int command_shell(const char* node)
 
    dabc::mgr.RunCmdLoop(1000, node);
 
-   dabc::mgr()->HaltManager();
-
-   dabc::mgr.Destroy();
+   dabc::DestroyManager();
 
    return 0;
 }
