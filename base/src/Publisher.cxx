@@ -53,9 +53,7 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
    if (!Cfg("store", cmd).AsBool()) fStoreDir.clear();
 
-   DOUT2("Create publisher");
-
-   DOUT0("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
+   DOUT2("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
 }
 
 void dabc::Publisher::OnThreadAssigned()
@@ -338,7 +336,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                return cmd_false;
             }
 
-            DOUT1("PUBLISH folder %s", path.c_str());
+            DOUT2("PUBLISH folder %s", path.c_str());
 
             fPublishers.push_back(PublisherEntry());
             fPublishers.back().id = fCnt++;

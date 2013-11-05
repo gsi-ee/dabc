@@ -4622,7 +4622,7 @@ var gStyle = {
          if (this.stat_entries<1e7)
             stat.AddLine("Entries = " + this.stat_entries.toFixed(0));
          else
-            stat.AddLine("Entries = " + this.stat_entries.toExponential());
+            stat.AddLine("Entries = " + this.stat_entries.toExponential(5));
 
       if (print_mean > 0) {
          var res = 0;
