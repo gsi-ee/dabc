@@ -275,7 +275,7 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
 
 int http::Server::ProcessFileRequest(struct mg_connection *conn, const std::string& fname)
 {
-   DOUT1("SEND FILE: %s", fname.c_str());
+   DOUT2("SEND FILE: %s", fname.c_str());
 
    mg_send_file(conn, fname.c_str());
 

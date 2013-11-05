@@ -422,7 +422,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       // this is fake element, which is need to be requested before first
       dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
       si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-      // si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
+      si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
 
       ScanRootHierarchy(fRoot);
 

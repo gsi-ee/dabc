@@ -182,7 +182,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    item.Field(dabc::prop_kind).SetStr("log");
    if (history>1) item.EnableHistory(history);
 
-/*   item = fHierarchy.CreateChild("CmdStart");
+/* item = fHierarchy.CreateChild("CmdStart");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 
    item = fHierarchy.CreateChild("CmdNodes");
