@@ -428,11 +428,6 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       fLastUpdate.GetNow();
 
-      // DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
-
-
-      // DOUT0("Current ROOT hierarchy %p has producer %s", fRoot(), DBOOL(fRoot.HasField(dabc::prop_producer)));
-
       // we lock mutex only at the moment when synchronize hierarchy with main
       dabc::LockGuard lock(fHierarchy.GetHMutex());
       fHierarchy.Update(fRoot);

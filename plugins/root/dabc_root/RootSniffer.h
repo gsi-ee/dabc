@@ -95,7 +95,7 @@ namespace dabc_root {
 
          void ProcessActionsInRootContext();
 
-         int ProcessGetBinary(dabc::Command cmd);
+         virtual int ProcessGetBinary(dabc::Command cmd);
 
       public:
          RootSniffer(const std::string& name, dabc::Command cmd = 0);
