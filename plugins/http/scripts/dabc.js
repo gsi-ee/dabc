@@ -1394,10 +1394,13 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    var hdr = DABC.UnpackBinaryHeader(arg);
    
    if (hdr==null) {
-      console.log(" RootDrawElement get error " + this.itemname + "  reload list");
+      console.log(" RootDrawElement get error " + this.itemname);
       this.state = this.StateEnum.stInit;
+      // we get error and should invalidate version number
+      this.version = 0; 
+      if (this.sinfo) this.sinfo.version = 0;
       // most probably, objects structure is changed, therefore reload it
-      DABC.mgr.ReloadTree();
+      // DABC.mgr.ReloadTree();
       return;
    }
 

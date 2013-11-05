@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+5.11.2013
+1. Several error fixes, suppress debug output.
+
+
 1.11.2013
 1. Create api.h, put there generic functions like create manager or connect
    with dabc node. Idea to have API, which is reused by ROOT or go4 or
