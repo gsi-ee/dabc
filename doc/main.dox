@@ -2,11 +2,12 @@
 
 /*! \mainpage DABC documentation
 
-\ref dabc_getting_started
+[Getting started with DABC](\ref dabc_getting_started) <br>
+<br>
+[Introduction](\ref dabc_introduction) <br> 
+<br>
+[XML file format](\ref dabc_xmlfile_format) <br>
 
-\ref dabc_introduction
-
-\ref dabc_xmlfile_format
 
 \ref dabc_core_classes
 
@@ -35,8 +36,5 @@
 \defgroup dabc_plugins DABC plugins
 
 \brief This is list of DABC plugins
-
-
-[dabc]: [DABC](@ref index)
 
 */
