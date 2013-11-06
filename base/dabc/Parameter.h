@@ -202,16 +202,17 @@ namespace dabc {
 
          DABC_REFERENCE(Parameter, Record, ParameterContainer)
 
-         /** \brief Returns parameter value */
+         /** Returns parameter value */
          RecordField Value() const { return GetField(""); }
 
-         /** \brief Set parameter value */
+         /** Set parameter value */
          bool SetValue(const RecordField& v) { return SetField("", v); }
 
-         /** \brief Set default parameter value.
-          *  \detail Only applied in parameter if parameter value was not specified before  */
+         /** Set default parameter value.
+          *  Only applied in parameter if parameter value was not specified before  */
          bool Dflt(const RecordField& v) { return Value().null() ? SetValue(v) : false; }
 
+         /** Returns true if parameter object requires timeout processing */
          bool NeedTimeout();
 
          /** Returns true when parameter event should be delivered to the worker */
@@ -230,14 +231,15 @@ namespace dabc {
          /** Returns true if rate measurement is activated */
          bool IsRatemeter() const;
 
-         /** \brief Disable ratemeter functionality */
+         /** Disable ratemeter functionality */
          Parameter& DisableRatemeter();
 
-         /** \brief Converts parameter in statistic variable.
+         /** Converts parameter in statistic variable.
           * All values will be summed up and average over interval will be calculated.
           * Result will have units of original variable */
          Parameter& SetAverage(bool synchron = false, double interval = 1.0);
 
+         /** Disables averaging  functionality */
          Parameter& DisableAverage();
 
          /** Returns true if average calculation is active */
@@ -254,6 +256,7 @@ namespace dabc {
          /** Set parameter to convert double values to the string - used for ratemeter */
          Parameter& SetWidthPrecision(unsigned width, unsigned prec);
 
+         /** Set units field of parameter */
          Parameter& SetUnits(const std::string& unit) { SetField("units", unit); return *this; }
 
          /** Return units of parameter value */

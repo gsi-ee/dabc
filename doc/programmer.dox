@@ -9,17 +9,14 @@ software objects and their collaboration,
 the intended mechanisms for controls and configuration, the dependencies of
 packages and libraries, and gives a short reference of the most important classes.
 
-The following chapters contain full explanations of the [dabc] interface 
-and service classes, 
-describe the set-up with parameters, and give a reference of the Java GUI plug-in possibilities.
+The following chapters contain explanations of the DABC interface 
+and service classes, describe configuration files and give a reference of the 
+control interface possibilities.
 
 Finally, some implementation examples are treated in detail to illustrate these issues:
-the adaption of the GSI legacy DAQ system [mbs] within  [dabc]; 
-the application of a distributed event builder network [bnet]; 
-the data import via UDP from a readout controller board [roc];
-and the use of a PCI express board [abb].
-
-
+- the adaption of the MBS system within DABC; 
+- support of TRB3;
+- usage of web interface with DABC.  
 
 
 

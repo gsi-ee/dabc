@@ -377,7 +377,10 @@ namespace dabc {
 
          void CancelCommands();
 
+         /** Internal - entrance function for main loop execution. */
          virtual void DoWorkerMainLoop() {}
+
+         /** Internal - function executed after leaving main loop. */
          virtual void DoWorkerAfterMainLoop() {}
 
          // method called immediately after processor was assigned to thread

@@ -252,7 +252,7 @@ void dabc::ModuleSync::StopUntilRestart()
 void dabc::ModuleSync::ObjectCleanup()
 {
    if (fNewCommands!=0) {
-      EOUT("Some commands remain event when module %s is cleaned up - BAD", GetName());
+      EOUT("Some commands remain even when module %s is cleaned up - BAD", GetName());
       AsyncProcessCommands();
    }
 
