@@ -31,30 +31,35 @@ namespace dabc {
 
    class ModuleAsync : public Module {
       private:
+         /** Activate module [internal].
+          * Generates appropriate number of events for each input, output and pool handle */
          virtual bool DoStart();
 
-         /** \brief Generic event processing method
+         /** Generic event processing method [internal].
           * Here all events are processed and delivered to the user.
           * Made private to exclude possibility to redefine it */
          virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
 
       protected:
-         /** \brief Constructor of ModuleAsync class
-          * Made protected to exclude possibility to create instance of class iteself */
+         /** Constructor of ModuleAsync class.
+          * Made protected to exclude possibility to create instance of class itself */
          ModuleAsync(const std::string& name, Command cmd = 0) : Module(name, cmd) { }
 
-         /** \brief Destructor of ModuleAsync class */
+         /** Destructor of ModuleAsync class. */
          virtual ~ModuleAsync();
 
-         /** \brief Method return true if send over specified port can be done */
+         /** Method return true if send over specified port can be done */
          bool CanSend(unsigned indx = 0) const
             { return indx < fOutputs.size() ? fOutputs[indx]->CanSend() : false; }
 
-         /** \brief Method return true if send over specified port can be done */
+         /** Method return number of send operation can be done for specified port.
+          * It is number of free entries in the port output queue.
+          * Actual number of send operations could be bigger, while buffers can be immediately
+          * transported further */
          unsigned NumCanSend(unsigned indx = 0) const
             { return indx < fOutputs.size() ? fOutputs[indx]->NumCanSend() : false; }
 
-         /** \brief Produces event for specified output port
+         /** Produces event for specified output port.
           * Should be used when processing was stopped due to return false in ProcessSend method */
          void ActivateOutput(unsigned port);
 
@@ -99,7 +104,6 @@ namespace dabc {
          /** \brief Remove items in input queue*/
          bool SkipInputBuffers(unsigned indx = 0, unsigned nbuf = 1)
          { return indx < fInputs.size() ? fInputs[indx]->SkipBuffers(nbuf) : false; }
-
 
          /** \brief Returns true if memory pool can provide buffer */
          bool CanTakeBuffer(unsigned pool = 0)

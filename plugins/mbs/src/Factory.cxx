@@ -196,16 +196,109 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 }
 
 /** \page mbs_plugin MBS plugin for DABC (libDabcMbs.so)
- *
- *  \subpage mbs_plugin_doc
- *
- *  \ingroup dabc_plugins
- *
+
+\ingroup dabc_plugins
+
+\subpage mbs_plugin_doc <br>
+
+\subpage mbs_web_interface
+
  */
 
 
 /** \page mbs_plugin_doc Short description of MBS plugin
- *
- * This should be description of MBS plugin for DABC.
- *
- */
+
+Plugin designed to work with GSI DAQ system [MBS](http://daq.gsi.de) and
+provides following components:
++ \ref mbs::LmdFile  - class for reading and writing of lmd files
++ \ref mbs::LmdOutput - output transport to store data in lmd files (like lmd://file.lmd)
++ \ref mbs::LmdInput  - input transport for reading of lmd files
++ \ref mbs::ClientTransport - input client transport to connect with running MBS node
++ \ref mbs::ServerTransport - output server transport to provide data as MBS server dose
++ \ref mbs::CombinerModule - module to combine events from several MBS sources
++ \ref mbs::Player - module to interact with MBS over DABC web interface
+*/
+
+
+/** \page mbs_web_interface Web interface to MBS
+
+\ref mbs::Player module provides possibility to interact with MBS over DABC web interface
+
+
+### XML file syntax
+
+Example of configuration file is \ref plugins/mbs/app/web-mbs.xml
+
+Following parameters could be specified for the module:
+
+| Parameter | Description |
+| --------: | :---------- |
+|      node | Name of MBS node |
+|    period | How often status information requested from MBS node |
+|   history | Size of preserved history |
+|  prompter | Argument, used for starting prompter |
+|    logger | If true, logger will be readout |
+
+
+Several MBS nodes can be readout at once:
+
+~~~~~~~~~~~~~{.xml}
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="web-mbs">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHttp.so"/>
+    </Run>
+    <Module name="mbs1" class="mbs::Player">
+       <node value="r4-1"/>
+       <period value="1"/>
+       <history value="100"/>
+       <prompter value=""/>
+       <logger value="false"/>
+    </Module>
+    <Module name="mbs2" class="mbs::Player">
+       <node value="r4l-1"/>
+       <period value="1"/>
+       <history value="100"/>
+       <prompter value=""/>
+       <logger value="false"/>
+    </Module>
+  </Context>
+</dabc>
+~~~~~~~~~~~~~
+
+
+
+### MBS status record (port 6008)
+
+In most situations started automatically by MBS.
+mbs::Player module will periodically request status record and
+calculate several rate values - data rate, event rate. Several log variables
+are created, which reproduce output of **rate** command of MBS.
+
+
+### MBS logger (port 6007)
+
+When logger is enabled by MBS, one can connect to it and get log information.
+If enabled (parameter logger is true), module will readout log information and put into
+log record.
+
+
+### MBS prompter (port 6006)
+
+MBS prompter allows to submit MBS commands remotely and only remotely.
+To start prompter on mbs, one should do:
+
+~~~~~~~~~~~~~
+rio4> rpm -r ARG
+~~~~~~~~~~~~~
+
+Value of argument after -r (here ARG) should be specified as value of **prompter**
+configuration parameter in xml file. In that case module will publish **CmdMbs** command,
+which can be used from web interface to submit commands like
+"start acq", "stop acq", "@startup", "show rate" and others to MBS process.
+
+
+*/
+

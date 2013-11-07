@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -163,9 +165,19 @@ namespace mbs {
    // ======================================================================
 
 
-   /** \brief Player of MBS data
+   /** \brief Interface module for MBS monitoring and control
     *
-    * Module represents MBS data,
+    * Module could access MBS via three different control ports
+    *
+    * + status port 6008 (always)
+    * + logger port 6007 (optional)
+    * + prompter port 6006 (optional)
+    *
+    * Status record readout periodically with specified interval and
+    * used to calculate different rate values.
+    *
+    * Details about module usage are described in
+    * [web interface for MBS](\ref mbs_web_interface).
     *
     **/
 

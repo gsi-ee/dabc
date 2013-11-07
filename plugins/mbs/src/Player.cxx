@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -191,9 +193,12 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    item = fHierarchy.CreateChild("CmdFiles");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 */
-   dabc::CommandDefinition cmddef = fHierarchy.CreateChild("CmdMbs");
-   cmddef.SetField(dabc::prop_kind, "DABC.Command");
-   cmddef.AddArg("cmd", "string", true, "show rate");
+
+   if (!fPrompter.empty()) {
+      dabc::CommandDefinition cmddef = fHierarchy.CreateChild("CmdMbs");
+      cmddef.SetField(dabc::prop_kind, "DABC.Command");
+      cmddef.AddArg("cmd", "string", true, "show rate");
+   }
 
    CreateTimer("update", fPeriod, false);
 

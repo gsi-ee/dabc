@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="web-mbs">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHttp.so"/>
+    </Run>
+    <Module name="mbs1" class="mbs::Player">
+       <node value="r4-1"/>
+       <period value="1"/>
+       <history value="100"/>
+       <prompter value=""/>
+       <logger value="false"/>
+    </Module>
+  </Context>
+</dabc>

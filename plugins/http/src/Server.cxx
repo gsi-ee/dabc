@@ -46,9 +46,9 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    memset(&fCallbacks, 0, sizeof(fCallbacks));
    fCallbacks.begin_request = begin_request_handler;
 
-   fHttpPort = Cfg("port", cmd).AsInt(8080);
+   fHttpPort = Cfg("port", cmd).AsInt(8090);
    fHttpsPort = Cfg("ports", cmd).AsInt(0);
-   fEnabled = Cfg("enabled", cmd).AsBool(false);
+   fEnabled = Cfg("enabled", cmd).AsBool(true);
    fAuthFile = Cfg("auth_file", cmd).AsStr();
    fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
    fSslCertif = Cfg("ssl_certif", cmd).AsStr("");

@@ -53,7 +53,7 @@
        <period value="1"/>
        <history value="100"/>
        <prompter value="lxg0538"/>
-       <logger value="true"/>
+       <logger value="false"/>
     </Module>
 
     <MemoryPool name="Pool">

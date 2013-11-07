@@ -231,22 +231,20 @@ All opened files will be closed normally.
 Usage of web-server
 -------------------
 
-To be able observer and control running DAQ application, one could
-enable http server. For that one should uncomment libDabcHttp.so loading
-and enable creation of Publisher module (auto="true").
-
+One able to observe and control running DAQ application via web browser.
 After DAQ is started, one could open in web browser address like 
 `http://your_host:8090`. Port number 8090 can be changed in configuration
 of HttpServer.
 
 In browser one should be able to see hierarchy with two folders:
-There one can see two folders: "Hadaq/Combiner" for combiner module and
-"Hadaq/Transmitter" for online server module. In the folders one will find
-published ratemeters and log messages.
++ "Hadaq/Combiner" for combiner module
++ "Hadaq/Transmitter" for online server module. 
+In the folders one will find published ratemeters and log messages.
 
 Most useful part of web-server now - possibility to start/stop file writings. 
-For instance, in  "Hadaq/Combiner" folder there are two commands "StartHldFile" and
-"StopHldFile".   
+For instance, in  "Hadaq/Combiner" folder there are two commands:
++ "StartHldFile" start file writing
++ "StopHldFile" stop file writing.   
 
 
 Running analysis
