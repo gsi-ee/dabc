@@ -237,7 +237,7 @@ Following parameters could be specified for the module:
 |    period | How often status information requested from MBS node |
 |   history | Size of preserved history |
 |  prompter | Argument, used for starting prompter |
-|    logger | If true, logger will be readout |
+|    logger | If not false, read log information when prompter is enabled |
 
 
 Several MBS nodes can be readout at once:
@@ -255,14 +255,12 @@ Several MBS nodes can be readout at once:
        <period value="1"/>
        <history value="100"/>
        <prompter value=""/>
-       <logger value="false"/>
     </Module>
     <Module name="mbs2" class="mbs::Player">
        <node value="r4l-1"/>
        <period value="1"/>
        <history value="100"/>
        <prompter value=""/>
-       <logger value="false"/>
     </Module>
   </Context>
 </dabc>
@@ -277,14 +275,6 @@ mbs::Player module will periodically request status record and
 calculate several rate values - data rate, event rate. Several log variables
 are created, which reproduce output of **rate** command of MBS.
 
-
-### MBS logger (port 6007)
-
-When logger is enabled by MBS, one can connect to it and get log information.
-If enabled (parameter logger is true), module will readout log information and put into
-log record.
-
-
 ### MBS prompter (port 6006)
 
 MBS prompter allows to submit MBS commands remotely and only remotely.
@@ -298,6 +288,13 @@ Value of argument after -r (here ARG) should be specified as value of **prompter
 configuration parameter in xml file. In that case module will publish **CmdMbs** command,
 which can be used from web interface to submit commands like
 "start acq", "stop acq", "@startup", "show rate" and others to MBS process.
+
+
+### MBS logger (port 6007)
+
+When logger is enabled by MBS, one can connect to it and get log information.
+At the moment logger is available in the MBS only together with the prompter.
+If enabled, module will readout log information and put into log record.
 
 
 */

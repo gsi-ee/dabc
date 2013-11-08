@@ -10,7 +10,6 @@
        <period value="1"/>
        <history value="100"/>
        <prompter value=""/>
-       <logger value="false"/>
     </Module>
   </Context>
 </dabc>

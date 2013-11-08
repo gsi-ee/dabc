@@ -144,7 +144,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    int history = Cfg("history", cmd).AsInt(200);
    fPrompter = Cfg("prompter", cmd).AsStr();
-   fWithLogger = Cfg("logger", cmd).AsBool();
+   fWithLogger = !fPrompter.empty() && Cfg("logger", cmd).AsBool(true);
 
    fHierarchy.Create("MBS");
    //fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
