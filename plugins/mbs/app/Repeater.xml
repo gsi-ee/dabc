@@ -13,9 +13,10 @@
        <NumBuffers value="100"/>
     </MemoryPool>
     <Module name="Repeater" class="dabc::RepeaterModule">
-       <!--InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/-->
-       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="5"/>
-       <OutputPort name="Output0" url="lmd://test.lmd?maxsize=100&log=2"/>
+       <autostop value="false"/>
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=100"/>
+       <!--InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="5"/-->
+       <OutputPort name="Output0" url="mbs://Stream"/>
      </Module>
   </Context>
 </dabc>

@@ -45,6 +45,7 @@ dabc::Module::Module(const std::string& name, Command cmd) :
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr();
    int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(0);
    int numout = Cfg(dabc::xmlNumOutputs, cmd).AsInt(0);
+   fAutoStop = Cfg("autostop", cmd).AsBool(fAutoStop);
 
    DOUT2("Create module %s with pool:%s numinp:%d numout:%d", GetName(), poolname.c_str(), numinp, numout);
 

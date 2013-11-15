@@ -16,7 +16,7 @@ DABC_IMPS = $(wildcard base/*/*.cxx)
 DABC_IMPS += $(wildcard plugins/*/*/*.cxx)
 DABC_IMPS += $(wildcard applications/*/*.cxx)
 
-DABC_PLUGINS_PACK += plugins/mbs plugins/verbs plugins/dim plugins/ezca plugins/hadaq plugins/rfio 
+DABC_PLUGINS_PACK += plugins/mbs plugins/hadaq plugins/verbs plugins/root   
 
 DABC_APPLICATIONS_PACK += applications/core-test applications/net-test
 

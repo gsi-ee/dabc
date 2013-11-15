@@ -144,7 +144,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    int history = Cfg("history", cmd).AsInt(200);
    fPrompter = Cfg("prompter", cmd).AsStr();
-   fWithLogger = !fPrompter.empty() && Cfg("logger", cmd).AsBool(true);
+   fWithLogger = Cfg("logger", cmd).AsBool(false);
 
    fHierarchy.Create("MBS");
    //fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
@@ -894,10 +894,19 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
    switch (evnt.GetCode()) {
       case dabc::SocketAddon::evntSocketRecvInfo: {
 
-         DOUT0("Get MSG: %s",fRec.fBuffer);
+         if (fRec.iOrder!=1)
+            mbs::SwapData(&fRec, 3 * sizeof(int32_t));
 
-         mbs::Player* pl = dynamic_cast<mbs::Player*> (GetParent());
-         if (pl) pl->NewMessage(fRec.fBuffer);
+         if (fRec.iOrder==1) {
+
+            if (fRec.iType == 1) {
+               DOUT4("Keep alive message from MBS logger");
+            } else {
+               DOUT0("Get MSG: %s",fRec.fBuffer);
+               mbs::Player* pl = dynamic_cast<mbs::Player*> (GetParent());
+               if (pl) pl->NewMessage(fRec.fBuffer);
+            }
+         }
 
          memset(&fRec, 0, sizeof(fRec));
 

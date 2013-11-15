@@ -234,10 +234,10 @@ Following parameters could be specified for the module:
 | Parameter | Description |
 | --------: | :---------- |
 |      node | Name of MBS node |
-|    period | How often status information requested from MBS node |
-|   history | Size of preserved history |
-|  prompter | Argument, used for starting prompter |
-|    logger | If not false, read log information when prompter is enabled |
+|    period | How often status information requested from MBS node [default 1 sec] |
+|   history | Size of preserved history [default 200] |
+|  prompter | Argument, used for starting prompter [default - empty] |
+|    logger | If not false, read log information when prompter is enabled [default - enabled] |
 
 
 Several MBS nodes can be readout at once:
@@ -252,20 +252,13 @@ Several MBS nodes can be readout at once:
     </Run>
     <Module name="mbs1" class="mbs::Player">
        <node value="r4-1"/>
-       <period value="1"/>
-       <history value="100"/>
-       <prompter value=""/>
     </Module>
     <Module name="mbs2" class="mbs::Player">
        <node value="r4l-1"/>
-       <period value="1"/>
-       <history value="100"/>
-       <prompter value=""/>
     </Module>
   </Context>
 </dabc>
 ~~~~~~~~~~~~~
-
 
 
 ### MBS status record (port 6008)
