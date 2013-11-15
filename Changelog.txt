@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+15.11.2013
+1. Modifications of MBS is started to provide more possibility for external
+   frameworks as DABC. First is changes in remote logger in MBS. It can be
+   optionally started from normal MBS session (without prompter), one can
+   reconnect to message logger. Logger also permanently sends dummy message
+   and therefore can easily detect if client disconects. Thus, no messages will
+   be lost if dabc restarted. Appropriate small changes in DABC classes.
+   It should be possible to use DABC also with older MBS versions. 
+
+
 5.11.2013
 1. Several error fixes, suppress debug output.
 

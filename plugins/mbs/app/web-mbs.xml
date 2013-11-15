@@ -6,7 +6,8 @@
       <lib value="libDabcHttp.so"/>
     </Run>
     <Module name="mbs1" class="mbs::Player">
-       <node value="X86L-15"/>
+       <!--node value="X86L-15"/-->
+       <node value="r4-1"/>
        <period value="1"/>
        <history value="100"/>
        <prompter value=""/>
