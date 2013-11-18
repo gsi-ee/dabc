@@ -1167,7 +1167,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_postponed;
    } else
    if (cmd.IsName("Ping")) {
-      DOUT1("!!! PING !!!");
+      DOUT2("!!! PING !!!");
       cmd_res = cmd_true;
    } else
    if (cmd.IsName("ParameterEventSubscription")) {
@@ -1218,7 +1218,7 @@ bool dabc::Manager::DoCreateMemoryPool(Command cmd)
 {
    if (cmd.null()) return false;
 
-   std::string poolname = cmd.Field(xmlPoolName).AsStdStr();
+   std::string poolname = cmd.GetStr(xmlPoolName);
    if (poolname.empty()) {
       EOUT("Pool name is not specified");
       return false;

@@ -507,7 +507,7 @@ int dabc::Parameter::ExecuteChange(Command cmd)
 {
    CmdSetParameter setcmd = cmd;
 
-   bool res = SetValue(setcmd.ParValue().AsStr());
+   bool res = SetValue(setcmd.ParValue());
 
    return res ? cmd_true : cmd_false;
 }
@@ -652,7 +652,7 @@ dabc::Command dabc::CommandDefinition::MakeCommand() const
       std::string name, kind, dflt;
       bool required(false);
       if (GetArg(n,name,kind,required, dflt))
-         if (required || !dflt.empty()) cmd.Field(name).SetStr(dflt);
+         if (required || !dflt.empty()) cmd.SetStr(name, dflt);
    }
 
    return cmd;

@@ -41,8 +41,8 @@ namespace dabc {
    class CmdInvokeTransition : public Command {
       DABC_COMMAND(CmdInvokeTransition, "InvokeTransition");
 
-      void SetTransition(const std::string& cmd) { Field("Transition").SetStr(cmd); }
-      std::string GetTransition() const { return Field("Transition").AsStr(); }
+      void SetTransition(const std::string& cmd) { SetStr("Transition", cmd); }
+      std::string GetTransition() const { return GetStr("Transition"); }
    };
 
 

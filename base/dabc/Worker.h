@@ -470,7 +470,7 @@ namespace dabc {
 
          /** \brief Returns configuration record of specified name */
          RecordField Cfg(const std::string& name, Command cmd = 0) const
-         { return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.Field(name); }
+         { return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.GetField(name); }
 
          /** \brief Returns true when thread is assigned to the worker */
          bool HasThread() const;
@@ -514,8 +514,8 @@ namespace dabc {
       {
          SetStr("ParName", parname);
          if (!parvalue.empty()) SetStr("ParValue", parvalue);
-         if (evid!=parModified) Field("Event").SetInt(evid);
-         if (attrmodified) Field("AttrMod").SetBool(true);
+         if (evid!=parModified) SetInt("Event", evid);
+         if (attrmodified) SetBool("AttrMod", true);
       }
    };
 
@@ -531,10 +531,10 @@ namespace dabc {
 
       public:
 
-         std::string ParName() const { return Field("ParName").AsStr(); }
-         std::string ParValue() const { return Field("ParValue").AsStr(); }
-         int EventId() const { return Field("Event").AsInt(parModified); }
-         bool AttrModified() const { return Field("AttrMod").AsBool(false); }
+         std::string ParName() const { return GetStr("ParName"); }
+         std::string ParValue() const { return GetStr("ParValue"); }
+         int EventId() const { return GetInt("Event", parModified); }
+         bool AttrModified() const { return GetBool("AttrMod", false); }
    };
 
 }

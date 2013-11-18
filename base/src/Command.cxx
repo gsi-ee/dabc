@@ -201,7 +201,7 @@ dabc::Reference dabc::Command::MakeRef(const std::string& buf)
 dabc::Reference dabc::Command::GetRef(const std::string& name)
 {
    std::string field = dabc::format("##REF##%s", name.c_str());
-   std::string value = Field(field).AsStr();
+   std::string value = GetStr(field);
    RemoveField(field);
 
    return MakeRef(value);

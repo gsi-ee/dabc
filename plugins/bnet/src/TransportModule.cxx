@@ -19,13 +19,13 @@ bnet::TransportModule::TransportModule(const std::string& name, dabc::Command cm
 {
    EnsurePorts(1, 1, "BnetDataPool");
 
-   fNodeNumber = cmd.Field("NodeNumber").AsInt(0);
-   fNumNodes = cmd.Field("NumNodes").AsInt(1);
+   fNodeNumber = cmd.GetInt("NodeNumber", 0);
+   fNumNodes = cmd.GetInt("NumNodes", 1);
 
    fNumLids = Cfg("TestNumLids", cmd).AsInt(1);
    if (fNumLids>bnet::MAXLID) fNumLids = bnet::MAXLID;
 
-   int nports = cmd.Field("NumPorts").AsInt(1);
+   int nports = cmd.GetInt("NumPorts", 1);
 
    fTestNumBuffers = Cfg(dabc::xmlNumBuffers, cmd).AsInt(1000);
 

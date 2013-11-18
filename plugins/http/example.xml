@@ -48,11 +48,11 @@
        <Field value="measVoltage"/>
     </Module>
 
-    <Module name="r4l_1" class="mbs::Player">
-       <node value="r4l-1"/>
+    <Module name="mbs1" class="mbs::Player">
+       <node value="x86l-15"/>
        <period value="1"/>
        <history value="100"/>
-       <prompter value="lxg0538"/>
+       <prompter value=""/>
        <logger value="false"/>
     </Module>
 

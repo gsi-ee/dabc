@@ -73,9 +73,9 @@ class IbTestApplication : public dabc::Application {
          dabc::mgr.CreateMemoryPool("SendPool", bufsize, NumNodes() * 4);
 
          dabc::CmdCreateModule cmd("IbTestWorkerModule", IBTEST_WORKERNAME, "IbTestThrd");
-         cmd.Field("NodeNumber").SetInt(dabc::mgr()->NodeId());
-         cmd.Field("NumNodes").SetInt(NumNodes());
-         cmd.Field("NumPorts").SetInt((dabc::mgr()->NodeId()==0) ? NumNodes()-1 : 1);
+         cmd.SetInt("NodeNumber", dabc::mgr()->NodeId());
+         cmd.SetInt("NumNodes", NumNodes());
+         cmd.SetInt("NumPorts", (dabc::mgr()->NodeId()==0) ? NumNodes()-1 : 1);
 
          if (!dabc::mgr.Execute(cmd)) return false;
 

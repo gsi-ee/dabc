@@ -64,9 +64,9 @@ bool bnet::Application::CreateAppModules()
    dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf);
 
    dabc::CmdCreateModule cmd("bnet::TransportModule", names::WorkerModule(), "BnetModuleThrd");
-   cmd.Field("NodeNumber").SetInt(dabc::mgr.NodeId());
-   cmd.Field("NumNodes").SetInt(dabc::mgr.NumNodes());
-   cmd.Field("NumPorts").SetInt((dabc::mgr.NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
+   cmd.SetInt("NodeNumber", dabc::mgr.NodeId());
+   cmd.SetInt("NumNodes", dabc::mgr.NumNodes());
+   cmd.SetInt("NumPorts" , (dabc::mgr.NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
    if (!dabc::mgr.Execute(cmd)) return false;
 
    // create event generator only for nodes there it is really necessary

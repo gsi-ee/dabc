@@ -126,35 +126,26 @@ namespace dabc {
          friend int operator==(const Command& cmd1, const Command& cmd2)
                          { return cmd1() == cmd2(); }
 
-         bool HasField(const std::string& name) const { return GetObject() ? GetObject()->Fields().HasField(name) : false; }
-         bool RemoveField(const std::string& name) { return GetObject() ? GetObject()->Fields().RemoveField(name) : false; }
-
-         unsigned NumFields() const { return GetObject() ? GetObject()->Fields().NumFields() : 0; }
-         std::string FieldName(unsigned cnt) const { return GetObject() ? GetObject()->Fields().FieldName(cnt) : std::string(); }
-
-         RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
-         const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
-
          std::string SaveToXml(bool compact=true);
          bool ReadFromXml(const char* xmlcode);
 
          // set of methods to keep old interface, it is preferable to use field methods
 
-         bool SetStr(const std::string& name, const char* value) { return Field(name).SetStr(value); }
-         bool SetStr(const std::string& name, const std::string& value) { return Field(name).SetStr(value); }
-         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return HasField(name) ? Field(name).AsStr(dflt) : dflt; }
+         bool SetStr(const std::string& name, const char* value) { return value==0 ? RemoveField(name) : SetField(name, value); }
+         bool SetStr(const std::string& name, const std::string& value) { return SetField(name, value); }
+         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return GetField(name).AsStr(dflt); }
 
-         bool SetInt(const std::string& name, int v) { return Field(name).SetInt(v); }
-         int GetInt(const std::string& name, int dflt = 0) const { return HasField(name) ? Field(name).AsInt(dflt) : dflt; }
+         bool SetInt(const std::string& name, int v) { return SetField(name, v); }
+         int GetInt(const std::string& name, int dflt = 0) const { return GetField(name).AsInt(dflt); }
 
-         bool SetBool(const std::string& name, bool v) { return Field(name).SetBool(v); }
-         bool GetBool(const std::string& name, bool dflt = false) const { return HasField(name) ? Field(name).AsBool(dflt) : dflt; }
+         bool SetBool(const std::string& name, bool v) { return SetField(name, v); }
+         bool GetBool(const std::string& name, bool dflt = false) const { return GetField(name).AsBool(dflt); }
 
-         bool SetDouble(const std::string& name, double v) { return Field(name).SetDouble(v); }
-         double GetDouble(const std::string& name, double dflt = 0.) const { return HasField(name) ? Field(name).AsDouble(dflt) : dflt; }
+         bool SetDouble(const std::string& name, double v) { return SetField(name, v); }
+         double GetDouble(const std::string& name, double dflt = 0.) const { return GetField(name).AsDouble(dflt); }
 
-         bool SetUInt(const std::string& name, unsigned v) { return Field(name).SetUInt(v); }
-         unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return HasField(name) ? Field(name).AsUInt(dflt) : dflt; }
+         bool SetUInt(const std::string& name, unsigned v) { return SetField(name, v); }
+         unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return GetField(name).AsUInt(dflt); }
 
          /** \brief Set pointer argument for the command */
          void SetPtr(const std::string& name, void* p);
@@ -270,7 +261,7 @@ namespace dabc {
          Command& SetReceiver(const std::string& itemname)
            { SetStr(ReceiverParName(), itemname); return *this; }
 
-         std::string GetReceiver() const { return Field(ReceiverParName()).AsStr(); }
+         std::string GetReceiver() const { return GetStr(ReceiverParName()); }
          void RemoveReceiver() { RemoveField(ReceiverParName()); }
 
          /** Name of the parameter, used to specified command receiver.

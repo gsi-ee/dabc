@@ -530,7 +530,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
    DOUT2("Worker %s Cfg %s", ItemName().c_str(), name.c_str());
 
    // first check in the command
-   if (cmd.HasField(name)) return cmd.Field(name);
+   if (cmd.HasField(name)) return cmd.GetField(name);
 
    DOUT2("Check Cfg %s in own parameters", name.c_str());
 
@@ -651,7 +651,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
       CmdSetParameter cmd2 = cmd;
 
-      Parameter par = Par(cmd2.ParName().AsStdStr());
+      Parameter par = Par(cmd2.ParName());
 
       cmd_res = par.ExecuteChange(cmd2);
 
@@ -684,7 +684,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
    } else
 
    if (cmd.IsName("DestroyParameter")) {
-      cmd_res = cmd_bool(DestroyPar(cmd.Field("ParName").AsStdStr()));
+      cmd_res = cmd_bool(DestroyPar(cmd.GetStr("ParName")));
    } else
 
    if (cmd.IsName("SyncWorker")) {

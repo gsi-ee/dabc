@@ -257,7 +257,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
             if (tmout>0) fExeCmd.SetTimeout(tmout);
 
-            // DOUT0("Submit command %s for execution", fExeCmd.GetName());
+            DOUT2("Submit command %s rcv:%s for execution", fExeCmd.GetName(), fExeCmd.GetReceiver().c_str());
 
             dabc::mgr.Submit(Assign(cmd));
          }
@@ -519,9 +519,12 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
       double tmout = fExeCmd.TimeTillTimeout();
 
       if (tmout==0.) {
-         fExeCmd.Cancel();
-         SubmitCommandSend(fExeCmd, true);
+         DOUT0("Command timedout %s", fExeCmd.GetName());
+
+         Command repl = fExeCmd;
+         fExeCmd.Cancel(); // this will release reference
          fExeCmd.Release();
+         SubmitCommandSend(repl, true);
       }
    }
 

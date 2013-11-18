@@ -78,13 +78,13 @@ IbTestWorkerModule::IbTestWorkerModule(const std::string& name, dabc::Command cm
    dabc::ModuleSync(name, cmd),
    fStamping()
 {
-   fNodeNumber = cmd.Field("NodeNumber").AsInt(0);
-   fNumNodes = cmd.Field("NumNodes").AsInt(1);
+   fNodeNumber = cmd.GetInt("NodeNumber", 0);
+   fNumNodes = cmd.GetInt("NumNodes", 1);
 
    fNumLids = Cfg("TestNumLids", cmd).AsInt(1);
    if (fNumLids>IBTEST_MAXLID) fNumLids = IBTEST_MAXLID;
 
-   int nports = cmd.Field("NumPorts").AsInt(1);
+   int nports = cmd.GetInt("NumPorts", 1);
 
    int connect_packet_size = 1024 + NumNodes() * NumLids() * sizeof(IbTestConnRec);
 
