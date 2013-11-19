@@ -182,9 +182,9 @@ int main(int argc, char* argv[])
 
    if (!dabc::CreateManager("shell", 0)) return 7;
 
-   if (!dabc::ConnectDabcNode(argv[1])) return 7;
+   fNodeName = dabc::MakeNodeName(argv[1]);
 
-   fNodeName = argv[1];
+   if (!dabc::ConnectDabcNode(fNodeName)) return 7;
 
    dabc::Hierarchy hierarchy = dabc::GetNodeHierarchy(fNodeName);
    if (hierarchy.null()) return 7;

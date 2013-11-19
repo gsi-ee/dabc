@@ -1731,14 +1731,14 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
       }
 
       if (cmd.IsName("connect")) {
-         std::string node = cmd.GetStr("Arg0");
+         std::string node = dabc::MakeNodeName(cmd.GetStr("Arg0"));
 
          if (node.empty()) {
-            EOUT("Node not specified");
+            EOUT("Node name not specified correctly");
             continue;
          }
 
-         tgtnode = std::string("dabc://") + node;
+         tgtnode = node;
 
          dabc::Command cmd2("Ping");
          cmd2.SetReceiver(tgtnode);
