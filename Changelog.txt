@@ -11,6 +11,8 @@ of the framework.
 2. When  CommandClient receives command, it mark command as local that manager
    do not tries again to detect to which node command should be submitted. Solves
    problem to distinguish between "nodename.gsi.de" and simply "nodename"
+3. In HTML set compatibility mode for IE, otherwise d3.js not working.
+   Need to check Chrome - it does not shows d3 graphics without click on pad. 
 
 
 15.11.2013
