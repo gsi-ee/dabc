@@ -1364,15 +1364,25 @@ int dabc::SocketThread::ConnectUdp(int fd, const std::string& remhost, int rempo
    return fd;
 }
 
-dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string& serverid)
+dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string& serverid, int dflt_port)
 {
    if (serverid.empty()) return 0;
 
-   size_t pos = serverid.find(':');
-   if (pos == serverid.npos) return 0;
+   std::string host, service;
 
-   std::string host = serverid.substr(0, pos);
-   std::string service = serverid.substr(pos+1, serverid.length()-pos);
+   size_t pos = serverid.find(':');
+   if (pos != serverid.npos) {
+      host = serverid.substr(0, pos);
+      service = serverid.substr(pos+1, serverid.length()-pos);
+   } else
+   if (dflt_port > 0) {
+      host = serverid;
+      service = dabc::format("%d", dflt_port);
+   } else {
+      return 0;
+   }
+
+
 
    SocketClientAddon* addon = 0;
 

@@ -2,6 +2,17 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+19.11.2013
+1. Allow to specify address of dabc node in different styles:
+   dabc://nodename:1237 or
+   dabc://nodename or
+   nodename:1237 or
+   nodename
+2. When  CommandClient receives command, it mark command as local that manager
+   do not tries again to detect to which node command should be submitted. Solves
+   problem to distinguish between "nodename.gsi.de" and simply "nodename"
+
+
 15.11.2013
 1. Modifications of MBS is started to provide more possibility for external
    frameworks as DABC. First is changes in remote logger in MBS. It can be

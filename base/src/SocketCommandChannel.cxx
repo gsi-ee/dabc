@@ -259,6 +259,10 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
             DOUT2("Submit command %s rcv:%s for execution", fExeCmd.GetName(), fExeCmd.GetReceiver().c_str());
 
+            // indicate that command must be executed locally
+            // done while receiver may contain different address format and may not recognized by Manager
+            cmd.SetBool("#local_cmd", true);
+
             dabc::mgr.Submit(Assign(cmd));
          }
 
@@ -492,7 +496,7 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0) && fAddon.null()) {
 
-      SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(fRemoteHostName);
+      SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(fRemoteHostName, defaultDabcPort);
 
       // DOUT0("Create client %p to host %s", client, fRemoteHostName.c_str());
 
@@ -563,7 +567,7 @@ std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str
    std::string server, itemname;
    bool islocal(true);
 
-   if (dabc::mgr()->DecomposeAddress(url_str, islocal, server, itemname))
+   if (dabc::mgr.DecomposeAddress(url_str, islocal, server, itemname))
       if (!islocal) return server;
 
    return std::string();
@@ -585,8 +589,8 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
    if (!worker.null() || (conn_tmout<0)) return worker;
 
    // we create worker only if address with port is specified
-   dabc::Url url(remnodename);
-   if (url.GetPort()<=0) return worker;
+   // dabc::Url url(remnodename);
+   // if (url.GetPort()<=0) return worker;
 
    std::string worker_name = dabc::format("Client%d", fClientCnt++);
 

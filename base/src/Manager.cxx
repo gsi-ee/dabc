@@ -784,6 +784,8 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
    if (!url.empty() && DecomposeAddress(url, islocal, server, itemname)) {
 
+      if (cmd.GetBool("#local_cmd")) islocal = true;
+
       DOUT5("MGR: Preview command %s item %s tgtnode %d", cmd.GetName(), url.c_str(), tgtnode);
 
       if (!islocal) {
@@ -792,7 +794,6 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
          EOUT("Cannot submit command to remote server %s", server.c_str());
          return cmd_false;
-
 
       } else
       if (!itemname.empty()) {

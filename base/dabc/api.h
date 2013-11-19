@@ -34,6 +34,9 @@ namespace dabc {
     * \details Could be used to ensure that all dabc-relevant objects are destroyed */
    extern bool DestroyManager();
 
+   /** \brief Function creates node name, which can be supplied as receiver of dabc commands */
+   extern std::string MakeNodeName(const std::string& arg);
+
    /** \brief Function establish connection with specified dabc node
     *
     * \details Address should look like dabc://nodname:port */

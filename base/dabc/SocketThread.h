@@ -401,7 +401,7 @@ namespace dabc {
 
          static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
 
-         static SocketClientAddon* CreateClientAddon(const std::string& servid);
+         static SocketClientAddon* CreateClientAddon(const std::string& servid, int dflt_port = -1);
 
       protected:
 

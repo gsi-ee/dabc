@@ -49,6 +49,17 @@ bool dabc::DestroyManager()
    return true;
 }
 
+std::string dabc::MakeNodeName(const std::string& arg)
+{
+   size_t pos = arg.find("dabc://");
+   if (pos==std::string::npos)
+      return std::string("dabc://") + arg;
+   if (pos == 0) return arg;
+
+   return std::string();
+}
+
+
 
 bool dabc::ConnectDabcNode(const std::string& nodeaddr)
 {
@@ -57,11 +68,17 @@ bool dabc::ConnectDabcNode(const std::string& nodeaddr)
       return false;
    }
 
+   std::string fullname = MakeNodeName(nodeaddr);
+   if (fullname.empty()) {
+      EOUT("Wrong address format %d", nodeaddr.c_str());
+      return false;
+   }
+
    if (dabc::mgr.GetCommandChannel().null())
       dabc::mgr()->CreateControl(false);
 
    dabc::Command cmd("Ping");
-   cmd.SetReceiver(nodeaddr);
+   cmd.SetReceiver(fullname);
    cmd.SetTimeout(10);
 
    if (dabc::mgr.GetCommandChannel().Execute(cmd) != dabc::cmd_true) {
@@ -74,11 +91,17 @@ bool dabc::ConnectDabcNode(const std::string& nodeaddr)
 
 dabc::Hierarchy dabc::GetNodeHierarchy(const std::string& nodeaddr)
 {
-   dabc::Command cmd("GetGlobalNamesList");
-   cmd.SetReceiver(nodeaddr + dabc::Publisher::DfltName());
-   cmd.SetTimeout(10);
-
    dabc::Hierarchy res;
+
+   std::string fullname = MakeNodeName(nodeaddr);
+   if (fullname.empty()) {
+      EOUT("Wrong address format %d", nodeaddr.c_str());
+      return res;
+   }
+
+   dabc::Command cmd("GetGlobalNamesList");
+   cmd.SetReceiver(fullname + dabc::Publisher::DfltName());
+   cmd.SetTimeout(10);
 
    if (dabc::mgr.GetCommandChannel().Execute(cmd)!=dabc::cmd_true) {
       EOUT("Fail to get hierarchy from node %s", nodeaddr.c_str());
