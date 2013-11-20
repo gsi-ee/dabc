@@ -16,6 +16,7 @@
 #include "http/Factory.h"
 
 #include "dabc/Manager.h"
+#include "dabc/Configuration.h"
 #include "http/Server.h"
 
 dabc::FactoryPlugin httpfactory(new http::Factory("http"));
@@ -23,6 +24,11 @@ dabc::FactoryPlugin httpfactory(new http::Factory("http"));
 
 void http::Factory::Initialize()
 {
+   if (dabc::mgr.null()) return;
+
+   // if dabc started without config file, do not automatically start http server
+   if ((dabc::mgr()->cfg()==0) || (dabc::mgr()->cfg()->GetVersion()<=0)) return;
+
    http::Server* serv = new http::Server("/http");
    if (!serv->IsEnabled()) {
       dabc::WorkerRef ref = serv;
