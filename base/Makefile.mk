@@ -52,7 +52,7 @@ exes:: $(DABC_BASEEXE) $(DABC_XMLEXE) $(DABC_BASESH)
 #$(DABCINCPATH)/dabc:
 #	@mkdir -p $@
 
-$(DABCINCPATH)/dabc/defines.h: config/Makefile.config Makefile $(DABCINCPATH)/dabc
+$(DABCINCPATH)/dabc/defines.h: config/Makefile.config config/Makefile.gener Makefile $(DABCINCPATH)/dabc
 	@echo "Producing $@"
 	@echo "#ifndef DABC_defines" > $@
 	@echo "#define DABC_defines" >> $@
@@ -66,9 +66,13 @@ else
 	@echo "   #define DEBUGLEVEL 2" >> $@
 endif
 	@echo "   #endif" >> $@
-	@echo "" >> $@
 ifdef extrachecks
+	@echo "" >> $@
 	@echo "   #define DABC_EXTRA_CHECKS" >> $@
+endif
+ifeq ($(DABC_ROOT_ASIMAGE),true)
+	@echo "" >> $@
+	@echo "   #define DABC_ROOT_ASIMAGE" >> $@
 endif
 	@echo "" >> $@
 	@echo "#endif" >> $@

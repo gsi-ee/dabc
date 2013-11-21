@@ -201,10 +201,54 @@ dabc::Buffer dabc_root::BinaryProducer::GetStreamerInfoBinary()
    return CreateBindData(sbuf);
 }
 
+#ifdef DABC_ROOT_ASIMAGE
+
+#include "TASImage.h"
 
 dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
 {
-   DOUT0("BinaryProducer::GetBinary process with image");
+   DOUT2("BinaryProducer::GetBinary process with image");
+
+   if (!obj->InheritsFrom(TPad::Class())) return 0;
+
+   TImage* img = TImage::Create();
+   if (img==0) return 0;
+
+   DOUT2("Crate IMAGE from canvas");
+   img->FromPad((TPad*) obj);
+
+   TASImage* tasImage = new TASImage();
+   tasImage->Append(img);
+
+   char* png_buffer(0);
+   int size(0);
+
+   tasImage->GetImageBuffer(&png_buffer, &size, TImage::kPng);
+
+   dabc::Buffer buf;
+
+   if ((png_buffer!=0) && (size>0)) {
+
+      buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader) + size);
+      dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
+      hdr->reset();
+      memcpy(((char*)buf.SegmentPtr()) + sizeof(dabc::BinDataHeader), png_buffer, size);
+   }
+
+   delete [] png_buffer;
+   delete tasImage;
+   // delete img;
+
+   DOUT0("Create image in memory %d", size);
+
+   return buf;
+}
+
+#else
+
+dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
+{
+   DOUT2("BinaryProducer::GetBinary process with image");
 
    if (!obj->InheritsFrom(TPad::Class())) return 0;
 
@@ -214,7 +258,7 @@ dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
    static int imgcnt = 0;
    std::string fname = dabc::format("/tmp/test%d.png", imgcnt++);
 
-   DOUT0("Crate IMAGE from canvas");
+   DOUT2("Crate IMAGE from canvas");
 
    img->FromPad((TPad*) obj);
 
@@ -240,10 +284,12 @@ dabc::Buffer dabc_root::BinaryProducer::CreateImage(TObject* obj)
 
    gSystem->Unlink(fname.c_str());
 
-   DOUT0("Reload image from file length %ld", length);
+   DOUT0("Build image in file %s length %ld", fname.c_str(), length);
 
    return buf;
 }
+
+#endif
 
 std::string dabc_root::BinaryProducer::GetObjectHash(TObject* obj)
 {

@@ -6,7 +6,9 @@ of the framework.
 1. In BinaryProducer disable zipping for older ROOT versions (<5.34.07). 
    ZIP engine from older ROOT versions is not supported by JSROOTIO.
 2. Do not retry objects after failure. User should click once again.   
-
+3. In root plugin generate image, using TASImage class.
+   This is much more efficient, while can be done directly in memory.
+   
 
 19.11.2013
 1. Allow to specify address of dabc node in different styles:
