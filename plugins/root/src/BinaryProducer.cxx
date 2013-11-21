@@ -32,6 +32,7 @@
 #include "TPad.h"
 #include "TImage.h"
 #include "TSystem.h"
+#include "RVersion.h"
 
 
 extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
@@ -122,6 +123,10 @@ dabc::Buffer dabc_root::BinaryProducer::CreateBindData(TBufferFile* sbuf)
    hdr->reset();
 
    char* fBuffer = ((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader);
+
+#if ROOT_VERSION_CODE <= ROOT_VERSION(5,34,7)
+   with_zip = false;
+#endif
 
    if (with_zip) {
       Int_t cxAlgorithm = 0;

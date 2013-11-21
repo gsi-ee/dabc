@@ -98,13 +98,13 @@ DABC.UnpackBinaryHeader = function(arg) {
    var unzip_buf = JSROOTIO.R__unzip(ziphdr['srcsize'], arg, o, true);
    if (!unzip_buf) {
       alert("fail to unzip data");
-      return false;
+      return null;
    } 
    
    hdr['rawdata'] = unzip_buf['unzipdata'];
    
    if (hdr['rawdata'].length != hdr.zipped)
-      alert("mismatch between length of buffer before zip and actual data length");
+      console.log("mismatch between expected " + hdr.zipped + " and actual len " +  hdr['rawdata'].length);
    
    unzip_buf = null;
    return hdr;
