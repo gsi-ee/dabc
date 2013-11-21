@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is the best place to find documentation about current functionality 
 of the framework.
 
+21.11.2013
+1. In BinaryProducer disable zipping for older ROOT versions (<5.34.07). 
+   ZIP engine from older ROOT versions is not supported by JSROOTIO.
+2. Do not retry objects after failure. User should click once again.   
+
+
 19.11.2013
 1. Allow to specify address of dabc node in different styles:
    dabc://nodename:1237 or

@@ -1212,7 +1212,8 @@ DABC.RootDrawElement = function(_clname) {
          stInit        : 0,
          stWaitRequest : 1,
          stWaitSinfo   : 2,
-         stReady       : 3
+         stReady       : 3,
+         stFailure     : 4
    };
    
    this.state = this.StateEnum.stInit;   
@@ -1232,7 +1233,6 @@ DABC.RootDrawElement.prototype.Clear = function() {
    this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
    this.painter = null;      // pointer on painter, can be used for update
 }
-
 
 
 DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
@@ -1394,7 +1394,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    var hdr = DABC.UnpackBinaryHeader(arg);
    
    if (hdr==null) {
-      console.log(" RootDrawElement get error " + this.itemname);
+      console.log("RootDrawElement get error " + this.itemname);
       this.state = this.StateEnum.stInit;
       // we get error and should invalidate version number
       this.version = 0; 
@@ -1483,6 +1483,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
         
         break;
      }
+     case this.StateEnum.stFailure: return; // do nothing when failure
      default: return;
    }
    
@@ -1516,7 +1517,7 @@ DABC.Manager = function(with_tree) {
    if (this.with_tree) {
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
       DABC.dabc_tree.config.useCookies = false;
-      this.CreateTable(3,3);
+      this.CreateTable(2,2);
    }
    
    return this;
