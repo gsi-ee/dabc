@@ -478,7 +478,7 @@ DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
 
    // xml node must have attribute, which will be extracted
    var val = this.ExtractField(name, kind, this.xmlnode);
-   if (!val) return;
+   if (val==null) return;
    
    var arr = new Array();
    arr.push(val);
@@ -486,7 +486,7 @@ DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
    if (this.xmlhistory) 
       for (var n=this.xmlhistory.length-1;n>=0;n--) {
          var newval = this.ExtractField(name, kind, this.xmlhistory[n]);
-         if (newval) val = newval;
+         if (newval!=null) val = newval;
          arr.push(val);
       }
 
@@ -1152,12 +1152,13 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
    
-//   console.log("Extract series");
+   //console.log("Extract series");
    
    var x = this.ExtractSeries("time", "time");
    var y = this.ExtractSeries("value", "number");
    
-//   if (x && y) console.log("Arrays length = " + x.length + "  " + y.length);
+   //if (x) console.log("X array length = " + x.length);
+   //if (y) console.log("Y array length = " + y.length);
 
    // here we should create TGraph object
 

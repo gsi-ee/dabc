@@ -6759,6 +6759,8 @@ var gStyle = {
          if (graph['fY'][i] < miny) miny = graph['fY'][i];
          if (graph['fY'][i] > maxy) maxy = graph['fY'][i];
       }
+      
+      if (miny==maxy) maxy = miny + 1;
    
       // console.log("search minx = " + minx + " maxx = " + maxx);
       
