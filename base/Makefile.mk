@@ -52,7 +52,7 @@ exes:: $(DABC_BASEEXE) $(DABC_XMLEXE) $(DABC_BASESH)
 #$(DABCINCPATH)/dabc:
 #	@mkdir -p $@
 
-$(DABCINCPATH)/dabc/defines.h: config/Makefile.config config/Makefile.gener Makefile $(DABCINCPATH)/dabc
+$(DABCINCPATH)/dabc/defines.h: config/Makefile.config Makefile $(DABCINCPATH)/dabc
 	@echo "Producing $@"
 	@echo "#ifndef DABC_defines" > $@
 	@echo "#define DABC_defines" >> $@

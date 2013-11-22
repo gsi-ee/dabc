@@ -68,6 +68,9 @@ namespace mbs {
 
          virtual double ProcessTimeout(double last_diff);
 
+         virtual void OnConnectionClosed();
+         virtual void OnSocketError(int errnum, const std::string& info);
+
       public:
          ServerOutputAddon(int fd, int kind);
          virtual ~ServerOutputAddon();

@@ -172,8 +172,18 @@ void mbs::ClientTransport::OnConnectionClosed()
    // from this moment we have nothing to do and can close transport
    SubmitWorkerCmd(dabc::Command("CloseTransport"));
 
+   // TODO: probably, one do not need call parent method
    dabc::SocketIOAddon::OnConnectionClosed();
 }
+
+void mbs::ClientTransport::OnSocketError(int errnum, const std::string& info)
+{
+   SubmitWorkerCmd(dabc::Command("CloseTransport"));
+
+   // TODO: probably, one do not need call parent method
+   dabc::SocketIOAddon::OnSocketError(errnum, info);
+}
+
 
 
 void mbs::ClientTransport::OnThreadAssigned()

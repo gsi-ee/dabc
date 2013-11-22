@@ -33,6 +33,7 @@ mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind) :
 
 mbs::ServerOutputAddon::~ServerOutputAddon()
 {
+   DOUT0("Destroy ServerOutputAddon %p", this);
 }
 
 void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool isnewformat)
@@ -199,6 +200,27 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    return dabc::do_CallBack;
 }
 
+
+void mbs::ServerOutputAddon::OnConnectionClosed()
+{
+   // disable autodestroy
+
+   if (fState != oError) {
+      fState = oError;
+      MakeCallback(dabc::do_Error);
+   }
+}
+
+void mbs::ServerOutputAddon::OnSocketError(int errnum, const std::string& info)
+{
+   // disable autodestroy
+   if (fState != oError) {
+      fState = oError;
+      MakeCallback(dabc::do_Error);
+   }
+}
+
+
 // ===============================================================================
 
 mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit, bool blocking) :
@@ -228,7 +250,6 @@ void mbs::ServerTransport::ObjectCleanup()
 {
    dabc::Transport::ObjectCleanup();
 }
-
 
 bool mbs::ServerTransport::StartTransport()
 {

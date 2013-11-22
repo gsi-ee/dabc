@@ -551,8 +551,9 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
          fOutput->Write_Flush();
          Recv(port).Release();
          return true;
-      } else
+      } else {
          ret = fOutput->Write_Check();
+      }
 
       switch (ret) {
          case do_Ok:

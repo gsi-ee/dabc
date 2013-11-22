@@ -35,7 +35,7 @@ else
 OPTFLAGS = $(OPTIMIZEMODE)
 endif
 
-$(BLD_DIR)/dummy.d: $(AUTO_DIRS) build-init 
+$(BLD_DIR)/dummy.d: $(AUTO_DIRS) build-init
 	@(if [ ! -f $(BLD_DIR) ] ; then mkdir -p $(BLD_DIR); fi)
 	@(if [ ! -f $@ ] ; then touch $@; fi)
 
@@ -72,8 +72,6 @@ $(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
 ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
 
 ifdef ALLDEPENDENC
-# before dependency can be created one need all headers
-# $(ALLDEPENDENC) : $(ALLHDRS)
 -include $(ALLDEPENDENC)
 endif
 

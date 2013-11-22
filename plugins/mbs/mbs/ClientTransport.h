@@ -77,6 +77,7 @@ namespace mbs {
          virtual void OnRecvCompleted();
 
          virtual void OnConnectionClosed();
+         virtual void OnSocketError(int errnum, const std::string& info);
 
          void SubmitRequest();
          void MakeCallback(unsigned sz);
