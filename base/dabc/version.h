@@ -21,7 +21,7 @@
 /*
  * These macros can be used in the following way:
  *
- *    #if DABC_VERSION_CODE >= DABC_VERSION(1,9,1)
+ *    #if DABC_VERSION_CODE >= DABC_VERSION(2,3,5)
  *       #include "newinclude.h"
  *    #else
  *       #include "oldinclude.h"
@@ -29,8 +29,8 @@
  *
 */
 
-#define DABC_RELEASE "2.3.6"
-#define DABC_VERSION_CODE 0x20306
+#define DABC_RELEASE "2.6.0"
+#define DABC_VERSION_CODE 0x20600
 #define DABC_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 
 #endif

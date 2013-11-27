@@ -1,6 +1,9 @@
 This is log of changes in the dabc project, which is started in winter 2013. 
-In some cases it is the best place to find documentation about current functionality 
-of the framework.
+In many cases it is the best place to find information about 
+current functionality of the framework.
+
+27.11.2013
+1. Create 2.6.0 tag, which is required for new Go4 4.6.0
 
 
 22.11.2013
