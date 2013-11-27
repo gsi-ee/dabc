@@ -3,7 +3,6 @@ In some cases it is the best place to find documentation about current functiona
 of the framework.
 
 
-
 22.11.2013
 1. Fix error when displaying 0 in rate history. 
 2. When min and max are the same, TGraph displays range [min, min+1]
