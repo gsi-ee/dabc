@@ -8,7 +8,7 @@ Most proper way to download DABC is to check out head version from repository.
 
 Alternative, one could check out latest release tag:
 
-    [shell] svn co https://subversion.gsi.de/dabc/tags/203-05 dabc20305
+    [shell] svn co https://subversion.gsi.de/dabc/tags/206-00 dabc20600
 
 
 
