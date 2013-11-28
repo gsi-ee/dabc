@@ -100,7 +100,7 @@ namespace hadaq {
 
    enum EvtId {
       EvtId_data     = 0x00000001,
-      EvtId_DABC     = 0x00003001,      // hades DAQVERSION=3 (evtbuild.c uses DAQVERSION=2)
+      EvtId_DABC     = 0x00002001,      // hades DAQVERSION=2 (same as evtbuild.c uses DAQVERSION=2)
       EvtId_runStart = 0x00010002,
       EvtId_runStop  = 0x00010003
    };
