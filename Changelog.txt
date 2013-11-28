@@ -6,10 +6,8 @@ current functionality of the framework.
 1. Use in hadaq plugin DAQVERSION=2 (same as old evtbuild.c).
    As a result, DABC HLD files will be absolutely the same.  
 
-
 27.11.2013
 1. Create 2.6.0 tag, which is required for new Go4 4.6.0
-
 
 22.11.2013
 1. Fix error when displaying 0 in rate history. 
