@@ -6,6 +6,8 @@ current functionality of the framework.
 1. Provide DabcRoot::Register() method to add arbitrary objects
    to DABC folders, which than can be seen in ROOT/Objects/ subdirectory
    of web browser.
+2. Correctly register folders in cleanup lists, that when object is deleted,
+   it should automatically be removed from registered folders. 
 
 
 28.11.2013

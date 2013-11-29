@@ -438,7 +438,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));
 
-      // DOUT0("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml(2).c_str());
+      // DOUT0("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml().c_str());
    }
 
    bool doagain(true);
@@ -461,7 +461,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
    }
 }
 
-bool dabc_root::RootSniffer::RegisterObject(const char* folder, TObject* obj)
+bool dabc_root::RootSniffer::RegisterObject(const char* subfolder, TObject* obj)
 {
    if (obj==0) return false;
 
@@ -478,10 +478,32 @@ bool dabc_root::RootSniffer::RegisterObject(const char* folder, TObject* obj)
       dabcfold->SetOwner(kFALSE);
    }
 
+   if ((subfolder!=0) && (strlen(subfolder)>0)) {
+
+      TObjArray* arr = TString(subfolder).Tokenize("/");
+      for (Int_t i=0; i <= (arr ? arr->GetLast() : -1); i++) {
+
+         const char* subname = arr->At(i)->GetName();
+         if (strlen(subname)==0) continue;
+
+         TFolder* fold = dynamic_cast<TFolder*> (dabcfold->FindObject(subname));
+         if (fold==0) {
+            fold = dabcfold->AddFolder(subname, "DABC sub-folder");
+            fold->SetOwner(kFALSE);
+         }
+         dabcfold = fold;
+      }
+
+   }
+
    // If object will be destroyed, it must be removed from the folders automatically
    obj->SetBit(kMustCleanup);
 
    dabcfold->Add(obj);
+
+   // register folder for cleanup
+   if (!gROOT->GetListOfCleanups()->FindObject(dabcfold))
+      gROOT->GetListOfCleanups()->Add(dabcfold);
 
    return true;
 }
