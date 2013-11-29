@@ -507,3 +507,22 @@ bool dabc_root::RootSniffer::RegisterObject(const char* subfolder, TObject* obj)
 
    return true;
 }
+
+bool dabc_root::RootSniffer::UnregisterObject(TObject* obj)
+{
+   if (obj==0) return true;
+
+   TFolder* topf = gROOT->GetRootFolder();
+
+   if (topf==0) {
+      EOUT("Not found top ROOT folder!!!");
+      return false;
+   }
+
+   TFolder* dabcfold = dynamic_cast<TFolder*> (topf->FindObject("dabc"));
+
+   if (dabcfold) dabcfold->RecursiveRemove(obj);
+
+   return true;
+}
+

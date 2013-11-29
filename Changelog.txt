@@ -8,6 +8,7 @@ current functionality of the framework.
    of web browser.
 2. Correctly register folders in cleanup lists, that when object is deleted,
    it should automatically be removed from registered folders. 
+3. Add DabcRoot::Unregister() method.
 
 
 28.11.2013

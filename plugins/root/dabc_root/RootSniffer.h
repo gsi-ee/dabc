@@ -113,6 +113,10 @@ namespace dabc_root {
           * Should be called from main ROOT thread */
          bool RegisterObject(const char* folder, TObject* obj);
 
+         /** Unregister object from objects hierarchy
+          * Should be called from main ROOT thread */
+         bool UnregisterObject(TObject* obj);
+
    };
 
 }

@@ -66,6 +66,10 @@ class DabcRoot {
        * where objects will be contained */
       static bool Register(const char* folder, TObject* obj);
 
+      /** \brief Remove object from registered list */
+      static bool Unregister(TObject* obj);
+
+
       /** \brief Switch on/off DABC debug output */
       static void EnableDebug(bool on = true);
 };

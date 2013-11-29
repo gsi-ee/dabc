@@ -113,8 +113,16 @@ bool DabcRoot::Register(const char* folder, TObject* obj)
    dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
    dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
 
-   if (sniff == 0) return false;
+   return sniff ? sniff->RegisterObject(folder, obj) : false;
+}
 
-   return sniff->RegisterObject(folder, obj);
+bool DabcRoot::Unregister(TObject* obj)
+{
+   if (dabc::mgr.null() || (obj==0)) return false;
+
+   dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
+   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+
+   return sniff ? sniff->UnregisterObject(obj) : false;
 }
 
