@@ -14,6 +14,8 @@
 #ifndef DabcRoot_h
 #define DabcRoot_h
 
+class TObject;
+
 class DabcRoot {
 
    public:
@@ -56,6 +58,13 @@ class DabcRoot {
        * Meaning of sync_timer variable see in \ref DabcRoot::StartHttpServer() documentation */
 
       static bool ConnectMaster(const char* master_url, bool sync_timer = true);
+
+
+      /** \brief Register objects in web server
+       *
+       * Allows to register arbitrary object in web server. One also can specify sub-folder name,
+       * where objects will be contained */
+      static bool Register(const char* folder, TObject* obj);
 
       /** \brief Switch on/off DABC debug output */
       static void EnableDebug(bool on = true);

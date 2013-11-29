@@ -1,5 +1,7 @@
 #include "DabcRoot.h"
 
+#include "TObject.h"
+
 #include "dabc/Command.h"
 #include "dabc/api.h"
 #include "dabc/Manager.h"
@@ -102,5 +104,17 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 void DabcRoot::EnableDebug(bool on)
 {
    dabc::SetDebugLevel(on ? 1 : 0);
+}
+
+bool DabcRoot::Register(const char* folder, TObject* obj)
+{
+   if (dabc::mgr.null() || (obj==0)) return false;
+
+   dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
+   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+
+   if (sniff == 0) return false;
+
+   return sniff->RegisterObject(folder, obj);
 }
 

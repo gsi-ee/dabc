@@ -119,6 +119,8 @@ void dabc_root::RootSniffer::OnThreadAssigned()
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
+   // this is just historical code, normally ROOT hierarchy will be scanned per ROOT timer
+
    dabc::Hierarchy h;
    h.Create("ROOT");
    // this is fake element, which is need to be requested before first
@@ -296,10 +298,10 @@ void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* 
 //   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
 //              else DOUT0("ROOT START SCAN");
 
-//   TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root"));
-
 //   if (topf!=0)
 //      return ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0);
+
+   TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root/dabc"));
 
    if (searchpath==0) h.Field(dabc::prop_kind).SetStr("ROOT.Session");
 
@@ -308,6 +310,8 @@ void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* 
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfCanvases(), 0, "Canvases");
 
    if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfFiles(), 0, "Files");
+
+   if (!res && topf) res = ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0, "Objects");
 
    return res;
 }
@@ -455,4 +459,29 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       if (fRootCmds.Size()>0) cmd = fRootCmds.Pop();
       doagain = !cmd.null();
    }
+}
+
+bool dabc_root::RootSniffer::RegisterObject(const char* folder, TObject* obj)
+{
+   if (obj==0) return false;
+
+   TFolder* topf = gROOT->GetRootFolder();
+
+   if (topf==0) {
+      EOUT("Not found top ROOT folder!!!");
+      return false;
+   }
+
+   TFolder* dabcfold = dynamic_cast<TFolder*> (topf->FindObject("dabc"));
+   if (dabcfold==0) {
+      dabcfold = topf->AddFolder("dabc", "Top DABC folder");
+      dabcfold->SetOwner(kFALSE);
+   }
+
+   // If object will be destroyed, it must be removed from the folders automatically
+   obj->SetBit(kMustCleanup);
+
+   dabcfold->Add(obj);
+
+   return true;
 }

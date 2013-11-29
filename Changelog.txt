@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+29.11.2013
+1. Provide DabcRoot::Register() method to add arbitrary objects
+   to DABC folders, which than can be seen in ROOT/Objects/ subdirectory
+   of web browser.
+
+
 28.11.2013
 1. Use in hadaq plugin DAQVERSION=2 (same as old evtbuild.c).
    As a result, DABC HLD files will be absolutely the same.  

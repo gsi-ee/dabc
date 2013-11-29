@@ -109,6 +109,10 @@ namespace dabc_root {
          /** Create TTimer object, which allows to perform action in ROOT context */
          void InstallSniffTimer();
 
+         /** Register object in objects hierarchy
+          * Should be called from main ROOT thread */
+         bool RegisterObject(const char* folder, TObject* obj);
+
    };
 
 }
