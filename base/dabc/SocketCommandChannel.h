@@ -184,8 +184,9 @@ namespace dabc {
       friend class SocketCommandClient;
 
       protected:
-         int             fNodeId;        ///<  current node id
-         int             fClientCnt;     ///<  counter for new clients
+         int             fNodeId;         ///<  current node id
+         bool            fClientsAllowed; ///<  when true, incomming clients are allowed
+         int             fClientCnt;      ///<  counter for new clients
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);

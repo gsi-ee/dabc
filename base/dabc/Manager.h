@@ -497,7 +497,7 @@ namespace dabc {
          /** \brief Create command channel
           * Parameter withserver defines if server socket will be created, which accepts client connections
           * Optionally one can provide port number for server socket*/
-         bool CreateControl(bool withserver, int serv_port = 0);
+         bool CreateControl(bool withserver, int serv_port = 0, bool allow_clients = true);
 
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 

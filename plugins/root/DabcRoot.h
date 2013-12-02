@@ -43,6 +43,28 @@ class DabcRoot {
 
       static bool StartHttpServer(int port = 8080, bool sync_timer = true);
 
+      /** \brief Method starts DABC server
+       *
+       * \param[in] port           socket port number, default 1237
+       * \param[in] sync_timer     kind of TTimer object to use, default true
+       * \param[in] allow_slaves   if true, other processes could be attached (default false)
+       * \returns                  true if successful
+       *
+       * To access such server, one could use Go4 GUI or shell-based tools.
+       * DABC server could be started together with HTTP server.
+       *
+       * sync_timer parameter defines that kind of timer is used. When true (default),
+       * synchronous timer is created which can process incoming commands only when
+       * gSystem->ProcessEvents() are called. It is a case in normal ROOT session and it is
+       * recommended way of working. Advantage - one exactly knows and can control
+       * when DABC server can interrupt program execution.
+       *
+       * allow_slaved parameter allows to connect other processes to this applications.
+       * It make possible to access such slave processes via main server */
+
+      static bool StartDabcServer(int port = 1237, bool sync_timer = true, bool allow_slaves = false);
+
+
       /** \brief Assign master DABC node
        *
        * \param[in] master_url   socket address of the DABC master node

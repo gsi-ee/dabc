@@ -10,40 +10,69 @@
 
 bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 {
-   if (!dabc::mgr.null()) return false;
+   if (dabc::mgr.null()) {
+      dabc::SetDebugLevel(0);
+      dabc::CreateManager("dabc", -1);
+      dabc::mgr.CreatePublisher();
+   }
 
-   dabc::SetDebugLevel(0);
+   if (dabc::mgr.FindItem("/ROOT").null()) {
 
-   dabc::CreateManager("dabc", -1);
+      dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+      cmd2.SetBool("enabled", true);
+      cmd2.SetBool("batch", false);
+      cmd2.SetBool("synctimer", sync_timer);
+      cmd2.SetStr("prefix", "ROOT");
 
-   // dabc::mgr.CreateThread("MainThread");
+      dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
+      sniff->InstallSniffTimer();
+      dabc::WorkerRef w2 = sniff;
+      w2.MakeThreadForWorker("MainThread");
+      DOUT1("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
+   }
 
-   dabc::mgr.CreatePublisher();
+   if (dabc::mgr.FindItem("/http").null()) {
+      dabc::CmdCreateObject cmd1("http::Server","/http");
+      cmd1.SetBool("enabled", true);
+      cmd1.SetInt("port", port);
+      if (!dabc::mgr.Execute(cmd1)) return false;
 
-   dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
-   cmd2.SetBool("enabled", true);
-   cmd2.SetBool("batch", false);
-   cmd2.SetBool("synctimer", sync_timer);
-   cmd2.SetStr("prefix", "ROOT");
-
-   dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
-   sniff->InstallSniffTimer();
-   dabc::WorkerRef w2 = sniff;
-   w2.MakeThreadForWorker("MainThread");
-
-   DOUT1("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
-
-   dabc::CmdCreateObject cmd1("http::Server","/http");
-   cmd1.SetBool("enabled", true);
-   cmd1.SetInt("port", port);
-
-   if (!dabc::mgr.Execute(cmd1)) return false;
-
-   dabc::WorkerRef w1 = cmd1.GetRef("Object");
-   w1.MakeThreadForWorker("MainThread");
+      dabc::WorkerRef w1 = cmd1.GetRef("Object");
+      w1.MakeThreadForWorker("MainThread");
+   }
 
    return true;
 }
+
+
+bool DabcRoot::StartDabcServer(int port, bool sync_timer, bool allow_slaves)
+{
+   if (dabc::mgr.null()) {
+      dabc::SetDebugLevel(0);
+      dabc::CreateManager("dabc", -1);
+      dabc::mgr.CreatePublisher();
+   }
+
+   dabc::mgr()->CreateControl(true, port, allow_slaves);
+
+   if (dabc::mgr.FindItem("/ROOT").null()) {
+
+      dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+      cmd2.SetBool("enabled", true);
+      cmd2.SetBool("batch", false);
+      cmd2.SetBool("synctimer", sync_timer);
+      cmd2.SetStr("prefix", "ROOT");
+
+      dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
+      sniff->InstallSniffTimer();
+      dabc::WorkerRef w2 = sniff;
+      w2.MakeThreadForWorker("MainThread");
+      DOUT1("Create root sniffer %p thrdname %s", sniff, w2.thread().GetName());
+   }
+
+   return true;
+}
+
 
 bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 {

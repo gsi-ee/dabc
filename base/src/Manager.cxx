@@ -748,13 +748,14 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
    }
 }
 
-bool dabc::Manager::CreateControl(bool withserver, int serv_port)
+bool dabc::Manager::CreateControl(bool withserver, int serv_port, bool allow_clients)
 {
    WorkerRef ref = GetCommandChannel();
    if (!ref.null()) return true;
 
    dabc::CmdCreateObject cmd("SocketCommandChannel", CmdChlName());
    cmd.SetBool("WithServer", withserver);
+   cmd.SetBool("ClientsAllowed", allow_clients);
    if (withserver && cfg()) {
       int port = cfg()->MgrPort();
       if (port<=0) port = serv_port;

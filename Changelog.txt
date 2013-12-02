@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+2.12.2013
+1. Add DabcRoot::StartDabcServer() method. This allows to connect server
+   with go4 gui or any other program, which uses DABC API. DABC server 
+   can be started in parallel with HTTP server.
+
+
 29.11.2013
 1. Provide DabcRoot::Register() method to add arbitrary objects
    to DABC folders, which than can be seen in ROOT/Objects/ subdirectory

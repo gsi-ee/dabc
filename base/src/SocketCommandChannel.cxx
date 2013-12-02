@@ -542,9 +542,12 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd) :
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
+   fClientsAllowed(true),
    fClientCnt(0)
 {
    fNodeId = dabc::mgr()->cfg()->MgrNodeId();
+
+   fClientsAllowed = cmd.GetBool("ClientsAllowed", true);
 
    AssignAddon(connaddon);
 

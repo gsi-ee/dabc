@@ -63,6 +63,9 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          mgrid += dabc::format(":%d", nport);
          addon = new dabc::SocketServerAddon(fd, nport);
          addon->SetDeliverEventsToWorker(true);
+
+         DOUT0("Start DABC server on port %d", nport);
+
       } else {
          mgrid += dabc::format("_pid%d", (int) getpid());
          dabc::mgr.SetLocalId(mgrid);
