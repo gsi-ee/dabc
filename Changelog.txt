@@ -6,6 +6,15 @@ current functionality of the framework.
 1. Add DabcRoot::StartDabcServer() method. This allows to connect server
    with go4 gui or any other program, which uses DABC API. DABC server 
    can be started in parallel with HTTP server.
+2. When add new item into hierarchy, by default check if name confirm to
+   DABC rules. If not, item name will be changed, but dabc:realname property will
+   be set.
+3. When converting into XML, more strict name convention are applied.
+   One could not use symbols '<' '>' '&'. Therefore XML node will be different
+   and actual item name will be stored in dabc:itemname attribute.
+4. As a result, it is allowed now to use '[' ']' symbols in histogram names
+   and such symbols propogated correctly to HTTP syntax. Is a case for many
+   hydra histograms.         
 
 
 29.11.2013

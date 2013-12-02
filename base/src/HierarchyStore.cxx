@@ -300,7 +300,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
          if (!ScanFiles(fullsubname + "/", dt, files)) return false;
       } else {
          isanysubdir = true;
-         dabc::Hierarchy subh = h.CreateChild(itemname.c_str());
+         dabc::Hierarchy subh = h.CreateChild(itemname);
          if (!ScanTreeDir(subh, fullsubname + "/")) return false;
       }
    }

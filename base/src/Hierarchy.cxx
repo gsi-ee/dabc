@@ -30,7 +30,8 @@
 
 const char* dabc::prop_version = "dabc:version";
 const char* dabc::prop_kind = "dabc:kind";
-const char* dabc::prop_realname = "dabc:realname";
+const char* dabc::prop_realname = "dabc:realname"; // real object name
+const char* dabc::prop_itemname = "dabc:itemname"; // item name in dabc hierarchy
 const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_producer = "dabc:producer";
 const char* dabc::prop_error = "dabc:error";
@@ -388,10 +389,30 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
    return s.verify_size(pos, sz);
 }
 
-
-dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, unsigned mask)
+dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveContainerInXmlNode(XMLNodePointer_t parent, const std::string& altname)
 {
-   XMLNodePointer_t objnode = SaveInXmlNode(parentnode);
+   std::string name = GetName();
+
+   XMLNodePointer_t node;
+
+   if (name.find_first_of("[]&<>") != std::string::npos) {
+      node = Xml::NewChild(parent, 0, altname.c_str(), 0);
+      Xml::NewAttr(node, 0, dabc::prop_itemname, name.c_str());
+   } else {
+      node = Xml::NewChild(parent, 0, name.c_str(), 0);
+   }
+
+   fFields->SaveInXml(node);
+
+   return node;
+}
+
+
+dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, unsigned mask, unsigned chldcnt)
+{
+   std::string altname = (chldcnt != (unsigned)-1) ? dabc::format("__item%u__",chldcnt) : std::string("topitem");
+
+   XMLNodePointer_t objnode = SaveContainerInXmlNode(parentnode, altname);
 
    if ((mask & xmlmask_Version) != 0) {
       Xml::NewIntAttr(objnode, "node_ver", fNodeVersion);
@@ -407,7 +428,7 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
    if ((mask & xmlmask_NoChilds) == 0)
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child) child->SaveHierarchyInXmlNode(objnode, mask);
+         if (child) child->SaveHierarchyInXmlNode(objnode, mask, n);
       }
 
    return objnode;
@@ -459,7 +480,7 @@ std::string dabc::HierarchyContainer::RequestHistoryAsXml(uint64_t version, int 
    Xml::NewAttr(topnode, 0, "xmlns:dabc", "http://dabc.gsi.de/xhtml");
    Xml::NewAttr(topnode, 0, prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
 
-   SaveInXmlNode(topnode);
+   SaveContainerInXmlNode(topnode,"item");
 
    bool cross_boundary = false;
 
@@ -1009,11 +1030,36 @@ void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
    SetObject(cont);
 }
 
-dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
+dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx, bool check_name)
 {
    if (null() || name.empty()) return dabc::Hierarchy();
 
-   return GetObject()->CreateChildAt(name, indx);
+   std::string itemname = name;
+
+   if (check_name) {
+      size_t pos = (itemname.find_last_of("/"));
+      if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
+      if (itemname.empty()) itemname = "item";
+
+      // replace all special symbols which can make problem in http (not in xml)
+      while ((pos = itemname.find_first_of("#:&?")) != std::string::npos)
+         itemname.replace(pos, 1, "_");
+
+      unsigned cnt = NumChilds();
+      std::string basename = itemname;
+
+      // prevent same item name
+      while (!FindChild(itemname.c_str()).null()) {
+         itemname = dabc::format("%s%d", basename.c_str(), cnt++);
+      }
+   }
+
+   dabc::Hierarchy res = GetObject()->CreateChildAt(itemname, indx);
+
+   if (check_name && (itemname != name))
+      res.SetField(dabc::prop_realname, name);
+
+   return res;
 }
 
 dabc::Hierarchy dabc::Hierarchy::FindMaster()

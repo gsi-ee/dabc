@@ -162,26 +162,7 @@ void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, cons
 
    if (searchpath==0) {
 
-      std::string itemname = obj->GetName();
-
-      size_t pos = (itemname.find_last_of("/"));
-      if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
-      if (itemname.empty()) itemname = "item";
-      while ((pos = itemname.find_first_of("/#<>:")) != std::string::npos)
-         itemname.replace(pos, 1, "_");
-
-      int cnt = 0;
-      std::string basename = itemname;
-
-      // prevent that same item appears many time
-      while (!parent.FindChild(itemname.c_str()).null()) {
-         itemname = basename + dabc::format("%d", cnt++);
-      }
-
-      chld = parent.CreateChild(itemname);
-
-      if (itemname.compare(obj->GetName()) != 0)
-         chld.Field(dabc::prop_realname).SetStr(obj->GetName());
+      chld = parent.CreateChild(obj->GetName());
 
       if (IsDrawableClass(obj->IsA())) {
          chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
@@ -273,7 +254,9 @@ void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const c
 
       // DOUT0("FOUND item %s ", itemname.c_str());
 
-      if (chld.HasField(dabc::prop_realname)) itemname = chld.Field(dabc::prop_realname).AsStr();
+      // real name specifies real object name we are searching fore
+      if (chld.HasField(dabc::prop_realname))
+         itemname = chld.Field(dabc::prop_realname).AsStr();
 
       // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
 

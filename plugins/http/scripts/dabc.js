@@ -788,15 +788,21 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       // console.log(" Work with node " + node.nodeName);
       
       var kind = node.getAttribute("dabc:kind");
+      
+      // this name will be specified when item name can be used as XML node name
+      var dabcitemname = node.getAttribute("dabc:itemname");
+      
       // var value = node.getAttribute("value");
       
       var html = "";
 
       var nodename = node.nodeName;
+      if (dabcitemname != null) nodename = dabcitemname;
+      
       var nodefullname  = "";
       
       if (parentid>=0) 
-         nodefullname = fullname + node.nodeName + "/";
+         nodefullname = fullname + nodename + "/";
       
       var nodeimg = "";
       var node2img = "";
@@ -829,7 +835,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       } else {
          html = nodefullname;
          if (html == "") html = ".."; 
-      }   
+      }
       
       if (node2img == "") node2img = nodeimg;
       
@@ -878,6 +884,8 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
 
    while (child) {
       if (child.nodeName == localname) break;
+      var dabcitemname = child.getAttribute("dabc:itemname");
+      if ((dabcitemname!=null) && (dabcitemname == localname)) break;
       child = DABC.nextXmlNode(child.nextSibling);
    }
    

@@ -38,13 +38,14 @@ namespace dabc {
 
    extern const char* prop_kind;
    extern const char* prop_version;       // version number of hierarchy item
-   extern const char* prop_realname;      // real name property specified, when xml node can not have such name
+   extern const char* prop_realname;      // real name property specified, when dabc item can not have such name (including HTTP syntax)
+   extern const char* prop_itemname;      // this property is used when only XML representation of existing DABC node cannot be directly done
    extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
-   extern const char* prop_producer;     // identifies item, which can deliver binary data for all its
-   extern const char* prop_error;        // indicates any kind of error - typically in text form
-   extern const char* prop_hash;         // content hash, which should describe if object is changed
-   extern const char* prop_history;        // indicates that history for that element is kept
-   extern const char* prop_time;           // time property, supplied when history is created
+   extern const char* prop_producer;      // identifies item, which can deliver binary data for all its
+   extern const char* prop_error;         // indicates any kind of error - typically in text form
+   extern const char* prop_hash;          // content hash, which should describe if object is changed
+   extern const char* prop_history;       // indicates that history for that element is kept
+   extern const char* prop_time;          // time property, supplied when history is created
 
    class Hierarchy;
 
@@ -312,11 +313,13 @@ namespace dabc {
           * xmlmask_Version - store version attributes
           * xmlmask_History - write history (when available)
           * xmlmask_NoChilds - excludes childs saving */
-         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask);
+         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask, unsigned chldcnt = -1);
 
          uint64_t GetVersion() const { return fNodeVersion; }
 
          uint64_t GetChildsVersion() const { return fChildsVersion; }
+
+         XMLNodePointer_t SaveContainerInXmlNode(XMLNodePointer_t parent, const std::string& altname);
 
          /** \brief Produces string with xml code, containing history */
          std::string RequestHistoryAsXml(uint64_t version = 0, int limit = 0);
@@ -350,8 +353,10 @@ namespace dabc {
       Mutex* GetHMutex() const { return null() ? 0 : GetObject()->fHierarchyMutex; }
 
       /** \brief Create child item in hierarchy with specified name
-       * \details If par indx specified, child will be created at specified position */
-      Hierarchy CreateChild(const std::string& name, int indx = -1);
+       * \details If par indx specified, child will be created at specified position
+       * If parameter check_name true, item name will be checked for special symbols
+       * and if found, name will be reformatted. At the same time, property dabc:realname will be set */
+      Hierarchy CreateChild(const std::string& name, int indx = -1, bool check_name = true);
 
       /** \brief Find master item
        * It is used in ROOT to specify position of streamer info */

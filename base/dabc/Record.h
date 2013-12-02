@@ -409,7 +409,7 @@ namespace dabc {
 
          RecordFieldsMap& Fields() const { return *fFields; }
 
-         XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent);
+         virtual XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent);
    };
 
    // ===================================================================================
