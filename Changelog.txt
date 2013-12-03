@@ -2,6 +2,18 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+3.12.2013
+1. Add new configuration parameters for mbs::ServerTransport. Now url can be:
+       mbs://Stream:6543?blocking&deliverall
+   Two new parameters are created:
+      nonblock   - force server do not block, can be specified for transport
+      blocking   - force server to block if client is not not exists
+      deliverall - force server to deliver all events to clients  
+   When last two options enabled, stream server bahaivers as transport    
+2. Provide example in hadaq plugin, where stream server misused for transport
+   of all data to client
+   
+
 2.12.2013
 1. Add DabcRoot::StartDabcServer() method. This allows to connect server
    with go4 gui or any other program, which uses DABC API. DABC server 

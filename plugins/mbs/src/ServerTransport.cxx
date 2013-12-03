@@ -223,19 +223,39 @@ void mbs::ServerOutputAddon::OnSocketError(int errnum, const std::string& info)
 
 // ===============================================================================
 
-mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit, bool blocking) :
+mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, int portnum, dabc::SocketServerAddon* connaddon, const dabc::Url& url) :
    dabc::Transport(cmd, 0, outport),
    fKind(kind),
    fSlaveQueueLength(5),
-   fClientsLimit(limit),
+   fClientsLimit(0),
    fDoingClose(0),
-   fBlocking(blocking)
+   fBlocking(false),
+   fDeliverAll(false)
 {
    // this addon handles connection
    AssignAddon(connaddon);
 
    // TODO: queue length one can take from configuration
    fSlaveQueueLength = 5;
+
+   if (url.HasOption("limit"))
+      fClientsLimit = url.GetOptionInt("limit", fClientsLimit);
+
+   // by default transport server is blocking and stream is unblocking
+   // blocking has two meaning:
+   // - when no connections are there, either block input or not
+   // - when at least one connection established, block input until all output are ready
+   fBlocking = (fKind == mbs::TransportServer);
+
+   fDeliverAll = (fKind == mbs::TransportServer);
+
+   if (url.HasOption("nonblock")) fBlocking = false; else
+   if (url.HasOption("blocking")) fBlocking = true;
+
+   if (url.HasOption("deliverall")) fDeliverAll = true;
+
+   DOUT0("Create MBS server fd:%d kind:%s port:%d limit:%d blocking:%s deliverall:%s",
+         connaddon->Socket(), mbs::ServerKindToStr(fKind), portnum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll));
 
    if (fClientsLimit>0) DOUT0("Set client limit for MBS server to %d", fClientsLimit);
 
@@ -316,7 +336,7 @@ bool mbs::ServerTransport::SendNextBuffer()
    if (!CanRecv()) return false;
 
    // unconnected transport server will block until any connection is established
-   if ((NumOutputs()==0) && fBlocking && (fKind == mbs::TransportServer)) return false;
+   if ((NumOutputs()==0) && fBlocking /*&& (fKind == mbs::TransportServer) */) return false;
 
    bool allcansend = CanSendToAllOutputs(true);
 
@@ -326,8 +346,8 @@ bool mbs::ServerTransport::SendNextBuffer()
    // in case of transport buffer all outputs should be
    // ready to get next buffer. Otherwise input port will be blocked
    if (!allcansend) {
-      // blocking transport server will wait until all clients can get next buffer
-      if ((fKind == mbs::TransportServer) && fBlocking) return false;
+      // if server must deliver all events, than wait (default for transport, can be enabled for stream)
+      if (fDeliverAll) return false;
       // if server do not blocks, first wait until input queue will be filled
       if (!RecvQueueFull()) {
          DOUT3("mbs::ServerTransport::ProcessRecv LET input queue to be filled size:%u", NumCanRecv());

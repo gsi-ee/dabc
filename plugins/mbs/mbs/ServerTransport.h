@@ -96,7 +96,8 @@ namespace mbs {
          int fSlaveQueueLength; ///< queue length, used for slaves connections
          int fClientsLimit;     ///< maximum number of simultaneous clients
          int fDoingClose;       ///< 0 - normal, 1 - saw EOF, 2 - all clients are gone
-         bool fBlocking;        ///< if true, server will block buffers until it can be delivered to client
+         bool fBlocking;        ///< if true, server will block buffers until it can be delivered
+         bool fDeliverAll;      ///< if true, server will try deliver all events when clients are there (default for transport)
 
          virtual bool StartTransport();
          virtual bool StopTransport();
@@ -114,7 +115,10 @@ namespace mbs {
 
       public:
 
-         ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit = 0, bool blocking = false);
+         ServerTransport(dabc::Command cmd, const dabc::PortRef& outport,
+                         int kind, int portnum,
+                         dabc::SocketServerAddon* connaddon,
+                         const dabc::Url& url);
          virtual ~ServerTransport();
 
    };

@@ -103,7 +103,6 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
 
       int kind = mbs::StreamServer;
       int portnum = 0;
-      int connlimit = 0;
 
       if (url.GetPort()>0) {
          portnum = url.GetPort();
@@ -114,13 +113,6 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
       if (!url.GetHostName().empty())
          kind = StrToServerKind(url.GetHostName().c_str());
 
-      if (url.HasOption("limit"))
-         connlimit = url.GetOptionInt("limit", connlimit);
-
-      bool blocking = (kind == mbs::TransportServer);
-
-      if (url.HasOption("nonblock")) blocking = false;
-
       if (portnum==0) portnum = DefualtServerPort(kind);
 
       int fd = dabc::SocketThread::StartServer(portnum);
@@ -130,11 +122,9 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
          return 0;
       }
 
-      DOUT0("Create MBS server fd:%d kind:%s port:%d limit:%d blocking:%s", fd, mbs::ServerKindToStr(kind), portnum, connlimit, DBOOL(blocking));
-
       dabc::SocketServerAddon* addon = new dabc::SocketServerAddon(fd, portnum);
 
-      return new mbs::ServerTransport(cmd, portref, kind, addon, connlimit, blocking);
+      return new mbs::ServerTransport(cmd, portref, kind, portnum, addon, url);
    }
 
 
