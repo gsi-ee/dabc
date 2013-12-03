@@ -24,6 +24,8 @@
 
        <OutputPort name="Output0" url="mbs://Stream?blocking&deliverall"/>
 
+       <FlushTimeout value="30"/>
+
        <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
        <SubeventFullId value="0x000001F"/>
 

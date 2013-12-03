@@ -83,6 +83,10 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
 //   DOUT0("MbsTransmitterModule::retransmit() starts");
 
+   // bool do_debug = CanRecv() && CanSend();
+
+   // if (do_debug) DOUT0("Enter retransmit send to all %s", DBOOL(CanSendToAllOutputs()));
+
    // nothing to do
    if (!CanSendToAllOutputs()) return false;
 
@@ -193,20 +197,27 @@ bool hadaq::MbsTransmitterModule::retransmit()
       has_required_place = fTgtIter.IsPlaceForEvent(evlen, true);
 
    bool doflush = (fFlushCnt<=0);
+   // if it is not enough space - try to flush
+   if (!has_required_place) doflush = true;
+   // if nothing is for output, but we could provide it, postpone flush
+   if (doflush && has_required_place && !fTgtIter.IsAnyEvent()) doflush = false;
 
-   if (!has_required_place || doflush) {
+   // if (do_debug) DOUT0("Deciding has_place %s for evnt %d doflush %s", DBOOL(has_required_place), evlen, DBOOL(doflush));
+
+   if (doflush) {
 
       // this is completely empty buffer, we should ignore event when it does not fit into empty buffer
       if (!has_required_place && !fTgtIter.IsAnyData()) {
          fIgnoreEvent = fSrcIter.evnt()->GetSeqNr();
          isIgnoreEvent = true;
-//         DOUT0("MbsTransmitterModule::retransmit() wants to ignore %u", (unsigned) fIgnoreEvent);
+         // if (do_debug) DOUT0("MbsTransmitterModule::retransmit() wants to ignore %u", (unsigned) fIgnoreEvent);
          return true;
       }
 
-      // no sense to make flush when no any data
-      if (doflush && !fTgtIter.IsAnyEvent()) {
-//         DOUT0("MbsTransmitterModule::retransmit() exit with false 188");
+      // we want to flush, but there is no data
+      if (!fTgtIter.IsAnyEvent()) {
+         // no sense to make flush when no any data
+         // if (do_debug) DOUT0("MbsTransmitterModule::retransmit() exit with false 188");
          return false;
       }
 
@@ -215,7 +226,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
       if (fTgtIter.IsAnyUncompleteData()) {
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) {
-//            DOUT0("MbsTransmitterModule::retransmit() exit with false 197");
+            // if (do_debug) DOUT0("MbsTransmitterModule::retransmit() exit with false 197");
             return false;
          }
 
@@ -231,8 +242,9 @@ bool hadaq::MbsTransmitterModule::retransmit()
       Par("TransmitEvents").SetValue(fEvCounter);
       fEvCounter = 0;
 
-//      DOUT0("MbsTransmitterModule::retransmit() dosend");
+      // if (do_debug) DOUT0("MbsTransmitterModule::retransmit() dosend");
 
+      // this is normal place where packed data are send
       SendToAllOutputs(sendbuf);
       return true;
    }
@@ -273,6 +285,11 @@ bool hadaq::MbsTransmitterModule::retransmit()
 void hadaq::MbsTransmitterModule::ProcessTimerEvent(unsigned timer)
 {
    if (fFlushCnt>0) fFlushCnt--;
+
+   // DOUT0("hadaq::MbsTransmitterModule cansend %s canrecv %s", DBOOL(CanSend()), DBOOL(CanRecv()));
+
+   // restart event loop if it was stopped
+   ActivateOutput();
 }
 
 int hadaq::MbsTransmitterModule::ExecuteCommand(dabc::Command cmd)

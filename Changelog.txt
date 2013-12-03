@@ -12,6 +12,9 @@ current functionality of the framework.
    When last two options enabled, stream server bahaivers as transport    
 2. Provide example in hadaq plugin, where stream server misused for transport
    of all data to client
+3. In hadaq::MbsTransmitterModule repair logic when buffer sending should be 
+   peformed. At some conditions it just stops to process input even when it
+   has possibility to send data to output.
    
 
 2.12.2013

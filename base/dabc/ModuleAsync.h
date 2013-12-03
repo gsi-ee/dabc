@@ -61,7 +61,7 @@ namespace dabc {
 
          /** Produces event for specified output port.
           * Should be used when processing was stopped due to return false in ProcessSend method */
-         void ActivateOutput(unsigned port);
+         void ActivateOutput(unsigned port = 0);
 
          /** \brief Methods to send buffer via specified output port */
          bool Send(unsigned indx, Buffer& buf)
@@ -96,7 +96,7 @@ namespace dabc {
 
          /** \brief Produces event for specified input port
           * Should be used when processing was stopped due to return false in ProcessRecv method */
-         void ActivateInput(unsigned port);
+         void ActivateInput(unsigned port = 0);
 
          /** \brief Returns buffer from receive queue of the input port */
          Buffer RecvQueueItem(unsigned port = 0, unsigned nbuf = 0);

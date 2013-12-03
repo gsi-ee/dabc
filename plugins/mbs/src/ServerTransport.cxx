@@ -304,7 +304,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
          return dabc::cmd_true;
       }
 
-      DOUT0("Get new connection request with fd %d", fd);
+      DOUT0("Get new connection request with fd %d canrecv %s", fd, DBOOL(CanRecv()));
 
       ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind);
       // FIXME: should we configure buffer size or could one ignore it???
