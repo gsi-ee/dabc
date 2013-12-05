@@ -1062,11 +1062,11 @@ dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx, 
    return res;
 }
 
-dabc::Hierarchy dabc::Hierarchy::FindMaster()
+dabc::Hierarchy dabc::Hierarchy::FindMaster() const
 {
    if (null() || (GetParent()==0) || !HasField(dabc::prop_masteritem)) return dabc::Hierarchy();
 
-   std::string masteritem = Field(dabc::prop_masteritem).AsStdStr();
+   std::string masteritem = GetField(dabc::prop_masteritem).AsStr();
 
    if (masteritem.empty()) return dabc::Hierarchy();
 

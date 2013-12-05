@@ -360,7 +360,7 @@ namespace dabc {
 
       /** \brief Find master item
        * It is used in ROOT to specify position of streamer info */
-      Hierarchy FindMaster();
+      Hierarchy FindMaster() const;
 
       /** Search for parent element, where binary_producer property is specified
        * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
