@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+5.12.2013
+1. Support MBS event-spanning in mbs::ClientTransport. This allows to connect 
+   any kind of MBS disregard of enbaled or disabled dabc mode.
+
+
 3.12.2013
 1. Add new configuration parameters for mbs::ServerTransport. Now url can be:
        mbs://Stream:6543?blocking&deliverall

@@ -75,6 +75,14 @@ void mbs::ReadIterator::Close()
    fFirstEvent = false;
 }
 
+bool mbs::ReadIterator::IsLastEvent() const
+{
+   if (fEvPtr.null()) return true;
+
+   return fEvPtr.fullsize() <= evnt()->FullSize();
+}
+
+
 bool mbs::ReadIterator::NextEvent()
 {
    if (fEvPtr.null()) return false;

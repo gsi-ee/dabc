@@ -130,11 +130,11 @@ namespace mbs {
          struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
             int16_t  i_used;   /*  Used length of data field in words */
-            int8_t   h_end;   /*  Fragment at begin of buffer */
-            int8_t   h_begin;   /*  Fragment at end of buffer */
+            int8_t   h_begin;  /*  Fragment at begin of buffer */
+            int8_t   h_end;    /*  Fragment at end of buffer */
 #else
-            int8_t   h_begin;   /*  Fragment at end of buffer */
-            int8_t   h_end;    /*  Fragment at begin of buffer */
+            int8_t   h_end;    /*  Fragment at end of buffer */
+            int8_t   h_begin;  /*  Fragment at begin of buffer */
             int16_t  i_used;   /*  Used length of data field in words */
 #endif
          };

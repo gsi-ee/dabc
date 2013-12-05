@@ -59,6 +59,9 @@ namespace mbs {
 
          bool IsData() const { return !fEvPtr.null(); }
 
+         /** Returns true if it is last event in the buffer */
+         bool IsLastEvent() const;
+
          bool NextEvent();
          bool NextSubEvent();
 

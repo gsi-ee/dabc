@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="LmdFile">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <debuglevel value="1"/>
+      <logfile value="mbs.log"/>
+    </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="265536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+    <Module name="Repeater" class="dabc::RepeaterModule">
+       <InputPort name="Input0" url="mbs://x86l-21/Stream"/>
+       <OutputPort name="Output0" url="lmd://local.lmd?maxsize=1000"/>
+     </Module>
+  </Context>
+</dabc>

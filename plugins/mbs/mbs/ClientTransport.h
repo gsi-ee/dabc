@@ -39,7 +39,7 @@ namespace mbs {
             ioInit,          // initial state
             ioRecvInfo,      // receiving server info
             ioReady,         // ready for work
-            ioRecvHeder,     // receiving buffer header
+            ioRecvHeader,     // receiving buffer header
             ioWaitBuffer,
             ioRecvBuffer,
             ioComplBuffer,   // at this stage buffer must be completed
@@ -55,12 +55,16 @@ namespace mbs {
          mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
          EIOState             fState;
          bool                 fSwapping;
+         bool                 fSpanning;  //!< when true, MBS could deliver spanned events
+
          mbs::BufferHeader    fHeader;
          char                 fSendBuf[12];
 
          int                  fKind; // values from EMbsServerKinds
 
          bool                 fPendingStart;
+
+         dabc::Buffer         fSpanBuffer;  //!< buffer rest, which should be copied and merged into next buffer
 
 
          // this is part from SocketAddon

@@ -19,14 +19,17 @@
 #include "dabc/Pointer.h"
 #include "dabc/DataTransport.h"
 
+#include "mbs/Iterator.h"
 
 mbs::ClientTransport::ClientTransport(int fd, int kind) :
    dabc::SocketIOAddon(fd),
    dabc::DataInput(),
    fState(ioInit),
    fSwapping(false),
+   fSpanning(false),
    fKind(kind),
-   fPendingStart(false)
+   fPendingStart(false),
+   fSpanBuffer()
 {
    fServInfo.iStreams = 0; // by default, new format
 
@@ -95,18 +98,19 @@ void mbs::ClientTransport::OnRecvCompleted()
          }
 
          if ((fState != ioError) && (fServInfo.iStreams != 0) && (fServInfo.iBuffers != 1)) {
-            EOUT("Number of buffers %u per stream bigger than 1", fServInfo.iBuffers);
-            EOUT("This will lead to event spanning which is not supported by DABC");
-            EOUT("Set buffers number to 1 or call \"enable dabc\" on mbs side");
-            fState = ioError;
+            DOUT0("Number of buffers %u per stream bigger than 1", fServInfo.iBuffers);
+            DOUT0("This will lead to event spanning which is not optimal for DABC");
+            DOUT0("Set buffers number to 1 or call 'enable dabc' on mbs side");
+            fSpanning = true;
+            // fState = ioError;
          }
 
-         if (fState!=ioError) {
-            std::string info = "new format";
+         if (fState != ioError) {
+            std::string info = "";
             if (fServInfo.iStreams > 0) dabc::formats(info, "streams = %u", fServInfo.iStreams);
 
-            DOUT0("Get MBS server info: %s, buf_per_stream = %u, swap = %s ",
-                  info.c_str(), fServInfo.iBuffers, DBOOL(fSwapping));
+            DOUT0("Get MBS server info: %s buf_per_stream = %u, swap = %s spanning %s",
+                  info.c_str(), fServInfo.iBuffers, DBOOL(fSwapping), DBOOL(fSpanning));
          }
 
          if (fPendingStart) {
@@ -116,7 +120,7 @@ void mbs::ClientTransport::OnRecvCompleted()
 
          break;
 
-      case ioRecvHeder:
+      case ioRecvHeader:
 
          if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 
@@ -133,7 +137,9 @@ void mbs::ClientTransport::OnRecvCompleted()
             MakeCallback(dabc::di_SkipBuffer);
          } else {
             fState = ioWaitBuffer;
-            MakeCallback(ReadBufferSize());
+
+            // when spanning is used, we need normal-size buffer
+            MakeCallback(fSpanning ? dabc::di_DfltBufSize : ReadBufferSize());
          }
 
          break;
@@ -142,20 +148,21 @@ void mbs::ClientTransport::OnRecvCompleted()
 
 //         DOUT1("Provide recv buffer %p to transport", fRecvBuffer);
 
-         if (fHeader.UsedBufferSize()>0) {
+         // DOUT0("RECV BUFFER Used size %u readsize %u", fHeader.UsedBufferSize(), ReadBufferSize());
+
+         if (fHeader.UsedBufferSize() > 0) {
             fState = ioComplBuffer;
             MakeCallback(dabc::di_Ok);
 
+         } else
+         if (IsDabcEnabledOnMbsSide()) {
+            EOUT("Empty buffer from mbs when dabc enabled?");
+            fState = ioError;
+            MakeCallback(dabc::di_Error);
          } else {
-            if (IsDabcEnabledOnMbsSide()) {
-               EOUT("Empty buffer from mbs when dabc enabled?");
-               fState = ioError;
-               MakeCallback(dabc::di_Error);
-            } else {
-               DOUT1("Keep alive buffer from MBS");
-               fState = ioReady;
-               MakeCallback(dabc::di_SkipBuffer);
-            }
+            DOUT1("Keep alive buffer from MBS");
+            fState = ioReady;
+            MakeCallback(dabc::di_SkipBuffer);
          }
 
          break;
@@ -176,6 +183,7 @@ void mbs::ClientTransport::OnConnectionClosed()
    dabc::SocketIOAddon::OnConnectionClosed();
 }
 
+
 void mbs::ClientTransport::OnSocketError(int errnum, const std::string& info)
 {
    SubmitWorkerCmd(dabc::Command("CloseTransport"));
@@ -183,7 +191,6 @@ void mbs::ClientTransport::OnSocketError(int errnum, const std::string& info)
    // TODO: probably, one do not need call parent method
    dabc::SocketIOAddon::OnSocketError(errnum, info);
 }
-
 
 
 void mbs::ClientTransport::OnThreadAssigned()
@@ -222,7 +229,7 @@ void mbs::ClientTransport::SubmitRequest()
    }
 
    StartRecv(&fHeader, sizeof(fHeader));
-   fState = ioRecvHeder;
+   fState = ioRecvHeader;
 }
 
 void mbs::ClientTransport::MakeCallback(unsigned arg)
@@ -261,6 +268,8 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 {
 //   DOUT0("mbs::ClientTransport::Read_Start");
 
+   DOUT4("BUFFER_START %u USED %u h_beg %u h_end %u", ReadBufferSize(), fHeader.UsedBufferSize(), fHeader.h_begin, fHeader.h_end);
+
    if (fState != ioWaitBuffer) {
       EOUT("Start reading at wrong place");
       return dabc::di_Error;
@@ -272,9 +281,33 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
       return dabc::di_Error;
    }
 
-   DOUT5("MBS transport start recv %u", ReadBufferSize());
+   bool started = false;
 
-   StartRecv(buf, ReadBufferSize());
+   if (!fSpanBuffer.null()) {
+
+      if (fHeader.h_begin==0) {
+         EOUT("We expecting spanned buffer in the begin, but didnot get it");
+         return dabc::di_Error;
+      }
+
+      dabc::Buffer extra = buf.Duplicate();
+
+      if (extra.GetTotalSize() < ReadBufferSize() + fSpanBuffer.GetTotalSize()) {
+         EOUT("Buffer size %u not enough to read %u and add spanned buffer %u", extra.GetTotalSize(), ReadBufferSize(), fSpanBuffer.GetTotalSize());
+         return dabc::di_Error;
+      }
+
+      // we keep place in main buffer, but header for additional peace will be cutted
+      extra.CutFromBegin(fSpanBuffer.GetTotalSize() - sizeof(mbs::Header));
+
+      // extra buffer required only here, later normal buffer can be used
+      started = StartRecv(extra, ReadBufferSize());
+   } else {
+      started = StartRecv(buf, ReadBufferSize());
+   }
+
+   if (!started) return dabc::di_Error;
+
    fState = ioRecvBuffer;
 
    return dabc::di_CallBack;
@@ -289,17 +322,81 @@ unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
       return dabc::di_Error;
    }
 
-   buf.SetTypeId(mbs::mbt_MbsEvents);
-   buf.SetTotalSize(fHeader.UsedBufferSize());
+   unsigned read_shift = 0;
+   if (!fSpanBuffer.null()) read_shift = fSpanBuffer.GetTotalSize() - sizeof(mbs::Header);
+
+
+   // first of all, swap data where it was received
    if (fSwapping) {
       dabc::Pointer ptr(buf);
+      if (read_shift>0) ptr.shift(read_shift);
+      ptr.setfullsize(fHeader.UsedBufferSize());
+
       while (!ptr.null()) {
          mbs::SwapData(ptr(), ptr.rawsize());
          ptr.shift(ptr.rawsize());
       }
    }
 
+   // now we should find how big is block in the beginning
+   // and copy spanned buffer to the beginning
+   if (!fSpanBuffer.null()) {
+      dabc::Pointer ptr(buf);
+      ptr.shift(read_shift);
+
+      mbs::Header* hdr = (mbs::Header*) ptr();
+      unsigned new_block_size = hdr->FullSize();
+
+      buf.CopyFrom(fSpanBuffer);
+
+      DOUT4("Copy block %u to begin", fSpanBuffer.GetTotalSize());
+
+      hdr = (mbs::Header*) buf.SegmentPtr();
+
+      hdr->SetFullSize(read_shift + new_block_size);
+
+      fSpanBuffer.Release();
+   }
+
+   // in any case release extra buffers
+   buf.SetTypeId(mbs::mbt_MbsEvents);
+   buf.SetTotalSize(read_shift + fHeader.UsedBufferSize());
+
+   if (fSpanning) {
+
+      // if there is block at the end, keep copy for the next operation
+      if (fHeader.h_end != 0) {
+
+         mbs::ReadIterator iter(buf);
+
+         unsigned useful_sz(0), last_sz(0);
+
+         while (iter.NextEvent()) {
+            useful_sz += last_sz;
+            last_sz = iter.evnt()->FullSize();
+         }
+
+         fSpanBuffer = buf.Duplicate();
+         if (fSpanBuffer.null()) {
+            EOUT("FAIL to duplicate buffer!!!");
+            return dabc::di_Error;
+         }
+
+         buf.SetTotalSize(useful_sz);
+
+         // span buffer remained until next request
+         fSpanBuffer.CutFromBegin(useful_sz);
+
+         DOUT4("Left block %u from the end", fSpanBuffer.GetTotalSize());
+      }
+   }
+
    fState = ioReady;
+
+   if (buf.GetTotalSize()==0) {
+      DOUT0("EXTREME CASE - FULL BUFFER IS JUST PEACE FROM THE MIDDLE");
+      return dabc::di_SkipBuffer;
+   }
 
    return dabc::di_Ok;
 }
