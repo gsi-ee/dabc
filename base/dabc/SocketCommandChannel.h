@@ -107,14 +107,13 @@ namespace dabc {
          SocketCmdPacket    fSendHdr;           ///< header for send command
          std::string        fSendBuf;           ///< content of transported command
          dabc::Buffer       fSendRawData;       ///< raw data, which should be send with command
+         bool               fSendingActive;     ///< indicate if currently send active
          SocketCmdPacket    fRecvHdr;           ///< buffer for receiving header
          char*              fRecvBuf;           ///< raw buffer for receiving command
          unsigned           fRecvBufSize;       ///< currently allocated size of recv buffer
 
-         dabc::Command      fMainCmd;           ///< command which was send to other side for execution
-         dabc::Command      fExeCmd;            ///< command which was received from remote for execution
-
-         CommandsQueue      fSendQueue;         ///< queue to keep commands needed for sending
+         CommandsQueue      fSendQueue;         ///< queue to keep commands which should be send
+         CommandsQueue      fWaitQueue;         ///< commands which should be replied from remote
 
          ERecvState         fRecvState;         ///< state that happens with receiver (server)
 
@@ -143,10 +142,13 @@ namespace dabc {
          void ProcessRecvPacket();
 
          /** \brief Submit command to send queue, if queue is empty start sending immediately */
-         void SubmitCommandSend(dabc::Command cmd, bool asreply, double send_tmout = 0.);
+         void AddCommand(dabc::Command cmd, bool asreply = false);
+
+         /** \brief Send submitted commands to remote */
+         void SendSubmittedCommands();
 
          /** Send next command to the remote */
-         void PerformCommandSend();
+         void SendCommand(dabc::Command cmd, bool asreply = false);
 
          /** \brief Called when connection must be closed due to the error */
          void CloseClient(bool iserr = false, const char* msg = 0);
@@ -162,8 +164,6 @@ namespace dabc {
                              const std::string& hostname = "",
                              double reconnect = 0.);
          virtual ~SocketCommandClient();
-
-         void AppendCmd(Command cmd);
    };
 
    class SocketCommandClientRef : public WorkerRef {
