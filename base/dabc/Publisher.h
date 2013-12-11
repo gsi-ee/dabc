@@ -154,6 +154,16 @@ namespace dabc {
          /** \brief Return hierarchy item selected for work */
          Hierarchy GetWorkItem(const std::string& path);
 
+         /** \brief Command redirected to local modules or remote publisher,
+          * where it should be processed
+          * Primary usage - for GetBinary commands, but also for any extra requests */
+         bool RedirectCommand(dabc::Command cmd, const std::string& itemname);
+
+         /** Try to find producer which potentially could deliver item
+          * It could happen that item is not exists in hierarchy, therefore
+          * shorter name will be tried */
+         bool IdentifyProducer(const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name);
+
       public:
 
          Publisher(const std::string& name, dabc::Command cmd = 0);

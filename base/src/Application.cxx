@@ -528,15 +528,15 @@ void TestHistory()
    h.EnableHistory(100);
    h.EnableTimeRecording();
 
-   h.Field("a").SetInt(5);
-   h.Field("b").SetDouble(3.5);
+   h.SetField("a", 5);
+   h.SetField("b", 3.5);
    h.MarkChangedItems();
 
    DOUT0("First xml:\n%s", h.SaveToXml().c_str());
 
    for (int n=0;n<50;n++) {
-      h.Field("a").SetInt(5+n);
-      h.Field("b").SetDouble(3.5+n);
+      h.SetField("a", 5+n);
+      h.SetField("b", 3.5+n);
       dabc::Sleep(0.01);
       h.MarkChangedItems();
    }
@@ -611,7 +611,7 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
 
       hrem.UpdateFromBuffer(diff2);
 
-      DOUT0("REM2 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+      DOUT0("REM2 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
 
       exit(7);
 */

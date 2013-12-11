@@ -33,6 +33,11 @@
 #include "TTree.h"
 #include "TBranch.h"
 #include "TLeaf.h"
+#include "TClass.h"
+#include "TDataMember.h"
+#include "TDataType.h"
+#include "TBaseClass.h"
+
 
 #include "dabc_root/BinaryProducer.h"
 
@@ -122,11 +127,8 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
    // this is just historical code, normally ROOT hierarchy will be scanned per ROOT timer
 
    dabc::Hierarchy h;
-   h.Create("ROOT");
-   // this is fake element, which is need to be requested before first
-   h.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
-   ScanRootHierarchy(h);
+   RescanHierarchy(h);
 
    DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
@@ -142,7 +144,8 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 
 int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName()) ||
+       cmd.IsName("GetGlobalNamesList")) {
       dabc::LockGuard lock(fHierarchy.GetHMutex());
       fRootCmds.Push(cmd);
       return dabc::cmd_postponed;
@@ -151,152 +154,356 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
-
-void* dabc_root::RootSniffer::AddObjectToHierarchy(dabc::Hierarchy& parent, const char* searchpath, TObject* obj, int lvl)
+void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* ptr, unsigned long int cloffset)
 {
-   if (obj==0) return 0;
+   if ((cl==0) || (ptr==0)) return;
 
-   void *res = 0;
+   //DOUT0("SCAN CLASS %s mask %u", cl->GetName(), rec.mask);
 
-   dabc::Hierarchy chld;
+   ScanRec chld;
+   if (!chld.MakeChild(rec)) return;
 
-   if (searchpath==0) {
+   // first of all expand base classes
+   TIter cliter(cl->GetListOfBases());
+   TObject* obj = 0;
+   while (((obj=cliter()) != 0) && !chld.Done()) {
+      TBaseClass* baseclass = dynamic_cast<TBaseClass*>(obj);
+      if (baseclass==0) continue;
+      TClass* bclass = baseclass->GetClassPointer();
+      if (bclass==0) continue;
 
-      chld = parent.CreateChild(obj->GetName());
+      if (chld.TestObject(baseclass))
+          ScanObjectMemebers(chld, bclass, ptr, cloffset + baseclass->GetDelta());
+   }
 
-      if (IsDrawableClass(obj->IsA())) {
-         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+   //DOUT0("SCAN MEMBERS %s %u mask %u done %s", cl->GetName(), cl->GetListOfDataMembers()->GetSize(), chld.mask, DBOOL(chld.Done()));
 
-         std::string master;
-         for (int n=0;n<lvl;n++) master +="../";
+   // than expand data members
+   TIter iter(cl->GetListOfDataMembers());
+   while (((obj=iter()) != 0) && !chld.Done()) {
+      TDataMember* member = dynamic_cast<TDataMember*>(obj);
+      if (member==0) continue;
 
-         chld.Field(dabc::prop_masteritem).SetStr(master+"StreamerInfo");
+      //printf("MEMBER %s mask %u\n", member->GetName(), chld.mask);
 
-//         if (obj->InheritsFrom(TH1::Class())) {
-//            chld.Field(dabc::prop_hash).SetDouble(((TH1*)obj)->GetEntries());
-//         }
-      } else
-      if (IsBrowsableClass(obj->IsA())) {
-         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+      char* member_ptr = ptr + cloffset + member->GetOffset();
+
+      if (chld.TestObject(member)) {
+         // set more property
+         bool islist = strcmp(member->GetTypeName(),"TList")==0;
+         if (islist) chld.SetField(dabc::prop_more, "true");
+
+         //printf("LOCATE MEMBER %s mask %u objname %s canexpand %s path %s\n", member->GetName(), chld.mask, chld.objname.c_str(), DBOOL(chld.CanExpandItem()), chld.searchpath ? chld.searchpath : "-null-");
+
+         if (chld.CanExpandItem()) {
+            if (islist) {
+
+               //printf("!!! EXPAND LIST %s mask %u \n", member->GetName(), chld.mask);
+
+               chld.SetField("#members", "true");
+               if (member->IsaPointer()) member_ptr = *((char**) member_ptr);
+               //printf("SCAN LIST %s\n", member->GetName());
+               ScanList(chld, (TList*) member_ptr);
+            }
+         }
       }
-   } else {
-      chld = parent;
    }
-
-   if (obj->InheritsFrom(TFolder::Class())) {
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TFolder*) obj)->GetListOfFolders(), lvl+1);
-   } else
-   if (obj->InheritsFrom(TDirectory::Class())) {
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TDirectory*) obj)->GetList(), lvl+1);
-   } else
-   if (obj->InheritsFrom(TTree::Class())) {
-      // if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TTree*) obj)->GetListOfLeaves(), lvl+1);
-   } else
-   if (obj->InheritsFrom(TBranch::Class())) {
-      // if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
-      if (!res) res = ScanListHierarchy(chld, searchpath, ((TBranch*) obj)->GetListOfLeaves(), lvl+1);
-   }
-   return res;
 }
 
 
-void* dabc_root::RootSniffer::ScanListHierarchy(dabc::Hierarchy& parent, const char* searchpath, TCollection* lst, int lvl, const std::string& foldername)
+void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
 {
-   if ((lst==0) || (lst->GetSize()==0)) return 0;
+   if (obj==0) return;
 
-   void* res = 0;
+   //DOUT0("SCAN OBJECT %s can expand %s mask %u", obj->GetName(), DBOOL(rec.CanExpandItem()), rec.mask);
 
-   dabc::Hierarchy top = parent;
+   if (rec.SetResult(obj)) return;
 
-   if (!foldername.empty()) {
+   if (IsDrawableClass(obj->IsA())) {
+      rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
 
-      if (searchpath) {
+      std::string master;
+      for (int n=0;n<rec.lvl;n++) master +="../";
+      rec.SetField(dabc::prop_masteritem, master+"StreamerInfo");
 
-         // DOUT0("SEARCH folder %s in path %s", foldername.c_str(), searchpath);
-
-         if (strncmp(searchpath, foldername.c_str(), foldername.length())!=0) return 0;
-         searchpath+=foldername.length();
-         if (*searchpath!='/') return 0;
-         searchpath++;
-         top = parent.FindChild(foldername.c_str());
-         if (top.null()) return 0;
-
-         // DOUT0("FOUND folder %s ", foldername.c_str());
-
-
-      } else {
-         top = parent.CreateChild(foldername);
-      }
-      lvl++;
+   } else
+   if (IsBrowsableClass(obj->IsA())) {
+      rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
    }
 
-   TIter iter(lst);
-   TObject* obj(0);
+   if (obj->InheritsFrom(TFolder::Class())) {
+      // starting from special folder, we automatically scan members
+
+      TFolder* fold = ((TFolder*) obj);
+      if (fold->TestBit(BIT(19)) && (rec.mask & mask_Scan))
+         rec.mask = rec.mask | mask_ChldMemb;
+      ScanList(rec, fold->GetListOfFolders());
+   } else
+   if (obj->InheritsFrom(TDirectory::Class())) {
+      ScanList(rec, ((TDirectory*) obj)->GetList());
+   } else
+   if (obj->InheritsFrom(TTree::Class())) {
+      // if (!res) res = ScanList(mask, chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
+      ScanList(rec, ((TTree*) obj)->GetListOfLeaves());
+   } else
+   if (obj->InheritsFrom(TBranch::Class())) {
+      // if (!res) res = ScanList(mask, chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
+      ScanList(rec, ((TBranch*) obj)->GetListOfLeaves());
+   } else
+   if (rec.CanExpandItem()) {
+      rec.SetField("#members", "true");
+      ScanObjectMemebers(rec, obj->IsA(), (char*) obj, 0);
+   }
+}
+
+bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::string& foldername)
+{
+   // if parent done, no need to start with new childs
+   if (super.Done()) return false;
+
+   prnt = super.top;
+
+   lvl = super.lvl + 1;
+   searchpath = super.searchpath;
+   mask = super.mask;
+   parent_rec = &super;
+
+   if (mask & mask_ChldMemb) {
+      mask = (mask & ~mask_ChldMemb) | mask_Members;
+   } else
+   if (mask & mask_Members) {
+      mask = mask & ~mask_Members;
+   }
+
+   if (!foldername.empty()) {
+      if (searchpath) {
+         //DOUT0("SEARCH folder %s in path %s", foldername.c_str(), searchpath);
+         if (strncmp(searchpath, foldername.c_str(), foldername.length())!=0) return false;
+         searchpath += foldername.length();
+         if (*searchpath != '/') return false;
+         searchpath++;
+         prnt = super.top.FindChild(foldername.c_str());
+
+         if (prnt.null()) {
+            EOUT("Did not found folder %s in items", foldername.c_str());
+            return false;
+         }
+
+      } else {
+         prnt = super.top.CreateChild(foldername);
+         //printf("CREATE FOLDER %s %p\n", foldername.c_str(), prnt());
+      }
+   }
 
    if (searchpath==0) {
-      while ((obj = iter())!=0)
-         AddObjectToHierarchy(top, searchpath, obj, lvl);
+      // after item is located, we just normally scan
+      if (mask & mask_Expand) {
+         mask = mask_Scan;
+         if (prnt.NumChilds()>0)
+            EOUT("Non-empty element which want to be expanded");
+      }
+
    } else {
       // while item name can be changed, we find first item itself and than
       // try to find object name
 
+      //DOUT0("Extract item name from %s", searchpath);
+
       const char* separ = strchr(searchpath, '/');
-      std::string itemname = searchpath;
-      if (separ!=0) {
-         itemname.resize(separ - searchpath);
+
+      if (separ == 0) {
+         itemname = searchpath;
+         searchpath = 0;
+      } else {
+         itemname.assign(searchpath, separ - searchpath);
+         searchpath = separ+1;
+         if (*searchpath == 0) searchpath = 0;
       }
 
-      // DOUT0("SEARCH item %s in path %s", itemname.c_str(), searchpath);
+      sub = prnt.FindChild(itemname.c_str());
 
-      dabc::Hierarchy chld = top.FindChild(itemname.c_str());
-      if (chld.null()) return 0;
+      //DOUT0("SEARCH item %s result %p", itemname.c_str(), sub());
 
-      // DOUT0("FOUND item %s ", itemname.c_str());
+      if (!sub.null()) {
+         // we use created hierarchy to reconstruct real object name
+         if (sub.HasField(dabc::prop_realname))
+            objname = sub.Field(dabc::prop_realname).AsStr();
+         else
+            objname = itemname;
 
-      // real name specifies real object name we are searching fore
-      if (chld.HasField(dabc::prop_realname))
-         itemname = chld.Field(dabc::prop_realname).AsStr();
-
-      // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
-
-      while ((obj = iter())!=0) {
-         if (obj->GetName() && (itemname == obj->GetName())) {
-            if (separ==0) return obj;
-            res = AddObjectToHierarchy(chld, separ+1, obj, lvl);
-            if (!res) return res;
-         }
+         //DOUT0("OBJECT NAME is %s ", objname.c_str());
       }
    }
 
-   return res;
+   return true;
 }
 
-void* dabc_root::RootSniffer::ScanRootHierarchy(dabc::Hierarchy& h, const char* searchpath)
+bool dabc_root::RootSniffer::ScanRec::Done()
 {
-   void *res = 0;
+   if (res==0) return false;
 
-   if (h.null()) return res;
+   // in such special case event when result assigned, we must continue looping to create all childs
+   if (((mask & (mask_Expand | mask_Search)) != 0) && objname.empty()) return false;
 
-//   if (searchpath) DOUT0("ROOT START SEARCH %s ", searchpath);
-//              else DOUT0("ROOT START SCAN");
+   return true;
+}
 
-//   if (topf!=0)
-//      return ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0);
+
+bool dabc_root::RootSniffer::ScanRec::TestObject(TObject* obj)
+{
+   if (obj==0) return false;
+
+   top.Release();
+
+   const char* obj_name = obj->GetName();
+
+   // exclude zero names
+   if ((obj_name==0) || (*obj_name==0)) return false;
+
+   // when scanning hierarchy, just add new item and signal it
+   if ((mask & mask_Scan) != 0) {
+      top = prnt.CreateChild(obj_name);
+      //printf("CREATE SCAN %s %p\n", obj_name, top());
+      return true;
+   }
+
+   // if searched name is known, sub-item is exists and we just need to identify object
+   if (!objname.empty()) {
+      if (objname != obj_name) return false;
+      top = sub;
+      return true;
+   }
+
+   // when trying to expand or search without knowing of exact object name
+   // we will try to create all subitems to reproduce finally itemname we are searching
+   if ((mask & (mask_Expand | mask_Search)) != 0) {
+
+      if (itemname.empty()) return false;
+
+      dabc::Hierarchy h = prnt.CreateChild(obj_name);
+
+      //printf("CREATE EXPAND %s %p\n", obj_name, h());
+
+      if (itemname == h.GetName()) {
+         top = h;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool dabc_root::RootSniffer::ScanRec::SetResult(TObject* obj)
+{
+   // if result already set, nothing to do
+   if (res != 0) return true;
+
+   // only when doing search, result will be propagated
+   if ((mask & mask_Search) == 0) return false;
+
+   //DOUT0("Set RESULT obj = %p search path = %s", obj, searchpath ? searchpath : "-null-");
+
+   // only when full search path is scanned
+   if (searchpath!=0) return false;
+
+   ScanRec* rec = this;
+   while (rec) {
+      rec->res = obj;
+      rec = rec->parent_rec;
+   }
+
+   return true;
+}
+
+
+void dabc_root::RootSniffer::ScanList(ScanRec& rec,
+                                      TCollection* lst,
+                                      const std::string& foldername)
+{
+   if ((lst==0) || (lst->GetSize()==0)) return;
+
+   ScanRec chld;
+   if (!chld.MakeChild(rec, foldername)) return;
+
+   TIter iter(lst);
+   TObject* obj(0);
+
+   // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
+
+   while (((obj = iter()) != 0) && !chld.Done()) {
+
+      if (chld.TestObject(obj))
+         ScanObject(chld, obj);
+   }
+}
+
+void dabc_root::RootSniffer::ScanRec::SetField(const std::string& name, const std::string& value)
+{
+   if (((mask & (mask_Scan | mask_Expand)) != 0) && !top.null()) top.SetField(name, value);
+}
+
+
+void dabc_root::RootSniffer::ScanRoot(ScanRec& rec)
+{
+   rec.SetField(dabc::prop_kind, "ROOT.Session");
 
    TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root/dabc"));
 
-   if (searchpath==0) h.Field(dabc::prop_kind).SetStr("ROOT.Session");
+   ScanList(rec, gROOT->GetList());
 
-   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetList(), 0);
+   ScanList(rec, gROOT->GetListOfCanvases(), "Canvases");
 
-   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfCanvases(), 0, "Canvases");
+   ScanList(rec, gROOT->GetListOfFiles(), "Files");
 
-   if (!res) res = ScanListHierarchy(h, searchpath, gROOT->GetListOfFiles(), 0, "Files");
+   ScanList(rec, topf ? topf->GetListOfFolders() : 0, "Objects");
+}
 
-   if (!res && topf) res = ScanListHierarchy(h, searchpath, topf->GetListOfFolders(), 0, "Objects");
 
-   return res;
+void dabc_root::RootSniffer::RescanHierarchy(dabc::Hierarchy& main)
+{
+   main.Release();
+   main.Create("ROOT");
+
+   // this is fake element, which is need to be requested before first
+   dabc::Hierarchy si = main.CreateChild("StreamerInfo");
+   si.SetField(dabc::prop_kind, "ROOT.TList");
+   si.SetField(dabc::prop_hash, fProducer->GetStreamerInfoHash());
+
+   ScanRec rec;
+   rec.top = main;
+   rec.mask = mask_Scan;
+
+   ScanRoot(rec);
+}
+
+void dabc_root::RootSniffer::ExpandHierarchy(dabc::Hierarchy& main, const std::string& itemname)
+{
+   ScanRec rec;
+   rec.top = main;
+   rec.searchpath = itemname.c_str();
+   if (*rec.searchpath == '/') rec.searchpath++;
+
+   rec.mask = mask_Expand;
+
+   dabc::Hierarchy h = main.FindChild(rec.searchpath);
+   if (h.NumChilds()>0)
+      h.RemoveChilds();
+
+   ScanRoot(rec);
+}
+
+void* dabc_root::RootSniffer::FindInHierarchy(dabc::Hierarchy& main, const std::string& itemname)
+{
+   ScanRec rec;
+   rec.top = main;
+   rec.searchpath = itemname.c_str();
+   rec.mask = mask_Search;
+
+   if (*rec.searchpath == '/') rec.searchpath++;
+
+   ScanRoot(rec);
+
+   return rec.res;
 }
 
 
@@ -309,7 +516,6 @@ bool dabc_root::RootSniffer::IsDrawableClass(TClass* cl)
    if (cl->InheritsFrom(TProfile::Class())) return true;
    return false;
 }
-
 
 
 bool dabc_root::RootSniffer::IsBrowsableClass(TClass* cl)
@@ -352,12 +558,14 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
       buf = fProducer->GetStreamerInfoBinary();
    } else {
 
-      TObject* obj = (TObject*) ScanRootHierarchy(fRoot, itemname.c_str());
+      TObject* obj = (TObject*) FindInHierarchy(fRoot, itemname);
 
       if (obj==0) {
          EOUT("Object for item %s not found", itemname.c_str());
          return dabc::cmd_false;
       }
+
+      DOUT2("OBJECT FOUND %s %p", itemname.c_str(), obj);
 
       objhash = fProducer->GetObjectHash(obj);
 
@@ -383,7 +591,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
       dabc::LockGuard lock(fHierarchy.GetHMutex());
 
       // here correct version number for item and master item will be filled
-      fHierarchy.FillBinHeader(itemname, buf, mhash);
+      fHierarchy.FillBinHeader(itemname, buf, mhash, "StreamerInfo");
    }
 
    cmd.SetRawData(buf);
@@ -402,16 +610,26 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
       DOUT3("Update ROOT structures");
-      fRoot.Release();
-      fRoot.Create("ROOT");
-      // fRoot.Field(dabc::prop_producer).SetStr(WorkerAddress());
+      RescanHierarchy(fRoot);
 
-      // this is fake element, which is need to be requested before first
-      dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
-      si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-      si.Field(dabc::prop_hash).SetStr(fProducer->GetStreamerInfoHash());
-
-      ScanRootHierarchy(fRoot);
+/*      DOUT0("ROOT\n%s", fRoot.SaveToXml().c_str());
+      void *res = FindInHierarchy(fRoot, "/Files/hsimple.root/hpxpy[0]/");
+      DOUT0("FOUND res = %p", res);
+      res = FindInHierarchy(fRoot, "/Objects/extra/c1/TPad/fPrimitives/hpx/");
+      DOUT0("FOUND2 res = %p", res);
+      dabc::Hierarchy h = fRoot.FindChild("/Objects/extra/c1/TPad/fPrimitives/");
+      DOUT0("BEFORE num = %u", h.NumChilds());
+      ExpandHierarchy(fRoot, "/Objects/extra/c1/TPad/fPrimitives/");
+      h = fRoot.FindChild("/Objects/extra/c1/TPad/fPrimitives/");
+      DOUT0("AFTER num = %u", h.NumChilds());
+      ExpandHierarchy(fRoot, "/Objects/extra/c1/TPad/fPrimitives/");
+      h = fRoot.FindChild("/Objects/extra/c1/TPad/fPrimitives/");
+      DOUT0("AFTER num = %u", h.NumChilds());
+      if (!h.null()) DOUT0("AFTER  \n%s", h.SaveToXml().c_str());
+      res = FindInHierarchy(fRoot, "/Objects/extra/c1/TPad/fPrimitives/hpx/");
+      DOUT0("FOUND3 res = %p", res);
+      exit(1);
+*/
 
       fLastUpdate.GetNow();
 
@@ -432,6 +650,29 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
          cmd.Reply(ProcessGetBinary(cmd));
       } else
+      if (cmd.IsName("GetGlobalNamesList")) {
+         std::string item = cmd.GetStr("subitem");
+
+         DOUT2("Request extended ROOT hierarchy %s", item.c_str());
+
+         ExpandHierarchy(fRoot, item);
+
+         dabc::Hierarchy res = fRoot.FindChild(item.c_str());
+
+         if (res.null()) cmd.ReplyFalse();
+
+         if (cmd.GetBool("asxml")) {
+            std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
+            DOUT2("Request res = \n%s", str.c_str());
+            cmd.SetStr("xml", str);
+         } else {
+            dabc::Buffer buf = res.SaveToBuffer(dabc::stream_NamesList);
+            cmd.SetRawData(buf);
+         }
+
+         cmd.ReplyTrue();
+      }
+
       if (!cmd.null()) {
          EOUT("Not processed command %s", cmd.GetName());
          cmd.ReplyFalse();
@@ -455,11 +696,13 @@ bool dabc_root::RootSniffer::RegisterObject(const char* subfolder, TObject* obj)
       return false;
    }
 
-   TFolder* dabcfold = dynamic_cast<TFolder*> (topf->FindObject("dabc"));
-   if (dabcfold==0) {
-      dabcfold = topf->AddFolder("dabc", "Top DABC folder");
-      dabcfold->SetOwner(kFALSE);
+   TFolder* topdabcfold = dynamic_cast<TFolder*> (topf->FindObject("dabc"));
+   if (topdabcfold==0) {
+      topdabcfold = topf->AddFolder("dabc", "Top DABC folder");
+      topdabcfold->SetOwner(kFALSE);
    }
+
+   TFolder* dabcfold = topdabcfold;
 
    if ((subfolder!=0) && (strlen(subfolder)>0)) {
 
@@ -473,6 +716,9 @@ bool dabc_root::RootSniffer::RegisterObject(const char* subfolder, TObject* obj)
          if (fold==0) {
             fold = dabcfold->AddFolder(subname, "DABC sub-folder");
             fold->SetOwner(kFALSE);
+
+            if ((dabcfold == topdabcfold) && (strcmp(subname, "extra")==0))
+               fold->SetBit(BIT(19), kTRUE);
          }
          dabcfold = fold;
       }

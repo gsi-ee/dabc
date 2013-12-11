@@ -146,7 +146,7 @@ double dabc::Publisher::ProcessTimeout(double last_diff)
          // first, generate current objects hierarchy
          dabc::Hierarchy curr;
          curr.BuildNew(dabc::mgr);
-         curr.Field(prop_producer).SetStr(WorkerAddress());
+         curr.SetField(prop_producer, WorkerAddress());
 
          // than use update to mark all changes
          fMgrHiearchy.Update(curr);
@@ -266,7 +266,7 @@ bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_
       dabc::Hierarchy top = fLocal.GetFolder(iter->path);
       if (!top.null()) {
          top.UpdateFromBuffer(diff);
-         top.Field(prop_producer).SetStr(iter->fulladdr);
+         top.SetField(prop_producer, iter->fulladdr);
       }
    } else {
       iter->rem.UpdateFromBuffer(diff);
@@ -310,6 +310,110 @@ dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path)
    if (path.empty() || (path=="/")) return top;
 
    return top.FindChild(path.c_str());
+}
+
+bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name)
+{
+   if (itemname.length()==0) return false;
+
+   dabc::Hierarchy h = fLocal.GetFolder(itemname);
+   if (!h.null()) {
+      // we need to redirect command to appropriate worker (or to ourself)
+
+      producer_name = h.FindBinaryProducer(request_name);
+      DOUT2("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
+
+      islocal = true;
+   } else
+   for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
+      if (iter->local) continue;
+
+      h = iter->rem.GetFolder(itemname);
+      if (h.null()) continue;
+
+      // we need to redirect command to remote node
+
+      producer_name = h.FindBinaryProducer(request_name);
+      islocal = false;
+      break;
+   }
+
+   if (!h.null()) return !producer_name.empty();
+
+   std::string item1 = itemname;
+   while (item1[item1.length()-1] == '/') item1.resize(item1.length()-1);
+   size_t pos = item1.find_last_of("/");
+   if ((pos == 0) || (pos == std::string::npos)) return false;
+
+   std::string sub = item1.substr(pos);
+   item1.resize(pos);
+
+   if (IdentifyProducer(item1, islocal, producer_name, request_name)) {
+      request_name.append(sub);
+      return true;
+   }
+
+
+   return false;
+}
+
+
+
+bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& itemname)
+{
+   std::string producer_name, request_name;
+   bool islocal(true);
+
+   DOUT2("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+
+   if (!IdentifyProducer(itemname, islocal, producer_name, request_name)) {
+      EOUT("Not found producer for item %s", itemname.c_str());
+      return false;
+   }
+
+   DOUT2("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
+
+   bool producer_local(true);
+   std::string producer_server, producer_item;
+
+   if (!dabc::mgr.DecomposeAddress(producer_name, producer_local, producer_server, producer_item)) {
+      EOUT("Wrong address specified as producer %s", producer_name.c_str());
+      return false;
+   }
+
+   if (islocal || producer_local) {
+      // this is local case, we need to redirect command to the appropriate worker
+      // but first we should locate hierarchy which is assigned with the worker
+
+      for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
+         if (!iter->local) continue;
+
+         if ((iter->worker != producer_item) && (iter->worker != std::string("/") + producer_item)) continue;
+
+         // we redirect command to local worker
+         // manager should find proper worker for execution
+
+         DOUT2("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
+         cmd.SetReceiver(iter->worker);
+         cmd.SetPtr("hierarchy", iter->hier);
+         cmd.SetStr("subitem", request_name);
+         dabc::mgr.Submit(cmd);
+         return true;
+      }
+
+      EOUT("Not found producer %s, which is correspond to item %s", producer_item.c_str(), itemname.c_str());
+      return false;
+   }
+
+   if (cmd.GetBool("analyzed")) {
+      EOUT("Command to get item %s already was analyzed - something went wrong", itemname.c_str());
+      return false;
+   }
+
+   cmd.SetReceiver(dabc::mgr.ComposeAddress(producer_server, dabc::Publisher::DfltName()));
+   cmd.SetBool("analyzed", true);
+   dabc::mgr.Submit(cmd);
+   return true;
 }
 
 
@@ -482,27 +586,19 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       dabc::Hierarchy h = GetWorkItem(path);
       if (h.null()) return cmd_false;
 
-      Buffer buf = h.SaveToBuffer(dabc::stream_NamesList);
+      if (h.HasField(dabc::prop_more)) {
+         if (!RedirectCommand(cmd, path)) return cmd_false;
+         DOUT3("ITEM %s CAN PROVIDE MORE!!!", path.c_str());
+         return cmd_postponed;
+      }
 
-      cmd.SetRawData(buf);
-      return cmd_true;
-   } else
-   if (cmd.IsName("GetGlobalNamesListAsXml")) {
-
-      std::string path = cmd.GetStr("path");
-
-      dabc::Hierarchy h = GetWorkItem(path);
-      if (h.null()) return cmd_false;
-
-      if (!path.empty() && (path[path.length()-1]!='/')) path.append("/");
-
-      std::string res =
-            dabc::format("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s\">\n", path.c_str())+
-            h.SaveToXml() +
-            std::string("</dabc>\n");
-
-      cmd.SetStr("xml",res);
-
+      if (cmd.GetBool("asxml")) {
+         std::string res = h.SaveToXml(xmlmask_TopDabc, path);
+         cmd.SetStr("xml",res);
+      } else {
+         Buffer buf = h.SaveToBuffer(dabc::stream_NamesList);
+         cmd.SetRawData(buf);
+      }
       return cmd_true;
    } else
    if (cmd.IsName("CreateExeCmd")) {
@@ -567,79 +663,9 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       // if we get command here, we need to find destination for it
 
       std::string itemname = cmd.GetStr("Item");
-      std::string producer_name, request_name;
-      bool islocal(true);
 
-      DOUT2("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+      if (!RedirectCommand(cmd, itemname)) return cmd_false;
 
-      // first look in local structures
-      dabc::Hierarchy h = fLocal.GetFolder(itemname);
-
-      if (!h.null()) {
-         // we need to redirect command to appropriate worker (or to ourself)
-
-         producer_name = h.FindBinaryProducer(request_name);
-         DOUT2("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
-
-      } else
-      for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-         if (iter->local) continue;
-
-         dabc::Hierarchy h = iter->rem.GetFolder(itemname);
-         if (h.null()) continue;
-
-         // we need to redirect command to remote node
-
-         producer_name = h.FindBinaryProducer(request_name);
-         islocal = false;
-         break;
-      }
-
-      if (producer_name.empty()) {
-         EOUT("Not found producer for item %s", itemname.c_str());
-         return cmd_false;
-      }
-
-      bool producer_local(true);
-      std::string producer_server, producer_item;
-
-      if (!dabc::mgr.DecomposeAddress(producer_name, producer_local, producer_server, producer_item)) {
-         EOUT("Wrong address specified as producer %s", producer_name.c_str());
-         return cmd_false;
-      }
-
-      if (islocal || producer_local) {
-         // this is local case, we need to redirect command to the appropriate worker
-         // but first we should locate hierarchy which is assigned with the worker
-
-         for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
-            if (!iter->local) continue;
-
-            if ((iter->worker != producer_item) && (iter->worker != std::string("/") + producer_item)) continue;
-
-            // we redirect command to local worker
-            // manager should find proper worker for execution
-
-            DOUT2("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
-            cmd.SetReceiver(iter->worker);
-            cmd.SetPtr("hierarchy", iter->hier);
-            cmd.SetStr("subitem", request_name);
-            dabc::mgr.Submit(cmd);
-            return cmd_postponed;
-         }
-
-         EOUT("Not found producer %s, which is correspond to item %s", producer_item.c_str(), itemname.c_str());
-         return cmd_false;
-      }
-
-      if (cmd.GetBool("analyzed")) {
-         EOUT("Command to get item %s already was analyzed - something went wrong", itemname.c_str());
-         return cmd_false;
-      }
-
-      cmd.SetReceiver(dabc::mgr.ComposeAddress(producer_server, dabc::Publisher::DfltName()));
-      cmd.SetBool("analyzed", true);
-      dabc::mgr.Submit(cmd);
       return cmd_postponed;
    }
 
@@ -652,7 +678,8 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
 {
    if (null()) return false;
 
-   dabc::Command cmd("GetGlobalNamesListAsXml");
+   dabc::Command cmd("GetGlobalNamesList");
+   cmd.SetBool("asxml", true);
    cmd.SetStr("path", path);
 
    if (Execute(cmd) != cmd_true) return false;

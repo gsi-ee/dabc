@@ -46,6 +46,7 @@ namespace dabc {
    extern const char* prop_hash;          // content hash, which should describe if object is changed
    extern const char* prop_history;       // indicates that history for that element is kept
    extern const char* prop_time;          // time property, supplied when history is created
+   extern const char* prop_more;          // indicate that item can provide more hierarchy if requested
 
    class Hierarchy;
 
@@ -175,12 +176,13 @@ namespace dabc {
    };
 
    enum HierarchyXmlStreamMask {
-      xmlmask_Compact = 1, // create compact code of xml
-      xmlmask_Version = 2, // write all versions
-      xmlmask_TopVersion = 4, // write version only for top node
-      xmlmask_NameSpace = 8,  // write artificial namespace on top node
-      xmlmask_History = 16,   // write full history in xml output
-      xmlmask_NoChilds = 32   // do not write childs in xml file
+      xmlmask_Compact =    1,   // create compact code of xml
+      xmlmask_Version =    2,   // write all versions
+      xmlmask_TopVersion = 4,   // write version only for top node
+      xmlmask_NameSpace =  8,   // write artificial namespace on top node
+      xmlmask_History =   16,   // write full history in xml output
+      xmlmask_NoChilds =  32,   // do not write childs in xml file
+      xmlmask_TopDabc =   64    // add top DABC node with correct namespace definition
    };
 
 
@@ -366,7 +368,7 @@ namespace dabc {
        * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
       std::string FindBinaryProducer(std::string& request_name);
 
-      RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
+      //RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
       const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
 
       bool IsAnyFieldChanged() const { return GetObject() ? GetObject()->Fields().WasChanged() : false; }
@@ -418,8 +420,9 @@ namespace dabc {
           * xmlmask_TopVersion - append hierarchy version to the top node
           * xmlmask_NameSpace - append artificial namespace to the top node
           * xmlmask_History - write history (when available)
-          * xmlmask_NoChilds - excludes childs saving */
-      std::string SaveToXml(unsigned mask = 0);
+          * xmlmask_NoChilds - excludes childs saving
+          * xmlmask_TopDabc  - append top dabc node with namespace definition */
+      std::string SaveToXml(unsigned mask = 0, const std::string& toppath = "");
 
       /** \brief Returns actual version of hierarchy entry */
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }
@@ -432,7 +435,7 @@ namespace dabc {
       bool IsBinItemChanged(const std::string& itemname, const std::string& hash, uint64_t last_version = 0);
 
       /** \brief Fill binary header with item and master versions */
-      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, const std::string& mhash = 0);
+      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, const std::string& mhash = "", const std::string& dflt_master_name = "");
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }

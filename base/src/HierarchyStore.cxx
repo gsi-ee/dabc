@@ -179,7 +179,7 @@ bool dabc::HierarchyStore::ExtractData(dabc::Hierarchy& h)
    if (fDoFlush || fDoStore) {
       // this time will be used as raster when reading files
       // it can be read very efficient - most decoding can be skipped
-      h.Field("storetm").SetDatime(fLastStoreTm);
+      h.SetField("storetm", fLastStoreTm);
       h.MarkChangedItems(fLastStoreTm.AsJSDate());
    }
 
@@ -324,10 +324,10 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
 
       DOUT0("DIR: %s mintm: %s maxtm: %s files %u", dirname.c_str(), buf1, buf2, files.size());
 
-      h.Field("dabc:path").SetStr(dirname);
-      h.Field("dabc:mindt").SetDatime(mindt);
-      h.Field("dabc:maxdt").SetDatime(maxdt);
-      h.Field("dabc:files").SetVectUInt(files);
+      h.SetField("dabc:path", dirname);
+      h.SetField("dabc:mindt", mindt);
+      h.SetField("dabc:maxdt" ,maxdt);
+      h.SetField("dabc:files", files);
    }
 
 

@@ -47,16 +47,16 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fWorkerHierarchy.Create("FESA", true);
 
    // this is just emulation, later one need list of real variables
-   fWorkerHierarchy.CreateChild("BeamProfile").Field(dabc::prop_kind).SetStr("FESA.2D");
+   fWorkerHierarchy.CreateChild("BeamProfile").SetField(dabc::prop_kind, "FESA.2D");
 
-   fWorkerHierarchy.CreateChild("BeamRate").Field(dabc::prop_kind).SetStr("rate");
+   fWorkerHierarchy.CreateChild("BeamRate").SetField(dabc::prop_kind, "rate");
 
    dabc::Hierarchy item = fWorkerHierarchy.CreateChild("BeamRate2");
-   item.Field(dabc::prop_kind).SetStr("rate");
+   item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
 
    item = fWorkerHierarchy.CreateChild("TestRate");
-   item.Field(dabc::prop_kind).SetStr("rate");
+   item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
    
    CreateCmdDef("CmdReset").AddArg("counter", "int", true, "5");
@@ -95,13 +95,13 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fProducer = new dabc_root::BinaryProducer("root_bin");
    fProducer.SetAutoDestroy(true);
 
-   fWorkerHierarchy.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
+   fWorkerHierarchy.CreateChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TList");
 
    dabc::Hierarchy h1 = fWorkerHierarchy.CreateChild("BeamRoot");
-   h1.Field(dabc::prop_kind).SetStr("ROOT.TH2I");
-   h1.Field(dabc::prop_masteritem).SetStr("StreamerInfo");
+   h1.SetField(dabc::prop_kind, "ROOT.TH2I");
+   h1.SetField(dabc::prop_masteritem, "StreamerInfo");
 
-   fWorkerHierarchy.CreateChild("ImageRoot").Field(dabc::prop_kind).SetStr("image.png");
+   fWorkerHierarchy.CreateChild("ImageRoot").SetField(dabc::prop_kind, "image.png");
 
    TH2I* h2 = new TH2I("BeamRoot","Root beam profile", 32, 0, 32, 32, 0, 32);
    h2->SetDirectory(0);
@@ -164,12 +164,12 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
 
    item()->bindata() = buf;
-   item.Field(dabc::prop_hash).SetInt(fCounter);
+   item.SetField(dabc::prop_hash, fCounter);
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-   fWorkerHierarchy.FindChild("BeamRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("BeamRate").SetField("value", dabc::format("%4.2f", v1));
    int64_t arr[5] = {1,7,4,2,3};
-   fWorkerHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
+   //fWorkerHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
 
 //   std::vector<int> res;
 //   res = fWorkerHierarchy.FindChild("BeamRate").Field("arr").AsIntVector();
@@ -177,25 +177,25 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 //   for (unsigned n=0;n<res.size();n++) DOUT0("   arr[%u] = %d", n, res[n]);
 
    v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-   fWorkerHierarchy.FindChild("BeamRate2").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("BeamRate2").SetField("value", dabc::format("%4.2f", v1));
 
    int test = fCounter % 100;
    v1 = 20 + (test & 0xfffffc) + (test & 3)*0.01;
-   fWorkerHierarchy.FindChild("TestRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+   fWorkerHierarchy.FindChild("TestRate").SetField("value", dabc::format("%4.2f", v1));
 
 #ifdef WITH_ROOT
 
    dabc_root::BinaryProducer* pr = (dabc_root::BinaryProducer*) fProducer();
 
    item = fWorkerHierarchy.FindChild("StreamerInfo");
-   item.Field(dabc::prop_hash).SetStr(pr->GetStreamerInfoHash());
+   item.SetField(dabc::prop_hash, pr->GetStreamerInfoHash());
 
    item = fWorkerHierarchy.FindChild("BeamRoot");
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
          h2->Fill(gRandom->Gaus(16,2), gRandom->Gaus(16,1));
-      item.Field(dabc::prop_hash).SetInt(h2->GetEntries());
+      item.SetField(dabc::prop_hash, h2->GetEntries());
    }
 
    TCanvas* can = (TCanvas*) fCanvas;

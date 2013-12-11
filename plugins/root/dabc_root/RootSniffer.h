@@ -49,7 +49,59 @@ namespace dabc_root {
 
       friend class ::TDabcTimer;
 
+
       protected:
+
+         enum {
+            mask_Scan    = 1,  ///< normal scan of hierarchy
+            mask_Expand  = 2,  ///< expand of specified item
+            mask_Search  = 4,  ///< search for specified item
+            mask_Members = 8,  ///< enable expand of objects with class info
+            mask_ChldMemb = 16 ///< expand child members
+         };
+
+         struct ScanRec {
+            unsigned mask;
+            const char* searchpath;
+            dabc::Hierarchy top, sub, prnt;
+            int lvl;
+            std::string itemname, objname;
+            ScanRec* parent_rec;
+            TObject* res;
+
+            ScanRec() : mask(0), searchpath(0), top(), sub(),
+                        prnt(), lvl(0), itemname(), objname(),
+                        parent_rec(0), res(0) {}
+
+            bool MakeChild(ScanRec& super, const std::string& foldername = "");
+
+            bool TestObject(TObject* obj);
+
+            /** Set item field only when creating is specified */
+            void SetField(const std::string& name, const std::string& value);
+
+            bool HasField(const std::string& name) { return top.HasField(name); }
+
+            /** Returns true when extra entries like object member can be extracted */
+            bool CanExpandItem()
+            {
+               if (mask & mask_Members) return true;
+
+               if (mask & mask_Expand) return true;
+
+               // when we search for object, but did not found item or item marked as expandable
+               if ((mask & mask_Search) && (objname.empty() || top.HasField(dabc::prop_more))) return true;
+
+               return top.HasField("#members");
+            }
+
+            /** Set result pointer and return true if result is found */
+            bool SetResult(TObject* obj);
+
+            /** Method indicates that scanning can be interrupted while result is set */
+            bool Done();
+         };
+
          bool fEnabled;
          bool fBatch;             ///< if true, batch mode will be activated
          bool fSyncTimer;         ///< is timer will run in synchronous mode (only within gSystem->ProcessEvents())
@@ -61,7 +113,7 @@ namespace dabc_root {
 
          ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context
 
-         /** \brief Last hierarchy, build from ROOT itself */
+         /** \brief Last hierarchy, build in ROOT main thread */
          dabc::Hierarchy fRoot;
 
          /** \brief hierarchy, used for version control */
@@ -79,14 +131,25 @@ namespace dabc_root {
 
          virtual double ProcessTimeout(double last_diff);
 
-         static void* AddObjectToHierarchy(dabc::Hierarchy& parent, const char* searchpath, TObject* obj, int lvl);
+         void ScanObjectMemebers(ScanRec& rec, TClass* cl, char* ptr, unsigned long int cloffset);
 
-         static void* ScanListHierarchy(dabc::Hierarchy& h, const char* searchpath, TCollection* lst, int lvl, const std::string& foldername = "");
+         void ScanObject(ScanRec& rec, TObject* obj);
+
+         void ScanList(ScanRec& rec, TCollection* lst, const std::string& foldername = "");
 
          /* Method is used to scan ROOT objects.
           * If path is empty, than hierarchy structure will be created.
           * If path specified, object with provided path name will be searched */
-         virtual void* ScanRootHierarchy(dabc::Hierarchy& h, const char* searchpath = 0);
+         virtual void ScanRoot(ScanRec& rec);
+
+         /** Method scans normal objects, registered in ROOT and DABC */
+         void RescanHierarchy(dabc::Hierarchy& main);
+
+         /** Selectively expand selected objects */
+         void ExpandHierarchy(dabc::Hierarchy& main, const std::string& itemname);
+
+         /** Find object in hierarchy */
+         void* FindInHierarchy(dabc::Hierarchy& main, const std::string& itemname);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 

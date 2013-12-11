@@ -151,37 +151,37 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");
-   item.Field(dabc::prop_kind).SetStr("rate");
+   item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("EventRate");
-   item.Field(dabc::prop_kind).SetStr("rate");
+   item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("ServerRate");
-   item.Field(dabc::prop_kind).SetStr("rate");
+   item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
    if (fWithLogger) {
       item = fHierarchy.CreateChild("logger");
-      item.Field(dabc::prop_kind).SetStr("log");
+      item.SetField(dabc::prop_kind, "log");
       if (history>1) item.EnableHistory(history);
    }
 
    item = fHierarchy.CreateChild("rate_log");
-   item.Field(dabc::prop_kind).SetStr("log");
+   item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("rash_log");
-   item.Field(dabc::prop_kind).SetStr("log");
+   item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("rast_log");
-   item.Field(dabc::prop_kind).SetStr("log");
+   item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateChild("ratf_log");
-   item.Field(dabc::prop_kind).SetStr("log");
+   item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
 /* item = fHierarchy.CreateChild("CmdStart");
@@ -703,19 +703,19 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
    dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
 
    if (fCounter % 20 == 0) {
-      item.Field("value").SetStr(c_head0);
+      item.SetField("value", c_head0);
       item.MarkChangedItems();
-      item.Field("value").SetStr(c_head);
+      item.SetField("value", c_head);
       item.MarkChangedItems();
    }
-   item.Field("value").SetStr(c_out);
-   item.Field("value").SetModified(true);
+   item.SetField("value", c_out);
+   item.SetFieldModified("value");
 
    if (options=="-u") {
       // printf("%s\n",c_out);
-      fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_kb));
-      fHierarchy.FindChild("EventRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_evt));
-      fHierarchy.FindChild("ServerRate").Field("value").SetStr(dabc::format("%3.1f", r_rate_strsrv_kb));
+      fHierarchy.FindChild("DataRate").SetField("value", dabc::format("%3.1f", r_rate_kb));
+      fHierarchy.FindChild("EventRate").SetField("value", dabc::format("%3.1f", r_rate_evt));
+      fHierarchy.FindChild("ServerRate").SetField("value", dabc::format("%3.1f", r_rate_strsrv_kb));
    }
 
 //   DOUT0("Set %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
@@ -738,13 +738,13 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
        fCounter++;
 
        double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-       fHierarchy.FindChild("DataRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+       fHierarchy.FindChild("DataRate").SetField("value", dabc::format("%4.2f", v1));
 
        v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-       fHierarchy.FindChild("EventRate").Field("value").SetStr(dabc::format("%4.2f", v1));
+       fHierarchy.FindChild("EventRate").SetField("value", dabc::format("%4.2f", v1));
 
-       fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("| Header  |   Entry      |      Rate  |"));
-       fHierarchy.FindChild("rate_log").Field("value").SetStr(dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
+       fHierarchy.FindChild("rate_log").SetField("value", dabc::format("| Header  |   Entry      |      Rate  |"));
+       fHierarchy.FindChild("rate_log").SetField("value", dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
 
        fHierarchy.MarkChangedItems();
        return;
@@ -767,8 +767,8 @@ void mbs::Player::NewMessage(const std::string& msg)
    dabc::Hierarchy item = fHierarchy.FindChild("logger");
 
    if (!item.null()) {
-      item.Field("value").SetStr(msg);
-      item.Field("value").SetModified(true);
+      item.SetField("value", msg);
+      item.SetFieldModified("value");
       fHierarchy.MarkChangedItems();
    }
 }

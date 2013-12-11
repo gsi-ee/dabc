@@ -169,7 +169,7 @@ void fesa::Monitor::ReportServiceError(const std::string& name, const std::strin
    dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
    if (item.null()) return;
 
-   item.Field(dabc::prop_error).SetStr(err);
+   item.SetField(dabc::prop_error, err);
 
    item.MarkChangedItems();
 }

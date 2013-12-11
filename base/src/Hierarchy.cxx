@@ -38,6 +38,7 @@ const char* dabc::prop_error = "dabc:error";
 const char* dabc::prop_hash = "hash";
 const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";
+const char* dabc::prop_more = "dabc:more";
 
 
 // ===============================================================================
@@ -914,7 +915,7 @@ void dabc::Hierarchy::EnableHistory(unsigned length, bool withchilds)
          GetObject()->fHist.Allocate(length);
          GetObject()->fHist()->fEnabled = true;
          GetObject()->fHist()->fChildsEnabled = withchilds;
-         Field(prop_history).SetUInt(length);
+         SetField(prop_history, length);
       } else {
          GetObject()->fHist.Release();
          RemoveField(prop_history);
@@ -1000,7 +1001,7 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamK
 }
 
 
-std::string dabc::Hierarchy::SaveToXml(unsigned mask)
+std::string dabc::Hierarchy::SaveToXml(unsigned mask, const std::string& path)
 {
    XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, mask);
 
@@ -1016,6 +1017,16 @@ std::string dabc::Hierarchy::SaveToXml(unsigned mask)
       bool compact = (mask & xmlmask_Compact) != 0;
       Xml::SaveSingleNode(topnode, &res, compact ? 0 : 1);
       Xml::FreeNode(topnode);
+   }
+
+   if ((mask & xmlmask_TopDabc) != 0) {
+      const char* lastslash = "";
+      if (!path.empty() && (path[path.length()-1]!='/')) lastslash = "/";
+
+      res = dabc::format("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s%s\">\n",
+            path.c_str(), lastslash) +
+            res +
+            std::string("</dabc>\n");
    }
 
    return res;
@@ -1080,13 +1091,14 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::s
    dabc::Hierarchy item;
    if (itemname.empty()) item = *this; else item = FindChild(itemname.c_str());
 
-   if (item.null()) return false;
+   // if item for the object not found, we suppose to always have changed object
+   if (item.null()) return true;
 
    // if there is no hash information provided, we always think that binary data is changed
    if (hash.empty()) return true;
 
    if (item.Field(dabc::prop_hash).AsStr() != hash) {
-      item.Field(dabc::prop_hash).SetStr(hash);
+      item.SetField(dabc::prop_hash, hash);
       item.MarkChangedItems();
    }
 
@@ -1095,21 +1107,23 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::s
 
 
 
-bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, const std::string& mhash)
+bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, const std::string& mhash, const std::string& dflt_master_name)
 {
    if (null()) return false;
 
-   dabc::Hierarchy item;
-   if (itemname.empty()) item = *this; else item = FindChild(itemname.c_str());
+   dabc::Hierarchy item, master;
+   if (itemname.empty()) item = *this;
+                    else item = FindChild(itemname.c_str());
 
-   if (item.null()) return false;
-
-   dabc::Hierarchy master = item.FindMaster();
+   if (item.null()) {
+      master = FindChild(dflt_master_name.c_str());
+      DOUT2("Search default master %s res = %p", dflt_master_name.c_str(), master());
+   } else {
+      master = item.FindMaster();
+   }
 
    if (!master.null() && !mhash.empty() && (master.Field(dabc::prop_hash).AsStr()!=mhash)) {
-
-      master.Field(dabc::prop_hash).SetStr(mhash);
-
+      master.SetField(dabc::prop_hash, mhash);
       master.MarkChangedItems();
    }
 

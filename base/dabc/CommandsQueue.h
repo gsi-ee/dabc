@@ -96,7 +96,11 @@ namespace dabc {
 
          unsigned Size() const { return fList.size(); }
 
+         /** \brief Reply all commands */
          void ReplyAll(int res);
+
+         /** \brief Reply timedout commands */
+         void ReplyTimedout();
 
          void Cleanup(Mutex* m = 0, Worker* proc = 0, int res = cmd_false);
    };

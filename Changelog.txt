@@ -2,6 +2,29 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+11.12.2013
+1. First try of dynamical content of hiararchy browser. Idea to expand some 
+   items only per request (click) of the user. Following changes were
+   done to implement such functionality. 
+2. More sophisticated, but more universal way to scan root structures.
+   Special scan record is created, which keep all setting for current-level scan.
+   Three different modes of scanning are implemented:
+     - simple full hierarchy scan (without extras)
+     - found object with specified name
+     - locate specified folder and expand (if possible)
+   Last two methods can navigate through ROOT folders/directories even when 
+   hierarchy was not created. If specified, scan will use TClass information 
+   to access data members of arbitrary ROOT objects. 
+3. Publisher now can process request for items which are not exists in normal hierarchy.
+   In such case it tries to guess which provider can process request.
+4. JavaScript code now able to process Expand request for items, which have dabc:more 
+   property set. "full_item_name/h.xml" request is send to server and
+   than web browser just expanded. 
+5. First test with basic ROOT objects are done. For the moment, all objects registered
+   in "extra" folder can be expanded in the browser. Means one should call:
+      DabcRoot::Register("extra", my_event);
+
+
 6.12.2013
 1. Allow submit many commands in parallel via command channel. Let request many
    objects from remote process faster.

@@ -53,6 +53,21 @@ void dabc::CommandsQueue::Cleanup(Mutex* m, Worker* proc, int res)
 }
 
 
+void dabc::CommandsQueue::ReplyTimedout()
+{
+   QueueRecsList::iterator iter = fList.begin();
+   while (iter != fList.end()) {
+
+      if (!iter->cmd.IsTimedout()) { iter++; continue; }
+
+      iter->cmd.Reply(dabc::cmd_timedout);
+
+      QueueRecsList::iterator curr = iter++;
+      fList.erase(curr);
+   }
+}
+
+
 uint32_t dabc::CommandsQueue::Push(Command cmd, EKind kind)
 {
    if (kind == kindNone) kind = fKind;

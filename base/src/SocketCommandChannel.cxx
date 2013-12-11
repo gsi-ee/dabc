@@ -488,6 +488,11 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
       }
    }
 
+   // cancel execution of commands due to timeout
+
+   fWaitQueue.ReplyTimedout();
+   fSendQueue.ReplyTimedout();
+
    return next_tmout;
 }
 
