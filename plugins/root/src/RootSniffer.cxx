@@ -223,7 +223,7 @@ void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
       rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
 
       std::string master;
-      for (int n=0;n<rec.lvl;n++) master +="../";
+      for (int n=1;n<rec.lvl;n++) master.append("../");
       rec.SetField(dabc::prop_masteritem, master+"StreamerInfo");
 
    } else
@@ -263,7 +263,7 @@ bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::strin
 
    prnt = super.top;
 
-   lvl = super.lvl + 1;
+   lvl = super.lvl;
    searchpath = super.searchpath;
    mask = super.mask;
    parent_rec = &super;
@@ -293,6 +293,7 @@ bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::strin
          prnt = super.top.CreateChild(foldername);
          //printf("CREATE FOLDER %s %p\n", foldername.c_str(), prnt());
       }
+      lvl++;
    }
 
    if (searchpath==0) {
@@ -334,6 +335,8 @@ bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::strin
          //DOUT0("OBJECT NAME is %s ", objname.c_str());
       }
    }
+
+   lvl++;
 
    return true;
 }
