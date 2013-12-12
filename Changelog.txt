@@ -8,7 +8,9 @@ current functionality of the framework.
 3. Several fixes concerning hierarchy version control. 
 4. Allow to explore all kind of ROOT collections. 
    Allow to draw objects from such collections.   
-
+5. Exclude enum and static variables from browsable items.
+   Later one can provide method to configure which data members should be browsable.   
+    
 
 11.12.2013
 1. First try of dynamical content in hiararchy browser. Idea to expand some 

@@ -12,12 +12,12 @@
 
 #include "dabc_root/RootSniffer.h"
 
-static std::string fDabcRootTopFolder = "ROOT";
+static std::string gDabcRootTopFolder = "ROOT";
 
 void DabcRoot::SetTopFolderName(const char* name)
 {
    if (name && *name && strpbrk(name,"/\\[]#()")==0) {
-      fDabcRootTopFolder = name;
+      gDabcRootTopFolder = name;
    } else {
       EOUT("Wrong top folder name %s", name ? name : "(null)");
    }
@@ -37,7 +37,7 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
       cmd2.SetBool("enabled", true);
       cmd2.SetBool("batch", false);
       cmd2.SetBool("synctimer", sync_timer);
-      cmd2.SetStr("prefix", fDabcRootTopFolder);
+      cmd2.SetStr("prefix", gDabcRootTopFolder);
 
       dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
       sniff->InstallSniffTimer();

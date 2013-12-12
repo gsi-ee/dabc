@@ -140,6 +140,8 @@ namespace dabc_root {
 
          dabc::Thread_t fStartThrdId;   ///< remember thread id where sniffer was started, can be used to check how timer processing is working
 
+         static long int gExcludeProperty; ///< property mask, which will be excluded from browsing
+
          virtual void OnThreadAssigned();
 
          virtual void InitializeHierarchy() {}

@@ -29,6 +29,7 @@
 #include "TBufferFile.h"
 #include "TROOT.h"
 #include "TTimer.h"
+#include "Property.h"
 #include "TFolder.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -65,6 +66,8 @@ class TDabcTimer : public TTimer {
 
 
 // ==============================================================================
+
+long int dabc_root::RootSniffer::gExcludeProperty = G__BIT_ISSTATIC | G__BIT_ISENUM | G__BIT_ISUNION;
 
 dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
@@ -185,7 +188,8 @@ void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* 
    TIter iter(cl->GetListOfDataMembers());
    while (((obj=iter()) != 0) && !chld.Done()) {
       TDataMember* member = dynamic_cast<TDataMember*>(obj);
-      if (member==0) continue;
+      // exclude enum or static variables
+      if ((member==0) || (member->Property() & gExcludeProperty)) continue;
 
       char* member_ptr = ptr + cloffset + member->GetOffset();
       if (member->IsaPointer()) member_ptr = *((char**) member_ptr);
@@ -193,7 +197,7 @@ void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* 
       if (chld.TestObject(member)) {
          // set more property
 
-         TClass* mcl = (member->IsBasic() || member->IsEnum() || member->IsSTLContainer())  ? 0 : gROOT->GetClass(member->GetTypeName());
+         TClass* mcl = (member->IsBasic() || member->IsSTLContainer())  ? 0 : gROOT->GetClass(member->GetTypeName());
 
          // if (mcl) printf("MEMBER %s class %s\n", member->GetName(), cl->GetName());
 
