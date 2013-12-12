@@ -20,6 +20,12 @@ class DabcRoot {
 
    public:
 
+      /** \brief Set name of top server folder
+       *
+       * Should be called before server start. Default name is "ROOT" */
+      static void SetTopFolderName(const char* name);
+
+
       /** \brief Method starts HTTP server in ROOT session
        *
        * \param[in] port         http port number, 8080 is default
