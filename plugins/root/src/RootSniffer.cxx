@@ -479,9 +479,12 @@ void dabc_root::RootSniffer::ScanRec::SetRootClass(TClass* cl)
 
    SetField(dabc::prop_kind, dabc::format("ROOT.%s", cl->GetName()));
 
-   std::string master;
-   for (int n=1;n<lvl;n++) master.append("../");
-   SetField(dabc::prop_masteritem, master+"StreamerInfo");
+   if (IsDrawableClass(cl)) {
+      // only drawable class can be fetched from the server
+      std::string master;
+      for (int n=1;n<lvl;n++) master.append("../");
+      SetField(dabc::prop_masteritem, master+"StreamerInfo");
+   }
 }
 
 
