@@ -272,7 +272,7 @@ bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_
       iter->rem.UpdateFromBuffer(diff);
    }
 
-   // DOUT0("LOCAL ver %u diff %u itemver %u \n%s",  fLocal.GetVersion(), diff.GetTotalSize(), iter->version, fLocal.SaveToXml(2).c_str());
+   DOUT5("LOCAL ver %u diff %u itemver %u \n%s",  fLocal.GetVersion(), diff.GetTotalSize(), iter->version, fLocal.SaveToXml(2).c_str());
 
    // check if hierarchy was changed
    CheckDnsSubscribers();
@@ -584,9 +584,9 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
    if (cmd.IsName("GetGlobalNamesList")) {
       std::string path = cmd.GetStr("path");
       dabc::Hierarchy h = GetWorkItem(path);
-      if (h.null()) return cmd_false;
 
-      if (h.HasField(dabc::prop_more)) {
+      // if item was not found directly, try to ask producer if it can be extended
+      if (h.null() || h.HasField(dabc::prop_more)) {
          if (!RedirectCommand(cmd, path)) return cmd_false;
          DOUT3("ITEM %s CAN PROVIDE MORE!!!", path.c_str());
          return cmd_postponed;
@@ -650,8 +650,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
    if (cmd.IsName("CmdHasChilds")) {
       std::string path = cmd.GetStr("path");
       dabc::Hierarchy h = GetWorkItem(path);
-      if (h.null()) return cmd_false;
-      cmd.SetBool("has_childs", h.NumChilds() > 0);
+      cmd.SetInt("num_childs", h.null() ? -1 : h.NumChilds());
 
       return cmd_true;
 
@@ -689,16 +688,16 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
    return true;
 }
 
-bool dabc::PublisherRef::HasChilds(const std::string& path)
+int dabc::PublisherRef::HasChilds(const std::string& path)
 {
-   if (null()) return false;
+   if (null()) return -1;
 
    dabc::Command cmd("CmdHasChilds");
    cmd.SetStr("path", path);
 
-   if (Execute(cmd) != cmd_true) return false;
+   if (Execute(cmd) != cmd_true) return -1;
 
-   return cmd.GetBool("has_childs");
+   return cmd.GetInt("num_childs");
 }
 
 

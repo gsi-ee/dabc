@@ -53,11 +53,14 @@ namespace dabc_root {
       protected:
 
          enum {
-            mask_Scan    = 1,  ///< normal scan of hierarchy
-            mask_Expand  = 2,  ///< expand of specified item
-            mask_Search  = 4,  ///< search for specified item
-            mask_Members = 8,  ///< enable expand of objects with class info
-            mask_ChldMemb = 16 ///< expand child members
+            mask_Scan        = 0x0001,  ///< normal scan of hierarchy
+            mask_Expand      = 0x0002,  ///< expand of specified item
+            mask_Search      = 0x0004,  ///< search for specified item
+            mask_Actions     = 0x0007,  ///< mask for actions, only actions copied to child rec
+            mask_Members     = 0x0008,  ///< enable expand of objects with class info
+            mask_ChldMemb    = 0x0010,  ///< enable expand of members of child objects
+            mask_MarkChldExp = 0x0020,  ///< mark child objects that it can be expanded
+            mask_MarkExpand  = 0x0040   ///< mark object that it can be expanded
          };
 
          struct ScanRec {
@@ -135,7 +138,7 @@ namespace dabc_root {
 
          void ScanObject(ScanRec& rec, TObject* obj);
 
-         void ScanList(ScanRec& rec, TCollection* lst, const std::string& foldername = "");
+         void ScanCollection(ScanRec& rec, TCollection* lst, const std::string& foldername = "", unsigned extra_mask = 0);
 
          /* Method is used to scan ROOT objects.
           * If path is empty, than hierarchy structure will be created.

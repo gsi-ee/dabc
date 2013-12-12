@@ -160,6 +160,9 @@ void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* 
 
    //DOUT0("SCAN CLASS %s mask %u", cl->GetName(), rec.mask);
 
+   //if (rec.mask & mask_Expand)
+   //   printf("EXPAND MEMBERS %s canexpand %s\n", cl->GetName(), DBOOL(rec.CanExpandItem()));
+
    ScanRec chld;
    if (!chld.MakeChild(rec)) return;
 
@@ -203,7 +206,7 @@ void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* 
                chld.SetField("#members", "true");
                if (member->IsaPointer()) member_ptr = *((char**) member_ptr);
                //printf("SCAN LIST %s\n", member->GetName());
-               ScanList(chld, (TList*) member_ptr);
+               ScanCollection(chld, (TList*) member_ptr);
             }
          }
       }
@@ -215,11 +218,14 @@ void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
 {
    if (obj==0) return;
 
-   //DOUT0("SCAN OBJECT %s can expand %s mask %u", obj->GetName(), DBOOL(rec.CanExpandItem()), rec.mask);
+   //if (rec.mask & mask_Expand)
+   //   printf("EXPAND OBJECT %s can expand %s mask %u\n", obj->GetName(), DBOOL(rec.CanExpandItem()), rec.mask);
+
+   if (rec.mask & mask_MarkExpand) rec.SetField(dabc::prop_more, "true");
 
    if (rec.SetResult(obj)) return;
 
-   if (IsDrawableClass(obj->IsA())) {
+   if (IsDrawableClass(obj->IsA()) || true) {
       rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
 
       std::string master;
@@ -236,19 +242,21 @@ void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
 
       TFolder* fold = ((TFolder*) obj);
       if (fold->TestBit(BIT(19)) && (rec.mask & mask_Scan))
-         rec.mask = rec.mask | mask_ChldMemb;
-      ScanList(rec, fold->GetListOfFolders());
+         // rec.mask = rec.mask | mask_ChldMemb;
+         rec.mask = rec.mask | mask_MarkChldExp;
+
+      ScanCollection(rec, fold->GetListOfFolders());
    } else
    if (obj->InheritsFrom(TDirectory::Class())) {
-      ScanList(rec, ((TDirectory*) obj)->GetList());
+      ScanCollection(rec, ((TDirectory*) obj)->GetList());
    } else
    if (obj->InheritsFrom(TTree::Class())) {
-      // if (!res) res = ScanList(mask, chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
-      ScanList(rec, ((TTree*) obj)->GetListOfLeaves());
+      // if (!res) res = ScanCollection(mask, chld, searchpath, ((TTree*) obj)->GetListOfBranches(), lvl+1);
+      ScanCollection(rec, ((TTree*) obj)->GetListOfLeaves());
    } else
    if (obj->InheritsFrom(TBranch::Class())) {
-      // if (!res) res = ScanList(mask, chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
-      ScanList(rec, ((TBranch*) obj)->GetListOfLeaves());
+      // if (!res) res = ScanCollection(mask, chld, searchpath, ((TBranch*) obj)->GetListOfBranches(), lvl+1);
+      ScanCollection(rec, ((TBranch*) obj)->GetListOfLeaves());
    } else
    if (rec.CanExpandItem()) {
       rec.SetField("#members", "true");
@@ -265,15 +273,11 @@ bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::strin
 
    lvl = super.lvl;
    searchpath = super.searchpath;
-   mask = super.mask;
+   mask = super.mask & mask_Actions;
    parent_rec = &super;
 
-   if (mask & mask_ChldMemb) {
-      mask = (mask & ~mask_ChldMemb) | mask_Members;
-   } else
-   if (mask & mask_Members) {
-      mask = mask & ~mask_Members;
-   }
+   if (super.mask & mask_ChldMemb) mask = mask | mask_Members;
+   if (super.mask & mask_MarkChldExp) mask = mask | mask_MarkExpand;
 
    if (!foldername.empty()) {
       if (searchpath) {
@@ -366,7 +370,7 @@ bool dabc_root::RootSniffer::ScanRec::TestObject(TObject* obj)
    // when scanning hierarchy, just add new item and signal it
    if ((mask & mask_Scan) != 0) {
       top = prnt.CreateChild(obj_name);
-      //printf("CREATE SCAN %s %p\n", obj_name, top());
+      // printf("CREATE SCAN %s %p %s\n", obj_name, top(), top.ItemName().c_str());
       return true;
    }
 
@@ -419,14 +423,17 @@ bool dabc_root::RootSniffer::ScanRec::SetResult(TObject* obj)
 }
 
 
-void dabc_root::RootSniffer::ScanList(ScanRec& rec,
-                                      TCollection* lst,
-                                      const std::string& foldername)
+void dabc_root::RootSniffer::ScanCollection(ScanRec& rec,
+                                            TCollection* lst,
+                                            const std::string& foldername,
+                                            unsigned extra_mask)
 {
    if ((lst==0) || (lst->GetSize()==0)) return;
 
    ScanRec chld;
    if (!chld.MakeChild(rec, foldername)) return;
+
+   chld.mask = chld.mask | extra_mask;
 
    TIter iter(lst);
    TObject* obj(0);
@@ -452,13 +459,13 @@ void dabc_root::RootSniffer::ScanRoot(ScanRec& rec)
 
    TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject("//root/dabc"));
 
-   ScanList(rec, gROOT->GetList());
+   ScanCollection(rec, gROOT->GetList());
 
-   ScanList(rec, gROOT->GetListOfCanvases(), "Canvases");
+   ScanCollection(rec, gROOT->GetListOfCanvases(), "Canvases");
 
-   ScanList(rec, gROOT->GetListOfFiles(), "Files");
+   ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
 
-   ScanList(rec, topf ? topf->GetListOfFolders() : 0, "Objects");
+   ScanCollection(rec, topf ? topf->GetListOfFolders() : 0, "Objects");
 }
 
 
@@ -642,7 +649,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
       // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));
 
-      // DOUT0("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml().c_str());
+      DOUT5("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml().c_str());
    }
 
    bool doagain(true);
@@ -656,7 +663,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
       if (cmd.IsName("GetGlobalNamesList")) {
          std::string item = cmd.GetStr("subitem");
 
-         DOUT2("Request extended ROOT hierarchy %s", item.c_str());
+         DOUT3("Request extended ROOT hierarchy %s", item.c_str());
 
          ExpandHierarchy(fRoot, item);
 

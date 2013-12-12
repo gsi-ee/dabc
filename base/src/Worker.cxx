@@ -705,9 +705,18 @@ int dabc::Worker::PreviewCommand(Command cmd)
       // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
       if (!h.null()) {
+
          LockGuard lock(h.GetHMutex());
+
+         // if (IsName("Go4")) { dabc::SetDebugLevel(2); dabc::Logger::Instance()->SetLogLimit(1000000); }
+
          Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
          cmd.SetRawData(diff);
+
+         //DOUT0("Worker %s store its hierarchy %p res_buf %u", GetName(), h(), diff.GetTotalSize());
+         //static int cnt = 3;
+         //if (IsName("Go4")) { dabc::SetDebugLevel(0); if (cnt--<0) exit(4); }
+
          cmd.SetUInt("version", h.GetVersion());
 
          if (store) store->ExtractData(h);

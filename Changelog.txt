@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+12.12.2013
+1. Only mark objects in "extra" folder, that they could be expand in browser
+2. For all ROOT objects set class property, adjust dabc.js to draw only supported classes
+3. Several fixes concerning hierarchy version control. 
+
+
 11.12.2013
 1. First try of dynamical content of hiararchy browser. Idea to expand some 
    items only per request (click) of the user. Following changes were

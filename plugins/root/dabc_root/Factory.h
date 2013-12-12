@@ -1,3 +1,5 @@
+// $Id$
+
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
@@ -11,6 +13,7 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #ifndef DABC_ROOT_Factory
 #define DABC_ROOT_Factory
 

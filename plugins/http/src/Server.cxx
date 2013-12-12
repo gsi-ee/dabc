@@ -160,7 +160,7 @@ int http::Server::begin_request(struct mg_connection *conn)
 
    // we return normal file
    if (filename.empty() || (filename == "index.htm")) {
-      if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname))
+      if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname) != 0)
          filename = fHttpSys + "/files/main.htm";
       else
          filename = fHttpSys + "/files/single.htm";

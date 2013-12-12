@@ -611,6 +611,8 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex)
    else
       fObjectChilds->AddAt(ref, pos);
 
+   _ChildsChanged();
+
    return true;
 }
 
@@ -639,6 +641,8 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
          // IMPORTANT: parent reference can be released only AFTER childs are decreased,
          // otherwise reference will try to destroy parent
          // IMPORTANT: we are under object mutex and can do anything
+
+         _ChildsChanged();
 
          if ((fObjectRefCnt>1) && (child->fObjectParent.fObj==this))  {
             child->fObjectParent.fObj = 0; // not very nice, but will work

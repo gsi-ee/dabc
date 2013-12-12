@@ -259,6 +259,8 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
             break;
       }
 
+      DOUT2("STORE %20s num_childs %u  store %6s  namesv %u nodevers %u childsvers %u", GetName(), NumChilds(), DBOOL(store_childs), fNamesVersion, fNodeVersion, fChildsVersion);
+
       uint64_t mask = (store_fields ? maskFieldsStored : 0) |
                       (store_childs ? maskChildsStored : 0) |
                       (store_diff ? maskDiffStored : 0) |
@@ -635,6 +637,9 @@ dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::str
    dabc::HierarchyContainer* res = new dabc::HierarchyContainer(name);
    AddChild(res);
 
+   //fNamesChanged = true;
+   //fChildsChanged = true;
+
    return res;
 }
 
@@ -760,8 +765,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
    if (withchilds)
       for (unsigned indx=0; indx < NumChilds(); indx++) {
          dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
-         if (child)
-            mask = mask | child->MarkVersionIfChanged(ver, tm, withchilds);
+         if (child) mask = mask | child->MarkVersionIfChanged(ver, tm, withchilds);
       }
 
    if (mask != 0) fNodeChanged = true;

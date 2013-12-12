@@ -821,12 +821,12 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
          if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; } else
-         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; } else  
-         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; } else
-         if (kind == "ROOT.TCanvas") nodeimg = source_dir+'img/canvas.png'; else
-         if (kind == "ROOT.TProfile") nodeimg = source_dir+'img/profile.png'; else
-         if (kind.match(/\bROOT.TGraph/)) nodeimg = source_dir+'img/graph.png'; else
+         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
+         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
+         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
+         if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
+         if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
+         if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
          if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
          if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
          if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
@@ -836,11 +836,11 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       }
 
       if (!node.hasChildNodes() || !scan_inside) {
-         if (can_display)
-            html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-         else
          if (can_expand)   
             html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
+         else
+         if (can_display)
+            html = "javascript: DABC.mgr.display('"+nodefullname+"');";
       } else {
          html = nodefullname;
          if (html == "") html = ".."; 
@@ -934,21 +934,27 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    } else {
       
       var mainxmlnode = this.main.FindNode(this.itemname);
-      if (mainxmlnode) console.log("found main xml node " + this.itemname);
-                  else console.log("didnot found main xml node");
+      if (!mainxmlnode) {
+         alert("Not found xml node for item " + this.itemname);
+         DABC.mgr.RemoveItem(this);
+         return;
+      } 
+
       var chld;
-      
       while ((chld = top.firstChild)!=null) {
          top.removeChild(chld);
          mainxmlnode.appendChild(chld);
       }
-    
-      this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
       
+      this.main.maxnodeid = this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
+
       var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
       content += DABC.dabc_tree;
       $("#" + this.main.frameid).html(content);
-      
+
+      // open node which was filled 
+      DABC.dabc_tree.o(this.maxnodeid);
+
       DABC.mgr.RemoveItem(this);
    }
       
@@ -1765,7 +1771,7 @@ DABC.Manager.prototype.CanDisplay = function(xmlnode)
    if (kind == "DABC.Command") return true;
    if (kind == "rate") return true;
    if (kind.indexOf("FESA.") == 0) return true;
-   if (kind.indexOf("ROOT.") == 0) return true;
+   // if (kind.indexOf("ROOT.") == 0) return true;
    
    return false;
 }
