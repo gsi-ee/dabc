@@ -187,26 +187,36 @@ void dabc_root::RootSniffer::ScanObjectMemebers(ScanRec& rec, TClass* cl, char* 
       TDataMember* member = dynamic_cast<TDataMember*>(obj);
       if (member==0) continue;
 
-      //printf("MEMBER %s mask %u\n", member->GetName(), chld.mask);
-
       char* member_ptr = ptr + cloffset + member->GetOffset();
+      if (member->IsaPointer()) member_ptr = *((char**) member_ptr);
 
       if (chld.TestObject(member)) {
          // set more property
-         bool islist = strcmp(member->GetTypeName(),"TList")==0;
-         if (islist) chld.SetField(dabc::prop_more, "true");
+
+         TClass* mcl = (member->IsBasic() || member->IsEnum() || member->IsSTLContainer())  ? 0 : gROOT->GetClass(member->GetTypeName());
+
+         // if (mcl) printf("MEMBER %s class %s\n", member->GetName(), cl->GetName());
+
+         // bool islist = strcmp(member->GetTypeName(),"TList")==0;
+
+         Int_t coll_offset = mcl ? mcl->GetBaseClassOffset(TCollection::Class()) : -1;
+
+         bool iscollection = (coll_offset>=0);
+         if (iscollection) chld.SetField(dabc::prop_more, "true");
+
+         //if (iscollection)
+         //   printf("DETECT COLLECTION %s %s offest %d in %s\n", member->GetName(), member->GetTypeName(), coll_offset, rec.top.ItemName().c_str());
 
          //printf("LOCATE MEMBER %s mask %u objname %s canexpand %s path %s\n", member->GetName(), chld.mask, chld.objname.c_str(), DBOOL(chld.CanExpandItem()), chld.searchpath ? chld.searchpath : "-null-");
 
+         if (IsDrawableClass(mcl)) {
+            if (chld.SetResult((TObject*)member_ptr)) return;
+            chld.SetRootClass(mcl);
+         } else
          if (chld.CanExpandItem()) {
-            if (islist) {
-
-               //printf("!!! EXPAND LIST %s mask %u \n", member->GetName(), chld.mask);
-
+            if (iscollection) {
                chld.SetField("#members", "true");
-               if (member->IsaPointer()) member_ptr = *((char**) member_ptr);
-               //printf("SCAN LIST %s\n", member->GetName());
-               ScanCollection(chld, (TList*) member_ptr);
+               ScanCollection(chld, (TCollection*) (member_ptr + coll_offset));
             }
          }
       }
@@ -221,29 +231,26 @@ void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
    //if (rec.mask & mask_Expand)
    //   printf("EXPAND OBJECT %s can expand %s mask %u\n", obj->GetName(), DBOOL(rec.CanExpandItem()), rec.mask);
 
-   if (rec.mask & mask_MarkExpand) rec.SetField(dabc::prop_more, "true");
+   // mark object as expandable for direct child of extra folder
+   // or when non drawable object is scanned
 
    if (rec.SetResult(obj)) return;
 
-   if (IsDrawableClass(obj->IsA()) || true) {
-      rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
+   if (rec.CanSetFields()) {
 
-      std::string master;
-      for (int n=1;n<rec.lvl;n++) master.append("../");
-      rec.SetField(dabc::prop_masteritem, master+"StreamerInfo");
+      int lvl = rec.ExtraFolderLevel();
 
-   } else
-   if (IsBrowsableClass(obj->IsA())) {
-      rec.SetField(dabc::prop_kind, dabc::format("ROOT.%s", obj->ClassName()));
+      if ((rec.mask & mask_MarkExpand) || (lvl==1) || ( (lvl>1) && !IsDrawableClass(obj->IsA())))
+          rec.SetField(dabc::prop_more, "true");
+
+      rec.SetRootClass(obj->IsA());
    }
 
    if (obj->InheritsFrom(TFolder::Class())) {
       // starting from special folder, we automatically scan members
 
-      TFolder* fold = ((TFolder*) obj);
-      if (fold->TestBit(BIT(19)) && (rec.mask & mask_Scan))
-         // rec.mask = rec.mask | mask_ChldMemb;
-         rec.mask = rec.mask | mask_MarkChldExp;
+      TFolder* fold = (TFolder*) obj;
+      if (fold->TestBit(BIT(19))) rec.mask = rec.mask | mask_ExtraFolder;
 
       ScanCollection(rec, fold->GetListOfFolders());
    } else
@@ -423,6 +430,20 @@ bool dabc_root::RootSniffer::ScanRec::SetResult(TObject* obj)
 }
 
 
+int dabc_root::RootSniffer::ScanRec::ExtraFolderLevel()
+{
+   ScanRec* rec = this;
+   int cnt = 0;
+   while (rec) {
+      if (rec->mask & mask_ExtraFolder) return cnt;
+      rec = rec->parent_rec;
+      cnt++;
+   }
+
+   return -1;
+}
+
+
 void dabc_root::RootSniffer::ScanCollection(ScanRec& rec,
                                             TCollection* lst,
                                             const std::string& foldername,
@@ -447,10 +468,18 @@ void dabc_root::RootSniffer::ScanCollection(ScanRec& rec,
    }
 }
 
-void dabc_root::RootSniffer::ScanRec::SetField(const std::string& name, const std::string& value)
+
+void dabc_root::RootSniffer::ScanRec::SetRootClass(TClass* cl)
 {
-   if (((mask & (mask_Scan | mask_Expand)) != 0) && !top.null()) top.SetField(name, value);
+   if ((cl==0) || !CanSetFields())  return;
+
+   SetField(dabc::prop_kind, dabc::format("ROOT.%s", cl->GetName()));
+
+   std::string master;
+   for (int n=1;n<lvl;n++) master.append("../");
+   SetField(dabc::prop_masteritem, master+"StreamerInfo");
 }
+
 
 
 void dabc_root::RootSniffer::ScanRoot(ScanRec& rec)

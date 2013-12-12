@@ -60,7 +60,8 @@ namespace dabc_root {
             mask_Members     = 0x0008,  ///< enable expand of objects with class info
             mask_ChldMemb    = 0x0010,  ///< enable expand of members of child objects
             mask_MarkChldExp = 0x0020,  ///< mark child objects that it can be expanded
-            mask_MarkExpand  = 0x0040   ///< mark object that it can be expanded
+            mask_MarkExpand  = 0x0040,  ///< mark object that it can be expanded
+            mask_ExtraFolder = 0x0080   ///< bit marks folder where all childs will be marked as expandable
          };
 
          struct ScanRec {
@@ -80,8 +81,16 @@ namespace dabc_root {
 
             bool TestObject(TObject* obj);
 
+            /** return true when fields could be set to the hierarchy item */
+            bool CanSetFields()
+              { return (mask & (mask_Scan | mask_Expand)) && !top.null(); }
+
             /** Set item field only when creating is specified */
-            void SetField(const std::string& name, const std::string& value);
+            void SetField(const std::string& name, const std::string& value)
+              {  if (CanSetFields()) top.SetField(name, value); }
+
+            /** Mark item with ROOT class and correspondent streamer info */
+            void SetRootClass(TClass* cl);
 
             bool HasField(const std::string& name) { return top.HasField(name); }
 
@@ -100,6 +109,9 @@ namespace dabc_root {
 
             /** Set result pointer and return true if result is found */
             bool SetResult(TObject* obj);
+
+            /** Returns level till extra folder, marked as mask_ExtraFolder */
+            int ExtraFolderLevel();
 
             /** Method indicates that scanning can be interrupted while result is set */
             bool Done();

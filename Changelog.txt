@@ -6,10 +6,12 @@ current functionality of the framework.
 1. Only mark objects in "extra" folder, that they could be expand in browser
 2. For all ROOT objects set class property, adjust dabc.js to draw only supported classes
 3. Several fixes concerning hierarchy version control. 
+4. Allow to explore all kind of ROOT collections. 
+   Allow to draw objects from such collections.   
 
 
 11.12.2013
-1. First try of dynamical content of hiararchy browser. Idea to expand some 
+1. First try of dynamical content in hiararchy browser. Idea to expand some 
    items only per request (click) of the user. Following changes were
    done to implement such functionality. 
 2. More sophisticated, but more universal way to scan root structures.
