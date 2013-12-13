@@ -1,10 +1,12 @@
 DABC = {};
 
-DABC.version = "2.3.1";
+DABC.version = "2.6.1";
 
 DABC.mgr = 0;
 
 DABC.dabc_tree = 0;   // variable to display hierarchy
+
+DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
 
 DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
@@ -781,7 +783,7 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    this.req.send(null);
 }
 
-DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname) 
+DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl = 0, maxlvl = -1) 
 {
    node = DABC.nextXmlNode(node);
 
@@ -841,6 +843,14 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          else
          if (can_display)
             html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+      } else 
+      if ((maxlvl>0) && (lvl >= maxlvl)) {
+         html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
+         if (nodeimg.length == 0) {
+            nodeimg = source_dir+'img/folder.gif'; 
+            node2img = source_dir+'img/folderopen.gif';
+         }
+         scan_inside = false;
       } else {
          html = nodefullname;
          if (html == "") html = ".."; 
@@ -851,7 +861,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
 
       if (scan_inside)
-         nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
+         nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname, lvl+1, maxlvl);
       else
          nodeid = nodeid + 1;
       
@@ -903,6 +913,21 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
    return this.FindNode(fullname.substr(pos+1), child);
 }
 
+DABC.HierarchyDrawElement.prototype.CountElements = function(arr, node, lvl)
+{
+   if (!node) return;
+   
+   while (arr.length <= lvl) arr.push(0);
+   
+   var child = DABC.nextXmlNode(node.firstChild);
+
+   while (child) {
+      arr[lvl]++;
+      this.CountElements(arr, child, lvl+1);
+      child = DABC.nextXmlNode(child.nextSibling);
+   }
+}
+
 
 DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    this.req = 0;
@@ -925,8 +950,19 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
       DABC.dabc_tree = 0;
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
       DABC.dabc_tree.config.useCookies = false;
+      
+      var arr = new Array();
+      this.CountElements(arr, top, 0);
+      var maxlvl = -1;
+      var sum = 0;
+      for (var lvl in arr) {
+         sum += arr[lvl];
+         if (sum > DABC.tree_limit) { maxlvl = lvl; break; }
+      }
+      
+      // console.log("Total number of elements = " + sum + " level limit = " + maxlvl);
    
-      this.maxnodeid = this.createNode(0, -1, top, "");
+      this.maxnodeid = this.createNode(0, -1, top, "", 0, maxlvl);
 
       var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
       content += DABC.dabc_tree;
@@ -957,8 +993,21 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
 
       DABC.mgr.RemoveItem(this);
    }
-      
 }
+
+DABC.HierarchyDrawElement.prototype.CompleteNode = function(itemname, xmlnode, nodeid)
+{
+   this.maxnodeid = this.createNode(this.maxnodeid, nodeid, xmlnode.firstChild, itemname);
+   
+   DABC.dabc_tree.aNodes[nodeid].url = itemname;
+   
+   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+   
+   content += DABC.dabc_tree;
+   $("#" + this.frameid).html(content);
+   DABC.dabc_tree.o(nodeid);
+}
+
 
 
 DABC.HierarchyDrawElement.prototype.Clear = function() {
@@ -1959,14 +2008,18 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, xmlnode, nodeid)
    var main = this.FindItem("ObjectsTree");
    if (!main) return;
    
-   elem = new DABC.HierarchyDrawElement();
+   if (nodeid>0) {
+      elem = new DABC.HierarchyDrawElement();
    
-   elem.itemname = itemname;
-   elem.main = main;
-   elem.maxnodeid = nodeid;
+      elem.itemname = itemname;
+      elem.main = main;
+      elem.maxnodeid = nodeid;
    
-   this.arr.push(elem);
-   elem.RegularCheck();
+      this.arr.push(elem);
+      elem.RegularCheck();
+   }
+   
+   main.CompleteNode(itemname, xmlnode, -nodeid);
 }
 
 

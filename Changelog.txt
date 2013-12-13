@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+13.12.2013
+1. Limit number of elements in browser, displayed by default. If user wants to browse
+   inside, it should click button once. For the moment limit 200 is defined.
+
+
 12.12.2013
 1. Only mark objects in "extra" folder, that they could be expand in browser
 2. For all ROOT objects set class property, adjust dabc.js to draw only supported classes
