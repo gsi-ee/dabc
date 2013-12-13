@@ -844,7 +844,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (can_display)
             html = "javascript: DABC.mgr.display('"+nodefullname+"');";
       } else 
-      if ((maxlvl>0) && (lvl >= maxlvl)) {
+      if ((maxlvl>0) && (lvl > maxlvl)) {
          html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
          if (nodeimg.length == 0) {
             nodeimg = source_dir+'img/folder.gif'; 
