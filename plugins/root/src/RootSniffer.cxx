@@ -244,7 +244,7 @@ void dabc_root::RootSniffer::ScanObject(ScanRec& rec, TObject* obj)
 
       int lvl = rec.ExtraFolderLevel();
 
-      if ((rec.mask & mask_MarkExpand) || (lvl==1) || ( (lvl>1) && !IsDrawableClass(obj->IsA())))
+      if ((lvl==1) || ( (lvl>1) && !IsDrawableClass(obj->IsA())))
           rec.SetField(dabc::prop_more, "true");
 
       rec.SetRootClass(obj->IsA());
@@ -286,9 +286,6 @@ bool dabc_root::RootSniffer::ScanRec::MakeChild(ScanRec& super, const std::strin
    searchpath = super.searchpath;
    mask = super.mask & mask_Actions;
    parent_rec = &super;
-
-   if (super.mask & mask_ChldMemb) mask = mask | mask_Members;
-   if (super.mask & mask_MarkChldExp) mask = mask | mask_MarkExpand;
 
    if (!foldername.empty()) {
       if (searchpath) {

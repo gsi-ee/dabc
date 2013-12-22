@@ -4,7 +4,7 @@ current functionality of the framework.
 
 13.12.2013
 1. Limit number of elements in browser, displayed by default. If user wants to browse
-   inside, it should click button once. For the moment limit 200 is defined.
+   inside, it should click item once. For the moment limit 200 is defined.
 
 
 12.12.2013

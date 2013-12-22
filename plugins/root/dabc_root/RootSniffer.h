@@ -57,10 +57,6 @@ namespace dabc_root {
             mask_Expand      = 0x0002,  ///< expand of specified item
             mask_Search      = 0x0004,  ///< search for specified item
             mask_Actions     = 0x0007,  ///< mask for actions, only actions copied to child rec
-            mask_Members     = 0x0008,  ///< enable expand of objects with class info
-            mask_ChldMemb    = 0x0010,  ///< enable expand of members of child objects
-            mask_MarkChldExp = 0x0020,  ///< mark child objects that it can be expanded
-            mask_MarkExpand  = 0x0040,  ///< mark object that it can be expanded
             mask_ExtraFolder = 0x0080   ///< bit marks folder where all childs will be marked as expandable
          };
 
@@ -97,8 +93,6 @@ namespace dabc_root {
             /** Returns true when extra entries like object member can be extracted */
             bool CanExpandItem()
             {
-               if (mask & mask_Members) return true;
-
                if (mask & mask_Expand) return true;
 
                // when we search for object, but did not found item or item marked as expandable
