@@ -776,7 +776,7 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    if (this.main)
       url = this.itemname + url;
    
-   console.log("Send request " + url);
+   // console.log("Send request " + url);
    
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
 
@@ -844,7 +844,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (can_display)
             html = "javascript: DABC.mgr.display('"+nodefullname+"');";
       } else 
-      if ((maxlvl>0) && (lvl > maxlvl)) {
+      if ((maxlvl >= 0) && (lvl >= maxlvl)) {
          html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
          if (nodeimg.length == 0) {
             nodeimg = source_dir+'img/folder.gif'; 
@@ -913,9 +913,11 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
    return this.FindNode(fullname.substr(pos+1), child);
 }
 
-DABC.HierarchyDrawElement.prototype.CountElements = function(arr, node, lvl)
+DABC.HierarchyDrawElement.prototype.CountElements = function(node, lvl, arr)
 {
-   if (!node) return;
+   if (!node) return -1;
+   
+   if ((lvl==0) && (arr==null)) arr = new Array;
    
    while (arr.length <= lvl) arr.push(0);
    
@@ -923,9 +925,21 @@ DABC.HierarchyDrawElement.prototype.CountElements = function(arr, node, lvl)
 
    while (child) {
       arr[lvl]++;
-      this.CountElements(arr, child, lvl+1);
+      this.CountElements(child, lvl+1, arr);
       child = DABC.nextXmlNode(child.nextSibling);
    }
+
+   // for first level count how deep browser can create items
+   if (lvl==0) {
+      var sum = 0;
+      for (var cnt in arr) {
+         sum += arr[cnt];
+         // console.log(" cnt = " + cnt + " arr = " + arr[cnt] + " sum = " + sum);
+         if (sum > DABC.tree_limit) return cnt;   
+      }
+   }
+   
+   return -1;
 }
 
 
@@ -951,14 +965,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
       DABC.dabc_tree.config.useCookies = false;
       
-      var arr = new Array();
-      this.CountElements(arr, top, 0);
-      var maxlvl = -1;
-      var sum = 0;
-      for (var lvl in arr) {
-         sum += arr[lvl];
-         if (sum > DABC.tree_limit) { maxlvl = lvl; break; }
-      }
+      var maxlvl = this.CountElements(top, 0);
       
       // console.log("Total number of elements = " + sum + " level limit = " + maxlvl);
    
@@ -982,14 +989,17 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
          mainxmlnode.appendChild(chld);
       }
       
-      this.main.maxnodeid = this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
+      if (mainxmlnode.firstChild != null) {
+      
+         this.main.maxnodeid = this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
 
-      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-      content += DABC.dabc_tree;
-      $("#" + this.main.frameid).html(content);
+         var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+         content += DABC.dabc_tree;
+         $("#" + this.main.frameid).html(content);
 
-      // open node which was filled 
-      DABC.dabc_tree.o(this.maxnodeid);
+         // open node which was filled 
+         DABC.dabc_tree.o(this.maxnodeid);
+      }
 
       DABC.mgr.RemoveItem(this);
    }
@@ -997,7 +1007,11 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
 
 DABC.HierarchyDrawElement.prototype.CompleteNode = function(itemname, xmlnode, nodeid)
 {
-   this.maxnodeid = this.createNode(this.maxnodeid, nodeid, xmlnode.firstChild, itemname);
+   var maxlvl = this.CountElements(xmlnode, 0);
+   // here maxlevel calculation differ while we are using not the dummy top-node 
+   if (maxlvl>0) maxlvl--;
+   
+   this.maxnodeid = this.createNode(this.maxnodeid, nodeid, xmlnode.firstChild, itemname, 0, maxlvl);
    
    DABC.dabc_tree.aNodes[nodeid].url = itemname;
    
@@ -2017,9 +2031,9 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, xmlnode, nodeid)
    
       this.arr.push(elem);
       elem.RegularCheck();
+   } else {
+      main.CompleteNode(itemname, xmlnode, -nodeid);
    }
-   
-   main.CompleteNode(itemname, xmlnode, -nodeid);
 }
 
 
@@ -2097,6 +2111,12 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    var master = itemnode.getAttribute("dabc:master");
    if (!master) return;
    
+   var lvl = 1; // we need to exclude item name anyway
+   while (master.indexOf("../")==0) {
+      master = master.substr(3);
+      lvl++;
+   }
+   
    var newname = itemname;
    var currpath = this.GetCurrentPath();
    
@@ -2105,27 +2125,34 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
       console.log("find master for path " + newname);
    }
    
-   // console.log("item = " + itemname + "  master = " + master);
+   // console.log("item = " + itemname + "  master = " + master + " lvl = " + lvl + " currpath = " + currpath);
 
-   while (newname) {
+   while (lvl>0) {
+      
       var separ = newname.lastIndexOf("/", newname.length - 2);
       
-      if (separ<=0) {
-         
-         if (currpath.length>0) {
-            // if itemname too short, try to apply global path 
+      if ((separ<0)  && (currpath.length>0)) {
+         // if itemname too short, try to apply global path
+         if ((currpath[currpath.length-1] != '/') && (newname[0] != '/'))
+            newname = currpath + "/" + newname;
+         else
             newname = currpath + newname;
-            currpath = "";
-            continue;
-         }
-         
-         alert("Name " + itemname + " is not long enough for master " + itemnode.getAttribute("dabc:master"));
+         currpath = "";
+         // console.log("newname = " + newname + " master = " + master); 
+         continue;
+      }
+
+      if ((newname.length == 0) || (newname == "/")) {
+         console.log("Cannot correctly found master for node " + itemname);
          return;
       }
-      newname = newname.substr(0, separ+1);
       
-      if (master.indexOf("../")<0) break;
-      master = master.substr(3);
+      if (separ<0)
+         newname = "";
+      else
+         newname = newname.substr(0, separ+1);
+      
+      lvl--;
    }
    
    return newname + master + "/";
