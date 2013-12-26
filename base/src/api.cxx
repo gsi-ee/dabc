@@ -99,7 +99,7 @@ dabc::Hierarchy dabc::GetNodeHierarchy(const std::string& nodeaddr)
       return res;
    }
 
-   dabc::Command cmd("GetGlobalNamesList");
+   dabc::CmdGetNamesList cmd;
    cmd.SetReceiver(fullname + dabc::Publisher::DfltName());
    cmd.SetTimeout(10);
 

@@ -225,6 +225,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
 
       std::string itemname = cmd.GetStr("subitem");
+      std::string binkind = cmd.GetStr("Kind");
 
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
@@ -252,8 +253,9 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
             mhash = pr->GetStreamerInfoHash();
          }
 #endif
-      } else
+      } else {
          buf = item()->bindata();
+      }
 
       if (buf.null()) {
          EOUT("No find binary data for item %s", itemname.c_str());

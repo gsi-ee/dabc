@@ -19,6 +19,21 @@
 #include "dabc/Url.h"
 #include "dabc/HierarchyStore.h"
 
+
+void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
+{
+   if (cmd.GetBool("asxml")) {
+      std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
+      cmd.SetStr("xml", str);
+   } else {
+      dabc::Buffer buf = res.SaveToBuffer(dabc::stream_NamesList);
+      cmd.SetRawData(buf);
+   }
+}
+
+
+// ==========================================================
+
 dabc::PublisherEntry::~PublisherEntry()
 {
    if (store!=0) {
@@ -581,8 +596,9 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       return cmd_true;
    } else
-   if (cmd.IsName("GetGlobalNamesList")) {
+   if (cmd.IsName(CmdGetNamesList::CmdName())) {
       std::string path = cmd.GetStr("path");
+
       dabc::Hierarchy h = GetWorkItem(path);
 
       // if item was not found directly, try to ask producer if it can be extended
@@ -592,13 +608,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          return cmd_postponed;
       }
 
-      if (cmd.GetBool("asxml")) {
-         std::string res = h.SaveToXml(xmlmask_TopDabc, path);
-         cmd.SetStr("xml",res);
-      } else {
-         Buffer buf = h.SaveToBuffer(dabc::stream_NamesList);
-         cmd.SetRawData(buf);
-      }
+      dabc::CmdGetNamesList::SetResNamesList(cmd, h);
+
       return cmd_true;
    } else
    if (cmd.IsName("CreateExeCmd")) {
@@ -677,7 +688,7 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
 {
    if (null()) return false;
 
-   dabc::Command cmd("GetGlobalNamesList");
+   CmdGetNamesList cmd;
    cmd.SetBool("asxml", true);
    cmd.SetStr("path", path);
 
@@ -745,7 +756,7 @@ dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std:
 }
 
 
-dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, uint64_t version, double tmout)
+dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout)
 {
    dabc::Buffer res;
 
@@ -753,7 +764,8 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, uint64_t
 
    CmdGetBinary cmd;
    cmd.SetStr("Item", fullname);
-   cmd.SetUInt("version", version);
+   cmd.SetStr("Kind", kind);
+   cmd.SetStr("Query", query);
    cmd.SetTimeout(tmout);
 
    if (Execute(cmd) == cmd_true)

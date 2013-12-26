@@ -35,11 +35,10 @@ class TClass;
 class TCollection;
 class TObject;
 class TDabcTimer;
+class TRootSniffer;
 
 namespace dabc_root {
 
-
-   class BinaryProducer;
 
    /** \brief %RootSniffer provides access to ROOT objects for DABC
     *
@@ -52,65 +51,6 @@ namespace dabc_root {
 
       protected:
 
-         enum {
-            mask_Scan        = 0x0001,  ///< normal scan of hierarchy
-            mask_Expand      = 0x0002,  ///< expand of specified item
-            mask_Search      = 0x0004,  ///< search for specified item
-            mask_Actions     = 0x0007,  ///< mask for actions, only actions copied to child rec
-            mask_ExtraFolder = 0x0080   ///< bit marks folder where all childs will be marked as expandable
-         };
-
-         struct ScanRec {
-            unsigned mask;
-            const char* searchpath;
-            dabc::Hierarchy top, sub, prnt;
-            int lvl;
-            std::string itemname, objname;
-            ScanRec* parent_rec;
-            TObject* res;
-
-            ScanRec() : mask(0), searchpath(0), top(), sub(),
-                        prnt(), lvl(0), itemname(), objname(),
-                        parent_rec(0), res(0) {}
-
-            bool MakeChild(ScanRec& super, const std::string& foldername = "");
-
-            bool TestObject(TObject* obj);
-
-            /** return true when fields could be set to the hierarchy item */
-            bool CanSetFields()
-              { return (mask & (mask_Scan | mask_Expand)) && !top.null(); }
-
-            /** Set item field only when creating is specified */
-            void SetField(const std::string& name, const std::string& value)
-              {  if (CanSetFields()) top.SetField(name, value); }
-
-            /** Mark item with ROOT class and correspondent streamer info */
-            void SetRootClass(TClass* cl);
-
-            bool HasField(const std::string& name) { return top.HasField(name); }
-
-            /** Returns true when extra entries like object member can be extracted */
-            bool CanExpandItem()
-            {
-               if (mask & mask_Expand) return true;
-
-               // when we search for object, but did not found item or item marked as expandable
-               if ((mask & mask_Search) && (objname.empty() || top.HasField(dabc::prop_more))) return true;
-
-               return top.HasField("#members");
-            }
-
-            /** Set result pointer and return true if result is found */
-            bool SetResult(TObject* obj);
-
-            /** Returns level till extra folder, marked as mask_ExtraFolder */
-            int ExtraFolderLevel();
-
-            /** Method indicates that scanning can be interrupted while result is set */
-            bool Done();
-         };
-
          bool fEnabled;
          bool fBatch;             ///< if true, batch mode will be activated
          bool fSyncTimer;         ///< is timer will run in synchronous mode (only within gSystem->ProcessEvents())
@@ -118,7 +58,7 @@ namespace dabc_root {
 
          std::string fPrefix;     ///< name prefix for hierarchy like ROOT or Go4
 
-         BinaryProducer*  fProducer;  ///< object which will convert ROOT objects into binary data
+         TRootSniffer* fNewSniffer;  ///< native sniffer, used to scan ROOT data
 
          ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context
 
@@ -134,38 +74,16 @@ namespace dabc_root {
 
          dabc::Thread_t fStartThrdId;   ///< remember thread id where sniffer was started, can be used to check how timer processing is working
 
-         static long int gExcludeProperty; ///< property mask, which will be excluded from browsing
-
          virtual void OnThreadAssigned();
 
          virtual void InitializeHierarchy() {}
 
          virtual double ProcessTimeout(double last_diff);
 
-         void ScanObjectMemebers(ScanRec& rec, TClass* cl, char* ptr, unsigned long int cloffset);
-
-         void ScanObject(ScanRec& rec, TObject* obj);
-
-         void ScanCollection(ScanRec& rec, TCollection* lst, const std::string& foldername = "", unsigned extra_mask = 0);
-
-         /* Method is used to scan ROOT objects.
-          * If path is empty, than hierarchy structure will be created.
-          * If path specified, object with provided path name will be searched */
-         virtual void ScanRoot(ScanRec& rec);
-
          /** Method scans normal objects, registered in ROOT and DABC */
-         void RescanHierarchy(dabc::Hierarchy& main);
-
-         /** Selectively expand selected objects */
-         void ExpandHierarchy(dabc::Hierarchy& main, const std::string& itemname);
-
-         /** Find object in hierarchy */
-         void* FindInHierarchy(dabc::Hierarchy& main, const std::string& itemname);
+         void RescanHierarchy(dabc::Hierarchy& main, const char* path = 0);
 
          virtual int ExecuteCommand(dabc::Command cmd);
-
-         static bool IsDrawableClass(TClass* cl);
-         static bool IsBrowsableClass(TClass* cl);
 
          void ProcessActionsInRootContext();
 
@@ -180,16 +98,10 @@ namespace dabc_root {
 
          bool IsEnabled() const { return fEnabled; }
 
+         TRootSniffer* GetSniffer() { return fNewSniffer; }
+
          /** Create TTimer object, which allows to perform action in ROOT context */
          void InstallSniffTimer();
-
-         /** Register object in objects hierarchy
-          * Should be called from main ROOT thread */
-         bool RegisterObject(const char* folder, TObject* obj);
-
-         /** Unregister object from objects hierarchy
-          * Should be called from main ROOT thread */
-         bool UnregisterObject(TObject* obj);
 
    };
 

@@ -41,6 +41,14 @@ namespace dabc {
       DABC_COMMAND(CmdGetBinary, "CmdGetBinary");
    };
 
+   /** Command to request names list */
+   class CmdGetNamesList : public Command {
+      DABC_COMMAND(CmdGetNamesList, "CmdGetNamesList");
+
+      static void SetResNamesList(dabc::Command& cmd, Hierarchy& res);
+   };
+
+
    class CmdSubscriber : public Command {
       DABC_COMMAND(CmdSubscriber, "CmdSubscriber");
 
@@ -205,7 +213,7 @@ namespace dabc {
 
       Hierarchy Get(const std::string& fullname, uint64_t version, unsigned hlimit, double tmout = 5.);
 
-      Buffer GetBinary(const std::string& fullname, uint64_t version, double tmout = 5.);
+      Buffer GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout = 5.);
 
       /** \brief Execute item is command, providing parameters in query */
       Command ExeCmd(const std::string& fullname, const std::string& query);

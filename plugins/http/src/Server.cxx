@@ -191,7 +191,7 @@ int http::Server::begin_request(struct mg_connection *conn)
       if (ProcessGetBin(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
    } else
-   if (filename == "image.png") {
+   if (filename == "get.png") {
       if (ProcessGetPng(conn, pathname, request_info->query_string)) return 1;
       iserror = true;
    } else
@@ -423,20 +423,7 @@ bool http::Server::ProcessGetBin(struct mg_connection* conn, const std::string& 
 {
    if (itemname.empty()) return false;
 
-   dabc::Url url(std::string("getbin?") + (query ? query : ""));
-
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-      return false;
-   }
-
-   uint64_t version(0);
-   if (url.HasOption("version")) {
-      int v = url.GetOptionInt("version", 0);
-      if (v>0) version = (unsigned) v;
-   }
-
-   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
+   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, "bin", query ? query : "");
 
    if (replybuf.null()) return false;
 
@@ -455,24 +442,11 @@ bool http::Server::ProcessGetPng(struct mg_connection* conn, const std::string& 
 {
    if (itemname.empty()) return false;
 
-   dabc::Url url(std::string("getbin?") + (query ? query : ""));
-
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query);
-      return false;
-   }
-
-   uint64_t version(0);
-   if (url.HasOption("version")) {
-      int v = url.GetOptionInt("version", 0);
-      if (v>0) version = (unsigned) v;
-   }
-
-   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, version);
+   dabc::Buffer replybuf = dabc::PublisherRef(GetPublisher()).GetBinary(itemname, "png", query ? query : "");
 
    if (replybuf.null()) return false;
 
-   unsigned image_size = replybuf.GetTotalSize() - sizeof(dabc::BinDataHeader);
+   unsigned image_size = replybuf.GetTotalSize();
 
    mg_printf(conn,
               "HTTP/1.1 200 OK\r\n"
@@ -480,7 +454,7 @@ bool http::Server::ProcessGetPng(struct mg_connection* conn, const std::string& 
               "Content-Length: %u\r\n"
               "Connection: keep-alive\r\n"
                "\r\n", image_size);
-   mg_write(conn, ((char*) replybuf.SegmentPtr()) + sizeof(dabc::BinDataHeader), (size_t) image_size);
+   mg_write(conn, replybuf.SegmentPtr(), (size_t) image_size);
 
    return true;
 }

@@ -5,6 +5,7 @@
 #include <string>
 
 #include "TObject.h"
+#include "TRootSniffer.h"
 
 #include "dabc/Command.h"
 #include "dabc/api.h"
@@ -156,8 +157,9 @@ bool DabcRoot::Register(const char* folder, TObject* obj)
 
    dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
    dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+   TRootSniffer* rsniff = sniff ? sniff->GetSniffer() : 0;
 
-   return sniff ? sniff->RegisterObject(folder, obj) : false;
+   return rsniff ? rsniff->RegisterObject(folder, obj) : false;
 }
 
 bool DabcRoot::Unregister(TObject* obj)
@@ -166,7 +168,8 @@ bool DabcRoot::Unregister(TObject* obj)
 
    dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
    dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+   TRootSniffer* rsniff = sniff ? sniff->GetSniffer() : 0;
 
-   return sniff ? sniff->UnregisterObject(obj) : false;
+   return rsniff ? rsniff->UnregisterObject(obj) : false;
 }
 
