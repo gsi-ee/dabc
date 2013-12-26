@@ -371,7 +371,7 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
 
    int isextra = rec.ExtraFolderLevel();
 
-   if ((isextra==1) || ( (isextra>1) && !IsDrawableClass(obj->IsA()))) {
+   if ((isextra==1) || ((isextra>1) && !IsDrawableClass(obj->IsA()))) {
      rec.SetField(dabc_prop_more, "true");
      rec.has_more = kTRUE;
    }
@@ -403,13 +403,14 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
    rec.SetResult(obj, obj->IsA(), rec.num_childs);
 }
 
-void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername)
+void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername, Bool_t extra)
 {
    if ((lst==0) || (lst->GetSize()==0)) return;
 
    TRootSnifferScanRec folderrec;
    if (foldername) {
       if (!folderrec.GoInside(rec, 0, foldername)) return;
+      if (extra) folderrec.mask = folderrec.mask | mask_ExtraFolder;
    }
 
    {
@@ -443,7 +444,6 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec& rec)
       if (chld.GoInside(rec, 0, "StreamerInfo"))
          chld.SetField(dabc_prop_kind, "ROOT.TList");
    }
-
 
    TFolder* topf = dynamic_cast<TFolder*> (gROOT->FindObject(TString::Format("//root/%s",fObjectsPath.Data())));
 

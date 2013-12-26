@@ -1828,11 +1828,13 @@ DABC.Manager.prototype.CanDisplay = function(xmlnode)
    if (!xmlnode) return false;
 
    var kind = xmlnode.getAttribute("dabc:kind");
+   var view = xmlnode.getAttribute("dabc:view");
    if (!kind) return false;
 
-   if (kind == "image.png") return true;
+   if (view == "png") return true;
    if (kind == "DABC.Command") return true;
    if (kind == "rate") return true;
+   if (kind == "log") return true;
    if (kind.indexOf("FESA.") == 0) return true;
    // if (kind.indexOf("ROOT.") == 0) return true;
    

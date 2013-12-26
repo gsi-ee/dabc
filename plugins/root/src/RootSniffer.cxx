@@ -111,11 +111,10 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    fCompression = Cfg("compress", cmd).AsInt(5);
    fPrefix = Cfg("prefix", cmd).AsStr("ROOT");
 
-   fNewSniffer = new TRootSniffer("DabcRoot","dabc");
-
-   fNewSniffer->SetCompression(fCompression);
-
    if (fBatch) gROOT->SetBatch(kTRUE);
+
+   fNewSniffer = new TRootSniffer("DabcRoot","dabc");
+   fNewSniffer->SetCompression(fCompression);
 }
 
 dabc_root::RootSniffer::~RootSniffer()
@@ -124,6 +123,13 @@ dabc_root::RootSniffer::~RootSniffer()
 
    if (fNewSniffer) { delete fNewSniffer; fNewSniffer = 0; }
 }
+
+void dabc_root::RootSniffer::SetObjectSniffer(TRootSniffer* sniff)
+{
+   if (fNewSniffer) delete fNewSniffer;
+   fNewSniffer = sniff;
+}
+
 
 void dabc_root::RootSniffer::OnThreadAssigned()
 {

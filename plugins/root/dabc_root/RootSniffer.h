@@ -89,6 +89,8 @@ namespace dabc_root {
 
          virtual int ProcessGetBinary(dabc::Command cmd);
 
+         void SetObjectSniffer(TRootSniffer* sniff);
+
       public:
          RootSniffer(const std::string& name, dabc::Command cmd = 0);
 
