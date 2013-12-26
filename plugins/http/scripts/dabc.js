@@ -641,7 +641,7 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
    
    var width = $(topid).width();
    
-   var url = this.itemname + "image.png";
+   var url = this.itemname + "get.png?w=400&h=300&opt=col";
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
    var entryInfo = 
       "<div id='"+this.frameid+ "'>" +
@@ -792,6 +792,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       // console.log(" Work with node " + node.nodeName);
       
       var kind = node.getAttribute("dabc:kind");
+      var view = node.getAttribute("dabc:view");
       
       // this name will be specified when item name can be used as XML node name
       var dabcitemname = node.getAttribute("dabc:itemname");
@@ -817,11 +818,10 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var can_expand = node.getAttribute("dabc:more") != null;
       
       if (kind) {
-         
+         if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
          if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
          if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
-         if (kind == "image.png") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
          if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
          if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
@@ -1850,11 +1850,12 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
    
    var kind = xmlnode.getAttribute("dabc:kind");
    var history = xmlnode.getAttribute("dabc:history");
+   var view = xmlnode.getAttribute("dabc:view");
    if (!kind) kind = "";
 
    var elem;
    
-   if (kind == "image.png") {
+   if (view == "png") {
       elem = new DABC.ImageDrawElement();
       elem.itemname = itemname;
       elem.CreateFrames(this.NextCell(), this.cnt++);

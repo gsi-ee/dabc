@@ -144,7 +144,7 @@ public:
 
    TObject* FindTObjectInHierarchy(const char* path);
 
-   void* FindInHierarchy(const char* path, TClass** cl=0, Int_t* chld = 0);
+   virtual void* FindInHierarchy(const char* path, TClass** cl=0, Int_t* chld = 0);
 
    Bool_t CanDrawItem(const char* path);
 
@@ -154,11 +154,11 @@ public:
 
    virtual TString GetStreamerInfoHash();
 
-   /** Method to produce binary data
-    * Allocated memory must be released by user with free(ptr) call */
-   Bool_t ProduceBinary(const char* path, void* &ptr, Long_t& length);
+   Bool_t ProduceBinary(const char* path, const char* options, void* &ptr, Long_t& length);
 
    Bool_t ProduceImage(Int_t kind, const char* path, const char* options, void* &ptr, Long_t& length);
+
+   Bool_t Produce(const char* kind, const char* path, const char* options, void* &ptr, Long_t& length);
 
    ClassDef(TRootSniffer,0) // Sniffer of ROOT objects
 };

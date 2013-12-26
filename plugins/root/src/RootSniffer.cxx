@@ -249,7 +249,7 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
          void* ptr(0);
          Long_t length(0);
 
-         if (!fNewSniffer->ProduceBinary(itemname.c_str(), ptr, length)) {
+         if (!fNewSniffer->ProduceBinary(itemname.c_str(), query.c_str(), ptr, length)) {
             EOUT("Binary producer fails for item %s", itemname.c_str());
             return dabc::cmd_false;
          }

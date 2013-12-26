@@ -623,7 +623,7 @@ void TRootSniffer::CreateMemFile()
    gFile = oldfile;
 }
 
-Bool_t TRootSniffer::ProduceBinary(const char* path, void* &ptr, Long_t& length)
+Bool_t TRootSniffer::ProduceBinary(const char* path, const char* options, void* &ptr, Long_t& length)
 {
    if ((path==0) || (*path==0)) return kFALSE;
 
@@ -894,6 +894,22 @@ Bool_t TRootSniffer::CreateBindData(TBufferFile* sbuf, void* &ptr, Long_t& lengt
 
    return kTRUE;
 }
+
+
+Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* options, void* &ptr, Long_t& length)
+{
+   if ((kind==0) || (*kind==0) || (strcmp(kind,"bin")==0))
+      return ProduceBinary(path, options, ptr, length);
+
+   if (strcmp(kind,"png")==0)
+      return ProduceImage(TImage::kPng, path, options, ptr, length);
+
+   if (strcmp(kind,"jpeg")==0)
+      return ProduceImage(TImage::kJpeg, path, options, ptr, length);
+
+   return kFALSE;
+}
+
 
 Bool_t TRootSniffer::RegisterObject(const char* subfolder, TObject* obj)
 {

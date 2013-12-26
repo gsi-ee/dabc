@@ -7,7 +7,10 @@ current functionality of the framework.
 2. Provide store class, which create Hierarchy for ROOT objects
 3. Use new sniffer for ROOT plugin
 4. Provide get.png request, which is implemented in TRootSniffer   
-
+5. In dabc.js handle new dabc:view attribute, which can define how to
+   display element by default.
+6. Eliminate old BinaryProducer for ROOT objects
+   
 
 13.12.2013
 1. Limit number of elements in browser, displayed by default. If user wants to browse

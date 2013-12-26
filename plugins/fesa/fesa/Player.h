@@ -25,6 +25,7 @@
 
 class rdaDeviceHandle;
 class rdaRDAService;
+class MySniffer;
 
 namespace fesa {
 
@@ -43,9 +44,8 @@ namespace fesa {
 
          unsigned fCounter;
 
-         dabc::Reference fProducer;   ///< binary producer for ROOT objects
-         void* fHist;                 ///< ROOT histogram
-         void* fCanvas;               ///< canvas for image generation
+         MySniffer*  fSniffer;      ///< binary producer for ROOT objects
+         void* fHist;               ///< ROOT histogram
          
          std::string fServerName;    ///< FESA server name
          std::string fDeviceName;    ///< FESA device name
