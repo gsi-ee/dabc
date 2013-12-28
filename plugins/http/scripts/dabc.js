@@ -783,8 +783,11 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    this.req.send(null);
 }
 
-DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl = 0, maxlvl = -1) 
+DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
 {
+   if (lvl == null) lvl = 0;
+   if (maxlvl == null) maxlvl = -1;
+   
    node = DABC.nextXmlNode(node);
 
    while (node) {
