@@ -10,18 +10,29 @@ FESADIR = .
 INCLUDES += $(FESADIR)
 endif
 
-# this is location of fesa 
+FESADIRI         = $(FESADIR)/fesa
+FESADIRS         = $(FESADIR)/src
+
+DABCFESA_LIBNAME  = $(LIB_PREFIX)DabcFesa
+DABCFESA_LIB      = $(TGTDLLPATH)/$(DABCFESA_LIBNAME).$(DllSuf)
+
+DABCFESA_H       = $(wildcard $(FESADIRI)/*.$(HedSuf))
+DABCFESA_S       = $(wildcard $(FESADIRS)/*.$(SrcSuf))
+DABCFESA_O       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCFESA_S))
+DABCFESA_D       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCFESA_S))
+
+
 FESA_DEFINITIONS = 
 FESA_INCLUDES = 
-FESA_LIBDEPS = 
 
 ifdef DABC_ISROOT
 FESA_DEFINITIONS += WITH_ROOT 
 FESA_INCLUDES += $(DABC_ROOTINCDIR)
 FESA_LIBS += -L$(TGTDLLPATH) -lDabcRoot 
-# FESA_LIBDEPS += $(TGTDLLPATH)/libDabcRoot.$(DllSuf)
+#$(DABCFESA_LIB): $(DABCROOT_LIB)
 endif
 
+# this is location of fesa 
 ifndef RDA_HOME
 RDA_HOME = /opt/fesa/fesa-3rdparty/1.0.0
 endif
@@ -41,19 +52,6 @@ FESA_STATIC += $(RDA_HOME)/lib/x86_64/libcmw-rda.a \
                $(RDA_HOME)/lib/x86_64/libiceutil.a
 endif
 
-FESADIRI         = $(FESADIR)/fesa
-FESADIRS         = $(FESADIR)/src
-
-DABCFESA_LIBNAME  = $(LIB_PREFIX)DabcFesa
-DABCFESA_LIB      = $(TGTDLLPATH)/$(DABCFESA_LIBNAME).$(DllSuf)
-
-FESA_H           = $(wildcard $(FESADIRI)/*.$(HedSuf))
-FESA_S           = $(wildcard $(FESADIRS)/*.$(SrcSuf))
-FESA_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(FESA_S))
-FESA_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(FESA_S))
-
-DABCFESA_O       = $(FESA_O)
-DABCFESA_D       = $(FESA_D)
 
 # used in the main Makefile
 
@@ -70,12 +68,12 @@ libs:: $(DABCFESA_LIB)
 
 #$(DABCFESA_LIB): LDFLAGS += -lrt
 
-$(DABCFESA_LIB):   $(DABCFESA_O)  $(FESA_LIBDEPS)
+$(DABCFESA_LIB):   $(DABCFESA_O) 
 	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) 
 
 ########### extra rules #############
-$(FESA_O) $(FESA_D) : DEFINITIONS += $(FESA_DEFINITIONS) 
-$(FESA_O) $(FESA_D) : INCLUDES += $(FESA_INCLUDES) $(FESADIR)
+$(DABCFESA_O) $(DABCFESA_D) : DEFINITIONS += $(FESA_DEFINITIONS) 
+$(DABCFESA_O) $(DABCFESA_D) : INCLUDES += $(FESA_INCLUDES) $(FESADIR)
 $(DABCFESA_LIB): LDFLAGS += $(FESA_LIBS)
 
 include $(DABCSYS)/config/Makefile.rules

@@ -20,7 +20,7 @@
 #include "dabc/logging.h"
 #include "dabc/Url.h"
 
-#include "dabc_root/RootSniffer.h"
+#include "dabc_root/Player.h"
 
 dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
 
@@ -30,8 +30,8 @@ void dabc_root::Factory::Initialize()
 
 dabc::Reference dabc_root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
 {
-   if (classname=="dabc_root::RootSniffer")
-      return new dabc_root::RootSniffer(objname, cmd);
+   if (classname=="dabc_root::Player")
+      return new dabc_root::Player(objname, cmd);
 
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }

@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef DABC_ROOT_RootSniffer
-#define DABC_ROOT_RootSniffer
+#ifndef DABC_ROOT_Player
+#define DABC_ROOT_Player
 
 #ifndef DABC_Worker
 #include "dabc/Worker.h"
@@ -28,23 +28,17 @@
 #include "dabc/CommandsQueue.h"
 #endif
 
-class TDirectory;
-class TBufferFile;
-class TMemFile;
-class TClass;
-class TCollection;
-class TObject;
 class TDabcTimer;
 class TRootSniffer;
 
 namespace dabc_root {
 
 
-   /** \brief %RootSniffer provides access to ROOT objects for DABC
+   /** \brief %Player provides access to ROOT objects for DABC
     *
     */
 
-   class RootSniffer : public dabc::Worker  {
+   class Player : public dabc::Worker  {
 
       friend class ::TDabcTimer;
 
@@ -92,11 +86,11 @@ namespace dabc_root {
          void SetObjectSniffer(TRootSniffer* sniff);
 
       public:
-         RootSniffer(const std::string& name, dabc::Command cmd = 0);
+         Player(const std::string& name, dabc::Command cmd = 0);
 
-         virtual ~RootSniffer();
+         virtual ~Player();
 
-         virtual const char* ClassName() const { return "RootSniffer"; }
+         virtual const char* ClassName() const { return "Player"; }
 
          bool IsEnabled() const { return fEnabled; }
 

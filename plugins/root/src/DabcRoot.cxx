@@ -11,7 +11,7 @@
 #include "dabc/api.h"
 #include "dabc/Manager.h"
 
-#include "dabc_root/RootSniffer.h"
+#include "dabc_root/Player.h"
 
 static std::string gDabcRootTopFolder = "ROOT";
 
@@ -34,13 +34,13 @@ bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 
    if (dabc::mgr.FindItem("/ROOT").null()) {
 
-      dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+      dabc::CmdCreateObject cmd2("dabc_root::Player","/ROOT");
       cmd2.SetBool("enabled", true);
       cmd2.SetBool("batch", false);
       cmd2.SetBool("synctimer", sync_timer);
       cmd2.SetStr("prefix", gDabcRootTopFolder);
 
-      dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
+      dabc_root::Player* sniff = new dabc_root::Player("/ROOT", cmd2);
       sniff->InstallSniffTimer();
       dabc::WorkerRef w2 = sniff;
       w2.MakeThreadForWorker("MainThread");
@@ -73,13 +73,13 @@ bool DabcRoot::StartDabcServer(int port, bool sync_timer, bool allow_slaves)
 
    if (dabc::mgr.FindItem("/ROOT").null()) {
 
-      dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+      dabc::CmdCreateObject cmd2("dabc_root::Player","/ROOT");
       cmd2.SetBool("enabled", true);
       cmd2.SetBool("batch", false);
       cmd2.SetBool("synctimer", sync_timer);
       cmd2.SetStr("prefix", "ROOT");
 
-      dabc_root::RootSniffer* sniff = new dabc_root::RootSniffer("/ROOT", cmd2);
+      dabc_root::Player* sniff = new dabc_root::Player("/ROOT", cmd2);
       sniff->InstallSniffTimer();
       dabc::WorkerRef w2 = sniff;
       w2.MakeThreadForWorker("MainThread");
@@ -107,7 +107,7 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 
    dabc::mgr.CreatePublisher();
 
-   dabc::CmdCreateObject cmd2("dabc_root::RootSniffer","/ROOT");
+   dabc::CmdCreateObject cmd2("dabc_root::Player","/ROOT");
    cmd2.SetBool("enabled", true);
    cmd2.SetBool("batch", false);
    cmd2.SetBool("synctimer", sync_timer);
@@ -117,7 +117,7 @@ bool DabcRoot::ConnectMaster(const char* master_url, bool sync_timer)
 
    dabc::WorkerRef w2 = cmd2.GetRef("Object");
 
-   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (w2());
+   dabc_root::Player* sniff = dynamic_cast<dabc_root::Player*> (w2());
    if (sniff) sniff->InstallSniffTimer();
 
    w2.MakeThreadForWorker("MainThread");
@@ -156,7 +156,7 @@ bool DabcRoot::Register(const char* folder, TObject* obj)
    if (dabc::mgr.null() || (obj==0)) return false;
 
    dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
-   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+   dabc_root::Player* sniff = dynamic_cast<dabc_root::Player*> (ref());
    TRootSniffer* rsniff = sniff ? sniff->GetSniffer() : 0;
 
    return rsniff ? rsniff->RegisterObject(folder, obj) : false;
@@ -167,7 +167,7 @@ bool DabcRoot::Unregister(TObject* obj)
    if (dabc::mgr.null() || (obj==0)) return false;
 
    dabc::WorkerRef ref = dabc::mgr.FindItem("/ROOT");
-   dabc_root::RootSniffer* sniff = dynamic_cast<dabc_root::RootSniffer*> (ref());
+   dabc_root::Player* sniff = dynamic_cast<dabc_root::Player*> (ref());
    TRootSniffer* rsniff = sniff ? sniff->GetSniffer() : 0;
 
    return rsniff ? rsniff->UnregisterObject(obj) : false;

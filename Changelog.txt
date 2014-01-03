@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+3.01.2014
+1. Rename dabc_root::RootSniffer into dabc_root::Player class, while
+   scanning (sniffing) of ROOT hierarchies now done in the TRootSniffer.
+
+
 26.12.2013
 1. Introduce TRootSniffer class, which can scan ROOT hierarchies 
 2. Provide store class, which create Hierarchy for ROOT objects
