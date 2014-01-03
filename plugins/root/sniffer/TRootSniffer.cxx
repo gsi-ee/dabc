@@ -33,10 +33,12 @@
 #include "TASImage.h"
 #endif
 
-#include <cstdlib>
+#include <stdlib.h>
 
 #pragma pack(push, 4)
 
+
+// binary header of data, delivered by the sniffer
 struct BinDataHeader {
    UInt_t typ;              ///< type of the binary header (1 for the moment)
    UInt_t version;          ///< version of data in binary data
@@ -56,6 +58,7 @@ struct BinDataHeader {
    bool is_zipped() const
      { return (zipped>0) && (payload>0); }
 
+   /** \bried returns pointer on raw data (just after header) */
    void* rawdata() const { return (char*) this + sizeof(BinDataHeader); }
 };
 
@@ -75,20 +78,62 @@ Long_t gExcludeProperty = G__BIT_ISSTATIC | G__BIT_ISENUM | G__BIT_ISUNION;
 
 // ============================================================================
 
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// TRootSnifferScanRec                                                  //
+//                                                                      //
+// Structure used to scan hierarchies of ROOT objects                   //
+// Represents single level of hierarchy                                 //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
+
+TRootSnifferScanRec::TRootSnifferScanRec() :
+   parent(0),
+   mask(0),
+   searchpath(0),
+   lvl(0),
+   fItemsNames(),
+   store(0),
+   has_more(kFALSE),
+   started_node(),
+   num_fields(0),
+   num_childs(0)
+{
+   // constructor
+
+   fItemsNames.SetOwner(kTRUE);
+}
+
+TRootSnifferScanRec::~TRootSnifferScanRec()
+{
+   // destructor
+
+   CloseNode();
+}
+
 void TRootSnifferScanRec::SetField(const char* name, const char* value)
 {
+   // record field for current element
+
    if (CanSetFields()) store->SetField(lvl, name, value, num_fields);
    num_fields++;
 }
 
 void TRootSnifferScanRec::BeforeNextChild()
 {
-  if (CanSetFields()) store->BeforeNextChild(lvl, num_childs, num_fields);
-  num_childs++;
+   // indicates that new child for current element will be started
+
+   if (CanSetFields()) store->BeforeNextChild(lvl, num_childs, num_fields);
+   num_childs++;
 }
 
 void TRootSnifferScanRec::MakeItemName(const char* objname, TString& _itemname)
 {
+   // constructs item name from object name
+   // if special symbols like '/', '#', ':', '&', '?" are used in object name
+   // they will be replaced with '_'.
+   // To avoid item name duplication, additional id number can be appended
+
    std::string nnn = objname;
 
    size_t pos = nnn.find_last_of("/");
@@ -112,6 +157,12 @@ void TRootSnifferScanRec::MakeItemName(const char* objname, TString& _itemname)
 
 void TRootSnifferScanRec::CreateNode(const char* _node_name, const char* _obj_name)
 {
+   // creates new node with specified name
+   // if special symbols like "[]&<>" are used, node name
+   // will be replaced by default name like "extra_item_N" and
+   // original node name will be recorded as "dabc:itemname" field
+   // Optionally, object name can be recorded as "dabc:realname" field
+
    if (!CanSetFields()) return;
 
    started_node = _node_name;
@@ -136,14 +187,20 @@ void TRootSnifferScanRec::CreateNode(const char* _node_name, const char* _obj_na
 
 void TRootSnifferScanRec::CloseNode()
 {
+   // close started node
+
    if (store && !started_node.IsNull()) {
-      store->CloseNode(lvl, started_node.Data(), num_childs>0);
+      store->CloseNode(lvl, started_node.Data(), num_childs);
       started_node = "";
    }
 }
 
 void TRootSnifferScanRec::SetRootClass(TClass* cl)
 {
+   // set root class name as node kind
+   // in addition, path to master item (streamer info) specified
+   // Such master item required to correctly unstream data on JavaScript
+
    if ((cl==0) || !CanSetFields())  return;
 
    SetField(dabc_prop_kind, TString::Format("ROOT.%s", cl->GetName()));
@@ -160,17 +217,22 @@ void TRootSnifferScanRec::SetRootClass(TClass* cl)
 
 Bool_t TRootSnifferScanRec::Done()
 {
+   // returns true if scanning is done
+   // Can happen when searched element is found
+
    if (store==0) return kFALSE;
 
-   if ((mask & mask_Search) && store->res) return kTRUE;
+   if ((mask & mask_Search) && store->GetResPtr()) return kTRUE;
 
-   if ((mask & mask_CheckChld) && store->res && (store->res_chld>=0)) return kTRUE;
+   if ((mask & mask_CheckChld) && store->GetResPtr() && (store->GetResNumChilds()>=0)) return kTRUE;
 
    return kFALSE;
 }
 
 Bool_t TRootSnifferScanRec::SetResult(void* obj, TClass* cl, Int_t chlds)
 {
+   // set results of scanning
+
    if (Done()) return kTRUE;
 
    // only when doing search, result will be propagated
@@ -183,15 +245,15 @@ Bool_t TRootSnifferScanRec::SetResult(void* obj, TClass* cl, Int_t chlds)
 
    if (store==0) return kFALSE;
 
-   store->res = obj;
-   store->rescl = cl;
-   store->res_chld = chlds;
+   store->SetResult(obj, cl, chlds);
 
    return Done();
 }
 
 Int_t TRootSnifferScanRec::Depth() const
 {
+   // returns current depth of scanned hierarchy
+
    Int_t cnt = 0;
    const TRootSnifferScanRec* rec = this;
    while (rec->parent) {
@@ -204,6 +266,11 @@ Int_t TRootSnifferScanRec::Depth() const
 
 Int_t TRootSnifferScanRec::ExtraFolderLevel()
 {
+   // return level depth till folder, marked with extra flag
+   // Objects in such folder can be 'expanded' -
+   // one can get access to all class members
+   // If no extra folder found, -1 is returned
+
    TRootSnifferScanRec* rec = this;
    Int_t cnt = 0;
    while (rec) {
@@ -217,6 +284,8 @@ Int_t TRootSnifferScanRec::ExtraFolderLevel()
 
 Bool_t TRootSnifferScanRec::CanExpandItem()
 {
+   // returns true if current item can be expanded - means one could explore objects members
+
    if (mask & (mask_Expand | mask_Search | mask_CheckChld)) return kTRUE;
 
    if (!has_more) return kFALSE;
@@ -230,6 +299,10 @@ Bool_t TRootSnifferScanRec::CanExpandItem()
 
 Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec& super, TObject* obj, const char* obj_name)
 {
+   // method verifies if new level of hierarchy should be started with provided object
+   // If necessary, all necessary nodes and fields will be created
+   // Used when different collection kinds should be scanned
+
    if (super.Done()) return kFALSE;
 
    if ((obj!=0) && (obj_name==0)) obj_name = obj->GetName();
@@ -277,6 +350,17 @@ Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec& super, TObject* obj, c
 
 // ====================================================================
 
+//////////////////////////////////////////////////////////////////////////
+//                                                                      //
+// TRootSniffer                                                         //
+//                                                                      //
+// Sniffer of ROOT objects, data provider for THttpServer               //
+// Provides methods to scan different structures like folders,          //
+// directories, files, trees, collections                               //
+// Can locate objects (or its data member) per name                     //
+// Can be extended to application-specific classes                      //
+//                                                                      //
+//////////////////////////////////////////////////////////////////////////
 
 TRootSniffer::TRootSniffer(const char* name, const char* objpath) :
    TNamed(name, "sniffer of root objects"),
@@ -285,15 +369,22 @@ TRootSniffer::TRootSniffer(const char* name, const char* objpath) :
    fSinfoSize(0),
    fCompression(5)
 {
+   // constructor
 }
 
 TRootSniffer::~TRootSniffer()
 {
+   // destructor
+
    if (fMemFile) { delete fMemFile; fMemFile = 0; }
 }
 
 void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char* ptr, unsigned long int cloffset)
 {
+   // scan object data members
+
+   // some members like enum or static members will be excluded
+
    if ((cl==0) || (ptr==0) || rec.Done()) return;
 
    //DOUT0("SCAN CLASS %s mask %u", cl->GetName(), rec.mask);
@@ -359,6 +450,10 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
 
 void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
 {
+   // scan object content
+   // if object is known collection class (like TFolder),
+   // collection content will be scanned as well
+
    if (obj==0) return;
 
    //if (rec.mask & mask_Expand)
@@ -405,6 +500,8 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
 
 void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername, Bool_t extra)
 {
+   // scan collection content
+
    if ((lst==0) || (lst->GetSize()==0)) return;
 
    TRootSnifferScanRec folderrec;
@@ -437,6 +534,12 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, co
 
 void TRootSniffer::ScanRoot(TRootSnifferScanRec& rec)
 {
+   // scan complete ROOT objects hierarchy
+   // For the moment it includes objects in gROOT directory and lise of canvases and files
+   // Also all registered objects are included.
+   // One could reimplement this method to provide alternative
+   // scan methods or to extend some collection kinds
+
    rec.SetField(dabc_prop_kind, "ROOT.Session");
 
    {
@@ -458,6 +561,8 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec& rec)
 
 Bool_t TRootSniffer::IsDrawableClass(TClass* cl)
 {
+   // return true if object can be drawn
+
    if (cl==0) return kFALSE;
    if (cl->InheritsFrom(TH1::Class())) return kTRUE;
    if (cl->InheritsFrom(TGraph::Class())) return kTRUE;
@@ -469,6 +574,8 @@ Bool_t TRootSniffer::IsDrawableClass(TClass* cl)
 
 Bool_t TRootSniffer::IsBrowsableClass(TClass* cl)
 {
+   // return true if object can be browsed?
+
    if (cl==0) return kFALSE;
 
    if (cl->InheritsFrom(TTree::Class())) return kTRUE;
@@ -481,6 +588,8 @@ Bool_t TRootSniffer::IsBrowsableClass(TClass* cl)
 
 void TRootSniffer::ScanHierarchy(const char* path, TRootSnifferStore* store)
 {
+   // scan ROOT hierarchy with provided store object
+
    TRootSnifferScanRec rec;
    rec.searchpath = path;
    if (rec.searchpath) {
@@ -502,6 +611,8 @@ void TRootSniffer::ScanHierarchy(const char* path, TRootSnifferStore* store)
 
 void TRootSniffer::ScanXml(const char* path, TString& xml)
 {
+   // scan ROOT hierarchy and produce xml description of it
+
    TRootSnifferStoreXml store(xml);
 
    ScanHierarchy(path, &store);
@@ -509,6 +620,8 @@ void TRootSniffer::ScanXml(const char* path, TString& xml)
 
 void TRootSniffer::ScanJson(const char* path, TString& json)
 {
+   // scan ROOT hierarchy and produce JSON description of it
+
    TRootSnifferStoreJson store(json);
 
    ScanHierarchy(path, &store);
@@ -517,6 +630,10 @@ void TRootSniffer::ScanJson(const char* path, TString& json)
 
 void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, Int_t* chld)
 {
+   // search element with specified path
+   // returns pointer on element
+   // optionally one could obtain element class and number of childs
+
    TRootSnifferStore store;
 
    TRootSnifferScanRec rec;
@@ -527,13 +644,15 @@ void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, Int_t* chld)
 
    ScanRoot(rec);
 
-   if (cl) *cl = store.rescl;
-   if (chld) *chld = store.res_chld;
-   return store.res;
+   if (cl) *cl = store.GetResClass();
+   if (chld) *chld = store.GetResNumChilds();
+   return store.GetResPtr();
 }
 
 TObject* TRootSniffer::FindTObjectInHierarchy(const char* path)
 {
+   // search element in hierarchy, derived from TObject
+
    TClass* cl(0);
 
    TObject* obj = (TObject*) FindInHierarchy(path, &cl);
@@ -544,6 +663,9 @@ TObject* TRootSniffer::FindTObjectInHierarchy(const char* path)
 
 TString TRootSniffer::GetObjectHash(TObject* obj)
 {
+   // provide hash value for object (implemented only for TH1)
+   // Used for fast detection if object changed or not
+
    if ((obj!=0) && (obj->InheritsFrom(TH1::Class())))
       return TString::Format("%g", ((TH1*)obj)->GetEntries());
 
@@ -552,6 +674,9 @@ TString TRootSniffer::GetObjectHash(TObject* obj)
 
 TString TRootSniffer::GetStreamerInfoHash()
 {
+   // returns hash value for streamer infos
+   // at the moment - just number of items in streamer infos list.
+
    return TString::Format("%d", fSinfoSize);
 }
 
@@ -577,9 +702,11 @@ Bool_t TRootSniffer::CanExploreItem(const char* path)
 }
 
 
-
 void TRootSniffer::CreateMemFile()
 {
+   // creates TMemFile instance, which used for objects streaming
+   // One could not use TBuffer directly, while one also require streamer infos list
+
    if (fMemFile!=0) return;
 
    TDirectory* olddir = gDirectory; gDirectory = 0;
@@ -623,17 +750,23 @@ void TRootSniffer::CreateMemFile()
    gFile = oldfile;
 }
 
-Bool_t TRootSniffer::ProduceBinary(const char* path, const char* options, void* &ptr, Long_t& length)
+Bool_t TRootSniffer::ProduceBinary(const char* path, const char*, void* &ptr, Long_t& length)
 {
+   // produce binary data for specified item
+   // It is 20 bytes for header plus compressed content of TBuffer
+
    if ((path==0) || (*path==0)) return kFALSE;
 
    if (*path=='/') path++;
 
    TBufferFile* sbuf = 0;
 
-   // Info("ProduceBinary","Request %s", path);
+//   Info("ProduceBinary","Request %s", path);
 
-   if (strcmp(path,"StreamerInfo")==0) {
+   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
+
+   if (istreamerinfo) {
+
       CreateMemFile();
 
       TDirectory* olddir = gDirectory; gDirectory = 0;
@@ -707,7 +840,7 @@ Bool_t TRootSniffer::ProduceBinary(const char* path, const char* options, void* 
 
    BinDataHeader* hdr = (BinDataHeader*) ptr;
 
-   if (strcmp(path,"StreamerInfo")==0) {
+   if (istreamerinfo) {
       hdr->version = fSinfoSize;
       hdr->master_version = 0;
    } else {
@@ -717,6 +850,79 @@ Bool_t TRootSniffer::ProduceBinary(const char* path, const char* options, void* 
 
    return kTRUE;
 }
+
+Bool_t TRootSniffer::CreateBindData(TBufferFile* sbuf, void* &ptr, Long_t& length)
+{
+   // create binary data from TBufferFile
+   // If compression enabled, data also will be zipped
+
+   if (sbuf==0) return kFALSE;
+
+   bool with_zip = fCompression > 0;
+
+   const Int_t kMAXBUF = 0xffffff;
+   Int_t noutot = 0;
+   Int_t fObjlen = sbuf->Length();
+   Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
+   Int_t buflen = TMath::Max(512,fObjlen + 9*nbuffers + 28);
+   if (buflen<fObjlen) buflen = fObjlen;
+
+   ptr = malloc(sizeof(BinDataHeader)+buflen);
+
+   if (ptr == 0) {
+      Error("CreateBinData", "Cannot create buffer of size %u", (unsigned) (sizeof(BinDataHeader)+buflen));
+      delete sbuf;
+      return kFALSE;
+   }
+
+   BinDataHeader* hdr = (BinDataHeader*) ptr;
+   hdr->reset();
+
+   char* fBuffer = ((char*) ptr) + sizeof(BinDataHeader);
+
+   if (with_zip) {
+      Int_t cxAlgorithm = 0;
+
+      char *objbuf = sbuf->Buffer();
+      char *bufcur = fBuffer; // start writing from beginning
+
+      Int_t nzip   = 0;
+      Int_t bufmax = 0;
+      Int_t nout = 0;
+
+      for (Int_t i = 0; i < nbuffers; ++i) {
+         if (i == nbuffers - 1) bufmax = fObjlen - nzip;
+         else               bufmax = kMAXBUF;
+         R__zipMultipleAlgorithm(fCompression, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
+         if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
+            Error("CreateBindData", "Fail to zip buffer");
+            noutot = 0;
+            with_zip = false;
+            break;
+         }
+         bufcur += nout;
+         noutot += nout;
+         objbuf += kMAXBUF;
+         nzip   += kMAXBUF;
+      }
+   }
+
+   if (with_zip) {
+      hdr->zipped = (UInt_t) fObjlen;
+      hdr->payload = (UInt_t) noutot;
+   } else {
+      memcpy(fBuffer, sbuf->Buffer(), fObjlen);
+      hdr->zipped = 0;
+      hdr->payload = (UInt_t) fObjlen;
+   }
+
+   length = sizeof(BinDataHeader) + hdr->payload;
+
+   delete sbuf;
+
+   return kTRUE;
+}
+
 
 Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* options, void* &ptr, Long_t& length)
 {
@@ -826,78 +1032,15 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
    return ptr!=0;
 }
 
-Bool_t TRootSniffer::CreateBindData(TBufferFile* sbuf, void* &ptr, Long_t& length)
-{
-   if (sbuf==0) return kFALSE;
-
-   bool with_zip = fCompression > 0;
-
-   const Int_t kMAXBUF = 0xffffff;
-   Int_t noutot = 0;
-   Int_t fObjlen = sbuf->Length();
-   Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
-   Int_t buflen = TMath::Max(512,fObjlen + 9*nbuffers + 28);
-   if (buflen<fObjlen) buflen = fObjlen;
-
-   ptr = malloc(sizeof(BinDataHeader)+buflen);
-
-   if (ptr == 0) {
-      Error("CreateBinData", "Cannot create buffer of size %u", (unsigned) (sizeof(BinDataHeader)+buflen));
-      delete sbuf;
-      return kFALSE;
-   }
-
-   BinDataHeader* hdr = (BinDataHeader*) ptr;
-   hdr->reset();
-
-   char* fBuffer = ((char*) ptr) + sizeof(BinDataHeader);
-
-   if (with_zip) {
-      Int_t cxAlgorithm = 0;
-
-      char *objbuf = sbuf->Buffer();
-      char *bufcur = fBuffer; // start writing from beginning
-
-      Int_t nzip   = 0;
-      Int_t bufmax = 0;
-      Int_t nout = 0;
-
-      for (Int_t i = 0; i < nbuffers; ++i) {
-         if (i == nbuffers - 1) bufmax = fObjlen - nzip;
-         else               bufmax = kMAXBUF;
-         R__zipMultipleAlgorithm(fCompression, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
-         if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
-            Error("CreateBindData", "Fail to zip buffer");
-            noutot = 0;
-            with_zip = false;
-            break;
-         }
-         bufcur += nout;
-         noutot += nout;
-         objbuf += kMAXBUF;
-         nzip   += kMAXBUF;
-      }
-   }
-
-   if (with_zip) {
-      hdr->zipped = (UInt_t) fObjlen;
-      hdr->payload = (UInt_t) noutot;
-   } else {
-      memcpy(fBuffer, sbuf->Buffer(), fObjlen);
-      hdr->zipped = 0;
-      hdr->payload = (UInt_t) fObjlen;
-   }
-
-   length = sizeof(BinDataHeader) + hdr->payload;
-
-   delete sbuf;
-
-   return kTRUE;
-}
-
-
 Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* options, void* &ptr, Long_t& length)
 {
+   // method to produce different kind of binary data
+   // Supported kinds (case sensitive):
+   //   "bin"  - binary data
+   //   "png"  - png image
+   //   "jpeg" - jpeg image
+   //   "gif"  - gif image
+
    if ((kind==0) || (*kind==0) || (strcmp(kind,"bin")==0))
       return ProduceBinary(path, options, ptr, length);
 
@@ -907,12 +1050,33 @@ Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* opt
    if (strcmp(kind,"jpeg")==0)
       return ProduceImage(TImage::kJpeg, path, options, ptr, length);
 
+   if (strcmp(kind,"gif")==0)
+      return ProduceImage(TImage::kGif, path, options, ptr, length);
+
    return kFALSE;
 }
 
 
 Bool_t TRootSniffer::RegisterObject(const char* subfolder, TObject* obj)
 {
+   // register object in subfolder structure
+   // subfolder paramerer can have many levels like:
+   //
+   // TRootSniffer* sniff = new TRootSniffer("sniff");
+   // sniff->RegisterObject("/my/sub/subfolder", h1);
+   //
+   // Such objects can be later found in "Objects" folder of sniffer like
+   //
+   // h1 = sniff->FindTObjectInHierarchy("/Objects/my/sub/subfolder/h1");
+   //
+   // Objects, registered in "extra" sub-folder, can be explored.
+   // Typically one used "extra" sub-folder to register event structures to
+   // be able expand it later in web-browser:
+   //
+   // TEvent* ev = new TEvent;
+   // sniff->RegisterObject("extra", ev);
+
+
    if (obj==0) return kFALSE;
 
    TFolder* topf = gROOT->GetRootFolder();
@@ -965,6 +1129,9 @@ Bool_t TRootSniffer::RegisterObject(const char* subfolder, TObject* obj)
 
 Bool_t TRootSniffer::UnregisterObject(TObject* obj)
 {
+   // unregister (remove) object from folders structures
+   // folder itself will remain even when it will be empty
+
    if (obj==0) return kTRUE;
 
    TFolder* topf = gROOT->GetRootFolder();

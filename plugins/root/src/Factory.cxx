@@ -14,39 +14,39 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 
-#include "dabc_root/Factory.h"
+#include "root/Factory.h"
 
 #include "dabc/string.h"
 #include "dabc/logging.h"
 #include "dabc/Url.h"
 
-#include "dabc_root/Player.h"
+#include "root/Player.h"
 
-dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
+dabc::FactoryPlugin root_factory(new root::Factory("root"));
 
-void dabc_root::Factory::Initialize()
+void root::Factory::Initialize()
 {
 }
 
-dabc::Reference dabc_root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
 {
-   if (classname=="dabc_root::Player")
-      return new dabc_root::Player(objname, cmd);
+   if (classname=="root::Player")
+      return new root::Player(objname, cmd);
 
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }
 
 
-dabc::DataInput* dabc_root::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* root::Factory::CreateDataInput(const std::string& typ)
 {
    return 0;
 }
 
 
-dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* root::Factory::CreateDataOutput(const std::string& typ)
 {
 
-   DOUT3("dabc_root::Factory::CreateDataOutput typ:%s", typ);
+   DOUT3("root::Factory::CreateDataOutput typ:%s", typ);
 
    dabc::Url url(typ);
 

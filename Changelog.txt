@@ -5,6 +5,9 @@ current functionality of the framework.
 3.01.2014
 1. Rename dabc_root::RootSniffer into dabc_root::Player class, while
    scanning (sniffing) of ROOT hierarchies now done in the TRootSniffer.
+2. Rename dabc_root namespace into root, use appropriate file names   
+3. Update TRootSniffer, add THttpServer and THttpEngine classes,
+   which will be used for ROOT plugin. 
 
 
 26.12.2013

@@ -13,44 +13,56 @@
 #endif
 
 class TRootSnifferStore : public TObject {
+protected:
+   void* fResPtr;         //! pointer on found item
+   TClass* fResClass;     //! class of found item
+   Int_t fResNumChilds;   //! count of found childs, -1 by default
 public:
-   void* res;             //! pointer on found item
-   TClass* rescl;         //! class of found item
-   Int_t res_chld;        //! count of found childs, -1 by default
-
-   TRootSnifferStore() : TObject(), res(0), rescl(0), res_chld(-1)  {}
-   virtual ~TRootSnifferStore() {}
+   TRootSnifferStore();
+   virtual ~TRootSnifferStore();
 
    virtual void CreateNode(Int_t, const char*) {}
    virtual void SetField(Int_t, const char*, const char*, Int_t) {}
    virtual void BeforeNextChild(Int_t, Int_t, Int_t) {}
-   virtual void CloseNode(Int_t, const char*, Bool_t) {}
+   virtual void CloseNode(Int_t, const char*, Int_t) {}
 
-   ClassDef(TRootSnifferStore, 0)
+   void SetResult(void* _res, TClass* _rescl, Int_t _res_chld);
+
+   void* GetResPtr() const { return fResPtr; }
+   TClass* GetResClass() const { return fResClass; }
+   Int_t GetResNumChilds() const { return fResNumChilds; }
+
+   ClassDef(TRootSnifferStore, 0) // structure for results store of objects sniffer
 };
 
-class TRootSnifferStoreXml : public TRootSnifferStore {
-public:
-   TString* buf;
+// ========================================================================
 
+class TRootSnifferStoreXml : public TRootSnifferStore {
+protected:
+   TString* buf;           //! output buffer
+
+public:
    TRootSnifferStoreXml(TString& _buf) :
       TRootSnifferStore(),
       buf(&_buf) {}
+
    virtual ~TRootSnifferStoreXml() {}
 
    virtual void CreateNode(Int_t lvl, const char* nodename);
    virtual void SetField(Int_t lvl, const char* field, const char* value, Int_t);
    virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t);
-   virtual void CloseNode(Int_t lvl, const char* nodename, Bool_t hadchilds);
+   virtual void CloseNode(Int_t lvl, const char* nodename, Int_t numchilds);
 
-   ClassDef(TRootSnifferStoreXml, 0)
+   ClassDef(TRootSnifferStoreXml, 0) // xml results store of objects sniffer
 };
+
+// ========================================================================
 
 
 class TRootSnifferStoreJson : public TRootSnifferStore {
+protected:
+   TString* buf;     //! output buffer
 public:
-   TString* buf;
-
    TRootSnifferStoreJson(TString& _buf) :
       TRootSnifferStore(),
       buf(&_buf) {}
@@ -59,9 +71,9 @@ public:
    virtual void CreateNode(Int_t lvl, const char* nodename);
    virtual void SetField(Int_t lvl, const char* field, const char* value, Int_t);
    virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t nfld);
-   virtual void CloseNode(Int_t lvl, const char* nodename, Bool_t hadchilds);
+   virtual void CloseNode(Int_t lvl, const char* nodename, Int_t numchilds);
 
-   ClassDef(TRootSnifferStoreJson, 0)
+   ClassDef(TRootSnifferStoreJson, 0) // json results store of objects sniffer
 };
 
 #endif

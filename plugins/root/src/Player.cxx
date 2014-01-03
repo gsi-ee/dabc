@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dabc_root/Player.h"
+#include "root/Player.h"
 
 #include "TImage.h"
 #include "TROOT.h"
@@ -31,7 +31,7 @@
 class TDabcTimer : public TTimer {
    public:
 
-      dabc_root::Player* fSniffer;
+      root::Player* fSniffer;
 
       TDabcTimer(Long_t milliSec, Bool_t mode) : TTimer(milliSec, mode), fSniffer(0) {}
 
@@ -39,7 +39,7 @@ class TDabcTimer : public TTimer {
          if (fSniffer) fSniffer->fTimer = 0;
       }
 
-      void SetSniffer(dabc_root::Player* sniff) { fSniffer = sniff; }
+      void SetSniffer(root::Player* sniff) { fSniffer = sniff; }
 
       virtual void Timeout() {
          if (fSniffer) fSniffer->ProcessActionsInRootContext();
@@ -77,7 +77,8 @@ public:
    virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t nfld)
    {
    }
-   virtual void CloseNode(Int_t lvl, const char* nodename, Bool_t hadchilds)
+
+   virtual void CloseNode(Int_t lvl, const char* nodename, Int_t numchilds)
    {
       curr = curr.GetParentRef();
       //DOUT0("Close node %s", nodename ? nodename : "---");
@@ -89,7 +90,7 @@ public:
 
 // ==============================================================================
 
-dabc_root::Player::Player(const std::string& name, dabc::Command cmd) :
+root::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fBatch(true),
@@ -117,21 +118,21 @@ dabc_root::Player::Player(const std::string& name, dabc::Command cmd) :
    fNewSniffer->SetCompression(fCompression);
 }
 
-dabc_root::Player::~Player()
+root::Player::~Player()
 {
    if (fTimer) fTimer->fSniffer = 0;
 
    if (fNewSniffer) { delete fNewSniffer; fNewSniffer = 0; }
 }
 
-void dabc_root::Player::SetObjectSniffer(TRootSniffer* sniff)
+void root::Player::SetObjectSniffer(TRootSniffer* sniff)
 {
    if (fNewSniffer) delete fNewSniffer;
    fNewSniffer = sniff;
 }
 
 
-void dabc_root::Player::OnThreadAssigned()
+void root::Player::OnThreadAssigned()
 {
    if (!IsEnabled()) {
       EOUT("sniffer was not enabled - why it is started??");
@@ -150,7 +151,7 @@ void dabc_root::Player::OnThreadAssigned()
    // if timer not installed, emulate activity in ROOT by regular timeouts
 }
 
-double dabc_root::Player::ProcessTimeout(double last_diff)
+double root::Player::ProcessTimeout(double last_diff)
 {
    // this is just historical code, normally ROOT hierarchy will be scanned per ROOT timer
 
@@ -170,7 +171,7 @@ double dabc_root::Player::ProcessTimeout(double last_diff)
 }
 
 
-int dabc_root::Player::ExecuteCommand(dabc::Command cmd)
+int root::Player::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetBinary::CmdName()) ||
        cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
@@ -183,7 +184,7 @@ int dabc_root::Player::ExecuteCommand(dabc::Command cmd)
 }
 
 
-void dabc_root::Player::RescanHierarchy(dabc::Hierarchy& main, const char* path)
+void root::Player::RescanHierarchy(dabc::Hierarchy& main, const char* path)
 {
    main.Release();
 
@@ -192,7 +193,7 @@ void dabc_root::Player::RescanHierarchy(dabc::Hierarchy& main, const char* path)
    fNewSniffer->ScanHierarchy(path, &store);
 }
 
-void dabc_root::Player::InstallSniffTimer()
+void root::Player::InstallSniffTimer()
 {
    if (fTimer==0) {
       fTimer = new TDabcTimer(100, fSyncTimer);
@@ -203,7 +204,7 @@ void dabc_root::Player::InstallSniffTimer()
    }
 }
 
-int dabc_root::Player::ProcessGetBinary(dabc::Command cmd)
+int root::Player::ProcessGetBinary(dabc::Command cmd)
 {
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
@@ -283,7 +284,7 @@ int dabc_root::Player::ProcessGetBinary(dabc::Command cmd)
 }
 
 
-void dabc_root::Player::ProcessActionsInRootContext()
+void root::Player::ProcessActionsInRootContext()
 {
    // DOUT0("ROOOOOOOT sniffer ProcessActionsInRootContext %p %s active %s", this, ClassName(), DBOOL(fWorkerActive));
 

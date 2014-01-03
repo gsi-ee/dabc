@@ -30,34 +30,19 @@ class TRootSnifferScanRec {
 public:
 
    TRootSnifferScanRec* parent; //! pointer on parent record
-   UInt_t mask;            //! defines operation kind
-   const char* searchpath; //! current path searched
-   Int_t lvl;              //! current level of hierarchy
-   TList fItemsNames;     //! list of created items names, need to avoid duplication
+   UInt_t mask;                 //! defines operation kind
+   const char* searchpath;      //! current path searched
+   Int_t lvl;                   //! current level of hierarchy
+   TList fItemsNames;           //! list of created items names, need to avoid duplication
 
    TRootSnifferStore* store;  //! object to store results
-   Bool_t has_more;       //! indicates that potentially there are more items can be found
-   TString started_node;  //! name of node stared
-   Int_t num_fields;      //! number of childs
-   Int_t num_childs;      //! number of childs
+   Bool_t has_more;           //! indicates that potentially there are more items can be found
+   TString started_node;      //! name of node stared
+   Int_t num_fields;          //! number of fields
+   Int_t num_childs;          //! number of childs
 
-
-   TRootSnifferScanRec() :
-      parent(0),
-      mask(0),
-      searchpath(0),
-      lvl(0),
-      fItemsNames(),
-      store(0),
-      has_more(kFALSE),
-      started_node(),
-      num_fields(0),
-      num_childs(0)
-   {
-      fItemsNames.SetOwner(kTRUE);
-   }
-
-   virtual ~TRootSnifferScanRec() { CloseNode(); }
+   TRootSnifferScanRec();
+   virtual ~TRootSnifferScanRec();
 
    void CloseNode();
 
@@ -94,7 +79,7 @@ public:
 
    Bool_t GoInside(TRootSnifferScanRec& super, TObject* obj, const char* obj_name = 0);
 
-   ClassDef(TRootSnifferScanRec,0) // Scan record for objects
+   ClassDef(TRootSnifferScanRec,0) // Scan record for objects sniffer
 };
 
 
