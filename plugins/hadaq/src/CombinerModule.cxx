@@ -708,7 +708,7 @@ bool hadaq::CombinerModule::BuildEvent()
          fTotalTagErrors++;
 
       // here event id, always from "cts master channel" 0
-      unsigned currentid = fCfg[0].fTrigType | (3 << 12); // DAQVERSION=3 for dabc
+      unsigned currentid = fCfg[0].fTrigType | (2 << 12); // DAQVERSION=2 for dabc
       fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
 
