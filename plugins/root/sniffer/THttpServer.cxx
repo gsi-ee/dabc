@@ -10,6 +10,8 @@
 #include "TTimer.h"
 #include "TSystem.h"
 #include "TImage.h"
+#include "TROOT.h"
+#include "TClass.h"
 
 #include <string>
 #include <cstdlib>
@@ -183,29 +185,37 @@ Bool_t THttpServer::CreateEngine(const char* engine)
    // At the moment two engine kinds are supported:
    //  mongoose (default) and fastcgi
    // Examples:
-   //   "mongoose:8090" or ":8090" - creates mongoose web server with http port 8090
+   //   "mongoose:8090" or "http:8090" or ":8090" - creates mongoose web server with http port 8090
    //   "fastcgi:9000" - creates fastcgi server with port 9000
+   //   "dabc:1237"   - create DABC server with port 1237
 
    if (engine==0) return kFALSE;
 
-   THttpEngine* eng = 0;
+   const char* arg = strchr(engine,':');
+   if (arg==0) return kFALSE;
 
-   //if (*engine == ':') eng = new TMongoose(this, engine); else
-   //if (strncmp(engine,"mongoose:", 9)==0) eng = new TMongoose(this, engine+8); else
-   //if (strncmp(engine,"fastcgi:", 8)==0) eng = new TFastCgi(this, engine+7);
+   TString clname;
+   if (arg!=engine) clname.Append(engine, arg-engine);
 
-   if (eng==0) return kFALSE;
+   if ((clname.Length()==0) || (clname == "http") || (clname=="mongoose")) clname = "TMongoose"; else
+   if (clname == "fastcgi") clname = "TFastCgi"; else
+   if (clname == "dabc") clname = "TDabcEngine";
 
+   // ensure that required engine class exists before we try to create it
+   TClass* engine_class = gROOT->LoadClass(clname.Data());
+   if (engine_class == 0) return kFALSE;
 
-   if (!eng->IsReady()) {
-      delete eng;
-      return kFALSE;
-   }
+   THttpEngine* eng = (THttpEngine*) engine_class->New();
+   if (eng == 0) return kFALSE;
+
+   eng->SetServer(this);
+
+   if (!eng->Create(arg+1)) { delete eng; return kFALSE; }
 
    fEngines.Add(eng);
+
    return kTRUE;
 }
-
 
 void THttpServer::SetTimer(Long_t milliSec, Bool_t mode)
 {
@@ -316,7 +326,7 @@ void THttpServer::ProcessRequests()
       }
       fMutex.UnLock();
 
-      if (arg==0) return;
+      if (arg==0) break;
 
       ProcessRequest(arg);
 

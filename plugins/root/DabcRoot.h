@@ -16,6 +16,12 @@
 
 class TObject;
 
+/** Interface to DABC framework.
+ *  Kept for compatibility.
+ *  It is recommended to use THttpServer class, which provides the same
+ *  functionality via TDabcEngine.
+ */
+
 class DabcRoot {
 
    public:

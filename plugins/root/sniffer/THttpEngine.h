@@ -16,7 +16,9 @@ protected:
 
    THttpServer* fServer;    //! object server
 
-   THttpEngine(const char* name, const char* title, THttpServer* serv);
+   THttpEngine(const char* name, const char* title);
+
+   void SetServer(THttpServer* serv) { fServer = serv; }
 
    /** Method regularly called in main ROOT context */
    virtual void Process() {}
@@ -24,8 +26,8 @@ protected:
 public:
    virtual ~THttpEngine();
 
-   /** Indicates that engine is ready to process data. If not, instance will be deleted */
-   virtual Bool_t IsReady() { return kFALSE; }
+   /** Method to create all components of engine. Called once from by the server */
+   virtual Bool_t Create(const char* arg) { return kFALSE; }
 
    THttpServer* GetServer() const { return fServer; }
 

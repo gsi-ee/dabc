@@ -20,7 +20,9 @@ DABCROOT_LINKDEF  = $(DABCROOTDIR)/LinkDef.h
 DABCROOT_LIBNAME  = $(LIB_PREFIX)DabcRoot
 DABCROOT_LIB      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).$(DllSuf)
 DABCROOT_MAP      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).rootmap
-DABCROOT_DICTINCL = $(DABCROOTDIR)/DabcRoot.h
+DABCROOT_DICTINCL = $(DABCROOTDIR)/DabcRoot.h \
+                    $(DABCROOTDIRI)/TDabcEngine.h
+
 
 ## must be similar for every module
 

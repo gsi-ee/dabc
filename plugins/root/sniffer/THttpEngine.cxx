@@ -12,9 +12,9 @@
 //////////////////////////////////////////////////////////////////////////
 
 
-THttpEngine::THttpEngine(const char* name, const char* title, THttpServer* serv) :
+THttpEngine::THttpEngine(const char* name, const char* title) :
    TNamed(name, title),
-   fServer(serv)
+   fServer(0)
 {
    // normal constructor
 }

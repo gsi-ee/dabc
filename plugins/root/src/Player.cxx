@@ -16,9 +16,6 @@
 #include "root/Player.h"
 
 #include "TImage.h"
-#include "TROOT.h"
-#include "TTimer.h"
-#include "TClass.h"
 
 #include "dabc/Url.h"
 #include "dabc/Iterator.h"
@@ -26,26 +23,6 @@
 
 #include "TRootSniffer.h"
 #include "TRootSnifferStore.h"
-
-
-class TDabcTimer : public TTimer {
-   public:
-
-      root::Player* fSniffer;
-
-      TDabcTimer(Long_t milliSec, Bool_t mode) : TTimer(milliSec, mode), fSniffer(0) {}
-
-      virtual ~TDabcTimer() {
-         if (fSniffer) fSniffer->fTimer = 0;
-      }
-
-      void SetSniffer(root::Player* sniff) { fSniffer = sniff; }
-
-      virtual void Timeout() {
-         if (fSniffer) fSniffer->ProcessActionsInRootContext();
-      }
-
-};
 
 class TRootSnifferStoreDabc : public TRootSnifferStore {
 public:
@@ -86,49 +63,23 @@ public:
 };
 
 
-
-
 // ==============================================================================
 
 root::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
-   fBatch(true),
-   fSyncTimer(true),
-   fCompression(5),
-   fNewSniffer(0),
-   fTimer(0),
    fRoot(),
    fHierarchy(),
    fRootCmds(dabc::CommandsQueue::kindPostponed),
-   fLastUpdate(),
-   fStartThrdId(0)
+   fLastUpdate()
 {
    fEnabled = Cfg("enabled", cmd).AsBool(false);
    if (!fEnabled) return;
-
-   fBatch = Cfg("batch", cmd).AsBool(true);
-   fSyncTimer = Cfg("synctimer", cmd).AsBool(true);
-   fCompression = Cfg("compress", cmd).AsInt(5);
    fPrefix = Cfg("prefix", cmd).AsStr("ROOT");
-
-   if (fBatch) gROOT->SetBatch(kTRUE);
-
-   fNewSniffer = new TRootSniffer("DabcRoot","dabc");
-   fNewSniffer->SetCompression(fCompression);
 }
 
 root::Player::~Player()
 {
-   if (fTimer) fTimer->fSniffer = 0;
-
-   if (fNewSniffer) { delete fNewSniffer; fNewSniffer = 0; }
-}
-
-void root::Player::SetObjectSniffer(TRootSniffer* sniff)
-{
-   if (fNewSniffer) delete fNewSniffer;
-   fNewSniffer = sniff;
 }
 
 
@@ -144,8 +95,6 @@ void root::Player::OnThreadAssigned()
    // fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
    InitializeHierarchy();
 
-   if (fTimer==0) ActivateTimeout(0);
-
    Publish(fHierarchy, fPrefix);
 
    // if timer not installed, emulate activity in ROOT by regular timeouts
@@ -153,20 +102,6 @@ void root::Player::OnThreadAssigned()
 
 double root::Player::ProcessTimeout(double last_diff)
 {
-   // this is just historical code, normally ROOT hierarchy will be scanned per ROOT timer
-
-   dabc::Hierarchy h;
-
-   RescanHierarchy(h);
-
-   DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
-
-   dabc::LockGuard lock(fHierarchy.GetHMutex());
-
-   fHierarchy.Update(h);
-
-   //h.Destroy();
-
    return 10.;
 }
 
@@ -184,27 +119,17 @@ int root::Player::ExecuteCommand(dabc::Command cmd)
 }
 
 
-void root::Player::RescanHierarchy(dabc::Hierarchy& main, const char* path)
+void root::Player::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path)
 {
    main.Release();
 
    TRootSnifferStoreDabc store(main);
 
-   fNewSniffer->ScanHierarchy(path, &store);
+   sniff->ScanHierarchy(path, &store);
 }
 
-void root::Player::InstallSniffTimer()
-{
-   if (fTimer==0) {
-      fTimer = new TDabcTimer(100, fSyncTimer);
-      fTimer->SetSniffer(this);
-      fTimer->TurnOn();
 
-      fStartThrdId = dabc::PosixThread::Self();
-   }
-}
-
-int root::Player::ProcessGetBinary(dabc::Command cmd)
+int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 {
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
@@ -219,7 +144,7 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
       void* ptr(0);
       Long_t length(0);
 
-      if (!fNewSniffer->ProduceImage(TImage::kPng, itemname.c_str(), query.c_str(), ptr, length)) {
+      if (!sniff->ProduceImage(TImage::kPng, itemname.c_str(), query.c_str(), ptr, length)) {
          EOUT("Image producer fails for item %s", itemname.c_str());
          return dabc::cmd_false;
       }
@@ -231,7 +156,7 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
       bool binchanged = true;
 
       if (itemname!="StreamerInfo") {
-         TObject* obj = fNewSniffer->FindTObjectInHierarchy(itemname.c_str());
+         TObject* obj = sniff->FindTObjectInHierarchy(itemname.c_str());
 
          if (obj==0) {
             EOUT("Object for item %s not found", itemname.c_str());
@@ -240,7 +165,7 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
 
          DOUT2("OBJECT FOUND %s %p", itemname.c_str(), obj);
 
-         objhash = fNewSniffer->GetObjectHash(obj);
+         objhash = sniff->GetObjectHash(obj);
 
          uint64_t version = 0;
          dabc::Url url(std::string("getbin?") + query);
@@ -256,7 +181,7 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
          void* ptr(0);
          Long_t length(0);
 
-         if (!fNewSniffer->ProduceBinary(itemname.c_str(), query.c_str(), ptr, length)) {
+         if (!sniff->ProduceBinary(itemname.c_str(), query.c_str(), ptr, length)) {
             EOUT("Binary producer fails for item %s", itemname.c_str());
             return dabc::cmd_false;
          }
@@ -268,7 +193,7 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
          hdr->reset();
       }
 
-      TString mhash = fNewSniffer->GetStreamerInfoHash();
+      TString mhash = sniff->GetStreamerInfoHash();
 
       {
          dabc::LockGuard lock(fHierarchy.GetHMutex());
@@ -284,17 +209,13 @@ int root::Player::ProcessGetBinary(dabc::Command cmd)
 }
 
 
-void root::Player::ProcessActionsInRootContext()
+void root::Player::ProcessActionsInRootContext(TRootSniffer* sniff)
 {
    // DOUT0("ROOOOOOOT sniffer ProcessActionsInRootContext %p %s active %s", this, ClassName(), DBOOL(fWorkerActive));
 
-   if ((fStartThrdId!=0) && ( fStartThrdId != dabc::PosixThread::Self())) {
-      EOUT("Called from other thread as when timer was started");
-   }
-
    if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
       DOUT3("Update ROOT structures");
-      RescanHierarchy(fRoot);
+      RescanHierarchy(sniff, fRoot);
       fLastUpdate.GetNow();
 
       // we lock mutex only at the moment when synchronize hierarchy with main
@@ -312,7 +233,7 @@ void root::Player::ProcessActionsInRootContext()
    while (doagain) {
 
       if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
-         cmd.Reply(ProcessGetBinary(cmd));
+         cmd.Reply(ProcessGetBinary(sniff, cmd));
       } else
       if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
          std::string item = cmd.GetStr("subitem");
@@ -323,7 +244,7 @@ void root::Player::ProcessActionsInRootContext()
 
          if (item.empty()) {
             if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
-               RescanHierarchy(fRoot);
+               RescanHierarchy(sniff, fRoot);
                fLastUpdate.GetNow();
                dabc::LockGuard lock(fHierarchy.GetHMutex());
                fHierarchy.Update(fRoot);
@@ -331,7 +252,7 @@ void root::Player::ProcessActionsInRootContext()
 
             res = fRoot;
          } else {
-            RescanHierarchy(res, item.c_str());
+            RescanHierarchy(sniff, res, item.c_str());
          }
 
          if (res.null()) cmd.ReplyFalse();

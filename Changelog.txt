@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+9.01.2014
+1. Implement TDabcEngine class, which provides access to THttpServer
+   from DABC framework.
+2. Old DabcRoot:: static methods left for compatibility, it is
+   recommended to use TDabcEngine and THttpServer.
+
+
 3.01.2014
 1. Rename dabc_root::RootSniffer into dabc_root::Player class, while
    scanning (sniffing) of ROOT hierarchies now done in the TRootSniffer.

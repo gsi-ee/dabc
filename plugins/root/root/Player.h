@@ -28,7 +28,6 @@
 #include "dabc/CommandsQueue.h"
 #endif
 
-class TDabcTimer;
 class TRootSniffer;
 
 namespace root {
@@ -38,23 +37,17 @@ namespace root {
     *
     */
 
+   class PlayerRef;
+
    class Player : public dabc::Worker  {
 
-      friend class ::TDabcTimer;
-
+      friend class PlayerRef;
 
       protected:
 
          bool fEnabled;
-         bool fBatch;             ///< if true, batch mode will be activated
-         bool fSyncTimer;         ///< is timer will run in synchronous mode (only within gSystem->ProcessEvents())
-         int  fCompression;       ///< compression level, default 5
 
          std::string fPrefix;     ///< name prefix for hierarchy like ROOT or Go4
-
-         TRootSniffer* fNewSniffer;  ///< native sniffer, used to scan ROOT data
-
-         ::TDabcTimer*  fTimer;  ///< timer used to perform actions in ROOT context
 
          /** \brief Last hierarchy, build in ROOT main thread */
          dabc::Hierarchy fRoot;
@@ -66,8 +59,6 @@ namespace root {
 
          dabc::TimeStamp fLastUpdate;
 
-         dabc::Thread_t fStartThrdId;   ///< remember thread id where sniffer was started, can be used to check how timer processing is working
-
          virtual void OnThreadAssigned();
 
          virtual void InitializeHierarchy() {}
@@ -75,15 +66,13 @@ namespace root {
          virtual double ProcessTimeout(double last_diff);
 
          /** Method scans normal objects, registered in ROOT and DABC */
-         void RescanHierarchy(dabc::Hierarchy& main, const char* path = 0);
+         void RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path = 0);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         void ProcessActionsInRootContext();
+         void ProcessActionsInRootContext(TRootSniffer* sniff);
 
-         virtual int ProcessGetBinary(dabc::Command cmd);
-
-         void SetObjectSniffer(TRootSniffer* sniff);
+         virtual int ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd);
 
       public:
          Player(const std::string& name, dabc::Command cmd = 0);
@@ -93,11 +82,15 @@ namespace root {
          virtual const char* ClassName() const { return "Player"; }
 
          bool IsEnabled() const { return fEnabled; }
+   };
 
-         TRootSniffer* GetSniffer() { return fNewSniffer; }
+   class PlayerRef : public dabc::WorkerRef  {
+      DABC_REFERENCE(PlayerRef, dabc::WorkerRef, Player);
 
-         /** Create TTimer object, which allows to perform action in ROOT context */
-         void InstallSniffTimer();
+      void ProcessActionsInRootContext(TRootSniffer* sniff)
+      {
+         if (GetObject()) GetObject()->ProcessActionsInRootContext(sniff);
+      }
 
    };
 

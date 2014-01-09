@@ -135,6 +135,8 @@ public:
 
    Bool_t CreateEngine(const char* engine);
 
+   TRootSniffer* GetSniffer() const { return fSniffer; }
+
    void SetTimer(Long_t milliSec = 100, Bool_t mode = kTRUE);
 
    /** Check if file is requested, thread safe */
