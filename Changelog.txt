@@ -7,6 +7,8 @@ current functionality of the framework.
    from DABC framework.
 2. Old DabcRoot:: static methods left for compatibility, it is
    recommended to use TDabcEngine and THttpServer.
+3. Add all classes from future libRHTTP.so library, 
+   if such library detected in ROOT installation - use it.
 
 
 3.01.2014

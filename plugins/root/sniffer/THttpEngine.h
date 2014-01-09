@@ -27,7 +27,7 @@ public:
    virtual ~THttpEngine();
 
    /** Method to create all components of engine. Called once from by the server */
-   virtual Bool_t Create(const char* arg) { return kFALSE; }
+   virtual Bool_t Create(const char*) { return kFALSE; }
 
    THttpServer* GetServer() const { return fServer; }
 

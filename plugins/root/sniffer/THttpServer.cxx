@@ -144,9 +144,19 @@ THttpServer::THttpServer(const char* engine) :
    fMainThrdId = TThread::SelfId();
 
    const char* rootsys = gSystem->Getenv("ROOTSYS");
-   fRootSys = (rootsys!=0) ? rootsys : ".";
+   if (rootsys!=0) fRootSys = rootsys;
 
-   fHttpSys = TString::Format("%s/net/http", fRootSys.Data());
+#ifdef COMPILED_WITH_DABC
+
+   const char* dabcsys = gSystem->Getenv("DABCSYS");
+   if (dabcsys!=0) fHttpSys = TString::Format("%s/plugins/http", dabcsys);
+
+#else
+   if (fRootSys.Length()>0)
+      fHttpSys = TString::Format("%s/net/http", fRootSys.Data());
+#endif
+
+   if (fHttpSys.IsNull()) fHttpSys = ".";
 
    const char* jsrootiosys = gSystem->Getenv("JSROOTIOSYS");
    if (jsrootiosys!=0)

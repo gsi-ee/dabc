@@ -9,8 +9,6 @@ else
 DABCROOTDIR = .
 endif
 
-DABCROOT_USE_OWN_SNIFFER = true
-
 DABCROOTDIRI      = $(DABCROOTDIR)/root
 DABCROOTDIRS      = $(DABCROOTDIR)/src
 DABCROOTDIRSNIFF  = $(DABCROOTDIR)/sniffer
@@ -20,9 +18,12 @@ DABCROOT_LINKDEF  = $(DABCROOTDIR)/LinkDef.h
 DABCROOT_LIBNAME  = $(LIB_PREFIX)DabcRoot
 DABCROOT_LIB      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).$(DllSuf)
 DABCROOT_MAP      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).rootmap
+
 DABCROOT_DICTINCL = $(DABCROOTDIR)/DabcRoot.h \
                     $(DABCROOTDIRI)/TDabcEngine.h
-
+                    
+DABCROOT_LIBDEP   = $(TGTDLLPATH)/libDabcHttp.$(DllSuf) \
+                    $(TGTDLLPATH)/libDabcBase.$(DllSuf)
 
 ## must be similar for every module
 
@@ -36,6 +37,15 @@ DABCROOT_DH        = $(DABCROOT_DICT).$(HedSuf)
 DABCROOT_DS        = $(DABCROOT_DICT).$(SrcSuf)
 DABCROOT_DO        = $(DABCROOT_DICT).$(ObjSuf) 
 DABCROOT_DD        = $(DABCROOT_DICT).$(DepSuf)
+
+# used in the main Makefile
+
+ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
+ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_DICTINCL)) 
+ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) 
+
+
+ifeq ($(DABC_ROOT_RHHTP), false)
 
 DABCROOT_SNIFF_H  = $(wildcard $(DABCROOTDIRSNIFF)/*.$(HedSuf))
 DABCROOT_SNIFF_S  = $(wildcard $(DABCROOTDIRSNIFF)/*.$(SrcSuf))
@@ -51,18 +61,54 @@ DABCROOT_SNIFF_DO   = $(DABCROOT_SNIFF_DICT).$(ObjSuf)
 DABCROOT_SNIFF_DD   = $(DABCROOT_SNIFF_DICT).$(DepSuf)
 
 
-# used in the main Makefile
-
-ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
-ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_DICTINCL)) 
-ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) 
-
-ifdef DABCROOT_USE_OWN_SNIFFER
 ALLHDRS            += $(patsubst $(DABCROOTDIRSNIFF)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_SNIFF_H)) 
 DABCROOT_D         += $(DABCROOT_SNIFF_D) 
 DABCROOT_O         += $(DABCROOT_SNIFF_O) 
 DABCROOT_DO        += $(DABCROOT_SNIFF_DO) 
 DABCROOT_DD        += $(DABCROOT_SNIFF_DD) 
+
+ifneq ($(wildcard /usr/include/fastcgi/fcgiapp.h),)
+HTTPINCDIR += /usr/include/fastcgi
+HTTPLIBEXTRA += -lfcgi
+else
+ifneq ($(wildcard /usr/include/fcgiapp.h),)
+HTTPLIBEXTRA += -lfcgi
+else
+HTTPDEFEXTRA += HTTP_WITHOUT_FASTCGI
+endif
+endif
+
+ifeq ($(DABC_ROOT_ASIMAGE),true)
+DABCROOT_LIBDEP += $(DABC_ROOTLIBDIR)/libASImage.$(DllSuf)
+else
+HTTPDEFEXTRA += HTTP_WITHOUT_ASIMAGE
+endif
+
+HTTPDEFEXTRA += COMPILED_WITH_DABC
+
+HTTPINCDIR += $(DABCROOTDIR)/../http/mongoose
+
+DABCROOT_LIBDEP += $(DABC_ROOTLIBDIR)/libThread.$(DllSuf) \
+                   $(DABC_ROOTLIBDIR)/libTree.$(DllSuf) \
+                   $(DABC_ROOTLIBDIR)/libHist.$(DllSuf) \
+                   $(DABC_ROOTLIBDIR)/libGpad.$(DllSuf) \
+                   $(DABC_ROOTLIBDIR)/libGraf.$(DllSuf) \
+                   $(DABC_ROOTLIBDIR)/libRIO.$(DllSuf)
+
+$(DABCROOT_SNIFF_DS): INCLUDES += $(DABCROOTDIRI)
+
+$(DABCROOT_SNIFF_O) $(DABCROOT_SNIFF_D) $(DABCROOT_SNIFF_DO) $(DABCROOT_SNIFF_DD): INCLUDES += $(HTTPINCDIR) 
+
+$(DABCROOT_SNIFF_O) $(DABCROOT_SNIFF_DO): DEFINITIONS += $(HTTPDEFEXTRA) 
+
+else
+
+# when using ROOT libRHTTP 
+
+DABCROOT_LIBDEP += $(DABC_ROOTLIBDIR)/libRHTTP.$(DllSuf)
+
+HTTPLIBEXTRA += -lRHTTP
+
 endif
 
 libs:: $(DABCROOT_LIB) $(DABCROOT_MAP)
@@ -77,7 +123,7 @@ $(DABCINCPATH)/%.h: $(DABCROOTDIRSNIFF)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS)
+$(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS) $(HTTPLIBEXTRA)
 
 $(DABCROOT_LIB): $(DABCROOT_O) $(DABCROOT_DO)
 	$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O) $(DABCROOT_DO)" $(TGTDLLPATH)
@@ -89,9 +135,9 @@ $(DABCROOT_SNIFF_DS): $(DABCROOT_SNIFF_H) $(DABCROOT_SNIFF_LINKDEF)
 	$(ROOTCINTDABC) $(DABCROOT_SNIFF_H) $(DABCROOT_SNIFF_LINKDEF)
 
 $(DABCROOT_MAP) : $(DABCROOT_LIB) $(DABCROOT_LINKDEF) $(DABCROOT_SNIFF_LINKDEF) 
-	@$(DABC_ROOTBIN)rlibmap -r $(DABCROOT_MAP) -l $(DABCROOT_LIB) -d $(TGTDLLPATH)/libDabcHttp.$(DllSuf) $(TGTDLLPATH)/libDabcBase.$(DllSuf) -c $(DABCROOT_LINKDEF)
-ifdef DABCROOT_USE_OWN_SNIFFER
-	@$(DABC_ROOTBIN)rlibmap -r $(DABCROOT_MAP).sniff -l $(DABCROOT_LIB) -d $(TGTDLLPATH)/libDabcHttp.$(DllSuf) $(TGTDLLPATH)/libDabcBase.$(DllSuf) -c $(DABCROOT_SNIFF_LINKDEF)
+	@$(DABC_ROOTBIN)rlibmap -r $(DABCROOT_MAP) -l $(DABCROOT_LIB) -d $(DABCROOT_LIBDEP) -c $(DABCROOT_LINKDEF)
+ifeq ($(DABC_ROOT_RHHTP), false)
+	@$(DABC_ROOTBIN)rlibmap -r $(DABCROOT_MAP).sniff -l $(DABCROOT_LIB) -d $(DABCROOT_LIBDEP) -c $(DABCROOT_SNIFF_LINKDEF)
 	@cat $(DABCROOT_MAP).sniff >> $(DABCROOT_MAP)
 	@rm -f $(DABCROOT_MAP).sniff
 endif
@@ -102,8 +148,7 @@ $(DABCROOT_O) $(DABCROOT_D): INCLUDES += $(DABC_ROOTINCDIR) $(DABCROOTDIR)
 
 $(DABCROOT_DO) $(DABCROOT_DD): INCLUDES += $(DABC_ROOTINCDIR) $(DABCROOTDIR) .
 
-$(DABCROOT_DS) $(DABCROOT_SNIFF_DS): INCLUDES += $(DABCROOTDIRI)
-
+$(DABCROOT_DS): INCLUDES += $(DABCROOTDIRI)
 
 endif
 
