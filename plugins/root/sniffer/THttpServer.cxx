@@ -167,7 +167,7 @@ THttpServer::THttpServer(const char* engine) :
    fDefaultPage = fHttpSys + "/files/main.htm";
    fDrawPage = fHttpSys + "/files/single.htm";
 
-   fSniffer = new TRootSniffer("sniff");
+   SetSniffer(new TRootSniffer("sniff"));
 
    // start timer
    SetTimer(100, kTRUE);
@@ -182,11 +182,17 @@ THttpServer::~THttpServer()
 
    fEngines.Delete();
 
-   if (fSniffer) delete fSniffer;
-   fSniffer = 0;
+   SetSniffer(0);
 
    SetTimer(0);
 }
+
+void THttpServer::SetSniffer(TRootSniffer* sniff)
+{
+   if (fSniffer) delete fSniffer;
+   fSniffer = sniff;
+}
+
 
 
 Bool_t THttpServer::CreateEngine(const char* engine)

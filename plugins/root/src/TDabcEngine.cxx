@@ -78,6 +78,8 @@ Bool_t TDabcEngine::Create(const char* args)
       return kFALSE;
    }
 
+   bool isslave = url.GetProtocol() == "dabc";
+
    std::string topfolder = url.GetOptionStr("top", "ROOT");
 
    if (dabc::mgr.null()) {
@@ -87,11 +89,21 @@ Bool_t TDabcEngine::Create(const char* args)
    }
 
    if (dabc::mgr.FindItem("/ROOT").null()) {
-      dabc::CmdCreateObject cmd2("root::Player","/ROOT");
-      cmd2.SetBool("enabled", true);
-      cmd2.SetStr("prefix", topfolder);
 
-      dabc::WorkerRef player = new root::Player("/ROOT", cmd2);
+      std::string player_class = url.GetOptionStr("player", "root::Player");
+
+      dabc::CmdCreateObject cmd2(player_class,"/ROOT");
+      cmd2.SetBool("enabled", true);
+      if (isslave)
+         cmd2.SetStr("prefix", topfolder + "/" + dabc::mgr.GetLocalId());
+      else
+         cmd2.SetStr("prefix", topfolder);
+
+      if (!dabc::mgr.Execute(cmd2)) return kFALSE;
+      dabc::WorkerRef player = cmd2.GetRef("Object");
+
+      if (player.null()) return kFALSE;
+
       player.MakeThreadForWorker("MainThread");
       DOUT1("Create root player %p thrdname %s", player(), player.thread().GetName());
    }
@@ -111,7 +123,7 @@ Bool_t TDabcEngine::Create(const char* args)
    }
 
    // connect to master
-   if (url.GetProtocol() == "dabc") {
+   if (isslave) {
 
       std::string master_url = url.GetHostNameWithPort();
 

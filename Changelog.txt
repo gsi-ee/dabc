@@ -9,6 +9,8 @@ current functionality of the framework.
    recommended to use TDabcEngine and THttpServer.
 3. Add all classes from future libRHTTP.so library, 
    if such library detected in ROOT installation - use it.
+4. In go4 use THttpServer and TDabcEngine classes. In future 
+   one could use plain ROOT http server without DABC. 
 
 
 3.01.2014
