@@ -376,6 +376,9 @@ Additionally, all subEvtIds may have the MSB set. This indicates a sub event of 
          uint32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
          void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
+         /* for trb3: each subevent contains trigger type in decoding word*/
+         uint8_t GetTrigTypeTrb3 () const {return (GetDecoding() & 0xF0) >> 4; }
+
          void Init(uint32_t trigger = 0)
          {
             SetTrigNr(trigger);

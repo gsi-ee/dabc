@@ -434,13 +434,24 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
 
       fCfg[ninp].fSubId = fInp[ninp].subevnt()->GetId() & 0x7fffffffUL ;
 
-      /* evaluate trigger type as in production eventbuilders here:*/
-      unsigned wordNr=2;
-      uint32_t bitmask=0xf000000;
-      uint32_t bitshift = 24;
-      // above from args.c defaults
-      uint32_t val = fInp[ninp].subevnt()->Data(wordNr-1);
-      fCfg[ninp].fTrigType = (val & bitmask) >> bitshift;
+      /* Evaluate trigger type:*/
+      /* NEW for trb3: trigger type is part of decoding word*/
+      uint32_t val = fInp[ninp].subevnt()->GetTrigTypeTrb3();
+      if (val) {
+         fCfg[ninp].fTrigType = val;
+         //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
+      } else {
+         /* evaluate trigger type as in HADESproduction eventbuilders here:*/
+         unsigned wordNr = 2;
+         uint32_t bitmask = 0xff000000; /* extended mask to contain spill on/off bit*/
+         uint32_t bitshift = 24;
+         // above from args.c defaults
+         val = fInp[ninp].subevnt()->Data(wordNr - 1);
+         fCfg[ninp].fTrigType = (val & bitmask) >> bitshift;
+         //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
+      }
+
+
 
       fCfg[ninp].fErrorBits = fInp[ninp].subevnt()->GetErrBits();
 
