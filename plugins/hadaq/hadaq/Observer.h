@@ -35,7 +35,6 @@ namespace hadaq {
    class Observer : public dabc::Worker  {
       protected:
 
-         bool fEnabled;  ///< true when HADAQ observer is enabled
          int fNodeId;
          double fFlushTimeout;
 
@@ -79,8 +78,6 @@ namespace hadaq {
          virtual void ProcessParameterEvent(const dabc::ParameterEvent& evnt);
 
          static const char* RunStatusName() { return "RunStatus"; }
-
-         bool IsEnabled() const { return fEnabled; }
 
          /* converts prefix text to number for shmem export*/
          static int Args_prefixCode(const char* prefix);

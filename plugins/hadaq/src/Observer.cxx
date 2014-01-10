@@ -18,12 +18,6 @@ hadaq::Observer::Observer(const std::string& name) :
    dabc::Worker(MakePair(name)),
    fEntryMutex()
 {
-   fEnabled = Cfg(hadaq::xmlObserverEnabled).AsBool(false);
-   if(!fEnabled) {
-      DOUT0("hadaq shmem observer is disabled.");
-      return;
-   }
-
    fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
    // we use here mask for evtbuild and netmem prefixes only
@@ -55,7 +49,6 @@ hadaq::Observer::Observer(const std::string& name) :
 
 hadaq::Observer::~Observer()
 {
-   if(!fEnabled) return;
    DOUT0("############# Destroy SHMEM observer #############");
    ::Worker_fini(fEvtbuildWorker);
    ::Worker_fini(fNetmemWorker);
@@ -204,10 +197,7 @@ void hadaq::Observer::RemoveEntry(ShmEntry* entry)
 
 void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 {
-   if(!fEnabled) return;
-
    std::string parname = evnt.ParName();
-
 
 //if(parname=="Combiner/Evtbuild_runId")
 //   {
@@ -221,8 +211,6 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
          EOUT("%s could not activate timeout of %f s",GetName(),fFlushTimeout);
       firsttime = false;
    }
-
-
 
    switch (evnt.EventId()) {
       case dabc::parCreated: {

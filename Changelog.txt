@@ -9,6 +9,8 @@ current functionality of the framework.
 4. Support "dabc:fastcgi:9000" in ROOT TDabcEngine
 5. Better support of HttpServer and FastCgiServer nodes in xml files.
    No need to use enabled flag, insted auto="true/false" can be specified.
+6. Create hadaq::Observer only when it appears in xml file.
+   One should use <Observer name="shm" auto="true"> flag
 
 
 9.01.2014

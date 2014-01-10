@@ -19,6 +19,7 @@
 #include "dabc/Manager.h"
 #include "dabc/SocketThread.h"
 #include "dabc/MemoryPool.h"
+#include "dabc/Configuration.h"
 #include "dabc/Port.h"
 #include "dabc/Url.h"
 
@@ -83,10 +84,8 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
       }
    }
 
-
    return dabc::Factory::CreateTransport(port, typ, cmd);
 }
-
 
 
 dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
@@ -103,12 +102,16 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
 void hadaq::Factory::Initialize()
 {
-   hadaq::Observer* observ = new hadaq::Observer("/shm");
-   dabc::WorkerRef w = observ;
-   if (!observ->IsEnabled()) {
-      w.Destroy();
-   } else {
-      DOUT0("Initialize SHM connected control");
-      w.MakeThreadForWorker("ShmThread");
+   dabc::XMLNodePointer_t node = 0;
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, "Observer", true)) {
+
+      // const char* name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
+
+      const char* thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
+      if ((thrdname==0) || (*thrdname==0)) thrdname = "ShmThread";
+
+      dabc::WorkerRef w = new hadaq::Observer("/shm");
+      w.MakeThreadForWorker(thrdname);
    }
 }
