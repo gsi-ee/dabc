@@ -13,6 +13,7 @@ current functionality of the framework.
    One should use <Observer name="shm" auto="true"> node
 7. Implement several options in plain ROOT server, allow to specify name
    of top folder or number of mongoose threads.
+8. When DABC compiled with "make noroot=1", ROOT installation is ignored 
 
 
 9.01.2014
