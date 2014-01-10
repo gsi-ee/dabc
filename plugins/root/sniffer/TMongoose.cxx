@@ -15,6 +15,7 @@ static int begin_request_handler(struct mg_connection *conn)
    TMongoose* engine = (TMongoose*) mg_get_request_info(conn)->user_data;
    if (engine == 0) return 0;
    THttpServer* serv = engine->GetServer();
+   if (serv == 0) return 0;
 
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
@@ -78,6 +79,14 @@ static int begin_request_handler(struct mg_connection *conn)
 // TMongoose                                                            //
 //                                                                      //
 // http server implementation, based on mongoose embedded server        //
+// It is default kind of engine, created for THttpServer                //
+//                                                                      //
+// Following additional options can be specified                        //
+//    top=foldername - name of top folder, seen in the browser          //
+//    thrds=N - use N threads to run mongoose server (default 5)        //
+//                                                                      //
+// Example:                                                             //
+//    new THttpServer("http:8080/none?top=MyApp&thrds=3");              //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 

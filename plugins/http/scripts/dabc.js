@@ -1437,6 +1437,9 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
 }
 
 DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
+   
+   //console.log("Call reconstruct " + this.itemname);
+   
    if (!this.raw_data) {
       this.state = this.StateEnum.stInit;
       return;
@@ -1488,6 +1491,8 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    // delete this.req;
    this.req = null;
    
+   // console.log("Call back " + this.itemname);
+   
    if (this.state != this.StateEnum.stWaitRequest) {
       alert("item not in wait request state");
       this.state = this.StateEnum.stInit;
@@ -1515,7 +1520,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       return;
    } 
    
-   // console.log(" RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + ver);
+   // console.log(" RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + hdr.version);
 
    if (!this.sinfo) {
       
@@ -2124,12 +2129,18 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    }
    
    var newname = itemname;
-   var currpath = this.GetCurrentPath();
+   var currpath = document.location.pathname;
    
-   if ((newname.length==0) && (currpath.length==0)) {
-      newname = document.location.pathname;
-      console.log("find master for path " + newname);
-   }
+   // var currpath = this.GetCurrentPath();
+   
+//   if ((newname.length==0) && (currpath.length==0)) {
+//      newname = document.location.pathname;
+//      console.log("find master for path " + newname);
+//   }
+   
+   // console.log("Item = " + itemname + " path = " + currpath + " lvl = " + lvl);
+   
+//   console.log("document path = " + document.location.pathname);
    
    // console.log("item = " + itemname + "  master = " + master + " lvl = " + lvl + " currpath = " + currpath);
 
