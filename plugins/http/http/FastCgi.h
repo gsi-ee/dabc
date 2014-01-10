@@ -41,6 +41,8 @@ namespace http {
          FastCgi(const std::string& name, dabc::Command cmd = 0);
          virtual ~FastCgi();
 
+         virtual const char* ClassName() const { return "FastCgiServer"; }
+
          static void* RunFunc(void* arg);
    };
 }

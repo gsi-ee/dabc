@@ -12,7 +12,6 @@
     </Run>
 
     <HttpServer name="http">
-       <enabled value="true"/>
        <port value="8090"/>
        <!--ports value="8091"/-->
        <!--ssl_certif value="${DABCSYS}/ssl_cert.pem"/-->

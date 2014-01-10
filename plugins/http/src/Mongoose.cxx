@@ -35,7 +35,6 @@ http::Mongoose::Mongoose(const std::string& name, dabc::Command cmd) :
    fSslCertif = Cfg("ssl_certif", cmd).AsStr("");
    if (!fSslCertif.empty() && (fHttpsPort<=0)) fHttpsPort = 443;
    if (fSslCertif.empty()) fHttpsPort = 0;
-   if ((fHttpPort<=0) && (fHttpsPort<=0)) fEnabled = false;
 
    memset(&fCallbacks, 0, sizeof(fCallbacks));
 }
@@ -51,12 +50,6 @@ http::Mongoose::~Mongoose()
 
 void http::Mongoose::OnThreadAssigned()
 {
-   if (!IsEnabled()) {
-      EOUT("http server was not enabled - why it is started??");
-      return;
-   }
-
-
    std::string sport;
 
    if (fHttpPort>0) sport = dabc::format("%d",fHttpPort);

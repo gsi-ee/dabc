@@ -45,6 +45,8 @@ namespace http {
          Mongoose(const std::string& name, dabc::Command cmd = 0);
          virtual ~Mongoose();
 
+         virtual const char* ClassName() const { return "HttpServer"; }
+
          static int begin_request_handler(struct mg_connection *conn);
    };
 }

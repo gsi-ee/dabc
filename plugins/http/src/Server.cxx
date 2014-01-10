@@ -24,14 +24,11 @@
 
 http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
-   fEnabled(false),
    fHttpSys(),
    fGo4Sys(),
    fRootSys(),
    fJSRootIOSys()
 {
-   fEnabled = Cfg("enabled", cmd).AsBool(true);
-
    fHttpSys = ".";
 
    const char* dabcsys = getenv("DABCSYS");
@@ -212,5 +209,3 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
 
    return false;
 }
-
-

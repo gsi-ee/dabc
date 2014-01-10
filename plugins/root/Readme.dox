@@ -53,7 +53,7 @@ any moment of macro execution. For instance:
 
     [shell] root -b -l
     
-    root [0] DabcRoot::StartHttpServer(8095);
+    root [0] new THttpServer("http:8095");
     root [1] .x $ROOTSYS/tutorials/hsimple.C
     hsimple   : Real Time =   0.14 seconds Cpu Time =   0.15 seconds
     (class TFile*)0x2b74510

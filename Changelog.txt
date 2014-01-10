@@ -7,6 +7,8 @@ current functionality of the framework.
 2. Provide http::Mongoose for build-in web server 
 3. Implement http::FastCgi for fastcgi server in DABC
 4. Support "dabc:fastcgi:9000" in ROOT TDabcEngine
+5. Better support of HttpServer and FastCgiServer nodes in xml files.
+   No need to use enabled flag, insted auto="true/false" can be specified.
 
 
 9.01.2014

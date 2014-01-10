@@ -189,11 +189,6 @@ http::FastCgi::~FastCgi()
 
 void http::FastCgi::OnThreadAssigned()
 {
-   if (!IsEnabled()) {
-      EOUT("http server was not enabled - why it is started??");
-      return;
-   }
-
    std::string sport = ":9000";
    if (fCgiPort>0) sport = dabc::format(":%d",fCgiPort);
 

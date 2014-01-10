@@ -15,8 +15,9 @@ to automatically create module when starting application.
 First output of the module reserved for stream server, second output can be used to
 store data in lmd files. 
 
-By default, HTTP server is enabled. One could change port number in <HttpServer>
-section or even disable it. When dabc runs, in any browser address like
+By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
+put <HttpServer name="http" auto="false">. One could change http port number. 
+When dabc runs, in any browser address like
 http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
   - ratemeters from EventBuilder and Transmitter
   - log fields 
@@ -51,7 +52,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
     </Run>
     
     <HttpServer name="http">
-       <enabled value="true"/>
        <port value="8090"/>
     </HttpServer>
 

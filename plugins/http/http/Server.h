@@ -37,7 +37,6 @@ namespace http {
    class Server : public dabc::Worker  {
 
       protected:
-         bool fEnabled;            ///< is server enabled
          std::string fHttpSys;     ///< location of http plugin, need to read special files
          std::string fGo4Sys;      ///< location of go4 (if any)
          std::string fRootSys;     ///< location of ROOT (if any)
@@ -57,10 +56,6 @@ namespace http {
          Server(const std::string& name, dabc::Command cmd = 0);
 
          virtual ~Server();
-
-         virtual const char* ClassName() const { return "HttpServer"; }
-
-         bool IsEnabled() const { return fEnabled; }
    };
 
 }
