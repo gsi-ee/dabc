@@ -247,7 +247,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       std::string mhash;
 
-      DOUT0("Player GetBinary for item %s kind %s", itemname.c_str(), binkind.c_str());
+      DOUT3("Player GetBinary for item %s kind %s", itemname.c_str(), binkind.c_str());
 #ifdef WITH_ROOT
       void* ptr(0);
       Long_t length(0);

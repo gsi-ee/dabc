@@ -64,6 +64,9 @@ Bool_t TDabcEngine::Create(const char* args)
    if (strncmp(args,"http:",5) == 0) {
       url.SetUrl(std::string("http://localhost:") + (args+5), false);
    } else
+   if (strncmp(args,"fastcgi:",8) == 0) {
+      url.SetUrl(std::string("fastcgi://localhost:") + (args+8), false);
+   } else
    if (strncmp(args,"master:",7) == 0) {
       url.SetUrl(std::string("dabc://") + (args+7), false);
    } else
@@ -111,7 +114,21 @@ Bool_t TDabcEngine::Create(const char* args)
    // creating web server
    if (url.GetProtocol() == "http") {
       if (dabc::mgr.FindItem("/http").null()) {
-         dabc::CmdCreateObject cmd1("http::Server","/http");
+         dabc::CmdCreateObject cmd1("http::Mongoose","/http");
+         cmd1.SetBool("enabled", true);
+         cmd1.SetInt("port", url.GetPort());
+         if (!dabc::mgr.Execute(cmd1)) return kFALSE;
+
+         dabc::WorkerRef w1 = cmd1.GetRef("Object");
+         w1.MakeThreadForWorker("MainThread");
+      }
+      return kTRUE;
+   }
+
+   // creating fastcgi server
+   if (url.GetProtocol() == "fastcgi") {
+      if (dabc::mgr.FindItem("/fastcgi").null()) {
+         dabc::CmdCreateObject cmd1("http::FastCgi","/fastcgi");
          cmd1.SetBool("enabled", true);
          cmd1.SetInt("port", url.GetPort());
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;

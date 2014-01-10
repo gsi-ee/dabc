@@ -67,15 +67,11 @@ DABCROOT_O         += $(DABCROOT_SNIFF_O)
 DABCROOT_DO        += $(DABCROOT_SNIFF_DO) 
 DABCROOT_DD        += $(DABCROOT_SNIFF_DD) 
 
-ifneq ($(wildcard /usr/include/fastcgi/fcgiapp.h),)
-HTTPINCDIR += /usr/include/fastcgi
-HTTPLIBEXTRA += -lfcgi
-else
-ifneq ($(wildcard /usr/include/fcgiapp.h),)
-HTTPLIBEXTRA += -lfcgi
+ifndef DABC_FASTCGI
+HTTPINCDIR += $(DABC_FASTCGI_INC)
+HTTPLIBEXTRA += $(DABC_FASTCGI_LIB)
 else
 HTTPDEFEXTRA += HTTP_WITHOUT_FASTCGI
-endif
 endif
 
 ifeq ($(DABC_ROOT_ASIMAGE),true)
