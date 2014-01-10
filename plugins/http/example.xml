@@ -23,6 +23,7 @@
 
     <FastCgiServer name="fastcgi">
        <port value="9000"/>
+       <debug value="false"/>
     </FastCgiServer>
     
     <Publisher name="publ">

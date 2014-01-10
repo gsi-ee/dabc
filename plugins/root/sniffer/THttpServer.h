@@ -36,6 +36,7 @@ class THttpCallArg : public TObject {
 protected:
    friend class THttpServer;
 
+   TString fTopName;            //! top item name
    TString fPathName;           //! item path
    TString fFileName;           //! file name
    TString fQuery;              //! additional arguments
@@ -55,11 +56,13 @@ public:
 
    // these methods used to set http request arguments
 
+   void SetTopName(const char* topname) { fTopName = topname; }
    void SetPathAndFileName(const char* fullpath);
    void SetPathName(const char* p) { fPathName = p; }
    void SetFileName(const char* f) { fFileName = f; }
    void SetQuery(const char* q) { fQuery = q; }
 
+   const char* GetTopName() const { return fTopName.Data(); }
    const char* GetPathName() const { return fPathName.Data(); }
    const char* GetFileName() const { return fFileName.Data(); }
    const char* GetQuery() const { return fQuery.Data(); }
@@ -118,6 +121,7 @@ protected:
    TString      fHttpSys;     //! location of http plugin, need to read special files
    TString      fRootSys;     //! location of ROOT (if any)
    TString      fJSRootIOSys; //! location of JSRootIO (if any)
+   TString      fTopName;     //! name of top folder, default - "ROOT"
 
    TString      fDefaultPage; //! file name for default page name
    TString      fDrawPage;    //! file name for drawing of single element
@@ -137,6 +141,9 @@ public:
 
    TRootSniffer* GetSniffer() const { return fSniffer; }
    void SetSniffer(TRootSniffer* sniff);
+
+   void SetTopName(const char* top) { fTopName = top;}
+   const char* GetTopName() const { return fTopName.Data(); }
 
    void SetTimer(Long_t milliSec = 100, Bool_t mode = kTRUE);
 

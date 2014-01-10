@@ -125,7 +125,7 @@ void root::Player::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, c
 
    TRootSnifferStoreDabc store(main);
 
-   sniff->ScanHierarchy(path, &store);
+   sniff->ScanHierarchy("DABC", path, &store);
 }
 
 

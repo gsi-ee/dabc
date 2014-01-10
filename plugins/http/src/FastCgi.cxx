@@ -165,10 +165,12 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
 http::FastCgi::FastCgi(const std::string& name, dabc::Command cmd) :
    http::Server(name, cmd),
    fCgiPort(9000),
+   fDebugMode(false),
    fSocket(0),
    fThrd(0)
 {
    fCgiPort = Cfg("port", cmd).AsInt(9000);
+   fDebugMode = Cfg("debug", cmd).AsBool(false);
 }
 
 http::FastCgi::~FastCgi()
@@ -219,22 +221,20 @@ void* http::FastCgi::RunFunc(void* args)
 
    FCGX_InitRequest(&request, server->fSocket, 0);
 
+   int count(0);
+
    while (1) {
 
       int rc = FCGX_Accept_r(&request);
 
       if (rc!=0) continue;
 
+      count++;
+
       const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
       const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
 
       std::string pathname, filename, query;
-
-      if (server->IsFileRequested(inp_path, filename)) {
-         FCGX_send_file(&request, filename.c_str());
-         FCGX_Finish_r(&request);
-         continue;
-      }
 
       const char* rslash = strrchr(inp_path,'/');
       if (rslash==0) {
@@ -247,8 +247,63 @@ void* http::FastCgi::RunFunc(void* args)
 
       if (inp_query) query = inp_query;
 
+
+      if (server->fDebugMode) {
+
+         FCGX_FPrintF(request.out,
+            "Content-type: text/html\r\n"
+            "\r\n"
+            "<title>FastCGI echo (fcgiapp version)</title>"
+            "<h1>FastCGI echo (fcgiapp version)</h1>\n"
+            "Request number %d<p>\n", count);
+
+         char *contentLength = FCGX_GetParam("CONTENT_LENGTH", request.envp);
+         int len = 0;
+
+         if (contentLength != NULL)
+             len = strtol(contentLength, NULL, 10);
+
+         if (len <= 0) {
+             FCGX_FPrintF(request.out, "No data from standard input.<p>\n");
+         }
+         else {
+             int i, ch;
+
+             FCGX_FPrintF(request.out, "Standard input:<br>\n<pre>\n");
+             for (i = 0; i < len; i++) {
+                 if ((ch = FCGX_GetChar(request.in)) < 0) {
+                     FCGX_FPrintF(request.out, "Error: Not enough bytes received on standard input<p>\n");
+                     break;
+                 }
+                 FCGX_PutChar(ch, request.out);
+             }
+             FCGX_FPrintF(request.out, "\n</pre><p>\n");
+         }
+
+         FCGX_FPrintF(request.out, "PATHNAME: %s<p>\n", pathname.c_str());
+         FCGX_FPrintF(request.out, "FILENAME: %s<p>\n", filename.c_str());
+         FCGX_FPrintF(request.out, "QUERY:    %s<p>\n", query.c_str());
+         FCGX_FPrintF(request.out, "<p>\n");
+
+         FCGX_FPrintF(request.out, "Environment:<br>\n<pre>\n");
+         for(char** envp = request.envp; *envp != NULL; envp++) {
+             FCGX_FPrintF(request.out, "%s\n", *envp);
+         }
+         FCGX_FPrintF(request.out, "</pre><p>\n");
+
+         FCGX_Finish_r(&request);
+         continue;
+      }
+
+
       std::string content_type, content_str;
       dabc::Buffer content_bin;
+
+      if (server->IsFileRequested(inp_path, content_str)) {
+         FCGX_send_file(&request, content_str.c_str());
+         FCGX_Finish_r(&request);
+         continue;
+      }
 
       if (!server->Process(pathname, filename, query,
                            content_type, content_str, content_bin)) {

@@ -4,6 +4,7 @@
 #include "TFastCgi.h"
 
 #include "TThread.h"
+#include "TUrl.h"
 #include "THttpServer.h"
 
 #include <stdlib.h>
@@ -159,88 +160,6 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
 }
 
 
-void* fastcgi_runfunc(void* thrdarg)
-{
-   // printf("Start FastCgi thread\n");
-
-   TFastCgi* engine = (TFastCgi*) thrdarg;
-
-   FCGX_Request request;
-
-   FCGX_InitRequest(&request, engine->GetSocket(), 0);
-
-   while (1) {
-
-      int rc = FCGX_Accept_r(&request);
-
-      if (rc!=0) continue;
-
-      const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
-      const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
-
-      TString fname;
-
-      if (engine->GetServer()->IsFileRequested(inp_path, fname)) {
-         FCGX_send_file(&request, fname.Data());
-         FCGX_Finish_r(&request);
-         continue;
-      }
-
-
-      THttpCallArg arg;
-      if (inp_path!=0) arg.SetPathAndFileName(inp_path);
-      if (inp_query!=0) arg.SetQuery(inp_query);
-
-      //printf("PATHNAME %s FILENAME %s QUERY %s \n",
-      //       arg.GetPathName(), arg.GetFileName(), arg.GetQuery());
-
-      if (!engine->GetServer()->ExecuteHttp(&arg) || arg.Is404()) {
-         FCGX_FPrintF(request.out, "HTTP/1.1 404 Not Found\r\n"
-                                   "Content-Length: 0\r\n"
-                                   "Connection: close\r\n\r\n");
-      } else
-
-      if (arg.IsFile()) {
-         FCGX_send_file(&request, arg.GetContent());
-      } else
-
-      if (arg.IsBinData()) {
-         FCGX_FPrintF(request.out,
-                  "HTTP/1.1 200 OK\r\n"
-                  "Content-Type: %s\r\n"
-                  "Content-Length: %ld\r\n"
-                  "Connection: keep-alive\r\n"
-                  "\r\n",
-                  arg.GetContentType(),
-                  arg.GetBinDataLength());
-
-         FCGX_PutStr((const char*) arg.GetBinData(), (int) arg.GetBinDataLength(), request.out);
-      } else {
-
-         // Send HTTP reply to the client
-         FCGX_FPrintF(request.out,
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Type: %s\r\n"
-             "Content-Length: %d\r\n"        // Always set Content-Length
-             "\r\n"
-             "%s",
-             arg.GetContentType(),
-             arg.GetContentLength(),
-             arg.GetContent());
-      }
-
-
-      FCGX_Finish_r(&request);
-
-   } /* while */
-
-
-   return 0;
-
-}
-
-
-
 void* fastcgi_runfunc_old(void* arg)
 {
    TFastCgi* engine = (TFastCgi*) arg;
@@ -362,6 +281,8 @@ void* fastcgi_runfunc_old(void* arg)
 TFastCgi::TFastCgi() :
    THttpEngine("fastcgi", "fastcgi interface to webserver"),
    fSocket(0),
+   fDebugMode(kFALSE),
+   fTopName(),
    fThrd(0)
 {
    // normal constructor
@@ -394,18 +315,171 @@ Bool_t TFastCgi::Create(const char* args)
 #ifndef HTTP_WITHOUT_FASTCGI
    FCGX_Init();
 
+//   Info("Create", "Analyze url %s", s.Data());
+
    TString sport = ":9000";
-   if ((args!=0) && (*args!=0)) sport.Form(":%s", args);
+
+   if ((args!=0) && (strlen(args)>0)) {
+      TUrl url(TString::Format("http://localhost:%s", args));
+
+      if (url.IsValid()) {
+         url.ParseOptions();
+         if (url.GetPort() > 0) sport.Form(":%d", url.GetPort());
+
+         if (url.GetValueFromOptions("debug")!=0) fDebugMode = kTRUE;
+
+         const char* top = url.GetValueFromOptions("top");
+
+         if (top!=0) fTopName = top;
+      }
+
+//      Info("Create", "valid url opt %s debug = %d", url.GetOptions(), fDebugMode);
+   }
 
    Info("Create", "Starting FastCGI server on port %s", sport.Data());
 
    fSocket = FCGX_OpenSocket(sport.Data(), 10);
-   fThrd = new TThread("FastCgiThrd", fastcgi_runfunc, this);
+   fThrd = new TThread("FastCgiThrd", TFastCgi::run_func, this);
    fThrd->Run();
 
    return kTRUE;
 #else
-   Error("TFastCgi", "ROOT compiled without fastcgi support");
+   Error("Create", "ROOT compiled without fastcgi support");
    return kFALSE;
 #endif
 }
+
+
+void* TFastCgi::run_func(void* args)
+{
+#ifndef HTTP_WITHOUT_FASTCGI
+
+   TFastCgi* engine = (TFastCgi*) args;
+
+   FCGX_Request request;
+
+   FCGX_InitRequest(&request, engine->GetSocket(), 0);
+
+   int count = 0;
+
+   while (1) {
+
+      int rc = FCGX_Accept_r(&request);
+
+      if (rc!=0) continue;
+
+      count++;
+
+      const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
+      const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
+
+      THttpCallArg arg;
+      if (inp_path!=0) arg.SetPathAndFileName(inp_path);
+      if (inp_query!=0) arg.SetQuery(inp_query);
+      if (engine->fTopName.Length()>0) arg.SetTopName(engine->fTopName.Data());
+
+      if (engine->fDebugMode) {
+         FCGX_FPrintF(request.out,
+            "Content-type: text/html\r\n"
+            "\r\n"
+            "<title>FastCGI echo</title>"
+            "<h1>FastCGI echo</h1>\n"
+            "Request number %d<p>\n", count);
+
+         char *contentLength = FCGX_GetParam("CONTENT_LENGTH", request.envp);
+         int len = 0;
+
+         if (contentLength != NULL)
+             len = strtol(contentLength, NULL, 10);
+
+         if (len <= 0) {
+             FCGX_FPrintF(request.out, "No data from standard input.<p>\n");
+         }
+         else {
+             int i, ch;
+
+             FCGX_FPrintF(request.out, "Standard input:<br>\n<pre>\n");
+             for (i = 0; i < len; i++) {
+                 if ((ch = FCGX_GetChar(request.in)) < 0) {
+                     FCGX_FPrintF(request.out, "Error: Not enough bytes received on standard input<p>\n");
+                     break;
+                 }
+                 FCGX_PutChar(ch, request.out);
+             }
+             FCGX_FPrintF(request.out, "\n</pre><p>\n");
+         }
+
+         FCGX_FPrintF(request.out, "PATHNAME: %s<p>\n", arg.GetPathName());
+         FCGX_FPrintF(request.out, "FILENAME: %s<p>\n", arg.GetFileName());
+         FCGX_FPrintF(request.out, "QUERY:    %s<p>\n", arg.GetQuery());
+         FCGX_FPrintF(request.out, "<p>\n");
+
+         FCGX_FPrintF(request.out, "Environment:<br>\n<pre>\n");
+         for(char** envp = request.envp; *envp != NULL; envp++) {
+             FCGX_FPrintF(request.out, "%s\n", *envp);
+         }
+         FCGX_FPrintF(request.out, "</pre><p>\n");
+
+         FCGX_Finish_r(&request);
+         continue;
+      }
+
+
+      TString fname;
+
+      if (engine->GetServer()->IsFileRequested(inp_path, fname)) {
+         FCGX_send_file(&request, fname.Data());
+         FCGX_Finish_r(&request);
+         continue;
+      }
+
+      //printf("PATHNAME %s FILENAME %s QUERY %s \n",
+      //       arg.GetPathName(), arg.GetFileName(), arg.GetQuery());
+
+      if (!engine->GetServer()->ExecuteHttp(&arg) || arg.Is404()) {
+         FCGX_FPrintF(request.out, "HTTP/1.1 404 Not Found\r\n"
+                                   "Content-Length: 0\r\n"
+                                   "Connection: close\r\n\r\n");
+      } else
+
+      if (arg.IsFile()) {
+         FCGX_send_file(&request, arg.GetContent());
+      } else
+
+      if (arg.IsBinData()) {
+         FCGX_FPrintF(request.out,
+                  "HTTP/1.1 200 OK\r\n"
+                  "Content-Type: %s\r\n"
+                  "Content-Length: %ld\r\n"
+                  "Connection: keep-alive\r\n"
+                  "\r\n",
+                  arg.GetContentType(),
+                  arg.GetBinDataLength());
+
+         FCGX_PutStr((const char*) arg.GetBinData(), (int) arg.GetBinDataLength(), request.out);
+      } else {
+
+         // Send HTTP reply to the client
+         FCGX_FPrintF(request.out,
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Type: %s\r\n"
+             "Content-Length: %d\r\n"        // Always set Content-Length
+             "\r\n"
+             "%s",
+             arg.GetContentType(),
+             arg.GetContentLength(),
+             arg.GetContent());
+      }
+
+
+      FCGX_Finish_r(&request);
+
+   } /* while */
+
+   return 0;
+
+#else
+   return args;
+#endif
+}
+

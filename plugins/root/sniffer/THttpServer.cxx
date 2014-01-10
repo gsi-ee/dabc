@@ -3,15 +3,15 @@
 
 #include "THttpServer.h"
 
-#include "THttpEngine.h"
-//#include "TMongoose.h"
-//#include "TFastCgi.h"
-#include "TRootSniffer.h"
 #include "TTimer.h"
 #include "TSystem.h"
 #include "TImage.h"
 #include "TROOT.h"
 #include "TClass.h"
+
+#include "THttpEngine.h"
+#include "TRootSniffer.h"
+#include "TRootSnifferStore.h"
 
 #include <string>
 #include <cstdlib>
@@ -28,6 +28,7 @@
 
 THttpCallArg::THttpCallArg() :
    TObject(),
+   fTopName(),
    fPathName(),
    fFileName(),
    fQuery(),
@@ -66,6 +67,7 @@ void THttpCallArg::SetPathAndFileName(const char* fullpath)
    if (rslash==0) {
       fFileName = fullpath;
    } else {
+      while ((fullpath != rslash) && (*fullpath == '/')) fullpath++;
       fPathName.Append(fullpath, rslash - fullpath);
       if (fPathName=="/") fPathName.Clear();
       fFileName = rslash+1;
@@ -132,6 +134,7 @@ THttpServer::THttpServer(const char* engine) :
    fHttpSys(),
    fRootSys(),
    fJSRootIOSys(),
+   fTopName("ROOT"),
    fMutex(),
    fCallArgs()
 {
@@ -142,6 +145,8 @@ THttpServer::THttpServer(const char* engine) :
    // which will be provided to the web clients by request
 
    fMainThrdId = TThread::SelfId();
+
+   // Info("THttpServer", "Create %p in thrd %ld", this, (long) fMainThrdId);
 
    const char* rootsys = gSystem->Getenv("ROOTSYS");
    if (rootsys!=0) fRootSys = rootsys;
@@ -192,8 +197,6 @@ void THttpServer::SetSniffer(TRootSniffer* sniff)
    if (fSniffer) delete fSniffer;
    fSniffer = sniff;
 }
-
-
 
 Bool_t THttpServer::CreateEngine(const char* engine)
 {
@@ -327,6 +330,8 @@ void THttpServer::ProcessRequests()
    // gSystem->ProcessEvents() is called.
    // User can call serv->ProcessRequests() directly, but only from main analysis thread.
 
+   // Info("ProcessRequests", "Server %p in main %ld curr %ld", this, (long) fMainThrdId, (long)TThread::SelfId());
+
    if (fMainThrdId != TThread::SelfId()) {
       Error("ProcessRequests", "Should be called only from main ROOT thread");
       return;
@@ -362,6 +367,8 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
    // Depending from requested path and filename different actions will be performed.
    // In most cases information is provided by TRootSniffer class
 
+   // Info("ProcessRequest", "Path %s File %s", arg->fPathName.Data(), arg->fFileName.Data());
+
    if (arg->fFileName.IsNull() || (arg->fFileName == "index.htm")) {
 
       Bool_t usedefaultpage = kTRUE;
@@ -387,13 +394,18 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
 
    if ((arg->fFileName == "h.xml") || (arg->fFileName == "get.xml"))  {
 
-      // Info("ProcessRequest", "Produce hierarchy %s", arg->fPathName.Data());
-
       arg->fContent.Form(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s\">\n", arg->fPathName.Data());
 
-      fSniffer->ScanXml(arg->fPathName.Data(), arg->fContent);
+      {
+         TRootSnifferStoreXml store(arg->fContent);
+
+         const char* topname = fTopName.Data();
+         if (arg->fTopName.Length()>0) topname = arg->fTopName.Data();
+
+         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
+      }
 
       arg->fContent.Append("</dabc>\n");
       arg->SetXml();
@@ -403,11 +415,16 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
 
    if (arg->fFileName == "h.json")  {
 
-      // Info("ProcessRequest", "Produce hierarchy %s", arg->fPathName.Data());
-
       arg->fContent.Append("{\n");
 
-      fSniffer->ScanJson(arg->fPathName.Data(), arg->fContent);
+      {
+         TRootSnifferStoreJson store(arg->fContent);
+
+         const char* topname = fTopName.Data();
+         if (arg->fTopName.Length()>0) topname = arg->fTopName.Data();
+
+         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
+      }
 
       arg->fContent.Append("\n}\n");
       arg->SetJson();

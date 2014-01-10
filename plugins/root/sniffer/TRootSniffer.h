@@ -120,12 +120,8 @@ public:
 
    void SetCompression(Int_t lvl) { fCompression = lvl; }
 
-   /** Method scans normal objects, registered in ROOT and DABC */
-   void ScanHierarchy(const char* path, TRootSnifferStore* store);
-
-   void ScanXml(const char* path, TString& xml);
-
-   void ScanJson(const char* path, TString& json);
+   /** Method scans normal objects, registered in ROOT */
+   void ScanHierarchy(const char* topname, const char* path, TRootSnifferStore* store);
 
    TObject* FindTObjectInHierarchy(const char* path);
 

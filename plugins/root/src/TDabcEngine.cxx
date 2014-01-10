@@ -52,6 +52,11 @@ Bool_t TDabcEngine::Create(const char* args)
    // To start DABC version of http server, one should specify:
    //    serv->CreateEngine("dabc:http:8090");
    //
+   // 4. DABC fastcgi server
+   // To start DABC version of fastcgi server, one should specify:
+   //    serv->CreateEngine("dabc:fastcgi:8090");
+   // Optionally, one can enable debug mode for the fastcgi server "dabc:fastcgi:8090?debug"
+   //
    // For all kinds of servers on can optionally specify name of top folder
    // For instance, when starting http server:
    //    serv->CreateEngine("dabc:http:8090?top=myapp");
@@ -115,7 +120,6 @@ Bool_t TDabcEngine::Create(const char* args)
    if (url.GetProtocol() == "http") {
       if (dabc::mgr.FindItem("/http").null()) {
          dabc::CmdCreateObject cmd1("http::Mongoose","/http");
-         cmd1.SetBool("enabled", true);
          cmd1.SetInt("port", url.GetPort());
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;
 
@@ -129,8 +133,8 @@ Bool_t TDabcEngine::Create(const char* args)
    if (url.GetProtocol() == "fastcgi") {
       if (dabc::mgr.FindItem("/fastcgi").null()) {
          dabc::CmdCreateObject cmd1("http::FastCgi","/fastcgi");
-         cmd1.SetBool("enabled", true);
          cmd1.SetInt("port", url.GetPort());
+         cmd1.SetBool("debug", url.HasOption("debug"));
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;
 
          dabc::WorkerRef w1 = cmd1.GetRef("Object");

@@ -32,8 +32,9 @@ namespace http {
 
    class FastCgi : public Server  {
       protected:
-         int fCgiPort;                   //!< configured fast cgi port, default 9000
-         int fSocket;                    //!< fastcgi server socket
+         int   fCgiPort;                 //!< configured fast cgi port, default 9000
+         bool  fDebugMode;               //!< when true, only debug info returned by server
+         int   fSocket;                  //!< fastcgi server socket
          dabc::PosixThread* fThrd;       //!< thread where fastcgi mainloop will run
 
          virtual void OnThreadAssigned();

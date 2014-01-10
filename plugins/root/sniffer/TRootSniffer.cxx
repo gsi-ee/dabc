@@ -586,7 +586,7 @@ Bool_t TRootSniffer::IsBrowsableClass(TClass* cl)
    return kFALSE;
 }
 
-void TRootSniffer::ScanHierarchy(const char* path, TRootSnifferStore* store)
+void TRootSniffer::ScanHierarchy(const char* topname, const char* path, TRootSnifferStore* store)
 {
    // scan ROOT hierarchy with provided store object
 
@@ -602,29 +602,11 @@ void TRootSniffer::ScanHierarchy(const char* path, TRootSnifferStore* store)
 
    rec.store = store;
 
-   rec.CreateNode("ROOT");
+   rec.CreateNode(topname);
 
    ScanRoot(rec);
 
    rec.CloseNode();
-}
-
-void TRootSniffer::ScanXml(const char* path, TString& xml)
-{
-   // scan ROOT hierarchy and produce xml description of it
-
-   TRootSnifferStoreXml store(xml);
-
-   ScanHierarchy(path, &store);
-}
-
-void TRootSniffer::ScanJson(const char* path, TString& json)
-{
-   // scan ROOT hierarchy and produce JSON description of it
-
-   TRootSnifferStoreJson store(json);
-
-   ScanHierarchy(path, &store);
 }
 
 

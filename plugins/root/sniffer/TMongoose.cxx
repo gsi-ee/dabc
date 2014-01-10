@@ -8,11 +8,13 @@
 #include <stdlib.h>
 
 #include "THttpServer.h"
+#include "TUrl.h"
 
 static int begin_request_handler(struct mg_connection *conn)
 {
-   THttpServer* serv = (THttpServer*) mg_get_request_info(conn)->user_data;
-   if (serv == 0) return 0;
+   TMongoose* engine = (TMongoose*) mg_get_request_info(conn)->user_data;
+   if (engine == 0) return 0;
+   THttpServer* serv = engine->GetServer();
 
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
@@ -26,6 +28,7 @@ static int begin_request_handler(struct mg_connection *conn)
    THttpCallArg arg;
    arg.SetPathAndFileName(request_info->uri); // path and file name
    arg.SetQuery(request_info->query_string);  //! additional arguments
+   arg.SetTopName(engine->GetTopName());
 
    if (!serv->ExecuteHttp(&arg) || arg.Is404()) {
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
@@ -82,7 +85,8 @@ static int begin_request_handler(struct mg_connection *conn)
 TMongoose::TMongoose() :
    THttpEngine("mongoose", "compact embedded http server"),
    fCtx(0),
-   fCallbacks(0)
+   fCallbacks(0),
+   fTopName()
 {
    // constructor
 }
@@ -106,24 +110,38 @@ Bool_t TMongoose::Create(const char* args)
    memset(fCallbacks, 0, sizeof(struct mg_callbacks));
    ((struct mg_callbacks*) fCallbacks)->begin_request = begin_request_handler;
 
-   const char* sport = "8080";
+   TString sport = "8080";
+   TString num_threads = "5";
 
    // for the moment the only argument is port number
-   if (args!=0) sport = args;
+   if ((args!=0) && (strlen(args)>0)) {
+      TUrl url(TString::Format("http://localhost:%s", args));
+
+      if (url.IsValid()) {
+         url.ParseOptions();
+         if (url.GetPort() > 0) sport.Form("%d", url.GetPort());
+
+         const char* top = url.GetValueFromOptions("top");
+         if (top!=0) fTopName = top;
+
+         Int_t thrds = url.GetIntValueFromOptions("thrds");
+         if (thrds>0) num_threads.Form("%d", thrds);
+      }
+   }
 
    const char *options[100];
    int op(0);
 
-   Info("Create", "Starting HTTP server on port %s", sport);
+   Info("Create", "Starting HTTP server on port %s", sport.Data());
 
    options[op++] = "listening_ports";
-   options[op++] = sport;
+   options[op++] = sport.Data();
    options[op++] = "num_threads";
-   options[op++] = "5";
+   options[op++] = num_threads.Data();
    options[op++] = 0;
 
    // Start the web server.
-   fCtx = mg_start((struct mg_callbacks*) fCallbacks, GetServer(), options);
+   fCtx = mg_start((struct mg_callbacks*) fCallbacks, this, options);
 
    return kTRUE;
 }

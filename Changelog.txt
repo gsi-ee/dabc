@@ -10,7 +10,9 @@ current functionality of the framework.
 5. Better support of HttpServer and FastCgiServer nodes in xml files.
    No need to use enabled flag, insted auto="true/false" can be specified.
 6. Create hadaq::Observer only when it appears in xml file.
-   One should use <Observer name="shm" auto="true"> flag
+   One should use <Observer name="shm" auto="true"> node
+7. Implement several options in plain ROOT server, allow to specify name
+   of top folder or number of mongoose threads.
 
 
 9.01.2014
