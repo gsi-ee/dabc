@@ -137,13 +137,13 @@ namespace mbs {
 
          IOState           fState;
          char              fSendBuf[256];
-         char              fRecvBuf[8];
+         int32_t           fRecvBuf[2];
          int               fExtraBlock;
          dabc::Buffer      fExtraBuf;
 
-         int GetStatus() const { return *((int32_t*) (fRecvBuf+4)); }
+         int GetStatus() const { return fRecvBuf[1]; }
 
-         int GetEndian() const { return *((int32_t*) (void*) fRecvBuf); }
+         int GetEndian() const { return fRecvBuf[0]; }
 
          virtual void ProcessEvent(const dabc::EventId&);
 
