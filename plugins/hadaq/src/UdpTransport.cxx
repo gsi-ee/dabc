@@ -309,7 +309,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       // workaround to suppress problems with dim observer when this ratemeter is registered:
       std::string ratesprefix = inpport.GetName();
       fDataRateName = ratesprefix + "-Datarate";
-      CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("B");
+      CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
       Par(fDataRateName).SetDebugLevel(1);
       SetPortRatemeter(OutputName(), Par(fDataRateName));
 

@@ -50,9 +50,12 @@ bool hadaq::HldOutput::Write_Init()
 {
    if (!dabc::FileOutput::Write_Init()) return false;
 
+
+   // always try to get parameters in master and slave mode:
+    fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
+    fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+
    if (fEpicsSlave) {
-      fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
-      fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
 
 
       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d",fRunNumber));
