@@ -37,6 +37,20 @@ uint32_t hadaq::RawEvent::CreateRunId()
    return tv.tv_sec - hadaq::HADAQ_TIMEOFFSET;
 }
 
+
+std::string hadaq::RawEvent::FormatFilename (uint32_t id)
+{
+   // same
+   char buf[128];
+   time_t iocTime;
+   iocTime = id + HADAQ_TIMEOFFSET;
+   strftime(buf, 18, "%y%j%H%M%S", localtime(&iocTime));
+   return std::string(buf);
+}
+
+
+
+
 // ===========================================================
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)

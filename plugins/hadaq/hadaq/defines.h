@@ -2,6 +2,9 @@
 #define HADAQ_defines
 
 #include <stdint.h>
+#include <iostream>
+#include <string.h>
+
 
 /*
 //Description of the Event Structure
@@ -93,6 +96,8 @@
 #pragma pack(push, 1)
 
 namespace hadaq {
+
+
 
    enum {
       HADAQ_TIMEOFFSET       = 1200000000 /* needed to reconstruct time from runId */
@@ -320,6 +325,15 @@ is unique throughout all events ever acquired by the system.
          void Dump();
 
          static uint32_t CreateRunId();
+
+         /*
+          * Format a HADES-convention filename string
+          * from a given run id.
+          */
+         static std::string FormatFilename (uint32_t id);
+
+
+
    };
 
 /** \brief Hadaq subevent structure

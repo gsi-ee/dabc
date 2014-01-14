@@ -81,8 +81,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    if (fFlushTimeout > 0.)
       CreateTimer("FlushTimer", fFlushTimeout, false);
 
-//   CreatePar("RunId");
-//   Par("RunId").SetInt(fRunNumber); // to communicate with file components
+   CreatePar("RunId");
+   Par("RunId").SetValue(fRunNumber); // to communicate with file components
 
    fDataRateName = ratesprefix + "Data";
    fEventRateName = ratesprefix + "Events";
