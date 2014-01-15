@@ -313,10 +313,15 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
       if (clname==0) continue;
-      DOUT2("Create module %s class %s", name, clname);
       if (thrdname==0) thrdname="";
 
-      dabc::ModuleRef m = dabc::mgr.CreateModule(clname, name, thrdname);
+      // check that module with such name exists
+      dabc::ModuleRef m = dabc::mgr.FindModule(name);
+      if (!m.null()) continue;
+
+      DOUT2("Create module %s class %s", name, clname);
+
+      m = dabc::mgr.CreateModule(clname, name, thrdname);
 
       if (m.null()) return false;
 
@@ -331,7 +336,7 @@ bool dabc::ApplicationBase::DefaultInitFunc()
          }
       }
 
-      for (unsigned n=0; n < m.NumOutputs(); n++) {
+      for (unsigned n = 0; n < m.NumOutputs(); n++) {
 
          PortRef port = m.FindPort(m.OutputName(n, false));
          if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
