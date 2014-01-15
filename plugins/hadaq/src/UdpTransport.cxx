@@ -284,7 +284,7 @@ int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
 hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpport, DataSocketAddon* addon) :
    dabc::InputTransport(cmd, inpport, addon, false, addon),
    fIdNumber(0),
-   fWithObserver(false),
+   fWithObserver(false), 
    fDataRateName()
 {
 
@@ -301,9 +301,10 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
    }
 
    fWithObserver = inpport.Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
-
-   if(sscanf(GetName(), "Input%d", &fIdNumber)!=1) fIdNumber = 0;
-   DOUT4("hadaq::DataTransport got id: %d", fIdNumber);
+    DOUT0("Starting hadaq::DataTransport with OBSERVER mode %d", fWithObserver);
+   //if(sscanf(GetName(), "Input%d", &fIdNumber)!=1) fIdNumber = 0;
+   fIdNumber=inpport.ItemSubId();
+   DOUT0("hadaq::DataTransport %s got id: %d", GetName(), fIdNumber);
 
    if(fWithObserver) {
       // workaround to suppress problems with dim observer when this ratemeter is registered:
@@ -324,6 +325,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
 
       CreateTimer("ObserverTimer", 1, false);
+       DOUT0("hadaq::DataTransport created observer parameters");
    }
 }
 
@@ -348,6 +350,7 @@ std::string  hadaq::DataTransport::GetNetmemParName(const std::string& name)
 
 void hadaq::DataTransport::CreateNetmemPar(const std::string& name)
 {
+  std::cout <<"DataTransport creates netmem parameter"<< GetNetmemParName(name)<< std::endl;
    CreatePar(GetNetmemParName(name));
 }
 

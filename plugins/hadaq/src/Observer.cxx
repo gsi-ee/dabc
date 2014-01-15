@@ -103,15 +103,15 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 
 
    if (entry==0) {
-      DOUT3("Create new entry for parameter %s", parname.c_str());
+      DOUT0("Create new entry for parameter %s", parname.c_str());
       ::Worker* my=0;
       if(parname.find(hadaq::NetmemPrefix)!= std::string::npos){
-         DOUT3("Use netmem:");
+         DOUT0("Use netmem:");
          my=fNetmemWorker;
 
       }
       else if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
-         DOUT3("Use evtbuild:");
+         DOUT0("Use evtbuild:");
          my=fEvtbuildWorker;
       }
       if(my==0)
@@ -134,11 +134,11 @@ std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 {
    std::string res="";
    size_t sep;
-   sep=dabcname.find("_");
+   sep=dabcname.rfind("_"); // need to look for last underscore, otherwise problems with DABC parameter naming!
     if (sep!=std::string::npos)
        {
           res=dabcname.substr (sep+1,std::string::npos);
-          //std::cout <<"ReducedName:" << res << std::endl;
+          //std::cout <<"ReducedName:" << res << "from full name:"<<dabcname<<std::endl;
        }
    return res;
 }

@@ -103,6 +103,7 @@ bool hadaq::HldOutput::StartNewFile()
 
    if (!fEpicsSlave || fRunNumber == 0) {
       fRunNumber = hadaq::RawEvent::CreateRunId();
+      //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d ", fRunNumber));
       if (!fRunidPar.null())
          fRunidPar.SetValue(fRunNumber);
@@ -115,6 +116,8 @@ bool hadaq::HldOutput::StartNewFile()
    } else {
       ProduceNewFileName();
    }
+    //std::cout <<"HldOutput StartNewFile for "<<fCurrentFileName << std::endl;
+   
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
@@ -130,6 +133,8 @@ bool hadaq::HldOutput::CloseFile()
    if (fFile.isWriting())
       ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
+   fCurrentFileSize=0;
+   //std::cout <<"Close File resets file size." << std::endl;
    return true;
 }
 
@@ -147,7 +152,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Error;
    }
 
-   bool startnewfile = CheckBufferForNextFile(buf.GetTotalSize());
+   bool startnewfile = false;
    if (fEpicsSlave) {
       // check if EPICS master has assigned a new run for us:
       uint32_t nextrunid = GetRunId();
@@ -157,13 +162,18 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d from EPICS", fRunNumber));
       }
    }
-
+   else
+   {
+     startnewfile = CheckBufferForNextFile(buf.GetTotalSize());
+   }
    if(startnewfile)
-      if (!StartNewFile()) {
+    {
+	ShowInfo(0, dabc::format("HldOutput before starting new file, bufsize:%d", buf.GetTotalSize()));
+	if (!StartNewFile()) {
          EOUT("Cannot start new file for writing");
          return dabc::do_Error;
       }
-
+    }
    if (!fBytesWrittenPar.null())
       fBytesWrittenPar.SetValue((int)fCurrentFileSize);
 
