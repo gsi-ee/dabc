@@ -103,7 +103,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 
 
    if (entry==0) {
-      DOUT3"Create new entry for parameter %s", parname.c_str());
+      DOUT3("Create new entry for parameter %s", parname.c_str());
       ::Worker* my=0;
       if(parname.find(hadaq::NetmemPrefix)!= std::string::npos){
          DOUT3("Use netmem:");
@@ -226,12 +226,12 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
             CreateShmEntry(parname);
             return;
          }
-         DOUT3("ProcessParameterEvent for parameter %s", parname.c_str());
-	 if(!strstr(parname.c_str(),"runId"))
-	 // todo: only in slave mode, supress updating runid from here!
-	  entry->UpdateValue(evnt.ParValue());
-	 else
-	    DOUT0("Ignoring update event Event for parameter %s", parname.c_str());
+//          DOUT3("ProcessParameterEvent for parameter %s", parname.c_str());
+// 	 if(!strstr(parname.c_str(),"runId"))
+// 	 // todo: only in slave mode, supress updating runid from here!
+// 	  entry->UpdateValue(evnt.ParValue());
+// 	 else
+// 	    DOUT0("Ignoring update event Event for parameter %s", parname.c_str());
 
 
          break;
