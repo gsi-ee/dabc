@@ -38,7 +38,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fBytesWrittenPar(),
    fFile()
 {
-   fEpicsSlave = url.HasOption("slave");
+   fEpicsSlave = url.HasOption("epicsctrl");
    fHadesFileNames = url.HasOption("hadesnames");
    fEBNumber=url.GetOptionInt("ebnumber",0); // default is single eventbuilder
 }

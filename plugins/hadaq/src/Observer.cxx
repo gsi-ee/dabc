@@ -229,7 +229,7 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 //          DOUT3("ProcessParameterEvent for parameter %s", parname.c_str());
 // 	 if(!strstr(parname.c_str(),"runId"))
 // 	 // todo: only in slave mode, supress updating runid from here!
-// 	  entry->UpdateValue(evnt.ParValue());
+ 	  entry->UpdateValue(evnt.ParValue());
 // 	 else
 // 	    DOUT0("Ignoring update event Event for parameter %s", parname.c_str());
 

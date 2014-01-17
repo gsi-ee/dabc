@@ -38,6 +38,37 @@ In this case one should specify that port number when starting go4 analysis like
    [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
 When starting analysis from the go4 gui, one should specify stream server with port number too.
 
+#############################################################################
+#############################################################################
+Advanced example with multiple eventbuilder processes and HADES EPICS control
+
+To start dabc processes, call 
+  dabc_run EventBuilderEpics.xml start
+To terminate dabc processes, call
+  dabc_run EventBuilderEpics.xml kill
+
+This example configures separate logfiles, http servers and online monitoring stream servers
+for 2 processes (<Context > tags).
+
+Common settings are done in wildcard tag <Context name="*" host="*"> at bottom.
+
+
+
+Note for distributed run id via EPICS (HADES production mode):
+1) enable observer
+<Observer name="shm">
+     <DoShmControl value="true"/>
+   </Observer>  
+This will allow to monitor values via EPICS anyway
+
+2) set file outputs to get common run id via epics master process with option "epicsctrl":
+<OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld&epicsctrl&hadesnames&ebnumber=1" queue="200"/>
+
+Note that in this mode parameter "maxsize" has no effect on maximum file size to start a new hld file!
+This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq/app/epics/st_full_1.cmd)
+
+
+   
 -->
 
 
@@ -75,8 +106,13 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&&slave&hadesnames&ebnumber=1" queue="200"/>
-       
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&hadesnames&ebnumber=1" queue="200"/>
+
+<!--  alternative setup for independent time tags on different eventbuilders: -->
+<!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&ebnumber=1" queue="200"/> -->
+ 
+      
+      
      </Module>
 
      <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
@@ -121,8 +157,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input4" url="hadaq://host:10205"/>
 
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&slave&ebnumber=2" queue="200"/>
-       
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&hadesnames&ebnumber=2" queue="200"/>
+
+<!--  alternative setup for independent time tags on different eventbuilders: -->
+<!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&ebnumber=2" queue="200"/> -->
+     
      </Module>
 
      <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
