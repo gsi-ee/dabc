@@ -40,31 +40,28 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
 -->
 
+
+
+
+
 <dabc version="2">
-  <Context host="localhost" name="EventBuilder">
-    <Run>
-      <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcHttp.so"/>  
-      <logfile value="hadaqevtbuild.log"/>
-      <loglimit value="1000000"/>
-      <control value="true"/>
+
+
+
+
+<Context host="localhost" name="EventBuilder1" port="7701">
+<!--    The master eventbuilder: -->
+   
+     <Run>
+      <logfile value="hadaqevtbuild1.log"/>
     </Run>
     
     
-     <!-- shmem control config -->
-   <Observer name="shm">
-     <DoShmControl value="true"/>
-   </Observer>
-    
     <HttpServer name="http">
-       <port value="8090"/>
+       <port value="8091"/>
     </HttpServer>
 
-    <MemoryPool name="Pool">
-       <BufferSize value="200000"/>
-       <NumBuffers value="1000"/>
-    </MemoryPool>
+  
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
@@ -77,22 +74,98 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
-       <InputPort name="Input*" queue="10">
-          <HadaqUdpBuffer value="200000"/>
+       
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&&slave&hadesnames&ebnumber=1" queue="200"/>
+       
+     </Module>
+
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+
+       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:6018"/>
+       <OutputPort name="Output1" url="lmd://test1.lmd?maxsize=30&log=2"/>
+    
+    </Module>
+
+  </Context>
+  
+  
+  
+<!-- Here the slave eventbuilder:   -->
+  
+  
+  <Context host="localhost" name="EventBuilder2" port="7702">
+    <Run>
+      <logfile value="hadaqevtbuild2.log"/>     
+    </Run>
+    
+    
+    
+    <HttpServer name="http">
+       <port value="8092"/>
+    </HttpServer>
+
+
+    <Module name="Combiner" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/oputputs of module -->
+       <NumInputs value="5"/>
+       <NumOutputs value="2"/>
+
+       <InputPort name="Input0" url="hadaq://host:10201"/>
+       <InputPort name="Input1" url="hadaq://host:10202"/>
+       <InputPort name="Input2" url="hadaq://host:10203"/>
+       <InputPort name="Input3" url="hadaq://host:10204"/>
+       <InputPort name="Input4" url="hadaq://host:10205"/>
+
+       
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&slave&ebnumber=2" queue="200"/>
+       
+     </Module>
+
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+
+       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:6019"/>
+       <OutputPort name="Output1" url="lmd://test2.lmd?maxsize=30&log=2"/>
+
+     </Module>
+  
+</Context>
+
+
+<!-- General settings for all contexts: -->
+<Context name="*" host="*">
+      
+<!--       <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/> -->
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <loglimit value="1000000"/>
+      <control value="true"/>
+    </Run>
+      
+      
+       <!-- shmem control config -->
+   <Observer name="shm">
+     <DoShmControl value="true"/>
+   </Observer>  
+   
+   <Module name="Combiner">    
+
+	<InputPort name="Input*" queue="10">
+	    <HadaqUdpBuffer value="200000"/>
           <DoShmControl value="true"/>  
           <HadaqUdpMTU value="64512"/>
           <FlushTimeout value="2.0"/>   
        </InputPort>
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames" queue="200"/>
-       
-        <!--<OutputPort name="Output1">
-          <HadaqFileName value="hld://home/joern/data/dabc.hld"/>
-          <HadaqEPICSControl value="false"/>
-          <HadaqFileSizeLimit value="1600"/>       
-        </OutputPort> -->
-
-
        <DoShmControl value="true"/>  
        <FlushTimeout value="2.0"/>   
 
@@ -108,20 +181,13 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-     </Module>
+</Module>
 
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
 
-       <OutputPort name="Output0" url="mbs://Stream:6002"/>
-       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
+  <Module name="OnlineServer">
     
-
-
-       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
+      <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
        <SubeventFullId value="0x000001F"/>
 
        <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
@@ -129,12 +195,14 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
        <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
-     </Module>
-
-  </Context>
-
-  <!--Context name="*">
-      <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/>
-  </Context-->
+ </Module>
+   
+   
+   <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="1000"/>
+   </MemoryPool>
+      
+</Context>
   
 </dabc>

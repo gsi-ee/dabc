@@ -350,7 +350,7 @@ std::string  hadaq::DataTransport::GetNetmemParName(const std::string& name)
 
 void hadaq::DataTransport::CreateNetmemPar(const std::string& name)
 {
-  std::cout <<"DataTransport creates netmem parameter"<< GetNetmemParName(name)<< std::endl;
+  //std::cout <<"DataTransport creates netmem parameter"<< GetNetmemParName(name)<< std::endl;
    CreatePar(GetNetmemParName(name));
 }
 

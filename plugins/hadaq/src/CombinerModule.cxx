@@ -218,7 +218,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
 void hadaq::CombinerModule::RegisterExportedCounters()
 {
    if(!fWithObserver) return;
-   DOUT0("##### CombinerModule::RegisterExportedCounters for shmem");
+   DOUT3("##### CombinerModule::RegisterExportedCounters for shmem");
    CreateEvtbuildPar("prefix");
 
    // FIXME: for time been use second port for file output

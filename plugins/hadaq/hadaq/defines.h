@@ -328,9 +328,9 @@ is unique throughout all events ever acquired by the system.
 
          /*
           * Format a HADES-convention filename string
-          * from a given run id.
+          * from a given run id and optional eventbuilder id
           */
-         static std::string FormatFilename (uint32_t id);
+         static std::string FormatFilename (uint32_t runid, uint16_t ebid);
 
 
 

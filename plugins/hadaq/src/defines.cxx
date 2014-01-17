@@ -38,13 +38,16 @@ uint32_t hadaq::RawEvent::CreateRunId()
 }
 
 
-std::string hadaq::RawEvent::FormatFilename (uint32_t id)
+std::string hadaq::RawEvent::FormatFilename (uint32_t runid, uint16_t ebid)
 {
    // same
    char buf[128];
    time_t iocTime;
-   iocTime = id + HADAQ_TIMEOFFSET;
-   strftime(buf, 18, "%y%j%H%M%S", localtime(&iocTime));
+   iocTime = runid + HADAQ_TIMEOFFSET;
+   size_t off=strftime(buf, 18, "%y%j%H%M%S", localtime(&iocTime));
+   char* cursor=buf+off;
+   std::string result(buf);
+   if(ebid!=0) snprintf(cursor,128-off,"%02d",ebid);
    return std::string(buf);
 }
 

@@ -1,0 +1,6 @@
+epicsEnvSet(ARCH,"linux-x86")
+epicsEnvSet(IOC,"iocebctrl")
+epicsEnvSet(TOP,"/home/joern/hadeswork/ebctrl/ioc")
+epicsEnvSet(EPICS_BASE,"/home/joern/epicsinstall/base-3.14.12.2")
+#epicsEnvSet(EPICS_CA_ADDR_LIST,"140.181.116.58")
+#epicsEnvSet(EPICS_CA_AUTO_ADDR_LIST,"NO")

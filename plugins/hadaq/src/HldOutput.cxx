@@ -33,12 +33,14 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fEpicsSlave(false),
    fHadesFileNames(false),
    fRunNumber(0),
+   fEBNumber(0), 
    fRunidPar(),
    fBytesWrittenPar(),
    fFile()
 {
    fEpicsSlave = url.HasOption("slave");
    fHadesFileNames = url.HasOption("hadesnames");
+   fEBNumber=url.GetOptionInt("ebnumber",0); // default is single eventbuilder
 }
 
 hadaq::HldOutput::~HldOutput()
@@ -58,12 +60,13 @@ bool hadaq::HldOutput::Write_Init()
    if (fEpicsSlave) {
 
 
-      ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d",fRunNumber));
-
       if(fRunidPar.null())
          ShowInfo(-1, "HldOutput::Write_Init did not find runid parameter");
       else
          fRunNumber = GetRunId();
+      
+       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
+      
 
       if(fBytesWrittenPar.null())
          ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
@@ -86,8 +89,8 @@ uint32_t hadaq::HldOutput::GetRunId()
       if(nextrunid) break;
       dabc::Sleep(0.1);
       counter++;
-      if(counter>100) {
-         EOUT("HldOutput could not get run id from EPICS master within 10s. Use self generated id. Disable epics runid control.");
+      if(counter>1000) {
+         EOUT("HldOutput could not get run id from EPICS master within 100s. Use self generated id. Disable epics runid control.");
          nextrunid = hadaq::RawEvent::CreateRunId(); // TODO: correct error handling here, shall we terminate instead?
          fEpicsSlave=false;
       }
@@ -104,11 +107,12 @@ bool hadaq::HldOutput::StartNewFile()
    if (!fEpicsSlave || fRunNumber == 0) {
       fRunNumber = hadaq::RawEvent::CreateRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
-      ShowInfo(0, dabc::format("HldOutput Generates New Runid %d ", fRunNumber));
+      ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
       if (!fRunidPar.null())
          fRunidPar.SetValue(fRunNumber);
    }
-
+     ShowInfo(0, dabc::format("New HldOutput with Runid %d ", fRunNumber)); 
+  
    //switch between standard dabc filename or hades run number syntax:
    if (fHadesFileNames) {
       // change file names according hades style:
@@ -122,6 +126,7 @@ bool hadaq::HldOutput::StartNewFile()
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
+   
 
    ShowInfo(0, dabc::format("%s open for writing", CurrentFileName().c_str()));
 
@@ -159,7 +164,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       if (nextrunid > fRunNumber) {
          fRunNumber = nextrunid;
          startnewfile = true;
-         ShowInfo(0, dabc::format("HldOutput Gets New Runid %d from EPICS", fRunNumber));
+         ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
       }
    }
    else
@@ -189,7 +194,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 void hadaq::HldOutput::SetFullHadesFileName()
 {
-   std::string extens=hadaq::RawEvent::FormatFilename(fRunNumber);
+   std::string extens=hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
 
    size_t len = fname.length();
