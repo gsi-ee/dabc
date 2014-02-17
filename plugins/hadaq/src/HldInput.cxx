@@ -28,6 +28,8 @@ hadaq::HldInput::HldInput(const dabc::Url& url) :
    dabc::FileInput(url),
    fFile()
 {
+   if (url.HasOption("rfio"))
+     fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
 hadaq::HldInput::~HldInput()

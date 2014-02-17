@@ -27,6 +27,9 @@ mbs::LmdInput::LmdInput(const dabc::Url& url) :
    dabc::FileInput(url),
    fFile()
 {
+   // TODO: when using new lmd file, enable usage of rfio
+   //   if (url.HasOption("rfio"))
+   //      fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
 mbs::LmdInput::~LmdInput()

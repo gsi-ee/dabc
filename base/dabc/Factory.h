@@ -65,21 +65,32 @@ namespace dabc {
       public:
          Factory(const std::string& name);
 
+         /** Factory method to create application */
          virtual Application* CreateApplication(const std::string& classname, Command cmd) { return 0; }
 
+         /** Factory method to create object */
          virtual Reference CreateObject(const std::string& classname, const std::string& objname, Command cmd) { return 0; }
 
+         /** Factory method to create device */
          virtual Device* CreateDevice(const std::string& classname, const std::string& devname, Command cmd) { return 0; }
 
+         /** Factory method to create thread */
          virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd) { return Reference(); }
 
+         /** Factory method to create module */
          virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd) { return 0; }
 
+         /** Factory method to create transport */
          virtual Transport* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
 
+         /** Factory method to create data input */
          virtual DataInput* CreateDataInput(const std::string& typ) { return 0; }
 
+         /** Factory method to create data output */
          virtual DataOutput* CreateDataOutput(const std::string& typ) { return 0; }
+
+         /** Factory method to create arbitrary object kind */
+         virtual void* CreateAny(const std::string& classname, const std::string& objname, Command cmd) { return 0; }
 
          static bool LoadLibrary(const std::string& fname);
 

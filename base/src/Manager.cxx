@@ -989,7 +989,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          LockGuard guard(fMgrMutex);
          fLastCreatedDevName = devname;
       }
-
    } else
    if (cmd.IsName(CmdDestroyDevice::CmdName())) {
       std::string devname = cmd.GetStr("DevName");
@@ -1073,11 +1072,23 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          }
       }
    } else
+
    if (cmd.IsName(CmdDestroyTransport::CmdName())) {
       PortRef portref = FindPort(cmd.GetStr("PortName"));
       if (!portref.Disconnect())
         cmd_res = cmd_false;
    } else
+
+   if (cmd.IsName(CmdCreateAny::CmdName())) {
+      void* res = 0;
+      FOR_EACH_FACTORY(
+         res = factory->CreateAny(cmd.GetStr("ClassName"), cmd.GetStr("ObjectName"), cmd);
+         if (res != 0) break;
+      )
+      cmd.SetPtr("ObjectPtr", res);
+      cmd_res = cmd_true;
+   } else
+
    if (cmd.IsName(CmdCreateThread::CmdName())) {
       const std::string& thrdname = cmd.GetStr(CmdCreateThread::ThrdNameArg());
       const std::string& thrdclass = cmd.GetStr("ThrdClass");
@@ -2172,6 +2183,18 @@ bool dabc::ManagerRef::CreateTransport(const std::string& portname, const std::s
 
    return Execute(CmdCreateTransport(portname, transportkind, thrdname));
 }
+
+void* dabc::ManagerRef::CreateAny(const std::string& classname, const std::string& objname)
+{
+   CmdCreateAny cmd;
+   cmd.SetStr("ClassName", classname);
+   cmd.SetStr("ObjectName", objname);
+
+   if (Execute(cmd) != cmd_true) return 0;
+
+   return cmd.GetPtr("ObjectPtr");
+}
+
 
 void dabc::ManagerRef::StopApplication()
 {

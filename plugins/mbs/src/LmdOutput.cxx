@@ -32,6 +32,9 @@ mbs::LmdOutput::LmdOutput(const dabc::Url& url) :
    dabc::FileOutput(url, ".lmd"),
    fFile()
 {
+   // TODO: when using new lmd file implementation, enable RFIO
+//   if (url.HasOption("rfio"))
+//      fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
 mbs::LmdOutput::~LmdOutput()

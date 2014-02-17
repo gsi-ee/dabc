@@ -212,8 +212,6 @@ namespace dabc {
       std::string PoolName() const { return GetStr(xmlPoolName); }
    };
 
-
-
    class CmdDestroyTransport : public Command {
 
       DABC_COMMAND(CmdDestroyTransport, "DestroyTransport");
@@ -224,6 +222,11 @@ namespace dabc {
          SetStr("PortName", portname);
       }
    };
+
+   class CmdCreateAny : public Command {
+      DABC_COMMAND(CmdCreateAny, "CreateAny");
+   };
+
 
    class CmdSetParameter : public Command {
 
@@ -647,6 +650,8 @@ namespace dabc {
          bool DeleteModule(const std::string& name);
 
          bool CreateTransport(const std::string& portname, const std::string& transportkind = "", const std::string& thrdname = "");
+
+         void* CreateAny(const std::string& classname, const std::string& objname = "");
 
          bool ActivateConnections(double tmout);
 

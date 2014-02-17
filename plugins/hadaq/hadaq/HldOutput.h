@@ -37,10 +37,10 @@ namespace hadaq {
    class HldOutput : public dabc::FileOutput {
       protected:
 
-         bool                fEpicsSlave; // true if run id is controlled by epics master
+         bool                fEpicsSlave;     // true if run id is controlled by epics master
          bool                fHadesFileNames; // if true, use hades filename stye (prefix + run number), otherwise plain dabc style (direct filename + cycle number)
-         uint32_t            fRunNumber; // id number of current run
-         uint16_t	     fEBNumber; // id of parent event builder process	
+         uint32_t            fRunNumber;      // id number of current run
+         uint16_t	           fEBNumber;       // id of parent event builder process
 
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
@@ -52,10 +52,8 @@ namespace hadaq {
 
          uint32_t GetRunId();
 
-
          /* evaluate file name with hades timestamp*/
          void SetFullHadesFileName();
-
 
          bool Init();
 
@@ -67,7 +65,6 @@ namespace hadaq {
          virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
-
    };
 }
 

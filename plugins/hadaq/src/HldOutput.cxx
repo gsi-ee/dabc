@@ -40,7 +40,20 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
 {
    fEpicsSlave = url.HasOption("epicsctrl");
    fHadesFileNames = url.HasOption("hadesnames");
-   fEBNumber=url.GetOptionInt("ebnumber",0); // default is single eventbuilder
+   fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
+
+   if (url.HasOption("rfio")) {
+
+      dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface");
+
+      if (io!=0) {
+         fFile.SetIO(io, true);
+         // set default protocol and node name, can only be used in GSI
+         fFileName = std::string("rfiodaq:gstore:") + fFileName;
+      } else {
+         EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
+      }
+   }
 }
 
 hadaq::HldOutput::~HldOutput()
@@ -52,10 +65,9 @@ bool hadaq::HldOutput::Write_Init()
 {
    if (!dabc::FileOutput::Write_Init()) return false;
 
-
    // always try to get parameters in master and slave mode:
-    fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
-    fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+   fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
+   fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
 
    if (fEpicsSlave) {
 
@@ -64,9 +76,9 @@ bool hadaq::HldOutput::Write_Init()
          ShowInfo(-1, "HldOutput::Write_Init did not find runid parameter");
       else
          fRunNumber = GetRunId();
-      
-       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
-      
+
+      ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
+
 
       if(fBytesWrittenPar.null())
          ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
@@ -111,8 +123,8 @@ bool hadaq::HldOutput::StartNewFile()
       if (!fRunidPar.null())
          fRunidPar.SetValue(fRunNumber);
    }
-     ShowInfo(0, dabc::format("New HldOutput with Runid %d ", fRunNumber)); 
-  
+   ShowInfo(0, dabc::format("New HldOutput with Runid %d ", fRunNumber));
+
    //switch between standard dabc filename or hades run number syntax:
    if (fHadesFileNames) {
       // change file names according hades style:
@@ -120,13 +132,13 @@ bool hadaq::HldOutput::StartNewFile()
    } else {
       ProduceNewFileName();
    }
-    //std::cout <<"HldOutput StartNewFile for "<<fCurrentFileName << std::endl;
-   
+   //std::cout <<"HldOutput StartNewFile for "<<fCurrentFileName << std::endl;
+
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
-   
+
 
    ShowInfo(0, dabc::format("%s open for writing", CurrentFileName().c_str()));
 
@@ -166,19 +178,18 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          startnewfile = true;
          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
       }
-   }
-   else
-   {
+   } else {
      startnewfile = CheckBufferForNextFile(buf.GetTotalSize());
    }
+
    if(startnewfile)
-    {
-	ShowInfo(0, dabc::format("HldOutput before starting new file, bufsize:%d", buf.GetTotalSize()));
-	if (!StartNewFile()) {
+   {
+      ShowInfo(0, dabc::format("HldOutput before starting new file, bufsize:%d", buf.GetTotalSize()));
+      if (!StartNewFile()) {
          EOUT("Cannot start new file for writing");
          return dabc::do_Error;
       }
-    }
+   }
    if (!fBytesWrittenPar.null())
       fBytesWrittenPar.SetValue((int)fCurrentFileSize);
 
@@ -194,20 +205,19 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 void hadaq::HldOutput::SetFullHadesFileName()
 {
-   std::string extens=hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
+   std::string extens = hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
 
-   size_t len = fname.length();
    size_t pos = fname.rfind(".hld");
-   if (pos==std::string::npos)
+   if (pos == std::string::npos)
       pos = fname.rfind(".HLD");
 
-   if (pos==len-4)
+   if (pos == fname.length()-4) {
       fname.insert(pos, extens);
-   else {
+   } else {
       fname += extens;
       fname += ".hld";
    }
-   fCurrentFileName=fname;
+   fCurrentFileName = fname;
 }
 
