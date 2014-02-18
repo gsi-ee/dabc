@@ -53,11 +53,16 @@ bool mbs::LmdOutput::StartNewFile()
 {
    CloseFile();
 
-   ProduceNewFileName();
+   int numtry = 100;
 
-   if (!fFile.OpenWrite(CurrentFileName().c_str(), 0)) {
+   while (numtry > 0) {
+
+      ProduceNewFileName();
+
+      if (fFile.OpenWrite(CurrentFileName().c_str(), 0)) break;
+
       ShowInfo(-1, dabc::format("%s cannot open file for writing, errcode %u", CurrentFileName().c_str(), fFile.LastError()));
-      return false;
+      if (--numtry<=0) return false;
    }
 
    ShowInfo(0, dabc::format("Open %s for writing", CurrentFileName().c_str()));

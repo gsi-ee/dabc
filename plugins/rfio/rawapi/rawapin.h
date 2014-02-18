@@ -201,6 +201,16 @@ int rfio_fnewfile(RFILE *, char *);
 #ifdef __cplusplus
 extern "C" {
 #endif
+int rfio_ffileid(RFILE *);
+   /* returns file id */
+#ifdef __cplusplus
+}
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 int rfio_mkdir(const char *, int);
    /* open new file on already connected server */
 #ifdef __cplusplus

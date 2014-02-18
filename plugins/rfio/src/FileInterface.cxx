@@ -27,9 +27,13 @@ bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
 {
    if (f==0) return false;
 
+   int fileid = rfio_ffileid((RFILE*)f);
+
+   if (fileid<0) return false;
+
 //   return false;
 
-   return rfio_lseek((RFILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0;
+   return rfio_lseek(fileid, offset, relative ? SEEK_CUR : SEEK_SET) >= 0;
 }
 
 

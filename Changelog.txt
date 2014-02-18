@@ -2,9 +2,21 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+18.02.2014
+1. When transport is created, url is provided with the syntax like:
+       <OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/>
+   It's advantage - many parameters in one string. 
+   It's disadvantage - it is the only place there parameters can be specified.
+   Therefore from now one can specify extra options for url via parameter
+   name "urlopt", "urlopt1", "urlopt2", ..., "urlopt9". It makes possible to
+   use wildcard like this:
+       <InputPort name="Input*" queue="10" urlopt="udpbuffer=200000&mtu=64512"/>
+       
+       
 17.02.2014
-1. Test RFIO 
+1. Test RFIO plugin 
 2. Provide RFIO implementation for HLD output
+
 
 10.01.2014
 1. Make http::Server as base class for different implementations.

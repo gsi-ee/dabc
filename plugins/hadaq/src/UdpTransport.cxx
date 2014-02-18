@@ -303,7 +303,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
    fWithObserver = inpport.Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
     DOUT0("Starting hadaq::DataTransport with OBSERVER mode %d", fWithObserver);
    //if(sscanf(GetName(), "Input%d", &fIdNumber)!=1) fIdNumber = 0;
-   fIdNumber=inpport.ItemSubId();
+   fIdNumber = inpport.ItemSubId();
    DOUT0("hadaq::DataTransport %s got id: %d", GetName(), fIdNumber);
 
    if(fWithObserver) {
@@ -325,7 +325,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
 
       CreateTimer("ObserverTimer", 1, false);
-       DOUT0("hadaq::DataTransport created observer parameters");
+      DOUT0("hadaq::DataTransport created observer parameters");
    }
 }
 

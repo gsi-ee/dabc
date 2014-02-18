@@ -4145,6 +4145,16 @@ RFILE *rfio_fopen_gsidaq_dm(
 
 } /* rfio_fopen_gsidaq_dm */
 
+int rfio_ffileid(RFILE *f)
+{
+   int id = 0;
+
+   for (id=0;id<iFileMax;id++)
+      if (pAPIFile[id] == f) return id;
+
+   return -1;
+}
+
 /********************************************************************
  * rfio_fopen_gsidaq: open connection to gStore server and file and
  *      prepare copy to lustre or read cache before migration to tape

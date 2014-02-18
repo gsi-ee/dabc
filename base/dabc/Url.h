@@ -68,7 +68,7 @@ namespace dabc {
          std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;
          int GetOptionInt(const std::string& optname, int dflt = 0) const;
 
-         /**! \brief Prodoces url string with unique address of specified item */
+         /**! \brief Produces url string with unique address of specified item */
          static std::string ComposeItemName(int nodeid, const std::string& itemname = "");
 
          /**! Method creates url string with port address, which includes nodeid and full portname

@@ -1007,7 +1007,26 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string trkind = crcmd.TransportKind();
 
       PortRef port = FindPort(crcmd.PortName());
-      if (trkind.empty()) trkind = port.Cfg("url", cmd).AsStr();
+      if (trkind.empty()) {
+         trkind = port.Cfg("url", cmd).AsStr();
+
+         Url url(trkind);
+         if (url.IsValid()) {
+
+            bool hasoptions = url.GetOptions().length() > 0;
+
+            for (int cnt = 0; cnt < 10; cnt++) {
+               std::string optname = "urlopt";
+               if (cnt>0) dabc::formats(optname,"urlopt%d",cnt);
+               std::string tropt = port.Cfg(optname, cmd).AsStr();
+               if (tropt.length() > 0) {
+                  trkind.append(hasoptions ? "&" : "?");
+                  trkind.append(tropt);
+                  hasoptions = true;
+               }
+            }
+         }
+      }
 
       PortRef port2 = FindPort(trkind);
       WorkerRef dev = FindDevice(trkind);

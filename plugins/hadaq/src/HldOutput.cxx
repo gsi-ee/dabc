@@ -123,24 +123,27 @@ bool hadaq::HldOutput::StartNewFile()
       if (!fRunidPar.null())
          fRunidPar.SetValue(fRunNumber);
    }
-   ShowInfo(0, dabc::format("New HldOutput with Runid %d ", fRunNumber));
 
-   //switch between standard dabc filename or hades run number syntax:
-   if (fHadesFileNames) {
-      // change file names according hades style:
-      SetFullHadesFileName();
-   } else {
-      ProduceNewFileName();
-   }
-   //std::cout <<"HldOutput StartNewFile for "<<fCurrentFileName << std::endl;
+   int numtry = 100;
 
-   if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
+   while (numtry > 0) {
+
+      //switch between standard dabc filename or hades run number syntax:
+      if (fHadesFileNames) {
+         // change file names according hades style:
+         SetFullHadesFileName();
+         numtry = 1; // try only once when exact file name is used
+      } else {
+         ProduceNewFileName();
+      }
+
+      if (fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) break;
+
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
-      return false;
+      if (--numtry <= 0) return false;
    }
 
-
-   ShowInfo(0, dabc::format("%s open for writing", CurrentFileName().c_str()));
+   ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
 
    return true;
 }

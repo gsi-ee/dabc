@@ -188,6 +188,7 @@ Following parameters of attributes could be specified:
 | --------:  | :---------- |
 | name       | port name |
 | url        | used to create transport for the port |
+| urlopt     | extra options for url string, can be specified in other places |
 | queue      | queue size, used for the port |
 | loop       | maximumal event loop length for port before it will be interrupted (default 0 - endless) |
 | bind       | name of bind port |
