@@ -9,6 +9,11 @@ First output of combiner module reserved for the connection to
 the optional MBS transmitter module. Second output can be use to store data in hld files. 
 To enable storage, one should specify two output ports and correctly configure Output1 of combiner module.
 
+To enable HLD file storage one should specify NumOutputs value="2" for Combiner module
+amnd provide hld file name for Output1 port   
+     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+File name fill be extended according to HADAQ naming convetion.       
+
 Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
 To enable transmitter, one should specify auto="true" in configuration which says DABC
 to automatically create module when starting application. 
@@ -46,6 +51,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcRfio.so"/>  
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
@@ -71,14 +77,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
-       <InputPort name="Input*" queue="10">
-          <HadaqUdpBuffer value="200000"/>
-          <DoShmControl value="false"/>  
-          <HadaqUdpMTU value="64512"/>
-          <FlushTimeout value="2.0"/>   
-       </InputPort>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false"/>
        
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
+       <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
 
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   

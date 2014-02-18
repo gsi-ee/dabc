@@ -31,7 +31,6 @@
 hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
    fEpicsSlave(false),
-   fHadesFileNames(false),
    fRunNumber(0),
    fEBNumber(0), 
    fRunidPar(),
@@ -39,8 +38,8 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fFile()
 {
    fEpicsSlave = url.HasOption("epicsctrl");
-   fHadesFileNames = url.HasOption("hadesnames");
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
+   fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
 
    if (url.HasOption("rfio")) {
 
@@ -65,82 +64,65 @@ bool hadaq::HldOutput::Write_Init()
 {
    if (!dabc::FileOutput::Write_Init()) return false;
 
-   // always try to get parameters in master and slave mode:
-   fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
-   fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
-
    if (fEpicsSlave) {
+      // use parameters only in slave mode
 
+      fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
+      fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
 
-      if(fRunidPar.null())
+      if(fRunidPar.null()) {
          ShowInfo(-1, "HldOutput::Write_Init did not find runid parameter");
-      else
-         fRunNumber = GetRunId();
+         return false;
+      }
+
+      if(fBytesWrittenPar.null()) {
+         ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
+         return false;
+      }
+
+      fRunNumber = fRunidPar.Value().AsUInt();
+
+      if (fRunNumber == 0) {
+         ShowInfo(0, "EPICS slave mode is enabled, waiting for runid");
+         return true;
+      }
 
       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
-
-
-      if(fBytesWrittenPar.null())
-         ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
-
    }
 
    return StartNewFile();
 }
 
 
-uint32_t hadaq::HldOutput::GetRunId()
-{
-   if (fRunidPar.null())
-      return hadaq::RawEvent::CreateRunId();
-
-   uint32_t nextrunid =0;
-   unsigned counter = 0;
-   do{
-      nextrunid = fRunidPar.Value().AsUInt();
-      if(nextrunid) break;
-      dabc::Sleep(0.1);
-      counter++;
-      if(counter>1000) {
-         EOUT("HldOutput could not get run id from EPICS master within 100s. Use self generated id. Disable epics runid control.");
-         nextrunid = hadaq::RawEvent::CreateRunId(); // TODO: correct error handling here, shall we terminate instead?
-         fEpicsSlave=false;
-      }
-   } while (nextrunid==0);
-   return nextrunid;
-}
-
-
 bool hadaq::HldOutput::StartNewFile()
 {
    CloseFile();
-   // new file will change run id for complete system:
 
-   if (!fEpicsSlave || fRunNumber == 0) {
+   if (fRunNumber == 0) {
       fRunNumber = hadaq::RawEvent::CreateRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
-      if (!fRunidPar.null())
-         fRunidPar.SetValue(fRunNumber);
    }
 
-   int numtry = 100;
+   // change file names according hades style:
+   std::string extens = hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
+   std::string fname = fFileName;
 
-   while (numtry > 0) {
+   size_t pos = fname.rfind(".hld");
+   if (pos == std::string::npos)
+      pos = fname.rfind(".HLD");
 
-      //switch between standard dabc filename or hades run number syntax:
-      if (fHadesFileNames) {
-         // change file names according hades style:
-         SetFullHadesFileName();
-         numtry = 1; // try only once when exact file name is used
-      } else {
-         ProduceNewFileName();
-      }
+   if (pos == fname.length()-4) {
+      fname.insert(pos, extens);
+   } else {
+      fname += extens;
+      fname += ".hld";
+   }
+   fCurrentFileName = fname;
 
-      if (fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) break;
-
+   if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
-      if (--numtry <= 0) return false;
+      return false;
    }
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
@@ -160,7 +142,7 @@ bool hadaq::HldOutput::CloseFile()
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
-   if (!fFile.isWriting() || buf.null()) return dabc::do_Error;
+   if (buf.null()) return dabc::do_Error;
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       CloseFile();
@@ -175,26 +157,37 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    bool startnewfile = false;
    if (fEpicsSlave) {
       // check if EPICS master has assigned a new run for us:
-      uint32_t nextrunid = GetRunId();
+      uint32_t nextrunid = fRunidPar.Value().AsUInt();
       if (nextrunid > fRunNumber) {
          fRunNumber = nextrunid;
          startnewfile = true;
          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
+      } else {
+
+         if ((nextrunid == 0) && (fRunNumber==0)) {
+            // ignore buffer while run number is not yet known
+            return dabc::do_Ok;
+         }
       }
+
+      if (!fBytesWrittenPar.null())
+         fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+
    } else {
-     startnewfile = CheckBufferForNextFile(buf.GetTotalSize());
+      if (CheckBufferForNextFile(buf.GetTotalSize())) {
+         fRunNumber = 0;
+         startnewfile = true;
+      }
    }
 
-   if(startnewfile)
-   {
-      ShowInfo(0, dabc::format("HldOutput before starting new file, bufsize:%d", buf.GetTotalSize()));
+   if(startnewfile) {
       if (!StartNewFile()) {
          EOUT("Cannot start new file for writing");
          return dabc::do_Error;
       }
    }
-   if (!fBytesWrittenPar.null())
-      fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+
+   if (!fFile.isWriting()) return dabc::do_Error;
 
    for (unsigned n=0;n<buf.NumSegments();n++)
       if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))
@@ -204,23 +197,3 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    return dabc::do_Ok;
 }
-
-
-void hadaq::HldOutput::SetFullHadesFileName()
-{
-   std::string extens = hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
-   std::string fname = fFileName;
-
-   size_t pos = fname.rfind(".hld");
-   if (pos == std::string::npos)
-      pos = fname.rfind(".HLD");
-
-   if (pos == fname.length()-4) {
-      fname.insert(pos, extens);
-   } else {
-      fname += extens;
-      fname += ".hld";
-   }
-   fCurrentFileName = fname;
-}
-

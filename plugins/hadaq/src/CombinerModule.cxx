@@ -97,8 +97,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreateCmdDef("StartHldFile")
       .AddArg("filename", "string", true, "file.hld")
-      .AddArg(dabc::xml_maxsize, "int", false, 50)
-      .SetArgMinMax(dabc::xml_maxsize, 1, 1000);
+      .AddArg(dabc::xml_maxsize, "int", false, 1500)
+      .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
    CreateCmdDef("StopHldFile");
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
@@ -268,15 +268,15 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 
 void hadaq::CombinerModule::ClearExportedCounters()
 {
-     // TODO: we need mechanism that calls this method whenever a new run begins
-     // problem: run id is decided by hld file output, need command communication
-     fTotalRecvBytes = 0;
-     fTotalRecvEvents = 0;
-     fTotalDiscEvents = 0;
-     fTotalDroppedData = 0;
-     fTotalTagErrors = 0;
-     fTotalDataErrors = 0;
-     UpdateExportedCounters();
+   // TODO: we need mechanism that calls this method whenever a new run begins
+   // problem: run id is decided by hld file output, need command communication
+   fTotalRecvBytes = 0;
+   fTotalRecvEvents = 0;
+   fTotalDiscEvents = 0;
+   fTotalDroppedData = 0;
+   fTotalTagErrors = 0;
+   fTotalDataErrors = 0;
+   UpdateExportedCounters();
 }
 
 
@@ -330,8 +330,6 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 }
 
 
-
-
 ///////////////////////////////////////////////////////////////
 //////// INPUT BUFFER METHODS:
 
@@ -341,7 +339,6 @@ bool hadaq::CombinerModule::SkipInputBuffer(unsigned ninp)
 
    DOUT5("CombinerModule::SkipInputBuffer  %d ", ninp);
    return SkipInputBuffers(ninp, 1);
-
 }
 
 
@@ -397,8 +394,8 @@ const uint32_t MaxHadaqTrigger = 0x1000000;
 int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next)
 {
    int res = (int) (next) - prev;
-   if (res > (int) MaxHadaqTrigger/2) res-=MaxHadaqTrigger; else
-   if (res < (int) MaxHadaqTrigger/-2) res+=MaxHadaqTrigger;
+   if (res > (int) MaxHadaqTrigger/2) res -= MaxHadaqTrigger; else
+   if (res < (int) MaxHadaqTrigger/-2) res += MaxHadaqTrigger;
    return res;
 }
 
@@ -451,10 +448,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
          //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
       }
 
-
-
       fCfg[ninp].fErrorBits = fInp[ninp].subevnt()->GetErrBits();
-
 
       int diff = 1;
       if (fCfg[ninp].fLastTrigNr != 0)
@@ -462,7 +456,6 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
 
       if (diff!=1)
          EOUT("%d triggers dropped on the input %u", diff, ninp);
-
    }
 
    return true;

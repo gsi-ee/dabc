@@ -28,7 +28,7 @@ hadaq::Observer::Observer(const std::string& name) :
    RegisterForParameterEvent(maske, false);
 
    std::string netname=dabc::format("daq_netmem%d", fNodeId);
-   fNetmemWorker=::Worker_initBegin(netname.c_str(), hadaq::sigHandler, 0, 0);
+   fNetmemWorker = ::Worker_initBegin(netname.c_str(), hadaq::sigHandler, 0, 0);
    if (fNetmemWorker == 0) {
       EOUT("Could not create netmem worker %s !!!!", netname.c_str());
    } else {
@@ -76,7 +76,7 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
          //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
       }
 
-return 1.0;
+   return 1.0;
 }
 
 
@@ -85,11 +85,9 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 {
    //dabc::LockGuard guard(fEntryMutex);
 
-   std::string shmemname=ShmName(parname);
-   std::string statsname=ReducedName(parname);
+   std::string shmemname = ShmName(parname);
+   std::string statsname = ReducedName(parname);
    hadaq::ShmEntry* entry = FindEntry(statsname,shmemname);
-
-
 
    dabc::Parameter par = dabc::mgr.FindPar(parname);
 
@@ -104,21 +102,20 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 
    if (entry==0) {
       DOUT3("Create new entry for parameter %s", parname.c_str());
-      ::Worker* my=0;
+      ::Worker* my = 0;
       if(parname.find(hadaq::NetmemPrefix)!= std::string::npos){
          DOUT3("Use netmem:");
-         my=fNetmemWorker;
+         my = fNetmemWorker;
 
-      }
-      else if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
-         DOUT3("Use evtbuild:");
-         my=fEvtbuildWorker;
-      }
-      if(my==0)
-         {
-            EOUT("Worker for shmem %s is zero!!!!", shmemname.c_str());
-            return false;
+      } else
+         if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
+            DOUT3("Use evtbuild:");
+            my=fEvtbuildWorker;
          }
+      if(my==0) {
+         EOUT("Worker for shmem %s is zero!!!!", shmemname.c_str());
+         return false;
+      }
       entry = new ShmEntry(statsname, shmemname,my,par);
       fEntries.push_back(entry);
    }
@@ -126,20 +123,15 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
    if(!par.null())
       entry->UpdateValue(par.Value().AsStr());
 
-
    return true;
 }
 
 std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 {
-   std::string res="";
-   size_t sep;
-   sep=dabcname.rfind("_"); // need to look for last underscore, otherwise problems with DABC parameter naming!
-    if (sep!=std::string::npos)
-       {
-          res=dabcname.substr (sep+1,std::string::npos);
-          //std::cout <<"ReducedName:" << res << "from full name:"<<dabcname<<std::endl;
-       }
+   std::string res = "";
+   size_t sep = dabcname.rfind("_"); // need to look for last underscore, otherwise problems with DABC parameter naming!
+   if (sep!=std::string::npos)
+      res = dabcname.substr (sep+1,std::string::npos);
    return res;
 }
 
@@ -226,13 +218,8 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
             CreateShmEntry(parname);
             return;
          }
-//          DOUT3("ProcessParameterEvent for parameter %s", parname.c_str());
-// 	 if(!strstr(parname.c_str(),"runId"))
-// 	 // todo: only in slave mode, supress updating runid from here!
- 	  entry->UpdateValue(evnt.ParValue());
-// 	 else
-// 	    DOUT0("Ignoring update event Event for parameter %s", parname.c_str());
-
+         // todo: only in slave mode, supress updating runid from here!
+         entry->UpdateValue(evnt.ParValue());
 
          break;
       }
@@ -289,15 +276,13 @@ void  hadaq::sigHandler(int sig)
    static int SigCnt=0;
    SigCnt++;
 
-     if ((SigCnt>2) || (dabc::mgr()==0)) {
-        EOUT("hadaq Observer Force application exit");
-        dabc::lgr()->CloseFile();
-        exit(0);
-     }
+   if ((SigCnt>2) || dabc::mgr.null()) {
+      EOUT("hadaq Observer Force application exit");
+      dabc::lgr()->CloseFile();
+      exit(0);
+   }
 
-     dabc::mgr()->ProcessCtrlCSignal();
-
+   dabc::mgr()->ProcessCtrlCSignal();
 }
-
 
 

@@ -20,33 +20,30 @@
 #include <string.h>
 #include <iostream>
 
-hadaq::ShmEntry::ShmEntry(const std::string& statsname, const std::string& shmemname,  ::Worker* handle, dabc::Parameter& par) :
-fStatsName(statsname),fShmName(shmemname),fWorker(handle),fShmPtr(0),fPar(par)
+hadaq::ShmEntry::ShmEntry(const std::string& statsname, const std::string& shmemname, ::Worker* handle, dabc::Parameter& par) :
+   fStatsName(statsname),
+   fShmName(shmemname),
+   fWorker(handle),
+   fShmPtr(0),
+   fPar(par)
 {
    // here hadaq worker add statistics etc.
-   fShmPtr=::Worker_addStatistic(fWorker,fStatsName.c_str());
+   fShmPtr = ::Worker_addStatistic(fWorker,fStatsName.c_str());
 }
 
 hadaq::ShmEntry::~ShmEntry()
 {
-
 }
-
-
 
 void hadaq::ShmEntry::UpdateValue(const std::string& value)
 {
    int i(0);
-   if (dabc::str_to_int(value.c_str(), &i))
+   if (dabc::str_to_int(value.c_str(), &i) && (fShmPtr!=0))
       *fShmPtr = i;
 }
 
 void hadaq::ShmEntry::UpdateParameter()
 {
    if(!fPar.null())
-      {
-         //std::cout <<"ShmEntry updated parameter  "<<fPar.GetName() << std::endl;
-         fPar.SetValue((int)GetValue());
-      }
+      fPar.SetValue((int)GetValue());
 }
-

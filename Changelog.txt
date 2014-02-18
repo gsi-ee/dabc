@@ -19,7 +19,9 @@ current functionality of the framework.
    Such variables could be used with normal syntax in the xml files:         
        <InputPort name="Input*" queue="10" urlopt="udpbuffer=${xbuf}&mtu=${mtu}"/>
 5. Check that xml file do not exists and display proper error
-
+6. Always use HADAQ naming convention for HLD files. 
+   When running in the slave mode, buffers will be skipt until runid is correctly set.
+   
 
 17.02.2014
 1. Test RFIO plugin 
