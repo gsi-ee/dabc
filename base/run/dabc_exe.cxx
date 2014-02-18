@@ -149,7 +149,7 @@ int main(int numc, char* args[])
 
    dabc::Configuration cfg(cfgfile);
    if (!cfg.IsOk()) {
-      EOUT("Cannot read configuration from file %s - Exit", (cfgfile ? cfgfile : "---") );
+      DOUT3("Cannot read configuration from file %s - Exit", (cfgfile ? cfgfile : "---") );
       return 7;
    }
 
@@ -190,15 +190,13 @@ int main(int numc, char* args[])
                   argvalue.resize(argvalue.length()-1);
                }
 
-            printf("SET %s = %s\n", argname.c_str(), argvalue.c_str());
-
             cfg.AddCmdVariable(argname.c_str(), argvalue.c_str());
          }
       }
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
-   if (nodeid >= numnodes) nodeid = 0;
+   if (nodeid>=numnodes) nodeid = 0;
 
    DOUT2("Using config file: %s id: %u", cfgfile, nodeid);
 

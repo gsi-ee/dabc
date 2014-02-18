@@ -18,6 +18,7 @@ current functionality of the framework.
      dabc_exe EventBuilder.xml xbuf=40000 observer=false
    Such variables could be used with normal syntax in the xml files:         
        <InputPort name="Input*" queue="10" urlopt="udpbuffer=${xbuf}&mtu=${mtu}"/>
+5. Check that xml file do not exists and display proper error
 
 
 17.02.2014

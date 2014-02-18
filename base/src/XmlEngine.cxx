@@ -197,6 +197,8 @@ namespace dabc {
          free(fBuf); fBuf = 0;
       }
 
+      inline bool IsBad() { return (fInp!=0) ? !(*fInp) : (fInpStr==0); }
+
       inline bool SkipComments() const { return false; }
 
       inline bool EndOfFile() { return (fInp!=0) ? fInp->eof() : (fInpStrLen<=0); }
@@ -1068,6 +1070,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char* filename, bool showerr)
 
    if ((filename==0) || (strlen(filename)==0)) return 0;
    XmlInputStream inp(true, filename, 100000);
+   if (inp.IsBad()) { EOUT("File %s not found", filename); return 0; }
    return ParseStream(&inp, showerr);
 }
 

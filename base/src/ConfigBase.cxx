@@ -97,11 +97,12 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    if (fname==0) return;
 
    fDoc = Xml::ParseFile(fname, true);
+   if (fDoc==0) return;
 
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
 
    if (IsNodeName(rootnode, xmlRootNode)) {
-      fVersion = GetIntAttr(rootnode, xmlVersionAttr, 1);
+      fVersion = GetIntAttr(rootnode, xmlVersionAttr, 2);
    } else {
       EOUT("Xml file %s not in dabc format", fname);
       Xml::FreeDoc(fDoc);
