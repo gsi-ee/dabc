@@ -26,9 +26,6 @@ const char* hadaq::protocolHadaq = "hadaq";
 
 
 // tag names for xml config file:
-const char* hadaq::xmlUdpPort        = "HadaqUdpPort";
-const char* hadaq::xmlUdpBuffer      = "HadaqUdpBuffer";
-const char* hadaq::xmlMTUsize        = "HadaqUdpMTU";
 const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 
 //const char* hadaq::xmlServerKind        = "HadaqServerKind";

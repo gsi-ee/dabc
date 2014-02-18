@@ -8,9 +8,12 @@ current functionality of the framework.
    It's advantage - many parameters in one string. 
    It's disadvantage - it is the only place there parameters can be specified.
    Therefore from now one can specify extra options for url via parameter
-   name "urlopt", "urlopt1", "urlopt2", ..., "urlopt9". It makes possible to
+   name "urlopt", "urlopt1" or "urlopt2". It makes possible to
    use wildcard like this:
        <InputPort name="Input*" queue="10" urlopt="udpbuffer=200000&mtu=64512"/>
+       <InputPort name="Input2" urlopt2="observer=true"/>
+2. Use fully url syntax to specify parameters for hadaq::UdpTransport
+3. Provide Url::GetOptionBool and Url::GetOptionDouble methods
        
        
 17.02.2014

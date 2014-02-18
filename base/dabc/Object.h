@@ -77,9 +77,6 @@ namespace dabc {
    extern const char* xmlFlushTimeout;
    extern const char* xmlConnTimeout;
 
-   extern const char* xmlTrueValue;
-   extern const char* xmlFalseValue;
-
    // list of parameters, taken from URL
    // this parameters can be (should be) used in many places, which
    // allows to specify them through standardized URL syntax
@@ -90,7 +87,7 @@ namespace dabc {
    extern const char* xmlFileSizeLimit; // used as separate xml node
    extern const char* xml_maxsize;      // used as option in file url
    extern const char* xml_number;       // used as option in file url
-
+   extern const char* xml_flush;        // used as flush attribute in url
 
    extern const char* xmlMcastAddr;
    extern const char* xmlMcastPort;

@@ -49,13 +49,12 @@ namespace hadaq {
 
          friend class DataTransport;
 
-         int                fNPort;         // upd port number
-         dabc::Pointer      fTgtPtr;        // pointer used to read data
-         bool               fWaitMoreData;  // indicate that transport waits for more data
-         unsigned           fMTU;      // maximal size of packet expected from TRB
-         double             fFlushTimeout; // time when buffer will be flushed
-         bool               fBuildFullEvent;  // if specified, hadaq event should be build
-         int                fSendCnt;        // counter of send buffers since last timeout active
+         int                fNPort;           ///< upd port number
+         dabc::Pointer      fTgtPtr;          ///< pointer used to read data
+         bool               fWaitMoreData;    ///< indicate that transport waits for more data
+         unsigned           fMTU;             ///< maximal size of packet expected from TRB
+         double             fFlushTimeout;    ///< time when buffer will be flushed
+         int                fSendCnt;         ///< counter of send buffers since last timeout active
 
          uint64_t           fTotalRecvPacket;
          uint64_t           fTotalDiscardPacket;
@@ -76,7 +75,7 @@ namespace hadaq {
          unsigned ReadUdp();
 
       public:
-         DataSocketAddon(int fd, int nport, int mtu);
+         DataSocketAddon(int fd, int nport, int mtu, double flush);
          virtual ~DataSocketAddon();
 
          // this is interface from DataInput
@@ -115,8 +114,10 @@ namespace hadaq {
 
          virtual void ProcessTimerEvent(unsigned timer);
 
+         virtual void ProcessConnectEvent(const std::string& name, bool on);
+
       public:
-         DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon);
+         DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer);
          virtual ~DataTransport();
 
    };

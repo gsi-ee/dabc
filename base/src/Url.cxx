@@ -14,7 +14,9 @@
  ************************************************************/
 
 #include "dabc/Url.h"
+
 #include "dabc/logging.h"
+#include "dabc/ConfigBase.h"
 
 dabc::Url::Url()
 {
@@ -243,6 +245,30 @@ int dabc::Url::GetOptionInt(const std::string& optname, int dflt) const
 
    int resi(0);
    if (str_to_int(res.c_str(), &resi)) return resi;
+
+   return dflt;
+}
+
+double dabc::Url::GetOptionDouble(const std::string& optname, double dflt) const
+{
+   std::string res = GetOptionStr(optname);
+
+   if (res.empty()) return dflt;
+
+   double resd(0.);
+   if (str_to_double(res.c_str(), &resd)) return resd;
+
+   return dflt;
+}
+
+bool dabc::Url::GetOptionBool(const std::string& optname, bool dflt) const
+{
+   std::string res = GetOptionStr(optname);
+
+   if (res.empty()) return dflt;
+
+   if (res == xmlTrueValue) return true;
+   if (res == xmlFalseValue) return false;
 
    return dflt;
 }

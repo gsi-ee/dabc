@@ -115,7 +115,10 @@ namespace dabc {
 
          void Disconnect() { fQueue.Disconnect(IsInput()); }
 
+         /** Set name of bind port - when input and output ports should use same transport */
          void SetBindName(const std::string& name);
+
+         /** Returns name of bind port */
          std::string GetBindName() const;
 
          /** Method can only be used from thread itself */

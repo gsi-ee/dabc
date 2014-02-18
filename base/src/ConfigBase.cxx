@@ -79,6 +79,9 @@ namespace dabc {
    const char* xmlSocketHost       = "sockethost";
    const char* xmlUseControl       = "control";
    const char* xmlMasterProcess    = "master";
+
+   const char* xmlTrueValue         = "true";
+   const char* xmlFalseValue        = "false";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -348,7 +351,7 @@ bool dabc::ConfigBase::NodeActive(unsigned id)
    XMLNodePointer_t contnode = FindContext(id);
    if (contnode == 0) return false;
 
-   return Find1(contnode, "", xmlRunNode, xmlActive) != "false";
+   return Find1(contnode, "", xmlRunNode, xmlActive) != xmlFalseValue;
 }
 
 std::string dabc::ConfigBase::ContextName(unsigned id)
@@ -505,10 +508,10 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    std::string debugger = Find1(contnode, "", xmlRunNode, xmlDebugger);
    std::string ldpath = Find1(contnode, "", xmlRunNode, xmlLDPATH);
-   bool copycfg = (Find1(contnode, "", xmlRunNode, xmlCopyCfg) == "true");
+   bool copycfg = (Find1(contnode, "", xmlRunNode, xmlCopyCfg) == xmlTrueValue);
    std::string dabc_stdout = Find1(contnode, "", xmlRunNode, xmlStdOut);
    std::string dabc_errout = Find1(contnode, "", xmlRunNode, xmlErrOut);
-   bool nullout = (Find1(contnode, "", xmlRunNode, xmlNullOut) == "true");
+   bool nullout = (Find1(contnode, "", xmlRunNode, xmlNullOut) == xmlTrueValue);
    std::string tasksetargs = Find1(contnode, "", xmlRunNode, xmlTaskset);
    std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
 
@@ -645,13 +648,13 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
       if (!workdir.empty()) res += dabc::format(" cd %s;", workdir.c_str());
 
-      if (!tasksetargs.empty() && (tasksetargs!="false")) {
+      if (!tasksetargs.empty() && (tasksetargs!=xmlFalseValue)) {
          res += " taskset ";
          res += tasksetargs;
       }
 
-      if (!debugger.empty() && (debugger!="false")) {
-         if (debugger == "true")
+      if (!debugger.empty() && (debugger!=xmlFalseValue)) {
+         if (debugger == xmlTrueValue)
             res += " gdb -q -x \\$DABCSYS/base/run/gdbcmd.txt --args";
          else {
             res += " ";

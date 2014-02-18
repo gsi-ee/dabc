@@ -25,15 +25,14 @@
 #include "dabc/Manager.h"
 
 
-hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu) :
+hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush) :
    dabc::SocketAddon(fd),
    dabc::DataInput(),
    fNPort(nport),
    fTgtPtr(),
    fWaitMoreData(false),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
-   fFlushTimeout(1.),
-   fBuildFullEvent(false),
+   fFlushTimeout(flush),
    fSendCnt(0),
    fTotalRecvPacket(0),
    fTotalDiscardPacket(0),
@@ -43,7 +42,6 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu) :
    fTotalRecvEvents(0),
    fTotalRecvBuffers(0),
    fTotalDroppedBuffers(0)
-
 {
 }
 
@@ -281,30 +279,18 @@ int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
 
 // =================================================================================
 
-hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpport, DataSocketAddon* addon) :
+hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer) :
    dabc::InputTransport(cmd, inpport, addon, false, addon),
    fIdNumber(0),
-   fWithObserver(false), 
+   fWithObserver(observer),
    fDataRateName()
 {
-
    // do not process to much events at once, let another transports a chance
    SetPortLoopLength(OutputName(), 2);
 
-   addon->fFlushTimeout = inpport.Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(addon->fFlushTimeout);
-   addon->fMTU = inpport.Cfg(hadaq::xmlMTUsize, cmd).AsInt(addon->fMTU);
-   addon->fBuildFullEvent = inpport.Cfg(hadaq::xmlBuildFullEvent, cmd).AsBool(addon->fBuildFullEvent);
-
-   if (addon->fBuildFullEvent) {
-      EOUT("Direct building of event in the transport was not implemented");
-      exit(333);
-   }
-
-   fWithObserver = inpport.Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
-    DOUT0("Starting hadaq::DataTransport with OBSERVER mode %d", fWithObserver);
-   //if(sscanf(GetName(), "Input%d", &fIdNumber)!=1) fIdNumber = 0;
    fIdNumber = inpport.ItemSubId();
-   DOUT0("hadaq::DataTransport %s got id: %d", GetName(), fIdNumber);
+
+   DOUT0("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
 
    if(fWithObserver) {
       // workaround to suppress problems with dim observer when this ratemeter is registered:
@@ -333,6 +319,16 @@ hadaq::DataTransport::~DataTransport()
 {
 
 }
+
+void hadaq::DataTransport::ProcessConnectEvent(const std::string& name, bool on)
+{
+   if (on && (name == OutputName())) {
+
+      DOUT0("hadaq::DataTransport ID %u CONNECTED!!!!", name.c_str(), fIdNumber);
+   }
+}
+
+
 
 void hadaq::DataTransport::ProcessTimerEvent(unsigned timer)
 {
@@ -379,7 +375,7 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), addon->fTotalRecvBytes);
    unsigned capacity = PortQueueCapacity(OutputName());
    float ratio = 100.;
-   if (capacity>0) ratio-= 100.* NumCanSend()/capacity;
+   if (capacity>0) ratio -= 100.* NumCanSend()/capacity;
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
    SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
 

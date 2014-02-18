@@ -53,7 +53,7 @@ mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
    fNumSubevents = url.GetOptionInt("numsub", 2);
    fFirstProcId = url.GetOptionInt("procid", 0);
    fSubeventSize = url.GetOptionInt("size", 32);
-   fIsGo4RandomFormat = url.GetOptionStr("go4","true") == "true";
+   fIsGo4RandomFormat = url.GetOptionBool("go4", true);
    fFullId = url.GetOptionInt("fullid", 0);
    fTotalSizeLimit = url.GetOptionInt("total", 0);
    fGenerTimeout = url.GetOptionInt("tmout", 0)*0.001;

@@ -191,20 +191,15 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
     </Run>
       
       
-       <!-- shmem control config -->
+   <!-- shmem control config -->
    <Observer name="shm">
      <DoShmControl value="true"/>
    </Observer>  
    
    <Module name="Combiner">    
 
-	<InputPort name="Input*" queue="10">
-	    <HadaqUdpBuffer value="200000"/>
-          <DoShmControl value="true"/>  
-          <HadaqUdpMTU value="64512"/>
-          <FlushTimeout value="2.0"/>   
-       </InputPort>
-       
+      <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
+
        <DoShmControl value="true"/>  
        <FlushTimeout value="2.0"/>   
 
@@ -220,9 +215,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-</Module>
-
-
+   </Module>
 
   <Module name="OnlineServer">
     
@@ -234,7 +227,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
 
        <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
        <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
- </Module>
+  </Module>
    
    
    <MemoryPool name="Pool">

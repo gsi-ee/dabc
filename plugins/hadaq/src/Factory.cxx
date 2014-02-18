@@ -66,20 +66,19 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    if (portref.IsInput() && (url.GetProtocol()=="hadaq") && !url.GetHostName().empty()) {
 
       int nport = url.GetPort();
-      int rcvbuflen = url.GetOptionInt("buf", 1 << 20);
-
-      nport = portref.Cfg(hadaq::xmlUdpPort, cmd).AsInt(nport);
-      rcvbuflen = portref.Cfg(hadaq::xmlUdpBuffer, cmd).AsInt(rcvbuflen);
-      int mtu = portref.Cfg(hadaq::xmlMTUsize, cmd).AsInt(63*1024);
+      int rcvbuflen = url.GetOptionInt("udpbuf", 2000000);
+      int mtu = url.GetOptionInt("mtu", 64512);
+      double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
+      bool observer = url.GetOptionBool("observer", false);
 
       if (nport>0) {
 
          int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
 
          if (fd>0) {
-            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu);
+            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush);
 
-            return new hadaq::DataTransport(cmd, portref, addon);
+            return new hadaq::DataTransport(cmd, portref, addon, observer);
          }
       }
    }

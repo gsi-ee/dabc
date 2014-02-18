@@ -348,9 +348,6 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    q()->fInpId = port_inp.ItemId();
    q()->fInpSignKind = port_inp.GetSignallingKind();
 
-
-//   DOUT0("Connecting ports output %p input %p  m1 %p m2 %p", port1, port2, m1(), m2());
-
    // first of all, we must connect input port
    dabc::Command cmd2("SetQueue");
    cmd2.SetStr("Port", port_inp.GetName());

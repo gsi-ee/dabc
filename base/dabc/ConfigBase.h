@@ -80,6 +80,9 @@ namespace dabc {
    extern const char* xmlUseControl;
    extern const char* xmlMasterProcess;
 
+   extern const char* xmlTrueValue;
+   extern const char* xmlFalseValue;
+
    enum { defaultDabcPort = 1237 };
 
    class ConfigIO;

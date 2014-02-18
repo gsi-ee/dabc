@@ -1015,7 +1015,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
             bool hasoptions = url.GetOptions().length() > 0;
 
-            for (int cnt = 0; cnt < 10; cnt++) {
+            for (int cnt = 0; cnt < 3; cnt++) {
                std::string optname = "urlopt";
                if (cnt>0) dabc::formats(optname,"urlopt%d",cnt);
                std::string tropt = port.Cfg(optname, cmd).AsStr();

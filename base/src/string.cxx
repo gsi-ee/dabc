@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "dabc/ConfigBase.h"
+
 void dabc::formats(std::string& sbuf, const char *fmt, ...)
 {
    if (!fmt || (strlen(fmt)==0)) return;
@@ -182,8 +184,8 @@ bool dabc::str_to_double(const char* val, double* res)
 bool dabc::str_to_bool(const char* val, bool* res)
 {
    if ((val==0) || (res==0)) return false;
-   if (strcmp(val, "true")==0) { *res = true; return true; }
-   if (strcmp(val, "false")==0) { *res = false; return true; }
+   if (strcmp(val, xmlTrueValue)==0) { *res = true; return true; }
+   if (strcmp(val, xmlFalseValue)==0) { *res = false; return true; }
    return false;
 }
 

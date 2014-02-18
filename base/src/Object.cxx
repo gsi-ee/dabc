@@ -70,9 +70,6 @@ namespace dabc {
    const char* xmlFlushTimeout      = "FlushTimeout";
    const char* xmlConnTimeout       = "ConnTimeout";
 
-   const char* xmlTrueValue         = "true";
-   const char* xmlFalseValue        = "false";
-
    const char* xmlMcastAddr         = "McastAddr";
    const char* xmlMcastPort         = "McastPort";
    const char* xmlMcastRecv         = "McastRecv";
@@ -84,6 +81,7 @@ namespace dabc {
    const char* xmlFileSizeLimit     = "FileSizeLimit";
    const char* xml_maxsize          = "maxsize";
    const char* xml_number           = "number";
+   const char* xml_flush            = "flush";
 
    const char* typeThread           = "dabc::Thread";
    const char* typeDevice           = "dabc::Device";

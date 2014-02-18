@@ -24,7 +24,7 @@
 #include "dabc/logging.h"
 #include "dabc/Exception.h"
 #include "dabc/Command.h"
-// #include "dabc/CommandDef.h"
+#include "dabc/ConfigBase.h"
 #include "dabc/ReferencesVector.h"
 
 
@@ -146,7 +146,7 @@ bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, un
    // we need to indicate this to the client
    // Client in this case should cleanup its buffers while with gap
    // one cannot correctly reconstruct history backwards
-   if (!cross_boundary) Xml::NewAttr(topnode, 0, "gap", "true");
+   if (!cross_boundary) Xml::NewAttr(topnode, 0, "gap", xmlTrueValue);
 
    return true;
 }
@@ -513,7 +513,7 @@ std::string dabc::HierarchyContainer::RequestHistoryAsXml(uint64_t version, int 
    // Client in this case should cleanup its buffers while with gap
    // one cannot correctly reconstruct history backwards
    if ((version>0) && !cross_boundary)
-      Xml::NewAttr(topnode, 0, "gap", "true");
+      Xml::NewAttr(topnode, 0, "gap", xmlTrueValue);
 
    std::string res;
 

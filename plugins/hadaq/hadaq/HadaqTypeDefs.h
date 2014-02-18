@@ -28,9 +28,6 @@ namespace hadaq {
    extern const char* protocolHld;
    extern const char* protocolHadaq;
 
-   extern const char* xmlUdpPort;
-   extern const char* xmlUdpBuffer;
-   extern const char* xmlMTUsize;
    extern const char* xmlBuildFullEvent;
 
    extern const char* xmlObserverEnabled;

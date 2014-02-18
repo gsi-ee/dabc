@@ -67,6 +67,8 @@ namespace dabc {
          bool HasOption(const std::string& optname) const { return GetOption(optname); }
          std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;
          int GetOptionInt(const std::string& optname, int dflt = 0) const;
+         double GetOptionDouble(const std::string& optname, double dflt = 0.) const;
+         bool GetOptionBool(const std::string& optname, bool dflt = false) const;
 
          /**! \brief Produces url string with unique address of specified item */
          static std::string ComposeItemName(int nodeid, const std::string& itemname = "");
