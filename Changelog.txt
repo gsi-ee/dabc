@@ -14,8 +14,12 @@ current functionality of the framework.
        <InputPort name="Input2" urlopt2="observer=true"/>
 2. Use fully url syntax to specify parameters for hadaq::UdpTransport
 3. Provide Url::GetOptionBool and Url::GetOptionDouble methods
-       
-       
+4. When starting DABC, one could provide extra arguments to dabc_exe like:
+     dabc_exe EventBuilder.xml xbuf=40000 observer=false
+   Such variables could be used with normal syntax in the xml files:         
+       <InputPort name="Input*" queue="10" urlopt="udpbuffer=${xbuf}&mtu=${mtu}"/>
+
+
 17.02.2014
 1. Test RFIO plugin 
 2. Provide RFIO implementation for HLD output

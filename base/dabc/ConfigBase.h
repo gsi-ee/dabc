@@ -103,8 +103,9 @@ namespace dabc {
          enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindGetlog, kindDellog };
 
          XMLDocPointer_t   fDoc;
-         int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
-         XMLNodePointer_t  fVariables;
+         int               fVersion;           // -1 - error, 0 - xdaq, 1 and more - dabc
+         XMLNodePointer_t  fCmdVariables;      // node with command variables
+         XMLNodePointer_t  fVariables;         // node with variables definition
 
          // following variables work as 'environment'
          std::string       envDABCSYS;
@@ -191,6 +192,9 @@ namespace dabc {
 
          /** Replaces entries like ${name} be variable value */
          std::string ResolveEnv(const std::string& arg);
+
+         /** Add variable from command line */
+         void AddCmdVariable(const char* name, const char* value);
    };
 
 }

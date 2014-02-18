@@ -153,7 +153,7 @@ int main(int numc, char* args[])
       return 7;
    }
 
-   if (cfg.GetVersion() != 2) {
+   if (cfg.GetVersion() < 2) {
       EOUT("Only dabc version 2 for xml files is supported - Exit");
       return 7;
    }
@@ -176,6 +176,25 @@ int main(int numc, char* args[])
       else
       if (strcmp(arg,"-norun")==0)
          dorun = false;
+      else {
+         const char* separ = strchr(arg,'=');
+         if ((separ!=0) && (separ!=arg)) {
+            std::string argname, argvalue;
+            argname.append(arg, separ - arg);
+            argvalue = separ+1;
+
+            // remove leading/trailing quotes if found
+            if ((argvalue.length() > 1) && (argvalue[0] == argvalue[argvalue.length()-1]))
+               if ((argvalue[0] == '\'') || (argvalue[0] == '\"')) {
+                  argvalue.erase(0,1);
+                  argvalue.resize(argvalue.length()-1);
+               }
+
+            printf("SET %s = %s\n", argname.c_str(), argvalue.c_str());
+
+            cfg.AddCmdVariable(argname.c_str(), argvalue.c_str());
+         }
+      }
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();

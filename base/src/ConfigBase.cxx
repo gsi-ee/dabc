@@ -87,6 +87,8 @@ namespace dabc {
 dabc::ConfigBase::ConfigBase(const char* fname) :
    fDoc(0),
    fVersion(-1),
+   fCmdVariables(0),
+   fVariables(0),
    envDABCSYS(),
    envDABCUSERDIR(),
    envDABCNODEID(),
@@ -97,8 +99,6 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    fDoc = Xml::ParseFile(fname, true);
 
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-
-   fVariables = 0;
 
    if (IsNodeName(rootnode, xmlRootNode)) {
       fVersion = GetIntAttr(rootnode, xmlVersionAttr, 1);
@@ -114,6 +114,10 @@ dabc::ConfigBase::~ConfigBase()
 {
    Xml::FreeDoc(fDoc);
    fDoc = 0;
+
+   Xml::FreeNode(fCmdVariables);
+   fCmdVariables = 0;
+
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
@@ -126,12 +130,22 @@ dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
 
    XMLNodePointer_t node = Xml::GetChild(rootnode);
    while (node!=0) {
-      if (IsNodeName(node, xmlVariablesNode)) break;
+      if (IsNodeName(node, xmlVariablesNode)) {
+         fVariables = node;
+         break;
+      }
       node = Xml::GetNext(node);
    }
 
-   fVariables = node;
    return fVariables;
+}
+
+void dabc::ConfigBase::AddCmdVariable(const char* name, const char* value)
+{
+   if (fCmdVariables==0) fCmdVariables = Xml::NewChild(0, 0, "CmdVariables", 0);
+
+   XMLNodePointer_t node = Xml::NewChild(fCmdVariables, 0, name, 0);
+   Xml::NewAttr(node, 0, xmlValueAttr, value);
 }
 
 
@@ -441,7 +455,8 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
       if (var.length()>0) {
          std::string value;
 
-         XMLNodePointer_t node = FindChild(vars, var.c_str());
+         XMLNodePointer_t node = FindChild(fCmdVariables, var.c_str());
+         if (node==0) node = FindChild(vars, var.c_str());
          if (node!=0) value = GetNodeValue(node);
 
          if (value.empty()){
@@ -747,3 +762,4 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    return logcmd;
 }
+
