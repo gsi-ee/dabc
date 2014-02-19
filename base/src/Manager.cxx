@@ -1028,66 +1028,77 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          }
       }
 
-      PortRef port2 = FindPort(trkind);
-      WorkerRef dev = FindDevice(trkind);
-
       if (port.null()) {
          EOUT("Ports %s not found - cannot create transport", crcmd.PortName().c_str());
-         cmd_res = cmd_false;
-      } else
+         return cmd_false;
+      }
+
+      if (trkind.empty()) {
+         // disconnect will be done via special command
+         port.Disconnect();
+         return cmd_true;
+      }
+
+      WorkerRef dev = FindDevice(trkind);
+
+      Url url(trkind);
+      if (dev.null() && url.IsValid() && ((url.GetProtocol()=="dev") || (url.GetProtocol()=="device")))
+         dev = FindDevice(url.GetFullName());
+
+      if (!dev.null()) {
+         cmd.SetStr("url", trkind); // provide complete url to the device
+         dev.Submit(cmd);
+         return cmd_postponed;
+      }
+
+      PortRef port2 = FindPort(trkind);
       if (!port2.null()) {
          // this is local connection between two ports
          cmd_res = dabc::LocalTransport::ConnectPorts(port2, port);
          // connect also bind ports (if exists)
-         dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
-      } else
-      if (!dev.null()) {
-         dev.Submit(cmd);
-         cmd_res = cmd_postponed;
-      } else
-      if (trkind.empty()) {
-         // disconnect will be done via special command
-         port.Disconnect();
-         cmd_res = cmd_true;
-      } else {
+         if (cmd_res == cmd_true) cmd_res = dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
 
-         cmd_res = cmd_false;
+         return cmd_res;
+      }
 
-         DOUT0("Request transport for port %s kind %s", port.ItemName().c_str(), trkind.c_str());
 
-         TransportRef tr;
-         FOR_EACH_FACTORY(
-            tr = factory->CreateTransport(port, trkind, cmd);
-            if (!tr.null()) break;
-         )
 
-         if (!tr.null()) {
+      cmd_res = cmd_false;
 
-            std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
-            if (thrdname.empty())
-               switch (GetThreadsLayout()) {
-                  case layoutMinimalistic: thrdname = ThreadName(); break;
-                  case layoutPerModule: thrdname = port.GetModule().ThreadName(); break;
-                  case layoutBalanced: thrdname = port.GetModule().ThreadName() + (port.IsInput() ? "Inp" : "Out"); break;
-                  case layoutMaximal: thrdname = port.GetModule().ThreadName() + port.GetName(); break;
-                  default: thrdname = port.GetModule().ThreadName(); break;
-               }
+      DOUT0("Request transport for port %s kind %s", port.ItemName().c_str(), trkind.c_str());
 
-            DOUT3("Creating thread %s for transport", thrdname.c_str());
+      TransportRef tr;
+      FOR_EACH_FACTORY(
+         tr = factory->CreateTransport(port, trkind, cmd);
+         if (!tr.null()) break;
+      )
 
-            // TODO: be aware that in future simple transport can be bidirectional!
+      if (!tr.null()) {
 
-            if (!tr.MakeThreadForWorker(thrdname)) {
-               EOUT("Fail to create thread for transport");
-               tr.Destroy();
-            } else {
-               tr.ConnectPoolHandles();
-               cmd_res = cmd_true;
-               if (port.IsInput())
-                  dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
-               if (port.IsOutput())
-                  dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
+         std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
+         if (thrdname.empty())
+            switch (GetThreadsLayout()) {
+               case layoutMinimalistic: thrdname = ThreadName(); break;
+               case layoutPerModule: thrdname = port.GetModule().ThreadName(); break;
+               case layoutBalanced: thrdname = port.GetModule().ThreadName() + (port.IsInput() ? "Inp" : "Out"); break;
+               case layoutMaximal: thrdname = port.GetModule().ThreadName() + port.GetName(); break;
+               default: thrdname = port.GetModule().ThreadName(); break;
             }
+
+         DOUT3("Creating thread %s for transport", thrdname.c_str());
+
+         // TODO: be aware that in future simple transport can be bidirectional!
+
+         if (!tr.MakeThreadForWorker(thrdname)) {
+            EOUT("Fail to create thread for transport");
+            tr.Destroy();
+         } else {
+            tr.ConnectPoolHandles();
+            cmd_res = cmd_true;
+            if (port.IsInput())
+               dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
+            if (port.IsOutput())
+               dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
          }
       }
    } else

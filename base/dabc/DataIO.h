@@ -89,6 +89,7 @@ namespace dabc {
           *   - di_DfltBufSize   - any non-zero buffer can be provided
           *   - di_Repeat        - nothing to read now, try again as soon as possible
           *   - di_RepeatTimeOut - nothing to read now, try again after timeout
+          *   - di_CallBack      - input will activate transport via callback
           *   - di_Error         - error, close input */
          virtual unsigned Read_Size() { return di_EndOfStream; }
 
@@ -96,6 +97,7 @@ namespace dabc {
           *
           * \returns
           *   - di_Ok               - buffer must be filled in Read_Complete call
+          *   - di_CallBack         - input will do readout and activate transport via callback
           *   - di_Error (or other) - error, skip buffer */
          virtual unsigned Read_Start(Buffer& buf) { return di_Ok; }
 

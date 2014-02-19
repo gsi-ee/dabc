@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+19.02.2014
+1. Device will be created when specified in xml file. 
+   Fix error with parameters setting from xml file.
+2. When specifying url for tranposrt creation, one could use dev:// protocol
+   to refer device name like:     
+       <OutputPort name="Output1" url="dev://user_device"/>
+
+
 18.02.2014
 1. When transport is created, url is provided with the syntax like:
        <OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/>
@@ -15,7 +23,7 @@ current functionality of the framework.
 2. Use fully url syntax to specify parameters for hadaq::UdpTransport
 3. Provide Url::GetOptionBool and Url::GetOptionDouble methods
 4. When starting DABC, one could provide extra arguments to dabc_exe like:
-     dabc_exe EventBuilder.xml xbuf=40000 observer=false
+       dabc_exe EventBuilder.xml xbuf=200000 mtu=62000
    Such variables could be used with normal syntax in the xml files:         
        <InputPort name="Input*" queue="10" urlopt="udpbuffer=${xbuf}&mtu=${mtu}"/>
 5. Check that xml file do not exists and display proper error

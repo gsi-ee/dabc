@@ -27,7 +27,7 @@ hadaq::Observer::Observer(const std::string& name) :
    RegisterForParameterEvent(maskn, false);
    RegisterForParameterEvent(maske, false);
 
-   std::string netname=dabc::format("daq_netmem%d", fNodeId);
+   std::string netname = dabc::format("daq_netmem%d", fNodeId);
    fNetmemWorker = ::Worker_initBegin(netname.c_str(), hadaq::sigHandler, 0, 0);
    if (fNetmemWorker == 0) {
       EOUT("Could not create netmem worker %s !!!!", netname.c_str());
@@ -42,7 +42,7 @@ hadaq::Observer::Observer(const std::string& name) :
       ::Worker_initEnd(fEvtbuildWorker); // this will just add pid as default entry.
    }
 
-   fFlushTimeout=1.0;
+   fFlushTimeout = 1.0;
 
    DOUT0("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str());
 }
@@ -69,12 +69,12 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
 // NOTE the above will lead to an overflowing with parameter update events. need to avoid circular signalling here
 
    // for the moment, we will just update the one value we need for hades eventbuilding:
-   std::string netname=dabc::format("daq_evtbuild%d", fNodeId);
-      hadaq::ShmEntry* entry = FindEntry("runId",netname);
-      if(entry){
-         entry->UpdateParameter();
-         //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
-      }
+   std::string netname = dabc::format("daq_evtbuild%d", fNodeId);
+   hadaq::ShmEntry* entry = FindEntry("runId",netname);
+   if(entry){
+      entry->UpdateParameter();
+      //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
+   }
 
    return 1.0;
 }
@@ -108,15 +108,15 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
          my = fNetmemWorker;
 
       } else
-         if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
-            DOUT3("Use evtbuild:");
-            my=fEvtbuildWorker;
-         }
+      if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
+         DOUT3("Use evtbuild:");
+         my=fEvtbuildWorker;
+      }
       if(my==0) {
          EOUT("Worker for shmem %s is zero!!!!", shmemname.c_str());
          return false;
       }
-      entry = new ShmEntry(statsname, shmemname,my,par);
+      entry = new ShmEntry(statsname, shmemname, my, par);
       fEntries.push_back(entry);
    }
 
@@ -138,9 +138,7 @@ std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 std::string hadaq::Observer::ShmName(const std::string& dabcname)
 {
    std::string res = "";
-   size_t sep;
-
-   sep = dabcname.find("_");
+   size_t sep = dabcname.find("_");
    if (sep != std::string::npos) {
       res = dabcname.substr(0, sep);
       //std::cout << "ShmName:" << res << std::endl;
@@ -153,9 +151,7 @@ std::string hadaq::Observer::ShmName(const std::string& dabcname)
    else
       res = "unknown";
 
-   std::string retval=std::string(dabc::format("%s%d", res.c_str(), fNodeId));
-   //std::cout <<"ShmName:" << retval << std::endl;
-   return retval;
+   return dabc::format("%s%d", res.c_str(), fNodeId);
 }
 
 
@@ -183,8 +179,6 @@ void hadaq::Observer::RemoveEntry(ShmEntry* entry)
       iter++;
    }
 }
-
-
 
 
 void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)

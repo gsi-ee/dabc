@@ -38,6 +38,8 @@ namespace dabc {
 
          Device(const std::string& name);
 
+         virtual bool Find(ConfigIO &cfg);
+
          // FIXME: device mutex should be normal object mutex - isn't it?
          Mutex* DeviceMutex() { return &fDeviceMutex; }
 

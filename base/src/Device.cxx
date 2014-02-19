@@ -69,3 +69,19 @@ int dabc::Device::ExecuteCommand(Command cmd)
 
    return dabc::Worker::ExecuteCommand(cmd);
 }
+
+
+bool dabc::Device::Find(ConfigIO &cfg)
+{
+   DOUT4("Device::Find %p name = %s parent %p", this, GetName(), GetParent());
+
+   if (GetParent()==0) return false;
+
+   // module will always have tag "Device", class could be specified with attribute
+   while (cfg.FindItem(xmlDeviceNode)) {
+      if (cfg.CheckAttr(xmlNameAttr, GetName())) return true;
+   }
+
+   return false;
+}
+

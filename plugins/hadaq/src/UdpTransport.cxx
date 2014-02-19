@@ -323,8 +323,7 @@ hadaq::DataTransport::~DataTransport()
 void hadaq::DataTransport::ProcessConnectEvent(const std::string& name, bool on)
 {
    if (on && (name == OutputName())) {
-
-      DOUT0("hadaq::DataTransport ID %u CONNECTED!!!!", name.c_str(), fIdNumber);
+      DOUT4("hadaq::DataTransport ID %u CONNECTED!!!!", fIdNumber);
    }
 }
 

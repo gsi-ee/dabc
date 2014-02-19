@@ -62,7 +62,7 @@ Note for distributed run id via EPICS (HADES production mode):
 This will allow to monitor values via EPICS anyway
 
 2) set file outputs to get common run id via epics master process with option "epicsctrl":
-<OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld&epicsctrl&hadesnames&ebnumber=1" queue="200"/>
+<OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld&epicsctrl&ebnumber=1" queue="200"/>
 
 Note that in this mode parameter "maxsize" has no effect on maximum file size to start a new hld file!
 This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq/app/epics/st_full_1.cmd)
@@ -80,8 +80,8 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
 
 
 
-<Context host="localhost" name="EventBuilder1" port="7701">
-<!--    The master eventbuilder: -->
+  <Context host="localhost" name="EventBuilder1" port="7701">
+  <!--    The master eventbuilder: -->
    
      <Run>
       <logfile value="hadaqevtbuild1.log"/>
@@ -91,8 +91,6 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
     <HttpServer name="http">
        <port value="8091"/>
     </HttpServer>
-
-  
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
@@ -106,12 +104,10 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&hadesnames&ebnumber=1" queue="200"/>
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=1" queue="200"/>
 
-<!--  alternative setup for independent time tags on different eventbuilders: -->
-<!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&ebnumber=1" queue="200"/> -->
- 
-      
+      <!--  alternative setup for independent time tags on different eventbuilders: -->
+      <!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=1" queue="200"/> -->
       
      </Module>
 
@@ -127,18 +123,14 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
     </Module>
 
   </Context>
+
   
-  
-  
-<!-- Here the slave eventbuilder:   -->
-  
+  <!-- Here the slave eventbuilder:   -->
   
   <Context host="localhost" name="EventBuilder2" port="7702">
     <Run>
       <logfile value="hadaqevtbuild2.log"/>     
     </Run>
-    
-    
     
     <HttpServer name="http">
        <port value="8092"/>
@@ -155,12 +147,11 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
        <InputPort name="Input2" url="hadaq://host:10203"/>
        <InputPort name="Input3" url="hadaq://host:10204"/>
        <InputPort name="Input4" url="hadaq://host:10205"/>
-
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&hadesnames&ebnumber=2" queue="200"/>
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=2" queue="200"/>
 
 <!--  alternative setup for independent time tags on different eventbuilders: -->
-<!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&hadesnames&ebnumber=2" queue="200"/> -->
+<!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=2" queue="200"/> -->
      
      </Module>
 
@@ -181,7 +172,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
 <!-- General settings for all contexts: -->
 <Context name="*" host="*">
       
-<!--       <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/> -->
+   <!--    <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/> -->
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
