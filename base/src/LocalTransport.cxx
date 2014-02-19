@@ -319,6 +319,8 @@ void dabc::LocalTransport::PortActivated(int itemkind, bool on)
 
 int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 {
+   if (port1ref.null() && port2ref.null()) return cmd_true;
+
    PortRef port_out = port1ref;
    PortRef port_inp = port2ref;
 

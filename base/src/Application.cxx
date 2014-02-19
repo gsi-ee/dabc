@@ -305,7 +305,10 @@ bool dabc::ApplicationBase::DefaultInitFunc()
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       DOUT2("Create memory pool %s", name);
-      if (!dabc::mgr.CreateMemoryPool(name)) return false;
+      if (!dabc::mgr.CreateMemoryPool(name)) {
+         EOUT("Fail to create memory pool %s", name);
+         return false;
+      }
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlModuleNode, true)) {
@@ -319,11 +322,17 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       dabc::ModuleRef m = dabc::mgr.FindModule(name);
       if (!m.null()) continue;
 
+      // FIXME: for old xml files, remove after 12.2014
+      if (strcmp(clname, "dabc::Publisher")==0) continue;
+
       DOUT2("Create module %s class %s", name, clname);
 
       m = dabc::mgr.CreateModule(clname, name, thrdname);
 
-      if (m.null()) return false;
+      if (m.null()) {
+         EOUT("Fail to create module %s class %s", name, clname);
+         return false;
+      }
 
       for (unsigned n = 0; n < m.NumInputs(); n++) {
 

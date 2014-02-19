@@ -1056,11 +1056,11 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          // this is local connection between two ports
          cmd_res = dabc::LocalTransport::ConnectPorts(port2, port);
          // connect also bind ports (if exists)
-         if (cmd_res == cmd_true) cmd_res = dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
+         if (cmd_res == cmd_true)
+            cmd_res = dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
 
          return cmd_res;
       }
-
 
 
       cmd_res = cmd_false;

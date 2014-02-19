@@ -18,7 +18,6 @@
 #include "dabc/XmlEngine.h"
 
 #include <string.h>
-#include <iostream>
 
 hadaq::ShmEntry::ShmEntry(const std::string& statsname, const std::string& shmemname, ::Worker* handle, dabc::Parameter& par) :
    fStatsName(statsname),

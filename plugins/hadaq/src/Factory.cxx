@@ -66,7 +66,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    if (portref.IsInput() && (url.GetProtocol()=="hadaq") && !url.GetHostName().empty()) {
 
       int nport = url.GetPort();
-      int rcvbuflen = url.GetOptionInt("udpbuf", 2000000);
+      int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
       int mtu = url.GetOptionInt("mtu", 64512);
       double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
       bool observer = url.GetOptionBool("observer", false);

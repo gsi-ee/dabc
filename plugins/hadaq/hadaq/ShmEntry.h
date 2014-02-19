@@ -56,8 +56,7 @@ namespace hadaq {
          /* Retrieve back value from shmem*/
          unsigned long GetValue()
          {
-            if(fShmPtr==0) return 0;
-            return *fShmPtr;
+            return fShmPtr ? *fShmPtr : 0;
          }
 
    };
