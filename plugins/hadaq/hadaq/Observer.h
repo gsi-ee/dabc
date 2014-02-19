@@ -68,6 +68,8 @@ namespace hadaq {
 
          virtual double ProcessTimeout(double lastdiff);
 
+         virtual void OnThreadAssigned();
+
       public:
          Observer(const std::string& name);
 

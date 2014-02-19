@@ -55,6 +55,16 @@ hadaq::Observer::~Observer()
 }
 
 
+void hadaq::Observer::OnThreadAssigned()
+{
+   dabc::Worker::OnThreadAssigned();
+
+   // we can not activate timeout in constructor,
+   // need to activate it here
+   if (fFlushTimeout > 0.) ActivateTimeout(fFlushTimeout);
+}
+
+
 double hadaq::Observer::ProcessTimeout(double lastdiff)
 {
    DOUT5("###hadaq::Observer::ProcessTimeout");
@@ -76,7 +86,7 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
    }
 
-   return 1.0;
+   return fFlushTimeout;
 }
 
 
@@ -189,14 +199,6 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 //   {
 //      DOUT0("Get event %d par %s value %s", evnt.EventId(), parname.c_str(), evnt.ParValue().c_str());
 //   }
-
-// we can not activate timeout in constructor, need to defer it here. todo for dabc framework?
-   static bool firsttime = true;
-   if (firsttime && fFlushTimeout > 0.) {
-      if (!ActivateTimeout(fFlushTimeout))
-         EOUT("%s could not activate timeout of %f s",GetName(),fFlushTimeout);
-      firsttime = false;
-   }
 
    switch (evnt.EventId()) {
       case dabc::parCreated: {
