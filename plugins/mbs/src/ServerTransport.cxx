@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -389,10 +391,9 @@ void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, b
       DOUT0("mbs::ServerTransport detect new client on %s %s", name.c_str(), (on ? "CONNECTED" : "DISCONNECTED") );
 
       if (on) {
-         ProcessInputEvent();
+         ProcessInputEvent(0);
          return;
       }
-
 
       if (!on) FindPort(name).Disconnect();
 

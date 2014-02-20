@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -15,6 +17,7 @@
 
 #include <string.h>
 #include <byteswap.h>
+#include <stdio.h>
 
 
 const char* mbs::protocolLmd          = "lmd";
@@ -46,6 +49,59 @@ const char* mbs::xmlEvidTolerance         = "MaxDeltaEventId";
 const char* mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
 const char* mbs::xmlCombinerRatesPrefix   = "CombinerRatesPrefix";
 
+
+void mbs::SubeventHeader::PrintHeader()
+{
+   printf("  SubEv ID %6u Type/Subtype %5u %5u Length %5u[w] Control %2u Subcrate %2u\n",
+            (unsigned) ProcId(), (unsigned) Type(), (unsigned) SubType(), (unsigned) FullSize()/2, (unsigned) Control(), (unsigned) Subcrate());
+}
+
+
+void mbs::SubeventHeader::PrintHex()
+{
+   uint32_t* pl_data = (uint32_t*) RawData();
+   uint32_t ll = RawDataSize() / 4;
+
+   for(uint32_t l=0; l<ll; l++) {
+      if(l%8 == 0) printf("  ");
+      printf("%04x.%04x ",(unsigned) ((*pl_data>>16) & 0xffff), (unsigned) (*pl_data & 0xffff));
+      pl_data++;
+      if(l%8 == 7) printf("\n");
+   }
+
+   if (ll%8 != 0) printf("\n");
+}
+
+void mbs::SubeventHeader::PrintLong()
+{
+   uint32_t* pl_data = (uint32_t*) RawData();
+   uint32_t ll = RawDataSize() / 4;
+
+   for(uint32_t l=0; l<ll; l++) {
+      if(l%8 == 0) printf("  ");
+      printf("%8u ", (unsigned) *pl_data);
+      pl_data++;
+      if(l%8 == 7) printf("\n");
+   }
+
+   if (ll%8 != 0) printf("\n");
+}
+
+void mbs::SubeventHeader::PrintData()
+{
+   uint16_t* pl_data = (uint16_t*) RawData();
+   uint32_t ll = RawDataSize() / 2;
+
+   for(uint32_t l=0; l<ll; l++) {
+      if(l%8 == 0) printf("  ");
+      printf("%8u ", (unsigned) *pl_data);
+      pl_data++;
+      if(l%8 == 7) printf("\n");
+   }
+
+   if (ll%8 != 0) printf("\n");
+}
+
 unsigned mbs::EventHeader::NumSubevents() const
 {
    unsigned cnt = 0;
@@ -53,6 +109,18 @@ unsigned mbs::EventHeader::NumSubevents() const
    while ((sub = NextSubEvent(sub)) != 0) cnt++;
    return cnt;
 }
+
+void mbs::EventHeader::PrintHeader()
+{
+   if (Type()==10) {
+      printf("Event   %9u Type/Subtype %5u %5u Length %5u[w] Trigger %2u\n",
+            (unsigned) EventNumber(), (unsigned) Type(), (unsigned) SubType(), (unsigned) FullSize()/2, (unsigned) TriggerNumber());
+   } else {
+      printf("Event type %u, subtype %u, data longwords %u",
+            (unsigned) Type(), (unsigned) SubType(), (unsigned) FullSize()/2);
+   }
+}
+
 
 void mbs::BufferHeader::Init(bool newformat)
 {

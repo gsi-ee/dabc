@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -30,6 +32,7 @@
 #include "mbs/ClientTransport.h"
 #include "mbs/CombinerModule.h"
 #include "mbs/Player.h"
+#include "mbs/api.h"
 
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
 
@@ -181,6 +184,9 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 
    if (classname == "mbs::Player")
       return new mbs::Player(modulename, cmd);
+
+   if (classname == "mbs::ReadoutModule")
+      return new mbs::ReadoutModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

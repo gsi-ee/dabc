@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -67,6 +69,21 @@ namespace mbs {
       uint32_t RawDataSize() const { return FullSize() - sizeof(SubeventHeader); }
       void SetRawDataSize(uint32_t sz) { SetFullSize(sz + sizeof(SubeventHeader)); }
 
+      int16_t ProcId() const { return iProcId; }
+      int8_t Control() const { return iControl; }
+      int8_t Subcrate() const { return iSubcrate; }
+
+      /** Prints sub-event header */
+      void PrintHeader();
+
+      /** Prints sub-event data in hex form */
+      void PrintHex();
+
+      /** Prints sub-event data in long form */
+      void PrintLong();
+
+      /** Prints sub-event data in 2-bytes form */
+      void PrintData();
    };
 
    // _______________________________________________________________
@@ -104,6 +121,8 @@ namespace mbs {
       inline EventNumType EventNumber() const { return iEventNumber; }
       inline void SetEventNumber(EventNumType ev) { iEventNumber = ev; }
 
+      inline uint16_t TriggerNumber() const { return iTrigger; }
+
       // SubEventsSize - size of all subevents, not includes events header
       inline uint32_t SubEventsSize() const { return FullSize() - sizeof(EventHeader); }
       inline void SetSubEventsSize(uint32_t sz) { SetFullSize(sz + sizeof(EventHeader)); }
@@ -117,6 +136,8 @@ namespace mbs {
                    (SubeventHeader*) (((char*) prev) + prev->FullSize()) : 0); }
 
       unsigned NumSubevents() const;
+
+      void PrintHeader();
    };
 
    // _______________________________________________________________

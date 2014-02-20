@@ -159,12 +159,12 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
       UpdateExportedCounters();
    fUpdateCountersFlag = true;
 
-   ProcessOutputEvent();
+   ProcessOutputEvent(0);
 }
 
 bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 {
-   ProcessOutputEvent();
+   ProcessOutputEvent(0);
    return false;
 }
 

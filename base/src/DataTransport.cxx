@@ -98,7 +98,7 @@ bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 //   DOUT0("@@@@@@@@@@ Process buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
 
    fInpState = inpCheckBuffer;
-   ProcessOutputEvent();
+   ProcessOutputEvent(0);
 
    // we are interesting for next buffer event if we really waiting for the buffer
    return fInpState == inpWaitBuffer;
@@ -138,7 +138,7 @@ void dabc::InputTransport::ProcessTimerEvent(unsigned timer)
    if (fInpState == inpComplitTimeout)
       fInpState = inpCompliting;
 
-   ProcessOutputEvent();
+   ProcessOutputEvent(0);
 }
 
 void dabc::InputTransport::Read_CallBack(unsigned sz)
@@ -175,7 +175,7 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
          fInpState = inpError;
    }
 
-   ProcessOutputEvent();
+   ProcessOutputEvent(0);
 }
 
 bool dabc::InputTransport::ProcessSend(unsigned port)
@@ -506,7 +506,7 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 
       if (fState == outWaitCallback) {
          fState = outInit;
-         ProcessInputEvent();
+         ProcessInputEvent(0);
          return;
       }
 
@@ -515,7 +515,7 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 
          // we need to call ProcessRecv directly at least once before entering into normal loop
          if (ProcessRecv(0))
-            ProcessInputEvent();
+            ProcessInputEvent(0);
 
          return;
       }
@@ -674,7 +674,5 @@ void dabc::OutputTransport::ProcessTimerEvent(unsigned timer)
    if (fState == outInitTimeout)
       fState = outInit;
 
-   ProcessInputEvent();
+   ProcessInputEvent(0);
 }
-
-

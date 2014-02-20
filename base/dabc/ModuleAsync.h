@@ -127,17 +127,17 @@ namespace dabc {
           * \details Can be reimplemented by the user.
           * Depending from port configuration it can happen for every new buffer
           * in input queue or only when after previous event was processed */
-         virtual void ProcessInputEvent(unsigned port = 0);
+         virtual void ProcessInputEvent(unsigned port);
 
 
          /** \brief Method called by framework when output event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessOutputEvent(unsigned port = 0);
+         virtual void ProcessOutputEvent(unsigned port);
 
 
          /** \brief Method called by framework when pool event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessPoolEvent(unsigned pool = 0);
+         virtual void ProcessPoolEvent(unsigned pool);
 
          /** \brief Method called by framework when connection state of the item is changed.
            * \details Can be reimplemented by the user.
@@ -147,11 +147,11 @@ namespace dabc {
 
          /** \brief Method called by framework when timer event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessTimerEvent(unsigned timer = 0) {}
+         virtual void ProcessTimerEvent(unsigned timer) {}
 
          /** \brief Method called by framework when custom user event is produced.
            * \details Can be reimplemented by the user. */
-         virtual void ProcessUserEvent(unsigned item = 0) {}
+         virtual void ProcessUserEvent(unsigned item) {}
 
 
          // Level 2: One could process each buffer

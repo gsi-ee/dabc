@@ -3,7 +3,15 @@ In many cases it is the best place to find information about
 current functionality of the framework.
 
 20.02.2014
-1. Fix error with device creation.
+1. Provide mbs::ReadoutHandle class to work with mbs-based servers from 
+   arbitrary application. Simplified code looks like:
+      mbs::ReadoutHandle handle = mbs::ReadoutHandle::Connect("mbs://r4-1/Stream");
+      while (handle.NextEvent()) 
+         handle.GetEvent()->PrintHeader();
+      handle.Disconnect();   
+2. Implement mbsprint application, which uses mbs::Readout handle to read events
+   and print them out. At the moment reading of events from file 
+   and stream/transport server are supported.
 
 
 19.02.2014

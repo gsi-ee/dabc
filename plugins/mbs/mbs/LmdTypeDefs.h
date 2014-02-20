@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -48,11 +50,14 @@ namespace mbs {
       inline uint32_t FullSize() const { return 8 + iWords*2; }
       inline void SetFullSize(uint32_t sz) { iWords = (sz - 8) /2; }
 
-      inline uint32_t Type() const { return iType; }
-      inline void SetType(uint32_t typ) { iType = typ; }
+      inline uint32_t FullType() const { return iType; }
+      inline uint16_t Type() const { return i_type; }
+      inline uint16_t SubType() const { return i_subtype; }
+
+      inline void SetFullType(uint32_t typ) { iType = typ; }
       inline void SetTypePair(unsigned typ, unsigned subtyp) { iType = (typ & 0xffff) | ((subtyp << 16) & 0xffff0000); }
 
-      inline bool isType(uint32_t typ) const { return iType == typ; }
+      inline bool isFullType(uint32_t typ) const { return iType == typ; }
       inline bool isTypePair(unsigned typ, unsigned subtyp) const { return iType == ((typ & 0xffff) | ((subtyp << 16) & 0xffff0000)); }
    };
 
