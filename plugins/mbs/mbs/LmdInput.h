@@ -28,46 +28,14 @@
 #include "mbs/LmdFile.h"
 #endif
 
-
-#ifndef MBS_LmdFileNew
-#include "mbs/LmdFileNew.h"
-#endif
-
 namespace mbs {
 
    /** \brief Input for LMD files (lmd:) */
 
-   class LmdInput : public dabc::FileInput {
-      protected:
-
-         mbs::LmdFile        fFile;
-
-         bool CloseFile();
-
-         bool OpenNextFile();
-
-      public:
-         LmdInput(const dabc::Url& url);
-         virtual ~LmdInput();
-
-         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
-
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
-
-         // alternative way to read mbs events from LmdInput - no any dabc buffer are used
-         mbs::EventHeader* ReadEvent();
-
-   };
-
-   // ===============================================================================
-
-   /** \brief Input for new LMD files (lmd2:) */
-
    class LmdInputNew : public dabc::FileInput {
        protected:
 
-          mbs::LmdFileNew      fFile;
+          mbs::LmdFile      fFile;
 
           bool CloseFile();
 

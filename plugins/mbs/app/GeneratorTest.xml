@@ -12,9 +12,9 @@
     <Module name="Multi" class="dabc::MultiplexerModule">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
-       <InputPort name="Input0" url="lmd2://test_0000.lmd" queue="5"/>
+       <InputPort name="Input0" url="lmd://test_0000.lmd" queue="5"/>
        <InputPort name="Input1" url="lmd://Generator?size=32&numsub=2&total=10" queue="5"/>
-       <OutputPort name="Output0" url="lmd2://gener2.lmd?maxsize=128" queue="5"/>
+       <OutputPort name="Output0" url="lmd://gener2.lmd?maxsize=128" queue="5"/>
        <OutputPort name="Output1" url="mbs://Stream:6767" queue="5"/>
      </Module>
   </Context>

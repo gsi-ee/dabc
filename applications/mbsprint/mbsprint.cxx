@@ -16,9 +16,10 @@ int usage(const char* errstr = 0)
    printf("   mbs://mbsnode/Stream    - MBS stream server\n");
    printf("Additional arguments:\n");
    printf("   -num number             - number of events to print\n");
-   printf("   -hex                    - print data in hex format\n");
-   printf("   -long                   - print data in long format\n");
-   printf("   -raw                    - print data in raw format\n");
+   printf("   -hex                    - print raw data in hex form\n");
+   printf("   -dec                    - print raw data in decimal form\n");
+   printf("   -long                   - print raw data in 4-bytes format\n");
+   printf("   -short                  - print raw data in 2-bytes format\n");
 
    return errstr ? 1 : 0;
 }
@@ -29,13 +30,15 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    int number = 10;
-   int printkind = 0;
+
+   bool printdata(false), ashex(true), aslong(true);
 
    int n = 1;
    while (++n<argc) {
-      if (strcmp(argv[n],"-hex")==0) printkind = 1; else
-      if (strcmp(argv[n],"-long")==0) printkind = 2; else
-      if (strcmp(argv[n],"-raw")==0) printkind = 3; else
+      if (strcmp(argv[n],"-hex")==0) { printdata = true; ashex = true; } else
+      if (strcmp(argv[n],"-dec")==0) { printdata = true; ashex = false; } else
+      if (strcmp(argv[n],"-long")==0) { printdata = true; aslong = true; } else
+      if (strcmp(argv[n],"-short")==0) { printdata = true; aslong = false; } else
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { number = atoi(argv[n+1]); n++; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
@@ -57,11 +60,7 @@ int main(int argc, char* argv[])
       mbs::SubeventHeader* sub = 0;
       while ((sub = evnt->NextSubEvent(sub)) != 0) {
          sub->PrintHeader();
-         switch (printkind) {
-            case 1: sub->PrintHex(); break;
-            case 2: sub->PrintLong(); break;
-            case 3: sub->PrintData(); break;
-         }
+         if (printdata) sub->PrintData(ashex, aslong);
       }
 
       if (++cnt >= number) break;

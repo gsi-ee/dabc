@@ -83,14 +83,8 @@ namespace mbs {
       /** Prints sub-event header */
       void PrintHeader();
 
-      /** Prints sub-event data in hex form */
-      void PrintHex();
-
-      /** Prints sub-event data in long form */
-      void PrintLong();
-
-      /** Prints sub-event data in 2-bytes form */
-      void PrintData();
+      /** Prints sub-event data in hex/decimal and long/short form */
+      void PrintData(bool ashex = true, bool aslong = true);
    };
 
    // _______________________________________________________________

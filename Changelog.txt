@@ -12,6 +12,8 @@ current functionality of the framework.
 2. Implement mbsprint application, which uses mbs::Readout handle to read events
    and print them out. At the moment reading of events from file 
    and stream/transport server are supported.
+3. Make LmdFileNew as default implementation for lmd files I/O.
+4. Remove old C-base API with fLmd.c 
 
 
 19.02.2014

@@ -16,68 +16,175 @@
 #ifndef MBS_LmdFile
 #define MBS_LmdFile
 
-#ifndef MBS_LmdTypeDefs
-#include "LmdTypeDefs.h"
+#ifndef DABC_BinaryFile
+#include "dabc/BinaryFile.h"
 #endif
 
-#ifndef MBS_MbsTypeDefs
-#include "MbsTypeDefs.h"
+#ifndef MBS_LmdTypeDefs
+#include "mbs/LmdTypeDefs.h"
 #endif
+
 
 namespace mbs {
 
-   /** \brief Reading/writing LMD files (old API)  */
+   /** \brief Reading/writing LMD files (new API)
+    *
+    * New LMD file, exclude index table from previous implementation
+    * */
 
-   class LmdFile {
+   class LmdFile : public dabc::BasicFile {
       protected:
-         enum EMode { mNone, mWrite, mRead, mError };
-
-         EMode      fMode;
-         void      *fControl;
-         uint32_t   fLastError;
+         FileHeader                  fFileHdr;          //!  file header
 
       public:
-         LmdFile();
-         virtual ~LmdFile();
 
-         uint32_t LastError() const { return fLastError; }
+         LmdFile() : dabc::BasicFile(), fFileHdr() {}
 
-         /** Open file with specified name for writing */
-         bool OpenWrite(const char* fname, uint32_t buffersize = 0x10000);
+         ~LmdFile()
+         {
+            Close();
+         }
 
-         /** Opened file for reading. Internal buffer required
-           * when data read partially and must be kept there. */
-         bool OpenRead(const char* fname, uint32_t buffersize = 0x10000);
+         bool OpenReading(const char* fname)
+         {
+            if (isOpened()) return false;
 
-         bool IsWriteMode() const { return fMode == mWrite; }
-         bool IsReadMode() const { return fMode == mRead; }
+            if (fname==0 || *fname==0) {
+               fprintf(stderr, "file name not specified\n");
+               return false;
+            }
 
-         void Close();
+            CheckIO();
 
-         /** Write one or several elements into the file.
-          * Each element must contain mbs::Header with correctly set size
-          */
-         bool WriteElements(mbs::Header* hdr, unsigned num = 1);
+            fd = io->fopen(fname,  "r");
+            if (fd==0) {
+               fprintf(stderr, "File open failed %s for reading\n", fname);
+               return false;
+            }
 
-         /** Read next element from file. File must be opened by method OpenRead(),
-           * Data will be copied first in internal buffer and than provided to user.
-           */
-         mbs::Header* ReadElement();
+            if (io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd) !=  1) {
+               fprintf(stderr, "Failure reading file %s header", fname);
+               Close();
+               return false;
+            }
 
-         /** Read one or several elements to provided user buffer
-           * When called, bufsize should has available buffer size,
-           * after call contains actual size read.
-           * Returns read number of events. */
-         unsigned int ReadBuffer(void* buf, uint32_t& bufsize);
+            if (!fFileHdr.isTypePair(0x65, 0x1)) {
+               fprintf(stderr, "Wrong header type in file %s", fname);
+               Close();
+               return false;
+            }
 
-         /** Write one or several events to the file.
-          * Same as WriteElements */
-         bool WriteEvents(EventHeader* hdr, unsigned num = 1);
+            if (fFileHdr.iOffsetSize != 8) {
+               fprintf(stderr, "Wrong offset size %u in file %s, expected 8", (unsigned) fFileHdr.iOffsetSize, fname);
+               Close();
+               return false;
+            }
 
-         /** Read next event from file - same as ReadElement. */
-         mbs::EventHeader* ReadEvent();
+            if (fFileHdr.iEndian != 1) {
+               fprintf(stderr, "Wrong endian %u in file %s, expected 1", (unsigned) fFileHdr.iEndian, fname);
+               Close();
+               return false;
+            }
+
+            fReadingMode = true;
+            return true;
+         }
+
+         bool OpenWriting(const char* fname)
+         {
+            if (isOpened()) return false;
+
+            if (fname==0 || *fname==0) {
+               fprintf(stderr, "file name not specified\n");
+               return false;
+            }
+
+            CheckIO();
+
+            fd = io->fopen(fname, "w");
+            if (fd==0) {
+               fprintf(stderr, "File open failed %s for writing\n", fname);
+               return false;
+            }
+
+            fFileHdr.SetFullSize(0xfffffff0);
+            fFileHdr.SetTypePair(0x65, 0x1);
+            fFileHdr.iTableOffset = 0;
+            fFileHdr.iElements = 0xffffffff;
+            fFileHdr.iOffsetSize = 8;  // Offset size, 4 or 8 [bytes]
+            fFileHdr.iTimeSpecSec = 0; // compatible with s_bufhe (2*32bit)
+            fFileHdr.iTimeSpecNanoSec = 0; // compatible with s_bufhe (2*32bit)
+
+            fFileHdr.iEndian = 1;      // compatible with s_bufhe free[0]
+            fFileHdr.iWrittenEndian = 0;// one of LMD__ENDIAN_x
+            fFileHdr.iUsedWords = 0;   // total words without header to read for type=100, free[2]
+            fFileHdr.iFree3 = 0;       // free[3]
+
+            if (io->fwrite(&fFileHdr, sizeof(fFileHdr),1,fd)!=1) {
+               fprintf(stderr, "Failure writing file %s header", fname);
+               Close();
+               return false;
+            }
+
+            fReadingMode = false;
+            return true;
+         }
+
+         bool Close()
+         {
+            return CloseBasicFile();
+         }
+
+         const FileHeader& hdr() const { return fFileHdr; }
+
+         /** Write buffer or part of buffer
+          * User must ensure that content of buffer is corresponds to the lmd header formatting */
+         bool WriteBuffer(const void* ptr, uint64_t sz)
+         {
+            if (!isWriting() || (ptr==0) || (sz==0)) return false;
+
+            if (io->fwrite(ptr, sz, 1, fd) != 1) {
+               fprintf(stderr, "fail to write buffer of size %u to lmd file\n", (unsigned) sz);
+               Close();
+               return false;
+            }
+
+            return true;
+         }
+
+         bool ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent = false)
+         {
+            if (isWriting() || (ptr==0) || (sz==0) || (*sz < sizeof(mbs::Header))) return false;
+
+            uint64_t maxsz = *sz; *sz = 0;
+
+            // any data in LMD should be written with 4-byte wrapping
+            size_t readsz = io->fread(ptr, 1, maxsz, fd);
+
+            if (readsz==0) return false;
+
+            size_t checkedsz = 0;
+
+            mbs::Header* hdr = (mbs::Header*) ptr;
+
+            while (checkedsz < readsz) {
+               // special case when event was read not completely
+               // or we want to provide only event
+               if ((checkedsz + hdr->FullSize() > readsz) || (onlyevent && (checkedsz>0))) {
+                  // return event to the begin of event
+                  io->fseek(fd, -(readsz - checkedsz), true);
+                  break;
+               }
+               checkedsz += hdr->FullSize();
+               hdr = (mbs::Header*) ((char*) hdr + hdr->FullSize());
+            }
+
+            *sz = checkedsz;
+
+            return checkedsz>0;
+         }
+
    };
-
-} // end of namespace
+}
 
 #endif

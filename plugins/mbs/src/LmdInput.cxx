@@ -25,109 +25,12 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-mbs::LmdInput::LmdInput(const dabc::Url& url) :
-   dabc::FileInput(url),
-   fFile()
-{
-   // TODO: when using new lmd file, enable usage of rfio
-   //   if (url.HasOption("rfio"))
-   //      fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
-}
-
-mbs::LmdInput::~LmdInput()
-{
-   CloseFile();
-}
-
-bool mbs::LmdInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
-{
-   if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
-
-   return OpenNextFile();
-}
-
-bool mbs::LmdInput::OpenNextFile()
-{
-   CloseFile();
-
-   if (!TakeNextFileName()) return false;
-
-   if (!fFile.OpenRead(CurrentFileName().c_str())) {
-      EOUT("Cannot open file %s for reading, errcode:%u", CurrentFileName().c_str(), fFile.LastError());
-      return false;
-   }
-
-   DOUT1("Open lmd file %s for reading", CurrentFileName().c_str());
-
-   return true;
-}
-
-
-bool mbs::LmdInput::CloseFile()
-{
-   fFile.Close();
-   ClearCurrentFileName();
-   return true;
-}
-
-unsigned mbs::LmdInput::Read_Size()
-{
-   // get size of the buffer which should be read from the file
-
-   if (!fFile.IsReadMode())
-      if (!OpenNextFile()) return dabc::di_EndOfStream;
-
-   return dabc::di_DfltBufSize;
-}
-
-unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
-{
-   unsigned numev = 0;
-   uint32_t bufsize = 0;
-
-   do {
-
-       if (!fFile.IsReadMode()) return dabc::di_Error;
-
-       // TODO: read into segmented buffer
-       bufsize = buf.SegmentSize(0);
-
-       numev = fFile.ReadBuffer(buf.SegmentPtr(0), bufsize);
-
-       if (numev==0) {
-          DOUT3("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize());
-          if (!OpenNextFile()) return dabc::di_EndOfStream;
-       }
-
-   } while (numev==0);
-
-   buf.SetTotalSize(bufsize);
-   buf.SetTypeId(mbs::mbt_MbsEvents);
-
-   return dabc::di_Ok;
-}
-
-mbs::EventHeader* mbs::LmdInput::ReadEvent()
-{
-   while (true) {
-       if (!fFile.IsReadMode()) return 0;
-
-       mbs::EventHeader* hdr = fFile.ReadEvent();
-       if (hdr!=0) return hdr;
-
-       DOUT1("File %s return 0 - end of file", CurrentFileName().c_str());
-       if (!OpenNextFile()) return 0;
-   }
-
-   return 0;
-}
-
-// ==========================================================================
-
 mbs::LmdInputNew::LmdInputNew(const dabc::Url& url) :
    dabc::FileInput(url),
    fFile()
 {
+   if (url.HasOption("rfio"))
+      fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
 mbs::LmdInputNew::~LmdInputNew()

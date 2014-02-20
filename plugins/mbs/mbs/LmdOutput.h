@@ -24,40 +24,14 @@
 #include "mbs/LmdFile.h"
 #endif
 
-#ifndef MBS_LmdFileNew
-#include "mbs/LmdFileNew.h"
-#endif
-
 namespace mbs {
 
    /** \brief Output for LMD files (lmd:) */
 
-   class LmdOutput : public dabc::FileOutput {
-      protected:
-
-         mbs::LmdFile        fFile;
-
-         bool CloseFile();
-         bool StartNewFile();
-
-      public:
-
-         LmdOutput(const dabc::Url& url);
-         virtual ~LmdOutput();
-
-         virtual bool Write_Init();
-
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
-   };
-
-   // ====================================================================
-
-   /** \brief Output for new LMD files (lmd2:) */
-
    class LmdOutputNew : public dabc::FileOutput {
       protected:
 
-         mbs::LmdFileNew       fFile;
+         mbs::LmdFile       fFile;
 
          bool CloseFile();
          bool StartNewFile();

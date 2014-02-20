@@ -130,7 +130,6 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
       return new mbs::ServerTransport(cmd, portref, kind, portnum, addon, url);
    }
 
-
    return dabc::Factory::CreateTransport(port, typ, cmd);
 }
 
@@ -145,10 +144,6 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
       return new mbs::GeneratorInput(url);
    } else
    if (url.GetProtocol()==mbs::protocolLmd) {
-      DOUT0("LMD input file name %s", url.GetFullName().c_str());
-      return new mbs::LmdInput(url);
-   } else
-   if (url.GetProtocol()=="lmd2") {
       DOUT0("LMD2 input file name %s", url.GetFullName().c_str());
       return new mbs::LmdInputNew(url);
    } else
@@ -167,10 +162,6 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
    dabc::Url url(typ);
    if (url.GetProtocol()==mbs::protocolLmd) {
       DOUT0("LMD output file name %s", url.GetFullName().c_str());
-      return new mbs::LmdOutput(url);
-   } else
-   if (url.GetProtocol()=="lmd2") {
-      DOUT0("LMD2 output file name %s", url.GetFullName().c_str());
       return new mbs::LmdOutputNew(url);
    }
 
