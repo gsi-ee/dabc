@@ -975,14 +975,29 @@ int dabc::Manager::ExecuteCommand(Command cmd)
         }
       } else {
          FOR_EACH_FACTORY(
-            if (factory->CreateDevice(classname, devname, cmd)) {
-               cmd_res = cmd_true;
-               break;
-            }
+            dev = factory->CreateDevice(classname, devname, cmd);
+            if (!dev.null()) break;
          )
 
-         if ((cmd_res==cmd_true) && FindDevice(devname).null())
-            EOUT("Cannot find device %s after it is created", devname.c_str());
+         if (dev.null()) {
+            EOUT("Cannot create device %s of class %s", devname.c_str(), classname.c_str());
+         } else {
+
+            std::string thrdname = dev.Cfg(xmlThreadAttr, cmd).AsStr();
+
+            if (thrdname.empty())
+               switch (GetThreadsLayout()) {
+                  case layoutMinimalistic: thrdname = ThreadName(); break;
+                  case layoutPerModule:
+                  case layoutBalanced:
+                  case layoutMaximal: thrdname = devname + "Thrd"; break;
+                  default: thrdname = devname + "Thrd"; break;
+               }
+
+            dev.MakeThreadForWorker(thrdname);
+
+            cmd_res = cmd_true;
+         }
       }
 
       if ((cmd_res==cmd_true) && !devname.empty()) {
@@ -1574,6 +1589,9 @@ int dabc::Manager::fFirstFactoriesId;
 void dabc::Manager::ProcessFactory(Factory* factory)
 {
    if (factory==0) return;
+
+   DOUT2("Instantiate factory %s", factory->GetName());
+
    if (fInstance && (fInstanceId==MagicInstanceId)) {
       fInstance->GetFactoriesFolder(true).AddChild(factory);
       return;

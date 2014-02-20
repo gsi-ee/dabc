@@ -162,7 +162,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
    // TODO: could we read objects which are not in manager?
    if (prnt==0) return false;
 
-   DOUT2("Start reading of obj %s item %s maxlevel %d", obj->ItemName().c_str(),  itemname.c_str(), maxlevel);
+   DOUT3("Start reading of obj %s item %s maxlevel %d", obj->ItemName().c_str(),  itemname.c_str(), maxlevel);
 
    bool isany = false;
 
@@ -175,7 +175,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
 
    for (int dcnt=0;dcnt<2;dcnt++) {
 
-      DOUT2("Switch to search mode %d", dcnt);
+      DOUT3("Switch to search mode %d", dcnt);
 
       fCurrStrict = dcnt==0;
 
@@ -195,7 +195,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
 
-         DOUT2("Search with loop %d path level = %d obj = %s class %s", dcnt,  level, DNAME(prnt), (prnt ? prnt->ClassName() : "---"));
+         DOUT3("Search with loop %d path level = %d obj = %s class %s", dcnt,  level, DNAME(prnt), (prnt ? prnt->ClassName() : "---"));
 
 //         DOUT3("Search with level = %d prnt = %p %s", level, prnt, DNAME(prnt));
 
@@ -207,7 +207,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
          //         DOUT0("Search for parent %s level %d loop = %d", prnt->GetName(), level, dcnt);
 
          if (prnt->Find(*this)) {
-            DOUT2("Find parent of level:%d", level);
+            DOUT3("Find parent of level:%d", level);
             if (level-->0) continue;
 
             // in case of single field (configuration) we either check attribute in node itself
@@ -225,7 +225,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
                      field->SetStr(fCfg->ResolveEnv(attrvalue).c_str());
                   else
                      field->SetStr(attrvalue);
-                  DOUT2("For item %s find value %s", itemname.c_str(), attrvalue);
+                  DOUT3("For item %s find value %s", itemname.c_str(), attrvalue);
                   return true;
                }
             } else
@@ -248,7 +248,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
             // if we were trying to find application and didnot find it - no problem
             // probably modules/pools/device configuration specified without application - lets try to find it
 
-            DOUT2("Skip missing application at level %d", level);
+            DOUT3("Skip missing application at level %d", level);
 
             // remember on which level we skip application, do not try to rall back
             appskiplevel = level--;

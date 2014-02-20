@@ -532,14 +532,14 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
    // first check in the command
    if (cmd.HasField(name)) return cmd.GetField(name);
 
-   DOUT2("Check Cfg %s in own parameters", name.c_str());
+   DOUT3("Check Cfg %s in own parameters", name.c_str());
 
    dabc::RecordField res = Par(name).Value();
 
    // second - as parameter
    if (!res.null()) return res;
 
-   DOUT2("Check Cfg %s in xml file", name.c_str());
+   DOUT3("Check Cfg %s in xml file", name.c_str());
 
    // third - in xml file
    ConfigIO io(dabc::mgr()->cfg());
@@ -548,7 +548,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
       return res;
    }
 
-   DOUT2("Check Cfg %s in parent parameters", name.c_str());
+   DOUT3("Check Cfg %s in parent parameters", name.c_str());
 
    // forth - in all parents
    Object* prnt = GetParent();

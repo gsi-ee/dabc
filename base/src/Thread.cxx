@@ -654,7 +654,7 @@ void dabc::Thread::ChangeRecursion(unsigned id, bool inc)
 
 int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command cmd)
 {
-   DOUT2("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id);
+   DOUT4("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id);
 
    if ((id>=fWorkers.size()) || (fWorkers[id]->work==0)) {
       DOUT3("THRD:%s Worker %u no longer exists", GetName(), id);
@@ -677,7 +677,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       balance = fWorkers[id]->work->fWorkerFiredEvents - fWorkers[id]->processed;
    }
 
-   DOUT2("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt);
+   DOUT4("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt);
 
    if (fWorkers[id]->doinghalt==0) return cmd_false;
 
@@ -703,7 +703,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       fWorkers[id] = new WorkerRec(0, 0);
    }
 
-   DOUT2("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
+   DOUT4("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
 
    // FIXME: this must be legitime method to destroy any worker
    //        one can remove it from workers vector
@@ -803,7 +803,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
       fWorkers[itemid]->processed++;
 
       if (worker==dabc::mgr())
-         DOUT2("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
+         DOUT3("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
 
       try {
 

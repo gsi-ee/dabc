@@ -288,7 +288,11 @@ bool dabc::ApplicationBase::DefaultInitFunc()
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlDeviceNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      if ((name!=0) && (clname!=0)) dabc::mgr.CreateDevice(clname, name);
+      if ((name!=0) && (clname!=0))
+         if (!dabc::mgr.CreateDevice(clname, name)) {
+            EOUT("Fail to create device %s class %s", name, clname);
+            return false;
+         }
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlThreadNode, true)) {
