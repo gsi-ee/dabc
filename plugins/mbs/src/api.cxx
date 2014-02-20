@@ -131,3 +131,9 @@ mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tm)
 
    return 0;
 }
+
+mbs::EventHeader* mbs::ReadoutHandle::GetEvent()
+{
+  return null() ? 0 : GetObject()->fIter.evnt();
+}
+

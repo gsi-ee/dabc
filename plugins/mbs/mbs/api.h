@@ -59,8 +59,6 @@ namespace mbs {
 
       DABC_REFERENCE(ReadoutHandle, dabc::ModuleAsyncRef, ReadoutModule)
 
-      virtual ~ReadoutHandle() { Disconnect(); }
-
       /** Connect with MBS server */
       static ReadoutHandle Connect(const std::string& url);
 
@@ -71,6 +69,11 @@ namespace mbs {
 
       /** Retrieve next event from the server */
       mbs::EventHeader* NextEvent(double tm = 1.0);
+
+      /** Get current event pointer */
+      mbs::EventHeader* GetEvent();
+
+
    };
 
 }

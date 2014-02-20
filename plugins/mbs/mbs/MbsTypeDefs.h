@@ -63,6 +63,13 @@ namespace mbs {
          iControl = control;
       }
 
+      void InitFull(uint32_t fullid)
+      {
+         iWords = 0;
+         iType = MBS_TYPE(10,1);
+         fFullId = fullid;
+      }
+
       void *RawData() const { return (char*) this + sizeof(SubeventHeader); }
 
       // RawDataSize - size of raw data without subevent header

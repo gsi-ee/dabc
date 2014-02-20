@@ -353,7 +353,7 @@ bool mbs::WriteIterator::NewSubevent2(uint32_t fullid)
       return false;
    }
 
-   subevnt()->fFullId = fullid;
+   subevnt()->InitFull(fullid);
 
    fSubData.reset(fSubPtr, sizeof(SubeventHeader));
 
