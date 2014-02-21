@@ -17,8 +17,6 @@
 
 #include "dabc/logging.h"
 
-#include "iostream"
-
 hadaq::ReadIterator::ReadIterator() :
    fFirstEvent(false),
    fEvPtr(),
@@ -181,7 +179,7 @@ bool hadaq::ReadIterator::NextSubEvent()
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
       // this function is used both in hadtu and in event mode. Check out mode:
-      dabc::BufferSize_t headsize=0;
+      dabc::BufferSize_t headsize = 0;
       size_t containersize = 0;
       if (fBufType == mbt_HadaqEvents) {
          headsize = sizeof(hadaq::RawEvent);
@@ -201,8 +199,9 @@ bool hadaq::ReadIterator::NextSubEvent()
       fSubPtr.reset(fEvPtr, 0, containersize);
 
       fSubPtr.shift(headsize);
-   } else
+   } else {
       fSubPtr.shift(subevnt()->GetPaddedSize());
+   }
 
    if (fSubPtr.fullsize() < sizeof(hadaq::RawSubevent)) {
       fSubPtr.reset();
@@ -211,12 +210,9 @@ bool hadaq::ReadIterator::NextSubEvent()
 
    if (subevnt()->GetSize() < sizeof(hadaq::RawSubevent)) {
       EOUT("Hadaq format error - subevent fullsize %u too small", subevnt()->GetSize());
-      char* ptr=(char*) subevnt();
+      char* ptr = (char*) subevnt();
       for(int i=0; i<20; ++i)
-      {
-         std::cout <<"sub("<<i<<")=0x"<< (std::hex)<< *ptr ;
-         std::cout <<(std::dec)<< std::endl;
-      }
+         printf("sub(%d)=0x%02x\n", i, (unsigned) *ptr++);
 
 
       fSubPtr.reset();

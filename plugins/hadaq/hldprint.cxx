@@ -27,7 +27,7 @@ int usage(const char* errstr = 0)
    }
 
    printf("utility for printing HLD events\n");
-   printf("mbsprint source [args]\n\n");
+   printf("hldprint source [args]\n\n");
    printf("Following source kinds are supported:\n");
    printf("   hld://path/file.hld      - HLD file reading\n");
    printf("   mbs://dabcnode/Stream    - DABC stream server\n");
@@ -36,6 +36,8 @@ int usage(const char* errstr = 0)
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in second for waiting next event\n");
    printf("   -num number             - number of events to print\n");
+   printf("   -raw                    - printout of raw data\n");
+   printf("   -sub                    - try to scan for subsub events\n");
 
    return errstr ? 1 : 0;
 }
@@ -47,11 +49,15 @@ int main(int argc, char* argv[])
 
    int number = 10;
    double tmout = 1.;
+   bool printraw = false;
+   bool printsub = false;
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &number); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
+      if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
@@ -66,7 +72,27 @@ int main(int argc, char* argv[])
 
    while ((evnt = ref.NextEvent(tmout)) != 0) {
 
-      printf("HLD event %p\n", evnt);
+      evnt->Dump();
+      hadaq::RawSubevent* sub = 0;
+      while ((sub=evnt->NextSubevent(sub))!=0) {
+         sub->Dump(printraw && !printsub);
+
+         unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+         unsigned ix = 0;
+
+         while ((ix < trbSubEvSize) && printsub) {
+            unsigned data = sub->Data(ix++);
+
+            unsigned datalen = (data >> 16) & 0xFFFF;
+            unsigned datakind = data & 0xFFFF;
+
+            printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+
+            if (printraw) sub->PrintRawData(ix,datalen,9);
+
+            ix+=datalen;
+         }
+      }
 
       if (++cnt >= number) break;
    }

@@ -66,10 +66,41 @@ std::string hadaq::RawEvent::FormatFilename (uint32_t runid, uint16_t ebid)
    return std::string(buf);
 }
 
+hadaq::RawSubevent* hadaq::RawEvent::NextSubevent(RawSubevent* prev)
+{
+   if (prev == 0) {
 
+      if (GetSize() - sizeof(hadaq::RawEvent) < sizeof(hadaq::RawSubevent)) return 0;
 
+      return (hadaq::RawSubevent*) ((char*) this + sizeof(hadaq::RawEvent));
+   }
+
+   char* next = (char*) prev + prev->GetPaddedSize();
+
+   if (next >= (char*) this + GetSize()) return 0;
+
+   return (hadaq::RawSubevent*) next;
+}
 
 // ===========================================================
+
+void hadaq::RawSubevent::PrintRawData(unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((GetSize() - sizeof(RawSubevent)) / Alignment());
+
+   if (ix>=sz) return;
+   if ((len==0) || (ix + len > sz)) len = sz - ix;
+
+   unsigned wlen = 2;
+   if (len>99) wlen = 3; else
+   if (len>999) wlen = 4;
+
+   for (unsigned cnt=0;cnt<len;cnt++,ix++)
+      printf("%*s[%*u] %08x%s", (cnt%8 ? 2 : 2+prefix), "", wlen, ix, (unsigned) Data(ix), (cnt % 8 == 7 ? "\n" : ""));
+
+   if (len % 8 != 0) printf("\n");
+}
+
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)
 {
@@ -81,18 +112,5 @@ void hadaq::RawSubevent::Dump(bool print_raw_data)
              IsSwapped() ? "swapped" : "not swapped",
              (unsigned) Alignment());
 
-   if (!print_raw_data) return;
-
-   bool newline = true;
-
-   for (unsigned ix=0; ix < ((GetSize() - sizeof(RawSubevent)) / Alignment()); ix++)
-   {
-      if (ix % 8 == 0) printf("    "); newline = false;
-
-      printf("  [%2u] %08x\t", ix, (unsigned) Data(ix));
-
-      if (((ix + 1) % 8) == 0)  { printf("\n"); newline = true; }
-   }
-
-   if (!newline) printf("\n");
+   if (print_raw_data) PrintRawData();
 }
