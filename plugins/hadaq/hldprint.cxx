@@ -29,15 +29,17 @@ int usage(const char* errstr = 0)
    printf("utility for printing HLD events\n");
    printf("hldprint source [args]\n\n");
    printf("Following source kinds are supported:\n");
-   printf("   hld://path/file.hld      - HLD file reading\n");
-   printf("   mbs://dabcnode/Stream    - DABC stream server\n");
-   printf("   mbs://dabcnode/Transport - DABC transport server\n");
-   printf("   lmd://path/file.lmd      - LMD file reading\n");
+   printf("   hld://path/file.hld         - HLD file reading\n");
+   printf("   //path/file.hld             - HLD file reading (file extension MUST be '.hld')\n");
+   printf("   mbs://dabcnode/Stream       - DABC stream server\n");
+   printf("   mbs://dabcnode:port/Stream  - DABC stream server with custom port\n");
+   printf("   mbs://dabcnode/Transport    - DABC transport server\n");
+   printf("   lmd://path/file.lmd         - LMD file reading\n");
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in second for waiting next event\n");
-   printf("   -num number             - number of events to print\n");
-   printf("   -raw                    - printout of raw data\n");
-   printf("   -sub                    - try to scan for subsub events\n");
+   printf("   -num number             - number of events to print (default 10)\n");
+   printf("   -sub                    - try to scan for subsub events (default false)\n");
+   printf("   -raw                    - printout of raw data (default false)\n");
 
    return errstr ? 1 : 0;
 }
@@ -62,7 +64,13 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(argv[1]);
+   std::string src = argv[1];
+   if ((src.find(".hld") != std::string::npos) && (src.find("hld://") != 0))
+      src = std::string("hld://") + src;
+
+   printf("Try to open %s\n", src.c_str());
+
+   hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(src.c_str());
 
    if (ref.null()) return 1;
 
