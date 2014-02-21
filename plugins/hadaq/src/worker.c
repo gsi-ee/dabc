@@ -1,4 +1,6 @@
-static char *rcsId = "$Header: /misc/hadesprojects/daq/cvsroot/hadaq/worker.c,v 6.31 2010-07-06 15:35:08 hadaq Exp $";
+// $Id$
+
+//static char *rcsId = "$Header: /misc/hadesprojects/daq/cvsroot/hadaq/worker.c,v 6.31 2010-07-06 15:35:08 hadaq Exp $";
 
 #define WORKER_NEW_PROTOCOL
 

@@ -64,8 +64,17 @@ void mbs::ReadoutModule::ProcessInputEvent(unsigned)
       dabc::Buffer buf = Recv();
       // when EOF buffer received, return immediately stop
 
-      if (buf.GetTypeId() == mbs::mbt_MbsEvents)
-         res = cmd_bool(fIter.Reset(buf));
+      switch (buf.GetTypeId()) {
+         case dabc::mbt_EOF:
+            res = dabc::cmd_false;
+            break;
+         case mbs::mbt_MbsEvents:
+            res = cmd_bool(fIter.Reset(buf));
+            break;
+         default:
+            res = AcceptBuffer(buf);
+            break;
+      }
    }
 
    fCmd.Reply(res);
@@ -81,7 +90,7 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
 
 
 
-mbs::ReadoutHandle mbs::ReadoutHandle::Connect(const std::string& url)
+mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string& url, const char* classname)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(0);
@@ -100,7 +109,7 @@ mbs::ReadoutHandle mbs::ReadoutHandle::Connect(const std::string& url)
       name = dabc::format("MbsReadout%d", cnt);
    } while (!dabc::mgr.FindModule(name).null());
 
-   mbs::ReadoutHandle mdl = dabc::mgr.CreateModule("mbs::ReadoutModule", name);
+   mbs::ReadoutHandle mdl = dabc::mgr.CreateModule(classname, name);
 
    if (mdl.null()) return mdl;
 

@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -30,6 +32,8 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
 #include "hadaq/Observer.h"
+#include "hadaq/api.h"
+
 
 dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
 
@@ -94,6 +98,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::MbsTransmitterModule")
       return new hadaq::MbsTransmitterModule(modulename, cmd);
+
+   if (classname == "hadaq::ReadoutModule")
+      return new hadaq::ReadoutModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

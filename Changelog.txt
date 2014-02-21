@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+21.02.2014
+1. Introduce hldprint application, as data source 
+   online server and lmd/hld files are supported 
+
+
 20.02.2014
 1. Provide mbs::ReadoutHandle class to work with mbs-based servers from 
    arbitrary application. Simplified code looks like:

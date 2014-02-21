@@ -1,4 +1,6 @@
-static char *rcsId = "$Header: /misc/hadesprojects/daq/cvsroot/hadaq/psxshm.c,v 6.6 2004-08-10 11:10:43 hadaq Exp $";
+// $Id$
+
+//static char *rcsId = "$Header: /misc/hadesprojects/daq/cvsroot/hadaq/psxshm.c,v 6.6 2004-08-10 11:10:43 hadaq Exp $";
 
 #define _POSIX_C_SOURCE 199309L
 #include <unistd.h>

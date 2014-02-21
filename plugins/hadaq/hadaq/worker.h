@@ -1,6 +1,7 @@
+// $Id$
 
-#ifndef WORKER_H
-#define WORKER_H
+#ifndef HADAQ_WORKER_H
+#define HADAQ_WORKER_H
 
 #include <limits.h>
 #include <signal.h>

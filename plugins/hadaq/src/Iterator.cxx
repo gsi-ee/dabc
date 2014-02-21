@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -126,12 +128,12 @@ bool hadaq::ReadIterator::NextHadTu()
 
 bool hadaq::ReadIterator::NextEvent()
 {
-   if (fBufType != mbt_HadaqEvents ) {
+   if (fEvPtr.null()) return false;
+
+   if (fBufType != mbt_HadaqEvents) {
       EOUT("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!");
       return false;
    }
-
-   if (fEvPtr.null()) return false;
 
    if (fFirstEvent)
       fFirstEvent = false;

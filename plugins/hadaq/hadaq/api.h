@@ -13,41 +13,29 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
+#ifndef HADAQ_api
+#define HADAQ_api
+
 #ifndef MBS_api
-#define MBS_api
-
-
-#ifndef MBS_MbsTypeDefs
-#include "mbs/MbsTypeDefs.h"
+#include "mbs/api.h"
 #endif
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
+#ifndef HADAQ_Iterator
+#include "hadaq/Iterator.h"
 #endif
 
-#ifndef MBS_Iterator
-#include "mbs/Iterator.h"
-#endif
-
-namespace mbs {
+namespace hadaq {
 
    class ReadoutHandle;
 
-   class ReadoutModule : public dabc::ModuleAsync {
+   class ReadoutModule : public mbs::ReadoutModule {
       protected:
 
          friend class ReadoutHandle;
 
-         mbs::ReadIterator fIter;   ///< iterator, accessed only from user side
-         dabc::Command fCmd;        ///< current nextbuffer cmd
+         hadaq::ReadIterator fIter2;   ///< iterator over HADAQ buffers
 
-         virtual int ExecuteCommand(dabc::Command cmd);
-
-         virtual void ProcessInputEvent(unsigned port);
-
-         virtual void ProcessTimerEvent(unsigned timer);
-
-         virtual int AcceptBuffer(dabc::Buffer& buf) { return dabc::cmd_false; }
+         int AcceptBuffer(dabc::Buffer& buf);
 
       public:
 
@@ -56,32 +44,26 @@ namespace mbs {
    };
 
 
-   class ReadoutHandle : protected dabc::ModuleAsyncRef {
+   class ReadoutHandle : protected mbs::ReadoutHandle {
 
-      DABC_REFERENCE(ReadoutHandle, dabc::ModuleAsyncRef, ReadoutModule)
+      DABC_REFERENCE(ReadoutHandle, mbs::ReadoutHandle, hadaq::ReadoutModule)
 
-      /** Connect with MBS server */
+      /** Connect with data source */
       static ReadoutHandle Connect(const std::string& url)
       {
-         return DoConnect(url, "mbs::ReadoutModule");
+         return DoConnect(url, "hadaq::ReadoutModule");
       }
 
-      bool null() const { return dabc::ModuleAsyncRef::null(); }
+      bool null() const { return mbs::ReadoutHandle::null(); }
 
       /** Disconnect from MBS server */
-      bool Disconnect();
+      bool Disconnect() { return mbs::ReadoutHandle::Disconnect(); }
 
       /** Retrieve next event from the server */
-      mbs::EventHeader* NextEvent(double tm = 1.0);
+      hadaq::RawEvent* NextEvent(double tm = 1.0);
 
       /** Get current event pointer */
-      mbs::EventHeader* GetEvent();
-
-      protected:
-
-
-      static ReadoutHandle DoConnect(const std::string& url, const char* classname);
-
+      hadaq::RawEvent* GetEvent();
    };
 
 }
