@@ -78,7 +78,7 @@ Bool_t TDabcEngine::Create(const char* args)
    if (strchr(args,':')!=0) {
       url.SetUrl(std::string("dabc://") + args, false);
    } else {
-      url.SetUrl(std::string("server://") + args, false);
+      url.SetUrl(std::string("server://localhost:") + args, false);
    }
 
    if (!url.IsValid()) {

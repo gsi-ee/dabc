@@ -30,7 +30,7 @@ void DabcRoot::SetTopFolderName(const char* name)
 
 bool DabcRoot::StartHttpServer(int port, bool sync_timer)
 {
-   if (gDabcHttpServer==0) gDabcHttpServer = new THttpServer;
+   if (gDabcHttpServer==0) gDabcHttpServer = new THttpServer("");
 
    if (!sync_timer) gDabcHttpServer->SetTimer(100, kFALSE);
 
