@@ -152,6 +152,8 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
 
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
+      // DOUT0("UDP %d get data %d", fNPort, res);
+
       // when rest size is smaller that mtu, one should close buffer
       if (fTgtPtr.rawsize() < fMTU)
          return dabc::di_Ok; // this is end

@@ -29,7 +29,6 @@ ifdef DABC_ISROOT
 FESA_DEFINITIONS += WITH_ROOT 
 FESA_INCLUDES += $(DABC_ROOTINCDIR)
 FESA_LIBS += -L$(TGTDLLPATH) -lDabcRoot 
-#$(DABCFESA_LIB): $(DABCROOT_LIB)
 endif
 
 # this is location of fesa 
@@ -68,7 +67,7 @@ libs:: $(DABCFESA_LIB)
 
 #$(DABCFESA_LIB): LDFLAGS += -lrt
 
-$(DABCFESA_LIB):   $(DABCFESA_O) 
+$(DABCFESA_LIB):   $(DABCFESA_O)  
 	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) 
 
 ########### extra rules #############

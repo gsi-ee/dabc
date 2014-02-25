@@ -1101,7 +1101,7 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
    }
    return true;
 }
-
+/*
 
 int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 {
@@ -1172,6 +1172,51 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    portnum = -1;
    return -1;
 }
+*/
+
+int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
+{
+   int numtests = 1; // at least test value of portnum
+   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
+
+   int firsttest = portnum;
+
+   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+   if (sockfd < 0) {
+      EOUT("ERROR create socket");
+      return -1;
+   }
+
+
+   for(int ntest=0;ntest<numtests;ntest++) {
+
+     if ((ntest==0) && (portnum<0)) continue;
+
+     if (ntest>0) portnum = portmin - 1 + ntest;
+
+     struct sockaddr_in serv_addr;
+
+     memset((char *) &serv_addr, 0, sizeof(serv_addr));
+     serv_addr.sin_family = AF_INET;
+     serv_addr.sin_addr.s_addr = INADDR_ANY;
+     serv_addr.sin_port = htons(portnum);
+
+     /* Now bind the host address using bind() call.*/
+     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) continue;
+
+     if (!dabc::SocketThread::SetNonBlockSocket(sockfd))
+        EOUT("Cannot set nonblocking flag for server socket");
+
+     return sockfd;
+   }
+
+   close(sockfd);
+
+   EOUT("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax);
+   portnum = -1;
+   return -1;
+}
+
 
 std::string dabc::SocketThread::DefineHostName()
 {

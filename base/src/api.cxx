@@ -110,7 +110,10 @@ dabc::Hierarchy dabc::GetNodeHierarchy(const std::string& nodeaddr)
 
    dabc::Buffer buf = cmd.GetRawData();
 
-   if (buf.null()) return res;
+   if (buf.null()) {
+      EOUT("No raw data when requesting hierarchy");
+      return res;
+   }
 
    // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
    if (!res.ReadFromBuffer(buf)) {

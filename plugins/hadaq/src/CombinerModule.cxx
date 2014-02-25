@@ -499,16 +499,18 @@ bool hadaq::CombinerModule::BuildEvent()
    //static unsigned ccount=0;
 
 
-//   DOUT0("hadaq::CombinerModule::BuildEvent() starts");
-
+   // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
    uint32_t mineventid(0), maxeventid(0);
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (fInp[ninp].subevnt() == 0)
-         if (!ShiftToNextSubEvent(ninp))
-            return false; // could not get subevent data on any channel. let framework do something before next try
+         if (!ShiftToNextSubEvent(ninp)) {
+            // could not get subevent data on any channel.
+            // let framework do something before next try
+            return false;
+         }
 
       uint32_t evid = fCfg[ninp].fTrigNr;
 

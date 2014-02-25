@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+25.02.2014
+1. When starting server socket, specify INADDR_ANY when bind socket. 
+   This should allow to react on connection request via any host address,
+   including localhost. 
+
+
 21.02.2014
 1. Introduce hldprint application, as data source 
    online server and lmd/hld files are supported 
