@@ -4542,7 +4542,6 @@ var gStyle = {
          if (value < hmin) hmin = value;
          if (value > hmax) hmax = value;
       }
-      var mul = (hmin < 0) ? 1.05 : 1.0;
 
       this.stat_entries = 0;
       if (('fBuffer' in this.histo) && (this.histo['fBuffer'].length>0)) this.stat_entries = this.histo['fBuffer'][0];   
@@ -4567,14 +4566,21 @@ var gStyle = {
       } else {
          if (this.histo['fMinimum'] != -1111) hmin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) hmax = this.histo['fMaximum'];
-         this.ymin = hmin * mul;
-         this.ymax = hmax * 1.05;
+         if (hmin >= hmax) {
+            if (hmin == 0) { this.ymax = 0; this.ymax = 1;  } 
+            else if (hmin<0) { this.ymin = 2*hmin; this.ymax = 0; } 
+            else { this.ymin = 0; this.ymax = hmin*2; }
+         } else {
+            var dy = (hmax-hmin) * 0.1;
+            this.ymin = hmin - dy;
+            if ((this.ymin<0) && (hmin>=0)) this.ymin = 0;
+            this.ymax = hmax + dy;
+         }
          this.draw_content = true;
       }
-      
       // console.log("xmin = " + this.xmin + "  xmax = " + this.xmax + "  nbins = " + this.nbinsx);
       // console.log("ymin = " + this.ymin + "  ymax = " + this.ymax);
-      
+
       // If no any draw options specified, do not try draw histogram
       if (this.options.Bar == 0 && this.options.Hist == 0) {
          this.draw_content = false;
