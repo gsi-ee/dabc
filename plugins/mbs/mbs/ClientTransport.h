@@ -41,12 +41,13 @@ namespace mbs {
             ioInit,          // initial state
             ioRecvInfo,      // receiving server info
             ioReady,         // ready for work
-            ioRecvHeader,     // receiving buffer header
+            ioRecvHeader,    // receiving buffer header
             ioWaitBuffer,
             ioRecvBuffer,
             ioComplBuffer,   // at this stage buffer must be completed
-            ioClosing,
-            ioError
+            ioClosing,       // sending message to server that client is closing
+            ioError,         // error detected
+            ioClosed         // socket was closed by server
          };
 
          enum EEvents {
@@ -88,9 +89,10 @@ namespace mbs {
          void SubmitRequest();
          void MakeCallback(unsigned sz);
 
-
          unsigned ReadBufferSize();
          bool IsDabcEnabledOnMbsSide(); // indicates if new format is enabled on mbs side
+
+         virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
 
       public:
 

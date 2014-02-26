@@ -76,6 +76,8 @@ namespace hadaq {
          /* Use codes which are valid for Read_Start */
          unsigned ReadUdp();
 
+         virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
+
       public:
          DataSocketAddon(int fd, int nport, int mtu, double flush);
          virtual ~DataSocketAddon();

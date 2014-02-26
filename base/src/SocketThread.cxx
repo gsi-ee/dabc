@@ -174,7 +174,7 @@ ssize_t dabc::SocketAddon::DoRecvBuffer(void* buf, ssize_t len)
 
    if (res==0) OnConnectionClosed(); else
    if (res<0) {
-     if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+      if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
    }
 
    return res;
@@ -204,7 +204,7 @@ ssize_t dabc::SocketAddon::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    if (res==0) OnConnectionClosed(); else
    if (res<0) {
-     if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+      if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
    }
 
    return res;
@@ -216,7 +216,7 @@ ssize_t dabc::SocketAddon::DoSendBuffer(void* buf, ssize_t len)
 
    if (res==0) OnConnectionClosed(); else
    if (res<0) {
-     if (errno!=EAGAIN) OnSocketError(errno, "When send()");
+      if (errno!=EAGAIN) OnSocketError(errno, "When send()");
    }
 
    return res;
@@ -247,7 +247,7 @@ ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    if (res==0) OnConnectionClosed(); else
    if (res<0) {
-     if (errno!=EAGAIN) OnSocketError(errno, "When sendmsg()");
+      if (errno!=EAGAIN) OnSocketError(errno, "When sendmsg()");
    }
 
    return res;
@@ -609,9 +609,9 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
           }
 
           if (res<0) {
-             if (errno!=EAGAIN)
+             if (errno!=EAGAIN) {
                 OnSocketError(errno, "When recvmsg()");
-             else {
+             } else {
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?
                 SetDoingInput(true);
@@ -716,9 +716,9 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
           if (res<0) {
              DOUT2("Error when sending via socket %d  usemsg %s first %d number %d", fSocket, DBOOL(fSendUseMsg), fSendIOVFirst, fSendIOVNumber);
 
-             if (errno!=EAGAIN)
+             if (errno!=EAGAIN) {
                 OnSocketError(errno, "When sendmsg()");
-             else {
+             } else {
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?
                 SetDoingOutput(true);
@@ -1101,7 +1101,7 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
    }
    return true;
 }
-/*
+
 
 int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 {
@@ -1172,7 +1172,9 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    portnum = -1;
    return -1;
 }
-*/
+
+
+/*
 
 int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 {
@@ -1187,7 +1189,6 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
       return -1;
    }
 
-
    for(int ntest=0;ntest<numtests;ntest++) {
 
      if ((ntest==0) && (portnum<0)) continue;
@@ -1201,7 +1202,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      serv_addr.sin_addr.s_addr = INADDR_ANY;
      serv_addr.sin_port = htons(portnum);
 
-     /* Now bind the host address using bind() call.*/
+     // Now bind the host address using bind() call.
      if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) continue;
 
      if (!dabc::SocketThread::SetNonBlockSocket(sockfd))
@@ -1216,6 +1217,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    portnum = -1;
    return -1;
 }
+*/
 
 
 std::string dabc::SocketThread::DefineHostName()

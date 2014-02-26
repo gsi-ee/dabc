@@ -45,11 +45,13 @@ mbs::ClientTransport::~ClientTransport()
 
 void mbs::ClientTransport::ObjectCleanup()
 {
-   DOUT3("mbs::ClientTransport::ObjectCleanup");
+   DOUT3("mbs::ClientTransport::ObjectCleanup\n");
 
-   strcpy(fSendBuf, "CLOSE");
-   DoSendBuffer(fSendBuf, 12);
-   fState = ioClosing;
+   if ((fState!=ioError) && (fState!=ioClosed)) {
+      strcpy(fSendBuf, "CLOSE");
+      DoSendBuffer(fSendBuf, 12);
+      fState = ioClosing;
+   }
 
    dabc::SocketIOAddon::ObjectCleanup();
 }
@@ -176,22 +178,27 @@ void mbs::ClientTransport::OnRecvCompleted()
 
 void mbs::ClientTransport::OnConnectionClosed()
 {
-//   DOUT0("Close mbs client connection");
+   DOUT3("MBS client Socket close\n");
 
-   // from this moment we have nothing to do and can close transport
-   SubmitWorkerCmd(dabc::Command("CloseTransport"));
+   fState = ioClosed;
+
+   SubmitWorkerCmd(dabc::CmdDataInputClosed());
 
    // TODO: probably, one do not need call parent method
-   dabc::SocketIOAddon::OnConnectionClosed();
+   // dabc::SocketIOAddon::OnConnectionClosed();
 }
 
 
 void mbs::ClientTransport::OnSocketError(int errnum, const std::string& info)
 {
-   SubmitWorkerCmd(dabc::Command("CloseTransport"));
+   DOUT3("MBS client Socket Error\n");
+
+   fState = ioError;
+
+   SubmitWorkerCmd(dabc::CmdDataInputFailed());
 
    // TODO: probably, one do not need call parent method
-   dabc::SocketIOAddon::OnSocketError(errnum, info);
+   // dabc::SocketIOAddon::OnSocketError(errnum, info);
 }
 
 

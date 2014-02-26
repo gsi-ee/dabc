@@ -284,7 +284,7 @@ int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
 // =================================================================================
 
 hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer) :
-   dabc::InputTransport(cmd, inpport, addon, false, addon),
+   dabc::InputTransport(cmd, inpport, addon, true),
    fIdNumber(0),
    fWithObserver(observer),
    fDataRateName()

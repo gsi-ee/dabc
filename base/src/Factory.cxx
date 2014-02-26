@@ -66,28 +66,31 @@ dabc::Transport* dabc::Factory::CreateTransport(const Reference& port, const std
 
    if (portref.IsInput()) {
       dabc::DataInput* inp = CreateDataInput(typ);
-      if (inp!=0) {
-         if (!inp->Read_Init(portref, cmd)) {
-            EOUT("Input object %s cannot be initialized", typ.c_str());
-            delete inp;
-         } else {
-            DOUT0("Creating input transport for port %p", port());
-            return new dabc::InputTransport(cmd, portref, inp, true);
-         }
+      if (inp==0) return 0;
+      if (!inp->Read_Init(portref, cmd)) {
+         EOUT("Input object %s cannot be initialized", typ.c_str());
+         delete inp;
+         return 0;
       }
+
+      dabc::InputTransport* tr = new dabc::InputTransport(cmd, portref, inp, true);
+
+      dabc::Url url(typ);
+      if (url.HasOption("reconnect")) tr->EnableReconnect(typ);
+
+      return tr;
    }
 
    if (portref.IsOutput()) {
       dabc::DataOutput* out = CreateDataOutput(typ);
-      if (out!=0) {
-         if (!out->Write_Init()) {
-            EOUT("Output object %s cannot be initialized", typ.c_str());
-            delete out;
-         } else {
-            DOUT3("Creating output transport for port %p", portref());
-            return new dabc::OutputTransport(cmd, portref, out, true);
-         }
+      if (out==0) return 0;
+      if (!out->Write_Init()) {
+         EOUT("Output object %s cannot be initialized", typ.c_str());
+         delete out;
+         return 0;
       }
+      DOUT3("Creating output transport for port %p", portref());
+      return new dabc::OutputTransport(cmd, portref, out, true);
    }
 
    return 0;

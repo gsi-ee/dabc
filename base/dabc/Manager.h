@@ -61,6 +61,7 @@ namespace dabc {
    class FactoryPlugin;
    class DependPairList;
    class DataInput;
+   class InputTransport;
    class DataOutput;
    class Configuration;
    class StdManagerFactory;
@@ -189,6 +190,10 @@ namespace dabc {
       }
    };
 
+
+   class CmdCreateDataInput : public Command {
+      DABC_COMMAND(CmdCreateDataInput, "CreateDataInput");
+   };
 
    class CmdCreateTransport : public Command {
 
@@ -572,6 +577,7 @@ namespace dabc {
          friend class Manager;
          friend class Worker;
          friend class Port;   // need to activate connection manager
+         friend class InputTransport;  // need to create input object
 
          bool ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string& mask, bool onlychangeevent = true);
 
@@ -580,6 +586,9 @@ namespace dabc {
 
          /** Creates connection manager, used for connection establishing */
          bool CreateConnectionManager();
+
+         /** Create data input, using factories methods */
+         DataInput* CreateDataInput(const std::string& kind);
 
       public:
 

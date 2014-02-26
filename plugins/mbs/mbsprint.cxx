@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
    double tmout = 5.;
 
 
-   bool printdata(false), ashex(true), aslong(true), showrate(false);
+   bool printdata(false), ashex(true), aslong(true), showrate(false), reconnect(false);
 
    int n = 1;
    while (++n<argc) {
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-dec")==0) { printdata = true; ashex = false; } else
       if (strcmp(argv[n],"-long")==0) { printdata = true; aslong = true; } else
       if (strcmp(argv[n],"-short")==0) { printdata = true; aslong = false; } else
-      if (strcmp(argv[n],"-rate")==0) { showrate = true; } else
+      if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
@@ -62,6 +62,13 @@ int main(int argc, char* argv[])
 
       if (url.GetFileName().empty())
          src += "/Stream";
+
+      if (reconnect && !url.HasOption("reconnect")) {
+        if (url.GetOptions().empty())
+           src+="?reconnect";
+        else
+           src+="&reconnect";
+      }
    }
 
    mbs::ReadoutHandle ref = mbs::ReadoutHandle::Connect(src);

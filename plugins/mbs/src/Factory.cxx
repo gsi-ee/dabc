@@ -43,66 +43,20 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
 
    dabc::PortRef portref = port;
 
-   if (portref.IsInput() && (url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) {
+/*   if (portref.IsInput() && (url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) {
 
-      DOUT0("Try to create new MBS input transport typ %s file %s", typ.c_str(), url.GetFileName().c_str());
+      dabc::DataInput* addon = CreateDataInput(typ);
+      if (addon==0) return 0;
 
-      int kind = mbs::NoServer;
-      int portnum = 0;
+      dabc::InputTransport* tr = new dabc::InputTransport(cmd, portref, addon, true);
 
-      if (!url.GetFileName().empty())
-         kind = StrToServerKind(url.GetFileName().c_str());
+      tr->EnableReconnect(typ);
 
-      if (url.GetPort()>0)
-         portnum = url.GetPort();
-
-      if (kind == mbs::NoServer) {
-         if (portnum==DefualtServerPort(mbs::TransportServer)) kind = mbs::TransportServer; else
-         if (portnum==DefualtServerPort(mbs::StreamServer)) kind = mbs::StreamServer;
-      }
-
-      if (portnum==0) portnum = DefualtServerPort(kind);
-
-      if ((kind == mbs::NoServer) || (portnum==0)) {
-         EOUT("MBS server in url %s not specified correctly", typ.c_str());
-         return 0;
-      }
-
-      dabc::TimeStamp tm(dabc::Now());
-      bool firsttime = true;
-
-      // TODO: configure timeout via url parameter
-      // TODO: make connection via special addon (not blocking thread here)
-      double tmout(3.);
-
-      int fd(-1);
-
-      do {
-
-         if (firsttime) firsttime = false;
-                   else dabc::mgr.Sleep(0.01);
-
-         fd = dabc::SocketThread::StartClient(url.GetHostName().c_str(), portnum);
-         if (fd>0) break;
-
-      } while (!tm.Expired(tmout));
-
-      if (fd<=0) {
-         DOUT0("Fail connecting to host:%s port:%d", url.GetHostName().c_str(), portnum);
-         return 0;
-      }
-
-      DOUT0("Try to establish connection with host:%s kind:%s port:%d", url.GetHostName().c_str(), mbs::ServerKindToStr(kind), portnum);
-
-      ClientTransport* tr = new ClientTransport(fd, kind);
-
-      return new dabc::InputTransport(cmd, portref, tr, false, tr);
+      return tr;
    }
-
+*/
 
    if (portref.IsOutput() && (url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) {
-
-      DOUT0("Try to create new MBS output transport type %s", typ.c_str());
 
       int kind = mbs::StreamServer;
       int portnum = 0;
@@ -121,7 +75,7 @@ dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, cons
       int fd = dabc::SocketThread::StartServer(portnum);
 
       if (fd<=0) {
-         DOUT0("Fail assign MBS server to port:%d", portnum);
+         DOUT3("Fail assign MBS server to port:%d", portnum);
          return 0;
       }
 
@@ -150,7 +104,43 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
    if (url.GetProtocol()=="lmdtxt") {
       DOUT0("TEXT LMD input file name %s", url.GetFullName().c_str());
       return new mbs::TextInput(url);
+   } else
+   if ((url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) {
+      DOUT3("Try to create new MBS data input typ %s", typ.c_str());
+
+      int kind = mbs::NoServer;
+      int portnum = 0;
+
+      if (!url.GetFileName().empty())
+         kind = StrToServerKind(url.GetFileName().c_str());
+
+      if (url.GetPort()>0)
+         portnum = url.GetPort();
+
+      if (kind == mbs::NoServer) {
+         if (portnum==DefualtServerPort(mbs::TransportServer)) kind = mbs::TransportServer; else
+         if (portnum==DefualtServerPort(mbs::StreamServer)) kind = mbs::StreamServer;
+      }
+
+      if (portnum==0) portnum = DefualtServerPort(kind);
+
+      if ((kind == mbs::NoServer) || (portnum==0)) {
+         EOUT("MBS server in url %s not specified correctly", typ.c_str());
+         return 0;
+      }
+
+      int fd = dabc::SocketThread::StartClient(url.GetHostName().c_str(), portnum);
+
+      if (fd<=0) {
+         DOUT3("Fail connecting to host:%s port:%d", url.GetHostName().c_str(), portnum);
+         return 0;
+      }
+
+      DOUT0("Connect MBS %s server %s:%d", mbs::ServerKindToStr(kind), url.GetHostName().c_str(),  portnum);
+
+      return new mbs::ClientTransport(fd, kind);
    }
+
 
    return 0;
 }

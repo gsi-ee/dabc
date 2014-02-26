@@ -614,14 +614,14 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
    if (cmd.IsName("InvokeWorkerDestroy")) {
 
-      DOUT2("THRD:%s Request to destroy worker id = %u", GetName(), cmd.GetUInt("WorkerId"));
+      DOUT3("THRD:%s Request to destroy worker id %u", GetName(), cmd.GetUInt("WorkerId"));
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actDestroy, cmd);
    } else
 
    if (cmd.IsName("HaltWorker")) {
 
-      DOUT2("THRD:%s Request to halt worker", GetName());
+      DOUT3("THRD:%s Request to halt worker id %u", GetName(), cmd.GetUInt("WorkerId"));
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actHalt, cmd);
    } else
@@ -699,6 +699,8 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       // do it under lock
 
       rec = fWorkers[id];
+
+      DOUT5("Thrd:%s Remove record %u\n", GetName(), id);
 
       fWorkers[id] = new WorkerRec(0, 0);
    }
@@ -983,7 +985,7 @@ void dabc::Thread::WorkerAddonChanged(Worker* work, bool assign)
    WorkerRec* rec = fWorkers[work->WorkerId()];
 
    if (rec->work != work) {
-      EOUT("Mismatch of worker");
+      EOUT("%s Mismatch of worker id %u rec: %p worker: %p ", GetName(), work->WorkerId(), rec->work, work);
       exit(444);
    }
 

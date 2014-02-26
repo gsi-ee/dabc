@@ -1156,6 +1156,16 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd.SetRef("Object", DoCreateObject(cmd.GetStr("ClassName"), cmd.GetStr("ObjName"), cmd));
       cmd_res = cmd_true;
    } else
+   if (cmd.IsName(CmdCreateDataInput::CmdName())) {
+      std::string kind = cmd.GetStr("Kind");
+      DataInput* res = 0;
+      FOR_EACH_FACTORY(
+         res = factory->CreateDataInput(kind);
+         if (res != 0) break;
+      )
+      cmd.SetPtr("DataInput", res);
+      cmd_res = cmd_true;
+   } else
    if (cmd.IsName(CmdCleanupApplication::CmdName())) {
       cmd_res = DoCleanupApplication();
    } else
@@ -2272,6 +2282,16 @@ dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, con
 
    return cmd.GetRef("Object");
 }
+
+dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string& kind)
+{
+   CmdCreateDataInput cmd;
+   cmd.SetStr("Kind", kind);
+   if (!Execute(cmd)) return 0;
+
+   return (dabc::DataInput*) cmd.GetPtr("DataInput");
+}
+
 
 bool dabc::ManagerRef::SetLocalAddress(const std::string& name)
 {

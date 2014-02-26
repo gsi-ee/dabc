@@ -45,40 +45,53 @@ namespace dabc {
     *
     */
 
+
+   class CmdDataInputClosed : public Command {
+      DABC_COMMAND(CmdDataInputClosed, "DataInputClosed");
+   };
+
+   class CmdDataInputFailed : public Command {
+      DABC_COMMAND(CmdDataInputFailed, "DataInputFailed");
+   };
+
+
    class InputTransport : public Transport {
 
       // enum EDataEvents { evCallBack = evntModuleLast };
 
       enum EInputStates {
          inpInit,
-         inpInitTimeout, // waiting timeout read_size
+         inpInitTimeout,   // waiting timeout read_size
          inpBegin,
-         inpSizeCallBack, // wait for call-back with buffer size
-         inpCheckSize,    // in this state one should check return size argument
+         inpSizeCallBack,  // wait for call-back with buffer size
+         inpCheckSize,     // in this state one should check return size argument
          inpNeedBuffer,
-         inpWaitBuffer,  // in such state we are waiting for the buffer be delivered
-         inpCheckBuffer, // here size of buffer will be checked
-         inpHasBuffer,   // buffer is ready for use
-         inpCallBack,    // in this mode transport waits for call-back
-         inpCompliting,  // one need to complete operation
-         inpComplitTimeout, // waiting timeout after Read_Complete
+         inpWaitBuffer,    // in such state we are waiting for the buffer be delivered
+         inpCheckBuffer,   // here size of buffer will be checked
+         inpHasBuffer,     // buffer is ready for use
+         inpCallBack,      // in this mode transport waits for call-back
+         inpCompliting,    // one need to complete operation
+         inpComplitTimeout,// waiting timeout after Read_Complete
          inpReady,
          inpError,
-         inpEnd,         // at such state we need to generate EOF buffer and close input
+         inpEnd,           // at such state we need to generate EOF buffer and close input
+         inpReconnect,     // reconnection state - transport tries to recreate input object
          inpClosed
       };
 
       protected:
 
-         DataInput         *fInput;
-         bool               fInputOwner; // if true, fInput object must be destroyed
-         EInputStates       fInpState;
-         Buffer             fCurrentBuf;   // currently used buffer
-         unsigned           fNextDataSize;    // indicate that input has data, but there is no buffer of required size
-         unsigned           fPoolChangeCounter;
+         DataInput         *fInput;             //!< input object
+         bool               fInputOwner;        //!< if true, fInput object must be destroyed
+         EInputStates       fInpState;          //!< state of transport
+         Buffer             fCurrentBuf;        //!< currently used buffer
+         unsigned           fNextDataSize;      //!< indicate that input has data, but there is no buffer of required size
+         unsigned           fPoolChangeCounter; //!<
          MemoryPoolRef      fPoolRef;
-         unsigned           fExtraBufs;       // number of extra buffers provided to the transport addon
+         unsigned           fExtraBufs;         //!< number of extra buffers provided to the transport addon
+         std::string        fReconnect;         //!< when specified, tried to reconnect
 
+         /** Method can be used in custom transport to start pool monitoring */
          void RequestPoolMonitoring();
 
          virtual bool StartTransport();
@@ -91,16 +104,25 @@ namespace dabc {
          virtual bool ProcessSend(unsigned port);
 
          virtual bool ProcessBuffer(unsigned pool);
+
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(Command cmd);
+
 
       public:
 
-         InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner, WorkerAddon* addon = 0);
+         InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp = 0, bool owner = false);
          virtual ~InputTransport();
+
+         /** Assign input object, set addon if exists */
+         void SetDataInput(DataInput* inp, bool owner);
+
+         /** Set URL, use to reconnect data input */
+         void EnableReconnect(const std::string& reconn);
 
          // in implementation user can get informed when something changed in the memory pool
          virtual void ProcessPoolChanged(MemoryPool* pool) {}
-
 
          // This method MUST be called by transport, when Read_Start returns di_CallBack
          // It is only way to "restart" event loop in the transport

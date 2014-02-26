@@ -35,6 +35,7 @@
 namespace dabc {
 
    class Buffer;
+   class InputTransport;
 
    enum DataInputCodes {
       di_ValidSize     = 0xFFFFFFF0,   // last valid size for buffer
@@ -66,6 +67,14 @@ namespace dabc {
     */
 
    class DataInput {
+      friend class InputTransport;
+
+      protected:
+
+         /** Returns addon, provided by data input
+          * If specified, supposed that I/O object is double-deriver from DataInput and Addon */
+         virtual WorkerAddon* Read_GetAddon() { return 0; }
+
       public:
 
          virtual ~DataInput() {}
@@ -148,6 +157,7 @@ namespace dabc {
     */
 
    class DataOutput {
+
       protected:
          std::string         fInfoName;     // parameter name for info settings
 

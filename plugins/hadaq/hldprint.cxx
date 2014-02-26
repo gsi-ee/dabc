@@ -53,9 +53,7 @@ int main(int argc, char* argv[])
 
    long number = 10;
    double tmout = 5.;
-   bool printraw = false;
-   bool printsub = false;
-   bool showrate = false;
+   bool printraw(false), printsub(false), showrate(false), reconnect(false);
 
    int n = 1;
    while (++n<argc) {
@@ -63,7 +61,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
-      if (strcmp(argv[n],"-rate")==0) { showrate = true; } else
+      if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
@@ -89,6 +87,13 @@ int main(int argc, char* argv[])
 
          if (url.GetFileName().empty())
             src += "/Stream";
+
+         if (reconnect && !url.HasOption("reconnect")) {
+           if (url.GetOptions().empty())
+              src+="?reconnect";
+           else
+              src+="&reconnect";
+         }
       }
    }
 

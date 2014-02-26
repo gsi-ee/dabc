@@ -93,7 +93,7 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
 mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string& url, const char* classname)
 {
    if (dabc::mgr.null()) {
-      dabc::SetDebugLevel(0);
+      dabc::SetDebugLevel(1);
       dabc::CreateManager("dabc", -1);
    }
 

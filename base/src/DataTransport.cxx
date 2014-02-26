@@ -22,27 +22,54 @@
 #include "dabc/timing.h"
 
 
-dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner, WorkerAddon* addon) :
+dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner) :
    dabc::Transport(cmd, inpport, 0),
-   fInput(inp),
-   fInputOwner(owner),
+   fInput(0),
+   fInputOwner(false),
    fInpState(inpInit),
    fCurrentBuf(),
    fNextDataSize(0),
    fPoolChangeCounter(0),
    fPoolRef(),
-   fExtraBufs(0)
+   fExtraBufs(0),
+   fReconnect()
 {
-   AssignAddon(addon);
+   if (inp!=0) SetDataInput(inp, owner);
+
    CreateTimer("SysTimer");
-//   DOUT0("Create InputTransport %s", GetName());
+//   DOUT5("Create InputTransport %s", GetName());
 }
 
 dabc::InputTransport::~InputTransport()
 {
-   DOUT2("Destroy InputTransport %s", GetName());
-   CloseInput();
+//   DOUT5("Destroy InputTransport %s", GetName());
 }
+
+void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
+{
+   CloseInput();
+
+   if (inp==0) return;
+
+   fInput = inp;
+   fInputOwner = false;
+   WorkerAddon* addon = inp->Read_GetAddon();
+
+   if (addon==0) {
+      fInputOwner = owner;
+   } else
+   if (owner)
+      AssignAddon(addon);
+   else
+      EOUT("Cannot assigned addon while owner flag is not specified");
+
+}
+
+void dabc::InputTransport::EnableReconnect(const std::string& reconn)
+{
+   fReconnect = reconn;
+}
+
 
 void dabc::InputTransport::RequestPoolMonitoring()
 {
@@ -112,10 +139,14 @@ void dabc::InputTransport::CloseInput()
    }
    fInput = 0;
    fInputOwner = false;
+
+   AssignAddon(0);
 }
 
 void dabc::InputTransport::ObjectCleanup()
 {
+
+   DOUT4("dabc::InputTransport::ObjectCleanup");
 
    if (fInpState != inpClosed) {
       CloseInput();
@@ -125,6 +156,8 @@ void dabc::InputTransport::ObjectCleanup()
    fCurrentBuf.Release();
 
    fPoolRef.Release();
+
+   DOUT4("Call dabc::Transport::ObjectCleanup");
 
    dabc::Transport::ObjectCleanup();
 }
@@ -140,6 +173,31 @@ void dabc::InputTransport::ProcessTimerEvent(unsigned timer)
 
    ProcessOutputEvent(0);
 }
+
+int dabc::InputTransport::ExecuteCommand(Command cmd)
+{
+   bool isfailure = cmd.IsName(CmdDataInputFailed::CmdName());
+
+   if (isfailure || cmd.IsName(CmdDataInputClosed::CmdName())) {
+
+      if (fInpState != inpClosed) {
+         CloseInput();
+         fInpState = inpClosed;
+      }
+
+      if (fReconnect.empty()) {
+         CloseTransport(isfailure);
+      } else {
+         fInpState = inpReconnect;
+         ShootTimer("SysTimer", 1.);
+      }
+
+      return cmd_true;
+   }
+
+   return dabc::Transport::ExecuteCommand(cmd);
+}
+
 
 void dabc::InputTransport::Read_CallBack(unsigned sz)
 {
@@ -190,6 +248,33 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       CloseTransport(true);
       return false;
    }
+
+   if (fInpState == inpReconnect) {
+
+      if (fInput!=0) {
+         EOUT("Reconnect when input non 0 - ABORT");
+         CloseTransport(true);
+         return false;
+      }
+
+      if (fReconnect.empty()) {
+         EOUT("Reconnect not specified - ABORT");
+         CloseTransport(true);
+         return false;
+      }
+
+      DataInput* inp = dabc::mgr.CreateDataInput(fReconnect);
+
+      if (inp==0) {
+         ShootTimer("SysTimer", 1.);
+         return false;
+      }
+
+      SetDataInput(inp, true);
+
+      fInpState = inpInit;
+   }
+
 
    if (fInput==0) {
       EOUT("InputTransport %s - no input object!!!!", GetName());
