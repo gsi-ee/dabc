@@ -1102,8 +1102,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
          DOUT3("Creating thread %s for transport", thrdname.c_str());
 
-         // TODO: be aware that in future simple transport can be bidirectional!
-
          if (!tr.MakeThreadForWorker(thrdname)) {
             EOUT("Fail to create thread for transport");
             tr.Destroy();
