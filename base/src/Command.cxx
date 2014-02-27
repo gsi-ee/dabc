@@ -84,7 +84,7 @@ dabc::Command::Command(const std::string& name) throw()
       SetObject(new dabc::CommandContainer(name.c_str()));
 }
 
-void dabc::Command::AddCaller(Reference worker, bool* exe_ready)
+void dabc::Command::AddCaller(Worker* worker, bool* exe_ready)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
    if (cont==0) return;
@@ -252,14 +252,10 @@ void dabc::Command::Reply(int res)
 
    if (res>=0) SetResult(res);
 
-   bool process = false;
-
-   do {
+   while (!null()) {
 
       CommandContainer* cont = (CommandContainer*) GetObject();
-      if (cont==0) return;
 
-      process = false;
       CommandContainer::CallerRec rec;
 
       {
@@ -271,19 +267,14 @@ void dabc::Command::Reply(int res)
 
          rec = cont->fCallers.back();
          cont->fCallers.pop_back();
-         process = true;
       }
 
-      Worker* worker = (Worker*) rec.worker();
+      if (rec.worker==0) continue;
 
-      if (process && worker) {
-         DOUT3("Call GetCommandReply worker:%p cmd:%p", worker, cont);
-         process = worker->GetCommandReply(*this, rec.exe_ready);
-         if (!process) { EOUT("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", GetName()); }
-      }
-   } while (!process);
+      if (rec.worker->GetCommandReply(*this, rec.exe_ready)) break;
 
-   DOUT3("Command %p process %s", GetObject(), DBOOL(process));
+      EOUT("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s worker %p", GetName(), rec.worker);
+   }
 
    // in any case release reference at the end
    Release();

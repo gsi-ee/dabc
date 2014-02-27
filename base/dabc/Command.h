@@ -60,10 +60,10 @@ namespace dabc {
       protected:
 
          struct CallerRec {
-            Reference  worker;
-            bool*      exe_ready;
-            CallerRec() : worker(), exe_ready(0) {}
-            CallerRec(Reference w, bool* e) : worker(w), exe_ready(e) {}
+            Worker       *worker;      //! pointer on worker, do not use reference while worker will care about correct cleanup
+            bool         *exe_ready;   //! pointer on variable, which is used to indicate that execution is done
+            CallerRec() : worker(0), exe_ready(0) {}
+            CallerRec(Worker* w, bool* e) : worker(w), exe_ready(e) {}
             CallerRec(const CallerRec& src) : worker(src.worker), exe_ready(src.exe_ready) {}
 
             CallerRec& operator=(CallerRec& src)
@@ -109,7 +109,7 @@ namespace dabc {
 
       private:
 
-         void AddCaller(Reference worker, bool* exe_ready = 0);
+         void AddCaller(Worker* worker, bool* exe_ready = 0);
          void RemoveCaller(Worker* worker, bool* exe_ready = 0);
 
          bool IsLastCallerSync();

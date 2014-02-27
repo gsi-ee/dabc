@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+27.02.2014
+1. Fix problem in timeout of command execution. Now worker correctly inform
+   command that it do not requires reply from command.
+
+
 26.02.2014
 1. Implement reconnecting of input transport. When "reconnect" option specified
    in URL, InputTransport will try to recreate DataInput object if it fail during

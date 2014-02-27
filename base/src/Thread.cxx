@@ -707,7 +707,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
 
-   // FIXME: this must be legitime method to destroy any worker
+   // FIXME: this must be legetime method to destroy any worker
    //        one can remove it from workers vector
 
    // before worker will be really destroyed indicate to the world that processor is disappear

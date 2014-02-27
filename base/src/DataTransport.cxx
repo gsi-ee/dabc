@@ -145,7 +145,6 @@ void dabc::InputTransport::CloseInput()
 
 void dabc::InputTransport::ObjectCleanup()
 {
-
    DOUT4("dabc::InputTransport::ObjectCleanup");
 
    if (fInpState != inpClosed) {
@@ -156,8 +155,6 @@ void dabc::InputTransport::ObjectCleanup()
    fCurrentBuf.Release();
 
    fPoolRef.Release();
-
-   DOUT4("Call dabc::Transport::ObjectCleanup");
 
    dabc::Transport::ObjectCleanup();
 }

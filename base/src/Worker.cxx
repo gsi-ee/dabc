@@ -298,9 +298,9 @@ void dabc::Worker::AssignAddon(WorkerAddon* addon)
    fAddon = addon;
    if (addon) addon->fWorker = this;
 
-   if (!thrd.null()) {
+   if (!thrd.null() && addon) {
       thrd()->WorkerAddonChanged(this, true);
-      if (addon) addon->OnThreadAssigned();
+      addon->OnThreadAssigned();
    }
 }
 
@@ -802,7 +802,9 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
       bool exe_ready = false;
 
-      cmd.AddCaller(Reference(this), &exe_ready);
+      cmd.AddCaller(this, &exe_ready);
+
+    try {
 
       DOUT3("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd());
 
@@ -847,8 +849,16 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
          DOUT0("Worker %s refuse to submit command - we do it as well", dest->GetName());
          res = cmd_false;
          cmd.SetResult(cmd_false);
-         cmd.RemoveCaller(this, &exe_ready);
       }
+
+      // in any case remove caller from the command
+      cmd.RemoveCaller(this, &exe_ready);
+
+    } catch (...) {
+
+      // even in case of exception
+      cmd.RemoveCaller(this, &exe_ready);
+    }
 
    } // this is end of parenthesis for RecursionGuard, should be closed before thread reference is released
 
@@ -913,10 +923,7 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
 {
    if (cmd.null()) return cmd;
 
-   Reference ref(this);
-
    {
-
       LockGuard lock(fThreadMutex);
 
       if (fThread()==0) {
@@ -927,7 +934,7 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
       fWorkerCommands.Push(cmd, CommandsQueue::kindAssign);
    }
 
-   cmd.AddCaller(ref, 0);
+   cmd.AddCaller(this, 0);
 
    return cmd;
 }

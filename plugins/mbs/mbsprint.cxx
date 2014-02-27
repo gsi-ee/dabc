@@ -111,6 +111,11 @@ int main(int argc, char* argv[])
       if (cnt >= number) break;
    }
 
+   if (showrate) {
+      printf("\n");
+      fflush(stdout);
+   }
+
    ref.Disconnect();
 
    return 0;
