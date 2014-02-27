@@ -140,6 +140,7 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
 
    } else {
       if (GetTransportState()==stRunning) {
+         DOUT2("Connection %s deactivated in transport %s - stop it", name.c_str(), GetName());
          if (StopTransport()) {
            fTransportState = stStopped;
          } else {
