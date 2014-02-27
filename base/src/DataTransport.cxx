@@ -42,7 +42,6 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
 
 dabc::InputTransport::~InputTransport()
 {
-//   DOUT5("Destroy InputTransport %s", GetName());
 }
 
 void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
@@ -145,8 +144,6 @@ void dabc::InputTransport::CloseInput()
 
 void dabc::InputTransport::TransportCleanup()
 {
-   DOUT4("dabc::InputTransport::TransportCleanup");
-
    if (fInpState != inpClosed) {
       CloseInput();
       fInpState = inpClosed;

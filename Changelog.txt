@@ -11,6 +11,9 @@ current functionality of the framework.
    When device destruction will be started, all dependent transports will be
    stopped as soon as possible. It is guarantied that transport will not
    work when device is destroyed.  
+5. In hadaq::UdpTransport fix problem with cleanup.
+6. When Thread removes Worker from the list, it also reset fWorkerId and fThred
+   reference that during destructor wrong calls to the thread not produced.
     
 
 26.02.2014

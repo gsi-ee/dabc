@@ -118,8 +118,6 @@ namespace hadaq {
 
          virtual void ProcessTimerEvent(unsigned timer);
 
-         virtual void ProcessConnectEvent(const std::string& name, bool on);
-
       public:
          DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer);
          virtual ~DataTransport();

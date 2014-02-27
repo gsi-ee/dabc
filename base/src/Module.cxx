@@ -65,11 +65,9 @@ dabc::Module::Module(const std::string& name, Command cmd) :
 
 dabc::Module::~Module()
 {
-   DOUT3("+++++++++++ dabc::Module::~Module() %s starts", GetName());
+   DOUT3("dabc::Module::~Module() %s", GetName());
 
    if (fRunState) EOUT("Module %s destroyed in running state", GetName());
-
-   DOUT3(" dabc::Module::~Module() %s done", GetName());
 }
 
 void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::string& poolname)
@@ -775,6 +773,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
       }
 
       case evntPortDisconnect: {
+
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
 
          port->GetConnReq(true).ChangeState(ConnectionObject::sDisconnected, true);

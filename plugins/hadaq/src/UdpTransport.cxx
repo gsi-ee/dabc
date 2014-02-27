@@ -324,15 +324,6 @@ hadaq::DataTransport::~DataTransport()
 
 }
 
-void hadaq::DataTransport::ProcessConnectEvent(const std::string& name, bool on)
-{
-   if (on && (name == OutputName())) {
-      DOUT4("hadaq::DataTransport ID %u CONNECTED!!!!", fIdNumber);
-   }
-}
-
-
-
 void hadaq::DataTransport::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "ObserverTimer")

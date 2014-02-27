@@ -273,7 +273,7 @@ void dabc::LocalTransport::Disconnect(bool isinp)
       if (fConnected == 0) cleanup = true;
    }
 
-   DOUT3("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
+   DOUT3("Queue %p disconnected isinp %s conn %u m1:%s m2:%s", this, DBOOL(isinp), fConnected, m1.GetName(), m2.GetName());
 
    if (!isinp) m1.FireEvent(evntPortDisconnect, id1);
 

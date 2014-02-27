@@ -97,10 +97,13 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
 dabc::Transport::~Transport()
 {
+   DOUT5("$$$$$$ Transport %s DESTRUCTOR", GetName());
 }
 
 void dabc::Transport::ModuleCleanup()
 {
+   DOUT5("$$$$$$ Transport %s CLEANUP", GetName());
+
    // first let transport to cleanup itself
    TransportCleanup();
 
@@ -135,6 +138,8 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
    // ignore connect/disconnect from pool handles
    if (IsValidPool(FindPool(name))) return;
 
+   DOUT5("$$$$$$ Transport %s %p Port %s Activated %s", GetName(), this, name.c_str(), DBOOL(on));
+
    if (on) {
       if ((GetTransportState()==stInit) || (GetTransportState()==stStopped)) {
          DOUT2("Connection %s activated in transport %s - start it", name.c_str(), GetName());
@@ -164,6 +169,8 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
 
 void dabc::Transport::ProcessConnectEvent(const std::string& name, bool on)
 {
+   DOUT5("$$$$$$ Transport %s %p %s event port %s\n", GetName(), this, on ? "connect" : "DISCONNECT", name.c_str());
+
    // ignore connect event
    if (on) return;
 
@@ -199,18 +206,20 @@ int dabc::Transport::ExecuteCommand(Command cmd)
 
 bool dabc::Transport::StartTransport()
 {
-   DOUT2("Start transport %s", GetName());
+   DOUT3("Start transport %s", GetName());
 
    fAddon.Notify("StartTransport");
-   return Start();
+
+   return ModuleAsync::Start();
 }
 
 bool dabc::Transport::StopTransport()
 {
-   DOUT2("Stop transport %s", GetName());
+   DOUT3("Stop transport %s", GetName());
 
    fAddon.Notify("StopTransport");
-   return Stop();
+
+   return ModuleAsync::Stop();
 }
 
 

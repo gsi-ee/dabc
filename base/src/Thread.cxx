@@ -81,7 +81,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
 {
    fThreadInstances++;
 
-   DOUT2("---------- Thread %s %p created", GetName(), this);
+   DOUT3("---------- CNT:%2d Thread %s %p created", fThreadInstances, GetName(), this);
 
    fWorkers.push_back(new WorkerRec(0,0)); // exclude id==0
 
@@ -171,7 +171,7 @@ dabc::Thread::~Thread()
    delete [] fQueues; fQueues = 0;
    fNumQueues = 0;
 
-   DOUT2("~~~~~~~~ THRD %s destroyed", GetName());
+   DOUT3("~~~~~~~~ CNT:%2d THRD %s destroyed", fThreadInstances, GetName());
 
    fThreadInstances--;
 }
@@ -537,7 +537,7 @@ void dabc::Thread::RunExplicitLoop()
 
      fWorkers[fExplicitLoop]->work->DoWorkerMainLoop();
 
-  } catch (dabc::Exception e) {
+  } catch (dabc::Exception& e) {
      if (e.IsStop()) DOUT2("Worker %u stopped via exception", fExplicitLoop); else
      if (e.IsTimeout()) DOUT2("Worker %u stopped via timeout", fExplicitLoop); else
      EOUT("Exception %s in processor %u", e.what(), fExplicitLoop);
@@ -703,6 +703,9 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       DOUT5("Thrd:%s Remove record %u\n", GetName(), id);
 
       fWorkers[id] = new WorkerRec(0, 0);
+
+      // reset id
+      if (rec->work) rec->work->fWorkerId = 0;
    }
 
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
@@ -717,6 +720,9 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
       if (rec->work && rec->work->IsLogging())
          DOUT0("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName());
+
+      // release thread reference from here
+      if (rec->work) rec->work->fThread.Release();
 
       // true indicates that object should be destroyed immediately
       if (rec->doinghalt & actDestroy) {
