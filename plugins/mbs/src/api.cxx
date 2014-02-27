@@ -93,13 +93,13 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
 mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string& url, const char* classname)
 {
    if (dabc::mgr.null()) {
-      dabc::SetDebugLevel(1);
+      dabc::SetDebugLevel(0);
       dabc::CreateManager("dabc", -1);
    }
 
    if (dabc::mgr.FindPool(dabc::xmlWorkPool).null()) {
       if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 512*1024, 100)) {
-         return false;
+         return 0;
       }
    }
 
