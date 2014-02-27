@@ -81,16 +81,22 @@ int main(int argc, char* argv[])
 
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
+   dabc::TimeStamp lastevtm = last;
 
-   while ((evnt = ref.NextEvent(tmout)) != 0) {
+   while (true) {
 
-      cnt++;
+      evnt = ref.NextEvent(1.);
+
+      dabc::TimeStamp curr = dabc::Now();
+
+      if (evnt!=0) {
+         cnt++;
+         lastevtm = curr;
+      } else
+      if (curr - lastevtm > tmout) break;
 
       if (showrate) {
-
-         dabc::TimeStamp curr = dabc::Now();
          double tm = curr - last;
-
          if (tm>=0.3) {
             printf("\rTm:%6.1fs  Ev:%8ld  Rate:%8.2f Ev/s", first.SpentTillNow(), cnt, (cnt-lastcnt)/tm);
             fflush(stdout);
@@ -100,6 +106,8 @@ int main(int argc, char* argv[])
 
          continue;
       }
+
+      if (evnt==0) continue;
 
       evnt->PrintHeader();
       mbs::SubeventHeader* sub = 0;
