@@ -268,11 +268,6 @@ mbs::ServerTransport::~ServerTransport()
 {
 }
 
-void mbs::ServerTransport::ObjectCleanup()
-{
-   dabc::Transport::ObjectCleanup();
-}
-
 bool mbs::ServerTransport::StartTransport()
 {
    return dabc::Transport::StartTransport();

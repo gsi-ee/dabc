@@ -333,7 +333,6 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
    bool viathrd = false;
 
-
    {
       dabc::LockGuard lock(fObjectMutex);
 

@@ -143,9 +143,9 @@ void dabc::InputTransport::CloseInput()
    AssignAddon(0);
 }
 
-void dabc::InputTransport::ObjectCleanup()
+void dabc::InputTransport::TransportCleanup()
 {
-   DOUT4("dabc::InputTransport::ObjectCleanup");
+   DOUT4("dabc::InputTransport::TransportCleanup");
 
    if (fInpState != inpClosed) {
       CloseInput();
@@ -156,7 +156,7 @@ void dabc::InputTransport::ObjectCleanup()
 
    fPoolRef.Release();
 
-   dabc::Transport::ObjectCleanup();
+   dabc::Transport::TransportCleanup();
 }
 
 
@@ -243,6 +243,16 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    if (NumPools()==0) {
       EOUT("InputTransport %s - no memory pool!!!!", GetName());
       CloseTransport(true);
+      return false;
+   }
+
+   // if transport was created via device and device is destroyed - close transport as well
+   if (fTransportDevice.DeviceDestroyed()) {
+      if (fInpState != inpClosed) {
+         CloseInput();
+         fInpState = inpClosed;
+      }
+      CloseTransport(false);
       return false;
    }
 
@@ -568,11 +578,11 @@ bool dabc::OutputTransport::StopTransport()
 }
 
 
-void dabc::OutputTransport::ObjectCleanup()
+void dabc::OutputTransport::TransportCleanup()
 {
    CloseOutput();
 
-   dabc::Transport::ObjectCleanup();
+   dabc::Transport::TransportCleanup();
 }
 
 void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
@@ -619,6 +629,13 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
    if (fOutput==0) {
       EOUT("Output object not specified");
       fState = outError;
+   }
+
+   if (fTransportDevice.DeviceDestroyed()) {
+      fState = outClosed;
+      CloseOutput();
+      CloseTransport(false);
+      return false;
    }
 
    if (fState == outInit) {

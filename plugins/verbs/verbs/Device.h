@@ -48,6 +48,21 @@ namespace verbs {
 
          ContextRef  fIbContext;
 
+         virtual int ExecuteCommand(dabc::Command cmd);
+
+         QueuePair* CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type,
+                                 dabc::ThreadRef &thrd);
+
+         virtual dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port);
+
+         virtual double ProcessTimeout(double last_diff);
+
+         int HandleManagerConnectionRequest(dabc::Command cmd);
+
+         bool fAllocateIndividualCQ; // for connections individual CQ will be used
+
+         static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
+
       public:
 
          Device(const std::string& name);
@@ -64,24 +79,7 @@ namespace verbs {
 
          static bool IsThreadSafeVerbs() { return fThreadSafeVerbs; }
 
-      protected:
 
-         virtual int ExecuteCommand(dabc::Command cmd);
-
-         QueuePair* CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type,
-                                 dabc::ThreadRef &thrd);
-
-         virtual dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port);
-
-         virtual double ProcessTimeout(double last_diff);
-
-         int HandleManagerConnectionRequest(dabc::Command cmd);
-
-         virtual void ObjectCleanup();
-
-         bool fAllocateIndividualCQ; // for connections individual CQ will be used
-
-         static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
    };
 
    // _________________________________________________________

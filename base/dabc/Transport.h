@@ -20,12 +20,11 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-
-#include <stdint.h>
+#ifndef DABC_Device
+#include "dabc/Device.h"
+#endif
 
 namespace dabc {
-
-   class Buffer;
 
    extern const unsigned AcknoledgeQueueLength;
 
@@ -36,6 +35,9 @@ namespace dabc {
     */
 
    class Transport : public ModuleAsync {
+
+      friend class Device;
+
       protected:
          enum ETransportState {
             stInit,         /** When created */
@@ -44,12 +46,13 @@ namespace dabc {
             stError         /** Transport failed and will be destroyed */
          };
 
-         ETransportState fTransportState;
-         bool fIsInputTransport;
-         bool fIsOutputTransport;
-         std::string fTransportInfoName;
-         double fTransportInfoInterval;
-         TimeStamp fTransportInfoTm;
+         DeviceRef        fTransportDevice;    //!< device, used to create transport
+         ETransportState  fTransportState;
+         bool             fIsInputTransport;
+         bool             fIsOutputTransport;
+         std::string      fTransportInfoName;
+         double           fTransportInfoInterval;
+         TimeStamp        fTransportInfoTm;
 
          ETransportState GetTransportState() const { return fTransportState; }
 
@@ -67,6 +70,11 @@ namespace dabc {
           *  If info parameter was configured, one could use it regularly to provide information
           *  about transport */
          bool InfoExpected() const;
+
+         /** Reimplemented method from module */
+         virtual void ModuleCleanup();
+
+         virtual void TransportCleanup() {}
 
          /** \brief Method provides transport info to specified parameter */
          void ProvideInfo(int lvl, const std::string& info);

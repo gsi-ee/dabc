@@ -99,7 +99,7 @@ namespace dabc {
 
          void CloseInput();
 
-         virtual void ObjectCleanup();
+         virtual void TransportCleanup();
 
          virtual bool ProcessSend(unsigned port);
 
@@ -167,7 +167,7 @@ namespace dabc {
          virtual bool StartTransport();
          virtual bool StopTransport();
 
-         virtual void ObjectCleanup();
+         virtual void TransportCleanup();
 
          virtual void ProcessEvent(const EventId&);
 

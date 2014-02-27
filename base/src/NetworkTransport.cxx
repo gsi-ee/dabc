@@ -118,11 +118,11 @@ dabc::NetworkTransport::~NetworkTransport()
    DOUT2("#### ~NetworkTransport fRecs %p", fRecs);
 }
 
-void dabc::NetworkTransport::ObjectCleanup()
+void dabc::NetworkTransport::TransportCleanup()
 {
-   dabc::Transport::ObjectCleanup();
+   dabc::Transport::TransportCleanup();
 
-   DOUT3("NetworkTransport::Cleanup()");
+   DOUT3("NetworkTransport::TransportCleanup");
 
    // at this moment net should be destroyed by the addon cleanup
    fNet = 0;
@@ -140,7 +140,6 @@ void dabc::NetworkTransport::ObjectCleanup()
    fRecs = 0;
    fNumRecs = 0;
    fNumUsedRecs = 0;
-
 }
 
 

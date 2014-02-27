@@ -41,6 +41,7 @@ std::string dabc::Transport::MakeName(const PortRef& inpport, const PortRef& out
 
 dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport) :
    ModuleAsync(MakeName(inpport, outport)),
+   fTransportDevice(),
    fTransportState(stInit),
    fIsInputTransport(false),
    fIsOutputTransport(false),
@@ -97,6 +98,16 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 dabc::Transport::~Transport()
 {
 }
+
+void dabc::Transport::ModuleCleanup()
+{
+   // first let transport to cleanup itself
+   TransportCleanup();
+
+   // than release device reference (if any)
+   fTransportDevice.Release();
+}
+
 
 bool dabc::Transport::InfoExpected() const
 {

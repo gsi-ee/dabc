@@ -23,18 +23,24 @@
 
 dabc::Device::Device(const std::string& name) :
    Worker(MakePair(name)),
-   fDeviceMutex(true)
+   fDeviceDestroyed(false)
 {
    DOUT3("Device %p %s %s constructor prior:%d", this, GetName(), ItemName().c_str(), WorkerPriority());
 }
 
 dabc::Device::~Device()
 {
-   // by this call we synchronise us with anything else
-   // that can happen on the device
-
    DOUT3("Device %s destr prior:%d", GetName(), WorkerPriority());
 }
+
+
+void dabc::Device::ObjectCleanup()
+{
+   fDeviceDestroyed = true;
+
+   dabc::Worker::ObjectCleanup();
+}
+
 
 int dabc::Device::ExecuteCommand(Command cmd)
 {
@@ -55,6 +61,9 @@ int dabc::Device::ExecuteCommand(Command cmd)
       if (thrdname.empty()) thrdname = ThreadName();
 
       DOUT1("Device %s Create thread %s for transport", GetName(), thrdname.c_str());
+
+      // set reference on device
+      tr()->fTransportDevice = this;
 
       if (!tr.MakeThreadForWorker(thrdname)) {
          EOUT("Fail to create thread for transport");

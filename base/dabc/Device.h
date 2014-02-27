@@ -24,26 +24,37 @@ namespace dabc {
 
    class Transport;
 
-   /** \brief Base class for device-specific classes
+   class DeviceRef;
+
+   /** \brief Base class for device implementation
     *
     * \ingroup dabc_user_classes
     * \ingroup dabc_all_classes
     *
+    *  Used when some transport-independent entity should be create and managed in the application.
+    *  Device can be used to create transports for the port. One should specify in xml
+    *    <InputPort name="Input0" url="device://device_name"/>
+    *  In such case transport will be created by Device::CreateTransport() method
+    *  When device will be created, all related transports will be created as well
     */
 
    class Device : public Worker {
 
+      friend class DeviceRef;
+
       protected:
          enum EDeviceEvents { eventDeviceLast = evntFirstUser };
+
+         bool  fDeviceDestroyed;     //!<  if true, device and all transports should not be used
 
          Device(const std::string& name);
 
          virtual bool Find(ConfigIO &cfg);
 
-         // FIXME: device mutex should be normal object mutex - isn't it?
-         Mutex* DeviceMutex() { return &fDeviceMutex; }
+         /** Returns device mutex - it is just object mutex */
+         Mutex* DeviceMutex() const { return ObjectMutex(); }
 
-         Mutex           fDeviceMutex;
+         virtual void ObjectCleanup();
 
       public:
          virtual ~Device();
@@ -67,6 +78,7 @@ namespace dabc {
 
       DABC_REFERENCE(DeviceRef, WorkerRef, Device)
 
+      bool DeviceDestroyed() const { return null() ? false : GetObject()->fDeviceDestroyed; }
    };
 
 };

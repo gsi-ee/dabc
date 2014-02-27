@@ -101,7 +101,7 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 }
 
 
-void dabc::ConnectionManager::ObjectCleanup()
+void dabc::ConnectionManager::ModuleCleanup()
 {
    // UnregisterForParameterEvent(ConnectionObject::ObjectName());
 
@@ -114,7 +114,7 @@ void dabc::ConnectionManager::ObjectCleanup()
       req.ChangeState(ConnectionObject::sFailed, true);
    }
 
-   dabc::ModuleAsync::ObjectCleanup();
+   dabc::ModuleAsync::ModuleCleanup();
 }
 
 

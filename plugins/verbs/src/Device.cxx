@@ -255,11 +255,6 @@ verbs::Device::~Device()
    DOUT5("verbs::Device::~Device()");
 }
 
-void verbs::Device::ObjectCleanup()
-{
-   dabc::Device::ObjectCleanup();
-}
-
 verbs::QueuePair* verbs::Device::CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;

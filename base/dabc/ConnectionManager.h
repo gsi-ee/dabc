@@ -171,7 +171,7 @@ namespace dabc {
          void CheckConnectionRecs(bool finish_command = false);
 
          /** \brief Destroy all connections, if necessary - request to cleanup custom data by device */
-         virtual void ObjectCleanup();
+         virtual void ModuleCleanup();
 
          /** \brief Process changes in connection recs */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt);

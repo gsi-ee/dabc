@@ -135,7 +135,7 @@ namespace dabc {
          virtual bool StartTransport();
          virtual bool StopTransport();
 
-         virtual void ObjectCleanup();
+         virtual void TransportCleanup();
 
       public:
          virtual const char* ClassName() const { return "NetworkTransport"; }

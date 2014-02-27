@@ -104,8 +104,6 @@ namespace mbs {
          virtual bool StartTransport();
          virtual bool StopTransport();
 
-         virtual void ObjectCleanup();
-
          virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual bool ProcessRecv(unsigned port) { return SendNextBuffer(); }
