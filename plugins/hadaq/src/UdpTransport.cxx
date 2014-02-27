@@ -294,7 +294,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
 
    fIdNumber = inpport.ItemSubId();
 
-   DOUT0("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
+   DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
 
    if(fWithObserver) {
       // workaround to suppress problems with dim observer when this ratemeter is registered:
@@ -315,7 +315,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
 
       CreateTimer("ObserverTimer", 1, false);
-      DOUT0("hadaq::DataTransport created observer parameters");
+      DOUT3("hadaq::DataTransport created observer parameters");
    }
 }
 
@@ -340,7 +340,6 @@ std::string  hadaq::DataTransport::GetNetmemParName(const std::string& name)
 
 void hadaq::DataTransport::CreateNetmemPar(const std::string& name)
 {
-  //std::cout <<"DataTransport creates netmem parameter"<< GetNetmemParName(name)<< std::endl;
    CreatePar(GetNetmemParName(name));
 }
 

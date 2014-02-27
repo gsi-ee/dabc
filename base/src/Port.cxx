@@ -74,8 +74,7 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
    if (!req.null() || !force) return req;
 
    // at the moment when first connection request will be created,
-   // connection manager is activated
-   dabc::mgr.CreateConnectionManager();
+   // connection manager should be already there
 
    req = new dabc::ConnectionObject(this, dabc::mgr.ComposeAddress("",ItemName()));
 

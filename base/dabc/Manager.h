@@ -584,9 +584,6 @@ namespace dabc {
          /** Returns true, if name of the item should specify name in local context or from remote node */
          bool IsLocalItem(const std::string& name);
 
-         /** Creates connection manager, used for connection establishing */
-         bool CreateConnectionManager();
-
          /** Create data input, using factories methods */
          DataInput* CreateDataInput(const std::string& kind);
 

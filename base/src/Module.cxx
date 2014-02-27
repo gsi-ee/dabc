@@ -765,7 +765,8 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          // deliver event to the user disregard running state
 
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
-         port->GetConnReq(true).ChangeState(ConnectionObject::sConnected, true);
+
+         if (port) port->GetConnReq().ChangeState(ConnectionObject::sConnected, true);
 
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
@@ -776,7 +777,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
 
-         port->GetConnReq(true).ChangeState(ConnectionObject::sDisconnected, true);
+         if (port) port->GetConnReq().ChangeState(ConnectionObject::sDisconnected, true);
 
          DOUT2("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
 

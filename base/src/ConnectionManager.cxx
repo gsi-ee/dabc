@@ -367,7 +367,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
    if (cmd.IsName("ActivateConnections")) {
       fConnCmd.ReplyFalse();
 
-      DOUT0("Start processing of connections  number %u", fRecs.GetSize());
+      DOUT3("Start processing of connections  number %u", fRecs.GetSize());
 
       fDoingConnection = 1;
       fConnCmd = cmd;

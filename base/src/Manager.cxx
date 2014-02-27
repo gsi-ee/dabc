@@ -1114,7 +1114,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
                dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
          }
 
-         DOUT0("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
+         DOUT3("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
 
       }
    } else
@@ -1989,19 +1989,6 @@ dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const
 
 // ========================================== ManagerRef methods ================================
 
-bool dabc::ManagerRef::CreateConnectionManager()
-{
-   if ( (GetObject()==0) || GetObject()->GetCommandChannel().null()) return false;
-
-   ModuleRef m = FindModule(Manager::ConnMgrName());
-
-   if (!m.null()) return true;
-
-   m = CreateModule("dabc::ConnectionManager", Manager::ConnMgrName(), Manager::MgrThrdName());
-
-   return !m.null();
-}
-
 
 bool dabc::ManagerRef::CreateApplication(const std::string& classname, const std::string& appthrd)
 {
@@ -2177,18 +2164,17 @@ bool dabc::ManagerRef::IsLocalItem(const std::string& name)
 
 dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, const std::string& port2name)
 {
+   if (GetObject()==0) return dabc::ConnectionRequest();
+
    PortRef port1 = FindPort(port1name);
    PortRef port2 = FindPort(port2name);
 
-   if (IsLocalItem(port1name) && IsLocalItem(port2name)) {
-
-      if (!port1.null() && !port2.null()) {
-         // make local connection immediately
-         dabc::LocalTransport::ConnectPorts(port1, port2);
-         // connect also bind ports (if exists)
-         dabc::LocalTransport::ConnectPorts(port2.GetBindPort(), port1.GetBindPort());
-         return dabc::ConnectionRequest();
-      }
+   if (!port1.null() && !port2.null()) {
+      // make local connection immediately
+      dabc::LocalTransport::ConnectPorts(port1, port2);
+      // connect also bind ports (if exists)
+      dabc::LocalTransport::ConnectPorts(port2.GetBindPort(), port1.GetBindPort());
+      return dabc::ConnectionRequest();
    }
 
    if (IsLocalItem(port1name) && port1.null()) {
@@ -2202,6 +2188,16 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, 
    }
 
    if (port1.null() && port2.null()) return dabc::ConnectionRequest();
+
+   if (GetObject()->GetCommandChannel().null()) {
+      EOUT("Not possible to establish remote connection without command channel");
+      return dabc::ConnectionRequest();
+   }
+
+   ModuleRef m = FindModule(Manager::ConnMgrName());
+
+   if (m.null())
+      CreateModule("dabc::ConnectionManager", Manager::ConnMgrName(), Manager::MgrThrdName());
 
    DOUT2("Connect ports %s %p %s %p", port1name.c_str(), port1(), port2name.c_str(), port2());
 

@@ -30,12 +30,12 @@ mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind) :
    fSendBuffers(0),
    fDroppedBuffers(0)
 {
-   DOUT0("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
+   DOUT3("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
 }
 
 mbs::ServerOutputAddon::~ServerOutputAddon()
 {
-   DOUT0("Destroy ServerOutputAddon %p", this);
+   DOUT3("Destroy ServerOutputAddon %p", this);
 }
 
 void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool isnewformat)
@@ -74,7 +74,7 @@ void mbs::ServerOutputAddon::OnSendCompleted()
 
    switch (fState) {
       case oInit:
-         DOUT0("Send info completed");
+         DOUT4("Send info completed");
          if (fKind == mbs::StreamServer)
             fState = oWaitingReq;
          else
@@ -301,7 +301,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
          return dabc::cmd_true;
       }
 
-      DOUT0("Get new connection request with fd %d canrecv %s", fd, DBOOL(CanRecv()));
+      DOUT3("Get new connection request with fd %d canrecv %s", fd, DBOOL(CanRecv()));
 
       ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind);
       // FIXME: should we configure buffer size or could one ignore it???
@@ -317,9 +317,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       dabc::LocalTransport::ConnectPorts(FindPort(OutputName(portindx)), tr.InputPort());
 
-      DOUT0("mbs::ServerTransport create new connection at running=%s", DBOOL(isTransportRunning()));
-
-//      dabc::SetDebugLevel(1);
+      DOUT3("mbs::ServerTransport create new connection at running=%s", DBOOL(isTransportRunning()));
 
       return dabc::cmd_true;
    }

@@ -173,30 +173,22 @@ bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 
 void hadaq::CombinerModule::BeforeModuleStart()
 {
-   DOUT3("hadaq::CombinerModule::BeforeModuleStart name: %s ", GetName());
-
-   SetInfo("Start HADAQ combiner");
-
    std::string info = dabc::format(
-         "HADAQ combiner module ready. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
-         fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
+         "HADAQ Combiner starts. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
+         (int) fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
-
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
 {
-   DOUT0("%s: Complete Events:%d , BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
-           GetName(), (int) fTotalRecvEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
+   std::string info = dabc::format(
+      "HADAQ Combiner stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
+       (int) fTotalRecvEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
 
-//   std::cout << "----- Combiner Module Statistics: -----" << std::endl;
-//   std::cout << "Complete Events:" << fTotalRecvEvents << ", BrokenEvents:"
-//         << fTotalDiscEvents << ", DroppedData:" << fTotalDroppedData
-//         << ", RecvBytes:" << fTotalRecvBytes << ", data errors:"
-//         << fTotalDataErrors << ", tag errors:" << fTotalTagErrors << std::endl;
-
+   SetInfo(info, true);
+   DOUT0(info.c_str());
 }
 
 
@@ -238,7 +230,6 @@ void hadaq::CombinerModule::RegisterExportedCounters()
        //std::cout <<"!!!!!! Register prefix:"<<filename << std::endl;
        SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(filename.c_str()));
     }
-
 
    CreateEvtbuildPar("evtsDiscarded");
    CreateEvtbuildPar("evtsComplete");

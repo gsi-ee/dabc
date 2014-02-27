@@ -536,7 +536,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
          case 5: {  // REMOVE WORKER
 
-            DOUT0("REMOVE WORKER %s", worker.c_str());
+            DOUT4("REMOVE WORKER %s", worker.c_str());
 
             PublishersList::iterator iter = fPublishers.begin();
             while (iter!=fPublishers.end()) {

@@ -326,14 +326,13 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 
    if (port_out.null() || port_inp.null()) return cmd_false;
 
-   // FIXME: one need to protect module pointer via mutex - port can be destroyed or cleaned at any moment in its own thread
    ModuleRef m1 = port_out.GetModule();
    ModuleRef m2 = port_inp.GetModule();
 
    bool withmutex = true;
 
    if (m1.IsSameThread(m2)) {
-      DOUT0("!!!! Can create queue without mutex !!!");
+      DOUT3("!!!! Can create queue without mutex !!!");
       withmutex = false;
    }
 
