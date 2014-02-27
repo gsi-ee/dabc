@@ -264,9 +264,10 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
       var argdflt = this.ArgDflt(cnt);
       
       var argid = this.frameid + "_arg" + cnt; 
-
+      var argwidth = (argkind=="int") ? "80px" : "170px";
+      
       entryInfo += "Arg: " + argname + " "; 
-      entryInfo += "<input id='" + argid + "' style='width:100px' value='"+argdflt+"' argname = '" + argname + "'/>";    
+      entryInfo += "<input id='" + argid + "' style='width:" + argwidth + "' value='"+argdflt+"' argname = '" + argname + "'/>";    
       entryInfo += "<br>";
    }
    
@@ -314,7 +315,10 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
    if (this.req) return;
    
    var resdiv = $("#" + this.frameid + "_res");
-   if (resdiv) resdiv.empty();
+   if (resdiv) {
+      resdiv.empty();
+      resdiv.append("<h5>Send command to server</h5>");
+   }
    
    var url = this.itemname + "execute";
 
