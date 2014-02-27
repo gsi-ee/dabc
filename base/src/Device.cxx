@@ -51,7 +51,7 @@ int dabc::Device::ExecuteCommand(Command cmd)
 
       if (tr.null()) return cmd_false;
 
-      std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
+      std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStr();
       if (thrdname.empty()) thrdname = ThreadName();
 
       DOUT1("Device %s Create thread %s for transport", GetName(), thrdname.c_str());
@@ -68,7 +68,7 @@ int dabc::Device::ExecuteCommand(Command cmd)
       if (port.IsOutput())
          dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
 
-      DOUT1("Device %s transport is created", GetName());
+      DOUT1("Device %s transport is created for port %p %s", GetName(), port(), port.ItemName().c_str());
 
       return cmd_true;
    }

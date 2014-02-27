@@ -42,7 +42,7 @@ dabc::Module::Module(const std::string& name, Command cmd) :
    fDfltPool(),
    fInfoParName()
 {
-   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr();
+   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStr();
    int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(0);
    int numout = Cfg(dabc::xmlNumOutputs, cmd).AsInt(0);
    fAutoStop = Cfg("autostop", cmd).AsBool(fAutoStop);
@@ -411,7 +411,7 @@ int dabc::Module::PreviewCommand(Command cmd)
          req.SetRemoteUrl(cmd.GetStr("Url"));
          req.SetServerSide(cmd.GetBool("IsServer"));
 
-         std::string thrdname = port.Cfg(xmlThreadAttr).AsStdStr();
+         std::string thrdname = port.Cfg(xmlThreadAttr).AsStr();
          if (thrdname.empty())
             switch (dabc::mgr.GetThreadsLayout()) {
                case dabc::layoutMinimalistic: thrdname = dabc::mgr.ThreadName(); break;
@@ -426,7 +426,7 @@ int dabc::Module::PreviewCommand(Command cmd)
 
          req.SetOptional(port.Cfg(xmlOptionalAttr).AsBool(false));
 
-         req.SetConnDevice(port.Cfg(xmlDeviceAttr).AsStdStr());
+         req.SetConnDevice(port.Cfg(xmlDeviceAttr).AsStr());
 
          req.SetConnTimeout(port.Cfg(xmlTimeoutAttr).AsDouble(10.));
 

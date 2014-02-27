@@ -48,7 +48,7 @@ bnet::TransportModule::TransportModule(const std::string& name, dabc::Command cm
    for (int n=0;n<NumNodes();n++)
       fActiveNodes[n] = true;
 
-   fTestScheduleFile = Cfg("TestSchedule",cmd).AsStdStr();
+   fTestScheduleFile = Cfg("TestSchedule",cmd).AsStr();
    if (!fTestScheduleFile.empty())
       fPreparedSch.ReadFromFile(fTestScheduleFile);
 
@@ -157,7 +157,7 @@ bnet::TransportModule::TransportModule(const std::string& name, dabc::Command cm
       fCmdsQueue.Push(CmdTransport(BNET_CMD_EXECSYNC));
       fCmdsQueue.Push(CmdTransport(BNET_CMD_GETSYNC));
 
-      if (Cfg("TestKind", cmd).AsStdStr() == "TimeSync") {
+      if (Cfg("TestKind", cmd).AsStr() == "TimeSync") {
          fCmdsQueue.Push(CmdTransport(BNET_CMD_WAIT, 10.)); // master wait 10 seconds
       } else {
          fCmdsQueue.Push(CmdTransport(BNET_CMD_ALLTOALL)); // configure and start all to all execution

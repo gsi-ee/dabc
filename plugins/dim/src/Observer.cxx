@@ -21,7 +21,7 @@ dimc::Observer::Observer(const std::string& name) :
 
    fDimPrefix = dabc::format("DABC/%s:%d/%s/",  nodename.c_str(), nodeid, dabc::mgr.GetName());
 
-   fDNS = Cfg("dns").AsStdStr();
+   fDNS = Cfg("dns").AsStr();
    if (fDNS.empty()) fDNS = dabc::mgr()->cfg()->ResolveEnv("${DIM_DNS_NODE}");
 
    if (fDNS.empty()) {
@@ -35,15 +35,15 @@ dimc::Observer::Observer(const std::string& name) :
    fDNSport = Cfg("port").AsUInt(2505);
 
    // Default, all parameter events are registered
-   std::string mask = Cfg("mask").AsStdStr("*");
+   std::string mask = Cfg("mask").AsStr("*");
 
    // if (mask.empty()) mask = "*";
 
-   fERateName = Cfg("ERate").AsStdStr();
-   fDRateName = Cfg("DRate").AsStdStr();
-   fInfoName = Cfg("Info").AsStdStr();
-   fInfo2Name = Cfg("Info2").AsStdStr();
-   fInfo3Name = Cfg("Info3").AsStdStr();
+   fERateName = Cfg("ERate").AsStr();
+   fDRateName = Cfg("DRate").AsStr();
+   fInfoName = Cfg("Info").AsStr();
+   fInfo2Name = Cfg("Info2").AsStr();
+   fInfo3Name = Cfg("Info3").AsStr();
 
    RegisterForParameterEvent(mask, false);
 

@@ -38,7 +38,7 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
 
    fEventIdTolerance = Cfg(mbs::xmlEvidTolerance,cmd).AsInt(0);
 
-   std::string ratesprefix = Cfg(mbs::xmlCombinerRatesPrefix, cmd).AsStdStr("Mbs");
+   std::string ratesprefix = Cfg(mbs::xmlCombinerRatesPrefix, cmd).AsStr("Mbs");
 
    fSpecialTriggerLimit = Cfg(mbs::xmlSpecialTriggerLimit,cmd).AsInt(12);
 

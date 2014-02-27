@@ -105,9 +105,9 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 {
    fHierarchy.Create("fesa-monitor", true);
 
-   fServerName = Cfg("Server", cmd).AsStdStr();
-   fDeviceName = Cfg("Device", cmd).AsStdStr();
-   fCycle = Cfg("Cycle", cmd).AsStdStr();
+   fServerName = Cfg("Server", cmd).AsStr();
+   fDeviceName = Cfg("Device", cmd).AsStr();
+   fCycle = Cfg("Cycle", cmd).AsStr();
 
    std::vector<std::string> services = Cfg("Services", cmd).AsStrVect();
 

@@ -51,7 +51,7 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    std::string poolname;
 
    if (!inpport.null()) {
-      poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
+      poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
 //      DOUT0("Inpport %s pool %s", inpport.ItemName(false).c_str(), poolname.c_str());
 
@@ -64,7 +64,7 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
    if (!outport.null()) {
 
-      poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
+      poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
 //      DOUT0("Outport %s pool %s cmdhaspool %s", outport.ItemName(false).c_str(), poolname.c_str(), DBOOL(cmd.HasField(dabc::xmlPoolName)));
 
@@ -126,23 +126,23 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
 
    if (on) {
       if ((GetState()==stInit) || (GetState()==stStopped)) {
-         DOUT2("Connection %s activated by transport %s - make start", name.c_str(), GetName());
+         DOUT2("Connection %s activated in transport %s - start it", name.c_str(), GetName());
 
-         if (StartTransport())
+         if (StartTransport()) {
             fState = stRunning;
-         else {
+         } else {
             fState = stError;
             DeleteThis();
          }
       } else {
-         DOUT2("dabc::Transport %s is running, ignore start message from port %s", GetName(), name.c_str());
+         DOUT2("Transport %s is running, ignore start message from port %s", GetName(), name.c_str());
       }
 
    } else {
       if (GetState()==stRunning) {
-         if (StopTransport())
+         if (StopTransport()) {
            fState = stStopped;
-         else {
+         } else {
            fState = stError;
            DeleteThis();
          }

@@ -24,7 +24,7 @@ dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Comman
 {
    EnsurePorts(1, 1);
 
-   fDataRateName = Cfg("DataRateName", cmd).AsStdStr();
+   fDataRateName = Cfg("DataRateName", cmd).AsStr();
 
    if (!fDataRateName.empty())
       CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
@@ -77,7 +77,7 @@ dabc::RepeaterModule::RepeaterModule(const std::string& name, dabc::Command cmd)
 {
    EnsurePorts(1, 1);
 
-   std::string ratemeter = Cfg("DataRateName", cmd).AsStdStr();
+   std::string ratemeter = Cfg("DataRateName", cmd).AsStr();
 
    if (!ratemeter.empty()) {
       CreatePar(ratemeter).SetRatemeter(false, 3.).SetUnits("MB");

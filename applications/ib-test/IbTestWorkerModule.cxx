@@ -93,7 +93,7 @@ IbTestWorkerModule::IbTestWorkerModule(const std::string& name, dabc::Command cm
 
    fCmdDataBuffer = new char[fCmdBufferSize];
 
-   fTestKind = Cfg("TestKind", cmd).AsStdStr();
+   fTestKind = Cfg("TestKind", cmd).AsStr();
    fTestPoolSize = Cfg("TestPoolSize", cmd).AsInt(250);
 
    EnsurePorts(nports, nports, "SendPool");
@@ -104,7 +104,7 @@ IbTestWorkerModule::IbTestWorkerModule(const std::string& name, dabc::Command cm
    fActiveNodes.clear();
    fActiveNodes.resize(fNumNodes, true);
 
-   fTestScheduleFile = Cfg("TestSchedule",cmd).AsStdStr();
+   fTestScheduleFile = Cfg("TestSchedule",cmd).AsStr();
    if (!fTestScheduleFile.empty())
       fPreparedSch.ReadFromFile(fTestScheduleFile);
 

@@ -43,13 +43,13 @@ void dabc::Port::ReadPortConfiguration()
 {
    fQueueCapacity = Cfg(xmlQueueAttr).AsInt(fQueueCapacity);
    fMapLoopLength = Cfg(xmlLoopAttr).AsInt(fMapLoopLength);
-   std::string signal = Cfg(xmlSignalAttr).AsStdStr();
+   std::string signal = Cfg(xmlSignalAttr).AsStr();
    if (signal == "none") fSignal = SignalNone; else
    if ((signal == "confirm") || (signal == "normal")) fSignal = SignalConfirm; else
    if (signal == "oper")  fSignal = SignalConfirm; else
    if (signal == "every") fSignal = SignalEvery;
-   fBindName = Cfg(xmlBindAttr).AsStdStr(fBindName);
-   fRateName = Cfg(xmlRateAttr).AsStdStr(fRateName);
+   fBindName = Cfg(xmlBindAttr).AsStr(fBindName);
+   fRateName = Cfg(xmlRateAttr).AsStr(fRateName);
 
    if (Cfg(xmlAutoAttr).AsBool(true))
       SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.));
@@ -142,7 +142,6 @@ void dabc::Port::DoCleanup()
    Disconnect();
    fRate.Release();
 }
-
 
 void dabc::Port::ObjectCleanup()
 {
@@ -294,7 +293,8 @@ dabc::Buffer dabc::InputPort::Recv()
 dabc::OutputPort::OutputPort(Reference parent,
                            const std::string& name,
                            unsigned queuesize) :
-   Port(dabc::mitOutPort, parent, name, queuesize)
+   Port(dabc::mitOutPort, parent, name, queuesize),
+   fSendallFlag(false)
 {
    // only can do it here, while in Port Cfg() cannot correctly locate OutputPort as class
    ReadPortConfiguration();

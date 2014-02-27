@@ -84,8 +84,8 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
       if (!dabc::mgr()->ConnectPorts(portname, "Splitter/Input")) return false;
    }
 
-   return CreateOutFile(portname, Par(xmlStoragePar).AsStdStr()) &&
-          CreateOutServer(Par(mbs::xmlServerKind).AsStdStr());
+   return CreateOutFile(portname, Par(xmlStoragePar).AsStr()) &&
+          CreateOutServer(Par(mbs::xmlServerKind).AsStr());
 }
 
 bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::string& filename)

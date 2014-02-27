@@ -56,7 +56,7 @@ bool mbs::TextInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& 
 {
    if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
 
-   fDataFormat = wrk.Cfg(mbs::xmlTextDataFormat, cmd).AsStdStr(fDataFormat);
+   fDataFormat = wrk.Cfg(mbs::xmlTextDataFormat, cmd).AsStr(fDataFormat);
    fNumData = wrk.Cfg(mbs::xmlTextNumData, cmd).AsInt(fNumData);
    fNumHeaderLines = wrk.Cfg(mbs::xmlTextHeaderLines, cmd).AsInt(fNumHeaderLines);
    fCharBufferLength = wrk.Cfg(mbs::xmlTextCharBuffer, cmd).AsInt(fCharBufferLength);

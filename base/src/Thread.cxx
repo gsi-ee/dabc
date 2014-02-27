@@ -103,7 +103,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
      }
    }
 
-   std::string affinity = fExec->Cfg(xmlAffinity, cmd).AsStdStr();
+   std::string affinity = fExec->Cfg(xmlAffinity, cmd).AsStr();
 
    if (!affinity.empty()) {
       SetAffinity(affinity.c_str());

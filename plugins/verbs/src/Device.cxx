@@ -309,10 +309,10 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
 
    dabc::PortRef portref = port;
 
-   std::string maddr = portref.Cfg(xmlMcastAddr, cmd).AsStdStr();
+   std::string maddr = portref.Cfg(xmlMcastAddr, cmd).AsStr();
 
    if (!maddr.empty()) {
-      std::string thrdname = portref.Cfg(dabc::xmlThreadAttr,cmd).AsStdStr();
+      std::string thrdname = portref.Cfg(dabc::xmlThreadAttr,cmd).AsStr();
 
       if (thrdname.empty())
          switch (dabc::mgr.GetThreadsLayout()) {

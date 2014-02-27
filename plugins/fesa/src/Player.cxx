@@ -78,11 +78,11 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    
    CreateCmdDef("CmdReset").AddArg("counter", "int", true, "5");
 
-   fServerName = Cfg("Server", cmd).AsStdStr();
-   fDeviceName = Cfg("Device", cmd).AsStdStr();
-   fCycles = Cfg("Cycles", cmd).AsStdStr();
-   fService = Cfg("Service", cmd).AsStdStr();
-   fField = Cfg("Field", cmd).AsStdStr();
+   fServerName = Cfg("Server", cmd).AsStr();
+   fDeviceName = Cfg("Device", cmd).AsStr();
+   fCycles = Cfg("Cycles", cmd).AsStr();
+   fService = Cfg("Service", cmd).AsStr();
+   fField = Cfg("Field", cmd).AsStr();
 
    CreateTimer("update", 1., false);
 

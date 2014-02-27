@@ -857,7 +857,7 @@ dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, cons
          return mdl;
       }
 
-      std::string thrdname = mdl.Cfg(xmlThreadAttr, cmd).AsStdStr();
+      std::string thrdname = mdl.Cfg(xmlThreadAttr, cmd).AsStr();
 
       if (thrdname.empty())
          switch (GetThreadsLayout()) {
@@ -939,7 +939,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       }
 
 
-      std::string appthrd = appref.Cfg(xmlThreadAttr, cmd).AsStdStr();
+      std::string appthrd = appref.Cfg(xmlThreadAttr, cmd).AsStr();
 
       if (appthrd.empty())
          switch (GetThreadsLayout()) {
@@ -1090,7 +1090,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       if (!tr.null()) {
 
-         std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
+         std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStr();
          if (thrdname.empty())
             switch (GetThreadsLayout()) {
                case layoutMinimalistic: thrdname = ThreadName(); break;

@@ -235,7 +235,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
          break;
 
       case kindString:
-         strncpy((char*) fBuffer, par.AsStdStr().c_str(), fBufferLen-1);
+         strncpy((char*) fBuffer, par.AsStr().c_str(), fBufferLen-1);
 
          if (fService==0) {
             fService = new ::DimService(fDimName.c_str(), (char*)fBuffer);

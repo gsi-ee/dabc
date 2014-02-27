@@ -36,7 +36,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       NetTestSenderModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
-         fKind = Cfg("Kind", cmd).AsStdStr();
+         fKind = Cfg("Kind", cmd).AsStr();
 
          fSendCnt =  dabc::mgr.NodeId();
 

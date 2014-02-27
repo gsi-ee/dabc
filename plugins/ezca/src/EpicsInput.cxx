@@ -47,15 +47,15 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
 
    fUpdateFlagRecord = wrk.Cfg(ezca::xmlUpdateFlagRecord,cmd).AsStr();
    fIDNumberRecord = wrk.Cfg(ezca::xmlEventIDRecord,cmd).AsStr();
-   fUpdateCommandReceiver = wrk.Cfg(ezca::xmlCommandReceiver,cmd).AsStdStr("");
+   fUpdateCommandReceiver = wrk.Cfg(ezca::xmlCommandReceiver,cmd).AsStr("");
 
    int numlongs = wrk.Cfg(ezca::xmlNumLongRecords, cmd).AsInt(0);
    for(int t=0;t<numlongs;++t)
-      AddLongRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameLongRecords, t), cmd).AsStdStr("dummy"));
+      AddLongRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameLongRecords, t), cmd).AsStr("dummy"));
 
    int numdubs = wrk.Cfg(ezca::xmlNumDoubleRecords, cmd).AsInt(0);
    for(int t=0;t<numdubs;++t)
-      AddDoubleRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameDoubleRecords, t), cmd).AsStdStr("dummy"));
+      AddDoubleRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameDoubleRecords, t), cmd).AsStr("dummy"));
 
    fEzcaTimeout = wrk.Cfg(ezca::xmlEzcaTimeout, cmd).AsDouble(fEzcaTimeout);
    fEzcaRetryCnt = wrk.Cfg(ezca::xmlEzcaRetryCount, cmd).AsInt(fEzcaRetryCnt);

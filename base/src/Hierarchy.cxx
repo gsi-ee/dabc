@@ -1150,7 +1150,7 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
    // we need to find parent on the most-top position with binary_producer property
    while (!parent.null()) {
       if (parent.HasField(dabc::prop_producer)) {
-         producer_name = parent.Field(dabc::prop_producer).AsStdStr();
+         producer_name = parent.Field(dabc::prop_producer).AsStr();
          request_name = RelativeName(parent);
       }
       parent = parent.GetParentRef();
