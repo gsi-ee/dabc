@@ -1113,6 +1113,9 @@ int dabc::Manager::ExecuteCommand(Command cmd)
             if (port.IsOutput())
                dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
          }
+
+         DOUT0("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
+
       }
    } else
 

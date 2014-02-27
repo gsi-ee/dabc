@@ -94,8 +94,10 @@ bool dabc::InputTransport::StartTransport()
       return false;
    }
 
+   if (fInpState != inpInit) {
+      EOUT("Non-init state when starting transport");
+   }
 
-   fInpState = inpInit;
    fNextDataSize = 0;
    ProduceOutputEvent();
 
@@ -106,11 +108,9 @@ bool dabc::InputTransport::StopTransport()
 {
 //   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
-   bool res = Transport::StopTransport();
-
    DOUT2("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
-   return res;
+   return Transport::StopTransport();
 }
 
 bool dabc::InputTransport::ProcessBuffer(unsigned pool)
@@ -291,6 +291,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    // first step - request size of the buffer
 
    if (fInpState == inpInit) {
+
+      // if transport not running, do not start acquire new buffer
+      if (!isTransportRunning()) return false;
 
       // if internal queue already acquire as many buffers, wait
       if (fExtraBufs && (NumCanSend(port) <= fExtraBufs)) {
@@ -633,6 +636,11 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
          fOutput->Write_Flush();
          Recv(port).Release();
          return true;
+// TODO: should we stop output when transport is closed?????
+//      } else
+//      if (!isTransportRunning()) {
+//         // when transport not running, ignore all input buffers anyway
+//         return false;
       } else {
          ret = fOutput->Write_Check();
       }

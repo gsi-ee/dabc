@@ -44,17 +44,17 @@ namespace dabc {
             stError         /** Transport failed and will be destroyed */
          };
 
-         ETransportState fState;
+         ETransportState fTransportState;
          bool fIsInputTransport;
          bool fIsOutputTransport;
          std::string fTransportInfoName;
          double fTransportInfoInterval;
          TimeStamp fTransportInfoTm;
 
-         ETransportState GetState() const { return fState; }
+         ETransportState GetTransportState() const { return fTransportState; }
 
-         bool isTransportRunning() const { return fState == stRunning; }
-         bool isTransportError() const { return fState == stError; }
+         bool isTransportRunning() const { return GetTransportState() == stRunning; }
+         bool isTransportError() const { return GetTransportState() == stError; }
 
          /** Method called when module on other side is started */
          virtual void ProcessConnectionActivated(const std::string& name, bool on);

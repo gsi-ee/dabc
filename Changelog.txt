@@ -6,6 +6,7 @@ current functionality of the framework.
 1. Fix problem in timeout of command execution. Now worker correctly inform
    command that it do not requires reply from command.
 2. In mbsprint/hldprint also show zero rate when no events comming.
+3. In InputTransport stop data receiving when transport is closed
  
 
 26.02.2014

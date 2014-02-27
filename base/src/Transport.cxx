@@ -41,7 +41,7 @@ std::string dabc::Transport::MakeName(const PortRef& inpport, const PortRef& out
 
 dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport) :
    ModuleAsync(MakeName(inpport, outport)),
-   fState(stInit),
+   fTransportState(stInit),
    fIsInputTransport(false),
    fIsOutputTransport(false),
    fTransportInfoName(),
@@ -125,13 +125,13 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
    if (IsValidPool(FindPool(name))) return;
 
    if (on) {
-      if ((GetState()==stInit) || (GetState()==stStopped)) {
+      if ((GetTransportState()==stInit) || (GetTransportState()==stStopped)) {
          DOUT2("Connection %s activated in transport %s - start it", name.c_str(), GetName());
 
          if (StartTransport()) {
-            fState = stRunning;
+            fTransportState = stRunning;
          } else {
-            fState = stError;
+            fTransportState = stError;
             DeleteThis();
          }
       } else {
@@ -139,11 +139,11 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
       }
 
    } else {
-      if (GetState()==stRunning) {
+      if (GetTransportState()==stRunning) {
          if (StopTransport()) {
-           fState = stStopped;
+           fTransportState = stStopped;
          } else {
-           fState = stError;
+           fTransportState = stError;
            DeleteThis();
          }
       }
