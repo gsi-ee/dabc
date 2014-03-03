@@ -119,7 +119,7 @@ Bool_t TDabcEngine::Create(const char* args)
    // creating web server
    if (url.GetProtocol() == "http") {
       if (dabc::mgr.FindItem("/http").null()) {
-         dabc::CmdCreateObject cmd1("http::Mongoose","/http");
+         dabc::CmdCreateObject cmd1("http::Civetweb","/http");
          cmd1.SetInt("port", url.GetPort());
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;
 

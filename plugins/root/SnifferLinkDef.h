@@ -5,7 +5,7 @@
 #pragma link off all functions;
 
 #pragma link C++ class THttpEngine;
-#pragma link C++ class TMongoose;
+#pragma link C++ class TCivetweb;
 #pragma link C++ class TFastCgi;
 
 #pragma link C++ class THttpCallArg;

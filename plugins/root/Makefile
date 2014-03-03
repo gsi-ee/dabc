@@ -82,7 +82,7 @@ endif
 
 HTTPDEFEXTRA += COMPILED_WITH_DABC
 
-HTTPINCDIR += $(DABCROOTDIR)/../http/mongoose
+HTTPINCDIR += $(DABCROOTDIR)/../http/civetweb
 
 DABCROOT_LIBDEP += $(DABC_ROOTLIBDIR)/libThread.$(DllSuf) \
                    $(DABC_ROOTLIBDIR)/libTree.$(DllSuf) \

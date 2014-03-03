@@ -1,9 +1,9 @@
 // $Id$
 // Author: Sergey Linev   21/12/2013
 
-#include "TMongoose.h"
+#include "TCivetweb.h"
 
-#include "../mongoose/mongoose.h"
+#include "../civetweb/civetweb.h"
 
 #include <stdlib.h>
 
@@ -12,7 +12,7 @@
 
 static int begin_request_handler(struct mg_connection *conn)
 {
-   TMongoose* engine = (TMongoose*) mg_get_request_info(conn)->user_data;
+   TCivetweb* engine = (TCivetweb*) mg_get_request_info(conn)->user_data;
    if (engine == 0) return 0;
    THttpServer* serv = engine->GetServer();
    if (serv == 0) return 0;
@@ -76,7 +76,7 @@ static int begin_request_handler(struct mg_connection *conn)
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
-// TMongoose                                                            //
+// TCivetweb                                                            //
 //                                                                      //
 // http server implementation, based on mongoose embedded server        //
 // It is default kind of engine, created for THttpServer                //
@@ -91,7 +91,7 @@ static int begin_request_handler(struct mg_connection *conn)
 //////////////////////////////////////////////////////////////////////////
 
 
-TMongoose::TMongoose() :
+TCivetweb::TCivetweb() :
    THttpEngine("mongoose", "compact embedded http server"),
    fCtx(0),
    fCallbacks(0),
@@ -100,7 +100,7 @@ TMongoose::TMongoose() :
    // constructor
 }
 
-TMongoose::~TMongoose()
+TCivetweb::~TCivetweb()
 {
    // destructor
 
@@ -110,7 +110,7 @@ TMongoose::~TMongoose()
    fCallbacks = 0;
 }
 
-Bool_t TMongoose::Create(const char* args)
+Bool_t TCivetweb::Create(const char* args)
 {
    // Creates embedded mongoose server
    // As argument, http port should be specified in form "8090"

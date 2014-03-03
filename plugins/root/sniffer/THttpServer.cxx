@@ -216,7 +216,7 @@ Bool_t THttpServer::CreateEngine(const char* engine)
    TString clname;
    if (arg!=engine) clname.Append(engine, arg-engine);
 
-   if ((clname.Length()==0) || (clname == "http") || (clname=="mongoose")) clname = "TMongoose"; else
+   if ((clname.Length()==0) || (clname == "http") || (clname=="civetweb")) clname = "TCivetweb"; else
    if (clname == "fastcgi") clname = "TFastCgi"; else
    if (clname == "dabc") clname = "TDabcEngine";
 

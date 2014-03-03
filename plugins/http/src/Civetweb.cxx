@@ -13,13 +13,13 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "http/Mongoose.h"
+#include "http/Civetweb.h"
 
 #include <string.h>
 
 #include "dabc/Publisher.h"
 
-http::Mongoose::Mongoose(const std::string& name, dabc::Command cmd) :
+http::Civetweb::Civetweb(const std::string& name, dabc::Command cmd) :
    http::Server(name, cmd),
    fHttpPort(0),
    fHttpsPort(0),
@@ -39,7 +39,7 @@ http::Mongoose::Mongoose(const std::string& name, dabc::Command cmd) :
    memset(&fCallbacks, 0, sizeof(fCallbacks));
 }
 
-http::Mongoose::~Mongoose()
+http::Civetweb::~Civetweb()
 {
    if (fCtx!=0) {
       mg_stop(fCtx);
@@ -48,7 +48,7 @@ http::Mongoose::~Mongoose()
 }
 
 
-void http::Mongoose::OnThreadAssigned()
+void http::Civetweb::OnThreadAssigned()
 {
    std::string sport;
 
@@ -81,16 +81,16 @@ void http::Mongoose::OnThreadAssigned()
    }
    options[op++] = 0;
 
-   fCallbacks.begin_request = http::Mongoose::begin_request_handler;
+   fCallbacks.begin_request = http::Civetweb::begin_request_handler;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
 }
 
 
-int http::Mongoose::begin_request_handler(struct mg_connection *conn)
+int http::Civetweb::begin_request_handler(struct mg_connection *conn)
 {
-   http::Mongoose* server = (http::Mongoose*) mg_get_request_info(conn)->user_data;
+   http::Civetweb* server = (http::Civetweb*) mg_get_request_info(conn)->user_data;
    if (server==0) return 0;
 
    const struct mg_request_info *request_info = mg_get_request_info(conn);

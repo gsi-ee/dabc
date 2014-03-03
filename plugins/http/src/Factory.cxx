@@ -18,7 +18,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
 #include "http/Server.h"
-#include "http/Mongoose.h"
+#include "http/Civetweb.h"
 #include "http/FastCgi.h"
 
 dabc::FactoryPlugin httpfactory(new http::Factory("http"));
@@ -46,7 +46,7 @@ void http::Factory::Initialize()
       if (objname[0]!='/') objname = std::string("/") + objname;
       if ((thrdname==0) || (*thrdname==0)) thrdname = "HttpThread";
 
-      dabc::WorkerRef serv = new http::Mongoose(objname);
+      dabc::WorkerRef serv = new http::Civetweb(objname);
       serv.MakeThreadForWorker(thrdname);
       dabc::mgr.CreatePublisher();
    }
@@ -80,8 +80,8 @@ dabc::Reference http::Factory::CreateObject(const std::string& classname, const 
    if (classname == "http::Server")
       return new http::Server(objname, cmd);
 
-   if (classname == "http::Mongoose")
-      return new http::Mongoose(objname, cmd);
+   if (classname == "http::Civetweb")
+      return new http::Civetweb(objname, cmd);
 
    if (classname == "http::FastCgi")
       return new http::FastCgi(objname, cmd);

@@ -13,14 +13,14 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef HTTP_Mongoose
-#define HTTP_Mongoose
+#ifndef HTTP_Civetweb
+#define HTTP_Civetweb
 
 #ifndef HTTP_Server
 #include "http/Server.h"
 #endif
 
-#include "mongoose.h"
+#include "civetweb.h"
 
 namespace http {
 
@@ -28,7 +28,7 @@ namespace http {
     *
     */
 
-   class Mongoose : public Server  {
+   class Civetweb : public Server  {
       protected:
          int fHttpPort;              ///< port number for HTTP server
          int fHttpsPort;             ///< port number for HTTPS server
@@ -42,8 +42,8 @@ namespace http {
          virtual void OnThreadAssigned();
 
       public:
-         Mongoose(const std::string& name, dabc::Command cmd = 0);
-         virtual ~Mongoose();
+         Civetweb(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Civetweb();
 
          virtual const char* ClassName() const { return "HttpServer"; }
 
