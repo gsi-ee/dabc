@@ -68,7 +68,7 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
    if (!Cfg("store", cmd).AsBool()) fStoreDir.clear();
 
-   DOUT2("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
+   DOUT3("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
 }
 
 void dabc::Publisher::OnThreadAssigned()

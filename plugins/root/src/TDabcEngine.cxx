@@ -93,8 +93,9 @@ Bool_t TDabcEngine::Create(const char* args)
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(0);
       dabc::CreateManager("dabc", -1);
-      dabc::mgr.CreatePublisher();
    }
+
+   dabc::mgr.CreatePublisher();
 
    if (dabc::mgr.FindItem("/ROOT").null()) {
 
