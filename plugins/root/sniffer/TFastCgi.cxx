@@ -8,7 +8,13 @@
 #include "THttpServer.h"
 
 #include <string.h>
+
+#ifdef WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
+
 
 #ifndef HTTP_WITHOUT_FASTCGI
 
