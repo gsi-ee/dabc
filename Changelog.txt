@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+4.03.2014
+1. Start implementation of TBufferJSON class. Idea to convert any
+   object into JSON to avoid I/O functionality in the browser. 
+
+
 3.03.2014
 1. Replace mongoose by https://github.com/sunsetbrew/civetweb webserver.
    Its main advantage - more liberal license, which is suited for ROOT.
