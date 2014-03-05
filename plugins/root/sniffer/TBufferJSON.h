@@ -36,7 +36,7 @@ class TBufferJSON : public TBufferFile {
    
 public:
 
-   TBufferJSON(TBuffer::EMode mode);
+   TBufferJSON();
    virtual ~TBufferJSON();
 
    static TString   ConvertToJSON(const TObject* obj);
@@ -215,8 +215,6 @@ public:
    
 
 protected:
-   TBufferJSON();
-
    // redefined protected virtual functions
 
    virtual void     WriteObjectClass(const void *actualObjStart, const TClass *actualClass);
@@ -239,7 +237,7 @@ protected:
    void             WorkWithClass(TStreamerInfo* info, const TClass* cl = 0);
    void             WorkWithElement(TStreamerElement* elem, Int_t number);
    
-   void             PerformPostProcessing();
+   void             PerformPostProcessing(TJSONStackObj* stack, const TStreamerElement* elem = 0);
 
    void              JsonWriteBasic(Char_t value);
    void              JsonWriteBasic(Short_t value);
@@ -254,25 +252,21 @@ protected:
    void              JsonWriteBasic(UInt_t value);
    void              JsonWriteBasic(ULong_t value);
    void              JsonWriteBasic(ULong64_t value);
-   void              JsonWriteValue(const char* value, Bool_t quotes = kFALSE);
 
-   void             JsonWriteObject(const void* obj, const TClass* objClass);
+   void              JsonWriteObject(const void* obj, const TClass* objClass);
 
-   void             AppendOutput(const char* val);
+   void              JsonStartElement();
+
+   void              AppendOutput(const char* val, Bool_t first = kFALSE);
 
    TString                   fOutBuffer;       //!  output buffer for json code
+   TString                   fValue;           //!  buffer for current value
    std::vector<const void*>  fObjMap;          //!  array of recorded objects
-   Bool_t                    fIsAnyValue;      //!  flag indicate if any value for item was stored
-
-
-   TObjArray        fStack;                //!
-
-   TString          fValueBuf;             //!
+   TObjArray                 fStack;           //!  stack of streamer infos
 
    Int_t            fErrorFlag;            //!
    
    Bool_t           fExpectedChain;        //!   flag to resolve situation when several elements of same basic type stored as FastArray
-   TClass*          fExpectedBaseClass;    //!   pointer to class, which should be stored as parent of current
    Int_t            fCompressLevel;        //!   compression level and algorithm
 
    static const char* fgFloatFmt;          //!  printf argument for floats and doubles, either "%f" or "%e" or "%10f" and so on
