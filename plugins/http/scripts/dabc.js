@@ -155,8 +155,12 @@ DABC.JSONR_unref = function(value, dy)
          } else {
             if (dy.indexOf(value) === -1) {
                dy.push(value);
-               // console.log("add object " + value._classname + "  arr.length = " + dy.length);
+               // console.log("add object " + value._typename + "  arr.length = " + dy.length);
             }
+            
+            // add methods to all objects, where _typename is specified
+            if ('_typename' in value)
+               JSROOTCore.addMethods(value);
 
             ks = Object.keys(value).sort();
             for (i = 0; i < ks.length; i++) {
@@ -1345,10 +1349,11 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
 // ======== start of RootDrawElement ======================
 
-DABC.RootDrawElement = function(_clname) {
+DABC.RootDrawElement = function(_clname, _json) {
    DABC.DrawElement.call(this);
 
    this.clname = _clname;    // ROOT class name
+   this.json = _json;        // indocates JSON usage
    this.obj = null;          // object itself, for streamer info is file instance
    this.sinfo = null;        // used to refer to the streamer info record
    this.req = null;          // this is current request
@@ -1386,6 +1391,12 @@ DABC.RootDrawElement.prototype.Clear = function() {
    this.painter = null;      // pointer on painter, can be used for update
 }
 
+DABC.RootDrawElement.prototype.IsObjectDraw = function()
+{
+   // returns true when normal ROOT drawing should be used
+   // when false, streamer info drawing is applied
+   return this.json || (this.sinfo!=null); 
+}
 
 DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.frameid = "dabcobj" + id;
@@ -1393,7 +1404,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.first_draw = true;
    
    var entryInfo = ""; 
-   if (this.sinfo) {
+   if (this.IsObjectDraw()) {
       entryInfo += "<div id='" + this.frameid + "'/>";
    } else {
       entryInfo += "<h5><a> Streamer Infos </a>&nbsp; </h5>";
@@ -1402,7 +1413,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    //entryInfo+="</div>";
    $(topid).append(entryInfo);
    
-   if (this.sinfo) {
+   if (this.IsObjectDraw()) {
       var render_to = "#" + this.frameid;
       var element = $(render_to);
       
@@ -1458,7 +1469,7 @@ DABC.RootDrawElement.prototype.HasVersion = function(ver) {
 DABC.RootDrawElement.prototype.DrawObject = function() {
    if (this.obj == null) return;
 
-   if (this.sinfo) {
+   if (this.IsObjectDraw()) {
    
       if (this.vis!=null)
         this.vis.select("title").text(this.FullItemName() + 
@@ -1479,7 +1490,7 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    } else {
       gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
-      gFile = 0;
+      gFile = null;
    }
    
    this.first_draw = false;
@@ -1545,6 +1556,26 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    if (this.state != this.StateEnum.stWaitRequest) {
       alert("item not in wait request state");
       this.state = this.StateEnum.stInit;
+      return;
+   }
+   
+   if (this.json) {
+      this.obj = DABC.JSONR_unref(JSON.parse(arg));
+
+      this.version = 0;
+      
+      this.raw_data = null;
+      this.raw_data_version = 0;
+
+      if (this.obj && ('_typename' in this.obj)) {
+         console.log("Get object of " + this.obj['_typename']);
+         this.state = this.StateEnum.stReady;
+         this.DrawObject();
+      } else {
+         console.log("Fail to process get.json");
+         this.state = this.StateEnum.stInit;
+         this.obj = null;
+      }
       return;
    }
    
@@ -1646,9 +1677,16 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    
    // console.log(" checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
 
-   var url = this.itemname + "get.bin";
    
-   if (this.version>0) url += "?version=" + this.version;
+   var url = this.itemname;
+   
+   if (this.json) {
+      url += "get.json";
+   } else {
+      url += "get.bin";
+      if (this.version>0) url += "?version=" + this.version;
+   }
+   
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
@@ -1970,21 +2008,29 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
    }
 
    if (kind.indexOf("ROOT.") == 0) {
-      // procesing of ROOT classes 
-      var sinfoname = this.FindMasterName(itemname, xmlnode);
-      var sinfo = this.FindItem(sinfoname);
-
-      if (sinfoname && !sinfo) {
-         sinfo = new DABC.RootDrawElement(kind.substr(5));
-         sinfo.itemname = sinfoname;
-         this.arr.push(sinfo);
-         // mark sinfo item as ready - it will not be requested until is not really required
-         sinfo.state = sinfo.StateEnum.stReady;
+      // procesing of ROOT classes
+      
+      var sinfo = null;
+      var use_json = false;
+      
+      if (!use_json) {
+      
+         var sinfoname = this.FindMasterName(itemname, xmlnode);
+         sinfo = this.FindItem(sinfoname);
+      
+         if (sinfoname && !sinfo) {
+            sinfo = new DABC.RootDrawElement(kind.substr(5), false);
+            sinfo.itemname = sinfoname;
+            this.arr.push(sinfo);
+            // mark sinfo item as ready - it will not be requested until is not really required
+            sinfo.state = sinfo.StateEnum.stReady;
+         }
       }
 
-      elem = new DABC.RootDrawElement(kind.substr(5));
-      elem.itemname = itemname;
+      elem = new DABC.RootDrawElement(kind.substr(5), use_json);
       elem.sinfo = sinfo;
+      
+      elem.itemname = itemname;
       elem.CreateFrames(this.NextCell(), this.cnt++);
       this.arr.push(elem);
 

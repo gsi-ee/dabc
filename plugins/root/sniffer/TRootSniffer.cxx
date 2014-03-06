@@ -12,6 +12,8 @@
 #include "TMemFile.h"
 #include "TStreamerInfo.h"
 #include "TBufferFile.h"
+#include "TBufferJSON.h"
+#include "TBufferXML.h"
 #include "TROOT.h"
 #include "TTimer.h"
 #include "Property.h"
@@ -731,6 +733,86 @@ void TRootSniffer::CreateMemFile()
    gDirectory = olddir;
    gFile = oldfile;
 }
+
+
+Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString& res)
+{
+   // produce JSON data for specified item
+   // For object conversion TBufferJSON is used
+
+   if ((path==0) || (*path==0)) return kFALSE;
+
+   if (*path=='/') path++;
+
+   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
+
+   if (istreamerinfo) {
+
+      CreateMemFile();
+
+      TDirectory* olddir = gDirectory; gDirectory = 0;
+      TFile* oldfile = gFile; gFile = 0;
+
+      fMemFile->WriteStreamerInfo();
+      TList* l = fMemFile->GetStreamerInfoList();
+      fSinfoSize = l->GetSize();
+
+      res = TBufferJSON::ConvertToJSON(l);
+
+      delete l;
+      gDirectory = olddir;
+      gFile = oldfile;
+   } else {
+
+      TClass* obj_cl(0);
+      void* obj_ptr = FindInHierarchy(path, &obj_cl);
+      if ((obj_ptr==0) || (obj_cl==0)) return kFALSE;
+
+      res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl);
+   }
+
+   return res.Length() > 0;
+}
+
+Bool_t TRootSniffer::ProduceXml(const char* path, const char* options, TString& res)
+{
+   // produce XML data for specified item
+   // For object conversion TBufferXML is used
+
+   if ((path==0) || (*path==0)) return kFALSE;
+
+   if (*path=='/') path++;
+
+   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
+
+   if (istreamerinfo) {
+
+      CreateMemFile();
+
+      TDirectory* olddir = gDirectory; gDirectory = 0;
+      TFile* oldfile = gFile; gFile = 0;
+
+      fMemFile->WriteStreamerInfo();
+      TList* l = fMemFile->GetStreamerInfoList();
+      fSinfoSize = l->GetSize();
+
+      res = TBufferXML::ConvertToXML(l);
+
+      delete l;
+      gDirectory = olddir;
+      gFile = oldfile;
+   } else {
+
+      TClass* obj_cl(0);
+      void* obj_ptr = FindInHierarchy(path, &obj_cl);
+      if ((obj_ptr==0) || (obj_cl==0)) return kFALSE;
+
+      res = TBufferXML::ConvertToXML(obj_ptr, obj_cl);
+   }
+
+   return res.Length() > 0;
+}
+
 
 Bool_t TRootSniffer::ProduceBinary(const char* path, const char*, void* &ptr, Long_t& length)
 {

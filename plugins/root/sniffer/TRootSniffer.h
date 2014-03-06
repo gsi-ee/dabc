@@ -135,6 +135,10 @@ public:
 
    virtual TString GetStreamerInfoHash();
 
+   Bool_t ProduceJson(const char* path, const char* options, TString& res);
+
+   Bool_t ProduceXml(const char* path, const char* options, TString& res);
+
    Bool_t ProduceBinary(const char* path, const char* options, void* &ptr, Long_t& length);
 
    Bool_t ProduceImage(Int_t kind, const char* path, const char* options, void* &ptr, Long_t& length);

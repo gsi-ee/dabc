@@ -392,7 +392,7 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
       return;
    }
 
-   if ((arg->fFileName == "h.xml") || (arg->fFileName == "get.xml"))  {
+   if (arg->fFileName == "h.xml")  {
 
       arg->fContent.Form(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -432,10 +432,23 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
       return;
    }
 
-
    if (arg->fFileName == "get.bin") {
       if (fSniffer->ProduceBinary(arg->fPathName.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength)) {
          arg->SetBin();
+         return;
+      }
+   }
+
+   if (arg->fFileName == "get.json") {
+      if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
+         arg->SetJson();
+         return;
+      }
+   }
+
+   if (arg->fFileName == "get.xml") {
+      if (fSniffer->ProduceXml(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
+         arg->SetXml();
          return;
       }
    }

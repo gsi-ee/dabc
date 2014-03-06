@@ -333,7 +333,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
 
       fJsonrMap.push_back(obj);
 
-      AppendOutput("{","\"_classname\" : \"");
+      AppendOutput("{","\"_typename\" : \"JSROOTIO.");
       AppendOutput(cl->GetName());
       AppendOutput("\"");
 
@@ -441,7 +441,7 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo* sinfo, const TClass* cl)
 
          AppendOutput(",", "\"");
          AppendOutput(stack->fElem->GetName());
-         AppendOutput("\" : {", "\"_classname\" : \"");
+         AppendOutput("\" : {", "\"_typename\" : \"JSROOTIO.");
          AppendOutput(cl->GetName());
          AppendOutput("\"");
       }

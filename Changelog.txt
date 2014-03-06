@@ -11,6 +11,12 @@ current functionality of the framework.
    side adopt JSON-R code from https://github.com/graniteds/jsonr.
    Use only unref part, exclude arrays from handling. 
 3. Derive TBufferJSON from TBuffer directly.
+4. Implement get.json and get.xml in THttpServer class.
+5. Provide support of JSON in dabc.js. Automaticaly provide
+   methods for all ROOT objects - done in JSONR_unref method.
+6. First time TH1F transported in JSON form! 
+   Small details remains, one should adjust Bertrand I/O 
+   code to make it compatible with normal streamer
 
 
 4.03.2014
