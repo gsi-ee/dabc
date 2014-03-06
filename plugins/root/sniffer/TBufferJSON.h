@@ -253,7 +253,9 @@ protected:
    void              JsonWriteBasic(ULong_t value);
    void              JsonWriteBasic(ULong64_t value);
 
-   void              JsonWriteObject(const void* obj, const TClass* objClass);
+   void              JsonWriteObject(const void* obj, const TClass* objClass, const char* extrafield = 0);
+
+   void              JsonStreamCollection(TCollection* obj, const TClass* objClass);
 
    void              JsonStartElement();
 

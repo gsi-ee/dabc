@@ -66,7 +66,7 @@ TBufferJSON::TBufferJSON() :
    fExpectedChain(kFALSE),
    fCompressLevel(0)
 {
-   // Creates buffer object to serailize data into json.
+   // Creates buffer object to serialize data into json.
 
    fBufSize = 1000000000;
 
@@ -296,7 +296,7 @@ void TBufferJSON::JsonStartElement()
 
 
 //______________________________________________________________________________
-void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
+void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char* extrafield)
 {
    // Write object to buffer
    // If object was written before, only pointer will be stored
@@ -306,19 +306,24 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
 
    if (gDebug>0) Info("JsonWriteObject","Object %p class %s", obj, cl ? cl->GetName() : "null");
 
-   if (obj==0) { AppendOutput("null"); return; }
-
    // special handling for TArray classes - they should appear not as object but JSON array
-   Bool_t isarray = strncmp("TArray", cl->GetName(), 6) == 0;
+   Bool_t isarray = strncmp("TArray", (cl ? cl->GetName() : ""), 6) == 0;
    if (isarray) isarray = ((TClass*)cl)->GetBaseClassOffset(TArray::Class()) == 0;
 
    if (!isarray) {
-      // add element name which should correspond to the object
       JsonStartElement();
+   }
+
+   if (obj==0) { AppendOutput("null"); return; }
+
+
+   if (!isarray) {
+      // add element name which should correspond to the object
 
       for(unsigned n=0;n<fObjMap.size();n++)
          if (fObjMap[n] == obj) {
-            AppendOutput(Form("{ $ref:id%u }\n", n));
+            AppendOutput(Form("{ $ref:id%u }", n));
+            if (extrafield!=0) Error("JsonWriteObject", "Extra field %s was not recorded for object", extrafield);
             return;
          }
 
@@ -329,6 +334,11 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
       AppendOutput("_classname: \"",kTRUE);
       AppendOutput(cl->GetName());
       AppendOutput("\"");
+
+      if (extrafield!=0) {
+         AppendOutput(",\n");
+         AppendOutput(extrafield,kTRUE);
+      }
    }
 
    if (gDebug>0)
@@ -337,7 +347,10 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
    TJSONStackObj* stack = PushStack();
    stack->fIsArray = isarray;
 
-   ((TClass*)cl)->Streamer((void*)obj, *this);
+   if (((TClass*)cl)->GetBaseClassOffset(TCollection::Class())==0)
+      JsonStreamCollection((TCollection*) obj, cl);
+   else
+      ((TClass*)cl)->Streamer((void*)obj, *this);
 
    if (gDebug>0)
       Info("JsonWriteObject","Done object %p write for class: %s", obj, cl->GetName());
@@ -347,13 +360,55 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
          stack->fValues.Delete();
       else
          Error("JsonWriteObject","Problem when writing array");
+   } else {
+      if (stack->fValues.GetLast()>=0)
+         Error("JsonWriteObject", "Non-empty values list when writing object");
    }
 
    PopStack();
 
-   if (!isarray)
-      AppendOutput("\n}");
+   if (!isarray) {
+      AppendOutput("\n");
+      AppendOutput("}",kTRUE);
+   }
 }
+
+
+//______________________________________________________________________________
+void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
+{
+   // store content of collection
+
+   AppendOutput(",\n");
+
+   AppendOutput("name: \"",kTRUE);
+   AppendOutput(col->GetName());
+   AppendOutput("\",\n");
+   AppendOutput("array: [",kTRUE);
+
+   bool islist = col->InheritsFrom(TList::Class());
+   TString sopt;
+
+   TIter iter(col);
+   TObject* obj;
+   Bool_t first = kTRUE;
+   while ((obj = iter())!=0) {
+
+      if (!first) {
+         AppendOutput(",\n");
+         AppendOutput("",kTRUE);
+      }
+
+      if (islist) sopt.Form("_option: \"%s\"", iter.GetOption());
+
+      JsonWriteObject(obj, obj->IsA(), (islist ? sopt.Data() : 0));
+
+      first = kFALSE;
+   }
+
+   AppendOutput("]");
+}
+
 
 //______________________________________________________________________________
 void TBufferJSON::IncrementLevel(TVirtualStreamerInfo* info)
@@ -677,6 +732,8 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    if (elem==0) elem = stack->fElem;
    if (elem==0) return;
 
+   Info("PerformPostProcessing","Start element %s type %s", elem->GetName(), elem->GetTypeName());
+
    stack->fIsPostProcessed = kTRUE;
 
    // when element was written as separate object, close only braces and exit
@@ -685,6 +742,13 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
       AppendOutput("}", kTRUE);
       return;
    }
+
+   const char* typname = stack->fIsBaseClass ? elem->GetName() : elem->GetTypeName();
+   Bool_t isarray = (strncmp("TArray", typname, 6)==0);
+   Bool_t istobject = (elem->GetType()==TStreamerInfo::kTObject) || (strcmp("TObject", typname)==0);
+
+
+
 
    if (!stack->fIsBaseClass) {
       AppendOutput(",\n");
@@ -695,9 +759,11 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    if (elem->GetType()==TStreamerInfo::kTString) {
       // in principle, we should just remove all kind of string length information
 
+      Info("PerformPostProcessing", "Elem %s reformat string value = '%s'", elem->GetName(), fValue.Data());
+
       stack->fValues.Delete();
    } else
-   if (elem->GetType()==TStreamerInfo::kTObject) {
+   if (istobject) {
       AppendOutput(",\n");
       if (stack->fValues.GetLast()!=0) {
          Error("PerformPostProcessing", "When storing TObject, more than 2 items are stored");
@@ -711,16 +777,27 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
 
       stack->fValues.Delete();
    } else
-   if ((elem->GetType()==TStreamerInfo::kAny) && (strncmp("TArray", elem->GetTypeName(), 6)==0)) {
+   if (isarray) {
+
+      Info("PerformPostProcessing", "TArray postprocessing");
 
       // work around for TArray classes - remove first element with array length
 
-      Info("PerformPostProcessing", "Ignore TArray postprocessing");
+      // only for base class insert fN and fArray tags
 
+      if (stack->fIsBaseClass && (stack->fValues.GetLast()==0)) {
+         AppendOutput(",\n");
+         AppendOutput("fN: ", kTRUE);
+         AppendOutput(stack->fValues.At(0)->GetName());
+         AppendOutput(",\n");
+         AppendOutput("fArray: ", kTRUE);
+      }
+
+      stack->fValues.Delete();
    }
 
 
-   if (stack->fIsBaseClass) {
+   if (stack->fIsBaseClass && !isarray && !istobject) {
       if (fValue.Length()!=0)
          Error("PerformPostProcessing", "Non-empty value for base class");
       return;
