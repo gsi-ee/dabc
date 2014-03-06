@@ -55,9 +55,10 @@ ClassImp(TBufferJSON);
 
 const char* TBufferJSON::fgFloatFmt = "%e";
 
+
 //______________________________________________________________________________
 TBufferJSON::TBufferJSON() :
-   TBufferFile(TBuffer::kWrite),
+   TBuffer(TBuffer::kWrite),
    fOutBuffer(),
    fValue(),
    fJsonrMap(),
@@ -71,7 +72,7 @@ TBufferJSON::TBufferJSON() :
 
    SetParent(0);
    SetBit(kCannotHandleMemberWiseStreaming);
-   SetBit(kTextBasedStreaming);
+   //SetBit(kTextBasedStreaming);
 
    fOutBuffer.Capacity(10000);
    fValue.Capacity(1000);
@@ -127,7 +128,7 @@ void TBufferJSON::WriteObject(const TObject *obj)
 
    Info("WriteObject","Object %p", obj);
 
-   TBufferFile::WriteObject(obj);
+   WriteObjectAny(obj, TObject::Class());
 }
 
 // TJSONStackObj is used to keep stack of object hierarchy,
@@ -1259,6 +1260,14 @@ void TBufferJSON::ReadFastArray(Char_t    *c, Int_t n)
 }
 
 //______________________________________________________________________________
+void TBufferJSON::ReadFastArrayString(Char_t *c, Int_t n)
+{
+   // read array of Char_t from buffer
+
+  TBufferJSON_ReadFastArray(c);
+}
+
+//______________________________________________________________________________
 void TBufferJSON::ReadFastArray(UChar_t   *c, Int_t n)
 {
    // read array of UChar_t from buffer
@@ -1399,7 +1408,7 @@ void TBufferJSON::ReadFastArray(void  *start, const TClass *cl, Int_t n, TMember
 {
    // redefined here to avoid warning message from gcc
 
-   TBufferFile::ReadFastArray(start, cl, n, s, onFileClass);
+   // TBuffer::ReadFastArray(start, cl, n, s, onFileClass);
 }
 
 //______________________________________________________________________________
@@ -1407,7 +1416,7 @@ void TBufferJSON::ReadFastArray(void **startp, const TClass *cl, Int_t n, Bool_t
 {
    // redefined here to avoid warning message from gcc
 
-   TBufferFile::ReadFastArray(startp, cl, n, isPreAlloc, s, onFileClass);
+   // TBuffer::ReadFastArray(startp, cl, n, isPreAlloc, s, onFileClass);
 }
 
 
@@ -1615,6 +1624,15 @@ void TBufferJSON::WriteFastArray(const Char_t    *c, Int_t n)
       fValue.Append("\"");
    }
 }
+
+//______________________________________________________________________________
+void TBufferJSON::WriteFastArrayString(const Char_t    *c, Int_t n)
+{
+   // Write array of Char_t to buffer
+
+   WriteFastArray(c, n);
+}
+
 
 //______________________________________________________________________________
 void TBufferJSON::WriteFastArray(const UChar_t   *c, Int_t n)
@@ -2339,5 +2357,106 @@ Int_t TBufferJSON::ApplySequence(const TStreamerInfoActions::TActionSequence &se
    }
    
    DecrementLevel(info);
+   return 0;
+}
+
+
+//______________________________________________________________________________
+Int_t TBufferJSON::WriteClones(TClonesArray *a, Int_t nobjects)
+{
+   // Interface to TStreamerInfo::WriteBufferClones.
+
+   Error("WriteClones", "Not implemented!!!");
+
+   return 0;
+}
+
+namespace {
+   struct DynamicType {
+      // Helper class to enable typeid on any address
+      // Used in code similar to:
+      //    typeid( * (DynamicType*) void_ptr );
+      virtual ~DynamicType() {}
+   };
+}
+
+//______________________________________________________________________________
+Int_t TBufferJSON::WriteObjectAny(const void *obj, const TClass *ptrClass)
+{
+   // Write object to I/O buffer.
+   // This function assumes that the value in 'obj' is the value stored in
+   // a pointer to a "ptrClass". The actual type of the object pointed to
+   // can be any class derived from "ptrClass".
+   // Return:
+   //  0: failure
+   //  1: success
+   //  2: truncated success (i.e actual class is missing. Only ptrClass saved.)
+
+   if (!obj) {
+      WriteObjectClass(0, 0);
+      return 1;
+   }
+
+   if (!ptrClass) {
+      Error("WriteObjectAny", "ptrClass argument may not be 0");
+      return 0;
+   }
+
+   TClass *clActual = ptrClass->GetActualClass(obj);
+
+   if (clActual==0) {
+      // The ptrClass is a class with a virtual table and we have no
+      // TClass with the actual type_info in memory.
+
+      DynamicType* d_ptr = (DynamicType*)obj;
+      Warning("WriteObjectAny",
+              "An object of type %s (from type_info) passed through a %s pointer was truncated (due a missing dictionary)!!!",
+              typeid(*d_ptr).name(),ptrClass->GetName());
+      WriteObjectClass(obj, ptrClass);
+      return 2;
+   } else if (clActual && (clActual != ptrClass)) {
+      const char *temp = (const char*) obj;
+      temp -= clActual->GetBaseClassOffset(ptrClass);
+      WriteObjectClass(temp, clActual);
+      return 1;
+   } else {
+      WriteObjectClass(obj, ptrClass);
+      return 1;
+   }
+}
+
+Int_t TBufferJSON::WriteClassBuffer(const TClass *cl, void *pointer)
+{
+   // Function called by the Streamer functions to serialize object at p
+   // to buffer b. The optional argument info may be specified to give an
+   // alternative StreamerInfo instead of using the default StreamerInfo
+   // automatically built from the class definition.
+   // For more information, see class TStreamerInfo.
+
+   //build the StreamerInfo if first time for the class
+   TStreamerInfo *sinfo = (TStreamerInfo*)const_cast<TClass*>(cl)->GetCurrentStreamerInfo();
+   if (sinfo == 0) {
+      const_cast<TClass*>(cl)->BuildRealData(pointer);
+      sinfo = new TStreamerInfo(const_cast<TClass*>(cl));
+      const_cast<TClass*>(cl)->SetCurrentStreamerInfo(sinfo);
+      cl->GetStreamerInfos()->AddAtAndExpand(sinfo,cl->GetClassVersion());
+      if (gDebug > 0) printf("Creating StreamerInfo for class: %s, version: %d\n",cl->GetName(),cl->GetClassVersion());
+      sinfo->Build();
+   } else if (!sinfo->IsCompiled()) {
+      const_cast<TClass*>(cl)->BuildRealData(pointer);
+      sinfo->BuildOld();
+   }
+
+   //write the class version number and reserve space for the byte count
+   // UInt_t R__c = WriteVersion(cl, kTRUE);
+
+   //NOTE: In the future Philippe wants this to happen via a custom action
+   TagStreamerInfo(sinfo);
+   ApplySequence(*(sinfo->GetWriteObjectWiseActions()), (char*)pointer);
+
+   //write the byte count at the start of the buffer
+   // SetByteCount(R__c, kTRUE);
+
+   if (gDebug > 2) printf(" TBufferJSON::WriteClassBuffer for class: %s version %d\n",cl->GetName(),cl->GetClassVersion());
    return 0;
 }

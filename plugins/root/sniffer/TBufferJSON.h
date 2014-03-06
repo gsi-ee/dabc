@@ -12,8 +12,8 @@
 #ifndef ROOT_TBufferJSON
 #define ROOT_TBufferJSON
 
-#ifndef ROOT_TBufferFile
-#include "TBufferFile.h"
+#ifndef ROOT_TBuffer
+#include "TBuffer.h"
 #endif
 #ifndef ROOT_TString
 #include "TString.h"
@@ -32,7 +32,7 @@ class TMemberStreamer;
 class TJSONStackObj;
 
 
-class TBufferJSON : public TBufferFile {
+class TBufferJSON : public TBuffer {
    
 public:
 
@@ -60,6 +60,7 @@ public:
    virtual void*    ReadObjectAny(const TClass* clCast);
    virtual void     SkipObjectAny();
 
+   // these methods used in streamer info to indicate currently streamed element,
    virtual void     IncrementLevel(TVirtualStreamerInfo*);
    virtual void     SetStreamerElementNumber(Int_t);
    virtual void     DecrementLevel(TVirtualStreamerInfo*);
@@ -113,6 +114,7 @@ public:
 
    virtual void     ReadFastArray(Bool_t    *b, Int_t n);
    virtual void     ReadFastArray(Char_t    *c, Int_t n);
+   virtual void     ReadFastArrayString(Char_t *c, Int_t n);
    virtual void     ReadFastArray(UChar_t   *c, Int_t n);
    virtual void     ReadFastArray(Short_t   *h, Int_t n);
    virtual void     ReadFastArray(UShort_t  *h, Int_t n);
@@ -151,6 +153,7 @@ public:
 
    virtual void     WriteFastArray(const Bool_t    *b, Int_t n);
    virtual void     WriteFastArray(const Char_t    *c, Int_t n);
+   virtual void     WriteFastArrayString(const Char_t    *c, Int_t n);
    virtual void     WriteFastArray(const UChar_t   *c, Int_t n);
    virtual void     WriteFastArray(const Short_t   *h, Int_t n);
    virtual void     WriteFastArray(const UShort_t  *h, Int_t n);
@@ -204,9 +207,67 @@ public:
    virtual   void     WriteCharP(const Char_t *c);
    virtual   void     WriteTString(const TString  &s);
 
+   virtual   Int_t    WriteClones(TClonesArray *a, Int_t nobjects);
+
+
    virtual Int_t ApplySequence(const TStreamerInfoActions::TActionSequence &sequence, void *object);      
    virtual Int_t ApplySequenceVecPtr(const TStreamerInfoActions::TActionSequence &sequence, void *start_collection, void *end_collection);      
    virtual Int_t ApplySequence(const TStreamerInfoActions::TActionSequence &sequence, void *start_collection, void *end_collection);
+
+
+   // abstract virtual methods from TBuffer, which should be redefined
+   virtual Bool_t     CheckObject(const TObject *) { Error("1","---"); return kFALSE; }
+   virtual Bool_t     CheckObject(const void *, const TClass *) { Error("2","---");  return kFALSE; }
+
+   virtual Int_t      ReadBuf(void* /*buf*/, Int_t /*max*/) { Error("3","---"); return 0; }
+   virtual void       WriteBuf(const void *buf, Int_t max) { Error("4","---");   }
+
+   virtual char      *ReadString(char *s, Int_t max) { Error("5","---"); return 0; }
+   virtual void       WriteString(const char *s) { Error("6","---"); }
+
+   virtual Int_t      GetVersionOwner() const { Error("7","---"); return 0; }
+   virtual Int_t      GetMapCount() const { Error("8","---"); return 0; }
+   virtual void       GetMappedObject(UInt_t tag, void* &ptr, TClass* &ClassPtr) const { Error("9","---"); }
+   virtual void       MapObject(const TObject *obj, UInt_t offset = 1) { Error("10","---"); }
+   virtual void       MapObject(const void *obj, const TClass *cl, UInt_t offset = 1) { Error("11","---");}
+   virtual void       Reset() { Error("12","---");}
+   virtual void       InitMap() { Error("13","---");}
+   virtual void       ResetMap() { Error("14","---");}
+   virtual void       SetReadParam(Int_t mapsize) { Error("15","---");}
+   virtual void       SetWriteParam(Int_t mapsize) { Error("16","---");}
+
+   virtual Version_t  ReadVersionForMemberWise(const TClass *cl = 0) { Error("17","---");return 0; }
+   virtual UInt_t     WriteVersionMemberWise(const TClass *cl, Bool_t useBcnt = kFALSE) { Error("18","---");return 0; }
+
+   virtual void       TagStreamerInfo(TVirtualStreamerInfo* info) {}
+
+   virtual TVirtualStreamerInfo *GetInfo() { Error("20","---"); return 0; }
+
+   virtual TObject   *ReadObject(const TClass *cl) { Error("21","---"); return 0; }
+
+   virtual Int_t      WriteObjectAny(const void *obj, const TClass *ptrClass);
+
+   virtual UShort_t   GetPidOffset() const  { Error("22","---"); return 0; }
+   virtual void       SetPidOffset(UShort_t offset) { Error("23","---");}
+   virtual Int_t      GetBufferDisplacement() const { Error("24","---");return 0; }
+   virtual void       SetBufferDisplacement() { Error("25","---");}
+   virtual void       SetBufferDisplacement(Int_t skipped) { Error("26","---");}
+
+   virtual   TProcessID *GetLastProcessID(TRefTable *reftable) const { Error("27","---"); return 0; }
+   virtual   UInt_t      GetTRefExecId() { Error("28","---"); return 0; }
+   virtual   TProcessID *ReadProcessID(UShort_t pidf) { Error("29","---");return 0; }
+   virtual   UShort_t    WriteProcessID(TProcessID *pid) { Error("30","---");return 0; }
+
+   // Utilities for TStreamerInfo
+   virtual   void     ForceWriteInfo(TVirtualStreamerInfo *info, Bool_t force) { Error("31","---");}
+   virtual   void     ForceWriteInfoClones(TClonesArray *a) { Error("32","---");}
+   virtual   Int_t    ReadClones (TClonesArray *a, Int_t nobjects, Version_t objvers) { Error("33","---"); return 0; }
+
+   // Utilities for TClass
+   virtual   Int_t    ReadClassEmulated(const TClass *cl, void *object, const TClass *onfile_class = 0) { Error("34","---"); return 0; }
+   virtual   Int_t    ReadClassBuffer(const TClass *cl, void *pointer, const TClass *onfile_class = 0) { Error("35","---"); return 0; }
+   virtual   Int_t    ReadClassBuffer(const TClass *cl, void *pointer, Int_t version, UInt_t start, UInt_t count, const TClass *onfile_class = 0) { Error("36","---"); return 0; }
+   virtual   Int_t    WriteClassBuffer(const TClass *cl, void *pointer);
 
    // end of redefined virtual functions
    

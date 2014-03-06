@@ -10,6 +10,7 @@ current functionality of the framework.
 2. Many references on same objects are handled correctly. On JavaScript
    side adopt JSON-R code from https://github.com/graniteds/jsonr.
    Use only unref part, exclude arrays from handling. 
+3. Derive TBufferJSON from TBuffer directly.
 
 
 4.03.2014
