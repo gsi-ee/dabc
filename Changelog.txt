@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+6.03.2014
+1. First functional version of TBufferJSON. Works with histograms
+   and canvas, need intensive testing. One need many workarounds for 
+   different classes like TObject or TString or TArray, but one could
+   improve custom streamers in the future.
+2. Many references on same objects are handled correctly. On JavaScript
+   side adopt JSON-R code from https://github.com/graniteds/jsonr.
+   Use only unref part, exclude arrays from handling. 
+
+
 4.03.2014
 1. Start implementation of TBufferJSON class. Idea to convert any
    object into JSON to avoid I/O functionality in the browser. 

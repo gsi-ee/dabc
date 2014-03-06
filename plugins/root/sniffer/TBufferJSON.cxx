@@ -60,9 +60,8 @@ TBufferJSON::TBufferJSON() :
    TBufferFile(TBuffer::kWrite),
    fOutBuffer(),
    fValue(),
-   fObjMap(),
+   fJsonrMap(),
    fStack(),
-   fErrorFlag(0),
    fExpectedChain(kFALSE),
    fCompressLevel(0)
 {
@@ -109,8 +108,6 @@ TString TBufferJSON::JsonWriteAny(const void* obj, const TClass* cl)
 {
    // Convert object of any class to xml structures
    // Return pointer on top xml element
-
-   fErrorFlag = 0;
 
    fOutBuffer.Clear();
 
@@ -265,13 +262,19 @@ void TBufferJSON::SetCompressionSettings(Int_t settings)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::AppendOutput(const char* val, Bool_t first)
+void TBufferJSON::AppendOutput(const char* line0, const char* line1)
 {
-   if (first)
-      for (Int_t n=0;n<=fStack.GetLast();n++)
-         fOutBuffer.Append(" ");
+   if (line0!=0) fOutBuffer.Append(line0);
 
-   if (val!=0) fOutBuffer.Append(val);
+   if (line1!=0) {
+      fOutBuffer.Append("\n");
+
+      if (strlen(line1)>0) {
+         for (Int_t n=0;n<=fStack.GetLast();n++)
+            fOutBuffer.Append(" ");
+         fOutBuffer.Append(line1);
+      }
+   }
 }
 
 //______________________________________________________________________________
@@ -287,9 +290,9 @@ void TBufferJSON::JsonStartElement()
       stack->fIsObjStarted = kTRUE;
 
       if (!stack->fIsBaseClass) {
-         AppendOutput(",\n");
-         AppendOutput(stack->fElem->GetName(), kTRUE);
-         AppendOutput(": ");
+         AppendOutput(",", "\"");
+         AppendOutput(stack->fElem->GetName());
+         AppendOutput("\" : ");
       }
    }
 }
@@ -320,24 +323,21 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    if (!isarray) {
       // add element name which should correspond to the object
 
-      for(unsigned n=0;n<fObjMap.size();n++)
-         if (fObjMap[n] == obj) {
-            AppendOutput(Form("{ $ref:id%u }", n));
+      for(unsigned n=0;n<fJsonrMap.size();n++)
+         if (fJsonrMap[n] == obj) {
+            AppendOutput(Form("\"$ref:%u\"", n));
             if (extrafield!=0) Error("JsonWriteObject", "Extra field %s was not recorded for object", extrafield);
             return;
          }
 
-      fObjMap.push_back(obj);
+      fJsonrMap.push_back(obj);
 
-      AppendOutput("{\n");
-
-      AppendOutput("_classname: \"",kTRUE);
+      AppendOutput("{","\"_classname\" : \"");
       AppendOutput(cl->GetName());
       AppendOutput("\"");
 
       if (extrafield!=0) {
-         AppendOutput(",\n");
-         AppendOutput(extrafield,kTRUE);
+         AppendOutput(",", extrafield);
       }
    }
 
@@ -362,14 +362,13 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
          Error("JsonWriteObject","Problem when writing array");
    } else {
       if (stack->fValues.GetLast()>=0)
-         Error("JsonWriteObject", "Non-empty values list when writing object");
+         Error("JsonWriteObject", "Non-empty values list when writing object size %d", stack->fValues.GetLast()+1);
    }
 
    PopStack();
 
    if (!isarray) {
-      AppendOutput("\n");
-      AppendOutput("}",kTRUE);
+      AppendOutput(0,"}");
    }
 }
 
@@ -379,12 +378,9 @@ void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
 {
    // store content of collection
 
-   AppendOutput(",\n");
-
-   AppendOutput("name: \"",kTRUE);
+   AppendOutput(",", "\"name\" : \"");
    AppendOutput(col->GetName());
-   AppendOutput("\",\n");
-   AppendOutput("array: [",kTRUE);
+   AppendOutput("\",", "\"array\" : [");
 
    bool islist = col->InheritsFrom(TList::Class());
    TString sopt;
@@ -395,11 +391,10 @@ void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
    while ((obj = iter())!=0) {
 
       if (!first) {
-         AppendOutput(",\n");
-         AppendOutput("",kTRUE);
+         AppendOutput(",", "");
       }
 
-      if (islist) sopt.Form("_option: \"%s\"", iter.GetOption());
+      if (islist) sopt.Form("\"_option\" : \"%s\"", iter.GetOption());
 
       JsonWriteObject(obj, obj->IsA(), (islist ? sopt.Data() : 0));
 
@@ -441,11 +436,11 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo* sinfo, const TClass* cl)
 
          stack->fIsObjStarted = kTRUE;
 
-         AppendOutput(",\n");
-         AppendOutput(stack->fElem->GetName(), kTRUE);
-         AppendOutput(": { \n");
+         fJsonrMap.push_back(0); // count object, but do not keep reference
 
-         AppendOutput(" _classname: \"",kTRUE);
+         AppendOutput(",", "\"");
+         AppendOutput(stack->fElem->GetName());
+         AppendOutput("\" : {", "\"_classname\" : \"");
          AppendOutput(cl->GetName());
          AppendOutput("\"");
       }
@@ -617,7 +612,6 @@ void TBufferJSON::ClassMember(const char* name, const char* typeName, Int_t arrs
 
    if ((name==0) || (strlen(name)==0)) {
       Error("ClassMember","Invalid member name");
-      fErrorFlag = 1;
       return;
    }
 
@@ -650,7 +644,6 @@ void TBufferJSON::ClassMember(const char* name, const char* typeName, Int_t arrs
       TClass* cl = TClass::GetClass(tname.Data());
       if (cl==0) {
          Error("ClassMember","Invalid class specifier %s", typeName);
-         fErrorFlag = 1;
          return;
       }
 
@@ -707,7 +700,6 @@ void TBufferJSON::ClassMember(const char* name, const char* typeName, Int_t arrs
 
    if (elem==0) {
       Error("ClassMember","Invalid combination name = %s type = %s", name, typeName);
-      fErrorFlag = 1;
       return;
    }
 
@@ -738,8 +730,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
 
    // when element was written as separate object, close only braces and exit
    if (stack->fIsObjStarted) {
-      AppendOutput("\n");
-      AppendOutput("}", kTRUE);
+      AppendOutput("","}");
       return;
    }
 
@@ -747,13 +738,10 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    Bool_t isarray = (strncmp("TArray", typname, 6)==0);
    Bool_t istobject = (elem->GetType()==TStreamerInfo::kTObject) || (strcmp("TObject", typname)==0);
 
-
-
-
    if (!stack->fIsBaseClass) {
-      AppendOutput(",\n");
-      AppendOutput(elem->GetName(), kTRUE);
-      AppendOutput(": ");
+      AppendOutput(",", "\"");
+      AppendOutput(elem->GetName());
+      AppendOutput("\" : ");
    }
 
    if (elem->GetType()==TStreamerInfo::kTString) {
@@ -764,15 +752,13 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
       stack->fValues.Delete();
    } else
    if (istobject) {
-      AppendOutput(",\n");
       if (stack->fValues.GetLast()!=0) {
          Error("PerformPostProcessing", "When storing TObject, more than 2 items are stored");
-         AppendOutput("dummy: ", kTRUE);
+         AppendOutput(",", "\"dummy\" : ");
       } else {
-         AppendOutput("fUniqueID: ", kTRUE);
+         AppendOutput(",","\"fUniqueID\" : ");
          AppendOutput(stack->fValues.At(0)->GetName());
-         AppendOutput(",\n");
-         AppendOutput("fBits: ", kTRUE);
+         AppendOutput(",", "\"fBits\" : ");
       }
 
       stack->fValues.Delete();
@@ -786,11 +772,9 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
       // only for base class insert fN and fArray tags
 
       if (stack->fIsBaseClass && (stack->fValues.GetLast()==0)) {
-         AppendOutput(",\n");
-         AppendOutput("fN: ", kTRUE);
+         AppendOutput(",", "\"fN\" : ");
          AppendOutput(stack->fValues.At(0)->GetName());
-         AppendOutput(",\n");
-         AppendOutput("fArray: ", kTRUE);
+         AppendOutput(",", "\"fArray\" : ");
       }
 
       stack->fValues.Delete();
@@ -805,14 +789,15 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
 
    if (stack->fValues.GetLast()>=0) {
       AppendOutput("{ ");
+      fJsonrMap.push_back(0); // count object, but do not keep reference
       TString sbuf;
-      for (Int_t n = 0;n <= stack->fValues.GetLast(); n++) {
-         sbuf.Form("elem%d:",n);
+      for (Int_t n = 0; n <= stack->fValues.GetLast(); n++) {
+         sbuf.Form("\"elem%d\" : ",n);
          AppendOutput(sbuf.Data());
          AppendOutput(stack->fValues.At(n)->GetName());
          AppendOutput(", ");
       }
-      sbuf.Form("elem%d:", stack->fValues.GetLast()+1);
+      sbuf.Form("\"elem%d\" : ", stack->fValues.GetLast()+1);
       AppendOutput(sbuf.Data());
    }
 
@@ -1760,13 +1745,13 @@ void  TBufferJSON::WriteFastArray(void  *start,  const TClass *cl, Int_t n, TMem
    for(Int_t j=0; j<n; j++,obj+=size) {
       // ((TClass*)cl)->Streamer(obj,*this);
 
-      if (j>0) AppendOutput(",\n");
+      if (j>0) AppendOutput(",", "");
 
       JsonWriteObject(obj, cl);
    }
 
    if (n>1) {
-      AppendOutput(" ]\n");
+      AppendOutput(" ]", "");
    }
 
 }
@@ -1794,7 +1779,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n, Bool_
    if (!isPreAlloc) {
 
       for (Int_t j=0;j<n;j++) {
-         if (j>0) AppendOutput(",\n");
+         if (j>0) AppendOutput(",", "");
          res |= WriteObjectAny(start[j],cl);
       }
 
@@ -1802,7 +1787,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n, Bool_
       //case //-> in comment
 
       for (Int_t j=0;j<n;j++) {
-         if (j>0) AppendOutput(",\n");
+         if (j>0) AppendOutput(",", "");
 
          if (!start[j]) start[j] = ((TClass*)cl)->New();
          // ((TClass*)cl)->Streamer(start[j],*this);
@@ -1811,7 +1796,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n, Bool_
    }
 
    if (n>1) {
-      AppendOutput(" ]\n");
+      AppendOutput(" ]", "");
    }
 
    return res;

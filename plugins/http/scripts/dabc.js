@@ -126,6 +126,51 @@ DABC.TopXmlNode = function(xmldoc)
 }
 
 
+// This is part of the JSON-R code, found on 
+// https://github.com/graniteds/jsonr
+// Only unref part was used, arrays are not accounted as objects
+
+DABC.JSONR_unref = function(value, dy)
+{
+   var c, i, k, ks;
+   if (!dy) dy = [];
+
+   switch (typeof value) {
+   case 'string':
+       if ((value.length > 5) && (value.substr(0, 5) == "$ref:")) {
+          c = parseInt(value.substr(5));
+          if (!isNaN(c) && (c < dy.length)) {
+             value = dy[c];
+             // console.log("replace index " + c + "  name = " + value.fName);
+          }
+       }
+       break;
+
+   case 'object':
+      if (value !== null) {
+         if (Object.prototype.toString.apply(value) === '[object Array]') {
+            for (i = 0; i < value.length; i++) {
+               value[i] = DABC.JSONR_unref(value[i], dy);
+            }
+         } else {
+            if (dy.indexOf(value) === -1) {
+               dy.push(value);
+               // console.log("add object " + value._classname + "  arr.length = " + dy.length);
+            }
+
+            ks = Object.keys(value).sort();
+            for (i = 0; i < ks.length; i++) {
+               k = ks[i];
+               value[k] = DABC.JSONR_unref(value[k], dy);
+            }
+         }
+      }
+      break;
+   }
+
+   return value;
+}
+
 // ============= start of DrawElement ================================= 
 
 DABC.DrawElement = function() {

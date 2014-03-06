@@ -259,15 +259,13 @@ protected:
 
    void              JsonStartElement();
 
-   void              AppendOutput(const char* val, Bool_t first = kFALSE);
+   void              AppendOutput(const char* line0 = 0, const char* line1 = 0);
 
    TString                   fOutBuffer;       //!  output buffer for json code
    TString                   fValue;           //!  buffer for current value
-   std::vector<const void*>  fObjMap;          //!  array of recorded objects
+   std::vector<const void*>  fJsonrMap;        //!  array of recorded objects, used in JsonR to restore references
    TObjArray                 fStack;           //!  stack of streamer infos
 
-   Int_t            fErrorFlag;            //!
-   
    Bool_t           fExpectedChain;        //!   flag to resolve situation when several elements of same basic type stored as FastArray
    Int_t            fCompressLevel;        //!   compression level and algorithm
 
