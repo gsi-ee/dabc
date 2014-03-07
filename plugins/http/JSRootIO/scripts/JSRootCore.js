@@ -129,7 +129,178 @@ landaun = function(f, x, i) {
       }
       function_list.push(sig);
    };
+   
+   JSROOTCore.CreateTAxis = function() {
+      var axis = {};
 
+      axis['_typename'] = "ROOTIO.TAxis";
+      axis['fBits'] = 0x3000008;
+      axis['fBits2'] = 0;
+      axis['fXmin'] = 0;
+      axis['fXmax'] = 0;
+      axis['fNbins'] = 0;
+      axis['fN'] = 0;
+      axis['fXbins'] = new Array;
+      axis['fFirst'] = 0;
+      axis['fLast'] = 0;
+      axis['fName'] = "";
+      axis['fTitle'] = "";
+      axis['fTimeDisplay'] = false;
+      axis['fTimeFormat'] = "";
+      axis['fNdivisions'] = 510;
+      axis['fAxisColor'] = 1;
+      axis['fLabelColor'] = 1;
+      axis['fLabelFont'] = 42;
+      axis['fLabelOffset']  = 0.05;
+      axis['fLabelSize']  = 0.035;
+      axis['fTickLength'] = 0.03;
+      axis['fTitleOffset'] = 1;
+      axis['fTitleSize']  = 0.035;
+      axis['fTitleColor'] = 1;
+      axis['fTitleFont'] = 42;
+      JSROOTCore.addMethods(axis);
+      return axis;
+   }
+
+   JSROOTCore.CreateTH1 = function(nbinsx) {
+      var histo = {};
+      histo['_typename'] = "JSROOTIO.TH1I";
+      histo['fBits'] = 0x3000008;
+      histo['fName'] = "dummy_histo_" + random_id++;
+      histo['fTitle'] = "dummytitle";
+      histo['fMinimum'] = -1111;
+      histo['fMaximum'] = -1111;
+      histo['fOption'] = "";
+      histo['fFillColor'] = 0;
+      histo['fLineColor'] = 0;
+      histo['fLineWidth'] = 1;
+      histo['fBinStatErrOpt'] = 0;
+      histo['fNcells'] = 0;
+      histo['fN'] = 0;
+      histo['fArray'] = new Array;
+      histo['fSumw2'] = new Array;
+      histo['fFunctions'] = new Array;
+
+      histo['fXaxis'] = JSROOTCore.CreateTAxis();
+      histo['fYaxis'] = JSROOTCore.CreateTAxis();
+      
+      if (nbinsx!=null) {
+         histo['fNcells'] = nbinsx+2; 
+         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
+         histo['fXaxis']['fNbins'] = nbinsx; 
+         histo['fXaxis']['fXmin'] = 0;
+         histo['fXaxis']['fXmax'] = nbinsx;
+      }
+
+      JSROOTCore.addMethods(histo);
+
+      return histo;
+   }
+
+   JSROOTCore.CreateTH2 = function(nbinsx, nbinsy) {
+      var histo = {};
+      histo['_typename'] = "JSROOTIO.TH2I";
+      histo['fBits'] = 0x3000008;
+      histo['fName'] = "dummy_histo_" + random_id++;
+      histo['fTitle'] = "dummytitle";
+      histo['fMinimum'] = -1111;
+      histo['fMaximum'] = -1111;
+      histo['fOption'] = "";
+      histo['fFillColor'] = 0;
+      histo['fLineColor'] = 0;
+      histo['fLineWidth'] = 1;
+      histo['fBinStatErrOpt'] = 0;
+      histo['fNcells'] = 0;
+      histo['fN'] = 0;
+      histo['fArray'] = new Array;
+      histo['fSumw2'] = new Array;
+      histo['fFunctions'] = new Array;
+      histo['fContour'] = new Array;
+
+      histo['fXaxis'] = JSROOTCore.CreateTAxis();
+      histo['fYaxis'] = JSROOTCore.CreateTAxis();
+      histo['fZaxis'] = JSROOTCore.CreateTAxis();
+      
+      if ((nbinsx!=null) && (nbinsy!=null)) {
+         histo['fNcells'] = (nbinsx+2) * (nbinsy+2);
+         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
+         histo['fXaxis']['fNbins'] = nbinsx; 
+         histo['fYaxis']['fNbins'] = nbinsy;
+         
+         histo['fXaxis']['fXmin'] = 0;
+         histo['fXaxis']['fXmax'] = nbinsx;
+         histo['fYaxis']['fXmin'] = 0;
+         histo['fYaxis']['fXmax'] = nbinsy;
+      }
+      
+      JSROOTCore.addMethods(histo);
+
+      return histo;
+   }
+
+   JSROOTCore.CreateTGraph = function(npoints) {
+      var graph = {};
+      graph['_typename'] = "JSROOTIO.TGraph";
+      graph['fBits'] = 0x3000408;
+      graph['fName'] = "dummy_graph_" + random_id++;
+      graph['fTitle'] = "dummytitle";
+      graph['fMinimum'] = -1111;
+      graph['fMaximum'] = -1111;
+      graph['fOption'] = "";
+      graph['fFillColor'] = 0;
+      graph['fFillStyle'] = 1001;
+      graph['fLineColor'] = 2;
+      graph['fLineStyle'] = 1;
+      graph['fLineWidth'] = 2;
+      graph['fMarkerColor'] = 4;
+      graph['fMarkerStyle'] = 21;
+      graph['fMarkerSize'] = 1;
+      graph['fMaxSize'] = 0;
+      graph['fNpoints'] = 0;
+      graph['fX'] = new Array;
+      graph['fY'] = new Array;
+      graph['fFunctions'] = new Array;
+      graph['fHistogram'] = JSROOTCore.CreateTH1();
+
+      if (npoints>0) {
+         graph['fMaxSize'] = npoints;
+         graph['fNpoints'] = npoints;
+         for (var i=0;i<npoints;i++) {
+            graph['fX'].push(i);
+            graph['fY'].push(i);
+         }
+         JSROOTPainter.AdjustTGraphRanges(graph);
+      }
+      
+      JSROOTCore.addMethods(graph);
+      return graph;
+   }
+   
+   JSROOTCore.AdjustTGraphRanges = function(graph) {
+      if (graph['fNpoints']==0) return;
+      
+      var minx = graph['fX'][0], maxx = minx;
+      var miny = graph['fY'][0], maxy = miny;
+      
+      for (var i=1;i<graph['fNpoints'];i++) {
+         if (graph['fX'][i] < minx) minx = graph['fX'][i];
+         if (graph['fX'][i] > maxx) maxx = graph['fX'][i];
+         if (graph['fY'][i] < miny) miny = graph['fY'][i];
+         if (graph['fY'][i] > maxy) maxy = graph['fY'][i];
+      }
+      
+      if (miny==maxy) maxy = miny + 1;
+   
+      // console.log("search minx = " + minx + " maxx = " + maxx);
+      
+      graph['fHistogram']['fXaxis']['fXmin'] = minx;
+      graph['fHistogram']['fXaxis']['fXmax'] = maxx;
+
+      graph['fHistogram']['fYaxis']['fXmin'] = miny;
+      graph['fHistogram']['fYaxis']['fXmax'] = maxy;
+   }
+   
+      
    JSROOTCore.addMethods = function(obj) {
       // check object type and add methods if needed
       if (('fBits' in obj) && !('TestBit' in obj)) {

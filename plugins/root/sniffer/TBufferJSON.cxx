@@ -313,6 +313,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    // special handling for TArray classes - they should appear not as object but JSON array
    Bool_t isarray = strncmp("TArray", (cl ? cl->GetName() : ""), 6) == 0;
    if (isarray) isarray = ((TClass*)cl)->GetBaseClassOffset(TArray::Class()) == 0;
+   Bool_t iscollect = !isarray && (cl!=0) && (((TClass*)cl)->GetBaseClassOffset(TCollection::Class())==0);
 
    if (!isarray) {
       JsonStartElement();
@@ -321,7 +322,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    if (obj==0) { AppendOutput("null"); return; }
 
 
-   if (!isarray) {
+   if (!isarray && !iscollect) {
       // add element name which should correspond to the object
 
       for(unsigned n=0;n<fJsonrMap.size();n++)
@@ -348,7 +349,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    TJSONStackObj* stack = PushStack();
    stack->fIsArray = isarray;
 
-   if (((TClass*)cl)->GetBaseClassOffset(TCollection::Class())==0)
+   if (iscollect)
       JsonStreamCollection((TCollection*) obj, cl);
    else
       ((TClass*)cl)->Streamer((void*)obj, *this);
@@ -368,7 +369,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
 
    PopStack();
 
-   if (!isarray) {
+   if (!isarray && !iscollect) {
       AppendOutput(0,"}");
    }
 }
@@ -379,9 +380,11 @@ void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
 {
    // store content of collection
 
-   AppendOutput(",", "\"name\" : \"");
-   AppendOutput(col->GetName());
-   AppendOutput("\",", "\"array\" : [");
+//   AppendOutput(",", "\"name\" : \"");
+//   AppendOutput(col->GetName());
+//   AppendOutput("\",", "\"array\" : [");
+
+   AppendOutput("[");
 
    bool islist = col->InheritsFrom(TList::Class());
    TString sopt;

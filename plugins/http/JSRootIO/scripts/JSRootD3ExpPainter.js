@@ -683,8 +683,8 @@ var gStyle = {
       chopt = JSROOTPainter.clearCuts(chopt);
       if (hdim > 1) option.Scat = 1;
       if (!nch) option.Hist = 1;
-      if ('fFunctions' in histo && histo['fFunctions'].length > 0) option.Func = 2;
-      if ('fSumw2' in histo && histo['fSumw2'].length > 0 && hdim == 1) option.Error = 2;
+      if (('fFunctions' in histo) && (histo.fFunctions.length > 0)) option.Func = 2;
+      if (('fSumw2' in histo) && (histo.fSumw2.length > 0) && (hdim == 1)) option.Error = 2;
       
       var l = chopt.indexOf('SPEC');
       if (l != -1) {
@@ -1850,7 +1850,7 @@ var gStyle = {
       if (ymax > 0.0) ymax *= 1.05;
       if (ymin < 0.0) ymin *= 1.05;
 
-      var histo = JSROOTPainter.Create1DHisto();
+      var histo = JSROOTCore.CreateTH1();
       
       histo['fName'] = this.tf1['fName'] + "_hist";
       histo['fTitle'] = this.tf1['fTitle'];
@@ -3772,9 +3772,9 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.FindStat = function() {
       
       if ('fFunctions' in this.histo)
-         for (i=0; i<this.histo['fFunctions'].length; ++i) {
+         for (i=0; i<this.histo.fFunctions.length; ++i) {
          
-            var func = this.histo['fFunctions'][i];
+            var func = this.histo.fFunctions[i];
          
             if (func['_typename'] == 'JSROOTIO.TPaveText' ||
                 func['_typename'] == 'JSROOTIO.TPaveStats') {
@@ -3842,9 +3842,10 @@ var gStyle = {
 
       stats['fLines'][0]['fTitle'] = this.histo['fName']; 
       
-      if (!'fFunctions' in this.histo) this.histo['fFunctions'] = {};
+      if (!'fFunctions' in this.histo) 
+         this.histo['fFunctions'] = new Array;
 
-      this.histo['fFunctions'].push(stats);
+      this.histo.fFunctions.push(stats);
       
       return stats;
    }
@@ -3852,8 +3853,8 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.FindPalette = function() {
       
       if ('fFunctions' in this.histo)
-         for (i=0; i<this.histo['fFunctions'].length; ++i) {
-            var func = this.histo['fFunctions'][i];
+         for (i=0; i<this.histo.fFunctions.length; ++i) {
+            var func = this.histo.fFunctions[i];
             if (func['_typename'] == 'JSROOTIO.TPaletteAxis') return func;
          }
 
@@ -3871,9 +3872,9 @@ var gStyle = {
       
       var lastpainter = this;
 
-      for (i=0; i<this.histo['fFunctions'].length; ++i) {
+      for (i=0; i<this.histo.fFunctions.length; ++i) {
 
-         var func = this.histo['fFunctions'][i];
+         var func = this.histo.fFunctions[i];
          
          var funcpainter = this.FindPainterFor(func);
 
@@ -5241,10 +5242,11 @@ var gStyle = {
       
       pal['fAxis'] = axis;
       
-      if (!'fFunctions' in this.histo) this.histo['fFunctions'] = {};
+      if (!'fFunctions' in this.histo) 
+         this.histo['fFunctions'] = new Array;
 
       // place colz in the beginning, that stat box is always drawn on the top
-      this.histo['fFunctions'].unshift(pal);
+      this.histo.fFunctions.unshift(pal);
       
       return pal;
    }
@@ -6284,7 +6286,7 @@ var gStyle = {
       else themin = stack['fMinimum'];
       if (!('fHistogram' in stack)) {
          h = stack['fHists'][0];
-         stack['fHistogram'] = JSROOTPainter.Create1DHisto();
+         stack['fHistogram'] = JSROOTCore.CreateTH1();
          stack['fHistogram']['fName'] = "unnamed";
          stack['fHistogram']['fOption'] = "";
          stack['fHistogram']['fXaxis'] = JSROOTCore.clone(h['fXaxis']);
@@ -6606,178 +6608,6 @@ var gStyle = {
       }
       return p;
    };
-
-   JSROOTPainter.CreateDummyAxis = function() {
-      var axis = {};
-
-      axis['_typename'] = "ROOTIO.TAxis";
-      axis['fBits'] = 0x3000008;
-      axis['fBits2'] = 0;
-      axis['fXmin'] = 0;
-      axis['fXmax'] = 0;
-      axis['fNbins'] = 0;
-      axis['fN'] = 0;
-      axis['fXbins'] = new Array;
-      axis['fFirst'] = 0;
-      axis['fLast'] = 0;
-      axis['fName'] = "";
-      axis['fTitle'] = "";
-      axis['fTimeDisplay'] = false;
-      axis['fTimeFormat'] = "";
-      axis['fNdivisions'] = 510;
-      axis['fAxisColor'] = 1;
-      axis['fLabelColor'] = 1;
-      axis['fLabelFont'] = 42;
-      axis['fLabelOffset']  = 0.05;
-      axis['fLabelSize']  = 0.035;
-      axis['fTickLength'] = 0.03;
-      axis['fTitleOffset'] = 1;
-      axis['fTitleSize']  = 0.035;
-      axis['fTitleColor'] = 1;
-      axis['fTitleFont'] = 42;
-      JSROOTCore.addMethods(axis);
-      return axis;
-   }
-
-   JSROOTPainter.Create1DHisto = function(nbinsx) {
-      var histo = {};
-      histo['_typename'] = "JSROOTIO.TH1I";
-      histo['fBits'] = 0x3000008;
-      histo['fName'] = "dummy_histo_" + random_id++;
-      histo['fTitle'] = "dummytitle";
-      histo['fMinimum'] = -1111;
-      histo['fMaximum'] = -1111;
-      histo['fOption'] = "";
-      histo['fFillColor'] = 0;
-      histo['fLineColor'] = 0;
-      histo['fLineWidth'] = 1;
-      histo['fBinStatErrOpt'] = 0;
-      histo['fNcells'] = 0;
-      histo['fN'] = 0;
-      histo['fArray'] = new Array;
-      histo['fSumw2'] = new Array;
-      histo['fFunctions'] = new Array;
-
-      histo['fXaxis'] = JSROOTPainter.CreateDummyAxis();
-      histo['fYaxis'] = JSROOTPainter.CreateDummyAxis();
-      
-      if (nbinsx!=null) {
-         histo['fNcells'] = nbinsx+2; 
-         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
-         histo['fXaxis']['fNbins'] = nbinsx; 
-         histo['fXaxis']['fXmin'] = 0;
-         histo['fXaxis']['fXmax'] = nbinsx;
-      }
-
-      JSROOTCore.addMethods(histo);
-
-      return histo;
-   }
-
-   JSROOTPainter.Create2DHisto = function(nbinsx, nbinsy) {
-      var histo = {};
-      histo['_typename'] = "JSROOTIO.TH2I";
-      histo['fBits'] = 0x3000008;
-      histo['fName'] = "dummy_histo_" + random_id++;
-      histo['fTitle'] = "dummytitle";
-      histo['fMinimum'] = -1111;
-      histo['fMaximum'] = -1111;
-      histo['fOption'] = "";
-      histo['fFillColor'] = 0;
-      histo['fLineColor'] = 0;
-      histo['fLineWidth'] = 1;
-      histo['fBinStatErrOpt'] = 0;
-      histo['fNcells'] = 0;
-      histo['fN'] = 0;
-      histo['fArray'] = new Array;
-      histo['fSumw2'] = new Array;
-      histo['fFunctions'] = new Array;
-      histo['fContour'] = new Array;
-
-      histo['fXaxis'] = JSROOTPainter.CreateDummyAxis();
-      histo['fYaxis'] = JSROOTPainter.CreateDummyAxis();
-      histo['fZaxis'] = JSROOTPainter.CreateDummyAxis();
-      
-      if ((nbinsx!=null) && (nbinsy!=null)) {
-         histo['fNcells'] = (nbinsx+2) * (nbinsy+2);
-         for (var i=0;i<histo['fNcells'];i++) histo['fArray'].push(0);
-         histo['fXaxis']['fNbins'] = nbinsx; 
-         histo['fYaxis']['fNbins'] = nbinsy;
-         
-         histo['fXaxis']['fXmin'] = 0;
-         histo['fXaxis']['fXmax'] = nbinsx;
-         histo['fYaxis']['fXmin'] = 0;
-         histo['fYaxis']['fXmax'] = nbinsy;
-      }
-      
-      JSROOTCore.addMethods(histo);
-
-      return histo;
-   }
-
-   JSROOTPainter.CreateTGraph = function(npoints) {
-      var graph = {};
-      graph['_typename'] = "JSROOTIO.TGraph";
-      graph['fBits'] = 0x3000408;
-      graph['fName'] = "dummy_graph_" + random_id++;
-      graph['fTitle'] = "dummytitle";
-      graph['fMinimum'] = -1111;
-      graph['fMaximum'] = -1111;
-      graph['fOption'] = "";
-      graph['fFillColor'] = 0;
-      graph['fFillStyle'] = 1001;
-      graph['fLineColor'] = 2;
-      graph['fLineStyle'] = 1;
-      graph['fLineWidth'] = 2;
-      graph['fMarkerColor'] = 4;
-      graph['fMarkerStyle'] = 21;
-      graph['fMarkerSize'] = 1;
-      graph['fMaxSize'] = 0;
-      graph['fNpoints'] = 0;
-      graph['fX'] = new Array;
-      graph['fY'] = new Array;
-      graph['fFunctions'] = new Array;
-      graph['fHistogram'] = JSROOTPainter.Create1DHisto();
-
-      if (npoints>0) {
-         graph['fMaxSize'] = npoints;
-         graph['fNpoints'] = npoints;
-         for (var i=0;i<npoints;i++) {
-            graph['fX'].push(i);
-            graph['fY'].push(i);
-         }
-         JSROOTPainter.AdjustTGraphRanges(graph);
-      }
-      
-      JSROOTCore.addMethods(graph);
-      return graph;
-   }
-   
-   JSROOTPainter.AdjustTGraphRanges = function(graph) {
-      if (graph['fNpoints']==0) return;
-      
-      var minx = graph['fX'][0], maxx = minx;
-      var miny = graph['fY'][0], maxy = miny;
-      
-      for (var i=1;i<graph['fNpoints'];i++) {
-         if (graph['fX'][i] < minx) minx = graph['fX'][i];
-         if (graph['fX'][i] > maxx) maxx = graph['fX'][i];
-         if (graph['fY'][i] < miny) miny = graph['fY'][i];
-         if (graph['fY'][i] > maxy) maxy = graph['fY'][i];
-      }
-      
-      if (miny==maxy) maxy = miny + 1;
-   
-      // console.log("search minx = " + minx + " maxx = " + maxx);
-      
-      graph['fHistogram']['fXaxis']['fXmin'] = minx;
-      graph['fHistogram']['fXaxis']['fXmax'] = maxx;
-
-      graph['fHistogram']['fYaxis']['fXmin'] = miny;
-      graph['fHistogram']['fYaxis']['fXmax'] = maxy;
-   }
-      
-
    
    JSROOTPainter.drawMultiGraphNew = function(vis, mgraph) {
       var i, maximum, minimum, rwxmin=0, rwxmax=0, rwymin=0, rwymax=0, uxmin=0, uxmax=0, dx, dy;
@@ -6874,7 +6704,7 @@ var gStyle = {
       // Create a temporary histogram to draw the axis (if necessary)
       if (!histo) {
          // $("#report").append("<br> create dummy histo");
-         histo = JSROOTPainter.Create1DHisto(); 
+         histo = JSROOTCore.CreateTH1(); 
          histo['fXaxis']['fXmin'] = rwxmin;
          histo['fXaxis']['fXmax'] = rwxmax;
          histo['fYaxis']['fXmin'] = rwymin;

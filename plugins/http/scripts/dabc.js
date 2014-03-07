@@ -1229,7 +1229,7 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
    if (this.clname != "2D") return false;
    
    if (this.root_obj == null) {
-      this.root_obj = JSROOTPainter.Create2DHisto(16, 16);
+      this.root_obj = JSROOTCore.CreateTH2(16, 16);
       this.root_obj['fName']  = "BeamProfile";
       this.root_obj['fTitle'] = "Beam profile from FESA";
       this.root_obj['fOption'] = "col";
@@ -1562,13 +1562,14 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    if (this.json) {
       this.obj = DABC.JSONR_unref(JSON.parse(arg));
 
-      this.version = 0;
+      this.version++;
       
       this.raw_data = null;
       this.raw_data_version = 0;
-
+      this.raw_data_size = arg.length;
+      
       if (this.obj && ('_typename' in this.obj)) {
-         console.log("Get object of " + this.obj['_typename']);
+         // console.log("Get JSON object of " + this.obj['_typename']);
          this.state = this.StateEnum.stReady;
          this.DrawObject();
       } else {
@@ -2011,7 +2012,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = false;
+      var use_json = true;
       
       if (!use_json) {
       

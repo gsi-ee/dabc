@@ -31,6 +31,11 @@
          $("#grid_spinner").spinner({ min:1, max:5});
          
          setInterval(function() { DABC.mgr.UpdateAll(); }, 3000);
+      
+      
+         // var txt = '{ "abc" : [ 10, 12 ] }';
+         // var arr = JSON.parse(txt);
+         // console.log("array length = " + arr.abc.length + " name " + arr.abc.name);
        
          // var txt = '{"_classname" : "TList", "name" : "TList", "array" : [{ "_classname" : "TNamed", "_option" : "opt1",    "fUniqueID" : 0,    "fBits" : 50331648,    "fName" : "a",    "fTitle" : "title a" },{ "_classname" : "TNamed", "_option" : "opt2",    "fUniqueID" : 0,    "fBits" : 50331648,    "fName" : "b",    "fTitle" : "" },"$ref:1",{ "_classname" : "TNamed", "_option" : "opt4",    "fUniqueID" : 0,    "fBits" : 50331648,    "fName" : "c",    "fTitle" : "title c" },"$ref:3"]}'; 
          // var obj = DABC.JSONR_unref(JSON.parse(txt));

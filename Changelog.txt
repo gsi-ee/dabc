@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+7.03.2014
+1. Represent all TCollection classes as JSON array. 
+   Class information and optional collection name are lost, 
+   but simplifies JavaScript codes. 
+
+
 6.03.2014
 1. First functional version of TBufferJSON. Works with histograms
    and canvas, need intensive testing. One need many workarounds for 
