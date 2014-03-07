@@ -746,6 +746,11 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
 
    bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
 
+   TUrl url;
+   url.SetOptions(options);
+   url.ParseOptions();
+   Int_t compact = url.GetIntValueFromOptions("compact");
+
    if (istreamerinfo) {
 
       CreateMemFile();
@@ -757,7 +762,7 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
       TList* l = fMemFile->GetStreamerInfoList();
       fSinfoSize = l->GetSize();
 
-      res = TBufferJSON::ConvertToJSON(l);
+      res = TBufferJSON::ConvertToJSON(l, compact);
 
       delete l;
       gDirectory = olddir;
@@ -768,7 +773,7 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
       void* obj_ptr = FindInHierarchy(path, &obj_cl);
       if ((obj_ptr==0) || (obj_cl==0)) return kFALSE;
 
-      res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl);
+      res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl, compact);
    }
 
    return res.Length() > 0;

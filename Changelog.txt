@@ -9,6 +9,8 @@ current functionality of the framework.
 2. Account all arrays in TBufferJSON in reference counter, but
    only objects and collections can be referenced. Make appropriate
    changes in JSONR_unref function.   
+3. Process 'compact' parameter in get.json?compact=3 query.
+   Reduce number of spaces and new lines.   
 
 
 6.03.2014

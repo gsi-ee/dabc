@@ -39,8 +39,8 @@ public:
    TBufferJSON();
    virtual ~TBufferJSON();
 
-   static TString   ConvertToJSON(const TObject* obj);
-   static TString   ConvertToJSON(const void* obj, const TClass* cl);
+   static TString   ConvertToJSON(const TObject* obj, Int_t compact = 0);
+   static TString   ConvertToJSON(const void* obj, const TClass* cl, Int_t compact = 0);
    
    // suppress class writing/reading
 
@@ -282,13 +282,6 @@ protected:
 
    // end redefined protected virtual functions
 
-   Int_t            GetCompressionAlgorithm() const;
-   Int_t            GetCompressionLevel() const;
-   Int_t            GetCompressionSettings() const;
-   void             SetCompressionAlgorithm(Int_t algorithm=0);
-   void             SetCompressionLevel(Int_t level=1);
-   void             SetCompressionSettings(Int_t settings=1);
-
    TString          JsonWriteAny(const void* obj, const TClass* cl);
 
    TJSONStackObj*   PushStack(Bool_t simple = kFALSE);
@@ -327,32 +320,14 @@ protected:
    std::map<const void*,unsigned>  fJsonrMap;     //!  map of recorded objects, used in JsonR to restore references
    unsigned                  fJsonrCnt;     //!  counter for all objects and arrays
    TObjArray                 fStack;        //!  stack of streamer infos
+   Bool_t                    fExpectedChain; //!   flag to resolve situation when several elements of same basic type stored as FastArray
+   Int_t                     fCompact;       //!  0 - no any compression, 1 - no spaces in the begin, 2 - no new lines, 3 - no spaces at all
 
-   Bool_t           fExpectedChain;        //!   flag to resolve situation when several elements of same basic type stored as FastArray
-   Int_t            fCompressLevel;        //!   compression level and algorithm
 
    static const char* fgFloatFmt;          //!  printf argument for floats and doubles, either "%f" or "%e" or "%10f" and so on
 
 ClassDef(TBufferJSON,1) //a specialized TBuffer to only write objects into JSON format
 };
-
-//______________________________________________________________________________
-inline Int_t TBufferJSON::GetCompressionAlgorithm() const
-{
-   return (fCompressLevel < 0) ? -1 : fCompressLevel / 100;
-}
-
-//______________________________________________________________________________
-inline Int_t TBufferJSON::GetCompressionLevel() const
-{
-   return (fCompressLevel < 0) ? -1 : fCompressLevel % 100;
-}
-
-//______________________________________________________________________________
-inline Int_t TBufferJSON::GetCompressionSettings() const
-{
-   return (fCompressLevel < 0) ? -1 : fCompressLevel;
-}
 
 #endif
 

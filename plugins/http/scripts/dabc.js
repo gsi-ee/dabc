@@ -1685,7 +1685,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    var url = this.itemname;
    
    if (this.json) {
-      url += "get.json";
+      url += "get.json?compact=3";
    } else {
       url += "get.bin";
       if (this.version>0) url += "?version=" + this.version;

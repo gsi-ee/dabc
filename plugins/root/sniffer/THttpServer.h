@@ -73,7 +73,7 @@ public:
    void Set404() { SetContentType("_404_"); }
    void SetFile() { SetContentType("_file_"); }
    void SetXml() { SetContentType("text/xml"); }
-   void SetJson() { SetContentType("text"); }
+   void SetJson() { SetContentType("application/json"); }
    void SetBin() { SetContentType("application/x-binary"); }
    void SetPng() { SetContentType("image/png"); }
    void SetJpeg() { SetContentType("image/jpeg"); }
@@ -86,7 +86,7 @@ public:
    Bool_t Is404() const { return IsContentType("_404_"); }
    Bool_t IsFile() const { return IsContentType("_file_"); }
    Bool_t IsXml() const { return IsContentType("text/xml"); }
-   Bool_t IsJson() const { return IsContentType("text"); }
+   Bool_t IsJson() const { return IsContentType("application/json"); }
    Bool_t IsBin() const { return IsContentType("application/x-binary"); }
    Bool_t IsPng() const { return IsContentType("image/png"); }
    Bool_t IsJpeg() const { return IsContentType("image/jpeg"); }

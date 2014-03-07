@@ -65,7 +65,7 @@ TBufferJSON::TBufferJSON() :
    fJsonrCnt(0),
    fStack(),
    fExpectedChain(kFALSE),
-   fCompressLevel(0)
+   fCompact(0)
 {
    // Creates buffer object to serialize data into json.
 
@@ -88,7 +88,7 @@ TBufferJSON::~TBufferJSON()
 }
 
 //______________________________________________________________________________
-TString TBufferJSON::ConvertToJSON(const TObject* obj)
+TString TBufferJSON::ConvertToJSON(const TObject* obj, Int_t compact)
 {
    // converts object, inherited from TObject class, to JSON string
 
@@ -96,12 +96,17 @@ TString TBufferJSON::ConvertToJSON(const TObject* obj)
 }
 
 //______________________________________________________________________________
-TString TBufferJSON::ConvertToJSON(const void* obj, const TClass* cl)
+TString TBufferJSON::ConvertToJSON(const void* obj, const TClass* cl, Int_t compact)
 {
-   // converts any type of object to XML string
+   // converts any type of object to JSON string
+   // following values of compact
+   //   0 - no any compression
+   //   1 - exclude spaces in the begin
+   //   2 - remove newlines
+   //   3 - exclude spaces as much as possible
 
    TBufferJSON buf;
-
+   buf.fCompact = compact;
    return buf.JsonWriteAny(obj, cl);
 }
 
@@ -210,71 +215,15 @@ TJSONStackObj* TBufferJSON::Stack(Int_t depth)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::SetCompressionAlgorithm(Int_t algorithm)
-{
-   // See comments for function SetCompressionSettings
-   if (algorithm < 0 || algorithm >= ROOT::kUndefinedCompressionAlgorithm) algorithm = 0;
-   if (fCompressLevel < 0) {
-      // if the level is not defined yet use 1 as a default
-      fCompressLevel = 100 * algorithm + 1;
-   } else {
-      int level = fCompressLevel % 100;
-      fCompressLevel = 100 * algorithm + level;
-   }
-}
-
-//______________________________________________________________________________
-void TBufferJSON::SetCompressionLevel(Int_t level)
-{
-   // See comments for function SetCompressionSettings
-   if (level < 0) level = 0;
-   if (level > 99) level = 99;
-   if (fCompressLevel < 0) {
-      // if the algorithm is not defined yet use 0 as a default
-      fCompressLevel = level;
-   } else {
-      int algorithm = fCompressLevel / 100;
-      if (algorithm >= ROOT::kUndefinedCompressionAlgorithm) algorithm = 0;
-      fCompressLevel = 100 * algorithm + level;
-   }
-}
-
-//______________________________________________________________________________
-void TBufferJSON::SetCompressionSettings(Int_t settings)
-{
-   // Used to specify the compression level and algorithm:
-   //  settings = 100 * algorithm + level
-   //
-   //  level = 0 no compression.
-   //  level = 1 minimal compression level but fast.
-   //  ....
-   //  level = 9 maximal compression level but slower and might use more memory.
-   // (For the currently supported algorithms, the maximum level is 9)
-   // If compress is negative it indicates the compression level is not set yet.
-   //
-   // The enumeration ROOT::ECompressionAlgorithm associates each
-   // algorithm with a number. There is a utility function to help
-   // to set the value of compress. For example,
-   //   ROOT::CompressionSettings(ROOT::kLZMA, 1)
-   // will build an integer which will set the compression to use
-   // the LZMA algorithm and compression level 1.  These are defined
-   // in the header file Compression.h.
-
-   fCompressLevel = settings;
-}
-
-//______________________________________________________________________________
 void TBufferJSON::AppendOutput(const char* line0, const char* line1)
 {
-   Bool_t fCompact = kTRUE;
-
    if (line0!=0) fOutBuffer.Append(line0);
 
    if (line1!=0) {
-      if (!fCompact) fOutBuffer.Append("\n");
+      if (fCompact<2) fOutBuffer.Append("\n");
 
       if (strlen(line1)>0) {
-         if (!fCompact) fOutBuffer.Append(' ', fStack.GetLast()+1);
+         if (fCompact<1) fOutBuffer.Append(' ', fStack.GetLast()+1);
          fOutBuffer.Append(line1);
       }
    }
@@ -314,7 +263,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
 
    //if (cnt++>100) return;
 
-   if (gDebug>0) Info("JsonWriteObject","Object %p class %s", obj, cl ? cl->GetName() : "null");
+   if (gDebug>3) Info("JsonWriteObject","Object %p class %s", obj, cl ? cl->GetName() : "null");
 
    // special handling for TArray classes - they should appear not as object but JSON array
    Bool_t isarray = strncmp("TArray", (cl ? cl->GetName() : ""), 6) == 0;
@@ -352,7 +301,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
       }
    }
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("JsonWriteObject","Starting object %p write for class: %s", obj, cl->GetName());
 
    TJSONStackObj* stack = PushStack();
@@ -363,7 +312,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    else
       ((TClass*)cl)->Streamer((void*)obj, *this);
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("JsonWriteObject","Done object %p write for class: %s", obj, cl->GetName());
 
    if (isarray) {
@@ -442,7 +391,7 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo* sinfo, const TClass* cl)
 
    if (cl==0) return;
 
-   if (gDebug>0) Info("WorkWithClass","Class: %s", cl->GetName());
+   if (gDebug>3) Info("WorkWithClass","Class: %s", cl->GetName());
 
    TJSONStackObj* stack = Stack();
 
@@ -475,13 +424,13 @@ void TBufferJSON::DecrementLevel(TVirtualStreamerInfo* info)
 
    fExpectedChain = kFALSE;
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("DecrementLevel","Class: %s", (info ? info->GetClass()->GetName() : "custom"));
 
    TJSONStackObj* stack = Stack();
 
    if (stack->IsStreamerElement()) {
-      if (gDebug>0)
+      if (gDebug>3)
          Info("DecrementLevel", "    Perform post-processing elem: %s", stack->fElem->GetName());
 
       PerformPostProcessing(stack);
@@ -496,7 +445,7 @@ void TBufferJSON::DecrementLevel(TVirtualStreamerInfo* info)
 
    PopStack();                       // back from data of stack info
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("DecrementLevel","Class: %s done", (info ? info->GetClass()->GetName() : "custom"));
 }
 
@@ -525,13 +474,13 @@ void TBufferJSON::WorkWithElement(TStreamerElement* elem, Int_t number)
       return;
    }
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("WorkWithElement", "    Start element %s type %d", elem ? elem->GetName() : "---", elem? elem->GetType() : -1);
 
    if (stack->IsStreamerElement()) {
       // this is post processing
 
-      if (gDebug>0)
+      if (gDebug>3)
          Info("WorkWithElement", "    Perform post-processing elem: %s", stack->fElem->GetName());
 
       PerformPostProcessing(stack);
@@ -569,14 +518,14 @@ void TBufferJSON::WorkWithElement(TStreamerElement* elem, Int_t number)
       return;
    }
 
-   if (gDebug>0)
+   if (gDebug>3)
       Info("WorkWithElement", "    Element %s type %d", elem ? elem->GetName() : "---", elem? elem->GetType() : -1);
 
    Bool_t isBasicType = (elem->GetType()>0) && (elem->GetType()<20);
 
    fExpectedChain = isBasicType && (comp_type - elem->GetType() == TStreamerInfo::kOffsetL);
 
-   if (fExpectedChain && (gDebug>0))
+   if (fExpectedChain && (gDebug>3))
       Info("WorkWithElement",
            "    Expects chain for elem %s number %d",
             elem->GetName(), number);
@@ -588,7 +537,7 @@ void TBufferJSON::WorkWithElement(TStreamerElement* elem, Int_t number)
        ((elem->GetType()==TStreamerInfo::kTNamed) && !strcmp(elem->GetName(), TNamed::Class()->GetName())) )
          base_class = elem->GetClassPointer();
 
-   if (base_class && (gDebug>0))
+   if (base_class && (gDebug>3))
       Info("WorkWithElement",
            "   Expects base class %s with standard streamer",  base_class->GetName());
 
@@ -739,7 +688,8 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    if (elem==0) elem = stack->fElem;
    if (elem==0) return;
 
-   Info("PerformPostProcessing","Start element %s type %s", elem->GetName(), elem->GetTypeName());
+   if (gDebug>3)
+      Info("PerformPostProcessing","Start element %s type %s", elem->GetName(), elem->GetTypeName());
 
    stack->fIsPostProcessed = kTRUE;
 
@@ -762,13 +712,14 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    if (elem->GetType()==TStreamerInfo::kTString) {
       // in principle, we should just remove all kind of string length information
 
-      Info("PerformPostProcessing", "Elem %s reformat string value = '%s'", elem->GetName(), fValue.Data());
+      if (gDebug>3)
+         Info("PerformPostProcessing", "Elem %s reformat string value = '%s'", elem->GetName(), fValue.Data());
 
       stack->fValues.Delete();
    } else
    if (istobject) {
       if (stack->fValues.GetLast()!=0) {
-         Error("PerformPostProcessing", "When storing TObject, more than 2 items are stored");
+         if (gDebug>0) Error("PerformPostProcessing", "When storing TObject, more than 2 items are stored");
          AppendOutput(",", "\"dummy\" : ");
       } else {
          AppendOutput(",","\"fUniqueID\" : ");
@@ -780,7 +731,8 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
    } else
    if (isarray) {
 
-      Info("PerformPostProcessing", "TArray postprocessing");
+      if (gDebug>3)
+         Info("PerformPostProcessing", "TArray postprocessing");
 
       // work around for TArray classes - remove first element with array length
 
@@ -795,9 +747,8 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
       stack->fValues.Delete();
    }
 
-
    if (stack->fIsBaseClass && !isarray && !istobject) {
-      if (fValue.Length()!=0)
+      if ((fValue.Length()!=0) && (gDebug>0))
          Error("PerformPostProcessing", "Non-empty value for base class");
       return;
    }
@@ -882,7 +833,7 @@ Version_t TBufferJSON::ReadVersion(UInt_t *start, UInt_t *bcnt, const TClass * /
    if (start) *start = 0;
    if (bcnt) *bcnt = 0;
 
-   if (gDebug>2) Info("ReadVersion","Version = %d", res);
+   if (gDebug>3) Info("ReadVersion","Version = %d", res);
 
    return res;
 }
@@ -917,7 +868,7 @@ void TBufferJSON::WriteObjectClass(const void *actualObjStart, const TClass *act
 {
    // Write object to buffer. Only used from TBuffer
 
-   if (gDebug>2)
+   if (gDebug>3)
       Info("WriteObject","Class %s", (actualClass ? actualClass->GetName() : " null"));
 
    JsonWriteObject(actualObjStart, actualClass);
@@ -1864,7 +1815,7 @@ void TBufferJSON::StreamObject(void *obj, const TClass *cl, const TClass* /* onf
 {
    // stream object to/from buffer
 
-   if (gDebug>1)
+   if (gDebug>3)
       Info("StreamObject","Class: %s", (cl ? cl->GetName() : "none"));
 
    JsonWriteObject(obj, cl);
