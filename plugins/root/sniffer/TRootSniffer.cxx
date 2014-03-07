@@ -1109,6 +1109,8 @@ Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* opt
    //   "png"  - png image
    //   "jpeg" - jpeg image
    //   "gif"  - gif image
+   //   "xml"  - xml representation
+   //   "json" - json representation
 
    if ((kind==0) || (*kind==0) || (strcmp(kind,"bin")==0))
       return ProduceBinary(path, options, ptr, length);
@@ -1121,6 +1123,19 @@ Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* opt
 
    if (strcmp(kind,"gif")==0)
       return ProduceImage(TImage::kGif, path, options, ptr, length);
+
+   if ((strcmp(kind,"xml")==0) || (strcmp(kind,"json")==0)) {
+      TString res;
+      if (strcmp(kind,"xml")==0) {
+         if (!ProduceXml(path, options,res)) return kFALSE;
+      } else {
+         if (!ProduceJson(path, options,res)) return kFALSE;
+      }
+      length = res.Length();
+      ptr = malloc(length);
+      memcpy(ptr, res.Data(), length);
+      return kTRUE;
+   }
 
    return kFALSE;
 }

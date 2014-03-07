@@ -758,9 +758,7 @@ dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std:
 
 dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout)
 {
-   dabc::Buffer res;
-
-   if (null()) return res;
+   if (null()) return 0;
 
    CmdGetBinary cmd;
    cmd.SetStr("Item", fullname);
@@ -769,9 +767,9 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const st
    cmd.SetTimeout(tmout);
 
    if (Execute(cmd) == cmd_true)
-      res = cmd.GetRawData();
+      return cmd.GetRawData();
 
-   return res;
+   return 0;
 }
 
 

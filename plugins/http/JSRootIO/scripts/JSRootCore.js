@@ -269,7 +269,7 @@ landaun = function(f, x, i) {
             graph['fX'].push(i);
             graph['fY'].push(i);
          }
-         JSROOTPainter.AdjustTGraphRanges(graph);
+         JSROOTCore.AdjustTGraphRanges(graph);
       }
       
       JSROOTCore.addMethods(graph);

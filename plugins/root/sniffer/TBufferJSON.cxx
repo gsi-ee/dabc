@@ -1708,7 +1708,8 @@ void  TBufferJSON::WriteFastArray(void  *start,  const TClass *cl, Int_t n, TMem
 {
    // Recall TBuffer function to avoid gcc warning message
 
-   Info("WriteFastArray","void *start");
+   if (gDebug>2)
+      Info("WriteFastArray","void *start");
 
    if (streamer) {
       JsonStartElement();
@@ -1745,7 +1746,8 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n, Bool_
 {
    // Recall TBuffer function to avoid gcc warning message
 
-   Info("WriteFastArray","void **startp cl %s n %d streamer %p", cl->GetName(), n, streamer);
+   if (gDebug>2)
+      Info("WriteFastArray","void **startp cl %s n %d streamer %p", cl->GetName(), n, streamer);
 
    if (streamer) {
       JsonStartElement();

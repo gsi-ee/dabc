@@ -140,16 +140,40 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
    dabc::Buffer buf;
 
-   if (binkind == "png") {
+   if ((binkind == "png") || (binkind == "jpeg")) {
       void* ptr(0);
       Long_t length(0);
 
-      if (!sniff->ProduceImage(TImage::kPng, itemname.c_str(), query.c_str(), ptr, length)) {
+      Int_t kind = binkind == "png" ? TImage::kPng : TImage::kJpeg;
+
+      if (!sniff->ProduceImage(kind, itemname.c_str(), query.c_str(), ptr, length)) {
          EOUT("Image producer fails for item %s", itemname.c_str());
          return dabc::cmd_false;
       }
 
       buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+   } else
+   if (binkind == "json") {
+      TString str;
+
+      if (!sniff->ProduceJson(itemname.c_str(), query.c_str(), str)) {
+         EOUT("JSON producer fails for item %s", itemname.c_str());
+         return dabc::cmd_false;
+      }
+
+      // add only string content without null-terminated string
+      buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
+   } else
+   if (binkind == "xml") {
+      TString str;
+
+      if (!sniff->ProduceXml(itemname.c_str(), query.c_str(), str)) {
+         EOUT("JSON producer fails for item %s", itemname.c_str());
+         return dabc::cmd_false;
+      }
+
+      // add only string content without null-terminated string
+      buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
    } else {
 
       TString objhash;

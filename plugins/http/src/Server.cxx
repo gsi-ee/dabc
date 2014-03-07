@@ -129,7 +129,7 @@ bool http::Server::ProcessGetItem(const std::string& itemname, const std::string
    dabc::Hierarchy res = dabc::PublisherRef(GetPublisher()).Get(itemname, version, hlimit);
 
    if (res.null()) return false;
-      // result is only item fields, we need to decorate it with some more attributes
+   // result is only item fields, we need to decorate it with some more attributes
 
    replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n",itemname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
    replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
@@ -172,7 +172,6 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
       return true;
    }
 
-
    if (file == "h.xml") {
       content_type = "text/xml";
 
@@ -187,7 +186,15 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
 
    if (file == "get.xml") {
       content_type = "text/xml";
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "xml", query);
+      if (!content_bin.null()) return true;
       return ProcessGetItem(path, query, content_str);
+   } else
+
+   if (file == "get.json") {
+      content_type = "application/json";
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "json", query);
+      return !content_bin.null();
    } else
 
    if (file == "get.bin") {

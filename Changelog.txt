@@ -11,6 +11,8 @@ current functionality of the framework.
    changes in JSONR_unref function.   
 3. Process 'compact' parameter in get.json?compact=3 query.
    Reduce number of spaces and new lines.   
+4. Support get.json and get.xml in http::Server class.
+   For the moment implemented only in ROOT-related classes.  
 
 
 6.03.2014

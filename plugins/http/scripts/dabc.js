@@ -1320,13 +1320,13 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
    // here we should create TGraph object
 
-   var gr = JSROOTPainter.CreateTGraph();
+   var gr = JSROOTCore.CreateTGraph();
    
    gr['fX'] = x;
    gr['fY'] = y;
    gr['fNpoints'] = x.length;
    
-   JSROOTPainter.AdjustTGraphRanges(gr);
+   JSROOTCore.AdjustTGraphRanges(gr);
 
    gr['fHistogram']['fTitle'] = this.FullItemName();
    if (gr['fHistogram']['fYaxis']['fXmin']>0)
