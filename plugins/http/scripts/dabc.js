@@ -1563,7 +1563,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    }
    
    if (this.json) {
-      this.obj = DABC.JSONR_unref(JSON.parse(arg));
+      var obj = DABC.JSONR_unref(JSON.parse(arg));
 
       this.version++;
       
@@ -1571,8 +1571,17 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       this.raw_data_version = 0;
       this.raw_data_size = arg.length;
       
-      if (this.obj && ('_typename' in this.obj)) {
+      if (obj && ('_typename' in obj)) {
          // console.log("Get JSON object of " + this.obj['_typename']);
+         
+         if (this.painter && this.painter.UpdateObject(obj)) {
+            // if painter accepted object update, we need later just redraw frame
+            obj = null;
+         } else { 
+            this.obj = obj;
+            this.painter = null;
+         }
+         
          this.state = this.StateEnum.stReady;
          this.DrawObject();
       } else {
@@ -2016,7 +2025,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = false;
+      var use_json = true;
       
       if (!use_json) {
       
