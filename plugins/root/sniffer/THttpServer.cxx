@@ -16,6 +16,10 @@
 #include <string>
 #include <cstdlib>
 
+//extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
+//const Int_t kMAXBUF = 0xffffff;
+
+
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // THttpCallArg                                                         //
@@ -34,6 +38,7 @@ THttpCallArg::THttpCallArg() :
    fQuery(),
    fCond(),
    fContentType(),
+   fContentEncoding(),
    fContent(),
    fBinData(0),
    fBinDataLength(0)
@@ -72,6 +77,27 @@ void THttpCallArg::SetPathAndFileName(const char* fullpath)
       if (fPathName=="/") fPathName.Clear();
       fFileName = rslash+1;
    }
+}
+
+void THttpCallArg::FillHttpHeader(TString& hdr)
+{
+   if ((fContentType.Length()==0) || Is404()) {
+      hdr.Form("HTTP/1.1 404 Not Found\r\n"
+               "Content-Length: 0\r\n"
+               "Connection: close\r\n\r\n");
+      return;
+   }
+
+   hdr.Form("HTTP/1.1 200 OK\r\n"
+            "Content-Type: %s\r\n"
+            "Connection: keep-alive\r\n"
+            "Content-Length: %ld\r\n",
+             GetContentType(),
+             GetContentLength());
+   if (fContentEncoding.Length()>0)
+      hdr.Append(TString::Format("Content-Encoding: %s\r\n", fContentEncoding.Data()));
+
+   hdr.Append("\r\n");
 }
 
 
@@ -445,6 +471,51 @@ void THttpServer::ProcessRequest(THttpCallArg* arg)
          return;
       }
    }
+/*
+   if (arg->fFileName == "get.json.gz") {
+      if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
+
+         Int_t fObjlen = arg->fContent.Length();
+         Int_t cxlevel = 5;
+         Int_t cxAlgorithm = 0;
+
+         Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
+         Int_t buflen = fObjlen + 9*nbuffers + 28; //add 28 bytes in case object is placed in a deleted gap
+         if (buflen<512) buflen = 512;
+
+         void* fBuffer = malloc(buflen);
+
+         char *objbuf = (char*) arg->fContent.Data();
+         char *bufcur = (char*) fBuffer;
+         Int_t noutot = 0;
+         Int_t nzip   = 0;
+         for (Int_t i = 0; i < nbuffers; ++i) {
+            Int_t bufmax = kMAXBUF, nout(0);
+            if (i == nbuffers - 1) bufmax = fObjlen - nzip;
+            R__zipMultipleAlgorithm(cxlevel, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
+            if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
+               Error("", "Fail to compress data");
+               free(fBuffer);
+               return;
+            }
+            bufcur += nout;
+            noutot += nout;
+            objbuf += kMAXBUF;
+            nzip   += kMAXBUF;
+         }
+
+         Info("Compress", "Original size %d compressed %d", fObjlen, noutot);
+
+         arg->fBinData = fBuffer;
+         arg->fBinDataLength = noutot;
+         arg->fContent.Clear();
+
+         arg->SetEncoding("gzip");
+         arg->SetJson();
+         return;
+      }
+   }
+*/
 
    if (arg->fFileName == "get.xml") {
       if (fSniffer->ProduceXml(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {

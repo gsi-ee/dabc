@@ -355,41 +355,22 @@ void* TFastCgi::run_func(void* args)
       //printf("PATHNAME %s FILENAME %s QUERY %s \n",
       //       arg.GetPathName(), arg.GetFileName(), arg.GetQuery());
 
+      TString hdr;
+
       if (!engine->GetServer()->ExecuteHttp(&arg) || arg.Is404()) {
-         FCGX_FPrintF(request.out, "HTTP/1.1 404 Not Found\r\n"
-                                   "Content-Length: 0\r\n"
-                                   "Connection: close\r\n\r\n");
+         arg.FillHttpHeader(hdr);
+         FCGX_FPrintF(request.out, hdr.Data());
       } else
 
       if (arg.IsFile()) {
-         FCGX_send_file(&request, arg.GetContent());
-      } else
-
-      if (arg.IsBinData()) {
-         FCGX_FPrintF(request.out,
-                  "HTTP/1.1 200 OK\r\n"
-                  "Content-Type: %s\r\n"
-                  "Content-Length: %ld\r\n"
-                  "Connection: keep-alive\r\n"
-                  "\r\n",
-                  arg.GetContentType(),
-                  arg.GetBinDataLength());
-
-         FCGX_PutStr((const char*) arg.GetBinData(), (int) arg.GetBinDataLength(), request.out);
+         FCGX_send_file(&request, (const char*) arg.GetContent());
       } else {
 
-         // Send HTTP reply to the client
-         FCGX_FPrintF(request.out,
-             "HTTP/1.1 200 OK\r\n"
-             "Content-Type: %s\r\n"
-             "Content-Length: %d\r\n"        // Always set Content-Length
-             "\r\n"
-             "%s",
-             arg.GetContentType(),
-             arg.GetContentLength(),
-             arg.GetContent());
-      }
+         arg.FillHttpHeader(hdr);
+         FCGX_FPrintF(request.out, hdr.Data());
 
+         FCGX_PutStr((const char*) arg.GetContent(), (int) arg.GetContentLength(), request.out);
+      }
 
       FCGX_Finish_r(&request);
 

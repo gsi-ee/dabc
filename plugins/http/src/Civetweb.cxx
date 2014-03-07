@@ -136,7 +136,9 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
                 "Content-Type: %s\r\n"
                 "Content-Length: %u\r\n"
                 "Connection: keep-alive\r\n"
-                "\r\n", content_type.c_str(), (unsigned) content_bin.GetTotalSize());
+                "\r\n",
+                content_type.c_str(),
+                (unsigned) content_bin.GetTotalSize());
       mg_write(conn, content_bin.SegmentPtr(), (size_t) content_bin.GetTotalSize());
    } else {
 

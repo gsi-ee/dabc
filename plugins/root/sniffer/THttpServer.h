@@ -44,10 +44,14 @@ protected:
    TCondition fCond;            //! condition used to wait for processing
 
    TString fContentType;        //! type of content
+   TString fContentEncoding;    //! type of content encoding
    TString fContent;            //! text content (if any)
 
    void* fBinData;              //! binary data, assigned with http call
    Long_t fBinDataLength;       //! length of binary data
+
+   Bool_t IsBinData() const
+      { return fBinData && fBinDataLength>0; }
 
 public:
 
@@ -78,6 +82,11 @@ public:
    void SetPng() { SetContentType("image/png"); }
    void SetJpeg() { SetContentType("image/jpeg"); }
 
+   // Set encoding like gzip
+   void SetEncoding(const char* typ) { fContentEncoding = typ; }
+
+   // Fill http header
+   void FillHttpHeader(TString& buf);
 
    // these methods used to return results of http request processing
 
@@ -92,17 +101,9 @@ public:
    Bool_t IsJpeg() const { return IsContentType("image/jpeg"); }
 
    const char* GetContentType() const { return fContentType.Data(); }
-   Int_t GetContentLength() const { return fContent.Length(); }
-   const char* GetContent() const { return fContent.Data(); }
 
-   Bool_t IsBinData() const
-   {
-      if (IsBin() || IsPng() || IsJpeg()) return kTRUE;
-      return (GetBinData()!=0) && (GetBinDataLength() > 0);
-   }
-
-   void* GetBinData() const { return fBinData; }
-   Long_t GetBinDataLength() const { return fBinDataLength; }
+   Long_t GetContentLength() const { return IsBinData() ? fBinDataLength : fContent.Length(); }
+   const void* GetContent() const { return IsBinData() ? fBinData : fContent.Data(); }
 
    ClassDef(THttpCallArg, 0) // Arguments for single HTTP call
 };
