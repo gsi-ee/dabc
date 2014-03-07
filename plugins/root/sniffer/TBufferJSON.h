@@ -22,7 +22,7 @@
 #include "TObjArray.h"
 #endif
 
-#include <vector>
+#include <map>
 
 class TVirtualStreamerInfo;
 class TStreamerInfo;
@@ -322,10 +322,11 @@ protected:
 
    void              AppendOutput(const char* line0 = 0, const char* line1 = 0);
 
-   TString                   fOutBuffer;       //!  output buffer for json code
-   TString                   fValue;           //!  buffer for current value
-   std::vector<const void*>  fJsonrMap;        //!  array of recorded objects, used in JsonR to restore references
-   TObjArray                 fStack;           //!  stack of streamer infos
+   TString                   fOutBuffer;    //!  output buffer for json code
+   TString                   fValue;        //!  buffer for current value
+   std::map<const void*,unsigned>  fJsonrMap;     //!  map of recorded objects, used in JsonR to restore references
+   unsigned                  fJsonrCnt;     //!  counter for all objects and arrays
+   TObjArray                 fStack;        //!  stack of streamer infos
 
    Bool_t           fExpectedChain;        //!   flag to resolve situation when several elements of same basic type stored as FastArray
    Int_t            fCompressLevel;        //!   compression level and algorithm

@@ -6,6 +6,9 @@ current functionality of the framework.
 1. Represent all TCollection classes as JSON array. 
    Class information and optional collection name are lost, 
    but simplifies JavaScript codes. 
+2. Account all arrays in TBufferJSON in reference counter, but
+   only objects and collections can be referenced. Make appropriate
+   changes in JSONR_unref function.   
 
 
 6.03.2014

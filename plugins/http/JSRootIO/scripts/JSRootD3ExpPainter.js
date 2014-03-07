@@ -6767,11 +6767,14 @@ var gStyle = {
    
    JSROOTPainter.drawObjectInFrame = function(vis, obj)
    {
+      // ignore objects without type information - for instance, TList
+      if (!('_typename' in obj)) return;
+      
       var classname = obj['_typename'];
       
       // $("#report").append("<br> draw primitive " + classname);
 
-      if (obj['_typename'].match(/\bTCanvas/)) {
+      if (classname.match(/\bTCanvas/)) {
          vis['ROOT:canvas'] = obj;
          vis['ROOT:pad'] = obj;
          for (var i=0; i<obj['fPrimitives'].length; ++i)

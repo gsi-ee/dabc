@@ -62,6 +62,7 @@ TBufferJSON::TBufferJSON() :
    fOutBuffer(),
    fValue(),
    fJsonrMap(),
+   fJsonrCnt(0),
    fStack(),
    fExpectedChain(kFALSE),
    fCompressLevel(0)
@@ -265,14 +266,15 @@ void TBufferJSON::SetCompressionSettings(Int_t settings)
 //______________________________________________________________________________
 void TBufferJSON::AppendOutput(const char* line0, const char* line1)
 {
+   Bool_t fCompact = kTRUE;
+
    if (line0!=0) fOutBuffer.Append(line0);
 
    if (line1!=0) {
-      fOutBuffer.Append("\n");
+      if (!fCompact) fOutBuffer.Append("\n");
 
       if (strlen(line1)>0) {
-         for (Int_t n=0;n<=fStack.GetLast();n++)
-            fOutBuffer.Append(" ");
+         if (!fCompact) fOutBuffer.Append(' ', fStack.GetLast()+1);
          fOutBuffer.Append(line1);
       }
    }
@@ -306,7 +308,11 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    // If object was written before, only pointer will be stored
    // Return pointer to top xml node, representing object
 
+   // static int  cnt = 0;
+
    if (!cl) obj = 0;
+
+   //if (cnt++>100) return;
 
    if (gDebug>0) Info("JsonWriteObject","Object %p class %s", obj, cl ? cl->GetName() : "null");
 
@@ -322,24 +328,27 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    if (obj==0) { AppendOutput("null"); return; }
 
 
-   if (!isarray && !iscollect) {
+   if (!isarray) {
       // add element name which should correspond to the object
 
-      for(unsigned n=0;n<fJsonrMap.size();n++)
-         if (fJsonrMap[n] == obj) {
-            AppendOutput(Form("\"$ref:%u\"", n));
-            if (extrafield!=0) Error("JsonWriteObject", "Extra field %s was not recorded for object", extrafield);
-            return;
+      std::map<const void*,unsigned>::const_iterator iter = fJsonrMap.find(obj);
+
+      if (iter != fJsonrMap.end()) {
+         AppendOutput(Form("\"$ref:%u\"", iter->second));
+         if (extrafield!=0) Error("JsonWriteObject", "Extra field %s was not recorded for object", extrafield);
+         return;
+      }
+
+      fJsonrMap[obj] = fJsonrCnt++;
+
+      if (!iscollect) {
+         AppendOutput("{","\"_typename\" : \"JSROOTIO.");
+         AppendOutput(cl->GetName());
+         AppendOutput("\"");
+
+         if (extrafield!=0) {
+            AppendOutput(",", extrafield);
          }
-
-      fJsonrMap.push_back(obj);
-
-      AppendOutput("{","\"_typename\" : \"JSROOTIO.");
-      AppendOutput(cl->GetName());
-      AppendOutput("\"");
-
-      if (extrafield!=0) {
-         AppendOutput(",", extrafield);
       }
    }
 
@@ -384,6 +393,8 @@ void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
 //   AppendOutput(col->GetName());
 //   AppendOutput("\",", "\"array\" : [");
 
+
+   // collection treated as JS Array and its reference kept in the objects map
    AppendOutput("[");
 
    bool islist = col->InheritsFrom(TList::Class());
@@ -440,7 +451,7 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo* sinfo, const TClass* cl)
 
          stack->fIsObjStarted = kTRUE;
 
-         fJsonrMap.push_back(0); // count object, but do not keep reference
+         fJsonrCnt++;   // count object, but do not keep reference
 
          AppendOutput(",", "\"");
          AppendOutput(stack->fElem->GetName());
@@ -793,7 +804,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
 
    if (stack->fValues.GetLast()>=0) {
       AppendOutput("{ ");
-      fJsonrMap.push_back(0); // count object, but do not keep reference
+      fJsonrCnt++;   // count object, but do not keep reference
       TString sbuf;
       for (Int_t n = 0; n <= stack->fValues.GetLast(); n++) {
          sbuf.Form("\"elem%d\" : ",n);
@@ -1425,7 +1436,7 @@ void TBufferJSON::ReadFastArray(void **startp, const TClass *cl, Int_t n, Bool_t
 
 #define TJSONWriteArrayContent(vname, arrsize)     \
 {                                                  \
-   fValue.Append("[");                             \
+   fValue.Append("["); fJsonrCnt++;                \
    for(Int_t indx=0;indx<arrsize;indx++) {         \
       if (indx>0) fValue.Append(", ");             \
       JsonWriteBasic(vname[indx]);                 \
@@ -1566,7 +1577,7 @@ void TBufferJSON::WriteArrayDouble32(const Double_t  *d, Int_t n, TStreamerEleme
 #define TBufferJSON_WriteFastArray(vname)                                 \
 {                                                                         \
    TJSONPushValue();                                                      \
-   if (n<=0) { fValue.Append("[]"); return; }                             \
+   if (n<=0) { fJsonrCnt++; fValue.Append("[]"); return; }                \
    TStreamerElement* elem = Stack(0)->fElem;                              \
    if ((elem!=0) && (elem->GetType()>TStreamerInfo::kOffsetL) &&          \
        (elem->GetType()<TStreamerInfo::kOffsetP) &&                       \
@@ -1761,6 +1772,7 @@ void  TBufferJSON::WriteFastArray(void  *start,  const TClass *cl, Int_t n, TMem
    if (n>1) {
       JsonStartElement();
       AppendOutput(" [ ");
+      fJsonrCnt++; // count array, but do not add to references
    }
 
    for(Int_t j=0; j<n; j++,obj+=size) {
@@ -1795,6 +1807,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n, Bool_
    if (n>1) {
       JsonStartElement();
       AppendOutput(" [ ");
+      fJsonrCnt++; // count array, but do not add to references
    }
 
    if (!isPreAlloc) {

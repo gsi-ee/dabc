@@ -148,18 +148,21 @@ DABC.JSONR_unref = function(value, dy)
 
    case 'object':
       if (value !== null) {
+         
+         // account all objects and arrays in reference table
+         if (dy.indexOf(value) === -1) {
+            dy.push(value);
+            // console.log("add object " + value._typename + "  arr.length = " + dy.length);
+         }
+         
          if (Object.prototype.toString.apply(value) === '[object Array]') {
             for (i = 0; i < value.length; i++) {
                value[i] = DABC.JSONR_unref(value[i], dy);
             }
          } else {
-            if (dy.indexOf(value) === -1) {
-               dy.push(value);
-               // console.log("add object " + value._typename + "  arr.length = " + dy.length);
-            }
             
             // add methods to all objects, where _typename is specified
-            if ('_typename' in value)
+            if (('_typename' in value) && (typeof JSROOTCore == "object"))
                JSROOTCore.addMethods(value);
 
             ks = Object.keys(value).sort();
