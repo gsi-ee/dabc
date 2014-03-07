@@ -42,13 +42,12 @@ namespace http {
          std::string fRootSys;     ///< location of ROOT (if any)
          std::string fJSRootIOSys; ///< location of JSRootIO (if any)
 
-         bool ProcessGetItem(const std::string& itemname, const std::string& query, std::string& replybuf);
-
          bool ProcessExecute(const std::string& itemname, const std::string& query, std::string& replybuf);
 
          /** \brief Check if file is requested. Can only be from server */
          bool IsFileRequested(const char* uri, std::string& fname);
 
+         /** Method process different URL requests, should be called from server thread */
          bool Process(const std::string& path, const std::string& file, const std::string& query,
                       std::string& content_type, std::string& content_str, dabc::Buffer& content_bin);
 

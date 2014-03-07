@@ -25,6 +25,7 @@
 #include "dabc/ReferencesVector.h"
 #include "dabc/Publisher.h"
 #include "dabc/HierarchyStore.h"
+#include "dabc/Url.h"
 
 
 dabc::WorkerAddon::WorkerAddon(const std::string& name) :
@@ -728,28 +729,66 @@ int dabc::Worker::PreviewCommand(Command cmd)
       // DOUT0("CURRENT ver %u\n%s", (unsigned) h.GetVersion(), h.SaveToXml().c_str());
 
    } else
-   if (cmd.IsName(CmdPublisherGet::CmdName())) {
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
+
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
+      if (h.null()) return cmd_ignore;
+
       std::string item = cmd.GetStr("subitem");
-      unsigned hlimit = cmd.GetUInt("history");
-      unsigned version = cmd.GetUInt("version");
-      if (!h.null()) {
+      std::string fullname = cmd.GetStr("Item");
+      std::string binkind = cmd.GetStr("Kind");
+      std::string query = cmd.GetStr("Query");
 
-         LockGuard lock(h.GetHMutex());
+      DOUT4("Worker %s Process CmdGetBinary %s kind %s", GetName(), item.c_str(), binkind.c_str());
 
-         dabc::Hierarchy sub = h.GetFolder(item);
-         if (sub.null()) {
-            EOUT("Did not found requested item %s in published hierarchy", item.c_str());
-            return cmd_false;
-         }
+      std::string surl = "getitem";
+      if (query.length()>0) { surl.append("?"); surl.append(query); }
 
-         // we record only fields, everything else is ignored - even name of entry is not stored
-         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+      dabc::Url url(surl);
+      if (!url.IsValid()) {
+         EOUT("Cannot decode query url %s", query.c_str());
+         return cmd_ignore;
+      }
 
-         DOUT2("GET worker %s item %s hlimit %u size %u", GetName(), item.c_str(), hlimit, raw.GetTotalSize());
+      unsigned hlimit(0);
+      uint64_t version(0);
 
+      if (url.HasOption("history")) {
+         int hist = url.GetOptionInt("history", 0);
+         if (hist>0) hlimit = (unsigned) hist;
+      }
+      if (url.HasOption("version")) {
+         int v = url.GetOptionInt("version", 0);
+         if (v>0) version = (unsigned) v;
+      }
+
+      LockGuard lock(h.GetHMutex());
+
+      dabc::Hierarchy sub = h.GetFolder(item);
+      if (sub.null()) return cmd_ignore;
+
+      // we record only fields, everything else is ignored - even name of entry is not stored
+      Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+      if (raw.null()) return cmd_ignore;
+
+      if (binkind=="hierarchy") {
          cmd.SetRawData(raw);
          cmd.SetUInt("version", sub.GetVersion());
+         cmd_res = cmd_true;
+      } else
+      if (binkind=="xml") {
+         dabc::Hierarchy res;
+         res.Create("get");
+         res.SetVersion(sub.GetVersion());
+         res.ReadFromBuffer(raw);
+
+         std::string replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n", fullname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
+         replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
+         replybuf += "</Reply>";
+
+         raw = dabc::Buffer::CreateBuffer(replybuf.c_str(), replybuf.length(), false, true);
+         cmd.SetRawData(raw);
+
          cmd_res = cmd_true;
       }
    }

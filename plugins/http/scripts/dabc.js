@@ -571,7 +571,7 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
    
    // top.getAttribute("itemname")  // one could rechek itemname
 
-   console.log("Get history request callback version = " + new_version);
+   // console.log("Get history request callback version = " + new_version);
 
    var modified = (this.version != new_version);
 
@@ -615,7 +615,7 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
             this.xmlhistory = this.xmlhistory.concat(arr);
          }
 
-      console.log("History length = " + this.xmlhistory.length);
+      // console.log("History length = " + this.xmlhistory.length);
    }
    
    if (modified) this.DrawHistoryElement();
@@ -1686,6 +1686,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    
    if (this.json) {
       url += "get.json?compact=3";
+      if (this.version>0) url += "&version=" + this.version;
    } else {
       url += "get.bin";
       if (this.version>0) url += "?version=" + this.version;
@@ -2015,7 +2016,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = true;
+      var use_json = false;
       
       if (!use_json) {
       

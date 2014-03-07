@@ -1859,11 +1859,14 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
          std::string path = cmd.GetStr("Arg0");
          int hlimit = cmd.GetInt("Arg1");
 
-         CmdPublisherGet cmd2;
+         std::string query;
+         if (hlimit>0) query = dabc::format("history=%d",hlimit);
+
+         CmdGetBinary cmd2;
          cmd2.SetStr("Item", path);
-         cmd2.SetUInt("history", hlimit);
-         cmd2.SetTimeout(5.);
-         cmd2.SetReceiver(tgtnode + dabc::Publisher::DfltName());
+         cmd2.SetStr("Kind", "hierarchy");
+         cmd2.SetStr("Query", query);
+         cmd2.SetTimeout(5);
 
          if (GetCommandChannel().Execute(cmd2)!=cmd_true) {
             DOUT0("Fail to get item %s", path.c_str());

@@ -96,48 +96,6 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
 }
 
 
-bool http::Server::ProcessGetItem(const std::string& itemname, const std::string& query, std::string& replybuf)
-{
-   if (itemname.empty()) {
-      EOUT("Item is not specified in get.xml request");
-      return false;
-   }
-
-   std::string surl = "getitem";
-   if (query.length()>0) { surl.append("?"); surl.append(query); }
-
-   dabc::Url url(surl);
-   if (!url.IsValid()) {
-      EOUT("Cannot decode query url %s", query.c_str());
-      return false;
-   }
-
-   unsigned hlimit(0);
-   uint64_t version(0);
-
-   if (url.HasOption("history")) {
-      int hist = url.GetOptionInt("history", 0);
-      if (hist>0) hlimit = (unsigned) hist;
-   }
-   if (url.HasOption("version")) {
-      int v = url.GetOptionInt("version", 0);
-      if (v>0) version = (unsigned) v;
-   }
-
-   // DOUT0("HLIMIT = %u query = %s", hlimit, query);
-
-   dabc::Hierarchy res = dabc::PublisherRef(GetPublisher()).Get(itemname, version, hlimit);
-
-   if (res.null()) return false;
-   // result is only item fields, we need to decorate it with some more attributes
-
-   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n",itemname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
-   replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
-   replybuf += "</Reply>";
-   return true;
-}
-
-
 bool http::Server::ProcessExecute(const std::string& itemname, const std::string& query, std::string& replybuf)
 {
    if (itemname.empty()) {
@@ -187,8 +145,7 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
    if (file == "get.xml") {
       content_type = "text/xml";
       content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "xml", query);
-      if (!content_bin.null()) return true;
-      return ProcessGetItem(path, query, content_str);
+      return !content_bin.null();
    } else
 
    if (file == "get.json") {

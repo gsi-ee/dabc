@@ -666,9 +666,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_true;
 
    } else
-
-   if (cmd.IsName(CmdPublisherGet::CmdName()) ||
-       cmd.IsName(CmdGetBinary::CmdName())) {
+   if (cmd.IsName(CmdGetBinary::CmdName())) {
 
       // if we get command here, we need to find destination for it
 
@@ -712,31 +710,6 @@ int dabc::PublisherRef::HasChilds(const std::string& path)
 }
 
 
-dabc::Hierarchy dabc::PublisherRef::Get(const std::string& fullname, uint64_t version, unsigned hlimit, double tmout)
-{
-   dabc::Hierarchy res;
-
-   if (null()) return res;
-
-   CmdPublisherGet cmd;
-   cmd.SetStr("Item", fullname);
-   cmd.SetUInt("version", version > 0 ? version+1 : 0);
-   cmd.SetUInt("history", hlimit);
-   cmd.SetTimeout(tmout);
-
-   if (Execute(cmd) != cmd_true) return res;
-
-   dabc::Buffer buf = cmd.GetRawData();
-
-   res.Create("get");
-   res.SetVersion(cmd.GetUInt("version"));
-
-   res.ReadFromBuffer(buf);
-
-   return res;
-}
-
-
 dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std::string& query)
 {
    dabc::Command res;
@@ -773,7 +746,23 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const st
 }
 
 
-dabc::Hierarchy dabc::PublisherRef::Get(const std::string& fullname, double tmout)
+dabc::Hierarchy dabc::PublisherRef::GetItem(const std::string& fullname, const std::string& query, double tmout)
 {
-   return Get(fullname, 0, 0, tmout);
+   dabc::Hierarchy res;
+
+   if (null()) return res;
+
+   CmdGetBinary cmd;
+   cmd.SetStr("Item", fullname);
+   cmd.SetStr("Kind", "hierarchy");
+   cmd.SetStr("Query", query);
+   cmd.SetTimeout(tmout);
+
+   if (Execute(cmd) != cmd_true) return res;
+
+   res.Create("get");
+   res.SetVersion(cmd.GetUInt("version"));
+   res.ReadFromBuffer(cmd.GetRawData());
+
+   return res;
 }

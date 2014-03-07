@@ -31,11 +31,6 @@ namespace dabc {
       DABC_COMMAND(CmdPublisher, "CmdPublisher");
    };
 
-   /** Command used to get published values from hierarchy */
-   class CmdPublisherGet : public Command {
-      DABC_COMMAND(CmdPublisherGet, "CmdPublisherGet");
-   };
-
    /** Command used to produce custom binary data for published in hierarchy entries */
    class CmdGetBinary : public Command {
       DABC_COMMAND(CmdGetBinary, "CmdGetBinary");
@@ -209,11 +204,11 @@ namespace dabc {
       /** Returns 0 - no childs, 1 - has childs, -1 - uncknown */
       int HasChilds(const std::string& path);
 
-      Hierarchy Get(const std::string& fullname, double tmout = 5.);
-
-      Hierarchy Get(const std::string& fullname, uint64_t version, unsigned hlimit, double tmout = 5.);
-
+      /** Return different kinds of binary data, depends from kind */
       Buffer GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout = 5.);
+
+      Hierarchy GetItem(const std::string& fullname, const std::string& query = "", double tmout = 5.);
+
 
       /** \brief Execute item is command, providing parameters in query */
       Command ExeCmd(const std::string& fullname, const std::string& query);

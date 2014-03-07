@@ -13,6 +13,8 @@ current functionality of the framework.
    Reduce number of spaces and new lines.   
 4. Support get.json and get.xml in http::Server class.
    For the moment implemented only in ROOT-related classes.  
+5. All hierarchy-relevant requests are handled now by GetBinary command.
+   
 
 
 6.03.2014
