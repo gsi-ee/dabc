@@ -6,6 +6,8 @@ current functionality of the framework.
 1. Implement correct indentation in TBufferJSON. 
    Suppress as many spaces as possible in maximial compression level.
 2. In XML storage correctly translate special symbols like < > & ' "
+3. Correct handling of arrays like TStreamerInfo::kOffsetP,
+   also array of TString should works better now. 
 
 
 7.03.2014

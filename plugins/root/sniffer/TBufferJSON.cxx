@@ -299,6 +299,9 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    if (isarray) isarray = ((TClass*)cl)->GetBaseClassOffset(TArray::Class()) == 0;
    Bool_t iscollect = !isarray && (cl!=0) && (((TClass*)cl)->GetBaseClassOffset(TCollection::Class())==0);
 
+   // special case for TString - it is saved as string in JSON
+   Bool_t iststring = !isarray && !iscollect && (cl == TString::Class()) && (fStack.GetLast()>=0);
+
    if (!isarray) {
       JsonStartElement();
    }
@@ -308,7 +311,8 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
 
    TJSONStackObj* stack = 0;
 
-   if (!isarray) {
+   // for array and string different handling - they not recognized at the end as objects in JSON
+   if (!isarray && !iststring) {
       // add element name which should correspond to the object
 
       std::map<const void*,unsigned>::const_iterator iter = fJsonrMap.find(obj);
@@ -338,7 +342,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
    if (gDebug>3)
       Info("JsonWriteObject","Starting object %p write for class: %s", obj, cl->GetName());
 
-   if (stack==0) stack = PushStack(isarray ? 0 : 2);
+   if (stack==0) stack = PushStack((isarray || iststring)  ? 0 : 2);
    stack->fIsArray = isarray;
 
    if (iscollect)
@@ -350,18 +354,24 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl, const char*
       Info("JsonWriteObject","Done object %p write for class: %s", obj, cl->GetName());
 
    if (isarray) {
-      if (stack->fValues.GetLast()==0)
-         stack->fValues.Delete();
-      else
+      if (stack->fValues.GetLast()!=0)
          Error("JsonWriteObject","Problem when writing array");
+      stack->fValues.Delete();
+   } else
+   if (iststring) {
+      if (stack->fValues.GetLast()>1)
+         Error("JsonWriteObject","Problem when writing TString");
+      stack->fValues.Delete();
+      AppendOutput(fValue.Data());
+      fValue.Clear();
    } else {
       if (stack->fValues.GetLast()>=0)
-         Error("JsonWriteObject", "Non-empty values list when writing object size %d", stack->fValues.GetLast()+1);
+         Error("JsonWriteObject", "Non-empty values %d for class %s", stack->fValues.GetLast()+1, cl->GetName());
    }
 
    PopStack();
 
-   if (!isarray && !iscollect) {
+   if (!isarray && !iscollect && !iststring) {
       AppendOutput(0,"}");
    }
 }
@@ -754,6 +764,21 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj* stack, const TStreamerEle
          Info("PerformPostProcessing", "Elem %s reformat string value = '%s'", elem->GetName(), fValue.Data());
 
       stack->fValues.Delete();
+   } else
+   if ((elem->GetType() > TStreamerInfo::kOffsetP) && (elem->GetType() < TStreamerInfo::kOffsetP + 20)) {
+      // basic array with [fN] comment
+
+      if ((stack->fValues.GetLast()<0) && (fValue == "0")) {
+         fValue = "[]";
+      } else
+      if ((stack->fValues.GetLast()==0) && (strcmp(stack->fValues.Last()->GetName(),"1")==0)) {
+         stack->fValues.Delete();
+      } else {
+         Error("PerformPostProcessing", "Wrong values for kOffsetP type %d name %s", elem->GetType(), elem->GetName());
+         stack->fValues.Delete();
+         fValue = "[]";
+      }
+
    } else
    if (istobject) {
       if (stack->fValues.GetLast()!=0) {
