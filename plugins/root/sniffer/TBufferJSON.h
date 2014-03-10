@@ -39,6 +39,8 @@ public:
    TBufferJSON();
    virtual ~TBufferJSON();
 
+   void SetCompact(int level);
+
    static TString   ConvertToJSON(const TObject* obj, Int_t compact = 0);
    static TString   ConvertToJSON(const void* obj, const TClass* cl, Int_t compact = 0);
    
@@ -55,6 +57,7 @@ public:
 
    virtual void      SkipVersion(const TClass *cl = 0);
    virtual Version_t ReadVersion(UInt_t *start = 0, UInt_t *bcnt = 0, const TClass *cl = 0);  // SL
+   virtual Version_t ReadVersionNoCheckSum(UInt_t*, UInt_t*) { return 0; }
    virtual UInt_t    WriteVersion(const TClass *cl, Bool_t useBcnt = kFALSE);  // SL
 
    virtual void*    ReadObjectAny(const TClass* clCast);
@@ -284,7 +287,7 @@ protected:
 
    TString          JsonWriteAny(const void* obj, const TClass* cl);
 
-   TJSONStackObj*   PushStack(Bool_t simple = kFALSE);
+   TJSONStackObj*   PushStack(Int_t inclevel = 0);
    TJSONStackObj*   PopStack();
    TJSONStackObj*   Stack(Int_t depth = 0);
 
@@ -313,7 +316,7 @@ protected:
 
    void              JsonStartElement();
 
-   void              AppendOutput(const char* line0 = 0, const char* line1 = 0);
+   void              AppendOutput(const char* line0, const char* line1 = 0);
 
    TString                   fOutBuffer;    //!  output buffer for json code
    TString                   fValue;        //!  buffer for current value
@@ -322,7 +325,8 @@ protected:
    TObjArray                 fStack;        //!  stack of streamer infos
    Bool_t                    fExpectedChain; //!   flag to resolve situation when several elements of same basic type stored as FastArray
    Int_t                     fCompact;       //!  0 - no any compression, 1 - no spaces in the begin, 2 - no new lines, 3 - no spaces at all
-
+   TString                   fSemicolon;     //!  depending from compression level, " : " or ":"
+   TString                   fArraySepar;    //!  depending from compression level, ", " or ","
 
    static const char* fgFloatFmt;          //!  printf argument for floats and doubles, either "%f" or "%e" or "%10f" and so on
 

@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+10.03.2014
+1. Implement correct indentation in TBufferJSON. 
+   Suppress as many spaces as possible in maximial compression level.
+
+
 7.03.2014
 1. Represent all TCollection classes as JSON array. 
    Class information and optional collection name are lost, 
@@ -14,7 +19,6 @@ current functionality of the framework.
 4. Support get.json and get.xml in http::Server class.
    For the moment implemented only in ROOT-related classes.  
 5. All hierarchy-relevant requests are handled now by GetBinary command.
-   
 
 
 6.03.2014

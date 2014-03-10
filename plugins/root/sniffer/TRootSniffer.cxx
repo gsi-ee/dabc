@@ -16,7 +16,6 @@
 #include "TBufferXML.h"
 #include "TROOT.h"
 #include "TTimer.h"
-#include "Property.h"
 #include "TFolder.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -76,7 +75,7 @@ const char* dabc_prop_more = "dabc:more";
 const char* dabc_prop_realname = "dabc:realname"; // real object name
 const char* dabc_prop_itemname = "dabc:itemname"; // item name in dabc hierarchy
 
-Long_t gExcludeProperty = G__BIT_ISSTATIC | G__BIT_ISENUM | G__BIT_ISUNION;
+Long_t gExcludeProperty = kIsStatic | kIsEnum | kIsUnion;
 
 // ============================================================================
 
