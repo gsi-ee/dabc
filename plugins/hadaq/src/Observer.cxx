@@ -33,7 +33,8 @@ hadaq::Observer::Observer(const std::string& name) :
    dabc::Worker(MakePair(name)),
    fEntryMutex()
 {
-   fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
+   fNodeId = Cfg("NodeId").AsInt(-1);
+   if (fNodeId<0) fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
    // we use here mask for evtbuild and netmem prefixes only
    std::string maskn = dabc::format("%s_*",hadaq::NetmemPrefix);
