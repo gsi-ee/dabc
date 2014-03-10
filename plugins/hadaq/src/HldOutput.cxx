@@ -160,7 +160,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    if (fEpicsSlave) {
       // check if EPICS master has assigned a new run for us:
       uint32_t nextrunid = fRunidPar.Value().AsUInt();
-      if (nextrunid > fRunNumber) {
+      if (nextrunid != fRunNumber) {
          fRunNumber = nextrunid;
          startnewfile = true;
          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
