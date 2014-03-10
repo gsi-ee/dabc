@@ -1041,15 +1041,15 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
          DABC.mgr.RemoveItem(this);
          return;
       } 
-
+      
       var chld;
       while ((chld = top.firstChild)!=null) {
          top.removeChild(chld);
          mainxmlnode.appendChild(chld);
       }
-      
+
       if (mainxmlnode.firstChild != null) {
-      
+
          this.main.maxnodeid = this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
 
          var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
@@ -1059,7 +1059,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
          // open node which was filled 
          DABC.dabc_tree.o(this.maxnodeid);
       }
-
+      
       DABC.mgr.RemoveItem(this);
    }
 }

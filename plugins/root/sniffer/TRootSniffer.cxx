@@ -131,7 +131,7 @@ void TRootSnifferScanRec::BeforeNextChild()
 void TRootSnifferScanRec::MakeItemName(const char* objname, TString& _itemname)
 {
    // constructs item name from object name
-   // if special symbols like '/', '#', ':', '&', '?" are used in object name
+   // if special symbols like '/', '#', ':', '&', '?',   are used in object name
    // they will be replaced with '_'.
    // To avoid item name duplication, additional id number can be appended
 
@@ -170,7 +170,7 @@ void TRootSnifferScanRec::CreateNode(const char* _node_name, const char* _obj_na
    TString real_item_name;
 
    // this is for XML
-   if (started_node.First("[]&<>") != kNPOS) {
+   if (started_node.First("[]&<>-\"\' ") != kNPOS) {
       real_item_name = started_node;
       MakeItemName("extra_item", started_node); // we generate abstract item just to be safe with syntax
    }

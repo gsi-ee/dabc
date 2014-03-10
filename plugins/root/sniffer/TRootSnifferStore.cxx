@@ -53,7 +53,25 @@ void TRootSnifferStoreXml::SetField(Int_t, const char* field, const char* value,
 {
    // set field (xml attribute) in current node
 
-   buf->Append(TString::Format(" %s=\"%s\"", field, value));
+   if (strpbrk(value,"<>&\'\"")==0) {
+      buf->Append(TString::Format(" %s=\"%s\"", field, value));
+   } else {
+      buf->Append(TString::Format(" %s=\"", field));
+      const char* v = value;
+      while (*v != 0) {
+         switch (*v) {
+            case '<' : buf->Append("&lt;"); break;
+            case '>' : buf->Append("&gt;"); break;
+            case '&' : buf->Append("&amp;"); break;
+            case '\'' : buf->Append("&ap;"); break;
+            case '\"' : buf->Append("&quot;"); break;
+            default: buf->Append(*v); break;
+         }
+         v++;
+      }
+
+      buf->Append("\"");
+   }
 }
 
 void TRootSnifferStoreXml::BeforeNextChild(Int_t, Int_t nchld, Int_t)
