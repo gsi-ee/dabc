@@ -14,6 +14,8 @@ current functionality of the framework.
 6. With TBufferJSON process many complex canvas, 
    can3.root example works even better with TBufferJSON - seems to
    be JSRootIO has some hidden problem.
+7. Remove object clonning in JSRootIO - one can use fOptions correctly.
+8. Fix problems with Legend drawing.
 
 
 10.03.2014

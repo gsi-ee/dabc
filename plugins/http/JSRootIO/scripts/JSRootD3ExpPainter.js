@@ -6449,9 +6449,12 @@ var gStyle = {
 
       for (var i=0; i<nlines; ++i) {
          var leg = pave.fPrimitives.arr[i];
-         var lopt = pave.fPrimitives.opt[i].toLowerCase();
+         var lopt = leg['fOption'].toLowerCase();
+            
+         //pave.fPrimitives.opt[i];
          
-         if (((lopt==null) || (lopt=="")) && ('fOption' in leg)) lopt = leg['fOption']; 
+         //if (((lopt==null) || (lopt=="")) && ('fOption' in leg)) lopt = leg['fOption']; 
+         //lopt = lopt.toLowerCase();
          
          var string = leg['fLabel'];
 
@@ -6475,15 +6478,12 @@ var gStyle = {
 
          var mo = leg['fObject'];
          
-         // var mo = gFile.GetMappedObject(leg['fObject']);
-
-//         if (mo!=null)
-//            console.log("Draw legend " + string + " lopt " + lopt + "  obj " + (typeof mo) + " value = " + mo);
+         if (mo!=null)
+            console.log("Draw legend " + string + " lopt " + lopt + "  obj " + mo['_typename']);
          
-         if (typeof mo != 'object') mo = null;
+         if ((typeof mo) != 'object') mo = null;
 
          if ((mo!=null) && ('fLineColor' in mo)) {
-//            console.log("Take line color from object");
             line_color = root_colors[mo['fLineColor']];
             line_width = mo['fLineWidth'];
             line_style = root_line_styles[mo['fLineStyle']];
