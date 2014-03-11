@@ -22,8 +22,8 @@
 
 void hadaq::RawEvent::Dump()
 {
-   printf("*** Event #0x%06x fullid=0x%04x size %u *** \n",
-         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetSize());
+   printf("*** Event #0x%06x fullid=0x%04x runid=0x%08x size %u *** \n",
+         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetRunNr(), (unsigned) GetSize());
 }
 
 void hadaq::RawEvent::InitHeader(uint32_t id)

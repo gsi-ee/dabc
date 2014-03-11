@@ -192,7 +192,8 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
 
        <DoShmControl value="true"/>  
-       <FlushTimeout value="2.0"/>   
+       <FlushTimeout value="2.0"/> 
+       <RunIdFromEPICS value="true"/>  
 
        <!-- take event sequence number from vulom/roc sync message at cts -->
        <UseSyncSequenceNumber value="false"/>

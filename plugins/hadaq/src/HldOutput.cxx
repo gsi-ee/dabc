@@ -90,6 +90,7 @@ bool hadaq::HldOutput::Write_Init()
       }
 
       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
+      
    }
 
    return StartNewFile();
@@ -128,7 +129,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-
+   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
    return true;
 }
 
@@ -156,31 +157,119 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Error;
    }
 
+   unsigned cursor=0;
+   unsigned startsegment=0;
    bool startnewfile = false;
    if (fEpicsSlave) {
-      // check if EPICS master has assigned a new run for us:
-      uint32_t nextrunid = fRunidPar.Value().AsUInt();
-      if (nextrunid != fRunNumber) {
-         fRunNumber = nextrunid;
-         startnewfile = true;
-         ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
-      } else {
+     
+// #ifdef OLDMODE     
+//       // check if EPICS master has assigned a new run for us:
+//       uint32_t nextrunid = fRunidPar.Value().AsUInt();
+//       if (nextrunid != fRunNumber) {
+//          fRunNumber = nextrunid;
+//          startnewfile = true;
+//          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
+// 	 DOUT0("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber);
+//       } else {
+// 
+//          if ((nextrunid == 0) && (fRunNumber==0)) {
+//             // ignore buffer while run number is not yet known
+//             return dabc::do_Ok;
+//          }
+//       }
+// #else
 
-         if ((nextrunid == 0) && (fRunNumber==0)) {
-            // ignore buffer while run number is not yet known
-            return dabc::do_Ok;
-         }
+
+
+if(fRunNumber==0)
+  {
+  // runid might not be available on initializeation. 
+  // check here if it was already delivered from epics
+  fRunNumber = fRunidPar.Value().AsUInt();
+   if (fRunNumber == 0) {
+         ShowInfo(0, "EPICS slave mode: still have no runid, skip buffer!");
+	 DOUT0("EPICS slave mode: still have no runid, skip buffer!");
+        return dabc::do_Skip;
       }
+   if (!StartNewFile()) {
+         EOUT("Cannot start new file for writing");
+         return dabc::do_Error;    
 
-      if (!fBytesWrittenPar.null())
-         fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+  }
+  }
 
+// scan event headers in buffer for run id change/consistency
+  hadaq::ReadIterator bufiter(buf);
+   uint32_t nextrunid=0;
+   unsigned numevents=0;
+   uint32_t payload=0;
+  
+   while (bufiter.NextEvent())
+    {
+	 numevents++;
+	 payload+=bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
+	 nextrunid=bufiter.evnt()->GetRunNr();
+	 if (nextrunid == 0) {
+	      // ignore entire buffer while run number is not yet known
+	      return dabc::do_Ok;
+	  }	 
+	 else if (nextrunid && nextrunid != fRunNumber) {
+	    ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))", 
+				    nextrunid, nextrunid, fRunNumber,fRunNumber));
+	     DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))", 
+				    nextrunid, nextrunid, fRunNumber,fRunNumber);
+	    fRunNumber = nextrunid;
+	    payload-=bufiter.evnt()->GetPaddedSize(); // the first event with new runid belongs to next file
+	    startnewfile = true;
+	    break;
+	} 
+
+      
+    } // while bufiter
+  
+  if(startnewfile) {
+   // first flush rest of previous run to old file:
+     for (unsigned n=0;n<buf.NumSegments();n++)
+     {
+	if(buf.SegmentSize(n)<payload){	  
+	    if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))
+	      return dabc::do_Error;
+	  payload-=buf.SegmentSize(n);
+	  
+	}
+	else
+	  {
+	        ShowInfo(0, dabc::format("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
+				    payload, numevents, n));
+		 DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
+				    payload, numevents, n);
+	    if (!fFile.WriteBuffer(buf.SegmentPtr(n), payload))
+	      return dabc::do_Error;
+	    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
+	    cursor=payload;
+	    startsegment=n;	    
+	  }
+	  
+       
+    }// for
+    
+  }
+  
+  
+      
+//#endif // oldmode
+
+       if (!fBytesWrittenPar.null())
+          fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+
+      
+      
    } else {
       if (CheckBufferForNextFile(buf.GetTotalSize())) {
          fRunNumber = 0;
          startnewfile = true;
       }
-   }
+   } // epicsslave
 
    if(startnewfile) {
       if (!StartNewFile()) {
@@ -191,10 +280,26 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if (!fFile.isWriting()) return dabc::do_Error;
 
-   for (unsigned n=0;n<buf.NumSegments();n++)
-      if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))
+   for (unsigned n=startsegment;n<buf.NumSegments();n++)
+   {
+      if(n>startsegment) cursor=0;
+      if(cursor>=buf.SegmentSize(n))
+	{
+	  DOUT0("Cursor %d  bigger than segment size %d, do not write to segment %d", cursor,  buf.SegmentSize(n),n);     
+	  continue;
+	}
+      if (!fFile.WriteBuffer((char*) buf.SegmentPtr(n) + cursor, buf.SegmentSize(n)-cursor))
          return dabc::do_Error;
-
+      
+    if(startnewfile)
+      {
+	DOUT0("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  buf.SegmentSize(n)-cursor);
+      
+      }
+     
+  }
+  
+   // TODO: in case of partial written buffer, account sizes to correct file 
    AccountBuffer(buf.GetTotalSize(), hadaq::ReadIterator::NumEvents(buf));
 
    return dabc::do_Ok;

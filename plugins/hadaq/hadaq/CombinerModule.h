@@ -145,6 +145,7 @@ namespace hadaq {
          bool fUpdateCountersFlag;
 
          bool fWithObserver;
+	 bool fEpicsSlave;
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
          bool fPrintSync; // if true, print syncs with DOUT1
@@ -178,6 +179,9 @@ namespace hadaq {
 
          /* run id from timeofday for eventbuilding*/
          uint32_t           fRunNumber;
+	 
+	  /* most recent run id from epics, for multi eventbuilder mode*/
+         uint32_t           fEpicsRunNumber;
 
 
          bool BuildEvent();

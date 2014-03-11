@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+
+<!-- 
+This is example file how HADAQ event building should be configured in DABC.
+Event building process implemented in Combiner module of hadaq::CombinerModule class.
+Module can have several inputs, each with separate port number for receiving data 
+from TRB boards. In each input port configuration only port number has meaning.
+First output of combiner module reserved for the connection to 
+the optional MBS transmitter module. Second output can be use to store data in hld files. 
+To enable storage, one should specify two output ports and correctly configure Output1 of combiner module.
+
+Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
+To enable transmitter, one should specify auto="true" in configuration which says DABC
+to automatically create module when starting application. 
+First output of the module reserved for stream server, second output can be used to
+store data in lmd files. 
+
+By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
+put <HttpServer name="http" auto="false">. One could change http port number. 
+When dabc runs, in any browser address like
+http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
+  - ratemeters from EventBuilder and Transmitter
+  - log fields 
+  - commands to start/stop hld and lmd files from browser
+
+It is also possible to attach go4 analysis to that server, that also histograms
+from online analysis will appear. For that one should specify 
+"-dabc your_dabc_host_name" argument when starting analysis. Like:
+   [shell] go4analysis -stream dabc_node -dabc dabc_node
+When launching analysis from the gui, extra arguments "-dabc your_dabc_host_name" 
+should be specified.
+
+There is well-known problem with using VNC viewer and mbs stream server. 
+Both by default are using port 6002. One could change port number for stream server.
+Just set other number in configuration of output port of transmitter module, for instance
+       <OutputPort name="Output0" url="mbs://Stream:6789"/>
+In this case one should specify that port number when starting go4 analysis like:
+   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
+When starting analysis from the go4 gui, one should specify stream server with port number too.
+
+Variables for hades multiple eventbuilder mode:
+EBNUM   - number of event builder
+STREAMS - number of input streams
+UDP00...UDP34- portnumbers for input streams
+PREFIX  - run prefix for filename convention (be,te,co,..)
+
+
+
+-->
+
+<dabc version="2">
+  <Context host="localhost" name="EventBuilder${EBNUM}" port="770${EBNUM}" >
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <logfile value="EB_${EBNUM}.log"/>
+      <debuglevel value="2"/>
+      <loglimit value="1000000"/>
+<!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
+      <control value="true"/>
+    </Run>
+    
+    <HttpServer name="http">
+       <port value="811${EBNUM}"/>
+    </HttpServer>
+
+     <!-- shmem control config -->
+    <Observer name="shm">
+     <DoShmControl value="true"/>
+     <NodeId value="${EBNUM}"/>     
+    </Observer>  
+   
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="2000"/>
+    </MemoryPool>
+
+    <Module name="Combiner" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/oputputs of module -->
+       <NumInputs value="${STREAMS}"/>
+       <NumOutputs value="2"/>
+
+       <InputPort name="Input0" url="hadaq://host:${UDP00}"/>
+       <InputPort name="Input1" url="hadaq://host:${UDP01}"/>
+       <InputPort name="Input2" url="hadaq://host:${UDP02}"/>
+       <InputPort name="Input3" url="hadaq://host:${UDP03}"/>
+       <InputPort name="Input4" url="hadaq://host:${UDP04}"/>       
+       <InputPort name="Input5" url="hadaq://host:${UDP05}"/>
+       <InputPort name="Input6" url="hadaq://host:${UDP06}"/>
+       <InputPort name="Input7" url="hadaq://host:${UDP07}"/>
+       <InputPort name="Input8" url="hadaq://host:${UDP08}"/>
+       <InputPort name="Input9" url="hadaq://host:${UDP09}"/>       
+       <InputPort name="Input10" url="hadaq://host:${UDP10}"/>
+       <InputPort name="Input11" url="hadaq://host:${UDP11}"/>
+       <InputPort name="Input12" url="hadaq://host:${UDP12}"/>
+       <InputPort name="Input13" url="hadaq://host:${UDP13}"/>
+       <InputPort name="Input14" url="hadaq://host:${UDP14}"/>       
+       <InputPort name="Input15" url="hadaq://host:${UDP15}"/>
+       <InputPort name="Input16" url="hadaq://host:${UDP16}"/>
+       <InputPort name="Input17" url="hadaq://host:${UDP17}"/>
+       <InputPort name="Input18" url="hadaq://host:${UDP18}"/>
+       <InputPort name="Input19" url="hadaq://host:${UDP19}"/>
+       <InputPort name="Input20" url="hadaq://host:${UDP20}"/>
+       <InputPort name="Input21" url="hadaq://host:${UDP21}"/>
+       <InputPort name="Input22" url="hadaq://host:${UDP22}"/>
+       <InputPort name="Input23" url="hadaq://host:${UDP23}"/>
+       <InputPort name="Input24" url="hadaq://host:${UDP24}"/>
+       <InputPort name="Input25" url="hadaq://host:${UDP25}"/>
+       <InputPort name="Input26" url="hadaq://host:${UDP26}"/>
+       <InputPort name="Input27" url="hadaq://host:${UDP27}"/>
+       <InputPort name="Input28" url="hadaq://host:${UDP28}"/>
+       <InputPort name="Input29" url="hadaq://host:${UDP29}"/>
+       <InputPort name="Input30" url="hadaq://host:${UDP30}"/>
+       <InputPort name="Input31" url="hadaq://host:${UDP31}"/>
+       <InputPort name="Input32" url="hadaq://host:${UDP32}"/>
+       <InputPort name="Input33" url="hadaq://host:${UDP33}"/>
+       <InputPort name="Input34" url="hadaq://host:${UDP34}"/>
+                    
+
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
+       <OutputPort name="Output1" url="hld:///home/joern/data/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}" queue="500"/>
+       <OutputPort name="Output2" url="hld:///adamczew/test${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio" queue="500"/>
+
+      
+       
+       
+        
+
+       <DoShmControl value="true"/>  
+       <RunIdFromEPICS value="true"/>  
+       <FlushTimeout value="0.5"/>   
+
+       <!-- take event sequence number from vulom/roc sync message at cts -->
+       <UseSyncSequenceNumber value="false"/>
+       <SyncSubeventId value="0x8000"/>
+       <SyncTriggerMask value="0x01"/>
+       <PrintSync value="false"/>
+       <FlushBySync value="false"/>
+
+       <!-- rate meters configuration -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+       
+       
+       
+       
+     </Module>
+
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+
+       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:610${EBNUM}"/>
+       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
+
+       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
+       <SubeventFullId value="0x000001F"/>
+
+       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
+       <DoMergeSyncedEvents value="true"/>
+
+       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
+     </Module>
+
+  </Context>
+
+  <!--Context name="*">
+      <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/>
+  </Context-->
+  
+</dabc>

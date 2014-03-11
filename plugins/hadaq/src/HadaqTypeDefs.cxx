@@ -36,7 +36,8 @@ const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 //const char* hadaq::xmlServerLimit       = "HadaqServerLimit";
 
 const char* hadaq::xmlObserverEnabled      = "DoShmControl";
-const char* hadaq::xmlExternalRunid       = "HadaqEPICSControl";
+
+const char* hadaq::xmlExternalRunid       = "RunIdFromEPICS";
 const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
 const char* hadaq::xmlMbsMergeSyncMode    = "DoMergeSyncedEvents";
 
