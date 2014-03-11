@@ -212,22 +212,8 @@ function displayMappedObject(obj_name, list_name, offset) {
    obj_index++;
 };
 
-function AssertPrerequisites(andThen, exp_painter) {
+function AssertPrerequisites(andThen) {
 
-   function AssertPainter() {
-      if ((typeof JSROOTPainter == "undefined") && (exp_painter!=null)) {
-         // exp_painter = true;
-         if (exp_painter) {
-            loadScript(source_dir+'scripts/JSRootD3ExpPainter.js', andThen);
-         } else {
-            loadScript(source_dir+'scripts/JSRootD3Painter.js', andThen);
-         }
-      } else {
-         if (andThen!=null) andThen();
-      }
-   }
-   
-   
    if (typeof JSROOTIO == "undefined") {
       // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
       loadScript(source_dir+'scripts/jquery.min.js', function() {
@@ -240,8 +226,7 @@ function AssertPrerequisites(andThen, exp_painter) {
       loadScript(source_dir+'scripts/three.min.js', function() {
       loadScript(source_dir+'fonts/helvetiker_regular.typeface.js', function() {
       loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
-
-         AssertPainter();
+      loadScript(source_dir+'scripts/JSRootD3ExpPainter.js', function() {
 
          // if report element exists - this is standard ROOT layout
          if (document.getElementById("report")) {
@@ -250,9 +235,11 @@ function AssertPrerequisites(andThen, exp_painter) {
             $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
          }
          
-      }) }) }) }) }) }) }) }) }) });
+         andThen();
+         
+      }) }) }) }) }) }) }) }) }) }) });
    } else {
-      AssertPainter();
+      andThen();
    }
 };
 
@@ -276,16 +263,7 @@ function ReadFile() {
       }
    }
 
-   var chkbox = document.getElementById("experimental_painter");
-   var exp_painter = false;
-   if ((chkbox!=null) && chkbox.checked) exp_painter = true;
-   
    AssertPrerequisites(function() {
-      
-      if (chkbox!=null) {
-         chkbox.disabled = true;
-         chkbox.checked = exp_painter; 
-      }
 
       var url = $("#urlToLoad").val();
       if (url == "" || url == " ") return;
@@ -295,7 +273,7 @@ function ReadFile() {
          delete gFile;
       }
       gFile = new JSROOTIO.RootFile(url);
-   }, exp_painter);
+   });
 };
 
 function ResetUI() {
@@ -333,6 +311,7 @@ function BuildSimpleGUI() {
    }
    var arrFiles = files.split(';');
 
+   
    var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
 
       guiCode += "<div id='main' class='column'>\n"
@@ -351,16 +330,13 @@ function BuildSimpleGUI() {
       guiCode += '</select>'
       +'</div>'
       +'<input style="padding:2px; margin-left:10px; margin-top:5px;"'
-      +' onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
+      +'       onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
       +'<input style="padding:2px; margin-left:10px;"'
-      +'onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
-      +'<input style="padding:2px; margin-left:10px;" type="checkbox" name="painter_selection" checked="true" id="experimental_painter"/> experimental painter<br/>'
+      +'       onclick="ResetUI()" type="button" title="Clear All" value="Reset"/>'
       +'</form>'
-
       +'<br/>'
       +'<div id="status"></div>'
       +'</div>'
-
       +'<div id="reportHolder" class="column">'
       +'<div id="dialog"> </div>'
       +'<div id="report"> </div>'

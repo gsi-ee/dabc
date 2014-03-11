@@ -2,6 +2,20 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+11.03.2014
+1. Change in JS form of TCollection representaion. Now it is
+   always object with '_typename', 'name', 'arr' fields.
+   For TList also 'opt' field is created.
+2. Due to this change remove old painter - it is too much changes.
+   Remove possibility to select painters.   
+3. Again exclude indexing of arrays from JSONR counter
+4. Introduce in JS code CheckByteCount, fails for hsimple.C file
+5. Fix problem with TF1 drawing - was incorrectly computed X coordinates
+6. With TBufferJSON process many complex canvas, 
+   can3.root example works even better with TBufferJSON - seems to
+   be JSRootIO has some hidden problem.
+
+
 10.03.2014
 1. Implement correct indentation in TBufferJSON. 
    Suppress as many spaces as possible in maximial compression level.

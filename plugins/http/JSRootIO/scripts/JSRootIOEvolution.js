@@ -17,6 +17,13 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
     kSTL = 300, kSTLstring = 365,
     kStreamer = 500, kStreamLoop = 501;
 
+var kMapOffset = 2;
+var kByteCountMask = 0x40000000;
+var kNewClassTag = 0xFFFFFFFF;
+var kClassMask = 0x80000000;
+
+
+
 (function(){
 
    if (typeof JSROOTIO == "object"){
@@ -32,6 +39,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
    JSROOTIO = {};
 
    JSROOTIO.version = "2.1 2013/07/03";
+   
+   JSROOTIO.debug = false;
 
    JSROOTIO.BIT = function(bits, index) {
       var mask = 1 << index;
@@ -312,11 +321,33 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
    };
 
    JSROOTIO.ReadObjectAny = function(str, o, previous) {
-      var obj = {};
       var class_name = previous;
       var startpos = o;
       var clRef = gFile.fStreamerInfo.ReadClass(str, o);
       o = clRef['off'];
+      
+      // class identified as object and should be handled so
+      if ('objtag' in clRef) {
+         var obj = gFile.GetMappedObject(clRef['objtag']);
+         if (obj!=null) {
+            class_name = obj['_typename'];
+            class_name = class_name.replace('JSROOTIO.', '');
+            
+            console.log("Found object with TAG " + clRef['objtag'] + "  class " + class_name);
+         }
+
+         return {
+            'cln' : class_name,
+            'off' : o,
+            'obj' : obj
+         };
+      }
+
+      var obj = {};
+
+      
+      // if (JSROOTIO.debug) console.log("Read class before o=" + startpos + "  after = " + o);
+      
       // use clRef['name'] and use previous name if == -1
       if (clRef['name'] && clRef['name'] != -1) {
          class_name = clRef['name'];
@@ -335,7 +366,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          }
          else if (class_name == 'TObjArray') {
             var array = JSROOTIO.ReadTObjArray(str, o);
-            obj = array['array'];
+            obj = array;
             o = array['off'];
          }
          else if (JSROOTIO.GetStreamer(class_name)) {
@@ -343,17 +374,21 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          }
          obj['_typename'] = 'JSROOTIO.' + class_name;
          JSROOTCore.addMethods(obj);
-         if (clRef['tag'])
-            gFile.MapObject(obj, clRef['tag']);
-         gFile.MapObject(obj, (gFile.fTagOffset + startpos + 2) | 0x01);
+         //if (clRef['tag']) gFile.MapObject(obj, clRef['tag']);
+         
+         gFile.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
       }
       else if (clRef['name'] === 0 && clRef['tag'] != 0) {
          // already seen (and read) object...
+         alert("NEVER COME HERE");
          var ro = gFile.GetMappedObject(clRef['tag']+4);
          if (ro) {
-            obj = JSROOTCore.clone(ro);
+            obj = ro; // use direct object instead of JSROOTCore.clone(ro);
             class_name = obj['_typename'];
             class_name = class_name.replace('JSROOTIO.', '');
+            
+            console.log("Found object with TAG " + (clRef['tag']+4) + "  class " + class_name);
+            
          }
       }
       else {
@@ -372,8 +407,10 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
    JSROOTIO.ReadTList = function(str, o) {
       // stream all objects in the list from the I/O buffer
       var list = {};
+      list['_typename'] = "JSROOTIO.TList";
       list['name'] = "";
-      list['array'] = new Array();
+      list['arr'] = new Array;
+      list['opt'] = new Array;
       var ver = JSROOTIO.ReadVersion(str, o);
       o = ver['off'];
       if (ver['val'] > 3) {
@@ -383,32 +420,49 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          list['name'] = so['str'];
          var nobjects = JSROOTIO.ntou4(str, o); o += 4;
          var class_name = '';
-         var idx = 0;
          for (var i = 0; i < nobjects; ++i) {
+            
+            if (JSROOTIO.debug) 
+               console.log("TList reading object at position = " + o);
+            
             obj = this.ReadObjectAny(str, o, class_name);
             o = obj['off'];
+            
+            if (JSROOTIO.debug)
+               console.log("TList did reading object position = " + o);
+
             if (obj['cln'] && obj['cln'] != '' && obj['cln'] != -1) {
                class_name = obj['cln'];
-               list['array'][idx] = obj['obj'];
-               ++idx;
+               list['arr'].push(obj['obj']);
+            } else {
+               list['arr'].push(null);
             }
 
-            var nch = str.charCodeAt(o) & 0xff; o++;
-            if (ver['val'] > 4 && nch == 255)  {
-               nbig= JSROOTIO.ntou4(str, o); o += 4;
-            } else {
-               nbig = nch;
+            var nbig = str.charCodeAt(o) & 0xff; o++;
+            if ((ver['val'] > 4) && (nbig == 255))  {
+               nbig = JSROOTIO.ntou4(str, o); o += 4;
             }
+            
+            var oo = o;
+            
             if (nbig > 0) {
                var readOption = JSROOTIO.ReadString(str, o, nbig);
-               // add the drawing option somewhere...
-               //obj['obj']['_options'] = readOption['str'];
-               obj['obj']['fOption'] = readOption['str'];
                o += nbig;
+               // add the drawing option somewhere...
+               list['opt'].push(readOption['str']);
+               if (JSROOTIO.debug) console.log("read option " + readOption['str']);
+            } else {
+               list['opt'].push("");
+               if (JSROOTIO.debug) console.log("read empty option");
             }
+            
+            if (JSROOTIO.debug) 
+               console.log("reading string len = " + nbig + " version " + ver['val'] + " oo=" + oo + " o=" + o);
+            
          }
       }
-      list['off'] = o;
+
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTList");
       return list;
    };
 
@@ -416,7 +470,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       // read the content of list from the I/O buffer
       var list = {};
       list['name'] = "";
-      list['array'] = new Array();
+      list['arr'] = new Array();
+      list['opt'] = new Array();
       var ver = JSROOTIO.ReadVersion(str, o);
       o = ver['off'];
       if (ver['val'] > 3) {
@@ -426,7 +481,6 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          list['name'] = so['str'];
          var nobjects = JSROOTIO.ntou4(str, o); o += 4;
          var class_name = '';
-         var idx = 0;
          for (var i = 0; i < nobjects; ++i) {
             var clRef = gFile.fStreamerInfo.ReadClass(str, o);
             if (clRef['name'] && clRef['name'] != -1) {
@@ -453,28 +507,31 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             clRef['_typename'] = clRef['name'];
             clRef['_listname'] = list_name;
             o +=  clRef['cnt']; o += 4;
-            list['array'][idx] = clRef;
-            ++idx;
+            list['arr'].push(clRef);
             var nch = str.charCodeAt(o) & 0xff; o++;
             if (ver['val'] > 4 && nch == 255)  {
-               nbig= JSROOTIO.ntou4(str, o); o += 4;
+               nbig = JSROOTIO.ntou4(str, o); o += 4;
             } else {
                nbig = nch;
             }
             if (nbig > 0) {
                var readOption = JSROOTIO.ReadString(str, o, nbig);
+               list['opt'].push(readOption['str']);
                o += nbig;
+            } else {
+               list['opt'].push("");
             }
          }
       }
-      list['off'] = o;
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTListContent");
       return list;
    };
 
    JSROOTIO.ReadTObjArray = function(str, o) {
       var list = {};
+      list['_typename'] = "JSROOTIO.TObjArray";
       list['name'] = "";
-      list['array'] = new Array();
+      list['arr'] = new Array();
       var ver = JSROOTIO.ReadVersion(str, o);
       o = ver['off'];
       if (ver['val'] > 2)
@@ -489,20 +546,22 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       for (var i = 0; i < nobjects; i++) {
          obj = this.ReadObjectAny(str, o, class_name);
          o = obj['off'];
-         list['array'][i] = 0;
          if (obj['cln'] && obj['cln'] != '' && obj['cln'] != -1) {
             class_name = obj['cln'];
-            list['array'][i] = obj['obj'];
+            list['arr'].push(obj['obj']);
+         } else {
+            list['arr'].push(null);
          }
       }
-      list['off'] = o;
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTObjArray");;
       return list;
    };
 
    JSROOTIO.ReadTClonesArray = function(str, o) {
       var list = {};
+      list['_typename'] = "JSROOTIO.TClonesArray";
       list['name'] = "";
-      list['array'] = new Array();
+      list['arr'] = new Array();
       var ver = JSROOTIO.ReadVersion(str, o);
       o = ver['off'];
       if (ver['val'] > 2)
@@ -527,24 +586,26 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       for (var i = 0; i < nobjects; i++) {
          if (classv == 'TObject' || classv == 'TMethodCall') {
             o += 10; // skip object bits & unique id
+            list['arr'].push(null);
          }
          else {
             var obj = {};
             obj['_typename'] = 'JSROOTIO.' + classv;
             if (JSROOTIO.GetStreamer(classv))
                o = JSROOTIO.GetStreamer(classv).Stream(obj, str, o);
-            list['array'][i] = obj;
+            list['arr'].push(obj);
             JSROOTCore.addMethods(obj);
          }
       }
-      list['off'] = o;
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTClonesArray");
       return list;
    };
 
    JSROOTIO.ReadTCollection = function(str, o) {
       var list = {};
+      list['_typename'] = "JSROOTIO.TCollection";
       list['name'] = "";
-      list['array'] = new Array();
+      list['arr'] = new Array();
       var ver = JSROOTIO.ReadVersion(str, o);
       o = ver['off'];
       if (ver['val'] > 2)
@@ -556,25 +617,38 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       var nobjects = JSROOTIO.ntou4(str, o); o += 4;
       for (var i = 0; i < nobjects; i++) {
          o += 10; // skip object bits & unique id
+         list['arr'].push(null);
       }
-      list['off'] = o;
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTCollection");
       return list;
    };
 
    JSROOTIO.ReadTHashList = function(str, o) {
-      var list = JSROOTIO.ReadTList(str, o);
-      return list;
+      return JSROOTIO.ReadTList(str, o);
    };
 
    JSROOTIO.ReadVersion = function(str, o) {
       // read class version from I/O buffer
       var version = {};
-      o += 4; // skip byte count
+      var bytecnt = JSROOTIO.ntou4(str, o); o += 4; // byte count
+      if (bytecnt & kByteCountMask) 
+         version['bytecnt'] = bytecnt - kByteCountMask - 2; // one can check between Read version and end of streamer  
       version['val'] = JSROOTIO.ntou2(str, o); o += 2;
       version['off'] = o;
       return version;
    };
 
+   JSROOTIO.CheckBytecount = function(ver, o, where) {
+      if (('bytecnt' in ver) && (ver['off'] + ver['bytecnt'] != o)) {
+         if (where!=null)
+            alert("Missmatch in " + where + " bytecount expected = " + ver['bytecnt'] + "  got = " + (o-ver['off']));
+         return ver['off'] + ver['bytecnt'];
+      }
+      
+      return o;
+   }
+
+   
    JSROOTIO.ReadTNamed = function(str, o) {
       // read a TNamed class definition from I/O buffer
       var named = {};
@@ -587,7 +661,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       named['name'] = so['str'];
       so = JSROOTIO.ReadTString(str, o); o = so['off'];
       named['title'] = so['str'];
-      named['off'] = o;
+      named['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTNamed");
       return named;
    };
 
@@ -826,11 +900,12 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             case kAnyp:
             case kAnyP:
                classname = this[prop]['typename'];
-               if (classname == "TObject*") {
-                  obj[prop] = JSROOTIO.ntou4(str, o);
-                  o += 4;
-                  break;
-               }
+               // S.Linev TObject* pointer as good as any other 
+               //if (classname == "TObject*") {
+               //   obj[prop] = JSROOTIO.ntou4(str, o);
+               //   o += 4;
+               //   break;
+               //}
                if (classname.endsWith("*")) {
                   classname = classname.substr(0, classname.length - 1);
                   pval = JSROOTIO.ntou4(str, o);
@@ -841,12 +916,31 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                   if (pval < 10000000) {
                      var ro = gFile.GetMappedObject(pval);
                      if (ro) {
-                        obj[prop] = JSROOTCore.clone(ro);
-                     }
+                        obj[prop] = ro; // use object instead of JSROOTCore.clone(ro);
+                        console.log("Found TObject with tag " + pval + "  class " + obj[prop]['_typename']);
+                     } else {
+                        console.log("Did not found object with tag " + pval);
+                     } 
                      o += 4;
+                     
                      break;
                   }
                }
+               if (classname == "TObject") {
+                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  if (clRef && clRef['name']) {
+                     o = clRef['off'];
+                     if (clRef['name'] != -1)
+                        classname = clRef['name'];
+                  }
+                  console.log("Ignore TObject part??? - classname " + classname);
+                  o += 2; // skip version
+                  o += 4; // skip unique id
+                  obj[prop] = new Object;
+                  obj[prop]['_typename'] = 'JSROOTIO.TObject';
+                  obj[prop]['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
+                  JSROOTCore.addMethods(obj[prop]);
+               } else
                if (JSROOTIO.GetStreamer(classname)) {
                   var clRef = gFile.fStreamerInfo.ReadClass(str, o);
                   if (clRef && clRef['name']) {
@@ -854,7 +948,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      if (clRef['name'] != -1)
                         classname = clRef['name'];
                   }
-                  obj[prop] = new Object();
+                  obj[prop] = new Object;
                   obj[prop]['_typename'] = 'JSROOTIO.' + classname;
                   o = JSROOTIO.GetStreamer(classname).Stream(obj[prop], str, o);
                   JSROOTCore.addMethods(obj[prop]);
@@ -1005,6 +1099,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          var pval;
          var ver = JSROOTIO.ReadVersion(str, o);
          o = ver['off'];
+         var startpos = o;
 
          // first base classes
          for (prop in this) {
@@ -1041,6 +1136,10 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                 this[prop]['typename'] === "BASE")
                continue;
             var prop_name = prop;
+            
+            if (prop_name=='fPrimitives') 
+               console.log("Reading fPrimitives type "+ this[prop]['typename']);
+            
             // special classes (custom streamers)
             switch (this[prop]['typename']) {
                case "TString*":
@@ -1051,6 +1150,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      var so = JSROOTIO.ReadTString(str, o); o = so['off'];
                      obj[prop_name][i] = so['str'];
                   }
+                  o = JSROOTIO.CheckBytecount(r__v, o, "TString* array");
                   break;
                case "TList*":
                   pval = JSROOTIO.ntou4(str, o);
@@ -1058,11 +1158,16 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      o += 4; // skip NULL pointer
                      break;
                   }
+                  if (pval < 10000000)
+                     console.log("Found valid reference on TList*");
+                  
                   var clRef = gFile.fStreamerInfo.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TList":
+                  // JSROOTIO.debug = (prop_name=='fPrimitives');
                   var list = JSROOTIO.ReadTList(str, o);
-                  obj[prop_name] = list['array'];
+                  //JSROOTIO.debug = false;
+                  obj[prop_name] = list;
                   o = list['off'];
                   break;
                case "TObjArray*":
@@ -1071,11 +1176,15 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      o += 4; // skip NULL pointer
                      break;
                   }
+                  
+                  if (pval < 10000000) 
+                     console.log("Found valid reference on TObjArray*");
+                  
                   var clRef = gFile.fStreamerInfo.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TObjArray":
                   var list = JSROOTIO.ReadTObjArray(str, o);
-                  obj[prop_name] = list['array'];
+                  obj[prop_name] = list;
                   o = list['off'];
                   break;
                case "TClonesArray*":
@@ -1084,11 +1193,13 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      o += 4; // skip NULL pointer
                      break;
                   }
+                  if (pval < 10000000) 
+                     console.log("Found valid reference on TClonesArray*");
                   var clRef = gFile.fStreamerInfo.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TClonesArray":
                   var list = JSROOTIO.ReadTClonesArray(str, o);
-                  obj[prop_name] = list['array'];
+                  obj[prop_name] = list;
                   o = list['off'];
                   break;
                case "TCollection*":
@@ -1097,11 +1208,14 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                      o += 4; // skip NULL pointer
                      break;
                   }
+                  if (pval < 10000000) 
+                     console.log("Found valid reference on TCollection*");
+                  
                   var clRef = gFile.fStreamerInfo.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TCollection":
                   var list = JSROOTIO.ReadTCollection(str, o);
-                  obj[prop_name] = list['array'];
+                  obj[prop_name] = list;
                   o = list['off'];
                   break;
                case "THashList*":
@@ -1156,7 +1270,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                return ((obj['fBits'] & f) != 0);
             };
          }
-         return o;
+
+         return JSROOTIO.CheckBytecount(ver, o, "TStreamer.Stream");
       };
 
       return this;
@@ -1183,11 +1298,6 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
    }
 
    var version = "1.6 2012/02/24";
-
-   var kMapOffset = 2;
-   var kByteCountMask = 0x40000000;
-   var kNewClassTag = 0xFFFFFFFF;
-   var kClassMask = 0x80000000;
 
    // ctor
    JSROOTIO.StreamerInfo = function(buffer, callback) {
@@ -1220,18 +1330,18 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          var tag = 0;
          var bcnt = JSROOTIO.ntou4(str, o); o += 4;
          var startpos = o;
-         if (!(bcnt & kByteCountMask) ||
-              (bcnt == kNewClassTag)) {
+         if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
             tag = bcnt;
             bcnt = 0;
          } else {
             clVersion = 1;
-            tag = JSROOTIO.ntou4(str, o); o+= 4;
+            tag = JSROOTIO.ntou4(str, o); o += 4;
          }
          if (!(tag & kClassMask)) {
             classInfo['name'] = 0;
             classInfo['tag'] = tag;
-            classInfo['off'] = o;//startpos;
+            classInfo['objtag'] = tag; // indicate that we have deal with objects tag
+            classInfo['off'] = o;
             return classInfo;
          }
          if (tag == kNewClassTag) {
@@ -1280,7 +1390,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             objarray['array'][i] = this.ReadObject(str, o);
             o = objarray['array'][i]['off'];
          }
-         objarray['off'] = o;
+         objarray['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadObjArray");
          return objarray;
       };
 
@@ -1306,7 +1416,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             streamerinfo['elements'] = this.ReadElements(str, o);
             o = streamerinfo['elements']['off'];
          }
-         streamerinfo['off'] = o;
+         streamerinfo['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerInfo");
          return streamerinfo;
       };
 
@@ -1360,7 +1470,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          if (R__v['val'] > 3) {
             //if (TestBit(kHasRange)) GetRange(GetTitle(),fXmin,fXmax,fFactor);
          }
-         element['off'] = o;
+         element['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerElement");
          return element;
       };
 
@@ -1374,7 +1484,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          if (R__v['val'] > 2) {
             streamerbase['baseversion'] = JSROOTIO.ntou4(str, o); o += 4;
          }
-         streamerbase['off'] = o;
+         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBase");
          return streamerbase;
       };
 
@@ -1404,7 +1514,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          }
          else {
          }
-         streamerbase['off'] = o;
+         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBasicType");
          return streamerbase;
       };
 
@@ -1421,7 +1531,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             //====process old versions before automatic schema evolution
             //return ReadStreamerElement(str, o);
          }
-         streamerbase['off'] = o;
+         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerObject");
          return streamerbase;
       };
 
@@ -1441,7 +1551,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          }
          else {
          }
-         streamerbase['off'] = o;
+         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBasicPointer");
          return streamerbase;
       };
 
@@ -1456,40 +1566,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
             streamerSTL['stltype'] = JSROOTIO.ntou4(str, o); o += 4;
             streamerSTL['ctype'] = JSROOTIO.ntou4(str, o); o += 4;
          }
-         streamerSTL['off'] = o;
+         streamerSTL['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerSTL");
          return streamerSTL;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadTList = function(str, o) {
-         // stream all objects in the collection from the I/O buffer
-         var list = {};
-         list['name'] = "";
-         list['array'] = new Array();
-         var ver = JSROOTIO.ReadVersion(str, o);
-         o = ver['off'];
-         if (ver['val'] > 3) {
-            o += 2; // skip version
-            o += 8; // object bits & unique id
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            list['name'] = so['str'];
-            var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-            for (var i = 0; i < nobjects; ++i) {
-               list['array'][i] = this.ReadObject(str, o);
-               o = list['array'][i]['off'];
-               var nch = str.charCodeAt(o) & 0xff; o++;
-               if (ver['val'] > 4 && nch == 255)  {
-                  nbig= JSROOTIO.ntou4(str, o); o += 4;
-               } else {
-                  nbig = nch;
-               }
-               if (nbig > 0) {
-                  var readOption = JSROOTIO.ReadString(str, o, nbig);
-                  o += nbig;
-               }
-            }
-         }
-         list['off'] = o;
-         return list;
       };
 
       JSROOTIO.StreamerInfo.prototype.ReadObjString = function(str, o) {
@@ -1498,7 +1576,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          o = version['off'];
          o += 2; // skip version
          o += 8; // object bits & unique id
-         return JSROOTIO.ReadTString(str, o);
+         o = JSROOTIO.ReadTString(str, o);
+         return JSROOTIO.CheckBytecount(version, o, "ReadObjString")
       };
 
       JSROOTIO.StreamerInfo.prototype.ReadObject = function(str, o) {
@@ -1517,7 +1596,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          if (clRef['name'] == "TStreamerSTL")
             return this.ReadStreamerSTL(str, o);
          if (clRef['name'] == "TList")
-            return this.ReadTList(str, o);
+            return JSROOTIO.ReadTList(str, o);
          if (clRef['name'] == "TObjString")
             return this.ReadObjString(str, o);
          // default:
@@ -1553,6 +1632,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                }
             }
          }
+         JSROOTIO.CheckBytecount(version, o, "ExtractStreamerInfo");
       };
 
       this.fStreamerInfos = new Array();
@@ -2144,6 +2224,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
 
       JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id) {
          // read any object from a root file
+         
          if (findObject(obj_name+cycle)) return;
          var key = this.GetKey(obj_name, cycle);
          if (key == null) return;
@@ -2180,6 +2261,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                objbuf['unzipdata'] = null;
             }
          };
+
          this.ReadObjBuffer(key, callback);
       };
 
@@ -2369,7 +2451,6 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
                   // when reading a TList, all objects are actually read, 
                   // unlike TDirectories where only TKeys are read....
                   list = JSROOTIO.ReadTListContent(objbuf['unzipdata'], 0, name);
-                  //list = JSROOTIO.ReadTList(objbuf['unzipdata'], 0);
                }
                if (list && list['array'])
                   displayCollection(list['array'], cycle, id);
@@ -2389,8 +2470,7 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          if (key == null) return null;
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
-               var class_name = '';
-               var obj = JSROOTIO.ReadObjectAny(objbuf['unzipdata'], offset, class_name);
+               var obj = JSROOTIO.ReadObjectAny(objbuf['unzipdata'], offset, "");
                if (obj && obj['obj']) {
                   displayObject(obj['obj'], cycle, obj_index);
                   obj_list.push(obj_name+cycle);
@@ -2423,27 +2503,23 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          this.fNbytesInfo = 0;
          this.fTagOffset = 0;
          this.fStreamerInfo = null;
-         if (this.fObjectMap) this.fObjectMap.splice(0, this.fObjectMap.length);
-         this.fObjectMap = null;
+         this.ClearObjectMap();
       };
 
       JSROOTIO.RootFile.prototype.GetMappedObject = function(tag) {
-         // find the tag 'clTag' in the list and return the class name
-         tag |= 0x01;
-         for (var i=0; i<this['fObjectMap'].length; ++i) {
-            if (this['fObjectMap'][i]['tag'] == tag)
-               return this['fObjectMap'][i]['obj'];
-         }
+         for (var i=0;i<this.fObjectMap.length;i++)
+            if (this.fObjectMap[i].tag == tag) return this.fObjectMap[i].obj; 
          return null;
       };
 
       JSROOTIO.RootFile.prototype.MapObject = function(obj, tag) {
-         if (this['fObjectMap'].indexOf({tag: tag, obj: obj}) == -1)
-            this['fObjectMap'].push({tag: tag, obj: obj});
+         if (obj==null) return;
+         
+         this.fObjectMap.push({ 'tag' : tag, 'obj': obj });
       };
 
       JSROOTIO.RootFile.prototype.ClearObjectMap = function() {
-         if (this.fObjectMap) this.fObjectMap.splice(0, this.fObjectMap.length);
+         this.fObjectMap = new Array;
       };
 
       this.fDirectories = new Array();
@@ -2457,8 +2533,8 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          this.fEND = this.GetSize(this.fURL);
          this.ReadKeys();
       }
-      this.fStreamers = new Array();
-      this.fObjectMap = new Array();
+      this.fStreamers = new Array;
+      this.ClearObjectMap();
       //this.ReadStreamerInfo();
 
       return this;

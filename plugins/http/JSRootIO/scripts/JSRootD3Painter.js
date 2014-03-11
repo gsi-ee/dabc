@@ -813,7 +813,7 @@ function createFillPatterns(svg, id, color) {
       chopt = JSROOTPainter.clearCuts(chopt);
       if (hdim > 1) option.Scat = 1;
       if (!nch) option.Hist = 1;
-      if ('fFunctions' in histo && histo['fFunctions'].length > 0) option.Func = 2;
+      if ('fFunctions' in histo && histo['fFunctions'].arr.length > 0) option.Func = 2;
       if ('fSumw2' in histo && histo['fSumw2'].length > 0 && hdim == 1) option.Error = 2;
       var l = chopt.indexOf('SPEC');
       if (l != -1) {
@@ -2262,28 +2262,28 @@ function createFillPatterns(svg, id, color) {
    JSROOTPainter.drawFunctions = function(vis, histo, pad, frame) {
       /* draw statistics box & other TPaveTexts */
       if ('fFunctions' in histo) {
-         for (i=0; i<histo['fFunctions'].length; ++i) {
-            if (histo['fFunctions'][i]['_typename'] == 'JSROOTIO.TPaveText' ||
-                histo['fFunctions'][i]['_typename'] == 'JSROOTIO.TPaveStats') {
-               if (histo['fFunctions'][i]['fX1NDC'] < 1.0 && histo['fFunctions'][i]['fY1NDC'] < 1.0 &&
-                   histo['fFunctions'][i]['fX1NDC'] > 0.0 && histo['fFunctions'][i]['fY1NDC'] > 0.0) {
-                  this.drawPaveText(vis, histo['fFunctions'][i]);
+         for (i=0; i<histo['fFunctions'].arr.length; ++i) {
+            if (histo['fFunctions'].arr[i]['_typename'] == 'JSROOTIO.TPaveText' ||
+                histo['fFunctions'].arr[i]['_typename'] == 'JSROOTIO.TPaveStats') {
+               if (histo['fFunctions'].arr[i]['fX1NDC'] < 1.0 && histo['fFunctions'].arr[i]['fY1NDC'] < 1.0 &&
+                   histo['fFunctions'].arr[i]['fX1NDC'] > 0.0 && histo['fFunctions'].arr[i]['fY1NDC'] > 0.0) {
+                  this.drawPaveText(vis, histo['fFunctions'].arr[i]);
                }
             }
-            if (histo['fFunctions'][i]['_typename'] == 'JSROOTIO.TF1') {
-               if (!pad && !histo['fFunctions'][i].TestBit(kNotDraw)) {
-                  //if (histo['fFunctions'][i].TestBit(EStatusBits.kObjInCanvas)) {
-                     if (typeof(histo['fFunctions'][i]['isDrawn']) == 'undefined' ||
-                         histo['fFunctions'][i]['isDrawn'] == false)
-                        this.drawFunction(vis, pad, histo['fFunctions'][i], frame);
-                     histo['fFunctions'][i]['isDrawn'] = true;
+            if (histo['fFunctions'].arr[i]['_typename'] == 'JSROOTIO.TF1') {
+               if (!pad && !histo['fFunctions'].arr[i].TestBit(kNotDraw)) {
+                  //if (histo['fFunctions'].arr[i].TestBit(EStatusBits.kObjInCanvas)) {
+                     if (typeof(histo['fFunctions'].arr[i]['isDrawn']) == 'undefined' ||
+                         histo['fFunctions'].arr[i]['isDrawn'] == false)
+                        this.drawFunction(vis, pad, histo['fFunctions'].arr[i], frame);
+                     histo['fFunctions'].arr[i]['isDrawn'] = true;
                   //}
                }
-               else if (pad && histo['fFunctions'][i].TestBit(EStatusBits.kObjInCanvas)) {
-                  if (typeof(histo['fFunctions'][i]['isDrawn']) == 'undefined' ||
-                      histo['fFunctions'][i]['isDrawn'] == false)
-                     this.drawFunction(vis, pad, histo['fFunctions'][i], frame);
-                  histo['fFunctions'][i]['isDrawn'] = true;
+               else if (pad && histo['fFunctions'].arr[i].TestBit(EStatusBits.kObjInCanvas)) {
+                  if (typeof(histo['fFunctions'].arr[i]['isDrawn']) == 'undefined' ||
+                      histo['fFunctions'].arr[i]['isDrawn'] == false)
+                     this.drawFunction(vis, pad, histo['fFunctions'].arr[i], frame);
+                  histo['fFunctions'].arr[i]['isDrawn'] = true;
                }
             }
          }
@@ -3382,9 +3382,9 @@ function createFillPatterns(svg, id, color) {
       if (options.Color > 0 && options.Zscale > 0) {
          // just to initialize the default palette
          this.getValueColor(histo, 0, pad);
-         for (i=0; i<histo['fFunctions'].length; ++i) {
-            if (histo['fFunctions'][i]['_typename'] == 'JSROOTIO.TPaletteAxis')
-               this.drawPaletteAxis(vis, histo['fFunctions'][i], minbin, maxbin);
+         for (i=0; i<histo['fFunctions'].arr.length; ++i) {
+            if (histo['fFunctions'].arr[i]['_typename'] == 'JSROOTIO.TPaletteAxis')
+               this.drawPaletteAxis(vis, histo['fFunctions'].arr[i], minbin, maxbin);
          }
       }
 
@@ -4140,14 +4140,14 @@ function createFillPatterns(svg, id, color) {
 
       var tcolor = root_colors[pave['fTextColor']];
       var tpos_x = pave['fMargin'] * w;
-      var nlines = pave['fPrimitives'].length;
+      var nlines = pave['fPrimitives'].arr.length;
       var font_size = Math.round(h / (nlines * 1.5));
       //var font_size = Math.round(pave['fTextSize'] * vis.height());
       var fontDetails = getFontDetails(root_fonts[Math.floor(pave['fTextFont']/10)]);
 
       var max_len = 0, mul = 1.4;
       for (var j=0; j<nlines; ++j) {
-         line = this.translateLaTeX(pave['fPrimitives'][j]['fLabel']);
+         line = this.translateLaTeX(pave['fPrimitives'].arr[j]['fLabel']);
          lw = tpos_x + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                                    font_size, fontDetails['style']);
          if (lw > max_len) max_len = lw;
@@ -4166,7 +4166,7 @@ function createFillPatterns(svg, id, color) {
       var boxw = margin*0.35;
 
       for (var i=0; i<nlines; ++i) {
-         var leg = pave['fPrimitives'][i];
+         var leg = pave['fPrimitives'].arr[i];
          var string = leg['fLabel'];
          var pos_y = ((i+1) * (font_size * mul)) - (font_size/3);
          var tpos_y = (i+1) * (font_size * mul);
@@ -4842,7 +4842,7 @@ function createFillPatterns(svg, id, color) {
       var width = Math.abs(pavetext['fX2NDC'] - pavetext['fX1NDC']) * w;
       var height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
       pos_y -= height;
-      var line, nlines = pavetext['fLines'].length;
+      var line, nlines = pavetext['fLines'].arr.length;
       var font_size = Math.round(height / (nlines * 1.5));
       var fcolor = root_colors[pavetext['fFillColor']];
       var lcolor = root_colors[pavetext['fLineColor']];
@@ -4894,7 +4894,7 @@ function createFillPatterns(svg, id, color) {
          .style("stroke", lcolor);
 
       if (nlines == 1) {
-         line = this.translateLaTeX(pavetext['fLines'][0]['fTitle']);
+         line = this.translateLaTeX(pavetext['fLines'].arr[0]['fTitle']);
 
          lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                           font_size, fontDetails['style']);
@@ -4916,7 +4916,7 @@ function createFillPatterns(svg, id, color) {
       else {
          var max_len = 0;
          for (j=0; j<nlines; ++j) {
-            line = this.translateLaTeX(pavetext['fLines'][j]['fTitle']);
+            line = this.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
             lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
                                        font_size, fontDetails['style']);
             if (lw > max_len) max_len = lw;
@@ -4925,10 +4925,10 @@ function createFillPatterns(svg, id, color) {
             font_size *= 0.98 * (width / max_len);
 
          for (j=0; j<nlines; ++j) {
-            var jcolor = root_colors[pavetext['fLines'][j]['fTextColor']];
-            if (pavetext['fLines'][j]['fTextColor'] == 0)
+            var jcolor = root_colors[pavetext['fLines'].arr[j]['fTextColor']];
+            if (pavetext['fLines'].arr[j]['fTextColor'] == 0)
                jcolor = tcolor;
-            line = this.translateLaTeX(pavetext['fLines'][j]['fTitle']);
+            line = this.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
             if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
                var off_y = (j == 0) ? 0 : (font_size * 0.05);
                pave.append("text")
@@ -4988,7 +4988,7 @@ function createFillPatterns(svg, id, color) {
 
    JSROOTPainter.drawPrimitives = function(vis, pad) {
       var i, j, fframe = null, frame = null;
-      var primitives = pad['fPrimitives'];
+      var primitives = pad['fPrimitives'].arr;
       for (i=0; i<primitives.length; ++i) {
          var classname = primitives[i]['_typename'];
          if (classname == 'JSROOTIO.TFrame') {
@@ -5297,34 +5297,34 @@ function createFillPatterns(svg, id, color) {
     */
 
    JSROOTPainter.displayBranches = function(branches, dir_id, k) {
-      for (var i=0; i<branches.length; ++i) {
-         var nb_leaves = branches[i]['fLeaves'].length;
-         var disp_name = branches[i]['fName'];
+      for (var i=0; i<branches.arr.length; ++i) {
+         var nb_leaves = branches.arr[i]['fLeaves'].arr.length;
+         var disp_name = branches.arr[i]['fName'];
          var node_img = source_dir+'img/branch.png';
          var node_title = disp_name;
          var tree_link = "";
          if (nb_leaves == 0) {
             node_img = source_dir+'img/leaf.png';
          }
-         else if (nb_leaves == 1 && branches[i]['fLeaves'][0]['fName'] == disp_name) {
+         else if (nb_leaves == 1 && branches.arr[i]['fLeaves'].arr[0]['fName'] == disp_name) {
             node_img = source_dir+'img/leaf.png';
             nb_leaves--;
          }
-         if (branches[i]['fBranches'].length > 0) {
+         if (branches.arr[i]['fBranches'].arr.length > 0) {
             node_img = source_dir+'img/branch.png';
          }
          key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img, node_img);
          nid = k; k++;
          for (var j=0; j<nb_leaves; ++j) {
-            var disp_name = branches[i]['fLeaves'][j]['fName'];
+            var disp_name = branches.arr[i]['fLeaves'].arr[j]['fName'];
             var node_title = disp_name;
             var node_img = source_dir+'img/leaf.png';
             var tree_link = "";
             key_tree.add(k, nid, disp_name, tree_link, node_title, '', node_img, node_img);
             k++;
          }
-         if (branches[i]['fBranches'].length > 0) {
-            k = JSROOTPainter.displayBranches(branches[i]['fBranches'], nid, k);
+         if (branches.arr[i]['fBranches'].arr.length > 0) {
+            k = JSROOTPainter.displayBranches(branches.arr[i]['fBranches'], nid, k);
          }
       }
       return k;

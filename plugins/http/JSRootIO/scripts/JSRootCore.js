@@ -130,10 +130,20 @@ landaun = function(f, x, i) {
       function_list.push(sig);
    };
    
+   JSROOTCore.CreateTList = function() {
+      var list = {};
+      list['_typename'] = "JSROOTIO.TList";
+      list['name'] = "TList";
+      list['arr'] = new Array;
+      list['opt'] = new Array;
+      return list;
+   }
+   
+   
    JSROOTCore.CreateTAxis = function() {
       var axis = {};
 
-      axis['_typename'] = "ROOTIO.TAxis";
+      axis['_typename'] = "JSROOTIO.TAxis";
       axis['fBits'] = 0x3000008;
       axis['fBits2'] = 0;
       axis['fXmin'] = 0;
@@ -179,7 +189,7 @@ landaun = function(f, x, i) {
       histo['fN'] = 0;
       histo['fArray'] = new Array;
       histo['fSumw2'] = new Array;
-      histo['fFunctions'] = new Array;
+      histo['fFunctions'] = JSROOTCore.CreateTList();
 
       histo['fXaxis'] = JSROOTCore.CreateTAxis();
       histo['fYaxis'] = JSROOTCore.CreateTAxis();
@@ -214,7 +224,7 @@ landaun = function(f, x, i) {
       histo['fN'] = 0;
       histo['fArray'] = new Array;
       histo['fSumw2'] = new Array;
-      histo['fFunctions'] = new Array;
+      histo['fFunctions'] = JSROOTCore.CreateTList();
       histo['fContour'] = new Array;
 
       histo['fXaxis'] = JSROOTCore.CreateTAxis();
@@ -259,7 +269,7 @@ landaun = function(f, x, i) {
       graph['fNpoints'] = 0;
       graph['fX'] = new Array;
       graph['fY'] = new Array;
-      graph['fFunctions'] = new Array;
+      graph['fFunctions'] = JSROOTCore.CreateTList();
       graph['fHistogram'] = JSROOTCore.CreateTH1();
 
       if (npoints>0) {
@@ -1009,15 +1019,15 @@ landaun = function(f, x, i) {
             //  Build a separate list fStack containing the running sum of all histograms
             if ('fStack' in this) return;
             if (!'fHists' in this) return;
-            var nhists = this['fHists'].length;
+            var nhists = this['fHists'].arr.length;
             if (nhists <= 0) return;
-            this['fStack'] = new Array();
-            var h = JSROOTCore.clone(this['fHists'][0]);
-            this['fStack'].push(h);
+            this['fStack'] = JSROOTCore.CreateTList();
+            var h = JSROOTCore.clone(this['fHists'].arr[0]);
+            this['fStack'].arr.push(h);
             for (var i=1;i<nhists;i++) {
-               h = JSROOTCore.clone(this['fHists'][i]);
-               h.add(this['fStack'][i-1]);
-               this['fStack'].splice(i, 1, h);
+               h = JSROOTCore.clone(this['fHists'].arr[i]);
+               h.add(this['fStack'].arr[i-1]);
+               this['fStack'].arr.splice(i, 1, h);
             }
          };
          obj['getMaximum'] = function(option) {
@@ -1028,22 +1038,22 @@ landaun = function(f, x, i) {
             if (opt.indexOf("e") != -1) lerr = true;
             var them = 0, themax = -1e300, c1, e1;
             if (!'fHists' in this) return 0;
-            var nhists = this['fHists'].length;
+            var nhists = this['fHists'].arr.length;
             var first, last;
             if (opt.indexOf("nostack") == -1) {
                this.buildStack();
-               var h = this['fStack'][nhists-1];
+               var h = this['fStack'].arr[nhists-1];
                themax = h.getMaximum();
             } else {
                for (var i=0;i<nhists;i++) {
-                  h = this['fHists'][i];
+                  h = this['fHists'].arr[i];
                   them = h.getMaximum();
                   if (them > themax) themax = them;
                }
             }
             if (lerr) {
                for (var i=0;i<nhists;i++) {
-                  h = this['fHists'][i];
+                  h = this['fHists'].arr[i];
                   first = h['fXaxis'].getFirst();
                   last  = h['fXaxis'].getLast();
                   for (var j=first; j<=last;j++) {
@@ -1063,15 +1073,15 @@ landaun = function(f, x, i) {
             if (opt.indexOf("e") == -1) lerr = true;
             var them = 0, themin = 1e300, c1, e1;
             if (!'fHists' in this) return 0;
-            var nhists = this['fHists'].length;
+            var nhists = this['fHists'].arr.length;
             var first, last;
             if (opt.indexOf("nostack") == -1) {
                this.buildStack();
-               var h = this['fStack'][nhists-1];
+               var h = this['fStack'].arr[nhists-1];
                themin = h.getMinimum();
             } else {
                for (var i=0;i<nhists;i++) {
-                  h = this['fHists'][i];
+                  h = this['fHists'].arr[i];
                   them = h.getMinimum();
                   if (them <= 0 && pad && pad['fLogy']) them = h.getMinimum(0);
                   if (them < themin) themin = them;
@@ -1079,7 +1089,7 @@ landaun = function(f, x, i) {
             }
             if (lerr) {
                for (var i=0;i<nhists;i++) {
-                  h = this['fHists'][i];
+                  h = this['fHists'].arr[i];
                   first = h['fXaxis'].getFirst();
                   last  = h['fXaxis'].getLast();
                   for (var j=first;j<=last;j++) {
