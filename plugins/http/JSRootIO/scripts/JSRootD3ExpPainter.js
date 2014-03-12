@@ -5971,7 +5971,7 @@ var gStyle = {
    }
    
 
-   JSROOTPainter.drawHistogram3D = function(vis, histo, opt) 
+   JSROOTPainter.drawHistogram3D = function(vis, histo, dopt) 
    {
       if (vis['ROOT:frame'] == null)
          JSROOTPainter.createFrame(vis);
@@ -5981,8 +5981,11 @@ var gStyle = {
       
       var i, j, k, logx = false, logy = false, logz = false,
           gridx = false, gridy = false, gridz = false;
-      if ((opt==null) || (opt=="")) opt = histo['fOption']; 
-      opt = opt.toLowerCase();
+      // if ((opt==null) || (opt=="")) opt = histo['fOption']; 
+      // opt = opt.toLowerCase();
+      
+      var opt = histo['fOption'].toLowerCase();
+      if (opt=="") opt = "colz";
       
       if (pad && typeof(pad) != 'undefined') {
          logx = pad['fLogx'];

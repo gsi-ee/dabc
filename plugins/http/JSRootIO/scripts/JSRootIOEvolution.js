@@ -38,7 +38,7 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.1 2013/07/03";
+   JSROOTIO.version = "2.5 2014/03/11";
    
    JSROOTIO.debug = false;
 

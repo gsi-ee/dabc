@@ -228,6 +228,8 @@ function AssertPrerequisites(andThen) {
       loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
       loadScript(source_dir+'scripts/JSRootD3ExpPainter.js', function() {
 
+         if (andThen!=null) andThen();
+
          // if report element exists - this is standard ROOT layout
          if (document.getElementById("report")) {
             var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
@@ -235,11 +237,9 @@ function AssertPrerequisites(andThen) {
             $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
          }
          
-         andThen();
-         
       }) }) }) }) }) }) }) }) }) }) });
    } else {
-      andThen();
+      if (andThen!=null) andThen();
    }
 };
 
