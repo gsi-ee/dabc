@@ -263,17 +263,15 @@ function ReadFile() {
       }
    }
 
-   AssertPrerequisites(function() {
+   var url = $("#urlToLoad").val();
+   if (url == "" || url == " ") return;
+   $("#status").html("file: " + url + "<br/>");
+   if (gFile) {
+      gFile.Delete();
+      delete gFile;
+   }
 
-      var url = $("#urlToLoad").val();
-      if (url == "" || url == " ") return;
-      $("#status").html("file: " + url + "<br/>");
-      if (gFile) {
-         gFile.Delete();
-         delete gFile;
-      }
-      gFile = new JSROOTIO.RootFile(url);
-   });
+   gFile = new JSROOTIO.RootFile(url);
 };
 
 function ResetUI() {

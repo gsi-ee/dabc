@@ -305,6 +305,7 @@ var kClassMask = 0x80000000;
       };
    };
 
+   
    JSROOTIO.ReadString = function(str, off, max_len) {
       // stream a string from buffer
       max_len = typeof(max_len) != 'undefined' ? max_len : 0;
@@ -315,15 +316,15 @@ var kClassMask = 0x80000000;
             break;
       }
       return {
-         'off' : off + len + 1,
-         'str' : (str.charCodeAt(off) == 0) ? '' : str.substring(off, off + len)
+         'off' : ((str.charCodeAt(off + len) & 0xff) == 0) ? (off + len + 1) : (off + len),
+         'str' : (len == 0) ? "" : str.substring(off, off + len)
       };
    };
 
    JSROOTIO.ReadObjectAny = function(str, o, previous) {
       var class_name = previous;
       var startpos = o;
-      var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+      var clRef = gFile.ReadClass(str, o);
       o = clRef['off'];
       
       // class identified as object and should be handled so
@@ -450,10 +451,8 @@ var kClassMask = 0x80000000;
                o += nbig;
                // add the drawing option somewhere...
                list['opt'].push(readOption['str']);
-               if (JSROOTIO.debug) console.log("read option " + readOption['str']);
             } else {
                list['opt'].push("");
-               if (JSROOTIO.debug) console.log("read empty option");
             }
             
             if (JSROOTIO.debug) 
@@ -482,7 +481,7 @@ var kClassMask = 0x80000000;
          var nobjects = JSROOTIO.ntou4(str, o); o += 4;
          var class_name = '';
          for (var i = 0; i < nobjects; ++i) {
-            var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+            var clRef = gFile.ReadClass(str, o);
             if (clRef['name'] && clRef['name'] != -1) {
                class_name = clRef['name'];
             }
@@ -885,7 +884,7 @@ var kClassMask = 0x80000000;
             case kObject:
                classname = this[prop]['typename'];
                if (JSROOTIO.GetStreamer(classname)) {
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                   obj[prop] = new Object();
                   obj[prop]['_typename'] = 'JSROOTIO.' + classname;
@@ -927,7 +926,7 @@ var kClassMask = 0x80000000;
                   }
                }
                if (classname == "TObject") {
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) {
                      o = clRef['off'];
                      if (clRef['name'] != -1)
@@ -942,7 +941,7 @@ var kClassMask = 0x80000000;
                   JSROOTCore.addMethods(obj[prop]);
                } else
                if (JSROOTIO.GetStreamer(classname)) {
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) {
                      o = clRef['off'];
                      if (clRef['name'] != -1)
@@ -1161,7 +1160,7 @@ var kClassMask = 0x80000000;
                   if (pval < 10000000)
                      console.log("Found valid reference on TList*");
                   
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TList":
                   // JSROOTIO.debug = (prop_name=='fPrimitives');
@@ -1180,7 +1179,7 @@ var kClassMask = 0x80000000;
                   if (pval < 10000000) 
                      console.log("Found valid reference on TObjArray*");
                   
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TObjArray":
                   var list = JSROOTIO.ReadTObjArray(str, o);
@@ -1195,7 +1194,7 @@ var kClassMask = 0x80000000;
                   }
                   if (pval < 10000000) 
                      console.log("Found valid reference on TClonesArray*");
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TClonesArray":
                   var list = JSROOTIO.ReadTClonesArray(str, o);
@@ -1211,7 +1210,7 @@ var kClassMask = 0x80000000;
                   if (pval < 10000000) 
                      console.log("Found valid reference on TCollection*");
                   
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "TCollection":
                   var list = JSROOTIO.ReadTCollection(str, o);
@@ -1224,7 +1223,7 @@ var kClassMask = 0x80000000;
                      o += 4; // skip NULL pointer
                      break;
                   }
-                  var clRef = gFile.fStreamerInfo.ReadClass(str, o);
+                  var clRef = gFile.ReadClass(str, o);
                   if (clRef && clRef['name']) o = clRef['off'];
                case "THashList":
                   var list = JSROOTIO.ReadTHashList(str, o);
@@ -1310,53 +1309,6 @@ var kClassMask = 0x80000000;
       this._version = version;
       this._typename = "JSROOTIO.StreamerInfo";
 
-      JSROOTIO.StreamerInfo.prototype.ReadClass = function(str, o) {
-         // read class definition from I/O buffer
-         var classInfo = {};
-         classInfo['name'] = "";
-         classInfo['cnt'] = 0;
-         classInfo['off'] = o;
-         classInfo['tag'] = 0;
-         var tag = 0;
-         var bcnt = JSROOTIO.ntou4(str, o); o += 4;
-         var startpos = o;
-         if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
-            tag = bcnt;
-            bcnt = 0;
-         } else {
-            clVersion = 1;
-            tag = JSROOTIO.ntou4(str, o); o += 4;
-         }
-         if (!(tag & kClassMask)) {
-            classInfo['name'] = 0;
-            classInfo['tag'] = tag;
-            classInfo['objtag'] = tag; // indicate that we have deal with objects tag
-            classInfo['off'] = o;
-            return classInfo;
-         }
-         if (tag == kNewClassTag) {
-            // got a new class description followed by a new object
-            var so = JSROOTIO.ReadString(str, o); // class name
-            o = so['off'];
-            classInfo['name'] = so['str'];
-            //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
-            classInfo['tag'] = gFile.fTagOffset + startpos + kMapOffset;
-            
-            if (gFile.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)!=-1)
-               alert("Class tag already exists for class " + so['str']);
-            else 
-               gFile.AddClassMap(so['str'], gFile.fTagOffset + startpos + kMapOffset);
-         }
-         else {
-            // got a tag to an already seen class
-            var clTag = (tag & ~kClassMask);
-            classInfo['name'] = gFile.GetClassMap(clTag);
-         }
-         classInfo['cnt'] = (bcnt & ~kByteCountMask);
-         classInfo['off'] = o;
-         return classInfo;
-      };
-
       JSROOTIO.StreamerInfo.prototype.ReadObjArray = function(str, o) {
          // read a TObjArray class definition from I/O buffer
          // and stream all objects in the array
@@ -1385,7 +1337,7 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.StreamerInfo.prototype.ReadElements = function(str, o) {
          // stream all the elements in the array from the I/O buffer
-         var clRef = this.ReadClass(str, o);
+         var clRef = gFile.ReadClass(str, o);
          o = clRef['off'];
          return this.ReadObjArray(str, o);
       };
@@ -1565,13 +1517,48 @@ var kClassMask = 0x80000000;
          o = version['off'];
          o += 2; // skip version
          o += 8; // object bits & unique id
-         o = JSROOTIO.ReadTString(str, o);
-         return JSROOTIO.CheckBytecount(version, o, "ReadObjString")
+
+         var so = JSROOTIO.ReadTString(str, o);
+         
+         so['off'] = JSROOTIO.CheckBytecount(version, so['off'], "ReadObjString");
+         
+         return so; 
       };
+      
+      JSROOTIO.StreamerInfo.prototype.ReadTList = function(str, o) {
+         // stream all objects in the collection from the I/O buffer
+         var list = {};
+         list['name'] = "";
+         list['array'] = new Array();
+         var ver = JSROOTIO.ReadVersion(str, o);
+         o = ver['off'];
+         if (ver['val'] > 3) {
+            o += 2; // skip version
+            o += 8; // object bits & unique id
+            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
+            list['name'] = so['str'];
+            var nobjects = JSROOTIO.ntou4(str, o); o += 4;
+            // console.log("sinfo list length = " +  nobjects);
+            for (var i = 0; i < nobjects; ++i) {
+               list['array'][i] = this.ReadObject(str, o);
+               o = list['array'][i]['off'];
+               
+               var nbig = str.charCodeAt(o) & 0xff; o++;
+               if ((ver['val'] > 4) && (nbig == 255))  {
+                  nbig = JSROOTIO.ntou4(str, o); o += 4;
+               }
+               if (nbig > 0) o += nbig;
+            }
+         }
+         list['off'] = JSROOTIO.CheckBytecount(ver, o, "StreamerInfo-ReadTList");
+         return list;
+      };
+
 
       JSROOTIO.StreamerInfo.prototype.ReadObject = function(str, o) {
          // read object from I/O buffer
-         var clRef = this.ReadClass(str, o);
+         var clRef = gFile.ReadClass(str, o);
+         // console.log("Reading sinfo class " + clRef['name']);
          o = clRef['off'];
          if (clRef['name'] == "TStreamerInfo")
             return this.ReadStreamerInfo(str, o);
@@ -1585,7 +1572,7 @@ var kClassMask = 0x80000000;
          if (clRef['name'] == "TStreamerSTL")
             return this.ReadStreamerSTL(str, o);
          if (clRef['name'] == "TList")
-            return JSROOTIO.ReadTList(str, o);
+            return this.ReadTList(str, o);
          if (clRef['name'] == "TObjString")
             return this.ReadObjString(str, o);
          // default:
@@ -2522,6 +2509,63 @@ var kClassMask = 0x80000000;
          return -1;
       };
 
+      JSROOTIO.RootFile.prototype.ReadClass = function(str, o) {
+         // read class definition from I/O buffer
+         var classInfo = {};
+         classInfo['clname'] = "";
+         classInfo['name'] = "";
+         classInfo['cnt'] = 0;
+         classInfo['off'] = o;
+         classInfo['tag'] = 0;
+         var tag = 0;
+         var bcnt = JSROOTIO.ntou4(str, o); o += 4;
+         var startpos = o;
+         if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
+            tag = bcnt;
+            bcnt = 0;
+         } else {
+            clVersion = 1;
+            tag = JSROOTIO.ntou4(str, o); o += 4;
+         }
+         if (!(tag & kClassMask)) {
+            
+            if (tag & kByteCountMask) console.log("Tag with kByteCountMask");
+            
+            classInfo['name'] = 0;
+            classInfo['tag'] = tag;
+            classInfo['objtag'] = tag; // indicate that we have deal with objects tag
+            classInfo['off'] = o;
+            return classInfo;
+         }
+         if (tag == kNewClassTag) {
+            // got a new class description followed by a new object
+            var so = JSROOTIO.ReadString(str, o); // class name
+            o = so['off'];
+            classInfo['name'] = so['str'];
+            //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
+            classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
+            
+            if (this.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)!=-1)
+               alert("Class tag already exists for class " + so['str']);
+            else 
+               this.AddClassMap(so['str'], gFile.fTagOffset + startpos + kMapOffset);
+         }
+         else {
+            // got a tag to an already seen class
+            var clTag = (tag & ~kClassMask);
+            classInfo['name'] = this.GetClassMap(clTag);
+         }
+         classInfo['cnt'] = (bcnt & ~kByteCountMask);
+         classInfo['off'] = o;
+
+         // new parameter - either empty or with valid class name
+         if (classInfo['name']!=-1)
+            classInfo['clname'] = classInfo['name'];
+         
+         return classInfo;
+      };
+
+      
       this.fClassMap = new Array;
       this.fClassIndex = 0;
 

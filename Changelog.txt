@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+12.03.2014
+1. In JSRootIO move class map into gFile instance. 
+   Fix several small errors in reading.
+
+
 11.03.2014
 1. Change in JS form of TCollection representaion. Now it is
    always object with '_typename', 'name', 'arr' fields.
