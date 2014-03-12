@@ -353,7 +353,7 @@ var kClassMask = 0x80000000;
          class_name = clRef['name'];
       }
       else if (!clRef['name'] && clRef['tag']) {
-         class_name = gFile.fStreamerInfo.GetClassMap(clRef['tag']);
+         class_name = gFile.GetClassMap(clRef['tag']);
          if (class_name != -1)
             obj['_typename'] = 'JSROOTIO.' + class_name;
          class_name = 0;
@@ -487,7 +487,7 @@ var kClassMask = 0x80000000;
                class_name = clRef['name'];
             }
             else if (!clRef['name'] && clRef['tag']) {
-               class_name = gFile.fStreamerInfo.GetClassMap(clRef['tag']);
+               class_name = gFile.GetClassMap(clRef['tag']);
                if (class_name != -1)
                   clRef['name'] = class_name;
             }
@@ -1310,16 +1310,6 @@ var kClassMask = 0x80000000;
       this._version = version;
       this._typename = "JSROOTIO.StreamerInfo";
 
-      JSROOTIO.StreamerInfo.prototype.GetClassMap = function(clTag) {
-         // find the tag 'clTag' in the list and return the class name
-         clTag |= 0x01;
-         for (var i=0; i<gFile['fStreamerInfo'].fClassIndex; ++i) {
-            if (gFile['fStreamerInfo'].fClassMap[i]['tag'] == clTag)
-               return gFile['fStreamerInfo'].fClassMap[i]['name'];
-         }
-         return -1;
-      };
-
       JSROOTIO.StreamerInfo.prototype.ReadClass = function(str, o) {
          // read class definition from I/O buffer
          var classInfo = {};
@@ -1351,20 +1341,19 @@ var kClassMask = 0x80000000;
             classInfo['name'] = so['str'];
             //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
             classInfo['tag'] = gFile.fTagOffset + startpos + kMapOffset;
+            
+            if (gFile.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)!=-1)
+               alert("Class tag already exists for class " + so['str']);
+            else 
+               gFile.AddClassMap(so['str'], gFile.fTagOffset + startpos + kMapOffset);
          }
          else {
             // got a tag to an already seen class
             var clTag = (tag & ~kClassMask);
-            classInfo['name'] = this.GetClassMap(clTag);
+            classInfo['name'] = gFile.GetClassMap(clTag);
          }
          classInfo['cnt'] = (bcnt & ~kByteCountMask);
          classInfo['off'] = o;
-         if (tag == kNewClassTag) {
-            // add class to fClassMap for later reference
-            classInfo['tag'] |= 0x01;
-            this.fClassMap[this.fClassIndex] = classInfo;
-            this.fClassIndex++;
-         }
          return classInfo;
       };
 
@@ -1637,9 +1626,6 @@ var kClassMask = 0x80000000;
 
       this.fStreamerInfos = new Array();
       this.fStreamerIndex = 0;
-
-      this.fClassMap = new Array();
-      this.fClassIndex = 0;
 
       return this;
    };
@@ -2521,6 +2507,23 @@ var kClassMask = 0x80000000;
       JSROOTIO.RootFile.prototype.ClearObjectMap = function() {
          this.fObjectMap = new Array;
       };
+      
+      JSROOTIO.RootFile.prototype.AddClassMap = function(name, tag) {
+         this.fClassMap[this.fClassIndex] = { 'clname' : name, 'cltag' : tag };
+         this.fClassIndex++;
+      }
+
+      JSROOTIO.RootFile.prototype.GetClassMap = function(clTag) {
+         // find the tag 'clTag' in the list and return the class name
+         for (var i=0; i<this.fClassIndex; ++i) {
+            if (this.fClassMap[i]['cltag'] == clTag)
+               return this.fClassMap[i]['clname'];
+         }
+         return -1;
+      };
+
+      this.fClassMap = new Array;
+      this.fClassIndex = 0;
 
       this.fDirectories = new Array();
       this.fKeys = new Array();
