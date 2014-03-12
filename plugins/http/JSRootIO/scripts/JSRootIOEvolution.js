@@ -377,6 +377,9 @@ var kClassMask = 0x80000000;
          JSROOTCore.addMethods(obj);
          //if (clRef['tag']) gFile.MapObject(obj, clRef['tag']);
          
+         if (clRef['fVersion'] == 0)
+            console.log("Should map object with different id???");
+         
          gFile.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
       }
       else if (clRef['name'] === 0 && clRef['tag'] != 0) {
@@ -1136,8 +1139,7 @@ var kClassMask = 0x80000000;
                continue;
             var prop_name = prop;
             
-            if (prop_name=='fPrimitives') 
-               console.log("Reading fPrimitives type "+ this[prop]['typename']);
+            //console.log("Reading " + prop_name + " of type " +  this[prop]['typename']);
             
             // special classes (custom streamers)
             switch (this[prop]['typename']) {
@@ -2216,6 +2218,10 @@ var kClassMask = 0x80000000;
                else if (JSROOTIO.GetStreamer(key['className'])) {
                   var obj = {};
                   obj['_typename'] = 'JSROOTIO.' + key['className'];
+
+                  gFile.ClearObjectMap();   
+                  gFile.MapObject(obj, 1); // workaround - tag first object with id1 
+                  
                   JSROOTIO.GetStreamer(key['className']).Stream(obj, objbuf['unzipdata'], 0);
                   if (key['className'] == 'TFormula') {
                      JSROOTCore.addFormula(obj);
@@ -2489,10 +2495,13 @@ var kClassMask = 0x80000000;
          if (obj==null) return;
          
          this.fObjectMap.push({ 'tag' : tag, 'obj': obj });
+         this.fMapCount++;
       };
 
       JSROOTIO.RootFile.prototype.ClearObjectMap = function() {
          this.fObjectMap = new Array;
+         this.fObjectMap.push({ 'tag' : 0, 'obj': null });
+         this.fMapCount = 1; // in original ROOT first element in map is 0
       };
       
       JSROOTIO.RootFile.prototype.AddClassMap = function(name, tag) {
@@ -2517,14 +2526,16 @@ var kClassMask = 0x80000000;
          classInfo['cnt'] = 0;
          classInfo['off'] = o;
          classInfo['tag'] = 0;
+         classInfo['fVersion'] = 0;
          var tag = 0;
          var bcnt = JSROOTIO.ntou4(str, o); o += 4;
          var startpos = o;
          if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
             tag = bcnt;
             bcnt = 0;
+            console.log("Should be other kind of map???");
          } else {
-            clVersion = 1;
+            classInfo['fVersion'] = 1;
             tag = JSROOTIO.ntou4(str, o); o += 4;
          }
          if (!(tag & kClassMask)) {

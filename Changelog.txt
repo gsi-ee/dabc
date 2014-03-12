@@ -5,6 +5,7 @@ current functionality of the framework.
 12.03.2014
 1. In JSRootIO move class map into gFile instance. 
    Fix several small errors in reading.
+2. Workaround for objects mapping - always map first object with id1. 
 
 
 11.03.2014
