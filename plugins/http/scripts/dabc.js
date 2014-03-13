@@ -1509,16 +1509,14 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       return;
    }
 
-   var obj = {};
-   
-   obj['_typename'] = 'JSROOTIO.' + this.clname;
-
-//   console.log("Calling JSROOTIO function");
-
    gFile = this.sinfo.obj;
 
    var obj = {};
+   
+   obj['_typename'] = 'JSROOTIO.' + this.clname;
+//   console.log("Calling JSROOTIO function");
    var buf = new JSROOTIO.TBuffer(this.raw_data, 0);
+   buf.MapObject(obj, 1);
 
    buf.ClassStreamer(obj, this.clname);
    

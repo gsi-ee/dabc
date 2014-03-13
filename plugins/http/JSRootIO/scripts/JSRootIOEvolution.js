@@ -873,9 +873,8 @@ var kClassMask = 0x80000000;
          var clRef = this.ReadClass(debug);
          
          // class identified as object and should be handled so
-         if ('objtag' in clRef) {
-            return gFile.GetMappedObject(clRef['objtag']);
-         }
+         if ('objtag' in clRef)
+            return this.GetMappedObject(clRef['objtag']);
          
          if (clRef['name'] == -1) {
             alert("Cannot read class, TODO:try to skip object content !!!");
@@ -883,10 +882,10 @@ var kClassMask = 0x80000000;
          }
          
          var obj = {};
-         
+
+         this.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
+
          this.ClassStreamer(obj, clRef['name']);
-         
-         gFile.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
             
          return obj;
       };
@@ -2075,13 +2074,11 @@ var kClassMask = 0x80000000;
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
                var obj = {};
+               obj['_typename'] = 'JSROOTIO.' + key['className'];
 
-               gFile.ClearObjectMap();   
-               gFile.MapObject(obj, 1); // workaround - tag first object with id1
-               
                var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
 
-               obj['_typename'] = 'JSROOTIO.' + key['className'];
+               buf.MapObject(obj, 1); // workaround - tag first object with id1
 
                buf.ClassStreamer(obj, key['className']);
                
@@ -2343,28 +2340,8 @@ var kClassMask = 0x80000000;
          this.fNbytesInfo = 0;
          this.fTagOffset = 0;
          this.fStreamerInfo = null;
-         this.ClearObjectMap();
       };
 
-      JSROOTIO.RootFile.prototype.GetMappedObject = function(tag) {
-         for (var i=0;i<this.fObjectMap.length;i++)
-            if (this.fObjectMap[i].tag == tag) return this.fObjectMap[i].obj; 
-         return null;
-      };
-
-      JSROOTIO.RootFile.prototype.MapObject = function(obj, tag) {
-         if (obj==null) return;
-         
-         this.fObjectMap.push({ 'tag' : tag, 'obj': obj });
-         this.fMapCount++;
-      };
-
-      JSROOTIO.RootFile.prototype.ClearObjectMap = function() {
-         this.fObjectMap = new Array;
-         this.fObjectMap.push({ 'tag' : 0, 'obj': null });
-         this.fMapCount = 1; // in original ROOT first element in map is 0
-      };
-      
       JSROOTIO.RootFile.prototype.AddClassMap = function(name, tag) {
          this.fClassMap[this.fClassIndex] = { 'clname' : name, 'cltag' : tag };
          this.fClassIndex++;
@@ -2455,7 +2432,6 @@ var kClassMask = 0x80000000;
          this.ReadKeys();
       }
       this.fStreamers = new Array;
-      this.ClearObjectMap();
       //this.ReadStreamerInfo();
 
       return this;
