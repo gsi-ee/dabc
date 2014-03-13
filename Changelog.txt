@@ -10,6 +10,8 @@ current functionality of the framework.
    as TBuffer in native ROOT I/O. Simplify logic in many places,
    reduce duplication of code in many places, fix errors.
    Main advantage - one could try to keep code synchronous.
+5. Read all streamer info classes via normal methods, remove 
+   many lines of duplication.
 
 
 12.03.2014

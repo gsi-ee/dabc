@@ -326,9 +326,9 @@ var kClassMask = 0x80000000;
          return 0;
       gFile.fStreamers[clname] = new JSROOTIO.TStreamer(gFile);
       if (typeof(s_i['elements']) != 'undefined') {
-         n_el = s_i['elements']['array'].length;
+         n_el = s_i['elements']['arr'].length;
          for (j=0;j<n_el;++j) {
-            var element = s_i['elements']['array'][j];
+            var element = s_i['elements']['arr'][j];
             if (element['typename'] === 'BASE') {
                // generate streamer for the base classes
                JSROOTIO.GetStreamer(element['name']);
@@ -336,14 +336,14 @@ var kClassMask = 0x80000000;
          }
       }
       if (typeof(s_i['elements']) != 'undefined') {
-         n_el = s_i['elements']['array'].length;
+         n_el = s_i['elements']['arr'].length;
          for (j=0;j<n_el;++j) {
             // extract streamer info for each class member
-            var element = s_i['elements']['array'][j];
+            var element = s_i['elements']['arr'][j];
             gFile.fStreamers[clname][element['name']] = {};
             gFile.fStreamers[clname][element['name']]['typename'] = element['typename'];
             gFile.fStreamers[clname][element['name']]['class']    = element['name'];
-            gFile.fStreamers[clname][element['name']]['cntname']  = s_i['elements']['array'][j]['countName'];
+            gFile.fStreamers[clname][element['name']]['cntname']  = s_i['elements']['arr'][j]['countName'];
             gFile.fStreamers[clname][element['name']]['type']     = element['type'];
             gFile.fStreamers[clname][element['name']]['length']   = element['length'];
          }
@@ -718,14 +718,12 @@ var kClassMask = 0x80000000;
       
       JSROOTIO.TBuffer.prototype.ReadTNamed = function(tobj) {
          // read a TNamed class definition from I/O buffer
-         var ver = JSROOTIO.ReadVersion();
+         var ver = this.ReadVersion();
          this.ReadTObject(tobj);
          tobj['fName'] = this.ReadTString();
          tobj['fTitle'] = this.ReadTString();
          return this.CheckBytecount(ver, "ReadTNamed");
       };
-
-
       
       JSROOTIO.TBuffer.prototype.ReadTList = function(list) {
          // stream all objects in the list from the I/O buffer
@@ -817,25 +815,35 @@ var kClassMask = 0x80000000;
          return this.CheckBytecount(ver,"ReadTCollection");
       };
       
-      JSROOTIO.TBuffer.prototype.ReadStreamerInfo = function(streamerinfo) {
+      JSROOTIO.TBuffer.prototype.ReadTStreamerInfo = function(streamerinfo) {
          // stream an object of class TStreamerInfo from the I/O buffer
+         
+         console.log("Reading ReadStreamerInfo");
+         
          var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadTNamed(streamerinfo);
             streamerinfo['name'] = streamerinfo['fName'];
             streamerinfo['title'] = streamerinfo['fTitle'];
+            
+            console.log("name = " + streamerinfo['name']);
+            
             streamerinfo['checksum'] = this.ntou4();
             streamerinfo['classversion'] = this.ntou4();
+            
             streamerinfo['elements'] = this.ReadObjectAny();
             
             // var clRef = this.ReadClass();
             // streamerinfo['elements'] = this.ReadTObjArray();
          }
-         return this.CheckBytecount(R__v, "ReadStreamerInfo");
+         return this.CheckBytecount(R__v, "ReadTStreamerInfo");
       };
       
       JSROOTIO.TBuffer.prototype.ReadStreamerElement = function(element) {
          // stream an object of class TStreamerElement
+
+         console.log("Reading ReadStreamer element");
+
          var R__v = this.ReadVersion();
          this.ReadTNamed(element);
          element['name'] = element['fName'];
@@ -877,6 +885,9 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.TBuffer.prototype.ReadStreamerBase = function(streamerbase) {
          // stream an object of class TStreamerBase
+
+         console.log("Reading ReadStreamer Base");
+
          var R__v = this.ReadVersion();
          this.ReadStreamerElement(streamerbase);
          if (R__v['val'] > 2) {
@@ -896,6 +907,8 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.TBuffer.prototype.ReadStreamerBasicPointer = function(streamerbase) {
          // stream an object of class TStreamerBasicPointer
+         console.log("Reading ReadStreamer BasicPointer");
+
          var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadStreamerElement(streamerbase);
@@ -908,6 +921,8 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.TBuffer.prototype.ReadStreamerSTL = function(streamerSTL) {
          // stream an object of class TStreamerSTL
+         console.log("Reading ReadStreamer STL");
+
          var R__v = this.ReadVersion();
          if (R__v['val'] > 2) {
             this.ReadStreamerElement(streamerSTL);
@@ -916,6 +931,16 @@ var kClassMask = 0x80000000;
          }
          return this.CheckBytecount(R__v, "ReadStreamerSTL");
       };
+      
+      JSROOTIO.TBuffer.prototype.ReadTStreamerObject = function(streamerbase) {
+         // stream an object of class TStreamerObject
+         var R__v = this.ReadVersion(str, o);
+         if (R__v['val'] > 1) {
+            this.ReadStreamerElement(streamerbase);
+         }
+         return this.CheckBytecount(R__v, "ReadTStreamerObject");
+      };
+
       
       JSROOTIO.TBuffer.prototype.ReadClass = function() {
          // read class definition from I/O buffer
@@ -962,7 +987,7 @@ var kClassMask = 0x80000000;
 
          // new parameter - either empty or with valid class name
          if (classInfo['name']!=-1)
-            classInfo['clname'] = classInfo['name'];
+            classInfo['clname'] = classInfo['name '];
          
          return classInfo;
       };
@@ -993,6 +1018,8 @@ var kClassMask = 0x80000000;
          //if (!'_typename' in obj) 
          //   obj['_typename'] = 'JSROOTIO.' + classname;
          
+         console.log("Start streaming of class " + classname);
+         
          if (classname == 'TObject' || classname == 'TMethodCall') {
             this.ReadTObject(obj);
          }
@@ -1005,7 +1032,7 @@ var kClassMask = 0x80000000;
          else if (classname == 'TClonesArray') {
             this.ReadTClonesArray(obj);
          }
-         else if ((classname == 'TList') || (classname == 'THashList')){
+         else if ((classname == 'TList') || (classname == 'THashList')) {
             this.ReadTList(obj);
          }
          else if (classname == 'TCollection') {
@@ -1019,7 +1046,7 @@ var kClassMask = 0x80000000;
             this.CheckBytecount(ver);
          }
          else if (classname == "TStreamerInfo") {
-            this.ReadStreamerInfo(obj);
+            this.ReadTStreamerInfo(obj);
          }
          else if (classname == "TStreamerBase") {
             this.ReadStreamerBase(obj);
@@ -1027,11 +1054,15 @@ var kClassMask = 0x80000000;
          else if (classname == "TStreamerBasicType") {
             this.ReadStreamerBasicType(obj);
          } 
-         else if ((classname == "TStreamerBasicPointer") ||
-                  (classname == "TStreamerLoop")) {
+         else if ((classname == "TStreamerBasicPointer") || (classname == "TStreamerLoop")) {
             this.ReadStreamerBasicPointer(obj);
          } else if (classname == "TStreamerSTL") {
             this.ReadStreamerSTL(obj);
+         } else if (classname == "TStreamerObject" || 
+                    classname == "TStreamerObjectAny" ||
+                    classname == "TStreamerString" ||
+                    classname == "TStreamerObjectPointer" ) {
+            this.ReadTStreamerObject(obj);
          }
          else if (JSROOTIO.GetStreamer(classname)) {
             JSROOTIO.GetStreamer(classname).Stream(obj, this);
@@ -1659,8 +1690,29 @@ var kClassMask = 0x80000000;
          // default:
          return this.ReadStreamerObject(str, o);
       };
-
+      
       JSROOTIO.StreamerInfo.prototype.ExtractStreamerInfo = function(str) {
+
+         var lst = {};
+         lst['_typename'] = "JSROOTIO.TList";
+
+         console.log("Start info reading from " + str.length);
+
+         var buf = new JSROOTIO.TBuffer(str, 0);
+         buf.MapObject(lst, 1);
+         
+         buf.ClassStreamer(lst,'TList');
+         
+         for (var i=0;i<lst['arr'].length;i++) {
+            this.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
+            this.fStreamerIndex++;
+         }
+         
+         console.log("Read streamer infos of size " + lst['arr'].length);
+      }
+
+
+      JSROOTIO.StreamerInfo.prototype.ExtractStreamerInfoOld = function(str) {
          // extract the list of streamer infos from the buffer (file)
          var o = 0;
          var version = JSROOTIO.ReadVersion(str, o);
