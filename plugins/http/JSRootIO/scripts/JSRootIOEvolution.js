@@ -1015,64 +1015,6 @@ var kClassMask = 0x80000000;
                obj[prop] = buf.ReadObjectAny();
                o = buf.o;
                break;
-               
-/*
-                classname = this[prop]['typename'];
-               // S.Linev TObject* pointer as good as any other 
-               //if (classname == "TObject*") {
-               //   obj[prop] = JSROOTIO.ntou4(str, o);
-               //   o += 4;
-               //   break;
-               //}
-               if (classname.endsWith("*")) {
-                  classname = classname.substr(0, classname.length - 1);
-                  pval = JSROOTIO.ntou4(str, o);
-                  if (pval == 0) {
-                     o += 4;
-                     break;
-                  }
-                  if (pval < 10000000) {
-                     var ro = gFile.GetMappedObject(pval);
-                     if (ro) {
-                        obj[prop] = ro; // use object instead of JSROOTCore.clone(ro);
-                        console.log("Found TObject with tag " + pval + "  class " + obj[prop]['_typename']);
-                     } else {
-                        console.log("Did not found object with tag " + pval);
-                     } 
-                     o += 4;
-                     
-                     break;
-                  }
-               }
-               if (classname == "TObject") {
-                  var clRef = gFile.ReadClass(str, o);
-                  if (clRef && clRef['name']) {
-                     o = clRef['off'];
-                     if (clRef['name'] != -1)
-                        classname = clRef['name'];
-                  }
-                  console.log("Ignore TObject part??? - classname " + classname);
-                  o += 2; // skip version
-                  o += 4; // skip unique id
-                  obj[prop] = new Object;
-                  obj[prop]['_typename'] = 'JSROOTIO.TObject';
-                  obj[prop]['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
-                  JSROOTCore.addMethods(obj[prop]);
-               } else
-               if (JSROOTIO.GetStreamer(classname)) {
-                  var clRef = gFile.ReadClass(str, o);
-                  if (clRef && clRef['name']) {
-                     o = clRef['off'];
-                     if (clRef['name'] != -1)
-                        classname = clRef['name'];
-                  }
-                  obj[prop] = new Object;
-                  obj[prop]['_typename'] = 'JSROOTIO.' + classname;
-                  o = JSROOTIO.GetStreamer(classname).Stream(obj[prop], str, o);
-                  JSROOTCore.addMethods(obj[prop]);
-               }
-               break;
-*/               
             case kTString:
                var so = JSROOTIO.ReadTString(str, o); o = so['off'];
                obj[prop] = so['str'];
@@ -1270,50 +1212,6 @@ var kClassMask = 0x80000000;
                   }
                   o = JSROOTIO.CheckBytecount(r__v, o, "TString* array");
                   break;
-/*               case "TList*":
-                  console.log("Read TList* as any other object");
-                  var oo = o;
-                  var ro = JSROOTIO.ReadObjectAny(str, o, true);
-                  o = ro['off'];
-                  obj[prop] = ro['obj'];
-                  console.log("Reading " + prop + " " + this[prop]['typename'] + " got " + (ro['obj'] ? ro['obj']._typename : "null") + " consume " + (o-oo));
-                  break;
-                  
-               case "TList":
-                  console.log("Read TList as any other object");
-                  obj[prop] = {};
-                  var oo = o;
-                  o = JSROOTIO.ClassStreamer(str, o, obj[prop], "TList");
-                  console.log("Reading " + prop + " " + this[prop]['typename'] + " got " + (ro['obj'] ? ro['obj']._typename : "null") + " consume " + (o-oo));
-                  break;
-*/                  
-               case "TList*":
-                  console.log("Extra process TList* from here!!!");
-
-                  pval = JSROOTIO.ntou4(str, o);
-                  if (pval == 0) {
-                     o += 4; // skip NULL pointer
-                     obj[prop_name] = null;
-                     break;
-                  }
-                  if (pval < 10000000)
-                     console.log("Found valid reference on TList*");
-                  
-                  var clRef = gFile.ReadClass(str, o, true);
-                  if (clRef && clRef['name']) o = clRef['off'];
-                  console.log("Obj tag is " + clRef['objtag']);
-
-               case "TList":
-                  // JSROOTIO.debug = (prop_name=='fPrimitives');
-                  
-                  console.log("Extra process TList from here!!!");
-                  
-                  var list = {}; 
-                  o = JSROOTIO.ReadTList(list, str, o);
-                  //JSROOTIO.debug = false;
-                  obj[prop_name] = list;
-                  break;
-                  
                case "TObjArray*":
                   pval = JSROOTIO.ntou4(str, o);
                   if (pval == 0) {
