@@ -6494,8 +6494,8 @@ var gStyle = {
 
          var mo = leg['fObject'];
          
-         if (mo!=null)
-            console.log("Draw legend " + string + " lopt " + lopt + "  obj " + mo['_typename']);
+//         if (mo!=null)
+//            console.log("Draw legend " + string + " lopt " + lopt + "  obj " + mo['_typename']);
          
          if ((typeof mo) != 'object') mo = null;
 
@@ -6830,7 +6830,7 @@ var gStyle = {
          vis['ROOT:canvas'] = obj;
          vis['ROOT:pad'] = obj;
          for (var i=0; i<obj.fPrimitives.arr.length; ++i) {
-            console.log("Draw canvas primitive " + obj.fPrimitives.arr[i]._typename + " opt = " + obj.fPrimitives.opt[i]);
+            // console.log("Draw canvas primitive " + obj.fPrimitives.arr[i]._typename + " opt = " + obj.fPrimitives.opt[i]);
             JSROOTPainter.drawObjectInFrame(vis, obj.fPrimitives.arr[i], obj.fPrimitives.opt[i]);
          }
          return 1;
