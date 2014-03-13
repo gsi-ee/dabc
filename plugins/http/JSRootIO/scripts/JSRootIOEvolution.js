@@ -449,8 +449,7 @@ var kClassMask = 0x80000000;
       return JSROOTIO.CheckBytecount(ver, o, "ReadTObjArray");
    };
 
-   JSROOTIO.ReadTClonesArray = function(str, o) {
-      var list = {};
+   JSROOTIO.ReadTClonesArray = function(list, str, o) {
       list['_typename'] = "JSROOTIO.TClonesArray";
       list['name'] = "";
       list['arr'] = new Array();
@@ -489,8 +488,7 @@ var kClassMask = 0x80000000;
             JSROOTCore.addMethods(obj);
          }
       }
-      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTClonesArray");
-      return list;
+      return JSROOTIO.CheckBytecount(ver, o, "ReadTClonesArray");
    };
 
    JSROOTIO.ReadTCollection = function(str, o) {
@@ -873,6 +871,10 @@ var kClassMask = 0x80000000;
             this.o = JSROOTIO.ReadTObjArray(obj, this.b, this.o);
             console.log("Read TObjArray from ClassStreamer");
          }
+         else if (classname == 'TClonesArray') {
+            this.o = JSROOTIO.ReadTClonesArray(obj, this.b, this.o);
+            console.log("Read TClonesArray from ClassStreamer");
+         }
          else if (classname == 'TList') {
             this.o = JSROOTIO.ReadTList(obj, this.b, this.o);
             console.log("Read TList from ClassStreamer");
@@ -984,7 +986,7 @@ var kClassMask = 0x80000000;
                //obj[prop] = JSROOTIO.ntof(str, o); o += 4;
                o += 2;
                break;
-            case kObject:
+/*            case kObject:
                classname = this[prop]['typename'];
                if (JSROOTIO.GetStreamer(classname)) {
                   var clRef = gFile.ReadClass(str, o);
@@ -995,10 +997,11 @@ var kClassMask = 0x80000000;
                   JSROOTCore.addMethods(obj[prop]);
                }
                break;
-            case kAny:
+*/            case kAny:
                break;
             case kAnyp:
             case kObjectp:
+            case kObject:   
                var classname = this[prop]['typename'];
                if (classname.endsWith("*")) 
                   classname = classname.substr(0, classname.length - 1);
@@ -1211,39 +1214,6 @@ var kClassMask = 0x80000000;
                      obj[prop_name][i] = so['str'];
                   }
                   o = JSROOTIO.CheckBytecount(r__v, o, "TString* array");
-                  break;
-               case "TObjArray*":
-                  pval = JSROOTIO.ntou4(str, o);
-                  if (pval == 0) {
-                     o += 4; // skip NULL pointer
-                     obj[prop_name] = null;
-                     break;
-                  }
-                  
-                  if (pval < 10000000) 
-                     console.log("Found valid reference on TObjArray*");
-                  
-                  var clRef = gFile.ReadClass(str, o);
-                  if (clRef && clRef['name']) o = clRef['off'];
-               case "TObjArray":
-                  var list = {};
-                  o = JSROOTIO.ReadTObjArray(list, str, o);
-                  obj[prop_name] = list;
-                  break;
-               case "TClonesArray*":
-                  pval = JSROOTIO.ntou4(str, o);
-                  if (pval == 0) {
-                     o += 4; // skip NULL pointer
-                     break;
-                  }
-                  if (pval < 10000000) 
-                     console.log("Found valid reference on TClonesArray*");
-                  var clRef = gFile.ReadClass(str, o);
-                  if (clRef && clRef['name']) o = clRef['off'];
-               case "TClonesArray":
-                  var list = JSROOTIO.ReadTClonesArray(str, o);
-                  obj[prop_name] = list;
-                  o = list['off'];
                   break;
                case "TCollection*":
                   pval = JSROOTIO.ntou4(str, o);
