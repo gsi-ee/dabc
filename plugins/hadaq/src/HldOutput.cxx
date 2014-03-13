@@ -91,6 +91,7 @@ bool hadaq::HldOutput::Write_Init()
 
       ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
       
+      
    }
 
    return StartNewFile();
@@ -187,8 +188,8 @@ if(fRunNumber==0)
   // check here if it was already delivered from epics
   fRunNumber = fRunidPar.Value().AsUInt();
    if (fRunNumber == 0) {
-         ShowInfo(0, "EPICS slave mode: still have no runid, skip buffer!");
-	 DOUT0("EPICS slave mode: still have no runid, skip buffer!");
+         //ShowInfo(2, "EPICS slave mode: still have no runid, skip buffer!");
+	 DOUT2("EPICS slave mode: still have no runid, skip buffer!");
         return dabc::do_Skip;
       }
    if (!StartNewFile()) {
@@ -239,9 +240,9 @@ if(fRunNumber==0)
 	}
 	else
 	  {
-	        ShowInfo(0, dabc::format("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
-				    payload, numevents, n));
-		 DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
+	        //ShowInfo(0, dabc::format("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
+		//		    payload, numevents, n));
+		 DOUT2("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
 				    payload, numevents, n);
 	    if (!fFile.WriteBuffer(buf.SegmentPtr(n), payload))
 	      return dabc::do_Error;
@@ -285,7 +286,7 @@ if(fRunNumber==0)
       if(n>startsegment) cursor=0;
       if(cursor>=buf.SegmentSize(n))
 	{
-	  DOUT0("Cursor %d  bigger than segment size %d, do not write to segment %d", cursor,  buf.SegmentSize(n),n);     
+	  DOUT2("Cursor %d  bigger than segment size %d, do not write to segment %d", cursor,  buf.SegmentSize(n),n);     
 	  continue;
 	}
       if (!fFile.WriteBuffer((char*) buf.SegmentPtr(n) + cursor, buf.SegmentSize(n)-cursor))
@@ -293,7 +294,7 @@ if(fRunNumber==0)
       
     if(startnewfile)
       {
-	DOUT0("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  buf.SegmentSize(n)-cursor);
+	DOUT2("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  buf.SegmentSize(n)-cursor);
       
       }
      

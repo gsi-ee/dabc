@@ -1,0 +1,37 @@
+# Table with active data sources
+
+# Addr     On/Off     Name              DataSize
+#Start must be the first for EvtId
+0x8800      1         StartVetoCTS      low
+0x8000      0         Central           low  #off
+0x8100      0         innerMDC          low  #off
+0x8110      0         outerMDC          low  #off
+0x8300      1         RICH12            mid
+0x8310      1         RICH34            mid
+0x8320      1         RICH56            mid
+0x8400      0         RPC12             mid
+0x8410      0         RPC34             mid
+0x8420      0         RPC56             mid
+0x8600      1         TOF               low
+0x8700      0         FW                low
+0x8880      0         StartTRB3         low
+0x8900      0         Pion1             mid
+0x1000      0         MDC12sec1         high
+0x1010      0         MDC12sec2         high
+0x1020      0         MDC12sec3         mid
+0x1030      0         MDC12sec4         mid
+0x1040      0         MDC12sec5         high
+0x1050      0         MDC12sec6         high
+0x1100      0         MDC34sec1         high
+0x1110      0         MDC34sec2         mid
+0x1120      0         MDC34sec3         high
+0x1130      0         MDC34sec4         mid
+0x1140      0         MDC34sec5         high
+0x1150      0         MDC34sec6         high
+0x1160      0         MDCspecial        mid   #off
+0x3200      0         Shower1           mid
+0x3210      0         Shower2           mid
+0x3220      0         Shower3           mid
+0x3230      0         Shower4           mid
+0x3240      0         Shower5           mid
+0x3250      0         Shower6           mid

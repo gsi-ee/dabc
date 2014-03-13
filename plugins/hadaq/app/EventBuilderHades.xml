@@ -43,8 +43,9 @@ EBNUM   - number of event builder
 STREAMS - number of input streams
 UDP00...UDP34- portnumbers for input streams
 PREFIX  - run prefix for filename convention (be,te,co,..)
-
-
+OUTDIR - path to file output directory
+RFIOPATH - path to rfio tape archive
+FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
 
 -->
 
@@ -52,10 +53,11 @@ PREFIX  - run prefix for filename convention (be,te,co,..)
   <Context host="localhost" name="EventBuilder${EBNUM}" port="770${EBNUM}" >
     <Run>
       <lib value="libDabcMbs.so"/>
+      <lib value="libDabcRfio.so"/>
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <logfile value="EB_${EBNUM}.log"/>
-      <debuglevel value="2"/>
+      <debuglevel value="0"/>
       <loglimit value="1000000"/>
 <!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
       <control value="true"/>
@@ -80,7 +82,7 @@ PREFIX  - run prefix for filename convention (be,te,co,..)
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
        <NumInputs value="${STREAMS}"/>
-       <NumOutputs value="2"/>
+       <NumOutputs value="${FILEOUTPUTS}"/>
 
        <InputPort name="Input0" url="hadaq://host:${UDP00}"/>
        <InputPort name="Input1" url="hadaq://host:${UDP01}"/>
@@ -120,8 +122,8 @@ PREFIX  - run prefix for filename convention (be,te,co,..)
                     
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
-       <OutputPort name="Output1" url="hld:///home/joern/data/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}" queue="500"/>
-       <OutputPort name="Output2" url="hld:///adamczew/test${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio" queue="500"/>
+       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}" queue="500"/>
+       <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${EBNUM}&rfio" queue="500"/>
 
       
        

@@ -297,7 +297,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    if(fEpicsSlave)
    {
       fEpicsRunNumber=GetEvtbuildParValue("runId");
-      std::cout <<"!!!!!! UpdateExportedCounters() got epics run id:"<< fEpicsRunNumber<< std::endl;
+      //std::cout <<"!!!!!! UpdateExportedCounters() got epics run id:"<< fEpicsRunNumber<< std::endl;
    }
    //SetEvtbuildPar("runId",fRunNumber);
    //SetEvtbuildPar("runId",Par("RunId").AsUInt()); // sync local parameter to observer export
