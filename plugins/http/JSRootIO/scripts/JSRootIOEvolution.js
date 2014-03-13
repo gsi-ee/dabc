@@ -220,75 +220,6 @@ var kClassMask = 0x80000000;
       return array;
    };
 
-   JSROOTIO.ReadFastArray = function(str, o, n, array_type) {
-      // read array of n integers from the I/O buffer
-      var array = {};
-      array['array'] = new Array();
-      if (array_type == 'D') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntod(str, o); o += 8;
-            if (Math.abs(array['array'][i]) < 1e-300) array['array'][i] = 0.0;
-         }
-      }
-      else if (array_type == 'F') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntof(str, o); o += 4;
-            if (Math.abs(array['array'][i]) < 1e-300) array['array'][i] = 0.0;
-         }
-      }
-      else if (array_type == 'L') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi8(str, o); o += 8;
-         }
-      }
-      else if (array_type == 'I') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi4(str, o); o += 4;
-         }
-      }
-      else if (array_type == 'S') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi2(str, o); o += 2;
-         }
-      }
-      else if (array_type == 'C') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = str.charCodeAt(o) & 0xff; o++;
-         }
-      }
-      else if (array_type == 'TString') {
-         for (var i = 0; i < n; ++i) {
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            array['array'][i] = so['str'];
-         }
-      }
-      else {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntou4(str, o); o += 4;
-         }
-      }
-      array['off'] = o;
-      return array;
-   };
-
-   JSROOTIO.ReadBasicPointerElem = function(str, o, n, array_type) {
-      var isArray = str.charCodeAt(o) & 0xff; o++;
-      if (isArray) {
-         var array = JSROOTIO.ReadFastArray(str, o, n, array_type);
-         return array;
-      }
-      else {
-         o--;
-         var array = JSROOTIO.ReadFastArray(str, o, n, array_type);
-         if (n == 0) array['off']++;
-         return array;
-      }
-      return null;
-   };
-
-   JSROOTIO.ReadBasicPointer = function(str, o, len, array_type) {
-      return JSROOTIO.ReadBasicPointerElem(str, o, len, array_type);
-   };
 
    JSROOTIO.ReadTString = function(str, off) {
       // stream a TString object from buffer
@@ -322,6 +253,7 @@ var kClassMask = 0x80000000;
    };
   
 
+   // TODO: should be removed completely
    JSROOTIO.ReadTListContent = function(str, o, list_name) {
       // read the content of list from the I/O buffer
       var list = {};
@@ -405,7 +337,7 @@ var kClassMask = 0x80000000;
       return o;
    }
 
-   
+   // TODO - should be removed completely
    JSROOTIO.ReadTNamed = function(str, o) {
       // read a TNamed class definition from I/O buffer
       var named = {};
@@ -627,6 +559,139 @@ var kClassMask = 0x80000000;
          return n;
       };
       
+      JSROOTIO.TBuffer.prototype.ntof = function() {
+         // IEEE-754 Floating-Point Conversion (single precision - 32 bits)
+         var inString = this.b.substring(this.o, this.o + 4); this.o+=4;
+         inString = inString.toString();
+         if (inString.length < 4) return Number.NaN;
+         var bits = "";
+         for (var i=0; i<4; i++) {
+            var curByte = (inString.charCodeAt(i) & 0xff).toString(2);
+            var byteLen = curByte.length;
+            if (byteLen < 8) {
+               for (var bit=0; bit<(8-byteLen); bit++)
+                  curByte = '0' + curByte;
+            }
+            bits = bits + curByte;
+         }
+         //var bsign = parseInt(bits[0]) ? -1 : 1;
+         var bsign = (bits.charAt(0) == '1') ? -1 : 1;
+         var bexp = parseInt(bits.substring(1, 9), 2) - 127;
+         var bman;
+         if (bexp == -127)
+            bman = 0;
+         else {
+            bman = 1;
+            for (i=0; i<23; i++) {
+               if (parseInt(bits.substr(9+i, 1)) == 1)
+                  bman = bman + 1 / Math.pow(2, i+1);
+            }
+         }
+         return (bsign * Math.pow(2, bexp) * bman);
+      };
+
+      JSROOTIO.TBuffer.prototype.ntod = function() {
+         // IEEE-754 Floating-Point Conversion (double precision - 64 bits)
+         var inString = this.b.substring(this.o, this.o + 8); this.o+=8;
+         inString = inString.toString();
+         if (inString.length < 8) return Number.NaN;
+         var bits = "";
+         for (var i=0; i<8; i++) {
+            var curByte = (inString.charCodeAt(i) & 0xff).toString(2);
+            var byteLen = curByte.length;
+            if (byteLen < 8) {
+               for (var bit=0; bit<(8-byteLen); bit++)
+                  curByte = '0' + curByte;
+            }
+            bits = bits + curByte;
+         }
+         //var bsign = parseInt(bits[0]) ? -1 : 1;
+         var bsign = (bits.charAt(0) == '1') ? -1 : 1;
+         var bexp = parseInt(bits.substring(1, 12), 2) - 1023;
+         var bman;
+         if (bexp == -127)
+            bman = 0;
+         else {
+            bman = 1;
+            for (i=0; i<52; i++) {
+               if (parseInt(bits.substr(12+i, 1)) == 1)
+                  bman = bman + 1 / Math.pow(2, i+1);
+            }
+         }
+         return (bsign * Math.pow(2, bexp) * bman);
+      };
+
+
+      JSROOTIO.TBuffer.prototype.ReadFastArray = function(n, array_type) {
+         // read array of n integers from the I/O buffer
+         var array = new Array();
+         switch (array_type) {
+            case 'D':
+               for (var i = 0; i < n; ++i) {
+                  array[i] = this.ntod(); 
+                  if (Math.abs(array[i]) < 1e-300) array[i] = 0.0;
+               }
+               break;
+            case 'F':
+               for (var i = 0; i < n; ++i) {
+                  array[i] = this.ntof();
+                  if (Math.abs(array[i]) < 1e-300) array[i] = 0.0;
+               }
+               break;
+            case 'L':
+               for (var i = 0; i < n; ++i) 
+                  array[i] = this.ntoi8();
+               break;
+            case 'LU':
+               for (var i = 0; i < n; ++i) 
+                  array[i] = this.ntou8();
+               break;
+            case 'I':
+               for (var i = 0; i < n; ++i)
+                  array[i] = this.ntoi4();
+               break;
+            case 'U':
+               for (var i = 0; i < n; ++i)
+                  array[i] = this.ntou4();
+               break;
+            case 'S':
+               for (var i = 0; i < n; ++i)
+                  array[i] = this.ntoi2();
+               break;
+            case 'C':
+               for (var i = 0; i < n; ++i) 
+                  array[i] = this.b.charCodeAt(this.o++) & 0xff;
+               break;
+            case 'TString':
+               for (var i = 0; i < n; ++i)
+                  array[i] = this.ReadTString();
+               break;
+            default:
+               for (var i = 0; i < n; ++i)
+                  array[i] = this.ntou4();
+            break;
+         }
+         return array;
+      };
+
+      
+      JSROOTIO.TBuffer.prototype.ReadBasicPointerElem = function(n, array_type) {
+         var isArray = this.b.charCodeAt(this.o++) & 0xff;
+         if (isArray) 
+            return this.ReadFastArray(n, array_type);
+         
+         this.o--;
+         var array = this.ReadFastArray(n, array_type);
+         if (n == 0) this.o++;
+         
+         return array;
+      };
+
+      JSROOTIO.TBuffer.prototype.ReadBasicPointer = function(len, array_type) {
+         return this.ReadBasicPointerElem(len, array_type);
+      };
+
+      
       JSROOTIO.TBuffer.prototype.ReadString = function(max_len) {
          // stream a string from buffer
          max_len = typeof(max_len) != 'undefined' ? max_len : 0;
@@ -702,6 +767,16 @@ var kClassMask = 0x80000000;
          tobj['fBits'] = this.ntou4();
          return true;
       }
+      
+      JSROOTIO.TBuffer.prototype.ReadTNamed = function(tobj) {
+         // read a TNamed class definition from I/O buffer
+         var ver = JSROOTIO.ReadVersion();
+         this.ReadTObject(tobj);
+         tobj['fName'] = this.ReadTString();
+         tobj['fTitle'] = this.ReadTString();
+         return this.CheckBytecount(ver, "ReadTNamed");
+      };
+
 
       
       JSROOTIO.TBuffer.prototype.ReadTList = function(list) {
@@ -923,10 +998,8 @@ var kClassMask = 0x80000000;
       this._version = version;
       this._typename = "JSROOTIO.TStreamer";
       
-      JSROOTIO.TStreamer.prototype.ReadBasicType = function(str, o, obj, prop) {
+      JSROOTIO.TStreamer.prototype.ReadBasicType = function(buf, obj, prop) {
          
-         var isPreAlloc = 1;
-
          // read basic types (known from the streamer info)
          switch (this[prop]['type']) {
             case kBase:
@@ -937,74 +1010,60 @@ var kClassMask = 0x80000000;
                break;
             case kCharStar:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'C');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'C');
                break;
             case kChar:
             case kLegacyChar:
-               obj[prop] = str.charCodeAt(o) & 0xff; o++;
+               obj[prop] = buf.b.charCodeAt(buf.o++) & 0xff;
                break;
             case kShort:
-               obj[prop] = JSROOTIO.ntoi2(str, o); o += 2;
+               obj[prop] = buf.ntoi2();
                break;
             case kInt:
             case kCounter:
-               obj[prop] = JSROOTIO.ntoi4(str, o); o += 4;
+               obj[prop] = buf.ntoi4(); 
                break;
             case kLong:
-               obj[prop] = JSROOTIO.ntoi8(str, o); o += 8;
+               obj[prop] = buf.ntoi8(); 
                break;
             case kFloat:
             case kDouble32:
-               obj[prop] = JSROOTIO.ntof(str, o); o += 4;
+               obj[prop] = buf.ntof();
                if (Math.abs(obj[prop]) < 1e-300) obj[prop] = 0.0;
                break;
             case kDouble:
-               obj[prop] = JSROOTIO.ntod(str, o); o += 8;
+               obj[prop] = buf.ntod();
                if (Math.abs(obj[prop]) < 1e-300) obj[prop] = 0.0;
                break;
             case kUChar:
-               obj[prop] = (str.charCodeAt(o) & 0xff) >>> 0; o++;
+               obj[prop] = (buf.b.charCodeAt(buf.o++) & 0xff) >>> 0;
                break;
             case kUShort:
-               obj[prop] = JSROOTIO.ntou2(str, o); o += 2;
+               obj[prop] = buf.ntou2();
                break;
             case kUInt:
-               obj[prop] = JSROOTIO.ntou4(str, o); o += 4;
+               obj[prop] = buf.ntou4(); 
                break;
             case kULong:
-               obj[prop] = JSROOTIO.ntou8(str, o); o += 8;
+               obj[prop] = buf.ntou8();
                break;
             case kBits:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
             case kLong64:
-               obj[prop] = JSROOTIO.ntoi8(str, o); o += 8;
+               obj[prop] = buf.ntoi8();
                break;
             case kULong64:
-               obj[prop] = JSROOTIO.ntou8(str, o); o += 8;
+               obj[prop] = buf.ntou8();
                break;
             case kBool:
-               obj[prop] = str.charCodeAt(o) & 0xff; o++;
+               obj[prop] = (buf.b.charCodeAt(buf.o++) & 0xff) != 0; 
                break;
             case kFloat16:
-               //obj[prop] = JSROOTIO.ntof(str, o); o += 4;
-               o += 2;
+               obj[prop] = 0;
+               buf.o += 2;
                break;
-/*            case kObject:
-               classname = this[prop]['typename'];
-               if (JSROOTIO.GetStreamer(classname)) {
-                  var clRef = gFile.ReadClass(str, o);
-                  if (clRef && clRef['name']) o = clRef['off'];
-                  obj[prop] = new Object();
-                  obj[prop]['_typename'] = 'JSROOTIO.' + classname;
-                  o = JSROOTIO.GetStreamer(classname).Stream(obj[prop], str, o);
-                  JSROOTCore.addMethods(obj[prop]);
-               }
-               break;
-*/            case kAny:
-               break;
+            case kAny:
             case kAnyp:
             case kObjectp:
             case kObject:   
@@ -1013,31 +1072,21 @@ var kClassMask = 0x80000000;
                   classname = classname.substr(0, classname.length - 1);
 
                obj[prop] = {};
-               var buf = new JSROOTIO.TBuffer(str, o);
                buf.ClassStreamer(obj[prop], classname);
-               o = buf.o;
                break;
                
             case kAnyP:
             case kObjectP:
-               var buf = new JSROOTIO.TBuffer(str, o);
                obj[prop] = buf.ReadObjectAny();
-               o = buf.o;
                break;
             case kTString:
-               var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-               obj[prop] = so['str'];
+               obj[prop] = buf.ReadTString();
                break;
             case kTObject:
-               o += 2; // skip version
-               o += 4; // skip unique id
-               obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
+               buf.ReadTObject(obj);
                break;
             case kTNamed:
-               var named = JSROOTIO.ReadTNamed(str, o);
-               o = named['off'];
-               obj['fName'] = named['name'];
-               obj['fTitle'] = named['title'];
+               buf.ReadTNamed(obj);
                break;
             case kAnyPnoVT:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
@@ -1077,91 +1126,80 @@ var kClassMask = 0x80000000;
                break;
             case kOffsetL+kShort:
             case kOffsetL+kUShort:
-               var n_el = str.charCodeAt(o) & 0xff;
-               var array = JSROOTIO.ReadFastArray(str, o, n_el, 'S');
-               obj[prop] = array['array'];
-               o = array['off'];
+               alert("Strange code was here????"); // var n_el = str.charCodeAt(o) & 0xff;
+               var n_el  = this[prop]['length'];
+               obj[prop] = buf.ReadFastArray(n_el, 'S');
                break;
             case kOffsetL+kInt:
-            case kOffsetL+kUInt:
-               //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
-               var array = JSROOTIO.ReadFastArray(str, o, n_el, 'I');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadFastArray(n_el, 'I');
+               break;
+            case kOffsetL+kUInt:
+               var n_el  = this[prop]['length'];
+               obj[prop] = buf.ReadFastArray(n_el, 'U');
+               break;
+            case kOffsetL+kULong:
+            case kOffsetL+kULong64:
+               var n_el  = this[prop]['length'];
+               obj[prop] = buf.ReadFastArray(n_el, 'LU');
                break;
             case kOffsetL+kLong:
-            case kOffsetL+kULong:
             case kOffsetL+kLong64:
-            case kOffsetL+kULong64:
-               //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
-               var array = JSROOTIO.ReadFastArray(str, o, n_el, 'L');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadFastArray(n_el, 'L');
                break;
             case kOffsetL+kFloat:
             case kOffsetL+kDouble32:
                //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
-               var array = JSROOTIO.ReadFastArray(str, o, n_el, 'F');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadFastArray(n_el, 'F');
                break;
             case kOffsetL+kDouble:
                //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
-               var array = JSROOTIO.ReadFastArray(str, o, n_el, 'D');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadFastArray(n_el, 'D');
                break;
             case kOffsetP+kChar:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'C');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'C');
                break;
             case kOffsetP+kShort:
             case kOffsetP+kUShort:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'S');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'S');
                break;
             case kOffsetP+kInt:
+               var n_el = obj[this[prop]['cntname']];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'I');
+               break;
             case kOffsetP+kUInt:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'I');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'U');
                break;
-            case kOffsetP+kLong:
             case kOffsetP+kULong:
-            case kOffsetP+kLong64:
             case kOffsetP+kULong64:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'L');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'LU');
+               break;
+            case kOffsetP+kLong:
+            case kOffsetP+kLong64:
+               var n_el = obj[this[prop]['cntname']];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'L');
                break;
             case kOffsetP+kFloat:
             case kOffsetP+kDouble32:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'F');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'F');
                break;
             case kOffsetP+kDouble:
                var n_el = obj[this[prop]['cntname']];
-               var array = JSROOTIO.ReadBasicPointer(str, o, n_el, 'D');
-               obj[prop] = array['array'];
-               o = array['off'];
+               obj[prop] = buf.ReadBasicPointer(n_el, 'D');
                break;
             default:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
          }
-         return o;
+         return buf.o;
       };
 
       JSROOTIO.TStreamer.prototype.Stream = function(obj, str, o) {
@@ -1245,18 +1283,11 @@ var kClassMask = 0x80000000;
                   // skip TQObject...
                   break;
                default:
+                  // basic types and standard streamers
+                  var buf = new JSROOTIO.TBuffer(str, o);
                   
-                  //if ((this[prop]['typename']=="TList") || (this[prop]['typename']=="TList*")) {
-                  //   console.log("Trying to read list normally. Its type is " + this[prop]['type']);
-                  //} 
+                  o = this.ReadBasicType(buf, obj, prop);
                   
-                  if (this[prop]['type'] == kAny && typeof(streamUserType) == 'function') {
-                     o = streamUserType(this, str, o, obj, prop);
-                  }
-                  else {
-                     // basic types and standard streamers
-                     o = this.ReadBasicType(str, o, obj, prop);
-                  }
                   break;
             }
          }
@@ -1376,9 +1407,9 @@ var kClassMask = 0x80000000;
             o = array['off'];
          }
          else {
-            var array = JSROOTIO.ReadFastArray(str, o, 5);
-            element['maxindex'] = array['array'];
-            o = array['off'];
+            var buf = new JSROOTIO.TBuffer(str, o);
+            element['maxindex'] = buf.ReadFastArray(5, 'U');
+            o = buf.o;
          }
          var so = JSROOTIO.ReadTString(str, o); o = so['off'];
          element['typename'] = so['str'];
@@ -1772,104 +1803,6 @@ var kClassMask = 0x80000000;
 //    ..->..          Title     = Title of the object
 //    ----->          DATA      = Data bytes associated to the object
 //
-/*
-   function TH1(name, tile, nbinsx, xlow, xup)
-   {
-      this.fName = name;
-      this.fTitle = title;
-      ...
-   }
-
-   ReadBasicType = function(str, o, type) {
-      ['off'] = o;
-      switch (type) {
-         case "Char_t":
-            ['val'] = str.charCodeAt(o) & 0xff; ['off']++;
-            break;
-         case "UChar_t":
-            ['val'] = (str.charCodeAt(o) & 0xff) >>> 0; ['off']++;
-            break;
-         case "Short_t":
-            ['val']  = (str.charCodeAt(o)   & 0xff) << 8;
-            ['val'] += (str.charCodeAt(o+1) & 0xff);
-            ['off'] += 2;
-            break;
-         case "UShort_t":
-            ['val']  = ((str.charCodeAt(o)   & 0xff) << 8) >>> 0;
-            ['val'] +=  (str.charCodeAt(o+1) & 0xff) >>> 0;
-            ['off'] += 2;
-            break;
-         case "Int_t":
-            ['val']  = (b.charCodeAt(o)   & 0xff) << 24;
-            ['val'] += (b.charCodeAt(o+1) & 0xff) << 16;
-            ['val'] += (b.charCodeAt(o+2) & 0xff) << 8;
-            ['val'] += (b.charCodeAt(o+3) & 0xff);
-            ['off'] += 4;
-            break;
-         case "UInt_t":
-            ['val']  = ((b.charCodeAt(o)   & 0xff) << 24) >>> 0;
-            ['val'] += ((b.charCodeAt(o+1) & 0xff) << 16) >>> 0;
-            ['val'] += ((b.charCodeAt(o+2) & 0xff) << 8)  >>> 0;
-            ['val'] +=  (b.charCodeAt(o+3) & 0xff) >>> 0;
-            ['off'] += 4;
-            break;
-         case "Long_t":
-            ['val']  = (b.charCodeAt(o)   & 0xff) << 56;
-            ['val'] += (b.charCodeAt(o+1) & 0xff) << 48;
-            ['val'] += (b.charCodeAt(o+2) & 0xff) << 40;
-            ['val'] += (b.charCodeAt(o+3) & 0xff) << 32;
-            ['val'] += (b.charCodeAt(o+4) & 0xff) << 24;
-            ['val'] += (b.charCodeAt(o+5) & 0xff) << 16;
-            ['val'] += (b.charCodeAt(o+6) & 0xff) << 8;
-            ['val'] += (b.charCodeAt(o+7) & 0xff);
-            ['off'] += 8;
-            break;
-         case "ULong_t":
-            ['val']  = ((b.charCodeAt(o)   & 0xff) << 56) >>> 0;
-            ['val'] += ((b.charCodeAt(o+1) & 0xff) << 48) >>> 0;
-            ['val'] += ((b.charCodeAt(o+2) & 0xff) << 40) >>> 0;
-            ['val'] += ((b.charCodeAt(o+3) & 0xff) << 32) >>> 0;
-            ['val'] += ((b.charCodeAt(o+4) & 0xff) << 24) >>> 0;
-            ['val'] += ((b.charCodeAt(o+5) & 0xff) << 16) >>> 0;
-            ['val'] += ((b.charCodeAt(o+6) & 0xff) << 8) >>> 0;
-            ['val'] +=  (b.charCodeAt(o+7) & 0xff) >>> 0;
-            ['off'] += 8;
-            break;
-      }
-   }
-
-   function ReadBasicTypeElem(name, index)
-   {
-      name *x=(name*)(arr[index]+ioffset);
-      b >> *x;
-   }
-
-   TStreamerInfo.ReadBuffer = function(buffer, o, obj) {
-      for (element in streamerinfo) {
-         element.Read(buffer, o, obj);
-      }
-   }
-
-   element.Read = function(buffer, o, obj) {
-      obj[obj['member_name']] = ReadString(buffer, o);
-   }
-
-   element.AddMember = function(obj, member_name, val) {
-      obj[member_name] = val;
-   }
-
-   element.AddMethod = function(obj, method) {
-      obj[obj['method_name']] = method;
-   }
-
-   element.AddMethod = function(obj, type) {
-      switch (type) {
-         case "Char_t":
-            obj['Read'] = readChar(str, o);
-            break;
-         ...
-   }
-*/
 
 (function(){
 
