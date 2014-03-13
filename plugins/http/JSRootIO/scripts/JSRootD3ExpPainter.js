@@ -3261,9 +3261,6 @@ var gStyle = {
       
       // here we deciding how histogram will look like and how will be shown 
       this.options = JSROOTPainter.decodeOptions(opt, this.histo, this.pad);
-
-      console.log("Use options opt = " + opt +  " err = " + this.options.Error);
-      
 //      if (this.histo['_typename'] == "JSROOTIO.TProfile")
 //         this.options.Error = 11;
       
@@ -4797,8 +4794,6 @@ var gStyle = {
 
    JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() 
    {
-      console.log("draw hist errors");
-      
       var w = this.svg_frame.attr("width"), h = this.svg_frame.attr("height");
       /* Add a panel for each data point */
       var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
@@ -4915,8 +4910,6 @@ var gStyle = {
       
       delete this.draw_bins; this.draw_bins = null;
       
-      console.log("DrawBins " + this.draw_content);
-
       if (!this.draw_content) return;
       
       this.CreateDrawBins();
@@ -5071,8 +5064,6 @@ var gStyle = {
    JSROOTPainter.drawHistogram1Dnew = function(vis, histo, opt) {
 
       //if (console) console.time("DrawTH1");
-      
-      console.log("drawHistogram1Dnew opt = " + opt);
       
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist1DPainter(histo);

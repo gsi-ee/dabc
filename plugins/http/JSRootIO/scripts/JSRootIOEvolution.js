@@ -339,65 +339,46 @@ var kClassMask = 0x80000000;
          };
       }
 
-      var class_name = "";
+      
+      if (clRef['name'] == -1) {
+         alert("Cannot read class, TODO:try to skip object content !!!");
+         return {
+            'off' : o,
+            'obj' : null
+         };
+      }
       
       var obj = {};
+      
+      if (clRef['name'] == 'TObject' || clRef['name'] == 'TMethodCall') {
+         o += 2; // skip version
+         obj['fUniqueID'] = JSROOTIO.ntou4(str, o); o += 4; 
+         obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
+      }
+      else if (clRef['name'] == 'TObjArray') {
+         var array = JSROOTIO.ReadTObjArray(str, o);
+         obj = array;
+         o = array['off'];
+         console.log("Read TObjArray");
+      }
+      else if (clRef['name'] == 'TList') {
+         var array = JSROOTIO.ReadTList(str, o);
+         obj = array;
+         o = array['off'];
+         console.log("Read TList");
+      }
+      else if (JSROOTIO.GetStreamer(clRef['name'])) {
+         o = JSROOTIO.GetStreamer(clRef['name']).Stream(obj, str, o);
+      }
 
+      obj['_typename'] = 'JSROOTIO.' + clRef['name'];
+      JSROOTCore.addMethods(obj);
       
-      // if (JSROOTIO.debug) console.log("Read class before o=" + startpos + "  after = " + o);
+      if (clRef['fVersion'] == 0)
+         console.log("Should map object with different id???");
       
-      // use clRef['name'] and use previous name if == -1
-      if (clRef['name'] && clRef['name'] != -1) {
-         class_name = clRef['name'];
-      }
-      else if (!clRef['name'] && clRef['tag']) {
-         class_name = gFile.GetClassMap(clRef['tag']);
-         if (class_name != -1)
-            obj['_typename'] = 'JSROOTIO.' + class_name;
-         class_name = 0;
-      }
-      if (class_name && class_name != '' && class_name != -1) {
-         if (class_name == 'TObject' || class_name == 'TMethodCall') {
-            o += 2; // skip version
-            o += 4; // skip unique id
-            obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
-         }
-         else if (class_name == 'TObjArray') {
-            var array = JSROOTIO.ReadTObjArray(str, o);
-            obj = array;
-            o = array['off'];
-         }
-         else if (JSROOTIO.GetStreamer(class_name)) {
-            o = JSROOTIO.GetStreamer(class_name).Stream(obj, str, o);
-         }
-         obj['_typename'] = 'JSROOTIO.' + class_name;
-         JSROOTCore.addMethods(obj);
-         //if (clRef['tag']) gFile.MapObject(obj, clRef['tag']);
+      gFile.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
          
-         if (clRef['fVersion'] == 0)
-            console.log("Should map object with different id???");
-         
-         gFile.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
-      }
-      else if (clRef['name'] === 0 && clRef['tag'] != 0) {
-         // already seen (and read) object...
-         alert("NEVER COME HERE");
-         var ro = gFile.GetMappedObject(clRef['tag']+4);
-         if (ro) {
-            obj = ro; // use direct object instead of JSROOTCore.clone(ro);
-            class_name = obj['_typename'];
-            class_name = class_name.replace('JSROOTIO.', '');
-            
-            console.log("Found object with TAG " + (clRef['tag']+4) + "  class " + class_name);
-            
-         }
-      }
-      else {
-         // simply skip empty object...
-         //o += 2; // skip version
-         //o += 4; // skip unique id
-         //obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
-      }
       return {
          'off' : o,
          'obj' : obj
@@ -528,7 +509,7 @@ var kClassMask = 0x80000000;
          o = obj['off'];
          list['arr'].push(obj['obj']);
       }
-      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTObjArray");;
+      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTObjArray");
       return list;
    };
 
