@@ -769,7 +769,7 @@ var kClassMask = 0x80000000;
          return this.CheckBytecount(ver, "ReadTObjArray");
       };
 
-      JSROOTIO.TBuffer.prototype.ReadTClonesArray = function(list, str, o) {
+      JSROOTIO.TBuffer.prototype.ReadTClonesArray = function(list) {
          list['_typename'] = "JSROOTIO.TClonesArray";
          list['name'] = "";
          list['arr'] = new Array();
@@ -799,7 +799,7 @@ var kClassMask = 0x80000000;
          }
          return this.CheckBytecount(ver, "ReadTClonesArray");
       };
-
+      
       JSROOTIO.TBuffer.prototype.ReadTCollection = function(list, str, o) {
          list['_typename'] = "JSROOTIO.TCollection";
          list['name'] = "";
@@ -816,7 +816,106 @@ var kClassMask = 0x80000000;
          }
          return this.CheckBytecount(ver,"ReadTCollection");
       };
+      
+      JSROOTIO.TBuffer.prototype.ReadStreamerInfo = function(streamerinfo) {
+         // stream an object of class TStreamerInfo from the I/O buffer
+         var R__v = this.ReadVersion();
+         if (R__v['val'] > 1) {
+            this.ReadTNamed(streamerinfo);
+            streamerinfo['name'] = streamerinfo['fName'];
+            streamerinfo['title'] = streamerinfo['fTitle'];
+            streamerinfo['checksum'] = this.ntou4();
+            streamerinfo['classversion'] = this.ntou4();
+            streamerinfo['elements'] = this.ReadObjectAny();
+            
+            // var clRef = this.ReadClass();
+            // streamerinfo['elements'] = this.ReadTObjArray();
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerInfo");
+      };
+      
+      JSROOTIO.TBuffer.prototype.ReadStreamerElement = function(element) {
+         // stream an object of class TStreamerElement
+         var R__v = this.ReadVersion();
+         this.ReadTNamed(element);
+         element['name'] = element['fName'];
+         element['title'] = element['fTitle'];
+         element['type'] = this.ntou4(); 
+         element['size'] = this.ntou4();
+         element['length'] = this.ntou4();
+         element['dim'] = this.ntou4();
+         if (R__v['val'] == 1) {
+            var n = this.ntou4();
+            element['maxindex'] = this.ReadFastArray(n, 'U');
+         } else {
+            element['maxindex'] = this.ReadFastArray(5, 'U');
+         }
+         element['typename'] = this.ReadTString();
+         if ((element['type'] == 11) && (element['typename'] == "Bool_t" ||
+              element['typename'] == "bool"))
+            element['type'] = 18;
+         if (R__v['val'] > 1) {
+            element['uuid'] = 0;
+         }
+         if (R__v['val'] <= 2) {
+            // In TStreamerElement v2, fSize was holding the size of
+            // the underlying data type.  In later version it contains
+            // the full length of the data member.
+         }
+         if (R__v['val'] == 3) {
+            element['xmin'] = this.ntou4();
+            element['xmax'] = this.ntou4(); 
+            element['factor'] = this.ntou4();
+            //if (element['factor'] > 0) SetBit(kHasRange);
+         }
+         if (R__v['val'] > 3) {
+            //if (TestBit(kHasRange)) GetRange(GetTitle(),fXmin,fXmax,fFactor);
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerElement");
+      };
 
+
+      JSROOTIO.TBuffer.prototype.ReadStreamerBase = function(streamerbase) {
+         // stream an object of class TStreamerBase
+         var R__v = this.ReadVersion();
+         this.ReadStreamerElement(streamerbase);
+         if (R__v['val'] > 2) {
+            streamerbase['baseversion'] = this.ntou4(); 
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerBase");
+      };
+
+      JSROOTIO.TBuffer.prototype.ReadStreamerBasicType = function(streamerbase) {
+         // stream an object of class TStreamerBasicType
+         var R__v = this.ReadVersion();
+         if (R__v['val'] > 1) {
+            this.ReadStreamerElement(streamerbase);
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerBasicType");
+      };
+
+      JSROOTIO.TBuffer.prototype.ReadStreamerBasicPointer = function(streamerbase) {
+         // stream an object of class TStreamerBasicPointer
+         var R__v = this.ReadVersion();
+         if (R__v['val'] > 1) {
+            this.ReadStreamerElement(streamerbase);
+            streamerbase['countversion'] = this.ntou4();
+            streamerbase['countName'] = this.ReadTString();
+            streamerbase['countClass'] = this.ReadTString();
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerBasicPointer");
+      };
+
+      JSROOTIO.TBuffer.prototype.ReadStreamerSTL = function(streamerSTL) {
+         // stream an object of class TStreamerSTL
+         var R__v = this.ReadVersion();
+         if (R__v['val'] > 2) {
+            this.ReadStreamerElement(streamerSTL);
+            streamerSTL['stltype'] = this.ntou4();
+            streamerSTL['ctype'] = this.ntou4();
+         }
+         return this.CheckBytecount(R__v, "ReadStreamerSTL");
+      };
       
       JSROOTIO.TBuffer.prototype.ReadClass = function() {
          // read class definition from I/O buffer
@@ -918,6 +1017,21 @@ var kClassMask = 0x80000000;
             this.ClassStreamer(obj, "TPad");
             // we repair here correct position - no warning to outside
             this.CheckBytecount(ver);
+         }
+         else if (classname == "TStreamerInfo") {
+            this.ReadStreamerInfo(obj);
+         }
+         else if (classname == "TStreamerBase") {
+            this.ReadStreamerBase(obj);
+         }
+         else if (classname == "TStreamerBasicType") {
+            this.ReadStreamerBasicType(obj);
+         } 
+         else if ((classname == "TStreamerBasicPointer") ||
+                  (classname == "TStreamerLoop")) {
+            this.ReadStreamerBasicPointer(obj);
+         } else if (classname == "TStreamerSTL") {
+            this.ReadStreamerSTL(obj);
          }
          else if (JSROOTIO.GetStreamer(classname)) {
             JSROOTIO.GetStreamer(classname).Stream(obj, this);
