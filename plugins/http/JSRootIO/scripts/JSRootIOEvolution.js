@@ -2557,9 +2557,7 @@ var kClassMask = 0x80000000;
             //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
             classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
             
-            if (this.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)!=-1)
-               alert("Class tag already exists for class " + so['str']);
-            else 
+            if (this.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)==-1)
                this.AddClassMap(so['str'], gFile.fTagOffset + startpos + kMapOffset);
          }
          else {
