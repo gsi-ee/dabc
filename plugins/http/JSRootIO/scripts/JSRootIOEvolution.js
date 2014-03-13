@@ -321,8 +321,7 @@ var kClassMask = 0x80000000;
       };
    };
 
-   JSROOTIO.ReadObjectAny = function(str, o, previous) {
-      var class_name = previous;
+   JSROOTIO.ReadObjectAny = function(str, o) {
       var startpos = o;
       var clRef = gFile.ReadClass(str, o);
       o = clRef['off'];
@@ -331,19 +330,17 @@ var kClassMask = 0x80000000;
       if ('objtag' in clRef) {
          var obj = gFile.GetMappedObject(clRef['objtag']);
          if (obj!=null) {
-            class_name = obj['_typename'];
-            class_name = class_name.replace('JSROOTIO.', '');
-            
-            console.log("Found object with TAG " + clRef['objtag'] + "  class " + class_name);
+            console.log("Found object with TAG " + clRef['objtag'] + "  class " + obj['_typename']);
          }
 
          return {
-            'cln' : class_name,
             'off' : o,
             'obj' : obj
          };
       }
 
+      var class_name = "";
+      
       var obj = {};
 
       
@@ -402,7 +399,6 @@ var kClassMask = 0x80000000;
          //obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
       }
       return {
-         'cln' : class_name,
          'off' : o,
          'obj' : obj
       };
@@ -423,24 +419,11 @@ var kClassMask = 0x80000000;
          var so = JSROOTIO.ReadTString(str, o); o = so['off'];
          list['name'] = so['str'];
          var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-         var class_name = '';
          for (var i = 0; i < nobjects; ++i) {
             
-            if (JSROOTIO.debug) 
-               console.log("TList reading object at position = " + o);
-            
-            obj = this.ReadObjectAny(str, o, class_name);
+            obj = this.ReadObjectAny(str, o);
             o = obj['off'];
-            
-            if (JSROOTIO.debug)
-               console.log("TList did reading object position = " + o);
-
-            if (obj['cln'] && obj['cln'] != '' && obj['cln'] != -1) {
-               class_name = obj['cln'];
-               list['arr'].push(obj['obj']);
-            } else {
-               list['arr'].push(null);
-            }
+            list['arr'].push(obj['obj']);
 
             var nbig = str.charCodeAt(o) & 0xff; o++;
             if ((ver['val'] > 4) && (nbig == 255))  {
@@ -457,10 +440,6 @@ var kClassMask = 0x80000000;
             } else {
                list['opt'].push("");
             }
-            
-            if (JSROOTIO.debug) 
-               console.log("reading string len = " + nbig + " version " + ver['val'] + " oo=" + oo + " o=" + o);
-            
          }
       }
 
@@ -544,16 +523,10 @@ var kClassMask = 0x80000000;
       }
       var nobjects = JSROOTIO.ntou4(str, o); o += 4;
       var lowerbound = JSROOTIO.ntou4(str, o); o += 4;
-      var class_name = '';
       for (var i = 0; i < nobjects; i++) {
-         obj = this.ReadObjectAny(str, o, class_name);
+         var obj = this.ReadObjectAny(str, o);
          o = obj['off'];
-         if (obj['cln'] && obj['cln'] != '' && obj['cln'] != -1) {
-            class_name = obj['cln'];
-            list['arr'].push(obj['obj']);
-         } else {
-            list['arr'].push(null);
-         }
+         list['arr'].push(obj['obj']);
       }
       list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTObjArray");;
       return list;
@@ -2450,8 +2423,8 @@ var kClassMask = 0x80000000;
          if (key == null) return null;
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
-               var obj = JSROOTIO.ReadObjectAny(objbuf['unzipdata'], offset, "");
-               if (obj && obj['obj']) {
+               var obj = JSROOTIO.ReadObjectAny(objbuf['unzipdata'], offset);
+               if (obj['obj']!=null) {
                   displayObject(obj['obj'], cycle, obj_index);
                   obj_list.push(obj_name+cycle);
                   obj_index++;

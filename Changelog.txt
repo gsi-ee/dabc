@@ -5,6 +5,7 @@ current functionality of the framework.
 13.03.2014
 1. Fix problem when only histogram errors should be drawn
 2. Correctly display fill colour of TF1
+3. Simplify logic in ReadObjectAny
 
 
 12.03.2014
