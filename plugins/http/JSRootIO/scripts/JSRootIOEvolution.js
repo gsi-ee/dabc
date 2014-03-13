@@ -168,19 +168,6 @@ var kClassMask = 0x80000000;
    };
 
 
-   JSROOTIO.ReadStaticArray = function(str, o) {
-      // read array of integers from the I/O buffer
-      var array = {}
-      array['array'] = new Array();
-      var n = JSROOTIO.ntou4(str, o); o += 4;
-      for (var i = 0; i < n; ++i) {
-         array['array'][i] = JSROOTIO.ntou4(str, o); o += 4;
-      }
-      array['off'] = o;
-      return array;
-   };
-
-
    JSROOTIO.ReadTString = function(str, off) {
       // stream a TString object from buffer
       var len = str.charCodeAt(off) & 0xff;
@@ -818,8 +805,6 @@ var kClassMask = 0x80000000;
       JSROOTIO.TBuffer.prototype.ReadTStreamerInfo = function(streamerinfo) {
          // stream an object of class TStreamerInfo from the I/O buffer
          
-         console.log("Reading ReadStreamerInfo");
-         
          var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadTNamed(streamerinfo);
@@ -832,17 +817,12 @@ var kClassMask = 0x80000000;
             streamerinfo['classversion'] = this.ntou4();
             
             streamerinfo['elements'] = this.ReadObjectAny();
-            
-            // var clRef = this.ReadClass();
-            // streamerinfo['elements'] = this.ReadTObjArray();
          }
          return this.CheckBytecount(R__v, "ReadTStreamerInfo");
       };
       
       JSROOTIO.TBuffer.prototype.ReadStreamerElement = function(element) {
          // stream an object of class TStreamerElement
-
-         console.log("Reading ReadStreamer element");
 
          var R__v = this.ReadVersion();
          this.ReadTNamed(element);
@@ -886,8 +866,6 @@ var kClassMask = 0x80000000;
       JSROOTIO.TBuffer.prototype.ReadStreamerBase = function(streamerbase) {
          // stream an object of class TStreamerBase
 
-         console.log("Reading ReadStreamer Base");
-
          var R__v = this.ReadVersion();
          this.ReadStreamerElement(streamerbase);
          if (R__v['val'] > 2) {
@@ -921,7 +899,6 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.TBuffer.prototype.ReadStreamerSTL = function(streamerSTL) {
          // stream an object of class TStreamerSTL
-         console.log("Reading ReadStreamer STL");
 
          var R__v = this.ReadVersion();
          if (R__v['val'] > 2) {
@@ -1018,7 +995,7 @@ var kClassMask = 0x80000000;
          //if (!'_typename' in obj) 
          //   obj['_typename'] = 'JSROOTIO.' + classname;
          
-         console.log("Start streaming of class " + classname);
+         // console.log("Start streaming of class " + classname);
          
          if (classname == 'TObject' || classname == 'TMethodCall') {
             this.ReadTObject(obj);
@@ -1420,283 +1397,11 @@ var kClassMask = 0x80000000;
 
       this._version = version;
       this._typename = "JSROOTIO.StreamerInfo";
-
-      JSROOTIO.StreamerInfo.prototype.ReadObjArray = function(str, o) {
-         // read a TObjArray class definition from I/O buffer
-         // and stream all objects in the array
-         var objarray = {};
-         objarray['name'] = "";
-         objarray['array'] = new Array();
-         var ver = JSROOTIO.ReadVersion(str, o);
-         o = ver['off'];
-         if (ver['val'] > 2) {
-            o += 2; // skip version
-            o += 8; // object bits & unique id
-         }
-         if (ver['val'] > 1) {
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            objarray['name'] = so['str'];
-         }
-         var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-         o += 4; // fLowerBound
-         for (var i = 0; i < nobjects; ++i) {
-            objarray['array'][i] = this.ReadObject(str, o);
-            o = objarray['array'][i]['off'];
-         }
-         objarray['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadObjArray");
-         return objarray;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadElements = function(str, o) {
-         // stream all the elements in the array from the I/O buffer
-         var clRef = gFile.ReadClass(str, o);
-         o = clRef['off'];
-         return this.ReadObjArray(str, o);
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerInfo = function(str, o) {
-         // stream an object of class TStreamerInfo from the I/O buffer
-         var streamerinfo = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         if (R__v['val'] > 1) {
-            var named = JSROOTIO.ReadTNamed(str, o);
-            o = named['off'];
-            streamerinfo['name'] = named['name'];
-            streamerinfo['title'] = named['title'];
-            streamerinfo['checksum'] = JSROOTIO.ntou4(str, o); o += 4;
-            streamerinfo['classversion'] = JSROOTIO.ntou4(str, o); o += 4;
-            streamerinfo['elements'] = this.ReadElements(str, o);
-            o = streamerinfo['elements']['off'];
-         }
-         streamerinfo['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerInfo");
-         return streamerinfo;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerElement = function(str, o) {
-         // stream an object of class TStreamerElement
-         var element = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         var named = JSROOTIO.ReadTNamed(str, o);
-         o = named['off'];
-         element['name'] = named['name'];
-         element['title'] = named['title'];
-         element['type'] = JSROOTIO.ntou4(str, o); o += 4;
-         element['size'] = JSROOTIO.ntou4(str, o); o += 4;
-         element['length'] = JSROOTIO.ntou4(str, o); o += 4;
-         element['dim'] = JSROOTIO.ntou4(str, o); o += 4;
-         if (R__v['val'] == 1) {
-            var array = JSROOTIO.ReadStaticArray(str, o);
-            element['maxindex'] = array['array'];
-            o = array['off'];
-         }
-         else {
-            var buf = new JSROOTIO.TBuffer(str, o);
-            element['maxindex'] = buf.ReadFastArray(5, 'U');
-            o = buf.o;
-         }
-         var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-         element['typename'] = so['str'];
-         GetExecID = function(str, o) {
-            if (element['typename'] == "TRef") return 0;
-         }
-         if ((element['type'] == 11) && (element['typename'] == "Bool_t" ||
-              element['typename'] == "bool"))
-            element['type'] = 18;
-         if (R__v['val'] > 1) {
-            element['uuid'] = 0;
-            // check if element is a TRef or TRefArray
-            GetExecID();
-         }
-         if (R__v['val'] <= 2) {
-            // In TStreamerElement v2, fSize was holding the size of
-            // the underlying data type.  In later version it contains
-            // the full length of the data member.
-         }
-         if (R__v['val'] == 3) {
-            element['xmin'] = JSROOTIO.ntou4(str, o); o += 4;
-            element['xmax'] = JSROOTIO.ntou4(str, o); o += 4;
-            element['factor'] = JSROOTIO.ntou4(str, o); o += 4;
-            //if (element['factor'] > 0) SetBit(kHasRange);
-         }
-         if (R__v['val'] > 3) {
-            //if (TestBit(kHasRange)) GetRange(GetTitle(),fXmin,fXmax,fFactor);
-         }
-         element['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerElement");
-         return element;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerBase = function(str, o) {
-         // stream an object of class TStreamerBase
-         var streamerbase = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         streamerbase = this.ReadStreamerElement(str, o);
-         o = streamerbase['off'];
-         if (R__v['val'] > 2) {
-            streamerbase['baseversion'] = JSROOTIO.ntou4(str, o); o += 4;
-         }
-         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBase");
-         return streamerbase;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadBuffer = function(str, o) {
-         // read a streamer element from a buffer
-         return this.ReadStreamerElement(str, o);
-      };
-
-      JSROOTIO.StreamerInfo.prototype.GenericReadAction = function(str, o) {
-         // generic read from a buffer
-         return this.ReadBuffer(str, o);
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadClassBuffer = function(str, o) {
-         // deserialize class information from a buffer
-         return this.GenericReadAction(str, o);
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerBasicType = function(str, o) {
-         // stream an object of class TStreamerBasicType
-         var streamerbase = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         if (R__v['val'] > 1) {
-            streamerbase = this.ReadClassBuffer(str, o);
-            o = streamerbase['off'];
-         }
-         else {
-         }
-         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBasicType");
-         return streamerbase;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerObject = function(str, o) {
-         // stream an object of class TStreamerObject
-         var streamerbase = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         if (R__v['val'] > 1) {
-            streamerbase = this.ReadClassBuffer(str, o);
-            o = streamerbase['off'];
-         }
-         else {
-            //====process old versions before automatic schema evolution
-            //return ReadStreamerElement(str, o);
-         }
-         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerObject");
-         return streamerbase;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerBasicPointer = function(str, o) {
-         // stream an object of class TStreamerBasicPointer
-         var streamerbase = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         if (R__v['val'] > 1) {
-            streamerbase = this.ReadClassBuffer(str, o);
-            o = streamerbase['off'];
-            streamerbase['countversion'] = JSROOTIO.ntou4(str, o); o += 4;
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            streamerbase['countName'] = so['str'];
-            so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            streamerbase['countClass'] = so['str'];
-         }
-         else {
-         }
-         streamerbase['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerBasicPointer");
-         return streamerbase;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadStreamerSTL = function(str, o) {
-         // stream an object of class TStreamerSTL
-         var streamerSTL = {};
-         var R__v = JSROOTIO.ReadVersion(str, o);
-         o = R__v['off'];
-         if (R__v['val'] > 2) {
-            streamerSTL = this.ReadClassBuffer(str, o);
-            o = streamerSTL['off'];
-            streamerSTL['stltype'] = JSROOTIO.ntou4(str, o); o += 4;
-            streamerSTL['ctype'] = JSROOTIO.ntou4(str, o); o += 4;
-         }
-         streamerSTL['off'] = JSROOTIO.CheckBytecount(R__v, o, "ReadStreamerSTL");
-         return streamerSTL;
-      };
-
-      JSROOTIO.StreamerInfo.prototype.ReadObjString = function(str, o) {
-         // stream an object of class TObjString
-         var version = JSROOTIO.ReadVersion(str, o);
-         o = version['off'];
-         o += 2; // skip version
-         o += 8; // object bits & unique id
-
-         var so = JSROOTIO.ReadTString(str, o);
-         
-         so['off'] = JSROOTIO.CheckBytecount(version, so['off'], "ReadObjString");
-         
-         return so; 
-      };
-      
-      JSROOTIO.StreamerInfo.prototype.ReadTList = function(str, o) {
-         // stream all objects in the collection from the I/O buffer
-         var list = {};
-         list['name'] = "";
-         list['array'] = new Array();
-         var ver = JSROOTIO.ReadVersion(str, o);
-         o = ver['off'];
-         if (ver['val'] > 3) {
-            o += 2; // skip version
-            o += 8; // object bits & unique id
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            list['name'] = so['str'];
-            var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-            // console.log("sinfo list length = " +  nobjects);
-            for (var i = 0; i < nobjects; ++i) {
-               list['array'][i] = this.ReadObject(str, o);
-               o = list['array'][i]['off'];
-               
-               var nbig = str.charCodeAt(o) & 0xff; o++;
-               if ((ver['val'] > 4) && (nbig == 255))  {
-                  nbig = JSROOTIO.ntou4(str, o); o += 4;
-               }
-               if (nbig > 0) o += nbig;
-            }
-         }
-         list['off'] = JSROOTIO.CheckBytecount(ver, o, "StreamerInfo-ReadTList");
-         return list;
-      };
-
-
-      JSROOTIO.StreamerInfo.prototype.ReadObject = function(str, o) {
-         // read object from I/O buffer
-         var clRef = gFile.ReadClass(str, o);
-         // console.log("Reading sinfo class " + clRef['name']);
-         o = clRef['off'];
-         if (clRef['name'] == "TStreamerInfo")
-            return this.ReadStreamerInfo(str, o);
-         if (clRef['name'] == "TStreamerBase")
-            return this.ReadStreamerBase(str, o);
-         if (clRef['name'] == "TStreamerBasicType")
-            return this.ReadStreamerBasicType(str, o);
-         if ((clRef['name'] == "TStreamerBasicPointer") ||
-             (clRef['name'] == "TStreamerLoop"))
-            return this.ReadStreamerBasicPointer(str, o);
-         if (clRef['name'] == "TStreamerSTL")
-            return this.ReadStreamerSTL(str, o);
-         if (clRef['name'] == "TList")
-            return this.ReadTList(str, o);
-         if (clRef['name'] == "TObjString")
-            return this.ReadObjString(str, o);
-         // default:
-         return this.ReadStreamerObject(str, o);
-      };
       
       JSROOTIO.StreamerInfo.prototype.ExtractStreamerInfo = function(str) {
 
          var lst = {};
          lst['_typename'] = "JSROOTIO.TList";
-
-         console.log("Start info reading from " + str.length);
 
          var buf = new JSROOTIO.TBuffer(str, 0);
          buf.MapObject(lst, 1);
@@ -1707,42 +1412,8 @@ var kClassMask = 0x80000000;
             this.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
             this.fStreamerIndex++;
          }
-         
-         console.log("Read streamer infos of size " + lst['arr'].length);
       }
 
-
-      JSROOTIO.StreamerInfo.prototype.ExtractStreamerInfoOld = function(str) {
-         // extract the list of streamer infos from the buffer (file)
-         var o = 0;
-         var version = JSROOTIO.ReadVersion(str, o);
-         o = version['off'];
-         if (version['val'] > 3) {
-            o += 10; // TObject's uniqueID, bits
-            var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-            var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-
-            for (var i = 0; i < nobjects; ++i) {
-               var obj = this.ReadObject(str, o);
-               if (obj) {
-                  o = obj['off'];
-                  this.fStreamerInfos[obj['name']] = obj;
-                  this.fStreamerIndex++;
-               }
-               var nch = str.charCodeAt(o) & 0xff; o++;
-               if (version['val'] > 4 && nch == 255)  {
-                  nbig= JSROOTIO.ntou4(str, o); o += 4;
-               } else {
-                  nbig = nch;
-               }
-               if (nbig > 0) {
-                  var readOption = JSROOTIO.ReadString(str, o, nbig);
-                  o += nbig;
-               }
-            }
-         }
-         JSROOTIO.CheckBytecount(version, o, "ExtractStreamerInfo");
-      };
 
       this.fStreamerInfos = new Array();
       this.fStreamerIndex = 0;
