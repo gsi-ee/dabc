@@ -167,46 +167,6 @@ var kClassMask = 0x80000000;
       return (bsign * Math.pow(2, bexp) * bman);
    };
 
-   JSROOTIO.ReadArray = function(str, o, array_type) {
-      // Read array of floats from the I/O buffer
-      var array = {}
-      array['array'] = new Array();
-      var n = JSROOTIO.ntou4(str, o); o += 4;
-      if (array_type == 'D') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntod(str, o); o += 8;
-            if (Math.abs(array['array'][i]) < 1e-300) array['array'][i] = 0.0;
-         }
-      }
-      if (array_type == 'F') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntof(str, o); o += 4;
-            if (Math.abs(array['array'][i]) < 1e-300) array['array'][i] = 0.0;
-         }
-      }
-      if (array_type == 'L') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi8(str, o); o += 8;
-         }
-      }
-      if (array_type == 'I') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi4(str, o); o += 4;
-         }
-      }
-      if (array_type == 'S') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = JSROOTIO.ntoi2(str, o); o += 2;
-         }
-      }
-      if (array_type == 'C') {
-         for (var i = 0; i < n; ++i) {
-            array['array'][i] = str.charCodeAt(o) & 0xff; o++;
-         }
-      }
-      array['off'] = o;
-      return array;
-   };
 
    JSROOTIO.ReadStaticArray = function(str, o) {
       // read array of integers from the I/O buffer
@@ -354,16 +314,20 @@ var kClassMask = 0x80000000;
       return named;
    };
 
+   
+   // TODO: should disapper
    JSROOTIO.ReadTCanvas = function(str, o) {
-      var ver = JSROOTIO.ReadVersion(str, o);
-      o = ver['off'];
+      var buf = new JSROOTIO.TBuffer(str, o);
+      var ver = buf.ReadVersion();
       var obj = {};
-      obj['_typename'] = 'JSROOTIO.TCanvas';
       gFile.ClearObjectMap();
       gFile.MapObject(obj, 1); // workaround - tag first object with id==1 
       if (JSROOTIO.GetStreamer('TPad')) {
-         o = JSROOTIO.GetStreamer('TPad').Stream(obj, str, o);
+         JSROOTIO.GetStreamer('TPad').Stream(obj, buf);
       }
+      obj['_typename'] = 'JSROOTIO.TCanvas';
+      
+      console.log("Did Canvas reading len = " + buf.o);
       return obj;
    };
 
@@ -944,8 +908,14 @@ var kClassMask = 0x80000000;
       };
 
       JSROOTIO.TBuffer.prototype.ClassStreamer = function(obj, classname) {
+         //if (!'_typename' in obj) 
+         //   obj['_typename'] = 'JSROOTIO.' + classname;
+         
          if (classname == 'TObject' || classname == 'TMethodCall') {
             this.ReadTObject(obj);
+         }
+         else if (classname == 'TQObject') {
+            // skip TQObject
          }
          else if (classname == 'TObjArray') {
             this.ReadTObjArray(obj);
@@ -961,10 +931,12 @@ var kClassMask = 0x80000000;
             alert("Trying to read TCollection - wrong!!!");
          }
          else if (JSROOTIO.GetStreamer(classname)) {
-            this.o = JSROOTIO.GetStreamer(classname).Stream(obj, this.b, this.o);
+            JSROOTIO.GetStreamer(classname).Stream(obj, this);
          }
 
+         // TODO: check how typename set
          obj['_typename'] = 'JSROOTIO.' + classname;
+
          JSROOTCore.addMethods(obj);
       }
 
@@ -1202,12 +1174,9 @@ var kClassMask = 0x80000000;
          return buf.o;
       };
 
-      JSROOTIO.TStreamer.prototype.Stream = function(obj, str, o) {
+      JSROOTIO.TStreamer.prototype.Stream = function(obj, buf) {
 
-         var pval;
-         var ver = JSROOTIO.ReadVersion(str, o);
-         o = ver['off'];
-         var startpos = o;
+         var ver = buf.ReadVersion();
 
          // first base classes
          for (prop in this) {
@@ -1217,23 +1186,10 @@ var kClassMask = 0x80000000;
                var clname = this[prop]['class'];
                if (this[prop]['class'].indexOf("TArray") == 0) {
                   var array_type = this[prop]['class'].charAt(this[prop]['class'].length-1)
-                  //o++; // ?????
-                  obj['fN'] = JSROOTIO.ntou4(str, o);
-                  var array = JSROOTIO.ReadArray(str, o, array_type);
-                  obj['fArray'] = array['array'];
-                  o = array['off'];
-               }
-               else if (this[prop]['class'] === 'TObject') {
-                  o += 2; // skip version
-                  o += 4; // skip unique id
-                  obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
-               }
-               else if (this[prop]['class'] === 'TQObject') {
-                  // skip TQObject
-               }
-               else {
-                  if (JSROOTIO.GetStreamer(prop))
-                     o = JSROOTIO.GetStreamer(prop).Stream(obj, str, o);
+                  obj['fN'] = buf.ntou4();
+                  obj['fArray'] = buf.ReadFastArray(obj['fN'], array_type);
+               } else {
+                  buf.ClassStreamer(obj, this[prop]['class']);
                }
             }
          }
@@ -1250,44 +1206,36 @@ var kClassMask = 0x80000000;
             // special classes (custom streamers)
             switch (this[prop]['typename']) {
                case "TString*":
-                  var r__v = JSROOTIO.ReadVersion(str, o);
-                  o = r__v['off'];
+                  // TODO: check how and when it used
+                  var r__v = buf.ReadVersion();
                   obj[prop_name] = new Array();
-                  for (var i = 0; i<obj[this[prop]['cntname']]; ++i ) {
-                     var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-                     obj[prop_name][i] = so['str'];
-                  }
-                  o = JSROOTIO.CheckBytecount(r__v, o, "TString* array");
+                  for (var i = 0; i<obj[this[prop]['cntname']]; ++i )
+                     obj[prop_name][i] = buf.ReadTString();
+                  buf.CheckBytecount(r__v, "TString* array");
                   break;
                case "TArrayI":
-                  var array = JSROOTIO.ReadArray(str, o, 'I');
-                  obj[prop] = array['array'];
-                  o = array['off'];
+                  var n = buf.ntou4();
+                  obj[prop] = buf.ReadFastArray(n, 'I');
                   break;
                case "TArrayF":
-                  var array = JSROOTIO.ReadArray(str, o, 'F');
-                  obj[prop] = array['array'];
-                  o = array['off'];
+                  var n = buf.ntou4();
+                  obj[prop] = buf.ReadFastArray(n, 'F');
                   break;
                case "TArrayD":
-                  var array = JSROOTIO.ReadArray(str, o, 'D');
-                  obj[prop] = array['array'];
-                  o = array['off'];
+                  var n = buf.ntou4();
+                  obj[prop] = buf.ReadFastArray(n, 'D');
                   break;
                case "TObject":
-                  o += 2; // skip version
-                  o += 4; // skip unique id
-                  obj['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
+                  // TODO: check why it is here
+                  buf.ReadTObject(obj);
                   break;
                case "TQObject":
+                  // TODO: check why it is here
                   // skip TQObject...
                   break;
                default:
                   // basic types and standard streamers
-                  var buf = new JSROOTIO.TBuffer(str, o);
-                  
-                  o = this.ReadBasicType(buf, obj, prop);
-                  
+                  this.ReadBasicType(buf, obj, prop);
                   break;
             }
          }
@@ -1297,7 +1245,10 @@ var kClassMask = 0x80000000;
             };
          }
 
-         return JSROOTIO.CheckBytecount(ver, o, "TStreamer.Stream");
+         buf.CheckBytecount(ver, "TStreamer.Stream");
+         
+         return buf.o;
+         
       };
 
       return this;
@@ -2147,9 +2098,12 @@ var kClassMask = 0x80000000;
                   obj['_typename'] = 'JSROOTIO.' + key['className'];
 
                   gFile.ClearObjectMap();   
-                  gFile.MapObject(obj, 1); // workaround - tag first object with id1 
+                  gFile.MapObject(obj, 1); // workaround - tag first object with id1
                   
-                  JSROOTIO.GetStreamer(key['className']).Stream(obj, objbuf['unzipdata'], 0);
+                  var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
+                  
+                  buf.ClassStreamer(obj, key['className']);
+                  
                   if (key['className'] == 'TFormula') {
                      JSROOTCore.addFormula(obj);
                   }
