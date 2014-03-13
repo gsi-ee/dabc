@@ -6,6 +6,10 @@ current functionality of the framework.
 1. Fix problem when only histogram errors should be drawn
 2. Correctly display fill colour of TF1
 3. Simplify logic in ReadObjectAny
+4. Introduce JSROOTIO.TBuffer class, which plays very similar role 
+   as TBuffer in native ROOT I/O. Simplify logic in many places,
+   reduce duplication of code in many places, fix errors.
+   Main advantage - one could try to keep code synchronous.
 
 
 12.03.2014

@@ -1517,19 +1517,10 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
 
    gFile = this.sinfo.obj;
 
-   if (this.clname == "TCanvas") {
-      obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
-      if (obj && obj['fPrimitives']) {
-         if (obj['fName'] == "") obj['fName'] = "anyname";
-      }
-   } else 
-   if (JSROOTIO.GetStreamer(this.clname)) {
-      JSROOTIO.GetStreamer(this.clname).Stream(obj, this.raw_data, 0);
-      JSROOTCore.addMethods(obj);
+   var obj = {};
+   var buf = new JSROOTIO.TBuffer(this.raw_data, 0);
 
-   } else {
-      console.log("!!!! streamer not found !!!!!!!" + this.clname);
-   }
+   buf.ClassStreamer(obj, this.clname);
    
    gFile = null;
 
@@ -2026,7 +2017,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = true;
+      var use_json = false;
       
       if (!use_json) {
       

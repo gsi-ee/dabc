@@ -313,23 +313,7 @@ var kClassMask = 0x80000000;
       named['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTNamed");
       return named;
    };
-
    
-   // TODO: should disapper
-   JSROOTIO.ReadTCanvas = function(str, o) {
-      var buf = new JSROOTIO.TBuffer(str, o);
-      var ver = buf.ReadVersion();
-      var obj = {};
-      gFile.ClearObjectMap();
-      gFile.MapObject(obj, 1); // workaround - tag first object with id==1 
-      if (JSROOTIO.GetStreamer('TPad')) {
-         JSROOTIO.GetStreamer('TPad').Stream(obj, buf);
-      }
-      obj['_typename'] = 'JSROOTIO.TCanvas';
-      
-      console.log("Did Canvas reading len = " + buf.o);
-      return obj;
-   };
 
    JSROOTIO.GetStreamer = function(clname) {
       // return the streamer for the class 'clname', from the list of streamers
@@ -929,6 +913,12 @@ var kClassMask = 0x80000000;
          else if (classname == 'TCollection') {
             this.ReadTCollection(obj);
             alert("Trying to read TCollection - wrong!!!");
+         }
+         else if (classname == 'TCanvas') {
+            var ver = this.ReadVersion();
+            this.ClassStreamer(obj, "TPad");
+            // we repair here correct position - no warning to outside
+            this.CheckBytecount(ver);
          }
          else if (JSROOTIO.GetStreamer(classname)) {
             JSROOTIO.GetStreamer(classname).Stream(obj, this);
@@ -2084,38 +2074,28 @@ var kClassMask = 0x80000000;
          this.fTagOffset = key.keyLen;
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
-               if (key['className'] == 'TCanvas') {
-                  var canvas = JSROOTIO.ReadTCanvas(objbuf['unzipdata'], 0);
-                  if (canvas && canvas['fPrimitives']) {
-                     if(canvas['fName'] == "") canvas['fName'] = obj_name;
-                     displayObject(canvas, cycle, obj_index);
-                     obj_list.push(obj_name+cycle);
-                     obj_index++;
-                  }
-               }
-               else if (JSROOTIO.GetStreamer(key['className'])) {
-                  var obj = {};
-                  obj['_typename'] = 'JSROOTIO.' + key['className'];
+               var obj = {};
 
-                  gFile.ClearObjectMap();   
-                  gFile.MapObject(obj, 1); // workaround - tag first object with id1
-                  
-                  var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
-                  
-                  buf.ClassStreamer(obj, key['className']);
-                  
-                  if (key['className'] == 'TFormula') {
-                     JSROOTCore.addFormula(obj);
-                  }
-                  else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
-                     displayTree(obj, cycle, node_id);
-                  }
-                  else {
-                     JSROOTCore.addMethods(obj);
-                     displayObject(obj, cycle, obj_index);
-                     obj_list.push(obj_name+cycle);
-                     obj_index++;
-                  }
+               gFile.ClearObjectMap();   
+               gFile.MapObject(obj, 1); // workaround - tag first object with id1
+               
+               var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
+
+               obj['_typename'] = 'JSROOTIO.' + key['className'];
+
+               buf.ClassStreamer(obj, key['className']);
+               
+               if (key['className'] == 'TFormula') {
+                  JSROOTCore.addFormula(obj);
+               }
+               else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
+                  displayTree(obj, cycle, node_id);
+               }
+               else {
+                  if (obj['fName'] == "") obj['fName'] = obj_name;
+                  displayObject(obj, cycle, obj_index);
+                  obj_list.push(obj_name+cycle);
+                  obj_index++;
                }
                delete objbuf['unzipdata'];
                objbuf['unzipdata'] = null;
