@@ -1962,27 +1962,43 @@ var gStyle = {
       var x = this.first.x;
       var y = this.first.y;
       
-      var fillcolor = root_colors[this.tf1['fFillColor']];
       var linecolor = root_colors[this.tf1['fLineColor']];
-      if (this.tf1['fFillColor'] == 0) {
-         fillcolor = '#4572A7';
-      }
-      if (this.tf1['fLineColor'] == 0) {
-         linecolor = '#4572A7';
+      if ((this.tf1['fLineColor'] == 0) || (this.tf1['fLineWidth'] == 0)) linecolor = "none";
+
+      var fillcolor = root_colors[this.tf1['fFillColor']];
+      if ((this.tf1['fFillStyle'] == 0) || (this.tf1['fFillColor'] == 0)) fillcolor = "none"; else
+      if (this.tf1['fFillStyle'] > 3000 && this.tf1['fFillStyle'] <= 3025) {
+         var patternid = JSROOTPainter.createFillPattern(this.vis, this.tf1['fFillStyle'], this.tf1['fFillColor']);
+         fillcolor = "url(#" + patternid + ")";
       }
       
       var line = d3.svg.line()
          .x(function(d) { return x(d.x);})
          .y(function(d) { return y(d.y);})
          .interpolate(this.interpolate_method);
+      
+      var area = d3.svg.area()
+         .x(function(d) { return x(d.x); })
+         .y1(h)
+         .y0(function(d) { return y(d.y); });
 
-      this.draw_g.append("svg:path")
-         .attr("class", "line")
-         .attr("d", line(this.bins))
-         .style("stroke", linecolor)
-         .style("stroke-width", this.tf1['fLineWidth'])
-         .style("stroke-dasharray", root_line_styles[this.tf1['fLineStyle']])
-         .style("fill", "none");
+      if (linecolor!="none")
+         this.draw_g.append("svg:path")
+           .attr("class", "line")
+           .attr("d", line(pthis.bins))
+           .style("stroke", linecolor)
+           .style("stroke-width", pthis.tf1['fLineWidth'])
+           .style("stroke-dasharray", root_line_styles[pthis.tf1['fLineStyle']])
+           .style("fill", "none");
+
+      if (fillcolor!="none")
+         this.draw_g.append("svg:path")
+           .attr("class", "area")
+           .attr("d", area(pthis.bins))
+           .style("stroke", "none")
+           .style("fill", fillcolor)
+           .style("antialias", "false");
+
 
       // add tooltips
       if (gStyle.Tooltip > 1)
@@ -3245,6 +3261,8 @@ var gStyle = {
       
       // here we deciding how histogram will look like and how will be shown 
       this.options = JSROOTPainter.decodeOptions(opt, this.histo, this.pad);
+
+      console.log("Use options opt = " + opt +  " err = " + this.options.Error);
       
 //      if (this.histo['_typename'] == "JSROOTIO.TProfile")
 //         this.options.Error = 11;
@@ -4601,7 +4619,7 @@ var gStyle = {
       // console.log("ymin = " + this.ymin + "  ymax = " + this.ymax);
 
       // If no any draw options specified, do not try draw histogram
-      if (this.options.Bar == 0 && this.options.Hist == 0) {
+      if (this.options.Bar == 0 && this.options.Hist == 0 && this.options.Error == 0) {
          this.draw_content = false;
       }
    }
@@ -4779,6 +4797,8 @@ var gStyle = {
 
    JSROOTPainter.Hist1DPainter.prototype.DrawErrors = function() 
    {
+      console.log("draw hist errors");
+      
       var w = this.svg_frame.attr("width"), h = this.svg_frame.attr("height");
       /* Add a panel for each data point */
       var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
@@ -4894,6 +4914,8 @@ var gStyle = {
       this.RemoveDraw();
       
       delete this.draw_bins; this.draw_bins = null;
+      
+      console.log("DrawBins " + this.draw_content);
 
       if (!this.draw_content) return;
       
@@ -5049,6 +5071,8 @@ var gStyle = {
    JSROOTPainter.drawHistogram1Dnew = function(vis, histo, opt) {
 
       //if (console) console.time("DrawTH1");
+      
+      console.log("drawHistogram1Dnew opt = " + opt);
       
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist1DPainter(histo);
@@ -6811,12 +6835,11 @@ var gStyle = {
       
       var classname = obj['_typename'];
       
-      // console.log("Draw primitive " + classname + " opt = " + opt);
-      
       if (classname.match(/\bTCanvas/)) {
          vis['ROOT:canvas'] = obj;
          vis['ROOT:pad'] = obj;
          for (var i=0; i<obj.fPrimitives.arr.length; ++i) {
+            console.log("Draw canvas primitive " + obj.fPrimitives.arr[i]._typename + " opt = " + obj.fPrimitives.opt[i]);
             JSROOTPainter.drawObjectInFrame(vis, obj.fPrimitives.arr[i], obj.fPrimitives.opt[i]);
          }
          return 1;

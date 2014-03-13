@@ -673,6 +673,7 @@ var kClassMask = 0x80000000;
       var obj = {};
       obj['_typename'] = 'JSROOTIO.TCanvas';
       gFile.ClearObjectMap();
+      gFile.MapObject(obj, 1); // workaround - tag first object with id==1 
       if (JSROOTIO.GetStreamer('TPad')) {
          o = JSROOTIO.GetStreamer('TPad').Stream(obj, str, o);
       }
@@ -2533,7 +2534,7 @@ var kClassMask = 0x80000000;
          if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
             tag = bcnt;
             bcnt = 0;
-            console.log("Should be other kind of map???");
+            // console.log("Should be other kind of map tag " + tag);
          } else {
             classInfo['fVersion'] = 1;
             tag = JSROOTIO.ntou4(str, o); o += 4;

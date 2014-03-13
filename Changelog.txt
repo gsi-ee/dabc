@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+13.03.2014
+1. Fix problem when only histogram errors should be drawn
+2. Correctly display fill colour of TF1
+
+
 12.03.2014
 1. In JSRootIO move class map into gFile instance. 
    Fix several small errors in reading.
