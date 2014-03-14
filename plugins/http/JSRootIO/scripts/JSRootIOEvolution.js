@@ -1474,35 +1474,19 @@ var kClassMask = 0x80000000;
 
          this.fFile.Seek(this.fSeekDir, this.fFile.ERelativeTo.kBeg);
          var callback1 = function(file, buffer, _dir) {
-            var str = new String(buffer);
-            o = _dir.fNbytesName;
+            var buf = new JSROOTIO.TBuffer(buffer, _dir.fNbytesName);
 
-            var version = JSROOTIO.ntou2(str, o); o += 2;
-            var versiondir = version%1000;
-            o += 8; // skip fDatimeC and fDatimeM ReadBuffer()
-            _dir.fNbytesKeys = JSROOTIO.ntou4(str, o); o += 4;
-            _dir.fNbytesName = JSROOTIO.ntou4(str, o); o += 4;
-            if (version > 1000) {
-               _dir.fSeekDir = JSROOTIO.ntou8(str, o); o += 8;
-               _dir.fSeekParent = JSROOTIO.ntou8(str, o); o += 8;
-               _dir.fSeekKeys = JSROOTIO.ntou8(str, o); o += 8;
-            } else {
-               _dir.fSeekDir = JSROOTIO.ntou4(str, o); o += 4;
-               _dir.fSeekParent = JSROOTIO.ntou4(str, o); o += 4;
-               _dir.fSeekKeys = JSROOTIO.ntou4(str, o); o += 4;
-            }
-            if (versiondir > 1) o += 18; // skip fUUID.ReadBuffer(buffer);
+            _dir.StreamHeader(buf);
 
             //*-*---------read TKey::FillBuffer info
-            var kl = 4; // Skip NBytes;
-            var keyversion = JSROOTIO.ntoi2(buffer, kl); kl += 2;
+            buf.locate(4); // Skip NBytes;
+            var keyversion = buf.ntoi2();
             // Skip ObjLen, DateTime, KeyLen, Cycle, SeekKey, SeekPdir
-            if (keyversion > 1000) kl += 28; // Large files
-            else kl += 20;
-            var so = JSROOTIO.ReadTString(buffer, kl); kl = so['off'];
-            so = JSROOTIO.ReadTString(buffer, kl); kl = so['off'];
-            so = JSROOTIO.ReadTString(buffer, kl); kl = so['off'];
-            _dir.fTitle = so['str'];
+            if (keyversion > 1000) buf.shift(28); // Large files
+                              else buf.shift(20);
+            buf.ReadTString(); 
+            buf.ReadTString();
+            _dir.fTitle = buf.ReadTString();
             if (_dir.fNbytesName < 10 || _dir.fNbytesName > 10000) {
                throw "Init : cannot read directory info of file " + _dir.fURL;
             }
@@ -1538,25 +1522,19 @@ var kClassMask = 0x80000000;
          };
          this.fFile.ReadBuffer(nbytes, callback1, this);
       };
-
-      JSROOTIO.TDirectory.prototype.Stream = function(str, o, cycle, dir_id) {
-         var version = JSROOTIO.ntou2(str, o); o += 2;
+      
+      JSROOTIO.TDirectory.prototype.StreamHeader = function(buf) {
+         var version = buf.ntou2();
          var versiondir = version%1000;
-         o += 8; // skip fDatimeC and fDatimeM ReadBuffer()
-         this.fNbytesKeys = JSROOTIO.ntou4(str, o); o += 4;
-         this.fNbytesName = JSROOTIO.ntou4(str, o); o += 4;
-         if (version > 1000) {
-            this.fSeekDir = JSROOTIO.ntou8(str, o); o += 8;
-            this.fSeekParent = JSROOTIO.ntou8(str, o); o += 8;
-            this.fSeekKeys = JSROOTIO.ntou8(str, o); o += 8;
-         } else {
-            this.fSeekDir = JSROOTIO.ntou4(str, o); o += 4;
-            this.fSeekParent = JSROOTIO.ntou4(str, o); o += 4;
-            this.fSeekKeys = JSROOTIO.ntou4(str, o); o += 4;
-         }
-         if (versiondir > 2) o += 18; // skip fUUID.ReadBuffer(buffer);
-         if (this.fSeekKeys) this.ReadKeys(cycle, dir_id);
+         buf.shift(8); // skip fDatimeC and fDatimeM ReadBuffer()
+         this.fNbytesKeys = buf.ntou4();
+         this.fNbytesName = buf.ntou4();
+         this.fSeekDir = (version > 1000) ? buf.ntou8() : buf.ntou4();
+         this.fSeekParent = (version > 1000) ? buf.ntou8() : buf.ntou4();
+         this.fSeekKeys = (version > 1000) ? buf.ntou8() : buf.ntou4();
+         if (versiondir > 2) buf.shift(18); // skip fUUID.ReadBuffer(buffer);
       };
+      
       this.fKeys = new Array();
       return this;
    };
@@ -2122,7 +2100,8 @@ var kClassMask = 0x80000000;
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
                var directory = new JSROOTIO.TDirectory(file, key['className']);
-               directory.Stream(objbuf['unzipdata'], 0, cycle, dir_id);
+               directory.StreamHeader(new JSROOTIO.TBuffer(objbuf['unzipdata'], 0));
+               if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
                delete objbuf['unzipdata'];
                objbuf['unzipdata'] = null;
             }

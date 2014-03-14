@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+14.03.2014
+1. Use TBuffer in reading of the file, fix display of streamer infos
+
+
 13.03.2014
 1. Fix problem when only histogram errors should be drawn
 2. Correctly display fill colour of TF1
