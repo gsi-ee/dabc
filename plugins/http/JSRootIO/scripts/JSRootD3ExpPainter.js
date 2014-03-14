@@ -7213,8 +7213,6 @@ var gStyle = {
    };
 
    JSROOTPainter.addDirectoryKeys = function(keys, container, dir_id) {
-      var pattern_th1 = /TH1/g;
-      var pattern_th2 = /TH2/g;
       var tree_link = '';
       var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
       var k = key_tree.aNodes.length;
@@ -7296,36 +7294,37 @@ var gStyle = {
    };
 
    JSROOTPainter.addCollectionContents = function(list, container, dir_id) {
-      var pattern_th1 = /TH1/g;
-      var pattern_th2 = /TH2/g;
       var tree_link = '';
       var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
       var k = key_tree.aNodes.length;
       var dir_name = key_tree.aNodes[dir_id]['title'];
       for (var i=0; i<list.length; ++i) {
          var disp_name = list[i]['fName'];
+         var classname = list[i]['_typename'];
+         if (!classname) classname = "undefined";
+         
          list[i]['_name'] = dir_name + '/' + list[i]['fName'];
-         var message = list[i]['_typename']+' is not yet implemented.';
+         var message = classname +' is not yet implemented.';
          tree_link = "javascript:  alert('" + message + "')";
          var node_img = source_dir+'img/page.gif';
          var node_title = list[i]['_typename'];
-         if (list[i]['_typename'].match(/\bTH1/) ||
-             list[i]['_typename'].match(/\bTH2/) ||
-             list[i]['_typename'].match(/\bTH3/) ||
-             list[i]['_typename'].match(/\bTGraph/) ||
-             list[i]['_typename'].match(/\bRooHist/) ||
-             list[i]['_typename'].match(/\RooCurve/)) {
+         if (classname.match(/\bTH1/) ||
+             classname.match(/\bTH2/) ||
+             classname.match(/\bTH3/) ||
+             classname.match(/\bTGraph/) ||
+             classname.match(/\bRooHist/) ||
+             classname.match(/\RooCurve/)) {
             //tree_link = "javascript: displayMappedObject('"+list[i]['_name']+"');";
             tree_link = "javascript: displayMappedObject('"+list[i]['_name']+"','"+list[i]['_listname']+"',"+list[i]['pos']+");";
             node_img = source_dir+'img/graph.png';
             node_title = list[i]['_name'];
          }
-         else if (list[i]['_typename'] == 'TList' || list[i]['_typename'] == 'TObjArray') {
+         else if (classname == 'TList' || classname == 'TObjArray') {
             tree_link = "javascript: showCollection('"+list[i]['_name']+"', 0, "+k+");";
             node_img = source_dir+'img/folder.gif';
             node_title = list[i]['_name'];
          }
-         if (list[i]['fName'] != '' && list[i]['_typename'] != 'TFile') {
+         if (list[i]['fName'] != '' && classname != 'TFile') {
             key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img);
             k++;
          }

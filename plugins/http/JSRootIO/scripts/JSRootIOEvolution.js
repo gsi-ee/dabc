@@ -3,7 +3,6 @@
 // core methods for Javascript ROOT IO.
 //
 
-
 var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
     kChar = 1, kShort = 2, kInt = 3, kLong = 4, kFloat = 5,
     kDouble = 8, kDouble32 = 9, kLegacyChar = 10, kUChar = 11, kUShort = 12,
@@ -22,8 +21,6 @@ var kByteCountMask = 0x40000000;
 var kNewClassTag = 0xFFFFFFFF;
 var kClassMask = 0x80000000;
 
-
-
 (function(){
 
    if (typeof JSROOTIO == "object"){
@@ -38,7 +35,7 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.5 2014/03/11";
+   JSROOTIO.version = "2.7 2014/03/14";
    
    JSROOTIO.debug = false;
 
@@ -46,180 +43,6 @@ var kClassMask = 0x80000000;
       var mask = 1 << index;
       return (bits & mask);
    };
-
-   JSROOTIO.ntou2 = function(b, o) {
-      // convert (read) two bytes of buffer b into a UShort_t
-      var n  = ((b.charCodeAt(o)   & 0xff) << 8) >>> 0;
-          n +=  (b.charCodeAt(o+1) & 0xff) >>> 0;
-      return n;
-   };
-
-   JSROOTIO.ntou4 = function(b, o) {
-      // convert (read) four bytes of buffer b into a UInt_t
-      var n  = ((b.charCodeAt(o)   & 0xff) << 24) >>> 0;
-          n += ((b.charCodeAt(o+1) & 0xff) << 16) >>> 0;
-          n += ((b.charCodeAt(o+2) & 0xff) << 8)  >>> 0;
-          n +=  (b.charCodeAt(o+3) & 0xff) >>> 0;
-      return n;
-   };
-
-   JSROOTIO.ntou8 = function(b, o) {
-      // convert (read) eight bytes of buffer b into a ULong_t
-      var n  = ((b.charCodeAt(o)   & 0xff) << 56) >>> 0;
-          n += ((b.charCodeAt(o+1) & 0xff) << 48) >>> 0;
-          n += ((b.charCodeAt(o+2) & 0xff) << 40) >>> 0;
-          n += ((b.charCodeAt(o+3) & 0xff) << 32) >>> 0;
-          n += ((b.charCodeAt(o+4) & 0xff) << 24) >>> 0;
-          n += ((b.charCodeAt(o+5) & 0xff) << 16) >>> 0;
-          n += ((b.charCodeAt(o+6) & 0xff) << 8) >>> 0;
-          n +=  (b.charCodeAt(o+7) & 0xff) >>> 0;
-      return n;
-   };
-
-   JSROOTIO.ntoi2 = function(b, o) {
-      // convert (read) two bytes of buffer b into a Short_t
-      var n  = (b.charCodeAt(o)   & 0xff) << 8;
-          n += (b.charCodeAt(o+1) & 0xff);
-      return n;
-   };
-
-   JSROOTIO.ntoi4 = function(b, o) {
-      // convert (read) four bytes of buffer b into a Int_t
-      var n  = (b.charCodeAt(o)   & 0xff) << 24;
-          n += (b.charCodeAt(o+1) & 0xff) << 16;
-          n += (b.charCodeAt(o+2) & 0xff) << 8;
-          n += (b.charCodeAt(o+3) & 0xff);
-      return n;
-   };
-
-   JSROOTIO.ntoi8 = function(b, o) {
-      // convert (read) eight bytes of buffer b into a Long_t
-      var n  = (b.charCodeAt(o)   & 0xff) << 56;
-          n += (b.charCodeAt(o+1) & 0xff) << 48;
-          n += (b.charCodeAt(o+2) & 0xff) << 40;
-          n += (b.charCodeAt(o+3) & 0xff) << 32;
-          n += (b.charCodeAt(o+4) & 0xff) << 24;
-          n += (b.charCodeAt(o+5) & 0xff) << 16;
-          n += (b.charCodeAt(o+6) & 0xff) << 8;
-          n += (b.charCodeAt(o+7) & 0xff);
-      return n;
-   };
-
-   JSROOTIO.ntof = function(b, o) {
-      // IEEE-754 Floating-Point Conversion (single precision - 32 bits)
-      var inString = b.substring(o, o + 4);
-      inString = inString.toString();
-      if (inString.length < 4) return Number.NaN;
-      var bits = "";
-      for (var i=0; i<4; i++) {
-         var curByte = (inString.charCodeAt(i) & 0xff).toString(2);
-         var byteLen = curByte.length;
-         if (byteLen < 8) {
-            for (var bit=0; bit<(8-byteLen); bit++)
-               curByte = '0' + curByte;
-         }
-         bits = bits + curByte;
-      }
-      //var bsign = parseInt(bits[0]) ? -1 : 1;
-      var bsign = (bits.charAt(0) == '1') ? -1 : 1;
-      var bexp = parseInt(bits.substring(1, 9), 2) - 127;
-      var bman;
-      if (bexp == -127)
-         bman = 0;
-      else {
-         bman = 1;
-         for (i=0; i<23; i++) {
-            if (parseInt(bits.substr(9+i, 1)) == 1)
-               bman = bman + 1 / Math.pow(2, i+1);
-         }
-      }
-      return (bsign * Math.pow(2, bexp) * bman);
-   };
-
-   JSROOTIO.ntod = function(b, o) {
-      // IEEE-754 Floating-Point Conversion (double precision - 64 bits)
-      var inString = b.substring(o, o + 8);
-      inString = inString.toString();
-      if (inString.length < 8) return Number.NaN;
-      var bits = "";
-      for (var i=0; i<8; i++) {
-         var curByte = (inString.charCodeAt(i) & 0xff).toString(2);
-         var byteLen = curByte.length;
-         if (byteLen < 8) {
-            for (var bit=0; bit<(8-byteLen); bit++)
-               curByte = '0' + curByte;
-         }
-         bits = bits + curByte;
-      }
-      //var bsign = parseInt(bits[0]) ? -1 : 1;
-      var bsign = (bits.charAt(0) == '1') ? -1 : 1;
-      var bexp = parseInt(bits.substring(1, 12), 2) - 1023;
-      var bman;
-      if (bexp == -127)
-         bman = 0;
-      else {
-         bman = 1;
-         for (i=0; i<52; i++) {
-            if (parseInt(bits.substr(12+i, 1)) == 1)
-               bman = bman + 1 / Math.pow(2, i+1);
-         }
-      }
-      return (bsign * Math.pow(2, bexp) * bman);
-   };
-
-
-   JSROOTIO.ReadTString = function(str, off) {
-      // stream a TString object from buffer
-      var len = str.charCodeAt(off) & 0xff;
-      off++;
-      if (len == 255) {
-         // large string
-         len = JSROOTIO.ntou4(str, off);
-         off += 4;
-      }
-      return {
-         'off' : off + len,
-         'str' : (str.charCodeAt(off) == 0) ? '' : str.substring(off, off + len)
-      };
-   };
-
-   
-   JSROOTIO.ReadString = function(str, off, max_len) {
-      // stream a string from buffer
-      max_len = typeof(max_len) != 'undefined' ? max_len : 0;
-      var len = 0;
-      while ((str.charCodeAt(off + len) & 0xff) != 0) {
-         len++;
-         if ((max_len > 0) && (len >= max_len))
-            break;
-      }
-      return {
-         'off' : ((str.charCodeAt(off + len) & 0xff) == 0) ? (off + len + 1) : (off + len),
-         'str' : (len == 0) ? "" : str.substring(off, off + len)
-      };
-   };
-
-   JSROOTIO.ReadVersion = function(str, o) {
-      // read class version from I/O buffer
-      var version = {};
-      var bytecnt = JSROOTIO.ntou4(str, o); o += 4; // byte count
-      if (bytecnt & kByteCountMask) 
-         version['bytecnt'] = bytecnt - kByteCountMask - 2; // one can check between Read version and end of streamer  
-      version['val'] = JSROOTIO.ntou2(str, o); o += 2;
-      version['off'] = o;
-      return version;
-   };
-
-   JSROOTIO.CheckBytecount = function(ver, o, where) {
-      if (('bytecnt' in ver) && (ver['off'] + ver['bytecnt'] != o)) {
-         if (where!=null)
-            alert("Missmatch in " + where + " bytecount expected = " + ver['bytecnt'] + "  got = " + (o-ver['off']));
-         return ver['off'] + ver['bytecnt'];
-      }
-      
-      return o;
-   }
-
 
    JSROOTIO.GetStreamer = function(clname) {
       // return the streamer for the class 'clname', from the list of streamers
@@ -432,7 +255,6 @@ var kClassMask = 0x80000000;
       JSROOTIO.TBuffer.prototype.ntof = function() {
          // IEEE-754 Floating-Point Conversion (single precision - 32 bits)
          var inString = this.b.substring(this.o, this.o + 4); this.o+=4;
-         inString = inString.toString();
          if (inString.length < 4) return Number.NaN;
          var bits = "";
          for (var i=0; i<4; i++) {
@@ -463,7 +285,6 @@ var kClassMask = 0x80000000;
       JSROOTIO.TBuffer.prototype.ntod = function() {
          // IEEE-754 Floating-Point Conversion (double precision - 64 bits)
          var inString = this.b.substring(this.o, this.o + 8); this.o+=8;
-         inString = inString.toString();
          if (inString.length < 8) return Number.NaN;
          var bits = "";
          for (var i=0; i<8; i++) {
@@ -545,20 +366,15 @@ var kClassMask = 0x80000000;
       };
 
       
-      JSROOTIO.TBuffer.prototype.ReadBasicPointerElem = function(n, array_type) {
+      JSROOTIO.TBuffer.prototype.ReadBasicPointer = function(len, array_type) {
          var isArray = this.b.charCodeAt(this.o++) & 0xff;
          if (isArray) 
-            return this.ReadFastArray(n, array_type);
+            return this.ReadFastArray(len, array_type);
+         
+         if (len==0) return new Array();
          
          this.o--;
-         var array = this.ReadFastArray(n, array_type);
-         if (n == 0) this.o++;
-         
-         return array;
-      };
-
-      JSROOTIO.TBuffer.prototype.ReadBasicPointer = function(len, array_type) {
-         return this.ReadBasicPointerElem(len, array_type);
+         return this.ReadFastArray(len, array_type);
       };
 
       
@@ -2032,7 +1848,7 @@ var kClassMask = 0x80000000;
 
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
-               console.log("Read collection");
+               console.log("Read collection " + name + "  len = " + objbuf['unzipdata'].length + "  class = " + key['className']);
 
                var list = {};
                list['_typename'] = 'JSROOTIO.' + key['className'];
@@ -2055,6 +1871,9 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.RootFile.prototype.ReadCollectionElement = function(list_name, obj_name, cycle, offset) {
          // read the collection content from a root file
+         
+         console.log("ReadCollectionElement list " + list_name + "  obj_name " + obj_name);
+         
          if (obj_list.indexOf(obj_name+cycle) != -1) return;
          var key = this.GetKey(list_name, cycle);
          if (key == null) return null;
@@ -2109,67 +1928,6 @@ var kClassMask = 0x80000000;
          return -1;
       };
 
-      JSROOTIO.RootFile.prototype.ReadClass = function(str, o, debug) {
-         // read class definition from I/O buffer
-         var classInfo = {};
-         classInfo['clname'] = "";
-         classInfo['name'] = "";
-         classInfo['cnt'] = 0;
-         classInfo['off'] = o;
-         classInfo['tag'] = 0;
-         classInfo['fVersion'] = 0;
-         var tag = 0;
-         var bcnt = JSROOTIO.ntou4(str, o); o += 4;
-         
-         if (debug) console.log("First class word is " + bcnt.toString(16));
-         
-         var startpos = o;
-         if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
-            tag = bcnt;
-            bcnt = 0;
-            // console.log("Should be other kind of map tag " + tag);
-         } else {
-            classInfo['fVersion'] = 1;
-            tag = JSROOTIO.ntou4(str, o); o += 4;
-            if (debug) console.log("Second class word is " + tag.toString(16));
-         }
-         if (!(tag & kClassMask)) {
-            
-            if (tag & kByteCountMask) console.log("Tag with kByteCountMask");
-            
-            classInfo['name'] = 0;
-            classInfo['tag'] = tag;
-            classInfo['objtag'] = tag; // indicate that we have deal with objects tag
-            classInfo['off'] = o;
-            return classInfo;
-         }
-         if (tag == kNewClassTag) {
-            // got a new class description followed by a new object
-            var so = JSROOTIO.ReadString(str, o); // class name
-            o = so['off'];
-            classInfo['name'] = so['str'];
-            //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
-            classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
-            
-            if (this.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)==-1)
-               this.AddClassMap(so['str'], gFile.fTagOffset + startpos + kMapOffset);
-         }
-         else {
-            // got a tag to an already seen class
-            var clTag = (tag & ~kClassMask);
-            classInfo['name'] = this.GetClassMap(clTag);
-         }
-         classInfo['cnt'] = (bcnt & ~kByteCountMask);
-         classInfo['off'] = o;
-
-         // new parameter - either empty or with valid class name
-         if (classInfo['name']!=-1)
-            classInfo['clname'] = classInfo['name'];
-         
-         return classInfo;
-      };
-
-      
       this.fClassMap = new Array;
       this.fClassIndex = 0;
 
