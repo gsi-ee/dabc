@@ -1473,6 +1473,7 @@ var kClassMask = 0x80000000;
          if (this.fFile.fVersion >= 40000) nbytes += 12;
 
          this.fFile.Seek(this.fSeekDir, this.fFile.ERelativeTo.kBeg);
+         
          var callback1 = function(file, buffer, _dir) {
             var buf = new JSROOTIO.TBuffer(buffer, _dir.fNbytesName);
 
@@ -1494,26 +1495,20 @@ var kClassMask = 0x80000000;
 
             if ( _dir.fSeekKeys >  0) {
                _dir.fFile.Seek(_dir.fSeekKeys, _dir.fFile.ERelativeTo.kBeg);
-               var callback2 = function(file, buffer, _dir) {
+               var callback2 = function(file, _buffer, _dir) {
                   //headerkey->ReadKeyBuffer(buffer);
-                  var key = _dir.fFile.ReadKey(buffer, 0);
-                  var offset = key['keyLen']; // 113
-                  if (key['className'] != "" && key['name'] != "") {
-                     key['offset'] = offset;
-                  }
-                  var nkeys = JSROOTIO.ntoi4(buffer, offset); offset += 4;
+                  var buf = new JSROOTIO.TBuffer(_buffer, 0);
+                  
+                  var key = _dir.fFile.ReadKey(buf);
+                  
+                  var nkeys = buf.ntoi4();
                   for (var i = 0; i < nkeys; i++) {
-                     key = _dir.fFile.ReadKey(buffer, offset);
-                     offset += key['keyLen'];
-                     if (key['className'] != "" && key['name'] != "") {
-                        key['offset'] = offset;
-                     }
+                     key = _dir.fFile.ReadKey(buf);
                      _dir.fKeys.push(key);
                   }
                   _dir.fFile.fDirectories.push(_dir);
                   displayDirectory(_dir, cycle, dir_id);
-                  delete buffer;
-                  buffer = null;
+                  delete buf;
                };
                _dir.fFile.ReadBuffer(_dir.fNbytesKeys, callback2, _dir);
             }
@@ -1810,15 +1805,13 @@ var kClassMask = 0x80000000;
          return header;
       };
 
-      JSROOTIO.RootFile.prototype.ReadKey = function(str, o) {
+      JSROOTIO.RootFile.prototype.ReadKey = function(buf) {
          // read key from buffer
-         var buf = new JSROOTIO.TBuffer(str, o); 
-         
          var key = {};
-         key['offset'] = o;
+         key['offset'] = buf.o;
          var nbytes = buf.ntoi4();
          key['nbytes'] = Math.abs(nbytes);
-         var largeKey = o + nbytes > 2 * 1024 * 1024 * 1024 /*2G*/;
+         var largeKey = buf.o + nbytes > 2 * 1024 * 1024 * 1024 /*2G*/;
          
          buf.shift(2);
          
@@ -1846,6 +1839,13 @@ var kClassMask = 0x80000000;
          key['title'] = buf.ReadTString();
          key['dataoffset'] = key['seekKey'] + key['keyLen'];
          key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
+         // should we do it here ???
+         buf.locate(key['offset'] + key['keyLen']);
+
+         // remember offset
+         if (key['className'] != "" && key['name'] != "") 
+            key['offset'] = buf.o;
+
          return key;
       };
 
@@ -1938,10 +1938,11 @@ var kClassMask = 0x80000000;
 
          if (this.fSeekInfo == 0 || this.fNbytesInfo == 0) return;
          this.Seek(this.fSeekInfo, this.ERelativeTo.kBeg);
-         var callback1 = function(file, buffer) {
-            var key = file.ReadKey(buffer, 0);
+         var callback1 = function(file, _buffer) {
+            var buf = new JSROOTIO.TBuffer(_buffer, 0);
+            var key = file.ReadKey(buf);
+            if (key == null) return;
             this.fTagOffset = key.keyLen;
-            if (key == 0) return;
             file.fKeys.push(key);
             var callback2 = function(file, objbuf) {
                if (objbuf && objbuf['unzipdata']) {
@@ -1958,8 +1959,7 @@ var kClassMask = 0x80000000;
             };
             file.ReadObjBuffer(key, callback2);
             JSROOTPainter.displayListOfKeys(file.fKeys, '#status');
-            delete buffer;
-            buffer = null;
+            delete _buf;
             // the next two lines are for debugging/info purpose
             //$("#status").append("file header: " + file.fLogMsg  + "<br/>");
             //JSROOTPainter.displayListOfKeyDetails(file.fKeys, '#status');
@@ -2056,25 +2056,20 @@ var kClassMask = 0x80000000;
                   if ( file.fSeekKeys >  0) {
                      file.Seek(file.fSeekKeys, file.ERelativeTo.kBeg);
 
-                     var callback4 = function(file, buffer) {
+                     var callback4 = function(file, _buffer) {
                         //headerkey->ReadKeyBuffer(buffer);
-                        var key = file.ReadKey(buffer, 0);
-                        var offset = key['keyLen']; // 113
-                        if (key['className'] != "" && key['name'] != "") {
-                           key['offset'] = offset;
-                        }
-                        var nkeys = JSROOTIO.ntoi4(buffer, offset); offset += 4;
+                        
+                        var buf = new JSROOTIO.TBuffer(_buffer, 0);
+                        
+                        var key = file.ReadKey(buf);
+
+                        var nkeys = buf.ntoi4();
                         for (var i = 0; i < nkeys; i++) {
-                           key = file.ReadKey(buffer, offset);
-                           offset += key['keyLen'];
-                           if (key['className'] != "" && key['name'] != "") {
-                              key['offset'] = offset;
-                           }
+                           key = file.ReadKey(buf);
                            file.fKeys.push(key);
                         }
                         file.ReadStreamerInfo();
-                        delete buffer;
-                        buffer = null;
+                        delete buf;
                      };
                      file.ReadBuffer(file.fNbytesKeys, callback4);
                   }
