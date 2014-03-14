@@ -123,7 +123,7 @@ bool hadaq::HldOutput::StartNewFile()
 	      prefix=fFileName.substr(prepos+1);
 	    
 	   unsigned disknumber = fDiskNumberPar.Value().AsUInt();	   
-	   fFileName=dabc::format("/data%02d/%s",disknumber,prefix.c_str());
+	   fFileName=dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
 	    DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s", 
 		  fFileName.c_str(), disknumber, prefix.c_str());
 	    fDiskNumberGuiPar=dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");

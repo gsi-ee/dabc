@@ -45,7 +45,7 @@ ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROO
 ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) 
 
 
-ifeq ($(DABC_ROOT_RHHTP), false)
+ifeq ($(DABC_ROOT_RHHTP),false)
 
 DABCROOT_SNIFF_H  = $(wildcard $(DABCROOTDIRSNIFF)/*.$(HedSuf))
 DABCROOT_SNIFF_S  = $(wildcard $(DABCROOTDIRSNIFF)/*.$(SrcSuf))
