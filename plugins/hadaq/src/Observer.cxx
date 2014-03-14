@@ -102,7 +102,7 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
    }
    // we also need information from daq_disk demon
-    hadaq::ShmEntry* diskentry = FindEntry("diskNr",netname);
+    hadaq::ShmEntry* diskentry = FindEntry("diskNum",netname);
    if(diskentry){
       diskentry->UpdateParameter();
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
