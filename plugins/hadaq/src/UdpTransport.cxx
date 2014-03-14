@@ -301,7 +301,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       std::string ratesprefix = inpport.GetName();
       fDataRateName = ratesprefix + "-Datarate";
       CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
-      Par(fDataRateName).SetDebugLevel(1);
+      //Par(fDataRateName).SetDebugLevel(1);
       SetPortRatemeter(OutputName(), Par(fDataRateName));
 
       CreateNetmemPar(dabc::format("pktsReceived%d",fIdNumber));

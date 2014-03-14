@@ -46,6 +46,7 @@ PREFIX  - run prefix for filename convention (be,te,co,..)
 OUTDIR - path to file output directory
 RFIOPATH - path to rfio tape archive
 FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
+DAQDISK - switches disk demon mode on/off
 
 -->
 
@@ -57,7 +58,7 @@ FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <logfile value="EB_${EBNUM}.log"/>
-      <debuglevel value="0"/>
+      <debuglevel value="-1"/>
       <loglimit value="1000000"/>
 <!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
       <control value="true"/>
@@ -122,7 +123,7 @@ FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
                     
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
-       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}" queue="500"/>
+       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
        <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${EBNUM}&rfio" queue="500"/>
 
       
@@ -142,10 +143,10 @@ FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
        <FlushBySync value="false"/>
 
        <!-- rate meters configuration -->
-       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
-       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
-       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
-       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+       <HadaqData width="4" prec="2" low="0" up="10" debug="-1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="-1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="-1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="-1"/>
        
        
        
@@ -167,8 +168,8 @@ FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
        <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
        <DoMergeSyncedEvents value="true"/>
 
-       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
+       <TransmitData width="5" prec="3" low="0" up="50" debug="-1"/>
+       <TransmitEvents width="4" prec="1" low="0" up="100" debug="-1"/>
      </Module>
 
   </Context>

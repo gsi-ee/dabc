@@ -261,6 +261,17 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    for (int p = 0; p < HADAQ_NUMERRPATTS; p++) {
       CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
    }
+
+  
+  CreateEvtbuildPar("diskNum"); // this gets number of partition from daq_disks
+  SetEvtbuildPar("diskNum", 1); // default for testing!
+  
+  CreateEvtbuildPar("diskNumEB"); // this is used for epics gui
+  SetEvtbuildPar("diskNumEB", 0); // default for testing!
+  
+  CreateEvtbuildPar("dataMover"); // rfio data mover number for epics gui
+  SetEvtbuildPar("dataMover", 0); // default for testing!
+  
 }
 
 

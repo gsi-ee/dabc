@@ -525,10 +525,10 @@ sub startEvtBuilders()
 	if($EB_Args_href->{$ebproc}->{'OUTDIR'} ){
 	       $exports = $exports . " export FILEOUTPUTS=2;";
              if($EB_Args_href->{$ebproc}->{'MULTIDISK'}){
-	         $exports = $exports . " export OUTDIR=/home/joern/data; ";
+	         $exports = $exports . "export DAQDISK=1; export OUTDIR=/home/joern/data; ";
              }
              else{
-		 $exports = $exports . " export OUTDIR=" . $EB_Args_href->{$ebproc}->{'OUTDIR'} .";";
+		 $exports = $exports . "export DAQDISK=0; export OUTDIR=" . $EB_Args_href->{$ebproc}->{'OUTDIR'} .";";
              }
          }
 	  else{
@@ -571,8 +571,8 @@ sub startEvtBuilders()
 
 
 
-   my $log = $log_path . "/log_" . $ebproc . "_" . "startEB.txt";
-   #my $log = "/dev/null 2>&1";
+   #my $log = $log_path . "/log_" . $ebproc . "_" . "startEB.txt";
+   my $log = "/dev/null 2>&1";
    
    print "Forking:" . $exe_dabc ."\n";
    forkMe($exe_dabc, $log, \@process_list) unless($opt_test);
@@ -625,7 +625,7 @@ else
         #- add rfio args
         my $rfio;
         if( $EB_Args_href->{$ebproc}->{'RFIO'} ){
-            $rfio = " --rfio "       . $EB_Args_href->{$ebproc}->{'RFIO_PATH'} .
+            $rfio = " --rfio rfiodaq:gstore:" . $EB_Args_href->{$ebproc}->{'RFIO_PATH'} .
                 " --rfiolustre "     . $EB_Args_href->{$ebproc}->{'RFIO_pcCopyPath'} .
                 " --rfio_pcoption "  . $EB_Args_href->{$ebproc}->{'RFIO_pcOptions'} .
                 " --rfio_icopymode " . $EB_Args_href->{$ebproc}->{'RFIO_iCopyMode'} .

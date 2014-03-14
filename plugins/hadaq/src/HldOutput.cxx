@@ -34,7 +34,9 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
    fEpicsSlave(false),
    fRunNumber(0),
-   fEBNumber(0), 
+   fEBNumber(0),
+   fUseDaqDisk(false),
+   fRfio(false),
    fRunidPar(),
    fBytesWrittenPar(),
    fFile()
@@ -42,15 +44,17 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fEpicsSlave = url.HasOption("epicsctrl");
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
    fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
-
-   if (url.HasOption("rfio")) {
+   fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
+   fRfio=url.HasOption("rfio");
+   if (fRfio) {
 
       dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface");
 
       if (io!=0) {
          fFile.SetIO(io, true);
          // set default protocol and node name, can only be used in GSI
-         fFileName = std::string("rfiodaq:gstore:") + fFileName;
+	 //if (fFileName.find("rfiodaq:gstore:")== std::string::npos)
+	    fFileName = std::string("rfiodaq:gstore:") + fFileName;
       } else {
          EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
       }
@@ -107,7 +111,33 @@ bool hadaq::HldOutput::StartNewFile()
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
    }
-
+  if(fUseDaqDisk)
+  {
+    fDiskNumberPar=dabc::mgr.FindPar("Combiner/Evtbuild_diskNum");
+      if(!fDiskNumberPar.null()) {
+	   std::string prefix;
+	   size_t prepos= fFileName.rfind("/");
+	   if (prepos == std::string::npos) 
+	      prefix=fFileName;
+	    else
+	      prefix=fFileName.substr(prepos+1);
+	    
+	   unsigned disknumber = fDiskNumberPar.Value().AsUInt();	   
+	   fFileName=dabc::format("/data%02d/%s",disknumber,prefix.c_str());
+	    DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s", 
+		  fFileName.c_str(), disknumber, prefix.c_str());
+	    fDiskNumberGuiPar=dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");
+	     if(!fDiskNumberGuiPar.null()) {
+		fDiskNumberGuiPar.SetValue(disknumber);
+		 DOUT0("Updated disknumber %d for gui",disknumber); 
+	     }
+	    
+      }
+      else
+      {
+	EOUT("Could not find daq_disk parameter although disk demon mode is on!");
+      }	
+  }      
    // change file names according hades style:
    std::string extens = hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
@@ -129,6 +159,15 @@ bool hadaq::HldOutput::StartNewFile()
       return false;
    }
 
+   if (fEpicsSlave && fRfio) {
+      // use parameters only in slave mode
+
+      fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
+       if(!fDataMoverPar.null()) {
+		fDataMoverPar.SetValue(1); // TODO: get here actual number of data mover from file interface!
+       }
+   }
+   
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
    return true;
