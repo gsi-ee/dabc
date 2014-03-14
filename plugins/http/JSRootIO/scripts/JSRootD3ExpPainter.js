@@ -7361,22 +7361,22 @@ var gStyle = {
             d_tree.add(k, j+1, 'Title: ' + streamerInfo[key]['title']); ++k;
          if (typeof(streamerInfo[key]['elements']) != 'undefined') {
             d_tree.add(k, j+1, 'Elements'); pid=k; ++k;
-            for (var l=0; l<streamerInfo[key]['elements']['array'].length; ++l) {
-               if (typeof(streamerInfo[key]['elements']['array'][l]['element']) != 'undefined') {
-                  d_tree.add(k, pid, streamerInfo[key]['elements']['array'][l]['element']['name']); cid=k; ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['elements']['array'][l]['element']['title']); ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['elements']['array'][l]['element']['typename']); ++k;
+            for (var l=0; l<streamerInfo[key]['elements']['arr'].length; ++l) {
+               if (typeof(streamerInfo[key]['elements']['arr'][l]['element']) != 'undefined') {
+                  d_tree.add(k, pid, streamerInfo[key]['elements']['arr'][l]['element']['name']); cid=k; ++k;
+                  d_tree.add(k, cid, streamerInfo[key]['elements']['arr'][l]['element']['title']); ++k;
+                  d_tree.add(k, cid, streamerInfo[key]['elements']['arr'][l]['element']['typename']); ++k;
                }
-               else if (typeof(streamerInfo[key]['elements']['array'][l]['name']) != 'undefined') {
-                  d_tree.add(k, pid, streamerInfo[key]['elements']['array'][l]['name']); cid=k; ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['elements']['array'][l]['title']); ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['elements']['array'][l]['typename']); ++k;
+               else if (typeof(streamerInfo[key]['elements']['arr'][l]['name']) != 'undefined') {
+                  d_tree.add(k, pid, streamerInfo[key]['elements']['arr'][l]['name']); cid=k; ++k;
+                  d_tree.add(k, cid, streamerInfo[key]['elements']['arr'][l]['title']); ++k;
+                  d_tree.add(k, cid, streamerInfo[key]['elements']['arr'][l]['typename']); ++k;
                }
             }
          }
-         else if (typeof(streamerInfo[key]['array']) != 'undefined') {
-            for (var l=0; l<streamerInfo[key]['array'].length; ++l) {
-               d_tree.add(k, j+1, streamerInfo[key]['array'][l]['str']); ++k;
+         else if (typeof(streamerInfo[key]['elements']) != 'undefined') {
+            for (var l=0; l<streamerInfo[key]['elements']['arr'].length; ++l) {
+               d_tree.add(k, j+1, streamerInfo[key]['elements']['arr'][l]['str']); ++k;
             }
          }
          ++j;

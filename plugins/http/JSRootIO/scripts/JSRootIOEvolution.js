@@ -429,6 +429,18 @@ var kClassMask = 0x80000000;
          error.source = "JSROOTIO.TBuffer.ctor";
          throw error;
       }
+
+      JSROOTIO.TBuffer.prototype.locate = function(pos) {
+         this.o = pos; 
+      }
+
+      JSROOTIO.TBuffer.prototype.shift = function(cnt) {
+         this.o += cnt; 
+      }
+
+      JSROOTIO.TBuffer.prototype.ntou1 = function() {
+         return (this.b.charCodeAt(this.o++) & 0xff) >>> 0; 
+      }
       
       JSROOTIO.TBuffer.prototype.ntou2 = function() {
          // convert (read) two bytes of buffer b into a UShort_t
@@ -462,6 +474,10 @@ var kClassMask = 0x80000000;
          return n;
       };
 
+      JSROOTIO.TBuffer.prototype.ntoi1 = function() {
+         return (this.b.charCodeAt(this.o++) & 0xff); 
+      }
+      
       JSROOTIO.TBuffer.prototype.ntoi2 = function() {
          // convert (read) two bytes of buffer b into a Short_t
          var n  = (this.b.charCodeAt(this.o)   & 0xff) << 8;
@@ -811,7 +827,7 @@ var kClassMask = 0x80000000;
             streamerinfo['name'] = streamerinfo['fName'];
             streamerinfo['title'] = streamerinfo['fTitle'];
             
-            console.log("name = " + streamerinfo['name']);
+            // console.log("name = " + streamerinfo['name']);
             
             streamerinfo['checksum'] = this.ntou4();
             streamerinfo['classversion'] = this.ntou4();
@@ -885,8 +901,6 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.TBuffer.prototype.ReadStreamerBasicPointer = function(streamerbase) {
          // stream an object of class TStreamerBasicPointer
-         console.log("Reading ReadStreamer BasicPointer");
-
          var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadStreamerElement(streamerbase);
@@ -1414,8 +1428,7 @@ var kClassMask = 0x80000000;
          }
       }
 
-
-      this.fStreamerInfos = new Array();
+      this.fStreamerInfos = {};
       this.fStreamerIndex = 0;
 
       return this;
@@ -1796,14 +1809,19 @@ var kClassMask = 0x80000000;
             return null;
          }
          var header = {};
-         header['version'] = JSROOTIO.ntou4(str, 4);
-         var largeFile = header['version'] >= 1000000;
-         var ntohoff = largeFile ? JSROOTIO.ntou8 : JSROOTIO.ntou4;
-         header['begin'] = JSROOTIO.ntou4(str, 8);
-         header['end'] = ntohoff(str, 12);
-         header['units'] = str.charCodeAt(largeFile ? 40 : 32) & 0xff;
-         header['seekInfo'] = ntohoff(str, largeFile ? 45 : 37);
-         header['nbytesInfo'] = ntohoff(str, largeFile ? 53 : 41);
+         
+         var buf = new JSROOTIO.TBuffer(str, 4); // skip root
+         header['version'] = buf.ntou4();
+         header['begin'] = buf.ntou4();
+         var largeFile = header['version'] >= 1000000; 
+         header['end'] = largeFile ? buf.ntou8() : buf.ntou4();
+         header['seekFree'] = largeFile ? buf.ntou8() : buf.ntou4();
+         buf.shift(12); // skip fNBytesFree, nfree, fNBytesName 
+         header['units'] = buf.ntoi1();
+         header['fCompress'] = buf.ntou4();
+         header['seekInfo'] = largeFile ? buf.ntou8() : buf.ntou4();
+         header['nbytesInfo'] = buf.ntou4();
+         
          if (!header['seekInfo'] && !header['nbytesInfo']) {
             // empty file
             return null;
@@ -1816,14 +1834,18 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.RootFile.prototype.ReadKey = function(str, o) {
          // read key from buffer
+         var buf = new JSROOTIO.TBuffer(str, o); 
+         
          var key = {};
          key['offset'] = o;
-         var nbytes = JSROOTIO.ntoi4(str, o);
+         var nbytes = buf.ntoi4();
          key['nbytes'] = Math.abs(nbytes);
          var largeKey = o + nbytes > 2 * 1024 * 1024 * 1024 /*2G*/;
-         var ntohoff = largeKey ? JSROOTIO.ntou8 : JSROOTIO.ntou4;
-         key['objLen'] = JSROOTIO.ntou4(str, o + 6);
-         var datime = JSROOTIO.ntou4(str, o + 10);
+         
+         buf.shift(2);
+         
+         key['objLen'] = buf.ntou4();
+         var datime = buf.ntou4();
          key['datime'] = {
             year : (datime >>> 26) + 1995,
             month : (datime << 6) >>> 28,
@@ -1832,23 +1854,18 @@ var kClassMask = 0x80000000;
             min : (datime << 20) >>> 26,
             sec : (datime << 26) >>> 26
          };
-         key['keyLen'] = JSROOTIO.ntou2(str, o + 14);
-         key['cycle'] = JSROOTIO.ntou2(str, o + 16);
-         o += 18;
+         key['keyLen'] = buf.ntou2();
+         key['cycle'] = buf.ntou2();
          if (largeKey) {
-            key['seekKey'] = JSROOTIO.ntou8(str, o); o += 8;
-            o += 8; // skip seekPdir
+            key['seekKey'] = buf.ntou8(); 
+            buf.shift(8); // skip seekPdir
+         } else {
+            key['seekKey'] = buf.ntou4();
+            buf.shift(4); // skip seekPdir
          }
-         else {
-            key['seekKey'] = JSROOTIO.ntou4(str, o); o += 4;
-            o += 4; // skip seekPdir
-         }
-         var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-         key['className'] = so['str'];
-         so = JSROOTIO.ReadTString(str, o); o = so['off'];
-         key['name'] = so['str'];
-         so = JSROOTIO.ReadTString(str, o); o = so['off'];
-         key['title'] = so['str'];
+         key['className'] = buf.ReadTString();
+         key['name'] = buf.ReadTString();
+         key['title'] = buf.ReadTString();
          key['dataoffset'] = key['seekKey'] + key['keyLen'];
          key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
          return key;
@@ -1984,30 +2001,31 @@ var kClassMask = 0x80000000;
             }
 
             var callback2 = function(file, str) {
-               var o = 4; // skip the "root" file identifier
-               file.fVersion = JSROOTIO.ntou4(str, o); o += 4;
-               var headerLength = JSROOTIO.ntou4(str, o); o += 4;
+               
+               var buf = new JSROOTIO.TBuffer(str, 4); // skip the "root" file identifier 
+               file.fVersion = buf.ntou4();
+               var headerLength = buf.ntou4();
                file.fBEGIN = headerLength;
                if (file.fVersion < 1000000) { //small file
-                  file.fEND = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fSeekFree = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fNbytesFree = JSROOTIO.ntou4(str, o); o += 4;
-                  var nfree = JSROOTIO.ntoi4(str, o); o += 4;
-                  file.fNbytesName = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fUnits = str.charCodeAt(o) & 0xff; o++;
-                  file.fCompress = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fSeekInfo = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fNbytesInfo = JSROOTIO.ntou4(str, o); o += 4;
+                  file.fEND = buf.ntou4();
+                  file.fSeekFree = buf.ntou4();
+                  file.fNbytesFree = buf.ntou4();
+                  var nfree = buf.ntoi4();
+                  file.fNbytesName = buf.ntou4();
+                  file.fUnits = buf.ntou1();
+                  file.fCompress = buf.ntou4();
+                  file.fSeekInfo = buf.ntou4();
+                  file.fNbytesInfo = buf.ntou4();
                } else { // new format to support large files
-                  file.fEND = JSROOTIO.ntou8(str, o); o += 8;
-                  file.fSeekFree = JSROOTIO.ntou8(str, o); o += 8;
-                  file.fNbytesFree = JSROOTIO.ntou4(str, o); o += 4;
-                  var nfree = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fNbytesName = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fUnits = str.charCodeAt(o) & 0xff; o++;
-                  file.fCompress = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fSeekInfo = JSROOTIO.ntou8(str, o); o += 8;
-                  file.fNbytesInfo = JSROOTIO.ntou4(str, o); o += 4;
+                  file.fEND = buf.ntou8();
+                  file.fSeekFree = buf.ntou8();
+                  file.fNbytesFree = buf.ntou4();
+                  var nfree = buf.ntou4();
+                  file.fNbytesName = buf.ntou4();
+                  file.fUnits = buf.ntou1();
+                  file.fCompress = buf.ntou4();
+                  file.fSeekInfo = buf.ntou8();
+                  file.fNbytesInfo = buf.ntou4();
                }
                file.fSeekDir = file.fBEGIN;
 
@@ -2023,35 +2041,35 @@ var kClassMask = 0x80000000;
                file.Seek(file.fBEGIN, file.ERelativeTo.kBeg);
 
                var callback3 = function(file, str) {
-                  var buffer_keyloc = new String(str);
-                  o = file.fNbytesName;
+                  console.log("callback3");
+                  
+                  var buf = new JSROOTIO.TBuffer(str, file.fNbytesName);
 
-                  var version = JSROOTIO.ntou2(str, o); o += 2;
+                  var version = buf.ntou2();
                   var versiondir = version%1000;
-                  o += 8; // skip fDatimeC and fDatimeM ReadBuffer()
-                  file.fNbytesKeys = JSROOTIO.ntou4(str, o); o += 4;
-                  file.fNbytesName = JSROOTIO.ntou4(str, o); o += 4;
+                  buf.shift(8); // skip fDatimeC and fDatimeM ReadBuffer()
+                  file.fNbytesKeys = buf.ntou4();
+                  file.fNbytesName = buf.ntou4();
                   if (version > 1000) {
-                     file.fSeekDir = JSROOTIO.ntou8(str, o); o += 8;
-                     file.fSeekParent = JSROOTIO.ntou8(str, o); o += 8;
-                     file.fSeekKeys = JSROOTIO.ntou8(str, o); o += 8;
+                     file.fSeekDir = buf.ntou8();
+                     file.fSeekParent = buf.ntou8();
+                     file.fSeekKeys = buf.ntou8();
                   } else {
-                     file.fSeekDir = JSROOTIO.ntou4(str, o); o += 4;
-                     file.fSeekParent = JSROOTIO.ntou4(str, o); o += 4;
-                     file.fSeekKeys = JSROOTIO.ntou4(str, o); o += 4;
+                     file.fSeekDir = buf.ntou4();
+                     file.fSeekParent = buf.ntou4();
+                     file.fSeekKeys = buf.ntou4();
                   }
-                  if (versiondir > 1) o += 18; // skip fUUID.ReadBuffer(buffer);
+                  if (versiondir > 1) buf.o += 18; // skip fUUID.ReadBuffer(buffer);
 
                   //*-*---------read TKey::FillBuffer info
-                  var kl = 4; // Skip NBytes;
-                  var keyversion = JSROOTIO.ntoi2(buffer_keyloc, kl); kl += 2;
+                  buf.o = 4; // Skip NBytes;
+                  var keyversion = buf.ntoi2();
                   // Skip ObjLen, DateTime, KeyLen, Cycle, SeekKey, SeekPdir
-                  if (keyversion > 1000) kl += 28; // Large files
-                  else kl += 20;
-                  var so = JSROOTIO.ReadTString(buffer_keyloc, kl); kl = so['off'];
-                  so = JSROOTIO.ReadTString(buffer_keyloc, kl); kl = so['off'];
-                  so = JSROOTIO.ReadTString(buffer_keyloc, kl); kl = so['off'];
-                  file.fTitle = so['str'];
+                  if (keyversion > 1000) buf.shift(28); // Large files
+                                    else buf.shift(20);
+                  buf.ReadTString(); 
+                  buf.ReadTString(); 
+                  file.fTitle = buf.ReadTString();
                   if (file.fNbytesName < 10 || this.fNbytesName > 10000) {
                      throw "Init : cannot read directory info of file " + file.fURL;
                   }
