@@ -7171,7 +7171,7 @@ var gStyle = {
             node_title = keys[i]['name'];
          }
          else if (keys[i]['name'] == 'StreamerInfo') {
-            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfo.fStreamerInfos);";
+            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
             node_img = source_dir+'img/question.gif';
          }
          else if (keys[i]['className'] == 'TDirectory') {
@@ -7252,7 +7252,7 @@ var gStyle = {
             node_title = keys[i]['name'];
          }
          else if (keys[i]['name'] == 'StreamerInfo') {
-            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfo.fStreamerInfos);";
+            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
             node_img = source_dir+'img/question.gif';
             node_title = keys[i]['name'];
          }

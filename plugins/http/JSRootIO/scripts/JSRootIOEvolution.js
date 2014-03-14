@@ -50,7 +50,7 @@ var kClassMask = 0x80000000;
       var i, j, n_el;
       if (typeof(gFile.fStreamers[clname]) != 'undefined')
          return gFile.fStreamers[clname];
-      var s_i = gFile.fStreamerInfo.fStreamerInfos[clname];
+      var s_i = gFile.fStreamerInfos[clname];
       if (typeof(s_i) === 'undefined')
          return 0;
       gFile.fStreamers[clname] = new JSROOTIO.TStreamer(gFile);
@@ -689,7 +689,6 @@ var kClassMask = 0x80000000;
             tag = this.ntou4();
          }
          if (!(tag & kClassMask)) {
-            
             classInfo['name'] = 0;
             classInfo['tag'] = tag;
             classInfo['objtag'] = tag; // indicate that we have deal with objects tag
@@ -698,11 +697,10 @@ var kClassMask = 0x80000000;
          if (tag == kNewClassTag) {
             // got a new class description followed by a new object
             classInfo['name'] = this.ReadString();
-            //if (gFile.fTagOffset == 0) gFile.fTagOffset = 68;
             classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
             
-            if (gFile.GetClassMap(gFile.fTagOffset + startpos + kMapOffset)==-1)
-               gFile.AddClassMap(classInfo['name'], gFile.fTagOffset + startpos + kMapOffset);
+            if (gFile.GetClassMap(this.fTagOffset + startpos + kMapOffset)==-1)
+               gFile.AddClassMap(classInfo['name'], this.fTagOffset + startpos + kMapOffset);
          }
          else {
             // got a tag to an already seen class
@@ -733,7 +731,7 @@ var kClassMask = 0x80000000;
          
          var obj = {};
 
-         this.MapObject(obj, gFile.fTagOffset + startpos + kMapOffset);
+         this.MapObject(obj, this.fTagOffset + startpos + kMapOffset);
 
          this.ClassStreamer(obj, clRef['name']);
             
@@ -803,6 +801,7 @@ var kClassMask = 0x80000000;
       this.b = str;
       this.o = (o==null) ? 0 : o;
       this.ClearObjectMap();
+      this.fTagOffset = 0;
    }
 
 })();
@@ -1120,60 +1119,6 @@ var kClassMask = 0x80000000;
 
 // JSROOTIO.TStreamer.js ends
 
-// StreamerInfo.js
-//
-// A class that reads TStreamerInfo inside ROOT files.
-// Depends on the JSROOTIO library functions.
-//
-
-(function(){
-
-   if (typeof JSROOTIO != "object") {
-      var e1 = new Error("This extension requires JSROOTIO.core.js");
-      e1.source = "JSROOTIO.StreamerInfo.js";
-      throw e1;
-   }
-
-   var version = "1.6 2012/02/24";
-
-   // ctor
-   JSROOTIO.StreamerInfo = function(buffer, callback) {
-      if (! (this instanceof arguments.callee) ) {
-         var error = new Error("you must use new to instantiate this class");
-         error.source = "JSROOTIO.StreamerInfo.ctor";
-         throw error;
-      }
-
-      this._version = version;
-      this._typename = "JSROOTIO.StreamerInfo";
-      
-      JSROOTIO.StreamerInfo.prototype.ExtractStreamerInfo = function(str) {
-
-         var lst = {};
-         lst['_typename'] = "JSROOTIO.TList";
-
-         var buf = new JSROOTIO.TBuffer(str, 0);
-         buf.MapObject(lst, 1);
-         
-         buf.ClassStreamer(lst,'TList');
-         
-         for (var i=0;i<lst['arr'].length;i++) {
-            this.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
-            this.fStreamerIndex++;
-         }
-      }
-
-      this.fStreamerInfos = {};
-      this.fStreamerIndex = 0;
-
-      return this;
-   };
-
-   JSROOTIO.StreamerInfo.Version = version;
-
-})();
-
-// JSROOTIO.StreamerInfo.js ends
 
 // JSROOTIO.TDirectory.js
 //
@@ -1314,12 +1259,6 @@ var kClassMask = 0x80000000;
 
    if (typeof JSROOTIO != "object") {
       var e1 = new Error("This extension requires JSROOTIO.core.js");
-      e1.source = "JSROOTIO.RootFile.js";
-      throw e1;
-   }
-
-   if (typeof JSROOTIO.StreamerInfo != "function") {
-      var e1 = new Error("This extension requires JSROOTIO.StreamerInfo.js");
       e1.source = "JSROOTIO.RootFile.js";
       throw e1;
    }
@@ -1604,7 +1543,6 @@ var kClassMask = 0x80000000;
       JSROOTIO.RootFile.prototype.ReadObjBuffer = function(key, callback) {
          // read and inflate object buffer described by its key
          this.Seek(key['dataoffset'], this.ERelativeTo.kBeg);
-         this.fTagOffset = key.keyLen;
          var callback1 = function(file, buffer) {
             var noutot = 0;
             var objbuf = 0;
@@ -1637,16 +1575,15 @@ var kClassMask = 0x80000000;
          if (findObject(obj_name+cycle)) return;
          var key = this.GetKey(obj_name, cycle);
          if (key == null) return;
-         this.fTagOffset = key.keyLen;
+         
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
                var obj = {};
                obj['_typename'] = 'JSROOTIO.' + key['className'];
 
                var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
-
+               buf.fTagOffset = key.keyLen;
                buf.MapObject(obj, 1); // workaround - tag first object with id1
-
                buf.ClassStreamer(obj, key['className']);
                
                if (key['className'] == 'TFormula') {
@@ -1677,12 +1614,21 @@ var kClassMask = 0x80000000;
             var buf = new JSROOTIO.TBuffer(_buffer, 0);
             var key = file.ReadKey(buf);
             if (key == null) return;
-            this.fTagOffset = key.keyLen;
             file.fKeys.push(key);
             var callback2 = function(file, objbuf) {
                if (objbuf && objbuf['unzipdata']) {
-                  file.fStreamerInfo.ExtractStreamerInfo(objbuf['unzipdata']);
-                  //JSROOTIO.GenerateStreamers(file);
+                  
+                  var lst = {};
+                  lst['_typename'] = "JSROOTIO.TList";
+
+                  var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
+                  buf.fTagOffset = key.keyLen;
+                  buf.MapObject(lst, 1);
+                  buf.ClassStreamer(lst, 'TList');
+                  
+                  for (var i=0;i<lst['arr'].length;i++)
+                     file.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
+                  
                   delete objbuf['unzipdata'];
                   objbuf['unzipdata'] = null;
                }
@@ -1853,6 +1799,7 @@ var kClassMask = 0x80000000;
                var list = {};
                list['_typename'] = 'JSROOTIO.' + key['className'];
                var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
+               buf.fTagOffset = key.keyLen;
                buf.MapObject(list, 1); 
                buf.ClassStreamer(list, key['className']);
                
@@ -1937,7 +1884,7 @@ var kClassMask = 0x80000000;
       this.fNbytesInfo = 0;
       this.fTagOffset = 0;
       this.fStreamers = 0;
-      this.fStreamerInfo = new JSROOTIO.StreamerInfo();
+      this.fStreamerInfos = {};
       if (this.fURL) {
          this.fEND = this.GetSize(this.fURL);
          this.ReadKeys();

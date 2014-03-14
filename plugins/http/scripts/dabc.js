@@ -1493,7 +1493,7 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
       }
    } else {
       gFile = this.obj;
-      JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
+      JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfos, "#" + this.frameid);
       gFile = null;
    }
    
