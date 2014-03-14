@@ -198,70 +198,6 @@ var kClassMask = 0x80000000;
          'str' : (len == 0) ? "" : str.substring(off, off + len)
       };
    };
-  
-
-   // TODO: should be removed completely
-   JSROOTIO.ReadTListContent = function(str, o, list_name) {
-      // read the content of list from the I/O buffer
-      var list = {};
-      list['name'] = "";
-      list['arr'] = new Array();
-      list['opt'] = new Array();
-      
-      var ver = JSROOTIO.ReadVersion(str, o);
-      o = ver['off'];
-      if (ver['val'] > 3) {
-         o += 2; // skip version
-         o += 8; // object bits & unique id
-         var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-         list['name'] = so['str'];
-         var nobjects = JSROOTIO.ntou4(str, o); o += 4;
-         var class_name = '';
-         for (var i = 0; i < nobjects; ++i) {
-            var clRef = gFile.ReadClass(str, o);
-            if (clRef['name'] && clRef['name'] != -1) {
-               class_name = clRef['name'];
-            }
-            else if (!clRef['name'] && clRef['tag']) {
-               class_name = gFile.GetClassMap(clRef['tag']);
-               if (class_name != -1)
-                  clRef['name'] = class_name;
-            }
-            else if (!clRef['name'] && class_name) {
-               clRef['name'] = class_name;
-            }
-            clRef['pos'] = o;
-            var posname = 12;
-            if (clRef['name'] && clRef['name'].match(/\bTH2/))
-               posname += 6;
-            if (clRef['name'] && clRef['name'].match(/\bTH3/))
-               posname += 6;
-            if (clRef['name'] && clRef['name'].match(/\bTList/))
-               posname = 0;
-            var named = JSROOTIO.ReadTNamed(str, clRef['off'] + posname);
-            clRef['fName'] = named['name'];
-            clRef['_typename'] = clRef['name'];
-            clRef['_listname'] = list_name;
-            o +=  clRef['cnt']; o += 4;
-            list['arr'].push(clRef);
-            var nch = str.charCodeAt(o) & 0xff; o++;
-            if (ver['val'] > 4 && nch == 255)  {
-               nbig = JSROOTIO.ntou4(str, o); o += 4;
-            } else {
-               nbig = nch;
-            }
-            if (nbig > 0) {
-               var readOption = JSROOTIO.ReadString(str, o, nbig);
-               list['opt'].push(readOption['str']);
-               o += nbig;
-            } else {
-               list['opt'].push("");
-            }
-         }
-      }
-      list['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTListContent");
-      return list;
-   };
 
    JSROOTIO.ReadVersion = function(str, o) {
       // read class version from I/O buffer
@@ -284,23 +220,6 @@ var kClassMask = 0x80000000;
       return o;
    }
 
-   // TODO - should be removed completely
-   JSROOTIO.ReadTNamed = function(str, o) {
-      // read a TNamed class definition from I/O buffer
-      var named = {};
-      var ver = JSROOTIO.ReadVersion(str, o);
-      o = ver['off'];
-      o += 2; // skip version
-      o += 4; // skip unique id
-      named['fBits'] = JSROOTIO.ntou4(str, o); o += 4;
-      var so = JSROOTIO.ReadTString(str, o); o = so['off'];
-      named['name'] = so['str'];
-      so = JSROOTIO.ReadTString(str, o); o = so['off'];
-      named['title'] = so['str'];
-      named['off'] = JSROOTIO.CheckBytecount(ver, o, "ReadTNamed");
-      return named;
-   };
-   
 
    JSROOTIO.GetStreamer = function(clname) {
       // return the streamer for the class 'clname', from the list of streamers
@@ -1958,8 +1877,9 @@ var kClassMask = 0x80000000;
                }
             };
             file.ReadObjBuffer(key, callback2);
+            
             JSROOTPainter.displayListOfKeys(file.fKeys, '#status');
-            delete _buf;
+            
             // the next two lines are for debugging/info purpose
             //$("#status").append("file header: " + file.fLogMsg  + "<br/>");
             //JSROOTPainter.displayListOfKeyDetails(file.fKeys, '#status');
@@ -2112,16 +2032,20 @@ var kClassMask = 0x80000000;
 
          var callback = function(file, objbuf) {
             if (objbuf && objbuf['unzipdata']) {
-               var list = null;
-               if (key['className'] == "TList") {
-                  // when reading a TList, all objects are actually read, 
-                  // unlike TDirectories where only TKeys are read....
-                  list = JSROOTIO.ReadTListContent(objbuf['unzipdata'], 0, name);
-               }
-               if (list && list['array'])
-                  displayCollection(list['array'], cycle, id);
-               delete objbuf['unzipdata'];
-               objbuf['unzipdata'] = null;
+               console.log("Read collection");
+
+               var list = {};
+               list['_typename'] = 'JSROOTIO.' + key['className'];
+               var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
+               buf.MapObject(list, 1); 
+               buf.ClassStreamer(list, key['className']);
+               
+               console.log("Read collection " + list.arr.length);
+               
+               if (('arr' in list) && (list.arr.length>0))
+                  displayCollection(list['arr'], cycle, id);
+               delete buf;
+
                obj_list.push(name+cycle);
                obj_index++;
             }
