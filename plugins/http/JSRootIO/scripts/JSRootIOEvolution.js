@@ -405,22 +405,28 @@ var kClassMask = 0x80000000;
 
 
       JSROOTIO.TBuffer.prototype.GetMappedObject = function(tag) {
-         for (var i=0;i<this.fObjectMap.length;i++)
-            if (this.fObjectMap[i].tag == tag) return this.fObjectMap[i].obj; 
-         return null;
+         return this.fObjectMap[tag];
       };
 
-      JSROOTIO.TBuffer.prototype.MapObject = function(obj, tag) {
+      JSROOTIO.TBuffer.prototype.MapObject = function(tag, obj) {
          if (obj==null) return;
-         
-         this.fObjectMap.push({ 'tag' : tag, 'obj': obj });
-         this.fMapCount++;
+         this.fObjectMap[tag] = obj;
       };
+      
+      JSROOTIO.TBuffer.prototype.MapClass = function(tag, classname) {
+         this.fClassMap[tag] = classname;
+      };
+
+      JSROOTIO.TBuffer.prototype.GetMappedClass = function(tag) {
+         if (tag in this.fClassMap) return this.fClassMap[tag];
+         return -1;
+      };
+
 
       JSROOTIO.TBuffer.prototype.ClearObjectMap = function() {
-         this.fObjectMap = new Array;
-         this.fObjectMap.push({ 'tag' : 0, 'obj': null });
-         this.fMapCount = 1; // in original ROOT first element in map is 0
+         this.fObjectMap = {};
+         this.fClassMap = {};
+         this.fObjectMap[0] = null;
       };
       
       JSROOTIO.TBuffer.prototype.ReadVersion = function() {
@@ -699,13 +705,13 @@ var kClassMask = 0x80000000;
             classInfo['name'] = this.ReadString();
             classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
             
-            if (gFile.GetClassMap(this.fTagOffset + startpos + kMapOffset)==-1)
-               gFile.AddClassMap(classInfo['name'], this.fTagOffset + startpos + kMapOffset);
+            if (this.GetMappedClass(this.fTagOffset + startpos + kMapOffset)==-1)
+               this.MapClass(this.fTagOffset + startpos + kMapOffset, classInfo['name']);
          }
          else {
             // got a tag to an already seen class
             var clTag = (tag & ~kClassMask);
-            classInfo['name'] = gFile.GetClassMap(clTag);
+            classInfo['name'] = this.GetMappedClass(clTag);
          }
          classInfo['cnt'] = (bcnt & ~kByteCountMask);
 
@@ -731,7 +737,7 @@ var kClassMask = 0x80000000;
          
          var obj = {};
 
-         this.MapObject(obj, this.fTagOffset + startpos + kMapOffset);
+         this.MapObject(this.fTagOffset + startpos + kMapOffset, obj);
 
          this.ClassStreamer(obj, clRef['name']);
             
@@ -1542,30 +1548,24 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.RootFile.prototype.ReadObjBuffer = function(key, callback) {
          // read and inflate object buffer described by its key
-         this.Seek(key['dataoffset'], this.ERelativeTo.kBeg);
          var callback1 = function(file, buffer) {
-            var noutot = 0;
-            var objbuf = 0;
-
-            if (key['objLen'] > key['nbytes']-key['keyLen']) {
+            var buf = null;
+            
+            if (key['objLen'] <= key['nbytes']-key['keyLen']) {
+               buf = new JSROOTIO.TBuffer(buffer);
+            } else {
                var hdr = JSROOTIO.R__unzip_header(buffer, 0);
-               if (hdr == null) {
-                  delete buffer;
-                  buffer = null;
-                  return;
-               }
-               objbuf = JSROOTIO.R__unzip(hdr['srcsize'], buffer, 0);
+               if (hdr == null) return;
+               var objbuf = JSROOTIO.R__unzip(hdr['srcsize'], buffer, 0);
+               buf = new JSROOTIO.TBuffer(objbuf['unzipdata']); 
             }
-            else {
-               var obj_buf = {};
-               obj_buf['unzipdata'] = buffer;
-               obj_buf['irep'] = buffer.length;
-               objbuf = obj_buf;
-            }
-            delete buffer;
-            buffer = null;
-            callback(file, objbuf);
+
+            buf.fTagOffset = key.keyLen;
+            callback(file, buf);
+            delete buf;
          };
+         
+         this.Seek(key['dataoffset'], this.ERelativeTo.kBeg);
          this.ReadBuffer(key['nbytes'] - key['keyLen'], callback1);
       };
 
@@ -1576,36 +1576,58 @@ var kClassMask = 0x80000000;
          var key = this.GetKey(obj_name, cycle);
          if (key == null) return;
          
-         var callback = function(file, objbuf) {
-            if (objbuf && objbuf['unzipdata']) {
-               var obj = {};
-               obj['_typename'] = 'JSROOTIO.' + key['className'];
+         var callback = function(file, buf) {
+            if (!buf) return;
+            var obj = {};
+            obj['_typename'] = 'JSROOTIO.' + key['className'];
 
-               var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
-               buf.fTagOffset = key.keyLen;
-               buf.MapObject(obj, 1); // workaround - tag first object with id1
-               buf.ClassStreamer(obj, key['className']);
-               
-               if (key['className'] == 'TFormula') {
-                  JSROOTCore.addFormula(obj);
-               }
-               else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
-                  displayTree(obj, cycle, node_id);
-               }
-               else {
-                  if (obj['fName'] == "") obj['fName'] = obj_name;
-                  displayObject(obj, cycle, obj_index);
-                  obj_list.push(obj_name+cycle);
-                  obj_index++;
-               }
-               delete objbuf['unzipdata'];
-               objbuf['unzipdata'] = null;
+            buf.MapObject(1, obj); // workaround - tag first object with id1
+            buf.ClassStreamer(obj, key['className']);
+            
+            if (key['className'] == 'TFormula') {
+               JSROOTCore.addFormula(obj);
+            }
+            else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
+               displayTree(obj, cycle, node_id);
+            }
+            else {
+               if (obj['fName'] == "") obj['fName'] = obj_name;
+               displayObject(obj, cycle, obj_index);
+               obj_list.push(obj_name+cycle);
+               obj_index++;
             }
          };
 
          this.ReadObjBuffer(key, callback);
       };
 
+      JSROOTIO.RootFile.prototype.ReadCollection = function(name, cycle, id) {
+         // read the collection content from a root file
+         if (obj_list.indexOf(name+cycle) != -1) return;
+         var key = this.GetKey(name, cycle);
+         if (key == null) return null;
+
+         var callback = function(file, buf) {
+            if (!buf) return;
+               
+            var list = {};
+            list['_typename'] = 'JSROOTIO.' + key['className'];
+            
+            buf.MapObject(1, list); 
+            buf.ClassStreamer(list, key['className']);
+            
+            console.log("Read collection " + list.arr.length);
+            
+            if (('arr' in list) && (list.arr.length>0))
+               displayCollection(name, cycle, id, list);
+            
+            obj_list.push(name+cycle);
+            obj_index++;
+         };
+         this.ReadObjBuffer(key, callback);
+      };
+
+      
       JSROOTIO.RootFile.prototype.ReadStreamerInfo = function() {
 
          if (this.fSeekInfo == 0 || this.fNbytesInfo == 0) return;
@@ -1615,23 +1637,18 @@ var kClassMask = 0x80000000;
             var key = file.ReadKey(buf);
             if (key == null) return;
             file.fKeys.push(key);
-            var callback2 = function(file, objbuf) {
-               if (objbuf && objbuf['unzipdata']) {
+            var callback2 = function(file, buf) {
+               if (!buf) return;
                   
-                  var lst = {};
-                  lst['_typename'] = "JSROOTIO.TList";
+               var lst = {};
+               lst['_typename'] = "JSROOTIO.TList";
 
-                  var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
-                  buf.fTagOffset = key.keyLen;
-                  buf.MapObject(lst, 1);
-                  buf.ClassStreamer(lst, 'TList');
+               buf.MapObject(1, lst);
+               buf.ClassStreamer(lst, 'TList');
+               
+               for (var i=0;i<lst['arr'].length;i++)
+                  file.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
                   
-                  for (var i=0;i<lst['arr'].length;i++)
-                     file.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
-                  
-                  delete objbuf['unzipdata'];
-                  objbuf['unzipdata'] = null;
-               }
                for (i=0;i<file.fKeys.length;++i) {
                   if (file.fKeys[i]['className'] == 'TFormula') {
                      file.ReadObject(file.fKeys[i]['name'], file.fKeys[i]['cycle']);
@@ -1774,70 +1791,16 @@ var kClassMask = 0x80000000;
          var key = this.GetKey(dir_name, cycle);
          if (key == null) return null;
 
-         var callback = function(file, objbuf) {
-            if (objbuf && objbuf['unzipdata']) {
-               var directory = new JSROOTIO.TDirectory(file, key['className']);
-               directory.StreamHeader(new JSROOTIO.TBuffer(objbuf['unzipdata'], 0));
-               if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
-               delete objbuf['unzipdata'];
-               objbuf['unzipdata'] = null;
-            }
-         };
-         this.ReadObjBuffer(key, callback);
-      };
-
-      JSROOTIO.RootFile.prototype.ReadCollection = function(name, cycle, id) {
-         // read the collection content from a root file
-         if (obj_list.indexOf(name+cycle) != -1) return;
-         var key = this.GetKey(name, cycle);
-         if (key == null) return null;
-
-         var callback = function(file, objbuf) {
-            if (objbuf && objbuf['unzipdata']) {
-               console.log("Read collection " + name + "  len = " + objbuf['unzipdata'].length + "  class = " + key['className']);
-
-               var list = {};
-               list['_typename'] = 'JSROOTIO.' + key['className'];
-               var buf = new JSROOTIO.TBuffer(objbuf['unzipdata'], 0);
-               buf.fTagOffset = key.keyLen;
-               buf.MapObject(list, 1); 
-               buf.ClassStreamer(list, key['className']);
+         var callback = function(file, buf) {
+            if (!buf) return;
                
-               console.log("Read collection " + list.arr.length);
-               
-               if (('arr' in list) && (list.arr.length>0))
-                  displayCollection(name, cycle, id, list);
-               delete buf;
-
-               obj_list.push(name+cycle);
-               obj_index++;
-            }
+            var directory = new JSROOTIO.TDirectory(file, key['className']);
+            directory.StreamHeader(buf);
+            if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
          };
          this.ReadObjBuffer(key, callback);
       };
 
-      JSROOTIO.RootFile.prototype.ReadCollectionElement = function(list_name, obj_name, cycle, offset) {
-         // read the collection content from a root file
-         
-         console.log("ReadCollectionElement list " + list_name + "  obj_name " + obj_name);
-         
-         if (obj_list.indexOf(obj_name+cycle) != -1) return;
-         var key = this.GetKey(list_name, cycle);
-         if (key == null) return null;
-         var callback = function(file, objbuf) {
-            if (objbuf && objbuf['unzipdata']) {
-               var obj = JSROOTIO.ReadObjectAny(objbuf['unzipdata'], offset);
-               if (obj['obj']!=null) {
-                  displayObject(obj['obj'], cycle, obj_index);
-                  obj_list.push(obj_name+cycle);
-                  obj_index++;
-               }
-               delete objbuf['unzipdata'];
-               objbuf['unzipdata'] = null;
-            }
-         };
-         this.ReadObjBuffer(key, callback);
-      };
 
       JSROOTIO.RootFile.prototype.Init = function(fileurl) {
          // init members of a Root file from given url
@@ -1860,23 +1823,6 @@ var kClassMask = 0x80000000;
          this.fTagOffset = 0;
          this.fStreamerInfo = null;
       };
-
-      JSROOTIO.RootFile.prototype.AddClassMap = function(name, tag) {
-         this.fClassMap[this.fClassIndex] = { 'clname' : name, 'cltag' : tag };
-         this.fClassIndex++;
-      }
-
-      JSROOTIO.RootFile.prototype.GetClassMap = function(clTag) {
-         // find the tag 'clTag' in the list and return the class name
-         for (var i=0; i<this.fClassIndex; ++i) {
-            if (this.fClassMap[i]['cltag'] == clTag)
-               return this.fClassMap[i]['clname'];
-         }
-         return -1;
-      };
-
-      this.fClassMap = new Array;
-      this.fClassIndex = 0;
 
       this.fDirectories = new Array();
       this.fKeys = new Array();

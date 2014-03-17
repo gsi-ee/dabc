@@ -155,8 +155,6 @@ function displayTree(tree, cycle, node_id) {
 function displayCollection(name, cycle, c_id, coll) {
    var fullname = name + ";" + cycle;
    
-   console.log("displayCollection " + fullname + "  c_id = " + c_id + "  length = " + coll.arr.length);
-   
    collections_list[fullname] = coll;
    
    JSROOTPainter.addCollectionContents(fullname, c_id, coll, '#status');

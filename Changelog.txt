@@ -12,6 +12,7 @@ current functionality of the framework.
    Use it for the rfio::FileInterface to request data mover parameters.  
 4. For special case preserve connection to RFIO server in the rfio::FileInterface
 5. In JSRootIO - correctly display collection elements.  
+6. Fix error with class map in JSRootIO. Now it works correctly for lists example.
 
 
 14.03.2014
