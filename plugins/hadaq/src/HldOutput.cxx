@@ -170,17 +170,18 @@ bool hadaq::HldOutput::StartNewFile()
 
       int indx = fFile.GetIntPar("DataMoverIndx");
 
-      // char sbuf[100];
-      // if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
+      char sbuf[100];
+      if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
 
       if(!fDataMoverPar.null()) {
          fDataMoverPar.SetValue(indx); // TODO: get here actual number of data mover from file interface!
       }
-   }
+    DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);      
+  }
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
-   return true;
+   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); return true;
+  
 }
 
 bool hadaq::HldOutput::CloseFile()

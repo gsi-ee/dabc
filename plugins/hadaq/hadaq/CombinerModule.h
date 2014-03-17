@@ -187,6 +187,10 @@ namespace hadaq {
 	 uint32_t fMaxHadaqTrigger;
 	 uint32_t fTriggerRangeMask;
 	 
+	 /* if true, account difference of subsequent build event numbers as lost events
+	  if false, do not account it (for multiple event builder mode)*/
+	 bool fEvnumDiffStatistics;
+	 
          bool BuildEvent();
 
          bool FlushOutputBuffer();

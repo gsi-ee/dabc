@@ -35,7 +35,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver(false),
    fEpicsSlave(false),
    fBuildCompleteEvents(true),
-   fFlushTimeout(0.)
+   fFlushTimeout(0.),
+   fEvnumDiffStatistics(true)
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
@@ -68,7 +69,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fMaxHadaqTrigger=Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask=fMaxHadaqTrigger-1;
       DOUT0("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
-   
+   fEvnumDiffStatistics=Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
+      
+      
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
    fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);        //0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
@@ -760,7 +763,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fLastTrigNr = buildevid;
 
       Par(fEventRateName).SetValue(1);
-      if (diff>1) {
+      if (fEvnumDiffStatistics && diff>1) {
          DOUT2("Events gap %d", diff);
          Par(fLostEventRateName).SetValue(diff);
          fTotalDiscEvents+=diff;

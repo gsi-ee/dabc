@@ -46,6 +46,7 @@ const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";
 const char* hadaq::xmlSyncAcceptedTriggerMask       = "SyncTriggerMask";
 
 const char* hadaq::xmlHadaqTrignumRange       = "TriggerNumRange";
+const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
 
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";
