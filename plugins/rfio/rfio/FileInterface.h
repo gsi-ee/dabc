@@ -9,14 +9,15 @@ namespace rfio {
 
    class FileInterface : public dabc::FileInterface {
       protected:
-         int  fDataMoverIndx;
-         char fDataMoverName[16];
+         void*  fRemote;              //! connection to datamover, done once when any special argument is appearing
+         int    fDataMoverIndx;       //! obtained data mover index
+         char   fDataMoverName[64];   //! obtained data mover name
 
       public:
 
          FileInterface();
 
-         virtual ~FileInterface() {}
+         virtual ~FileInterface();
 
          virtual Handle fopen(const char* fname, const char* mode, const char* opt = 0);
 

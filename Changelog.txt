@@ -10,6 +10,7 @@ current functionality of the framework.
    RFIO file.
 3. In file interface provide possibility to request int or str parameter.
    Use it for the rfio::FileInterface to request data mover parameters.  
+4. For special case preserve connection to RFIO server in the rfio::FileInterface  
 
 
 14.03.2014
