@@ -25,18 +25,6 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    if ((opt==0) || (*opt==0))
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
 
-   const char* pcc = strrchr(fname, ':');
-
-   char rfioBase[128];
-
-   if (pcc!=0) {
-      int len = pcc - fname;
-      strncpy(rfioBase, fname, len);
-      rfioBase[len] = 0;
-   } else {
-      strcpy(rfioBase, fname);
-   }
-
    bool isany = false;
 
    dabc::Url url;
@@ -74,6 +62,21 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    }
 
    if (isany) {
+
+      char rfioBase[1024];
+
+      strcpy(rfioBase, fname);
+
+      char* pcc = (char*) strrchr(rfioBase, ':');
+
+      if (pcc!=0) {
+         pcc++;
+         strncpy(pcc, "\0", 1);  /* terminates after node name */
+      }
+
+      strcpy(fDataMoverName,"");
+      fDataMoverIndx = 0;
+
       DOUT0("rfioBase=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
             rfioBase, rfioLustrePath.c_str(), rfioCopyMode, rfioCopyFrac, rfioMaxFile, rfioPathConv);
 
