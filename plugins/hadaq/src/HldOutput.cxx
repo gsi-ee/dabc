@@ -281,11 +281,13 @@ if(fRunNumber==0)
 	  {
 	        //ShowInfo(0, dabc::format("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
 		//		    payload, numevents, n));
-		 DOUT2("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
+		 DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file", 
 				    payload, numevents, n);
-	    if (!fFile.WriteBuffer(buf.SegmentPtr(n), payload))
-	      return dabc::do_Error;
-	    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
+	      if(payload)
+		{
+		  if (!fFile.WriteBuffer(buf.SegmentPtr(n), payload))
+		    return dabc::do_Error;
+		}	  
 	    cursor=payload;
 	    startsegment=n;	    
 	  }
@@ -316,6 +318,7 @@ if(fRunNumber==0)
          EOUT("Cannot start new file for writing");
          return dabc::do_Error;
       }
+    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    }
 
    if (!fFile.isWriting()) return dabc::do_Error;
