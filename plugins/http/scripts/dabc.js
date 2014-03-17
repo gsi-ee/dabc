@@ -37,7 +37,6 @@ DABC.ntou4 = function(b, o) {
 
 DABC.AssertRootPrerequisites = function() {
    if (DABC.load_root_js == 0) {
-      console.log("start loading scripts");
       DABC.load_root_js = 1;
       loadScript('jsrootiosys/scripts/jquery.mousewheel.js', function() {
       loadScript('jsrootiosys/scripts/rawinflate.js', function() {
@@ -48,7 +47,6 @@ DABC.AssertRootPrerequisites = function() {
       loadScript('jsrootiosys/scripts/JSRootD3ExpPainter.js', function() {
          DABC.load_root_js = 2;
          gStyle.OptimizeDraw = true;
-         console.log("loading all scripts done");
       }) }) }) }) }) }) });
    }
    

@@ -645,7 +645,7 @@ var gStyle = {
 
    JSROOTPainter = {};
 
-   JSROOTPainter.version = '3.0 2013/07/8';
+   JSROOTPainter.version = '4.0 2014/03/14';
    
    /*
     * Helper functions
