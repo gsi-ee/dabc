@@ -45,6 +45,13 @@ UDP00...UDP34- portnumbers for input streams
 PREFIX  - run prefix for filename convention (be,te,co,..)
 OUTDIR - path to file output directory
 RFIOPATH - path to rfio tape archive
+RFIOLUSTREPATH - path to copy on lustre file system, e.g. /hera/hades/may14
+RFIOCOPYMODE - 0 no copy to Lustre/hera 1 copy to Lustre after the file is in the write cash, 2 copy in parallel to Lustre
+RFIOCOPYFRAC - 1 copy all
+
+RFIOMAXFILE  - Maxfile 100,
+RFIOPATHCONV - pathconvention=1 to create new subfolder on lustre after 100 events
+
 FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
 DAQDISK - switches disk demon mode on/off
 
@@ -124,7 +131,7 @@ DAQDISK - switches disk demon mode on/off
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
-       <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${EBNUM}&rfio" queue="500"/>
+       <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500"/>
 
       
        
@@ -142,6 +149,7 @@ DAQDISK - switches disk demon mode on/off
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
        <TriggerNumRange value="0x10000"/>
+       <AccountLostEventDiff value="false"/>
 
 
        <!-- rate meters configuration -->
