@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "dabc/Url.h"
+#include "dabc/logging.h"
 
 
 rfio::FileInterface::FileInterface() :
@@ -72,11 +73,15 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
       isany = true;
    }
 
-   if (isany)
+   if (isany) {
+      DOUT0("rfioBase=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
+            rfioBase, rfioLustrePath.c_str(), rfioCopyMode, rfioCopyFrac, rfioMaxFile, rfioPathConv);
+
       return (Handle) rfio_fopen_gsidaq_dm(rfioBase, (char*) pcOptions,
                                            fDataMoverName, &fDataMoverIndx,
                                            rfioCopyMode, (char*) rfioLustrePath.c_str(),
                                            rfioCopyFrac, rfioMaxFile, rfioPathConv);
+   }
 
 
    return (Handle) rfio_fopen((char*)fname, (char*)mode);
