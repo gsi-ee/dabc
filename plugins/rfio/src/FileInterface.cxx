@@ -29,12 +29,9 @@ rfio::FileInterface::~FileInterface()
 dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
 {
    // clear possible parameters
-   fDataMoverName[0] = 0;
-   fDataMoverIndx = 0;
-
-
-   if (((opt==0) || (*opt==0)) && (fRemote==0))
+   if (((opt==0) || (*opt==0)) && (fRemote==0)) {
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
+   }
 
    if (fRemote == 0) {
       bool isany = false;
@@ -107,6 +104,8 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
                   rfioBase, rfioOptions.c_str(), rfioLustrePath.c_str(), rfioCopyMode, rfioCopyFrac, rfioMaxFile, rfioPathConv);
             return 0;
          }
+
+         DOUT0("Open connection to datamover %d %s", fDataMoverIndx, fDataMoverName);
       }
    }
 
@@ -116,7 +115,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    int rev = rfio_fnewfile((RFILE*)fRemote, (char*) fname);
 
    if (rev!=0) {
-      EOUT("Fail to create new RFIO file %s via existing connection", fname);
+      EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fDataMoverIndx, fDataMoverName, fname);
       return 0;
    }
 
