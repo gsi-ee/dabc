@@ -7293,44 +7293,37 @@ var gStyle = {
       key_tree.openTo(dir_id, true);
    };
 
-   JSROOTPainter.addCollectionContents = function(list, container, dir_id) {
+   JSROOTPainter.addCollectionContents = function(fullname, dir_id, list, container) {
       var tree_link = '';
       var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
       var k = key_tree.aNodes.length;
       var dir_name = key_tree.aNodes[dir_id]['title'];
-      for (var i=0; i<list.length; ++i) {
-         var disp_name = list[i]['fName'];
-         var classname = list[i]['_typename'];
+      for (var i=0; i<list.arr.length; ++i) {
+         var disp_name = list.arr[i]['fName'];
+         var classname = list.arr[i]['_typename'];
          if (!classname) classname = "undefined";
          
-         list[i]['_name'] = dir_name + '/' + list[i]['fName'];
          var message = classname +' is not yet implemented.';
          tree_link = "javascript:  alert('" + message + "')";
          var node_img = source_dir+'img/page.gif';
-         var node_title = list[i]['_typename'];
+         var node_title = list.arr[i]['_typename'];
          if (classname.match(/\bTH1/) ||
              classname.match(/\bTH2/) ||
              classname.match(/\bTH3/) ||
              classname.match(/\bTGraph/) ||
              classname.match(/\bRooHist/) ||
              classname.match(/\RooCurve/)) {
-            //tree_link = "javascript: displayMappedObject('"+list[i]['_name']+"');";
-            tree_link = "javascript: displayMappedObject('"+list[i]['_name']+"','"+list[i]['_listname']+"',"+list[i]['pos']+");";
+            tree_link = "javascript: showListObject('"+fullname+"','"+disp_name+"');";
             node_img = source_dir+'img/graph.png';
-            node_title = list[i]['_name'];
+            node_title = fullname + "/" + disp_name;
          }
-         else if (classname == 'TList' || classname == 'TObjArray') {
-            tree_link = "javascript: showCollection('"+list[i]['_name']+"', 0, "+k+");";
-            node_img = source_dir+'img/folder.gif';
-            node_title = list[i]['_name'];
-         }
-         if (list[i]['fName'] != '' && classname != 'TFile') {
+         if (disp_name != '' && classname != 'TFile') {
             key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img);
             k++;
          }
       }
       content += key_tree;
-      $(container).append(content);
+      $(container).html(content);
       key_tree.openTo(dir_id, true);
    };
 

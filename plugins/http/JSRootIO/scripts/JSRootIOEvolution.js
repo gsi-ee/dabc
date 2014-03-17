@@ -1806,7 +1806,7 @@ var kClassMask = 0x80000000;
                console.log("Read collection " + list.arr.length);
                
                if (('arr' in list) && (list.arr.length>0))
-                  displayCollection(list['arr'], cycle, id);
+                  displayCollection(name, cycle, id, list);
                delete buf;
 
                obj_list.push(name+cycle);

@@ -14,6 +14,7 @@ var obj_index = 0;
 var last_index = 0;
 var function_list = new Array();
 var func_list = new Array();
+var collections_list = {};
 var frame_id = 0;
 var random_id = 0;
 
@@ -133,12 +134,6 @@ function displayDirectory(directory, cycle, dir_id) {
    JSROOTPainter.addDirectoryKeys(directory.fKeys, '#status', dir_id);
 };
 
-function displayCollection(cont, cycle, c_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.addCollectionContents(cont, '#status', c_id);
-};
-
 function showDirectory(dir_name, cycle, dir_id) {
    gFile.ReadDirectory(dir_name, cycle, dir_id);
 };
@@ -155,6 +150,16 @@ function displayTree(tree, cycle, node_id) {
    var url = $("#urlToLoad").val();
    $("#status").html("file: " + url + "<br/>");
    JSROOTPainter.displayTree(tree, '#status', node_id);
+};
+
+function displayCollection(name, cycle, c_id, coll) {
+   var fullname = name + ";" + cycle;
+   
+   console.log("displayCollection " + fullname + "  c_id = " + c_id + "  length = " + coll.arr.length);
+   
+   collections_list[fullname] = coll;
+   
+   JSROOTPainter.addCollectionContents(fullname, c_id, coll, '#status');
 };
 
 function displayObject(obj, cycle, idx) {
@@ -178,39 +183,30 @@ function displayObject(obj, cycle, idx) {
    addCollapsible('#'+uid);
 };
 
-function displayMappedObject(obj_name, list_name, offset) {
+function showListObject(list_name, obj_name) {
+   
+   var fullname = list_name+"/"+obj_name+"1";
+   
+   // do not display object twice
+   if (obj_list.indexOf(fullname)>=0) return;
+   
+   var coll = collections_list[list_name];
+   if (!coll) return;
+
    var obj = null;
-   for (var i=0; i<gFile['fObjectMap'].length; ++i) {
-      if (gFile['fObjectMap'][i]['obj']['_name'] == obj_name) {
-         obj = gFile['fObjectMap'][i]['obj'];
-         break;
-      }
-   }
-   if (obj == null) {
-      gFile.ReadCollectionElement(list_name, obj_name, 1, offset);
-      return;
-   }
-   if (!obj['_typename'].match(/\bJSROOTIO.TH1/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH2/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH3/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TGraph/) &&
-       !obj['_typename'].match(/\bRooHist/) &&
-       !obj['_typename'].match(/\RooCurve/) &&
-       obj['_typename'] != 'JSROOTIO.TCanvas' &&
-       obj['_typename'] != 'JSROOTIO.TF1' &&
-       obj['_typename'] != 'JSROOTIO.TProfile') {
-      if (typeof(checkUserTypes) != 'function' || checkUserTypes(obj) == false)
-         return;
-   }
-   var uid = "uid_accordion_"+(++last_index);
-   var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + "</a>&nbsp; </h5>\n";
-   entryInfo += "<div id='histogram" + obj_index + "'>\n";
-   $("#report").append(entryInfo);
-   JSROOTPainter.drawObject(obj, obj_index);
-   addCollapsible('#'+uid);
-   obj_list.push(obj['fName']);
+   
+   for (var i=0;i<coll.arr.length;i++)
+     if (coll.arr[i].fName == obj_name) {
+        obj = coll.arr[i];
+        break;
+     }
+   if (!obj) return;
+   
+   displayObject(obj, "1", obj_index);
+   obj_list.push(fullname);
    obj_index++;
 };
+
 
 function AssertPrerequisites(andThen) {
 
@@ -277,6 +273,7 @@ function ReadFile() {
 function ResetUI() {
    obj_list.splice(0, obj_list.length);
    func_list.splice(0, func_list.length);
+   collections_list = {};
    obj_index = 0;
    last_index = 0;
    frame_id = 0;
