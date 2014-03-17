@@ -537,14 +537,18 @@ sub startEvtBuilders()
          }
 
 
-# TODO: additional exports for
+# additional exports for
 # 	RFIO
   if( $EB_Args_href->{$ebproc}->{'RFIO'} ){
 	$exports = $exports . " export FILEOUTPUTS=3;";
-	$exports = $exports . " export RFIOPATH=". $EB_Args_href->{$ebproc}->{'RFIO_PATH'} . ";"
+	$exports = $exports . " export RFIOPATH=". $EB_Args_href->{$ebproc}->{'RFIO_PATH'} . ";";
+        $exports = $exports . " export RFIOLUSTREPATH=". $EB_Args_href->{$ebproc}->{'RFIO_pcCopyPath'} . ";";
+        $exports = $exports . " export RFIOCOPYMODE=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyMode'} . ";";
+        $exports = $exports . " export RFIOCOPYFRAC=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyFrac'} . ";";
+        $exports = $exports . " export RFIOMAXFILE=". $EB_Args_href->{$ebproc}->{'RFIO_iMaxFile'} . ";";
+        $exports = $exports . " export RFIOPATHCONV=". $EB_Args_href->{$ebproc}->{'RFIO_iPathConv'} . ";";
 
 }
-# TODO: implement lustre copy to dabc!
 
 
 #  my $rfio;
