@@ -33,6 +33,11 @@ namespace rfio {
          virtual bool fseek(Handle f, long int offset, bool realtive = true);
 
          virtual dabc::Object* fmatch(const char* fmask, bool select_files = true);
+
+         virtual int GetFileIntPar(Handle h, const char* parname);
+
+         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen);
+
    };
 
 }

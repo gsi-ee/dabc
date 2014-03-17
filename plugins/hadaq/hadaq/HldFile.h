@@ -64,7 +64,6 @@ namespace hadaq {
           * User must be aware about correct formatting of data.
           * Returns true if data was written.*/
          bool WriteBuffer(void* buf, uint32_t bufsize);
-
    };
 
 } // end of namespace

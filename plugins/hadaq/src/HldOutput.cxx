@@ -167,8 +167,14 @@ bool hadaq::HldOutput::StartNewFile()
       // use parameters only in slave mode
 
       fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
+
+      int indx = fFile.GetIntPar("DataMoverIndx");
+
+      // char sbuf[100];
+      // if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
+
       if(!fDataMoverPar.null()) {
-         fDataMoverPar.SetValue(1); // TODO: get here actual number of data mover from file interface!
+         fDataMoverPar.SetValue(indx); // TODO: get here actual number of data mover from file interface!
       }
    }
 

@@ -62,6 +62,13 @@ namespace dabc {
          virtual Object* fmatch(const char* fmask, bool select_files = true);
 
          virtual bool mkdir(const char* path);
+
+         /** Method returns file-specific int parameter */
+         virtual int GetFileIntPar(Handle h, const char* parname) { return 0; }
+
+         /** Method returns file-specific string parameter */
+         virtual bool GetFileStrPar(Handle h, const char* parname, char* sbuf, int sbuflen) { if (sbuf) *sbuf = 0; return false; }
+
    };
 
    // ==============================================================================
@@ -126,6 +133,16 @@ namespace dabc {
          inline bool isWriting() const { return isOpened() && !fReadingMode; }
 
          bool eof() const { return isReading() ? io->feof(fd) : true; }
+
+         /** Return integer file parameter */
+         int GetIntPar(const char* parname) { return io ? io->GetFileIntPar(fd, parname) : 0; }
+
+         /** Return string file parameter */
+         bool GetStrPar(const char* parname, char* sbuf, int sbuflen) { return io ? io->GetFileStrPar(fd, parname, sbuf, sbuflen) : false; }
+
+         /** Returns true when RFIO is used */
+         bool IsRFIO() { return GetIntPar("RFIO") > 0; }
+
    };
 
 

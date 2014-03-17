@@ -17,6 +17,10 @@ rfio::FileInterface::FileInterface() :
 
 dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
 {
+   // clear possible parameters
+   fDataMoverName[0] = 0;
+   fDataMoverIndx = 0;
+
    if ((opt==0) || (*opt==0))
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
 
@@ -76,6 +80,26 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
    return (Handle) rfio_fopen((char*)fname, (char*)mode);
 }
+
+
+int rfio::FileInterface::GetFileIntPar(Handle, const char* parname)
+{
+   if (strcmp(parname, "RFIO")==0) return 8; // return RFIO version number
+   if (strcmp(parname, "DataMoverIndx")==0) return fDataMoverIndx;
+   return 0;
+}
+
+bool rfio::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf, int sbuflen)
+{
+   if (strcmp(parname, "DataMoverName")==0)
+      if (strlen(fDataMoverName) < (unsigned) sbuflen) {
+         strcpy(sbuf, fDataMoverName);
+         return true;
+      }
+
+   return false;
+}
+
 
 void rfio::FileInterface::fclose(Handle f)
 {

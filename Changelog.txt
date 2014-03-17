@@ -8,6 +8,8 @@ current functionality of the framework.
      rfioCopyMode, rfioCopyFrac,  rfioMaxFile, rfioPathConv, rfioLustrePath
    If any options specified, rfio_fopen_gsidaq_dm will be used to create 
    RFIO file.
+3. In file interface provide possibility to request int or str parameter.
+   Use it for the rfio::FileInterface to request data mover parameters.  
 
 
 14.03.2014
