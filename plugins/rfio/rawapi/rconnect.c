@@ -20,6 +20,7 @@
  *  7.10.2008, H.G.: improved retry loops
  *  3.11.2008, H.G.: correct include files for AIX
  *  5.11.2010, H.G.: replace perror by strerror(errno)
+ *  4. 9.2012, H.G.: printf -> fprintf(fLogFile, ...)
  *********************************************************************
  */  
  
@@ -52,6 +53,7 @@
 #endif              /* all Unix */
 
 extern int imySigS;                      /* if = 1: CTL C specified */
+extern FILE *fLogFile;
 
 /********************************************************************/
 
@@ -80,14 +82,14 @@ int rconnect( char *cNode,        /* input:  name of remote host */
 
    if (iDebug)
    {
-      printf("\n-D- begin %s: try connection to %s:%d",
+      fprintf(fLogFile, "\n-D- begin %s: try connection to %s:%d",
          cModule, cNode, iPort); 
       if (iMaxTime < 0)
-         printf(" (1 trial)\n");
+         fprintf(fLogFile, " (1 trial)\n");
       else if (iMaxTime == 0)
-         printf(" (until success)\n");
+         fprintf(fLogFile, " (until success)\n");
       else
-         printf(" (for %d sec)\n", iMaxTime);
+         fprintf(fLogFile, " (for %d sec)\n", iMaxTime);
    }
 
    if ( ( pHE = gethostbyname(cNode) ) == NULL ) 
@@ -96,15 +98,15 @@ int rconnect( char *cNode,        /* input:  name of remote host */
       if ( ( pHE = gethostbyaddr( 
                (char *)&lAddr, sizeof(lAddr), AF_INET ) ) == NULL )
       {
-         printf("-E- %s: unknown host %s\n", cModule, cNode );
+         fprintf(fLogFile, "-E- %s: unknown host %s\n", cModule, cNode );
          iError = -1;
          goto gError;
       }
       if (iDebug) 
-         printf("    %s: gethostbyaddr succeeded\n", cModule);
+         fprintf(fLogFile, "    %s: gethostbyaddr succeeded\n", cModule);
    }
    else if (iDebug) 
-      printf("    %s: gethostbyname succeeded\n", cModule);
+      fprintf(fLogFile, "    %s: gethostbyname succeeded\n", cModule);
    sHE = *pHE;                                        /* safe copy */
 
 gRetryConnect:;
@@ -112,10 +114,10 @@ gRetryConnect:;
    if ( ( iSocket = socket( 
             AF_INET, SOCK_STREAM, IPPROTO_TCP ) ) == -1 )
    {
-      printf("-E- %s: socket failed\n", cModule);
+      fprintf(fLogFile, "-E- %s: socket failed\n", cModule);
       if (errno)
       {
-         printf("    %s\n", strerror(errno));
+         fprintf(fLogFile, "    %s\n", strerror(errno));
          errno = 0;
       }
 
@@ -131,10 +133,10 @@ gRetryConnect:;
                (struct sockaddr *) &sSockAddr,
                sizeof(sSockAddr) ) == -1 )
    {
-      printf("-E- %s: bind failed\n", cModule);
+      fprintf(fLogFile, "-E- %s: bind failed\n", cModule);
       if (errno)
       {
-         printf("    %s\n", strerror(errno));
+         fprintf(fLogFile, "    %s\n", strerror(errno));
          errno = 0;
       }
 
@@ -153,10 +155,11 @@ gRetryConnect:;
 #ifdef WIN32
       iError = -1;           /* errno, perror indicate NO error! */
 #else
-      printf("-E- %s: connect to %s:%d failed\n", cModule, cNode, iPort);
+      fprintf(fLogFile, "-E- %s: connect to %s:%d failed\n",
+         cModule, cNode, iPort);
       if (errno)
       {
-         printf("    %s\n", strerror(errno));
+         fprintf(fLogFile, "    %s\n", strerror(errno));
          errno = 0;
       }
 #endif
@@ -181,7 +184,7 @@ gRetryConnect:;
             iSleep++;
          iTime += iSleep;
 
-         if (iDebug) printf(
+         if (iDebug) fprintf(fLogFile,
             "    time %d of %d, sleep %d\n",
             iTime, iMaxTime, iSleep);
 #ifdef WIN32
@@ -198,7 +201,8 @@ gRetryConnect:;
    *piMaxTime = iTime;         /* return time needed for connect */
    *piSocket = iSocket;        /* return socket number */
    if (iDebug)
-      printf("-D- end %s (success after %d sec)\n\n", cModule, *piMaxTime); 
+      fprintf(fLogFile, "-D- end %s (success after %d sec)\n\n",
+         cModule, *piMaxTime); 
 
    return(0);                  /* no error */
 
@@ -221,11 +225,11 @@ gError:
 
    if (iDebug)
    {
-      printf("-D- end %s", cModule); 
+      fprintf(fLogFile, "-D- end %s", cModule); 
       if (iMaxTime >= 0)
-         printf(" (after %d sec)\n\n", iTime); 
+         fprintf(fLogFile, " (after %d sec)\n\n", iTime); 
       else
-         printf("\n\n"); 
+         fprintf(fLogFile, "\n\n"); 
    }
 
    return iError;

@@ -189,20 +189,76 @@
  *  6.10.2010, H.G.: srawComm: new iClient32
  *                   new definition: MAX_FILE_SIZE_U
  * 26.11.2010, H.G.: string cTooBig: substitute for filesizes >= 4 GB
- * *********************************************************************
+ * 19. 1.2011, H.G.: new IDENT_STAGE_PARALLEL, MAX_NUM_TAPE
+ * 21. 1.2011, H.G.: new action STAGE_PARALLEL, struct srawObjNameList,
+ *                   new IDENT_GLOBAL_SOCKET
+ * 24. 1.2011, H.G.: new structs srawStageSocket, srawStageSocketData
+ * 25. 1.2011, H.G.: add definition PORT_STAGER
+ *  3. 2.2011, H.G.: new actions SET_GLOBAL_SOCKET, UNSET_GLOBAL_SOCKET
+ *                   get definition PORT_STAGE_MGR from rawservn.h
+ *  9. 2.2011, H.G.: new parameter srawComm: iParStageId
+ *  2. 3.2011, H.G.: new IDENT_CACHEFS_ACTION
+ *  1. 4.2011, H.G.: new define MAX_NUM_DM_NO (digits in DM name)
+ *  4. 4.2011, H.G.: new IDENT_STAGE_SEQUENTIAL
+ * 15. 4.2011, H.G.: increase MAX_NUM_DM to 12
+ *  9. 2.2012, H.G.: remove MAX_MASTER, WORK_LEN (no longer needed), 
+ *                   new STATUS_LEN_LONG
+ * 10. 2.2012, H.G.: new IDENT_MIGR_LIMIT
+ * 16. 2.2012, H.G.: get from rawservn.h: declaration cNodeStageMgr +
+ *                       cNodeArchiveMgr, definition PORT_ARCHIVE_MGR 
+ *                   ren PORT_STAGER -> PORT_DISTR, move to rawservn.h
+ * 24. 2.2012, H.G.: srawFileSystem: add iPoolId
+ * 20. 4.2012, H.G.: /hera: new base directory for InfiniBand lustre
+ * 31. 8.2012, H.G.: enhanced usage, if srawComm.iDataFS > 1
+ *  6. 9.2012, H.G.: new parameter srawDataMoverAttr: iPoolId, 
+ *                   new define MAX_POOL_ATLSERVER,
+ * 11. 9.2011, H.G.: mod define MAX_NUM_DM_NO 17 -> 20
+ *                   mod define MAX_NUM_DM 12 -> 13
+ * 31. 1.2013, H.G.: new IDENT_TAPE_STATUS_DM
+ * 19. 3.2013, H.G.: new action SEND_FROM_TAPE
+ *  3. 4.2013, H.G.: new action RETRIEVE_PARALLEL
+ *  4. 4.2013, H.G.: define MAX_NUM_POOL from rawstagen.h
+ * 12. 4.2013, H.G.: rename srawStageSocket -> srawGlobalSocket,
+ *                      srawStageSocketData -> srawGlobalSocketData,
+ *                   new srawGlobalNotice, new action SEND_GLOBAL_NOTICE
+ * 15. 4.2013, H.G.: in srawComm: ren iParStageId -> iGlobalActionId
+ *                   in srawGlobalSocketData: iParStageId -> iActionId
+ * 19. 4.2013, H.G.: new status STA_FILE_AVAIL
+ * 29. 4.2013, H.G.: srawObjNameList: add iCacheLocation (for par retr)
+ * 17. 5.2013, H.G.: srawObjNameList: add iPoolIdRC, iPoolIdWC
+ * 27. 6.2013, H.G.: srawGlobalNotice: add cFile (lustre file name)
+ * 12. 8.2013, H.G.: sComm.iSynchId==21: test access rights
+ *                   mod define MAX_NUM_DM 13 -> 20
+ * 19. 8.2013, H.G.: sComm.iSynchId>100: use alternate prod TSM server
+ * 22. 8.2013, H.G.: new IDENT_TAPE_STATUS_DM
+ *  2. 1.2014, H.G.: srawComm.iReservation <0: request filesize check
+ *                      comparing cacheDB - data mover FS
+ *                   srawObjAttr: iDummy -> iObjInfo: contains 
+ *                      result of filesize check
+ *  3. 1.2014, H.G.: new IDENT_FILESIZE_REQUEST
+ * 21. 2.2014, H.G.: get from rawclin.h: define MIN_SEQUENTIAL_FILES
+ * 26. 2.2014, H.G.: new IDENT_SPACE_TREE1, IDENT_SPACE_TREE2
+ * ********************************************************************
  */
 
-#define PORT_MASTER 1996        /* default port number master server */
+#define PORT_STAGE_MGR 1991      /* default port number StageManager */
+                             /* 1992: port number SpaceManager on DM */
+#define PORT_ARCHIVE_MGR 1993  /* default port number ArchiveManager */ 
 #define PORT_MOVER  1994           /* default port number data mover */
-#define PORT_MOVER_DATAFS 1998
-        /* default port number data mover writing to central data FS */
+                            /* 1995: port number ArchiveServer on DM */
+#define PORT_MASTER 1996        /* default port number master server */
+                            /* 1997: port number distribution server */
+#define PORT_MOVER_DATAFS 1998   /* port number DM for lustre (root) */
+
 #define PORT_RFIO_SERV 1974       /* default port number RFIO server */
 
 #define ATLSERVER_ARCHIVE 1     /* API write: 1: IBM 3494, 2: SANLB2 */
 #define MAX_ATLSERVER 1                    /* max no. of ATL servers */
-#define MAX_MASTER   1               /* max number of master servers */
-#define MAX_NUM_DM  10         /* max no. of data movers on platform */
-
+#define MAX_POOL_ATLSERVER 10     /* max no. of pools in ATL servers */
+#define MAX_NUM_POOL   5                  /* sum for all ATL servers */
+#define MAX_NUM_TAPE   8        /* max no. of available tapes in ATL */
+#define MAX_NUM_DM    20  /* max no. of DMs for RC + GRC or WC + GWC */
+#define MAX_NUM_DM_NO 20                    /* max digits in DM name */
 #define MBUF_SOCK  32768              /* default buffer size sockets */
 #define MBUF_ADSM  32768                 /* default buffer size ADSM */
 #define MBUF_RFIO  32768            /* max currently possible in MBS */
@@ -219,15 +275,23 @@
 #define MAX_FILE_SIZE_U 4294967295   /* max size 4GByte-1 (unsigned) */
 #define MAX_FILE_NO 1024         /* max number of file names in list */
 
+#define MIN_SEQUENTIAL_FILES 20
+                  /* limit for parallel actions and sequential stage */
+
 static const char cTooBig[8] = "(>=4GB)";
                /* for 32 bit clients: substitute for filesize >= 4GB */
 
 #define MAX_NODE    16                       /* max length node name */
+static char cNodeMaster0[MAX_NODE] = "lxgstore";     /* entry server */
+static char cNodeMasterE1[MAX_NODE] = "lxha05";  /* def entry server */
+static char cNodeMasterE2[MAX_NODE] = "lxha04";  /* bkp entry server */
+static char cNodeStageMgr[MAX_NODE] = "lxgstore";
+static char cNodeArchiveMgr[MAX_NODE] = "lxgstore";
 
 #define MIN_DATAFS_PATH 12              /* min path length in lustre */
 static char cDataFSType[16] = "lustre";              /* general name */
-static char cDataFSHigh1[16] = "/lustre_alpha/";     /* 1st instance */
-static char cDataFSHigh2[16] = "/lustre/";          /* prod instance */
+static char cDataFSHigh1[16] = "/hera/";        /* InfiniBand lustre */
+static char cDataFSHigh2[16] = "/lustre/";        /* Ethernet lustre */
 
 #define MAX_OWNER   16                    /* max length object owner */
 static char cAdminUser[MAX_OWNER] = "goeri";         /* special user */
@@ -235,7 +299,7 @@ static char cForceMigPath[32] = "/ArchiveNow";  /* special path name */
 
 /* query client operating system */
 #define MAX_OS       8           /* max length operating system name */
-// static char *pcOS;
+static char *pcOS;
 #ifdef _AIX
 static char cOS[MAX_OS] = "AIX    ";
 #endif
@@ -278,8 +342,8 @@ static char cOS[MAX_OS] = "VMS    ";
 
 #define HEAD_OFFSET   3           /* offset common pre-header (ints) */
 #define HEAD_LEN     12          /* length common pre-header (bytes) */
-#define STATUS_LEN  512           /* max length status/error message */
-#define WORK_LEN     20                    /* length work space info */
+#define STATUS_LEN        512     /* max length status/error message */
+#define STATUS_LEN_LONG  4096    /* max length long status/error msg */
 
 /* identifiers for buffer headers transfered via sockets */
 /* at least IDENT_STATUS must be <0 to avoid confusion with data */
@@ -306,7 +370,16 @@ static char cOS[MAX_OS] = "VMS    ";
 #define IDENT_COPY_CACHE   -21    /* copy DAQ stream data from cache */
 #define IDENT_ARCHIVE_LIST -22              /* list of archive names */
 #define IDENT_PROC_INFO    -23     /* get/update proc no. in cacheDB */
-#define IDENT_COMM64       -24       /* communication control buffer */
+#define IDENT_STAGE_PARALLEL -24  /* DMs and filelists for par stage */
+#define IDENT_GLOBAL_SOCKET  -25  /* global socket data for CacheMgr */
+#define IDENT_CACHEFS_ACTION -26      /* action request for cache FS */
+#define IDENT_STAGE_SEQUENTIAL -27 /* DMs + filelists for sequ stage */
+#define IDENT_MIGR_LIMIT   -28 /* info/action for migr limit WC pool */
+#define IDENT_TAPE_STATUS_DM -29      /* pool DM tape connect status */
+#define IDENT_RETRIEVE_PARALLEL -30    /* DMs and filelists par retr */
+#define IDENT_FILESIZE_REQUEST -31  /* request object filesize on DM */
+#define IDENT_SPACE_TREE1 -32 /* metadataDB space info + 1 fill tree */
+#define IDENT_SPACE_TREE2 -33 /* metadataDB space info + 2 fill trees*/
 
 enum ARCH_DEVICE                           /* logical archive device */
 {
@@ -370,18 +443,28 @@ enum ACTION                                                /* action */
    END_SESSION,                         /* 32: end session on server */
    QUERY_ARCHIVE_RECORD,          /* 33: query before ARCHIVE_RECORD */
    STAGE_FROM_CACHE,                 /* 34: copy files from WC to RC */
-   RETRIEVE_FROM_CACHE,            /* 35: retr. files from WC via RC */
-   SEND_FROM_CACHE,         /* 36: read from write cache, send to DM */
+   RETRIEVE_FROM_CACHE,                /* 35: retrieve files from WC */
+   SEND_FROM_CACHE,           /* 36: read in write cache, send to DM */
    QUERY_RETRIEVE_STAGE,          /* 37: query before RETRIEVE_STAGE */
    COPY_RC_TO_FILESYSTEM,  /* 38: copy from read cache to mounted FS */
    RETRIEVE_TO_FILESYSTEM,    /* 39: retrieve from TSM to mounted FS */
-   ARCHIVE_FROM_FILESYSTEM,           /* 40: archive from mounted FS */
-   COPY_WC_TO_FILESYSTEM, /* 41: copy from write cache to mounted FS */
-   MIGRATE_CACHE_PATH,      /* 42: migrate complete write cache path */
+   ARCHIVE_FROM_FILESYSTEM,/* 40: archive: mounted FS to write cache */
+   COPY_WC_TO_FILESYSTEM,   /* 41: online copy from WC to mounted FS */
+   MIGRATE_CACHE_PATH,      /* 42: migrate complete write cache path
+                                   (force migration) */
    QUERY_FILESERVER,    /* 43: query files in specified 2nd level DM */
    SEND_TO_FILESERVER,       /* 44: read from RC, send to FileServer */
    RECEIVE_FROM_DM,  /* 45: on FileServer: recv from DM, write to FS */
-   SHOW_ARCHIVES                /* 46 show list of matching archives */
+   SHOW_ARCHIVES,               /* 46 show list of matching archives */
+   STAGE_PARALLEL, /* 47 stage with several DMs in parallel or sequ. */
+   SET_GLOBAL_SOCKET,  /* 48 create global socket buffer in CacheMgr
+                             also lock action */
+   UNSET_GLOBAL_SOCKET,/*49 mark global socket in CacheMgr as invalid
+                            also lock action */
+   SEND_GLOBAL_NOTICE,/*50 send notice for global socket in CacheMgr
+                           also lock action */
+   SEND_FROM_TAPE,             /* 51 read data from tape, send to DM */
+   RETRIEVE_PARALLEL /*52 retr to lustre with several DMs in parallel*/
 };
 
 typedef struct                                 /* info for file list */
@@ -389,7 +472,7 @@ typedef struct                                 /* info for file list */
    char cFile[MAX_FULL_FILE];           /* fully qualified file name */
 } srawFileList;
 
-/* command buffer with object attributes, used only for 32 bit OS */
+/* command buffer with object attributes */
 typedef struct
 {
    int iIdent;               /* IDENT_COMM identifies command buffer */
@@ -410,14 +493,19 @@ typedef struct
    unsigned int iObjLow;               /* lower four bytes object Id */
    char cliNode[MAX_NODE];                       /* client node name */
    int iExecStatus;   /* execution status set by LockManager:
-                         = 1: active, = 2 waiting, = 3 suppressed    */
+            =1: active, =2 waiting, =3 suppressed (--> not yet impl) */
    int iWaitTime;         /* time to wait before execution (seconds) */
-   int iSynchId;     /* = 1: RFIO write in DAQ mode (1st: select DM) */
-                     /* =11: requested action recursive              */
+   int iSynchId;
+          /* = 1: RFIO write in DAQ mode (1st: select DM)
+             =11: requested action recursive (cmd client only)
+             =21: (else) check access rights also for admin user
+            +100: as before, but use alternate prod TSM server */
    char cTapeLib[16];            /* name of ATL: "" default, "*" all */ 
    char cNodeCacheMgr[MAX_NODE];     /* name of node with cache mgrs */
-   int iATLServer;            /* =1: aixtsm1(AIX), =2: gsitsma(Win),
-                                 < 0: test system */
+   int iATLServer;
+          /* = 1: prod TSM server (aixtsm1),
+             = 2: test TSM server (aixtsm2),
+             < 0: gStore test system */
    int iPoolIdRC;              /* read cache PoolId (= 0: not in RC) */
    char cNodeRC[MAX_NODE];   /* read cache DM name (= "": not in RC) */
    int iStageFSid; /* stage FS no. on read cache DM (= 0: not in RC) */
@@ -426,11 +514,16 @@ typedef struct
    int iFSidWC;         /* FS no. on write cache DM (= 0: not in WC) */
    char cNodeFC[MAX_NODE]; /* file server cache node ("": not in FC) */
    int iFSidFC; /* FS no. on file server cache node (= 0: not in FC) */
-   int iDataFS;          /* =1: retrieve directly to central data FS */
+   int iDataFS; /* >0: handle files on central data FS
+                   >1: base hl dir level, append further subdirs to
+                       data FS dir (retrieve) */ 
    char cDataFS[MAX_FULL_FILE];      /* full path in central data FS */
    int iClient32;                   /* =1: 32 bit gstore/RFIO client */
-   int iReservation; /* >0: current object belongs to workspace with
-                                 specified  space reservation number */
+   int iReservation;
+          /* <0: request filesize check comparing cacheDB - DM FS
+             >0: current object belongs to workspace with specified
+                 space reservation number (--> not yet impl) */
+   int iGlobalActionId; /* global actionId for parallel/sequ actions */
 } srawComm;
 
 enum STATUS                                      /* status of action */
@@ -458,8 +551,9 @@ enum STATUS                                      /* status of action */
    STA_ENTRY_INFO,     /* 19: info: name of entry server */
    STA_FILE_CACHED,    /* 20: file cached (WC) from central data FS */
    STA_CACHE_COPY, /* 21: successfull copy from WC to central dataFS */
-   STA_CACHE_COPY_ERROR
+   STA_CACHE_COPY_ERROR,
              /* 22: error status for copy from WC to central data FS */
+   STA_FILE_AVAIL  /* 23: file already available in (G)RC or data FS */
 };
 
 typedef struct                                      /* Status buffer */
@@ -504,8 +598,10 @@ typedef struct                 /* object attribute buffer version 4 */
    int iFS;                    /* filesystem number if file on disk */
    char cNode[MAX_NODE];       /* node name data mover */
    char cStageUser[MAX_OWNER]; /* account name of staging user */
-   int iATLServer;             /* =1: aixtsm1(AIX), =2: gsitsma(Win),
-                                 < 0: test system */
+   int iATLServer;
+          /* = 1: prod TSM server (aixtsm1),
+             = 2: test TSM server (aixtsm2),
+             < 0: gStore test system */
    unsigned int iRestoHighHigh;/* hi_hi four bytes restore order */
    unsigned int iRestoHighLow; /* hi_lo four bytes restore order */
    unsigned int iRestoLowHigh; /* lo_hi four bytes restore order */
@@ -536,7 +632,9 @@ typedef struct /* query info of gStore object version 5 from server,
    unsigned int iRestoLowHigh;     /* lo_hi four bytes restore order */
    unsigned int iRestoLow;         /* lo_lo four bytes restore order */
    int iATLServer;
-           /* =1: aixtsm1 (AIX), =2: gsitsma (Win), < 0: test system */
+          /* = 1: prod TSM server (aixtsm1),
+             = 2: test TSM server (aixtsm2),
+             < 0: gStore test system */
    int iPoolId;
       /* disk pool identifier:
           1: RetrievePool ATLServer1 (created by retrieve)
@@ -551,8 +649,10 @@ typedef struct /* query info of gStore object version 5 from server,
    char cNode[MAX_NODE];                     /* node name data mover */
    int iDM;             /* cache data mover number, =0: not in cache */
    int iFS;             /* cache filesystem number, =0: not in cache */
-   int iFileSet;                /* Id of file set (handled parallel) */
-   int iDummy;                                 /* for 8 byte padding */
+   int iFileSet;                    /* Id of file set (--> not used) */
+   int iObjInfo;
+          /* result of filesize check comparing cacheDB - DM FS:
+             = 1: okay, = 2: diff file sizes */
    char cStageUser[MAX_OWNER];       /* account name of staging user */
 } srawObjAttr;
 
@@ -638,6 +738,12 @@ typedef struct                           /* attributes of data mover */
                        = 1: active, = 2 waiting, = 3 suppressed      */
    int iWaitTime;         /* time to wait before execution (seconds) */
    int iATLServer;                           /* number of ATL Server */
+          /* = 1: prod TSM server (aixtsm1),
+             = 2: test TSM server (aixtsm2),
+             < 0: gStore test system */
+   int iPoolId;
+          /* =1: RetrievePool, =2 StagePool,
+             =3: ArchivePool, =4: DaqPool, =5: GlobalPool */
 } srawDataMoverAttr;
 
 typedef struct    /* communication buffer with data mover attributes */
@@ -651,8 +757,9 @@ typedef struct    /* communication buffer with data mover attributes */
 typedef struct                                   /* filesystem infos */
 {
    char cOS[MAX_OS];                             /* operating system */
-   char cNode[MAX_NODE];                                /* node name */
+   char cNode[MAX_NODE];                           /* datamover name */
    int iFileSystem;                     /* no. of filesystem on node */
+   int iPoolId;                        /* read or write cache poolId */
    char cArchiveDate[MAX_DATE];      /* creation date in ArchivePool */
    char cArchiveUser[MAX_OWNER];   /* account name of archiving user */
 } srawFileSystem;
@@ -673,6 +780,7 @@ typedef struct              /* for copy of DAQ data stream to dataFS */
    char cCopyPath[MAX_FULL_FILE];
        /* destination where to be copied
           = "/lustre..."  => fully qualified path name in lustre
+          = "/hera..."    => fully qualified path name in lustre
             if not existing: will be created (see iPathConvention)
           = "RC" => read cache
         */
@@ -708,4 +816,46 @@ typedef struct                                   /* list of archives */
    int iArchSize;                 /* length of following data (byte) */
    char cArchive[MAX_OBJ_FS];                        /* archive name */
 } srawArchiveList;
+
+typedef struct    /* list of full obj names and filesizes in archive */
+{
+   int iCacheLocation;      /* 0: tape, 1: RC, 2: WC, 3: GRC, 4: GWC */ 
+   int iPoolIdRC;
+   int iPoolIdWC;        /* maybe >0 also for staged files (RC, GRC) */
+   unsigned int iFileSize;                        /* 8 byte filesize */
+   unsigned int iFileSize2;
+   char cPath[MAX_OBJ_HL];                              /* path name */
+   char cFile[MAX_OBJ_LL];                             /*  file name */
+} srawObjNameList;
+
+typedef struct            /* global socket data for parallel actions */
+{
+   int iSocket;    /* socket for communication client - entry server */
+   int iActionId;       /* global actionId for parallel/sequ actions */
+   char cClientNode[MAX_NODE];                   /* client node name */
+   char cClientUser[MAX_OWNER];          /* user name on client node */
+}
+srawGlobalSocketData;
+
+typedef struct          /* global socket buffer for parallel actions */
+{
+   int iIdent;                                /* IDENT_GLOBAL_SOCKET */
+   int iAction;       /* [lock] actions with global sockets: 48 - 50 */
+   int iDataLen;                 /* length of following data in byte */
+   srawGlobalSocketData sGlobalSocketData;     /* global socket data */
+} srawGlobalSocket;
+
+typedef struct    /* global notification buffer for parallel actions */
+{
+   srawGlobalSocket sGlobalSocket;           /* global socket buffer */
+   char cDataMover[MAX_NODE];     /* name of DM sending notification */
+   char cNamefs[MAX_OBJ_FS];                       /* filespace name */
+   char cNamehl[MAX_OBJ_HL];               /* object high level name */
+   char cNamell[MAX_OBJ_LL];    /* file name / object low level name */
+   char cFile[MAX_FULL_FILE];               /* full lustre file name */
+   unsigned int iuFileSize;/* file size (byte), overlaid with 'long' */
+   unsigned int iuFileSize2;                 /* both together 8 byte */
+   int iStatus;                             /* status for cmd client */
+   char cMsg[STATUS_LEN];            /* optionally: error/status msg */
+} srawGlobalNotice;
 

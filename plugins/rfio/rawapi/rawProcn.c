@@ -54,7 +54,7 @@
  *  5. 8.2002, H.G.: rawQueryFile: handle QUERY_RETRIEVE, QUERY_STAGE
  * 14.10.2002, H.G.: ported to Lynx
  * 31. 1.2003, H.G.: use rawdefn.h
- * 17. 2.2003, H.G.: rawCheckFilelist, rawCheckObjlist -> rawcliprocn.c
+ * 17. 2.2003, H.G.: rawCheckFileList, rawCheckObjList -> rawcliprocn.c
  *  3. 6.2003, H.G.: renamed from rawprocn to rawProcn
  *  9. 7.2003, H.G.: rawTestFileName: call rawGetFileSize to identify
  *                   directories
@@ -120,6 +120,13 @@
  *  5.11.2010, H.G.: reset errno after error,
  *                   better error handling after recv/send
  * 18.11.2010, H.G.: rawRecvError: provide also incomplete msg
+ * 25.08.2011, H.G.: rawRecv..., some broken connections: -E- -> -W- 
+ *  5.09.2011, H.G.: rawCheckClientFile: allow wildcard chars in dirname
+ *  1.12.2011, H.G.: rawGetFileSize: better msg handling
+ * 24.12.2012, H.G.: rawQueryFile: enable query with variable hl
+ *  4.12.2013, H.G.: rawRecvStatus: modify last arg to 'srawStatus *'
+ * 23. 1.2014, H.G.: rawQueryFile: handle broken connection to master
+ * 29. 1.2014, H.G.: rawCheckClientFile: adapted arg types, better names
  **********************************************************************
  */
 
@@ -167,6 +174,7 @@ static char *pcNull = (char *) "";/* to be returned in case of error */
                         /* return(NULL) works in AIX, but not in VMS */
 
 static int iObjAttr = sizeof(srawObjAttr);
+static int ichar = sizeof(char);
 
 /*********************************************************************
  * rawAddStrings
@@ -341,14 +349,15 @@ gEndAddStrings:
  ********************************************************************
  */
 
-int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
+int rawCheckClientFile(
+      char *pcFullFile, char *pcFile, char *pcTape)
 {
 
    char cModule[32]="rawCheckClientFile";
    int iDebug = 0;
 
    int iloc, iRC, ii;
-   int iDevType = 1;                     /* default: disk */
+   int iDevType = 1;                                /* default: disk */
 
    bool_t bup = bFalse;
 
@@ -357,14 +366,12 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
    char *plocd = NULL, *plocs = NULL;
    char *pdelim = NULL, *pgen = NULL;
    const char *pcSemi = ";";
-   char *pcc = NULL, *pBufTape, *pBufFile;
+   char *pcc = NULL;
 
    if (iDebug) fprintf(fLogFile,
-      "\n-D- begin %s: test file %s\n", cModule, pcFile0);
+      "\n-D- begin %s: test file %s\n", cModule, pcFullFile);
 
-   pBufTape = *pcTape;
-   pBufFile = *pcFile;
-   strcpy(cTemp, pcFile0);
+   strcpy(cTemp, pcFullFile);
 
    /* check if device name specified */
    plocd = strchr(cTemp, *pcDevDelim);
@@ -374,7 +381,7 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
       {
          fprintf(fLogFile,
             "-E- invalid file name: %s\n    path names must not contain '%s'\n",
-            pcFile0, pcDevDelim);
+            pcFullFile, pcDevDelim);
          return(-2);
       }
 
@@ -384,7 +391,7 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
       {
          fprintf(fLogFile,
             "-E- invalid disk file name: %s\n    path names must not contain '%s'\n",
-            pcFile0, pcDevDelim);
+            pcFullFile, pcDevDelim);
          return(-2);
       }
 
@@ -395,7 +402,7 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
          ii = MAX_TAPE_FILE;
          fprintf(fLogFile,
             "-E- invalid tape file name: %s\n    name too long: max %d byte after dev name\n",
-            pcFile0, ii);
+            pcFullFile, ii);
          return(-2);
       }
 
@@ -407,7 +414,7 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
          fprintf(fLogFile,
             "-E- file name must be specified explicitly\n");
 #else
-         fprintf(fLogFile, "-E- file name missing in %s\n", pcFile0);
+         fprintf(fLogFile, "-E- file name missing in %s\n", pcFullFile);
 #endif
          return(-2);
       }
@@ -434,10 +441,10 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
          fprintf(fLogFile,
             "-W- semicolon in file specification removed\n");
       strncpy(--plocs, "\0", 1);
-      strcpy(pcFile0, cTemp);
+      strcpy(pcFullFile, cTemp);
    }
 
-   iDevType = rawCheckDevice(cTemp, pcFile, pcTape);
+   iDevType = rawCheckDevice(cTemp, &pcFile, &pcTape);
    switch(iDevType)
    {
       case 0:
@@ -447,24 +454,24 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
       case 1:
          if (iDebug)
          {
-            if (strlen(*pcFile) == 0)
-               fprintf(fLogFile, "   disk device %s\n", *pcTape);
+            if (strlen(pcFile) == 0)
+               fprintf(fLogFile, "   disk device %s\n", pcTape);
             else
                fprintf(fLogFile,
-                  "    file %s on disk %s\n", *pcFile, *pcTape);
+                  "    file %s on disk %s\n", pcFile, pcTape);
          }
          break;
       case 2:
          if (iDebug)
          {
-            if (strlen(*pcFile) == 0)
-               fprintf(fLogFile, "   tape device %s\n", *pcTape);
+            if (strlen(pcFile) == 0)
+               fprintf(fLogFile, "   tape device %s\n", pcTape);
             else
-               fprintf(fLogFile, "    file %s on tape %s\n", *pcFile, *pcTape);
+               fprintf(fLogFile, "    file %s on tape %s\n", pcFile, pcTape);
          }
          break;
       default:
-         fprintf(fLogFile, "-E- invalid file name %s\n", pcFile0);
+         fprintf(fLogFile, "-E- invalid file name %s\n", pcFullFile);
          return(-1);
 
    } /* switch(iDevType) */
@@ -479,75 +486,70 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
       {
          fprintf(fLogFile,
             "-E- node specification not allowed in file name: %s\n",
-            pcFile0);
+            pcFullFile);
          return(-2);
       }
 #endif /* Unix */
 
       strncpy(plocd++, "\0", 1);              /* cut string at colon */
-      strcpy(pBufTape, cTemp);
+      strcpy(pcTape, cTemp);
 #ifdef VMS
-      strncat(pBufTape, pcDevDelim, 1);       /* append colon in VMS */
+      strncat(pcTape, pcDevDelim, 1);         /* append colon in VMS */
 
 #else
-      pgen = strchr(pBufTape, *pcStar);
+      pgen = strchr(pcTape, *pcStar);
       if (pgen != NULL)
       {
          fprintf(fLogFile,
-            "-E- specified device %s has generic path\n", pBufTape);
+            "-E- specified device %s has generic path\n", pcTape);
          fprintf(fLogFile,
             "    only the relative file name may be generic\n");
          return(-1);
       }
 #endif
 
-      strcpy(pBufFile, plocd);
+      strcpy(pcFile, plocd);
       if (iDebug) fprintf(fLogFile,
-         "    file %s on tape %s\n", pBufFile, pBufTape);
+         "    file %s on tape %s\n", pcFile, pcTape);
       strcpy(cText, "tape");
       iRC = 1;
 
    } /* (iDevType == 2) */
    else
    {
-      strcpy(pBufFile, cTemp);
+      strcpy(pcFile, cTemp);
       strcpy(cText, "disk");
       iRC = 0;
    }
 
    if (iDebug) fprintf(fLogFile,
-      "    %s file %s\n", cText, pBufFile);
+      "    %s file %s\n", cText, pcFile);
 
-   pdelim = strrchr(pBufFile, *pcFileDelim);
+   pdelim = strrchr(pcFile, *pcFileDelim);
    if (pdelim != NULL)                             /* path specified */
    {
 #ifndef VMS
       if (iDevType == 2)                             /* file on tape */
       {
          fprintf(fLogFile,
-            "-E- path in tape file name not allowed: %s\n", pBufFile);
+            "-E- path in tape file name not allowed: %s\n", pcFile);
          return(-1);
       }
 #endif
 
       /* disk file prefixed with path */
-      pgen = strchr(pBufFile, *pcStar);
+      pgen = strchr(pcFile, *pcStar);
       if (pgen == NULL)
-         pgen = strchr(pBufFile, *pcQM);
-      if ( (pgen != NULL) && (pgen < pdelim) )
-      {
+         pgen = strchr(pcFile, *pcQM);
+      if ( (pgen != NULL) && (pgen < pdelim) && (iDebug) )
          fprintf(fLogFile,
-            "-E- specified %s file %s has wildcard chars in path name\n",
-            cText, pBufFile);
-         fprintf(fLogFile,
-            "    only the relative file name may contain wildcard chars\n");
-         return(-1);
-      }
+            "    specified %s file %s has wildcard chars in path name\n",
+            cText, pcFile);
 
       pdelim++;                          /* points to rel. file name */
 
    } /* (pdelim != NULL) */
-   else pdelim = pBufFile;
+   else pdelim = pcFile;
 
    ii = MAX_OBJ_LL - 2;
    if (strlen(pdelim) > ii)
@@ -583,7 +585,7 @@ int rawCheckClientFile( char *pcFile0, char **pcFile, char **pcTape)
 #endif
 
    if (iDebug) fprintf(fLogFile,
-      "\n    end %s: file name %s okay\n", cModule, pcFile0);
+      "-D- end %s: file name %s okay\n\n", cModule, pcFullFile);
 
    return(iRC);
 
@@ -812,19 +814,21 @@ int rawGetFileSize(char *pcFile,
 #endif
    if (iRC)
    {
-      fprintf(fLogFile,
+      if (iDebug) fprintf(fLogFile,
          "-E- %s: file %s unavailable (stat)\n", cModule, pcFile);
       if (errno)
       {
-         fprintf(fLogFile, "    %s\n", strerror(errno));
+         if (strcmp(strerror(errno),
+               "No such file or directory") != 0)
+            fprintf(fLogFile, "    %s\n", strerror(errno));
 
          /* valid only for 32 bit OS */
          if (strcmp(strerror(errno),
                "Value too large for defined data type") == 0)
          {
             fprintf(fLogFile,
-               "-E- %s: file size of %s > 2 GByte: use 64 bit gStore client\n",
-               cModule, pcFile);
+               "-E- file size %s > 2 GByte: use 64 bit gStore client\n",
+               pcFile);
 
             errno = 0;
             return -99;
@@ -951,14 +955,16 @@ int rawQueryFile(
    char cModule[32] = "rawQueryFile";
    int iDebug = 0;
 
-   int iATLServer = -1;         /* =0: all, =1: aixtsm1, =2: gsitsma */
-   int iNameWC = -1;
+   int iATLServer = 0;   /* =1: prod TSM server, =2: test TSM server */
+   int iNameVar = -1;      /* = 1: path/file contains wildcard chars */
    int iRC;
-   int iAction;
-   int iIdent, iQuery = -1, iAttrLen;
+   int iAction = 0;
+   int iIdent = 0;
+   int iQuery = -1;
+   int  iAttrLen = 0;
    int iQueryAll = 0;
-   int iStatus, iStatusLen;
-   int iBuf, iBufComm;
+   int iStatus = 0, iStatusLen = 0;
+   int iBuf = 0, iBufComm = 0;
    int ii, jj;
    char *pcc;
 
@@ -975,15 +981,23 @@ int rawQueryFile(
    srawQueryResult *pQuery;
    srawObjAttr *pObjAttr;
 
+   /* query data space to be allocated, if several objects found */
+   char *pcQueryBuffer;
+   int iQueryBuffer = 0;
+   
    pComm = pCommBuf;
    iAction = ntohl(pComm->iAction);
    iATLServer = ntohl(pComm->iATLServer);
    pQuery = (srawQueryResult *) (*pQueryBuf);
 
    iBufComm = ntohl(pComm->iCommLen) + HEAD_LEN;
-   if (iDebug) fprintf(fLogFile,
-      "\n-D- begin %s: query file %s in ATL Server %d (action %d)\n",
-      cModule, pComm->cNamell, iATLServer, iAction);
+   if (iDebug)
+   {
+      fprintf(fLogFile,
+         "\n-D- begin %s: query file %s%s in ATL Server %d (socket %d, action %d)\n",
+         cModule, pComm->cNamehl, pComm->cNamell, iATLServer, iSocket, iAction);
+      fflush(fLogFile);
+   }
 
    switch(iAction)
    {
@@ -1002,7 +1016,7 @@ int rawQueryFile(
       default:
          fprintf(fLogFile,
             "-E- %s: invalid action %d\n", cModule, iAction);
-         iQuery = -1;
+         iQueryAll = -1;
          goto gEndQueryFile;
    }
 
@@ -1011,8 +1025,8 @@ int rawQueryFile(
    if (iRC < iBufComm)
    {
       if (iRC < 0) fprintf(fLogFile,
-         "-E- %s: sending command buffer for query file %s\n",
-         cModule, pComm->cNamell);
+         "-E- %s: sending command buffer for query file %s%s\n",
+         cModule, pComm->cNamehl, pComm->cNamell);
       else fprintf(fLogFile,
          "-E- %s: query command buffer incompletely sent (%d of %d byte)\n",
          cModule, iRC, iBufComm);
@@ -1023,13 +1037,14 @@ int rawQueryFile(
          errno = 0;
       }
 
-      iQuery = -1;
+      iQueryAll = -1;
       goto gEndQueryFile;
    }
 
    if (iDebug) fprintf(fLogFile,
       "    query command sent to entry server (%d bytes), look for reply\n",
       iBufComm);
+   fflush(fLogFile);
 
    /******************* look for reply from server *******************/
 
@@ -1041,7 +1056,7 @@ gNextReply:
       fprintf(fLogFile,
          "-E- %s: receiving buffer header with query information\n",
          cModule);
-      iQuery = -1;
+      iQueryAll = -1;
       goto gEndQueryFile;
    }
 
@@ -1053,12 +1068,14 @@ gNextReply:
    if (iDebug) fprintf(fLogFile,
       "    %d bytes received: iIdent %d, iQuery %d, iAttrLen %d\n",
       iRC, iIdent, iQuery, iAttrLen);
+   fflush(fLogFile);
 
+   iQueryAll += iQuery;
    if ( (iIdent != IDENT_QUERY) && (iIdent != IDENT_QUERY_DONE) &&
         (iIdent != IDENT_QUERY_ARCHDB) )
    {
       iStatus = iQuery;
-      iQuery = -1;                                   /* query failed */
+      iQueryAll = -1;                                /* query failed */
 
       if (iIdent == IDENT_STATUS)
       {
@@ -1086,9 +1103,9 @@ gNextReply:
                fprintf(fLogFile,"    no error message available\n");
 
             if (iStatus == STA_ARCHIVE_NOT_AVAIL)
-               iQuery = -1000;
+               iQueryAll = -1000;
             else if (iStatus == STA_NO_ACCESS)
-               iQuery = -1001;
+               iQueryAll = -1001;
 
          } /* (iStatus == STA_ERROR || STA_ERROR_EOF ||
                STA_ARCHIVE_NOT_AVAIL || STA_NO_ACCESS) */
@@ -1101,111 +1118,116 @@ gNextReply:
          "-E- %s: unexpected header (type %d) received from server\n",
          cModule, iIdent);
 
-      iQueryAll = iQuery;
       goto gEndQueryFile;
 
    } /* iIdent != IDENT_QUERY  && != IDENT_QUERY_DONE &&
                != IDENT_QUERY_ARCHDB */
 
-   iQueryAll += iQuery;
    if (iQuery > 0)
    {
-      pcc = (char *) pQuery + HEAD_LEN;
-      pObjAttr = (srawObjAttr *) pcc;
-
-      /* DDD iQuery = 1 only! */
-      for (ii=1; ii<=iQuery; ii++)
+      if (iQuery > 1)
       {
-         iBuf = iAttrLen;        /* only space for one object buffer */
-         while(iBuf > 0)
+         iQueryBuffer = iQuery * iAttrLen;
+         if ( (pcQueryBuffer =
+              (char *) calloc(iQueryBuffer, ichar) ) == NULL)
          {
-            if ( (iRC = recv( iSocket, pcc, (unsigned) iBuf, 0 )) <= 0 )
+            fprintf(fLogFile,
+               "-E- %s: allocating query info buffer for %d objs (%d byte)\n",
+               cModule, iQuery, iQueryBuffer);
+            if (errno)
+               fprintf(fLogFile, "    %s\n", strerror(errno));
+
+            goto gEndQueryFile;
+         }
+         pcc = pcQueryBuffer;
+
+         if (iDebug) fprintf(fLogFile,
+            "    query info buffer for %d objs allocated (%d byte)\n",
+            iQuery, iQueryBuffer);
+
+      } /* (iQuery > 1) */
+      else
+      {
+         pcc = (char *) pQuery + HEAD_LEN;
+         iQueryBuffer = iAttrLen;
+      }
+
+      pObjAttr = (srawObjAttr *) pcc;
+      iBuf = iQueryBuffer;
+      while(iBuf > 0)
+      {
+         if ( (iRC = recv( iSocket, pcc, (unsigned) iBuf, 0 )) <= 0 )
+         {
+            if (iRC < 0)
             {
-               if (iRC < 0)
-               {
-                  fprintf(fLogFile,
-                     "-E- %s: receiving buffer %d with query results\n",
-                     cModule, ii);
+               fprintf(fLogFile,
+                  "-E- %s: receiving buffer with query results (%d byte)\n",
+                  cModule, iQueryBuffer);
 
-                  iQuery = -1;
-                  iQueryAll -= iQuery;
-               }
-               else
-               {
-                  jj = iAttrLen - iBuf;
-                  fprintf(fLogFile,
-                     "-E- %s: connection to server broken, only %d bytes of query object %d (%d byte) received\n",
-                     cModule, jj, ii, iAttrLen);
-
-                  if (ii == 1)
-                  {
-                     iQuery = -1;
-                     iQueryAll -= iQuery;
-                  }
-                  else
-                  {
-                     fprintf(fLogFile,
-                        "-E- %s: only %d of %d objects received\n",
-                        cModule, --ii, iQuery);
-                     iQueryAll -= iQuery - ii;
-                     iQuery = ii;
-                  }
-               }
+               iQueryAll = -1;
+            }
+            else
+            {
+               jj = iQueryBuffer - iBuf;
+               fprintf(fLogFile,
+                  "-E- %s: connection to server broken, only %d bytes of query result (%d byte) received\n",
+                  cModule, jj,  iQueryBuffer);
+            }
             
-               if (errno)
-               {
-                  fprintf(fLogFile, "    %s\n", strerror(errno));
-                  errno = 0;
-               }
-
-               goto gEndQueryFile;
+            if (errno)
+            {
+               fprintf(fLogFile, "    %s\n", strerror(errno));
+               errno = 0;
             }
 
-            iBuf -= iRC;
-            pcc += iRC;
+            goto gEndQueryFile;
+         }
 
-         } /* while(iBuf > 0) */
+         iBuf -= iRC;
+         pcc += iRC;
+
+      } /* while(iBuf > 0) */
+
+      if (iDebug) fprintf(fLogFile,
+         "    query data of %d objs received (%d byte)\n",
+         iQuery, iQueryBuffer);
+
+      if (iQuery > 1)
+         pObjAttr = (srawObjAttr *) pcQueryBuffer;
+      else
+      {
+         pcc = (char *) pQuery + HEAD_LEN;
+         pObjAttr = (srawObjAttr *) pcc;
+      }
+
+      for (ii=1; ii<=iQuery; ii++)
+      {
+         if (iDebug)
+         {
+            iPoolId = ntohl(pObjAttr->iPoolId);
+            fprintf(fLogFile, "%d: %s%s%s (poolId %d)\n",
+               ii, pObjAttr->cNamefs, pObjAttr->cNamehl,
+               pObjAttr->cNamell, iPoolId);
+         }
 
          iVersionObjAttr = ntohl(pObjAttr->iVersion);
          if ( (iVersionObjAttr != VERSION_SRAWOBJATTR) &&
               (iVersionObjAttr != VERSION_SRAWOBJATTR-1) )
          {
             fprintf(fLogFile,
-               "-E- %s: invalid cacheDB entry version %d\n",
-               cModule, iVersionObjAttr);
+               "-E- %d: %s%s%s has invalid cacheDB entry version %d\n",
+               ii, pObjAttr->cNamefs, pObjAttr->cNamehl,
+               pObjAttr->cNamell, iVersionObjAttr);
 
-            iQuery = -1;
-            goto gEndQueryFile;
+            continue;
          }
 
-         iPoolId = ntohl(pObjAttr->iPoolId);
-         if (iDebug) 
-         {
-            if (ii == 1) fprintf(fLogFile,
-               "    query buffer received (%d bytes, objAttr data V%d)\n",
-               iAttrLen, iVersionObjAttr);
-            else fprintf(fLogFile,
-               "    query buffer overlaid (%d bytes)\n", iAttrLen);
+         pObjAttr++;
 
-            fprintf(fLogFile, "    %s%s%s: poolId %d",
-               pObjAttr->cNamefs, pObjAttr->cNamehl,
-               pObjAttr->cNamell, iPoolId); 
-            if (iPoolId == 1)
-               fprintf(fLogFile, " (RetrievePool)\n");
-            else if (iPoolId == 2)
-               fprintf(fLogFile, " (StagePool)\n");
-            else if (iPoolId == 3)
-               fprintf(fLogFile, " (ArchivePool)\n");
-            else if (iPoolId == 4)
-               fprintf(fLogFile, " (DAQPool)\n");
-            else
-               fprintf(fLogFile, " (TSM DB)\n");
-         }
       } /* object loop */
    } /* (iQuery > 0) */
    else if ( (iQuery == 0) && (iDebug) )
-     fprintf(fLogFile,
-        "    no more objects found in ATL server %d\n", iATLServer);
+      fprintf(fLogFile, "    no objs found\n");
 
    /* if object explicitly specified, stop query if found */
    if ( (strchr(pComm->cNamell, *pcStar) == NULL) &&
@@ -1214,11 +1236,11 @@ gNextReply:
         (strchr(pComm->cNamehl, *pcStar) == NULL) &&
         (strchr(pComm->cNamehl, *pcQM) == NULL) &&
         (strchr(pComm->cNamehl, *pcPerc) == NULL) )
-      iNameWC = 0;
+      iNameVar = 0;
    else
-      iNameWC = 1;
+      iNameVar = 1;
 
-   if ( (iNameWC == 0) && (iQuery > 0) )      /* fixed name, found */
+   if ( (iNameVar == 0) && (iQueryAll > 0) )    /* fixed name, found */
       goto gEndQueryFile;
 
    if ( (iIdent == IDENT_QUERY) || (iIdent == IDENT_QUERY_ARCHDB) )
@@ -1229,18 +1251,18 @@ gEndQueryFile:
    {
       case 0:
          if (iDebug) fprintf(fLogFile,
-            "    no matching object %s in gStore found\n",
-            pComm->cNamell);
+            "    no matching object %s%s%s in gStore found\n",
+            pComm->cNamefs, pComm->cNamehl, pComm->cNamell);
          break;
       case 1:
          if (iDebug) fprintf(fLogFile,
-            "    file %s available in gStore\n", pComm->cNamell);
+            "    file %s%s%s available in gStore\n",
+            pObjAttr->cNamefs, pComm->cNamehl, pComm->cNamell);
          break;
       case -1:
          fprintf(fLogFile,
             "-E- %s: query in gStore could not be executed\n",
             cModule);
-         iQuery = -1;
          break;
       case -1000:
          if (iDebug) fprintf(fLogFile,
@@ -1249,29 +1271,24 @@ gEndQueryFile:
          break;
       case -1001:
          if (iDebug) fprintf(fLogFile,
-            "    requested access to file %s not allowed\n",
-            pComm->cNamell);
+            "    access to requested file %s%s%s not allowed\n",
+            pObjAttr->cNamefs, pComm->cNamehl, pComm->cNamell);
          break;
       default:
-         if (iQueryAll > 1)
+         if ( (iQueryAll > 1) && (iNameVar == 0) )
          {
-            if (strcmp(pComm->cOwner, "goeri") == 0)
-               fprintf(fLogFile, "-W- %d versions of %s exist!\n", 
-                  iQuery, pComm->cNamell);
+            fprintf(fLogFile, "    %d versions of %s%s exist!\n", 
+               iQueryAll, pComm->cNamehl, pComm->cNamell);
          }
-         else
-         {
-            fprintf(fLogFile,
-               "-E- %s: invalid number %d of objects %s found\n",
-               cModule, iQuery, pComm->cNamell);
-            iQuery = -1;
-         }
-   } /* switch (iQuery) */
+   } /* switch (iQueryAll) */
 
-   if (iDebug) fprintf(fLogFile,
-      "-D- end %s\n\n", cModule);
+   if (iDebug)
+   {
+      fprintf(fLogFile, "-D- end %s\n\n", cModule);
+      fflush(fLogFile);
+   }
 
-   return iQuery;
+   return iQueryAll;
 
 } /* end rawQueryFile */
 
@@ -1408,7 +1425,10 @@ int rawRecvHead( int iSocket, char *pcBuf)
    int *pint;
 
    if (iDebug)
-      fprintf(fLogFile, "\n-D- begin %s\n", cModule);
+   {
+      fprintf(fLogFile, "\n-D- begin %s: socket %d\n", cModule, iSocket);
+      fflush(fLogFile);
+   }
 
    strcpy(pcBuf, "");
    pcc = pcBuf;        /* points now to buffer in calling procedure */
@@ -1427,7 +1447,7 @@ int rawRecvHead( int iSocket, char *pcBuf)
          {
             ii = iBufs - iBuf;
             fprintf(fLogFile,
-               "-E- %s: connection to sender broken, %d byte of buffer header (%d byte) received\n",
+               "-W- %s: connection to sender broken, %d byte of buffer header (%d byte) received\n",
                cModule, ii, iBufs);
          }
 
@@ -1464,9 +1484,13 @@ int rawRecvHead( int iSocket, char *pcBuf)
       return iDataLen;
    }
 
-   if (iDebug) fprintf(fLogFile,
-      "-D- end %s: buffer header received (%d bytes)\n\n",
-      cModule, iBufs);
+   if (iDebug)
+   {
+      fprintf(fLogFile,
+         "-D- end %s: buffer header received (%d bytes)\n\n",
+         cModule, iBufs);
+      fflush(fLogFile);
+   }
 
    return iBufs;
 
@@ -1493,7 +1517,7 @@ int rawRecvHead( int iSocket, char *pcBuf)
 
 int rawRecvHeadC(int iSocket,
                  char *pcBuf,
-                 int iIdentReq,     /* < 0 => check, = 0 => no check */
+                 int iIdentReq,    /* < 0 => check, >= 0 => no check */
                  int iStatusReq,   /* >= 0 => check, < 0 => no check */
                  char *pcMsg)
 {
@@ -1546,7 +1570,7 @@ int rawRecvHeadC(int iSocket,
          {
             ii = iBufs - iBuf;
             sprintf(pcMsg,
-               "-E- %s: connection to sender broken, %d byte of buffer header (%d byte) received\n",
+               "-W- %s: connection to sender broken, %d byte of buffer header (%d byte) received\n",
                cModule, ii, iBufs);
             iRC = -2;
          }
@@ -1900,7 +1924,7 @@ gErrorRecvRequest:
  *********************************************************************
  */
 
-int rawRecvStatus( int iSocket, char *pcBuf) 
+int rawRecvStatus(int iSocket, srawStatus *psStatus) 
 {
    char cModule[32]="rawRecvStatus";
    int iDebug = 0;
@@ -1909,20 +1933,21 @@ int rawRecvStatus( int iSocket, char *pcBuf)
    int iBuf, iBufs;
    int iLen;
    char *pcc;
-   srawStatus *pStatus;
 
    if (iDebug)
       fprintf(fLogFile, "\n-D- begin %s\n", cModule);
 
-   pcc = pcBuf;         /* points now to buffer in calling procedure */
-   pStatus = (srawStatus *) pcc;
-   memset(pcc, 0x00, sizeof(HEAD_LEN));
+   /* clear status structure */
+   memset(psStatus, 0X00, sizeof(srawStatus));
+
+   pcc = (char *) psStatus;
    iBuf = HEAD_LEN;
    iBufs = iBuf;
 
    while(iBuf > 0)
    {
-      if ( (iRC = recv( iSocket, pcc, (unsigned) iBuf, 0 )) <= 0 )
+      iRC = recv( iSocket, pcc, (unsigned) iBuf, 0 );
+      if (iRC <= 0 )
       {
          if (iRC < 0) fprintf(fLogFile,
             "-E- %s: receiving status header\n", cModule);
@@ -1930,7 +1955,7 @@ int rawRecvStatus( int iSocket, char *pcBuf)
          {
             ii = iBufs - iBuf;
             fprintf(fLogFile,
-               "-E- %s: connection to sender broken, %d byte of status header (%d byte) received\n",
+               "-W- %s: connection to sender broken, %d byte of status header (%d byte) received\n",
                cModule, ii, iBufs);
          }
       
@@ -1945,6 +1970,7 @@ int rawRecvStatus( int iSocket, char *pcBuf)
 
       iBuf -= iRC;
       pcc += iRC;
+      fflush(fLogFile);
 
    } /* while(iBuf > 0) */
 
@@ -1956,29 +1982,29 @@ int rawRecvStatus( int iSocket, char *pcBuf)
       return -2;
    }
 
-   pStatus->iIdent = ntohl(pStatus->iIdent);
-   pStatus->iStatus = ntohl(pStatus->iStatus);
-   pStatus->iStatusLen = ntohl(pStatus->iStatusLen);
+   psStatus->iIdent = ntohl(psStatus->iIdent);
+   psStatus->iStatus = ntohl(psStatus->iStatus);
+   psStatus->iStatusLen = ntohl(psStatus->iStatusLen);
 
    if (iDebug)
    {
       fprintf(fLogFile, "    status header received (%d bytes)\n",
          iBufs);
       fprintf(fLogFile, "    ident %d, status %d, status len %d\n",
-         pStatus->iIdent, pStatus->iStatus, pStatus->iStatusLen);
+         psStatus->iIdent, psStatus->iStatus, psStatus->iStatusLen);
+      fflush(fLogFile);
    }
 
-   if (pStatus->iIdent != IDENT_STATUS)
+   if (psStatus->iIdent != IDENT_STATUS)
    {
       fprintf(fLogFile, "-E- %s: invalid status header received (%d)\n",
-              cModule, pStatus->iIdent);
+              cModule, psStatus->iIdent);
       return -3;
    }
 
-   iLen = pStatus->iStatusLen;
+   iLen = psStatus->iStatusLen;
    if (iLen > 0)
    {
-      memset(pcc, 0x00, (unsigned) iLen);
       iBuf = iLen;                      /* length of status message */
       iBufs += iBuf;
       while(iBuf > 0)
@@ -1991,7 +2017,7 @@ int rawRecvStatus( int iSocket, char *pcBuf)
             {
                ii = iLen - iBuf;
                fprintf(fLogFile,
-                  "-E- %s: connection to sender broken, %d byte of status message (%d byte) received\n",
+                  "-W- %s: connection to sender broken, %d byte of status message (%d byte) received\n",
                   cModule, ii, iLen);
             }
       
@@ -2019,7 +2045,8 @@ int rawRecvStatus( int iSocket, char *pcBuf)
 
       if (iDebug) fprintf(fLogFile,
          "    status message received (%d bytes):\n%s\n",
-         iLen, pStatus->cStatus);
+         iLen, psStatus->cStatus);
+      fflush(fLogFile);
 
    } /*  iLen > 0 */
 
@@ -2137,8 +2164,7 @@ int rawSendStatus( int iSocket, int iStatus, char *pcMsg)
       sStatus.iStatusLen = htonl(iMsgLen);
       strcpy(sStatus.cStatus, pcMsg);
       if (iDebug) fprintf(fLogFile,
-         "    %s: error message (%d bytes):\n    %s\n",
-         cModule, iMsgLen, pcMsg);
+         "    status message (%d bytes):\n    %s\n", iMsgLen, pcMsg);
    }
 
    pcc = (char *) &sStatus;

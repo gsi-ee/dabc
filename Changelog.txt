@@ -2,10 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+17.03.2014
+1. Integrate RFIO v8.0 from Horst.
+
+
 14.03.2014
 1. Use TBuffer in reading of the file, fix display of streamer infos
 2. Completely switch to usage of JSROOTIO.TBuffer class, remove
    many obsolete functions, significantely reduce code size.  
+3. Remove StreamerInfos class - it is just list of streamer elements
+4. Move fTagOffset to TBuffer class
 
 
 13.03.2014

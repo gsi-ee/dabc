@@ -207,7 +207,6 @@ int rfio_ffileid(RFILE *);
 }
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -14,20 +14,27 @@
  *  9. 1.2002, H.G.: created from rawent.h
  *                   rawGetLLName: pass object and delimiter as argument
  * 13. 2.2003, H.G.: mod arg list rawDelList
- * 14. 2.2003, H.G.: mod arg list rawCheckFilelist
+ * 14. 2.2003, H.G.: mod arg list rawCheckFileList
  * 25.11.2004, H.G.: rawQueryFile: add new arg no. 2
  *  7.12.2006, H.G.: mod arg list rawDelList
  *  5.11.2008, H.G.: mod arg lists rawRecvError, rawRecvHead,
  *                   rawRecvStatus for (char ** -> char *)
  * 11.11.2008, H.G.: rawGetLLName: 'const char' for delimiter
- * 18.12.2008, H.G.: rawCheckObjlist: additional argument (int)
+ * 18.12.2008, H.G.: rawCheckObjList: additional argument (int)
  * 15. 6.2009, H.G.: rawSortValues: new entry
  * 22. 6.2008, H.G.: replace long->int if 64bit client (ifdef SYSTEM64)
- * 30.11.2009, H.G.: rawCheckFilelist: add 'char *' (archive name)
+ * 30.11.2009, H.G.: rawCheckFileList: add 'char *' (archive name)
  * 11. 2.2010, H.G.: rename rawTestFilePath -> rawCheckClientFile
  * 22. 2.2010, H.G.: add rawGetPathName
  * 26. 2.2010, H.G.: rawQueryString: add parameter (len output string)
  * 23. 8.2010, H.G.: remove SYSTEM64 flag: allow "long" in 64 bit OS
+ * 11. 2.2011, H.G.: rename rawCheckObjlist -> rawCheckObjList,
+ *                   rawCheckObjList: additional int argument 
+ *                   rename rawCheckFilelist -> rawCheckFileList
+ * 28. 7.2011, H.G.: remove rawCheckFileList, rawCheckObjList
+ *                      (used only in rawCliCmd)
+ *  4.12.2013, H.G.: rawRecvStatus: modify last arg to 'srawStatus *'
+ * 29. 1.2014, H.G.: remove decl rawCheckClientFile, only once used
  *********************************************************************
  */
 
@@ -39,12 +46,6 @@ int rawCheckAuth( char *, char *,
                   char *);
    /* check if client authorized for requested action */
 #endif
-
-int rawCheckFilelist( char **, char **, char *, char *);
-   /* remove objects already archived from file list */
-
-int rawCheckObjlist(int, int, char **, char **, char **);
-   /* compress and sort entries in object and file list */
 
 int rawDelFile( int, srawComm *);
    /* delete object in archive */
@@ -113,8 +114,8 @@ int rawRecvHead( int, char *);
 int rawRecvHeadC( int, char *, int, int, char *);
    /* receive common buffer header and check header values */
 
-int rawRecvStatus( int, char *);
-   /* receive common buffer header and error msg */
+int rawRecvStatus( int, srawStatus *);
+   /* receive status header and error msg, if applicable */
 
 int rawSendRequest( int, int, int, int);
    /* send request buffer */
@@ -130,9 +131,6 @@ int rawTapeFile( char *, char *, int, int *, unsigned long *);
 
 int rawTestFileName( char *);
    /* verify that specified name is valid */
-
-int rawCheckClientFile( char *, char **, char **);
-   /* check client file name, get tape drive name */
 
 #ifdef VMS
 int rawCheckDevice (char *, char **, char **);

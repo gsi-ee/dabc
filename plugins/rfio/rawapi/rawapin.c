@@ -140,15 +140,20 @@
  * 24. 9.2010, H.G.: handle 64 bit filesizes, now also in
  *                      rfio_fstat64, rfio_stat64
  * 23.11.2010, H.G.: gStore files >=4GB: inhibit read, incomplete query
+ *  9.12.2010, H.G.: print to logfile (fprintm) if flag GSI_MBS set
+ * 23. 1.2012, H.G.: rfio_open_gsidaq: allow [rfio*:]node:port: in URL
+ * 24. 2.2012, H.G.: rfio_open_gsidaq: use new iPoolId in srawFileSystem
+ *  6. 9.2012, H.G.: new parameter srawDataMoverAttr: iPoolId
+ *  4.12.2013, H.G.: modify last arg of rawRecvStatus to 'srawStatus *'
  **********************************************************************
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <time.h>
-#include <stdlib.h>
+#include <ctype.h>
 
 #ifdef Linux
 #include <netinet/in.h>
@@ -159,6 +164,10 @@
 FILE *fLogClient = NULL;                               /* client log */
 #define MAX_LOG_FILE 64        /* max length of client log file name */
 static char cLogClient[MAX_LOG_FILE] = "";
+#ifdef GSI_MBS
+#define fprintf  fprintm
+#endif
+
 static int iLogFile = 1;              /* default: client log to file */
 static int iOS64 = 0;    /* =0: 4 byte filesize, =1: 8 byte filesize */
 
@@ -167,9 +176,6 @@ static int iOS64 = 0;    /* =0: 4 byte filesize, =1: 8 byte filesize */
 #include "errnum_def.h"
 #include "err_mask_def.h"
 #include "f_ut_printm.h"
-
-#define fprintf  fprintm
-
 #endif
 
 #include "rawdefn.h"
@@ -179,12 +185,6 @@ static int iOS64 = 0;    /* =0: 4 byte filesize, =1: 8 byte filesize */
 #include "rawapitd.h"
 #include "rawapitd-gsin.h"
 #include "rawapplcli.h"
-
-
-static char cNodeMaster0[MAX_NODE] = "lxgstore";     /* entry server */
-static char cNodeMasterE1[MAX_NODE] = "lxha05";  /* def entry server */
-static char cNodeMasterE2[MAX_NODE] = "lxha04";  /* bkp entry server */
-
 
 int* piEntryList;              /* external in some utility functions */
 int imySigS;         /* if = 1: CTL C specified (extern in rconnect) */
@@ -365,6 +365,7 @@ int rfio_open_gsidaq(
    char cModule[32] = "rfio_open_gsidaq";
    int iDebug = 0;
    int iRC;
+   int iPort = 0;
    int iMaxConnect = 0;            /* try connection to servers once */
    int ii1, ii2;
 
@@ -415,7 +416,7 @@ int rfio_open_gsidaq(
 
    int iMapFound = 0;             /* =1: specified file already open */
    int ii;
-   char *pcc, *pcc1;
+   char *pcc, *pcc1, *pcc2;
    char cTemp[STATUS_LEN] = "";
    char cMsg[STATUS_LEN] = "                                                                                                                                                                                                         ";
    char cNamefs[MAX_OBJ_FS] = "", *pcNamefs;       /* filespace name */
@@ -644,7 +645,7 @@ int rfio_open_gsidaq(
    {
       pcc = (char *) strchr(cTemp, *pcDevDelim);
       pcc++;                                /* skip device delimiter */
-      pcc1 = (char *) strrchr(pcc, *pcDevDelim);
+      pcc1 = (char *) strchr(pcc, *pcDevDelim);
       if (pcc1 == NULL)
       {
         fprintf(fLogClient, 
@@ -654,9 +655,26 @@ int rfio_open_gsidaq(
         iError = -1;
         goto gError;
       }
+
+      pcc1++;                     /* points to port no. or file name */
+      pcc2 = (char *) strrchr(pcc1, *pcDevDelim);
+      if (pcc2)
+      {
+         /* rfio*:node:port:/object specified */
+         strncpy(pcc2, "\0", 1);        /* terminates after port no. */
+         iPort = atoi(pcc1);
+
+         if ( (iPort == 0) && (strlen(pcc1) > 1) ) fprintf(fLogClient,
+            "-W- invalid name part %s in URL ignored\n", pcc1);
+         else if (iDebug)
+            printf("    node:port %s, port %s, iPort %d\n", pcc, pcc1, iPort);
+      }
+      /* else rfio*:node:/object specified */
+
+      pcc1--;
       strncpy(pcc1, "\0", 1);          /* terminates after node name */
 
-      /* now pcc points to node name */
+      /* now pcc contains only node name */
       if (strlen(pcc) == 0)
       {
         fprintf(fLogClient, 
@@ -669,7 +687,7 @@ int rfio_open_gsidaq(
 
       strcpy(cNodePrefix, pcc);
       if (iDebug)
-         printf("    node name after prefix 'rfio': '%s'\n", cNodePrefix);
+         printf("    node name (after prefix 'rfio'): '%s'\n", cNodePrefix);
 
       if (strncmp(cTemp, "rfiodaq:", 8) == 0)
       {
@@ -705,8 +723,16 @@ int rfio_open_gsidaq(
          iMassSto = 0;
          strcpy(cServer, "RFIO server");
          iPoolId = 0;                              /* not applicable */
-         iPortMaster = PORT_RFIO_SERV;
-         iPortMover = PORT_RFIO_SERV;
+         if (iPort)
+         {
+            iPortMaster = iPort;
+            iPortMover = iPort;
+         }
+         else
+         {
+            iPortMaster = PORT_RFIO_SERV;
+            iPortMover = PORT_RFIO_SERV;
+         }
       }
       else
       {
@@ -720,19 +746,8 @@ int rfio_open_gsidaq(
    } /* (strncmp(cTemp, "rfio", 4) == 0) */
    else
    {
-      /* node:/object */
+      /* node:[port:]/object */
       pcc = (char *) strchr(cTemp, *pcDevDelim);
-      pcc1 = (char *) strrchr(pcc, *pcDevDelim);
-      if (pcc1 != pcc)             /* more than one device delimiter */
-      {
-         fprintf(fLogClient,
-            "-E- %s: invalid remote file name '%s': invalid prefix\n",
-            cModule, pcFile);
-
-         iError = -1;
-         goto gError;
-      }
-
       if (strlen(pcc) == 0)
       {
          fprintf(fLogClient,
@@ -741,6 +756,21 @@ int rfio_open_gsidaq(
 
          iError = -1;
          goto gError;
+      }
+
+      strncpy(pcc, "\0", 1);           /* terminates after node name */
+      pcc++;
+      pcc1 = (char *) strchr(pcc, *pcDevDelim);
+      if (pcc1)                       /* possibly port no. specified */
+      {
+         /* node:port:/object specified */
+         strncpy(pcc1, "\0", 1);        /* terminates after port no. */
+         iPort = atoi(pcc);
+
+         if ( (iPort == 0) && (strlen(pcc) > 1) ) fprintf(fLogClient,
+            "-W- invalid name part %s in URL ignored\n", pcc);
+         else if (iDebug)
+            printf("    node %s, port %s, iPort %d\n", cTemp, pcc, iPort);
       }
 
       iMassSto = 1;
@@ -753,7 +783,6 @@ int rfio_open_gsidaq(
       else if (iAction == 2)
          iPoolId = 3;                                 /* ArchivePool */
 
-      strncpy(pcc, "\0", 1);           /* terminates after node name */
       strcpy(cNodePrefix, cTemp);
       if (iDebug)
          printf("    node name: '%s'\n", cNodePrefix);
@@ -1197,7 +1226,7 @@ int rfio_open_gsidaq(
          iMaxFile, iPathConvention);
 
       /* store parameters */
-      pCopyCacheServ->iIdent = htonl( (unsigned int) IDENT_COPY_CACHE);
+      pCopyCacheServ->iIdent = htonl(IDENT_COPY_CACHE);
       pCopyCacheServ->iCopyMode = htonl(iCopyMode);
       pCopyCacheServ->iCopyLen = htonl(0);    /* indicates that copy 
                       buffer not yet sent to DM: set in rfio_newfile */
@@ -1219,15 +1248,19 @@ int rfio_open_gsidaq(
       else
          iPortMover = PORT_MOVER;
 
-      pcc = cNodePrefix + strlen(cNodePrefix) - 2;   /* last 2 chars */
-      if (strcmp(pcc, "_d") == 0)
+      if (iPort)
       {
-         strncpy(pcc, "\0", 1);              /* terminates node name */
-         if (iDebug)
-            printf("    switch to test system\n");
+         if (iPort == PORT_MASTER-10)
+         {
+            if (iDebug)
+               printf("    switch to test system\n");
 
-         iPortMaster -= 10;
-         iPortMover -= 10;
+            iPortMaster -= 10;
+            iPortMover -= 10;
+         }
+         else if (iPort != PORT_MASTER) fprintf(fLogClient,
+            "-W- invalid port no. %d for gStore entry server, ignored\n",
+            iPort);
       }
 
       if ( (strcmp(cNodePrefix, "gstore") == 0) ||     /* in root, C */
@@ -1243,9 +1276,14 @@ int rfio_open_gsidaq(
          "    gStore entry server %s (node in URL %s)\n",
          cNodeMaster, cNodePrefix);
       fflush(stdout);
-   }
+
+   } /* (iMassSto > 0) */
    else
+   {
       strcpy(cNodeMaster, cNodePrefix);
+      if (iDebug) printf(
+         "    copy server %s:%d\n", cNodeMaster, iPortMaster);
+   }
 
    strcpy(pCommAPI->cNodeCacheMgr, cNodeMaster);
 
@@ -1652,12 +1690,10 @@ int rfio_open_gsidaq(
                iCache = 1;
 
                /* specify location of cache data */
-               strcpy(sFileSystemServ.cOS, "Windows");  /* DDD */
+               strcpy(sFileSystemServ.cOS, "Linux");
                strcpy(sFileSystemServ.cNode, pQAttr->cNode);
-               sFileSystemServ.iFileSystem = pQAttr->iFS;
-                                                       /* net format */
-               sFileSystemServ.iFileSystem = pQAttr->iFS;
-                                                       /* net format */
+               sFileSystemServ.iPoolId = pQAttr->iPoolId;/*net format*/
+               sFileSystemServ.iFileSystem = pQAttr->iFS;/*net format*/
                strcpy(sFileSystemServ.cArchiveDate, pQAttr->cDateCreate);
                                                      /* archive date */
                strcpy(sFileSystemServ.cArchiveUser, pQAttr->cOwner);
@@ -1796,6 +1832,7 @@ int rfio_open_gsidaq(
                      strcpy(cNodeMover, cMsg);
                      strcpy(pDataMoverSelect->cNode, cMsg);
                      pDataMoverSelect->iATLServer = htonl(0);
+                     pDataMoverSelect->iPoolId = htonl(0);
                      pDataMoverSelect->iExecStatus = htonl(0);
                      pDataMoverSelect->iWaitTime = htonl(0);
 
@@ -2187,15 +2224,13 @@ gNextCmdOpen:
 
       /************* look for reply from server/data mover ***********/
 
-      pcc = (char *) &sStatus;
       iStatusOkay = 0;
       iStatusLoop = 0;
       while (iStatusOkay == 0)
       {
          iStatusLoop++;
 
-         memset(&sStatus, 0X00, sizeof(srawStatus));
-         iRC = rawRecvStatus(iSockMover, pcc);
+         iRC = rawRecvStatus(iSockMover, &sStatus);
          iStatus = sStatus.iStatus;
          if (iRC != HEAD_LEN)
          {
@@ -2406,7 +2441,6 @@ int rfio_endfile(int iFileId)                             /* file id */
    int ii = 0;
 
    char cServer[16] = "data mover";
-   char *pcc;
 
    srawStatus sStatus;
    srawAPIFile *pcurAPIFile;
@@ -2462,9 +2496,7 @@ int rfio_endfile(int iFileId)                             /* file id */
          "    status buffer (EOF) sent to %s (%d bytes)\n",
          cServer, iRC);
 
-      memset(&sStatus, 0X00, sizeof(srawStatus));
-      pcc = (char *) &sStatus;
-      iRC = rawRecvStatus(iSockMover, pcc);
+      iRC = rawRecvStatus(iSockMover, &sStatus);
       if (iRC < HEAD_LEN)
       {
          fprintf(fLogClient, "-E- %s: receiving status buffer\n", cModule);
@@ -3169,19 +3201,19 @@ int rfio_newfile(int iFileId,
    {
       iMassSto = 2;
       if (iDebug)
-         printf("    copy to mass storage (DAQPool)\n");
+         printf("    copy to gStore (DAQPool)\n");
    }
    else if (strncmp(cTemp, "rfio:", 5) == 0)
    {
       iMassSto = 1;
       if (iDebug)
-         printf("    copy to mass storage (ArchivePool)\n");
+         printf("    copy to gStore (ArchivePool)\n");
    }
    else /* assume node:object */
    {
       iMassSto = 1;
       if (iDebug)
-         printf("    copy to mass storage (ArchivePool)\n");
+         printf("    copy to gStore (ArchivePool)\n");
    }
 
    if (pcurAPIFile->iMassSto != iMassSto)
@@ -3438,17 +3470,17 @@ int rfio_newfile(int iFileId,
          if (iRC < 0)
          {
             if (iRC == -1001) sprintf(rfio_errmsg,
-               "-E- no write access to archive %s in mass storage\n",
+               "-E- no write access to archive %s in gStore\n",
                pCommAPI->cNamefs);
             else if (iRC == -1000) sprintf(rfio_errmsg,
-               "-E- no archive %s in mass storage found\n",
+               "-E- no archive %s in gStore found\n",
                pCommAPI->cNamefs);
             else sprintf(rfio_errmsg,
-               "-E- file %s: query in mass storage failed, rc = %d\n",
+               "-E- file %s: query in gStore failed, rc = %d\n",
                pcFile, iRC);
          }
          else sprintf(rfio_errmsg,
-            "-E- file %s already available in mass storage\n",
+            "-E- file %s already available in gStore\n",
             pcFile);
          fprintf(fLogClient, "%s", rfio_errmsg);
 
@@ -3461,7 +3493,7 @@ int rfio_newfile(int iFileId,
       }
 
       if (iDebug) printf(
-         "    file %s not yet available in mass storage\n", pcFile);
+         "    file %s not yet available in gStore\n", pcFile);
 
    } /* (iMassSto) */
 
@@ -3476,7 +3508,7 @@ gNextCmdNewFile:
          ii = irawCopyCache - HEAD_LEN;
          pCopyCacheServ->iCopyLen = htonl(ii);
          if (iDebug)
-            printf("    send copy parameters to DM\n");
+            printf("    send copy parameters to DM (%d byte)\n", ii);
       }
       else if (iDebug)
          printf("    copy parameters already sent to DM\n");
@@ -3492,8 +3524,12 @@ gNextCmdNewFile:
          pCommAPI->iAction,
          pCommAPI->iBufsizeFile);
       if (iCopyBuffer)
-         printf(", data len %d\n",
+      {
+         /* pCopyCacheServ->iIdent = htonl(0); DDDD */
+         printf(", copyid %d, data len %d\n",
+            ntohl(pCopyCacheServ->iIdent),
             pCommAPI->iCommLen + irawCopyCache);
+      }
       else
          printf(", data len %d\n", pCommAPI->iCommLen);
    }
@@ -3561,15 +3597,14 @@ gNextCmdNewFile:
 
    /******************* look for reply from server *******************/
 
-   pcc = (char *) &sStatus;
    iStatusOkay = 0;
    iStatusLoop = 0;
+
    while (iStatusOkay == 0)
    {
       iStatusLoop++;
 
-      memset(&sStatus, 0X00, sizeof(srawStatus));
-      iRC = rawRecvStatus(iSockMover, pcc);
+      iRC = rawRecvStatus(iSockMover, &sStatus);
       iStatus = sStatus.iStatus;
       if (iDebug) printf(
          "    status %d received (%d byte)\n", iStatus, iRC);
@@ -3696,7 +3731,7 @@ gNextCmdNewFile:
    }
 
    iError = 0;
-      /* = 1: file already in mass storage: try new name
+      /* = 1: file already in gStore: try new name
          = -2: write cache of current data mover full: close, new open 
          = -3: write cache of all data movers full: close, retry
        */
@@ -3727,7 +3762,6 @@ int rfio_close(int iFileId)                              /* file id */
    int iSockMover;                 /* socket for connection to mover */
    int iStatus = STA_END_OF_SESSION;
    int ii = 0;
-   char *pcc;
 
    srawStatus sStatusRecv;
    srawComm *pCommAPI;
@@ -3805,9 +3839,7 @@ int rfio_close(int iFileId)                              /* file id */
            (pCommAPI->iArchDev == ARCH_TAPE) &&
            (pcurAPIFile->iOpMode == 0) ) /* in rfio_endfile alr. done */
       {
-         memset(&sStatusRecv, 0X00, sizeof(srawStatus));
-         pcc = (char *) &sStatusRecv;
-         iRC = rawRecvStatus(iSockMover, pcc);
+         iRC = rawRecvStatus(iSockMover, &sStatusRecv);
 
          if (iRC < HEAD_LEN) fprintf(fLogClient, 
             "-E- %s: receiving confirmation of status buffer (EOS)\n",
@@ -4145,16 +4177,6 @@ RFILE *rfio_fopen_gsidaq_dm(
 
 } /* rfio_fopen_gsidaq_dm */
 
-int rfio_ffileid(RFILE *f)
-{
-   int id = 0;
-
-   for (id=0;id<iFileMax;id++)
-      if (pAPIFile[id] == f) return id;
-
-   return -1;
-}
-
 /********************************************************************
  * rfio_fopen_gsidaq: open connection to gStore server and file and
  *      prepare copy to lustre or read cache before migration to tape
@@ -4169,7 +4191,8 @@ RFILE *rfio_fopen_gsidaq(
         int iCopyMode,
                /* = 0: standard RFIO, ignore following arguments
                   = 1: copy to pcCopyPath after file written to WC
-                       (for high data rates,
+                       (to be independent of lustre latencies/hangups,
+                        and for high data rates:
                         don't interfere writing to cache)
                   = 2: for lustre only:
                        write each data buffer in parallel to
@@ -4242,6 +4265,21 @@ RFILE *rfio_fopen_gsidaq(
    return pAPIFile[iFileId];        /* global, filled in rfio_open */
 
 } /* rfio_fopen_gsidaq */
+
+
+
+
+int rfio_ffileid(RFILE *f)
+{
+   int id = 0;
+
+   for (id=0;id<iFileMax;id++)
+      if (pAPIFile[id] == f) return id;
+
+   return -1;
+}
+
+
 
 /*********************************************************************
  * rfio_fnewfile: continue with next remote file in GSI mass storage

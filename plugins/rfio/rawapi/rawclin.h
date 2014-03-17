@@ -7,7 +7,7 @@
  * created  1. 3.1996 by Horst Goeringer
  *********************************************************************
  * rawclin.h
- *   structures and definitions needed for rawserv clients only
+ *   structures and definitions needed for gStore clients
  *********************************************************************
  *  3. 2.1998, H.G.: add iFileSize to srawRetrList
  * 17. 1.2001, H.G.: add srawAPIFile for API clients
@@ -61,12 +61,28 @@
  *                   srawRetrList: 'long' iFileSize -> 2* 'int'
  * 15. 9.2010, H.G.: discard flag SYSTEM64,
  *                   srawTapeFileList: iFileSize 'long' -> 'int'
+ * 19. 1.2011, H.G.: srawCliActionComm: new iParallelStage,
+ *                      rename iAltQuery -> iTimeStamp
+ * 28. 7.2011, H.G.: srawCliActionComm: new iRecursive
+ * 26. 8.2011, H.G.: srawCliActionComm: new cTopDir
+ *  7. 9.2011, H.G.: srawCliActionComm: new iVarPath
+ *  1. 2.2012, H.G.: srawRetrList: iPoolId -> iPoolIdRC, new iPoolIdWC
+ *  4. 4.2012, H.G.: srawCliActionComm: iParallelStage cur. unused
+ *  2.10.2013, H.G.: new defines MIN_SEQUENTIAL_FILES, MAX_NUM_VOLUME
+ * 21. 2.2013, H.G.: move MIN_SEQUENTIAL_FILES -> rawcommn.h
  *********************************************************************
- * */
+ */
+
+static int iMB = 1024000;                                    /* 1 MB */
+static char cPathPrefix[16] = "@PATH:";              /* for filelist */
+static int iPathPrefix = 0;        /* >0: path for files in filelist */
 
 /* definitions for command interface */
 #define MAX_CMDPARM 20           /* max number of command parameters */
 #define MAX_CMDPARM_LEN 256      /* max length of command parameters */
+
+/* definitions for parallel actions and sequ. stage */
+#define MAX_NUM_VOLUME 100                  /* max no of TSM volumes */
 
 typedef struct                  /* list of tape file names and sizes */
 {
@@ -99,12 +115,16 @@ typedef struct
    int iObjArchiveDB;               /* no. of objects in ArchivePool */
    int iPurge;           /* no. of files to be removed from filelist */
    int iStatus;                         /* output: status for caller */
-   int iAltQuery;         /* query alternate entry server (not used) */
+   int iTimeStamp;     /* =1: measure execution speeds of components */
    int iMaxQuery;                   /* max no. of queries per buffer */
    int iFilesIgnore;                  /* 1st files in list to ignore */
-   int iATLServer;                /* =1 aixtsm1, =2 gsitsma, =0 both */
+   int iATLServer;             /* =1: aixtsm1, =2: gsitsma, =0: both */
+   int iParallelStage;                           /* currently unused */
    char cMsg[STATUS_LEN];                /* message in case of error */
    int iOS64;            /* =0: 4 byte filesize, =1: 8 byte filesize */
+   char cTopDir[MAX_FULL_FILE]; /* top directory (recursive archive) */
+   int iRecursive;                   /* > 0: recursive file handling */
+   int iVarPath;      /* =1: archive source path with wildcard chars */
 } srawCliActionComm;
 
 typedef struct                           /* info for TSM object list */
@@ -124,9 +144,10 @@ typedef struct                           /* info for TSM object list */
    unsigned int iFileSize; /* file size (byte), overlaid with 'long' */
    unsigned int iFileSize2;                  /* both in total 8 byte */
    int iATLServer;           /* ATL server: =1: aixtsm1, =2: gsitsma */
-   int iPoolId;/* from query: RC poolId (staged), WC poolId (cached) */
+   int iPoolIdRC;            /* poolId in read cache, =0: not staged */
    char cMoverStage[MAX_NODE];     /* node name data mover if staged */
    int iStageFS;                /* > 0: in StagePool, no. of StageFS */
+   int iPoolIdWC;           /* poolId in write cache, =0: not cached */
    char cMoverCache[MAX_NODE];  /* name data mover if in write cache */
    int iCacheFS;         /* > 0: in write cache, no. of writeCacheFS */
    char cArchiveDate[MAX_DATE];      /* creation date in ArchivePool */
