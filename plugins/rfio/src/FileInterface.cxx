@@ -45,6 +45,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    int rfioCopyFrac = 1;
    int rfioMaxFile = 0;
    int rfioPathConv = 0;
+   const char* pcOptions = "wb";
 
    if (url.HasOption("rfioCopyMode")) {
       rfioCopyMode = url.GetOptionInt("rfioCopyMode", rfioCopyMode);
@@ -72,7 +73,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    }
 
    if (isany)
-      return (Handle) rfio_fopen_gsidaq_dm(rfioBase, (char*) mode,
+      return (Handle) rfio_fopen_gsidaq_dm(rfioBase, (char*) pcOptions,
                                            fDataMoverName, &fDataMoverIndx,
                                            rfioCopyMode, (char*) rfioLustrePath.c_str(),
                                            rfioCopyFrac, rfioMaxFile, rfioPathConv);
