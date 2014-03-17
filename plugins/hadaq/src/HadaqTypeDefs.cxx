@@ -45,5 +45,7 @@ const char* hadaq::xmlSyncSeqNumberEnabled ="UseSyncSequenceNumber";
 const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";
 const char* hadaq::xmlSyncAcceptedTriggerMask       = "SyncTriggerMask";
 
+const char* hadaq::xmlHadaqTrignumRange       = "TriggerNumRange";
+
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";

@@ -141,6 +141,8 @@ DAQDISK - switches disk demon mode on/off
        <SyncTriggerMask value="0x01"/>
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
+       <TriggerNumRange value="0x10000"/>
+
 
        <!-- rate meters configuration -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="-1"/>
@@ -153,7 +155,7 @@ DAQDISK - switches disk demon mode on/off
        
      </Module>
 
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="false">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
 

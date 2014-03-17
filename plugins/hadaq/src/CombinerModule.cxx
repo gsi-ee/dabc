@@ -57,12 +57,18 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fTriggerNrTolerance = 50000;
 
    fLastTrigNr = 0;
+   fMaxHadaqTrigger=0;
+   fTriggerRangeMask=0;
 
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
    fEpicsSlave =   Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
    
    if(fEpicsSlave) fRunNumber=0; // ignore data without valid run id at beginning!
 
+   fMaxHadaqTrigger=Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
+   fTriggerRangeMask=fMaxHadaqTrigger-1;
+      DOUT0("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
+   
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
    fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);        //0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
@@ -403,13 +409,12 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
    return true;
 }
 
-const uint32_t MaxHadaqTrigger = 0x1000000;
 
-int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next)
+int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next)
 {
    int res = (int) (next) - prev;
-   if (res > (int) MaxHadaqTrigger/2) res -= MaxHadaqTrigger; else
-   if (res < (int) MaxHadaqTrigger/-2) res += MaxHadaqTrigger;
+   if (res > (int) fMaxHadaqTrigger/2) res -= fMaxHadaqTrigger; else
+   if (res < (int) fMaxHadaqTrigger/-2) res += fMaxHadaqTrigger;
    return res;
 }
 
@@ -433,8 +438,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
       foundevent = true;
 
       fCfg[ninp].fLastTrigNr = fCfg[ninp].fTrigNr;
-
-      fCfg[ninp].fTrigNr = fInp[ninp].subevnt()->GetTrigNr() >> 8;
+      fCfg[ninp].fTrigNr = ((fInp[ninp].subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
       fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
       if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::RawSubevent)) {
          fCfg[ninp].fEmpty = false;

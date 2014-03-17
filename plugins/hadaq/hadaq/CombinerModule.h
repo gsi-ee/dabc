@@ -183,7 +183,10 @@ namespace hadaq {
 	  /* most recent run id from epics, for multi eventbuilder mode*/
          uint32_t           fEpicsRunNumber;
 
-
+	/* Defines trigger sequence number range for overflow*/
+	 uint32_t fMaxHadaqTrigger;
+	 uint32_t fTriggerRangeMask;
+	 
          bool BuildEvent();
 
          bool FlushOutputBuffer();
@@ -241,6 +244,9 @@ namespace hadaq {
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
+	 
+	 
+	int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next); 
 
    };
 
