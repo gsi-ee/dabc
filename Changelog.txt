@@ -4,6 +4,10 @@ current functionality of the framework.
 
 17.03.2014
 1. Integrate RFIO v8.0 from Horst.
+2. When creating RFIO file, one can specify following extra options in URL:
+     rfioCopyMode, rfioCopyFrac,  rfioMaxFile, rfioPathConv, rfioLustrePath
+   If any options specified, rfio_fopen_gsidaq_dm will be used to create 
+   RFIO file.
 
 
 14.03.2014

@@ -28,7 +28,7 @@ hadaq::HldFile::~HldFile()
    Close();
 }
 
-bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
+bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid, const char* opt)
 {
    if (isOpened()) return false;
 
@@ -39,7 +39,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
 
    CheckIO();
 
-   fd = io->fopen(fname, "w");
+   fd = io->fopen(fname, "w", opt);
    if (fd==0) {
       fprintf(stderr, "File open failed %s for writing\n", fname);
       return false;
@@ -60,7 +60,7 @@ bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
    return true;
 }
 
-bool hadaq::HldFile::OpenRead(const char* fname)
+bool hadaq::HldFile::OpenRead(const char* fname, const char* opt)
 {
    if (isOpened()) return false;
 
@@ -71,7 +71,7 @@ bool hadaq::HldFile::OpenRead(const char* fname)
 
    CheckIO();
 
-   fd = io->fopen(fname,  "r");
+   fd = io->fopen(fname,  "r", opt);
    if (fd==0) {
       fprintf(stderr, "File open failed %s for reading\n", fname);
       return false;

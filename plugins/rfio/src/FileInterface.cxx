@@ -2,8 +2,78 @@
 
 #include "rawapin.h"
 
-dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode)
+#include <string.h>
+
+#include "dabc/Url.h"
+
+
+rfio::FileInterface::FileInterface() :
+   dabc::FileInterface(),
+   fDataMoverIndx(0)
 {
+   memset(fDataMoverName, 0, sizeof(fDataMoverName));
+}
+
+
+dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const char* mode, const char* opt)
+{
+   if ((opt==0) || (*opt==0))
+      return (Handle) rfio_fopen((char*)fname, (char*)mode);
+
+   const char* pcc = strrchr(fname, ':');
+
+   char rfioBase[128];
+
+   if (pcc!=0) {
+      int len = pcc - fname;
+      strncpy(rfioBase, fname, len);
+      rfioBase[len] = 0;
+   } else {
+      strcpy(rfioBase, fname);
+   }
+
+   bool isany = false;
+
+   dabc::Url url;
+   url.SetOptions(opt);
+   int rfioCopyMode = 1;
+   std::string rfioLustrePath = "/hera/hades/may14raw";
+   int rfioCopyFrac = 1;
+   int rfioMaxFile = 0;
+   int rfioPathConv = 0;
+
+   if (url.HasOption("rfioCopyMode")) {
+      rfioCopyMode = url.GetOptionInt("rfioCopyMode", rfioCopyMode);
+      isany = true;
+   }
+
+   if (url.HasOption("rfioCopyFrac")) {
+      rfioCopyFrac = url.GetOptionInt("rfioCopyFrac", rfioCopyFrac);
+      isany = true;
+   }
+
+   if (url.HasOption("rfioMaxFile")) {
+      rfioMaxFile = url.GetOptionInt("rfioMaxFile", rfioMaxFile);
+      isany = true;
+   }
+
+   if (url.HasOption("rfioPathConv")) {
+      rfioPathConv = url.GetOptionInt("rfioPathConv", rfioPathConv);
+      isany = true;
+   }
+
+   if (url.HasOption("rfioLustrePath")) {
+      rfioLustrePath = url.GetOptionStr("rfioLustrePath", rfioLustrePath);
+      isany = true;
+   }
+
+   if (isany)
+      return (Handle) rfio_fopen_gsidaq_dm(rfioBase, (char*) mode,
+                                           fDataMoverName, &fDataMoverIndx,
+                                           rfioCopyMode, (char*) rfioLustrePath.c_str(),
+                                           rfioCopyFrac, rfioMaxFile, rfioPathConv);
+
+
    return (Handle) rfio_fopen((char*)fname, (char*)mode);
 }
 
@@ -31,8 +101,6 @@ bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
 
    if (fileid<0) return false;
 
-//   return false;
-
    return rfio_lseek(fileid, offset, relative ? SEEK_CUR : SEEK_SET) >= 0;
 }
 
@@ -49,7 +117,6 @@ bool rfio::FileInterface::fflush(Handle f)
    // return f==0 ? false : ::fflush((FILE*)f)==0;
 }
 
-         /** Produce list of files, object must be explicitely destroyed with ref.Destroy call */
 dabc::Object* rfio::FileInterface::fmatch(const char* fmask, bool select_files)
 {
    return 0;

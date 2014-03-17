@@ -63,6 +63,9 @@ namespace dabc {
          std::string GetOptions() const  { return fOptions; }
          std::string GetFullName() const;
 
+         /** Method allows to set URL options directly to be able use all Get methods */
+         void SetOptions(const std::string& opt) { fOptions = opt; }
+
          std::string GetOptionsPart(int number = 0) const;
          bool HasOption(const std::string& optname) const { return GetOption(optname); }
          std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;

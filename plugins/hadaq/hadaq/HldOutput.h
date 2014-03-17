@@ -41,13 +41,14 @@ namespace hadaq {
 
          bool                fEpicsSlave;     // true if run id is controlled by epics master
          uint32_t            fRunNumber;      // id number of current run
-         uint16_t	           fEBNumber;       // id of parent event builder process
-         bool fUseDaqDisk; // true if /data number is taken from daq_disk (HADES setup)
-         bool fRfio; // true if we write to rfio
+         uint16_t            fEBNumber;       // id of parent event builder process
+         bool                fUseDaqDisk;     // true if /data number is taken from daq_disk (HADES setup)
+         bool                fRfio;           // true if we write to rfio
+         std::string         fUrlOptions;     // remember URL options, may be used for RFIO file open
 
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
-	 dabc::Parameter     fDiskNumberPar; // for hades mode get number of local disk for next file
+         dabc::Parameter     fDiskNumberPar; // for hades mode get number of local disk for next file
          dabc::Parameter     fDiskNumberGuiPar; // export current disk number to epics gui
          dabc::Parameter     fDataMoverPar; // for rfio: number of current data mover server
          hadaq::HldFile      fFile;

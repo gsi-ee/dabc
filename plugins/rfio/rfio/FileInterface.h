@@ -8,13 +8,17 @@
 namespace rfio {
 
    class FileInterface : public dabc::FileInterface {
+      protected:
+         int  fDataMoverIndx;
+         char fDataMoverName[16];
+
       public:
 
-         FileInterface() {}
+         FileInterface();
 
          virtual ~FileInterface() {}
 
-         virtual Handle fopen(const char* fname, const char* mode);
+         virtual Handle fopen(const char* fname, const char* mode, const char* opt = 0);
 
          virtual void fclose(Handle f);
 
