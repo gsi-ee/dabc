@@ -144,8 +144,12 @@ namespace hadaq {
          bool fFlushFlag;
          bool fUpdateCountersFlag;
 
+	 int32_t fEBId; // eventbuilder id <- node id
+	 
          bool fWithObserver;
 	 bool fEpicsSlave;
+	 
+	 bool fRunToOracle;
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
          bool fPrintSync; // if true, print syncs with DOUT1
@@ -177,6 +181,10 @@ namespace hadaq {
 
          uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
 
+	 
+	 std::string fRunInfoToOraFilename;
+	 std::string fPrefix;
+	 
          /* run id from timeofday for eventbuilding*/
          uint32_t           fRunNumber;
 	 
@@ -224,6 +232,21 @@ namespace hadaq {
          void SetInfo(const std::string& info, bool forceinfo = false);
 
 
+	 /* Methods to export run begin to oracle via text file*/
+	 void StoreRunInfoStart();	
+	 
+	  /* Methods to export run end and statistics to oracle via text file
+	   if this is called on eventbuilder exit, we use local time instead ioc/runnumber time*/
+	 void StoreRunInfoStop(bool onexit=false);
+	 
+	 /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
+         char* Unit(unsigned long v);
+	 
+	 /* we synthetise old and new filenames ourselves, since all communication to hldoutput is faulty,
+	  because of timeshift between getting new runid and open/close of actual files*/
+	 std::string GenerateFileName(unsigned runid);
+	 
+	  
          /* helper methods to export ebctrl parameters */
          std::string GetEvtbuildParName(const std::string& name);
          void CreateEvtbuildPar(const std::string& name);
@@ -235,6 +258,8 @@ namespace hadaq {
          void SetNetmemPar(const std::string& name, unsigned value);
 
 
+	 
+	 
       public:
          CombinerModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~CombinerModule();

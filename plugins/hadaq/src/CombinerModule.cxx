@@ -34,6 +34,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fUpdateCountersFlag(false),
    fWithObserver(false),
    fEpicsSlave(false),
+   fRunToOracle(false),
    fBuildCompleteEvents(true),
    fFlushTimeout(0.),
    fEvnumDiffStatistics(true)
@@ -53,6 +54,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;
 
+   fEBId = Cfg("NodeId").AsInt(-1);
+   if (fEBId<0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
+   
+   
    fRunNumber = hadaq::RawEvent::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber=0;
    fTriggerNrTolerance = 50000;
@@ -99,6 +104,12 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    //CreatePar("RunId");
    //Par("RunId").SetValue(fRunNumber); // to communicate with file components
 
+   
+   fRunInfoToOraFilename=dabc::format("eb_runinfo2ora_%d.txt",fEBId);
+   // TODO: optionally set this name
+   fPrefix=Cfg("FilePrefix", cmd).AsStr("no");
+   fRunToOracle=Cfg("Runinfo2ora", cmd).AsBool("false");
+   
    fDataRateName = ratesprefix + "Data";
    fEventRateName = ratesprefix + "Events";
    fLostEventRateName = ratesprefix + "LostEvents";
@@ -118,7 +129,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
    
- 
+   
+   
    PublishPars("Hadaq/Combiner");
 
    RegisterExportedCounters();
@@ -138,12 +150,18 @@ hadaq::CombinerModule::~CombinerModule()
 
 void hadaq::CombinerModule::ModuleCleanup()
 {
+   StoreRunInfoStop(true); // run info with exit mode 
+  
    fOut.Close().Release();
    
    for (unsigned n=0;n<fInp.size();n++)
       fInp[n].Reset();
 
    fCfg.clear();
+   
+   
+   
+   
    
 //   DOUT0("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1);
 //   if (numsync>0)
@@ -638,7 +656,7 @@ bool hadaq::CombinerModule::BuildEvent()
          DOUT1("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.", 0, syncsub->GetId());
       } else {
          unsigned datasize = syncsub->GetNrOfDataWords();
-         unsigned syncdata(0), syncnum(0), trigtype(0), trignum(0);
+         unsigned syncdata(0), syncnum(0), trigtype(0); //, trignum(0);
          for (unsigned ix = 0; ix < datasize; ix++) {
             //scan through trb3 data words and look for the cts subsubevent
             unsigned data = syncsub->Data(ix);
@@ -655,8 +673,8 @@ bool hadaq::CombinerModule::BuildEvent()
             //                   trignum= (syncdata >> 16) & 0xFF;
             // new cts
             trigtype = (data & 0xFFFF);
-            trignum = (data >> 16) & 0xF;
-            DOUT5("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, trignum);
+            //trignum = (data >> 16) & 0xF;
+            DOUT5("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, (data >> 16) & 0xF);
             fCfg[0].fTrigType=trigtype; // overwrite default trigger type from main hades cts format
             syncdata = syncsub->Data(ix + centHubLen);
             syncnum = (syncdata & 0xFFFFFF);
@@ -727,9 +745,12 @@ bool hadaq::CombinerModule::BuildEvent()
       // EVENT BUILDING IS HERE
       if(fEpicsSlave && (fEpicsRunNumber!=fRunNumber))
 	{
-	  DOUT0("Combiner in EPICS slave mode found new RUN ID %d (previous=%d), o!",fEpicsRunNumber, fRunNumber);
-	  fRunNumber=fEpicsRunNumber;
-	  ClearExportedCounters();  	  
+	  DOUT0("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
+          StoreRunInfoStop();
+	  fRunNumber=fEpicsRunNumber;	 
+	  ClearExportedCounters();
+	  StoreRunInfoStart();
+	  
 	}
      
      
@@ -890,4 +911,75 @@ void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)
 void hadaq::CombinerModule::SetNetmemPar(const std::string& name, unsigned value)
 {
    Par(GetNetmemParName(name)).SetValue(value);
+}
+
+
+void hadaq::CombinerModule::StoreRunInfoStart()
+{
+	/* open ascii file eb_runinfo2ora.txt to store simple information for 
+	   the started RUN. The format: start <run_id> <filename> <date> <time>
+	   where "start" is a key word which defines START RUN info. -S.Y.
+	 */
+	if(!fRunToOracle || fRunNumber==0) return; 
+	time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
+	FILE *fp;
+	char ltime[20];				/* local time */
+	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));	
+	std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
+	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+	fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
+	fclose(fp);
+	DOUT0("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
+
+}
+
+void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
+{
+	/* open ascii file eb_runinfo2ora.txt to store simple information for 
+	   the stoped RUN. The format: stop <run_id> <date> <time> <events> <bytes>
+	   where "stop" is a key word which defines STOP RUN info. -S.Y.
+	 */
+	
+	if(!fRunToOracle || fRunNumber==0) return; // suppress void output at beginning
+	// JAM we do not use our own time, but time of next run given by epics master
+	// otherwise mismatch between run start time that comes before run stop time!
+	// note that this problem also occured with old EBs 
+	// only exception: when eventbuilder is discarded we use termination time!
+	time_t t;
+	if(onexit) 
+	   t = time(NULL);
+	else
+	   t = fEpicsRunNumber+ hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
+	FILE *fp;
+	char ltime[20];				/* local time */
+	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+	std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
+        fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
+        fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
+        fclose(fp);
+	DOUT0("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
+}
+
+
+
+char* hadaq::CombinerModule::Unit(unsigned long v)
+{
+  
+  // JAM stolen from old hadaq eventbuilders to keep precisely same format
+	static char retVal[6];
+	static char u[] = " kM";
+	unsigned int i;
+
+	for (i = 0; v >= 10000 && i < sizeof(u) - 2; v /= 1000, i++) {
+	}
+	sprintf(retVal, "%4lu%c", v, u[i]);
+
+	return retVal;
+}
+
+std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
+{
+	std::string result = fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
+	return result;
 }

@@ -168,19 +168,47 @@ bool hadaq::HldOutput::StartNewFile()
 
       fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
 
-      int indx = fFile.GetIntPar("DataMoverIndx");
+      int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
 
       char sbuf[100];
       if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
 
       if(!fDataMoverPar.null()) {
-         fDataMoverPar.SetValue(indx); // TODO: get here actual number of data mover from file interface!
+         fDataMoverPar.SetValue(indx); 
       }
     DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);      
   }
 
+  
+//   if(fRunInfoToOracle) 
+//   {
+//    //put reduced file name to combiner module parameter for oracle info:
+//     dabc::Parameter filenamepar = dabc::mgr.FindPar("Combiner/CurrentFile");
+//    if(!filenamepar.null()) {
+//      std::string reducedname; 
+//      pos = fCurrentFileName.rfind("/");
+//      if (pos == std::string::npos)
+// 	reducedname=fCurrentFileName;
+//      else
+//         reducedname=fCurrentFileName.substr(pos+1);
+//      
+//      DOUT0("Put reduced filename %s for oracle export.", reducedname.c_str(), fRunNumber); 
+//      filenamepar.SetValue(reducedname);
+//      
+//    }
+//    else
+//    {
+//      EOUT("HldOutput could not find currentfilename parameter!");      
+//     }
+//    
+//   } // if not run2ora
+   
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); return true;
+   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
+   
+   
+   
+   return true;
   
 }
 
@@ -358,3 +386,12 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    return dabc::do_Ok;
 }
+
+
+
+
+
+
+
+
+

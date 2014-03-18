@@ -91,6 +91,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <SyncTriggerMask value="0x01"/>
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
+       <TriggerNumRange value="0x1000000"/> 
+          <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
+       <AccountLostEventDiff value="true"/>
+          <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+
 
        <!-- rate meters configuration -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
