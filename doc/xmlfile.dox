@@ -90,6 +90,8 @@ which can be specified in `<Run>` section.
 | debuglevel | level of debug output |
 | loglevel   | level of debug output to the file |
 | logfile    | name of log file |
+| sysloglevel  | level of output to the syslog |
+| syslog     | prefix for the syslog, default "DABC" |
 | runtime    | maximum execution time in seconds |
 | func       | Name of C funtion to be called to create modules.  |
 | ssh_user   | User name used to login on host. Login without paasword should be possible |

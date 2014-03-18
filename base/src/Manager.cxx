@@ -339,8 +339,9 @@ dabc::Manager::~Manager()
       DOUT1("Normal EXIT");
       if (dabc::Logger::Instance())
          dabc::Logger::Instance()->LogFile(0);
-   } else
+   } else {
       EOUT("What ??? !!!");
+   }
 
    fInstance = 0;
    fInstanceId = 0;

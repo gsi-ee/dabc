@@ -27,6 +27,7 @@
 
 #include <sys/time.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "dabc/timing.h"
 #include "dabc/threads.h"
@@ -110,6 +111,7 @@ dabc::Logger::Logger(bool withmutex)
 
    fDebugLevel = 1;
    fFileLevel = 1;
+   fSyslogLevel = 0;
    fLevel = 1;
    fPrefix = "";
 
@@ -123,6 +125,7 @@ dabc::Logger::Logger(bool withmutex)
 
    fLogFileName = "";
    fFile = 0;
+   fSyslogOn = false;
    fLogReopenTime = 0.;
    fLogFileModified = false;
    fLogLimit = 100;
@@ -138,6 +141,8 @@ dabc::Logger::~Logger()
    gDebug = fPrev;
 
    CloseFile();
+
+   Syslog(0);
 
    {
      LockGuard lock(fMutex);
@@ -171,6 +176,11 @@ void dabc::Logger::SetFileLevel(int level)
 {
    fFileLevel = level;
    fLevel = fDebugLevel < fFileLevel ? fFileLevel : fDebugLevel;
+}
+
+void dabc::Logger::SetSyslogLevel(int level)
+{
+   fSyslogLevel = level;
 }
 
 
@@ -211,6 +221,21 @@ void dabc::Logger::LogFile(const char* fname)
       fLogFileModified = false;
    }
 }
+
+void dabc::Logger::Syslog(const char* prefix)
+{
+   LockGuard lock(fMutex);
+   if (fSyslogOn) {
+      closelog();
+      fSyslogOn = false;
+   }
+
+   if ((prefix!=0) && (strlen(prefix)>0)) {
+      openlog(prefix, LOG_ODELAY, LOG_LOCAL1);
+      fSyslogOn = true;
+   }
+}
+
 
 void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* entry)
 {
@@ -317,6 +342,15 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
          fprintf(out, str.c_str());
          fprintf(out, "\n");
          fflush(out);
+      }
+   }
+
+   if (fSyslogOn && (!drop_msg || (mask & lNoDrop)) && (level<=fSyslogLevel)) {
+      std::string str;
+      _FillString(str, mask, entry);
+
+      if (str.length() > 0) {
+         syslog(level < 0 ? LOG_ERR : LOG_INFO, str.c_str());
       }
    }
 

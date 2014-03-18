@@ -66,6 +66,8 @@ namespace dabc {
    const char* xmlLogfile          = "logfile";
    const char* xmlLoglimit         = "loglimit";
    const char* xmlLoglevel         = "loglevel";
+   const char* xmlSysloglevel      = "sysloglevel";
+   const char* xmlSyslog           = "syslog";
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
    const char* xmlAffinity         = "affinity";

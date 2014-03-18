@@ -38,7 +38,7 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
-    * Acessible via dabc::lgr() function.
+    * Accessible via dabc::lgr() function.
     *
     */
 
@@ -75,6 +75,8 @@ namespace dabc {
 
          void SetDebugLevel(int level = 0);
          void SetFileLevel(int level = 0);
+         void SetSyslogLevel(int level = 0);
+
          void SetLogLimit(unsigned limit = 100) { fLogLimit = limit; }
          inline int GetDebugLevel() const { return fDebugLevel; }
          inline int GetFileLevel() const { return fFileLevel; }
@@ -83,6 +85,7 @@ namespace dabc {
          const char* GetPrefix() { return fPrefix.c_str(); }
 
          virtual void LogFile(const char* fname);
+         virtual void Syslog(const char* prefix);
 
          void ShowStat(bool tofile = true);
 
@@ -116,12 +119,14 @@ namespace dabc {
          LoggerLineEntry **fLines;
          unsigned          fMaxLine;
          Mutex            *fMutex;
-         FILE             *fFile;
+         FILE             *fFile;        // ouptut file for log messages
+         bool              fSyslogOn;    // true when syslof was started
          unsigned          fDebugMask;   // mask for debug output
          unsigned          fErrorMask;   // mask for error output
          unsigned          fFileMask;    // mask for file output
          int               fDebugLevel;  // level of debug output on terminal
          int               fFileLevel;   // level of debug output to file
+         int               fSyslogLevel; // level of syslog message
          int               fLevel;       // used to define max
          std::string       fPrefix;      // prefix of all messages
          std::string       fLogFileName; // name of logfile

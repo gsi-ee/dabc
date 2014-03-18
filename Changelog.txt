@@ -8,6 +8,9 @@ current functionality of the framework.
 3. More clear management of directories list in the file, 
    implement correct reading of objects from sub-sub-directories.
 4. Remove gFile from I/O part of JSRootIO. Set file pointer for each TBuffer instance. 
+5. Add support of syslog. In "Context/Run" configurations one can
+   specify "sysloglevel" and "syslog". First is logging level (as debug level),
+   second is prefix of log messages.
  
 
 17.03.2014
