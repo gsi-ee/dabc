@@ -44,43 +44,6 @@ var kClassMask = 0x80000000;
       return (bits & mask);
    };
 
-   JSROOTIO.GetStreamer = function(clname) {
-      // return the streamer for the class 'clname', from the list of streamers
-      // or generate it from the streamer infos and add it to the list
-      
-      var streamer = gFile.fStreamers[clname];
-      if (typeof(streamer) != 'undefined') return streamer;
-      
-      var s_i = gFile.fStreamerInfos[clname];
-      if (typeof(s_i) === 'undefined') return null;
-      
-      gFile.fStreamers[clname] = new JSROOTIO.TStreamer(gFile);
-      if (typeof(s_i['elements']) != 'undefined') {
-         var n_el = s_i['elements']['arr'].length;
-         for (var j=0;j<n_el;++j) {
-            var element = s_i['elements']['arr'][j];
-            if (element['typename'] === 'BASE') {
-               // generate streamer for the base classes
-               JSROOTIO.GetStreamer(element['name']);
-            }
-         }
-      }
-      if (typeof(s_i['elements']) != 'undefined') {
-         var n_el = s_i['elements']['arr'].length;
-         for (var j=0;j<n_el;++j) {
-            // extract streamer info for each class member
-            var element = s_i['elements']['arr'][j];
-            gFile.fStreamers[clname][element['name']] = {};
-            gFile.fStreamers[clname][element['name']]['typename'] = element['typename'];
-            gFile.fStreamers[clname][element['name']]['class']    = element['name'];
-            gFile.fStreamers[clname][element['name']]['cntname']  = s_i['elements']['arr'][j]['countName'];
-            gFile.fStreamers[clname][element['name']]['type']     = element['type'];
-            gFile.fStreamers[clname][element['name']]['length']   = element['length'];
-         }
-      }
-      return gFile.fStreamers[clname];
-   };
-
    JSROOTIO.R__unzip_header = function(str, off, noalert) {
       // Reads header envelope, and determines target size.
 
@@ -155,7 +118,7 @@ var kClassMask = 0x80000000;
 
 (function(){
    
-   JSROOTIO.TBuffer = function(str, o) {
+   JSROOTIO.TBuffer = function(_str, _o, _file) {
       if (! (this instanceof arguments.callee) ) {
          var error = new Error("you must use new to instantiate this class");
          error.source = "JSROOTIO.TBuffer.ctor";
@@ -656,7 +619,7 @@ var kClassMask = 0x80000000;
       
       JSROOTIO.TBuffer.prototype.ReadTStreamerObject = function(streamerbase) {
          // stream an object of class TStreamerObject
-         var R__v = this.ReadVersion(str, o);
+         var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadStreamerElement(streamerbase);
          }
@@ -775,8 +738,11 @@ var kClassMask = 0x80000000;
             this.ReadTStreamerObject(obj);
          }
          else {
-            var streamer = JSROOTIO.GetStreamer(classname); 
-            if (streamer != null) streamer.Stream(obj, this);
+            var streamer = this.fFile.GetStreamer(classname); 
+            if (streamer != null) 
+               streamer.Stream(obj, this);
+            else
+               console.log("Did not found streamer for class " + classname);
          }
 
          // TODO: check how typename set
@@ -785,8 +751,9 @@ var kClassMask = 0x80000000;
          JSROOTCore.addMethods(obj);
       }
 
-      this.b = str;
-      this.o = (o==null) ? 0 : o;
+      this.b = _str;
+      this.o = (_o==null) ? 0 : _o;
+      this.fFile = _file;
       this.ClearObjectMap();
       this.fTagOffset = 0;
    }
@@ -1125,7 +1092,7 @@ var kClassMask = 0x80000000;
          
          var callback2 = function(file, _buffer) {
             //headerkey->ReadKeyBuffer(buffer);
-            var buf = new JSROOTIO.TBuffer(_buffer, 0);
+            var buf = new JSROOTIO.TBuffer(_buffer, 0, thisdir.fFile);
             
             var key = thisdir.fFile.ReadKey(buf);
             
@@ -1141,7 +1108,7 @@ var kClassMask = 0x80000000;
          };
          
          var callback1 = function(file, buffer) {
-            var buf = new JSROOTIO.TBuffer(buffer, thisdir.fNbytesName);
+            var buf = new JSROOTIO.TBuffer(buffer, thisdir.fNbytesName, thisdir.fFile);
 
             thisdir.StreamHeader(buf);
 
@@ -1434,7 +1401,7 @@ var kClassMask = 0x80000000;
          }
          var header = {};
          
-         var buf = new JSROOTIO.TBuffer(str, 4); // skip root
+         var buf = new JSROOTIO.TBuffer(str, 4, this); // skip root
          header['version'] = buf.ntou4();
          header['begin'] = buf.ntou4();
          var largeFile = header['version'] >= 1000000; 
@@ -1530,12 +1497,12 @@ var kClassMask = 0x80000000;
             var buf = null;
             
             if (key['objLen'] <= key['nbytes']-key['keyLen']) {
-               buf = new JSROOTIO.TBuffer(buffer);
+               buf = new JSROOTIO.TBuffer(buffer, 0, file);
             } else {
                var hdrsize = JSROOTIO.R__unzip_header(buffer, 0);
                if (hdrsize<0) return;
                var objbuf = JSROOTIO.R__unzip(hdrsize, buffer, 0);
-               buf = new JSROOTIO.TBuffer(objbuf); 
+               buf = new JSROOTIO.TBuffer(objbuf, 0, file); 
             }
 
             buf.fTagOffset = key.keyLen;
@@ -1584,26 +1551,35 @@ var kClassMask = 0x80000000;
          this.ReadObjBuffer(key, callback);
       };
       
-      JSROOTIO.RootFile.prototype.ReadStreamerInfo = function() {
+      JSROOTIO.RootFile.prototype.ExtractStreamerInfos = function(buf)
+      {
+         if (!buf) return;
+         
+         var lst = {};
+         lst['_typename'] = "JSROOTIO.TList";
+
+         buf.MapObject(1, lst);
+         buf.ClassStreamer(lst, 'TList');
+         
+         for (var i=0;i<lst['arr'].length;i++) {
+            this.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
+         }
+         
+         delete lst;
+      }
+      
+      JSROOTIO.RootFile.prototype.ReadStreamerInfos = function() {
 
          if (this.fSeekInfo == 0 || this.fNbytesInfo == 0) return;
          this.Seek(this.fSeekInfo, this.ERelativeTo.kBeg);
          var callback1 = function(file, _buffer) {
-            var buf = new JSROOTIO.TBuffer(_buffer, 0);
+            var buf = new JSROOTIO.TBuffer(_buffer, 0, file);
             var key = file.ReadKey(buf);
             if (key == null) return;
             file.fKeys.push(key);
             var callback2 = function(file, buf) {
-               if (!buf) return;
-                  
-               var lst = {};
-               lst['_typename'] = "JSROOTIO.TList";
-
-               buf.MapObject(1, lst);
-               buf.ClassStreamer(lst, 'TList');
                
-               for (var i=0;i<lst['arr'].length;i++)
-                  file.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
+               file.ExtractStreamerInfos(buf);
                   
                for (i=0;i<file.fKeys.length;++i) {
                   if (file.fKeys[i]['className'] == 'TFormula') {
@@ -1635,7 +1611,7 @@ var kClassMask = 0x80000000;
 
             var callback2 = function(file, str) {
                
-               var buf = new JSROOTIO.TBuffer(str, 4); // skip the "root" file identifier 
+               var buf = new JSROOTIO.TBuffer(str, 4, file); // skip the "root" file identifier 
                file.fVersion = buf.ntou4();
                var headerLength = buf.ntou4();
                file.fBEGIN = headerLength;
@@ -1675,7 +1651,7 @@ var kClassMask = 0x80000000;
 
                var callback3 = function(file, str) {
                   
-                  var buf = new JSROOTIO.TBuffer(str, file.fNbytesName);
+                  var buf = new JSROOTIO.TBuffer(str, file.fNbytesName, file);
 
                   var version = buf.ntou2();
                   var versiondir = version%1000;
@@ -1713,7 +1689,7 @@ var kClassMask = 0x80000000;
                      var callback4 = function(file, _buffer) {
                         //headerkey->ReadKeyBuffer(buffer);
                         
-                        var buf = new JSROOTIO.TBuffer(_buffer, 0);
+                        var buf = new JSROOTIO.TBuffer(_buffer, 0, file);
                         
                         var key = file.ReadKey(buf);
 
@@ -1722,7 +1698,7 @@ var kClassMask = 0x80000000;
                            key = file.ReadKey(buf);
                            file.fKeys.push(key);
                         }
-                        file.ReadStreamerInfo();
+                        file.ReadStreamerInfos();
                         delete buf;
                      };
                      file.ReadBuffer(file.fNbytesKeys, callback4);
@@ -1769,6 +1745,45 @@ var kClassMask = 0x80000000;
             this.fEND = this.GetSize(fileurl);
          }
       };
+      
+      JSROOTIO.RootFile.prototype.GetStreamer = function(clname) {
+         // return the streamer for the class 'clname', from the list of streamers
+         // or generate it from the streamer infos and add it to the list
+         
+         var streamer = this.fStreamers[clname];
+         if (typeof(streamer) != 'undefined') return streamer;
+         
+         var s_i = this.fStreamerInfos[clname];
+         if (typeof(s_i) === 'undefined') return null;
+         
+         this.fStreamers[clname] = new JSROOTIO.TStreamer(this);
+         if (typeof(s_i['elements']) != 'undefined') {
+            var n_el = s_i['elements']['arr'].length;
+            for (var j=0;j<n_el;++j) {
+               var element = s_i['elements']['arr'][j];
+               if (element['typename'] === 'BASE') {
+                  // generate streamer for the base classes
+                  this.GetStreamer(element['name']);
+               }
+            }
+         }
+         if (typeof(s_i['elements']) != 'undefined') {
+            var n_el = s_i['elements']['arr'].length;
+            for (var j=0;j<n_el;++j) {
+               // extract streamer info for each class member
+               var element = s_i['elements']['arr'][j];
+               var streamer = {};
+               streamer['typename'] = element['typename'];
+               streamer['class']    = element['name'];
+               streamer['cntname']  = s_i['elements']['arr'][j]['countName'];
+               streamer['type']     = element['type'];
+               streamer['length']   = element['length'];
+               
+               this.fStreamers[clname][element['name']] = streamer;
+            }
+         }
+         return this.fStreamers[clname];
+      };
 
       JSROOTIO.RootFile.prototype.Delete = function() {
          if (this.fDirectories) this.fDirectories.splice(0, this.fDirectories.length);
@@ -1780,7 +1795,6 @@ var kClassMask = 0x80000000;
          this.fSeekInfo = 0;
          this.fNbytesInfo = 0;
          this.fTagOffset = 0;
-         this.fStreamerInfo = null;
       };
 
       this.fDirectories = new Array();
@@ -1795,10 +1809,11 @@ var kClassMask = 0x80000000;
          this.ReadKeys();
       }
       this.fStreamers = new Array;
-      //this.ReadStreamerInfo();
 
       return this;
    };
+   
+
 
    JSROOTIO.RootFile.Version = version;
 

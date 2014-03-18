@@ -1490,9 +1490,7 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
          // if (this.painter)  console.log("painter is created");
       }
    } else {
-      gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfos, "#" + this.frameid);
-      gFile = null;
    }
    
    this.first_draw = false;
@@ -1507,19 +1505,15 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       return;
    }
 
-   gFile = this.sinfo.obj;
 
    var obj = {};
    
    obj['_typename'] = 'JSROOTIO.' + this.clname;
-//   console.log("Calling JSROOTIO function");
-   var buf = new JSROOTIO.TBuffer(this.raw_data, 0);
+   var buf = new JSROOTIO.TBuffer(this.raw_data, 0, this.sinfo.obj);
    buf.MapObject(obj, 1);
 
    buf.ClassStreamer(obj, this.clname);
    
-   gFile = null;
-
    if (this.painter && this.painter.UpdateObject(obj)) {
       // if painter accepted object update, we need later just redraw frame
       obj = null;
@@ -1608,18 +1602,18 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       delete this.obj; 
       
       // we are doing sreamer infos
-      if (gFile) console.log(" gFile already exists???"); 
-      this.obj = new JSROOTIO.RootFile;
-
-      gFile = this.obj;
-      this.obj.fStreamerInfo.ExtractStreamerInfo(hdr.rawdata);
+      var file = new JSROOTIO.RootFile;
+      var buf = new JSROOTIO.TBuffer(hdr.rawdata, 0, file);
+      file.ExtractStreamerInfos(buf);
+      
+      this.obj = file;
+      
       this.version = hdr.version;
       this.state = this.StateEnum.stReady;
       this.raw_data = null;
       // this indicates that object was clicked and want to be drawn
       this.DrawObject();
          
-      gFile = null;
 
       if (!this.obj) alert("Cannot reconstruct streamer infos!!!");
 
