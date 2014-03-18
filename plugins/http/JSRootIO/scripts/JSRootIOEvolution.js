@@ -47,16 +47,17 @@ var kClassMask = 0x80000000;
    JSROOTIO.GetStreamer = function(clname) {
       // return the streamer for the class 'clname', from the list of streamers
       // or generate it from the streamer infos and add it to the list
-      var i, j, n_el;
-      if (typeof(gFile.fStreamers[clname]) != 'undefined')
-         return gFile.fStreamers[clname];
+      
+      var streamer = gFile.fStreamers[clname];
+      if (typeof(streamer) != 'undefined') return streamer;
+      
       var s_i = gFile.fStreamerInfos[clname];
-      if (typeof(s_i) === 'undefined')
-         return 0;
+      if (typeof(s_i) === 'undefined') return null;
+      
       gFile.fStreamers[clname] = new JSROOTIO.TStreamer(gFile);
       if (typeof(s_i['elements']) != 'undefined') {
-         n_el = s_i['elements']['arr'].length;
-         for (j=0;j<n_el;++j) {
+         var n_el = s_i['elements']['arr'].length;
+         for (var j=0;j<n_el;++j) {
             var element = s_i['elements']['arr'][j];
             if (element['typename'] === 'BASE') {
                // generate streamer for the base classes
@@ -65,8 +66,8 @@ var kClassMask = 0x80000000;
          }
       }
       if (typeof(s_i['elements']) != 'undefined') {
-         n_el = s_i['elements']['arr'].length;
-         for (j=0;j<n_el;++j) {
+         var n_el = s_i['elements']['arr'].length;
+         for (var j=0;j<n_el;++j) {
             // extract streamer info for each class member
             var element = s_i['elements']['arr'][j];
             gFile.fStreamers[clname][element['name']] = {};
@@ -677,11 +678,7 @@ var kClassMask = 0x80000000;
       JSROOTIO.TBuffer.prototype.ReadClass = function() {
          // read class definition from I/O buffer
          var classInfo = {};
-         classInfo['clname'] = "";
-         classInfo['name'] = "";
-         classInfo['cnt'] = 0;
-         classInfo['tag'] = 0;
-         classInfo['fVersion'] = 0;
+         classInfo['name'] = -1;
          var tag = 0;
          var bcnt = this.ntou4();
          
@@ -689,21 +686,17 @@ var kClassMask = 0x80000000;
          if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
             tag = bcnt;
             bcnt = 0;
-            // console.log("Should be other kind of map tag " + tag);
          } else {
-            classInfo['fVersion'] = 1;
+            // classInfo['fVersion'] = 1;
             tag = this.ntou4();
          }
          if (!(tag & kClassMask)) {
-            classInfo['name'] = 0;
-            classInfo['tag'] = tag;
             classInfo['objtag'] = tag; // indicate that we have deal with objects tag
             return classInfo;
          }
          if (tag == kNewClassTag) {
             // got a new class description followed by a new object
             classInfo['name'] = this.ReadString();
-            classInfo['tag'] = this.fTagOffset + startpos + kMapOffset;
             
             if (this.GetMappedClass(this.fTagOffset + startpos + kMapOffset)==-1)
                this.MapClass(this.fTagOffset + startpos + kMapOffset, classInfo['name']);
@@ -712,28 +705,26 @@ var kClassMask = 0x80000000;
             // got a tag to an already seen class
             var clTag = (tag & ~kClassMask);
             classInfo['name'] = this.GetMappedClass(clTag);
+            
+            if (classInfo['name']==-1) {
+               alert("Did not found class with tag " + clTag);
+            }
+            
          }
-         classInfo['cnt'] = (bcnt & ~kByteCountMask);
+         // classInfo['cnt'] = (bcnt & ~kByteCountMask);
 
-         // new parameter - either empty or with valid class name
-         if (classInfo['name']!=-1)
-            classInfo['clname'] = classInfo['name '];
-         
          return classInfo;
       };
 
-      JSROOTIO.TBuffer.prototype.ReadObjectAny = function(debug) {
+      JSROOTIO.TBuffer.prototype.ReadObjectAny = function() {
          var startpos = this.o;
-         var clRef = this.ReadClass(debug);
+         var clRef = this.ReadClass();
          
          // class identified as object and should be handled so
          if ('objtag' in clRef)
             return this.GetMappedObject(clRef['objtag']);
          
-         if (clRef['name'] == -1) {
-            alert("Cannot read class, TODO:try to skip object content !!!");
-            return null;
-         }
+         if (clRef['name'] == -1) return null;
          
          var obj = {};
 
@@ -794,8 +785,9 @@ var kClassMask = 0x80000000;
                     classname == "TStreamerObjectPointer" ) {
             this.ReadTStreamerObject(obj);
          }
-         else if (JSROOTIO.GetStreamer(classname)) {
-            JSROOTIO.GetStreamer(classname).Stream(obj, this);
+         else {
+            var streamer = JSROOTIO.GetStreamer(classname); 
+            if (streamer != null) streamer.Stream(obj, this);
          }
 
          // TODO: check how typename set
@@ -1718,7 +1710,6 @@ var kClassMask = 0x80000000;
                file.Seek(file.fBEGIN, file.ERelativeTo.kBeg);
 
                var callback3 = function(file, str) {
-                  console.log("callback3");
                   
                   var buf = new JSROOTIO.TBuffer(str, file.fNbytesName);
 
@@ -1800,7 +1791,6 @@ var kClassMask = 0x80000000;
          };
          this.ReadObjBuffer(key, callback);
       };
-
 
       JSROOTIO.RootFile.prototype.Init = function(fileurl) {
          // init members of a Root file from given url
