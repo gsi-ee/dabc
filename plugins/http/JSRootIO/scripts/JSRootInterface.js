@@ -90,10 +90,6 @@ function displayRootStatus(msg) {
    $("#status").append(msg);
 };
 
-function displayListOfKeys(keys) {
-   JSROOTPainter.displayListOfKeys(keys, '#status');
-};
-
 function displayStreamerInfos(streamerInfo) {
    var findElement = $('#report').find('#treeview');
    if (findElement.length) {
@@ -126,12 +122,6 @@ function findObject(obj_name) {
 
 function showObject(obj_name, cycle, dir_id) {
    gFile.ReadObject(obj_name, cycle, dir_id);
-};
-
-function displayDirectory(directory, cycle, dir_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.addDirectoryKeys(directory.fKeys, '#status', dir_id);
 };
 
 function showDirectory(dir_name, cycle, dir_id) {

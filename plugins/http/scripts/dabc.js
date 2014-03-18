@@ -88,14 +88,14 @@ DABC.UnpackBinaryHeader = function(arg) {
       return hdr;
    }
 
-   var ziphdr = JSROOTIO.R__unzip_header(arg, o, true);
+   var ziphdrsize = JSROOTIO.R__unzip_header(arg, o, true);
    
-   if (!ziphdr) {
+   if (ziphdrsize<0) {
       alert("no zip header but it was specified!!!");
       return null;
    }
   
-   var unzip_buf = JSROOTIO.R__unzip(ziphdr['srcsize'], arg, o, true);
+   var unzip_buf = JSROOTIO.R__unzip(ziphdrsize, arg, o, true);
    if (!unzip_buf) {
       alert("fail to unzip data");
       return null;

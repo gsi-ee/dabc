@@ -84,11 +84,9 @@ var kClassMask = 0x80000000;
    JSROOTIO.R__unzip_header = function(str, off, noalert) {
       // Reads header envelope, and determines target size.
 
-      var header = {};
-      header['srcsize'] = HDRSIZE;
       if (off + HDRSIZE > str.length) {
          if (!noalert) alert("Error R__unzip_header: header size exceeds buffer size");
-         return null;
+         return -1;
       }
 
       /*   C H E C K   H E A D E R   */
@@ -96,12 +94,11 @@ var kClassMask = 0x80000000;
           !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == Z_DEFLATED) &&
           !(str.charAt(off) == 'X' && str.charAt(off+1) == 'Z' && str.charCodeAt(off+2) == 0)) {
          if (!noalert) alert("Error R__unzip_header: error in header");
-         return null;
+         return -1;
       }
-      header['srcsize'] += ((str.charCodeAt(off+3) & 0xff) |
-                           ((str.charCodeAt(off+4) & 0xff) << 8) |
-                           ((str.charCodeAt(off+5) & 0xff) << 16));
-      return header;
+      return HDRSIZE + ((str.charCodeAt(off+3) & 0xff) |
+                       ((str.charCodeAt(off+4) & 0xff) << 8) |
+                       ((str.charCodeAt(off+5) & 0xff) << 16));
    };
 
    JSROOTIO.R__unzip = function(srcsize, str, off, noalert) {
@@ -910,38 +907,16 @@ var kClassMask = 0x80000000;
                buf.ReadTNamed(obj);
                break;
             case kAnyPnoVT:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSTLp:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSkip:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSkipL:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSkipP:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kConv:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kConvL:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kConvP:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSTL:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kSTLstring:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kStreamer:
-               alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
-               break;
             case kStreamLoop:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
@@ -1118,10 +1093,10 @@ var kClassMask = 0x80000000;
 
 (function(){
 
-   var version = "1.5 2012/02/21";
+   var version = "2.8 2014/03/18";
 
    // ctor
-   JSROOTIO.TDirectory = function(file, classname) {
+   JSROOTIO.TDirectory = function(file, dirname, cycle) {
       if (! (this instanceof arguments.callee) ) {
          var error = new Error("you must use new to instantiate this class");
          error.source = "JSROOTIO.TDirectory.ctor";
@@ -1129,25 +1104,46 @@ var kClassMask = 0x80000000;
       }
 
       this.fFile = file;
-      this._classname = classname;
       this._version = version;
       this._typename = "JSROOTIO.TDirectory";
+      this['dirname'] = dirname;
+      this['cycle'] = cycle;
+
+      JSROOTIO.TDirectory.prototype.GetKey = function(keyname, cycle) {
+         // retrieve a key by its name and cycle in the list of keys
+         for (var i=0; i<this.fKeys.length; ++i) {
+            if (this.fKeys[i]['name'] == keyname && this.fKeys[i]['cycle'] == cycle)
+               return this.fKeys[i];
+         }
+         return null;
+      }
+
 
       JSROOTIO.TDirectory.prototype.ReadKeys = function(cycle, dir_id) {
-         //*-*-------------Read directory info
-         var nbytes = this.fNbytesName + 22;
-         nbytes += 4;  // fDatimeC.Sizeof();
-         nbytes += 4;  // fDatimeM.Sizeof();
-         nbytes += 18; // fUUID.Sizeof();
-         // assume that the file may be above 2 Gbytes if file version is > 4
-         if (this.fFile.fVersion >= 40000) nbytes += 12;
 
-         this.fFile.Seek(this.fSeekDir, this.fFile.ERelativeTo.kBeg);
+         var thisdir = this;
          
-         var callback1 = function(file, buffer, _dir) {
-            var buf = new JSROOTIO.TBuffer(buffer, _dir.fNbytesName);
+         var callback2 = function(file, _buffer) {
+            //headerkey->ReadKeyBuffer(buffer);
+            var buf = new JSROOTIO.TBuffer(_buffer, 0);
+            
+            var key = thisdir.fFile.ReadKey(buf);
+            
+            var nkeys = buf.ntoi4();
+            for (var i = 0; i < nkeys; i++) {
+               key = thisdir.fFile.ReadKey(buf);
+               thisdir.fKeys.push(key);
+            }
+            thisdir.fFile.fDirectories.push(thisdir);
+            
+            JSROOTPainter.displayListOfKeys(thisdir.fKeys, '#status', dir_id);
+            delete buf;
+         };
+         
+         var callback1 = function(file, buffer) {
+            var buf = new JSROOTIO.TBuffer(buffer, thisdir.fNbytesName);
 
-            _dir.StreamHeader(buf);
+            thisdir.StreamHeader(buf);
 
             //*-*---------read TKey::FillBuffer info
             buf.locate(4); // Skip NBytes;
@@ -1157,35 +1153,28 @@ var kClassMask = 0x80000000;
                               else buf.shift(20);
             buf.ReadTString(); 
             buf.ReadTString();
-            _dir.fTitle = buf.ReadTString();
-            if (_dir.fNbytesName < 10 || _dir.fNbytesName > 10000) {
-               throw "Init : cannot read directory info of file " + _dir.fURL;
+            thisdir.fTitle = buf.ReadTString();
+            if (thisdir.fNbytesName < 10 || thisdir.fNbytesName > 10000) {
+               throw "Init : cannot read directory info of file " + thisdir.fURL;
             }
             //*-* -------------Read keys of the top directory
 
-            if ( _dir.fSeekKeys >  0) {
-               _dir.fFile.Seek(_dir.fSeekKeys, _dir.fFile.ERelativeTo.kBeg);
-               var callback2 = function(file, _buffer, _dir) {
-                  //headerkey->ReadKeyBuffer(buffer);
-                  var buf = new JSROOTIO.TBuffer(_buffer, 0);
-                  
-                  var key = _dir.fFile.ReadKey(buf);
-                  
-                  var nkeys = buf.ntoi4();
-                  for (var i = 0; i < nkeys; i++) {
-                     key = _dir.fFile.ReadKey(buf);
-                     _dir.fKeys.push(key);
-                  }
-                  _dir.fFile.fDirectories.push(_dir);
-                  displayDirectory(_dir, cycle, dir_id);
-                  delete buf;
-               };
-               _dir.fFile.ReadBuffer(_dir.fNbytesKeys, callback2, _dir);
+            if ( thisdir.fSeekKeys >  0) {
+               thisdir.fFile.Seek(thisdir.fSeekKeys, thisdir.fFile.ERelativeTo.kBeg);
+               thisdir.fFile.ReadBuffer(thisdir.fNbytesKeys, callback2);
             }
-            delete buffer;
-            buffer = null;
          };
-         this.fFile.ReadBuffer(nbytes, callback1, this);
+         
+         //*-*-------------Read directory info
+         var nbytes = this.fNbytesName + 22;
+         nbytes += 4;  // fDatimeC.Sizeof();
+         nbytes += 4;  // fDatimeM.Sizeof();
+         nbytes += 18; // fUUID.Sizeof();
+         // assume that the file may be above 2 Gbytes if file version is > 4
+         if (this.fFile.fVersion >= 40000) nbytes += 12;
+
+         this.fFile.Seek(this.fSeekDir, this.fFile.ERelativeTo.kBeg);
+         this.fFile.ReadBuffer(nbytes, callback1);
       };
       
       JSROOTIO.TDirectory.prototype.StreamHeader = function(buf) {
@@ -1293,10 +1282,10 @@ var kClassMask = 0x80000000;
          return -1;
       }
 
-      JSROOTIO.RootFile.prototype.ReadBuffer = function(len, callback, object) {
+      JSROOTIO.RootFile.prototype.ReadBuffer = function(len, callback) {
 
          // Read specified byte range from remote file
-         var ie9 = function(url, pos, len, file, callbk, obj) {
+         var ie9 = function(url, pos, len, file) {
             // IE9 Fallback
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
@@ -1314,9 +1303,8 @@ var kClassMask = 0x80000000;
                      filecontent = file.fFullFileContent.substr(pos, len);
                   }
 
-                  callbk(file, filecontent, obj); // Call callback func with data
+                  callback(file, filecontent); // Call callback func with data
                   delete filecontent;
-                  filecontent = null;
                }
                else if (this.readyState == 4 && this.status == 404) {
                   alert("Error 404: File not found!");
@@ -1329,7 +1317,7 @@ var kClassMask = 0x80000000;
             xhr.send(null);
             xhr = null;
          }
-         var other = function(url, pos, len, file, callbk, obj) {
+         var other = function(url, pos, len, file) {
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
                if (this.readyState == 4 && (this.status == 0 || this.status == 200 ||
@@ -1363,9 +1351,8 @@ var kClassMask = 0x80000000;
                     filecontent = file.fFullFileContent.substr(pos, len);
                   }
 
-                  callbk(file, filecontent, obj); // Call callback func with data
+                  callback(file, filecontent); // Call callback func with data
                   delete filecontent;
-                  filecontent = null;
                }
             };
             xhr.open('GET', url, true);
@@ -1389,14 +1376,14 @@ var kClassMask = 0x80000000;
          
          if (!this.fAcceptRanges && (this.fFullFileContent.length>0)) {
             var res = this.fFullFileContent.substr(this.fOffset,len);
-            callback(this, res, object);
+            callback(this, res);
          }
          else
          // Multi-browser support
          if (typeof ActiveXObject == "function")
-            return ie9(this.fURL, this.fOffset, len, this, callback, object);
+            return ie9(this.fURL, this.fOffset, len, this);
          else
-            return other(this.fURL, this.fOffset, len, this, callback, object);
+            return other(this.fURL, this.fOffset, len, this);
       };
 
       JSROOTIO.RootFile.prototype.Seek = function(offset, pos) {
@@ -1513,21 +1500,28 @@ var kClassMask = 0x80000000;
          return key;
       };
 
+      JSROOTIO.RootFile.prototype.GetDir = function(dirname) {
+         for (var j=0; j<this.fDirectories.length;++j) {
+            if (this.fDirectories[j]['dirname'] == dirname)
+               return this.fDirectories[j];
+         }
+         return null;
+      }
+      
       JSROOTIO.RootFile.prototype.GetKey = function(keyname, cycle) {
          // retrieve a key by its name and cycle in the list of keys
-         var i, j;
-         for (i=0; i<this.fKeys.length; ++i) {
+         for (var i=0; i<this.fKeys.length; ++i) {
             if (this.fKeys[i]['name'] == keyname && this.fKeys[i]['cycle'] == cycle)
                return this.fKeys[i];
          }
-         for (j=0; j<this.fDirectories.length;++j) {
-            for (i=0; i<this.fDirectories[j].fKeys.length; ++i) {
-               if (this.fDirectories[j].fKeys[i]['name'] == keyname &&
-                   this.fDirectories[j].fKeys[i]['cycle'] == cycle)
-                  return this.fDirectories[j].fKeys[i];
-            }
-         }
-         return null;
+         
+         var n = keyname.lastIndexOf("/");
+         if (n<=0) return null;
+
+         var dir = this.GetDir(keyname.substr(0, n));
+         if (dir==null) return null;
+
+         return dir.GetKey(keyname.substr(n+1), cycle);
       };
 
       JSROOTIO.RootFile.prototype.ReadObjBuffer = function(key, callback) {
@@ -1538,9 +1532,9 @@ var kClassMask = 0x80000000;
             if (key['objLen'] <= key['nbytes']-key['keyLen']) {
                buf = new JSROOTIO.TBuffer(buffer);
             } else {
-               var hdr = JSROOTIO.R__unzip_header(buffer, 0);
-               if (hdr == null) return;
-               var objbuf = JSROOTIO.R__unzip(hdr['srcsize'], buffer, 0);
+               var hdrsize = JSROOTIO.R__unzip_header(buffer, 0);
+               if (hdrsize<0) return;
+               var objbuf = JSROOTIO.R__unzip(hdrsize, buffer, 0);
                buf = new JSROOTIO.TBuffer(objbuf); 
             }
 
@@ -1749,13 +1743,18 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.RootFile.prototype.ReadDirectory = function(dir_name, cycle, dir_id) {
          // read the directory content from  a root file
+         // do not read directory if it is already exists
+         
+         var dir = this.GetDir(dir_name);
+         if (dir!=null) return;
+
          var key = this.GetKey(dir_name, cycle);
          if (key == null) return null;
 
          var callback = function(file, buf) {
             if (!buf) return;
                
-            var directory = new JSROOTIO.TDirectory(file, key['className']);
+            var directory = new JSROOTIO.TDirectory(file, dir_name, cycle);
             directory.StreamHeader(buf);
             if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
          };

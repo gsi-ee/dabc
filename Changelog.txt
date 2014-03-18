@@ -5,6 +5,8 @@ current functionality of the framework.
 18.03.2014
 1. In JSROOTIO optimize ReadClass and GetStreamer methods. 
 2. Eliminate ReadCollection - it is handled in ReadObject function 
+3. More clear management of directories list in the file, 
+   implement correct reading of objects from sub-sub-directories.
  
 
 17.03.2014

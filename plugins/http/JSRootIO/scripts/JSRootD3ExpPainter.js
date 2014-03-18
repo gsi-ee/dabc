@@ -7130,18 +7130,30 @@ var gStyle = {
       key_tree.openTo(dir_id, true);
    };
 
-   JSROOTPainter.displayListOfKeys = function(keys, container) {
-      delete key_tree;
-      var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
-      key_tree = new dTree('key_tree');
-      key_tree.config.useCookies = false;
-      key_tree.add(0, -1, 'File Content');
+   JSROOTPainter.displayListOfKeys = function(keys, container, dir_id) {
       var k = 1;
+      var dir_name = "";
+      
+      if (!dir_id || dir_id==0) {
+         delete key_tree;
+         key_tree = new dTree('key_tree');
+         key_tree.config.useCookies = false;
+         key_tree.add(0, -1, 'File Content');
+         dir_id = 0;
+         dir_name = "";
+      } else {
+         k = key_tree.aNodes.length;
+         dir_name = key_tree.aNodes[dir_id]['title'];
+      }
+
       for (var i=0; i<keys.length; ++i) {
          // ignore keys with empty names
          if (keys[i]['name'] == '') continue;
+
+         var full_name = keys[i]['name'];
+         if (dir_name.length > 0) full_name = dir_name + "/" + full_name;  
          
-         var tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+"," + k + ");";
+         var tree_link = "javascript: showObject('"+full_name+"',"+keys[i]['cycle']+"," + k + ");";
          
          var node_img = source_dir+'img/page.gif';
          var node_img2 = '';
@@ -7171,7 +7183,7 @@ var gStyle = {
             node_img = source_dir+'img/question.gif';
          }
          else if (keys[i]['className'] == 'TDirectory') {
-            tree_link = "javascript: showDirectory('"+keys[i]['name']+"',"+keys[i]['cycle']+","+(i+1)+");";
+            tree_link = "javascript: showDirectory('"+full_name+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/folder.gif';
             node_img2 = source_dir+'img/folderopen.gif'
          }
@@ -7180,7 +7192,7 @@ var gStyle = {
             node_img2 = source_dir+'img/folderopen.gif'
          }
          else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple') {
-            tree_link = "javascript: readTree('"+keys[i]['name']+"',"+keys[i]['cycle']+","+(i+1)+");";
+            tree_link = "javascript: readTree('"+full_name+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/tree.png';
          }
          else if (keys[i]['className'].match('TGeoManager') ||
@@ -7195,74 +7207,16 @@ var gStyle = {
          
          if (node_img2=='') node_img2 = node_img;
          
-         key_tree.add(k, 0, keys[i]['name']+';'+keys[i]['cycle'], tree_link, keys[i]['name'], '', node_img, node_img2);
-         k++;
+         key_tree.add(k++, dir_id, keys[i]['name']+';'+keys[i]['cycle'], tree_link, full_name, '', node_img, node_img2);
       }
-      content += key_tree;
-      $(container).append(content);
-   };
 
-   JSROOTPainter.addDirectoryKeys = function(keys, container, dir_id) {
-      var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
-      var k = key_tree.aNodes.length;
-      var dir_name = key_tree.aNodes[dir_id]['title'];
-      for (var i=0; i<keys.length; ++i) {
-         var disp_name = keys[i]['name'] + ";" + keys[i]['cycle'];
-         keys[i]['name'] = dir_name + '/' + keys[i]['name'];
-         if (keys[i]['name'] == '') continue;
-         
-         var node_img = source_dir+'img/page.gif';
-         var node_img2 = '';
-         var node_title = keys[i]['className'];
-         var tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
-         
-         if (keys[i]['className'].match(/\bTH1/) ||
-             keys[i]['className'].match(/\bRooHist/)) {
-            node_img = source_dir+'img/histo.png';
-         }
-         else if (keys[i]['className'].match(/\bTH2/)) {
-            node_img = source_dir+'img/histo2d.png';
-         }
-         else if (keys[i]['className'].match(/\bTH3/)) {
-            node_img = source_dir+'img/histo3d.png';
-         }
-         else if (keys[i]['className'].match(/\bTGraph/) ||
-             keys[i]['className'].match(/\RooCurve/)) {
-            node_img = source_dir+'img/graph.png';
-         }
-         else if (keys[i]['className'] ==  'TProfile') {
-            node_img = source_dir+'img/profile.png';
-         }
-         else if (keys[i]['name'] == 'StreamerInfo') {
-            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
-            node_img = source_dir+'img/question.gif';
-         }
-         else if (keys[i]['className'] == 'TDirectory') {
-            tree_link = "javascript: showDirectory('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
-            node_img = source_dir+'img/folder.gif';
-            node_img2 = source_dir+'img/folderopen.gif';
-         }
-         else if (keys[i]['className'] == 'TList' || keys[i]['className'] == 'TObjArray') {
-            node_img = source_dir+'img/folder.gif';
-            node_img2 = source_dir+'img/folderopen.gif';
-         }
-         else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple') {
-            tree_link = "javascript: readTree('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
-            node_img = source_dir+'img/tree.png';
-         }
-         else if (keys[i]['className'].match('TCanvas')) {
-            node_img = source_dir+'img/canvas.png';
-         } 
-         else {
-            tree_link = "javascript:  alert('" + keys[i]['className']+ " is not yet implemented.')";   
-         }
-         
-         key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img, node_img2);
-         k++;
-      }
+      if (dir_id>0) key_tree.openTo(dir_id, true);
+
+      var content = "file: " + $("#urlToLoad").val() + "<br/>";
+      content += "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
       content += key_tree;
-      $(container).append(content);
-      key_tree.openTo(dir_id, true);
+      $(container).html(content);
+      
    };
 
    JSROOTPainter.addCollectionContents = function(fullname, dir_id, list, container) {
