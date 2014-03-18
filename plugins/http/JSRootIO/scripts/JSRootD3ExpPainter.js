@@ -7137,38 +7137,34 @@ var gStyle = {
       key_tree.config.useCookies = false;
       key_tree.add(0, -1, 'File Content');
       var k = 1;
-      var tree_link = '';
       for (var i=0; i<keys.length; ++i) {
-         var message = keys[i]['className']+' is not yet implemented.';
-         tree_link = "javascript:  alert('" + message + "')";
+         // ignore keys with empty names
+         if (keys[i]['name'] == '') continue;
+         
+         var tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+"," + k + ");";
+         
          var node_img = source_dir+'img/page.gif';
+         var node_img2 = '';
+         
          if (keys[i]['className'].match(/\bTH1/) ||
              keys[i]['className'].match(/\bRooHist/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo.png';
          }
          else if (keys[i]['className'].match(/\bTH2/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo2d.png';
          }
          else if (keys[i]['className'].match(/\bTH3/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo3d.png';
          }
          else if (keys[i]['className'].match(/\bTGraph/) ||
              keys[i]['className'].match(/\RooCurve/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/graph.png';
          }
          else if (keys[i]['className'] ==  'TF1') {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/graph.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'] ==  'TProfile') {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/profile.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['name'] == 'StreamerInfo') {
             tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
@@ -7177,10 +7173,11 @@ var gStyle = {
          else if (keys[i]['className'] == 'TDirectory') {
             tree_link = "javascript: showDirectory('"+keys[i]['name']+"',"+keys[i]['cycle']+","+(i+1)+");";
             node_img = source_dir+'img/folder.gif';
+            node_img2 = source_dir+'img/folderopen.gif'
          }
          else if (keys[i]['className'] == 'TList' || keys[i]['className'] == 'TObjArray') {
-            tree_link = "javascript: showCollection('"+keys[i]['name']+"',"+keys[i]['cycle']+","+(i+1)+");";
             node_img = source_dir+'img/folder.gif';
+            node_img2 = source_dir+'img/folderopen.gif'
          }
          else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple') {
             tree_link = "javascript: readTree('"+keys[i]['name']+"',"+keys[i]['cycle']+","+(i+1)+");";
@@ -7191,100 +7188,77 @@ var gStyle = {
             node_img = source_dir+'img/folder.gif';
          }
          else if (keys[i]['className'].match('TCanvas')) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/canvas.png';
-            node_title = keys[i]['name'];
+         } else {
+            tree_link = "javascript:  alert('" + keys[i]['className']+ " is not yet implemented.')";   
          }
-         if (keys[i]['name'] != '' && keys[i]['className'] != 'TFile')
-            if (keys[i]['className'] == 'TDirectory' || keys[i]['className'] == 'TList' ||
-                keys[i]['className'] == 'TObjArray')
-               key_tree.add(k, 0, keys[i]['name']+';'+keys[i]['cycle'], tree_link, keys[i]['name'], '', node_img,
-                            source_dir+'img/folderopen.gif');
-            else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple')
-               key_tree.add(k, 0, keys[i]['name']+';'+keys[i]['cycle'], tree_link, keys[i]['name'], '', node_img, node_img);
-            else
-               key_tree.add(k, 0, keys[i]['name']+';'+keys[i]['cycle'], tree_link, keys[i]['name'], '', node_img);
-            k++;
+         
+         if (node_img2=='') node_img2 = node_img;
+         
+         key_tree.add(k, 0, keys[i]['name']+';'+keys[i]['cycle'], tree_link, keys[i]['name'], '', node_img, node_img2);
+         k++;
       }
       content += key_tree;
       $(container).append(content);
    };
 
    JSROOTPainter.addDirectoryKeys = function(keys, container, dir_id) {
-      var tree_link = '';
       var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
       var k = key_tree.aNodes.length;
       var dir_name = key_tree.aNodes[dir_id]['title'];
       for (var i=0; i<keys.length; ++i) {
-         var disp_name = keys[i]['name'];
+         var disp_name = keys[i]['name'] + ";" + keys[i]['cycle'];
          keys[i]['name'] = dir_name + '/' + keys[i]['name'];
-         var message = keys[i]['className']+' is not yet implemented.';
-         tree_link = "javascript:  alert('" + message + "')";
+         if (keys[i]['name'] == '') continue;
+         
          var node_img = source_dir+'img/page.gif';
+         var node_img2 = '';
          var node_title = keys[i]['className'];
+         var tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
+         
          if (keys[i]['className'].match(/\bTH1/) ||
              keys[i]['className'].match(/\bRooHist/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'].match(/\bTH2/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo2d.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'].match(/\bTH3/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/histo3d.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'].match(/\bTGraph/) ||
              keys[i]['className'].match(/\RooCurve/)) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/graph.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'] ==  'TProfile') {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/profile.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['name'] == 'StreamerInfo') {
             tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
             node_img = source_dir+'img/question.gif';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'] == 'TDirectory') {
             tree_link = "javascript: showDirectory('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/folder.gif';
-            node_title = keys[i]['name'];
+            node_img2 = source_dir+'img/folderopen.gif';
          }
          else if (keys[i]['className'] == 'TList' || keys[i]['className'] == 'TObjArray') {
-            tree_link = "javascript: showCollection('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/folder.gif';
-            node_title = keys[i]['name'];
+            node_img2 = source_dir+'img/folderopen.gif';
          }
          else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple') {
             tree_link = "javascript: readTree('"+keys[i]['name']+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/tree.png';
-            node_title = keys[i]['name'];
          }
          else if (keys[i]['className'].match('TCanvas')) {
-            tree_link = "javascript: showObject('"+keys[i]['name']+"',"+keys[i]['cycle']+");";
             node_img = source_dir+'img/canvas.png';
-            node_title = keys[i]['name'];
+         } 
+         else {
+            tree_link = "javascript:  alert('" + keys[i]['className']+ " is not yet implemented.')";   
          }
-         if (keys[i]['name'] != '' && keys[i]['className'] != 'TFile') {
-            if (keys[i]['className'] == 'TDirectory' || keys[i]['className'] == 'TList' ||
-                keys[i]['className'] == 'TObjArray')
-               key_tree.add(k, dir_id, disp_name+';'+keys[i]['cycle'], tree_link, node_title, '', node_img,
-                            source_dir+'img/folderopen.gif');
-            else if (keys[i]['className'] == 'TNtuple' || keys[i]['className'] == 'TTree')
-               key_tree.add(k, dir_id, disp_name+';'+keys[i]['cycle'], tree_link, node_title, '', node_img, node_img);
-            else
-               key_tree.add(k, dir_id, disp_name+';'+keys[i]['cycle'], tree_link, node_title, '', node_img);
-            k++;
-         }
+         
+         key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img, node_img2);
+         k++;
       }
       content += key_tree;
       $(container).append(content);

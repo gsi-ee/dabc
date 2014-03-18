@@ -101,7 +101,7 @@ DABC.UnpackBinaryHeader = function(arg) {
       return null;
    } 
    
-   hdr['rawdata'] = unzip_buf['unzipdata'];
+   hdr['rawdata'] = unzip_buf;
    
    if (hdr['rawdata'].length != hdr.zipped)
       console.log("mismatch between expected " + hdr.zipped + " and actual len " +  hdr['rawdata'].length);

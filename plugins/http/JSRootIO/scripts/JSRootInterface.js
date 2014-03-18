@@ -124,8 +124,8 @@ function findObject(obj_name) {
    return false;
 };
 
-function showObject(obj_name, cycle) {
-   gFile.ReadObject(obj_name, cycle);
+function showObject(obj_name, cycle, dir_id) {
+   gFile.ReadObject(obj_name, cycle, dir_id);
 };
 
 function displayDirectory(directory, cycle, dir_id) {
@@ -136,10 +136,6 @@ function displayDirectory(directory, cycle, dir_id) {
 
 function showDirectory(dir_name, cycle, dir_id) {
    gFile.ReadDirectory(dir_name, cycle, dir_id);
-};
-
-function showCollection(name, cycle, id) {
-   gFile.ReadCollection(name, cycle, id);
 };
 
 function readTree(tree_name, cycle, node_id) {

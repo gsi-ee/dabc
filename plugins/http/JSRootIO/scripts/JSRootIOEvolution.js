@@ -35,7 +35,7 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.7 2014/03/14";
+   JSROOTIO.version = "2.8 2014/03/18";
    
    JSROOTIO.debug = false;
 
@@ -106,10 +106,6 @@ var kClassMask = 0x80000000;
 
    JSROOTIO.R__unzip = function(srcsize, str, off, noalert) {
 
-      var obj_buf = {};
-      obj_buf['irep'] = 0;
-      obj_buf['unzipdata'] = 0;
-
       /*   C H E C K   H E A D E R   */
       if (srcsize < HDRSIZE) {
          if (!noalert) alert("R__unzip: too small source");
@@ -135,18 +131,14 @@ var kClassMask = 0x80000000;
       if (str.charAt(off) == 'Z' && str.charAt(off+1) == 'L') {
          /* New zlib format */
          var data = str.substr(off + HDRSIZE + 2, srcsize);
-         var unzipdata = RawInflate.inflate(data);
-         if (typeof(unzipdata) != 'undefined') {
-            obj_buf['unzipdata'] = unzipdata;
-            obj_buf['irep'] = unzipdata.length;
-         }
+         return RawInflate.inflate(data);
       }
       /* Old zlib format */
       else {
          if (!noalert) alert("R__unzip: Old zlib format is not supported!");
          return null;
       }
-      return obj_buf;
+      return null;
    };
 
    JSROOTIO.Print = function(str, what) {
@@ -1549,7 +1541,7 @@ var kClassMask = 0x80000000;
                var hdr = JSROOTIO.R__unzip_header(buffer, 0);
                if (hdr == null) return;
                var objbuf = JSROOTIO.R__unzip(hdr['srcsize'], buffer, 0);
-               buf = new JSROOTIO.TBuffer(objbuf['unzipdata']); 
+               buf = new JSROOTIO.TBuffer(objbuf); 
             }
 
             buf.fTagOffset = key.keyLen;
@@ -1582,6 +1574,11 @@ var kClassMask = 0x80000000;
             else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
                displayTree(obj, cycle, node_id);
             }
+            else if (key['className'] == 'TList' || key['className'] == 'TObjArray' || key['className'] == 'TClonesArray') {
+               displayCollection(obj_name, cycle, node_id, obj);
+               obj_list.push(obj_name+cycle);
+               obj_index++;
+            }
             else {
                if (obj['fName'] == "") obj['fName'] = obj_name;
                displayObject(obj, cycle, obj_index);
@@ -1592,33 +1589,6 @@ var kClassMask = 0x80000000;
 
          this.ReadObjBuffer(key, callback);
       };
-
-      JSROOTIO.RootFile.prototype.ReadCollection = function(name, cycle, id) {
-         // read the collection content from a root file
-         if (obj_list.indexOf(name+cycle) != -1) return;
-         var key = this.GetKey(name, cycle);
-         if (key == null) return null;
-
-         var callback = function(file, buf) {
-            if (!buf) return;
-               
-            var list = {};
-            list['_typename'] = 'JSROOTIO.' + key['className'];
-            
-            buf.MapObject(1, list); 
-            buf.ClassStreamer(list, key['className']);
-            
-            console.log("Read collection " + list.arr.length);
-            
-            if (('arr' in list) && (list.arr.length>0))
-               displayCollection(name, cycle, id, list);
-            
-            obj_list.push(name+cycle);
-            obj_index++;
-         };
-         this.ReadObjBuffer(key, callback);
-      };
-
       
       JSROOTIO.RootFile.prototype.ReadStreamerInfo = function() {
 

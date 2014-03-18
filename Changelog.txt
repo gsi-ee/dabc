@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+18.03.2014
+1. In JSROOTIO optimize ReadClass and GetStreamer methods. 
+2. Eliminate ReadCollection - it is handled in ReadObject function 
+ 
+
 17.03.2014
 1. Integrate RFIO v8.0 from Horst.
 2. When creating RFIO file, one can specify following extra options in URL:
