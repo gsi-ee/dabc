@@ -421,7 +421,15 @@ var kClassMask = 0x80000000;
          tobj['fTitle'] = this.ReadTString();
          return this.CheckBytecount(ver, "ReadTNamed");
       };
-      
+
+      JSROOTIO.TBuffer.prototype.ReadTObjString = function(tobj) {
+         // read a TObjString definition from I/O buffer
+         var ver = this.ReadVersion();
+         this.ReadTObject(tobj);
+         tobj['fString'] = this.ReadTString();
+         return this.CheckBytecount(ver, "ReadTObjString");
+      };
+
       JSROOTIO.TBuffer.prototype.ReadTList = function(list) {
          // stream all objects in the list from the I/O buffer
          list['_typename'] = "JSROOTIO.TList";
@@ -698,6 +706,9 @@ var kClassMask = 0x80000000;
          }
          else if (classname == 'TQObject') {
             // skip TQObject
+         }
+         else if (classname == 'TObjString') {
+            this.ReadTObjString(obj);
          }
          else if (classname == 'TObjArray') {
             this.ReadTObjArray(obj);

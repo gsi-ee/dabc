@@ -11,6 +11,7 @@ current functionality of the framework.
 5. Add support of syslog. In "Context/Run" configurations one can
    specify "sysloglevel" and "syslog". First is logging level (as debug level),
    second is prefix of log messages.
+6. Implement custom reading of TObjString - hsimple.root do not provide streamer for it?  
  
 
 17.03.2014

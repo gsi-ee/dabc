@@ -2007,7 +2007,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = false;
+      var use_json = true;
       
       if (!use_json) {
       
