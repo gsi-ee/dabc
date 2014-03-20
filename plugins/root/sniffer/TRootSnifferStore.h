@@ -12,11 +12,14 @@
 #include "TString.h"
 #endif
 
+class TDataMember;
+
 class TRootSnifferStore : public TObject {
 protected:
-   void* fResPtr;         //! pointer on found item
-   TClass* fResClass;     //! class of found item
-   Int_t fResNumChilds;   //! count of found childs, -1 by default
+   void* fResPtr;           //! pointer on found item
+   TClass* fResClass;       //! class of found item
+   TDataMember* fResMember; //! datamember pointer of found item
+   Int_t fResNumChilds;     //! count of found childs, -1 by default
 public:
    TRootSnifferStore();
    virtual ~TRootSnifferStore();
@@ -26,10 +29,11 @@ public:
    virtual void BeforeNextChild(Int_t, Int_t, Int_t) {}
    virtual void CloseNode(Int_t, const char*, Int_t) {}
 
-   void SetResult(void* _res, TClass* _rescl, Int_t _res_chld);
+   void SetResult(void* _res, TClass* _rescl, TDataMember* _resmemb, Int_t _res_chld);
 
    void* GetResPtr() const { return fResPtr; }
    TClass* GetResClass() const { return fResClass; }
+   TDataMember* GetResMember() const { return fResMember; }
    Int_t GetResNumChilds() const { return fResNumChilds; }
 
    ClassDef(TRootSnifferStore, 0) // structure for results store of objects sniffer

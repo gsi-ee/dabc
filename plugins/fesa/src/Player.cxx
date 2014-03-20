@@ -37,7 +37,7 @@ class MySniffer : public TRootSniffer {
       TH2* fHist;
       MySniffer(TH2* hist) : TRootSniffer("MySniffer"), fHist(hist) {}
 
-      virtual void* FindInHierarchy(const char* path, TClass** cl=0, Int_t* chld = 0)
+      virtual void* FindInHierarchy(const char* path, TClass** cl=0, TDataMember** member = 0, Int_t* chld = 0)
       {
          if (path==0) return 0;
          if (!strcmp(path, "ImageRoot") || !strcmp(path, "BeamRoot")) {

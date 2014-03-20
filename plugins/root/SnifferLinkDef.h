@@ -17,5 +17,6 @@
 #pragma link C++ class TRootSnifferStoreJson;
 
 #pragma link C++ class TBufferJSON;
+#pragma link C++ class TTestObject+;
 
 #endif

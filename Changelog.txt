@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+20.03.2014
+1. Provide TBufferJson::JsonWriteMember method. It allows to stream any selected
+   data member of the class. Supported are: basic data types, arrays of basic data types,
+   TString, TArray classes. Also any object kind can be streamed. 
+2. In get.json request provide possibility to stream also objects memebers into json. 
+
+
 18.03.2014
 1. In JSROOTIO optimize ReadClass and GetStreamer methods. 
 2. Eliminate ReadCollection - it is handled in ReadObject function 

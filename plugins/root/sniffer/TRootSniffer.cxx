@@ -230,7 +230,7 @@ Bool_t TRootSnifferScanRec::Done()
    return kFALSE;
 }
 
-Bool_t TRootSnifferScanRec::SetResult(void* obj, TClass* cl, Int_t chlds)
+Bool_t TRootSnifferScanRec::SetResult(void* obj, TClass* cl, TDataMember* member, Int_t chlds)
 {
    // set results of scanning
 
@@ -246,7 +246,7 @@ Bool_t TRootSnifferScanRec::SetResult(void* obj, TClass* cl, Int_t chlds)
 
    if (store==0) return kFALSE;
 
-   store->SetResult(obj, cl, chlds);
+   store->SetResult(obj, cl, member, chlds);
 
    return Done();
 }
@@ -432,7 +432,7 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
             chld.has_more = true;
          }
 
-         if (chld.SetResult(member_ptr, mcl)) break;
+         if (chld.SetResult(member_ptr, mcl, member)) break;
 
          if (IsDrawableClass(mcl))
             chld.SetRootClass(mcl);
@@ -444,7 +444,7 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
             }
          }
 
-         if (chld.SetResult(member_ptr, mcl, chld.num_childs)) break;
+         if (chld.SetResult(member_ptr, mcl, member, chld.num_childs)) break;
       }
    }
 }
@@ -496,7 +496,7 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
    }
 
    // here we should know how many childs are accumulated
-   rec.SetResult(obj, obj->IsA(), rec.num_childs);
+   rec.SetResult(obj, obj->IsA(), 0, rec.num_childs);
 }
 
 void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername, Bool_t extra)
@@ -517,17 +517,12 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, co
       TIter iter(lst);
       TObject* obj(0);
 
-      // DOUT0("SEARCH OBJECT with name %s ", itemname.c_str());
-
       while ((obj = iter()) != 0) {
-
          TRootSnifferScanRec chld;
-
          if (chld.GoInside(master, obj)) {
             ScanObject(chld, obj);
             if (chld.Done()) break;
          }
-
       }
    }
 }
@@ -611,7 +606,7 @@ void TRootSniffer::ScanHierarchy(const char* topname, const char* path, TRootSni
 }
 
 
-void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, Int_t* chld)
+void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, TDataMember** member, Int_t* chld)
 {
    // search element with specified path
    // returns pointer on element
@@ -628,7 +623,9 @@ void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, Int_t* chld)
    ScanRoot(rec);
 
    if (cl) *cl = store.GetResClass();
+   if (member) *member = store.GetResMember();
    if (chld) *chld = store.GetResNumChilds();
+
    return store.GetResPtr();
 }
 
@@ -638,9 +635,9 @@ TObject* TRootSniffer::FindTObjectInHierarchy(const char* path)
 
    TClass* cl(0);
 
-   TObject* obj = (TObject*) FindInHierarchy(path, &cl);
+   void* obj = FindInHierarchy(path, &cl);
 
-   return (cl!=0) && (cl->GetBaseClassOffset(TObject::Class())==0) ? obj : 0;
+   return (cl!=0) && (cl->GetBaseClassOffset(TObject::Class())==0) ? (TObject*) obj : 0;
 }
 
 
@@ -680,7 +677,7 @@ Bool_t TRootSniffer::CanExploreItem(const char* path)
 
    TClass *obj_cl(0);
    Int_t obj_chld(-1);
-   void *res = FindInHierarchy(path, &obj_cl, &obj_chld);
+   void *res = FindInHierarchy(path, &obj_cl, 0, &obj_chld);
    return (res!=0) && (obj_chld > 0);
 }
 
@@ -769,10 +766,14 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
    } else {
 
       TClass* obj_cl(0);
-      void* obj_ptr = FindInHierarchy(path, &obj_cl);
-      if ((obj_ptr==0) || (obj_cl==0)) return kFALSE;
+      TDataMember* member(0);
+      void* obj_ptr = FindInHierarchy(path, &obj_cl, &member);
+      if ((obj_ptr==0) || ((obj_cl==0) && (member==0))) return kFALSE;
 
-      res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl, compact);
+      if (member == 0)
+         res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl, compact);
+      else
+         res = TBufferJSON::ConvertToJSON(obj_ptr, member, compact);
    }
 
    return res.Length() > 0;

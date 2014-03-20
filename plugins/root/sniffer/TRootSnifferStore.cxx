@@ -13,6 +13,7 @@ TRootSnifferStore::TRootSnifferStore() :
    TObject(),
    fResPtr(0),
    fResClass(0),
+   fResMember(0),
    fResNumChilds(-1)
 {
    // normal constructor
@@ -23,12 +24,13 @@ TRootSnifferStore::~TRootSnifferStore()
    // destructor
 }
 
-void TRootSnifferStore::SetResult(void* _res, TClass* _rescl, Int_t _res_chld)
+void TRootSnifferStore::SetResult(void* _res, TClass* _rescl, TDataMember* _resmemb, Int_t _res_chld)
 {
    // set pointer on found element, class and number of childs
 
    fResPtr = _res;
    fResClass = _rescl;
+   fResMember = _resmemb;
    fResNumChilds = _res_chld;
 }
 

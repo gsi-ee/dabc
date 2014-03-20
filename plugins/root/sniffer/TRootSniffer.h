@@ -23,7 +23,7 @@ enum {
 
 class TMemFile;
 class TBufferFile;
-
+class TDataMember;
 class TRootSnifferStore;
 
 class TRootSnifferScanRec {
@@ -64,7 +64,7 @@ public:
    Bool_t CanExpandItem();
 
    /** Set result pointer and return true if result is found */
-   Bool_t SetResult(void* obj, TClass* cl, Int_t chlds = -1);
+   Bool_t SetResult(void* obj, TClass* cl, TDataMember* member = 0,  Int_t chlds = -1);
 
    /** Returns depth of hierarchy */
    Int_t Depth() const;
@@ -125,7 +125,7 @@ public:
 
    TObject* FindTObjectInHierarchy(const char* path);
 
-   virtual void* FindInHierarchy(const char* path, TClass** cl=0, Int_t* chld = 0);
+   virtual void* FindInHierarchy(const char* path, TClass** cl=0, TDataMember** member = 0, Int_t* chld = 0);
 
    Bool_t CanDrawItem(const char* path);
 
