@@ -119,17 +119,17 @@ namespace dabc {
          LoggerLineEntry **fLines;
          unsigned          fMaxLine;
          Mutex            *fMutex;
-         FILE             *fFile;        // ouptut file for log messages
-         bool              fSyslogOn;    // true when syslof was started
-         unsigned          fDebugMask;   // mask for debug output
-         unsigned          fErrorMask;   // mask for error output
-         unsigned          fFileMask;    // mask for file output
-         int               fDebugLevel;  // level of debug output on terminal
-         int               fFileLevel;   // level of debug output to file
-         int               fSyslogLevel; // level of syslog message
-         int               fLevel;       // used to define max
-         std::string       fPrefix;      // prefix of all messages
-         std::string       fLogFileName; // name of logfile
+         FILE             *fFile;          // ouptut file for log messages
+         std::string       fSyslogPrefix;  // if specified, send message to syslog
+         unsigned          fDebugMask;     // mask for debug output
+         unsigned          fErrorMask;     // mask for error output
+         unsigned          fFileMask;      // mask for file output
+         int               fDebugLevel;    // level of debug output on terminal
+         int               fFileLevel;     // level of debug output to file
+         int               fSyslogLevel;   // level of syslog message
+         int               fLevel;         // used to define max
+         std::string       fPrefix;        // prefix of all messages
+         std::string       fLogFileName;   // name of logfile
          double            fLogReopenTime; // last time when logfile was reopened
          bool              fLogFileModified; // true if any string was written into file
          unsigned          fLogLimit;   // maximum number of log messages before drop

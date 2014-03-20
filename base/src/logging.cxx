@@ -125,7 +125,7 @@ dabc::Logger::Logger(bool withmutex)
 
    fLogFileName = "";
    fFile = 0;
-   fSyslogOn = false;
+   fSyslogPrefix = "";
    fLogReopenTime = 0.;
    fLogFileModified = false;
    fLogLimit = 100;
@@ -225,15 +225,8 @@ void dabc::Logger::LogFile(const char* fname)
 void dabc::Logger::Syslog(const char* prefix)
 {
    LockGuard lock(fMutex);
-   if (fSyslogOn) {
-      closelog();
-      fSyslogOn = false;
-   }
 
-   if ((prefix!=0) && (strlen(prefix)>0)) {
-      openlog(prefix, LOG_ODELAY, LOG_LOCAL1);
-      fSyslogOn = true;
-   }
+   fSyslogPrefix = prefix ? prefix : "";
 }
 
 
@@ -345,12 +338,14 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       }
    }
 
-   if (fSyslogOn && (!drop_msg || (mask & lNoDrop)) && (level<=fSyslogLevel)) {
+   if (!fSyslogPrefix.empty() && (!drop_msg || (mask & lNoDrop)) && (level<=fSyslogLevel)) {
       std::string str;
       _FillString(str, mask, entry);
 
       if (str.length() > 0) {
+         openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
          syslog(level < 0 ? LOG_ERR : LOG_INFO, str.c_str());
+         closelog();
       }
    }
 
