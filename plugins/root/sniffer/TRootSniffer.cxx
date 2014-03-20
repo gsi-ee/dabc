@@ -429,7 +429,7 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
          bool iscollection = (coll_offset>=0);
          if (iscollection) {
             chld.SetField(dabc_prop_more, "true");
-            chld.has_more = true;
+            chld.has_more = kTRUE;
          }
 
          if (chld.SetResult(member_ptr, mcl, member)) break;
@@ -499,17 +499,14 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
    rec.SetResult(obj, obj->IsA(), 0, rec.num_childs);
 }
 
-void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername, Bool_t extra)
+void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername)
 {
    // scan collection content
 
    if ((lst==0) || (lst->GetSize()==0)) return;
 
    TRootSnifferScanRec folderrec;
-   if (foldername) {
-      if (!folderrec.GoInside(rec, 0, foldername)) return;
-      if (extra) folderrec.mask = folderrec.mask | mask_ExtraFolder;
-   }
+   if (foldername && !folderrec.GoInside(rec, 0, foldername)) return;
 
    {
       TRootSnifferScanRec& master = foldername ? folderrec : rec;
@@ -610,7 +607,9 @@ void* TRootSniffer::FindInHierarchy(const char* path, TClass** cl, TDataMember**
 {
    // search element with specified path
    // returns pointer on element
-   // optionally one could obtain element class and number of childs
+   // optionally one could obtain element class, member description and number of childs
+   // when chld!=0, not only element is searched, but also number of childs are counted
+   // when member!=0, any object will be scanned for its data members (disregard of extra options)
 
    TRootSnifferStore store;
 

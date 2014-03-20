@@ -14,11 +14,11 @@
 
 enum {
    mask_Scan        = 0x0001,  ///< normal scan of hierarchy
-   mask_Expand      = 0x0002,  ///< expand of specified item
-   mask_Search      = 0x0004,  ///< search for specified item
+   mask_Expand      = 0x0002,  ///< expand of specified item - allowed to scan object members
+   mask_Search      = 0x0004,  ///< search for specified item (only objects and collections)
    mask_CheckChld   = 0x0008,  ///< check if there childs, very similar to search
    mask_Actions     = 0x000F,  ///< mask for actions, only actions copied to child rec
-   mask_ExtraFolder = 0x0010   ///< bit marks folder where all childs will be marked as expandable
+   mask_ExtraFolder = 0x0010   ///< bit marks folder where all childs can be expanded
 };
 
 class TMemFile;
@@ -96,7 +96,7 @@ protected:
 
    void ScanObject(TRootSnifferScanRec& rec, TObject* obj);
 
-   void ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername = 0, Bool_t extra = kFALSE);
+   void ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername = 0);
 
    /* Method is used to scan ROOT objects.
     * Can be reimplemented to extend scanning */
