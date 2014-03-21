@@ -546,6 +546,11 @@ bool hadaq::CombinerModule::BuildEvent()
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
+            if (fLastDebugTm.Expired(1.)) {
+               DOUT1("Fail to build event while input %u is not ready", ninp);
+               fLastDebugTm.GetNow();
+            }
+
             return false;
          }
 
@@ -583,6 +588,12 @@ bool hadaq::CombinerModule::BuildEvent()
       DOUT0("Event id difference %d exceeding tolerance window %d, maxid:%u minid:%u, flushing buffers!",
                   diff, fTriggerNrTolerance, maxeventid, mineventid);
       DropAllInputBuffers();
+
+      if (fLastDebugTm.Expired(1.)) {
+         DOUT1("Drop all buffers");
+         fLastDebugTm.GetNow();
+      }
+
       return false; // retry on next set of buffers
    }
 
@@ -625,13 +636,26 @@ bool hadaq::CombinerModule::BuildEvent()
             Par(fDataDroppedRateName).SetValue(droppedsize/1024/1024);
             fTotalDroppedData+=droppedsize;
 
-            if(!ShiftToNextSubEvent(ninp)) return false;
+            if(!ShiftToNextSubEvent(ninp)) {
+               if (fLastDebugTm.Expired(1.)) {
+                  DOUT1("Cannot shift data from input %d", ninp);
+                  fLastDebugTm.GetNow();
+               }
+
+               return false;
+            }
             // try with next subevt until reaching buildevid
 
             continue;
          } else {
             // can happen when the subevent of the buildevid is missing on this channel
             // we account broken event and let call BuildEvent again, rescan buildevid without shifting other subevts.
+
+            if (fLastDebugTm.Expired(1.)) {
+               DOUT1("No any data on input %d", ninp);
+               fLastDebugTm.GetNow();
+            }
+
             return false; // we give the framework some time to do other things though
          }
 
@@ -705,8 +729,6 @@ bool hadaq::CombinerModule::BuildEvent()
    } // if(fUseSyncSeqNumber)
 
 
-
-
    // provide normal buffer
 
    if (hascorrectsync) {
@@ -722,13 +744,22 @@ bool hadaq::CombinerModule::BuildEvent()
       if (!fOut.IsBuffer()) {
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) {
-            // DOUT0("did not have new buffer - wait for it");
+
+            if (fLastDebugTm.Expired(1.)) {
+               DOUT0("did not have new buffer - wait for it");
+               fLastDebugTm.GetNow();
+            }
+
             return false;
          }
          if (!fOut.Reset(buf)) {
             SetInfo("Cannot use buffer for output - hard error!!!!", true);
             buf.Release();
             dabc::mgr.StopApplication();
+            if (fLastDebugTm.Expired(1.)) {
+               DOUT0("Abort application completely");
+               fLastDebugTm.GetNow();
+            }
             return false;
          }
       }
@@ -739,21 +770,18 @@ bool hadaq::CombinerModule::BuildEvent()
       }
    }
 
-
    // now we should be able to build event
    if (hascorrectsync) {
       // EVENT BUILDING IS HERE
       if(fEpicsSlave && (fEpicsRunNumber!=fRunNumber))
-	{
-	  DOUT0("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
-          StoreRunInfoStop();
-	  fRunNumber=fEpicsRunNumber;	 
-	  ClearExportedCounters();
-	  StoreRunInfoStart();
-	  
-	}
-     
-     
+      {
+         DOUT0("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
+         StoreRunInfoStop();
+         fRunNumber = fEpicsRunNumber;
+         ClearExportedCounters();
+         StoreRunInfoStart();
+      }
+
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
       fTotalRecvEvents++;
 
@@ -776,7 +804,6 @@ bool hadaq::CombinerModule::BuildEvent()
       } // for ninp
 
       fOut.FinishEvent();
-
 
       int diff = 1;
       if (fLastTrigNr!=0) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
@@ -803,6 +830,11 @@ bool hadaq::CombinerModule::BuildEvent()
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
       ShiftToNextSubEvent(ninp);
+
+   if (fLastDebugTm.Expired(1.)) {
+      DOUT0("Did event building as usual");
+      fLastDebugTm.GetNow();
+   }
 
    // return true means that method can be called again immediately
    // in all places one requires while loop
