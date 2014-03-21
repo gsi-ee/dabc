@@ -556,6 +556,18 @@ void dabc::Parameter::FireModified()
       GetObject()->FireModified(Value().AsStr());
 }
 
+bool dabc::Parameter::SubmitSetValue(const RecordField& v)
+{
+   WorkerRef w = GetWorker();
+   if (w.null()) return SetValue(v);
+
+   CmdSetParameter cmd(GetName());
+   cmd.SetField(CmdSetParameter::ParValue(), v);
+
+   return w.Submit(cmd);
+}
+
+
 // ========================================================================================
 
 int dabc::CommandDefinition::NumArgs() const

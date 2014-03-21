@@ -7,6 +7,8 @@ current functionality of the framework.
 2. When running in slave mode, HldOutput extracts runid number only from buffer itself   
 3. Implement CmdSetParameter parameter, it should be used when
    value must be set from other thread. Later make it in SetValue logic.
+4. Introduce Parameter::SubmitSetValue, which submit command to the worker.
+   Used it in the hadaq::Observer 
 
 
 20.03.2014

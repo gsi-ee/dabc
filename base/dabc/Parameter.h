@@ -285,6 +285,8 @@ namespace dabc {
             if (GetObject())
                GetObject()->BuildFieldsMap(cont);
          }
+
+         bool SubmitSetValue(const RecordField& v);
    };
 
    // ___________________________________________________________________________________

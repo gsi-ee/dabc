@@ -46,5 +46,5 @@ void hadaq::ShmEntry::UpdateValue(const std::string& value)
 void hadaq::ShmEntry::UpdateParameter()
 {
    if(!fPar.null())
-      fPar.SetValue((int)GetValue());
+      fPar.SubmitSetValue((int)GetValue());
 }
