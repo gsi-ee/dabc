@@ -290,8 +290,8 @@ dabc::Buffer dabc::InputPort::Recv()
 // ====================================================================================
 
 dabc::OutputPort::OutputPort(Reference parent,
-                           const std::string& name,
-                           unsigned queuesize) :
+                             const std::string& name,
+                             unsigned queuesize) :
    Port(dabc::mitOutPort, parent, name, queuesize),
    fSendallFlag(false)
 {

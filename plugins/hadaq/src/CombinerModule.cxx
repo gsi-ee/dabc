@@ -136,7 +136,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    RegisterExportedCounters();
 
-   fNumCompletedBuffers = 0;
+   fNumReadBuffers = 0;
 }
 
 
@@ -376,33 +376,22 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 ///////////////////////////////////////////////////////////////
 //////// INPUT BUFFER METHODS:
 
-bool hadaq::CombinerModule::SkipInputBuffer(unsigned ninp)
-{
-   fNumCompletedBuffers++;
-
-   DOUT5("CombinerModule::SkipInputBuffer  %d ", ninp);
-   return SkipInputBuffers(ninp, 1);
-}
-
 
 bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
    DOUT5("CombinerModule::ShiftToNextBuffer %d ", ninp);
    fInp[ninp].Close();
 
-//   if(!SkipInputBuffer(ninp))
-//               return false; // discard previous first buffer if we can receive a new one
    if(!CanRecv(ninp)) return false;
 
    dabc::Buffer buf = Recv(ninp);
 
-   fNumCompletedBuffers++;
+   fNumReadBuffers++;
 
    if(!fInp[ninp].Reset(buf)) {
       // use new first buffer of input for work iterator, but leave it in input queue
       DOUT5("CombinerModule::ShiftToNextBuffer %d could not reset to FirstInputBuffer", ninp);
       // skip buffer and try again
-      //SkipInputBuffer(ninp);
       return false;
    }
 
@@ -507,7 +496,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    DOUT0("hadaq::CombinerModule::DropAllInputBuffers()...");
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       fInp[ninp].Close();
-      while (SkipInputBuffer(ninp))
+      while (SkipInputBuffers(ninp, 100))
          ; // drop input port queue buffers until no more there
    }
    return true;

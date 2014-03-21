@@ -156,7 +156,7 @@ namespace hadaq {
          uint32_t fSyncSubeventId; // id number of sync subevent
          uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
 
-         int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
+         int  fNumReadBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
 
          /* switch between partial combining of smallest event ids (false)
           * and building of complete events only (true)*/
@@ -225,8 +225,6 @@ namespace hadaq {
 
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);
-
-         bool SkipInputBuffer(unsigned ninp);
 
          /* cleanup input buffers in case of too large eventnumber mismatch*/
          bool DropAllInputBuffers();
