@@ -198,6 +198,7 @@ Following parameters of attributes could be specified:
 | rate       | name of rate parameter |
 | signal     | which events delivered to user. Can be "none", "every", "confirm" (default) |
 | reconnect  | period of automatic reconnect, (default -1 - disabled) | 
+| thread     | thread name, used to create transport | 
  
  
 ## Connections 

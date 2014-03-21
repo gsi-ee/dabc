@@ -202,6 +202,9 @@ namespace hadaq {
 
          dabc::TimeStamp   fLastDebugTm;  // timer used to generate rare debugs output
          dabc::TimeStamp   fLastDropTm;   // timer used to avoid too often drop of data
+         dabc::TimeStamp   fLastProcTm;   // last time when event building was called
+         dabc::TimeStamp   fLastBuildTm;  // last time when complete event was build
+         double            fMaxProcDist;
 
          bool BuildEvent();
 

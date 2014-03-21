@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <sched.h>
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"
@@ -213,6 +214,10 @@ void hadaq::CombinerModule::BeforeModuleStart()
    SetInfo(info, true);
    DOUT0(info.c_str());
    fLastDropTm.GetNow();
+
+   fLastProcTm.GetNow();
+   fLastBuildTm.GetNow();
+
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -526,6 +531,10 @@ bool hadaq::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
    //static unsigned ccount=0;
 
+   double tm = fLastProcTm.SpentTillNow();
+   if (tm > fMaxProcDist) fMaxProcDist = tm;
+   fLastProcTm.GetNow();
+
 
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
@@ -538,9 +547,12 @@ bool hadaq::CombinerModule::BuildEvent()
             // could not get subevent data on any channel.
             // let framework do something before next try
             if (fLastDebugTm.Expired(1.)) {
-               DOUT1("Fail to build event while input %u is not ready", ninp);
+               DOUT1("Fail to build event while input %u is not ready maxtm = %5.3f ", ninp, fMaxProcDist);
                fLastDebugTm.GetNow();
+               fMaxProcDist = 0;
             }
+
+            return true;
 
             return false;
          }
@@ -568,12 +580,14 @@ bool hadaq::CombinerModule::BuildEvent()
 
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels, flush input buffers
-   if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance) && fLastDropTm.Expired(5.)) {
+
+   if (fLastDropTm.Expired(5.))
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || fLastBuildTm.Expired(2.)) {
       SetInfo(
             dabc::format(
-                  "Event id difference %d exceeding tolerance window %d, flushing buffers!",
+                  "Event id difference %d exceeding tolerance window %d (or no events where build), flushing buffers!",
                   diff, fTriggerNrTolerance), true);
-      DOUT0("Event id difference %d exceeding tolerance window %d, maxid:%u minid:%u, flushing buffers!",
+      DOUT0("Event id difference %d exceeding tolerance window %d (or no events where build), maxid:%u minid:%u, flushing buffers!",
                   diff, fTriggerNrTolerance, maxeventid, mineventid);
       DropAllInputBuffers();
 
@@ -583,6 +597,8 @@ bool hadaq::CombinerModule::BuildEvent()
       }
 
       fLastDropTm.GetNow();
+
+      return true;
 
       return false; // retry on next set of buffers
    }
@@ -635,6 +651,7 @@ bool hadaq::CombinerModule::BuildEvent()
                   fLastDebugTm.GetNow();
                }
 
+               return true;
                return false;
             }
             // try with next subevt until reaching buildevid
@@ -727,6 +744,7 @@ bool hadaq::CombinerModule::BuildEvent()
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
             DOUT0("Could not flush buffer");
+            return true;
             return false;
          }
       }
@@ -740,6 +758,7 @@ bool hadaq::CombinerModule::BuildEvent()
                fLastDebugTm.GetNow();
             }
 
+            return true;
             return false;
          }
          if (!fOut.Reset(buf)) {
@@ -750,6 +769,7 @@ bool hadaq::CombinerModule::BuildEvent()
                DOUT0("Abort application completely");
                fLastDebugTm.GetNow();
             }
+            return true;
             return false;
          }
       }
@@ -811,19 +831,28 @@ bool hadaq::CombinerModule::BuildEvent()
       fTotalRecvBytes += currentbytes;
       Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
+      fLastBuildTm.GetNow();
    } else {
       Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents+=1;
    } // ensure outputbuffer
 
+   char debugmask[200];
+   memset(debugmask, 0, sizeof(debugmask));
+
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
-      if (fCfg[ninp].fTrigNr == buildevid)
+      if (fCfg[ninp].fTrigNr == buildevid) {
+         debugmask[ninp] = 'o';
          ShiftToNextSubEvent(ninp);
+      } else {
+         debugmask[ninp] = 'x';
+      }
 
    if (fLastDebugTm.Expired(1.)) {
-      DOUT0("Did event building as usual complete = %s", DBOOL(hasCompleteEvent));
+      DOUT0("Did building as usual mask %s complete = %5s maxdist = %5.3f s", debugmask, DBOOL(hasCompleteEvent), fMaxProcDist);
       fLastDebugTm.GetNow();
+      fMaxProcDist = 0;
    }
 
    // return true means that method can be called again immediately
