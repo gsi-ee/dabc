@@ -46,29 +46,26 @@ namespace hadaq {
          bool                fRfio;           // true if we write to rfio
          std::string         fUrlOptions;     // remember URL options, may be used for RFIO file open
 
-          std::string fRunInfoToOraFilename;
+         std::string         fRunInfoToOraFilename;
          
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
-         dabc::Parameter     fDiskNumberPar; // for hades mode get number of local disk for next file
-         dabc::Parameter     fDiskNumberGuiPar; // export current disk number to epics gui
-         dabc::Parameter     fDataMoverPar; // for rfio: number of current data mover server
+
          hadaq::HldFile      fFile;
 
          bool CloseFile();
          bool StartNewFile();
 
-	 
-	  /* Methods to export run begin to oracle via text file*/
-	 void StoreRunInfoStart();	
-	 
-	  /* Methods to export run end and statistics to oracle via text file*/
-	 void StoreRunInfoStop();
-	 
-	 /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
+         /* Methods to export run begin to oracle via text file*/
+         void StoreRunInfoStart();
+
+         /* Methods to export run end and statistics to oracle via text file*/
+         void StoreRunInfoStop();
+
+         /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
          char* Unit(unsigned long v);
-	 
-	 
+
+
       public:
 
          HldOutput(const dabc::Url& url);
@@ -77,10 +74,6 @@ namespace hadaq {
          virtual bool Write_Init();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
-	 
-	 
-	 
-	 
    };
 }
 

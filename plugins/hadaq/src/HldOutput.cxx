@@ -40,9 +40,6 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fUrlOptions(),
    fRunidPar(),
    fBytesWrittenPar(),
-   fDiskNumberPar(),
-   fDiskNumberGuiPar(),
-   fDataMoverPar(),
    fFile()
 {
    fEpicsSlave = url.HasOption("epicsctrl");
@@ -118,7 +115,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
    if(fUseDaqDisk)
    {
-      fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNum");
+      dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNum");
       if(!fDiskNumberPar.null()) {
          std::string prefix;
          size_t prepos= fFileName.rfind("/");
@@ -131,7 +128,7 @@ bool hadaq::HldOutput::StartNewFile()
          fFileName = dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
          DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
                fFileName.c_str(), disknumber, prefix.c_str());
-         fDiskNumberGuiPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");
+         dabc::Parameter fDiskNumberGuiPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");
          if(!fDiskNumberGuiPar.null()) {
             fDiskNumberGuiPar.SetValue(disknumber);
             DOUT0("Updated disknumber %d for gui",disknumber);
@@ -166,7 +163,7 @@ bool hadaq::HldOutput::StartNewFile()
    if (fEpicsSlave && fRfio) {
       // use parameters only in slave mode
 
-      fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
+      dabc::Parameter fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
 
       int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
 
@@ -262,7 +259,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       if(fRunNumber==0)
       {
-         // runid might not be available on initializeation.
+         // runid might not be available on initialization.
          // check here if it was already delivered from epics
          fRunNumber = fRunidPar.Value().AsUInt();
          if (fRunNumber == 0) {
@@ -279,15 +276,14 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
-      uint32_t nextrunid=0;
-      unsigned numevents=0;
-      uint32_t payload=0;
+      uint32_t nextrunid(0), payload(0);
+      unsigned numevents(0);
 
       while (bufiter.NextEvent())
       {
          numevents++;
-         payload+=bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
-         nextrunid=bufiter.evnt()->GetRunNr();
+         payload += bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
+         nextrunid = bufiter.evnt()->GetRunNr();
          if (nextrunid == 0) {
             // ignore entire buffer while run number is not yet known
             return dabc::do_Ok;
@@ -298,11 +294,10 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
             DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
                   nextrunid, nextrunid, fRunNumber,fRunNumber);
             fRunNumber = nextrunid;
-            payload-=bufiter.evnt()->GetPaddedSize(); // the first event with new runid belongs to next file
+            payload -= bufiter.evnt()->GetPaddedSize(); // the first event with new runid belongs to next file
             startnewfile = true;
             break;
          }
-
 
       } // while bufiter
 
@@ -331,19 +326,14 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
                startsegment=n;
             }
 
-
          }// for
 
       }
-
-
 
       //#endif // oldmode
 
       if (!fBytesWrittenPar.null())
          fBytesWrittenPar.SetValue((int)fCurrentFileSize);
-
-
 
    } else {
       if (CheckBufferForNextFile(buf.GetTotalSize())) {
