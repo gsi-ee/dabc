@@ -122,19 +122,19 @@ DAQDISK - switches disk demon mode on/off
        <InputPort name="Input22" url="hadaq://host:${UDP22}" thread="UdpThread3"/>
        <InputPort name="Input23" url="hadaq://host:${UDP23}" thread="UdpThread4"/>
        <InputPort name="Input24" url="hadaq://host:${UDP24}" thread="UdpThread5"/>
-       <InputPort name="Input25" url="hadaq://host:${UDP25}" thread="UdpThread1"/>
-       <InputPort name="Input26" url="hadaq://host:${UDP26}" thread="UdpThread2"/>
-       <InputPort name="Input27" url="hadaq://host:${UDP27}" thread="UdpThread3"/>
-       <InputPort name="Input28" url="hadaq://host:${UDP28}" thread="UdpThread4"/>
-       <InputPort name="Input29" url="hadaq://host:${UDP29}" thread="UdpThread5"/>
-       <InputPort name="Input30" url="hadaq://host:${UDP30}" thread="UdpThread1"/>
+       <InputPort name="Input25" url="hadaq://host:${UDP25}" thread="UdpThread1" queue="200"/>
+       <InputPort name="Input26" url="hadaq://host:${UDP26}" thread="UdpThread2" queue="200"/>
+       <InputPort name="Input27" url="hadaq://host:${UDP27}" thread="UdpThread3" queue="200"/>
+       <InputPort name="Input28" url="hadaq://host:${UDP28}" thread="UdpThread4" queue="200"/>
+       <InputPort name="Input29" url="hadaq://host:${UDP29}" thread="UdpThread5" queue="200" />
+       <InputPort name="Input30" url="hadaq://host:${UDP30}" thread="UdpThread1" queue="200"/>
        <InputPort name="Input31" url="hadaq://host:${UDP31}" thread="UdpThread2"/>
        <InputPort name="Input32" url="hadaq://host:${UDP32}" thread="UdpThread3"/>
        <InputPort name="Input33" url="hadaq://host:${UDP33}" thread="UdpThread4"/>
        <InputPort name="Input34" url="hadaq://host:${UDP34}" thread="UdpThread5"/>
                     
 
-       <InputPort name="Input*" queue="50" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
+       <InputPort name="Input*" queue="30" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
        <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500"/>
 
