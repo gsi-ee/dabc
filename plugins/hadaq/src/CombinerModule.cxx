@@ -552,8 +552,7 @@ bool hadaq::CombinerModule::BuildEvent()
                fMaxProcDist = 0;
             }
 
-            return true;
-
+            // return true;  polling
             return false;
          }
 
@@ -598,8 +597,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastDropTm.GetNow();
 
-      return true;
-
+      // return true;  polling
       return false; // retry on next set of buffers
    }
 
@@ -651,7 +649,7 @@ bool hadaq::CombinerModule::BuildEvent()
                   fLastDebugTm.GetNow();
                }
 
-               return true;
+               // return true;  polling
                return false;
             }
             // try with next subevt until reaching buildevid
@@ -744,7 +742,7 @@ bool hadaq::CombinerModule::BuildEvent()
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
             DOUT0("Could not flush buffer");
-            return true;
+            // return true;  polling
             return false;
          }
       }
@@ -758,7 +756,7 @@ bool hadaq::CombinerModule::BuildEvent()
                fLastDebugTm.GetNow();
             }
 
-            return true;
+            // return true;  polling
             return false;
          }
          if (!fOut.Reset(buf)) {
@@ -769,7 +767,7 @@ bool hadaq::CombinerModule::BuildEvent()
                DOUT0("Abort application completely");
                fLastDebugTm.GetNow();
             }
-            return true;
+            // return true;  polling
             return false;
          }
       }
