@@ -347,7 +347,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    {
       unsigned write_size = buf.SegmentSize(n);
 
-      if (write_size>=cursor) {
+      if (cursor>=write_size) {
          // skip segment completely
          cursor -= write_size;
          continue;
@@ -375,12 +375,3 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    return dabc::do_Ok;
 }
-
-
-
-
-
-
-
-
-
