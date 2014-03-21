@@ -9,6 +9,8 @@ current functionality of the framework.
    value must be set from other thread. Later make it in SetValue logic.
 4. Introduce Parameter::SubmitSetValue, which submit command to the worker.
    Used it in the hadaq::Observer 
+5. In hadaq::CombinerModule modify logic how events are build and how error condition detected.
+   Do not exit from the BuildEvent function when one needs to skip buffers on some input   
 
 
 20.03.2014

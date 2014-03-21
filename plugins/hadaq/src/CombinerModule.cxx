@@ -59,8 +59,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    
    
    fRunNumber = hadaq::RawEvent::CreateRunId(); // runid from configuration time.
-   fEpicsRunNumber=0;
-   fTriggerNrTolerance = 50000;
+   fEpicsRunNumber = 0;
 
    fLastTrigNr = 0;
    fMaxHadaqTrigger=0;
@@ -71,10 +70,12 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    
    if(fEpicsSlave) fRunNumber=0; // ignore data without valid run id at beginning!
 
-   fMaxHadaqTrigger=Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
-   fTriggerRangeMask=fMaxHadaqTrigger-1;
-      DOUT0("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
-   fEvnumDiffStatistics=Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
+   fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
+   fTriggerRangeMask = fMaxHadaqTrigger-1;
+   DOUT0("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
+   fEvnumDiffStatistics = Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
+
+   fTriggerNrTolerance = fMaxHadaqTrigger / 4;
       
       
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
@@ -540,7 +541,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
-   uint32_t mineventid(0), maxeventid(0);
+   uint32_t mineventid(0), maxeventid(0), buildevid(0);
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (fInp[ninp].subevnt() == 0)
          if (!ShiftToNextSubEvent(ninp)) {
@@ -559,20 +560,17 @@ bool hadaq::CombinerModule::BuildEvent()
       if (ninp == 0) {
          mineventid = evid;
          maxeventid = evid;
-         masterchannel = ninp;
+         buildevid = evid;
       }
 
-      if (CalcTrigNumDiff(evid, maxeventid) < 0) {
+      if (CalcTrigNumDiff(evid, maxeventid) < 0)
          maxeventid = evid;
-         masterchannel = ninp;
-      }
 
       if (CalcTrigNumDiff(mineventid, evid) < 0)
          mineventid = evid;
    } // for ninp
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
-   uint32_t buildevid = maxeventid;
    uint32_t buildtag = fCfg[masterchannel].fTrigTag;
    int diff = CalcTrigNumDiff(mineventid, maxeventid);
 
@@ -602,6 +600,9 @@ bool hadaq::CombinerModule::BuildEvent()
    // select inputs which will be used for building
    //bool eventIsBroken=false;
    bool dataError(false), tagError(false);
+
+   bool hasCompleteEvent = true;
+
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       bool foundsubevent = false;
       while (!foundsubevent) {
@@ -648,15 +649,14 @@ bool hadaq::CombinerModule::BuildEvent()
 
             continue;
          } else {
-            // can happen when the subevent of the buildevid is missing on this channel
-            // we account broken event and let call BuildEvent again, rescan buildevid without shifting other subevts.
 
-            if (fLastDebugTm.Expired(1.)) {
-               DOUT1("No any data on input %d  trignr %d buildev %d diff %d", ninp, (int) trignr, (int) buildevid, CalcTrigNumDiff(trignr, buildevid));
-               fLastDebugTm.GetNow();
-            }
+            // we want to build event with id, defined by input 0
+            // but subevent in this input has number bigger than buildevid
+            // it will not be possible to build buildevid, therefore mark it as incomplete
+            hasCompleteEvent = false;
 
-            return false; // we give the framework some time to do other things though
+            // let also verify all other channels
+            break;
          }
 
       } // while foundsubevent
@@ -666,10 +666,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // for sync sequence number, check first if we have error from cts:
    uint32_t sequencenumber = fTotalRecvEvents;
-   bool hascorrectsync = true;
    
-   if(fUseSyncSeqNumber) {
-      hascorrectsync = false;
+   if(fUseSyncSeqNumber && hasCompleteEvent) {
+      hasCompleteEvent = false;
 
       // we may put sync id from subevent payload to event sequence number already here.
       hadaq::RawSubevent* syncsub = fInp[0].subevnt(); // for the moment, sync number must be in first udp input
@@ -721,7 +720,7 @@ bool hadaq::CombinerModule::BuildEvent()
          } else {
             //                  DOUT1("FIND SYNC in HADAQ %06x", syncnum);
             sequencenumber=syncnum;
-            hascorrectsync=true;
+            hasCompleteEvent=true;
          }
 
       } // if (syncsub->GetId() != fSyncSubeventId)
@@ -731,14 +730,13 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // provide normal buffer
 
-   if (hascorrectsync) {
+   if (hasCompleteEvent) {
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
             DOUT0("Could not flush buffer");
             return false;
          }
-
       }
       // after flushing last buffer, take next one:
       if (!fOut.IsBuffer()) {
@@ -766,12 +764,12 @@ bool hadaq::CombinerModule::BuildEvent()
       // now check working buffer for space:
       if (!fOut.IsPlaceForEvent(subeventssize)) {
          DOUT0("New buffer has not enough space, skip subevent!");
-         hascorrectsync = false;
+         hasCompleteEvent = false;
       }
    }
 
    // now we should be able to build event
-   if (hascorrectsync) {
+   if (hasCompleteEvent) {
       // EVENT BUILDING IS HERE
       if(fEpicsSlave && (fEpicsRunNumber!=fRunNumber))
       {
@@ -822,17 +820,17 @@ bool hadaq::CombinerModule::BuildEvent()
       Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
    } else {
-      EOUT("Event dropped hassync %s subevsize %u", DBOOL(hascorrectsync), subeventssize);
       Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents+=1;
    } // ensure outputbuffer
 
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
-      ShiftToNextSubEvent(ninp);
+      if (fCfg[ninp].fTrigNr == buildevid)
+         ShiftToNextSubEvent(ninp);
 
    if (fLastDebugTm.Expired(1.)) {
-      DOUT0("Did event building as usual");
+      DOUT0("Did event building as usual complete = %s", DBOOL(hasCompleteEvent));
       fLastDebugTm.GetNow();
    }
 
