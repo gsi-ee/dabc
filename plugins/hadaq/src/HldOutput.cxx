@@ -233,9 +233,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Error;
    }
 
-   unsigned cursor=0;
-   unsigned startsegment=0;
-   bool startnewfile = false;
+   unsigned cursor(0);
+   bool startnewfile(false);
    if (fEpicsSlave) {
 
       // #ifdef OLDMODE
@@ -276,58 +275,50 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
-      uint32_t nextrunid(0), payload(0);
-      unsigned numevents(0);
+      unsigned numevents(0), payload(0);
 
       while (bufiter.NextEvent())
       {
-         numevents++;
-         payload += bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
-         nextrunid = bufiter.evnt()->GetRunNr();
+         uint32_t nextrunid = bufiter.evnt()->GetRunNr();
          if (nextrunid == 0) {
             // ignore entire buffer while run number is not yet known
             return dabc::do_Ok;
          }
-         else if (nextrunid && nextrunid != fRunNumber) {
-            ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
-                  nextrunid, nextrunid, fRunNumber,fRunNumber));
-            DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
-                  nextrunid, nextrunid, fRunNumber,fRunNumber);
-            fRunNumber = nextrunid;
-            payload -= bufiter.evnt()->GetPaddedSize(); // the first event with new runid belongs to next file
-            startnewfile = true;
-            break;
+
+         if (nextrunid == fRunNumber) {
+            numevents++;
+            payload += bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
+            continue;
          }
+
+         ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
+                    nextrunid, nextrunid, fRunNumber,fRunNumber));
+         DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
+                  nextrunid, nextrunid, fRunNumber,fRunNumber);
+         fRunNumber = nextrunid;
+         startnewfile = true;
+         break;
 
       } // while bufiter
 
       if(startnewfile) {
          // first flush rest of previous run to old file:
-         for (unsigned n=0;n<buf.NumSegments();n++)
-         {
-            if(buf.SegmentSize(n)<payload){
-               if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))
-                  return dabc::do_Error;
-               payload-=buf.SegmentSize(n);
+         cursor = payload;
 
-            }
-            else
-            {
-               //ShowInfo(0, dabc::format("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file",
-               //		    payload, numevents, n));
-               DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file",
-                     payload, numevents, n);
-               if(payload)
-               {
-                  if (!fFile.WriteBuffer(buf.SegmentPtr(n), payload))
-                     return dabc::do_Error;
-               }
-               cursor=payload;
-               startsegment=n;
-            }
+         for (unsigned n=0;n<buf.NumSegments();n++) {
 
+            if (payload==0) break;
+
+            unsigned write_size = buf.SegmentSize(n);
+            if (write_size > payload) write_size = payload;
+
+            if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
+
+            DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file",
+                  write_size, numevents, n);
+
+            payload -= write_size;
          }// for
-
       }
 
       //#endif // oldmode
@@ -352,22 +343,30 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if (!fFile.isWriting()) return dabc::do_Error;
 
-   for (unsigned n=startsegment;n<buf.NumSegments();n++)
+   for (unsigned n=0;n<buf.NumSegments();n++)
    {
-      if(n>startsegment) cursor=0;
-      if(cursor>=buf.SegmentSize(n))
-      {
-         DOUT2("Cursor %d  bigger than segment size %d, do not write to segment %d", cursor,  buf.SegmentSize(n),n);
+      unsigned write_size = buf.SegmentSize(n);
+
+      if (write_size>=cursor) {
+         // skip segment completely
+         cursor -= write_size;
          continue;
       }
-      if (!fFile.WriteBuffer((char*) buf.SegmentPtr(n) + cursor, buf.SegmentSize(n)-cursor))
-         return dabc::do_Error;
+
+      char* write_ptr = (char*) buf.SegmentPtr(n);
 
       if(startnewfile)
       {
-         DOUT2("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  buf.SegmentSize(n)-cursor);
-
+         DOUT2("Wrote to %s at segment %d, cursor %d, size %d", CurrentFileName().c_str(), n, cursor,  write_size-cursor);
       }
+
+      if (cursor>0) {
+         write_ptr += cursor;
+         write_size -= cursor;
+         cursor = 0;
+      }
+
+      if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
    }
 
