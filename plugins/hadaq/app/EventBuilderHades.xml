@@ -97,41 +97,41 @@ DAQDISK - switches disk demon mode on/off
        <NumInputs value="${STREAMS}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
 
-       <InputPort name="Input0" url="hadaq://host:${UDP00}"/>
-       <InputPort name="Input1" url="hadaq://host:${UDP01}"/>
-       <InputPort name="Input2" url="hadaq://host:${UDP02}"/>
-       <InputPort name="Input3" url="hadaq://host:${UDP03}"/>
-       <InputPort name="Input4" url="hadaq://host:${UDP04}"/>       
-       <InputPort name="Input5" url="hadaq://host:${UDP05}"/>
-       <InputPort name="Input6" url="hadaq://host:${UDP06}"/>
-       <InputPort name="Input7" url="hadaq://host:${UDP07}"/>
-       <InputPort name="Input8" url="hadaq://host:${UDP08}"/>
-       <InputPort name="Input9" url="hadaq://host:${UDP09}"/>       
-       <InputPort name="Input10" url="hadaq://host:${UDP10}"/>
-       <InputPort name="Input11" url="hadaq://host:${UDP11}"/>
-       <InputPort name="Input12" url="hadaq://host:${UDP12}"/>
-       <InputPort name="Input13" url="hadaq://host:${UDP13}"/>
-       <InputPort name="Input14" url="hadaq://host:${UDP14}"/>       
-       <InputPort name="Input15" url="hadaq://host:${UDP15}"/>
-       <InputPort name="Input16" url="hadaq://host:${UDP16}"/>
-       <InputPort name="Input17" url="hadaq://host:${UDP17}"/>
-       <InputPort name="Input18" url="hadaq://host:${UDP18}"/>
-       <InputPort name="Input19" url="hadaq://host:${UDP19}"/>
-       <InputPort name="Input20" url="hadaq://host:${UDP20}"/>
-       <InputPort name="Input21" url="hadaq://host:${UDP21}"/>
-       <InputPort name="Input22" url="hadaq://host:${UDP22}"/>
-       <InputPort name="Input23" url="hadaq://host:${UDP23}"/>
-       <InputPort name="Input24" url="hadaq://host:${UDP24}"/>
-       <InputPort name="Input25" url="hadaq://host:${UDP25}"/>
-       <InputPort name="Input26" url="hadaq://host:${UDP26}"/>
-       <InputPort name="Input27" url="hadaq://host:${UDP27}"/>
-       <InputPort name="Input28" url="hadaq://host:${UDP28}"/>
-       <InputPort name="Input29" url="hadaq://host:${UDP29}"/>
-       <InputPort name="Input30" url="hadaq://host:${UDP30}"/>
-       <InputPort name="Input31" url="hadaq://host:${UDP31}"/>
-       <InputPort name="Input32" url="hadaq://host:${UDP32}"/>
-       <InputPort name="Input33" url="hadaq://host:${UDP33}"/>
-       <InputPort name="Input34" url="hadaq://host:${UDP34}"/>
+       <InputPort name="Input0" url="hadaq://host:${UDP00}" thread="UdpThread1"/>
+       <InputPort name="Input1" url="hadaq://host:${UDP01}" thread="UdpThread2"/>
+       <InputPort name="Input2" url="hadaq://host:${UDP02}" thread="UdpThread3"/>
+       <InputPort name="Input3" url="hadaq://host:${UDP03}" thread="UdpThread4"/>
+       <InputPort name="Input4" url="hadaq://host:${UDP04}" thread="UdpThread5"/>       
+       <InputPort name="Input5" url="hadaq://host:${UDP05}" thread="UdpThread1"/>
+       <InputPort name="Input6" url="hadaq://host:${UDP06}" thread="UdpThread2"/>
+       <InputPort name="Input7" url="hadaq://host:${UDP07}" thread="UdpThread3"/>
+       <InputPort name="Input8" url="hadaq://host:${UDP08}" thread="UdpThread4"/>
+       <InputPort name="Input9" url="hadaq://host:${UDP09}" thread="UdpThread5"/>       
+       <InputPort name="Input10" url="hadaq://host:${UDP10}" thread="UdpThread1"/>
+       <InputPort name="Input11" url="hadaq://host:${UDP11}" thread="UdpThread2"/>
+       <InputPort name="Input12" url="hadaq://host:${UDP12}" thread="UdpThread3"/>
+       <InputPort name="Input13" url="hadaq://host:${UDP13}" thread="UdpThread4"/>
+       <InputPort name="Input14" url="hadaq://host:${UDP14}" thread="UdpThread5"/>       
+       <InputPort name="Input15" url="hadaq://host:${UDP15}" thread="UdpThread1"/>
+       <InputPort name="Input16" url="hadaq://host:${UDP16}" thread="UdpThread2"/>
+       <InputPort name="Input17" url="hadaq://host:${UDP17}" thread="UdpThread3"/>
+       <InputPort name="Input18" url="hadaq://host:${UDP18}" thread="UdpThread4"/>
+       <InputPort name="Input19" url="hadaq://host:${UDP19}" thread="UdpThread5"/>
+       <InputPort name="Input20" url="hadaq://host:${UDP20}" thread="UdpThread1"/>
+       <InputPort name="Input21" url="hadaq://host:${UDP21}" thread="UdpThread2"/>
+       <InputPort name="Input22" url="hadaq://host:${UDP22}" thread="UdpThread3"/>
+       <InputPort name="Input23" url="hadaq://host:${UDP23}" thread="UdpThread4"/>
+       <InputPort name="Input24" url="hadaq://host:${UDP24}" thread="UdpThread5"/>
+       <InputPort name="Input25" url="hadaq://host:${UDP25}" thread="UdpThread1"/>
+       <InputPort name="Input26" url="hadaq://host:${UDP26}" thread="UdpThread2"/>
+       <InputPort name="Input27" url="hadaq://host:${UDP27}" thread="UdpThread3"/>
+       <InputPort name="Input28" url="hadaq://host:${UDP28}" thread="UdpThread4"/>
+       <InputPort name="Input29" url="hadaq://host:${UDP29}" thread="UdpThread5"/>
+       <InputPort name="Input30" url="hadaq://host:${UDP30}" thread="UdpThread1"/>
+       <InputPort name="Input31" url="hadaq://host:${UDP31}" thread="UdpThread2"/>
+       <InputPort name="Input32" url="hadaq://host:${UDP32}" thread="UdpThread3"/>
+       <InputPort name="Input33" url="hadaq://host:${UDP33}" thread="UdpThread4"/>
+       <InputPort name="Input34" url="hadaq://host:${UDP34}" thread="UdpThread5"/>
                     
 
        <InputPort name="Input*" queue="50" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
