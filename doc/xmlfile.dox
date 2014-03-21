@@ -105,6 +105,7 @@ which can be specified in `<Run>` section.
 | debugger   | "true" "false" to enable/disable debugger usage. One also can directly specify command prefix like "gdb -x run.txt --args" |
 | taskset    | taskset arguments like "-c 10-15" to set affinity of whole dabc_exe process. See [here](@ref dabc_affinity) for more details |
 | affinity   | affinity mask which defines how threads code be used. See [here](@ref dabc_affinity) for more details |
+| threads_layout  | "minimal", "permodule", "balanced" (default), "maximal" |
 | stdout     | redirection for standard output, for instance file name |
 | errout     | redirection for error output, for instance file name |
 | nullout    | if true, all output will be redirected ro /dev/null |

@@ -1036,7 +1036,8 @@ dabc::SocketThread::SocketThread(Reference parent, const std::string& name, Comm
    f_ufds(0),
    f_recs(0),
    fIsAnySocket(false),
-   fCheckNewEvents(true)
+   fCheckNewEvents(true),
+   fBalanceCnt(0)
 {
 
 #ifdef SOCKET_PROFILING
@@ -1586,7 +1587,10 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
    // if we really has any events, analyze all of them and push in the queue
    if (poll_res>0)
-      for (int n=1; n<numufds;n++) {
+      for (int imn=1; imn<numufds;imn++) {
+
+         // we use shifted index, that sockets at the end of list has chance to come at right time
+         int n = 1 + (imn + fBalanceCnt) % (numufds-1);
 
          if (f_ufds[n].revents==0) continue;
 
@@ -1629,6 +1633,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
    if (isany) {
       fCheckNewEvents = false;
       _PushEvent(evntEnableCheck, 1);
+      fBalanceCnt = (fBalanceCnt + 1) % fWorkers.size();
    }
 
    #ifdef DABC_EXTRA_CHECKS

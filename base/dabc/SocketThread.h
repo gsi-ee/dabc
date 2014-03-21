@@ -352,6 +352,40 @@ namespace dabc {
             evntLastSocketThrdEvent            ///< last event, which can be used by socket
          };
 
+         struct ProcRec {
+             bool      use;  ///< indicates if processor is used for poll
+             uint32_t  indx; ///< index for dereference of processor from ufds structure
+         };
+
+         int            fPipe[2];         ///< array with i/o pipes handles
+         long           fPipeFired;       ///< indicate if something was written in pipe
+         bool           fWaitFire;        ///< indicates if pipe firing is awaited
+         int            fScalerCounter;   ///< variable used to test time to time sockets even if there are events in the queue
+         unsigned       f_sizeufds;       ///< size of the structure, which was allocated
+         pollfd        *f_ufds;           ///< list of file descriptors for poll call
+         ProcRec       *f_recs;           ///< identify used processors
+         bool           fIsAnySocket;     ///< indicates that at least one socket processors in the list
+         bool           fCheckNewEvents;  ///< flag indicate if sockets should be checked for new events even if there are already events in the queue
+         int            fBalanceCnt;      ///< counter for balancing of input events
+
+#ifdef SOCKET_PROFILING
+         long           fWaitCalls;
+         long           fWaitDone;
+         long           fPipeCalled;
+         double         fWaitTime;
+         double         fFillTime;
+#endif
+
+         virtual bool WaitEvent(EventId&, double tmout);
+
+         virtual void _Fire(const EventId& evnt, int nq);
+
+         virtual void WorkersSetChanged();
+
+         virtual void ProcessExtraThreadEvent(const EventId& evid);
+
+
+
 
       public:
 
@@ -402,39 +436,6 @@ namespace dabc {
          static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
 
          static SocketClientAddon* CreateClientAddon(const std::string& servid, int dflt_port = -1);
-
-      protected:
-
-         struct ProcRec {
-             bool      use;  ///< indicates if processor is used for poll
-             uint32_t  indx; ///< index for dereference of processor from ufds structure
-         };
-
-         virtual bool WaitEvent(EventId&, double tmout);
-
-         virtual void _Fire(const EventId& evnt, int nq);
-
-         virtual void WorkersSetChanged();
-
-         virtual void ProcessExtraThreadEvent(const EventId& evid);
-
-         int            fPipe[2];         ///< array with i/o pipes handles
-         long           fPipeFired;       ///< indicate if something was written in pipe
-         bool           fWaitFire;        ///< indicates if pipe firing is awaited
-         int            fScalerCounter;   ///< variable used to test time to time sockets even if there are events in the queue
-         unsigned       f_sizeufds;       ///< size of the structure, which was allocated
-         pollfd        *f_ufds;           ///< list of file descriptors for poll call
-         ProcRec       *f_recs;           ///< identify used processors
-         bool           fIsAnySocket;     ///< indicates that at least one socket processors in the list
-         bool           fCheckNewEvents;  ///< flag indicate if sockets should be checked for new events even if there are already events in the queue
-
-#ifdef SOCKET_PROFILING
-         long           fWaitCalls;
-         long           fWaitDone;
-         long           fPipeCalled;
-         double         fWaitTime;
-         double         fFillTime;
-#endif
    };
 }
 
