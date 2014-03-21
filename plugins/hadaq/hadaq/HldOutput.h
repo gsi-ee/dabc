@@ -48,8 +48,7 @@ namespace hadaq {
 
          std::string         fRunInfoToOraFilename;
          
-         dabc::Parameter     fRunidPar;
-         dabc::Parameter     fBytesWrittenPar;
+         dabc::TimeStamp     fLastUpdate;     // time when last parameter update was performed
 
          hadaq::HldFile      fFile;
 

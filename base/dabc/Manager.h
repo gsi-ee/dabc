@@ -237,8 +237,18 @@ namespace dabc {
 
       DABC_COMMAND(CmdSetParameter, "SetParameter");
 
-      std::string ParName() { return GetStr("ParName"); }
-      std::string ParValue() { return GetStr("ParValue"); }
+      static const char* ParName() { return "ParName"; }
+      static const char* ParValue() { return "ParValue"; }
+
+      CmdSetParameter(const std::string& parname) : Command(CmdName())
+      {
+         SetStr(ParName(), parname);
+      }
+
+      void SetParValue(const RecordField& v) { SetField(ParValue(), v); }
+
+      std::string GetParName() { return GetStr(ParName()); }
+      RecordField GetParValue() { return GetField(ParValue()); }
    };
 
    /** \brief %Command to request current state of known nodes */

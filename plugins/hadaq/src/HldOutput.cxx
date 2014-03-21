@@ -38,8 +38,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fUseDaqDisk(false),
    fRfio(false),
    fUrlOptions(),
-   fRunidPar(),
-   fBytesWrittenPar(),
+   fLastUpdate(),
    fFile()
 {
    fEpicsSlave = url.HasOption("epicsctrl");
@@ -75,29 +74,12 @@ bool hadaq::HldOutput::Write_Init()
    if (fEpicsSlave) {
       // use parameters only in slave mode
 
-      fRunidPar = dabc::mgr.FindPar("Combiner/Evtbuild_runId");
-      fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+      fLastUpdate.GetNow();
 
-      if(fRunidPar.null()) {
-         ShowInfo(-1, "HldOutput::Write_Init did not find runid parameter");
-         return false;
-      }
+      fRunNumber = 0;
 
-      if(fBytesWrittenPar.null()) {
-         ShowInfo(-1, "HldOutput::Write_Init did not find written bytes parameter");
-         return false;
-      }
-
-      fRunNumber = fRunidPar.Value().AsUInt();
-
-      if (fRunNumber == 0) {
-         ShowInfo(0, "EPICS slave mode is enabled, waiting for runid");
-         return true;
-      }
-
-      ShowInfo(0, dabc::format("EPICS slave mode is enabled, first runid:%d (0x%x)",fRunNumber, fRunNumber));
-
-
+      ShowInfo(0, "EPICS slave mode is enabled, waiting for runid");
+      return true;
    }
 
    return StartNewFile();
@@ -237,42 +219,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    bool startnewfile(false);
    if (fEpicsSlave) {
 
-      // #ifdef OLDMODE
-      //       // check if EPICS master has assigned a new run for us:
-      //       uint32_t nextrunid = fRunidPar.Value().AsUInt();
-      //       if (nextrunid != fRunNumber) {
-      //          fRunNumber = nextrunid;
-      //          startnewfile = true;
-      //          ShowInfo(0, dabc::format("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber));
-      // 	 DOUT0("HldOutput Gets New Runid %d (0x%x)from EPICS", fRunNumber,fRunNumber);
-      //       } else {
-      //
-      //          if ((nextrunid == 0) && (fRunNumber==0)) {
-      //             // ignore buffer while run number is not yet known
-      //             return dabc::do_Ok;
-      //          }
-      //       }
-      // #else
-
-
-
-      if(fRunNumber==0)
-      {
-         // runid might not be available on initialization.
-         // check here if it was already delivered from epics
-         fRunNumber = fRunidPar.Value().AsUInt();
-         if (fRunNumber == 0) {
-            //ShowInfo(2, "EPICS slave mode: still have no runid, skip buffer!");
-            DOUT2("EPICS slave mode: still have no runid, skip buffer!");
-            return dabc::do_Skip;
-         }
-         if (!StartNewFile()) {
-            EOUT("Cannot start new file for writing");
-            return dabc::do_Error;
-
-         }
-      }
-
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
       unsigned numevents(0), payload(0);
@@ -280,11 +226,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       while (bufiter.NextEvent())
       {
          uint32_t nextrunid = bufiter.evnt()->GetRunNr();
-         if (nextrunid == 0) {
-            // ignore entire buffer while run number is not yet known
-            return dabc::do_Ok;
-         }
-
          if (nextrunid == fRunNumber) {
             numevents++;
             payload += bufiter.evnt()->GetPaddedSize();// remember current position in buffer:
@@ -301,10 +242,16 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       } // while bufiter
 
+      // if current runid is still 0, just ignore buffer
+      if (!startnewfile && (fRunNumber==0)) return dabc::do_Ok;
+
+
       if(startnewfile) {
          // first flush rest of previous run to old file:
          cursor = payload;
 
+         // only if file opened for writing, write rest buffers
+         if (fFile.isWriting())
          for (unsigned n=0;n<buf.NumSegments();n++) {
 
             if (payload==0) break;
@@ -323,8 +270,21 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       //#endif // oldmode
 
-      if (!fBytesWrittenPar.null())
-         fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+
+      if (fLastUpdate.Expired(1.)) {
+
+         dabc::ModuleRef m = dabc::mgr.FindModule("Combiner");
+
+         dabc::CmdSetParameter cmd("Evtbuild_bytesWritten");
+         cmd.SetParValue((int)fCurrentFileSize);
+         m.Submit(cmd);
+
+         fLastUpdate.GetNow();
+
+        //fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+        //if (!fBytesWrittenPar.null())
+        //    fBytesWrittenPar.SetValue((int)fCurrentFileSize);
+      }
 
    } else {
       if (CheckBufferForNextFile(buf.GetTotalSize())) {
@@ -368,6 +328,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
+      fCurrentFileSize += write_size;
    }
 
    // TODO: in case of partial written buffer, account sizes to correct file 

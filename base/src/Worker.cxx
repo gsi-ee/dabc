@@ -648,11 +648,9 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
    if (cmd.IsName(CmdSetParameter::CmdName())) {
 
-      CmdSetParameter cmd2 = cmd;
+      Parameter par = Par(cmd.GetStr(CmdSetParameter::ParName()));
 
-      Parameter par = Par(cmd2.ParName());
-
-      cmd_res = par.ExecuteChange(cmd2);
+      cmd_res = par.ExecuteChange(cmd);
 
    } else
 

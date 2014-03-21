@@ -505,9 +505,7 @@ dabc::Reference dabc::Parameter::GetWorker() const
 
 int dabc::Parameter::ExecuteChange(Command cmd)
 {
-   CmdSetParameter setcmd = cmd;
-
-   bool res = SetValue(setcmd.ParValue());
+   bool res = SetField("", cmd.GetField(CmdSetParameter::ParValue()));
 
    return res ? cmd_true : cmd_false;
 }
