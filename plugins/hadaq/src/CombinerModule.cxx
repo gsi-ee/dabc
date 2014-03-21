@@ -652,7 +652,7 @@ bool hadaq::CombinerModule::BuildEvent()
             // we account broken event and let call BuildEvent again, rescan buildevid without shifting other subevts.
 
             if (fLastDebugTm.Expired(1.)) {
-               DOUT1("No any data on input %d", ninp);
+               DOUT1("No any data on input %d  trignr %d buildev %d diff %d", ninp, (int) trignr, (int) buildevid, CalcTrigNumDiff(trignr, buildevid));
                fLastDebugTm.GetNow();
             }
 
