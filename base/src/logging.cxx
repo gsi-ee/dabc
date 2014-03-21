@@ -299,6 +299,10 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 {
    TimeStamp now = dabc::Now();
 
+   std::string syslogout;
+
+   {
+
    LockGuard lock(fMutex);
 
    if (linenumber>=fMaxLine)
@@ -339,14 +343,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    }
 
    if (!fSyslogPrefix.empty() && (!drop_msg || (mask & lNoDrop)) && (level<=fSyslogLevel)) {
-      std::string str;
-      _FillString(str, mask, entry);
-
-      if (str.length() > 0) {
-         openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
-         syslog(level < 0 ? LOG_ERR : LOG_INFO, str.c_str());
-         closelog();
-      }
+      _FillString(syslogout, mask, entry);
    }
 
    if (fFile && (!drop_msg || (fmask & lNoDrop)) && (level<=fFileLevel)) {
@@ -365,6 +362,15 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       entry->fDropCnt = 0;
       entry->fLastTm = now;
    }
+
+   } // end of LockGuard
+
+   if (!syslogout.empty()) {
+      openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
+      syslog(level < 0 ? LOG_ERR : LOG_INFO, syslogout.c_str());
+      closelog();
+   }
+
 }
 
 void dabc::Logger::_DoCheckTimeout()
