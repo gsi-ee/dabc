@@ -212,6 +212,7 @@ void hadaq::CombinerModule::BeforeModuleStart()
 
    SetInfo(info, true);
    DOUT0(info.c_str());
+   fLastDropTm.GetNow();
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -578,7 +579,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels, flush input buffers
-   if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
+   if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance) && fLastDropTm.Expired(5.)) {
       SetInfo(
             dabc::format(
                   "Event id difference %d exceeding tolerance window %d, flushing buffers!",
@@ -591,6 +592,8 @@ bool hadaq::CombinerModule::BuildEvent()
          DOUT1("Drop all buffers");
          fLastDebugTm.GetNow();
       }
+
+      fLastDropTm.GetNow();
 
       return false; // retry on next set of buffers
    }

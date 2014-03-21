@@ -11,6 +11,7 @@ current functionality of the framework.
    Used it in the hadaq::Observer 
 5. In hadaq::CombinerModule modify logic how events are build and how error condition detected.
    Do not exit from the BuildEvent function when one needs to skip buffers on some input   
+6. In hadaq::CombinerModule drop all events not before 5 sec is runed
 
 
 20.03.2014
