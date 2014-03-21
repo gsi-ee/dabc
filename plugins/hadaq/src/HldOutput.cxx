@@ -272,9 +272,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 
       if (fLastUpdate.Expired(1.)) {
-
          dabc::ModuleRef m = dabc::mgr.FindModule("Combiner");
-
          dabc::CmdSetParameter cmd("Evtbuild_bytesWritten");
          cmd.SetParValue((int)fCurrentFileSize);
          m.Submit(cmd);
@@ -303,6 +301,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if (!fFile.isWriting()) return dabc::do_Error;
 
+   unsigned total_write_size(0);
+
    for (unsigned n=0;n<buf.NumSegments();n++)
    {
       unsigned write_size = buf.SegmentSize(n);
@@ -328,11 +328,11 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
-      fCurrentFileSize += write_size;
+      total_write_size+=write_size;
    }
 
    // TODO: in case of partial written buffer, account sizes to correct file 
-   AccountBuffer(buf.GetTotalSize(), hadaq::ReadIterator::NumEvents(buf));
+   AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
 
    return dabc::do_Ok;
 }
