@@ -88,7 +88,7 @@ DAQDISK - switches disk demon mode on/off
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
-       <NumBuffers value="2000"/>
+       <NumBuffers value="3000"/>
     </MemoryPool>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
@@ -134,7 +134,7 @@ DAQDISK - switches disk demon mode on/off
        <InputPort name="Input34" url="hadaq://host:${UDP34}"/>
                     
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
+       <InputPort name="Input*" queue="30" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
        <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500"/>
 
