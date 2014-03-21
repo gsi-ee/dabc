@@ -55,6 +55,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
+      <threads_layout value="maximal"/>
     </Run>
     
     <HttpServer name="http">

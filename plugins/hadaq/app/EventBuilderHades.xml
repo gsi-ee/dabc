@@ -65,12 +65,14 @@ DAQDISK - switches disk demon mode on/off
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <logfile value="EB_${EBNUM}.log"/>
+      <loglevel value="1"/>
       <debuglevel value="-1"/>
       <syslog value="DAQ"/>
       <sysloglevel value="0"/>
       <loglimit value="1000000"/>
 <!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
       <control value="true"/>
+       <threads_layout value="maximal"/>
     </Run>
     
     <HttpServer name="http">
