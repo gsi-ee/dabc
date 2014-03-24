@@ -43,7 +43,7 @@
 #include "TStreamer.h"
 #include "TStreamerInfoActions.h"
 #include "RVersion.h"
-
+#include "TClonesArray.h"
 
 #ifdef R__VISUAL_CPLUSPLUS
 #define FLong64    "%I64d"
@@ -577,7 +577,7 @@ void TBufferJSON::JsonWriteObject(const void* obj, const TClass* cl)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass* objClass)
+void TBufferJSON::JsonStreamCollection(TCollection* col, const TClass*)
 {
    // store content of collection
 
@@ -1133,11 +1133,9 @@ Version_t TBufferJSON::ReadVersion(UInt_t *start, UInt_t *bcnt, const TClass * /
 }
 
 //______________________________________________________________________________
-UInt_t TBufferJSON::WriteVersion(const TClass *cl, Bool_t /* useBcnt */)
+UInt_t TBufferJSON::WriteVersion(const TClass * /*cl*/, Bool_t /* useBcnt */)
 {
-   // Copies class version to buffer, but not writes it to xml
-   // Version will be written with next I/O operation or
-   // will be added as attribute of class tag, created by IncrementLevel call
+   // Ignored in TBufferJSON
 
    return 0;
 }
@@ -1663,19 +1661,17 @@ void TBufferJSON::ReadFastArrayWithNbits(Double_t  *d, Int_t n, Int_t /*nbits*/)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::ReadFastArray(void  *start, const TClass *cl, Int_t n, TMemberStreamer *s, const TClass *onFileClass)
+void TBufferJSON::ReadFastArray(void  * /*start*/, const TClass * /*cl*/, Int_t /*n*/, TMemberStreamer * /*s*/, const TClass * /*onFileClass*/)
 {
    // redefined here to avoid warning message from gcc
 
-   // TBuffer::ReadFastArray(start, cl, n, s, onFileClass);
 }
 
 //______________________________________________________________________________
-void TBufferJSON::ReadFastArray(void **startp, const TClass *cl, Int_t n, Bool_t isPreAlloc, TMemberStreamer *s, const TClass *onFileClass)
+void TBufferJSON::ReadFastArray(void ** /*startp*/, const TClass * /*cl*/, Int_t /*n*/, Bool_t /*isPreAlloc*/, TMemberStreamer * /*s*/, const TClass * /*onFileClass*/)
 {
    // redefined here to avoid warning message from gcc
 
-   // TBuffer::ReadFastArray(startp, cl, n, isPreAlloc, s, onFileClass);
 }
 
 
@@ -2626,11 +2622,14 @@ Int_t TBufferJSON::ApplySequence(const TStreamerInfoActions::TActionSequence &se
 
 
 //______________________________________________________________________________
-Int_t TBufferJSON::WriteClones(TClonesArray *a, Int_t nobjects)
+Int_t TBufferJSON::WriteClones(TClonesArray* a, Int_t /*nobjects*/)
 {
    // Interface to TStreamerInfo::WriteBufferClones.
 
-   Error("WriteClones", "Not implemented!!!");
+   Info("WriteClones", "Not yet tested");
+
+   if (a!=0)
+      JsonStreamCollection(a, a->IsA());
 
    return 0;
 }

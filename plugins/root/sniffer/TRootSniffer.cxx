@@ -788,7 +788,7 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
    return res.Length() > 0;
 }
 
-Bool_t TRootSniffer::ProduceXml(const char* path, const char* options, TString& res)
+Bool_t TRootSniffer::ProduceXml(const char* path, const char* /*options*/, TString& res)
 {
    // produce XML data for specified item
    // For object conversion TBufferXML is used
