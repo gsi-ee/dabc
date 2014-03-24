@@ -752,7 +752,9 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
    TUrl url;
    url.SetOptions(options);
    url.ParseOptions();
-   Int_t compact = url.GetIntValueFromOptions("compact");
+   Int_t compact = -1;
+   if (url.GetValueFromOptions("compact"))
+      compact = url.GetIntValueFromOptions("compact");
 
    if (istreamerinfo) {
 
@@ -778,9 +780,9 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
       if ((obj_ptr==0) || ((obj_cl==0) && (member==0))) return kFALSE;
 
       if (member == 0)
-         res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl, compact);
+         res = TBufferJSON::ConvertToJSON(obj_ptr, obj_cl, compact >= 0 ? compact : 0);
       else
-         res = TBufferJSON::ConvertToJSON(obj_ptr, member, compact);
+         res = TBufferJSON::ConvertToJSON(obj_ptr, member, compact >= 0 ? compact : 1);
    }
 
    return res.Length() > 0;

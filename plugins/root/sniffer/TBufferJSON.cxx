@@ -255,9 +255,12 @@ TString TBufferJSON::JsonWriteMember(const void* ptr, TDataMember* member, TClas
             case kVoid_t: break;
          }
       } else
-      if (member->GetArrayDim()==1) {
+      if ((member->GetArrayDim()==1) || (fCompact>0)) {
 
-         int n = member->GetMaxIndex(0);
+         Int_t n = member->GetMaxIndex(0);
+         for (Int_t ndim = 1; ndim < member->GetArrayDim(); ndim++)
+            n *= member->GetMaxIndex(ndim);
+
          switch (tid) {
             case kChar_t:     WriteFastArray((Char_t*)ptr, n); break;
             case kShort_t:    WriteFastArray((Short_t*)ptr, n); break;
@@ -299,7 +302,7 @@ TString TBufferJSON::JsonWriteMember(const void* ptr, TDataMember* member, TClas
             }
 
             if (indexes[cnt] > 0)
-               fOutBuffer.Append(", ");
+               fOutBuffer.Append(fArraySepar);
             else
                fOutBuffer.Append("[ ");
 
