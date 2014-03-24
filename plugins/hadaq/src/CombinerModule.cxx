@@ -17,7 +17,9 @@
 
 #include <math.h>
 #include <iostream>
-#include <sched.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"
@@ -318,6 +320,14 @@ void hadaq::CombinerModule::RegisterExportedCounters()
   CreateEvtbuildPar("dataMover"); // rfio data mover number for epics gui
   SetEvtbuildPar("dataMover", 0); // default for testing!
   
+  CreateEvtbuildPar("coreNr");
+  
+  CreateEvtbuildPar("PID");
+  fPID=getpid();
+  SetEvtbuildPar("PID", (int) fPID);
+ 
+  
+  
 }
 
 
@@ -352,6 +362,13 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          StoreRunInfoStart();
       }
    }
+   
+   static int affcount=0;
+   if(affcount++ % 10)
+    {
+      SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
+    }
+   
 
    SetEvtbuildPar("nrOfMsgs", NumInputs());
    SetNetmemPar("nrOfMsgs", NumInputs());
@@ -688,7 +705,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // here all inputs should be aligned to buildevid
 
    // for sync sequence number, check first if we have error from cts:
-   uint32_t sequencenumber = fTotalRecvEvents;
+   uint32_t sequencenumber = fTotalRecvEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
    
    if(fUseSyncSeqNumber && hasCompleteEvent) {
       hasCompleteEvent = false;
@@ -1011,7 +1028,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
 	char ltime[20];				/* local time */
 	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
-	std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
+        std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
         fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
         fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
         fclose(fp);
@@ -1040,3 +1057,7 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 	std::string result = fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 	return result;
 }
+
+
+
+

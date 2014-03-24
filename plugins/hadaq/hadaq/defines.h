@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <string.h>
+#include <sched.h>
 
 
 /*
@@ -478,8 +479,12 @@ is unique throughout all events ever acquired by the system.
           */
          static std::string FormatFilename (uint32_t runid, uint16_t ebid);
 
-
-
+         
+         /* helper function to evaluate core affinity for process pid_t
+          * mostly stolen from daqdata/hadaq/stats.c   
+            we put it here since event structures are known almost everywhere*/
+         static int CoreAffinity(pid_t pid);
+ 
    };
 
 }

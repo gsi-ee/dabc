@@ -45,6 +45,7 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fTotalRecvBuffers(0),
    fTotalDroppedBuffers(0)
 {
+     fPid=getpid();
 }
 
 hadaq::DataSocketAddon::~DataSocketAddon()
@@ -313,6 +314,12 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       CreateNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber));
       CreateNetmemPar(dabc::format("portNr%d",fIdNumber));
       SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
+      
+      CreateNetmemPar("coreNr");
+      CreateNetmemPar("PID");
+   
+     
+      
 
       CreateTimer("ObserverTimer", 1, false);
       DOUT3("hadaq::DataTransport created observer parameters");
@@ -365,6 +372,12 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
    SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
 
+   static int affcount=0;
+   if(affcount++ % 10)
+    {
+    SetNetmemPar("PID", (int) addon->fPid);
+    SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
+    }
    return true;
 }
 

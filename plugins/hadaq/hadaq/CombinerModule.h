@@ -16,6 +16,9 @@
 #ifndef HADAQ_CombinerModule
 #define HADAQ_CombinerModule
 
+
+#include <sched.h>
+
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
 #endif
@@ -144,6 +147,8 @@ namespace hadaq {
          int fFlushCounter;
 
          int32_t fEBId; // eventbuilder id <- node id
+         
+         pid_t fPID; // process id of combiner module
 
          bool fWithObserver;
          bool fEpicsSlave;
@@ -249,7 +254,7 @@ namespace hadaq {
              because of timeshift between getting new runid and open/close of actual files*/
          std::string GenerateFileName(unsigned runid);
 
-
+         
          /* helper methods to export ebctrl parameters */
          std::string GetEvtbuildParName(const std::string& name);
          void CreateEvtbuildPar(const std::string& name);

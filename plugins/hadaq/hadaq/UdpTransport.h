@@ -35,7 +35,7 @@
 
 #include "hadaq/HadaqTypeDefs.h"
 
-
+#include <sched.h>
 
 #define DEFAULT_MTU 63 * 1024
 
@@ -67,6 +67,7 @@ namespace hadaq {
          uint64_t           fTotalRecvBuffers;
          uint64_t           fTotalDroppedBuffers;
 
+         pid_t fPid; // process id 
 
          virtual void ProcessEvent(const dabc::EventId&);
          virtual double ProcessTimeout(double lastdiff);
@@ -107,6 +108,8 @@ namespace hadaq {
          int            fIdNumber;
          bool           fWithObserver;
          std::string    fDataRateName;
+         
+       
 
          std::string GetNetmemParName(const std::string& name);
          void CreateNetmemPar(const std::string& name);

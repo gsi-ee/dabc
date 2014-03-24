@@ -66,6 +66,33 @@ std::string hadaq::RawEvent::FormatFilename (uint32_t runid, uint16_t ebid)
    return std::string(buf);
 }
 
+
+
+int hadaq::RawEvent::CoreAffinity(pid_t pid)
+{
+  // stolen from stats.c of old eventbuilders JAM
+        unsigned long new_mask = 2;
+        unsigned int len = sizeof(new_mask);
+        cpu_set_t cur_mask;
+        CPU_ZERO(&cur_mask);
+        sched_getaffinity(pid, len, &cur_mask);
+        int i;
+        for (i = 0; i < 24; i++) {
+          int cpu;
+          cpu = CPU_ISSET(i, &cur_mask);
+                        if (cpu > 0)
+                                break;
+                }
+       return i;
+}
+
+
+
+
+
+
+
+
 hadaq::RawSubevent* hadaq::RawEvent::NextSubevent(RawSubevent* prev)
 {
    if (prev == 0) {
