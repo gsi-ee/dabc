@@ -779,7 +779,7 @@ var kClassMask = 0x80000000;
 
 (function(){
 
-   var version = "1.11 2012/12/04";
+   var version = "2.8 2014/03/24";
    
 
    // ctor
@@ -987,7 +987,7 @@ var kClassMask = 0x80000000;
             if (this[prop]['typename'] === 'BASE') {
                var clname = this[prop]['class'];
                if (this[prop]['class'].indexOf("TArray") == 0) {
-                  var array_type = this[prop]['class'].charAt(this[prop]['class'].length-1)
+                  var array_type = this[prop]['class'].charAt(6);
                   obj['fN'] = buf.ntou4();
                   obj['fArray'] = buf.ReadFastArray(obj['fN'], array_type);
                } else {
@@ -1001,31 +1001,27 @@ var kClassMask = 0x80000000;
                 typeof(this[prop]['typename']) === "undefined" ||
                 this[prop]['typename'] === "BASE")
                continue;
-            var prop_name = prop;
-            
-            //console.log("Reading " + prop_name + " of type " +  this[prop]['typename']);
             
             // special classes (custom streamers)
             switch (this[prop]['typename']) {
                case "TString*":
                   // TODO: check how and when it used
                   var r__v = buf.ReadVersion();
-                  obj[prop_name] = new Array();
+                  obj[prop] = new Array();
                   for (var i = 0; i<obj[this[prop]['cntname']]; ++i )
-                     obj[prop_name][i] = buf.ReadTString();
+                     obj[prop][i] = buf.ReadTString();
                   buf.CheckBytecount(r__v, "TString* array");
                   break;
-               case "TArrayI":
-                  var n = buf.ntou4();
-                  obj[prop] = buf.ReadFastArray(n, 'I');
-                  break;
-               case "TArrayF":
-                  var n = buf.ntou4();
-                  obj[prop] = buf.ReadFastArray(n, 'F');
-                  break;
+               case "TArrayC":
                case "TArrayD":
+               case "TArrayF":
+               case "TArrayI":
+               case "TArrayL":
+               case "TArrayL64":
+               case "TArrayS":
+                  var array_type = this[prop]['typename'].charAt(6);
                   var n = buf.ntou4();
-                  obj[prop] = buf.ReadFastArray(n, 'D');
+                  obj[prop] = buf.ReadFastArray(n, array_type);
                   break;
                case "TObject":
                   // TODO: check why it is here
