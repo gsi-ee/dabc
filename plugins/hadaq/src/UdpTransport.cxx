@@ -22,6 +22,8 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/syscall.h>
+
 
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
@@ -45,7 +47,9 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fTotalRecvBuffers(0),
    fTotalDroppedBuffers(0)
 {
-     fPid=getpid();
+     //fPid=getpid();
+     fPid= syscall(SYS_gettid);
+     
 }
 
 hadaq::DataSocketAddon::~DataSocketAddon()
@@ -154,6 +158,10 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
       // DOUT0("UDP %d get data %d", fNPort, res);
+//       if(fTotalRecvMsg % 10000)
+//         {
+//           fPid= syscall(SYS_gettid); // we want the real active threadid
+//         }
 
       // when rest size is smaller that mtu, one should close buffer
       if (fTgtPtr.rawsize() < fMTU)
@@ -319,8 +327,8 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       CreateNetmemPar("PID");
    
      
-      
-
+      SetNetmemPar("PID", (int) addon->fPid);
+      SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
       CreateTimer("ObserverTimer", 1, false);
       DOUT3("hadaq::DataTransport created observer parameters");
    }
@@ -372,12 +380,14 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
    SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
 
-   static int affcount=0;
-   if(affcount++ % 10)
-    {
-    SetNetmemPar("PID", (int) addon->fPid);
-    SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
-    }
+// does updating the affinity cause performance loss?   
+//    static int affcount=0;
+//    if(affcount++ % 20)
+//     {
+//     SetNetmemPar("PID", (int) addon->fPid);
+//     SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
+//     //SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(0));
+//     }
    return true;
 }
 

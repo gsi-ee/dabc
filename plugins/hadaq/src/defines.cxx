@@ -75,7 +75,23 @@ int hadaq::RawEvent::CoreAffinity(pid_t pid)
         unsigned int len = sizeof(new_mask);
         cpu_set_t cur_mask;
         CPU_ZERO(&cur_mask);
-        sched_getaffinity(pid, len, &cur_mask);
+        if(pid)
+        {
+        // this one for whole process:
+          sched_getaffinity(pid, len, &cur_mask);
+        }
+        else
+        {
+        // try if we can find out current thread affinity:
+          pthread_t thread=pthread_self();
+          int r=pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cur_mask);
+          if(r)
+            {
+              printf("Error %d in pthread_getaffinity_np for thread 0x%x!\n",r, (unsigned) thread);              
+            }   
+        }
+
+        
         int i;
         for (i = 0; i < 24; i++) {
           int cpu;

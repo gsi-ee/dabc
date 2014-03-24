@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 
 
 #include "dabc/Application.h"
@@ -323,9 +324,12 @@ void hadaq::CombinerModule::RegisterExportedCounters()
   CreateEvtbuildPar("coreNr");
   
   CreateEvtbuildPar("PID");
-  fPID=getpid();
+  //fPID=getpid();
+  fPID= syscall(SYS_gettid);
+
+  
   SetEvtbuildPar("PID", (int) fPID);
- 
+  SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
   
   
 }
@@ -363,11 +367,12 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
       }
    }
    
-   static int affcount=0;
-   if(affcount++ % 10)
-    {
-      SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
-    }
+//    static int affcount=0;
+//    if(affcount++ % 20)
+//     {
+//       SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
+//       //SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(0));
+//     }
    
 
    SetEvtbuildPar("nrOfMsgs", NumInputs());
@@ -873,9 +878,13 @@ bool hadaq::CombinerModule::BuildEvent()
       }
 
    if (fLastDebugTm.Expired(1.)) {
-      DOUT0("Did building as usual mask %s complete = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(hasCompleteEvent), fMaxProcDist);
+      DOUT1("Did building as usual mask %s complete = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(hasCompleteEvent), fMaxProcDist);
       fLastDebugTm.GetNow();
       fMaxProcDist = 0;
+      // put here update of tid
+      // fPID= syscall(SYS_gettid);
+      
+      
    }
 
    // return true means that method can be called again immediately
