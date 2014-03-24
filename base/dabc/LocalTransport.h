@@ -141,8 +141,13 @@ namespace dabc {
       Buffer Item(unsigned indx) const { return GetObject() ? GetObject()->Item(indx) : Buffer(); }
 
       bool Full() const { return GetObject() ? GetObject()->Full() : false; }
-   };
 
+      bool SubmitCommandTo(bool to_input, Command cmd)
+      {
+         if (!GetObject()) return false;
+         return to_input ? GetObject()->fInp.Submit(cmd) : GetObject()->fOut.Submit(cmd);
+      }
+   };
 
 
 }

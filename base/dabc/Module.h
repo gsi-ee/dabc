@@ -178,6 +178,10 @@ namespace dabc {
          /** \brief Disconnect port from transport.
           Should be called only from Module thread */
          bool DisconnectPort(const std::string& name);
+
+         /** Submits command to transport, assigned with the port */
+         bool SubmitCommandToTransport(const std::string& portname, Command cmd);
+
          unsigned PortQueueCapacity(const std::string& name) const { return FindPort(name).QueueCapacity(); }
          bool SetPortSignalling(const std::string& name, Port::EventsProducing signal);
          bool SetPortRatemeter(const std::string& name, const Parameter& ref);

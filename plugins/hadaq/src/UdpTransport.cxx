@@ -348,13 +348,6 @@ void hadaq::DataTransport::SetNetmemPar(const std::string& name, unsigned value)
    Par(GetNetmemParName(name)).SetValue(value);
 }
 
-void hadaq::DataTransport::ClearExportedCounters()
-{
-   DataSocketAddon* addon = dynamic_cast<DataSocketAddon*> (fAddon());
-   if (addon!=0) addon->ClearCounters();
-}
-
-
 bool hadaq::DataTransport::UpdateExportedCounters()
 {
    DataSocketAddon* addon = dynamic_cast<DataSocketAddon*> (fAddon());
@@ -373,4 +366,16 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
 
    return true;
+}
+
+int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("ResetExportedCounters")) {
+      DataSocketAddon* addon = dynamic_cast<DataSocketAddon*> (fAddon());
+      if (addon!=0) addon->ClearCounters();
+      UpdateExportedCounters();
+      return dabc::cmd_true;
+   }
+
+   return dabc::InputTransport::ExecuteCommand(cmd);
 }

@@ -285,6 +285,16 @@ bool dabc::Module::DisconnectPort(const std::string& portname)
 }
 
 
+bool dabc::Module::SubmitCommandToTransport(const std::string& portname, Command cmd)
+{
+   PortRef port = FindPort(portname);
+
+   if (port.null()) return false;
+
+   return port()->SubmitCommandToTransport(cmd);
+}
+
+
 int dabc::Module::PreviewCommand(Command cmd)
 {
    // this hook in command execution routine allows us to "preview"

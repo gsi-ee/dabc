@@ -71,7 +71,7 @@ namespace dabc {
 
          std::string        fRateName; // name of rate parameter, which should be assigned to port
 
-         unsigned           fMapLoopLength;
+         unsigned           fMaxLoopLength;   // maximum length of single event-processing loop
 
          double             fReconnectPeriod; // defines how often reconnect for port should be tried, -1 disable reconnect
          bool               fDoingReconnect;  // true if reconnection is now active
@@ -138,10 +138,13 @@ namespace dabc {
          void SetRateMeter(const Parameter& ref);
 
          /** Specifies how many events can be processed at once. Could be used to balance load between ports */
-         void SetMaxLoopLength(unsigned cnt) { fMapLoopLength = cnt; }
+         void SetMaxLoopLength(unsigned cnt) { fMaxLoopLength = cnt; }
 
          bool SetSignalling(EventsProducing kind);
          EventsProducing SignallingKind() const { return fSignal; }
+
+         /** Submit command to connected transport */
+         bool SubmitCommandToTransport(Command cmd);
 
       public:
 

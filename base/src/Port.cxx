@@ -27,7 +27,7 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fQueue(),
    fBindName(),
    fRateName(),
-   fMapLoopLength(0),
+   fMaxLoopLength(0),
    fReconnectPeriod(-1),
    fDoingReconnect(false)
 {
@@ -42,7 +42,7 @@ dabc::Port::~Port()
 void dabc::Port::ReadPortConfiguration()
 {
    fQueueCapacity = Cfg(xmlQueueAttr).AsInt(fQueueCapacity);
-   fMapLoopLength = Cfg(xmlLoopAttr).AsInt(fMapLoopLength);
+   fMaxLoopLength = Cfg(xmlLoopAttr).AsInt(fMaxLoopLength);
    std::string signal = Cfg(xmlSignalAttr).AsStr();
    if (signal == "none") fSignal = SignalNone; else
    if ((signal == "confirm") || (signal == "normal")) fSignal = SignalConfirm; else
@@ -173,12 +173,20 @@ int dabc::Port::GetMaxLoopLength()
          return 0;
       case SignalConfirm:
       case SignalOperation:
-         return fMapLoopLength ? fMapLoopLength : QueueCapacity();
+         return fMaxLoopLength ? fMaxLoopLength : QueueCapacity();
       case Port::SignalEvery:
          return -1;
    }
    return -1;
 }
+
+bool dabc::Port::SubmitCommandToTransport(Command cmd)
+{
+   if (IsInput()) return fQueue.SubmitCommandTo(false, cmd);
+   if (IsOutput()) return fQueue.SubmitCommandTo(true, cmd);
+   return false;
+}
+
 
 // ================================================================
 

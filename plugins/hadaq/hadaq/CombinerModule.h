@@ -141,8 +141,7 @@ namespace hadaq {
          std::vector<ReadIterator> fInp;
          WriteIterator fOut;
 
-         bool fFlushFlag;
-         bool fUpdateCountersFlag;
+         int fFlushCounter;
 
          int32_t fEBId; // eventbuilder id <- node id
 
@@ -212,7 +211,6 @@ namespace hadaq {
 
          void RegisterExportedCounters();
          bool UpdateExportedCounters();
-         void ClearExportedCounters();
 
          void DoErrorBitStatistics(unsigned ninp);
 

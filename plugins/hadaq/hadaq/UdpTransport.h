@@ -114,9 +114,10 @@ namespace hadaq {
 
          void RegisterExportedCounters();
          bool UpdateExportedCounters();
-         void ClearExportedCounters();
 
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
          DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer);

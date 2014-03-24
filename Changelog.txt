@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+24.03.2014
+1. Provide possibility to submit command to the transport, assigned with the port.
+2. In hadaq::CombinerModule reset different counters, using such command.
+   Also separate flush and update timers.
+
+
 21.03.2014
 1. Remove all permanent parameter references from HldOutput.
 2. When running in slave mode, HldOutput extracts runid number only from buffer itself   
