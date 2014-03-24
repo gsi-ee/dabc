@@ -27,6 +27,8 @@ March 2014:
    selected data member of the class. Supported are: 
    basic data types, arrays of basic data types, TString, TArray classes. 
    Also any object as data member can be streamed.
+8. TRootSniffer do not creates sublevels for base classes
+   
     
 To do:
 1. Redraw of canvas do not work at all.    

@@ -383,7 +383,6 @@ TRootSniffer::~TRootSniffer()
 void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char* ptr, unsigned long int cloffset)
 {
    // scan object data members
-
    // some members like enum or static members will be excluded
 
    if ((cl==0) || (ptr==0) || rec.Done()) return;
@@ -399,12 +398,18 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
       TClass* bclass = baseclass->GetClassPointer();
       if (bclass==0) continue;
 
-      TRootSnifferScanRec chld;
+      // all parent classes scanned within same hierarchy level
+      // this is how normal object streaming works
+      ScanObjectMemebers(rec, bclass, ptr, cloffset + baseclass->GetDelta());
+      if (rec.Done()) break;
 
-      if (chld.GoInside(rec, baseclass)) {
-         ScanObjectMemebers(chld, bclass, ptr, cloffset + baseclass->GetDelta());
-         if (chld.Done()) break;
-      }
+//    this code was used when each base class creates its own sub level
+
+//      TRootSnifferScanRec chld;
+//      if (chld.GoInside(rec, baseclass)) {
+//         ScanObjectMemebers(chld, bclass, ptr, cloffset + baseclass->GetDelta());
+//         if (chld.Done()) break;
+//      }
    }
 
    //DOUT0("SCAN MEMBERS %s %u mask %u done %s", cl->GetName(), cl->GetListOfDataMembers()->GetSize(), chld.mask, DBOOL(chld.Done()));
