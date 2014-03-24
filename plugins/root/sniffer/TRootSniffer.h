@@ -96,7 +96,7 @@ protected:
 
    void ScanObject(TRootSnifferScanRec& rec, TObject* obj);
 
-   void ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername = 0);
+   void ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername = 0, Bool_t extra = kFALSE);
 
    /* Method is used to scan ROOT objects.
     * Can be reimplemented to extend scanning */

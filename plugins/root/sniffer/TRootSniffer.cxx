@@ -499,14 +499,17 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec& rec, TObject* obj)
    rec.SetResult(obj, obj->IsA(), 0, rec.num_childs);
 }
 
-void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername)
+void TRootSniffer::ScanCollection(TRootSnifferScanRec& rec, TCollection* lst, const char* foldername, Bool_t extra)
 {
    // scan collection content
 
    if ((lst==0) || (lst->GetSize()==0)) return;
 
    TRootSnifferScanRec folderrec;
-   if (foldername && !folderrec.GoInside(rec, 0, foldername)) return;
+   if (foldername) {
+      if (!folderrec.GoInside(rec, 0, foldername)) return;
+      if (extra) folderrec.mask = folderrec.mask | mask_ExtraFolder;
+   }
 
    {
       TRootSnifferScanRec& master = foldername ? folderrec : rec;
