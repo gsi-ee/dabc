@@ -113,7 +113,7 @@ bool hadaq::HldOutput::StartNewFile()
          dabc::Parameter fDiskNumberGuiPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");
          if(!fDiskNumberGuiPar.null()) {
             fDiskNumberGuiPar.SetValue(disknumber);
-            DOUT0("Updated disknumber %d for gui",disknumber);
+            DOUT2("Updated disknumber %d for gui",disknumber);
          }
       }
       else
@@ -232,8 +232,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
             continue;
          }
 
-         ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
-                    nextrunid, nextrunid, fRunNumber,fRunNumber));
+//          ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
+//                     nextrunid, nextrunid, fRunNumber,fRunNumber));
          DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
                   nextrunid, nextrunid, fRunNumber,fRunNumber);
          fRunNumber = nextrunid;
@@ -261,7 +261,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
             if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
 
-            DOUT0("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file",
+            DOUT2("HldOutput flushes %d bytes (%d events) of old runid in buffer segment %d to file",
                   write_size, numevents, n);
 
             payload -= write_size;

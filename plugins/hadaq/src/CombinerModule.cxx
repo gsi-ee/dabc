@@ -253,7 +253,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       return false;
    }
    if (!CanSendToAllOutputs()) {
-      DOUT0("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s CanSend(1) = %s", NumOutputs(), DBOOL(CanSend(0)), DBOOL(CanSend(1)));
+      DOUT1("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s CanSend(1) = %s", NumOutputs(), DBOOL(CanSend(0)), DBOOL(CanSend(1)));
       return false;
    }
    dabc::Buffer buf = fOut.Close();
@@ -619,12 +619,12 @@ bool hadaq::CombinerModule::BuildEvent()
    // check too large triggertag difference on input channels, flush input buffers
 
    if (fLastDropTm.Expired(5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || fLastBuildTm.Expired(2.)) {
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || fLastBuildTm.Expired(10.)) {
       SetInfo(
             dabc::format(
-                  "Event id difference %d exceeding tolerance window %d (or no events where build), flushing buffers!",
+                  "Event id difference %d exceeding tolerance window %d (or no events were build since 10 s), flushing buffers!",
                   diff, fTriggerNrTolerance), true);
-      DOUT0("Event id difference %d exceeding tolerance window %d (or no events where build), maxid:%u minid:%u, flushing buffers!",
+      DOUT0("Event id difference %d exceeding tolerance window %d (or no events were build since 10 s), maxid:%u minid:%u, flushing buffers!",
                   diff, fTriggerNrTolerance, maxeventid, mineventid);
       DropAllInputBuffers();
 
@@ -779,7 +779,7 @@ bool hadaq::CombinerModule::BuildEvent()
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
-            DOUT0("Could not flush buffer");
+            DOUT1("Could not flush buffer");
             // return true;  polling
             return false;
          }
@@ -1012,7 +1012,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
 	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
 	fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
 	fclose(fp);
-	DOUT0("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
+	DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
 
 }
 
@@ -1041,7 +1041,7 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
         fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
         fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
         fclose(fp);
-	DOUT0("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
+	DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
 }
 
 
