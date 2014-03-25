@@ -422,7 +422,7 @@ bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& f
 
       tgt.DisableReading();    // we ignore all data
       sel.EnableReading(tgt);  // beside selected element
-      tgt.EnableReading();     // we enable reading of top - it store time stamp
+      tgt.EnableReading();     // we enable reading of top - it stores time stamp
 
       // now we need enable only that entry
       sel.EnableHistory(100);

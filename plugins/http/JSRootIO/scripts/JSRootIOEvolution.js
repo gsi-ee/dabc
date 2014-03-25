@@ -1819,8 +1819,6 @@ var kClassMask = 0x80000000;
 
       return this;
    };
-   
-
 
    JSROOTIO.RootFile.Version = version;
 

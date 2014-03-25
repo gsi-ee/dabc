@@ -165,8 +165,9 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fNodeChanged(false),
    fNamesChanged(false),
    fChildsChanged(false),
-   fDisableReading(false),
+   fDisableDataReading(false),
    fDisableChildsReading(false),
+   fDisableReadingAsChild(false),
    fBinData(),
    fHist(),
    fHierarchyMutex(0)
@@ -294,6 +295,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       //DOUT0("Write childs %u", (unsigned) s.size());
 
    } else {
+
       s.read_uint32(storesz);
       sz = ((uint64_t) storesz)*8;
       s.read_uint32(storenum);
@@ -304,11 +306,11 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       s.read_uint64(mask);
 
       if (mask & maskFieldsStored) {
-         if (fDisableReading) {
+         if (fDisableDataReading) {
             if (!s.skip_object())
                EOUT("FAIL to skip fields part in the streamer for %s", ItemName().c_str());
             else
-               DOUT0("SKIP FIELDS in %s", ItemName().c_str());
+               DOUT3("SKIP FIELDS in %s", ItemName().c_str());
          } else {
             fNodeChanged = true;
             std::string prefix;
@@ -318,12 +320,11 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
       }
 
       if (mask & maskHistory) {
-
-         if (fDisableReading) {
+         if (fDisableDataReading) {
             if (!s.skip_object())
                EOUT("FAIL to skip history part in the streamer");
             else
-               DOUT0("SKIP HISTORY in %s", ItemName().c_str());
+               DOUT3("SKIP HISTORY in %s", ItemName().c_str());
          } else {
             if (fHist.null()) fHist.Allocate();
             fHist()->Stream(s, version, hlimit);
@@ -351,7 +352,6 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
                   EOUT("FAIL to skip child %s in %s", childname.c_str(), ItemName().c_str());
                else
                   DOUT0("SKIP CHILD %s in %s", childname.c_str(), ItemName().c_str());
-
                continue;
             }
 
@@ -379,7 +379,15 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
                   while (findindx-- > tgtcnt) RemoveChildAt(tgtcnt, true);
             }
 
-            child->Stream(s, kind, version, hlimit);
+            if (child->fDisableReadingAsChild) {
+               if (!s.skip_object())
+                  EOUT("FAIL to skip item %s completely", child->ItemName().c_str());
+               else
+                  DOUT3("SKIP item completely %s", child->ItemName().c_str());
+            } else {
+               child->Stream(s, kind, version, hlimit);
+            }
+
             tgtcnt++;
          }
 
@@ -654,8 +662,11 @@ std::string dabc::HierarchyContainer::ItemName()
 
 void dabc::HierarchyContainer::BuildObjectsHierarchy(const Reference& top)
 {
-   if (!top.null())
-      top()->BuildFieldsMap(&Fields());
+   if (top.null()) return;
+
+   top()->BuildFieldsMap(&Fields());
+
+   if (top()->IsChildsHidden()) return;
 
    ReferencesVector chlds;
    if (!top.GetAllChildRef(&chlds)) return;
@@ -753,7 +764,7 @@ void dabc::HierarchyContainer::MarkReading(bool withchilds, bool readvalues, boo
          if (child) child->MarkReading(withchilds, readvalues, readchilds);
       }
 
-   fDisableReading = !readvalues;
+   fDisableDataReading = !readvalues;
    fDisableChildsReading = !readchilds;
 }
 
@@ -1142,7 +1153,7 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
 
 
 
-std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
+std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name, bool topmost)
 {
    dabc::Hierarchy parent = *this;
    std::string producer_name;
@@ -1152,6 +1163,7 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name)
       if (parent.HasField(dabc::prop_producer)) {
          producer_name = parent.Field(dabc::prop_producer).AsStr();
          request_name = RelativeName(parent);
+         if (!topmost) break;
       }
       parent = parent.GetParentRef();
    }
@@ -1203,6 +1215,11 @@ bool dabc::Hierarchy::DettachFromParent()
 void dabc::Hierarchy::DisableReading(bool withchlds)
 {
    if (!null()) GetObject()->MarkReading(withchlds, false, false);
+}
+
+void dabc::Hierarchy::DisableReadingAsChild()
+{
+   if (!null()) GetObject()->fDisableReadingAsChild = true;
 }
 
 void dabc::Hierarchy::EnableReading(const Hierarchy& upto)

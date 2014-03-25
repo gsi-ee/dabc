@@ -53,6 +53,7 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    fPublishers(),
    fSubscribers(),
    fCnt(0),
+   fMgrPath(),
    fMgrHiearchy()
 {
    fLocal.Create("LOCAL");
@@ -73,24 +74,25 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
 void dabc::Publisher::OnThreadAssigned()
 {
+//   fMgrPath = "DABC/localhost";
+
+   fMgrPath = "DABC/";
+   std::string addr = dabc::mgr.GetLocalAddress();
+   size_t pos = addr.find(":");
+   if (pos<addr.length()) addr[pos]='_';
+   fMgrPath += addr;
+
    if (!fMgrHiearchy.null()) {
-      std::string path = "DABC/";
-      std::string addr = dabc::mgr.GetLocalAddress();
-      size_t pos = addr.find(":");
-      if (pos<addr.length()) addr[pos]='_';
-      path += addr;
-
-      DOUT0("dabc::Publisher::BeforeModuleStart mgr path %s", path.c_str());
-
+      DOUT3("dabc::Publisher::BeforeModuleStart mgr path %s", fMgrPath.c_str());
       fPublishers.push_back(PublisherEntry());
       fPublishers.back().id = fCnt++;
-      fPublishers.back().path = path;
+      fPublishers.back().path = fMgrPath;
       fPublishers.back().worker = ItemName();
       fPublishers.back().fulladdr = WorkerAddress(true);
       fPublishers.back().hier = fMgrHiearchy();
       fPublishers.back().local = true;
 
-      fLocal.GetFolder(path, true);
+      fLocal.GetFolder(fMgrPath, true);
    }
 
    ActivateTimeout(0.1);
@@ -278,10 +280,33 @@ bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_
    iter->version = version;
 
    if (iter->local) {
+
+//      if (iter->mgrsubitem) DOUT0("Get diff for the subpath %s", iter->path.c_str());
+
       dabc::Hierarchy top = fLocal.GetFolder(iter->path);
       if (!top.null()) {
+
+/*         std::string dpath = iter->path;
+         if ((dpath.length()>0) && (dpath[0]!='/')) {
+            dpath = std::string("/") + dpath;
+            dabc::Hierarchy dtop = fLocal.GetFolder(dpath);
+            if (dtop.null()) EOUT("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa %s", dpath.c_str());
+                        else EOUT("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ %s", dpath.c_str());
+
+         }
+*/
+         // we ensure that update of that item in manager hierarchy will not change its properties
          top.UpdateFromBuffer(diff);
          top.SetField(prop_producer, iter->fulladdr);
+         if (iter->mgrsubitem) top.DisableReadingAsChild();
+
+/*         dabc::Hierarchy dtop = fLocal.GetFolder("/DABC/localhost/Threads/CombinerThrd");
+         if (dtop.null()) EOUT("GGGGGGGGGGGGGGG didnot found /DABC/localhost/Threads/CombinerThrd");
+         dtop = fLocal.GetFolder("/DABC/localhost/Threads/CombinerThrd/WaitTime");
+         if (dtop.null()) EOUT("GGGGGGGGGGGGGGG didnot found /DABC/localhost/Threads/CombinerThrd/WaitTime");
+*/
+      } else {
+         EOUT("Did not found local folder %s ", iter->path.c_str());
       }
    } else {
       iter->rem.UpdateFromBuffer(diff);
@@ -317,10 +342,12 @@ bool dabc::Publisher::ReplyCommand(Command cmd)
 }
 
 
-dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path)
+dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path, bool* islocal)
 {
 
    dabc::Hierarchy top = fGlobal.null() ? fLocal : fGlobal;
+
+   if (islocal) *islocal = fGlobal.null();
 
    if (path.empty() || (path=="/")) return top;
 
@@ -334,12 +361,13 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
    dabc::Hierarchy h = fLocal.GetFolder(itemname);
    if (!h.null()) {
       // we need to redirect command to appropriate worker (or to ourself)
-
-      producer_name = h.FindBinaryProducer(request_name);
-      DOUT2("Producer = %s request %s", producer_name.c_str(), request_name.c_str());
+      // for local producers we need to find last (maximal depth) producer
+      producer_name = h.FindBinaryProducer(request_name, false);
+      DOUT0("Producer:%s request:%s item:%s", producer_name.c_str(), request_name.c_str(), itemname.c_str());
 
       islocal = true;
-   } else
+   } else {
+      DOUT0("Did not found item %s in local folder", itemname.c_str());
    for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
       if (iter->local) continue;
 
@@ -351,6 +379,7 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
       producer_name = h.FindBinaryProducer(request_name);
       islocal = false;
       break;
+   }
    }
 
    if (!h.null()) return !producer_name.empty();
@@ -368,7 +397,6 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
       return true;
    }
 
-
    return false;
 }
 
@@ -379,14 +407,14 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
    std::string producer_name, request_name;
    bool islocal(true);
 
-   DOUT2("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+   DOUT0("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
    if (!IdentifyProducer(itemname, islocal, producer_name, request_name)) {
       EOUT("Not found producer for item %s", itemname.c_str());
       return false;
    }
 
-   DOUT2("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
+   DOUT0("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
 
    bool producer_local(true);
    std::string producer_server, producer_item;
@@ -438,6 +466,12 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       std::string path = cmd.GetStr("Path");
       std::string worker = cmd.GetStr("Worker");
+      bool ismgrpath = false;
+      if (path.find("$MGR$")==0) {
+         ismgrpath = true;
+         path.erase(0, 5);
+         path = fMgrPath + path;
+      }
 
       switch (cmd.GetInt("cmdid")) {
          case 1: { // REGISTER
@@ -451,8 +485,13 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             dabc::Hierarchy h = fLocal.GetFolder(path);
             if (!h.null()) {
-               EOUT("Path %s already present in the hierarchy", path.c_str());
-               return cmd_false;
+               if (ismgrpath) {
+                  DOUT0("Path %s is registered in manager hierarchy, treat it individually", path.c_str());
+                  h.DisableReadingAsChild();
+               } else {
+                  EOUT("Path %s already present in the hierarchy", path.c_str());
+                  return cmd_false;
+               }
             }
 
             DOUT2("PUBLISH folder %s", path.c_str());
@@ -464,6 +503,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             fPublishers.back().fulladdr = dabc::mgr.ComposeAddress("", worker);
             fPublishers.back().hier = cmd.GetPtr("Hierarchy");
             fPublishers.back().local = true;
+            fPublishers.back().mgrsubitem = ismgrpath;
 
             if (!fStoreDir.empty()) {
                if (fStoreSel.empty() || (path.find(fStoreSel) == 0)) {
@@ -474,6 +514,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             }
 
             fLocal.GetFolder(path, true);
+            // set immediately producer
+            // h.SetField(prop_producer, fPublishers.back().fulladdr);
 
             // ShootTimer("Timer");
 
@@ -615,13 +657,14 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
    if (cmd.IsName("CreateExeCmd")) {
       std::string path = cmd.GetStr("path");
 
-      dabc::Hierarchy def = GetWorkItem(path);
+      bool islocal(true);
+      dabc::Hierarchy def = GetWorkItem(path, &islocal);
       if (def.null()) return cmd_false;
 
       if (def.Field(dabc::prop_kind).AsStr() !="DABC.Command") return cmd_false;
 
       std::string request_name;
-      std::string producer_name = def.FindBinaryProducer(request_name);
+      std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
       if (producer_name.empty()) return cmd_false;
 
       dabc::Command res = dabc::Command(def.GetName());

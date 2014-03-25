@@ -533,9 +533,8 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
 
    DOUT3("Check Cfg %s in own parameters", name.c_str());
 
-   dabc::RecordField res = Par(name).Value();
-
    // second - as parameter
+   dabc::RecordField res = Par(name).Value();
    if (!res.null()) return res;
 
    DOUT3("Check Cfg %s in xml file", name.c_str());
@@ -549,7 +548,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
 
    DOUT3("Check Cfg %s in parent parameters", name.c_str());
 
-   // forth - in all parents
+   // forth - in parameters of all parents
    Object* prnt = GetParent();
    while (prnt!=0) {
       res = WorkerRef(prnt).Par(name).Value();
@@ -702,6 +701,8 @@ int dabc::Worker::PreviewCommand(Command cmd)
       // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
       if (!h.null()) {
+
+         BeforeHierarchyScan(h);
 
          LockGuard lock(h.GetHMutex());
 

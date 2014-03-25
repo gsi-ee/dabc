@@ -185,12 +185,23 @@ bool dabc::Object::IsLogging() const
    return GetFlag(flLogging);
 }
 
+bool dabc::Object::IsChildsHidden() const
+{
+   LockGuard lock(fObjectMutex);
+   return GetFlag(flChildsHidden);
+}
+
+bool dabc::Object::IsTopXmlLevel() const
+{
+   LockGuard lock(fObjectMutex);
+   return GetFlag(flTopXmlLevel);
+}
+
 bool dabc::Object::IsHidden() const
 {
    LockGuard lock(fObjectMutex);
    return GetFlag(flHidden);
 }
-
 
 void dabc::Object::SetLogging(bool on)
 {
@@ -248,7 +259,9 @@ void dabc::Object::Destructor()
       }
 
       if (fObjectChilds!=0) {
-         EOUT("!!!!!!! CHILDS %u ARE NOT DELETED completely obj:%s %p", fObjectChilds->GetSize(), GetName(), this);
+
+         if (fObjectChilds->GetSize() > 0)
+            EOUT("!!!!!!! CHILDS %u ARE NOT DELETED completely obj:%s %p", fObjectChilds->GetSize(), GetName(), this);
 
          if (fObjectBlock > 0)
             EOUT("!!!! CHILDS ARE STILL BLOCKED %d!!!!!!!", fObjectBlock);
@@ -349,7 +362,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       if (do_decrement) {
 
          if (fObjectRefCnt==0) {
-            EOUT("Obj %p %s Reference counter is already 0", this, GetName());
+            EOUT("Obj %p name:%s class:%s Reference counter is already 0", this, GetName(), ClassName());
             throw dabc::Exception(ex_Object, "Reference counter is 0 - cannot decrease", GetName());
             return false;
          }
@@ -641,13 +654,14 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
 
          _ChildsChanged();
 
-         if ((fObjectRefCnt>1) && (child->fObjectParent.fObj==this))  {
+         if (child->fObjectParent.fObj==this) {
             child->fObjectParent.fObj = 0; // not very nice, but will work
-            fObjectRefCnt--;
-         } else {
-            // do not decrease counter - we leave parent reference till object destructor
-            // than, probably object will be automatically destroyed
-            DOUT0("Object %p %s refcnt==1 when deleting child", this, GetName());
+            if (fObjectRefCnt>1) {
+               fObjectRefCnt--;
+            } else {
+               fObjectRefCnt = 0;
+               DOUT0("Object %p %s refcnt==%d when deleting child", this, GetName(), fObjectRefCnt);
+            }
          }
          break;
       }

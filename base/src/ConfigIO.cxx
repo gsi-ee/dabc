@@ -106,6 +106,8 @@ dabc::Object* dabc::ConfigIO::GetObjParent(Object* obj, int lvl)
 
    if ((obj!=0) && (obj->GetParent()==0) && (lvl==1) && (obj!=dabc::mgr())) return dabc::mgr();
 
+   if (lvl==0) return obj;
+
    while ((obj!=0) && (lvl-->0)) obj = obj->GetParent();
    return obj;
 }
@@ -158,6 +160,8 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
    while ((prnt = GetObjParent(obj, maxlevel)) != 0) {
       if (prnt==dabc::mgr()) break;
       maxlevel++;
+      // if object want to be on the top xml level, count maxlevel+1 to add manager as artificial top parent
+      if (prnt->IsTopXmlLevel()) break;
    }
    // TODO: could we read objects which are not in manager?
    if (prnt==0) return false;
@@ -177,15 +181,23 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
 
       DOUT3("Switch to search mode %d", dcnt);
 
-      fCurrStrict = dcnt==0;
-
       // only in first case we skipping context node
-      int max_depth = (dcnt==0) ? maxlevel - 1 : maxlevel;
+      int max_depth = 0;
+      fCurrItem = 0;
+      fCurrStrict = true;
 
       switch (dcnt) {
-         case 0: fCurrItem = fCfg->fSelected; break;
-         case 1: fCurrItem = fCfg->RootNode(); break;
-         default: EOUT("INTERNAL ERROR"); fCurrItem = 0; break;
+         case 0:
+            fCurrItem = fCfg->fSelected;
+            max_depth = maxlevel - 1;
+            fCurrStrict = true;
+            break;
+         case 1:
+            fCurrItem = fCfg->RootNode();
+            max_depth = maxlevel;
+            fCurrStrict = false;
+            break;
+         default: EOUT("INTERNAL ERROR");  break;
       }
 
       fCurrChld = 0;
@@ -193,7 +205,8 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
       int appskiplevel(-1);
 
       while (level >= 0) {
-         prnt = GetObjParent(obj, level);
+         // maximal level is manager itself, all other is several parents (if any)
+         prnt = (level==maxlevel) ? dabc::mgr() :  GetObjParent(obj, level);
 
          DOUT3("Search with loop %d path level = %d obj = %s class %s", dcnt,  level, DNAME(prnt), (prnt ? prnt->ClassName() : "---"));
 

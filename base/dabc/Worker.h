@@ -405,7 +405,6 @@ namespace dabc {
          /** Interface method to retrieve subscribed parameter events */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
 
-
          /** \brief Return reference on publisher.
           * First time publisher is searched in objects hierarchy and reference
           * stored in the internal structures.
@@ -425,6 +424,10 @@ namespace dabc {
 
          /** \brief Release reference on publisher and unsubscribe/unpublish all registered entries */
          void CleanupPublisher();
+
+         /** \brief Method called before publisher makes next snapshot of hierarchy.
+          *  Worker is able to make any kind of changes   */
+         virtual void BeforeHierarchyScan(Hierarchy& h) {}
 
       private:
 

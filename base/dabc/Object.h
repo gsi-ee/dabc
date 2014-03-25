@@ -164,14 +164,16 @@ namespace dabc {
       protected:
 
          enum EFlags {
-            flStateMask      = 0x00f,  ///< use 4 bits for state
-            flIsOwner        = 0x010,  ///< flag indicates default ownership for child objects
-            flCleanup        = 0x020,  ///< flag indicates that one should cleanup pointer from depended objects
-            flHasThread      = 0x040,  ///< flag indicates that object has thread and should be cleaned up via thread
-            flAutoDestroy    = 0x080,  ///< object will be automatically destroyed when no references exists, normally set in constructor, example Command
-            flLogging        = 0x100,  ///< object is marked to provide logging information, for debug purposes only
-            flNoMutex        = 0x200,  ///< object will be created without mutex, only can be used in constructor
-            flHidden         = 0x400   ///< hide object from hierarchy scan
+            flStateMask      = 0x000f,  ///< use 4 bits for state
+            flIsOwner        = 0x0010,  ///< flag indicates default ownership for child objects
+            flCleanup        = 0x0020,  ///< flag indicates that one should cleanup pointer from depended objects
+            flHasThread      = 0x0040,  ///< flag indicates that object has thread and should be cleaned up via thread
+            flAutoDestroy    = 0x0080,  ///< object will be automatically destroyed when no references exists, normally set in constructor, example Command
+            flLogging        = 0x0100,  ///< object is marked to provide logging information, for debug purposes only
+            flNoMutex        = 0x0200,  ///< object will be created without mutex, only can be used in constructor
+            flHidden         = 0x0400,  ///< hide object from hierarchy scan
+            flChildsHidden   = 0x0800,  ///< hide all childs from hierarchy scan
+            flTopXmlLevel    = 0x1000   ///< object (or folder) can be found on top xml level in the Context
          };
 
          unsigned           fObjectFlags;    ///< flag, protected by the mutex
@@ -325,6 +327,12 @@ namespace dabc {
 
          /** \brief Return true if object wants to be hidden from hierarchy scan, __thread safe__ */
          bool IsHidden() const;
+
+         /** \brief Return true if object wants to hide childs from hierarchy scan, __thread safe__ */
+         bool IsChildsHidden() const;
+
+         /** \brief Return true if object should be searched in the top level of the xml file, __thread safe__ */
+         bool IsTopXmlLevel() const;
 
          // List of children is __thread safe__ BUT may change in any time in between two calls
          // To perform some complex actions, references on child objects should be used

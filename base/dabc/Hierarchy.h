@@ -223,8 +223,9 @@ namespace dabc {
          bool       fNamesChanged;      ///< indicate if DNS structure was changed (either childs or relevant dabc fields)
          bool       fChildsChanged;     ///< indicate if something was changed in the hierarchy
 
-         bool       fDisableReading;       ///< when true, non of data (fields and history) need to be read in streamer
+         bool       fDisableDataReading;    ///< when true, non of data (fields and history) need to be read in streamer
          bool       fDisableChildsReading;  ///< when true, non of childs should be read
+         bool       fDisableReadingAsChild; ///< when true, object will not be updated when provided as child
 
          Buffer     fBinData;           ///< binary data, assigned with element
 
@@ -365,8 +366,9 @@ namespace dabc {
       Hierarchy FindMaster() const;
 
       /** Search for parent element, where binary_producer property is specified
-       * Returns name of binary producer and item name, which should be requested (relative to producer itself)  */
-      std::string FindBinaryProducer(std::string& request_name);
+       * Returns name of binary producer and item name, which should be requested (relative to producer itself)
+       * \par topmost identify where in hierarchy producer property will be searched */
+      std::string FindBinaryProducer(std::string& request_name, bool topmost = true);
 
       //RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
       const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
@@ -454,6 +456,9 @@ namespace dabc {
 
       /** \brief Mark all elements that non of data will be read */
       void DisableReading(bool withchlds = true);
+
+      /** \brief Disable reading of element when it appears as child in the structure */
+      void DisableReadingAsChild();
 
       /** \brief Enable element and all its parents to read data */
       void EnableReading(const Hierarchy& upto = 0);

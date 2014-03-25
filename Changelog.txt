@@ -2,6 +2,18 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+25.03.2014
+1. Fix error in ReferencesVector::AddAt - expand of vector was not working correctly 
+2. When searching object in xml hierarchy, one could exclude all perents from path
+   For that flTopXmlLevel flag was introduced for Object. On the long run
+   one can remove constrain about Application completely.
+3. It is now possible to publish extra data for objects in manager hierarchy.
+   By this one can selectively extend information about each item without
+   need of deep scan into folders, which should not happen from the main thread.
+4. First try to selectively publish thread information. For that one need to specify
+   in xml file:   <Thread name="*" publ="true"/>     
+
+
 24.03.2014
 1. Provide possibility to submit command to the transport, assigned with the port.
 2. In hadaq::CombinerModule reset different counters, using such command.

@@ -201,15 +201,13 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 #ifdef WITH_ROOT
 
-   item = fWorkerHierarchy.FindChild("StreamerInfo");
-   item.SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash().Data());
+   fWorkerHierarchy.FindChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash().Data());
 
-   item = fWorkerHierarchy.FindChild("BeamRoot");
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
          h2->Fill(gRandom->Gaus(16,4), gRandom->Gaus(16,2));
-      item.SetField(dabc::prop_hash, fSniffer->GetObjectHash(h2).Data());
+      fWorkerHierarchy.FindChild("BeamRoot").SetField(dabc::prop_hash, fSniffer->GetObjectHash(h2).Data());
    }
 #endif
 

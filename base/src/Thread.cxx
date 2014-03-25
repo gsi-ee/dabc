@@ -30,32 +30,109 @@
 unsigned dabc::Thread::maxlimit = 1000;
 #endif
 
+
+/** \brief  - helper class to use methods, available in dabc::Worker in thread itself
+ *
+ *   Delivers commands, manage parameters and so on
+ */
+
+
+
 class dabc::Thread::ExecWorker : public dabc::Worker {
    protected:
 
       friend class Thread;
 
+      bool fPublish;     ///! if true, different thread parameters will be published
+      bool fProfiling;   ///! if true, thread profiling will be activated
+
+      int fCnt;
+
    public:
-      ExecWorker() :
-         dabc::Worker(0, "Exec")
+      ExecWorker(Thread* parent, Command cmd) :
+         dabc::Worker(parent, "Exec"),
+         fPublish(false),
+         fProfiling(false),
+         fCnt(0)
       {
          fWorkerPriority = 0;
          // special case - thread keep only pointer
          SetAutoDestroy(false);
+
+         // all threads configuration should be found on the top-level
+         SetFlag(flTopXmlLevel, true);
+
+         fThread = ThreadRef(parent);
+         fThreadMutex = parent->ThreadMutex();
+         fWorkerId = parent->fWorkers.size();
+         fWorkerActive = true;
+
+         fProfiling = Cfg("profiling", cmd).AsBool(false);
+         fPublish = fProfiling || Cfg("publ", cmd).AsBool(false);
+
+         DOUT0("Exec %s publ %s", fThread.GetName(), DBOOL(fPublish));
       }
+
+      virtual ~ExecWorker() {
+         DOUT3("Destroy EXEC worker %p", this);
+      }
+
+      virtual const char* ClassName() const { return "Thread"; }
 
       virtual int ExecuteCommand(Command cmd)
       {
-         return fThread()->ExecuteThreadCommand(cmd);
+         int res = cmd_ignore;
+
+         if (!fThread.null())
+             res = fThread()->ExecuteThreadCommand(cmd);
+
+         if (res == cmd_ignore) res = dabc::Worker::ExecuteCommand(cmd);
+
+         return res;
       }
 
       virtual bool Find(ConfigIO &cfg)
       {
          while (cfg.FindItem(xmlThreadNode)) {
+            // DOUT0("Worker found thread node");
             if (cfg.CheckAttr(xmlNameAttr, fThread.GetName())) return true;
          }
          return false;
       }
+
+      virtual void BeforeHierarchyScan(Hierarchy& h)
+      {
+      }
+
+      virtual double ProcessTimeout(double last_diff)
+      {
+         // timeout is used to update published hierarchy
+         if (!fPublish) return -1;
+
+         // we need to wait for the publisher itself (if it anytime will be created)
+         if (GetPublisher().null()) return 1.;
+
+         if (fWorkerHierarchy.null()) {
+            fWorkerHierarchy.Create("Thread");
+            dabc::Hierarchy item = fWorkerHierarchy.CreateChild("NumWorkers");
+            item.SetField(dabc::prop_kind, "rate");
+            item.EnableHistory(100);
+
+            item = fWorkerHierarchy.CreateChild("WaitTime");
+            item.SetField(dabc::prop_kind, "rate");
+            item.EnableHistory(100);
+
+            Publish(fWorkerHierarchy, std::string("$MGR$") + fThread.ItemName());
+         }
+
+         fWorkerHierarchy.FindChild("NumWorkers").SetField("value", 5);
+         fWorkerHierarchy.FindChild("WaitTime").SetField("value", fCnt);
+         fCnt = (fCnt + 1) % 10;
+         fWorkerHierarchy.MarkChangedItems();
+
+         return 1.;
+      }
+
 
 };
 
@@ -81,16 +158,15 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
 {
    fThreadInstances++;
 
+   // hide all possible thread childs from hierarchy scan
+   SetFlag(flChildsHidden, true);
+
    DOUT3("---------- CNT:%2d Thread %s %p created", fThreadInstances, GetName(), this);
 
    fWorkers.push_back(new WorkerRec(0,0)); // exclude id==0
 
-   fExec = new ExecWorker;
+   fExec = new ExecWorker(this, cmd);
    //fExec->SetLogging(true);
-   fExec->fThread = ThreadRef(this);
-   fExec->fThreadMutex = ThreadMutex();
-   fExec->fWorkerId = fWorkers.size();
-   fExec->fWorkerActive = true;
 
    // keep numqueues 3 for the moment
    //fNumQueues = fExec->Cfg("NumQueues", cmd).AsUInt(fNumQueues);
@@ -143,6 +219,7 @@ dabc::Thread::~Thread()
    fExec->ClearThreadRef();
    dabc::Object::Destroy(fExec);
    fExec = 0;
+   DOUT2("Destroy EXEC worker %p done", fExec);
 
    for (unsigned n=0;n<fWorkers.size();n++) {
       if (fWorkers[n]) { delete fWorkers[n]; fWorkers[n] = 0; }
@@ -565,12 +642,17 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 {
    DOUT2("Thread %s  Execute command %s", GetName(), cmd.GetName());
 
-   int res = cmd_true;
-
    if (cmd.IsName("ConfirmStart")) {
-      DOUT2("THRD:%s did confirm start", GetName());
+
+      DOUT3("THRD:%s item %s", GetName(), ItemName().c_str());
+
+      // activate timeout at least once
+      fExec->ActivateTimeout(0.01);
+
+      return cmd_true;
    } else
    if (cmd.IsName("ConfirmSync")) {
+      return cmd_true;
    } else
    if (cmd.IsName("AddWorker")) {
 
@@ -610,6 +692,8 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
       //cmd->Print(1, "DIDjob");
 
+      return cmd_true;
+
    } else
 
    if (cmd.IsName("InvokeWorkerDestroy")) {
@@ -624,11 +708,10 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
       DOUT3("THRD:%s Request to halt worker id %u", GetName(), cmd.GetUInt("WorkerId"));
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actHalt, cmd);
-   } else
+   }
 
-      res = cmd_false;
 
-   return res;
+   return cmd_ignore;
 }
 
 
@@ -1068,6 +1151,10 @@ void dabc::Thread::ObjectCleanup()
    DOUT3("---- THRD %s ObjectCleanup refcnt %u", GetName(), fObjectRefCnt);
 
    // FIXME: should we wait until all commands and all events are processed
+   // FIXME: can we delete worker already here??
+
+   // we keep exec worker for a while
+   RemoveChild(fExec, false);
 
    {
       LockGuard lock(ObjectMutex());

@@ -60,6 +60,7 @@ namespace dabc {
       uint64_t version;     // last requested version
       uint64_t lastglvers;  // last version, used to build global
       bool local;           // is entry from local node
+      bool mgrsubitem;      // if true, belongs to manager hierarchy
       int  errcnt;          // counter of consequent errors
       bool waiting_publisher; // indicate if next request is submitted
       Hierarchy rem;        // remote hierarchy
@@ -67,14 +68,14 @@ namespace dabc {
 
       PublisherEntry() :
          id(0), path(), worker(), fulladdr(), hier(0),
-         version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
-         store(0) {}
+         version(0), lastglvers(0), local(true), mgrsubitem(false),
+         errcnt(0), waiting_publisher(false), rem(), store(0) {}
 
       // implement copy constructor to avoid any extra copies which are not necessary
       PublisherEntry(const PublisherEntry& src) :
          id(src.id), path(), worker(), fulladdr(), hier(0),
-         version(0), lastglvers(0), local(true), errcnt(0), waiting_publisher(false), rem(),
-         store(0) {}
+         version(0), lastglvers(0), local(true), mgrsubitem(false),
+         errcnt(0), waiting_publisher(false), rem(), store(0) {}
 
       ~PublisherEntry();
 
@@ -126,9 +127,10 @@ namespace dabc {
 
          SubscribersList fSubscribers;
 
-         unsigned fCnt;
+         unsigned fCnt;            ///! counter for new records
 
-         Hierarchy fMgrHiearchy; ///! this is manager hierarchy, published by ourselfs
+         std::string fMgrPath;     ///! path for manager
+         Hierarchy   fMgrHiearchy; ///! this is manager hierarchy, published by ourselfs
 
          std::string fStoreDir;   ///! directory to store data
          std::string fStoreSel;   ///! selected hierarchy path for storage like 'MBS' or 'FESA/server'
@@ -155,7 +157,7 @@ namespace dabc {
          bool DoStorage() const { return !fStoreDir.empty(); }
 
          /** \brief Return hierarchy item selected for work */
-         Hierarchy GetWorkItem(const std::string& path);
+         Hierarchy GetWorkItem(const std::string& path, bool* islocal = 0);
 
          /** \brief Command redirected to local modules or remote publisher,
           * where it should be processed

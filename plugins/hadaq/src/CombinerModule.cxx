@@ -112,7 +112,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fRunInfoToOraFilename = dabc::format("eb_runinfo2ora_%d.txt",fEBId);
    // TODO: optionally set this name
    fPrefix = Cfg("FilePrefix", cmd).AsStr("no");
-   fRunToOracle=Cfg("Runinfo2ora", cmd).AsBool("false");
+   fRunToOracle = Cfg("Runinfo2ora", cmd).AsBool(false);
    
    fDataRateName = ratesprefix + "Data";
    fEventRateName = ratesprefix + "Events";
