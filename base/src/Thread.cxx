@@ -124,6 +124,8 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             if (fThread()->fProfiling) {
                item = fWorkerHierarchy.CreateChild("Load");
                item.SetField(dabc::prop_kind, "rate");
+               item.SetField("min", 0);
+               item.SetField("max", 1);
                item.EnableHistory(100);
             }
 

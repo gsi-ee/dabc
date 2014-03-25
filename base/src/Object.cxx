@@ -660,7 +660,8 @@ bool dabc::Object::RemoveChild(Object* child, bool cleanup) throw()
                fObjectRefCnt--;
             } else {
                fObjectRefCnt = 0;
-               DOUT0("Object %p %s refcnt==%d when deleting child", this, GetName(), fObjectRefCnt);
+               if (fObjectChilds->GetSize() > 0)
+                  DOUT0("Object %p %s refcnt==0 when numchild %u", this, GetName(), fObjectChilds->GetSize());
             }
          }
          break;

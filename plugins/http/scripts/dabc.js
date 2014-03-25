@@ -643,7 +643,7 @@ DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
    this.frameid = "dabc_gauge_" + id;
    this.min = 0;
-   this.max = 1;
+   this.max = 10;
    this.gauge = null;
    
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
@@ -653,14 +653,19 @@ DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
 DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
    
-   val = this.ExtractField("value", "number");
+   var val = this.ExtractField("value", "number");
+   var min = this.ExtractField("min", "number");
+   var max = this.ExtractField("max", "number");
+   
+   if (max!=null) this.max = max; 
+   if (min!=null) this.min = min; 
 
    if (val > this.max) {
       if (this.gauge!=null) {
          this.gauge = null;
          $("#" + this.frameid).empty();
       }
-      this.max = 10;
+      this.max = 1;
       var cnt = 0;
       while (val > this.max) 
          this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
