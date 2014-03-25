@@ -136,7 +136,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    PublishPars("Hadaq/Combiner");
 
    if (fWithObserver) {
-      CreateTimer("ObserverTimer", 1., false);
+      CreateTimer("ObserverTimer", .3, false);
       RegisterExportedCounters();
    }
 

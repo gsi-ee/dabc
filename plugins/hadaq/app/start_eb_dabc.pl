@@ -571,7 +571,8 @@ sub startEvtBuilders()
 #   my $core_nr = &getCoreNr($cpu);
 # JAM use fixed core number for kp1pc092 tests:
    my $core_nr = 1;
-   my $exe_dabc = "ssh -n $cpu -l $username \"$dabclogin $cdworkdir $exports taskset -c $core_nr  $cmd_dabc $conf_dabc &\"";
+#  my $exe_dabc = "ssh -n $cpu -l $username \"$dabclogin $cdworkdir $exports taskset -c $core_nr  $cmd_dabc $conf_dabc &\"";
+ my $exe_dabc = "ssh -n $cpu -l $username \"$dabclogin $cdworkdir $exports $cmd_dabc $conf_dabc &\"";
 
 
 

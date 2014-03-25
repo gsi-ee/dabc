@@ -271,7 +271,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       //#endif // oldmode
 
 
-      if (fLastUpdate.Expired(1.)) {
+      if (fLastUpdate.Expired(0.5)) {
          dabc::ModuleRef m = dabc::mgr.FindModule("Combiner");
          dabc::CmdSetParameter cmd("Evtbuild_bytesWritten");
          cmd.SetParValue((int)fCurrentFileSize);
