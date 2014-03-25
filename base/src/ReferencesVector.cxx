@@ -81,7 +81,7 @@ bool dabc::ReferencesVector::AddAt(Reference& ref, unsigned pos) throw()
    if (pos >= fVector->size()) {
       fVector->back() << ref;
    } else {
-      for (unsigned n=pos+1; n<fVector->size();n++)
+      for (unsigned n=fVector->size()-1; n>pos; n--)
          fVector->at(n) << fVector->at(n-1);
       fVector->at(pos) << ref;
    }
