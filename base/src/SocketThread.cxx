@@ -1561,11 +1561,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
 //     DOUT0("SocketThread %s (%d) wait with timeout %d ms numufds %d", GetName(), entry_cnt, tmout, numufds);
 
-   if (fProfiling) ProfileBeforeWait();
-
    int poll_res = poll(f_ufds, numufds, tmout);
-
-   if (fProfiling) ProfileAfterWait();
 
    #ifdef SOCKET_PROFILING
      TimeStamp tm3 = dabc::Now();

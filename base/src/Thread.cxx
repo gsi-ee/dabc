@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/resource.h>
 
 #include "dabc/Worker.h"
 #include "dabc/Command.h"
@@ -146,22 +147,35 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          fWorkerHierarchy.FindChild("Workers").SetField("value", names);
 
          if (fThread()->fProfiling) {
-            double load = 0.;
-            if (fThread()->fThreadRunTime > 0) {
-               load = 1. - fThread()->fThreadWaitTime / fThread()->fThreadRunTime;
-               if (load < 0) load = 0.;
 
-               fThread()->fThreadWaitTime = 0;
-               fThread()->fThreadRunTime = 0;
+            double real_tm = fThread()->fLastProfileTime.SpentTillNow(true);
+            double run_tm = 0.;
+
+            struct rusage usage;
+
+            if (getrusage(RUSAGE_THREAD, &usage) == 0) {
+
+               double curr =
+                     usage.ru_utime.tv_sec * 1. +
+                     usage.ru_utime.tv_usec * 1e-6 +
+                     usage.ru_stime.tv_sec * 1. +
+                     usage.ru_stime.tv_usec * 1e-6;
+
+               run_tm = curr - fThread()->fThreadRunTime;
+               fThread()->fThreadRunTime = curr;
             }
-            fWorkerHierarchy.FindChild("Load").SetField("value", load);
+
+            if ((real_tm>0) && (run_tm>0)) {
+               double load = run_tm / real_tm;
+               if (load > 1) load  = 1.;
+               fWorkerHierarchy.FindChild("Load").SetField("value", load);
+            }
          }
 
          fWorkerHierarchy.MarkChangedItems();
 
          return 1.;
       }
-
 
 };
 
@@ -185,9 +199,8 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
    fDidDecRefCnt(false),
    fCheckThrdCleanup(false),
    fProfiling(false),
-   fLastWaitTime(),
-   fThreadRunTime(0.),
-   fThreadWaitTime(0.)
+   fLastProfileTime(),
+   fThreadRunTime(0.)
 {
    fThreadInstances++;
 
@@ -887,20 +900,12 @@ void dabc::Thread::_Fire(const EventId& arg, int nq)
 bool dabc::Thread::WaitEvent(EventId& evid, double tmout)
 {
 
-   if (fProfiling) ProfileBeforeWait();
+   LockGuard lock(ThreadMutex());
 
-   bool res = false;
+   if (fWorkCond._DoWait(tmout))
+      return _GetNextEvent(evid);
 
-   {
-      LockGuard lock(ThreadMutex());
-
-      if (fWorkCond._DoWait(tmout))
-         res = _GetNextEvent(evid);
-   }
-
-   if (fProfiling) ProfileAfterWait();
-
-   return res;
+   return false;
 }
 
 

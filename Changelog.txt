@@ -16,7 +16,9 @@ current functionality of the framework.
    spent in the wait event function. Later one should use /proc filesystem to
    get precise thread information. To enable profiling, one should specify
       <Thread name="*" prof="true"/> 
-6. Fix small problem in dabc.js - display of history with single element. 
+6. Fix small problem in dabc.js - display of history with single element.
+7. Implement threads profiling with getrusage() function, 
+   display for the moment only CPU load. 
 
 
 24.03.2014

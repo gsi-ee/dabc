@@ -265,9 +265,8 @@ namespace dabc {
          bool                 fCheckThrdCleanup; // !< indicates if thread should be checked for clean up
 
          bool                 fProfiling;        ///! if true, different statistic will be accumulated about thread
-         TimeStamp            fLastWaitTime;     ///! when doing profiling, last time when wait was started is remembered
-         double               fThreadRunTime;    ///! when doing profiling, total run time is accumulated
-         double               fThreadWaitTime;   ///! when doing profiling, wait time is accumulated
+         TimeStamp            fLastProfileTime;  ///! when doing profiling, last time when profiling was done
+         double               fThreadRunTime;    ///! total run time (user and sys), measured by getrusage
 
          static unsigned      fThreadInstances;
 
@@ -429,19 +428,6 @@ namespace dabc {
 
          /** Returns actual number of workers */
          unsigned NumWorkers();
-
-         /** Method used to profile thread load, should be called before waiting of next thread event */
-         inline void ProfileBeforeWait()
-         {
-            fThreadRunTime += fLastWaitTime.SpentTillNow(true);
-         }
-
-         /** Method used to profile thread load, should be called after waiting of next thread event */
-         inline void ProfileAfterWait()
-         {
-            fThreadWaitTime += fLastWaitTime.SpentTillNow();
-         }
-
    };
 
    // __________________________________________________________________________
