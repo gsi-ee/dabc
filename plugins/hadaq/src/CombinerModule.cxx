@@ -164,10 +164,6 @@ void hadaq::CombinerModule::ModuleCleanup()
 
    fCfg.clear();
    
-   
-   
-   
-   
 //   DOUT0("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1);
 //   if (numsync>0)
 //      DOUT0("Step %5.2f rate %5.2f sync/s", (lastsync-firstsync + 0.) / numsync, (numsync + 0.) / (tm2-tm1));
@@ -569,9 +565,8 @@ bool hadaq::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
    //static unsigned ccount=0;
 
-   double tm = fLastProcTm.SpentTillNow();
+   double tm = fLastProcTm.SpentTillNow(true);
    if (tm > fMaxProcDist) fMaxProcDist = tm;
-   fLastProcTm.GetNow();
 
 
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
@@ -584,7 +579,7 @@ bool hadaq::CombinerModule::BuildEvent()
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
-            if (fLastDebugTm.Expired(1.)) {
+            if (fLastDebugTm.Expired(2.)) {
                DOUT1("Fail to build event while input %u is not ready maxtm = %5.3f ", ninp, fMaxProcDist);
                fLastDebugTm.GetNow();
                fMaxProcDist = 0;
@@ -682,7 +677,7 @@ bool hadaq::CombinerModule::BuildEvent()
             fTotalDroppedData+=droppedsize;
 
             if(!ShiftToNextSubEvent(ninp)) {
-               if (fLastDebugTm.Expired(1.)) {
+               if (fLastDebugTm.Expired(2.)) {
                   DOUT1("Cannot shift data from input %d", ninp);
                   fLastDebugTm.GetNow();
                }
@@ -883,8 +878,6 @@ bool hadaq::CombinerModule::BuildEvent()
       fMaxProcDist = 0;
       // put here update of tid
       // fPID= syscall(SYS_gettid);
-      
-      
    }
 
    // return true means that method can be called again immediately

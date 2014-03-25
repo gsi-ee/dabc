@@ -44,7 +44,6 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       friend class Thread;
 
       bool fPublish;     ///! if true, different thread parameters will be published
-      bool fProfiling;   ///! if true, thread profiling will be activated
 
       int fCnt;
 
@@ -52,7 +51,6 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       ExecWorker(Thread* parent, Command cmd) :
          dabc::Worker(parent, "Exec"),
          fPublish(false),
-         fProfiling(false),
          fCnt(0)
       {
          fWorkerPriority = 0;
@@ -67,10 +65,11 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          fWorkerId = parent->fWorkers.size();
          fWorkerActive = true;
 
-         fProfiling = Cfg("profiling", cmd).AsBool(false);
-         fPublish = fProfiling || Cfg("publ", cmd).AsBool(false);
-
-         DOUT0("Exec %s publ %s", fThread.GetName(), DBOOL(fPublish));
+         if (!fThread()->IsTemporaryThread()) {
+            fThread()->fProfiling = Cfg("prof", cmd).AsBool(false);
+            fPublish = fThread()->fProfiling || Cfg("publ", cmd).AsBool(false);
+            DOUT2("Exec %s publ %s", fThread.GetName(), DBOOL(fPublish));
+         }
       }
 
       virtual ~ExecWorker() {
@@ -107,7 +106,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       virtual double ProcessTimeout(double last_diff)
       {
          // timeout is used to update published hierarchy
-         if (!fPublish) return -1;
+         if (!fPublish || fThread.null()) return -1;
 
          // we need to wait for the publisher itself (if it anytime will be created)
          if (GetPublisher().null()) return 1.;
@@ -118,16 +117,44 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             item.SetField(dabc::prop_kind, "rate");
             item.EnableHistory(100);
 
-            item = fWorkerHierarchy.CreateChild("WaitTime");
-            item.SetField(dabc::prop_kind, "rate");
+            item = fWorkerHierarchy.CreateChild("Workers");
+            item.SetField(dabc::prop_kind, "log");
             item.EnableHistory(100);
+
+            if (fThread()->fProfiling) {
+               item = fWorkerHierarchy.CreateChild("Load");
+               item.SetField(dabc::prop_kind, "rate");
+               item.EnableHistory(100);
+            }
 
             Publish(fWorkerHierarchy, std::string("$MGR$") + fThread.ItemName());
          }
 
-         fWorkerHierarchy.FindChild("NumWorkers").SetField("value", 5);
-         fWorkerHierarchy.FindChild("WaitTime").SetField("value", fCnt);
-         fCnt = (fCnt + 1) % 10;
+         unsigned num(0);
+         std::vector<std::string> names;
+
+         for (unsigned n=1;n<fThread()->fWorkers.size();n++) {
+            Worker* work = fThread()->fWorkers[n]->work;
+            if (work==0) continue;
+            num++;
+            names.push_back(work->GetName());
+         }
+
+         fWorkerHierarchy.FindChild("NumWorkers").SetField("value", num);
+         fWorkerHierarchy.FindChild("Workers").SetField("value", names);
+
+         if (fThread()->fProfiling) {
+            double load = 0.;
+            if (fThread()->fThreadRunTime > 0) {
+               load = 1. - fThread()->fThreadWaitTime / fThread()->fThreadRunTime;
+               if (load < 0) load = 0.;
+
+               fThread()->fThreadWaitTime = 0;
+               fThread()->fThreadRunTime = 0;
+            }
+            fWorkerHierarchy.FindChild("Load").SetField("value", load);
+         }
+
          fWorkerHierarchy.MarkChangedItems();
 
          return 1.;
@@ -154,7 +181,11 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
    fExplicitLoop(0),
    fExec(0),
    fDidDecRefCnt(false),
-   fCheckThrdCleanup(false)
+   fCheckThrdCleanup(false),
+   fProfiling(false),
+   fLastWaitTime(),
+   fThreadRunTime(0.),
+   fThreadWaitTime(0.)
 {
    fThreadInstances++;
 
@@ -853,21 +884,21 @@ void dabc::Thread::_Fire(const EventId& arg, int nq)
 
 bool dabc::Thread::WaitEvent(EventId& evid, double tmout)
 {
-   LockGuard lock(ThreadMutex());
 
-//  if (GetFlag(flLogging))
-//      DOUT0("*** Thrd:%s Wait Event %5.1f cond_cnt %ld q0:%u q1:%u q2:%u",
-//         GetName(), tmout, fWorkCond._FiredCounter(),
-//         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size());
+   if (fProfiling) ProfileBeforeWait();
 
-   if (fWorkCond._DoWait(tmout)) {
-//      if (GetFlag(flLogging)) DOUT0("*** Thrd:%s return event", GetName());
-      return _GetNextEvent(evid);
+   bool res = false;
+
+   {
+      LockGuard lock(ThreadMutex());
+
+      if (fWorkCond._DoWait(tmout))
+         res = _GetNextEvent(evid);
    }
 
-//   if (GetFlag(flLogging)) DOUT0("*** Thrd:%s Wait timedout", GetName());
+   if (fProfiling) ProfileAfterWait();
 
-   return false;
+   return res;
 }
 
 
@@ -1201,6 +1232,15 @@ void dabc::Thread::Print(int lvl)
       if (work==0) continue;
       dabc::lgr()->Debug(lvl, "file", 1, "func", dabc::format("   Worker: %u is %p %s %s", n, work, work->GetName(), work->ClassName()).c_str());
    }
+}
+
+unsigned dabc::Thread::NumWorkers()
+{
+   unsigned cnt = 0;
+   for (unsigned n=1;n<fWorkers.size();n++)
+      if (fWorkers[n]->work != 0) cnt++;
+
+   return cnt;
 }
 
 // -----------------------------------------------------------------

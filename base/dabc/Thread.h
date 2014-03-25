@@ -260,9 +260,14 @@ namespace dabc {
 
          unsigned             fExplicitLoop; // id of the worker, selected to run own explicit loop
 
-         ExecWorker*          fExec; // processor to execute commands in the thread
-         bool                 fDidDecRefCnt; // indicates if object cleanup was called - need in destructor
+         ExecWorker*          fExec;             // processor to execute commands in the thread
+         bool                 fDidDecRefCnt;     // indicates if object cleanup was called - need in destructor
          bool                 fCheckThrdCleanup; // !< indicates if thread should be checked for clean up
+
+         bool                 fProfiling;        ///! if true, different statistic will be accumulated about thread
+         TimeStamp            fLastWaitTime;     ///! when doing profiling, last time when wait was started is remembered
+         double               fThreadRunTime;    ///! when doing profiling, total run time is accumulated
+         double               fThreadWaitTime;   ///! when doing profiling, wait time is accumulated
 
          static unsigned      fThreadInstances;
 
@@ -329,6 +334,9 @@ namespace dabc {
       protected:
 
          inline Mutex* ThreadMutex() const { return ObjectMutex(); }
+
+         /** Returns true is this is temporary thread for command execution */
+         bool IsTemporaryThread() const { return GetParent() == 0; }
 
          virtual int ExecuteThreadCommand(Command cmd);
 
@@ -418,6 +426,22 @@ namespace dabc {
 
          /** */
          virtual bool _DoDeleteItself();
+
+         /** Returns actual number of workers */
+         unsigned NumWorkers();
+
+         /** Method used to profile thread load, should be called before waiting of next thread event */
+         inline void ProfileBeforeWait()
+         {
+            fThreadRunTime += fLastWaitTime.SpentTillNow(true);
+         }
+
+         /** Method used to profile thread load, should be called after waiting of next thread event */
+         inline void ProfileAfterWait()
+         {
+            fThreadWaitTime += fLastWaitTime.SpentTillNow();
+         }
+
    };
 
    // __________________________________________________________________________

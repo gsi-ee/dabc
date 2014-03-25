@@ -257,6 +257,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
    if (nevents == 0) {
 
+   if (fProfiling) ProfileBeforeWait();
 
 #ifdef VERBS_USING_PIPE
 
@@ -313,6 +314,8 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
    }
 
    ibv_req_notify_cq(ev_cq, 0);
+
+   if (fProfiling) ProfileAfterWait();
 
    if(ev_ctx!=0) {
       ComplQueueContext* cq_ctx = (ComplQueueContext*) ev_ctx;

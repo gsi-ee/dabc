@@ -132,8 +132,24 @@ namespace dabc {
          /** \brief Method to acquire current time stamp plus shift in seconds */
          inline void GetNow(double shift) { GetNow(); fValue += shift;  }
 
-         /** Method return time in second, spent from the time kept in TimeStamp instance */
-         inline double SpentTillNow() const { return Now().AsDouble() - AsDouble(); }
+         /** Method return time in second, spent from the time kept in TimeStamp instance
+          * If time was not set before, returns 0 */
+         inline double SpentTillNow() const
+         {
+            return null() ? 0 : Now().AsDouble() - AsDouble();
+         }
+
+         /** Method return time in second, spent from the time kept in TimeStamp instance
+          * If specified, automatically set to the current time
+          * If time was not set before, returns 0 */
+         inline double SpentTillNow(bool set_to_now)
+         {
+            double res = 0.;
+            TimeStamp now = Now();
+            if (!null()) res = now.AsDouble() - AsDouble();
+            if (set_to_now) *this = now;
+            return res;
+         }
 
          /** Method returns true if specified time interval expired
           * relative to time, kept in TimeStamp instance */

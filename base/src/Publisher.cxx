@@ -363,11 +363,10 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
       // we need to redirect command to appropriate worker (or to ourself)
       // for local producers we need to find last (maximal depth) producer
       producer_name = h.FindBinaryProducer(request_name, false);
-      DOUT0("Producer:%s request:%s item:%s", producer_name.c_str(), request_name.c_str(), itemname.c_str());
+      DOUT3("Producer:%s request:%s item:%s", producer_name.c_str(), request_name.c_str(), itemname.c_str());
 
       islocal = true;
-   } else {
-      DOUT0("Did not found item %s in local folder", itemname.c_str());
+   } else
    for (PublishersList::iterator iter = fPublishers.begin(); iter != fPublishers.end(); iter++) {
       if (iter->local) continue;
 
@@ -379,7 +378,6 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
       producer_name = h.FindBinaryProducer(request_name);
       islocal = false;
       break;
-   }
    }
 
    if (!h.null()) return !producer_name.empty();
@@ -407,14 +405,14 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
    std::string producer_name, request_name;
    bool islocal(true);
 
-   DOUT0("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
+   DOUT3("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
    if (!IdentifyProducer(itemname, islocal, producer_name, request_name)) {
       EOUT("Not found producer for item %s", itemname.c_str());
       return false;
    }
 
-   DOUT0("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
+   DOUT3("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
 
    bool producer_local(true);
    std::string producer_server, producer_item;

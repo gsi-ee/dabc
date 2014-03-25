@@ -1314,8 +1314,12 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    var x = this.ExtractSeries("time", "time");
    var y = this.ExtractSeries("value", "number");
    
-   //if (x) console.log("X array length = " + x.length);
-   //if (y) console.log("Y array length = " + y.length);
+   if (x.length==1) {
+      console.log("duplicate single point at time " + x[0]);
+      x.push(x[0]+1);
+      y.push(y[0]);
+   } 
+   
 
    // here we should create TGraph object
 
@@ -1343,7 +1347,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    if (this.root_painter && this.root_painter.UpdateObject(gr)) {
       this.root_painter.RedrawFrame();
    } else {
-      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, gr);
+      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, gr, "L");
       
       if (this.root_painter == -1) this.root_painter = null;
    }
