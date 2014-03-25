@@ -281,30 +281,13 @@ bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_
 
    if (iter->local) {
 
-//      if (iter->mgrsubitem) DOUT0("Get diff for the subpath %s", iter->path.c_str());
-
       dabc::Hierarchy top = fLocal.GetFolder(iter->path);
       if (!top.null()) {
-
-/*         std::string dpath = iter->path;
-         if ((dpath.length()>0) && (dpath[0]!='/')) {
-            dpath = std::string("/") + dpath;
-            dabc::Hierarchy dtop = fLocal.GetFolder(dpath);
-            if (dtop.null()) EOUT("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa %s", dpath.c_str());
-                        else EOUT("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ %s", dpath.c_str());
-
-         }
-*/
          // we ensure that update of that item in manager hierarchy will not change its properties
          top.UpdateFromBuffer(diff);
          top.SetField(prop_producer, iter->fulladdr);
          if (iter->mgrsubitem) top.DisableReadingAsChild();
 
-/*         dabc::Hierarchy dtop = fLocal.GetFolder("/DABC/localhost/Threads/CombinerThrd");
-         if (dtop.null()) EOUT("GGGGGGGGGGGGGGG didnot found /DABC/localhost/Threads/CombinerThrd");
-         dtop = fLocal.GetFolder("/DABC/localhost/Threads/CombinerThrd/WaitTime");
-         if (dtop.null()) EOUT("GGGGGGGGGGGGGGG didnot found /DABC/localhost/Threads/CombinerThrd/WaitTime");
-*/
       } else {
          EOUT("Did not found local folder %s ", iter->path.c_str());
       }

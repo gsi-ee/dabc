@@ -1193,6 +1193,7 @@ void dabc::Thread::ObjectCleanup()
 
    // we keep exec worker for a while
    RemoveChild(fExec, false);
+   if (fExec->GetParent()!=0) EOUT("PARENT IS STILL THERE");
 
    {
       LockGuard lock(ObjectMutex());
