@@ -21,6 +21,8 @@
 
 bool dabc::CreateManager(const std::string& name, int cmd_port)
 {
+   bool dofactories = false;
+
    if (dabc::mgr.null()) {
       static dabc::Configuration cfg;
 
@@ -29,11 +31,17 @@ bool dabc::CreateManager(const std::string& name, int cmd_port)
       // ensure that all submitted events are processed
       dabc::mgr.SyncWorker();
 
-      dabc::mgr.Execute("InitFactories");
+      dofactories = true;
    }
 
-   if ((cmd_port>=0) && dabc::mgr.GetCommandChannel().null())
-      dabc::mgr()->CreateControl(cmd_port > 0, cmd_port);
+   if (cmd_port>=0)
+      dabc::mgr.CreateControl(cmd_port > 0, cmd_port);
+
+   if (dofactories) {
+      dabc::mgr.Execute("InitFactories");
+      dabc::mgr.SetLocalId("", false); // ensure that correct ids will be specified
+      dabc::mgr.SetLocalAddress("", false);
+   }
 
    return true;
 }
@@ -74,8 +82,7 @@ bool dabc::ConnectDabcNode(const std::string& nodeaddr)
       return false;
    }
 
-   if (dabc::mgr.GetCommandChannel().null())
-      dabc::mgr()->CreateControl(false);
+   dabc::mgr.CreateControl(false);
 
    dabc::Command cmd("Ping");
    cmd.SetReceiver(fullname);

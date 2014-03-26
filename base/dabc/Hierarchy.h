@@ -176,13 +176,13 @@ namespace dabc {
    };
 
    enum HierarchyXmlStreamMask {
-      xmlmask_Compact =    1,   // create compact code of xml
-      xmlmask_Version =    2,   // write all versions
-      xmlmask_TopVersion = 4,   // write version only for top node
-      xmlmask_NameSpace =  8,   // write artificial namespace on top node
-      xmlmask_History =   16,   // write full history in xml output
-      xmlmask_NoChilds =  32,   // do not write childs in xml file
-      xmlmask_TopDabc =   64    // add top DABC node with correct namespace definition
+      xmlmask_Compact =    0x03,   // 0..3 level of compactness
+      xmlmask_Version =    0x04,   // write all versions
+      xmlmask_TopVersion = 0x08,   // write version only for top node
+      xmlmask_NameSpace =  0x10,   // write artificial namespace on top node
+      xmlmask_History =    0x20,   // write full history in xml output
+      xmlmask_NoChilds =   0x40,   // do not write childs in xml file
+      xmlmask_TopDabc =    0x80    // add top DABC node with correct namespace definition
    };
 
 
@@ -318,6 +318,10 @@ namespace dabc {
           * xmlmask_NoChilds - excludes childs saving */
          XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask, unsigned chldcnt = -1);
 
+         /** \brief Save hierarchy in JSON form.
+          * Details see in SaveHierarchyInXmlNode */
+         bool SaveHierarchyInJson(std::string& res, unsigned mask, int lvl = 0);
+
          uint64_t GetVersion() const { return fNodeVersion; }
 
          uint64_t GetChildsVersion() const { return fChildsVersion; }
@@ -417,14 +421,18 @@ namespace dabc {
 
       /** \brief Store hierarchy in form of xml
        *  \details mask select that is saved. Following values are used
-          * xmlmask_Compact - use compact form of
-          * xmlmask_Version - store version attributes for all nodes
+          * xmlmask_Compact    - use compact form of
+          * xmlmask_Version    - store version attributes for all nodes
           * xmlmask_TopVersion - append hierarchy version to the top node
           * xmlmask_NameSpace - append artificial namespace to the top node
           * xmlmask_History - write history (when available)
           * xmlmask_NoChilds - excludes childs saving
           * xmlmask_TopDabc  - append top dabc node with namespace definition */
       std::string SaveToXml(unsigned mask = 0, const std::string& toppath = "");
+
+      /** \brief Store hierarchy in json form
+       *  \details mask select that is saved. See SaveToXml method for more details  */
+      std::string SaveToJson(unsigned mask);
 
       /** \brief Returns actual version of hierarchy entry */
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }

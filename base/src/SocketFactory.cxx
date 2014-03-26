@@ -27,7 +27,7 @@
 #include "dabc/Url.h"
 #include "dabc/Manager.h"
 
-// as long as sockets integrated in libDabcBase, SocketFactory should be created directly by manager
+// as long as sockets integrated into libDabcBase, SocketFactory should be created directly by manager
 // dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));
 
 
@@ -38,8 +38,8 @@ void dabc::SocketFactory::Initialize()
    DOUT1("MGR localid is %s", id.c_str());
 
    // when socket factory is initialized, use host name for local address initialization
-   dabc::mgr.SetLocalId(id);
-   dabc::mgr.SetLocalAddress(id);
+   dabc::mgr.SetLocalId(id, false);
+   dabc::mgr.SetLocalAddress(id, false);
 }
 
 
@@ -49,7 +49,8 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
 
       dabc::SocketServerAddon* addon = 0;
 
-      std::string mgrid = dabc::SocketThread::DefineHostName();
+      std::string addrid = dabc::SocketThread::DefineHostName();
+      std::string localid = addrid + dabc::format("_pid%d", (int) getpid());
 
       if (cmd.GetBool("WithServer", true)) {
          int nport = cmd.GetInt("ServerPort");
@@ -60,19 +61,20 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
             return 0;
          }
 
-         mgrid += dabc::format(":%d", nport);
+         addrid += dabc::format(":%d", nport);
          addon = new dabc::SocketServerAddon(fd, nport);
          addon->SetDeliverEventsToWorker(true);
 
          DOUT0("Start DABC server on port %d", nport);
 
       } else {
-         mgrid += dabc::format("_pid%d", (int) getpid());
-         dabc::mgr.SetLocalId(mgrid);
+         addrid = localid;
       }
 
-      DOUT1("Start command channel with id %s", mgrid.c_str());
-      dabc::mgr.SetLocalAddress(mgrid);
+      dabc::mgr.SetLocalId(localid, true);
+      dabc::mgr.SetLocalAddress(addrid, true);
+
+      DOUT1("Start command channel with id %s", addrid.c_str());
 
       return new SocketCommandChannel(objname, addon, cmd);
    }

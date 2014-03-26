@@ -246,8 +246,8 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       dabc::SetDebugPrefix(GetName());
    }
 
-   fLocalId = dabc::format("localhost_pid%d", (int) getpid());
-   fLocalAddress = fLocalId;
+   fLocalId = "localhost";
+   fLocalAddress = "localhost";
 
    DOUT1("MGR localid is %s", fLocalId.c_str());
 
@@ -748,29 +748,6 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
       ptr->FillFullName(itemname, this);
    }
 }
-
-bool dabc::Manager::CreateControl(bool withserver, int serv_port, bool allow_clients)
-{
-   WorkerRef ref = GetCommandChannel();
-   if (!ref.null()) return true;
-
-   dabc::CmdCreateObject cmd("SocketCommandChannel", CmdChlName());
-   cmd.SetBool("WithServer", withserver);
-   cmd.SetBool("ClientsAllowed", allow_clients);
-   if (withserver && cfg()) {
-      int port = cfg()->MgrPort();
-      if (port<=0) port = serv_port;
-      if (port<=0) port = defaultDabcPort;
-      cmd.SetInt("ServerPort", port);
-   }
-
-   ref = DoCreateObject("SocketCommandChannel", CmdChlName(), cmd);
-
-   ref.MakeThreadForWorker("CmdThrd");
-
-   return !ref.null();
-}
-
 
 int dabc::Manager::PreviewCommand(Command cmd)
 {
@@ -2294,23 +2271,34 @@ dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string& kind)
 }
 
 
-bool dabc::ManagerRef::SetLocalAddress(const std::string& name)
+bool dabc::ManagerRef::SetLocalAddress(const std::string& name, bool force)
 {
    if (null()) return false;
 
    LockGuard lock(GetObject()->fMgrMutex);
-   GetObject()->fLocalAddress = name;
-   DOUT2("MGR local address is %s", name.c_str());
+
+   if (force || (GetObject()->fLocalAddress=="localhost")) {
+      if (!name.empty())
+         GetObject()->fLocalAddress = name;
+      else
+         GetObject()->fLocalAddress = dabc::format("localhost_pid%d", (int) getpid());
+      DOUT2("MGR local address is %s", GetObject()->fLocalAddress.c_str());
+   }
    return true;
 }
 
-bool dabc::ManagerRef::SetLocalId(const std::string& name)
+bool dabc::ManagerRef::SetLocalId(const std::string& name, bool force)
 {
    if (null()) return false;
 
    LockGuard lock(GetObject()->fMgrMutex);
-   GetObject()->fLocalId = name;
-   DOUT2("MGR local id is %s", name.c_str());
+   if (force || (GetObject()->fLocalId=="localhost")) {
+      if (name.empty())
+         GetObject()->fLocalId = dabc::format("localhost_pid%d", (int) getpid());
+      else
+         GetObject()->fLocalId = name;
+      DOUT2("MGR local id is %s", GetObject()->fLocalId.c_str());
+   }
    return true;
 }
 
@@ -2321,6 +2309,36 @@ void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
    else
       dabc::Sleep(tmout);
 }
+
+bool dabc::ManagerRef::CreateControl(bool withserver, int serv_port, bool allow_clients)
+{
+   if (null()) return false;
+
+   WorkerRef ref = GetCommandChannel();
+   if (!ref.null()) return true;
+
+   dabc::CmdCreateObject cmd("SocketCommandChannel", dabc::Manager::CmdChlName());
+   cmd.SetBool("WithServer", withserver);
+   cmd.SetBool("ClientsAllowed", allow_clients);
+   if (withserver) {
+      int port = 0;
+      if (GetObject()->cfg()) port = GetObject()->cfg()->MgrPort();
+      if (port<=0) port = serv_port;
+      if (port<=0) port = defaultDabcPort;
+      cmd.SetInt("ServerPort", port);
+   }
+
+   ref = GetObject()->DoCreateObject("SocketCommandChannel", dabc::Manager::CmdChlName(), cmd);
+
+   if (ref.null()) return false;
+
+   DOUT1("Set Local addr %s", GetObject()->fLocalAddress.c_str());
+
+   ref.MakeThreadForWorker("CmdThrd");
+
+   return true;
+}
+
 
 bool dabc::ManagerRef::CreatePublisher()
 {

@@ -248,7 +248,6 @@ namespace dabc {
          uint64_t AsUInt(uint64_t dflt = 0) const;
          double AsDouble(double dflt = 0.) const;
          std::string AsStr(const std::string& dflt = "") const;
-         std::string AsStdStr(const std::string& dflt = "") const { return AsStr(dflt); }
          std::vector<int64_t> AsIntVect() const;
          int64_t* GetIntArr() const { return fKind == kind_arrint ? arrInt : 0; }
          std::vector<uint64_t> AsUIntVect() const;
@@ -256,6 +255,10 @@ namespace dabc {
          std::vector<double> AsDoubleVect() const;
          double* GetDoubleArr() const { return fKind == kind_arrdouble ? arrDouble : 0; }
          std::vector<std::string> AsStrVect() const;
+
+         /** Returns field value in JSON format */
+         std::string AsJson() const;
+
 
          bool SetValue(const RecordField& src);
          bool SetNull();
@@ -286,9 +289,12 @@ namespace dabc {
          uint64_t StoreSize();
          bool Stream(iostream& s);
 
-         static int NeedQuotes(const std::string& str);
-         static std::string ExpandValue(const std::string& str);
-         static std::string CompressValue(const char* str, int len);
+         static int NeedXmlQuotes(const std::string& str);
+         static std::string ExpandXmlValue(const std::string& str);
+         static std::string CompressXmlValue(const char* str, int len);
+
+         static int NeedJsonQuotes(const std::string& str);
+         static std::string ReformatJsonString(const std::string& str);
    };
 
    class RecordFieldsMap {

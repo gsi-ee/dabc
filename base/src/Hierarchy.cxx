@@ -445,6 +445,41 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
    return objnode;
 }
 
+bool dabc::HierarchyContainer::SaveHierarchyInJson(std::string& res, unsigned mask, int lvl)
+{
+   int compact = mask & xmlmask_Compact;
+
+   if (compact==0) for(int l=0;l<lvl;l++) res.append(" ");
+   res.append("{");
+   if (compact<2) res.append("\n");
+   int cnt = 0;
+   for(unsigned n=0;n<NumFields();n++) {
+      std::string name = FieldName(n);
+      // exclude special record fields
+      if (name.empty() || (name[0]=='#')) continue;
+
+      if (cnt++>0) {
+         res.append(",");
+         if (compact<2) res.append("\n"); else
+         if (compact==2) res.append(" ");
+      }
+
+      if (compact==0) for(int l=0;l<lvl+2;l++) res.append(" ");
+
+      res.append("'"); res.append(name); res.append("\'");
+
+      if (compact>2) res.append(":"); else res.append(" : ");
+      res.append(GetField(name).AsJson());
+   }
+
+   if (compact<2) res.append("\n");
+   if (compact==0) for(int l=0;l<lvl;l++) res.append(" ");
+   res.append("}");
+
+   return true;
+}
+
+
 
 void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recursive)
 {
@@ -1018,6 +1053,8 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamK
 
 std::string dabc::Hierarchy::SaveToXml(unsigned mask, const std::string& path)
 {
+   if (null()) return "";
+
    XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, mask);
 
    if ((mask & xmlmask_TopVersion) != 0)
@@ -1046,6 +1083,18 @@ std::string dabc::Hierarchy::SaveToXml(unsigned mask, const std::string& path)
 
    return res;
 }
+
+std::string dabc::Hierarchy::SaveToJson(unsigned mask)
+{
+   std::string res;
+
+   if (null()) return res;
+
+   GetObject()->SaveHierarchyInJson(res, mask);
+
+   return res;
+}
+
 
 void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
 {

@@ -122,6 +122,9 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             item.SetField(dabc::prop_kind, "log");
             item.EnableHistory(100);
 
+            item = fWorkerHierarchy.CreateChild("pid");
+            item.SetField(dabc::prop_kind, "log");
+
             if (fThread()->fProfiling) {
                item = fWorkerHierarchy.CreateChild("Load");
                item.SetField(dabc::prop_kind, "rate");
@@ -145,6 +148,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
          fWorkerHierarchy.FindChild("NumWorkers").SetField("value", num);
          fWorkerHierarchy.FindChild("Workers").SetField("value", names);
+         fWorkerHierarchy.FindChild("pid").SetField("value", getpid());
 
          if (fThread()->fProfiling) {
 

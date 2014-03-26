@@ -26,10 +26,6 @@
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"
 
-// TODO: All classes here should be factorized so that socket processor can be replaced by
-//       the verbs processor and socket addresses replaced by verbs addresses
-//       Thus, it should be possible to replace socket by IB in command channel
-
 
 dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string& name,
                                                SocketAddon* addon,

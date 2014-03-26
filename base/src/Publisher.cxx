@@ -475,7 +475,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                }
             }
 
-            DOUT2("PUBLISH folder %s", path.c_str());
+            DOUT0("PUBLISH folder %s", path.c_str());
 
             fPublishers.push_back(PublisherEntry());
             fPublishers.back().id = fCnt++;

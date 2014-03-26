@@ -764,18 +764,22 @@ int dabc::Worker::PreviewCommand(Command cmd)
       LockGuard lock(h.GetHMutex());
 
       dabc::Hierarchy sub = h.GetFolder(item);
-      if (sub.null()) return cmd_ignore;
-
-      // we record only fields, everything else is ignored - even name of entry is not stored
-      Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
-      if (raw.null()) return cmd_ignore;
 
       if (binkind=="hierarchy") {
+         if (sub.null()) return cmd_ignore;
+         // we record only fields, everything else is ignored - even name of entry is not stored
+         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+         if (raw.null()) return cmd_ignore;
+
          cmd.SetRawData(raw);
          cmd.SetUInt("version", sub.GetVersion());
          cmd_res = cmd_true;
       } else
       if (binkind=="xml") {
+         if (sub.null()) return cmd_ignore;
+         // we record only fields, everything else is ignored - even name of entry is not stored
+         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+         if (raw.null()) return cmd_ignore;
          dabc::Hierarchy res;
          res.Create("get");
          res.SetVersion(sub.GetVersion());
@@ -786,6 +790,46 @@ int dabc::Worker::PreviewCommand(Command cmd)
          replybuf += "</Reply>";
 
          raw = dabc::Buffer::CreateBuffer(replybuf.c_str(), replybuf.length(), false, true);
+         cmd.SetRawData(raw);
+
+         cmd_res = cmd_true;
+      } else
+      if (binkind=="json") {
+         int compact = url.GetOptionInt("compact", 0);
+
+         std::string field = url.GetOptionStr("field", "");
+
+         if (sub.null() && field.empty()) {
+            size_t separ = item.find_last_of('/');
+            if ((separ != std::string::npos) && (separ>0) && (separ < item.length()-1)) {
+               field = item.substr(separ+1);
+               item.resize(separ);
+               sub = h.GetFolder(item);
+            }
+         }
+
+         if (sub.null()) return cmd_ignore;
+
+         DOUT0("Request JSON for item %s field %s compact %d", item.c_str(), field.c_str(), compact);
+
+         std::string replybuf;
+
+         if (field.empty()) {
+            unsigned mask = hlimit > 0 ? dabc::xmlmask_History : 0;
+
+            if (compact>0) {
+               if (compact>xmlmask_Compact) mask = mask | xmlmask_Compact;
+                                       else mask = mask | compact;
+            }
+
+            replybuf = sub.SaveToJson(mask);
+         } else {
+            if (!sub.HasField(field)) return cmd_ignore;
+
+            replybuf = sub.GetField(field).AsJson();
+         }
+
+         Buffer raw = dabc::Buffer::CreateBuffer(replybuf.c_str(), replybuf.length(), false, true);
          cmd.SetRawData(raw);
 
          cmd_res = cmd_true;

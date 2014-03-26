@@ -1223,11 +1223,12 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 
 std::string dabc::SocketThread::DefineHostName()
 {
-   char hostname[1000];
-   if (gethostname(hostname, sizeof(hostname)))
+   char hostname[1024];
+   if (gethostname(hostname, sizeof(hostname))) {
       EOUT("ERROR gethostname");
-   else
-      DOUT3( "gethostname = %s", hostname);
+      return std::string();
+   }
+   DOUT3("gethostname = %s", hostname);
    return std::string(hostname);
 }
 

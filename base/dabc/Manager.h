@@ -512,11 +512,6 @@ namespace dabc {
          /** Provides string, which can be used as receiver argument */
          std::string ComposeAddress(const std::string& server, const std::string& itemtname = "");
 
-         /** \brief Create command channel
-          * Parameter withserver defines if server socket will be created, which accepts client connections
-          * Optionally one can provide port number for server socket*/
-         bool CreateControl(bool withserver, int serv_port = 0, bool allow_clients = true);
-
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 
          // -------------------------- misc functions ---------------
@@ -716,11 +711,16 @@ namespace dabc {
 
          /** \brief Defines address for the application, which could be used to address it from outside
           * Normally it is hostname:port of the socket channel, which can be connected from outside */
-         bool SetLocalAddress(const std::string& name);
+         bool SetLocalAddress(const std::string& name, bool force = false);
 
          /** \brief Defines unique identifier for the application.
           * Default include node name and process id */
-         bool SetLocalId(const std::string& name);
+         bool SetLocalId(const std::string& name, bool force = false);
+
+         /** \brief Create command channel
+          * Parameter withserver defines if server socket will be created, which accepts client connections
+          * Optionally one can provide port number for server socket */
+         bool CreateControl(bool withserver, int serv_port = 0, bool allow_clients = true);
 
          /** \brief Create publisher, which manage all published hierarchies */
          bool CreatePublisher();

@@ -150,7 +150,7 @@ Bool_t TDabcEngine::Create(const char* args)
       std::string master_url = url.GetHostNameWithPort();
 
       // we selecting ROOT sniffer as the only objects, seen from the server
-      if (!dabc::mgr()->CreateControl(false)) {
+      if (!dabc::mgr.CreateControl(false)) {
          DOUT0("Cannot create control instance");
          return false;
       }
@@ -168,7 +168,7 @@ Bool_t TDabcEngine::Create(const char* args)
       return kTRUE;
    }
 
-   return dabc::mgr()->CreateControl(true, url.GetPort(), url.HasOption("allowclients"));
+   return dabc::mgr.CreateControl(true, url.GetPort(), url.HasOption("allowclients"));
 }
 
 

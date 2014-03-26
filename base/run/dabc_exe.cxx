@@ -64,17 +64,9 @@ bool dabc_InstallCtrlCHandler()
    return true;
 }
 
-
-
-int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool dorun)
+bool CreateManagerControl(dabc::Configuration& cfg)
 {
-   if (dabc::mgr.null()) return 1;
-
-   int cpuinfo = cfg.ShowCpuInfo();
-   if (cpuinfo>=0) {
-      dabc::mgr.CreateModule("dabc::CpuInfoModule", "/CpuInfo", dabc::Manager::MgrThrdName());
-      dabc::mgr.StartModule("/CpuInfo");
-   }
+   if (dabc::mgr.null()) return false;
 
    int ctrl = cfg.UseControl();
    std::string master = cfg.MasterName();
@@ -83,9 +75,9 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
 
    if ((ctrl > 0) || !master.empty()) {
       DOUT2("Connecting control");
-      if (!dabc::mgr()->CreateControl(ctrl>0)) {
+      if (!dabc::mgr.CreateControl(ctrl>0)) {
          EOUT("Cannot establish connection to command system");
-         return 1;
+         return false;
       }
 
       if (!master.empty()) {
@@ -94,10 +86,26 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
          cmd.SetStr("NameSufix", "DABC");
          if (dabc::mgr.GetCommandChannel().Execute(cmd) != dabc::cmd_true) {
             DOUT0("FAIL to activate connection to master %s", master.c_str());
-            return 1;
+            return false;
          }
       }
    }
+
+   return true;
+}
+
+
+
+int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool dorun)
+{
+
+   // create cpu info
+   int cpuinfo = cfg.ShowCpuInfo();
+   if (cpuinfo>=0) {
+      dabc::mgr.CreateModule("dabc::CpuInfoModule", "/CpuInfo", dabc::Manager::MgrThrdName());
+      dabc::mgr.StartModule("/CpuInfo");
+   }
+
 
    // activate application only with non-controlled mode
 
@@ -228,9 +236,15 @@ int main(int numc, char* args[])
    if (!cfg.LoadLibs()) res = -2;
 
    if (res==0)
-      dabc::mgr.Execute("InitFactories");
+      if (!CreateManagerControl(cfg)) res = -1;
 
-   if (cfg.WithPublisher() > 0)
+   if (res==0) {
+      dabc::mgr.Execute("InitFactories");
+      dabc::mgr.SetLocalId("", false); // ensure that correct ids will be specified
+      dabc::mgr.SetLocalAddress("", false);
+   }
+
+   if ((res==0) && (cfg.WithPublisher() > 0))
       dabc::mgr.CreatePublisher();
 
    dabc::Application::ExternalFunction* runfunc =

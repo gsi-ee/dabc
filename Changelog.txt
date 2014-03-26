@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+26.03.2014
+1. Implement get.json request for DABC hieararchy classes. One could request 
+   record itself or separate fields:
+      wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/get.json
+   To get field 'value', one could specify   
+        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/value/get.json
+        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/get.json?field=value
+
+
 25.03.2014
 1. Fix error in ReferencesVector::AddAt - expand of vector was not working correctly 
 2. When searching object in xml hierarchy, one could exclude all perents from path

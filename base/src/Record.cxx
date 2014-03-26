@@ -540,7 +540,7 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
    return res;
 }
 
-int dabc::RecordField::NeedQuotes(const std::string& str)
+int dabc::RecordField::NeedXmlQuotes(const std::string& str)
 {
    if (str.length()==0) return 1;
 
@@ -549,7 +549,7 @@ int dabc::RecordField::NeedQuotes(const std::string& str)
    return (str.find_first_of(" ,[]")!=std::string::npos) ? 1 : 0;
 }
 
-std::string dabc::RecordField::ExpandValue(const std::string& str)
+std::string dabc::RecordField::ExpandXmlValue(const std::string& str)
 {
    std::string res;
 
@@ -566,7 +566,7 @@ std::string dabc::RecordField::ExpandValue(const std::string& str)
    return res;
 }
 
-std::string dabc::RecordField::CompressValue(const char* str, int len)
+std::string dabc::RecordField::CompressXmlValue(const char* str, int len)
 {
    std::string res;
    int n=0;
@@ -612,7 +612,7 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
          std::string res("[");
          for (unsigned n=0; n<vect.size();n++) {
             if (n>0) res.append(",");
-            switch (NeedQuotes(vect[n])) {
+            switch (NeedXmlQuotes(vect[n])) {
                case 1:
                   res.append("\'");
                   res.append(vect[n]);
@@ -620,7 +620,7 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
                   break;
                case 2:
                   res.append("\'");
-                  res.append(ExpandValue(vect[n]));
+                  res.append(ExpandXmlValue(vect[n]));
                   res.append("\'");
                   break;
                default:
@@ -640,6 +640,138 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
    }
    return dflt;
 }
+
+int dabc::RecordField::NeedJsonQuotes(const std::string& str)
+{
+   // if none of quotes found, use single quotes
+   if (str.find_first_of("\'\"")==std::string::npos) return 1;
+
+   // if none of single quotes found, use single quotes
+   if (str.find_first_of("\'")==std::string::npos) return 1;
+
+   // if none of double quotes found, use double quotes
+   if (str.find_first_of("\"")==std::string::npos) return 2;
+
+   // here we have situation that both single and double quotes present
+   // first try to define which kind quotes preceding with escape character
+   bool has_single(false), has_double(false);
+
+   for (unsigned n=0;n<str.length();n++) {
+      // this is escape character, next is special symbol
+      if ((str[n]=='\\') && (n+1<str.length())) {
+         n++; continue;
+      }
+
+      if (str[n]=='\'') has_single = true; else
+      if (str[n]=='\"') has_double = true;
+   }
+
+   // if both symbols present without escape character, need to reformat string
+   if (has_single && has_double) return 10;
+
+   // if only one kind of quotes present without escape, use another kind for decoration
+   return has_single ? 2 : 1;
+}
+
+std::string dabc::RecordField::ReformatJsonString(const std::string& str)
+{
+   std::string res = "\'";
+
+   for (unsigned n=0;n<str.length();n++) {
+      // this is escape character, next is special symbol
+      if ((str[n]=='\\') && (n+1<str.length())) {
+         res.push_back(str[n++]);
+         res.push_back(str[n]);
+         continue;
+      }
+
+      if (str[n]=='\'') res.append("\\\'"); else
+      if (str[n]=='\"') res.append("\\\""); else res.push_back(str[n]);
+   }
+
+   res.append("\'");
+   return res;
+}
+
+
+std::string dabc::RecordField::AsJson() const
+{
+   switch (fKind) {
+      case kind_none: return "null";
+      case kind_bool: return valueInt!=0 ? "true" : "false";
+      case kind_int: return dabc::format("%ld", (long) valueInt);
+      case kind_datime: {
+         char sbuf[35];
+         if (dabc::DateTime(valueUInt).AsJSString(sbuf, sizeof(sbuf), 3))
+            return dabc::format("\'%s\'", sbuf);
+         break;
+      }
+      case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);
+      case kind_double: return dabc::format("%g", valueDouble);
+      case kind_arrint: {
+         std::string res("[");
+         for (int64_t n=0; n<valueInt;n++) {
+            if (n>0) res.append(",");
+            res.append(dabc::format("%ld", (long) arrInt[n]));
+         }
+         res.append("]");
+         return res;
+      }
+      case kind_arruint: {
+         std::string res("[");
+         for (int64_t n=0; n<valueInt;n++) {
+            if (n>0) res.append(",");
+            res.append(dabc::format("%lu", (long unsigned) arrUInt[n]));
+         }
+         res.append("]");
+         return res;
+      }
+      case kind_arrdouble: {
+         std::string res("[");
+         for (int64_t n=0; n<valueInt;n++) {
+            if (n>0) res.append(",");
+            res.append(dabc::format("%g", arrDouble[n]));
+         }
+         res.append("]");
+         return res;
+      }
+      case kind_arrstr: {
+
+         std::vector<std::string> vect = AsStrVect();
+
+         std::string res("[");
+         for (unsigned n=0; n<vect.size();n++) {
+            if (n>0) res.append(",");
+            switch (NeedJsonQuotes(vect[n])) {
+               case 1:
+                  res.append("\'");
+                  res.append(vect[n]);
+                  res.append("\'");
+                  break;
+               case 2:
+                  res.append("\"");
+                  res.append(vect[n]);
+                  res.append("\"");
+                  break;
+               case 10:
+                  res.append(ReformatJsonString(vect[n]));
+                  break;
+               default:
+                  res.append(vect[n]);
+                  break;
+            }
+         }
+         res.append("]");
+         return res;
+      }
+      case kind_string: {
+         if (valueStr!=0) return ReformatJsonString(valueStr);
+         return "\'\'";
+      }
+   }
+   return "null";
+}
+
 
 std::vector<std::string> dabc::RecordField::AsStrVect() const
 {
@@ -686,7 +818,7 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
                    EOUT("Error syntax in array %s after char:%u - closing quote ' not found ", valueStr, (unsigned) (pos - valueStr));
                    break;
                 }
-                res.push_back(CompressValue(pos+1, p1 - pos - 1));
+                res.push_back(CompressXmlValue(pos+1, p1 - pos - 1));
                 pos = p1 + 1;
              } else {
                 char* p1 = strpbrk(pos+1, ",]");
