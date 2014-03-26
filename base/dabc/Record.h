@@ -194,8 +194,9 @@ namespace dabc {
             char* valueStr;        ///! string or array of strings
          };
 
-         bool                fModified;   ///! when true, field was modified at least once
-         bool                fTouched;    ///! flag, used to detect in streamer when field was touched at all
+         bool                fModified;    ///! when true, field was modified at least once
+         bool                fTouched;     ///! flag, used to detect in streamer when field was touched at all
+         bool                fProtected;   ///! when true, field will not be automatically deleted when full list updated from other hierarchy
 
          void release();
 
@@ -210,7 +211,7 @@ namespace dabc {
 
          void SetArrStrDirect(int64_t size, char* arr, bool owner = false);
 
-         void constructor() { fKind = kind_none; fModified = false; fTouched = false; }
+         void constructor() { fKind = kind_none; fModified = false; fTouched = false; fProtected = false; }
 
       public:
          RecordField();
@@ -218,7 +219,9 @@ namespace dabc {
          RecordField(const char* v) { constructor(); SetStr(v); }
          RecordField(const std::string& v) { constructor(); SetStr(v); }
          RecordField(const int& v) { constructor(); SetInt(v); }
+         RecordField(const int64_t& v) { constructor(); SetInt(v); }
          RecordField(const unsigned& v) { constructor(); SetUInt(v); }
+         RecordField(const uint64_t& v) { constructor(); SetUInt(v); }
          RecordField(const double& v) { constructor(); SetDouble(v); }
          RecordField(const bool& v) { constructor(); SetBool(v); }
          RecordField(const DateTime& v) { constructor(); SetDatime(v); }
@@ -233,6 +236,9 @@ namespace dabc {
 
          bool IsModified() const { return fModified; }
          void SetModified(bool on = true) { fModified = on; }
+
+         bool IsProtected() const { return fProtected; }
+         void SetProtected(bool on = true) { fProtected = on; }
 
          bool IsArray() const
          {
@@ -338,9 +344,8 @@ namespace dabc {
          /** \brief Copy fields from source map */
          void CopyFrom(const RecordFieldsMap& src, bool overwrite = true);
 
-         /** \brief Move fields from source map, delete no longer existing,
-          * one could exclude field names with prefix - typically 'dabc:' */
-         void MoveFrom(RecordFieldsMap& src, const std::string& eclude_prefix = "");
+         /** \brief Move fields from source map, delete no longer existing (except protected) */
+         void MoveFrom(RecordFieldsMap& src);
 
          /** \brief  In the map only modified fields are remained
           * Also dabc:delete field can appear which marks all removed fields */
@@ -452,6 +457,14 @@ namespace dabc {
          GetObject()->Fields().Field(name).SetModified(on);
          return true;
       }
+
+      bool SetFieldProtected(const std::string& name, bool on = true)
+      {
+         if (!HasField(name)) return false;
+         GetObject()->Fields().Field(name).SetProtected(on);
+         return true;
+      }
+
    };
 
 }

@@ -201,13 +201,13 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 #ifdef WITH_ROOT
 
-   fWorkerHierarchy.FindChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash().Data());
+   fWorkerHierarchy.FindChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash());
 
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
          h2->Fill(gRandom->Gaus(16,4), gRandom->Gaus(16,2));
-      fWorkerHierarchy.FindChild("BeamRoot").SetField(dabc::prop_hash, fSniffer->GetObjectHash(h2).Data());
+      fWorkerHierarchy.FindChild("BeamRoot").SetField(dabc::prop_hash, (uint64_t) h2->GetEntries());
    }
 #endif
 
@@ -243,8 +243,6 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       dabc::Buffer buf;
 
-      std::string mhash;
-
       DOUT3("Player GetBinary for item %s kind %s", itemname.c_str(), binkind.c_str());
 
       if (binkind == "dabc.bin") {
@@ -254,9 +252,11 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 #ifdef WITH_ROOT
         void* ptr(0);
         Long_t length(0);
-        mhash = fSniffer->GetStreamerInfoHash();
-        if (fSniffer->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length))
+        ULong_t mhash = fSniffer->GetStreamerInfoHash();
+        if (fSniffer->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length)) {
            buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+           item.FillBinHeader("", buf, mhash, "StreamerInfo");
+        }
 #endif
       }
 
@@ -264,8 +264,6 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
          EOUT("No find binary data for item %s", itemname.c_str());
          return dabc::cmd_false;
       }
-
-      // item.FillBinHeader("", buf, mhash);
 
       cmd.SetRawData(buf);
 

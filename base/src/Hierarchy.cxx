@@ -599,9 +599,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
-   // we do like we manually set/remove all fields, excluding fields starting from 'dabc:'
-
-   Fields().MoveFrom(cont->Fields()); // FIXME: probably have no need to filter fields
+   // we do like manually set/remove all fields, excluding protected fields
+   Fields().MoveFrom(cont->Fields());
    if (Fields().WasChanged()) fNodeChanged = true;
 
    // now we should check if any childs were changed
@@ -1148,7 +1147,7 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster() const
    return GetParent()->FindChildRef(masteritem.c_str());
 }
 
-bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::string& hash, uint64_t last_version)
+bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version)
 {
    if (null()) return false;
 
@@ -1159,10 +1158,11 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::s
    if (item.null()) return true;
 
    // if there is no hash information provided, we always think that binary data is changed
-   if (hash.empty()) return true;
+   if (hash==0) return true;
 
-   if (item.Field(dabc::prop_hash).AsStr() != hash) {
+   if (item.Field(dabc::prop_hash).AsUInt() != hash) {
       item.SetField(dabc::prop_hash, hash);
+      item.SetFieldProtected(dabc::prop_hash, true);
       item.MarkChangedItems();
    }
 
@@ -1171,7 +1171,7 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, const std::s
 
 
 
-bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, const std::string& mhash, const std::string& dflt_master_name)
+bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, uint64_t mhash, const std::string& dflt_master_name)
 {
    if (null()) return false;
 
@@ -1181,13 +1181,14 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
 
    if (item.null()) {
       master = FindChild(dflt_master_name.c_str());
-      DOUT2("Search default master %s res = %p", dflt_master_name.c_str(), master());
+      DOUT0("Search default master %s res = %p", dflt_master_name.c_str(), master());
    } else {
       master = item.FindMaster();
    }
 
-   if (!master.null() && !mhash.empty() && (master.Field(dabc::prop_hash).AsStr()!=mhash)) {
+   if (!master.null() && (mhash!=0) && (master.GetField(dabc::prop_hash).AsUInt()!=mhash)) {
       master.SetField(dabc::prop_hash, mhash);
+      master.SetFieldProtected(dabc::prop_hash, true);
       master.MarkChangedItems();
    }
 

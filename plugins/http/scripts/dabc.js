@@ -897,7 +897,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
          if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif'; 
+         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
       }
 
       if (!node.hasChildNodes() || !scan_inside) {
@@ -2016,7 +2016,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = true;
+      var use_json = false;
       
       if (!use_json) {
       

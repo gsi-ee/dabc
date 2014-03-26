@@ -177,32 +177,21 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    } else
    if (binkind == "root.bin") {
 
-      TString objhash;
+      uint64_t version = 0;
+      dabc::Url url(std::string("getbin?") + query);
+      if (url.IsValid() && url.HasOption("version"))
+         version = (unsigned) url.GetOptionInt("version", 0);
+
+      ULong_t objhash = sniff->GetItemHash(itemname.c_str());
+
       bool binchanged = true;
 
-      if (itemname!="StreamerInfo") {
-         TObject* obj = sniff->FindTObjectInHierarchy(itemname.c_str());
-
-         if (obj==0) {
-            EOUT("Object for item %s not found", itemname.c_str());
-            return dabc::cmd_false;
-         }
-
-         DOUT2("OBJECT FOUND %s %p", itemname.c_str(), obj);
-
-         objhash = sniff->GetObjectHash(obj);
-
-         uint64_t version = 0;
-         dabc::Url url(std::string("getbin?") + query);
-         if (url.IsValid() && url.HasOption("version"))
-            version = (unsigned) url.GetOptionInt("version", 0);
-
+      {
          dabc::LockGuard lock(fHierarchy.GetHMutex());
-         binchanged = fHierarchy.IsBinItemChanged(itemname, objhash.Data(), version);
+         binchanged = fHierarchy.IsBinItemChanged(itemname, objhash, version);
       }
 
       if (binchanged) {
-
          void* ptr(0);
          Long_t length(0);
 
@@ -218,13 +207,13 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
          hdr->reset();
       }
 
-      TString mhash = sniff->GetStreamerInfoHash();
+      ULong_t mhash = sniff->GetStreamerInfoHash();
 
       {
          dabc::LockGuard lock(fHierarchy.GetHMutex());
 
          // here correct version number for item and master item will be filled
-         fHierarchy.FillBinHeader(itemname, buf, mhash.Data(), "StreamerInfo");
+         fHierarchy.FillBinHeader(itemname, buf, mhash, "StreamerInfo");
       }
    }
 
@@ -245,6 +234,7 @@ void root::Player::ProcessActionsInRootContext(TRootSniffer* sniff)
 
       // we lock mutex only at the moment when synchronize hierarchy with main
       dabc::LockGuard lock(fHierarchy.GetHMutex());
+
       fHierarchy.Update(fRoot);
 
       // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));

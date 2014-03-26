@@ -131,9 +131,11 @@ public:
 
    Bool_t CanExploreItem(const char* path);
 
-   virtual TString GetObjectHash(TObject* obj);
+   Bool_t IsStreamerInfoItem(const char* itemname);
 
-   virtual TString GetStreamerInfoHash();
+   ULong_t GetStreamerInfoHash();
+
+   ULong_t GetItemHash(const char* itemname);
 
    Bool_t ProduceJson(const char* path, const char* options, TString& res);
 

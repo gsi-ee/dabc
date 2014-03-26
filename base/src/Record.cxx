@@ -1381,15 +1381,12 @@ void dabc::RecordFieldsMap::CopyFrom(const RecordFieldsMap& src, bool overwrite)
          fMap[iter->first] = iter->second;
 }
 
-void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src, const std::string& exclude_prefix)
+void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src)
 {
-   int elen = exclude_prefix.length();
-
    std::vector<std::string> delfields;
 
    for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if ((elen>0) && (iter->first.compare(0,elen,exclude_prefix) == 0)) continue;
-
+      if (iter->second.IsProtected()) continue;
       if (!src.HasField(iter->first)) delfields.push_back(iter->first);
    }
 
@@ -1397,7 +1394,8 @@ void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src, const std::string& ex
       RemoveField(delfields[n]);
 
    for (FieldsMap::iterator iter = src.fMap.begin(); iter!=src.fMap.end(); iter++) {
-      if ((elen>0) && (iter->first.compare(0,elen,exclude_prefix) == 0)) continue;
+      // should we completely preserve protected fields???
+      // if (iter->second.IsProtected()) continue;
 
       fMap[iter->first].SetValue(iter->second);
    }

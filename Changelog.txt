@@ -12,6 +12,8 @@ current functionality of the framework.
 2. Clear separation between dabc.json and root.json. Now this name propogated with
    CmdGetBinary, that each application can decide how to process it. In fact, any
    worker, publishing new structures, can now define its own requests for processing. 
+3. Fix problem with hash value storage - it was overwritten when hierarchy was updated.
+   Now hash property (and any other) can be protected from update. 
 
 
 25.03.2014

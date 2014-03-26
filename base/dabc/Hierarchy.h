@@ -442,10 +442,10 @@ namespace dabc {
 
       /** \brief Return true if one could suppose that binary item is changed and
        *  binary data must be regenerated. First of all version is proved and than hash (if availible) */
-      bool IsBinItemChanged(const std::string& itemname, const std::string& hash, uint64_t last_version = 0);
+      bool IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version = 0);
 
       /** \brief Fill binary header with item and master versions */
-      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, const std::string& mhash = "", const std::string& dflt_master_name = "");
+      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, uint64_t mhash = 0, const std::string& dflt_master_name = "");
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }

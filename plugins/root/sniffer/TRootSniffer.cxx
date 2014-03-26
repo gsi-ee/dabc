@@ -431,7 +431,7 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec& rec, TClass* cl, char
 
          Int_t coll_offset = mcl ? mcl->GetBaseClassOffset(TCollection::Class()) : -1;
 
-         bool iscollection = (coll_offset>=0);
+         Bool_t iscollection = (coll_offset>=0);
          if (iscollection) {
             chld.SetField(dabc_prop_more, "true");
             chld.has_more = kTRUE;
@@ -648,23 +648,25 @@ TObject* TRootSniffer::FindTObjectInHierarchy(const char* path)
 }
 
 
-TString TRootSniffer::GetObjectHash(TObject* obj)
-{
-   // provide hash value for object (implemented only for TH1)
-   // Used for fast detection if object changed or not
-
-   if ((obj!=0) && (obj->InheritsFrom(TH1::Class())))
-      return TString::Format("%g", ((TH1*)obj)->GetEntries());
-
-   return "";
-}
-
-TString TRootSniffer::GetStreamerInfoHash()
+ULong_t TRootSniffer::GetStreamerInfoHash()
 {
    // returns hash value for streamer infos
    // at the moment - just number of items in streamer infos list.
 
-   return TString::Format("%d", fSinfoSize);
+   return fSinfoSize;
+}
+
+
+ULong_t TRootSniffer::GetItemHash(const char* itemname)
+{
+   // get hash function for specified item
+   // used to detect any changes in the specified object
+
+   if (IsStreamerInfoItem(itemname)) return GetStreamerInfoHash();
+
+   TObject* obj = FindTObjectInHierarchy(itemname);
+
+   return obj == 0 ? 0 : TString::Hash(obj, obj->IsA()->Size());
 }
 
 
@@ -747,8 +749,6 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
 
    if (*path=='/') path++;
 
-   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
-
    TUrl url;
    url.SetOptions(options);
    url.ParseOptions();
@@ -756,7 +756,7 @@ Bool_t TRootSniffer::ProduceJson(const char* path, const char* options, TString&
    if (url.GetValueFromOptions("compact"))
       compact = url.GetIntValueFromOptions("compact");
 
-   if (istreamerinfo) {
+   if (IsStreamerInfoItem(path)) {
 
       CreateMemFile();
 
@@ -797,9 +797,7 @@ Bool_t TRootSniffer::ProduceXml(const char* path, const char* /*options*/, TStri
 
    if (*path=='/') path++;
 
-   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
-
-   if (istreamerinfo) {
+   if (IsStreamerInfoItem(path)) {
 
       CreateMemFile();
 
@@ -828,6 +826,14 @@ Bool_t TRootSniffer::ProduceXml(const char* path, const char* /*options*/, TStri
 }
 
 
+Bool_t TRootSniffer::IsStreamerInfoItem(const char* itemname)
+{
+   if ((itemname==0) || (*itemname==0)) return kFALSE;
+
+   return (strcmp(itemname,"StreamerInfo")==0) || (strcmp(itemname,"StreamerInfo/")==0);
+}
+
+
 Bool_t TRootSniffer::ProduceBinary(const char* path, const char*, void* &ptr, Long_t& length)
 {
    // produce binary data for specified item
@@ -841,7 +847,7 @@ Bool_t TRootSniffer::ProduceBinary(const char* path, const char*, void* &ptr, Lo
 
 //   Info("ProduceBinary","Request %s", path);
 
-   bool istreamerinfo = (strcmp(path,"StreamerInfo")==0) || (strcmp(path,"StreamerInfo/")==0);
+   Bool_t istreamerinfo = IsStreamerInfoItem(path);
 
    if (istreamerinfo) {
 
@@ -892,7 +898,7 @@ Bool_t TRootSniffer::ProduceBinary(const char* path, const char*, void* &ptr, Lo
          sbuf = 0;
       }
 
-      bool believe_not_changed = false;
+      Bool_t believe_not_changed = kFALSE;
 
       if ((fMemFile->GetClassIndex()==0) || (fMemFile->GetClassIndex()->fArray[0] == 0)) {
          believe_not_changed = true;
@@ -936,7 +942,7 @@ Bool_t TRootSniffer::CreateBindData(TBufferFile* sbuf, void* &ptr, Long_t& lengt
 
    if (sbuf==0) return kFALSE;
 
-   bool with_zip = fCompression > 0;
+   Bool_t with_zip = fCompression > 0;
 
    const Int_t kMAXBUF = 0xffffff;
    Int_t noutot = 0;
