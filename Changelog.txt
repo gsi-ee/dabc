@@ -7,8 +7,11 @@ current functionality of the framework.
    record itself or separate fields:
       wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/get.json
    To get field 'value', one could specify   
-        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/value/get.json
-        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/get.json?field=value
+        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/value/dabc.json
+        wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/dabc.json?field=value
+2. Clear separation between dabc.json and root.json. Now this name propogated with
+   CmdGetBinary, that each application can decide how to process it. In fact, any
+   worker, publishing new structures, can now define its own requests for processing. 
 
 
 25.03.2014

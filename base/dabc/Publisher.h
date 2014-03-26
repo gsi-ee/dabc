@@ -34,6 +34,14 @@ namespace dabc {
    /** Command used to produce custom binary data for published in hierarchy entries */
    class CmdGetBinary : public Command {
       DABC_COMMAND(CmdGetBinary, "CmdGetBinary");
+
+      CmdGetBinary(const std::string& path, const std::string& kind, const std::string& query) :
+         Command(CmdName())
+      {
+         SetStr("Item", path);
+         SetStr("Kind", kind);
+         SetStr("Query", query);
+      }
    };
 
    /** Command to request names list */

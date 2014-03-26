@@ -775,7 +775,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
          cmd.SetUInt("version", sub.GetVersion());
          cmd_res = cmd_true;
       } else
-      if (binkind=="xml") {
+      if (binkind=="dabc.xml") {
          if (sub.null()) return cmd_ignore;
          // we record only fields, everything else is ignored - even name of entry is not stored
          Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
@@ -794,7 +794,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          cmd_res = cmd_true;
       } else
-      if (binkind=="json") {
+      if (binkind=="dabc.json") {
          int compact = url.GetOptionInt("compact", 0);
 
          std::string field = url.GetOptionStr("field", "");

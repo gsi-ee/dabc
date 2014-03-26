@@ -1840,10 +1840,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
          std::string query;
          if (hlimit>0) query = dabc::format("history=%d",hlimit);
 
-         CmdGetBinary cmd2;
-         cmd2.SetStr("Item", path);
-         cmd2.SetStr("Kind", "hierarchy");
-         cmd2.SetStr("Query", query);
+         CmdGetBinary cmd2(path, "hierarchy", query);
          cmd2.SetTimeout(5);
 
          if (GetCommandChannel().Execute(cmd2)!=cmd_true) {

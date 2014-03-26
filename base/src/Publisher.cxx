@@ -757,10 +757,7 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const st
 {
    if (null()) return 0;
 
-   CmdGetBinary cmd;
-   cmd.SetStr("Item", fullname);
-   cmd.SetStr("Kind", kind);
-   cmd.SetStr("Query", query);
+   CmdGetBinary cmd(fullname, kind, query);
    cmd.SetTimeout(tmout);
 
    if (Execute(cmd) == cmd_true)
@@ -776,10 +773,7 @@ dabc::Hierarchy dabc::PublisherRef::GetItem(const std::string& fullname, const s
 
    if (null()) return res;
 
-   CmdGetBinary cmd;
-   cmd.SetStr("Item", fullname);
-   cmd.SetStr("Kind", "hierarchy");
-   cmd.SetStr("Query", query);
+   CmdGetBinary cmd(fullname, "hierarchy", query);
    cmd.SetTimeout(tmout);
 
    if (Execute(cmd) != cmd_true) return res;

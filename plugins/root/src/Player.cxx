@@ -140,11 +140,11 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
    dabc::Buffer buf;
 
-   if ((binkind == "png") || (binkind == "jpeg")) {
+   if ((binkind == "root.png") || (binkind == "root.jpeg")) {
       void* ptr(0);
       Long_t length(0);
 
-      Int_t kind = binkind == "png" ? TImage::kPng : TImage::kJpeg;
+      Int_t kind = binkind == "root.png" ? TImage::kPng : TImage::kJpeg;
 
       if (!sniff->ProduceImage(kind, itemname.c_str(), query.c_str(), ptr, length)) {
          EOUT("Image producer fails for item %s", itemname.c_str());
@@ -153,7 +153,7 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
       buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
    } else
-   if (binkind == "json") {
+   if (binkind == "root.json") {
       TString str;
 
       if (!sniff->ProduceJson(itemname.c_str(), query.c_str(), str)) {
@@ -164,7 +164,7 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
       // add only string content without null-terminated string
       buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
    } else
-   if (binkind == "xml") {
+   if (binkind == "root.xml") {
       TString str;
 
       if (!sniff->ProduceXml(itemname.c_str(), query.c_str(), str)) {
@@ -174,7 +174,8 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
       // add only string content without null-terminated string
       buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
-   } else {
+   } else
+   if (binkind == "root.bin") {
 
       TString objhash;
       bool binchanged = true;

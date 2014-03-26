@@ -55,6 +55,8 @@ namespace http {
          Server(const std::string& name, dabc::Command cmd = 0);
 
          virtual ~Server();
+
+         static const char* GetMimeType(const char* fname);
    };
 
 }

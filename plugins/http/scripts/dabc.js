@@ -355,7 +355,7 @@ DABC.CommandDrawElement.prototype.RegularCheck = function() {
 DABC.CommandDrawElement.prototype.RequestCommand = function() {
    if (this.req) return;
 
-   var url = this.itemname + "get.xml";
+   var url = this.itemname + "dabc.xml";
 
    this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
 
@@ -499,7 +499,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + "get.xml";
+   var url = this.itemname + "dabc.xml";
    var separ = "?";
 
    // console.log("GetHistory current version = " + this.version);
@@ -701,7 +701,7 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
    
    var width = $(topid).width();
    
-   var url = this.itemname + "get.png?w=400&h=300&opt=col";
+   var url = this.itemname + "root.png?w=400&h=300&opt=col";
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
    var entryInfo = 
       "<div id='"+this.frameid+ "'>" +
@@ -1175,7 +1175,7 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + "get.bin";
+   var url = this.itemname + "dabc.bin";
    
    if (this.version>0) url += "?version=" + this.version;
 
@@ -1576,7 +1576,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
          this.state = this.StateEnum.stReady;
          this.DrawObject();
       } else {
-         console.log("Fail to process get.json");
+         console.log("Fail to process root.json");
          this.state = this.StateEnum.stInit;
          this.obj = null;
       }
@@ -1685,10 +1685,10 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    var url = this.itemname;
    
    if (this.json) {
-      url += "get.json?compact=3";
+      url += "root.json?compact=3";
       if (this.version>0) url += "&version=" + this.version;
    } else {
-      url += "get.bin";
+      url += "root.bin";
       if (this.version>0) url += "?version=" + this.version;
    }
    

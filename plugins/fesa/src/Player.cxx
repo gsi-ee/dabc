@@ -246,14 +246,19 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       std::string mhash;
 
       DOUT3("Player GetBinary for item %s kind %s", itemname.c_str(), binkind.c_str());
+
+      if (binkind == "dabc.bin") {
+         buf = item()->bindata();
+      } else {
+
 #ifdef WITH_ROOT
-      void* ptr(0);
-      Long_t length(0);
-      mhash = fSniffer->GetStreamerInfoHash();
-      if (fSniffer->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length))
-         buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+        void* ptr(0);
+        Long_t length(0);
+        mhash = fSniffer->GetStreamerInfoHash();
+        if (fSniffer->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length))
+           buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
 #endif
-      if (buf.null()) buf = item()->bindata();
+      }
 
       if (buf.null()) {
          EOUT("No find binary data for item %s", itemname.c_str());
