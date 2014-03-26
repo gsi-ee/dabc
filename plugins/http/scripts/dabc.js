@@ -2016,7 +2016,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       // procesing of ROOT classes
       
       var sinfo = null;
-      var use_json = false;
+      var use_json = true;
       
       if (!use_json) {
       
@@ -2024,7 +2024,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
          sinfo = this.FindItem(sinfoname);
       
          if (sinfoname && !sinfo) {
-            sinfo = new DABC.RootDrawElement(kind.substr(5), false);
+            sinfo = new DABC.RootDrawElement(kind.substr(5), use_json);
             sinfo.itemname = sinfoname;
             this.arr.push(sinfo);
             // mark sinfo item as ready - it will not be requested until is not really required

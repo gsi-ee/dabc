@@ -255,7 +255,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
         ULong_t mhash = fSniffer->GetStreamerInfoHash();
         if (fSniffer->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length)) {
            buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
-           item.FillBinHeader("", buf, mhash, "StreamerInfo");
+           item.FillBinHeader("", buf, mhash);
         }
 #endif
       }

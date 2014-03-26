@@ -14,6 +14,9 @@ current functionality of the framework.
    worker, publishing new structures, can now define its own requests for processing. 
 3. Fix problem with hash value storage - it was overwritten when hierarchy was updated.
    Now hash property (and any other) can be protected from update. 
+4. Let TRootSniffer process all requestes which are directed to ROOT, 
+   only for root.bin request use hash to verify if requester already has most recent object.  
+   
 
 
 25.03.2014

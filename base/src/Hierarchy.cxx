@@ -1179,7 +1179,7 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
    if (itemname.empty()) item = *this;
                     else item = FindChild(itemname.c_str());
 
-   if (item.null()) {
+   if (item.null() && !dflt_master_name.empty()) {
       master = FindChild(dflt_master_name.c_str());
       DOUT0("Search default master %s res = %p", dflt_master_name.c_str(), master());
    } else {
