@@ -1,3 +1,18 @@
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "ezca/Factory.h"
 
 #include <stdlib.h>
@@ -9,6 +24,7 @@
 
 #include "ezca/Definitions.h"
 #include "ezca/EpicsInput.h"
+#include "ezca/Player.h"
 
 
 const char* ezca::xmlEpicsName               = "EpicsIdentifier";
@@ -45,4 +61,12 @@ dabc::DataInput* ezca::Factory::CreateDataInput(const std::string& typ)
       return new ezca::EpicsInput(url.GetHostName());
 
    return 0;
+}
+
+dabc::Module* ezca::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+{
+   if (classname == "ezca::Player")
+      return new ezca::Player(modulename, cmd);
+
+   return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

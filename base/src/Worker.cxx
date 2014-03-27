@@ -241,12 +241,7 @@ void dabc::Worker::ObjectCleanup()
 {
    // TODO: that is correct sequence - first delete child, than clean ourself  (current) or vice-versa
 
-   if (!fPublisher.null()) {
-      // clean reference on publisher
-      PublisherRef(fPublisher).RemoveWorker(ItemName(), false);
-      fPublisher.Release();
-   }
-
+   CleanupPublisher(false);
 
    // we do standard object cleanup - remove all our childs and remove ourself from parent
    dabc::Object::ObjectCleanup();
@@ -1186,11 +1181,11 @@ bool dabc::Worker::Unsubscribe(const std::string& path)
    return PublisherRef(GetPublisher()).Unsubscribe(path, ItemName());
 }
 
-void dabc::Worker::CleanupPublisher()
+void dabc::Worker::CleanupPublisher(bool sync)
 {
    if (!fPublisher.null()) {
       // clean reference on publisher
-      PublisherRef(fPublisher).RemoveWorker(ItemName(), true);
+      PublisherRef(fPublisher).RemoveWorker(ItemName(), sync);
       fPublisher.Release();
    }
 }

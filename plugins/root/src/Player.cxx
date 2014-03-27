@@ -85,6 +85,8 @@ root::Player::~Player()
 
 void root::Player::OnThreadAssigned()
 {
+   dabc::Worker::OnThreadAssigned();
+
    if (!IsEnabled()) {
       EOUT("sniffer was not enabled - why it is started??");
       return;

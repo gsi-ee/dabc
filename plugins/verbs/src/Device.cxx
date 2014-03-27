@@ -117,6 +117,8 @@ verbs::ProtocolAddon::~ProtocolAddon()
 
 void verbs::ProtocolAddon::OnThreadAssigned()
 {
+   dabc::WorkerAddon::OnThreadAssigned();
+
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
    if (req.null()) {
       Finish(false);

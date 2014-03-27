@@ -72,6 +72,8 @@ dabc::SocketCommandClient::~SocketCommandClient()
 
 void dabc::SocketCommandClient::OnThreadAssigned()
 {
+   dabc::Worker::OnThreadAssigned();
+
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0) && fAddon.null())
       ActivateTimeout(0.);
    else
@@ -511,16 +513,6 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
    // object is owner its childs - autodestroy flag will be automatically set to the new add object
    SetOwner(true);
 }
-
-dabc::SocketCommandChannel::~SocketCommandChannel()
-{
-   // fHierarchy.Destroy();
-}
-
-void dabc::SocketCommandChannel::OnThreadAssigned()
-{
-}
-
 
 std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str)
 {

@@ -1,3 +1,18 @@
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "ezca/EpicsInput.h"
 
 #include "dabc/Pointer.h"
@@ -184,13 +199,13 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       for (unsigned ix = 0; ix < NumLongRecords(); ix++) {
          fLongValues[ix] = 0;
          int ret = CA_GetLong(GetLongRecord(ix), fLongValues[ix]);
-         if (ret!=EZCA_OK) EOUT("Request long %s Ret = %s", ix, GetLongRecord(ix).c_str(), CA_RetCode(ret));
+         if (ret!=EZCA_OK) EOUT("Request long %s Ret = %s", GetLongRecord(ix).c_str(), CA_RetCode(ret));
       }
 
       for (unsigned ix = 0; ix < NumDoubleRecords(); ix++) {
          fDoubleValues[ix] = 0;
          int ret = CA_GetDouble(GetDoubleRecord(ix), fDoubleValues[ix]);
-         if (ret!=EZCA_OK) EOUT("Request double %s Ret = %s", ix, GetDoubleRecord(ix).c_str(), CA_RetCode(ret));
+         if (ret!=EZCA_OK) EOUT("Request double %s Ret = %s", GetDoubleRecord(ix).c_str(), CA_RetCode(ret));
       }
 
       int *rcs(0), nrcs(0);
@@ -207,7 +222,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       ezcaFree(rcs);
    }
 
-   DOUT2("EpicsInput:: redout time is = %7.5f s", tm.SpentTillNow());
+   DOUT2("EpicsInput:: readout time is = %7.5f s", tm.SpentTillNow());
 
 
    if (fDescriptor.empty())

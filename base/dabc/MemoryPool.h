@@ -115,7 +115,11 @@ namespace dabc {
          /** Return true when all segments has refcnt==1 */
          bool IsSingleSegmRefs(MemSegment* segm, unsigned num) throw();
 
-         virtual void OnThreadAssigned() { fUseThread = HasThread(); }
+         virtual void OnThreadAssigned()
+         {
+            fUseThread = HasThread();
+            dabc::ModuleAsync::OnThreadAssigned();
+         }
 
          bool ProcessSend(unsigned port);
 

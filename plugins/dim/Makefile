@@ -105,7 +105,8 @@ $(DABCINCPATH)/%.h: $(DIMCTLDIR)/%.h
 
 $(DIMCTL_O) : $(DIM_LIB)
 
-$(DIMCTL_LIB): LDFLAGS += -L$(DABCSYS)/lib -ldim
+$(DIMCTL_LIB): LDDIRS += $(DABCSYS)/lib
+$(DIMCTL_LIB): LDFLAGS += -ldim
 
 $(DIMCTL_LIB):  $(DIMCTL_O) 
 	@$(MakeLib) $(DIMCTL_LIBNAME) "$(DIMCTL_O)" $(TGTDLLPATH)

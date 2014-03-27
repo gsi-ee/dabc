@@ -1,0 +1,41 @@
+<!-- This is example of http server usage in DABC
+     Example provide several components plus http server --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Example">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcEzca.so"/>
+      <logfile value="Example.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+    </Run>
+
+    <HttpServer name="http" port="8097"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+    <Module name="ezca" class="ezca::Player">
+	    <NumOutputs value="1"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:6002"/>
+
+	    <!-- configuration of ezca -->
+	    <EzcaTimeout value="0.2"/>
+	    <EzcaRetryCount value="20"/>
+	    <EzcaDebug value="false"/>
+	    <EzcaAutoError value="false"/>
+
+	    <EpicsSubeventId value="0x000000A"/>
+	    <EpicsPollingTimeout value="1"/>
+	    
+	    <Long value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/>
+    </Module>
+    
+  </Context>
+</dabc>

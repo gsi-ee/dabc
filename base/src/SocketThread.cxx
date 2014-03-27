@@ -887,6 +887,8 @@ void dabc::SocketClientAddon::SetRetryOpt(int nretry, double tmout)
 
 void dabc::SocketClientAddon::OnThreadAssigned()
 {
+   dabc::SocketConnectAddon::OnThreadAssigned();
+
    FireWorkerEvent(evntSocketStartConnect);
 }
 

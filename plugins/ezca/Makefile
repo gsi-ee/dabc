@@ -84,9 +84,6 @@ clean::
 
 $(EZCA_O) $(EZCA_D) : INCLUDES += $(EPICS_BASE)/include $(EPICS_BASE)/include/os/Linux $(EPICS_EXTENSIONS)/include 
 
-# TODO: link to the EZCA library
-#$(EZCA_LIB) : LDFLAGS += -L... -lezca
-
 $(EZCA_LIB): LDFLAGS += -lezca 
 $(EZCA_LIB): LDDIRS += $(EPICS_LIBDIR) 
 

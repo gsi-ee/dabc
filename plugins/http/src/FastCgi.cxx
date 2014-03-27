@@ -117,6 +117,8 @@ http::FastCgi::~FastCgi()
 
 void http::FastCgi::OnThreadAssigned()
 {
+   http::Server::OnThreadAssigned();
+
    std::string sport = ":9000";
    if (fCgiPort>0) sport = dabc::format(":%d",fCgiPort);
 

@@ -1136,6 +1136,22 @@ dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx, 
    return res;
 }
 
+dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool force)
+{
+   dabc::Hierarchy res = FindChild(name.c_str());
+   if (!res.null() || !force) return res;
+
+   size_t pos = name.rfind("/");
+   if (pos == std::string::npos) return CreateChild(name);
+
+   if (pos==0) return CreateChild(name.substr(1));
+   if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), true);
+
+   return GetHChild(name.substr(0, pos), true).CreateChild(name.substr(pos+1));
+}
+
+
+
 dabc::Hierarchy dabc::Hierarchy::FindMaster() const
 {
    if (null() || (GetParent()==0) || !HasField(dabc::prop_masteritem)) return dabc::Hierarchy();

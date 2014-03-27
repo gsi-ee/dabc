@@ -471,8 +471,11 @@ namespace dabc {
       /** \brief Enable element and all its parents to read data */
       void EnableReading(const Hierarchy& upto = 0);
 
+      /** \brief Return child, if necessary creates with full subfolder */
+      Hierarchy GetHChild(const std::string& name, bool force = false);
+
       /** \brief Create folder in hierarchy, one could use it to add new childs to it */
-      Hierarchy CreateFolder(const std::string& name) { return CreateChild(name); }
+      Hierarchy CreateFolder(const std::string& name) { return GetHChild(name, true); }
 
       /** \brief Produce history iterator */
       HistoryIter MakeHistoryIter();

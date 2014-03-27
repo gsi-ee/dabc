@@ -875,6 +875,8 @@ bool mbs::DaqLogWorker::CreateAddon()
 
 void mbs::DaqLogWorker::OnThreadAssigned()
 {
+   dabc::Worker::OnThreadAssigned();
+
    if (!CreateAddon()) ActivateTimeout(5);
 
    DOUT0("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());

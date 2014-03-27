@@ -50,7 +50,7 @@ void mbs::ServerOutputAddon::FillServInfo(int32_t maxbytes, bool isnewformat)
 
 void mbs::ServerOutputAddon::OnThreadAssigned()
 {
-//   DOUT0("mbs::ServerOutputAddon::OnThreadAssigned - send info");
+   dabc::SocketIOAddon::OnThreadAssigned();
 
    if (fState == oInit)
       StartSend(&fServInfo, sizeof(fServInfo));

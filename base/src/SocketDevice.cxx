@@ -123,6 +123,8 @@ namespace dabc {
 
          virtual void OnThreadAssigned()
          {
+            dabc::SocketIOAddon::OnThreadAssigned();
+
             switch (fState) {
                case stServerProto:
                   StartRecv(fInBuf, ProtocolMsgSize);

@@ -74,6 +74,8 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
 void dabc::Publisher::OnThreadAssigned()
 {
+   dabc::Worker::OnThreadAssigned();
+
    fMgrPath = dabc::format("DABC/%s", dabc::mgr.GetName());
 
 //   std::string addr = dabc::mgr.GetLocalAddress();

@@ -8,6 +8,9 @@ current functionality of the framework.
    will be used - no scoket or process id, no any host name.
 2. Default path for DABC application is /DABC/${Context}, 
    default path for Go4 analysis is /GO4/AnalysisName
+3. Introduce ezca::Player class. It will have two functions.
+   First of all, it will provide data as ezca::EpicsInput.
+   Second, it will export records to hierarchy structures.
 
 
 26.03.2014

@@ -52,6 +52,7 @@ namespace verbs {
 
          void OnThreadAssigned()
          {
+            dabc::Worker::OnThreadAssigned();
             ActivateTimeout(fLastTm);
          }
 

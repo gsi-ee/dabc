@@ -18,7 +18,7 @@
        <!--auth_file value="${DABCSYS}/.htdigest"/-->
        <!--auth_domain value="dabc@server"/-->
     </HttpServer>
-    
+
     <Publisher name="publ">
        <manager value="true"/>
        <store value="false"/>

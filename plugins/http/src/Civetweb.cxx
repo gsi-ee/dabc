@@ -50,6 +50,8 @@ http::Civetweb::~Civetweb()
 
 void http::Civetweb::OnThreadAssigned()
 {
+   http::Server::OnThreadAssigned();
+
    std::string sport;
 
    if (fHttpPort>0) sport = dabc::format("%d",fHttpPort);

@@ -423,7 +423,7 @@ namespace dabc {
          virtual bool Unsubscribe(const std::string& path);
 
          /** \brief Release reference on publisher and unsubscribe/unpublish all registered entries */
-         void CleanupPublisher();
+         void CleanupPublisher(bool sync = true);
 
          /** \brief Method called before publisher makes next snapshot of hierarchy.
           *  Worker is able to make any kind of changes   */
