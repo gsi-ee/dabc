@@ -33,13 +33,6 @@
 
 void dabc::SocketFactory::Initialize()
 {
-   std::string id = dabc::SocketThread::DefineHostName() + dabc::format("_pid%d", (int) getpid());
-
-   DOUT1("MGR localid is %s", id.c_str());
-
-   // when socket factory is initialized, use host name for local address initialization
-   dabc::mgr.SetLocalId(id, false);
-   dabc::mgr.SetLocalAddress(id, false);
 }
 
 
@@ -50,7 +43,6 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
       dabc::SocketServerAddon* addon = 0;
 
       std::string addrid = dabc::SocketThread::DefineHostName();
-      std::string localid = addrid + dabc::format("_pid%d", (int) getpid());
 
       if (cmd.GetBool("WithServer", true)) {
          int nport = cmd.GetInt("ServerPort");
@@ -68,13 +60,12 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          DOUT0("Start DABC server on port %d", nport);
 
       } else {
-         addrid = localid;
+         addrid += dabc::format("_pid%d", (int) getpid());
       }
 
-      dabc::mgr.SetLocalId(localid, true);
-      dabc::mgr.SetLocalAddress(addrid, true);
+      cmd.SetStr("localaddr", addrid);
 
-      DOUT1("Start command channel with id %s", addrid.c_str());
+      DOUT0("Start command channel with id %s", addrid.c_str());
 
       return new SocketCommandChannel(objname, addon, cmd);
    }

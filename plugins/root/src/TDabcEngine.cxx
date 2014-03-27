@@ -86,35 +86,11 @@ Bool_t TDabcEngine::Create(const char* args)
       return kFALSE;
    }
 
-   bool isslave = url.GetProtocol() == "dabc";
-
    std::string topfolder = url.GetOptionStr("top", "ROOT");
 
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(0);
       dabc::CreateManager("dabc", -1);
-   }
-
-   dabc::mgr.CreatePublisher();
-
-   if (dabc::mgr.FindItem("/ROOT").null()) {
-
-      std::string player_class = url.GetOptionStr("player", "root::Player");
-
-      dabc::CmdCreateObject cmd2(player_class,"/ROOT");
-      cmd2.SetBool("enabled", true);
-      if (isslave)
-         cmd2.SetStr("prefix", topfolder + "/" + dabc::mgr.GetLocalId());
-      else
-         cmd2.SetStr("prefix", topfolder);
-
-      if (!dabc::mgr.Execute(cmd2)) return kFALSE;
-      dabc::WorkerRef player = cmd2.GetRef("Object");
-
-      if (player.null()) return kFALSE;
-
-      player.MakeThreadForWorker("MainThread");
-      DOUT1("Create root player %p thrdname %s", player(), player.thread().GetName());
    }
 
    // creating web server
@@ -127,9 +103,7 @@ Bool_t TDabcEngine::Create(const char* args)
          dabc::WorkerRef w1 = cmd1.GetRef("Object");
          w1.MakeThreadForWorker("MainThread");
       }
-      return kTRUE;
-   }
-
+   } else
    // creating fastcgi server
    if (url.GetProtocol() == "fastcgi") {
       if (dabc::mgr.FindItem("/fastcgi").null()) {
@@ -142,10 +116,9 @@ Bool_t TDabcEngine::Create(const char* args)
          w1.MakeThreadForWorker("MainThread");
       }
       return kTRUE;
-   }
-
+   } else
    // connect to master
-   if (isslave) {
+   if (url.GetProtocol() == "dabc") {
 
       std::string master_url = url.GetHostNameWithPort();
 
@@ -164,11 +137,30 @@ Bool_t TDabcEngine::Create(const char* args)
          DOUT0("FAIL to activate connection to master %s", master_url.c_str());
          return kFALSE;
       }
-
-      return kTRUE;
+   } else {
+      if (!dabc::mgr.CreateControl(true, url.GetPort(), url.HasOption("allowclients"))) return kFALSE;
    }
 
-   return dabc::mgr.CreateControl(true, url.GetPort(), url.HasOption("allowclients"));
+   dabc::mgr.CreatePublisher();
+
+   if (dabc::mgr.FindItem("/ROOT").null()) {
+
+      std::string player_class = url.GetOptionStr("player", "root::Player");
+
+      dabc::CmdCreateObject cmd2(player_class,"/ROOT");
+      cmd2.SetBool("enabled", true);
+      cmd2.SetStr("prefix", topfolder);
+
+      if (!dabc::mgr.Execute(cmd2)) return kFALSE;
+      dabc::WorkerRef player = cmd2.GetRef("Object");
+
+      if (player.null()) return kFALSE;
+
+      player.MakeThreadForWorker("MainThread");
+      DOUT1("Create root player %p thrdname %s", player(), player.thread().GetName());
+   }
+
+   return kTRUE;
 }
 
 

@@ -71,7 +71,7 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
    fEvCounter = 0;
    fFlushCnt = 2;
 
-   PublishPars("Hadaq/Transmitter");
+   PublishPars("$CONTEXT$/HadaqTransmitter");
 }
 
 

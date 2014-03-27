@@ -1116,7 +1116,7 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
    return ptr!=0;
 }
 
-Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* options, void* &ptr, Long_t& length)
+Bool_t TRootSniffer::Produce(const char* path, const char* file, const char* options, void* &ptr, Long_t& length)
 {
    // method to produce different kind of binary data
    // Supported file (case sensitive):
@@ -1127,21 +1127,21 @@ Bool_t TRootSniffer::Produce(const char* kind, const char* path, const char* opt
    //   "root.xml"  - xml representation
    //   "root.json" - json representation
 
-   if ((kind==0) || (*kind==0) || (strcmp(kind,"root.bin")==0))
+   if ((file==0) || (*file==0) || (strcmp(file,"root.bin")==0))
       return ProduceBinary(path, options, ptr, length);
 
-   if (strcmp(kind,"root.png")==0)
+   if (strcmp(file,"root.png")==0)
       return ProduceImage(TImage::kPng, path, options, ptr, length);
 
-   if (strcmp(kind,"root.jpeg")==0)
+   if (strcmp(file,"root.jpeg")==0)
       return ProduceImage(TImage::kJpeg, path, options, ptr, length);
 
-   if (strcmp(kind,"root.gif")==0)
+   if (strcmp(file,"root.gif")==0)
       return ProduceImage(TImage::kGif, path, options, ptr, length);
 
-   if ((strcmp(kind,"root.xml")==0) || (strcmp(kind,"root.json")==0)) {
+   if ((strcmp(file,"root.xml")==0) || (strcmp(file,"root.json")==0)) {
       TString res;
-      if (strcmp(kind,"root.xml")==0) {
+      if (strcmp(file,"root.xml")==0) {
          if (!ProduceXml(path, options,res)) return kFALSE;
       } else {
          if (!ProduceJson(path, options,res)) return kFALSE;

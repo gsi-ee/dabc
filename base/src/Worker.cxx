@@ -698,7 +698,6 @@ int dabc::Worker::PreviewCommand(Command cmd)
       dabc::Hierarchy h = (HierarchyContainer*) cmd.GetPtr("hierarchy");
       HierarchyStore* store = (HierarchyStore*) cmd.GetPtr("store");
       unsigned version = cmd.GetUInt("version");
-      // DOUT0("Worker %s hierarchy %p has producer %s", GetName(), h(), DBOOL(h.HasField(dabc::prop_producer)));
 
       if (!h.null()) {
 
@@ -706,14 +705,8 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          LockGuard lock(h.GetHMutex());
 
-         // if (IsName("Go4")) { dabc::SetDebugLevel(2); dabc::Logger::Instance()->SetLogLimit(1000000); }
-
          Buffer diff = h.SaveToBuffer(dabc::stream_NamesList, version);
          cmd.SetRawData(diff);
-
-         //DOUT0("Worker %s store its hierarchy %p res_buf %u", GetName(), h(), diff.GetTotalSize());
-         //static int cnt = 3;
-         //if (IsName("Go4")) { dabc::SetDebugLevel(0); if (cnt--<0) exit(4); }
 
          cmd.SetUInt("version", h.GetVersion());
 
@@ -723,9 +716,6 @@ int dabc::Worker::PreviewCommand(Command cmd)
       }
 
       if (store) store->WriteExtractedData();
-
-      // DOUT0("Request DNS version %u sizelen %u", (unsigned) cmdp.GetVersion(), (unsigned) diff.GetTotalSize());
-      // DOUT0("CURRENT ver %u\n%s", (unsigned) h.GetVersion(), h.SaveToXml().c_str());
 
    } else
    if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {

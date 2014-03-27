@@ -78,9 +78,6 @@ public:
    void SetFile() { SetContentType("_file_"); }
    void SetXml() { SetContentType("text/xml"); }
    void SetJson() { SetContentType("application/json"); }
-   void SetBin() { SetContentType("application/x-binary"); }
-   void SetPng() { SetContentType("image/png"); }
-   void SetJpeg() { SetContentType("image/jpeg"); }
 
    // Set encoding like gzip
    void SetEncoding(const char* typ) { fContentEncoding = typ; }
@@ -94,11 +91,6 @@ public:
 
    Bool_t Is404() const { return IsContentType("_404_"); }
    Bool_t IsFile() const { return IsContentType("_file_"); }
-   Bool_t IsXml() const { return IsContentType("text/xml"); }
-   Bool_t IsJson() const { return IsContentType("application/json"); }
-   Bool_t IsBin() const { return IsContentType("application/x-binary"); }
-   Bool_t IsPng() const { return IsContentType("image/png"); }
-   Bool_t IsJpeg() const { return IsContentType("image/jpeg"); }
 
    const char* GetContentType() const { return fContentType.Data(); }
 
@@ -157,9 +149,14 @@ public:
    /** Process submitted requests, must be called from main thread */
    void ProcessRequests();
 
+   /** Register object in subfolder */
    Bool_t Register(const char* subfolder, TObject* obj);
 
+   /** Unregister object */
    Bool_t Unregister(TObject* obj);
+
+   /** Guess mime type base on file extension */
+   static const char* GetMimeType(const char* path);
 
    ClassDef(THttpServer,0) // HTTP online server for analysis
 };

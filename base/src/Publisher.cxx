@@ -74,13 +74,12 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
 
 void dabc::Publisher::OnThreadAssigned()
 {
-//   fMgrPath = "DABC/localhost";
+   fMgrPath = dabc::format("DABC/%s", dabc::mgr.GetName());
 
-   fMgrPath = "DABC/";
-   std::string addr = dabc::mgr.GetLocalAddress();
-   size_t pos = addr.find(":");
-   if (pos<addr.length()) addr[pos]='_';
-   fMgrPath += addr;
+//   std::string addr = dabc::mgr.GetLocalAddress();
+//   size_t pos = addr.find(":");
+//   if (pos<addr.length()) addr[pos]='_';
+//   fMgrPath = std::string("DABC/")+ addr;
 
    if (!fMgrHiearchy.null()) {
       DOUT3("dabc::Publisher::BeforeModuleStart mgr path %s", fMgrPath.c_str());
@@ -434,6 +433,8 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
       return false;
    }
 
+   DOUT3("Submit command to Receiver %s", dabc::mgr.ComposeAddress(producer_server, dabc::Publisher::DfltName()).c_str());
+
    cmd.SetReceiver(dabc::mgr.ComposeAddress(producer_server, dabc::Publisher::DfltName()));
    cmd.SetBool("analyzed", true);
    dabc::mgr.Submit(cmd);
@@ -452,6 +453,10 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          ismgrpath = true;
          path.erase(0, 5);
          path = fMgrPath + path;
+      } else
+      if (path.find("$CONTEXT$")==0) {
+         path.erase(0, 9);
+         path = dabc::format("/%s", dabc::mgr.GetName()) + path;
       }
 
       switch (cmd.GetInt("cmdid")) {
@@ -496,7 +501,6 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
             fLocal.GetFolder(path, true);
             // set immediately producer
-            // h.SetField(prop_producer, fPublishers.back().fulladdr);
 
             // ShootTimer("Timer");
 
@@ -695,6 +699,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       // if we get command here, we need to find destination for it
 
       std::string itemname = cmd.GetStr("Item");
+
+      DOUT0("Publisher::CmdGetBinary for item %s", itemname.c_str());
 
       if (!RedirectCommand(cmd, itemname)) return cmd_false;
 

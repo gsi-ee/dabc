@@ -39,8 +39,6 @@ bool dabc::CreateManager(const std::string& name, int cmd_port)
 
    if (dofactories) {
       dabc::mgr.Execute("InitFactories");
-      dabc::mgr.SetLocalId("", false); // ensure that correct ids will be specified
-      dabc::mgr.SetLocalAddress("", false);
    }
 
    return true;

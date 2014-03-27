@@ -91,8 +91,6 @@ void root::Player::OnThreadAssigned()
    }
 
    fHierarchy.Create("ROOT", true);
-   // identify ourself as bin objects producer
-   // fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
    InitializeHierarchy();
 
    Publish(fHierarchy, fPrefix);
@@ -138,6 +136,8 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
+   DOUT0("Request item %s file %s ", itemname.c_str(), binkind.c_str());
+
    // check if version was specified in query
    uint64_t version = 0;
    dabc::Url url(std::string("getbin?") + query);
@@ -177,7 +177,7 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
    // use sniffer method to generate data
 
-   if (!sniff->Produce(binkind.c_str(), itemname.c_str(), query.c_str(), ptr, length)) {
+   if (!sniff->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length)) {
        EOUT("ROOT sniffer producer fails for item %s kind %s", itemname.c_str(), binkind.c_str());
        return dabc::cmd_false;
    }
@@ -213,10 +213,6 @@ void root::Player::ProcessActionsInRootContext(TRootSniffer* sniff)
       dabc::LockGuard lock(fHierarchy.GetHMutex());
 
       fHierarchy.Update(fRoot);
-
-      // DOUT0("Main ROOT hierarchy %p has producer %s", fHierarchy(), DBOOL(fHierarchy.HasField(dabc::prop_producer)));
-
-      DOUT5("ROOT hierarchy ver %u \n%s", fHierarchy.GetVersion(), fHierarchy.SaveToXml().c_str());
    }
 
    bool doagain(true);

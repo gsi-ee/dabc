@@ -373,12 +373,9 @@ namespace dabc {
          int                   fNodeId;
          int                   fNumNodes;
 
-         /** \brief Unique identifier - include host name and process id */
-         std::string           fLocalId;
-
          /** \brief Identifier for the current application
-          * Often it is host:port of command channel. If command channel not exists
-          * or not allows client connections, port number should not be provided */
+          * Only set when control instance is created
+          * Depending on configuration, includes server port number or just process id */
          std::string           fLocalAddress;
 
          ThreadsLayout         fThrLayout; ///< defines distribution of threads
@@ -501,8 +498,6 @@ namespace dabc {
          /** \brief Return address of current application */
          std::string GetLocalAddress();
 
-         /** \brief Get identifier of current application */
-         std::string GetLocalId();
 
          /** Return address of the node to be able communicate with it */
          std::string GetNodeAddress(int nodeid);
@@ -608,10 +603,6 @@ namespace dabc {
 
          int NumNodes() const;
 
-         /** \brief Return unique identifier of the application */
-         std::string GetLocalId()
-         {  return null() ? std::string() : GetObject()->GetLocalId(); }
-
          /** Return identifier of local host, which can be used everywhere for node addressing */
          std::string GetLocalAddress()
          {  return null() ? std::string() : GetObject()->GetLocalAddress(); }
@@ -708,14 +699,6 @@ namespace dabc {
 
          WorkerRef GetCommandChannel()
            { return GetObject() ? GetObject()->GetCommandChannel() : WorkerRef();  }
-
-         /** \brief Defines address for the application, which could be used to address it from outside
-          * Normally it is hostname:port of the socket channel, which can be connected from outside */
-         bool SetLocalAddress(const std::string& name, bool force = false);
-
-         /** \brief Defines unique identifier for the application.
-          * Default include node name and process id */
-         bool SetLocalId(const std::string& name, bool force = false);
 
          /** \brief Create command channel
           * Parameter withserver defines if server socket will be created, which accepts client connections

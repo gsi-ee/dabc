@@ -233,7 +233,6 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fCfgHost(),
    fNodeId(0),
    fNumNodes(1),
-   fLocalId(),
    fLocalAddress(),
    fThrLayout(layoutBalanced),
    fLastCreatedDevName()
@@ -245,11 +244,6 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       dabc::mgr = dabc::ManagerRef(this);
       dabc::SetDebugPrefix(GetName());
    }
-
-   fLocalId = "localhost";
-   fLocalAddress = "localhost";
-
-   DOUT1("MGR localid is %s", fLocalId.c_str());
 
    if (cfg) {
       fCfgHost = cfg->MgrHost();
@@ -1438,12 +1432,6 @@ std::string dabc::Manager::GetNodeAddress(int nodeid)
    return url.GetHostNameWithPort(defaultDabcPort);
 }
 
-std::string dabc::Manager::GetLocalId()
-{
-   LockGuard lock(fMgrMutex);
-   return fLocalId;
-}
-
 
 std::string dabc::Manager::GetLocalAddress()
 {
@@ -2267,38 +2255,6 @@ dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string& kind)
    return (dabc::DataInput*) cmd.GetPtr("DataInput");
 }
 
-
-bool dabc::ManagerRef::SetLocalAddress(const std::string& name, bool force)
-{
-   if (null()) return false;
-
-   LockGuard lock(GetObject()->fMgrMutex);
-
-   if (force || (GetObject()->fLocalAddress=="localhost")) {
-      if (!name.empty())
-         GetObject()->fLocalAddress = name;
-      else
-         GetObject()->fLocalAddress = dabc::format("localhost_pid%d", (int) getpid());
-      DOUT2("MGR local address is %s", GetObject()->fLocalAddress.c_str());
-   }
-   return true;
-}
-
-bool dabc::ManagerRef::SetLocalId(const std::string& name, bool force)
-{
-   if (null()) return false;
-
-   LockGuard lock(GetObject()->fMgrMutex);
-   if (force || (GetObject()->fLocalId=="localhost")) {
-      if (name.empty())
-         GetObject()->fLocalId = dabc::format("localhost_pid%d", (int) getpid());
-      else
-         GetObject()->fLocalId = name;
-      DOUT2("MGR local id is %s", GetObject()->fLocalId.c_str());
-   }
-   return true;
-}
-
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 {
    if (GetObject())
@@ -2329,7 +2285,9 @@ bool dabc::ManagerRef::CreateControl(bool withserver, int serv_port, bool allow_
 
    if (ref.null()) return false;
 
-   DOUT1("Set Local addr %s", GetObject()->fLocalAddress.c_str());
+   GetObject()->fLocalAddress = cmd.GetStr("localaddr");
+
+   DOUT0("Set Local addr %s", GetObject()->fLocalAddress.c_str());
 
    ref.MakeThreadForWorker("CmdThrd");
 

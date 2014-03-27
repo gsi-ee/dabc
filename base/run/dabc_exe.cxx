@@ -240,8 +240,6 @@ int main(int numc, char* args[])
 
    if (res==0) {
       dabc::mgr.Execute("InitFactories");
-      dabc::mgr.SetLocalId("", false); // ensure that correct ids will be specified
-      dabc::mgr.SetLocalAddress("", false);
    }
 
    if ((res==0) && (cfg.WithPublisher() > 0))

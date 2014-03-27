@@ -133,7 +133,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
    
-   PublishPars("Hadaq/Combiner");
+   PublishPars("$CONTEXT$/HadaqCombiner");
 
    if (fWithObserver) {
       CreateTimer("ObserverTimer", .3, false);

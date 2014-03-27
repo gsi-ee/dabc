@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+27.03.2014
+1. Change naming convention for folders in the published structures.
+   To be able reproduce folder name, only application/context/manager names 
+   will be used - no scoket or process id, no any host name.
+2. Default path for DABC application is /DABC/${Context}, 
+   default path for Go4 analysis is /GO4/AnalysisName
+
+
 26.03.2014
 1. Implement get.json request for DABC hieararchy classes. One could request 
    record itself or separate fields:
@@ -17,7 +25,6 @@ current functionality of the framework.
 4. Let TRootSniffer process all requestes which are directed to ROOT, 
    only for root.bin request use hash to verify if requester already has most recent object.  
    
-
 
 25.03.2014
 1. Fix error in ReferencesVector::AddAt - expand of vector was not working correctly 

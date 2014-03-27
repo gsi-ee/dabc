@@ -147,7 +147,6 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fWithLogger = Cfg("logger", cmd).AsBool(false);
 
    fHierarchy.Create("MBS");
-   //fHierarchy.Field(dabc::prop_producer).SetStr(WorkerAddress());
 
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");

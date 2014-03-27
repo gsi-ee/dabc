@@ -145,7 +145,7 @@ public:
 
    Bool_t ProduceImage(Int_t kind, const char* path, const char* options, void* &ptr, Long_t& length);
 
-   Bool_t Produce(const char* kind, const char* path, const char* options, void* &ptr, Long_t& length);
+   Bool_t Produce(const char* path, const char* file, const char* options, void* &ptr, Long_t& length);
 
    ClassDef(TRootSniffer,0) // Sniffer of ROOT objects
 };
