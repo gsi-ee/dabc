@@ -13,29 +13,39 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef DIMC_Factory
-#define DIMC_Factory
+#ifndef DIMC_Player
+#define DIMC_Player
 
-#ifndef DABC_Factory
-#include "dabc/Factory.h"
+#ifndef DABC_ModuleAsync
+#include "dabc/ModuleAsync.h"
 #endif
 
-/** \brief CERN DIM  */
+#ifndef DABC_Hierarchy
+#include "dabc/Hierarchy.h"
+#endif
 
 namespace dimc {
 
-   /** \brief %Factory for dim control classes */
+   /** \brief Player of DIM data
+    *
+    * Module builds hierarchy for discovered DIM variables
+    *
+    **/
 
-   class Factory : public dabc::Factory {
-      public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
-
-         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+   class Player : public dabc::ModuleAsync {
 
       protected:
+         virtual void OnThreadAssigned();
 
+      public:
+         Player(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Player();
+
+         virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
    };
-
 }
+
 
 #endif

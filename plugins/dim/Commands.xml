@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Commands>
-<command name="ToggleInfo" scope="public">
-  <argument name="toggle" type="I" value="" required="false"/>
-</command>
-<command name="ToggleInfo" dim="DABC/lxg0526:0/Generator/ToggleInfo.Generator" scope="public" content="values">
-<argument name="toggle" type="I" value="67" required="FALSE"/>
-</command>
-</Commands>

@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -11,19 +13,37 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dimc/records.h"
+#include "dimc/Player.h"
 
-namespace dimc {
+#include "dabc/Publisher.h"
 
-   const char* desc_HistogramRec = "L:1;F:1;F:1;C:32;C:32;C:16;L";
-   const char* desc_StatusRec    = "L:1;C:16;C:16";
-   const char* desc_InfoRec      = "L:1;C:16;C:128";
-   const char* desc_RateRec      = "F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16";
+dimc::Player::Player(const std::string& name, dabc::Command cmd) :
+   dabc::ModuleAsync(name, cmd)
+{
+   EnsurePorts(0, 0, dabc::xmlWorkPool);
 
-   const char* col_Red     =  "Red";
-   const char* col_Green   =  "Green";
-   const char* col_Blue    =  "Blue";
-   const char* col_Cyan    =  "Cyan";
-   const char* col_Yellow  =  "Yellow";
-   const char* col_Magenta =  "Magenta";
+   fWorkerHierarchy.Create("DIMC");
+
+   CreateTimer("update", 1., false);
+
+   Publish(fWorkerHierarchy, "DIMC");
+}
+
+dimc::Player::~Player()
+{
+}
+
+
+void dimc::Player::OnThreadAssigned()
+{
+   dabc::ModuleAsync::OnThreadAssigned();
+}
+
+void dimc::Player::ProcessTimerEvent(unsigned timer)
+{
+}
+
+int dimc::Player::ExecuteCommand(dabc::Command cmd)
+{
+   return dabc::ModuleAsync::ExecuteCommand(cmd);
 }

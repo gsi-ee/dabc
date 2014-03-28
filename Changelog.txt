@@ -24,6 +24,10 @@ current functionality of the framework.
    players, building one common hierarchy of variables.  
 6. Adjust old ezca::EpicsInput for usage of current xml syntax, 
    where array of items can be used.
+7. Remove old DIM code completely, including DIM package itself.
+   Introduce dimc::Player class, which will be used to represent DIM 
+   variables in DABC hierarchies. DIM plugin is only compiled when
+   DIM is installed and DIMDIR is correctly configured.
 
 
 27.03.2014

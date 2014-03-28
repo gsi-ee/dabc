@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -12,23 +14,14 @@
  ************************************************************/
 
 #include "dimc/Factory.h"
-#include "dimc/Observer.h"
-
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
+#include "dimc/Player.h"
 
 dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
 
-void dimc::Factory::Initialize()
+dabc::Module* dimc::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
+   if (classname == "dimc::Player")
+      return new dimc::Player(modulename, cmd);
 
-   dimc::Observer* observ = new dimc::Observer("/dim");
-   if (!observ->IsEnabled()) {
-      delete observ;
-   } else {
-      DOUT0("Initialize DIM control");
-      dabc::WorkerRef(observ).MakeThreadForWorker("DimThread");
-   }
+   return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
