@@ -359,12 +359,6 @@ namespace dabc {
 
       Mutex* GetHMutex() const { return null() ? 0 : GetObject()->fHierarchyMutex; }
 
-      /** \brief Create child item in hierarchy with specified name
-       * \details If par indx specified, child will be created at specified position
-       * If parameter check_name true, item name will be checked for special symbols
-       * and if found, name will be reformatted. At the same time, property dabc:realname will be set */
-      Hierarchy CreateChild(const std::string& name, int indx = -1, bool check_name = true);
-
       /** \brief Find master item
        * It is used in ROOT to specify position of streamer info */
       Hierarchy FindMaster() const;
@@ -471,8 +465,15 @@ namespace dabc {
       /** \brief Enable element and all its parents to read data */
       void EnableReading(const Hierarchy& upto = 0);
 
-      /** \brief Return child, if necessary creates with full subfolder */
-      Hierarchy GetHChild(const std::string& name, bool force = false);
+      /** \brief Return child, if necessary creates with full subfolder
+       * If force specified, missing childs and folders will be recreated
+       * If allowslahes enabled, instead of subfolders item with coded name will be created */
+      Hierarchy GetHChild(const std::string& name, bool allowslahes = false, bool force = false);
+
+      /** \brief Create child item in hierarchy with specified name
+       * If allowslahes enabled, instead of subfolders item with coded name will be created */
+      Hierarchy CreateHChild(const std::string& name, bool allowslahes = false)
+        { return GetHChild(name, allowslahes, true); }
 
       /** \brief Create folder in hierarchy, one could use it to add new childs to it */
       Hierarchy CreateFolder(const std::string& name) { return GetHChild(name, true); }

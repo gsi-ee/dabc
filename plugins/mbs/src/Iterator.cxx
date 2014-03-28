@@ -257,7 +257,7 @@ dabc::Buffer mbs::WriteIterator::CloseAndTransfer(dabc::Buffer& newbuf)
 {
    if (newbuf.null()) return Close();
 
-   if (!IsAnyUncompleteData()) {
+   if (!IsAnyIncompleteData()) {
       dabc::Buffer oldbuf = Close();
       Reset(newbuf);
       return oldbuf;

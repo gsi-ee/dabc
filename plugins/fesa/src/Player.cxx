@@ -66,15 +66,15 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fWorkerHierarchy.Create("FESA", true);
 
    // this is just emulation, later one need list of real variables
-   fWorkerHierarchy.CreateChild("BeamProfile").SetField(dabc::prop_kind, "FESA.2D");
+   fWorkerHierarchy.CreateHChild("BeamProfile").SetField(dabc::prop_kind, "FESA.2D");
 
-   fWorkerHierarchy.CreateChild("BeamRate").SetField(dabc::prop_kind, "rate");
+   fWorkerHierarchy.CreateHChild("BeamRate").SetField(dabc::prop_kind, "rate");
 
-   dabc::Hierarchy item = fWorkerHierarchy.CreateChild("BeamRate2");
+   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("BeamRate2");
    item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
 
-   item = fWorkerHierarchy.CreateChild("TestRate");
+   item = fWorkerHierarchy.CreateHChild("TestRate");
    item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
    
@@ -101,7 +101,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
       }
       
       if ((fDevice!=0) && !fService.empty()) {
-         item = fWorkerHierarchy.CreateChild(fService);
+         item = fWorkerHierarchy.CreateHChild(fService);
          item.Field(dabc::prop_kind).SetStr("rate");
          item.EnableHistory(100);
       }
@@ -111,13 +111,13 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    #ifdef WITH_ROOT
 
-   fWorkerHierarchy.CreateChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TList");
+   fWorkerHierarchy.CreateHChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TList");
 
-   dabc::Hierarchy h1 = fWorkerHierarchy.CreateChild("BeamRoot");
+   dabc::Hierarchy h1 = fWorkerHierarchy.CreateHChild("BeamRoot");
    h1.SetField(dabc::prop_kind, "ROOT.TH2I");
    h1.SetField(dabc::prop_masteritem, "StreamerInfo");
 
-   h1 = fWorkerHierarchy.CreateChild("ImageRoot");
+   h1 = fWorkerHierarchy.CreateHChild("ImageRoot");
    h1.SetField(dabc::prop_kind, "ROOT.TH2I");
    h1.SetField(dabc::prop_masteritem, "StreamerInfo");
    h1.SetField("dabc:view", "png");

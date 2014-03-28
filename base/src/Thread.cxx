@@ -114,19 +114,19 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
          if (fWorkerHierarchy.null()) {
             fWorkerHierarchy.Create("Thread");
-            dabc::Hierarchy item = fWorkerHierarchy.CreateChild("NumWorkers");
+            dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("NumWorkers");
             item.SetField(dabc::prop_kind, "rate");
             item.EnableHistory(100);
 
-            item = fWorkerHierarchy.CreateChild("Workers");
+            item = fWorkerHierarchy.CreateHChild("Workers");
             item.SetField(dabc::prop_kind, "log");
             item.EnableHistory(100);
 
-            item = fWorkerHierarchy.CreateChild("pid");
+            item = fWorkerHierarchy.CreateHChild("pid");
             item.SetField(dabc::prop_kind, "log");
 
             if (fThread()->fProfiling) {
-               item = fWorkerHierarchy.CreateChild("Load");
+               item = fWorkerHierarchy.CreateHChild("Load");
                item.SetField(dabc::prop_kind, "rate");
                item.SetField("min", 0);
                item.SetField("max", 1);

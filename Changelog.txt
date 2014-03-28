@@ -13,6 +13,11 @@ current functionality of the framework.
 	       <item value="3"/>
 	       <item value="4"/>
 	    </Field>
+2. In ezca::Player accumulate many events in buffer, implement flushing.
+3. In dabc::Hierarchy implement GetHChild and CreateHChild methods.
+   Internally all kind of subfolders and special symbols hadeled.
+   Actual folder/item names in hierarchy may differ due to special symbols,
+   but GetHChild can recognize such situation.  
 
 
 27.03.2014

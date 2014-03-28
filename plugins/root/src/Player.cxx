@@ -42,7 +42,7 @@ public:
          top.Create(nodename);
          curr = top;
       } else {
-         curr = curr.CreateChild(nodename);
+         curr = curr.CreateHChild(nodename, true);
       }
       //DOUT0("Create node %s", nodename);
    }

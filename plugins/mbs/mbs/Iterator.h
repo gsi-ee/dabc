@@ -96,7 +96,7 @@ namespace mbs {
          dabc::Pointer  fEvPtr;   ///< place for current event
          dabc::Pointer  fSubPtr;  ///< place for subevents
          dabc::Pointer  fSubData; ///< pointer to place raw data of current subevent
-         dabc::BufferSize_t fFullSize; ///<
+         dabc::BufferSize_t fFullSize; ///< size of accumulated events
 
       public:
          WriteIterator();
@@ -111,11 +111,11 @@ namespace mbs {
          /** Return true if any complete event was written to the buffer */
          bool IsAnyEvent() const { return fFullSize != 0; }
 
-         /** Return true if any uncomplete data were provided to the iterator */
-         bool IsAnyUncompleteData() const { return !fSubPtr.null(); }
+         /** Return true if any incomplete data were provided to the iterator */
+         bool IsAnyIncompleteData() const { return !fSubPtr.null(); }
 
          /** Return true if anything was written to the buffer */
-         bool IsAnyData() const { return IsAnyEvent() || IsAnyUncompleteData(); }
+         bool IsAnyData() const { return IsAnyEvent() || IsAnyIncompleteData(); }
 
          bool IsPlaceForEvent(uint32_t subeventsize, bool add_subev_header = false);
          bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);

@@ -149,52 +149,52 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fHierarchy.Create("MBS");
 
    // this is just emulation, later one need list of real variables
-   dabc::Hierarchy item = fHierarchy.CreateChild("DataRate");
+   dabc::Hierarchy item = fHierarchy.CreateHChild("DataRate");
    item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("EventRate");
+   item = fHierarchy.CreateHChild("EventRate");
    item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("ServerRate");
+   item = fHierarchy.CreateHChild("ServerRate");
    item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
    if (fWithLogger) {
-      item = fHierarchy.CreateChild("logger");
+      item = fHierarchy.CreateHChild("logger");
       item.SetField(dabc::prop_kind, "log");
       if (history>1) item.EnableHistory(history);
    }
 
-   item = fHierarchy.CreateChild("rate_log");
+   item = fHierarchy.CreateHChild("rate_log");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("rash_log");
+   item = fHierarchy.CreateHChild("rash_log");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("rast_log");
+   item = fHierarchy.CreateHChild("rast_log");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
-   item = fHierarchy.CreateChild("ratf_log");
+   item = fHierarchy.CreateHChild("ratf_log");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
-/* item = fHierarchy.CreateChild("CmdStart");
+/* item = fHierarchy.CreateHChild("CmdStart");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 
-   item = fHierarchy.CreateChild("CmdNodes");
+   item = fHierarchy.CreateHChild("CmdNodes");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 
-   item = fHierarchy.CreateChild("CmdFiles");
+   item = fHierarchy.CreateHChild("CmdFiles");
    item.Field(dabc::prop_kind).SetStr("DABC.Command");
 */
 
    if (!fPrompter.empty()) {
-      dabc::CommandDefinition cmddef = fHierarchy.CreateChild("CmdMbs");
+      dabc::CommandDefinition cmddef = fHierarchy.CreateHChild("CmdMbs");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
       cmddef.AddArg("cmd", "string", true, "show rate");
    }

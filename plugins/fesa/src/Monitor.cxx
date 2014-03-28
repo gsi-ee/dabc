@@ -126,7 +126,7 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    #endif
 
    for (unsigned n=0;n<services.size();n++) {
-      dabc::Hierarchy item = fHierarchy.CreateChild(services[n]);
+      dabc::Hierarchy item = fHierarchy.CreateHChild(services[n]);
       item.EnableHistory(100);
 
       if (fDevice!=0) {

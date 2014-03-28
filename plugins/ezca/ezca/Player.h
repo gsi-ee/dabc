@@ -24,6 +24,11 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+
+#ifndef MBS_Iterator
+#include "mbs/Iterator.h"
+#endif
+
 namespace ezca {
 
    /** \brief Player of EPICS data
@@ -44,20 +49,20 @@ namespace ezca {
          bool    fEzcaAutoError;  ///< Automatic error printing
          double  fTimeout;        ///< timeout (in seconds) for readout polling.
          unsigned fSubeventId;    ///< full id number for epics subevent
+         std::string fNameSepar;  ///< separator symbol(s), which defines subfolder in epcis names
 
-         /* contains names of all long integer values to be requested*/
-         std::vector<std::string> fLongRecords;
-         std::vector<long> fLongValues;
+         std::vector<std::string> fLongRecords;  ///< names of long records
+         std::vector<long> fLongValues;          ///< values of long records
 
-         /* contains names of all double  values to be requested*/
-         std::vector<std::string> fDoubleRecords;
-         std::vector<double> fDoubleValues;
+         std::vector<std::string> fDoubleRecords; ///< names of double records
+         std::vector<double> fDoubleValues;       ///< values of double records
 
-         /** Complete descriptor of long/double variables, packed into mbs event */
-         std::string fDescriptor;
+         std::string  fDescriptor;   ///< descriptor for mbs event
+         long         fEventNumber;  ///< Event number, written to MBS event
 
-         /** Event number, written to MBS event */
-         long fEventNumber;
+         dabc::TimeStamp  fLastSendTime;  ///< last time when buffer was send, used for flushing
+         mbs::WriteIterator fIter;        ///< iterator for creating of MBS events
+         double   fFlushTime;             ///< time to flush event
 
          /** Initialize some EZCA settings, do it from worker thread */
          virtual void OnThreadAssigned();
@@ -77,6 +82,9 @@ namespace ezca {
 
          /** Build descriptor of EPICS variables */
          void BuildDescriptor();
+
+         /** Evaluate next event size to decide if new buffer is required */
+         unsigned NextEventSize();
 
          /** Perform readout of all variables */
          bool DoEpicsReadout();

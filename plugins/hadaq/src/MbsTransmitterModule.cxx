@@ -225,7 +225,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
       dabc::Buffer sendbuf;
 
-      if (fTgtIter.IsAnyUncompleteData()) {
+      if (fTgtIter.IsAnyIncompleteData()) {
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) {
             // if (do_debug) DOUT0("MbsTransmitterModule::retransmit() exit with false 197");

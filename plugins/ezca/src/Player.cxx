@@ -35,12 +35,16 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fEzcaAutoError(false),
    fTimeout(1),
    fSubeventId(8),
+   fNameSepar(":"),
    fLongRecords(),
    fLongValues(),
    fDoubleRecords(),
    fDoubleValues(),
    fDescriptor(),
-   fEventNumber(0)
+   fEventNumber(0),
+   fLastSendTime(),
+   fIter(),
+   fFlushTime(10)
 {
    EnsurePorts(0, 0, dabc::xmlWorkPool);
 
@@ -52,11 +56,15 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fTimeout = Cfg(ezca::xmlTimeout, cmd).AsDouble(fTimeout);
    fSubeventId = Cfg(ezca::xmlEpicsSubeventId, cmd).AsUInt(fSubeventId);
 
+   fNameSepar = Cfg("NamesSepar", cmd).AsStr(fNameSepar);
+
    fLongRecords = Cfg("Long", cmd).AsStrVect();
    fLongValues.resize(fLongRecords.size());
 
    fDoubleRecords = Cfg("Doubles", cmd).AsStrVect();
    fDoubleValues.resize(fDoubleRecords.size());
+
+   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
    fDescriptor.clear();
 
@@ -64,30 +72,16 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
 
 
    for (unsigned ix = 0; ix < fLongRecords.size(); ++ix) {
-      dabc::Hierarchy item = fWorkerHierarchy.GetHChild(GetItemName(fLongRecords[ix]), true);
+      dabc::Hierarchy item = fWorkerHierarchy.CreateHChild(GetItemName(fLongRecords[ix]));
       item.SetField(dabc::prop_kind, "rate");
       item.EnableHistory(100);
    }
 
    for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix) {
-      dabc::Hierarchy item = fWorkerHierarchy.GetHChild(GetItemName(fDoubleRecords[ix]), true);
+      dabc::Hierarchy item = fWorkerHierarchy.CreateHChild(GetItemName(fDoubleRecords[ix]));
       item.SetField(dabc::prop_kind, "rate");
       item.EnableHistory(100);
    }
-
-
-   /*
-   dabc::Hierarchy item = fWorkerHierarchy.CreateChild("BeamRate2");
-   item.SetField(dabc::prop_kind, "rate");
-   item.EnableHistory(100);
-
-   fServerName = Cfg("Server", cmd).AsStr();
-   fDeviceName = Cfg("Device", cmd).AsStr();
-   fCycles = Cfg("Cycles", cmd).AsStr();
-   fService = Cfg("Service", cmd).AsStr();
-   fField = Cfg("Field", cmd).AsStr();
-
-   */
 
    if (fTimeout<=0.001) fTimeout = 0.001;
 
@@ -102,12 +96,14 @@ ezca::Player::~Player()
 
 std::string ezca::Player::GetItemName(const std::string& ezcaname)
 {
+   if (fNameSepar.empty()) return ezcaname;
+
    std::string res = ezcaname;
 
    size_t pos = 0;
 
-   while ((pos = res.find_first_of(":")) != std::string::npos)
-      res[pos] = '/';
+   while ((pos = res.find_first_of(fNameSepar, pos)) != std::string::npos)
+      res[pos++] = '/';
 
    return res;
 }
@@ -122,10 +118,12 @@ void ezca::Player::OnThreadAssigned()
    if (fEzcaRetryCnt>0) ezcaSetRetryCount(fEzcaRetryCnt);
 
    if (fEzcaDebug) ezcaDebugOn();
-   else ezcaDebugOff();
+              else ezcaDebugOff();
 
    if (fEzcaAutoError) ezcaAutoErrorMessageOn();
-   else ezcaAutoErrorMessageOff();
+                  else ezcaAutoErrorMessageOff();
+
+   fLastSendTime.GetNow();
 }
 
 void ezca::Player::ProcessTimerEvent(unsigned timer)
@@ -152,55 +150,90 @@ int ezca::Player::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
+unsigned ezca::Player::NextEventSize()
+{
+   return sizeof(uint32_t) +    // event number
+          sizeof(uint32_t) +    // time
+          sizeof(uint64_t) +    // numlongs
+          fLongValues.size()*sizeof(int64_t) + // longs
+          sizeof(uint64_t) +    // numdoubles
+          fDoubleValues.size()*sizeof(double) + // doubles
+          fDescriptor.size();
+}
+
 
 void ezca::Player::SendDataToOutputs()
 {
-   if (fDescriptor.empty()) BuildDescriptor();
+   BuildDescriptor();
 
-   dabc::Buffer buf = TakeBuffer();
-   if (buf.null()) return;
+   unsigned nextsize = NextEventSize();
+
+   if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
+
+      // if output is blocked, do not produce data
+      if (!CanSendToAllOutputs()) return;
+
+      dabc::Buffer buf = fIter.Close();
+      SendToAllOutputs(buf);
+
+      fLastSendTime.GetNow();
+   }
+
+   if (!fIter.IsBuffer()) {
+      dabc::Buffer buf = TakeBuffer();
+      // if no buffer can be taken, skip data
+      if (buf.null()) { EOUT("Cannot take buffer for EZCA data"); return; }
+      fIter.Reset(buf);
+   }
+
+   if (!fIter.IsPlaceForEvent(nextsize, true)) {
+      EOUT("EZCA event %u too large for current buffer size", nextsize);
+      return;
+   }
 
    fEventNumber++;
 
-   mbs::WriteIterator iter(buf);
-
-   iter.NewEvent(fEventNumber);
-   iter.NewSubevent2(fSubeventId);
+   fIter.NewEvent(fEventNumber);
+   fIter.NewSubevent2(fSubeventId);
 
    uint32_t number = fEventNumber;
-   iter.AddRawData(&number, sizeof(number));
+   fIter.AddRawData(&number, sizeof(number));
 
    struct timeb s_timeb;
    ftime(&s_timeb);
    number = s_timeb.time;
-   iter.AddRawData(&number, sizeof(number));
+   fIter.AddRawData(&number, sizeof(number));
 
    uint64_t num64 = fLongValues.size();
-   iter.AddRawData(&num64, sizeof(num64));
+   fIter.AddRawData(&num64, sizeof(num64));
 
    for (unsigned ix = 0; ix < fLongValues.size(); ++ix) {
       int64_t val = fLongValues[ix]; // machine independent representation here
-      iter.AddRawData(&val, sizeof(val));
+      fIter.AddRawData(&val, sizeof(val));
    }
 
    // header with number of double records
    num64 = fDoubleValues.size();
-   iter.AddRawData(&num64, sizeof(num64));
+   fIter.AddRawData(&num64, sizeof(num64));
 
    // data values for double records:
    for (unsigned ix = 0; ix < fDoubleValues.size(); ix++) {
       double tmpval = fDoubleValues[ix]; // should be always 8 bytes
-      iter.AddRawData(&tmpval, sizeof(tmpval));
+      fIter.AddRawData(&tmpval, sizeof(tmpval));
    }
 
    // copy description of record names at subevent end:
-   iter.AddRawData(fDescriptor.c_str(), fDescriptor.size());
+   fIter.AddRawData(fDescriptor.c_str(), fDescriptor.size());
 
-   iter.FinishSubEvent();
-   iter.FinishEvent();
+   fIter.FinishSubEvent();
+   fIter.FinishEvent();
 
-   buf = iter.Close();
-   SendToAllOutputs(buf);
+
+   if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
+      dabc::Buffer buf = fIter.Close();
+      SendToAllOutputs(buf);
+      fLastSendTime.GetNow();
+   }
 }
 
 

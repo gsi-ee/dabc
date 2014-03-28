@@ -300,7 +300,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
          if (!ScanFiles(fullsubname + "/", dt, files)) return false;
       } else {
          isanysubdir = true;
-         dabc::Hierarchy subh = h.CreateChild(itemname);
+         dabc::Hierarchy subh = h.CreateHChild(itemname);
          if (!ScanTreeDir(subh, fullsubname + "/")) return false;
       }
    }
@@ -378,7 +378,7 @@ bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& f
          if (!entry.empty())
             if (entry.find(tree_chld.ItemName())!=0) continue;
 
-         Hierarchy tgt_chld = tgt.CreateChild(tree_chld.GetName());
+         Hierarchy tgt_chld = tgt.CreateHChild(tree_chld.GetName());
          if (!ProduceStructure(tree_chld, from_date, till_date, entry, tgt_chld)) return false;
       }
       return true;

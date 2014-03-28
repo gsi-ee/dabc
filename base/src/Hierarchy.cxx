@@ -1104,50 +1104,56 @@ void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
    SetObject(cont);
 }
 
-dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx, bool check_name)
+
+dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowslahes, bool force)
 {
-   if (null() || name.empty()) return dabc::Hierarchy();
+   size_t pos = name.rfind("/");
+   if ((pos != std::string::npos) && !allowslahes) {
+      if (pos==0) return GetHChild(name.substr(1), force, allowslahes);
+      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), force, allowslahes);
+      return GetHChild(name.substr(0, pos), force, allowslahes).GetHChild(name.substr(pos+1), force, allowslahes);
+   }
 
    std::string itemname = name;
+   if (pos != std::string::npos) itemname = itemname.substr(pos+1);
+   if (itemname.empty()) itemname = "item";
 
-   if (check_name) {
-      size_t pos = (itemname.find_last_of("/"));
-      if (pos!=std::string::npos) itemname = itemname.substr(pos+1);
-      if (itemname.empty()) itemname = "item";
+   // replace all special symbols which can make problem in http (not in xml)
+   while ((pos = itemname.find_first_of("#:&?")) != std::string::npos)
+      itemname.replace(pos, 1, "_");
 
-      // replace all special symbols which can make problem in http (not in xml)
-      while ((pos = itemname.find_first_of("#:&?")) != std::string::npos)
-         itemname.replace(pos, 1, "_");
-
-      unsigned cnt = NumChilds();
-      std::string basename = itemname;
-
-      // prevent same item name
-      while (!FindChild(itemname.c_str()).null()) {
-         itemname = dabc::format("%s%d", basename.c_str(), cnt++);
+   if (itemname == name) {
+      // simple case - no any special symbols
+      dabc::Hierarchy res = FindChild(name.c_str());
+      if (!res.null() && !res.HasField(dabc::prop_realname)) {
+         return res;
+      } else
+      if (res.null()) {
+         if (force) res = GetObject()->CreateChildAt(name, -1);
+         return res;
       }
    }
 
-   dabc::Hierarchy res = GetObject()->CreateChildAt(itemname, indx);
 
-   if (check_name && (itemname != name))
-      res.SetField(dabc::prop_realname, name);
+   for (unsigned n=0;n<NumChilds();n++) {
+      dabc::Hierarchy res = GetChild(n);
+      if (res.GetField(dabc::prop_realname).AsStr() == name) return res;
+   }
+
+   if (!force) return dabc::Hierarchy();
+
+   unsigned cnt = NumChilds();
+   std::string basename = itemname;
+
+   // prevent same item name
+   while (!FindChild(itemname.c_str()).null())
+      itemname = dabc::format("%s%u", basename.c_str(), cnt++);
+   dabc::Hierarchy res = GetObject()->CreateChildAt(itemname, -1);
+
+   res.SetField(dabc::prop_realname, name);
 
    return res;
-}
 
-dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool force)
-{
-   dabc::Hierarchy res = FindChild(name.c_str());
-   if (!res.null() || !force) return res;
-
-   size_t pos = name.rfind("/");
-   if (pos == std::string::npos) return CreateChild(name);
-
-   if (pos==0) return CreateChild(name.substr(1));
-   if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), true);
-
-   return GetHChild(name.substr(0, pos), true).CreateChild(name.substr(pos+1));
 }
 
 

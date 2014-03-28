@@ -1147,7 +1147,7 @@ bool dabc::Worker::PublishPars(const std::string& path)
       Hierarchy chld = fWorkerHierarchy.FindChild(par.GetName());
       if (!chld.null()) continue;
 
-      chld = fWorkerHierarchy.CreateChild(par.GetName());
+      chld = fWorkerHierarchy.CreateHChild(par.GetName());
 
       if (par.IsRatemeter()) {
          chld.EnableHistory(100);
