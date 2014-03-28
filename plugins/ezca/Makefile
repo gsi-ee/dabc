@@ -31,7 +31,7 @@ ALLDEPENDENC    += $(EZCA_D)
 libs:: $(EZCA_LIB)
 
 clean::
-	@rm -f $(EZCA_LIB)
+	@rm -f $(EZCADIR)/go4/*.o $(EZCADIR)/go4/*.d $(EZCADIR)/go4/*.root $(EZCADIR)/go4/*.so
 
 
 ##### local rules #####

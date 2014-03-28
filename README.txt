@@ -1,6 +1,6 @@
 --------------------------------------------------------------
           The Data Acquisition Backbone Core 
-         DABC Release v2.6.1 (27-November-2013)
+         DABC Release v2.6.7 (28-March-2014)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
@@ -26,7 +26,7 @@ GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
 This package was tested on:
-    Debian 5.0/6.0 (32 bit & 64 bit)
+    Debian 5.0/6.0/7.0 (32 bit & 64 bit)
     SuSe 11.2, 11.4, 12.1 (64bit)
     compilers: gcc 4.3.x, gcc 4.4.x, 4.5.x, 4.7.x 
 
