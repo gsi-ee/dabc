@@ -24,6 +24,9 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+
+class DimBrowser;
+
 namespace dimc {
 
    /** \brief Player of DIM data
@@ -35,6 +38,10 @@ namespace dimc {
    class Player : public dabc::ModuleAsync {
 
       protected:
+
+         std::string    fDimDns;  ///<  name of DNS server
+         ::DimBrowser*  fDimBr;   ///<  dim browser
+
          virtual void OnThreadAssigned();
 
       public:

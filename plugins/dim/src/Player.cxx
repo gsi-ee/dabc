@@ -17,10 +17,17 @@
 
 #include "dabc/Publisher.h"
 
+#include <dic.hxx>
+
+
 dimc::Player::Player(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd)
+   dabc::ModuleAsync(name, cmd),
+   fDimDns(),
+   fDimBr(0)
 {
-   EnsurePorts(0, 0, dabc::xmlWorkPool);
+   //EnsurePorts(0, 0, dabc::xmlWorkPool);
+
+   fDimDns = Cfg("DimDns", cmd).AsStr();
 
    fWorkerHierarchy.Create("DIMC");
 
@@ -31,16 +38,36 @@ dimc::Player::Player(const std::string& name, dabc::Command cmd) :
 
 dimc::Player::~Player()
 {
+   delete fDimBr; fDimBr = 0;
 }
 
 
 void dimc::Player::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
+
+   fDimBr = new ::DimBrowser();
+
+
 }
 
 void dimc::Player::ProcessTimerEvent(unsigned timer)
 {
+   if (fDimBr==0) return;
+
+   char *ptr, *ptr1;
+   int type;
+
+// DimClient::addErrorHandler(errHandler);
+
+   int n = fDimBr->getServices("*");
+   DOUT0("found %d DIM services", n);
+
+   while((type = fDimBr->getNextService(ptr, ptr1))!= 0)
+   {
+      DOUT0("type %d name %s descr %s", type, ptr, ptr1);
+   }
+
 }
 
 int dimc::Player::ExecuteCommand(dabc::Command cmd)

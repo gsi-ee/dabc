@@ -1,0 +1,18 @@
+<!-- This is example of dim usage with http server in DABC -->
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Example">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcDim.so"/>
+      <logfile value="Example.log"/>
+    </Run>
+
+    <HttpServer name="http" port="8097"/>
+
+    <Module name="dim" class="dimc::Player">
+        <DimDns value="lxg0538"/>
+    </Module>
+  </Context>
+</dabc>
