@@ -335,7 +335,7 @@ namespace hadaq {
             /** Print subevent header and optionally raw data */
             void Dump(bool print_raw_data = false);
 
-            /** Print data, optionally one can specify interval for the print */
+            /** Print raw data, optionally one can position and portion to print */
             void PrintRawData(unsigned ix = 0, unsigned len = 0, unsigned prefix = 6);
       };
 

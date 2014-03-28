@@ -41,9 +41,69 @@ int usage(const char* errstr = 0)
    printf("   -num number             - number of events to print (default 10)\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
+   printf("   -tdc mask               - printout raw data of tdc subevents (default none)\n");
    printf("   -rate                   - display only events rate\n");
 
    return errstr ? 1 : 0;
+}
+
+enum TdcMessageKind {
+   tdckind_Reserved = 0x00000000,
+   tdckind_Header   = 0x20000000,
+   tdckind_Debug    = 0x40000000,
+   tdckind_Epoch    = 0x60000000,
+   tdckind_Mask     = 0xe0000000,
+   tdckind_Hit      = 0x80000000,
+   tdckind_Hit1     = 0xa0000000,
+   tdckind_Hit2     = 0xc0000000,
+   tdckind_Hit3     = 0xe0000000
+};
+
+
+void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if (ix>=sz) return;
+   if ((len==0) || (ix + len > sz)) len = sz - ix;
+
+   unsigned wlen = 2;
+   if (len>99) wlen = 3; else
+   if (len>999) wlen = 4;
+
+   unsigned epoch(0);
+   double tm;
+
+   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+      unsigned msg = sub->Data(ix);
+      printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+
+      switch (msg & tdckind_Mask) {
+         case tdckind_Reserved:
+            printf("reserved\n");
+            break;
+         case tdckind_Header:
+            printf("tdc header\n");
+            break;
+         case tdckind_Debug:
+            printf("tdc debug\n");
+            break;
+         case tdckind_Epoch:
+            epoch = msg & 0xFFFFFFF;
+            tm = (epoch << 11) *5.;
+            printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
+            break;
+         case tdckind_Hit:
+            tm = ((epoch << 11) + (msg & 0x7FF)) *5.; // coarse time
+            tm += (((msg >> 12) & 0x3FF) - 20)/470.*5.; // approx fine time 20-490
+            printf("hit ch %3u isrising:%u tc 0x%03x tf 0x%03x tm %6.3f ns\n",
+                    (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), (msg >> 12) & 0x3FF, tm);
+            break;
+         default:
+            printf("undefined\n");
+            break;
+      }
+   }
 }
 
 
@@ -54,10 +114,12 @@ int main(int argc, char* argv[])
    long number = 10;
    double tmout = 5.;
    bool printraw(false), printsub(false), showrate(false), reconnect(false);
+   unsigned tdcmask(0);
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
+      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
@@ -65,6 +127,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
+
+   if (tdcmask!=0) { printsub = true; printraw = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -153,6 +217,10 @@ int main(int argc, char* argv[])
 
             printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
 
+
+            if ((tdcmask!=0) && (datakind & tdcmask)) {
+               PrintTdcData(sub, ix, datalen,9);
+            } else
             if (printraw) sub->PrintRawData(ix,datalen,9);
 
             ix+=datalen;

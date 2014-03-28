@@ -18,6 +18,7 @@ current functionality of the framework.
    Internally all kind of subfolders and special symbols hadeled.
    Actual folder/item names in hierarchy may differ due to special symbols,
    but GetHChild can recognize such situation.  
+4. Print tdc messages in hldprint.
 
 
 27.03.2014
