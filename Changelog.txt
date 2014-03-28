@@ -2,6 +2,19 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+28.03.2014
+1. In xml file there are two alternatives to set array of some element.
+   First is using json-like syntax:
+       <Field value="[1, 2, 3, 4]"/>
+   Second is following structure:    
+	    <Field>
+	       <item value="1"/>
+	       <item value="2"/>
+	       <item value="3"/>
+	       <item value="4"/>
+	    </Field>
+
+
 27.03.2014
 1. Change naming convention for folders in the published structures.
    To be able reproduce folder name, only application/context/manager names 
@@ -11,6 +24,7 @@ current functionality of the framework.
 3. Introduce ezca::Player class. It will have two functions.
    First of all, it will provide data as ezca::EpicsInput.
    Second, it will export records to hierarchy structures.
+4. Everywhere call parent OnThreadAssigned method
 
 
 26.03.2014

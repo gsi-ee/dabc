@@ -34,7 +34,13 @@
 	    <EpicsSubeventId value="0x000000A"/>
 	    <EpicsPollingTimeout value="1"/>
 	    
-	    <Long value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/>
+	    <!--Long value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
+	    <Long>
+	       <item value="HAD:eb01:evtComp"/>
+	       <item value="HAD:eb02:evtComp"/>
+	       <item value="HAD:eb03:evtComp"/>
+	       <item value="HAD:eb04:evtComp"/>
+	    </Long>
     </Module>
     
   </Context>

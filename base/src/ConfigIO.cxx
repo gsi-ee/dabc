@@ -175,7 +175,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
    Reference app = dabc::mgr.GetAppFolder();
 
    // first loop - strict syntax in the selected context
-   // second loop - wildcard syntax in selected context
+   // second loop - wildcard syntax in all contexts
 
    for (int dcnt=0;dcnt<2;dcnt++) {
 
@@ -240,6 +240,24 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
                      field->SetStr(attrvalue);
                   DOUT3("For item %s find value %s", itemname.c_str(), attrvalue);
                   return true;
+               } else {
+                  // try to find array of items
+                  std::vector<std::string> arr;
+
+                  for (XMLNodePointer_t child = Xml::GetChild(itemnode); child!=0; child = Xml::GetNext(child)) {
+                     if (strcmp(Xml::GetNodeName(child), "item")!=0) continue;
+                     const char* arritemvalue = Xml::GetAttr(child,"value");
+                     if (arritemvalue==0) continue;
+                     if ((strstr(arritemvalue,"${")!=0) && fCfg)
+                        arr.push_back(fCfg->ResolveEnv(arritemvalue));
+                     else
+                        arr.push_back(std::string(arritemvalue));
+                  }
+
+                  if (arr.size()>0) {
+                     field->SetStrVect(arr);
+                     return true;
+                  }
                }
             } else
             if ((fieldsmap!=0) && (itemnode!=0)) {
