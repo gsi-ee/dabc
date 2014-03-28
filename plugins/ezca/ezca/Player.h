@@ -24,10 +24,6 @@
 #include "dabc/Hierarchy.h"
 #endif
 
-class rdaDeviceHandle;
-class rdaRDAService;
-class MySniffer;
-
 namespace ezca {
 
    /** \brief Player of EPICS data
@@ -42,23 +38,12 @@ namespace ezca {
    class Player : public dabc::ModuleAsync {
       protected:
 
-         /** Timeout for ezca readout */
-         double fEzcaTimeout;
-
-         /** Number of retry in ezca readout */
-         int fEzcaRetryCnt;
-
-         /** Switch on/off epics debug messages */
-         bool fEzcaDebug;
-
-         /** Automatic error printing */
-         bool fEzcaAutoError;
-
-         /* timeout (in seconds) for readout polling. */
-         double fTimeout;
-
-         /* full id number for epics subevent*/
-         unsigned fSubeventId;
+         double  fEzcaTimeout;    ///< Timeout for ezca readout
+         int     fEzcaRetryCnt;   ///< Number of retry in ezca readout
+         bool    fEzcaDebug;      ///< Switch on/off epics debug messages
+         bool    fEzcaAutoError;  ///< Automatic error printing
+         double  fTimeout;        ///< timeout (in seconds) for readout polling.
+         unsigned fSubeventId;    ///< full id number for epics subevent
 
          /* contains names of all long integer values to be requested*/
          std::vector<std::string> fLongRecords;

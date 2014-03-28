@@ -1,6 +1,20 @@
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef EZCA_DEFINITIONS_H
 #define EZCA_DEFINITIONS_H
-
 
 // this is switch to put double values instead of scaled integers
 #define EZCA_useDOUBLES 1

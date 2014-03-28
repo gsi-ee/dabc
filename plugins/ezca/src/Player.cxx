@@ -89,7 +89,7 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
 
    */
 
-   if (fTimeout<=0) fTimeout = 0.001;
+   if (fTimeout<=0.001) fTimeout = 0.001;
 
    CreateTimer("update", fTimeout, false);
 

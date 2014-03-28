@@ -1,52 +1,6 @@
-
-#ifndef EPICS_BASE
-#EPICS_BASE=/u/epics/EPICS-3.14.9/base-3.14.9
-#endif
-#
-#
-#ifndef EPICS_EXTENSIONS
-#EPICS_EXTENSIONS=/misc/adamczew/epics/myextensions 
-#endif
-
-ifdef DABC_64BIT
-EPICS_LIBDIR = $(EPICS_EXTENSIONS)/lib/linux-x86_64
-else
-EPICS_LIBDIR = $(EPICS_EXTENSIONS)/lib/linux-x86
-endif
-
-
-ifndef USEEPICS
-
-ifdef EPICS_BASE
-ifdef EPICS_EXTENSIONS
-ifneq ($(wildcard $(EPICS_LIBDIR)/libezca.*),)
-USEEPICS    = true
-endif
-endif
-endif
-
-endif
-
-
-
-ifeq ($(USEEPICS),true)
-
-
-
-
 include $(DABCSYS)/config/Makefile.config
 
-## normally should be like this for every module, but can be specific
-
-
-
-#DOOPTIMIZATION = false
-
-
-
-
-
-# libezca.so
+ifdef DABC_EPICS
 
 ifdef DABCMAINMAKE
 EZCADIR = plugins/ezca
@@ -82,10 +36,10 @@ clean::
 
 ##### local rules #####
 
-$(EZCA_O) $(EZCA_D) : INCLUDES += $(EPICS_BASE)/include $(EPICS_BASE)/include/os/Linux $(EPICS_EXTENSIONS)/include 
+$(EZCA_O) $(EZCA_D) : INCLUDES += $(DABC_EPICS_INCDIR) 
 
 $(EZCA_LIB): LDFLAGS += -lezca 
-$(EZCA_LIB): LDDIRS += $(EPICS_LIBDIR) 
+$(EZCA_LIB): LDDIRS += $(DABC_EPICS_LIBDIR) 
 
 $(EZCA_LIB):  $(EZCA_O)
 	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH)
