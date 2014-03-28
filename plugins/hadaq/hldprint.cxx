@@ -96,7 +96,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          case tdckind_Hit:
             tm = ((epoch << 11) + (msg & 0x7FF)) *5.; // coarse time
             tm += (((msg >> 12) & 0x3FF) - 20)/470.*5.; // approx fine time 20-490
-            printf("hit ch %3u isrising:%u tc 0x%03x tf 0x%03x tm %6.3f ns\n",
+            printf("hit ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns\n",
                     (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), (msg >> 12) & 0x3FF, tm);
             break;
          default:
