@@ -41,7 +41,7 @@ int usage(const char* errstr = 0)
    printf("   -num number             - number of events to print (default 10)\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
-   printf("   -tdc mask               - printout raw data of tdc subevents (default none)\n");
+   printf("   -tdc mask               - printout raw data of tdc subevents (default none) \n");
    printf("   -rate                   - display only events rate\n");
 
    return errstr ? 1 : 0;
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
             printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
 
 
-            if ((tdcmask!=0) && (datakind & tdcmask)) {
+            if ((tdcmask!=0) && (datakind & tdcmask) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
                PrintTdcData(sub, ix, datalen,9);
             } else
             if (printraw) sub->PrintRawData(ix,datalen,9);
