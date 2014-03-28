@@ -19,6 +19,11 @@ current functionality of the framework.
    Actual folder/item names in hierarchy may differ due to special symbols,
    but GetHChild can recognize such situation.  
 4. Print tdc messages in hldprint.
+5. Allow to specify topfolder for EPICS variables in ezca::Player, 
+   all variables should be in the folder. This should allow to run many
+   players, building one common hierarchy of variables.  
+6. Adjust old ezca::EpicsInput for usage of current xml syntax, 
+   where array of items can be used.
 
 
 27.03.2014

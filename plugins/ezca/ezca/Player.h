@@ -50,6 +50,7 @@ namespace ezca {
          double  fTimeout;        ///< timeout (in seconds) for readout polling.
          unsigned fSubeventId;    ///< full id number for epics subevent
          std::string fNameSepar;  ///< separator symbol(s), which defines subfolder in epcis names
+         std::string fTopFolder;  ///< name of top folder, which should exists also in every variable
 
          std::vector<std::string> fLongRecords;  ///< names of long records
          std::vector<long> fLongValues;          ///< values of long records

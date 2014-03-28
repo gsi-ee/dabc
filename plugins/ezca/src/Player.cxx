@@ -36,6 +36,7 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fTimeout(1),
    fSubeventId(8),
    fNameSepar(":"),
+   fTopFolder(),
    fLongRecords(),
    fLongValues(),
    fDoubleRecords(),
@@ -57,11 +58,14 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fSubeventId = Cfg(ezca::xmlEpicsSubeventId, cmd).AsUInt(fSubeventId);
 
    fNameSepar = Cfg("NamesSepar", cmd).AsStr(fNameSepar);
+   fTopFolder = Cfg("TopFolder", cmd).AsStr(fTopFolder);
 
-   fLongRecords = Cfg("Long", cmd).AsStrVect();
+   fLongRecords = Cfg(ezca::xmlNameLongRecords, cmd).AsStrVect();
    fLongValues.resize(fLongRecords.size());
 
-   fDoubleRecords = Cfg("Doubles", cmd).AsStrVect();
+   DOUT0("Num LONG recs = %d", fLongRecords.size());
+
+   fDoubleRecords = Cfg(ezca::xmlNameDoubleRecords, cmd).AsStrVect();
    fDoubleValues.resize(fDoubleRecords.size());
 
    fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
@@ -70,9 +74,11 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
 
    fWorkerHierarchy.Create("EZCA");
 
+   // fTopFolder = "HAD";
 
    for (unsigned ix = 0; ix < fLongRecords.size(); ++ix) {
       dabc::Hierarchy item = fWorkerHierarchy.CreateHChild(GetItemName(fLongRecords[ix]));
+      DOUT0("Name = %s item %p", GetItemName(fLongRecords[ix]).c_str(), item());
       item.SetField(dabc::prop_kind, "rate");
       item.EnableHistory(100);
    }
@@ -87,7 +93,10 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
 
    CreateTimer("update", fTimeout, false);
 
-   Publish(fWorkerHierarchy, "EZCA");
+   if (fTopFolder.empty())
+      Publish(fWorkerHierarchy, "EZCA");
+   else
+      Publish(fWorkerHierarchy, std::string("EZCA/") + fTopFolder);
 }
 
 ezca::Player::~Player()
@@ -96,14 +105,20 @@ ezca::Player::~Player()
 
 std::string ezca::Player::GetItemName(const std::string& ezcaname)
 {
-   if (fNameSepar.empty()) return ezcaname;
-
    std::string res = ezcaname;
 
-   size_t pos = 0;
+   if (!fNameSepar.empty()) {
+      size_t pos = 0;
 
-   while ((pos = res.find_first_of(fNameSepar, pos)) != std::string::npos)
-      res[pos++] = '/';
+      while ((pos = res.find_first_of(fNameSepar, pos)) != std::string::npos)
+         res[pos++] = '/';
+   }
+
+   if (!fTopFolder.empty()) {
+      // any variable should have top folder name in front
+      if (res.find(fTopFolder)!=0) return std::string();
+      res.erase(0, fTopFolder.length()+1); // delete top folder and slash
+   }
 
    return res;
 }

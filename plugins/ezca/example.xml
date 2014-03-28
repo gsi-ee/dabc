@@ -37,13 +37,16 @@
 	    <!-- how offten events will be flushed to outputs --> 
 	    <FlushTimeout value="10"/>
 	    
-	    <!--Long value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
-	    <Long>
+	    <!--EpicsLongRecs value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
+	    <EpicsLongRecs>
 	       <item value="HAD:eb01:evtComp"/>
 	       <item value="HAD:eb02:evtComp"/>
 	       <item value="HAD:eb03:evtComp"/>
 	       <item value="HAD:eb04:evtComp"/>
-	    </Long>
+	    </EpicsLongRecs>
+
+	    <!--EpicsDoubleRecs value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
+
     </Module>
     
   </Context>

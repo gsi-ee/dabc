@@ -1107,11 +1107,16 @@ void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
 
 dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowslahes, bool force)
 {
+   // DOUT0("GetHChild main:%p name:%s force %s", this, name.c_str(), DBOOL(force));
+
+   // if name empty, return null
+   if (name.empty()) return dabc::Hierarchy();
+
    size_t pos = name.rfind("/");
    if ((pos != std::string::npos) && !allowslahes) {
-      if (pos==0) return GetHChild(name.substr(1), force, allowslahes);
-      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), force, allowslahes);
-      return GetHChild(name.substr(0, pos), force, allowslahes).GetHChild(name.substr(pos+1), force, allowslahes);
+      if (pos==0) return GetHChild(name.substr(1), allowslahes, force);
+      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), allowslahes, force);
+      return GetHChild(name.substr(0, pos), allowslahes, force).GetHChild(name.substr(pos+1), allowslahes, force);
    }
 
    std::string itemname = name;
@@ -1148,6 +1153,7 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowsl
    // prevent same item name
    while (!FindChild(itemname.c_str()).null())
       itemname = dabc::format("%s%u", basename.c_str(), cnt++);
+
    dabc::Hierarchy res = GetObject()->CreateChildAt(itemname, -1);
 
    res.SetField(dabc::prop_realname, name);

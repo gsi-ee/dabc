@@ -21,13 +21,15 @@
 	    <EpicsSubeventId value="0x000000A"/>
 	    <!--EpicsFlagRec value="zumbruchHost:calcExample"/-->
 	    <!--EpicsEventIDRec value="zumbruchHost:aiExample"/-->
-	    <EpicsNumLongRecs value="1"/>
-	    <EpicsLongRec-0 value="zumbruchHost:integer"/>
-	    <EpicsNumDoubleRecs value="4"/>
-	    <EpicsDoubleRec-0 value="zumbruchHost:calcExample1"/>
-	    <EpicsDoubleRec-1 value="zumbruchHost:calcExample2"/>
-	    <EpicsDoubleRec-2 value="zumbruchHost:calcExample3"/>
-	    <EpicsDoubleRec-3 value="zumbruchHost:aiExample"/>
+	    
+	    <EpicsLongRecs value="[zumbruchHost:integer]"/>
+	    <EpicsDoubleRecs>
+	       <item value="zumbruchHost:calcExample1"/>
+	       <item value="zumbruchHost:calcExample2"/>
+	       <item value="zumbruchHost:calcExample3"/>
+	       <item value="zumbruchHost:aiExample"/>
+	    </EpicsDoubleRecs>
+	    
 	    <EpicsPollingTimeout value="0.1"/>
 	    <!-- configuration of ezca -->
 	    <EzcaTimeout value="0.2"/>

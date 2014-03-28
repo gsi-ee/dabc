@@ -29,7 +29,9 @@
 
 namespace ezca {
 
-   /** \brief The epics easy channel access data input implementation
+   /** \brief The epics easy channel access data input implementation.
+    * It was first implementation for access EPICS data in DABC,
+    * now is preferable to use ezca::Player class
     */
 
    class EpicsInput: public dabc::DataInput {
@@ -99,24 +101,9 @@ namespace ezca {
             fDescriptor.clear();
          }
 
-
-         void AddLongRecord(const std::string& name)
-         {
-            fLongRecords.push_back(name);
-            fLongValues.push_back(0);
-            fDescriptor.clear();
-         }
-
          unsigned NumLongRecords() const { return fLongRecords.size(); }
 
          const std::string& GetLongRecord(unsigned i) const { return fLongRecords[i]; }
-
-         void AddDoubleRecord(const std::string& name)
-         {
-            fDoubleRecords.push_back(name);
-            fDoubleValues.push_back(0.);
-            fDescriptor.clear();
-         }
 
          unsigned NumDoubleRecords() const { return fDoubleRecords.size(); }
 
