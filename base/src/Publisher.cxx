@@ -482,7 +482,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
                }
             }
 
-            DOUT0("PUBLISH folder %s", path.c_str());
+            DOUT3("PUBLISH folder %s", path.c_str());
 
             fPublishers.push_back(PublisherEntry());
             fPublishers.back().id = fCnt++;
@@ -606,7 +606,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             fPublishers.back().local = false;
             fPublishers.back().rem.Create("remote");
 
-            DOUT0("PUBLISH NODE %s", path.c_str());
+            DOUT3("PUBLISH NODE %s", path.c_str());
 
             return cmd_true;
          }
@@ -702,7 +702,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       std::string itemname = cmd.GetStr("Item");
 
-      DOUT0("Publisher::CmdGetBinary for item %s", itemname.c_str());
+      // DOUT3("Publisher::CmdGetBinary for item %s", itemname.c_str());
 
       if (!RedirectCommand(cmd, itemname)) return cmd_false;
 
