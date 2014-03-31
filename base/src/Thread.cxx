@@ -154,7 +154,8 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
             double real_tm = fThread()->fLastProfileTime.SpentTillNow(true);
             double run_tm = 0.;
-
+            // #if  LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28)
+            #ifdef RUSAGE_THREAD
             struct rusage usage;
 
             if (getrusage(RUSAGE_THREAD, &usage) == 0) {
@@ -168,6 +169,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
                run_tm = curr - fThread()->fThreadRunTime;
                fThread()->fThreadRunTime = curr;
             }
+            #endif
 
             if ((real_tm>0) && (run_tm>0)) {
                double load = run_tm / real_tm;
