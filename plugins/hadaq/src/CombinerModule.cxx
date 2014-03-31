@@ -136,7 +136,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    PublishPars("$CONTEXT$/HadaqCombiner");
 
    if (fWithObserver) {
-      CreateTimer("ObserverTimer", .3, false);
+      CreateTimer("ObserverTimer", 1.0, false);
       RegisterExportedCounters();
    }
 
@@ -286,7 +286,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    CreateEvtbuildPar("evtsDataError");
    CreateEvtbuildPar("evtsTagError");
    CreateEvtbuildPar("bytesWritten");
-   CreateEvtbuildPar("runId");
+   CreateEvtbuildPar("runId"); 
    CreateEvtbuildPar("nrOfMsgs");
    CreateNetmemPar("nrOfMsgs");
 
@@ -319,12 +319,15 @@ void hadaq::CombinerModule::RegisterExportedCounters()
   
   CreateEvtbuildPar("coreNr");
   
-  CreateEvtbuildPar("PID");
+  // NOTE: this export has no effect, since pid is exported by default in worker mechanism
+  // and worker names are not case sensitive!
+  // thus epics will always take pid of the observer process that opens shared memory
+  //CreateEvtbuildPar("PID");
   //fPID=getpid();
-  fPID= syscall(SYS_gettid);
+  //fPID= syscall(SYS_gettid);
 
   
-  SetEvtbuildPar("PID", (int) fPID);
+  //SetEvtbuildPar("PID", (int) fPID);
   SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
   
   
