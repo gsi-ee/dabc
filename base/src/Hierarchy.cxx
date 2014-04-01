@@ -1159,9 +1159,23 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowsl
    res.SetField(dabc::prop_realname, name);
 
    return res;
-
 }
 
+bool dabc::Hierarchy::RemoveHChild(const std::string& path, bool allowslahes)
+{
+   dabc::Hierarchy h = GetHChild(path, allowslahes);
+   if (h.null()) return false;
+
+   dabc::Hierarchy prnt = h.GetParentRef();
+   h.Destroy();
+   while (!prnt.null() && (prnt() != GetObject())) {
+      h << prnt;
+      prnt = h.GetParentRef();
+      if (h.NumChilds() != 0) break;
+      h.Destroy(); // delete as long no any other involved
+   }
+   return true;
+}
 
 
 dabc::Hierarchy dabc::Hierarchy::FindMaster() const

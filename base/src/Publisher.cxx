@@ -654,7 +654,13 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
       if (producer_name.empty()) return cmd_false;
 
-      dabc::Command res = dabc::Command(def.GetName());
+      dabc::Command res;
+      if (def.GetField("cmddef").AsBool(false)) {
+         res = dabc::Command(def.GetName());
+      } else {
+         DOUT3("Hierarchy Command item %s", def.GetName(), request_name.c_str());
+         res = dabc::CmdHierarchyExec(request_name);
+      }
 
       dabc::Url url(std::string("execute?") + cmd.GetStr("query"));
 
@@ -713,6 +719,31 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 }
 
 // ===================================================================
+
+
+bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::string& workername, void* hier)
+{
+   if (null()) return false;
+
+   bool sync = id > 0;
+   if (!sync) id = -id;
+
+   Command cmd("OwnCommand");
+   cmd.SetInt("cmdid", id);
+   cmd.SetStr("Path", path);
+   cmd.SetStr("Worker", workername);
+   cmd.SetPtr("Hierarchy", hier);
+
+   if (thread().null() && !sync) {
+      DOUT0("Trying to submit publisher command when thread not assigned - do exec");
+      sync = true;
+   }
+
+   if (!sync) return Submit(cmd);
+
+   return Execute(cmd) == cmd_true;
+}
+
 
 bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::string& str)
 {

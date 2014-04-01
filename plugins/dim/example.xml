@@ -12,7 +12,8 @@
     <HttpServer name="http" port="8097"/>
 
     <Module name="dim" class="dimc::Player">
-        <DimDns value="lxg0538"/>
+        <DimDns value="lxg0538:2505"/>
+        <DimMask value="*"/>
     </Module>
   </Context>
 </dabc>

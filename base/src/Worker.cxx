@@ -1183,11 +1183,11 @@ bool dabc::Worker::Unsubscribe(const std::string& path)
 
 void dabc::Worker::CleanupPublisher(bool sync)
 {
-   if (!fPublisher.null()) {
-      // clean reference on publisher
-      PublisherRef(fPublisher).RemoveWorker(ItemName(), sync);
-      fPublisher.Release();
-   }
+   if (fPublisher.null()) return;
+
+   // clean reference on publisher
+   PublisherRef(fPublisher).RemoveWorker(ItemName(), sync);
+   fPublisher.Release();
 }
 
 // ===========================================================================================

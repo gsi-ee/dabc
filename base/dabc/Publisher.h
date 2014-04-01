@@ -44,6 +44,18 @@ namespace dabc {
       }
    };
 
+   /** Command submitted to worker when item in hierarchy defined as DABC.Command
+    * and used to produce custom binary data for published in hierarchy entries */
+   class CmdHierarchyExec : public Command {
+      DABC_COMMAND(CmdHierarchyExec, "CmdHierarchyExec");
+
+      CmdHierarchyExec(const std::string& path) :
+         Command(CmdName())
+      {
+         SetStr("Item", path);
+      }
+   };
+
    /** Command to request names list */
    class CmdGetNamesList : public Command {
       DABC_COMMAND(CmdGetNamesList, "CmdGetNamesList");
@@ -219,31 +231,12 @@ namespace dabc {
 
       Hierarchy GetItem(const std::string& fullname, const std::string& query = "", double tmout = 5.);
 
-
       /** \brief Execute item is command, providing parameters in query */
       Command ExeCmd(const std::string& fullname, const std::string& query);
 
-
       protected:
 
-      bool OwnCommand(int id, const std::string& path, const std::string& workername, void* hier = 0)
-      {
-         if (null()) return false;
-
-         bool sync = id > 0;
-         if (!sync) id = -id;
-
-         Command cmd("OwnCommand");
-         cmd.SetInt("cmdid", id);
-         cmd.SetStr("Path", path);
-         cmd.SetStr("Worker", workername);
-         cmd.SetPtr("Hierarchy", hier);
-
-         if (!sync) return Submit(cmd);
-
-         return Execute(cmd) == cmd_true;
-
-      }
+      bool OwnCommand(int id, const std::string& path, const std::string& workername, void* hier = 0);
 
    };
 

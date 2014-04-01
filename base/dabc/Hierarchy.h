@@ -475,6 +475,9 @@ namespace dabc {
       Hierarchy CreateHChild(const std::string& name, bool allowslahes = false)
         { return GetHChild(name, allowslahes, true); }
 
+      /** Delete H item, including all empty parent folders */
+      bool RemoveHChild(const std::string& name, bool allowslahes = false);
+
       /** \brief Create folder in hierarchy, one could use it to add new childs to it */
       Hierarchy CreateFolder(const std::string& name) { return GetHChild(name, true); }
 

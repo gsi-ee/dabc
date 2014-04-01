@@ -319,14 +319,16 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
    LockGuard lock(ObjectMutex());
 
    // mark that we are producing rate
-   if (fStatistic == ParameterContainer::kindRate)
+   if (fStatistic == ParameterContainer::kindRate) {
       cont->Field(dabc::prop_kind).SetStr("rate");
-   else
-   if (fKind == "cmddef")
+   } else
+   if (fKind == "cmddef") {
       cont->Field(dabc::prop_kind).SetStr("DABC.Command");
-   else
-   if (fKind == "info")
+      cont->Field("cmddef").SetBool(true);
+   } else
+   if (fKind == "info") {
       cont->Field(dabc::prop_kind).SetStr("log");
+   }
 
    // just copy all fields, including value
    cont->CopyFrom(Fields());

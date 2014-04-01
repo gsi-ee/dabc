@@ -2,6 +2,19 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+1.04.2014
+1. Publish DIM command in the hierarchy, execute them via generic
+   CmdHierarchyExec command. Provide optional string parameter 
+   for the command 
+
+
+31.03.2014
+1. In dimc::Player class support main DIM types, including custom records.
+2. Use DimInfoHandler class to detect any changes in the variable.
+3. Allow to specify DimDns and DimMask parameters
+4. Automatically rescan all variables when server list is changed.
+
+
 28.03.2014
 1. In xml file there are two alternatives to set array of some element.
    First is using json-like syntax:

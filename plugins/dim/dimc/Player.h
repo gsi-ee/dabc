@@ -24,8 +24,12 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+#include <map>
+
+#include <dic.hxx>
 
 class DimBrowser;
+class DimInfo;
 
 namespace dimc {
 
@@ -35,14 +39,33 @@ namespace dimc {
     *
     **/
 
-   class Player : public dabc::ModuleAsync {
+   class Player : public dabc::ModuleAsync,
+                  public DimInfoHandler {
 
       protected:
 
-         std::string    fDimDns;  ///<  name of DNS server
-         ::DimBrowser*  fDimBr;   ///<  dim browser
+         struct MyEntry {
+            DimInfo* info;
+            int   flag;
+            MyEntry() : info(0), flag(0) {}
+            MyEntry(const MyEntry& src) : info(src.info), flag(src.flag) {}
+         };
+
+         typedef std::map<std::string, MyEntry> DimServicesMap;
+
+         std::string    fDimDns;      ///<  name of DNS server
+         std::string    fDimMask;     ///<  mask of DIM services
+         double         fDimPeriod;   ///<  how often DIM records will be checked, default 1 s
+         ::DimBrowser*  fDimBr;       ///<  dim browser
+         DimServicesMap fDimInfos;    ///< all subscribed DIM services
+         dabc::TimeStamp fLastScan;   ///< last time when DIM services were scanned
+         char           fNoLink[10];  ///< buffer used to detect nolink
+         bool           fNeedDnsUpdate; ///< if true, should update DNS structures
+
 
          virtual void OnThreadAssigned();
+
+         void ScanDimServices();
 
       public:
          Player(const std::string& name, dabc::Command cmd = 0);
@@ -51,6 +74,9 @@ namespace dimc {
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
+
+         virtual void infoHandler();
+
    };
 }
 
