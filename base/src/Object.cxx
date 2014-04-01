@@ -286,36 +286,20 @@ void dabc::Object::Destructor()
 
 bool dabc::Object::IncReference(bool withmutex)
 {
-   if (withmutex) {
-      dabc::LockGuard lock(fObjectMutex);
+   dabc::LockGuard lock(withmutex ? fObjectMutex : 0);
 
-      if (GetState() == stDestructor) {
-         EOUT("OBJ:%p %s Inc reference during destructor", this, GetName());
-         return false;
+   if (GetState() == stDestructor) {
+      EOUT("OBJ:%p %s Inc reference during destructor", this, GetName());
+      return false;
 //         EOUT("Obj:%p %s Class:%s IncReference %u inside destructor :(",
 //               this, GetName(), ClassName(), fObjectRefCnt);
-      }
-
-      fObjectRefCnt++;
-
-      if (GetFlag(flLogging))
-         DOUT0("Obj:%s %p Class:%s IncReference +----- %u thrd:%s", GetName(), this, ClassName(), fObjectRefCnt, dabc::mgr.CurrentThread().GetName());
-
-      return true;
    }
 
-
-//   if (fObjectMutex==0) return false;
-//   if (!fObjectMutex->IsLocked()) {
-//      EOUT("Obj:%p %s Class:%s IncReference mutex is not lock but declared so",
-//            this, GetName(), ClassName());
-//      return false;
-//   }
+   fObjectRefCnt++;
 
    if (GetFlag(flLogging))
-      DOUT0("Obj:%s %p Class:%s IncReference -+---- %u", GetName(), this, ClassName(), fObjectRefCnt);
+      DOUT0("Obj:%s %p Class:%s IncReference +----- %u thrd:%s", GetName(), this, ClassName(), fObjectRefCnt, dabc::mgr.CurrentThread().GetName());
 
-   fObjectRefCnt++;
    return true;
 }
 

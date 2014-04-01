@@ -769,9 +769,9 @@ class TestModuleCmd : public dabc::ModuleAsync {
 
          if (!fSameCmd) cmd = dabc::Command(dabc::format("%s_cmd%d", GetName(), fCount).c_str());
 
-         int res = ExecuteIn(next(), cmd);
+         int res = next.Execute(cmd);
 
-         DOUT4("Module %s ExecuteIn res = %d", GetName(), res);
+         DOUT4("Module %s Execute res = %d", GetName(), res);
 
          return res>0 ? res+1 : dabc::cmd_false;
       }

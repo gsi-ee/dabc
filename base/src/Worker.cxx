@@ -167,7 +167,7 @@ dabc::ThreadRef dabc::Worker::thread()
       LockGuard lock(fThreadMutex);
 
       // we can acquire new reference without additional lock of the mutex
-      fThread.AcquireThreadRef(res);
+      fThread._AcquireThreadRef(res);
    }
 
    return res;
@@ -241,6 +241,8 @@ void dabc::Worker::ObjectCleanup()
 {
    // TODO: that is correct sequence - first delete child, than clean ourself  (current) or vice-versa
 
+   DOUT4("START worker %s class %s cleanup refcnt = %d thrd %s publ %p publthrd %s", GetName(), ClassName(), fObjectRefCnt, thread().GetName(), fPublisher(), WorkerRef(fPublisher).thread().GetName());
+
    CleanupPublisher(false);
 
    // we do standard object cleanup - remove all our childs and remove ourself from parent
@@ -270,7 +272,7 @@ void dabc::Worker::ObjectCleanup()
    // DOUT0("Worker:%s Destroy addon:%p in ObjectCleanup", GetName(), fAddon());
    fAddon.Release();
 
-   DOUT5("Worker %s class %s cleanup refcnt = %d", GetName(), ClassName(), fObjectRefCnt);
+   DOUT4("DID worker %s class %s cleanup refcnt = %d", GetName(), ClassName(), fObjectRefCnt);
 }
 
 
@@ -448,7 +450,7 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
 
 int dabc::Worker::ProcessCommand(Command cmd)
 {
-   if (cmd.null()) return cmd_false;
+   if (cmd.null() || !IsNormalState()) return cmd_false;
 
    DOUT3("ProcessCommand cmd %s lvl %d isync %s", cmd.GetName(), fWorkerCommandsLevel, DBOOL(cmd.IsLastCallerSync()));
 
@@ -842,94 +844,13 @@ bool dabc::Worker::ReplyCommand(Command cmd)
 
 bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 {
-   if (cmd.null() || (dest==0)) {
-      cmd.ReplyFalse();
-      return false;
-   }
-
    // this is pointer of thread from which command is called
    ThreadRef thrd = thread();
 
    // we must be sure that call is done from thread itself - otherwise it is wrong
-   if (!thrd.IsItself()) {
-      EOUT("Cannot call ExecuteIn from other thread!!!");
-      cmd.ReplyFalse();
-      return false;
-   }
+   if (!thrd.null()) return false;
 
-   int res = cmd_false;
-
-   { // this is begin of parenthesis for RecursionGuard
-
-
-      // we indicate that processor involved in
-      Thread::RecursionGuard iguard(thrd(), fWorkerId);
-
-      bool exe_ready = false;
-
-      cmd.AddCaller(this, &exe_ready);
-
-    try {
-
-      DOUT3("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd());
-
-      // critical point - we want to submit command to other thread
-      // if command receiver does not accept command means it either do not have thread or lost it
-      // in this case command can be executed in current thread context ???
-      // Once command is submitted it is guaranteed that it will be executed or command will be canceled
-
-      if (dest->Submit(cmd)) {
-
-         // we can access exe_ready directly, while this flag only access from caller thread
-         // loop should be executed at least once to process do-nothing event produced by command reply
-
-         do {
-
-            // account timeout
-            double tmout = cmd.TimeTillTimeout();
-
-            if (tmout==0.) {
-               res = cmd_timedout;
-               break;
-            }
-
-            DOUT3("ExecuteIn - cmd:%s singleLoop proc %u time %4.1f", cmd.GetName(), fWorkerId, ((tmout<=0) ? 0.1 : tmout));
-
-            if (!thrd()->SingleLoop(fWorkerId, (tmout<=0) ? 0.1 : tmout)) {
-               // FIXME: one should cancel command in normal way
-               res = cmd_false;
-               break;
-            }
-         } while (!exe_ready);
-         DOUT3("------------ Proc %p Cmd %s ready = %s", this, cmd.GetName(), DBOOL(exe_ready));
-
-         if (exe_ready) res = cmd.GetResult();
-
-      } else {
-
-         // this is a case when command can be executed in current thread context
-
-         // FIXME: should we do this - if destination does not accept command via Submit, should we execute it that way?
-
-         DOUT0("Worker %s refuse to submit command - we do it as well", dest->GetName());
-         res = cmd_false;
-         cmd.SetResult(cmd_false);
-      }
-
-      // in any case remove caller from the command
-      cmd.RemoveCaller(this, &exe_ready);
-
-    } catch (...) {
-
-      // even in case of exception
-      cmd.RemoveCaller(this, &exe_ready);
-    }
-
-   } // this is end of parenthesis for RecursionGuard, should be closed before thread reference is released
-
-   DOUT3("------------ Proc %p Cmd %s res = %d", this, cmd.GetName(), res);
-
-   return res>0;
+   return thrd()->RunCommandInTheThread(this, dest, cmd) > 0;
 }
 
 bool dabc::Worker::Execute(Command cmd, double tmout)
@@ -957,7 +878,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
       } else
       if (fThread.IsItself()) {
          // DOUT0("Mutex = %p thrdmutex %p locked %s", fThreadMutex, fThread()->ThreadMutex(), DBOOL(fThreadMutex->IsLocked()));
-         fThread.AcquireThreadRef(thrd);
+         fThread._AcquireThreadRef(thrd);
       }
    }
 
@@ -968,7 +889,11 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
    if (thrd.null())
       thrd = dabc::mgr.CurrentThread();
 
-   if (thrd()) return ((Worker*) thrd()->fExec)->ExecuteIn(this, cmd);
+   if (thrd()) {
+      return thrd()->RunCommandInTheThread(0, this, cmd) > 0;
+      //if (res!=cmd_ignore) return res>0;
+      //return ProcessCommand(cmd) > 0;
+   }
 
    // if there is no Thread with such id (most probably, some user-managed thrd)
    // than we create fake object only to handle commands and events,
@@ -981,7 +906,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
    curr.Start(0, false);
 
-   return ((Worker*) curr.fExec)->ExecuteIn(this, cmd);
+   return curr.RunCommandInTheThread(0, this, cmd) > 0;
 }
 
 dabc::Command dabc::Worker::Assign(dabc::Command cmd)
@@ -1185,9 +1110,11 @@ void dabc::Worker::CleanupPublisher(bool sync)
 {
    if (fPublisher.null()) return;
 
-   // clean reference on publisher
-   PublisherRef(fPublisher).RemoveWorker(ItemName(), sync);
-   fPublisher.Release();
+   PublisherRef ref;
+
+   ref << fPublisher;
+
+   if (!ref.thread().null()) ref.RemoveWorker(ItemName(), sync);
 }
 
 // ===========================================================================================

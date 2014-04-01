@@ -1636,7 +1636,7 @@ void dabc::Manager::ProcessCtrlCSignal()
       return;
    }
 
-   double spent = fMgrStoppedTime - dabc::Now();
+   double spent = fMgrStoppedTime.SpentTillNow();
 
    // TODO: make 10 second configurable
    if (spent<10.) return;

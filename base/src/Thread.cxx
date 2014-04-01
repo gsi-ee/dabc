@@ -254,30 +254,33 @@ dabc::Thread::~Thread()
 {
    // !!!!!!!! Do not forgot stopping thread in destructors of inherited classes too  !!!!!
 
-   DOUT2("~~~~~~~~~~~~~~ Start thread %p %s destructor %s", this, GetName(), DBOOL(IsItself()));
+   DOUT3("~~~~~~~~~~~~~~ THRD %s destructor", GetName());
 
    // we stop thread in destructor, in all inherited classes stop also should be called
    // otherwise one get problem here if stop will use inherited methods which is no longer available
 
    Stop(1.);
 
-   DOUT2("thread %s stopped", GetName());
+   ExecWorker* exec = 0;
 
    {
       LockGuard lock(ObjectMutex());
       // Workaround - Exec processor is keeping one reference
       // We decrease it during cleanup, now increase it again
       if (fDidDecRefCnt) fObjectRefCnt++;
+      exec = fExec;
+      fExec = 0;
    }
 
-   DOUT2("Destroy EXEC worker %p", fExec);
-   fExec->ClearThreadRef();
-   dabc::Object::Destroy(fExec);
-   fExec = 0;
-   DOUT2("Destroy EXEC worker %p done", fExec);
+   exec->ClearThreadRef();
+   dabc::Object::Destroy(exec);
 
    for (unsigned n=0;n<fWorkers.size();n++) {
-      if (fWorkers[n]) { delete fWorkers[n]; fWorkers[n] = 0; }
+      if (fWorkers[n]) {
+         //EOUT("Still non-empty worker rec %u  in thread %s destructor", n, GetName());
+         delete fWorkers[n];
+         fWorkers[n] = 0;
+      }
    }
 
    LockGuard guard(ThreadMutex());
@@ -303,7 +306,7 @@ dabc::Thread::~Thread()
    delete [] fQueues; fQueues = 0;
    fNumQueues = 0;
 
-   DOUT3("~~~~~~~~ CNT:%2d THRD %s destroyed", fThreadInstances, GetName());
+   DOUT3("~~~~~~~~~~~~~~ THRD %s destroyed cnt:%d", GetName(), fThreadInstances);
 
    fThreadInstances--;
 }
@@ -484,6 +487,108 @@ void dabc::Thread::RunEventLoop(double tm)
 }
 
 
+int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cmd)
+{
+   if (cmd.null() || (dest==0)) {
+      cmd.ReplyFalse();
+      return dabc::cmd_false;
+   }
+
+   {
+      dabc::LockGuard lock(ObjectMutex());
+
+      // in principle, it is enough to check state of the thread
+      // if destructor is started, we can reject submission of all commands
+      if (!_IsNormalState()) return cmd_ignore;
+
+      if (caller==0) caller = fExec;
+   }
+
+
+   // we must be sure that call is done from thread itself - otherwise it is wrong
+   if (!IsItself()) {
+      EOUT("Cannot execute command in wrong thread context!!!");
+      cmd.ReplyFalse();
+      return cmd_false;
+   }
+
+   int res = cmd_false;
+
+   { // this is begin of parenthesis for RecursionGuard
+
+
+      // we indicate that processor involved in
+      Thread::RecursionGuard iguard(this, caller->fWorkerId);
+
+      bool exe_ready = false;
+
+      cmd.AddCaller(caller, &exe_ready);
+
+    try {
+
+      DOUT3("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd());
+
+      // critical point - we want to submit command to other thread
+      // if command receiver does not accept command means it either do not have thread or lost it
+      // in this case command can be executed in current thread context ???
+      // Once command is submitted it is guaranteed that it will be executed or command will be canceled
+
+      if (dest->Submit(cmd)) {
+
+         // we can access exe_ready directly, while this flag only access from caller thread
+         // loop should be executed at least once to process do-nothing event produced by command reply
+
+         do {
+
+            // account timeout
+            double tmout = cmd.TimeTillTimeout();
+
+            if (tmout==0.) {
+               res = cmd_timedout;
+               break;
+            }
+
+            DOUT3("ExecuteIn - cmd:%s singleLoop proc %u time %4.1f", cmd.GetName(), caller->fWorkerId, ((tmout<=0) ? 0.1 : tmout));
+
+            if (!SingleLoop(caller->fWorkerId, (tmout<=0) ? 0.1 : tmout)) {
+               // FIXME: one should cancel command in normal way
+               res = cmd_false;
+               break;
+            }
+         } while (!exe_ready);
+         DOUT3("------------ Proc %p Cmd %s ready = %s", caller, cmd.GetName(), DBOOL(exe_ready));
+
+         if (exe_ready) res = cmd.GetResult();
+
+      } else {
+
+         // this is a case when command can be executed in current thread context
+
+         // FIXME: should we do this - if destination does not accept command via Submit, should we execute it that way?
+
+         DOUT0("Worker %s refuse to submit command - we do it as well", dest->GetName());
+         res = cmd_false;
+         cmd.SetResult(cmd_false);
+      }
+
+      // in any case remove caller from the command
+      cmd.RemoveCaller(caller, &exe_ready);
+
+    } catch (...) {
+
+      // even in case of exception
+      cmd.RemoveCaller(caller, &exe_ready);
+    }
+
+   } // this is end of parenthesis for RecursionGuard, should be closed before thread reference is released
+
+   DOUT3("------------ Proc %p Cmd %s res = %d", caller, cmd.GetName(), res);
+
+   return res;
+}
+
+
+
 bool dabc::Thread::Start(double timeout_sec, bool real_thread)
 {
    // first, check if we should join thread,
@@ -531,8 +636,9 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
          exit(765);
       }
       res = fExec->Execute("ConfirmStart", timeout_sec) == cmd_true;
-   } else
+   } else {
       PosixThread::UseCurrentAsSelf();
+   }
 
    LockGuard guard(ThreadMutex());
    fState = res ? stRunning : stError;
@@ -848,7 +954,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    DOUT4("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
 
-   // FIXME: this must be legetime method to destroy any worker
+   // FIXME: this must be legitime method to destroy any worker
    //        one can remove it from workers vector
 
    // before worker will be really destroyed indicate to the world that processor is disappear
@@ -860,7 +966,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
          DOUT0("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName());
 
       // release thread reference from here
-      if (rec->work) rec->work->fThread.Release();
+      if (rec->work) rec->work->ClearThreadRef();
 
       // true indicates that object should be destroyed immediately
       if (rec->doinghalt & actDestroy) {
@@ -876,7 +982,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    LockGuard guard(ThreadMutex());
 
-   DOUT2("THRD:%s specify cleanup", GetName());
+   DOUT2("THRD:%s mark thread for cleanup check", GetName());
 
    // indicate for thread itself that it can be optimized
    fCheckThrdCleanup = true;

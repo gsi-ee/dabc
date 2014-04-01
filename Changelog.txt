@@ -11,6 +11,9 @@ current functionality of the framework.
    for testing of back-pressure. To configure, use:
       <OutputPort name="Output1" url="block://host?time=500&sleep=false"/>
    One can specify block time per buffer and sleep/polling mode for blocking.
+4. Fix error in workers cleanup - thread reference was cleared, but
+   thread mutex not. Leads to problem with publisher, which thread
+   destroyed before publisher itself, while all objects have direct reference to publisher. 
 
 
 31.03.2014

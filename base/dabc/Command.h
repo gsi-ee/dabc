@@ -37,9 +37,9 @@ namespace dabc {
       cmd_false = 0,
       cmd_true = 1,
 
-      cmd_timedout = -1,
-      cmd_ignore = -2,
-      cmd_postponed = -3,
+      cmd_timedout = -1,     // command execution timedout
+      cmd_ignore   = -2,     // returned when command was ignored or rejected
+      cmd_postponed = -3,    // command will be executed later
       cmd_noresult = -4,
       cmd_canceled = -5
    };

@@ -235,45 +235,48 @@ namespace dabc {
          friend class Object;
          friend class RecursionGuard;
 
-         /** \brief Internal DABC method, used to verify if worker can be halted now while recursion is over
-          * Request indicates that halt action is requested : actDestroy = 1 or actHalt = 2.
-          * Returns true when worker is really halted **/
-
          enum EHaltActions { actDestroy = 1, actHalt = 2 };
 
          enum EThreadState { stCreated, stRunning, stStopped, stError, stChanging };
 
-         EThreadState         fState;
+         EThreadState         fState;         ///< actual thread state
 
-         bool                 fThrdWorking; // flag indicates if mainloop of the thread should continue to work
-         bool                 fRealThrd;    // indicate if we create real thread and not running mainloop from top process
+         bool                 fThrdWorking;   ///< flag indicates if mainloop of the thread should continue to work
+         bool                 fRealThrd;      ///< indicate if we create real thread and not running mainloop from top process
 
-         Condition            fWorkCond; // condition, which is used in default MainLoop implementation
+         Condition            fWorkCond;      ///< condition, which is used in default MainLoop implementation
 
-         EventsQueue         *fQueues;
-         int                  fNumQueues;
+         EventsQueue         *fQueues;         ///< queues for threads events
+         int                  fNumQueues;      ///< number of queues
 
-         TimeStamp            fNextTimeout; // indicate when we expects next timeout
-         int                  fProcessingTimeouts; // indicate recursion in timeouts processing
+         TimeStamp            fNextTimeout;    ///< indicate when we expects next timeout
+         int                  fProcessingTimeouts; ///< indicate recursion in timeouts processing
 
-         WorkersVector        fWorkers;   // vector of all processors
+         WorkersVector        fWorkers;          ///< vector of all processors
 
-         unsigned             fExplicitLoop; // id of the worker, selected to run own explicit loop
+         unsigned             fExplicitLoop;     ///< id of the worker, selected to run own explicit loop
 
-         ExecWorker*          fExec;             // processor to execute commands in the thread
-         bool                 fDidDecRefCnt;     // indicates if object cleanup was called - need in destructor
-         bool                 fCheckThrdCleanup; // !< indicates if thread should be checked for clean up
+         ExecWorker*          fExec;             ///< processor to execute commands in the thread
+         bool                 fDidDecRefCnt;     ///< indicates if object cleanup was called - need in destructor
+         bool                 fCheckThrdCleanup; ///< indicates if thread should be checked for clean up
 
-         bool                 fProfiling;        ///! if true, different statistic will be accumulated about thread
-         TimeStamp            fLastProfileTime;  ///! when doing profiling, last time when profiling was done
-         double               fThreadRunTime;    ///! total run time (user and sys), measured by getrusage
+         bool                 fProfiling;        ///< if true, different statistic will be accumulated about thread
+         TimeStamp            fLastProfileTime;  ///< when doing profiling, last time when profiling was done
+         double               fThreadRunTime;    ///< total run time (user and sys), measured by getrusage
 
          static unsigned      fThreadInstances;
 
 
+
+         /** \brief Internal DABC method, used to verify if worker can be halted now while recursion is over
+          * Request indicates that halt action is requested : actDestroy = 1 or actHalt = 2.
+          * Returns true when worker is really halted **/
+
          int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = 0);
 
          void IncWorkerFiredEvents(Worker* work);
+
+         int RunCommandInTheThread(Worker* caller, Worker* dest, Command cmd);
 
 
       public:
@@ -448,7 +451,7 @@ namespace dabc {
          bool _ActivateWorkerTimeout(unsigned workerid, int priority, double tmout);
          bool _ActivateAddonTimeout(unsigned workerid, int priority, double tmout);
 
-         bool AcquireThreadRef(ThreadRef& ref) { return AcquireRefWithoutMutex(ref); }
+         bool _AcquireThreadRef(ThreadRef& ref) { return AcquireRefWithoutMutex(ref); }
 
       public:
          bool IsItself() const { return GetObject() ? GetObject()->IsItself() : false; }

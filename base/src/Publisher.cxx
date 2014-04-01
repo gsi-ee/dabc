@@ -72,6 +72,11 @@ dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
    DOUT3("PUBLISHER name:%s item:%s class:%s mgr:%s", GetName(), ItemName().c_str(), ClassName(), DBOOL(!fMgrHiearchy.null()));
 }
 
+dabc::Publisher::~Publisher()
+{
+}
+
+
 void dabc::Publisher::OnThreadAssigned()
 {
    dabc::Worker::OnThreadAssigned();
@@ -725,11 +730,11 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::
 {
    if (null()) return false;
 
-   if (thread().null()) {
-      DOUT3("Trying to submit publisher command when thread not assigned - ignore");
+/*   if (thread().null()) {
+      DOUT2("Trying to submit publisher command when thread not assigned - ignore");
       return true;
    }
-
+*/
    bool sync = id > 0;
    if (!sync) id = -id;
 

@@ -192,6 +192,7 @@ namespace dabc {
       public:
 
          Publisher(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Publisher();
 
          static const char* DfltName() { return "/publ"; }
 
