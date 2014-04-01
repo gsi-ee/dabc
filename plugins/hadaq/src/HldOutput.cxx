@@ -100,21 +100,19 @@ bool hadaq::HldOutput::StartNewFile()
       dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNum");
       if(!fDiskNumberPar.null()) {
          std::string prefix;
-         size_t prepos= fFileName.rfind("/");
+         size_t prepos = fFileName.rfind("/");
          if (prepos == std::string::npos)
-            prefix=fFileName;
+            prefix = fFileName;
          else
-            prefix=fFileName.substr(prepos+1);
+            prefix = fFileName.substr(prepos+1);
 
          unsigned disknumber = fDiskNumberPar.Value().AsUInt();
          fFileName = dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
          DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
                fFileName.c_str(), disknumber, prefix.c_str());
-         dabc::Parameter fDiskNumberGuiPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNumEB");
-         if(!fDiskNumberGuiPar.null()) {
-            fDiskNumberGuiPar.SetValue(disknumber);
-            DOUT2("Updated disknumber %d for gui",disknumber);
-         }
+
+         dabc::CmdSetParameter cmd("Evtbuild_diskNumEB", disknumber);
+         dabc::mgr.FindModule("Combiner").Submit(cmd);
       }
       else
       {
@@ -145,17 +143,15 @@ bool hadaq::HldOutput::StartNewFile()
    if (fEpicsSlave && fRfio) {
       // use parameters only in slave mode
 
-      dabc::Parameter fDataMoverPar = dabc::mgr.FindPar("Combiner/Evtbuild_dataMover");
-
       int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
 
       char sbuf[100];
       if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
 
-      if(!fDataMoverPar.null()) {
-         fDataMoverPar.SetValue(indx); 
-      }
-    DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);      
+      dabc::CmdSetParameter cmd("Evtbuild_dataMover", indx);
+      dabc::mgr.FindModule("Combiner").Submit(cmd);
+
+      DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);
   }
 
   
@@ -272,16 +268,9 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 
       if (fLastUpdate.Expired(0.5)) {
-         dabc::ModuleRef m = dabc::mgr.FindModule("Combiner");
-         dabc::CmdSetParameter cmd("Evtbuild_bytesWritten");
-         cmd.SetParValue((int)fCurrentFileSize);
-         m.Submit(cmd);
-
+         dabc::CmdSetParameter cmd("Evtbuild_bytesWritten", (int)fCurrentFileSize);
+         dabc::mgr.FindModule("Combiner").Submit(cmd);
          fLastUpdate.GetNow();
-
-        //fBytesWrittenPar = dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
-        //if (!fBytesWrittenPar.null())
-        //    fBytesWrittenPar.SetValue((int)fCurrentFileSize);
       }
 
    } else {

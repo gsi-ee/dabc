@@ -951,8 +951,8 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
          // command execution possible without thread,
          // but only manager allows to do it without warnings
-         if ((this != dabc::mgr()) && !cmd.IsName("OwnCommand"))
-            EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
+         if (this != dabc::mgr())
+            EOUT("Cannot execute command %s without working thread, execute directly", cmd.GetName());
          exe_direct = true;
       } else
       if (fThread.IsItself()) {

@@ -248,10 +248,9 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       DOUT3("FlushOutputBuffer has no buffer to flush");
       return false;
    }
-   if (!CanSendToAllOutputs()) {
-      DOUT1("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s CanSend(1) = %s", NumOutputs(), DBOOL(CanSend(0)), DBOOL(CanSend(1)));
-      return false;
-   }
+
+   if (!CanSendToAllOutputs()) return false;
+
    dabc::Buffer buf = fOut.Close();
    SendToAllOutputs(buf);
    fFlushCounter = 0; // indicate that next flush timeout one not need to send buffer
@@ -588,7 +587,6 @@ bool hadaq::CombinerModule::BuildEvent()
                fMaxProcDist = 0;
             }
 
-            // return true;  polling
             return false;
          }
 
@@ -633,7 +631,6 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastDropTm.GetNow();
 
-      // return true;  polling
       return false; // retry on next set of buffers
    }
 
@@ -685,7 +682,6 @@ bool hadaq::CombinerModule::BuildEvent()
                   fLastDebugTm.GetNow();
                }
 
-               // return true;  polling
                return false;
             }
             // try with next subevt until reaching buildevid
@@ -777,8 +773,14 @@ bool hadaq::CombinerModule::BuildEvent()
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
-            DOUT1("Could not flush buffer");
-            // return true;  polling
+            if (fLastDebugTm.Expired(1.)) {
+               std::string sendmask;
+               for (unsigned n=0;n<NumOutputs();n++)
+                  sendmask.append(CanSend(n) ? "o" : "x");
+
+               DOUT0("FlushOutputBuffer can't send to all %u outputs sendmask = %s", NumOutputs(), sendmask.c_str());
+               fLastDebugTm.GetNow();
+            }
             return false;
          }
       }
@@ -792,7 +794,6 @@ bool hadaq::CombinerModule::BuildEvent()
                fLastDebugTm.GetNow();
             }
 
-            // return true;  polling
             return false;
          }
          if (!fOut.Reset(buf)) {
@@ -803,7 +804,6 @@ bool hadaq::CombinerModule::BuildEvent()
                DOUT0("Abort application completely");
                fLastDebugTm.GetNow();
             }
-            // return true;  polling
             return false;
          }
       }

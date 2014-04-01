@@ -6,6 +6,11 @@ current functionality of the framework.
 1. Publish DIM command in the hierarchy, execute them via generic
    CmdHierarchyExec command. Provide optional string parameter 
    for the command 
+2. In HldOutput always use CmdSetParameter to change Combiner parameter values
+3. For debug purposes introduce dummy blocking output. It can be used
+   for testing of back-pressure. To configure, use:
+      <OutputPort name="Output1" url="block://host?time=500&sleep=false"/>
+   One can specify block time per buffer and sleep/polling mode for blocking.
 
 
 31.03.2014

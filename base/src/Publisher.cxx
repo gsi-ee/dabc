@@ -725,6 +725,11 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::
 {
    if (null()) return false;
 
+   if (thread().null()) {
+      DOUT3("Trying to submit publisher command when thread not assigned - ignore");
+      return true;
+   }
+
    bool sync = id > 0;
    if (!sync) id = -id;
 
@@ -733,11 +738,6 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::
    cmd.SetStr("Path", path);
    cmd.SetStr("Worker", workername);
    cmd.SetPtr("Hierarchy", hier);
-
-   if (thread().null() && !sync) {
-      DOUT0("Trying to submit publisher command when thread not assigned - do exec");
-      sync = true;
-   }
 
    if (!sync) return Submit(cmd);
 

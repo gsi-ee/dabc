@@ -122,6 +122,39 @@ namespace dabc {
 
    class ParamEventReceiverList : public std::list<ParamEventReceiverRec> {};
 
+
+   class BlockingOutput : public DataOutput {
+      protected:
+         double fBlockTm;
+         bool fSleep;
+
+      public:
+         BlockingOutput(const dabc::Url& url) :
+            DataOutput(url),
+            fBlockTm(1.),
+            fSleep(true)
+         {
+            fBlockTm = url.GetOptionDouble("time", 1.);
+            fSleep = url.GetOptionBool("sleep", true);
+         }
+
+         unsigned Write_Buffer(Buffer& buf)
+         {
+            buf.Release();
+            if (fSleep) {
+               dabc::Sleep(fBlockTm);
+            } else {
+               TimeStamp tm;
+               tm.GetNow();
+               int cnt(0);
+               while (!tm.Expired(fBlockTm)) cnt++;
+            }
+            return do_Ok;
+         }
+
+
+   };
+
 }
 
 dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname, const std::string& modulename, Command cmd)
@@ -167,6 +200,9 @@ dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string& t
    if (url.GetProtocol()=="bin") {
       DOUT0("Binary output file name %s", url.GetFullName().c_str());
       return new BinaryFileOutput(url);
+   } else
+   if (url.GetProtocol() == "block") {
+      return new BlockingOutput(url);
    }
 
    return 0;

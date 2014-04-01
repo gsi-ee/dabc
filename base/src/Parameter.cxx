@@ -563,8 +563,7 @@ bool dabc::Parameter::SubmitSetValue(const RecordField& v)
    WorkerRef w = GetWorker();
    if (w.null()) return SetValue(v);
 
-   CmdSetParameter cmd(GetName());
-   cmd.SetField(CmdSetParameter::ParValue(), v);
+   CmdSetParameter cmd(GetName(), v);
 
    return w.Submit(cmd);
 }

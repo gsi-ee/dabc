@@ -240,9 +240,17 @@ namespace dabc {
       static const char* ParName() { return "ParName"; }
       static const char* ParValue() { return "ParValue"; }
 
-      CmdSetParameter(const std::string& parname) : Command(CmdName())
+      CmdSetParameter(const std::string& parname) :
+         Command(CmdName())
       {
          SetStr(ParName(), parname);
+      }
+
+      CmdSetParameter(const std::string& parname, const RecordField& v) :
+         Command(CmdName())
+      {
+         SetStr(ParName(), parname);
+         SetParValue(v);
       }
 
       void SetParValue(const RecordField& v) { SetField(ParValue(), v); }
