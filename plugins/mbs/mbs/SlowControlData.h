@@ -17,6 +17,8 @@
 #define MBS_SlowControlData
 
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <string>
 #include <vector>
 
@@ -29,6 +31,10 @@ namespace mbs {
 
    class SlowControlData {
       protected:
+
+         uint32_t   fEventId;      ///<  event number
+         uint32_t   fEventTime;    ///<   unix time in seconds
+
          std::vector<std::string> fLongRecords;  ///< names of long records
          std::vector<int64_t> fLongValues;       ///< values of long records
 
@@ -65,18 +71,37 @@ namespace mbs {
 
       public:
 
-         SlowControlData() {}
+         SlowControlData() :
+            fEventId(0),
+            fEventTime(0),
+            fLongRecords(),
+            fLongValues(),
+            fDoubleRecords(),
+            fDoubleValues(),
+            fDescriptor()
+         {
+         }
+
          virtual ~SlowControlData() {}
 
          void Clear()
          {
+            fEventId = 0;
+            fEventTime = 0;
             fLongRecords.clear();
             fLongValues.clear();
             fDoubleRecords.clear();
             fDoubleValues.clear();
+            fDescriptor.clear();
          }
 
          bool Empty() const { return fLongRecords.empty() && fDoubleRecords.empty(); }
+
+         void SetEventId(uint32_t id) { fEventId = id; }
+         uint32_t GetEventId() const { return fEventId; }
+
+         void SetEventTime(uint32_t tm) { fEventTime = tm; }
+         uint32_t GetEventTime() const { return fEventTime; }
 
          void AddLong(const std::string& name, int64_t value)
          {
@@ -103,16 +128,16 @@ namespace mbs {
                    fDescriptor.size();
          }
 
-         unsigned Write(void* buf, unsigned buflen, uint32_t evnumber=0, uint32_t currtime = 0)
+         unsigned Write(void* buf, unsigned buflen)
          {
             unsigned size = GetRawSize();
             if (size > buflen) return 0;
 
             char* ptr = (char*) buf;
 
-            memcpy(ptr, &evnumber, sizeof(evnumber)); ptr+=sizeof(evnumber);
+            memcpy(ptr, &fEventId, sizeof(fEventId)); ptr+=sizeof(fEventId);
 
-            memcpy(ptr, &currtime, sizeof(currtime)); ptr+=sizeof(currtime);
+            memcpy(ptr, &fEventTime, sizeof(fEventTime)); ptr+=sizeof(fEventTime);
 
             uint64_t num64 = fLongValues.size();
             memcpy(ptr, &num64, sizeof(num64)); ptr+=sizeof(num64);
@@ -138,9 +163,81 @@ namespace mbs {
             return size;
          }
 
+         bool Read(void* buf, unsigned bufsize)
+         {
+            if ((buf==0) || (bufsize<24)) return false;
 
+            Clear();
 
+            char* ptr = (char*) buf;
+            char* theEnd = ptr + bufsize;
 
+            memcpy(&fEventId, ptr, sizeof(fEventId)); ptr+=sizeof(fEventId);
+
+            memcpy(&fEventTime, ptr, sizeof(fEventTime)); ptr+=sizeof(fEventTime);
+
+            uint64_t num64 = 0;
+            memcpy(&num64, ptr, sizeof(num64)); ptr+=sizeof(num64);
+            fLongValues.reserve(num64);
+            for (uint64_t n=0;n<num64;n++) {
+               int64_t val(0);
+               memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
+               fLongValues.push_back(val);
+            }
+
+            num64 = 0;
+            memcpy(&num64, ptr, sizeof(num64)); ptr+=sizeof(num64);
+            fDoubleValues.reserve(num64);
+            for (uint64_t n=0;n<num64;n++) {
+               double val = 0.;
+               memcpy(&val, ptr, sizeof(val)); ptr+=sizeof(val);
+               fDoubleValues.push_back(val); // should be always 8 bytes
+            }
+
+            unsigned num = 0;
+            if (sscanf(ptr, "%u", &num)!=1) {
+               printf("cannot get number of long names\n");
+               return false;
+            }
+            if (num != fLongValues.size()) {
+               printf("mismatch between count long names %u and values %u\n", num, (unsigned) fLongValues.size());
+               return false;
+            }
+            ptr  = ptr + strlen(ptr) + 1;
+
+            fLongRecords.reserve(num);
+            for (unsigned n=0;n<num;n++) {
+               if (ptr>=theEnd) {
+                  printf("decoding error\n");
+                  return false;
+               }
+               fLongRecords.push_back(ptr);
+               ptr  = ptr + strlen(ptr) + 1;
+            }
+
+            num = 0;
+            if (sscanf(ptr, "%u", &num)!=1) {
+               printf("cannot get number of double names\n");
+               return false;
+            }
+            if (num != fDoubleValues.size()) {
+               printf("mismatch between count double names %u and values %u\n", num, (unsigned) fDoubleValues.size());
+               return false;
+            }
+            ptr  = ptr + strlen(ptr) + 1;
+
+            fDoubleRecords.reserve(num);
+            for (unsigned n=0;n<num;n++) {
+               if (ptr>=theEnd) {
+                  printf("decoding error\n");
+                  return false;
+               }
+               fDoubleRecords.push_back(ptr);
+               ptr  = ptr + strlen(ptr) + 1;
+            }
+
+            return true;
+         }
    };
 }
 

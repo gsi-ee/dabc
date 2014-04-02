@@ -15,10 +15,12 @@
 
 #include "dimc/Player.h"
 
+#include <sys/timeb.h>
+
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"
 
-#include <dic.hxx>
+#include "mbs/SlowControlData.h"
 
 
 dimc::Player::Player(const std::string& name, dabc::Command cmd) :
@@ -30,7 +32,12 @@ dimc::Player::Player(const std::string& name, dabc::Command cmd) :
    fDimBr(0),
    fDimInfos(),
    fLastScan(),
-   fNeedDnsUpdate(true)
+   fNeedDnsUpdate(true),
+   fSubeventId(8),
+   fEventNumber(0),
+   fLastSendTime(),
+   fIter(),
+   fFlushTime(10)
 {
    //EnsurePorts(0, 0, dabc::xmlWorkPool);
 
@@ -41,10 +48,14 @@ dimc::Player::Player(const std::string& name, dabc::Command cmd) :
    fDimPeriod = Cfg("DimPeriod", cmd).AsDouble(1);
    if (fDimMask.empty()) fDimMask = "*";
 
+   fSubeventId = Cfg("DimSubeventId", cmd).AsUInt(fSubeventId);
+
    fWorkerHierarchy.Create("DIMC", true);
    // fWorkerHierarchy.EnableHistory(100, true); // TODO: make it configurable
 
    CreateTimer("update", (fDimPeriod>0.01) ? fDimPeriod : 0.01, false);
+
+   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
    Publish(fWorkerHierarchy, "DIMC");
 }
@@ -85,8 +96,12 @@ void dimc::Player::ScanDimServices()
 
 // DimClient::addErrorHandler(errHandler);
 
-   for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
-      iter->second.flag = 0;
+   {
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
+
+      for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
+         iter->second.flag = 0;
+      }
    }
 
    int nservices = fDimBr->getServices(fDimMask.c_str());
@@ -95,6 +110,8 @@ void dimc::Player::ScanDimServices()
    while((type = fDimBr->getNextService(service_name, service_descr))!= 0)
    {
       nservices--;
+
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
       DOUT0("type %d name %s descr %s", type, service_name, service_descr);
 
@@ -117,7 +134,6 @@ void dimc::Player::ScanDimServices()
 
       DOUT3("Create entry %p type %d name %s descr %s", entry.info, type, service_name, service_descr);
 
-      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
       dabc::Hierarchy item = fWorkerHierarchy.CreateHChild(service_name);
 
       if (type==1) {
@@ -133,19 +149,22 @@ void dimc::Player::ScanDimServices()
       }
    }
 
-   DimServicesMap::iterator iter = fDimInfos.begin();
-   while (iter!=fDimInfos.end()) {
-      if (iter->second.flag != 0) { iter++; continue; }
-
-      delete iter->second.info;
-      iter->second.info = 0;
-
-      DOUT3("Destroy entry %s", iter->first.c_str());
-
+   {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
-      fWorkerHierarchy.RemoveHChild(iter->first);
 
-      fDimInfos.erase(iter++);
+      DimServicesMap::iterator iter = fDimInfos.begin();
+      while (iter!=fDimInfos.end()) {
+         if (iter->second.flag != 0) { iter++; continue; }
+
+         delete iter->second.info;
+         iter->second.info = 0;
+
+         DOUT3("Destroy entry %s", iter->first.c_str());
+
+         fWorkerHierarchy.RemoveHChild(iter->first);
+
+         fDimInfos.erase(iter++);
+      }
    }
 
    fLastScan.GetNow();
@@ -195,6 +214,8 @@ int dimc::Player::ExecuteCommand(dabc::Command cmd)
 
 void dimc::Player::infoHandler()
 {
+   // DIM method, called when service is updated
+
    DimInfo *info = getInfo();
    if (info==0) return;
 
@@ -216,6 +237,12 @@ void dimc::Player::infoHandler()
       return;
    }
 
+   DimServicesMap::iterator iter = fDimInfos.find(info->getName());
+   if ((iter==fDimInfos.end()) || (iter->second.info!=info)) {
+      EOUT("Did not found service %s in infos map", info->getName());
+      return;
+   }
+
    if (strcmp(info->getName(),"DIS_DNS/SERVER_LIST")==0) {
       DOUT0("Get DIS_DNS/SERVER_LIST");
       fNeedDnsUpdate = true;
@@ -224,17 +251,24 @@ void dimc::Player::infoHandler()
 
    bool changed = true;
 
+   iter->second.fKind = 0;
    if (strcmp(info->getFormat(),"I")==0) {
       item.SetField("value", info->getInt());
       item.SetField(dabc::prop_kind,"rate");
+      iter->second.fKind = 1;
+      iter->second.fLong = info->getInt();
    } else
    if (strcmp(info->getFormat(),"F")==0) {
       item.SetField("value", info->getFloat());
       item.SetField(dabc::prop_kind,"rate");
+      iter->second.fKind = 2;
+      iter->second.fDouble = info->getFloat();
    } else
    if (strcmp(info->getFormat(),"D")==0) {
       item.SetField("value", info->getDouble());
       item.SetField(dabc::prop_kind,"rate");
+      iter->second.fKind = 2;
+      iter->second.fDouble = info->getDouble();
    } else
    if (strcmp(info->getFormat(),"C")==0) {
       item.SetField("value", info->getString());
@@ -244,6 +278,8 @@ void dimc::Player::infoHandler()
       // old DABC rate record
       item.SetField("value", info->getFloat());
       item.SetField(dabc::prop_kind,"rate");
+      iter->second.fKind = 2;
+      iter->second.fDouble = info->getFloat();
    } else
    if ((strcmp(info->getFormat(),"I:1;C:16;C:128")==0) && (strncmp(info->getName(),"DABC/",5)==0)) {
       // old DABC info record
@@ -331,3 +367,73 @@ void dimc::Player::infoHandler()
 
 }
 
+
+void dimc::Player::SendDataToOutputs()
+{
+
+   mbs::SlowControlData rec;
+
+
+   {
+      dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
+
+      for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end(); iter++) {
+         switch (iter->second.fKind) {
+            case 1: rec.AddLong(iter->first, iter->second.fLong); break;
+            case 2: rec.AddDouble(iter->first, iter->second.fDouble); break;
+            default: break;
+         }
+      }
+   }
+
+   unsigned nextsize = rec.GetRawSize();
+
+   if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
+
+      // if output is blocked, do not produce data
+      if (!CanSendToAllOutputs()) return;
+
+      dabc::Buffer buf = fIter.Close();
+      SendToAllOutputs(buf);
+
+      fLastSendTime.GetNow();
+   }
+
+   if (!fIter.IsBuffer()) {
+      dabc::Buffer buf = TakeBuffer();
+      // if no buffer can be taken, skip data
+      if (buf.null()) { EOUT("Cannot take buffer for EZCA data"); return; }
+      fIter.Reset(buf);
+   }
+
+   if (!fIter.IsPlaceForEvent(nextsize, true)) {
+      EOUT("EZCA event %u too large for current buffer size", nextsize);
+      return;
+   }
+
+   fEventNumber++;
+
+   struct timeb s_timeb;
+   ftime(&s_timeb);
+
+   rec.SetEventId(fEventNumber);
+   rec.SetEventTime(s_timeb.time);
+
+   fIter.NewEvent(fEventNumber);
+   fIter.NewSubevent2(fSubeventId);
+
+   unsigned size = rec.Write(fIter.rawdata(), fIter.maxrawdatasize());
+
+   if (size==0) {
+      EOUT("Fail to write data into MBS subevent");
+   }
+
+   fIter.FinishSubEvent(size);
+   fIter.FinishEvent();
+
+   if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
+      dabc::Buffer buf = fIter.Close();
+      SendToAllOutputs(buf);
+      fLastSendTime.GetNow();
+   }
+}

@@ -6,6 +6,8 @@ current functionality of the framework.
 1. Introduce mbs::SlowControlData class, which should pack/unpack slow-control
    records into MBS subevents. Idea to use it in all cases like EPICS, DIM, FESA 
    plugins. One also could use this class in analysis to unpack data.  
+2. Provide mbs::SlowControlData::Read function, which can be used in analysis.
+3. Intoroduce mbs::SlowControlData in DIM plugin.
 
 
 1.04.2014

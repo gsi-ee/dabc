@@ -24,6 +24,10 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+#ifndef MBS_Iterator
+#include "mbs/Iterator.h"
+#endif
+
 #include <map>
 
 #include <dic.hxx>
@@ -46,9 +50,12 @@ namespace dimc {
 
          struct MyEntry {
             DimInfo* info;
-            int   flag;
-            MyEntry() : info(0), flag(0) {}
-            MyEntry(const MyEntry& src) : info(src.info), flag(src.flag) {}
+            int      flag;
+            long     fLong;      ///< buffer for long
+            double   fDouble;    ///< buffer for double
+            int      fKind;     ///< kind of new data (0 - none, 1 - long, 2 - double )
+            MyEntry() : info(0), flag(0), fLong(0), fDouble(0.), fKind(0) {}
+            MyEntry(const MyEntry& src) : info(src.info), flag(src.flag), fLong(src.fLong), fDouble(src.fDouble), fKind(src.fKind) {}
          };
 
          typedef std::map<std::string, MyEntry> DimServicesMap;
@@ -62,10 +69,18 @@ namespace dimc {
          char           fNoLink[10];  ///< buffer used to detect nolink
          bool           fNeedDnsUpdate; ///< if true, should update DNS structures
 
+         unsigned           fSubeventId;      ///< full id number for epics subevent
+         long               fEventNumber;     ///< Event number, written to MBS event
+         dabc::TimeStamp    fLastSendTime;    ///< last time when buffer was send, used for flushing
+         mbs::WriteIterator fIter;            ///< iterator for creating of MBS events
+         double             fFlushTime;       ///< time to flush event
+
 
          virtual void OnThreadAssigned();
 
          void ScanDimServices();
+
+         void SendDataToOutputs();
 
       public:
          Player(const std::string& name, dabc::Command cmd = 0);

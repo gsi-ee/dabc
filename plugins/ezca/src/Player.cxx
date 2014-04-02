@@ -26,6 +26,7 @@
 #include "dabc/Publisher.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
+#include "mbs/SlowControlData.h"
 
 ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -166,15 +167,15 @@ int ezca::Player::ExecuteCommand(dabc::Command cmd)
 
 void ezca::Player::SendDataToOutputs()
 {
-   fRec.Clear();
+   mbs::SlowControlData rec;
 
    for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
-      if (fLongRes[ix]) fRec.AddLong(fLongRecords[ix], fLongValues[ix]);
+      if (fLongRes[ix]) rec.AddLong(fLongRecords[ix], fLongValues[ix]);
 
    for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
-      if (fDoubleRes[ix]) fRec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
+      if (fDoubleRes[ix]) rec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
 
-   unsigned nextsize = fRec.GetRawSize();
+   unsigned nextsize = rec.GetRawSize();
 
    if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
 
@@ -201,13 +202,16 @@ void ezca::Player::SendDataToOutputs()
 
    fEventNumber++;
 
-   fIter.NewEvent(fEventNumber);
-   fIter.NewSubevent2(fSubeventId);
-
    struct timeb s_timeb;
    ftime(&s_timeb);
 
-   unsigned size = fRec.Write(fIter.rawdata(), fIter.maxrawdatasize(), fEventNumber, s_timeb.time);
+   rec.SetEventId(fEventNumber);
+   rec.SetEventTime(s_timeb.time);
+
+   fIter.NewEvent(fEventNumber);
+   fIter.NewSubevent2(fSubeventId);
+
+   unsigned size = rec.Write(fIter.rawdata(), fIter.maxrawdatasize());
 
    if (size==0) {
       EOUT("Fail to write data into MBS subevent");

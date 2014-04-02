@@ -5,6 +5,7 @@
   <Context name="Example">
     <Run>
       <lib value="libDabcHttp.so"/>
+      <lib value="libDabcMbs.so"/>
       <lib value="libDabcDim.so"/>
       <logfile value="Example.log"/>
     </Run>

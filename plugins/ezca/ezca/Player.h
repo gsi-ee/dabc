@@ -28,9 +28,6 @@
 #include "mbs/Iterator.h"
 #endif
 
-#ifndef MBS_SlowControlData
-#include "mbs/SlowControlData.h"
-#endif
 
 namespace ezca {
 
@@ -63,13 +60,10 @@ namespace ezca {
          std::vector<double> fDoubleValues;       ///< values of double records
          std::vector<bool> fDoubleRes;            ///< results of record readout
 
-         long         fEventNumber;  ///< Event number, written to MBS event
-
+         long         fEventNumber;       ///< Event number, written to MBS event
          dabc::TimeStamp  fLastSendTime;  ///< last time when buffer was send, used for flushing
          mbs::WriteIterator fIter;        ///< iterator for creating of MBS events
          double   fFlushTime;             ///< time to flush event
-
-         mbs::SlowControlData   fRec;     ///< record with names and values
 
          /** Initialize some EZCA settings, do it from worker thread */
          virtual void OnThreadAssigned();

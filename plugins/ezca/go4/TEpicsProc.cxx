@@ -114,7 +114,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
       // secondly get dabc record time expression
       fUTimeSeconds = (UInt_t) *pdata++;
       if (fVerbose)
-         printf("Found EPICS timestring: %s\n", GetUpdateTimeString());
+         printf("Found EPICS time: %s\n", GetUpdateTimeString());
 
       //int numlong = *pdata++;
 

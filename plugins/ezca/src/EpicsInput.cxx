@@ -219,15 +219,19 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
       if (fDoubleRes[ix]) rec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
 
+
+   struct timeb s_timeb;
+   ftime(&s_timeb);
+
+   rec.SetEventId(fEventNumber);
+   rec.SetEventTime(s_timeb.time);
+
    mbs::WriteIterator iter(buf);
 
    iter.NewEvent(fEventNumber);
    iter.NewSubevent2(fSubeventId);
 
-   struct timeb s_timeb;
-   ftime(&s_timeb);
-
-   unsigned size = rec.Write(iter.rawdata(), iter.maxrawdatasize(), fEventNumber, s_timeb.time);
+   unsigned size = rec.Write(iter.rawdata(), iter.maxrawdatasize());
 
    if (size==0) {
       EOUT("Fail to write data into MBS subevent");
