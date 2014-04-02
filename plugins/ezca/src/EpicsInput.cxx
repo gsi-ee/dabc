@@ -20,6 +20,8 @@
 #include "dabc/Manager.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
+#include "mbs/SlowControlData.h"
+
 #include "ezca/Definitions.h"
 
 #include <sys/timeb.h>
@@ -65,10 +67,12 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
    fUpdateCommandReceiver = wrk.Cfg(ezca::xmlCommandReceiver,cmd).AsStr("");
 
    fLongRecords = wrk.Cfg(ezca::xmlNameLongRecords, cmd).AsStrVect();
-   fLongValues.resize(fLongRecords.size());
+   fLongValues.resize(fLongRecords.size(), 0);
+   fLongRes.resize(fLongRecords.size(), false);
 
    fDoubleRecords = wrk.Cfg(ezca::xmlNameDoubleRecords, cmd).AsStrVect();
-   fDoubleValues.resize(fDoubleRecords.size());
+   fDoubleValues.resize(fDoubleRecords.size(), 0.);
+   fDoubleRes.resize(fDoubleRecords.size(), false);
 
    fEzcaTimeout = wrk.Cfg(ezca::xmlEzcaTimeout, cmd).AsDouble(fEzcaTimeout);
    fEzcaRetryCnt = wrk.Cfg(ezca::xmlEzcaRetryCount, cmd).AsInt(fEzcaRetryCnt);
@@ -156,30 +160,6 @@ unsigned ezca::EpicsInput::Read_Size()
    return dabc::di_DfltBufSize;
 }
 
-void ezca::EpicsInput::BuildDescriptor()
-{
-   fDescriptor.clear();
-
-   fDescriptor.append(dabc::format("%u ", NumLongRecords()));
-   fDescriptor.append(1,'\0');
-
-   for (unsigned ix = 0; ix < NumLongRecords(); ++ix) {
-      // record the name of just written process variable:
-      fDescriptor.append(GetLongRecord(ix));
-      fDescriptor.append(1,'\0');
-   }
-
-   fDescriptor.append(dabc::format("%u ", NumDoubleRecords()));
-   fDescriptor.append(1,'\0');
-
-   for (unsigned ix = 0; ix < NumDoubleRecords(); ix++) {
-      // record the name of just written process variable:
-      fDescriptor.append(GetDoubleRecord(ix));
-      fDescriptor.append(1,'\0');
-   }
-
-   while (fDescriptor.size() % 4 != 0) fDescriptor.append(1,'\0');
-}
 
 unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 {
@@ -196,12 +176,14 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       // now the data values for each record in order:
       for (unsigned ix = 0; ix < NumLongRecords(); ix++) {
          fLongValues[ix] = 0;
+         fLongRes[ix] = true;
          int ret = CA_GetLong(GetLongRecord(ix), fLongValues[ix]);
          if (ret!=EZCA_OK) EOUT("Request long %s Ret = %s", GetLongRecord(ix).c_str(), CA_RetCode(ret));
       }
 
       for (unsigned ix = 0; ix < NumDoubleRecords(); ix++) {
          fDoubleValues[ix] = 0;
+         fDoubleRes[ix] = true;
          int ret = CA_GetDouble(GetDoubleRecord(ix), fDoubleValues[ix]);
          if (ret!=EZCA_OK) EOUT("Request double %s Ret = %s", GetDoubleRecord(ix).c_str(), CA_RetCode(ret));
       }
@@ -211,9 +193,16 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       if (ezcaEndGroupWithReport(&rcs, &nrcs) != EZCA_OK) {
          EOUT("EZCA error %s", CA_ErrorString().c_str());
          for (unsigned i=0; i< (unsigned) nrcs; i++)
-            if (rcs[i] != EZCA_OK) {
-               const char* vname = i<NumLongRecords() ? GetLongRecord(i).c_str() : GetDoubleRecord(i-NumLongRecords()).c_str();
-               EOUT("Problem getting %s ret %s", vname, CA_RetCode(rcs[i]));
+            if (i<fLongRecords.size()) {
+               unsigned ix = i;
+               fLongRes[ix] = (rcs[i]==EZCA_OK);
+               if (!fLongRes[ix])
+                  EOUT("Problem getting long %s ret %s", fLongRecords[ix].c_str(), CA_RetCode(rcs[i]));
+            } else {
+               unsigned ix = i - fLongRecords.size();
+               fDoubleRes[ix] = (rcs[i]==EZCA_OK);
+               if (!fDoubleRes[ix])
+                  EOUT("Problem getting double %s ret %s", fDoubleRecords[ix].c_str(), CA_RetCode(rcs[i]));
             }
       }
 
@@ -222,54 +211,29 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 
    DOUT2("EpicsInput:: readout time is = %7.5f s", tm.SpentTillNow());
 
+   mbs::SlowControlData rec;
 
-   if (fDescriptor.empty())
-     BuildDescriptor();
+   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
+      if (fLongRes[ix]) rec.AddLong(fLongRecords[ix], fLongValues[ix]);
 
+   for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
+      if (fDoubleRes[ix]) rec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
 
    mbs::WriteIterator iter(buf);
 
    iter.NewEvent(fEventNumber);
    iter.NewSubevent2(fSubeventId);
 
-   uint32_t number = fEventNumber;
-   iter.AddRawData(&number, sizeof(number));
-
    struct timeb s_timeb;
    ftime(&s_timeb);
-   number = s_timeb.time;
-   iter.AddRawData(&number, sizeof(number));
 
-   uint64_t num64 = NumLongRecords();
-   iter.AddRawData(&num64, sizeof(num64));
+   unsigned size = rec.Write(iter.rawdata(), iter.maxrawdatasize(), fEventNumber, s_timeb.time);
 
-   for (unsigned ix = 0; ix < NumLongRecords(); ++ix) {
-      int64_t val = fLongValues[ix]; // machine independent representation here
-      DOUT3("EpicsInput LongRecord:%s - val= %ld ",GetLongRecord(ix).c_str(), (long) val);
-      iter.AddRawData(&val, sizeof(val));
+   if (size==0) {
+      EOUT("Fail to write data into MBS subevent");
    }
 
-   // header with number of double records
-   num64 = NumDoubleRecords();
-   iter.AddRawData(&num64, sizeof(num64));
-
-   // data values for double records:
-   for (unsigned ix = 0; ix < NumDoubleRecords(); ix++) {
-      //val=3.14159e-42; // for testing
-#ifdef EZCA_useDOUBLES
-      double tmpval = fDoubleValues[ix]; // should be always 8 bytes
-#else
-      // workaround: instead of doubles, we store integers scaled by a factor JAM
-      int64_t tmpval = (int64_t) fDoubleValues[ix] * EZCA_DOUBLESCALE;
-#endif
-      iter.AddRawData(&tmpval, sizeof(tmpval));
-   }
-
-   // copy description of record names at subevent end:
-
-   iter.AddRawData(fDescriptor.c_str(), fDescriptor.size());
-
-   iter.FinishSubEvent();
+   iter.FinishSubEvent(size);
    iter.FinishEvent();
 
    buf = iter.Close();

@@ -128,7 +128,6 @@ namespace mbs {
          bool IsPlaceForRawData(unsigned len) const;
          bool AddRawData(const void* src, unsigned len);
 
-
          bool FinishSubEvent(uint32_t rawdatasz = 0);
          bool AddSubevent(const dabc::Pointer& source);
          bool AddSubevent(SubeventHeader* sub);

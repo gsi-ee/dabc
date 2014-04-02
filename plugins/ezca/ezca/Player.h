@@ -24,9 +24,12 @@
 #include "dabc/Hierarchy.h"
 #endif
 
-
 #ifndef MBS_Iterator
 #include "mbs/Iterator.h"
+#endif
+
+#ifndef MBS_SlowControlData
+#include "mbs/SlowControlData.h"
 #endif
 
 namespace ezca {
@@ -52,18 +55,21 @@ namespace ezca {
          std::string fNameSepar;  ///< separator symbol(s), which defines subfolder in epcis names
          std::string fTopFolder;  ///< name of top folder, which should exists also in every variable
 
-         std::vector<std::string> fLongRecords;  ///< names of long records
-         std::vector<long> fLongValues;          ///< values of long records
+         std::vector<std::string> fLongRecords;   ///< names of long records
+         std::vector<long> fLongValues;           ///< values of long records
+         std::vector<bool> fLongRes;              ///< results of record readout
 
          std::vector<std::string> fDoubleRecords; ///< names of double records
          std::vector<double> fDoubleValues;       ///< values of double records
+         std::vector<bool> fDoubleRes;            ///< results of record readout
 
-         std::string  fDescriptor;   ///< descriptor for mbs event
          long         fEventNumber;  ///< Event number, written to MBS event
 
          dabc::TimeStamp  fLastSendTime;  ///< last time when buffer was send, used for flushing
          mbs::WriteIterator fIter;        ///< iterator for creating of MBS events
          double   fFlushTime;             ///< time to flush event
+
+         mbs::SlowControlData   fRec;     ///< record with names and values
 
          /** Initialize some EZCA settings, do it from worker thread */
          virtual void OnThreadAssigned();
@@ -80,12 +86,6 @@ namespace ezca {
          std::string CA_ErrorString();
 
          const char* CA_RetCode(int ret);
-
-         /** Build descriptor of EPICS variables */
-         void BuildDescriptor();
-
-         /** Evaluate next event size to decide if new buffer is required */
-         unsigned NextEventSize();
 
          /** Perform readout of all variables */
          bool DoEpicsReadout();

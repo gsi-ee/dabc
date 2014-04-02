@@ -81,13 +81,12 @@ namespace ezca {
          /* contains names of all long integer values to be requested*/
          std::vector<std::string> fLongRecords;
          std::vector<long> fLongValues;
+         std::vector<bool> fLongRes;
 
          /* contains names of all double  values to be requested*/
          std::vector<std::string> fDoubleRecords;
          std::vector<double> fDoubleValues;
-
-         /** Complete descriptor of long/double variables, packed into mbs event */
-         std::string fDescriptor;
+         std::vector<bool> fDoubleRes;
 
          void ResetDescriptors()
          {
@@ -96,9 +95,10 @@ namespace ezca {
             fUpdateCommandReceiver="";
             fLongRecords.clear();
             fLongValues.clear();
+            fLongRes.clear();
             fDoubleRecords.clear();
             fDoubleValues.clear();
-            fDescriptor.clear();
+            fDoubleRes.clear();
          }
 
          unsigned NumLongRecords() const { return fLongRecords.size(); }
@@ -108,8 +108,6 @@ namespace ezca {
          unsigned NumDoubleRecords() const { return fDoubleRecords.size(); }
 
          const std::string& GetDoubleRecord(unsigned i) const { return fDoubleRecords[i]; }
-
-         void BuildDescriptor();
 
          /* Wrapper for ezca get with long values. Contains error message handling.
           * Returns ezca error code.*/

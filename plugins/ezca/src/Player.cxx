@@ -41,7 +41,6 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fLongValues(),
    fDoubleRecords(),
    fDoubleValues(),
-   fDescriptor(),
    fEventNumber(0),
    fLastSendTime(),
    fIter(),
@@ -61,16 +60,16 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
    fTopFolder = Cfg("TopFolder", cmd).AsStr(fTopFolder);
 
    fLongRecords = Cfg(ezca::xmlNameLongRecords, cmd).AsStrVect();
-   fLongValues.resize(fLongRecords.size());
+   fLongValues.resize(fLongRecords.size(), 0);
+   fLongRes.resize(fLongRecords.size(), false);
 
    DOUT0("Num LONG recs = %d", fLongRecords.size());
 
    fDoubleRecords = Cfg(ezca::xmlNameDoubleRecords, cmd).AsStrVect();
    fDoubleValues.resize(fDoubleRecords.size());
+   fDoubleRes.resize(fDoubleRecords.size(), false);
 
    fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
-
-   fDescriptor.clear();
 
    fWorkerHierarchy.Create("EZCA");
 
@@ -148,13 +147,13 @@ void ezca::Player::ProcessTimerEvent(unsigned timer)
    if (NumOutputs() > 0)
       SendDataToOutputs();
 
-   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix) {
-      fWorkerHierarchy.GetHChild(GetItemName(fLongRecords[ix])).SetField("value", fLongValues[ix]);
-   }
+   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
+      if (fLongRes[ix])
+         fWorkerHierarchy.GetHChild(GetItemName(fLongRecords[ix])).SetField("value", fLongValues[ix]);
 
-   for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix) {
-      fWorkerHierarchy.GetHChild(GetItemName(fDoubleRecords[ix])).SetField("value", fDoubleValues[ix]);
-   }
+   for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
+      if (fDoubleRes[ix])
+        fWorkerHierarchy.GetHChild(GetItemName(fDoubleRecords[ix])).SetField("value", fDoubleValues[ix]);
 
    fWorkerHierarchy.MarkChangedItems();
 }
@@ -165,23 +164,17 @@ int ezca::Player::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-unsigned ezca::Player::NextEventSize()
-{
-   return sizeof(uint32_t) +    // event number
-          sizeof(uint32_t) +    // time
-          sizeof(uint64_t) +    // numlongs
-          fLongValues.size()*sizeof(int64_t) + // longs
-          sizeof(uint64_t) +    // numdoubles
-          fDoubleValues.size()*sizeof(double) + // doubles
-          fDescriptor.size();
-}
-
-
 void ezca::Player::SendDataToOutputs()
 {
-   BuildDescriptor();
+   fRec.Clear();
 
-   unsigned nextsize = NextEventSize();
+   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
+      if (fLongRes[ix]) fRec.AddLong(fLongRecords[ix], fLongValues[ix]);
+
+   for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
+      if (fDoubleRes[ix]) fRec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
+
+   unsigned nextsize = fRec.GetRawSize();
 
    if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
 
@@ -211,38 +204,17 @@ void ezca::Player::SendDataToOutputs()
    fIter.NewEvent(fEventNumber);
    fIter.NewSubevent2(fSubeventId);
 
-   uint32_t number = fEventNumber;
-   fIter.AddRawData(&number, sizeof(number));
-
    struct timeb s_timeb;
    ftime(&s_timeb);
-   number = s_timeb.time;
-   fIter.AddRawData(&number, sizeof(number));
 
-   uint64_t num64 = fLongValues.size();
-   fIter.AddRawData(&num64, sizeof(num64));
+   unsigned size = fRec.Write(fIter.rawdata(), fIter.maxrawdatasize(), fEventNumber, s_timeb.time);
 
-   for (unsigned ix = 0; ix < fLongValues.size(); ++ix) {
-      int64_t val = fLongValues[ix]; // machine independent representation here
-      fIter.AddRawData(&val, sizeof(val));
+   if (size==0) {
+      EOUT("Fail to write data into MBS subevent");
    }
 
-   // header with number of double records
-   num64 = fDoubleValues.size();
-   fIter.AddRawData(&num64, sizeof(num64));
-
-   // data values for double records:
-   for (unsigned ix = 0; ix < fDoubleValues.size(); ix++) {
-      double tmpval = fDoubleValues[ix]; // should be always 8 bytes
-      fIter.AddRawData(&tmpval, sizeof(tmpval));
-   }
-
-   // copy description of record names at subevent end:
-   fIter.AddRawData(fDescriptor.c_str(), fDescriptor.size());
-
-   fIter.FinishSubEvent();
+   fIter.FinishSubEvent(size);
    fIter.FinishEvent();
-
 
    if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
       dabc::Buffer buf = fIter.Close();
@@ -250,34 +222,6 @@ void ezca::Player::SendDataToOutputs()
       fLastSendTime.GetNow();
    }
 }
-
-
-void ezca::Player::BuildDescriptor()
-{
-   fDescriptor.clear();
-
-   fDescriptor.append(dabc::format("%u ", (unsigned) fLongRecords.size()));
-   fDescriptor.append(1,'\0');
-
-   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix) {
-      // record the name of just written process variable:
-      fDescriptor.append(fLongRecords[ix]);
-      fDescriptor.append(1,'\0');
-   }
-
-   fDescriptor.append(dabc::format("%u ", (unsigned) fDoubleRecords.size()));
-   fDescriptor.append(1,'\0');
-
-   for (unsigned ix = 0; ix < fDoubleRecords.size(); ix++) {
-      // record the name of just written process variable:
-      fDescriptor.append(fDoubleRecords[ix]);
-      fDescriptor.append(1,'\0');
-   }
-
-   while (fDescriptor.size() % 4 != 0) fDescriptor.append(1,'\0');
-}
-
-
 
 bool ezca::Player::DoEpicsReadout()
 {
@@ -292,6 +236,7 @@ bool ezca::Player::DoEpicsReadout()
    // now the data values for each record in order:
    for (unsigned ix = 0; ix < fLongRecords.size(); ix++) {
       fLongValues[ix] = 0;
+      fLongRes[ix] = true;
       int ret = CA_GetLong(fLongRecords[ix], fLongValues[ix]);
       if (ret==EZCA_OK) continue;
       EOUT("Request long %s Ret = %s", fLongRecords[ix].c_str(), CA_RetCode(ret));
@@ -300,6 +245,7 @@ bool ezca::Player::DoEpicsReadout()
 
    for (unsigned ix = 0; ix < fDoubleRecords.size(); ix++) {
       fDoubleValues[ix] = 0;
+      fDoubleRes[ix] = true;
       int ret = CA_GetDouble(fDoubleRecords[ix], fDoubleValues[ix]);
       if (ret==EZCA_OK) continue;
       EOUT("Request double %s Ret = %s", fDoubleRecords[ix].c_str(), CA_RetCode(ret));
@@ -313,9 +259,16 @@ bool ezca::Player::DoEpicsReadout()
       res = false;
       EOUT("EZCA error %s", CA_ErrorString().c_str());
       for (unsigned i=0; i< (unsigned) nrcs; i++)
-         if (rcs[i] != EZCA_OK) {
-            std::string vname = i<fLongRecords.size() ? fLongRecords[i] : fDoubleRecords[i-fLongRecords.size()];
-            EOUT("Problem getting %s ret %s", vname.c_str(), CA_RetCode(rcs[i]));
+         if (i<fLongRecords.size()) {
+            unsigned ix = i;
+            fLongRes[ix] = (rcs[i]==EZCA_OK);
+            if (!fLongRes[ix])
+               EOUT("Problem getting long %s ret %s", fLongRecords[ix].c_str(), CA_RetCode(rcs[i]));
+         } else {
+            unsigned ix = i - fLongRecords.size();
+            fDoubleRes[ix] = (rcs[i]==EZCA_OK);
+            if (!fDoubleRes[ix])
+               EOUT("Problem getting double %s ret %s", fDoubleRecords[ix].c_str(), CA_RetCode(rcs[i]));
          }
    }
 

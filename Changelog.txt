@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+2.04.2014
+1. Introduce mbs::SlowControlData class, which should pack/unpack slow-control
+   records into MBS subevents. Idea to use it in all cases like EPICS, DIM, FESA 
+   plugins. One also could use this class in analysis to unpack data.  
+
+
 1.04.2014
 1. Publish DIM command in the hierarchy, execute them via generic
    CmdHierarchyExec command. Provide optional string parameter 
