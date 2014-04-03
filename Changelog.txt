@@ -11,6 +11,8 @@ current functionality of the framework.
 4. Rename Player->Monitor in EPICS and DIM plugins. 
 5. Create slow-control data in fesa::Monitor (to be tested). 
 6. Rename root::Player -> root::Monitor, correspondent changes in Go4.
+7. Introduce mbs::MonitorSlowControl which provides basic functionality to
+   server slow control data to clients, use it first for dim::Monitor class. 
 
 
 2.04.2014

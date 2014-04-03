@@ -16,16 +16,12 @@
 #ifndef DIM_Monitor
 #define DIM_Monitor
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
+#ifndef MBS_MonitorSlowControl
+#include "mbs/MonitorSlowControl.h"
 #endif
 
 #ifndef DABC_Hierarchy
 #include "dabc/Hierarchy.h"
-#endif
-
-#ifndef MBS_Iterator
-#include "mbs/Iterator.h"
 #endif
 
 #include <map>
@@ -43,7 +39,7 @@ namespace dim {
     *
     **/
 
-   class Monitor : public dabc::ModuleAsync,
+   class Monitor : public mbs::MonitorSlowControl,
                    public DimInfoHandler {
 
       protected:
@@ -69,17 +65,12 @@ namespace dim {
          char           fNoLink[10];  ///< buffer used to detect nolink
          bool           fNeedDnsUpdate; ///< if true, should update DNS structures
 
-         unsigned           fSubeventId;      ///< full id number for dim subevent
-         long               fEventNumber;     ///< Event number, written to MBS event
-         dabc::TimeStamp    fLastSendTime;    ///< last time when buffer was send, used for flushing
-         mbs::WriteIterator fIter;            ///< iterator for creating of MBS events
-         double             fFlushTime;       ///< time to flush event
-
          virtual void OnThreadAssigned();
 
          void ScanDimServices();
 
-         void SendDataToOutputs();
+         virtual unsigned GetRecRawSize();
+
 
       public:
          Monitor(const std::string& name, dabc::Command cmd = 0);

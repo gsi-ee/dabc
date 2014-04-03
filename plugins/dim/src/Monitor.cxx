@@ -24,7 +24,7 @@
 
 
 dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd),
+   mbs::MonitorSlowControl(name, "Dim", cmd),
    DimInfoHandler(),
    fDimDns(),
    fDimMask(),
@@ -32,15 +32,8 @@ dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fDimBr(0),
    fDimInfos(),
    fLastScan(),
-   fNeedDnsUpdate(true),
-   fSubeventId(8),
-   fEventNumber(0),
-   fLastSendTime(),
-   fIter(),
-   fFlushTime(10)
+   fNeedDnsUpdate(true)
 {
-   EnsurePorts(0, 0, dabc::xmlWorkPool);
-
    strncpy(fNoLink, "no_link", sizeof(fNoLink));
 
    fDimDns = Cfg("DimDns", cmd).AsStr();
@@ -51,10 +44,8 @@ dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    // fWorkerHierarchy.EnableHistory(100, true); // TODO: make it configurable
 
    fDimPeriod = Cfg("DimPeriod", cmd).AsDouble(1);
-   fSubeventId = Cfg("DimSubeventId", cmd).AsUInt(fSubeventId);
-   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
-   CreateTimer("update", (fDimPeriod>0.01) ? fDimPeriod : 0.01, false);
+   CreateTimer("DimTimer", (fDimPeriod>0.01) ? fDimPeriod : 0.01, false);
 
 
    Publish(fWorkerHierarchy, "DIMC");
@@ -175,15 +166,11 @@ void dim::Monitor::ProcessTimerEvent(unsigned timer)
 {
    if (fDimBr==0) return;
 
-   if (fLastScan.Expired(10.) || (fDimInfos.size()==0) || fNeedDnsUpdate)
-      ScanDimServices();
+   if (TimerName(timer) == "DimTimer")
+      if (fLastScan.Expired(10.) || (fDimInfos.size()==0) || fNeedDnsUpdate)
+         ScanDimServices();
 
-   if (NumOutputs() > 0)
-      SendDataToOutputs();
-
-//   dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
-//   fWorkerHierarchy.MarkChangedItems();
-
+   mbs::MonitorSlowControl::ProcessTimerEvent(timer);
 }
 
 int dim::Monitor::ExecuteCommand(dabc::Command cmd)
@@ -370,69 +357,21 @@ void dim::Monitor::infoHandler()
 
 }
 
-
-void dim::Monitor::SendDataToOutputs()
+unsigned dim::Monitor::GetRecRawSize()
 {
-
-   mbs::SlowControlData rec;
+   fRec.Clear();
 
    {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
       for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end(); iter++) {
          switch (iter->second.fKind) {
-            case 1: rec.AddLong(iter->first, iter->second.fLong); break;
-            case 2: rec.AddDouble(iter->first, iter->second.fDouble); break;
+            case 1: fRec.AddLong(iter->first, iter->second.fLong); break;
+            case 2: fRec.AddDouble(iter->first, iter->second.fDouble); break;
             default: break;
          }
       }
    }
 
-   unsigned nextsize = rec.GetRawSize();
-
-   if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
-
-      // if output is blocked, do not produce data
-      if (!CanSendToAllOutputs()) return;
-
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-
-      fLastSendTime.GetNow();
-   }
-
-   if (!fIter.IsBuffer()) {
-      dabc::Buffer buf = TakeBuffer();
-      // if no buffer can be taken, skip data
-      if (buf.null()) { EOUT("Cannot take buffer for EZCA data"); return; }
-      fIter.Reset(buf);
-   }
-
-   if (!fIter.IsPlaceForEvent(nextsize, true)) {
-      EOUT("EZCA event %u too large for current buffer size", nextsize);
-      return;
-   }
-
-   fEventNumber++;
-
-   rec.SetEventId(fEventNumber);
-   rec.SetEventTime(time(NULL));
-
-   fIter.NewEvent(fEventNumber);
-   fIter.NewSubevent2(fSubeventId);
-
-   unsigned size = rec.Write(fIter.rawdata(), fIter.maxrawdatasize());
-
-   if (size==0) {
-      EOUT("Fail to write data into MBS subevent");
-   }
-
-   fIter.FinishSubEvent(size);
-   fIter.FinishEvent();
-
-   if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-      fLastSendTime.GetNow();
-   }
+   return fRec.GetRawSize();
 }

@@ -20,6 +20,7 @@
         <DimDns value="lxg0538:2505"/>
         <DimMask value="*"/>
         <DimPeriod value="1"/>
+        
         <DimSubeventId value="0x000000A"/>
         
         <NumOutputs value="1"/>
