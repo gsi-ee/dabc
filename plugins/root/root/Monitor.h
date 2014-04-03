@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef ROOT_Player
-#define ROOT_Player
+#ifndef ROOT_Monitor
+#define ROOT_Monitor
 
 #ifndef DABC_Worker
 #include "dabc/Worker.h"
@@ -33,15 +33,15 @@ class TRootSniffer;
 namespace root {
 
 
-   /** \brief %Player provides access to ROOT objects for DABC
+   /** \brief Class provides live access to ROOT objects for DABC
     *
     */
 
-   class PlayerRef;
+   class MonitorRef;
 
-   class Player : public dabc::Worker  {
+   class Monitor : public dabc::Worker  {
 
-      friend class PlayerRef;
+      friend class MonitorRef;
 
       protected:
 
@@ -75,9 +75,9 @@ namespace root {
          virtual int ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd);
 
       public:
-         Player(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = 0);
 
-         virtual ~Player();
+         virtual ~Monitor();
 
          virtual const char* ClassName() const { return "Player"; }
 
@@ -85,8 +85,8 @@ namespace root {
    };
 
 
-   class PlayerRef : public dabc::WorkerRef  {
-      DABC_REFERENCE(PlayerRef, dabc::WorkerRef, Player);
+   class MonitorRef : public dabc::WorkerRef  {
+      DABC_REFERENCE(MonitorRef, dabc::WorkerRef, Monitor);
 
       void ProcessActionsInRootContext(TRootSniffer* sniff)
       {

@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "root/Player.h"
+#include "root/Monitor.h"
 
 #include "TImage.h"
 
@@ -65,7 +65,7 @@ public:
 
 // ==============================================================================
 
-root::Player::Player(const std::string& name, dabc::Command cmd) :
+root::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fRoot(),
@@ -78,12 +78,12 @@ root::Player::Player(const std::string& name, dabc::Command cmd) :
    fPrefix = Cfg("prefix", cmd).AsStr("ROOT");
 }
 
-root::Player::~Player()
+root::Monitor::~Monitor()
 {
 }
 
 
-void root::Player::OnThreadAssigned()
+void root::Monitor::OnThreadAssigned()
 {
    dabc::Worker::OnThreadAssigned();
 
@@ -100,13 +100,13 @@ void root::Player::OnThreadAssigned()
    // if timer not installed, emulate activity in ROOT by regular timeouts
 }
 
-double root::Player::ProcessTimeout(double last_diff)
+double root::Monitor::ProcessTimeout(double last_diff)
 {
    return 10.;
 }
 
 
-int root::Player::ExecuteCommand(dabc::Command cmd)
+int root::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetBinary::CmdName()) ||
        cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
@@ -119,7 +119,7 @@ int root::Player::ExecuteCommand(dabc::Command cmd)
 }
 
 
-void root::Player::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path)
+void root::Monitor::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, const char* path)
 {
    main.Release();
 
@@ -129,7 +129,7 @@ void root::Player::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, c
 }
 
 
-int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
+int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 {
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
@@ -202,7 +202,7 @@ int root::Player::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 }
 
 
-void root::Player::ProcessActionsInRootContext(TRootSniffer* sniff)
+void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
 {
    // DOUT0("ROOOOOOOT sniffer ProcessActionsInRootContext %p %s active %s", this, ClassName(), DBOOL(fWorkerActive));
 

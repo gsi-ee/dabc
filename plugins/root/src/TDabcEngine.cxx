@@ -20,7 +20,7 @@
 #include "dabc/Url.h"
 #include "dabc/Manager.h"
 
-#include "root/Player.h"
+#include "root/Monitor.h"
 
 #include "THttpServer.h"
 
@@ -145,7 +145,7 @@ Bool_t TDabcEngine::Create(const char* args)
 
    if (dabc::mgr.FindItem("/ROOT").null()) {
 
-      std::string player_class = url.GetOptionStr("player", "root::Player");
+      std::string player_class = url.GetOptionStr("player", "root::Monitor");
 
       dabc::CmdCreateObject cmd2(player_class,"/ROOT");
       cmd2.SetBool("enabled", true);
@@ -170,7 +170,7 @@ void TDabcEngine::Process()
 
    if ((GetServer()==0) || (GetServer()->GetSniffer()==0)) return;
 
-   root::PlayerRef player = dabc::mgr.FindItem("/ROOT");
+   root::MonitorRef player = dabc::mgr.FindItem("/ROOT");
 
    player.ProcessActionsInRootContext(GetServer()->GetSniffer());
 }

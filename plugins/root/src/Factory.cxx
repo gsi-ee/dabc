@@ -20,7 +20,7 @@
 #include "dabc/logging.h"
 #include "dabc/Url.h"
 
-#include "root/Player.h"
+#include "root/Monitor.h"
 
 dabc::FactoryPlugin root_factory(new root::Factory("root"));
 
@@ -30,8 +30,8 @@ void root::Factory::Initialize()
 
 dabc::Reference root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
 {
-   if (classname=="root::Player")
-      return new root::Player(objname, cmd);
+   if (classname=="root::Monitor")
+      return new root::Monitor(objname, cmd);
 
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }
