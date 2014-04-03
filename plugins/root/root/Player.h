@@ -84,6 +84,7 @@ namespace root {
          bool IsEnabled() const { return fEnabled; }
    };
 
+
    class PlayerRef : public dabc::WorkerRef  {
       DABC_REFERENCE(PlayerRef, dabc::WorkerRef, Player);
 

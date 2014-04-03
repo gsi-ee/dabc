@@ -48,11 +48,8 @@ $(DABCINCPATH)/%.h: $(RFIODIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-#$(DABCRFIO_LIB): LDFLAGS += -lrt
-
 $(DABCRFIO_LIB):   $(DABCRFIO_O)
 	@$(MakeLib) $(DABCRFIO_LIBNAME) "$(DABCRFIO_O)" $(TGTDLLPATH)
-
 
 clean::
 #	rm -f $(RFIOFAPI_PACKAGE)

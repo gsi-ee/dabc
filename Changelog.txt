@@ -6,6 +6,8 @@ current functionality of the framework.
 1. Provide printout of SlowControlData in mbsprint command.
 2. In Module::EnsurePorts() method only when at least one input or output
    port is created, memory pool handle will be created as well. 
+3. Optimize Makefiles - correctly treat dependency between libraries,
+   link required shared libraries directly. Resolves several build problems. 
 
 
 2.04.2014

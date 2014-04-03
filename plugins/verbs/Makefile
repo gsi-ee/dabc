@@ -34,8 +34,9 @@ VERBSDIRS         = $(VERBSDIR)/src
 
 VERBS_NOTLIBF = 
 
-DABCVERBS_LIBNAME  = $(LIB_PREFIX)DabcVerbs
-DABCVERBS_LIB      = $(TGTDLLPATH)/$(DABCVERBS_LIBNAME).$(DllSuf)
+# put in Makefile.config
+#DABCVERBS_LIBNAME  = $(LIB_PREFIX)DabcVerbs
+#DABCVERBS_LIB      = $(TGTDLLPATH)/$(DABCVERBS_LIBNAME).$(DllSuf)
 
 ## must be similar for every module
 
@@ -61,10 +62,8 @@ $(DABCINCPATH)/%.h: $(VERBSDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCVERBS_LIB): LDFLAGS += $(OFED_LIBS)
-
 $(DABCVERBS_LIB):   $(VERBS_O)
-	@$(MakeLib) $(DABCVERBS_LIBNAME) "$(VERBS_O)" $(TGTDLLPATH)
+	@$(MakeLib) $(DABCVERBS_LIBNAME) "$(VERBS_O)" $(TGTDLLPATH) "$(OFED_LIBS)"
 
 $(VERBS_O) $(VERBS_D): INCLUDES += $(OFED_INCLUDES)
 $(VERBS_O) $(VERBS_D): DEFINITIONS += $(VERBS_DEFINITIONS)

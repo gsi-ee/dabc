@@ -1,7 +1,8 @@
+ifndef noroot
+
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABC_ISROOT
-
 
 ifdef DABCMAINMAKE
 DABCROOTDIR = plugins/root
@@ -15,9 +16,10 @@ DABCROOTDIRSNIFF  = $(DABCROOTDIR)/sniffer
 
 DABCROOT_LINKDEF  = $(DABCROOTDIR)/LinkDef.h
 
-DABCROOT_LIBNAME  = $(LIB_PREFIX)DabcRoot
-DABCROOT_LIB      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).$(DllSuf)
-DABCROOT_MAP      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).rootmap
+# move it to Makefile.config, while ROOT plugin used in some others plugins
+#DABCROOT_LIBNAME  = $(LIB_PREFIX)DabcRoot
+#DABCROOT_LIB      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).$(DllSuf)
+#DABCROOT_MAP      = $(TGTDLLPATH)/$(DABCROOT_LIBNAME).rootmap
 
 DABCROOT_DICTINCL = $(DABCROOTDIR)/DabcRoot.h \
                     $(DABCROOTDIRI)/TDabcEngine.h
@@ -121,10 +123,8 @@ $(DABCINCPATH)/%.h: $(DABCROOTDIRSNIFF)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS) $(HTTPLIBEXTRA)
-
 $(DABCROOT_LIB): $(DABCROOT_O) $(DABCROOT_DO)
-	$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O) $(DABCROOT_DO)" $(TGTDLLPATH)
+	$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O) $(DABCROOT_DO)" $(TGTDLLPATH) "$(DABC_ROOTLIBS) $(HTTPLIBEXTRA)"
 
 $(DABCROOT_DS): $(DABCROOT_DICTINCL) $(DABCROOT_LINKDEF)
 	$(ROOTCINTDABC) $(DABCROOT_DICTINCL) $(DABCROOT_LINKDEF)
@@ -152,3 +152,4 @@ endif
 
 include $(DABCSYS)/config/Makefile.rules
 
+endif

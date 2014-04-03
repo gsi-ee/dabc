@@ -1,6 +1,8 @@
 ## normally should be like this for every plugin
 ## one can extract complete plugin subdirectory and compile it independent from rest
 
+ifndef nofesa
+
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
@@ -23,32 +25,25 @@ DABCFESA_D       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCFESA_S)
 
 
 FESA_DEFINITIONS = 
-FESA_INCLUDES = 
+FESA_INCLUDES =
+FESA_LIBS = -lDabcMbs
+FESA_STATIC =
+FESA_DEPEND = $(DABCMBS_LIB)   
 
 ifdef DABC_ISROOT
 FESA_DEFINITIONS += WITH_ROOT 
 FESA_INCLUDES += $(DABC_ROOTINCDIR)
-FESA_LIBS += -L$(TGTDLLPATH) -lDabcRoot 
+FESA_LIBS += -lDabcRoot 
+FESA_DEPEND += $(DABCROOT_LIB)
 endif
 
 # this is location of fesa 
-ifndef RDA_HOME
-RDA_HOME = /opt/fesa/fesa-3rdparty/1.0.0
-endif
 
-ifneq  ($(wildcard $(RDA_HOME)/*),)
+ifdef DABC_FESA
 FESA_DEFINITIONS += WITH_FESA
-FESA_INCLUDES += $(RDA_HOME)/include
-FESA_LIBS += -lomniORB4 -lomnithread -lcrypto -lcurl -lpthread
-FESA_STATIC += $(RDA_HOME)/lib/x86_64/libcmw-rda.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-rbac.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-directory-client.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-serializer.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-log-stomp.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-stomp.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-log.a \
-               $(RDA_HOME)/lib/x86_64/libcmw-util.a \
-               $(RDA_HOME)/lib/x86_64/libiceutil.a
+FESA_INCLUDES += $(DABC_FESA_INCDIR)
+FESA_LIBS += $(DABC_FESA_LIBS)
+FESA_STATIC += $(DABC_FESA_SLIBS)
 endif
 
 
@@ -65,14 +60,13 @@ libs:: $(DABCFESA_LIB)
 #	@echo "Header: $@" 
 #	@cp -f $< $@
 
-#$(DABCFESA_LIB): LDFLAGS += -lrt
-
-$(DABCFESA_LIB):   $(DABCFESA_O)  
-	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) 
+$(DABCFESA_LIB):   $(DABCFESA_O) $(FESA_DEPEND)  
+	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) "$(FESA_LIBS)" 
 
 ########### extra rules #############
 $(DABCFESA_O) $(DABCFESA_D) : DEFINITIONS += $(FESA_DEFINITIONS) 
 $(DABCFESA_O) $(DABCFESA_D) : INCLUDES += $(FESA_INCLUDES) $(FESADIR)
-$(DABCFESA_LIB): LDFLAGS += $(FESA_LIBS)
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif

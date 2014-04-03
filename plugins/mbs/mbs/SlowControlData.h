@@ -103,14 +103,29 @@ namespace mbs {
          void SetEventTime(uint32_t tm) { fEventTime = tm; }
          uint32_t GetEventTime() const { return fEventTime; }
 
-         void AddLong(const std::string& name, int64_t value)
+         /** Method add long record. If specified, name duplication will be checked */
+         void AddLong(const std::string& name, int64_t value, bool checkduplicate = false)
          {
+            if (checkduplicate)
+               for (unsigned n=0;n<fLongRecords.size();n++)
+                  if (fLongRecords[n]==name) {
+                     fLongValues[n] = value;
+                     return;
+                  }
+
             fLongRecords.push_back(name);
             fLongValues.push_back(value);
          }
 
-         void AddDouble(const std::string& name, double value)
+         /** Method add double record. If specified, name duplication will be checked  */
+         void AddDouble(const std::string& name, double value, bool checkduplicate = false)
          {
+            if (checkduplicate)
+               for (unsigned n=0;n<fDoubleRecords.size();n++)
+                  if (fDoubleRecords[n]==name) {
+                     fDoubleValues[n] = value;
+                     return;
+                  }
             fDoubleRecords.push_back(name);
             fDoubleValues.push_back(value);
          }

@@ -56,10 +56,8 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCHADAQ_LIB): LDFLAGS += -lrt
-
 $(DABCHADAQ_LIB):   $(DABCHADAQ_O)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH)
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt"
 
 $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)

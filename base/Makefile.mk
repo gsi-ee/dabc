@@ -1,6 +1,5 @@
 ## special makefile, cannot be copied out of DABC
 
-
 DABC_BASEDIR     = base
 DABC_BASEDIRI    = $(DABC_BASEDIR)/dabc
 DABC_BASEDIRS    = $(DABC_BASEDIR)/src
@@ -81,10 +80,8 @@ $(DABCINCPATH)/%.h: $(DABC_BASEDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCBASE_LIB): LDFLAGS += -lpthread -ldl -lrt
-
 $(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
-	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH)
+	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH) "$(LIBS_SYSSET)"
 
 #$(DABCSOCKET_LIB): $(BASE_SOCKET_O)
 #	@$(MakeLib) $(DABCSOCKET_LIBNAME) "$(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"

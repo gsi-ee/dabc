@@ -1,13 +1,13 @@
+ifndef noepics
+
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABC_EPICS
 
 ifdef DABCMAINMAKE
 EZCADIR = plugins/ezca
-INCLUDES += plugins/ezca
 else
 EZCADIR = .
-INCLUDES += .
 endif
 
 
@@ -36,16 +36,16 @@ clean::
 
 ##### local rules #####
 
-$(EZCA_O) $(EZCA_D) : INCLUDES += $(DABC_EPICS_INCDIR) 
+$(EZCA_O) $(EZCA_D) : INCLUDES += $(DABC_EPICS_INCDIR) $(EZCADIR) 
 
-$(EZCA_LIB): LDFLAGS += -lezca 
-$(EZCA_LIB): LDDIRS += $(DABC_EPICS_LIBDIR) 
-
-$(EZCA_LIB):  $(EZCA_O)
-	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH)
+$(EZCA_LIB):  $(EZCA_O) $(DABCMBS_LIB)
+	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH) "$(call lddiropt,$(DABC_EPICS_LIBDIR)) -lezca -lDabcMbs"
 
 ########### extra rules #############
+
+endif
 
 include $(DABCSYS)/config/Makefile.rules
 
 endif
+

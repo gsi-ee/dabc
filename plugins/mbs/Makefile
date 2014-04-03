@@ -16,8 +16,9 @@ endif
 MBSDIRI         = $(MBSDIR)/mbs
 MBSDIRS         = $(MBSDIR)/src
 
-DABCMBS_LIBNAME  = $(LIB_PREFIX)DabcMbs
-DABCMBS_LIB      = $(TGTDLLPATH)/$(DABCMBS_LIBNAME).$(DllSuf)
+# move it into Makefile.config, while mbs plugin used in many other places 
+#DABCMBS_LIBNAME  = $(LIB_PREFIX)DabcMbs
+#DABCMBS_LIB      = $(TGTDLLPATH)/$(DABCMBS_LIBNAME).$(DllSuf)
 
 DABCMBS_H        = $(wildcard $(MBSDIRI)/*.$(HedSuf))
 DABCMBS_S        = $(wildcard $(MBSDIRS)/*.$(SrcSuf))
@@ -48,10 +49,8 @@ $(DABCINCPATH)/%.h: $(MBSDIR)/%.h
 	@cp -f $< $@
 
 
-$(DABCMBS_LIB): LDFLAGS += -lrt
-
 $(DABCMBS_LIB):   $(DABCMBS_O)
-	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) 
+	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) "-lrt"
 
 $(MBSPRINT_EXE) : $(MBSPRINT_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB)
 	$(LD) -O $(MBSPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -o $(MBSPRINT_EXE)

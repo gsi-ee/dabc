@@ -72,17 +72,13 @@ $(IBTEST_O) : DEFINITIONS += WITH_VERBS
 endif
 
 ifeq ($(USEGPU),true)
-EXTRAOPT+=-Wl,-rpath,$(GPU_LIBPATH) -L$(GPU_LIBPATH) $(GPU_LIB)
+EXTRAOPT += $(call lddiropt,$(GPU_LIBPATH)) $(GPU_LIB)
 $(IBTEST_O) : DEFINITIONS += WITH_GPU
 $(IBTEST_O) : INCLUDES += $(GPU_INCPATH)
 endif
 
-$(IBTEST_LIB):  LDFLAGS += $(EXTRAOPT)
-
-$(IBTEST_LIB):  $(IBTEST_O)
-	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" $(IBTESTDIR)
-
-
+$(IBTEST_LIB):  $(IBTEST_O) $(DABCVERBS_LIB)
+	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" $(IBTESTDIR) "$(EXTRAOPT)"
 
 
 include $(DABCSYS)/config/Makefile.rules
