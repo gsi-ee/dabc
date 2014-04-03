@@ -60,9 +60,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
     <HttpServer name="http" port="8090"/>
     
-    <Publisher name="publ" manager="true"/>
+    <!-- Publisher name="publ" manager="true"/ -->
     
-    <Thread name="*" publ="true" prof="true"/>
+    <!-- Thread name="*" publ="true" prof="true"/ -->
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
