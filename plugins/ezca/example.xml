@@ -20,9 +20,6 @@
     </MemoryPool>
 
     <Module name="ezca" class="ezca::Monitor">
-	    <NumOutputs value="1"/>
-
-       <OutputPort name="Output0" url="mbs://Stream:6007"/>
 
 	    <!-- configuration of ezca -->
 	    <EzcaTimeout value="0.2"/>
@@ -30,12 +27,6 @@
 	    <EzcaDebug value="false"/>
 	    <EzcaAutoError value="false"/>
 
-	    <EpicsSubeventId value="0x000000A"/>
-	    <EpicsPollingTimeout value="1"/>
-	    
-	    <!-- how offten events will be flushed to outputs --> 
-	    <FlushTimeout value="10"/>
-	    
 	    <!--EpicsLongRecs value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
 	    <EpicsLongRecs>
 	       <item value="HAD:eb01:evtComp"/>
@@ -45,6 +36,13 @@
 	    </EpicsLongRecs>
 
 	    <!--EpicsDoubleRecs value="[HAD:eb01:evtComp,HAD:eb02:evtComp,HAD:eb03:evtComp,HAD:eb04:evtComp]"/-->
+
+	    <NumOutputs value="1"/>
+       <OutputPort name="Output0" url="mbs://Stream:6007"/>
+	    <EpicsSubeventId value="0x000000A"/>
+	    <EpicsPeriod value="2"/>
+	    <!-- how offten events will be flushed to outputs --> 
+	    <FlushTimeout value="10"/>
 
     </Module>
     

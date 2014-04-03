@@ -29,34 +29,27 @@
 #include "mbs/SlowControlData.h"
 
 ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd),
+   mbs::MonitorSlowControl(name, "Epics", cmd),
    fEzcaTimeout(-1.),
    fEzcaRetryCnt(-1),
    fEzcaDebug(false),
    fEzcaAutoError(false),
    fTimeout(1),
-   fSubeventId(8),
    fNameSepar(":"),
    fTopFolder(),
    fLongRecords(),
    fLongValues(),
+   fLongRes(),
    fDoubleRecords(),
    fDoubleValues(),
-   fEventNumber(0),
-   fLastSendTime(),
-   fIter(),
-   fFlushTime(10)
+   fDoubleRes()
 {
-   EnsurePorts(0, 0, dabc::xmlWorkPool);
-
    fEzcaTimeout = Cfg(ezca::xmlEzcaTimeout, cmd).AsDouble(fEzcaTimeout);
    fEzcaRetryCnt = Cfg(ezca::xmlEzcaRetryCount, cmd).AsInt(fEzcaRetryCnt);
    fEzcaDebug = Cfg(ezca::xmlEzcaDebug, cmd).AsBool(fEzcaDebug);
    fEzcaAutoError = Cfg(ezca::xmlEzcaAutoError, cmd).AsBool(fEzcaAutoError);
 
    fTimeout = Cfg(ezca::xmlTimeout, cmd).AsDouble(fTimeout);
-   fSubeventId = Cfg(ezca::xmlEpicsSubeventId, cmd).AsUInt(fSubeventId);
-
    fNameSepar = Cfg("NamesSepar", cmd).AsStr(fNameSepar);
    fTopFolder = Cfg("TopFolder", cmd).AsStr(fTopFolder);
 
@@ -64,13 +57,9 @@ ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fLongValues.resize(fLongRecords.size(), 0);
    fLongRes.resize(fLongRecords.size(), false);
 
-   DOUT0("Num LONG recs = %d", fLongRecords.size());
-
    fDoubleRecords = Cfg(ezca::xmlNameDoubleRecords, cmd).AsStrVect();
    fDoubleValues.resize(fDoubleRecords.size());
    fDoubleRes.resize(fDoubleRecords.size(), false);
-
-   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
    fWorkerHierarchy.Create("EZCA");
 
@@ -91,16 +80,12 @@ ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    if (fTimeout<=0.001) fTimeout = 0.001;
 
-   CreateTimer("update", fTimeout, false);
+   CreateTimer("EpicsRead", fTimeout, false);
 
    if (fTopFolder.empty())
       Publish(fWorkerHierarchy, "EZCA");
    else
       Publish(fWorkerHierarchy, std::string("EZCA/") + fTopFolder);
-}
-
-ezca::Monitor::~Monitor()
-{
 }
 
 std::string ezca::Monitor::GetItemName(const std::string& ezcaname)
@@ -143,85 +128,35 @@ void ezca::Monitor::OnThreadAssigned()
 
 void ezca::Monitor::ProcessTimerEvent(unsigned timer)
 {
-   if (!DoEpicsReadout()) return;
+   if (TimerName(timer) == "EpicsRead") {
+      if (!DoEpicsReadout()) return;
 
-   if (NumOutputs() > 0)
-      SendDataToOutputs();
+      for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
+         if (fLongRes[ix])
+            fWorkerHierarchy.GetHChild(GetItemName(fLongRecords[ix])).SetField("value", fLongValues[ix]);
 
-   for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
-      if (fLongRes[ix])
-         fWorkerHierarchy.GetHChild(GetItemName(fLongRecords[ix])).SetField("value", fLongValues[ix]);
+      for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
+         if (fDoubleRes[ix])
+            fWorkerHierarchy.GetHChild(GetItemName(fDoubleRecords[ix])).SetField("value", fDoubleValues[ix]);
 
-   for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
-      if (fDoubleRes[ix])
-        fWorkerHierarchy.GetHChild(GetItemName(fDoubleRecords[ix])).SetField("value", fDoubleValues[ix]);
+      fWorkerHierarchy.MarkChangedItems();
+   }
 
-   fWorkerHierarchy.MarkChangedItems();
+
+   mbs::MonitorSlowControl::ProcessTimerEvent(timer);
 }
 
-
-int ezca::Monitor::ExecuteCommand(dabc::Command cmd)
+unsigned ezca::Monitor::GetRecRawSize()
 {
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
-}
-
-void ezca::Monitor::SendDataToOutputs()
-{
-   mbs::SlowControlData rec;
+   fRec.Clear();
 
    for (unsigned ix = 0; ix < fLongRecords.size(); ++ix)
-      if (fLongRes[ix]) rec.AddLong(fLongRecords[ix], fLongValues[ix]);
+      if (fLongRes[ix]) fRec.AddLong(fLongRecords[ix], fLongValues[ix]);
 
    for (unsigned ix = 0; ix < fDoubleRecords.size(); ++ix)
-      if (fDoubleRes[ix]) rec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
+      if (fDoubleRes[ix]) fRec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
 
-   unsigned nextsize = rec.GetRawSize();
-
-   if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
-
-      // if output is blocked, do not produce data
-      if (!CanSendToAllOutputs()) return;
-
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-
-      fLastSendTime.GetNow();
-   }
-
-   if (!fIter.IsBuffer()) {
-      dabc::Buffer buf = TakeBuffer();
-      // if no buffer can be taken, skip data
-      if (buf.null()) { EOUT("Cannot take buffer for EZCA data"); return; }
-      fIter.Reset(buf);
-   }
-
-   if (!fIter.IsPlaceForEvent(nextsize, true)) {
-      EOUT("EZCA event %u too large for current buffer size", nextsize);
-      return;
-   }
-
-   fEventNumber++;
-
-   rec.SetEventId(fEventNumber);
-   rec.SetEventTime(time(NULL));
-
-   fIter.NewEvent(fEventNumber);
-   fIter.NewSubevent2(fSubeventId);
-
-   unsigned size = rec.Write(fIter.rawdata(), fIter.maxrawdatasize());
-
-   if (size==0) {
-      EOUT("Fail to write data into MBS subevent");
-   }
-
-   fIter.FinishSubEvent(size);
-   fIter.FinishEvent();
-
-   if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-      fLastSendTime.GetNow();
-   }
+   return fRec.GetRawSize();
 }
 
 bool ezca::Monitor::DoEpicsReadout()

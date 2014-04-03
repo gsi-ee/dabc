@@ -16,17 +16,14 @@
 #ifndef EZCA_Monitor
 #define EZCA_Monitor
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
+#ifndef MBS_MonitorSlowControl
+#include "mbs/MonitorSlowControl.h"
 #endif
 
 #ifndef DABC_Hierarchy
 #include "dabc/Hierarchy.h"
 #endif
 
-#ifndef MBS_Iterator
-#include "mbs/Iterator.h"
-#endif
 
 
 namespace ezca {
@@ -40,15 +37,14 @@ namespace ezca {
     *
     **/
 
-   class Monitor : public dabc::ModuleAsync {
+   class Monitor : public mbs::MonitorSlowControl {
       protected:
 
          double  fEzcaTimeout;    ///< Timeout for ezca readout
          int     fEzcaRetryCnt;   ///< Number of retry in ezca readout
          bool    fEzcaDebug;      ///< Switch on/off epics debug messages
          bool    fEzcaAutoError;  ///< Automatic error printing
-         double  fTimeout;        ///< timeout (in seconds) for readout polling.
-         unsigned fSubeventId;    ///< full id number for epics subevent
+         double  fTimeout;        ///< timeout for readout
          std::string fNameSepar;  ///< separator symbol(s), which defines subfolder in epcis names
          std::string fTopFolder;  ///< name of top folder, which should exists also in every variable
 
@@ -59,11 +55,6 @@ namespace ezca {
          std::vector<std::string> fDoubleRecords; ///< names of double records
          std::vector<double> fDoubleValues;       ///< values of double records
          std::vector<bool> fDoubleRes;            ///< results of record readout
-
-         long         fEventNumber;       ///< Event number, written to MBS event
-         dabc::TimeStamp  fLastSendTime;  ///< last time when buffer was send, used for flushing
-         mbs::WriteIterator fIter;        ///< iterator for creating of MBS events
-         double   fFlushTime;             ///< time to flush event
 
          /** Initialize some EZCA settings, do it from worker thread */
          virtual void OnThreadAssigned();
@@ -84,17 +75,14 @@ namespace ezca {
          /** Perform readout of all variables */
          bool DoEpicsReadout();
 
-         void SendDataToOutputs();
+         virtual unsigned GetRecRawSize();
 
          std::string GetItemName(const std::string& ezcaname);
 
       public:
          Monitor(const std::string& name, dabc::Command cmd = 0);
-         virtual ~Monitor();
 
          virtual void ProcessTimerEvent(unsigned timer);
-
-         virtual int ExecuteCommand(dabc::Command cmd);
    };
 }
 
