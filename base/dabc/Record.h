@@ -225,7 +225,9 @@ namespace dabc {
          RecordField(const double& v) { constructor(); SetDouble(v); }
          RecordField(const bool& v) { constructor(); SetBool(v); }
          RecordField(const DateTime& v) { constructor(); SetDatime(v); }
+         RecordField(const std::vector<int64_t>& v) { constructor(); SetVectInt(v); }
          RecordField(const std::vector<uint64_t>& v) { constructor(); SetVectUInt(v); }
+         RecordField(const std::vector<double>& v) { constructor(); SetVectDouble(v); }
          RecordField(const std::vector<std::string>& v) { constructor(); SetStrVect(v); }
 
          RecordField& operator=(const RecordField& src) { SetValue(src); return *this; }
