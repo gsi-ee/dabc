@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "ezca/Player.h"
+#include "ezca/Monitor.h"
 
 #include <time.h>
 
@@ -28,7 +28,7 @@
 #include "mbs/Iterator.h"
 #include "mbs/SlowControlData.h"
 
-ezca::Player::Player(const std::string& name, dabc::Command cmd) :
+ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fEzcaTimeout(-1.),
    fEzcaRetryCnt(-1),
@@ -99,11 +99,11 @@ ezca::Player::Player(const std::string& name, dabc::Command cmd) :
       Publish(fWorkerHierarchy, std::string("EZCA/") + fTopFolder);
 }
 
-ezca::Player::~Player()
+ezca::Monitor::~Monitor()
 {
 }
 
-std::string ezca::Player::GetItemName(const std::string& ezcaname)
+std::string ezca::Monitor::GetItemName(const std::string& ezcaname)
 {
    std::string res = ezcaname;
 
@@ -124,7 +124,7 @@ std::string ezca::Player::GetItemName(const std::string& ezcaname)
 }
 
 
-void ezca::Player::OnThreadAssigned()
+void ezca::Monitor::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
 
@@ -141,7 +141,7 @@ void ezca::Player::OnThreadAssigned()
    fLastSendTime.GetNow();
 }
 
-void ezca::Player::ProcessTimerEvent(unsigned timer)
+void ezca::Monitor::ProcessTimerEvent(unsigned timer)
 {
    if (!DoEpicsReadout()) return;
 
@@ -160,12 +160,12 @@ void ezca::Player::ProcessTimerEvent(unsigned timer)
 }
 
 
-int ezca::Player::ExecuteCommand(dabc::Command cmd)
+int ezca::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-void ezca::Player::SendDataToOutputs()
+void ezca::Monitor::SendDataToOutputs()
 {
    mbs::SlowControlData rec;
 
@@ -224,7 +224,7 @@ void ezca::Player::SendDataToOutputs()
    }
 }
 
-bool ezca::Player::DoEpicsReadout()
+bool ezca::Monitor::DoEpicsReadout()
 {
    if ((fLongRecords.size()==0) && (fDoubleRecords.size()==0)) return false;
 
@@ -281,7 +281,7 @@ bool ezca::Player::DoEpicsReadout()
 }
 
 
-int ezca::Player::CA_GetLong(const std::string& name, long& val)
+int ezca::Monitor::CA_GetLong(const std::string& name, long& val)
 {
    int rev = ezcaGet((char*) name.c_str(), ezcaLong, 1, &val);
    if(rev!=EZCA_OK)
@@ -291,7 +291,7 @@ int ezca::Player::CA_GetLong(const std::string& name, long& val)
    return rev;
 }
 
-int ezca::Player::CA_GetDouble(const std::string& name, double& val)
+int ezca::Monitor::CA_GetDouble(const std::string& name, double& val)
 {
    int rev=ezcaGet((char*) name.c_str(), ezcaDouble, 1, &val);
    if(rev!=EZCA_OK)
@@ -301,7 +301,7 @@ int ezca::Player::CA_GetDouble(const std::string& name, double& val)
    return rev;
 }
 
-std::string ezca::Player::CA_ErrorString()
+std::string ezca::Monitor::CA_ErrorString()
 {
    std::string res;
 
@@ -313,7 +313,7 @@ std::string ezca::Player::CA_ErrorString()
    return res;
 }
 
-const char* ezca::Player::CA_RetCode(int ret)
+const char* ezca::Monitor::CA_RetCode(int ret)
 {
    switch (ret) {
       case EZCA_OK:                return "EZCA_OK";

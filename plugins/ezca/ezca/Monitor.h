@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef EZCA_Player
-#define EZCA_Player
+#ifndef EZCA_Monitor
+#define EZCA_Monitor
 
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
@@ -31,7 +31,7 @@
 
 namespace ezca {
 
-   /** \brief Player of EPICS data
+   /** \brief Monitor of EPICS data
     *
     * Module builds hierarchy for connected FESA classes,
     * which could be served via DABC web server in any browser
@@ -40,7 +40,7 @@ namespace ezca {
     *
     **/
 
-   class Player : public dabc::ModuleAsync {
+   class Monitor : public dabc::ModuleAsync {
       protected:
 
          double  fEzcaTimeout;    ///< Timeout for ezca readout
@@ -89,8 +89,8 @@ namespace ezca {
          std::string GetItemName(const std::string& ezcaname);
 
       public:
-         Player(const std::string& name, dabc::Command cmd = 0);
-         virtual ~Player();
+         Monitor(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Monitor();
 
          virtual void ProcessTimerEvent(unsigned timer);
 

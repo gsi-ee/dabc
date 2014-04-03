@@ -31,7 +31,7 @@ namespace ezca {
 
    /** \brief The epics easy channel access data input implementation.
     * It was first implementation for access EPICS data in DABC,
-    * now is preferable to use ezca::Player class
+    * now is preferable to use ezca::Monitor class
     */
 
    class EpicsInput: public dabc::DataInput {

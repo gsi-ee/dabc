@@ -6,7 +6,6 @@
   <Context name="Example">
     <Run>
       <lib value="libDabcHttp.so"/>
-      <lib value="libDabcMbs.so"/>
       <lib value="libDabcEzca.so"/>
       <logfile value="Example.log"/>
       <loglimit value="1000000"/>
@@ -20,10 +19,10 @@
        <NumBuffers value="100"/>
     </MemoryPool>
 
-    <Module name="ezca" class="ezca::Player">
+    <Module name="ezca" class="ezca::Monitor">
 	    <NumOutputs value="1"/>
 
-       <OutputPort name="Output0" url="mbs://Stream:6002"/>
+       <OutputPort name="Output0" url="mbs://Stream:6007"/>
 
 	    <!-- configuration of ezca -->
 	    <EzcaTimeout value="0.2"/>

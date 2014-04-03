@@ -39,14 +39,8 @@ namespace ezca {
    /* Name of record containing the id number*/
    extern const char* xmlEventIDRecord;
 
-   /* Number of records with longword values to fetch*/
-   extern const char* xmlNumLongRecords;
-
    /* Name prefix of longword records, will be completed by number*/
    extern const char* xmlNameLongRecords;
-
-   /* Number of records with double values to fetch*/
-   extern const char* xmlNumDoubleRecords;
 
    /* Name prefix of double records, will be completed by number*/
    extern const char* xmlNameDoubleRecords;

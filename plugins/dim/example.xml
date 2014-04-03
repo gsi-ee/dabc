@@ -5,7 +5,6 @@
   <Context name="Example">
     <Run>
       <lib value="libDabcHttp.so"/>
-      <lib value="libDabcMbs.so"/>
       <lib value="libDabcDim.so"/>
       <logfile value="Example.log"/>
     </Run>
@@ -17,7 +16,7 @@
        <NumBuffers value="100"/>
     </MemoryPool>
 
-    <Module name="dim" class="dimc::Player">
+    <Module name="dim" class="dim::Monitor">
         <DimDns value="lxg0538:2505"/>
         <DimMask value="*"/>
         <DimPeriod value="1"/>

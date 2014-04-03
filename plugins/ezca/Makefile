@@ -26,7 +26,8 @@ EZCA_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(EZCA_S))
 
 # used in the main Makefile
 
-ALLDEPENDENC    += $(EZCA_D)
+ALLHDRS           += $(patsubst $(EZCADIR)/%.h, $(DABCINCPATH)/%.h, $(EZCA_H))
+ALLDEPENDENC      += $(EZCA_D)
 
 libs:: $(EZCA_LIB)
 
@@ -36,7 +37,12 @@ clean::
 
 ##### local rules #####
 
-$(EZCA_O) $(EZCA_D) : INCLUDES += $(DABC_EPICS_INCDIR) $(EZCADIR) 
+$(DABCINCPATH)/%.h: $(EZCADIR)/%.h
+	@echo "Header: $@" 
+	@cp -f $< $@
+
+
+$(EZCA_O) $(EZCA_D) : INCLUDES += $(DABC_EPICS_INCDIR) 
 
 $(EZCA_LIB):  $(EZCA_O) $(DABCMBS_LIB)
 	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH) "$(call lddiropt,$(DABC_EPICS_LIBDIR)) -lezca -lDabcMbs"

@@ -24,15 +24,12 @@
 
 #include "ezca/Definitions.h"
 #include "ezca/EpicsInput.h"
-#include "ezca/Player.h"
-
+#include "ezca/Monitor.h"
 
 const char* ezca::xmlEpicsName               = "EpicsIdentifier";
 const char* ezca::xmlUpdateFlagRecord        = "EpicsFlagRec";
 const char* ezca::xmlEventIDRecord           = "EpicsEventIDRec";
-const char* ezca::xmlNumLongRecords          = "EpicsNumLongRecs";
 const char* ezca::xmlNameLongRecords         = "EpicsLongRecs";
-const char* ezca::xmlNumDoubleRecords        = "EpicsNumDoubleRecs";
 const char* ezca::xmlNameDoubleRecords       = "EpicsDoubleRecs";
 const char* ezca::xmlTimeout                 = "EpicsPollingTimeout";
 const char* ezca::xmlEpicsSubeventId         = "EpicsSubeventId";
@@ -42,9 +39,8 @@ const char* ezca::xmlEzcaDebug               = "EzcaDebug";
 const char* ezca::xmlEzcaAutoError           = "EzcaAutoError";
 
 
-const char* ezca::nameUpdateCommand          =  "ezca::OnUpdate";
+const char* ezca::nameUpdateCommand          = "ezca::OnUpdate";
 const char* ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Command receiver on flag change event
-
 
 dabc::FactoryPlugin epicsfactory(new ezca::Factory("ezca"));
 
@@ -65,8 +61,8 @@ dabc::DataInput* ezca::Factory::CreateDataInput(const std::string& typ)
 
 dabc::Module* ezca::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if (classname == "ezca::Player")
-      return new ezca::Player(modulename, cmd);
+   if (classname == "ezca::Monitor")
+      return new ezca::Monitor(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

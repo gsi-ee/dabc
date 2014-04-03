@@ -8,6 +8,7 @@ current functionality of the framework.
    port is created, memory pool handle will be created as well. 
 3. Optimize Makefiles - correctly treat dependency between libraries,
    link required shared libraries directly. Resolves several build problems. 
+4. Rename Player->Monitor in EPICS and DIM plugins. 
 
 
 2.04.2014

@@ -13,15 +13,29 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dim/Factory.h"
-#include "dim/Monitor.h"
+#ifndef DIM_Factory
+#define DIM_Factory
 
-dabc::FactoryPlugin dimcfactory(new dim::Factory("dim"));
+#ifndef DABC_Factory
+#include "dabc/Factory.h"
+#endif
 
-dabc::Module* dim::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
-{
-   if (classname == "dim::Monitor")
-      return new dim::Monitor(modulename, cmd);
+/** \brief CERN DIM  */
 
-   return dabc::Factory::CreateModule(classname, modulename, cmd);
+namespace dim {
+
+   /** \brief %Factory for dim control classes */
+
+   class Factory : public dabc::Factory {
+      public:
+         Factory(const std::string& name) : dabc::Factory(name) {}
+
+         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+
+      protected:
+
+   };
+
 }
+
+#endif

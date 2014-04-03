@@ -60,9 +60,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
     <HttpServer name="http" port="8090"/>
     
-    <!--Publisher name="publ" manager="true"/-->
+    <Publisher name="publ" manager="true"/>
     
-    <!--Thread name="*" publ="true" prof="true"/-->
+    <Thread name="*" publ="true" prof="true"/>
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
@@ -83,7 +83,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false"/>
        
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+       <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
+       
+       <OutputPort name="Output1" url="block://host?time=500&sleep=false"/>
 
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   

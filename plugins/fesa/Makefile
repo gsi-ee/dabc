@@ -46,19 +46,18 @@ FESA_LIBS += $(DABC_FESA_LIBS)
 FESA_STATIC += $(DABC_FESA_SLIBS)
 endif
 
-
 # used in the main Makefile
 
-#ALLHDRS           += $(patsubst $(FESADIR)/%.h, $(DABCINCPATH)/%.h, $(FESA_H))
+ALLHDRS           += $(patsubst $(FESADIR)/%.h, $(DABCINCPATH)/%.h, $(FESA_H))
 ALLDEPENDENC      += $(DABCFESA_D)
 
 libs:: $(DABCFESA_LIB)
 
 ##### local rules #####
 
-#$(DABCINCPATH)/%.h: $(FESADIR)/%.h
-#	@echo "Header: $@" 
-#	@cp -f $< $@
+$(DABCINCPATH)/%.h: $(FESADIR)/%.h
+	@echo "Header: $@" 
+	@cp -f $< $@
 
 $(DABCFESA_LIB):   $(DABCFESA_O) $(FESA_DEPEND)  
 	@$(MakeLib) $(DABCFESA_LIBNAME) "$(DABCFESA_O) $(FESA_STATIC)" $(TGTDLLPATH) "$(FESA_LIBS)" 

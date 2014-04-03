@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dimc/Player.h"
+#include "dim/Monitor.h"
 
 #include <time.h>
 
@@ -23,7 +23,7 @@
 #include "mbs/SlowControlData.h"
 
 
-dimc::Player::Player(const std::string& name, dabc::Command cmd) :
+dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    DimInfoHandler(),
    fDimDns(),
@@ -60,7 +60,7 @@ dimc::Player::Player(const std::string& name, dabc::Command cmd) :
    Publish(fWorkerHierarchy, "DIMC");
 }
 
-dimc::Player::~Player()
+dim::Monitor::~Monitor()
 {
    for (DimServicesMap::iterator iter = fDimInfos.begin(); iter!=fDimInfos.end();iter++) {
       delete iter->second.info;
@@ -72,7 +72,7 @@ dimc::Player::~Player()
 }
 
 
-void dimc::Player::OnThreadAssigned()
+void dim::Monitor::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
 
@@ -89,7 +89,7 @@ void dimc::Player::OnThreadAssigned()
    fDimBr = new ::DimBrowser();
 }
 
-void dimc::Player::ScanDimServices()
+void dim::Monitor::ScanDimServices()
 {
    char *service_name, *service_descr;
    int type;
@@ -171,7 +171,7 @@ void dimc::Player::ScanDimServices()
    fNeedDnsUpdate = false;
 }
 
-void dimc::Player::ProcessTimerEvent(unsigned timer)
+void dim::Monitor::ProcessTimerEvent(unsigned timer)
 {
    if (fDimBr==0) return;
 
@@ -186,7 +186,7 @@ void dimc::Player::ProcessTimerEvent(unsigned timer)
 
 }
 
-int dimc::Player::ExecuteCommand(dabc::Command cmd)
+int dim::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
       std::string path = cmd.GetStr("Item");
@@ -215,7 +215,7 @@ int dimc::Player::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-void dimc::Player::infoHandler()
+void dim::Monitor::infoHandler()
 {
    // DIM method, called when service is updated
 
@@ -371,7 +371,7 @@ void dimc::Player::infoHandler()
 }
 
 
-void dimc::Player::SendDataToOutputs()
+void dim::Monitor::SendDataToOutputs()
 {
 
    mbs::SlowControlData rec;
