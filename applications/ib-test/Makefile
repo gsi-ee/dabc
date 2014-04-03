@@ -21,8 +21,6 @@ else
 IBTESTDIR = 
 endif
 
-EXTRAOPT = 
-
 IBTEST_LIBNAME   = $(LIB_PREFIX)DabcIbTest
 IBTEST_LIB       = $(IBTESTDIR)$(IBTEST_LIBNAME).$(DllSuf)
 
@@ -41,7 +39,8 @@ libs::  $(IBTEST_LIB)
 
 ifeq ($(USEOFEDVERBS), true)
 
-EXTRAOPT+=-L$(DABCSYS)/lib -lDabcVerbs
+IBTEST_EXTRAOPT += -lDabcVerbs
+IBTEST_LIBDEP = $(DABCVERBS_LIB)
 
 ifneq ($(wildcard /usr/include/infiniband/umad.h),)
 ifneq ($(wildcard /usr/include/infiniband/complib/cl_nodenamemap.h),)
@@ -72,13 +71,13 @@ $(IBTEST_O) : DEFINITIONS += WITH_VERBS
 endif
 
 ifeq ($(USEGPU),true)
-EXTRAOPT += $(call lddiropt,$(GPU_LIBPATH)) $(GPU_LIB)
+IBTEST_EXTRAOPT += $(call lddiropt,$(GPU_LIBPATH)) $(GPU_LIB)
 $(IBTEST_O) : DEFINITIONS += WITH_GPU
 $(IBTEST_O) : INCLUDES += $(GPU_INCPATH)
 endif
 
-$(IBTEST_LIB):  $(IBTEST_O) $(DABCVERBS_LIB)
-	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" $(IBTESTDIR) "$(EXTRAOPT)"
+$(IBTEST_LIB):  $(IBTEST_O) $(IBTEST_LIBDEP)
+	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" $(IBTESTDIR) "$(IBTEST_EXTRAOPT)"
 
 
 include $(DABCSYS)/config/Makefile.rules
