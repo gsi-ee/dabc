@@ -218,7 +218,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          case rdaDataEntry::TYPE_NULL: break;
          /// indicates a boolean value.
          case rdaDataEntry::TYPE_BOOLEAN: {
-            item.Field(tag).SetBool(entry->extractBoolean());
+            item.SetField(tag, entry->extractBoolean());
             break;
          }
          /// indicates a boolean array value.
@@ -227,12 +227,12 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const bool* arr = entry->getBooleanArray(size);
             std::vector<int64_t> vect;
             for (unsigned n=0;n<size;n++) vect.push_back(arr[n] ? 1 : 0);
-            item.Field(tag).SetVectInt(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a byte value.
          case rdaDataEntry::TYPE_BYTE: {
-            item.Field(tag).SetInt((int64_t)entry->extractByte());
+            item.SetField(tag, (int64_t)entry->extractByte());
             break;
          }
          /// indicates a byte array value.
@@ -241,12 +241,12 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const signed char* arr = entry->getByteArray(size);
             std::vector<int64_t> vect;
             for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
-            item.Field(tag).SetVectInt(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a short value.
          case rdaDataEntry::TYPE_SHORT: {
-            item.Field(tag).SetInt((int64_t)entry->extractShort());
+            item.SetField(tag, (int64_t)entry->extractShort());
             break;
          }
          /// indicates a short array value.
@@ -255,12 +255,12 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const short* arr = entry->getShortArray(size);
             std::vector<int64_t> vect;
             for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
-            item.Field(tag).SetVectInt(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates an integer value.
          case rdaDataEntry::TYPE_INT: {
-            item.Field(tag).SetInt(entry->extractInt());
+            item.SetField(tag, entry->extractInt());
             break;
          }
          /// indicates an integer array value.
@@ -270,12 +270,12 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 
             std::vector<int64_t> vect;
             for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
-            item.Field(tag).SetVectInt(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a long long value.
          case rdaDataEntry::TYPE_LONG: {
-            item.Field(tag).SetInt((int64_t)entry->extractLong());
+            item.SetField(tag, (int64_t)entry->extractLong());
             break;
          }
          /// indicates a long long array value.
@@ -284,12 +284,12 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const long long* arr = entry->getLongArray(size);
             std::vector<int64_t> vect;
             for (unsigned n=0;n<size;n++) vect.push_back((int64_t)arr[n]);
-            item.Field(tag).SetVectInt(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a float value.
          case rdaDataEntry::TYPE_FLOAT: {
-            item.Field(tag).SetDouble(entry->extractFloat());
+            item.SetField(tag, entry->extractFloat());
             break;
          }
          /// indicates a float array value.
@@ -298,24 +298,26 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const float* arr = entry->getFloatArray(size);
             std::vector<double> vect;
             for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
-            item.Field(tag).SetVectDouble(vect);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a double value.
          case rdaDataEntry::TYPE_DOUBLE: {
-            item.Field(tag).SetDouble(entry->extractDouble());
+            item.SetField(tag, entry->extractDouble());
             break;
          }
          /// indicates a double array value.
          case rdaDataEntry::TYPE_DOUBLE_ARRAY: {
             unsigned long size(0);
             const double* arr = entry->getDoubleArray(size);
-            item.Field(tag).SetArrDouble(size, (double*) arr);
+            std::vector<double> vect;
+            for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
+            item.SetField(tag, vect);
             break;
          }
          /// indicates a string value.
          case rdaDataEntry::TYPE_STRING: {
-            item.Field(tag).SetStr(entry->getString());
+            item.SetField(tag, entry->getString());
             break;
          }
          /// indicates a string array value.
@@ -324,7 +326,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
             const char** arr = entry->getStringArray(size);
             std::vector<std::string> vect;
             for (unsigned n=0;n<size;n++) vect.push_back(arr[n]);
-            item.Field(tag).SetStrVect(vect);
+            item.SetField(tag, vect);
             break;
          }
       }
