@@ -1,10 +1,13 @@
 #include <stdio.h>
 
 #include <string.h>
+#include <time.h>
 
-#include "mbs/api.h"
 #include "dabc/string.h"
 #include "dabc/Url.h"
+
+#include "mbs/api.h"
+#include "mbs/SlowControlData.h"
 
 int usage(const char* errstr = 0)
 {
@@ -25,9 +28,33 @@ int usage(const char* errstr = 0)
    printf("   -dec                    - print raw data in decimal form\n");
    printf("   -long                   - print raw data in 4-bytes format\n");
    printf("   -short                  - print raw data in 2-bytes format\n");
+   printf("   -slow subevid           - print subevents with id as slow control record (see mbs/SlowControlData.h file)\n");
 
    return errstr ? 1 : 0;
 }
+
+void PrintSlowSubevent(mbs::SubeventHeader* sub)
+{
+   mbs::SlowControlData rec;
+   if (!rec.Read(sub->RawData(), sub->RawDataSize())) {
+      printf("   SlowControl record format failure\n");
+      return;
+   }
+
+   time_t tm = rec.GetEventTime();
+
+   printf("    SlowControl data evid:%u longs:%u doubles:%u time:%s",
+         (unsigned) rec.GetEventId(), rec.NumLongs(), rec.NumDoubles(), ctime(&tm));
+
+   for (unsigned num=0;num<rec.NumLongs();num++) {
+      printf("      %s = %ld\n", rec.GetLongName(num).c_str(), (long int) rec.GetLongValue(num));
+   }
+
+   for (unsigned num=0;num<rec.NumDoubles();num++) {
+      printf("      %s = %f\n", rec.GetDoubleName(num).c_str(), rec.GetDoubleValue(num));
+   }
+}
+
 
 
 int main(int argc, char* argv[])
@@ -36,6 +63,7 @@ int main(int argc, char* argv[])
 
    long number = 10;
    double tmout = 5.;
+   unsigned slowsubevid(0);
 
 
    bool printdata(false), ashex(true), aslong(true), showrate(false), reconnect(false);
@@ -49,6 +77,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-slow")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &slowsubevid); } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
@@ -113,6 +142,9 @@ int main(int argc, char* argv[])
       mbs::SubeventHeader* sub = 0;
       while ((sub = evnt->NextSubEvent(sub)) != 0) {
          sub->PrintHeader();
+         if ((slowsubevid!=0) && (sub->fFullId==slowsubevid)) {
+            PrintSlowSubevent(sub);
+         } else
          if (printdata) sub->PrintData(ashex, aslong);
       }
 

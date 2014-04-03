@@ -65,7 +65,6 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
 
    DOUT0("Create rate %s", fDataRateName.c_str());
 
-
    CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
 

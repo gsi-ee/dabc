@@ -78,7 +78,7 @@ void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::stri
    while (NumOutputs() < numout)
       CreateOutput(format("Output%u", NumOutputs()));
 
-   if (!poolname.empty() && (NumPools()==0))
+   if (!poolname.empty() && (NumPools()==0) && ((NumInputs() + NumOutputs())>0))
       CreatePoolHandle(poolname);
 }
 

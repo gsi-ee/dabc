@@ -15,7 +15,7 @@
 
 #include "dimc/Player.h"
 
-#include <sys/timeb.h>
+#include <time.h>
 
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"
@@ -39,7 +39,7 @@ dimc::Player::Player(const std::string& name, dabc::Command cmd) :
    fIter(),
    fFlushTime(10)
 {
-   //EnsurePorts(0, 0, dabc::xmlWorkPool);
+   EnsurePorts(0, 0, dabc::xmlWorkPool);
 
    strncpy(fNoLink, "no_link", sizeof(fNoLink));
 
@@ -177,6 +177,9 @@ void dimc::Player::ProcessTimerEvent(unsigned timer)
 
    if (fLastScan.Expired(10.) || (fDimInfos.size()==0) || fNeedDnsUpdate)
       ScanDimServices();
+
+   if (NumOutputs() > 0)
+      SendDataToOutputs();
 
 //   dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 //   fWorkerHierarchy.MarkChangedItems();
@@ -373,7 +376,6 @@ void dimc::Player::SendDataToOutputs()
 
    mbs::SlowControlData rec;
 
-
    {
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
@@ -413,11 +415,8 @@ void dimc::Player::SendDataToOutputs()
 
    fEventNumber++;
 
-   struct timeb s_timeb;
-   ftime(&s_timeb);
-
    rec.SetEventId(fEventNumber);
-   rec.SetEventTime(s_timeb.time);
+   rec.SetEventTime(time(NULL));
 
    fIter.NewEvent(fEventNumber);
    fIter.NewSubevent2(fSubeventId);

@@ -15,7 +15,7 @@
 
 #include "ezca/Player.h"
 
-#include <sys/timeb.h>
+#include <time.h>
 
 #include "tsDefs.h"
 #include "cadef.h"
@@ -202,11 +202,8 @@ void ezca::Player::SendDataToOutputs()
 
    fEventNumber++;
 
-   struct timeb s_timeb;
-   ftime(&s_timeb);
-
    rec.SetEventId(fEventNumber);
-   rec.SetEventTime(s_timeb.time);
+   rec.SetEventTime(time(NULL));
 
    fIter.NewEvent(fEventNumber);
    fIter.NewSubevent2(fSubeventId);

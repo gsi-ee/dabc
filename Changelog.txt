@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+3.04.2014
+1. Provide printout of SlowControlData in mbsprint command.
+2. In Module::EnsurePorts() method only when at least one input or output
+   port is created, memory pool handle will be created as well. 
+
+
 2.04.2014
 1. Introduce mbs::SlowControlData class, which should pack/unpack slow-control
    records into MBS subevents. Idea to use it in all cases like EPICS, DIM, FESA 

@@ -115,6 +115,15 @@ namespace mbs {
             fDoubleValues.push_back(value);
          }
 
+         unsigned NumLongs() const { return fLongRecords.size(); }
+         int64_t GetLongValue(unsigned indx) { return indx < fLongValues.size() ? fLongValues[indx] : 0; }
+         std::string GetLongName(unsigned indx) { return indx < fLongRecords.size() ? fLongRecords[indx] : std::string(); }
+
+         unsigned NumDoubles() const { return fDoubleRecords.size(); }
+         double GetDoubleValue(unsigned indx) { return indx < fDoubleValues.size() ? fDoubleValues[indx] : 0.; }
+         std::string GetDoubleName(unsigned indx) { return indx < fDoubleRecords.size() ? fDoubleRecords[indx] : std::string(); }
+
+
          unsigned GetRawSize()
          {
             BuildDescriptor();

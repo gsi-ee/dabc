@@ -24,7 +24,7 @@
 
 #include "ezca/Definitions.h"
 
-#include <sys/timeb.h>
+#include <time.h>
 
 
 #include "tsDefs.h"
@@ -220,11 +220,8 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       if (fDoubleRes[ix]) rec.AddDouble(fDoubleRecords[ix], fDoubleValues[ix]);
 
 
-   struct timeb s_timeb;
-   ftime(&s_timeb);
-
    rec.SetEventId(fEventNumber);
-   rec.SetEventTime(s_timeb.time);
+   rec.SetEventTime(time(NULL));
 
    mbs::WriteIterator iter(buf);
 
