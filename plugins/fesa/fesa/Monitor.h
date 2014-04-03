@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -38,10 +40,6 @@ namespace fesa {
 
    class Monitor : public dabc::ModuleAsync {
       protected:
-         virtual void BeforeModuleStart() {}
-
-         virtual void AfterModuleStop() {}
-
          dabc::Hierarchy fHierarchy;
 
          std::string fServerName;    ///< FESA server name

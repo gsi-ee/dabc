@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -12,8 +14,6 @@
  ************************************************************/
 
 #include "fesa/Monitor.h"
-
-#include "fesa/defines.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -166,7 +166,7 @@ void fesa::Monitor::ReportServiceError(const std::string& name, const std::strin
 {
    dabc::LockGuard lock(fHierarchy.GetHMutex());
 
-   dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
+   dabc::Hierarchy item = fHierarchy.GetHChild(name);
    if (item.null()) return;
 
    item.SetField(dabc::prop_error, err);
@@ -181,7 +181,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 
    dabc::LockGuard lock(fHierarchy.GetHMutex());
 
-   dabc::Hierarchy item = fHierarchy.FindChild(name.c_str());
+   dabc::Hierarchy item = fHierarchy.GetHChild(name);
    if (item.null()) return;
 
    if (item.HasField(dabc::prop_error))

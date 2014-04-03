@@ -15,10 +15,10 @@
 
 #include "fesa/Player.h"
 
-#include "fesa/defines.h"
-
 #include <stdlib.h>
 #include <math.h>
+
+#include "dabc/Publisher.h"
 
 #ifdef WITH_FESA
 #include <cmw-rda/RDAService.h>
@@ -53,7 +53,40 @@ class MySniffer : public TRootSniffer {
 
 #endif
 
-#include "dabc/Publisher.h"
+
+namespace fesa {
+
+   struct BeamProfile {
+      enum { sizex = 16, sizey = 16 };
+
+      uint32_t arr[sizex][sizey];
+
+      void clear()
+      {
+         for (unsigned x=0;x<sizex;x++)
+            for (unsigned y=0;y<sizey;y++)
+               arr[x][y] = 0;
+      }
+
+      void fill(int kind = 0)
+      {
+         for (unsigned x=0;x<sizex;x++)
+            for (unsigned y=0;y<sizey;y++)
+               switch (kind) {
+                  case 0: arr[x][y] = x+y; break;
+                  case 1: arr[x][y] = sizex - x + sizey-y; break;
+                  case 2: arr[x][y] = sizex - x + y; break;
+                  case 3: arr[x][y] = x + sizey-y; break;
+                  default: {
+                     arr[x][y] = (unsigned) (sizex + sizey - 3*sqrt((x-sizex/2)*(x-sizex/2) + (y-sizey/2)*(y-sizey/2)));
+                  }
+               }
+      }
+   };
+
+}
+
+
 
 fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -170,14 +203,14 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    if ((fDevice!=0) && !fService.empty()) {
       double res = doGet(fService, fField);
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
-      fWorkerHierarchy.FindChild(fService.c_str()).SetField("value", res);
+      fWorkerHierarchy.GetHChild(fService).SetField("value", res);
       // DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
    }
 #endif
 
    dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
    
-   dabc::Hierarchy item = fWorkerHierarchy.FindChild("BeamProfile");
+   dabc::Hierarchy item = fWorkerHierarchy.GetHChild("BeamProfile");
 
    // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
 
@@ -185,7 +218,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    item.SetField(dabc::prop_hash, fCounter);
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-   fWorkerHierarchy.FindChild("BeamRate").SetField("value", dabc::format("%4.2f", v1));
+   fWorkerHierarchy.GetHChild("BeamRate").SetField("value", dabc::format("%4.2f", v1));
    int64_t arr[5] = {1,7,4,2,3};
    //fWorkerHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
 
@@ -195,21 +228,21 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 //   for (unsigned n=0;n<res.size();n++) DOUT0("   arr[%u] = %d", n, res[n]);
 
    v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-   fWorkerHierarchy.FindChild("BeamRate2").SetField("value", dabc::format("%4.2f", v1));
+   fWorkerHierarchy.GetHChild("BeamRate2").SetField("value", dabc::format("%4.2f", v1));
 
    int test = fCounter % 100;
    v1 = 20 + (test & 0xfffffc) + (test & 3)*0.01;
-   fWorkerHierarchy.FindChild("TestRate").SetField("value", dabc::format("%4.2f", v1));
+   fWorkerHierarchy.GetHChild("TestRate").SetField("value", dabc::format("%4.2f", v1));
 
 #ifdef WITH_ROOT
 
-   fWorkerHierarchy.FindChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash());
+   fWorkerHierarchy.GetHChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash());
 
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
       for (int n=0;n<100;n++)
          h2->Fill(gRandom->Gaus(16,4), gRandom->Gaus(16,2));
-      fWorkerHierarchy.FindChild("BeamRoot").SetField(dabc::prop_hash, (uint64_t) h2->GetEntries());
+      fWorkerHierarchy.GetHChild("BeamRoot").SetField(dabc::prop_hash, (uint64_t) h2->GetEntries());
    }
 #endif
 
@@ -236,7 +269,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      dabc::Hierarchy item = fWorkerHierarchy.FindChild(itemname.c_str());
+      dabc::Hierarchy item = fWorkerHierarchy.GetHChild(itemname);
 
       if (item.null()) {
          EOUT("No find item %s to get binary", itemname.c_str());
