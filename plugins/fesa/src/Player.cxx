@@ -102,7 +102,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
       
       if ((fDevice!=0) && !fService.empty()) {
          item = fWorkerHierarchy.CreateHChild(fService);
-         item.Field(dabc::prop_kind).SetStr("rate");
+         item.SetField(dabc::prop_kind,"rate");
          item.EnableHistory(100);
       }
       
@@ -170,7 +170,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    if ((fDevice!=0) && !fService.empty()) {
       double res = doGet(fService, fField);
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
-      fWorkerHierarchy.FindChild(fService.c_str()).Field("value").SetDouble(res);
+      fWorkerHierarchy.FindChild(fService.c_str()).SetField("value", res);
       // DOUT0("GET FESA field %s = %5.3f", fService.c_str(), res);
    }
 #endif
