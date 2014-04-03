@@ -69,7 +69,7 @@ namespace dim {
          char           fNoLink[10];  ///< buffer used to detect nolink
          bool           fNeedDnsUpdate; ///< if true, should update DNS structures
 
-         unsigned           fSubeventId;      ///< full id number for epics subevent
+         unsigned           fSubeventId;      ///< full id number for dim subevent
          long               fEventNumber;     ///< Event number, written to MBS event
          dabc::TimeStamp    fLastSendTime;    ///< last time when buffer was send, used for flushing
          mbs::WriteIterator fIter;            ///< iterator for creating of MBS events

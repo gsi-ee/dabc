@@ -1,0 +1,37 @@
+<!-- This is example of http server usage in DABC
+     Example provide several components plus http server --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Example">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcFesa.so"/>
+      <logfile value="Example.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+    </Run>
+
+    <HttpServer name="http" port="8097"/>
+
+    <Publisher name="publ" manager="true"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+    <Module name="fesa_monitor" class="fesa::Monitor">
+       <Server value="DummyDevice_DU.linev.asl732"/>
+       <Device value="MyDevice"/>
+       <Cycle value=""/>
+       <Services value="[GetMeasVoltage,GetMeasCurrent,GetMeasWeight]"/>
+       
+       <NumOutputs value="1"/>
+       <OutputPort name="Output0" url="mbs://Stream:6007"/>
+       <FlushTimeout value="3"/>
+       <FesaPeriod value="1"/>
+       <FesaSubeventId value="0x000000A"/>
+    </Module>
+  </Context>
+</dabc>

@@ -24,6 +24,14 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+#ifndef MBS_Iterator
+#include "mbs/Iterator.h"
+#endif
+
+#ifndef MBS_SlowControlData
+#include "mbs/SlowControlData.h"
+#endif
+
 class rdaDeviceHandle;
 class rdaRDAService;
 class rdaDabcHandler;
@@ -31,10 +39,11 @@ class rdaData;
 
 namespace fesa {
 
-   /** \brief Player of FESA data
+   /** \brief Monitor for of FESA data
     *
     * Module builds hierarchy for connected FESA classes,
     * which could be served via DABC web server in any browser
+    * Optionally, one able to convert data into MBS events, which could be delivered to analysis
     *
     **/
 
@@ -50,14 +59,22 @@ namespace fesa {
          rdaDeviceHandle* fDevice;
          std::vector<rdaDabcHandler*> fHandlers;
 
+         mbs::SlowControlData  fRec;   ///< record used to store selected variables
+         bool fDoRec;  ///< when true, record will be filled
+         unsigned           fSubeventId;      ///< full id number for dim subevent
+         long               fEventNumber;     ///< Event number, written to MBS event
+         dabc::TimeStamp    fLastSendTime;    ///< last time when buffer was send, used for flushing
+         mbs::WriteIterator fIter;            ///< iterator for creating of MBS events
+         double             fFlushTime;       ///< time to flush event
+
          double doGet(const std::string& service, const std::string& field);
+
+         void SendDataToOutputs();
 
       public:
 
          Monitor(const std::string& name, dabc::Command cmd = 0);
          virtual ~Monitor();
-
-         virtual void ModuleCleanup() {}
 
          virtual void ProcessTimerEvent(unsigned timer);
 

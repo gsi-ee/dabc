@@ -9,6 +9,7 @@ current functionality of the framework.
 3. Optimize Makefiles - correctly treat dependency between libraries,
    link required shared libraries directly. Resolves several build problems. 
 4. Rename Player->Monitor in EPICS and DIM plugins. 
+5. Create slow-control data in fesa::Monitor (to be tested). 
 
 
 2.04.2014

@@ -45,17 +45,17 @@ dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    fDimDns = Cfg("DimDns", cmd).AsStr();
    fDimMask = Cfg("DimMask", cmd).AsStr("*");
-   fDimPeriod = Cfg("DimPeriod", cmd).AsDouble(1);
    if (fDimMask.empty()) fDimMask = "*";
-
-   fSubeventId = Cfg("DimSubeventId", cmd).AsUInt(fSubeventId);
 
    fWorkerHierarchy.Create("DIMC", true);
    // fWorkerHierarchy.EnableHistory(100, true); // TODO: make it configurable
 
+   fDimPeriod = Cfg("DimPeriod", cmd).AsDouble(1);
+   fSubeventId = Cfg("DimSubeventId", cmd).AsUInt(fSubeventId);
+   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
+
    CreateTimer("update", (fDimPeriod>0.01) ? fDimPeriod : 0.01, false);
 
-   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
    Publish(fWorkerHierarchy, "DIMC");
 }
