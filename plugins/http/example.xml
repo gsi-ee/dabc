@@ -52,7 +52,7 @@
        <Field value="measVoltage"/>
     </Module>
 
-    <Module name="mbs1" class="mbs::Player">
+    <Module name="mbs1" class="mbs::Monitor">
        <node value="x86l-15"/>
        <period value="1"/>
        <history value="100"/>

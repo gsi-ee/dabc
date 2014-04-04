@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "mbs/Player.h"
+#include "mbs/Monitor.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -130,8 +130,8 @@ void mbs::DaqStatusAddon::OnRecvCompleted()
 
 // =========================================================================
 
-mbs::Player::Player(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd),
+mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+   mbs::MonitorSlowControl(name, "Mbs", cmd),
    fHierarchy(),
    fCounter(0),
    fMbsNode(),
@@ -139,7 +139,6 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
    fStatus(),
    fStatStamp()
 {
-
    fMbsNode = Cfg("node", cmd).AsStr();
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    int history = Cfg("history", cmd).AsInt(200);
@@ -199,7 +198,7 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
       cmddef.AddArg("cmd", "string", true, "show rate");
    }
 
-   CreateTimer("update", fPeriod, false);
+   CreateTimer("MbsUpdate", fPeriod, false);
 
    fCounter = 0;
 
@@ -210,21 +209,21 @@ mbs::Player::Player(const std::string& name, dabc::Command cmd) :
 }
 
 
-mbs::Player::~Player()
+mbs::Monitor::~Monitor()
 {
 }
 
-void mbs::Player::OnThreadAssigned()
+void mbs::Monitor::OnThreadAssigned()
 {
    if (fWithLogger) {
       DaqLogWorker* logger = new DaqLogWorker(this, "DaqLogger", fMbsNode);
       logger->AssignToThread(thread());
    }
 
-   dabc::ModuleAsync::OnThreadAssigned();
+   mbs::MonitorSlowControl::OnThreadAssigned();
 }
 
-void mbs::Player::FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
+void mbs::Monitor::FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
 {
    int bStreams_n = 0, bBuffers_n = 0, bEvents_n = 0, bData_n = 0;
    int bStreams_r = 0, bBuffers_r = 0, bEvents_r = 0, bData_r = 0;
@@ -699,7 +698,7 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
        strcat (c_out, " cl");
    }
 
-   dabc::Hierarchy item = fHierarchy.FindChild(itemname.c_str());
+   dabc::Hierarchy item = fHierarchy.GetHChild(itemname);
 
    if (fCounter % 20 == 0) {
       item.SetField("value", c_head0);
@@ -712,9 +711,16 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 
    if (options=="-u") {
       // printf("%s\n",c_out);
-      fHierarchy.FindChild("DataRate").SetField("value", dabc::format("%3.1f", r_rate_kb));
-      fHierarchy.FindChild("EventRate").SetField("value", dabc::format("%3.1f", r_rate_evt));
-      fHierarchy.FindChild("ServerRate").SetField("value", dabc::format("%3.1f", r_rate_strsrv_kb));
+      fHierarchy.GetHChild("DataRate").SetField("value", dabc::format("%3.1f", r_rate_kb));
+      fHierarchy.GetHChild("EventRate").SetField("value", dabc::format("%3.1f", r_rate_evt));
+      fHierarchy.GetHChild("ServerRate").SetField("value", dabc::format("%3.1f", r_rate_strsrv_kb));
+   }
+
+   if (fDoRec) {
+      std::string prefix = std::string("MBS.") + fMbsNode + std::string(".");
+      fRec.AddDouble(prefix + "DataRate", r_rate_kb, true);
+      fRec.AddDouble(prefix + "EventRate", r_rate_evt, true);
+      fRec.AddDouble(prefix + "ServerRate", r_rate_strsrv_kb, true);
    }
 
 //   DOUT0("Set %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
@@ -729,21 +735,24 @@ void mbs::Player::FillStatistic(const std::string& options, const std::string& i
 //   DOUT0("After %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
 }
 
-void mbs::Player::ProcessTimerEvent(unsigned timer)
+void mbs::Monitor::ProcessTimerEvent(unsigned timer)
 {
-//   DOUT0("+++++++++++++++++++++++++++ Process timer!!!");
+   if (TimerName(timer) != "MbsUpdate") {
+      mbs::MonitorSlowControl::ProcessTimerEvent(timer);
+      return;
+   }
 
    if (fMbsNode.empty()) {
        fCounter++;
 
        double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
-       fHierarchy.FindChild("DataRate").SetField("value", dabc::format("%4.2f", v1));
+       fHierarchy.GetHChild("DataRate").SetField("value", dabc::format("%4.2f", v1));
 
        v1 = 100. * (1.3 + cos(dabc::Now().AsDouble()/8.));
-       fHierarchy.FindChild("EventRate").SetField("value", dabc::format("%4.2f", v1));
+       fHierarchy.GetHChild("EventRate").SetField("value", dabc::format("%4.2f", v1));
 
-       fHierarchy.FindChild("rate_log").SetField("value", dabc::format("| Header  |   Entry      |      Rate  |"));
-       fHierarchy.FindChild("rate_log").SetField("value", dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
+       fHierarchy.GetHChild("rate_log").SetField("value", dabc::format("| Header  |   Entry      |      Rate  |"));
+       fHierarchy.GetHChild("rate_log").SetField("value", dabc::format("|         |    %5d       |     %6.2f  |", fCounter,v1));
 
        fHierarchy.MarkChangedItems();
        return;
@@ -761,9 +770,9 @@ void mbs::Player::ProcessTimerEvent(unsigned timer)
       AssignAddon(new DaqStatusAddon(fd));
 }
 
-void mbs::Player::NewMessage(const std::string& msg)
+void mbs::Monitor::NewMessage(const std::string& msg)
 {
-   dabc::Hierarchy item = fHierarchy.FindChild("logger");
+   dabc::Hierarchy item = fHierarchy.GetHChild("logger");
 
    if (!item.null()) {
       item.SetField("value", msg);
@@ -772,7 +781,7 @@ void mbs::Player::NewMessage(const std::string& msg)
    }
 }
 
-void mbs::Player::NewStatus(mbs::DaqStatus& stat)
+void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
 {
    dabc::TimeStamp stamp;
    stamp.GetNow();
@@ -800,7 +809,7 @@ void mbs::Player::NewStatus(mbs::DaqStatus& stat)
 }
 
 
-int mbs::Player::ExecuteCommand(dabc::Command cmd)
+int mbs::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ProcessDaqStatus")) {
 
@@ -838,6 +847,13 @@ int mbs::Player::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
+unsigned mbs::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)
+{
+   unsigned len = mbs::MonitorSlowControl::WriteRecRawData(ptr,maxsize);
+   fRec.Clear();
+   return len;
+}
+
 // =====================================================================
 
 mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode) :
@@ -848,7 +864,6 @@ mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string
 
 mbs::DaqLogWorker::~DaqLogWorker()
 {
-   DOUT0("Destroy DaqLogWorker");
 }
 
 
@@ -879,7 +894,7 @@ void mbs::DaqLogWorker::OnThreadAssigned()
 
    if (!CreateAddon()) ActivateTimeout(5);
 
-   DOUT0("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
+   DOUT3("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
 }
 
 double mbs::DaqLogWorker::ProcessTimeout(double last_diff)
@@ -904,7 +919,7 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
                DOUT4("Keep alive message from MBS logger");
             } else {
                DOUT0("Get MSG: %s",fRec.fBuffer);
-               mbs::Player* pl = dynamic_cast<mbs::Player*> (GetParent());
+               mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
                if (pl) pl->NewMessage(fRec.fBuffer);
             }
          }
@@ -943,7 +958,7 @@ mbs::DaqCmdWorker::DaqCmdWorker(const dabc::Reference& parent, const std::string
 
 mbs::DaqCmdWorker::~DaqCmdWorker()
 {
-   DOUT0("Destroy DaqCmdWorker");
+   DOUT3("Destroy DaqCmdWorker");
 }
 
 
@@ -1068,7 +1083,7 @@ void mbs::DaqCmdWorker::ProcessNextMbsCommand()
       addon = new dabc::SocketIOAddon(fd);
       addon->SetDeliverEventsToWorker(true);
 
-      DOUT0("ADDON:%p Create cmd socket %d to mbs %s:6006", addon, fd, fMbsNode.c_str());
+      DOUT3("ADDON:%p Create cmd socket %d to mbs %s:6006", addon, fd, fMbsNode.c_str());
 
       AssignAddon(addon);
    } else {
@@ -1100,7 +1115,7 @@ void mbs::DaqCmdWorker::ProcessNextMbsCommand()
       return;
    }
 
-   DOUT0("MBS-CMD:  %s", s.c_str());
+   DOUT3("MBS-CMD:  %s", s.c_str());
 
    fExtraBlock = mbsblock;
 

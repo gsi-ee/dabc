@@ -4,6 +4,8 @@ current functionality of the framework.
 
 4.04.2014
 1. Use mbs::MonitorSlowControl as base class for fesa::Monitor
+2. Rename mbs::Player -> mbs::Monitor, use MonitorSlowControl as base class.
+   As result, user can get MBS slow-control variables (rates for the moment) into analysis. 
 
 
 3.04.2014

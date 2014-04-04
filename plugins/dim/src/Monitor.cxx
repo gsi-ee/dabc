@@ -96,7 +96,7 @@ void dim::Monitor::ScanDimServices()
    }
 
    int nservices = fDimBr->getServices(fDimMask.c_str());
-   DOUT0("found %d DIM services", nservices);
+   DOUT3("found %d DIM services", nservices);
 
    while((type = fDimBr->getNextService(service_name, service_descr))!= 0)
    {
@@ -104,7 +104,7 @@ void dim::Monitor::ScanDimServices()
 
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
-      DOUT0("type %d name %s descr %s", type, service_name, service_descr);
+      DOUT3("DIM type %d name %s descr %s", type, service_name, service_descr);
 
       if ((service_descr==0) || ((type!=1) && (type!=2))) continue;
 
@@ -192,7 +192,7 @@ int dim::Monitor::ExecuteCommand(dabc::Command cmd)
 
       if (dimcmd.empty()) return dabc::cmd_false;
 
-      DOUT0("Execute DIM command %s arg %s", dimcmd.c_str(), arg.c_str());
+      DOUT2("Execute DIM command %s arg %s", dimcmd.c_str(), arg.c_str());
 
       DimClient::sendCommand(dimcmd.c_str(), arg.c_str());
 
@@ -210,7 +210,7 @@ void dim::Monitor::infoHandler()
    if (info==0) return;
 
    if (info->getData() == fNoLink) {
-      DOUT0("Get nolink for %s", info->getName());
+      DOUT3("Get nolink for %s", info->getName());
       return;
    }
 
@@ -234,7 +234,7 @@ void dim::Monitor::infoHandler()
    }
 
    if (strcmp(info->getName(),"DIS_DNS/SERVER_LIST")==0) {
-      DOUT0("Get DIS_DNS/SERVER_LIST");
+      DOUT3("Get DIS_DNS/SERVER_LIST");
       fNeedDnsUpdate = true;
    }
    // DOUT0("Get change for info %p name :%s: format %s", info, info->getName(), info->getFormat());

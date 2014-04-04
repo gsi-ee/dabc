@@ -47,13 +47,7 @@ namespace fesa {
          rdaDeviceHandle* fDevice;
          std::vector<rdaDabcHandler*> fHandlers;
 
-         mbs::SlowControlData  fRec;   ///< record used to store selected variables
-         bool fDoRec;  ///< when true, record will be filled
-         unsigned           fSubeventId;      ///< full id number for dim subevent
-         long               fEventNumber;     ///< Event number, written to MBS event
-         dabc::TimeStamp    fLastSendTime;    ///< last time when buffer was send, used for flushing
-         mbs::WriteIterator fIter;            ///< iterator for creating of MBS events
-         double             fFlushTime;       ///< time to flush event
+         bool fBlockRec; ///< when true, slow-control record cannot be updated
 
          double doGet(const std::string& service, const std::string& field);
 

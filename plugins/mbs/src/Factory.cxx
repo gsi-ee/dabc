@@ -31,7 +31,7 @@
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
 #include "mbs/CombinerModule.h"
-#include "mbs/Player.h"
+#include "mbs/Monitor.h"
 #include "mbs/api.h"
 
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
@@ -163,8 +163,8 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
    if (classname == "mbs::CombinerModule")
       return new mbs::CombinerModule(modulename, cmd);
 
-   if (classname == "mbs::Player")
-      return new mbs::Player(modulename, cmd);
+   if (classname == "mbs::Monitor")
+      return new mbs::Monitor(modulename, cmd);
 
    if (classname == "mbs::ReadoutModule")
       return new mbs::ReadoutModule(modulename, cmd);
@@ -193,13 +193,13 @@ provides following components:
 + \ref mbs::ClientTransport - input client transport to connect with running MBS node
 + \ref mbs::ServerTransport - output server transport to provide data as MBS server dose
 + \ref mbs::CombinerModule - module to combine events from several MBS sources
-+ \ref mbs::Player - module to interact with MBS over DABC web interface
++ \ref mbs::Monitor - module to interact with MBS over DABC web interface
 */
 
 
 /** \page mbs_web_interface Web interface to MBS
 
-\ref mbs::Player module provides possibility to interact with MBS over DABC web interface
+\ref mbs::Monitor module provides possibility to interact with MBS over DABC web interface
 
 
 ### XML file syntax
@@ -227,10 +227,10 @@ Several MBS nodes can be readout at once:
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
     </Run>
-    <Module name="mbs1" class="mbs::Player">
+    <Module name="mbs1" class="mbs::Monitor">
        <node value="r4-1"/>
     </Module>
-    <Module name="mbs2" class="mbs::Player">
+    <Module name="mbs2" class="mbs::Monitor">
        <node value="r4l-1"/>
     </Module>
   </Context>
@@ -241,7 +241,7 @@ Several MBS nodes can be readout at once:
 ### MBS status record (port 6008)
 
 In most situations started automatically by MBS.
-mbs::Player module will periodically request status record and
+mbs::Monitor module will periodically request status record and
 calculate several rate values - data rate, event rate. Several log variables
 are created, which reproduce output of **rate** command of MBS.
 

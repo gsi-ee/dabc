@@ -101,7 +101,8 @@ fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fHierarchy(),
    fRDAService(0),
    fDevice(0),
-   fHandlers(0)
+   fHandlers(0),
+   fBlockRec(false)
 {
    fHierarchy.Create("fesa-monitor", true);
 
@@ -212,7 +213,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a boolean value.
          case rdaDataEntry::TYPE_BOOLEAN: {
             item.SetField(tag, entry->extractBoolean());
-            if (fDoRec) fRec.AddLong(tag, entry->extractBoolean(), true);
+            if (fDoRec && !fBlockRec) fRec.AddLong(tag, entry->extractBoolean(), true);
             break;
          }
          /// indicates a boolean array value.
@@ -227,7 +228,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a byte value.
          case rdaDataEntry::TYPE_BYTE: {
             item.SetField(tag, (int64_t)entry->extractByte());
-            if (fDoRec) fRec.AddLong(tag, (int64_t)entry->extractByte(), true);
+            if (fDoRec && !fBlockRec) fRec.AddLong(tag, (int64_t)entry->extractByte(), true);
             break;
          }
          /// indicates a byte array value.
@@ -242,7 +243,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a short value.
          case rdaDataEntry::TYPE_SHORT: {
             item.SetField(tag, (int64_t)entry->extractShort());
-            if (fDoRec) fRec.AddLong(tag, (int64_t)entry->extractShort(), true);
+            if (fDoRec && !fBlockRec) fRec.AddLong(tag, (int64_t)entry->extractShort(), true);
             break;
          }
          /// indicates a short array value.
@@ -257,7 +258,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates an integer value.
          case rdaDataEntry::TYPE_INT: {
             item.SetField(tag, entry->extractInt());
-            if (fDoRec) fRec.AddLong(tag, entry->extractInt(), true);
+            if (fDoRec && !fBlockRec) fRec.AddLong(tag, entry->extractInt(), true);
             break;
          }
          /// indicates an integer array value.
@@ -273,7 +274,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a long long value.
          case rdaDataEntry::TYPE_LONG: {
             item.SetField(tag, (int64_t)entry->extractLong());
-            if (fDoRec) fRec.AddLong(tag, entry->extractLong(), true);
+            if (fDoRec && !fBlockRec) fRec.AddLong(tag, entry->extractLong(), true);
             break;
          }
          /// indicates a long long array value.
@@ -288,7 +289,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a float value.
          case rdaDataEntry::TYPE_FLOAT: {
             item.SetField(tag, entry->extractFloat());
-            if (fDoRec) fRec.AddDouble(tag, entry->extractFloat(), true);
+            if (fDoRec && !fBlockRec) fRec.AddDouble(tag, entry->extractFloat(), true);
             break;
          }
          /// indicates a float array value.
@@ -303,7 +304,7 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
          /// indicates a double value.
          case rdaDataEntry::TYPE_DOUBLE: {
             item.SetField(tag, entry->extractDouble());
-            if (fDoRec) fRec.AddDouble(tag, entry->extractDouble(), true);
+            if (fDoRec && !fBlockRec) fRec.AddDouble(tag, entry->extractDouble(), true);
             break;
          }
          /// indicates a double array value.
@@ -341,11 +342,16 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
 unsigned fesa::Monitor::GetRecRawSize()
 {
    dabc::LockGuard lock(fHierarchy.GetHMutex());
+   // between GetRecRawSize and WriteRecRawData record will be blocked - no any updates possible
+   fBlockRec = true;
    return fRec.GetRawSize();
 }
 
 unsigned fesa::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)
 {
    dabc::LockGuard lock(fHierarchy.GetHMutex());
-   return fRec.Write(ptr, maxsize);
+   unsigned len = fRec.Write(ptr, maxsize);
+   fRec.Clear();
+   fBlockRec = false;
+   return len;
 }

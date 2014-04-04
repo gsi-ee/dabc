@@ -13,15 +13,11 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef MBS_Player
-#define MBS_Player
+#ifndef MBS_Monitor
+#define MBS_Monitor
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
-#endif
-
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
+#ifndef MBS_MonitorSlowControl
+#include "mbs/MonitorSlowControl.h"
 #endif
 
 #ifndef DABC_CommandsQueue
@@ -181,7 +177,7 @@ namespace mbs {
     *
     **/
 
-   class Player : public dabc::ModuleAsync {
+   class Monitor : public mbs::MonitorSlowControl {
       protected:
 
          dabc::Hierarchy   fHierarchy;
@@ -210,11 +206,12 @@ namespace mbs {
 
          virtual void ProcessTimerEvent(unsigned timer);
 
+         virtual unsigned WriteRecRawData(void* ptr, unsigned maxsize);
 
       public:
 
-         Player(const std::string& name, dabc::Command cmd = 0);
-         virtual ~Player();
+         Monitor(const std::string& name, dabc::Command cmd = 0);
+         virtual ~Monitor();
 
          virtual std::string RequiredThrdClass() const
            {  return dabc::typeSocketThread; }
