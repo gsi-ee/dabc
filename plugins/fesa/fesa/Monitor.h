@@ -16,20 +16,8 @@
 #ifndef FESA_Monitor
 #define FESA_Monitor
 
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
-#endif
-
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
-#endif
-
-#ifndef MBS_Iterator
-#include "mbs/Iterator.h"
-#endif
-
-#ifndef MBS_SlowControlData
-#include "mbs/SlowControlData.h"
+#ifndef MBS_MonitorSlowControl
+#include "mbs/MonitorSlowControl.h"
 #endif
 
 class rdaDeviceHandle;
@@ -47,7 +35,7 @@ namespace fesa {
     *
     **/
 
-   class Monitor : public dabc::ModuleAsync {
+   class Monitor : public mbs::MonitorSlowControl {
       protected:
          dabc::Hierarchy fHierarchy;
 
@@ -69,14 +57,13 @@ namespace fesa {
 
          double doGet(const std::string& service, const std::string& field);
 
-         void SendDataToOutputs();
+         virtual unsigned GetRecRawSize();
+         virtual unsigned WriteRecRawData(void* ptr, unsigned maxsize);
 
       public:
 
          Monitor(const std::string& name, dabc::Command cmd = 0);
          virtual ~Monitor();
-
-         virtual void ProcessTimerEvent(unsigned timer);
 
          void ReportServiceChanged(const std::string& name, const rdaData* v);
 

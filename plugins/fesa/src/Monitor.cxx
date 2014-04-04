@@ -97,34 +97,17 @@ class rdaDabcHandler : public rdaReplyHandler
 #endif
 
 fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd),
+   mbs::MonitorSlowControl(name, "Fesa", cmd),
    fHierarchy(),
    fRDAService(0),
    fDevice(0),
-   fHandlers(0),
-   fRec(),
-   fDoRec(false),
-   fSubeventId(8),
-   fEventNumber(0),
-   fLastSendTime(),
-   fIter(),
-   fFlushTime(10)
+   fHandlers(0)
 {
-   EnsurePorts(0, 0, dabc::xmlWorkPool);
-   fDoRec = NumOutputs() > 0;
-
    fHierarchy.Create("fesa-monitor", true);
 
    fServerName = Cfg("Server", cmd).AsStr();
    fDeviceName = Cfg("Device", cmd).AsStr();
    fCycle = Cfg("Cycle", cmd).AsStr();
-
-   double period = Cfg("FesaPeriod", cmd).AsDouble(1);
-   fSubeventId = Cfg("FesaSubeventId", cmd).AsUInt(fSubeventId);
-   fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
-
-   if (fDoRec)
-      CreateTimer("update", (period>0.01) ? period : 0.01, false);
 
    std::vector<std::string> services = Cfg("Services", cmd).AsStrVect();
 
@@ -170,11 +153,6 @@ fesa::Monitor::~Monitor()
 
    #endif
 
-}
-
-void fesa::Monitor::ProcessTimerEvent(unsigned timer)
-{
-   if (fDoRec) SendDataToOutputs();
 }
 
 void fesa::Monitor::ReportServiceError(const std::string& name, const std::string& err)
@@ -360,64 +338,14 @@ void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData*
    item.MarkChangedItems();
 }
 
-
-void fesa::Monitor::SendDataToOutputs()
+unsigned fesa::Monitor::GetRecRawSize()
 {
-   unsigned nextsize = 0;
+   dabc::LockGuard lock(fHierarchy.GetHMutex());
+   return fRec.GetRawSize();
+}
 
-   {
-      dabc::LockGuard lock(fHierarchy.GetHMutex());
-      nextsize = fRec.GetRawSize();
-   }
-
-   if (fIter.IsAnyEvent() && !fIter.IsPlaceForEvent(nextsize, true)) {
-
-      // if output is blocked, do not produce data
-      if (!CanSendToAllOutputs()) return;
-
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-
-      fLastSendTime.GetNow();
-   }
-
-   if (!fIter.IsBuffer()) {
-      dabc::Buffer buf = TakeBuffer();
-      // if no buffer can be taken, skip data
-      if (buf.null()) { EOUT("Cannot take buffer for FESA data"); return; }
-      fIter.Reset(buf);
-   }
-
-   if (!fIter.IsPlaceForEvent(nextsize, true)) {
-      EOUT("EZCA event %u too large for current buffer size", nextsize);
-      return;
-   }
-
-   fEventNumber++;
-
-   fRec.SetEventId(fEventNumber);
-   fRec.SetEventTime(time(NULL));
-
-   fIter.NewEvent(fEventNumber);
-   fIter.NewSubevent2(fSubeventId);
-
-   unsigned size = 0;
-
-   {
-      dabc::LockGuard lock(fHierarchy.GetHMutex());
-      size = fRec.Write(fIter.rawdata(), fIter.maxrawdatasize());
-   }
-
-   if (size==0) {
-      EOUT("Fail to write data into MBS subevent");
-   }
-
-   fIter.FinishSubEvent(size);
-   fIter.FinishEvent();
-
-   if (fLastSendTime.Expired(fFlushTime) && CanSendToAllOutputs()) {
-      dabc::Buffer buf = fIter.Close();
-      SendToAllOutputs(buf);
-      fLastSendTime.GetNow();
-   }
+unsigned fesa::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)
+{
+   dabc::LockGuard lock(fHierarchy.GetHMutex());
+   return fRec.Write(ptr, maxsize);
 }

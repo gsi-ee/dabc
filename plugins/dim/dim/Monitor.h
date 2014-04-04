@@ -20,10 +20,6 @@
 #include "mbs/MonitorSlowControl.h"
 #endif
 
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
-#endif
-
 #include <map>
 
 #include <dic.hxx>

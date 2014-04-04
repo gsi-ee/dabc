@@ -38,7 +38,6 @@ const char* ezca::xmlEzcaRetryCount          = "EzcaRetryCount";
 const char* ezca::xmlEzcaDebug               = "EzcaDebug";
 const char* ezca::xmlEzcaAutoError           = "EzcaAutoError";
 
-
 const char* ezca::nameUpdateCommand          = "ezca::OnUpdate";
 const char* ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Command receiver on flag change event
 

@@ -20,12 +20,6 @@
 #include "mbs/MonitorSlowControl.h"
 #endif
 
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
-#endif
-
-
-
 namespace ezca {
 
    /** \brief Monitor of EPICS data
