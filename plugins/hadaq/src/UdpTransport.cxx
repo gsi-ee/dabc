@@ -326,10 +326,10 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       CreateNetmemPar("coreNr");
       // exclude PID from shared mem not to interfere with default pid of observer
       // TODO: fix default pid export of worker ?
-      //CreateNetmemPar("PID");
+      CreateNetmemPar("PID");
    
      
-      //SetNetmemPar("PID", (int) addon->fPid);
+      SetNetmemPar("PID", (int) addon->fPid);
       SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
       CreateTimer("ObserverTimer", 1, false);
       DOUT3("hadaq::DataTransport created observer parameters");
