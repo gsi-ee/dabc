@@ -165,7 +165,12 @@ bool rfio::FileInterface::fseek(Handle f, long int offset, bool relative)
 {
    if (f==0) return false;
 
+#ifdef ORIGIN_ADSM
+   int fileid = -1;
+   printf("rfio::FileInterface::fseek not working with original version of ADSM library\n");
+#else
    int fileid = rfio_ffileid((RFILE*)f);
+#endif
 
    if (fileid<0) return false;
 

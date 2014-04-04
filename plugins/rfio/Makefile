@@ -1,15 +1,14 @@
 ## normally should be like this for every plugin
 ## one can extract complete plugin subdirectory and compile it independent from rest
 
-include $(DABCSYS)/config/Makefile.config
+ifndef norfio
 
-#DOOPTIMIZATION = false
+include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
 RFIODIR = plugins/rfio
 else
 RFIODIR = .
-INCLUDES += $(RFIODIR)
 endif
 
 RFIODIRI         = $(RFIODIR)/rfio
@@ -31,9 +30,19 @@ RFIO_CO          = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(RFIO_CS))
 RFIO_CD          = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(RFIO_CS))
 
 
-DABCRFIO_O       = $(RFIO_O) $(RFIO_CO)
-DABCRFIO_D       = $(RFIO_D) $(RFIO_CD)
+DABCRFIO_O       = $(RFIO_O) 
+DABCRFIO_D       = $(RFIO_D)
 
+ifdef ADSMDIR
+DABCRFIO_O       += $(wildcard $(ADSMDIR)/librawapi*.a)
+$(RFIO_O) $(RFIO_D) : INCLUDES += $(ADSMDIR)
+$(RFIO_O) $(RFIO_D) : DEFINITIONS += ORIGIN_ADSM 
+else
+DABCRFIO_O       += $(RFIO_CO)
+DABCRFIO_D       += $(RFIO_CD)
+
+$(RFIO_O) $(RFIO_D) : INCLUDES += $(RFIODIRAPI)  
+endif
 
 # used in the main Makefile
 
@@ -55,7 +64,6 @@ clean::
 #	rm -f $(RFIOFAPI_PACKAGE)
 
 ########### extra rules #############
-$(RFIO_O) $(RFIO_D) : INCLUDES += $(RFIODIRAPI)  
 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += Linux
 
@@ -64,3 +72,5 @@ $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += SYSTEM64
 endif
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif

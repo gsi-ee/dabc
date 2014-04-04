@@ -59,7 +59,7 @@ struct BinDataHeader {
    bool is_zipped() const
      { return (zipped>0) && (payload>0); }
 
-   /** \bried returns pointer on raw data (just after header) */
+   /** \brief returns pointer on raw data (just after header) */
    void* rawdata() const { return (char*) this + sizeof(BinDataHeader); }
 };
 
