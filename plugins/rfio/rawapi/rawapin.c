@@ -3054,7 +3054,7 @@ int rfio_newfile(int iFileId,
                  char *pcFile)                          /* file name */
 {
    char cModule[32] = "rfio_newfile";
-   int iDebug = 0;
+   int iDebug = 1;
    int iRC;
    int ii = 0;
    int iArchLen = 0;
@@ -4292,7 +4292,7 @@ int rfio_fnewfile(RFILE *pRemFile,      /* remote file control block */
                    char *pcFile)                        /* file name */
 {
    char cModule[32] = "rfio_fnewfile";
-   int iDebug = 0;
+   int iDebug = 1;
    int iRC;
    int ii;
    int iFileId;             /* file identifier for server connection */
