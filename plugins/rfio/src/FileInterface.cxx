@@ -11,6 +11,7 @@
 rfio::FileInterface::FileInterface() :
    dabc::FileInterface(),
    fRemote(0),
+   fOpenedCounter(0),
    fDataMoverIndx(0)
 {
    memset(fDataMoverName, 0, sizeof(fDataMoverName));
@@ -112,12 +113,20 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
    if (fRemote==0)
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
 
+   DOUT0("Calling rfio_fnewfile %s", fname);
+
    int rev = rfio_fnewfile((RFILE*)fRemote, (char*) fname);
 
+   DOUT0("Did call rfio_fnewfile %s rev = %d", fname, rev);
+
    if (rev!=0) {
-      EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fDataMoverIndx, fDataMoverName, fname);
+      EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fname, fDataMoverIndx, fDataMoverName);
       return 0;
    }
+
+   fOpenedCounter++;
+
+   if (fOpenedCounter > 0) EOUT("Too many (%d) files, opened via RFIO connection", fOpenedCounter);
 
    return (Handle) fRemote;
 }
@@ -146,7 +155,13 @@ void rfio::FileInterface::fclose(Handle f)
 {
    if ((fRemote!=0) && (f==fRemote)) {
       rfio_fendfile((RFILE*) fRemote);
-   } else
+      fOpenedCounter--;
+      if (fOpenedCounter < 0) EOUT("Too many close operations - counter (%d) is negative", fOpenedCounter);
+      return;
+   }
+
+   if (fRemote!=0) EOUT("Get RFIO::fclose with unexpected argument when fRemote!=0 cnt %d", fOpenedCounter);
+
    if (f!=0) rfio_fclose((RFILE*)f);
 }
 

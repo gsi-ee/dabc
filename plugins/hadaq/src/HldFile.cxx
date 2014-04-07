@@ -116,7 +116,7 @@ void hadaq::HldFile::Close()
 
   CloseBasicFile();
 
-  fRunNumber=0;
+  fRunNumber = 0;
   fEOF = true;
 }
 

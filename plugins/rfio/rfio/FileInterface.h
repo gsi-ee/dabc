@@ -10,6 +10,7 @@ namespace rfio {
    class FileInterface : public dabc::FileInterface {
       protected:
          void*  fRemote;              //! connection to datamover, done once when any special argument is appearing
+         int    fOpenedCounter;       //! counter of opened files via special connection to datamover
          int    fDataMoverIndx;       //! obtained data mover index
          char   fDataMoverName[64];   //! obtained data mover name
 

@@ -195,10 +195,9 @@ bool hadaq::HldOutput::StartNewFile()
 
 bool hadaq::HldOutput::CloseFile()
 {
-   if (fFile.isWriting())
-      ShowInfo(0, "HLD file is CLOSED");
+   if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
-   fCurrentFileSize=0;
+   fCurrentFileSize = 0;
    //std::cout <<"Close File resets file size." << std::endl;
    return true;
 }
