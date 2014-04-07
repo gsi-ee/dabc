@@ -1139,13 +1139,18 @@ Bool_t TRootSniffer::Produce(const char* path, const char* file, const char* opt
    if (strcmp(file,"root.gif")==0)
       return ProduceImage(TImage::kGif, path, options, ptr, length);
 
-   if ((strcmp(file,"root.xml")==0) || (strcmp(file,"root.json")==0)) {
+   if (strcmp(file,"root.xml")==0) {
       TString res;
-      if (strcmp(file,"root.xml")==0) {
-         if (!ProduceXml(path, options,res)) return kFALSE;
-      } else {
-         if (!ProduceJson(path, options,res)) return kFALSE;
-      }
+      if (!ProduceXml(path, options, res)) return kFALSE;
+      length = res.Length();
+      ptr = malloc(length);
+      memcpy(ptr, res.Data(), length);
+      return kTRUE;
+   }
+
+   if ((strcmp(file,"root.json")==0) || (strcmp(file,"get.json")==0)) {
+      TString res;
+      if (!ProduceJson(path, options, res)) return kFALSE;
       length = res.Length();
       ptr = malloc(length);
       memcpy(ptr, res.Data(), length);
