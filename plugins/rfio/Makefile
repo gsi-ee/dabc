@@ -34,7 +34,7 @@ DABCRFIO_O       = $(RFIO_O)
 DABCRFIO_D       = $(RFIO_D)
 
 ifdef ADSMDIR
-DABCRFIO_O       += $(wildcard $(ADSMDIR)/librawapi*.a)
+DABCRFIO_O       += $(wildcard $(ADSMDIR)/*.a)
 $(RFIO_O) $(RFIO_D) : INCLUDES += $(ADSMDIR)
 $(RFIO_O) $(RFIO_D) : DEFINITIONS += ORIGIN_ADSM 
 else
