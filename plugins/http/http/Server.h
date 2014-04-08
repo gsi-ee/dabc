@@ -37,18 +37,24 @@ namespace http {
    class Server : public dabc::Worker  {
 
       protected:
-         std::string fHttpSys;     ///< location of http plugin, need to read special files
-         std::string fGo4Sys;      ///< location of go4 (if any)
-         std::string fRootSys;     ///< location of ROOT (if any)
-         std::string fJSRootIOSys; ///< location of JSRootIO (if any)
+         std::string fHttpSys;      ///< location of http plugin, need to read special files
+         std::string fGo4Sys;       ///< location of go4 (if any)
+         std::string fRootSys;      ///< location of ROOT (if any)
+         std::string fJSRootIOSys;  ///< location of JSRootIO (if any)
+         int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
          bool ProcessExecute(const std::string& itemname, const std::string& query, std::string& replybuf);
 
-         /** \brief Check if file is requested. Can only be from server */
+         /** Check if file is requested. Can only be from server */
          bool IsFileRequested(const char* uri, std::string& fname);
 
+         void ExtractPathAndFile(const char* uri, std::string& pathname, std::string& filename);
+
+         /** Returns true if authentication is required */
+         bool IsAuthRequired(const char* uri);
+
          /** Method process different URL requests, should be called from server thread */
-         bool Process(const std::string& path, const std::string& file, const std::string& query,
+         bool Process(const char* uri, const char* query,
                       std::string& content_type, std::string& content_str, dabc::Buffer& content_bin);
 
       public:

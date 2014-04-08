@@ -12,7 +12,6 @@ endif
 
 DABCHTTPDIRI     = $(DABCHTTPDIR)/http
 DABCHTTPDIRS     = $(DABCHTTPDIR)/src
-MONGOOSEDIR      = $(DABCHTTPDIR)/mongoose
 CIVETWEBDIR      = $(DABCHTTPDIR)/civetweb
 
 DABCHTTP_INCDIRS = $(DABCHTTPDIR) $(CIVETWEBDIR)
@@ -26,11 +25,6 @@ DABCHTTP_H       = $(wildcard $(DABCHTTPDIRI)/*.$(HedSuf))
 DABCHTTP_S       = $(wildcard $(DABCHTTPDIRS)/*.$(SrcSuf))
 DABCHTTP_O       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCHTTP_S))
 DABCHTTP_D       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCHTTP_S))
-
-MONGOOSE_CS      = $(MONGOOSEDIR)/mongoose.c
-MONGOOSE_CH      = $(MONGOOSEDIR)/mongoose.h 
-MONGOOSE_CO      = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MONGOOSE_CS))
-MONGOOSE_CD      = $(patsubst %.$(ObjSuf), %.$(DepSuf), $(MONGOOSE_CO))
 
 CIVETWEB_CS      = $(CIVETWEBDIR)/civetweb.c
 CIVETWEB_CH      = $(CIVETWEBDIR)/civetweb.h 

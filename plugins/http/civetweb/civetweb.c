@@ -2827,6 +2827,11 @@ static int check_authorization(struct mg_connection *conn, const char *path)
     struct file file = STRUCT_FILE_INITIALIZER;
     int authorized = 1;
 
+    if (conn->ctx->callbacks.auth_request != NULL) {
+       // we only check if authentication should be performed
+       if (conn->ctx->callbacks.auth_request(conn, path) == 0) return 1;
+    }
+
     list = conn->ctx->config[PROTECT_URI];
     while ((list = next_option(list, &uri_vec, &filename_vec)) != NULL) {
         if (!memcmp(conn->request_info.uri, uri_vec.ptr, uri_vec.len)) {

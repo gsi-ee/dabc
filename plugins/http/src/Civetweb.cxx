@@ -32,6 +32,11 @@ http::Civetweb::Civetweb(const std::string& name, dabc::Command cmd) :
    fHttpsPort = Cfg("ports", cmd).AsInt(0);
    fAuthFile = Cfg("auth_file", cmd).AsStr();
    fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
+
+   // when authentication file specified, one could decide which is default behavior
+   if (!fAuthFile.empty())
+      fDefaultAuth = Cfg("auth_default", cmd).AsBool(true) ? 1 : 0;
+
    fSslCertif = Cfg("ssl_certif", cmd).AsStr("");
    if (!fSslCertif.empty() && (fHttpsPort<=0)) fHttpsPort = 443;
    if (fSslCertif.empty()) fHttpsPort = 0;
@@ -84,10 +89,23 @@ void http::Civetweb::OnThreadAssigned()
    options[op++] = 0;
 
    fCallbacks.begin_request = http::Civetweb::begin_request_handler;
+   fCallbacks.auth_request = http::Civetweb::auth_request_handler;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
 }
+
+int http::Civetweb::auth_request_handler(struct mg_connection *conn, const char* path)
+{
+   http::Civetweb* server = (http::Civetweb*) mg_get_request_info(conn)->user_data;
+   if (server==0) return 1;
+
+   const struct mg_request_info *request_info = mg_get_request_info(conn);
+
+   // do not require authentication
+   return server->IsAuthRequired(request_info->uri) ? 1 : 0;
+}
+
 
 
 int http::Civetweb::begin_request_handler(struct mg_connection *conn)
@@ -99,29 +117,17 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
 
    DOUT2("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
 
-   std::string pathname, filename, query;
+   std::string filename;
 
    if (server->IsFileRequested(request_info->uri, filename)) {
       mg_send_file(conn, filename.c_str());
       return 1;
    }
 
-   const char* rslash = strrchr(request_info->uri,'/');
-   if (rslash==0) {
-      filename = request_info->uri;
-   } else {
-      pathname.append(request_info->uri, rslash - request_info->uri);
-      if (pathname=="/") pathname.clear();
-      filename = rslash+1;
-   }
-
-   if (request_info->query_string) query = request_info->query_string;
-
-
    std::string content_type, content_str;
    dabc::Buffer content_bin;
 
-   if (!server->Process(pathname, filename, query,
+   if (!server->Process(request_info->uri, request_info->query_string,
                         content_type, content_str, content_bin)) {
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
                 "Content-Length: 0\r\n"
@@ -156,7 +162,7 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
              content_str.c_str());
    }
 
-    // Returning non-zero tells mongoose that our function has replied to
-    // the client, and mongoose should not send client any more data.
+    // Returning non-zero tells civetweb that our function has replied to
+    // the client, and civetweb should not send client any more data.
     return 1;
 }

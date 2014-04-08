@@ -44,6 +44,7 @@ namespace dabc {
    extern const char* prop_producer;      // identifies item, which can deliver binary data for all its
    extern const char* prop_error;         // indicates any kind of error - typically in text form
    extern const char* prop_hash;          // content hash, which should describe if object is changed
+   extern const char* prop_auth;          // when specified, enabled (true) or disabled (false) authentication for the elements
    extern const char* prop_history;       // indicates that history for that element is kept
    extern const char* prop_time;          // time property, supplied when history is created
    extern const char* prop_more;          // indicate that item can provide more hierarchy if requested

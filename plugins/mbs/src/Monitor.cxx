@@ -196,6 +196,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    if (fCmdPort > 0) {
       dabc::CommandDefinition cmddef = fHierarchy.CreateHChild("CmdMbs");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
+      cmddef.SetField(dabc::prop_auth, true); // require authentication
       cmddef.AddArg("cmd", "string", true, "show rate");
    }
 

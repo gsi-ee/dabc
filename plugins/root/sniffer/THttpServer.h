@@ -127,7 +127,7 @@ protected:
 
 public:
 
-   THttpServer(const char* engine = "mongoose:8080");
+   THttpServer(const char* engine = "civetweb:8080");
    virtual ~THttpServer();
 
    Bool_t CreateEngine(const char* engine);

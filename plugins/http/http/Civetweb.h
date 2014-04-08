@@ -48,6 +48,8 @@ namespace http {
          virtual const char* ClassName() const { return "HttpServer"; }
 
          static int begin_request_handler(struct mg_connection *conn);
+
+         static int auth_request_handler(struct mg_connection *conn, const char* path);
    };
 }
 

@@ -35,6 +35,7 @@ const char* dabc::prop_itemname = "dabc:itemname"; // item name in dabc hierarch
 const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_producer = "dabc:producer";
 const char* dabc::prop_error = "dabc:error";
+const char* dabc::prop_auth = "dabc:auth";
 const char* dabc::prop_hash = "hash";
 const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";

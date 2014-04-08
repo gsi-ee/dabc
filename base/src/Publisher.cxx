@@ -709,6 +709,26 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_true;
 
    } else
+   if (cmd.IsName("CmdNeedAuth")) {
+      std::string path = cmd.GetStr("path");
+      dabc::Hierarchy h = GetWorkItem(path);
+
+      int res = -1;
+
+      while (!h.null()) {
+         if (h.HasField(dabc::prop_auth)) {
+            res = h.GetField(dabc::prop_auth).AsBool() ? 1 : 0;
+            break;
+         }
+
+         h = h.GetParentRef();
+      }
+
+      cmd.SetInt("need_auth", res);
+
+      return cmd_true;
+   }
+
    if (cmd.IsName(CmdGetBinary::CmdName())) {
 
       // if we get command here, we need to find destination for it
@@ -778,6 +798,19 @@ int dabc::PublisherRef::HasChilds(const std::string& path)
 
    return cmd.GetInt("num_childs");
 }
+
+int dabc::PublisherRef::NeedAuth(const std::string& path)
+{
+   if (null()) return -1;
+
+   dabc::Command cmd("CmdNeedAuth");
+   cmd.SetStr("path", path);
+
+   if (Execute(cmd) != cmd_true) return -1;
+
+   return cmd.GetInt("need_auth");
+}
+
 
 
 dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std::string& query)

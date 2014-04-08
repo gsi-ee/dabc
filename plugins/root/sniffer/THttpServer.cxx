@@ -228,9 +228,9 @@ Bool_t THttpServer::CreateEngine(const char* engine)
 {
    // factory method to create different http engine
    // At the moment two engine kinds are supported:
-   //  mongoose (default) and fastcgi
+   //  civetweb (default) and fastcgi
    // Examples:
-   //   "mongoose:8090" or "http:8090" or ":8090" - creates mongoose web server with http port 8090
+   //   "civetweb:8090" or "http:8090" or ":8090" - creates civetweb web server with http port 8090
    //   "fastcgi:9000" - creates fastcgi server with port 9000
    //   "dabc:1237"   - create DABC server with port 1237
 

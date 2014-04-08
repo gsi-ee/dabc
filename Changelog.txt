@@ -5,8 +5,17 @@ current functionality of the framework.
 6.04.2014
 1. Preliminary implementation of new remote command channel in MBS.
    Using mbs::Monitor class, any kind of MBS commands can be submitted. 
-   Security not yet established.
-   
+2. On MBS side one can specify exact IP address of allowed clients,
+   no special configuration required on DABC side.
+3. Intoduce in Civetweb hook to allow authorized access for selected items only.
+   By default, when authorization file is configured, access to all items is 
+   password-protected. One could disable default authentication (auth_default = false),
+   and enable authentication by setting 'dabc:auth' property on some selected
+   structures. Probably, functionality must be moved into http::Server to
+   make it available for FastCgi server as well. 
+4. In mbs::Monitor protect "MbsCmd" - means always authentication will be
+   requested when accessing such element in browser or via command line.        
+
 
 4.04.2014
 1. Use mbs::MonitorSlowControl as base class for fesa::Monitor

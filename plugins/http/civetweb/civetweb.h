@@ -138,6 +138,10 @@ struct mg_callbacks {
        Parameters:
          status: HTTP error status code. */
     int  (*http_error)(struct mg_connection *, int status);
+
+    /* Called when authentication want to be requested */
+    int  (*auth_request)(struct mg_connection *, const char* path);
+
 };
 
 /* Start web server.

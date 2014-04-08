@@ -162,20 +162,6 @@ void* http::FastCgi::RunFunc(void* args)
       const char* inp_path = FCGX_GetParam("PATH_INFO", request.envp);
       const char* inp_query = FCGX_GetParam("QUERY_STRING", request.envp);
 
-      std::string pathname, filename, query;
-
-      const char* rslash = strrchr(inp_path,'/');
-      if (rslash==0) {
-         filename = inp_path;
-      } else {
-         pathname.append(inp_path, rslash - inp_path);
-         if (pathname=="/") pathname.clear();
-         filename = rslash+1;
-      }
-
-      if (inp_query) query = inp_query;
-
-
       if (server->fDebugMode) {
 
          FCGX_FPrintF(request.out,
@@ -208,9 +194,8 @@ void* http::FastCgi::RunFunc(void* args)
              FCGX_FPrintF(request.out, "\n</pre><p>\n");
          }
 
-         FCGX_FPrintF(request.out, "PATHNAME: %s<p>\n", pathname.c_str());
-         FCGX_FPrintF(request.out, "FILENAME: %s<p>\n", filename.c_str());
-         FCGX_FPrintF(request.out, "QUERY:    %s<p>\n", query.c_str());
+         FCGX_FPrintF(request.out, "URI:     %s<p>\n", inp_path);
+         FCGX_FPrintF(request.out, "QUERY:   %s<p>\n", inp_query ? inp_query : "---");
          FCGX_FPrintF(request.out, "<p>\n");
 
          FCGX_FPrintF(request.out, "Environment:<br>\n<pre>\n");
@@ -233,7 +218,7 @@ void* http::FastCgi::RunFunc(void* args)
          continue;
       }
 
-      if (!server->Process(pathname, filename, query,
+      if (!server->Process(inp_path, inp_query,
                            content_type, content_str, content_bin)) {
          FCGX_FPrintF(request.out, "HTTP/1.1 404 Not Found\r\n"
                                    "Content-Length: 0\r\n"

@@ -100,7 +100,8 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fHttpSys(),
    fGo4Sys(),
    fRootSys(),
-   fJSRootIOSys()
+   fJSRootIOSys(),
+   fDefaultAuth(-1)
 {
    fHttpSys = ".";
 
@@ -188,13 +189,55 @@ bool http::Server::ProcessExecute(const std::string& itemname, const std::string
    return true;
 }
 
+void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, std::string& filename)
+{
+   pathname.clear();
+   const char* rslash = strrchr(uri,'/');
+   if (rslash==0) {
+      filename = uri;
+   } else {
+      pathname.append(uri, rslash - uri);
+      if (pathname=="/") pathname.clear();
+      filename = rslash+1;
+   }
+}
 
-bool http::Server::Process(const std::string& path, const std::string& file, const std::string& query,
+
+bool http::Server::IsAuthRequired(const char* uri)
+{
+   if (fDefaultAuth<0) return false;
+
+   std::string pathname, fname;
+
+   if (IsFileRequested(uri, fname)) return fDefaultAuth > 0;
+
+   ExtractPathAndFile(uri, pathname, fname);
+
+   int res = dabc::PublisherRef(GetPublisher()).NeedAuth(pathname);
+
+   // DOUT0("Request AUTH for path %s res = %d", pathname.c_str(), res);
+
+   if (res<0) res = fDefaultAuth;
+
+   return res > 0;
+}
+
+
+
+bool http::Server::Process(const char* uri, const char* _query,
                            std::string& content_type, std::string& content_str, dabc::Buffer& content_bin)
 {
+
+   std::string pathname, filename, query;
+
+
+   ExtractPathAndFile(uri, pathname, filename);
+
+   if (_query!=0) query = _query;
+
    // we return normal file
-   if (file.empty() || (file == "index.htm")) {
-      if (dabc::PublisherRef(GetPublisher()).HasChilds(path) != 0)
+   if (filename.empty() || (filename == "index.htm")) {
+      if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname) != 0)
          content_str = fHttpSys + "/files/main.htm";
       else
          content_str = fHttpSys + "/files/single.htm";
@@ -203,26 +246,26 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
       return true;
    }
 
-   if (file == "h.xml") {
+   if (filename == "h.xml") {
       content_type = "text/xml";
 
       std::string xmlcode;
 
-      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(path, xmlcode)) {
+      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(pathname, xmlcode)) {
          content_str = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
          return true;
       }
       return false;
    } else
 
-   if (file == "execute") {
+   if (filename == "execute") {
       content_type = "text/xml";
-      return ProcessExecute(path, query, content_str);
+      return ProcessExecute(pathname, query, content_str);
    } else
 
-   if (!file.empty()) {
+   if (!filename.empty()) {
 
-      dabc::CmdGetBinary cmd(path, file, query);
+      dabc::CmdGetBinary cmd(pathname, filename, query);
       cmd.SetTimeout(5.);
 
       dabc::WorkerRef ref = GetPublisher();
@@ -231,7 +274,7 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
          content_type = cmd.GetStr("content_type");
 
          if (content_type.empty())
-            content_type = GetMimeType(file.c_str());
+            content_type = GetMimeType(filename.c_str());
 
          content_bin = cmd.GetRawData();
          return !content_bin.null();
@@ -241,27 +284,27 @@ bool http::Server::Process(const std::string& path, const std::string& file, con
 
    }
 /*
-   if (file == "get.xml") {
+   if (filename == "get.xml") {
       content_type = "text/xml";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "xml", query);
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "xml", query);
       return !content_bin.null();
    } else
 
-   if (file == "get.json") {
+   if (filename == "get.json") {
       content_type = "application/json";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "json", query);
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "json", query);
       return !content_bin.null();
    } else
 
-   if (file == "get.bin") {
+   if (filename == "get.bin") {
       content_type = "application/x-binary";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "bin", query);
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "bin", query);
       return !content_bin.null();
    } else
 
-   if (file == "get.png") {
+   if (filename == "get.png") {
       content_type = "image/png";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(path, "png", query);
+      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "png", query);
       return !content_bin.null();
    }
 */

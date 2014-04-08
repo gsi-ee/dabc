@@ -224,8 +224,11 @@ namespace dabc {
 
       bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
 
-      /** Returns 0 - no childs, 1 - has childs, -1 - uncknown */
+      /** Returns 0 - no childs, 1 - has childs, -1 - unknown */
       int HasChilds(const std::string& path);
+
+      /** Returns 1 - need auth,  0 - no need auth, -1 - undefined */
+      int NeedAuth(const std::string& path);
 
       /** Return different kinds of binary data, depends from kind */
       Buffer GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout = 5.);
