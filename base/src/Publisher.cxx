@@ -659,6 +659,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
       if (producer_name.empty()) return cmd_false;
 
+      DOUT0("CMD ITEM %s HAS FIELD %s", request_name.c_str(), DBOOL(def.HasField("cmddef")));
+
       dabc::Command res;
       if (def.GetField("cmddef").AsBool(false)) {
          res = dabc::Command(def.GetName());

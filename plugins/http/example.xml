@@ -58,6 +58,7 @@
        <history value="100"/>
        <prompter value=""/>
        <logger value="false"/>
+       <cmd value="false"/>
     </Module>
 
     <MemoryPool name="Pool">

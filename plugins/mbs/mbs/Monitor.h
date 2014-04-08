@@ -93,7 +93,8 @@ namespace mbs {
          };
 
          std::string fMbsNode;
-         MbsLogRec  fRec;
+         int         fPort;
+         MbsLogRec   fRec;
 
          bool CreateAddon();
 
@@ -104,7 +105,7 @@ namespace mbs {
          virtual void ProcessEvent(const dabc::EventId&);
 
       public:
-         DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode);
+         DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
          virtual ~DaqLogWorker();
 
          virtual std::string RequiredThrdClass() const
@@ -112,34 +113,43 @@ namespace mbs {
 
    };
 
-   // ========================================================================
+   // ======================================================================
 
+   /** Worker to handle connection with MBS remote command server.
+    * Server can be started in MBS with command 'start cmdrem'
+    */
 
-   class DaqCmdWorker : public dabc::Worker {
+   class DaqRemCmdWorker : public dabc::Worker {
       protected:
+
+         struct MbsRemCmdRec {
+            uint32_t  l_order;      /* byte order. Set to 1 by sender */
+            uint32_t  l_cmdid;      /* command id, 0xffffffff when dummy command is send */
+            uint32_t  l_status;     /* command completion status      */
+            char      c_cmd[512];   /* command to execute - or reply info */
+
+            bool CheckByteOrder() {
+               if (l_order!=1) mbs::SwapData(this, 3*4);
+               return l_order==1;
+            }
+         };
+
 
          enum IOState {
             ioInit,           // initial state
-            ioRecvHeader,     // receiving header
-            ioRecvExtra,      // receiving extra data
-            ioDone,           // operation completed
+            ioWaitReply,      // waiting for command reply
             ioError
          };
 
          std::string       fMbsNode;
-         std::string       fPrompter;
+         int               fPort;
 
          dabc::CommandsQueue fCmds;
 
          IOState           fState;
-         char              fSendBuf[256];
-         int32_t           fRecvBuf[2];
-         int               fExtraBlock;
-         dabc::Buffer      fExtraBuf;
-
-         int GetStatus() const { return fRecvBuf[1]; }
-
-         int GetEndian() const { return fRecvBuf[0]; }
+         MbsRemCmdRec      fSendBuf;
+         uint32_t          fSendCmdId;  // command identifier, send to the MBS with the command
+         MbsRemCmdRec      fRecvBuf;
 
          virtual void ProcessEvent(const dabc::EventId&);
 
@@ -149,12 +159,15 @@ namespace mbs {
 
          void ProcessNextMbsCommand();
 
+         virtual void OnThreadAssigned();
+
+         bool CreateAddon();
+
 
       public:
-         DaqCmdWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, const std::string& prompter);
+         DaqRemCmdWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
 
-         virtual ~DaqCmdWorker();
-
+         virtual ~DaqRemCmdWorker();
    };
 
 
@@ -166,8 +179,8 @@ namespace mbs {
     * Module could access MBS via three different control ports
     *
     * + status port 6008 (always)
-    * + logger port 6007 (optional)
-    * + prompter port 6006 (optional)
+    * + remote logger port 6007 (optional)
+    * + remote command port 6019 (optional)
     *
     * Status record readout periodically with specified interval and
     * used to calculate different rate values.
@@ -183,19 +196,11 @@ namespace mbs {
          dabc::Hierarchy   fHierarchy;
          unsigned          fCounter;
 
-         std::string       fMbsNode;
-         double            fPeriod;
-
-         /** If not empty, command connection will be established
-          * Same argument should be specified when starting prompter in MBS like
-          * prm -r myvalue
-          */
-         std::string       fPrompter;
-
-         bool              fWithLogger; ///< if true, logger will be tried to created
-
-         mbs::DaqStatus    fStatus;
-
+         std::string       fMbsNode;    ///< name of MBS node to connect
+         double            fPeriod;     ///< period how often status is requested
+         int               fLoggerPort; ///< port, providing log information
+         int               fCmdPort;    ///< port, providing remote command access
+         mbs::DaqStatus    fStatus;     ///< current DAQ status
          dabc::TimeStamp   fStatStamp; ///< time when last status was obtained
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);

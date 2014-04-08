@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+6.04.2014
+1. Preliminary implementation of new remote command channel in MBS.
+   Using mbs::Monitor class, any kind of MBS commands can be submitted. 
+   Security not yet established.
+   
+
 4.04.2014
 1. Use mbs::MonitorSlowControl as base class for fesa::Monitor
 2. Rename mbs::Player -> mbs::Monitor, use MonitorSlowControl as base class.

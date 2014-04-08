@@ -5,13 +5,16 @@
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
     </Run>
+    
+    <HttpServer name="http" port="8090"/>
+    
     <Module name="mbs1" class="mbs::Monitor">
-       <!--node value="X86L-15"/-->
-       <node value="r4-1"/>
+       <node value="X86L-9"/>
+       <!-- node value="r4-1"/-->
        <period value="1"/>
        <history value="100"/>
-       <prompter value=""/>
        <logger value="true"/>
+       <cmd value="true"/>
     </Module>
   </Context>
 </dabc>
