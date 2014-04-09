@@ -140,11 +140,14 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fLoggerPort(0),
    fCmdPort(0),
    fStatus(),
-   fStatStamp()
+   fStatStamp(),
+   fPrintf(false)
 {
    fMbsNode = Cfg("node", cmd).AsStr();
    fPeriod = Cfg("period", cmd).AsDouble(1.);
    int history = Cfg("history", cmd).AsInt(200);
+   bool publish = Cfg("publish", cmd).AsBool(true);
+   fPrintf = Cfg("printf", cmd).AsBool(false);
 
    if (Cfg("logger", cmd).AsBool(false))
       fLoggerPort = 6007;
@@ -207,7 +210,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
 
    // from this point on Publisher want to get regular update for the hierarchy
-   Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+   if (publish) Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
 }
 
 
@@ -786,7 +789,18 @@ void mbs::Monitor::NewMessage(const std::string& msg)
       item.SetFieldModified("value");
       fHierarchy.MarkChangedItems();
    }
+
+   if (fPrintf) printf("%s\n", msg.c_str());
 }
+
+
+void mbs::Monitor::NewSendCommand(const std::string& cmd, int res)
+{
+   if (!fPrintf) return;
+   if (res>=0) printf("replcmd>%s res=%s\n", cmd.c_str(), DBOOL(res));
+          else printf("sendcmd>%s\n", cmd.c_str());
+}
+
 
 void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
 {
@@ -833,15 +847,11 @@ int mbs::Monitor::ExecuteCommand(dabc::Command cmd)
 
       std::string cmdpath = cmd.GetStr("Item");
 
-      DOUT0("mbs::Monitor:: Get new command %s", cmdpath.c_str());
-
       if (cmdpath != "CmdMbs") return dabc::cmd_false;
 
       dabc::WorkerRef wrk = FindChildRef("DaqCmd");
 
       if ((fCmdPort<=0) || wrk.null()) return dabc::cmd_false;
-
-      DOUT0("Get new CmdMbs command %s worker %p", cmd.GetStr("cmd").c_str(), wrk());
 
       wrk.Submit(cmd);
 
@@ -899,7 +909,7 @@ void mbs::DaqLogWorker::OnThreadAssigned()
 
    if (!CreateAddon()) ActivateTimeout(5);
 
-   DOUT3("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
+   DOUT2("mbs::DaqLogWorker::OnThreadAssigned parent = %p", GetParent());
 }
 
 double mbs::DaqLogWorker::ProcessTimeout(double last_diff)
@@ -923,7 +933,7 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
             if (fRec.iType == 1) {
                DOUT4("Keep alive message from MBS logger");
             } else {
-               DOUT0("Get MSG: %s",fRec.fBuffer);
+               DOUT2("Get MSG: %s",fRec.fBuffer);
                mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
                if (pl) pl->NewMessage(fRec.fBuffer);
             }
@@ -986,7 +996,7 @@ bool mbs::DaqRemCmdWorker::CreateAddon()
    dabc::SocketIOAddon* addon = new dabc::SocketIOAddon(fd);
    addon->SetDeliverEventsToWorker(true);
 
-   DOUT0("ADDON:%p Created cmd socket %d to mbs %s:%d", addon, fd, fMbsNode.c_str(), fPort);
+   DOUT2("ADDON:%p Created cmd socket %d to mbs %s:%d", addon, fd, fMbsNode.c_str(), fPort);
 
    AssignAddon(addon);
 
@@ -1019,7 +1029,7 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
          if ((fCmds.Size()>0) && (fState == ioWaitReply)) {
             // TODO: when reply command - check result
 
-            DOUT0("mbs::DaqRemCmdWorker get reply for the command id %u", (unsigned) fRecvBuf.l_cmdid);
+            DOUT3("mbs::DaqRemCmdWorker get reply for the command id %u", (unsigned) fRecvBuf.l_cmdid);
 
             bool res = fRecvBuf.l_status==0;
 
@@ -1027,6 +1037,9 @@ void mbs::DaqRemCmdWorker::ProcessEvent(const dabc::EventId& evnt)
                EOUT("Mismatch of command id in the MBS reply");
                res = false;
             }
+
+            mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+            if (pl) pl->NewSendCommand(fCmds.Front().GetStr("cmd"), res ? 1 : 0);
 
             fCmds.Pop().ReplyBool(res);
             fState = ioInit;
@@ -1070,7 +1083,6 @@ double mbs::DaqRemCmdWorker::ProcessTimeout(double last_diff)
 int mbs::DaqRemCmdWorker::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
-      DOUT0("mbs::DaqRemCmdWorker get new command %s", cmd.GetStr("cmd").c_str());
       fCmds.Push(cmd);
       ProcessNextMbsCommand();
       return dabc::cmd_postponed;
@@ -1101,7 +1113,10 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
       return;
    }
 
-   DOUT0("Send MBS-CMD:  %s", mbscmd.c_str());
+   DOUT2("Send MBS-CMD:  %s", mbscmd.c_str());
+
+   mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+   if (pl) pl->NewSendCommand(mbscmd);
 
    fState = ioWaitReply;
 

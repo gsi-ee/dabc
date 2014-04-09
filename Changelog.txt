@@ -4,6 +4,10 @@ current functionality of the framework.
 
 9.04.2014
 1. In ROOT THttpServer provide possibility to use authentication. 
+2. Introduce mbs::MonitorHandle in "mbs/api.h" file to provide simple
+   interface to end-user for mbs::Monitor. Allow to submit mbs command
+   and retrieve logger information.
+3. Introduce mbscmd utitlity for submit MBS commnads from command line.     
 
 
 8.04.2014

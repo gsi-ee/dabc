@@ -16,8 +16,8 @@
 #include "mbs/api.h"
 
 #include "dabc/api.h"
-
 #include "dabc/Manager.h"
+#include "dabc/Publisher.h"
 
 mbs::ReadoutModule::ReadoutModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -88,7 +88,7 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
    ProcessInputEvent(0);
 }
 
-
+// ===================================================================================
 
 mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string& url, const char* classname)
 {
@@ -161,3 +161,59 @@ mbs::EventHeader* mbs::ReadoutHandle::GetEvent()
   return null() ? 0 : GetObject()->fIter.evnt();
 }
 
+// ============================================================================================
+
+mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string& mbsnode, int cmdport, int logport)
+{
+   if (dabc::mgr.null()) {
+      dabc::SetDebugLevel(-1);
+      dabc::CreateManager("dabc", -1);
+   }
+
+   int cnt = 0;
+   std::string name;
+   do {
+      name = dabc::format("MbsCtrl%d", cnt);
+   } while (!dabc::mgr.FindModule(name).null());
+
+   dabc::CmdCreateModule cmd("mbs::Monitor", name);
+   cmd.SetStr("node", mbsnode);
+   cmd.SetInt("logger", logport);
+   cmd.SetInt("cmd", cmdport);
+   cmd.SetBool("publish", false);
+   cmd.SetBool("printf", true);
+
+   if (!dabc::mgr.Execute(cmd)) return 0;
+
+   mbs::MonitorHandle mdl = dabc::mgr.FindModule(name);
+
+   mdl.Start();
+
+   return mdl;
+}
+
+bool mbs::MonitorHandle::Disconnect()
+{
+   if (null()) return false;
+
+   Stop();
+
+   std::string name = GetName();
+
+   Release();
+
+   dabc::mgr.DeleteModule(name);
+
+   return true;
+}
+
+bool mbs::MonitorHandle::MbsCmd(const std::string& mbscmd, double tmout)
+{
+   if (null()) return false;
+
+   dabc::Command cmd = dabc::CmdHierarchyExec("CmdMbs");
+   cmd.SetStr("cmd", mbscmd);
+   cmd.SetTimeout(tmout);
+
+   return Execute(cmd);
+}

@@ -201,7 +201,8 @@ namespace mbs {
          int               fLoggerPort; ///< port, providing log information
          int               fCmdPort;    ///< port, providing remote command access
          mbs::DaqStatus    fStatus;     ///< current DAQ status
-         dabc::TimeStamp   fStatStamp; ///< time when last status was obtained
+         dabc::TimeStamp   fStatStamp;  ///< time when last status was obtained
+         bool              fPrintf;     ///< use printf for major debug output
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
@@ -223,8 +224,13 @@ namespace mbs {
 
          std::string MbsNodeName() const { return fMbsNode; }
 
+         /** Called by LogWorker to inform about new message */
          void NewMessage(const std::string& msg);
 
+         /** Called by CmdWorker to inform about new command send (or getting reply) */
+         void NewSendCommand(const std::string& cmd, int res = -1);
+
+         /** Called by DaqStatusAddon to inform about new daq status */
          void NewStatus(mbs::DaqStatus& stat);
    };
 }

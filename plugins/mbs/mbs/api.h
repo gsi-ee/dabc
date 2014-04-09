@@ -29,9 +29,15 @@
 #include "mbs/Iterator.h"
 #endif
 
+#ifndef MBS_Monitor
+#include "mbs/Monitor.h"
+#endif
+
 namespace mbs {
 
    class ReadoutHandle;
+
+   /** Module, used to readout MBS data source and provide data to the user */
 
    class ReadoutModule : public dabc::ModuleAsync {
       protected:
@@ -55,6 +61,9 @@ namespace mbs {
 
    };
 
+   // =================================================================================
+
+   /** Handle to organize readout of MBS data source */
 
    class ReadoutHandle : protected dabc::ModuleAsyncRef {
 
@@ -66,6 +75,7 @@ namespace mbs {
          return DoConnect(url, "mbs::ReadoutModule");
       }
 
+      /** Check if handle is initialized */
       bool null() const { return dabc::ModuleAsyncRef::null(); }
 
       /** Disconnect from MBS server */
@@ -82,6 +92,22 @@ namespace mbs {
 
       static ReadoutHandle DoConnect(const std::string& url, const char* classname);
 
+   };
+
+   // ==========================================================================
+
+   class MonitorHandle : protected dabc::ModuleAsyncRef {
+
+       DABC_REFERENCE(MonitorHandle, dabc::ModuleAsyncRef, Monitor)
+
+       /** Connect with MBS node */
+       static MonitorHandle Connect(const std::string& mbsnode, int cmdport = 6019, int logport = 6007);
+
+       /** Release connection to the MBS node */
+       bool Disconnect();
+
+       /** Execute MBS command */
+       bool MbsCmd(const std::string& cmd, double tmout=5.);
    };
 
 }
