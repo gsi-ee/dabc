@@ -798,7 +798,15 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
          // if reconnect is specified and port is not declared as non-automatic
-         if (port->GetReconnectPeriod() > 0) {
+         if ((port->GetReconnectPeriod() > 0) || (port->fReconnectCounter>=0)) {
+            if ((port->fReconnectCounter>=0) && (--port->fReconnectCounter<0)) {
+               DOUT0("Port %s reconnection counter is expired - brake execution", port->ItemName().c_str());
+               port->Disconnect();
+               DoStop();
+               dabc::mgr.StopApplication();
+               return;
+            }
+
             std::string timername = dabc::format("ConnTimer_%s", port->GetName());
 
             ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));
@@ -808,12 +816,14 @@ void dabc::Module::ProcessEvent(const EventId& evid)
                AddModuleItem(timer);
             }
             port->SetDoingReconnect(true);
-            timer->Activate(port->GetReconnectPeriod());
+            timer->Activate(port->GetReconnectPeriod() > 0 ? port->GetReconnectPeriod() : 1.);
 
-            DOUT0("Module %s will try to reconnect port %s with period %f", GetName(), port->ItemName().c_str(), port->GetReconnectPeriod());
+            DOUT1("Module %s will try to reconnect port %s with period %f counter %d", GetName(), port->ItemName().c_str(), port->GetReconnectPeriod(), port->fReconnectCounter);
 
             return;
          }
+
+         DOUT3("Module %s get disconnect message about port %s", GetName(), port->ItemName().c_str());
 
          if (fAutoStop && IsRunning()) {
             for (unsigned n=0;n<NumOutputs();n++)
@@ -901,7 +911,7 @@ double dabc::Module::ProcessConnTimer(ConnTimer* timer)
       return -1.;
    }
 
-   return port()->GetReconnectPeriod();
+   return port()->GetReconnectPeriod() > 0 ? port()->GetReconnectPeriod() : 1.;
 }
 
 

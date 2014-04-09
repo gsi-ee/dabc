@@ -38,7 +38,6 @@ std::string dabc::Transport::MakeName(const PortRef& inpport, const PortRef& out
 }
 
 
-
 dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport) :
    ModuleAsync(MakeName(inpport, outport)),
    fTransportDevice(),
@@ -97,12 +96,12 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
 dabc::Transport::~Transport()
 {
-   DOUT5("$$$$$$ Transport %s DESTRUCTOR", GetName());
+   DOUT3("Transport %s DESTRUCTOR", ItemName().c_str());
 }
 
 void dabc::Transport::ModuleCleanup()
 {
-   DOUT5("$$$$$$ Transport %s CLEANUP", GetName());
+   DOUT3("Transport %s CLEANUP", ItemName().c_str());
 
    // first let transport to cleanup itself
    TransportCleanup();

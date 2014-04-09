@@ -59,6 +59,8 @@ namespace dabc {
 
          unsigned fConnected;
 
+         bool fBlockWhenUnconnected; ///< should queue block when input port not connected, default false
+
          enum { MaskInp = 0x1, MaskOut = 0x2, MaskConn = 0x3 };
 
          LocalTransport(unsigned capacity, bool withmutex);
@@ -75,9 +77,22 @@ namespace dabc {
 
          bool IsConnected() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn); }
 
-         unsigned NumCanSend() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn) ? (fQueue.Capacity() - fQueue.Size()) : 1; }
 
-         bool CanSend() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn) ? !fQueue.Full() : true; }
+         /** How many buffers can be add to the queue */
+         unsigned NumCanSend() const
+         {
+            LockGuard lock(QueueMutex());
+            return ((fConnected == MaskConn) || fBlockWhenUnconnected) ? fQueue.Capacity() - fQueue.Size() : fQueue.Capacity();
+         }
+
+         /** Returns true when send operation will add buffer into the queue
+          * When queue is not connected, buffer can always be add to the queue - this
+          * will left in the queue newest buffers */
+         bool CanSend() const
+         {
+            LockGuard lock(QueueMutex());
+            return ((fConnected == MaskConn) || fBlockWhenUnconnected) ? !fQueue.Full() : true;
+         }
 
          bool Send(Buffer& buf);
 

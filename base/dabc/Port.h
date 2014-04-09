@@ -73,8 +73,10 @@ namespace dabc {
 
          unsigned           fMaxLoopLength;   // maximum length of single event-processing loop
 
-         double             fReconnectPeriod; // defines how often reconnect for port should be tried, -1 disable reconnect
-         bool               fDoingReconnect;  // true if reconnection is now active
+         double             fReconnectPeriod;   ///< defines how often reconnect for port should be tried, -1 disable reconnect
+         int                fReconnectCounter;  ///< maximal number of reconnect attempts, default unlimited
+         bool               fDoingReconnect;    ///< true if reconnection is now active
+
 
          /** \brief Inherited method, should cleanup everything */
          virtual void ObjectCleanup();
@@ -124,8 +126,14 @@ namespace dabc {
          /** Method can only be used from thread itself */
          bool IsConnected() const { return fQueue.IsConnected(); }
 
-         /** Specify reconnect period or disable reconnection with -1 */
-         void SetReconnectPeriod(double p = -1) { fReconnectPeriod = p; if (fReconnectPeriod<=0) SetDoingReconnect(false); }
+         /** Specify reconnect period or disable reconnection with -1
+          * One also can specify maximal number of reconnect after application will be stopped */
+         void SetReconnectPeriod(double period = -1, int numtry = -1)
+         {
+            fReconnectPeriod = period;
+            fReconnectCounter = numtry;
+            if (fReconnectPeriod<=0) SetDoingReconnect(false);
+         }
 
          double GetReconnectPeriod() const { return fReconnectPeriod; }
 
@@ -190,7 +198,7 @@ namespace dabc {
       PortRef GetBindPort();
 
       /** \brief Enable of port reconnection, if connection was broken  */
-      void EnableReconnect(double period = 1.) { if (GetObject()) GetObject()->SetReconnectPeriod(period); }
+      void EnableReconnect(double period = 1., int numtry = -1) { if (GetObject()) GetObject()->SetReconnectPeriod(period, numtry); }
 
       /** \brief Disable reconnection */
       void DisableReconnect() { if (GetObject()) GetObject()->SetReconnectPeriod(-1); }

@@ -29,6 +29,7 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fRateName(),
    fMaxLoopLength(0),
    fReconnectPeriod(-1),
+   fReconnectCounter(-1),
    fDoingReconnect(false)
 {
 }
@@ -52,7 +53,7 @@ void dabc::Port::ReadPortConfiguration()
    fRateName = Cfg(xmlRateAttr).AsStr(fRateName);
 
    if (Cfg(xmlAutoAttr).AsBool(true))
-      SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.));
+      SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.), Cfg(xmlNumReconnAttr).AsInt(-1.));
 }
 
 

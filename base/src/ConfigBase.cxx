@@ -41,6 +41,7 @@ namespace dabc {
    const char* xmlTimeoutAttr      = "timeout";
    const char* xmlAutoAttr         = "auto";
    const char* xmlReconnectAttr    = "reconnect";
+   const char* xmlNumReconnAttr    = "numreconn";
    const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
    const char* xmlUserNode         = "User";

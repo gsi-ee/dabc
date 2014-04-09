@@ -30,7 +30,8 @@ dabc::LocalTransport::LocalTransport(unsigned capacity, bool withmutex) :
     fInpId(0),
     fInpSignKind(0),
     fSignalInp(3),  // signal input after any first operation
-    fConnected(0)
+    fConnected(0),
+    fBlockWhenUnconnected(false)
 {
    SetFlag(flAutoDestroy, true);
 
@@ -62,21 +63,28 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
 //   DOUT0("Local transport %p send buffer %u", this, (unsigned) buf.SegmentId(0));
 
+
+   dabc::Buffer skipbuf;
    dabc::WorkerRef mdl;
    unsigned id(0);
 
    {
       dabc::LockGuard lock(QueueMutex());
 
-      // ignore all send operations when connection is not established
-      if (fConnected != MaskConn) {
-         DOUT1("Local transport %s ignore buffer while not fully connected mask %u inp %s out %s",
-               GetName(), fConnected, (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
-         return false;
-      }
+      // when send operation invoked in not connected state, one could reject buffer
+      // but ptobably reconnection will be started therefore try to add buffer into the queue
+      //if (fConnected != MaskConn) {
+      //   DOUT1("Local transport %s ignore buffer while not fully connected mask %u inp %s out %s",
+      //         GetName(), fConnected, (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
+      //   return false;
+      // }
 
       if (buf.NumReferences() > 1)
          EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.NumReferences());
+
+      // when queue is not connected, we could skip oldest buffer
+      if ((fConnected != MaskConn) && !fBlockWhenUnconnected && fQueue.Full())
+         fQueue.PopBuffer(skipbuf);
 
       if (!fQueue.PushBuffer(buf)) {
          EOUT("Not able to push buffer into the queue");
@@ -88,6 +96,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       bool makesig(false);
 
+      // only if input port still connected, deliver events to it
+      if (fConnected & MaskInp)
       switch (fInpSignKind) {
          case Port::SignalNone: return true;
 
@@ -112,6 +122,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
          id = fInpId;
       }
    }
+
+   skipbuf.Release();
 
    mdl.FireEvent(evntInput, id);
 

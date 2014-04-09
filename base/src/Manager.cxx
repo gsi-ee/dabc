@@ -125,22 +125,28 @@ namespace dabc {
 
    class BlockingOutput : public DataOutput {
       protected:
-         double fBlockTm;
-         bool fSleep;
+         double    fBlockTm;
+         bool      fSleep;
+         int       fErrCounter;  ///< counter till error
 
       public:
          BlockingOutput(const dabc::Url& url) :
             DataOutput(url),
             fBlockTm(1.),
-            fSleep(true)
+            fSleep(true),
+            fErrCounter(0)
          {
             fBlockTm = url.GetOptionDouble("time", 1.);
             fSleep = url.GetOptionBool("sleep", true);
+            fErrCounter = url.GetOptionInt("err", 0);
          }
 
          unsigned Write_Buffer(Buffer& buf)
          {
             buf.Release();
+            if (fErrCounter > 0)
+               if (--fErrCounter == 0) return do_Error;
+
             if (fSleep) {
                dabc::Sleep(fBlockTm);
             } else {
@@ -198,7 +204,7 @@ dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string& t
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="bin") {
-      DOUT0("Binary output file name %s", url.GetFullName().c_str());
+      // DOUT0("Binary output file name %s", url.GetFullName().c_str());
       return new BinaryFileOutput(url);
    } else
    if (url.GetProtocol() == "block") {
@@ -212,7 +218,7 @@ dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string& typ
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="bin") {
-      DOUT0("Binary input file name %s", url.GetFullName().c_str());
+      // DOUT0("Binary input file name %s", url.GetFullName().c_str());
 
       return new BinaryFileInput(url);
    }

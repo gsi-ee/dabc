@@ -41,6 +41,7 @@ namespace dabc {
    extern const char* xmlTimeoutAttr;
    extern const char* xmlAutoAttr;
    extern const char* xmlReconnectAttr;
+   extern const char* xmlNumReconnAttr;
    extern const char* xmlValueAttr;
    extern const char* xmlRunNode;
    extern const char* xmlUserNode;
