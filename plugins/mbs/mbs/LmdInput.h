@@ -32,7 +32,7 @@ namespace mbs {
 
    /** \brief Input for LMD files (lmd:) */
 
-   class LmdInputNew : public dabc::FileInput {
+   class LmdInput : public dabc::FileInput {
        protected:
 
           mbs::LmdFile      fFile;
@@ -42,8 +42,8 @@ namespace mbs {
           bool OpenNextFile();
 
        public:
-          LmdInputNew(const dabc::Url& url);
-          virtual ~LmdInputNew();
+          LmdInput(const dabc::Url& url);
+          virtual ~LmdInput();
 
           virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 

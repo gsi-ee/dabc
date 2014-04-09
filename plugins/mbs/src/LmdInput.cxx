@@ -25,7 +25,7 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-mbs::LmdInputNew::LmdInputNew(const dabc::Url& url) :
+mbs::LmdInput::LmdInput(const dabc::Url& url) :
    dabc::FileInput(url),
    fFile()
 {
@@ -33,19 +33,19 @@ mbs::LmdInputNew::LmdInputNew(const dabc::Url& url) :
       fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
-mbs::LmdInputNew::~LmdInputNew()
+mbs::LmdInput::~LmdInput()
 {
    CloseFile();
 }
 
-bool mbs::LmdInputNew::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+bool mbs::LmdInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
    if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
 
    return OpenNextFile();
 }
 
-bool mbs::LmdInputNew::OpenNextFile()
+bool mbs::LmdInput::OpenNextFile()
 {
    CloseFile();
 
@@ -62,14 +62,14 @@ bool mbs::LmdInputNew::OpenNextFile()
 }
 
 
-bool mbs::LmdInputNew::CloseFile()
+bool mbs::LmdInput::CloseFile()
 {
    fFile.Close();
    ClearCurrentFileName();
    return true;
 }
 
-unsigned mbs::LmdInputNew::Read_Size()
+unsigned mbs::LmdInput::Read_Size()
 {
    // get size of the buffer which should be read from the file
 
@@ -79,7 +79,7 @@ unsigned mbs::LmdInputNew::Read_Size()
    return dabc::di_DfltBufSize;
 }
 
-unsigned mbs::LmdInputNew::Read_Complete(dabc::Buffer& buf)
+unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
 {
    uint64_t bufsize = 0;
 

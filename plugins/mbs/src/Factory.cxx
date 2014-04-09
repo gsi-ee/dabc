@@ -99,7 +99,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
    } else
    if (url.GetProtocol()==mbs::protocolLmd) {
       DOUT0("LMD2 input file name %s", url.GetFullName().c_str());
-      return new mbs::LmdInputNew(url);
+      return new mbs::LmdInput(url);
    } else
    if (url.GetProtocol()=="lmdtxt") {
       DOUT0("TEXT LMD input file name %s", url.GetFullName().c_str());
@@ -152,7 +152,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
    dabc::Url url(typ);
    if (url.GetProtocol()==mbs::protocolLmd) {
       DOUT0("LMD output file name %s", url.GetFullName().c_str());
-      return new mbs::LmdOutputNew(url);
+      return new mbs::LmdOutput(url);
    }
 
    return 0;
@@ -171,101 +171,4 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
-
-/** \page mbs_plugin MBS plugin for DABC (libDabcMbs.so)
-
-\ingroup dabc_plugins
-
-\subpage mbs_plugin_doc <br>
-
-\subpage mbs_web_interface
-
- */
-
-
-/** \page mbs_plugin_doc Short description of MBS plugin
-
-Plugin designed to work with GSI DAQ system [MBS](http://daq.gsi.de) and
-provides following components:
-+ \ref mbs::LmdFile  - class for reading and writing of lmd files
-+ \ref mbs::LmdOutput - output transport to store data in lmd files (like lmd://file.lmd)
-+ \ref mbs::LmdInput  - input transport for reading of lmd files
-+ \ref mbs::ClientTransport - input client transport to connect with running MBS node
-+ \ref mbs::ServerTransport - output server transport to provide data as MBS server dose
-+ \ref mbs::CombinerModule - module to combine events from several MBS sources
-+ \ref mbs::Monitor - module to interact with MBS over DABC web interface
-*/
-
-
-/** \page mbs_web_interface Web interface to MBS
-
-\ref mbs::Monitor module provides possibility to interact with MBS over DABC web interface
-
-
-### XML file syntax
-
-Example of configuration file is \ref plugins/mbs/app/web-mbs.xml
-
-Following parameters could be specified for the module:
-
-| Parameter | Description |
-| --------: | :---------- |
-|      node | Name of MBS node |
-|    period | How often status information requested from MBS node [default 1 sec] |
-|   history | Size of preserved history [default 200] |
-|  prompter | Argument, used for starting prompter [default - empty] |
-|    logger | If not false, read log information when prompter is enabled [default - enabled] |
-
-
-Several MBS nodes can be readout at once:
-
-~~~~~~~~~~~~~{.xml}
-<?xml version="1.0"?>
-<dabc version="2">
-  <Context name="web-mbs">
-    <Run>
-      <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHttp.so"/>
-    </Run>
-    <Module name="mbs1" class="mbs::Monitor">
-       <node value="r4-1"/>
-    </Module>
-    <Module name="mbs2" class="mbs::Monitor">
-       <node value="r4l-1"/>
-    </Module>
-  </Context>
-</dabc>
-~~~~~~~~~~~~~
-
-
-### MBS status record (port 6008)
-
-In most situations started automatically by MBS.
-mbs::Monitor module will periodically request status record and
-calculate several rate values - data rate, event rate. Several log variables
-are created, which reproduce output of **rate** command of MBS.
-
-### MBS prompter (port 6006)
-
-MBS prompter allows to submit MBS commands remotely and only remotely.
-To start prompter on mbs, one should do:
-
-~~~~~~~~~~~~~
-rio4> rpm -r ARG
-~~~~~~~~~~~~~
-
-Value of argument after -r (here ARG) should be specified as value of **prompter**
-configuration parameter in xml file. In that case module will publish **CmdMbs** command,
-which can be used from web interface to submit commands like
-"start acq", "stop acq", "@startup", "show rate" and others to MBS process.
-
-
-### MBS logger (port 6007)
-
-When logger is enabled by MBS, one can connect to it and get log information.
-At the moment logger is available in the MBS only together with the prompter.
-If enabled, module will readout log information and put into log record.
-
-
-*/
 

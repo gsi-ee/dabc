@@ -1,8 +1,6 @@
 /** \page hadaq_plugin HADAQ plugin for DABC (libDabcHadaq.so)
  *
- *  \subpage hadaq_plugin_doc
- *
- *  \n
+ *  \subpage hadaq_plugin_doc <br>
  *
  *  \subpage hadaq_trb3_package
  *
@@ -199,7 +197,7 @@ maxsize defines maximum size (in MB) of file, which than will be closed and new
 file will be started
 
 ## Configure online server
-
+ 
 Combiner module should have at least one output and
 auto="true" should be specified for "OnlineServer" module.
 hadaq events will be delivered to "OnlineServer" module, where

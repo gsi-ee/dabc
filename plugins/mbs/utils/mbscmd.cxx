@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <vector>
 
 #include "dabc/string.h"
 
@@ -28,10 +29,13 @@ int usage(const char* errstr = 0)
    }
 
    printf("utility for accessing remote MBS nodes\n");
-   printf("mbscmd nodename [args]\n\n");
+   printf("mbscmd nodename [args] cmd1 cmd2 cmd3 ...\n");
    printf("Additional arguments:\n");
    printf("   -logport number         - port number of log channel (-1 - off, default 6007)\n");
    printf("   -cmdport number         - port number of command channel (-1 - off, default 6019)\n");
+   printf("   -cmd mbs_command        - MBS command to execute (can be any number)\n");
+   printf("   -tmout time             - timeout for command execution (default 5 sec)\n");
+   printf("   -wait time              - wait time at the end of utility (default 1 sec)\n");
 
    return errstr ? 1 : 0;
 }
@@ -43,12 +47,18 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    int logport(6007), cmdport(6019);
+   double tmout(5.), waittm(1.);
+
+   std::vector<std::string> cmds;
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-logport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &logport); } else
       if ((strcmp(argv[n],"-cmdport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &cmdport); } else
-      return usage("Unknown option");
+      if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-wait")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &waittm); } else
+      if ((strcmp(argv[n],"-cmd")==0) && (n+1<argc)) { cmds.push_back(argv[++n]); } else
+      usage("Unkcnown option");
    }
 
    mbs::MonitorHandle ref = mbs::MonitorHandle::Connect(argv[1], cmdport, logport);
@@ -57,11 +67,10 @@ int main(int argc, char* argv[])
 
    //ref.MbsCmd("sta logrem");
 
-   ref.MbsCmd("type event");
+   for (unsigned n=0;n<cmds.size();n++)
+      ref.MbsCmd(cmds[n], tmout);
 
-   ref.MbsCmd("show rate");
-
-   dabc::Sleep(0.5);
+   dabc::Sleep(waittm);
 
    ref.Disconnect();
 

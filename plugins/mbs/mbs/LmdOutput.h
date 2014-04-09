@@ -28,7 +28,7 @@ namespace mbs {
 
    /** \brief Output for LMD files (lmd:) */
 
-   class LmdOutputNew : public dabc::FileOutput {
+   class LmdOutput : public dabc::FileOutput {
       protected:
 
          mbs::LmdFile       fFile;
@@ -38,8 +38,8 @@ namespace mbs {
 
       public:
 
-         LmdOutputNew(const dabc::Url& url);
-         virtual ~LmdOutputNew();
+         LmdOutput(const dabc::Url& url);
+         virtual ~LmdOutput();
 
          virtual bool Write_Init();
 

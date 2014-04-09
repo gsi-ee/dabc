@@ -31,7 +31,7 @@
 #include "mbs/Iterator.h"
 
 
-mbs::LmdOutputNew::LmdOutputNew(const dabc::Url& url) :
+mbs::LmdOutput::LmdOutput(const dabc::Url& url) :
    dabc::FileOutput(url, ".lmd"),
    fFile()
 {
@@ -39,19 +39,19 @@ mbs::LmdOutputNew::LmdOutputNew(const dabc::Url& url) :
       fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
 }
 
-mbs::LmdOutputNew::~LmdOutputNew()
+mbs::LmdOutput::~LmdOutput()
 {
    CloseFile();
 }
 
-bool mbs::LmdOutputNew::Write_Init()
+bool mbs::LmdOutput::Write_Init()
 {
    if (!dabc::FileOutput::Write_Init()) return false;
 
    return StartNewFile();
 }
 
-bool mbs::LmdOutputNew::StartNewFile()
+bool mbs::LmdOutput::StartNewFile()
 {
    CloseFile();
 
@@ -67,7 +67,7 @@ bool mbs::LmdOutputNew::StartNewFile()
    return true;
 }
 
-bool mbs::LmdOutputNew::CloseFile()
+bool mbs::LmdOutput::CloseFile()
 {
    if (fFile.isWriting()) {
       ShowInfo(0, dabc::format("Close file %s", CurrentFileName().c_str()));
@@ -76,7 +76,7 @@ bool mbs::LmdOutputNew::CloseFile()
    return true;
 }
 
-unsigned mbs::LmdOutputNew::Write_Buffer(dabc::Buffer& buf)
+unsigned mbs::LmdOutput::Write_Buffer(dabc::Buffer& buf)
 {
    if (!fFile.isWriting() || buf.null()) return dabc::do_Error;
 
