@@ -2,7 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
-6.04.2014
+9.04.2014
+1. In ROOT THttpServer provide possibility to use authentication. 
+
+
+8.04.2014
 1. Preliminary implementation of new remote command channel in MBS.
    Using mbs::Monitor class, any kind of MBS commands can be submitted. 
 2. On MBS side one can specify exact IP address of allowed clients,
@@ -17,7 +21,7 @@ current functionality of the framework.
    requested when accessing such element in browser or via command line.        
 
 
-4.04.2014
+6.04.2014
 1. Use mbs::MonitorSlowControl as base class for fesa::Monitor
 2. Rename mbs::Player -> mbs::Monitor, use MonitorSlowControl as base class.
    As result, user can get MBS slow-control variables (rates for the moment) into analysis. 

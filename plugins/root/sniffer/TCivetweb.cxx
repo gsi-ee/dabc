@@ -66,9 +66,23 @@ static int begin_request_handler(struct mg_connection *conn)
 // Following additional options can be specified                        //
 //    top=foldername - name of top folder, seen in the browser          //
 //    thrds=N - use N threads to run civetweb server (default 5)        //
+//    auth_file - global authentication file                            //
+//    auth_domain - domain name, used for authentication                //
 //                                                                      //
 // Example:                                                             //
 //    new THttpServer("http:8080/none?top=MyApp&thrds=3");              //
+//                                                                      //
+// Authentication:                                                      //
+//    When auth_file and auth_domain parameters are specified, access   //
+//    to running http server will be possible only after user           //
+//    authentication, using so-call digest method. To generate          //
+//    authentication file, htdigest routine should be used:             //
+//                                                                      //
+//        [shell] htdigest -c .htdigest domain_name user                //
+//                                                                      //
+//    When creating server, parameters should be:                       //
+//                                                                      //
+//       new THttpServer("http:8080/none?auth_file=.htdigets&auth_domain=domain_name");   //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -103,6 +117,7 @@ Bool_t TCivetweb::Create(const char* args)
 
    TString sport = "8080";
    TString num_threads = "5";
+   TString auth_file, auth_domain;
 
    // for the moment the only argument is port number
    if ((args!=0) && (strlen(args)>0)) {
@@ -117,6 +132,11 @@ Bool_t TCivetweb::Create(const char* args)
 
          Int_t thrds = url.GetIntValueFromOptions("thrds");
          if (thrds>0) num_threads.Form("%d", thrds);
+
+         const char* afile = url.GetValueFromOptions("auth_file");
+         if (afile!=0) auth_file = afile;
+         const char* adomain = url.GetValueFromOptions("auth_domain");
+         if (adomain!=0) auth_domain = adomain;
       }
    }
 
@@ -129,6 +149,14 @@ Bool_t TCivetweb::Create(const char* args)
    options[op++] = sport.Data();
    options[op++] = "num_threads";
    options[op++] = num_threads.Data();
+
+   if ((auth_file.Length()>0) && (auth_domain.Length()>0)) {
+      options[op++] = "global_auth_file";
+      options[op++] = auth_file.Data();
+      options[op++] = "authentication_domain";
+      options[op++] = auth_domain.Data();
+   }
+
    options[op++] = 0;
 
    // Start the web server.
