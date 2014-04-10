@@ -122,7 +122,6 @@ void dabc::Port::SetQueue(Reference& ref)
    fQueue << ref;
    if (fQueue.null()) return;
 
-   // DOUT0("Port %s SetQUEUE", ItemName().c_str());
    fQueue()->SetConnected(IsInput());
 
    // change capacity field under mutex, while it can be accessed outside the thread
@@ -192,9 +191,12 @@ bool dabc::Port::SubmitCommandToTransport(Command cmd)
    return false;
 }
 
-/** Returns true when reconnection should be attempted */
-bool dabc::Port::TryNextReconnect()
+bool dabc::Port::TryNextReconnect(bool caused_by_error)
 {
+   if (!caused_by_error) {
+      return false;
+   }
+
    if ((fReconnectPeriod>0) && (--fReconnectLimit>=0)) return true;
 
    SetDoingReconnect(false);
@@ -233,11 +235,12 @@ int dabc::PortRef::GetSignallingKind()
    return Port::SignalNone;
 }
 
-bool dabc::PortRef::Disconnect()
+bool dabc::PortRef::Disconnect(bool witherr)
 {
    if (GetObject()==0) return false;
    dabc::Command cmd("DisconnectPort");
    cmd.SetStr("Port", GetObject()->GetName());
+   cmd.SetBool("WithErr", witherr);
    return GetModule().Execute(cmd) == cmd_true;
 }
 

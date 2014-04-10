@@ -47,6 +47,7 @@ namespace dabc {
            evntTimeout,
            evntPortConnect,
            evntPortDisconnect,
+           evntPortError,           // produce when port on other side disconnects with error
            evntConnStart,           // event produce when other side of connection is stared
            evntConnStop,            // event produce when other side of connection is stopped
            evntModuleLast,          // last event id, used by Module itself
@@ -198,7 +199,8 @@ namespace dabc {
 
       protected:
 
-         std::string fPortName;
+         std::string fPortName;        ///< port name, which should be reconnected
+         bool fErrorFlag;              ///< indicate why reconnection was started
 
          virtual bool ItemNeedThread() const { return true; }
 

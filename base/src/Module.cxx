@@ -270,18 +270,27 @@ dabc::Buffer dabc::Module::TakeDfltBuffer()
    return dabc::Buffer();
 }
 
-bool dabc::Module::DisconnectPort(const std::string& portname)
+bool dabc::Module::DisconnectPort(const std::string& portname, bool witherr)
 {
    PortRef port = FindPort(portname);
 
    if (port.null()) return false;
 
-   port()->Disconnect();
+   port()->Disconnect(witherr);
 
    // we should process event (disregard running state) to allow module react on such action
-   ProcessItemEvent(port(), evntPortDisconnect);
+   ProcessItemEvent(port(), witherr ? evntPortError : evntPortDisconnect);
 
    return true;
+}
+
+
+void dabc::Module::DisconnectAllPorts(bool witherr)
+{
+   for (unsigned n=0;n<fItems.size();n++) {
+      Port* port = dynamic_cast<Port*> (fItems[n]);
+      if (port) port->Disconnect(witherr);
+   }
 }
 
 
@@ -345,7 +354,7 @@ int dabc::Module::PreviewCommand(Command cmd)
       cmd_res = cmd_bool((nout<NumOutputs()) && Output(nout)->IsConnected());
    } else
    if (cmd.IsName("DisconnectPort")) {
-      cmd_res = cmd_bool(DisconnectPort(cmd.GetStr("Port")));
+      cmd_res = cmd_bool(DisconnectPort(cmd.GetStr("Port"), cmd.GetBool("WithErr")));
    } else
    if (cmd.IsName("IsPortConnected")) {
       PortRef port = FindPort(cmd.GetStr("Port"));
@@ -786,14 +795,17 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          break;
       }
 
-      case evntPortDisconnect: {
+      case evntPortDisconnect:
+      case evntPortError: {
+
+         bool iserror = (evid.GetCode() == evntPortError);
 
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
 
          if (port!=0) {
             port->GetConnReq().ChangeState(ConnectionObject::sDisconnected, true);
 
-            DOUT2("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
+            DOUT3("Module %s running %s get disconnect event for port %s connected %s err %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()), DBOOL(iserror));
 
             //InputPort* inp = dynamic_cast<InputPort*> (port);
             //if (inp) DOUT0("Input still can recv %u buffers", inp->NumCanRecv());
@@ -802,7 +814,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
             ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
             // if reconnect is specified and port is not declared as non-automatic
-            if (port->TryNextReconnect()) {
+            if (port->TryNextReconnect(iserror)) {
                std::string timername = dabc::format("ConnTimer_%s", port->GetName());
 
                ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));
@@ -811,6 +823,9 @@ void dabc::Module::ProcessEvent(const EventId& evid)
                   timer = new ConnTimer(this, timername, port->GetName());
                   AddModuleItem(timer);
                }
+
+               timer->fErrorFlag = iserror;
+
                port->SetDoingReconnect(true);
                timer->Activate(port->GetReconnectPeriod() > 0 ? port->GetReconnectPeriod() : 1.);
 
@@ -819,8 +834,6 @@ void dabc::Module::ProcessEvent(const EventId& evid)
                return;
             }
          }
-
-         DOUT3("Module %s get disconnect message about port %s", GetName(), port->ItemName().c_str());
 
          if (fAutoStop && IsRunning()) {
             for (unsigned n=0;n<NumOutputs();n++)
@@ -911,7 +924,7 @@ double dabc::Module::ProcessConnTimer(const std::string& portname)
       return -1.;
    }
 
-   if (!port()->TryNextReconnect()) return -1;
+   if (!port()->TryNextReconnect(true)) return -1;
 
    return port()->GetReconnectPeriod() > 0 ? port()->GetReconnectPeriod() : 1.;
 }

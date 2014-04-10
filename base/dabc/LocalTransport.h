@@ -77,7 +77,6 @@ namespace dabc {
 
          bool IsConnected() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn); }
 
-
          /** How many buffers can be add to the queue */
          unsigned NumCanSend() const
          {
@@ -104,6 +103,8 @@ namespace dabc {
 
          inline Mutex* QueueMutex() const { return fWithMutex ? ObjectMutex() : 0; }
 
+         inline void EnableMutex() { fWithMutex = true; }
+
          // no need for mutex - capacity is not changed until destructor call
          unsigned Capacity() const { LockGuard lock(QueueMutex()); return fQueue.Capacity(); }
 
@@ -113,7 +114,7 @@ namespace dabc {
 
          Buffer Item(unsigned indx) const { LockGuard lock(QueueMutex()); return fQueue.Item(indx); }
 
-         void Disconnect(bool isinp);
+         void Disconnect(bool isinp, bool witherr = false);
 
       public:
 
@@ -145,7 +146,7 @@ namespace dabc {
 
       void SignalWhenFull() { if (GetObject()) GetObject()->SignalWhenFull(); }
 
-      void Disconnect(bool isinp) { if (GetObject()) GetObject()->Disconnect(isinp); Release(); }
+      void Disconnect(bool isinp, bool witherr = false) { if (GetObject()) GetObject()->Disconnect(isinp, witherr); Release(); }
 
       void PortActivated(int itemkind, bool on) { if (GetObject()) GetObject()->PortActivated(itemkind, on); }
 

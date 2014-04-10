@@ -538,6 +538,7 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
 
 dabc::OutputTransport::~OutputTransport()
 {
+   // DOUT0("DESTROY OUTPUT TRANSPORT %s", GetName());
    CloseOutput();
 }
 
@@ -577,6 +578,8 @@ bool dabc::OutputTransport::StopTransport()
 
 void dabc::OutputTransport::TransportCleanup()
 {
+   // DOUT0("CLEANUP OUTPUT TRANSPORT %s", GetName());
+
    CloseOutput();
 
    dabc::Transport::TransportCleanup();
@@ -760,6 +763,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
    if (fState == outError) {
       fState = outClosed;
+      // DOUT3("CLOSE OUTPUT TRANSPORT %s input connected %s", GetName(), DBOOL(IsInputConnected()));
       CloseOutput();
       CloseTransport(true);
       return false;

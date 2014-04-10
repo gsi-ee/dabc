@@ -10,6 +10,8 @@ current functionality of the framework.
      "stop"  - stop module
      "exit"  - normal exit from DABC application 
      "abort" - immediate abort of application 
+2. When reconnect ports, reuse buffers queue (in LocalTransport) again.
+   Before each reconnection was recreating queue again.  
 
 
 9.04.2014

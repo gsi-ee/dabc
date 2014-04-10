@@ -78,7 +78,7 @@ bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (d
    // one need Keeper to release buffer in case of exceptions
    do {
 
-      if (evid == evntPortDisconnect)
+      if ((evid == evntPortDisconnect) || (evid==evntPortError))
          if (IsDisconnectExcept())
             throw Exception(ex_Disconnect, "Port disconnected when sending buffer", port->ItemName());
 
@@ -100,7 +100,7 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (dabc::
    uint16_t evid(evntModuleNone);
 
    do {
-      if (evid == evntPortDisconnect)
+      if ((evid == evntPortDisconnect) || (evid==evntPortError))
          if (IsDisconnectExcept())
             throw Exception(ex_Disconnect, "Port disconnected when receiving buffer", port->ItemName());
 
@@ -134,7 +134,7 @@ dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw
    unsigned shift(0);
 
    do {
-      if (evid == evntPortDisconnect)
+      if ((evid == evntPortDisconnect) || (evid==evntPortError))
          if (IsDisconnectExcept())
             throw Exception(ex_Disconnect, "Port disconnected when receiving buffer", resitem ? resitem->ItemName() : "");
 
@@ -167,7 +167,7 @@ bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double ti
    uint16_t evid(evntModuleNone);
 
    do {
-      if (evid == evntPortDisconnect)
+      if ((evid == evntPortDisconnect) || (evid==evntPortError))
          if (IsDisconnectExcept())
             throw Exception(ex_Disconnect, "Port disconnected when waiting for input buffers", port->ItemName());
 

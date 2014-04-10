@@ -189,6 +189,7 @@ void dabc::Transport::ProcessConnectEvent(const std::string& name, bool on)
 
 void dabc::Transport::CloseTransport(bool witherr)
 {
+   DisconnectAllPorts(witherr);
    DeleteThis();
 }
 

@@ -65,6 +65,7 @@ void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
           ProcessConnectEvent(item->GetName(), true);
           break;
        case evntPortDisconnect:
+       case evntPortError:
           ProcessConnectEvent(item->GetName(), false);
           break;
        case evntUser:

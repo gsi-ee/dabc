@@ -16,6 +16,7 @@
 #include "dabc/ModuleItem.h"
 
 #include "dabc/Module.h"
+#include "dabc/Manager.h"
 
 
 dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string& name) :
@@ -148,15 +149,39 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
 dabc::ConnTimer::ConnTimer(Reference parent, const std::string& name, const std::string& portname) :
    ModuleItem(mitConnTimer, parent, name),
-   fPortName(portname)
+   fPortName(portname),
+   fErrorFlag(false)
 {
 }
 
-double dabc::ConnTimer::ProcessTimeout(double last_diff)
+double dabc::ConnTimer::ProcessTimeout(double)
 {
    Module* m = dynamic_cast<Module*> (GetParent());
 
-   DOUT3("ConnTimer::ProcessTimeout m = %s", DNAME(m));
+   // DOUT0("ConnTimer::ProcessTimeout m = %s", DNAME(m));
 
-   return m ? m->ProcessConnTimer(fPortName) : -1.;
+   if (m==0) return -1;
+
+   PortRef port = m->FindPort(fPortName);
+   if (port.null()) return -1.;
+
+   std::string itemname = port.ItemName();
+
+   if (!port()->IsDoingReconnect()) return -1;
+
+   // DOUT0("Trying to reconnect port %s", itemname.c_str());
+
+   if (port.IsConnected() || dabc::mgr.CreateTransport(itemname)) {
+      port()->SetDoingReconnect(false);
+      // DOUT0("Port %s connected again", itemname.c_str());
+      return -1.;
+   }
+
+   if (!port()->TryNextReconnect(fErrorFlag)) return -1;
+
+   return port()->GetReconnectPeriod() > 0 ? port()->GetReconnectPeriod() : 1.;
+
+
+
+//   return m ? m->ProcessConnTimer(fPortName, fErrorFlag) : -1.;
 }

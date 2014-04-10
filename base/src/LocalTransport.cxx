@@ -266,7 +266,7 @@ void dabc::LocalTransport::ConfirmEvent(bool fromoutputport)
 
 }
 
-void dabc::LocalTransport::Disconnect(bool isinp)
+void dabc::LocalTransport::Disconnect(bool isinp, bool witherr)
 {
    dabc::WorkerRef m1, m2;
    unsigned id1, id2;
@@ -277,19 +277,30 @@ void dabc::LocalTransport::Disconnect(bool isinp)
       // we remove all references from queue itself
       dabc::LockGuard lock(QueueMutex());
 
-      m1 << fInp;
-      id1 = fInpId; fInpId = 0;
-      m2 << fOut;
-      id2 = fOutId; fOutId = 0;
+      id1 = fInpId;
+      if (isinp) {
+         m1 << fInp;
+         fInpId = 0;
+      } else {
+         m1 = fInp; // we will use reference to deliver signal
+      }
+
+      id2 = fOutId;
+      if (!isinp) {
+         m2 << fOut;
+         fOutId = 0;
+      } else {
+         m2 = fOut;
+      }
       fConnected = fConnected & ~(isinp ? MaskInp : MaskOut);
       if (fConnected == 0) cleanup = true;
    }
 
-   DOUT3("Queue %p disconnected isinp %s conn %u m1:%s m2:%s", this, DBOOL(isinp), fConnected, m1.GetName(), m2.GetName());
+   DOUT3("Queue %p disconnected witherr %s isinp %s conn %u m1:%s m2:%s", this, DBOOL(witherr), DBOOL(isinp), fConnected, m1.GetName(), m2.GetName());
 
-   if (!isinp) m1.FireEvent(evntPortDisconnect, id1);
+   if (!isinp) m1.FireEvent(witherr ? evntPortError : evntPortDisconnect, id1);
 
-   if (isinp) m2.FireEvent(evntPortDisconnect, id2);
+   if (isinp) m2.FireEvent(witherr ? evntPortError : evntPortDisconnect, id2);
 
    m1.Release();
 
@@ -340,7 +351,16 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    ModuleRef m1 = port_out.GetModule();
    ModuleRef m2 = port_inp.GetModule();
 
-   bool withmutex = true;
+   LocalTransportRef q_out = port_out()->fQueue;
+   LocalTransportRef q_inp = port_inp()->fQueue;
+
+   if (!q_out.null() && !q_inp.null()) {
+      EOUT("Both ports have existing queues - should not happen");
+      q_out.Release();
+      q_inp.Release();
+   }
+
+   bool withmutex(true), assign_out(true), assign_inp(true);
 
    if (m1.IsSameThread(m2)) {
       DOUT3("!!!! Can create queue without mutex !!!");
@@ -350,27 +370,51 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    unsigned queuesize = port_out.QueueCapacity() > port_inp.QueueCapacity() ?
          port_out.QueueCapacity() : port_inp.QueueCapacity();
 
-   LocalTransportRef q = new LocalTransport(queuesize, withmutex);
+   LocalTransportRef q;
 
-   q()->fOut = m1;
-   q()->fOutId = port_out.ItemId();
-   q()->fOutSignKind = port_out.GetSignallingKind();
+   if (!q_out.null()) {
+      q << q_out;
+      if (withmutex) q()->EnableMutex();
+      assign_out = false;
 
-   q()->fInp = m2;
-   q()->fInpId = port_inp.ItemId();
-   q()->fInpSignKind = port_inp.GetSignallingKind();
+      DOUT3("REUSE queue of output port %s", port_out.ItemName().c_str());
+   } else
+   if (!q_inp.null()) {
+      q << q_inp;
+      if (withmutex) q()->EnableMutex();
+      assign_inp = false;
+      DOUT3("REUSE queue of input port %s", port_inp.ItemName().c_str());
+   } else {
+      q = new LocalTransport(queuesize, withmutex);
+   }
+
+   if (assign_inp) {
+      q()->fInp = m2;
+      q()->fInpId = port_inp.ItemId();
+      q()->fInpSignKind = port_inp.GetSignallingKind();
+   }
+
+   if (assign_out) {
+      q()->fOut = m1;
+      q()->fOutId = port_out.ItemId();
+      q()->fOutSignKind = port_out.GetSignallingKind();
+   }
 
    // first of all, we must connect input port
-   dabc::Command cmd2("SetQueue");
-   cmd2.SetStr("Port", port_inp.GetName());
-   cmd2.SetRef("Queue", q);
-   if (!m2.Execute(cmd2)) return cmd_false;
+   if (assign_inp) {
+      dabc::Command cmd2("SetQueue");
+      cmd2.SetStr("Port", port_inp.GetName());
+      cmd2.SetRef("Queue", q);
+      if (!m2.Execute(cmd2)) return cmd_false;
+   }
 
-   // than output port
-   dabc::Command cmd1("SetQueue");
-   cmd1.SetStr("Port", port_out.GetName());
-   cmd1.SetRef("Queue", q);
-   if (!m1.Execute(cmd1)) return cmd_false;
+   // than assign output port
+   if (assign_out) {
+      dabc::Command cmd1("SetQueue");
+      cmd1.SetStr("Port", port_out.GetName());
+      cmd1.SetRef("Queue", q);
+      if (!m1.Execute(cmd1)) return cmd_false;
+   }
 
    bool m1running = m1.IsRunning();
    bool m2running = m2.IsRunning();

@@ -35,6 +35,7 @@ namespace dabc {
    class Module;
    class ModuleAsync;
    class ModuleSync;
+   class ConnTimer;
 
    /** \brief Base class for input and output ports
     *
@@ -49,6 +50,8 @@ namespace dabc {
       friend class ModuleAsync;
       friend class ModuleSync;
       friend class PortRef;
+      friend class LocalTransport;
+      friend class ConnTimer;
 
       public:
          // TODO: provide meaningful names
@@ -111,7 +114,7 @@ namespace dabc {
          /** Method returns actual queue capacity of the port, object mutex is used */
          unsigned QueueCapacity() const;
 
-         void Disconnect() { fQueue.Disconnect(IsInput()); }
+         void Disconnect(bool witherr = false) { fQueue.Disconnect(IsInput(), witherr); }
 
          /** Set name of bind port - when input and output ports should use same transport */
          void SetBindName(const std::string& name);
@@ -135,7 +138,7 @@ namespace dabc {
          }
 
          /** Returns true when reconnection should be attempted */
-         bool TryNextReconnect();
+         bool TryNextReconnect(bool caused_by_error);
 
          double GetReconnectPeriod() const { return fReconnectPeriod; }
 
@@ -206,7 +209,7 @@ namespace dabc {
       bool IsConnected();
 
       /** \brief Disconnect port  */
-      bool Disconnect();
+      bool Disconnect(bool witherr = false);
 
       /** \brief Return reference on the bind port */
       PortRef GetBindPort();

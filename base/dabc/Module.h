@@ -175,9 +175,12 @@ namespace dabc {
 
          PortRef FindPort(const std::string& name) const;
          bool IsPortConnected(const std::string& name) const;
-         /** \brief Disconnect port from transport.
-          Should be called only from Module thread */
-         bool DisconnectPort(const std::string& name);
+
+         /** Disconnect port from transport. Should be called only from Module thread */
+         bool DisconnectPort(const std::string& name, bool witherr = false);
+
+         /** Method disconnects all module ports, should be called only from Module thread */
+         void DisconnectAllPorts(bool witherr = false);
 
          /** Submits command to transport, assigned with the port */
          bool SubmitCommandToTransport(const std::string& portname, Command cmd);
