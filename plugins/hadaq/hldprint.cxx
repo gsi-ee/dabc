@@ -42,6 +42,7 @@ int usage(const char* errstr = 0)
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -tdc mask               - printout raw data of tdc subevents (default none) \n");
+   printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
 
    return errstr ? 1 : 0;
@@ -114,12 +115,13 @@ int main(int argc, char* argv[])
    long number = 10;
    double tmout = 5.;
    bool printraw(false), printsub(false), showrate(false), reconnect(false);
-   unsigned tdcmask(0);
+   unsigned tdcmask(0), hubmask(0);
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
+      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
@@ -220,6 +222,10 @@ int main(int argc, char* argv[])
 
             if ((tdcmask!=0) && (datakind & tdcmask) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
                PrintTdcData(sub, ix, datalen,9);
+            } else
+            if ((hubmask!=0) && (datakind==hubmask)) {
+               // this is hack - skip hub header, inside is normal subsub events structure
+               continue;
             } else
             if (printraw) sub->PrintRawData(ix,datalen,9);
 
