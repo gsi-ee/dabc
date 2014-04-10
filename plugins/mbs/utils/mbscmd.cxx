@@ -24,13 +24,11 @@
 
 int usage(const char* errstr = 0)
 {
-   if (errstr!=0) {
-      printf("Error: %s\n\n", errstr);
-   }
+   if (errstr!=0) printf("Error: %s\n\n", errstr);
 
-   printf("utility for accessing remote MBS nodes\n");
-   printf("mbscmd nodename [args] cmd1 cmd2 cmd3 ...\n");
-   printf("Additional arguments:\n");
+   printf("Utility for execute commands on remote MBS node\n");
+   printf("   mbscmd nodename [args] -cmd cmd1 [-cmd cmd2] [-cmd cmd3] ...\n");
+   printf("Arguments:\n");
    printf("   -logport number         - port number of log channel (-1 - off, default 6007)\n");
    printf("   -cmdport number         - port number of command channel (-1 - off, default 6019)\n");
    printf("   -cmd mbs_command        - MBS command to execute (can be any number)\n");
@@ -39,7 +37,6 @@ int usage(const char* errstr = 0)
 
    return errstr ? 1 : 0;
 }
-
 
 
 int main(int argc, char* argv[])

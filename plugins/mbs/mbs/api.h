@@ -103,6 +103,9 @@ namespace mbs {
        /** Connect with MBS node */
        static MonitorHandle Connect(const std::string& mbsnode, int cmdport = 6019, int logport = 6007);
 
+       /** Check if handle is initialized */
+       bool null() const { return dabc::ModuleAsyncRef::null(); }
+
        /** Release connection to the MBS node */
        bool Disconnect();
 
