@@ -352,7 +352,7 @@ void hadaq::DataTransport::ProcessTimerEvent(unsigned timer)
 
 std::string  hadaq::DataTransport::GetNetmemParName(const std::string& name)
 {
-   return dabc::format("%s_%s",hadaq::NetmemPrefix,name.c_str());
+   return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
 }
 
 void hadaq::DataTransport::CreateNetmemPar(const std::string& name)

@@ -960,7 +960,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
 std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string& name)
 {
-   return dabc::format("%s_%s",hadaq::EvtbuildPrefix,name.c_str());
+   return dabc::format("%s-%s",hadaq::EvtbuildPrefix,name.c_str());
 }
 
 void hadaq::CombinerModule::CreateEvtbuildPar(const std::string& name)
@@ -981,7 +981,7 @@ unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string& name)
 
 std::string  hadaq::CombinerModule::GetNetmemParName(const std::string& name)
 {
-   return dabc::format("%s_%s",hadaq::NetmemPrefix,name.c_str());
+   return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
 }
 
 void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)

@@ -97,7 +97,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
    if(fUseDaqDisk)
    {
-      dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild_diskNum");
+      dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild-diskNum");
       if(!fDiskNumberPar.null()) {
          std::string prefix;
          size_t prepos = fFileName.rfind("/");
@@ -111,7 +111,7 @@ bool hadaq::HldOutput::StartNewFile()
          DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
                fFileName.c_str(), disknumber, prefix.c_str());
 
-         dabc::CmdSetParameter cmd("Evtbuild_diskNumEB", disknumber);
+         dabc::CmdSetParameter cmd("Evtbuild-diskNumEB", disknumber);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
       }
       else
@@ -154,7 +154,7 @@ bool hadaq::HldOutput::StartNewFile()
       char sbuf[100];
       if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
 
-      dabc::CmdSetParameter cmd("Evtbuild_dataMover", indx);
+      dabc::CmdSetParameter cmd("Evtbuild-dataMover", indx);
       dabc::mgr.FindModule("Combiner").Submit(cmd);
 
       DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);
@@ -274,7 +274,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       //#endif // oldmode
 
       if (fLastUpdate.Expired(0.5)) {
-         dabc::CmdSetParameter cmd("Evtbuild_bytesWritten", (int)fCurrentFileSize);
+         dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
          fLastUpdate.GetNow();
       }

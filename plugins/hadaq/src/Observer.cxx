@@ -37,8 +37,8 @@ hadaq::Observer::Observer(const std::string& name) :
    if (fNodeId<0) fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
    // we use here mask for evtbuild and netmem prefixes only
-   std::string maskn = dabc::format("%s_*",hadaq::NetmemPrefix);
-   std::string maske = dabc::format("%s_*",hadaq::EvtbuildPrefix);
+   std::string maskn = dabc::format("%s-*",hadaq::NetmemPrefix);
+   std::string maske = dabc::format("%s-*",hadaq::EvtbuildPrefix);
 
    RegisterForParameterEvent(maskn, false);
    RegisterForParameterEvent(maske, false);
@@ -124,8 +124,8 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
    dabc::Parameter par = dabc::mgr.FindPar(parname);
 
 // NOTE/TODO: parameters exported from transport workers are not found under their pathname here
-// Name is e.g. "//Input3/Netmem_pktsReceived3"
-// Names from Combiner module are found "Combiner/Evtbuild_trigNr1"
+// Name is e.g. "//Input3/Netmem-pktsReceived3"
+// Names from Combiner module are found "Combiner/Evtbuild-trigNr1"
 //   if (par.null()) {
 //      EOUT("Warning - Did not find parameter %s !!!!", parname.c_str());
 //      //return false;
@@ -161,7 +161,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 {
    std::string res = "";
-   size_t sep = dabcname.rfind("_"); // need to look for last underscore, otherwise problems with DABC parameter naming!
+   size_t sep = dabcname.rfind("-"); // need to look for last score, otherwise problems with DABC parameter naming!
    if (sep!=std::string::npos)
       res = dabcname.substr (sep+1,std::string::npos);
    return res;
@@ -170,7 +170,7 @@ std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 std::string hadaq::Observer::ShmName(const std::string& dabcname)
 {
    std::string res = "";
-   size_t sep = dabcname.find("_");
+   size_t sep = dabcname.find("-");
    if (sep != std::string::npos) {
       res = dabcname.substr(0, sep);
       //std::cout << "ShmName:" << res << std::endl;
@@ -217,7 +217,7 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 {
    std::string parname = evnt.ParName();
 
-//if(parname=="Combiner/Evtbuild_runId")
+//if(parname=="Combiner/Evtbuild-runId")
 //   {
 //      DOUT0("Get event %d par %s value %s", evnt.EventId(), parname.c_str(), evnt.ParValue().c_str());
 //   }
