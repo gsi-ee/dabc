@@ -299,7 +299,6 @@ void dabc::LocalTransport::Disconnect(bool isinp)
       DOUT3("Perform queue %p cleanup by disconnect", this);
       CleanupQueue();
    }
-
 }
 
 

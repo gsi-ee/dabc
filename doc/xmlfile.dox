@@ -193,13 +193,14 @@ Following parameters of attributes could be specified:
 | url        | used to create transport for the port |
 | urlopt     | extra options for url string, can be specified in other places |
 | queue      | queue size, used for the port |
+| thread     | thread name, used to create transport | 
 | loop       | maximumal event loop length for port before it will be interrupted (default 0 - endless) |
 | bind       | name of bind port |
 | rate       | name of rate parameter |
 | signal     | which events delivered to user. Can be "none", "every", "confirm" (default) |
-| reconnect  | period of automatic reconnect, (default -1 - disabled) | 
-| numreconn  | number of reconnect attempts, after which application will be stopped (default - unlimited) | 
-| thread     | thread name, used to create transport | 
+| reconnect  | period of automatic reconnect (default -1 - disabled) | 
+| numreconn  | number of reconnect attempts (default - 10) | 
+| onerror    | action done in case of error "close", "none", "stop", "exit", "abort" | 
  
  
 ## Connections 

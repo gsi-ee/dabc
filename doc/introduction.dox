@@ -124,6 +124,10 @@ Depending on the module type, there are different possibilities to
 work with the ports in the processing functions of the module.
 These are described in respective sectiops of dabc::ModuleSync and dabc::ModuleAsync.
 
+One could configure that happens when port connection is closed due to error.
+It is done via "onerror" property in xml file or \ref dabc::Port::ConfigureOnError() method.
+Allowed values are: "none", "close", "stop", "exit", "abort"
+
 
 ## Transport
 Outside the modules the ports are connected to dabc::Transport objects.

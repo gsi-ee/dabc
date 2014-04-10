@@ -15,6 +15,8 @@
 
 #include "dabc/Port.h"
 
+#include <stdlib.h>
+
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
 
@@ -29,8 +31,9 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fRateName(),
    fMaxLoopLength(0),
    fReconnectPeriod(-1),
-   fReconnectCounter(-1),
-   fDoingReconnect(false)
+   fReconnectLimit(-1),
+   fDoingReconnect(false),
+   fOnError()
 {
 }
 
@@ -52,8 +55,9 @@ void dabc::Port::ReadPortConfiguration()
    fBindName = Cfg(xmlBindAttr).AsStr(fBindName);
    fRateName = Cfg(xmlRateAttr).AsStr(fRateName);
 
-   if (Cfg(xmlAutoAttr).AsBool(true))
-      SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.), Cfg(xmlNumReconnAttr).AsInt(-1.));
+   ConfigureOnError(Cfg("onerror").AsStr());
+
+   ConfigureReconnect(Cfg(xmlReconnectAttr).AsDouble(-1.), Cfg(xmlNumReconnAttr).AsInt(-1.));
 }
 
 
@@ -185,6 +189,34 @@ bool dabc::Port::SubmitCommandToTransport(Command cmd)
 {
    if (IsInput()) return fQueue.SubmitCommandTo(false, cmd);
    if (IsOutput()) return fQueue.SubmitCommandTo(true, cmd);
+   return false;
+}
+
+/** Returns true when reconnection should be attempted */
+bool dabc::Port::TryNextReconnect()
+{
+   if ((fReconnectPeriod>0) && (--fReconnectLimit>=0)) return true;
+
+   SetDoingReconnect(false);
+
+   if (fOnError == "none") {
+      // do nothing
+   } else
+   if (fOnError == "stop") {
+      DOUT0("Stop module %s due to error on port %s", DNAME(GetParent()), ItemName().c_str());
+      StopModule();
+   } else
+   if (fOnError == "exit") {
+      DOUT0("Exit application due to error on port %s", ItemName().c_str());
+      dabc::mgr.StopApplication();
+   } else
+   if (fOnError == "abort") {
+      DOUT0("Abort application due to error on port %s", ItemName().c_str());
+      abort();
+   } else {
+      Disconnect();
+   }
+
    return false;
 }
 
@@ -350,7 +382,6 @@ unsigned dabc::OutputPort::NumStartEvents()
 // ====================================================================================
 
 
-
 dabc::PoolHandle::PoolHandle(Reference parent,
                              Reference pool,
                              const std::string& name,
@@ -361,6 +392,7 @@ dabc::PoolHandle::PoolHandle(Reference parent,
    // only can do it here, while in Port Cfg() cannot correctly locate PoolHandle as class
    ReadPortConfiguration();
 }
+
 
 dabc::PoolHandle::~PoolHandle()
 {

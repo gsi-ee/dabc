@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+10.04.2014
+1. Add "onerror" property for the port. It defines, that happens when
+   error occured on the port and port cannot be reconnected. Allowed: 
+     "none" - do nothing
+     "close" - close connection, cleanup queue (defualt)
+     "stop"  - stop module
+     "exit"  - normal exit from DABC application 
+     "abort" - immediate abort of application 
+
+
 9.04.2014
 1. In ROOT THttpServer provide possibility to use authentication. 
 2. Introduce mbs::MonitorHandle in "mbs/api.h" file to provide simple

@@ -83,7 +83,7 @@ namespace dabc {
          void AddModuleItem(ModuleItem* item);
          void RemoveModuleItem(ModuleItem* item);
 
-         double ProcessConnTimer(ConnTimer* timer);
+         double ProcessConnTimer(const std::string& portname);
 
          Buffer TakeDfltBuffer();
 

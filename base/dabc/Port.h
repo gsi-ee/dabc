@@ -61,21 +61,17 @@ namespace dabc {
          };
 
       protected:
-         unsigned           fQueueCapacity;
-         Parameter          fRate;
-         EventsProducing    fSignal;
-
-         LocalTransportRef  fQueue;
-
-         std::string        fBindName; // name of bind port
-
-         std::string        fRateName; // name of rate parameter, which should be assigned to port
-
-         unsigned           fMaxLoopLength;   // maximum length of single event-processing loop
-
+         unsigned           fQueueCapacity;     ///< configured capacity of the queue
+         Parameter          fRate;              ///< parameter for rate calculations
+         EventsProducing    fSignal;            ///< which kinds of signals will be produced
+         LocalTransportRef  fQueue;             ///< queue with buffers
+         std::string        fBindName;          ///< name of bind port (when input and output connected to same transport)
+         std::string        fRateName;          ///< name of rate parameter, which should be assigned to port
+         unsigned           fMaxLoopLength;     ///< maximum length of single event-processing loop
          double             fReconnectPeriod;   ///< defines how often reconnect for port should be tried, -1 disable reconnect
-         int                fReconnectCounter;  ///< maximal number of reconnect attempts, default unlimited
+         int                fReconnectLimit;    ///< number of reconnect attempts, default 10
          bool               fDoingReconnect;    ///< true if reconnection is now active
+         std::string        fOnError;           ///< that to do in case of error
 
 
          /** \brief Inherited method, should cleanup everything */
@@ -126,14 +122,20 @@ namespace dabc {
          /** Method can only be used from thread itself */
          bool IsConnected() const { return fQueue.IsConnected(); }
 
-         /** Specify reconnect period or disable reconnection with -1
-          * One also can specify maximal number of reconnect after application will be stopped */
-         void SetReconnectPeriod(double period = -1, int numtry = -1)
+         /** Specify reconnect period and number of reconnect tries
+          * If both negative, disable reconnect. */
+         void ConfigureReconnect(double period = -1, int numtry = -1)
          {
             fReconnectPeriod = period;
-            fReconnectCounter = numtry;
-            if (fReconnectPeriod<=0) SetDoingReconnect(false);
+            fReconnectLimit = numtry;
+            if ((fReconnectPeriod <= 0) && (fReconnectLimit>=0)) fReconnectPeriod = 1.; else
+            if ((fReconnectPeriod > 0) && (fReconnectLimit<0)) fReconnectLimit = 10; else
+
+            if (fReconnectPeriod <= 0) SetDoingReconnect(false);
          }
+
+         /** Returns true when reconnection should be attempted */
+         bool TryNextReconnect();
 
          double GetReconnectPeriod() const { return fReconnectPeriod; }
 
@@ -153,6 +155,18 @@ namespace dabc {
 
          /** Submit command to connected transport */
          bool SubmitCommandToTransport(Command cmd);
+
+         /** Configure action in case of error.
+          *
+          * @param action - kind of action
+          *    "none"  - do nothing
+          *    "close" - close connection, cleanup queue (default)
+          *    "stop"  - stop module
+          *    "exit"  - normal exit from DABC application
+          *    "abort" - immediate abort of application
+          *
+          */
+         void ConfigureOnError(const std::string& action = "") { fOnError = action; }
 
       public:
 
@@ -197,11 +211,13 @@ namespace dabc {
       /** \brief Return reference on the bind port */
       PortRef GetBindPort();
 
-      /** \brief Enable of port reconnection, if connection was broken  */
-      void EnableReconnect(double period = 1., int numtry = -1) { if (GetObject()) GetObject()->SetReconnectPeriod(period, numtry); }
+      /** \brief Configure action in case of error */
+      void ConfigureOnError(const std::string& action = "")
+         { if (GetObject()) GetObject()->ConfigureOnError(action); }
 
-      /** \brief Disable reconnection */
-      void DisableReconnect() { if (GetObject()) GetObject()->SetReconnectPeriod(-1); }
+      /** \brief Configure reconnect parameters  */
+      void ConfigureReconnect(double period = 1., int numtry = -1)
+         { if (GetObject()) GetObject()->ConfigureReconnect(period, numtry); }
 
       /** \brief Create connection request to specified url
        * \details If connection to other dabc port is specified,

@@ -90,6 +90,11 @@ namespace dabc {
          /** \brief Called when module object is cleaned up - should release all references if any */
          virtual void DoCleanup() {}
 
+         /** Stops module, should be called from module thread */
+         void StopModule();
+
+         /** Starts module, should be called from module thread */
+         void StartModule();
 
       public:
          virtual ~ModuleItem();

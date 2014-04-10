@@ -47,6 +47,20 @@ dabc::ModuleItem::~ModuleItem()
 }
 
 
+void dabc::ModuleItem::StopModule()
+{
+   Module* m = dynamic_cast<Module*> (GetParent());
+   if (m) m->DoStop();
+}
+
+
+void dabc::ModuleItem::StartModule()
+{
+   Module* m = dynamic_cast<Module*> (GetParent());
+   if (m) m->DoStart();
+}
+
+
 // ========================================================
 
 dabc::WorkerRef dabc::ModuleItemRef::GetModule() const
@@ -142,9 +156,7 @@ double dabc::ConnTimer::ProcessTimeout(double last_diff)
 {
    Module* m = dynamic_cast<Module*> (GetParent());
 
-   DOUT0("ConnTimer::ProcessTimeout m = %p", m);
+   DOUT3("ConnTimer::ProcessTimeout m = %s", DNAME(m));
 
-   if (m) return m->ProcessConnTimer(this);
-
-   return -1.;
+   return m ? m->ProcessConnTimer(fPortName) : -1.;
 }
