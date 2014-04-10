@@ -1005,7 +1005,8 @@ void hadaq::CombinerModule::StoreRunInfoStart()
 	time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
 	FILE *fp;
 	char ltime[20];				/* local time */
-	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));	
+	struct tm tm_res;
+	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
 	std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
 	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
 	fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
@@ -1033,7 +1034,8 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
 	   t = fEpicsRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
 	FILE *fp;
 	char ltime[20];				/* local time */
-	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+	struct tm tm_res;
+	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
 	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
         std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
         fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
@@ -1061,8 +1063,7 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 
 std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
-	std::string result = fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
-	return result;
+	return fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 }
 
 

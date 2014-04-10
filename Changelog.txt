@@ -12,6 +12,8 @@ current functionality of the framework.
      "abort" - immediate abort of application 
 2. When reconnect ports, reuse buffers queue (in LocalTransport) again.
    Before each reconnection was recreating queue again.  
+3. Use localtime_r, which avoids usage of internal static variables.
+   Can cause to different effects in multithreaded environment. 
 
 
 9.04.2014

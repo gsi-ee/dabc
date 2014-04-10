@@ -250,7 +250,8 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
    }
 
    if (mask & (lDate | lTime)) {
-      struct tm * inf = localtime ( &(entry->fMsgTime) );
+      struct tm tm_res;
+      struct tm * inf = localtime_r ( &(entry->fMsgTime), &tm_res );
       if (mask & lDate) {
          if (str.length() > 0) str+=" ";
          str += dabc::format("%d-%02d-%d", inf->tm_mday, inf->tm_mon, inf->tm_year + 1900);
