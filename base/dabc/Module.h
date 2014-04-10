@@ -83,8 +83,6 @@ namespace dabc {
          void AddModuleItem(ModuleItem* item);
          void RemoveModuleItem(ModuleItem* item);
 
-         double ProcessConnTimer(const std::string& portname);
-
          Buffer TakeDfltBuffer();
 
          inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }

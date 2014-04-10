@@ -907,28 +907,6 @@ void dabc::Module::SendToAllOutputs(Buffer& buf)
    buf.Release();
 }
 
-double dabc::Module::ProcessConnTimer(const std::string& portname)
-{
-   PortRef port = FindPort(portname);
-   if (port.null()) return -1.;
-
-   std::string itemname = port.ItemName();
-
-   if (!port()->IsDoingReconnect()) return -1;
-
-   DOUT0("Trying to reconnect port %s", itemname.c_str());
-
-   if (port.IsConnected() || dabc::mgr.CreateTransport(itemname)) {
-      port()->SetDoingReconnect(false);
-      DOUT0("Port %s connected again", itemname.c_str());
-      return -1.;
-   }
-
-   if (!port()->TryNextReconnect(true)) return -1;
-
-   return port()->GetReconnectPeriod() > 0 ? port()->GetReconnectPeriod() : 1.;
-}
-
 
 // ==========================================================================
 

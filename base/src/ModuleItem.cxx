@@ -180,8 +180,4 @@ double dabc::ConnTimer::ProcessTimeout(double)
    if (!port()->TryNextReconnect(fErrorFlag)) return -1;
 
    return port()->GetReconnectPeriod() > 0 ? port()->GetReconnectPeriod() : 1.;
-
-
-
-//   return m ? m->ProcessConnTimer(fPortName, fErrorFlag) : -1.;
 }

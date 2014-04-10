@@ -718,7 +718,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
             fState = outClosing;
             break;
          case do_Error:
-            EOUT("Error when writing buffer");
+            DOUT0("Error when writing buffer in transport %s", GetName());
             fState = outError;
             break;
          default:
