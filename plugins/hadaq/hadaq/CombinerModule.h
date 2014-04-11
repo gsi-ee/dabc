@@ -125,8 +125,9 @@ namespace hadaq {
             fErrorBits=0;
             fDataError = false;
             fEmpty = true;
-            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-               fErrorbitStats[i]=0;
+          // do not clear error bit statistics!  
+//             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+//                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
          }
       };

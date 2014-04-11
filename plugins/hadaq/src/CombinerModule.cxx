@@ -30,6 +30,9 @@
 
 #include "mbs/MbsTypeDefs.h"
 
+//#define HADERRBITDEBUG 1
+
+
 hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fInp(),
@@ -520,9 +523,11 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
          fCfg[ninp].fTrigType = (val & bitmask) >> bitshift;
          //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
       }
-
+#ifndef HADERRBITDEBUG
       fCfg[ninp].fErrorBits = fInp[ninp].subevnt()->GetErrBits();
-
+#else      
+      fCfg[ninp].fErrorBits = ninp;
+#endif
       int diff = 1;
       if (fCfg[ninp].fLastTrigNr != 0)
          diff = CalcTrigNumDiff(fCfg[ninp].fTrigNr, fCfg[ninp].fLastTrigNr);
