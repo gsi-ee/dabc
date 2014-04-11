@@ -105,13 +105,17 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
       DOUT0("TEXT LMD input file name %s", url.GetFullName().c_str());
       return new mbs::TextInput(url);
    } else
-   if ((url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) {
+   if (((url.GetProtocol()==mbs::protocolMbs) && !url.GetHostName().empty()) ||
+       (url.GetProtocol()=="mbss") || (url.GetProtocol()=="mbst")) {
       DOUT3("Try to create new MBS data input typ %s", typ.c_str());
 
       int kind = mbs::NoServer;
+      if (url.GetProtocol()=="mbss") kind = mbs::StreamServer; else
+      if (url.GetProtocol()=="mbst") kind = mbs::TransportServer;
+
       int portnum = 0;
 
-      if (!url.GetFileName().empty())
+      if ((kind == mbs::NoServer) && !url.GetFileName().empty())
          kind = StrToServerKind(url.GetFileName().c_str());
 
       if (url.GetPort()>0)

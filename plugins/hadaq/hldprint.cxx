@@ -149,10 +149,7 @@ int main(int argc, char* argv[])
 
       if (url.IsValid()) {
          if (url.GetProtocol().empty())
-            src = std::string("mbs://") + src;
-
-         if (url.GetFileName().empty())
-            src += "/Stream";
+            src = std::string("mbss://") + src;
 
          if (reconnect && !url.HasOption("reconnect")) {
            if (url.GetOptions().empty())

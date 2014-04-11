@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+11.04.2014
+1. Export pthread_self() value in threads hierarchy
+2. Introduce ExtraDebug flag in hadaq::CombinerModule, 
+   only when specified extra debug will be enabled 
+3. For input kinds support protocol mbss:// - stream server 
+   and mbst:// - transport. One could specify in mbsprint mbss://r4-5. 
+
+
 10.04.2014
 1. Add "onerror" property for the port. It defines, that happens when
    error occured on the port and port cannot be reconnected. Allowed: 
@@ -15,9 +23,6 @@ current functionality of the framework.
 3. Use localtime_r, which avoids usage of internal static variables.
    Can cause to different effects in multithreaded environment. 
 4. In hldprint support -hub flag
-5. Export pthread_self() value in threads hierarchy
-6. Introduce ExtraDebug flag in hadaq::CombinerModule, 
-   only when specified extra debug will be enabled 
 
 
 9.04.2014
