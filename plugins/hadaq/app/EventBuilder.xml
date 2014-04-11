@@ -4,14 +4,15 @@
 This is example file how HADAQ event building should be configured in DABC.
 Event building process implemented in Combiner module of hadaq::CombinerModule class.
 Module can have several inputs, each with separate port number for receiving data 
-from TRB boards. In each input port configuration only port number has meaning.
-First output of combiner module reserved for the connection to 
-the optional MBS transmitter module. Second output can be use to store data in hld files. 
-To enable storage, one should specify two output ports and correctly configure Output1 of combiner module.
+from TRB boards. For every input one could configure only UDP port number - host name is ignored.
+First output of combiner module reserved for the connection to the MBS transmitter module. 
+Second output can be use to store data in hld files. 
+To enable HLD file storage one should specify NumOutputs for Combiner module
+and provide hld file name for Output1 port   
 
-To enable HLD file storage one should specify NumOutputs value="2" for Combiner module
-amnd provide hld file name for Output1 port   
+     <NumOutputs value="2"/>
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+     
 File name fill be extended according to HADAQ naming convetion.       
 
 Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
@@ -81,11 +82,14 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false"/>
-       
-       <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
+
+       <!--  this is example of HLD file storage - local and RFIO -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
-       
-       <OutputPort name="Output1" url="block://host?time=500&sleep=false"/>
+       <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
+
+       <!--  this is for debug purposes -->
+       <!--OutputPort name="Output1" url="block://host?time=0&sleep=true" thread="blockthrd1"/-->
+       <!--OutputPort name="Output2" url="block://host?time=0&sleep=true&err=100" onerror="exit" numreconn="2" thread="blockthrd2"/-->
 
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   
@@ -130,8 +134,4 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
   </Context>
 
-  <!--Context name="*">
-      <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/>
-  </Context-->
-  
 </dabc>
