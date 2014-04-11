@@ -197,19 +197,20 @@ namespace hadaq {
          uint32_t           fEpicsRunNumber;
 
          /* Defines trigger sequence number range for overflow*/
-         uint32_t fMaxHadaqTrigger;
-         uint32_t fTriggerRangeMask;
+         uint32_t           fMaxHadaqTrigger;
+         uint32_t           fTriggerRangeMask;
 
          /* if true, account difference of subsequent build event numbers as lost events
             if false, do not account it (for multiple event builder mode)*/
-         bool fEvnumDiffStatistics;
+         bool               fEvnumDiffStatistics;
 
 
-         dabc::TimeStamp   fLastDebugTm;  // timer used to generate rare debugs output
-         dabc::TimeStamp   fLastDropTm;   // timer used to avoid too often drop of data
-         dabc::TimeStamp   fLastProcTm;   // last time when event building was called
-         dabc::TimeStamp   fLastBuildTm;  // last time when complete event was build
-         double            fMaxProcDist;
+         bool              fExtraDebug;   ///< when true, extra debug output is created
+         dabc::TimeStamp   fLastDebugTm;  ///< timer used to generate rare debugs output
+         dabc::TimeStamp   fLastDropTm;   ///< timer used to avoid too often drop of data
+         dabc::TimeStamp   fLastProcTm;   ///< last time when event building was called
+         dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
+         double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
 
          bool BuildEvent();
 

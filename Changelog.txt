@@ -15,6 +15,9 @@ current functionality of the framework.
 3. Use localtime_r, which avoids usage of internal static variables.
    Can cause to different effects in multithreaded environment. 
 4. In hldprint support -hub flag
+5. Export pthread_self() value in threads hierarchy
+6. Introduce ExtraDebug flag in hadaq::CombinerModule, 
+   only when specified extra debug will be enabled 
 
 
 9.04.2014

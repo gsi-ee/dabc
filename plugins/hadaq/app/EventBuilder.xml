@@ -83,6 +83,8 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false"/>
 
+       <ExtraDebug value="false"/>
+
        <!--  this is example of HLD file storage - local and RFIO -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->

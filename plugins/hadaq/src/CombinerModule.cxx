@@ -60,9 +60,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;
 
-   fEBId = Cfg("NodeId").AsInt(-1);
+   fEBId = Cfg("NodeId", cmd).AsInt(-1);
    if (fEBId<0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
    
+   fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
    
    fRunNumber = hadaq::RawEvent::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;
@@ -574,8 +575,10 @@ bool hadaq::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
    //static unsigned ccount=0;
 
-   double tm = fLastProcTm.SpentTillNow(true);
-   if (tm > fMaxProcDist) fMaxProcDist = tm;
+   if (fExtraDebug) {
+      double tm = fLastProcTm.SpentTillNow(true);
+      if (tm > fMaxProcDist) fMaxProcDist = tm;
+   }
 
 
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
@@ -588,7 +591,7 @@ bool hadaq::CombinerModule::BuildEvent()
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
-            if (fLastDebugTm.Expired(2.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(2.)) {
                DOUT1("Fail to build event while input %u is not ready maxtm = %5.3f ", ninp, fMaxProcDist);
                fLastDebugTm.GetNow();
                fMaxProcDist = 0;
@@ -631,11 +634,10 @@ bool hadaq::CombinerModule::BuildEvent()
                   diff, fTriggerNrTolerance, maxeventid, mineventid);
       DropAllInputBuffers();
 
-      if (fLastDebugTm.Expired(1.)) {
+      if (fExtraDebug && fLastDebugTm.Expired(1.)) {
          DOUT1("Drop all buffers");
          fLastDebugTm.GetNow();
       }
-
       fLastDropTm.GetNow();
 
       return false; // retry on next set of buffers
@@ -684,7 +686,7 @@ bool hadaq::CombinerModule::BuildEvent()
             fTotalDroppedData+=droppedsize;
 
             if(!ShiftToNextSubEvent(ninp)) {
-               if (fLastDebugTm.Expired(2.)) {
+               if (fExtraDebug && fLastDebugTm.Expired(2.)) {
                   DOUT1("Cannot shift data from input %d", ninp);
                   fLastDebugTm.GetNow();
                }
@@ -780,7 +782,7 @@ bool hadaq::CombinerModule::BuildEvent()
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
          // no, we close current buffer
          if (!FlushOutputBuffer()) {
-            if (fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
                std::string sendmask;
                for (unsigned n=0;n<NumOutputs();n++)
                   sendmask.append(CanSend(n) ? "o" : "x");
@@ -796,7 +798,7 @@ bool hadaq::CombinerModule::BuildEvent()
          dabc::Buffer buf = TakeBuffer();
          if (buf.null()) {
 
-            if (fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
                DOUT0("did not have new buffer - wait for it");
                fLastDebugTm.GetNow();
             }
@@ -807,7 +809,7 @@ bool hadaq::CombinerModule::BuildEvent()
             SetInfo("Cannot use buffer for output - hard error!!!!", true);
             buf.Release();
             dabc::mgr.StopApplication();
-            if (fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
                DOUT0("Abort application completely");
                fLastDebugTm.GetNow();
             }
@@ -882,7 +884,7 @@ bool hadaq::CombinerModule::BuildEvent()
          debugmask[ninp] = 'x';
       }
 
-   if (fLastDebugTm.Expired(1.)) {
+   if (fExtraDebug && fLastDebugTm.Expired(1.)) {
       DOUT1("Did building as usual mask %s complete = %5s maxdist = %5.3f s", debugmask.c_str(), DBOOL(hasCompleteEvent), fMaxProcDist);
       fLastDebugTm.GetNow();
       fMaxProcDist = 0;

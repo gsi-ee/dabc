@@ -88,9 +88,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
     </Run>
     
     
-    <HttpServer name="http">
-       <port value="8091"/>
-    </HttpServer>
+    <HttpServer name="http" port="8091"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
@@ -103,6 +101,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
+       <ExtraDebug value="false"/>
        
       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=1" queue="200"/>
 

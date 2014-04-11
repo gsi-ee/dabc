@@ -32,8 +32,8 @@ int usage(const char* errstr = 0)
    printf("Following source kinds are supported:\n");
    printf("   hld://path/file.hld         - HLD file reading\n");
    printf("   file.hld                    - HLD file reading (file extension MUST be '.hld')\n");
-   printf("   mbs://dabcnode/Stream       - DABC stream server\n");
-   printf("   mbs://dabcnode:port/Stream  - DABC stream server with custom port\n");
+   printf("   mbs://dabcnode              - DABC stream server\n");
+   printf("   mbs://dabcnode:port         - DABC stream server with custom port\n");
    printf("   mbs://dabcnode/Transport    - DABC transport server\n");
    printf("   lmd://path/file.lmd         - LMD file reading\n");
    printf("Additional arguments:\n");

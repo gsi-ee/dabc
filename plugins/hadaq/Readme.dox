@@ -20,9 +20,6 @@
 /** \page hadaq_trb3_package Software collection for TRB3
 
 
-[TOC]
-\tableofcontents
-
 Introduction
 ============
 
@@ -97,15 +94,7 @@ Update from repository
 To obtain newest version from repository do:
 
     [shell] cd your_trb3_path
-    [shell] svn up
-    [shell] make -j4
-
-Please perform these commands from the shell, where trb3login was not called.
-
-If for that ever reasons compilation did not work after update, try recompile completely:
-
-    [shell] make clean
-    [shell] make -j4
+    [shell] make -j4 update
 
 
 
@@ -315,6 +304,131 @@ Via analysis browser one can display and monitor any histogram.
 For more details about go4 see introduction on http://go4.gsi.de.
 
 
-Any comments and wishes: S.Linev@gsi.de
+Running hldprint
+================
+
+hldprint is small utility to printout HLD data from different sources: 
+local hld files, remote hld files and running dabc application.
+It also supports printout of TDC messages.
+For instance, printing of messages from TDC with mask 0xC003 can be done with command:
+
+~~~~~~~~~~~~~~~~
+   [shell] hldprint file_0000.hld -tdc 0xc003 -hub 0x9000 -num 1
+~~~~~~~~~~~~~~~~
+ 
+Result is:
+
+~~~~~~~~~~~~~~~~
+*** Event #0x10b7b7 fullid=0x2001 runid=0x0bc01162 size 424 ***
+   *** Subevent size 388 decoding 0x020011 id 0x8000 trig 0x9578eaf0 swapped align 4 ***
+      *** Subsubevent size  19 id 0xc000 full 0013c000
+         [ 1] 21660000  tdc header
+         [ 2] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [ 3] 80118d18  hit ch: 0 isrising:1 tc:0x518 tf:0x118 tm:5587575162.766 ns
+         [ 4] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [ 5] 808e0fb6  hit ch: 2 isrising:1 tc:0x7b6 tf:0x0e0 tm:5587568272.170 ns
+         [ 6] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [ 7] 8104efb5  hit ch: 4 isrising:1 tc:0x7b5 tf:0x04e tm:5587568265.617 ns
+         [ 8] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [ 9] 81848fb5  hit ch: 6 isrising:1 tc:0x7b5 tf:0x048 tm:5587568265.553 ns
+         [10] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [11] 82063fb5  hit ch: 8 isrising:1 tc:0x7b5 tf:0x063 tm:5587568265.840 ns
+         [12] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [13] 8283afb5  hit ch:10 isrising:1 tc:0x7b5 tf:0x03a tm:5587568265.404 ns
+         [14] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [15] 830befb5  hit ch:12 isrising:1 tc:0x7b5 tf:0x0be tm:5587568266.809 ns
+         [16] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [17] 83989fb6  hit ch:14 isrising:1 tc:0x7b6 tf:0x189 tm:5587568273.968 ns
+         [18] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [19] 8415cfb6  hit ch:16 isrising:1 tc:0x7b6 tf:0x15c tm:5587568273.489 ns
+      *** Subsubevent size   3 id 0xc001 full 0003c001
+         [21] 21660000  tdc header
+         [22] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [23] 8007dd18  hit ch: 0 isrising:1 tc:0x518 tf:0x07d tm:5587575161.117 ns
+      *** Subsubevent size  20 id 0x9000 full 00149000
+      *** Subsubevent size  19 id 0xc003 full 0013c003
+         [26] 21660000  tdc header
+         [27] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [28] 80151cce  hit ch: 0 isrising:1 tc:0x4ce tf:0x151 tm:5587574793.372 ns
+         [29] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [30] 8083cf6b  hit ch: 2 isrising:1 tc:0x76b tf:0x03c tm:5587567895.426 ns
+         [31] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [32] 8106ef6b  hit ch: 4 isrising:1 tc:0x76b tf:0x06e tm:5587567895.957 ns
+         [33] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [34] 81840f6b  hit ch: 6 isrising:1 tc:0x76b tf:0x040 tm:5587567895.468 ns
+         [35] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [36] 82033f6b  hit ch: 8 isrising:1 tc:0x76b tf:0x033 tm:5587567895.330 ns
+         [37] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [38] 8289bf6b  hit ch:10 isrising:1 tc:0x76b tf:0x09b tm:5587567896.436 ns
+         [39] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [40] 83066f6b  hit ch:12 isrising:1 tc:0x76b tf:0x066 tm:5587567895.872 ns
+         [41] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [42] 8394af6b  hit ch:14 isrising:1 tc:0x76b tf:0x14a tm:5587567898.298 ns
+         [43] 6f68537c  epoch 258495356 tm 5587558400.000 ns
+         [44] 8414bf6b  hit ch:16 isrising:1 tc:0x76b tf:0x14b tm:5587567898.309 ns
+      *** Subsubevent size  29 id 0xc002 full 001dc002
+         [46] 21660000  tdc header
+         [47] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [48] 80119d19  hit ch: 0 isrising:1 tc:0x519 tf:0x119 tm:5587575167.777 ns
+         [49] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [50] 80c7b840  hit ch: 3 isrising:1 tc:0x040 tf:0x07b tm:5587568961.096 ns
+         [51] 80d26845  hit ch: 3 isrising:1 tc:0x045 tf:0x126 tm:5587568987.915 ns
+         [52] 80d0d8d1  hit ch: 3 isrising:1 tc:0x0d1 tf:0x10d tm:5587569687.649 ns
+         [53] 80dc58fc  hit ch: 3 isrising:1 tc:0x0fc tf:0x1c5 tm:5587569904.606 ns
+         [54] 80d06a23  hit ch: 3 isrising:1 tc:0x223 tf:0x106 tm:5587571377.574 ns
+         [55] 80c2ea81  hit ch: 3 isrising:1 tc:0x281 tf:0x02e tm:5587571845.277 ns
+         [56] 80c31ae2  hit ch: 3 isrising:1 tc:0x2e2 tf:0x031 tm:5587572330.309 ns
+         [57] 80c62b42  hit ch: 3 isrising:1 tc:0x342 tf:0x062 tm:5587572810.830 ns
+         [58] 80c72b77  hit ch: 3 isrising:1 tc:0x377 tf:0x072 tm:5587573076.000 ns
+         [59] 80d30ba6  hit ch: 3 isrising:1 tc:0x3a6 tf:0x130 tm:5587573313.021 ns
+         [60] 80d06bd3  hit ch: 3 isrising:1 tc:0x3d3 tf:0x106 tm:5587573537.574 ns
+         [61] 80d3bcbc  hit ch: 3 isrising:1 tc:0x4bc tf:0x13b tm:5587574703.138 ns
+         [62] 6f68537d  epoch 258495357 tm 5587568640.000 ns
+         [63] 810ba840  hit ch: 4 isrising:1 tc:0x040 tf:0x0ba tm:5587568961.766 ns
+         [64] 8113c845  hit ch: 4 isrising:1 tc:0x045 tf:0x13c tm:5587568988.149 ns
+         [65] 811288d1  hit ch: 4 isrising:1 tc:0x0d1 tf:0x128 tm:5587569687.936 ns
+         [66] 810498fb  hit ch: 4 isrising:1 tc:0x0fb tf:0x049 tm:5587569895.564 ns
+         [67] 8113da23  hit ch: 4 isrising:1 tc:0x223 tf:0x13d tm:5587571378.160 ns
+         [68] 81066a81  hit ch: 4 isrising:1 tc:0x281 tf:0x066 tm:5587571845.872 ns
+         [69] 8119fae3  hit ch: 4 isrising:1 tc:0x2e3 tf:0x19f tm:5587572339.202 ns
+         [70] 81084b42  hit ch: 4 isrising:1 tc:0x342 tf:0x084 tm:5587572811.191 ns
+         [71] 81095b77  hit ch: 4 isrising:1 tc:0x377 tf:0x095 tm:5587573076.372 ns
+         [72] 8115fba6  hit ch: 4 isrising:1 tc:0x3a6 tf:0x15f tm:5587573313.521 ns
+         [73] 8112abd3  hit ch: 4 isrising:1 tc:0x3d3 tf:0x12a tm:5587573537.957 ns
+         [74] 8116fcbc  hit ch: 4 isrising:1 tc:0x4bc tf:0x16f tm:5587574703.691 ns
+      *** Subsubevent size  15 id 0x8000 full 000f8000
+           [76] 1006f0f4  [77] a14df70f  [78] 00000032  [79] 9cbfd319  [80] 00000000  [81] 00000000  [82] 00000000  [83] 00000000
+           [84] 00000000  [85] a14df70f  [86] 00000032  [87] 9cbfd319  [88] 00000000  [89] e0ffffff  [90] 21660000
+      *** Subsubevent size   1 id 0x5555 full 00015555
+           [92] 00000001
+~~~~~~~~~~~~~~~~
+ 
+All options can be obtain when running "hldprint -help"
+
+
+Usage of hadaq API from DABC
+============================
+hldprint is just program with about 200 lines of code. 
+Source code can be found in [repository](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx)
+
+In simplified form access to any data source (local file, remote file or online server) looks like:
+
+~~~~~~~~~~~~~~~~
+#include "hadaq/api.h"
+int main() {
+   hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect("file.hld");
+   hadaq::RawEvent* evnt = 0;
+   while(evnt = ref.NextEvent(1.)) {
+      // any user code here
+      evnt->Dump();
+   }
+}
+~~~~~~~~~~~~~~~~
+
+One can use such interface in any other standalone applications.
+
+
+
+Any comments and wishes: S.Linev(at)gsi.de
 
  */

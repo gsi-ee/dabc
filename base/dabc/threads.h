@@ -375,7 +375,7 @@ namespace dabc {
          static Thread_t Self() { return pthread_self(); }
 
          /** \brief Returns true if called from thread context. */
-         inline bool IsItself() const { return fThrd == pthread_self(); }
+         inline bool IsItself() const { return pthread_equal(fThrd, pthread_self()) != 0; }
 
          /** \brief Sets default affinity for next threads to be created and for main process.
           *

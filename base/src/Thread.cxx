@@ -128,6 +128,9 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             item = fWorkerHierarchy.CreateHChild("pid");
             item.SetField(dabc::prop_kind, "log");
 
+            item = fWorkerHierarchy.CreateHChild("threadid");
+            item.SetField(dabc::prop_kind, "log");
+
             if (fThread()->fProfiling) {
                item = fWorkerHierarchy.CreateHChild("Load");
                item.SetField(dabc::prop_kind, "rate");
@@ -149,9 +152,10 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             names.push_back(work->GetName());
          }
 
-         fWorkerHierarchy.FindChild("NumWorkers").SetField("value", num);
-         fWorkerHierarchy.FindChild("Workers").SetField("value", names);
-         fWorkerHierarchy.FindChild("pid").SetField("value", getpid());
+         fWorkerHierarchy.GetHChild("NumWorkers").SetField("value", num);
+         fWorkerHierarchy.GetHChild("Workers").SetField("value", names);
+         fWorkerHierarchy.GetHChild("pid").SetField("value", getpid());
+         fWorkerHierarchy.GetHChild("threadid").SetField("value", (long) Self());
 
          if (fThread()->fProfiling) {
 
@@ -177,7 +181,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
             if ((real_tm>0) && (run_tm>0)) {
                double load = run_tm / real_tm;
                if (load > 1) load  = 1.;
-               fWorkerHierarchy.FindChild("Load").SetField("value", load);
+               fWorkerHierarchy.GetHChild("Load").SetField("value", load);
             }
          }
 
