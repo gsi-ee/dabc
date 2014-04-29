@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+29.04.2014
+1. In FastCgi use "Status:" in the header - as defined in FastCgi documentation. 
+   See http://www.fastcgi.com/docs/faq.html#httpstatus Required by Apache.
+2. Rename function FCGI_send_file, which was duplicated in Http and Root plugins.   
+
+
 11.04.2014
 1. Export pthread_self() value in threads hierarchy
 2. Introduce ExtraDebug flag in hadaq::CombinerModule, 

@@ -79,21 +79,24 @@ void THttpCallArg::SetPathAndFileName(const char* fullpath)
    }
 }
 
-void THttpCallArg::FillHttpHeader(TString& hdr)
+void THttpCallArg::FillHttpHeader(TString& hdr, Bool_t normal)
 {
+   const char* header = normal ? "HTTP/1.1" : "Status:";
+
    if ((fContentType.Length()==0) || Is404()) {
-      hdr.Form("HTTP/1.1 404 Not Found\r\n"
+      hdr.Form("%s 404 Not Found\r\n"
                "Content-Length: 0\r\n"
-               "Connection: close\r\n\r\n");
+               "Connection: close\r\n\r\n", header);
       return;
    }
 
-   hdr.Form("HTTP/1.1 200 OK\r\n"
+   hdr.Form("%s 200 OK\r\n"
             "Content-Type: %s\r\n"
             "Connection: keep-alive\r\n"
             "Content-Length: %ld\r\n",
-             GetContentType(),
-             GetContentLength());
+            header,
+            GetContentType(),
+            GetContentLength());
    if (fContentEncoding.Length()>0)
       hdr.Append(TString::Format("Content-Encoding: %s\r\n", fContentEncoding.Data()));
 

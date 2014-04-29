@@ -22,7 +22,7 @@
 #include <fstream>
 #include <stdlib.h>
 
-void FCGX_send_file(FCGX_Request* request, const char* fname)
+void FCGX_ROOT_send_file(FCGX_Request* request, const char* fname)
 {
    std::ifstream is(fname);
 
@@ -44,7 +44,7 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
 
    if (buf==0) {
       FCGX_FPrintF(request->out,
-            "HTTP/1.1 404 Not Found\r\n"
+            "Status: 404 Not Found\r\n"
             "Content-Length: 0\r\n" // Always set Content-Length
             "Connection: close\r\n\r\n");
    } else {
@@ -66,11 +66,13 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
              "\r\n", sbuf, sbuf, etag, THttpServer::GetMimeType(fname), length);
 
 */
+
       FCGX_FPrintF(request->out,
-             "HTTP/1.1 200 OK\r\n"
+             "Status: 200 OK\r\n"
              "Content-Type: %s\r\n"
              "Content-Length: %d\r\n"     // Always set Content-Length
              "\r\n", THttpServer::GetMimeType(fname), length);
+
 
       FCGX_PutStr(buf, length, request->out);
 
@@ -222,6 +224,7 @@ void* TFastCgi::run_func(void* args)
 
       if (engine->fDebugMode) {
          FCGX_FPrintF(request.out,
+            "Status: 200 OK\r\n"
             "Content-type: text/html\r\n"
             "\r\n"
             "<title>FastCGI echo</title>"
@@ -270,26 +273,26 @@ void* TFastCgi::run_func(void* args)
       TString fname;
 
       if (engine->GetServer()->IsFileRequested(inp_path, fname)) {
-         FCGX_send_file(&request, fname.Data());
+         FCGX_ROOT_send_file(&request, fname.Data());
          FCGX_Finish_r(&request);
          continue;
       }
 
-      //printf("PATHNAME %s FILENAME %s QUERY %s \n",
-      //       arg.GetPathName(), arg.GetFileName(), arg.GetQuery());
+//      printf("PATHNAME %s FILENAME %s QUERY %s \n",
+//             arg.GetPathName(), arg.GetFileName(), arg.GetQuery());
 
       TString hdr;
 
       if (!engine->GetServer()->ExecuteHttp(&arg) || arg.Is404()) {
-         arg.FillHttpHeader(hdr);
+         arg.FillHttpHeader(hdr, kFALSE);
          FCGX_FPrintF(request.out, hdr.Data());
       } else
 
       if (arg.IsFile()) {
-         FCGX_send_file(&request, (const char*) arg.GetContent());
+         FCGX_ROOT_send_file(&request, (const char*) arg.GetContent());
       } else {
 
-         arg.FillHttpHeader(hdr);
+         arg.FillHttpHeader(hdr, kFALSE);
          FCGX_FPrintF(request.out, hdr.Data());
 
          FCGX_PutStr((const char*) arg.GetContent(), (int) arg.GetContentLength(), request.out);

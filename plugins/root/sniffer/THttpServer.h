@@ -83,7 +83,7 @@ public:
    void SetEncoding(const char* typ) { fContentEncoding = typ; }
 
    // Fill http header
-   void FillHttpHeader(TString& buf);
+   void FillHttpHeader(TString& buf, Bool_t normal = kTRUE);
 
    // these methods used to return results of http request processing
 

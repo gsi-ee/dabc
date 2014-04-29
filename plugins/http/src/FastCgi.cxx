@@ -26,7 +26,7 @@
 #include <fstream>
 
 
-void FCGX_send_file(FCGX_Request* request, const char* fname)
+void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
 {
    std::ifstream is(fname);
 
@@ -48,7 +48,7 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
 
    if (buf==0) {
       FCGX_FPrintF(request->out,
-            "HTTP/1.1 404 Not Found\r\n"
+            "Status: 404 Not Found\r\n"
             "Content-Length: 0\r\n" // Always set Content-Length
             "Connection: close\r\n\r\n");
    } else {
@@ -71,7 +71,7 @@ void FCGX_send_file(FCGX_Request* request, const char* fname)
 
 */
       FCGX_FPrintF(request->out,
-             "HTTP/1.1 200 OK\r\n"
+             "Status: 200 OK\r\n"
              "Content-Type: %s\r\n"
              "Content-Length: %d\r\n"     // Always set Content-Length
              "\r\n", http::Server::GetMimeType(fname), length);
@@ -165,6 +165,7 @@ void* http::FastCgi::RunFunc(void* args)
       if (server->fDebugMode) {
 
          FCGX_FPrintF(request.out,
+            "Status: 200 OK\r\n"
             "Content-type: text/html\r\n"
             "\r\n"
             "<title>FastCGI echo (fcgiapp version)</title>"
@@ -213,25 +214,25 @@ void* http::FastCgi::RunFunc(void* args)
       dabc::Buffer content_bin;
 
       if (server->IsFileRequested(inp_path, content_str)) {
-         FCGX_send_file(&request, content_str.c_str());
+         FCGX_DABC_send_file(&request, content_str.c_str());
          FCGX_Finish_r(&request);
          continue;
       }
 
       if (!server->Process(inp_path, inp_query,
                            content_type, content_str, content_bin)) {
-         FCGX_FPrintF(request.out, "HTTP/1.1 404 Not Found\r\n"
+         FCGX_FPrintF(request.out, "Status: 404 Not Found\r\n"
                                    "Content-Length: 0\r\n"
                                    "Connection: close\r\n\r\n");
       } else
 
       if (content_type=="__file__") {
-         FCGX_send_file(&request, content_str.c_str());
+         FCGX_DABC_send_file(&request, content_str.c_str());
       } else
 
       if (!content_bin.null()) {
          FCGX_FPrintF(request.out,
-                  "HTTP/1.1 200 OK\r\n"
+                  "Status: 200 OK\r\n"
                   "Content-Type: %s\r\n"
                   "Content-Length: %ld\r\n"
                   "Connection: keep-alive\r\n"
@@ -239,12 +240,12 @@ void* http::FastCgi::RunFunc(void* args)
                   content_type.c_str(),
                   content_bin.GetTotalSize());
 
-         FCGX_PutStr((const char*) content_bin.SegmentPtr(), (int) content_bin.GetTotalSize(), request.out);
+         FCGX_PutStr((const char*) content_bin.SegmentPtr(), (long) content_bin.GetTotalSize(), request.out);
       } else {
 
          // Send HTTP reply to the client
          FCGX_FPrintF(request.out,
-             "HTTP/1.1 200 OK\r\n"
+             "Status: 200 OK\r\n"
              "Content-Type: %s\r\n"
              "Content-Length: %d\r\n"        // Always set Content-Length
              "\r\n"
@@ -253,7 +254,6 @@ void* http::FastCgi::RunFunc(void* args)
              content_str.length(),
              content_str.c_str());
       }
-
 
       FCGX_Finish_r(&request);
 
