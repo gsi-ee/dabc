@@ -26,13 +26,9 @@
 #include "TBaseClass.h"
 #include "TObjString.h"
 #include "TUrl.h"
+#include "TImage.h"
 
 #include "TRootSnifferStore.h"
-
-#ifndef HTTP_WITHOUT_ASIMAGE
-#include "TImage.h"
-#include "TASImage.h"
-#endif
 
 #include <stdlib.h>
 
@@ -1033,7 +1029,6 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
    ptr = 0;
    length = 0;
 
-#ifndef HTTP_WITHOUT_ASIMAGE
    if ((path==0) || (*path==0)) return kFALSE;
    if (*path=='/') path++;
 
@@ -1052,7 +1047,6 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
    if (img==0) return kFALSE;
 
    if (obj->InheritsFrom(TPad::Class())) {
-
       Info("TRootSniffer", "Crate IMAGE directly from pad");
       img->FromPad((TPad*) obj);
    } else
@@ -1093,14 +1087,10 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
       return kFALSE;
    }
 
-
-   TASImage* tasImage = new TASImage();
-   tasImage->Append(img);
-
    char* png_buffer(0);
    int size(0);
 
-   tasImage->GetImageBuffer(&png_buffer, &size, (TImage::EImageFileTypes) kind);
+   img->GetImageBuffer(&png_buffer, &size, (TImage::EImageFileTypes) kind);
 
    if ((png_buffer!=0) && (size>0)) {
       ptr = malloc(size);
@@ -1109,9 +1099,6 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char* path, const char* opti
    }
 
    delete [] png_buffer;
-   delete tasImage;
-
-#endif
 
    return ptr!=0;
 }
