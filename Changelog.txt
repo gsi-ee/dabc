@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+2.05.2014
+1. Implement additional options (-skip, -onlytdc, -onlyraw) in the hldprint.
+
+
 30.04.2014
 1. Avoid direct usage of TASImage class in TRootSniffer.
 

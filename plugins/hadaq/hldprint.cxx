@@ -39,9 +39,13 @@ int usage(const char* errstr = 0)
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -num number             - number of events to print (default 10)\n");
+   printf("   -skip number            - number of events to skip before start printing\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
-   printf("   -tdc mask               - printout raw data of tdc subevents (default none) \n");
+   printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
+   printf("   -tdc mask               - printout raw data of tdc subsubevents (default none) \n");
+   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
+   printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
 
@@ -112,15 +116,19 @@ int main(int argc, char* argv[])
 {
    if (argc<2) return usage();
 
-   long number = 10;
+   long number(10), skip(0);
    double tmout = 5.;
    bool printraw(false), printsub(false), showrate(false), reconnect(false);
-   unsigned tdcmask(0), hubmask(0);
+   unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0);
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
+      if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
+      if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
+      if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
       if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
@@ -130,7 +138,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if (tdcmask!=0) { printsub = true; printraw = true; }
+   if ((tdcmask!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -167,7 +175,7 @@ int main(int argc, char* argv[])
 
    hadaq::RawEvent* evnt(0);
 
-   long cnt(0), lastcnt(0);
+   long cnt(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
@@ -200,10 +208,22 @@ int main(int argc, char* argv[])
 
       if (evnt==0) continue;
 
+      if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
+
+      if (skip>0) { skip--; continue; }
+
+      printcnt++;
+
       evnt->Dump();
       hadaq::RawSubevent* sub = 0;
       while ((sub=evnt->NextSubevent(sub))!=0) {
-         sub->Dump(printraw && !printsub);
+
+         bool print_sub_header(false);
+
+         if ((onlytdc==0) && (onlyraw==0)) {
+            sub->Dump(printraw && !printsub);
+            print_sub_header = true;
+         }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
          unsigned ix = 0;
@@ -214,23 +234,42 @@ int main(int argc, char* argv[])
             unsigned datalen = (data >> 16) & 0xFFFF;
             unsigned datakind = data & 0xFFFF;
 
-            printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+            bool as_raw(false), as_tdc(false);
 
-
-            if ((tdcmask!=0) && (datakind & tdcmask) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
-               PrintTdcData(sub, ix, datalen,9);
+            if ((onlytdc!=0) && (datakind==onlytdc)) {
+               as_tdc = true;
+            } else
+            if ((tdcmask!=0) && (datakind & 0xff & tdcmask) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
+               as_tdc = true;
             } else
             if ((hubmask!=0) && (datakind==hubmask)) {
                // this is hack - skip hub header, inside is normal subsub events structure
                continue;
             } else
-            if (printraw) sub->PrintRawData(ix,datalen,9);
+            if ((onlyraw!=0) && (datakind==onlyraw)) {
+               as_raw = true;
+            } else
+            if (printraw) {
+               as_raw = (onlytdc==0) && (onlyraw==0);
+            }
+
+            if (as_raw || as_tdc) {
+               if (!print_sub_header) {
+                  sub->Dump(false);
+                  print_sub_header = true;
+               }
+
+               printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+            }
+
+            if (as_tdc) PrintTdcData(sub, ix, datalen,9); else
+            if (as_raw) sub->PrintRawData(ix,datalen,9);
 
             ix+=datalen;
          }
       }
 
-      if (cnt >= number) break;
+      if (printcnt >= number) break;
    }
 
    if (showrate) {

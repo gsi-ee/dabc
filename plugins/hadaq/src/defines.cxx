@@ -69,35 +69,35 @@ std::string hadaq::RawEvent::FormatFilename (uint32_t runid, uint16_t ebid)
 int hadaq::RawEvent::CoreAffinity(pid_t pid)
 {
   // stolen from stats.c of old eventbuilders JAM
-        unsigned long new_mask = 2;
-        unsigned int len = sizeof(new_mask);
-        cpu_set_t cur_mask;
-        CPU_ZERO(&cur_mask);
-        if(pid)
-        {
-        // this one for whole process:
-          sched_getaffinity(pid, len, &cur_mask);
-        }
-        else
-        {
-        // try if we can find out current thread affinity:
-          pthread_t thread=pthread_self();
-          int r=pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cur_mask);
-          if(r)
-            {
-              printf("Error %d in pthread_getaffinity_np for thread 0x%x!\n",r, (unsigned) thread);              
-            }   
-        }
+   unsigned long new_mask = 2;
+   unsigned int len = sizeof(new_mask);
+   cpu_set_t cur_mask;
+   CPU_ZERO(&cur_mask);
+   if(pid)
+   {
+      // this one for whole process:
+      sched_getaffinity(pid, len, &cur_mask);
+   }
+   else
+   {
+      // try if we can find out current thread affinity:
+      pthread_t thread=pthread_self();
+      int r=pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cur_mask);
+      if(r)
+      {
+         printf("Error %d in pthread_getaffinity_np for thread 0x%x!\n",r, (unsigned) thread);
+      }
+   }
 
-        
-        int i;
-        for (i = 0; i < 24; i++) {
-          int cpu;
-          cpu = CPU_ISSET(i, &cur_mask);
-                        if (cpu > 0)
-                                break;
-                }
-       return i;
+
+   int i;
+   for (i = 0; i < 24; i++) {
+      int cpu;
+      cpu = CPU_ISSET(i, &cur_mask);
+      if (cpu > 0)
+         break;
+   }
+   return i;
 }
 
 
@@ -145,7 +145,7 @@ void hadaq::RawSubevent::PrintRawData(unsigned ix, unsigned len, unsigned prefix
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)
 {
-   printf("   *** Subevent size %u decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
+   printf("   *** Subevent size %3u decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
              (unsigned) GetSize(),
              (unsigned) GetDecoding(),
              (unsigned) GetId(),
