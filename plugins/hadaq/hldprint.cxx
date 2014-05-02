@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
             if ((onlytdc!=0) && (datakind==onlytdc)) {
                as_tdc = true;
             } else
-            if ((tdcmask!=0) && (datakind & 0xff & tdcmask) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
+            if ((tdcmask!=0) && ((datakind & 0xff) <= (tdcmask & 0xff)) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
                as_tdc = true;
             } else
             if ((hubmask!=0) && (datakind==hubmask)) {
