@@ -54,15 +54,18 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcHttp.so"/>  
       <lib value="libDabcRfio.so"/>  
       <logfile value="hadaqevtbuild.log"/>
-      <loglimit value="1000000"/>
+      <loglevel value="-1"/>
+      <loglimit value="1000"/>
       <control value="true"/>
       <threads_layout value="balanced"/>
     </Run>
     
     <HttpServer name="http" port="8090"/>
     
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
     <!-- Publisher name="publ" manager="true"/ -->
     
+    <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
     
     <MemoryPool name="Pool">
