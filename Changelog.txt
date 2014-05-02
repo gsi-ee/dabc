@@ -7,7 +7,9 @@ current functionality of the framework.
 2. Implement option -stat for hldprint. By this different statistic is accumulated
    for hld data, including TDC errors
 3. Process Ctrl-C signal in hldprint and mbsprint to smoothely stop applications.    
-   
+4. In dabc.js process correctly StreamerInfo when working in JSON format.
+   For the future one should use in JSRootIO native names for members names.
+       
 
 30.04.2014
 1. Avoid direct usage of TASImage class in TRootSniffer.
