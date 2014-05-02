@@ -19,6 +19,7 @@
 
 #include "dabc/string.h"
 #include "dabc/Url.h"
+#include "dabc/api.h"
 
 #include "mbs/api.h"
 #include "mbs/SlowControlData.h"
@@ -122,7 +123,9 @@ int main(int argc, char* argv[])
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
 
-   while (true) {
+   dabc::InstallCtrlCHandler();
+
+   while (!dabc::CtrlCPressed()) {
 
       evnt = ref.NextEvent(1.);
 

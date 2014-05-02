@@ -15,6 +15,10 @@
 
 #include "dabc/api.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+
 #include "dabc/Publisher.h"
 #include "dabc/Configuration.h"
 #include "dabc/Manager.h"
@@ -43,6 +47,47 @@ bool dabc::CreateManager(const std::string& name, int cmd_port)
 
    return true;
 }
+
+dabc::Thread_t DABC_SigThrd = 0;
+int DABC_SigCnt = 0;
+
+void DABC_GLOBAL_CtrlCHandler(int number)
+{
+   if (DABC_SigThrd != dabc::PosixThread::Self()) return;
+
+   DABC_SigCnt++;
+
+   if ((DABC_SigCnt>2) || (dabc::mgr()==0)) {
+      printf("Force application exit\n");
+      if (dabc::lgr()!=0) dabc::lgr()->CloseFile();
+      exit(0);
+   }
+
+   dabc::mgr()->ProcessCtrlCSignal();
+}
+
+bool dabc::InstallCtrlCHandler()
+{
+   if (DABC_SigThrd!=0) {
+      printf("Signal handler was already installed !!!\n");
+      return false;
+   }
+
+   DABC_SigThrd = dabc::PosixThread::Self();
+
+   if (signal(SIGINT, DABC_GLOBAL_CtrlCHandler)==SIG_ERR) {
+      printf("Cannot change handler for SIGINT\n");
+      return false;
+   }
+
+   return true;
+}
+
+bool dabc::CtrlCPressed()
+{
+   return DABC_SigCnt > 0;
+}
+
 
 bool dabc::DestroyManager()
 {

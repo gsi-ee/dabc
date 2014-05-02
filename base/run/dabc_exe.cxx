@@ -14,7 +14,6 @@
  ************************************************************/
 
 #include <stdlib.h>
-#include <signal.h>
 
 #include "dabc/logging.h"
 #include "dabc/threads.h"
@@ -26,43 +25,6 @@
 #include "dabc/api.h"
 
 #include "dabc/CpuInfoModule.h"
-
-dabc::Thread_t SigThrd = 0;
-int SigCnt = 0;
-
-void dabc_CtrlCHandler(int number)
-{
-   if (SigThrd != dabc::PosixThread::Self()) return;
-
-   SigCnt++;
-
-   if ((SigCnt>2) || (dabc::mgr()==0)) {
-      EOUT("Force application exit");
-      dabc::lgr()->CloseFile();
-      exit(0);
-   }
-
-   dabc::mgr()->ProcessCtrlCSignal();
-}
-
-bool dabc_InstallCtrlCHandler()
-{
-   if (SigThrd!=0) {
-      EOUT("Signal handler was already installed !!!");
-      return false;
-   }
-
-   SigThrd = dabc::PosixThread::Self();
-
-   if (signal(SIGINT, dabc_CtrlCHandler)==SIG_ERR) {
-      EOUT("Cannot change handler for SIGINT");
-      return false;
-   }
-
-   DOUT2("Install Ctrl-C handler from thrd %d", SigThrd);
-
-   return true;
-}
 
 bool CreateManagerControl(dabc::Configuration& cfg)
 {
@@ -136,7 +98,7 @@ int command_shell(const char* node)
 
 int main(int numc, char* args[])
 {
-   dabc_InstallCtrlCHandler();
+   dabc::InstallCtrlCHandler();
 
 //   dabc::SetDebugLevel(0);
 

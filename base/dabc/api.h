@@ -22,13 +22,19 @@
 
 namespace dabc {
 
-   /** \brief Function should be used to create manager instance
-    *
+   /** Function should be used to create manager instance
     * \par cmd_port defines if socket communication channel will be created
     *  cmd_port < 0  - nothing will be done (default)
     *  cmd_port == 0 - communication channel without server socket
     *  cmd_port > 0  - communication channel with specified server socket */
    extern bool CreateManager(const std::string& name, int cmd_port = -1);
+
+   /** Method is used to install DABC-specific Ctrl-C handler
+    * It allows to correctly stop program execution when pressing Ctrl-C */
+   extern bool InstallCtrlCHandler();
+
+   /** Returns true when CtrlC was pressed in handler */
+   extern bool CtrlCPressed();
 
    /** \brief Function can be used to destroy manager
     * \details Could be used to ensure that all dabc-relevant objects are destroyed */

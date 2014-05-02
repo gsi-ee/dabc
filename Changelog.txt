@@ -4,7 +4,10 @@ current functionality of the framework.
 
 2.05.2014
 1. Implement additional options (-skip, -onlytdc, -onlyraw) in the hldprint.
-
+2. Implement option -stat for hldprint. By this different statistic is accumulated
+   for hld data, including TDC errors
+3. Process Ctrl-C signal in hldprint and mbsprint to smoothely stop applications.    
+   
 
 30.04.2014
 1. Avoid direct usage of TASImage class in TRootSniffer.

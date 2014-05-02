@@ -286,7 +286,7 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 
 
-void  hadaq::sigHandler(int sig)
+void hadaq::sigHandler(int sig)
 {
    DOUT0("hadaq Observer caught signal %d", sig);
    // following is copy of dabc_exe dabc_CtrlCHandler

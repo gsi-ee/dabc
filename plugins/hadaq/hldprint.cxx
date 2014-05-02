@@ -16,10 +16,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <map>
 
 #include "hadaq/api.h"
 #include "dabc/string.h"
 #include "dabc/Url.h"
+#include "dabc/api.h"
 
 int usage(const char* errstr = 0)
 {
@@ -38,9 +40,10 @@ int usage(const char* errstr = 0)
    printf("   lmd://path/file.lmd         - LMD file reading\n");
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
-   printf("   -num number             - number of events to print (default 10)\n");
+   printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
+   printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -tdc mask               - printout raw data of tdc subsubevents (default none) \n");
@@ -64,8 +67,44 @@ enum TdcMessageKind {
    tdckind_Hit3     = 0xe0000000
 };
 
+enum { NumTdcErr = 4 };
 
-void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+enum TdcErrorsKind {
+   tdcerr_MissHeader  = 0x0001,
+   tdcerr_MissCh0     = 0x0002,
+   tdcerr_MissEpoch   = 0x0004,
+   tdcerr_NoData      = 0x0008
+};
+
+const char* TdcErrName(int cnt) {
+   switch(cnt) {
+      case 0: return "header";
+      case 1: return "ch0";
+      case 2: return "epoch";
+      case 3: return "nodata";
+   }
+   return "uncknown";
+}
+
+struct SubevStat {
+
+   long unsigned num;        // number of subevent seen
+   long unsigned sizesum;    // sum of all subevents sizes
+   bool          istdc;      // indicate if it is TDC subevent
+   long unsigned tdcerr[NumTdcErr];  // tdc errors
+
+   double aver_size() { return num>0 ? sizesum / (1.*num) : 0.; }
+   double tdcerr_rel(unsigned n) { return (n < NumTdcErr) && (num>0) ? tdcerr[n] / (1.*num) : 0.; }
+
+   SubevStat() : num(0), sizesum(0), istdc(false)
+      {  for (int n=0;n<NumTdcErr;n++) tdcerr[n] = 0; }
+   SubevStat(const SubevStat& src) : num(src.num), sizesum(src.sizesum), istdc(src.istdc)
+      {  for (int n=0;n<NumTdcErr;n++) tdcerr[n] = src.tdcerr[n]; }
+
+};
+
+
+void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask)
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
@@ -79,36 +118,54 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned epoch(0);
    double tm;
 
+   errmask = 0;
+
+   bool haschannel0 = false;
+   unsigned channel(0);
+   int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
+
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
-      printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+      if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+
+      if ((cnt==0) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
-            printf("reserved\n");
+            if (prefix>0) printf("reserved\n");
             break;
          case tdckind_Header:
-            printf("tdc header\n");
+            if (prefix>0) printf("tdc header\n");
             break;
          case tdckind_Debug:
-            printf("tdc debug\n");
+            if (prefix>0) printf("tdc debug\n");
             break;
          case tdckind_Epoch:
             epoch = msg & 0xFFFFFFF;
             tm = (epoch << 11) *5.;
-            printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
+            epoch_channel = -1; // indicate that we have new epoch
+            if (prefix>0) printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
             break;
          case tdckind_Hit:
+            channel = (msg >> 22) & 0x7F;
+            if (channel == 0) haschannel0 = true;
+            if (epoch_channel==-1) epoch_channel = channel;
+
+            if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
+
             tm = ((epoch << 11) + (msg & 0x7FF)) *5.; // coarse time
             tm += (((msg >> 12) & 0x3FF) - 20)/470.*5.; // approx fine time 20-490
-            printf("hit ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns\n",
-                    (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), (msg >> 12) & 0x3FF, tm);
+            if (prefix>0) printf("hit ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns\n",
+                                 (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), (msg >> 12) & 0x3FF, tm);
             break;
          default:
-            printf("undefined\n");
+            if (prefix>0) printf("undefined\n");
             break;
       }
    }
+
+   if (len<2) errmask |= tdcerr_NoData; else
+   if (!haschannel0) errmask |= tdcerr_MissCh0;
 }
 
 
@@ -117,8 +174,8 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    long number(10), skip(0);
-   double tmout = 5.;
-   bool printraw(false), printsub(false), showrate(false), reconnect(false);
+   double tmout = -1.;
+   bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
    unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0);
 
    int n = 1;
@@ -133,6 +190,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
+      if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
@@ -151,6 +209,8 @@ int main(int argc, char* argv[])
 
    if ((src.find("hld://") == 0) || (src.find(".hld") != std::string::npos)) ishld = true;
 
+   if (tmout<0) tmout = ishld ? 0.5 : 5.;
+
    if (!ishld) {
 
       dabc::Url url(src);
@@ -168,25 +228,31 @@ int main(int argc, char* argv[])
       }
    }
 
-
    hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect(src.c_str());
 
    if (ref.null()) return 1;
 
    hadaq::RawEvent* evnt(0);
 
+   std::map<unsigned,SubevStat> stat;
    long cnt(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
 
-   while (true) {
+   dabc::InstallCtrlCHandler();
+
+   while (!dabc::CtrlCPressed()) {
 
       evnt = ref.NextEvent(1.);
 
       dabc::TimeStamp curr = dabc::Now();
 
       if (evnt!=0) {
+
+         // ignore events which are nor match with specified id
+         if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
+
          cnt++;
          lastevtm = curr;
       } else
@@ -203,24 +269,25 @@ int main(int argc, char* argv[])
             lastcnt = cnt;
          }
 
-         continue;
+         // when showing rate, only with statistic one need to analyze event
+         if (!dostat) continue;
       }
 
       if (evnt==0) continue;
-
-      if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
 
       if (skip>0) { skip--; continue; }
 
       printcnt++;
 
-      evnt->Dump();
+      if (!showrate && !dostat)
+         evnt->Dump();
+
       hadaq::RawSubevent* sub = 0;
       while ((sub=evnt->NextSubevent(sub))!=0) {
 
          bool print_sub_header(false);
 
-         if ((onlytdc==0) && (onlyraw==0)) {
+         if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -228,7 +295,7 @@ int main(int argc, char* argv[])
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
          unsigned ix = 0;
 
-         while ((ix < trbSubEvSize) && printsub) {
+         while ((ix < trbSubEvSize) && (printsub || dostat)) {
             unsigned data = sub->Data(ix++);
 
             unsigned datalen = (data >> 16) & 0xFFFF;
@@ -244,6 +311,10 @@ int main(int argc, char* argv[])
             } else
             if ((hubmask!=0) && (datakind==hubmask)) {
                // this is hack - skip hub header, inside is normal subsub events structure
+               if (dostat) {
+                  stat[datakind].num++;
+                  stat[datakind].sizesum+=datalen;
+               }
                continue;
             } else
             if ((onlyraw!=0) && (datakind==onlyraw)) {
@@ -253,23 +324,50 @@ int main(int argc, char* argv[])
                as_raw = (onlytdc==0) && (onlyraw==0);
             }
 
-            if (as_raw || as_tdc) {
-               if (!print_sub_header) {
-                  sub->Dump(false);
-                  print_sub_header = true;
+            if (!dostat && !showrate) {
+               // do raw printout when necessary
+
+               if (as_raw || as_tdc) {
+                  if (!print_sub_header) {
+                     sub->Dump(false);
+                     print_sub_header = true;
+                  }
+
+                  printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                }
 
-               printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
-            }
+               unsigned errmask(0);
 
-            if (as_tdc) PrintTdcData(sub, ix, datalen,9); else
-            if (as_raw) sub->PrintRawData(ix,datalen,9);
+               if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask); else
+               if (as_raw) sub->PrintRawData(ix,datalen,9);
+
+               if (errmask!=0) {
+                  printf("         !!!! TDC errors detected:");
+                  unsigned mask = 1;
+                  for (int n=0;n<NumTdcErr;n++,mask*=2)
+                     if (errmask & mask) printf(" err_%s", TdcErrName(n));
+                  printf("\n");
+               }
+
+            } else
+            if (dostat) {
+               stat[datakind].num++;
+               stat[datakind].sizesum+=datalen;
+               if (as_tdc) {
+                  stat[datakind].istdc = true;
+                  unsigned errmask(0);
+                  PrintTdcData(sub, ix, datalen,0, errmask);
+                  unsigned mask = 1;
+                  for (int n=0;n<NumTdcErr;n++,mask*=2)
+                     if (errmask & mask) stat[datakind].tdcerr[n]++;
+               }
+            }
 
             ix+=datalen;
          }
       }
 
-      if (printcnt >= number) break;
+      if ((number>0) && (printcnt >= number)) break;
    }
 
    if (showrate) {
@@ -278,6 +376,28 @@ int main(int argc, char* argv[])
    }
 
    ref.Disconnect();
+
+   if (dostat) {
+      printf("Statistic: %ld events analyzed\n", printcnt);
+
+      int width = 3;
+      if (printcnt > 1000) width = 6;
+
+      for (std::map<unsigned,SubevStat>::iterator iter = stat.begin(); iter!=stat.end(); iter++) {
+         printf("   Subevent 0x%04x : cnt %*lu averlen %5.1f", iter->first, width, iter->second.num, iter->second.aver_size());
+
+         if (iter->second.istdc) {
+            printf(" TDC");
+            for (int n=0;n<NumTdcErr;n++)
+               if (iter->second.tdcerr[n]>0) {
+                  printf(" %s=%lu (%3.1f%s)", TdcErrName(n), iter->second.tdcerr[n], iter->second.tdcerr_rel(n) * 100., "\%");
+               }
+         }
+
+         printf("\n");
+      }
+
+   }
 
    return 0;
 }
