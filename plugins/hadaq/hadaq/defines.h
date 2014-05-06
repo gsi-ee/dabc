@@ -336,7 +336,7 @@ namespace hadaq {
             void Dump(bool print_raw_data = false);
 
             /** Print raw data, optionally one can position and portion to print */
-            void PrintRawData(unsigned ix = 0, unsigned len = 0, unsigned prefix = 6);
+            void PrintRawData(unsigned ix = 0, unsigned len = 0xffffffff, unsigned prefix = 6);
       };
 
    // =================================================================================

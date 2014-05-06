@@ -129,8 +129,8 @@ void hadaq::RawSubevent::PrintRawData(unsigned ix, unsigned len, unsigned prefix
 {
    unsigned sz = ((GetSize() - sizeof(RawSubevent)) / Alignment());
 
-   if (ix>=sz) return;
-   if ((len==0) || (ix + len > sz)) len = sz - ix;
+   if ((ix>=sz) || (len==0)) return;
+   if (ix + len > sz) len = sz - ix;
 
    unsigned wlen = 2;
    if (len>99) wlen = 3; else
