@@ -9,6 +9,7 @@
       <logfile value="Master.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
+      <!--runtime value="100"/-->
     </Run>
 
     <HttpServer name="http">
@@ -20,7 +21,7 @@
     </HttpServer>
 
     <Publisher name="publ">
-       <manager value="true"/>
+       <manager value="false"/>
        <store value="false"/>
        <storedir value="/data.local1/hstore/"/>
        <storesel value="FESA/Test"/>

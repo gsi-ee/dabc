@@ -27,7 +27,8 @@
 dabc::ApplicationBase::ApplicationBase() :
    Worker(dabc::mgr(), xmlAppDfltName),
    fInitFunc(0),
-   fWasRunning(false)
+   fWasRunning(false),
+   fAnyModuleWasRunning(false)
 {
    CreatePar(StateParName(), "state").SetSynchron(true, -1, true);
 
@@ -56,7 +57,6 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
          res = DoStateTransition(cmd.GetName());
       return cmd_bool(res);
    }
-
 
    if (cmd.IsName(CmdInvokeAppRun::CmdName())) {
 
@@ -101,7 +101,12 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
 
 bool dabc::ApplicationBase::IsWorkDone()
 {
-   return (GetState() == stRunning()) && !IsModulesRunning();
+   if (GetState() != stRunning()) return false;
+
+   bool modules_running = IsModulesRunning();
+   if (modules_running) fAnyModuleWasRunning = true;
+
+   return fAnyModuleWasRunning && !modules_running;
 }
 
 bool dabc::ApplicationBase::IsFinished()

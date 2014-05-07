@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+7.05.2014
+1. Special handling of application without any module at all.
+   Such application either runs forever or stopped after specified runtime.
+
+
 2.05.2014
 1. Implement additional options (-skip, -onlytdc, -onlyraw) in the hldprint.
 2. Implement option -stat for hldprint. By this different statistic is accumulated

@@ -80,6 +80,7 @@ namespace dabc {
          ExternalFunction*  fInitFunc;
 
          bool               fWasRunning; ///< indicate if application was running at least once
+         bool               fAnyModuleWasRunning; ///< indicate when any module was running, than once can automatically stop application
 
          virtual int ExecuteCommand(Command cmd);
 
