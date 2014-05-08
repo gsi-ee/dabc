@@ -5411,10 +5411,10 @@ var gStyle = {
       if (print_under > 0) {
       }
 
-      if (print_over> 0) { 
+      if (print_over > 0) { 
       }
 
-      if (print_integral> 0) { 
+      if (print_integral > 0) { 
          stat.AddLine("Integral = " + this.stat_matrix[4].toFixed(0));
       }
       
@@ -5424,11 +5424,13 @@ var gStyle = {
 //      if (print_kurt> 0)
 //         stat.AddLine("Kurt = 0");
 
-      var m = this.stat_matrix;
-         
-      stat.AddLine(""+ m[6].toFixed(0)+ " | " + m[7].toFixed(0) +  " | " + m[7].toFixed(0));
-      stat.AddLine(""+ m[3].toFixed(0)+ " | " + m[4].toFixed(0) +  " | " + m[5].toFixed(0));
-      stat.AddLine(""+ m[0].toFixed(0)+ " | " + m[1].toFixed(0) +  " | " + m[2].toFixed(0));
+      if ((print_under > 0) || (print_over > 0)) { 
+         var m = this.stat_matrix;
+      
+         stat.AddLine(""+ m[6].toFixed(0)+ " | " + m[7].toFixed(0) +  " | " + m[7].toFixed(0));
+         stat.AddLine(""+ m[3].toFixed(0)+ " | " + m[4].toFixed(0) +  " | " + m[5].toFixed(0));
+         stat.AddLine(""+ m[0].toFixed(0)+ " | " + m[1].toFixed(0) +  " | " + m[2].toFixed(0));
+      }
       
       return true;
    }
@@ -7182,7 +7184,7 @@ var gStyle = {
             tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
             node_img = source_dir+'img/question.gif';
          }
-         else if (keys[i]['className'] == 'TDirectory') {
+         else if (keys[i]['className'] == 'TDirectory' || keys[i]['className'] == 'TDirectoryFile') {
             tree_link = "javascript: showDirectory('"+full_name+"',"+keys[i]['cycle']+","+k+");";
             node_img = source_dir+'img/folder.gif';
             node_img2 = source_dir+'img/folderopen.gif'

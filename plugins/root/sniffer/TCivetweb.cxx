@@ -12,9 +12,9 @@
 
 static int begin_request_handler(struct mg_connection *conn)
 {
-   TCivetweb* engine = (TCivetweb*) mg_get_request_info(conn)->user_data;
+   TCivetweb *engine = (TCivetweb *) mg_get_request_info(conn)->user_data;
    if (engine == 0) return 0;
-   THttpServer* serv = engine->GetServer();
+   THttpServer *serv = engine->GetServer();
    if (serv == 0) return 0;
 
    const struct mg_request_info *request_info = mg_get_request_info(conn);
@@ -40,14 +40,14 @@ static int begin_request_handler(struct mg_connection *conn)
    }
 
    if (arg.IsFile()) {
-      mg_send_file(conn, (const char*) arg.GetContent());
+      mg_send_file(conn, (const char *) arg.GetContent());
       return 1;
    }
 
    arg.FillHttpHeader(hdr);
    mg_printf(conn, hdr.Data());
 
-   if (arg.GetContentLength()>0)
+   if (arg.GetContentLength() > 0)
       mg_write(conn, arg.GetContent(), (size_t) arg.GetContentLength());
 
    // Returning non-zero tells civetweb that our function has replied to
@@ -87,6 +87,7 @@ static int begin_request_handler(struct mg_connection *conn)
 //////////////////////////////////////////////////////////////////////////
 
 
+//______________________________________________________________________________
 TCivetweb::TCivetweb() :
    THttpEngine("civetweb", "compact embedded http server"),
    fCtx(0),
@@ -96,47 +97,49 @@ TCivetweb::TCivetweb() :
    // constructor
 }
 
+//______________________________________________________________________________
 TCivetweb::~TCivetweb()
 {
    // destructor
 
-   if (fCtx!=0) mg_stop((struct mg_context*) fCtx);
+   if (fCtx != 0) mg_stop((struct mg_context *) fCtx);
    if (fCallbacks != 0) free(fCallbacks);
    fCtx = 0;
    fCallbacks = 0;
 }
 
-Bool_t TCivetweb::Create(const char* args)
+//______________________________________________________________________________
+Bool_t TCivetweb::Create(const char *args)
 {
    // Creates embedded civetweb server
    // As argument, http port should be specified in form "8090"
 
    fCallbacks = malloc(sizeof(struct mg_callbacks));
    memset(fCallbacks, 0, sizeof(struct mg_callbacks));
-   ((struct mg_callbacks*) fCallbacks)->begin_request = begin_request_handler;
+   ((struct mg_callbacks *) fCallbacks)->begin_request = begin_request_handler;
 
    TString sport = "8080";
    TString num_threads = "5";
    TString auth_file, auth_domain;
 
    // for the moment the only argument is port number
-   if ((args!=0) && (strlen(args)>0)) {
+   if ((args != 0) && (strlen(args) > 0)) {
       TUrl url(TString::Format("http://localhost:%s", args));
 
       if (url.IsValid()) {
          url.ParseOptions();
          if (url.GetPort() > 0) sport.Form("%d", url.GetPort());
 
-         const char* top = url.GetValueFromOptions("top");
-         if (top!=0) fTopName = top;
+         const char *top = url.GetValueFromOptions("top");
+         if (top != 0) fTopName = top;
 
          Int_t thrds = url.GetIntValueFromOptions("thrds");
-         if (thrds>0) num_threads.Form("%d", thrds);
+         if (thrds > 0) num_threads.Form("%d", thrds);
 
-         const char* afile = url.GetValueFromOptions("auth_file");
-         if (afile!=0) auth_file = afile;
-         const char* adomain = url.GetValueFromOptions("auth_domain");
-         if (adomain!=0) auth_domain = adomain;
+         const char *afile = url.GetValueFromOptions("auth_file");
+         if (afile != 0) auth_file = afile;
+         const char *adomain = url.GetValueFromOptions("auth_domain");
+         if (adomain != 0) auth_domain = adomain;
       }
    }
 
@@ -150,7 +153,7 @@ Bool_t TCivetweb::Create(const char* args)
    options[op++] = "num_threads";
    options[op++] = num_threads.Data();
 
-   if ((auth_file.Length()>0) && (auth_domain.Length()>0)) {
+   if ((auth_file.Length() > 0) && (auth_domain.Length() > 0)) {
       options[op++] = "global_auth_file";
       options[op++] = auth_file.Data();
       options[op++] = "authentication_domain";
@@ -160,7 +163,7 @@ Bool_t TCivetweb::Create(const char* args)
    options[op++] = 0;
 
    // Start the web server.
-   fCtx = mg_start((struct mg_callbacks*) fCallbacks, this, options);
+   fCtx = mg_start((struct mg_callbacks *) fCallbacks, this, options);
 
    return kTRUE;
 }

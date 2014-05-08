@@ -1466,7 +1466,7 @@ var kClassMask = 0x80000000;
          key['dataoffset'] = key['seekKey'] + key['keyLen'];
          key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
          // should we do it here ???
-         buf.locate(key['offset'] + key['keyLen']);
+         //buf.locate(key['offset'] + key['keyLen']);
 
          // remember offset
          if (key['className'] != "" && key['name'] != "") 

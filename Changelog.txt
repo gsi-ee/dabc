@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+8.05.2014
+1. Apply changes from Bertrand concerning coding conventions in ROOT code
+
+
 7.05.2014
 1. Special handling of application without any module at all.
    Such application either runs forever or stopped after specified runtime.

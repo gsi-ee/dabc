@@ -12,13 +12,15 @@
 //////////////////////////////////////////////////////////////////////////
 
 
-THttpEngine::THttpEngine(const char* name, const char* title) :
+//______________________________________________________________________________
+THttpEngine::THttpEngine(const char *name, const char *title) :
    TNamed(name, title),
    fServer(0)
 {
    // normal constructor
 }
 
+//______________________________________________________________________________
 THttpEngine::~THttpEngine()
 {
    // destructor
