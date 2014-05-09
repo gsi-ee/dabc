@@ -35,7 +35,7 @@ By default http server is open for anonymous access.
 One could restrict access to the server only for authenticated users.
 First of all, one should create password file, using **htdigest** utility.  
 
-``` {.cpp}
+``` {.sh}
 [shell] htdigest -c .htdigest domain_name user_name
 ```
 
@@ -93,20 +93,20 @@ One could specify debug parameter to be able adjust FastCGI configuration on the
 serv->CreateEngine("fastcgi:9000/none?debug=1");
 ```
  
-All user access will be rouled by web server - one can not configure 
-method like htdigest for civetweb server. 
+All user access will be ruled by web server - 
+for the moment one cannot restrict with fastcgi engine. 
 
 
 ## Integrate with existing applications
 
 In many practical cases no any changes of existing code is required.
 Opened files (and all objects inside), existing canvas and histograms automatically
-scanned by the server and available to the users.
-If necessary, any object can be registered directly to the server with THttpServer::Register() call.
+scanned by the server and will be available to the users.
+If necessary, any object can be registered directly to the server with **`THttpServer::Register()`** call.
 
-Central point of integration - method how THttpServer synchronized with running application.
+Central point of integration - when and how THttpServer get access to data from running application.
 By default it is done during gSystem->ProcessEvents() call - THttpServer uses synchronous timer,
-which is activated every 100 ms. 
+which is activated every 100 ms. Such approach works perfectely when running macros in interactive ROOT shell.
 
 If application runs in compiled code and does not contains gSystem->ProcessEvents() calls, 
 two method are available. 
@@ -119,10 +119,10 @@ First method is to configure asynchronous timer for the server like:
 serv->SetTimer(100, kFALSE);
 ```
 
-Than timer will be activated even without ProcessEvents() method call. 
+Than timer will be activated even without gSystem->ProcessEvents() method call. 
 Main advantage of such method that application code can be used as it is.
 Disadvantage - there is no control when communication between server and application is performed.
-It could happen hust in-between of histogram filling and histogram object may be incomplete.
+It could happen just in-between of **`TH1::Fill()`** call and histogram object may be incomplete.
 
 
 ### Explicit call of THttpServer::ProcessRequests() method
@@ -139,7 +139,6 @@ In such case one can fully disable timer of the server:
 ``` {.cpp}
 serv->SetTimer(0, kTRUE);
 ```
-   
 
 
 
@@ -186,7 +185,7 @@ One could access also class members of object like:
 Result will be: "title".
 
 If access to the server restricted with htdigest method,
-it is recommended to use **curl** program while only it supports its directly.
+it is recommended to use **curl** program while only curl correctly supports htdigest method.
 Command will look like:
 
 ``` {.sh}
@@ -194,11 +193,11 @@ Command will look like:
 ```
 
 Following requests can be performed:
-   * root.bin - 20-byte header and zipped binary TBuffer content
+   * root.bin  - 20-byte header and zipped binary TBuffer content
    * root.json - ROOT JSON representation for object and objects members
-   * root.xml - ROOT XML representation   
-   * root.png - PNG image   
-   * root.gif - GIF image   
+   * root.xml  - ROOT XML representation   
+   * root.png  - PNG image   
+   * root.gif  - GIF image   
    * root.jpeg - JPEG image   
 
 For images one could specify h (height), w (width) and opt (draw) options. Like:
@@ -208,6 +207,6 @@ http://localhost:8080/Files/hsimple.root/hpx/root.png?w=500&h=500&opt=lego1
 ```
 
 
-## Using JSRootIO to display ROOT files
+## Using JSRootIO for ROOT files display
 
 To be done
