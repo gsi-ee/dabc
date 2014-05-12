@@ -1,5 +1,9 @@
 # HTTP server in ROOT
 
+Idea of such server – provide direct access to the different data 
+from running ROOT application. Any object can be streamed at the moment 
+when request is coming and delivered to the browser. 
+Main benefit of such approach – one do not need to create any temporary ROOT files for such task. 
 
 ## Starting HTTP server
 
@@ -44,7 +48,7 @@ Several users can be add to the ".htdigetst" file. When server started,
 following arguments should be specified:
 
 ``` {.cpp}
-root [0] new THttpServer("http:8080/none?auth_file=.htdigets&auth_domain=domain_name");
+root [0] new THttpServer("http:8080/none?auth_file=.htdigest&auth_domain=domain_name");
 ```
 
 After that browser will automatically request to input name/password for domain "domain_name"

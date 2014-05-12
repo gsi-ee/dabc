@@ -645,12 +645,20 @@ var gStyle = {
 
    JSROOTPainter = {};
 
-   JSROOTPainter.version = '4.0 2014/03/14';
+   JSROOTPainter.version = '4.1 2014/05/12';
+   
+   JSROOTPainter.fUserPainters = null; // list of user painters, called with arguments painter(vis, obj, opt) 
    
    /*
     * Helper functions
     */
 
+   JSROOTPainter.addUserPainter = function(class_name,user_painter)
+   {
+      if (this.fUserPainters == null) this.fUserPainters = {};
+      this.fUserPainters[class_name] = user_painter;
+   }
+   
    JSROOTPainter.clearCuts = function(chopt) {
       /* decode string "chopt" and remove graphical cuts */
       var left = chopt.indexOf('[');
@@ -2030,7 +2038,7 @@ var gStyle = {
       
       if (!('painters' in vis)) {
          var histo = painter.CreateDummyHisto();
-         JSROOTPainter.drawHistogram1Dnew(vis, histo);
+         JSROOTPainter.drawHistogram1D(vis, histo);
       } 
       
       painter.SetFrame(vis, true);
@@ -2708,7 +2716,7 @@ var gStyle = {
       return true;
    }
    
-   JSROOTPainter.drawGraphNew = function(vis, graph, opt) 
+   JSROOTPainter.drawGraph = function(vis, graph, opt) 
    {
       var ownhisto = false;
       if (!('painters' in vis)) {
@@ -2716,7 +2724,7 @@ var gStyle = {
             alert("drawing first graphs without fHistogram field not (yet) supported");
             return -1;
          } else {
-            JSROOTPainter.drawHistogram1Dnew(vis, graph['fHistogram']);
+            JSROOTPainter.drawHistogram1D(vis, graph['fHistogram']);
             ownhisto = true;
          }
       }
@@ -5061,7 +5069,7 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawHistogram1Dnew = function(vis, histo, opt) {
+   JSROOTPainter.drawHistogram1D = function(vis, histo, opt) {
 
       //if (console) console.time("DrawTH1");
       
@@ -5699,7 +5707,7 @@ var gStyle = {
    }
 
    
-   JSROOTPainter.drawHistogram2Dnew = function(vis, histo, opt) 
+   JSROOTPainter.drawHistogram2D = function(vis, histo, opt) 
    {
 
       // create painter and add it to canvas
@@ -6351,9 +6359,9 @@ var gStyle = {
          if ((opt!="") && (hopt.indexOf(opt) == -1)) hopt += opt;
          
          if (histo['_typename'].match(/\bJSROOTIO.TH1/))
-            JSROOTPainter.drawHistogram1Dnew(vis, histo, hopt);
+            JSROOTPainter.drawHistogram1D(vis, histo, hopt);
          else if (histo['_typename'].match(/\bJSROOTIO.TH2/))
-            JSROOTPainter.drawHistogram2Dnew(vis, histo, hopt);
+            JSROOTPainter.drawHistogram2D(vis, histo, hopt);
       }
       for (var i=0; i<nhists; ++i) {
          if (nostack) 
@@ -6366,7 +6374,7 @@ var gStyle = {
          hopt += "same";
 
          if (h['_typename'].match(/\bJSROOTIO.TH1/))
-            JSROOTPainter.drawHistogram1Dnew(vis, h, hopt);
+            JSROOTPainter.drawHistogram1D(vis, h, hopt);
       }
    };
 
@@ -6766,10 +6774,10 @@ var gStyle = {
       }
 
       // histogram painter will be first in the pad, will define axis and interactive actions
-      JSROOTPainter.drawHistogram1Dnew(vis, histo);
+      JSROOTPainter.drawHistogram1D(vis, histo);
       
       for (var i=0; i<graphs.arr.length; ++i) 
-         JSROOTPainter.drawGraphNew(vis, graphs.arr[i]);
+         JSROOTPainter.drawGraph(vis, graphs.arr[i]);
    };
    
    
@@ -6811,13 +6819,31 @@ var gStyle = {
       var vis = JSROOTPainter.createCanvas($(render_to), obj);
       if (vis == null) return false;
 
-      var res = JSROOTPainter.drawObjectInFrame(vis, obj);
-      
-      if (res != -1) return res;
-         
-      if (typeof(drawUserObject) == 'function') 
-         return drawUserObject(obj, vis);
+      return JSROOTPainter.drawObjectInFrame(vis, obj);
    };
+   
+   JSROOTPainter.canDrawObject = function(classname)
+   {
+      if (!classname) return false;
+
+      if ((this.fUserPainters != null) && 
+          (typeof(this.fUserPainters[classname]) === 'function')) return true;
+      
+      if (classname.match(/\bJSROOTIO.TH1/) ||
+          classname.match(/\bJSROOTIO.TH2/) ||
+          classname.match(/\bJSROOTIO.TH3/) ||
+          classname.match(/\bJSROOTIO.TGraph/) ||
+          classname.match(/\bRooHist/) ||
+          classname.match(/\RooCurve/) ||
+          classname == 'JSROOTIO.TF1' ||
+          classname == 'JSROOTIO.TCanvas' ||
+          classname == 'JSROOTIO.THStack' ||
+          classname == 'JSROOTIO.TProfile') return true;
+
+      // console.log("Cannot draw class " + classname + "  " + typeof(this.fUserPainters[classname]));
+      
+      return false;
+   }
    
    JSROOTPainter.drawObjectInFrame = function(vis, obj, opt)
    {
@@ -6828,7 +6854,7 @@ var gStyle = {
       
       var classname = obj['_typename'];
       
-      if (classname.match(/\bTCanvas/)) {
+      if (classname == 'JSROOTIO.TCanvas') {
          vis['ROOT:canvas'] = obj;
          vis['ROOT:pad'] = obj;
          for (var i=0; i<obj.fPrimitives.arr.length; ++i) {
@@ -6857,27 +6883,31 @@ var gStyle = {
          return JSROOTPainter.drawText(vis, obj);
       
       if (classname.match(/\bJSROOTIO.TH1/) || (classname=="JSROOTIO.TProfile")) 
-         return JSROOTPainter.drawHistogram1Dnew(vis, obj, opt);
+         return JSROOTPainter.drawHistogram1D(vis, obj, opt);
       
       if (classname.match(/\bJSROOTIO.TH2/)) 
-         return JSROOTPainter.drawHistogram2Dnew(vis, obj, opt);
+         return JSROOTPainter.drawHistogram2D(vis, obj, opt);
       
       if (classname.match(/\bJSROOTIO.TH3/)) 
          return JSROOTPainter.drawHistogram3D(vis, obj, opt);
       
-      if (classname.match(/\bJSROOTIO.THStack/)) 
+      if (classname == 'JSROOTIO.THStack') 
          return JSROOTPainter.drawHStack(vis, obj, opt);
          
       if (classname == 'JSROOTIO.TF1') 
          return JSROOTPainter.drawFunctionNew(vis, obj);
       
-      if (classname.match(/\bTGraph/) ||
+      if (classname.match(/\bJSROOTIO.TGraph/) ||
           classname.match(/\bRooHist/) ||
           classname.match(/\RooCurve/)) 
-         return JSROOTPainter.drawGraphNew(vis, obj, opt);
+         return JSROOTPainter.drawGraph(vis, obj, opt);
       
       if (classname == 'JSROOTIO.TMultiGraph') 
          return JSROOTPainter.drawMultiGraphNew(vis, obj, opt);
+
+      
+      if ((this.fUserPainters != null) && typeof(this.fUserPainters[classname]) === 'function')
+         return this.fUserPainters[classname](vis, obj, opt);
       
       return -1;
    }
@@ -7203,7 +7233,11 @@ var gStyle = {
          }
          else if (keys[i]['className'].match('TCanvas')) {
             node_img = source_dir+'img/canvas.png';
-         } else {
+         } 
+         else if (this.canDrawObject(keys[i]['className'])) {
+            node_img = source_dir+'img/graph.png';
+         }
+         else {
             tree_link = "javascript:  alert('" + keys[i]['className']+ " is not yet implemented.')";   
          }
          
@@ -7235,12 +7269,7 @@ var gStyle = {
          tree_link = "javascript:  alert('" + message + "')";
          var node_img = source_dir+'img/page.gif';
          var node_title = list.arr[i]['_typename'];
-         if (classname.match(/\bTH1/) ||
-             classname.match(/\bTH2/) ||
-             classname.match(/\bTH3/) ||
-             classname.match(/\bTGraph/) ||
-             classname.match(/\bRooHist/) ||
-             classname.match(/\RooCurve/)) {
+         if (this.canDrawObject(classname)) {
             tree_link = "javascript: showListObject('"+fullname+"','"+disp_name+"');";
             node_img = source_dir+'img/graph.png';
             node_title = fullname + "/" + disp_name;
@@ -7331,3 +7360,30 @@ var gStyle = {
 // JSROOTD3Painter.js ends
 
 
+// example of user code for streamer and painter
+/*
+
+(function(){
+
+   Amore_String_Streamer = function(buf, obj, prop, streamer) {
+      
+      console.log("read property " + prop + " of typename " + streamer[prop]['typename']);
+      
+      obj[prop] = buf.ReadTString();
+   }
+   
+   Amore_Painter = function(vis, obj, opt) {
+      // custom draw function. 
+      
+      console.log("Draw user type " + obj['_typename']);
+      
+      JSROOTPainter.drawObjectInFrame(vis, obj['fVal'], opt);
+   }
+   
+   JSROOTIO.addUserStreamer("amore::core::String_t", Amore_String_Streamer);
+
+   JSROOTPainter.addUserPainter("JSROOTIO.amore::core::MonitorObjectHisto<TH1F>", Amore_Painter);
+   
+})();
+
+*/

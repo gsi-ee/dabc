@@ -21,6 +21,7 @@ var kByteCountMask = 0x40000000;
 var kNewClassTag = 0xFFFFFFFF;
 var kClassMask = 0x80000000;
 
+
 (function(){
 
    if (typeof JSROOTIO == "object"){
@@ -35,10 +36,18 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.8 2014/03/18";
+   JSROOTIO.version = "2.81 2014/05/12";
    
    JSROOTIO.debug = false;
-
+   
+   JSROOTIO.fUserStreamers = null; // map of user-streamer function like func(buf,obj,prop,streamerinfo)
+   
+   JSROOTIO.addUserStreamer = function(type,user_streamer)
+   {
+      if (this.fUserStreamers==null) this.fUserStreamers = {};
+      this.fUserStreamers[type] = user_streamer;
+   }
+   
    JSROOTIO.BIT = function(bits, index) {
       var mask = 1 << index;
       return (bits & mask);
@@ -865,9 +874,12 @@ var kClassMask = 0x80000000;
             case kObjectp:
             case kObject:   
                var classname = this[prop]['typename'];
+               
                if (classname.endsWith("*")) 
                   classname = classname.substr(0, classname.length - 1);
-
+               
+               // console.log("Read property " + prop + " of class " +  classname);
+               
                obj[prop] = {};
                buf.ClassStreamer(obj[prop], classname);
                break;
@@ -974,7 +986,6 @@ var kClassMask = 0x80000000;
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
          }
-         return buf.o;
       };
 
       JSROOTIO.TStreamer.prototype.Stream = function(obj, buf) {
@@ -998,13 +1009,24 @@ var kClassMask = 0x80000000;
          }
          // then class members
          for (prop in this) {
-            if (!this[prop] || typeof(this[prop]) === "function" ||
-                typeof(this[prop]['typename']) === "undefined" ||
-                this[prop]['typename'] === "BASE")
-               continue;
+
+            if (!this[prop] || typeof(this[prop]) === "function") continue;
+            
+            var prop_typename = this[prop]['typename'];
+            
+            if (typeof(prop_typename) === "undefined" || prop_typename === "BASE") continue;
+            
+            if (JSROOTIO.fUserStreamers !== null) {
+               var user_func = JSROOTIO.fUserStreamers[prop_typename];
+               
+               if (user_func !== undefined) {
+                  user_func(buf, obj, prop, this);
+                  continue;
+               }
+            }
             
             // special classes (custom streamers)
-            switch (this[prop]['typename']) {
+            switch (prop_typename) {
                case "TString*":
                   // TODO: check how and when it used
                   var r__v = buf.ReadVersion();

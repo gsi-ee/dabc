@@ -147,18 +147,8 @@ function displayCollection(name, cycle, c_id, coll) {
 };
 
 function displayObject(obj, cycle, idx) {
-   if (!obj['_typename'].match(/\bJSROOTIO.TH1/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH2/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TH3/) &&
-       !obj['_typename'].match(/\bJSROOTIO.TGraph/) &&
-       !obj['_typename'].match(/\bRooHist/) &&
-       !obj['_typename'].match(/\RooCurve/) &&
-       obj['_typename'] != 'JSROOTIO.TCanvas' &&
-       obj['_typename'] != 'JSROOTIO.TF1' &&
-       obj['_typename'] != 'JSROOTIO.TProfile') {
-      if (typeof(checkUserTypes) != 'function' || checkUserTypes(obj) == false)
-         return;
-   }
+   if (!obj) return;
+   if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
    var uid = "uid_accordion_"+(++last_index);
    var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + ";" + cycle + "</a>&nbsp; </h5>\n";
    entryInfo += "<div id='histogram" + idx + "'>\n";
