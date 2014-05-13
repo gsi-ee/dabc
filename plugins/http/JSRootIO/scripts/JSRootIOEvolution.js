@@ -21,7 +21,6 @@ var kByteCountMask = 0x40000000;
 var kNewClassTag = 0xFFFFFFFF;
 var kClassMask = 0x80000000;
 
-
 (function(){
 
    if (typeof JSROOTIO == "object"){
@@ -36,10 +35,11 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.81 2014/05/12";
+   JSROOTIO.version = "2.9 2014/05/12";
    
    JSROOTIO.debug = false;
    
+      
    JSROOTIO.fUserStreamers = null; // map of user-streamer function like func(buf,obj,prop,streamerinfo)
    
    JSROOTIO.addUserStreamer = function(type,user_streamer)
@@ -47,7 +47,7 @@ var kClassMask = 0x80000000;
       if (this.fUserStreamers==null) this.fUserStreamers = {};
       this.fUserStreamers[type] = user_streamer;
    }
-   
+
    JSROOTIO.BIT = function(bits, index) {
       var mask = 1 << index;
       return (bits & mask);
@@ -874,12 +874,9 @@ var kClassMask = 0x80000000;
             case kObjectp:
             case kObject:   
                var classname = this[prop]['typename'];
-               
                if (classname.endsWith("*")) 
                   classname = classname.substr(0, classname.length - 1);
-               
-               // console.log("Read property " + prop + " of class " +  classname);
-               
+
                obj[prop] = {};
                buf.ClassStreamer(obj[prop], classname);
                break;
@@ -1009,7 +1006,7 @@ var kClassMask = 0x80000000;
          }
          // then class members
          for (prop in this) {
-
+         
             if (!this[prop] || typeof(this[prop]) === "function") continue;
             
             var prop_typename = this[prop]['typename'];
