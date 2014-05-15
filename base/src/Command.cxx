@@ -58,7 +58,7 @@ dabc::CommandContainer::~CommandContainer()
    std::string field;
 
    do {
-      field = Fields().FindFieldWichStarts("##REF##");
+      field = Fields().FindFieldWhichStarts("##REF##");
       if (!field.empty()) {
          EOUT("CMD:%s Reference %s not cleared correctly", GetName(), field.c_str());
 

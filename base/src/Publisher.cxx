@@ -659,13 +659,12 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
       if (producer_name.empty()) return cmd_false;
 
-      DOUT0("CMD ITEM %s HAS FIELD %s", request_name.c_str(), DBOOL(def.HasField("cmddef")));
-
       dabc::Command res;
-      if (def.GetField("cmddef").AsBool(false)) {
+      if (def.GetField("dabc:parcmddef").AsBool(false)) {
+         DOUT3("Create normal command %s for path %s", def.GetName(), path.c_str());
          res = dabc::Command(def.GetName());
       } else {
-         DOUT3("Hierarchy Command item %s", def.GetName(), request_name.c_str());
+         DOUT3("Create hierarchy command %s for path %s", request_name.c_str(), path.c_str());
          res = dabc::CmdHierarchyExec(request_name);
       }
 
@@ -825,6 +824,9 @@ dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std:
    if (Execute(cmd) != cmd_true) return res;
 
    res = cmd.GetRef("ExeCmd");
+
+   DOUT3("Produce command %p - now submit", res());
+
    if (res.null()) return res;
 
    dabc::mgr.Execute(res);

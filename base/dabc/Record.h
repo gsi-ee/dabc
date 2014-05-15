@@ -336,7 +336,7 @@ namespace dabc {
 
          unsigned NumFields() const { return fMap.size(); }
          std::string FieldName(unsigned n) const;
-         std::string FindFieldWichStarts(const std::string& name);
+         std::string FindFieldWhichStarts(const std::string& name);
 
          RecordField& Field(const std::string& name) { return fMap[name]; }
 

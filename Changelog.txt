@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+15.05.2014
+1. Fix problem with  command-definitions parameter - they now correctly recgnized.
+
+
 12.05.2014
 1. In JSRootIO provide possibility for user-defined streamer and user-defined painter.
    Provide simple example for amore users.

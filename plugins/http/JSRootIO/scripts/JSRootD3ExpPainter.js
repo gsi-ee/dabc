@@ -646,14 +646,14 @@ var gStyle = {
    JSROOTPainter = {};
 
    JSROOTPainter.version = '4.1 2014/05/12';
-   
+
    JSROOTPainter.fUserPainters = null; // list of user painters, called with arguments painter(vis, obj, opt) 
-   
+
    /*
     * Helper functions
     */
 
-   JSROOTPainter.addUserPainter = function(class_name,user_painter)
+   JSROOTPainter.addUserPainter = function(class_name, user_painter)
    {
       if (this.fUserPainters == null) this.fUserPainters = {};
       this.fUserPainters[class_name] = user_painter;
@@ -3082,13 +3082,13 @@ var gStyle = {
    }
 
 
-   JSROOTPainter.drawPaveText = function(vis, pavetext)
+   JSROOTPainter.DrawPaveText = function(vis, pavetext)
    {
-      // $("#report").append("<br> JSROOTPainter.drawPaveText " + pavetext['fName']);
+      // $("#report").append("<br> JSROOTPainter.DrawPaveText " + pavetext['fName']);
 
       if (pavetext['fX1NDC'] < 0.0 || pavetext['fY1NDC'] < 0.0 ||
           pavetext['fX1NDC'] > 1.0 || pavetext['fY1NDC'] > 1.0) {
-         // $("#report").append("<br> JSROOTPainter.drawPaveText suppress painitng of " + pavetext['fName']);
+         // $("#report").append("<br> JSROOTPainter.DrawPaveText suppress painting of " + pavetext['fName']);
          return;
       }
 
@@ -3931,7 +3931,7 @@ var gStyle = {
 
             if (func['_typename'] == 'JSROOTIO.TPaveText' ||
                 func['_typename'] == 'JSROOTIO.TPaveStats') {
-               funcpainter = JSROOTPainter.drawPaveText(this.vis, func);
+               funcpainter = JSROOTPainter.DrawPaveText(this.vis, func);
             }
 
             if (func['_typename'] == 'JSROOTIO.TF1') {
@@ -5314,7 +5314,7 @@ var gStyle = {
       this.fillcolor = root_colors[this.histo['fFillColor']];
       this.linecolor = root_colors[this.histo['fLineColor']];
 
-      if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
+      //if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7'; // why?
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
 
       this.nbinsx = this.histo['fXaxis']['fNbins'];
@@ -5467,7 +5467,7 @@ var gStyle = {
       var wmin = this.minbin, wmax = this.maxbin;
           wlmin = wmin, wlmax = wmax;
       var ndivz = this.histo['fContour'].length;
-      if (ndivz<16) ndivz = 16;
+      if (ndivz < 16) ndivz = 16;
       var scale = ndivz / (wlmax - wlmin);
       if (this.options.Logz) {
          if (wmin <= 0 && wmax > 0) wmin = Math.min(1.0, 0.001 * wmax);
@@ -5493,6 +5493,7 @@ var gStyle = {
       var color = Math.round(0.01 + (zc - wlmin) * scale);
       var theColor = Math.round((color + 0.99) * ncolors / ndivz);
       var icol = theColor % ncolors;
+      if (theColor == ncolors) icol = ncolors - 1;
       if (icol < 0) icol = 0;
 
       return default_palette[icol];
@@ -5543,8 +5544,8 @@ var gStyle = {
                   point = {
                      x: grx1,
                      y: gry2,
-                     width: grx2-grx1,
-                     height: gry1-gry2,
+                     width: 1+grx2-grx1,
+                     height: 1+gry1-gry2,
                      stroke: "none",
                      fill: this.getValueColor(binz)
                   }
@@ -6839,14 +6840,14 @@ var gStyle = {
 
       return JSROOTPainter.drawObjectInFrame(vis, obj);
    };
-   
+
    JSROOTPainter.canDrawObject = function(classname)
    {
       if (!classname) return false;
 
       if ((this.fUserPainters != null) && 
           (typeof(this.fUserPainters[classname]) === 'function')) return true;
-      
+
       if (classname.match(/\bJSROOTIO.TH1/) ||
           classname.match(/\bJSROOTIO.TH2/) ||
           classname.match(/\bJSROOTIO.TH3/) ||
@@ -6859,7 +6860,7 @@ var gStyle = {
           classname == 'JSROOTIO.TProfile') return true;
 
       // console.log("Cannot draw class " + classname + "  " + typeof(this.fUserPainters[classname]));
-      
+
       return false;
    }
 
@@ -6871,7 +6872,7 @@ var gStyle = {
       if (!('_typename' in obj)) return;
 
       var classname = obj['_typename'];
-      
+
       if (classname == 'JSROOTIO.TCanvas') {
          vis['ROOT:canvas'] = obj;
          vis['ROOT:pad'] = obj;
@@ -6895,7 +6896,7 @@ var gStyle = {
          return JSROOTPainter.drawLegend(vis, obj, opt);
 
       if (classname == 'JSROOTIO.TPaveText')
-         return JSROOTPainter.drawPaveText(vis, obj);
+         return JSROOTPainter.DrawPaveText(vis, obj);
 
       if ((classname == 'JSROOTIO.TLatex') || (classname == 'JSROOTIO.TText'))
          return JSROOTPainter.drawText(vis, obj);
@@ -7405,3 +7406,4 @@ var gStyle = {
 })();
 
 */
+
