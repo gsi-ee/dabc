@@ -22,9 +22,13 @@
 mbs::ReadoutModule::ReadoutModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fIter(),
+   fLastNotFullTm(),
+   fCurBufTm(),
    fCmd()
 {
    EnsurePorts(1, 0, dabc::xmlWorkPool);
+
+   SetPortSignaling(InputName(), dabc::Port::SignalEvery);
 
    CreateTimer("SysTimer");
 }
@@ -41,7 +45,7 @@ int mbs::ReadoutModule::ExecuteCommand(dabc::Command cmd)
       double tm = fCmd.TimeTillTimeout();
 
       if (CanRecv() || (tm<=0))
-         ProcessInputEvent(0);
+         ProcessData();
       else
          ShootTimer(0, tm);
 
@@ -51,18 +55,43 @@ int mbs::ReadoutModule::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-void mbs::ReadoutModule::ProcessInputEvent(unsigned)
+void mbs::ReadoutModule::ProcessData()
 {
    // ignore input event as long as command is not specified
    if (fCmd.null()) return;
 
    // DOUT0("process input event");
 
+   double maxage = fCmd.GetDouble("maxage", -1);
+
    int res = dabc::cmd_false;
 
-   if (CanRecv()) {
+   dabc::TimeStamp now = dabc::Now();
+
+   bool cleanqueue = false;
+   if ((maxage>0) && InputQueueFull())
+      if (fLastNotFullTm.null() || (now - fLastNotFullTm > maxage)) cleanqueue = true;
+
+   if (cleanqueue) fLastNotFullTm = now;
+//   if (cleanqueue) printf("Clean client queue\n");
+
+   while (CanRecv()) {
       dabc::Buffer buf = Recv();
+
+      fCurBufTm = now;
+
       // when EOF buffer received, return immediately stop
+      if (buf.GetTypeId() == dabc::mbt_EOF) {
+         fCmd.Reply(dabc::cmd_false);
+         return;
+      }
+
+      // clean queue when it was full too long
+      // last buffer will be preserved
+      if (cleanqueue && CanRecv()) {
+         buf.Release();
+         continue;
+      }
 
       switch (buf.GetTypeId()) {
          case dabc::mbt_EOF:
@@ -75,9 +104,19 @@ void mbs::ReadoutModule::ProcessInputEvent(unsigned)
             res = AcceptBuffer(buf);
             break;
       }
+
+      break;
    }
 
    fCmd.Reply(res);
+}
+
+
+void mbs::ReadoutModule::ProcessInputEvent(unsigned)
+{
+   if (!InputQueueFull()) fLastNotFullTm.GetNow();
+
+   ProcessData();
 }
 
 void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
@@ -85,8 +124,15 @@ void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
    // DOUT0("process timer event");
 
    // if timeout happened, reply
-   ProcessInputEvent(0);
+   ProcessData();
 }
+
+bool mbs::ReadoutModule::GetEventInTime(double maxage)
+{
+   if ((maxage <= 0) || fCurBufTm.null()) return true;
+   return !fCurBufTm.Expired(maxage);
+}
+
 
 // ===================================================================================
 
@@ -141,14 +187,23 @@ bool mbs::ReadoutHandle::Disconnect()
 }
 
 
-mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tm)
+mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tmout, double maxage)
 {
    if (null()) return 0;
 
-   if (GetObject()->fIter.NextEvent())
+   bool intime = GetObject()->GetEventInTime(maxage);
+
+   // if (maxage>0) printf("Max age %f!!!\n", maxage);
+   // if (!intime) printf("Skip buffer!!!\n");
+
+   if (intime && GetObject()->fIter.NextEvent())
       return GetObject()->fIter.evnt();
 
-   if (!Execute(dabc::Command("NextBuffer"), tm)) return 0;
+   dabc::Command cmd("NextBuffer");
+   // here maxage means cleanup of complete queue when queue was full for long time
+   cmd.SetDouble("maxage", 2.*maxage);
+
+   if (!Execute(cmd, tmout)) return 0;
 
    if (GetObject()->fIter.NextEvent())
       return GetObject()->fIter.evnt();

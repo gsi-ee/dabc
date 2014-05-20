@@ -61,7 +61,7 @@ void dabc::Port::ReadPortConfiguration()
 }
 
 
-bool dabc::Port::SetSignalling(EventsProducing kind)
+bool dabc::Port::SetSignaling(EventsProducing kind)
 {
    if (IsConnected()) {
       EOUT("Cannot change signalling kind with connected port!!!");
@@ -172,7 +172,7 @@ void dabc::Port::SetRateMeter(const Parameter& ref)
 
 int dabc::Port::GetMaxLoopLength()
 {
-   switch (SignallingKind()) {
+   switch (SignalingKind()) {
       case SignalNone:
          return 0;
       case SignalConfirm:
@@ -225,10 +225,10 @@ bool dabc::Port::TryNextReconnect(bool caused_by_error)
 
 // ================================================================
 
-int dabc::PortRef::GetSignallingKind()
+int dabc::PortRef::GetSignalingKind()
 {
    if (GetObject()==0) return Port::SignalNone;
-   dabc::Command cmd("GetSignallingKind");
+   dabc::Command cmd("GetSignalingKind");
    cmd.SetStr("Port", GetObject()->GetName());
    if (GetModule().Execute(cmd) == cmd_true)
       return cmd.GetInt("Kind");
@@ -310,7 +310,7 @@ bool dabc::InputPort::SkipBuffers(unsigned cnt)
 
 unsigned dabc::InputPort::NumStartEvents()
 {
-   switch (SignallingKind()) {
+   switch (SignalingKind()) {
       case SignalNone:
          return 0;
       case SignalConfirm:
@@ -369,7 +369,7 @@ bool dabc::OutputPort::Send(dabc::Buffer& buf)
 
 unsigned dabc::OutputPort::NumStartEvents()
 {
-   switch (SignallingKind()) {
+   switch (SignalingKind()) {
       case SignalNone:
          return 0;
       case SignalConfirm:
@@ -405,7 +405,7 @@ dabc::PoolHandle::~PoolHandle()
 
 unsigned dabc::PoolHandle::NumStartEvents()
 {
-   switch (SignallingKind()) {
+   switch (SignalingKind()) {
       case SignalNone:
          return 0;
       case SignalConfirm:

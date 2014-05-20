@@ -92,7 +92,7 @@ namespace dabc {
          void SetQueue(Reference& ref);
 
          inline void ConfirmEvent()
-         { if (SignallingKind() == SignalConfirm) fQueue.ConfirmEvent(GetType()==mitOutPort); }
+         { if (SignalingKind() == SignalConfirm) fQueue.ConfirmEvent(GetType()==mitOutPort); }
 
          /** Return maximum number of events, which could be processed at once.
           * For internal usage */
@@ -153,8 +153,11 @@ namespace dabc {
          /** Specifies how many events can be processed at once. Could be used to balance load between ports */
          void SetMaxLoopLength(unsigned cnt) { fMaxLoopLength = cnt; }
 
-         bool SetSignalling(EventsProducing kind);
-         EventsProducing SignallingKind() const { return fSignal; }
+         /** Specifies how often port event will be produced */
+         bool SetSignaling(EventsProducing kind);
+
+         /** Returns configured signaling mode */
+         EventsProducing SignalingKind() const { return fSignal; }
 
          /** Submit command to connected transport */
          bool SubmitCommandToTransport(Command cmd);
@@ -203,7 +206,7 @@ namespace dabc {
       unsigned QueueCapacity() const { return GetObject() ? GetObject()->QueueCapacity() : 0; }
 
       /** \brief Returns signaling method configured for the port */
-      int GetSignallingKind();
+      int GetSignalingKind();
 
       /** \brief Returns true if port is connected */
       bool IsConnected();

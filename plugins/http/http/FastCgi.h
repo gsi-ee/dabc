@@ -26,7 +26,7 @@
 
 namespace http {
 
-   /** \brief %Server provides http access to DABC
+   /** \brief %Server provides fastcgi access to DABC
     *
     */
 

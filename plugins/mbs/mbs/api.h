@@ -44,16 +44,22 @@ namespace mbs {
 
          friend class ReadoutHandle;
 
-         mbs::ReadIterator fIter;   ///< iterator, accessed only from user side
-         dabc::Command fCmd;        ///< current nextbuffer cmd
+         mbs::ReadIterator fIter;    ///< iterator, accessed only from user side
+         dabc::TimeStamp fLastNotFullTm; ///< last time when queue is not full
+         dabc::TimeStamp fCurBufTm;      ///< time when buffer analysis starts
+         dabc::Command fCmd;             ///< current nextbuffer cmd
 
          virtual int ExecuteCommand(dabc::Command cmd);
+
+         void ProcessData();
 
          virtual void ProcessInputEvent(unsigned port);
 
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int AcceptBuffer(dabc::Buffer& buf) { return dabc::cmd_false; }
+
+         bool GetEventInTime(double maxage);
 
       public:
 
@@ -81,8 +87,11 @@ namespace mbs {
       /** Disconnect from MBS server */
       bool Disconnect();
 
-      /** Retrieve next event from the server */
-      mbs::EventHeader* NextEvent(double tm = 1.0);
+      /** Retrieve next event from the server
+       * One could specify timeout (how long one should wait for next event, default 1 s) and
+       * maximal age of the event on client side (default -1)
+       * Maximal age parameters allows to skip old events, analyzing only newest*/
+      mbs::EventHeader* NextEvent(double tmout = 1.0, double maxage = -1.);
 
       /** Get current event pointer */
       mbs::EventHeader* GetEvent();

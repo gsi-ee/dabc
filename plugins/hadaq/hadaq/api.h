@@ -60,7 +60,7 @@ namespace hadaq {
       bool Disconnect() { return mbs::ReadoutHandle::Disconnect(); }
 
       /** Retrieve next event from the server */
-      hadaq::RawEvent* NextEvent(double tm = 1.0);
+      hadaq::RawEvent* NextEvent(double tm = 1.0, double maxage = -1.);
 
       /** Get current event pointer */
       hadaq::RawEvent* GetEvent();

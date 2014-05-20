@@ -40,6 +40,7 @@ int usage(const char* errstr = 0)
    printf("   lmd://path/file.lmd         - LMD file reading\n");
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
+   printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
@@ -174,7 +175,7 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    long number(10), skip(0);
-   double tmout = -1.;
+   double tmout(-1.), maxage(-1.), debug_delay(-1);
    bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
    unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0);
 
@@ -188,6 +189,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
       if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
+      if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
@@ -244,7 +247,9 @@ int main(int argc, char* argv[])
 
    while (!dabc::CtrlCPressed()) {
 
-      evnt = ref.NextEvent(1.);
+      evnt = ref.NextEvent(maxage > 0 ? maxage/2. : 1., maxage);
+
+      if (debug_delay>0) dabc::Sleep(debug_delay);
 
       dabc::TimeStamp curr = dabc::Now();
 

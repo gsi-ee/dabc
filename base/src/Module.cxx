@@ -363,11 +363,11 @@ int dabc::Module::PreviewCommand(Command cmd)
       else
          cmd_res = cmd_false;
    } else
-   if (cmd.IsName("GetSignallingKind")) {
+   if (cmd.IsName("GetSignalingKind")) {
       PortRef port = FindPort(cmd.GetStr("Port"));
       if (!port.null()) {
          cmd_res = cmd_true;
-         cmd.SetInt("Kind", port()->SignallingKind());
+         cmd.SetInt("Kind", port()->SignalingKind());
       } else
          cmd_res = cmd_false;
    } else
@@ -738,11 +738,11 @@ bool dabc::Module::IsPortConnected(const std::string& name) const
 }
 
 
-bool dabc::Module::SetPortSignalling(const std::string& name, Port::EventsProducing signal)
+bool dabc::Module::SetPortSignaling(const std::string& name, Port::EventsProducing signal)
 {
    PortRef port = FindPort(name);
    if (!port.null()) {
-      port()->SetSignalling(signal);
+      port()->SetSignaling(signal);
       return true;
    }
 

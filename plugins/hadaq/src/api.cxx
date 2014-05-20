@@ -29,16 +29,22 @@ int hadaq::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
 }
 
 
-hadaq::RawEvent* hadaq::ReadoutHandle::NextEvent(double tm)
+hadaq::RawEvent* hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
 {
    if (null()) return 0;
 
+   bool intime = GetObject()->GetEventInTime(maxage);
+
    // check that HADAQ event can be produced
-   if (GetObject()->fIter2.NextEvent())
+   // while hadaq events can be read only from file, ignore maxage parameter here
+   if (intime && GetObject()->fIter2.NextEvent())
       return GetObject()->fIter2.evnt();
 
-   if (mbs::ReadoutHandle::NextEvent(tm)!=0) return GetEvent();
+   // this is a case, when hadaq event packed into MBS event
+   if (mbs::ReadoutHandle::NextEvent(tmout, maxage)!=0)
+      return hadaq::ReadoutHandle::GetEvent();
 
+   // check again that HADAQ event can be produced
    if (GetObject()->fIter2.NextEvent())
       return GetObject()->fIter2.evnt();
 

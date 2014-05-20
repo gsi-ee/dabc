@@ -184,7 +184,7 @@ namespace dabc {
          bool SubmitCommandToTransport(const std::string& portname, Command cmd);
 
          unsigned PortQueueCapacity(const std::string& name) const { return FindPort(name).QueueCapacity(); }
-         bool SetPortSignalling(const std::string& name, Port::EventsProducing signal);
+         bool SetPortSignaling(const std::string& name, Port::EventsProducing signal);
          bool SetPortRatemeter(const std::string& name, const Parameter& ref);
          bool SetPortLoopLength(const std::string& name, unsigned cnt);
 

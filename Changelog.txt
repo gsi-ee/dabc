@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+20.05.2014
+1. In mbs/api.h and hadaq/api.h introduce 'maxage' parameter in NextEvent functions.
+   It used to skip events from the queue when event processing is too slow compared 
+   with server performance. Parameter used in two places. First, when iteration over
+   events in single buffer takes too long, buffer will be skipped 
+   and new buffer will be started. Second, if queue remained full 
+   for the long time (2x maxage), when complete queue will be cleaned.
+   Aim to use in hydra when processing could be slower than event rate. 
+
+
 15.05.2014
 1. Fix problem with  command-definitions parameter - they now correctly recgnized.
 

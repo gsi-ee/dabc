@@ -30,7 +30,7 @@ dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Comman
       CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
    for (unsigned n=0;n<NumInputs();n++) {
-      SetPortSignalling(InputName(n), dabc::Port::SignalEvery);
+      SetPortSignaling(InputName(n), dabc::Port::SignalEvery);
       if (!fDataRateName.empty())
          SetPortRatemeter(InputName(n), Par(fDataRateName));
    }

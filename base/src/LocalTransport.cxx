@@ -391,13 +391,13 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    if (assign_inp) {
       q()->fInp = m2;
       q()->fInpId = port_inp.ItemId();
-      q()->fInpSignKind = port_inp.GetSignallingKind();
+      q()->fInpSignKind = port_inp.GetSignalingKind();
    }
 
    if (assign_out) {
       q()->fOut = m1;
       q()->fOutId = port_out.ItemId();
-      q()->fOutSignKind = port_out.GetSignallingKind();
+      q()->fOutSignKind = port_out.GetSignalingKind();
    }
 
    // first of all, we must connect input port

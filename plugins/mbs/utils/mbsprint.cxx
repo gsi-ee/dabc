@@ -38,6 +38,7 @@ int usage(const char* errstr = 0)
    printf("   mbs://mbsnode/Stream    - MBS stream server\n");
    printf("Additional arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
+   printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
    printf("   -num number             - number of events to print\n");
    printf("   -hex                    - print raw data in hex form\n");
    printf("   -dec                    - print raw data in decimal form\n");
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
    if (argc<2) return usage();
 
    long number = 10;
-   double tmout = 5.;
+   double tmout(5.), maxage(-1.), debug_delay(-1.);
    unsigned slowsubevid(0);
 
    bool printdata(false), ashex(true), aslong(true), showrate(false), reconnect(false);
@@ -91,6 +92,8 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
+      if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
+      if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
       if ((strcmp(argv[n],"-slow")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &slowsubevid); } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
@@ -127,7 +130,8 @@ int main(int argc, char* argv[])
 
    while (!dabc::CtrlCPressed()) {
 
-      evnt = ref.NextEvent(1.);
+      evnt = ref.NextEvent(maxage > 0 ? maxage/2. : 1., maxage);
+      if (debug_delay>0) dabc::Sleep(debug_delay);
 
       dabc::TimeStamp curr = dabc::Now();
 
