@@ -2205,7 +2205,7 @@ var gStyle = {
             };
          }
          else if (pthis.graph['_typename'] == 'JSROOTIO.TGraphAsymmErrors' ||
-               pthis.graph['_typename'].match(/\bRooHist/)) {
+                  pthis.graph['_typename'].match(/\bRooHist/)) {
             return {
                x: pthis.graph['fX'][p],
                y: pthis.graph['fY'][p],
@@ -2833,7 +2833,7 @@ var gStyle = {
       var height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
       pos_y -= height;
       var line, nlines = pavetext['fLines'].arr.length;
-      var font_size = Math.round(height / (nlines * 1.5));
+      var font_size = Math.round(height / (nlines * 1.6));
       var fcolor = root_colors[pavetext['fFillColor']];
       var lcolor = root_colors[pavetext['fLineColor']];
       var tcolor = root_colors[pavetext['fTextColor']];
@@ -2867,7 +2867,6 @@ var gStyle = {
             break;
       }
 
-
       // for now ignore all align parameters, draw as is
       if (nlines>1) lmargin = pavetext['fMargin'] * width / 2;
 
@@ -2892,26 +2891,15 @@ var gStyle = {
 
       var first_stat = 0;
       var num_cols = 0;
-      var max_len = 0;
-
-      for (var j=0; j<nlines; ++j) {
-         var line = pavetext['fLines'].arr[j]['fTitle'];
-         line = JSROOTPainter.translateLaTeX(line);
-         var parts = line.split("|");
-         if (parts && (parts.length>1)) {
-            if (first_stat == 0) first_stat =j;
-            if (parts.length > num_cols) num_cols = parts.length;
-         }
-         var lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                   font_size, fontDetails['style']);
-         if (lw > max_len) max_len = lw;
-      }
-
-      if (max_len > width)
-         font_size *= 0.98 * (width / max_len);
+      var lw = 0;
+      var draw_font_size = font_size;
 
       if (nlines == 1) {
          line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[0]['fTitle']);
+         lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
+                                    font_size, fontDetails['style']);
+         if (lw > width)
+            draw_font_size = font_size * 0.97 * (width / lw);
 
          this.draw_g.append("text")
             .attr("text-anchor", align)
@@ -2920,9 +2908,11 @@ var gStyle = {
             .attr("font-family", fontDetails['name'])
             .attr("font-weight", fontDetails['weight'])
             .attr("font-style", fontDetails['style'])
-            .attr("font-size", font_size)
+            .attr("font-size", draw_font_size)
             .attr("fill", tcolor)
             .text(line);
+
+         draw_font_size = font_size;
       }
       else {
 
@@ -2930,11 +2920,15 @@ var gStyle = {
             var jcolor = root_colors[pavetext['fLines'].arr[j]['fTextColor']];
             if (pavetext['fLines'].arr[j]['fTextColor'] == 0)  jcolor = tcolor;
             line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
+            lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
+                                       font_size, fontDetails['style']);
+            if (lw > width)
+               draw_font_size = font_size * 0.96 * (width / lw);
             if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
                var posy = (j == 0) ? (font_size * 1.2) :
-                                      font_size * (0.05 + (j+1) * 1.4);
+                                      font_size * (0.05 + (j+1) * 1.45);
                if ((first_stat>0) && (j>=first_stat)) {
-                  posy -= font_size*0.3; // dut to middle allignment
+                  posy -= draw_font_size*0.3; // dut to middle allignment
                   var parts = line.split("|");
                   for (var n=0;n<parts.length;n++)
                      this.draw_g.append("text")
@@ -2944,7 +2938,7 @@ var gStyle = {
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", font_size)
+                     .attr("font-size", draw_font_size)
                      .attr("fill", jcolor)
                      .text(parts[n]);
                } else
@@ -2956,7 +2950,7 @@ var gStyle = {
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", font_size)
+                     .attr("font-size", draw_font_size)
                      .attr("fill", jcolor)
                      .text(line);
                } else {
@@ -2969,7 +2963,7 @@ var gStyle = {
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", font_size)
+                     .attr("font-size", draw_font_size)
                      .attr("fill", jcolor)
                      .text(parts[n]);
                }
@@ -2981,10 +2975,11 @@ var gStyle = {
                   .attr("font-family", fontDetails['name'])
                   .attr("font-weight", fontDetails['weight'])
                   .attr("font-style", fontDetails['style'])
-                  .attr("font-size", font_size)
+                  .attr("font-size", draw_font_size)
                   .attr("fill", jcolor)
                   .text(line);
             }
+            draw_font_size = font_size;
          }
       }
 
@@ -4634,6 +4629,8 @@ var gStyle = {
           this.options.Error == 0 && this.options.Same == 0) {
          this.draw_content = false;
       }
+      if (this.options.Axis > 0) // Paint histogram axis only
+         this.draw_content = false;
    }
 
    JSROOTPainter.Hist1DPainter.prototype.CountStat = function()
@@ -5491,9 +5488,8 @@ var gStyle = {
       if (zc < wlmin) zc = wlmin;
       var ncolors = default_palette.length;
       var color = Math.round(0.01 + (zc - wlmin) * scale);
-      var theColor = Math.round((color + 0.99) * ncolors / ndivz);
+      var theColor = Math.round((color + 0.99) * ncolors / ndivz) - 1;
       var icol = theColor % ncolors;
-      if (theColor == ncolors) icol = ncolors - 1;
       if (icol < 0) icol = 0;
 
       return default_palette[icol];

@@ -97,8 +97,19 @@ https://github.com/linev/JSRootIO.git
 
 Functionality of the modified code can be tested on http://web-docs.gsi.de/~linev/JSRootIO/index_local.htm
 
+
+THttpServer in ROOT
+===================
+
+Since May 2014 THttpServer class is included into ROOT repository (versions 6-00 and 5-34).
+Therefore it is no longer necessary to install DABC to use it with pure ROOT application.
+One could benefit from DABC when heterogenoius systems, 
+involving other components like DAQ and slow-control, are planned. 
+ 
+THttpServer class (and several others) will remain some time in DABC package to support
+older ROOT versions. 
  
 
 For any comments and wishes contact \n 
-Sergey Linev <mailto:S.Linev@gsi.de>
+Sergey Linev   S.Linev(at)gsi.de
 */
