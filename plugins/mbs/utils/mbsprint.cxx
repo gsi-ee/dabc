@@ -103,8 +103,13 @@ int main(int argc, char* argv[])
    dabc::Url url(src);
 
    if (url.IsValid()) {
-      if (url.GetProtocol().empty())
-         src = std::string("mbss://") + src;
+      if (url.GetProtocol().empty()) {
+
+         if (src.find(".lmd") != std::string::npos)
+            src = std::string("lmd://") + src;
+         else
+            src = std::string("mbss://") + src;
+      }
 
       if (reconnect && !url.HasOption("reconnect")) {
         if (url.GetOptions().empty())

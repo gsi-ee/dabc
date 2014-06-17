@@ -63,30 +63,41 @@ namespace mbs {
             }
 
             if (io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd) !=  1) {
-               fprintf(stderr, "Failure reading file %s header", fname);
-               Close();
-               return false;
-            }
-
-            if (!fFileHdr.isTypePair(0x65, 0x1)) {
-               fprintf(stderr, "Wrong header type in file %s", fname);
-               Close();
-               return false;
-            }
-
-            if (fFileHdr.iOffsetSize != 8) {
-               fprintf(stderr, "Wrong offset size %u in file %s, expected 8", (unsigned) fFileHdr.iOffsetSize, fname);
+               fprintf(stderr, "Failure reading file %s header\n", fname);
                Close();
                return false;
             }
 
             if (fFileHdr.iEndian != 1) {
-               fprintf(stderr, "Wrong endian %u in file %s, expected 1", (unsigned) fFileHdr.iEndian, fname);
+               fprintf(stderr, "Wrong endian %u in file %s, expected 1\n", (unsigned) fFileHdr.iEndian, fname);
                Close();
                return false;
             }
 
+            if (fFileHdr.isTypePair(0x65, 0x1) && (fFileHdr.FullSize() == 0xfffffff0) && (fFileHdr.iOffsetSize == 8)) {
+               // this is LMD file, created by DABC
+               fReadingMode = true;
+               // fMbsFormat = false;
+               return true;
+            }
+
+            fprintf(stderr, "%s is original LMD file, which is not supported by DABC\n", fname);
+            Close();
+            return false;
+
+            if ((fFileHdr.FullSize() > 0x8000) || (fFileHdr.FullSize() < sizeof(fFileHdr))) {
+               fprintf(stderr, "File header %u too large in file %s\n", (unsigned) fFileHdr.FullSize(), fname);
+               Close();
+               return false;
+            }
+
+            if (fFileHdr.FullSize() > sizeof(fFileHdr)) {
+               // skip dummy bytes from file header
+               io->fseek(fd, fFileHdr.FullSize() - sizeof(fFileHdr), true);
+            }
+
             fReadingMode = true;
+            // fMbsFormat = true;
             return true;
          }
 
@@ -121,12 +132,13 @@ namespace mbs {
             fFileHdr.iFree3 = 0;       // free[3]
 
             if (io->fwrite(&fFileHdr, sizeof(fFileHdr),1,fd)!=1) {
-               fprintf(stderr, "Failure writing file %s header", fname);
+               fprintf(stderr, "Failure writing file %s header\n", fname);
                Close();
                return false;
             }
 
             fReadingMode = false;
+            // fMbsFormat = false;
             return true;
          }
 
@@ -152,14 +164,23 @@ namespace mbs {
             return true;
          }
 
+
+         /** Reads buffer with several MBS events */
          bool ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent = false)
          {
             if (isWriting() || (ptr==0) || (sz==0) || (*sz < sizeof(mbs::Header))) return false;
 
+            // if (fMbsFormat) return ReadMbsBuffer(ptr, sz, onlyevent);
+
             uint64_t maxsz = *sz; *sz = 0;
+
+            printf("start buffer reading maxsz = %u\n", (unsigned) maxsz);
 
             // any data in LMD should be written with 4-byte wrapping
             size_t readsz = io->fread(ptr, 1, maxsz, fd);
+
+            printf("readsz = %u\n", (unsigned) readsz);
+
 
             if (readsz==0) return false;
 
@@ -171,7 +192,7 @@ namespace mbs {
                // special case when event was read not completely
                // or we want to provide only event
                if ((checkedsz + hdr->FullSize() > readsz) || (onlyevent && (checkedsz>0))) {
-                  // return event to the begin of event
+                  // return pointer to the begin of event
                   io->fseek(fd, -(readsz - checkedsz), true);
                   break;
                }

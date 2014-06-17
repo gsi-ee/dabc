@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+17.06.2014
+1. Recognize lmd files, written by MBS. For the moment such files not supported.
+   One could use go4 and MBS API for them.
+
+
 20.05.2014
 1. In mbs/api.h and hadaq/api.h introduce 'maxage' parameter in NextEvent functions.
    It used to skip events from the queue when event processing is too slow compared 
