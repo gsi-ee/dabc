@@ -410,6 +410,8 @@ Usage of hadaq API from DABC
 ============================
 hldprint is just program with about 200 lines of code. 
 Source code can be found in [repository](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx)
+There is also [example](https://subversion.gsi.de/dabc/trunk/applications/hadaq/), which 
+can be copied and modified for the user needs.
 
 In simplified form access to any data source (local file, remote file or online server) looks like:
 

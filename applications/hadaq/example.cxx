@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
             unsigned data = sub->Data(ix++);
 
             unsigned datalen = (data >> 16) & 0xFFFF;
-            unsigned datakind = data & 0xFFFF;
+            // unsigned datakind = data & 0xFFFF;
 
             ix+=datalen;
          }
