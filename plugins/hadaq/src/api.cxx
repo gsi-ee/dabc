@@ -28,6 +28,20 @@ int hadaq::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
    return dabc::cmd_false;
 }
 
+// =========================================================================
+
+
+hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string& src)
+{
+   std::string newurl = src;
+
+   if (((newurl.find(".hld") != std::string::npos) || (newurl.find(".HLD") != std::string::npos)) &&
+         (newurl.find("hld://") == std::string::npos))
+      newurl = std::string("hld://") + src;
+
+   return DoConnect(newurl, "hadaq::ReadoutModule");
+}
+
 
 hadaq::RawEvent* hadaq::ReadoutHandle::NextEvent(double tmout, double maxage)
 {

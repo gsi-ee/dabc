@@ -49,11 +49,9 @@ namespace hadaq {
       DABC_REFERENCE(ReadoutHandle, mbs::ReadoutHandle, hadaq::ReadoutModule)
 
       /** Connect with data source */
-      static ReadoutHandle Connect(const std::string& url)
-      {
-         return DoConnect(url, "hadaq::ReadoutModule");
-      }
+      static ReadoutHandle Connect(const std::string& url);
 
+      /** Return true if handle not initialized */
       bool null() const { return mbs::ReadoutHandle::null(); }
 
       /** Disconnect from MBS server */
