@@ -18,8 +18,9 @@ endif
 HADAQDIRI         = $(HADAQDIR)/hadaq
 HADAQDIRS         = $(HADAQDIR)/src
 
-DABCHADAQ_LIBNAME = $(LIB_PREFIX)DabcHadaq
-DABCHADAQ_LIB     = $(TGTDLLPATH)/$(DABCHADAQ_LIBNAME).$(DllSuf)
+# now defined in the Makefile.config
+#DABCHADAQ_LIBNAME = $(LIB_PREFIX)DabcHadaq
+#DABCHADAQ_LIB     = $(TGTDLLPATH)/$(DABCHADAQ_LIBNAME).$(DllSuf)
 
 HADAQ_H           = $(wildcard $(HADAQDIRI)/*.$(HedSuf))
 HADAQ_S           = $(wildcard $(HADAQDIRS)/*.$(SrcSuf))
