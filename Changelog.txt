@@ -5,6 +5,7 @@ current functionality of the framework.
 25.06.2014
 1. Add simple applications, which uses hadaq/api.h. Mainly to demonstrate makefile.
 2. Automatically recognize .hld extension in hadaq::ReadoutHandle::Connect.
+3. Adjust Makefiles to be able compile standalone applications (as hadaq example)
 
 
 17.06.2014
