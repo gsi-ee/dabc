@@ -2,6 +2,7 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+
 25.06.2014
 1. Add simple applications, which uses hadaq/api.h. Mainly to demonstrate makefile.
 2. Automatically recognize .hld extension in hadaq::ReadoutHandle::Connect.
