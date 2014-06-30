@@ -20,7 +20,7 @@ rfio::FileInterface::FileInterface() :
 rfio::FileInterface::~FileInterface()
 {
    if (fRemote!=0) {
-      DOUT0("Close existing connection to RFIO data mover");
+      DOUT2("Close existing connection to RFIO data mover");
       rfio_fclose((RFILE*) fRemote);
       fRemote = 0;
    }
@@ -92,7 +92,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
          strcpy(fDataMoverName,"");
          fDataMoverIndx = 0;
 
-         DOUT0("Try to connect to RFIO mover rfioBase=%s rfioOptions=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
+         DOUT1("Try to connect to RFIO mover rfioBase=%s rfioOptions=%s rfioLustrePath=%s rfioCopyMode=%d rfioCopyFrac=%d rfioMaxFile=%d rfioPathConv=%d",
                rfioBase, rfioOptions.c_str(), rfioLustrePath.c_str(), rfioCopyMode, rfioCopyFrac, rfioMaxFile, rfioPathConv);
 
          fRemote = rfio_fopen_gsidaq_dm(rfioBase, (char*) rfioOptions.c_str(),
@@ -106,18 +106,18 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
             return 0;
          }
 
-         DOUT0("Open connection to datamover %d %s", fDataMoverIndx, fDataMoverName);
+         DOUT2("Successfully opened connection to datamover %d %s", fDataMoverIndx, fDataMoverName);
       }
    }
 
    if (fRemote==0)
       return (Handle) rfio_fopen((char*)fname, (char*)mode);
 
-   DOUT0("Calling rfio_fnewfile %s", fname);
+   DOUT3("Calling rfio_fnewfile %s", fname);
 
    int rev = rfio_fnewfile((RFILE*)fRemote, (char*) fname);
 
-   DOUT0("Did call rfio_fnewfile %s rev = %d", fname, rev);
+   DOUT3("Did call rfio_fnewfile %s rev = %d", fname, rev);
 
    if (rev!=0) {
       EOUT("Fail to create new RFIO file %s via existing datamover %d %s connection", fname, fDataMoverIndx, fDataMoverName);
@@ -126,7 +126,7 @@ dabc::FileInterface::Handle rfio::FileInterface::fopen(const char* fname, const 
 
    fOpenedCounter++;
 
-   if (fOpenedCounter > 0) EOUT("Too many (%d) files, opened via RFIO connection", fOpenedCounter);
+   if (fOpenedCounter > 100) EOUT("Too many (%d) files, opened via RFIO connection", fOpenedCounter);
 
    return (Handle) fRemote;
 }
