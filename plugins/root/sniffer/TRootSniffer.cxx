@@ -1124,12 +1124,12 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char *path,
 
    if (obj->InheritsFrom(TPad::Class())) {
 
-      if (gDebug>1) 
+      if (gDebug>1)
          Info("TRootSniffer", "Crate IMAGE directly from pad");
       img->FromPad((TPad *) obj);
    } else if (IsDrawableClass(obj->IsA())) {
 
-      if (gDebug>1) 
+      if (gDebug>1)
          Info("TRootSniffer", "Crate IMAGE from object %s", obj->GetName());
 
       Int_t width(300), height(200);

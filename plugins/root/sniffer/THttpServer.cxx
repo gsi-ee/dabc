@@ -19,7 +19,6 @@
 extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
 extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
 
-
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // THttpCallArg                                                         //
@@ -483,7 +482,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       return;
    }
 
-  if (arg->fFileName == "get.json.gz") {
+   if (arg->fFileName == "get.json.gz") {
      if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
 
         char *objbuf = (char*) arg->fContent.Data();
@@ -541,7 +540,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
         arg->SetJson();
         return;
      }
-  }
+   }
 
    arg->Set404();
 }
