@@ -4,7 +4,16 @@ current functionality of the framework.
 
 1.07.2014
 1. In THttpServer implement compression of requested data with gzip. 
-
+2. Remove extra header from root.bin request. Now returned buffer 
+   can be directly used with TBufferFile to reconstruct object. 
+3. Streamer infos version is now packed into http response header 
+   with parameters "MVersion"  and "BVersion". 
+   Application (like JavaScript code in web browser) should analyze 
+   this version to decide if streamer info need to be updated or not.
+4. Use root.bin.gz request in dabc.js. It makes no longer sense to continue 
+   support of binary data transfer (root.bin.gz and root.json.gz has approx same size),
+   but functionality will remain for a while for demonstration purposes. 
+   
 
 25.06.2014
 1. Add simple applications, which uses hadaq/api.h. Mainly to demonstrate makefile.

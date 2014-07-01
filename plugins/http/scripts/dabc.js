@@ -53,62 +53,22 @@ DABC.AssertRootPrerequisites = function() {
    return (DABC.load_root_js == 2);
 };
 
-
-DABC.UnpackBinaryHeader = function(arg) {
-   if ((arg==null) || (arg.length < 20)) return null;
+DABC.UnzipFile = function(arg) 
+{
+   if ((arg==null) || (arg.length < 18)) return null;
    
-   //console.log("Get header of length " + arg.length);
-   
-   var o = 0;
-   var typ = DABC.ntou4(arg, o); o+=4;
-
-   //console.log("Get header of typ " + typ);
-
-   if (typ!=1) return null;
-   
-   var hdr = {};
-   
-   hdr['typ'] = typ;
-   hdr['version'] = DABC.ntou4(arg, o); o+=4;
-   hdr['master_version'] = DABC.ntou4(arg, o); o+=4;
-   hdr['zipped'] = DABC.ntou4(arg, o); o+=4;
-   hdr['payload'] = DABC.ntou4(arg, o); o+=4;
-   
-   hdr['rawdata'] = "";
-
-   //console.log("Get header with payload " + hdr.payload);
-   
-   // if no payload specified, ignore
-   if (hdr.payload == 0) return hdr;
-   
-   if (hdr.zipped == 0) {
-      hdr['rawdata'] = arg.slice(o);
-      if (hdr['rawdata'].length != hdr.payload)
-         alert("mismatch between payload value and actual data length");
-      return hdr;
-   }
-
-   var ziphdrsize = JSROOTIO.R__unzip_header(arg, o, true);
-   
-   if (ziphdrsize<0) {
-      alert("no zip header but it was specified!!!");
+   // this is check for gz file header
+   if ((arg.charCodeAt(0) != 0x1f) || 
+       (arg.charCodeAt(1) != 0x8b) || 
+       (arg.charCodeAt(2) != 0x08) ||
+       (arg.charCodeAt(3) != 0x00)) {
+      console.log("unsopported header in gz file ");
       return null;
    }
-  
-   var unzip_buf = JSROOTIO.R__unzip(ziphdrsize, arg, o, true);
-   if (!unzip_buf) {
-      alert("fail to unzip data");
-      return null;
-   } 
    
-   hdr['rawdata'] = unzip_buf;
-   
-   if (hdr['rawdata'].length != hdr.zipped)
-      console.log("mismatch between expected " + hdr.zipped + " and actual len " +  hdr['rawdata'].length);
-   
-   unzip_buf = null;
-   return hdr;
+   return RawInflate.inflate(arg.slice(10, arg.length - 8));
 }
+
 
 DABC.nextXmlNode = function(node)
 {
@@ -357,7 +317,7 @@ DABC.CommandDrawElement.prototype.RequestCommand = function() {
 
    var url = this.itemname + "dabc.xml";
 
-   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
 
    this.req.send(null);
 }
@@ -400,7 +360,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       }
    }
    
-   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
 
    this.req.send(null);
 }
@@ -506,7 +466,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    
    if (this.version>0) { url += separ + "version=" + this.version; separ = "&"; } 
    if (this.xmllimit>0) url += separ + "history=" + this.xmllimit;
-   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
 
    this.req.send(null);
 
@@ -838,7 +798,7 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    
    // console.log("Send request " + url);
    
-   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
 
    this.req.send(null);
 }
@@ -1179,7 +1139,7 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
    
    if (this.version>0) url += "?version=" + this.version;
 
-   this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "bin", this);
 
    this.req.send(null);
 
@@ -1190,29 +1150,29 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
 DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    // in any case, request pointer will be reseted
    // delete this.req;
+   
+   var bversion = new Number(0);
+   if (this.req != 0) {
+     var str = this.req.getResponseHeader("BVersion");
+     if (str != null) bversion = new Number(str);
+   }
+   
    this.req = null;
    
    // console.log("Get response from server " + arg.length);
    
-   var hdr = DABC.UnpackBinaryHeader(arg);
-   
-   if (hdr == null) {
-      alert("cannot extract binary header");
-      return;
-   }
-   
-   if (this.version == hdr.version) {
+   if (this.version == bversion) {
       console.log("Same version of beam profile " + ver);
       return;
    }
    
-   if (hdr.rawdata == null) {
+   if (arg == null) {
       alert("no data for beamprofile when expected");
       return;
    } 
 
-   this.data = hdr.rawdata;
-   this.version = hdr.version;
+   this.data = arg;
+   this.version = bversion;
 
    console.log("Data length is " + this.data.length);
    
@@ -1528,6 +1488,7 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
       return;
    }
 
+
    var obj = {};
    
    obj['_typename'] = 'JSROOTIO.' + this.clname;
@@ -1554,8 +1515,17 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
 }
 
 DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
+   
+   var mversion = null, bversion = null;
+   
+   if (this.req!=null) {
+      mversion = this.req.getResponseHeader("MVersion");
+      if (mversion!=null) mversion = new Number(mversion);
+      bversion = this.req.getResponseHeader("BVersion");
+      if (bversion!=null) bversion = new Number(bversion);
+   }
+   
    // in any case, request pointer will be reseted
-   // delete this.req;
    this.req = null;
    
    // console.log("Call back " + this.itemname);
@@ -1596,23 +1566,13 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       return;
    }
    
-   var hdr = DABC.UnpackBinaryHeader(arg);
+   if (mversion==null) mversion = new Number(0);
+   if (bversion == null) bversion = new Number(0);
    
-   if (hdr==null) {
-      console.log("RootDrawElement get error " + this.itemname);
-      this.state = this.StateEnum.stInit;
-      // we get error and should invalidate version number
-      this.version = 0; 
-      if (this.sinfo) this.sinfo.version = 0;
-      // most probably, objects structure is changed, therefore reload it
-      // DABC.mgr.ReloadTree();
-      return;
-   }
-
    // if we got same version, do nothing - we are happy!!!
-   if ((hdr.version > 0) && (this.version == hdr.version)) {
+   if ((bversion > 0) && (this.version == bversion)) {
       this.state = this.StateEnum.stReady;
-      console.log(" Get same version " + hdr.version + " of object " + this.itemname);
+      console.log(" Get same version " + bversion + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
       return;
    } 
@@ -1625,12 +1585,12 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       
       // we are doing sreamer infos
       var file = new JSROOTIO.RootFile;
-      var buf = new JSROOTIO.TBuffer(hdr.rawdata, 0, file);
+      var buf = new JSROOTIO.TBuffer(arg, 0, file);
       file.ExtractStreamerInfos(buf);
       
       this.obj = file;
       
-      this.version = hdr.version;
+      this.version = bversion;
       this.state = this.StateEnum.stReady;
       this.raw_data = null;
       // this indicates that object was clicked and want to be drawn
@@ -1645,10 +1605,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       return;
    } 
 
-   this.raw_data_version = hdr.version;
-   this.raw_data = hdr.rawdata;
-   this.raw_data_size = hdr.rawdata.length;
-   this.need_master_version = hdr.master_version;
+   this.raw_data_version = bversion;
+   this.raw_data = arg;
+   this.raw_data_size = arg.length;
+   this.need_master_version = mversion;
    
    if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
       // console.log(" Streamer info is required of vers " + this.need_master_version);
@@ -1698,15 +1658,14 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
    var url = this.itemname;
    
    if (this.json) {
-      url += "root.json?compact=3";
+      url += "root.json.gz?compact=3";
       if (this.version>0) url += "&version=" + this.version;
    } else {
-      url += "root.bin";
+      url += "root.bin.gz";
       if (this.version>0) url += "?version=" + this.version;
    }
-   
 
-   this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
+   this.req = DABC.mgr.NewHttpRequest(url, "bin", this);
 
 //   console.log(" Send request " + url);
 
@@ -1821,11 +1780,13 @@ DABC.Manager.prototype.NewRequest = function() {
 }
 
 
-DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
+DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
+   // kind can be "xml", "gz" or "bin"
    var xhr = new XMLHttpRequest();
+   var async = true;
    
    xhr.dabc_item = item;
-   xhr.isbin = isbin;
+   xhr.kind = kind;
 
 //   if (typeof ActiveXObject == "function") {
    if (window.ActiveXObject) {
@@ -1837,7 +1798,9 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
          if (!this.dabc_item || (this.dabc_item==0)) return;
          
          if (this.status == 200 || this.status == 206) {
-            if (this.isbin) {
+            if (this.kind == "xml") {
+               this.dabc_item.RequestCallback(this.responseXML);
+            } else {
                var filecontent = new String("");
                var array = new VBArray(this.responseBody).toArray();
                for (var i = 0; i < array.length; i++) {
@@ -1845,13 +1808,10 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                }
                
                // console.log(" IE response ver = " + ver);
-
+               
                this.dabc_item.RequestCallback(filecontent);
-               delete filecontent;
                filecontent = null;
-            } else {
-               this.dabc_item.RequestCallback(this.responseXML);
-            }
+            } 
          } else {
             this.dabc_item.RequestCallback(null);
          } 
@@ -1869,7 +1829,9 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
          if (!this.dabc_item || (this.dabc_item==0)) return;
          
          if (this.status == 0 || this.status == 200 || this.status == 206) {
-            if (this.isbin) {
+            if (this.kind == "xml") {
+               this.dabc_item.RequestCallback(this.responseXML);
+            } else {
                var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
                var Buf;
                if (HasArrayBuffer && 'mozResponse' in this) {
@@ -1893,13 +1855,11 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                } else {
                   var filecontent = Buf;
                }
+               
                this.dabc_item.RequestCallback(filecontent);
 
-               delete filecontent;
                filecontent = null;
-            } else {
-               this.dabc_item.RequestCallback(this.responseXML);
-            }
+            } 
          } else {
             this.dabc_item.RequestCallback(null);
          }
@@ -1908,7 +1868,7 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
 
       xhr.open('POST', url, async);
       
-      if (xhr.isbin) {
+      if (xhr.kind != "xml") {
          var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
          if (HasArrayBuffer && 'mozResponseType' in xhr) {
             xhr.mozResponseType = 'arraybuffer';

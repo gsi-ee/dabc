@@ -38,6 +38,7 @@ THttpCallArg::THttpCallArg() :
    fCond(),
    fContentType(),
    fContentEncoding(),
+   fExtraHeader(),
    fContent(),
    fBinData(0),
    fBinDataLength(0)
@@ -95,9 +96,9 @@ void THttpCallArg::SetPathAndFileName(const char *fullpath)
 }
 
 //______________________________________________________________________________
-void THttpCallArg::FillHttpHeader(TString &hdr, Bool_t normal)
+void THttpCallArg::FillHttpHeader(TString &hdr, const char* header)
 {
-   const char *header = normal ? "HTTP/1.1" : "Status:";
+   if (header==0) header = "HTTP/1.1";
 
    if ((fContentType.Length() == 0) || Is404()) {
       hdr.Form("%s 404 Not Found\r\n"
@@ -113,8 +114,17 @@ void THttpCallArg::FillHttpHeader(TString &hdr, Bool_t normal)
             header,
             GetContentType(),
             GetContentLength());
-   if (fContentEncoding.Length() > 0)
-      hdr.Append(TString::Format("Content-Encoding: %s\r\n", fContentEncoding.Data()));
+
+   if (fContentEncoding.Length() > 0) {
+      hdr.Append("Content-Encoding: ");
+      hdr.Append(fContentEncoding);
+      hdr.Append("\r\n");
+   }
+
+   if (fExtraHeader.Length() > 0) {
+      hdr.Append(fExtraHeader);
+      hdr.Append("\r\n");
+   }
 
    hdr.Append("\r\n");
 }
@@ -553,6 +563,15 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       arg->SetBinData(buffer, bufcur - (char*) buffer);
 
       arg->SetEncoding("gzip");
+   }
+
+   if (filename == "root.bin") {
+      // only for binary data master version is important
+      // it allows to detect if streamer info was modified
+      const char* parname = fSniffer->IsStreamerInfoItem(arg->fPathName.Data()) ? "BVersion" : "MVersion";
+      arg->SetExtraHeader(parname, Form("%u", (unsigned) fSniffer->GetStreamerInfoHash()));
+
+      printf("Set header parameter %s = %u\n", parname, (unsigned) fSniffer->GetStreamerInfoHash());
    }
 }
 
