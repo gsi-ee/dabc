@@ -55,6 +55,8 @@ protected:
       return fBinData && fBinDataLength > 0;
    }
 
+   void SetBinData(void* data, Long_t length);
+
 public:
 
    THttpCallArg();

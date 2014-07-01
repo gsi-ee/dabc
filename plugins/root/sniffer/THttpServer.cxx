@@ -56,6 +56,20 @@ THttpCallArg::~THttpCallArg()
    }
 }
 
+
+//______________________________________________________________________________
+void THttpCallArg::SetBinData(void* data, Long_t length)
+{
+   // set binary data for http call
+
+   if (fBinData) free(fBinData);
+   fBinData = data;
+   fBinDataLength = length;
+
+   // string content must be cleared in any case
+   fContent.Clear();
+}
+
 //______________________________________________________________________________
 void THttpCallArg::SetPathAndFileName(const char *fullpath)
 {
@@ -428,15 +442,19 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       return;
    }
 
-   TString buf = arg->fFileName;
-
-   if (IsFileRequested(arg->fFileName.Data(), buf)) {
-      arg->fContent = buf;
+   if (IsFileRequested(arg->fFileName.Data(), arg->fContent)) {
       arg->SetFile();
       return;
    }
 
-   if (arg->fFileName == "h.xml")  {
+   TString filename = arg->fFileName;
+   Bool_t iszip = kFALSE;
+   if (filename.EndsWith(".gz")) {
+      filename.Resize(filename.Length()-3);
+      iszip = kTRUE;
+   }
+
+   if (filename == "h.xml")  {
 
       arg->fContent.Form(
          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -453,11 +471,9 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
       arg->fContent.Append("</dabc>\n");
       arg->SetXml();
+   } else
 
-      return;
-   }
-
-   if (arg->fFileName == "h.json")  {
+   if (filename == "h.json")  {
 
       arg->fContent.Append("{\n");
 
@@ -472,77 +488,72 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
       arg->fContent.Append("\n}\n");
       arg->SetJson();
+   } else
 
-      return;
-   }
-
-   if (fSniffer->Produce(arg->fPathName.Data(), arg->fFileName.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength)) {
+   if (fSniffer->Produce(arg->fPathName.Data(), filename.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength)) {
       // define content type base on extension
-      arg->SetContentType(GetMimeType(arg->fFileName.Data()));
-      return;
+      arg->SetContentType(GetMimeType(filename.Data()));
+   } else {
+      // request is not processed
+      arg->Set404();
    }
 
-   if (arg->fFileName == "get.json.gz") {
-     if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
+   if (arg->Is404()) return;
 
-        char *objbuf = (char*) arg->fContent.Data();
-        Int_t objlen = arg->fContent.Length();
 
-        unsigned long crc = crc32(0, NULL, 0);
-        crc = crc32(crc, (const unsigned char*) objbuf, objlen);
+   if (iszip) {
 
-        // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
-        Int_t buflen = 10 + objlen + 8;
-        if (buflen<512) buflen = 512;
+      char *objbuf = (char*) arg->GetContent();
+      Long_t objlen = arg->GetContentLength();
 
-        void* buffer = malloc(buflen);
+      unsigned long crc = crc32(0, NULL, 0);
+      crc = crc32(crc, (const unsigned char*) objbuf, objlen);
 
-        char *bufcur = (char*) buffer;
+      // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
+      Int_t buflen = 10 + objlen + 8;
+      if (buflen<512) buflen = 512;
 
-        *bufcur++ = 0x1f;  // first byte of ZIP identifier
-        *bufcur++ = 0x8b;  // second byte of ZIP identifier
-        *bufcur++ = 0x08;  // compression method
-        *bufcur++ = 0x00;  // FLAG - empty, no any file names
-        *bufcur++ = 0;    // empty timestamp
-        *bufcur++ = 0;    //
-        *bufcur++ = 0;    //
-        *bufcur++ = 0;    //
-        *bufcur++ = 0;    // XFL (eXtra FLags)
-        *bufcur++ = 3;    // OS   3 means Unix
-        //strcpy(bufcur, "get.json");
-        //bufcur += strlen("get.json")+1;
+      void* buffer = malloc(buflen);
 
-        char dummy[8];
-        memcpy(dummy, bufcur-6, 6);
+      char *bufcur = (char*) buffer;
 
-        // R__memcompress fills first 6 bytes with own header, therefore just overwrite them
-        unsigned long ziplen = R__memcompress(bufcur-6, objlen + 6, objbuf, objlen);
+      *bufcur++ = 0x1f;  // first byte of ZIP identifier
+      *bufcur++ = 0x8b;  // second byte of ZIP identifier
+      *bufcur++ = 0x08;  // compression method
+      *bufcur++ = 0x00;  // FLAG - empty, no any file names
+      *bufcur++ = 0;    // empty timestamp
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    // XFL (eXtra FLags)
+      *bufcur++ = 3;    // OS   3 means Unix
+      //strcpy(bufcur, "get.json");
+      //bufcur += strlen("get.json")+1;
 
-        memcpy(bufcur-6, dummy, 6);
+      char dummy[8];
+      memcpy(dummy, bufcur-6, 6);
 
-        bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
+      // R__memcompress fills first 6 bytes with own header, therefore just overwrite them
+      unsigned long ziplen = R__memcompress(bufcur-6, objlen + 6, objbuf, objlen);
 
-        *bufcur++ = crc & 0xff;    // CRC32
-        *bufcur++ = (crc >> 8) & 0xff;
-        *bufcur++ = (crc >> 16) & 0xff;
-        *bufcur++ = (crc >> 24) & 0xff;
+      memcpy(bufcur-6, dummy, 6);
 
-        *bufcur++ = objlen & 0xff;  // original data length
-        *bufcur++ = (objlen >> 8) & 0xff;  // original data length
-        *bufcur++ = (objlen >> 16) & 0xff;  // original data length
-        *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+      bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
 
-        arg->fBinData = buffer;
-        arg->fBinDataLength = bufcur - (char*) buffer;
-        arg->fContent.Clear();
+      *bufcur++ = crc & 0xff;    // CRC32
+      *bufcur++ = (crc >> 8) & 0xff;
+      *bufcur++ = (crc >> 16) & 0xff;
+      *bufcur++ = (crc >> 24) & 0xff;
 
-        arg->SetEncoding("gzip");
-        arg->SetJson();
-        return;
-     }
+      *bufcur++ = objlen & 0xff;  // original data length
+      *bufcur++ = (objlen >> 8) & 0xff;  // original data length
+      *bufcur++ = (objlen >> 16) & 0xff;  // original data length
+      *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+
+      arg->SetBinData(buffer, bufcur - (char*) buffer);
+
+      arg->SetEncoding("gzip");
    }
-
-   arg->Set404();
 }
 
 //______________________________________________________________________________
