@@ -16,8 +16,8 @@
 #include <string>
 #include <cstdlib>
 
-//extern "C" void R__zipMultipleAlgorithm(int cxlevel, int *srcsize, char *src, int *tgtsize, char *tgt, int *irep, int compressionAlgorithm);
-//const Int_t kMAXBUF = 0xffffff;
+extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
+extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -483,51 +483,65 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       return;
    }
 
-   /*
-     if (arg->fFileName == "get.json.gz") {
-        if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
+  if (arg->fFileName == "get.json.gz") {
+     if (fSniffer->ProduceJson(arg->fPathName.Data(), arg->fQuery.Data(), arg->fContent)) {
 
-           Int_t fObjlen = arg->fContent.Length();
-           Int_t cxlevel = 5;
-           Int_t cxAlgorithm = 0;
+        char *objbuf = (char*) arg->fContent.Data();
+        Int_t objlen = arg->fContent.Length();
 
-           Int_t nbuffers = 1 + (fObjlen - 1)/kMAXBUF;
-           Int_t buflen = fObjlen + 9*nbuffers + 28; //add 28 bytes in case object is placed in a deleted gap
-           if (buflen<512) buflen = 512;
+        unsigned long crc = crc32(0, NULL, 0);
+        crc = crc32(crc, (const unsigned char*) objbuf, objlen);
 
-           void* fBuffer = malloc(buflen);
+        // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
+        Int_t buflen = 10 + objlen + 8;
+        if (buflen<512) buflen = 512;
 
-           char *objbuf = (char*) arg->fContent.Data();
-           char *bufcur = (char*) fBuffer;
-           Int_t noutot = 0;
-           Int_t nzip   = 0;
-           for (Int_t i = 0; i < nbuffers; ++i) {
-              Int_t bufmax = kMAXBUF, nout(0);
-              if (i == nbuffers - 1) bufmax = fObjlen - nzip;
-              R__zipMultipleAlgorithm(cxlevel, &bufmax, objbuf, &bufmax, bufcur, &nout, cxAlgorithm);
-              if (nout == 0 || nout >= fObjlen) { //this happens when the buffer cannot be compressed
-                 Error("", "Fail to compress data");
-                 free(fBuffer);
-                 return;
-              }
-              bufcur += nout;
-              noutot += nout;
-              objbuf += kMAXBUF;
-              nzip   += kMAXBUF;
-           }
+        void* buffer = malloc(buflen);
 
-           Info("Compress", "Original size %d compressed %d", fObjlen, noutot);
+        char *bufcur = (char*) buffer;
 
-           arg->fBinData = fBuffer;
-           arg->fBinDataLength = noutot;
-           arg->fContent.Clear();
+        *bufcur++ = 0x1f;  // first byte of ZIP identifier
+        *bufcur++ = 0x8b;  // second byte of ZIP identifier
+        *bufcur++ = 0x08;  // compression method
+        *bufcur++ = 0x00;  // FLAG - empty, no any file names
+        *bufcur++ = 0;    // empty timestamp
+        *bufcur++ = 0;    //
+        *bufcur++ = 0;    //
+        *bufcur++ = 0;    //
+        *bufcur++ = 0;    // XFL (eXtra FLags)
+        *bufcur++ = 3;    // OS   3 means Unix
+        //strcpy(bufcur, "get.json");
+        //bufcur += strlen("get.json")+1;
 
-           arg->SetEncoding("gzip");
-           arg->SetJson();
-           return;
-        }
+        char dummy[8];
+        memcpy(dummy, bufcur-6, 6);
+
+        // R__memcompress fills first 6 bytes with own header, therefore just overwrite them
+        unsigned long ziplen = R__memcompress(bufcur-6, objlen + 6, objbuf, objlen);
+
+        memcpy(bufcur-6, dummy, 6);
+
+        bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
+
+        *bufcur++ = crc & 0xff;    // CRC32
+        *bufcur++ = (crc >> 8) & 0xff;
+        *bufcur++ = (crc >> 16) & 0xff;
+        *bufcur++ = (crc >> 24) & 0xff;
+
+        *bufcur++ = objlen & 0xff;  // original data length
+        *bufcur++ = (objlen >> 8) & 0xff;  // original data length
+        *bufcur++ = (objlen >> 16) & 0xff;  // original data length
+        *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+
+        arg->fBinData = buffer;
+        arg->fBinDataLength = bufcur - (char*) buffer;
+        arg->fContent.Clear();
+
+        arg->SetEncoding("gzip");
+        arg->SetJson();
+        return;
      }
-   */
+  }
 
    arg->Set404();
 }
