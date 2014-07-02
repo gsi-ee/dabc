@@ -189,14 +189,9 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    fCounter++;
 
-   dabc::Buffer buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader)+sizeof(fesa::BeamProfile));
+   dabc::Buffer buf = dabc::Buffer::CreateBuffer(sizeof(fesa::BeamProfile));
 
-   dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
-   hdr->reset();
-   hdr->zipped = 0; // no ziping (yet)
-   hdr->payload = sizeof(fesa::BeamProfile);
-
-   fesa::BeamProfile* rec = (fesa::BeamProfile*) (((char*) buf.SegmentPtr()) + sizeof(dabc::BinDataHeader));
+   fesa::BeamProfile* rec = (fesa::BeamProfile*) buf.SegmentPtr();
    rec->fill(fCounter % 7);
 
 #ifdef WITH_FESA
@@ -272,24 +267,26 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild(itemname);
 
       if (item.null()) {
-         EOUT("No find item %s to get binary", itemname.c_str());
+         EOUT("Item %s not found to get binary", itemname.c_str());
          return dabc::cmd_false;
       }
 
       dabc::Buffer buf;
 
-      DOUT3("Player GetBinary for item %s kind %s", itemname.c_str(), binkind.c_str());
-
       if (binkind == "dabc.bin") {
          buf = item()->bindata();
+         item.FillBinHeader("", cmd);
       } else {
 
 #ifdef WITH_ROOT
         void* ptr(0);
         Long_t length(0);
+
         if (fSniffer->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length)) {
            buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
-           item.FillBinHeader("", buf, fSniffer->GetStreamerInfoHash());
+           item.FillBinHeader("", cmd, fSniffer->GetStreamerInfoHash());
+        } else {
+           EOUT("Player fail to produce item %s", itemname.c_str());
         }
 #endif
       }

@@ -153,20 +153,17 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
       ULong_t objhash = sniff->GetItemHash(itemname.c_str());
 
       bool binchanged = true;
-      if (version>0) {
+      if (version > 0) {
          dabc::LockGuard lock(fHierarchy.GetHMutex());
          binchanged = fHierarchy.IsBinItemChanged(itemname, objhash, version);
       }
 
       if (!binchanged) {
-         buf = dabc::Buffer::CreateBuffer(sizeof(dabc::BinDataHeader)); // only header is required
-         dabc::BinDataHeader* hdr = (dabc::BinDataHeader*) buf.SegmentPtr();
-         hdr->reset();
-
+         buf = dabc::Buffer::CreateBuffer(8); // dummy data of 8 bytes long
          {
             dabc::LockGuard lock(fHierarchy.GetHMutex());
             // here correct version number for item and master item will be filled
-            fHierarchy.FillBinHeader(itemname, buf);
+            fHierarchy.FillBinHeader(itemname, cmd);
          }
 
          cmd.SetRawData(buf);
@@ -193,7 +190,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
       dabc::LockGuard lock(fHierarchy.GetHMutex());
       // here correct version number for item and master item will be filled
-      fHierarchy.FillBinHeader(itemname, buf, mhash);
+      fHierarchy.FillBinHeader(itemname, cmd, mhash);
    }
 
    cmd.SetRawData(buf);

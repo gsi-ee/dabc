@@ -107,7 +107,6 @@ int http::Civetweb::auth_request_handler(struct mg_connection *conn, const char*
 }
 
 
-
 int http::Civetweb::begin_request_handler(struct mg_connection *conn)
 {
    http::Civetweb* server = (http::Civetweb*) mg_get_request_info(conn)->user_data;
@@ -124,11 +123,11 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
       return 1;
    }
 
-   std::string content_type, content_str;
+   std::string content_type, content_header, content_str;
    dabc::Buffer content_bin;
 
    if (!server->Process(request_info->uri, request_info->query_string,
-                        content_type, content_str, content_bin)) {
+                        content_type, content_header, content_str, content_bin)) {
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
                 "Content-Length: 0\r\n"
                 "Connection: close\r\n\r\n");
@@ -142,10 +141,12 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
       mg_printf(conn,
                 "HTTP/1.1 200 OK\r\n"
                 "Content-Type: %s\r\n"
+                "%s"
                 "Content-Length: %u\r\n"
                 "Connection: keep-alive\r\n"
                 "\r\n",
                 content_type.c_str(),
+                content_header.c_str(),
                 (unsigned) content_bin.GetTotalSize());
       mg_write(conn, content_bin.SegmentPtr(), (size_t) content_bin.GetTotalSize());
    } else {
@@ -154,10 +155,12 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
       mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: %s\r\n"
+            "%s"
             "Content-Length: %d\r\n"        // Always set Content-Length
             "\r\n"
             "%s",
              content_type.c_str(),
+             content_header.c_str(),
              (int) content_str.length(),
              content_str.c_str());
    }

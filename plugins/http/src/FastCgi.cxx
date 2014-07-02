@@ -210,7 +210,7 @@ void* http::FastCgi::RunFunc(void* args)
       }
 
 
-      std::string content_type, content_str;
+      std::string content_type, content_header, content_str;
       dabc::Buffer content_bin;
 
       if (server->IsFileRequested(inp_path, content_str)) {
@@ -220,7 +220,7 @@ void* http::FastCgi::RunFunc(void* args)
       }
 
       if (!server->Process(inp_path, inp_query,
-                           content_type, content_str, content_bin)) {
+                           content_type, content_header, content_str, content_bin)) {
          FCGX_FPrintF(request.out, "Status: 404 Not Found\r\n"
                                    "Content-Length: 0\r\n"
                                    "Connection: close\r\n\r\n");
@@ -234,10 +234,12 @@ void* http::FastCgi::RunFunc(void* args)
          FCGX_FPrintF(request.out,
                   "Status: 200 OK\r\n"
                   "Content-Type: %s\r\n"
+                  "%s"
                   "Content-Length: %ld\r\n"
                   "Connection: keep-alive\r\n"
                   "\r\n",
                   content_type.c_str(),
+                  content_header.c_str(),
                   content_bin.GetTotalSize());
 
          FCGX_PutStr((const char*) content_bin.SegmentPtr(), (long) content_bin.GetTotalSize(), request.out);
@@ -247,10 +249,12 @@ void* http::FastCgi::RunFunc(void* args)
          FCGX_FPrintF(request.out,
              "Status: 200 OK\r\n"
              "Content-Type: %s\r\n"
+             "%s"
              "Content-Length: %d\r\n"        // Always set Content-Length
              "\r\n"
              "%s",
              content_type.c_str(),
+             content_header.c_str(),
              content_str.length(),
              content_str.c_str());
       }

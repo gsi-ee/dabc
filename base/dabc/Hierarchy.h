@@ -51,38 +51,6 @@ namespace dabc {
 
    class Hierarchy;
 
-   /** This is header, which should be supplied for every binary data,
-    * created in Hierarchy classes
-    *
-    */
-
-#pragma pack(push, 4)
-
-   struct BinDataHeader {
-      uint32_t typ;              ///< type of the binary header (1 for the moment)
-      uint32_t version;          ///< version of data in binary data
-      uint32_t master_version;   ///< version of master object for that binary data
-      uint32_t zipped;           ///< length of unzipped data
-      uint32_t payload;          ///< length of payload (not including header)
-
-      void reset() {
-         typ = 1;
-         version = 0;
-         master_version = 0;
-         zipped = 0;
-         payload = 0;
-      }
-
-      /** \brief returns true if content of buffer is zipped */
-      bool is_zipped() const
-        { return (zipped>0) && (payload>0); }
-
-      void* rawdata() const { return (char*) this + sizeof(BinDataHeader); }
-   };
-
-#pragma pack(pop)
-
-
    // ===================================================================================
 
    struct HistoryItem {
@@ -440,7 +408,7 @@ namespace dabc {
       bool IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version = 0);
 
       /** \brief Fill binary header with item and master versions */
-      bool FillBinHeader(const std::string& itemname, const dabc::Buffer& buf, uint64_t mhash = 0, const std::string& dflt_master_name = "");
+      bool FillBinHeader(const std::string& itemname, dabc::Command& cmd, uint64_t mhash = 0, const std::string& dflt_master_name = "");
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }

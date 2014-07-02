@@ -1214,7 +1214,7 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t has
 
 
 
-bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buffer& bindata, uint64_t mhash, const std::string& dflt_master_name)
+bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, dabc::Command& cmd, uint64_t mhash, const std::string& dflt_master_name)
 {
    if (null()) return false;
 
@@ -1224,7 +1224,7 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
 
    if (item.null() && !dflt_master_name.empty()) {
       master = FindChild(dflt_master_name.c_str());
-      DOUT0("Search default master %s res = %p", dflt_master_name.c_str(), master());
+      DOUT2("Found default master %s res = %p", dflt_master_name.c_str(), master());
    } else {
       master = item.FindMaster();
    }
@@ -1235,11 +1235,8 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, const dabc::Buf
       master.MarkChangedItems();
    }
 
-   if (!bindata.null()) {
-      dabc::BinDataHeader* bindatahdr = (dabc::BinDataHeader*) bindata.SegmentPtr();
-      bindatahdr->version = item.GetVersion();
-      bindatahdr->master_version = master.GetVersion();
-   }
+   if (!item.null()) cmd.SetUInt("BVersion", item.GetVersion());
+   if (!master.null()) cmd.SetUInt("MVersion", master.GetVersion());
 
    return true;
 }

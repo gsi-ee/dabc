@@ -1153,8 +1153,12 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    
    var bversion = new Number(0);
    if (this.req != 0) {
-     var str = this.req.getResponseHeader("BVersion");
-     if (str != null) bversion = new Number(str);
+      var str = this.req.getResponseHeader("BVersion");
+      if (str != null) {
+         bversion = new Number(str);
+         console.log("FESA data version is " + bversion);
+      }
+      
    }
    
    this.req = null;
@@ -1162,7 +1166,7 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    // console.log("Get response from server " + arg.length);
    
    if (this.version == bversion) {
-      console.log("Same version of beam profile " + ver);
+      console.log("Same version of beam profile " + bversion);
       return;
    }
    
@@ -1174,7 +1178,7 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    this.data = arg;
    this.version = bversion;
 
-   console.log("Data length is " + this.data.length);
+   console.log("FESA data length is " + this.data.length);
    
    this.vis.select("title").text(this.FullItemName() + 
          "\nversion = " + this.version + ", size = " + this.data.length);

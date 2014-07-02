@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+2.07.2014
+1. Exclude usage of extra header in dabc.bin request. 
+   Extra information (like version number) placed into http header.
+     
+
 1.07.2014
 1. In THttpServer implement compression of requested data with gzip. 
 2. Remove extra header from root.bin request. Now returned buffer 

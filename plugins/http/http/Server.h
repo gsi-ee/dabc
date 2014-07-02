@@ -55,7 +55,10 @@ namespace http {
 
          /** Method process different URL requests, should be called from server thread */
          bool Process(const char* uri, const char* query,
-                      std::string& content_type, std::string& content_str, dabc::Buffer& content_bin);
+                      std::string& content_type,
+                      std::string& content_header,
+                      std::string& content_str,
+                      dabc::Buffer& content_bin);
 
       public:
          Server(const std::string& name, dabc::Command cmd = 0);

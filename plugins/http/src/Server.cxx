@@ -225,11 +225,15 @@ bool http::Server::IsAuthRequired(const char* uri)
 
 
 bool http::Server::Process(const char* uri, const char* _query,
-                           std::string& content_type, std::string& content_str, dabc::Buffer& content_bin)
+                           std::string& content_type,
+                           std::string& content_header,
+                           std::string& content_str,
+                           dabc::Buffer& content_bin)
 {
 
    std::string pathname, filename, query;
 
+   content_header.clear();
 
    ExtractPathAndFile(uri, pathname, filename);
 
@@ -265,6 +269,13 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    if (!filename.empty()) {
 
+      bool iszipped = false;
+
+      if ((filename.length()>3) && (filename.rfind(".gz")==filename.length()-3)) {
+         filename.resize(filename.length()-3);
+         iszipped = true;
+      }
+
       dabc::CmdGetBinary cmd(pathname, filename, query);
       cmd.SetTimeout(5.);
 
@@ -276,11 +287,20 @@ bool http::Server::Process(const char* uri, const char* _query,
          if (content_type.empty())
             content_type = GetMimeType(filename.c_str());
 
+         if (cmd.HasField("MVersion"))
+            content_header.append(dabc::format("MVersion: %u\r\n", cmd.GetUInt("MVersion")));
+
+         if (cmd.HasField("BVersion"))
+            content_header.append(dabc::format("BVersion: %u\r\n", cmd.GetUInt("BVersion")));
+
          content_bin = cmd.GetRawData();
-         return !content_bin.null();
       }
 
-      return false;
+      if (!content_bin.null() && iszipped) {
+         DOUT0("It is requested to zipped buffer, but we will ignore it!!!");
+      }
+
+      return !content_bin.null();
 
    }
 /*
