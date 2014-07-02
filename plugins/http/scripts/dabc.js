@@ -1528,7 +1528,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       bversion = this.req.getResponseHeader("BVersion");
       if (bversion!=null) bversion = new Number(bversion);
    }
-   
+
+   if (mversion == null) mversion = new Number(0);
+   if (bversion == null) bversion = new Number(0);
+
    // in any case, request pointer will be reseted
    this.req = null;
    
@@ -1539,14 +1542,22 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       this.state = this.StateEnum.stInit;
       return;
    }
+
+   // if we got same version, do nothing - we are happy!!!
+   if ((bversion > 0) && (this.version == bversion)) {
+      this.state = this.StateEnum.stReady;
+      console.log(" Get same version " + bversion + " of object " + this.itemname);
+      if (this.first_draw) this.DrawObject();
+      return;
+   } 
    
    if (this.json) {
       var obj = DABC.JSONR_unref(JSON.parse(arg));
 
-      this.version++;
+      this.version = bversion;
       
       this.raw_data = null;
-      this.raw_data_version = 0;
+      this.raw_data_version = bversion;
       this.raw_data_size = arg.length;
       
       if (obj && ('_typename' in obj)) {
@@ -1569,17 +1580,6 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       }
       return;
    }
-   
-   if (mversion==null) mversion = new Number(0);
-   if (bversion == null) bversion = new Number(0);
-   
-   // if we got same version, do nothing - we are happy!!!
-   if ((bversion > 0) && (this.version == bversion)) {
-      this.state = this.StateEnum.stReady;
-      console.log(" Get same version " + bversion + " of object " + this.itemname);
-      if (this.first_draw) this.DrawObject();
-      return;
-   } 
    
    // console.log(" RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + hdr.version);
 
