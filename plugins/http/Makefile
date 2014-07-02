@@ -41,6 +41,13 @@ DABCHTTP_DEFS += DABC_WITHOUT_FASTCGI
 endif
 
 
+ifdef DABC_ZLIB
+DABCHTTP_INCDIRS += $(DABC_ZLIB_INC)
+DABCHTTP_EXTRALIBS += $(DABC_ZLIB_LIB)
+else
+DABCHTTP_DEFS += DABC_WITHOUT_ZLIB
+endif
+
 # used in the main Makefile
 
 #ALLHDRS           += $(patsubst $(DABCHTTPDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCHTTP_H))

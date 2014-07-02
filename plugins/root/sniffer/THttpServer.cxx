@@ -516,8 +516,8 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       char *objbuf = (char*) arg->GetContent();
       Long_t objlen = arg->GetContentLength();
 
-      unsigned long crc = crc32(0, NULL, 0);
-      crc = crc32(crc, (const unsigned char*) objbuf, objlen);
+      unsigned long objcrc = crc32(0, NULL, 0);
+      objcrc = crc32(objcrc, (const unsigned char*) objbuf, objlen);
 
       // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
       Int_t buflen = 10 + objlen + 8;
@@ -550,10 +550,10 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
       bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
 
-      *bufcur++ = crc & 0xff;    // CRC32
-      *bufcur++ = (crc >> 8) & 0xff;
-      *bufcur++ = (crc >> 16) & 0xff;
-      *bufcur++ = (crc >> 24) & 0xff;
+      *bufcur++ = objcrc & 0xff;    // CRC32
+      *bufcur++ = (objcrc >> 8) & 0xff;
+      *bufcur++ = (objcrc >> 16) & 0xff;
+      *bufcur++ = (objcrc >> 24) & 0xff;
 
       *bufcur++ = objlen & 0xff;  // original data length
       *bufcur++ = (objlen >> 8) & 0xff;  // original data length

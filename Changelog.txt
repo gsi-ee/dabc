@@ -5,6 +5,7 @@ current functionality of the framework.
 2.07.2014
 1. Exclude usage of extra header in dabc.bin request. 
    Extra information (like version number) placed into http header.
+2. Use ZLIB in http::Server to compress data, produced by requests.
      
 
 1.07.2014

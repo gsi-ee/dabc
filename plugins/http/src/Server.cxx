@@ -22,6 +22,11 @@
 #include "dabc/Url.h"
 #include "dabc/Publisher.h"
 
+#ifndef DABC_WITHOUT_ZLIB
+#include "zlib.h"
+#endif
+
+
 
 const char* http::Server::GetMimeType(const char* path)
 {
@@ -250,31 +255,31 @@ bool http::Server::Process(const char* uri, const char* _query,
       return true;
    }
 
+   if (filename == "execute") {
+      content_type = "text/xml";
+      return ProcessExecute(pathname, query, content_str);
+   }
+
+   if (filename.empty()) return false;
+
+   bool iszipped = false;
+
+   if ((filename.length() > 3) && (filename.rfind(".gz") == filename.length()-3)) {
+      filename.resize(filename.length()-3);
+      iszipped = true;
+   }
+
+
    if (filename == "h.xml") {
       content_type = "text/xml";
 
       std::string xmlcode;
 
-      if (dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(pathname, xmlcode)) {
-         content_str = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
-         return true;
-      }
-      return false;
-   } else
+      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(pathname, xmlcode)) return false;
 
-   if (filename == "execute") {
-      content_type = "text/xml";
-      return ProcessExecute(pathname, query, content_str);
-   } else
+      content_str = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
 
-   if (!filename.empty()) {
-
-      bool iszipped = false;
-
-      if ((filename.length()>3) && (filename.rfind(".gz")==filename.length()-3)) {
-         filename.resize(filename.length()-3);
-         iszipped = true;
-      }
+   } else {
 
       dabc::CmdGetBinary cmd(pathname, filename, query);
       cmd.SetTimeout(5.);
@@ -296,38 +301,90 @@ bool http::Server::Process(const char* uri, const char* _query,
          content_bin = cmd.GetRawData();
       }
 
-      if (!content_bin.null() && iszipped) {
-         DOUT0("It is requested to zipped buffer, but we will ignore it!!!");
+      // TODO: in some cases empty binary may be not an error
+      if (content_bin.null()) return false;
+   }
+
+   if (iszipped) {
+#ifdef DABC_WITHOUT_ZLIB
+      DOUT0("It is requested to zipped buffer, but ZLIB is not available!!!");
+#else
+
+      unsigned long objlen = 0;
+      Bytef* objptr = 0;
+
+      if (!content_bin.null()) {
+         objlen = content_bin.GetTotalSize();
+         objptr = (Bytef*) content_bin.SegmentPtr();
+      } else {
+         objlen = content_str.length();
+         objptr = (Bytef*) content_str.c_str();
       }
 
-      return !content_bin.null();
+      unsigned long objcrc = crc32(0, NULL, 0);
+      objcrc = crc32(objcrc, objptr, objlen);
 
+      // reserve place for header plus space required for the target buffer
+      unsigned long zipbuflen = 18 + compressBound(objlen);
+      if (zipbuflen<512) zipbuflen = 512;
+      void* zipbuf = malloc(zipbuflen);
+
+      if (zipbuf==0) {
+         EOUT("Fail to allocate %lu bytes memory !!!", zipbuflen);
+         return true;
+      }
+
+      char *bufcur = (char*) zipbuf;
+
+      *bufcur++ = 0x1f;  // first byte of ZIP identifier
+      *bufcur++ = 0x8b;  // second byte of ZIP identifier
+      *bufcur++ = 0x08;  // compression method
+      *bufcur++ = 0x00;  // FLAG - empty, no any file names
+      *bufcur++ = 0;    // empty timestamp
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    //
+      *bufcur++ = 0;    // XFL (eXtra FLags)
+      *bufcur++ = 3;    // OS   3 means Unix
+
+      zipbuflen-=18; // ZIP cannot use header and footer
+
+      // WORKAROUD - seems to be, compress places 2 bytes before and 4 bytes after the compressed buffer
+
+      // int res = compress((Bytef*)bufcur, &zipbuflen, objptr, objlen);
+      // bufcur += zipbuflen;
+
+      int res = compress((Bytef*)bufcur-2, &zipbuflen, objptr, objlen);
+      if (res!=Z_OK) {
+         EOUT("Fail to compress buffer with ZLIB");
+         free(zipbuf);
+         return true;
+      }
+
+      *(bufcur-2) = 0;    // XFL (eXtra FLags)
+      *(bufcur-1) = 3;    // OS   3 means Unix
+
+      bufcur += (zipbuflen - 6);
+
+
+      *bufcur++ = objcrc & 0xff;    // CRC32
+      *bufcur++ = (objcrc >> 8) & 0xff;
+      *bufcur++ = (objcrc >> 16) & 0xff;
+      *bufcur++ = (objcrc >> 24) & 0xff;
+
+      *bufcur++ = objlen & 0xff;  // original data length
+      *bufcur++ = (objlen >> 8) & 0xff;  // original data length
+      *bufcur++ = (objlen >> 16) & 0xff;  // original data length
+      *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+
+      content_bin = dabc::Buffer::CreateBuffer(zipbuf, bufcur - (char*) zipbuf, true);
+      content_str.clear();
+
+      content_header.append("Content-Encoding: gzip\r\n");
+
+      DOUT0("Compress original object %lu into zip buffer %lu", objlen, zipbuflen);
+#endif
    }
-/*
-   if (filename == "get.xml") {
-      content_type = "text/xml";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "xml", query);
-      return !content_bin.null();
-   } else
 
-   if (filename == "get.json") {
-      content_type = "application/json";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "json", query);
-      return !content_bin.null();
-   } else
-
-   if (filename == "get.bin") {
-      content_type = "application/x-binary";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "bin", query);
-      return !content_bin.null();
-   } else
-
-   if (filename == "get.png") {
-      content_type = "image/png";
-      content_bin = dabc::PublisherRef(GetPublisher()).GetBinary(pathname, "png", query);
-      return !content_bin.null();
-   }
-*/
-
-   return false;
+   return true;
 }
