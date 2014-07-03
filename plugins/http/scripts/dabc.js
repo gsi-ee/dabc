@@ -661,7 +661,7 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
    
    var width = $(topid).width();
    
-   var url = this.itemname + "root.png?w=400&h=300&opt=col";
+   var url = this.itemname + "root.png.gz?w=400&h=300&opt=col";
 //   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
    var entryInfo = 
       "<div id='"+this.frameid+ "'>" +
