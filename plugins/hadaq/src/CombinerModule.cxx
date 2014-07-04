@@ -371,8 +371,11 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
               fErrorbitPattern[ptrn] = 0;
               fCfg[n].fErrorbitStats[ptrn]=0;
             }
+	 fCfg[n].fLastEvtBuildTrigId=0;
          }
 
+	 for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
+	   fEventIdCount[i]=0;
 
          StoreRunInfoStart();
       }
