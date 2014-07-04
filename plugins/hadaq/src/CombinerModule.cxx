@@ -361,8 +361,6 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          fTotalTagErrors = 0;
          fTotalDataErrors = 0;
 
-         for (unsigned n=0;n<NumInputs();n++)
-            SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
 
         for (unsigned n=0;n<NumInputs();n++)
          {
