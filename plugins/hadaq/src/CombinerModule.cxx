@@ -364,6 +364,18 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          for (unsigned n=0;n<NumInputs();n++)
             SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
 
+        for (unsigned n=0;n<NumInputs();n++)
+         {
+            SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
+
+         // JAM BUGFIX JUL14: errorbits not reset 
+         for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
+              fErrorbitPattern[ptrn] = 0;
+              fCfg[n].fErrorbitStats[ptrn]=0;
+            }
+         }
+
+
          StoreRunInfoStart();
       }
    }
@@ -856,7 +868,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       Par(fEventRateName).SetValue(1);
       if (fEvnumDiffStatistics && diff>1) {
-         DOUT2("Events gap %d", diff);
+         DOUT0("Events gap %d (0x%x)", diff,diff);
          Par(fLostEventRateName).SetValue(diff);
          fTotalDiscEvents+=diff;
       }

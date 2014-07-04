@@ -380,7 +380,7 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    float ratio = 100.;
    if (capacity>0) ratio -= 100.* NumCanSend()/capacity;
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
-   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) Par(fDataRateName).Value().AsDouble() * 1024 * 1024);
+   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) (Par(fDataRateName).Value().AsDouble() * 1024 * 1024));
 
 // does updating the affinity cause performance loss?   
 //    static int affcount=0;
