@@ -1,6 +1,11 @@
-This is log of changes in the dabc project, which is started in winter 2013. 
+This is log of changes in the dabc project, which is started in the beginning 2013. 
 In many cases it is the best place to find information about 
 current functionality of the framework.
+
+4.07.2014
+1. Move JSONR_unref into JSRootCore.js, while method related to ROOT classes.
+2. First working version of context menu in the tree browser.
+
 
 2.07.2014
 1. Exclude usage of extra header in dabc.bin request. 

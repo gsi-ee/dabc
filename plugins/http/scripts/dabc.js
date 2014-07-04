@@ -53,22 +53,6 @@ DABC.AssertRootPrerequisites = function() {
    return (DABC.load_root_js == 2);
 };
 
-DABC.UnzipFile = function(arg) 
-{
-   if ((arg==null) || (arg.length < 18)) return null;
-   
-   // this is check for gz file header
-   if ((arg.charCodeAt(0) != 0x1f) || 
-       (arg.charCodeAt(1) != 0x8b) || 
-       (arg.charCodeAt(2) != 0x08) ||
-       (arg.charCodeAt(3) != 0x00)) {
-      console.log("unsopported header in gz file ");
-      return null;
-   }
-   
-   return RawInflate.inflate(arg.slice(10, arg.length - 8));
-}
-
 
 DABC.nextXmlNode = function(node)
 {
@@ -76,66 +60,13 @@ DABC.nextXmlNode = function(node)
    return node;
 }
 
+
 DABC.TopXmlNode = function(xmldoc) 
 {
    if (!xmldoc) return;
-   
    return DABC.nextXmlNode(xmldoc.firstChild);
 }
 
-
-// This is part of the JSON-R code, found on 
-// https://github.com/graniteds/jsonr
-// Only unref part was used, arrays are not accounted as objects
-
-DABC.JSONR_unref = function(value, dy)
-{
-   var c, i, k, ks;
-   if (!dy) dy = [];
-
-   switch (typeof value) {
-   case 'string':
-       if ((value.length > 5) && (value.substr(0, 5) == "$ref:")) {
-          c = parseInt(value.substr(5));
-          if (!isNaN(c) && (c < dy.length)) {
-             value = dy[c];
-             // console.log("replace index " + c + "  name = " + value.fName);
-          }
-       }
-       break;
-
-   case 'object':
-      if (value !== null) {
-         
-         if (Object.prototype.toString.apply(value) === '[object Array]') {
-            for (i = 0; i < value.length; i++) {
-               value[i] = DABC.JSONR_unref(value[i], dy);
-            }
-         } else {
-
-            // account only objects in ref table
-            if (dy.indexOf(value) === -1) {
-               //if (dy.length<10) console.log("Add object " + value._typename + "  $ref:" + dy.length);
-               dy.push(value);
-            }
-
-            // add methods to all objects, where _typename is specified
-            if (('_typename' in value) && (typeof JSROOTCore == "object"))
-               JSROOTCore.addMethods(value);
-
-            ks = Object.keys(value);
-            for (i = 0; i < ks.length; i++) {
-               k = ks[i];
-               //if (dy.length<10) console.log("Check field " + k);
-               value[k] = DABC.JSONR_unref(value[k], dy);
-            }
-         }
-      }
-      break;
-   }
-
-   return value;
-}
 
 // ============= start of DrawElement ================================= 
 
@@ -883,6 +814,10 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       
       DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
 
+      // allow context menu only for objects which can be displayed
+      if (can_display)
+         DABC.dabc_tree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
+      
       if (scan_inside)
          nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname, lvl+1, maxlvl);
       else
@@ -1552,7 +1487,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    } 
    
    if (this.json) {
-      var obj = DABC.JSONR_unref(JSON.parse(arg));
+      var obj = JSROOTCore.JSONR_unref(JSON.parse(arg));
 
       this.version = bversion;
       
@@ -2048,6 +1983,47 @@ DABC.Manager.prototype.display = function(itemname) {
    this.DisplayItem(itemname, xmlnode);
 }
 
+DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) {
+
+   var xMousePosition = event.clientX + window.pageXOffset;
+   var yMousePosition = event.clientY + window.pageYOffset;
+
+   // console.log("Menu for " + itemname + " pos = " + xMousePosition + "," + yMousePosition);
+   
+   var x = document.getElementById('ctxmenu1');
+   if(x) x.parentNode.removeChild(x);
+  
+   var d = document.createElement('div');
+   d.setAttribute('class', 'ctxmenu');
+   d.setAttribute('id', 'ctxmenu1');
+   element.parentNode.appendChild(d);
+   d.style.left = xMousePosition + "px";
+   d.style.top = yMousePosition + "px";
+   d.onmouseover = function(e) { this.style.cursor = 'pointer'; }
+   d.onclick = function(e) { element.parentNode.removeChild(d);  }
+   
+   document.body.onclick = function(e) { 
+      var x = document.getElementById('ctxmenu1');
+      if(x) x.parentNode.removeChild(x);
+   }
+  
+   var p = document.createElement('p');
+   d.appendChild(p);
+   p.onclick = function() { DABC.mgr.display(itemname); };
+   p.setAttribute('class', 'ctxline');
+   p.innerHTML = "Draw";
+  
+   var p2 = document.createElement('p');
+   d.appendChild(p2);
+   p2.onclick = function() {  
+      // var x = document.getElementById('ctxmenu1');
+      // if(x) x.parentNode.removeChild(x);
+   }; 
+   p2.setAttribute('class', 'ctxline');
+   p2.innerHTML = "Close";
+   
+   return false;
+}
 
 DABC.Manager.prototype.expand = function(itemname, nodeid) {
    
@@ -2251,6 +2227,8 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    
    return newname + master + "/";
 }
+
+
 
 
 

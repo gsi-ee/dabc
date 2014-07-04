@@ -114,6 +114,60 @@ landaun = function(f, x, i) {
    JSROOTCore.clone = function(obj) {
       return jQuery.extend(true, {}, obj);
    };
+   
+   // This is part of the JSON-R code, found on 
+   // https://github.com/graniteds/jsonr
+   // Only unref part was used, arrays are not accounted as objects
+   // Should be used to reintroduce objects references, produced by TBufferJSON 
+
+	JSROOTCore.JSONR_unref = function(value, dy)
+	{
+	   var c, i, k, ks;
+	   if (!dy) dy = [];
+	
+	   switch (typeof value) {
+	   case 'string':
+	       if ((value.length > 5) && (value.substr(0, 5) == "$ref:")) {
+	          c = parseInt(value.substr(5));
+	          if (!isNaN(c) && (c < dy.length)) {
+	             value = dy[c];
+	             // console.log("replace index " + c + "  name = " + value.fName);
+	          }
+	       }
+	       break;
+	
+	   case 'object':
+	      if (value !== null) {
+	         
+	         if (Object.prototype.toString.apply(value) === '[object Array]') {
+	            for (i = 0; i < value.length; i++) {
+	               value[i] = JSROOTCore.JSONR_unref(value[i], dy);
+	            }
+	         } else {
+	
+	            // account only objects in ref table
+	            if (dy.indexOf(value) === -1) {
+	               //if (dy.length<10) console.log("Add object " + value._typename + "  $ref:" + dy.length);
+	               dy.push(value);
+	            }
+	
+	            // add methods to all objects, where _typename is specified
+	            if (('_typename' in value) && (typeof JSROOTCore == "object"))
+	               JSROOTCore.addMethods(value);
+	
+	            ks = Object.keys(value);
+	            for (i = 0; i < ks.length; i++) {
+	               k = ks[i];
+	               //if (dy.length<10) console.log("Check field " + k);
+	               value[k] = JSROOTCore.JSONR_unref(value[k], dy);
+	            }
+	         }
+	      }
+	      break;
+	   }
+	
+	   return value;
+	}
 
    JSROOTCore.addFormula = function(obj) {
       var formula = obj['fTitle'];
@@ -138,7 +192,6 @@ landaun = function(f, x, i) {
       list['opt'] = new Array;
       return list;
    }
-
 
    JSROOTCore.CreateTAxis = function() {
       var axis = {};
