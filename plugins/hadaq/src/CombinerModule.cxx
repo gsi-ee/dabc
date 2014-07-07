@@ -850,7 +850,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
       // here event id, always from "cts master channel" 0
       unsigned currentid = fCfg[0].fTrigType | (2 << 12); // DAQVERSION=2 for dabc
-      fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
+      //fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
+      fEventIdCount[currentid & 0xF]++; // JAM: problem with spill bit?
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
 
       // third input loop: build output event from all not empty subevents
