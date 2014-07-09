@@ -138,15 +138,15 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       int msgsize = hadTu->GetPaddedSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
 
       if (res != msgsize) {
-         EOUT("Send buffer %d differ from message size %d - ignore it", res, msgsize);
+   	  EOUT("Send buffer %d differ from message size %d - ignore it at port %d (0x%x)", res, msgsize,fNPort,fNPort);
          fTotalDiscardMsg++;
          fTotalDiscardPacket++;
          continue;
       }
 
       if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
-         EOUT("Padding 32 bytes not match to the header - ignore packet");
-         fTotalDiscardMsg++;
+         EOUT("Trailing 32 bytes do not match to header - ignore packet at port %d (0x%x)",fNPort,fNPort);
+	fTotalDiscardMsg++;
          fTotalDiscardPacket++;
          continue;
       }
