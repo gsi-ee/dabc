@@ -4422,6 +4422,7 @@ var gStyle = {
                  .attr("class", "zoom")
                  .attr("id", "zoom_rect");
 
+
          pthis.frame.on("dblclick", unZoom);
 
          d3.select(window)
@@ -7343,6 +7344,9 @@ var gStyle = {
       $(container).html(content);
    };
 
+   // comment out - now it is handled via CSS files
+   
+   /*
    var style = "<style>\n"
       +".xaxis path, .xaxis line, .yaxis path, .yaxis line, .zaxis path, .zaxis line {\n"
       +"   fill: none;\n"
@@ -7358,10 +7362,10 @@ var gStyle = {
       +"  stroke: steelblue;\n"
       +"  fill-opacity: 0.1;\n"
       +"}\n"
-      /* Correct overflow not hidden in IE9 */
       +"svg:not(:root) { overflow: hidden; }\n"
       +"</style>\n";
    $(style).prependTo("body");
+   */
 
 })();
 

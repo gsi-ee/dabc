@@ -7,6 +7,7 @@ current functionality of the framework.
    dabc.js or JSRootInterface.js. Fix several small problems.
 2. Eliminate "#dialog" element for context menu - now such element created
    dynamically when context menu activated.
+3. Clarify CSS styles instantiation - move code from JSRootD3Painter.js to css files.  
 
 
 4.07.2014

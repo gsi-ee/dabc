@@ -1659,7 +1659,6 @@ DABC.Manager.prototype.CreateTable = function(divx, divy)
    $("#dabc_draw").empty();
    document.getElementById("dabc_draw").innerHTML = tablecontents;
 
-
    this.table_counter = 0;
    this.table_number = divx*divy;
 }
