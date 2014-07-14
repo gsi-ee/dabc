@@ -491,7 +491,7 @@ function format_id(id) {
    /* format the string id to remove specials characters
       (that cannot be used in id strings) */
    var g_id = id;
-   if (g_id == "") g_id = "random_histo_" + random_id++;
+   if (g_id == "") g_id = "random_histo_" + JSROOTCore.id_counter++;
    while (g_id.indexOf(' ') != -1)
       g_id = g_id.replace(' ', '_');
    while (g_id.indexOf(':') != -1)

@@ -115,6 +115,8 @@ landaun = function(f, x, i) {
       return jQuery.extend(true, {}, obj);
    };
    
+   JSROOTCore.id_counter = 0;
+   
    // This is part of the JSON-R code, found on 
    // https://github.com/graniteds/jsonr
    // Only unref part was used, arrays are not accounted as objects
@@ -229,7 +231,7 @@ landaun = function(f, x, i) {
       var histo = {};
       histo['_typename'] = "JSROOTIO.TH1I";
       histo['fBits'] = 0x3000008;
-      histo['fName'] = "dummy_histo_" + random_id++;
+      histo['fName'] = "dummy_histo_" + this.id_counter++;
       histo['fTitle'] = "dummytitle";
       histo['fMinimum'] = -1111;
       histo['fMaximum'] = -1111;
@@ -264,7 +266,7 @@ landaun = function(f, x, i) {
       var histo = {};
       histo['_typename'] = "JSROOTIO.TH2I";
       histo['fBits'] = 0x3000008;
-      histo['fName'] = "dummy_histo_" + random_id++;
+      histo['fName'] = "dummy_histo_" + this.id_counter++;
       histo['fTitle'] = "dummytitle";
       histo['fMinimum'] = -1111;
       histo['fMaximum'] = -1111;
@@ -305,7 +307,7 @@ landaun = function(f, x, i) {
       var graph = {};
       graph['_typename'] = "JSROOTIO.TGraph";
       graph['fBits'] = 0x3000408;
-      graph['fName'] = "dummy_graph_" + random_id++;
+      graph['fName'] = "dummy_graph_" + this.id_counter++;
       graph['fTitle'] = "dummytitle";
       graph['fMinimum'] = -1111;
       graph['fMaximum'] = -1111;
