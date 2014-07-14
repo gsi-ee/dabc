@@ -145,6 +145,7 @@ function displayCollection(name, cycle, c_id, coll) {
    JSROOTPainter.addCollectionContents(fullname, c_id, coll, '#status');
 };
 
+
 function displayObject(obj, cycle, idx) {
    if (!obj) return;
    if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
@@ -152,9 +153,21 @@ function displayObject(obj, cycle, idx) {
    var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + ";" + cycle + "</a>&nbsp; </h5>\n";
    entryInfo += "<div id='histogram" + idx + "'>\n";
    $("#report").append(entryInfo);
-   JSROOTPainter.drawObject(obj, idx);
+   
+   var render_to = '#histogram' + idx;
+   if (typeof($(render_to)[0]) == 'undefined') return;
+   
+   $(render_to).empty();
+
+   var vis = JSROOTPainter.createCanvas($(render_to), obj);
+   
+   if (vis == null) return;
+
+   JSROOTPainter.drawObjectInFrame(vis, obj);
+   
    addCollapsible('#'+uid);
 };
+
 
 function showListObject(list_name, obj_name) {
 

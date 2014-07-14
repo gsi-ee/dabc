@@ -1337,10 +1337,14 @@ var gStyle = {
 
    JSROOTPainter.histoDialog = function(item) {
 
-      var painter = $("#dialog").data("Painter");
-
-      $("#dialog").dialog("close");
-      $("#dialog").empty();
+      var x = document.getElementById('root_ctx_menu');
+      if(!x) return; 
+         
+      var painter = $("#root_ctx_menu").data("Painter");
+      $("#root_ctx_menu").dialog("close");
+      $("#root_ctx_menu").empty();
+      
+      x.parentNode.removeChild(x);
 
       painter.ExeContextMenu(item);
    }
@@ -4330,17 +4334,22 @@ var gStyle = {
 
          // ignore context menu when touches zooming is ongoing
          if (zoom_kind>100) return;
+         
+         var ctx_menu = document.getElementById('root_ctx_menu');
+         if(ctx_menu) ctx_menu.parentNode.removeChild(ctx_menu);
 
+         ctx_menu = document.createElement('div');
+         ctx_menu.setAttribute('id', 'root_ctx_menu');
+         pthis.vis.node().parentNode.appendChild(ctx_menu);
 
-         $("#dialog").empty();
+         $("#root_ctx_menu").empty();
 
-         pthis.FillContextMenu($("#dialog"));
+         pthis.FillContextMenu($("#root_ctx_menu"));
+         
+         $("#root_ctx_menu").data("Painter", pthis);
+         $("#root_ctx_menu").data("shown", true);
 
-         $("#dialog").data("Painter", pthis);
-         //$("#dialog").data("Frame", vis);
-         $("#dialog").data("shown", true);
-
-         $("#dialog").dialog({
+         $("#root_ctx_menu").dialog({
             title: pthis.histo['fName'],
             closeOnEscape: true,
             autoOpen: false,
@@ -4351,13 +4360,15 @@ var gStyle = {
             position : {my: "left+3 top+3", of: d3.event, collision:"fit"}
          });
 
-         $( "#dialog" ).dialog("open");
+         $("#root_ctx_menu").dialog("open");
        }
 
       function closeAllExtras() {
-         if ($("#dialog").data("shown")) {
-            $( "#dialog" ).dialog("close");
-            $( "#dialog" ).empty();
+         var x = document.getElementById('root_ctx_menu');
+         if(x) {
+            $("#root_ctx_menu").dialog("close");
+            $("#root_ctx_menu").empty();
+            x.parentNode.removeChild(x);
          }
          closeTooltip(true);
          if (rect != null) { rect.remove(); rect = null; }
@@ -6820,22 +6831,6 @@ var gStyle = {
                   .attr("height", h)
                   .style("background-color", fillcolor);
    }
-
-   JSROOTPainter.drawObject = function(obj, idx)
-   {
-      var render_to = '#histogram' + idx;
-      if (typeof($(render_to)[0]) == 'undefined') {
-         obj = null;
-         // $("#report").append("<br>no place for draw");
-         return;
-      }
-      $(render_to).empty();
-
-      var vis = JSROOTPainter.createCanvas($(render_to), obj);
-      if (vis == null) return false;
-
-      return JSROOTPainter.drawObjectInFrame(vis, obj);
-   };
 
    JSROOTPainter.canDrawObject = function(classname)
    {

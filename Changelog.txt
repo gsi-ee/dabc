@@ -5,6 +5,8 @@ current functionality of the framework.
 14.07.2014
 1. Provide example.htm, showing usage of JSRootIO graphics without any 
    dabc.js or JSRootInterface.js. Fix several small problems.
+2. Eliminate "#dialog" element for context menu - now such element created
+   dynamically when context menu activated.
 
 
 4.07.2014
