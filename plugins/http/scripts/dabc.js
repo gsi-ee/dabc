@@ -339,7 +339,8 @@ DABC.HistoryDrawElement = function(_clname) {
    this.xmlhistory = null;    // array with previous history
    this.xmllimit = 0;         // maximum number of history entries
    this.force = true;
-   
+   this.request_name = "dabc.xml";
+
    return this;
 }
 
@@ -390,7 +391,7 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + "dabc.xml";
+   var url = this.itemname + this.request_name;
    var separ = "?";
 
    // console.log("GetHistory current version = " + this.version);
@@ -649,6 +650,7 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
 DABC.GenericDrawElement = function() {
    DABC.HistoryDrawElement.call(this,"generic");
    this.recheck = false;   // indicate that we want to redraw 
+   this.request_name = "h.xml";
 }
 
 DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
