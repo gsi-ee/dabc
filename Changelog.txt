@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+15.07.2014
+1. Provide example how insert ROOT graphics in the <iframe>
+
+
 14.07.2014
 1. Provide example.htm, showing usage of JSRootIO graphics without any 
    dabc.js or JSRootInterface.js. Fix several small problems.

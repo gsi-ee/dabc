@@ -452,6 +452,12 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       return;
    }
 
+   if (arg->fFileName == "draw.htm") {
+      arg->fContent = fDrawPage;
+      arg->SetFile();
+      return;
+   }
+
    if (IsFileRequested(arg->fFileName.Data(), arg->fContent)) {
       arg->SetFile();
       return;

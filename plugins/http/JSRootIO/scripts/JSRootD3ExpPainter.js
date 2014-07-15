@@ -1428,7 +1428,7 @@ var gStyle = {
 
    JSROOTPainter.ObjectPainter.prototype.RedrawFrame = function(selobj) {
       // call Redraw methods for each painter in the frame
-      // if selobj specifief, painter with selected object will be redrawn
+      // if selobj specified, painter with selected object will be redrawn
 
       if (!this.vis) return;
 
@@ -3910,8 +3910,7 @@ var gStyle = {
 
    JSROOTPainter.HistPainter.prototype.DrawFunctions = function() {
 
-      /// draw statistics box & other TPaveTexts, which are belongs to histogram
-
+      // draw statistics box & other TPaveTexts, which are belongs to histogram
       // should be called once to create all painters, which are than updated separately
 
       if (!('fFunctions' in this.histo)) return;
@@ -3948,7 +3947,7 @@ var gStyle = {
             funcpainter.Enabled = (this.options.Zscale > 0) && (this.options.Color>0);
          }
 
-         // we do it to preserve oder in which objects are drawn
+         // we do it to preserve order in which objects are drawn
          // therefore we need to guarantee that painters are in the same order
          if (funcpainter!=null) {
             lastpainter.PlacePainterAfterMe(funcpainter);
@@ -3958,7 +3957,6 @@ var gStyle = {
    }
 
    JSROOTPainter.HistPainter.prototype.Redraw = function() {
-      //if (console) console.time("Redraw");
       this.CreateXY();
       this.CountStat();
       this.DrawGrids();
@@ -3966,8 +3964,6 @@ var gStyle = {
       this.DrawBins();
       this.DrawTitle();
       this.DrawFunctions();
-//    if (console) console.timeEnd("Redraw");
-
    }
 
    JSROOTPainter.HistPainter.prototype.AddInteractive = function() {
@@ -4056,39 +4052,12 @@ var gStyle = {
 
          if (arr.length != 2) return;
 
-         // $("#report").append("<br> double-touch temp_id");
-
          d3.event.preventDefault();
 
          closeAllExtras();
 
          var pnt1 = arr[0];
          var pnt2 = arr[1];
-
-         /*
-         $("#report").append("<br> first  x:" + pnt1[0].toFixed(1) + "  y:"+pnt1[1].toFixed(1));
-         $("#report").append("<br> second x:" + pnt2[0].toFixed(1) + "  y:"+pnt2[1].toFixed(1));
-         $("#report").append("<br> height = " + height + "  width = " + width);
-
-         var abc = d3.touches(document.getElementById("temp_id"));
-         if (abc) {
-            $("#report").append("<br> abc[0] x:" + abc[0][0].toFixed(1) + "  y:"+abc[0][1].toFixed(1));
-            $("#report").append("<br> abc[1] x:" + abc[1][0].toFixed(1) + "  y:"+abc[1][1].toFixed(1));
-         } else {
-            $("#report").append("<br>abc fail");
-         }
-         */
-
-         /*
-         if (origin[0] < 0) {
-            $("#report").append("<br> Start only Y");
-         } else
-         if (origin[1] > height) {
-            $("#report").append("<br> Start only X");
-         } else {
-            $("#report").append("<br> Start  X and Y");
-         }
-         */
 
          curr = new Array; // minimum
          origin = new Array; // maximum
@@ -4126,8 +4095,6 @@ var gStyle = {
                  .attr("height", origin[1] - curr[1]);
 
          // pthis.frame.on("dblclick", unZoom);
-
-//         $("#report").append("<br> Start select x:" + origin[0] + "  y:" + origin[1]);
 
          d3.select(window)
             .on("touchmove.zoomRect", moveTouchSel)
