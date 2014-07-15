@@ -20,6 +20,22 @@
    <script src="scripts/JSRootD3ExpPainter.js" type="text/javascript"></script>
    
    <script type='text/javascript'>
+
+      painter = null;
+      cnt = 0;
+   
+      function updateGUI() {
+         if (painter==null) return;
+         cnt++;   
+         var histo = JSROOTCore.CreateTH2(20, 20);
+         for (var iy=0;iy<20;iy++)
+            for (var ix=0;ix<20;ix++) {
+               var bin = histo.getBin(ix+1, iy+1);
+               histo.setBinContent(bin, cnt %2 ? 40 - ix - iy : ix+iy);
+            }
+         painter.UpdateObject(histo);   
+         painter.RedrawFrame(); 
+      }
    
       function initGUI() {
 
@@ -46,22 +62,10 @@
               var bin = histo.getBin(ix+1, iy+1);
               histo.setBinContent(bin, ix+iy);
             }
-         var cnt = 0;   
-
-         var painter = JSROOTPainter.drawObjectInFrame(vis, histo,"col");
+            
+         painter = JSROOTPainter.drawObjectInFrame(vis, histo,"col");
          
-         setInterval(function() { 
-              cnt++;   
-              for (var iy=0;iy<20;iy++)
-                 for (var ix=0;ix<20;ix++) {
-                    var bin = histo.getBin(ix+1, iy+1);
-                    histo.setBinContent(bin, cnt %2 ? 40 - ix - iy : ix+iy);
-                  }
-              painter.UpdateObject(histo);   
-              painter.RedrawFrame(); 
- 
-            }, 
-         3000);         
+         setInterval(updateGUI, 3000);
       }
       
       $(document).ready(initGUI);

@@ -1434,7 +1434,7 @@ var gStyle = {
 
       for (var n=0;n<this.vis['painters'].length;n++) {
 
-         painter = this.vis['painters'][n];
+         var painter = this.vis['painters'][n];
 
          if ((selobj!=null) && !painter.IsObject(selobj)) continue;
 
@@ -1450,7 +1450,7 @@ var gStyle = {
       if (!this.vis) return null;
 
       for (var n=0;n<this.vis['painters'].length;n++) {
-         painter = this.vis['painters'][n];
+         var painter = this.vis['painters'][n];
 
          if (painter.IsObject(selobj)) return painter;
       }
