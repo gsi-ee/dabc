@@ -38,12 +38,30 @@
          // here instead of dummy histogram creation should be
          // var histo = JSROOTCore.JSONR_unref(JSON.parse(your_json_string));
          
-         var histo = JSROOTCore.CreateTH1(100);
-         for (var i=0;i<100;i++)
-            histo['fArray'][i+1] = i;
+         var histo = JSROOTCore.CreateTH2(20, 20);
+         histo['fName']  = "histo1";
+         histo['fTitle'] = "Histogram title";
+         for (var iy=0;iy<20;iy++)
+           for (var ix=0;ix<20;ix++) {
+              var bin = histo.getBin(ix+1, iy+1);
+              histo.setBinContent(bin, ix+iy);
+            }
+         var cnt = 0;   
 
-
-         JSROOTPainter.drawObjectInFrame(vis, histo);         
+         var painter = JSROOTPainter.drawObjectInFrame(vis, histo,"col");
+         
+         setInterval(function() { 
+              cnt++;   
+              for (var iy=0;iy<20;iy++)
+                 for (var ix=0;ix<20;ix++) {
+                    var bin = histo.getBin(ix+1, iy+1);
+                    histo.setBinContent(bin, cnt %2 ? 40 - ix - iy : ix+iy);
+                  }
+              painter.UpdateObject(histo);   
+              painter.RedrawFrame(); 
+ 
+            }, 
+         3000);         
       }
       
       $(document).ready(initGUI);
