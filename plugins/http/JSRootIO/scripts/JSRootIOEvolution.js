@@ -25,7 +25,7 @@ var kClassMask = 0x80000000;
 
    if (typeof JSROOTIO == "object"){
       var e1 = new Error("JSROOTIO is already defined");
-      e1.source = "JSROOTIO.core.js";
+      e1.source = "JSRootIOEvolution.js";
       throw e1;
    }
 
