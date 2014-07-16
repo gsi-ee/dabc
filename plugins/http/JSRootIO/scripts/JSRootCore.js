@@ -642,10 +642,10 @@ landaun = function(f, x, i) {
                   else        s1[i] += c1 * s2[i];
                }
                //this.putStats(s1);
-               fTsumw   = s1[0];
-               fTsumw2  = s1[1];
-               fTsumwx  = s1[2];
-               fTsumwx2 = s1[3];
+               this['fTsumw']   = s1[0];
+               this['fTsumw2']  = s1[1];
+               this['fTsumwx']  = s1[2];
+               this['fTsumwx2'] = s1[3];
                this['fEntries'] = entries;
             }
             return true;

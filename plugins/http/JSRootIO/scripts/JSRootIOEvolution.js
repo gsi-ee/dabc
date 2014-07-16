@@ -39,7 +39,6 @@ var kClassMask = 0x80000000;
 
    JSROOTIO.debug = false;
 
-
    JSROOTIO.fUserStreamers = null; // map of user-streamer function like func(buf,obj,prop,streamerinfo)
 
    JSROOTIO.addUserStreamer = function(type, user_streamer)
@@ -990,7 +989,7 @@ var kClassMask = 0x80000000;
          var ver = buf.ReadVersion();
 
          // first base classes
-         for (prop in this) {
+         for (var prop in this) {
             if (!this[prop] || typeof(this[prop]) === "function")
                continue;
             if (this[prop]['typename'] === 'BASE') {
@@ -1005,7 +1004,7 @@ var kClassMask = 0x80000000;
             }
          }
          // then class members
-         for (prop in this) {
+         for (var prop in this) {
 
             if (!this[prop] || typeof(this[prop]) === "function") continue;
 

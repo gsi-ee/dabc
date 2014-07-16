@@ -1701,14 +1701,15 @@ var gStyle = {
          if (pad) {
             var xspan = width / Math.abs(pad['fX2'] - pad['fX1']);
             var yspan = height / Math.abs(pad['fY2'] - pad['fY1']);
-            px1 = (frame['fX1'] - pad['fX1']) * xspan;
-            py1 = (frame['fY1'] - pad['fY1']) * yspan;
-            px2 = (frame['fX2'] - pad['fX1']) * xspan;
-            py2 = (frame['fY2'] - pad['fY1']) * yspan;
-            if (px1 < px2) {pxl = px1; pxt = px2;}
-            else           {pxl = px2; pxt = px1;}
-            if (py1 < py2) {pyl = py1; pyt = py2;}
-            else           {pyl = py2; pyt = py1;}
+            var px1 = (frame['fX1'] - pad['fX1']) * xspan;
+            var py1 = (frame['fY1'] - pad['fY1']) * yspan;
+            var px2 = (frame['fX2'] - pad['fX1']) * xspan;
+            var py2 = (frame['fY2'] - pad['fY1']) * yspan;
+            var pxl, pxt, pyl, pyt;
+            if (px1 < px2) { pxl = px1; pxt = px2; }
+            else           { pxl = px2; pxt = px1; }
+            if (py1 < py2) { pyl = py1; pyt = py2; }
+            else           { pyl = py2; pyt = py1; }
             lm = pxl;
             bm = pyl;
             w = pxt - pxl;
