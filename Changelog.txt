@@ -5,6 +5,8 @@ current functionality of the framework.
 17.07.2014
 1. Switch to d3 v3.4.10. Fix several problems with log scales.
 2. Fix statistic drawing for 2D histograms.
+3. Allow move and resize of stat box
+
 
 15.07.2014
 1. Provide example how insert ROOT graphics in the <iframe>

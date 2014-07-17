@@ -2875,22 +2875,115 @@ var gStyle = {
       var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
       
-      this.draw_g = vis.append("svg:g")
-         .attr("x", pos_x)
-         .attr("y", pos_y)
-         .attr("width", width)
-         .attr("height", height)
-         .attr("transform", "translate(" + pos_x + "," + pos_y + ")");
+      // container to just to recalculate coordinates
+      this.draw_g = 
+         vis.append("svg:g").attr("transform", "translate(" + pos_x + "," + pos_y + ")");
 
-      this.draw_g.append("svg:rect")
+
+      var pthis = this;
+      
+      var drag_rect = null;
+      
+      var drag_move = d3.behavior.drag()
+              .origin(Object)
+              .on("dragstart", function() {
+                  d3.event.sourceEvent.preventDefault();
+                  drag_rect = 
+                   pthis.draw_g.append("rect")
+                    .attr("class", "zoom")
+                    .attr("id", "stat_move_rect")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", width)
+                    .attr("height", height)
+                    .style("cursor", "move");
+               
+                 // main_rect.style("cursor", "move"); 
+              })
+              .on("drag", function() { 
+                 d3.event.sourceEvent.preventDefault();
+                 drag_rect.attr("x", Number(drag_rect.attr("x")) + d3.event.dx);  
+                 drag_rect.attr("y", Number(drag_rect.attr("y")) + d3.event.dy);  
+               })
+              .on("dragend", function() { 
+                 d3.event.sourceEvent.preventDefault();
+                 drag_rect.style("cursor", "auto");
+                 
+                 var dx = Number(drag_rect.attr("x"));  
+                 var dy = Number(drag_rect.attr("y"));
+                 
+                 // recalculate
+                 pavetext['fX1NDC'] += dx / w;
+                 pavetext['fX2NDC'] += dx / w;
+                 pavetext['fY1NDC'] -= dy / h;
+                 pavetext['fY2NDC'] -= dy / h;
+                 
+                 drag_rect.remove();
+                 drag_rect = null;
+
+                 pos_x += dx;
+                 pos_y += dy;
+                                  
+                 pthis.draw_g.attr("transform", "translate(" + pos_x + "," + pos_y + ")");
+              });
+
+      var drag_resize = d3.behavior.drag()
+              .origin(Object)
+              .on("dragstart", function() {
+                  d3.event.sourceEvent.preventDefault();
+                  drag_rect = 
+                   pthis.draw_g.append("rect")
+                    .attr("class", "zoom")
+                    .attr("id", "stat_move_rect")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", width)
+                    .attr("height", height)
+                    .style("cursor", "se-resize");
+               
+                 // main_rect.style("cursor", "move"); 
+              })
+              .on("drag", function() { 
+                 d3.event.sourceEvent.preventDefault();
+                 drag_rect.attr("width", Number(drag_rect.attr("width")) + d3.event.dx);  
+                 drag_rect.attr("height", Number(drag_rect.attr("height")) + d3.event.dy);  
+               })
+              .on("dragend", function() { 
+                 d3.event.sourceEvent.preventDefault();
+                 drag_rect.style("cursor", "auto");
+                 
+                 pavetext['fX2NDC'] = pavetext['fX1NDC'] + Number(drag_rect.attr("width"))/w;  
+                 pavetext['fY1NDC'] = pavetext['fY2NDC'] - Number(drag_rect.attr("height")) / h;
+                 
+                 drag_rect.remove();
+                 drag_rect = null;
+                 
+                 pthis.RemoveDraw();
+                 pthis.DrawPaveText();
+              });
+
+      var main_rect =
+        this.draw_g.append("rect")
          .attr("x", 0)
          .attr("y", 0)
          .attr("height", height)
          .attr("width", width)
          .attr("fill", fcolor)
          .style("stroke-width", lwidth ? 1 : 0)
-         .style("stroke", lcolor);
+         .style("stroke", lcolor)
+         .call(drag_move);
 
+      var resize_rect =    
+        this.draw_g.append("rect")
+         .attr("x", width-20)
+         .attr("y", height-20)
+         .attr("width", 20)
+         .attr("height", 20)
+         .style("opacity", "0")
+         .style("cursor", "se-resize")
+         .call(drag_resize);
+
+         
       var first_stat = 0, num_cols = 0;
       var maxlw = 0;
       var lines = new Array;
@@ -3082,7 +3175,6 @@ var gStyle = {
 
       this.DrawPaveText();
    }
-
 
    JSROOTPainter.DrawPaveText = function(vis, pavetext)
    {
@@ -3761,13 +3853,9 @@ var gStyle = {
 
    JSROOTPainter.HistPainter.prototype.ToggleStat = function() {
 
-      console.log("HistPainter.prototype.ToggleStat");
-
       var stat = this.FindStat();
 
       if (stat == null) {
-      
-         console.log("create statistic");
 
          // when statbox created first time, one need to draw it
          stat = this.CreateStat();
