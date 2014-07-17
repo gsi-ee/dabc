@@ -2823,7 +2823,7 @@ var gStyle = {
       var pavetext = this.pavetext;
       var vis = this.vis;
 
-      var i, j, lw, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
+      var line,  i, j, lw, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
 
       var pos_x = pavetext['fX1NDC'] * w;
       var pos_y = (1.0 - pavetext['fY1NDC']) * h;
@@ -2870,7 +2870,7 @@ var gStyle = {
 
       var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
-
+      
       this.draw_g = vis.append("svg:g")
          .attr("x", pos_x)
          .attr("y", pos_y)
@@ -2887,8 +2887,22 @@ var gStyle = {
          .style("stroke-width", lwidth ? 1 : 0)
          .style("stroke", lcolor);
 
-      var first_stat = 0;
-      var num_cols = 0;
+      var first_stat = 0, num_cols = 0;
+      
+      if ((nlines>1) && (pavetext['_typename'] == 'JSROOTIO.TPaveStats')) {
+         for (j=1; j<nlines; ++j) {
+            line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
+            if (line.indexOf('|')<0) continue;
+            if (first_stat === 0) first_stat = j;
+            var parts = line.split("|");
+            if (parts.length>num_cols) num_cols = parts.length; 
+         }
+      }
+
+      var stepy = height / nlines; 
+
+      console.log("  stat type = " + pavetext['_typename']+ " numlines=" + nlines + " num_cols = " + num_cols);
+      
       var lw = 0;
       var draw_font_size = font_size;
 
@@ -2922,17 +2936,17 @@ var gStyle = {
                                        font_size, fontDetails['style']);
             if (lw > width)
                draw_font_size = font_size * 0.96 * (width / lw);
+            var posy = j * stepy + draw_font_size;
+               
             if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
-               var posy = (j == 0) ? (font_size * 1.2) :
-                                      font_size * (0.05 + (j+1) * 1.45);
                if ((first_stat>0) && (j>=first_stat)) {
-                  posy -= draw_font_size*0.3; // dut to middle allignment
+                  posy -= draw_font_size*0.5; // dut to middle allignment
                   var parts = line.split("|");
                   for (var n=0;n<parts.length;n++)
                      this.draw_g.append("text")
                      .attr("text-anchor", "middle")
                      .attr("x",  width*(n+0.5)/num_cols)
-                     .attr("y", posy + font_size*0.6)
+                     .attr("y", posy + draw_font_size*0.6)
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
@@ -2969,7 +2983,7 @@ var gStyle = {
                this.draw_g.append("text")
                   .attr("text-anchor", "start")
                   .attr("x", lmargin)
-                  .attr("y", (j+1) * (font_size * 1.4))
+                  .attr("y", posy)
                   .attr("font-family", fontDetails['name'])
                   .attr("font-weight", fontDetails['weight'])
                   .attr("font-style", fontDetails['style'])
@@ -2993,20 +3007,20 @@ var gStyle = {
       }
 
       if ((first_stat > 0) && (num_cols > 1)) {
-         var yy = (1.4 * first_stat + 0.6) * font_size;
 
-         this.draw_g.append("svg:line")
-         .attr("x1", 0)
-         .attr("y1", yy)
-         .attr("x2", width)
-         .attr("y2", yy)
-         .style("stroke", lcolor)
-         .style("stroke-width", lwidth ? 1 : 'none');
+         for (var nrow = first_stat; nrow < nlines; nrow++) 
+            this.draw_g.append("svg:line")
+              .attr("x1", 0)
+              .attr("y1", nrow*stepy)
+              .attr("x2", width)
+              .attr("y2", nrow*stepy)
+              .style("stroke", lcolor)
+              .style("stroke-width", lwidth ? 1 : 'none');
 
          for (var ncol = 0; ncol<num_cols-1; ncol++)
             this.draw_g.append("svg:line")
             .attr("x1", width/num_cols*(ncol+1))
-            .attr("y1", yy)
+            .attr("y1", first_stat * stepy)
             .attr("x2", width/num_cols*(ncol+1) )
             .attr("y2", height)
             .style("stroke", lcolor)
