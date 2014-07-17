@@ -1863,7 +1863,7 @@ var gStyle = {
    JSROOTPainter.Func1DPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
    JSROOTPainter.Func1DPainter.prototype.IsObject = function(obj) {
-      return this.tf1 == obj;
+      return this.tf1 === obj;
    }
 
    JSROOTPainter.Func1DPainter.prototype.Redraw = function()
@@ -2119,7 +2119,7 @@ var gStyle = {
    JSROOTPainter.GraphPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
    JSROOTPainter.GraphPainter.prototype.IsObject = function(obj) {
-      return this.graph == obj;
+      return this.graph === obj;
    }
 
    JSROOTPainter.GraphPainter.prototype.Redraw = function()
@@ -2750,11 +2750,10 @@ var gStyle = {
             .data(this.bins)
             .enter()
             .append("svg:path")
-            .attr("transform", function(d) {return "translate(" + x(d.x) + "," + y(d.y) + ")"})
+            .attr("transform", function(d) { return "translate(" + x(d.x) + " , " + y(d.y) + ")"} )
             .style("fill", filled ? root_colors[this.graph['fMarkerColor']] : "none")
             .style("stroke", root_colors[this.graph['fMarkerColor']])
             .attr("d", marker);
-
 
          if (gStyle.Tooltip > 1)
             markers
@@ -2795,7 +2794,7 @@ var gStyle = {
       painter['ownhisto'] = ownhisto;
 
       painter.SetFrame(vis, true);
-
+      
       painter.DecodeOptions(opt);
 
       painter.CreateBins();
@@ -2817,7 +2816,7 @@ var gStyle = {
 
 
    JSROOTPainter.PavePainter.prototype.IsObject = function(obj) {
-      return this.pavetext == obj;
+      return this.pavetext === obj;
    }
 
    JSROOTPainter.PavePainter.prototype.DrawPaveText = function() {
@@ -3110,7 +3109,7 @@ var gStyle = {
 
 
    JSROOTPainter.ColzPalettePainter.prototype.IsObject = function(obj) {
-      return this.palette == obj;
+      return this.palette === obj;
    }
 
    JSROOTPainter.ColzPalettePainter.prototype.DrawPalette = function() {
@@ -3239,9 +3238,8 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype = Object.create( JSROOTPainter.ObjectPainter.prototype );
 
 
-
    JSROOTPainter.HistPainter.prototype.IsObject = function(obj) {
-      return this.histo == obj;
+      return this.histo === obj;
    }
 
    JSROOTPainter.HistPainter.prototype.Dimension = function() {
@@ -3319,7 +3317,7 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.CreateXY = function()
    {
       // here we create x,y objects which maps our physical coordnates into pixels
-      // while only first painter really need such object, all others just copy it
+      // while only first painter really need such object, all others just reuse it
 
       if (this.first) {
          this['x'] = this.first['x'];
@@ -3327,33 +3325,37 @@ var gStyle = {
          return;
       }
 
-      // special case used for drawing multiple graphs in the same frame
       var w = Number(this.frame.attr("width")), h = Number(this.frame.attr("height"));
 
-      if (this.options.Logx) {
-         this.xlogmax = this.xmax <= 0 ? 1 : this.xmax;
-         this.xlogmin = this.xmin <= 0 ? this.xlogmax * 0.0001 : this.xmin;
-         this['x'] = d3.scale.log().domain([this.xlogmin, this.xlogmax]).range([0, w]);
+      this['scale_xmin'] = this.xmin;
+      this['scale_xmax'] = this.xmax;
+      if (this.zoom_xmin != this.zoom_xmax) { 
+         this['scale_xmin'] = this.zoom_xmin;
+         this['scale_xmax'] = this.zoom_xmax; 
       }
-      else
-         this['x'] = d3.scale.linear().domain([this.xmin,this.xmax]).range([0, w]);
+      
+      if (this.options.Logx) {
+         if (this.scale_xmax <= 0) this.scale_xmax = 0;
+         if ((this.scale_xmin <= 0) || (this.scale_xmin >= this.scale_xmax)) this.scale_xmin = this.scale_xmax * 0.0001;
+         this['x'] = d3.scale.log().domain([this.scale_xmin, this.scale_xmax]).range([0, w]).clamp(true);
+      } else {
+         this['x'] = d3.scale.linear().domain([this.scale_xmin, this.scale_xmax]).range([0, w]);
+      }
 
-      if (this.zoom_xmin != this.zoom_xmax)
-         this.x.domain([this.zoom_xmin, this.zoom_xmax]);
-
-      // $("#report").append("<br> ymin " + this.ymin + "  ymax " + this.ymax);
-
+      this['scale_ymin'] = this.ymin;
+      this['scale_ymax'] = this.ymax;
+      if (this.zoom_ymin!=this.zoom_ymax) { 
+         this['scale_ymin'] = this.zoom_ymin; 
+         this['scale_ymax'] = this.zoom_ymax; 
+      }
+      
       if (this.options.Logy) {
-         this.ylogmax = this.ymax <= 0 ? 1 : this.ymax;
-         this.ylogmin = this.ymin <= 0 ? this.ylogmax * 0.0001 : this.ymin;
-         this['y'] = d3.scale.log().domain([this.ylogmin, this.ylogmax]).range([h, 0]);
-      } else
-         this['y'] = d3.scale.linear().domain([this.ymin, this.ymax]).range([h, 0]);
-
-      if (this.zoom_ymin!=this.zoom_ymax)
-         this.y.domain([this.zoom_ymin, this.zoom_ymax]);
-
-      // console.log("creating X-Y done");
+         if (this.scale_ymax<=0) this.scale_ymax = 1;
+         if ((this.scale_ymin<=0) || (this.scale_ymin>=this.scale_ymax)) this.scale_ymin = 0.0001 * this.scale_ymax;
+         this['y'] = d3.scale.log().domain([this.scale_ymin, this.scale_ymax]).range([h, 0]).clamp(true);
+      } else {
+         this['y'] = d3.scale.linear().domain([this.scale_ymin, this.scale_ymax]).range([h, 0]);
+      }
    }
 
    JSROOTPainter.HistPainter.prototype.CountStat = function()
@@ -3525,8 +3527,10 @@ var gStyle = {
 
          this['timeoffsetx'] = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
 
-         if (timeformatx.length == 0) 
-            timeformatx = JSROOTPainter.chooseTimeFormat(xrange, this.x_nticks);
+         var scale_xrange = this.scale_xmax - this.scale_xmin;
+
+         if ((timeformatx.length == 0) || (scale_xrange < 0.1*xrange)) 
+            timeformatx = JSROOTPainter.chooseTimeFormat(scale_xrange, this.x_nticks);
 
          this['dfx'] = d3.time.format(timeformatx);
 
@@ -3585,8 +3589,10 @@ var gStyle = {
 
          this['timeoffsety'] = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
 
-         if (timeformaty.length == 0) 
-            timeformaty = JSROOTPainter.chooseTimeFormat(yrange,this.y_nticks); 
+         var scale_yrange = this.scale_ymax - this.scale_ymin;
+
+         if ((timeformaty.length == 0) || (scale_yrange < 0.1*yrange)) 
+            timeformaty = JSROOTPainter.chooseTimeFormat(scale_yrange, this.y_nticks); 
 
          this['dfy'] = d3.time.format(timeformaty);
 
@@ -4741,9 +4747,6 @@ var gStyle = {
          if ((stepi>1) && (i+stepi>right)) stepi = (right-i);
          x1 = x2; x2 += stepi*this.binwidthx;
 
-         // protect againt logx scale
-         if ((this.options.Logx>0) && (x1<=this.xlogmin)) continue;
-
          grx1 = grx2; grx2 = this.x(x2);
          if (grx1 < 0) grx1 = this.x(x1);
 
@@ -4753,9 +4756,6 @@ var gStyle = {
             var ccc = this.histo.getBinContent(i+ii+1);
             if (ccc>cont) { cont = ccc; pmax = i + ii; }
          }
-
-         // protect agains logy scale
-         if ((this.options.Logy>0) && (cont<=this.ylogmin)) cont = this.ylogmin;
 
          gry = this.y(cont);
 
