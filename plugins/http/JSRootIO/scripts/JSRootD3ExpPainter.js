@@ -314,21 +314,6 @@ function getRootMarker(markers, i) {
    };
 };
 
-function stringWidth(svg, line, font_name, font_weight, font_size, font_style) {
-   /* compute the bounding box of a string by using temporary svg:text */
-   var text = svg.append("svg:text")
-       .attr("class", "temp_text")
-       .attr("font-family", font_name)
-       .attr("font-weight", font_weight)
-       .attr("font-style", font_style)
-       .attr("font-size", font_size)
-       .style("opacity", 0)
-       .text(line);
-   var w = text.node().getBBox().width;
-   text.remove();
-   return w;
-}
-
 function format_id(id) {
    /* format the string id to remove specials characters
       (that cannot be used in id strings) */
@@ -438,7 +423,7 @@ var gStyle = {
       'StatColor'     : 0,
       'StatStyle'     : 1001,
       'StatFont'      : 42,
-      'StatFontSize'  : 0,
+      'StatFontSize'  : 9,
       'StatTextColor' : 1,
       'TimeOffset'    : 788918400000 // UTC time at 01/01/95
    };
@@ -1381,6 +1366,20 @@ var gStyle = {
       return str;
    };
 
+   JSROOTPainter.stringWidth = function(svg, line, font_size, fontDetails) {
+      /* compute the bounding box of a string by using temporary svg:text */
+      var text = svg.append("svg:text")
+      .attr("class", "temp_text")
+      .attr("font-family", fontDetails['name'])
+      .attr("font-weight", fontDetails['weight'])
+      .attr("font-style", fontDetails['style'])
+      .attr("font-size", font_size)
+      .style("opacity", 0)
+      .text(line);
+      var w = text.node().getBBox().width;
+      text.remove();
+      return w;
+   }
 
 
 
@@ -1409,6 +1408,7 @@ var gStyle = {
       this.vis   = null;  // canvas where object is drawn
       this.first = null;  // pointer on first painter
       this.draw_g = null;  // container for all draw objects
+      this.original_view_changed = false;  // indicate that original zoom changed and one should recalculate statistic
    }
 
    JSROOTPainter.ObjectPainter.prototype.IsObject = function(obj) {
@@ -1601,7 +1601,10 @@ var gStyle = {
          obj['zoom_ymax'] = 0;
       }
 
-      if (changed) this.RedrawFrame();
+      if (changed) {
+         obj.original_view_changed = true;
+         this.RedrawFrame();
+      }
    }
 
    JSROOTPainter.ObjectPainter.prototype.Zoom = function(xmin, xmax, ymin, ymax) {
@@ -1615,6 +1618,7 @@ var gStyle = {
          obj['zoom_ymin'] = ymin;
          obj['zoom_ymax'] = ymax;
       }
+      obj.original_view_changed = true;
       this.RedrawFrame();
    }
 
@@ -2823,15 +2827,15 @@ var gStyle = {
       var pavetext = this.pavetext;
       var vis = this.vis;
 
-      var line,  i, j, lw, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
+      var j, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
 
       var pos_x = pavetext['fX1NDC'] * w;
       var pos_y = (1.0 - pavetext['fY1NDC']) * h;
       var width = Math.abs(pavetext['fX2NDC'] - pavetext['fX1NDC']) * w;
       var height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
       pos_y -= height;
-      var line, nlines = pavetext['fLines'].arr.length;
-      var font_size = Math.round(height / (nlines * 1.6));
+      var nlines = pavetext['fLines'].arr.length;
+      var font_size = Math.round(height / (nlines * 1.2));
       var fcolor = root_colors[pavetext['fFillColor']];
       var lcolor = root_colors[pavetext['fLineColor']];
       var tcolor = root_colors[pavetext['fTextColor']];
@@ -2888,31 +2892,31 @@ var gStyle = {
          .style("stroke", lcolor);
 
       var first_stat = 0, num_cols = 0;
-      
-      if ((nlines>1) && (pavetext['_typename'] == 'JSROOTIO.TPaveStats')) {
-         for (j=1; j<nlines; ++j) {
-            line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
-            if (line.indexOf('|')<0) continue;
-            if (first_stat === 0) first_stat = j;
-            var parts = line.split("|");
-            if (parts.length>num_cols) num_cols = parts.length; 
-         }
+      var maxlw = 0;
+      var lines = new Array;
+
+ 
+      // adjust font size      
+      for (j=0; j<nlines; ++j) {
+         var line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
+         
+         lines.push(line);
+         
+         var lw = lmargin + JSROOTPainter.stringWidth(vis, line, font_size, fontDetails);
+         if (lw > maxlw) maxlw = lw;
+         
+         if ((j==0) || (line.indexOf('|')<0)) continue;
+         if (first_stat === 0) first_stat = j;
+         var parts = line.split("|");
+         if (parts.length>num_cols) num_cols = parts.length; 
       }
+      
+      if (maxlw > width)
+        font_size = font_size * (width / maxlw);
 
       var stepy = height / nlines; 
 
-      console.log("  stat type = " + pavetext['_typename']+ " numlines=" + nlines + " num_cols = " + num_cols);
-      
-      var lw = 0;
-      var draw_font_size = font_size;
-
       if (nlines == 1) {
-         line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[0]['fTitle']);
-         lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                                    font_size, fontDetails['style']);
-         if (lw > width)
-            draw_font_size = font_size * 0.97 * (width / lw);
-
          this.draw_g.append("text")
             .attr("text-anchor", align)
             .attr("x", lmargin)
@@ -2920,41 +2924,33 @@ var gStyle = {
             .attr("font-family", fontDetails['name'])
             .attr("font-weight", fontDetails['weight'])
             .attr("font-style", fontDetails['style'])
-            .attr("font-size", draw_font_size)
+            .attr("font-size", font_size)
             .attr("fill", tcolor)
-            .text(line);
-
-         draw_font_size = font_size;
+            .text(lines[0]);
       }
       else {
 
          for (j=0; j<nlines; ++j) {
             var jcolor = root_colors[pavetext['fLines'].arr[j]['fTextColor']];
             if (pavetext['fLines'].arr[j]['fTextColor'] == 0)  jcolor = tcolor;
-            line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
-            lw = lmargin + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                                       font_size, fontDetails['style']);
-            if (lw > width)
-               draw_font_size = font_size * 0.96 * (width / lw);
-            var posy = j * stepy + draw_font_size;
+            var posy = j * stepy + font_size;
                
             if (pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
                if ((first_stat>0) && (j>=first_stat)) {
-                  posy -= draw_font_size*0.5; // dut to middle allignment
-                  var parts = line.split("|");
+                  var parts = lines[j].split("|");
                   for (var n=0;n<parts.length;n++)
                      this.draw_g.append("text")
                      .attr("text-anchor", "middle")
                      .attr("x",  width*(n+0.5)/num_cols)
-                     .attr("y", posy + draw_font_size*0.6)
+                     .attr("y", posy)
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", draw_font_size)
+                     .attr("font-size", font_size)
                      .attr("fill", jcolor)
                      .text(parts[n]);
                } else
-               if ((j==0) || (line.indexOf('=')<0)) {
+               if ((j==0) || (lines[j].indexOf('=')<0)) {
                   this.draw_g.append("text")
                      .attr("text-anchor", (j == 0) ? "middle" : "start")
                      .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
@@ -2962,11 +2958,11 @@ var gStyle = {
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", draw_font_size)
+                     .attr("font-size", font_size)
                      .attr("fill", jcolor)
-                     .text(line);
+                     .text(lines[j]);
                } else {
-                  var parts = line.split("=");
+                  var parts = lines[j].split("=");
                   for (var n=0;n<2;n++)
                      this.draw_g.append("text")
                      .attr("text-anchor", (n==0) ? "start" : "end")
@@ -2975,7 +2971,7 @@ var gStyle = {
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
                      .attr("font-style", fontDetails['style'])
-                     .attr("font-size", draw_font_size)
+                     .attr("font-size", font_size)
                      .attr("fill", jcolor)
                      .text(parts[n]);
                }
@@ -2987,11 +2983,10 @@ var gStyle = {
                   .attr("font-family", fontDetails['name'])
                   .attr("font-weight", fontDetails['weight'])
                   .attr("font-style", fontDetails['style'])
-                  .attr("font-size", draw_font_size)
+                  .attr("font-size", font_size)
                   .attr("fill", jcolor)
-                  .text(line);
+                  .text(lines[j]);
             }
-            draw_font_size = font_size;
          }
       }
 
@@ -2999,9 +2994,9 @@ var gStyle = {
          this.draw_g.append("svg:line")
             .attr("class", "pavedraw")
             .attr("x1", 0)
-            .attr("y1", font_size * 1.6)
+            .attr("y1", stepy)
             .attr("x2", width)
-            .attr("y2", font_size * 1.6)
+            .attr("y2", stepy)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth ? 1 : 'none');
       }
@@ -3025,7 +3020,6 @@ var gStyle = {
             .attr("y2", height)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth ? 1 : 'none');
-
       }
 
       if (lwidth && lwidth > 1) {
@@ -3082,8 +3076,9 @@ var gStyle = {
       // if pavetext artificially disabled, do not redraw it
       if (!this.Enabled) return;
 
-      // fill statistic
-      this.FillStatistic();
+      // recalculate statistic when manipulation with view were done
+      if (this.first.original_view_changed)
+         this.FillStatistic();
 
       this.DrawPaveText();
    }
@@ -3766,11 +3761,13 @@ var gStyle = {
 
    JSROOTPainter.HistPainter.prototype.ToggleStat = function() {
 
-      // $("#report").append("HistPainter.prototype.ToggleStat");
+      console.log("HistPainter.prototype.ToggleStat");
 
       var stat = this.FindStat();
 
       if (stat == null) {
+      
+         console.log("create statistic");
 
          // when statbox created first time, one need to draw it
          stat = this.CreateStat();
@@ -3780,17 +3777,17 @@ var gStyle = {
          return;
       }
 
-      var painter = this.FindPainterFor(stat);
-      if (painter == null) {
+      var statpainter = this.FindPainterFor(stat);
+      if (statpainter == null) {
          alert("Did not found painter for existing stat??");
          return;
       }
 
-      painter.Enabled = !painter.Enabled;
+      statpainter.Enabled = !statpainter.Enabled;
 
       // when stat box is drawed, it always can be draw individualy while it should be last
       // for colz RedrawFrame is used
-      painter.Redraw();
+      statpainter.Redraw();
    }
 
    JSROOTPainter.HistPainter.prototype.GetSelectIndex = function(axis,size,add) {
@@ -4711,18 +4708,7 @@ var gStyle = {
       if (print_kurt> 0)
          stat.AddLine("Kurt = 0");
 
-      /*
-      if ((histo['fDimension'] == 2) && this.first.stat_matrix) {
-         // add special count statistic
-         var m = this.first.stat_matrix;
-
-         this.AddLine(""+ m[6].toFixed(0)+ " | " + m[7].toFixed(0) +  " | " + m[7].toFixed(0));
-         this.AddLine(""+ m[3].toFixed(0)+ " | " + m[4].toFixed(0) +  " | " + m[5].toFixed(0));
-         this.AddLine(""+ m[0].toFixed(0)+ " | " + m[1].toFixed(0) +  " | " + m[2].toFixed(0));
-      }
-      */
-
-      // adjust the size of the stats box wrt the number of lines
+      // adjust the size of the stats box with the number of lines
       var nlines = stat.pavetext['fLines'].arr.length;
       var stath = nlines * gStyle.StatFontSize;
       if (stath <= 0 || 3 == (gStyle.StatFont%10)) {
@@ -6462,8 +6448,7 @@ var gStyle = {
       var max_len = 0, mul = 1.4;
       for (var j=0; j<nlines; ++j) {
          line = JSROOTPainter.translateLaTeX(pave.fPrimitives.arr[j]['fLabel']);
-         lw = tpos_x + stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                                   font_size, fontDetails['style']);
+         lw = tpos_x + JSROOTPainter.stringWidth(vis, line, font_size, fontDetails);
          if (lw > max_len) max_len = lw;
       }
       if (max_len > w) {
@@ -6934,9 +6919,7 @@ var gStyle = {
 
       var line = JSROOTPainter.translateLaTeX(pavelabel['fLabel']);
 
-
-      var lw = stringWidth(vis, line, fontDetails['name'], fontDetails['weight'],
-                           font_size, fontDetails['style']);
+      var lw = JSROOTPainter.stringWidth(vis, line, font_size, fontDetails);
       if (lw > width)
          font_size *= 0.98 * (width / lw);
 
