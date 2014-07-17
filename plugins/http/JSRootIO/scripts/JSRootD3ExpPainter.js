@@ -491,7 +491,7 @@ var gStyle = {
    
    JSROOTPainter.d3v3 = (d3.version.charAt(0) == '3');
    
-   // if (JSROOTPainter.d3v3) console.log("d3.v3.js"); else console.log("d3.v2.js");
+   // if (JSROOTPainter.d3v3) console.log("d3_v3_js"); else console.log("d3_v2_js");
 
    JSROOTPainter.fUserPainters = null; // list of user painters, called with arguments painter(vis, obj, opt) 
 
@@ -1044,14 +1044,62 @@ var gStyle = {
          b = hue2rgb(p, q, h - 1/3);
       }
       return 'rgb('+Math.round(r * 255)+', '+Math.round(g * 255)+', '+Math.round(b * 255)+')';
-   };
+   }
+   
+   JSROOTPainter.chooseTimeFormat = function(range, nticks) {
+      if (nticks<1) nticks = 1;
+      var awidth = range / nticks;
+      var reasformat = 0;
+      
+      // code from TAxis::ChooseTimeFormat
+      // width in seconds ?
+      if (awidth>=.5) {
+         reasformat = 1;
+         //  width in minutes ?
+         if (awidth>=30) {
+            awidth /= 60; reasformat = 2;
+            //  width in hours ?
+            if (awidth>=30) {
+               awidth /=60; reasformat = 3;
+               //  width in days ?
+               if (awidth>=12) {
+                  awidth /= 24; reasformat = 4;
+                  // width in months ?
+                  if (awidth>=15.218425) {
+                     awidth /= 30.43685; reasformat = 5;
+                     //  width in years ?
+                     if (awidth>=6) {
+                        awidth /= 12; reasformat = 6;
+                        if (awidth>=2) {
+                           awidth /= 12; reasformat = 7;
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+      
+      switch (reasformat) {
+         case 0: return "%S"; 
+         case 1: return "%Mm%S";
+         case 2: return "%Hh%M";
+         case 3: return "%d-%Hh";
+         case 4: return "%d/%m";
+         case 5: return "%d/%m/%y";
+         case 6: return "%d/%m/%y";
+         case 7: return "%m/%y";
+      }
+      
+      return "%Y";
+   }
 
    JSROOTPainter.getTimeFormat = function(axis) {
       var timeFormat = axis['fTimeFormat'];
       var idF = timeFormat.indexOf('%F');
       if (idF >= 0) return timeFormat.substr(0, idF);
       return timeFormat;
-   };
+   }
 
    JSROOTPainter.getTimeOffset = function(axis) {
       var timeFormat = axis['fTimeFormat'];
@@ -1078,7 +1126,7 @@ var gStyle = {
       }
 
       return gStyle['TimeOffset'];
-   };
+   }
 
    JSROOTPainter.formatExp = function(label) {
       var str = label;
@@ -2757,65 +2805,6 @@ var gStyle = {
       return painter;
    }
 
-   JSROOTPainter.drawGrid = function(vis, histo, pad, x, y) {
-      var gridx = false, gridy = false;
-      if (pad && typeof(pad) != 'undefined') {
-         gridx = pad['fGridx'];
-         gridy = pad['fGridy'];
-      }
-      var ndivx = histo['fXaxis']['fNdivisions'];
-      var n1ax = ndivx%100;
-      var n2ax = (ndivx%10000 - n1ax)/100;
-      var n3ax = ndivx/10000;
-      var nn3x = Math.max(n3ax,1);
-      var nn2x = Math.max(n2ax,1)*nn3x;
-      var nn1x = Math.max(n1ax,1)*nn2x;
-
-      var ndivy = histo['fYaxis']['fNdivisions'];
-      var n1ay = ndivy%100;
-      var n2ay = (ndivy%10000 - n1ay)/100;
-      var n3ay = ndivy/10000;
-      var nn3y = Math.max(n3ay,1);
-      var nn2y = Math.max(n2ay,1)*nn3y;
-      var nn1y = Math.max(n1ay,1)*nn2y;
-
-      vis.selectAll(".gridLine").remove();
-
-      /* add a grid on x axis, if the option is set */
-      if (gridx) {
-         vis.selectAll("gridLine")
-            .data(x.ticks(n1ax))
-            .enter()
-            .append("svg:line")
-            .attr("class", "gridLine")
-            .attr("x1", x)
-            .attr("y1", Number(vis.attr("height")))
-            .attr("x2", x)
-            .attr("y2", 0)
-            .style("stroke", "black")
-            .style("stroke-width", histo['fLineWidth'])
-            .style("stroke-dasharray", root_line_styles[11]);
-      }
-
-      /* add a grid on y axis, if the option is set */
-      if (gridy) {
-         vis.selectAll("gridLine")
-            .data(y.ticks(n1ay))
-            .enter()
-            .append("svg:line")
-            .attr("class", "gridLine")
-            .attr("x1", 0)
-            .attr("y1", y)
-            .attr("x2", Number(vis.attr("width")))
-            .attr("y2", y)
-            .style("stroke", "black")
-            .style("stroke-width", histo['fLineWidth'])
-            .style("stroke-dasharray", root_line_styles[11]);
-      }
-   };
-
-
-
    // ============================================================
 
    JSROOTPainter.PavePainter = function(pave) {
@@ -3376,34 +3365,14 @@ var gStyle = {
       // grid can only be drawn by first painter
       if (this.first) return;
 
-      var ndivx = this.histo['fXaxis']['fNdivisions'];
-      var n1ax = ndivx%100;
-      var n2ax = (ndivx%10000 - n1ax)/100;
-      var n3ax = ndivx/10000;
-      var nn3x = Math.max(n3ax,1);
-      var nn2x = Math.max(n2ax,1)*nn3x;
-      var nn1x = Math.max(n1ax,1)*nn2x;
-
-      var ndivy = this.histo['fYaxis']['fNdivisions'];
-      var n1ay = ndivy%100;
-      var n2ay = (ndivy%10000 - n1ay)/100;
-      var n3ay = ndivy/10000;
-      var nn3y = Math.max(n3ay,1);
-      var nn2y = Math.max(n2ay,1)*nn3y;
-      var nn1y = Math.max(n1ay,1)*nn2y;
-
-      // $("#report").append(" draw grids");
-
       this.frame.selectAll(".gridLine").remove();
       /* add a grid on x axis, if the option is set */
 
       // add a grid on x axis, if the option is set
       if (this.show_gridx) {
 
-         // $("#report").append(" draw grid x:" + n1ax);
-
          this.frame.selectAll("gridLine")
-         .data(this.x.ticks(n1ax))
+         .data(this.x.ticks(this.x_nticks))
          .enter()
          .append("svg:line")
          .attr("class", "gridLine")
@@ -3419,10 +3388,8 @@ var gStyle = {
       // add a grid on y axis, if the option is set
       if (this.show_gridy) {
 
-         // $("#report").append(" draw grid y:" + n1ay);
-
          this.frame.selectAll("gridLine")
-         .data(this.y.ticks(n1ay))
+         .data(this.y.ticks(this.y_nticks))
          .enter()
          .append("svg:line")
          .attr("class", "gridLine")
@@ -3483,13 +3450,13 @@ var gStyle = {
       if (this.histo['fYaxis']['fXmax'] < 100 && this.histo['fYaxis']['fXmax']/this.histo['fYaxis']['fXmin'] < 100) noexpy = true;
 
       var ndivx = this.histo['fXaxis']['fNdivisions'];
-      var n1ax = ndivx%100;
-      var n2ax = (ndivx%10000 - n1ax)/100;
+      this['x_nticks'] = ndivx%100; // used also to draw grids
+      var n2ax = (ndivx%10000 - this.x_nticks)/100;
       var n3ax = ndivx/10000;
 
       var ndivy = this.histo['fYaxis']['fNdivisions'];
-      var n1ay = ndivy%100;
-      var n2ay = (ndivy%10000 - n1ay)/100;
+      this['y_nticks'] = ndivy%100; // used also to draw grids
+      var n2ay = (ndivy%10000 - this.y_nticks)/100;
       var n3ay = ndivy/10000;
 
       /* X-axis label */
@@ -3553,19 +3520,13 @@ var gStyle = {
        */
       var xrange = this.xmax - this.xmin;
       if (this.histo['fXaxis']['fTimeDisplay']) {
-         if (n1ax > 8) n1ax = 8;
+         if (this.x_nticks > 8) this.x_nticks = 8;
          var timeformatx = JSROOTPainter.getTimeFormat(this.histo['fXaxis']);
 
          this['timeoffsetx'] = JSROOTPainter.getTimeOffset(this.histo['fXaxis']);
 
-         if (timeformatx.length == 0) {
-            if (xrange>315360000) timeformatx = "%Y"; else
-            if (xrange>24192000)  timeformatx = "%Y/%m"; else
-            if (xrange>864000)    timeformatx = "%Y/%m/%d"; else
-            if (xrange>36000)     timeformatx = "%Hh%M"; else
-            if (xrange>600)       timeformatx = "%Hh%Mm%S"; else
-                                  timeformatx = "%Mm%S";
-         }
+         if (timeformatx.length == 0) 
+            timeformatx = JSROOTPainter.chooseTimeFormat(xrange, this.x_nticks);
 
          this['dfx'] = d3.time.format(timeformatx);
 
@@ -3575,7 +3536,7 @@ var gStyle = {
              .tickPadding(xAxisLabelOffset)
              .tickSize(-xDivLength, -xDivLength/2, -xDivLength/4)
              .tickFormat(function(d) { return pthis.dfx(new Date(pthis.timeoffsetx + d*1000)); })
-             .ticks(n1ax);
+             .ticks(this.x_nticks);
       }
       else if (this.options.Logx) {
          this['x_axis'] = d3.svg.axis()
@@ -3614,34 +3575,18 @@ var gStyle = {
                 if ((Math.abs(d)<1e-14) && (Math.abs(xrange)>1e-5)) d = 0;
                 return parseFloat(d.toPrecision(12));
             })
-            .ticks(n1ax);
-         
-         // this is additional ticks, required in d3.v3
-         if (JSROOTPainter.d3v3)
-           this['x_axis_sub'] = d3.svg.axis()
-            .scale(this.x)
-            .orient("bottom")
-            .tickPadding(xAxisLabelOffset)
-            .innerTickSize(-xDivLength/2)
-            .tickFormat(function(d) { return; })
-            .ticks(n1ax*n2ax);
+            .ticks(this.x_nticks);
       }
 
       var yrange = this.ymax - this.ymin;
       if (this.histo['fYaxis']['fTimeDisplay']) {
-         if (n1ay > 8) n1ay = 8;
+         if (this.y_nticks > 8) this.y_nticks = 8;
          var timeformaty = JSROOTPainter.getTimeFormat(this.histo['fYaxis']);
 
          this['timeoffsety'] = JSROOTPainter.getTimeOffset(this.histo['fYaxis']);
 
-         if (timeformaty.length == 0) {
-            if (yrange>315360000) timeformaty = "%Y"; else
-            if (yrange>24192000)  timeformaty = "%Y/%m"; else
-            if (yrange>864000)    timeformaty = "%Y/%m/%d"; else
-            if (yrange>36000)     timeformaty = "%Hh%M"; else
-            if (yrange>600)       timeformaty = "%Hh%Mm%S"; else
-                                  timeformaty = "%Mm%S";
-         }
+         if (timeformaty.length == 0) 
+            timeformaty = JSROOTPainter.chooseTimeFormat(yrange,this.y_nticks); 
 
          this['dfy'] = d3.time.format(timeformaty);
 
@@ -3651,7 +3596,7 @@ var gStyle = {
                .tickPadding(yAxisLabelOffset)
                .tickSize(-yDivLength, -yDivLength/2, -yDivLength/4)
                .tickFormat(function(d) { return pthis.dfy(new Date(pthis.timeoffsety + d * 1000)); })
-               .ticks(n1ay);
+               .ticks(this.y_nticks);
       }
       else if (this.options.Logy) {
          this['y_axis'] = d3.svg.axis()
@@ -3678,7 +3623,7 @@ var gStyle = {
                }});
       }
       else {
-         if (n1ay >= 10) n1ay -= 2;
+         if (this.y_nticks >= 10) this.y_nticks -= 2;
          this['y_axis'] = d3.svg.axis()
            .scale(this.y)
            .orient("left")
@@ -3689,17 +3634,30 @@ var gStyle = {
               if ((Math.abs(d)<1e-14) && (Math.abs(yrange)>1e-5)) d = 0;
               return parseFloat(d.toPrecision(12));
            })
-           .ticks(n1ay);
-         
-         if (JSROOTPainter.d3v3)
-            this['y_axis_sub'] = d3.svg.axis()
-             .scale(this.y)
-             .orient("left")
-             .tickPadding(yAxisLabelOffset)
-             .innerTickSize(-yDivLength/2)
-             .tickFormat(function(d) { return; })
-             .ticks(n1ay*n2ay);
+           .ticks(this.y_nticks);
+
       }
+
+      // this is additional ticks, required in d3.v3
+      if (JSROOTPainter.d3v3 && (n2ax>0) && !this.options.Logx)
+        this['x_axis_sub'] = d3.svg.axis()
+         .scale(this.x)
+         .orient("bottom")
+         .tickPadding(xAxisLabelOffset)
+         .innerTickSize(-xDivLength/2)
+         .tickFormat(function(d) { return; })
+         .ticks(this.x_nticks*n2ax);
+
+      // this is additional ticks, required in d3.v3
+      if (JSROOTPainter.d3v3 && (n2ay>0) && !this.options.Logy)
+         this['y_axis_sub'] = d3.svg.axis()
+          .scale(this.y)
+          .orient("left")
+          .tickPadding(yAxisLabelOffset)
+          .innerTickSize(-yDivLength/2)
+          .tickFormat(function(d) { return; })
+          .ticks(this.y_nticks*n2ay);
+
 
       if ('xax' in this) this['xax'].remove();
       if ('xaxsub' in this) this['xaxsub'].remove();
@@ -4002,8 +3960,8 @@ var gStyle = {
    JSROOTPainter.HistPainter.prototype.Redraw = function() {
       this.CreateXY();
       this.CountStat();
-      this.DrawGrids();
       this.DrawAxes();
+      this.DrawGrids();
       this.DrawBins();
       this.DrawTitle();
       this.DrawFunctions();
@@ -5121,9 +5079,9 @@ var gStyle = {
 
       painter.CountStat();
 
-      painter.DrawGrids();
-
       painter.DrawAxes();
+
+      painter.DrawGrids();
 
       painter.DrawBins();
 
@@ -5766,9 +5724,9 @@ var gStyle = {
 
       painter.CountStat();
 
-      painter.DrawGrids();
-
       painter.DrawAxes();
+
+      painter.DrawGrids();
 
       painter.DrawBins();
 
