@@ -425,8 +425,11 @@ var gStyle = {
       'StatFont'      : 42,
       'StatFontSize'  : 9,
       'StatTextColor' : 1,
-      'TimeOffset'    : 788918400000 // UTC time at 01/01/95
+      'TimeOffset'    : 788918400000, // UTC time at 01/01/95
+      'StatFormat'    : function(v) { return (Math.abs(v) < 1e5) ? v.toFixed(5) : v.toExponential(7); }, 
+      'StatEntriesFormat'  : function(v) { return (Math.abs(v) < 1e7) ? v.toFixed(0) : v.toExponential(7); } 
    };
+
 
 
 
@@ -3083,7 +3086,7 @@ var gStyle = {
          }
       }
 
-      if (pavetext['fBorderSize'] && pavetext['_typename'] == 'JSROOTIO.TPaveStats') {
+      if (pavetext['fBorderSize'] && (pavetext['_typename'] == 'JSROOTIO.TPaveStats')) {
          this.draw_g.append("svg:line")
             .attr("class", "pavedraw")
             .attr("x1", 0)
@@ -3170,8 +3173,8 @@ var gStyle = {
       if (!this.Enabled) return;
 
       // recalculate statistic when manipulation with view were done
-      if (this.first.original_view_changed)
-         this.FillStatistic();
+      // if (this.first.original_view_changed)
+      this.FillStatistic();
 
       this.DrawPaveText();
    }
@@ -3190,7 +3193,10 @@ var gStyle = {
 
       painter.SetFrame(vis, true);
 
-      if ('_AutoCreated' in pavetext) painter.FillStatistic();
+      
+      // refill statistic in any case 
+      // if ('_AutoCreated' in pavetext)
+      painter.FillStatistic();
 
       painter.DrawPaveText();
 
@@ -4661,20 +4667,20 @@ var gStyle = {
 
       var hmin = 1.0e32, hmax = -1.0e32, hsum = 0;
       // this.stat_entries = d3.sum(this.histo['fArray']);
-
+      
       this.nbinsx = this.histo['fXaxis']['fNbins'];
 
       for (var i=0;i<this.nbinsx;++i) {
          var value = this.histo.getBinContent(i+1);
          hsum += value;
-         if (value < hmin) hmin = value;
+         if (value < hmin) hmin = value; else
          if (value > hmax) hmax = value;
       }
+      
+      this.stat_entries = hsum;
 
-      this.stat_entries = 0;
-      if (('fBuffer' in this.histo) && (this.histo['fBuffer'].length>0)) this.stat_entries = this.histo['fBuffer'][0];
-      //if ((this.stat_entries == 0) && ('fEntries' in this.histo)) this.stat_entries = this.histo['fEntries'];
-      if (this.stat_entries == 0) this.stat_entries = hsum;
+      // if (('fBuffer' in this.histo) && (this.histo['fBuffer'].length>0)) this.stat_entries = this.histo['fBuffer'][0];
+      // if ((this.stat_entries == 0) && ('fEntries' in this.histo)) this.stat_entries = this.histo['fEntries'];
 
       // used in CreateXY and tooltip providing
       this.xmin = this.histo['fXaxis']['fXmin'];
@@ -4727,10 +4733,10 @@ var gStyle = {
       var left = this.GetSelectIndex("x","left");
       var right = this.GetSelectIndex("x","right");
 
-      // $("#report").append("<br> count statistic " + left + "  " + right);
+      // console.log("  xleft = " + left + " xright = " + right);
 
       for (var i=left;i<right;i++) {
-         var xx = this.xmin + i*this.binwidthx;
+         var xx = this.xmin + (i+0.5)*this.binwidthx;
          var yy = this.histo.getBinContent(i+1);
          this.stat_sum0 += yy;
          this.stat_sum1 += xx * yy;
@@ -4756,45 +4762,42 @@ var gStyle = {
          stat.AddLine(this.histo['fName']);
 
       if (print_entries > 0)
-         if (this.stat_entries<1e7)
-            stat.AddLine("Entries = " + this.stat_entries.toFixed(0));
-         else
-            stat.AddLine("Entries = " + this.stat_entries.toExponential(5));
+         stat.AddLine("Entries = " + gStyle.StatEntriesFormat(this.stat_entries));
 
       if (print_mean > 0) {
          var res = 0;
          if (this.stat_sum0 > 0) res = this.stat_sum1/this.stat_sum0;
-         stat.AddLine("Mean = " + res.toFixed(2));
+         stat.AddLine("Mean = " + gStyle.StatFormat(res));
       }
 
       if (print_rms > 0) {
          var res = 0;
          if (this.stat_sum0 > 0)
             res = Math.sqrt(this.stat_sum2/this.stat_sum0 - Math.pow(this.stat_sum1/this.stat_sum0, 2));
-         stat.AddLine("RMS = " + res.toFixed(3));
+         stat.AddLine("RMS = " + gStyle.StatFormat(res));
       }
 
       if (print_under > 0) {
          var res = 0;
          if (this.histo['fArray'].length > 0) res = this.histo['fArray'][0];
-         stat.AddLine("Underflow = " + res.toFixed(0));
+         stat.AddLine("Underflow = " + gStyle.StatFormat(res));
       }
 
-      if (print_over> 0) {
+      if (print_over > 0) {
          var res = 0;
          if (this.histo['fArray'].length > 0) res = this.histo['fArray'][this.histo['fArray'].length-1];
-         stat.AddLine("Overflow = " + res.toFixed(0));
+         stat.AddLine("Overflow = " + gStyle.StatFormat(res));
       }
 
-      if (print_integral> 0) {
-         stat.AddLine("Integral = " + this.stat_sum0.toFixed(0));
+      if (print_integral > 0) {
+         stat.AddLine("Integral = " + gStyle.StatEntriesFormat(this.stat_sum0));
       }
 
       if (print_skew> 0)
-         stat.AddLine("Skew = 0");
+         stat.AddLine("Skew = not avail");
 
       if (print_kurt> 0)
-         stat.AddLine("Kurt = 0");
+         stat.AddLine("Kurt = not avail");
 
       // adjust the size of the stats box with the number of lines
       var nlines = stat.pavetext['fLines'].arr.length;
@@ -5429,22 +5432,23 @@ var gStyle = {
       var yleft = this.GetSelectIndex("y","left");
       var yright = this.GetSelectIndex("y","right");
 
-      // $("#report").append("<br> count statistic " + left + "  " + right);
+      //console.log("  xleft = " + xleft + " xright = " + xright);
+      //console.log("  yleft = " + yleft + " yright = " + yright);
 
       for (var xi=0;xi<=this.nbinsx;xi++) {
-         var xside = xi<=xleft ? 0 : (xi<=xright ? 1 : 2);
-         var xx = this.xmin + (xi-1)*this.binwidthx;
+         var xside = (xi<=xleft) ? 0 : (xi>xright ? 2 : 1);
+         var xx = this.xmin + (xi-0.5)*this.binwidthx;
 
          for (var yi=0;yi<=this.nbinsx;yi++) {
-            var yside = yi<=yleft ? 0 : (yi<=yright ? 1 : 2);
-            var yy = this.ymin + (yi-1)*this.binwidthy;
+            var yside = (yi<=yleft) ? 0 : (yi>yright ? 2 : 1);
+            var yy = this.ymin + (yi-0.5)*this.binwidthy;
 
             var zz = this.histo.getBinContent(xi,yi);
-            this.stat_entries+=zz;
 
             this.stat_matrix[yside*3 + xside]+=zz;
 
             if ((xside==1) && (yside==1)) {
+               this.stat_entries += zz;
                this.stat_sum0   += zz;
                this.stat_sumx1  += xx * zz;
                this.stat_sumy1  += yy * zz;
@@ -5475,16 +5479,16 @@ var gStyle = {
          stat.AddLine(this.histo['fName']);
 
       if (print_entries > 0)
-         stat.AddLine("Entries = " + this.stat_entries.toFixed(0));
-
+         stat.AddLine("Entries = " + gStyle.StatEntriesFormat(this.stat_entries));
+         
       if (print_mean > 0) {
          var resx = 0, resy = 0;
          if (this.stat_sum0 > 0) {
             resx = this.stat_sumx1/this.stat_sum0;
             resy = this.stat_sumy1/this.stat_sum0;
          }
-         stat.AddLine("Mean x = " + resx.toFixed(2));
-         stat.AddLine("Mean y = " + resy.toFixed(2));
+         stat.AddLine("Mean x = " + gStyle.StatFormat(resx));
+         stat.AddLine("Mean y = " + gStyle.StatFormat(resy));
       }
 
       if (print_rms > 0) {
@@ -5493,19 +5497,19 @@ var gStyle = {
             resx = Math.sqrt(this.stat_sumx2/this.stat_sum0 - Math.pow(this.stat_sumx1/this.stat_sum0, 2));
             resy = Math.sqrt(this.stat_sumy2/this.stat_sum0 - Math.pow(this.stat_sumy1/this.stat_sum0, 2));
          }
-         stat.AddLine("RMS x = " + resx.toFixed(3));
-         stat.AddLine("RMS y = " + resy.toFixed(3));
+         stat.AddLine("RMS x = " + gStyle.StatFormat(resx));
+         stat.AddLine("RMS y = " + gStyle.StatFormat(resy));
       }
 
       if (print_integral > 0) {
-         stat.AddLine("Integral = " + this.stat_matrix[4].toFixed(0));
+         stat.AddLine("Integral = " + gStyle.StatEntriesFormat(this.stat_matrix[4]));
       }
 
-//      if (print_skew> 0)
-//         stat.AddLine("Skew = 0");
+      if (print_skew> 0)
+         stat.AddLine("Skew = <undef>");
 
-//      if (print_kurt> 0)
-//         stat.AddLine("Kurt = 0");
+      if (print_kurt> 0)
+         stat.AddLine("Kurt = <undef>");
 
       if ((print_under > 0) || (print_over > 0)) {
          var m = this.stat_matrix;
