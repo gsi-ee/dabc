@@ -2990,7 +2990,6 @@ var gStyle = {
       var first_stat = 0, num_cols = 0;
       var maxlw = 0;
       var lines = new Array;
-
  
       // adjust font size      
       for (j=0; j<nlines; ++j) {
