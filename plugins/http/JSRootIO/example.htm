@@ -25,35 +25,34 @@
       cnt = 0;
    
       function updateGUI() {
-         if (painter==null) return;
-         cnt++;   
+         // if getting histogram from THttpServer as JSON string, one should parse it like:
+         // var histo = JSROOTCore.JSONR_unref(JSON.parse(your_json_string));
+
+         // this is just generation of histogram      
          var histo = JSROOTCore.CreateTH2(20, 20);
          for (var iy=0;iy<20;iy++)
             for (var ix=0;ix<20;ix++) {
                var bin = histo.getBin(ix+1, iy+1);
                histo.setBinContent(bin, cnt %2 ? 40 - ix - iy : ix+iy);
             }
-         painter.UpdateObject(histo);   
-         painter.RedrawFrame(); 
+            
+         cnt++;
+         
+         if (painter==null) {
+            painter = JSROOTPainter.draw('object_draw', histo, "col");
+         } else {   
+            painter.UpdateObject(histo);   
+            painter.RedrawFrame();
+         } 
       }
    
       function initGUI() {
 
-         // here instead of dummy histogram creation should be
-         // var histo = JSROOTCore.JSONR_unref(JSON.parse(your_json_string));
+         // draw for the first time
+         updateGUI(); 
          
-         var histo = JSROOTCore.CreateTH2(20, 20);
-         histo['fName']  = "histo1";
-         histo['fTitle'] = "Histogram title";
-         for (var iy=0;iy<20;iy++)
-           for (var ix=0;ix<20;ix++) {
-              var bin = histo.getBin(ix+1, iy+1);
-              histo.setBinContent(bin, ix+iy);
-            }
-            
-         painter = JSROOTPainter.draw('object_draw', histo, "col");
-         
-         // setInterval(updateGUI, 3000);
+         // regularly update 
+         setInterval(updateGUI, 3000);
       }
       
       $(document).ready(initGUI);
@@ -67,8 +66,6 @@
   <h3>Text Before </h3> 
    
   <div id="object_draw" style="width: 800px; height:600px"></div>
-
-  <!--div id="object_draw" style="width: 70%; height: 70%"></div-->
 
   <h3>Text After</h3> 
   

@@ -5434,20 +5434,21 @@ var gStyle = {
       //console.log("  xleft = " + xleft + " xright = " + xright);
       //console.log("  yleft = " + yleft + " yright = " + yright);
 
-      for (var xi=0;xi<=this.nbinsx;xi++) {
+      for (var xi=0;xi<=this.nbinsx+1;xi++) {
          var xside = (xi<=xleft) ? 0 : (xi>xright ? 2 : 1);
          var xx = this.xmin + (xi-0.5)*this.binwidthx;
 
-         for (var yi=0;yi<=this.nbinsx;yi++) {
+         for (var yi=0;yi<=this.nbinsx+1;yi++) {
             var yside = (yi<=yleft) ? 0 : (yi>yright ? 2 : 1);
             var yy = this.ymin + (yi-0.5)*this.binwidthy;
 
             var zz = this.histo.getBinContent(xi,yi);
 
+            this.stat_entries += zz;
+
             this.stat_matrix[yside*3 + xside]+=zz;
 
             if ((xside==1) && (yside==1)) {
-               this.stat_entries += zz;
                this.stat_sum0   += zz;
                this.stat_sumx1  += xx * zz;
                this.stat_sumy1  += yy * zz;
