@@ -138,7 +138,7 @@ DAQDISK - switches disk demon mode on/off
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
        <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/>
 
-       <ExtraDebug value="true"/>
+       <ExtraDebug value="false"/>
         
 
        <DoShmControl value="true"/>  
@@ -151,8 +151,8 @@ DAQDISK - switches disk demon mode on/off
        <SyncTriggerMask value="0x01"/>
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
-       <TriggerNumRange value="0x10000"/> 
-          <!--TriggerNumRange: defines when trigger sequence number wraps, only 16 bit for HADES EBs!  -->
+       <TriggerNumRange value="0x1000000"/> 
+          <!--TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
        <AccountLostEventDiff value="false"/>
           <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
           
@@ -172,7 +172,7 @@ DAQDISK - switches disk demon mode on/off
        
      </Module>
 
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="false">
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
 
