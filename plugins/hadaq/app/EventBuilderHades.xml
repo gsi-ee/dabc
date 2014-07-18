@@ -76,7 +76,7 @@ DAQDISK - switches disk demon mode on/off
     </Run>
     
     <HttpServer name="http">
-       <port value="811${EBNUM}"/>
+       <port value="611${EBNUM}"/>
     </HttpServer>
 
      <!-- shmem control config -->
@@ -178,7 +178,7 @@ DAQDISK - switches disk demon mode on/off
 
        <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
 
-       <OutputPort name="Output0" url="mbs://Stream:610${EBNUM}"/>
+       <OutputPort name="Output0" url="mbs://Stream:810${EBNUM}"/>
        <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
 
        <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
