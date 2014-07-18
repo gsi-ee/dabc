@@ -7,6 +7,14 @@ project of Bertrand, but provides very similar functionality.
 Main motivation for changes - fix different errors,
 make JavaScript code more flexible and be able use it in online enviroment. 
 
+July 2014:
+- migration to d3.v3.js and jQuery v2.1.1
+- fix errors in histograms statistic filling
+- possibility of move and resize of statbox
+- remove many (not all) global variables
+- example.htm with direct usage JSRootIO graphics  (like Martin did)
+- example of inserting ROOT graphics from THttpServer into <iframe></iframe> 
+
 
 March 2014:
 1. Introduce JSROOTIO.TBuffer class, which plays similar role 

@@ -2884,6 +2884,7 @@ var gStyle = {
 
 
       var pthis = this;
+      var current_draw_g = pthis.draw_g;
       
       var drag_rect = null;
       
@@ -2915,15 +2916,17 @@ var gStyle = {
                  var dx = Number(drag_rect.attr("x"));  
                  var dy = Number(drag_rect.attr("y"));
                  
+                 drag_rect.remove();
+                 drag_rect = null;
+                 
+                 if (current_draw_g !== pthis.draw_g) return;
+                 
                  // recalculate
                  pavetext['fX1NDC'] += dx / w;
                  pavetext['fX2NDC'] += dx / w;
                  pavetext['fY1NDC'] -= dy / h;
                  pavetext['fY2NDC'] -= dy / h;
                  
-                 drag_rect.remove();
-                 drag_rect = null;
-
                  pos_x += dx;
                  pos_y += dy;
                                   
@@ -2955,11 +2958,16 @@ var gStyle = {
                  d3.event.sourceEvent.preventDefault();
                  drag_rect.style("cursor", "auto");
                  
-                 pavetext['fX2NDC'] = pavetext['fX1NDC'] + Number(drag_rect.attr("width"))/w;  
-                 pavetext['fY1NDC'] = pavetext['fY2NDC'] - Number(drag_rect.attr("height")) / h;
-                 
+                 var newwidth = Number(drag_rect.attr("width"));
+                 var newheight = Number(drag_rect.attr("height"));
+
                  drag_rect.remove();
                  drag_rect = null;
+
+                 if (current_draw_g !== pthis.draw_g) return;
+                 
+                 pavetext['fX2NDC'] = pavetext['fX1NDC'] + newwidth/w;  
+                 pavetext['fY1NDC'] = pavetext['fY2NDC'] - newheight/h;
                  
                  pthis.RemoveDraw();
                  pthis.DrawPaveText();
@@ -4499,7 +4507,6 @@ var gStyle = {
                  .append("rect")
                  .attr("class", "zoom")
                  .attr("id", "zoom_rect");
-
 
          pthis.frame.on("dblclick", unZoom);
 
@@ -7395,13 +7402,6 @@ var gStyle = {
          return this.fUserPainters[classname](vis, obj, opt);
    }
    
-   JSROOTPainter.redraw = function(painter)
-   {
-      if ('timer' in painter) console.log("identified timer");
-                         else console.log("timer");
-      
-   }
-
    JSROOTPainter.draw = function(divid, obj, opt)
    {
       if ((typeof obj != 'object') || (!('_typename' in obj))) return;
@@ -7424,9 +7424,6 @@ var gStyle = {
                    .call(d3.behavior.zoom().on("zoom", JSROOTPainter.redraw));
 
       var painter = JSROOTPainter.drawObjectInFrame(svg, obj, opt);
-      
-      if (typeof painter == 'object')
-         painter['timer'] = setInterval(function() {JSROOTPainter.redraw(painter);}, 3000);
       
       return painter;
    }
