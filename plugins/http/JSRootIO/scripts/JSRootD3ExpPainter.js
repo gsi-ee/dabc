@@ -5480,35 +5480,40 @@ var gStyle = {
 
       if (print_entries > 0)
          stat.AddLine("Entries = " + gStyle.StatEntriesFormat(this.stat_entries));
+      
+      
+      var meanx = 0, meany = 0;
+      if (this.stat_sum0 > 0) {
+         meanx = this.stat_sumx1/this.stat_sum0;
+         meany = this.stat_sumy1/this.stat_sum0;
+      }
          
       if (print_mean > 0) {
-         var resx = 0, resy = 0;
-         if (this.stat_sum0 > 0) {
-            resx = this.stat_sumx1/this.stat_sum0;
-            resy = this.stat_sumy1/this.stat_sum0;
-         }
-         stat.AddLine("Mean x = " + gStyle.StatFormat(resx));
-         stat.AddLine("Mean y = " + gStyle.StatFormat(resy));
+         stat.AddLine("Mean x = " + gStyle.StatFormat(meanx));
+         stat.AddLine("Mean y = " + gStyle.StatFormat(meany));
+      }
+
+      var rmsx = 0, rmsy = 0;
+      if (this.stat_sum0 > 0) {
+         rmsx = Math.sqrt(this.stat_sumx2/this.stat_sum0 - meanx*meanx);
+         rmsy = Math.sqrt(this.stat_sumy2/this.stat_sum0 - meany*meany);
       }
 
       if (print_rms > 0) {
-         var resx = 0, resy = 0;
-         if (this.stat_sum0 > 0) {
-            resx = Math.sqrt(this.stat_sumx2/this.stat_sum0 - Math.pow(this.stat_sumx1/this.stat_sum0, 2));
-            resy = Math.sqrt(this.stat_sumy2/this.stat_sum0 - Math.pow(this.stat_sumy1/this.stat_sum0, 2));
-         }
-         stat.AddLine("RMS x = " + gStyle.StatFormat(resx));
-         stat.AddLine("RMS y = " + gStyle.StatFormat(resy));
+         stat.AddLine("RMS x = " + gStyle.StatFormat(rmsx));
+         stat.AddLine("RMS y = " + gStyle.StatFormat(rmsy));
       }
 
       if (print_integral > 0) {
          stat.AddLine("Integral = " + gStyle.StatEntriesFormat(this.stat_matrix[4]));
       }
 
-      if (print_skew> 0)
-         stat.AddLine("Skew = <undef>");
+      if (print_skew > 0) {
+         stat.AddLine("Skewness x = <undef>");
+         stat.AddLine("Skewness y = <undef>");
+      }
 
-      if (print_kurt> 0)
+      if (print_kurt > 0)
          stat.AddLine("Kurt = <undef>");
 
       if ((print_under > 0) || (print_over > 0)) {
