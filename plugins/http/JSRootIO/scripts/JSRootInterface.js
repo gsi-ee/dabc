@@ -64,7 +64,7 @@ function showElement(element) {
 function loadScript(url, callback) {
    // dynamic script loader using callback
    // (as loading scripts may be asynchronous)
-   var script = document.createElement("script")
+   var script = document.createElement("script");
    script.type = "text/javascript";
    if (script.readyState) { // Internet Explorer specific
       script.onreadystatechange = function() {
@@ -73,7 +73,7 @@ function loadScript(url, callback) {
             script.onreadystatechange = null;
             if (callback!=null) callback();
          }
-      };
+      }
    } else { // Other browsers
       script.onload = function(){
          if (callback!=null) callback();
@@ -253,7 +253,7 @@ function ReadFile() {
    }
 
    gFile = new JSROOTIO.RootFile(url);
-};
+}
 
 function ResetUI() {
    obj_list.splice(0, obj_list.length);
@@ -316,7 +316,6 @@ function BuildSimpleGUI() {
       +'<div id="status"></div>'
       +'</div>'
       +'<div id="reportHolder" class="column">'
-      +'<div id="dialog"> </div>'
       +'<div id="report"> </div>'
       +'</div>';
       $('#simpleGUI').append(guiCode);

@@ -1339,7 +1339,6 @@ var kClassMask = 0x80000000;
 
                   if (!file.fAcceptRanges && (filecontent.length != len) &&
                       (file.fEND == filecontent.length)) {
-                    // $('#report').append("<br> seems to be, we get full file");
                     file.fFullFileContent = filecontent;
                     filecontent = file.fFullFileContent.substr(pos, len);
                   }
@@ -1616,12 +1615,8 @@ var kClassMask = 0x80000000;
                   userCallback(file);
             };
             file.ReadObjBuffer(key, callback2);
-
+            
             JSROOTPainter.displayListOfKeys(file.fKeys, '#status');
-
-            // the next two lines are for debugging/info purpose
-            //$("#status").append("file header: " + file.fLogMsg  + "<br/>");
-            //JSROOTPainter.displayListOfKeyDetails(file.fKeys, '#status');
          };
          this.ReadBuffer(this.fNbytesInfo, callback1);
       };

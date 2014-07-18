@@ -5,6 +5,7 @@ current functionality of the framework.
 18.07.2014
 1. Fix errors in TH1/TH2 statistic calculations
 2. Switch to newest jQuery 1.11.1, do not use 2.x while IE 6/7/8 not supported. 
+3. Switch to newest jQuery 2.1.1 - anyway IE 6/7/8 is not supported by JSRootIO
 
 
 17.07.2014
