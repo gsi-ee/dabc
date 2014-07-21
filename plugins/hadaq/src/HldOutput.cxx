@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <endian.h>
-
+ 
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
@@ -144,7 +144,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
 
    if (fEpicsSlave && fRfio)
-      DOUT1("After open file %s for writing", CurrentFileName().c_str());
+      DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
    if (fEpicsSlave && fRfio) {
       // use parameters only in slave mode
@@ -185,7 +185,7 @@ bool hadaq::HldOutput::StartNewFile()
 //   } // if not run2ora
    
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT1("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
+   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
    
    
    
@@ -235,7 +235,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 //          ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
 //                     nextrunid, nextrunid, fRunNumber,fRunNumber));
-         DOUT0("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
+         DOUT1("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
                   nextrunid, nextrunid, fRunNumber,fRunNumber);
          fRunNumber = nextrunid;
          startnewfile = true;
