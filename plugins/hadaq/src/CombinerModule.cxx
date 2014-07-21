@@ -123,10 +123,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fDataDroppedRateName = ratesprefix + "DroppedData";
    fInfoName = ratesprefix + "Info";
 
-   CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
-   CreatePar(fEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
-   CreatePar(fLostEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
-   CreatePar(fDataDroppedRateName).SetRatemeter(false, 5.).SetUnits("MB");
+   CreatePar(fDataRateName).SetRatemeter(false, 1.).SetUnits("MB");
+   CreatePar(fEventRateName).SetRatemeter(false, 1.).SetUnits("Ev");
+   CreatePar(fLostEventRateName).SetRatemeter(false, 1.).SetUnits("Ev");
+   CreatePar(fDataDroppedRateName).SetRatemeter(false, 1.).SetUnits("MB");
 
    CreateCmdDef("StartHldFile")
       .AddArg("filename", "string", true, "file.hld")
@@ -428,6 +428,23 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       SetEvtbuildPar(dabc::format("evtId%d",i), fEventIdCount[i]);
 
+
+   // test: provide here some frequent output for logfile
+   double drate= Par(fDataRateName).Value().AsDouble();
+   double erate= Par(fEventRateName).Value().AsDouble();
+   double losterate=Par(fLostEventRateName).Value().AsDouble();
+   double dropdrate=Par(fDataDroppedRateName).Value().AsDouble();
+   static double oldlostrate=0;
+
+   if((losterate>0 || dropdrate>0) && (losterate!=oldlostrate))
+     {
+       oldlostrate=losterate;
+       std::string info = dabc::format(
+				       "Warning: Lost Event rate: %.0f ev/s, Dropped data rate: %.3f Mb/s  (at Eventrate:%.0f Ev/s, Datarate:%.3f Mb/s)",
+				       losterate, dropdrate , erate, drate);
+   SetInfo(info, true);
+   DOUT0(info.c_str());
+      }
    return true;
 }
 
