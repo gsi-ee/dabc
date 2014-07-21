@@ -435,8 +435,11 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    double losterate=Par(fLostEventRateName).Value().AsDouble();
    double dropdrate=Par(fDataDroppedRateName).Value().AsDouble();
    static double oldlostrate=0;
-
-   if((losterate>0 || dropdrate>0) && (losterate!=oldlostrate))
+   /////////////////
+   // lostrate of 1 is expected since we still have
+   // wrong overflow behaviour for triggernumber.
+   // so only logfile warnings beyond 1 ->
+   if((losterate>1 || dropdrate>0) && (losterate!=oldlostrate))
      {
        oldlostrate=losterate;
        std::string info = dabc::format(
