@@ -42,7 +42,7 @@ dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string& typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="hld") {
-      DOUT0("HLD input file name %s", url.GetFullName().c_str());
+      DOUT1("HLD input file name %s", url.GetFullName().c_str());
 
       return new hadaq::HldInput(url);
    }
@@ -54,7 +54,7 @@ dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string& typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="hld") {
-      DOUT0("HLD output file name %s", url.GetFullName().c_str());
+      DOUT1("HLD output file name %s", url.GetFullName().c_str());
       return new hadaq::HldOutput(url);
    }
 

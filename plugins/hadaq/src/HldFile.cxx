@@ -1,7 +1,7 @@
 // $Id$
 
 /************************************************************
- * The Data Acquisition Backbone Core (DABC)                *
+ * The Data Acquisition Backbone Core (DABC)     q           *
  ************************************************************
  * Copyright (C) 2009 -                                     *
  * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
