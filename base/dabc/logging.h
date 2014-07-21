@@ -55,7 +55,8 @@ namespace dabc {
             lMessage = 0x0080,  // show debug message itself
             lNoDrop  = 0x0100,  // disable drop of frequent messages
             lNoPrefix= 0x0200,  // disable prefix output (superior to lPrefix)
-            lTStamp  = 0x0400   // show TimeStamp (ms precision)
+            lTStamp  = 0x0400,  // show TimeStamp (ms precision)
+            lSyslgLvl= 0x0800   // show messege level in syslog format
          };
 
          Logger(bool withmutex = true);

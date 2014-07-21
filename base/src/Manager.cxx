@@ -1335,12 +1335,12 @@ bool dabc::Manager::ReplyCommand(Command cmd)
          if (&(*iter) == origin) {
             iter->queue--;
             if (iter->queue<0)
-               EOUT("Internal error - parameters event queue negative");
+               DOUT2("Internal error - parameters event queue negative");
             return true;
          }
       }
 
-      EOUT("Did not find original record with receiver for parameter events");
+      DOUT2("Did not find original record with receiver for parameter events");
 
       return true;
    }

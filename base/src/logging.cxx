@@ -249,6 +249,14 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
          str += dabc::format("DOUT%d", entry->fLevel);
    }
 
+   if (mask & lSyslgLvl) {
+      if (str.length() > 0) str+=" ";
+      if (entry->fLevel<0)
+         str += "<E>";
+      else
+         str += "<I>";
+   }
+
    if (mask & (lDate | lTime)) {
       struct tm tm_res;
       struct tm * inf = localtime_r ( &(entry->fMsgTime), &tm_res );
@@ -344,7 +352,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    }
 
    if (!fSyslogPrefix.empty() && (!drop_msg || (mask & lNoDrop)) && (level<=fSyslogLevel)) {
-      _FillString(syslogout, mask, entry);
+      _FillString(syslogout, mask | lSyslgLvl, entry);
    }
 
    if (fFile && (!drop_msg || (fmask & lNoDrop)) && (level<=fFileLevel)) {

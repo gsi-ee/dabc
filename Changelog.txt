@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+21.07.2014
+1. When doing syslog, add <E> for errors or <I> for other messages
+2. Suppress several errors messages 
+
+
 18.07.2014
 1. Fix errors in TH1/TH2 statistic calculations
 2. Switch to newest jQuery 1.11.1, do not use 2.x while IE 6/7/8 not supported. 
