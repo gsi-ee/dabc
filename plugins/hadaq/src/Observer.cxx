@@ -60,12 +60,12 @@ hadaq::Observer::Observer(const std::string& name) :
 
    fFlushTimeout = 1.0;
 
-   DOUT0("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str());
+   DOUT1("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str());
 }
 
 hadaq::Observer::~Observer()
 {
-   DOUT0("############# Destroy SHMEM observer #############");
+   DOUT1("############# Destroy SHMEM observer #############");
    ::Worker_fini(fEvtbuildWorker);
    ::Worker_fini(fNetmemWorker);
 }
@@ -288,7 +288,7 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 void hadaq::sigHandler(int sig)
 {
-   DOUT0("hadaq Observer caught signal %d", sig);
+   DOUT1("hadaq Observer caught signal %d", sig);
    // following is copy of dabc_exe dabc_CtrlCHandler
    // probably use this directly?
    static int SigCnt=0;

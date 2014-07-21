@@ -108,7 +108,7 @@ bool hadaq::HldOutput::StartNewFile()
 
          unsigned disknumber = fDiskNumberPar.Value().AsUInt();
          fFileName = dabc::format("/data%02d/data/%s",disknumber,prefix.c_str());
-         DOUT0("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
+         DOUT1("Set filename from daq_disks to %s, disknumber was %d, prefix=%s",
                fFileName.c_str(), disknumber, prefix.c_str());
 
          dabc::CmdSetParameter cmd("Evtbuild-diskNumEB", disknumber);
@@ -136,7 +136,7 @@ bool hadaq::HldOutput::StartNewFile()
    fCurrentFileName = fname;
 
    if (fEpicsSlave && fRfio)
-      DOUT0("Before open file %s for writing", CurrentFileName().c_str());
+      DOUT1("Before open file %s for writing", CurrentFileName().c_str());
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber, fUrlOptions.c_str())) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
@@ -144,7 +144,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
 
    if (fEpicsSlave && fRfio)
-      DOUT0("After open file %s for writing", CurrentFileName().c_str());
+      DOUT1("After open file %s for writing", CurrentFileName().c_str());
 
    if (fEpicsSlave && fRfio) {
       // use parameters only in slave mode
@@ -185,7 +185,7 @@ bool hadaq::HldOutput::StartNewFile()
 //   } // if not run2ora
    
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
+   DOUT1("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
    
    
    
@@ -260,11 +260,11 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
             if (write_size > payload) write_size = payload;
 
             if (fEpicsSlave && fRfio)
-               DOUT0("HldOutput write %u bytes from buffer with old runid", write_size);
+               DOUT1("HldOutput write %u bytes from buffer with old runid", write_size);
 
             if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
 
-            DOUT0("HldOutput did flushes %d bytes (%d events) of old runid in buffer segment %d to file",
+            DOUT1("HldOutput did flushes %d bytes (%d events) of old runid in buffer segment %d to file",
                   write_size, numevents, n);
 
             payload -= write_size;
@@ -322,12 +322,12 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       }
 
       if (fEpicsSlave && fRfio && startnewfile)
-         DOUT0("HldOutput write %u bytes after new file was started", write_size);
+         DOUT1("HldOutput write %u bytes after new file was started", write_size);
 
       if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
       if (fEpicsSlave && fRfio && startnewfile)
-         DOUT0("HldOutput did write %u bytes after new file was started", write_size);
+         DOUT1("HldOutput did write %u bytes after new file was started", write_size);
 
       total_write_size += write_size;
    }
@@ -336,7 +336,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
 
    if (fEpicsSlave && fRfio && startnewfile)
-      DOUT0("HldOutput write complete first buffer after new file was started");
+      DOUT1("HldOutput write complete first buffer after new file was started");
 
    return dabc::do_Ok;
 }

@@ -78,7 +78,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
-   DOUT0("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
+   DOUT1("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
    fEvnumDiffStatistics = Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
 
    fTriggerNrTolerance = fMaxHadaqTrigger / 4;
@@ -89,9 +89,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 
    if (fUseSyncSeqNumber)
-      DOUT0("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x", (unsigned) fSyncSubeventId, (unsigned) fSyncTriggerMask);
+      DOUT1("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x", (unsigned) fSyncSubeventId, (unsigned) fSyncTriggerMask);
    else
-      DOUT0("HADAQ combiner module with independent event sequence number");
+      DOUT1("HADAQ combiner module with independent event sequence number");
 
    std::string ratesprefix = "Hadaq";
 
@@ -350,7 +350,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
       //std::cout <<"!!!!!! UpdateExportedCounters() got epics run id:"<< fEpicsRunNumber<< std::endl;
 
       if(fEpicsRunNumber!=fRunNumber) {
-         DOUT0("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
+         DOUT1("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
          StoreRunInfoStop();
          fRunNumber = fEpicsRunNumber;
 
@@ -487,7 +487,7 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
    if (res > (int) fMaxHadaqTrigger/2) res -= fMaxHadaqTrigger; else
    if (res < (int) fMaxHadaqTrigger/-2) res += fMaxHadaqTrigger;
    return res;
-}
+} 
 
 bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
 {
