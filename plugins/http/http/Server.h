@@ -37,6 +37,7 @@ namespace http {
    class Server : public dabc::Worker  {
 
       protected:
+         std::string fDabcSys;      ///< location of DABC installation
          std::string fHttpSys;      ///< location of http plugin, need to read special files
          std::string fGo4Sys;       ///< location of go4 (if any)
          std::string fRootSys;      ///< location of ROOT (if any)

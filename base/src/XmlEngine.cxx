@@ -1286,21 +1286,24 @@ void dabc::Xml::TruncateNsExtension(XMLNodePointer_t xmlnode)
 void dabc::Xml::UnpackSpecialCharacters(char* target, const char* source, int srclen)
 {
    // unpack special symbols, used in xml syntax to code characters
-   // these symbols: '<' - &lt, '>' - &gt, '&' - &amp, '"' - &quot
+   // these symbols: '<' - &lt, '>' - &gt, '&' - &amp, '"' - &quot, ' - &apos;
 
    while (srclen>0) {
       if (*source=='&') {
-         if ((*(source+1)=='l') && (*(source+2)=='t') && (*(source+3)==';')) {
+         if ((srclen>3) && (*(source+1)=='l') && (*(source+2)=='t') && (*(source+3)==';')) {
             *target++ = '<'; source+=4; srclen-=4;
          } else
-         if ((*(source+1)=='g') && (*(source+2)=='t') && (*(source+3)==';')) {
+         if ((srclen>3) && (*(source+1)=='g') && (*(source+2)=='t') && (*(source+3)==';')) {
             *target++ = '>'; source+=4; srclen-=4;
          } else
-         if ((*(source+1)=='a') && (*(source+2)=='m') && (*(source+3)=='p') && (*(source+4)==';')) {
+         if ((srclen>4) && (*(source+1)=='a') && (*(source+2)=='m') && (*(source+3)=='p') && (*(source+4)==';')) {
             *target++ = '&'; source+=5; srclen-=5;
          } else
-         if ((*(source+1)=='q') && (*(source+2)=='u') && (*(source+3)=='o') && (*(source+4)=='t') && (*(source+5)==';')) {
+         if ((srclen>5) && (*(source+1)=='q') && (*(source+2)=='u') && (*(source+3)=='o') && (*(source+4)=='t') && (*(source+5)==';')) {
             *target++ = '\"'; source+=6; srclen-=6;
+         } else
+         if ((srclen>5) && (*(source+1)=='a') && (*(source+2)=='p') && (*(source+3)=='o') && (*(source+4)=='s') && (*(source+5)==';')) {
+            *target++ = '\''; source+=6; srclen-=6;
          } else {
             *target++ = *source++; srclen--;
          }
@@ -1323,16 +1326,17 @@ void dabc::Xml::OutputValue(char* value, XmlOutputStream* out)
 
    char* last = value;
    char* find = 0;
-   while ((find=strpbrk(last,"<&>\"")) !=0 ) {
+   while ((find=strpbrk(last,"<&>\"\'")) !=0 ) {
       char symb = *find;
       *find = 0;
       out->Write(last);
       *find = symb;
       last = find+1;
-      if (symb=='<')      out->Write("&lt;");
-      else if (symb=='>') out->Write("&gt;");
-      else if (symb=='&') out->Write("&amp;");
-      else                out->Write("&quot;");
+      if (symb=='<')       out->Write("&lt;");
+      else if (symb=='>')  out->Write("&gt;");
+      else if (symb=='&')  out->Write("&amp;");
+      else if (symb=='\'') out->Write("&apos;");
+      else                 out->Write("&quot;");
    }
    if (*last!=0)
       out->Write(last);

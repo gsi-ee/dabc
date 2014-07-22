@@ -700,10 +700,14 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       return cmd_true;
    } else
-   if (cmd.IsName("CmdHasChilds")) {
+   if (cmd.IsName("CmdUIKind")) {
       std::string path = cmd.GetStr("path");
       dabc::Hierarchy h = GetWorkItem(path);
-      cmd.SetInt("num_childs", h.null() ? -1 : h.NumChilds());
+      if (h.Field("dabc::prop_kind").AsStr()=="DABC.HTML") {
+         cmd.SetStr("ui_kind", h.GetField("dabc:UserFilePath").AsStr() + h.GetField("dabc:UserFileMain").AsStr());
+      } else {
+         cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
+      }
 
       return cmd_true;
 
@@ -733,6 +737,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       // if we get command here, we need to find destination for it
 
       std::string itemname = cmd.GetStr("Item");
+
 
       // DOUT3("Publisher::CmdGetBinary for item %s", itemname.c_str());
 
@@ -786,16 +791,16 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
    return true;
 }
 
-int dabc::PublisherRef::HasChilds(const std::string& path)
+std::string dabc::PublisherRef::UserInterfaceKind(const std::string& path)
 {
-   if (null()) return -1;
+   if (null()) return "";
 
-   dabc::Command cmd("CmdHasChilds");
+   dabc::Command cmd("CmdUIKind");
    cmd.SetStr("path", path);
 
-   if (Execute(cmd) != cmd_true) return -1;
+   if (Execute(cmd) != cmd_true) return "";
 
-   return cmd.GetInt("num_childs");
+   return cmd.GetStr("ui_kind");
 }
 
 int dabc::PublisherRef::NeedAuth(const std::string& path)

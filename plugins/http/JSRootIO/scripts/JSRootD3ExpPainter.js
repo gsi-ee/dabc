@@ -2882,7 +2882,6 @@ var gStyle = {
       this.draw_g = 
          vis.append("svg:g").attr("transform", "translate(" + pos_x + "," + pos_y + ")");
 
-
       var pthis = this;
       var current_draw_g = pthis.draw_g;
       

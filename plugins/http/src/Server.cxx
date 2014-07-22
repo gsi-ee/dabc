@@ -102,6 +102,7 @@ const char* http::Server::GetMimeType(const char* path)
 
 http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
+   fDabcSys(),
    fHttpSys(),
    fGo4Sys(),
    fRootSys(),
@@ -109,9 +110,13 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fDefaultAuth(-1)
 {
    fHttpSys = ".";
+   fDabcSys = ".";
 
    const char* dabcsys = getenv("DABCSYS");
-   if (dabcsys!=0) fHttpSys = dabc::format("%s/plugins/http", dabcsys);
+   if (dabcsys!=0) {
+      fDabcSys = dabcsys;
+      fHttpSys = dabc::format("%s/plugins/http", dabcsys);
+   }
 
    const char* go4sys = getenv("GO4SYS");
    if (go4sys!=0) fGo4Sys = go4sys;
@@ -142,6 +147,20 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
       fname.erase(0, pos+7);
       res = fHttpSys + fname;
       return true;
+   }
+
+   if (!fDabcSys.empty()) {
+      // DABCSYS can be only in the beginning
+      if (fname.find("${DABCSYS}")==0) {
+         fname.erase(0, 10);
+         res = fDabcSys + fname;
+         return true;
+      }
+      if (fname.find("dabcsys")==0) {
+         fname.erase(0, 7);
+         res = fDabcSys + fname;
+         return true;
+      }
    }
 
    if (!fRootSys.empty()) {
@@ -244,12 +263,23 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    if (_query!=0) query = _query;
 
-   // we return normal file
-   if (filename.empty() || (filename == "index.htm")) {
-      if (dabc::PublisherRef(GetPublisher()).HasChilds(pathname) != 0)
-         content_str = fHttpSys + "/files/main.htm";
-      else
-         content_str = fHttpSys + "/files/single.htm";
+   DOUT0("Process %s filename '%s'", pathname.c_str(), filename.c_str());
+
+
+   // if no file specified, we tried to detect that is requested
+   if (filename.empty()) {
+
+      content_str = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(pathname);
+
+      DOUT0("UI kind '%s'", content_str.c_str());
+
+      if (content_str.empty()) return false;
+
+      if (content_str == "__tree__") content_str = fHttpSys + "/files/main.htm"; else
+      if (content_str == "__single__") content_str = fHttpSys + "/files/single.htm"; else {
+         // here we only allow to check filename for prefixes like DABCSYS
+         IsFileRequested(content_str.c_str(), content_str);
+      }
 
       content_type = "__file__";
       return true;
@@ -268,7 +298,6 @@ bool http::Server::Process(const char* uri, const char* _query,
       filename.resize(filename.length()-3);
       iszipped = true;
    }
-
 
    if (filename == "h.xml") {
       content_type = "text/xml";
@@ -307,7 +336,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    if (iszipped) {
 #ifdef DABC_WITHOUT_ZLIB
-      DOUT0("It is requested to zipped buffer, but ZLIB is not available!!!");
+      DOUT0("It is requested to compress buffer, but ZLIB is not available!!!");
 #else
 
       unsigned long objlen = 0;
@@ -372,10 +401,10 @@ bool http::Server::Process(const char* uri, const char* _query,
       *bufcur++ = (objcrc >> 16) & 0xff;
       *bufcur++ = (objcrc >> 24) & 0xff;
 
-      *bufcur++ = objlen & 0xff;  // original data length
-      *bufcur++ = (objlen >> 8) & 0xff;  // original data length
-      *bufcur++ = (objlen >> 16) & 0xff;  // original data length
-      *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+      *bufcur++ = objlen & 0xff;          // original data length
+      *bufcur++ = (objlen >> 8) & 0xff;
+      *bufcur++ = (objlen >> 16) & 0xff;
+      *bufcur++ = (objlen >> 24) & 0xff;
 
       content_bin = dabc::Buffer::CreateBuffer(zipbuf, bufcur - (char*) zipbuf, true);
       content_str.clear();

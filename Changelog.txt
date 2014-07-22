@@ -5,6 +5,11 @@ current functionality of the framework.
 21.07.2014
 1. When doing syslog, add <E> for errors or <I> for other messages
 2. Suppress several errors messages 
+3. In ROOT sniffer scan list of keys
+4. Introduce read-only flag in sniffer. Only if off, sniffer allowed to read
+   objects and directories list from the files.
+5. From dabc.js allow to read sub-directories content in TFile 
+6. Fix error in XML parser - processing of &apos;  
 
 
 18.07.2014

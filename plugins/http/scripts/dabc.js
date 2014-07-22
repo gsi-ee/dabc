@@ -794,9 +794,13 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       }
 
       if (!node.hasChildNodes() || !scan_inside) {
-         if (can_expand)   
+         if (can_expand) {   
             html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
-         else
+            if (nodeimg.length == 0) {
+               nodeimg = source_dir+'img/folder.gif'; 
+               node2img = source_dir+'img/folderopen.gif';
+            }
+         } else
          if (can_display)
             html = "javascript: DABC.mgr.display('"+nodefullname+"');";
       } else 

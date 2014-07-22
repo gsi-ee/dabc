@@ -224,8 +224,11 @@ namespace dabc {
 
       bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
 
-      /** Returns 0 - no childs, 1 - has childs, -1 - unknown */
-      int HasChilds(const std::string& path);
+      /** Returns "" - error,
+       *          "__tree__"    -- tree hierarchy
+       *          "__single__"  -- single element
+       *          <filename>    -- custom html file name */
+      std::string UserInterfaceKind(const std::string& path);
 
       /** Returns 1 - need auth,  0 - no need auth, -1 - undefined */
       int NeedAuth(const std::string& path);

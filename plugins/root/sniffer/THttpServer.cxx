@@ -230,7 +230,24 @@ THttpServer::THttpServer(const char *engine) :
    // start timer
    SetTimer(100, kTRUE);
 
-   CreateEngine(engine);
+   if (strchr(engine,';')==0) {
+      CreateEngine(engine);
+   } else {
+      TObjArray* lst = TString(engine).Tokenize(";");
+
+      for (Int_t n=0;n<=lst->GetLast();n++) {
+         const char* opt = lst->At(n)->GetName();
+         if ((strcmp(opt,"readonly")==0) || (strcmp(opt,"ro")==0)) {
+            GetSniffer()->SetReadOnly(kTRUE);
+         } else
+         if ((strcmp(opt,"readwrite")==0) || (strcmp(opt,"rw")==0)) {
+            GetSniffer()->SetReadOnly(kFALSE);
+         } else
+            CreateEngine(opt);
+      }
+
+      delete lst;
+   }
 }
 
 //______________________________________________________________________________
