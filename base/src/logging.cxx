@@ -238,7 +238,7 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
    if ((mask & lPrefix) && ((mask & lNoPrefix) == 0))
       if (fPrefix.length() > 0) {
          str = fPrefix;
-         str += ":";
+         //str += ":";
       }
 
    if (mask & lLevel) {
@@ -252,9 +252,9 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
    if (mask & lSyslgLvl) {
       if (str.length() > 0) str+=" ";
       if (entry->fLevel<0)
-         str += "<E>";
+         str += "  <E>";
       else
-         str += "<I>";
+         str += "  <I>";
    }
 
    if (mask & (lDate | lTime)) {
@@ -271,7 +271,7 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
       }
    }
 
-   if (mask & lTStamp) {
+   if ((mask & lTStamp) && !(mask & lSyslgLvl)) {
       double tm = dabc::Now().AsDouble();
       if (str.length() > 0) str+=" ";
       str += dabc::format("%10.6f", tm);
@@ -375,7 +375,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    } // end of LockGuard
 
    if (!syslogout.empty()) {
-      openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
+      openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);     
       syslog(level < 0 ? LOG_ERR : LOG_INFO, syslogout.c_str());
       closelog();
    }
