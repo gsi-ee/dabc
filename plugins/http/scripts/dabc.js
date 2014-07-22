@@ -768,7 +768,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var nodeimg = "";
       var node2img = "";
       
-      var scan_inside = true;
+      var scan_inside = true, can_open = false;
       
       var can_display = DABC.mgr.CanDisplay(node);
       var can_expand = node.getAttribute("dabc:more") != null;
@@ -776,6 +776,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       if (kind) {
          if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
          if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
+         if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
          if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
@@ -801,8 +802,11 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
                node2img = source_dir+'img/folderopen.gif';
             }
          } else
-         if (can_display)
+         if (can_display) {
             html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+         } else
+         if (can_open) 
+            html = nodefullname;
       } else 
       if ((maxlvl >= 0) && (lvl >= maxlvl)) {
          html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";

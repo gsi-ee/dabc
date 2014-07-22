@@ -217,11 +217,11 @@ void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, st
 {
    pathname.clear();
    const char* rslash = strrchr(uri,'/');
-   if (rslash==0) {
+   if (rslash == 0) {
       filename = uri;
    } else {
       pathname.append(uri, rslash - uri);
-      if (pathname=="/") pathname.clear();
+      if (pathname == "/") pathname.clear();
       filename = rslash+1;
    }
 }
@@ -259,15 +259,41 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    content_header.clear();
 
-   ExtractPathAndFile(uri, pathname, filename);
+   //ExtractPathAndFile(uri, pathname, filename);
+
+   //DOUT0("URI = %s path %s file %s", uri ? uri : "---", pathname.c_str(), filename.c_str());
+
+   content_type = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(uri, pathname, filename);
+
+   // DOUT0("URI = %s path %s file %s type %s", uri ? uri : "---", pathname.c_str(), filename.c_str(), content_type.c_str());
+
+   if (content_type == "__error__") return false;
+
+   if (content_type == "__user__") {
+      content_str = pathname;
+      if (filename.empty()) content_str += "gosip.htm";
+                       else content_str += filename;
+      content_type = "__file__";
+      IsFileRequested(content_str.c_str(), content_str);
+      return true;
+   }
+
+   if (filename.empty()) {
+
+      if (content_type == "__tree__") content_str = fHttpSys + "/files/main.htm"; else
+      if (content_type == "__single__") content_str = fHttpSys + "/files/single.htm"; else
+      { EOUT("Cannot define that return by uri %s", uri); return false; }
+
+      content_type = "__file__";
+      return true;
+   }
 
    if (_query!=0) query = _query;
 
-   DOUT0("Process %s filename '%s'", pathname.c_str(), filename.c_str());
-
+   // DOUT0("Process %s filename '%s'", pathname.c_str(), filename.c_str());
 
    // if no file specified, we tried to detect that is requested
-   if (filename.empty()) {
+/*   if (filename.empty()) {
 
       content_str = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(pathname);
 
@@ -284,6 +310,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       content_type = "__file__";
       return true;
    }
+*/
 
    if (filename == "execute") {
       content_type = "text/xml";

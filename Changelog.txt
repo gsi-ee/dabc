@@ -5,6 +5,8 @@ current functionality of the framework.
 22.07.2014
 1. Allow to read key objects from TFile in TRootSniffer
 2. Fix min/max selection of TH1 histograms
+3. Add possibility to redirect http request to specified directory.
+4. Use redirection to introduce custom GUI for the gosipcmd utility.
 
 
 21.07.2014

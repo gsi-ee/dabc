@@ -187,7 +187,7 @@ namespace dabc {
          /** Try to find producer which potentially could deliver item
           * It could happen that item is not exists in hierarchy, therefore
           * shorter name will be tried */
-         bool IdentifyProducer(const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name);
+         bool IdentifyItem(bool asproducer, const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name);
 
       public:
 
@@ -224,11 +224,11 @@ namespace dabc {
 
       bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
 
-      /** Returns "" - error,
+      /** Returns "" - undefined,
        *          "__tree__"    -- tree hierarchy
        *          "__single__"  -- single element
-       *          <filename>    -- custom html file name */
-      std::string UserInterfaceKind(const std::string& path);
+       *          "__file__"    -- just a file name */
+      std::string UserInterfaceKind(const char* uri, std::string& path, std::string& fname);
 
       /** Returns 1 - need auth,  0 - no need auth, -1 - undefined */
       int NeedAuth(const std::string& path);

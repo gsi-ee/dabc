@@ -343,15 +343,18 @@ dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path, bool* islo
    return top.FindChild(path.c_str());
 }
 
-bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name)
+bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name)
 {
-   if (itemname.length()==0) return false;
+   if (asproducer && (itemname.length()==0)) return false;
 
    dabc::Hierarchy h = fLocal.GetFolder(itemname);
    if (!h.null()) {
       // we need to redirect command to appropriate worker (or to ourself)
       // for local producers we need to find last (maximal depth) producer
-      producer_name = h.FindBinaryProducer(request_name, false);
+      if (asproducer)
+         producer_name = h.FindBinaryProducer(request_name, false);
+      else
+         producer_name = itemname;
       DOUT3("Producer:%s request:%s item:%s", producer_name.c_str(), request_name.c_str(), itemname.c_str());
 
       islocal = true;
@@ -364,22 +367,31 @@ bool dabc::Publisher::IdentifyProducer(const std::string& itemname, bool& isloca
 
       // we need to redirect command to remote node
 
-      producer_name = h.FindBinaryProducer(request_name);
+      if (asproducer)
+         producer_name = h.FindBinaryProducer(request_name);
+      else
+         producer_name = itemname;
       islocal = false;
       break;
    }
 
-   if (!h.null()) return !producer_name.empty();
+   if (!h.null() || (itemname.length()<2)) return !producer_name.empty() || !!asproducer;
+
+   // DOUT0("Cut part from item %s", itemname.c_str());
 
    std::string item1 = itemname;
-   while (item1[item1.length()-1] == '/') item1.resize(item1.length()-1);
-   size_t pos = item1.find_last_of("/");
-   if ((pos == 0) || (pos == std::string::npos)) return false;
+   //while (item1[item1.length()-1] == '/') item1.resize(item1.length()-1);
+   size_t pos = item1.find_last_of("/", item1.length()-2);
+   if (pos == std::string::npos) return false;
+   // when searching producer, it cannot be root folder
+   if ((pos == 0) && asproducer) return false;
 
-   std::string sub = item1.substr(pos);
-   item1.resize(pos);
+   std::string sub = item1.substr(pos+1);
+   item1.resize(pos+1);
 
-   if (IdentifyProducer(item1, islocal, producer_name, request_name)) {
+   // DOUT0("After cut item1 %s sub %s", item1.c_str(), sub.c_str());
+
+   if (IdentifyItem(asproducer, item1, islocal, producer_name, request_name)) {
       request_name.append(sub);
       return true;
    }
@@ -396,7 +408,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
 
    DOUT3("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
-   if (!IdentifyProducer(itemname, islocal, producer_name, request_name)) {
+   if (!IdentifyItem(true, itemname, islocal, producer_name, request_name)) {
       EOUT("Not found producer for item %s", itemname.c_str());
       return false;
    }
@@ -701,12 +713,28 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_true;
    } else
    if (cmd.IsName("CmdUIKind")) {
-      std::string path = cmd.GetStr("path");
-      dabc::Hierarchy h = GetWorkItem(path);
-      if (h.Field("dabc::prop_kind").AsStr()=="DABC.HTML") {
-         cmd.SetStr("ui_kind", h.GetField("dabc:UserFilePath").AsStr() + h.GetField("dabc:UserFileMain").AsStr());
+
+      bool islocal;
+      std::string item_name, request_name, uri = cmd.GetStr("uri");
+
+      //DOUT0("before uri = %s", uri.c_str());
+
+      if (!uri.empty())
+         if (!IdentifyItem(false, uri, islocal, item_name, request_name)) return cmd_false;
+
+      //DOUT0("after uri = %s item %s request %s", uri.c_str(), item_name.c_str(), request_name.c_str());
+
+      dabc::Hierarchy h = GetWorkItem(item_name);
+
+      if (islocal && h.Field(dabc::prop_kind).AsStr()=="DABC.HTML") {
+         cmd.SetStr("ui_kind", "__user__");
+         cmd.SetStr("path", h.GetField("dabc:UserFilePath").AsStr());
+         cmd.SetStr("fname", request_name);
       } else {
-         cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
+         cmd.SetStr("path", item_name);
+         cmd.SetStr("fname", request_name);
+         if (request_name.empty())
+            cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
       }
 
       return cmd_true;
@@ -791,15 +819,17 @@ bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::
    return true;
 }
 
-std::string dabc::PublisherRef::UserInterfaceKind(const std::string& path)
+std::string dabc::PublisherRef::UserInterfaceKind(const char* uri, std::string& path, std::string& fname)
 {
-   if (null()) return "";
+   if (null()) return "__error__";
 
    dabc::Command cmd("CmdUIKind");
-   cmd.SetStr("path", path);
+   cmd.SetStr("uri", uri);
 
-   if (Execute(cmd) != cmd_true) return "";
+   if (Execute(cmd) != cmd_true) return "__error__";
 
+   path = cmd.GetStr("path");
+   fname = cmd.GetStr("fname");
    return cmd.GetStr("ui_kind");
 }
 

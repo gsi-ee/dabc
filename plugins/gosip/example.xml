@@ -1,0 +1,26 @@
+<!-- This is example of http server for GOSIP protocol --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Example">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcGosip.so"/>
+      <logfile value="Example.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+    </Run>
+
+    <HttpServer name="http" port="8097"/>
+
+    <Publisher name="publ" manager="false"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+    <Module name="gosip_player" class="gosip::Player">
+    </Module>
+  </Context>
+</dabc>
