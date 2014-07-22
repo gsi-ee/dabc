@@ -443,7 +443,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
      {
        oldlostrate=losterate;
        std::string info = dabc::format(
-				       "Lost Event rate: %.0f Ev/s, Dropped data rate: %.3f Mb/s  (at Eventrate:%.0f Ev/s, Datarate:%.3f Mb/s)",
+				       "Lost Event rate: %.0f Ev/s, Dropped data rate: %.3f Mb/s  (at %.0f Ev/s, %.3f Mb/s)",
 				       losterate, dropdrate , erate, drate);
    SetInfo(info, true);
    DOUT0(info.c_str());
