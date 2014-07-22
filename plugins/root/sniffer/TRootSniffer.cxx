@@ -188,7 +188,7 @@ void TRootSnifferScanRec::SetRootClass(TClass *cl)
 }
 
 //______________________________________________________________________________
-Bool_t TRootSnifferScanRec::Done()
+Bool_t TRootSnifferScanRec::Done() const
 {
    // returns true if scanning is done
    // Can happen when searched element is found
@@ -206,6 +206,27 @@ Bool_t TRootSnifferScanRec::Done()
    return kFALSE;
 }
 
+
+//______________________________________________________________________________
+Bool_t TRootSnifferScanRec::IsReadyForResult() const
+{
+   // Checks if result will be accepted.
+   // Used to verify if sniffer should read object from the file
+
+   if (Done()) return kFALSE;
+
+   // only when doing search, result will be propagated
+   if ((mask & (mask_Search | mask_CheckChld)) == 0) return kFALSE;
+
+   // only when full search path is scanned
+   if (searchpath != 0) return kFALSE;
+
+   if (store == 0) return kFALSE;
+
+   return kTRUE;
+}
+
+
 //______________________________________________________________________________
 Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member, Int_t chlds)
 {
@@ -213,15 +234,7 @@ Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member
 
    if (Done()) return kTRUE;
 
-   // only when doing search, result will be propagated
-   if ((mask & (mask_Search | mask_CheckChld)) == 0) return kFALSE;
-
-   //DOUT0("Set RESULT obj = %p search path = %s", obj, searchpath ? searchpath : "-null-");
-
-   // only when full search path is scanned
-   if (searchpath != 0) return kFALSE;
-
-   if (store == 0) return kFALSE;
+   if (!IsReadyForResult()) return kFALSE;
 
    store->SetResult(obj, cl, member, chlds);
 
@@ -466,6 +479,12 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
    // mark object as expandable for direct child of extra folder
    // or when non drawable object is scanned
 
+   if (!fReadOnly && obj->InheritsFrom(TKey::Class()) && rec.IsReadyForResult()) {
+      TObject* keyobj = ((TKey*) obj)->ReadObj();
+      if (keyobj!=0)
+         if (rec.SetResult(keyobj, keyobj->IsA())) return;
+   }
+
    if (rec.SetResult(obj, obj->IsA())) return;
 
    int isextra = rec.ExtraFolderLevel();
@@ -475,7 +494,30 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
       rec.has_more = kTRUE;
    }
 
-   rec.SetRootClass(obj->IsA());
+   // special handling of TKey class - in non-readonly mode
+   // sniffer allowed to fetch objects
+
+   TClass* obj_class = obj->IsA();
+
+   if (!fReadOnly && obj->InheritsFrom(TKey::Class())) {
+      TKey* key = (TKey *) obj;
+      if (strcmp(key->GetClassName(),"TDirectoryFile")==0) {
+         if (rec.lvl==0) {
+            TDirectory* dir = dynamic_cast<TDirectory*> (key->ReadObj());
+            if (dir!=0) {
+               obj = dir;
+               obj_class = dir->IsA();
+            }
+         } else {
+            rec.SetField(dabc_prop_more, "true");
+            rec.has_more = kTRUE;
+         }
+      } else {
+         obj_class = TClass::GetClass(key->GetClassName());
+      }
+   }
+
+   rec.SetRootClass(obj_class);
 
    if (obj->InheritsFrom(TFolder::Class())) {
       // starting from special folder, we automatically scan members
@@ -487,22 +529,6 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
    } else if (obj->InheritsFrom(TDirectory::Class())) {
       TDirectory* dir = (TDirectory *) obj;
       ScanCollection(rec, dir->GetList(), 0, kFALSE, dir->GetListOfKeys());
-   } else if (obj->InheritsFrom(TKey::Class())) {
-
-      TKey* key = (TKey *) obj;
-      bool isdir = strcmp(key->GetClassName(),"TDirectoryFile")==0;
-
-      if (isdir && !fReadOnly) {
-         if (rec.lvl==0) {
-            TDirectory* dir = dynamic_cast<TDirectory*> (key->ReadObj());
-            if (dir!=0)
-               ScanCollection(rec, dir->GetList(), 0, kFALSE, dir->GetListOfKeys());
-
-         } else {
-            rec.SetField(dabc_prop_more, "true");
-            rec.has_more = kTRUE;
-         }
-      }
    } else if (obj->InheritsFrom(TTree::Class())) {
       ScanCollection(rec, ((TTree *) obj)->GetListOfLeaves());
    } else if (obj->InheritsFrom(TBranch::Class())) {
@@ -512,7 +538,7 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
    }
 
    // here we should know how many childs are accumulated
-   rec.SetResult(obj, obj->IsA(), 0, rec.num_childs);
+   rec.SetResult(obj, obj_class, 0, rec.num_childs);
 }
 
 //______________________________________________________________________________

@@ -66,6 +66,9 @@ public:
    /** Returns true when item can be expanded */
    Bool_t CanExpandItem();
 
+   /** Checks if result will be accepted. Used to verify if sniffer should read object from the file */
+   Bool_t IsReadyForResult() const;
+
    /** Set result pointer and return true if result is found */
    Bool_t SetResult(void *obj, TClass *cl, TDataMember *member = 0,  Int_t chlds = -1);
 
@@ -76,7 +79,7 @@ public:
    Int_t ExtraFolderLevel();
 
    /** Method indicates that scanning can be interrupted while result is set */
-   Bool_t Done();
+   Bool_t Done() const;
 
    /** Construct item name, using object name as basis */
    void MakeItemName(const char *objname, TString &itemname, Bool_t cut_slashes = kFALSE);
