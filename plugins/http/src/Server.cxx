@@ -271,7 +271,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    if (content_type == "__user__") {
       content_str = pathname;
-      if (filename.empty()) content_str += "gosip.htm";
+      if (filename.empty()) content_str += "main.htm";
                        else content_str += filename;
       content_type = "__file__";
       IsFileRequested(content_str.c_str(), content_str);

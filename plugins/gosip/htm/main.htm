@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+   <title>GOSIP user interface</title>
+
+   <script type='text/javascript'>
+   
+      function nextXmlNode(node)
+      {
+         while (node && (node.nodeType!=1)) node = node.nextSibling;
+         return node;
+      }
+
+      function topXmlNode(xmldoc) 
+      {
+         if (!xmldoc) return;
+         return nextXmlNode(xmldoc.firstChild);
+      }
+   
+      function ExecCommand() {
+         //console.log("Execute");
+         
+         var elem = document.getElementById("report");
+         
+         if (elem!=null) {
+            //console.log("Found");
+            // elem.innerHTML += "My text<br>";
+         }
+         
+         var xmlHttp = new XMLHttpRequest();
+         
+         xmlHttp.open('GET', '../CmdGosip/execute?cmd=get', true);
+         
+         xmlHttp.onreadystatechange = function () {
+            // console.log("onready change " + xmlHttp.readyState); 
+            if (xmlHttp.readyState == 4) {
+               var xmldoc = xmlHttp.responseXML;
+            
+               var top = topXmlNode(xmldoc);
+               var cmdnode = nextXmlNode(top.firstChild);
+               
+            
+               if (cmdnode)
+                  elem.innerHTML += "Result = " + cmdnode.getAttribute("_Result_") + "<br>";
+               else
+                  elem.innerHTML += "command fail<br>";
+            }
+         };
+         
+         xmlHttp.send(null);
+      }
+      
+   </script>
+
+
+</head>
+
+<body>
+  <h3>Press button</h3>
+  
+  <input type='button' title='Execute' value='Execute' onclick='ExecCommand()'/>
+  <br>
+
+  <h3>Text in the middle</h3> 
+  
+  <div id='report'>
+    My text inside report<br>
+  </div>
+
+  <h3>Text After</h3> 
+
+</body>
+</html>
+
