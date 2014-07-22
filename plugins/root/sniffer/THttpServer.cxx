@@ -196,6 +196,12 @@ THttpServer::THttpServer(const char *engine) :
    // Checks where ROOT sources (via $ROOTSYS variable)
    // Sources are required to locate files and scripts,
    // which will be provided to the web clients by request
+   // As argument, one specifies engine kind which should be
+   // created like "http:8080". One could specify several engines
+   // at once, separating them with ; like "http:8080;fastcgi:9000"
+   // One also can configure readonly flag for sniffer like
+   // "http:8080;readonly" or "http:8080;readwrite"
+
 
    fMainThrdId = TThread::SelfId();
 

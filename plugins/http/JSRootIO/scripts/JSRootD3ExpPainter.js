@@ -1443,8 +1443,11 @@ var gStyle = {
          // create dummy here and not need to check if it exists or not
          this['zoom_xmin'] = 0;
          this['zoom_xmax'] = 0;
+         this['zoom_xpad'] = true; // indicate that zooming specified from pad
+         
          this['zoom_ymin'] = 0;
          this['zoom_ymax'] = 0;
+         this['zoom_ypad'] = true; // indicate that zooming specified from pad
 
          if (this.pad && typeof(this.pad) != 'undefined') {
             this['zoom_xmin'] = this.pad.fUxmin;
@@ -3454,12 +3457,19 @@ var gStyle = {
       } else {
          this['x'] = d3.scale.linear().domain([this.scale_xmin, this.scale_xmax]).range([0, w]);
       }
-
+      
       this['scale_ymin'] = this.ymin;
       this['scale_ymax'] = this.ymax;
-      if (this.zoom_ymin!=this.zoom_ymax) { 
+      
+      if (this.zoom_ypad) {
+         if (this.histo.fMinimum != -1111) this.zoom_ymin = this.histo.fMinimum;
+         if (this.histo.fMaximum != -1111) this.zoom_ymax = this.histo.fMaximum;
+         this['zoom_ypad'] = false;
+      }
+      
+      if (this.zoom_ymin != this.zoom_ymax) {
          this['scale_ymin'] = this.zoom_ymin; 
-         this['scale_ymax'] = this.zoom_ymax; 
+         this['scale_ymax'] = this.zoom_ymax;
       }
       
       if (this.options.Logy) {

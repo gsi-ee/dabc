@@ -4,6 +4,7 @@ current functionality of the framework.
 
 22.07.2014
 1. Allow to read key objects from TFile in TRootSniffer
+2. Fix min/max selection of TH1 histograms
 
 
 21.07.2014
