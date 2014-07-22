@@ -48,7 +48,7 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fTotalDroppedBuffers(0)
 {
      //fPid=getpid();
-     fPid= syscall(SYS_gettid);
+     fPid = syscall(SYS_gettid);
      
 }
 
@@ -61,14 +61,12 @@ void hadaq::DataSocketAddon::ProcessEvent(const dabc::EventId& evnt)
    if (evnt.GetCode() == evntSocketRead) {
       // inside method if necessary SetDoingInput(true); should be done
 
-      if (!fWaitMoreData) {
-         EOUT("Get input event when call back operation is not awaited");
-         return;
-      }
+      // ignore events when not waiting for the new data
+      if (!fWaitMoreData) return;
 
       unsigned res = ReadUdp();
 
-      if (res!=dabc::di_CallBack) {
+      if (res != dabc::di_CallBack) {
          fWaitMoreData = false;
          MakeCallback(res);
       }
@@ -86,7 +84,6 @@ double hadaq::DataSocketAddon::ProcessTimeout(double lastdiff)
    if ((fTgtPtr.distance_to_ownbuf()>0) && (fSendCnt==0)) {
       fWaitMoreData = false;
       MakeCallback(dabc::di_Ok);
-//      DOUT0("Flush port %d", fNPort);
       return -1;
    }
 
@@ -111,8 +108,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
 
    while (true) {
 
-
-      /* this was old form which is not necessary - socket is already binf with the port */
+      /* this was old form which is not necessary - socket is already bind with the port */
       //  socklen_t socklen = sizeof(fSockAddr);
       //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
 
@@ -125,9 +121,11 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
 
       if (res<0) {
 
+         // socket do not have data, one should enable event processing
+         // otherwise we need to poll for the new data
          if (errno == EAGAIN) {
             SetDoingInput(true);
-            return dabc::di_CallBack;
+            return dabc::di_CallBack; // indicate that buffer reading will be finished by callback
          }
 
          EOUT("Socket error");
@@ -138,7 +136,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       int msgsize = hadTu->GetPaddedSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
 
       if (res != msgsize) {
-   	  EOUT("Send buffer %d differ from message size %d - ignore it at port %d (0x%x)", res, msgsize,fNPort,fNPort);
+         EOUT("Send buffer %d differ from message size %d - ignore it at port %d (0x%x)", res, msgsize,fNPort,fNPort);
          fTotalDiscardMsg++;
          fTotalDiscardPacket++;
          continue;
@@ -146,7 +144,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
 
       if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
          EOUT("Trailing 32 bytes do not match to header - ignore packet at port %d (0x%x)",fNPort,fNPort);
-	fTotalDiscardMsg++;
+         fTotalDiscardMsg++;
          fTotalDiscardPacket++;
          continue;
       }
@@ -205,10 +203,10 @@ unsigned hadaq::DataSocketAddon::Read_Start(dabc::Buffer& buf)
 
    fWaitMoreData = (res == dabc::di_CallBack);
 
+   // we are waiting for event callback, configure alse timeout
    if (fWaitMoreData) {
       fSendCnt = 0;
       ActivateTimeout(fFlushTimeout);
-//      DOUT0("Activate timeout %5.1f", fFlushTimeout);
    }
 
    DOUT3("hadaq::DataSocketAddon::Read_Start buf %u res %u", buf.GetTotalSize(), res);
@@ -218,7 +216,6 @@ unsigned hadaq::DataSocketAddon::Read_Start(dabc::Buffer& buf)
 
 unsigned hadaq::DataSocketAddon::Read_Complete(dabc::Buffer& buf)
 {
-
    if (fTgtPtr.null()) return dabc::di_Ok;
 
    unsigned fill_sz = fTgtPtr.distance_to_ownbuf();
