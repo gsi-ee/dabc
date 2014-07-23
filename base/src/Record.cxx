@@ -641,55 +641,46 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
    return dflt;
 }
 
-int dabc::RecordField::NeedJsonQuotes(const std::string& str)
+bool dabc::RecordField::NeedJsonReformat(const std::string& str)
 {
-   // if none of quotes found, use single quotes
-   if (str.find_first_of("\'\"")==std::string::npos) return 1;
-
-   // if none of single quotes found, use single quotes
-   if (str.find_first_of("\'")==std::string::npos) return 1;
-
-   // if none of double quotes found, use double quotes
-   if (str.find_first_of("\"")==std::string::npos) return 2;
+   // if didnot found double quotes, everything is fine
+   if (str.find_first_of("\"")==std::string::npos) return false;
 
    // here we have situation that both single and double quotes present
    // first try to define which kind quotes preceding with escape character
-   bool has_single(false), has_double(false);
+   bool is_last_escape(false);
 
-   for (unsigned n=0;n<str.length();n++) {
-      // this is escape character, next is special symbol
-      if ((str[n]=='\\') && (n+1<str.length())) {
-         n++; continue;
+   for (unsigned n=0;n<str.length();n++)
+
+      switch (str[n]) {
+         case '\\' : is_last_escape = ~is_last_escape; break;
+         case '\"' :
+            if (!is_last_escape) return true;
+            is_last_escape = false;
+            break;
+         default:
+            is_last_escape = false;
+            break;
       }
 
-      if (str[n]=='\'') has_single = true; else
-      if (str[n]=='\"') has_double = true;
-   }
-
-   // if both symbols present without escape character, need to reformat string
-   if (has_single && has_double) return 10;
-
-   // if only one kind of quotes present without escape, use another kind for decoration
-   return has_single ? 2 : 1;
+   return is_last_escape;
 }
 
-std::string dabc::RecordField::ReformatJsonString(const std::string& str)
+std::string dabc::RecordField::JsonReformat(const std::string& str)
 {
-   std::string res = "\'";
+   std::string res = "\"";
+
+   bool is_last_escape(false);
 
    for (unsigned n=0;n<str.length();n++) {
-      // this is escape character, next is special symbol
-      if ((str[n]=='\\') && (n+1<str.length())) {
-         res.push_back(str[n++]);
-         res.push_back(str[n]);
-         continue;
-      }
+      if (str[n] == '\\') is_last_escape = ~is_last_escape;
 
-      if (str[n]=='\'') res.append("\\\'"); else
-      if (str[n]=='\"') res.append("\\\""); else res.push_back(str[n]);
+      if ((str[n] == '\"') && !is_last_escape) res+='\\';
+      res += str[n];
    }
 
-   res.append("\'");
+   if (is_last_escape) res.append("\\");
+   res.append("\"");
    return res;
 }
 
@@ -742,31 +733,25 @@ std::string dabc::RecordField::AsJson() const
          std::string res("[");
          for (unsigned n=0; n<vect.size();n++) {
             if (n>0) res.append(",");
-            switch (NeedJsonQuotes(vect[n])) {
-               case 1:
-                  res.append("\'");
-                  res.append(vect[n]);
-                  res.append("\'");
-                  break;
-               case 2:
-                  res.append("\"");
-                  res.append(vect[n]);
-                  res.append("\"");
-                  break;
-               case 10:
-                  res.append(ReformatJsonString(vect[n]));
-                  break;
-               default:
-                  res.append(vect[n]);
-                  break;
-            }
+            res.append("\"");
+            if (NeedJsonReformat(vect[n]))
+               res.append(JsonReformat(vect[n]));
+            else
+               res.append(vect[n]);
+            res.append("\"");
          }
          res.append("]");
          return res;
       }
       case kind_string: {
-         if (valueStr!=0) return ReformatJsonString(valueStr);
-         return "\'\'";
+         if (valueStr==0) return "\"\"";
+         std::string res("\"");
+         if (NeedJsonReformat(valueStr))
+            res.append(JsonReformat(valueStr));
+         else
+            res.append(valueStr);
+         res.append("\"");
+         return res;
       }
    }
    return "null";
@@ -1344,6 +1329,35 @@ bool dabc::RecordFieldsMap::SaveInXml(XMLNodePointer_t node)
    return true;
 }
 
+
+void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
+{
+   bool first(true);
+
+   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+
+      if (iter->first.empty()) continue;
+
+      if (iter->first[0]=='#') continue;
+
+      // discard attributes, which using quotes or any special symbols in the names
+      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
+
+      if (!first) buf.append(compact ? "," : ",\n");
+
+      if (!compact) buf.append("  ");
+      buf.append("\"");
+      buf.append(iter->first);
+      buf.append("\":");
+      if (!compact) buf.append(" ");
+
+      buf.append(iter->second.AsJson());
+
+      first = false;
+   }
+}
+
+
 bool dabc::RecordFieldsMap::ReadFromXml(XMLNodePointer_t node, bool overwrite, const ResolveFunc& func)
 {
    if (node==0) return false;
@@ -1486,4 +1500,14 @@ dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t par
    fFields->SaveInXml(node);
 
    return node;
+}
+
+std::string dabc::RecordContainer::SaveToJson(bool compact)
+{
+   std::string res = "{";
+   if (!compact) res.append("\n");
+   fFields->SaveToJson(res, compact);
+   if (!compact) res.append("\n");
+   res.append("}");
+   return res;
 }

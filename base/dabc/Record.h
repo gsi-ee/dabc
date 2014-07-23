@@ -301,8 +301,8 @@ namespace dabc {
          static std::string ExpandXmlValue(const std::string& str);
          static std::string CompressXmlValue(const char* str, int len);
 
-         static int NeedJsonQuotes(const std::string& str);
-         static std::string ReformatJsonString(const std::string& str);
+         static bool NeedJsonReformat(const std::string& str);
+         static std::string JsonReformat(const std::string& str);
    };
 
    class RecordFieldsMap {
@@ -342,6 +342,9 @@ namespace dabc {
 
          bool SaveInXml(XMLNodePointer_t node);
          bool ReadFromXml(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
+
+         /** Save all field in json format */
+         void SaveToJson(std::string& buf, bool compact = true);
 
          /** \brief Copy fields from source map */
          void CopyFrom(const RecordFieldsMap& src, bool overwrite = true);
@@ -426,6 +429,8 @@ namespace dabc {
          RecordFieldsMap& Fields() const { return *fFields; }
 
          virtual XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent);
+
+         std::string SaveToJson(bool compact = true);
    };
 
    // ===================================================================================

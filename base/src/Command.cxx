@@ -381,6 +381,14 @@ std::string dabc::Command::SaveToXml(bool compact)
    return res;
 }
 
+std::string dabc::Command::SaveToJson(bool compact)
+{
+   if (null()) return std::string();
+
+   return GetObject()->SaveToJson(compact);
+}
+
+
 bool dabc::Command::ReadFromXml(const char* xmlcode)
 {
    if ((xmlcode==0) || (*xmlcode==0)) return false;

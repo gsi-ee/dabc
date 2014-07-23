@@ -6,7 +6,10 @@ current functionality of the framework.
 1. Introduce newest jquery-ui 1.11 for JSROOTIOm, also will be used for GOSIP gui
 2. Implement in TRootSniffer compression for binary data, 
    activated when "zipped" option specified in query. Used in communication with go4.
-
+3. Implement correct conversion of record data into JSON. Use double qoutes.   
+4. Return result of command execution in JSON form. It makes easier
+   to operate with complex data in command execution.
+    
 
 22.07.2014
 1. Allow to read key objects from TFile in TRootSniffer

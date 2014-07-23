@@ -203,12 +203,15 @@ bool http::Server::ProcessExecute(const std::string& itemname, const std::string
 
    dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, query);
 
-   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\">\n", itemname.c_str());
+//   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\">\n", itemname.c_str());
+//   if (!res.null())
+//      replybuf += res.SaveToXml();
+//   replybuf += "\n</Reply>";
 
-   if (!res.null())
-      replybuf += res.SaveToXml();
+   replybuf = res.SaveToJson();
 
-   replybuf += "\n</Reply>";
+//   replybuf = "{\"_Priority_\":null, \"_Result_\":1, \"counter\":5, \"arr\": [\"1\",\"2\",\"3\"] }";
+//   DOUT0("JSON: %s", replybuf.c_str());
 
    return true;
 }

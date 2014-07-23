@@ -278,20 +278,11 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       url += "=";
       if ((argkind=="int") && (argmin!=null) && (argmax!=null))
          url += arginp.spinner("value");
-      else {
-         var str = new String(arginp.val()); 
-         
-         url += str;
-/*         
-         if (str.indexOf(" ")<0) 
-            url += str;
-         else
-            url += "'" + str + "'";
-*/            
-      }
+      else
+         url += new String(arginp.val());
    }
    
-   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
+   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
 
    this.req.send(null);
 }
@@ -302,28 +293,27 @@ DABC.CommandDrawElement.prototype.RequestCallback = function(arg) {
    this.req = null;
    
    if (arg==null) {
-      console.log("no xml response from server");
+      console.log("no response from server");
       return;
    }
    
-   var top = DABC.TopXmlNode(arg);
-   var cmdnode = DABC.nextXmlNode(top.firstChild);
-   
    if (this.xmlnode==null) {
-      // we are waiting for the command itself
-      this.xmlnode = cmdnode;
+      var top = DABC.TopXmlNode(arg);
+      this.xmlnode = DABC.nextXmlNode(top.firstChild);
       this.ShowCommand();
+      return;
+   }
+   
+   var reply = JSON.parse(arg);
+   if (typeof reply != 'object') {
+      console.log("non-object in json response from server");
       return;
    }
    
    var resdiv = $("#" + this.frameid + "_res");
    if (resdiv) {
       resdiv.empty();
-      
-      if (cmdnode)
-         resdiv.append("<h5>Get reply res=" + cmdnode.getAttribute("_Result_") + "</h5>");
-      else   
-         resdiv.append("<h5>Get reply without command?</h5>");
+      resdiv.append("<h5>Get reply res=" + reply['_Result_'] + "</h5>");
    }
 }
 
@@ -1748,6 +1738,9 @@ DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
          if (this.status == 200 || this.status == 206) {
             if (this.kind == "xml") {
                this.dabc_item.RequestCallback(this.responseXML);
+            } else 
+            if (this.kind == "text") {
+              this.dabc_item.RequestCallback(this.responseText);
             } else {
                var filecontent = new String("");
                var array = new VBArray(this.responseBody).toArray();
@@ -1779,6 +1772,9 @@ DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
          if (this.status == 0 || this.status == 200 || this.status == 206) {
             if (this.kind == "xml") {
                this.dabc_item.RequestCallback(this.responseXML);
+            } else 
+            if (this.kind == "text") {
+               this.dabc_item.RequestCallback(this.responseText);
             } else {
                var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
                var Buf;
@@ -1816,7 +1812,7 @@ DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
 
       xhr.open('POST', url, async);
       
-      if (xhr.kind != "xml") {
+      if (xhr.kind == "bin") {
          var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
          if (HasArrayBuffer && 'mozResponseType' in xhr) {
             xhr.mozResponseType = 'arraybuffer';

@@ -1,10 +1,38 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
+  <head>
 
-   <title>GOSIP user interface</title>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <title>GOSIP user interface</title>
+    <style type="text/css">
+      #wrap {
+        width:100%;
+        margin:0 auto;
+		}
+		#left_col {
+		   float:left;
+		   width: 80%;
+		}
+		#right_col {
+		   float:right;
+		   width: 20%;
+		}
+		#tabs {
+		   float:bottom;
+		   height: 100%;
+		}
+      body,html{
+         height:100%;
+      }
+		</style>    
 
-   <script type='text/javascript'>
+
+    <link rel="stylesheet" type="text/css" href="/jsrootiosys/style/jquery-ui.css"/>
+    <script src="/jsrootiosys/scripts/jquery.min.js" type="text/javascript"></script>
+    <script src="/jsrootiosys/scripts/jquery-ui.js" type="text/javascript"></script>
+
+    
+    <script type="text/javascript">
    
       function nextXmlNode(node)
       {
@@ -35,14 +63,10 @@
          xmlHttp.onreadystatechange = function () {
             // console.log("onready change " + xmlHttp.readyState); 
             if (xmlHttp.readyState == 4) {
-               var xmldoc = xmlHttp.responseXML;
+               var reply = JSON.parse(xmlHttp.responseText);
             
-               var top = topXmlNode(xmldoc);
-               var cmdnode = nextXmlNode(top.firstChild);
-               
-            
-               if (cmdnode)
-                  elem.innerHTML += "Result = " + cmdnode.getAttribute("_Result_") + "<br>";
+               if (reply)
+                  elem.innerHTML += "Result = " + reply["_Result_"] + "<br>";
                else
                   elem.innerHTML += "command fail<br>";
             }
@@ -51,25 +75,154 @@
          xmlHttp.send(null);
       }
       
+      function ButtonAction() {
+         console.log("arg1 = " + $("#arg1").val() + "  arg2 = " + $("#arg2").val());
+      }
+      
+      $(function() {
+         $("#tabs").tabs();
+         $("#arg1").selectmenu();
+         $("#arg2").selectmenu();
+         
+         $( "#broadcast" ).button();
+         
+         $("#button1").button().click(function() { ButtonAction(); }); 
+         $("#button2").button().click(function() { ButtonAction(); }); 
+         $("#button3").button().click(function() { ButtonAction(); }); 
+
+         $("#button10").button().click(function() { ButtonAction(); }); 
+         $("#button11").button().click(function() { ButtonAction(); }); 
+         $("#button12").button().click(function() { ButtonAction(); }); 
+
+       });
+      
    </script>
-
-
-</head>
-
-<body>
-  <h3>Press button</h3>
+  </head>
+  <body>
+    
+    <div id='wrap'>
+    
+    <div id='left_col'>
+    
+    
+    <table style="width: 100%">
+    <tr>
+     <td>     
+       <label for="arg1">arg1</label>
+       <select name="arg1" id="arg1">
+         <options elected="selected">0</option>
+         <option>1</option>
+         <option>2</option>
+         <option>3</option>
+         <option>4</option>
+       </select>
+     </td>
+     <td>
+       <label for="arg2">arg2</label>
+       <select name="arg2" id="arg2">
+         <options elected="selected">0</option>
+         <option>1</option>
+         <option>2</option>
+         <option>3</option>
+         <option>4</option>
+       </select>
+     </td>
+     <td>
+        <input type="checkbox" id="broadcast"><label for="broadcast">Broadcast</label>
+     </td>
+     <td>
+     </td>
+     <td>
+       <button id="button1">Button1</button>
+     </td>
+     <td>
+       <button id="button2">Button2</button>
+     </td>
+     <td>
+       <button id="button3">Button3</button>
+     </td>
+     
+     
+     
+     
+    </tr>
+    </table>
   
-  <input type='button' title='Execute' value='Execute' onclick='ExecCommand()'/>
-  <br>
+    <h3>Press button</h3>
+    <input title="Execute" value="Execute" onclick="ExecCommand()"
+      type="button">&nbsp;&nbsp; <br>
+    <br>
+    <h3>Text in the middle</h3>
+    <div id="report"> My text inside report<br>
+    </div>
+    <h3>Text After</h3>
+    
+    <div id="tabs">
+		<ul>
+		<li><a href="#tabs-1">QFW</a></li>
+		<li><a href="#tabs-2">REGS</a></li>
+		</ul>
+		<div id="tabs-1">
+		<p>Here will be QFW registers</p>
+		</div>
+		<div id="tabs-2">
+		<h4>Here will be just registers</h4>
+		
+		<table>
+       <tr>
+         <td>
+           <input type="text" id="reg01" value="reg01"/>           
+         </td>
+         <td>
+           <input type="text" id="reg02" value="reg02"/>           
+         </td>
+         <td>
+           <input type="text" id="reg03" value="reg03"/>           
+         </td>
+       </tr>       
+       <tr>
+         <td>
+           <input type="text" id="reg11" value="reg11"/>           
+         </td>
+         <td>
+           <input type="text" id="reg12" value="reg12"/>           
+         </td>
+         <td>
+           <input type="text" id="reg13" value="reg13"/>           
+         </td>
+       </tr>       
+       <tr>
+         <td>
+           <input type="text" id="reg21" value="reg21"/>           
+         </td>
+         <td>
+           <input type="text" id="reg22" value="reg22"/>           
+         </td>
+         <td>
+           <input type="text" id="reg23" value="reg23"/>           
+         </td>
+       </tr> 
+       </table>      
+		
+		
+		</div>
+	 </div>
+	 </div> 
 
-  <h3>Text in the middle</h3> 
-  
-  <div id='report'>
-    My text inside report<br>
-  </div>
-
-  <h3>Text After</h3> 
-
-</body>
+    <div id='right_col'>
+       <h5>Right</h5>
+       
+       <button id="button10">Button10</button>
+       <br>
+       <br>
+       <button id="button11">Button11</button>
+       <br>
+       <br>
+       <button id="button12">Button12</button>
+       
+    </div>
+	 
+	 </div>
+    
+  </body>
 </html>
-
