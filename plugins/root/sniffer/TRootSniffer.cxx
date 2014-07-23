@@ -1019,8 +1019,6 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&p
 
       R__zip(5, &srcsize, (char*) sbuf->Buffer(), &tgtsize, (char*) ptr, &irep);
 
-      printf("Original size %d compressed size %d\n", sbuf->Length(), irep);
-
       length = irep;
 
    } else {
