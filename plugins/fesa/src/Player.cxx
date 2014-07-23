@@ -262,6 +262,8 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       std::string binkind = cmd.GetStr("Kind");
       std::string query = cmd.GetStr("Query");
 
+      // DOUT0("fesa::Player CmdGetBinary item %s kind %s", itemname.c_str(), binkind.c_str());
+
       dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
 
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild(itemname);

@@ -358,7 +358,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       }
 
       // TODO: in some cases empty binary may be not an error
-      if (content_bin.null()) return false;
+      if (content_bin.null()) { DOUT0("Is empty buffer is error for uri %s ?", uri); return false; }
    }
 
    if (iszipped) {
