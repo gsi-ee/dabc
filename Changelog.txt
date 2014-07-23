@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+23.07.2014
+1. Introduce newest jquery-ui 1.11 for JSROOTIOm, also will be used for GOSIP gui
+2. Implement in TRootSniffer compression for binary data, 
+   activated when "zipped" option specified in query. Used in communication with go4.
+
+
 22.07.2014
 1. Allow to read key objects from TFile in TRootSniffer
 2. Fix min/max selection of TH1 histograms

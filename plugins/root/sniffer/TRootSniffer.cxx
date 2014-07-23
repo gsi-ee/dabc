@@ -33,12 +33,14 @@
 
 #include <stdlib.h>
 
-
 const char *dabc_prop_kind = "dabc:kind";
 const char *dabc_prop_masteritem = "dabc:master";
 const char *dabc_prop_more = "dabc:more";
 const char *dabc_prop_realname = "dabc:realname"; // real object name
 const char *dabc_prop_itemname = "dabc:itemname"; // item name in dabc hierarchy
+
+//extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
+extern "C" void R__zip(int cxlevel, int *srcsize, char* src, int *tgtsize, char* tgt, int* irep);
 
 // ============================================================================
 
@@ -910,11 +912,11 @@ Bool_t TRootSniffer::IsStreamerInfoItem(const char *itemname)
 }
 
 //______________________________________________________________________________
-Bool_t TRootSniffer::ProduceBinary(const char *path, const char *, void *&ptr,
+Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&ptr,
                                    Long_t &length)
 {
    // produce binary data for specified item
-   // It is 20 bytes for header plus compressed content of TBuffer
+   // if "zipped" option specified in query, buffer will be compressed
 
    if ((path == 0) || (*path == 0)) return kFALSE;
 
@@ -1007,9 +1009,27 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char *, void *&ptr,
 
    if (sbuf==0) return kFALSE;
 
-   ptr = malloc(sbuf->Length());
-   memcpy(ptr, sbuf->Buffer(), sbuf->Length());
-   length = sbuf->Length();
+   if ((query!=0) && (strstr(query,"zipped")!=0)) {
+      Int_t buflen = 20 + sbuf->Length() + sbuf->Length()/20; // keep safety margin
+      if (buflen<512) buflen = 512;
+
+      ptr = malloc(buflen);
+
+      int irep(0), srcsize(sbuf->Length()), tgtsize(buflen);
+
+      R__zip(5, &srcsize, (char*) sbuf->Buffer(), &tgtsize, (char*) ptr, &irep);
+
+      printf("Original size %d compressed size %d\n", sbuf->Length(), irep);
+
+      length = irep;
+
+   } else {
+      ptr = malloc(sbuf->Length());
+      memcpy(ptr, sbuf->Buffer(), sbuf->Length());
+      length = sbuf->Length();
+   }
+
+
 
    return kTRUE;
 }
