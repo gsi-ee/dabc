@@ -68,11 +68,18 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
 
    if (s.length() == 0) return fValid;
 
-
-   pos = s.rfind("?");
+   // first question in url is position for options,
+   pos = s.find("?");
    if (pos != std::string::npos) {
       fOptions = s.substr(pos+1);
       s.erase(pos);
+
+      // replace special symbols which could appear in the options string
+      if (fOptions.find("%2") != std::string::npos) {
+         while ((pos = fOptions.find("%27")) != std::string::npos) fOptions.replace(pos, 3, "\'");
+         while ((pos = fOptions.find("%22")) != std::string::npos) fOptions.replace(pos, 3, "\"");
+         while ((pos = fOptions.find("%20")) != std::string::npos) fOptions.replace(pos, 3, " ");
+      }
    }
 
    pos = s.find("/");
@@ -190,9 +197,30 @@ bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::str
 
    while (p < fOptions.length()) {
 
-      size_t separ = fOptions.find("&", p);
+      // instead of simple search we should analyze different quotes, ignoring symbols inside quotes
+      // size_t separ = fOptions.find("&", p);
+      // if (separ==std::string::npos) separ = fOptions.length();
 
-      if (separ==std::string::npos) separ = fOptions.length();
+
+      bool q1(false), q2(false), special(false);
+
+      size_t separ = p, posequal = std::string::npos;
+      for(;separ<fOptions.length();separ++) {
+
+         if (q1 || q2) {
+            if (fOptions[separ] == '\\') { special = !special; continue; }
+                                     else special = false;
+         }
+
+         if (!q2 && (fOptions[separ]=='\'') && !special) { q1 = !q1; continue; }
+         if (!q1 && (fOptions[separ]=='\"') && !special) { q2 = !q2; continue; }
+
+         if (!q1 && !q2) {
+            if (fOptions[separ] == '&') break;
+            if ((fOptions[separ] == '=') && (posequal = std::string::npos)) posequal = separ;
+         }
+      }
+
 
 //      printf("Search for option %s  fullstr %s p=%d separ=%d\n", optname.c_str(), fOptions.c_str(), p, separ);
 
@@ -215,7 +243,15 @@ bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::str
             if (fOptions[p]=='=') {
                // also empty option possible, but with syntax http://host?option=
                p++;
-               if ((p<separ) && value) *value = fOptions.substr(p, separ-p);
+               if ((p<separ) && value) {
+                  *value = fOptions.substr(p, separ-p);
+                  // check if surrounded by quotes or double quotes and remove them
+                  if ((value->length()>1) && ((value->at(0)=='\'') || (value->at(0)=='\"'))
+                        && (value->at(0) == value->at(value->length()-1))) {
+                     value->erase(0,1);
+                     value->resize(value->length()-1);
+                  }
+               }
                return true;
             }
          }

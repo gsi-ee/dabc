@@ -2,6 +2,15 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+24.07.2014
+1. Correct treatment of quotes and double quotes in RecordField.
+   Important when convertiong to JSON representation
+2. When publisher analyzes URL with arguments, it tries to convert 
+   each arguments to int or double first. Also each argument tested
+   if it can be repersented as vector. Need to be able correctly receive commands
+   with complex arguments via URL and to able respond with JSON.
+
+
 23.07.2014
 1. Introduce newest jquery-ui 1.11 for JSROOTIOm, also will be used for GOSIP gui
 2. Implement in TRootSniffer compression for binary data, 

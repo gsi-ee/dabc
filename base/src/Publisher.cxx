@@ -699,9 +699,53 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             while ((pos = parvalue.find("%20")) != std::string::npos)
                parvalue.replace(pos, 3, " ");
 
-            res.SetStr(parname, parvalue);
+            bool quotes = false;
 
-            // DOUT0("************ CMD ARG %s = %s", part.substr(0,p-1).c_str(), part.substr(p+1).c_str());
+            if ((parvalue.length()>1) && ((parvalue[0]=='\'') || (parvalue[0]=='\"'))
+                  && (parvalue[0] == parvalue[parvalue.length()-1])) {
+               parvalue.erase(0,1);
+               parvalue.resize(parvalue.length()-1);
+               quotes = true;
+            }
+
+            // DOUT0("parname %s parvalue %s", parname.c_str(), parvalue.c_str());
+
+            if (quotes) {
+
+               std::vector<std::string> vect;
+               std::vector<double> dblvect;
+               std::vector<int64_t> intvect;
+
+               if (!dabc::RecordField::StrToStrVect(parvalue.c_str(), vect)) {
+                  res.SetStr(parname, parvalue);
+                  continue;
+               }
+
+               if (vect.size()==0) {
+                  res.SetField(parname, parvalue);
+                  continue;
+               }
+
+               for (unsigned n=0;n<vect.size();n++) {
+                  double ddd;
+                  long iii;
+                  if (str_to_double(vect[n].c_str(), &ddd)) dblvect.push_back(ddd);
+                  if (str_to_lint(vect[n].c_str(), &iii)) intvect.push_back(ddd);
+               }
+
+               if (intvect.size()==vect.size()) res.SetField(parname, intvect); else
+               if (dblvect.size()==vect.size()) res.SetField(parname, dblvect); else
+               res.SetField(parname, vect);
+
+            } else {
+
+               double ddd;
+               long iii;
+               if (str_to_lint(parvalue.c_str(), &iii)) res.SetInt(parname, iii); else
+               if (str_to_double(parvalue.c_str(), &ddd)) res.SetDouble(parname, ddd); else
+                  res.SetStr(parname, parvalue);
+
+            }
 
          } while (!part.empty());
       }

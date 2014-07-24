@@ -34,18 +34,6 @@
     
     <script type="text/javascript">
    
-      function nextXmlNode(node)
-      {
-         while (node && (node.nodeType!=1)) node = node.nextSibling;
-         return node;
-      }
-
-      function topXmlNode(xmldoc) 
-      {
-         if (!xmldoc) return;
-         return nextXmlNode(xmldoc.firstChild);
-      }
-   
       function ExecCommand() {
          //console.log("Execute");
          
@@ -58,7 +46,11 @@
          
          var xmlHttp = new XMLHttpRequest();
          
-         xmlHttp.open('GET', '../CmdGosip/execute?cmd=get', true);
+         var cmdtext = '../CmdGosip/execute?arg1=' + $("#arg1").val() + '&arg2='+$("#arg2").val();
+         
+         cmdtext+="&cmd='[\"a=bc\",\"c&df\",\"k?lm\"]'";
+         
+         xmlHttp.open('GET', cmdtext, true);
          
          xmlHttp.onreadystatechange = function () {
             // console.log("onready change " + xmlHttp.readyState); 

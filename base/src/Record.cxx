@@ -653,7 +653,7 @@ bool dabc::RecordField::NeedJsonReformat(const std::string& str)
    for (unsigned n=0;n<str.length();n++)
 
       switch (str[n]) {
-         case '\\' : is_last_escape = ~is_last_escape; break;
+         case '\\' : is_last_escape = !is_last_escape; break;
          case '\"' :
             if (!is_last_escape) return true;
             is_last_escape = false;
@@ -668,19 +668,18 @@ bool dabc::RecordField::NeedJsonReformat(const std::string& str)
 
 std::string dabc::RecordField::JsonReformat(const std::string& str)
 {
-   std::string res = "\"";
+   std::string res;
 
    bool is_last_escape(false);
 
    for (unsigned n=0;n<str.length();n++) {
-      if (str[n] == '\\') is_last_escape = ~is_last_escape;
+      if (str[n] == '\\') is_last_escape = !is_last_escape;
 
       if ((str[n] == '\"') && !is_last_escape) res+='\\';
       res += str[n];
    }
 
    if (is_last_escape) res.append("\\");
-   res.append("\"");
    return res;
 }
 
@@ -785,47 +784,8 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
          break;
       }
       case kind_string: {
-         // TODO: check that valueStr correspond to vector syntax
-         int len = strlen(valueStr);
-
-         if ((len<3) || (valueStr[0]!='[') || (valueStr[len-1]!=']')) {
+         if (!StrToStrVect(valueStr, res))
             res.push_back(valueStr);
-            break;
-         }
-
-          char* pos = valueStr + 1;
-
-          while (*pos != 0) {
-             while (*pos==' ') pos++; // exclude possible spaces in the begin
-             if (*pos=='\'') {
-                char* p1 = strchr(pos+1, '\'');
-                if (p1==0) {
-                   EOUT("Error syntax in array %s after char:%u - closing quote ' not found ", valueStr, (unsigned) (pos - valueStr));
-                   break;
-                }
-                res.push_back(CompressXmlValue(pos+1, p1 - pos - 1));
-                pos = p1 + 1;
-             } else {
-                char* p1 = strpbrk(pos+1, ",]");
-                if (p1==0) {
-                   EOUT("Error syntax in array %s after char:%u - ',' or ']' not found ", valueStr, (unsigned) (pos - valueStr));
-                }
-                int spaces = 0;
-                while ((p1 - spaces > pos + 1) && (*(p1-spaces-1)==' ')) spaces++;
-                res.push_back(std::string(pos, p1 - pos - spaces));
-                pos = p1;
-             }
-             while (*pos==' ') pos++; // exclude possible spaces at the end
-
-             // this is end of the array
-             if (*pos==']') break;
-
-             if (*pos != ',') {
-                EOUT("Error syntax in array %s char:%u - expected ',' ", valueStr, (unsigned) (pos - valueStr));
-                break;
-             }
-             pos++;
-          }
           break;
       }
       case kind_arrstr: {
@@ -840,6 +800,53 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
 
    return res;
 }
+
+bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose)
+{
+   int len = strlen(str);
+
+   if ((len<2) || (str[0]!='[') || (str[len-1]!=']')) return false;
+
+   const char* pos = str + 1;
+
+   while (*pos != 0) {
+      while (*pos==' ') pos++; // exclude possible spaces in the begin
+      if ((*pos=='\'') || (*pos == '\"')) {
+         const char* p1 = strchr(pos+1, *pos);
+         if (p1==0) {
+            if (verbose) EOUT("Error syntax in array %s after char:%u - closing quote not found ", str, (unsigned) (pos - str));
+            vect.clear();
+            return false;
+         }
+         vect.push_back(CompressXmlValue(pos+1, p1 - pos - 1));
+         pos = p1 + 1;
+      } else {
+         const char* p1 = strpbrk(pos+1, ",]");
+         if (p1==0) {
+            if (verbose) EOUT("Error syntax in array %s after char:%u - ',' or ']' not found ", str, (unsigned) (pos - str));
+            vect.clear();
+            return false;
+         }
+         int spaces = 0;
+         while ((p1 - spaces > pos + 1) && (*(p1-spaces-1)==' ')) spaces++;
+         vect.push_back(std::string(pos, p1 - pos - spaces));
+         pos = p1;
+      }
+      while (*pos==' ') pos++; // exclude possible spaces at the end
+
+      // this is end of the array
+      if (*pos==']') break;
+
+      if (*pos != ',') {
+         if (verbose) EOUT("Error syntax in array %s char:%u - expected ',' ", str, (unsigned) (pos - str));
+         break;
+      }
+      pos++;
+   }
+
+   return true;
+}
+
 
 bool dabc::RecordField::SetValue(const RecordField& src)
 {
@@ -1350,6 +1357,8 @@ void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
       buf.append(iter->first);
       buf.append("\":");
       if (!compact) buf.append(" ");
+
+      DOUT0("name:%s value:%s", iter->first.c_str(), iter->second.AsJson().c_str());
 
       buf.append(iter->second.AsJson());
 

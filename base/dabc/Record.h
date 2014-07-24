@@ -303,6 +303,8 @@ namespace dabc {
 
          static bool NeedJsonReformat(const std::string& str);
          static std::string JsonReformat(const std::string& str);
+
+         static bool StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose = true);
    };
 
    class RecordFieldsMap {
