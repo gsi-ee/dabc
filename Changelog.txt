@@ -2,6 +2,7 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+
 24.07.2014
 1. Correct treatment of quotes and double quotes in RecordField.
    Important when convertiong to JSON representation
@@ -9,6 +10,8 @@ current functionality of the framework.
    each arguments to int or double first. Also each argument tested
    if it can be repersented as vector. Need to be able correctly receive commands
    with complex arguments via URL and to able respond with JSON.
+3. Introduce gosip.js, put there most JavaScript code.   
+4. First version of gosip command, reading complete setup  
 
 
 23.07.2014

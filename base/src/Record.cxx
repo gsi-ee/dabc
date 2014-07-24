@@ -583,7 +583,6 @@ std::string dabc::RecordField::CompressXmlValue(const char* str, int len)
    }
 
    return res;
-
 }
 
 
@@ -683,7 +682,6 @@ std::string dabc::RecordField::JsonReformat(const std::string& str)
    return res;
 }
 
-
 std::string dabc::RecordField::AsJson() const
 {
    switch (fKind) {
@@ -755,7 +753,6 @@ std::string dabc::RecordField::AsJson() const
    }
    return "null";
 }
-
 
 std::vector<std::string> dabc::RecordField::AsStrVect() const
 {
@@ -1358,7 +1355,7 @@ void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
       buf.append("\":");
       if (!compact) buf.append(" ");
 
-      DOUT0("name:%s value:%s", iter->first.c_str(), iter->second.AsJson().c_str());
+      // DOUT0("name:%s value:%s", iter->first.c_str(), iter->second.AsJson().c_str());
 
       buf.append(iter->second.AsJson());
 

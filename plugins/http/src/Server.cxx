@@ -201,26 +201,13 @@ bool http::Server::ProcessExecute(const std::string& itemname, const std::string
       return false;
    }
 
-   size_t pos = 0;
-
-//   std::string q = query;
-//   while ((pos = q.find("%27")) != std::string::npos) q.replace(pos, 3, "\'");
-//   while ((pos = q.find("%22")) != std::string::npos) q.replace(pos, 3, "\"");
-//   while ((pos = q.find("%20")) != std::string::npos) q.replace(pos, 3, " ");
-
-   DOUT0("Execute cmd %s query %s", itemname.c_str(), query.c_str());
+   // DOUT0("Execute cmd %s query %s", itemname.c_str(), query.c_str());
 
    dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, query);
 
-//   replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\">\n", itemname.c_str());
-//   if (!res.null())
-//      replybuf += res.SaveToXml();
-//   replybuf += "\n</Reply>";
+   if (res.GetResult() <= 0) return false;
 
    replybuf = res.SaveToJson();
-
-//   replybuf = "{\"_Priority_\":null, \"_Result_\":1, \"counter\":5, \"arr\": [\"1\",\"2\",\"3\"] }";
-//   DOUT0("JSON: %s", replybuf.c_str());
 
    return true;
 }
