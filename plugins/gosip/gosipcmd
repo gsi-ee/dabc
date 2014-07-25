@@ -1,17 +1,27 @@
 #!/bin/bash
 # use for debugging where gosipcmd not availible
 
+if [[ "$1" == "-z" ]]; then echo "Reset PEXOR"; exit; fi
+
+if [[ "$1" == "-i" ]]; then echo "Initizlie chain on SFP $2"; exit; fi
+
 if [[ "$1" == "--" ]]; then shift; fi
 
+if [[ "$3" == "-d" ]]; then
+  if [[ "$6" == "--" ]]; then
+     echo Shoud dump data after offset scan
+     exit
+  fi 
+
+  numregs=$7
+  for (( cnt=0; cnt<numregs; cnt++ )) ; do
+     echo "reg $cnt=$((cnt*4))"
+  done
+  exit;
+fi
+
 if [[ "$3" == "-r" ]]; then 
-  if [[ "$4" == "-d" ]]; then
-    numregs=$6
-    for (( cnt=0; cnt<numregs; cnt++ )) ; do
-       echo "reg $cnt=$((cnt*4))"
-    done
-  else
-    echo $4;  
-  fi
+  echo $4;  
   exit;
 fi
 

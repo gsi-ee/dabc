@@ -168,8 +168,8 @@
            Setup.fSFP = -1;
            Setup.fDEV = -1;
          } else {
-           Setup.fSFP = $("#id_sfp").val();
-           Setup.fDEV = $("#id_dev").val();
+           Setup.fSFP = Number($("#id_sfp").val());
+           Setup.fDEV = Number($("#id_dev").val());
          }
          Setup.fLogging = document.getElementById("Verbose").checked;         
       }
@@ -238,10 +238,57 @@
          
          $( "#broadcast" ).button();
          
-         $("#buttonScanOffset").button().click(function() { ButtonAction(); }); 
-         $("#buttonInitChain").button().click(function() { ButtonAction(); }); 
-         $("#buttonReset").button().click(function() { ButtonAction(); }); 
-         $("#buttonResetPEX").button().click(function() { ButtonAction(); });
+         $("#buttonScanOffset").button().click(function() { 
+             ReadSlave();
+             
+             var response = confirm("Really scan offset for SFP chain " + Setup.fSFP + ", Slave "+Setup.fDEV+"?");
+             if (!response) return;
+
+             SetStatusMessage("Doing offset measurement...");
+             var cmd = "[\"-w " + POLAND_REG_DO_OFFSET + " 1\", \"-w " + POLAND_REG_DO_OFFSET + " 0\"]";
+             var dumpcmd = "-d -r -x -- 0x" + POLAND_REG_OFFSET_BASE.toString(16) + " 0x20";
+              
+             Setup.GosipCommand(cmd, function(res) {
+                SetStatusMessage("Scan offset " + (res ? "OK" : "Fail"));
+                if (!res) return;
+                Setup.GosipCommand(dumpcmd, function(res) {
+                   SetStatusMessage("Dump data after scan " + (res ? "OK" : "Fail"));
+                });
+             }); 
+         });
+          
+         $("#buttonInitChain").button().click(function() {
+            ReadSlave();
+            var numslaves = prompt("Please specify NUMBER OF DEVICES to initialize at SFP " + Setup.fSFP, "4");
+            if (!numslaves) return;
+            
+            SetStatusMessage("Initializing chain...");
+            
+            var cmd = "-i " + Setup.fSFP + " " + numslaves;
+
+            Setup.fLogging = true;
+
+            Setup.GosipCommand(cmd, function(res) {
+               SetStatusMessage("Initialize chain " + (res ? "OK" : "Fail"));
+            }); 
+            
+         }); 
+         $("#buttonReset").button().click(function() {
+            ReadSlave();
+            SetStatusMessage("Resetting logic on POLAND...");
+            var cmd = "[\"-w " + POLAND_REG_RESET + " 0\", \"-w " + POLAND_REG_RESET + " 1\"]"; 
+            Setup.GosipCommand(cmd, function(res) {
+               SetStatusMessage("Reset logic on POLAND " + (res ? "OK" : "Fail"));
+            }); 
+            
+         }); 
+         $("#buttonResetPEX").button().click(function() { 
+            SetStatusMessage("Resetting PEXOR...");
+            Setup.fLogging = true;
+            Setup.GosipCommand("-z", function(res) {
+               SetStatusMessage("Reset of PEXOR " + (res ? "OK" : "Fail"));
+            }); 
+         });
          
          $("#DacModeCombo").selectmenu({
             change: function( event, ui ) { Setup.fDACMode = ui.item.value; Setup.RefreshDAC(); }
@@ -280,18 +327,19 @@
             ReadSlave(); 
             Setup.fLogging = true;
             SetStatusMessage("Dumping data...");
-            var numwords = 32 + Setup.fSteps[0] * 32 + Setup.fSteps[1]*32 + Setup.fSteps[2] * 32 + 32;
+            var numwords = 32 + Number(Setup.fSteps[0]) * 32 + Number(Setup.fSteps[1])*32 + Number(Setup.fSteps[2]) * 32 + 32;
+            if (numwords > 512) numwords = 512; 
 
-            document.getElementById("logging").innerHTML += "--- Register Dump ---<br>";
+            document.getElementById("logging").innerHTML += "--- Register Dump ---<br/>";
             
-            Setup.GosipCommand("-d 0 " + numwords.toString(), function(res) {
+            Setup.GosipCommand("-d -r -x 0 " + numwords.toString(), function(res) {
                SetStatusMessage("Dump data " + (res ? "OK" : "Fail"));
             }); 
          });
           
          $("#buttonClear").button().click(function() {
             document.getElementById("logging").innerHTML = 
-              "<br>GOSIP web interface v 0.1, 25 Jul 2014<br> S.Linev/J.Adamzewski-Musch<br>";
+              "<br/>GOSIP web interface v 0.1, 25 Jul 2014<br> S.Linev/J.Adamzewski-Musch<br/>";
          }); 
        });
        
@@ -479,12 +527,12 @@
         <h3>QFW Counters</h3>
         <h2>Trigger</h2>
         <div align="center" id="TriggerLbl" style="width: 100%"> </div>
-        <br>
+        <br/>
         <h2>Errors</h2>
         <div align="center" id="ErrorsLbl" style="width: 100%"> </div>
-        <br>
-        <input id="HexMode" type="checkbox"><label for="HexMode">Hexmode</label><br>
-        <input id="Verbose" type="checkbox"><label for="Verbose">Verbose</label><br>
+        <br/>
+        <input id="HexMode" type="checkbox"><label for="HexMode">Hexmode</label><br/>
+        <input id="Verbose" type="checkbox"><label for="Verbose">Verbose</label><br/>
       </div>
       
     </div>
@@ -495,7 +543,7 @@
             <td> <button id="buttonShow">Show</button> </td>
             <td> <button id="buttonApply">Apply</button> </td>
             <td> <button id="buttonConfigure">Configure</button> </td>
-            <td> <br>
+            <td> <br/>
             </td>
             <td> <button id="buttonDataDump">DataDump</button> </td>
             <td> <button id="buttonClear">Clear</button> </td>

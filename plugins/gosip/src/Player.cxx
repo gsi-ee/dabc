@@ -58,7 +58,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
       bool log_output = cmd.GetInt("log") > 0;
 
-      std::string prefix = "gosipcmd ";
+      std::string prefix;
       if ((sfp<0) || (dev<0)) {
          prefix.append("-- -1 -1 ");
       } else {
@@ -70,20 +70,26 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       std::vector<std::string> gosipres;
       std::vector<std::string> gosiplog;
 
-      DOUT0("****************** CmdGosip ****************");
+      DOUT0("*** CmdGosip len %u ****", gosipcmd.size());
       for (unsigned n=0;n<gosipcmd.size();n++) {
 
          std::string currcmd = gosipcmd[n];
 
          bool isreading = (currcmd.find("-r")==0);
          bool iswriting = (currcmd.find("-w")==0);
+         bool isdump = (currcmd.find("-d")==0);
 
-         if (!isreading && !iswriting) {
+         if (!isreading && !iswriting && (currcmd[0]!='-')) {
             isreading = true;
             currcmd = std::string("-r ") + currcmd;
          }
 
-         std::string exec = prefix + currcmd + " 2>&1";
+         std::string exec;
+
+         if (isreading || iswriting || isdump)
+            exec = "gosipcmd " + prefix + currcmd + " 2>&1";
+         else
+            exec = "gosipcmd " + currcmd + " 2>&1";
 
          if (log_output) gosiplog.push_back(exec);
 
@@ -98,12 +104,14 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
          char buf[2048];
          memset(buf, 0, sizeof(buf));
+         int totalsize = 0;
 
-         while(!feof(pipe)) {
+         while(!feof(pipe) && (totalsize<16000)) {
             int size = (int)fread(buf,1, sizeof(buf)-1, pipe); //cout<<buffer<<" size="<<size<<endl;
             if (size<=0) break;
             while ((size>0) && ((buf[size-1]==' ') || (buf[size-1]=='\n'))) size--;
             buf[size] = 0;
+            totalsize+=size;
             if (log_output && (size>0)) gosiplog.push_back(buf);
             // DOUT0("Get %s", buf);
          }
@@ -133,6 +141,8 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
             gosipres.push_back(dabc::format("%ld", value));
             continue;
          }
+
+         // no idea that should be returned by other commands
          gosipres.push_back("<undef>");
       }
 
@@ -141,6 +151,9 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       cmd.SetField("res", gosipres);
       if (log_output)
          cmd.SetField("log", gosiplog);
+
+      DOUT0("*** CmdGosip finished ****");
+
 
       return dabc::cmd_true;
    }
