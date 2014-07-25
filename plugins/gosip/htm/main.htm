@@ -162,16 +162,30 @@
       var Setup;
       
       function ReadSlave() {
-         Setup.fSFP = $("#id_sfp").val();
-         Setup.fDEV = $("#id_dev").val();
+         if (document.getElementById("broadcast").checked) {
+           Setup.fSFP = -1;
+           Setup.fDEV = -1;
+         } else {
+           Setup.fSFP = $("#id_sfp").val();
+           Setup.fDEV = $("#id_dev").val();
+         }
          Setup.fLogging = document.getElementById("Verbose").checked;         
       }
       
+      function SetStatusMessage(info)
+      {
+         var d = new Date();
+         var txt = d.toLocaleTimeString() + " SFP:" + Setup.fSFP + " DEV:"+Setup.fDEV + "  " + info;
+         document.getElementById("status_message").innerHTML = txt; 
+      }
+      
       function RefreshView(res) {
-         document.getElementById("status_message").innerHTML = res ? "Command done" : "Command fail";
+      
+         SetStatusMessage("Reading registers " + (res ? "OK" : "Fail"));
+         
          if (Setup.fLogData!=null) {
             var ddd = "";
-            console.log("length = " + Setup.fLogData.length); 
+            // console.log("log length = " + Setup.fLogData.length); 
             for (var i in Setup.fLogData) {
                ddd += "<pre>";
                ddd += Setup.fLogData[i];
@@ -190,13 +204,17 @@
          Setup.RefreshQFW(base);
          
          Setup.RefreshDAC(base);
+         
+         Setup.RefreshCounters(base);
       }
       
       function CompleteCommand(res) {
-         document.getElementById("status_message").innerHTML = res ? "Command done" : "Command fail";
+         
+         SetStatusMessage("Writing registers " + (res ? "OK" : "Fail"));
+         
          if (Setup.fLogData!=null) {
             var ddd = "";
-            console.log("length = " + Setup.fLogData.length); 
+            //console.log("log length = " + Setup.fLogData.length); 
             for (var i in Setup.fLogData) {
                ddd += "<pre>";
                ddd += Setup.fLogData[i];
@@ -236,41 +254,38 @@
          if ($("#QFWModeCombo").selectmenu("option","width") < 500)
             $("#QFWModeCombo").selectmenu("option","width", 500);
           
-
-         $("#button10").button().click(function() { ButtonAction(); }); 
-         $("#button11").button().click(function() { ButtonAction(); }); 
-         $("#button12").button().click(function() { ButtonAction(); }); 
-         $("#buttonExecute").button().click(function() { ExecCommand(); }); 
-
          $("#buttonShow").button().click(function() { 
             ReadSlave(); 
-            document.getElementById("status_message").innerHTML = "Executing command ...";
+            SetStatusMessage("Start register reading...");
             Setup.ReadRegisters(RefreshView); 
          });
           
          $("#buttonApply").button().click(function() {
             ReadSlave();
 
-            document.getElementById("status_message").innerHTML = "Apply pressed ...";
-
             Setup.EvaluateDAC();
             Setup.EvaluateQFW();
             
-            if ($("#tabs").tabs("option","active")==0)
-               Setup.SetRegisters("QFW", CompleteCommand);
-            else
-               Setup.SetRegisters("DAC", CompleteCommand);
+            var cmd = ($("#tabs").tabs("option","active")==0) ? "QFW" : "DAC";   
+            
+            SetStatusMessage("Start writing "+cmd);
+            Setup.SetRegisters(cmd, CompleteCommand);
          });
           
          $("#buttonConfigure").button().click(function() { ButtonAction(); }); 
          $("#buttonDataDump").button().click(function() { ButtonAction(); }); 
-         $("#buttonClear").button().click(function() { ButtonAction(); }); 
-
+         $("#buttonClear").button().click(function() {
+            document.getElementById("logging").innerHTML = 
+              "<br>GOSIP web interface v 0.1, 25 Jul 2014<br> S.Linev/J.Adamzewski-Musch<br>";
+         }); 
        });
        
        function initGUI() {
-          Setup.RefreshQFW();
-          Setup.RefreshDAC();
+          var base = document.getElementById("HexMode").checked ? 16 : 10;
+          Setup.RefreshQFW(base);
+          Setup.RefreshDAC(base);
+          Setup.RefreshCounters(base);
+          $("#buttonClear").button().click();
        } 
        
        $(document).ready(initGUI);
@@ -447,15 +462,11 @@
       </div>
       <div id="right_col">
         <h3>QFW Counters</h3>
+        <h2>Trigger</h2>
+        <div align="center" id="TriggerLbl" style="width: 100%"> </div>
         <br>
-        <br>
-        <button id="button10">Button10</button> <br>
-        <br>
-        <button id="button11">Button11</button> <br>
-        <br>
-        <button id="button12">Button12</button> <br>
-        <br>
-        <button id="buttonExecute">Execute</button> <br>
+        <h2>Errors</h2>
+        <div align="center" id="ErrorsLbl" style="width: 100%"> </div>
         <br>
         <input id="HexMode" type="checkbox"><label for="HexMode">Hexmode</label><br>
         <input id="Verbose" type="checkbox"><label for="Verbose">Verbose</label><br>

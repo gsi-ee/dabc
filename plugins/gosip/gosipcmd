@@ -1,6 +1,8 @@
 #!/bin/bash
 # use for debugging where gosipcmd not availible
 
+if [[ "$1" == "--" ]]; then shift; fi
+
 if [[ "$3" == "-r" ]]; then echo $4; exit; fi
 if [[ "$3" == "-w" ]]; then exit; fi
 

@@ -209,6 +209,21 @@ PolandSetup.prototype.EvaluateDAC = function()
      }
 }
 
+PolandSetup.prototype.RefreshCounters = function(base)
+{
+   if (!base) base = 16;
+   var pre = base==16 ? "0x" : "";
+   
+   document.getElementById("TriggerLbl").innerHTML = "<h2>"+pre+this.fEventCounter.toString(base)+"</h2>";
+
+   var txt = "";
+   
+   for (var i=0;i<this.fErrorCounter.length;i++)
+      txt+="<h2>"+pre + this.fErrorCounter[i].toString(base)+"</h2>";
+
+   document.getElementById("ErrorsLbl").innerHTML = txt;
+}
+
 
 PolandSetup.prototype.ReadRegisters = function(callback)
 {
@@ -267,29 +282,29 @@ PolandSetup.prototype.ReadRegisters = function(callback)
 
          var indx = 0;
          
-         pthis.fInternalTrigger = res[indx++];
-         pthis.fTriggerMode = res[indx++];
-         pthis.fEventCounter = res[indx++];
-         pthis.fQFWMode = res[indx++];
+         pthis.fInternalTrigger = Number(res[indx++]);
+         pthis.fTriggerMode = Number(res[indx++]);
+         pthis.fEventCounter = Number(res[indx++]);
+         pthis.fQFWMode = Number(res[indx++]);
 
          for (var i = 0; i < POLAND_TS_NUM; ++i)
          {
-            pthis.fSteps[i] = res[indx++];
-            pthis.fTimes[i] = res[indx++];
+            pthis.fSteps[i] = Number(res[indx++]);
+            pthis.fTimes[i] = Number(res[indx++]);
          }
          for (var e = 0; e < POLAND_ERRCOUNT_NUM; ++e)
          {
-            pthis.fErrorCounter[e] = res[indx++];
+            pthis.fErrorCounter[e] = Number(res[indx++]);
          }
 
-         pthis.fDACMode = res[indx++];
-         pthis.fDACCalibTime = res[indx++];
-         pthis.fDACOffset = res[indx++];
-         pthis.fDACStartValue = res[indx++];
+         pthis.fDACMode = Number(res[indx++]);
+         pthis.fDACCalibTime = Number(res[indx++]);
+         pthis.fDACOffset = Number(res[indx++]);
+         pthis.fDACStartValue = Number(res[indx++]);
 
          for (var d = 0; d < POLAND_DAC_NUM; ++d)
          {
-            pthis.fDACValue[d] = res[indx++];
+            pthis.fDACValue[d] = Number(res[indx++]);
          }
          
          pthis.fLogData = reply['log'];
