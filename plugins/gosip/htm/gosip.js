@@ -225,6 +225,61 @@ PolandSetup.prototype.RefreshCounters = function(base)
 }
 
 
+PolandSetup.prototype.GosipCommand = function(cmd, command_callback)
+{
+   var xmlHttp = new XMLHttpRequest();
+   
+   var cmdtext = this.CmdUrl + "?sfp=" + this.fSFP + "&dev=" + this.fDEV;
+   
+   if (this.fLogging) cmdtext+="&log=1";
+   
+   cmdtext+="&cmd=\'[" + cmd + "]\'";
+   
+   console.log(cmdtext);
+   
+   xmlHttp.open('GET', cmdtext, true);
+   
+   var pthis = this;
+   
+   xmlHttp.onreadystatechange = function () {
+      // console.log("onready change " + xmlHttp.readyState); 
+      if (xmlHttp.readyState == 4) {
+         var reply = JSON.parse(xmlHttp.responseText);
+      
+         if (!reply || (reply["_Result_"]!=1)) {
+            command_callback(false, null);
+            return;
+         }
+         
+         var res = reply["res"];
+         if (res.length != regs.length) {
+            console.log("return length mismatch");
+            command_callback(false, null);
+            return;
+         }
+         
+         if (reply['log']!=null) {
+            var ddd = "";
+            // console.log("log length = " + Setup.fLogData.length); 
+            for (var i in reply['log']) {
+               ddd += "<pre>";
+               ddd += reply['log'][i];
+               ddd += "</pre>";
+            }
+
+            document.getElementById("logging").innerHTML += ddd;
+         }
+         
+         command_callback(true, res);
+      }
+   };
+   
+   xmlHttp.send(null);
+
+
+}
+
+
 PolandSetup.prototype.ReadRegisters = function(callback)
 {
    var regs = new Array();
@@ -247,7 +302,6 @@ PolandSetup.prototype.ReadRegisters = function(callback)
    { 
       regs.push(POLAND_REG_DAC_BASE_READ + 4 * d);
    }
-
    
    var xmlHttp = new XMLHttpRequest();
    
