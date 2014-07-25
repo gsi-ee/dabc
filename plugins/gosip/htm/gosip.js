@@ -152,7 +152,7 @@ PolandSetup.prototype.EvaluateQFW = function()
 {
    var options = document.getElementById("QFWModeCombo").options;
    for (var i = 0; i < options.length; i++) 
-      if (options[i].selected) this.fQFWMode = options[i].value;
+      if (options[i].selected) this.fQFWMode = Number(options[i].value);
 
    this.fSteps[0] = parseInt(document.getElementById("TS1Loop").value);
    this.fSteps[1] = parseInt(document.getElementById("TS2Loop").value);
@@ -191,7 +191,7 @@ PolandSetup.prototype.EvaluateDAC = function()
 {
    var options = document.getElementById("DacModeCombo").options;
    for (var i = 0; i < options.length; i++) 
-      if (options[i].selected) this.fDACMode = options[i].value;
+      if (options[i].selected) this.fDACMode = Number(options[i].value);
    
    if(this.fDACMode==4)
      this.fDACAllValue = parseInt(document.getElementById("DacStart").value);
@@ -233,7 +233,7 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback)
    
    if (this.fLogging) cmdtext+="&log=1";
    
-   cmdtext+="&cmd=\'[" + cmd + "]\'";
+   cmdtext+="&cmd=\'" + cmd + "\'";
    
    console.log(cmdtext);
    
@@ -251,34 +251,29 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback)
             return;
          }
          
-         var res = reply["res"];
-         if (res.length != regs.length) {
-            console.log("return length mismatch");
-            command_callback(false, null);
-            return;
-         }
-         
          if (reply['log']!=null) {
             var ddd = "";
             // console.log("log length = " + Setup.fLogData.length); 
             for (var i in reply['log']) {
+               
+               if (reply['log'][i].search("\n")>=0) console.log("found 1");
+               if (reply['log'][i].search("\\n")>=0) console.log("found 2");
+               if (reply['log'][i].search("\\\n")>=0) console.log("found 3");
+               
                ddd += "<pre>";
-               ddd += reply['log'][i];
+               ddd += reply['log'][i].replace(/\\n/g,"<br/>");
                ddd += "</pre>";
             }
 
             document.getElementById("logging").innerHTML += ddd;
          }
          
-         command_callback(true, res);
+         command_callback(true, reply["res"]);
       }
    };
    
    xmlHttp.send(null);
-
-
 }
-
 
 PolandSetup.prototype.ReadRegisters = function(callback)
 {
@@ -303,37 +298,16 @@ PolandSetup.prototype.ReadRegisters = function(callback)
       regs.push(POLAND_REG_DAC_BASE_READ + 4 * d);
    }
    
-   var xmlHttp = new XMLHttpRequest();
-   
-   var cmdtext = this.CmdUrl + "?sfp=" + this.fSFP + "&dev=" + this.fDEV;
-   
-   if (this.fLogging) cmdtext+="&log=1";
-   
-   cmdtext+="&cmd=\'[" + regs.toString() + "]\'";
-   
-   console.log(cmdtext);
-   
-   xmlHttp.open('GET', cmdtext, true);
-   
    var pthis = this;
    
-   xmlHttp.onreadystatechange = function () {
-      // console.log("onready change " + xmlHttp.readyState); 
-      if (xmlHttp.readyState == 4) {
-         var reply = JSON.parse(xmlHttp.responseText);
-      
-         if (!reply || (reply["_Result_"]!=1)) {
-            callback(false);
-            return;
-         }
-         
-         var res = reply["res"];
-         if (res.length != regs.length) {
-            console.log("return length mismatch");
-            callback(false);
-            return;
-         }
+   this.GosipCommand("[" + regs.toString() + "]", function(isok, res) {
 
+      if (isok && (res.length != regs.length)) {
+         console.log("return length mismatch");
+         isok = false;
+      }
+      
+      if (isok) {
          var indx = 0;
          
          pthis.fInternalTrigger = Number(res[indx++]);
@@ -360,14 +334,9 @@ PolandSetup.prototype.ReadRegisters = function(callback)
          {
             pthis.fDACValue[d] = Number(res[indx++]);
          }
-         
-         pthis.fLogData = reply['log'];
-         
-         callback(true);
       }
-   };
-   
-   xmlHttp.send(null);
+      callback(isok);
+   });
 }
 
 
@@ -441,50 +410,27 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
    }
    
    
-   var xmlHttp = new XMLHttpRequest();
-   
-   var cmdtext = this.CmdUrl + "?sfp=" + this.fSFP + "&dev=" + this.fDEV;
-   
-   if (this.fLogging) cmdtext+="&log=1";
-   
-   cmdtext+="&cmd=\'[";
+   var cmdtext = "[";
    
    for (var i=0;i<regs.length;i++) {
       if (i>0) cmdtext += ",";
       cmdtext += "\"-w " + regs[i][0] + " " + regs[i][1] + "\"";  
    }
    
-   cmdtext += "]\'";
+   cmdtext += "]";
    
-   console.log(cmdtext);
-   
-   xmlHttp.open('GET', cmdtext, true);
-   
-   var pthis = this;
-   
-   xmlHttp.onreadystatechange = function () {
-      // console.log("onready change " + xmlHttp.readyState); 
-      if (xmlHttp.readyState == 4) {
-         var reply = JSON.parse(xmlHttp.responseText);
-      
-         if (!reply || (reply["_Result_"]!=1)) {
-            callback(false);
-            return;
-         }
-         
-         var res = reply["res"];
-         if (res.length != regs.length) {
-            console.log("return length mismatch");
-            callback(false);
-            return;
-         }
-         
-         pthis.fLogData = reply['log'];
-         
-         callback(true);
+   this.GosipCommand(cmdtext, function(isok, res) {
+      if (isok && (res.length != regs.length)) {
+         console.log("return length mismatch");
+         isok = false;
       }
-   };
-   
-   xmlHttp.send(null);
+      
+      callback(isok);
+   });
 }
 
+
+PolandSetup.prototype.DumpData = function(callback) 
+{
+   
+}

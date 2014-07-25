@@ -642,9 +642,6 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
 
 bool dabc::RecordField::NeedJsonReformat(const std::string& str)
 {
-   // if didnot found double quotes, everything is fine
-   if (str.find_first_of("\"")==std::string::npos) return false;
-
    // here we have situation that both single and double quotes present
    // first try to define which kind quotes preceding with escape character
    bool is_last_escape(false);
@@ -653,9 +650,13 @@ bool dabc::RecordField::NeedJsonReformat(const std::string& str)
 
       switch (str[n]) {
          case '\\' : is_last_escape = !is_last_escape; break;
+         case '\n' : return true; // new-line symbol should be replaced
          case '\"' :
             if (!is_last_escape) return true;
             is_last_escape = false;
+            break;
+         case 'n' :
+            if (is_last_escape) return true; // string '\n' should be replaced by "\\n"
             break;
          default:
             is_last_escape = false;
@@ -672,9 +673,16 @@ std::string dabc::RecordField::JsonReformat(const std::string& str)
    bool is_last_escape(false);
 
    for (unsigned n=0;n<str.length();n++) {
+      if (str[n] == '\n') {
+         res += "\\\\n";
+         continue;
+      }
+
       if (str[n] == '\\') is_last_escape = !is_last_escape;
 
-      if ((str[n] == '\"') && !is_last_escape) res+='\\';
+      if ((str[n] == '\"') && !is_last_escape) res+='\\'; else
+      if ((str[n] == 'n') && is_last_escape) res += '\\'; // when appearing \n, replace by \\n
+
       res += str[n];
    }
 

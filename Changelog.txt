@@ -5,6 +5,7 @@ current functionality of the framework.
 25.07.2014
 1. First version of gosip GUI with reading and writing of registers.
    Many small layout problems need to be fixed. 
+2. Implement newline in json format, used in gosip data dump.
 
 
 24.07.2014

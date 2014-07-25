@@ -32,6 +32,7 @@
 			margin:0;
 			height:3em;
 			z-index:3;
+         background-color:white;
 		}
 		.DacEdit {
 		   width: 90%;
@@ -64,6 +65,7 @@
 			margin:0;
 			height:3em;
 			z-index:3;
+			background-color:white;
 		}
 		#footer 
 		{
@@ -272,8 +274,21 @@
             Setup.SetRegisters(cmd, CompleteCommand);
          });
           
-         $("#buttonConfigure").button().click(function() { ButtonAction(); }); 
-         $("#buttonDataDump").button().click(function() { ButtonAction(); }); 
+         $("#buttonConfigure").button().click(function() { ButtonAction(); });
+          
+         $("#buttonDataDump").button().click(function() {
+            ReadSlave(); 
+            Setup.fLogging = true;
+            SetStatusMessage("Dumping data...");
+            var numwords = 32 + Setup.fSteps[0] * 32 + Setup.fSteps[1]*32 + Setup.fSteps[2] * 32 + 32;
+
+            document.getElementById("logging").innerHTML += "--- Register Dump ---<br>";
+            
+            Setup.GosipCommand("-d 0 " + numwords.toString(), function(res) {
+               SetStatusMessage("Dump data " + (res ? "OK" : "Fail"));
+            }); 
+         });
+          
          $("#buttonClear").button().click(function() {
             document.getElementById("logging").innerHTML = 
               "<br>GOSIP web interface v 0.1, 25 Jul 2014<br> S.Linev/J.Adamzewski-Musch<br>";
