@@ -164,19 +164,53 @@
       function ReadSlave() {
          Setup.fSFP = $("#id_sfp").val();
          Setup.fDEV = $("#id_dev").val();
+         Setup.fLogging = document.getElementById("Verbose").checked;         
       }
       
       function RefreshView(res) {
          document.getElementById("status_message").innerHTML = res ? "Command done" : "Command fail";
+         if (Setup.fLogData!=null) {
+            var ddd = "";
+            console.log("length = " + Setup.fLogData.length); 
+            for (var i in Setup.fLogData) {
+               ddd += "<pre>";
+               ddd += Setup.fLogData[i];
+               ddd += "</pre>";
+            }
+            
+            document.getElementById("logging").innerHTML += ddd;
+                
+            Setup.fLogData = null;
+         }
+
          if (!res) return;
-         Setup.RefreshDAC();
+         
+         var base = document.getElementById("HexMode").checked ? 16 : 10;
+         
+         Setup.RefreshQFW(base);
+         
+         Setup.RefreshDAC(base);
+      }
+      
+      function CompleteCommand(res) {
+         document.getElementById("status_message").innerHTML = res ? "Command done" : "Command fail";
+         if (Setup.fLogData!=null) {
+            var ddd = "";
+            console.log("length = " + Setup.fLogData.length); 
+            for (var i in Setup.fLogData) {
+               ddd += "<pre>";
+               ddd += Setup.fLogData[i];
+               ddd += "</pre>";
+            }
+            
+            document.getElementById("logging").innerHTML += ddd;
+            Setup.fLogData = null;
+         }
       }
       
       $(function() {
 
          Setup = new PolandSetup("../CmdGosip/execute");
-         Setup.RefreshDAC();
-
       
          $("#tabs").tabs();
          $("#id_sfp").selectmenu();
@@ -190,13 +224,15 @@
          $("#buttonResetPEX").button().click(function() { ButtonAction(); });
          
          $("#DacModeCombo").selectmenu({
-           change: function( event, ui ) { Setup.fDACMode = ui.item.value; Setup.RefreshDAC(); }
+            change: function( event, ui ) { Setup.fDACMode = ui.item.value; Setup.RefreshDAC(); }
          });
          
          if ($("#DacModeCombo").selectmenu("option","width") < 500)
             $("#DacModeCombo").selectmenu("option","width", 500);
 
-         $("#QFWModeCombo").selectmenu();
+         $("#QFWModeCombo").selectmenu( {
+            change: function( event, ui ) { Setup.fQFWMode = ui.item.value; }
+         });
          if ($("#QFWModeCombo").selectmenu("option","width") < 500)
             $("#QFWModeCombo").selectmenu("option","width", 500);
           
@@ -210,8 +246,22 @@
             ReadSlave(); 
             document.getElementById("status_message").innerHTML = "Executing command ...";
             Setup.ReadRegisters(RefreshView); 
-         }); 
-         $("#buttonApply").button().click(function() { ButtonAction(); }); 
+         });
+          
+         $("#buttonApply").button().click(function() {
+            ReadSlave();
+
+            document.getElementById("status_message").innerHTML = "Apply pressed ...";
+
+            Setup.EvaluateDAC();
+            Setup.EvaluateQFW();
+            
+            if ($("#tabs").tabs("option","active")==0)
+               Setup.SetRegisters("QFW", CompleteCommand);
+            else
+               Setup.SetRegisters("DAC", CompleteCommand);
+         });
+          
          $("#buttonConfigure").button().click(function() { ButtonAction(); }); 
          $("#buttonDataDump").button().click(function() { ButtonAction(); }); 
          $("#buttonClear").button().click(function() { ButtonAction(); }); 
@@ -219,6 +269,8 @@
        });
        
        function initGUI() {
+          Setup.RefreshQFW();
+          Setup.RefreshDAC();
        } 
        
        $(document).ready(initGUI);
@@ -281,14 +333,14 @@
               </tbody>
             </table>
             <select name="QFWModeCombo" id="QFWModeCombo" style="width: 100%">
-              <option selected="selected">(-) [ 2.5pF & 0.25pC]</option>
-              <option>(-) [25.0pF & 2.50pC]</option>
-              <option>(+) [ 2.5pF & 0.25pC]</option>
-              <option>(+) [25.0pF & 2.50pC]</option>
-              <option>1000uA (-) [ 2.5pF & 0.25pC]</option>
-              <option>1000uA (-) [25.0pF & 2.50pC]</option>
-              <option>1000uA (+) [ 2.5pF & 0.25pC]</option>
-              <option>1000uA (+) [25.0pF & 2.50pC]</option>
+              <option selected="selected" value="0">(-) [ 2.5pF & 0.25pC]</option>
+              <option value="1">(-) [25.0pF & 2.50pC]</option>
+              <option value="2">(+) [ 2.5pF & 0.25pC]</option>
+              <option value="3">(+) [25.0pF & 2.50pC]</option>
+              <option value="16">1000uA (-) [ 2.5pF & 0.25pC]</option>
+              <option value="17">1000uA (-) [25.0pF & 2.50pC]</option>
+              <option value="18">1000uA (+) [ 2.5pF & 0.25pC]</option>
+              <option value="19">1000uA (+) [25.0pF & 2.50pC]</option>
             </select>
             <table style="width: 100%">
               <tbody>
@@ -314,9 +366,6 @@
                 </tr>
               </tbody>
             </table>
-          
-          
-           
           </div>
           <div id="tabs-2">
             <select name="DacModeCombo" id="DacModeCombo">
@@ -392,6 +441,9 @@
             </table>
           </div>
         </div>
+        
+        <div id="logging" style="width: 100%; height: 300px; overflow-y: auto;">
+        </div>
       </div>
       <div id="right_col">
         <h3>QFW Counters</h3>
@@ -407,8 +459,8 @@
         <br>
         <input id="HexMode" type="checkbox"><label for="HexMode">Hexmode</label><br>
         <input id="Verbose" type="checkbox"><label for="Verbose">Verbose</label><br>
-         
       </div>
+      
     </div>
     <div id="footer_container">
       <table style="width: 100%">

@@ -43,6 +43,8 @@ function PolandSetup(cmdurl) {
    
    this.fSFP = 0;
    this.fDEV = 0;
+   this.fLogging = false;
+   this.fLogData = null;
    
    this.fSteps = new Array;
    this.fTimes = new Array;
@@ -73,30 +75,140 @@ function PolandSetup(cmdurl) {
    this.fDACCalibTime = 0;
 }
 
+PolandSetup.prototype.SetTriggerMaster  = function(on)
+{
+   this.fTriggerMode = on ? (this.fTriggerMode | 2) : (this.fTriggerMode & ~2);
+}
+
+PolandSetup.prototype.IsTriggerMaster = function()
+{
+  return ((this.fTriggerMode & 2) === 2);
+}
+
+PolandSetup.prototype.SetFesaMode = function(on)
+{
+  this.fTriggerMode = on ? (this.fTriggerMode | 1) : (this.fTriggerMode & ~1);
+}
+
+PolandSetup.prototype.IsFesaMode = function()
+{
+  return (this.fTriggerMode & 1) === 1;
+}
+
+PolandSetup.prototype.SetInternalTrigger = function (on)
+{
+   this.fInternalTrigger = on ?  (this.fInternalTrigger | 1) : (this.fInternalTrigger & ~1);
+}
+
+PolandSetup.prototype.IsInternalTrigger = function()
+{
+  return (this.fInternalTrigger & 1) === 1;
+}
+
 PolandSetup.prototype.GetCalibrationTime = function()
 {
    return (this.fDACCalibTime*POLAND_TIME_UNIT)/1000.;
 }
 
+PolandSetup.prototype.SetCalibrationTime = function (ms)
+{
+   this.fDACCalibTime = 1000 * ms / POLAND_TIME_UNIT;
+}
+
+PolandSetup.prototype.GetStepTime = function(loop)
+{
+   return this.fTimes[loop]*POLAND_TIME_UNIT;
+}
+
+PolandSetup.prototype.SetStepTime = function(loop, us)
+{
+   this.fTimes[loop] = us / POLAND_TIME_UNIT;
+}
+
+
+PolandSetup.prototype.RefreshQFW = function(base)
+{
+   var options = document.getElementById("QFWModeCombo").options;
+   for (var i = 0; i < options.length; i++) 
+      options[i].selected = (options[i].value == this.fQFWMode);
+   $("#QFWModeCombo").selectmenu('refresh', true);
+   
+   if (!base) base = 16;
+   var pre = base==16 ? "0x" : "";
+
+   document.getElementById("TS1Loop").value = pre + this.fSteps[0].toString(base);
+   document.getElementById("TS2Loop").value = pre + this.fSteps[1].toString(base);
+   document.getElementById("TS3Loop").value = pre + this.fSteps[2].toString(base);
+   document.getElementById("TS1Time").value = this.GetStepTime(0).toString();
+   document.getElementById("TS2Time").value = this.GetStepTime(1).toString();
+   document.getElementById("TS3Time").value = this.GetStepTime(2).toString();
+   
+   document.getElementById("MasterTrigger").checked = this.IsTriggerMaster();
+   document.getElementById("FESAMode").checked = this.IsFesaMode();
+   document.getElementById("InternalTrigger").checked = this.IsInternalTrigger();
+}
+
+PolandSetup.prototype.EvaluateQFW = function() 
+{
+   var options = document.getElementById("QFWModeCombo").options;
+   for (var i = 0; i < options.length; i++) 
+      if (options[i].selected) this.fQFWMode = options[i].value;
+
+   this.fSteps[0] = parseInt(document.getElementById("TS1Loop").value);
+   this.fSteps[1] = parseInt(document.getElementById("TS2Loop").value);
+   this.fSteps[2] = parseInt(document.getElementById("TS3Loop").value);
+   this.SetStepTime(0, parseFloat(document.getElementById("TS1Time").value));
+   this.SetStepTime(1, parseFloat(document.getElementById("TS2Time").value));
+   this.SetStepTime(2, parseFloat(document.getElementById("TS3Time").value));
+   
+   this.SetTriggerMaster(document.getElementById("MasterTrigger").checked);
+   this.SetFesaMode(document.getElementById("FESAMode").checked);
+   this.SetInternalTrigger(document.getElementById("InternalTrigger").checked);
+}
 
 PolandSetup.prototype.RefreshDAC = function(base)
 {
-  //std::cout << "PolandGui::RefreshDAC"<< std::endl;
-   
+   var options = document.getElementById("DacModeCombo").options;
+   for (var i = 0; i < options.length; i++) 
+      options[i].selected = (options[i].value == this.fDACMode);
+   $("#DacModeCombo").selectmenu('refresh', true);
+
    if (!base) base = 16;
-   
    var pre = base==16 ? "0x" : "";
 
    document.getElementById("DacOffset").value = pre + this.fDACOffset.toString(base);
    document.getElementById("DacDeltaOffset").value = pre + this.fDACDelta.toString(base);
    document.getElementById("DacCalibTime").value = this.GetCalibrationTime().toString();
    
-   for (var i=1;i<=POLAND_DAC_NUM;i++) {
-      var elem = document.getElementById("DacEdit" + i)
+   for (var i=0;i<POLAND_DAC_NUM;i++) {
+      var elem = document.getElementById("DacEdit" + (i+1));
       
-      elem.value = pre + this.fDACValue[i-1].toString(base);
+      elem.value = pre + this.fDACValue[i].toString(base);
    }
 }
+
+PolandSetup.prototype.EvaluateDAC = function()
+{
+   var options = document.getElementById("DacModeCombo").options;
+   for (var i = 0; i < options.length; i++) 
+      if (options[i].selected) this.fDACMode = options[i].value;
+   
+   if(this.fDACMode==4)
+     this.fDACAllValue = parseInt(document.getElementById("DacStart").value);
+  else
+     this.fDACStartValue = parseInt(document.getElementById("DacStart").value);
+
+  this.fDACOffset = parseInt(document.getElementById("DacOffset").value);
+  this.fDACDelta = parseInt(document.getElementById("DacDeltaOffset").value);
+  this.SetCalibrationTime(parseFloat(document.getElementById("DacCalibTime").value));
+
+  if(this.fDACMode == 1)
+     for (var i=0;i<POLAND_DAC_NUM;i++) {
+        var elem = document.getElementById("DacEdit" + (i+1));
+        this.fDACValue[i] = parseInt(elem.value);
+     }
+}
+
 
 PolandSetup.prototype.ReadRegisters = function(callback)
 {
@@ -125,6 +237,8 @@ PolandSetup.prototype.ReadRegisters = function(callback)
    var xmlHttp = new XMLHttpRequest();
    
    var cmdtext = this.CmdUrl + "?sfp=" + this.fSFP + "&dev=" + this.fDEV;
+   
+   if (this.fLogging) cmdtext+="&log=1";
    
    cmdtext+="&cmd=\'[" + regs.toString() + "]\'";
    
@@ -178,9 +292,130 @@ PolandSetup.prototype.ReadRegisters = function(callback)
             pthis.fDACValue[d] = res[indx++];
          }
          
+         pthis.fLogData = reply['log'];
+         
          callback(true);
       }
    };
    
    xmlHttp.send(null);
 }
+
+
+
+PolandSetup.prototype.SetRegisters = function(kind, callback)
+{
+   // one could set "QFW", "DAC" or all registers 
+   
+   
+   // write register values from strucure with gosipcmd
+   
+   var regs = new Array();
+
+   if (kind=="QFW") {
+      // reading of registers on QFW page
+   
+      if ((this.fSFP >= 0) && (this.fDEV >= 0)) {
+         // update trigger modes only in single device
+         regs.push([POLAND_REG_INTERNAL_TRIGGER, this.fInternalTrigger]);
+         regs.push([POLAND_REG_MASTERMODE, this.fTriggerMode]);
+      }
+
+      regs.push([POLAND_REG_QFW_MODE, this.fQFWMode]);
+   
+      for (var i = 0; i < POLAND_TS_NUM; ++i)
+      {
+         regs.push([POLAND_REG_STEPS_BASE + 4 * i, this.fSteps[i]]);
+         regs.push([POLAND_REG_TIME_BASE + 4 * i, this.fTimes[i]]);
+      }
+   }
+   
+   if (kind == "DAC") {
+      // reading of registers on DAC page
+      
+      regs.push([POLAND_REG_DAC_MODE, this.fDACMode]);
+
+      switch(this.fDACMode)
+      {
+        case 1:
+          // manual settings:
+          for (var d = 0; d < POLAND_DAC_NUM; ++d)
+          {
+             regs.push( [POLAND_REG_DAC_BASE_WRITE + 4 * d, this.fDACValue[d]]);
+          }
+          break;
+        case 2:
+          // test structure:
+          // no more actions needed
+          break;
+        case 3:
+          // issue calibration:
+          regs.push( [POLAND_REG_DAC_CAL_STARTVAL , this.fDACStartValue]);
+          regs.push( [POLAND_REG_DAC_CAL_OFFSET ,  this.fDACOffset]);
+          regs.push( [POLAND_REG_DAC_CAL_DELTA ,  this.fDACDelta]);
+          regs.push( [POLAND_REG_DAC_CAL_TIME ,  this.fDACCalibTime]);
+
+          break;
+        case 4:
+          // all same constant value mode:
+          regs.push( [POLAND_REG_DAC_ALLVAL , this.fDACAllValue]);
+          break;
+
+        default:
+          console.log("!!! ApplyDAC Never come here - undefined DAC mode " + this.fDACMode);
+          break;
+
+      };
+
+      regs.push([POLAND_REG_DAC_PROGRAM , 1]);
+      regs.push([POLAND_REG_DAC_PROGRAM , 0]);
+   }
+   
+   
+   var xmlHttp = new XMLHttpRequest();
+   
+   var cmdtext = this.CmdUrl + "?sfp=" + this.fSFP + "&dev=" + this.fDEV;
+   
+   if (this.fLogging) cmdtext+="&log=1";
+   
+   cmdtext+="&cmd=\'[";
+   
+   for (var i=0;i<regs.length;i++) {
+      if (i>0) cmdtext += ",";
+      cmdtext += "\"-w " + regs[i][0] + " " + regs[i][1] + "\"";  
+   }
+   
+   cmdtext += "]\'";
+   
+   console.log(cmdtext);
+   
+   xmlHttp.open('GET', cmdtext, true);
+   
+   var pthis = this;
+   
+   xmlHttp.onreadystatechange = function () {
+      // console.log("onready change " + xmlHttp.readyState); 
+      if (xmlHttp.readyState == 4) {
+         var reply = JSON.parse(xmlHttp.responseText);
+      
+         if (!reply || (reply["_Result_"]!=1)) {
+            callback(false);
+            return;
+         }
+         
+         var res = reply["res"];
+         if (res.length != regs.length) {
+            console.log("return length mismatch");
+            callback(false);
+            return;
+         }
+         
+         pthis.fLogData = reply['log'];
+         
+         callback(true);
+      }
+   };
+   
+   xmlHttp.send(null);
+}
+

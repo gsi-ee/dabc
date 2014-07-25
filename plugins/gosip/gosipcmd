@@ -1,0 +1,8 @@
+#!/bin/bash
+# use for debugging where gosipcmd not availible
+
+if [[ "$3" == "-r" ]]; then echo $4; exit; fi
+if [[ "$3" == "-w" ]]; then exit; fi
+
+echo "wrong arguments $3" 1>&2
+

@@ -56,7 +56,9 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       int sfp = cmd.GetInt("sfp", 0);
       int dev = cmd.GetInt("dev", 0);
 
-      std::string prefix = "gosipcmp ";
+      bool log_output = cmd.GetInt("log") > 0;
+
+      std::string prefix = "gosipcmd ";
       if ((sfp<0) || (dev<0)) {
          prefix.append("-- -1 -1 ");
       } else {
@@ -66,6 +68,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       std::vector<std::string> gosipcmd = cmd.GetField("cmd").AsStrVect();
 
       std::vector<std::string> gosipres;
+      std::vector<std::string> gosiplog;
 
       DOUT0("****************** CmdGosip ****************");
       for (unsigned n=0;n<gosipcmd.size();n++) {
@@ -80,10 +83,11 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
             currcmd = std::string("-r ") + currcmd;
          }
 
-
          std::string exec = prefix + currcmd + " 2>&1";
 
-         DOUT0("CMD %s", exec.c_str());
+         if (log_output) gosiplog.push_back(exec);
+
+         // DOUT0("CMD %s", exec.c_str());
 
          FILE* pipe = popen(exec.c_str(), "r");
 
@@ -98,14 +102,17 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
          while(!feof(pipe)) {
             int size = (int)fread(buf,1, sizeof(buf)-1, pipe); //cout<<buffer<<" size="<<size<<endl;
             if (size<=0) break;
+            while ((size>0) && ((buf[size-1]==' ') || (buf[size-1]=='\n'))) size--;
             buf[size] = 0;
-            DOUT0("Get %s", buf);
+            if (log_output && (size>0)) gosiplog.push_back(buf);
+            // DOUT0("Get %s", buf);
          }
+
          pclose(pipe);
 
          if (iswriting) {
 
-            DOUT0("Writing res:%s len %d", buf, strlen(buf));
+            // DOUT0("Writing res:%s len %d", buf, strlen(buf));
 
             if (strlen(buf) > 2) {
                gosipres.push_back("<err>");
@@ -122,7 +129,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
                gosipres.push_back("<err>");
                break;
             }
-            DOUT0("Reading ok %ld", value);
+            // DOUT0("Reading ok %ld", value);
             gosipres.push_back(dabc::format("%ld", value));
             continue;
          }
@@ -132,6 +139,8 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       while (gosipres.size() < gosipcmd.size()) gosipres.push_back("<skip>");
 
       cmd.SetField("res", gosipres);
+      if (log_output)
+         cmd.SetField("log", gosiplog);
 
       return dabc::cmd_true;
    }
