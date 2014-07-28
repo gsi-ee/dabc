@@ -9,114 +9,38 @@
     <script src="gosip.js" type="text/javascript"></script>
     <style type="text/css">
     
-      body
-		{ 
-			position:absolute;
-			background:#ffffff;
-		}
-		html, body
-		{ 
-			top:0; left:0; right:0;
-			min-height:100%;
-			margin:0;
-			padding:0;
-			width:100%;
-		}
 		#header_container 
 		{
 			position:fixed;
-			top:0; left:0; right:0;
+			top:0; height:3em; 
+			left:0; width:100%; 
 			text-align:center;
-			margin:0;
-			height:3em;
-			z-index:3;
-         background-color:white;
 		}
-		.DacEdit {
-		   width: 90%;
-		} 
-
-		#header 
+		#content_left
 		{
-			position:absolute;
-			top:0; left:0; right:0; bottom:0;
-			height:100%;
-			z-index:3;
-			margin:0;
-			padding:0.2em;
+			position:fixed;
+			top:3em; bottom:3em;  
+			left:0; width:80%;
 		}
-		
-		#content
+		#content_right
 		{
-			margin:0;
-			padding-top:4.85em;
-			padding-left:0.5em;
-			padding-right:0.5em;
-			padding-bottom:3em;
-			z-index:2;
+			position:fixed;
+			top:3em; bottom:3em;
+			left:80%; width:20%;  
 		}
 		#footer_container
 		{
 			position:fixed;
-			bottom:0; left:0; right:0;
+			bottom:0; height:3em; 
+			left:0; width: 100%;
 			text-align:center;
-			margin:0;
-			height:3em;
-			z-index:3;
 			background-color:white;
 		}
-		#footer 
-		{
-			position:absolute;
-			top:0; left:0; right:0; bottom:0;
-			z-index:3;
+		
+		.DacEdit {
+		   width: 90%;
 		}
 		
-		/* Nun für den MSIE */
-		* html, * html body 
-		{
-			overflow:hidden;
-			bottom:0;
-			height:100%;
-		}
-		* html #header_container, * html #footer_container
-		{
-			position:absolute;
-			width:100%;
-			padding-right:16px;
-		}
-		* html #menu
-		{
-			position:absolute;
-		}
-		* html #header,* html #footer
-		{
-			height:100%;
-			position:static;
-		}
-		* html #content 
-		{
-			position:absolute;
-			top:0; bottom:0; left:0; right:0;
-			height:100%;
-			width:100%;
-			overflow:auto;
-			margin:0;
-		}
-    
-		#left_col {
-		   float:left;
-		   width: 80%;
-		}
-		#right_col {
-		   float:right;
-		   width: 20%;
-		}
-		#tabs {
-		   float:bottom;
-		   height: 100%;
-		}
-      
       label {
         vertical-align: top;
       }
@@ -390,8 +314,7 @@
         </tbody>
       </table>
     </div>
-    <div id="content">
-      <div id="left_col">
+      <div id="content_left">
         <h3 id="status_message">Status message</h3>
         <div id="tabs">
           <ul>
@@ -521,19 +444,18 @@
         <div id="logging" style="width: 100%; height: 300px; overflow-y: auto;">
         </div>
       </div>
-      <div id="right_col">
-        <h3>QFW Counters</h3>
-        <h2>Trigger</h2>
+      <div id="content_right">
+        <h3 style="text-align: center">QFW Counters</h3>
+        <h3 style="text-align: center">Trigger</h3>
         <div align="center" id="TriggerLbl" style="width: 100%"> </div>
         <br/>
-        <h2>Errors</h2>
+        <h3 style="text-align: center">Errors</h3>
         <div align="center" id="ErrorsLbl" style="width: 100%"> </div>
         <br/>
         <input id="HexMode" type="checkbox"><label for="HexMode">Hexmode</label><br/>
         <input id="Verbose" type="checkbox"><label for="Verbose">Verbose</label><br/>
       </div>
       
-    </div>
     <div id="footer_container">
       <table style="width: 100%">
         <tbody>
