@@ -104,6 +104,21 @@
          document.getElementById("status_message").innerHTML = txt; 
       }
       
+      function updateElementsSize()
+      {
+         var h = $('#tabs').height();
+         var t = $('#tabs').offset().top;
+         var h0 = $('#content_right').height();
+           
+         var lx = h0 - t - h;
+         if (lx<100) lx = 100;
+         $('#logging').height(lx);
+         
+         $("#QFWModeCombo").selectmenu("option","width", $('#tabs-1-table').width());
+         $("#DacModeCombo").selectmenu("option","width", $('#tabs-2-table').width());
+      }
+      
+      
       function RefreshView(res) {
       
          SetStatusMessage("Reading registers " + (res ? "OK" : "Fail"));
@@ -131,6 +146,8 @@
          Setup.RefreshDAC(base);
          
          Setup.RefreshCounters(base);
+         
+         updateElementsSize();
       }
       
       function CompleteCommand(res) {
@@ -149,20 +166,6 @@
             document.getElementById("logging").innerHTML += ddd;
             Setup.fLogData = null;
          }
-      }
-      
-      function updateElementsSize()
-      {
-         var h = $('#tabs').height();
-         var t = $('#tabs').offset().top;
-         var h0 = $('#content_right').height();
-           
-         var lx = h0 - t - h;
-         if (lx<100) lx = 100;
-         $('#logging').height(lx);
-         
-         $("#QFWModeCombo").selectmenu("option","width", $('#tabs-1-table').width());
-         $("#DacModeCombo").selectmenu("option","width", $('#tabs-2-table').width());
       }
        
       $(function() {
