@@ -219,7 +219,7 @@ PolandSetup.prototype.RefreshCounters = function(base)
    var txt = "";
    
    for (var i=0;i<this.fErrorCounter.length;i++)
-      txt+="<h2>"+pre + this.fErrorCounter[i].toString(base)+"</h2>";
+      txt+="<h4>"+pre + this.fErrorCounter[i].toString(base)+"</h4>";
 
    document.getElementById("ErrorsLbl").innerHTML = txt;
 }

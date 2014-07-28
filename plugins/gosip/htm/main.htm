@@ -150,11 +150,28 @@
          }
       }
       
+      function updateElementsSize()
+      {
+         var h = $('#tabs').height();
+         var t = $('#tabs').offset().top;
+         var h0 = $('#content_right').height();
+           
+         var lx = h0 - t - h;
+         if (lx<100) lx = 100;
+         $('#logging').height(lx);
+         
+         $("#QFWModeCombo").selectmenu("option","width", $('#tabs-1-table').width());
+         $("#DacModeCombo").selectmenu("option","width", $('#tabs-2-table').width());
+      }
+       
       $(function() {
 
          Setup = new PolandSetup("../CmdGosip/execute");
       
-         $("#tabs").tabs();
+         $("#tabs").tabs({
+            activate: function(event, ui) { updateElementsSize(); }
+         });
+         
          $("#id_sfp").selectmenu();
          $("#id_dev").selectmenu();
          
@@ -216,15 +233,10 @@
             change: function( event, ui ) { Setup.fDACMode = ui.item.value; Setup.RefreshDAC(); }
          });
          
-         if ($("#DacModeCombo").selectmenu("option","width") < 500)
-            $("#DacModeCombo").selectmenu("option","width", 500);
-
          $("#QFWModeCombo").selectmenu( {
             change: function( event, ui ) { Setup.fQFWMode = ui.item.value; }
          });
-         if ($("#QFWModeCombo").selectmenu("option","width") < 500)
-            $("#QFWModeCombo").selectmenu("option","width", 500);
-          
+         
          $("#buttonShow").button().click(function() { 
             ReadSlave(); 
             SetStatusMessage("Start register reading...");
@@ -271,9 +283,13 @@
           Setup.RefreshDAC(base);
           Setup.RefreshCounters(base);
           $("#buttonClear").button().click();
+          
+          updateElementsSize();
        } 
        
        $(document).ready(initGUI);
+       
+       $(window).on('resize', function(){  updateElementsSize(); });
       
    </script>
   </head>
@@ -331,7 +347,7 @@
                 </tr>
               </tbody>
             </table>
-            <select name="QFWModeCombo" id="QFWModeCombo" style="width: 100%">
+            <select name="QFWModeCombo" id="QFWModeCombo">
               <option selected="selected" value="0">(-) [ 2.5pF & 0.25pC]</option>
               <option value="1">(-) [25.0pF & 2.50pC]</option>
               <option value="2">(+) [ 2.5pF & 0.25pC]</option>
@@ -341,7 +357,7 @@
               <option value="18">1000uA (+) [ 2.5pF & 0.25pC]</option>
               <option value="19">1000uA (+) [25.0pF & 2.50pC]</option>
             </select>
-            <table style="width: 100%">
+            <table id="tabs-1-table" style="width: 100%">
               <tbody>
                 <tr>
                   <td> </td>
@@ -373,7 +389,7 @@
               <option value="3">Calibrate (mode 3)</option>
               <option value="4">All Constant (mode 4)</option>
             </select>
-            <table style="width: 100%">
+            <table id="tabs-2-table" style="width: 100%">
               <tbody>
                 <tr>
                   <td nowrap> Value </td>

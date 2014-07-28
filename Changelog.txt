@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+28.07.2014
+1. Improve layout of HTML page, adjust sizes dynamically.
+
+
 25.07.2014
 1. First version of gosip GUI with reading and writing of registers.
    Many small layout problems need to be fixed. 
