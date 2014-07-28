@@ -199,7 +199,7 @@ function AssertPrerequisites(andThen) {
       // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
       loadScript(source_dir+'scripts/jquery.min.js', function() {
       loadScript(source_dir+'scripts/jquery-ui.min.js', function() {
-      loadScript(source_dir+'scripts/d3.v3.js', function() {
+      loadScript(source_dir+'scripts/d3.v3.min.js', function() {
       loadScript(source_dir+'scripts/jquery.mousewheel.js', function() {
       loadScript(source_dir+'scripts/dtree.js', function() {
       loadScript(source_dir+'scripts/rawinflate.js', function() {
