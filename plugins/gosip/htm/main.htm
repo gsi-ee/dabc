@@ -188,8 +188,8 @@
              if (!response) return;
 
              SetStatusMessage("Doing offset measurement...");
-             var cmd = "[\"-w " + POLAND_REG_DO_OFFSET + " 1\", \"-w " + POLAND_REG_DO_OFFSET + " 0\"]";
-             var dumpcmd = "-d -r -x -- 0x" + POLAND_REG_OFFSET_BASE.toString(16) + " 0x20";
+             var cmd = "[\"-w adr " + POLAND_REG_DO_OFFSET + " 1\", \"-w # " + POLAND_REG_DO_OFFSET + " 0\"]";
+             var dumpcmd = "-d -r -x adr 0x" + POLAND_REG_OFFSET_BASE.toString(16) + " 0x20";
               
              Setup.GosipCommand(cmd, function(res) {
                 SetStatusMessage("Scan offset " + (res ? "OK" : "Fail"));
@@ -219,7 +219,7 @@
          $("#buttonReset").button().click(function() {
             ReadSlave();
             SetStatusMessage("Resetting logic on POLAND...");
-            var cmd = "[\"-w " + POLAND_REG_RESET + " 0\", \"-w " + POLAND_REG_RESET + " 1\"]"; 
+            var cmd = "[\"-w adr " + POLAND_REG_RESET + " 0\", \"-w adr " + POLAND_REG_RESET + " 1\"]"; 
             Setup.GosipCommand(cmd, function(res) {
                SetStatusMessage("Reset logic on POLAND " + (res ? "OK" : "Fail"));
             }); 
@@ -270,7 +270,7 @@
 
             document.getElementById("logging").innerHTML += "--- Register Dump ---<br/>";
             
-            Setup.GosipCommand("-d -r -x 0 " + numwords.toString(), function(res) {
+            Setup.GosipCommand("-d -r -x adr 0 " + numwords.toString(), function(res) {
                SetStatusMessage("Dump data " + (res ? "OK" : "Fail"));
             }); 
          });

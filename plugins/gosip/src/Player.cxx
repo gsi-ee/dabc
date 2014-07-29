@@ -58,12 +58,11 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
       bool log_output = cmd.GetInt("log") > 0;
 
-      std::string prefix;
-      if ((sfp<0) || (dev<0)) {
-         prefix.append("-- -1 -1 ");
-      } else {
-         prefix.append(dabc::format("%d %d ", sfp, dev));
-      }
+      std::string addr;
+      if ((sfp<0) || (dev<0))
+         addr = "-- -1 -1";
+      else
+         addr = dabc::format("%d %d", sfp, dev);
 
       std::vector<std::string> gosipcmd = cmd.GetField("cmd").AsStrVect();
 
@@ -77,25 +76,22 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
 
          bool isreading = (currcmd.find("-r")==0);
          bool iswriting = (currcmd.find("-w")==0);
-         bool isdump = (currcmd.find("-d")==0);
 
          if (!isreading && !iswriting && (currcmd[0]!='-')) {
             isreading = true;
-            currcmd = std::string("-r ") + currcmd;
+            currcmd = std::string("-r adr ") + currcmd;
          }
 
-         std::string exec;
+         size_t ppp = currcmd.find("adr");
+         if (ppp!=std::string::npos) currcmd.replace(ppp,3,addr);
 
-         if (isreading || iswriting || isdump)
-            exec = "gosipcmd " + prefix + currcmd + " 2>&1";
-         else
-            exec = "gosipcmd " + currcmd + " 2>&1";
+         currcmd = "gosipcmd " + currcmd;
 
-         if (log_output) gosiplog.push_back(exec);
+         if (log_output) gosiplog.push_back(currcmd);
 
-         // DOUT0("CMD %s", exec.c_str());
+         // DOUT0("CMD %s", currcmd.c_str());
 
-         FILE* pipe = popen(exec.c_str(), "r");
+         FILE* pipe = popen(currcmd.c_str(), "r");
 
          if (!pipe) {
             gosipres.push_back("<err>");

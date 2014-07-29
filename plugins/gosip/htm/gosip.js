@@ -414,7 +414,7 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
    
    for (var i=0;i<regs.length;i++) {
       if (i>0) cmdtext += ",";
-      cmdtext += "\"-w " + regs[i][0] + " " + regs[i][1] + "\"";  
+      cmdtext += "\"-w adr " + regs[i][0] + " " + regs[i][1] + "\"";  
    }
    
    cmdtext += "]";
