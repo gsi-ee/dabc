@@ -4,7 +4,8 @@ current functionality of the framework.
 
 29.07.2014
 1. Move/resize of statbox works smoothly now also during updates. 
-
+2. Provide move/resize capability for title and colz options.
+ 
 
 28.07.2014
 1. Improve layout of HTML page in GOSIP page, adjust sizes dynamically.

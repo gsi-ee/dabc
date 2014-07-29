@@ -1500,6 +1500,168 @@ var gStyle = {
          painter.Redraw();
       }
    }
+   
+   JSROOTPainter.ObjectPainter.prototype.RemoveDrag = function(id)
+   {
+      var drag_rect_name = id + "_drag_rect"; 
+      var resize_rect_name = id + "_resize_rect";
+      if (this[drag_rect_name]) { this[drag_rect_name].remove(); this[drag_rect_name] = null; } 
+      if (this[resize_rect_name]) { this[resize_rect_name].remove(); this[resize_rect_name] = null; } 
+   }
+   
+   JSROOTPainter.ObjectPainter.prototype.AddDrag = function(id, main_rect, callback) {
+      
+      var pthis = this;
+      
+      var drag_rect_name = id + "_drag_rect"; 
+      var resize_rect_name = id + "_resize_rect";
+
+      var istitle = (main_rect.node().tagName == "text"); 
+      
+      var rect_width = function() {
+         if (istitle) 
+            return main_rect.node().getBBox().width;
+         else
+            return Number(main_rect.attr("width"));
+      }
+
+      var rect_height = function() {
+         if (istitle) 
+            return main_rect.node().getBBox().height;
+         else
+            return Number(main_rect.attr("height"));
+      }
+
+      var rect_x = function() {
+         var x = Number(main_rect.attr("x"));
+         if (istitle) x -= rect_width()/2;
+         return x;
+      }
+
+      var rect_y = function() {
+         var y = Number(main_rect.attr("y"));
+         if (istitle) y -= rect_height();
+         return y;
+      }
+      
+      var drag_move = d3.behavior.drag()
+          .origin(Object)
+          .on("dragstart", function() {
+             d3.event.sourceEvent.preventDefault();
+
+             pthis[drag_rect_name] = 
+                pthis.vis.append("rect")
+                .attr("class", "zoom")
+                .attr("id", drag_rect_name)
+                .attr("x", rect_x())
+                .attr("y", rect_y())
+                .attr("width", rect_width())
+                .attr("height", rect_height())
+                .style("cursor", "move");
+          })
+          .on("drag", function() {
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name].attr("x", Number(pthis[drag_rect_name].attr("x")) + d3.event.dx);  
+             pthis[drag_rect_name].attr("y", Number(pthis[drag_rect_name].attr("y")) + d3.event.dy);
+             d3.event.sourceEvent.stopPropagation();
+          })
+          .on("dragend", function() {
+             d3.event.sourceEvent.preventDefault();
+
+             pthis[drag_rect_name].style("cursor", "auto");
+
+             var x = Number(pthis[drag_rect_name].attr("x"));
+             var y = Number(pthis[drag_rect_name].attr("y"));
+             
+             var dx = x - rect_x();  
+             var dy = y - rect_y();
+
+             pthis[drag_rect_name].remove();
+             pthis[drag_rect_name] = null;
+             
+             if (istitle) {
+                main_rect.attr("x", x + rect_width()/2).attr("y", y + rect_height());
+             } else {
+                main_rect.attr("x", x).attr("y", y);
+                pthis[resize_rect_name]
+                   .attr("x", x + rect_width() - 20)
+                   .attr("y", y + rect_height() - 20);
+             }
+
+             callback.move(x, y, dx, dy);
+
+             // do it after call-back - rectangle has correct coordinates
+             if (istitle)
+                pthis[resize_rect_name]
+                  .attr("x", rect_x() + rect_width() - 20)
+                  .attr("y", rect_y() + rect_height() - 20);
+          });
+
+      var drag_resize = 
+         d3.behavior.drag()
+          .origin(Object)
+          .on("dragstart", function() {
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name] = 
+                pthis.vis.append("rect")
+                .attr("class", "zoom")
+                .attr("id", drag_rect_name)
+                .attr("x", rect_x())
+                .attr("y", rect_y())
+                .attr("width", rect_width())
+                .attr("height", rect_height())
+                .style("cursor", "se-resize");
+
+             // main_rect.style("cursor", "move"); 
+          })
+          .on("drag", function() { 
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name].attr("width", Number(pthis[drag_rect_name].attr("width")) + d3.event.dx);  
+             pthis[drag_rect_name].attr("height", Number(pthis[drag_rect_name].attr("height")) + d3.event.dy);
+             d3.event.sourceEvent.stopPropagation();
+          })
+          .on("dragend", function() { 
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name].style("cursor", "auto");
+
+             var newwidth = Number(pthis[drag_rect_name].attr("width"));
+             var newheight = Number(pthis[drag_rect_name].attr("height"));
+
+             pthis[drag_rect_name].remove();
+             pthis[drag_rect_name] = null;
+             
+             callback.resize(newwidth, newheight);
+
+             // do it after call-back - rectangle has correct coordinates
+             if (istitle)
+                pthis[resize_rect_name]
+                  .attr("x", rect_x() + rect_width() - 20)
+                  .attr("y", rect_y() + rect_height() - 20);
+             
+             // console.log(resize_rect_name + " x = " + rect_x() + "  width = " + rect_width());
+             // console.log(resize_rect_name + " y = " + rect_y() + "  height = " + rect_height());
+          });
+
+      
+      if (this[resize_rect_name] == null) {
+         
+         main_rect.call(drag_move);
+         
+         this[resize_rect_name] = 
+            this.vis.append("rect")
+              .attr("id", resize_rect_name)
+              .style("opacity", "0")
+              .style("cursor", "se-resize")
+              .call(drag_resize);
+      }
+      
+      this[resize_rect_name]
+          .attr("x", rect_x() + rect_width() - 20)
+          .attr("y", rect_y() + rect_height() - 20)
+          .attr("width", 20)
+          .attr("height", 20);
+   }
+
 
    JSROOTPainter.ObjectPainter.prototype.FindPainterFor = function(selobj)
    {
@@ -1516,7 +1678,7 @@ var gStyle = {
 
       return null;
    }
-
+   
    JSROOTPainter.ObjectPainter.prototype.PlacePainterAfterMe = function(next) {
       if (!this.vis) return;
 
@@ -2832,144 +2994,19 @@ var gStyle = {
       return this.pavetext === obj;
    }
    
-   JSROOTPainter.PavePainter.prototype.RemoveDrag = function(id)
-   {
-      var drag_rect_name = id + "_drag_rect"; 
-      var resize_rect_name = id + "_resize_rect";
-      if (this[drag_rect_name]) { this[drag_rect_name].remove(); this[drag_rect_name] = null; } 
-      if (this[resize_rect_name]) { this[resize_rect_name].remove(); this[resize_rect_nameresize_rect_name] = null; } 
-   }
-   
-   JSROOTPainter.PavePainter.prototype.AddDrag = function(id, main_rect) {
-      
-      var pthis = this;
-      
-      var drag_rect_name = id + "_drag_rect"; 
-      var resize_rect_name = id + "_resize_rect"; 
-      
-      var drag_move = d3.behavior.drag()
-          .origin(Object)
-          .on("dragstart", function() {
-             d3.event.sourceEvent.preventDefault();
-
-             pthis[drag_rect_name] = 
-                pthis.vis.append("rect")
-                .attr("class", "zoom")
-                .attr("id", drag_rect_name)
-                .attr("x", main_rect.attr("x"))
-                .attr("y", main_rect.attr("y"))
-                .attr("width", main_rect.attr("width"))
-                .attr("height", main_rect.attr("height"))
-                .style("cursor", "move");
-          })
-          .on("drag", function() {
-             d3.event.sourceEvent.preventDefault();
-
-             var drag_rect = pthis[drag_rect_name];
-
-             drag_rect.attr("x", Number(drag_rect.attr("x")) + d3.event.dx);  
-             drag_rect.attr("y", Number(drag_rect.attr("y")) + d3.event.dy);
-             d3.event.sourceEvent.stopPropagation();
-          })
-          .on("dragend", function() {
-             d3.event.sourceEvent.preventDefault();
-
-             pthis[drag_rect_name].style("cursor", "auto");
-
-             var x = Number(pthis[drag_rect_name].attr("x"));
-             var y = Number(pthis[drag_rect_name].attr("y"));
-             
-             var dx = x - main_rect.attr("x");  
-             var dy = y - main_rect.attr("y");
-
-             pthis[drag_rect_name].remove();
-             pthis[drag_rect_name] = null;
-
-             // recalculate
-             pthis.pavetext['fX1NDC'] += dx / Number(pthis.vis.attr("width"));
-             pthis.pavetext['fX2NDC'] += dx / Number(pthis.vis.attr("width"));
-             pthis.pavetext['fY1NDC'] -= dy / Number(pthis.vis.attr("height"));
-             pthis.pavetext['fY2NDC'] -= dy / Number(pthis.vis.attr("height"));
-
-             pthis.draw_g.attr("transform", "translate(" + x + "," + y + ")");
-
-             main_rect.attr("x", x).attr("y", y);
-             pthis[resize_rect_name].attr("x", x+main_rect.attr("x")-20).attr("y", y+ main_rect.attr("height")-20);
-          });
-
-      var drag_resize = 
-         d3.behavior.drag()
-          .origin(Object)
-          .on("dragstart", function() {
-             d3.event.sourceEvent.preventDefault();
-             pthis[drag_rect_name] = 
-                pthis.vis.append("rect")
-                .attr("class", "zoom")
-                .attr("id", drag_rect_name)
-                .attr("x", main_rect.attr("x"))
-                .attr("y", main_rect.attr("y"))
-                .attr("width", main_rect.attr("width"))
-                .attr("height", main_rect.attr("height"))
-                .style("cursor", "se-resize");
-
-             // main_rect.style("cursor", "move"); 
-          })
-          .on("drag", function() { 
-             d3.event.sourceEvent.preventDefault();
-             pthis[drag_rect_name].attr("width", Number(pthis[drag_rect_name].attr("width")) + d3.event.dx);  
-             pthis[drag_rect_name].attr("height", Number(pthis[drag_rect_name].attr("height")) + d3.event.dy);
-             d3.event.sourceEvent.stopPropagation();
-          })
-          .on("dragend", function() { 
-             d3.event.sourceEvent.preventDefault();
-             pthis[drag_rect_name].style("cursor", "auto");
-
-             var newwidth = Number(pthis[drag_rect_name].attr("width"));
-             var newheight = Number(pthis[drag_rect_name].attr("height"));
-
-             pthis[drag_rect_name].remove();
-             pthis[drag_rect_name] = null;
-
-             pthis.pavetext['fX2NDC'] = pthis.pavetext['fX1NDC'] + newwidth/Number(pthis.vis.attr("width"));  
-             pthis.pavetext['fY1NDC'] = pthis.pavetext['fY2NDC'] - newheight/Number(pthis.vis.attr("height"));
-
-             pthis.RemoveDraw();
-             pthis.DrawPaveText();
-          });
-
-      
-      if (this[resize_rect_name] == null) {
-         
-         main_rect.call(drag_move);
-         
-         this[resize_rect_name] = 
-            this.vis.append("rect")
-              .attr("id", resize_rect_name)
-              .call(drag_resize);
-      }
-      
-      this[resize_rect_name]
-          .attr("x", main_rect.attr("x") + main_rect.attr("width") - 20)
-          .attr("y", main_rect.attr("y") + main_rect.attr("height") - 20)
-          .attr("width", 20)
-          .attr("height", 20)
-          .style("opacity", "0")
-          .style("cursor", "se-resize");
-   }
-
    JSROOTPainter.PavePainter.prototype.DrawPaveText = function() {
       var pavetext = this.pavetext;
       var vis = this.vis;
 
       var j, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
 
-      this.pos_x = pavetext['fX1NDC'] * w;
-      this.pos_y = (1.0 - pavetext['fY1NDC']) * h;
-      this.width = Math.abs(pavetext['fX2NDC'] - pavetext['fX1NDC']) * w;
-      this.height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
-      this.pos_y -= this.height;
+      var pos_x = pavetext['fX1NDC'] * w;
+      var pos_y = (1.0 - pavetext['fY1NDC']) * h;
+      var width = Math.abs(pavetext['fX2NDC'] - pavetext['fX1NDC']) * w;
+      var height = Math.abs(pavetext['fY2NDC'] - pavetext['fY1NDC']) * h;
+      pos_y -= height;
       var nlines = pavetext['fLines'].arr.length;
-      var font_size = Math.round(this.height / (nlines * 1.2));
+      var font_size = Math.round(height / (nlines * 1.2));
       var fcolor = root_colors[pavetext['fFillColor']];
       var lcolor = root_colors[pavetext['fLineColor']];
       var tcolor = root_colors[pavetext['fTextColor']];
@@ -2992,142 +3029,63 @@ var gStyle = {
       var lmargin = 0;
       switch (halign) {
          case 1:
-            lmargin = pavetext['fMargin'] * this.width;
+            lmargin = pavetext['fMargin'] * width;
             break;
          case 2:
-            lmargin = this.width / 2;
+            lmargin = width / 2;
             break;
          case 3:
-            lmargin = this.width - (pavetext['fMargin'] * this.width);
+            lmargin = width - (pavetext['fMargin'] * width);
             break;
       }
 
       // for now ignore all align parameters, draw as is
-      if (nlines>1) lmargin = pavetext['fMargin'] * this.width / 2;
+      if (nlines>1) lmargin = pavetext['fMargin'] * width / 2;
 
       var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
       
+      if (this.main_rect == null) {
+         this.main_rect = this.vis.append("rect");
+      } else {
+         // force main rect of the stat box be last item in the primitives to kept it on the top
+         var prnt = this.main_rect.node().parentNode;
+         prnt.removeChild(this.main_rect.node());
+         prnt.appendChild(this.main_rect.node());
+      }
+    
+      this.main_rect
+         .attr("x", pos_x)
+         .attr("y", pos_y)
+         .attr("height", height)
+         .attr("width", width)
+         .attr("fill", fcolor)
+         .style("stroke-width", lwidth ? 1 : 0)
+         .style("stroke", lcolor);
+
       var pthis = this;
+      
+      this.AddDrag("stat", this.main_rect, {
+         move: function(x, y, dx, dy) {
+            pthis.draw_g.attr("transform", "translate(" + x + "," + y + ")");
 
-      var drag_move = d3.behavior.drag()
-         .origin(Object)
-         .on("dragstart", function() {
-             d3.event.sourceEvent.preventDefault();
-             
-             pthis.drag_rect = 
-              vis.append("rect")
-               .attr("class", "zoom")
-               .attr("id", "stat_drag_rect")
-               .attr("x", pthis.pos_x)
-               .attr("y", pthis.pos_y)
-               .attr("width", pthis.width)
-               .attr("height", pthis.height)
-               .style("cursor", "move");
-          
-            // main_rect.style("cursor", "move"); 
-         })
-         .on("drag", function() {
-            d3.event.sourceEvent.preventDefault();
-            
-            pthis.drag_rect.attr("x", Number(pthis.drag_rect.attr("x")) + d3.event.dx);  
-            pthis.drag_rect.attr("y", Number(pthis.drag_rect.attr("y")) + d3.event.dy);
-            d3.event.sourceEvent.stopPropagation();
-            
-          })
-         .on("dragend", function() {
-            d3.event.sourceEvent.preventDefault();
-            pthis.drag_rect.style("cursor", "auto");
-            
-            var dx = Number(pthis.drag_rect.attr("x")) - pthis.pos_x;  
-            var dy = Number(pthis.drag_rect.attr("y")) - pthis.pos_y;
-            
-            pthis.drag_rect.remove();
-            pthis.drag_rect = null;
-            
-            // recalculate
-            pavetext['fX1NDC'] += dx / w;
-            pavetext['fX2NDC'] += dx / w;
-            pavetext['fY1NDC'] -= dy / h;
-            pavetext['fY2NDC'] -= dy / h;
-            
-            pthis.pos_x += dx;
-            pthis.pos_y += dy;
-                             
-            pthis.draw_g.attr("transform", "translate(" + pthis.pos_x + "," + pthis.pos_y + ")");
-            
-            pthis.main_rect.attr("x", pthis.pos_x).attr("y", pthis.pos_y);
-            pthis.resize_rect.attr("x", pthis.pos_x + pthis.width-20).attr("y", pthis.pos_y + pthis.height-20);
-         
-         });
+            pthis.pavetext['fX1NDC'] += dx / Number(pthis.vis.attr("width"));
+            pthis.pavetext['fX2NDC'] += dx / Number(pthis.vis.attr("width"));
+            pthis.pavetext['fY1NDC'] -= dy / Number(pthis.vis.attr("height"));
+            pthis.pavetext['fY2NDC'] -= dy / Number(pthis.vis.attr("height"));
+         },  
+         resize: function(width, height) {
+            pthis.pavetext['fX2NDC'] = pthis.pavetext['fX1NDC'] + width/Number(pthis.vis.attr("width"));  
+            pthis.pavetext['fY1NDC'] = pthis.pavetext['fY2NDC'] - height/Number(pthis.vis.attr("height"));
 
-    var drag_resize = d3.behavior.drag()
-         .origin(Object)
-         .on("dragstart", function() {
-             d3.event.sourceEvent.preventDefault();
-             pthis.drag_rect = 
-                vis.append("rect")
-               .attr("class", "zoom")
-               .attr("id", "stat_drag_rect")
-               .attr("x", pthis.pos_x)
-               .attr("y", pthis.pos_y)
-               .attr("width", pthis.width)
-               .attr("height", pthis.height)
-               .style("cursor", "se-resize");
-          
-            // main_rect.style("cursor", "move"); 
-         })
-         .on("drag", function() { 
-            d3.event.sourceEvent.preventDefault();
-            pthis.drag_rect.attr("width", Number(pthis.drag_rect.attr("width")) + d3.event.dx);  
-            pthis.drag_rect.attr("height", Number(pthis.drag_rect.attr("height")) + d3.event.dy);
-            d3.event.sourceEvent.stopPropagation();
-          })
-         .on("dragend", function() { 
-            d3.event.sourceEvent.preventDefault();
-            pthis.drag_rect.style("cursor", "auto");
-            
-            var newwidth = Number(pthis.drag_rect.attr("width"));
-            var newheight = Number(pthis.drag_rect.attr("height"));
-
-            pthis.drag_rect.remove();
-            pthis.drag_rect = null;
-
-            pavetext['fX2NDC'] = pavetext['fX1NDC'] + newwidth/w;  
-            pavetext['fY1NDC'] = pavetext['fY2NDC'] - newheight/h;
-            
             pthis.RemoveDraw();
             pthis.DrawPaveText();
-         });
-
-
-    if (this.main_rect == null)
-       this.main_rect = this.vis.append("rect").call(drag_move);
-    
-     this.main_rect
-        .attr("x", this.pos_x)
-        .attr("y", this.pos_y)
-        .attr("height", this.height)
-        .attr("width", this.width)
-        .attr("fill", fcolor)
-        .style("stroke-width", lwidth ? 1 : 0)
-        .style("stroke", lcolor);
-     
-    if (this.resize_rect == null)   
-       this.resize_rect = this.vis.append("rect").call(drag_resize);
-    
-       this.resize_rect
-        .attr("x", this.pos_x + this.width-20)
-        .attr("y", this.pos_y + this.height-20)
-        .attr("width", 20)
-        .attr("height", 20)
-        .style("opacity", "0")
-        .style("cursor", "se-resize");
-
+         } 
+      });
        
-     // container to just to recalculate coordinates
-     this.draw_g = 
-        vis.append("svg:g").attr("transform", "translate(" + this.pos_x + "," + this.pos_y + ")");
+      // container to just to recalculate coordinates
+      this.draw_g = 
+         vis.append("svg:g").attr("transform", "translate(" + pos_x + "," + pos_y + ")");
      
       var first_stat = 0, num_cols = 0;
       var maxlw = 0;
@@ -3148,10 +3106,10 @@ var gStyle = {
          if (parts.length>num_cols) num_cols = parts.length; 
       }
       
-      if (maxlw > this.width)
-        font_size = font_size * (this.width / maxlw);
+      if (maxlw > width)
+        font_size = font_size * (width / maxlw);
 
-      var stepy = this.height / nlines; 
+      var stepy = height / nlines; 
 
       if (nlines == 1) {
          this.draw_g.append("text")
@@ -3178,7 +3136,7 @@ var gStyle = {
                   for (var n=0;n<parts.length;n++)
                      this.draw_g.append("text")
                      .attr("text-anchor", "middle")
-                     .attr("x",  this.width*(n+0.5)/num_cols)
+                     .attr("x",  width*(n+0.5)/num_cols)
                      .attr("y", posy)
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
@@ -3190,7 +3148,7 @@ var gStyle = {
                if ((j==0) || (lines[j].indexOf('=')<0)) {
                   this.draw_g.append("text")
                      .attr("text-anchor", (j == 0) ? "middle" : "start")
-                     .attr("x", ((j==0) ? this.width/2 : pavetext['fMargin'] * this.width))
+                     .attr("x", ((j==0) ? width/2 : pavetext['fMargin'] * width))
                      .attr("y", posy)
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
@@ -3203,7 +3161,7 @@ var gStyle = {
                   for (var n=0;n<2;n++)
                      this.draw_g.append("text")
                      .attr("text-anchor", (n==0) ? "start" : "end")
-                     .attr("x", (n==0) ? pavetext['fMargin'] * this.width : (1-pavetext['fMargin']) * this.width)
+                     .attr("x", (n==0) ? pavetext['fMargin'] * width : (1-pavetext['fMargin']) * width)
                      .attr("y", posy)
                      .attr("font-family", fontDetails['name'])
                      .attr("font-weight", fontDetails['weight'])
@@ -3232,7 +3190,7 @@ var gStyle = {
             .attr("class", "pavedraw")
             .attr("x1", 0)
             .attr("y1", stepy)
-            .attr("x2", this.width)
+            .attr("x2", width)
             .attr("y2", stepy)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth ? 1 : 'none');
@@ -3244,17 +3202,17 @@ var gStyle = {
             this.draw_g.append("svg:line")
               .attr("x1", 0)
               .attr("y1", nrow*stepy)
-              .attr("x2", this.width)
+              .attr("x2", width)
               .attr("y2", nrow*stepy)
               .style("stroke", lcolor)
               .style("stroke-width", lwidth ? 1 : 'none');
 
          for (var ncol = 0; ncol<num_cols-1; ncol++)
             this.draw_g.append("svg:line")
-            .attr("x1", this.width/num_cols*(ncol+1))
+            .attr("x1", width/num_cols*(ncol+1))
             .attr("y1", first_stat * stepy)
-            .attr("x2", this.width/num_cols*(ncol+1) )
-            .attr("y2", this.height)
+            .attr("x2", width/num_cols*(ncol+1) )
+            .attr("y2", height)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth ? 1 : 'none');
       }
@@ -3263,15 +3221,15 @@ var gStyle = {
          this.draw_g.append("svg:line")
             .attr("x1", width+(lwidth/2))
             .attr("y1", lwidth+1)
-            .attr("x2", this.width+(lwidth/2))
-            .attr("y2", this.height+lwidth-1)
+            .attr("x2", width+(lwidth/2))
+            .attr("y2", height+lwidth-1)
             .style("stroke", lcolor)
             .style("stroke-width", lwidth);
          this.draw_g.append("svg:line")
             .attr("x1", lwidth+1)
-            .attr("y1", this.height+(lwidth/2))
-            .attr("x2", this.width+lwidth-1)
-            .attr("y2", this.height+(lwidth/2))
+            .attr("y1", height+(lwidth/2))
+            .attr("x2", width+lwidth-1)
+            .attr("y2", height+(lwidth/2))
             .style("stroke", lcolor)
             .style("stroke-width", lwidth);
       }
@@ -3312,9 +3270,8 @@ var gStyle = {
 
       // if pavetext artificially disabled, do not redraw it
       if (!this.Enabled) {
+         this.RemoveDrag("stat");
          if (this.main_rect) { this.main_rect.remove(); this.main_rect = null; }
-         if (this.resize_rect) { this.resize_rect.remove(); this.resize_rect = null; }
-         if (this.drag_rect) { this.drag_rect.remove(); this.drag_rect = null; }
          return;
       }
 
@@ -3459,6 +3416,46 @@ var gStyle = {
                .attr("font-size", axisTitleFontSize )
                .text(title);
       }
+      
+      if (this.main_rect == null) {
+         this.main_rect = this.vis.append("rect")
+                              .attr("id","colz_move_rect")   
+                              .style("opacity", "0");
+      } else {
+         // ensure that all color drawing inserted before move rect
+         var prnt = this.main_rect.node().parentNode;
+         prnt.removeChild(this.draw_g.node());
+         prnt.insertBefore(this.draw_g.node(), this.main_rect.node());
+      }
+    
+      this.main_rect
+         .attr("x", pos_x)
+         .attr("y", pos_y)
+         .attr("width", s_width)
+         .attr("height", s_height);
+
+      var pthis = this;
+
+      this.AddDrag("colz", this.main_rect, {
+         move: function(x, y, dx, dy) {
+            
+            pthis.draw_g.attr("transform", "translate(" + x + "," + y + ")");
+
+            pthis.palette['fX1NDC'] += dx / Number(pthis.vis.attr("width"));
+            pthis.palette['fX2NDC'] += dx / Number(pthis.vis.attr("width"));
+            pthis.palette['fY1NDC'] -= dy / Number(pthis.vis.attr("height"));
+            pthis.palette['fY2NDC'] -= dy / Number(pthis.vis.attr("height"));
+         },  
+         resize: function(width, height) {
+            pthis.palette['fX2NDC'] = pthis.palette['fX1NDC'] + width/Number(pthis.vis.attr("width"));  
+            pthis.palette['fY1NDC'] = pthis.palette['fY2NDC'] - height/Number(pthis.vis.attr("height"));
+
+            pthis.RemoveDraw();
+            pthis.DrawPalette();
+         } 
+      });
+
+
    }
 
    JSROOTPainter.ColzPalettePainter.prototype.Redraw = function() {
@@ -3466,7 +3463,11 @@ var gStyle = {
       this.RemoveDraw();
 
       // if palette artificially disabled, do not redraw it
-      if (!this.Enabled) return;
+      if (!this.Enabled) {
+         this.RemoveDrag("colz");
+         if (this.main_rect) { this.main_rect.remove(); this.main_rect = null; }
+         return;
+      }
 
       this.DrawPalette();
    }
@@ -3997,16 +3998,33 @@ var gStyle = {
       var l_title = JSROOTPainter.translateLaTeX(this.histo['fTitle']);
 
       if (!this.pad || typeof(this.pad) == 'undefined') {
+         
          if (!('draw_title' in this))
-            this['draw_title'] = this.vis.append("text").attr("class", "title");
+            this['draw_title'] = 
+               this.vis.append("text")
+                .attr("class", "title")
+                .attr("text-anchor", "middle")
+                .attr("x", w/2)
+                .attr("y", 1 + font_size /* 0.07*h */)
+                .attr("font-family", "Arial")
+                .attr("font-size", font_size);
+         
+         this.draw_title.text(l_title);
 
-         this.draw_title
-            .attr("text-anchor", "middle")
-            .attr("x", w/2)
-            .attr("y", 1 + font_size /* 0.07*h */)
-            .attr("font-family", "Arial")
-            .attr("font-size", font_size)
-            .text(l_title);
+         // console.log("title height = " + this.draw_title.node().getBBox().height + "  font size = " + font_size);
+         
+         var pthis = this;
+         
+         this.AddDrag("title", this.draw_title, {
+            move: function(x, y) {
+               // pthis.draw_title.attr("x",x).attr("y", y);
+            },  
+            resize: function(width, height) {
+               font_size = height*0.8; 
+               pthis.draw_title.attr("font-size", font_size);
+            } 
+         });
+         
       }
    }
 
