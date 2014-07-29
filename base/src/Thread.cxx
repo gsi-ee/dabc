@@ -155,7 +155,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          fWorkerHierarchy.GetHChild("NumWorkers").SetField("value", num);
          fWorkerHierarchy.GetHChild("Workers").SetField("value", names);
          fWorkerHierarchy.GetHChild("pid").SetField("value", getpid());
-         fWorkerHierarchy.GetHChild("threadid").SetField("value", (long) Self());
+         fWorkerHierarchy.GetHChild("threadid").SetField("value", (uint64_t) Self());
 
          if (fThread()->fProfiling) {
 
