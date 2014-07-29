@@ -2831,6 +2831,131 @@ var gStyle = {
    JSROOTPainter.PavePainter.prototype.IsObject = function(obj) {
       return this.pavetext === obj;
    }
+   
+   JSROOTPainter.PavePainter.prototype.RemoveDrag = function(id)
+   {
+      var drag_rect_name = id + "_drag_rect"; 
+      var resize_rect_name = id + "_resize_rect";
+      if (this[drag_rect_name]) { this[drag_rect_name].remove(); this[drag_rect_name] = null; } 
+      if (this[resize_rect_name]) { this[resize_rect_name].remove(); this[resize_rect_nameresize_rect_name] = null; } 
+   }
+   
+   JSROOTPainter.PavePainter.prototype.AddDrag = function(id, main_rect) {
+      
+      var pthis = this;
+      
+      var drag_rect_name = id + "_drag_rect"; 
+      var resize_rect_name = id + "_resize_rect"; 
+      
+      var drag_move = d3.behavior.drag()
+          .origin(Object)
+          .on("dragstart", function() {
+             d3.event.sourceEvent.preventDefault();
+
+             pthis[drag_rect_name] = 
+                pthis.vis.append("rect")
+                .attr("class", "zoom")
+                .attr("id", drag_rect_name)
+                .attr("x", main_rect.attr("x"))
+                .attr("y", main_rect.attr("y"))
+                .attr("width", main_rect.attr("width"))
+                .attr("height", main_rect.attr("height"))
+                .style("cursor", "move");
+          })
+          .on("drag", function() {
+             d3.event.sourceEvent.preventDefault();
+
+             var drag_rect = pthis[drag_rect_name];
+
+             drag_rect.attr("x", Number(drag_rect.attr("x")) + d3.event.dx);  
+             drag_rect.attr("y", Number(drag_rect.attr("y")) + d3.event.dy);
+             d3.event.sourceEvent.stopPropagation();
+          })
+          .on("dragend", function() {
+             d3.event.sourceEvent.preventDefault();
+
+             pthis[drag_rect_name].style("cursor", "auto");
+
+             var x = Number(pthis[drag_rect_name].attr("x"));
+             var y = Number(pthis[drag_rect_name].attr("y"));
+             
+             var dx = x - main_rect.attr("x");  
+             var dy = y - main_rect.attr("y");
+
+             pthis[drag_rect_name].remove();
+             pthis[drag_rect_name] = null;
+
+             // recalculate
+             pthis.pavetext['fX1NDC'] += dx / Number(pthis.vis.attr("width"));
+             pthis.pavetext['fX2NDC'] += dx / Number(pthis.vis.attr("width"));
+             pthis.pavetext['fY1NDC'] -= dy / Number(pthis.vis.attr("height"));
+             pthis.pavetext['fY2NDC'] -= dy / Number(pthis.vis.attr("height"));
+
+             pthis.draw_g.attr("transform", "translate(" + x + "," + y + ")");
+
+             main_rect.attr("x", x).attr("y", y);
+             pthis[resize_rect_name].attr("x", x+main_rect.attr("x")-20).attr("y", y+ main_rect.attr("height")-20);
+          });
+
+      var drag_resize = 
+         d3.behavior.drag()
+          .origin(Object)
+          .on("dragstart", function() {
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name] = 
+                pthis.vis.append("rect")
+                .attr("class", "zoom")
+                .attr("id", drag_rect_name)
+                .attr("x", main_rect.attr("x"))
+                .attr("y", main_rect.attr("y"))
+                .attr("width", main_rect.attr("width"))
+                .attr("height", main_rect.attr("height"))
+                .style("cursor", "se-resize");
+
+             // main_rect.style("cursor", "move"); 
+          })
+          .on("drag", function() { 
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name].attr("width", Number(pthis[drag_rect_name].attr("width")) + d3.event.dx);  
+             pthis[drag_rect_name].attr("height", Number(pthis[drag_rect_name].attr("height")) + d3.event.dy);
+             d3.event.sourceEvent.stopPropagation();
+          })
+          .on("dragend", function() { 
+             d3.event.sourceEvent.preventDefault();
+             pthis[drag_rect_name].style("cursor", "auto");
+
+             var newwidth = Number(pthis[drag_rect_name].attr("width"));
+             var newheight = Number(pthis[drag_rect_name].attr("height"));
+
+             pthis[drag_rect_name].remove();
+             pthis[drag_rect_name] = null;
+
+             pthis.pavetext['fX2NDC'] = pthis.pavetext['fX1NDC'] + newwidth/Number(pthis.vis.attr("width"));  
+             pthis.pavetext['fY1NDC'] = pthis.pavetext['fY2NDC'] - newheight/Number(pthis.vis.attr("height"));
+
+             pthis.RemoveDraw();
+             pthis.DrawPaveText();
+          });
+
+      
+      if (this[resize_rect_name] == null) {
+         
+         main_rect.call(drag_move);
+         
+         this[resize_rect_name] = 
+            this.vis.append("rect")
+              .attr("id", resize_rect_name)
+              .call(drag_resize);
+      }
+      
+      this[resize_rect_name]
+          .attr("x", main_rect.attr("x") + main_rect.attr("width") - 20)
+          .attr("y", main_rect.attr("y") + main_rect.attr("height") - 20)
+          .attr("width", 20)
+          .attr("height", 20)
+          .style("opacity", "0")
+          .style("cursor", "se-resize");
+   }
 
    JSROOTPainter.PavePainter.prototype.DrawPaveText = function() {
       var pavetext = this.pavetext;
