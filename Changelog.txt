@@ -2,8 +2,12 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+29.07.2014
+1. Move/resize of statbox works smoothly now also during updates. 
+
+
 28.07.2014
-1. Improve layout of HTML page, adjust sizes dynamically.
+1. Improve layout of HTML page in GOSIP page, adjust sizes dynamically.
 
 
 25.07.2014
