@@ -1653,6 +1653,17 @@ var gStyle = {
               .style("opacity", "0")
               .style("cursor", "se-resize")
               .call(drag_resize);
+      } else {
+         // ensure that small resize rect appears after large move rect
+         var prnt = this[resize_rect_name].node().parentNode;
+         
+         // first move small resize rec before main_rect
+         prnt.removeChild(this[resize_rect_name].node());
+         prnt.insertBefore(this[resize_rect_name].node(), main_rect.node());
+         // than swap them while big rect should be in the front
+         prnt.removeChild(main_rect.node());
+         prnt.insertBefore(main_rect.node(), this[resize_rect_name].node());
+  
       }
       
       this[resize_rect_name]
