@@ -1663,7 +1663,6 @@ var gStyle = {
          // than swap them while big rect should be in the front
          prnt.removeChild(main_rect.node());
          prnt.insertBefore(main_rect.node(), this[resize_rect_name].node());
-  
       }
       
       this[resize_rect_name]

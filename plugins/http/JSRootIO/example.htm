@@ -33,8 +33,14 @@
          var histo = JSROOTCore.CreateTH2(20, 20);
          for (var iy=0;iy<20;iy++)
             for (var ix=0;ix<20;ix++) {
-               var bin = histo.getBin(ix+1, iy+1);
-               histo.setBinContent(bin, cnt %2 ? 40 - ix - iy : ix+iy);
+               var bin = histo.getBin(ix+1, iy+1), val = 0;
+               switch (cnt % 4) {
+                  case 1: val = ix + 19 - iy; break;
+                  case 2: val = 38 - ix - iy; break;
+                  case 3: val = 19 - ix + iy; break;
+                  default: val = ix + iy; break; 
+               }
+               histo.setBinContent(bin, val);
             }
             
          cnt++;
