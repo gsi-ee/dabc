@@ -330,9 +330,16 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       std::string xmlcode;
 
-      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAsXml(pathname, xmlcode)) return false;
+      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("xml", pathname, query, xmlcode)) return false;
 
       content_str = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
+
+   } else
+   if (filename == "h.json") {
+
+      content_type = "application/json";
+
+      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("json", pathname, query, content_str)) return false;
 
    } else {
 

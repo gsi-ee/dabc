@@ -51,6 +51,24 @@ namespace dabc {
 
    class Hierarchy;
 
+   class HStore {
+      protected:
+         std::string       buf;
+         int               lvl;
+         std::vector<int>  numflds;
+         std::vector<int>  numchilds;
+      public:
+         HStore() : buf(), lvl(0), numflds(), numchilds() {}
+         virtual ~HStore() {}
+
+         std::string GetResult() { return buf; }
+
+         virtual void CreateNode(const char *) {}
+         virtual void SetField(const char *, const char *) {}
+         virtual void BeforeNextChild() {}
+         virtual void CloseNode(const char *) {}
+   };
+
    // ===================================================================================
 
    struct HistoryItem {
@@ -289,7 +307,7 @@ namespace dabc {
 
          /** \brief Save hierarchy in JSON form.
           * Details see in SaveHierarchyInXmlNode */
-         bool SaveHierarchyInJson(std::string& res, unsigned mask, int lvl = 0);
+         bool SaveHierarchyInJson(HStore& res, unsigned mask);
 
          uint64_t GetVersion() const { return fNodeVersion; }
 
@@ -387,10 +405,10 @@ namespace dabc {
           * xmlmask_Compact    - use compact form of
           * xmlmask_Version    - store version attributes for all nodes
           * xmlmask_TopVersion - append hierarchy version to the top node
-          * xmlmask_NameSpace - append artificial namespace to the top node
-          * xmlmask_History - write history (when available)
-          * xmlmask_NoChilds - excludes childs saving
-          * xmlmask_TopDabc  - append top dabc node with namespace definition */
+          * xmlmask_NameSpace  - append artificial namespace to the top node
+          * xmlmask_History    - write history (when available)
+          * xmlmask_NoChilds   - excludes childs saving
+          * xmlmask_TopDabc    - append top dabc node with namespace definition */
       std::string SaveToXml(unsigned mask = 0, const std::string& toppath = "");
 
       /** \brief Store hierarchy in json form
@@ -404,7 +422,7 @@ namespace dabc {
       void SetVersion(uint64_t v) { if (GetObject()) GetObject()->SetVersion(v); }
 
       /** \brief Return true if one could suppose that binary item is changed and
-       *  binary data must be regenerated. First of all version is proved and than hash (if availible) */
+       *  binary data must be regenerated. First of all version is proved and than hash (if available) */
       bool IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version = 0);
 
       /** \brief Fill binary header with item and master versions */

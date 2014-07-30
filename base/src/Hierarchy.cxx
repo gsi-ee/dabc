@@ -41,6 +41,150 @@ const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";
 const char* dabc::prop_more = "dabc:more";
 
+namespace dabc {
+
+   class HXmlStore : public HStore {
+
+   public:
+      HXmlStore() : HStore() {}
+      virtual ~HXmlStore() {}
+
+      virtual void CreateNode(const char *nodename)
+      {
+         // starts new xml node, will be closed by CloseNode
+         buf.append(dabc::format("%*s<%s", lvl * 2, "", nodename));
+
+         numchilds.push_back(0);
+         numflds.push_back(0);
+         lvl++;
+
+      }
+
+      virtual void SetField(const char *field, const char *value)
+      {
+         // set field (xml attribute) in current node
+
+         if (strpbrk(value, "<>&\'\"") == 0) {
+            buf.append(dabc::format(" %s=\"%s\"", field, value));
+         } else {
+            buf.append(dabc::format(" %s=\"", field));
+            const char *v = value;
+            while (*v != 0) {
+               switch (*v) {
+                  case '<' :
+                     buf.append("&lt;");
+                     break;
+                  case '>' :
+                     buf.append("&gt;");
+                     break;
+                  case '&' :
+                     buf.append("&amp;");
+                     break;
+                  case '\'' :
+                     buf.append("&apos;");
+                     break;
+                  case '\"' :
+                     buf.append("&quot;");
+                     break;
+                  default:
+                     buf.append(v, 1);
+                     break;
+               }
+               v++;
+            }
+
+            buf.append("\"");
+         }
+      }
+
+      virtual void BeforeNextChild()
+      {
+         // called before next child node created
+
+         if (numchilds.back()++ == 0) buf.append(">\n");
+
+      }
+
+      virtual void CloseNode(const char *nodename)
+      {
+         // called when node should be closed
+         // depending from number of childs different xml format is applied
+
+         if (numchilds.back() > 0)
+            buf.append(dabc::format("%*s</%s>\n", lvl * 2, "", nodename));
+         else
+            buf.append(dabc::format("/>\n"));
+         numchilds.pop_back();
+         numflds.pop_back();
+         lvl--;
+      }
+   };
+
+   // ========================================================================
+
+
+   class HJsonStore : public HStore {
+   protected:
+      int compact;
+   public:
+      HJsonStore(int _compact) : HStore(), compact(_compact) {}
+      virtual ~HJsonStore() {}
+
+      virtual void CreateNode(const char *nodename)
+      {
+         // starts new json object, will be closed by CloseNode
+
+         buf.append(dabc::format("%*s{", lvl * 4, ""));
+         lvl++;
+         numflds.push_back(0);
+         numchilds.push_back(0);
+         SetField("name", dabc::format("\"%s\"",nodename).c_str());
+      }
+
+      virtual void SetField(const char *field, const char *value)
+      {
+         // set field (json field) in current node
+
+         if (numflds.back()++ == 0)
+            buf.append("\n");
+         else
+            buf.append(",\n");
+         buf.append(dabc::format("%*s\"%s\" : %s", lvl * 4 + 2, "", field, value));
+      }
+
+      virtual void CloseNode(const char *)
+      {
+         // called when node should be closed
+         // depending from number of childs different json format is applied
+
+         if (numchilds.back() > 0)
+            buf.append(dabc::format("\n%*s]", lvl * 4 + 2, ""));
+         buf.append(dabc::format("\n%*s}", lvl * 4, ""));
+
+         numchilds.pop_back();
+         numflds.pop_back();
+         lvl--;
+      }
+
+
+      virtual void BeforeNextChild()
+      {
+         // called before next child node created
+
+         if (numchilds.back()++==0) {
+            if (numflds.back() == 0)
+               buf.append("\n");
+            else
+               buf.append(",\n");
+            buf.append(dabc::format("%*s\"childs\" : [\n", lvl * 4 + 2, ""));
+         } else {
+            buf.append(",\n");
+         }
+      }
+   };
+
+}
+
 
 // ===============================================================================
 
@@ -446,36 +590,28 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
    return objnode;
 }
 
-bool dabc::HierarchyContainer::SaveHierarchyInJson(std::string& res, unsigned mask, int lvl)
+bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res, unsigned mask)
 {
-   int compact = mask & xmlmask_Compact;
+   res.CreateNode(GetName());
 
-   if (compact==0) for(int l=0;l<lvl;l++) res.append(" ");
-   res.append("{");
-   if (compact<2) res.append("\n");
-   int cnt = 0;
    for(unsigned n=0;n<NumFields();n++) {
-      std::string name = FieldName(n);
+      std::string name = (n==NumFields()) ? "sub" : FieldName(n);
       // exclude special record fields
       if (name.empty() || (name[0]=='#')) continue;
 
-      if (cnt++>0) {
-         res.append(",");
-         if (compact<2) res.append("\n"); else
-         if (compact==2) res.append(" ");
-      }
-
-      if (compact==0) for(int l=0;l<lvl+2;l++) res.append(" ");
-
-      res.append("'"); res.append(name); res.append("\'");
-
-      if (compact>2) res.append(":"); else res.append(" : ");
-      res.append(GetField(name).AsJson());
+      res.SetField(name.c_str(), GetField(name).AsJson().c_str());
    }
 
-   if (compact<2) res.append("\n");
-   if (compact==0) for(int l=0;l<lvl;l++) res.append(" ");
-   res.append("}");
+   if ((mask & xmlmask_NoChilds) == 0) {
+      for (unsigned n=0;n<NumChilds();n++) {
+         dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
+         if (child==0) continue;
+         res.BeforeNextChild();
+         child->SaveHierarchyInJson(res, mask);
+      }
+   }
+
+   res.CloseNode(GetName());
 
    return true;
 }
@@ -1086,13 +1222,13 @@ std::string dabc::Hierarchy::SaveToXml(unsigned mask, const std::string& path)
 
 std::string dabc::Hierarchy::SaveToJson(unsigned mask)
 {
-   std::string res;
+   if (null()) return "";
 
-   if (null()) return res;
+   HJsonStore store(mask & xmlmask_Compact);
 
-   GetObject()->SaveHierarchyInJson(res, mask);
+   GetObject()->SaveHierarchyInJson(store, mask);
 
-   return res;
+   return store.GetResult();
 }
 
 

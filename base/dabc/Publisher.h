@@ -222,7 +222,11 @@ namespace dabc {
       bool AddRemote(const std::string& remnode, const std::string& workername)
       {  return OwnCommand(6, remnode, workername); }
 
-      bool SaveGlobalNamesListAsXml(const std::string& path, std::string& str);
+      /** Store hierarchy in xml/json to use in the browser for display */
+      bool SaveGlobalNamesListAs(const std::string& kind,
+                                 const std::string& path,
+                                 const std::string& query,
+                                 std::string& str);
 
       /** Returns "" - undefined,
        *          "__tree__"    -- tree hierarchy

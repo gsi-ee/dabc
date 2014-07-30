@@ -71,9 +71,9 @@ DABC.TopXmlNode = function(xmldoc)
 // ============= start of DrawElement ================================= 
 
 DABC.DrawElement = function() {
-   this.itemname = "";   // full item name in hierarhcy
+   this.itemname = "";               // full item name in hierarchy
    this.version = new Number(-1);    // check which version of element is drawn
-   this.frameid = "";
+   this.frameid = "";                // frame id of HTML element (ion most cases <div>), where object drawn 
    return this;
 }
 

@@ -22,12 +22,23 @@
 
 void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
 {
-   if (cmd.GetBool("asxml")) {
-      std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
-      cmd.SetStr("xml", str);
-   } else {
+   std::string kind = cmd.GetStr("textkind");
+
+   if (kind.empty()) {
       dabc::Buffer buf = res.SaveToBuffer(dabc::stream_NamesList);
       cmd.SetRawData(buf);
+   } else
+   if (kind == "xml") {
+      std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
+      cmd.SetStr("astext", str);
+   } else {
+      std::string query = cmd.GetStr("query");
+
+      unsigned mask = dabc::xmlmask_TopDabc;
+      if (query.find("compact")!=std::string::npos) mask = dabc::xmlmask_Compact;
+
+      std::string str = res.SaveToJson(mask);
+      cmd.SetStr("astext", str);
    }
 }
 
@@ -848,17 +859,21 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::
 }
 
 
-bool dabc::PublisherRef::SaveGlobalNamesListAsXml(const std::string& path, std::string& str)
+bool dabc::PublisherRef::SaveGlobalNamesListAs(const std::string& kind,
+                                               const std::string& path,
+                                               const std::string& query,
+                                               std::string& str)
 {
    if (null()) return false;
 
    CmdGetNamesList cmd;
-   cmd.SetBool("asxml", true);
+   cmd.SetStr("textkind", kind);
    cmd.SetStr("path", path);
+   cmd.SetStr("query", path);
 
    if (Execute(cmd) != cmd_true) return false;
 
-   str = cmd.GetStr("xml");
+   str = cmd.GetStr("astext");
 
    return true;
 }
