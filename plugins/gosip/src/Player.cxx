@@ -98,11 +98,11 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
             break;
          }
 
-         char buf[2048];
+         char buf[50000];
          memset(buf, 0, sizeof(buf));
          int totalsize = 0;
 
-         while(!feof(pipe) && (totalsize<16000)) {
+         while(!feof(pipe) && (totalsize<200000)) {
             int size = (int)fread(buf,1, sizeof(buf)-1, pipe); //cout<<buffer<<" size="<<size<<endl;
             if (size<=0) break;
             while ((size>0) && ((buf[size-1]==' ') || (buf[size-1]=='\n'))) size--;

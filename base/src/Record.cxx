@@ -678,6 +678,11 @@ std::string dabc::RecordField::JsonReformat(const std::string& str)
          continue;
       }
 
+      if (str[n] == '\t') {
+         res += "\\\\t";
+         continue;
+      }
+
       if (str[n] == '\\') is_last_escape = !is_last_escape;
 
       if ((str[n] == '\"') && !is_last_escape) res+='\\'; else
