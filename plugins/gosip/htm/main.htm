@@ -270,7 +270,7 @@
 
             document.getElementById("logging").innerHTML += "--- Register Dump ---<br/>";
             
-            Setup.GosipCommand("-d -r -x adr 0 " + numwords.toString(), function(res) {
+            Setup.GosipCommand("-d -r -x adr 0 0x" + numwords.toString(16), function(res) {
                SetStatusMessage("Dump data " + (res ? "OK" : "Fail"));
             }); 
          });
