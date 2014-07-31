@@ -48,6 +48,8 @@ public:
       return fResNumChilds;
    }
 
+   virtual Bool_t IsXml() const { return kFALSE; }
+
    ClassDef(TRootSnifferStore, 0) // structure for results store of objects sniffer
 };
 
@@ -68,6 +70,8 @@ public:
    virtual void SetField(Int_t lvl, const char *field, const char *value, Int_t);
    virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t);
    virtual void CloseNode(Int_t lvl, const char *nodename, Int_t numchilds);
+
+   virtual Bool_t IsXml() const { return kTRUE; }
 
    ClassDef(TRootSnifferStoreXml, 0) // xml results store of objects sniffer
 };

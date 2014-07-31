@@ -141,7 +141,7 @@ void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_na
    TString real_item_name;
 
    // this is for XML
-   if (started_node.First("[]&<>-\"\' ") != kNPOS) {
+   if (store->IsXml() && (started_node.First("[]&<>-\"\' ") != kNPOS)) {
       real_item_name = started_node;
       MakeItemName("extra_item", started_node); // we generate abstract item just to be safe with syntax
    }

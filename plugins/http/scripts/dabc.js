@@ -54,20 +54,6 @@ DABC.AssertRootPrerequisites = function() {
 };
 
 
-DABC.nextXmlNode = function(node)
-{
-   while (node && (node.nodeType!=1)) node = node.nextSibling;
-   return node;
-}
-
-
-DABC.TopXmlNode = function(xmldoc) 
-{
-   if (!xmldoc) return;
-   return DABC.nextXmlNode(xmldoc.firstChild);
-}
-
-
 // ============= start of DrawElement ================================= 
 
 DABC.DrawElement = function() {
@@ -134,7 +120,7 @@ DABC.DrawElement.prototype.FullItemName = function() {
 DABC.CommandDrawElement = function() {
    DABC.DrawElement.call(this);
    this.req = null;
-   this.xmlnode = null; // here is xml description of command, which should be first requested
+   this.jsonnode = null; // here is xml description of command, which should be first requested
    return this;
 }
 
@@ -152,37 +138,33 @@ DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
 }
 
 DABC.CommandDrawElement.prototype.NumArgs = function() {
-   if (this.xmlnode==null) return 0;
-   
-   return this.xmlnode.getAttribute("numargs");
+   if (this.jsonnode==null) return 0;
+   return this.jsonnode["numargs"];
 }
 
 DABC.CommandDrawElement.prototype.ArgName = function(n) {
    if (n>=this.NumArgs()) return "";
-   
-   return this.xmlnode.getAttribute("arg"+n);
+   return this.jsonnode["arg"+n];
 }
 
 DABC.CommandDrawElement.prototype.ArgKind = function(n) {
    if (n>=this.NumArgs()) return "";
-   
-   return this.xmlnode.getAttribute("arg"+n+"_kind");
+   return this.jsonnode["arg"+n+"_kind"];
 }
 
 DABC.CommandDrawElement.prototype.ArgDflt = function(n) {
    if (n>=this.NumArgs()) return "";
-   
-   return this.xmlnode.getAttribute("arg"+n+"_dflt");
+   return this.jsonnode["arg"+n+"_dflt"];
 }
 
 DABC.CommandDrawElement.prototype.ArgMin = function(n) {
    if (n>=this.NumArgs()) return null;
-   return this.xmlnode.getAttribute("arg"+n+"_min");
+   return this.jsonnode["arg"+n+"_min"];
 }
 
 DABC.CommandDrawElement.prototype.ArgMax = function(n) {
    if (n>=this.NumArgs()) return null;
-   return this.xmlnode.getAttribute("arg"+n+"_max");
+   return this.jsonnode["arg"+n+"_max"];
 }
 
 DABC.CommandDrawElement.prototype.ShowCommand = function() {
@@ -193,7 +175,7 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
    
    frame.append("<h3>" + this.FullItemName() + "</h3>");
 
-   if (this.xmlnode==null) {
+   if (this.jsonnode==null) {
       frame.append("request command definition...<br>");
       return;
    } 
@@ -246,9 +228,9 @@ DABC.CommandDrawElement.prototype.RegularCheck = function() {
 DABC.CommandDrawElement.prototype.RequestCommand = function() {
    if (this.req) return;
 
-   var url = this.itemname + "dabc.xml";
+   var url = this.itemname + "get.json";
 
-   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
+   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
 
    this.req.send(null);
 }
@@ -297,9 +279,8 @@ DABC.CommandDrawElement.prototype.RequestCallback = function(arg) {
       return;
    }
    
-   if (this.xmlnode==null) {
-      var top = DABC.TopXmlNode(arg);
-      this.xmlnode = DABC.nextXmlNode(top.firstChild);
+   if (this.jsonnode==null) {
+      this.jsonnode = JSON.parse(arg);
       this.ShowCommand();
       return;
    }
@@ -380,13 +361,10 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + this.request_name;
-   var separ = "?";
+   var url = this.itemname + this.request_name + "?compact=3";
 
-   // console.log("GetHistory current version = " + this.version);
-   
-   if (this.version>0) { url += separ + "version=" + this.version; separ = "&"; } 
-   if (this.hlimit>0) url += separ + "history=" + this.hlimit;
+   if (this.version>0) url += "&version=" + this.version; 
+   if (this.hlimit>0) url += "&history=" + this.hlimit;
    this.req = DABC.mgr.NewHttpRequest(url, "text", this);
 
    this.req.send(null);
@@ -679,301 +657,6 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
 }
 
 
-//======== start of HierarchyDrawElement =============================
-
-DABC.HierarchyDrawElement = function() {
-   DABC.DrawElement.call(this);
-   this.xmldoc = null;      // description is json form
-   this.ready = false;
-   this.req = 0;             // this is current request
-   this.main = null;         // pointer on main hierarchy element
-   this.maxnodeid = 0;       // maximum id of last element
-}
-
-// TODO: check how it works in different older browsers
-DABC.HierarchyDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = topid;
-}
-
-DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
-   if (this.ready || this.req) return;
-   
-   var url = "h.xml";
-   
-   // if it is sub-item, include its name when request hierarchy
-   if (this.main)
-      url = this.itemname + url;
-   
-   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
-
-   this.req.send(null);
-}
-
-DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
-{
-   if (lvl == null) lvl = 0;
-   if (maxlvl == null) maxlvl = -1;
-   
-   node = DABC.nextXmlNode(node);
-
-   while (node) {
-
-      // console.log(" Work with node " + node.nodeName);
-      
-      var kind = node.getAttribute("dabc:kind");
-      var view = node.getAttribute("dabc:view");
-      
-      // this name will be specified when item name can be used as XML node name
-      var dabcitemname = node.getAttribute("dabc:itemname");
-      
-      // var value = node.getAttribute("value");
-      
-      var html = "";
-
-      var nodename = node.nodeName;
-      if (dabcitemname != null) nodename = dabcitemname;
-      
-      var nodefullname  = "";
-      
-      if (parentid>=0) 
-         nodefullname = fullname + nodename + "/";
-      
-      var nodeimg = "";
-      var node2img = "";
-      
-      var scan_inside = true, can_open = false;
-      
-      var can_display = DABC.mgr.CanDisplay(node);
-      var can_expand = node.getAttribute("dabc:more") != null;
-      
-      if (kind) {
-         if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
-         if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
-         if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
-         if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
-         if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
-         if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
-         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
-         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
-         if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
-         if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
-         if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
-         if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
-         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
-         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
-         if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
-         if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
-      }
-
-      if (!node.hasChildNodes() || !scan_inside) {
-         if (can_expand) {   
-            html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
-            if (nodeimg.length == 0) {
-               nodeimg = source_dir+'img/folder.gif'; 
-               node2img = source_dir+'img/folderopen.gif';
-            }
-         } else
-         if (can_display) {
-            html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-         } else
-         if (can_open) 
-            html = nodefullname;
-      } else 
-      if ((maxlvl >= 0) && (lvl >= maxlvl)) {
-         html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
-         if (nodeimg.length == 0) {
-            nodeimg = source_dir+'img/folder.gif'; 
-            node2img = source_dir+'img/folderopen.gif';
-         }
-         scan_inside = false;
-      } else {
-         html = nodefullname;
-         if (html == "") html = ".."; 
-      }
-      
-      if (node2img == "") node2img = nodeimg;
-      
-      DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
-
-      // allow context menu only for objects which can be displayed
-      if (can_display)
-         DABC.dabc_tree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
-      
-      if (scan_inside)
-         nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname, lvl+1, maxlvl);
-      else
-         nodeid = nodeid + 1;
-      
-      node = DABC.nextXmlNode(node.nextSibling);
-   }
-   
-   return nodeid;
-}
-
-DABC.HierarchyDrawElement.prototype.TopNode = function() 
-{
-   if (!this.xmldoc) return;
-   
-   var lvl1 = DABC.nextXmlNode(this.xmldoc.firstChild);
-   
-   if (lvl1) return DABC.nextXmlNode(lvl1.firstChild);
-}
-
-
-DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
-
-   if (fullname.length==0) return top;
-   
-   if (!top) top = this.TopNode();
-   var pos = fullname.indexOf("/");
-   if (pos<0) return;
-   
-   var localname = fullname.substr(0, pos);  
-   var child = DABC.nextXmlNode(top.firstChild);
-   
-   // console.log("Serching for localname " + localname);
-
-   while (child) {
-      if (child.nodeName == localname) break;
-      var dabcitemname = child.getAttribute("dabc:itemname");
-      if ((dabcitemname!=null) && (dabcitemname == localname)) break;
-      child = DABC.nextXmlNode(child.nextSibling);
-   }
-   
-   if (!child) return;
-   
-   return this.FindNode(fullname.substr(pos+1), child);
-}
-
-DABC.HierarchyDrawElement.prototype.CountElements = function(node, lvl, arr)
-{
-   if (!node) return -1;
-   
-   if ((lvl==0) && (arr==null)) arr = new Array;
-   
-   while (arr.length <= lvl) arr.push(0);
-   
-   var child = DABC.nextXmlNode(node.firstChild);
-
-   while (child) {
-      arr[lvl]++;
-      this.CountElements(child, lvl+1, arr);
-      child = DABC.nextXmlNode(child.nextSibling);
-   }
-
-   // for first level count how deep browser can create items
-   if (lvl==0) {
-      var sum = 0;
-      for (var cnt in arr) {
-         sum += arr[cnt];
-         // console.log(" cnt = " + cnt + " arr = " + arr[cnt] + " sum = " + sum);
-         if (sum > DABC.tree_limit) return cnt;   
-      }
-   }
-   
-   return -1;
-}
-
-
-DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
-   this.req = 0;
-
-   if (arg==null) { this.ready = false; return; }
-
-   // console.log(" Get XML request callback "+ver);
-
-   this.xmldoc = arg;
-   
-   // console.log(" xml doc is there");
-   
-   var top = this.TopNode();
-   if (!top) return;
-   
-   this.ready = true;
-   
-   if (this.main == null) {
-   
-      DABC.dabc_tree = 0;
-      DABC.dabc_tree = new dTree('DABC.dabc_tree');
-      DABC.dabc_tree.config.useCookies = false;
-      
-      var maxlvl = this.CountElements(top, 0);
-      
-      // console.log("Total number of elements = " + sum + " level limit = " + maxlvl);
-   
-      this.maxnodeid = this.createNode(0, -1, top, "", 0, maxlvl);
-
-      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-      content += DABC.dabc_tree;
-      $("#" + this.frameid).html(content);
-   } else {
-      
-      var mainxmlnode = this.main.FindNode(this.itemname);
-      if (!mainxmlnode) {
-         alert("Not found xml node for item " + this.itemname);
-         DABC.mgr.RemoveItem(this);
-         return;
-      } 
-      
-      var chld;
-      while ((chld = top.firstChild)!=null) {
-         top.removeChild(chld);
-         mainxmlnode.appendChild(chld);
-      }
-
-      if (mainxmlnode.firstChild != null) {
-
-         this.main.maxnodeid = this.main.createNode(this.main.maxnodeid, this.maxnodeid, mainxmlnode.firstChild, this.itemname);
-
-         var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-         content += DABC.dabc_tree;
-         $("#" + this.main.frameid).html(content);
-
-         // open node which was filled 
-         DABC.dabc_tree.o(this.maxnodeid);
-      }
-      
-      DABC.mgr.RemoveItem(this);
-   }
-}
-
-DABC.HierarchyDrawElement.prototype.CompleteNode = function(itemname, xmlnode, nodeid)
-{
-   var maxlvl = this.CountElements(xmlnode, 0);
-   // here maxlevel calculation differ while we are using not the dummy top-node 
-   if (maxlvl>0) maxlvl--;
-   
-   this.maxnodeid = this.createNode(this.maxnodeid, nodeid, xmlnode.firstChild, itemname, 0, maxlvl);
-   
-   DABC.dabc_tree.aNodes[nodeid].url = itemname;
-   
-   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-   
-   content += DABC.dabc_tree;
-   $("#" + this.frameid).html(content);
-   DABC.dabc_tree.o(nodeid);
-}
-
-
-
-DABC.HierarchyDrawElement.prototype.Clear = function() {
-   
-   DABC.DrawElement.prototype.Clear.call(this);
-   
-   this.xmldoc = null;
-   this.ready = false;
-   if (this.req != null) this.req.abort();
-   this.req = null;
-}
-
-
-// ======== end of HierarchyDrawElement ======================
-
-
 //======== start of HierarchyJsonDrawElement =============================
 
 DABC.HierarchyJsonDrawElement = function() {
@@ -1109,6 +792,8 @@ DABC.HierarchyJsonDrawElement.prototype.TopNode = function()
 
 DABC.HierarchyJsonDrawElement.prototype.FindNode = function(fullname, top, replace) {
 
+   // console.log("Searchig " + fullname);
+   
    if (fullname.length==0) return top;
    
    if (!top) top = this.TopNode();
@@ -1116,7 +801,9 @@ DABC.HierarchyJsonDrawElement.prototype.FindNode = function(fullname, top, repla
    if (pos<0) return;
    
    var localname = fullname.substr(0, pos);  
-   
+
+   // console.log("local " + localname + " pos = " + pos + "  ");
+
    for (var i in top._childs) 
       if (top._childs[i]._name == localname) {
          if (pos+1 == fullname.length) {
@@ -1463,7 +1150,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    if (!DABC.AssertRootPrerequisites()) return;
    
    this.vis.select("title").text(this.itemname + 
-         "\nversion = " + this.version + ", history = " + this.history.length);
+         "\nversion = " + this.version + ", history = " + (this.history ? this.history.length : 0));
    
    //console.log("Extract series");
    
@@ -2092,19 +1779,12 @@ DABC.Manager.prototype.UpdateAll = function() {
 }
 
 
-DABC.Manager.prototype.CanDisplay = function(xmlnode)
+DABC.Manager.prototype.CanDisplay = function(node)
 {
-   if (!xmlnode) return false;
+   if (!node) return false;
 
-   var kind, view;
-   
-   if ("_name" in xmlnode) {
-      kind = xmlnode["dabc:kind"];
-      view = xmlnode["dabc:view"];
-   } else {
-      kind = xmlnode.getAttribute("dabc:kind");
-      view = xmlnode.getAttribute("dabc:view");
-   }
+   var kind = node["dabc:kind"];
+   var view = node["dabc:view"];
    if (!kind) return false;
 
    if (view == "png") return true;
@@ -2118,27 +1798,17 @@ DABC.Manager.prototype.CanDisplay = function(xmlnode)
 }
 
 
-DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
+DABC.Manager.prototype.DisplayItem = function(itemname, node)
 {
-   if (!xmlnode) xmlnode = this.FindXmlNode(itemname);
-   if (!xmlnode) {
-      console.log("cannot find xml node " + itemname);
+   if (!node) node = this.FindNode(itemname);
+   if (!node) {
+      console.log("cannot find node for item " + itemname);
       return;
    } 
    
-   var kind, history, view; 
-   
-   if ("_name" in xmlnode) {
-      kind = xmlnode["dabc:kind"];
-      history = xmlnode["dabc:history"];
-      view = xmlnode["dabc:view"];
-   } else {
-      kind = xmlnode.getAttribute("dabc:kind");
-      history = xmlnode.getAttribute("dabc:history");
-      view = xmlnode.getAttribute("dabc:view");
-   }
-   
-   
+   var kind = node["dabc:kind"];
+   var history = node["dabc:history"];
+   var view = node["dabc:view"];
    if (!kind) kind = "";
 
    var elem;
@@ -2206,7 +1876,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       
       if (!use_json) {
       
-         var sinfoname = this.FindMasterName(itemname, xmlnode);
+         var sinfoname = this.FindMasterName(itemname, node);
          sinfo = this.FindItem(sinfoname);
       
          if (sinfoname && !sinfo) {
@@ -2239,14 +1909,12 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
 
 DABC.Manager.prototype.display = function(itemname) {
    
-   var xmlnode = this.FindXmlNode(itemname);
-   if (!xmlnode) {
-      console.log(" cannot find xml node " + itemname);
+   var node = this.FindNode(itemname);
+   if (!node) {
+      console.log(" cannot find node " + itemname);
       return;
    }
 
-//   console.log(" find kind of node "+itemname + " " + kind);
-   
    var elem = this.FindItem(itemname);
 
    if (elem) {
@@ -2254,7 +1922,7 @@ DABC.Manager.prototype.display = function(itemname) {
       return;
    }
    
-   this.DisplayItem(itemname, xmlnode);
+   this.DisplayItem(itemname, node);
 }
 
 DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) {
@@ -2301,9 +1969,9 @@ DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) 
 
 DABC.Manager.prototype.expand = function(itemname, nodeid) {
    
-   var xmlnode = this.FindXmlNode(itemname);
-   if (!xmlnode) {
-      console.log(" cannot find xml node " + itemname);
+   var node = this.FindNode(itemname);
+   if (!node) {
+      console.log(" cannot find node " + itemname);
       return;
    }
 
@@ -2314,7 +1982,7 @@ DABC.Manager.prototype.expand = function(itemname, nodeid) {
       return;
    }
    
-   this.ExpandHiearchy(itemname, xmlnode, nodeid);
+   this.ExpandHiearchy(itemname, node, nodeid);
 }
 
 
@@ -2353,9 +2021,9 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    elem.RegularCheck();
 }
 
-DABC.Manager.prototype.ExpandHiearchy = function(itemname, xmlnode, nodeid)
+DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
 {
-   if (!xmlnode) return;
+   if (!node) return;
 
    var main = this.FindItem("ObjectsTree");
    if (!main) return;
@@ -2370,7 +2038,7 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, xmlnode, nodeid)
       this.arr.push(elem);
       elem.RegularCheck();
    } else {
-      main.CompleteNode(itemname, xmlnode, -nodeid);
+      main.CompleteNode(itemname, node, -nodeid);
    }
 }
 
@@ -2414,11 +2082,10 @@ DABC.Manager.prototype.ClearWindow = function()
 }
 
 
-DABC.Manager.prototype.FindXmlNode = function(itemname) {
+DABC.Manager.prototype.FindNode = function(itemname) {
    var elem = this.FindItem("ObjectsTree");
-   if (!elem) return;
    
-   return elem.FindNode(itemname);
+   return elem ? elem.FindNode(itemname) : null;
 }
 
 
