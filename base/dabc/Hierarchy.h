@@ -51,26 +51,6 @@ namespace dabc {
 
    class Hierarchy;
 
-   class HStore {
-      protected:
-         std::string       buf;
-         int               lvl;
-         std::vector<int>  numflds;
-         std::vector<int>  numchilds;
-      public:
-         HStore() : buf(), lvl(0), numflds(), numchilds() {}
-         virtual ~HStore() {}
-
-         std::string GetResult() { return buf; }
-
-         virtual void CreateNode(const char *) {}
-         virtual void SetField(const char *, const char *) {}
-         virtual void BeforeNextChild() {}
-         virtual void CloseNode(const char *) {}
-   };
-
-   // ===================================================================================
-
    struct HistoryItem {
       public:
          uint64_t version;          ///< version number
@@ -139,6 +119,8 @@ namespace dabc {
       unsigned Size() const { return null() ? 0 : GetObject()->fArr.Size(); }
 
       bool SaveInXmlNode(XMLNodePointer_t histnode, uint64_t version = 0, unsigned hlimit = 0);
+
+      bool SaveInJson(HStore& res, uint64_t version = 0, unsigned hlimit = 0);
    };
 
    // =======================================================

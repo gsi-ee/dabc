@@ -1326,9 +1326,7 @@ bool dabc::RecordFieldsMap::SaveInXml(XMLNodePointer_t node)
 {
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
 
-      if (iter->first.empty()) continue;
-
-      if (iter->first[0]=='#') continue;
+      if (iter->first.empty() || (iter->first[0]=='#')) continue;
 
       std::string value = iter->second.AsStr();
 
@@ -1353,9 +1351,7 @@ void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
 
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
 
-      if (iter->first.empty()) continue;
-
-      if (iter->first[0]=='#') continue;
+      if (iter->first.empty() || (iter->first[0]=='#')) continue;
 
       // discard attributes, which using quotes or any special symbols in the names
       if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
@@ -1376,6 +1372,19 @@ void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
    }
 }
 
+bool dabc::RecordFieldsMap::SaveInJson(HStore& res)
+{
+   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+
+      if (iter->first.empty() || (iter->first[0]=='#')) continue;
+
+      // discard attributes, which using quotes or any special symbols in the names
+      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
+
+      res.SetField(iter->first.c_str(), iter->second.AsJson().c_str());
+   }
+   return true;
+}
 
 bool dabc::RecordFieldsMap::ReadFromXml(XMLNodePointer_t node, bool overwrite, const ResolveFunc& func)
 {

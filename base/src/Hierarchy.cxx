@@ -97,11 +97,14 @@ namespace dabc {
          }
       }
 
-      virtual void BeforeNextChild()
+      virtual void BeforeNextChild(const char* = 0)
       {
          // called before next child node created
-
          if (numchilds.back()++ == 0) buf.append(">\n");
+      }
+
+      virtual void CloseChilds()
+      {
 
       }
 
@@ -151,6 +154,11 @@ namespace dabc {
       {
          // set field (json field) in current node
 
+         if (numflds.back() < 0) {
+            EOUT("Not allowed to set fields (here %s) after any child was created", field);
+            return;
+         }
+
          if (numflds.back()++ > 0) buf.append(",");
          NewLine();
          buf.append(dabc::format("%*s\"%s\"", (compact > 0) ? 0 : lvl * 4 - 2, "", field));
@@ -167,10 +175,7 @@ namespace dabc {
          // called when node should be closed
          // depending from number of childs different json format is applied
 
-         if (numchilds.back() > 0) {
-            NewLine();
-            buf.append(dabc::format("%*s]", (compact > 0) ? 0 : lvl * 4 - 2, ""));
-         }
+         CloseChilds();
          numchilds.pop_back();
          numflds.pop_back();
          lvl--;
@@ -178,29 +183,48 @@ namespace dabc {
          buf.append(dabc::format("%*s}", (compact > 0) ? 0 : lvl * 4, ""));
       }
 
+      virtual void StartChilds()
+      {
+      }
 
-      virtual void BeforeNextChild()
+
+      virtual void BeforeNextChild(const char* basename = 0)
       {
          // called before next child node created
 
-         if (numchilds.back()++==0) {
-            if (numflds.back() > 0) buf.append(",");
+         // first of all, close field and mark that we did it
+         if (numflds.back() > 0) buf.append(",");
+         numflds.back() = -1;
 
+         if (numchilds.back()++ == 0) {
             NewLine();
 
-            buf.append(dabc::format("%*s\"_childs\"", (compact > 0) ? 0 : lvl * 4 - 2, ""));
+            if (basename==0) basename = "_childs";
+
+            buf.append(dabc::format("%*s\"%s\"", (compact > 0) ? 0 : lvl * 4 - 2, "", basename));
             switch(compact) {
                case 2: buf.append(": ["); break;
                case 3: buf.append(":["); break;
                default: buf.append(" : [");
             }
-
-            NewLine();
          } else {
             buf.append(",");
+         }
+         NewLine();
+      }
+
+      virtual void CloseChilds()
+      {
+         if (numchilds.back() > 0) {
             NewLine();
+            buf.append(dabc::format("%*s]", (compact > 0) ? 0 : lvl * 4 - 2, ""));
+            numchilds.back() = 0;
+            numflds.back() = 1; // artificially mark that something was written
          }
       }
+
+
+
    };
 
 }
@@ -312,6 +336,50 @@ bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, un
    // Client in this case should cleanup its buffers while with gap
    // one cannot correctly reconstruct history backwards
    if (!cross_boundary) Xml::NewAttr(topnode, 0, "gap", xmlTrueValue);
+
+   return true;
+}
+
+
+bool dabc::History::SaveInJson(HStore& res, uint64_t version, unsigned hlimit)
+{
+   if (null()) return false;
+
+   // we could use value, restored from binary array
+   bool cross_boundary = GetObject()->fCrossBoundary;
+
+   unsigned first = 0;
+   if ((hlimit>0) && (GetObject()->fArr.Size() > hlimit))
+      first = GetObject()->fArr.Size() - hlimit;
+
+
+   for (unsigned n=first; n < GetObject()->fArr.Size();n++)
+      if (GetObject()->fArr.Item(n).version < version)
+         { cross_boundary = true; break; }
+
+   // if specific version was defined, and we do not have history backward to that version
+   // we need to indicate this to the client
+   // Client in this case should cleanup its buffers while with gap
+   // one cannot correctly reconstruct history backwards
+   if (!cross_boundary) res.SetField("history_gap", xmlTrueValue);
+
+   for (unsigned n=first; n < GetObject()->fArr.Size();n++) {
+      HistoryItem& item = GetObject()->fArr.Item(n);
+
+      // we have longer history as requested
+      if (item.version < version) continue;
+
+      res.BeforeNextChild("history");
+
+      res.CreateNode("h");
+
+      item.fields->SaveInJson(res);
+
+      res.CloseNode("h");
+//      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
+   }
+
+   res.CloseChilds();
 
    return true;
 }
@@ -614,13 +682,16 @@ bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res, unsigned mask)
 {
    res.CreateNode(GetName());
 
-   for(unsigned n=0;n<NumFields();n++) {
-      std::string name = (n==NumFields()) ? "sub" : FieldName(n);
-      // exclude special record fields
-      if (name.empty() || (name[0]=='#')) continue;
+   fFields->SaveInJson(res);
 
-      res.SetField(name.c_str(), GetField(name).AsJson().c_str());
+   if ((mask & xmlmask_Version) != 0) {
+      res.SetField("node_ver", dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
+      res.SetField("dns_ver", dabc::format("%lu", (long unsigned) fNamesVersion).c_str());
+      res.SetField("chld_ver", dabc::format("%lu", (long unsigned) fChildsVersion).c_str());
    }
+
+   if (((mask & xmlmask_History) != 0) && !fHist.null())
+      fHist.SaveInJson(res, 0, 0);
 
    if ((mask & xmlmask_NoChilds) == 0) {
       for (unsigned n=0;n<NumChilds();n++) {

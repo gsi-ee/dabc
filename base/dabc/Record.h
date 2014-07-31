@@ -159,6 +159,30 @@ namespace dabc {
          virtual ~memstream() {}
    };
 
+   /** \brief class, used for direct store in JSON/XML form */
+
+   class HStore {
+      protected:
+         std::string       buf;
+         int               lvl;
+         std::vector<int>  numflds;
+         std::vector<int>  numchilds;
+      public:
+         HStore() : buf(), lvl(0), numflds(), numchilds() {}
+         virtual ~HStore() {}
+
+         std::string GetResult() { return buf; }
+
+         virtual void CreateNode(const char *) {}
+         virtual void SetField(const char *, const char *) {}
+         virtual void BeforeNextChild(const char* = 0) {}
+         virtual void CloseChilds() {}
+         virtual void CloseNode(const char *) {}
+   };
+
+   // ===================================================================================
+
+
    // =========================================================
 
    class RecordField {
@@ -347,6 +371,9 @@ namespace dabc {
 
          /** Save all field in json format */
          void SaveToJson(std::string& buf, bool compact = true);
+
+         /** Save all field in json format */
+         bool SaveInJson(HStore& res);
 
          /** \brief Copy fields from source map */
          void CopyFrom(const RecordFieldsMap& src, bool overwrite = true);
