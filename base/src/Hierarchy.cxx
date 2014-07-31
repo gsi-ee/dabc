@@ -46,11 +46,13 @@ namespace dabc {
    class HXmlStore : public HStore {
 
    public:
-      HXmlStore() : HStore() {}
+      HXmlStore(unsigned m = 0) : HStore(m) {}
       virtual ~HXmlStore() {}
 
       virtual void CreateNode(const char *nodename)
       {
+         if (nodename==0) nodename = "item";
+
          // starts new xml node, will be closed by CloseNode
          buf.append(dabc::format("%*s<%s", lvl * 2, "", nodename));
 
@@ -113,9 +115,10 @@ namespace dabc {
          // called when node should be closed
          // depending from number of childs different xml format is applied
 
-         if (numchilds.back() > 0)
+         if (numchilds.back() > 0) {
+            if (nodename==0) nodename = "item";
             buf.append(dabc::format("%*s</%s>\n", lvl * 2, "", nodename));
-         else
+         } else
             buf.append(dabc::format("/>\n"));
          numchilds.pop_back();
          numflds.pop_back();
@@ -123,110 +126,86 @@ namespace dabc {
       }
    };
 
-   // ========================================================================
+}
 
+void dabc::HJsonStore::CreateNode(const char *nodename)
+{
+   // starts new json object, will be closed by CloseNode
 
-   class HJsonStore : public HStore {
-   protected:
-      int compact;
-      void NewLine()
-      {
-         if (compact<2) buf.append("\n"); else
-         if (compact<3) buf.append(" ");
+   buf.append(dabc::format("%*s{", (compact() > 0) ? 0 : lvl * 4, ""));
+   lvl++;
+   numflds.push_back(0);
+   numchilds.push_back(0);
+   if (nodename!=0)
+      SetField("_name", dabc::format("\"%s\"",nodename).c_str());
+}
+
+void dabc::HJsonStore::SetField(const char *field, const char *value)
+{
+   // set field (json field) in current node
+
+   if (numflds.back() < 0) {
+      EOUT("Not allowed to set fields (here %s) after any child was created", field);
+      return;
+   }
+
+   if (numflds.back()++ > 0) buf.append(",");
+   NewLine();
+   buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", field));
+   switch(compact()) {
+      case 2: buf.append(": "); break;
+      case 3: buf.append(":"); break;
+      default: buf.append(" : ");
+   }
+   buf.append(value);
+}
+
+void dabc::HJsonStore::CloseNode(const char *)
+{
+   // called when node should be closed
+   // depending from number of childs different json format is applied
+
+   CloseChilds();
+   numchilds.pop_back();
+   numflds.pop_back();
+   lvl--;
+   NewLine();
+   buf.append(dabc::format("%*s}", (compact() > 0) ? 0 : lvl * 4, ""));
+}
+
+void dabc::HJsonStore::BeforeNextChild(const char* basename)
+{
+   // called before next child node created
+
+   // first of all, close field and mark that we did it
+   if (numflds.back() > 0) buf.append(",");
+   numflds.back() = -1;
+
+   if (numchilds.back()++ == 0) {
+      NewLine();
+
+      if (basename==0) basename = "_childs";
+
+      buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", basename));
+      switch(compact()) {
+         case 2: buf.append(": ["); break;
+         case 3: buf.append(":["); break;
+         default: buf.append(" : [");
       }
+   } else {
+      buf.append(",");
+   }
+   NewLine();
+}
 
-   public:
-      HJsonStore(int _compact) : HStore(), compact(_compact) {}
-      virtual ~HJsonStore() {}
-
-      virtual void CreateNode(const char *nodename)
-      {
-         // starts new json object, will be closed by CloseNode
-
-         buf.append(dabc::format("%*s{", (compact > 0) ? 0 : lvl * 4, ""));
-         lvl++;
-         numflds.push_back(0);
-         numchilds.push_back(0);
-         SetField("_name", dabc::format("\"%s\"",nodename).c_str());
-      }
-
-      virtual void SetField(const char *field, const char *value)
-      {
-         // set field (json field) in current node
-
-         if (numflds.back() < 0) {
-            EOUT("Not allowed to set fields (here %s) after any child was created", field);
-            return;
-         }
-
-         if (numflds.back()++ > 0) buf.append(",");
-         NewLine();
-         buf.append(dabc::format("%*s\"%s\"", (compact > 0) ? 0 : lvl * 4 - 2, "", field));
-         switch(compact) {
-            case 2: buf.append(": "); break;
-            case 3: buf.append(":"); break;
-            default: buf.append(" : ");
-         }
-         buf.append(value);
-      }
-
-      virtual void CloseNode(const char *)
-      {
-         // called when node should be closed
-         // depending from number of childs different json format is applied
-
-         CloseChilds();
-         numchilds.pop_back();
-         numflds.pop_back();
-         lvl--;
-         NewLine();
-         buf.append(dabc::format("%*s}", (compact > 0) ? 0 : lvl * 4, ""));
-      }
-
-      virtual void StartChilds()
-      {
-      }
-
-
-      virtual void BeforeNextChild(const char* basename = 0)
-      {
-         // called before next child node created
-
-         // first of all, close field and mark that we did it
-         if (numflds.back() > 0) buf.append(",");
-         numflds.back() = -1;
-
-         if (numchilds.back()++ == 0) {
-            NewLine();
-
-            if (basename==0) basename = "_childs";
-
-            buf.append(dabc::format("%*s\"%s\"", (compact > 0) ? 0 : lvl * 4 - 2, "", basename));
-            switch(compact) {
-               case 2: buf.append(": ["); break;
-               case 3: buf.append(":["); break;
-               default: buf.append(" : [");
-            }
-         } else {
-            buf.append(",");
-         }
-         NewLine();
-      }
-
-      virtual void CloseChilds()
-      {
-         if (numchilds.back() > 0) {
-            NewLine();
-            buf.append(dabc::format("%*s]", (compact > 0) ? 0 : lvl * 4 - 2, ""));
-            numchilds.back() = 0;
-            numflds.back() = 1; // artificially mark that something was written
-         }
-      }
-
-
-
-   };
-
+void dabc::HJsonStore::CloseChilds()
+{
+   if (numchilds.back() > 0) {
+      NewLine();
+      buf.append(dabc::format("%*s]", (compact() > 0) ? 0 : lvl * 4 - 2, ""));
+      numchilds.back() = 0;
+      numflds.back() = 1; // artificially mark that something was written
+   }
 }
 
 
@@ -341,7 +320,7 @@ bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, un
 }
 
 
-bool dabc::History::SaveInJson(HStore& res, uint64_t version, unsigned hlimit)
+bool dabc::History::SaveInJson(HStore& res)
 {
    if (null()) return false;
 
@@ -349,12 +328,11 @@ bool dabc::History::SaveInJson(HStore& res, uint64_t version, unsigned hlimit)
    bool cross_boundary = GetObject()->fCrossBoundary;
 
    unsigned first = 0;
-   if ((hlimit>0) && (GetObject()->fArr.Size() > hlimit))
-      first = GetObject()->fArr.Size() - hlimit;
-
+   if ((res.hlimit()>0) && (GetObject()->fArr.Size() > res.hlimit()))
+      first = GetObject()->fArr.Size() - res.hlimit();
 
    for (unsigned n=first; n < GetObject()->fArr.Size();n++)
-      if (GetObject()->fArr.Item(n).version < version)
+      if (GetObject()->fArr.Item(n).version < res.version())
          { cross_boundary = true; break; }
 
    // if specific version was defined, and we do not have history backward to that version
@@ -367,15 +345,15 @@ bool dabc::History::SaveInJson(HStore& res, uint64_t version, unsigned hlimit)
       HistoryItem& item = GetObject()->fArr.Item(n);
 
       // we have longer history as requested
-      if (item.version < version) continue;
+      if (item.version < res.version()) continue;
 
       res.BeforeNextChild("history");
 
-      res.CreateNode("h");
+      res.CreateNode(0);
 
       item.fields->SaveInJson(res);
 
-      res.CloseNode("h");
+      res.CloseNode(0);
 //      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
    }
 
@@ -678,32 +656,32 @@ dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodeP
    return objnode;
 }
 
-bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res, unsigned mask)
+bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res)
 {
    res.CreateNode(GetName());
 
    fFields->SaveInJson(res);
 
-   if (mask & xmlmask_TopVersion) {
+   if (res.mask() & xmlmask_TopVersion) {
       res.SetField(dabc::prop_version, dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
-      mask = mask & ~xmlmask_TopVersion;
+      res.SetMask(res.mask() & ~xmlmask_TopVersion);
    }
 
-   if ((mask & xmlmask_Version) != 0) {
+   if ((res.mask() & xmlmask_Version) != 0) {
       res.SetField("node_ver", dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
       res.SetField("dns_ver", dabc::format("%lu", (long unsigned) fNamesVersion).c_str());
       res.SetField("chld_ver", dabc::format("%lu", (long unsigned) fChildsVersion).c_str());
    }
 
-   if (((mask & xmlmask_History) != 0) && !fHist.null())
-      fHist.SaveInJson(res, 0, 0);
+   if (((res.mask() & xmlmask_History) != 0) && !fHist.null())
+      fHist.SaveInJson(res);
 
-   if ((mask & xmlmask_NoChilds) == 0) {
+   if ((res.mask() & xmlmask_NoChilds) == 0) {
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
          if (child==0) continue;
          res.BeforeNextChild();
-         child->SaveHierarchyInJson(res, mask);
+         child->SaveHierarchyInJson(res);
       }
    }
 
@@ -1322,7 +1300,7 @@ std::string dabc::Hierarchy::SaveToJson(unsigned mask)
 
    HJsonStore store(mask);
 
-   GetObject()->SaveHierarchyInJson(store, mask);
+   GetObject()->SaveHierarchyInJson(store);
 
    return store.GetResult();
 }

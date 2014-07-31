@@ -738,6 +738,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
       unsigned hlimit(0);
       uint64_t version(0);
+      int compact(0);
 
       if (url.HasOption("history")) {
          int hist = url.GetOptionInt("history", 0);
@@ -747,6 +748,9 @@ int dabc::Worker::PreviewCommand(Command cmd)
          int v = url.GetOptionInt("version", 0);
          if (v>0) version = (unsigned) v;
       }
+      if (url.HasOption("compact"))
+         compact = url.GetOptionInt("compact", 3);
+
 
       LockGuard lock(h.GetHMutex());
 
@@ -781,9 +785,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          cmd_res = cmd_true;
       } else
-      if (binkind=="dabc.json") {
-         int compact = url.GetOptionInt("compact", 0);
-
+      if (binkind=="get.json") {
          std::string field = url.GetOptionStr("field", "");
 
          if (sub.null() && field.empty()) {
@@ -797,19 +799,22 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          if (sub.null()) return cmd_ignore;
 
-         DOUT0("Request JSON for item %s field %s compact %d", item.c_str(), field.c_str(), compact);
+         // DOUT0("Request JSON for item %s field %s compact %d", item.c_str(), field.c_str(), compact);
 
          std::string replybuf;
 
          if (field.empty()) {
-            unsigned mask = hlimit > 0 ? dabc::xmlmask_History : 0;
+            if (compact<0) compact = 0; else
+            if (compact>xmlmask_Compact) compact = xmlmask_Compact;
+            unsigned mask = compact;
+            if (hlimit>0) mask |= xmlmask_NoChilds | dabc::xmlmask_History | xmlmask_TopVersion;
 
-            if (compact>0) {
-               if (compact>xmlmask_Compact) mask = mask | xmlmask_Compact;
-                                       else mask = mask | compact;
-            }
+            dabc::HJsonStore store(mask);
+            store.SetLimits(version, hlimit);
 
-            replybuf = sub.SaveToJson(mask);
+            if (sub()->SaveHierarchyInJson(store))
+               replybuf = store.GetResult();
+
          } else {
             if (!sub.HasField(field)) return cmd_ignore;
 

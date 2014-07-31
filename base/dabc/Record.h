@@ -163,13 +163,24 @@ namespace dabc {
 
    class HStore {
       protected:
+         unsigned          fMask;
          std::string       buf;
          int               lvl;
          std::vector<int>  numflds;
          std::vector<int>  numchilds;
+         uint64_t          fVersion;
+         unsigned          fHLimit;
       public:
-         HStore() : buf(), lvl(0), numflds(), numchilds() {}
+         HStore(unsigned m = 0) : fMask(m), buf(), lvl(0), numflds(), numchilds(), fVersion(0), fHLimit(0) {}
          virtual ~HStore() {}
+
+         void SetLimits(uint64_t v, unsigned hlimit) { fVersion = v; fHLimit = hlimit; }
+
+         unsigned mask() const { return fMask; }
+         void SetMask(unsigned m) { fMask = m; }
+
+         uint64_t version() const { return fVersion; }
+         unsigned hlimit() const { return fHLimit; }
 
          std::string GetResult() { return buf; }
 

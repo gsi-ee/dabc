@@ -1190,7 +1190,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 {
    // register object in subfolder structure
-   // subfolder paramerer can have many levels like:
+   // subfolder parameter can have many levels like:
    //
    // TRootSniffer* sniff = new TRootSniffer("sniff");
    // sniff->RegisterObject("/my/sub/subfolder", h1);

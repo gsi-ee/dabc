@@ -704,7 +704,7 @@ std::string dabc::RecordField::AsJson() const
       case kind_datime: {
          char sbuf[35];
          if (dabc::DateTime(valueUInt).AsJSString(sbuf, sizeof(sbuf), 3))
-            return dabc::format("\'%s\'", sbuf);
+            return dabc::format("\"%s\"", sbuf);
          break;
       }
       case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);

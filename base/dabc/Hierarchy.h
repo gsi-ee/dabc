@@ -49,6 +49,30 @@ namespace dabc {
    extern const char* prop_time;          // time property, supplied when history is created
    extern const char* prop_more;          // indicate that item can provide more hierarchy if requested
 
+   class HJsonStore : public HStore {
+   protected:
+      unsigned compact() const { return mask() & 3; }
+      void NewLine()
+      {
+         if (compact()<2) buf.append("\n"); else
+         if (compact()<3) buf.append(" ");
+      }
+
+   public:
+      HJsonStore(unsigned m = 0) : HStore(m) {}
+      virtual ~HJsonStore() {}
+
+      virtual void CreateNode(const char *nodename);
+      virtual void SetField(const char *field, const char *value);
+      virtual void CloseNode(const char*);
+      virtual void StartChilds() {}
+      virtual void BeforeNextChild(const char* basename = 0);
+      virtual void CloseChilds();
+
+   };
+
+
+
    class Hierarchy;
 
    struct HistoryItem {
@@ -120,7 +144,7 @@ namespace dabc {
 
       bool SaveInXmlNode(XMLNodePointer_t histnode, uint64_t version = 0, unsigned hlimit = 0);
 
-      bool SaveInJson(HStore& res, uint64_t version = 0, unsigned hlimit = 0);
+      bool SaveInJson(HStore& res);
    };
 
    // =======================================================
@@ -289,7 +313,7 @@ namespace dabc {
 
          /** \brief Save hierarchy in JSON form.
           * Details see in SaveHierarchyInXmlNode */
-         bool SaveHierarchyInJson(HStore& res, unsigned mask);
+         bool SaveHierarchyInJson(HStore& res);
 
          uint64_t GetVersion() const { return fNodeVersion; }
 

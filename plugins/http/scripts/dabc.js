@@ -6,7 +6,7 @@ DABC.mgr = 0;
 
 DABC.dabc_tree = 0;   // variable to display hierarchy
 
-DABC.tree_limit = 20; // maximum number of elements drawn in the beginning
+DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
 
 DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
@@ -123,8 +123,8 @@ DABC.DrawElement.prototype.FullItemName = function() {
    // method should return absolute path of the item
    if ((this.itemname.length > 0) && (this.itemname[0] == '/')) return this.itemname;
    
-   var curpath = DABC.mgr.GetCurrentPath();
-   if (curpath.length == 0) curpath = document.location.pathname;
+   var curpath = document.location.pathname;
+   // if (curpath.length == 0) curpath = document.location.pathname;
    
    return curpath + this.itemname; 
 }
@@ -325,11 +325,11 @@ DABC.HistoryDrawElement = function(_clname) {
 
    this.clname = _clname;
    this.req = null;           // request to get raw data
-   this.xmlnode = null;       // xml node with current values 
-   this.xmlhistory = null;    // array with previous history
-   this.xmllimit = 0;         // maximum number of history entries
+   this.jsonnode = null;      // json object with current values 
+   this.history = null;       // array with previous history entries
+   this.hlimit = 0;           // maximum number of history entries
    this.force = true;
-   this.request_name = "dabc.xml";
+   this.request_name = "get.json";
 
    return this;
 }
@@ -337,21 +337,20 @@ DABC.HistoryDrawElement = function(_clname) {
 DABC.HistoryDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
 DABC.HistoryDrawElement.prototype.EnableHistory = function(hlimit) {
-   this.xmllimit = hlimit;
+   this.hlimit = hlimit;
 }
 
 DABC.HistoryDrawElement.prototype.isHistory = function() {
-   return this.xmllimit > 0;
+   return this.hlimit > 0;
 }
-
 
 DABC.HistoryDrawElement.prototype.Clear = function() {
    
    DABC.DrawElement.prototype.Clear.call(this);
    
-   this.xmlnode = null;       // xml node with current values 
-   this.xmlhistory = null;    // array with previous history
-   this.xmllimit = 100;       // maximum number of history entries  
+   this.jsonnode = null;      // json object with current values 
+   this.history = null;      // array with previous history
+   this.hlimit = 100;         // maximum number of history entries  
    if (this.req) this.req.abort(); 
    this.req = null;          // this is current request
    this.force = true;
@@ -387,8 +386,8 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
    // console.log("GetHistory current version = " + this.version);
    
    if (this.version>0) { url += separ + "version=" + this.version; separ = "&"; } 
-   if (this.xmllimit>0) url += separ + "history=" + this.xmllimit;
-   this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
+   if (this.hlimit>0) url += separ + "history=" + this.hlimit;
+   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
 
    this.req.send(null);
 
@@ -397,10 +396,10 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
 
 DABC.HistoryDrawElement.prototype.ExtractField = function(name, kind, node) {
    
-   if (!node) node = this.xmlnode;    
+   if (!node) node = this.jsonnode;    
    if (!node) return;
 
-   var val = node.getAttribute(name);
+   var val = node[name];
    if (!val) return;
    
    if (kind=="number") return Number(val); 
@@ -416,15 +415,15 @@ DABC.HistoryDrawElement.prototype.ExtractField = function(name, kind, node) {
 DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
 
    // xml node must have attribute, which will be extracted
-   var val = this.ExtractField(name, kind, this.xmlnode);
+   var val = this.ExtractField(name, kind, this.jsonnode);
    if (val==null) return;
    
    var arr = new Array();
    arr.push(val);
    
-   if (this.xmlhistory) 
-      for (var n=this.xmlhistory.length-1;n>=0;n--) {
-         var newval = this.ExtractField(name, kind, this.xmlhistory[n]);
+   if (this.history) 
+      for (var n=this.history.length-1;n>=0;n--) {
+         var newval = this.ExtractField(name, kind, this.history[n]);
          if (newval!=null) val = newval;
          arr.push(val);
       }
@@ -444,59 +443,46 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
       return;
    }
    
-   var top = DABC.TopXmlNode(arg);
+   var top = JSON.parse(arg);
 
 //   console.log("Get request callback " + top.getAttribute("dabc:version") + "  or " + top.getAttribute("version"));
    
-   var new_version = Number(top.getAttribute("dabc:version"));
+   var new_version = Number(top["dabc:version"]);
    
-   // top.getAttribute("itemname")  // one could rechek itemname
-
-   // console.log("Get history request callback version = " + new_version);
-
    var modified = (this.version != new_version);
 
    this.version = new_version;
 
    // this is xml node with all fields
-   this.xmlnode = DABC.nextXmlNode(top.firstChild);
+   this.jsonnode = top;
 
-   if (this.xmlnode == null) {
+   if (this.jsonnode == null) {
       console.log("Did not found node with item attributes");
       return;
    }
    
-   // this is node <history> 
-   var historynode = DABC.nextXmlNode(this.xmlnode.firstChild);
+   // this is array with history entries 
+   var arr = this.jsonnode["history"];
    
-   if ((historynode!=null) && (this.xmllimit>0)) {
+   if ((arr!=null) && (this.hlimit>0)) {
   
       // gap indicates that we could not get full history relative to provided version number
-      var gap = historynode.getAttribute("gap");
+      var gap = this.jsonnode["history_gap"];
       
-      // this is first node of kind <h value="abc" time="aaa"> 
-      var hnode = DABC.nextXmlNode(historynode.firstChild);
-   
-      var arr = new Array
-      while (hnode!=null) {
-         arr.push(hnode);
-         hnode = DABC.nextXmlNode(hnode.nextSibling);
+      // join both arrays with history entries
+      if ((this.history == null) || (arr.length >= this.hlimit) || gap) {
+         this.history = arr;
+      } else
+      if (arr.length>0) {
+         modified = true;
+         var total = this.history.length + arr.length; 
+         if (total > this.hlimit) 
+            this.history.splice(0, total - this.hlimit);
+
+         this.history = this.history.concat(arr);
       }
 
-      // join both arrays with history entries
-      if ((this.xmlhistory == null) || (arr.length >= this.xmllimit) || (gap!=null)) {
-         this.xmlhistory = arr;
-      } else
-         if (arr.length>0) {
-            modified = true;
-            var total = this.xmlhistory.length + arr.length; 
-            if (total > this.xmllimit) 
-               this.xmlhistory.splice(0, total - this.xmllimit);
-
-            this.xmlhistory = this.xmlhistory.concat(arr);
-         }
-
-      // console.log("History length = " + this.xmlhistory.length);
+      // console.log("History length = " + this.history.length);
    }
    
    if (modified) this.DrawHistoryElement();
@@ -625,7 +611,7 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
 
    if (this.isHistory()) {
       var txt = this.ExtractSeries("value","string");
-      for (var i=0;i<txt.length;i++)
+      for (var i in txt)
          element.append("<PRE>"+txt[i]+"</PRE>");
    } else {
       var val = this.ExtractField("value");
@@ -640,7 +626,6 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
 DABC.GenericDrawElement = function() {
    DABC.HistoryDrawElement.call(this,"generic");
    this.recheck = false;   // indicate that we want to redraw 
-   this.request_name = "h.xml";
 }
 
 DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
@@ -663,11 +648,11 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
       console.log("here one need to draw element with real style " + this.FullItemName());
       this.recheck = false;
       
-      if (this.xmlnode.getAttribute("dabc:kind")) {
+      if (this.jsonnode["dabc:kind"]) {
          var itemname = this.itemname;
-         var xmlnode = this.xmlnode;
+         var jsonnode = this.jsonnode;
          DABC.mgr.ClearWindow();
-         DABC.mgr.DisplayItem(itemname, xmlnode);
+         DABC.mgr.DisplayItem(itemname, jsonnode);
          return;
       }
    }
@@ -675,9 +660,11 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
    var element = $("#" + this.frameid);
    element.empty();
    element.append(this.FullItemName() + "<br>");
-   for (var i=0; i< this.xmlnode.attributes.length; i++) {
-      var attr = this.xmlnode.attributes.item(i);
-      element.append("<h5><PRE>" + attr.name + " = " + attr.value + "</PRE></h5>");
+   
+   var ks = Object.keys(this.jsonnode);
+   for (i = 0; i < ks.length; i++) {
+      k = ks[i];
+      element.append("<h5><PRE>" + ks[i] + " = " + this.jsonnode[ks[i]] + "</PRE></h5>");
    }
 
 //   if (this.isHistory()) {
@@ -825,13 +812,6 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    }
    
    return nodeid;
-}
-
-DABC.HierarchyDrawElement.prototype.GetCurrentPath = function() {
-   if (!this.xmldoc) return;
-   var lvl0 = DABC.nextXmlNode(this.xmldoc.firstChild);
-   if (!lvl0) return;
-   return lvl0.getAttribute("path");
 }
 
 DABC.HierarchyDrawElement.prototype.TopNode = function() 
@@ -1015,7 +995,7 @@ DABC.HierarchyJsonDrawElement.prototype.CreateFrames = function(topid, id) {
 DABC.HierarchyJsonDrawElement.prototype.RegularCheck = function() {
    if (this.ready || this.req) return;
    
-   var url = "h.json";
+   var url = "h.json?compact=3";
    
    // if it is sub-item, include its name when request hierarchy
    if (this.main)
@@ -1119,14 +1099,6 @@ DABC.HierarchyJsonDrawElement.prototype.createNode = function(nodeid, parentid, 
          nodeid = this.createNode(nodeid, thisid, node._childs[i], nodefullname, lvl+1, maxlvl);
    
    return nodeid;
-}
-
-DABC.HierarchyJsonDrawElement.prototype.GetCurrentPath = function() {
-   
-   return this.itemname;
-   
-   //if (!this.jsondoc) return;
-   //return this.jsondoc["_path"];
 }
 
 DABC.HierarchyJsonDrawElement.prototype.TopNode = function() 
@@ -1491,7 +1463,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    if (!DABC.AssertRootPrerequisites()) return;
    
    this.vis.select("title").text(this.itemname + 
-         "\nversion = " + this.version + ", history = " + this.xmlhistory.length);
+         "\nversion = " + this.version + ", history = " + this.history.length);
    
    //console.log("Extract series");
    
@@ -2449,12 +2421,6 @@ DABC.Manager.prototype.FindXmlNode = function(itemname) {
    return elem.FindNode(itemname);
 }
 
-DABC.Manager.prototype.GetCurrentPath = function() {
-   var elem = this.FindItem("ObjectsTree");
-   if (elem) return elem.GetCurrentPath();
-   return "";
-}
-
 
 DABC.Manager.prototype.ReloadSingleElement = function()
 {
@@ -2485,19 +2451,6 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    
    var newname = itemname;
    var currpath = document.location.pathname;
-   
-   // var currpath = this.GetCurrentPath();
-   
-//   if ((newname.length==0) && (currpath.length==0)) {
-//      newname = document.location.pathname;
-//      console.log("find master for path " + newname);
-//   }
-   
-   // console.log("Item = " + itemname + " path = " + currpath + " lvl = " + lvl);
-   
-//   console.log("document path = " + document.location.pathname);
-   
-   // console.log("item = " + itemname + "  master = " + master + " lvl = " + lvl + " currpath = " + currpath);
 
    while (lvl>0) {
       

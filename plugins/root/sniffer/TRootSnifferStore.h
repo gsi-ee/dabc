@@ -78,10 +78,12 @@ public:
 class TRootSnifferStoreJson : public TRootSnifferStore {
 protected:
    TString *buf;     //! output buffer
+   Bool_t compact;   //! produce compact json code
 public:
-   TRootSnifferStoreJson(TString &_buf) :
+   TRootSnifferStoreJson(TString &_buf, Bool_t _compact) :
       TRootSnifferStore(),
-      buf(&_buf) {}
+      buf(&_buf),
+      compact(_compact) {}
    virtual ~TRootSnifferStoreJson() {}
 
    virtual void CreateNode(Int_t lvl, const char *nodename);

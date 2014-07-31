@@ -514,18 +514,13 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
    if (filename == "h.json")  {
 
-      arg->fContent.Append("{\n");
+      TRootSnifferStoreJson store(arg->fContent, arg->fQuery.Index("compact")!=kNPOS);
 
-      {
-         TRootSnifferStoreJson store(arg->fContent);
+      const char *topname = fTopName.Data();
+      if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
 
-         const char *topname = fTopName.Data();
-         if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
+      fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
 
-         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
-      }
-
-      arg->fContent.Append("\n}\n");
       arg->SetJson();
    } else
 

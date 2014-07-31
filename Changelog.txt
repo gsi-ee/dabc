@@ -5,6 +5,14 @@ current functionality of the framework.
 31.07.2014
 1. Implement several levels of compressions when creating JSON. 
 2. Implement storage of hierarchy into JSON, including history.
+3. By new JSON/XML storage do not use intermediate binary buffer.
+   Data directly written into string output. For XML case it also
+   eliminates intermediate XML structures.
+4. Adjust TRootSnifferStoreJson to be compatible with DABC format.      
+5. Data exchange between server and client always performed in JSON.
+   Always h.json for hierarchy and get.json for data are used. 
+   XML will be left just for historical reasons. 
+   Tested with DABC/ROOT/Go4.   
 
 
 30.07.2014
