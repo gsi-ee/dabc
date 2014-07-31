@@ -40,11 +40,11 @@ DABC.AssertRootPrerequisites = function() {
       DABC.load_root_js = 1;
       loadScript('jsrootiosys/scripts/jquery.mousewheel.js', function() {
       loadScript('jsrootiosys/scripts/rawinflate.js', function() {
-      loadScript('jsrootiosys/scripts/JSRootCore.js', function() {
       loadScript('jsrootiosys/scripts/three.min.js', function() {
       loadScript('jsrootiosys/fonts/helvetiker_regular.typeface.js', function() {
+      loadScript('jsrootiosys/scripts/JSRootCore.js', function() {
       loadScript('jsrootiosys/scripts/JSRootIOEvolution.js', function() {
-      loadScript('jsrootiosys/scripts/JSRootD3ExpPainter.js', function() {
+      loadScript('jsrootiosys/scripts/JSRootPainter.js', function() {
          DABC.load_root_js = 2;
          gStyle.OptimizeDraw = true;
       }) }) }) }) }) }) });
