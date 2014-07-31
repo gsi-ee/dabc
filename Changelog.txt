@@ -4,6 +4,7 @@ current functionality of the framework.
 
 31.07.2014
 1. Implement several levels of compressions when creating JSON. 
+2. Implement storage of hierarchy into JSON, including history.
 
 
 30.07.2014

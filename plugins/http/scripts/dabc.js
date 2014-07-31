@@ -6,7 +6,7 @@ DABC.mgr = 0;
 
 DABC.dabc_tree = 0;   // variable to display hierarchy
 
-DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
+DABC.tree_limit = 20; // maximum number of elements drawn in the beginning
 
 DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
@@ -696,7 +696,7 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
 
 DABC.HierarchyDrawElement = function() {
    DABC.DrawElement.call(this);
-   this.xmldoc = 0;
+   this.xmldoc = null;      // description is json form
    this.ready = false;
    this.req = 0;             // this is current request
    this.main = null;         // pointer on main hierarchy element
@@ -718,8 +718,6 @@ DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    // if it is sub-item, include its name when request hierarchy
    if (this.main)
       url = this.itemname + url;
-   
-   // console.log("Send request " + url);
    
    this.req = DABC.mgr.NewHttpRequest(url, "xml", this);
 
@@ -994,6 +992,288 @@ DABC.HierarchyDrawElement.prototype.Clear = function() {
 
 
 // ======== end of HierarchyDrawElement ======================
+
+
+//======== start of HierarchyJsonDrawElement =============================
+
+DABC.HierarchyJsonDrawElement = function() {
+   DABC.DrawElement.call(this);
+   this.jsondoc = null;      // description is json form
+   this.ready = false;
+   this.req = 0;             // this is current request
+   this.main = null;         // pointer on main hierarchy element
+   this.maxnodeid = 0;       // maximum id of last element
+}
+
+// TODO: check how it works in different older browsers
+DABC.HierarchyJsonDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.HierarchyJsonDrawElement.prototype.CreateFrames = function(topid, id) {
+   this.frameid = topid;
+}
+
+DABC.HierarchyJsonDrawElement.prototype.RegularCheck = function() {
+   if (this.ready || this.req) return;
+   
+   var url = "h.json";
+   
+   // if it is sub-item, include its name when request hierarchy
+   if (this.main)
+      url = this.itemname + url;
+   
+   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
+
+   this.req.send(null);
+}
+
+DABC.HierarchyJsonDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
+{
+   if (lvl == null) lvl = 0;
+   if (maxlvl == null) maxlvl = -1;
+   
+   var kind = node["dabc:kind"];
+   var view = node["dabc:view"];
+   
+   // this name will be specified when item name can be used as XML node name
+   var dabcitemname = node["dabc:itemname"];
+   
+   var html = "";
+
+   var nodename = node._name;
+   if (dabcitemname != null) nodename = dabcitemname;
+   
+   var nodefullname  = "";
+   
+   if (parentid>=0) 
+      nodefullname = fullname + nodename + "/";
+   
+   var nodeimg = "";
+   var node2img = "";
+   
+   var scan_inside = true, can_open = false;
+   
+   var can_display = DABC.mgr.CanDisplay(node);
+   var can_expand = node["dabc:more"] != null;
+   
+   if (kind) {
+      if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
+      if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
+      if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
+      if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
+      if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
+      if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
+      if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
+      if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
+      if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
+      if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
+      if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
+      if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
+      if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
+      if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
+      if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
+      if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
+      if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
+      if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
+   }
+
+   if (!node._childs || !scan_inside) {
+      if (can_expand) {   
+         html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
+         if (nodeimg.length == 0) {
+            nodeimg = source_dir+'img/folder.gif'; 
+            node2img = source_dir+'img/folderopen.gif';
+         }
+      } else
+      if (can_display) {
+         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+      } else
+      if (can_open) 
+         html = nodefullname;
+   } else 
+   if ((maxlvl >= 0) && (lvl >= maxlvl)) {
+      html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
+      if (nodeimg.length == 0) {
+         nodeimg = source_dir+'img/folder.gif'; 
+         node2img = source_dir+'img/folderopen.gif';
+      }
+      scan_inside = false;
+   } else {
+      html = nodefullname;
+      if (html == "") html = ".."; 
+   }
+   
+   if (node2img == "") node2img = nodeimg;
+   
+   DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
+   
+   var thisid = nodeid;
+
+   // allow context menu only for objects which can be displayed
+   if (can_display)
+      DABC.dabc_tree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
+
+   nodeid++;
+   
+   if (scan_inside) 
+      for (var i in node._childs)
+         nodeid = this.createNode(nodeid, thisid, node._childs[i], nodefullname, lvl+1, maxlvl);
+   
+   return nodeid;
+}
+
+DABC.HierarchyJsonDrawElement.prototype.GetCurrentPath = function() {
+   
+   return this.itemname;
+   
+   //if (!this.jsondoc) return;
+   //return this.jsondoc["_path"];
+}
+
+DABC.HierarchyJsonDrawElement.prototype.TopNode = function() 
+{
+   return this.jsondoc;
+}
+
+
+DABC.HierarchyJsonDrawElement.prototype.FindNode = function(fullname, top, replace) {
+
+   if (fullname.length==0) return top;
+   
+   if (!top) top = this.TopNode();
+   var pos = fullname.indexOf("/");
+   if (pos<0) return;
+   
+   var localname = fullname.substr(0, pos);  
+   
+   for (var i in top._childs) 
+      if (top._childs[i]._name == localname) {
+         if (pos+1 == fullname.length) {
+            if (replace!=null) top._childs[i] = replace;
+            return top._childs[i]; 
+         }
+         
+         return this.FindNode(fullname.substr(pos+1), top._childs[i], replace);
+      }
+}
+
+DABC.HierarchyJsonDrawElement.prototype.CountElements = function(node, lvl, arr)
+{
+   if (!node) return -1;
+   
+   if ((lvl==0) && (arr==null)) arr = new Array;
+   
+   while (arr.length <= lvl) arr.push(0);
+   
+   if (node._childs)
+      for (var i in node._childs) {
+         arr[lvl]++;
+         this.CountElements(node._childs[i], lvl+1, arr);
+      }
+
+   // for first level count how deep browser can create items
+   if (lvl==0) {
+      var sum = 0;
+      for (var cnt in arr) {
+         sum += arr[cnt];
+         // console.log(" cnt = " + cnt + " arr = " + arr[cnt] + " sum = " + sum);
+         if (sum > DABC.tree_limit) return cnt;   
+      }
+   }
+   
+   return -1;
+}
+
+
+DABC.HierarchyJsonDrawElement.prototype.RequestCallback = function(arg) {
+   this.req = 0;
+
+   if (arg==null) { this.ready = false; return; }
+
+   this.jsondoc = JSON.parse(arg);
+   if (!this.jsondoc) {
+      console.log(" Fail to parse JSON reply");
+      return;
+   }
+   
+   var top = this.jsondoc;
+   if (!top) return;
+   
+   this.ready = true;
+   
+   if (this.main == null) {
+   
+      DABC.dabc_tree = 0;
+      DABC.dabc_tree = new dTree('DABC.dabc_tree');
+      DABC.dabc_tree.config.useCookies = false;
+      
+      var maxlvl = this.CountElements(top, 0);
+      
+      // console.log("Total number of elements = " + sum + " level limit = " + maxlvl);
+   
+      this.maxnodeid = this.createNode(0, -1, top, "", 0, maxlvl);
+
+      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+      content += DABC.dabc_tree;
+      $("#" + this.frameid).html(content);
+   } else {
+      // find and replace at the same time
+      var mainjsonnode = this.main.FindNode(this.itemname, null, top);
+      if (!mainjsonnode) {
+         alert("Not found json node for item " + this.itemname);
+         DABC.mgr.RemoveItem(this);
+         return;
+      } 
+      
+      if (mainjsonnode._childs != null) {
+
+         for (var i in mainjsonnode._childs)
+            this.main.maxnodeid = this.createNode(this.main.maxnodeid, this.maxnodeid, mainjsonnode._childs[i], this.itemname);
+
+         var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+         content += DABC.dabc_tree;
+         $("#" + this.main.frameid).html(content);
+
+         // open node which was filled 
+         DABC.dabc_tree.o(this.maxnodeid);
+      }
+      
+      DABC.mgr.RemoveItem(this);
+   }
+}
+
+DABC.HierarchyJsonDrawElement.prototype.CompleteNode = function(itemname, node, nodeid)
+{
+   var maxlvl = this.CountElements(node, 0);
+   // here maxlevel calculation differ while we are using not the dummy top-node 
+   if (maxlvl>0) maxlvl--;
+
+   for (var i in node._childs)
+     this.maxnodeid = this.createNode(this.maxnodeid, nodeid, node._childs[i], itemname, 0, maxlvl);
+   
+   DABC.dabc_tree.aNodes[nodeid].url = itemname;
+   
+   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+   
+   content += DABC.dabc_tree;
+   $("#" + this.frameid).html(content);
+   DABC.dabc_tree.o(nodeid);
+}
+
+
+
+DABC.HierarchyJsonDrawElement.prototype.Clear = function() {
+   
+   DABC.DrawElement.prototype.Clear.call(this);
+   
+   this.xmldoc = null;
+   this.ready = false;
+   if (this.req != null) this.req.abort();
+   this.req = null;
+}
+
+
+// ======== end of HierarchyJsonDrawElement ======================
+
 
 // ================ start of FesaDrawElement
 
@@ -1844,8 +2124,15 @@ DABC.Manager.prototype.CanDisplay = function(xmlnode)
 {
    if (!xmlnode) return false;
 
-   var kind = xmlnode.getAttribute("dabc:kind");
-   var view = xmlnode.getAttribute("dabc:view");
+   var kind, view;
+   
+   if ("_name" in xmlnode) {
+      kind = xmlnode["dabc:kind"];
+      view = xmlnode["dabc:view"];
+   } else {
+      kind = xmlnode.getAttribute("dabc:kind");
+      view = xmlnode.getAttribute("dabc:view");
+   }
    if (!kind) return false;
 
    if (view == "png") return true;
@@ -1867,9 +2154,19 @@ DABC.Manager.prototype.DisplayItem = function(itemname, xmlnode)
       return;
    } 
    
-   var kind = xmlnode.getAttribute("dabc:kind");
-   var history = xmlnode.getAttribute("dabc:history");
-   var view = xmlnode.getAttribute("dabc:view");
+   var kind, history, view; 
+   
+   if ("_name" in xmlnode) {
+      kind = xmlnode["dabc:kind"];
+      history = xmlnode["dabc:history"];
+      view = xmlnode["dabc:view"];
+   } else {
+      kind = xmlnode.getAttribute("dabc:kind");
+      history = xmlnode.getAttribute("dabc:history");
+      view = xmlnode.getAttribute("dabc:view");
+   }
+   
+   
    if (!kind) kind = "";
 
    var elem;
@@ -2073,7 +2370,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
 
    // console.log(" start2");
 
-   elem = new DABC.HierarchyDrawElement();
+   elem = new DABC.HierarchyJsonDrawElement();
    
    elem.itemname = "ObjectsTree";
 
@@ -2092,7 +2389,7 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, xmlnode, nodeid)
    if (!main) return;
    
    if (nodeid>0) {
-      elem = new DABC.HierarchyDrawElement();
+      elem = new DABC.HierarchyJsonDrawElement();
    
       elem.itemname = itemname;
       elem.main = main;

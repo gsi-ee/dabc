@@ -684,6 +684,11 @@ bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res, unsigned mask)
 
    fFields->SaveInJson(res);
 
+   if (mask & xmlmask_TopVersion) {
+      res.SetField(dabc::prop_version, dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
+      mask = mask & ~xmlmask_TopVersion;
+   }
+
    if ((mask & xmlmask_Version) != 0) {
       res.SetField("node_ver", dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
       res.SetField("dns_ver", dabc::format("%lu", (long unsigned) fNamesVersion).c_str());
@@ -1315,7 +1320,7 @@ std::string dabc::Hierarchy::SaveToJson(unsigned mask)
 {
    if (null()) return "";
 
-   HJsonStore store(mask & xmlmask_Compact);
+   HJsonStore store(mask);
 
    GetObject()->SaveHierarchyInJson(store, mask);
 
