@@ -32,10 +32,13 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
       cmd.SetStr("astext", str);
    } else {
-      std::string query = cmd.GetStr("query");
-
       unsigned mask = dabc::xmlmask_TopDabc;
-      if (query.find("compact")!=std::string::npos) mask = dabc::xmlmask_Compact;
+
+      dabc::Url url;
+      url.SetOptions(cmd.GetStr("query"));
+
+      if (url.HasOption("compact"))
+         mask |= (url.GetOptionInt("compact", dabc::xmlmask_Compact) & dabc::xmlmask_Compact);
 
       std::string str = res.SaveToJson(mask);
       cmd.SetStr("astext", str);
@@ -869,7 +872,7 @@ bool dabc::PublisherRef::SaveGlobalNamesListAs(const std::string& kind,
    CmdGetNamesList cmd;
    cmd.SetStr("textkind", kind);
    cmd.SetStr("path", path);
-   cmd.SetStr("query", path);
+   cmd.SetStr("query", query);
 
    if (Execute(cmd) != cmd_true) return false;
 

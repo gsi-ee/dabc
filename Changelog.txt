@@ -2,10 +2,14 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+31.07.2014
+1. Implement several levels of compressions when creating JSON. 
+
+
 30.07.2014
 1. Introduce HStore class to store hierarchy structure in JSON/XML formats.
    Idea to make functionality comparable with TRootSnifferStore classes.
-   Later both ROOT and DABC should work with json-based descrptions.  
+   Later both ROOT and DABC should work with json-based descriptions.  
 
 
 29.07.2014

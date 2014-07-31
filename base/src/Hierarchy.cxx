@@ -126,6 +126,12 @@ namespace dabc {
    class HJsonStore : public HStore {
    protected:
       int compact;
+      void NewLine()
+      {
+         if (compact<2) buf.append("\n"); else
+         if (compact<3) buf.append(" ");
+      }
+
    public:
       HJsonStore(int _compact) : HStore(), compact(_compact) {}
       virtual ~HJsonStore() {}
@@ -134,22 +140,26 @@ namespace dabc {
       {
          // starts new json object, will be closed by CloseNode
 
-         buf.append(dabc::format("%*s{", lvl * 4, ""));
+         buf.append(dabc::format("%*s{", (compact > 0) ? 0 : lvl * 4, ""));
          lvl++;
          numflds.push_back(0);
          numchilds.push_back(0);
-         SetField("name", dabc::format("\"%s\"",nodename).c_str());
+         SetField("_name", dabc::format("\"%s\"",nodename).c_str());
       }
 
       virtual void SetField(const char *field, const char *value)
       {
          // set field (json field) in current node
 
-         if (numflds.back()++ == 0)
-            buf.append("\n");
-         else
-            buf.append(",\n");
-         buf.append(dabc::format("%*s\"%s\" : %s", lvl * 4 + 2, "", field, value));
+         if (numflds.back()++ > 0) buf.append(",");
+         NewLine();
+         buf.append(dabc::format("%*s\"%s\"", (compact > 0) ? 0 : lvl * 4 - 2, "", field));
+         switch(compact) {
+            case 2: buf.append(": "); break;
+            case 3: buf.append(":"); break;
+            default: buf.append(" : ");
+         }
+         buf.append(value);
       }
 
       virtual void CloseNode(const char *)
@@ -157,13 +167,15 @@ namespace dabc {
          // called when node should be closed
          // depending from number of childs different json format is applied
 
-         if (numchilds.back() > 0)
-            buf.append(dabc::format("\n%*s]", lvl * 4 + 2, ""));
-         buf.append(dabc::format("\n%*s}", lvl * 4, ""));
-
+         if (numchilds.back() > 0) {
+            NewLine();
+            buf.append(dabc::format("%*s]", (compact > 0) ? 0 : lvl * 4 - 2, ""));
+         }
          numchilds.pop_back();
          numflds.pop_back();
          lvl--;
+         NewLine();
+         buf.append(dabc::format("%*s}", (compact > 0) ? 0 : lvl * 4, ""));
       }
 
 
@@ -172,13 +184,21 @@ namespace dabc {
          // called before next child node created
 
          if (numchilds.back()++==0) {
-            if (numflds.back() == 0)
-               buf.append("\n");
-            else
-               buf.append(",\n");
-            buf.append(dabc::format("%*s\"childs\" : [\n", lvl * 4 + 2, ""));
+            if (numflds.back() > 0) buf.append(",");
+
+            NewLine();
+
+            buf.append(dabc::format("%*s\"_childs\"", (compact > 0) ? 0 : lvl * 4 - 2, ""));
+            switch(compact) {
+               case 2: buf.append(": ["); break;
+               case 3: buf.append(":["); break;
+               default: buf.append(" : [");
+            }
+
+            NewLine();
          } else {
-            buf.append(",\n");
+            buf.append(",");
+            NewLine();
          }
       }
    };
