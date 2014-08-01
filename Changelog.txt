@@ -6,6 +6,7 @@ current functionality of the framework.
 1. Remove old xml generation from hierarchy/history. 
    HJsonStore and HXmlStore are mainline now. 
 2. Use HStore classes for all kinds of text storage.
+3. Command transport between hosts implemented in binary form. 
    
 
 31.07.2014

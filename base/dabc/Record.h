@@ -24,6 +24,10 @@
 #include "dabc/XmlEngine.h"
 #endif
 
+#ifndef DABC_Buffer
+#include "dabc/Buffer.h"
+#endif
+
 #include <vector>
 #include <map>
 #include <stdint.h>
@@ -413,6 +417,9 @@ namespace dabc {
 
          void clear() { fMap.clear(); }
 
+         static bool match_prefix(const std::string& name, const std::string& prefix);
+
+
       public:
 
          class ResolveFunc {
@@ -579,6 +586,16 @@ namespace dabc {
 
       /** \brief Store record in XML form */
       std::string SaveToXml(unsigned mask = 0);
+
+      bool Stream(iostream& s);
+
+      dabc::Buffer SaveToBuffer();
+
+      bool ReadFromBuffer(const dabc::Buffer& buf);
+
+      protected:
+
+      virtual void CreateRecord(const std::string& name);
 
    };
 

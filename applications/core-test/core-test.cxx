@@ -874,39 +874,6 @@ extern "C" void RunTimersTest()
 
 extern "C" void RunCmdTest()
 {
-/*
-
-   dabc::Command cmd1("MyCmd");
-   cmd1.SetBool("abc", false);
-   cmd1.SetInt("kdf", 122);
-   cmd1.SetStr("bad", "bad & string");
-   cmd1.SetStr("bad par", "with bad \"string's");
-   cmd1.SetInt("_lmc", 1222);
-   cmd1.SetInt("#hidden", 1222);
-
-   std::string s1,s2;
-   s1 = cmd1.SaveToXml(false);
-
-   DOUT1("CMD1: \n%s", s1.c_str());
-
-
-   dabc::Command cmd2;
-   cmd2.ReadFromXml(s1.c_str());
-   s2 = cmd2.SaveToXml(false);
-
-   DOUT1("CMD2: \n%s", s2.c_str());
-
-   DOUT1("Same = %s", DBOOL(s1==s2));
-
-   return;
-*/
-
-
-
-//   TestCmdSet(5, false, 3, true);
-//   return;
-
-
    TestCmdChain(20, true); // with timeout
 
    TestCmdChain(20, false); // without timeout and same command
@@ -918,7 +885,6 @@ extern "C" void RunCmdTest()
 extern "C" void RunTimeTest()
 {
    dabc::TimeStamp ttt;
-
 
    timespec tm;
    clock_gettime(CLOCK_MONOTONIC, &tm);

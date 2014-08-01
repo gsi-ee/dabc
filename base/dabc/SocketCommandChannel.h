@@ -105,7 +105,7 @@ namespace dabc {
          EState             fState;             ///< current state of the worker
 
          SocketCmdPacket    fSendHdr;           ///< header for send command
-         std::string        fSendBuf;           ///< content of transported command
+         dabc::Buffer       fSendBuf;           ///< content of transported command
          dabc::Buffer       fSendRawData;       ///< raw data, which should be send with command
          bool               fSendingActive;     ///< indicate if currently send active
          SocketCmdPacket    fRecvHdr;           ///< buffer for receiving header

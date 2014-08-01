@@ -365,36 +365,3 @@ dabc::Reference dabc::Command::GetRawData()
 {
    return GetRef("RawData");
 }
-
-
-std::string dabc::Command::SaveToXml(bool compact)
-{
-   XMLNodePointer_t node = GetObject() ? GetObject()->SaveInXmlNode(0) : 0;
-
-   std::string res;
-
-   if (node) {
-      Xml::SaveSingleNode(node, &res, compact ? 0 : 1);
-      Xml::FreeNode(node);
-   }
-
-   return res;
-}
-
-
-bool dabc::Command::ReadFromXml(const char* xmlcode)
-{
-   if ((xmlcode==0) || (*xmlcode==0)) return false;
-
-   XMLNodePointer_t node = Xml::ReadSingleNode(xmlcode);
-
-   if (node==0) return false;
-
-   SetObject(new dabc::CommandContainer(Xml::GetNodeName(node)));
-
-   GetObject()->Fields().ReadFromXml(node, true);
-
-   Xml::FreeNode(node);
-
-   return true;
-}

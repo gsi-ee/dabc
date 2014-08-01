@@ -224,7 +224,8 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
       return;
    }
 
-   if (!cmd.ReadFromXml(fRecvBuf)) {
+   dabc::Buffer cmddata = dabc::Buffer::CreateBuffer(fRecvBuf, fRecvHdr.data_cmdsize, false, true);
+   if (!cmd.ReadFromBuffer(cmddata)) {
       CloseClient(true, "cannot decode command");
       return;
    }
@@ -425,15 +426,16 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
    fSendHdr.data_cmdsize = 0;
    fSendHdr.data_rawsize = 0;
 
-   fSendBuf.clear();
+   fSendBuf.Release();
    fSendRawData.Release();
 
    if (cmd.IsCanceled()) fSendHdr.data_kind = kindCancel;
 
-   fSendBuf = cmd.SaveToXml(true);
+   fSendBuf = cmd.SaveToBuffer();
+
    fSendRawData = cmd.GetRawData();
 
-   fSendHdr.data_cmdsize = fSendBuf.length() + 1; // transport 0-terminated string as is
+   fSendHdr.data_cmdsize = fSendBuf.GetTotalSize(); // transport 0-terminated string as is
    fSendHdr.data_rawsize = fSendRawData.GetTotalSize();
    void* rawdata = 0;
    if (fSendHdr.data_rawsize > 0) rawdata = fSendRawData.SegmentPtr();
@@ -451,7 +453,7 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
    // DOUT0("Start command send fullsize:%u cmd:%u raw:%u", fSendHdr.data_size, fSendHdr.data_cmdsize, fSendHdr.data_rawsize);
 
    if (!addon->StartSend(&fSendHdr, sizeof(fSendHdr),
-         fSendBuf.c_str(), fSendHdr.data_cmdsize,
+         fSendBuf.SegmentPtr(), fSendHdr.data_cmdsize,
          rawdata, fSendHdr.data_rawsize)) {
       CloseClient(true, "Fail to send command");
       return;

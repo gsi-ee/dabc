@@ -1402,8 +1402,6 @@ dabc::RecordFieldsMap* dabc::RecordFieldsMap::Clone()
    return res;
 }
 
-
-
 uint64_t dabc::RecordFieldsMap::StoreSize(const std::string& nameprefix)
 {
    sizestream s;
@@ -1411,27 +1409,36 @@ uint64_t dabc::RecordFieldsMap::StoreSize(const std::string& nameprefix)
    return s.size();
 }
 
+bool dabc::RecordFieldsMap::match_prefix(const std::string& name, const std::string& prefix)
+{
+   if (name.empty()) return false;
+   // all fields started with # are invisible for I/O
+   if (name[0]=='#') return false;
+
+   return prefix.empty() || (name.find(prefix) == 0);
+}
+
+
 bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
 {
    uint32_t storesz(0), storenum(0), storevers(0);
-   uint64_t sz;
+   uint64_t sz(0);
 
    uint64_t pos = s.size();
 
    if (s.is_output()) {
       sz = s.is_real() ? StoreSize(nameprefix) : 0;
       storesz = sz/8;
-      storenum = (uint32_t) fMap.size();
-      if (nameprefix.length()>0)
-         for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-            if (iter->first.find(nameprefix) != 0) storenum--;
-         }
+      storenum = 0;
+      for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
+         if (match_prefix(iter->first, nameprefix)) storenum++;
+      }
 
       s.write_uint32(storesz);
       s.write_uint32(storenum  | (storevers<<24));
 
       for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-         if ((nameprefix.length()>0) && (iter->first.find(nameprefix) != 0)) continue;
+         if (!match_prefix(iter->first, nameprefix)) continue;
          s.write_str(iter->first);
          iter->second.Stream(s);
       }
@@ -1465,7 +1472,7 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
       // now we should remove all fields, which were not touched
       while (iter!=fMap.end()) {
          if (iter->second.fTouched) { iter++; continue; }
-         if (!nameprefix.empty() && (iter->first.find(nameprefix) != 0)) { iter++; continue; }
+         if (!match_prefix(iter->first, nameprefix)) { iter++; continue; }
          fMap.erase(iter++);
       }
 
@@ -1680,3 +1687,78 @@ std::string dabc::Record::SaveToXml(unsigned mask)
    return "";
 }
 
+void dabc::Record::CreateRecord(const std::string& name)
+{
+   Release();
+   SetObject(new RecordContainer(name));
+}
+
+
+bool dabc::Record::Stream(iostream& s)
+{
+   uint64_t pos = s.size();
+   uint64_t sz = 0;
+
+   if (s.is_output()) {
+      if (s.is_real()) {
+         sizestream sizes;
+         Stream(sizes);
+         sz = sizes.size();
+      }
+      s.write_uint64(sz);
+      s.write_str(GetName());
+      GetObject()->Fields().Stream(s);
+   } else {
+
+      s.read_uint64(sz);
+
+      std::string objname;
+      s.read_str(objname);
+
+      if (null())
+         CreateRecord(objname);
+      else
+         GetObject()->SetName(objname.c_str());
+
+      GetObject()->Fields().Stream(s);
+   }
+
+   return s.verify_size(pos, sz);
+}
+
+dabc::Buffer dabc::Record::SaveToBuffer()
+{
+   if (null()) return dabc::Buffer();
+
+   // first define size we need
+   sizestream s;
+   Stream(s);
+
+   dabc::Buffer res = dabc::Buffer::CreateBuffer(s.size());
+   if (res.null()) return res;
+
+   memstream outs(false, (char*) res.SegmentPtr(), res.SegmentSize());
+
+   if (Stream(outs)) {
+      if (s.size() != outs.size()) { EOUT("Stream sizes mismatch %u %u", (unsigned) s.size(), (unsigned) outs.size()); }
+      res.SetTotalSize(s.size());
+   } else {
+      res.Release();
+   }
+
+   return res;
+}
+
+bool dabc::Record::ReadFromBuffer(const dabc::Buffer& buf)
+{
+   if (buf.null()) return false;
+
+   memstream inps(true, (char*) buf.SegmentPtr(), buf.SegmentSize());
+
+   if (!Stream(inps)) {
+      EOUT("Cannot reconstruct record from the binary data!");
+      return false;
+   }
+
+   return true;
+}

@@ -116,6 +116,10 @@ namespace dabc {
 
          static Reference MakeRef(const std::string& buf);
 
+      protected:
+
+         virtual void CreateRecord(const std::string& name) { SetObject(new CommandContainer(name)); }
+
       public:
          /** \brief Default constructor, creates empty reference on the command */
 //         Command() {}
@@ -125,9 +129,6 @@ namespace dabc {
          /** Compare operator, returns true when command contains pointer on same object */
          friend int operator==(const Command& cmd1, const Command& cmd2)
                          { return cmd1() == cmd2(); }
-
-         std::string SaveToXml(bool compact=true);
-         bool ReadFromXml(const char* xmlcode);
 
          // set of methods to keep old interface, it is preferable to use field methods
 
