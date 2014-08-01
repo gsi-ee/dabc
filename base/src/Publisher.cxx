@@ -685,7 +685,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       dabc::Hierarchy def = GetWorkItem(path, &islocal);
       if (def.null()) return cmd_false;
 
-      if (def.Field(dabc::prop_kind).AsStr() !="DABC.Command") return cmd_false;
+      if (def.Field(dabc::prop_kind).AsStr()!="DABC.Command") return cmd_false;
 
       std::string request_name;
       std::string producer_name = def.FindBinaryProducer(request_name, !islocal);

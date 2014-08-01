@@ -193,25 +193,6 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
    return false;
 }
 
-
-bool http::Server::ProcessExecute(const std::string& itemname, const std::string& query, std::string& replybuf)
-{
-   if (itemname.empty()) {
-      EOUT("Item is not specified in execute request");
-      return false;
-   }
-
-   // DOUT0("Execute cmd %s query %s", itemname.c_str(), query.c_str());
-
-   dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(itemname, query);
-
-   if (res.GetResult() <= 0) return false;
-
-   replybuf = res.SaveToJson();
-
-   return true;
-}
-
 void http::Server::ExtractPathAndFile(const char* uri, std::string& pathname, std::string& filename)
 {
    pathname.clear();
@@ -312,8 +293,16 @@ bool http::Server::Process(const char* uri, const char* _query,
 */
 
    if (filename == "execute") {
-      content_type = "text/xml";
-      return ProcessExecute(pathname, query, content_str);
+      if (pathname.empty()) return false;
+
+      dabc::Command res = dabc::PublisherRef(GetPublisher()).ExeCmd(pathname, query);
+
+      if (res.GetResult() <= 0) return false;
+
+      content_type = "application/json";
+      content_str = res.SaveToJson();
+
+      return true;
    }
 
    if (filename.empty()) return false;
@@ -446,7 +435,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       content_header.append("Content-Encoding: gzip\r\n");
 
-      DOUT0("Compress original object %lu into zip buffer %lu", objlen, zipbuflen);
+      DOUT3("Compress original object %lu into zip buffer %lu", objlen, zipbuflen);
 #endif
    }
 

@@ -9,6 +9,7 @@ current functionality of the framework.
 3. Command transport between hosts implemented in binary form.
 4. Remove old xml generation in Record/Command class.
    XML used directly only in reading of configuration 
+5. Process commands in root::Monitor, required by Go4 
    
 
 31.07.2014

@@ -72,6 +72,9 @@ namespace root {
 
          void ProcessActionsInRootContext(TRootSniffer* sniff);
 
+         /** Execute extra command in ROOT context, used in Go4 plugin */
+         virtual bool ProcessHCommand(const std::string& cmdname, dabc::Command cmd) { return false; }
+
          virtual int ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd);
 
       public:

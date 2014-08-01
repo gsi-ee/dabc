@@ -44,8 +44,6 @@ namespace http {
          std::string fJSRootIOSys;  ///< location of JSRootIO (if any)
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
-         bool ProcessExecute(const std::string& itemname, const std::string& query, std::string& replybuf);
-
          /** Check if file is requested. Can only be from server */
          bool IsFileRequested(const char* uri, std::string& fname);
 

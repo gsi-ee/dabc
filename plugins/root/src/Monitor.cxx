@@ -109,7 +109,8 @@ double root::Monitor::ProcessTimeout(double last_diff)
 int root::Monitor::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetBinary::CmdName()) ||
-       cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
+       cmd.IsName(dabc::CmdGetNamesList::CmdName()) ||
+       cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
       dabc::LockGuard lock(fHierarchy.GetHMutex());
       fRootCmds.Push(cmd);
       return dabc::cmd_postponed;
@@ -138,7 +139,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
-   DOUT0("Request item %s file %s ", itemname.c_str(), binkind.c_str());
+   DOUT3("Request item %s file %s ", itemname.c_str(), binkind.c_str());
 
    // check if version was specified in query
    uint64_t version = 0;
@@ -249,6 +250,9 @@ void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
          dabc::CmdGetNamesList::SetResNamesList(cmd, res);
 
          cmd.ReplyTrue();
+      } else
+      if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
+         if (ProcessHCommand(cmd.GetStr("Item"), cmd)) cmd.ReplyTrue();
       }
 
       if (!cmd.null()) {
