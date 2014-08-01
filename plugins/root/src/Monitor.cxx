@@ -242,6 +242,8 @@ void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
             RescanHierarchy(sniff, res, item.c_str());
          }
 
+         DOUT3("Extend result %s", DBOOL(!res.null()));
+
          if (res.null()) cmd.ReplyFalse();
 
          dabc::CmdGetNamesList::SetResNamesList(cmd, res);

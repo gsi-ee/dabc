@@ -405,12 +405,13 @@ bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string& itemname,
    // when searching producer, it cannot be root folder
    if ((pos == 0) && asproducer) return false;
 
-   std::string sub = item1.substr(pos+1);
+   std::string sub = item1.substr(pos+1); // keep slash
    item1.resize(pos+1);
 
    // DOUT0("After cut item1 %s sub %s", item1.c_str(), sub.c_str());
 
    if (IdentifyItem(asproducer, item1, islocal, producer_name, request_name)) {
+      if ((sub.length()>0) && (request_name.length()>0) && (request_name[request_name.length()-1]!='/')) request_name.append("/");
       request_name.append(sub);
       return true;
    }
@@ -454,7 +455,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
          // we redirect command to local worker
          // manager should find proper worker for execution
 
-         DOUT2("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
+         DOUT3("Submit GET command to %s subitem %s", producer_item.c_str(), request_name.c_str());
          cmd.SetReceiver(iter->worker);
          cmd.SetPtr("hierarchy", iter->hier);
          cmd.SetStr("subitem", request_name);
@@ -794,10 +795,21 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          cmd.SetStr("path", h.GetField("dabc:UserFilePath").AsStr());
          cmd.SetStr("fname", request_name);
       } else {
+
          cmd.SetStr("path", item_name);
          cmd.SetStr("fname", request_name);
+
          if (request_name.empty())
             cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
+
+         // publisher can only identify existing entries
+         // all extra entries (like objects members in Go4 events browser) appears as subfolders in request
+         size_t pos = request_name.rfind("/");
+         if ((pos!=std::string::npos) && (pos != request_name.length()-1)) {
+            cmd.SetStr("path", item_name + request_name.substr(0, pos));
+            cmd.SetStr("fname", request_name.substr(pos+1));
+         }
+
       }
 
       return cmd_true;
