@@ -123,28 +123,13 @@ dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const 
    return FindSubItem(fCfg->FindChild(node, subname.c_str()), pos+1);
 }
 
-/** \brief Special class to resolve configuration variables at the time when field value set */
+std::string dabc::ConfigIO::ResolveEnv(const char* value)
+{
+   if ((value==0) || (*value==0)) return std::string();
 
-namespace dabc {
+   if ((strstr(value,"${")==0) || (fCfg==0)) return std::string(value);
 
-   class ConfigIOResolveNew : public RecordFieldsMap::ResolveFunc {
-      protected:
-         Configuration* fCfg;
-         std::string fBuf;
-
-      public:
-         ConfigIOResolveNew(Configuration* cfg) : RecordFieldsMap::ResolveFunc(), fCfg(cfg) {}
-
-         virtual ~ConfigIOResolveNew() {}
-
-         virtual const char* Resolve(const char* arg) const
-         {
-            if ((fCfg==0) || (arg==0) || (strstr(arg,"${")==0)) return arg;
-            ConfigIOResolveNew* me = const_cast<ConfigIOResolveNew*> (this);
-            me->fBuf = me->fCfg->ResolveEnv(arg);
-            return fBuf.c_str();
-         }
-   };
+   return fCfg->ResolveEnv(value);
 }
 
 bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, RecordField* field, RecordFieldsMap* fieldsmap)
@@ -234,10 +219,7 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
                if (attrvalue==0) attrvalue = Xml::GetAttr(fCurrItem, itemname.c_str());
 
                if (attrvalue!=0) {
-                  if ((strstr(attrvalue,"${")!=0) && fCfg)
-                     field->SetStr(fCfg->ResolveEnv(attrvalue).c_str());
-                  else
-                     field->SetStr(attrvalue);
+                  field->SetStr(ResolveEnv(attrvalue));
                   DOUT3("For item %s find value %s", itemname.c_str(), attrvalue);
                   return true;
                } else {
@@ -247,11 +229,8 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
                   for (XMLNodePointer_t child = Xml::GetChild(itemnode); child!=0; child = Xml::GetNext(child)) {
                      if (strcmp(Xml::GetNodeName(child), "item")!=0) continue;
                      const char* arritemvalue = Xml::GetAttr(child,"value");
-                     if (arritemvalue==0) continue;
-                     if ((strstr(arritemvalue,"${")!=0) && fCfg)
-                        arr.push_back(fCfg->ResolveEnv(arritemvalue));
-                     else
-                        arr.push_back(std::string(arritemvalue));
+                     if (arritemvalue!=0)
+                        arr.push_back(ResolveEnv(arritemvalue));
                   }
 
                   if (arr.size()>0) {
@@ -261,10 +240,28 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
                }
             } else
             if ((fieldsmap!=0) && (itemnode!=0)) {
-               ConfigIOResolveNew resolve(fCfg);
-
-               fieldsmap->ReadFromXml(itemnode, false, resolve);
                isany = true;
+
+               for (XMLAttrPointer_t attr = Xml::GetFirstAttr(itemnode); attr!=0; attr = Xml::GetNextAttr(attr)) {
+                  const char* attrname = Xml::GetAttrName(attr);
+                  const char* attrvalue = Xml::GetAttrValue(attr);
+                  if ((attrname==0) || (attrvalue==0)) continue;
+
+                  if (!fieldsmap->HasField(attrname))
+                     fieldsmap->Field(attrname).SetStr(ResolveEnv(attrvalue));
+               }
+
+               for (XMLNodePointer_t child = Xml::GetChild(itemnode); child!=0; child = Xml::GetNext(child)) {
+
+                  if (strcmp(Xml::GetNodeName(child), "dabc:field")!=0) continue;
+
+                  const char* attrname = Xml::GetAttr(child,"name");
+                  const char* attrvalue = Xml::GetAttr(child,"value");
+                  if ((attrname==0) || (attrvalue==0)) continue;
+
+                  if (!fieldsmap->HasField(attrname))
+                     fieldsmap->Field(attrname).SetStr(ResolveEnv(attrvalue));
+               }
             }
 
             fCurrChld = 0;

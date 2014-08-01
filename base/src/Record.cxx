@@ -1481,29 +1481,6 @@ bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
    return s.verify_size(pos, sz);
 }
 
-
-bool dabc::RecordFieldsMap::SaveInXml(XMLNodePointer_t node)
-{
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-
-      if (iter->first.empty() || (iter->first[0]=='#')) continue;
-
-      std::string value = iter->second.AsStr();
-
-      // if somebody use wrong symbol in parameter name, pack it differently
-      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,")!=iter->first.npos) {
-         XMLNodePointer_t child = Xml::NewChild(node, 0, "dabc:field", 0);
-         Xml::NewAttr(child, 0, "name", iter->first.c_str());
-         Xml::NewAttr(child, 0, "value", value.c_str());
-      } else {
-         // add attribute
-         Xml::NewAttr(node,0,iter->first.c_str(), value.c_str());
-      }
-
-   }
-   return true;
-}
-
 bool dabc::RecordFieldsMap::SaveTo(HStore& res)
 {
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
@@ -1515,36 +1492,6 @@ bool dabc::RecordFieldsMap::SaveTo(HStore& res)
 
       res.SetField(iter->first.c_str(), iter->second.AsJson().c_str());
    }
-   return true;
-}
-
-bool dabc::RecordFieldsMap::ReadFromXml(XMLNodePointer_t node, bool overwrite, const ResolveFunc& func)
-{
-   if (node==0) return false;
-
-   for (XMLAttrPointer_t attr = Xml::GetFirstAttr(node); attr!=0; attr = Xml::GetNextAttr(attr)) {
-      const char* attrname = Xml::GetAttrName(attr);
-      const char* attrvalue = Xml::GetAttrValue(attr);
-      if ((attrname==0) || (attrvalue==0)) continue;
-
-      DOUT3("Cont:%p  attribute:%s overwrite:%s", this, attrname, DBOOL(overwrite));
-
-      if (overwrite || !HasField(attrname))
-         fMap[attrname].SetStr(func.Resolve(attrvalue));
-   }
-
-   for (XMLNodePointer_t child = Xml::GetChild(node); child!=0; child = Xml::GetNext(child)) {
-
-      if (strcmp(Xml::GetNodeName(child), "dabc:field")!=0) continue;
-
-      const char* attrname = Xml::GetAttr(child,"name");
-      const char* attrvalue = Xml::GetAttr(child,"value");
-      if ((attrname==0) || (attrvalue==0)) continue;
-
-      if (overwrite || !HasField(attrname))
-        fMap[attrname].SetStr(func.Resolve(attrvalue));
-   }
-
    return true;
 }
 
@@ -1574,7 +1521,6 @@ void dabc::RecordFieldsMap::MoveFrom(RecordFieldsMap& src)
       fMap[iter->first].SetValue(iter->second);
    }
 }
-
 
 void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
 {
@@ -1651,15 +1597,6 @@ void dabc::RecordContainer::Print(int lvl)
       std::string value = fFields->Field(name).AsStr();
       DOUT1("   %s = %s", name.c_str(), value.c_str());
    }
-}
-
-dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t parent)
-{
-   XMLNodePointer_t node = Xml::NewChild(parent, 0, GetName(), 0);
-
-   fFields->SaveInXml(node);
-
-   return node;
 }
 
 bool dabc::RecordContainer::SaveTo(HStore& store)

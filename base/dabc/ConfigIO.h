@@ -56,6 +56,8 @@ namespace dabc {
 
          static Object* GetObjParent(Object* obj, int lvl);
 
+         std::string ResolveEnv(const char* value);
+
       public:
          ConfigIO(Configuration* cfg);
 

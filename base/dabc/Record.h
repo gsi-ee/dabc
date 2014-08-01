@@ -20,10 +20,6 @@
 #include "dabc/Object.h"
 #endif
 
-#ifndef DABC_XmlEngine
-#include "dabc/XmlEngine.h"
-#endif
-
 #ifndef DABC_Buffer
 #include "dabc/Buffer.h"
 #endif
@@ -283,7 +279,7 @@ namespace dabc {
 
          union {
             int64_t valueInt;      /// scalar int type
-            uint64_t valueUInt;    /// scalar int type
+            uint64_t valueUInt;    /// scalar unsigned int type
             double valueDouble;    /// scalar double type
          };
 
@@ -292,6 +288,7 @@ namespace dabc {
             uint64_t* arrUInt;     ///! uint array, size in valueInt
             double* arrDouble;     ///! double array, size in valueInt
             char* valueStr;        ///! string or array of strings
+            void* valueBuf;        ///! binary buffer, size in bytes in valueInt
          };
 
          bool                fModified;    ///! when true, field was modified at least once
@@ -422,14 +419,6 @@ namespace dabc {
 
       public:
 
-         class ResolveFunc {
-            public:
-               ResolveFunc(unsigned = 0) {}
-               virtual ~ResolveFunc() {}
-
-               virtual const char* Resolve(const char* arg) const { return arg; }
-         };
-
          RecordFieldsMap();
          virtual ~RecordFieldsMap();
 
@@ -444,9 +433,6 @@ namespace dabc {
          std::string FindFieldWhichStarts(const std::string& name);
 
          RecordField& Field(const std::string& name) { return fMap[name]; }
-
-         bool SaveInXml(XMLNodePointer_t node);
-         bool ReadFromXml(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
 
          /** Save all field in json format */
          bool SaveTo(HStore& res);
@@ -534,8 +520,6 @@ namespace dabc {
          virtual void Print(int lvl = 0);
 
          RecordFieldsMap& Fields() const { return *fFields; }
-
-         virtual XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent);
    };
 
    // ===================================================================================
