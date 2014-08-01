@@ -766,26 +766,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
          cmd.SetUInt("version", sub.GetVersion());
          cmd_res = cmd_true;
       } else
-      if (binkind=="dabc.xml") {
-         if (sub.null()) return cmd_ignore;
-         // we record only fields, everything else is ignored - even name of entry is not stored
-         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
-         if (raw.null()) return cmd_ignore;
-         dabc::Hierarchy res;
-         res.Create("get");
-         res.SetVersion(sub.GetVersion());
-         res.ReadFromBuffer(raw);
-
-         std::string replybuf = dabc::format("<Reply xmlns:dabc=\"http://dabc.gsi.de/xhtml\" itemname=\"%s\" %s=\"%lu\">\n", fullname.c_str(), dabc::prop_version, (long unsigned) res.GetVersion());
-         replybuf += res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0);
-         replybuf += "</Reply>";
-
-         raw = dabc::Buffer::CreateBuffer(replybuf.c_str(), replybuf.length(), false, true);
-         cmd.SetRawData(raw);
-
-         cmd_res = cmd_true;
-      } else
-      if (binkind=="get.json") {
+      if ((binkind=="get.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
          std::string field = url.GetOptionStr("field", "");
 
          if (sub.null() && field.empty()) {
@@ -801,6 +782,8 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          // DOUT0("Request JSON for item %s field %s compact %d", item.c_str(), field.c_str(), compact);
 
+         bool isxml = binkind.find(".xml")!=std::string::npos;
+
          std::string replybuf;
 
          if (field.empty()) {
@@ -809,11 +792,21 @@ int dabc::Worker::PreviewCommand(Command cmd)
             unsigned mask = compact;
             if (hlimit>0) mask |= xmlmask_NoChilds | dabc::xmlmask_History | xmlmask_TopVersion;
 
-            dabc::HJsonStore store(mask);
-            store.SetLimits(version, hlimit);
+            if (isxml) {
+               dabc::HXmlStore store(mask);
+               store.SetLimits(version, hlimit);
 
-            if (sub()->SaveHierarchyInJson(store))
-               replybuf = store.GetResult();
+               if (sub.SaveTo(store))
+                  replybuf = store.GetResult();
+
+            } else {
+
+               dabc::HJsonStore store(mask);
+               store.SetLimits(version, hlimit);
+
+               if (sub.SaveTo(store))
+                  replybuf = store.GetResult();
+            }
 
          } else {
             if (!sub.HasField(field)) return cmd_ignore;

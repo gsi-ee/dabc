@@ -129,7 +129,7 @@ namespace dabc {
          std::string SaveToXml(bool compact=true);
          bool ReadFromXml(const char* xmlcode);
 
-         /** Save command into JSOn format, used to transport via http channel */
+         /** Save command into JSON format, used to transport via http channel */
          std::string SaveToJson(bool compact=true);
 
          // set of methods to keep old interface, it is preferable to use field methods

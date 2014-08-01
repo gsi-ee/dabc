@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+1.08.2014.
+1. Remove old xml generation from hierarchy/history. 
+   HJsonStore and HXmlStore are mainline now. 
+
+
 31.07.2014
 1. Implement several levels of compressions when creating JSON. 
 2. Implement storage of hierarchy into JSON, including history.

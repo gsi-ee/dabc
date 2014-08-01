@@ -1883,7 +1883,7 @@ void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode
          res.SetVersion(cmd2.GetUInt("version"));
          res.ReadFromBuffer(cmd2.GetRawData());
 
-         DOUT0("GET:%s len:%d RES = \n%s", path.c_str(), hlimit, res.SaveToXml(hlimit > 0 ? dabc::xmlmask_History : 0).c_str());
+         DOUT0("GET:%s len:%d RES = \n%s", path.c_str(), hlimit, res.SaveToXml().c_str());
 
          continue;
       }

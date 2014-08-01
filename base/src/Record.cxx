@@ -1372,7 +1372,7 @@ void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
    }
 }
 
-bool dabc::RecordFieldsMap::SaveInJson(HStore& res)
+bool dabc::RecordFieldsMap::SaveTo(HStore& res)
 {
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
 

@@ -243,9 +243,6 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    fWorkerHierarchy.MarkChangedItems();
 
-//   if (fCounter % 10 == 0)
-//      DOUT0("History BeamRate2 \n%s", fWorkerHierarchy.FindChild("BeamRate2").GetObject()->RequestHistoryAsXml().c_str());
-
 #ifdef DABC_EXTRA_CHECKS
 //   if (fCounter % 10 == 0)
 //      dabc::Object::DebugObject();

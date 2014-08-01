@@ -41,91 +41,73 @@ const char* dabc::prop_history = "dabc:history";
 const char* dabc::prop_time = "time";
 const char* dabc::prop_more = "dabc:more";
 
-namespace dabc {
+void dabc::HXmlStore::CreateNode(const char *nodename)
+{
+   if (nodename==0) nodename = "item";
 
-   class HXmlStore : public HStore {
+   // starts new xml node, will be closed by CloseNode
+   buf.append(dabc::format("%*s<%s", compact() > 0 ? 0 : lvl * 2, "", nodename));
+   if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
+   numchilds.push_back(0);
+   numflds.push_back(0);
+   lvl++;
 
-   public:
-      HXmlStore(unsigned m = 0) : HStore(m) {}
-      virtual ~HXmlStore() {}
+}
 
-      virtual void CreateNode(const char *nodename)
-      {
-         if (nodename==0) nodename = "item";
+void dabc::HXmlStore::SetField(const char *field, const char *value)
+{
+   // set field (xml attribute) in current node
 
-         // starts new xml node, will be closed by CloseNode
-         buf.append(dabc::format("%*s<%s", lvl * 2, "", nodename));
+   buf.append(dabc::format(" %s=", field));
 
-         numchilds.push_back(0);
-         numflds.push_back(0);
-         lvl++;
+   int vlen = strlen(value);
 
+   const char* v = value;
+   const char* stop = value+vlen;
+
+   if ((vlen > 1) && (value[0] == '\"') && (value[vlen-1] == '\"')) {
+      v++; stop--;
+   }
+
+   buf.append("\"");
+
+   while (v!=stop) {
+      switch (*v) {
+         case '<' : buf.append("&lt;"); break;
+         case '>' : buf.append("&gt;"); break;
+         case '&' : buf.append("&amp;"); break;
+         case '\'' : buf.append("&apos;"); break;
+         case '\"' : buf.append("&quot;"); break;
+         default: buf.append(v, 1); break;
       }
+      v++;
+   }
+   buf.append("\"");
+}
 
-      virtual void SetField(const char *field, const char *value)
-      {
-         // set field (xml attribute) in current node
+void dabc::HXmlStore::BeforeNextChild(const char*)
+{
+   // called before next child node created
+   if (numchilds.back()++ == 0) { buf.append(">"); NewLine(); }
+}
 
-         if (strpbrk(value, "<>&\'\"") == 0) {
-            buf.append(dabc::format(" %s=\"%s\"", field, value));
-         } else {
-            buf.append(dabc::format(" %s=\"", field));
-            const char *v = value;
-            while (*v != 0) {
-               switch (*v) {
-                  case '<' :
-                     buf.append("&lt;");
-                     break;
-                  case '>' :
-                     buf.append("&gt;");
-                     break;
-                  case '&' :
-                     buf.append("&amp;");
-                     break;
-                  case '\'' :
-                     buf.append("&apos;");
-                     break;
-                  case '\"' :
-                     buf.append("&quot;");
-                     break;
-                  default:
-                     buf.append(v, 1);
-                     break;
-               }
-               v++;
-            }
+void dabc::HXmlStore::CloseNode(const char *nodename)
+{
+   // called when node should be closed
+   // depending from number of childs different xml format is applied
 
-            buf.append("\"");
-         }
-      }
+   lvl--;
 
-      virtual void BeforeNextChild(const char* = 0)
-      {
-         // called before next child node created
-         if (numchilds.back()++ == 0) buf.append(">\n");
-      }
-
-      virtual void CloseChilds()
-      {
-
-      }
-
-      virtual void CloseNode(const char *nodename)
-      {
-         // called when node should be closed
-         // depending from number of childs different xml format is applied
-
-         if (numchilds.back() > 0) {
-            if (nodename==0) nodename = "item";
-            buf.append(dabc::format("%*s</%s>\n", lvl * 2, "", nodename));
-         } else
-            buf.append(dabc::format("/>\n"));
-         numchilds.pop_back();
-         numflds.pop_back();
-         lvl--;
-      }
-   };
-
+   if (numchilds.back() > 0) {
+      if (nodename==0) nodename = "item";
+      buf.append(dabc::format("%*s</%s>", compact() > 0 ? 0 : lvl * 2, "", nodename));
+      NewLine();
+   } else {
+      buf.append(dabc::format("/>"));
+      NewLine();
+   }
+   numchilds.pop_back();
+   numflds.pop_back();
 }
 
 void dabc::HJsonStore::CreateNode(const char *nodename)
@@ -282,45 +264,8 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
    return s.verify_size(pos, sz);
 }
 
-bool dabc::History::SaveInXmlNode(XMLNodePointer_t topnode, uint64_t version, unsigned hlimit)
-{
-   if (null() || (topnode==0)) return false;
 
-   // we could use value, restored from binary array
-   bool cross_boundary = GetObject()->fCrossBoundary;
-
-//   DOUT0("RequestHistoryAsXml req_version %u", (unsigned) version);
-
-   unsigned first = 0;
-   if ((hlimit>0) && (GetObject()->fArr.Size() > hlimit))
-      first = GetObject()->fArr.Size() - hlimit;
-
-   for (unsigned n=first; n < GetObject()->fArr.Size();n++) {
-      HistoryItem& item = GetObject()->fArr.Item(n);
-
-      // we have longer history as requested
-      if (item.version < version) {
-         cross_boundary = true;
-         // DOUT0("    ignore item %u version %u", n, (unsigned) item.version);
-         continue;
-      }
-
-      XMLNodePointer_t hnode = Xml::NewChild(topnode, 0, "h", 0);
-      item.fields->SaveInXml(hnode);
-//      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
-   }
-
-   // if specific version was defined, and we do not have history backward to that version
-   // we need to indicate this to the client
-   // Client in this case should cleanup its buffers while with gap
-   // one cannot correctly reconstruct history backwards
-   if (!cross_boundary) Xml::NewAttr(topnode, 0, "gap", xmlTrueValue);
-
-   return true;
-}
-
-
-bool dabc::History::SaveInJson(HStore& res)
+bool dabc::History::SaveTo(HStore& res)
 {
    if (null()) return false;
 
@@ -351,7 +296,7 @@ bool dabc::History::SaveInJson(HStore& res)
 
       res.CreateNode(0);
 
-      item.fields->SaveInJson(res);
+      item.fields->SaveTo(res);
 
       res.CloseNode(0);
 //      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
@@ -611,56 +556,12 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
    return s.verify_size(pos, sz);
 }
 
-dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveContainerInXmlNode(XMLNodePointer_t parent, const std::string& altname)
-{
-   std::string name = GetName();
 
-   XMLNodePointer_t node;
-
-   if (name.find_first_of("[]&<>") != std::string::npos) {
-      node = Xml::NewChild(parent, 0, altname.c_str(), 0);
-      Xml::NewAttr(node, 0, dabc::prop_itemname, name.c_str());
-   } else {
-      node = Xml::NewChild(parent, 0, name.c_str(), 0);
-   }
-
-   fFields->SaveInXml(node);
-
-   return node;
-}
-
-
-dabc::XMLNodePointer_t dabc::HierarchyContainer::SaveHierarchyInXmlNode(XMLNodePointer_t parentnode, unsigned mask, unsigned chldcnt)
-{
-   std::string altname = (chldcnt != (unsigned)-1) ? dabc::format("__item%u__",chldcnt) : std::string("topitem");
-
-   XMLNodePointer_t objnode = SaveContainerInXmlNode(parentnode, altname);
-
-   if ((mask & xmlmask_Version) != 0) {
-      Xml::NewIntAttr(objnode, "node_ver", fNodeVersion);
-      Xml::NewIntAttr(objnode, "dns_ver", fNamesVersion);
-      Xml::NewIntAttr(objnode, "chld_ver", fChildsVersion);
-   }
-
-   if (((mask & xmlmask_History) != 0) && !fHist.null()) {
-      XMLNodePointer_t histnode = Xml::NewChild(objnode, 0, "history", 0);
-      fHist.SaveInXmlNode(histnode, 0, 0);
-   }
-
-   if ((mask & xmlmask_NoChilds) == 0)
-      for (unsigned n=0;n<NumChilds();n++) {
-         dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
-         if (child) child->SaveHierarchyInXmlNode(objnode, mask, n);
-      }
-
-   return objnode;
-}
-
-bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res)
+bool dabc::HierarchyContainer::SaveTo(HStore& res)
 {
    res.CreateNode(GetName());
 
-   fFields->SaveInJson(res);
+   fFields->SaveTo(res);
 
    if (res.mask() & xmlmask_TopVersion) {
       res.SetField(dabc::prop_version, dabc::format("%lu", (long unsigned) fNodeVersion).c_str());
@@ -674,14 +575,14 @@ bool dabc::HierarchyContainer::SaveHierarchyInJson(HStore& res)
    }
 
    if (((res.mask() & xmlmask_History) != 0) && !fHist.null())
-      fHist.SaveInJson(res);
+      fHist.SaveTo(res);
 
    if ((res.mask() & xmlmask_NoChilds) == 0) {
       for (unsigned n=0;n<NumChilds();n++) {
          dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
          if (child==0) continue;
          res.BeforeNextChild();
-         child->SaveHierarchyInJson(res);
+         child->SaveTo(res);
       }
    }
 
@@ -703,79 +604,6 @@ void dabc::HierarchyContainer::SetModified(bool node, bool hierarchy, bool recur
       }
 }
 
-dabc::Buffer dabc::HierarchyContainer::RequestHistory(uint64_t version, int hlimit)
-{
-   dabc::Buffer res;
-
-   if ((fHist.Capacity()==0) || (hlimit<0)) return res;
-
-   uint64_t size = StoreSize(version, hlimit);
-
-   res = dabc::Buffer::CreateBuffer(size);
-
-   memstream outs(false, (char*) res.SegmentPtr(), res.SegmentSize());
-
-   if (Stream(outs, version, hlimit)) {
-
-      if (size != outs.size()) { EOUT("Sizes mismatch %lu %lu", (long unsigned) size, (long unsigned) outs.size()); }
-
-      res.SetTotalSize(size);
-   }
-
-   return res;
-}
-
-
-std::string dabc::HierarchyContainer::RequestHistoryAsXml(uint64_t version, int limit)
-{
-//   DOUT0("RequestHistoryAsXml capacity %u", (unsigned) fHist.Capacity());
-
-   if (fHist.Capacity()==0) return "";
-
-   XMLNodePointer_t topnode = Xml::NewChild(0, 0, "gethistory", 0);
-
-   Xml::NewAttr(topnode, 0, "xmlns:dabc", "http://dabc.gsi.de/xhtml");
-   Xml::NewAttr(topnode, 0, prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
-
-   SaveContainerInXmlNode(topnode,"item");
-
-   bool cross_boundary = false;
-
-//   DOUT0("RequestHistoryAsXml req_version %u", (unsigned) version);
-
-   unsigned first = 0;
-   if ((limit>0) && (fHist()->fArr.Size() > (unsigned) limit))
-      first = fHist()->fArr.Size() - limit;
-
-   for (unsigned n=first; n<fHist()->fArr.Size();n++) {
-      HistoryItem& item = fHist()->fArr.Item(n);
-
-      // we have longer history as requested
-      if ((version>0) && (item.version < version)) {
-         cross_boundary = true;
-//         DOUT0("    ignore item %u version %u", n, (unsigned) item.version);
-         continue;
-      }
-
-      XMLNodePointer_t hnode = Xml::NewChild(topnode, 0, "h", 0);
-      item.fields->SaveInXml(hnode);
-//      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
-   }
-
-   // if specific version was defined, and we do not have history backward to that version
-   // we need to indicate this to the client
-   // Client in this case should cleanup its buffers while with gap
-   // one cannot correctly reconstruct history backwards
-   if ((version>0) && !cross_boundary)
-      Xml::NewAttr(topnode, 0, "gap", xmlTrueValue);
-
-   std::string res;
-
-   Xml::SaveSingleNode(topnode, &res, 1);
-   Xml::FreeNode(topnode);
-
-   return res;
-}
 
 bool dabc::HierarchyContainer::DuplicateHierarchyFrom(HierarchyContainer* cont)
 {
@@ -1261,48 +1089,18 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamK
 }
 
 
-std::string dabc::Hierarchy::SaveToXml(unsigned mask, const std::string& path)
+std::string dabc::Hierarchy::SaveToJson()
 {
-   if (null()) return "";
-
-   XMLNodePointer_t topnode = GetObject()->SaveHierarchyInXmlNode(0, mask);
-
-   if ((mask & xmlmask_TopVersion) != 0)
-      Xml::NewAttr(topnode, 0, dabc::prop_version, dabc::format("%lu", (long unsigned) GetVersion()).c_str());
-
-   if ((mask & xmlmask_NameSpace) != 0)
-      Xml::NewAttr(topnode, 0, "xmlns:dabc", "http://dabc.gsi.de/xhtml");
-
-   std::string res;
-
-   if (topnode) {
-      bool compact = (mask & xmlmask_Compact) != 0;
-      Xml::SaveSingleNode(topnode, &res, compact ? 0 : 1);
-      Xml::FreeNode(topnode);
-   }
-
-   if ((mask & xmlmask_TopDabc) != 0) {
-      const char* lastslash = "";
-      if (!path.empty() && (path[path.length()-1]!='/')) lastslash = "/";
-
-      res = dabc::format("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s%s\">\n",
-            path.c_str(), lastslash) +
-            res +
-            std::string("</dabc>\n");
-   }
-
-   return res;
+   dabc::HJsonStore store(dabc::xmlmask_History);
+   if (SaveTo(store)) return store.GetResult();
+   return "";
 }
 
-std::string dabc::Hierarchy::SaveToJson(unsigned mask)
+std::string dabc::Hierarchy::SaveToXml()
 {
-   if (null()) return "";
-
-   HJsonStore store(mask);
-
-   GetObject()->SaveHierarchyInJson(store);
-
-   return store.GetResult();
+   dabc::HXmlStore store(dabc::xmlmask_History);
+   if (SaveTo(store)) return store.GetResult();
+   return "";
 }
 
 

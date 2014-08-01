@@ -543,35 +543,6 @@ bool dabc::Application::IsTransitionAllowed(const std::string& cmd)
 }
 
 
-void TestHistory()
-{
-
-   dabc::Hierarchy h;
-   h.Create("test");
-   h.EnableHistory(100);
-   h.EnableTimeRecording();
-
-   h.SetField("a", 5);
-   h.SetField("b", 3.5);
-   h.MarkChangedItems();
-
-   DOUT0("First xml:\n%s", h.SaveToXml().c_str());
-
-   for (int n=0;n<50;n++) {
-      h.SetField("a", 5+n);
-      h.SetField("b", 3.5+n);
-      dabc::Sleep(0.01);
-      h.MarkChangedItems();
-   }
-   DOUT0("Last xml:\n%s", h.SaveToXml().c_str());
-
-   std::string hist0 = h()->RequestHistoryAsXml(0);
-   DOUT0("History:\n%s", hist0.c_str());
-
-   std::string hist30 = h()->RequestHistoryAsXml(30);
-   DOUT0("History 30:\n%s", hist30.c_str());
-}
-
 bool dabc::Application::DoStateTransition(const std::string& cmd)
 {
    // method called from application thread
@@ -582,62 +553,7 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
 
    if (cmd == stcmdDoConfigure()) {
 
-/*      DOUT0("Start building");
-
-      TestHistory(); exit(54);
-
-      dabc::Hierarchy h;
-      //h.Create("test");
-      //h.Field("a").SetInt(5);
-      //h.Field("b").SetDouble(3.5);
-
-      h.UpdateHierarchy(dabc::mgr);
-
-      DOUT0("Create buf1");
-
-      dabc::Buffer buf1 = h.SaveToBuffer();
-      uint64_t v1 = h.GetVersion();
-
-      DOUT0("First version = ver %u bufsize %u", (unsigned) v1, (unsigned) buf1.GetTotalSize());
-      DOUT0("First xml:\n%s", h.SaveToXml().c_str());
-
-      dabc::Hierarchy h2;
-      h2.ReadFromBuffer(buf1);
-      DOUT0("Restore xml\n%s", h2.SaveToXml().c_str());
-
-*/
       res = CreateAppModules();
-/*
-      h.UpdateHierarchy(dabc::mgr);
-
-      dabc::Buffer buf2 = h.SaveToBuffer();
-      uint64_t v2 = h.GetVersion();
-
-      DOUT0("Second buffer = ver %u size %u", (unsigned) v2, (unsigned) buf2.GetTotalSize());
-      std::string xml2 = h.SaveToXml();
-      DOUT0("Second xml len %u:\n%s", (unsigned) xml2.length(), xml2.c_str());
-
-      dabc::Buffer diff1 = h.SaveToBuffer(dabc::stream_Full, v1+1);
-      DOUT0("DIFF1 ver %u size %u", (unsigned) v1+1, (unsigned)diff1.GetTotalSize());
-
-      dabc::Buffer diff2 = h.SaveToBuffer(dabc::stream_Full, v2+1);
-      DOUT0("DIFF2 ver %u size %u", (unsigned) v2+1, (unsigned)diff2.GetTotalSize());
-
-      dabc::Hierarchy hrem;
-      hrem.UpdateFromBuffer(buf1);
-
-      DOUT0("REM0 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
-
-      hrem.UpdateFromBuffer(diff1);
-
-      DOUT0("REM1 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
-
-      hrem.UpdateFromBuffer(diff2);
-
-      DOUT0("REM2 ver %u\n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml().c_str());
-
-      exit(7);
-*/
 
       tgtstate = stConfigured();
       DOUT2("Configure res = %s", DBOOL(res));

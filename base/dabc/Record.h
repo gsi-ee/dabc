@@ -170,6 +170,9 @@ namespace dabc {
          std::vector<int>  numchilds;
          uint64_t          fVersion;
          unsigned          fHLimit;
+
+         unsigned compact() const { return mask() & 3; }
+
       public:
          HStore(unsigned m = 0) : fMask(m), buf(), lvl(0), numflds(), numchilds(), fVersion(0), fHLimit(0) {}
          virtual ~HStore() {}
@@ -384,7 +387,7 @@ namespace dabc {
          void SaveToJson(std::string& buf, bool compact = true);
 
          /** Save all field in json format */
-         bool SaveInJson(HStore& res);
+         bool SaveTo(HStore& res);
 
          /** \brief Copy fields from source map */
          void CopyFrom(const RecordFieldsMap& src, bool overwrite = true);

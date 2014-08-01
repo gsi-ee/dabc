@@ -164,16 +164,12 @@ bool dabc::HierarchyStore::ExtractData(dabc::Hierarchy& h)
                    (unsigned) h()->GetChildsVersion(), (unsigned) fStoreBuf.GetTotalSize());
 
       fLastVersion = h.GetVersion();
-
-      DOUT0("STORE\n%s",h.SaveToXml().c_str());
    }
 
    if (fDoFlush) {
       // we record complete hierarchy without any history entry
       fFlushBuf = h.SaveToBuffer(dabc::stream_Full, 0, 0);
       fLastVersion = h.GetVersion();
-
-      DOUT0("FLUSH\n%s",h.SaveToXml().c_str());
    }
 
    if (fDoFlush || fDoStore) {

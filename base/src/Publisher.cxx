@@ -22,15 +22,13 @@
 
 void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
 {
+   if (res.null()) return;
+
    std::string kind = cmd.GetStr("textkind");
 
    if (kind.empty()) {
       dabc::Buffer buf = res.SaveToBuffer(dabc::stream_NamesList);
       cmd.SetRawData(buf);
-   } else
-   if (kind == "xml") {
-      std::string str = res.SaveToXml(dabc::xmlmask_TopDabc, cmd.GetStr("path"));
-      cmd.SetStr("astext", str);
    } else {
       unsigned mask = dabc::xmlmask_TopDabc;
 
@@ -40,8 +38,15 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       if (url.HasOption("compact"))
          mask |= (url.GetOptionInt("compact", dabc::xmlmask_Compact) & dabc::xmlmask_Compact);
 
-      std::string str = res.SaveToJson(mask);
-      cmd.SetStr("astext", str);
+      if (kind == "xml") {
+         dabc::HXmlStore store(mask);
+         if (res.SaveTo(store))
+            cmd.SetStr("astext", store.GetResult());
+      } else {
+         dabc::HJsonStore store(mask);
+         if (res.SaveTo(store))
+            cmd.SetStr("astext", store.GetResult());
+      }
    }
 }
 
@@ -315,7 +320,7 @@ bool dabc::Publisher::ApplyEntryDiff(unsigned recid, dabc::Buffer& diff, uint64_
       iter->rem.UpdateFromBuffer(diff);
    }
 
-   DOUT5("LOCAL ver %u diff %u itemver %u \n%s",  fLocal.GetVersion(), diff.GetTotalSize(), iter->version, fLocal.SaveToXml(2).c_str());
+   DOUT5("LOCAL ver %u diff %u itemver %u \n%s",  fLocal.GetVersion(), diff.GetTotalSize(), iter->version, fLocal.SaveToXml().c_str());
 
    // check if hierarchy was changed
    CheckDnsSubscribers();

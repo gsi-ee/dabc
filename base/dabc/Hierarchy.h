@@ -51,7 +51,6 @@ namespace dabc {
 
    class HJsonStore : public HStore {
    protected:
-      unsigned compact() const { return mask() & 3; }
       void NewLine()
       {
          if (compact()<2) buf.append("\n"); else
@@ -68,8 +67,30 @@ namespace dabc {
       virtual void StartChilds() {}
       virtual void BeforeNextChild(const char* basename = 0);
       virtual void CloseChilds();
-
    };
+
+
+   class HXmlStore : public HStore {
+   protected:
+      bool first_node;
+
+      void NewLine()
+      {
+         if (compact()<2) buf.append("\n"); else
+         if (compact()<3) buf.append(" ");
+      }
+
+   public:
+      HXmlStore(unsigned m = 0) : HStore(m), first_node(true) {}
+      virtual ~HXmlStore() {}
+
+      virtual void CreateNode(const char *nodename);
+      virtual void SetField(const char *field, const char *value);
+      virtual void BeforeNextChild(const char* = 0);
+      virtual void CloseChilds() { }
+      virtual void CloseNode(const char *nodename);
+   };
+
 
 
 
@@ -142,9 +163,7 @@ namespace dabc {
 
       unsigned Size() const { return null() ? 0 : GetObject()->fArr.Size(); }
 
-      bool SaveInXmlNode(XMLNodePointer_t histnode, uint64_t version = 0, unsigned hlimit = 0);
-
-      bool SaveInJson(HStore& res);
+      bool SaveTo(HStore& res);
    };
 
    // =======================================================
@@ -289,6 +308,8 @@ namespace dabc {
 
          void CreateHMutex();
 
+         /** \brief Save hierarchy in JSON/xml form. */
+         bool SaveTo(HStore& res);
 
       public:
          HierarchyContainer(const std::string& name);
@@ -304,28 +325,9 @@ namespace dabc {
           * If specified, all childs will be checked */
          bool IsNodeChanged(bool withchilds = true);
 
-         /** \brief Save hierarchy with childs in xml node.
-          * mask select that is saved. Following values can be used
-          * xmlmask_Version - store version attributes
-          * xmlmask_History - write history (when available)
-          * xmlmask_NoChilds - excludes childs saving */
-         XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, unsigned mask, unsigned chldcnt = -1);
-
-         /** \brief Save hierarchy in JSON form.
-          * Details see in SaveHierarchyInXmlNode */
-         bool SaveHierarchyInJson(HStore& res);
-
          uint64_t GetVersion() const { return fNodeVersion; }
 
          uint64_t GetChildsVersion() const { return fChildsVersion; }
-
-         XMLNodePointer_t SaveContainerInXmlNode(XMLNodePointer_t parent, const std::string& altname);
-
-         /** \brief Produces string with xml code, containing history */
-         std::string RequestHistoryAsXml(uint64_t version = 0, int limit = 0);
-
-         /** \brief Produces history in binary form */
-         dabc::Buffer RequestHistory(uint64_t version = 0, int limit = 0);
 
          void BuildObjectsHierarchy(const Reference& top);
 
@@ -406,20 +408,15 @@ namespace dabc {
       /** Apply modification to hierarchy, using stored binary data  */
       bool UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamKind kind = stream_Full);
 
-      /** \brief Store hierarchy in form of xml
-       *  \details mask select that is saved. Following values are used
-          * xmlmask_Compact    - use compact form of
-          * xmlmask_Version    - store version attributes for all nodes
-          * xmlmask_TopVersion - append hierarchy version to the top node
-          * xmlmask_NameSpace  - append artificial namespace to the top node
-          * xmlmask_History    - write history (when available)
-          * xmlmask_NoChilds   - excludes childs saving
-          * xmlmask_TopDabc    - append top dabc node with namespace definition */
-      std::string SaveToXml(unsigned mask = 0, const std::string& toppath = "");
+      /** \brief Store hierarchy in json/xml form  */
+      bool SaveTo(HStore& store)
+      {  return null() ? false : GetObject()->SaveTo(store); }
 
-      /** \brief Store hierarchy in json form
-       *  \details mask select that is saved. See SaveToXml method for more details  */
-      std::string SaveToJson(unsigned mask);
+      /** \brief Store hierarchy in JSON form */
+      std::string SaveToJson();
+
+      /** \brief Store hierarchy in XML form */
+      std::string SaveToXml();
 
       /** \brief Returns actual version of hierarchy entry */
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }

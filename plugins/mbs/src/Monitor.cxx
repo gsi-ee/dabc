@@ -733,16 +733,7 @@ void mbs::Monitor::FillStatistic(const std::string& options, const std::string& 
       fRec.AddDouble(prefix + "ServerRate", r_rate_strsrv_kb, true);
    }
 
-//   DOUT0("Set %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
-
    fHierarchy.MarkChangedItems();
-
-//   if (item.IsName("rate_log")) {
-//      std::string res = item.SaveToXml(dabc::xmlmask_History);
-//      DOUT0("RATE\n%s", res.c_str());
-//   }
-
-//   DOUT0("After %s cnt %d changed %s", itemname.c_str(), fCounter, DBOOL(fHierarchy()->IsNodeChanged(true)));
 }
 
 void mbs::Monitor::ProcessTimerEvent(unsigned timer)
