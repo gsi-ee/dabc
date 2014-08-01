@@ -30,13 +30,13 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       dabc::Buffer buf = res.SaveToBuffer(dabc::stream_NamesList);
       cmd.SetRawData(buf);
    } else {
-      unsigned mask = dabc::xmlmask_TopDabc;
+      unsigned mask = 0;
 
       dabc::Url url;
       url.SetOptions(cmd.GetStr("query"));
 
       if (url.HasOption("compact"))
-         mask |= (url.GetOptionInt("compact", dabc::xmlmask_Compact) & dabc::xmlmask_Compact);
+         mask |= (url.GetOptionInt("compact", dabc::storemask_Compact) & dabc::storemask_Compact);
 
       if (kind == "xml") {
          dabc::HXmlStore store(mask);
@@ -162,7 +162,7 @@ double dabc::Publisher::ProcessTimeout(double last_diff)
       dabc::Hierarchy sel = rr.GetSerie("/FESA/Test/TestRate", from, till);
 
       if (!sel.null())
-         DOUT0("SELECT\n%s",sel.SaveToXml(dabc::xmlmask_History).c_str());
+         DOUT0("SELECT\n%s",sel.SaveToXml(dabc::storemask_History).c_str());
       else
          DOUT0("???????? SELECT FAILED ?????????");
 

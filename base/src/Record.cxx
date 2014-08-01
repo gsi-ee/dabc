@@ -144,6 +144,159 @@ bool dabc::memstream::read(void* tgt, uint64_t len)
    return true;
 }
 
+void dabc::HXmlStore::CreateNode(const char *nodename)
+{
+   if (nodename==0) nodename = "item";
+
+   // starts new xml node, will be closed by CloseNode
+   buf.append(dabc::format("%*s<%s", compact() > 0 ? 0 : lvl * 2, "", nodename));
+   if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
+   numchilds.push_back(0);
+   numflds.push_back(0);
+   lvl++;
+
+}
+
+void dabc::HXmlStore::SetField(const char *field, const char *value)
+{
+   // set field (xml attribute) in current node
+
+   buf.append(dabc::format(" %s=", field));
+
+   int vlen = strlen(value);
+
+   const char* v = value;
+   const char* stop = value+vlen;
+
+   if ((vlen > 1) && (value[0] == '\"') && (value[vlen-1] == '\"')) {
+      v++; stop--;
+   }
+
+   buf.append("\"");
+
+   while (v!=stop) {
+      switch (*v) {
+         case '<' : buf.append("&lt;"); break;
+         case '>' : buf.append("&gt;"); break;
+         case '&' : buf.append("&amp;"); break;
+         case '\'' : buf.append("&apos;"); break;
+         case '\"' : buf.append("&quot;"); break;
+         default: buf.append(v, 1); break;
+      }
+      v++;
+   }
+   buf.append("\"");
+}
+
+void dabc::HXmlStore::BeforeNextChild(const char*)
+{
+   // called before next child node created
+   if (numchilds.back()++ == 0) { buf.append(">"); NewLine(); }
+}
+
+void dabc::HXmlStore::CloseNode(const char *nodename)
+{
+   // called when node should be closed
+   // depending from number of childs different xml format is applied
+
+   lvl--;
+
+   if (numchilds.back() > 0) {
+      if (nodename==0) nodename = "item";
+      buf.append(dabc::format("%*s</%s>", compact() > 0 ? 0 : lvl * 2, "", nodename));
+      NewLine();
+   } else {
+      buf.append(dabc::format("/>"));
+      NewLine();
+   }
+   numchilds.pop_back();
+   numflds.pop_back();
+}
+
+// ===============================================================================
+
+
+void dabc::HJsonStore::CreateNode(const char *nodename)
+{
+   // starts new json object, will be closed by CloseNode
+
+   buf.append(dabc::format("%*s{", (compact() > 0) ? 0 : lvl * 4, ""));
+   lvl++;
+   numflds.push_back(0);
+   numchilds.push_back(0);
+   if (nodename!=0)
+      SetField("_name", dabc::format("\"%s\"",nodename).c_str());
+}
+
+void dabc::HJsonStore::SetField(const char *field, const char *value)
+{
+   // set field (json field) in current node
+
+   if (numflds.back() < 0) {
+      EOUT("Not allowed to set fields (here %s) after any child was created", field);
+      return;
+   }
+
+   if (numflds.back()++ > 0) buf.append(",");
+   NewLine();
+   buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", field));
+   switch(compact()) {
+      case 2: buf.append(": "); break;
+      case 3: buf.append(":"); break;
+      default: buf.append(" : ");
+   }
+   buf.append(value);
+}
+
+void dabc::HJsonStore::CloseNode(const char *)
+{
+   // called when node should be closed
+   // depending from number of childs different json format is applied
+
+   CloseChilds();
+   numchilds.pop_back();
+   numflds.pop_back();
+   lvl--;
+   NewLine();
+   buf.append(dabc::format("%*s}", (compact() > 0) ? 0 : lvl * 4, ""));
+}
+
+void dabc::HJsonStore::BeforeNextChild(const char* basename)
+{
+   // called before next child node created
+
+   // first of all, close field and mark that we did it
+   if (numflds.back() > 0) buf.append(",");
+   numflds.back() = -1;
+
+   if (numchilds.back()++ == 0) {
+      NewLine();
+
+      if (basename==0) basename = "_childs";
+
+      buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", basename));
+      switch(compact()) {
+         case 2: buf.append(": ["); break;
+         case 3: buf.append(":["); break;
+         default: buf.append(" : [");
+      }
+   } else {
+      buf.append(",");
+   }
+   NewLine();
+}
+
+void dabc::HJsonStore::CloseChilds()
+{
+   if (numchilds.back() > 0) {
+      NewLine();
+      buf.append(dabc::format("%*s]", (compact() > 0) ? 0 : lvl * 4 - 2, ""));
+      numchilds.back() = 0;
+      numflds.back() = 1; // artificially mark that something was written
+   }
+}
+
+
 // ===========================================================================
 
 
@@ -1344,34 +1497,6 @@ bool dabc::RecordFieldsMap::SaveInXml(XMLNodePointer_t node)
    return true;
 }
 
-
-void dabc::RecordFieldsMap::SaveToJson(std::string& buf, bool compact)
-{
-   bool first(true);
-
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-
-      if (iter->first.empty() || (iter->first[0]=='#')) continue;
-
-      // discard attributes, which using quotes or any special symbols in the names
-      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,") != std::string::npos) continue;
-
-      if (!first) buf.append(compact ? "," : ",\n");
-
-      if (!compact) buf.append("  ");
-      buf.append("\"");
-      buf.append(iter->first);
-      buf.append("\":");
-      if (!compact) buf.append(" ");
-
-      // DOUT0("name:%s value:%s", iter->first.c_str(), iter->second.AsJson().c_str());
-
-      buf.append(iter->second.AsJson());
-
-      first = false;
-   }
-}
-
 bool dabc::RecordFieldsMap::SaveTo(HStore& res)
 {
    for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
@@ -1530,12 +1655,28 @@ dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t par
    return node;
 }
 
-std::string dabc::RecordContainer::SaveToJson(bool compact)
+bool dabc::RecordContainer::SaveTo(HStore& store)
 {
-   std::string res = "{";
-   if (!compact) res.append("\n");
-   fFields->SaveToJson(res, compact);
-   if (!compact) res.append("\n");
-   res.append("}");
+   store.CreateNode(GetName());
+   bool res = fFields->SaveTo(store);
+   store.CloseNode(GetName());
    return res;
 }
+
+// ===========================================================================================
+
+
+std::string dabc::Record::SaveToJson(unsigned mask)
+{
+   dabc::HJsonStore store(mask);
+   if (SaveTo(store)) return store.GetResult();
+   return "";
+}
+
+std::string dabc::Record::SaveToXml(unsigned mask)
+{
+   dabc::HXmlStore store(mask);
+   if (SaveTo(store)) return store.GetResult();
+   return "";
+}
+

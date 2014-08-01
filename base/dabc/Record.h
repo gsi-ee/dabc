@@ -97,6 +97,8 @@ namespace dabc {
          bool read_str(std::string& str);
    };
 
+   // ===================================================================================
+
    /** \brief special class only to define how many data will be written to the stream */
    class sizestream : public iostream {
       protected:
@@ -125,6 +127,7 @@ namespace dabc {
 
    };
 
+   // ===================================================================================
 
    /** \brief iostream class, which write and read data from memory */
 
@@ -159,8 +162,20 @@ namespace dabc {
          virtual ~memstream() {}
    };
 
-   /** \brief class, used for direct store in JSON/XML form */
+   // ===================================================================================
 
+
+   enum HStoreMask {
+      storemask_Compact =    0x03,   // 0..3 level of compactness
+      storemask_Version =    0x04,   // write all versions
+      storemask_TopVersion = 0x08,   // write version only for top node
+      storemask_History =    0x10,   // write full history in the output
+      storemask_NoChilds =   0x20
+   };
+
+   // ===================================================================================
+
+   /** \brief class, used for direct store in JSON/XML form */
    class HStore {
       protected:
          unsigned          fMask;
@@ -171,7 +186,7 @@ namespace dabc {
          uint64_t          fVersion;
          unsigned          fHLimit;
 
-         unsigned compact() const { return mask() & 3; }
+         unsigned compact() const { return mask() & storemask_Compact; }
 
       public:
          HStore(unsigned m = 0) : fMask(m), buf(), lvl(0), numflds(), numchilds(), fVersion(0), fHLimit(0) {}
@@ -195,6 +210,49 @@ namespace dabc {
    };
 
    // ===================================================================================
+
+   class HJsonStore : public HStore {
+   protected:
+      void NewLine()
+      {
+         if (compact()<2) buf.append("\n"); else
+         if (compact()<3) buf.append(" ");
+      }
+
+   public:
+      HJsonStore(unsigned m = 0) : HStore(m) {}
+      virtual ~HJsonStore() {}
+
+      virtual void CreateNode(const char *nodename);
+      virtual void SetField(const char *field, const char *value);
+      virtual void CloseNode(const char*);
+      virtual void StartChilds() {}
+      virtual void BeforeNextChild(const char* basename = 0);
+      virtual void CloseChilds();
+   };
+
+   // =========================================================
+
+   class HXmlStore : public HStore {
+   protected:
+      bool first_node;
+
+      void NewLine()
+      {
+         if (compact()<2) buf.append("\n"); else
+         if (compact()<3) buf.append(" ");
+      }
+
+   public:
+      HXmlStore(unsigned m = 0) : HStore(m), first_node(true) {}
+      virtual ~HXmlStore() {}
+
+      virtual void CreateNode(const char *nodename);
+      virtual void SetField(const char *field, const char *value);
+      virtual void BeforeNextChild(const char* = 0);
+      virtual void CloseChilds() { }
+      virtual void CloseNode(const char *nodename);
+   };
 
 
    // =========================================================
@@ -384,9 +442,6 @@ namespace dabc {
          bool ReadFromXml(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
 
          /** Save all field in json format */
-         void SaveToJson(std::string& buf, bool compact = true);
-
-         /** Save all field in json format */
          bool SaveTo(HStore& res);
 
          /** \brief Copy fields from source map */
@@ -461,6 +516,8 @@ namespace dabc {
          virtual bool SetField(const std::string& name, const RecordField& v)
             { return Fields().Field(name).SetValue(v); }
 
+         virtual bool SaveTo(HStore& store);
+
       public:
 
          virtual ~RecordContainer();
@@ -472,8 +529,6 @@ namespace dabc {
          RecordFieldsMap& Fields() const { return *fFields; }
 
          virtual XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent);
-
-         std::string SaveToJson(bool compact = true);
    };
 
    // ===================================================================================
@@ -514,6 +569,16 @@ namespace dabc {
          GetObject()->Fields().Field(name).SetProtected(on);
          return true;
       }
+
+      /** \brief Store hierarchy in json/xml form  */
+      bool SaveTo(HStore& store)
+      {  return null() ? false : GetObject()->SaveTo(store); }
+
+      /** \brief Store record in JSON form */
+      std::string SaveToJson(unsigned mask = 0);
+
+      /** \brief Store record in XML form */
+      std::string SaveToXml(unsigned mask = 0);
 
    };
 

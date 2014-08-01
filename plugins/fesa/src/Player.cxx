@@ -214,7 +214,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
    double v1 = 100. * (1.3 + sin(dabc::Now().AsDouble()/5.));
    fWorkerHierarchy.GetHChild("BeamRate").SetField("value", dabc::format("%4.2f", v1));
-   int64_t arr[5] = {1,7,4,2,3};
+   // int64_t arr[5] = {1,7,4,2,3};
    //fWorkerHierarchy.FindChild("BeamRate").Field("arr").SetArrInt(5, arr);
 
 //   std::vector<int> res;

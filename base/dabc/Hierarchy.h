@@ -49,50 +49,6 @@ namespace dabc {
    extern const char* prop_time;          // time property, supplied when history is created
    extern const char* prop_more;          // indicate that item can provide more hierarchy if requested
 
-   class HJsonStore : public HStore {
-   protected:
-      void NewLine()
-      {
-         if (compact()<2) buf.append("\n"); else
-         if (compact()<3) buf.append(" ");
-      }
-
-   public:
-      HJsonStore(unsigned m = 0) : HStore(m) {}
-      virtual ~HJsonStore() {}
-
-      virtual void CreateNode(const char *nodename);
-      virtual void SetField(const char *field, const char *value);
-      virtual void CloseNode(const char*);
-      virtual void StartChilds() {}
-      virtual void BeforeNextChild(const char* basename = 0);
-      virtual void CloseChilds();
-   };
-
-
-   class HXmlStore : public HStore {
-   protected:
-      bool first_node;
-
-      void NewLine()
-      {
-         if (compact()<2) buf.append("\n"); else
-         if (compact()<3) buf.append(" ");
-      }
-
-   public:
-      HXmlStore(unsigned m = 0) : HStore(m), first_node(true) {}
-      virtual ~HXmlStore() {}
-
-      virtual void CreateNode(const char *nodename);
-      virtual void SetField(const char *field, const char *value);
-      virtual void BeforeNextChild(const char* = 0);
-      virtual void CloseChilds() { }
-      virtual void CloseNode(const char *nodename);
-   };
-
-
-
 
    class Hierarchy;
 
@@ -186,17 +142,6 @@ namespace dabc {
       stream_Full,        // store full hierarchy (plus history, if specified)
       stream_NoDelete     // when reading, no any element will be deleted
    };
-
-   enum HierarchyXmlStreamMask {
-      xmlmask_Compact =    0x03,   // 0..3 level of compactness
-      xmlmask_Version =    0x04,   // write all versions
-      xmlmask_TopVersion = 0x08,   // write version only for top node
-      xmlmask_NameSpace =  0x10,   // write artificial namespace on top node
-      xmlmask_History =    0x20,   // write full history in xml output
-      xmlmask_NoChilds =   0x40,   // do not write childs in xml file
-      xmlmask_TopDabc =    0x80    // add top DABC node with correct namespace definition
-   };
-
 
    class HierarchyContainer : public RecordContainer {
 
@@ -309,7 +254,7 @@ namespace dabc {
          void CreateHMutex();
 
          /** \brief Save hierarchy in JSON/xml form. */
-         bool SaveTo(HStore& res);
+         virtual bool SaveTo(HStore& res);
 
       public:
          HierarchyContainer(const std::string& name);
@@ -407,16 +352,6 @@ namespace dabc {
 
       /** Apply modification to hierarchy, using stored binary data  */
       bool UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamKind kind = stream_Full);
-
-      /** \brief Store hierarchy in json/xml form  */
-      bool SaveTo(HStore& store)
-      {  return null() ? false : GetObject()->SaveTo(store); }
-
-      /** \brief Store hierarchy in JSON form */
-      std::string SaveToJson();
-
-      /** \brief Store hierarchy in XML form */
-      std::string SaveToXml();
 
       /** \brief Returns actual version of hierarchy entry */
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }

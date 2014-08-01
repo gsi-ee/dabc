@@ -788,9 +788,9 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          if (field.empty()) {
             if (compact<0) compact = 0; else
-            if (compact>xmlmask_Compact) compact = xmlmask_Compact;
+            if (compact>storemask_Compact) compact = storemask_Compact;
             unsigned mask = compact;
-            if (hlimit>0) mask |= xmlmask_NoChilds | dabc::xmlmask_History | xmlmask_TopVersion;
+            if (hlimit>0) mask |= storemask_NoChilds | dabc::storemask_History | storemask_TopVersion;
 
             if (isxml) {
                dabc::HXmlStore store(mask);
