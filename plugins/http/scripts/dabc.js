@@ -657,9 +657,9 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
 }
 
 
-//======== start of HierarchyJsonDrawElement =============================
+//======== start of HierarchyDrawElement =============================
 
-DABC.HierarchyJsonDrawElement = function() {
+DABC.HierarchyDrawElement = function() {
    DABC.DrawElement.call(this);
    this.jsondoc = null;      // description is json form
    this.ready = false;
@@ -669,13 +669,13 @@ DABC.HierarchyJsonDrawElement = function() {
 }
 
 // TODO: check how it works in different older browsers
-DABC.HierarchyJsonDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+DABC.HierarchyDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.HierarchyJsonDrawElement.prototype.CreateFrames = function(topid, id) {
+DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
    this.frameid = topid;
 }
 
-DABC.HierarchyJsonDrawElement.prototype.RegularCheck = function() {
+DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
    if (this.ready || this.req) return;
    
    var url = "h.json?compact=3";
@@ -689,7 +689,7 @@ DABC.HierarchyJsonDrawElement.prototype.RegularCheck = function() {
    this.req.send(null);
 }
 
-DABC.HierarchyJsonDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
+DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
 {
    if (lvl == null) lvl = 0;
    if (maxlvl == null) maxlvl = -1;
@@ -772,7 +772,7 @@ DABC.HierarchyJsonDrawElement.prototype.createNode = function(nodeid, parentid, 
    var thisid = nodeid;
 
    // allow context menu only for objects which can be displayed
-   if (can_display)
+   if (can_display || (nodeid==0))
       DABC.dabc_tree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
 
    nodeid++;
@@ -784,13 +784,13 @@ DABC.HierarchyJsonDrawElement.prototype.createNode = function(nodeid, parentid, 
    return nodeid;
 }
 
-DABC.HierarchyJsonDrawElement.prototype.TopNode = function() 
+DABC.HierarchyDrawElement.prototype.TopNode = function() 
 {
    return this.jsondoc;
 }
 
 
-DABC.HierarchyJsonDrawElement.prototype.FindNode = function(fullname, top, replace) {
+DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top, replace) {
 
    // console.log("Searchig " + fullname);
    
@@ -815,7 +815,7 @@ DABC.HierarchyJsonDrawElement.prototype.FindNode = function(fullname, top, repla
       }
 }
 
-DABC.HierarchyJsonDrawElement.prototype.CountElements = function(node, lvl, arr)
+DABC.HierarchyDrawElement.prototype.CountElements = function(node, lvl, arr)
 {
    if (!node) return -1;
    
@@ -843,7 +843,7 @@ DABC.HierarchyJsonDrawElement.prototype.CountElements = function(node, lvl, arr)
 }
 
 
-DABC.HierarchyJsonDrawElement.prototype.RequestCallback = function(arg) {
+DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    this.req = 0;
 
    if (arg==null) { this.ready = false; return; }
@@ -900,7 +900,7 @@ DABC.HierarchyJsonDrawElement.prototype.RequestCallback = function(arg) {
    }
 }
 
-DABC.HierarchyJsonDrawElement.prototype.CompleteNode = function(itemname, node, nodeid)
+DABC.HierarchyDrawElement.prototype.CompleteNode = function(itemname, node, nodeid)
 {
    var maxlvl = this.CountElements(node, 0);
    // here maxlevel calculation differ while we are using not the dummy top-node 
@@ -920,7 +920,7 @@ DABC.HierarchyJsonDrawElement.prototype.CompleteNode = function(itemname, node, 
 
 
 
-DABC.HierarchyJsonDrawElement.prototype.Clear = function() {
+DABC.HierarchyDrawElement.prototype.Clear = function() {
    
    DABC.DrawElement.prototype.Clear.call(this);
    
@@ -931,7 +931,7 @@ DABC.HierarchyJsonDrawElement.prototype.Clear = function() {
 }
 
 
-// ======== end of HierarchyJsonDrawElement ======================
+// ======== end of HierarchyDrawElement ======================
 
 
 // ================ start of FesaDrawElement
@@ -1948,12 +1948,20 @@ DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) 
       var x = document.getElementById('ctxmenu1');
       if(x) x.parentNode.removeChild(x);
    }
-  
-   var p = document.createElement('p');
-   d.appendChild(p);
-   p.onclick = function() { DABC.mgr.display(itemname); };
-   p.setAttribute('class', 'ctxline');
-   p.innerHTML = "Draw";
+
+   if (nodeid==0) {
+      var p = document.createElement('p');
+      d.appendChild(p);
+      p.onclick = function() { DABC.mgr.openRootFile("/httpsys/hsimple.root"); };
+      p.setAttribute('class', 'ctxline');
+      p.innerHTML = "Open ROOT file";
+   } else {
+      var p = document.createElement('p');
+      d.appendChild(p);
+      p.onclick = function() { DABC.mgr.display(itemname); };
+      p.setAttribute('class', 'ctxline');
+      p.innerHTML = "Draw";
+   }
   
    var p2 = document.createElement('p');
    d.appendChild(p2);
@@ -2010,7 +2018,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
 
    // console.log(" start2");
 
-   elem = new DABC.HierarchyJsonDrawElement();
+   elem = new DABC.HierarchyDrawElement();
    
    elem.itemname = "ObjectsTree";
 
@@ -2029,7 +2037,7 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
    if (!main) return;
    
    if (nodeid>0) {
-      elem = new DABC.HierarchyJsonDrawElement();
+      elem = new DABC.HierarchyDrawElement();
    
       elem.itemname = itemname;
       elem.main = main;
@@ -2151,7 +2159,15 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
 }
 
 
+DABC.Manager.prototype.openRootFile = function(filename)
+{
+   if (!DABC.AssertRootPrerequisites()) return;
+   
+   console.log("loading file " + filename);
+   
+   var f = new JSROOTIO.RootFile(filename);
 
+}
 
 
 // ============= end of DABC.Manager =============== 
