@@ -78,8 +78,8 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hadaq://host:${port0}"/>
-       <InputPort name="Input1" url="hadaq://host:${port1}"/>
+       <InputPort name="Input0" url="hadaq://host:10101"/>
+       <InputPort name="Input1" url="hadaq://host:10102"/>
        <InputPort name="Input2" url="hadaq://host:10103"/>
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
@@ -109,7 +109,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
           <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <AccountLostEventDiff value="true"/>
           <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
-
 
        <!-- rate meters configuration -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>

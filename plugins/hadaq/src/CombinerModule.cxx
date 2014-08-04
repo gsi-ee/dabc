@@ -890,7 +890,10 @@ bool hadaq::CombinerModule::BuildEvent()
 
       Par(fEventRateName).SetValue(1);
       if (fEvnumDiffStatistics && diff>1) {
-         DOUT0("Events gap %d (0x%x)", diff,diff);
+         if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            DOUT1("Events gap %d (0x%x)", diff,diff);
+            fLastDebugTm.GetNow();
+         }
          Par(fLostEventRateName).SetValue(diff);
          fTotalDiscEvents+=diff;
       }

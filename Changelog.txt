@@ -7,6 +7,8 @@ current functionality of the framework.
 2. Implement dabc::Buffer and dabc::Reference as RecordFields. 
 3. Use new RecordFields capabilities in the dabc::Command
    Remove ugly reference-to-string conversion.   
+4. Minimal changes in hadaq plugin - debug output about events gap
+   only when ExtraDebug is enabled  
 
 
 1.08.2014.
