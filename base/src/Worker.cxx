@@ -791,22 +791,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
             if (compact>storemask_Compact) compact = storemask_Compact;
             unsigned mask = compact;
             if (hlimit>0) mask |= storemask_NoChilds | dabc::storemask_History | storemask_TopVersion;
+            if (isxml) mask |= dabc::storemask_AsXML;
 
-            if (isxml) {
-               dabc::HXmlStore store(mask);
-               store.SetLimits(version, hlimit);
-
-               if (sub.SaveTo(store))
-                  replybuf = store.GetResult();
-
-            } else {
-
-               dabc::HJsonStore store(mask);
-               store.SetLimits(version, hlimit);
-
-               if (sub.SaveTo(store))
-                  replybuf = store.GetResult();
-            }
+            dabc::HStore store(mask);
+            store.SetLimits(version, hlimit);
+            if (sub.SaveTo(store))
+               replybuf = store.GetResult();
 
          } else {
             if (!sub.HasField(field)) return cmd_ignore;

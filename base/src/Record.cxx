@@ -144,91 +144,35 @@ bool dabc::memstream::read(void* tgt, uint64_t len)
    return true;
 }
 
-void dabc::HXmlStore::CreateNode(const char *nodename)
-{
-   if (nodename==0) nodename = "item";
-
-   // starts new xml node, will be closed by CloseNode
-   buf.append(dabc::format("%*s<%s", compact() > 0 ? 0 : lvl * 2, "", nodename));
-   if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
-   numchilds.push_back(0);
-   numflds.push_back(0);
-   lvl++;
-
-}
-
-void dabc::HXmlStore::SetField(const char *field, const char *value)
-{
-   // set field (xml attribute) in current node
-
-   buf.append(dabc::format(" %s=", field));
-
-   int vlen = strlen(value);
-
-   const char* v = value;
-   const char* stop = value+vlen;
-
-   if ((vlen > 1) && (value[0] == '\"') && (value[vlen-1] == '\"')) {
-      v++; stop--;
-   }
-
-   buf.append("\"");
-
-   while (v!=stop) {
-      switch (*v) {
-         case '<' : buf.append("&lt;"); break;
-         case '>' : buf.append("&gt;"); break;
-         case '&' : buf.append("&amp;"); break;
-         case '\'' : buf.append("&apos;"); break;
-         case '\"' : buf.append("&quot;"); break;
-         default: buf.append(v, 1); break;
-      }
-      v++;
-   }
-   buf.append("\"");
-}
-
-void dabc::HXmlStore::BeforeNextChild(const char*)
-{
-   // called before next child node created
-   if (numchilds.back()++ == 0) { buf.append(">"); NewLine(); }
-}
-
-void dabc::HXmlStore::CloseNode(const char *nodename)
-{
-   // called when node should be closed
-   // depending from number of childs different xml format is applied
-
-   lvl--;
-
-   if (numchilds.back() > 0) {
-      if (nodename==0) nodename = "item";
-      buf.append(dabc::format("%*s</%s>", compact() > 0 ? 0 : lvl * 2, "", nodename));
-      NewLine();
-   } else {
-      buf.append(dabc::format("/>"));
-      NewLine();
-   }
-   numchilds.pop_back();
-   numflds.pop_back();
-}
 
 // ===============================================================================
 
 
-void dabc::HJsonStore::CreateNode(const char *nodename)
+void dabc::HStore::CreateNode(const char *nodename)
 {
-   // starts new json object, will be closed by CloseNode
+   // starts new json node, will be closed by CloseNode
 
-   buf.append(dabc::format("%*s{", (compact() > 0) ? 0 : lvl * 4, ""));
-   lvl++;
-   numflds.push_back(0);
-   numchilds.push_back(0);
-   if (nodename!=0)
-      SetField("_name", dabc::format("\"%s\"",nodename).c_str());
+   if (isxml()) {
+      if (nodename==0) nodename = "item";
+      // starts new xml node, will be closed by CloseNode
+      buf.append(dabc::format("%*s<%s", compact() > 0 ? 0 : lvl * 2, "", nodename));
+      if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
+      numchilds.push_back(0);
+      numflds.push_back(0);
+      lvl++;
+   } else {
+      buf.append(dabc::format("%*s{", (compact() > 0) ? 0 : lvl * 4, ""));
+      lvl++;
+      numflds.push_back(0);
+      numchilds.push_back(0);
+      if (nodename!=0)
+         SetField("_name", dabc::format("\"%s\"",nodename).c_str());
+   }
+
+   first_node = false;
 }
 
-void dabc::HJsonStore::SetField(const char *field, const char *value)
+void dabc::HStore::SetField(const char *field, const char *value)
 {
    // set field (json field) in current node
 
@@ -237,33 +181,83 @@ void dabc::HJsonStore::SetField(const char *field, const char *value)
       return;
    }
 
-   if (numflds.back()++ > 0) buf.append(",");
-   NewLine();
-   buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", field));
-   switch(compact()) {
-      case 2: buf.append(": "); break;
-      case 3: buf.append(":"); break;
-      default: buf.append(" : ");
+   if (isxml()) {
+
+      buf.append(dabc::format(" %s=", field));
+      int vlen = strlen(value);
+
+      const char* v = value;
+      const char* stop = value+vlen;
+
+      if ((vlen > 1) && (value[0] == '\"') && (value[vlen-1] == '\"')) {
+         v++; stop--;
+      }
+
+      buf.append("\"");
+
+      while (v!=stop) {
+         switch (*v) {
+            case '<' : buf.append("&lt;"); break;
+            case '>' : buf.append("&gt;"); break;
+            case '&' : buf.append("&amp;"); break;
+            case '\'' : buf.append("&apos;"); break;
+            case '\"' : buf.append("&quot;"); break;
+            default: buf.append(v, 1); break;
+         }
+         v++;
+      }
+      buf.append("\"");
+
+   } else {
+
+      if (numflds.back()++ > 0) buf.append(",");
+      NewLine();
+      buf.append(dabc::format("%*s\"%s\"", (compact() > 0) ? 0 : lvl * 4 - 2, "", field));
+      switch(compact()) {
+         case 2: buf.append(": "); break;
+         case 3: buf.append(":"); break;
+         default: buf.append(" : ");
+      }
+      buf.append(value);
+
    }
-   buf.append(value);
 }
 
-void dabc::HJsonStore::CloseNode(const char *)
+void dabc::HStore::CloseNode(const char * nodename)
 {
    // called when node should be closed
    // depending from number of childs different json format is applied
 
-   CloseChilds();
-   numchilds.pop_back();
-   numflds.pop_back();
-   lvl--;
-   NewLine();
-   buf.append(dabc::format("%*s}", (compact() > 0) ? 0 : lvl * 4, ""));
+   if (isxml()) {
+      lvl--;
+      if (numchilds.back() > 0) {
+         if (nodename==0) nodename = "item";
+         buf.append(dabc::format("%*s</%s>", compact() > 0 ? 0 : lvl * 2, "", nodename));
+         NewLine();
+      } else {
+         buf.append(dabc::format("/>"));
+         NewLine();
+      }
+      numchilds.pop_back();
+      numflds.pop_back();
+   } else {
+      CloseChilds();
+      numchilds.pop_back();
+      numflds.pop_back();
+      lvl--;
+      NewLine();
+      buf.append(dabc::format("%*s}", (compact() > 0) ? 0 : lvl * 4, ""));
+   }
 }
 
-void dabc::HJsonStore::BeforeNextChild(const char* basename)
+void dabc::HStore::BeforeNextChild(const char* basename)
 {
    // called before next child node created
+
+   if (isxml()) {
+      if (numchilds.back()++ == 0) { buf.append(">"); NewLine(); }
+      return;
+   }
 
    // first of all, close field and mark that we did it
    if (numflds.back() > 0) buf.append(",");
@@ -286,8 +280,10 @@ void dabc::HJsonStore::BeforeNextChild(const char* basename)
    NewLine();
 }
 
-void dabc::HJsonStore::CloseChilds()
+void dabc::HStore::CloseChilds()
 {
+   if (isxml()) return;
+
    if (numchilds.back() > 0) {
       NewLine();
       buf.append(dabc::format("%*s]", (compact() > 0) ? 0 : lvl * 4 - 2, ""));
@@ -331,6 +327,8 @@ dabc::RecordField::RecordField(const RecordField& src)
       case kind_arrdouble: SetArrDouble(src.valueInt, (double*) src.arrDouble); break;
       case kind_string: SetStr(src.valueStr); break;
       case kind_arrstr: SetArrStrDirect(src.valueInt, src.valueStr); break;
+      case kind_buffer: SetBuffer(*src.valueBuf); break;
+      case kind_reference: SetReference(*src.valueRef); break;
    }
 }
 
@@ -392,6 +390,13 @@ bool dabc::RecordField::Stream(iostream& s)
             s.write(valueStr, fulllen);
             break;
          }
+         case kind_buffer:
+            s.write_uint64(valueBuf->SegmentSize());
+            s.write(valueBuf->SegmentPtr(), valueBuf->SegmentSize());
+            break;
+         case kind_reference:
+            // we do not write reference at all
+            break;
       }
    } else {
       release();
@@ -399,7 +404,6 @@ bool dabc::RecordField::Stream(iostream& s)
       s.read_uint32(storekind);
       sz = ((uint64_t) storesz) * 8;
       // storeversion = storekind >> 24;
-
 
       fKind = (ValueKind) (storekind & 0xffffff);
       switch (fKind) {
@@ -434,6 +438,19 @@ bool dabc::RecordField::Stream(iostream& s)
             s.read(valueStr, (storesz-2)*8);
             break;
          }
+         case kind_buffer: {
+            uint64_t sz(0);
+            s.read_uint64(sz);
+            valueBuf = new Buffer;
+            *valueBuf = Buffer::CreateBuffer((storesz-1)*8);
+            s.read(valueBuf->SegmentPtr(), (storesz-1)*8);
+            if (sz != (storesz-1)*8) valueBuf->SetTotalSize(sz);
+            break;
+         }
+         case kind_reference:
+            // also do not read reference
+            valueRef = new Reference;
+            break;
       }
    }
 
@@ -454,6 +471,8 @@ void dabc::RecordField::release()
       case kind_arrdouble: delete [] arrDouble; break;
       case kind_string:
       case kind_arrstr: free(valueStr); break;
+      case kind_buffer: delete valueBuf; break;
+      case kind_reference: delete valueRef; break;
    }
 
    fKind = kind_none;
@@ -477,6 +496,8 @@ bool dabc::RecordField::AsBool(bool dflt) const
          if (strcmp(valueStr,xmlFalseValue)==0) return false;
          break;
       }
+      case kind_buffer: if (valueBuf!=0) return valueBuf->SegmentSize()!=0; break;
+      case kind_reference: if (valueRef!=0) return !valueRef->null(); break;
    }
    return dflt;
 }
@@ -499,6 +520,8 @@ int64_t dabc::RecordField::AsInt(int64_t dflt) const
          if (str_to_lint(valueStr, &res)) return res;
          break;
       }
+      case kind_buffer: return dflt;
+      case kind_reference: return dflt;
    }
    return dflt;
 }
@@ -521,6 +544,8 @@ uint64_t dabc::RecordField::AsUInt(uint64_t dflt) const
          if (str_to_luint(valueStr, &res)) return res;
          break;
       }
+      case kind_buffer: return dflt;
+      case kind_reference: return dflt;
    }
    return dflt;
 }
@@ -543,6 +568,8 @@ double dabc::RecordField::AsDouble(double dflt) const
          if (str_to_double(valueStr, &res)) return res;
          break;
       }
+      case kind_buffer: return dflt;
+      case kind_reference: return dflt;
    }
    return dflt;
 }
@@ -590,7 +617,8 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
          }
          break;
       }
-
+      case kind_buffer: break;
+      case kind_reference: break;
    }
 
    return res;
@@ -639,6 +667,8 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
          }
          break;
       }
+      case kind_buffer: break;
+      case kind_reference: break;
    }
 
    return res;
@@ -688,56 +718,12 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
          }
          break;
       }
+      case kind_buffer: break;
+      case kind_reference: break;
    }
 
    return res;
 }
-
-int dabc::RecordField::NeedXmlQuotes(const std::string& str)
-{
-   if (str.length()==0) return 1;
-
-   if (str.find_first_of("\'\"<>&")!=std::string::npos) return 2;
-
-   return (str.find_first_of(" ,[]")!=std::string::npos) ? 1 : 0;
-}
-
-std::string dabc::RecordField::ExpandXmlValue(const std::string& str)
-{
-   std::string res;
-
-   for (unsigned n=0;n<str.length();n++)
-      switch(str[n]) {
-         case '\"': res.append("&quout;"); break;
-         case '\'': res.append("&apos;"); break;
-         case '<': res.append("&lt;"); break;
-         case '>': res.append("&gt;"); break;
-         case '&': res.append("&amp;"); break;
-         default: res+=str[n]; break;
-      }
-
-   return res;
-}
-
-std::string dabc::RecordField::CompressXmlValue(const char* str, int len)
-{
-   std::string res;
-   int n=0;
-   while (n<len) {
-      if (str[n]!='&') { res+=str[n++]; continue; }
-
-      if ((len - n >= 7) && (strncmp(str+n, "&quout;", 7)==0)) { res+="\""; n+=7; continue; }
-      if ((len - n >= 6) && (strncmp(str+n, "&apos;", 6)==0)) { res+="\'"; n+=6; continue; }
-      if ((len - n >= 4) && (strncmp(str+n, "&lt;", 4)==0)) { res+="<"; n+=4; continue; }
-      if ((len - n >= 4) && (strncmp(str+n, "&gt;", 4)==0)) { res+=">"; n+=4; continue; }
-      if ((len - n >= 5) && (strncmp(str+n, "&amp;", 5)==0)) { res+="&"; n+=5; continue; }
-
-      res+=str[n++];
-   }
-
-   return res;
-}
-
 
 std::string dabc::RecordField::AsStr(const std::string& dflt) const
 {
@@ -764,21 +750,12 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
          std::string res("[");
          for (unsigned n=0; n<vect.size();n++) {
             if (n>0) res.append(",");
-            switch (NeedXmlQuotes(vect[n])) {
-               case 1:
-                  res.append("\'");
-                  res.append(vect[n]);
-                  res.append("\'");
-                  break;
-               case 2:
-                  res.append("\'");
-                  res.append(ExpandXmlValue(vect[n]));
-                  res.append("\'");
-                  break;
-               default:
-                  res.append(vect[n]);
-                  break;
-            }
+            res.append("\"");
+            if (NeedJsonReformat(vect[n]))
+               res.append(JsonReformat(vect[n]));
+            else
+               res.append(vect[n]);
+            res.append("\"");
          }
          res.append("]");
          return res;
@@ -789,6 +766,8 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
          if (valueStr!=0) return valueStr;
          break;
       }
+      case kind_buffer: return dflt;
+      case kind_reference: return dflt;
    }
    return dflt;
 }
@@ -916,6 +895,22 @@ std::string dabc::RecordField::AsJson() const
          res.append("\"");
          return res;
       }
+      case kind_buffer: {
+         if (valueBuf==0) return "null";
+         std::string res("[");
+         uint8_t* ptr = (uint8_t*) valueBuf->SegmentPtr();
+         for (unsigned n=0;n<valueBuf->SegmentSize();n++) {
+            if (n>0) res.append(",");
+            res.append(dabc::format("0x%02x", (unsigned) ptr[n]));
+         }
+         res.append("]");
+         return res;
+      }
+      case kind_reference: {
+         if (valueRef==0) return "null";
+         // no idea how to store reference
+         return "\"<Refernce>\"";
+      }
    }
    return "null";
 }
@@ -959,9 +954,25 @@ std::vector<std::string> dabc::RecordField::AsStrVect() const
          }
          break;
       }
+      case kind_buffer: break;
+      case kind_reference: break;
    }
 
    return res;
+}
+
+dabc::Buffer dabc::RecordField::AsBuffer() const
+{
+   if (fKind != kind_buffer) return dabc::Buffer();
+
+   return *valueBuf;
+}
+
+dabc::Reference dabc::RecordField::AsReference() const
+{
+   if (fKind != kind_reference) return dabc::Reference();
+
+   return *valueRef;
 }
 
 bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose)
@@ -981,7 +992,7 @@ bool dabc::RecordField::StrToStrVect(const char* str, std::vector<std::string>& 
             vect.clear();
             return false;
          }
-         vect.push_back(CompressXmlValue(pos+1, p1 - pos - 1));
+         vect.push_back(std::string(pos+1, p1 - pos - 1));
          pos = p1 + 1;
       } else {
          const char* p1 = strpbrk(pos+1, ",]");
@@ -1025,6 +1036,8 @@ bool dabc::RecordField::SetValue(const RecordField& src)
       case kind_arrdouble: return SetArrDouble(src.valueInt, (double*) src.arrDouble);
       case kind_string: return SetStr(src.valueStr);
       case kind_arrstr: return SetArrStr(src.valueInt, src.valueStr);
+      case kind_buffer: return SetBuffer(*src.valueBuf);
+      case kind_reference: return SetReference(*src.valueRef);
    }
    return false;
 }
@@ -1167,8 +1180,34 @@ bool dabc::RecordField::SetStrVect(const std::vector<std::string>& vect)
    }
 
    return modified();
-
 }
+
+bool dabc::RecordField::SetBuffer(const Buffer& buf)
+{
+   if (cannot_modify()) return false;
+
+   release();
+
+   fKind = kind_buffer;
+   valueBuf = new Buffer;
+   *valueBuf = buf;
+
+   return modified();
+}
+
+bool dabc::RecordField::SetReference(const Reference& ref)
+{
+   if (cannot_modify()) return false;
+
+   release();
+
+   fKind = kind_reference;
+   valueRef = new Reference;
+   *valueRef = ref;
+
+   return modified();
+}
+
 
 bool dabc::RecordField::SetArrInt(int64_t size, int64_t* arr, bool owner)
 {
@@ -1612,14 +1651,14 @@ bool dabc::RecordContainer::SaveTo(HStore& store)
 
 std::string dabc::Record::SaveToJson(unsigned mask)
 {
-   dabc::HJsonStore store(mask);
+   dabc::HStore store(mask);
    if (SaveTo(store)) return store.GetResult();
    return "";
 }
 
 std::string dabc::Record::SaveToXml(unsigned mask)
 {
-   dabc::HXmlStore store(mask);
+   dabc::HStore store(mask | dabc::storemask_AsXML);
    if (SaveTo(store)) return store.GetResult();
    return "";
 }

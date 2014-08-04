@@ -170,12 +170,13 @@ namespace dabc {
       storemask_Version =    0x04,   // write all versions
       storemask_TopVersion = 0x08,   // write version only for top node
       storemask_History =    0x10,   // write full history in the output
-      storemask_NoChilds =   0x20
+      storemask_NoChilds =   0x20,
+      storemask_AsXML    =   0x80    // create XML output
    };
 
    // ===================================================================================
 
-   /** \brief class, used for direct store in JSON/XML form */
+   /** \brief class, used for direct store of records in JSON/XML form */
    class HStore {
       protected:
          unsigned          fMask;
@@ -185,11 +186,20 @@ namespace dabc {
          std::vector<int>  numchilds;
          uint64_t          fVersion;
          unsigned          fHLimit;
+         bool              first_node;
 
          unsigned compact() const { return mask() & storemask_Compact; }
 
+         void NewLine()
+         {
+            if (compact()<2) buf.append("\n"); else
+            if (compact()<3) buf.append(" ");
+         }
+
+         bool isxml() { return (mask() & storemask_AsXML) != 0; }
+
       public:
-         HStore(unsigned m = 0) : fMask(m), buf(), lvl(0), numflds(), numchilds(), fVersion(0), fHLimit(0) {}
+         HStore(unsigned m = 0) : fMask(m), buf(), lvl(0), numflds(), numchilds(), fVersion(0), fHLimit(0), first_node(true) {}
          virtual ~HStore() {}
 
          void SetLimits(uint64_t v, unsigned hlimit) { fVersion = v; fHLimit = hlimit; }
@@ -202,58 +212,12 @@ namespace dabc {
 
          std::string GetResult() { return buf; }
 
-         virtual void CreateNode(const char *) {}
-         virtual void SetField(const char *, const char *) {}
-         virtual void BeforeNextChild(const char* = 0) {}
-         virtual void CloseChilds() {}
-         virtual void CloseNode(const char *) {}
+         void CreateNode(const char * nodename);
+         void SetField(const char * name, const char * value);
+         void BeforeNextChild(const char* basename = 0);
+         void CloseChilds();
+         void CloseNode(const char * nodename);
    };
-
-   // ===================================================================================
-
-   class HJsonStore : public HStore {
-   protected:
-      void NewLine()
-      {
-         if (compact()<2) buf.append("\n"); else
-         if (compact()<3) buf.append(" ");
-      }
-
-   public:
-      HJsonStore(unsigned m = 0) : HStore(m) {}
-      virtual ~HJsonStore() {}
-
-      virtual void CreateNode(const char *nodename);
-      virtual void SetField(const char *field, const char *value);
-      virtual void CloseNode(const char*);
-      virtual void StartChilds() {}
-      virtual void BeforeNextChild(const char* basename = 0);
-      virtual void CloseChilds();
-   };
-
-   // =========================================================
-
-   class HXmlStore : public HStore {
-   protected:
-      bool first_node;
-
-      void NewLine()
-      {
-         if (compact()<2) buf.append("\n"); else
-         if (compact()<3) buf.append(" ");
-      }
-
-   public:
-      HXmlStore(unsigned m = 0) : HStore(m), first_node(true) {}
-      virtual ~HXmlStore() {}
-
-      virtual void CreateNode(const char *nodename);
-      virtual void SetField(const char *field, const char *value);
-      virtual void BeforeNextChild(const char* = 0);
-      virtual void CloseChilds() { }
-      virtual void CloseNode(const char *nodename);
-   };
-
 
    // =========================================================
 
@@ -272,7 +236,9 @@ namespace dabc {
             kind_arruint   = 7,
             kind_arrdouble = 8,
             kind_string    = 9,
-            kind_arrstr    = 10
+            kind_arrstr    = 10,
+            kind_buffer    = 11,
+            kind_reference = 12
          };
 
          ValueKind fKind;
@@ -288,7 +254,8 @@ namespace dabc {
             uint64_t* arrUInt;     ///! uint array, size in valueInt
             double* arrDouble;     ///! double array, size in valueInt
             char* valueStr;        ///! string or array of strings
-            void* valueBuf;        ///! binary buffer, size in bytes in valueInt
+            Buffer* valueBuf;      ///! buffer object
+            Reference* valueRef;   ///! object reference
          };
 
          bool                fModified;    ///! when true, field was modified at least once
@@ -326,6 +293,8 @@ namespace dabc {
          RecordField(const std::vector<uint64_t>& v) { constructor(); SetVectUInt(v); }
          RecordField(const std::vector<double>& v) { constructor(); SetVectDouble(v); }
          RecordField(const std::vector<std::string>& v) { constructor(); SetStrVect(v); }
+         RecordField(const Buffer& buf) { constructor(); SetBuffer(buf); }
+         RecordField(const Reference& ref) { constructor(); SetReference(ref); }
 
          RecordField& operator=(const RecordField& src) { SetValue(src); return *this; }
 
@@ -360,10 +329,11 @@ namespace dabc {
          std::vector<double> AsDoubleVect() const;
          double* GetDoubleArr() const { return fKind == kind_arrdouble ? arrDouble : 0; }
          std::vector<std::string> AsStrVect() const;
+         dabc::Buffer AsBuffer() const;
+         dabc::Reference AsReference() const;
 
          /** Returns field value in JSON format */
          std::string AsJson() const;
-
 
          bool SetValue(const RecordField& src);
          bool SetNull();
@@ -376,6 +346,8 @@ namespace dabc {
          bool SetStr(const std::string& v);
          bool SetStr(const char* v);
          bool SetStrVect(const std::vector<std::string>& vect);
+         bool SetBuffer(const Buffer& buf);
+         bool SetReference(const Reference& ref);
 
          /** Set as array, if owner flag specified, one get ownership over array and do not need to create copy */
          bool SetArrInt(int64_t size, int64_t* arr, bool owner = false);
@@ -393,10 +365,6 @@ namespace dabc {
          /** \return Total size, which is required to stream object */
          uint64_t StoreSize();
          bool Stream(iostream& s);
-
-         static int NeedXmlQuotes(const std::string& str);
-         static std::string ExpandXmlValue(const std::string& str);
-         static std::string CompressXmlValue(const char* str, int len);
 
          static bool NeedJsonReformat(const std::string& str);
          static std::string JsonReformat(const std::string& str);

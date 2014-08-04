@@ -38,15 +38,11 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       if (url.HasOption("compact"))
          mask |= (url.GetOptionInt("compact", dabc::storemask_Compact) & dabc::storemask_Compact);
 
-      if (kind == "xml") {
-         dabc::HXmlStore store(mask);
-         if (res.SaveTo(store))
-            cmd.SetStr("astext", store.GetResult());
-      } else {
-         dabc::HJsonStore store(mask);
-         if (res.SaveTo(store))
-            cmd.SetStr("astext", store.GetResult());
-      }
+      if (kind == "xml") mask |= dabc::storemask_AsXML;
+
+      dabc::HStore store(mask);
+      if (res.SaveTo(store))
+         cmd.SetStr("astext", store.GetResult());
    }
 }
 
