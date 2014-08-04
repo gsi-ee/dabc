@@ -114,8 +114,6 @@ namespace dabc {
 
          bool IsLastCallerSync();
 
-         static Reference MakeRef(const std::string& buf);
-
       protected:
 
          virtual void CreateRecord(const std::string& name) { SetObject(new CommandContainer(name)); }
@@ -154,17 +152,17 @@ namespace dabc {
          void* GetPtr(const std::string& name, void* deflt = 0) const;
 
          /** Set reference to the command */
-         void SetRef(const std::string& name, Reference ref);
+         bool SetRef(const std::string& name, Reference ref);
 
          /** \brief Returns reference from the command, can be called only once */
          Reference GetRef(const std::string& name);
 
          /** \brief Set raw data to the command, which can be transported also between nodes */
-         bool SetRawData(Reference rawdata);
+         bool SetRawData(Buffer rawdata);
 
          /** \brief Returns reference on raw data
           * Can be called only once - raw data reference will be cleaned */
-         Reference GetRawData();
+         Buffer GetRawData();
 
          void AddValuesFrom(const Command& cmd, bool canoverwrite = true);
 

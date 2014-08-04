@@ -88,12 +88,6 @@ namespace dabc {
           *   It may be necessary when non-recursive mutexes are used. */
          bool AcquireRefWithoutMutex(Reference& ref);
 
-         /** \brief Convert reference to string, one should be able to recover reference from the string */
-         bool ConvertToString(char* buf, int buflen);
-
-         /** \brief Reconstruct reference again from the string */
-         Reference(const char* value, int valuelen) throw();
-
          /** \brief Method used in reference constructor/assignments to verify is object is suitable */
          template<class T>
          bool verify_object(Object* src, T* &tgt) { return (tgt=dynamic_cast<T*>(src))!=0; }

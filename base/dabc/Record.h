@@ -398,8 +398,8 @@ namespace dabc {
 
          unsigned NumFields() const { return fMap.size(); }
          std::string FieldName(unsigned n) const;
-         std::string FindFieldWhichStarts(const std::string& name);
 
+         /** \brief Direct access to the fields */
          RecordField& Field(const std::string& name) { return fMap[name]; }
 
          /** Save all field in json format */

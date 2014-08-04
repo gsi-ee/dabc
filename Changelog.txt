@@ -5,6 +5,8 @@ current functionality of the framework.
 4.08.2014
 1. Merge HJsonStore and HXmlStore into same HStore class.
 2. Implement dabc::Buffer and dabc::Reference as RecordFields. 
+3. Use new RecordFields capabilities in the dabc::Command
+   Remove ugly reference-to-string conversion.   
 
 
 1.08.2014.

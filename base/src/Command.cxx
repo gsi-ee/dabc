@@ -54,22 +54,6 @@ dabc::CommandContainer::~CommandContainer()
       EOUT("Did clear callers in cmd %s", GetName());
    }
 
-   // check if reference is remaining !!!
-   std::string field;
-
-   do {
-      field = Fields().FindFieldWhichStarts("##REF##");
-      if (!field.empty()) {
-         EOUT("CMD:%s Reference %s not cleared correctly", GetName(), field.c_str());
-
-         std::string value = Fields().Field(field).AsStr();
-         dabc::Command::MakeRef(value).Release();
-
-         Fields().RemoveField(field);
-      }
-
-   } while (!field.empty());
-
    DOUT4("CMD:%p name %s deleted", this, GetName());
 
 #ifdef DABC_EXTRA_CHECKS
@@ -184,27 +168,22 @@ void* dabc::Command::GetPtr(const std::string& name, void* deflt) const
    return res>0 ? p : deflt;
 }
 
-void dabc::Command::SetRef(const std::string& name, Reference ref)
+bool dabc::Command::SetRef(const std::string& name, Reference ref)
 {
-   char buf[100];
+   std::string field = dabc::format("#%s", name.c_str());
 
-   if (ref.ConvertToString(buf,sizeof(buf)))
-      SetStr(dabc::format("##REF##%s", name.c_str()).c_str(), buf);
+   return SetField(field, ref);
 }
-
-dabc::Reference dabc::Command::MakeRef(const std::string& buf)
-{
-   return Reference(buf.c_str(), buf.length());
-}
-
 
 dabc::Reference dabc::Command::GetRef(const std::string& name)
 {
-   std::string field = dabc::format("##REF##%s", name.c_str());
-   std::string value = GetStr(field);
+   std::string field = dabc::format("#%s", name.c_str());
+
+   dabc::Reference ref = GetField(field).AsReference();
+
    RemoveField(field);
 
-   return MakeRef(value);
+   return ref;
 }
 
 
@@ -354,14 +333,15 @@ bool dabc::Command::ReadFromCmdString(const std::string& str)
 }
 
 
-bool dabc::Command::SetRawData(Reference rawdata)
+bool dabc::Command::SetRawData(Buffer rawdata)
 {
-   SetRef("RawData", rawdata);
-   return true;
+   return SetField("#RawData", rawdata);
 }
 
 
-dabc::Reference dabc::Command::GetRawData()
+dabc::Buffer dabc::Command::GetRawData()
 {
-   return GetRef("RawData");
+   dabc::Buffer buf = GetField("#RawData").AsBuffer();
+   RemoveField("#RawData");
+   return buf;
 }

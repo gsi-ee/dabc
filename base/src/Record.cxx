@@ -1391,16 +1391,6 @@ std::string dabc::RecordFieldsMap::FieldName(unsigned n) const
    return "";
 }
 
-std::string dabc::RecordFieldsMap::FindFieldWhichStarts(const std::string& name)
-{
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (iter->first.length() >= name.length())
-         if (iter->first.compare(0, name.length(), name)==0) return iter->first;
-   }
-
-   return "";
-}
-
 bool dabc::RecordFieldsMap::WasChanged() const
 {
    if (fChanged) return true;

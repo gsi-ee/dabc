@@ -36,32 +36,6 @@ dabc::Reference::Reference(Object* obj) throw() :
       throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", obj), obj->GetName() );
 }
 
-bool dabc::Reference::ConvertToString(char* buf, int buflen)
-{
-   int res = snprintf(buf, buflen, "%p", fObj);
-
-   if ((res<0) || (res==buflen)) {
-      EOUT("To small buffer len %d to convert reference!!!", buflen);
-      return false;
-   }
-
-   fObj = 0;
-   return true;
-}
-
-
-dabc::Reference::Reference(const char* buf, int buflen) throw() :
-   fObj(0)
-{
-   if (buf==0 || (buflen==0)) return;
-
-   if (sscanf(buf,"%p", &fObj)!=1) {
-      fObj = 0;
-      throw dabc::Exception(ex_Object, dabc::format("Cannot reconstruct reference from string %s", buf), "Reference" );
-   }
-}
-
-
 void dabc::Reference::SetObject(Object* obj, bool withmutex) throw()
 {
    Release();
