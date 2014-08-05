@@ -113,7 +113,6 @@ dTree.prototype.addNode = function(pNode) {
                this.selectedFound = true;
          }
          str += this.node(cn, n);
-         if (cn._ls) break;
       }
    }
    return str;
@@ -179,7 +178,7 @@ dTree.prototype.setCS = function(node) {
       if (this.aNodes[n].pid == node.id) node._hc = true;
       if (this.aNodes[n].pid == node.pid) lastId = this.aNodes[n].id;
    }
-   if (lastId==node.id) node._ls = true;
+   node._ls = (lastId==node.id); // Sergey Linev fix - one should be able to reset property
 };
 
 // Returns the selected node
