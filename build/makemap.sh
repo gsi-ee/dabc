@@ -22,13 +22,6 @@ HEADERS=${10}
 
 SHORTLIBNAME=$(basename $LIBNAME)
 
-#echo libname = $LIBNAME
-#echo shortlibname = $SHORTLIBNAME
-#echo mapfile = $MAPFILE
-#echo linkdef = $LINKDEF
-#echo libdep = $LIBDEP
-#echo rootbin = $DABC_ROOTBIN
-
 if [[ "$DABC_ROOTVERSION" == "6" ]]; then
 
    echo "Generating root6 mapfile $MAPFILE" 

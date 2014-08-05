@@ -24,10 +24,6 @@ fi
 
 echo "Generating root5 dictionary $DICTIONARY ..." 
 
-echo dict = $DICTIONARY
-echo cxxopt = $CXXOPTIONS
-echo headers = $HEADERS
-
 $DABC_ROOTBIN/rootcint -f $DICTIONARY -c -p  $CXXOPTIONS  $HEADERS
    
 exit 0
