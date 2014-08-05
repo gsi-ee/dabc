@@ -276,7 +276,7 @@ function ResetUI() {
 };
 
 function BuildSimpleGUI() {
-   AssertPrerequisites(function DisplayGUI() {
+ AssertPrerequisites(function DisplayGUI() {
    var myDiv = $('#simpleGUI');
    if (!myDiv) {
       alert("You have to define a div with id='simpleGUI'!");
@@ -289,10 +289,9 @@ function BuildSimpleGUI() {
    }
    var arrFiles = files.split(';');
 
-
    var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
 
-      guiCode += "<div id='main' class='column'>\n"
+   guiCode += "<div id='main' class='column'>\n"
       +"<h1><font face='Verdana' size='4'>Read a ROOT file with Javascript</font></h1>\n"
       +"<p><b>Select a ROOT file to read, or enter a url (*): </b><br/>\n"
       +'<small><sub>*: Other URLs might not work because of cross site scripting protection, see e.g. <a href="https://developer.mozilla.org/en/http_access_control">developer.mozilla.org/http_access_control</a> on how to avoid it.</sub></small></p>'
@@ -302,10 +301,10 @@ function BuildSimpleGUI() {
       +'<select name="s" size="1" '
       +'onchange="document.ex.state.value = document.ex.s.options[document.ex.s.selectedIndex].value;document.ex.s.selectedIndex=0;document.ex.s.value=\'\'">'
       +'<option value = " " selected = "selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>';
-      for (var i=0; i<arrFiles.length; i++) {
-         guiCode += '<option value = "' + arrFiles[i] + '">' + arrFiles[i] + '</option>';
-      }
-      guiCode += '</select>'
+   for (var i=0; i<arrFiles.length; i++) {
+      guiCode += '<option value = "' + arrFiles[i] + '">' + arrFiles[i] + '</option>';
+   }
+   guiCode += '</select>'
       +'</div>'
       +'<input style="padding:2px; margin-left:10px; margin-top:5px;"'
       +'       onclick="ReadFile()" type="button" title="Read the Selected File" value="Load"/>'
@@ -318,6 +317,6 @@ function BuildSimpleGUI() {
       +'<div id="reportHolder" class="column">'
       +'<div id="report"> </div>'
       +'</div>';
-      $('#simpleGUI').append(guiCode);
-   });
-};
+   $('#simpleGUI').append(guiCode);
+ });
+}

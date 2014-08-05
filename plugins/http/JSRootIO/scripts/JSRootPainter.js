@@ -1371,14 +1371,15 @@ var gStyle = {
 
    JSROOTPainter.stringWidth = function(svg, line, font_size, fontDetails) {
       /* compute the bounding box of a string by using temporary svg:text */
-      var text = svg.append("svg:text")
-      .attr("class", "temp_text")
-      .attr("font-family", fontDetails['name'])
-      .attr("font-weight", fontDetails['weight'])
-      .attr("font-style", fontDetails['style'])
-      .attr("font-size", font_size)
-      .style("opacity", 0)
-      .text(line);
+      var text = 
+         svg.append("svg:text")
+            .attr("class", "temp_text")
+            .attr("font-family", fontDetails['name'])
+            .attr("font-weight", fontDetails['weight'])
+            .attr("font-style", fontDetails['style'])
+            .attr("font-size", font_size)
+            .style("opacity", 0)
+            .text(line);
       var w = text.node().getBBox().width;
       text.remove();
       return w;

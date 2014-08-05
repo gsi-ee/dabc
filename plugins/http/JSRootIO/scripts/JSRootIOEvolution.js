@@ -35,7 +35,7 @@ var kClassMask = 0x80000000;
 
    JSROOTIO = {};
 
-   JSROOTIO.version = "2.9 2014/05/12";
+   JSROOTIO.version = "3.0 2014/08/05";
 
    JSROOTIO.debug = false;
 
@@ -109,12 +109,6 @@ var kClassMask = 0x80000000;
       return null;
    };
 
-   JSROOTIO.Print = function(str, what) {
-      what = typeof(what) === 'undefined' ? 'info' : what;
-      if ( (window['console'] !== undefined) ) {
-         if (console[what] !== undefined) console[what](str + '\n');
-      }
-   };
 
 })();
 
@@ -1236,7 +1230,7 @@ var kClassMask = 0x80000000;
    }
 
    // ctor
-   JSROOTIO.RootFile = function(url, userCallback) {
+   JSROOTIO.RootFile = function(url, newfile_callback) {
       if (! (this instanceof arguments.callee) ) {
          var error = new Error("you must use new to instantiate this class");
          error.source = "JSROOTIO.RootFile.ctor";
@@ -1249,7 +1243,6 @@ var kClassMask = 0x80000000;
       this.fArchiveOffset = 0;
       this.fEND = 0;
       this.fURL = url;
-      this.fLogMsg = "";
       this.fAcceptRanges = true;
       this.fFullFileContent = ""; // this will full content of the file
 
@@ -1262,7 +1255,8 @@ var kClassMask = 0x80000000;
       JSROOTIO.RootFile.prototype.GetSize = function(url) {
          // Return maximum file size.
          var xhr = new XMLHttpRequest();
-         xhr.open('HEAD', url+"?"+-1, false);
+         
+         xhr.open('HEAD', url+"?-1", false);
          xhr.send(null);
          if (xhr.status == 200 || xhr.status == 0) {
             var header = xhr.getResponseHeader("Content-Length");
@@ -1277,105 +1271,30 @@ var kClassMask = 0x80000000;
 
       JSROOTIO.RootFile.prototype.ReadBuffer = function(len, callback) {
 
-         // Read specified byte range from remote file
-         var ie9 = function(url, pos, len, file) {
-            // IE9 Fallback
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-               if (this.readyState == 4 && (this.status == 200 || this.status == 206)) {
-                  var filecontent = new String("");
-                  var array = new VBArray(this.responseBody).toArray();
-                  for (var i = 0; i < array.length; i++) {
-                     filecontent = filecontent + String.fromCharCode(array[i]);
-                  }
-
-                  if (!file.fAcceptRanges && (filecontent.length != len) &&
-                      (file.fEND == filecontent.length)) {
-                     // $('#report').append("<br> seems to be, we get full file");
-                     file.fFullFileContent = filecontent;
-                     filecontent = file.fFullFileContent.substr(pos, len);
-                  }
-
-                  callback(file, filecontent); // Call callback func with data
-                  delete filecontent;
-               }
-               else if (this.readyState == 4 && this.status == 404) {
-                  alert("Error 404: File not found!");
-               }
-            }
-            xhr.open('GET', url, true);
-            var xhr_header = "bytes=" + pos + "-" + (pos + len);
-            xhr.setRequestHeader("Range", xhr_header);
-            xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
-            xhr.send(null);
-            xhr = null;
-         }
-         var other = function(url, pos, len, file) {
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-               if (this.readyState == 4 && (this.status == 0 || this.status == 200 ||
-                   this.status == 206)) {
-                  var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-                  if (HasArrayBuffer && 'mozResponse' in this) {
-                     Buf = this.mozResponse;
-                  } else if (HasArrayBuffer && this.mozResponseArrayBuffer) {
-                     Buf = this.mozResponseArrayBuffer;
-                  } else if ('responseType' in this) {
-                     Buf = this.response;
-                  } else {
-                     Buf = this.responseText;
-                     HasArrayBuffer = false;
-                  }
-                  if (HasArrayBuffer) {
-                     var filecontent = new String("");
-                     var bLen = Buf.byteLength;
-                     var u8Arr = new Uint8Array(Buf, 0, bLen);
-                     for (var i = 0; i < u8Arr.length; i++) {
-                        filecontent = filecontent + String.fromCharCode(u8Arr[i]);
-                     }
-                  } else {
-                     var filecontent = Buf;
-                  }
-
-                  if (!file.fAcceptRanges && (filecontent.length != len) &&
-                      (file.fEND == filecontent.length)) {
-                    file.fFullFileContent = filecontent;
-                    filecontent = file.fFullFileContent.substr(pos, len);
-                  }
-
-                  callback(file, filecontent); // Call callback func with data
-                  delete filecontent;
-               }
-            };
-            xhr.open('GET', url, true);
-            var xhr_header = "bytes=" + pos + "-" + (pos + len);
-            xhr.setRequestHeader("Range", xhr_header);
-            // next few lines are there to make Safari working with byte ranges...
-            xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
-
-            var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-            if (HasArrayBuffer && 'mozResponseType' in xhr) {
-               xhr.mozResponseType = 'arraybuffer';
-            } else if (HasArrayBuffer && 'responseType' in xhr) {
-               xhr.responseType = 'arraybuffer';
-            } else {
-               //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
-               xhr.overrideMimeType("text/plain; charset=x-user-defined");
-            }
-            xhr.send(null);
-            xhr = null;
-         }
-
          if (!this.fAcceptRanges && (this.fFullFileContent.length>0)) {
-            var res = this.fFullFileContent.substr(this.fOffset,len);
+            var res = this.fFullFileContent.substr(this.fOffset, len);
             callback(this, res);
+            return;
          }
-         else
-         // Multi-browser support
-         if (typeof ActiveXObject == "function")
-            return ie9(this.fURL, this.fOffset, len, this);
-         else
-            return other(this.fURL, this.fOffset, len, this);
+         
+         var file = this;
+         var xhrcallback = function(res) {
+            
+            if ((res!=null) && !file.fAcceptRanges && 
+                (res.length != len) && (file.fEND == res.length)) {
+               // special case - local file reading will not accept ranges
+               file.fFullFileContent = res;
+               res = file.fFullFileContent.substr(file.fOffset, len);
+            }
+
+            callback(file, res);
+         }
+
+         var xhr = JSROOTCore.NewHttpRequest(this.fURL, "bin", xhrcallback);
+
+         xhr.setRequestHeader("Range", "bytes=" + this.fOffset + "-" + (this.fOffset + len));
+         xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
+         xhr.send(null);
       };
 
       JSROOTIO.RootFile.prototype.Seek = function(offset, pos) {
@@ -1397,25 +1316,6 @@ var kClassMask = 0x80000000;
                throw  "Seek : unknown seek option (" + pos + ")";
                break;
          }
-      };
-
-      JSROOTIO.RootFile.prototype.Log = function(s, i) {
-         // format html log information
-         if (!i) i = '';
-         for (var e in s) {
-            if (s[e] != null && typeof(s[e]) == 'object') {
-               this.fLogMsg += i + e + ':<br>\n';
-               this.fLogMsg += '<ul type="circle">\n';
-               this.Log(s[e], '<li>');
-            }
-            else {
-               if ((i == '<li>') || (i == '<li> '))
-                  this.fLogMsg += i + e + ' = ' + s[e] + '</li>\n';
-               else
-                  this.fLogMsg += i + e + ' = ' + s[e] + '<br>\n';
-            }
-         }
-         if (i == '<li>') this.fLogMsg += '</ul>\n';
       };
 
       JSROOTIO.RootFile.prototype.ReadHeader = function(str) {
@@ -1444,7 +1344,6 @@ var kClassMask = 0x80000000;
          }
          this.fSeekInfo = header['seekInfo'];
          this.fNbytesInfo = header['nbytesInfo'];
-         this.Log(header);
          return header;
       };
 
@@ -1616,7 +1515,7 @@ var kClassMask = 0x80000000;
          delete lst;
       }
 
-      JSROOTIO.RootFile.prototype.ReadStreamerInfos = function() {
+      JSROOTIO.RootFile.prototype.ReadStreamerInfos = function(si_callback) {
 
          if (this.fSeekInfo == 0 || this.fNbytesInfo == 0) return;
          this.Seek(this.fSeekInfo, this.ERelativeTo.kBeg);
@@ -1634,8 +1533,8 @@ var kClassMask = 0x80000000;
                      file.ReadObject(file.fKeys[i]['name'], file.fKeys[i]['cycle']);
                   }
                }
-               if (typeof(userCallback) == 'function')
-                  userCallback(file);
+               if (typeof(si_callback) == 'function')
+                  si_callback(file);
             };
             file.ReadObjBuffer(key, callback2);
             
@@ -1644,7 +1543,7 @@ var kClassMask = 0x80000000;
          this.ReadBuffer(this.fNbytesInfo, callback1);
       };
 
-      JSROOTIO.RootFile.prototype.ReadKeys = function() {
+      JSROOTIO.RootFile.prototype.ReadKeys = function(readkeys_callback) {
          // read keys only in the root file
 
          var callback1 = function(file, buffer) {
@@ -1744,7 +1643,7 @@ var kClassMask = 0x80000000;
                            key = file.ReadKey(buf);
                            file.fKeys.push(key);
                         }
-                        file.ReadStreamerInfos();
+                        file.ReadStreamerInfos(readkeys_callback);
                         delete buf;
                      };
                      file.ReadBuffer(file.fNbytesKeys, callback4);
@@ -1781,15 +1680,6 @@ var kClassMask = 0x80000000;
             if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
          };
          this.ReadObjBuffer(key, callback);
-      };
-
-      JSROOTIO.RootFile.prototype.Init = function(fileurl) {
-         // init members of a Root file from given url
-         this.fURL = fileurl;
-         this.fLogMsg = "";
-         if (fileurl) {
-            this.fEND = this.GetSize(fileurl);
-         }
       };
 
       JSROOTIO.RootFile.prototype.GetStreamer = function(clname) {
@@ -1851,17 +1741,31 @@ var kClassMask = 0x80000000;
       this.fStreamers = 0;
       this.fStreamerInfos = {};
       this.fFileName = "";  
+      this.fStreamers = new Array;
 
       if (this.fURL) {
-         this.fEND = this.GetSize(this.fURL);
-         
-         var pos = this.fURL.lastIndexOf("/");
+         var pos = Math.max(this.fURL.lastIndexOf("/"), this.fURL.lastIndexOf("\\"));
          if (pos>=0) this.fFileName = this.fURL.substr(pos+1); 
          
-         this.ReadKeys();
+         var file = this;
+         
+         var xhr = JSROOTCore.NewHttpRequest(this.fURL, "head", function(res) {
+             if (res==null) {
+                if (typeof newfile_callback == 'function')
+                   newfile_callback(null); 
+                return; 
+             } 
+             
+             var accept_ranges = res.getResponseHeader("Accept-Ranges");
+             if (!accept_ranges) file.fAcceptRanges = false;
+             file.fEND = parseInt(res.getResponseHeader("Content-Length"));
+             file.ReadKeys(newfile_callback);
+         });
+         
+         xhr.send(null);
+         xhr = null;
+         
       }
-      this.fStreamers = new Array;
-      
 
       return this;
    };

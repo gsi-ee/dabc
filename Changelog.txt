@@ -7,6 +7,14 @@ current functionality of the framework.
    class will be used, later one can switch to the ROOT version.
 2. Fix small error in dtree.js - one should always set 
    last sibling (_ls) property while tree can be dynamically changed  
+3. First try to read ROOT file inside dabc.js. Idea to extract common 
+   functionality and avoid strong coupling of I/O and graphics as it 
+   is now in JSRootIO.
+4. In JSRootCore.js make central function, which handles different kinds 
+   of XMLHttpRequest. Use for ROOT and DABC data reading. Use only async
+   requests, also for file header requests.
+5. Load  JSRootCore.js and JSRootPainter.js automatically, no nasty timeout
+   at the first draw.  
     
 
 4.08.2014

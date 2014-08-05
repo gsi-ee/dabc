@@ -4,14 +4,15 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
    <head>
       <title>Read a ROOT file in Javascript (Demonstration)</title>
-      <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=Edge; text/html">
+      <!--meta http-equiv="Content-type" content="text/html; charset=utf-8"/-->
       <link rel="stylesheet" type="text/css" href="style/jquery-ui.css" />
       <link rel="stylesheet" type="text/css" href="style/JSRootInterface.css" />
       <script type="text/javascript" src="scripts/JSRootInterface.js"></script>
 
    <script type='text/javascript'>
       function localGuiInit() {
-         var pos = document.URL.lastIndexOf("/"); 
+         var pos = Math.max(document.URL.lastIndexOf("/"), document.URL.lastIndexOf("\\")); 
          source_dir = document.URL.substr(0, pos+1);
          BuildSimpleGUI();
       }

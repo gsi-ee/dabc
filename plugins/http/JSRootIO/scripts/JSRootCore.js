@@ -109,7 +109,7 @@ landaun = function(f, x, i) {
 
    JSROOTCore = {};
 
-   JSROOTCore.version = "1.0 2012/08/08";
+   JSROOTCore.version = "3.0 2014/08/05";
 
    JSROOTCore.clone = function(obj) {
       return jQuery.extend(true, {}, obj);
@@ -170,6 +170,110 @@ landaun = function(f, x, i) {
 	
 	   return value;
 	}
+	
+	JSROOTCore.NewHttpRequest = function(url, kind, callback) {
+      // kind can be "text", "xml", "bin" or "head"
+      var xhr = new XMLHttpRequest();
+      
+//      if (typeof ActiveXObject == "function") {
+      if (window.ActiveXObject) {
+         // console.log(" Create IE request");
+         
+         xhr.onreadystatechange = function() {
+            // console.log(" Ready IE request");
+            if (xhr.readyState != 4) return;
+            
+            if (xhr.status != 200 && xhr.status != 206) {
+               // error
+               callback(null); return;
+            }
+            
+            if (kind == "xml") {
+               callback(xhr.responseXML); return;
+            } 
+            if (kind == "text") {
+               callback(xhr.responseText); return;
+            } 
+            if (kind == "head") {
+               callback(xhr); return;
+            } 
+            
+            var filecontent = new String("");
+            var array = new VBArray(xhr.responseBody).toArray();
+            for (var i = 0; i < array.length; i++) {
+               filecontent = filecontent + String.fromCharCode(array[i]);
+            }
+            
+            callback(filecontent);
+            filecontent = null;
+         }
+         
+         xhr.open(kind == 'head' ? 'HEAD' : 'GET', url, true);
+         
+      } else {
+         
+         xhr.onreadystatechange = function() {
+            if (xhr.readyState != 4) return;
+            
+            if (xhr.status != 0 && xhr.status != 200 && xhr.status != 206) {
+               callback(null); return;
+            }
+            if (kind == "xml") {
+               callback(xhr.responseXML); return;
+            }  
+            if (kind == "text") {
+               callback(xhr.responseText); return;
+            }  
+            if (kind == "head") {
+               callback(xhr); return;
+            }
+            
+            var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+            var Buf, filecontent;
+            if (HasArrayBuffer && 'mozResponse' in xhr) {
+               Buf = xhr.mozResponse;
+            } else if (HasArrayBuffer && xhr.mozResponseArrayBuffer) {
+               Buf = xhr.mozResponseArrayBuffer;
+            } else if ('responseType' in xhr) {
+               Buf = xhr.response;
+            } else {
+               Buf = xhr.responseText;
+               HasArrayBuffer = false;
+            }
+            
+            if (HasArrayBuffer) {
+               filecontent = new String("");
+               var bLen = Buf.byteLength;
+               var u8Arr = new Uint8Array(Buf, 0, bLen);
+               for (var i = 0; i < u8Arr.length; i++) {
+                  filecontent = filecontent + String.fromCharCode(u8Arr[i]);
+               }
+               delete u8Arr;
+            } else {
+               filecontent = Buf;
+            }
+            
+            callback(filecontent);
+
+            filecontent = null;
+         }
+         
+         xhr.open(kind == 'head' ? 'HEAD' : 'GET', url, true);
+         
+         if (kind == "bin") {
+            var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+            if (HasArrayBuffer && 'mozResponseType' in xhr) {
+               xhr.mozResponseType = 'arraybuffer';
+            } else if (HasArrayBuffer && 'responseType' in xhr) {
+               xhr.responseType = 'arraybuffer';
+            } else {
+               //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+               xhr.overrideMimeType("text/plain; charset=x-user-defined");
+            }
+         }
+      }
+      return xhr;
+   }
 
    JSROOTCore.addFormula = function(obj) {
       var formula = obj['fTitle'];

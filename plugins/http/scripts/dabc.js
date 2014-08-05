@@ -42,12 +42,9 @@ DABC.AssertRootPrerequisites = function() {
       loadScript('jsrootiosys/scripts/rawinflate.js', function() {
       loadScript('jsrootiosys/scripts/three.min.js', function() {
       loadScript('jsrootiosys/fonts/helvetiker_regular.typeface.js', function() {
-      loadScript('jsrootiosys/scripts/JSRootCore.js', function() {
       loadScript('jsrootiosys/scripts/JSRootIOEvolution.js', function() {
-      loadScript('jsrootiosys/scripts/JSRootPainter.js', function() {
          DABC.load_root_js = 2;
-         gStyle.OptimizeDraw = true;
-      }) }) }) }) }) }) });
+      }) }) }) }) });
    }
    
    return (DABC.load_root_js == 2);
@@ -993,7 +990,7 @@ DABC.FesaDrawElement.prototype.ClickItem = function() {
 
 DABC.FesaDrawElement.prototype.RegularCheck = function() {
 
-   if (!DABC.AssertRootPrerequisites()) return;
+//   if (!DABC.AssertRootPrerequisites()) return;
    
    // no need to do something when req not completed
    if (this.req!=null) return;
@@ -1112,7 +1109,7 @@ DABC.RateHistoryDrawElement.prototype.Clear = function() {
 
 DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 
-   DABC.AssertRootPrerequisites();
+//   DABC.AssertRootPrerequisites();
    
    this.frameid = "dabcobj" + id;
    
@@ -1142,7 +1139,7 @@ DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 
 DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
-   if (!DABC.AssertRootPrerequisites()) return;
+//   if (!DABC.AssertRootPrerequisites()) return;
    
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", history = " + (this.history ? this.history.length : 0));
@@ -1498,7 +1495,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
 
 DABC.RootDrawElement.prototype.RegularCheck = function() {
 
-   if (!DABC.AssertRootPrerequisites()) return;
+//   if (!DABC.AssertRootPrerequisites()) return;
    
    // ignore all callbacks for object from ROOT files
    if ('rootfile' in this) return;
@@ -1570,6 +1567,9 @@ DABC.Manager = function(with_tree) {
       DABC.dabc_tree.config.useCookies = false;
       this.CreateTable(2,2);
    }
+
+   // we could use ROOT drawing from beginning
+   gStyle.OptimizeDraw = true;
    
    return this;
 }
@@ -1659,112 +1659,12 @@ DABC.Manager.prototype.NewRequest = function() {
 
 
 DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
-   // kind can be "xml", "gz" or "bin"
-   var xhr = new XMLHttpRequest();
-   var async = true;
    
-   xhr.dabc_item = item;
-   xhr.kind = kind;
-
-//   if (typeof ActiveXObject == "function") {
-   if (window.ActiveXObject) {
-      // console.log(" Create IE request");
-      
-      xhr.onreadystatechange = function() {
-         // console.log(" Ready IE request");
-         if (this.readyState != 4) return;
-         if (!this.dabc_item || (this.dabc_item==0)) return;
-         
-         if (this.status == 200 || this.status == 206) {
-            if (this.kind == "xml") {
-               this.dabc_item.RequestCallback(this.responseXML);
-            } else 
-            if (this.kind == "text") {
-              this.dabc_item.RequestCallback(this.responseText);
-            } else {
-               var filecontent = new String("");
-               var array = new VBArray(this.responseBody).toArray();
-               for (var i = 0; i < array.length; i++) {
-                  filecontent = filecontent + String.fromCharCode(array[i]);
-               }
-               
-               // console.log(" IE response ver = " + ver);
-               
-               this.dabc_item.RequestCallback(filecontent);
-               filecontent = null;
-            } 
-         } else {
-            this.dabc_item.RequestCallback(null);
-         } 
-         this.dabc_item = null;
-      }
-      
-      xhr.open('POST', url, async);
-      
-   } else {
-      
-      xhr.onreadystatechange = function() {
-         //console.log(" Response request "+this.readyState);
-
-         if (this.readyState != 4) return;
-         if (!this.dabc_item || (this.dabc_item==0)) return;
-         
-         if (this.status == 0 || this.status == 200 || this.status == 206) {
-            if (this.kind == "xml") {
-               this.dabc_item.RequestCallback(this.responseXML);
-            } else 
-            if (this.kind == "text") {
-               this.dabc_item.RequestCallback(this.responseText);
-            } else {
-               var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-               var Buf;
-               if (HasArrayBuffer && 'mozResponse' in this) {
-                  Buf = this.mozResponse;
-               } else if (HasArrayBuffer && this.mozResponseArrayBuffer) {
-                  Buf = this.mozResponseArrayBuffer;
-               } else if ('responseType' in this) {
-                  Buf = this.response;
-               } else {
-                  Buf = this.responseText;
-                  HasArrayBuffer = false;
-               }
-               if (HasArrayBuffer) {
-                  var filecontent = new String("");
-                  var bLen = Buf.byteLength;
-                  var u8Arr = new Uint8Array(Buf, 0, bLen);
-                  for (var i = 0; i < u8Arr.length; i++) {
-                     filecontent = filecontent + String.fromCharCode(u8Arr[i]);
-                  }
-                  delete u8Arr;
-               } else {
-                  var filecontent = Buf;
-               }
-               
-               this.dabc_item.RequestCallback(filecontent);
-
-               filecontent = null;
-            } 
-         } else {
-            this.dabc_item.RequestCallback(null);
-         }
-         this.dabc_item = 0;
-      }
-
-      xhr.open('POST', url, async);
-      
-      if (xhr.kind == "bin") {
-         var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-         if (HasArrayBuffer && 'mozResponseType' in xhr) {
-            xhr.mozResponseType = 'arraybuffer';
-         } else if (HasArrayBuffer && 'responseType' in xhr) {
-            xhr.responseType = 'arraybuffer';
-         } else {
-            //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
-            xhr.overrideMimeType("text/plain; charset=x-user-defined");
-         }
-      }
-   }
-   return xhr;
+//   var xhrcallback = function(res) {
+//      item.RequestCallback(res);
+//   }
+   
+   return JSROOTCore.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
 }
 
 

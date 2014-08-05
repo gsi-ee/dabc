@@ -10,6 +10,8 @@ August 2014:
 1. All communication between server and browser done with JSON format.
 2. Fix small error in dtree.js - one should always set 
    last sibling (_ls) property while tree can be dynamically changed.  
+3. In JSRootCore.js provide central function, which handles different kinds 
+   of XMLHttpRequest.  Use only async requests, also when getting file header.
 
 July 2014:
 1. Migration to d3.v3.js and jQuery v2.1.1
