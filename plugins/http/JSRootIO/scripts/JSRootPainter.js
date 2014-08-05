@@ -7343,6 +7343,9 @@ var gStyle = {
    };
 
    JSROOTPainter.displayListOfKeys = function(keys, container, dir_id) {
+
+      if (document.getElementById(container.substr(1))==null) return;
+
       var k = 1;
       var dir_name = "";
 

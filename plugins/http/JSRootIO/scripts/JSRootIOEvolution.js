@@ -1236,7 +1236,7 @@ var kClassMask = 0x80000000;
    }
 
    // ctor
-   JSROOTIO.RootFile = function(url) {
+   JSROOTIO.RootFile = function(url, userCallback) {
       if (! (this instanceof arguments.callee) ) {
          var error = new Error("you must use new to instantiate this class");
          error.source = "JSROOTIO.RootFile.ctor";
@@ -1539,10 +1539,33 @@ var kClassMask = 0x80000000;
          this.ReadBuffer(key['nbytes'] - key['keyLen'], callback1);
       };
 
+      JSROOTIO.RootFile.prototype.ReadObjectNew = function(obj_name, cycle, user_call_back) {
+         // read any object from a root file
+
+         var key = this.GetKey(obj_name, cycle);
+         if (key == null) return;
+
+         var callback = function(file, buf) {
+            if (!buf) return;
+            var obj = {};
+            obj['_typename'] = 'JSROOTIO.' + key['className'];
+
+            buf.MapObject(1, obj); // tag object itself with id==1
+            buf.ClassStreamer(obj, key['className']);
+
+            if (typeof user_call_back == 'function')
+               user_call_back(obj);
+         };
+
+         this.ReadObjBuffer(key, callback);
+      };
+      
+
       JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id) {
          // read any object from a root file
 
          if (findObject(obj_name+cycle)) return;
+         
          var key = this.GetKey(obj_name, cycle);
          if (key == null) return;
 
@@ -1827,11 +1850,18 @@ var kClassMask = 0x80000000;
       this.fTagOffset = 0;
       this.fStreamers = 0;
       this.fStreamerInfos = {};
+      this.fFileName = "";  
+
       if (this.fURL) {
          this.fEND = this.GetSize(this.fURL);
+         
+         var pos = this.fURL.lastIndexOf("/");
+         if (pos>=0) this.fFileName = this.fURL.substr(pos+1); 
+         
          this.ReadKeys();
       }
       this.fStreamers = new Array;
+      
 
       return this;
    };

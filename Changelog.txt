@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+5.08.2014
+1. Adjust makefile for ROOT v6. For the moment own  TRootSniffer
+   class will be used, later one can switch to the ROOT version.
+2. Fix small error in dtree.js - one should always set 
+   last sibling (_ls) property while tree can be dynamically changed  
+    
+
 4.08.2014
 1. Merge HJsonStore and HXmlStore into same HStore class.
 2. Implement dabc::Buffer and dabc::Reference as RecordFields. 

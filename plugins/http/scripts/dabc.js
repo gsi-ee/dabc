@@ -767,6 +767,7 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    
    if (node2img == "") node2img = nodeimg;
    
+   // console.log("add nodeid " + nodeid + ":" + parentid + "  name = " + nodename );
    DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
    
    var thisid = nodeid;
@@ -784,19 +785,13 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    return nodeid;
 }
 
-DABC.HierarchyDrawElement.prototype.TopNode = function() 
-{
-   return this.jsondoc;
-}
-
-
 DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top, replace) {
 
    // console.log("Searchig " + fullname);
    
    if (fullname.length==0) return top;
    
-   if (!top) top = this.TopNode();
+   if (!top) top = this.jsondoc;
    var pos = fullname.indexOf("/");
    if (pos<0) return;
    
@@ -1316,7 +1311,18 @@ DABC.RootDrawElement.prototype.HasVersion = function(ver) {
 }
 
 // if frame created and exists
-DABC.RootDrawElement.prototype.DrawObject = function() {
+DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
+   
+   if (newobj != null) {
+      if (this.painter && this.painter.UpdateObject(newobj)) {
+         // if painter accepted object update, we need later just redraw frame
+         newobj = null;
+      } else { 
+         this.obj = newobj;
+         this.painter = null;
+      }
+   }
+   
    if (this.obj == null) return;
 
    if (this.IsObjectDraw()) {
@@ -1437,16 +1443,8 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       if (obj && ('_typename' in obj)) {
          // console.log("Get JSON object of " + obj['_typename']);
          
-         if (this.painter && this.painter.UpdateObject(obj)) {
-            // if painter accepted object update, we need later just redraw frame
-            obj = null;
-         } else { 
-            this.obj = obj;
-            this.painter = null;
-         }
-         
          this.state = this.StateEnum.stReady;
-         this.DrawObject();
+         this.DrawObject(obj);
       } else {
          console.log("Fail to process root.json");
          this.state = this.StateEnum.stInit;
@@ -1501,6 +1499,9 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
 DABC.RootDrawElement.prototype.RegularCheck = function() {
 
    if (!DABC.AssertRootPrerequisites()) return;
+   
+   // ignore all callbacks for object from ROOT files
+   if ('rootfile' in this) return;
    
    switch (this.state) {
      case this.StateEnum.stInit: break;
@@ -1813,6 +1814,23 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
 
    var elem;
    
+   if ('_file' in node) {
+      elem = new DABC.RootDrawElement(kind.substr(5), true);
+      elem.sinfo = null; // no streamer info required
+      
+      elem.itemname = itemname;
+      elem.CreateFrames(this.NextCell(), this.cnt++);
+      elem['rootfile'] = node._file;
+      
+      this.arr.push(elem);
+      
+      node._file.ReadObjectNew(node._keyname, node._keycycle, function(obj) {
+         elem.DrawObject(obj);
+      });
+
+      return;
+   }
+   
    if (view == "png") {
       elem = new DABC.ImageDrawElement();
       elem.itemname = itemname;
@@ -1952,7 +1970,7 @@ DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) 
    if (nodeid==0) {
       var p = document.createElement('p');
       d.appendChild(p);
-      p.onclick = function() { DABC.mgr.openRootFile("/httpsys/hsimple.root"); };
+      p.onclick = function() { DABC.mgr.openRootFile("/httpsys/hsimple.root", nodeid); };
       p.setAttribute('class', 'ctxline');
       p.innerHTML = "Open ROOT file";
    } else {
@@ -2036,6 +2054,65 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
    var main = this.FindItem("ObjectsTree");
    if (!main) return;
    
+   if ('_file' in node) {
+      if ((node["dabc:kind"] == 'ROOT.TTree') || (node["dabc:kind"] == 'ROOT.TNtuple')) {
+         
+         node._file.ReadObjectNew(node._keyname, node._keycycle, function(obj) {
+            // here should be display of tree
+            
+            node._childs = [];
+            
+            for (var i in obj['fBranches'].arr) {
+               var branch = obj['fBranches'].arr[i]; 
+               var nb_leaves = branch['fLeaves'].arr.length;
+               
+               // display branch with only leaf as leaf
+               if (nb_leaves == 1 && branch['fLeaves'].arr[0]['fName'] == branch['fName']) {
+                  nb_leaves = 0; 
+               }
+               
+               // console.log("name = " + branch['fName'] + " numleavs = " + nb_leaves);
+               
+               var item = {
+                  _name : branch['fName'],  
+                  "dabc:kind" : nb_leaves > 0 ? "ROOT.TLeafF" : "ROOT.TBranch",
+                   _file : node._file,
+                   _tree : obj
+               }
+               
+               node._childs.push(item);
+               
+               if (nb_leaves > 0) {
+                  item._childs = [];
+                  for (var j=0; j<nb_leaves; ++j) {
+                     var subitem = {
+                           _name : branch['fLeaves'].arr[j]['fName'],  
+                           "dabc:kind" : "ROOT.TLeafF",
+                            _file : node._file,
+                            _tree : obj
+                        }
+                     item._childs.push(subitem);
+                  }
+               }
+               
+               if (branch['fBranches'].arr.length > 0) {
+                  console.log("Display subbranches as well")
+               }
+
+               main.maxnodeid = main.createNode(main.maxnodeid, nodeid, item, itemname);
+               
+            }
+            
+            var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+            content += DABC.dabc_tree;
+            $("#" + main.frameid).html(content);
+
+         });
+      }
+      
+      return;
+   }
+
    if (nodeid>0) {
       elem = new DABC.HierarchyDrawElement();
    
@@ -2159,13 +2236,60 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
 }
 
 
-DABC.Manager.prototype.openRootFile = function(filename)
+DABC.Manager.prototype.openRootFile = function(filename, nodeid)
 {
-   if (!DABC.AssertRootPrerequisites()) return;
+   if (!DABC.AssertRootPrerequisites()) { 
+      console.log("ROOT scripts not yet loaded");
+      return;
+   }
+   var main = this.FindItem("ObjectsTree");
+   if (!main) { 
+      console.log("not found objects tree"); 
+      return; 
+   }
    
-   console.log("loading file " + filename);
+   function callback(file) {
+      console.log("keys length = " + file.fKeys.length);
+      
+      var folder = { _name : "LocalFiles", _childs : [] };
+      
+      main.jsondoc._childs.push(folder);
+      
+      var subfolder = { _name : file.fFileName, "dabc:kind" : "ROOT.TFile", _childs : [] };
+      
+      folder._childs.push(subfolder);
+      
+      for (var i in file.fKeys) {
+         var key = file.fKeys[i];
+         var item = { 
+            _name : key['name'] + ";" + key['cycle'],  
+            "dabc:kind" : "ROOT." + key['className'],
+            _file : file,
+            _keyname : key['name'],
+            _keycycle : key['cycle']
+         };
+         
+         if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
+            item["dabc:more"] = true;
+         }
+         
+         subfolder._childs.push(item);
+      }
+
+      main.maxnodeid = main.createNode(main.maxnodeid, 0, folder, "");
+
+      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
+      content += DABC.dabc_tree;
+      $("#" + main.frameid).html(content);
+      
+      // open node which was filled 
+      // DABC.dabc_tree.o(0);
+      
+   }
    
-   var f = new JSROOTIO.RootFile(filename);
+   console.log("loading file " + filename + "  nodeid = " + nodeid);
+   
+   new JSROOTIO.RootFile(filename, callback);
 
 }
 
