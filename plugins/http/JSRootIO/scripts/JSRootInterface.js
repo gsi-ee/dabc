@@ -149,6 +149,7 @@ function displayObject(obj, cycle, idx) {
    if (!obj) return;
    if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
    var uid = "uid_accordion_"+(++last_index);
+   
    var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + ";" + cycle + "</a>&nbsp; </h5>\n";
    entryInfo += "<div id='histogram" + idx + "'>\n";
    $("#report").append(entryInfo);
@@ -224,6 +225,43 @@ function AssertPrerequisites(andThen) {
    }
 };
 
+function CollapsibleDisplay(itemname, obj) {
+   
+   console.log("CollapsibleDisplay " + itemname);
+
+   if (!obj) return;
+   if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
+   
+   var id = itemname.replace(/[^a-zA-Z0-9]/g,'_');
+   
+   var uid = "uid_accordion_"+id;
+   var hid = "histogram_"+id;
+   
+   if (document.getElementById(uid)!=null) {
+      showElement('#'+uid);
+      return;
+   }
+   
+   
+
+   
+   var entryInfo = "<h5 id=\""+uid+"\"><a> " + itemname + "</a>&nbsp; </h5>\n";
+   entryInfo += "<div id='" + hid + "'></div>\n";
+   $("#report").append(entryInfo);
+   
+   if (typeof($('#'+hid)[0]) == 'undefined') return;
+   
+   $('#'+hid).empty();
+
+   var vis = JSROOTPainter.createCanvas($('#'+hid), obj);
+   
+   if (vis == null) return;
+
+   JSROOTPainter.drawObjectInFrame(vis, obj);
+   
+   addCollapsible('#'+uid);
+}
+
 function ReadFile() {
    var navigator_version = navigator.appVersion;
    if (typeof ActiveXObject == "function") { // Windows
@@ -245,14 +283,25 @@ function ReadFile() {
    }
 
    var url = $("#urlToLoad").val();
-   if (url == "" || url == " ") return;
+   url.trim();
+   if (url.length == 0) return;
+   
    $("#status").html("file: " + url + "<br/>");
+   
+   var painter = new JSROOTPainter.HPainter("root", "newstatus");
+   
+   painter['ondisplay'] = CollapsibleDisplay;
+   
+   painter.OpenRootFile(url);
+   
+   
    if (gFile) {
       gFile.Delete();
       delete gFile;
    }
 
    gFile = new JSROOTIO.RootFile(url);
+   
 }
 
 function ResetUI() {
@@ -313,6 +362,7 @@ function BuildSimpleGUI() {
       +'</form>'
       +'<br/>'
       +'<div id="status"></div>'
+      +'<div id="newstatus"></div>'
       +'</div>'
       +'<div id="reportHolder" class="column">'
       +'<div id="report"> </div>'

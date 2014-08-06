@@ -5,6 +5,7 @@
 
 // The "source_dir" variable is defined in JSRootInterface.js
 
+// #TODO: must be removed in the future
 var d_tree, key_tree;
 
 //var kWhite = 0, kBlack = 1, kGray = 920, kRed = 632, kGreen = 416, kBlue = 600,
@@ -7604,31 +7605,291 @@ var gStyle = {
 
       return painter;
    }
+   
+   // =========== painter of hierarchical structures =================================
+   
+   JSROOTPainter.HList = [];
+   
+   JSROOTPainter.AddHList = function(_name,_h) {
+      JSROOTPainter.HList.push({name:_name, h: _h});
+   }
+   
+   JSROOTPainter.H = function(name) {
+      for (var i in JSROOTPainter.HList)
+         if (JSROOTPainter.HList[i].name==name) return JSROOTPainter.HList[i].h; 
+      return null;
+   }
+   
+   JSROOTPainter.HPainter = function(name,frameid) {
+      JSROOTPainter.AddHList(name, this);
+      this.name = name;
+      this.frameid = frameid;
+      this.h = null; // hierarchy
+      this.dtree = null;
+      this.maxnodeid = -1;
+   }
+   
+   JSROOTPainter.HPainter.prototype.GlobalName = function(suffix) {
+      var res = "JSROOTPainter.H(\'" + this.name + "\')";
+      if (suffix!=null) res+=suffix;
+      return res;
+   } 
+   
+   
+   JSROOTPainter.HPainter.prototype.FileHierarchy = function(file) {
+   
+      var folder = { 
+            _name : file.fFileName, 
+            "dabc:kind" : "ROOT.TFile", 
+            _childs : [],
+            _file : file,
+            _get : function(item, callback) {
+               if ((this._file == null) || (item._readobj!=null)) {
+                  if (typeof callback == 'function') callback(item, item._readobj);
+                  return;
+               }
+
+               console.log("try to read " + item._name + " from file");
+
+               this._file.ReadObjectNew(item._keyname, item._keycycle, function(obj) {
+                  item._readobj = obj;
+                  if (typeof callback == 'function') callback(item, obj);
+               });
+            }
+      };
+   
+      for (var i in file.fKeys) {
+         var key = file.fKeys[i];
+         var item = { 
+               _name : key['name'] + ";" + key['cycle'],  
+               "dabc:kind" : "ROOT." + key['className'],
+               _file : file,
+               _keyname : key['name'],
+               _keycycle : key['cycle'],
+               _readobj: null
+         };
+
+         if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
+            item["dabc:more"] = true;
+         }
+
+         folder._childs.push(item);
+      }
+      
+      return folder;
+   }
+   
+   JSROOTPainter.HPainter.prototype.CanDisplay = function(node)
+   {
+      if (!node) return false;
+
+      var kind = node["dabc:kind"];
+      var view = node["dabc:view"];
+      if (!kind) return false;
+
+      if (view == "png") return true;
+      if (kind == "DABC.Command") return true;
+      if (kind == "rate") return true;
+      if (kind == "log") return true;
+      // if (kind.indexOf("FESA.") == 0) return true;
+      // if (kind.indexOf("ROOT.") == 0) return true;
+      
+      return false;
+   }
+
+   JSROOTPainter.HPainter.prototype.Find = function(fullname, top, replace) {
+
+      console.log("Searchig " + fullname);
+      
+      if (fullname.length==0) return top;
+      
+      if (!top) top = this.h;
+      var pos = fullname.indexOf("/");
+      // if (pos<0) pos = fullname.length;
+      
+      var localname = (pos < 0) ? fullname : fullname.substr(0, pos);  
+
+      console.log("local " + localname + " pos = " + pos + "  ");
+
+      for (var i in top._childs) 
+         if (top._childs[i]._name == localname) {
+            top._childs[i]['_parent'] = top; // set parent pointer when searching child
+            if ((pos+1 == fullname.length) || (pos<0)) {
+               if (replace!=null) top._childs[i] = replace;
+               return top._childs[i]; 
+            }
+            
+            return this.Find(fullname.substr(pos+1), top._childs[i], replace);
+         }
+      return null;
+   }
+
+   
+   JSROOTPainter.HPainter.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
+   {
+      if (lvl == null) lvl = 0;
+      if (maxlvl == null) maxlvl = -1;
+      
+      var kind = node["dabc:kind"];
+      var view = node["dabc:view"];
+      
+      // this name will be specified when item name can be used as XML node name
+      var dabcitemname = node["dabc:itemname"];
+      
+      var html = "";
+
+      var nodename = node._name;
+      if (dabcitemname != null) nodename = dabcitemname;
+      
+      var nodefullname = "";
+      
+      if (parentid>=0) {
+         nodefullname = nodename;
+         if (fullname.length>0) nodefullname = fullname+ "/" + nodename;   
+      }
+      
+      var nodeimg = "";
+      var node2img = "";
+      
+      var scan_inside = true, can_open = false;
+      
+      var can_display = this.CanDisplay(node);
+      var can_expand = node["dabc:more"] != null;
+      
+      if (kind) {
+         if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
+         if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
+         if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
+         if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
+         if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
+         if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
+         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
+         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
+         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
+         if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
+         if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
+         if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
+         if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
+         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
+         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
+         if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
+         if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
+         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
+      }
+
+      if (!node._childs || !scan_inside) {
+         if (can_expand) {   
+            html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
+            if (nodeimg.length == 0) {
+               nodeimg = source_dir+'img/folder.gif'; 
+               node2img = source_dir+'img/folderopen.gif';
+            }
+         } else
+         if (can_display) {
+            html = "javascript: " + this.GlobalName() + ".display(\'"+nodefullname+"\');";
+         } else
+         if (can_open) 
+            html = nodefullname;
+      } else 
+      if ((maxlvl >= 0) && (lvl >= maxlvl)) {
+         html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
+         if (nodeimg.length == 0) {
+            nodeimg = source_dir+'img/folder.gif'; 
+            node2img = source_dir+'img/folderopen.gif';
+         }
+         scan_inside = false;
+      } else {
+         html = nodefullname;
+         if (html == "") html = ".."; 
+      }
+      
+      if (node2img == "") node2img = nodeimg;
+      
+      // console.log("add nodeid " + nodeid + ":" + parentid + "  name = " + nodefullname );
+      this.dtree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
+      
+      var thisid = nodeid;
+
+      // allow context menu only for objects which can be displayed
+      if (can_display || (nodeid==0))
+         this.dtree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
+
+      nodeid++;
+      
+      if (scan_inside) 
+         for (var i in node._childs)
+            nodeid = this.createNode(nodeid, thisid, node._childs[i], nodefullname, lvl+1, maxlvl);
+      
+      return nodeid;
+   }
+
+   JSROOTPainter.HPainter.prototype.RefreshHtml = function()
+   {
+      var elem = document.getElementById(this.frameid);
+      if (elem==null) return;
+      
+      if (this.h==null) {
+         elem.innerHTML = "<h2>null</h2>";
+         return;
+      }
+      
+      this.dtree = new dTree(this.GlobalName('.dtree'));
+      this.dtree.config.useCookies = false;
+      
+      var maxlvl = -1; //this.CountElements(top, 0);
+      
+      this.maxnodeid = this.createNode(0, -1, this.h, "", 0, maxlvl);
+
+      var content = "<p><a href=\"javascript: " + this.GlobalName() + ".dtree.openAll();\">open all</a> | <a href=\"javascript: " + this.GlobalName() + ".dtree.closeAll();\">close all</a></p>";
+      content += this.dtree;
+      
+      elem.innerHTML = content;
+   }
+   
+   JSROOTPainter.HPainter.prototype.get = function(itemname, callback)
+   {
+      var item = this.Find(itemname);
+      var curr = item;
+      while (curr != null) {
+         if (('_get' in curr) && (typeof(curr._get)=='function')) {
+            curr._get(item, callback);
+            return;
+         }
+         if (!('_parent' in curr)) break; 
+           
+         curr = curr['_parent'];
+      }
+      
+      if (typeof callback == 'function') callback(item, null);
+   }
+
+   JSROOTPainter.HPainter.prototype.display = function(itemname)
+   {
+      var pthis = this;
+      
+      this.get(itemname, function(item, obj) {
+         if (obj!=null) console.log("get object for the drawing");
+         
+         if (('ondisplay' in pthis) && (typeof pthis['ondisplay'] == 'function'))
+            pthis['ondisplay'](itemname, obj);
+      });
+   }
+
+   JSROOTPainter.HPainter.prototype.OpenRootFile = function(url)
+   {
+      var pthis = this;
+      
+      var f = new JSROOTIO.RootFile(url, function(res) {
+         if (res==null) return;
+         // for the moment file is only entry
+         pthis.h = pthis.FileHierarchy(res);
+         
+         pthis.RefreshHtml();
+      });
+      
+   }
 
 
-
-   // comment out - now it is handled via CSS files
-
-   /*
-   var style = "<style>\n"
-      +".xaxis path, .xaxis line, .yaxis path, .yaxis line, .zaxis path, .zaxis line {\n"
-      +"   fill: none;\n"
-      +"   stroke: #000;\n"
-      +"   shape-rendering: crispEdges;\n"
-      +"}\n"
-      +".brush .extent {\n"
-      +"  stroke: #fff;\n"
-      +"  fill-opacity: .125;\n"
-      +"  shape-rendering: crispEdges;\n"
-      +"}\n"
-      +"rect.zoom {\n"
-      +"  stroke: steelblue;\n"
-      +"  fill-opacity: 0.1;\n"
-      +"}\n"
-      +"svg:not(:root) { overflow: hidden; }\n"
-      +"</style>\n";
-   $(style).prependTo("body");
-   */
 
 })();
 

@@ -23,16 +23,15 @@
          if (inp.value=="") {
             inp.value = "files/hsimple.root";
             ReadFile();
-            setTimeout(loadFile, 100);
+            // setTimeout(loadFile, 100);
             return;
          }
          
-         if ((gFile == null) || (gcnt++<5)) {
-            setTimeout(loadFile, 100);
-            return;
-         }
-         
-         showObject('hpx',1);
+         //if ((gFile == null) || (gcnt++<5)) {
+         //   setTimeout(loadFile, 100);
+         //   return;
+         // }
+         // showObject('hpx',1);
       }
    
       function localGuiInit() {

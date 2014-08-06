@@ -853,7 +853,6 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    
    if (this.main == null) {
    
-      DABC.dabc_tree = 0;
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
       DABC.dabc_tree.config.useCookies = false;
       
