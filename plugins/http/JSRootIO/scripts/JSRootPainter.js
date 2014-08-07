@@ -7721,7 +7721,7 @@ var gStyle = {
          
          var subitem = {
             _name : branch['fName'],  
-            "dabc:kind" : nb_leaves > 0 ? "ROOT.TLeafF" : "ROOT.TBranch"
+            "dabc:kind" : nb_leaves > 0 ? "ROOT.TBranch" : "ROOT.TLeafF"
          }
          
          node._childs.push(subitem);
@@ -7753,6 +7753,8 @@ var gStyle = {
                _keyname : key['name'],
                _readobj : null
          };
+         
+         // console.log("key class = " + key['className']);
 
          if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
             item["dabc:more"] = true;
@@ -7802,7 +7804,7 @@ var gStyle = {
             "dabc:kind" : "ROOT.TFile", 
             _file : file,
             _get : function(item, callback) {
-               if ((this._file == null) || (item._readobj!=null)) {
+               if ((this._file == null) || (item._readobj != null)) {
                   if (typeof callback == 'function') callback(item, item._readobj);
                   return;
                }
@@ -7813,7 +7815,7 @@ var gStyle = {
                
                this._file.ReadObject(fullname, -1, -1, function(obj) {
                   item._readobj = obj;
-                  /*if ('_isdir' in item)*/ item._name = item._keyname; // remove cycle number from name
+                  if ('_expand' in item) item._name = item._keyname; // remove cycle number for objects supporting expand
                   if (typeof callback == 'function') callback(item, obj);
                });
             }
@@ -7930,12 +7932,14 @@ var gStyle = {
          if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
          if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
          if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
+         if (kind == "ROOT.TF1") { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
          if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
          if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
-         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
+         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree.png';   else
          if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = false; can_display = true; }
+         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = false; can_display = true; } else
+         if ((kind.indexOf("ROOT.")==0) && JSROOTPainter.canDrawObject("JSROOTIO." + kind.slice(5))) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; }
       }
       
       // console.log("add kind = " + kind + "  name = " + node._name);  
@@ -8104,7 +8108,7 @@ var gStyle = {
 
 // example of user code for streamer and painter
 
-/*
+
 
 (function(){
 
@@ -8129,5 +8133,5 @@ var gStyle = {
 
 })();
 
-*/
+
 
