@@ -7690,8 +7690,8 @@ var gStyle = {
          for (var l in entry['fElements']['arr']) {
             var elem = entry['fElements']['arr'][l];
             if ((elem==null) || (typeof(elem['fName']) == 'undefined')) continue;
-            var info = elem['fName'] + ": " + elem['fTypeName'];
-            if (elem['fTitle'] != '') info += "  // " + elem['fTitle']; 
+            var info = elem['fTypeName'] + " " + elem['fName'] + ";";
+            if (elem['fTitle'] != '') info += " // " + elem['fTitle']; 
             item._childs.push({ _name :  info });
          }
       }
@@ -7767,7 +7767,6 @@ var gStyle = {
             item['_name'] = 'StreamerInfo';
             item['dabc:kind'] = "ROOT.TStreamerInfoList";
             item['_readobj'] = file.fStreamerInfos;
-            item["dabc:more"] = true;
             item['_expand'] = function(node, obj) {
                painter.StreamerInfoHierarchy(node, obj);
                return true;
@@ -7933,7 +7932,7 @@ var gStyle = {
          if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
          if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = true; }
+         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = true; can_display = false; }
       }
       
       console.log("add kind = " + kind + "  name = " + node._name);  
@@ -8029,8 +8028,10 @@ var gStyle = {
    {
       var pthis = this;
       
+      console.log("try display  " + itemname);
+      
       this.get(itemname, function(item, obj) {
-         // if (obj!=null) console.log("get object for the drawing");
+         if (obj!=null) console.log("get object " + itemname + " for the drawing");
          
          if (('ondisplay' in pthis) && (typeof pthis['ondisplay'] == 'function'))
             pthis['ondisplay'](itemname, obj);
