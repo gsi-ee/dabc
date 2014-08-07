@@ -7485,34 +7485,36 @@ var gStyle = {
       var key;
       for (key in streamerInfo) {
          var entry = streamerInfo[key]['fName'];
-         d_tree.add(k, 0, entry); k++;
+         d_tree.add(k++, 0, entry);
       }
       var j=0;
       for (key in streamerInfo) {
          if (typeof(streamerInfo[key]['fCheckSum']) != 'undefined')
-            d_tree.add(k, j+1, 'Checksum: ' + streamerInfo[key]['fCheckSum']); ++k;
+            d_tree.add(k++, j+1, 'Checksum: ' + streamerInfo[key]['fCheckSum']); 
          if (typeof(streamerInfo[key]['fClassVersion']) != 'undefined')
-            d_tree.add(k, j+1, 'Class Version: ' + streamerInfo[key]['fClassVersion']); ++k;
+            d_tree.add(k++, j+1, 'Class Version: ' + streamerInfo[key]['fClassVersion']);
          if (typeof(streamerInfo[key]['fTitle']) != 'undefined')
-            d_tree.add(k, j+1, 'Title: ' + streamerInfo[key]['fTitle']); ++k;
+            d_tree.add(k++, j+1, 'Title: ' + streamerInfo[key]['fTitle']);
          if (typeof(streamerInfo[key]['fElements']) != 'undefined') {
-            d_tree.add(k, j+1, 'Elements'); pid=k; ++k;
+            d_tree.add(k++, j+1, 'Elements'); pid=k;
             for (var l=0; l<streamerInfo[key]['fElements']['arr'].length; ++l) {
                if (typeof(streamerInfo[key]['fElements']['arr'][l]['element']) != 'undefined') {
-                  d_tree.add(k, pid, streamerInfo[key]['fElements']['arr'][l]['element']['fName']); cid=k; ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTitle']); ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTypeName']); ++k;
+                  cid=k;
+                  d_tree.add(k++, pid, streamerInfo[key]['fElements']['arr'][l]['element']['fName']); 
+                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTitle']);
+                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTypeName']);
                }
                else if (typeof(streamerInfo[key]['fElements']['arr'][l]['fName']) != 'undefined') {
-                  d_tree.add(k, pid, streamerInfo[key]['fElements']['arr'][l]['fName']); cid=k; ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['fElements']['arr'][l]['fTitle']); ++k;
-                  d_tree.add(k, cid, streamerInfo[key]['fElements']['arr'][l]['fTypeName']); ++k;
+                  cid=k;
+                  d_tree.add(k++, pid, streamerInfo[key]['fElements']['arr'][l]['fName']); 
+                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['fTitle']);
+                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['fTypeName']);
                }
             }
          }
          else if (typeof(streamerInfo[key]['fElements']) != 'undefined') {
             for (var l=0; l<streamerInfo[key]['fElements']['arr'].length; ++l) {
-               d_tree.add(k, j+1, streamerInfo[key]['fElements']['arr'][l]['str']); ++k;
+               d_tree.add(k++, j+1, streamerInfo[key]['fElements']['arr'][l]['str']);
             }
          }
          ++j;
@@ -7666,6 +7668,34 @@ var gStyle = {
          folder._childs.push(item);
       }
    }
+
+   JSROOTPainter.HPainter.prototype.StreamerInfoHierarchy = function(folder, lst) {
+
+      folder['_childs'] = [];
+      
+      for (var key in lst) {
+         var entry = lst[key]
+         var item = { 
+               _name : entry['fName'],  
+               "dabc:kind" : "",
+               _childs : []
+         };
+  
+         folder._childs.push(item);
+         
+         item._childs.push({ _name : 'Checksum: ' + entry['fCheckSum'] }); 
+         item._childs.push({ _name : 'Class version: ' + entry['fClassVersion'] }); 
+         if (entry['fTitle'] != '')
+            item._childs.push({ _name : 'Title: ' + entry['fTitle'] }); 
+         for (var l in entry['fElements']['arr']) {
+            var elem = entry['fElements']['arr'][l];
+            if ((elem==null) || (typeof(elem['fName']) == 'undefined')) continue;
+            var info = elem['fName'] + ": " + elem['fTypeName'];
+            if (elem['fTitle'] != '') info += "  // " + elem['fTitle']; 
+            item._childs.push({ _name :  info });
+         }
+      }
+   }
    
    JSROOTPainter.HPainter.prototype.TreeHierarchy = function(node, obj)
    {
@@ -7702,7 +7732,7 @@ var gStyle = {
       }
    }
 
-   JSROOTPainter.HPainter.prototype.KeysHierarchy = function(folder, keys) {
+   JSROOTPainter.HPainter.prototype.KeysHierarchy = function(folder, keys, file) {
 
       folder['_childs'] = [];
       
@@ -7714,7 +7744,7 @@ var gStyle = {
                _name : key['name'] + ";" + key['cycle'],  
                "dabc:kind" : "ROOT." + key['className'],
                _keyname : key['name'],
-               _readobj: null
+               _readobj : null
          };
 
          if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
@@ -7733,7 +7763,18 @@ var gStyle = {
                return true;
             }
          } else
-         if (key['className'] == 'TList' || key['className'] == 'TObjArray') {
+         if (key['className'] == 'TList' && key['name']=='StreamerInfo' && (file!=null)) {
+            item['_name'] = 'StreamerInfo';
+            item['dabc:kind'] = "ROOT.TStreamerInfoList";
+            item['_readobj'] = file.fStreamerInfos;
+            item["dabc:more"] = true;
+            item['_expand'] = function(node, obj) {
+               painter.StreamerInfoHierarchy(node, obj);
+               return true;
+            }
+            
+         } else 
+         if (key['className'] == 'TList' || key['className'] == 'TObjArray' || key['className'] == 'TClonesArray') {
             item["dabc:more"] = true;
             item['_expand'] = function(node, obj) {
                painter.ListHierarchy(node, obj);
@@ -7772,7 +7813,7 @@ var gStyle = {
             }
       };
       
-      this.KeysHierarchy(folder, file.fKeys);
+      this.KeysHierarchy(folder, file.fKeys, file);
       
       return folder;
    }
@@ -7892,8 +7933,10 @@ var gStyle = {
          if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
          if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
+         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = true; }
       }
+      
+      console.log("add kind = " + kind + "  name = " + node._name);  
 
       if (!node._childs || !scan_inside) {
          if (can_expand) {   
