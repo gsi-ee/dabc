@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+7.08.2014
+1. First working version of JSROOTPainter.HPainter. It should decouple
+   data manipulation from drawing. Later should be possible to change
+   layout and design how single objects are drawn. At the moment
+   ROOT file with sub-directories and TTree are working.
+   
+
 5.08.2014
 1. Adjust makefile for ROOT v6. For the moment own  TRootSniffer
    class will be used, later one can switch to the ROOT version.

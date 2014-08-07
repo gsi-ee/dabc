@@ -7635,35 +7635,52 @@ var gStyle = {
       return res;
    } 
    
-   
-   JSROOTPainter.HPainter.prototype.FileHierarchy = function(file) {
-   
-      var folder = { 
-            _name : file.fFileName, 
-            "dabc:kind" : "ROOT.TFile", 
-            _childs : [],
-            _file : file,
-            _get : function(item, callback) {
-               if ((this._file == null) || (item._readobj!=null)) {
-                  if (typeof callback == 'function') callback(item, item._readobj);
-                  return;
-               }
-
-               console.log("try to read " + item._name + " from file");
-
-               this._file.ReadObjectNew(item._keyname, item._keycycle, function(obj) {
-                  item._readobj = obj;
-                  if (typeof callback == 'function') callback(item, obj);
-               });
+   JSROOTPainter.HPainter.prototype.TreeHierarchy = function(node, obj)
+   {
+      node._childs = [];
+      
+      for (var i in obj['fBranches'].arr) {
+         var branch = obj['fBranches'].arr[i]; 
+         var nb_leaves = branch['fLeaves'].arr.length;
+         
+         // display branch with only leaf as leaf
+         if (nb_leaves == 1 && branch['fLeaves'].arr[0]['fName'] == branch['fName']) {
+            nb_leaves = 0; 
+         }
+         
+         // console.log("name = " + branch['fName'] + " numleavs = " + nb_leaves);
+         
+         var subitem = {
+            _name : branch['fName'],  
+            "dabc:kind" : nb_leaves > 0 ? "ROOT.TLeafF" : "ROOT.TBranch"
+         }
+         
+         node._childs.push(subitem);
+         
+         if (nb_leaves > 0) {
+            subitem._childs = [];
+            for (var j=0; j<nb_leaves; ++j) {
+               var leafitem = {
+                     _name : branch['fLeaves'].arr[j]['fName'],  
+                     "dabc:kind" : "ROOT.TLeafF"
+                  }
+               subitem._childs.push(leafitem);
             }
-      };
+         }
+      }
+   }
+
+   JSROOTPainter.HPainter.prototype.KeysHierarchy = function(folder, keys) {
+
+      folder['_childs'] = [];
+      
+      var painter = this;
    
-      for (var i in file.fKeys) {
-         var key = file.fKeys[i];
+      for (var i in keys) {
+         var key = keys[i];
          var item = { 
                _name : key['name'] + ";" + key['cycle'],  
                "dabc:kind" : "ROOT." + key['className'],
-               _file : file,
                _keyname : key['name'],
                _keycycle : key['cycle'],
                _readobj: null
@@ -7671,10 +7688,52 @@ var gStyle = {
 
          if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
             item["dabc:more"] = true;
+            
+            item['_expand'] = function(node, obj) {
+               painter.TreeHierarchy(node, obj);
+               return true;
+            }
+         } else 
+         if (key['className'] == 'TDirectory' || key['className'] == 'TDirectoryFile') {
+            item["dabc:more"] = true;
+            item["_isdir"] = true;
+            item['_expand'] = function(node, obj) {
+               painter.KeysHierarchy(node, obj.fKeys);
+               return true;
+            }
          }
-
+  
          folder._childs.push(item);
       }
+   }
+   
+   JSROOTPainter.HPainter.prototype.FileHierarchy = function(file)
+   {
+      var painter = this;
+      
+      var folder = { 
+            _name : file.fFileName, 
+            "dabc:kind" : "ROOT.TFile", 
+            _file : file,
+            _get : function(item, callback) {
+               if ((this._file == null) || (item._readobj!=null)) {
+                  if (typeof callback == 'function') callback(item, item._readobj);
+                  return;
+               }
+               
+               var fullname = painter.itemFullName(item, this);
+               var pos = fullname.lastIndexOf(";");
+               if (pos>0) fullname = fullname.slice(0, pos);
+               
+               this._file.ReadObject(fullname, item._keycycle, -1, function(obj) {
+                  item._readobj = obj;
+                  if ('_isdir' in item) item._name = item._keyname; // remove cycle number from name
+                  if (typeof callback == 'function') callback(item, obj);
+               });
+            }
+      };
+      
+      this.KeysHierarchy(folder, file.fKeys);
       
       return folder;
    }
@@ -7724,6 +7783,26 @@ var gStyle = {
       return null;
    }
 
+   JSROOTPainter.HPainter.prototype.itemFullName = function(node, uptoparent)
+   {
+      var res = ""; 
+         
+      while ('_parent' in node) {
+         if (res.length>0) res = "/" + res;
+         res = node._name + res;
+         node = node._parent;
+         if ((uptoparent!=null) && (node == uptoparent)) break;
+      }
+      
+      return res;  
+   }
+
+   
+   JSROOTPainter.HPainter.prototype.itemHtml = function(node, itemname)
+   {
+      // for DABC could be just itemname to open server subfolder 
+      return "";  
+   }
    
    JSROOTPainter.HPainter.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
    {
@@ -7779,7 +7858,7 @@ var gStyle = {
 
       if (!node._childs || !scan_inside) {
          if (can_expand) {   
-            html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
+            html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
             if (nodeimg.length == 0) {
                nodeimg = source_dir+'img/folder.gif'; 
                node2img = source_dir+'img/folderopen.gif';
@@ -7792,15 +7871,14 @@ var gStyle = {
             html = nodefullname;
       } else 
       if ((maxlvl >= 0) && (lvl >= maxlvl)) {
-         html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
+         html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
          if (nodeimg.length == 0) {
             nodeimg = source_dir+'img/folder.gif'; 
             node2img = source_dir+'img/folderopen.gif';
          }
          scan_inside = false;
       } else {
-         html = nodefullname;
-         if (html == "") html = ".."; 
+         html = this.itemHtml(node, nodefullname);
       }
       
       if (node2img == "") node2img = nodeimg;
@@ -7808,7 +7886,7 @@ var gStyle = {
       // console.log("add nodeid " + nodeid + ":" + parentid + "  name = " + nodefullname );
       this.dtree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
       
-      var thisid = nodeid;
+      node['_nodeid'] = nodeid;
 
       // allow context menu only for objects which can be displayed
       if (can_display || (nodeid==0))
@@ -7818,7 +7896,7 @@ var gStyle = {
       
       if (scan_inside) 
          for (var i in node._childs)
-            nodeid = this.createNode(nodeid, thisid, node._childs[i], nodefullname, lvl+1, maxlvl);
+            nodeid = this.createNode(nodeid, node['_nodeid'], node._childs[i], nodefullname, lvl+1, maxlvl);
       
       return nodeid;
    }
@@ -7833,12 +7911,14 @@ var gStyle = {
          return;
       }
       
-      this.dtree = new dTree(this.GlobalName('.dtree'));
-      this.dtree.config.useCookies = false;
+      if (this.dtree == null) {
+         this.dtree = new dTree(this.GlobalName('.dtree'));
+         this.dtree.config.useCookies = false;
       
-      var maxlvl = -1; //this.CountElements(top, 0);
+         var maxlvl = -1; //this.CountElements(top, 0);
       
-      this.maxnodeid = this.createNode(0, -1, this.h, "", 0, maxlvl);
+         this.maxnodeid = this.createNode(0, -1, this.h, "", 0, maxlvl);
+      }
 
       var content = "<p><a href=\"javascript: " + this.GlobalName() + ".dtree.openAll();\">open all</a> | <a href=\"javascript: " + this.GlobalName() + ".dtree.closeAll();\">close all</a></p>";
       content += this.dtree;
@@ -7868,21 +7948,53 @@ var gStyle = {
       var pthis = this;
       
       this.get(itemname, function(item, obj) {
-         if (obj!=null) console.log("get object for the drawing");
+         // if (obj!=null) console.log("get object for the drawing");
          
          if (('ondisplay' in pthis) && (typeof pthis['ondisplay'] == 'function'))
             pthis['ondisplay'](itemname, obj);
       });
    }
+   
+   JSROOTPainter.HPainter.prototype.ExpandDtree = function(node)
+   {
+      var itemname = this.itemFullName(node);
+      
+      for (var i in node._childs)
+         this.maxnodeid = this.createNode(this.maxnodeid, node._nodeid, node._childs[i], itemname);
+      
+      this.dtree.aNodes[node._nodeid]._io = true;
+      this.dtree.aNodes[node._nodeid].url = this.itemHtml(node, itemname);
+      this.dtree.aNodes[node._nodeid].name = node._name;
+      
+      this.RefreshHtml();
 
+      // this should be done on the drawn element, 
+      // this.dtree.o(node._nodeid);
+   }
+   
+   JSROOTPainter.HPainter.prototype.expand = function(itemname)
+   {
+      var painter = this;
+      
+      this.get(itemname, function(item, obj) {
+         // if (obj!=null) console.log("get object for the drawing");
+         
+         if ((item==null) || (obj==null)) return;
+
+         if (('_expand' in item) && (typeof item['_expand'] == 'function'))
+            if (item['_expand'](item, obj)) 
+               painter.ExpandDtree(item);
+      });
+   }
+   
    JSROOTPainter.HPainter.prototype.OpenRootFile = function(url)
    {
       var pthis = this;
       
-      var f = new JSROOTIO.RootFile(url, function(res) {
-         if (res==null) return;
+      var f = new JSROOTIO.RootFile(url, function(file) {
+         if (file==null) return;
          // for the moment file is only entry
-         pthis.h = pthis.FileHierarchy(res);
+         pthis.h = pthis.FileHierarchy(file);
          
          pthis.RefreshHtml();
       });

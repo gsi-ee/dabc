@@ -242,9 +242,6 @@ function CollapsibleDisplay(itemname, obj) {
       return;
    }
    
-   
-
-   
    var entryInfo = "<h5 id=\""+uid+"\"><a> " + itemname + "</a>&nbsp; </h5>\n";
    entryInfo += "<div id='" + hid + "'></div>\n";
    $("#report").append(entryInfo);
@@ -294,7 +291,6 @@ function ReadFile() {
    
    painter.OpenRootFile(url);
    
-   
    if (gFile) {
       gFile.Delete();
       delete gFile;
@@ -320,6 +316,7 @@ function ResetUI() {
    delete $("#report").get(0);
    //window.location.reload(true);
    $('#status').get(0).innerHTML = '';
+   $('#newstatus').get(0).innerHTML = '';
    $('#report').get(0).innerHTML = '';
    $(window).unbind('resize');
 };

@@ -1106,7 +1106,7 @@ var kClassMask = 0x80000000;
       }
 
 
-      JSROOTIO.TDirectory.prototype.ReadKeys = function(cycle, dir_id) {
+      JSROOTIO.TDirectory.prototype.ReadKeys = function(cycle, dir_id, readkeys_callback) {
 
          var thisdir = this;
 
@@ -1123,8 +1123,11 @@ var kClassMask = 0x80000000;
             }
             thisdir.fFile.fDirectories.push(thisdir);
 
-            JSROOTPainter.displayListOfKeys(thisdir.fKeys, '#status', dir_id);
+            if (dir_id>=0)
+               JSROOTPainter.displayListOfKeys(thisdir.fKeys, '#status', dir_id);
             delete buf;
+            
+            if (typeof readkeys_callback == 'function') readkeys_callback(thisdir);
          };
 
          var callback1 = function(file, buffer) {
@@ -1438,44 +1441,59 @@ var kClassMask = 0x80000000;
          this.ReadBuffer(key['nbytes'] - key['keyLen'], callback1);
       };
 
-      JSROOTIO.RootFile.prototype.ReadObjectNew = function(obj_name, cycle, user_call_back) {
+      JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id, user_call_back) {
          // read any object from a root file
 
+         // FIXME: should be removed after resdesign
+         if (node_id>0) if (findObject(obj_name+cycle)) return;
+         
          var key = this.GetKey(obj_name, cycle);
-         if (key == null) return;
+         if (key == null) {
+            if (typeof user_call_back == 'function') user_call_back(null);
+            return;
+         }
+         
+         var isdir = false;
+         if ((key['className'] == 'TDirectory' || key['className'] == 'TDirectoryFile')) {
+            isdir = true;
+            var dir = this.GetDir(obj_name);
+            if (dir!=null) {
+               if (typeof callback == 'user_call_back') user_call_back(dir);
+               return dir;
+            }
+         }
 
          var callback = function(file, buf) {
-            if (!buf) return;
+            if (!buf) {
+               if (typeof user_call_back == 'function') user_call_back(null);
+               return;
+            }
+
+            if (isdir) {
+               var dir = new JSROOTIO.TDirectory(file, obj_name, cycle);
+               dir.StreamHeader(buf);
+               if (dir.fSeekKeys) {
+                  dir.ReadKeys(cycle, node_id, user_call_back);
+               } else {
+                  if (typeof user_call_back == 'function') user_call_back(dir);
+               }
+               
+               return;
+            }
+
+            
             var obj = {};
             obj['_typename'] = 'JSROOTIO.' + key['className'];
 
             buf.MapObject(1, obj); // tag object itself with id==1
             buf.ClassStreamer(obj, key['className']);
 
-            if (typeof user_call_back == 'function')
+            if (typeof user_call_back == 'function') {
                user_call_back(obj);
-         };
+               return;
+            }
 
-         this.ReadObjBuffer(key, callback);
-      };
-      
-
-      JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id) {
-         // read any object from a root file
-
-         if (findObject(obj_name+cycle)) return;
-         
-         var key = this.GetKey(obj_name, cycle);
-         if (key == null) return;
-
-         var callback = function(file, buf) {
-            if (!buf) return;
-            var obj = {};
-            obj['_typename'] = 'JSROOTIO.' + key['className'];
-
-            buf.MapObject(1, obj); // workaround - tag first object with id1
-            buf.ClassStreamer(obj, key['className']);
-
+            // FIXME: should be removed after resdesign
             if (key['className'] == 'TFormula') {
                JSROOTCore.addFormula(obj);
             }
@@ -1661,26 +1679,34 @@ var kClassMask = 0x80000000;
          };
          this.ReadBuffer(256, callback1);
       };
-
-      JSROOTIO.RootFile.prototype.ReadDirectory = function(dir_name, cycle, dir_id) {
+      
+      JSROOTIO.RootFile.prototype.ReadDirectory = function(dir_name, cycle, dir_id, readdir_callback) {
          // read the directory content from  a root file
          // do not read directory if it is already exists
 
          var dir = this.GetDir(dir_name);
-         if (dir!=null) return;
+         if (dir!=null) {
+            if (typeof callback == 'function') callback(dir);
+            return dir;
+         }
 
          var key = this.GetKey(dir_name, cycle);
-         if (key == null) return null;
+         if (key == null) {
+            if (typeof callback == 'function') callback(null);
+            return null;
+         } 
 
-         var callback = function(file, buf) {
-            if (!buf) return;
-
+         this.ReadObjBuffer(key, function(file,buf) {
+            if (buf==null) {
+               if (typeof callback == 'function') callback(null);
+               return null;
+            }
             var directory = new JSROOTIO.TDirectory(file, dir_name, cycle);
             directory.StreamHeader(buf);
-            if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id);
-         };
-         this.ReadObjBuffer(key, callback);
+            if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id, readdir_callback);
+         });
       };
+
 
       JSROOTIO.RootFile.prototype.GetStreamer = function(clname) {
          // return the streamer for the class 'clname', from the list of streamers

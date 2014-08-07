@@ -213,6 +213,7 @@ dTree.prototype.o = function(id) {
    if (this.config.useCookies) this.updateCookie();
 };
 
+
 // Open or close all nodes
 dTree.prototype.oAll = function(status) {
    for (var n=0; n<this.aNodes.length; n++) {

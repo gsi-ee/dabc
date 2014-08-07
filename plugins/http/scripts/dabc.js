@@ -1723,7 +1723,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
       
       this.arr.push(elem);
       
-      node._file.ReadObjectNew(node._keyname, node._keycycle, function(obj) {
+      node._file.ReadObject(node._keyname, node._keycycle, -1, function(obj) {
          elem.DrawObject(obj);
       });
 
@@ -1956,7 +1956,7 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
    if ('_file' in node) {
       if ((node["dabc:kind"] == 'ROOT.TTree') || (node["dabc:kind"] == 'ROOT.TNtuple')) {
          
-         node._file.ReadObjectNew(node._keyname, node._keycycle, function(obj) {
+         node._file.ReadObject(node._keyname, node._keycycle, -1, function(obj) {
             // here should be display of tree
             
             node._childs = [];
