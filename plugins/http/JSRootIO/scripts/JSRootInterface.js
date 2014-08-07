@@ -227,10 +227,12 @@ function AssertPrerequisites(andThen) {
 
 function CollapsibleDisplay(itemname, obj) {
    
-   console.log("CollapsibleDisplay " + itemname + "  type " + (obj ? obj['_typename'] : "null"));
-
+   // console.log("CollapsibleDisplay " + itemname + "  type " + (obj ? obj['_typename'] : "null"));
    if (!obj) return;
-   if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
+   
+   var issinfo = itemname.lastIndexOf("StreamerInfo") >= 0;
+   
+   if (!issinfo && !JSROOTPainter.canDrawObject(obj['_typename'])) return;
    
    var id = itemname.replace(/[^a-zA-Z0-9]/g,'_');
    
@@ -250,11 +252,14 @@ function CollapsibleDisplay(itemname, obj) {
    
    $('#'+hid).empty();
 
-   var vis = JSROOTPainter.createCanvas($('#'+hid), obj);
-   
-   if (vis == null) return;
-
-   JSROOTPainter.drawObjectInFrame(vis, obj);
+   if (issinfo) {
+      var painter = new JSROOTPainter.HPainter('sinfo', hid);
+      painter.ShowStreamerInfo(obj);
+   } else {
+      var vis = JSROOTPainter.createCanvas($('#'+hid), obj);
+      if (vis == null) return;
+      JSROOTPainter.drawObjectInFrame(vis, obj);
+   }
    
    addCollapsible('#'+uid);
 }
@@ -318,6 +323,7 @@ function ResetUI() {
    $('#status').get(0).innerHTML = '';
    $('#newstatus').get(0).innerHTML = '';
    JSROOTPainter.DelHList('root');
+   JSROOTPainter.DelHList('sinfo');
    $('#report').get(0).innerHTML = '';
    $(window).unbind('resize');
 };

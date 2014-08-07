@@ -9,7 +9,8 @@ current functionality of the framework.
    ROOT file with sub-directories and TTree are working.
 2. Support TList in HPainter
 3. Fix small error in hist painter.
-4. Support list of streamer infos in HPainter  
+4. Support list of streamer infos in HPainter, also make example how to draw 
+   sinfo structure in other window.  
    
 
 5.08.2014

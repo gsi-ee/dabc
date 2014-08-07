@@ -1455,9 +1455,6 @@ var kClassMask = 0x80000000;
          
          if ((typeof cycle != 'number') || (cycle<0)) cycle = 1;
 
-         console.log("Reading object " + obj_name + "  cycle " + cycle)
-         
-         
          var key = this.GetKey(obj_name, cycle);
          if (key == null) {
             if (typeof user_call_back == 'function') user_call_back(null);

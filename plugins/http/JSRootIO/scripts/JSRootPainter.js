@@ -7675,6 +7675,12 @@ var gStyle = {
       
       for (var key in lst) {
          var entry = lst[key]
+
+         if (typeof(entry['fName']) == 'undefined') {
+            console.log("strange element in StreamerInfo with name " + entry['name']);
+            continue;
+         }
+         
          var item = { 
                _name : entry['fName'],  
                "dabc:kind" : "",
@@ -7686,7 +7692,8 @@ var gStyle = {
          item._childs.push({ _name : 'Checksum: ' + entry['fCheckSum'] }); 
          item._childs.push({ _name : 'Class version: ' + entry['fClassVersion'] }); 
          if (entry['fTitle'] != '')
-            item._childs.push({ _name : 'Title: ' + entry['fTitle'] }); 
+            item._childs.push({ _name : 'Title: ' + entry['fTitle'] });
+         if (typeof entry['fElements'] == 'undefined') continue;   
          for (var l in entry['fElements']['arr']) {
             var elem = entry['fElements']['arr'][l];
             if ((elem==null) || (typeof(elem['fName']) == 'undefined')) continue;
@@ -7837,8 +7844,6 @@ var gStyle = {
 
    JSROOTPainter.HPainter.prototype.Find = function(fullname, top, replace) {
 
-      console.log("Searchig " + fullname);
-      
       if (fullname.length==0) return top;
       
       if (!top) top = this.h;
@@ -7846,8 +7851,6 @@ var gStyle = {
       // if (pos<0) pos = fullname.length;
       
       var localname = (pos < 0) ? fullname : fullname.substr(0, pos);  
-
-      console.log("local " + localname + " pos = " + pos + "  ");
 
       for (var i in top._childs) 
          if (top._childs[i]._name == localname) {
@@ -7932,10 +7935,10 @@ var gStyle = {
          if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
          if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
          if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = true; can_display = false; }
+         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = false; can_display = true; }
       }
       
-      console.log("add kind = " + kind + "  name = " + node._name);  
+      // console.log("add kind = " + kind + "  name = " + node._name);  
 
       if (!node._childs || !scan_inside) {
          if (can_expand) {   
@@ -8028,10 +8031,10 @@ var gStyle = {
    {
       var pthis = this;
       
-      console.log("try display  " + itemname);
+      // console.log("try display  " + itemname);
       
       this.get(itemname, function(item, obj) {
-         if (obj!=null) console.log("get object " + itemname + " for the drawing");
+         // if (obj!=null) console.log("get object " + itemname + " for the drawing");
          
          if (('ondisplay' in pthis) && (typeof pthis['ondisplay'] == 'function'))
             pthis['ondisplay'](itemname, obj);
@@ -8081,8 +8084,15 @@ var gStyle = {
          
          pthis.RefreshHtml();
       });
-      
    }
+   
+   JSROOTPainter.HPainter.prototype.ShowStreamerInfo = function(sinfo)
+   {
+      this.h = { _name : "StreamerInfo" };
+      this.StreamerInfoHierarchy(this.h, sinfo);
+      this.RefreshHtml();
+   }
+   
 
 
 
