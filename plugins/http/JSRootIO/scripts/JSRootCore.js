@@ -117,6 +117,8 @@ landaun = function(f, x, i) {
    
    JSROOTCore.id_counter = 0;
    
+   JSROOTCore.function_list = []; // do we really need it here?
+   
    // This is part of the JSON-R code, found on 
    // https://github.com/graniteds/jsonr
    // Only unref part was used, arrays are not accounted as objects
@@ -283,11 +285,12 @@ landaun = function(f, x, i) {
       var code = obj['fName'] + " = function(x) { return " + formula + " };";
       eval(code);
       var sig = obj['fName']+'(x)';
-      var pos = function_list.indexOf(sig);
+      
+      var pos = JSROOTCore.function_list.indexOf(sig);
       if (pos >= 0) {
-         function_list.splice(pos, 1);
+         JSROOTCore.function_list.splice(pos, 1);
       }
-      function_list.push(sig);
+      JSROOTCore.function_list.push(sig);
    };
 
    JSROOTCore.CreateTList = function() {
@@ -516,10 +519,10 @@ landaun = function(f, x, i) {
                while(_function.indexOf('['+i+']') != -1)
                   _function = _function.replace('['+i+']', this['fParams'][i])
             }
-            for (i=0;i<function_list.length;++i) {
-               var f = function_list[i].substring(0, function_list[i].indexOf('('));
+            for (i=0;i<JSROOTCore.function_list.length;++i) {
+               var f = JSROOTCore.function_list[i].substring(0, JSROOTCore.function_list[i].indexOf('('));
                if (_function.indexOf(f) != -1) {
-                  var fa = function_list[i].replace('(x)', '(' + x + ')');
+                  var fa = JSROOTCore.function_list[i].replace('(x)', '(' + x + ')');
                   _function = _function.replace(f, fa);
                }
             }

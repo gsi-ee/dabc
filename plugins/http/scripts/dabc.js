@@ -1347,13 +1347,14 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
       for (var i=0;i<this.obj.arr.length;i++) {
          sinfo[this.obj.arr[i].fName] = this.obj.arr[i];
       }
-
-      // when doing binary exchanhe, object is gFile 
-      JSROOTPainter.displayStreamerInfos(sinfo, "#" + this.frameid);
+      
+      var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
+      painter.ShowStreamerInfo(sinfo);
+      
    } else {
-      // when doing binary exchanhe, object is gFile 
-      JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfos, "#" + this.frameid);
-   
+      // when doing binary exchanhe, object is file
+      var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
+      painter.ShowStreamerInfo(this.obj.fStreamerInfos);
    }
    
    this.first_draw = false;
@@ -1713,23 +1714,6 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
 
    var elem;
    
-   if ('_file' in node) {
-      elem = new DABC.RootDrawElement(kind.substr(5), true);
-      elem.sinfo = null; // no streamer info required
-      
-      elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      elem['rootfile'] = node._file;
-      
-      this.arr.push(elem);
-      
-      node._file.ReadObject(node._keyname, node._keycycle, -1, function(obj) {
-         elem.DrawObject(obj);
-      });
-
-      return;
-   }
-   
    if (view == "png") {
       elem = new DABC.ImageDrawElement();
       elem.itemname = itemname;
@@ -1953,64 +1937,6 @@ DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
    var main = this.FindItem("ObjectsTree");
    if (!main) return;
    
-   if ('_file' in node) {
-      if ((node["dabc:kind"] == 'ROOT.TTree') || (node["dabc:kind"] == 'ROOT.TNtuple')) {
-         
-         node._file.ReadObject(node._keyname, node._keycycle, -1, function(obj) {
-            // here should be display of tree
-            
-            node._childs = [];
-            
-            for (var i in obj['fBranches'].arr) {
-               var branch = obj['fBranches'].arr[i]; 
-               var nb_leaves = branch['fLeaves'].arr.length;
-               
-               // display branch with only leaf as leaf
-               if (nb_leaves == 1 && branch['fLeaves'].arr[0]['fName'] == branch['fName']) {
-                  nb_leaves = 0; 
-               }
-               
-               // console.log("name = " + branch['fName'] + " numleavs = " + nb_leaves);
-               
-               var item = {
-                  _name : branch['fName'],  
-                  "dabc:kind" : nb_leaves > 0 ? "ROOT.TLeafF" : "ROOT.TBranch",
-                   _file : node._file,
-                   _tree : obj
-               }
-               
-               node._childs.push(item);
-               
-               if (nb_leaves > 0) {
-                  item._childs = [];
-                  for (var j=0; j<nb_leaves; ++j) {
-                     var subitem = {
-                           _name : branch['fLeaves'].arr[j]['fName'],  
-                           "dabc:kind" : "ROOT.TLeafF",
-                            _file : node._file,
-                            _tree : obj
-                        }
-                     item._childs.push(subitem);
-                  }
-               }
-               
-               if (branch['fBranches'].arr.length > 0) {
-                  console.log("Display subbranches as well")
-               }
-
-               main.maxnodeid = main.createNode(main.maxnodeid, nodeid, item, itemname);
-               
-            }
-            
-            var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-            content += DABC.dabc_tree;
-            $("#" + main.frameid).html(content);
-
-         });
-      }
-      
-      return;
-   }
 
    if (nodeid>0) {
       elem = new DABC.HierarchyDrawElement();

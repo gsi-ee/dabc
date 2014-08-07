@@ -8,13 +8,6 @@
 // To use the local ones (e.g. when checking out the files in a web server), just let it
 // empty: var source_dir = "";
 var source_dir = "http://root.cern.ch/js/";
-var gFile;
-var obj_list = new Array();
-var obj_index = 0;
-var last_index = 0;
-var function_list = new Array();
-var func_list = new Array();
-var collections_list = {};
 
 function closeCollapsible(e, el) {
    var sel = $(el)[0].textContent;
@@ -22,8 +15,6 @@ function closeCollapsible(e, el) {
    sel.replace(' x', '');
    sel.replace(';', '');
    sel.replace(' ', '');
-   var i = obj_list.indexOf(sel)
-   if (i >= 0) obj_list.splice(i, 1);
    $(el).next().andSelf().remove();
    e.stopPropagation();
 };
@@ -82,115 +73,6 @@ function loadScript(url, callback) {
    var rnd = Math.floor(Math.random()*80000);
    script.src = url;//+ "?r=" + rnd;
    document.getElementsByTagName("head")[0].appendChild(script);
-};
-
-function displayRootStatus(msg) {
-   $("#status").append(msg);
-};
-
-function displayStreamerInfos(streamerInfo) {
-   var findElement = $('#report').find('#treeview');
-   if (findElement.length) {
-      var element = findElement[0].parentElement.previousSibling.id;
-      showElement('#'+element);
-   }
-   else {
-      var uid = "uid_accordion_"+(++last_index);
-      var entryInfo = "<h5 id=\""+uid+"\"><a> Streamer Infos </a>&nbsp; </h5><div>\n";
-      entryInfo += "<h6>Streamer Infos</h6><span id='treeview' class='dtree'></span></div>\n";
-      $("#report").append(entryInfo);
-      JSROOTPainter.displayStreamerInfos(streamerInfo, '#treeview');
-      addCollapsible('#'+uid);
-   }
-};
-
-function findObject(obj_name) {
-   for (var i in obj_list) {
-      if (obj_list[i] == obj_name) {
-         var findElement = $('#report').find('#histogram'+i);
-         if (findElement.length) {
-            var element = findElement[0].previousElementSibling.id;
-            showElement('#'+element);
-            return true;
-         }
-      }
-   }
-   return false;
-};
-
-function showObject(obj_name, cycle, dir_id) {
-   gFile.ReadObject(obj_name, cycle, dir_id);
-};
-
-function showDirectory(dir_name, cycle, dir_id) {
-   gFile.ReadDirectory(dir_name, cycle, dir_id);
-};
-
-function readTree(tree_name, cycle, node_id) {
-   gFile.ReadObject(tree_name, cycle, node_id);
-};
-
-function displayTree(tree, cycle, node_id) {
-   var url = $("#urlToLoad").val();
-   $("#status").html("file: " + url + "<br/>");
-   JSROOTPainter.displayTree(tree, '#status', node_id);
-};
-
-function displayCollection(name, cycle, c_id, coll) {
-   var fullname = name + ";" + cycle;
-
-   collections_list[fullname] = coll;
-
-   JSROOTPainter.addCollectionContents(fullname, c_id, coll, '#status');
-};
-
-
-function displayObject(obj, cycle, idx) {
-   if (!obj) return;
-   if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
-   var uid = "uid_accordion_"+(++last_index);
-   
-   var entryInfo = "<h5 id=\""+uid+"\"><a> " + obj['fName'] + ";" + cycle + "</a>&nbsp; </h5>\n";
-   entryInfo += "<div id='histogram" + idx + "'>\n";
-   $("#report").append(entryInfo);
-   
-   var render_to = '#histogram' + idx;
-   if (typeof($(render_to)[0]) == 'undefined') return;
-   
-   $(render_to).empty();
-
-   var vis = JSROOTPainter.createCanvas($(render_to), obj);
-   
-   if (vis == null) return;
-
-   JSROOTPainter.drawObjectInFrame(vis, obj);
-   
-   addCollapsible('#'+uid);
-};
-
-
-function showListObject(list_name, obj_name) {
-
-   var fullname = list_name+"/"+obj_name+"1";
-
-   // do not display object twice
-   if (obj_list.indexOf(fullname)>=0) return;
-
-   var coll = collections_list[list_name];
-   if (!coll) return;
-
-   var obj = null;
-
-   for (var i=0;i<coll.arr.length;i++)
-     if (coll.arr[i].fName == obj_name) {
-        obj = coll.arr[i];
-        break;
-     }
-   if (!obj) return;
-
-   displayObject(obj, "1", obj_index);
-   obj_list.push(fullname);
-   obj_index++;
 };
 
 
@@ -288,40 +170,19 @@ function ReadFile() {
    url.trim();
    if (url.length == 0) return;
    
-   $("#status").html("file: " + url + "<br/>");
-   
-   var painter = new JSROOTPainter.HPainter("root", "newstatus");
+   var painter = new JSROOTPainter.HPainter("root", "status");
    
    painter['ondisplay'] = CollapsibleDisplay;
    
    painter.OpenRootFile(url);
-   
-   if (gFile) {
-      gFile.Delete();
-      delete gFile;
-   }
-
-   gFile = new JSROOTIO.RootFile(url);
-   
 }
 
 function ResetUI() {
-   obj_list.splice(0, obj_list.length);
-   func_list.splice(0, func_list.length);
-   collections_list = {};
-   obj_index = 0;
-   last_index = 0;
-   if (gFile) {
-      gFile.Delete();
-      delete gFile;
-   }
-   gFile = null;
    $("#report").get(0).innerHTML = '';
    $("#report").innerHTML = '';
    delete $("#report").get(0);
    //window.location.reload(true);
    $('#status').get(0).innerHTML = '';
-   $('#newstatus').get(0).innerHTML = '';
    JSROOTPainter.DelHList('root');
    JSROOTPainter.DelHList('sinfo');
    $('#report').get(0).innerHTML = '';
@@ -366,7 +227,6 @@ function BuildSimpleGUI() {
       +'</form>'
       +'<br/>'
       +'<div id="status"></div>'
-      +'<div id="newstatus"></div>'
       +'</div>'
       +'<div id="reportHolder" class="column">'
       +'<div id="report"> </div>'

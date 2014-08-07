@@ -1,16 +1,9 @@
-// JSROOTD3Painter.js
+// JSRootPainter.js
 //
 // core methods for Javascript ROOT Graphics, using d3.js.
 //
 
 // The "source_dir" variable is defined in JSRootInterface.js
-
-// #TODO: must be removed in the future
-var d_tree, key_tree;
-
-//var kWhite = 0, kBlack = 1, kGray = 920, kRed = 632, kGreen = 416, kBlue = 600,
-//    kYellow = 400, kMagenta = 616, kCyan = 432, kOrange = 800, kSpring = 820,
-//    kTeal = 840, kAzure = 860, kViolet = 880, kPink = 900;
 
 
 var tooltip = function() {
@@ -7298,231 +7291,6 @@ var gStyle = {
          .text(string);
    };
 
-   /**
-    * List tree (dtree) related functions
-    */
-
-   JSROOTPainter.displayBranches = function(branches, dir_id, k) {
-      // as argument, list of branches is obtained
-
-      for (var i=0; i<branches.arr.length; ++i) {
-         var nb_leaves = branches.arr[i]['fLeaves'].arr.length;
-         var disp_name = branches.arr[i]['fName'];
-         var node_img = source_dir+'img/branch.png';
-         var node_title = disp_name;
-         var tree_link = "";
-         if (nb_leaves == 0) {
-            node_img = source_dir+'img/leaf.png';
-         }
-         else if (nb_leaves == 1 && branches.arr[i]['fLeaves'].arr[0]['fName'] == disp_name) {
-            node_img = source_dir+'img/leaf.png';
-            nb_leaves--;
-         }
-         if (branches.arr[i]['fBranches'].arr.length > 0) {
-            node_img = source_dir+'img/branch.png';
-         }
-         key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img, node_img);
-         nid = k; k++;
-         for (var j=0; j<nb_leaves; ++j) {
-            var disp_name = branches.arr[i]['fLeaves'].arr[j]['fName'];
-            var node_title = disp_name;
-            var node_img = source_dir+'img/leaf.png';
-            var tree_link = "";
-            key_tree.add(k, nid, disp_name, tree_link, node_title, '', node_img, node_img);
-            k++;
-         }
-         if (branches.arr[i]['fBranches'].arr.length > 0) {
-            k = JSROOTPainter.displayBranches(branches.arr[i]['fBranches'], nid, k);
-         }
-      }
-      return k;
-   };
-
-   JSROOTPainter.displayTree = function(tree, container, dir_id) {
-      var tree_link = '';
-      var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
-      var k = key_tree.aNodes.length;
-      JSROOTPainter.displayBranches(tree['fBranches'], dir_id, k);
-      content += key_tree;
-      $(container).append(content);
-      key_tree.openTo(dir_id, true);
-   };
-
-   JSROOTPainter.displayListOfKeys = function(keys, container, dir_id) {
-
-      if (document.getElementById(container.substr(1))==null) return;
-
-      var k = 1;
-      var dir_name = "";
-
-      if (!dir_id || dir_id==0) {
-         delete key_tree;
-         key_tree = new dTree('key_tree');
-         key_tree.config.useCookies = false;
-         key_tree.add(0, -1, 'File Content');
-         dir_id = 0;
-         dir_name = "";
-      } else {
-         k = key_tree.aNodes.length;
-         dir_name = key_tree.aNodes[dir_id]['title'];
-      }
-
-      for (var i=0; i<keys.length; ++i) {
-         // ignore keys with empty names
-         if (keys[i]['name'] == '') continue;
-
-         var full_name = keys[i]['name'];
-         if (dir_name.length > 0) full_name = dir_name + "/" + full_name;
-
-         var tree_link = "javascript: showObject('"+full_name+"',"+keys[i]['cycle']+"," + k + ");";
-
-         var node_img = source_dir+'img/page.gif';
-         var node_img2 = '';
-
-         if (keys[i]['className'].match(/\bTH1/) ||
-             keys[i]['className'].match(/\bRooHist/)) {
-            node_img = source_dir+'img/histo.png';
-         }
-         else if (keys[i]['className'].match(/\bTH2/)) {
-            node_img = source_dir+'img/histo2d.png';
-         }
-         else if (keys[i]['className'].match(/\bTH3/)) {
-            node_img = source_dir+'img/histo3d.png';
-         }
-         else if (keys[i]['className'].match(/\bTGraph/) ||
-             keys[i]['className'].match(/\RooCurve/)) {
-            node_img = source_dir+'img/graph.png';
-         }
-         else if (keys[i]['className'] ==  'TF1') {
-            node_img = source_dir+'img/graph.png';
-         }
-         else if (keys[i]['className'] ==  'TProfile') {
-            node_img = source_dir+'img/profile.png';
-         }
-         else if (keys[i]['name'] == 'StreamerInfo') {
-            tree_link = "javascript: displayStreamerInfos(gFile.fStreamerInfos);";
-            node_img = source_dir+'img/question.gif';
-         }
-         else if (keys[i]['className'] == 'TDirectory' || keys[i]['className'] == 'TDirectoryFile') {
-            tree_link = "javascript: showDirectory('"+full_name+"',"+keys[i]['cycle']+","+k+");";
-            node_img = source_dir+'img/folder.gif';
-            node_img2 = source_dir+'img/folderopen.gif'
-         }
-         else if (keys[i]['className'] == 'TList' || keys[i]['className'] == 'TObjArray') {
-            node_img = source_dir+'img/folder.gif';
-            node_img2 = source_dir+'img/folderopen.gif'
-         }
-         else if (keys[i]['className'] == 'TTree' || keys[i]['className'] == 'TNtuple') {
-            tree_link = "javascript: readTree('"+full_name+"',"+keys[i]['cycle']+","+k+");";
-            node_img = source_dir+'img/tree.png';
-         }
-         else if (keys[i]['className'].match('TGeoManager') ||
-                  keys[i]['className'].match('TGeometry')) {
-            node_img = source_dir+'img/folder.gif';
-         }
-         else if (keys[i]['className'].match('TCanvas')) {
-            node_img = source_dir+'img/canvas.png';
-         }
-         else if (this.canDrawObject(keys[i]['className'])) {
-            node_img = source_dir+'img/graph.png';
-         }
-         else {
-            tree_link = "javascript:  alert('" + keys[i]['className']+ " is not yet implemented.')";
-         }
-
-         if (node_img2=='') node_img2 = node_img;
-
-         key_tree.add(k++, dir_id, keys[i]['name']+';'+keys[i]['cycle'], tree_link, full_name, '', node_img, node_img2);
-      }
-
-      if (dir_id>0) key_tree.openTo(dir_id, true);
-
-      var content = "file: " + $("#urlToLoad").val() + "<br/>";
-      content += "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
-      content += key_tree;
-      $(container).html(content);
-   };
-
-   JSROOTPainter.addCollectionContents = function(fullname, dir_id, list, container) {
-      var tree_link = '';
-      var content = "<p><a href='javascript: key_tree.openAll();'>open all</a> | <a href='javascript: key_tree.closeAll();'>close all</a></p>";
-      var k = key_tree.aNodes.length;
-      var dir_name = key_tree.aNodes[dir_id]['title'];
-      for (var i=0; i<list.arr.length; ++i) {
-         var disp_name = list.arr[i]['fName'];
-         var classname = list.arr[i]['_typename'];
-         if (!classname) classname = "undefined";
-
-         var message = classname +' is not yet implemented.';
-         tree_link = "javascript:  alert('" + message + "')";
-         var node_img = source_dir+'img/page.gif';
-         var node_title = list.arr[i]['_typename'];
-         if (this.canDrawObject(classname)) {
-            tree_link = "javascript: showListObject('"+fullname+"','"+disp_name+"');";
-            node_img = source_dir+'img/graph.png';
-            node_title = fullname + "/" + disp_name;
-         }
-         if (disp_name != '' && classname != 'TFile') {
-            key_tree.add(k, dir_id, disp_name, tree_link, node_title, '', node_img);
-            k++;
-         }
-      }
-      content += key_tree;
-      $(container).html(content);
-      key_tree.openTo(dir_id, true);
-   };
-
-   JSROOTPainter.displayStreamerInfos = function(streamerInfo, container) {
-      delete d;
-      var content = "<p><a href='javascript: d_tree.openAll();'>open all</a> | <a href='javascript: d_tree.closeAll();'>close all</a></p>";
-      d_tree = new dTree('d_tree');
-      d_tree.config.useCookies = false;
-      d_tree.add(0, -1, 'Streamer Infos');
-
-      var k = 1;
-      var pid = 0;
-      var cid = 0;
-      var key;
-      for (key in streamerInfo) {
-         var entry = streamerInfo[key]['fName'];
-         d_tree.add(k++, 0, entry);
-      }
-      var j=0;
-      for (key in streamerInfo) {
-         if (typeof(streamerInfo[key]['fCheckSum']) != 'undefined')
-            d_tree.add(k++, j+1, 'Checksum: ' + streamerInfo[key]['fCheckSum']); 
-         if (typeof(streamerInfo[key]['fClassVersion']) != 'undefined')
-            d_tree.add(k++, j+1, 'Class Version: ' + streamerInfo[key]['fClassVersion']);
-         if (typeof(streamerInfo[key]['fTitle']) != 'undefined')
-            d_tree.add(k++, j+1, 'Title: ' + streamerInfo[key]['fTitle']);
-         if (typeof(streamerInfo[key]['fElements']) != 'undefined') {
-            d_tree.add(k++, j+1, 'Elements'); pid=k;
-            for (var l=0; l<streamerInfo[key]['fElements']['arr'].length; ++l) {
-               if (typeof(streamerInfo[key]['fElements']['arr'][l]['element']) != 'undefined') {
-                  cid=k;
-                  d_tree.add(k++, pid, streamerInfo[key]['fElements']['arr'][l]['element']['fName']); 
-                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTitle']);
-                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['element']['fTypeName']);
-               }
-               else if (typeof(streamerInfo[key]['fElements']['arr'][l]['fName']) != 'undefined') {
-                  cid=k;
-                  d_tree.add(k++, pid, streamerInfo[key]['fElements']['arr'][l]['fName']); 
-                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['fTitle']);
-                  d_tree.add(k++, cid, streamerInfo[key]['fElements']['arr'][l]['fTypeName']);
-               }
-            }
-         }
-         else if (typeof(streamerInfo[key]['fElements']) != 'undefined') {
-            for (var l=0; l<streamerInfo[key]['fElements']['arr'].length; ++l) {
-               d_tree.add(k++, j+1, streamerInfo[key]['fElements']['arr'][l]['str']);
-            }
-         }
-         ++j;
-      }
-      content += d_tree;
-      $(container).html(content);
-   };
-
 
    JSROOTPainter.drawObjectInFrame = function(vis, obj, opt)
    {
@@ -7813,7 +7581,7 @@ var gStyle = {
                // var pos = fullname.lastIndexOf(";");
                // if (pos>0) fullname = fullname.slice(0, pos);
                
-               this._file.ReadObject(fullname, -1, -1, function(obj) {
+               this._file.ReadObject(fullname, -1, function(obj) {
                   item._readobj = obj;
                   if ('_expand' in item) item._name = item._keyname; // remove cycle number for objects supporting expand
                   if (typeof callback == 'function') callback(item, obj);
@@ -8108,7 +7876,7 @@ var gStyle = {
 })();
 
 
-// JSROOTD3Painter.js ends
+// JSRootPainter.js ends
 
 
 // example of user code for streamer and painter

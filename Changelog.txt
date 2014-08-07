@@ -12,6 +12,9 @@ current functionality of the framework.
 4. Support list of streamer infos in HPainter, also make example how to draw 
    sinfo structure in other window.  
 5. Support slashes in the item names.
+6. Remove old code with fixed dtree-based file display. Complete hierarchy 
+   of file keys and objects handled by HPainter class. dtree is just 
+   many alternatives how display can be implemented.
    
 
 5.08.2014

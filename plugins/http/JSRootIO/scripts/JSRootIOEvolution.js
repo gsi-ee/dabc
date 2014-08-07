@@ -1106,7 +1106,7 @@ var kClassMask = 0x80000000;
       }
 
 
-      JSROOTIO.TDirectory.prototype.ReadKeys = function(cycle, dir_id, readkeys_callback) {
+      JSROOTIO.TDirectory.prototype.ReadKeys = function(readkeys_callback) {
 
          var thisdir = this;
 
@@ -1123,8 +1123,6 @@ var kClassMask = 0x80000000;
             }
             thisdir.fFile.fDirectories.push(thisdir);
 
-            if (dir_id>=0)
-               JSROOTPainter.displayListOfKeys(thisdir.fKeys, '#status', dir_id);
             delete buf;
             
             if (typeof readkeys_callback == 'function') readkeys_callback(thisdir);
@@ -1254,23 +1252,6 @@ var kClassMask = 0x80000000;
          kCur : 1,
          kEnd : 2
       };
-
-      JSROOTIO.RootFile.prototype.GetSize = function(url) {
-         // Return maximum file size.
-         var xhr = new XMLHttpRequest();
-         
-         xhr.open('HEAD', url+"?-1", false);
-         xhr.send(null);
-         if (xhr.status == 200 || xhr.status == 0) {
-            var header = xhr.getResponseHeader("Content-Length");
-            var accept_ranges = xhr.getResponseHeader("Accept-Ranges");
-            if (!accept_ranges) this.fAcceptRanges = false;
-            return parseInt(header);
-         }
-
-         xhr = null;
-         return -1;
-      }
 
       JSROOTIO.RootFile.prototype.ReadBuffer = function(len, callback) {
 
@@ -1443,12 +1424,9 @@ var kClassMask = 0x80000000;
          this.ReadBuffer(key['nbytes'] - key['keyLen'], callback1);
       };
 
-      JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id, user_call_back) {
+      JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, user_call_back) {
          // read any object from a root file
 
-         // FIXME: should be removed after redesign
-         if (node_id>0) if (findObject(obj_name+cycle)) return;
-         
          var pos = obj_name.lastIndexOf(";");
          if (pos>0) {
             cycle = parseInt(obj_name.slice(pos+1));
@@ -1483,7 +1461,7 @@ var kClassMask = 0x80000000;
                var dir = new JSROOTIO.TDirectory(file, obj_name, cycle);
                dir.StreamHeader(buf);
                if (dir.fSeekKeys) {
-                  dir.ReadKeys(cycle, node_id, user_call_back);
+                  dir.ReadKeys(user_call_back);
                } else {
                   if (typeof user_call_back == 'function') user_call_back(dir);
                }
@@ -1498,28 +1476,14 @@ var kClassMask = 0x80000000;
             buf.MapObject(1, obj); // tag object itself with id==1
             buf.ClassStreamer(obj, key['className']);
 
-            if (typeof user_call_back == 'function') {
-               user_call_back(obj);
-               return;
-            }
-
-            // FIXME: should be removed after redesign
+            // do we need global list of TFormula classes
             if (key['className'] == 'TFormula') {
                JSROOTCore.addFormula(obj);
             }
-            else if (key['className'] == 'TNtuple' || key['className'] == 'TTree') {
-               displayTree(obj, cycle, node_id);
-            }
-            else if (key['className'] == 'TList' || key['className'] == 'TObjArray' || key['className'] == 'TClonesArray') {
-               displayCollection(obj_name, cycle, node_id, obj);
-               obj_list.push(obj_name+cycle);
-               obj_index++;
-            }
-            else {
-               if (obj['fName'] == "") obj['fName'] = obj_name;
-               displayObject(obj, cycle, obj_index);
-               obj_list.push(obj_name+cycle);
-               obj_index++;
+            
+            if (typeof user_call_back == 'function') {
+               user_call_back(obj);
+               return;
             }
          };
 
@@ -1565,8 +1529,6 @@ var kClassMask = 0x80000000;
                   si_callback(file);
             };
             file.ReadObjBuffer(key, callback2);
-            
-            JSROOTPainter.displayListOfKeys(file.fKeys, '#status');
          };
          this.ReadBuffer(this.fNbytesInfo, callback1);
       };
@@ -1690,32 +1652,12 @@ var kClassMask = 0x80000000;
          this.ReadBuffer(256, callback1);
       };
       
-      JSROOTIO.RootFile.prototype.ReadDirectory = function(dir_name, cycle, dir_id, readdir_callback) {
+      JSROOTIO.RootFile.prototype.ReadDirectory = function(dir_name, cycle, readdir_callback) {
          // read the directory content from  a root file
          // do not read directory if it is already exists
 
-         var dir = this.GetDir(dir_name);
-         if (dir!=null) {
-            if (typeof callback == 'function') callback(dir);
-            return dir;
-         }
-
-         var key = this.GetKey(dir_name, cycle);
-         if (key == null) {
-            if (typeof callback == 'function') callback(null);
-            return null;
-         } 
-
-         this.ReadObjBuffer(key, function(file,buf) {
-            if (buf==null) {
-               if (typeof callback == 'function') callback(null);
-               return null;
-            }
-            var directory = new JSROOTIO.TDirectory(file, dir_name, cycle);
-            directory.StreamHeader(buf);
-            if (directory.fSeekKeys) directory.ReadKeys(cycle, dir_id, readdir_callback);
-         });
-      };
+         return this.ReadObject(dir_name, cycle, readdir_callback);
+      }
 
 
       JSROOTIO.RootFile.prototype.GetStreamer = function(clname) {
