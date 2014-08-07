@@ -11,6 +11,7 @@ current functionality of the framework.
 3. Fix small error in hist painter.
 4. Support list of streamer infos in HPainter, also make example how to draw 
    sinfo structure in other window.  
+5. Support slashes in the item names.
    
 
 5.08.2014

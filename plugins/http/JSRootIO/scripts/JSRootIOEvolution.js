@@ -1403,19 +1403,21 @@ var kClassMask = 0x80000000;
       }
 
       JSROOTIO.RootFile.prototype.GetKey = function(keyname, cycle) {
+
          // retrieve a key by its name and cycle in the list of keys
          for (var i=0; i<this.fKeys.length; ++i) {
             if (this.fKeys[i]['name'] == keyname && this.fKeys[i]['cycle'] == cycle)
                return this.fKeys[i];
          }
-
-         var n = keyname.lastIndexOf("/");
-         if (n<=0) return null;
-
-         var dir = this.GetDir(keyname.substr(0, n));
-         if (dir==null) return null;
-
-         return dir.GetKey(keyname.substr(n+1), cycle);
+         
+         var pos = keyname.lastIndexOf("/");
+         // try to handle situation when object name contains slashed (bad practice anyway)
+         while (pos > 0) {
+            var dir = this.GetDir(keyname.substr(0, pos));
+            if (dir!=null) return dir.GetKey(keyname.substr(pos+1), cycle);
+            pos = keyname.lastIndexOf("/", pos-1);
+         }
+         return null;
       };
 
       JSROOTIO.RootFile.prototype.ReadObjBuffer = function(key, callback) {

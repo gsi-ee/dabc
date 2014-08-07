@@ -7849,21 +7849,26 @@ var gStyle = {
       if (fullname.length==0) return top;
       
       if (!top) top = this.h;
-      var pos = fullname.indexOf("/");
-      // if (pos<0) pos = fullname.length;
       
-      var localname = (pos < 0) ? fullname : fullname.substr(0, pos);  
+      var pos = -1;
+      
+      do {
+        // we try to find element with slashes inside       
+        pos = fullname.indexOf("/", pos+1);
+  
+        var localname = (pos < 0) ? fullname : fullname.substr(0, pos);  
 
-      for (var i in top._childs) 
-         if (top._childs[i]._name == localname) {
-            top._childs[i]['_parent'] = top; // set parent pointer when searching child
-            if ((pos+1 == fullname.length) || (pos<0)) {
-               if (replace!=null) top._childs[i] = replace;
-               return top._childs[i]; 
-            }
-            
-            return this.Find(fullname.substr(pos+1), top._childs[i], replace);
-         }
+        for (var i in top._childs) 
+           if (top._childs[i]._name == localname) {
+             top._childs[i]['_parent'] = top; // set parent pointer when searching child
+             if ((pos+1 == fullname.length) || (pos<0)) {
+                if (replace!=null) top._childs[i] = replace;
+                return top._childs[i]; 
+             }
+         
+             return this.Find(fullname.substr(pos+1), top._childs[i], replace);
+           }
+      } while (pos>0);
       return null;
    }
 
