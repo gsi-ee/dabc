@@ -1444,8 +1444,19 @@ var kClassMask = 0x80000000;
       JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, node_id, user_call_back) {
          // read any object from a root file
 
-         // FIXME: should be removed after resdesign
+         // FIXME: should be removed after redesign
          if (node_id>0) if (findObject(obj_name+cycle)) return;
+         
+         var pos = obj_name.lastIndexOf(";");
+         if (pos>0) {
+            cycle = parseInt(obj_name.slice(pos+1));
+            obj_name = obj_name.slice(0, pos);
+         }
+         
+         if ((typeof cycle != 'number') || (cycle<0)) cycle = 1;
+
+         console.log("Reading object " + obj_name + "  cycle " + cycle)
+         
          
          var key = this.GetKey(obj_name, cycle);
          if (key == null) {
@@ -1493,7 +1504,7 @@ var kClassMask = 0x80000000;
                return;
             }
 
-            // FIXME: should be removed after resdesign
+            // FIXME: should be removed after redesign
             if (key['className'] == 'TFormula') {
                JSROOTCore.addFormula(obj);
             }

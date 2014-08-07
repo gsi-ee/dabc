@@ -4847,14 +4847,15 @@ var gStyle = {
       if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
 
-      var hmin = 1.0e32, hmax = -1.0e32, hsum = 0;
+      var hmin = 0, hmax = 0, hsum = 0;
       // this.stat_entries = d3.sum(this.histo['fArray']);
 
       this.nbinsx = this.histo['fXaxis']['fNbins'];
-
+      
       for (var i=0;i<this.nbinsx;++i) {
          var value = this.histo.getBinContent(i+1);
          hsum += value;
+         if (i==0) { hmin = hmax = value; }
          if (value < hmin) hmin = value; else
          if (value > hmax) hmax = value;
       }
@@ -4875,6 +4876,9 @@ var gStyle = {
       this.ymin = this.histo['fYaxis']['fXmin'];
       this.ymax = this.histo['fYaxis']['fXmax'];
 
+      // console.log("histo fMinimum = " + this.histo['fMinimum'] + "  fMaximum = " + this.histo['fMaximum']);
+      // console.log("hmin = " + hmin + "  hmax = " + hmax + "  " + (typeof hmax));
+      
       if ((this.nbinsx==0) || ((Math.abs(hmin) < 1e-300 && Math.abs(hmax) < 1e-300))) {
          if (this.histo['fMinimum'] != -1111) this.ymin = this.histo['fMinimum'];
          if (this.histo['fMaximum'] != -1111) this.ymax = this.histo['fMaximum'];
@@ -4894,8 +4898,8 @@ var gStyle = {
          }
          this.draw_content = true;
       }
-      // console.log("xmin = " + this.xmin + "  xmax = " + this.xmax + "  nbins = " + this.nbinsx);
-      // console.log("ymin = " + this.ymin + "  ymax = " + this.ymax);
+       //console.log("xmin = " + this.xmin + "  xmax = " + this.xmax + "  nbins = " + this.nbinsx);
+       //console.log("ymin = " + this.ymin + "  ymax = " + this.ymax);
 
       // If no any draw options specified, do not try draw histogram
       if (this.options.Bar == 0 && this.options.Hist == 0 &&
@@ -5587,7 +5591,7 @@ var gStyle = {
       for (var i=0; i<this.nbinsx; ++i) {
          for (var j=0; j<this.nbinsy; ++j) {
             var bin_content = this.histo.getBinContent(i+1, j+1);
-            if (bin_content < this.minbin) this.minbin = bin_content; else
+            if (bin_content < this.minbin) this.minbin = bin_content; 
             if (bin_content > this.maxbin) this.maxbin = bin_content;
          }
       }
@@ -7609,8 +7613,19 @@ var gStyle = {
    // =========== painter of hierarchical structures =================================
    
    JSROOTPainter.HList = [];
-   
+
+   JSROOTPainter.DelHList = function(_name) {
+      for (var i in JSROOTPainter.HList)
+         if (JSROOTPainter.HList[i].name == _name) {
+            var old = JSROOTPainter.HList[i];
+            JSROOTPainter.HList.splice(i,1);
+            delete old;
+            return true;
+         }
+   } 
+
    JSROOTPainter.AddHList = function(_name,_h) {
+      JSROOTPainter.DelHList(_name);
       JSROOTPainter.HList.push({name:_name, h: _h});
    }
    
@@ -7633,7 +7648,24 @@ var gStyle = {
       var res = "JSROOTPainter.H(\'" + this.name + "\')";
       if (suffix!=null) res+=suffix;
       return res;
-   } 
+   }
+   
+   JSROOTPainter.HPainter.prototype.ListHierarchy = function(folder, lst) {
+
+      folder['_childs'] = [];
+      
+      for (var i in lst.arr) {
+         var obj = lst.arr[i];
+         var item = { 
+               _name : obj['fName'],  
+               "dabc:kind" : "ROOT." + obj['_typename'].slice(9), // remove JSROOTIO. in front
+               _readobj: obj
+         };
+
+  
+         folder._childs.push(item);
+      }
+   }
    
    JSROOTPainter.HPainter.prototype.TreeHierarchy = function(node, obj)
    {
@@ -7682,7 +7714,6 @@ var gStyle = {
                _name : key['name'] + ";" + key['cycle'],  
                "dabc:kind" : "ROOT." + key['className'],
                _keyname : key['name'],
-               _keycycle : key['cycle'],
                _readobj: null
          };
 
@@ -7701,11 +7732,19 @@ var gStyle = {
                painter.KeysHierarchy(node, obj.fKeys);
                return true;
             }
+         } else
+         if (key['className'] == 'TList' || key['className'] == 'TObjArray') {
+            item["dabc:more"] = true;
+            item['_expand'] = function(node, obj) {
+               painter.ListHierarchy(node, obj);
+               return true;
+            }
          }
   
          folder._childs.push(item);
       }
    }
+  
    
    JSROOTPainter.HPainter.prototype.FileHierarchy = function(file)
    {
@@ -7722,12 +7761,12 @@ var gStyle = {
                }
                
                var fullname = painter.itemFullName(item, this);
-               var pos = fullname.lastIndexOf(";");
-               if (pos>0) fullname = fullname.slice(0, pos);
+               // var pos = fullname.lastIndexOf(";");
+               // if (pos>0) fullname = fullname.slice(0, pos);
                
-               this._file.ReadObject(fullname, item._keycycle, -1, function(obj) {
+               this._file.ReadObject(fullname, -1, -1, function(obj) {
                   item._readobj = obj;
-                  if ('_isdir' in item) item._name = item._keyname; // remove cycle number from name
+                  /*if ('_isdir' in item)*/ item._name = item._keyname; // remove cycle number from name
                   if (typeof callback == 'function') callback(item, obj);
                });
             }

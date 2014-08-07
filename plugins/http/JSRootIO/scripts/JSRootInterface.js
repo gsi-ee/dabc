@@ -227,7 +227,7 @@ function AssertPrerequisites(andThen) {
 
 function CollapsibleDisplay(itemname, obj) {
    
-   console.log("CollapsibleDisplay " + itemname);
+   console.log("CollapsibleDisplay " + itemname + "  type " + (obj ? obj['_typename'] : "null"));
 
    if (!obj) return;
    if (!JSROOTPainter.canDrawObject(obj['_typename'])) return;
@@ -317,6 +317,7 @@ function ResetUI() {
    //window.location.reload(true);
    $('#status').get(0).innerHTML = '';
    $('#newstatus').get(0).innerHTML = '';
+   JSROOTPainter.DelHList('root');
    $('#report').get(0).innerHTML = '';
    $(window).unbind('resize');
 };
