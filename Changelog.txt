@@ -4,6 +4,7 @@ current functionality of the framework.
 
 8.08.2014
 1. Remove most global variables and functions from JSRootPainter.js
+2. Handle color palette local in Hist2Dpainter
 
 
 7.08.2014

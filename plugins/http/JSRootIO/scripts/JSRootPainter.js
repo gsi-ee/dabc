@@ -131,9 +131,6 @@ var gStyle = {
       throw e1;
    }
 
-   // Initialize colors of the default palette
-   var default_palette = new Array();
-
    var root_line_styles = new Array("", "", "3, 3", "1, 2", "3, 4, 1, 4",
          "5, 3, 1, 3", "5, 3, 1, 3, 1, 3, 1, 3", "5, 5",
          "5, 3, 1, 3, 1, 3", "20, 5", "20, 10, 1, 10", "1, 2");
@@ -3243,12 +3240,12 @@ var gStyle = {
 
       var axis = palette['fAxis'];
 
-      /*
-       * Draw the default palette
-       */
-      var rectHeight = s_height / default_palette.length;
+      var paletteColors = this.first.paletteColors;
+
+      // Draw palette
+      var rectHeight = s_height / paletteColors.length;
       this.draw_g.selectAll("colorRect")
-         .data(default_palette)
+         .data(paletteColors)
          .enter()
          .append("svg:rect")
          .attr("class", "colorRect")
@@ -5271,6 +5268,7 @@ var gStyle = {
    JSROOTPainter.Hist2DPainter = function(histo) {
       JSROOTPainter.HistPainter.call(this, histo);
       this.is3D = false;
+      this.paletteColors = [];
    }
 
    JSROOTPainter.Hist2DPainter.prototype = Object.create( JSROOTPainter.HistPainter.prototype );
@@ -5413,6 +5411,7 @@ var gStyle = {
 
       var axis = {};
 
+      axis['_typename'] = 'JSROOTIO.TGaxis';
       axis['fTickSize'] =    0.03;
       axis['fLabelOffset'] = 0.005;
       axis['fLabelSize'] =   0.035;
@@ -5622,7 +5621,7 @@ var gStyle = {
          wlmax = Math.log(wmax)/Math.log(10);
       }
 
-      if (default_palette.length == 0) {
+      if (this.paletteColors.length == 0) {
          var saturation = 1,
              lightness = 0.5,
              maxHue = 280,
@@ -5631,18 +5630,18 @@ var gStyle = {
          for (var i=0 ; i<maxPretty ; i++) {
             var hue = (maxHue - (i + 1) * ((maxHue - minHue) / maxPretty))/360.0;
             var rgbval = JSROOTPainter.HLStoRGB(hue, lightness, saturation);
-            default_palette.push(rgbval);
+            this.paletteColors.push(rgbval);
          }
       }
       if (this.options.Logz) zc = Math.log(zc)/Math.log(10);
       if (zc < wlmin) zc = wlmin;
-      var ncolors = default_palette.length;
+      var ncolors = this.paletteColors.length;
       var color = Math.round(0.01 + (zc - wlmin) * scale);
       var theColor = Math.round((color + 0.99) * ncolors / ndivz) - 1;
       var icol = theColor % ncolors;
       if (icol < 0) icol = 0;
 
-      return default_palette[icol];
+      return this.paletteColors[icol];
    }
 
    JSROOTPainter.Hist2DPainter.prototype.CreateDrawBins = function(w,h,coordinates_kind,tipkind)
