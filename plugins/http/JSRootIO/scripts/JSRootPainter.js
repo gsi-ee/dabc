@@ -5,38 +5,6 @@
 
 // The "source_dir" variable is defined in JSRootInterface.js
 
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mr.doob / http://mrdoob.com/
- */
-var Detector = {
-   canvas: !! window.CanvasRenderingContext2D,
-   webgl: ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )(),
-   workers: !! window.Worker, fileapi: window.File && window.FileReader && window.FileList && window.Blob
-};
-
-var gStyle = {
-      'Tooltip'       : 0,     // 0 - off, 1 - event info, 2 - full but may be slow
-      'OptimizeDraw'  : false, // if true, drawing of 1-D histogram will be optimized to exclude too-many points
-      'AutoStat'      : true,
-      'OptStat'       : 1111,
-      'StatX'         : 0.78,
-      'StatY'         : 0.75,
-      'StatW'         : 0.2,
-      'StatH'         : 0.16,
-      'StatColor'     : 0,
-      'StatStyle'     : 1001,
-      'StatFont'      : 42,
-      'StatFontSize'  : 9,
-      'StatTextColor' : 1,
-      'TimeOffset'    : 788918400000, // UTC time at 01/01/95
-      'StatFormat'    : function(v) { return (Math.abs(v) < 1e5) ? v.toFixed(5) : v.toExponential(7); },
-      'StatEntriesFormat'  : function(v) { return (Math.abs(v) < 1e7) ? v.toFixed(0) : v.toExponential(7); }
-   };
-
-
-
-
 (function(){
 
    if (typeof JSROOTPainter == 'object'){
@@ -62,10 +30,29 @@ var gStyle = {
       if (this.fUserPainters == null) this.fUserPainters = {};
       this.fUserPainters[class_name] = user_painter;
    }
-    
+
+   JSROOTPainter.gStyle = {
+      'Tooltip'       : 2,     // 0 - off, 1 - event info, 2 - full but may be slow
+      'OptimizeDraw'  : false, // if true, drawing of 1-D histogram will be optimized to exclude too-many points
+      'AutoStat'      : true,
+      'OptStat'       : 1111,
+      'StatX'         : 0.78,
+      'StatY'         : 0.75,
+      'StatW'         : 0.2,
+      'StatH'         : 0.16,
+      'StatColor'     : 0,
+      'StatStyle'     : 1001,
+      'StatFont'      : 42,
+      'StatFontSize'  : 9,
+      'StatTextColor' : 1,
+      'TimeOffset'    : 788918400000, // UTC time at 01/01/95
+      'StatFormat'    : function(v) { return (Math.abs(v) < 1e5) ? v.toFixed(5) : v.toExponential(7); },
+      'StatEntriesFormat'  : function(v) { return (Math.abs(v) < 1e7) ? v.toFixed(0) : v.toExponential(7); }
+   };
+
 
    /** Function that generates all root colors */
-   JSROOTPainter.generateAllColors = function () {
+   JSROOTPainter.root_colors = function () {
       var colorMap = new Array(
             'rgb(255, 255, 255)',
             'rgb(0, 0, 0)',
@@ -183,11 +170,8 @@ var gStyle = {
          }
       }
       return colorMap;
-   };
+   }();
    
-   // Initialize Custom colors
-   JSROOTPainter.root_colors = JSROOTPainter.generateAllColors();
-
    JSROOTPainter.root_line_styles = new Array("", "", "3, 3", "1, 2", "3, 4, 1, 4",
          "5, 3, 1, 3", "5, 3, 1, 3, 1, 3, 1, 3", "5, 5",
          "5, 3, 1, 3, 1, 3", "20, 5", "20, 10, 1, 10", "1, 2");
@@ -916,7 +900,7 @@ var gStyle = {
          return timeoffset;
       }
 
-      return gStyle['TimeOffset'];
+      return JSROOTPainter.gStyle['TimeOffset'];
    }
 
    JSROOTPainter.formatExp = function(label) {
@@ -1565,7 +1549,7 @@ var gStyle = {
       this.AddMenuItem(menu,"Unzoom X","unx");
       this.AddMenuItem(menu,"Unzoom Y","uny");
       this.AddMenuItem(menu,"Unzoom","unxy");
-      if (gStyle.Tooltip > 0)
+      if (JSROOTPainter.gStyle.Tooltip > 0)
          this.AddMenuItem(menu,"Disable tooltip","disable_tooltip");
       else
          this.AddMenuItem(menu,"Enable tooltip","enable_tooltip");
@@ -1578,11 +1562,11 @@ var gStyle = {
       if (cmd=="uny") this.Unzoom(false, true); else
       if (cmd=="unxy") this.Unzoom(true, true); else
       if (cmd=="disable_tooltip") {
-         gStyle.Tooltip = 0;
+         JSROOTPainter.gStyle.Tooltip = 0;
          this.RedrawFrame();
       } else
       if (cmd=="enable_tooltip") {
-         gStyle.Tooltip = 2;
+         JSROOTPainter.gStyle.Tooltip = 2;
          this.RedrawFrame();
       }
    }
@@ -1730,7 +1714,7 @@ var gStyle = {
                renderer.render( scene, camera );
             }
             INTERSECTED = null;
-            if (gStyle.Tooltip > 1) tooltip.hide();
+            if (JSROOTPainter.gStyle.Tooltip > 1) tooltip.hide();
             return;
          }
          var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
@@ -1751,7 +1735,7 @@ var gStyle = {
                INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
                INTERSECTED.material.emissive.setHex( 0x5f5f5f );
                renderer.render( scene, camera );
-               if (gStyle.Tooltip > 1) tooltip.show(INTERSECTED.name.length > 0 ? INTERSECTED.name : INTERSECTED.parent.name, 200);
+               if (JSROOTPainter.gStyle.Tooltip > 1) tooltip.show(INTERSECTED.name.length > 0 ? INTERSECTED.name : INTERSECTED.parent.name, 200);
             }
          } else {
             if ( INTERSECTED ) {
@@ -1759,13 +1743,13 @@ var gStyle = {
                renderer.render( scene, camera );
             }
             INTERSECTED = null;
-            if (gStyle.Tooltip > 1) tooltip.hide();
+            if (JSROOTPainter.gStyle.Tooltip > 1) tooltip.hide();
          }
       };
 
       $( renderer.domElement ).on('touchstart mousedown',function (e) {
          //var touch = e.changedTouches[0] || {};
-         if (gStyle.Tooltip > 1) tooltip.hide();
+         if (JSROOTPainter.gStyle.Tooltip > 1) tooltip.hide();
          e.preventDefault();
          var touch = e;
          if ('changedTouches' in e) touch = e.changedTouches[0];
@@ -2153,7 +2137,7 @@ var gStyle = {
 
 
       // add tooltips
-      if (gStyle.Tooltip > 1)
+      if (JSROOTPainter.gStyle.Tooltip > 1)
          this.draw_g.selectAll("line")
             .data(this.bins)
             .enter()
@@ -2673,7 +2657,7 @@ var gStyle = {
             .attr("height", function(d) { return y(d.y) - y(d.y+d.bh); } )
             .style("fill", fillcolor);
 
-         if (gStyle.Tooltip > 1)
+         if (JSROOTPainter.gStyle.Tooltip > 1)
             nodes.append("svg:title").text(function(d) {
                     return "x = " + d.x.toPrecision(4) + " \nentries = " + d.y.toPrecision(4);
                    });
@@ -2707,7 +2691,7 @@ var gStyle = {
             .style("stroke-dasharray", JSROOTPainter.root_line_styles[pthis.graph['fLineStyle']])
             .style("fill", (pthis.optionFill == 1) ? JSROOTPainter.root_colors[pthis.graph['fFillColor']] : "none");
 
-         if (gStyle.Tooltip > 1)
+         if (JSROOTPainter.gStyle.Tooltip > 1)
             this.draw_g.selectAll("draw_line")
               .data(pthis.bins).enter()
               .append("svg:circle")
@@ -2786,7 +2770,7 @@ var gStyle = {
             .style("stroke-width", this.graph['fLineWidth']);
 
 
-         if (gStyle.Tooltip > 1) {
+         if (JSROOTPainter.gStyle.Tooltip > 1) {
             xerr.append("svg:title").text(TooltipText);
             yerr.append("svg:title").text(TooltipText);
          }
@@ -2841,7 +2825,7 @@ var gStyle = {
             .style("stroke", JSROOTPainter.root_colors[this.graph['fMarkerColor']])
             .attr("d", marker);
 
-         if (gStyle.Tooltip > 1)
+         if (JSROOTPainter.gStyle.Tooltip > 1)
             markers
             .append("svg:title")
             .text(TooltipText);
@@ -3164,7 +3148,7 @@ var gStyle = {
       if (!this.IsStats()) return false;
 
       var dostat = new Number(this.pavetext['fOptStat']);
-      if (!dostat) dostat = new Number(gStyle.OptStat);
+      if (!dostat) dostat = new Number(JSROOTPainter.gStyle.OptStat);
 
       // we take histogram from first painter
       if (this.first && ('FillStatistic' in this.first)) {
@@ -4039,16 +4023,16 @@ var gStyle = {
       stats['fName'] = 'stats';
 
       stats['_AutoCreated'] = true;
-      stats['fX1NDC'] = gStyle.StatX;
-      stats['fY1NDC'] = gStyle.StatY;
-      stats['fX2NDC'] = gStyle.StatX + gStyle.StatW;
-      stats['fY2NDC'] = gStyle.StatY + gStyle.StatH;
+      stats['fX1NDC'] = JSROOTPainter.gStyle.StatX;
+      stats['fY1NDC'] = JSROOTPainter.gStyle.StatY;
+      stats['fX2NDC'] = JSROOTPainter.gStyle.StatX + JSROOTPainter.gStyle.StatW;
+      stats['fY2NDC'] = JSROOTPainter.gStyle.StatY + JSROOTPainter.gStyle.StatH;
       if ((this.histo['_typename'] && this.histo['_typename'].match(/\bTProfile/)) ||
           (this.histo['_typename'] && this.histo['_typename'].match(/\bTH2/)))
          stats['fY1NDC'] = 0.67;
 
       stats['fOptFit'] = 0;
-      stats['fOptStat'] = gStyle.OptStat;
+      stats['fOptStat'] = JSROOTPainter.gStyle.OptStat;
       stats['fLongest'] = 17;
       stats['fMargin'] = 0.05;
 
@@ -4069,14 +4053,14 @@ var gStyle = {
       stats['fLineStyle'] = 1;
       stats['fLineWidth'] = 1;
 
-      stats['fFillColor'] = gStyle.StatColor;
-      stats['fFillStyle'] = gStyle.StatStyle;
+      stats['fFillColor'] = JSROOTPainter.gStyle.StatColor;
+      stats['fFillStyle'] = JSROOTPainter.gStyle.StatStyle;
 
       stats['fTextAngle'] = 0;
-      stats['fTextSize'] = gStyle.StatFontSize;
+      stats['fTextSize'] = JSROOTPainter.gStyle.StatFontSize;
       stats['fTextAlign'] = 12;
-      stats['fTextColor'] = gStyle.StatTextColor;
-      stats['fTextFont'] = gStyle.StatFont;
+      stats['fTextColor'] = JSROOTPainter.gStyle.StatTextColor;
+      stats['fTextFont'] = JSROOTPainter.gStyle.StatFont;
 
       stats['fLines'] = JSROOTCore.CreateTList();
 
@@ -4182,7 +4166,7 @@ var gStyle = {
       this.frame.on("mousedown", startRectSel);
       this.frame.on("touchstart", startTouchSel);
 
-      if (gStyle.Tooltip == 1) {
+      if (JSROOTPainter.gStyle.Tooltip == 1) {
          this.frame.on("mousemove", moveTooltip);
          this.frame.on("mouseout", finishTooltip);
 
@@ -4852,35 +4836,35 @@ var gStyle = {
          stat.AddLine(this.histo['fName']);
 
       if (print_entries > 0)
-         stat.AddLine("Entries = " + gStyle.StatEntriesFormat(this.stat_entries));
+         stat.AddLine("Entries = " + JSROOTPainter.gStyle.StatEntriesFormat(this.stat_entries));
 
       if (print_mean > 0) {
          var res = 0;
          if (this.stat_sum0 > 0) res = this.stat_sum1/this.stat_sum0;
-         stat.AddLine("Mean = " + gStyle.StatFormat(res));
+         stat.AddLine("Mean = " + JSROOTPainter.gStyle.StatFormat(res));
       }
 
       if (print_rms > 0) {
          var res = 0;
          if (this.stat_sum0 > 0)
             res = Math.sqrt(this.stat_sum2/this.stat_sum0 - Math.pow(this.stat_sum1/this.stat_sum0, 2));
-         stat.AddLine("RMS = " + gStyle.StatFormat(res));
+         stat.AddLine("RMS = " + JSROOTPainter.gStyle.StatFormat(res));
       }
 
       if (print_under > 0) {
          var res = 0;
          if (this.histo['fArray'].length > 0) res = this.histo['fArray'][0];
-         stat.AddLine("Underflow = " + gStyle.StatFormat(res));
+         stat.AddLine("Underflow = " + JSROOTPainter.gStyle.StatFormat(res));
       }
 
       if (print_over > 0) {
          var res = 0;
          if (this.histo['fArray'].length > 0) res = this.histo['fArray'][this.histo['fArray'].length-1];
-         stat.AddLine("Overflow = " + gStyle.StatFormat(res));
+         stat.AddLine("Overflow = " + JSROOTPainter.gStyle.StatFormat(res));
       }
 
       if (print_integral > 0) {
-         stat.AddLine("Integral = " + gStyle.StatEntriesFormat(this.stat_sum0));
+         stat.AddLine("Integral = " + JSROOTPainter.gStyle.StatEntriesFormat(this.stat_sum0));
       }
 
       if (print_skew> 0)
@@ -4891,9 +4875,9 @@ var gStyle = {
 
       // adjust the size of the stats box with the number of lines
       var nlines = stat.pavetext['fLines'].arr.length;
-      var stath = nlines * gStyle.StatFontSize;
-      if (stath <= 0 || 3 == (gStyle.StatFont%10)) {
-         stath = 0.25 * nlines * gStyle.StatH;
+      var stath = nlines * JSROOTPainter.gStyle.StatFontSize;
+      if (stath <= 0 || 3 == (JSROOTPainter.gStyle.StatFont%10)) {
+         stath = 0.25 * nlines * JSROOTPainter.gStyle.StatH;
          stat.pavetext['fY1NDC'] = 0.93 - stath;
          stat.pavetext['fY2NDC'] = 0.93;
       }
@@ -4913,7 +4897,7 @@ var gStyle = {
       this.draw_bins = new Array;
 
       // reduce number of drawn points - we define interval where two points will be selected - max and min
-      if ((this.nbinsx > 10000) || (gStyle.OptimizeDraw && (right - left > width)))
+      if ((this.nbinsx > 10000) || (JSROOTPainter.gStyle.OptimizeDraw && (right - left > width)))
          while ((right - left)/stepi > width) stepi++;
 
       var x1, x2 = this.xmin + left*this.binwidthx;
@@ -4947,7 +4931,7 @@ var gStyle = {
             point['yerr'] =  gry - this.y(cont + this.histo.getBinError(pmax+1));
          }
 
-         if (gStyle.Tooltip > 1) {
+         if (JSROOTPainter.gStyle.Tooltip > 1) {
             if (this.options.Error > 0) {
                point['x'] = (grx1 + grx2)/2;
                point['tip'] = "x = " + this.AxisAsText("x", x1) + " \ny = " + this.AxisAsText("y",cont) +
@@ -5075,7 +5059,7 @@ var gStyle = {
             .style("stroke", marker_color)
             .attr("d", marker);
 
-      if (gStyle.Tooltip > 1) {
+      if (JSROOTPainter.gStyle.Tooltip > 1) {
          marks.append("svg:title").text(TooltipText);
          xerr.append("svg:title").text(TooltipText);
          yerr.append("svg:title").text(TooltipText);
@@ -5148,7 +5132,7 @@ var gStyle = {
            .style("antialias", "false");
       }
 
-      if (gStyle.Tooltip > 1) {
+      if (JSROOTPainter.gStyle.Tooltip > 1) {
          // TODO: limit number of tooltips by number of visible pixels
          this.draw_g.selectAll("selections")
             .data(this.draw_bins)
@@ -5270,7 +5254,7 @@ var gStyle = {
       painter.DrawTitle();
 
       //$("#report").append("<br> stat");
-      if (gStyle.AutoStat && !hadframe) painter.CreateStat();
+      if (JSROOTPainter.gStyle.AutoStat && !hadframe) painter.CreateStat();
 
       //$("#report").append("<br> func");
       painter.DrawFunctions();
@@ -5562,7 +5546,7 @@ var gStyle = {
          stat.AddLine(this.histo['fName']);
 
       if (print_entries > 0)
-         stat.AddLine("Entries = " + gStyle.StatEntriesFormat(this.stat_entries));
+         stat.AddLine("Entries = " + JSROOTPainter.gStyle.StatEntriesFormat(this.stat_entries));
 
 
       var meanx = 0, meany = 0;
@@ -5572,8 +5556,8 @@ var gStyle = {
       }
 
       if (print_mean > 0) {
-         stat.AddLine("Mean x = " + gStyle.StatFormat(meanx));
-         stat.AddLine("Mean y = " + gStyle.StatFormat(meany));
+         stat.AddLine("Mean x = " + JSROOTPainter.gStyle.StatFormat(meanx));
+         stat.AddLine("Mean y = " + JSROOTPainter.gStyle.StatFormat(meany));
       }
 
       var rmsx = 0, rmsy = 0;
@@ -5583,12 +5567,12 @@ var gStyle = {
       }
 
       if (print_rms > 0) {
-         stat.AddLine("RMS x = " + gStyle.StatFormat(rmsx));
-         stat.AddLine("RMS y = " + gStyle.StatFormat(rmsy));
+         stat.AddLine("RMS x = " + JSROOTPainter.gStyle.StatFormat(rmsx));
+         stat.AddLine("RMS y = " + JSROOTPainter.gStyle.StatFormat(rmsy));
       }
 
       if (print_integral > 0) {
-         stat.AddLine("Integral = " + gStyle.StatEntriesFormat(this.stat_matrix[4]));
+         stat.AddLine("Integral = " + JSROOTPainter.gStyle.StatEntriesFormat(this.stat_matrix[4]));
       }
 
       if (print_skew > 0) {
@@ -5609,9 +5593,9 @@ var gStyle = {
 
       // adjust the size of the stats box wrt the number of lines
       var nlines = stat.pavetext['fLines'].arr.length;
-      var stath = nlines * gStyle.StatFontSize;
-      if (stath <= 0 || 3 == (gStyle.StatFont%10)) {
-         stath = 0.25 * nlines * gStyle.StatH;
+      var stath = nlines * JSROOTPainter.gStyle.StatFontSize;
+      if (stath <= 0 || 3 == (JSROOTPainter.gStyle.StatFont%10)) {
+         stath = 0.25 * nlines * JSROOTPainter.gStyle.StatH;
          stat.pavetext['fY1NDC'] = 0.93 - stath;
          stat.pavetext['fY2NDC'] = 0.93;
       }
@@ -5762,7 +5746,7 @@ var gStyle = {
 
 
       var tipkind = 0;
-      if (gStyle.Tooltip > 1) tipkind = draw_markers ? 2 : 1;
+      if (JSROOTPainter.gStyle.Tooltip > 1) tipkind = draw_markers ? 2 : 1;
 
       var local_bins = this.CreateDrawBins(w,h,normal_coordinates ? 0 : 1, tipkind);
 
@@ -5822,7 +5806,7 @@ var gStyle = {
             .style("stroke", JSROOTPainter.root_colors[this.histo['fMarkerColor']])
             .attr("d", marker);
 
-         if (gStyle.Tooltip > 1)
+         if (JSROOTPainter.gStyle.Tooltip > 1)
             markers.append("svg:title").text(function(d) { return d.tip; });
       }
       else {
@@ -5838,7 +5822,7 @@ var gStyle = {
                .style("stroke", function(d) { return d.stroke; })
                .style("fill", function(d) { this['f0'] = d.fill; this['f1'] = d.tipcolor; return d.fill; });
 
-         if (gStyle.Tooltip > 1)
+         if (JSROOTPainter.gStyle.Tooltip > 1)
             drawn_bins
               .on('mouseover', function() { d3.select(this).transition().duration(100).style("fill", this['f1']); })
               .on('mouseout', function() { d3.select(this).transition().duration(100).style("fill", this['f0']); })
@@ -5898,7 +5882,7 @@ var gStyle = {
       }
 
       // check if we need to create statbox
-      if (gStyle.AutoStat && !hadframe) painter.CreateStat();
+      if (JSROOTPainter.gStyle.AutoStat && !hadframe) painter.CreateStat();
 
       painter.CreateXY();
 
@@ -6117,7 +6101,7 @@ var gStyle = {
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei, hh;
 
-      var local_bins = this.CreateDrawBins(100, 100, 2, (gStyle.Tooltip > 1 ? 1 : 0));
+      var local_bins = this.CreateDrawBins(100, 100, 2, (JSROOTPainter.gStyle.Tooltip > 1 ? 1 : 0));
 
       for (var i = 0; i < local_bins.length; ++i ) {
          hh = local_bins[i];
@@ -6130,7 +6114,7 @@ var gStyle = {
          bin.position.y = hh.z/2;
          bin.position.z = -(ty(hh.y));
 
-         if (gStyle.Tooltip > 1) bin.name = hh.tip;
+         if (JSROOTPainter.gStyle.Tooltip > 1) bin.name = hh.tip;
          toplevel.add( bin );
       }
 
@@ -6149,6 +6133,17 @@ var gStyle = {
       var camera = new THREE.PerspectiveCamera( 45, w / h, 1, 1000 );
       camera.position.set( 0, size/2, 500 );
       camera.lookat = cube;
+
+      /**
+       * @author alteredq / http://alteredqualia.com/
+       * @author mr.doob / http://mrdoob.com/
+       */
+      var Detector = {
+            canvas: !! window.CanvasRenderingContext2D,
+            webgl: ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )(),
+            workers: !! window.Worker, fileapi: window.File && window.FileReader && window.FileList && window.Blob
+      };
+
 
       var renderer = Detector.webgl ? new THREE.WebGLRenderer( { antialias: true } ) :
                      new THREE.CanvasRenderer( { antialias: true } );
@@ -6437,6 +6432,16 @@ var gStyle = {
       var camera = new THREE.PerspectiveCamera( 45, w / h, 1, 1000 );
       camera.position.set( 0, 0, 500 );
       camera.lookat = cube;
+
+      /**
+       * @author alteredq / http://alteredqualia.com/
+       * @author mr.doob / http://mrdoob.com/
+       */
+      var Detector = {
+            canvas: !! window.CanvasRenderingContext2D,
+            webgl: ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )(),
+            workers: !! window.Worker, fileapi: window.File && window.FileReader && window.FileList && window.Blob
+      };
 
       var renderer = Detector.webgl ? new THREE.WebGLRenderer( { antialias: true } ) :
                      new THREE.CanvasRenderer( { antialias: true } );

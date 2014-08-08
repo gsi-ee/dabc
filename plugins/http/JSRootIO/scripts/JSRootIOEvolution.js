@@ -3,24 +3,6 @@
 // core methods for Javascript ROOT IO.
 //
 
-var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
-    kChar = 1, kShort = 2, kInt = 3, kLong = 4, kFloat = 5,
-    kDouble = 8, kDouble32 = 9, kLegacyChar = 10, kUChar = 11, kUShort = 12,
-    kUInt = 13, kULong = 14, kBits = 15, kLong64 = 16, kULong64 = 17, kBool = 18,
-    kFloat16 = 19,
-    kObject = 61, kAny = 62, kObjectp = 63, kObjectP = 64, kTString = 65,
-    kTObject = 66, kTNamed = 67, kAnyp = 68, kAnyP = 69, kAnyPnoVT = 70,
-    kSTLp = 71,
-    kSkip = 100, kSkipL = 120, kSkipP = 140,
-    kConv = 200, kConvL = 220, kConvP = 240,
-    kSTL = 300, kSTLstring = 365,
-    kStreamer = 500, kStreamLoop = 501;
-
-var kMapOffset = 2;
-var kByteCountMask = 0x40000000;
-var kNewClassTag = 0xFFFFFFFF;
-var kClassMask = 0x80000000;
-
 (function(){
 
    if (typeof JSROOTIO == "object"){
@@ -29,11 +11,26 @@ var kClassMask = 0x80000000;
       throw e1;
    }
 
-   var Z_DEFLATED = 8;
-   var HDRSIZE = 9;
-   var kByteCountMask = 0x40000000;
-
-   JSROOTIO = {};
+   JSROOTIO = {
+         kBase : 0, kOffsetL : 20, kOffsetP : 40, kCounter : 6, kCharStar : 7,
+         kChar : 1, kShort : 2, kInt : 3, kLong : 4, kFloat : 5,
+         kDouble : 8, kDouble32 : 9, kLegacyChar : 10, kUChar : 11, kUShort : 12,
+         kUInt : 13, kULong : 14, kBits : 15, kLong64 : 16, kULong64 : 17, kBool : 18,
+         kFloat16 : 19,
+         kObject : 61, kAny : 62, kObjectp : 63, kObjectP : 64, kTString : 65,
+         kTObject : 66, kTNamed : 67, kAnyp : 68, kAnyP : 69, kAnyPnoVT : 70,
+         kSTLp : 71,
+         kSkip : 100, kSkipL : 120, kSkipP : 140,
+         kConv : 200, kConvL : 220, kConvP : 240,
+         kSTL : 300, kSTLstring : 365,
+         kStreamer : 500, kStreamLoop : 501,
+         kMapOffset : 2,
+         kByteCountMask : 0x40000000,
+         kNewClassTag : 0xFFFFFFFF,
+         kClassMask : 0x80000000,
+         Z_DEFLATED : 8,
+         Z_HDRSIZE : 9
+   };
 
    JSROOTIO.version = "3.0 2014/08/05";
 
@@ -47,42 +44,38 @@ var kClassMask = 0x80000000;
       this.fUserStreamers[type] = user_streamer;
    }
 
-   JSROOTIO.BIT = function(bits, index) {
-      var mask = 1 << index;
-      return (bits & mask);
-   };
-
    JSROOTIO.R__unzip_header = function(str, off, noalert) {
       // Reads header envelope, and determines target size.
 
-      if (off + HDRSIZE > str.length) {
+      if (off + JSROOTIO.Z_HDRSIZE > str.length) {
          if (!noalert) alert("Error R__unzip_header: header size exceeds buffer size");
          return -1;
       }
 
       /*   C H E C K   H E A D E R   */
-      if (!(str.charAt(off) == 'Z' && str.charAt(off+1) == 'L' && str.charCodeAt(off+2) == Z_DEFLATED) &&
-          !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == Z_DEFLATED) &&
+      if (!(str.charAt(off) == 'Z' && str.charAt(off+1) == 'L' && str.charCodeAt(off+2) == JSROOTIO.Z_DEFLATED) &&
+          !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == JSROOTIO.Z_DEFLATED) &&
           !(str.charAt(off) == 'X' && str.charAt(off+1) == 'Z' && str.charCodeAt(off+2) == 0)) {
          if (!noalert) alert("Error R__unzip_header: error in header");
          return -1;
       }
-      return HDRSIZE + ((str.charCodeAt(off+3) & 0xff) |
-                       ((str.charCodeAt(off+4) & 0xff) << 8) |
-                       ((str.charCodeAt(off+5) & 0xff) << 16));
+      return JSROOTIO.Z_HDRSIZE + 
+                ((str.charCodeAt(off+3) & 0xff) |
+                 ((str.charCodeAt(off+4) & 0xff) << 8) |
+                 ((str.charCodeAt(off+5) & 0xff) << 16));
    };
 
    JSROOTIO.R__unzip = function(srcsize, str, off, noalert) {
 
       /*   C H E C K   H E A D E R   */
-      if (srcsize < HDRSIZE) {
+      if (srcsize < JSROOTIO.Z_HDRSIZE) {
          if (!noalert) alert("R__unzip: too small source");
          return null;
       }
 
       /*   C H E C K   H E A D E R   */
-      if (!(str.charAt(off) == 'Z' && str.charAt(off+1) == 'L' && str.charCodeAt(off+2) == Z_DEFLATED) &&
-          !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == Z_DEFLATED) &&
+      if (!(str.charAt(off) == 'Z' && str.charAt(off+1) == 'L' && str.charCodeAt(off+2) == JSROOTIO.Z_DEFLATED) &&
+          !(str.charAt(off) == 'C' && str.charAt(off+1) == 'S' && str.charCodeAt(off+2) == JSROOTIO.Z_DEFLATED) &&
           !(str.charAt(off) == 'X' && str.charAt(off+1) == 'Z' && str.charCodeAt(off+2) == 0)) {
          if (!noalert) alert("Error R__unzip: error in header");
          return null;
@@ -90,7 +83,7 @@ var kClassMask = 0x80000000;
       var ibufcnt = ((str.charCodeAt(off+3) & 0xff) |
                     ((str.charCodeAt(off+4) & 0xff) << 8) |
                     ((str.charCodeAt(off+5) & 0xff) << 16));
-      if (ibufcnt + HDRSIZE != srcsize) {
+      if (ibufcnt + JSROOTIO.Z_HDRSIZE != srcsize) {
          if (!noalert) alert("R__unzip: discrepancy in source length");
          return null;
       }
@@ -98,7 +91,7 @@ var kClassMask = 0x80000000;
       /*   D E C O M P R E S S   D A T A  */
       if (str.charAt(off) == 'Z' && str.charAt(off+1) == 'L') {
          /* New zlib format */
-         var data = str.substr(off + HDRSIZE + 2, srcsize);
+         var data = str.substr(off + JSROOTIO.Z_HDRSIZE + 2, srcsize);
          return RawInflate.inflate(data);
       }
       /* Old zlib format */
@@ -388,8 +381,8 @@ var kClassMask = 0x80000000;
          // read class version from I/O buffer
          var version = {};
          var bytecnt = this.ntou4(); // byte count
-         if (bytecnt & kByteCountMask)
-            version['bytecnt'] = bytecnt - kByteCountMask - 2; // one can check between Read version and end of streamer
+         if (bytecnt & JSROOTIO.kByteCountMask)
+            version['bytecnt'] = bytecnt - JSROOTIO.kByteCountMask - 2; // one can check between Read version and end of streamer
          version['val'] = this.ntou2();
          version['off'] = this.o;
          return version;
@@ -646,27 +639,27 @@ var kClassMask = 0x80000000;
          var bcnt = this.ntou4();
 
          var startpos = this.o;
-         if (!(bcnt & kByteCountMask) || (bcnt == kNewClassTag)) {
+         if (!(bcnt & JSROOTIO.kByteCountMask) || (bcnt == JSROOTIO.kNewClassTag)) {
             tag = bcnt;
             bcnt = 0;
          } else {
             // classInfo['fVersion'] = 1;
             tag = this.ntou4();
          }
-         if (!(tag & kClassMask)) {
+         if (!(tag & JSROOTIO.kClassMask)) {
             classInfo['objtag'] = tag; // indicate that we have deal with objects tag
             return classInfo;
          }
-         if (tag == kNewClassTag) {
+         if (tag == JSROOTIO.kNewClassTag) {
             // got a new class description followed by a new object
             classInfo['name'] = this.ReadString();
 
-            if (this.GetMappedClass(this.fTagOffset + startpos + kMapOffset)==-1)
-               this.MapClass(this.fTagOffset + startpos + kMapOffset, classInfo['name']);
+            if (this.GetMappedClass(this.fTagOffset + startpos + JSROOTIO.kMapOffset)==-1)
+               this.MapClass(this.fTagOffset + startpos + JSROOTIO.kMapOffset, classInfo['name']);
          }
          else {
             // got a tag to an already seen class
-            var clTag = (tag & ~kClassMask);
+            var clTag = (tag & ~JSROOTIO.kClassMask);
             classInfo['name'] = this.GetMappedClass(clTag);
 
             if (classInfo['name']==-1) {
@@ -674,7 +667,7 @@ var kClassMask = 0x80000000;
             }
 
          }
-         // classInfo['cnt'] = (bcnt & ~kByteCountMask);
+         // classInfo['cnt'] = (bcnt & ~JSROOTIO.kByteCountMask);
 
          return classInfo;
       };
@@ -691,7 +684,7 @@ var kClassMask = 0x80000000;
 
          var obj = {};
 
-         this.MapObject(this.fTagOffset + startpos + kMapOffset, obj);
+         this.MapObject(this.fTagOffset + startpos + JSROOTIO.kMapOffset, obj);
 
          this.ClassStreamer(obj, clRef['name']);
 
@@ -801,71 +794,71 @@ var kClassMask = 0x80000000;
 
          // read basic types (known from the streamer info)
          switch (this[prop]['type']) {
-            case kBase:
+            case JSROOTIO.kBase:
                break;
-            case kOffsetL:
+            case JSROOTIO.kOffsetL:
                break;
-            case kOffsetP:
+            case JSROOTIO.kOffsetP:
                break;
-            case kCharStar:
+            case JSROOTIO.kCharStar:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'C');
                break;
-            case kChar:
-            case kLegacyChar:
+            case JSROOTIO.kChar:
+            case JSROOTIO.kLegacyChar:
                obj[prop] = buf.b.charCodeAt(buf.o++) & 0xff;
                break;
-            case kShort:
+            case JSROOTIO.kShort:
                obj[prop] = buf.ntoi2();
                break;
-            case kInt:
-            case kCounter:
+            case JSROOTIO.kInt:
+            case JSROOTIO.kCounter:
                obj[prop] = buf.ntoi4();
                break;
-            case kLong:
+            case JSROOTIO.kLong:
                obj[prop] = buf.ntoi8();
                break;
-            case kFloat:
-            case kDouble32:
+            case JSROOTIO.kFloat:
+            case JSROOTIO.kDouble32:
                obj[prop] = buf.ntof();
                if (Math.abs(obj[prop]) < 1e-300) obj[prop] = 0.0;
                break;
-            case kDouble:
+            case JSROOTIO.kDouble:
                obj[prop] = buf.ntod();
                if (Math.abs(obj[prop]) < 1e-300) obj[prop] = 0.0;
                break;
-            case kUChar:
+            case JSROOTIO.kUChar:
                obj[prop] = (buf.b.charCodeAt(buf.o++) & 0xff) >>> 0;
                break;
-            case kUShort:
+            case JSROOTIO.kUShort:
                obj[prop] = buf.ntou2();
                break;
-            case kUInt:
+            case JSROOTIO.kUInt:
                obj[prop] = buf.ntou4();
                break;
-            case kULong:
+            case JSROOTIO.kULong:
                obj[prop] = buf.ntou8();
                break;
-            case kBits:
+            case JSROOTIO.kBits:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
-            case kLong64:
+            case JSROOTIO.kLong64:
                obj[prop] = buf.ntoi8();
                break;
-            case kULong64:
+            case JSROOTIO.kULong64:
                obj[prop] = buf.ntou8();
                break;
-            case kBool:
+            case JSROOTIO.kBool:
                obj[prop] = (buf.b.charCodeAt(buf.o++) & 0xff) != 0;
                break;
-            case kFloat16:
+            case JSROOTIO.kFloat16:
                obj[prop] = 0;
                buf.o += 2;
                break;
-            case kAny:
-            case kAnyp:
-            case kObjectp:
-            case kObject:
+            case JSROOTIO.kAny:
+            case JSROOTIO.kAnyp:
+            case JSROOTIO.kObjectp:
+            case JSROOTIO.kObject:
                var classname = this[prop]['typename'];
                if (classname.endsWith("*"))
                   classname = classname.substr(0, classname.length - 1);
@@ -874,101 +867,101 @@ var kClassMask = 0x80000000;
                buf.ClassStreamer(obj[prop], classname);
                break;
 
-            case kAnyP:
-            case kObjectP:
+            case JSROOTIO.kAnyP:
+            case JSROOTIO.kObjectP:
                obj[prop] = buf.ReadObjectAny();
                break;
-            case kTString:
+            case JSROOTIO.kTString:
                obj[prop] = buf.ReadTString();
                break;
-            case kTObject:
+            case JSROOTIO.kTObject:
                buf.ReadTObject(obj);
                break;
-            case kTNamed:
+            case JSROOTIO.kTNamed:
                buf.ReadTNamed(obj);
                break;
-            case kAnyPnoVT:
-            case kSTLp:
-            case kSkip:
-            case kSkipL:
-            case kSkipP:
-            case kConv:
-            case kConvL:
-            case kConvP:
-            case kSTL:
-            case kSTLstring:
-            case kStreamer:
-            case kStreamLoop:
+            case JSROOTIO.kAnyPnoVT:
+            case JSROOTIO.kSTLp:
+            case JSROOTIO.kSkip:
+            case JSROOTIO.kSkipL:
+            case JSROOTIO.kSkipP:
+            case JSROOTIO.kConv:
+            case JSROOTIO.kConvL:
+            case JSROOTIO.kConvP:
+            case JSROOTIO.kSTL:
+            case JSROOTIO.kSTLstring:
+            case JSROOTIO.kStreamer:
+            case JSROOTIO.kStreamLoop:
                alert('failed to stream ' + prop + ' (' + this[prop]['typename'] + ')');
                break;
-            case kOffsetL+kShort:
-            case kOffsetL+kUShort:
+            case JSROOTIO.kOffsetL+JSROOTIO.kShort:
+            case JSROOTIO.kOffsetL+JSROOTIO.kUShort:
                alert("Strange code was here????"); // var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'S');
                break;
-            case kOffsetL+kInt:
+            case JSROOTIO.kOffsetL+JSROOTIO.kInt:
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'I');
                break;
-            case kOffsetL+kUInt:
+            case JSROOTIO.kOffsetL+JSROOTIO.kUInt:
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'U');
                break;
-            case kOffsetL+kULong:
-            case kOffsetL+kULong64:
+            case JSROOTIO.kOffsetL+JSROOTIO.kULong:
+            case JSROOTIO.kOffsetL+JSROOTIO.kULong64:
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'LU');
                break;
-            case kOffsetL+kLong:
-            case kOffsetL+kLong64:
+            case JSROOTIO.kOffsetL+JSROOTIO.kLong:
+            case JSROOTIO.kOffsetL+JSROOTIO.kLong64:
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'L');
                break;
-            case kOffsetL+kFloat:
-            case kOffsetL+kDouble32:
+            case JSROOTIO.kOffsetL+JSROOTIO.kFloat:
+            case JSROOTIO.kOffsetL+JSROOTIO.kDouble32:
                //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'F');
                break;
-            case kOffsetL+kDouble:
+            case JSROOTIO.kOffsetL+JSROOTIO.kDouble:
                //var n_el = str.charCodeAt(o) & 0xff;
                var n_el  = this[prop]['length'];
                obj[prop] = buf.ReadFastArray(n_el, 'D');
                break;
-            case kOffsetP+kChar:
+            case JSROOTIO.kOffsetP+JSROOTIO.kChar:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'C');
                break;
-            case kOffsetP+kShort:
-            case kOffsetP+kUShort:
+            case JSROOTIO.kOffsetP+JSROOTIO.kShort:
+            case JSROOTIO.kOffsetP+JSROOTIO.kUShort:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'S');
                break;
-            case kOffsetP+kInt:
+            case JSROOTIO.kOffsetP+JSROOTIO.kInt:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'I');
                break;
-            case kOffsetP+kUInt:
+            case JSROOTIO.kOffsetP+JSROOTIO.kUInt:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'U');
                break;
-            case kOffsetP+kULong:
-            case kOffsetP+kULong64:
+            case JSROOTIO.kOffsetP+JSROOTIO.kULong:
+            case JSROOTIO.kOffsetP+JSROOTIO.kULong64:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'LU');
                break;
-            case kOffsetP+kLong:
-            case kOffsetP+kLong64:
+            case JSROOTIO.kOffsetP+JSROOTIO.kLong:
+            case JSROOTIO.kOffsetP+JSROOTIO.kLong64:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'L');
                break;
-            case kOffsetP+kFloat:
-            case kOffsetP+kDouble32:
+            case JSROOTIO.kOffsetP+JSROOTIO.kFloat:
+            case JSROOTIO.kOffsetP+JSROOTIO.kDouble32:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'F');
                break;
-            case kOffsetP+kDouble:
+            case JSROOTIO.kOffsetP+JSROOTIO.kDouble:
                var n_el = obj[this[prop]['cntname']];
                obj[prop] = buf.ReadBasicPointer(n_el, 'D');
                break;
@@ -1689,7 +1682,7 @@ var kClassMask = 0x80000000;
                var streamer = {};
                streamer['typename'] = element['typename'];
                streamer['class']    = element['name'];
-               streamer['cntname']  = s_i['fElements']['arr'][j]['countName'];
+               streamer['cntname']  = element['countName'];
                streamer['type']     = element['type'];
                streamer['length']   = element['length'];
 

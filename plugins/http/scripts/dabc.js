@@ -1175,7 +1175,7 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
    gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
    gr['fHistogram']['fXaxis']['fTimeFormat'] = "";
-   // gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
+   // JSROOTPainter.gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
    gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
    
    if (this.root_painter && this.root_painter.UpdateObject(gr)) {
@@ -1330,9 +1330,6 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
       if (this.painter != null) {
          this.painter.RedrawFrame();
       } else {
-//         if (gStyle) gStyle.AutoStat = true;
-//                else console.log("no gStyle");
-
          this.painter = JSROOTPainter.drawObjectInFrame(this.vis, this.obj);
          
          if (this.painter == -1) this.painter = null;
@@ -1569,7 +1566,7 @@ DABC.Manager = function(with_tree) {
    }
 
    // we could use ROOT drawing from beginning
-   gStyle.OptimizeDraw = true;
+   JSROOTPainter.gStyle.OptimizeDraw = true;
    
    return this;
 }
