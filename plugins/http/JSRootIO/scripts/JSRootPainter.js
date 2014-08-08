@@ -5,86 +5,6 @@
 
 // The "source_dir" variable is defined in JSRootInterface.js
 
-
-var tooltip = function() {
-   var id = 'tt';
-   var top = 3;
-   var left = 3;
-   var maxw = 150;
-   var speed = 10;
-   var timer = 20;
-   var endalpha = 95;
-   var alpha = 0;
-   var tt,t,c,b,h;
-   var ie = document.all ? true : false;
-   return {
-      show: function(v, w) {
-         if (tt == null) {
-            tt = document.createElement('div');
-            tt.setAttribute('id',id);
-            t = document.createElement('div');
-            t.setAttribute('id',id + 'top');
-            c = document.createElement('div');
-            c.setAttribute('id',id + 'cont');
-            b = document.createElement('div');
-            b.setAttribute('id',id + 'bot');
-            tt.appendChild(t);
-            tt.appendChild(c);
-            tt.appendChild(b);
-            document.body.appendChild(tt);
-            tt.style.opacity = 0;
-            tt.style.filter = 'alpha(opacity=0)';
-            document.onmousemove = this.pos;
-         }
-         tt.style.display = 'block';
-         c.innerHTML = v;
-         tt.style.width = w ? w + 'px' : 'auto';
-         tt.style.width = 'auto'; // let it be automatically resizing...
-         if (!w && ie) {
-            t.style.display = 'none';
-            b.style.display = 'none';
-            tt.style.width = tt.offsetWidth;
-            t.style.display = 'block';
-            b.style.display = 'block';
-         }
-         //if (tt.offsetWidth > maxw) { tt.style.width = maxw + 'px'; }
-         h = parseInt(tt.offsetHeight) + top;
-         clearInterval(tt.timer);
-         tt.timer = setInterval( function() { tooltip.fade(1) }, timer );
-      },
-      pos: function(e) {
-         var u = ie ? event.clientY + document.documentElement.scrollTop : e.pageY;
-         var l = ie ? event.clientX + document.documentElement.scrollLeft : e.pageX;
-         tt.style.top = u + 15 + 'px';//(u - h) + 'px';
-         tt.style.left = (l + left) + 'px';
-      },
-      fade: function(d) {
-         var a = alpha;
-         if ((a != endalpha && d == 1) || (a != 0 && d == -1)) {
-            var i = speed;
-            if (endalpha - a < speed && d == 1) {
-               i = endalpha - a;
-            }
-            else if (alpha < speed && d == -1) {
-               i = a;
-            }
-            alpha = a + (i * d);
-            tt.style.opacity = alpha * .01;
-            tt.style.filter = 'alpha(opacity=' + alpha + ')';
-         }
-         else {
-            clearInterval(tt.timer);
-            if (d == -1) { tt.style.display = 'none'; }
-         }
-      },
-      hide: function() {
-         if (tt == null) return;
-         clearInterval(tt.timer);
-         tt.timer = setInterval( function() { tooltip.fade(-1) }, timer );
-      }
-   };
-}();
-
 /**
  * @author alteredq / http://alteredqualia.com/
  * @author mr.doob / http://mrdoob.com/
@@ -96,7 +16,7 @@ var Detector = {
 };
 
 var gStyle = {
-      'Tooltip'       : 2,     // 0 - off, 1 - event info, 2 - full but may be slow
+      'Tooltip'       : 0,     // 0 - off, 1 - event info, 2 - full but may be slow
       'OptimizeDraw'  : false, // if true, drawing of 1-D histogram will be optimized to exclude too-many points
       'AutoStat'      : true,
       'OptStat'       : 1111,
@@ -131,13 +51,9 @@ var gStyle = {
       throw e1;
    }
 
-   var root_line_styles = new Array("", "", "3, 3", "1, 2", "3, 4, 1, 4",
-         "5, 3, 1, 3", "5, 3, 1, 3, 1, 3, 1, 3", "5, 5",
-         "5, 3, 1, 3, 1, 3", "20, 5", "20, 10, 1, 10", "1, 2");
-
    JSROOTPainter = {};
 
-   JSROOTPainter.version = '4.1 2014/05/12';
+   JSROOTPainter.version = '4.2 2014/08/08';
    
    // list of user painters, called with arguments painter(vis, obj, opt)
    JSROOTPainter.fUserPainters = null;
@@ -271,6 +187,10 @@ var gStyle = {
    
    // Initialize Custom colors
    JSROOTPainter.root_colors = JSROOTPainter.generateAllColors();
+
+   JSROOTPainter.root_line_styles = new Array("", "", "3, 3", "1, 2", "3, 4, 1, 4",
+         "5, 3, 1, 3", "5, 3, 1, 3, 1, 3, 1, 3", "5, 5",
+         "5, 3, 1, 3, 1, 3", "20, 5", "20, 10, 1, 10", "1, 2");
 
    //Initialize ROOT markers
    JSROOTPainter.root_markers = new Array('fcircle','fcircle', 'fcross', 'dcross', 'ocircle',
@@ -1269,7 +1189,6 @@ var gStyle = {
    }
 
 
-
    // try to write new drawHistogram1D, where recreation of all graphical objects
    // can be done in redraw methdod by switching one argument in the histogram
 
@@ -1373,6 +1292,7 @@ var gStyle = {
       // if selobj specified, painter with selected object will be redrawn
 
       if (!this.vis) return;
+      if (! 'painters' in this.vis) return;
 
       for (var n=0;n<this.vis['painters'].length;n++) {
 
@@ -1383,6 +1303,28 @@ var gStyle = {
          painter.Redraw();
       }
    }
+
+   JSROOTPainter.ObjectPainter.prototype.ClearFrame = function() {
+
+      var vis = this.vis; 
+
+      if (!vis) return;
+
+      for (var n=0;n<vis['painters'].length;n++) {
+
+         var painter = vis['painters'][n];
+         
+         painter.RemoveDraw();
+         painter.vis = null;
+         painter.frame = null;
+         painter.pad = null;
+      }
+      
+      delete vis['painters'];
+      
+      vis.empty();
+   }
+
 
    JSROOTPainter.ObjectPainter.prototype.RemoveDrag = function(id)
    {
@@ -1697,6 +1639,85 @@ var gStyle = {
       // add 3D mouse interactive functions
       var mouseX, mouseY, mouseDowned = false;
       var mouse = { x: 0, y: 0 }, INTERSECTED;
+      
+      var tooltip = function() {
+         var id = 'tt';
+         var top = 3;
+         var left = 3;
+         var maxw = 150;
+         var speed = 10;
+         var timer = 20;
+         var endalpha = 95;
+         var alpha = 0;
+         var tt,t,c,b,h;
+         var ie = document.all ? true : false;
+         return {
+            show: function(v, w) {
+               if (tt == null) {
+                  tt = document.createElement('div');
+                  tt.setAttribute('id',id);
+                  t = document.createElement('div');
+                  t.setAttribute('id',id + 'top');
+                  c = document.createElement('div');
+                  c.setAttribute('id',id + 'cont');
+                  b = document.createElement('div');
+                  b.setAttribute('id',id + 'bot');
+                  tt.appendChild(t);
+                  tt.appendChild(c);
+                  tt.appendChild(b);
+                  document.body.appendChild(tt);
+                  tt.style.opacity = 0;
+                  tt.style.filter = 'alpha(opacity=0)';
+                  document.onmousemove = this.pos;
+               }
+               tt.style.display = 'block';
+               c.innerHTML = v;
+               tt.style.width = w ? w + 'px' : 'auto';
+               tt.style.width = 'auto'; // let it be automatically resizing...
+               if (!w && ie) {
+                  t.style.display = 'none';
+                  b.style.display = 'none';
+                  tt.style.width = tt.offsetWidth;
+                  t.style.display = 'block';
+                  b.style.display = 'block';
+               }
+               //if (tt.offsetWidth > maxw) { tt.style.width = maxw + 'px'; }
+               h = parseInt(tt.offsetHeight) + top;
+               clearInterval(tt.timer);
+               tt.timer = setInterval( function() { tooltip.fade(1) }, timer );
+            },
+            pos: function(e) {
+               var u = ie ? event.clientY + document.documentElement.scrollTop : e.pageY;
+               var l = ie ? event.clientX + document.documentElement.scrollLeft : e.pageX;
+               tt.style.top = u + 15 + 'px';//(u - h) + 'px';
+               tt.style.left = (l + left) + 'px';
+            },
+            fade: function(d) {
+               var a = alpha;
+               if ((a != endalpha && d == 1) || (a != 0 && d == -1)) {
+                  var i = speed;
+                  if (endalpha - a < speed && d == 1) {
+                     i = endalpha - a;
+                  }
+                  else if (alpha < speed && d == -1) {
+                     i = a;
+                  }
+                  alpha = a + (i * d);
+                  tt.style.opacity = alpha * .01;
+                  tt.style.filter = 'alpha(opacity=' + alpha + ')';
+               }
+               else {
+                  clearInterval(tt.timer);
+                  if (d == -1) { tt.style.display = 'none'; }
+               }
+            },
+            hide: function() {
+               if (tt == null) return;
+               clearInterval(tt.timer);
+               tt.timer = setInterval( function() { tooltip.fade(-1) }, timer );
+            }
+         };
+      }();
 
       var radius = 100;
       var theta = 0;
@@ -2119,7 +2140,7 @@ var gStyle = {
            .attr("d", line(pthis.bins))
            .style("stroke", linecolor)
            .style("stroke-width", pthis.tf1['fLineWidth'])
-           .style("stroke-dasharray", root_line_styles[pthis.tf1['fLineStyle']])
+           .style("stroke-dasharray", JSROOTPainter.root_line_styles[pthis.tf1['fLineStyle']])
            .style("fill", "none");
 
       if (fillcolor!="none")
@@ -2683,7 +2704,7 @@ var gStyle = {
             .attr("class", "draw_line")
             .style("stroke", (pthis.optionLine == 1) ? JSROOTPainter.root_colors[pthis.graph['fLineColor']] : "none")
             .style("stroke-width", pthis.bins_lw)
-            .style("stroke-dasharray", root_line_styles[pthis.graph['fLineStyle']])
+            .style("stroke-dasharray", JSROOTPainter.root_line_styles[pthis.graph['fLineStyle']])
             .style("fill", (pthis.optionFill == 1) ? JSROOTPainter.root_colors[pthis.graph['fFillColor']] : "none");
 
          if (gStyle.Tooltip > 1)
@@ -3538,7 +3559,7 @@ var gStyle = {
          .attr("y2", 0)
          .style("stroke", "black")
          .style("stroke-width", this.histo['fLineWidth'])
-         .style("stroke-dasharray", root_line_styles[11]);
+         .style("stroke-dasharray", JSROOTPainter.root_line_styles[11]);
       }
 
       // add a grid on y axis, if the option is set
@@ -3555,7 +3576,7 @@ var gStyle = {
          .attr("y2", this.y)
          .style("stroke", "black")
          .style("stroke-width", this.histo['fLineWidth'])
-         .style("stroke-dasharray", root_line_styles[11]);
+         .style("stroke-dasharray", JSROOTPainter.root_line_styles[11]);
       }
    }
 
@@ -5123,7 +5144,7 @@ var gStyle = {
            .style("stroke", this.linecolor)
            .style("stroke-width", this.histo['fLineWidth'])
            .style("fill", "none")
-           .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? root_line_styles[this.histo['fLineStyle']] : null)
+           .style("stroke-dasharray", this.histo['fLineStyle'] > 1 ? JSROOTPainter.root_line_styles[this.histo['fLineStyle']] : null)
            .style("antialias", "false");
       }
 
@@ -5267,7 +5288,6 @@ var gStyle = {
 
    JSROOTPainter.Hist2DPainter = function(histo) {
       JSROOTPainter.HistPainter.call(this, histo);
-      this.is3D = false;
       this.paletteColors = [];
    }
 
@@ -5278,10 +5298,7 @@ var gStyle = {
    {
       JSROOTPainter.HistPainter.prototype.FillContextMenu.call(this, menu);
       this.AddMenuItem(menu,"Auto zoom-in","autozoom");
-      if (this.is3D)
-         this.AddMenuItem(menu,"Draw in 2D","draw2d");
-      else
-         this.AddMenuItem(menu,"Draw in 3D","draw3d");
+      this.AddMenuItem(menu,"Draw in 3D","draw3d");
       this.AddMenuItem(menu,"Toggle col","col");
 
       if (this.options.Color > 0)
@@ -5289,15 +5306,9 @@ var gStyle = {
    }
 
    JSROOTPainter.Hist2DPainter.prototype.ExeContextMenu = function(cmd) {
-      if (cmd == "draw2d") {
-         this.is3D = false;
-         this.RedrawFrame();
-         return;
-      }
 
       if (cmd == "draw3d") {
-         this.is3D = true;
-         this.RedrawFrame();
+         this.Draw3D();
          return;
       }
 
@@ -5908,21 +5919,14 @@ var gStyle = {
       return painter;
    }
 
-   JSROOTPainter.Hist2DPainter.prototype.Redraw = function() {
-      if (!this.is3D) {
-         JSROOTPainter.HistPainter.prototype.Redraw.call(this);
-         return;
-      }
-
-      this.Draw3D();
-   }
-
-
    JSROOTPainter.Hist2DPainter.prototype.Draw3D = function()
    {
-      this.RemoveDraw();
+      var vis = this.vis;
+      var frame = this.frame;
+   
+      this.ClearFrame();
 
-      var w = Number(this.frame.attr("width")), h = Number(this.frame.attr("height")), size = 100;
+      var w = Number(frame.attr("width")), h = Number(frame.attr("height")), size = 100;
 
       var xmin = this.xmin, xmax = this.xmax;
       if (this.zoom_xmin != this.zoom_xmax) { xmin = this.zoom_xmin; xmax = this.zoom_xmax; }
@@ -6149,7 +6153,7 @@ var gStyle = {
       var renderer = Detector.webgl ? new THREE.WebGLRenderer( { antialias: true } ) :
                      new THREE.CanvasRenderer( { antialias: true } );
       renderer.setSize( w, h );
-      $( this.vis[0][0] ).hide().parent().append( renderer.domElement );
+      $( vis[0][0] ).hide().parent().append( renderer.domElement );
       renderer.render( scene, camera );
 
       JSROOTPainter.add3DInteraction(renderer, scene, camera, toplevel);
@@ -6652,7 +6656,7 @@ var gStyle = {
 
          var line_color = JSROOTPainter.root_colors[leg['fLineColor']];
          var line_width = leg['fLineWidth'];
-         var line_style = root_line_styles[leg['fLineStyle']];
+         var line_style = JSROOTPainter.root_line_styles[leg['fLineStyle']];
 
          var fill_color = leg['fFillColor'];
          var fill_style = leg['fFillStyle'];
@@ -6663,26 +6667,21 @@ var gStyle = {
 
          var mo = leg['fObject'];
 
-//         if (mo!=null)
-//            console.log("Draw legend " + string + " lopt " + lopt + "  obj " + mo['_typename']);
-
-         if ((typeof mo) != 'object') mo = null;
-
-         if ((mo!=null) && ('fLineColor' in mo)) {
-            line_color = JSROOTPainter.root_colors[mo['fLineColor']];
-            line_width = mo['fLineWidth'];
-            line_style = root_line_styles[mo['fLineStyle']];
-         }
-
-         if ((mo!=null) && ('fFillColor' in mo)) {
-            fill_color = mo['fFillColor'];
-            fill_style = mo['fFillStyle'];
-         }
-
-         if ((mo!=null) && ('fMarkerColor' in mo)) {
-            marker_color = JSROOTPainter.root_colors[mo['fMarkerColor']];
-            marker_size = mo['fMarkerSize'];
-            marker_style = mo['fMarkerStyle'];
+         if ((mo!=null) && (typeof mo == 'object')) {
+            if ('fLineColor' in mo) {
+               line_color = JSROOTPainter.root_colors[mo['fLineColor']];
+               line_width = mo['fLineWidth'];
+               line_style = JSROOTPainter.root_line_styles[mo['fLineStyle']];
+            }
+            if ('fFillColor' in mo) {
+               fill_color = mo['fFillColor'];
+               fill_style = mo['fFillStyle'];
+            }
+            if ('fMarkerColor' in mo) {
+               marker_color = JSROOTPainter.root_colors[mo['fMarkerColor']];
+               marker_size = mo['fMarkerSize'];
+               marker_style = mo['fMarkerStyle'];
+            }
          }
 
          p.append("text")
