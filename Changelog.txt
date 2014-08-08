@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+8.08.2014
+1. Remove most global variables and functions from JSRootPainter.js
+
+
 7.08.2014
 1. First working version of JSROOTPainter.HPainter. It should decouple
    data manipulation from drawing. Later should be possible to change

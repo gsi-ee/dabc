@@ -95,316 +95,6 @@ var Detector = {
    workers: !! window.Worker, fileapi: window.File && window.FileReader && window.FileList && window.Blob
 };
 
-/*
- * Function that generates all root colors
- */
-function generateAllColors () {
-   var colorMap = new Array(
-      'rgb(255, 255, 255)',
-      'rgb(0, 0, 0)',
-      'rgb(255, 0, 0)',
-      'rgb(0, 255, 0)',
-      'rgb(0, 0, 255)',
-      'rgb(255, 255, 0)',
-      'rgb(255, 0, 255)',
-      'rgb(0, 255, 255)',
-      'rgb(89, 211, 84)',
-      'rgb(89, 84, 216)',
-      'rgb(254, 254, 254)',
-      'rgb(191, 181, 173)',
-      'rgb(76, 76, 76)',
-      'rgb(102, 102, 102)',
-      'rgb(127, 127, 127)',
-      'rgb(153, 153, 153)',
-      'rgb(178, 178, 178)',
-      'rgb(204, 204, 204)',
-      'rgb(229, 229, 229)',
-      'rgb(242, 242, 242)',
-      'rgb(204, 198, 170)',
-      'rgb(204, 198, 170)',
-      'rgb(193, 191, 168)',
-      'rgb(186, 181, 163)',
-      'rgb(178, 165, 150)',
-      'rgb(183, 163, 155)',
-      'rgb(173, 153, 140)',
-      'rgb(155, 142, 130)',
-      'rgb(135, 102, 86)',
-      'rgb(175, 206, 198)',
-      'rgb(132, 193, 163)',
-      'rgb(137, 168, 160)',
-      'rgb(130, 158, 140)',
-      'rgb(173, 188, 198)',
-      'rgb(122, 142, 153)',
-      'rgb(117, 137, 145)',
-      'rgb(104, 130, 150)',
-      'rgb(109, 122, 132)',
-      'rgb(124, 153, 209)',
-      'rgb(127, 127, 155)',
-      'rgb(170, 165, 191)',
-      'rgb(211, 206, 135)',
-      'rgb(221, 186, 135)',
-      'rgb(188, 158, 130)',
-      'rgb(198, 153, 124)',
-      'rgb(191, 130, 119)',
-      'rgb(206, 94, 96)',
-      'rgb(170, 142, 147)',
-      'rgb(165, 119, 122)',
-      'rgb(147, 104, 112)',
-      'rgb(211, 89, 84)');
-
-   var circleColors = [632, 416, 600, 400, 616, 432];
-
-   var rectangleColors = [800, 820, 840, 860, 880, 900];
-
-   var set1 = [ 255,204,204, 255,153,153, 204,153,153, 255,102,102, 204,102,102
-               ,153,102,102, 255, 51, 51, 204, 51, 51, 153, 51, 51, 102, 51, 51
-               ,255,  0,  0, 204,  0,  0, 153,  0,  0, 102,  0,  0,  51,  0,  0];
-   var set2 = [ 204,255,204, 153,255,153, 153,204,153, 102,255,102, 102,204,102
-               ,102,153,102, 51,255, 51,  51,204, 51,  51,153, 51,  51,102, 51
-               ,  0,255,  0,   0,204,  0,   0,153,  0,   0,102,  0,  0, 51,  0];
-   var set3 = [ 204,204,255, 153,153,255, 153,153,204, 102,102,255, 102,102,204
-               ,102,102,153,  51, 51,255,  51, 51,204,  51, 51,153,  51, 51,102
-               ,  0,  0,255,   0,  0,204,   0,  0,153,   0,  0,102,   0,  0, 51];
-   var set4 = [ 255,255,204, 255,255,153, 204,204,153, 255,255,102, 204,204,102
-               ,153,153,102, 255,255, 51, 204,204, 51, 153,153, 51, 102,102, 51
-               ,255,255,  0, 204,204,  0, 153,153,  0, 102,102,  0,  51, 51,  0];
-   var set5 = [ 255,204,255, 255,153,255, 204,153,204, 255,102,255, 204,102,204
-               ,153,102,153, 255, 51,255, 204, 51,204, 153, 51,153, 102, 51,102
-               ,255,  0,255, 204,  0,204, 153,  0,153, 102,  0,102,  51,  0, 51];
-   var set6 = [ 204,255,255, 153,255,255, 153,204,204, 102,255,255, 102,204,204
-               ,102,153,153,  51,255,255,  51,204,204,  51,153,153,  51,102,102
-               ,  0,255,255,   0,204,204,   0,153,153,   0,102,102,   0, 51,  51];
-
-   var circleSets = new Array(set1, set2, set3, set4, set5, set6);
-
-   var set7 = [ 255,204,153,  204,153,102,  153,102, 51,  153,102,  0,  204,153, 51
-                ,255,204,102,  255,153,  0,  255,204, 51,  204,153,  0,  255,204,  0
-                ,255,153, 51,  204,102,  0,  102, 51,  0,  153, 51,  0,  204,102, 51
-                ,255,153,102,  255,102,  0,  255,102, 51,  204, 51,  0,  255, 51,  0];
-   var set8 = [ 153,255, 51,  102,204,  0,   51,102,  0,   51,153,  0,  102,204, 51
-               ,153,255,102,  102,255,  0,  102,255, 51,   51,204,  0,   51,255, 0
-               ,204,255,153,  153,204,102,  102,153, 51,  102,153,  0,  153,204, 51
-               ,204,255,102,  153,255,  0,  204,255, 51,  153,204,  0,  204,255,  0];
-   var set9 = [ 153,255,204,  102,204,153,   51,153,102,    0,153,102,   51,204,153
-               ,102,255,204,    0,255,102,   51,255,204,    0,204,153,    0,255,204
-               , 51,255,153,    0,204,102,    0,102, 51,    0,153, 51,   51,204,102
-               ,102,255,153,    0,255,153,   51,255,102,    0,204, 51,    0,255, 51];
-   var set10 = [153,204,255,  102,153,204,   51,102,153,    0, 51,153,   51,102,204
-               ,102,153,255,    0,102,255,   51,102,255,    0, 51,204,    0, 51,255
-               , 51,153,255,    0,102,204,    0, 51,102,    0,102,153,   51,153,204
-               ,102,204,255,    0,153,255,   51,204,255,    0,153,204,    0,204,255];
-   var set11 = [204,153,255,  153,102,204,  102, 51,153,  102,  0,153,  153, 51,204
-               ,204,102,255,  153,  0,255,  204, 51,255,  153,  0,204,  204,  0,255
-               ,153, 51,255,  102,  0,204,   51,  0,102,   51,  0,153,  102, 51,204
-               ,153,102,255,  102,  0,255,  102, 51,255,   51,  0,204,   51,  0,255];
-   var set12 = [255, 51,153,  204,  0,102,  102,  0, 51,  153,  0, 51,  204, 51,102
-               ,255,102,153,  255,  0,102,  255, 51,102,  204,  0, 51,  255,  0, 51
-               ,255,153,204,  204,102,153,  153, 51,102,  153,  0,102,  204, 51,153
-               ,255,102,204,  255,  0,153,  204,  0,153,  255, 51,204,  255,  0,153];
-
-   var rectSets = new Array(set7, set8, set9, set10, set11, set12);
-
-   /*
-    * Define circle colors
-    */
-   for(var i = 0; i < 6; i++) {
-      for(var j = 0; j < 15; j++) {
-         var colorn = circleColors[i] + j - 10;
-         colorMap[colorn] = 'rgb(' + circleSets[i][3*j] + ', ' + circleSets[i][3*j+1] + ', ' + circleSets[i][3*j+2] + ')';
-         colorn = rectangleColors[i] + j - 9;
-         colorMap[colorn] = 'rgb('+ rectSets[i][3*j] + ', ' + rectSets[i][3*j+1] + ', ' + rectSets[i][3*j+2] + ')';
-      }
-    }
-    return colorMap;
-};
-
-function getFontDetails(fontName) {
-   var weight = "";
-   var style = "";
-   var name = "Arial";
-
-   if (fontName==null) fontName = "";
-
-   if (fontName.indexOf("bold") != -1) {
-      weight = "bold";
-      //The first 5 characters are removed because "bold " is always first when it occurs
-      fontName = fontName.substring(5, fontName.length);
-   }
-   if (fontName.charAt(0) == 'i') {
-      style = "italic";
-      fontName = fontName.substring(7, fontName.length);
-   }
-   else if (fontName.charAt(0) == 'o') {
-      style = "oblique";
-      fontName = fontName.substring(8, fontName.length);
-   }
-   if (name == 'Symbol') {
-      weight = "";
-      style = "";
-   }
-   return {
-      'weight' : weight,
-      'style'  : style,
-      'name'   : fontName
-   };
-};
-
-/*
- * Function that returns the SVG symbol type identifier for a given root matker
- * The result is an array with 3 elements:
- *    the first is the identifier of the root marker in the SVG symbols
- *    the second is true if the shape is filled and false if it is open
- *    the third is true if the shape should be rotated
- * The identifier will be 6 if the shape is a star or 7 if it is '*'
- */
-function getRootMarker(markers, i) {
-   var marker = markers[i];
-   var shape = 0;
-   var toFill = true;
-   var toRotate = false;
-
-   if (typeof(marker) != 'undefined') {
-      var fst = marker.charAt(0);
-      switch (fst) {
-         case 'd':
-            shape = 7;
-            return {'shape' : shape};
-         case 'o':
-            toFill = false;
-            break;
-         case 'g':
-            toRotate = true;
-      }
-
-      var type = marker.substr(1, marker.length);
-      switch (type) {
-         case "circle":
-            shape = 0;
-            break;
-         case "cross":
-            shape = 1;
-            break;
-         case "diamond":
-            shape = 2;
-            break;
-         case "square":
-            shape = 3;
-            break;
-         case "triangle-up":
-            shape = 4;
-            break;
-         case "triangle-down":
-            shape = 5;
-            break;
-         case "star":
-            shape = 6;
-            break;
-      };
-   }
-   return {
-      'shape'    : shape,
-      'toFill'   : toFill,
-      'toRotate' : toRotate
-   };
-};
-
-function format_id(id) {
-   /* format the string id to remove specials characters
-      (that cannot be used in id strings) */
-   var g_id = id;
-   if (g_id == "") g_id = "random_histo_" + JSROOTCore.id_counter++;
-   while (g_id.indexOf(' ') != -1)
-      g_id = g_id.replace(' ', '_');
-   while (g_id.indexOf(':') != -1)
-      g_id = g_id.replace(':', '_');
-   while (g_id.indexOf('.') != -1)
-      g_id = g_id.replace('.', '_');
-   while (g_id.indexOf('>') != -1)
-      g_id = g_id.replace('>', 'gt');
-   while (g_id.indexOf('<') != -1)
-      g_id = g_id.replace('<', 'lt');
-   while (g_id.indexOf('\\') != -1)
-      g_id = g_id.replace('\\', '');
-   while (g_id.indexOf('\'') != -1)
-      g_id = g_id.replace('\'', '');
-   while (g_id.indexOf('(') != -1)
-      g_id = g_id.replace('(', '_');
-   while (g_id.indexOf(')') != -1)
-      g_id = g_id.replace(')', '_');
-   while (g_id.indexOf('/') != -1)
-      g_id = g_id.replace('/', '_');
-   while (g_id.indexOf('-') != -1)
-      g_id = g_id.replace('-', '_');
-   while (g_id.indexOf('[') != -1)
-      g_id = g_id.replace('[', '_');
-   while (g_id.indexOf(']') != -1)
-      g_id = g_id.replace(']', '_');
-   return g_id;
-};
-
-/*
-    Polyfill for touch dblclick
-    http://mckamey.mit-license.org
-*/
-function doubleTap(elem, speed, distance) {
-   if (!('ontouchstart' in elem)) {
-      // non-touch has native dblclick and no need for polyfill
-      return;
-   }
-   // default dblclick speed to half sec
-   speed = Math.abs(+speed) || 500;//ms
-   // default dblclick distance to within 40x40 area
-   distance = Math.abs(+distance) || 40;//px
-
-   var taps, x, y;
-   var reset = function() {
-      // reset state
-      taps = 0;
-      x = NaN;
-      y = NaN;
-   };
-   reset();
-
-   elem.addEventListener('touchstart', function(e) {
-      var touch = e.changedTouches[0] || {}, oldX = x, oldY = y;
-
-      taps++;
-      x = +touch.pageX || +touch.clientX || +touch.screenX;
-      y = +touch.pageY || +touch.clientY || +touch.screenY;
-
-      // NaN will always be false
-      if (Math.abs(oldX-x) < distance && Math.abs(oldY-y) < distance) {
-         // fire dblclick event
-         var e2 = document.createEvent('MouseEvents');
-         if (e2.initMouseEvent) {
-             e2.initMouseEvent(
-                 'dblclick',
-                 true,                   // dblclick bubbles
-                 true,                   // dblclick cancelable
-                 e.view,                 // copy view
-                 taps,                   // click count
-                 touch.screenX,          // copy coordinates
-                 touch.screenY,
-                 touch.clientX,
-                 touch.clientY,
-                 e.ctrlKey,              // copy key modifiers
-                 e.altKey,
-                 e.shiftKey,
-                 e.metaKey,
-                 e.button,               // copy button 0: left, 1: middle, 2: right
-                 touch.target);          // copy target
-         }
-         elem.dispatchEvent(e2);
-      }
-      setTimeout(reset, speed);
-   }, false);
-
-   elem.addEventListener('touchmove', function(e) {
-      reset();
-   }, false);
-};
-
-
 var gStyle = {
       'Tooltip'       : 2,     // 0 - off, 1 - event info, 2 - full but may be slow
       'OptimizeDraw'  : false, // if true, drawing of 1-D histogram will be optimized to exclude too-many points
@@ -441,27 +131,8 @@ var gStyle = {
       throw e1;
    }
 
-   // Initialize Custom colors
-   var root_colors = generateAllColors();
-
    // Initialize colors of the default palette
    var default_palette = new Array();
-
-   //Initialize ROOT markers
-   var root_markers = new Array('fcircle','fcircle', 'fcross', 'dcross', 'ocircle',
-      'gcross', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
-      'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
-      'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fsquare', 'ftriangle-up',
-      'ftriangle-down', 'ocircle', 'osquare', 'otriangle-up', 'odiamond',
-      'ocross', 'fstar', 'ostar', 'dcross', 'otriangle-down', 'fdiamond',
-      'fcross');
-
-   var root_fonts = new Array('Arial', 'Times New Roman',
-      'bold Times New Roman', 'bold italic Times New Roman',
-      'Arial', 'oblique Arial', 'bold Arial', 'bold oblique Arial',
-      'Courier New', 'oblique Courier New', 'bold Courier New',
-      'bold oblique Courier New', 'Symbol', 'Times New Roman',
-      'Wingdings', 'Symbol');
 
    var root_line_styles = new Array("", "", "3, 3", "1, 2", "3, 4, 1, 4",
          "5, 3, 1, 3", "5, 3, 1, 3, 1, 3, 1, 3", "5, 5",
@@ -470,22 +141,207 @@ var gStyle = {
    JSROOTPainter = {};
 
    JSROOTPainter.version = '4.1 2014/05/12';
-
-   JSROOTPainter.d3v3 = (d3.version.charAt(0) == '3');
-
-   // if (JSROOTPainter.d3v3) console.log("d3_v3_js"); else console.log("d3_v2_js");
-
-   JSROOTPainter.fUserPainters = null; // list of user painters, called with arguments painter(vis, obj, opt)
-
-   /*
-    * Helper functions
-    */
-
-   JSROOTPainter.addUserPainter = function(class_name, user_painter)
-   {
+   
+   // list of user painters, called with arguments painter(vis, obj, opt)
+   JSROOTPainter.fUserPainters = null;
+   
+   JSROOTPainter.addUserPainter = function(class_name, user_painter) {
       if (this.fUserPainters == null) this.fUserPainters = {};
       this.fUserPainters[class_name] = user_painter;
    }
+    
+
+   /** Function that generates all root colors */
+   JSROOTPainter.generateAllColors = function () {
+      var colorMap = new Array(
+            'rgb(255, 255, 255)',
+            'rgb(0, 0, 0)',
+            'rgb(255, 0, 0)',
+            'rgb(0, 255, 0)',
+            'rgb(0, 0, 255)',
+            'rgb(255, 255, 0)',
+            'rgb(255, 0, 255)',
+            'rgb(0, 255, 255)',
+            'rgb(89, 211, 84)',
+            'rgb(89, 84, 216)',
+            'rgb(254, 254, 254)',
+            'rgb(191, 181, 173)',
+            'rgb(76, 76, 76)',
+            'rgb(102, 102, 102)',
+            'rgb(127, 127, 127)',
+            'rgb(153, 153, 153)',
+            'rgb(178, 178, 178)',
+            'rgb(204, 204, 204)',
+            'rgb(229, 229, 229)',
+            'rgb(242, 242, 242)',
+            'rgb(204, 198, 170)',
+            'rgb(204, 198, 170)',
+            'rgb(193, 191, 168)',
+            'rgb(186, 181, 163)',
+            'rgb(178, 165, 150)',
+            'rgb(183, 163, 155)',
+            'rgb(173, 153, 140)',
+            'rgb(155, 142, 130)',
+            'rgb(135, 102, 86)',
+            'rgb(175, 206, 198)',
+            'rgb(132, 193, 163)',
+            'rgb(137, 168, 160)',
+            'rgb(130, 158, 140)',
+            'rgb(173, 188, 198)',
+            'rgb(122, 142, 153)',
+            'rgb(117, 137, 145)',
+            'rgb(104, 130, 150)',
+            'rgb(109, 122, 132)',
+            'rgb(124, 153, 209)',
+            'rgb(127, 127, 155)',
+            'rgb(170, 165, 191)',
+            'rgb(211, 206, 135)',
+            'rgb(221, 186, 135)',
+            'rgb(188, 158, 130)',
+            'rgb(198, 153, 124)',
+            'rgb(191, 130, 119)',
+            'rgb(206, 94, 96)',
+            'rgb(170, 142, 147)',
+            'rgb(165, 119, 122)',
+            'rgb(147, 104, 112)',
+      'rgb(211, 89, 84)');
+
+      var circleColors = [632, 416, 600, 400, 616, 432];
+
+      var rectangleColors = [800, 820, 840, 860, 880, 900];
+
+      var set1 = [ 255,204,204, 255,153,153, 204,153,153, 255,102,102, 204,102,102
+                   ,153,102,102, 255, 51, 51, 204, 51, 51, 153, 51, 51, 102, 51, 51
+                   ,255,  0,  0, 204,  0,  0, 153,  0,  0, 102,  0,  0,  51,  0,  0];
+      var set2 = [ 204,255,204, 153,255,153, 153,204,153, 102,255,102, 102,204,102
+                   ,102,153,102, 51,255, 51,  51,204, 51,  51,153, 51,  51,102, 51
+                   ,  0,255,  0,   0,204,  0,   0,153,  0,   0,102,  0,  0, 51,  0];
+      var set3 = [ 204,204,255, 153,153,255, 153,153,204, 102,102,255, 102,102,204
+                   ,102,102,153,  51, 51,255,  51, 51,204,  51, 51,153,  51, 51,102
+                   ,  0,  0,255,   0,  0,204,   0,  0,153,   0,  0,102,   0,  0, 51];
+      var set4 = [ 255,255,204, 255,255,153, 204,204,153, 255,255,102, 204,204,102
+                   ,153,153,102, 255,255, 51, 204,204, 51, 153,153, 51, 102,102, 51
+                   ,255,255,  0, 204,204,  0, 153,153,  0, 102,102,  0,  51, 51,  0];
+      var set5 = [ 255,204,255, 255,153,255, 204,153,204, 255,102,255, 204,102,204
+                   ,153,102,153, 255, 51,255, 204, 51,204, 153, 51,153, 102, 51,102
+                   ,255,  0,255, 204,  0,204, 153,  0,153, 102,  0,102,  51,  0, 51];
+      var set6 = [ 204,255,255, 153,255,255, 153,204,204, 102,255,255, 102,204,204
+                   ,102,153,153,  51,255,255,  51,204,204,  51,153,153,  51,102,102
+                   ,  0,255,255,   0,204,204,   0,153,153,   0,102,102,   0, 51,  51];
+
+      var circleSets = new Array(set1, set2, set3, set4, set5, set6);
+
+      var set7 = [ 255,204,153,  204,153,102,  153,102, 51,  153,102,  0,  204,153, 51
+                   ,255,204,102,  255,153,  0,  255,204, 51,  204,153,  0,  255,204,  0
+                   ,255,153, 51,  204,102,  0,  102, 51,  0,  153, 51,  0,  204,102, 51
+                   ,255,153,102,  255,102,  0,  255,102, 51,  204, 51,  0,  255, 51,  0];
+      var set8 = [ 153,255, 51,  102,204,  0,   51,102,  0,   51,153,  0,  102,204, 51
+                   ,153,255,102,  102,255,  0,  102,255, 51,   51,204,  0,   51,255, 0
+                   ,204,255,153,  153,204,102,  102,153, 51,  102,153,  0,  153,204, 51
+                   ,204,255,102,  153,255,  0,  204,255, 51,  153,204,  0,  204,255,  0];
+      var set9 = [ 153,255,204,  102,204,153,   51,153,102,    0,153,102,   51,204,153
+                   ,102,255,204,    0,255,102,   51,255,204,    0,204,153,    0,255,204
+                   , 51,255,153,    0,204,102,    0,102, 51,    0,153, 51,   51,204,102
+                   ,102,255,153,    0,255,153,   51,255,102,    0,204, 51,    0,255, 51];
+      var set10 = [153,204,255,  102,153,204,   51,102,153,    0, 51,153,   51,102,204
+                   ,102,153,255,    0,102,255,   51,102,255,    0, 51,204,    0, 51,255
+                   , 51,153,255,    0,102,204,    0, 51,102,    0,102,153,   51,153,204
+                   ,102,204,255,    0,153,255,   51,204,255,    0,153,204,    0,204,255];
+      var set11 = [204,153,255,  153,102,204,  102, 51,153,  102,  0,153,  153, 51,204
+                   ,204,102,255,  153,  0,255,  204, 51,255,  153,  0,204,  204,  0,255
+                   ,153, 51,255,  102,  0,204,   51,  0,102,   51,  0,153,  102, 51,204
+                   ,153,102,255,  102,  0,255,  102, 51,255,   51,  0,204,   51,  0,255];
+      var set12 = [255, 51,153,  204,  0,102,  102,  0, 51,  153,  0, 51,  204, 51,102
+                   ,255,102,153,  255,  0,102,  255, 51,102,  204,  0, 51,  255,  0, 51
+                   ,255,153,204,  204,102,153,  153, 51,102,  153,  0,102,  204, 51,153
+                   ,255,102,204,  255,  0,153,  204,  0,153,  255, 51,204,  255,  0,153];
+
+      var rectSets = new Array(set7, set8, set9, set10, set11, set12);
+
+      /*
+       * Define circle colors
+       */
+      for(var i = 0; i < 6; i++) {
+         for(var j = 0; j < 15; j++) {
+            var colorn = circleColors[i] + j - 10;
+            colorMap[colorn] = 'rgb(' + circleSets[i][3*j] + ', ' + circleSets[i][3*j+1] + ', ' + circleSets[i][3*j+2] + ')';
+            colorn = rectangleColors[i] + j - 9;
+            colorMap[colorn] = 'rgb('+ rectSets[i][3*j] + ', ' + rectSets[i][3*j+1] + ', ' + rectSets[i][3*j+2] + ')';
+         }
+      }
+      return colorMap;
+   };
+   
+   // Initialize Custom colors
+   JSROOTPainter.root_colors = JSROOTPainter.generateAllColors();
+
+   //Initialize ROOT markers
+   JSROOTPainter.root_markers = new Array('fcircle','fcircle', 'fcross', 'dcross', 'ocircle',
+      'gcross', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
+      'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
+      'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fsquare', 'ftriangle-up',
+      'ftriangle-down', 'ocircle', 'osquare', 'otriangle-up', 'odiamond',
+      'ocross', 'fstar', 'ostar', 'dcross', 'otriangle-down', 'fdiamond',
+      'fcross');
+
+
+   /** Function that returns the SVG symbol type identifier for a given root matker
+    * The result is an array with 3 elements:
+    *    the first is the identifier of the root marker in the SVG symbols
+    *    the second is true if the shape is filled and false if it is open
+    *    the third is true if the shape should be rotated
+    * The identifier will be 6 if the shape is a star or 7 if it is '*'
+    */
+   JSROOTPainter.getRootMarker = function(i) {
+      var marker = JSROOTPainter.root_markers[i];
+      var shape = 0;
+      var toFill = true;
+      var toRotate = false;
+
+      if (typeof(marker) != 'undefined') {
+         var fst = marker.charAt(0);
+         switch (fst) {
+         case 'd':
+            shape = 7;
+            return {'shape' : shape};
+         case 'o':
+            toFill = false;
+            break;
+         case 'g':
+            toRotate = true;
+         }
+
+         var type = marker.substr(1, marker.length);
+         switch (type) {
+         case "circle":
+            shape = 0;
+            break;
+         case "cross":
+            shape = 1;
+            break;
+         case "diamond":
+            shape = 2;
+            break;
+         case "square":
+            shape = 3;
+            break;
+         case "triangle-up":
+            shape = 4;
+            break;
+         case "triangle-down":
+            shape = 5;
+            break;
+         case "star":
+            shape = 6;
+            break;
+         };
+      }
+      return {
+         'shape'    : shape,
+         'toFill'   : toFill,
+         'toRotate' : toRotate
+      };
+   };
 
    JSROOTPainter.clearCuts = function(chopt) {
       /* decode string "chopt" and remove graphical cuts */
@@ -500,7 +356,6 @@ var gStyle = {
    };
 
    JSROOTPainter.decodeOptions = function(opt, histo, pad) {
-
       /* decode string 'opt' and fill the option structure */
       var hdim = 1; // histo['fDimension'];
       if (histo['_typename'].match(/\bJSROOTIO.TH2/)) hdim = 2;
@@ -801,10 +656,47 @@ var gStyle = {
 
       return option;
    };
+   
+   JSROOTPainter.root_fonts = new Array('Arial', 'Times New Roman',
+      'bold Times New Roman', 'bold italic Times New Roman',
+      'Arial', 'oblique Arial', 'bold Arial', 'bold oblique Arial',
+      'Courier New', 'oblique Courier New', 'bold Courier New',
+      'bold oblique Courier New', 'Symbol', 'Times New Roman',
+      'Wingdings', 'Symbol');
+   
+   JSROOTPainter.getFontDetails = function(fontIndex) {
+   
+      var fontName = JSROOTPainter.root_fonts[Math.floor(fontIndex/10)];
+   
+      var weight = "";
+      var style = "";
+      var name = "Arial";
 
-   JSROOTPainter.getRootColor = function(color) {
-      return root_colors[color];
-   }
+      if (fontName==null) fontName = "";
+
+      if (fontName.indexOf("bold") != -1) {
+         weight = "bold";
+         //The first 5 characters are removed because "bold " is always first when it occurs
+         fontName = fontName.substring(5, fontName.length);
+      }
+      if (fontName.charAt(0) == 'i') {
+         style = "italic";
+         fontName = fontName.substring(7, fontName.length);
+      }
+      else if (fontName.charAt(0) == 'o') {
+         style = "oblique";
+         fontName = fontName.substring(8, fontName.length);
+      }
+      if (name == 'Symbol') {
+         weight = "";
+         style = "";
+      }
+      return {
+         'weight' : weight,
+         'style'  : style,
+         'name'   : fontName
+      };
+   };
 
    JSROOTPainter.createFillPattern = function (svg, pattern, color) {
       // create fill pattern - only if they don't exists yet
@@ -814,7 +706,7 @@ var gStyle = {
 
       if (document.getElementById(id) != null) return id;
 
-      var line_color = JSROOTPainter.getRootColor(color);
+      var line_color = JSROOTPainter.root_colors[color];
 
       switch (pattern) {
          case 3001:
@@ -1432,7 +1324,6 @@ var gStyle = {
 
       if (!('painters' in vis)) {
          vis['painters'] = new Array();
-         doubleTap(vis[0][0]); // ????
 
          // only first object in list can have zoom selection
          // create dummy here and not need to check if it exists or not
@@ -1925,7 +1816,7 @@ var gStyle = {
       if (frame) {
          bordermode = frame['fBorderMode'];
          bordersize = frame['fBorderSize'];
-         linecolor = root_colors[frame['fLineColor']];
+         linecolor = JSROOTPainter.root_colors[frame['fLineColor']];
          linestyle = frame['fLineStyle'];
          linewidth = frame['fLineWidth'];
          if (pad) {
@@ -1955,13 +1846,13 @@ var gStyle = {
             w -= (lm + rm);
             h -= (tm + bm);
          }
-         framecolor = root_colors[frame['fFillColor']];
+         framecolor = JSROOTPainter.root_colors[frame['fFillColor']];
          if (frame['fFillStyle'] > 4000 && frame['fFillStyle'] < 4100)
             framecolor = 'none';
       }
       else {
          if (pad) {
-            framecolor = root_colors[pad['fFrameFillColor']];
+            framecolor = JSROOTPainter.root_colors[pad['fFrameFillColor']];
             if (pad['fFrameFillStyle'] > 4000 && pad['fFrameFillStyle'] < 4100)
                framecolor = 'none';
          }
@@ -2205,10 +2096,10 @@ var gStyle = {
       var x = this.first.x;
       var y = this.first.y;
 
-      var linecolor = root_colors[this.tf1['fLineColor']];
+      var linecolor = JSROOTPainter.root_colors[this.tf1['fLineColor']];
       if ((this.tf1['fLineColor'] == 0) || (this.tf1['fLineWidth'] == 0)) linecolor = "none";
 
-      var fillcolor = root_colors[this.tf1['fFillColor']];
+      var fillcolor = JSROOTPainter.root_colors[this.tf1['fFillColor']];
       if ((this.tf1['fFillStyle'] == 0) || (this.tf1['fFillColor'] == 0)) fillcolor = "none"; else
       if (this.tf1['fFillStyle'] > 3000 && this.tf1['fFillStyle'] <= 3025) {
          var patternid = JSROOTPainter.createFillPattern(this.vis, this.tf1['fFillStyle'], this.tf1['fFillColor']);
@@ -2482,7 +2373,7 @@ var gStyle = {
       }
       this.bins_lw = glw % 100; // line width
       if (this.bins_lw > 0) this.optionLine = 1;
-      ec = root_colors[this.graph['fFillColor']];
+      ec = JSROOTPainter.root_colors[this.graph['fFillColor']];
       ec = ec.replace('rgb', 'rgba');
       ec = ec.replace(')', ', 0.20)');
 
@@ -2746,7 +2637,7 @@ var gStyle = {
       }
 
       if (this.seriesType == 'bar') {
-         var fillcolor = root_colors[this.graph['fFillColor']];
+         var fillcolor = JSROOTPainter.root_colors[this.graph['fFillColor']];
          if (typeof(fillcolor) == 'undefined') fillcolor = "rgb(204, 204, 204)";
          /* filled bar graph */
          var xdom = this.first.x.domain();
@@ -2793,10 +2684,10 @@ var gStyle = {
          this.draw_g.append("svg:path")
             .attr("d", line(pthis.bins))
             .attr("class", "draw_line")
-            .style("stroke", (pthis.optionLine == 1) ? root_colors[pthis.graph['fLineColor']] : "none")
+            .style("stroke", (pthis.optionLine == 1) ? JSROOTPainter.root_colors[pthis.graph['fLineColor']] : "none")
             .style("stroke-width", pthis.bins_lw)
             .style("stroke-dasharray", root_line_styles[pthis.graph['fLineStyle']])
-            .style("fill", (pthis.optionFill == 1) ? root_colors[pthis.graph['fFillColor']] : "none");
+            .style("fill", (pthis.optionFill == 1) ? JSROOTPainter.root_colors[pthis.graph['fFillColor']] : "none");
 
          if (gStyle.Tooltip > 1)
             this.draw_g.selectAll("draw_line")
@@ -2826,7 +2717,7 @@ var gStyle = {
                .attr("y1", function(d) { return y(d.y)} )
                .attr("x2", function(d) { return x(d.x+d.exhigh)} )
                .attr("y2", function(d) { return y(d.y)} )
-               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
                .style("stroke-width", this.graph['fLineWidth']);
 
          nodes.filter(function(d) { return (d.exlow>0); })
@@ -2835,7 +2726,7 @@ var gStyle = {
                .attr("x1", function(d) { return x(d.x-d.exlow)})
                .attr("y2", function(d) { return y(d.y)+3})
                .attr("x2", function(d) { return x(d.x-d.exlow)})
-               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
                .style("stroke-width", this.graph['fLineWidth']);
 
          nodes.filter(function(d) { return (d.exhigh>0); })
@@ -2844,7 +2735,7 @@ var gStyle = {
                .attr("x1", function(d) { return x(d.x+d.exhigh) })
                .attr("y2", function(d) { return y(d.y)+3})
                .attr("x2", function(d) { return x(d.x+d.exhigh) })
-               .style("stroke", root_colors[this.graph['fLineColor']])
+               .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
                .style("stroke-width", this.graph['fLineWidth']);
 
          // Add y-error indicators
@@ -2855,7 +2746,7 @@ var gStyle = {
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)})
             .attr("y2", function(d) { return y(d.y+d.eyhigh) })
-            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
 
          nodes.filter(function(d) { return (d.eylow>0); })
@@ -2864,7 +2755,7 @@ var gStyle = {
             .attr("y1", function(d) { return y(d.y-d.eylow) })
             .attr("x2", function(d) { return x(d.x)+3})
             .attr("y2", function(d) { return y(d.y-d.eylow) })
-            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
 
          nodes.filter(function(d) { return (d.eyhigh>0); })
@@ -2873,7 +2764,7 @@ var gStyle = {
             .attr("y1", function(d) { return y(d.y+d.eyhigh) })
             .attr("x2", function(d) { return x(d.x)+3})
             .attr("y2", function(d) { return y(d.y+d.eyhigh) })
-            .style("stroke", root_colors[this.graph['fLineColor']])
+            .style("stroke", JSROOTPainter.root_colors[this.graph['fLineColor']])
             .style("stroke-width", this.graph['fLineWidth']);
 
 
@@ -2891,7 +2782,7 @@ var gStyle = {
              (this.graph['fMarkerStyle'] == 29))
             filled = true;
 
-         var info_marker = getRootMarker(root_markers, this.graph['fMarkerStyle']);
+         var info_marker = JSROOTPainter.getRootMarker(this.graph['fMarkerStyle']);
 
          var shape = info_marker['shape'];
          var filled = info_marker['toFill'];
@@ -2928,8 +2819,8 @@ var gStyle = {
             .enter()
             .append("svg:path")
             .attr("transform", function(d) { return "translate(" + x(d.x) + " , " + y(d.y) + ")"} )
-            .style("fill", filled ? root_colors[this.graph['fMarkerColor']] : "none")
-            .style("stroke", root_colors[this.graph['fMarkerColor']])
+            .style("fill", filled ? JSROOTPainter.root_colors[this.graph['fMarkerColor']] : "none")
+            .style("stroke", JSROOTPainter.root_colors[this.graph['fMarkerColor']])
             .attr("d", marker);
 
          if (gStyle.Tooltip > 1)
@@ -3012,10 +2903,10 @@ var gStyle = {
       pos_y -= height;
       var nlines = pavetext['fLines'].arr.length;
       var font_size = Math.round(height / (nlines * 1.2));
-      var fcolor = root_colors[pavetext['fFillColor']];
-      var lcolor = root_colors[pavetext['fLineColor']];
-      var tcolor = root_colors[pavetext['fTextColor']];
-      var scolor = root_colors[pavetext['fShadowColor']];
+      var fcolor = JSROOTPainter.root_colors[pavetext['fFillColor']];
+      var lcolor = JSROOTPainter.root_colors[pavetext['fLineColor']];
+      var tcolor = JSROOTPainter.root_colors[pavetext['fTextColor']];
+      var scolor = JSROOTPainter.root_colors[pavetext['fShadowColor']];
       if (pavetext['fFillStyle'] == 0) fcolor = 'none';
       // align = 10*HorizontalAlign + VerticalAlign
       // 1=left adjusted, 2=centered, 3=right adjusted
@@ -3047,7 +2938,7 @@ var gStyle = {
       // for now ignore all align parameters, draw as is
       if (nlines>1) lmargin = pavetext['fMargin'] * width / 2;
 
-      var fontDetails = getFontDetails(root_fonts[Math.floor(pavetext['fTextFont']/10)]);
+      var fontDetails = JSROOTPainter.getFontDetails(pavetext['fTextFont']);
       var lwidth = pavetext['fBorderSize'] ? pavetext['fBorderSize'] : 0;
 
       if (this.main_rect == null) {
@@ -3131,7 +3022,7 @@ var gStyle = {
       else {
 
          for (j=0; j<nlines; ++j) {
-            var jcolor = root_colors[pavetext['fLines'].arr[j]['fTextColor']];
+            var jcolor = JSROOTPainter.root_colors[pavetext['fLines'].arr[j]['fTextColor']];
             if (pavetext['fLines'].arr[j]['fTextColor'] == 0)  jcolor = tcolor;
             var posy = j * stepy + font_size;
 
@@ -3394,21 +3285,21 @@ var gStyle = {
                .attr("transform", "translate(" + s_width + ", 0)")
                .call(z_axis);
 
-      var axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fLabelFont'] /10)]);
+      var axisFontDetails = JSROOTPainter.getFontDetails(axis['fLabelFont']);
       var axisLabelFontSize = axis['fLabelSize'] * height;
       zax.selectAll("text")
          .attr("font-size", axisLabelFontSize)
          .attr("font-weight", axisFontDetails['weight'])
          .attr("font-style", axisFontDetails['style'])
          .attr("font-family", axisFontDetails['name'])
-         .attr("fill", root_colors[axis['fLabelColor']]);
+         .attr("fill", JSROOTPainter.root_colors[axis['fLabelColor']]);
 
       /*
        * Add palette axis title
        */
       var title = axis['fTitle'];
       if (title != "" && typeof(axis['fTitleFont']) != 'undefined') {
-         axisFontDetails = getFontDetails(root_fonts[Math.floor(axis['fTitleFont'] /10)]);
+         axisFontDetails = JSROOTPainter.getFontDetails(axis['fTitleFont']);
          var axisTitleFontSize = axis['fTitleSize'] * height;
          this.draw_g.append("text")
                .attr("class", "Z axis label")
@@ -3732,7 +3623,7 @@ var gStyle = {
       var xAxisTitleFontSize = this.histo['fXaxis']['fTitleSize'] * h;
       var xAxisLabelOffset = 3 + (this.histo['fXaxis']['fLabelOffset'] * h);
       var xAxisLabelFontSize = this.histo['fXaxis']['fLabelSize'] * h;
-      var xAxisFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fXaxis']['fTitleFont']/10)]);
+      var xAxisFontDetails = JSROOTPainter.getFontDetails(this.histo['fXaxis']['fTitleFont']);
 
       if (label.length > 0) {
          if (!('x_axis_label' in this))
@@ -3756,7 +3647,7 @@ var gStyle = {
       var yAxisTitleFontSize = this.histo['fYaxis']['fTitleSize'] * h;
       var yAxisLabelOffset = 3 + (this.histo['fYaxis']['fLabelOffset'] * w);
       var yAxisLabelFontSize = this.histo['fYaxis']['fLabelSize'] * h;
-      var yAxisFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fYaxis']['fTitleFont'] /10)]);
+      var yAxisFontDetails = JSROOTPainter.getFontDetails(this.histo['fYaxis']['fTitleFont']);
 
       if (label.length > 0) {
          if (!('y_axis_label' in this))
@@ -3911,7 +3802,7 @@ var gStyle = {
       }
 
       // this is additional ticks, required in d3.v3
-      if (JSROOTPainter.d3v3 && (n2ax>0) && !this.options.Logx)
+      if (true && (n2ax>0) && !this.options.Logx)
         this['x_axis_sub'] = d3.svg.axis()
          .scale(this.x)
          .orient("bottom")
@@ -3921,7 +3812,7 @@ var gStyle = {
          .ticks(this.x_nticks*n2ax);
 
       // this is additional ticks, required in d3.v3
-      if (JSROOTPainter.d3v3 && (n2ay>0) && !this.options.Logy)
+      if (true && (n2ay>0) && !this.options.Logy)
          this['y_axis_sub'] = d3.svg.axis()
           .scale(this.y)
           .orient("left")
@@ -3940,7 +3831,8 @@ var gStyle = {
                    .attr("transform", "translate(0," + h + ")")
                    .call(this.x_axis);
 
-      if (JSROOTPainter.d3v3 && this['x_axis_sub'])
+      // aditional frame, required in d3.v3
+      if (true && this['x_axis_sub'])
          this['xaxsub'] =
             this.frame.append("svg:g")
                       .attr("class", "xaxis")
@@ -3952,11 +3844,12 @@ var gStyle = {
 
       this['yax'] = this.frame.append("svg:g").attr("class", "yaxis").call(this.y_axis);
 
-      if (JSROOTPainter.d3v3 && this['y_axis_sub'])
+      // aditional frame, required in d3.v3
+      if (true && this['y_axis_sub'])
          this['yaxsub'] = this.frame.append("svg:g").attr("class", "yaxis").call(this.y_axis_sub);
 
-      var xAxisLabelFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fXaxis']['fLabelFont']/10)]);
-      var yAxisLabelFontDetails = getFontDetails(root_fonts[Math.floor(this.histo['fXaxis']['fLabelFont']/10)]);
+      var xAxisLabelFontDetails = JSROOTPainter.getFontDetails(this.histo['fXaxis']['fLabelFont']);
+      var yAxisLabelFontDetails = JSROOTPainter.getFontDetails(this.histo['fYaxis']['fLabelFont']);
 
       this.xax.selectAll("text")
         .attr("font-family", xAxisLabelFontDetails['name'])
@@ -4834,8 +4727,8 @@ var gStyle = {
 
       // from here we analyze object content
       // therefore code will be moved
-      this.fillcolor = root_colors[this.histo['fFillColor']];
-      this.linecolor = root_colors[this.histo['fLineColor']];
+      this.fillcolor = JSROOTPainter.root_colors[this.histo['fFillColor']];
+      this.linecolor = JSROOTPainter.root_colors[this.histo['fLineColor']];
 
       if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7';
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
@@ -5067,13 +4960,13 @@ var gStyle = {
    {
       var w = Number(this.svg_frame.attr("width")), h = Number(this.svg_frame.attr("height"));
       /* Add a panel for each data point */
-      var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
+      var info_marker = JSROOTPainter.getRootMarker(this.histo['fMarkerStyle']);
       var shape = info_marker['shape'], filled = info_marker['toFill'],
           toRotate = info_marker['toRotate'], marker_size = this.histo['fMarkerSize'] * 32;
 
       var line_width = this.histo['fLineWidth'];
-      var line_color = root_colors[this.histo['fLineColor']];
-      var marker_color = root_colors[this.histo['fMarkerColor']];
+      var line_color = JSROOTPainter.root_colors[this.histo['fLineColor']];
+      var marker_color = JSROOTPainter.root_colors[this.histo['fMarkerColor']];
 
       if (this.histo['fMarkerStyle'] == 1) marker_size = 1;
 
@@ -5558,8 +5451,8 @@ var gStyle = {
 
    JSROOTPainter.Hist2DPainter.prototype.ScanContent = function()
    {
-      this.fillcolor = root_colors[this.histo['fFillColor']];
-      this.linecolor = root_colors[this.histo['fLineColor']];
+      this.fillcolor = JSROOTPainter.root_colors[this.histo['fFillColor']];
+      this.linecolor = JSROOTPainter.root_colors[this.histo['fLineColor']];
 
       //if (this.histo['fFillColor'] == 0) this.fillcolor = '#4572A7'; // why?
       if (this.histo['fLineColor'] == 0) this.linecolor = '#4572A7';
@@ -5719,7 +5612,7 @@ var gStyle = {
 
    JSROOTPainter.Hist2DPainter.prototype.getValueColor = function(zc) {
       var wmin = this.minbin, wmax = this.maxbin;
-          wlmin = wmin, wlmax = wmax;
+      var wlmin = wmin, wlmax = wmax;
       var ndivz = this.histo['fContour'].length;
       if (ndivz < 16) ndivz = 16;
       var scale = ndivz / (wlmax - wlmin);
@@ -5874,7 +5767,7 @@ var gStyle = {
              (this.histo['fMarkerStyle'] == 29))
             filled = true;
 
-         var info_marker = getRootMarker(root_markers, this.histo['fMarkerStyle']);
+         var info_marker = JSROOTPainter.getRootMarker(this.histo['fMarkerStyle']);
 
          var shape = info_marker['shape'];
          var filled = info_marker['toFill'];
@@ -5915,8 +5808,8 @@ var gStyle = {
             .attr("transform", function(d) {
                return "translate(" + d.x + "," + d.y + ")"
             })
-            .style("fill", root_colors[this.histo['fMarkerColor']])
-            .style("stroke", root_colors[this.histo['fMarkerColor']])
+            .style("fill", JSROOTPainter.root_colors[this.histo['fMarkerColor']])
+            .style("stroke", JSROOTPainter.root_colors[this.histo['fMarkerColor']])
             .attr("d", marker);
 
          if (gStyle.Tooltip > 1)
@@ -6216,7 +6109,7 @@ var gStyle = {
       var consty = (size*2 / this.nbinsy) / this.maxbin;
 
       var colorFlag = ( this.options.Color > 0);
-      var fcolor = d3.rgb(root_colors[this.histo['fFillColor']]);
+      var fcolor = d3.rgb(JSROOTPainter.root_colors[this.histo['fFillColor']]);
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei, hh;
@@ -6286,8 +6179,8 @@ var gStyle = {
          gridy = pad['fGridy'];
          gridz = pad['fGridz'];
       }
-      var fillcolor = root_colors[histo['fFillColor']];
-      var linecolor = root_colors[histo['fLineColor']];
+      var fillcolor = JSROOTPainter.root_colors[histo['fFillColor']];
+      var linecolor = JSROOTPainter.root_colors[histo['fLineColor']];
       if (histo['fFillColor'] == 0) {
          fillcolor = '#4572A7';
       }
@@ -6503,7 +6396,7 @@ var gStyle = {
       var constz = (size*2 / histo['fZaxis']['fNbins']) / maxbin;
 
       var optFlag = ( opt.indexOf('colz') != -1 || opt.indexOf('col') != -1 );
-      var fcolor = d3.rgb(root_colors[histo['fFillColor']]);
+      var fcolor = d3.rgb(JSROOTPainter.root_colors[histo['fFillColor']]);
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei;
@@ -6693,8 +6586,8 @@ var gStyle = {
           h = (pave['fY2NDC'] - pave['fY1NDC']) * Number(vis.attr("height"));
       }
       y -= h;
-      var fillcolor = root_colors[pave['fFillColor']];
-      var lcolor = root_colors[pave['fLineColor']];
+      var fillcolor = JSROOTPainter.root_colors[pave['fFillColor']];
+      var lcolor = JSROOTPainter.root_colors[pave['fLineColor']];
       var lwidth = pave['fBorderSize'] ? pave['fBorderSize'] : 0;
       if (pave['fFillStyle'] > 4000 && pave['fFillStyle'] < 4100)
          fillcolor = 'none';
@@ -6714,12 +6607,12 @@ var gStyle = {
          .style("stroke-width", lwidth ? 1 : 0)
          .style("stroke", lcolor);
 
-      var tcolor = root_colors[pave['fTextColor']];
+      var tcolor = JSROOTPainter.root_colors[pave['fTextColor']];
       var tpos_x = pave['fMargin'] * w;
       var nlines = pave.fPrimitives.arr.length;
       var font_size = Math.round(h / (nlines * 1.5));
       //var font_size = Math.round(pave['fTextSize'] * vis.height());
-      var fontDetails = getFontDetails(root_fonts[Math.floor(pave['fTextFont']/10)]);
+      var fontDetails = JSROOTPainter.getFontDetails(pave['fTextFont']);
 
       var max_len = 0, mul = 1.4;
       for (var j=0; j<nlines; ++j) {
@@ -6758,14 +6651,14 @@ var gStyle = {
             var tpos_y = h * 0.75;
          }
 
-         var line_color = root_colors[leg['fLineColor']];
+         var line_color = JSROOTPainter.root_colors[leg['fLineColor']];
          var line_width = leg['fLineWidth'];
          var line_style = root_line_styles[leg['fLineStyle']];
 
          var fill_color = leg['fFillColor'];
          var fill_style = leg['fFillStyle'];
 
-         var marker_color = root_colors[leg['fMarkerColor']];
+         var marker_color = JSROOTPainter.root_colors[leg['fMarkerColor']];
          var marker_size = leg['fMarkerSize'];
          var marker_style = leg['fMarkerStyle'];
 
@@ -6777,7 +6670,7 @@ var gStyle = {
          if ((typeof mo) != 'object') mo = null;
 
          if ((mo!=null) && ('fLineColor' in mo)) {
-            line_color = root_colors[mo['fLineColor']];
+            line_color = JSROOTPainter.root_colors[mo['fLineColor']];
             line_width = mo['fLineWidth'];
             line_style = root_line_styles[mo['fLineStyle']];
          }
@@ -6788,7 +6681,7 @@ var gStyle = {
          }
 
          if ((mo!=null) && ('fMarkerColor' in mo)) {
-            marker_color = root_colors[mo['fMarkerColor']];
+            marker_color = JSROOTPainter.root_colors[mo['fMarkerColor']];
             marker_size = mo['fMarkerSize'];
             marker_style = mo['fMarkerStyle'];
          }
@@ -6846,7 +6739,7 @@ var gStyle = {
                   .attr("y", pos_y)
                   .attr("width", ww)
                   .attr("height", hh)
-                  .attr("fill", root_colors[fill_color])
+                  .attr("fill", JSROOTPainter.root_colors[fill_color])
                   .style("stroke-width", line_width)
                   .style("stroke", line_color);
             }
@@ -6882,7 +6775,7 @@ var gStyle = {
                 (marker_style == 29))
                filled = true;
 
-            var info_marker = getRootMarker(root_markers, marker_style);
+            var info_marker = JSROOTPainter.getRootMarker(marker_style);
 
             var shape = info_marker['shape'];
             var filled = info_marker['toFill'];
@@ -7056,7 +6949,7 @@ var gStyle = {
 
       if ((obj!=null) && (obj['_typename'] == "JSROOTIO.TCanvas")) {
          factor = Math.abs(obj['fVtoPixel']/ obj['fUtoPixel']);
-         fillcolor = root_colors[obj['fFillColor']];
+         fillcolor = JSROOTPainter.root_colors[obj['fFillColor']];
          if (obj['fFillStyle'] > 4000 && obj['fFillStyle'] < 4100)
             fillcolor = 'none';
       }
@@ -7104,12 +6997,12 @@ var gStyle = {
       var h = pad['fAbsHNDC'] * height;
       y -= h;
 
-      var fillcolor = root_colors[pad['fFillColor']];
+      var fillcolor = JSROOTPainter.root_colors[pad['fFillColor']];
       if (pad['fFillStyle'] > 4000 && pad['fFillStyle'] < 4100)
          fillcolor = 'none';
 
       var border_width = pad['fLineWidth'];
-      var border_color = root_colors[pad['fLineColor']];
+      var border_color = JSROOTPainter.root_colors[pad['fLineColor']];
       if (pad['fBorderMode'] == 0) {
          border_width = 0;
          border_color = 'none';
@@ -7146,10 +7039,10 @@ var gStyle = {
       var height = Math.abs(pavelabel['fY2NDC'] - pavelabel['fY1NDC']) * h;
       pos_y -= height;
       var font_size = Math.round(height / 1.9);
-      var fcolor = root_colors[pavelabel['fFillColor']];
-      var lcolor = root_colors[pavelabel['fLineColor']];
-      var tcolor = root_colors[pavelabel['fTextColor']];
-      var scolor = root_colors[pavelabel['fShadowColor']];
+      var fcolor = JSROOTPainter.root_colors[pavelabel['fFillColor']];
+      var lcolor = JSROOTPainter.root_colors[pavelabel['fLineColor']];
+      var tcolor = JSROOTPainter.root_colors[pavelabel['fTextColor']];
+      var scolor = JSROOTPainter.root_colors[pavelabel['fShadowColor']];
       if (pavelabel['fFillStyle'] == 0) fcolor = 'none';
       // align = 10*HorizontalAlign + VerticalAlign
       // 1=left adjusted, 2=centered, 3=right adjusted
@@ -7175,7 +7068,7 @@ var gStyle = {
             break;
       }
       var lwidth = pavelabel['fBorderSize'] ? pavelabel['fBorderSize'] : 0;
-      var fontDetails = getFontDetails(root_fonts[Math.floor(pavelabel['fTextFont']/10)]);
+      var fontDetails = JSROOTPainter.getFontDetails(pavelabel['fTextFont']);
 
       var pave = vis.append("svg:g")
          .attr("width", width)
@@ -7270,8 +7163,8 @@ var gStyle = {
       }
       pos_x = ((Math.abs(pad['fX1'])+pos_x)/(pad['fX2'] - pad['fX1']))*w;
       pos_y = (1-((Math.abs(pad['fY1'])+pos_y)/(pad['fY2'] - pad['fY1'])))*h;
-      var tcolor = root_colors[text['fTextColor']];
-      var fontDetails = getFontDetails(root_fonts[Math.floor(text['fTextFont']/10)]);
+      var tcolor = JSROOTPainter.root_colors[text['fTextColor']];
+      var fontDetails = JSROOTPainter.getFontDetails(text['fTextFont']);
 
       var string = text['fTitle'];
       // translate the LaTeX symbols

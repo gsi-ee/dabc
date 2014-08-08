@@ -12,6 +12,11 @@ August 2014:
    last sibling (_ls) property while tree can be dynamically changed.  
 3. In JSRootCore.js provide central function, which handles different kinds 
    of XMLHttpRequest.  Use only async requests, also when getting file header.
+4. Fully reorganize data management in file/tree/directory/collection hierarchical
+   display. Now complete description collected in HPainter class and decoupled from
+   visualization, performed with dTree.js. 
+5. Remove most global variables from the code.   
+   
 
 July 2014:
 1. Migration to d3.v3.js and jQuery v2.1.1
