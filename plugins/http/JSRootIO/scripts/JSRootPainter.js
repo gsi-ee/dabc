@@ -9,13 +9,13 @@
 
    if (typeof JSROOTPainter == 'object'){
       var e1 = new Error('JSROOTPainter is already defined');
-      e1.source = 'JSROOTPainter.js';
+      e1.source = 'JSRootPainter.js';
       throw e1;
    }
 
    if (typeof d3 != 'object') {
-      var e1 = new Error('This extension requires d3.v2.js');
-      e1.source = 'JSROOTPainter.js';
+      var e1 = new Error('This extension requires d3.v3.js');
+      e1.source = 'JSRootPainter.js';
       throw e1;
    }
 
@@ -50,6 +50,7 @@
       'StatEntriesFormat'  : function(v) { return (Math.abs(v) < 1e7) ? v.toFixed(0) : v.toExponential(7); }
    };
 
+   JSROOTPainter.Coord = { kCARTESIAN : 1, kPOLAR : 2, kCYLINDRICAL : 3, kSPHERICAL : 4, kRAPIDITY : 5 };
 
    /** Function that generates all root colors */
    JSROOTPainter.root_colors = function () {
@@ -252,7 +253,7 @@
       if (right == -1) return chopt;
       var nch = right-left;
       if (nch < 2) return chopt;
-      for (i=0;i<=nch;i++) chopt[left+i] = ' ';
+      for (var i=0;i<=nch;i++) chopt[left+i] = ' ';
       return chopt;
    };
 
@@ -267,7 +268,7 @@
          'Star': 0, 'Arrow': 0, 'Box': 0, 'Text': 0, 'Char': 0, 'Color': 0,
          'Contour': 0, 'Logx': 0, 'Logy': 0, 'Logz': 0, 'Lego': 0, 'Surf': 0,
          'Off': 0, 'Tri': 0, 'Proj': 0, 'AxisPos': 0, 'Spec': 0, 'Pie': 0,
-         'List': 0, 'Zscale': 0, 'FrontBox': 1, 'BackBox': 1, 'System': kCARTESIAN,
+         'List': 0, 'Zscale': 0, 'FrontBox': 1, 'BackBox': 1, 'System': JSROOTPainter.Coord.kCARTESIAN,
          'HighRes': 0, 'Zero': 0
       };
       //check for graphical cuts
@@ -457,10 +458,10 @@
          if (l != -1 && histo['_typename'].match(/\bJSROOTIO.TH2Poly/)) option.Text += 3000;
          option.Scat = 0;
       }
-      l = chopt.indexOf('POL');  if (l != -1) { option.System = kPOLAR;       chopt = chopt.replace('POL', '   '); }
-      l = chopt.indexOf('CYL');  if (l != -1) { option.System = kCYLINDRICAL; chopt = chopt.replace('CYL', '   '); }
-      l = chopt.indexOf('SPH');  if (l != -1) { option.System = kSPHERICAL;   chopt = chopt.replace('SPH', '   '); }
-      l = chopt.indexOf('PSR');  if (l != -1) { option.System = kRAPIDITY;    chopt = chopt.replace('PSR', '   '); }
+      l = chopt.indexOf('POL');  if (l != -1) { option.System = JSROOTPainter.Coord.kPOLAR;       chopt = chopt.replace('POL', '   '); }
+      l = chopt.indexOf('CYL');  if (l != -1) { option.System = JSROOTPainter.Coord.kCYLINDRICAL; chopt = chopt.replace('CYL', '   '); }
+      l = chopt.indexOf('SPH');  if (l != -1) { option.System = JSROOTPainter.Coord.kSPHERICAL;   chopt = chopt.replace('SPH', '   '); }
+      l = chopt.indexOf('PSR');  if (l != -1) { option.System = JSROOTPainter.Coord.kRAPIDITY;    chopt = chopt.replace('PSR', '   '); }
       l = chopt.indexOf('TRI');
       if (l != -1) {
          option.Scat = 0;
@@ -537,7 +538,8 @@
       }
       if (chopt.indexOf('9') != -1)  option.HighRes = 1;
       if (option.Surf == 15) {
-         if (option.System == kPOLAR || option.System == kCARTESIAN) {
+         if (option.System == JSROOTPainter.Coord.kPOLAR || 
+             option.System == JSROOTPainter.Coord.kCARTESIAN) {
             option.Surf = 13;
             //Warning('MakeChopt','option SURF5 is not supported in Cartesian and Polar modes');
          }
@@ -914,7 +916,7 @@
       _val = _val.replace('@', '');
       _exp = _exp.replace('@', '');
       var u, size = _exp.length;
-      for (j=0;j<size;++j) {
+      for (var j=0;j<size;++j) {
          var c = _exp.charAt(j);
          if (c == '+') u = '\u207A';
          else if (c == '-') u = '\u207B'
@@ -931,15 +933,15 @@
    };
 
    JSROOTPainter.translateExp = function(str) {
-      var i, j, lstr = str.match(/\^{[0-9]*}/gi);
+      var lstr = str.match(/\^{[0-9]*}/gi);
       if (lstr != null) {
          var symbol = '';
-         for (i=0;i<lstr.length;++i) {
+         for (var i=0;i<lstr.length;++i) {
             symbol = lstr[i].replace(' ', '');
             symbol = symbol.replace('^{', ''); // &sup
             symbol = symbol.replace('}', ''); // ;
             var size = symbol.length;
-            for (j=0;j<size;++j) {
+            for (var j=0;j<size;++j) {
                var c = symbol.charAt(j);
                var e = parseInt(c);
                if (e == 1) u = String.fromCharCode(0xB9);
@@ -1118,38 +1120,32 @@
       while (str.indexOf('^{o}') != -1)
          str = str.replace('^{o}', '\xBA');
       var lstr = str.match(/\#sqrt{(.*?)}/gi);
-      if (lstr != null) {
-         var symbol;
-         for (i=0;i<lstr.length;++i) {
-            symbol = lstr[i].replace(' ', '');
+      if (lstr != null) 
+         for (var i=0;i<lstr.length;++i) {
+            var symbol = lstr[i].replace(' ', '');
             symbol = symbol.replace('#sqrt{', '#sqrt');
             symbol = symbol.replace('}', '');
             str = str.replace(lstr[i], symbol);
          }
-      }
-      var lstr = str.match(/\_{(.*?)}/gi);
-      if (lstr != null) {
-         var symbol;
-         for (i=0;i<lstr.length;++i) {
-            symbol = lstr[i].replace(' ', '');
+      lstr = str.match(/\_{(.*?)}/gi);
+      if (lstr != null) 
+         for (var i=0;i<lstr.length;++i) {
+            var symbol = lstr[i].replace(' ', '');
             symbol = symbol.replace('_{', ''); // &sub
             symbol = symbol.replace('}', ''); // ;
             str = str.replace(lstr[i], symbol);
          }
-      }
-      var lstr = str.match(/\^{(.*?)}/gi);
-      if (lstr != null) {
-         var symbol;
+      lstr = str.match(/\^{(.*?)}/gi);
+      if (lstr != null) 
          for (i=0;i<lstr.length;++i) {
-            symbol = lstr[i].replace(' ', '');
+            var symbol = lstr[i].replace(' ', '');
             symbol = symbol.replace('^{', ''); // &sup
             symbol = symbol.replace('}', ''); // ;
             str = str.replace(lstr[i], symbol);
          }
-      }
       while (str.indexOf('#/') != -1)
          str = str.replace('#/', JSROOTPainter.symbols_map['#/']);
-      for (x in JSROOTPainter.symbols_map) {
+      for (var x in JSROOTPainter.symbols_map) {
          while (str.indexOf(x) != -1)
             str = str.replace(x, JSROOTPainter.symbols_map[x]);
       }
@@ -2310,9 +2306,6 @@
    JSROOTPainter.GraphPainter.prototype.CreateBins = function() {
       var pthis = this;
 
-      // TODO: Sergey: one should remove all ifs out of the d3.range call -
-      //               just becose of performance
-
       this.bins = d3.range(this.graph['fNpoints']).map(function(p) {
          if (pthis.optionBar == 1) {
             return {
@@ -2366,9 +2359,9 @@
       var normx, normy;
       var n = this.graph['fNpoints'];
       var glw = this.graph['fLineWidth'],
-      xo = new Array(n+2), yo = new Array(n+2),
-      xt = new Array(n+2), yt = new Array(n+2),
-      xf = new Array(2*n+2), yf = new Array(2*n+2);
+          xo = new Array(n+2), yo = new Array(n+2),
+          xt = new Array(n+2), yt = new Array(n+2),
+          xf = new Array(2*n+2), yf = new Array(2*n+2);
       // negative value means another side of the line...
       if (glw > 32767) {
          glw = 65536 - glw;
@@ -2896,7 +2889,7 @@
       var pavetext = this.pavetext;
       var vis = this.vis;
 
-      var j, w = Number(vis.attr("width")), h = Number(vis.attr("height"));
+      var w = Number(vis.attr("width")), h = Number(vis.attr("height"));
 
       var pos_x = pavetext['fX1NDC'] * w;
       var pos_y = (1.0 - pavetext['fY1NDC']) * h;
@@ -2990,7 +2983,7 @@
       var lines = new Array;
 
       // adjust font size
-      for (j=0; j<nlines; ++j) {
+      for (var j=0; j<nlines; ++j) {
          var line = JSROOTPainter.translateLaTeX(pavetext['fLines'].arr[j]['fTitle']);
 
          lines.push(line);
@@ -3023,7 +3016,7 @@
       }
       else {
 
-         for (j=0; j<nlines; ++j) {
+         for (var j=0; j<nlines; ++j) {
             var jcolor = JSROOTPainter.root_colors[pavetext['fLines'].arr[j]['fTextColor']];
             if (pavetext['fLines'].arr[j]['fTextColor'] == 0)  jcolor = tcolor;
             var posy = j * stepy + font_size;
@@ -3602,10 +3595,10 @@
       this['y_axis_sub'] = null;
 
       var w = Number(this.frame.attr("width")), h = Number(this.frame.attr("height"));
-      var noexpx = this.histo['fXaxis'].TestBit(EAxisBits.kNoExponent);
-      var noexpy = this.histo['fYaxis'].TestBit(EAxisBits.kNoExponent);
-      var moreloglabelsx = this.histo['fXaxis'].TestBit(EAxisBits.kMoreLogLabels);
-      var moreloglabelsy = this.histo['fYaxis'].TestBit(EAxisBits.kMoreLogLabels);
+      var noexpx = this.histo['fXaxis'].TestBit(JSROOTCore.EAxisBits.kNoExponent);
+      var noexpy = this.histo['fYaxis'].TestBit(JSROOTCore.EAxisBits.kNoExponent);
+      var moreloglabelsx = this.histo['fXaxis'].TestBit(JSROOTCore.EAxisBits.kMoreLogLabels);
+      var moreloglabelsy = this.histo['fYaxis'].TestBit(JSROOTCore.EAxisBits.kMoreLogLabels);
 
       if (this.histo['fXaxis']['fXmax'] < 100 && this.histo['fXaxis']['fXmax']/this.histo['fXaxis']['fXmin'] < 100) noexpx = true;
       if (this.histo['fYaxis']['fXmax'] < 100 && this.histo['fYaxis']['fXmax']/this.histo['fYaxis']['fXmin'] < 100) noexpy = true;
@@ -3999,7 +3992,7 @@
    JSROOTPainter.HistPainter.prototype.FindStat = function() {
 
       if ('fFunctions' in this.histo)
-         for (i=0; i<this.histo.fFunctions.arr.length; ++i) {
+         for (var i in this.histo.fFunctions.arr) {
 
             var func = this.histo.fFunctions.arr[i];
 
@@ -4082,7 +4075,7 @@
    JSROOTPainter.HistPainter.prototype.FindPalette = function() {
 
       if ('fFunctions' in this.histo)
-         for (i=0; i<this.histo.fFunctions.arr.length; ++i) {
+         for (var i in this.histo.fFunctions.arr) {
             var func = this.histo.fFunctions.arr[i];
             if (func['_typename'] == 'JSROOTIO.TPaletteAxis') return func;
          }
@@ -4099,8 +4092,21 @@
       if (!('fFunctions' in this.histo)) return;
 
       var lastpainter = this;
+      
+      var kNotDraw = JSROOTCore.BIT(9);  // don't draw the function (TF1) when in a TH1
+      
+      var EStatusBits = {
+            kCanDelete     : JSROOTCore.BIT(0),   // if object in a list can be deleted
+            kMustCleanup   : JSROOTCore.BIT(3),   // if object destructor must call RecursiveRemove()
+            kObjInCanvas   : JSROOTCore.BIT(3),   // for backward compatibility only, use kMustCleanup
+            kIsReferenced  : JSROOTCore.BIT(4),   // if object is referenced by a TRef or TRefArray
+            kHasUUID       : JSROOTCore.BIT(5),   // if object has a TUUID (its fUniqueID=UUIDNumber)
+            kCannotPick    : JSROOTCore.BIT(6),   // if object in a pad cannot be picked
+            kNoContextMenu : JSROOTCore.BIT(8),   // if object does not want context menu
+            kInvalidObject : JSROOTCore.BIT(13)   // if object ctor succeeded but object should not be used
+      };
 
-      for (i=0; i<this.histo.fFunctions.arr.length; ++i) {
+      for (var i in this.histo.fFunctions.arr) {
 
          var func = this.histo.fFunctions.arr[i];
 
@@ -5968,7 +5974,7 @@
       var text3d, text;
       var xmajors = tx.ticks(8);
       var xminors = tx.ticks(50);
-      for ( i=-size, j=0, k=0; i<size; ++i ) {
+      for (var i=-size, j=0, k=0; i<size; ++i ) {
          var is_major = ( utx( i ) <= xmajors[j] && utx( i+1 ) > xmajors[j] ) ? true : false;
          var is_minor = ( utx( i ) <= xminors[k] && utx( i+1 ) > xminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6002,7 +6008,7 @@
       }
       var ymajors = ty.ticks(8);
       var yminors = ty.ticks(50);
-      for ( i=size, j=0, k=0; i>-size; --i ) {
+      for (var i=size, j=0, k=0; i>-size; --i ) {
          var is_major = ( uty( i ) <= ymajors[j] && uty( i-1 ) > ymajors[j] ) ? true : false;
          var is_minor = ( uty( i ) <= yminors[k] && uty( i-1 ) > yminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6037,7 +6043,7 @@
       }
       var zmajors = tz.ticks(8);
       var zminors = tz.ticks(50);
-      for ( i=0, j=0, k=0; i<(size*2); ++i ) {
+      for (var i=0, j=0, k=0; i<(size*2); ++i ) {
          var is_major = ( utz( i ) <= zmajors[j] && utz( i+1 ) > zmajors[j] ) ? true : false;
          var is_minor = ( utz( i ) <= zminors[k] && utz( i+1 ) > zminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6163,7 +6169,7 @@
       var pad = vis['ROOT:pad'];
       var frame = vis['ROOT:frame'];
 
-      var i, j, k, logx = false, logy = false, logz = false,
+      var logx = false, logy = false, logz = false,
           gridx = false, gridy = false, gridz = false;
 
       var opt = histo['fOption'].toLowerCase();
@@ -6198,7 +6204,7 @@
       maxbin = d3.max(histo['fArray']);
       minbin = d3.min(histo['fArray']);
       var bins = new Array();
-      for (i=0; i<=nbinsx+2; ++i) {
+      for (var i=0; i<=nbinsx+2; ++i) {
          for (var j=0; j<nbinsy+2; ++j) {
             for (var k=0; k<nbinsz+2; ++k) {
                var bin_content = histo.getBinContent(i, j, k);
@@ -6265,7 +6271,7 @@
       var text3d, text;
       var xmajors = tx.ticks(5);
       var xminors = tx.ticks(25);
-      for ( i=-size, j=0, k=0; i<=size; ++i ) {
+      for (var i=-size, j=0, k=0; i<=size; ++i ) {
          var is_major = ( utx( i ) <= xmajors[j] && utx( i+1 ) > xmajors[j] ) ? true : false;
          var is_minor = ( utx( i ) <= xminors[k] && utx( i+1 ) > xminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6299,7 +6305,7 @@
       }
       var ymajors = ty.ticks(5);
       var yminors = ty.ticks(25);
-      for ( i=size, j=0, k=0; i>-size; --i ) {
+      for (var i=size, j=0, k=0; i>-size; --i ) {
          var is_major = ( uty( i ) <= ymajors[j] && uty( i-1 ) > ymajors[j] ) ? true : false;
          var is_minor = ( uty( i ) <= yminors[k] && uty( i-1 ) > yminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6334,7 +6340,7 @@
       }
       var zmajors = tz.ticks(5);
       var zminors = tz.ticks(25);
-      for ( i=-size, j=0, k=0; i<=size; ++i ) {
+      for (var i=-size, j=0, k=0; i<=size; ++i ) {
          var is_major = ( utz( i ) <= zmajors[j] && utz( i+1 ) > zmajors[j] ) ? true : false;
          var is_minor = ( utz( i ) <= zminors[k] && utz( i+1 ) > zminors[k] ) ? true : false;
          plen = ( is_major ? len + 2 : len) * sin45;
@@ -6398,7 +6404,7 @@
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei;
-      for ( i = 0; i < bins.length; ++i ) {
+      for (var i = 0; i < bins.length; ++i ) {
          wei = ( optFlag ? maxbin : bins[i].n );
          if (opt.indexOf('box1') != -1) {
             bin = new THREE.Mesh( new THREE.SphereGeometry( 0.5 * wei * constx /*, 16, 16 */ ),
@@ -6510,7 +6516,7 @@
       stack['fHistogram']['fTitle'] = stack['fTitle'];
       //var histo = JSROOTCore.clone(stack['fHistogram']);
       var histo = stack['fHistogram'];
-      if (!histo.TestBit(TH1StatusBits.kIsZoomed)) {
+      if (!histo.TestBit(JSROOTCore.TH1StatusBits.kIsZoomed)) {
          if (nostack && stack['fMaximum'] != -1111) histo['fMaximum'] = stack['fMaximum'];
          else {
             if (pad && pad['fLogy']) histo['fMaximum'] = themax*(1+0.2*JSROOTMath.log10(themax/themin));
@@ -6835,7 +6841,7 @@
    };
 
    JSROOTPainter.drawMultiGraph = function(vis, mgraph, opt) {
-      var i, maximum, minimum, rwxmin=0, rwxmax=0, rwymin=0, rwymax=0, uxmin=0, uxmax=0, dx, dy;
+      var maximum, minimum, rwxmin=0, rwxmax=0, rwymin=0, rwymax=0, uxmin=0, uxmax=0, dx, dy;
       var npt = 100;
       var histo = mgraph['fHistogram'];
       var graphs = mgraph['fGraphs'];
@@ -6867,7 +6873,7 @@
             rwxmin = r['xmin']; rwymin = r['ymin'];
             rwxmax = r['xmax']; rwymax = r['ymax'];
          }
-         for (i=1; i<graphs.arr.length; ++i) {
+         for (var i=1; i<graphs.arr.length; ++i) {
             var rx1,ry1,rx2,ry2;
             g = graphs.arr[i];
             var r = g.computeRange();
@@ -6939,7 +6945,7 @@
       // histogram painter will be first in the pad, will define axis and interactive actions
       JSROOTPainter.drawHistogram1D(vis, histo);
 
-      for (var i=0; i<graphs.arr.length; ++i)
+      for (var i in graphs.arr)
          JSROOTPainter.drawGraph(vis, graphs.arr[i]);
    };
 
@@ -7028,7 +7034,7 @@
 
       new_pad['ROOT:pad'] = pad;
 
-      for (var i=0; i<pad.fPrimitives.arr.length; ++i)
+      for (var i in pad.fPrimitives.arr)
          JSROOTPainter.drawObjectInFrame(new_pad, pad.fPrimitives.arr[i], pad.fPrimitives.opt[i]);
 
       return new_pad;
@@ -7130,6 +7136,8 @@
       // align = 10*HorizontalAlign + VerticalAlign
       // 1=left adjusted, 2=centered, 3=right adjusted
       // 1=bottom adjusted, 2=centered, 3=top adjusted
+
+      var kTextNDC  = JSROOTCore.BIT(14);
 
       var pad = vis['ROOT:pad'];
 
@@ -7776,8 +7784,6 @@
 
 
 // example of user code for streamer and painter
-
-
 
 (function(){
 

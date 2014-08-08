@@ -6,98 +6,6 @@
 
 // Globals
 
-BIT = function(n) { return 1 << (n); }
-
-var EAxisBits = {
-   kTickPlus      : BIT(9),
-   kTickMinus     : BIT(10),
-   kAxisRange     : BIT(11),
-   kCenterTitle   : BIT(12),
-   kCenterLabels  : BIT(14),
-   kRotateTitle   : BIT(15),
-   kPalette       : BIT(16),
-   kNoExponent    : BIT(17),
-   kLabelsHori    : BIT(18),
-   kLabelsVert    : BIT(19),
-   kLabelsDown    : BIT(20),
-   kLabelsUp      : BIT(21),
-   kIsInteger     : BIT(22),
-   kMoreLogLabels : BIT(23),
-   kDecimals      : BIT(11)
-};
-
-var EStatusBits = {
-   kCanDelete     : BIT(0),   // if object in a list can be deleted
-   kMustCleanup   : BIT(3),   // if object destructor must call RecursiveRemove()
-   kObjInCanvas   : BIT(3),   // for backward compatibility only, use kMustCleanup
-   kIsReferenced  : BIT(4),   // if object is referenced by a TRef or TRefArray
-   kHasUUID       : BIT(5),   // if object has a TUUID (its fUniqueID=UUIDNumber)
-   kCannotPick    : BIT(6),   // if object in a pad cannot be picked
-   kNoContextMenu : BIT(8),   // if object does not want context menu
-   kInvalidObject : BIT(13)   // if object ctor succeeded but object should not be used
-};
-
-   // TH1 status bits
-var TH1StatusBits = {
-   kNoStats       : BIT(9),  // don't draw stats box
-   kUserContour   : BIT(10), // user specified contour levels
-   kCanRebin      : BIT(11), // can rebin axis
-   kLogX          : BIT(15), // X-axis in log scale
-   kIsZoomed      : BIT(16), // bit set when zooming on Y axis
-   kNoTitle       : BIT(17), // don't draw the histogram title
-   kIsAverage     : BIT(18)  // Bin contents are average (used by Add)
-};
-
-var kTextNDC = BIT(14);
-
-var kNotDraw = BIT(9);  // don't draw the function (TF1) when in a TH1
-
-var kNstat = 13;
-
-var EErrorType = {
-   kERRORMEAN : 0,
-   kERRORSPREAD : 1,
-   kERRORSPREADI : 2,
-   kERRORSPREADG : 3
-};
-
-var EBinErrorOpt = {
-   kNormal : 0,    // errors with Normal (Wald) approximation: errorUp=errorLow= sqrt(N)
-   kPoisson : 1,   // errors from Poisson interval at 68.3% (1 sigma)
-   kPoisson2 : 2   // errors from Poisson interval at 95% CL (~ 2 sigma)
-};
-
-var kCARTESIAN   = 1;
-var kPOLAR       = 2;
-var kCYLINDRICAL = 3;
-var kSPHERICAL   = 4;
-var kRAPIDITY    = 5;
-
-String.prototype.endsWith = function(str, ignoreCase) {
-   return (ignoreCase ? this.toUpperCase() : this).slice(-str.length)
-       == (ignoreCase ? str.toUpperCase() : str);
-};
-
-gaus = function(f, x, i) {
-   return f['fParams'][i+0] * Math.exp(-0.5 * Math.pow((x-f['fParams'][i+1]) / f['fParams'][i+2], 2));
-};
-
-gausn = function(f, x, i) {
-   return gaus(f, x, i)/(sqrt(2 * Math.PI) * f['fParams'][i+2]);
-};
-
-expo = function(f, x, i) {
-   return Math.exp(f['fParams'][i+0] + f['fParams'][i+1] * x);
-};
-
-landau = function(f, x, i) {
-   return JSROOTMath.Landau(x, f['fParams'][i+1],f['fParams'][i+2], false);
-};
-
-landaun = function(f, x, i) {
-   return JSROOTMath.Landau(x, f['fParams'][i+1],f['fParams'][i+2], true);
-};
-
 
 (function(){
 
@@ -110,7 +18,7 @@ landaun = function(f, x, i) {
    JSROOTCore = {};
 
    JSROOTCore.version = "3.0 2014/08/05";
-
+   
    JSROOTCore.clone = function(obj) {
       return jQuery.extend(true, {}, obj);
    };
@@ -119,6 +27,37 @@ landaun = function(f, x, i) {
    
    JSROOTCore.function_list = []; // do we really need it here?
    
+   JSROOTCore.BIT = function(n) { return 1 << (n); }
+
+   // TH1 status bits
+   JSROOTCore.TH1StatusBits = {
+         kNoStats       : JSROOTCore.BIT(9),  // don't draw stats box
+         kUserContour   : JSROOTCore.BIT(10), // user specified contour levels
+         kCanRebin      : JSROOTCore.BIT(11), // can rebin axis
+         kLogX          : JSROOTCore.BIT(15), // X-axis in log scale
+         kIsZoomed      : JSROOTCore.BIT(16), // bit set when zooming on Y axis
+         kNoTitle       : JSROOTCore.BIT(17), // don't draw the histogram title
+         kIsAverage     : JSROOTCore.BIT(18)  // Bin contents are average (used by Add)
+   };
+
+   JSROOTCore.EAxisBits = {
+         kTickPlus      : JSROOTCore.BIT(9),
+         kTickMinus     : JSROOTCore.BIT(10),
+         kAxisRange     : JSROOTCore.BIT(11),
+         kCenterTitle   : JSROOTCore.BIT(12),
+         kCenterLabels  : JSROOTCore.BIT(14),
+         kRotateTitle   : JSROOTCore.BIT(15),
+         kPalette       : JSROOTCore.BIT(16),
+         kNoExponent    : JSROOTCore.BIT(17),
+         kLabelsHori    : JSROOTCore.BIT(18),
+         kLabelsVert    : JSROOTCore.BIT(19),
+         kLabelsDown    : JSROOTCore.BIT(20),
+         kLabelsUp      : JSROOTCore.BIT(21),
+         kIsInteger     : JSROOTCore.BIT(22),
+         kMoreLogLabels : JSROOTCore.BIT(23),
+         kDecimals      : JSROOTCore.BIT(11)
+   };
+
    // This is part of the JSON-R code, found on 
    // https://github.com/graniteds/jsonr
    // Only unref part was used, arrays are not accounted as objects
@@ -480,15 +419,28 @@ landaun = function(f, x, i) {
             return ((obj['fBits'] & f) != 0);
          };
       }
-      if (!('_typename' in obj))
-         return;
+      if (!('_typename' in obj)) return;
+      
+      var EBinErrorOpt = {
+          kNormal : 0,    // errors with Normal (Wald) approximation: errorUp=errorLow= sqrt(N)
+          kPoisson : 1,   // errors from Poisson interval at 68.3% (1 sigma)
+          kPoisson2 : 2   // errors from Poisson interval at 95% CL (~ 2 sigma)
+       };
+      
+      var EErrorType = {
+          kERRORMEAN : 0,
+          kERRORSPREAD : 1,
+          kERRORSPREADI : 2,
+          kERRORSPREADG : 3
+       };
+      
       if (obj['_typename'].indexOf("JSROOTIO.TAxis") == 0) {
          obj['getFirst'] = function() {
-            if (!this.TestBit(EAxisBits.kAxisRange)) return 1;
+            if (!this.TestBit(JSROOTCore.EAxisBits.kAxisRange)) return 1;
             return this['fFirst'];
          };
          obj['getLast'] = function() {
-            if (!this.TestBit(EAxisBits.kAxisRange)) return this['fNbins'];
+            if (!this.TestBit(JSROOTCore.EAxisBits.kAxisRange)) return this['fNbins'];
             return this['fLast'];
          };
          obj['getBinCenter'] = function(bin) {
@@ -509,11 +461,11 @@ landaun = function(f, x, i) {
             var i, _function = this['fTitle'];
             _function = _function.replace('TMath::Exp(', 'Math.exp(');
             _function = _function.replace('TMath::Abs(', 'Math.abs(');
-            _function = _function.replace('gaus(', 'gaus(this, ' + x + ', ');
-            _function = _function.replace('gausn(', 'gausn(this, ' + x + ', ');
-            _function = _function.replace('expo(', 'expo(this, ' + x + ', ');
-            _function = _function.replace('landau(', 'landau(this, ' + x + ', ');
-            _function = _function.replace('landaun(', 'landaun(this, ' + x + ', ');
+            _function = _function.replace('gaus(', 'JSROOTMath.gaus(this, ' + x + ', ');
+            _function = _function.replace('gausn(', 'JSROOTMath.gausn(this, ' + x + ', ');
+            _function = _function.replace('expo(', 'JSROOTMath.expo(this, ' + x + ', ');
+            _function = _function.replace('landau(', 'JSROOTMath.landau(this, ' + x + ', ');
+            _function = _function.replace('landaun(', 'JSROOTMath.landaun(this, ' + x + ', ');
             _function = _function.replace('pi', 'Math.PI');
             for (i=0;i<this['fNpar'];++i) {
                while(_function.indexOf('['+i+']') != -1)
@@ -690,7 +642,8 @@ landaun = function(f, x, i) {
                   for (binx=0;binx<=nbinsx+1;binx++) {
                      bin = binx +(nbinsx+2)*(biny + (nbinsy+2)*binz);
                      //special case where histograms have the kIsAverage bit set
-                     if (this.TestBit(TH1StatusBits.kIsAverage) && h1.TestBit(TH1StatusBits.kIsAverage)) {
+                     if (this.TestBit(JSROOTCore.TH1StatusBits.kIsAverage) 
+                         && h1.TestBit(JSROOTCore.TH1StatusBits.kIsAverage)) {
                         var y1 = h1.getBinContent(bin),
                             y2 = this.getBinContent(bin),
                             e1 = h1.getBinError(bin),
@@ -744,6 +697,7 @@ landaun = function(f, x, i) {
                this.resetStats();
             }
             else {
+               var kNstat = 13;
                for (var i=0;i<kNstat;i++) {
                   if (i == 1) s1[i] += c1 * c1 * s2[i];
                   else        s1[i] += c1 * s2[i];
@@ -905,7 +859,7 @@ landaun = function(f, x, i) {
             xmax = xmin + 2 * (xmax - xmin);
             axis['fFirst'] = 1;
             axis['fLast'] = axis['fNbins'];
-            this['fBits'] &= ~(EAxisBits.kAxisRange & 0x00ffffff); // SetBit(kAxisRange, 0);
+            this['fBits'] &= ~(JSROOTCore.EAxisBits.kAxisRange & 0x00ffffff); // SetBit(kAxisRange, 0);
             // double the bins and recompute ncells
             axis['fNbins'] = 2*nbins;
             axis['fXmin']  = xmin;
@@ -966,7 +920,7 @@ landaun = function(f, x, i) {
             this['fTsumw'] = 0;
             if (bin < 0) return;
             if (bin >= this['fNcells']-1) {
-               if (this['fXaxis']['fTimeDisplay'] || this.TestBit(TH1StatusBits.kCanRebin) ) {
+               if (this['fXaxis']['fTimeDisplay'] || this.TestBit(JSROOTCore.TH1StatusBits.kCanRebin) ) {
                   while (bin >= this['fNcells']-1) this.labelsInflate();
                } else {
                   if (bin == this['fNcells']-1) this['fArray'][bin] = content;
@@ -1015,14 +969,14 @@ landaun = function(f, x, i) {
             var bin, binx, w, err, x, stats = new Array(0,0,0,0,0);
             // case of labels with rebin of axis set
             // statistics in x does not make any sense - set to zero
-            if (this['fXaxis']['fLabels'] && this.TestBit(TH1StatusBits.kCanRebin) ) {
+            if (this['fXaxis']['fLabels'] && this.TestBit(JSROOTCore.TH1StatusBits.kCanRebin) ) {
                stats[0] = this['fTsumw'];
                stats[1] = this['fTsumw2'];
                stats[2] = 0;
                stats[3] = 0;
             }
             else if ((this['fTsumw'] == 0 && this['fEntries'] > 0) ||
-                     this['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
+                     this['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange)) {
                for (bin=0;bin<4;bin++) stats[bin] = 0;
 
                var firstBinX = this['fXaxis'].getFirst();
@@ -1055,18 +1009,18 @@ landaun = function(f, x, i) {
          };
          obj['getStats'] = function() {
             var bin, binx, biny, stats = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0);
-            if ((this['fTsumw'] == 0 && this['fEntries'] > 0) || this['fXaxis'].TestBit(EAxisBits.kAxisRange) || this['fYaxis'].TestBit(EAxisBits.kAxisRange)) {
+            if ((this['fTsumw'] == 0 && this['fEntries'] > 0) || this['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) || this['fYaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange)) {
                var firstBinX = this['fXaxis'].getFirst();
                var lastBinX  = this['fXaxis'].getLast();
                var firstBinY = this['fYaxis'].getFirst();
                var lastBinY  = this['fYaxis'].getLast();
                // include underflow/overflow if TH1::StatOverflows(kTRUE) in case no range is set on the axis
                if (this['fgStatOverflows']) {
-                 if ( !this['fXaxis'].TestBit(EAxisBits.kAxisRange) ) {
+                 if ( !this['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) ) {
                      if (firstBinX == 1) firstBinX = 0;
                      if (lastBinX ==  this['fXaxis']['fNbins'] ) lastBinX += 1;
                   }
-                  if ( !this['fYaxis'].TestBit(EAxisBits.kAxisRange) ) {
+                  if ( !this['fYaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) ) {
                      if (firstBinY == 1) firstBinY = 0;
                      if (lastBinY ==  this['fYaxis']['fNbins'] ) lastBinY += 1;
                   }
@@ -1114,7 +1068,7 @@ landaun = function(f, x, i) {
          };
          obj['getStats'] = function() {
             var bin, binx, biny, binz, stats = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0);
-            if ((obj['fTsumw'] == 0 && obj['fEntries'] > 0) || obj['fXaxis'].TestBit(EAxisBits.kAxisRange) || obj['fYaxis'].TestBit(EAxisBits.kAxisRange) || obj['fZaxis'].TestBit(EAxisBits.kAxisRange)) {
+            if ((obj['fTsumw'] == 0 && obj['fEntries'] > 0) || obj['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) || obj['fYaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) || obj['fZaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange)) {
                var firstBinX = obj['fXaxis'].getFirst();
                var lastBinX  = obj['fXaxis'].getLast();
                var firstBinY = obj['fYaxis'].getFirst();
@@ -1123,15 +1077,15 @@ landaun = function(f, x, i) {
                var lastBinZ  = obj['fZaxis'].getLast();
                // include underflow/overflow if TH1::StatOverflows(kTRUE) in case no range is set on the axis
                if (obj['fgStatOverflows']) {
-                 if ( !obj['fXaxis'].TestBit(EAxisBits.kAxisRange) ) {
+                 if ( !obj['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) ) {
                      if (firstBinX == 1) firstBinX = 0;
                      if (lastBinX ==  obj['fXaxis']['fNbins'] ) lastBinX += 1;
                   }
-                  if ( !obj['fYaxis'].TestBit(EAxisBits.kAxisRange) ) {
+                  if ( !obj['fYaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) ) {
                      if (firstBinY == 1) firstBinY = 0;
                      if (lastBinY ==  obj['fYaxis']['fNbins'] ) lastBinY += 1;
                   }
-                  if ( !obj['fZaxis'].TestBit(EAxisBits.kAxisRange) ) {
+                  if ( !obj['fZaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange) ) {
                      if (firstBinZ == 1) firstBinZ = 0;
                      if (lastBinZ ==  obj['fZaxis']['fNbins'] ) lastBinZ += 1;
                   }
@@ -1304,7 +1258,7 @@ landaun = function(f, x, i) {
          };
          obj['getStats'] = function() {
             var bin, binx, stats = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0);
-            if (this['fTsumw'] < 1e-300 || this['fXaxis'].TestBit(EAxisBits.kAxisRange)) {
+            if (this['fTsumw'] < 1e-300 || this['fXaxis'].TestBit(JSROOTCore.EAxisBits.kAxisRange)) {
                var firstBinX = this['fXaxis'].getFirst();
                var lastBinX  = this['fXaxis'].getLast();
                for (binx = this['firstBinX']; binx <= lastBinX; binx++) {
@@ -1801,6 +1755,28 @@ landaun = function(f, x, i) {
       if (!norm) return den;
       return den/sigma;
    };
+   
+   JSROOTMath.gaus = function(f, x, i) {
+      return f['fParams'][i+0] * Math.exp(-0.5 * Math.pow((x-f['fParams'][i+1]) / f['fParams'][i+2], 2));
+   };
+
+   JSROOTMath.gausn = function(f, x, i) {
+      return JSROOTMath.gaus(f, x, i)/(Math.sqrt(2 * Math.PI) * f['fParams'][i+2]);
+   };
+
+   JSROOTMath.expo = function(f, x, i) {
+      return Math.exp(f['fParams'][i+0] + f['fParams'][i+1] * x);
+   };
+
+   JSROOTMath.landau = function(f, x, i) {
+      return JSROOTMath.Landau(x, f['fParams'][i+1],f['fParams'][i+2], false);
+   };
+
+   JSROOTMath.landaun = function(f, x, i) {
+      return JSROOTMath.Landau(x, f['fParams'][i+1],f['fParams'][i+2], true);
+   };
+
+
 
 })();
 

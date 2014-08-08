@@ -222,7 +222,7 @@
             bman = 0;
          else {
             bman = 1;
-            for (i=0; i<23; i++) {
+            for (var i=0; i<23; i++) {
                if (parseInt(bits.substr(9+i, 1)) == 1)
                   bman = bman + 1 / Math.pow(2, i+1);
             }
@@ -252,7 +252,7 @@
             bman = 0;
          else {
             bman = 1;
-            for (i=0; i<52; i++) {
+            for (var i=0; i<52; i++) {
                if (parseInt(bits.substr(12+i, 1)) == 1)
                   bman = bman + 1 / Math.pow(2, i+1);
             }
@@ -860,7 +860,7 @@
             case JSROOTIO.kObjectp:
             case JSROOTIO.kObject:
                var classname = this[prop]['typename'];
-               if (classname.endsWith("*"))
+               if (classname.charAt(classname.length-1) == "*")
                   classname = classname.substr(0, classname.length - 1);
 
                obj[prop] = {};
@@ -1513,7 +1513,7 @@
 
                file.ExtractStreamerInfos(buf);
 
-               for (i=0;i<file.fKeys.length;++i) {
+               for (var i=0;i<file.fKeys.length;++i) {
                   if (file.fKeys[i]['className'] == 'TFormula') {
                      file.ReadObject(file.fKeys[i]['name'], file.fKeys[i]['cycle']);
                   }
