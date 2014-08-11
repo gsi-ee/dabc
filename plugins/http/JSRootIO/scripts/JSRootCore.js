@@ -1474,7 +1474,8 @@
          '$$$scripts/three.min.js;' +
          '$$$fonts/helvetiker_regular.typeface.js;' +
          '$$$scripts/JSRootIOEvolution.js;' +
-         '$$$scripts/JSRootPainter.js';
+         '$$$scripts/JSRootPainter.js;' +
+         '$$$style/JSRootPainter.css';
       
       JSROOTCore.loadScript(allfiles, andThen); 
    }
