@@ -77,9 +77,17 @@ function CollapsibleDisplay(itemname, obj) {
       var painter = new JSROOTPainter.HPainter('sinfo', hid);
       painter.ShowStreamerInfo(obj);
    } else {
-      var vis = JSROOTPainter.createCanvas($('#'+hid), obj);
-      if (vis == null) return;
-      JSROOTPainter.drawObjectInFrame(vis, obj);
+      
+      // d3.select('#'+hid).attr("height",$('#'+hid).width()*0.66);
+
+      var height = $('#'+hid).width() * 0.66;
+      
+      document.getElementById(hid).setAttribute("style", "height:"+height+"px");
+      document.getElementById(hid).style.height=""+height+'px';
+
+      // console.log("width = " + $('#'+hid).width() + "  height = " + $('#'+hid).height());
+
+      JSROOTPainter.draw(hid, obj);
    }
    
    addCollapsible('#'+uid);

@@ -6948,31 +6948,6 @@
    };
 
 
-   JSROOTPainter.createCanvas = function(element, obj) {
-      var render_to = "#" + element.attr("id");
-
-      var fillcolor = 'white';
-      var factor = 0.66666;
-
-      if ((obj!=null) && (obj['_typename'] == "JSROOTIO.TCanvas")) {
-         factor = Math.abs(obj['fVtoPixel']/ obj['fUtoPixel']);
-         fillcolor = JSROOTPainter.root_colors[obj['fFillColor']];
-         if (obj['fFillStyle'] > 4000 && obj['fFillStyle'] < 4100)
-            fillcolor = 'none';
-      }
-
-      var w = element.width(), h = w * factor;
-
-      d3.select(render_to).style("background-color", fillcolor);
-      //d3.select(render_to).style("width", "100%");
-
-      return d3.select(render_to)
-                  .append("svg")
-                  .attr("width", w)
-                  .attr("height", h)
-                  .style("background-color", fillcolor);
-   }
-
    JSROOTPainter.canDrawObject = function(classname)
    {
       if (!classname) return false;
