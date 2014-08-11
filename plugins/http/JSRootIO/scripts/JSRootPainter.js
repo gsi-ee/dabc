@@ -3,8 +3,6 @@
 // core methods for Javascript ROOT Graphics, using d3.js.
 //
 
-// The "source_dir" variable is defined in JSRootInterface.js
-
 (function(){
 
    if (typeof JSROOTPainter == 'object'){
@@ -7598,25 +7596,25 @@
       
       if (kind) {
          if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
-         if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
-         if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
+         if (kind == "ROOT.Session") nodeimg = JSROOTCore.source_dir+'img/globe.gif'; else
+         if (kind == "DABC.HTML") { nodeimg = JSROOTCore.source_dir+'img/globe.gif'; can_open = true; } else
          if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
          if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
          if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-         if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
-         if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
-         if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
-         if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
-         if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
-         if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
-         if (kind == "ROOT.TF1") { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
-         if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
-         if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
-         if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree.png';   else
-         if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
-         if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-         if (kind == "ROOT.TStreamerInfoList") { nodeimg = source_dir+'img/question.gif'; can_expand = false; can_display = true; } else
-         if ((kind.indexOf("ROOT.")==0) && JSROOTPainter.canDrawObject("JSROOTIO." + kind.slice(5))) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; }
+         if (kind.match(/\bROOT.TH1/)) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
+         if (kind.match(/\bROOT.TH2/)) { nodeimg = JSROOTCore.source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
+         if (kind.match(/\bROOT.TH3/)) { nodeimg = JSROOTCore.source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
+         if (kind == "ROOT.TCanvas") { nodeimg = JSROOTCore.source_dir+'img/canvas.png'; can_display = true; } else
+         if (kind == "ROOT.TProfile") { nodeimg = JSROOTCore.source_dir+'img/profile.png'; can_display = true; } else
+         if (kind.match(/\bROOT.TGraph/)) { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
+         if (kind == "ROOT.TF1") { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
+         if (kind == "ROOT.TTree") nodeimg = JSROOTCore.source_dir+'img/tree.png'; else
+         if (kind == "ROOT.TFolder") { nodeimg = JSROOTCore.source_dir+'img/folder.gif'; node2img = JSROOTCore.source_dir+'img/folderopen.gif'; }  else
+         if (kind == "ROOT.TNtuple") nodeimg = JSROOTCore.source_dir+'img/tree.png';   else
+         if (kind == "ROOT.TBranch") nodeimg = JSROOTCore.source_dir+'img/branch.png';   else
+         if (kind.match(/\bROOT.TLeaf/)) nodeimg = JSROOTCore.source_dir+'img/leaf.png'; else
+         if (kind == "ROOT.TStreamerInfoList") { nodeimg = JSROOTCore.source_dir+'img/question.gif'; can_expand = false; can_display = true; } else
+         if ((kind.indexOf("ROOT.")==0) && JSROOTPainter.canDrawObject("JSROOTIO." + kind.slice(5))) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; }
       }
       
       // console.log("add kind = " + kind + "  name = " + node._name);  
@@ -7625,8 +7623,8 @@
          if (can_expand) {   
             html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
             if (nodeimg.length == 0) {
-               nodeimg = source_dir+'img/folder.gif'; 
-               node2img = source_dir+'img/folderopen.gif';
+               nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
+               node2img = JSROOTCore.source_dir+'img/folderopen.gif';
             }
          } else
          if (can_display) {
@@ -7638,8 +7636,8 @@
       if ((maxlvl >= 0) && (lvl >= maxlvl)) {
          html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
          if (nodeimg.length == 0) {
-            nodeimg = source_dir+'img/folder.gif'; 
-            node2img = source_dir+'img/folderopen.gif';
+            nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
+            node2img = JSROOTCore.source_dir+'img/folderopen.gif';
          }
          scan_inside = false;
       } else {
@@ -7785,6 +7783,7 @@
 
 // example of user code for streamer and painter
 
+/*
 (function(){
 
    Amore_String_Streamer = function(buf, obj, prop, streamer) {
@@ -7807,6 +7806,6 @@
    JSROOTPainter.addUserPainter("JSROOTIO.amore::core::MonitorObjectHisto<TH1F>", Amore_Painter);
 
 })();
-
+*/
 
 

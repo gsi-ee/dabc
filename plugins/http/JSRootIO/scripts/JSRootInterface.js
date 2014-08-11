@@ -3,12 +3,6 @@
 // interface methods for Javascript ROOT Web Page.
 //
 
-// global variables
-// source_dir is the variable defining where to take the scripts and the list tree icons
-// To use the local ones (e.g. when checking out the files in a web server), just let it
-// empty: var source_dir = "";
-var source_dir = "http://root.cern.ch/js/";
-
 function closeCollapsible(e, el) {
    var sel = $(el)[0].textContent;
    if (typeof(sel) == 'undefined') return;
@@ -24,7 +18,7 @@ function addCollapsible(element) {
        .addClass("ui-accordion-header ui-helper-reset ui-state-default ui-corner-top ui-corner-bottom")
        .hover(function() { $(this).toggleClass("ui-state-hover"); })
        .prepend('<span class="ui-icon ui-icon-triangle-1-e"></span>')
-       .append('<button type="button" class="closeButton" title="close canvas" onclick="closeCollapsible(event, \''+element+'\')"><img src="'+source_dir+'/img/remove.gif"/></button>')
+       .append('<button type="button" class="closeButton" title="close canvas" onclick="closeCollapsible(event, \''+element+'\')"><img src="'+JSROOTCore.source_dir+'/img/remove.gif"/></button>')
        .click(function() {
           $(this)
              .toggleClass("ui-accordion-header-active ui-state-active ui-state-default ui-corner-bottom")
@@ -51,61 +45,6 @@ function showElement(element) {
    }
    $(element)[0].scrollIntoView();
 }
-
-function loadScript(url, callback) {
-   // dynamic script loader using callback
-   // (as loading scripts may be asynchronous)
-   var script = document.createElement("script");
-   script.type = "text/javascript";
-   if (script.readyState) { // Internet Explorer specific
-      script.onreadystatechange = function() {
-         if (script.readyState == "loaded" ||
-             script.readyState == "complete") {
-            script.onreadystatechange = null;
-            if (callback!=null) callback();
-         }
-      }
-   } else { // Other browsers
-      script.onload = function(){
-         if (callback!=null) callback();
-      };
-   }
-   var rnd = Math.floor(Math.random()*80000);
-   script.src = url;//+ "?r=" + rnd;
-   document.getElementsByTagName("head")[0].appendChild(script);
-};
-
-
-function AssertPrerequisites(andThen) {
-
-   if (typeof JSROOTIO == "undefined") {
-      // if JSROOTIO is not defined, then dynamically load the required scripts and open the file
-      loadScript(source_dir+'scripts/jquery.min.js', function() {
-      loadScript(source_dir+'scripts/jquery-ui.min.js', function() {
-      loadScript(source_dir+'scripts/d3.v3.min.js', function() {
-      loadScript(source_dir+'scripts/jquery.mousewheel.js', function() {
-      loadScript(source_dir+'scripts/dtree.js', function() {
-      loadScript(source_dir+'scripts/rawinflate.js', function() {
-      loadScript(source_dir+'scripts/JSRootCore.js', function() {
-      loadScript(source_dir+'scripts/three.min.js', function() {
-      loadScript(source_dir+'fonts/helvetiker_regular.typeface.js', function() {
-      loadScript(source_dir+'scripts/JSRootIOEvolution.js', function() {
-      loadScript(source_dir+'scripts/JSRootPainter.js', function() {
-
-         if (andThen!=null) andThen();
-
-         // if report element exists - this is standard ROOT layout
-         if (document.getElementById("report")) {
-            var version = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>";
-            $(version).prependTo("body");
-            $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
-         }
-
-      }) }) }) }) }) }) }) }) }) }) });
-   } else {
-      if (andThen!=null) andThen();
-   }
-};
 
 function CollapsibleDisplay(itemname, obj) {
    
@@ -146,7 +85,7 @@ function CollapsibleDisplay(itemname, obj) {
    addCollapsible('#'+uid);
 }
 
-function ReadFile() {
+function ReadFile(filename) {
    var navigator_version = navigator.appVersion;
    if (typeof ActiveXObject == "function") { // Windows
       // detect obsolete browsers
@@ -166,15 +105,17 @@ function ReadFile() {
       }
    }
 
-   var url = $("#urlToLoad").val();
-   url.trim();
-   if (url.length == 0) return;
+   if (filename==null) {
+      filename = $("#urlToLoad").val();
+      filename.trim();
+   }
+   if (filename.length == 0) return;
    
    var painter = new JSROOTPainter.HPainter("root", "status");
    
    painter['ondisplay'] = CollapsibleDisplay;
    
-   painter.OpenRootFile(url);
+   painter.OpenRootFile(filename);
 }
 
 function ResetUI() {
@@ -190,7 +131,6 @@ function ResetUI() {
 };
 
 function BuildSimpleGUI() {
- AssertPrerequisites(function DisplayGUI() {
    var myDiv = $('#simpleGUI');
    if (!myDiv) {
       alert("You have to define a div with id='simpleGUI'!");
@@ -232,5 +172,6 @@ function BuildSimpleGUI() {
       +'<div id="report"> </div>'
       +'</div>';
    $('#simpleGUI').append(guiCode);
- });
+   
+   $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
 }

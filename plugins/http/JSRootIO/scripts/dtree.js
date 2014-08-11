@@ -9,7 +9,7 @@
 | Updated: 17.04.2003                               |
 |--------------------------------------------------*/
 
-// The "source_dir" variable is defined in JSRootInterface.js
+// The "source_dir" variable is defined in JSRootCore.js
 
 // Node object
 function Node(id, pid, name, url, title, target, icon, iconOpen, open) {
@@ -43,20 +43,20 @@ function dTree(objName) {
       inOrder        : false
    }
    this.icon = {
-      root           : source_dir+'img/base.gif',
-      folder         : source_dir+'img/folder.gif',
-      folderOpen     : source_dir+'img/folderopen.gif',
-      node           : source_dir+'img/page.gif',
-      empty          : source_dir+'img/empty.gif',
-      line           : source_dir+'img/line.gif',
-      join           : source_dir+'img/join.gif',
-      joinBottom     : source_dir+'img/joinbottom.gif',
-      plus           : source_dir+'img/plus.gif',
-      plusBottom     : source_dir+'img/plusbottom.gif',
-      minus          : source_dir+'img/minus.gif',
-      minusBottom    : source_dir+'img/minusbottom.gif',
-      nlPlus         : source_dir+'img/nolines_plus.gif',
-      nlMinus        : source_dir+'img/nolines_minus.gif'
+      root           : JSROOTCore.source_dir+'img/base.gif',
+      folder         : JSROOTCore.source_dir+'img/folder.gif',
+      folderOpen     : JSROOTCore.source_dir+'img/folderopen.gif',
+      node           : JSROOTCore.source_dir+'img/page.gif',
+      empty          : JSROOTCore.source_dir+'img/empty.gif',
+      line           : JSROOTCore.source_dir+'img/line.gif',
+      join           : JSROOTCore.source_dir+'img/join.gif',
+      joinBottom     : JSROOTCore.source_dir+'img/joinbottom.gif',
+      plus           : JSROOTCore.source_dir+'img/plus.gif',
+      plusBottom     : JSROOTCore.source_dir+'img/plusbottom.gif',
+      minus          : JSROOTCore.source_dir+'img/minus.gif',
+      minusBottom    : JSROOTCore.source_dir+'img/minusbottom.gif',
+      nlPlus         : JSROOTCore.source_dir+'img/nolines_plus.gif',
+      nlMinus        : JSROOTCore.source_dir+'img/nolines_minus.gif'
    };
    this.obj = objName;
    this.aNodes = [];

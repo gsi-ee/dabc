@@ -717,31 +717,31 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    
    if (kind) {
       if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
-      if (kind == "ROOT.Session") nodeimg = source_dir+'img/globe.gif'; else
-      if (kind == "DABC.HTML") { nodeimg = source_dir+'img/globe.gif'; can_open = true; } else
+      if (kind == "ROOT.Session") nodeimg = JSROOTCore.source_dir+'img/globe.gif'; else
+      if (kind == "DABC.HTML") { nodeimg = JSROOTCore.source_dir+'img/globe.gif'; can_open = true; } else
       if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
       if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-      if (kind.match(/\bROOT.TH1/)) { nodeimg = source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
-      if (kind.match(/\bROOT.TH2/)) { nodeimg = source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
-      if (kind.match(/\bROOT.TH3/)) { nodeimg = source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
-      if (kind == "ROOT.TCanvas") { nodeimg = source_dir+'img/canvas.png'; can_display = true; } else
-      if (kind == "ROOT.TProfile") { nodeimg = source_dir+'img/profile.png'; can_display = true; } else
-      if (kind.match(/\bROOT.TGraph/)) { nodeimg = source_dir+'img/graph.png'; can_display = true; } else
-      if (kind == "ROOT.TTree") nodeimg = source_dir+'img/tree.png'; else
-      if (kind == "ROOT.TFolder") { nodeimg = source_dir+'img/folder.gif'; node2img = source_dir+'img/folderopen.gif'; }  else
-      if (kind == "ROOT.TNtuple") nodeimg = source_dir+'img/tree_t.png';   else
-      if (kind == "ROOT.TBranch") nodeimg = source_dir+'img/branch.png';   else
-      if (kind.match(/\bROOT.TLeaf/)) nodeimg = source_dir+'img/leaf.png'; else
-      if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = source_dir+'img/question.gif'; can_display = true; }
+      if (kind.match(/\bROOT.TH1/)) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
+      if (kind.match(/\bROOT.TH2/)) { nodeimg = JSROOTCore.source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
+      if (kind.match(/\bROOT.TH3/)) { nodeimg = JSROOTCore.source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
+      if (kind == "ROOT.TCanvas") { nodeimg = JSROOTCore.source_dir+'img/canvas.png'; can_display = true; } else
+      if (kind == "ROOT.TProfile") { nodeimg = JSROOTCore.source_dir+'img/profile.png'; can_display = true; } else
+      if (kind.match(/\bROOT.TGraph/)) { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
+      if (kind == "ROOT.TTree") nodeimg = JSROOTCore.source_dir+'img/tree.png'; else
+      if (kind == "ROOT.TFolder") { nodeimg = JSROOTCore.source_dir+'img/folder.gif'; node2img = JSROOTCore.source_dir+'img/folderopen.gif'; }  else
+      if (kind == "ROOT.TNtuple") nodeimg = JSROOTCore.source_dir+'img/tree_t.png';   else
+      if (kind == "ROOT.TBranch") nodeimg = JSROOTCore.source_dir+'img/branch.png';   else
+      if (kind.match(/\bROOT.TLeaf/)) nodeimg = JSROOTCore.source_dir+'img/leaf.png'; else
+      if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = JSROOTCore.source_dir+'img/question.gif'; can_display = true; }
    }
 
    if (!node._childs || !scan_inside) {
       if (can_expand) {   
          html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
          if (nodeimg.length == 0) {
-            nodeimg = source_dir+'img/folder.gif'; 
-            node2img = source_dir+'img/folderopen.gif';
+            nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
+            node2img = JSROOTCore.source_dir+'img/folderopen.gif';
          }
       } else
       if (can_display) {
@@ -753,8 +753,8 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    if ((maxlvl >= 0) && (lvl >= maxlvl)) {
       html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
       if (nodeimg.length == 0) {
-         nodeimg = source_dir+'img/folder.gif'; 
-         node2img = source_dir+'img/folderopen.gif';
+         nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
+         node2img = JSROOTCore.source_dir+'img/folderopen.gif';
       }
       scan_inside = false;
    } else {

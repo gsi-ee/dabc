@@ -15,7 +15,12 @@ August 2014:
 4. Fully reorganize data management in file/tree/directory/collection hierarchical
    display. Now complete description collected in HPainter class and decoupled from
    visualization, performed with dTree.js. 
-5. Remove most global variables from the code.   
+5. Remove all global variables from the code.
+6. Automatic scripts/style loading handled via JSROOTCore.loadScript() function.
+   One can specify arbitrary scripts list, which asynchronously loaded by browser.
+7. Method to build simple GUI little bit changed. The example in index.htm.
+   While loadScript and AssertPrerequisites functions moved to JSROOTCore, one
+   can easily build many different kinds of GUIs, reusing provided JSRootCore.js functions.         
    
 
 July 2014:

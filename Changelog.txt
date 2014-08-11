@@ -2,6 +2,14 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+11.08.2014
+1. Move scripts/styles loading into JSRootCore.js. 
+   One can specify any list of files for loading.
+2. To construct simple GUI, one can use standard examples in JSRootInterface.js
+   or provide own list of scripts to load.     
+3. Simplify and make more flexible method of simple GUI building
+
+
 8.08.2014
 1. Remove most global variables and functions from JSRootPainter.js
 2. Handle color palette local in Hist2Dpainter
