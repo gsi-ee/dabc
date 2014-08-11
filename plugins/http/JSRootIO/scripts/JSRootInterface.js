@@ -169,9 +169,7 @@ function BuildSimpleGUI() {
       +'<div id="status"></div>'
       +'</div>'
       +'<div id="reportHolder" class="column">'
-      +'<div id="report"> </div>'
+      +'<div id="report" class="ui-accordion ui-accordion-icons ui-widget ui-helper-reset"> </div>'
       +'</div>';
    $('#simpleGUI').append(guiCode);
-   
-   $('#report').addClass("ui-accordion ui-accordion-icons ui-widget ui-helper-reset");
 }
