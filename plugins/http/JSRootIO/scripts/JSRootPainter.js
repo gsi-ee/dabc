@@ -6964,7 +6964,7 @@
       var w = element.width(), h = w * factor;
 
       d3.select(render_to).style("background-color", fillcolor);
-      d3.select(render_to).style("width", "100%");
+      //d3.select(render_to).style("width", "100%");
 
       return d3.select(render_to)
                   .append("svg")

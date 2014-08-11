@@ -59,38 +59,17 @@ input.tb {
    background-color: #eee;
 }
 
-.ui-icon { width: 16px; height: 16px; background-image: url(images/ui-icons_222222_256x240.png); }
-.ui-icon-triangle-1-e { background-position: -32px -16px; }
-.ui-icon-triangle-1-s { background-position: -64px -16px; }
-
-.ui-accordion { 
-   width: 100%; margin-right: 15px;
-}
-.ui-accordion-header {
-   background-color: #c0c8ff;
-   border: 1px solid #aaaaaa;
-   color: #7a7a7a;
-   cursor: pointer;
-   margin-top: 2px;
-   padding-left:3px;
-   margin-right: -2px;
-   padding-top:3px;
-   padding-bottom:3px;
-   position: relative;
-   /*text-align:center;*/
-}
-.ui-accordion-header-active { 
-   border-bottom: 0;
-}
 .ui-accordion-icons .ui-accordion-header a { 
    padding-left: 2.2em; 
 }
+
 .ui-accordion .ui-accordion-header .ui-icon { 
    left: .5em; 
    margin-top: -8px; 
    position: absolute; 
    top: 50%; 
 }
+
 .ui-accordion .ui-accordion-content {
    border: 1px solid #aaaaaa;
    border-top: 0;
@@ -99,11 +78,13 @@ input.tb {
    overflow:hidden;
    padding: 3px 0px 3px 0px;
 }
+
 .ui-state-active { 
    background: #ffffff;
    border-bottom: 0;
    color: #3a3a3a;
 }
+
 .ui-accordion-content-active {
    background-color: #ffffff;
 }
