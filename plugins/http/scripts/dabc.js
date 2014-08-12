@@ -8,7 +8,6 @@ DABC.dabc_tree = 0;   // variable to display hierarchy
 
 DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
 
-DABC.load_root_js = 0; // 0 - not started, 1 - doing load, 2 - completed
 
 /*
 if (!Object.create) {
@@ -34,22 +33,6 @@ DABC.ntou4 = function(b, o) {
        n += (b.charCodeAt(o+3) & 0xff) << 24;
    return n;
 }
-
-DABC.AssertRootPrerequisites = function() {
-   if (DABC.load_root_js == 0) {
-      DABC.load_root_js = 1;
-      loadScript('jsrootiosys/scripts/jquery.mousewheel.js', function() {
-      loadScript('jsrootiosys/scripts/rawinflate.js', function() {
-      loadScript('jsrootiosys/scripts/three.min.js', function() {
-      loadScript('jsrootiosys/fonts/helvetiker_regular.typeface.js', function() {
-      loadScript('jsrootiosys/scripts/JSRootIOEvolution.js', function() {
-         DABC.load_root_js = 2;
-      }) }) }) }) });
-   }
-   
-   return (DABC.load_root_js == 2);
-};
-
 
 // ============= start of DrawElement ================================= 
 
@@ -641,16 +624,6 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
       k = ks[i];
       element.append("<h5><PRE>" + ks[i] + " = " + this.jsonnode[ks[i]] + "</PRE></h5>");
    }
-
-//   if (this.isHistory()) {
-//      var txt = this.ExtractSeries("value","string");
-//      for (var i=0;i<txt.length;i++)
-//         element.append("<PRE>"+txt[i]+"</PRE>");
-//   } else {
-//      var val = this.ExtractField("value");
-//      element.append(this.itemname + "<br>");
-//      element.append("<h5>"+val +"</h5>");
-//   }
 }
 
 
@@ -660,7 +633,7 @@ DABC.HierarchyDrawElement = function() {
    DABC.DrawElement.call(this);
    this.jsondoc = null;      // description is json form
    this.ready = false;
-   this.req = 0;             // this is current request
+   this.req = null;             // this is current request
    this.main = null;         // pointer on main hierarchy element
    this.maxnodeid = 0;       // maximum id of last element
 }
@@ -673,6 +646,7 @@ DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
 }
 
 DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
+   
    if (this.ready || this.req) return;
    
    var url = "h.json?compact=3";
@@ -852,6 +826,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
    this.ready = true;
    
    if (this.main == null) {
+      
    
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
       DABC.dabc_tree.config.useCookies = false;
@@ -865,6 +840,8 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
       var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
       content += DABC.dabc_tree;
       $("#" + this.frameid).html(content);
+      
+      
    } else {
       // find and replace at the same time
       var mainjsonnode = this.main.FindNode(this.itemname, null, top);
@@ -989,7 +966,6 @@ DABC.FesaDrawElement.prototype.ClickItem = function() {
 
 DABC.FesaDrawElement.prototype.RegularCheck = function() {
 
-//   if (!DABC.AssertRootPrerequisites()) return;
    
    // no need to do something when req not completed
    if (this.req!=null) return;
@@ -1108,7 +1084,6 @@ DABC.RateHistoryDrawElement.prototype.Clear = function() {
 
 DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 
-//   DABC.AssertRootPrerequisites();
    
    this.frameid = "dabcobj" + id;
    
@@ -1138,8 +1113,6 @@ DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
 
 DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
-//   if (!DABC.AssertRootPrerequisites()) return;
-   
    this.vis.select("title").text(this.itemname + 
          "\nversion = " + this.version + ", history = " + (this.history ? this.history.length : 0));
    
@@ -1193,7 +1166,7 @@ DABC.RootDrawElement = function(_clname, _json) {
    DABC.DrawElement.call(this);
 
    this.clname = _clname;    // ROOT class name
-   this.json = _json;        // indocates JSON usage
+   this.json = _json;        // indicates JSON usage
    this.obj = null;          // object itself, for streamer info is file instance
    this.sinfo = null;        // used to refer to the streamer info record
    this.req = null;          // this is current request
@@ -1492,8 +1465,6 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
 
 DABC.RootDrawElement.prototype.RegularCheck = function() {
 
-//   if (!DABC.AssertRootPrerequisites()) return;
-   
    // ignore all callbacks for object from ROOT files
    if ('rootfile' in this) return;
    
@@ -1558,6 +1529,8 @@ DABC.Manager = function(with_tree) {
    this.cnt = new Number(0);      // counter to create new element 
    this.arr = new Array();        // array of DrawElement
    this.with_tree = with_tree;
+   
+   this.hpainter = null;  // painter used to to draw hierarchy
    
    if (this.with_tree) {
       DABC.dabc_tree = new dTree('DABC.dabc_tree');
@@ -1904,12 +1877,31 @@ DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
    var elem = new DABC.GenericDrawElement();
    elem.itemname = itemname;
    elem.CreateFrames(this.NextCell(), this.cnt++);
-   if (recheck) elem.recheck = true;
+   if (recheck) {
+      elem.recheck = true;
+      elem.request_name = "h.json"; // we do not need element but its description
+   }
    this.arr.push(elem);
+}
+
+DABC.Manager.prototype.DisplayNewHiearchy = function(holder) {
+   if (this.hpainter!=null) return;
+   
+   this.hpainter = new JSROOTPainter.HPainter('main', holder);
+      
+   this.hpainter['ondisplay'] = function(itemname, obj) {
+      // here this belongs to painter
+      console.log("Request for display " + itemname);
+   }
+      
+   this.hpainter.OpenUrl("h.json?compact=3");
 }
 
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
+   
+   // return this.DisplayHiearchy(holder);
+   
    var elem = this.FindItem("ObjectsTree");
    
    if (elem) return;
@@ -2060,10 +2052,6 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
 
 DABC.Manager.prototype.openRootFile = function(filename, nodeid)
 {
-   if (!DABC.AssertRootPrerequisites()) { 
-      console.log("ROOT scripts not yet loaded");
-      return;
-   }
    var main = this.FindItem("ObjectsTree");
    if (!main) { 
       console.log("not found objects tree"); 

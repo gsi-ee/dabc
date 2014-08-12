@@ -7678,7 +7678,11 @@
          curr = curr['_parent'];
       }
       
-      if (typeof callback == 'function') callback(item, null);
+      if(('_get' in this) && (typeof this._get == 'function')) {
+         // process get in central method - if exists
+         this._get(item, callback);
+      } else
+         if (typeof callback == 'function') callback(item, null);
    }
 
    JSROOTPainter.HPainter.prototype.display = function(itemname)
@@ -7739,6 +7743,41 @@
          pthis.RefreshHtml();
       });
    }
+
+   JSROOTPainter.HPainter.prototype.OpenUrl = function(url)
+   {
+      this.url = url; // remember url to be able reload id 
+      
+      var painter = this;
+      
+      var req = JSROOTCore.NewHttpRequest(url, 'text', function(arg) {
+          if (arg==null) return;
+          
+          painter.h = JSON.parse(arg);
+
+          painter.h['_get'] = function (item, callback) {
+             var itemname = painter.itemFullName(item);
+             
+             console.log("sending request for " + itemname);
+             
+             var itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json?compact=3", 'text', function(itemres) {
+                 var obj = null;
+                 
+                 if (itemres!=null) obj = JSROOTCore.JSONR_unref(JSON.parse(itemres));
+                 
+                 if (typeof callback == 'function') callback(item, obj);
+             });
+             
+             itemreq.send(null);
+          }
+          
+          if (painter.h!=null) painter.RefreshHtml();
+      
+      });
+      
+      req.send(null);
+   }
+
    
    JSROOTPainter.HPainter.prototype.ShowStreamerInfo = function(sinfo)
    {
@@ -7747,7 +7786,12 @@
       this.RefreshHtml();
    }
    
-
+   JSROOTPainter.HPainter.prototype.Adopt = function(h)
+   {
+      this.h = h;
+      this.RefreshHtml();
+   }
+   
 
 
 })();

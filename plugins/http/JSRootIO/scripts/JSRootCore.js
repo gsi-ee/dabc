@@ -217,6 +217,169 @@
       }
       return xhr;
    }
+	
+   JSROOTCore.loadScript = function(urllist, callback) {
+      // dynamic script loader using callback
+      // (as loading scripts may be asynchronous)
+      // one could specify list of scripts or style files, separated by semicolon ';'
+      // one can prepend file name with '$$$' - than file will be loaded from JSROOTIO location
+      // This location can be set by JSROOTCore.source_dir or it will be detected automatically
+      // by the position of JSRootCore.js file, which must be loaded by normal methods:
+      // <script type="text/javascript" src="scripts/JSRootCore.js"></script>
+
+      
+      var completeLoad = function() {
+         if ((urllist!=null) && (urllist.length>0))
+            JSROOTCore.loadScript(urllist, callback);
+         else
+            if (typeof callback == 'function') callback();
+      }
+      
+      
+      
+      if ((urllist==null) || (urllist.length==0)) {
+         completeLoad();
+         return;
+      }
+      
+      var filename = urllist;
+      var separ = filename.indexOf(";");
+      if (separ>0) {
+         filename = filename.substr(0, separ);
+         urllist = urllist.slice(separ+1);
+      } else {
+         urllist = "";
+      }
+      
+      var isrootjs = false;
+      if (filename.indexOf("$$$")==0) {
+         isrootjs = true;
+         filename = filename.slice(3);
+      }
+      var isstyle = filename.indexOf('.css') > 0;
+      
+      
+      if (isstyle) {
+         var styles = document.getElementsByTagName('link');
+         for (var n in styles) {
+            if ((styles[n]['type'] != 'text/css') || (styles[n]['rel'] != 'stylesheet')) continue;
+
+            var href = styles[n]['href']; 
+            if ((href == null) || (href.length == 0)) continue;
+
+            if (href.indexOf(filename)>=0) {
+               console.log("style "+  filename + " already loaded");
+               completeLoad();
+               return;
+            }
+         }
+         
+      } else {
+         var scripts = document.getElementsByTagName('script');
+
+         for (var n in scripts) {
+            if (scripts[n]['type'] != 'text/javascript') continue;
+
+            var src = scripts[n]['src']; 
+            if ((src == null) || (src.length == 0)) continue;
+
+            // try to detect place where source for our scripts should be situated
+            if (JSROOTCore.source_dir == null) {
+
+               var pos = src.indexOf("scripts/JSRootCore.js");
+               if (pos>=0) {
+                  JSROOTCore.source_dir = src.substr(0, pos);
+                  console.log("Set JSROOTCore.source_dir to " + JSROOTCore.source_dir);
+               }
+            }
+
+            if (src.indexOf(filename)>=0) {
+               console.log("script "+  filename + " already loaded");
+               completeLoad();
+               return;
+            }
+         }
+      }
+
+      if (isrootjs && (JSROOTCore.source_dir!=null)) filename = JSROOTCore.source_dir + filename;   
+      
+      var element = null;
+      
+      if (isstyle) {
+         
+         console.log("loading style " + filename);
+         
+         element = document.createElement("link");
+         element.setAttribute("rel", "stylesheet");
+         element.setAttribute("type", "text/css");
+         element.setAttribute("href", filename);
+      } else {
+         console.log("loading script " + filename);
+
+         element = document.createElement("script");
+         element.setAttribute('type', "text/javascript");
+         element.setAttribute('src', filename);//+ "?r=" + rnd;
+      }
+      
+      if (element.readyState) { // Internet Explorer specific
+         element.onreadystatechange = function() {
+            if (element.readyState == "loaded" ||
+                  element.readyState == "complete") {
+               element.onreadystatechange = null;
+               completeLoad();
+            }
+         }
+      } else { // Other browsers
+         element.onload = function() {
+            element.onload = null;
+            completeLoad();
+         }
+      }
+    
+      document.getElementsByTagName("head")[0].appendChild(element);
+   }
+
+   JSROOTCore.AssertPrerequisites = function(andThen) {
+
+      // file names should be separated with ';' 
+      var allfiles = 
+         '$$$scripts/jquery.min.js;'+
+         '$$$style/jquery-ui.css;' +
+         '$$$scripts/jquery-ui.min.js;' +
+         '$$$scripts/d3.v3.min.js;' +
+         '$$$scripts/jquery.mousewheel.js;' +
+         '$$$scripts/dtree.js;' +
+         '$$$scripts/rawinflate.js;' +
+         '$$$scripts/three.min.js;' +
+         '$$$fonts/helvetiker_regular.typeface.js;' +
+         '$$$scripts/JSRootIOEvolution.js;' +
+         '$$$scripts/JSRootPainter.js;' +
+         '$$$style/JSRootPainter.css';
+      
+      JSROOTCore.loadScript(allfiles, andThen); 
+   }
+   
+   
+   JSROOTCore.InitSimpleGUI = function(andThen, allfiles) {
+      // only initialize script and style, required by simple gui
+      JSROOTCore.AssertPrerequisites(function(){
+         if (allfiles==null) allfiles = '$$$scripts/JSRootInterface.js;$$$style/JSRootInterface.css';
+         console.log("init simple gui with " + allfiles);
+         JSROOTCore.loadScript(allfiles, andThen);
+      });
+   }
+   
+   JSROOTCore.BuildSimpleGUI = function(andThen, allfiles) {
+      // initialize all scripts and call build function
+      JSROOTCore.InitSimpleGUI(function() {
+         if (typeof BuildSimpleGUI != 'function') {
+            alert("BuildSimpleGUI not defined after loading " + allfiles);
+            return;
+         }
+         BuildSimpleGUI();
+         if (typeof andThen == 'function') andThen();
+      });
+   }
 
    JSROOTCore.addFormula = function(obj) {
       var formula = obj['fTitle'];
@@ -1338,171 +1501,6 @@
          };
       }
    };
-   
-   JSROOTCore.loadScript = function(urllist, callback) {
-      // dynamic script loader using callback
-      // (as loading scripts may be asynchronous)
-      // one could specify list of scripts or style files, separated by semicolon ';'
-      // one can prepend file name with '$$$' - than file will be loaded from JSROOTIO location
-      // This location can be set by JSROOTCore.source_dir or it will be detected automatically
-      // by the position of JSRootCore.js file, which must be loaded by normal methods:
-      // <script type="text/javascript" src="scripts/JSRootCore.js"></script>
-
-      
-      var completeLoad = function() {
-         if ((urllist!=null) && (urllist.length>0))
-            JSROOTCore.loadScript(urllist, callback);
-         else
-            if (typeof callback == 'function') callback();
-      }
-      
-      
-      
-      if ((urllist==null) || (urllist.length==0)) {
-         completeLoad();
-         return;
-      }
-      
-      var filename = urllist;
-      var separ = filename.indexOf(";");
-      if (separ>0) {
-         filename = filename.substr(0, separ);
-         urllist = urllist.slice(separ+1);
-      } else {
-         urllist = "";
-      }
-      
-      var isrootjs = false;
-      if (filename.indexOf("$$$")==0) {
-         isrootjs = true;
-         filename = filename.slice(3);
-      }
-      var isstyle = filename.indexOf('.css') > 0;
-      
-      
-      if (isstyle) {
-         var styles = document.getElementsByTagName('link');
-         for (var n in styles) {
-            if ((styles[n]['type'] != 'text/css') || (styles[n]['rel'] != 'stylesheet')) continue;
-
-            var href = styles[n]['href']; 
-            if ((href == null) || (href.length == 0)) continue;
-
-            if (href.indexOf(filename)>=0) {
-               console.log("style "+  filename + " already loaded");
-               completeLoad();
-               return;
-            }
-         }
-         
-      } else {
-         var scripts = document.getElementsByTagName('script');
-
-         for (var n in scripts) {
-            if (scripts[n]['type'] != 'text/javascript') continue;
-
-            var src = scripts[n]['src']; 
-            if ((src == null) || (src.length == 0)) continue;
-
-            // try to detect place where source for our scripts should be situated
-            if (JSROOTCore.source_dir == null) {
-
-               var pos = src.indexOf("scripts/JSRootCore.js");
-               if (pos>=0) {
-                  JSROOTCore.source_dir = src.substr(0, pos);
-                  console.log("Set JSROOTCore.source_dir to " + JSROOTCore.source_dir);
-               }
-            }
-
-            if (src.indexOf(filename)>=0) {
-               console.log("script "+  filename + " already loaded");
-               completeLoad();
-               return;
-            }
-         }
-      }
-
-      if (isrootjs && (JSROOTCore.source_dir!=null)) filename = JSROOTCore.source_dir + filename;   
-      
-      var element = null;
-      
-      if (isstyle) {
-         
-         console.log("loading style " + filename);
-         
-         element = document.createElement("link");
-         element.setAttribute("rel", "stylesheet");
-         element.setAttribute("type", "text/css");
-         element.setAttribute("href", filename);
-      } else {
-         console.log("loading script " + filename);
-
-         element = document.createElement("script");
-         element.setAttribute('type', "text/javascript");
-         element.setAttribute('src', filename);//+ "?r=" + rnd;
-      }
-      
-      if (element.readyState) { // Internet Explorer specific
-         element.onreadystatechange = function() {
-            if (element.readyState == "loaded" ||
-                  element.readyState == "complete") {
-               element.onreadystatechange = null;
-               completeLoad();
-            }
-         }
-      } else { // Other browsers
-         element.onload = function() {
-            element.onload = null;
-            completeLoad();
-         }
-      }
-    
-      document.getElementsByTagName("head")[0].appendChild(element);
-   }
-
-   JSROOTCore.AssertPrerequisites = function(andThen) {
-
-      // file names should be separated with ';' 
-      var allfiles = 
-         '$$$scripts/jquery.min.js;'+
-         '$$$style/jquery-ui.css;' +
-         '$$$scripts/jquery-ui.min.js;' +
-         '$$$scripts/d3.v3.min.js;' +
-         '$$$scripts/jquery.mousewheel.js;' +
-         '$$$scripts/dtree.js;' +
-         '$$$scripts/rawinflate.js;' +
-         '$$$scripts/three.min.js;' +
-         '$$$fonts/helvetiker_regular.typeface.js;' +
-         '$$$scripts/JSRootIOEvolution.js;' +
-         '$$$scripts/JSRootPainter.js;' +
-         '$$$style/JSRootPainter.css';
-      
-      JSROOTCore.loadScript(allfiles, andThen); 
-   }
-   
-   
-   JSROOTCore.InitSimpleGUI = function(andThen, allfiles) {
-      // only initialize script and style, required by simple gui
-      JSROOTCore.AssertPrerequisites(function(){
-         if (allfiles==null) allfiles = '$$$scripts/JSRootInterface.js;$$$style/JSRootInterface.css';
-         console.log("init simple gui with " + allfiles);
-         JSROOTCore.loadScript(allfiles, andThen);
-      });
-   }
-   
-   JSROOTCore.BuildSimpleGUI = function(andThen, allfiles) {
-      // initialize all scripts and call build function
-      JSROOTCore.InitSimpleGUI(function() {
-         if (typeof BuildSimpleGUI != 'function') {
-            alert("BuildSimpleGUI not defined after loading " + allfiles);
-            return;
-         }
-         BuildSimpleGUI();
-         if (typeof andThen == 'function') andThen();
-      });
-   }
-
-   
 
 })();
 

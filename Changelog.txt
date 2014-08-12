@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+12.08.2014
+1. Use new JSROOT functionality in dabc.js. One loads necessary ROOT scripts
+   automatically from the beginning.
+2. First steps to implementing DABC hierarchy display with JSRootPainter.HPainter class.     
+
+
 11.08.2014
 1. Move scripts/styles loading into JSRootCore.js. 
    One can specify any list of files for loading.

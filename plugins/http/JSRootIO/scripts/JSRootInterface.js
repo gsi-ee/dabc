@@ -80,6 +80,8 @@ function CollapsibleDisplay(itemname, obj) {
       
       // d3.select('#'+hid).attr("height",$('#'+hid).width()*0.66);
 
+      
+      // set aspect ratio for the place, where object will be drawn
       var height = $('#'+hid).width() * 0.66;
       
       document.getElementById(hid).setAttribute("style", "height:"+height+"px");
