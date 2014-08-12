@@ -5,7 +5,12 @@ current functionality of the framework.
 12.08.2014
 1. Use new JSROOT functionality in dabc.js. One loads necessary ROOT scripts
    automatically from the beginning.
-2. First steps to implementing DABC hierarchy display with JSRootPainter.HPainter class.     
+2. Implement online hierarchy display for ROOT and DABC based on JSRootPainter.HPainter class.
+   For DABC window management remains, for ROOT offline collapsible display reused.
+   On the long run one could introduce many different window managers (collpsible, tabs, subpads),
+   which could be easily exchanged with each other.
+3. Online display for ROOT is independent now from dabc.js. Main functionality in
+   HPainter, window management in JSRootInterface.js. 
 
 
 11.08.2014

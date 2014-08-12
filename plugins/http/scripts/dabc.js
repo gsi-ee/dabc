@@ -156,11 +156,11 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
    frame.append("<h3>" + this.FullItemName() + "</h3>");
 
    if (this.jsonnode==null) {
-      frame.append("request command definition...<br>");
+      frame.append("request command definition...<br/>");
       return;
    } 
    
-   var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br>";
+   var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br/>";
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argname = this.ArgName(cnt);
@@ -172,7 +172,7 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
       
       entryInfo += "Arg: " + argname + " "; 
       entryInfo += "<input id='" + argid + "' style='width:" + argwidth + "' value='"+argdflt+"' argname = '" + argname + "'/>";    
-      entryInfo += "<br>";
+      entryInfo += "<br/>";
    }
    
    entryInfo += "<div id='" +this.frameid + "_res'/>";
@@ -573,7 +573,7 @@ DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
          element.append("<PRE>"+txt[i]+"</PRE>");
    } else {
       var val = this.ExtractField("value");
-      element.append(this.FullItemName() + "<br>");
+      element.append(this.FullItemName() + "<br/>");
       element.append("<h5>"+val +"</h5>");
    }
 }
@@ -617,7 +617,7 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
    
    var element = $("#" + this.frameid);
    element.empty();
-   element.append(this.FullItemName() + "<br>");
+   element.append(this.FullItemName() + "<br/>");
    
    var ks = Object.keys(this.jsonnode);
    for (i = 0; i < ks.length; i++) {
@@ -1890,17 +1890,35 @@ DABC.Manager.prototype.DisplayNewHiearchy = function(holder) {
    this.hpainter = new JSROOTPainter.HPainter('main', holder);
       
    this.hpainter['ondisplay'] = function(itemname, obj) {
-      // here this belongs to painter
-      console.log("Request for display " + itemname);
+      alert("Request for display " + itemname + " never come here!!!");
    }
+   
+   this.hpainter['display'] = function(itemname) {
+      var item = this.Find(itemname);
       
-   this.hpainter.OpenUrl("h.json?compact=3");
+      if (item==null) {
+         console.log("fail to find item " + itemname);
+         return;
+      }
+      
+      console.log("trying to display " + itemname);
+      
+      // FIXME: avoid usage of extra slashes
+      DABC.mgr.DisplayItem(itemname + "/", item);
+   }
+   
+   this.hpainter['clear'] = function() {
+      DABC.mgr.ClearWindow();
+   }
+   
+      
+   this.hpainter.OpenOnline("h.json?compact=3");
 }
 
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    
-   // return this.DisplayHiearchy(holder);
+   return this.DisplayNewHiearchy(holder);
    
    var elem = this.FindItem("ObjectsTree");
    
@@ -1966,13 +1984,14 @@ DABC.Manager.prototype.ClearWindow = function()
       this.arr[i].Clear();
    }
    
-   this.arr.splice(0, this.arr.length);
+   delete this.arr;
+   this.arr = [];
 
    if (!this.with_tree) return;
    
    var num = $("#grid_spinner").spinner( "value" );
 
-   this.arr.push(elem);
+   if (elem!=null) this.arr.push(elem);
    
    this.CreateTable(num,num);
    
@@ -1982,6 +2001,9 @@ DABC.Manager.prototype.ClearWindow = function()
 
 
 DABC.Manager.prototype.FindNode = function(itemname) {
+   
+   if (this.hpainter!=null) return this.hpainter.Find(itemname);
+   
    var elem = this.FindItem("ObjectsTree");
    
    return elem ? elem.FindNode(itemname) : null;

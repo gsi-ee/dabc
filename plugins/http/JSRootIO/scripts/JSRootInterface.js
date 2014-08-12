@@ -80,6 +80,7 @@ function CollapsibleDisplay(itemname, obj) {
       
       // d3.select('#'+hid).attr("height",$('#'+hid).width()*0.66);
 
+      $('#'+uid).attr("drawnitem", itemname);   
       
       // set aspect ratio for the place, where object will be drawn
       var height = $('#'+hid).width() * 0.66;
@@ -89,7 +90,14 @@ function CollapsibleDisplay(itemname, obj) {
 
       // console.log("width = " + $('#'+hid).width() + "  height = " + $('#'+hid).height());
 
-      JSROOTPainter.draw(hid, obj);
+      var hpainter = JSROOTPainter.draw(hid, obj);
+      
+      console.log('drawing type = ' + (typeof hpainter));
+      
+      document.getElementById(uid)['hpainter'] = hpainter;
+      
+      console.log('drawing type = ' + uid + (typeof document.getElementById(uid)['hpainter']));
+
    }
    
    addCollapsible('#'+uid);
@@ -128,19 +136,85 @@ function ReadFile(filename) {
    painter.OpenRootFile(filename);
 }
 
-function ResetUI() {
+function ResetReport() {
    $("#report").get(0).innerHTML = '';
    $("#report").innerHTML = '';
    delete $("#report").get(0);
    //window.location.reload(true);
-   $('#status').get(0).innerHTML = '';
-   JSROOTPainter.DelHList('root');
    JSROOTPainter.DelHList('sinfo');
    $('#report').get(0).innerHTML = '';
+}
+
+
+function ResetUI() {
+   ResetReport();
+   $('#status').get(0).innerHTML = '';
+   JSROOTPainter.DelHList('root');
    $(window).unbind('resize');
 };
 
+function OpenOnline(url) {
+   
+   var painter = new JSROOTPainter.HPainter("root", "status");
+   
+   painter['ondisplay'] = CollapsibleDisplay;
+   painter['clear'] = ResetReport;
+   
+   painter.OpenOnline(url);
+}
+
+function UpdateOnline() {
+   var chkbox = document.getElementById("monitoring");
+   if (!chkbox || !chkbox.checked) return;
+
+   // console.log("One could monitor all elements");
+   $('#report').children().each(function() {
+      
+      var itemname = $(this).attr('drawnitem');
+      if (typeof itemname=='undefined') return;
+
+      // update only visible histograms
+      if ($(this).next().is(":hidden")) return;
+      var uid = $(this).attr('id');
+      
+      var hpainter = document.getElementById(uid)['hpainter'];
+      if (hpainter == null) return;
+      
+      JSROOTPainter.H('root').get(itemname, function(item, obj) {
+         if (hpainter.UpdateObject(obj))
+            hpainter.RedrawFrame(); 
+      });
+   });
+}
+
+function BuildOnlineGUI() {
+   var myDiv = $('#onlineGUI');
+   if (!myDiv) {
+      alert("You have to define a div with id='onlineGUI'!");
+      return;
+   }
+   
+   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
+
+   guiCode += '<div id="main" class="column"><br/>'
+            + '  <h1><font face="Verdana" size="4">ROOT online server</font></h1>'
+            + '  Hierarchy in <a href="h.xml">xml</a> and <a href="h.json">json</a> format<br/><br/>'
+            + '  <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring<br/>'
+            + '<div id="status"></div>'
+            + '</div>'
+            + '<div id="reportHolder" class="column">'
+            + '  <div id="report" class="ui-accordion ui-accordion-icons ui-widget ui-helper-reset"> </div>'
+            + '</div>';
+   
+   $('#onlineGUI').append(guiCode);
+   
+   setInterval(UpdateOnline, 3000);
+}
+
 function BuildSimpleGUI() {
+   
+   if ($('#onlineGUI')) return BuildOnlineGUI();  
+   
    var myDiv = $('#simpleGUI');
    if (!myDiv) {
       alert("You have to define a div with id='simpleGUI'!");

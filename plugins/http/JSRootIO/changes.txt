@@ -23,6 +23,7 @@ August 2014:
    can easily build many different kinds of GUIs, reusing provided JSRootCore.js functions.         
 8. In example.htm also use AssertPrerequisites to load necessary scripts.
    This helps to keep code up-to-date even by big changes in JavaScript code.
+9. Provide monitoring of online THttpServer with similar interface as for ROOT files.
        
 
 July 2014:

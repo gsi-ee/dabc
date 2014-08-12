@@ -184,7 +184,7 @@ void* http::FastCgi::RunFunc(void* args)
          else {
              int i, ch;
 
-             FCGX_FPrintF(request.out, "Standard input:<br>\n<pre>\n");
+             FCGX_FPrintF(request.out, "Standard input:<br/>\n<pre>\n");
              for (i = 0; i < len; i++) {
                  if ((ch = FCGX_GetChar(request.in)) < 0) {
                      FCGX_FPrintF(request.out, "Error: Not enough bytes received on standard input<p>\n");
@@ -199,11 +199,11 @@ void* http::FastCgi::RunFunc(void* args)
          FCGX_FPrintF(request.out, "QUERY:   %s<p>\n", inp_query ? inp_query : "---");
          FCGX_FPrintF(request.out, "<p>\n");
 
-         FCGX_FPrintF(request.out, "Environment:<br>\n<pre>\n");
+         FCGX_FPrintF(request.out, "Environment:<br/><pre>");
          for(char** envp = request.envp; *envp != NULL; envp++) {
              FCGX_FPrintF(request.out, "%s\n", *envp);
          }
-         FCGX_FPrintF(request.out, "</pre><p>\n");
+         FCGX_FPrintF(request.out, "</pre><p>");
 
          FCGX_Finish_r(&request);
          continue;

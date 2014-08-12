@@ -1522,7 +1522,7 @@
 
    JSROOTPainter.ObjectPainter.prototype.AddMenuItem = function(menu, text, cmd)
    {
-      menu.append("<a href='javascript: JSROOTPainter.histoDialog(\"" + cmd + "\")'>" + text + "</a><br>");
+      menu.append("<a href='javascript: JSROOTPainter.histoDialog(\"" + cmd + "\")'>" + text + "</a><br/>");
    }
 
 
@@ -3173,11 +3173,8 @@
 
    JSROOTPainter.DrawPaveText = function(vis, pavetext)
    {
-      // $("#report").append("<br> JSROOTPainter.DrawPaveText " + pavetext['fName']);
-
       if (pavetext['fX1NDC'] < 0.0 || pavetext['fY1NDC'] < 0.0 ||
           pavetext['fX1NDC'] > 1.0 || pavetext['fY1NDC'] > 1.0) {
-         // $("#report").append("<br> JSROOTPainter.DrawPaveText suppress painting of " + pavetext['fName']);
          return;
       }
 
@@ -3225,8 +3222,6 @@
       var s_width = Math.abs(palette['fX2NDC'] - palette['fX1NDC']) * width;
       var s_height = Math.abs(palette['fY2NDC'] - palette['fY1NDC']) * height;
       pos_y -= s_height;
-
-      // $("#report").append("<br> draw palette");
 
       // Draw palette pad
       this.draw_g = vis.append("svg:g")
@@ -4220,7 +4215,6 @@
             var now = new Date();
             var diff = now.getTime() - lasttouch.getTime();
 
-            //$("#report").append("<br> single touch " + diff);
             if ((diff < 300) &&
                 (curr != null) && (Math.abs(curr[0] - arr[0][0]) < 30) &&
                 (Math.abs(curr[1] - arr[0][1]) < 30)) {
@@ -4230,7 +4224,6 @@
 
                closeAllExtras();
                pthis.Unzoom(true,true);
-               // $("#report").append("<br> unzoom " + diff);
             } else {
                lasttouch = now;
                curr = arr[0];
@@ -4263,10 +4256,8 @@
             zoom_kind = 102; // only x
             curr[1] = 0;
             origin[1] = height;
-            //$("#report").append("<br> Start only X " + origin[0]);
          } else {
             zoom_kind = 101; // x and y
-            //$("#report").append("<br> Start  X and Y ");
          }
 
          // d3.select("body").classed("noselect", true);
@@ -4301,7 +4292,6 @@
          var arr = d3.touches(e);
 
          if (arr.length != 2) {
-            // $("#report").append("<br> no two points");
             closeAllExtras();
             zoom_kind = 0;
             return;
@@ -4551,7 +4541,6 @@
             origin[1] = curr[1];
             curr[0] = width;
             curr[1] += 1;
-            //$("#report").append("<br> Start only Y " + origin[1]);
          } else
          if (origin[1] > height) {
             zoom_kind = 2; // only x
@@ -4559,13 +4548,10 @@
             origin[1] = 0;
             curr[0] += 1;
             curr[1] = height;
-            //$("#report").append("<br> Start only X " + origin[0]);
          } else {
             zoom_kind = 1; // x and y
             origin[0] = curr[0];
             origin[1] = curr[1];
-
-            //$("#report").append("<br> Start  X and Y ");
          }
 
          //d3.select("body").classed("noselect", true);
@@ -5233,8 +5219,6 @@
 
    JSROOTPainter.drawHistogram1D = function(vis, histo, opt) {
 
-      //if (console) console.time("DrawTH1");
-
       // create painter and add it to canvas
       var painter = new JSROOTPainter.Hist1DPainter(histo);
 
@@ -5254,19 +5238,13 @@
 
       painter.DrawBins();
 
-      //$("#report").append("<br> title");
       painter.DrawTitle();
 
-      //$("#report").append("<br> stat");
       if (JSROOTPainter.gStyle.AutoStat && !hadframe) painter.CreateStat();
 
-      //$("#report").append("<br> func");
       painter.DrawFunctions();
 
-      //$("#report").append("<br> interact");
       painter.AddInteractive();
-
-      //if (console) console.timeEnd("DrawTH1");
 
       return painter;
    }
@@ -5348,8 +5326,6 @@
             if (this.histo.getBinContent(i+1, j+1)<min)
                min = this.histo.getBinContent(i+1, j+1);
 
-      // $("#report").append("<br> found min " + min);
-
       var ileft = i2, iright = i1, jleft = j2, jright = j1;
 
       for (var i=i1;i<i2;i++)
@@ -5360,8 +5336,6 @@
                if (j<jleft) jleft = j;
                if (j>=jright) jright = j+1;
             }
-
-      // $("#report").append("<br> found indexes " + ileft + iright + jleft + jright);
 
       var xmin = 0, xmax = 0, ymin = 0, ymax = 0;
 
@@ -5854,8 +5828,6 @@
       tip['text'].push("histo: " + this.histo['fName']);
       tip['text'].push("binx:" + i + " biny:" + j);
       tip['text'].push("cont: " + value);
-
-//      $("#report").append("<br> found " + bin.x.toPrecision(4) + " " + bin.y.toPrecision(4));
 
       tip['x1'] = this.xmin + i*this.binwidthx;
       tip['x2'] = this.xmin + (i+1)*this.binwidthx;
@@ -6418,9 +6390,9 @@
          bin.position.x = tx( bins[i].x - (scalex/2));
          bin.position.y = tz( bins[i].z - (scalez/2));
          bin.position.z = -(ty( bins[i].y - (scaley/2)));
-         bin.name = "x: [" + bins[i].x.toPrecision(4) + ", " + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
-                    "y: [" + bins[i].y.toPrecision(4) + ", " + (bins[i].y + scaley).toPrecision(4) + "]<br>" +
-                    "z: [" + bins[i].z.toPrecision(4) + ", " + (bins[i].z + scalez).toPrecision(4) + "]<br>" +
+         bin.name = "x: [" + bins[i].x.toPrecision(4) + ", " + (bins[i].x + scalex).toPrecision(4) + "]<br/>" +
+                    "y: [" + bins[i].y.toPrecision(4) + ", " + (bins[i].y + scaley).toPrecision(4) + "]<br/>" +
+                    "z: [" + bins[i].z.toPrecision(4) + ", " + (bins[i].z + scalez).toPrecision(4) + "]<br/>" +
                     "entries: " + bins[i].n.toFixed();
          toplevel.add( bin );
       }
@@ -6932,7 +6904,6 @@
 
       // Create a temporary histogram to draw the axis (if necessary)
       if (!histo) {
-         // $("#report").append("<br> create dummy histo");
          histo = JSROOTCore.CreateTH1();
          histo['fXaxis']['fXmin'] = rwxmin;
          histo['fXaxis']['fXmax'] = rwxmax;
@@ -7286,7 +7257,8 @@
       JSROOTPainter.AddHList(name, this);
       this.name = name;
       this.frameid = frameid;
-      this.h = null; // hierarchy
+      this.h = null;    // hierarchy
+      this.url = null;  // url of online server 
       this.dtree = null;
       this.maxnodeid = -1;
    }
@@ -7639,7 +7611,7 @@
       return nodeid;
    }
 
-   JSROOTPainter.HPainter.prototype.RefreshHtml = function()
+   JSROOTPainter.HPainter.prototype.RefreshHtml = function(force)
    {
       var elem = document.getElementById(this.frameid);
       if (elem==null) return;
@@ -7647,6 +7619,11 @@
       if (this.h==null) {
          elem.innerHTML = "<h2>null</h2>";
          return;
+      }
+      
+      if (force && this.dtree!= null) {
+         delete this.dtree;
+         this.dtree = null;
       }
       
       if (this.dtree == null) {
@@ -7658,7 +7635,15 @@
          this.maxnodeid = this.createNode(0, -1, this.h, "", 0, maxlvl);
       }
 
-      var content = "<p><a href=\"javascript: " + this.GlobalName() + ".dtree.openAll();\">open all</a> | <a href=\"javascript: " + this.GlobalName() + ".dtree.closeAll();\">close all</a></p>";
+      var content = "<p>";
+      content += "<a href=\"javascript: " + this.GlobalName() + ".dtree.openAll();\">open all</a>";
+      content += "| <a href=\"javascript: " + this.GlobalName() + ".dtree.closeAll();\">close all</a>";
+      if (this.url!=null)
+         content += "| <a href=\"javascript: " + this.GlobalName() + ".reload();\">reload</a>";                           
+      if (typeof this['clear'] == 'function')
+         content += "| <a href=\"javascript: " + this.GlobalName() + ".clear();\">clear</a>";                           
+                  
+      content+="</p>";
       content += this.dtree;
       
       elem.innerHTML = content;
@@ -7673,9 +7658,7 @@
             curr._get(item, callback);
             return;
          }
-         if (!('_parent' in curr)) break; 
-           
-         curr = curr['_parent'];
+         curr = ('_parent' in curr) ? curr['_parent'] : null;
       }
       
       if(('_get' in this) && (typeof this._get == 'function')) {
@@ -7697,6 +7680,11 @@
          if (('ondisplay' in pthis) && (typeof pthis['ondisplay'] == 'function'))
             pthis['ondisplay'](itemname, obj);
       });
+   }
+   
+   JSROOTPainter.HPainter.prototype.reload = function()
+   {
+      if (this.url!=null) this.OpenOnline(this.url);
    }
    
    JSROOTPainter.HPainter.prototype.ExpandDtree = function(node)
@@ -7724,10 +7712,16 @@
          // if (obj!=null) console.log("get object for the drawing");
          
          if ((item==null) || (obj==null)) return;
-
-         if (('_expand' in item) && (typeof item['_expand'] == 'function'))
-            if (item['_expand'](item, obj)) 
-               painter.ExpandDtree(item);
+         
+         var curr = item;
+         while (curr != null) {
+            if (('_expand' in curr) && (typeof(curr['_expand'])=='function')) {
+               if (curr['_expand'](item, obj))
+                  painter.ExpandDtree(item);
+               return;   
+            }
+            curr = ('_parent' in curr) ? curr['_parent'] : null;
+         }
       });
    }
    
@@ -7744,7 +7738,7 @@
       });
    }
 
-   JSROOTPainter.HPainter.prototype.OpenUrl = function(url)
+   JSROOTPainter.HPainter.prototype.OpenOnline = function(url)
    {
       this.url = url; // remember url to be able reload id 
       
@@ -7760,18 +7754,47 @@
              
              console.log("sending request for " + itemname);
              
-             var itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json?compact=3", 'text', function(itemres) {
-                 var obj = null;
-                 
-                 if (itemres!=null) obj = JSROOTCore.JSONR_unref(JSON.parse(itemres));
-                 
-                 if (typeof callback == 'function') callback(item, obj);
-             });
+             var itemreq = null;
              
-             itemreq.send(null);
+             if ('dabc:more' in item) {
+                itemreq = JSROOTCore.NewHttpRequest(itemname+"/h.json?compact=3", 'text', function(itemres) {
+                   var obj = null;
+                 
+                   if (itemres!=null) obj = JSON.parse(itemres);
+                 
+                   if (typeof callback == 'function') callback(item, obj);
+                });
+             } else {
+                itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json?compact=3", 'text', function(itemres) {
+                   var obj = null;
+                 
+                   if (itemres!=null) obj = JSROOTCore.JSONR_unref(JSON.parse(itemres));
+                 
+                   if (typeof callback == 'function') callback(item, obj);
+                });
+             }
+             
+             if (itemreq) 
+                itemreq.send(null);
+             else
+                if (typeof callback == 'function') callback(null, obj);
           }
           
-          if (painter.h!=null) painter.RefreshHtml();
+          painter.h['_expand'] = function(node, obj) {
+             // central function for all expand
+          
+             console.log("this is try to expand node " + node._name);
+             
+             if ((obj!=null) && (node!=null) && ('_childs' in obj)) {
+                node._childs = obj._childs;
+                obj._childs = null;
+                return true;
+             }
+             
+             return false;
+          }
+          
+          if (painter.h!=null) painter.RefreshHtml(true);
       
       });
       
