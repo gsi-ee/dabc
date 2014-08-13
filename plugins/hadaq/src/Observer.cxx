@@ -58,7 +58,7 @@ hadaq::Observer::Observer(const std::string& name) :
       ::Worker_initEnd(fEvtbuildWorker); // this will just add pid as default entry.
    }
 
-   fFlushTimeout = 1.0;
+   fFlushTimeout = 0.2; // export shared memory 5 times a second
 
    DOUT1("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str());
 }

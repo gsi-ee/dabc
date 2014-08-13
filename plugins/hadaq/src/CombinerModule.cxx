@@ -123,10 +123,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fDataDroppedRateName = ratesprefix + "DroppedData";
    fInfoName = ratesprefix + "Info";
 
-   CreatePar(fDataRateName).SetRatemeter(false, 1.).SetUnits("MB");
-   CreatePar(fEventRateName).SetRatemeter(false, 1.).SetUnits("Ev");
-   CreatePar(fLostEventRateName).SetRatemeter(false, 1.).SetUnits("Ev");
-   CreatePar(fDataDroppedRateName).SetRatemeter(false, 1.).SetUnits("MB");
+   CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
+   CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
+   CreatePar(fLostEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
+   CreatePar(fDataDroppedRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
    CreateCmdDef("StartHldFile")
       .AddArg("filename", "string", true, "file.hld")
@@ -139,7 +139,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    PublishPars("$CONTEXT$/HadaqCombiner");
 
    if (fWithObserver) {
-      CreateTimer("ObserverTimer", 0.1, false);
+      CreateTimer("ObserverTimer", 0.2, false); // export timers 5 times a second
       RegisterExportedCounters();
    }
 
@@ -273,15 +273,15 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    dabc::PortRef port = FindPort(OutputName(1));
 
    if(!port.null()) {
-       std::string filename = port.Cfg("url").AsStr();
-       //std::cout <<"!! Has filename:"<<filename << std::endl;
-       // strip leading path if any:
-       size_t pos = filename.rfind("/");
-       if (pos!=std::string::npos)
-           filename = filename.substr(pos+1, std::string::npos);
-       //std::cout <<"!!!!!! Register prefix:"<<filename << std::endl;
-       SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(filename.c_str()));
-    }
+      std::string filename = port.Cfg("url").AsStr();
+      //std::cout <<"!! Has filename:"<<filename << std::endl;
+      // strip leading path if any:
+      size_t pos = filename.rfind("/");
+      if (pos!=std::string::npos)
+         filename = filename.substr(pos+1, std::string::npos);
+      //std::cout <<"!!!!!! Register prefix:"<<filename << std::endl;
+      SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(filename.c_str()));
+   }
 
    CreateEvtbuildPar("evtsDiscarded");
    CreateEvtbuildPar("evtsComplete");
@@ -309,30 +309,26 @@ void hadaq::CombinerModule::RegisterExportedCounters()
       CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
    }
 
-  
-  CreateEvtbuildPar("diskNum"); // this gets number of partition from daq_disks
-  SetEvtbuildPar("diskNum", 1); // default for testing!
-  
-  CreateEvtbuildPar("diskNumEB"); // this is used for epics gui
-  SetEvtbuildPar("diskNumEB", 0); // default for testing!
-  
-  CreateEvtbuildPar("dataMover"); // rfio data mover number for epics gui
-  SetEvtbuildPar("dataMover", 0); // default for testing!
-  
-  CreateEvtbuildPar("coreNr");
-  
-  // NOTE: this export has no effect, since pid is exported by default in worker mechanism
-  // and worker names are not case sensitive!
-  // thus epics will always take pid of the observer process that opens shared memory
-  CreateEvtbuildPar("PID");
-  //fPID=getpid();
-  //fPID= syscall(SYS_gettid);
+   CreateEvtbuildPar("diskNum"); // this gets number of partition from daq_disks
+   SetEvtbuildPar("diskNum", 1); // default for testing!
 
-  
-  SetEvtbuildPar("PID", (int) fPID);
-  SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
-  
-  
+   CreateEvtbuildPar("diskNumEB"); // this is used for epics gui
+   SetEvtbuildPar("diskNumEB", 0); // default for testing!
+
+   CreateEvtbuildPar("dataMover"); // rfio data mover number for epics gui
+   SetEvtbuildPar("dataMover", 0); // default for testing!
+
+   CreateEvtbuildPar("coreNr");
+
+   // NOTE: this export has no effect, since pid is exported by default in worker mechanism
+   // and worker names are not case sensitive!
+   // thus epics will always take pid of the observer process that opens shared memory
+   CreateEvtbuildPar("PID");
+   //fPID=getpid();
+   //fPID= syscall(SYS_gettid);
+
+   SetEvtbuildPar("PID", (int) fPID);
+   SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
 }
 
 
@@ -362,34 +358,34 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          fTotalDataErrors = 0;
 
 
-        for (unsigned n=0;n<NumInputs();n++)
+         for (unsigned n=0;n<NumInputs();n++)
          {
             SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
 
-         // JAM BUGFIX JUL14: errorbits not reset 
-         for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
-              fErrorbitPattern[ptrn] = 0;
-              fCfg[n].fErrorbitStats[ptrn]=0;
+            // JAM BUGFIX JUL14: errorbits not reset
+            for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
+               fErrorbitPattern[ptrn] = 0;
+               fCfg[n].fErrorbitStats[ptrn]=0;
             }
-	 fCfg[n].fLastEvtBuildTrigId=0;
+            fCfg[n].fLastEvtBuildTrigId=0;
          }
 
-	 for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
-	   fEventIdCount[i]=0;
+         for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
+            fEventIdCount[i]=0;
 
          StoreRunInfoStart();
       }
    }
 
-   
-   
-//    static int affcount=0;
-//    if(affcount++ % 20)
-//     {
-//       SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
-//       //SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(0));
-//     }
-   
+
+
+   //    static int affcount=0;
+   //    if(affcount++ % 20)
+   //     {
+   //       SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(fPID));
+   //       //SetEvtbuildPar("coreNr", hadaq::RawEvent::CoreAffinity(0));
+   //     }
+
 
    SetEvtbuildPar("nrOfMsgs", NumInputs());
    SetNetmemPar("nrOfMsgs", NumInputs());
@@ -440,14 +436,14 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    // wrong overflow behaviour for triggernumber.
    // so only logfile warnings beyond 1 ->
    if((losterate>1 || dropdrate>0) && (losterate!=oldlostrate))
-     {
-       oldlostrate=losterate;
-       std::string info = dabc::format(
-				       "Lost Event rate: %.0f Ev/s, Dropped data rate: %.3f Mb/s  (at %.0f Ev/s, %.3f Mb/s)",
-				       losterate, dropdrate , erate, drate);
-   SetInfo(info, true);
-   DOUT0(info.c_str());
-      }
+   {
+      oldlostrate=losterate;
+      std::string info = dabc::format(
+            "Lost Event rate: %.0f Ev/s, Dropped data rate: %.3f Mb/s  (at %.0f Ev/s, %.3f Mb/s)",
+            losterate, dropdrate , erate, drate);
+      SetInfo(info, true);
+      DOUT0(info.c_str());
+   }
    return true;
 }
 
@@ -612,12 +608,14 @@ bool hadaq::CombinerModule::BuildEvent()
       if (tm > fMaxProcDist) fMaxProcDist = tm;
    }
 
-
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
-   unsigned masterchannel = 0;
+   unsigned masterchannel(0), min_inp(0);
    uint32_t subeventssize = 0;
    uint32_t mineventid(0), maxeventid(0), buildevid(0);
+   bool incomplete_data = false;
+   int missing_inp(-1);
+
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (fInp[ninp].subevnt() == 0)
          if (!ShiftToNextSubEvent(ninp)) {
@@ -629,7 +627,9 @@ bool hadaq::CombinerModule::BuildEvent()
                fMaxProcDist = 0;
             }
 
-            return false;
+            missing_inp = ninp;
+            incomplete_data = true;
+            break;
          }
 
       uint32_t evid = fCfg[ninp].fTrigNr;
@@ -643,13 +643,14 @@ bool hadaq::CombinerModule::BuildEvent()
       if (CalcTrigNumDiff(evid, maxeventid) < 0)
          maxeventid = evid;
 
-      if (CalcTrigNumDiff(mineventid, evid) < 0)
+      if (CalcTrigNumDiff(mineventid, evid) < 0) {
          mineventid = evid;
+         min_inp = ninp;
+      }
    } // for ninp
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
-   uint32_t buildtag = fCfg[masterchannel].fTrigTag;
-   int diff = CalcTrigNumDiff(mineventid, maxeventid);
+   int diff = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
 
 //   DOUT0("Min:%8u Max:%8u diff:%5d", mineventid, maxeventid, diff);
 
@@ -658,22 +659,37 @@ bool hadaq::CombinerModule::BuildEvent()
 
    if (fLastDropTm.Expired(5.))
      if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || fLastBuildTm.Expired(10.)) {
-      SetInfo(
-            dabc::format(
-                  "Event id difference %d exceeding tolerance window %d (or no events were build since 10 s), flushing buffers!",
-                  diff, fTriggerNrTolerance), true);
-      DOUT0("Event id difference %d exceeding tolerance window %d (or no events were build since 10 s), maxid:%u minid:%u, flushing buffers!",
-                  diff, fTriggerNrTolerance, maxeventid, mineventid);
-      DropAllInputBuffers();
 
-      if (fExtraDebug && fLastDebugTm.Expired(1.)) {
-         DOUT1("Drop all buffers");
-         fLastDebugTm.GetNow();
-      }
-      fLastDropTm.GetNow();
+        std::string msg;
 
-      return false; // retry on next set of buffers
-   }
+        if (missing_inp >= 0) {
+           msg += dabc::format("Missing data on input %d url: %s, drop all!", missing_inp, FindPort(InputName(missing_inp)).Cfg("url").AsStr().c_str());
+        } else
+        if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
+          msg = dabc::format(
+              "Event id difference %d exceeding tolerance window %d (min input %u), drop all!",
+              diff, fTriggerNrTolerance, min_inp);
+        } else {
+           msg = "No events were build since at least 10 s, drop all!";
+        }
+
+        SetInfo(msg, true);
+        DOUT0(msg.c_str());
+
+        DropAllInputBuffers();
+
+        if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+           DOUT1("Drop all buffers");
+           fLastDebugTm.GetNow();
+        }
+        fLastDropTm.GetNow();
+
+        return false; // retry on next set of buffers
+     }
+
+   if (incomplete_data) return false;
+
+   uint32_t buildtag = fCfg[masterchannel].fTrigTag;
 
    ////////////////////////////////////////////////////////////////////////
    // second input loop: skip all subevents until we reach current trignum
@@ -1040,51 +1056,51 @@ void hadaq::CombinerModule::SetNetmemPar(const std::string& name, unsigned value
 
 void hadaq::CombinerModule::StoreRunInfoStart()
 {
-	/* open ascii file eb_runinfo2ora.txt to store simple information for 
-	   the started RUN. The format: start <run_id> <filename> <date> <time>
-	   where "start" is a key word which defines START RUN info. -S.Y.
-	 */
-	if(!fRunToOracle || fRunNumber==0) return; 
-	time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
-	FILE *fp;
-	char ltime[20];				/* local time */
-	struct tm tm_res;
-	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
-	std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
-	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
-	fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
-	fclose(fp);
-	DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
+   /* open ascii file eb_runinfo2ora.txt to store simple information for
+      the started RUN. The format: start <run_id> <filename> <date> <time>
+      where "start" is a key word which defines START RUN info. -S.Y.
+    */
+   if(!fRunToOracle || fRunNumber==0) return;
+   time_t t = fRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines start time
+   FILE *fp;
+   char ltime[20];            /* local time */
+   struct tm tm_res;
+   strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
+   std::string filename=GenerateFileName(fRunNumber); // new run number defines filename
+   fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+   fprintf(fp, "start %u %d %s %s\n", fRunNumber, fEBId, filename.c_str(), ltime);
+   fclose(fp);
+   DOUT1("Write run info to %s - start: %lu %d %s %s ", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime);
 
 }
 
 void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
 {
-	/* open ascii file eb_runinfo2ora.txt to store simple information for 
-	   the stoped RUN. The format: stop <run_id> <date> <time> <events> <bytes>
-	   where "stop" is a key word which defines STOP RUN info. -S.Y.
-	 */
-	
-	if(!fRunToOracle || fRunNumber==0) return; // suppress void output at beginning
-	// JAM we do not use our own time, but time of next run given by epics master
-	// otherwise mismatch between run start time that comes before run stop time!
-	// note that this problem also occured with old EBs 
-	// only exception: when eventbuilder is discarded we use termination time!
-	time_t t;
-	if(onexit) 
-	   t = time(NULL);
-	else
-	   t = fEpicsRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
-	FILE *fp;
-	char ltime[20];				/* local time */
-	struct tm tm_res;
-	strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
-	fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
+   /* open ascii file eb_runinfo2ora.txt to store simple information for
+      the stoped RUN. The format: stop <run_id> <date> <time> <events> <bytes>
+      where "stop" is a key word which defines STOP RUN info. -S.Y.
+    */
+
+   if(!fRunToOracle || fRunNumber==0) return; // suppress void output at beginning
+   // JAM we do not use our own time, but time of next run given by epics master
+   // otherwise mismatch between run start time that comes before run stop time!
+   // note that this problem also occured with old EBs
+   // only exception: when eventbuilder is discarded we use termination time!
+   time_t t;
+   if(onexit)
+      t = time(NULL);
+   else
+      t = fEpicsRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
+   FILE *fp;
+   char ltime[20];            /* local time */
+   struct tm tm_res;
+   strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
+   fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
         std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
         fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
         fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
         fclose(fp);
-	DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
+   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
 }
 
 
@@ -1093,20 +1109,20 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 {
   
   // JAM stolen from old hadaq eventbuilders to keep precisely same format
-	static char retVal[6];
-	static char u[] = " kM";
-	unsigned int i;
+   static char retVal[6];
+   static char u[] = " kM";
+   unsigned int i;
 
-	for (i = 0; v >= 10000 && i < sizeof(u) - 2; v /= 1000, i++) {
-	}
-	sprintf(retVal, "%4lu%c", v, u[i]);
+   for (i = 0; v >= 10000 && i < sizeof(u) - 2; v /= 1000, i++) {
+   }
+   sprintf(retVal, "%4lu%c", v, u[i]);
 
-	return retVal;
+   return retVal;
 }
 
 std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
-	return fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
+   return fPrefix +  hadaq::RawEvent::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 }
 
 

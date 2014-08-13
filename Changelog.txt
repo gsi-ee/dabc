@@ -7,7 +7,9 @@ current functionality of the framework.
 2. Remove binary-based requests with streamer infos from dabc.js.
    Only for very special cases user can use binrary I/I directly,
    JSROOTIO.ReconstructObject shows how object can be reconstructed. 
-3. Remove master name from all ROOT hierarchies.   
+3. Remove master name from all ROOT hierarchies.
+4. In hadaq plugin update netmem parameters with 0.2 sec period
+   Drop all buffers and produce message when one input do not deliver data at all
 
 
 12.08.2014

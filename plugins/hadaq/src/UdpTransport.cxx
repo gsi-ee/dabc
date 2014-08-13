@@ -47,9 +47,7 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fTotalRecvBuffers(0),
    fTotalDroppedBuffers(0)
 {
-     //fPid=getpid();
-     fPid = syscall(SYS_gettid);
-     
+   fPid = syscall(SYS_gettid);
 }
 
 hadaq::DataSocketAddon::~DataSocketAddon()
@@ -93,7 +91,6 @@ double hadaq::DataSocketAddon::ProcessTimeout(double lastdiff)
 
 unsigned hadaq::DataSocketAddon::ReadUdp()
 {
-
    if (fTgtPtr.null()) {
       // if call was done from socket, just do nothing and wait buffer
       EOUT("ReadUdp at wrong moment - no buffer to read");
@@ -104,7 +101,6 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       EOUT("Should never happen - rest size is smaller than MTU");
       return dabc::di_Error;
    }
-
 
    while (true) {
 
@@ -203,7 +199,7 @@ unsigned hadaq::DataSocketAddon::Read_Start(dabc::Buffer& buf)
 
    fWaitMoreData = (res == dabc::di_CallBack);
 
-   // we are waiting for event callback, configure alse timeout
+   // we are waiting for event callback, configure else timeout
    if (fWaitMoreData) {
       fSendCnt = 0;
       ActivateTimeout(fFlushTimeout);
