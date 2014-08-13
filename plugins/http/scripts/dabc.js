@@ -627,279 +627,6 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
 }
 
 
-//======== start of HierarchyDrawElement =============================
-
-DABC.HierarchyDrawElement = function() {
-   DABC.DrawElement.call(this);
-   this.jsondoc = null;      // description is json form
-   this.ready = false;
-   this.req = null;             // this is current request
-   this.main = null;         // pointer on main hierarchy element
-   this.maxnodeid = 0;       // maximum id of last element
-}
-
-// TODO: check how it works in different older browsers
-DABC.HierarchyDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = topid;
-}
-
-DABC.HierarchyDrawElement.prototype.RegularCheck = function() {
-   
-   if (this.ready || this.req) return;
-   
-   var url = "h.json?compact=3";
-   
-   // if it is sub-item, include its name when request hierarchy
-   if (this.main)
-      url = this.itemname + url;
-   
-   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
-
-   this.req.send(null);
-}
-
-DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
-{
-   if (lvl == null) lvl = 0;
-   if (maxlvl == null) maxlvl = -1;
-   
-   var kind = node["dabc:kind"];
-   var view = node["dabc:view"];
-   
-   // this name will be specified when item name can be used as XML node name
-   var dabcitemname = node["dabc:itemname"];
-   
-   var html = "";
-
-   var nodename = node._name;
-   if (dabcitemname != null) nodename = dabcitemname;
-   
-   var nodefullname  = "";
-   
-   if (parentid>=0) 
-      nodefullname = fullname + nodename + "/";
-   
-   var nodeimg = "";
-   var node2img = "";
-   
-   var scan_inside = true, can_open = false;
-   
-   var can_display = DABC.mgr.CanDisplay(node);
-   var can_expand = node["dabc:more"] != null;
-   
-   if (kind) {
-      if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
-      if (kind == "ROOT.Session") nodeimg = JSROOTCore.source_dir+'img/globe.gif'; else
-      if (kind == "DABC.HTML") { nodeimg = JSROOTCore.source_dir+'img/globe.gif'; can_open = true; } else
-      if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
-      if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
-      if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-      if (kind.match(/\bROOT.TH1/)) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
-      if (kind.match(/\bROOT.TH2/)) { nodeimg = JSROOTCore.source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
-      if (kind.match(/\bROOT.TH3/)) { nodeimg = JSROOTCore.source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
-      if (kind == "ROOT.TCanvas") { nodeimg = JSROOTCore.source_dir+'img/canvas.png'; can_display = true; } else
-      if (kind == "ROOT.TProfile") { nodeimg = JSROOTCore.source_dir+'img/profile.png'; can_display = true; } else
-      if (kind.match(/\bROOT.TGraph/)) { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
-      if (kind == "ROOT.TTree") nodeimg = JSROOTCore.source_dir+'img/tree.png'; else
-      if (kind == "ROOT.TFolder") { nodeimg = JSROOTCore.source_dir+'img/folder.gif'; node2img = JSROOTCore.source_dir+'img/folderopen.gif'; }  else
-      if (kind == "ROOT.TNtuple") nodeimg = JSROOTCore.source_dir+'img/tree_t.png';   else
-      if (kind == "ROOT.TBranch") nodeimg = JSROOTCore.source_dir+'img/branch.png';   else
-      if (kind.match(/\bROOT.TLeaf/)) nodeimg = JSROOTCore.source_dir+'img/leaf.png'; else
-      if ((kind == "ROOT.TList") && (node.nodeName == "StreamerInfo")) { nodeimg = JSROOTCore.source_dir+'img/question.gif'; can_display = true; }
-   }
-
-   if (!node._childs || !scan_inside) {
-      if (can_expand) {   
-         html = "javascript: DABC.mgr.expand('"+nodefullname+"'," + nodeid +");";
-         if (nodeimg.length == 0) {
-            nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
-            node2img = JSROOTCore.source_dir+'img/folderopen.gif';
-         }
-      } else
-      if (can_display) {
-         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
-      } else
-      if (can_open) 
-         html = nodefullname;
-   } else 
-   if ((maxlvl >= 0) && (lvl >= maxlvl)) {
-      html = "javascript: DABC.mgr.expand('"+nodefullname+"',-" + nodeid +");";
-      if (nodeimg.length == 0) {
-         nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
-         node2img = JSROOTCore.source_dir+'img/folderopen.gif';
-      }
-      scan_inside = false;
-   } else {
-      html = nodefullname;
-      if (html == "") html = ".."; 
-   }
-   
-   if (node2img == "") node2img = nodeimg;
-   
-   // console.log("add nodeid " + nodeid + ":" + parentid + "  name = " + nodename );
-   DABC.dabc_tree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
-   
-   var thisid = nodeid;
-
-   // allow context menu only for objects which can be displayed
-   if (can_display || (nodeid==0))
-      DABC.dabc_tree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
-
-   nodeid++;
-   
-   if (scan_inside) 
-      for (var i in node._childs)
-         nodeid = this.createNode(nodeid, thisid, node._childs[i], nodefullname, lvl+1, maxlvl);
-   
-   return nodeid;
-}
-
-DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top, replace) {
-
-   // console.log("Searchig " + fullname);
-   
-   if (fullname.length==0) return top;
-   
-   if (!top) top = this.jsondoc;
-   var pos = fullname.indexOf("/");
-   if (pos<0) return;
-   
-   var localname = fullname.substr(0, pos);  
-
-   // console.log("local " + localname + " pos = " + pos + "  ");
-
-   for (var i in top._childs) 
-      if (top._childs[i]._name == localname) {
-         if (pos+1 == fullname.length) {
-            if (replace!=null) top._childs[i] = replace;
-            return top._childs[i]; 
-         }
-         
-         return this.FindNode(fullname.substr(pos+1), top._childs[i], replace);
-      }
-}
-
-DABC.HierarchyDrawElement.prototype.CountElements = function(node, lvl, arr)
-{
-   if (!node) return -1;
-   
-   if ((lvl==0) && (arr==null)) arr = new Array;
-   
-   while (arr.length <= lvl) arr.push(0);
-   
-   if (node._childs)
-      for (var i in node._childs) {
-         arr[lvl]++;
-         this.CountElements(node._childs[i], lvl+1, arr);
-      }
-
-   // for first level count how deep browser can create items
-   if (lvl==0) {
-      var sum = 0;
-      for (var cnt in arr) {
-         sum += arr[cnt];
-         // console.log(" cnt = " + cnt + " arr = " + arr[cnt] + " sum = " + sum);
-         if (sum > DABC.tree_limit) return cnt;   
-      }
-   }
-   
-   return -1;
-}
-
-
-DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg) {
-   this.req = 0;
-
-   if (arg==null) { this.ready = false; return; }
-
-   this.jsondoc = JSON.parse(arg);
-   if (!this.jsondoc) {
-      console.log(" Fail to parse JSON reply");
-      return;
-   }
-   
-   var top = this.jsondoc;
-   if (!top) return;
-   
-   this.ready = true;
-   
-   if (this.main == null) {
-      
-   
-      DABC.dabc_tree = new dTree('DABC.dabc_tree');
-      DABC.dabc_tree.config.useCookies = false;
-      
-      var maxlvl = this.CountElements(top, 0);
-      
-      // console.log("Total number of elements = " + sum + " level limit = " + maxlvl);
-   
-      this.maxnodeid = this.createNode(0, -1, top, "", 0, maxlvl);
-
-      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-      content += DABC.dabc_tree;
-      $("#" + this.frameid).html(content);
-      
-      
-   } else {
-      // find and replace at the same time
-      var mainjsonnode = this.main.FindNode(this.itemname, null, top);
-      if (!mainjsonnode) {
-         alert("Not found json node for item " + this.itemname);
-         DABC.mgr.RemoveItem(this);
-         return;
-      } 
-      
-      if (mainjsonnode._childs != null) {
-
-         for (var i in mainjsonnode._childs)
-            this.main.maxnodeid = this.createNode(this.main.maxnodeid, this.maxnodeid, mainjsonnode._childs[i], this.itemname);
-
-         var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-         content += DABC.dabc_tree;
-         $("#" + this.main.frameid).html(content);
-
-         // open node which was filled 
-         DABC.dabc_tree.o(this.maxnodeid);
-      }
-      
-      DABC.mgr.RemoveItem(this);
-   }
-}
-
-DABC.HierarchyDrawElement.prototype.CompleteNode = function(itemname, node, nodeid)
-{
-   var maxlvl = this.CountElements(node, 0);
-   // here maxlevel calculation differ while we are using not the dummy top-node 
-   if (maxlvl>0) maxlvl--;
-
-   for (var i in node._childs)
-     this.maxnodeid = this.createNode(this.maxnodeid, nodeid, node._childs[i], itemname, 0, maxlvl);
-   
-   DABC.dabc_tree.aNodes[nodeid].url = itemname;
-   
-   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-   
-   content += DABC.dabc_tree;
-   $("#" + this.frameid).html(content);
-   DABC.dabc_tree.o(nodeid);
-}
-
-
-
-DABC.HierarchyDrawElement.prototype.Clear = function() {
-   
-   DABC.DrawElement.prototype.Clear.call(this);
-   
-   this.xmldoc = null;
-   this.ready = false;
-   if (this.req != null) this.req.abort();
-   this.req = null;
-}
-
-
-// ======== end of HierarchyDrawElement ======================
 
 
 // ================ start of FesaDrawElement
@@ -1532,11 +1259,7 @@ DABC.Manager = function(with_tree) {
    
    this.hpainter = null;  // painter used to to draw hierarchy
    
-   if (this.with_tree) {
-      DABC.dabc_tree = new dTree('DABC.dabc_tree');
-      DABC.dabc_tree.config.useCookies = false;
-      this.CreateTable(2,2);
-   }
+   if (this.with_tree) this.CreateTable(2,2);
 
    // we could use ROOT drawing from beginning
    JSROOTPainter.gStyle.OptimizeDraw = true;
@@ -1671,7 +1394,6 @@ DABC.Manager.prototype.CanDisplay = function(node)
 
 DABC.Manager.prototype.DisplayItem = function(itemname, node)
 {
-   if (!node) node = this.FindNode(itemname);
    if (!node) {
       console.log("cannot find node for item " + itemname);
       return;
@@ -1780,7 +1502,7 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
 
 DABC.Manager.prototype.display = function(itemname) {
    
-   var node = this.FindNode(itemname);
+   var node = this.hpainter.Find(itemname);
    if (!node) {
       console.log(" cannot find node " + itemname);
       return;
@@ -1846,24 +1568,6 @@ DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) 
    return false;
 }
 
-DABC.Manager.prototype.expand = function(itemname, nodeid) {
-   
-   var node = this.FindNode(itemname);
-   if (!node) {
-      console.log(" cannot find node " + itemname);
-      return;
-   }
-
-   var elem = this.FindItem(itemname);
-
-   if (elem) {
-      elem.ClickItem();
-      return;
-   }
-   
-   this.ExpandHiearchy(itemname, node, nodeid);
-}
-
 
 DABC.Manager.prototype.ExecuteCommand = function(itemname)
 {
@@ -1884,7 +1588,7 @@ DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
    this.arr.push(elem);
 }
 
-DABC.Manager.prototype.DisplayNewHiearchy = function(holder) {
+DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    if (this.hpainter!=null) return;
    
    this.hpainter = new JSROOTPainter.HPainter('main', holder);
@@ -1916,97 +1620,17 @@ DABC.Manager.prototype.DisplayNewHiearchy = function(holder) {
 }
 
 
-DABC.Manager.prototype.DisplayHiearchy = function(holder) {
-   
-   return this.DisplayNewHiearchy(holder);
-   
-   var elem = this.FindItem("ObjectsTree");
-   
-   if (elem) return;
-
-   // console.log(" start2");
-
-   elem = new DABC.HierarchyDrawElement();
-   
-   elem.itemname = "ObjectsTree";
-
-   elem.CreateFrames(holder, this.cnt++);
-   
-   this.arr.push(elem);
-   
-   elem.RegularCheck();
-}
-
-DABC.Manager.prototype.ExpandHiearchy = function(itemname, node, nodeid)
-{
-   if (!node) return;
-
-   var main = this.FindItem("ObjectsTree");
-   if (!main) return;
-   
-
-   if (nodeid>0) {
-      elem = new DABC.HierarchyDrawElement();
-   
-      elem.itemname = itemname;
-      elem.main = main;
-      elem.maxnodeid = nodeid;
-   
-      this.arr.push(elem);
-      elem.RegularCheck();
-   } else {
-      main.CompleteNode(itemname, node, -nodeid);
-   }
-}
-
-
-DABC.Manager.prototype.ReloadTree = function() 
-{
-   var elem = this.FindItem("ObjectsTree");
-   if (!elem) return;
-   
-   elem.ready = false;
-   elem.RegularCheck();
-}
-
 DABC.Manager.prototype.ClearWindow = function()
 {
    $("#dialog").empty();
    
-   var elem = null;
-   
-   if (this.with_tree) {
-      elem = this.FindItem("ObjectsTree");
-   }
-
-   for (var i=0;i<this.arr.length;i++) {
-      if (this.arr[i] == elem) continue;
-      this.arr[i].Clear();
-   }
-   
    delete this.arr;
    this.arr = [];
 
-   if (!this.with_tree) return;
-   
-   var num = $("#grid_spinner").spinner( "value" );
-
-   if (elem!=null) this.arr.push(elem);
-   
-   this.CreateTable(num,num);
-   
-   // elem.ready = false;
-   // elem.RegularCheck();
-}
-
-
-DABC.Manager.prototype.FindNode = function(itemname) {
-   
-   if (this.hpainter!=null) return this.hpainter.Find(itemname);
-   
-   var elem = this.FindItem("ObjectsTree");
-   
-   return elem ? elem.FindNode(itemname) : null;
+   if (this.with_tree) {
+      var num = $("#grid_spinner").spinner( "value" );
+      this.CreateTable(num,num);
+   }
 }
 
 
@@ -2069,60 +1693,6 @@ DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
    }
    
    return newname + master + "/";
-}
-
-
-DABC.Manager.prototype.openRootFile = function(filename, nodeid)
-{
-   var main = this.FindItem("ObjectsTree");
-   if (!main) { 
-      console.log("not found objects tree"); 
-      return; 
-   }
-   
-   function callback(file) {
-      console.log("keys length = " + file.fKeys.length);
-      
-      var folder = { _name : "LocalFiles", _childs : [] };
-      
-      main.jsondoc._childs.push(folder);
-      
-      var subfolder = { _name : file.fFileName, "dabc:kind" : "ROOT.TFile", _childs : [] };
-      
-      folder._childs.push(subfolder);
-      
-      for (var i in file.fKeys) {
-         var key = file.fKeys[i];
-         var item = { 
-            _name : key['name'] + ";" + key['cycle'],  
-            "dabc:kind" : "ROOT." + key['className'],
-            _file : file,
-            _keyname : key['name'],
-            _keycycle : key['cycle']
-         };
-         
-         if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
-            item["dabc:more"] = true;
-         }
-         
-         subfolder._childs.push(item);
-      }
-
-      main.maxnodeid = main.createNode(main.maxnodeid, 0, folder, "");
-
-      var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> | <a href='javascript: DABC.mgr.ClearWindow();'>clear</a> </p>";
-      content += DABC.dabc_tree;
-      $("#" + main.frameid).html(content);
-      
-      // open node which was filled 
-      // DABC.dabc_tree.o(0);
-      
-   }
-   
-   console.log("loading file " + filename + "  nodeid = " + nodeid);
-   
-   new JSROOTIO.RootFile(filename, callback);
-
 }
 
 
