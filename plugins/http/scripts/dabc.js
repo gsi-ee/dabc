@@ -889,31 +889,15 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
 // ======== start of RootDrawElement ======================
 
-DABC.RootDrawElement = function(_clname, _json) {
+DABC.RootDrawElement = function(_clname) {
    DABC.DrawElement.call(this);
-
    this.clname = _clname;    // ROOT class name
-   this.json = _json;        // indicates JSON usage
+   
    this.obj = null;          // object itself, for streamer info is file instance
-   this.sinfo = null;        // used to refer to the streamer info record
    this.req = null;          // this is current request
-   this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
    this.painter = null;      // pointer on painter, can be used for update
-   
-   this.raw_data = null;    // raw data kept in the item when object cannot be reconstructed immediately
-   this.raw_data_version = 0;   // verison of object in the raw data, will be copied into object when completely reconstructed
-   this.raw_data_size = 0;      // size of raw data, can be displayed
-   this.need_master_version = 0; // this is version, required for the master item (streamer info)
-   
-   this.StateEnum = {
-         stInit        : 0,
-         stWaitRequest : 1,
-         stWaitSinfo   : 2,
-         stReady       : 3,
-         stFailure     : 4
-   };
-   
-   this.state = this.StateEnum.stInit;   
+   this.version = 0;         // object version 
+   this.object_size = 0;      // size of raw data, can be displayed
 }
 
 DABC.RootDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
@@ -922,27 +906,23 @@ DABC.RootDrawElement.prototype.Clear = function() {
    
    DABC.DrawElement.prototype.Clear.call(this);
 
-   this.clname = "";         // ROOT class name
    this.obj = null;          // object itself, for streamer info is file instance
-   this.sinfo = null;        // used to refer to the streamer info record
    if (this.req) this.req.abort(); 
    this.req = null;          // this is current request
-   this.first_draw = true;   // one should enable flag only when all ROOT scripts are loaded
    this.painter = null;      // pointer on painter, can be used for update
+   this.version = 0;         // object version 
+   this.object_size = 0;     // size of raw data, can be displayed
 }
 
 DABC.RootDrawElement.prototype.IsObjectDraw = function()
 {
    // returns true when normal ROOT drawing should be used
    // when false, streamer info drawing is applied
-   if (this.json) return this.itemname.indexOf("StreamerInfo")<0;
-   return this.sinfo!=null; 
+   return true; 
 }
 
 DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.frameid = "dabcobj" + id;
-   
-   this.first_draw = true;
    
    var entryInfo = ""; 
    if (this.IsObjectDraw()) {
@@ -983,7 +963,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
 }
 
 DABC.RootDrawElement.prototype.ClickItem = function() {
-   if (this.state != this.StateEnum.stReady) return; 
+   if (this.req != null) return; 
 
    // TODO: TCanvas update do not work in JSRootIO
    if (this.clname == "TCanvas") return;
@@ -991,16 +971,9 @@ DABC.RootDrawElement.prototype.ClickItem = function() {
    if (!this.IsDrawn()) 
       this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
       
-   this.state = this.StateEnum.stInit;
    this.RegularCheck();
 }
 
-// force item to get newest version of the object
-DABC.RootDrawElement.prototype.Update = function() {
-   if (this.state != this.StateEnum.stReady) return;
-   this.state = this.StateEnum.stInit;
-   this.RegularCheck();
-}
 
 DABC.RootDrawElement.prototype.HasVersion = function(ver) {
    return this.obj && (this.version >= ver);
@@ -1023,9 +996,12 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
 
    if (this.IsObjectDraw()) {
    
-      if (this.vis!=null)
-        this.vis.select("title").text(this.FullItemName() + 
-                                      "\nversion = " + this.version + ", size = " + this.raw_data_size);
+      if (this.vis!=null) {
+         var lbl = "";
+         if (this.version > 0) lbl += "version = " + this.version + ", ";
+         lbl += "size = " + this.object_size;
+         this.vis.select("title").text(this.FullItemName() + "\n" + lbl);
+      }
       
       if (this.painter != null) {
          this.painter.RedrawFrame();
@@ -1036,10 +1012,8 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
 
          // if (this.painter)  console.log("painter is created");
       }
-   } else 
-   if (this.json) {
-      
-      // we create sinfo similar to the file itself
+   } else { 
+     // we create sinfo similar to the file itself
       var sinfo = {};
       for (var i=0;i<this.obj.arr.length;i++) {
          sinfo[this.obj.arr[i].fName] = this.obj.arr[i];
@@ -1047,50 +1021,9 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
       
       var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
       painter.ShowStreamerInfo(sinfo);
-      
-   } else {
-      // when doing binary exchanhe, object is file
-      var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
-      painter.ShowStreamerInfo(this.obj.fStreamerInfos);
    }
-   
-   this.first_draw = false;
 }
 
-DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
-   
-   //console.log("Call reconstruct " + this.itemname);
-   
-   if (!this.raw_data) {
-      this.state = this.StateEnum.stInit;
-      return;
-   }
-
-
-   var obj = {};
-   
-   obj['_typename'] = 'JSROOTIO.' + this.clname;
-   var buf = new JSROOTIO.TBuffer(this.raw_data, 0, this.sinfo.obj);
-   buf.MapObject(obj, 1);
-
-   buf.ClassStreamer(obj, this.clname);
-   
-   if (this.painter && this.painter.UpdateObject(obj)) {
-      // if painter accepted object update, we need later just redraw frame
-      obj = null;
-   } else { 
-      this.obj = obj;
-      this.painter = null;
-   }
-   
-   this.state = this.StateEnum.stReady;
-   this.version = this.raw_data_version;
-   
-   this.raw_data = null;
-   this.raw_data_version = 0;
-   
-   this.DrawObject();
-}
 
 DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    
@@ -1111,138 +1044,48 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
    
    // console.log("Call back " + this.itemname);
    
-   if (this.state != this.StateEnum.stWaitRequest) {
-      alert("item not in wait request state");
-      this.state = this.StateEnum.stInit;
-      return;
-   }
-
    // if we got same version, do nothing - we are happy!!!
    if ((bversion > 0) && (this.version == bversion)) {
-      this.state = this.StateEnum.stReady;
       console.log(" Get same version " + bversion + " of object " + this.itemname);
-      if (this.first_draw) this.DrawObject();
       return;
    } 
    
-   if (this.json) {
-      var obj = JSROOTCore.JSONR_unref(JSON.parse(arg));
+   var obj = JSROOTCore.JSONR_unref(JSON.parse(arg));
 
-      this.version = bversion;
+   this.version = bversion;
       
-      this.raw_data = null;
-      this.raw_data_version = bversion;
-      this.raw_data_size = arg.length;
+   this.object_size = arg.length;
       
-      if (obj && ('_typename' in obj)) {
-         // console.log("Get JSON object of " + obj['_typename']);
-         
-         this.state = this.StateEnum.stReady;
-         this.DrawObject(obj);
-      } else {
-         console.log("Fail to process root.json");
-         this.state = this.StateEnum.stInit;
-         this.obj = null;
-      }
-      return;
-   }
-   
-   // console.log(" RootDrawElement get callback " + this.itemname + " sz " + arg.length + "  this.version = " + this.version + "  newversion = " + hdr.version);
-
-   if (!this.sinfo) {
-      
-      delete this.obj; 
-      
-      // we are doing sreamer infos
-      var file = new JSROOTIO.RootFile;
-      var buf = new JSROOTIO.TBuffer(arg, 0, file);
-      file.ExtractStreamerInfos(buf);
-      
-      this.obj = file;
-      
-      this.version = bversion;
-      this.state = this.StateEnum.stReady;
-      this.raw_data = null;
-      // this indicates that object was clicked and want to be drawn
-      this.DrawObject();
-         
-
-      if (!this.obj) alert("Cannot reconstruct streamer infos!!!");
-
-      // with streamer info one could try to update complex fields
-      DABC.mgr.UpdateComplexFields();
-
-      return;
+   if (obj && ('_typename' in obj)) {
+      // console.log("Get JSON object of " + obj['_typename']);
+      this.DrawObject(obj);
    } 
-
-   this.raw_data_version = bversion;
-   this.raw_data = arg;
-   this.raw_data_size = arg.length;
-   this.need_master_version = mversion;
-   
-   if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
-      // console.log(" Streamer info is required of vers " + this.need_master_version);
-      this.state = this.StateEnum.stWaitSinfo;
-      this.sinfo.Update();
-      return;
-   }
-   
-   this.ReconstructRootObject();
 }
 
 DABC.RootDrawElement.prototype.RegularCheck = function() {
 
-   // ignore all callbacks for object from ROOT files
-   if ('rootfile' in this) return;
+   // if item ready, verify that we want to send request again
+   if (!this.IsDrawn()) return;
    
-   switch (this.state) {
-     case this.StateEnum.stInit: break;
-     case this.StateEnum.stWaitRequest: return;
-     case this.StateEnum.stWaitSinfo: { 
-        // console.log(" item " + this.itemname+ " requires streamer info ver " + this.need_master_version  +  "  available is = " + this.sinfo.version);
+   var chkbox = document.getElementById("monitoring");
+   if (!chkbox || !chkbox.checked) return;
 
-        if (this.sinfo.HasVersion(this.need_master_version)) {
-           this.ReconstructRootObject();
-        } else {
-           // console.log(" version is not ok");
-        }
-        return;
-     }
-     case this.StateEnum.stReady: {
-        // if item ready, verify that we want to send request again
-        if (!this.IsDrawn()) return;
-        var chkbox = document.getElementById("monitoring");
-        if (!chkbox || !chkbox.checked) return;
-        
-        // TODO: TCanvas update do not work in JSRootIO
-        if (this.clname == "TCanvas") return;
-        
-        break;
-     }
-     case this.StateEnum.stFailure: return; // do nothing when failure
-     default: return;
-   }
+   this.SendRequest();
+}
+
+DABC.RootDrawElement.prototype.SendRequest = function() {
+
+   if (this.req!=null) return;
    
-   // console.log(" checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
-
+   // TODO: TCanvas update do not work in JSRootIO
+   if (this.clname == "TCanvas") return;
    
-   var url = this.itemname;
-   
-   if (this.json) {
-      url += "root.json.gz?compact=3";
-      if (this.version>0) url += "&version=" + this.version;
-   } else {
-      url += "root.bin.gz";
-      if (this.version>0) url += "?version=" + this.version;
-   }
+   var url = this.itemname + "root.json.gz?compact=3";
+   if (this.version>0) url += "&version=" + this.version;
 
-   this.req = DABC.mgr.NewHttpRequest(url, "bin", this);
-
-//   console.log(" Send request " + url);
+   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
 
    this.req.send(null);
-   
-   this.state = this.StateEnum.stWaitRequest;
 }
 
 
@@ -1464,31 +1307,13 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
    if (kind.indexOf("ROOT.") == 0) {
       // procesing of ROOT classes
       
-      var sinfo = null;
-      var use_json = true;
-      
-      if (!use_json) {
-      
-         var sinfoname = this.FindMasterName(itemname, node);
-         sinfo = this.FindItem(sinfoname);
-      
-         if (sinfoname && !sinfo) {
-            sinfo = new DABC.RootDrawElement(kind.substr(5), use_json);
-            sinfo.itemname = sinfoname;
-            this.arr.push(sinfo);
-            // mark sinfo item as ready - it will not be requested until is not really required
-            sinfo.state = sinfo.StateEnum.stReady;
-         }
-      }
-
-      elem = new DABC.RootDrawElement(kind.substr(5), use_json);
-      elem.sinfo = sinfo;
+      elem = new DABC.RootDrawElement(kind.substr(5));
       
       elem.itemname = itemname;
       elem.CreateFrames(this.NextCell(), this.cnt++);
       this.arr.push(elem);
 
-      elem.RegularCheck();
+      elem.SendRequest();
       return;
    }
    
@@ -1615,6 +1440,22 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
       DABC.mgr.ClearWindow();
    }
    
+   
+   this.hpainter['CheckCanDo'] = function(node, cando) {
+      var kind = node["dabc:kind"];
+      var view = node["dabc:view"];
+
+      cando.expand = (node["dabc:more"] != null);
+
+      if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
+      if (kind == "rate") { cando.display = true; } else
+      if (kind == "log") { cando.display = true; } else
+      if (kind == "DABC.HTML") { cando.img1 = JSROOTCore.source_dir+'img/globe.gif'; cando.open = true; } else
+      if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
+      if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
+      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
+         JSROOTPainter.HPainter.prototype.CheckCanDo(node, cando);
+   }
       
    this.hpainter.OpenOnline("h.json?compact=3");
 }
@@ -1643,56 +1484,6 @@ DABC.Manager.prototype.ReloadSingleElement = function()
    this.ClearWindow();
    
    this.DisplayGeneric(itemname, true);
-}
-
-
-/** \brief Method finds element in structure, which must be loaded before item itself can be loaded
- *   In case of ROOT objects it is StreamerInfo */
-
-DABC.Manager.prototype.FindMasterName = function(itemname, itemnode) {
-   if (!itemnode) return;
-   
-   var master = itemnode.getAttribute("dabc:master");
-   if (!master) return;
-   
-   var lvl = 1; // we need to exclude item name anyway
-   while (master.indexOf("../")==0) {
-      master = master.substr(3);
-      lvl++;
-   }
-   
-   var newname = itemname;
-   var currpath = document.location.pathname;
-
-   while (lvl>0) {
-      
-      var separ = newname.lastIndexOf("/", newname.length - 2);
-      
-      if ((separ<0)  && (currpath.length>0)) {
-         // if itemname too short, try to apply global path
-         if ((currpath[currpath.length-1] != '/') && (newname[0] != '/'))
-            newname = currpath + "/" + newname;
-         else
-            newname = currpath + newname;
-         currpath = "";
-         // console.log("newname = " + newname + " master = " + master); 
-         continue;
-      }
-
-      if ((newname.length == 0) || (newname == "/")) {
-         console.log("Cannot correctly found master for node " + itemname);
-         return;
-      }
-      
-      if (separ<0)
-         newname = "";
-      else
-         newname = newname.substr(0, separ+1);
-      
-      lvl--;
-   }
-   
-   return newname + master + "/";
 }
 
 

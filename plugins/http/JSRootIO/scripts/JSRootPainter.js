@@ -7502,12 +7502,29 @@
       
       return res;  
    }
-
    
-   JSROOTPainter.HPainter.prototype.itemHtml = function(node, itemname)
+   JSROOTPainter.HPainter.prototype.CheckCanDo = function(node, cando) 
    {
-      // for DABC could be just itemname to open server subfolder 
-      return "";  
+      var kind = node["dabc:kind"];
+      if (kind == null) kind = "";
+      
+      cando.expand = (node["dabc:more"] != null);
+
+      if (kind == "ROOT.Session") cando.img1 = JSROOTCore.source_dir+'img/globe.gif'; else
+      if (kind.match(/\bROOT.TH1/)) { cando.img1 = JSROOTCore.source_dir+'img/histo.png'; cando.scan = false; cando.display = true; } else
+      if (kind.match(/\bROOT.TH2/)) { cando.img1 = JSROOTCore.source_dir+'img/histo2d.png'; cando.scan = false; cando.display = true; } else  
+      if (kind.match(/\bROOT.TH3/)) { cando.img1 = JSROOTCore.source_dir+'img/histo3d.png'; cando.scan = false; cando.display = true; } else
+      if (kind == "ROOT.TCanvas") { cando.img1 = JSROOTCore.source_dir+'img/canvas.png'; cando.display = true; } else
+      if (kind == "ROOT.TProfile") { cando.img1 = JSROOTCore.source_dir+'img/profile.png'; cando.display = true; } else
+      if (kind.match(/\bROOT.TGraph/)) { cando.img1 = JSROOTCore.source_dir+'img/graph.png'; cando.display = true; } else
+      if (kind == "ROOT.TF1") { cando.img1 = JSROOTCore.source_dir+'img/graph.png'; cando.display = true; } else
+      if (kind == "ROOT.TTree") cando.img1 = JSROOTCore.source_dir+'img/tree.png'; else
+      if (kind == "ROOT.TFolder") { cando.img1 = JSROOTCore.source_dir+'img/folder.gif'; cando.img2 = JSROOTCore.source_dir+'img/folderopen.gif'; }  else
+      if (kind == "ROOT.TNtuple") cando.img1 = JSROOTCore.source_dir+'img/tree.png';   else
+      if (kind == "ROOT.TBranch") cando.img1 = JSROOTCore.source_dir+'img/branch.png';   else
+      if (kind.match(/\bROOT.TLeaf/)) cando.img1 = JSROOTCore.source_dir+'img/leaf.png'; else
+      if (kind == "ROOT.TStreamerInfoList") { cando.img1 = JSROOTCore.source_dir+'img/question.gif'; cando.expand = false; cando.display = true; } else
+      if ((kind.indexOf("ROOT.")==0) && JSROOTPainter.canDrawObject("JSROOTIO." + kind.slice(5))) { cando.img1 = JSROOTCore.source_dir+'img/histo.png'; cando.scan = false; cando.display = true; }
    }
    
    JSROOTPainter.HPainter.prototype.createNode = function(nodeid, parentid, node, fullname, lvl, maxlvl) 
@@ -7515,16 +7532,7 @@
       if (lvl == null) lvl = 0;
       if (maxlvl == null) maxlvl = -1;
       
-      var kind = node["dabc:kind"];
-      var view = node["dabc:view"];
-      
-      // this name will be specified when item name can be used as XML node name
-      var dabcitemname = node["dabc:itemname"];
-      
-      var html = "";
-
       var nodename = node._name;
-      if (dabcitemname != null) nodename = dabcitemname;
       
       var nodefullname = "";
       
@@ -7533,78 +7541,57 @@
          if (fullname.length>0) nodefullname = fullname+ "/" + nodename;   
       }
       
-      var nodeimg = "";
-      var node2img = "";
+      var cando = {
+         expand : false,
+         display : false,
+         scan : true,
+         open : false,
+         img1 : "",
+         img2 : "",
+         html : ""
+      };
       
-      var scan_inside = true, can_open = false;
-      
-      var can_display = this.CanDisplay(node);
-      var can_expand = node["dabc:more"] != null;
-      
-      if (kind) {
-         if (view == "png") { nodeimg = 'httpsys/img/dabcicon.png'; can_display = true; } else
-         if (kind == "ROOT.Session") nodeimg = JSROOTCore.source_dir+'img/globe.gif'; else
-         if (kind == "DABC.HTML") { nodeimg = JSROOTCore.source_dir+'img/globe.gif'; can_open = true; } else
-         if (kind == "DABC.Application") nodeimg = 'httpsys/img/dabcicon.png'; else
-         if (kind == "DABC.Command") { nodeimg = 'httpsys/img/dabcicon.png'; scan_inside = false; } else
-         if (kind == "GO4.Analysis") nodeimg = 'go4sys/icons/go4logo2_small.png'; else
-         if (kind.match(/\bROOT.TH1/)) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; } else
-         if (kind.match(/\bROOT.TH2/)) { nodeimg = JSROOTCore.source_dir+'img/histo2d.png'; scan_inside = false; can_display = true; } else  
-         if (kind.match(/\bROOT.TH3/)) { nodeimg = JSROOTCore.source_dir+'img/histo3d.png'; scan_inside = false; can_display = true; } else
-         if (kind == "ROOT.TCanvas") { nodeimg = JSROOTCore.source_dir+'img/canvas.png'; can_display = true; } else
-         if (kind == "ROOT.TProfile") { nodeimg = JSROOTCore.source_dir+'img/profile.png'; can_display = true; } else
-         if (kind.match(/\bROOT.TGraph/)) { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
-         if (kind == "ROOT.TF1") { nodeimg = JSROOTCore.source_dir+'img/graph.png'; can_display = true; } else
-         if (kind == "ROOT.TTree") nodeimg = JSROOTCore.source_dir+'img/tree.png'; else
-         if (kind == "ROOT.TFolder") { nodeimg = JSROOTCore.source_dir+'img/folder.gif'; node2img = JSROOTCore.source_dir+'img/folderopen.gif'; }  else
-         if (kind == "ROOT.TNtuple") nodeimg = JSROOTCore.source_dir+'img/tree.png';   else
-         if (kind == "ROOT.TBranch") nodeimg = JSROOTCore.source_dir+'img/branch.png';   else
-         if (kind.match(/\bROOT.TLeaf/)) nodeimg = JSROOTCore.source_dir+'img/leaf.png'; else
-         if (kind == "ROOT.TStreamerInfoList") { nodeimg = JSROOTCore.source_dir+'img/question.gif'; can_expand = false; can_display = true; } else
-         if ((kind.indexOf("ROOT.")==0) && JSROOTPainter.canDrawObject("JSROOTIO." + kind.slice(5))) { nodeimg = JSROOTCore.source_dir+'img/histo.png'; scan_inside = false; can_display = true; }
-      }
+      this.CheckCanDo(node, cando);
       
       // console.log("add kind = " + kind + "  name = " + node._name);  
 
-      if (!node._childs || !scan_inside) {
-         if (can_expand) {   
-            html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
-            if (nodeimg.length == 0) {
-               nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
-               node2img = JSROOTCore.source_dir+'img/folderopen.gif';
+      if (!node._childs || !cando.scan) {
+         if (cando.expand) {   
+            cando.html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
+            if (cando.img1.length == 0) {
+               cando.img1 = JSROOTCore.source_dir+'img/folder.gif'; 
+               cando.img2 = JSROOTCore.source_dir+'img/folderopen.gif';
             }
          } else
-         if (can_display) {
-            html = "javascript: " + this.GlobalName() + ".display(\'"+nodefullname+"\');";
+         if (cando.display) {
+            cando.html = "javascript: " + this.GlobalName() + ".display(\'"+nodefullname+"\');";
          } else
-         if (can_open) 
-            html = nodefullname;
+         if (cando.open) 
+            cando.html = nodefullname;
       } else 
       if ((maxlvl >= 0) && (lvl >= maxlvl)) {
-         html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
-         if (nodeimg.length == 0) {
-            nodeimg = JSROOTCore.source_dir+'img/folder.gif'; 
-            node2img = JSROOTCore.source_dir+'img/folderopen.gif';
+         cando.html = "javascript: " + this.GlobalName() + ".expand(\'"+nodefullname+"\');";
+         if (cando.img1.length == 0) {
+            cando.img1 = JSROOTCore.source_dir+'img/folder.gif'; 
+            cando.img2 = JSROOTCore.source_dir+'img/folderopen.gif';
          }
-         scan_inside = false;
-      } else {
-         html = this.itemHtml(node, nodefullname);
-      }
+         cando.scan = false;
+      } 
       
-      if (node2img == "") node2img = nodeimg;
+      if (cando.img2 == "") cando.img2 = cando.img1;
       
       // console.log("add nodeid " + nodeid + ":" + parentid + "  name = " + nodefullname );
-      this.dtree.add(nodeid, parentid, nodename, html, nodename, "", nodeimg, node2img);
+      this.dtree.add(nodeid, parentid, nodename, cando.html, nodename, "", cando.img1, cando.img2);
       
       node['_nodeid'] = nodeid;
 
       // allow context menu only for objects which can be displayed
-      if (can_display || (nodeid==0))
+      if (cando.display || (nodeid==0))
          this.dtree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
 
       nodeid++;
       
-      if (scan_inside) 
+      if (cando.scan) 
          for (var i in node._childs)
             nodeid = this.createNode(nodeid, node['_nodeid'], node._childs[i], nodefullname, lvl+1, maxlvl);
       
@@ -7695,7 +7682,7 @@
          this.maxnodeid = this.createNode(this.maxnodeid, node._nodeid, node._childs[i], itemname);
       
       this.dtree.aNodes[node._nodeid]._io = true;
-      this.dtree.aNodes[node._nodeid].url = this.itemHtml(node, itemname);
+      this.dtree.aNodes[node._nodeid].url = "";
       this.dtree.aNodes[node._nodeid].name = node._name;
       
       this.RefreshHtml();
@@ -7765,7 +7752,7 @@
                    if (typeof callback == 'function') callback(item, obj);
                 });
              } else {
-                itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json?compact=3", 'text', function(itemres) {
+                itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json.gz?compact=3", 'text', function(itemres) {
                    var obj = null;
                  
                    if (itemres!=null) obj = JSROOTCore.JSONR_unref(JSON.parse(itemres));

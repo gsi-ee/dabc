@@ -4,6 +4,9 @@ current functionality of the framework.
 
 13.08.2014
 1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT. 
+2. Remove binary-based requests with streamer infos from dabc.js.
+   Only for very special cases user can use binrary I/I directly,
+   JSROOTIO.ReconstructObject shows how object can be reconstructed.  
 
 
 12.08.2014

@@ -102,6 +102,33 @@
       return null;
    };
 
+   
+   JSROOTIO.ReconstructObject = function(class_name, obj_rawdata, sinfo_rawdata) {
+      // method can be used to reconstruct ROOT object from binary buffer
+      // Buffer can be requested from online server with request like:
+      //   http://localhost:8080/Files/job1.root/hpx/root.bin
+      // One also requires buffer with streamer infos, reqeusted with command
+      //   http://localhost:8080/StreamerInfo/root.bin
+      // And one should provide class name of the object
+      //
+      // Method provided for convenience only to see how binary JSROOTIO works.  
+      // It is strongly recommended to use JSON representation:
+      //   http://localhost:8080/Files/job1.root/hpx/root.json
+
+      var file = new JSROOTIO.RootFile;
+      var buf = new JSROOTIO.TBuffer(sinfo_rawdata, 0, file);
+      file.ExtractStreamerInfos(buf);
+
+      var obj = {};
+      
+      obj['_typename'] = 'JSROOTIO.' + class_name;
+      buf = new JSROOTIO.TBuffer(obj_rawdata, 0, file);
+      buf.MapObject(obj, 1);
+
+      buf.ClassStreamer(obj, class_name);
+      
+      return obj;
+   }
 
 })();
 
