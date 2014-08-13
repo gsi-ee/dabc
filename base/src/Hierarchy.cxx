@@ -31,7 +31,6 @@
 const char* dabc::prop_version = "dabc:version";
 const char* dabc::prop_kind = "dabc:kind";
 const char* dabc::prop_realname = "dabc:realname"; // real object name
-const char* dabc::prop_itemname = "dabc:itemname"; // item name in dabc hierarchy
 const char* dabc::prop_masteritem = "dabc:master";
 const char* dabc::prop_producer = "dabc:producer";
 const char* dabc::prop_error = "dabc:error";
@@ -1031,6 +1030,7 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster() const
    return GetParent()->FindChildRef(masteritem.c_str());
 }
 
+
 bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version)
 {
    if (null()) return false;
@@ -1052,7 +1052,6 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t has
 
    return (last_version==0) || (last_version<item.GetVersion());
 }
-
 
 
 bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, dabc::Command& cmd, uint64_t mhash, const std::string& dflt_master_name)
@@ -1081,7 +1080,6 @@ bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, dabc::Command& 
 
    return true;
 }
-
 
 
 std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name, bool topmost)

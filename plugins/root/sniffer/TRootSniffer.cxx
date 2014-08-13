@@ -34,10 +34,8 @@
 #include <stdlib.h>
 
 const char *dabc_prop_kind = "dabc:kind";
-const char *dabc_prop_masteritem = "dabc:master";
 const char *dabc_prop_more = "dabc:more";
 const char *dabc_prop_realname = "dabc:realname"; // real object name
-const char *dabc_prop_itemname = "dabc:itemname"; // item name in dabc hierarchy
 
 //extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
 extern "C" void R__zip(int cxlevel, int *srcsize, char* src, int *tgtsize, char* tgt, int* irep);
@@ -151,7 +149,7 @@ void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_na
    if (store) store->CreateNode(lvl, started_node.Data());
 
    if (real_item_name.Length() > 0)
-      SetField(dabc_prop_itemname, real_item_name.Data());
+      SetField("_origin_name", real_item_name.Data());
 
    if (_obj_name && (started_node != _obj_name))
       SetField(dabc_prop_realname, _obj_name);
@@ -175,18 +173,8 @@ void TRootSnifferScanRec::SetRootClass(TClass *cl)
    // in addition, path to master item (streamer info) specified
    // Such master item required to correctly unstream data on JavaScript
 
-   if ((cl == 0) || !CanSetFields())  return;
-
-   SetField(dabc_prop_kind, TString::Format("ROOT.%s", cl->GetName()));
-
-   if (TRootSniffer::IsDrawableClass(cl)) {
-      // only drawable class can be fetched from the server
-      TString master;
-      Int_t depth = Depth();
-      for (Int_t n = 1; n < depth; n++) master.Append("../");
-      master.Append("StreamerInfo");
-      SetField(dabc_prop_masteritem, master.Data());
-   }
+   if ((cl != 0) && CanSetFields())
+      SetField(dabc_prop_kind, TString::Format("ROOT.%s", cl->GetName()));
 }
 
 //______________________________________________________________________________

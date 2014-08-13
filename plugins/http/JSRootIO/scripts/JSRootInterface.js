@@ -1,6 +1,6 @@
 // JSRootInterface.js
 //
-// interface methods for Javascript ROOT Web Page.
+// user interface for JavaScript ROOT Web Page.
 //
 
 function closeCollapsible(e, el) {
@@ -88,16 +88,9 @@ function CollapsibleDisplay(itemname, obj) {
       document.getElementById(hid).setAttribute("style", "height:"+height+"px");
       document.getElementById(hid).style.height=""+height+'px';
 
-      // console.log("width = " + $('#'+hid).width() + "  height = " + $('#'+hid).height());
-
       var hpainter = JSROOTPainter.draw(hid, obj);
       
-      console.log('drawing type = ' + (typeof hpainter));
-      
       document.getElementById(uid)['hpainter'] = hpainter;
-      
-      console.log('drawing type = ' + uid + (typeof document.getElementById(uid)['hpainter']));
-
    }
    
    addCollapsible('#'+uid);
@@ -213,7 +206,7 @@ function BuildOnlineGUI() {
 
 function BuildSimpleGUI() {
    
-   if ($('#onlineGUI')) return BuildOnlineGUI();  
+   if (document.getElementById('onlineGUI')) return BuildOnlineGUI();  
    
    var myDiv = $('#simpleGUI');
    if (!myDiv) {

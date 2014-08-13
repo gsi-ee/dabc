@@ -39,7 +39,6 @@ namespace dabc {
    extern const char* prop_kind;
    extern const char* prop_version;       // version number of hierarchy item
    extern const char* prop_realname;      // real name property specified, when dabc item can not have such name (including HTTP syntax)
-   extern const char* prop_itemname;      // this property is used when only XML representation of existing DABC node cannot be directly done
    extern const char* prop_masteritem;    // relative name of master item, which should be loaded before item itself can be used
    extern const char* prop_producer;      // identifies item, which can deliver binary data for all its
    extern const char* prop_error;         // indicates any kind of error - typically in text form

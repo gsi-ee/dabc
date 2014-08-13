@@ -4,35 +4,7 @@ DABC.version = "2.6.7";
 
 DABC.mgr = 0;
 
-DABC.dabc_tree = 0;   // variable to display hierarchy
-
 DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
-
-
-/*
-if (!Object.create) {
-   Object.create = (function(){
-       function F(){}
-
-       return function(o){
-           if (arguments.length != 1) {
-               throw new Error('Object.create implementation only accepts one parameter.');
-           }
-           F.prototype = o
-           return new F()
-       }
-   })()
-}
-*/
-
-DABC.ntou4 = function(b, o) {
-   // convert (read) four bytes of buffer b into a uint32_t
-   var n  = (b.charCodeAt(o)   & 0xff);
-       n += (b.charCodeAt(o+1) & 0xff) << 8;
-       n += (b.charCodeAt(o+2) & 0xff) << 16;
-       n += (b.charCodeAt(o+3) & 0xff) << 24;
-   return n;
-}
 
 // ============= start of DrawElement ================================= 
 
@@ -762,6 +734,14 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    }
 }
 
+DABC.FesaDrawElement.prototype.ntou4 = function(b, o) {
+   // convert (read) four bytes of buffer b into a uint32_t
+   var n  = (b.charCodeAt(o)   & 0xff);
+       n += (b.charCodeAt(o+1) & 0xff) << 8;
+       n += (b.charCodeAt(o+2) & 0xff) << 16;
+       n += (b.charCodeAt(o+3) & 0xff) << 24;
+   return n;
+}
 
 DABC.FesaDrawElement.prototype.ReconstructObject = function()
 {
@@ -783,7 +763,7 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
    var o = 0;
    for (var iy=0;iy<16;iy++)
       for (var ix=0;ix<16;ix++) {
-         var value = DABC.ntou4(this.data, o); o+=4;
+         var value = this.ntou4(this.data, o); o+=4;
          var bin = this.root_obj.getBin(ix+1, iy+1);
          this.root_obj.setBinContent(bin, value);
 //         if (iy==5) console.log("Set content " + value);
@@ -1485,6 +1465,5 @@ DABC.Manager.prototype.ReloadSingleElement = function()
    
    this.DisplayGeneric(itemname, true);
 }
-
 
 // ============= end of DABC.Manager =============== 
