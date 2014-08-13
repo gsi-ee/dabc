@@ -311,6 +311,9 @@ current functionality of the framework.
    make it available for FastCgi server as well. 
 4. In mbs::Monitor protect "MbsCmd" - means always authentication will be
    requested when accessing such element in browser or via command line.        
+5. Replace 'dabc:' prefix in property names by underscore symbol '_'.
+   This mostly remove all DABC-based names from TRootSniffer.
+   Naming convention between ROOT and DABC remains. 
 
 
 6.04.2014

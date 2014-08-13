@@ -375,9 +375,9 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
    
    var top = JSON.parse(arg);
 
-//   console.log("Get request callback " + top.getAttribute("dabc:version") + "  or " + top.getAttribute("version"));
+//   console.log("Get request callback " + top["_version"]);
    
-   var new_version = Number(top["dabc:version"]);
+   var new_version = Number(top["_version"]);
    
    var modified = (this.version != new_version);
 
@@ -578,7 +578,7 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
       console.log("here one need to draw element with real style " + this.FullItemName());
       this.recheck = false;
       
-      if (this.jsonnode["dabc:kind"]) {
+      if ('_kind' in this.jsonnode) {
          var itemname = this.itemname;
          var jsonnode = this.jsonnode;
          DABC.mgr.ClearWindow();
@@ -1196,25 +1196,6 @@ DABC.Manager.prototype.UpdateAll = function() {
 }
 
 
-DABC.Manager.prototype.CanDisplay = function(node)
-{
-   if (!node) return false;
-
-   var kind = node["dabc:kind"];
-   var view = node["dabc:view"];
-   if (!kind) return false;
-
-   if (view == "png") return true;
-   if (kind == "DABC.Command") return true;
-   if (kind == "rate") return true;
-   if (kind == "log") return true;
-   if (kind.indexOf("FESA.") == 0) return true;
-   // if (kind.indexOf("ROOT.") == 0) return true;
-   
-   return false;
-}
-
-
 DABC.Manager.prototype.DisplayItem = function(itemname, node)
 {
    if (!node) {
@@ -1222,9 +1203,9 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
       return;
    } 
    
-   var kind = node["dabc:kind"];
-   var history = node["dabc:history"];
-   var view = node["dabc:view"];
+   var kind = node["_kind"];
+   var history = node["_history"];
+   var view = node["_view"];
    if (!kind) kind = "";
 
    var elem;
@@ -1410,8 +1391,6 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
          return;
       }
       
-      console.log("trying to display " + itemname);
-      
       // FIXME: avoid usage of extra slashes
       DABC.mgr.DisplayItem(itemname + "/", item);
    }
@@ -1422,10 +1401,10 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    
    
    this.hpainter['CheckCanDo'] = function(node, cando) {
-      var kind = node["dabc:kind"];
-      var view = node["dabc:view"];
+      var kind = node["_kind"];
+      var view = node["_view"];
 
-      cando.expand = (node["dabc:more"] != null);
+      cando.expand = ('_more' in node);
 
       if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
       if (kind == "rate") { cando.display = true; } else

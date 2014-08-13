@@ -7277,7 +7277,7 @@
          var obj = lst.arr[i];
          var item = { 
                _name : obj['fName'],  
-               "dabc:kind" : "ROOT." + obj['_typename'].slice(9), // remove JSROOTIO. in front
+               _kind : "ROOT." + obj['_typename'].slice(9), // remove JSROOTIO. in front
                _readobj: obj
          };
 
@@ -7300,7 +7300,7 @@
          
          var item = { 
                _name : entry['fName'],  
-               "dabc:kind" : "",
+               _kind : "",
                _childs : []
          };
   
@@ -7338,7 +7338,7 @@
          
          var subitem = {
             _name : branch['fName'],  
-            "dabc:kind" : nb_leaves > 0 ? "ROOT.TBranch" : "ROOT.TLeafF"
+            _kind : nb_leaves > 0 ? "ROOT.TBranch" : "ROOT.TLeafF"
          }
          
          node._childs.push(subitem);
@@ -7348,7 +7348,7 @@
             for (var j=0; j<nb_leaves; ++j) {
                var leafitem = {
                      _name : branch['fLeaves'].arr[j]['fName'],  
-                     "dabc:kind" : "ROOT.TLeafF"
+                     _kind : "ROOT.TLeafF"
                   }
                subitem._childs.push(leafitem);
             }
@@ -7366,7 +7366,7 @@
          var key = keys[i];
          var item = { 
                _name : key['name'] + ";" + key['cycle'],  
-               "dabc:kind" : "ROOT." + key['className'],
+               _kind : "ROOT." + key['className'],
                _keyname : key['name'],
                _readobj : null
          };
@@ -7374,7 +7374,7 @@
          // console.log("key class = " + key['className']);
 
          if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
-            item["dabc:more"] = true;
+            item["_more"] = true;
             
             item['_expand'] = function(node, obj) {
                painter.TreeHierarchy(node, obj);
@@ -7382,7 +7382,7 @@
             }
          } else 
          if (key['className'] == 'TDirectory' || key['className'] == 'TDirectoryFile') {
-            item["dabc:more"] = true;
+            item["_more"] = true;
             item["_isdir"] = true;
             item['_expand'] = function(node, obj) {
                painter.KeysHierarchy(node, obj.fKeys);
@@ -7391,7 +7391,7 @@
          } else
          if (key['className'] == 'TList' && key['name']=='StreamerInfo' && (file!=null)) {
             item['_name'] = 'StreamerInfo';
-            item['dabc:kind'] = "ROOT.TStreamerInfoList";
+            item['_kind'] = "ROOT.TStreamerInfoList";
             item['_readobj'] = file.fStreamerInfos;
             item['_expand'] = function(node, obj) {
                painter.StreamerInfoHierarchy(node, obj);
@@ -7400,7 +7400,7 @@
             
          } else 
          if (key['className'] == 'TList' || key['className'] == 'TObjArray' || key['className'] == 'TClonesArray') {
-            item["dabc:more"] = true;
+            item["_more"] = true;
             item['_expand'] = function(node, obj) {
                painter.ListHierarchy(node, obj);
                return true;
@@ -7418,7 +7418,7 @@
       
       var folder = { 
             _name : file.fFileName, 
-            "dabc:kind" : "ROOT.TFile", 
+            _kind : "ROOT.TFile", 
             _file : file,
             _get : function(item, callback) {
                if ((this._file == null) || (item._readobj != null)) {
@@ -7441,24 +7441,6 @@
       this.KeysHierarchy(folder, file.fKeys, file);
       
       return folder;
-   }
-   
-   JSROOTPainter.HPainter.prototype.CanDisplay = function(node)
-   {
-      if (!node) return false;
-
-      var kind = node["dabc:kind"];
-      var view = node["dabc:view"];
-      if (!kind) return false;
-
-      if (view == "png") return true;
-      if (kind == "DABC.Command") return true;
-      if (kind == "rate") return true;
-      if (kind == "log") return true;
-      // if (kind.indexOf("FESA.") == 0) return true;
-      // if (kind.indexOf("ROOT.") == 0) return true;
-      
-      return false;
    }
 
    JSROOTPainter.HPainter.prototype.Find = function(fullname, top, replace) {
@@ -7505,10 +7487,10 @@
    
    JSROOTPainter.HPainter.prototype.CheckCanDo = function(node, cando) 
    {
-      var kind = node["dabc:kind"];
+      var kind = node["_kind"];
       if (kind == null) kind = "";
       
-      cando.expand = (node["dabc:more"] != null);
+      cando.expand = ('_more' in node);
 
       if (kind == "ROOT.Session") cando.img1 = JSROOTCore.source_dir+'img/globe.gif'; else
       if (kind.match(/\bROOT.TH1/)) { cando.img1 = JSROOTCore.source_dir+'img/histo.png'; cando.scan = false; cando.display = true; } else
@@ -7743,7 +7725,7 @@
              
              var itemreq = null;
              
-             if ('dabc:more' in item) {
+             if ('_more' in item) {
                 itemreq = JSROOTCore.NewHttpRequest(itemname+"/h.json?compact=3", 'text', function(itemres) {
                    var obj = null;
                  

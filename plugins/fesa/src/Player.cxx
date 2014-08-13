@@ -151,7 +151,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    h1 = fWorkerHierarchy.CreateHChild("ImageRoot");
    h1.SetField(dabc::prop_kind, "ROOT.TH2I");
-   h1.SetField("dabc:view", "png");
+   h1.SetField(dabc::prop_view, "png");
 
    TH2I* h2 = new TH2I("BeamRoot","Root beam profile", 32, 0, 32, 32, 0, 32);
    h2->SetDirectory(0);

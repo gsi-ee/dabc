@@ -33,9 +33,9 @@
 
 #include <stdlib.h>
 
-const char *dabc_prop_kind = "dabc:kind";
-const char *dabc_prop_more = "dabc:more";
-const char *dabc_prop_realname = "dabc:realname"; // real object name
+const char *item_prop_kind = "_kind";
+const char *item_prop_more = "_more";
+const char *item_prop_realname = "_realname"; // real object name
 
 //extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
 extern "C" void R__zip(int cxlevel, int *srcsize, char* src, int *tgtsize, char* tgt, int* irep);
@@ -130,8 +130,8 @@ void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_na
    // creates new node with specified name
    // if special symbols like "[]&<>" are used, node name
    // will be replaced by default name like "extra_item_N" and
-   // original node name will be recorded as "dabc:itemname" field
-   // Optionally, object name can be recorded as "dabc:realname" field
+   // original node name will be recorded as "_original_name" field
+   // Optionally, object name can be recorded as "_realname" field
 
    if (!CanSetFields()) return;
 
@@ -149,10 +149,10 @@ void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_na
    if (store) store->CreateNode(lvl, started_node.Data());
 
    if (real_item_name.Length() > 0)
-      SetField("_origin_name", real_item_name.Data());
+      SetField("_original_name", real_item_name.Data());
 
    if (_obj_name && (started_node != _obj_name))
-      SetField(dabc_prop_realname, _obj_name);
+      SetField(item_prop_realname, _obj_name);
 }
 
 //______________________________________________________________________________
@@ -174,7 +174,7 @@ void TRootSnifferScanRec::SetRootClass(TClass *cl)
    // Such master item required to correctly unstream data on JavaScript
 
    if ((cl != 0) && CanSetFields())
-      SetField(dabc_prop_kind, TString::Format("ROOT.%s", cl->GetName()));
+      SetField(item_prop_kind, TString::Format("ROOT.%s", cl->GetName()));
 }
 
 //______________________________________________________________________________
@@ -432,14 +432,13 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
 
          Bool_t iscollection = (coll_offset >= 0);
          if (iscollection) {
-            chld.SetField(dabc_prop_more, "true");
+            chld.SetField(item_prop_more, "true");
             chld.has_more = kTRUE;
          }
 
          if (chld.SetResult(member_ptr, mcl, member)) break;
 
-         if (IsDrawableClass(mcl))
-            chld.SetRootClass(mcl);
+         chld.SetRootClass(mcl);
 
          if (chld.CanExpandItem()) {
             if (iscollection) {
@@ -480,7 +479,7 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
    int isextra = rec.ExtraFolderLevel();
 
    if ((isextra == 1) || ((isextra > 1) && !IsDrawableClass(obj->IsA()))) {
-      rec.SetField(dabc_prop_more, "true");
+      rec.SetField(item_prop_more, "true");
       rec.has_more = kTRUE;
    }
 
@@ -499,7 +498,7 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
                obj_class = dir->IsA();
             }
          } else {
-            rec.SetField(dabc_prop_more, "true");
+            rec.SetField(item_prop_more, "true");
             rec.has_more = kTRUE;
          }
       } else {
@@ -588,12 +587,12 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
    // One could reimplement this method to provide alternative
    // scan methods or to extend some collection kinds
 
-   rec.SetField(dabc_prop_kind, "ROOT.Session");
+   rec.SetField(item_prop_kind, "ROOT.Session");
 
    {
       TRootSnifferScanRec chld;
       if (chld.GoInside(rec, 0, "StreamerInfo"))
-         chld.SetField(dabc_prop_kind, "ROOT.TList");
+         chld.SetField(item_prop_kind, "ROOT.TList");
    }
 
    TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject(TString::Format("//root/%s", fObjectsPath.Data())));

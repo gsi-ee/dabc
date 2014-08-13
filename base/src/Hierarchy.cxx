@@ -28,17 +28,18 @@
 #include "dabc/ReferencesVector.h"
 
 
-const char* dabc::prop_version = "dabc:version";
-const char* dabc::prop_kind = "dabc:kind";
-const char* dabc::prop_realname = "dabc:realname"; // real object name
-const char* dabc::prop_masteritem = "dabc:master";
-const char* dabc::prop_producer = "dabc:producer";
-const char* dabc::prop_error = "dabc:error";
-const char* dabc::prop_auth = "dabc:auth";
+const char* dabc::prop_version = "_version";
+const char* dabc::prop_kind = "_kind";
+const char* dabc::prop_realname = "_realname"; // real object name
+const char* dabc::prop_masteritem = "_master";
+const char* dabc::prop_producer = "_producer";
+const char* dabc::prop_error = "_error";
+const char* dabc::prop_auth = "_auth";
 const char* dabc::prop_hash = "hash";
-const char* dabc::prop_history = "dabc:history";
+const char* dabc::prop_history = "_history";
 const char* dabc::prop_time = "time";
-const char* dabc::prop_more = "dabc:more";
+const char* dabc::prop_more = "_more";
+const char* dabc::prop_view = "_view";
 
 
 uint64_t dabc::HistoryContainer::StoreSize(uint64_t version, int hlimit)
@@ -243,14 +244,13 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
 
       switch (kind) {
          case stream_NamesList: // this is DNS case - only names list
-            fields_prefix = "dabc:";
+            fields_prefix = "_";
             store_fields = fNamesVersion >= version;
             store_childs = fNamesVersion >= version;
             store_history = false;
             store_diff = store_fields; // we indicate if only selected fields are stored
             break;
          case stream_Value: // only fields are stored
-            fields_prefix = "";
             store_fields = true;
             store_childs = false;
             store_history = !fHist.null() && (hlimit>0);
@@ -317,7 +317,7 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
          } else {
             fNodeChanged = true;
             std::string prefix;
-            if (mask & maskDiffStored) { prefix = "dabc:"; fNamesChanged = true; }
+            if (mask & maskDiffStored) { prefix = "_"; fNamesChanged = true; }
             Fields().Stream(s, prefix);
          }
       }
@@ -710,7 +710,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
 
    if (fields_were_chaneged) {
       fNodeChanged = true;
-      if (Fields().WasChangedWith("dabc:")) fNamesChanged = true;
+      if (Fields().WasChangedWith("_")) fNamesChanged = true;
    }
 
    if (fNodeChanged) {

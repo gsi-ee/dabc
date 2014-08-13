@@ -47,6 +47,7 @@ namespace dabc {
    extern const char* prop_history;       // indicates that history for that element is kept
    extern const char* prop_time;          // time property, supplied when history is created
    extern const char* prop_more;          // indicate that item can provide more hierarchy if requested
+   extern const char* prop_view;          // property indicate preferable view for the item
 
 
    class Hierarchy;

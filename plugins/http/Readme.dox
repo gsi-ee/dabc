@@ -63,7 +63,7 @@ When using command line tools (like wget or curl), following arguments should be
    
    [shell] wget --http-user=user --http-passwd=passwd http://server:8090/MBS/X86L-9/CmdMbs/execute?cmd=show -O some.txt
 
-When creating hierarchies, for each element or folder 'dabc:auth' property can be specified,
+When creating hierarchies, for each element or folder '_auth' property can be specified,
 which decides if authentication is required or not for that element.
  
 */
