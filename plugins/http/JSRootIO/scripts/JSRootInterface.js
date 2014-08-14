@@ -94,7 +94,26 @@ function CollapsibleDisplay(itemname, obj) {
    }
    
    addCollapsible('#'+uid);
+   
+   $('#'+uid)[0].scrollIntoView();
 }
+
+function ResetReport() {
+   $("#report").get(0).innerHTML = '';
+   $("#report").innerHTML = '';
+   delete $("#report").get(0);
+   //window.location.reload(true);
+   JSROOTPainter.DelHList('sinfo');
+   $('#report').get(0).innerHTML = '';
+}
+
+
+function ResetUI() {
+   ResetReport();
+   $('#status').get(0).innerHTML = '';
+   JSROOTPainter.DelHList('root');
+   $(window).unbind('resize');
+};
 
 function ReadFile(filename) {
    var navigator_version = navigator.appVersion;
@@ -125,26 +144,10 @@ function ReadFile(filename) {
    var painter = new JSROOTPainter.HPainter("root", "status");
    
    painter['ondisplay'] = CollapsibleDisplay;
+   painter['clear'] = ResetReport;
    
    painter.OpenRootFile(filename);
 }
-
-function ResetReport() {
-   $("#report").get(0).innerHTML = '';
-   $("#report").innerHTML = '';
-   delete $("#report").get(0);
-   //window.location.reload(true);
-   JSROOTPainter.DelHList('sinfo');
-   $('#report').get(0).innerHTML = '';
-}
-
-
-function ResetUI() {
-   ResetReport();
-   $('#status').get(0).innerHTML = '';
-   JSROOTPainter.DelHList('root');
-   $(window).unbind('resize');
-};
 
 function OpenOnline(url) {
    
@@ -187,7 +190,7 @@ function BuildOnlineGUI() {
       return;
    }
    
-   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
+   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOT version:" + JSROOTCore.version + "&nbsp</font></div>"
 
    guiCode += '<div id="main" class="column"><br/>'
             + '  <h1><font face="Verdana" size="4">ROOT online server</font></h1>'
@@ -220,7 +223,7 @@ function BuildSimpleGUI() {
    }
    var arrFiles = files.split(';');
 
-   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOTIO version:" + JSROOTIO.version + "&nbsp</font></div>"
+   var guiCode = "<div id='overlay'><font face='Verdana' size='1px'>&nbspJSROOT version:" + JSROOTCore.version + "&nbsp</font></div>"
 
    guiCode += "<div id='main' class='column'>\n"
       +"<h1><font face='Verdana' size='4'>Read a ROOT file with Javascript</font></h1>\n"

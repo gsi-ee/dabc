@@ -4,14 +4,14 @@ current functionality of the framework.
 
 14.08.2014
 1. In hadaq plugin correctly account dropped data.
-   Do drop all when at least one input gets any data.
+   Drop all data when at least one input gets some data.
 2. Ensure that hadaq::Combiner parameters produce change events after 0.2 s.
-   With old default settings (1s) EPICS control time to time produced zero rates.  
+   With default settings (1s) EPICS control time to time produced zero rates.  
 3. Implement Emulation mode in hadaq::Observer for debugging purposes.
-3. In JS work with streamer infos as with normal TList, support streamer info
+4. In JS work with streamer infos as with normal TList, support streamer info
    display in online and offline mode, use 'fName' and 'fTitle' instead
    of 'name' and 'title' 
-4. Fix several errors in JS TKey streamer, use member names as in ROOT itself.
+5. Fix several errors in JS TKey streamer, use member names as in ROOT itself.
        
 
 13.08.2014

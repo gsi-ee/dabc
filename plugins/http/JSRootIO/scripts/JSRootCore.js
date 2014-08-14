@@ -9,7 +9,7 @@
 
 (function(){
 
-   if (typeof JSROOTCore == "object"){
+   if (typeof JSROOTCore == "object") {
       var e1 = new Error("JSROOTCore is already defined");
       e1.source = "JSROOTCore.js";
       throw e1;
@@ -17,7 +17,7 @@
 
    JSROOTCore = {};
 
-   JSROOTCore.version = "3.0 2014/08/05";
+   JSROOTCore.version = "3.x 2014/08/14";
    
    JSROOTCore.source_dir = null;
    
@@ -1520,8 +1520,6 @@
    }
 
    JSROOTMath = {};
-
-   JSROOTMath.version = "1.0 2012/08/08";
 
    /* the machine roundoff error */
    var kMACHEP = 1.11022302462515654042363166809e-16;

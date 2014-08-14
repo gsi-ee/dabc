@@ -1,6 +1,6 @@
 // JSRootPainter.js
 //
-// core methods for Javascript ROOT Graphics, using d3.js.
+// core methods for JavaScript ROOT Graphics, using d3.v3.js.
 //
 
 (function(){
@@ -19,8 +19,6 @@
 
    JSROOTPainter = {};
 
-   JSROOTPainter.version = '4.2 2014/08/08';
-   
    // list of user painters, called with arguments painter(vis, obj, opt)
    JSROOTPainter.fUserPainters = null;
    

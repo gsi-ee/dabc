@@ -1,6 +1,6 @@
-// JSROOTIO.core.js
+// JSRootIOEvolution.js
 //
-// core methods for Javascript ROOT IO.
+// core methods for JavaScript ROOT I/O.
 //
 
 (function(){
@@ -31,8 +31,6 @@
          Z_DEFLATED : 8,
          Z_HDRSIZE : 9
    };
-
-   JSROOTIO.version = "3.0 2014/08/05";
 
    JSROOTIO.debug = false;
 
@@ -406,13 +404,13 @@
 
       JSROOTIO.TBuffer.prototype.ReadVersion = function() {
          // read class version from I/O buffer
-         var version = {};
+         var ver = {};
          var bytecnt = this.ntou4(); // byte count
          if (bytecnt & JSROOTIO.kByteCountMask)
-            version['bytecnt'] = bytecnt - JSROOTIO.kByteCountMask - 2; // one can check between Read version and end of streamer
-         version['val'] = this.ntou2();
-         version['off'] = this.o;
-         return version;
+            ver['bytecnt'] = bytecnt - JSROOTIO.kByteCountMask - 2; // one can check between Read version and end of streamer
+         ver['val'] = this.ntou2();
+         ver['off'] = this.o;
+         return ver;
       };
 
       JSROOTIO.TBuffer.prototype.CheckBytecount = function(ver, where) {
@@ -796,9 +794,6 @@
 
 (function(){
 
-   var version = "2.8 2014/03/24";
-
-
    // ctor
    JSROOTIO.TStreamer = function(file) {
       if (! (this instanceof arguments.callee) ) {
@@ -808,7 +803,6 @@
       }
 
       this.fFile = file;
-      this._version = version;
       this._typename = "JSROOTIO.TStreamer";
 
       JSROOTIO.TStreamer.prototype.ReadBasicType = function(buf, obj, prop) {
@@ -1079,8 +1073,6 @@
       return this;
    };
 
-   JSROOTIO.TStreamer.Version = version;
-
 })();
 
 // JSROOTIO.TStreamer.js ends
@@ -1094,8 +1086,6 @@
 
 (function(){
 
-   var version = "2.8 2014/03/18";
-
    // ctor
    JSROOTIO.TDirectory = function(file, dirname, cycle) {
       if (! (this instanceof arguments.callee) ) {
@@ -1105,10 +1095,9 @@
       }
 
       this.fFile = file;
-      this._version = version;
       this._typename = "JSROOTIO.TDirectory";
-      this['dirname'] = dirname;
-      this['fCycle'] = cycle;
+      this['dir_name'] = dirname;
+      this['dir_cycle'] = cycle;
 
       JSROOTIO.TDirectory.prototype.GetKey = function(keyname, cycle) {
          // retrieve a key by its name and cycle in the list of keys
@@ -1194,8 +1183,6 @@
       return this;
    };
 
-   JSROOTIO.TDirectory.Version = version;
-
 })();
 
 // JSROOTIO.TDirectory.js ends
@@ -1229,8 +1216,6 @@
 
 (function(){
 
-   var version = "1.8 2013/07/03";
-
    if (typeof JSROOTCore != "object") {
       var e1 = new Error("This extension requires JSROOTCore.js");
       e1.source = "JSROOTIO.RootFile.js";
@@ -1251,7 +1236,6 @@
          throw error;
       }
 
-      this._version = version;
       this._typename = "JSROOTIO.RootFile";
       this.fOffset = 0;
       this.fArchiveOffset = 0;
@@ -1372,15 +1356,18 @@
          key['fClassName'] = buf.ReadTString();
          key['fName'] = buf.ReadTString(); 
          key['fTitle'] = buf.ReadTString(); 
+         
          key['fName'] = key['fName'].replace(/['"]/g,''); // get rid of quotes
 
          return key;
       };
 
-      JSROOTIO.RootFile.prototype.GetDir = function(dirname) {
-         for (var j=0; j<this.fDirectories.length;++j) {
-            if (this.fDirectories[j]['dirname'] == dirname)
-               return this.fDirectories[j];
+      JSROOTIO.RootFile.prototype.GetDir = function(dirname, cycle) {
+         for (var j in this.fDirectories) {
+            var dir = this.fDirectories[j]; 
+            if (dir['dir_name'] != dirname) continue;
+            if ((cycle!=null) && (dir['dir_cycle']!=cycle)) continue;
+            return dir;
          }
          return null;
       }
@@ -1446,7 +1433,7 @@
          var isdir = false;
          if ((key['fClassName'] == 'TDirectory' || key['fClassName'] == 'TDirectoryFile')) {
             isdir = true;
-            var dir = this.GetDir(obj_name);
+            var dir = this.GetDir(obj_name, cycle);
             if (dir!=null) {
                if (typeof callback == 'user_call_back') user_call_back(dir);
                return dir;
@@ -1753,8 +1740,6 @@
 
       return this;
    };
-
-   JSROOTIO.RootFile.Version = version;
 
 })();
 
