@@ -548,10 +548,6 @@
          var R__v = this.ReadVersion();
          if (R__v['val'] > 1) {
             this.ReadTNamed(streamerinfo);
-            streamerinfo['name'] = streamerinfo['fName'];
-            streamerinfo['title'] = streamerinfo['fTitle'];
-
-            // console.log("name = " + streamerinfo['name']);
 
             streamerinfo['fCheckSum'] = this.ntou4();
             streamerinfo['fClassVersion'] = this.ntou4();
@@ -566,8 +562,6 @@
 
          var R__v = this.ReadVersion();
          this.ReadTNamed(element);
-         element['name'] = element['fName']; // TODO - should be removed
-         element['title'] = element['fTitle']; // TODO - should be removed
          element['type'] = this.ntou4();
          element['size'] = this.ntou4();
          element['length'] = this.ntou4();
@@ -1381,8 +1375,8 @@
             buf.shift(4); // skip seekPdir
          }
          key['className'] = buf.ReadTString();
-         key['name'] = buf.ReadTString();
-         key['title'] = buf.ReadTString();
+         key['name'] = buf.ReadTString(); // TODO: rename to fName
+         key['title'] = buf.ReadTString(); // TODO: rename to fTitle
          key['dataoffset'] = key['seekKey'] + key['keyLen'];
          key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
          // should we do it here ???
@@ -1520,11 +1514,7 @@
          buf.MapObject(1, lst);
          buf.ClassStreamer(lst, 'TList');
 
-         for (var i=0;i<lst['arr'].length;i++) {
-            this.fStreamerInfos[lst.arr[i].name] = lst.arr[i];
-         }
-
-         delete lst;
+         this.fStreamerInfos = lst;
       }
 
       JSROOTIO.RootFile.prototype.ReadStreamerInfos = function(si_callback) {
@@ -1687,8 +1677,15 @@
          var streamer = this.fStreamers[clname];
          if (typeof(streamer) != 'undefined') return streamer;
 
-         var s_i = this.fStreamerInfos[clname];
-         if (typeof(s_i) === 'undefined') return null;
+         var s_i;
+         
+         if (this.fStreamerInfos)
+            for (var i in this.fStreamerInfos.arr)
+               if (this.fStreamerInfos.arr[i].fName == clname)  {
+                  s_i = this.fStreamerInfos.arr[i]; 
+                  break;
+               }
+         if (typeof s_i == 'undefined') return null;
 
          this.fStreamers[clname] = new JSROOTIO.TStreamer(this);
          if (typeof(s_i['fElements']) != 'undefined') {
@@ -1697,7 +1694,7 @@
                var element = s_i['fElements']['arr'][j];
                if (element['typename'] === 'BASE') {
                   // generate streamer for the base classes
-                  this.GetStreamer(element['name']);
+                  this.GetStreamer(element['fName']);
                }
             }
          }
@@ -1708,12 +1705,12 @@
                var element = s_i['fElements']['arr'][j];
                var streamer = {};
                streamer['typename'] = element['typename'];
-               streamer['class']    = element['name'];
+               streamer['class']    = element['fName'];
                streamer['cntname']  = element['countName'];
                streamer['type']     = element['type'];
                streamer['length']   = element['length'];
 
-               this.fStreamers[clname][element['name']] = streamer;
+               this.fStreamers[clname][element['fName']] = streamer;
             }
          }
          return this.fStreamers[clname];
@@ -1737,7 +1734,7 @@
       this.fNbytesInfo = 0;
       this.fTagOffset = 0;
       this.fStreamers = 0;
-      this.fStreamerInfos = {};
+      this.fStreamerInfos = null;
       this.fFileName = "";  
       this.fStreamers = new Array;
 

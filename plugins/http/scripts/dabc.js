@@ -898,7 +898,7 @@ DABC.RootDrawElement.prototype.IsObjectDraw = function()
 {
    // returns true when normal ROOT drawing should be used
    // when false, streamer info drawing is applied
-   return true; 
+   return this.clname != 'TStreamerInfoList'; 
 }
 
 DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
@@ -908,8 +908,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    if (this.IsObjectDraw()) {
       entryInfo += "<div id='" + this.frameid + "'/>";
    } else {
-      entryInfo += "<h5><a> Streamer Infos </a>&nbsp; </h5>";
-      entryInfo += "<div style='overflow:auto'><h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>";
+      entryInfo += "<div style='overflow:auto'><span id='" + this.frameid +"' class='dtree'></span></div>";
    }
    //entryInfo+="</div>";
    $(topid).append(entryInfo);
@@ -961,6 +960,13 @@ DABC.RootDrawElement.prototype.HasVersion = function(ver) {
 
 // if frame created and exists
 DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
+
+   if (!this.IsObjectDraw()) {
+      this.obj = newobj;
+      var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
+      painter.ShowStreamerInfo(this.obj);
+      return;
+   }
    
    if (newobj != null) {
       if (this.painter && this.painter.UpdateObject(newobj)) {
@@ -974,33 +980,21 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
    
    if (this.obj == null) return;
 
-   if (this.IsObjectDraw()) {
-   
-      if (this.vis!=null) {
-         var lbl = "";
-         if (this.version > 0) lbl += "version = " + this.version + ", ";
-         lbl += "size = " + this.object_size;
-         this.vis.select("title").text(this.FullItemName() + "\n" + lbl);
-      }
-      
-      if (this.painter != null) {
-         this.painter.RedrawFrame();
-      } else {
-         this.painter = JSROOTPainter.drawObjectInFrame(this.vis, this.obj);
-         
-         if (this.painter == -1) this.painter = null;
+   if (this.vis!=null) {
+      var lbl = "";
+      if (this.version > 0) lbl += "version = " + this.version + ", ";
+      lbl += "size = " + this.object_size;
+      this.vis.select("title").text(this.FullItemName() + "\n" + lbl);
+   }
 
-         // if (this.painter)  console.log("painter is created");
-      }
-   } else { 
-     // we create sinfo similar to the file itself
-      var sinfo = {};
-      for (var i=0;i<this.obj.arr.length;i++) {
-         sinfo[this.obj.arr[i].fName] = this.obj.arr[i];
-      }
-      
-      var painter = new JSROOTPainter.HPainter('sinfo', this.frameid);
-      painter.ShowStreamerInfo(sinfo);
+   if (this.painter != null) {
+      this.painter.RedrawFrame();
+   } else {
+      this.painter = JSROOTPainter.drawObjectInFrame(this.vis, this.obj);
+
+      if (this.painter == -1) this.painter = null;
+
+      // if (this.painter)  console.log("painter is created");
    }
 }
 

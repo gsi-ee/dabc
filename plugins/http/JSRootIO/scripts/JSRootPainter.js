@@ -7290,8 +7290,8 @@
 
       folder['_childs'] = [];
       
-      for (var key in lst) {
-         var entry = lst[key]
+      for (var i in lst.arr) {
+         var entry = lst.arr[i]
 
          if (typeof(entry['fName']) == 'undefined') {
             console.log("strange element in StreamerInfo with name " + entry['name']);

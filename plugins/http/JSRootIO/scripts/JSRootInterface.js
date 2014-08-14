@@ -48,7 +48,7 @@ function showElement(element) {
 
 function CollapsibleDisplay(itemname, obj) {
    
-   // console.log("CollapsibleDisplay " + itemname + "  type " + (obj ? obj['_typename'] : "null"));
+   console.log("CollapsibleDisplay " + itemname + "  type " + (obj ? obj['_typename'] : "null"));
    if (!obj) return;
    
    var issinfo = itemname.lastIndexOf("StreamerInfo") >= 0;

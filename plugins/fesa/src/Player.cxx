@@ -144,7 +144,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    #ifdef WITH_ROOT
 
-   fWorkerHierarchy.CreateHChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TList");
+   fWorkerHierarchy.CreateHChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TStreamerInfoList");
 
    dabc::Hierarchy h1 = fWorkerHierarchy.CreateHChild("BeamRoot");
    h1.SetField(dabc::prop_kind, "ROOT.TH2I");

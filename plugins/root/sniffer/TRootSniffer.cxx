@@ -592,7 +592,7 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
    {
       TRootSnifferScanRec chld;
       if (chld.GoInside(rec, 0, "StreamerInfo"))
-         chld.SetField(item_prop_kind, "ROOT.TList");
+         chld.SetField(item_prop_kind, "ROOT.TStreamerInfoList");
    }
 
    TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject(TString::Format("//root/%s", fObjectsPath.Data())));
