@@ -142,7 +142,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
       } else
       if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
          DOUT3("Use evtbuild:");
-         my=fEvtbuildWorker;
+         my = fEvtbuildWorker;
       }
       if(my==0) {
          EOUT("Worker for shmem %s is zero!!!!", shmemname.c_str());
@@ -229,14 +229,14 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
       }
 
       case dabc::parModified: {
-           //dabc::LockGuard guard(fEntryMutex);
-           hadaq::ShmEntry* entry = FindEntry(parname);
+         //dabc::LockGuard guard(fEntryMutex);
+         hadaq::ShmEntry* entry = FindEntry(parname);
          if (entry==0) {
             DOUT0("NEVER COME HERE: Modified event for non-known parameter %s !!!!", parname.c_str());
             CreateShmEntry(parname);
             return;
          }
-         // todo: only in slave mode, supress updating runid from here!
+         // todo: only in slave mode, suppress updating runid from here!
          entry->UpdateValue(evnt.ParValue());
 
          break;

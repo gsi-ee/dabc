@@ -47,9 +47,9 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
 
    DOUT0("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents);
 
-   CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
-   CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
-   CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Ev");
+   CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
+   CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
+   CreatePar("TransmitEvents").SetRatemeter(false, 3.).SetUnits("Ev");
 
    CreateCmdDef("StartLmdFile")
       .AddArg("filename", "string", true, "file.lmd")

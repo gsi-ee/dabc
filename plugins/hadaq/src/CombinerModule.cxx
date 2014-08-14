@@ -505,7 +505,7 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
    return res;
 } 
 
-bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
+bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast)
 {
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
    fCfg[ninp].Reset();
@@ -521,6 +521,9 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
          DOUT5("CombinerModule::ShiftToNextSubEvent in continue ninp %u", ninp);
          continue;
       }
+
+      // no need to analyze data
+      if (fast) return true;
 
       foundevent = true;
 
@@ -571,11 +574,31 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
 bool hadaq::CombinerModule::DropAllInputBuffers()
 {
    DOUT0("hadaq::CombinerModule::DropAllInputBuffers()...");
+
+   unsigned maxnumsubev(0), droppeddata(0);
+
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+      unsigned numsubev = 0;
+
+      do {
+         if (fInp[ninp].subevnt()) {
+            numsubev++;
+            droppeddata += fInp[ninp].subevnt()->GetSize();
+         }
+      } while (ShiftToNextSubEvent(ninp, true));
+
+      if (numsubev>maxnumsubev) maxnumsubev = numsubev;
+
       fInp[ninp].Close();
-      while (SkipInputBuffers(ninp, 100))
-         ; // drop input port queue buffers until no more there
+      while (SkipInputBuffers(ninp, 100)); // drop input port queue buffers until no more there
    }
+
+   Par(fLostEventRateName).SetValue(maxnumsubev);
+   Par(fDataDroppedRateName).SetValue(droppeddata/1024./1024.);
+   fTotalDiscEvents += maxnumsubev;
+   fTotalDroppedData += droppeddata;
+
+
    return true;
 }
 
@@ -613,7 +636,7 @@ bool hadaq::CombinerModule::BuildEvent()
    unsigned masterchannel(0), min_inp(0);
    uint32_t subeventssize = 0;
    uint32_t mineventid(0), maxeventid(0), buildevid(0);
-   bool incomplete_data = false;
+   bool incomplete_data(false), any_data(false);
    int missing_inp(-1);
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
@@ -629,12 +652,13 @@ bool hadaq::CombinerModule::BuildEvent()
 
             missing_inp = ninp;
             incomplete_data = true;
-            break;
+            continue;
          }
 
       uint32_t evid = fCfg[ninp].fTrigNr;
 
-      if (ninp == 0) {
+      if (!any_data) {
+         any_data = true;
          mineventid = evid;
          maxeventid = evid;
          buildevid = evid;
@@ -658,7 +682,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // check too large triggertag difference on input channels, flush input buffers
 
    if (fLastDropTm.Expired(5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || fLastBuildTm.Expired(10.)) {
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || (fLastBuildTm.Expired(10.) && any_data)) {
 
         std::string msg;
 
@@ -730,7 +754,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
 //            DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
-            Par(fDataDroppedRateName).SetValue(droppedsize/1024/1024);
+            Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
             fTotalDroppedData+=droppedsize;
 
             if(!ShiftToNextSubEvent(ninp)) {

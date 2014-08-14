@@ -227,9 +227,10 @@ namespace hadaq {
 
          virtual void AfterModuleStop();
 
-         bool ShiftToNextSubEvent(unsigned ninp);
-
          bool ShiftToNextHadTu(unsigned ninp);
+
+         /** Shifts to next subevent in the input queue */
+         bool ShiftToNextSubEvent(unsigned ninp, bool fast = false);
 
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);

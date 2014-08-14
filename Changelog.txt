@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+14.08.2014
+1. In hadaq plugin correctly account dropped data.
+   Do drop all when at least one input gets any data.
+
+
 13.08.2014
 1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT. 
 2. Remove binary-based requests with streamer infos from dabc.js.
