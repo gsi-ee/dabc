@@ -6,7 +6,7 @@
 
    <title>JSRootIO drawing inside HTML page</title>
    
-   <script src="scripts/JSRootCore.js" type="text/javascript"></script>
+   <script src="../scripts/JSRootCore.js" type="text/javascript"></script>
    
    <script type='text/javascript'>
 
@@ -15,7 +15,7 @@
    
       function updateGUI() {
          // if getting histogram from THttpServer as JSON string, one should parse it like:
-         // var histo = JSROOTCore.JSONR_unref(JSON.parse(your_json_string));
+         // var histo = JSROOTCore.parse(your_json_string);
 
          // this is just generation of histogram      
          var histo = JSROOTCore.CreateTH2(20, 20);

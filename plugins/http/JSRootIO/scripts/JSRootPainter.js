@@ -7728,15 +7728,11 @@
          
          if ((itemname.length>0) && (itemname.lastIndexOf("/") != itemname.length-1)) itemname+="/";
          
-         var ish = ('_more' in item);
-         
-         itemname += ish ? "h.json?compact=3" : "root.json.gz?compact=3";
+         itemname += ('_more' in item) ? "h.json?compact=3" : "root.json.gz?compact=3";
          
          var itemreq = JSROOTCore.NewHttpRequest(itemname, 'text', function(itemres) {
-            var obj = null;
-             
-            if (itemres!=null) obj = JSON.parse(itemres);
-            if (!ish && obj) obj = JSROOTCore.JSONR_unref(obj);
+
+            var obj = JSROOTCore.parse(itemres);
              
             if (typeof callback == 'function') callback(item, obj);
          });
@@ -7799,6 +7795,15 @@
       this.AddOnlineMethods(this.h);
    }
    
+   JSROOTPainter.HPainter.prototype.menuitem = function(d,txt,func)
+   {
+      var p = document.createElement('p');
+      d.appendChild(p);
+      p.onclick = func;
+      p.setAttribute('class', 'ctxline');
+      p.innerHTML = txt;
+   }
+   
    JSROOTPainter.HPainter.prototype.contextmenu = function(element, event, itemname)
    {
       var xMousePosition = event.clientX + window.pageXOffset;
@@ -7827,26 +7832,10 @@
 
       var painter = this;
       
-      var p = document.createElement('p');
-      d.appendChild(p);
-      p.onclick = function() { painter.display(itemname); };
-      p.setAttribute('class', 'ctxline');
-      p.innerHTML = "Draw";
-
-      var p1 = document.createElement('p');
-      d.appendChild(p1);
-      p1.onclick = function() { window.open(itemname+"/draw.htm"); };
-      p1.setAttribute('class', 'ctxline');
-      p1.innerHTML = "Draw only";
-      
-      var p2 = document.createElement('p');
-      d.appendChild(p2);
-      p2.onclick = function() {  
-         // var x = document.getElementById('ctxmenu1');
-         // if(x) x.parentNode.removeChild(x);
-      }; 
-      p2.setAttribute('class', 'ctxline');
-      p2.innerHTML = "Close";
+      this.menuitem(d,"Draw", function() { painter.display(itemname); });
+      this.menuitem(d,"Draw in new window", function() { window.open(itemname+"/draw.htm"); });
+      this.menuitem(d,"Draw as png", function() { window.open(itemname+"/root.png?w=400&h=300&opt=colz"); });
+      this.menuitem(d,"Close", function() { });
       
       return false;
    }

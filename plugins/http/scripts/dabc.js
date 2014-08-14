@@ -1024,7 +1024,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       return;
    } 
    
-   var obj = JSROOTCore.JSONR_unref(JSON.parse(arg));
+   var obj = JSROOTCore.parse(arg);
 
    this.version = bversion;
       
@@ -1280,81 +1280,11 @@ DABC.Manager.prototype.DisplayItem = function(itemname, node)
    return elem;
 }
 
-DABC.Manager.prototype.display = function(itemname) {
-   
-   var node = this.hpainter.Find(itemname);
-   if (!node) {
-      console.log(" cannot find node " + itemname);
-      return;
-   }
-
-   var elem = this.FindItem(itemname);
-
-   if (elem) {
-      elem.ClickItem();
-      return;
-   }
-   
-   this.DisplayItem(itemname, node);
-}
-
-DABC.Manager.prototype.contextmenu = function(element, event, itemname, nodeid) {
-
-   var xMousePosition = event.clientX + window.pageXOffset;
-   var yMousePosition = event.clientY + window.pageYOffset;
-
-   // console.log("Menu for " + itemname + " pos = " + xMousePosition + "," + yMousePosition);
-   
-   var x = document.getElementById('ctxmenu1');
-   if(x) x.parentNode.removeChild(x);
-  
-   var d = document.createElement('div');
-   d.setAttribute('class', 'ctxmenu');
-   d.setAttribute('id', 'ctxmenu1');
-   element.parentNode.appendChild(d);
-   d.style.left = xMousePosition + "px";
-   d.style.top = yMousePosition + "px";
-   d.onmouseover = function(e) { this.style.cursor = 'pointer'; }
-   d.onclick = function(e) { element.parentNode.removeChild(d);  }
-   
-   document.body.onclick = function(e) { 
-      var x = document.getElementById('ctxmenu1');
-      if(x) x.parentNode.removeChild(x);
-   }
-
-   if (nodeid==0) {
-      var p = document.createElement('p');
-      d.appendChild(p);
-      p.onclick = function() { DABC.mgr.openRootFile("/httpsys/hsimple.root", nodeid); };
-      p.setAttribute('class', 'ctxline');
-      p.innerHTML = "Open ROOT file";
-   } else {
-      var p = document.createElement('p');
-      d.appendChild(p);
-      p.onclick = function() { DABC.mgr.display(itemname); };
-      p.setAttribute('class', 'ctxline');
-      p.innerHTML = "Draw";
-   }
-  
-   var p2 = document.createElement('p');
-   d.appendChild(p2);
-   p2.onclick = function() {  
-      // var x = document.getElementById('ctxmenu1');
-      // if(x) x.parentNode.removeChild(x);
-   }; 
-   p2.setAttribute('class', 'ctxline');
-   p2.innerHTML = "Close";
-   
-   return false;
-}
-
-
 DABC.Manager.prototype.ExecuteCommand = function(itemname)
 {
    var elem = this.FindItem(itemname);
    if (elem) elem.InvokeCommand();
 }
-
 
 DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
 {

@@ -114,6 +114,13 @@
 	   return value;
 	}
 	
+	JSROOTCore.parse = function(arg) {
+	   if (arg==null) return null;
+	   var obj = JSON.parse(arg);
+	   if (obj!=null) obj = JSROOTCore.JSONR_unref(obj)
+	   return obj;
+	}
+	
 	JSROOTCore.NewHttpRequest = function(url, kind, callback) {
       // kind can be "text", "xml", "bin" or "head"
       var xhr = new XMLHttpRequest();

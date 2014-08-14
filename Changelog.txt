@@ -18,6 +18,7 @@ current functionality of the framework.
 8. First working version of single element drawing in ROOT JS.
    First working version of context menu in ROOT HPainter. 
    From now ROOT JS is fully independent from additional features of dabc.js  
+9. When displaying single element, one could specify draw options and monitor property.
        
 
 13.08.2014
