@@ -37,19 +37,21 @@ namespace hadaq {
    class Observer : public dabc::Worker  {
       protected:
 
-         int fNodeId;
-         double fFlushTimeout;
+         int             fNodeId;
+         double          fFlushTimeout;
 
          /* handle for shmem worker structure for netmem emulation*/
-         ::Worker* fNetmemWorker;
+         ::Worker       *fNetmemWorker;
 
          /* handle for shmem worker structure for evtbuild emulation*/
-         ::Worker* fEvtbuildWorker;
+         ::Worker       *fEvtbuildWorker;
 
          typedef std::list<ShmEntry*> ShmEntriesList;
 
-         ShmEntriesList fEntries;
-         dabc::Mutex        fEntryMutex;
+         ShmEntriesList  fEntries;
+         dabc::Mutex     fEntryMutex;
+
+         bool IsEmulation() const { return (fNetmemWorker==0) && (fEvtbuildWorker==0); }
 
          ShmEntry*  FindEntry(const std::string& parname)
          {

@@ -5,7 +5,10 @@ current functionality of the framework.
 14.08.2014
 1. In hadaq plugin correctly account dropped data.
    Do drop all when at least one input gets any data.
-
+2. Ensure that hadaq::Combiner parameters produce change events after 0.2 s.
+   With old default settings (1s) EPICS control time to time produced zero rates.  
+3. Implement Emulation mode in hadaq::Observer for debugging purposes.
+   
 
 13.08.2014
 1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT. 

@@ -68,8 +68,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fEpicsRunNumber = 0;
 
    fLastTrigNr = 0;
-   fMaxHadaqTrigger=0;
-   fTriggerRangeMask=0;
+   fMaxHadaqTrigger = 0;
+   fTriggerRangeMask = 0;
 
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
    fEpicsSlave =   Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
@@ -1048,7 +1048,7 @@ std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string& name)
 
 void hadaq::CombinerModule::CreateEvtbuildPar(const std::string& name)
 {
-   CreatePar(GetEvtbuildParName(name));
+   CreatePar(GetEvtbuildParName(name)).SetSynchron(true, 0.2);
 }
 
 void hadaq::CombinerModule::SetEvtbuildPar(const std::string& name, unsigned value)
@@ -1061,7 +1061,6 @@ unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string& name)
    return Par(GetEvtbuildParName(name)).Value().AsUInt();
 }
 
-
 std::string  hadaq::CombinerModule::GetNetmemParName(const std::string& name)
 {
    return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
@@ -1069,7 +1068,7 @@ std::string  hadaq::CombinerModule::GetNetmemParName(const std::string& name)
 
 void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)
 {
-   CreatePar(GetNetmemParName(name));
+   CreatePar(GetNetmemParName(name)).SetSynchron(true, 0.2);
 }
 
 void hadaq::CombinerModule::SetNetmemPar(const std::string& name, unsigned value)

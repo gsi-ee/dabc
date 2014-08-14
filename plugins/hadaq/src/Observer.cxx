@@ -31,6 +31,11 @@ extern "C" {
 
 hadaq::Observer::Observer(const std::string& name) :
    dabc::Worker(MakePair(name)),
+   fNodeId(-1),
+   fFlushTimeout(0.2),
+   fNetmemWorker(0),
+   fEvtbuildWorker(0),
+   fEntries(),
    fEntryMutex()
 {
    fNodeId = Cfg("NodeId").AsInt(-1);
@@ -42,6 +47,13 @@ hadaq::Observer::Observer(const std::string& name) :
 
    RegisterForParameterEvent(maskn, false);
    RegisterForParameterEvent(maske, false);
+
+   fFlushTimeout = 0.2; // export shared memory 5 times a second
+
+   if (Cfg("Emulation").AsBool(false)) {
+      DOUT1("############ Creating hadaq observer in emulation mode ##########");
+      return;
+   }
 
    std::string netname = dabc::format("daq_netmem%d", fNodeId);
    fNetmemWorker = ::Worker_initBegin(netname.c_str(), hadaq::sigHandler, 0, 0);
@@ -58,16 +70,14 @@ hadaq::Observer::Observer(const std::string& name) :
       ::Worker_initEnd(fEvtbuildWorker); // this will just add pid as default entry.
    }
 
-   fFlushTimeout = 0.2; // export shared memory 5 times a second
-
    DOUT1("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str());
 }
 
 hadaq::Observer::~Observer()
 {
    DOUT1("############# Destroy SHMEM observer #############");
-   ::Worker_fini(fEvtbuildWorker);
-   ::Worker_fini(fNetmemWorker);
+   if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
+   if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
 }
 
 
@@ -101,8 +111,9 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
       entry->UpdateParameter();
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
    }
+
    // we also need information from daq_disk demon
-    hadaq::ShmEntry* diskentry = FindEntry("diskNum",netname);
+   hadaq::ShmEntry* diskentry = FindEntry("diskNum",netname);
    if(diskentry){
       diskentry->UpdateParameter();
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
@@ -216,6 +227,12 @@ void hadaq::Observer::RemoveEntry(ShmEntry* entry)
 void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 {
    std::string parname = evnt.ParName();
+
+   if (IsEmulation()) {
+//      if (parname.find("bytesWritten") != std::string::npos)
+//         DOUT0("get %s = %s", parname.c_str(), evnt.ParValue().c_str());
+      return;
+   }
 
 //if(parname=="Combiner/Evtbuild-runId")
 //   {

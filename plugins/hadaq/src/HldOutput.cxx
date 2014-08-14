@@ -187,8 +187,6 @@ bool hadaq::HldOutput::StartNewFile()
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
    
-   
-   
    return true;
   
 }
@@ -273,7 +271,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       //#endif // oldmode
 
-      if (fLastUpdate.Expired(0.5)) {
+      if (fLastUpdate.Expired(0.2)) {
          dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
          fLastUpdate.GetNow();
@@ -284,6 +282,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          fRunNumber = 0;
          startnewfile = true;
       }
+
    } // epicsslave
 
    if(startnewfile) {
