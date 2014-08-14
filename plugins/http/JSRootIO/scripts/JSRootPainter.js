@@ -7294,7 +7294,7 @@
          var entry = lst.arr[i]
 
          if (typeof(entry['fName']) == 'undefined') {
-            console.log("strange element in StreamerInfo with name " + entry['name']);
+            console.log("strange element in StreamerInfo with name " + entry['fName']);
             continue;
          }
          
@@ -7365,15 +7365,15 @@
       for (var i in keys) {
          var key = keys[i];
          var item = { 
-               _name : key['name'] + ";" + key['cycle'],  
-               _kind : "ROOT." + key['className'],
-               _keyname : key['name'],
+               _name : key['fName'] + ";" + key['fCycle'],  
+               _kind : "ROOT." + key['fClassName'],
+               _keyname : key['fName'],
                _readobj : null
          };
          
-         // console.log("key class = " + key['className']);
+         // console.log("key class = " + key['fClassName']);
 
-         if ((key['className'] == 'TTree' || key['className'] == 'TNtuple')) {
+         if ((key['fClassName'] == 'TTree' || key['fClassName'] == 'TNtuple')) {
             item["_more"] = true;
             
             item['_expand'] = function(node, obj) {
@@ -7381,7 +7381,7 @@
                return true;
             }
          } else 
-         if (key['className'] == 'TDirectory' || key['className'] == 'TDirectoryFile') {
+         if (key['fClassName'] == 'TDirectory' || key['fClassName'] == 'TDirectoryFile') {
             item["_more"] = true;
             item["_isdir"] = true;
             item['_expand'] = function(node, obj) {
@@ -7389,7 +7389,7 @@
                return true;
             }
          } else
-         if (key['className'] == 'TList' && key['name']=='StreamerInfo' && (file!=null)) {
+         if ((key['fClassName'] == 'TList') && (key['fName']=='StreamerInfo') && (file!=null)) {
             item['_name'] = 'StreamerInfo';
             item['_kind'] = "ROOT.TStreamerInfoList";
             item['_readobj'] = file.fStreamerInfos;
@@ -7399,7 +7399,7 @@
             }
             
          } else 
-         if (key['className'] == 'TList' || key['className'] == 'TObjArray' || key['className'] == 'TClonesArray') {
+         if (key['fClassName'] == 'TList' || key['fClassName'] == 'TObjArray' || key['fClassName'] == 'TClonesArray') {
             item["_more"] = true;
             item['_expand'] = function(node, obj) {
                painter.ListHierarchy(node, obj);

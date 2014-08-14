@@ -1108,17 +1108,16 @@
       this._version = version;
       this._typename = "JSROOTIO.TDirectory";
       this['dirname'] = dirname;
-      this['cycle'] = cycle;
+      this['fCycle'] = cycle;
 
       JSROOTIO.TDirectory.prototype.GetKey = function(keyname, cycle) {
          // retrieve a key by its name and cycle in the list of keys
          for (var i=0; i<this.fKeys.length; ++i) {
-            if (this.fKeys[i]['name'] == keyname && this.fKeys[i]['cycle'] == cycle)
+            if (this.fKeys[i]['fName'] == keyname && this.fKeys[i]['fCycle'] == cycle)
                return this.fKeys[i];
          }
          return null;
       }
-
 
       JSROOTIO.TDirectory.prototype.ReadKeys = function(readkeys_callback) {
 
@@ -1348,43 +1347,32 @@
       JSROOTIO.RootFile.prototype.ReadKey = function(buf) {
          // read key from buffer
          var key = {};
-         key['offset'] = buf.o;
-         var nbytes = buf.ntoi4();
-         key['nbytes'] = Math.abs(nbytes);
-         var largeKey = buf.o + nbytes > 2 * 1024 * 1024 * 1024 /*2G*/;
-
-         buf.shift(2);
-
-         key['objLen'] = buf.ntou4();
+         
+         key['fNbytes'] = buf.ntoi4();
+         key['fVersion'] = buf.ntoi2();
+         key['fObjlen'] = buf.ntou4();
          var datime = buf.ntou4();
-         key['datime'] = {
-            year : (datime >>> 26) + 1995,
-            month : (datime << 6) >>> 28,
-            day : (datime << 10) >>> 27,
-            hour : (datime << 15) >>> 27,
-            min : (datime << 20) >>> 26,
-            sec : (datime << 26) >>> 26
-         };
-         key['keyLen'] = buf.ntou2();
-         key['cycle'] = buf.ntou2();
-         if (largeKey) {
-            key['seekKey'] = buf.ntou8();
+         key['fDatime'] = new Date();
+         key['fDatime'].setFullYear((datime >>> 26) + 1995);
+         key['fDatime'].setMonth((datime << 6) >>> 28);
+         key['fDatime'].setDate((datime << 10) >>> 27);
+         key['fDatime'].setHours((datime << 15) >>> 27);
+         key['fDatime'].setMinutes((datime << 20) >>> 26);
+         key['fDatime'].setSeconds((datime << 26) >>> 26);
+         key['fDatime'].setMilliseconds(0);
+         key['fKeylen'] = buf.ntou2();
+         key['fCycle'] = buf.ntou2();
+         if (key['fVersion'] > 1000) {
+            key['fSeekKey'] = buf.ntou8();
             buf.shift(8); // skip seekPdir
          } else {
-            key['seekKey'] = buf.ntou4();
+            key['fSeekKey'] = buf.ntou4();
             buf.shift(4); // skip seekPdir
          }
-         key['className'] = buf.ReadTString();
-         key['name'] = buf.ReadTString(); // TODO: rename to fName
-         key['title'] = buf.ReadTString(); // TODO: rename to fTitle
-         key['dataoffset'] = key['seekKey'] + key['keyLen'];
-         key['name'] = key['name'].replace(/['"]/g,''); // get rid of quotes
-         // should we do it here ???
-         //buf.locate(key['offset'] + key['keyLen']);
-
-         // remember offset
-         if (key['className'] != "" && key['name'] != "")
-            key['offset'] = buf.o;
+         key['fClassName'] = buf.ReadTString();
+         key['fName'] = buf.ReadTString(); 
+         key['fTitle'] = buf.ReadTString(); 
+         key['fName'] = key['fName'].replace(/['"]/g,''); // get rid of quotes
 
          return key;
       };
@@ -1401,7 +1389,7 @@
 
          // retrieve a key by its name and cycle in the list of keys
          for (var i=0; i<this.fKeys.length; ++i) {
-            if (this.fKeys[i]['name'] == keyname && this.fKeys[i]['cycle'] == cycle)
+            if (this.fKeys[i]['fName'] == keyname && this.fKeys[i]['fCycle'] == cycle)
                return this.fKeys[i];
          }
          
@@ -1420,7 +1408,7 @@
          var callback1 = function(file, buffer) {
             var buf = null;
 
-            if (key['objLen'] <= key['nbytes']-key['keyLen']) {
+            if (key['fObjlen'] <= key['fNbytes']-key['fKeylen']) {
                buf = new JSROOTIO.TBuffer(buffer, 0, file);
             } else {
                var hdrsize = JSROOTIO.R__unzip_header(buffer, 0);
@@ -1429,13 +1417,13 @@
                buf = new JSROOTIO.TBuffer(objbuf, 0, file);
             }
 
-            buf.fTagOffset = key.keyLen;
+            buf.fTagOffset = key.fKeylen;
             callback(file, buf);
             delete buf;
          };
 
-         this.Seek(key['dataoffset'], this.ERelativeTo.kBeg);
-         this.ReadBuffer(key['nbytes'] - key['keyLen'], callback1);
+         this.Seek(key['fSeekKey'] + key['fKeylen'], this.ERelativeTo.kBeg);
+         this.ReadBuffer(key['fNbytes'] - key['fKeylen'], callback1);
       };
 
       JSROOTIO.RootFile.prototype.ReadObject = function(obj_name, cycle, user_call_back) {
@@ -1456,7 +1444,7 @@
          }
          
          var isdir = false;
-         if ((key['className'] == 'TDirectory' || key['className'] == 'TDirectoryFile')) {
+         if ((key['fClassName'] == 'TDirectory' || key['fClassName'] == 'TDirectoryFile')) {
             isdir = true;
             var dir = this.GetDir(obj_name);
             if (dir!=null) {
@@ -1485,16 +1473,11 @@
 
             
             var obj = {};
-            obj['_typename'] = 'JSROOTIO.' + key['className'];
+            obj['_typename'] = 'JSROOTIO.' + key['fClassName'];
 
             buf.MapObject(1, obj); // tag object itself with id==1
-            buf.ClassStreamer(obj, key['className']);
+            buf.ClassStreamer(obj, key['fClassName']);
 
-            // do we need global list of TFormula classes
-            if (key['className'] == 'TFormula') {
-               JSROOTCore.addFormula(obj);
-            }
-            
             if (typeof user_call_back == 'function') {
                user_call_back(obj);
                return;
@@ -1516,6 +1499,15 @@
 
          this.fStreamerInfos = lst;
       }
+      
+      JSROOTIO.RootFile.prototype.ReadFormulas = function()
+      {
+         for (var i in this.fKeys) 
+           if (this.fKeys[i]['fClassName'] == 'TFormula') 
+             this.ReadObject(this.fKeys[i]['fName'], this.fKeys[i]['fCycle'], function(obj) {
+                  JSROOTCore.addFormula(obj);
+            });
+      }
 
       JSROOTIO.RootFile.prototype.ReadStreamerInfos = function(si_callback) {
 
@@ -1529,12 +1521,9 @@
             var callback2 = function(file, buf) {
 
                file.ExtractStreamerInfos(buf);
+               
+               file.ReadFormulas();
 
-               for (var i=0;i<file.fKeys.length;++i) {
-                  if (file.fKeys[i]['className'] == 'TFormula') {
-                     file.ReadObject(file.fKeys[i]['name'], file.fKeys[i]['cycle']);
-                  }
-               }
                if (typeof(si_callback) == 'function')
                   si_callback(file);
             };

@@ -24,7 +24,7 @@ August 2014:
 8. In example.htm also use AssertPrerequisites to load necessary scripts.
    This helps to keep code up-to-date even by big changes in JavaScript code.
 9. Provide monitoring of online THttpServer with similar interface as for ROOT files.
-       
+10.Fix several errors in TKey Streamer, use member names as in ROOT itself.        
 
 July 2014:
 1. Migration to d3.v3.js and jQuery v2.1.1
