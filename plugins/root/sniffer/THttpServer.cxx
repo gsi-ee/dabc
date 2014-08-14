@@ -228,10 +228,8 @@ THttpServer::THttpServer(const char *engine) :
    else
       fJSRootIOSys = fHttpSys + "/JSRootIO";
 
-   fDefaultPage = fHttpSys + "/files/main.htm";
-   fDefaultPage = fJSRootIOSys + "/online.htm";
-
-   fDrawPage = fHttpSys + "/files/single.htm";
+   fDefaultPage = fJSRootIOSys + "/files/online.htm";
+   fDrawPage = fJSRootIOSys + "/files/draw.htm";
 
    SetSniffer(new TRootSniffer("sniff"));
 

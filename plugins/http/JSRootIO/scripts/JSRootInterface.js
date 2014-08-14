@@ -159,6 +159,7 @@ function OpenOnline(url) {
    painter.OpenOnline(url);
 }
 
+
 function UpdateOnline() {
    var chkbox = document.getElementById("monitoring");
    if (!chkbox || !chkbox.checked) return;
@@ -181,6 +182,23 @@ function UpdateOnline() {
             hpainter.RedrawFrame(); 
       });
    });
+}
+
+function BuildDrawGUI()
+{
+//   guiCode = "here will be single element draw " + document.URL; 
+   
+//   $('#drawGUI').append(guiCode);
+   
+   var hpainter = new JSROOTPainter.HPainter("single");
+   
+   hpainter.CreateSingleOnlineElement();
+   
+   hpainter.get("", function(item, obj) {
+      
+      if (obj) JSROOTPainter.draw('drawGUI', obj);
+   });
+
 }
 
 function BuildOnlineGUI() {
@@ -210,6 +228,7 @@ function BuildOnlineGUI() {
 function BuildSimpleGUI() {
    
    if (document.getElementById('onlineGUI')) return BuildOnlineGUI();  
+   if (document.getElementById('drawGUI')) return BuildDrawGUI();  
    
    var myDiv = $('#simpleGUI');
    if (!myDiv) {

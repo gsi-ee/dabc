@@ -7453,9 +7453,9 @@
 
    JSROOTPainter.HPainter.prototype.Find = function(fullname, top, replace) {
 
-      if (fullname.length==0) return top;
-      
       if (!top) top = this.h;
+      
+      if (fullname.length==0) return top;
       
       var pos = -1;
       
@@ -7576,8 +7576,8 @@
       node['_nodeid'] = nodeid;
 
       // allow context menu only for objects which can be displayed
-      if (cando.display || (nodeid==0))
-         this.dtree.aNodes[nodeid]['ctxt'] = "return DABC.mgr.contextmenu(this, event, '" + nodefullname+"',-" + nodeid +");"; 
+      if (cando.display)
+         this.dtree.aNodes[nodeid]['ctxt'] = this.GlobalName() + ".contextmenu(this, event, \'"+nodefullname+"\')"; 
 
       nodeid++;
       
@@ -7590,6 +7590,7 @@
 
    JSROOTPainter.HPainter.prototype.RefreshHtml = function(force)
    {
+      if (this.frameid == null) return;
       var elem = document.getElementById(this.frameid);
       if (elem==null) return;
       
@@ -7629,6 +7630,7 @@
    JSROOTPainter.HPainter.prototype.get = function(itemname, callback)
    {
       var item = this.Find(itemname);
+
       var curr = item;
       while (curr != null) {
          if (('_get' in curr) && (typeof(curr._get)=='function')) {
@@ -7714,6 +7716,46 @@
          pthis.RefreshHtml();
       });
    }
+   
+   JSROOTPainter.HPainter.prototype.AddOnlineMethods = function(h)
+   {
+      if (typeof h != 'object') return;
+      
+      var painter = this;
+      
+      h['_get'] = function (item, callback) {
+         var itemname = painter.itemFullName(item);
+         
+         if ((itemname.length>0) && (itemname.lastIndexOf("/") != itemname.length-1)) itemname+="/";
+         
+         var ish = ('_more' in item);
+         
+         itemname += ish ? "h.json?compact=3" : "root.json.gz?compact=3";
+         
+         var itemreq = JSROOTCore.NewHttpRequest(itemname, 'text', function(itemres) {
+            var obj = null;
+             
+            if (itemres!=null) obj = JSON.parse(itemres);
+            if (!ish && obj) obj = JSROOTCore.JSONR_unref(obj);
+             
+            if (typeof callback == 'function') callback(item, obj);
+         });
+         
+         itemreq.send(null);
+      }
+      
+      h['_expand'] = function(node, obj) {
+         // central function for all expand
+      
+         if ((obj!=null) && (node!=null) && ('_childs' in obj)) {
+            node._childs = obj._childs;
+            obj._childs = null;
+            return true;
+         }
+         return false;
+      }
+   }
+   
 
    JSROOTPainter.HPainter.prototype.OpenOnline = function(url)
    {
@@ -7725,51 +7767,8 @@
           if (arg==null) return;
           
           painter.h = JSON.parse(arg);
-
-          painter.h['_get'] = function (item, callback) {
-             var itemname = painter.itemFullName(item);
-             
-             // console.log("sending request for " + itemname);
-             
-             var itemreq = null;
-             
-             if ('_more' in item) {
-                itemreq = JSROOTCore.NewHttpRequest(itemname+"/h.json?compact=3", 'text', function(itemres) {
-                   var obj = null;
-                 
-                   if (itemres!=null) obj = JSON.parse(itemres);
-                 
-                   if (typeof callback == 'function') callback(item, obj);
-                });
-             } else {
-                itemreq = JSROOTCore.NewHttpRequest(itemname+"/root.json.gz?compact=3", 'text', function(itemres) {
-                   var obj = null;
-                 
-                   if (itemres!=null) obj = JSROOTCore.JSONR_unref(JSON.parse(itemres));
-                 
-                   if (typeof callback == 'function') callback(item, obj);
-                });
-             }
-             
-             if (itemreq) 
-                itemreq.send(null);
-             else
-                if (typeof callback == 'function') callback(null, obj);
-          }
           
-          painter.h['_expand'] = function(node, obj) {
-             // central function for all expand
-          
-             console.log("this is try to expand node " + node._name);
-             
-             if ((obj!=null) && (node!=null) && ('_childs' in obj)) {
-                node._childs = obj._childs;
-                obj._childs = null;
-                return true;
-             }
-             
-             return false;
-          }
+          painter.AddOnlineMethods(painter.h);
           
           if (painter.h!=null) painter.RefreshHtml(true);
       
@@ -7792,7 +7791,59 @@
       this.RefreshHtml();
    }
    
+   JSROOTPainter.HPainter.prototype.CreateSingleOnlineElement = function()
+   {
+      this.h = {
+         _name : ""   
+      }
+      this.AddOnlineMethods(this.h);
+   }
+   
+   JSROOTPainter.HPainter.prototype.contextmenu = function(element, event, itemname)
+   {
+      var xMousePosition = event.clientX + window.pageXOffset;
+      var yMousePosition = event.clientY + window.pageYOffset;
 
+      event.preventDefault();
+      
+      // console.log("Menu for " + itemname + " pos = " + xMousePosition + "," + yMousePosition);
+      
+      var x = document.getElementById('ctxmenu1');
+      if(x) x.parentNode.removeChild(x);
+     
+      var d = document.createElement('div');
+      d.setAttribute('class', 'ctxmenu');
+      d.setAttribute('id', 'ctxmenu1');
+      element.parentNode.appendChild(d);
+      d.style.left = xMousePosition + "px";
+      d.style.top = yMousePosition + "px";
+      d.onmouseover = function(e) { this.style.cursor = 'pointer'; }
+      d.onclick = function(e) { element.parentNode.removeChild(d);  }
+      
+      document.body.onclick = function(e) { 
+         var x = document.getElementById('ctxmenu1');
+         if(x) x.parentNode.removeChild(x);
+      }
+
+      var painter = this;
+      
+      var p = document.createElement('p');
+      d.appendChild(p);
+      p.onclick = function() { painter.display(itemname); };
+      p.setAttribute('class', 'ctxline');
+      p.innerHTML = "Draw";
+     
+      var p2 = document.createElement('p');
+      d.appendChild(p2);
+      p2.onclick = function() {  
+         // var x = document.getElementById('ctxmenu1');
+         // if(x) x.parentNode.removeChild(x);
+      }; 
+      p2.setAttribute('class', 'ctxline');
+      p2.innerHTML = "Close";
+      
+      return false;
+   }
 
 })();
 
