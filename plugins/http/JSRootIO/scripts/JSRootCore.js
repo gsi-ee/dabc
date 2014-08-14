@@ -339,7 +339,13 @@
       document.getElementsByTagName("head")[0].appendChild(element);
    }
 
-   JSROOTCore.AssertPrerequisites = function(andThen) {
+   JSROOTCore.AssertPrerequisites = function(kind, andThan) {
+      // one could specify which kind of requirements are expected
+      // 'io' for I/O functionality (default)
+      // '2d' only for 2d graphic
+      // '3d' for 3d graphic
+      
+      if (typeof kind == 'function') { andThan = kind; kind = null; } 
 
       // file names should be separated with ';' 
       var allfiles = 
@@ -347,35 +353,42 @@
          '$$$style/jquery-ui.css;' +
          '$$$scripts/jquery-ui.min.js;' +
          '$$$scripts/d3.v3.min.js;' +
-         '$$$scripts/jquery.mousewheel.js;' +
          '$$$scripts/dtree.js;' +
-         '$$$scripts/rawinflate.js;' +
-         '$$$scripts/JSRootIOEvolution.js;' +
          '$$$scripts/JSRootPainter.js;' +
          '$$$style/JSRootPainter.css';
       
-      JSROOTCore.loadScript(allfiles, andThen); 
+      var minimal = ((kind!=null) && (kind.indexOf('2d')>=0));
+      
+      if (!minimal || ((kind!=null) && (kind.indexOf('io')>=0)))
+         allfiles += ";$$$scripts/rawinflate.js;$$$scripts/JSRootIOEvolution.js"; 
+      
+      if ((kind!=null) && (kind.indexOf("3d")>=0))
+         allfiles += ";$$$scripts/jquery.mousewheel.js;$$$scripts/three.min.js;$$$fonts/helvetiker_regular.typeface.js";
+      
+      JSROOTCore.loadScript(allfiles, andThan); 
    }
    
-   
-   JSROOTCore.InitSimpleGUI = function(andThen, allfiles) {
-      // only initialize script and style, required by simple gui
-      JSROOTCore.AssertPrerequisites(function(){
-         if (allfiles==null) allfiles = '$$$scripts/JSRootInterface.js;$$$style/JSRootInterface.css';
-         console.log("init simple gui with " + allfiles);
-         JSROOTCore.loadScript(allfiles, andThen);
-      });
+   JSROOTCore.Assert3DScripts = function(andThen) {
+      JSROOTCore.AssertPrerequisites('3d', andThen);
    }
    
-   JSROOTCore.BuildSimpleGUI = function(andThen, allfiles) {
-      // initialize all scripts and call build function
-      JSROOTCore.InitSimpleGUI(function() {
-         if (typeof BuildSimpleGUI != 'function') {
-            alert("BuildSimpleGUI not defined after loading " + allfiles);
-            return;
-         }
-         BuildSimpleGUI();
-         if (typeof andThen == 'function') andThen();
+   JSROOTCore.BuildSimpleGUI = function(requirements, andThen) {
+      if (typeof requirements == 'function') {
+         andThen = requirements; requirements = null;
+      } 
+      
+      JSROOTCore.AssertPrerequisites(requirements, function(){
+         JSROOTCore.loadScript('$$$scripts/JSRootInterface.js;$$$style/JSRootInterface.css', function() { 
+            
+            if (typeof BuildSimpleGUI != 'function') {
+               alert('BuildSimpleGUI function not found');
+               return;
+            }
+            
+            BuildSimpleGUI();
+            
+            if (typeof andThen == 'function') andThen();
+         });
       });
    }
 

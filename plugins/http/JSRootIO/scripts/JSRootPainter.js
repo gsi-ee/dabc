@@ -5925,7 +5925,7 @@
 
       var painter = this;
 
-      JSROOTCore.loadScript("$$$scripts/three.min.js;$$$fonts/helvetiker_regular.typeface.js", function() {
+    JSROOTCore.Assert3DScripts(function() {
       
       // three.js 3D drawing
       var scene = new THREE.Scene();
@@ -6139,7 +6139,7 @@
 
    JSROOTPainter.drawHistogram3D = function(vis, histo, dopt)
    {
-   JSROOTCore.loadScript("$$$scripts/three.min.js;$$$fonts/helvetiker_regular.typeface.js", function() {
+     JSROOTCore.Assert3DScripts(function() {
       
       if (vis['ROOT:frame'] == null)
          JSROOTPainter.createFrame(vis);
@@ -7729,7 +7729,7 @@
           painter.h['_get'] = function (item, callback) {
              var itemname = painter.itemFullName(item);
              
-             console.log("sending request for " + itemname);
+             // console.log("sending request for " + itemname);
              
              var itemreq = null;
              

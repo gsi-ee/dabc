@@ -26,7 +26,11 @@ August 2014:
 9. Provide monitoring of online THttpServer with similar interface as for ROOT files.
 10.Fix several errors in TKey Streamer, use member names as in ROOT itself.        
 11.Keep the only version identifier JSROOTCore.version for JS code
-12.Load scripts for 3D graphic only when they required
+12.One can specify in JSROOTCore.AssertPrerequisites functionality which is required.
+   One could specify '2d', 'io' (default) or '3d'.
+13.Use new AssertPrerequisites functionality to load only required functionality.
+
+ 
 
 July 2014:
 1. Migration to d3.v3.js and jQuery v2.1.1
