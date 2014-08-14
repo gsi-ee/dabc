@@ -12,6 +12,7 @@ current functionality of the framework.
    display in online and offline mode, use 'fName' and 'fTitle' instead
    of 'name' and 'title' 
 5. Fix several errors in JS TKey streamer, use member names as in ROOT itself.
+6. Load scripts for 3D graphic only when they required
        
 
 13.08.2014

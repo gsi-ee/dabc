@@ -350,8 +350,6 @@
          '$$$scripts/jquery.mousewheel.js;' +
          '$$$scripts/dtree.js;' +
          '$$$scripts/rawinflate.js;' +
-         '$$$scripts/three.min.js;' +
-         '$$$fonts/helvetiker_regular.typeface.js;' +
          '$$$scripts/JSRootIOEvolution.js;' +
          '$$$scripts/JSRootPainter.js;' +
          '$$$style/JSRootPainter.css';

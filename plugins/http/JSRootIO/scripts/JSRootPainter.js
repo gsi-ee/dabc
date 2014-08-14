@@ -5890,29 +5890,43 @@
       if (this.zoom_xmin != this.zoom_xmax) { xmin = this.zoom_xmin; xmax = this.zoom_xmax; }
       var ymin = this.ymin, ymax = this.ymax;
       if (this.zoom_ymin != this.zoom_ymax) { ymin = this.zoom_ymin; ymax = this.zoom_ymax; }
+      
+      var tx, utx, ty, uty, tz, utz;
 
       if (this.options.Logx) {
-         var tx = d3.scale.log().domain([xmin, xmax]).range([-size, size]);
-         var utx = d3.scale.log().domain([-size, size]).range([xmin, xmax]);
+         tx = d3.scale.log().domain([xmin, xmax]).range([-size, size]);
+         utx = d3.scale.log().domain([-size, size]).range([xmin, xmax]);
       } else {
-         var tx = d3.scale.linear().domain([xmin, xmax]).range([-size, size]);
-         var utx = d3.scale.linear().domain([-size, size]).range([xmin, xmax]);
+         tx = d3.scale.linear().domain([xmin, xmax]).range([-size, size]);
+         utx = d3.scale.linear().domain([-size, size]).range([xmin, xmax]);
       }
       if (this.options.Logy) {
-         var ty = d3.scale.log().domain([ymin, ymax]).range([-size, size]);
-         var uty = d3.scale.log().domain([size, -size]).range([ymin, ymax]);
+         ty = d3.scale.log().domain([ymin, ymax]).range([-size, size]);
+         uty = d3.scale.log().domain([size, -size]).range([ymin, ymax]);
       } else {
-         var ty = d3.scale.linear().domain([ymin, ymax]).range([-size, size]);
-         var uty = d3.scale.linear().domain([size, -size]).range([ymin, ymax]);
+         ty = d3.scale.linear().domain([ymin, ymax]).range([-size, size]);
+         uty = d3.scale.linear().domain([size, -size]).range([ymin, ymax]);
       }
       if (this.options.Logz) {
-         var tz = d3.scale.log().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
-         var utz = d3.scale.log().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
+         tz = d3.scale.log().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
+         utz = d3.scale.log().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
       } else {
-         var tz = d3.scale.linear().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
-         var utz = d3.scale.linear().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
+         tz = d3.scale.linear().domain([this.minbin, Math.ceil( this.maxbin/10 )*10]).range([0, size*2]);
+         utz = d3.scale.linear().domain([0, size*2]).range([this.minbin, Math.ceil( this.maxbin/10 )*10]);
       }
 
+      var constx = (size*2 / this.nbinsx) / this.maxbin;
+      var consty = (size*2 / this.nbinsy) / this.maxbin;
+
+      var colorFlag = ( this.options.Color > 0);
+      var fcolor = d3.rgb(JSROOTPainter.root_colors[this.histo['fFillColor']]);
+
+      var local_bins = this.CreateDrawBins(100, 100, 2, (JSROOTPainter.gStyle.Tooltip > 1 ? 1 : 0));
+
+      var painter = this;
+
+      JSROOTCore.loadScript("$$$scripts/three.min.js;$$$fonts/helvetiker_regular.typeface.js", function() {
+      
       // three.js 3D drawing
       var scene = new THREE.Scene();
 
@@ -6066,22 +6080,16 @@
       toplevel.add( line );
 
       // create the bin cubes
-      var constx = (size*2 / this.nbinsx) / this.maxbin;
-      var consty = (size*2 / this.nbinsy) / this.maxbin;
 
-      var colorFlag = ( this.options.Color > 0);
-      var fcolor = d3.rgb(JSROOTPainter.root_colors[this.histo['fFillColor']]);
       var fillcolor = new THREE.Color( 0xDDDDDD );
       fillcolor.setRGB(fcolor.r/255, fcolor.g/255, fcolor.b/255);
       var bin, wei, hh;
-
-      var local_bins = this.CreateDrawBins(100, 100, 2, (JSROOTPainter.gStyle.Tooltip > 1 ? 1 : 0));
 
       for (var i = 0; i < local_bins.length; ++i ) {
          hh = local_bins[i];
 
          bin = THREE.SceneUtils.createMultiMaterialObject(
-            new THREE.CubeGeometry( 2*size/this.nbinsx, hh.z, 2*size/this.nbinsy ),
+            new THREE.CubeGeometry( 2*size/painter.nbinsx, hh.z, 2*size/painter.nbinsy ),
             [ new THREE.MeshLambertMaterial( { color: fillcolor.getHex(), shading: THREE.NoShading } ),
               wireMaterial ] );
          bin.position.x = tx(hh.x);
@@ -6126,11 +6134,13 @@
       renderer.render( scene, camera );
 
       JSROOTPainter.add3DInteraction(renderer, scene, camera, toplevel);
-   }
+   })}
 
 
    JSROOTPainter.drawHistogram3D = function(vis, histo, dopt)
    {
+   JSROOTCore.loadScript("$$$scripts/three.min.js;$$$fonts/helvetiker_regular.typeface.js", function() {
+      
       if (vis['ROOT:frame'] == null)
          JSROOTPainter.createFrame(vis);
 
@@ -6423,8 +6433,8 @@
       $( vis[0][0] ).hide().parent().append( renderer.domElement );
       renderer.render( scene, camera );
 
-      this.add3DInteraction(renderer, scene, camera, toplevel);
-   }
+      JSROOTPainter.add3DInteraction(renderer, scene, camera, toplevel);
+   })}
 
    JSROOTPainter.drawHStack = function(vis, stack, opt) {
       // paint the list of histograms
