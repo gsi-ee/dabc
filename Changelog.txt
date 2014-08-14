@@ -15,6 +15,9 @@ current functionality of the framework.
 6. Load scripts for 3D graphic only when they required
 7. Load scripts for I/O only when required, for ROOT/DABC online monitoring this
    reduces number of used js scripts from 10 to 5!
+8. First working version of single element drawing in ROOT JS.
+   First working version of context menu in ROOT HPainter. 
+   From now ROOT JS is fully independent from additional features of dabc.js  
        
 
 13.08.2014

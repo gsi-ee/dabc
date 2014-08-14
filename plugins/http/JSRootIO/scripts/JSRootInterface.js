@@ -149,17 +149,6 @@ function ReadFile(filename) {
    painter.OpenRootFile(filename);
 }
 
-function OpenOnline(url) {
-   
-   var painter = new JSROOTPainter.HPainter("root", "status");
-   
-   painter['ondisplay'] = CollapsibleDisplay;
-   painter['clear'] = ResetReport;
-   
-   painter.OpenOnline(url);
-}
-
-
 function UpdateOnline() {
    var chkbox = document.getElementById("monitoring");
    if (!chkbox || !chkbox.checked) return;
@@ -221,6 +210,13 @@ function BuildOnlineGUI() {
             + '</div>';
    
    $('#onlineGUI').append(guiCode);
+
+   var hpainter = new JSROOTPainter.HPainter("root", "status");
+   
+   hpainter['ondisplay'] = CollapsibleDisplay;
+   hpainter['clear'] = ResetReport;
+   
+   hpainter.OpenOnline("h.json?compact=3");
    
    setInterval(UpdateOnline, 3000);
 }

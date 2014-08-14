@@ -7832,7 +7832,13 @@
       p.onclick = function() { painter.display(itemname); };
       p.setAttribute('class', 'ctxline');
       p.innerHTML = "Draw";
-     
+
+      var p1 = document.createElement('p');
+      d.appendChild(p1);
+      p1.onclick = function() { window.open(itemname+"/draw.htm"); };
+      p1.setAttribute('class', 'ctxline');
+      p1.innerHTML = "Draw only";
+      
       var p2 = document.createElement('p');
       d.appendChild(p2);
       p2.onclick = function() {  
