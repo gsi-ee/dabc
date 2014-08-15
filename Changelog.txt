@@ -6,6 +6,8 @@ current functionality of the framework.
 1. Move JSRootIO into root plugin - now ROOT JS code fully independent from DABC.
 2. Remove 'JSROOTIO.' prefix from _typename. Now real class name is used.
 3. Use in all scripts JSROOT as central 'namespace'
+4. Introduce context menu in 3D, use it for switch between 2D/3D modes
+5. Everywhere use own-designed context menu
 
 
 14.08.2014
