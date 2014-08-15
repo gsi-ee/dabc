@@ -1346,8 +1346,6 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
 
 DABC.Manager.prototype.ClearWindow = function()
 {
-   $("#dialog").empty();
-   
    delete this.arr;
    this.arr = [];
 
