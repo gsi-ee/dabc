@@ -4,6 +4,7 @@ current functionality of the framework.
 
 15.08.2014
 1. Move JSRootIO into root plugin - now ROOT JS code fully independent from DABC.
+2. Remove 'JSROOTIO.' prefix from _typename. Now real class name is used.
 
 
 14.08.2014

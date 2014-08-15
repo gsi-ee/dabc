@@ -172,7 +172,7 @@ Than representation will look like:
 
 ``` {.json}
 {
-  "_typename" : "JSROOTIO.TNamed",
+  "_typename" : "TNamed",
   "fUniqueID" : 0,
   "fBits" : 50331656,
   "fName" : "obj",

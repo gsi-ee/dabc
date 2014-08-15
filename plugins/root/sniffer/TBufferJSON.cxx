@@ -659,7 +659,7 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl)
       stack = PushStack(2);
       AppendOutput("{", "\"_typename\"");
       AppendOutput(fSemicolon.Data());
-      AppendOutput("\"JSROOTIO.");
+      AppendOutput("\"");
       AppendOutput(cl->GetName());
       AppendOutput("\"");
    } else {
@@ -805,7 +805,7 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo *sinfo, const TClass *cl)
       stack = PushStack(2);
       AppendOutput("\" : {", "\"_typename\"");
       AppendOutput(fSemicolon.Data());
-      AppendOutput("\"JSROOTIO.");
+      AppendOutput("\"");
       AppendOutput(cl->GetName());
       AppendOutput("\"");
    } else {

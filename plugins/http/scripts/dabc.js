@@ -748,7 +748,7 @@ DABC.FesaDrawElement.prototype.ReconstructObject = function()
    if (this.clname != "2D") return false;
    
    if (this.root_obj == null) {
-      this.root_obj = JSROOTCore.CreateTH2(16, 16);
+      this.root_obj = JSROOT.CreateTH2(16, 16);
       this.root_obj['fName']  = "BeamProfile";
       this.root_obj['fTitle'] = "Beam profile from FESA";
       this.root_obj['fOption'] = "col";
@@ -837,13 +837,13 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
 
    // here we should create TGraph object
 
-   var gr = JSROOTCore.CreateTGraph();
+   var gr = JSROOT.CreateTGraph();
    
    gr['fX'] = x;
    gr['fY'] = y;
    gr['fNpoints'] = x.length;
    
-   JSROOTCore.AdjustTGraphRanges(gr);
+   JSROOT.AdjustTGraphRanges(gr);
 
    gr['fHistogram']['fTitle'] = this.FullItemName();
    if (gr['fHistogram']['fYaxis']['fXmin']>0)
@@ -1024,7 +1024,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
       return;
    } 
    
-   var obj = JSROOTCore.parse(arg);
+   var obj = JSROOT.parse(arg);
 
    this.version = bversion;
       
@@ -1174,7 +1174,7 @@ DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
 //      item.RequestCallback(res);
 //   }
    
-   return JSROOTCore.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
+   return JSROOT.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
 }
 
 
@@ -1333,7 +1333,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
       if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
       if (kind == "rate") { cando.display = true; } else
       if (kind == "log") { cando.display = true; } else
-      if (kind == "DABC.HTML") { cando.img1 = JSROOTCore.source_dir+'img/globe.gif'; cando.open = true; } else
+      if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
       if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
