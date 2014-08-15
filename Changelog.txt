@@ -5,6 +5,7 @@ current functionality of the framework.
 15.08.2014
 1. Move JSRootIO into root plugin - now ROOT JS code fully independent from DABC.
 2. Remove 'JSROOTIO.' prefix from _typename. Now real class name is used.
+3. Use in all scripts JSROOT as central 'namespace'
 
 
 14.08.2014
@@ -63,7 +64,7 @@ current functionality of the framework.
 
 
 7.08.2014
-1. First working version of JSROOTPainter.HPainter. It should decouple
+1. First working version of JSROOT.Painter.HPainter. It should decouple
    data manipulation from drawing. Later should be possible to change
    layout and design how single objects are drawn. At the moment
    ROOT file with sub-directories and TTree are working.

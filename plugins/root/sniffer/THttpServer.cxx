@@ -8,6 +8,7 @@
 #include "TImage.h"
 #include "TROOT.h"
 #include "TClass.h"
+#include "RVersion.h"
 
 #include "THttpEngine.h"
 #include "TRootSniffer.h"
@@ -16,15 +17,23 @@
 #include <string>
 #include <cstdlib>
 
-extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
-extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
+#ifdef COMPILED_WITH_DABC
+   extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
+   extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
+
+   unsigned long R__crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen)
+   { return crc32(crc, buf, buflen); }
+#else
+   #include "RZip.h"
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 //                                                                      //
 // THttpCallArg                                                         //
 //                                                                      //
 // Contains arguments for single HTTP call                              //
-// Must be used in THttpEngine to process icomming http requests        //
+// Must be used in THttpEngine to process incoming http requests        //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +224,7 @@ THttpServer::THttpServer(const char *engine) :
    const char *rootsys = gSystem->Getenv("ROOTSYS");
 
    if (rootsys != 0)
-      fJsRootSys = TString::Format("%s/etc/http/JSRootIO", rootsys);
+      fJsRootSys = TString::Format("%s/etc/js", rootsys);
 #endif
 
    const char* jsrootsys = getenv("JSROOTSYS");
@@ -516,8 +525,8 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       char *objbuf = (char*) arg->GetContent();
       Long_t objlen = arg->GetContentLength();
 
-      unsigned long objcrc = crc32(0, NULL, 0);
-      objcrc = crc32(objcrc, (const unsigned char*) objbuf, objlen);
+      unsigned long objcrc = R__crc32(0, NULL, 0);
+      objcrc = R__crc32(objcrc, (const unsigned char*) objbuf, objlen);
 
       // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
       Int_t buflen = 10 + objlen + 8;

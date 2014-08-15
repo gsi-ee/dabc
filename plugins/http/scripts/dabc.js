@@ -728,7 +728,7 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    if (this.root_painter != null) {
       this.root_painter.RedrawFrame();
    } else {
-      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, this.root_obj);
+      this.root_painter = JSROOT.Painter.drawObjectInFrame(this.vis, this.root_obj);
       
       if (this.root_painter == -1) this.root_painter = null;
    }
@@ -855,13 +855,13 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
    gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
    gr['fHistogram']['fXaxis']['fTimeFormat'] = "";
-   // JSROOTPainter.gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
+   // JSROOT.gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
    gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
    
    if (this.root_painter && this.root_painter.UpdateObject(gr)) {
       this.root_painter.RedrawFrame();
    } else {
-      this.root_painter = JSROOTPainter.drawObjectInFrame(this.vis, gr, "L");
+      this.root_painter = JSROOT.Painter.drawObjectInFrame(this.vis, gr, "L");
       
       if (this.root_painter == -1) this.root_painter = null;
    }
@@ -990,7 +990,7 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
    if (this.painter != null) {
       this.painter.RedrawFrame();
    } else {
-      this.painter = JSROOTPainter.drawObjectInFrame(this.vis, this.obj);
+      this.painter = JSROOT.Painter.drawObjectInFrame(this.vis, this.obj);
 
       if (this.painter == -1) this.painter = null;
 
@@ -1079,7 +1079,7 @@ DABC.Manager = function(with_tree) {
    if (this.with_tree) this.CreateTable(2,2);
 
    // we could use ROOT drawing from beginning
-   JSROOTPainter.gStyle.OptimizeDraw = true;
+   JSROOT.gStyle.OptimizeDraw = true;
    
    return this;
 }
