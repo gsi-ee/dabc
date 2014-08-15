@@ -105,8 +105,7 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    fDabcSys(),
    fHttpSys(),
    fGo4Sys(),
-   fRootSys(),
-   fJSRootIOSys(),
+   fJsRootSys(),
    fDefaultAuth(-1)
 {
    fHttpSys = ".";
@@ -116,19 +115,16 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    if (dabcsys!=0) {
       fDabcSys = dabcsys;
       fHttpSys = dabc::format("%s/plugins/http", dabcsys);
+      fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
    }
 
    const char* go4sys = getenv("GO4SYS");
    if (go4sys!=0) fGo4Sys = go4sys;
 
-   const char* rootsys = getenv("ROOTSYS");
-   if (rootsys!=0) fRootSys = rootsys;
+   const char* jsrootsys = getenv("JSROOTSYS");
+   if (jsrootsys!=0) fJsRootSys = jsrootsys;
 
-   const char* jsrootiosys = getenv("JSROOTIOSYS");
-   if (jsrootiosys!=0) fJSRootIOSys = jsrootiosys;
-   if (fJSRootIOSys.empty()) fJSRootIOSys = fHttpSys + "/JSRootIO";
-
-   DOUT1("JSROOTIOSYS = %s ", fJSRootIOSys.c_str());
+   DOUT1("JSROOTSYS = %s ", fJsRootSys.c_str());
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 }
 
@@ -163,20 +159,11 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
       }
    }
 
-   if (!fRootSys.empty()) {
-      pos = fname.rfind("rootsys/");
+   if (!fJsRootSys.empty()) {
+      pos = fname.rfind("jsrootsys/");
       if (pos!=std::string::npos) {
-         fname.erase(0, pos+7);
-         res = fRootSys + fname;
-         return true;
-      }
-   }
-
-   if (!fJSRootIOSys.empty()) {
-      pos = fname.rfind("jsrootiosys/");
-      if (pos!=std::string::npos) {
-         fname.erase(0, pos+11);
-         res = fJSRootIOSys + fname;
+         fname.erase(0, pos+9);
+         res = fJsRootSys + fname;
          return true;
       }
    }

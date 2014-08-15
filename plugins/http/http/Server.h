@@ -40,8 +40,7 @@ namespace http {
          std::string fDabcSys;      ///< location of DABC installation
          std::string fHttpSys;      ///< location of http plugin, need to read special files
          std::string fGo4Sys;       ///< location of go4 (if any)
-         std::string fRootSys;      ///< location of ROOT (if any)
-         std::string fJSRootIOSys;  ///< location of JSRootIO (if any)
+         std::string fJsRootSys;    ///< location of Root JS (if any)
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
          /** Check if file is requested. Can only be from server */

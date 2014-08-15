@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+15.08.2014
+1. Move JSRootIO into root plugin - now ROOT JS code fully independent from DABC.
+
+
 14.08.2014
 1. In hadaq plugin correctly account dropped data.
    Drop all data when at least one input gets some data.
