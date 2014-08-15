@@ -30,7 +30,7 @@ current functionality of the framework.
 1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT. 
 2. Remove binary-based requests with streamer infos from dabc.js.
    Only for very special cases user can use binary I/O directly,
-   JSROOTIO.ReconstructObject shows how object can be reconstructed. 
+   JSROOT.ReconstructObject shows how object can be reconstructed. 
 3. Remove master name from all ROOT hierarchies.
 4. In hadaq plugin update netmem parameters with 0.2 sec period
    Drop all buffers and produce message when one input do not deliver data at all
@@ -520,7 +520,7 @@ current functionality of the framework.
 
 14.03.2014
 1. Use TBuffer in reading of the file, fix display of streamer infos
-2. Completely switch to usage of JSROOTIO.TBuffer class, remove
+2. Completely switch to usage of JSROOT.TBuffer class, remove
    many obsolete functions, significantely reduce code size.  
 3. Remove StreamerInfos class - it is just list of streamer elements
 4. Move fTagOffset to TBuffer class
@@ -530,7 +530,7 @@ current functionality of the framework.
 1. Fix problem when only histogram errors should be drawn
 2. Correctly display fill colour of TF1
 3. Simplify logic in ReadObjectAny
-4. Introduce JSROOTIO.TBuffer class, which plays very similar role 
+4. Introduce JSROOT.TBuffer class, which plays very similar role 
    as TBuffer in native ROOT I/O. Simplify logic in many places,
    reduce duplication of code in many places, fix errors.
    Main advantage - one could try to keep code synchronous.
