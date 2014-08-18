@@ -5,6 +5,8 @@ current functionality of the framework.
 18.08.2014
 1. Support different ROOT versions in ROOT plugin. Due to incompatible changes in 
    TBuffer class one requires separate versions for TBUfferJSON class. 
+2. Use own code to generate hierarchical structure in HTML, replace dtree.js which is 
+   extremely slow for complex hierarchies 
 
 
 15.08.2014

@@ -149,7 +149,6 @@ $(DABCINCPATH)/%.h: $(DABCROOT_DIRSNIFF)/%.h
 
 $(DABCINCPATH)/%.h: $(DABCROOT_DIRVER)/%.h
 	@echo "Header: $@" 
-	@echo "Version : $(DABC_ROOTIVERSION)"
 	@cp -f $< $@
 
 $(DABCROOT_LIB): $(DABCROOT_ALL_O) $(DABCROOT_DO)
