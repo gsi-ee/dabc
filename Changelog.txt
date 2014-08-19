@@ -5,7 +5,9 @@ current functionality of the framework.
 19.08.2014
 1. Generate HTML only for visible elements in the hierarchy tree. This increase
    dramatically performance of navigation in the big structures. 
-
+2. When toggle/update tree content, change whole line again and not single images or links.
+   Reduces number of required ids, remove ids for images completely.
+    
 
 18.08.2014
 1. Support different ROOT versions in ROOT plugin. Due to incompatible changes in 
