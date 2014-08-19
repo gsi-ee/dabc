@@ -67,7 +67,8 @@ namespace hadaq {
          uint64_t           fTotalRecvBuffers;
          uint64_t           fTotalDroppedBuffers;
 
-         pid_t fPid; // process id 
+         pid_t fPid;                        // process id
+         bool   fDebug;                     ///< when true, produce more debug output
 
          virtual void ProcessEvent(const dabc::EventId&);
          virtual double ProcessTimeout(double lastdiff);
@@ -80,7 +81,7 @@ namespace hadaq {
          virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
 
       public:
-         DataSocketAddon(int fd, int nport, int mtu, double flush);
+         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug);
          virtual ~DataSocketAddon();
 
          // this is interface from DataInput
@@ -108,8 +109,6 @@ namespace hadaq {
          int            fIdNumber;
          bool           fWithObserver;
          std::string    fDataRateName;
-         
-       
 
          std::string GetNetmemParName(const std::string& name);
          void CreateNetmemPar(const std::string& name);

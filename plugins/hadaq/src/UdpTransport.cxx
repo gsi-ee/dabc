@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <math.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -29,7 +30,7 @@
 #include "dabc/Manager.h"
 
 
-hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush) :
+hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug) :
    dabc::SocketAddon(fd),
    dabc::DataInput(),
    fNPort(nport),
@@ -45,7 +46,8 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fTotalRecvBytes(0),
    fTotalRecvEvents(0),
    fTotalRecvBuffers(0),
-   fTotalDroppedBuffers(0)
+   fTotalDroppedBuffers(0),
+   fDebug(debug)
 {
    fPid = syscall(SYS_gettid);
 }
@@ -93,12 +95,12 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
 {
    if (fTgtPtr.null()) {
       // if call was done from socket, just do nothing and wait buffer
-      EOUT("ReadUdp at wrong moment - no buffer to read");
+      DOUT0("UDP:%d ReadUdp at wrong moment - no buffer to read", fNPort);
       return dabc::di_Error;
    }
 
    if (fTgtPtr.rawsize() < fMTU) {
-      EOUT("Should never happen - rest size is smaller than MTU");
+      DOUT0("UDP:%d Should never happen - rest size is smaller than MTU", fNPort);
       return dabc::di_Error;
    }
 
@@ -111,7 +113,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       ssize_t res = recv(Socket(), fTgtPtr.ptr(), fMTU, 0);
 
       if (res == 0) {
-         DOUT0("Seems to be, socket was closed");
+         DOUT0("UDP:%d Seems to be, socket was closed", fNPort);
          return dabc::di_EndOfStream;
       }
 
@@ -131,15 +133,34 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       hadaq::HadTu* hadTu = (hadaq::HadTu*) fTgtPtr.ptr();
       int msgsize = hadTu->GetPaddedSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
 
+      std::string errmsg;
+
       if (res != msgsize) {
-         EOUT("Send buffer %d differ from message size %d - ignore it at port %d (0x%x)", res, msgsize,fNPort,fNPort);
-         fTotalDiscardMsg++;
-         fTotalDiscardPacket++;
-         continue;
+         errmsg = dabc::format("Send buffer %d differ from message size %d - ignore it", res, msgsize);
+      } else
+      if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
+         errmsg = "Trailing 32 bytes do not match to header - ignore packet";
       }
 
-      if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
-         EOUT("Trailing 32 bytes do not match to header - ignore packet at port %d (0x%x)",fNPort,fNPort);
+      // static int cnt = 0;
+      // if (fNPort == 10101) if (cnt++ % 789 == 0) errmsg = "just test";
+
+      if (!errmsg.empty()) {
+         DOUT0("UDP:%d %s", fNPort, errmsg.c_str());
+         if (fDebug) {
+            errmsg = dabc::format("   Packet length %d", res);
+            uint32_t* ptr = (uint32_t*) hadTu;
+            for (unsigned n=0;n<res/4;n++) {
+               if (n%8 == 0) {
+                  printf("   %s\n", errmsg.c_str());
+                  errmsg = dabc::format("0x%04x:", n*4);
+               }
+
+               errmsg.append(dabc::format(" 0x%08x", (unsigned) ptr[n]));
+            }
+            printf("   %s\n",errmsg.c_str());
+         }
+
          fTotalDiscardMsg++;
          fTotalDiscardPacket++;
          continue;

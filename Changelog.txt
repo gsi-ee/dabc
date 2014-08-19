@@ -7,6 +7,7 @@ current functionality of the framework.
    dramatically performance of navigation in the big structures. 
 2. When toggle/update tree content, change whole line again and not single images or links.
    Reduces number of required ids, remove ids for images completely.
+3. In hadaq::UdpTransport print content of problematic packet when 'debug' option is specified. 
     
 
 18.08.2014

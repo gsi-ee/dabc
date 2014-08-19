@@ -74,13 +74,15 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
       int mtu = url.GetOptionInt("mtu", 64512);
       double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
       bool observer = url.GetOptionBool("observer", false);
+      bool debug = url.HasOption("debug");
+
 
       if (nport>0) {
 
          int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
 
          if (fd>0) {
-            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush);
+            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug);
 
             return new hadaq::DataTransport(cmd, portref, addon, observer);
          }

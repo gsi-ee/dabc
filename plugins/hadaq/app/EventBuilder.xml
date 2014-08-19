@@ -85,7 +85,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input4" url="hadaq://host:10105"/>
        <InputPort name="Input5" url="hadaq://host:10106"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug"/>
 
        <ExtraDebug value="false"/>
 
