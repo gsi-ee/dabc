@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+19.08.2014
+1. Generate HTML only for visible elements in the hierarchy tree. This increase
+   dramatically performance of navigation in the big structures. 
+
+
 18.08.2014
 1. Support different ROOT versions in ROOT plugin. Due to incompatible changes in 
    TBuffer class one requires separate versions for TBUfferJSON class. 
