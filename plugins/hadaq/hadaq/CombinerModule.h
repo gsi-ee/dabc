@@ -43,6 +43,8 @@ namespace hadaq {
     * Use functionality as in daq_evtbuild here.
     */
 
+   class DataSocketAddon;
+
    class CombinerModule: public dabc::ModuleAsync {
 
       protected:
@@ -82,6 +84,9 @@ namespace hadaq {
          /** indicates if input has empty data */
          bool fEmpty;
 
+         /** Direct transport pointer, used only for debugging */
+         DataSocketAddon* fAddon;
+
          InputCfg() :
             fTrigNr(0),
             fLastTrigNr(0),
@@ -92,7 +97,8 @@ namespace hadaq {
             fQueueLevel(0),
             fLastEvtBuildTrigId(0),
             fDataError(false),
-            fEmpty(true)
+            fEmpty(true),
+            fAddon(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=0;
@@ -108,7 +114,8 @@ namespace hadaq {
             fQueueLevel(src.fQueueLevel),
             fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
             fDataError(src.fDataError),
-            fEmpty(src.fEmpty)
+            fEmpty(src.fEmpty),
+            fAddon(src.fAddon)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];
@@ -176,7 +183,7 @@ namespace hadaq {
          std::string        fInfoName;
 
          uint64_t           fTotalRecvBytes;
-         uint64_t           fTotalRecvEvents;
+         uint64_t           fTotalBuildEvents;   ///< number of build events
          uint64_t           fTotalDroppedData;
          uint64_t           fTotalDiscEvents;
          uint64_t           fTotalTagErrors;
@@ -203,6 +210,9 @@ namespace hadaq {
          /* if true, account difference of subsequent build event numbers as lost events
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
+
+         double             fTerminalMode; ///< when true, display information in style of old event builders
+         dabc::TimeStamp    fTerminalTm;   ///< time used to update terminal
 
 
          bool              fExtraDebug;   ///< when true, extra debug output is created
@@ -257,6 +267,7 @@ namespace hadaq {
              because of timeshift between getting new runid and open/close of actual files*/
          std::string GenerateFileName(unsigned runid);
 
+         void DoTerminalOutput();
          
          /* helper methods to export ebctrl parameters */
          std::string GetEvtbuildParName(const std::string& name);
@@ -281,9 +292,10 @@ namespace hadaq {
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
-	 
-	 
-	int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next); 
+
+         virtual bool ReplyCommand(dabc::Command cmd);
+
+         int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next);
 
    };
 

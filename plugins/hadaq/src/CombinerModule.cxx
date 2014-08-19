@@ -20,12 +20,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <stdio.h>
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
 #include "hadaq/Observer.h"
+#include "hadaq/UdpTransport.h"
 
 #include "mbs/MbsTypeDefs.h"
 
@@ -42,12 +44,13 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fRunToOracle(false),
    fBuildCompleteEvents(true),
    fFlushTimeout(0.),
-   fEvnumDiffStatistics(true)
+   fEvnumDiffStatistics(true),
+   fTerminalMode(-1)
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
    fTotalRecvBytes = 0;
-   fTotalRecvEvents = 0;
+   fTotalBuildEvents = 0;
    fTotalDiscEvents = 0;
    fTotalDroppedData = 0;
    fTotalTagErrors = 0;
@@ -74,6 +77,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
    fEpicsSlave =   Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
    
+   fTerminalMode = Cfg("TerminalMode", cmd).AsDouble(-1);
+
    if(fEpicsSlave) fRunNumber=0; // ignore data without valid run id at beginning!
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
@@ -232,13 +237,26 @@ void hadaq::CombinerModule::BeforeModuleStart()
    fLastProcTm.GetNow();
    fLastBuildTm.GetNow();
 
+   if (fTerminalMode>0) {
+      DOUT0("Switch to terminal mode item %s", ItemName().c_str());
+      dabc::SetDebugLevel(-1);
+      fTerminalTm.GetNow();
+
+      for (unsigned n=0;n<fCfg.size();n++) {
+         dabc::Command cmd("GetDirectPointer");
+         cmd.SetInt("id", n);
+         SubmitCommandToTransport(InputName(n), Assign(cmd));
+      }
+   }
+
+
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
 {
    std::string info = dabc::format(
       "HADAQ Combiner stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
-       (int) fTotalRecvEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
+       (int) fTotalBuildEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
@@ -351,7 +369,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          fRunNumber = fEpicsRunNumber;
 
          fTotalRecvBytes = 0;
-         fTotalRecvEvents = 0;
+         fTotalBuildEvents = 0;
          fTotalDiscEvents = 0;
          fTotalDroppedData = 0;
          fTotalTagErrors = 0;
@@ -390,7 +408,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    SetEvtbuildPar("nrOfMsgs", NumInputs());
    SetNetmemPar("nrOfMsgs", NumInputs());
    SetEvtbuildPar("evtsDiscarded", fTotalDiscEvents);
-   SetEvtbuildPar("evtsComplete", fTotalRecvEvents);
+   SetEvtbuildPar("evtsComplete", fTotalBuildEvents);
    SetEvtbuildPar("evtsDataError",fTotalDataErrors);
    SetEvtbuildPar("evtsTagError", fTotalTagErrors);
 
@@ -631,6 +649,12 @@ bool hadaq::CombinerModule::BuildEvent()
       if (tm > fMaxProcDist) fMaxProcDist = tm;
    }
 
+   if (fTerminalMode>0)
+      if (fTerminalTm.Expired(fTerminalMode)) {
+         DoTerminalOutput();
+         fTerminalTm.GetNow();
+      }
+
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
    unsigned masterchannel(0), min_inp(0);
@@ -785,7 +809,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // here all inputs should be aligned to buildevid
 
    // for sync sequence number, check first if we have error from cts:
-   uint32_t sequencenumber = fTotalRecvEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
+   uint32_t sequencenumber = fTotalBuildEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
    
    if(fUseSyncSeqNumber && hasCompleteEvent) {
       hasCompleteEvent = false;
@@ -900,7 +924,7 @@ bool hadaq::CombinerModule::BuildEvent()
       // EVENT BUILDING IS HERE
 
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
-      fTotalRecvEvents++;
+      fTotalBuildEvents++;
 
       fOut.evnt()->SetDataError((dataError || tagError));
       if (dataError)
@@ -1120,10 +1144,10 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
    fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
         std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
-        fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents));
+        fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents));
         fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
         fclose(fp);
-   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalRecvEvents),Unit(fTotalRecvBytes));
+   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents),Unit(fTotalRecvBytes));
 }
 
 
@@ -1150,4 +1174,50 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 
 
 
+void hadaq::CombinerModule::DoTerminalOutput()
+{
+   for (unsigned n=0;n<fCfg.size()+2;n++)
+      fputs("\033[A\033[2K",stdout);
+   rewind(stdout);
+   ftruncate(1,0); /* you probably want this as well */
 
+   fprintf(stdout, "Events: %5lu   Rate: %5.1f  Data: %5lu  Rate:%5.3f\n",
+         (long unsigned) fTotalBuildEvents, Par(fEventRateName).Value().AsDouble(),
+         (long unsigned) fTotalRecvBytes, Par(fDataRateName).Value().AsDouble());
+   fprintf(stdout, "Lost:   %5lu   Rate: %5.1f  Data: %5lu  Rate:%5.3f\n",
+         (long unsigned) fTotalDiscEvents, Par(fLostEventRateName).Value().AsDouble(),
+         (long unsigned) fTotalDroppedData, Par(fDataDroppedRateName).Value().AsDouble());
+
+   for (unsigned n=0;n<fCfg.size();n++) {
+      fprintf(stdout,"inp:%2u", n);
+      if (fCfg[n].fAddon==0) { fprintf(stdout,"  addon:null\n"); continue; }
+
+      fprintf(stdout, "  port:%5d pkt:%6lu data:%10lu disc:%4lu, queue:%2u\n",
+            fCfg[n].fAddon->fNPort,
+            (long unsigned) fCfg[n].fAddon->fTotalRecvPacket,
+            (long unsigned) fCfg[n].fAddon->fTotalRecvBytes,
+            (long unsigned) fCfg[n].fAddon->fTotalDiscardMsg,
+            NumCanRecv(n));
+   }
+
+
+   //fputs("output3\n",stdout);
+   //fputs("output4\n",stdout);
+
+}
+
+
+bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("GetDirectPointer")) {
+
+      unsigned id = cmd.GetUInt("id");
+
+      if (id < fCfg.size())
+         fCfg[id].fAddon = (hadaq::DataSocketAddon*) cmd.GetPtr("Addon");
+
+      return true;
+   }
+
+   return dabc::ModuleAsync::ReplyCommand(cmd);
+}

@@ -42,6 +42,7 @@
 namespace hadaq {
 
    class DataTransport;
+   class CombinerModule;
 
    /** \brief %Addon for socket thread to handle UDP data stream from TRB */
 
@@ -49,6 +50,7 @@ namespace hadaq {
                            public dabc::DataInput {
       protected:
 
+         friend class CombinerModule;  // use only to access statistic, nothing else
          friend class DataTransport;
 
          int                fNPort;           ///< upd port number
@@ -104,6 +106,7 @@ namespace hadaq {
     */
 
    class DataTransport : public dabc::InputTransport {
+
       protected:
 
          int            fIdNumber;

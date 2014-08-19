@@ -414,6 +414,11 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
       if (addon!=0) addon->ClearCounters();
       UpdateExportedCounters();
       return dabc::cmd_true;
+   } else
+   if (cmd.IsName("GetDirectPointer")) {
+
+      cmd.SetPtr("Addon", fAddon());
+      return dabc::cmd_true;
    }
 
    return dabc::InputTransport::ExecuteCommand(cmd);

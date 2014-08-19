@@ -21,7 +21,6 @@
 #include <string.h>
 #include <sched.h>
 
-
 /*
 //Description of the Event Structure
 //

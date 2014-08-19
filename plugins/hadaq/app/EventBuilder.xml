@@ -89,6 +89,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <ExtraDebug value="false"/>
 
+       <!--  Specify update interval to see output more like to old event builder -->
+       <TerminalMode value="-1"/>
+
        <!--  this is example of HLD file storage - local and RFIO -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
