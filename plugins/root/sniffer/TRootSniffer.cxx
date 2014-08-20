@@ -97,36 +97,33 @@ void TRootSnifferScanRec::BeforeNextChild()
 }
 
 //______________________________________________________________________________
-void TRootSnifferScanRec::MakeItemName(const char *objname, TString &_itemname, Bool_t cut_slashes)
+void TRootSnifferScanRec::MakeItemName(const char *objname, TString& itemname)
 {
    // constructs item name from object name
    // if special symbols like '/', '#', ':', '&', '?'  are used in object name
    // they will be replaced with '_'.
    // To avoid item name duplication, additional id number can be appended
-   // If specified, object name until slash will be removed at all
 
    std::string nnn = objname;
 
-   size_t pos = nnn.find_last_of("/");
-   if (cut_slashes && (pos != std::string::npos)) nnn = nnn.substr(pos + 1);
-   if (nnn.empty()) nnn = "item";
+   size_t pos;
 
-   // replace all special symbols which can make problem in http (not in xml)
-   while ((pos = nnn.find_first_of("#:&?/\'")) != std::string::npos)
+   // replace all special symbols which can make problem to navigate in hierarchy
+   while ((pos = nnn.find_first_of("- []<>#:&?/\'\"\\")) != std::string::npos)
       nnn.replace(pos, 1, "_");
 
-   _itemname = nnn.c_str();
+   itemname = nnn.c_str();
    Int_t cnt = 0;
 
-   while (fItemsNames.FindObject(_itemname.Data())) {
-      _itemname.Form("%s_%d", nnn.c_str(), cnt++);
+   while (fItemsNames.FindObject(itemname.Data())) {
+      itemname.Form("%s_%d", nnn.c_str(), cnt++);
    }
 
-   fItemsNames.Add(new TObjString(_itemname.Data()));
+   fItemsNames.Add(new TObjString(itemname.Data()));
 }
 
 //______________________________________________________________________________
-void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_name)
+void TRootSnifferScanRec::CreateNode(const char *_node_name)
 {
    // creates new node with specified name
    // if special symbols like "[]&<>" are used, node name
@@ -137,23 +134,10 @@ void TRootSnifferScanRec::CreateNode(const char *_node_name, const char *_obj_na
    if (!CanSetFields()) return;
 
    started_node = _node_name;
-   TString real_item_name;
-
-   // this is for XML
-   if (store->IsXml() && (started_node.First("[]&<>-\"\' ") != kNPOS)) {
-      real_item_name = started_node;
-      MakeItemName("extra_item", started_node); // we generate abstract item just to be safe with syntax
-   }
 
    if (parent) parent->BeforeNextChild();
 
    if (store) store->CreateNode(lvl, started_node.Data());
-
-   if (real_item_name.Length() > 0)
-      SetField("_original_name", real_item_name.Data());
-
-   if (_obj_name && (started_node != _obj_name))
-      SetField(item_prop_realname, _obj_name);
 }
 
 //______________________________________________________________________________
@@ -300,7 +284,19 @@ Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec &super, TObject *obj,
 
    TString obj_item_name;
 
-   super.MakeItemName(obj_name, obj_item_name, obj && obj->InheritsFrom(TDirectoryFile::Class()));
+   const char* full_name = 0;
+
+   // remove slashes from file names
+   if (obj && obj->InheritsFrom(TDirectoryFile::Class())) {
+      const char* slash = strrchr(obj_name, '/');
+      if (slash!=0) {
+         full_name = obj_name;
+         obj_name = slash+1;
+         if (*obj_name == 0) obj_name = "file";
+      }
+   }
+
+   super.MakeItemName(obj_name, obj_item_name);
 
    lvl = super.lvl;
    store = super.store;
@@ -334,7 +330,13 @@ Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec &super, TObject *obj,
       }
    }
 
-   CreateNode(obj_item_name.Data(), obj ? obj->GetName() : 0);
+   CreateNode(obj_item_name.Data());
+
+   if ((obj_name!=0) && (obj_item_name != obj_name))
+      SetField(item_prop_realname, obj_name);
+
+   if (full_name != 0)
+      SetField("_fullname", full_name);
 
    return kTRUE;
 }
