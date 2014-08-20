@@ -70,12 +70,12 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    fTotalDiscEvents = comb->fTotalDiscEvents;
    fTotalDroppedData = comb->fTotalDroppedData;
 
-   fprintf(stdout, "Events: %5lu   Rate: %5.1f ev/s  Data: %5lu  Rate:%6.3f MB/s\n",
+   fprintf(stdout, "Events: %5lu   Rate: %5.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalBuildEvents, rate1,
-         (long unsigned) fTotalRecvBytes, rate2/1024./1024.);
-   fprintf(stdout, "Lost:   %5lu   Rate: %5.1f ev/s  Data: %5lu  Rate:%6.3f MB/s\n",
+         dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
+   fprintf(stdout, "Lost:   %5lu   Rate: %5.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalDiscEvents, rate3,
-         (long unsigned) fTotalDroppedData, rate4/1024./1024.);
+         dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
       fprintf(stdout,"inp:%2u", n);
@@ -83,12 +83,12 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       if (addon==0) { fprintf(stdout,"  addon:null\n"); continue; }
 
-      fprintf(stdout, "  port:%5d pkt:%6lu data:%10lu disc:%4lu data:%10lu err32:%4lu  buf:%5lu queue:%2d\n",
+      fprintf(stdout, "  port:%5d pkt:%6lu data:%9s disc:%4lu data:%9s err32:%4lu  buf:%5lu queue:%2d\n",
             addon->fNPort,
             (long unsigned) addon->fTotalRecvPacket,
-            (long unsigned) addon->fTotalRecvBytes,
+            dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
             (long unsigned) addon->fTotalDiscardPacket,
-            (long unsigned) addon->fTotalDiscardBytes,
+            dabc::size_to_str(addon->fTotalDiscardBytes).c_str(),
             (long unsigned) addon->fTotalDiscard32Packet,
             (long unsigned) addon->fTotalProducedBuffers,
             comb->fCfg[n].fNumCanRecv);
