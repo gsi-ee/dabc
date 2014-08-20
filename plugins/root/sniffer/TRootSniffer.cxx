@@ -35,6 +35,7 @@
 
 const char *item_prop_kind = "_kind";
 const char *item_prop_more = "_more";
+const char *item_prop_title = "_title";
 const char *item_prop_realname = "_realname"; // real object name
 
 //extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
@@ -476,6 +477,10 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
 
    if (rec.SetResult(obj, obj->IsA())) return;
 
+   const char* title = obj->GetTitle();
+   if ((title!=0) && (*title!=0))
+      rec.SetField(item_prop_title, title);
+
    int isextra = rec.ExtraFolderLevel();
 
    if ((isextra == 1) || ((isextra > 1) && !IsDrawableClass(obj->IsA()))) {
@@ -591,8 +596,10 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
 
    {
       TRootSnifferScanRec chld;
-      if (chld.GoInside(rec, 0, "StreamerInfo"))
+      if (chld.GoInside(rec, 0, "StreamerInfo")) {
          chld.SetField(item_prop_kind, "ROOT.TStreamerInfoList");
+         chld.SetField(item_prop_title, "List of streamer infos for binary I/O");
+      }
    }
 
    TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject(TString::Format("//root/%s", fObjectsPath.Data())));
