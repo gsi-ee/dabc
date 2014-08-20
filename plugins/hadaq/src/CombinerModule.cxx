@@ -937,13 +937,13 @@ bool hadaq::CombinerModule::BuildEvent()
       fLastTrigNr = buildevid;
 
       Par(fEventRateName).SetValue(1);
-      if (fEvnumDiffStatistics && diff>1) {
+      if (fEvnumDiffStatistics && (diff>1)) {
          if (fExtraDebug && fLastDebugTm.Expired(1.)) {
-            DOUT1("Events gap %d (0x%x)", diff,diff);
+            DOUT1("Events gap %d", diff-1);
             fLastDebugTm.GetNow();
          }
-         Par(fLostEventRateName).SetValue(diff);
-         fTotalDiscEvents+=diff;
+         Par(fLostEventRateName).SetValue(diff-1);
+         fTotalDiscEvents+=(diff-1);
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
