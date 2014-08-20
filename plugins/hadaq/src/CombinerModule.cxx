@@ -44,8 +44,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fRunToOracle(false),
    fBuildCompleteEvents(true),
    fFlushTimeout(0.),
-   fEvnumDiffStatistics(true),
-   fTerminalMode(-1)
+   fEvnumDiffStatistics(true)
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
@@ -77,8 +76,6 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
    fEpicsSlave =   Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
    
-   fTerminalMode = Cfg("TerminalMode", cmd).AsDouble(-1);
-
    if(fEpicsSlave) fRunNumber=0; // ignore data without valid run id at beginning!
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
@@ -237,19 +234,12 @@ void hadaq::CombinerModule::BeforeModuleStart()
    fLastProcTm.GetNow();
    fLastBuildTm.GetNow();
 
-   if (fTerminalMode>0) {
-      DOUT0("Switch to terminal mode item %s", ItemName().c_str());
-      dabc::SetDebugLevel(-1);
-      fTerminalTm.GetNow();
-
-      for (unsigned n=0;n<fCfg.size();n++) {
-         dabc::Command cmd("GetDirectPointer");
-         cmd.SetInt("id", n);
-         SubmitCommandToTransport(InputName(n), Assign(cmd));
-      }
+   // direct addon pointers can be used for terminal printout
+   for (unsigned n=0;n<fCfg.size();n++) {
+      dabc::Command cmd("GetDirectPointer");
+      cmd.SetInt("id", n);
+      SubmitCommandToTransport(InputName(n), Assign(cmd));
    }
-
-
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -648,12 +638,6 @@ bool hadaq::CombinerModule::BuildEvent()
       double tm = fLastProcTm.SpentTillNow(true);
       if (tm > fMaxProcDist) fMaxProcDist = tm;
    }
-
-   if (fTerminalMode>0)
-      if (fTerminalTm.Expired(fTerminalMode)) {
-         DoTerminalOutput();
-         fTerminalTm.GetNow();
-      }
 
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
@@ -1173,40 +1157,6 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 }
 
 
-
-void hadaq::CombinerModule::DoTerminalOutput()
-{
-   for (unsigned n=0;n<fCfg.size()+2;n++)
-      fputs("\033[A\033[2K",stdout);
-   rewind(stdout);
-   ftruncate(1,0); /* you probably want this as well */
-
-   fprintf(stdout, "Events: %5lu   Rate: %5.1f  Data: %5lu  Rate:%5.3f\n",
-         (long unsigned) fTotalBuildEvents, Par(fEventRateName).Value().AsDouble(),
-         (long unsigned) fTotalRecvBytes, Par(fDataRateName).Value().AsDouble());
-   fprintf(stdout, "Lost:   %5lu   Rate: %5.1f  Data: %5lu  Rate:%5.3f\n",
-         (long unsigned) fTotalDiscEvents, Par(fLostEventRateName).Value().AsDouble(),
-         (long unsigned) fTotalDroppedData, Par(fDataDroppedRateName).Value().AsDouble());
-
-   for (unsigned n=0;n<fCfg.size();n++) {
-      fprintf(stdout,"inp:%2u", n);
-      if (fCfg[n].fAddon==0) { fprintf(stdout,"  addon:null\n"); continue; }
-
-      fprintf(stdout, "  port:%5d pkt:%6lu data:%10lu disc:%4lu, queue:%2u\n",
-            fCfg[n].fAddon->fNPort,
-            (long unsigned) fCfg[n].fAddon->fTotalRecvPacket,
-            (long unsigned) fCfg[n].fAddon->fTotalRecvBytes,
-            (long unsigned) fCfg[n].fAddon->fTotalDiscardMsg,
-            NumCanRecv(n));
-   }
-
-
-   //fputs("output3\n",stdout);
-   //fputs("output4\n",stdout);
-
-}
-
-
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetDirectPointer")) {
@@ -1214,7 +1164,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       unsigned id = cmd.GetUInt("id");
 
       if (id < fCfg.size())
-         fCfg[id].fAddon = (hadaq::DataSocketAddon*) cmd.GetPtr("Addon");
+         fCfg[id].fAddon = cmd.GetPtr("Addon");
 
       return true;
    }

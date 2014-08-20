@@ -31,6 +31,7 @@
 #include "hadaq/UdpTransport.h"
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
+#include "hadaq/TerminalModule.h"
 #include "hadaq/Observer.h"
 #include "hadaq/api.h"
 
@@ -103,6 +104,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::ReadoutModule")
       return new hadaq::ReadoutModule(modulename, cmd);
+
+   if (classname == "hadaq::TerminalModule")
+      return new hadaq::TerminalModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

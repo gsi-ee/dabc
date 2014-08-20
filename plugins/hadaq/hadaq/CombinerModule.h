@@ -43,9 +43,11 @@ namespace hadaq {
     * Use functionality as in daq_evtbuild here.
     */
 
-   class DataSocketAddon;
+   class TerminalModule;
 
    class CombinerModule: public dabc::ModuleAsync {
+
+      friend class TerminalModule;
 
       protected:
 
@@ -85,7 +87,7 @@ namespace hadaq {
          bool fEmpty;
 
          /** Direct transport pointer, used only for debugging */
-         DataSocketAddon* fAddon;
+         void* fAddon;
 
          InputCfg() :
             fTrigNr(0),
@@ -210,10 +212,6 @@ namespace hadaq {
          /* if true, account difference of subsequent build event numbers as lost events
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
-
-         double             fTerminalMode; ///< when true, display information in style of old event builders
-         dabc::TimeStamp    fTerminalTm;   ///< time used to update terminal
-
 
          bool              fExtraDebug;   ///< when true, extra debug output is created
          dabc::TimeStamp   fLastDebugTm;  ///< timer used to generate rare debugs output
