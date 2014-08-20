@@ -464,13 +464,6 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
 
    if (obj == 0) return;
 
-   //if (rec.mask & mask_Expand)
-   //   printf("EXPAND OBJECT %s can expand %s mask %u\n", obj->GetName(),
-   //          DBOOL(rec.CanExpandItem()), rec.mask);
-
-   // mark object as expandable for direct child of extra folder
-   // or when non drawable object is scanned
-
    if (!fReadOnly && obj->InheritsFrom(TKey::Class()) && rec.IsReadyForResult()) {
       TObject* keyobj = ((TKey*) obj)->ReadObj();
       if (keyobj!=0)
@@ -569,12 +562,20 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
 
       if (keys_lst!=0) {
          TIter iter(keys_lst);
-         TObject *obj(0);
+         TObject *kobj(0);
 
-         while ((obj = iter()) != 0) {
-            if ((lst!=0) && lst->FindObject(obj->GetName())) continue;
+         while ((kobj = iter()) != 0) {
+            TKey* key = dynamic_cast<TKey*> (kobj);
+            if (key == 0) continue;
+            TObject* obj = (lst == 0) ? 0 : lst->FindObject(key->GetName());
+            if ((obj!=0) && (master.mask & mask_Scan)) continue;
+
+            if (obj==0) obj = key; // if object exists, provide it to for scan instead of  key
+
             TRootSnifferScanRec chld;
-            if (chld.GoInside(master, obj)) {
+            TString fullname = TString::Format("%s;%d", key->GetName(), key->GetCycle());
+
+            if (chld.GoInside(master, obj, fullname.Data())) {
                ScanObject(chld, obj);
                if (chld.Done()) break;
             }

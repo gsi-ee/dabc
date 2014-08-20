@@ -8,6 +8,8 @@ current functionality of the framework.
 3. Deliver to the server title of the objects, display it as hint in the browser.
 4. Better handling of special characters in the hierarchies - allows to display
    symbols like ' or " in the file structure. 
+5. Provide key cycle number when scanning TDirectory, 
+   makes look and feel as existing ROOT browser. 
 
 
 19.08.2014
