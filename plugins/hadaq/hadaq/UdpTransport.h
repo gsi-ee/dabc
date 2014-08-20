@@ -62,12 +62,10 @@ namespace hadaq {
 
          uint64_t           fTotalRecvPacket;
          uint64_t           fTotalDiscardPacket;
-         uint64_t           fTotalRecvMsg;
-         uint64_t           fTotalDiscardMsg;
+         uint64_t           fTotalDiscard32Packet;
          uint64_t           fTotalRecvBytes;
-         uint64_t           fTotalRecvEvents;
-         uint64_t           fTotalRecvBuffers;
-         uint64_t           fTotalDroppedBuffers;
+         uint64_t           fTotalDiscardBytes;
+         uint64_t           fTotalProducedBuffers;
 
          pid_t fPid;                        // process id
          bool   fDebug;                     ///< when true, produce more debug output

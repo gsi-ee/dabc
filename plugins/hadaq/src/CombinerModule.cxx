@@ -1005,7 +1005,8 @@ void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
    unsigned capacity = PortQueueCapacity(InputName(ninp));
 
    float ratio=0;
-   if(capacity>0) ratio = 1. * NumCanRecv(ninp) / capacity;
+   fCfg[ninp].fNumCanRecv = NumCanRecv(ninp);
+   if(capacity>0) ratio = 1. * fCfg[ninp].fNumCanRecv / capacity;
    fCfg[ninp].fQueueLevel = ratio;
    fCfg[ninp].fLastEvtBuildTrigId = (fCfg[ninp].fTrigNr << 8) |  (fCfg[ninp].fTrigTag & 0xff);
 }

@@ -89,6 +89,9 @@ namespace hadaq {
          /** Direct transport pointer, used only for debugging */
          void* fAddon;
 
+         /** Number buffers can be received */
+         int fNumCanRecv;
+
          InputCfg() :
             fTrigNr(0),
             fLastTrigNr(0),
@@ -100,7 +103,8 @@ namespace hadaq {
             fLastEvtBuildTrigId(0),
             fDataError(false),
             fEmpty(true),
-            fAddon(0)
+            fAddon(0),
+            fNumCanRecv(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=0;
@@ -117,7 +121,8 @@ namespace hadaq {
             fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
             fDataError(src.fDataError),
             fEmpty(src.fEmpty),
-            fAddon(src.fAddon)
+            fAddon(src.fAddon),
+            fNumCanRecv(src.fNumCanRecv)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];

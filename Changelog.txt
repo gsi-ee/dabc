@@ -4,6 +4,7 @@ current functionality of the framework.
 
 20.08.2014
 1. Move HADAQ terminal output into separate module.
+2. Provide more statistic in the TerminalModule 
 
 
 19.08.2014

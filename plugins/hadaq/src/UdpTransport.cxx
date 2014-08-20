@@ -41,12 +41,10 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fSendCnt(0),
    fTotalRecvPacket(0),
    fTotalDiscardPacket(0),
-   fTotalRecvMsg(0),
-   fTotalDiscardMsg(0),
+   fTotalDiscard32Packet(0),
    fTotalRecvBytes(0),
-   fTotalRecvEvents(0),
-   fTotalRecvBuffers(0),
-   fTotalDroppedBuffers(0),
+   fTotalDiscardBytes(0),
+   fTotalProducedBuffers(0),
    fDebug(debug)
 {
    fPid = syscall(SYS_gettid);
@@ -139,6 +137,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
          errmsg = dabc::format("Send buffer %d differ from message size %d - ignore it", res, msgsize);
       } else
       if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
+         fTotalDiscard32Packet++;
          errmsg = "Trailing 32 bytes do not match to header - ignore packet";
       }
 
@@ -161,22 +160,15 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
             printf("   %s\n",errmsg.c_str());
          }
 
-         fTotalDiscardMsg++;
          fTotalDiscardPacket++;
+         fTotalDiscardBytes+=res;
          continue;
       }
 
-      fTotalRecvMsg++;
       fTotalRecvPacket++;
       fTotalRecvBytes += res;
 
       fTgtPtr.shift(hadTu->GetPaddedSize());
-
-      // DOUT0("UDP %d get data %d", fNPort, res);
-//       if(fTotalRecvMsg % 10000)
-//         {
-//           fPid= syscall(SYS_gettid); // we want the real active threadid
-//         }
 
       // when rest size is smaller that mtu, one should close buffer
       if (fTgtPtr.rawsize() < fMTU)
@@ -244,7 +236,7 @@ unsigned hadaq::DataSocketAddon::Read_Complete(dabc::Buffer& buf)
    buf.SetTotalSize(fill_sz);
 
    fSendCnt++;
-   fTotalRecvBuffers++;
+   fTotalProducedBuffers++;
 
    DOUT3("hadaq::DataSocketAddon::Read_Complete buf %u", buf.GetTotalSize());
 
@@ -256,12 +248,10 @@ void hadaq::DataSocketAddon::ClearCounters()
 {
    fTotalRecvPacket = 0;
    fTotalDiscardPacket = 0;
-   fTotalRecvMsg = 0;
-   fTotalDiscardMsg = 0;
+   fTotalDiscard32Packet = 0;
    fTotalRecvBytes = 0;
-   fTotalRecvEvents = 0;
-   fTotalRecvBuffers = 0;
-   fTotalDroppedBuffers = 0;
+   fTotalDiscardBytes = 0;
+   fTotalProducedBuffers = 0;
 }
 
 int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
@@ -387,8 +377,8 @@ bool hadaq::DataTransport::UpdateExportedCounters()
 
    SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), addon->fTotalRecvPacket);
    SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
-   SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), addon->fTotalRecvMsg);
-   SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), addon->fTotalDiscardMsg);
+   SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), addon->fTotalRecvPacket);
+   SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
    SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), addon->fTotalRecvBytes);
    unsigned capacity = PortQueueCapacity(OutputName());
    float ratio = 100.;

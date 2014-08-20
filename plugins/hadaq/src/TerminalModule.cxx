@@ -83,11 +83,14 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       if (addon==0) { fprintf(stdout,"  addon:null\n"); continue; }
 
-      fprintf(stdout, "  port:%5d pkt:%6lu data:%10lu disc:%4lu, queue:%2u\n",
+      fprintf(stdout, "  port:%5d pkt:%6lu data:%10lu disc:%4lu data:%10lu err32:%4lu  buf:%5lu queue:%2d\n",
             addon->fNPort,
             (long unsigned) addon->fTotalRecvPacket,
             (long unsigned) addon->fTotalRecvBytes,
-            (long unsigned) addon->fTotalDiscardMsg,
-            comb->NumCanRecv(n));
+            (long unsigned) addon->fTotalDiscardPacket,
+            (long unsigned) addon->fTotalDiscardBytes,
+            (long unsigned) addon->fTotalDiscard32Packet,
+            (long unsigned) addon->fTotalProducedBuffers,
+            comb->fCfg[n].fNumCanRecv);
    }
 }
