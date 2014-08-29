@@ -145,6 +145,13 @@ sub init_CPU_status()
 
     #cores 0/1 reserved for system 02-05
     #cores 2/3 reserved for interrupts on 02-05
+
+ # JAM added for kp1pc092
+    foreach my $core (0..1){
+            $EB_CPU_status_href->{'140.181.116.58'}->{$core} = "free"; 
+        }
+    
+
     
     foreach my $core (0..7){
         if($core == 1){
@@ -308,8 +315,10 @@ sub getEBArgs()
 
     #- Logging the output of EBs
     my $eb_log     = $temp_args_href->{'Parallel'}->{'EB_LOG'};
+    my $eb_debug     = $temp_args_href->{'Parallel'}->{'EB_DEBUG'};
     my $nm_log     = $temp_args_href->{'Parallel'}->{'NM_LOG'};
     my @eblog_list =  split(/\s+/, $eb_log);
+    my @ebdbg_list =  split(/\s+/, $eb_debug);
     my @nmlog_list =  split(/\s+/, $nm_log);
 
     #- Write to disk
@@ -411,6 +420,8 @@ sub getEBArgs()
 
 	$href->{$ebproc}->{'DABC'}       = $dabc_list[$ebproc];  # 0|1
 
+
+        $href->{$ebproc}->{'EB_DEBUG'}       = $ebdbg_list[$ebproc];  # 0|1
 
         $href->{$ebproc}->{'EB_LOG'}       = $eblog_list[$ebproc];  # 0|1
         $href->{$ebproc}->{'NM_LOG'}       = $nmlog_list[$ebproc];  # 0|1
@@ -590,7 +601,7 @@ else
  print "Starting evtbuild/netmem processes..\n";
 
         #--- Prepare execution of daq_evtbuild
-        my $cmd_eb = "/home/hadaq/bin/daq_evtbuild" .
+        my $cmd_eb = "/home/joern/hadesgit/daqdata/bin/daq_evtbuild" .
             " -m "          . $EB_Args_href->{$ebproc}->{'SOURCENUM'} . 
             " -q "          . $EB_Args_href->{$ebproc}->{'QUEUESIZE'} . 
             " -S "          . $EB_Args_href->{$ebproc}->{'EBNUM'} .
@@ -655,6 +666,9 @@ else
         #- add epics controlled
         $cmd_eb = $cmd_eb . " --epicsctrl " if( $EB_Args_href->{$ebproc}->{'EPICS_CTRL'} );
 
+        # switch on debug output
+        $cmd_eb = $cmd_eb . " --debug trignr --debug errbit --debug word " if( $EB_Args_href->{$ebproc}->{'EB_DEBUG'} );
+
         #- logging the output
         my $eblog_file = "/tmp/log_eb_" . $EB_Args_href->{$ebproc}->{'EBNUM'} . ".txt";
         my $eb_log = "1>$eblog_file 2>$eblog_file";
@@ -663,14 +677,15 @@ else
         my $time = 1. * $ebproc;
         my $sleep_cmd = "sleep " . $time;
 
-        my $core_nr = &getCoreNr($cpu);
+#       my $core_nr = &getCoreNr($cpu);
+# JAM use fixed core number for kp1pc092 tests:
+   my $core_nr = 1;
+       my $exe_eb = "ssh -n $cpu -l $username \"cd /home/joern/hadesgit/daqdata/oper; export DAQ_SETUP=/home/joern/hadesgit/daqdata/oper/eb; taskset -c $core_nr  $cmd_eb $eb_log &\"";
 
-        my $exe_eb = "ssh -n $cpu -l $username \"cd /home/hadaq/oper; export DAQ_SETUP=/home/hadaq/oper/eb; taskset -c $core_nr  $cmd_eb $eb_log &\"";
-
-        #print "exec: $exe_eb\n";
+        print "exec: $exe_eb\n";
 
         #--- Prepare execution of daq_netmem
-        my $cmd_nm = "/home/hadaq/bin/daq_netmem" .
+        my $cmd_nm = "/home/joern/hadesgit/daqdata/bin/daq_netmem" .
             " -m " . $EB_Args_href->{$ebproc}->{'SOURCENUM'} . 
             " -q " . $EB_Args_href->{$ebproc}->{'QUEUESIZE'} . 
             " -S " . $EB_Args_href->{$ebproc}->{'EBNUM'};
@@ -695,11 +710,12 @@ else
         my $nm_log = "1>$nmlog_file 2>$nmlog_file";
         $nm_log = "1>/dev/null 2>/dev/null" unless( $EB_Args_href->{$ebproc}->{'NM_LOG'} );
 
-        $core_nr = &getCoreNr($cpu);
+        # $core_nr = &getCoreNr($cpu);
+# JAM use fixed core number for kp1pc092 tests:
+        $core_nr = 1;
+        my $exe_nm = "ssh -n $cpu -l $username \"cd /home/joern/hadesgit/daqdata/oper; export DAQ_SETUP=/home/joern/hadesgit/daqdata/oper/eb; taskset -c $core_nr $cmd_nm $nm_log &\"";
 
-        my $exe_nm = "ssh -n $cpu -l $username \"cd /home/hadaq/oper; export DAQ_SETUP=/home/hadaq/oper/eb; taskset -c $core_nr $cmd_nm $nm_log &\"";
-
-        #print "exec: $exe_nm\n";
+        print "exec: $exe_nm\n";
 
         #--- Open permissions for shared memory
         my $eb_shmem = "daq_evtbuild" . $EB_Args_href->{$ebproc}->{'EBNUM'} . ".shm";

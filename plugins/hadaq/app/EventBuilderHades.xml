@@ -155,7 +155,8 @@ DAQDISK - switches disk demon mode on/off
           <!--TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
        <AccountLostEventDiff value="false"/>
           <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
-          
+        
+       <BuildDropTimeout value="30.0"/>    
           
        <Runinfo2ora value="true"/>  
        <FilePrefix value="${PREFIX}"/> 

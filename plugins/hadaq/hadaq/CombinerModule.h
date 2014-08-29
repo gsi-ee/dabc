@@ -150,10 +150,14 @@ namespace hadaq {
          /* master stream for event building*/
          //unsigned fMasterChannel;
 
-         /* maximum allowed difference of trigger numbers (subevent sequence number)*/
+         /** maximum allowed difference of trigger numbers (subevent sequence number)*/
          int fTriggerNrTolerance;
+         
+         /** timeout in seconds since last complete event when previous buffers
+          * are dropped*/
+         double fEventBuildTimeout;
 
-         uint32_t fLastTrigNr;  // last number of build event
+         uint32_t fLastTrigNr;  ///<  last number of build event
 
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;
@@ -161,23 +165,23 @@ namespace hadaq {
 
          int fFlushCounter;
 
-         int32_t fEBId; // eventbuilder id <- node id
+         int32_t fEBId; ///<  eventbuilder id <- node id
          
-         pid_t fPID; // process id of combiner module
+         pid_t fPID; ///<  process id of combiner module
 
          bool fWithObserver;
          bool fEpicsSlave;
 
          bool fRunToOracle;
 
-         bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
-         bool fPrintSync; // if true, print syncs with DOUT1
-         uint32_t fSyncSubeventId; // id number of sync subevent
-         uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
+         bool fUseSyncSeqNumber; ///< if true, use vulom/roc syncnumber for event sequence number
+         bool fPrintSync; ///<  if true, print syncs with DOUT1
+         uint32_t fSyncSubeventId; ///<  id number of sync subevent
+         uint32_t fSyncTriggerMask; ///<  bit mask for accepted trigger inputs in sync mode
 
-         int  fNumReadBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
+         int  fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
 
-         /* switch between partial combining of smallest event ids (false)
+         /** switch between partial combining of smallest event ids (false)
           * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
          
@@ -204,17 +208,17 @@ namespace hadaq {
          std::string fRunInfoToOraFilename;
          std::string fPrefix;
 
-         /* run id from timeofday for eventbuilding*/
+         /** run id from timeofday for eventbuilding*/
          uint32_t           fRunNumber;
 
-         /* most recent run id from epics, for multi eventbuilder mode*/
+         /** most recent run id from epics, for multi eventbuilder mode*/
          uint32_t           fEpicsRunNumber;
 
-         /* Defines trigger sequence number range for overflow*/
+         /** Defines trigger sequence number range for overflow*/
          uint32_t           fMaxHadaqTrigger;
          uint32_t           fTriggerRangeMask;
 
-         /* if true, account difference of subsequent build event numbers as lost events
+         /** if true, account difference of subsequent build event numbers as lost events
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
 
@@ -224,7 +228,8 @@ namespace hadaq {
          dabc::TimeStamp   fLastProcTm;   ///< last time when event building was called
          dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
          double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
-
+  
+         
          bool BuildEvent();
 
          bool FlushOutputBuffer();

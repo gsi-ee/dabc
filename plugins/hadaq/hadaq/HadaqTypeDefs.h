@@ -42,6 +42,7 @@ namespace hadaq {
    extern const char* xmlSyncAcceptedTriggerMask;
    extern const char* xmlHadaqTrignumRange;
    extern const char* xmlHadaqDiffEventStats;
+   extern const char* xmlEvtbuildTimeout;
 
    extern const char* NetmemPrefix;
    extern const char* EvtbuildPrefix;

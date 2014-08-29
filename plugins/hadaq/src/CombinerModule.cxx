@@ -84,7 +84,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fEvnumDiffStatistics = Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
 
    fTriggerNrTolerance = fMaxHadaqTrigger / 4;
-      
+   fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
    fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);        //0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
@@ -688,22 +688,22 @@ bool hadaq::CombinerModule::BuildEvent()
 
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels, flush input buffers
-
    if (fLastDropTm.Expired(5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || (fLastBuildTm.Expired(10.) && any_data)) {
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || (fLastBuildTm.Expired(fEventBuildTimeout) && any_data)) {
 
         std::string msg;
-
-        if (missing_inp >= 0) {
-           msg += dabc::format("Missing data on input %d url: %s, drop all!", missing_inp, FindPort(InputName(missing_inp)).Cfg("url").AsStr().c_str());
-        } else
         if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
           msg = dabc::format(
-              "Event id difference %d exceeding tolerance window %d (min input %u), drop all!",
+              "Event id difference %d exceeding tolerance window %d (min input %u),",
               diff, fTriggerNrTolerance, min_inp);
         } else {
-           msg = "No events were build since at least 10 s, drop all!";
+           msg = dabc::format("No events were build since at least %.1f seconds,", fEventBuildTimeout);
         }
+        
+        if (missing_inp >= 0) {
+           msg += dabc::format(" missing data on input %d url: %s,", missing_inp, FindPort(InputName(missing_inp)).Cfg("url").AsStr().c_str());
+        } 
+        msg += " drop all!";
 
         SetInfo(msg, true);
         DOUT0(msg.c_str());
