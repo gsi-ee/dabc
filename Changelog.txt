@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+10.09.2014
+1. In JS axis painter use actual number of ticks when drawing sub-ticks.  
+
+
+29.08.2014
+1. In hadaq::CombinerModule make configurable time, when module allowed to 
+   drop all buffers. Required during HADES beamtime while pause between spills were
+   longer than default 10 s. 
+   
+
 20.08.2014
 1. Move HADAQ terminal output into separate module.
 2. Provide more statistic in the TerminalModule 
