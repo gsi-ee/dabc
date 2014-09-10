@@ -353,7 +353,9 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
       fEpicsRunNumber = GetEvtbuildParValue("runId");
       //std::cout <<"!!!!!! UpdateExportedCounters() got epics run id:"<< fEpicsRunNumber<< std::endl;
 
-      if(fEpicsRunNumber!=fRunNumber) {
+      if((fEpicsRunNumber!=0) && (fEpicsRunNumber!=fRunNumber)) {
+        // run number 0 can occur when master eventbuilder terminates
+        // ignore this case, since it may store wrong run info stop time
          DOUT1("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
          StoreRunInfoStop();
          fRunNumber = fEpicsRunNumber;
