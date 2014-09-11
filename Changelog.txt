@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+11.09.2014
+1. Implement resize functionality in ROOT JS.
+2. Add interactively moving slider on the main page.
+
+
 10.09.2014
 1. In JS axis painter use actual number of ticks when drawing sub-ticks.  
 
