@@ -397,14 +397,12 @@ void dabc::Manager::HaltManager()
 
    RemoveChilds();
 
-   // run dummy event loop several seconds to complete event which may be submitted there
+   // run dummy event loop several seconds to complete events which may be submitted there
 
-   // FIXME: one should avoid any kind of timeouts
-   int maxcnt = 500; // about 0.5 seconds
-
-   int cnt = maxcnt;
-
+   int cnt = 0;
    TimeStamp tm1 = dabc::Now();
+   double halttime = fCfg ? fCfg->GetHaltTime() : 0.;
+   if (halttime<=0.) halttime = 0.7;
 
    do {
 
@@ -414,19 +412,20 @@ void dabc::Manager::HaltManager()
 
       if (!thrd.null()) {
          thrd()->SingleLoop(0, 0.001);
-         if ((cnt < maxcnt/2) || (thrd()->TotalNumberOfEvents()==0)) thrd.Release();
+         if ((thrd()->TotalNumberOfEvents()==0) || tm1.Expired(halttime*0.7)) thrd.Release();
       } else {
-         if (cnt>0) dabc::Sleep(0.001);
+         dabc::Sleep(0.001);
       }
 
-   } while ((--cnt > 0) && (dabc::Thread::NumThreadInstances() > 0));
+   } while ((dabc::Thread::NumThreadInstances() > 0) && !tm1.Expired(halttime));
 
    TimeStamp tm2 = dabc::Now();
 
    if (dabc::Thread::NumThreadInstances() > 0) {
-      EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted cnt = %d  %5.3f !!!!!!", dabc::Thread::NumThreadInstances(), cnt, tm2 - tm1);
-   } else
-      DOUT1(" ALL THREADS STOP AFTER %d tries tm %5.3f", maxcnt-cnt, tm2-tm1);
+      EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted spent: %5.3f s!!!!!!", dabc::Thread::NumThreadInstances(), tm2 - tm1);
+   } else {
+      DOUT1("All threads stopped after %5.3f s (loop count = %d)", tm2-tm1, cnt);
+   }
 
 #ifdef DABC_EXTRA_CHECKS
    dabc::Object::DebugObject();

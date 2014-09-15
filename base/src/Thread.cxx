@@ -974,7 +974,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
       // true indicates that object should be destroyed immediately
       if (rec->doinghalt & actDestroy) {
-         if (rec->work && rec->work->CallDestroyFromThread())
+         if (rec->work && rec->work->DestroyCalledFromOwnThread())
             delete rec->work;
       }
 

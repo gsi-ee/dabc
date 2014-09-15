@@ -79,7 +79,12 @@ namespace dabc {
           * Typically master provide http-server, which allows to control also all clients */
          std::string MasterName();
 
-         int GetRunTime();
+         /** \brief Returns configured time to run DABC process */
+         double GetRunTime();
+
+         /** \brief Returns time, required to halt DABC process */
+         double GetHaltTime();
+
          bool NormalMainThread();
          std::string ThreadsLayout();
 

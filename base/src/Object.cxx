@@ -428,7 +428,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
    }
 
    if (viathrd) {
-      if (AskToDestroyByThread()) return false;
+      if (DestroyByOwnThread()) return false;
 
       // it means thread do not want to destroy us, let do it normal way
       dabc::LockGuard lock(fObjectMutex);
@@ -510,7 +510,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
    return false;
 }
 
-bool dabc::Object::CallDestroyFromThread()
+bool dabc::Object::DestroyCalledFromOwnThread()
 {
    return DecReference(true, true, true);
 }
@@ -900,7 +900,7 @@ void dabc::Object::SetName(const char* name)
  *
  *  First, object is checked that if it is assigned with a thread (flHasThread).
  *  It means that object can be actively used in the thread and any cleanup
- *  should happen from this thread. In this case AskToDestroyByThread() method will be called.
+ *  should happen from this thread. In this case DestroyByOwnThread() method will be called.
  *  Method can return true only when objects allowed to be destroyed immediately
  *
  *  If object does not have thread, ObjectCleanup() will be called immediately,

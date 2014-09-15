@@ -172,8 +172,10 @@ namespace dabc {
          Hierarchy        fWorkerHierarchy;            ///< place for publishing of worker parameters
 
 
-         virtual bool AskToDestroyByThread();
+         /** \brief Inherited method from Object, invoked at the moment when worker requested to be destroyed by its thread */
+         virtual bool DestroyByOwnThread();
 
+         /** \brief Central cleanup method for worker */
          virtual void ObjectCleanup();
 
          /** \brief Method to clear object reference, will be called from thread context (when possible) */

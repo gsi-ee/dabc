@@ -171,13 +171,22 @@ std::string dabc::Configuration::MasterName()
    return Find1(fSelected, "", xmlRunNode, xmlMasterProcess);
 }
 
-int dabc::Configuration::GetRunTime()
+double dabc::Configuration::GetRunTime()
 {
-   if (fSelected==0) return 0;
+   if (fSelected==0) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlRunTime);
-   if (res.empty()) return 0;
-   int runtime(0);
-   return dabc::str_to_int(res.c_str(), &runtime) ? runtime : 0;
+   if (res.empty()) return 0.;
+   double runtime(0.);
+   return dabc::str_to_double(res.c_str(), &runtime) ? runtime : 0.;
+}
+
+double dabc::Configuration::GetHaltTime()
+{
+   if (fSelected==0) return 0.;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlHaltTime);
+   if (res.empty()) return 0.;
+   double halttime(0.);
+   return dabc::str_to_double(res.c_str(), &halttime) ? halttime : 0.;
 }
 
 bool dabc::Configuration::NormalMainThread()

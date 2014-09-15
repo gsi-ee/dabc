@@ -93,6 +93,7 @@ which can be specified in `<Run>` section.
 | sysloglevel  | level of output to the syslog |
 | syslog     | prefix for the syslog, default "DABC" |
 | runtime    | maximum execution time in seconds |
+| halttime   | time required to halt application (default 0.7 s) |
 | func       | Name of C funtion to be called to create modules.  |
 | ssh_user   | User name used to login on host. Login without paasword should be possible |
 | ssh_port   | ssh port number fopr login |

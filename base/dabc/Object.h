@@ -198,11 +198,11 @@ namespace dabc {
 
          /** \brief Internal DABC method, used to activate object cleanup via object thread
           * Returns: false - object cannot be cleanup by the thread,
-          *          true  - thread guarantees that CallDestroyFromThread() will be called from thread context */
-         virtual bool AskToDestroyByThread() { return false; }
+          *          true  - thread guarantees that DestroyCalledFromOwnThread() will be called from thread context */
+         virtual bool DestroyByOwnThread() { return false; }
 
          /** \brief Internal DABC method, should be called by thread which was requested to destroy object */
-         bool CallDestroyFromThread();
+         bool DestroyCalledFromOwnThread();
 
          /** \brief User method to cleanup object content before it will be destroyed
           * Main motivation is to release any references on other objects to avoid any

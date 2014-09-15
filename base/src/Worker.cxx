@@ -192,14 +192,13 @@ std::string dabc::Worker::ThreadName() const
 }
 
 
-bool dabc::Worker::AskToDestroyByThread()
+bool dabc::Worker::DestroyByOwnThread()
 {
    // method can be called from any thread therefore we should first ensure that
    // correct reference will exists on the thread
-   // Once true is returned thread guarantees that CallDestroyFromThread() method
+   // Once true is returned thread guarantees that DestroyCalledFromOwnThread() method
    // will be called from thread context
    // One should also remember that reference counter is granted to thread
-
 
    ThreadRef thrd = thread();
 
