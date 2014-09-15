@@ -5,6 +5,8 @@ current functionality of the framework.
 15.09.2014
 1. Add "halttime" parameter into configuration time. Defines maximal time which 
    can be spend in the halt process. By default it is 0.7 s.
+2. Introduce display class for MDI drawing. Provide two implementations - 
+   'collapsible' for old kind and 'tabs' for new kinds.  
 
 
 11.09.2014

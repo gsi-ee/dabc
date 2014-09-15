@@ -963,7 +963,7 @@ DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
 
    if (!this.IsObjectDraw()) {
       this.obj = newobj;
-      var painter = new JSROOT.THierarchyPainter('sinfo', this.frameid);
+      var painter = new JSROOT.HierarchyPainter('sinfo', this.frameid);
       painter.ShowStreamerInfo(this.obj);
       return;
    }
@@ -1301,11 +1301,9 @@ DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    if (this.hpainter!=null) return;
    
-   this.hpainter = new JSROOT.THierarchyPainter('main', holder);
+   this.hpainter = new JSROOT.HierarchyPainter('main', holder);
       
-   this.hpainter['ondisplay'] = function(itemname, obj) {
-      alert("Request for display " + itemname + " never come here!!!");
-   }
+   // this.hpainter['ondisplay'] = null;
    
    this.hpainter['display'] = function(itemname) {
       var item = this.Find(itemname);
@@ -1337,7 +1335,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
       if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
       if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
-         JSROOT.THierarchyPainter.prototype.CheckCanDo(node, cando);
+         JSROOT.HierarchyPainter.prototype.CheckCanDo(node, cando);
    }
       
    this.hpainter.OpenOnline("h.json?compact=3");
