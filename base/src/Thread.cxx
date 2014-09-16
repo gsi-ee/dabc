@@ -875,7 +875,6 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actHalt, cmd);
    }
 
-
    return cmd_ignore;
 }
 
@@ -920,7 +919,6 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       // it will be able to supply commands with magic priority
       if (fWorkers[id]->doinghalt)
          fWorkers[id]->work->fWorkerActive = false;
-
 
       balance = fWorkers[id]->work->fWorkerFiredEvents - fWorkers[id]->processed;
    }
@@ -1133,19 +1131,18 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
             // if cleanup was started due to no workers in thread,
             // one should stop it while thread will be deleted by other means
             if ((evnt.GetArg() < 100) && !_IsNormalState()) break;
-
          }
 
          if (fWorkers.size()!=2) {
             // this is situation when cleanup was started by DecReference while
             // there is no more references on the thread and one can destroy thread
             // one need to ensure that no more other events existing
-            DOUT3("Cleanup running when more than 2 workers in the thread %s - something strange", GetName());
+            DOUT3("Thrd:%s Cleanup running when num workers %u != 2 - something strange", GetName(), fWorkers.size());
          }
 
          DOUT3("THRD:%s Num workers = %u totalsize %u", GetName(), fWorkers.size(), totalsize);
 
-         if ((totalsize>0) && (evnt.GetArg() % 100 <20)) {
+         if ((totalsize>0) && (evnt.GetArg() % 100 < 20)) {
             LockGuard lock(ThreadMutex());
             _Fire(EventId(evntCleanupThrd, 0, evnt.GetArg()+1), priorityLowest);
          } else {

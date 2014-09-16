@@ -688,7 +688,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       if (producer_name.empty()) return cmd_false;
 
       dabc::Command res;
-      if (def.GetField("dabc:parcmddef").AsBool(false)) {
+      if (def.GetField("_parcmddef").AsBool(false)) {
          DOUT3("Create normal command %s for path %s", def.GetName(), path.c_str());
          res = dabc::Command(def.GetName());
       } else {

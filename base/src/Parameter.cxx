@@ -324,7 +324,7 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
    } else
    if (fKind == "cmddef") {
       cont->Field(dabc::prop_kind).SetStr("DABC.Command");
-      cont->Field("dabc:parcmddef").SetBool(true);
+      cont->Field("_parcmddef").SetBool(true);
    } else
    if (fKind == "info") {
       cont->Field(dabc::prop_kind).SetStr("log");
