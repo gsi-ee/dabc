@@ -224,7 +224,7 @@ THttpServer::THttpServer(const char *engine) :
    const char *rootsys = gSystem->Getenv("ROOTSYS");
 
    if (rootsys != 0)
-      fJsRootSys = TString::Format("%s/etc/js", rootsys);
+      fJsRootSys = TString::Format("%s/etc/http", rootsys);
 #endif
 
    const char* jsrootsys = getenv("JSROOTSYS");
