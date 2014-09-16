@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+16.09.2014
+1. Adjust size of color palette drawing when labels would take more place as provided.
+
+
 15.09.2014
 1. Add "halttime" parameter into configuration time. Defines maximal time which 
    can be spend in the halt process. By default it is 0.7 s.
