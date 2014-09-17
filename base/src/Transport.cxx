@@ -57,6 +57,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
       CreateOutput("Output", inpport.QueueCapacity());
 
+      SetPortLoopLength(OutputName(), 1);
+
       fTransportInfoName = inpport.InfoParName();
 
       fIsInputTransport = true;
@@ -69,6 +71,8 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 //      DOUT0("Outport %s pool %s cmdhaspool %s", outport.ItemName(false).c_str(), poolname.c_str(), DBOOL(cmd.HasField(dabc::xmlPoolName)));
 
       CreateInput("Input", outport.QueueCapacity());
+
+      SetPortLoopLength(InputName(), 1);
 
       if (fTransportInfoName.empty())
          fTransportInfoName = outport.InfoParName();

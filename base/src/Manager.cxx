@@ -406,6 +406,8 @@ void dabc::Manager::HaltManager()
 
    do {
 
+      cnt++;
+
       ProcessParameterEvents();
 
       ProcessDestroyQueue();

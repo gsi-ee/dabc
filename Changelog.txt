@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+17.09.2014
+1. In the dabc::Transport class reduce maximal number of input/output loops
+   per each port. This guarantee that after each data processing transport 
+   returns to the main loop, which enables faster command processing or shutdown.
+
+
 16.09.2014
 1. Adjust size of color palette drawing when labels would take more place as provided.
 2. Add correct filling of statistic for TProfile
