@@ -24,40 +24,63 @@
 #include "dabc/Queue.h"
 #endif
 
+#ifndef DABC_string
+#include "dabc/string.h"
+#endif
+
+#include <vector>
+
 namespace dabc {
 
-   /** Command used to activate application - all necessary transitions will be
-    * performed to bring application in working state. Used by main dabc runnable */
-   class CmdInvokeAppRun : public Command {
-      DABC_COMMAND(CmdInvokeAppRun, "InvokeAppRun");
-   };
+   class CmdStateTransition : public Command {
+      DABC_COMMAND(CmdStateTransition, "CmdStateTransition");
 
-   /** Command used to finish application work - it should destroy all components and
-    * finally declare application as ready - IsDone() should return true at the end  */
-   class CmdInvokeAppFinish : public Command {
-      DABC_COMMAND(CmdInvokeAppFinish, "InvokeAppFinish");
-   };
-
-   class CmdInvokeTransition : public Command {
-      DABC_COMMAND(CmdInvokeTransition, "InvokeTransition");
-
-      void SetTransition(const std::string& cmd) { SetStr("Transition", cmd); }
-      std::string GetTransition() const { return GetStr("Transition"); }
+      CmdStateTransition(const std::string& state) :
+         dabc::Command(CmdName())
+      {
+         SetStr("State", state);
+      }
    };
 
 
    class Manager;
    class ApplicationRef;
 
-   /** \brief Base application class
+   /** \brief Base class for user-specific applications.
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes
     *
     * Defines main methods and minimal set of state-machine states and commands.
+    * Main aim of writing user-specific application is creation and management of
+    * different application components like modules, transports, devices, which cannot
+    * be handled by standard DABC methods.
+    * For instance, complex connection scheme or modules creation,
+    * dependent from application parameters.
+    *
+    * Following states are defined in the state-machine:
+    *  'Halted'  - initial state, no any object existed
+    *  'Ready'   - all objects are created and ready for start
+    *  'Running' - modules are running
+    *  'Failure' - error state
+    *
+    * Several commands are provided to switch between states:
+    *  'DoConfigure' - switch to 'Ready' state
+    *  'DoStart'     - switch to 'Running' state
+    *  'DoStop'      - switch to 'Ready' state from 'Running'
+    *  'DoHalt'      - switch to 'Halted' state
+    *
+    *  Any command can be executed at any time - state machine will try to bring
+    *  system to specifies state.
+    *
+    *  Commands can be triggered via web interface.
+    *
+    *  By default, application will be brought to the 'Running' state by the dabc.
+    *  Only if self='false' specified in <Context> node attributes, application will be created and remain as is
+    *
     */
 
-   class ApplicationBase : public Worker {
+   class Application : public Worker {
 
       friend class Manager;
       friend class ApplicationRef;
@@ -66,32 +89,39 @@ namespace dabc {
 
          typedef void* ExternalFunction();
 
-         // these are three states in default state machine
-         static const char* stHalted() { return "Halted"; }
+         // these are states in default state machine
+         static const char* stHalted()  { return "Halted"; }
+         static const char* stReady()   { return "Ready"; }
          static const char* stRunning() { return "Running"; }
          static const char* stFailure() { return "Failure"; }
 
-         // these are only two command in default state machine
+         // these are commands provided by state machine
+         static const char* stcmdDoConfigure() { return "DoConfigure"; }
          static const char* stcmdDoStart() { return "DoStart"; }
-         static const char* stcmdDoStop() { return "DoStop"; }
+         static const char* stcmdDoStop()  { return "DoStop"; }
+         static const char* stcmdDoHalt()  { return "DoHalt"; }
 
       protected:
 
+         std::string        fAppClass;
+
          ExternalFunction*  fInitFunc;
 
-         bool               fWasRunning; ///< indicate if application was running at least once
          bool               fAnyModuleWasRunning; ///< indicate when any module was running, than once can automatically stop application
+
+         bool               fSelfControl;   ///< when true, application itself decide when stop main loop
+
+         std::vector<std::string> fAppDevices;   ///< list of devices, created by application
+         std::vector<std::string> fAppPools;     ///< list of pools, created by application
+         std::vector<std::string> fAppModules;   ///< list of modules, created by application
 
          virtual int ExecuteCommand(Command cmd);
 
+         /** \brief Method called at thread assignment - application may switch into running state */
+         virtual void OnThreadAssigned();
+
          /** \brief Cleanup application */
          virtual void ObjectCleanup();
-
-         /** Method should bring application in to running state */
-         virtual bool PerformApplicationRun();
-
-         /** Method brings application in finish state, when application can be destroyed */
-         virtual bool PerformApplicationFinish();
 
          /** Directly changes value of the state parameter */
          void SetState(const std::string& name) { Par(StateParName()).SetValue(name); }
@@ -106,6 +136,9 @@ namespace dabc {
          /** Return true if all application-relevant modules are running */
          virtual bool IsModulesRunning();
 
+         /** Create application modules */
+         virtual bool CreateAppModules();
+
          /** Start all application modules */
          virtual bool StartModules();
 
@@ -115,147 +148,36 @@ namespace dabc {
          /** Delete all components created in application, excluding state parameter */
          virtual bool CleanupApplication();
 
-         /** Should return true if specified transition allowed */
-         virtual bool IsTransitionAllowed(const std::string&);
-
-         /** Do action, required by transition, called in context of application thread */
-         virtual bool DoStateTransition(const std::string&);
-
-         /** Method should return true when application is did the job and can be finished.
-          * By default it is the case, when all modules stopped during run state */
-         virtual bool IsWorkDone();
-
-         /** Returns true if application finished its work */
-         virtual bool IsFinished();
+         /** Do action, required to make transition into specified state */
+         virtual bool DoTransition(const std::string& state);
 
          /** Default state machine command timeout */
          virtual int SMCommandTimeout() const { return 10; }
 
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
 
+         /** Timeout used by application to control stop state of modules and brake application */
+         virtual double ProcessTimeout(double);
+
       public:
 
-         ApplicationBase();
-         virtual ~ApplicationBase();
+         Application(const char* classname = 0);
+         virtual ~Application();
 
          static const char* StateParName() { return "State"; }
 
          std::string GetState() const { return Par(StateParName()).Value().AsStr(); }
 
-         /** Execute transition command */
-         bool ExecuteStateTransition(const std::string& cmd, double tmout = -1.);
-
-         /** Invoke (make asynchron) state transition */
-         bool InvokeStateTransition(const std::string& cmd);
-
-         /** Call this method that application should check if job is finished*
-          * Application will be automatically stopped when it happens */
-         bool CheckWorkDone();
+         /** Adds object into application list
+          *  List used when objects must be destroyed or application start/stop should be executed
+          * @param kind - 'device', 'pool', module'
+          * @param name - object name
+          * @return true if successes  */
+         bool AddObject(const std::string& kind, const std::string& name);
 
          virtual bool Find(ConfigIO &cfg);
 
-         virtual const char* ClassName() const { return typeApplication; }
-   };
-
-   // =====================================================================================
-
-   /** \brief Base class for user-specific applications.
-    *
-    * \ingroup dabc_user_classes
-    * \ingroup dabc_all_classes
-    *
-    * Main aim of writing user-specific application is creation and management of
-    * different application components like modules, transports, devices, which cannot
-    * be handled by standard DABC method.
-    * For instance, complex connection scheme or modules creation,
-    * dependent from application parameters.
-    *
-    */
-
-
-   class Application : public ApplicationBase {
-
-      friend class ApplicationRef;
-
-      public:
-
-         struct NodeStateRec {
-            bool active;
-         };
-
-         static const char* stNull() { return "Null"; }
-         static const char* stConfigured() { return "Configured"; }
-         static const char* stReady() { return "Ready"; }
-         static const char* stError() { return "Error"; }
-
-         static const char* stcmdDoConfigure() { return "DoConfigure"; }
-         static const char* stcmdDoEnable() { return "DoEnable"; }
-         static const char* stcmdDoError() { return "DoError"; }
-         static const char* stcmdDoHalt() { return "DoHalt"; }
-
-      private:
-
-         void GetFirstNodesConfig();
-
-      protected:
-
-         friend class Manager;
-
-         std::string        fAppClass;
-         PointersVector     fNodes;
-
-         virtual int ExecuteCommand(Command cmd);
-
-         /** Method should bring application in to running state.
-          * In current implementation it is done via few steps - Configure, Enable, Run */
-         virtual bool PerformApplicationRun();
-
-         virtual bool PerformApplicationFinish();
-
-         /** \brief Remember current state of all nodes seen by the application
-          * All changes notifications will be done relative to this stored version
-          * This call explicitly done after application constructor */
-
-         bool MakeSystemSnapshot(double tmout = 10.);
-
-         NodeStateRec* NodeRec(unsigned n) const { return n < NumNodes() ? (NodeStateRec*) fNodes[n] : 0; }
-
-         /** Returns true if application life-cycle is finished */
-         virtual bool IsFinished();
-
-      public:
-
-          Application(const char* classname = 0);
-
-          virtual ~Application();
-
-          /** Should return true if specified transition allowed */
-          virtual bool IsTransitionAllowed(const std::string& trans_cmd);
-
-          /** Method could be reimplemented to perform state transition */
-          virtual bool DoStateTransition(const std::string& trans_cmd);
-
-          // These methods are called in the state transition process,
-          // but always from application thread (via command channel)
-          // Implement them to create modules, test if connection is done and
-          // do specific actions before modules stars, after modules stopped and before module destroyed
-
-          // FIXME: these are methods from dabc v1, one could remove them at all
-
-          virtual bool CreateAppModules();
-          virtual bool BeforeAppModulesStarted() { return true; }
-          virtual bool AfterAppModulesStopped() { return true; }
-          virtual bool BeforeAppModulesDestroyed() { return true; }
-
-          virtual int SMCommandTimeout() const { return 10; }
-
-          virtual const char* ClassName() const { return fAppClass.c_str(); }
-
-          // ___________ these are new methods ______________
-
-          unsigned NumNodes() const { return fNodes.size(); }
-
-          bool NodeActive(unsigned n) const { return NodeRec(n) ? NodeRec(n)->active : false; }
+         virtual const char* ClassName() const { return fAppClass.c_str(); }
    };
 
    // ________________________________________________________________________________
@@ -270,16 +192,11 @@ namespace dabc {
 
       DABC_REFERENCE(ApplicationRef, WorkerRef, Application)
 
-      public:
+      bool ChangeState(const std::string& state)
+      {
+         return Execute(CmdStateTransition(state));
+      }
 
-         /** \brief Verifies that all modules finish there job. If yes, complete process will be stopped. */
-         void CheckWorkDone();
-
-         /** \brief Return true if application normally finished its work (module is stopped) */
-         bool IsWorkDone();
-
-         /** \brief Returns true when application is cleaned up */
-         bool IsFinished();
    };
 
 

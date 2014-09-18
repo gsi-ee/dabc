@@ -57,33 +57,6 @@ bool CreateManagerControl(dabc::Configuration& cfg)
 }
 
 
-
-int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool dorun)
-{
-
-   // create cpu info
-   int cpuinfo = cfg.ShowCpuInfo();
-   if (cpuinfo>=0) {
-      dabc::mgr.CreateModule("dabc::CpuInfoModule", "/CpuInfo", dabc::Manager::MgrThrdName());
-      dabc::mgr.StartModule("/CpuInfo");
-   }
-
-
-   // activate application only with non-controlled mode
-
-   dabc::mgr.app().Submit(dabc::CmdInvokeAppRun());
-
-   DOUT0("Application mainloop is now running");
-   DOUT0("       Press Ctrl-C for stop");
-
-   // manager main loop will be run for specified time
-   // at the exit application either stopped or will be requested to stop
-
-   dabc::mgr.RunMainLoop(cfg.GetRunTime());
-
-   return 0;
-}
-
 int command_shell(const char* node)
 {
    dabc::CreateManager("cmd", 0);
@@ -200,9 +173,8 @@ int main(int numc, char* args[])
    if (res==0)
       if (!CreateManagerControl(cfg)) res = -1;
 
-   if (res==0) {
+   if (res==0)
       dabc::mgr.Execute("InitFactories");
-   }
 
    if ((res==0) && (cfg.WithPublisher() > 0))
       dabc::mgr.CreatePublisher();
@@ -211,6 +183,12 @@ int main(int numc, char* args[])
          (dabc::Application::ExternalFunction*)
          dabc::Factory::FindSymbol(cfg.RunFuncName());
 
+   int cpuinfo = cfg.ShowCpuInfo();
+   if (cpuinfo>=0) {
+      dabc::mgr.CreateModule("dabc::CpuInfoModule", "/CpuInfo", dabc::Manager::MgrThrdName());
+      dabc::mgr.StartModule("/CpuInfo");
+   }
+
    if (runfunc!=0) {
       if (res==0) runfunc();
    } else {
@@ -218,7 +196,7 @@ int main(int numc, char* args[])
          if (!dabc::mgr.CreateApplication(cfg.ConetextAppClass())) res = -3;
 
       if (res==0)
-         res = RunApplication(cfg, nodeid, numnodes, dorun);
+         dabc::mgr.RunMainLoop(cfg.GetRunTime());
    }
 
    dabc::mgr()->HaltManager();
@@ -226,8 +204,7 @@ int main(int numc, char* args[])
    dabc::mgr.Destroy();
 
    dabc::Object::InspectGarbageCollector();
-
-   DOUT2("Exit  cnt = %u", dabc::Object::NumInstances());
+   DOUT2("Exit cnt = %u", dabc::Object::NumInstances());
 
    return res;
 }

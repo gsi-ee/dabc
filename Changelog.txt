@@ -2,6 +2,16 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+18.09.2014
+1. Eliminate code division between dabc::ApplicationBase and dabc::Application
+   Now generic functionality provided in dabc::Application class, user 
+   can extend it by sub-classing
+2. Simplify logic behind state-machine in application. Now three states are 
+   defined - 'Halted', 'Ready' and 'Running'. There is only method called 
+   DoTransition(), where state could be changed.
+3. There are several commands defined to switch between states.         
+
+
 17.09.2014
 1. In the dabc::Transport class reduce maximal number of input/output loops
    per each port. This guarantee that after each data processing transport 

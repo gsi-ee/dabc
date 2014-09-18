@@ -265,6 +265,7 @@ void dabc::Manager::SetAutoDestroy(bool on)
 dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    Worker(0, managername),
    fMgrStoppedTime(),
+   fAppFinished(false),
    fMgrMutex(0),
    fDestroyQueue(0),
    fParsQueue(1024),
@@ -968,7 +969,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_bool(!appref.null());
 
       if (appref.null()) EOUT("Cannot create application of class %s", classname.c_str());
-                    else DOUT2("Application of class %s created", classname.c_str());
+                    else DOUT2("Application of class %s thrd %s created", classname.c_str(), appthrd.c_str());
 
    } else
 
@@ -1346,6 +1347,11 @@ bool dabc::Manager::ReplyCommand(Command cmd)
       return true;
    }
 
+   if (cmd.IsName(CmdStateTransition::CmdName())) {
+      // manager receive reply on this command only during normal shutdown
+      fAppFinished = true;
+      return true;
+   }
 
    return dabc::Worker::ReplyCommand(cmd);
 }
@@ -1662,13 +1668,18 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
    DOUT2("Enter dabc::Manager::RunManagerMainLoop");
 
    ThreadRef thrd = thread();
-
    if (thrd.null()) return;
 
    if (!fMgrStoppedTime.null()) {
       DOUT1("Manager stopped before entering to the mainloop - stop running");
       return;
    }
+
+   if (runtime>0)
+      DOUT0("Application mainloop will run for %3.1 s", runtime);
+   else
+      DOUT0("Application mainloop is now running");
+   DOUT0("       Press Ctrl-C for stop");
 
    if (thrd.IsRealThrd()) {
       DOUT3("Manager has normal thread - just wait until application modules are stopped");
@@ -1680,43 +1691,39 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
       ActivateTimeout(1.);
    }
 
-   TimeStamp start = dabc::Now();
+   TimeStamp starttm = dabc::Now();
 
    bool appstopped = false;
 
    ApplicationRef appref = app();
 
+   // we run even loop in units of 0.1 sec
+   // TODO: make 0.1 sec configurable
+   double period = 0.1;
 
    while (true) {
 
-      // we run even loop in units of 0.1 sec
-      // TODO: make 0.1 sec configurable
       if (thrd.IsRealThrd())
-         dabc::Sleep(0.1);
+         dabc::Sleep(period);
       else
-         thrd.RunEventLoop(0.1);
+         thrd.RunEventLoop(period);
 
-      TimeStamp now = dabc::Now();
-
-      if (appref.IsFinished()) break;
+      if (appstopped && fAppFinished) break;
 
       // check if stop time was not set
       if (fMgrStoppedTime.null()) {
-
-         if ((runtime > 0) && (now > start + runtime)) fMgrStoppedTime = now;
-
-         // TODO: logic with automatic stop of application should be implemented in the application itself
-         if (appref.IsWorkDone()) fMgrStoppedTime = now;
+         if ((runtime <= 0) || !starttm.Expired(runtime)) continue;
+         fMgrStoppedTime.GetNow();
       }
 
-      if (!fMgrStoppedTime.null() && !appstopped) {
+      period = 0.001; // perform checks more often
+
+      if (!appstopped) {
          appstopped = true;
-         appref.Submit(CmdInvokeAppFinish());
+         appref.Submit(Assign(dabc::CmdStateTransition(dabc::Application::stHalted())));
       }
 
-      // TODO: make 10 second configurable
-      if (!fMgrStoppedTime.null())
-         if (now > fMgrStoppedTime + 10.) break;
+      if (fMgrStoppedTime.Expired(10.)) break; // TODO: make 10 second configurable
    }
 
    DOUT2("Exit dabc::Manager::RunManagerMainLoop");
@@ -2031,7 +2038,7 @@ bool dabc::ManagerRef::CreateDevice(const std::string& classname, const std::str
 }
 
 
-bool dabc::ManagerRef::DestroyDevice(const std::string& devname)
+bool dabc::ManagerRef::DeleteDevice(const std::string& devname)
 {
    return Execute(CmdDestroyDevice(devname));
 }

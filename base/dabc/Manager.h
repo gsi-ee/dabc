@@ -357,7 +357,8 @@ namespace dabc {
             }
          };
 
-         TimeStamp            fMgrStoppedTime; // indicate when manager mainloop was stopped
+         TimeStamp            fMgrStoppedTime;  ///< indicate when manager mainloop was stopped
+         bool                 fAppFinished;     ///< when true, reply from application was received
 
          // FIXME: revise usage of manager mutex, it is not necessary everywhere
          Mutex                *fMgrMutex; // main mutex to protect manager queues
@@ -634,7 +635,7 @@ namespace dabc {
          ThreadRef CurrentThread();
 
          bool CreateDevice(const std::string& classname, const std::string& devname);
-         bool DestroyDevice(const std::string& devname);
+         bool DeleteDevice(const std::string& devname);
          WorkerRef FindDevice(const std::string& name);
 
          Reference CreateObject(const std::string& classname, const std::string& objname);

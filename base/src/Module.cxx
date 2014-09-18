@@ -844,7 +844,6 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
             DOUT0("Module %s automatically stopped while all connections are now disconnected", GetName());
             DoStop();
-            // dabc::mgr.app().CheckWorkDone();
          }
 
          break;

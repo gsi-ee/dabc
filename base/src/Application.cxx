@@ -24,74 +24,87 @@
 #include "dabc/Iterator.h"
 #include "dabc/Hierarchy.h"
 
-dabc::ApplicationBase::ApplicationBase() :
+dabc::Application::Application(const char* classname) :
    Worker(dabc::mgr(), xmlAppDfltName),
+   fAppClass(classname ? classname : typeApplication),
    fInitFunc(0),
-   fWasRunning(false),
-   fAnyModuleWasRunning(false)
+   fAnyModuleWasRunning(false),
+   fSelfControl(true),
+   fAppDevices(),
+   fAppPools(),
+   fAppModules()
 {
    CreatePar(StateParName(), "state").SetSynchron(true, -1, true);
 
+   CreateCmdDef(stcmdDoConfigure());
    CreateCmdDef(stcmdDoStart());
    CreateCmdDef(stcmdDoStop());
+   CreateCmdDef(stcmdDoHalt());
 
    SetState(stHalted());
+
+   fSelfControl = Cfg("self").AsBool(true);
+
+   // DOUT0("Self control = %s", DBOOL(fSelfControl));
+
+   // if (dabc::mgr()->cfg()->UseControl() > 0) fSelfControl = false;
+
+   PublishPars("$CONTEXT$/App");
 }
 
-dabc::ApplicationBase::~ApplicationBase()
+dabc::Application::~Application()
 {
 }
 
-void dabc::ApplicationBase::ObjectCleanup()
+void dabc::Application::OnThreadAssigned()
+{
+   if (fSelfControl)
+      Submit(dabc::CmdStateTransition(stRunning()));
+}
+
+void dabc::Application::ObjectCleanup()
 {
    dabc::Worker::ObjectCleanup();
 }
 
-
-int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
+bool dabc::Application::AddObject(const std::string& kind, const std::string& name)
 {
-   if (cmd.IsName(stcmdDoStart()) ||
-       cmd.IsName(stcmdDoStop())) {
-      bool res = false;
-      if (IsTransitionAllowed(cmd.GetName()))
-         res = DoStateTransition(cmd.GetName());
-      return cmd_bool(res);
-   }
+   dabc::Command cmd("AddAppObject");
+   cmd.SetStr("kind", kind);
+   cmd.SetStr("name", name);
+   return Execute(cmd);
+}
 
-   if (cmd.IsName(CmdInvokeAppRun::CmdName())) {
+int dabc::Application::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName(CmdStateTransition::CmdName()))
+      return cmd_bool(DoTransition(cmd.GetStr("State")));
 
-      bool res = PerformApplicationRun();
 
-      return cmd_bool(res);
-   }
+   if (cmd.IsName(stcmdDoConfigure()))
+      return cmd_bool(DoTransition(stReady()));
 
-   if (cmd.IsName(CmdInvokeAppFinish::CmdName())) {
+   if (cmd.IsName(stcmdDoStart()))
+      return cmd_bool(DoTransition(stRunning()));
 
-      bool res = PerformApplicationFinish();
+   if (cmd.IsName(stcmdDoStop()))
+      return cmd_bool(DoTransition(stReady()));
 
-      return cmd_bool(res);
-   }
+   if (cmd.IsName(stcmdDoHalt()))
+      return cmd_bool(DoTransition(stHalted()));
 
-   if (cmd.IsName(CmdInvokeTransition::CmdName())) {
 
-      CmdInvokeTransition tr = cmd;
-
-      bool res = false;
-
-      if (IsTransitionAllowed(tr.GetTransition()))
-         res = DoStateTransition(tr.GetTransition());
-
-      return cmd_bool(res);
-   }
-
-   if (cmd.IsName("CheckWorkDone")) {
-      DOUT2("Verify that application did its job running %s modules %s",
-            DBOOL(GetState() == stRunning()), DBOOL(IsModulesRunning()));
-
-      if (IsWorkDone()) {
-         DOUT2("Stop application while work is completed");
-         Submit(CmdInvokeAppFinish());
-      }
+   if (cmd.IsName("AddAppObject")) {
+      if (cmd.GetStr("kind") == "device")
+         fAppDevices.push_back(cmd.GetStr("name"));
+      else
+      if (cmd.GetStr("kind") == "pool")
+         fAppPools.push_back(cmd.GetStr("name"));
+      else
+      if (cmd.GetStr("kind") == "module")
+         fAppModules.push_back(cmd.GetStr("name"));
+      else
+         return cmd_false;
 
       return cmd_true;
    }
@@ -99,92 +112,54 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
-bool dabc::ApplicationBase::IsWorkDone()
-{
-   if (GetState() != stRunning()) return false;
 
-   bool modules_running = IsModulesRunning();
-   if (modules_running) fAnyModuleWasRunning = true;
-
-   return fAnyModuleWasRunning && !modules_running;
-}
-
-bool dabc::ApplicationBase::IsFinished()
-{
-   std::string state = GetState();
-
-   if (state == stFailure()) return true;
-
-   if (state != stHalted()) return false;
-
-   LockGuard lock(ObjectMutex());
-   return fWasRunning;
-}
-
-void dabc::ApplicationBase::SetInitFunc(ExternalFunction* initfunc)
+void dabc::Application::SetInitFunc(ExternalFunction* initfunc)
 {
    fInitFunc = initfunc;
 }
 
-bool dabc::ApplicationBase::PerformApplicationRun()
+
+bool dabc::Application::DoTransition(const std::string& tgtstate)
 {
-   ExecuteStateTransition(stcmdDoStart(), SMCommandTimeout());
+   std::string currstate = GetState();
 
-   DOUT3("@@@@@@@@ Start application done state = %s", GetState().c_str());
+   DOUT3("DoTransition curr %s tgt %s", currstate.c_str(), tgtstate.c_str());
 
-   return GetState() == stRunning();
-}
+   if (currstate == tgtstate) return true;
 
-bool dabc::ApplicationBase::PerformApplicationFinish()
-{
-   ExecuteStateTransition(stcmdDoStop(), SMCommandTimeout());
+   // in case of failure state always bring application into halted state first
+   if (currstate == stFailure()) {
+      if (!CleanupApplication()) return false;
+      currstate = stHalted();
+   }
 
-   return GetState() == stHalted();
-}
-
-bool dabc::ApplicationBase::IsTransitionAllowed(const std::string& cmd)
-{
-   if (cmd == stcmdDoStop()) return true;
-
-   if ((cmd == stcmdDoStart()) && (GetState() == stHalted())) return true;
-
-   return false;
-
-}
-
-bool dabc::ApplicationBase::DoStateTransition(const std::string& cmd)
-{
    bool res = true;
-   std::string tgtstate;
 
-   if (cmd == stcmdDoStart()) {
-
-      if (fInitFunc!=0)
-         fInitFunc();
-      else
-         res = DefaultInitFunc();
-
-      if (res && !dabc::mgr.ActivateConnections(20.)) res = false;
-
-      if (res && !StartModules()) res = false;
-
-      if (res) {
-         LockGuard lock(ObjectMutex());
-         fWasRunning = true;
+   if (tgtstate == stHalted()) {
+      if (currstate == stRunning()) res = StopModules();
+      if (!CleanupApplication()) res = false;
+   } else
+   if (tgtstate == stReady()) {
+      if (currstate == stHalted()) res = CreateAppModules(); else
+      if (currstate == stRunning()) res = StopModules();
+   } else
+   if (tgtstate == stRunning()) {
+      if (currstate == stHalted()) {
+         if (CreateAppModules()) currstate = stReady(); else res = false;
       }
+      if (currstate == stReady())
+         if (!StartModules()) res = false;
 
-      tgtstate = stRunning();
+      // use timeout to control if application should be shutdown
+      if (res && fSelfControl) ActivateTimeout(0.2);
+
    } else
-   if (cmd == stcmdDoStop()) {
-
+   if (tgtstate == stFailure()) {
       StopModules();
-
-      CleanupApplication();
-
-      tgtstate = stHalted();
-
-   } else
-      res = false;
+   } else {
+      EOUT("Unsupported state name %s", tgtstate.c_str());
+      return false;
+   }
 
    if (res) SetState(tgtstate);
        else SetState(stFailure());
@@ -192,25 +167,50 @@ bool dabc::ApplicationBase::DoStateTransition(const std::string& cmd)
    return res;
 }
 
-
-bool dabc::ApplicationBase::IsModulesRunning()
+double dabc::Application::ProcessTimeout(double)
 {
-   ReferencesVector vect;
+   if (!fSelfControl || (GetState() != stRunning())) return -1;
 
-   GetAllChildRef(&vect);
+   if (IsModulesRunning()) { fAnyModuleWasRunning = true; return 0.2; }
 
-   while (vect.GetSize()>0) {
-      ModuleRef m = vect.TakeLast();
-      if (m.IsRunning() && (std::string("MemoryPool")!=m.ClassName())) return true;
+   // if non modules was running, do not try automatic stop
+   if (!fAnyModuleWasRunning) return 0.2;
+
+   // application decide to stop manager main loop
+   dabc::mgr.Submit(dabc::Command("StopManagerMainLoop"));
+
+   return -1;
+}
+
+
+bool dabc::Application::IsModulesRunning()
+{
+   for (unsigned n=0;n<fAppModules.size();n++) {
+      ModuleRef m = dabc::mgr.FindModule(fAppModules[n]);
+      if (m.IsRunning()) return true;
    }
 
    return false;
 }
 
 
-bool dabc::ApplicationBase::StartModules()
+bool dabc::Application::CreateAppModules()
 {
-   ReferencesVector vect;
+   // if no init func was specified, default will be called
+   if (fInitFunc==0)
+      return DefaultInitFunc();
+
+   fInitFunc();
+   return true;
+}
+
+bool dabc::Application::StartModules()
+{
+
+   for (unsigned n=0;n<fAppModules.size();n++)
+      dabc::mgr.StartModule(fAppModules[n]);
+
+/*   ReferencesVector vect;
 
    GetAllChildRef(&vect);
 
@@ -218,12 +218,17 @@ bool dabc::ApplicationBase::StartModules()
       ModuleRef m = vect.TakeRef(0);
       m.Start();
    }
+   */
 
    return true;
 }
 
-bool dabc::ApplicationBase::StopModules()
+bool dabc::Application::StopModules()
 {
+   for (unsigned n=0;n<fAppModules.size();n++)
+      dabc::mgr.StopModule(fAppModules[n]);
+
+/*
    ReferencesVector vect;
 
    GetAllChildRef(&vect);
@@ -232,14 +237,28 @@ bool dabc::ApplicationBase::StopModules()
       ModuleRef m = vect.TakeRef(0);
       m.Stop();
    }
-
+*/
    DOUT2("Stop modules");
 
    return true;
 }
 
-bool dabc::ApplicationBase::CleanupApplication()
+bool dabc::Application::CleanupApplication()
 {
+   for (unsigned n=0;n<fAppModules.size();n++)
+      dabc::mgr.DeleteModule(fAppModules[n]);
+
+   for (unsigned n=0;n<fAppPools.size();n++)
+      dabc::mgr.DeletePool(fAppPools[n]);
+
+   for (unsigned n=0;n<fAppDevices.size();n++)
+      dabc::mgr.DeleteDevice(fAppDevices[n]);
+
+   fAppModules.clear();
+   fAppPools.clear();
+   fAppDevices.clear();
+
+/*
    ReferencesVector vect;
 
    GetAllChildRef(&vect);
@@ -249,33 +268,12 @@ bool dabc::ApplicationBase::CleanupApplication()
       WorkerRef w = vect.TakeRef(0);
       w.Destroy();
    }
-
+*/
    return true;
 }
 
-bool dabc::ApplicationBase::ExecuteStateTransition(const std::string& trans_cmd, double tmout)
-{
-   CmdInvokeTransition cmd;
-   cmd.SetTransition(trans_cmd);
-   cmd.SetTimeout(tmout);
-   return Execute(cmd);
-}
 
-bool dabc::ApplicationBase::InvokeStateTransition(const std::string& trans_cmd)
-{
-   CmdInvokeTransition cmd;
-   cmd.SetTransition(trans_cmd);
-   return Submit(cmd);
-}
-
-
-bool dabc::ApplicationBase::CheckWorkDone()
-{
-   Submit(Command("CheckWorkDone"));
-   return true;
-}
-
-bool dabc::ApplicationBase::Find(ConfigIO &cfg)
+bool dabc::Application::Find(ConfigIO &cfg)
 {
    while (cfg.FindItem(xmlApplication)) {
       // if application has non-default class name, one should check additionally class attribute
@@ -286,18 +284,21 @@ bool dabc::ApplicationBase::Find(ConfigIO &cfg)
    return false;
 }
 
-bool dabc::ApplicationBase::DefaultInitFunc()
+bool dabc::Application::DefaultInitFunc()
 {
    XMLNodePointer_t node = 0;
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlDeviceNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      if ((name!=0) && (clname!=0))
-         if (!dabc::mgr.CreateDevice(clname, name)) {
-            EOUT("Fail to create device %s class %s", name, clname);
-            return false;
-         }
+      if ((name==0) || (clname==0)) continue;
+
+      fAppDevices.push_back(name);
+
+      if (!dabc::mgr.CreateDevice(clname, name)) {
+         EOUT("Fail to create device %s class %s", name, clname);
+         return false;
+      }
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlThreadNode, true)) {
@@ -313,6 +314,7 @@ bool dabc::ApplicationBase::DefaultInitFunc()
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
+      fAppPools.push_back(name);
       DOUT2("Create memory pool %s", name);
       if (!dabc::mgr.CreateMemoryPool(name)) {
          EOUT("Fail to create memory pool %s", name);
@@ -333,6 +335,8 @@ bool dabc::ApplicationBase::DefaultInitFunc()
 
       // FIXME: for old xml files, remove after 12.2014
       if (strcmp(clname, "dabc::Publisher")==0) continue;
+
+      fAppModules.push_back(name);
 
       DOUT2("Create module %s class %s", name, clname);
 
@@ -400,233 +404,7 @@ bool dabc::ApplicationBase::DefaultInitFunc()
 }
 
 
-void dabc::ApplicationBase::BuildFieldsMap(RecordFieldsMap* cont)
+void dabc::Application::BuildFieldsMap(RecordFieldsMap* cont)
 {
    cont->Field(dabc::prop_kind).SetStr("DABC.Application");
-}
-
-
-// ==============================================================
-
-
-dabc::Application::Application(const char* classname) :
-   dabc::ApplicationBase(),
-   fAppClass(classname ? classname : typeApplication),
-   fNodes()
-{
-   DOUT3("Application %s created", ClassName());
-
-   CreateCmdDef(stcmdDoConfigure());
-   CreateCmdDef(stcmdDoEnable());
-   CreateCmdDef(stcmdDoError());
-   CreateCmdDef(stcmdDoHalt());
-
-   GetFirstNodesConfig();
-}
-
-dabc::Application::~Application()
-{
-   DOUT3("Start Application %s destructor", GetName());
-
-   while (fNodes.size()>0)
-      delete (NodeStateRec*) fNodes.pop();
-
-   DOUT3("Did Application %s destructor", GetName());
-}
-
-int dabc::Application::ExecuteCommand(Command cmd)
-{
-   if (cmd.IsName(stcmdDoConfigure()) ||
-       cmd.IsName(stcmdDoEnable()) ||
-       cmd.IsName(stcmdDoStart()) ||
-       cmd.IsName(stcmdDoStop()) ||
-       cmd.IsName(stcmdDoError()) ||
-       cmd.IsName(stcmdDoHalt()))
-   {
-      bool res = false;
-      if (IsTransitionAllowed(cmd.GetName()))
-         res = DoStateTransition(cmd.GetName());
-      return cmd_bool(res);
-   }
-
-   return ApplicationBase::ExecuteCommand(cmd);
-}
-
-
-void dabc::Application::GetFirstNodesConfig()
-{
-   unsigned num = dabc::mgr()->cfg()->NumNodes();
-
-   for (unsigned n=0;n<num;n++) {
-      NodeStateRec* rec = new NodeStateRec;
-
-      rec->active = dabc::mgr()->cfg()->NodeActive(n);
-      fNodes.push_back(rec);
-   }
-}
-
-bool dabc::Application::CreateAppModules()
-{
-   // if no init func was specified, default will be called
-   if (fInitFunc==0)
-      return DefaultInitFunc();
-
-   fInitFunc();
-   return true;
-}
-
-bool dabc::Application::PerformApplicationRun()
-{
-   DOUT3("@@@@@@@@@@ Start application state = %s", GetState().c_str());
-
-   // Halt application in any case
-   // ExecuteStateTransition(stcmdDoHalt(), SMCommandTimeout());
-
-   ExecuteStateTransition(stcmdDoConfigure(), SMCommandTimeout());
-
-   ExecuteStateTransition(stcmdDoEnable(), SMCommandTimeout());
-
-   ExecuteStateTransition(stcmdDoStart(), SMCommandTimeout());
-
-   DOUT3("@@@@@@@@ Start application done state = %s", GetState().c_str());
-
-   return GetState() == stRunning();
-}
-
-bool dabc::Application::PerformApplicationFinish()
-{
-//   DOUT0("==================================================================");
-//   DOUT0("App PerformApplicationFinish1 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
-
-   ExecuteStateTransition(stcmdDoStop(), SMCommandTimeout());
-
-//   DOUT0("==================================================================");
-//   DOUT0("App PerformApplicationFinish2 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
-
-   // do halt will be done in any case
-   ExecuteStateTransition(stcmdDoHalt(), SMCommandTimeout());
-
-//   DOUT0("==================================================================");
-//   DOUT0("App PerformApplicationFinish3 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
-
-
-//   DOUT0("Finish application state = %s", GetState().c_str());
-
-   return GetState() == stHalted();
-}
-
-bool dabc::Application::IsFinished()
-{
-   if (GetState() == stError()) return true;
-
-   return dabc::ApplicationBase::IsFinished();
-}
-
-
-bool dabc::Application::IsTransitionAllowed(const std::string& cmd)
-{
-   std::string state = GetState();
-
-   if ((state == stHalted()) && (cmd == stcmdDoConfigure())) return true;
-
-   if ((state == stConfigured()) && (cmd == stcmdDoEnable())) return true;
-
-   if ((state == stReady()) && (cmd == stcmdDoStart())) return true;
-
-   if ((state == stRunning()) && (cmd == stcmdDoStop())) return true;
-
-   if (cmd == stcmdDoHalt()) return true;
-
-   if (cmd == stcmdDoError()) return true;
-
-   return false;
-}
-
-
-bool dabc::Application::DoStateTransition(const std::string& cmd)
-{
-   // method called from application thread
-
-   bool res = true;
-
-   std::string tgtstate;
-
-   if (cmd == stcmdDoConfigure()) {
-
-      res = CreateAppModules();
-
-      tgtstate = stConfigured();
-      DOUT2("Configure res = %s", DBOOL(res));
-   } else
-   if (cmd == stcmdDoEnable()) {
-      res = dabc::mgr.ActivateConnections(SMCommandTimeout());
-      tgtstate = stReady();
-      DOUT2("Enable res = %s", DBOOL(res));
-   } else
-   if (cmd == stcmdDoStart()) {
-      res = BeforeAppModulesStarted();
-      res = StartModules() && res;
-      if (res) {
-         LockGuard lock(ObjectMutex());
-         fWasRunning = true;
-      }
-      DOUT2("Start res = %s", DBOOL(res));
-
-      tgtstate = stRunning();
-   } else
-   if (cmd == stcmdDoStop()) {
-      res = StopModules();
-      res = AfterAppModulesStopped() && res;
-      DOUT2("Stop res = %s", DBOOL(res));
-      tgtstate = stReady();
-   } else
-   if (cmd == stcmdDoHalt()) {
-      res = BeforeAppModulesDestroyed();
-      res = CleanupApplication() && res;
-      DOUT2("Halt res = %s", DBOOL(res));
-      tgtstate = stHalted();
-   } else
-   if (cmd == stcmdDoError()) {
-      res = StopModules();
-      tgtstate = stError();
-   } else
-      res = false;
-
-   if (res) SetState(tgtstate);
-       else SetState(stFailure());
-
-   return res;
-}
-
-
-bool dabc::Application::MakeSystemSnapshot(double tmout)
-{
-   dabc::CmdGetNodesState cmd;
-   cmd.SetTimeout(tmout);
-
-   if (!Execute(cmd)) return false;
-
-   std::string sbuf = cmd.GetStr(CmdGetNodesState::States());
-
-   for (unsigned n=0; n<NumNodes(); n++)
-      NodeRec(n)->active = dabc::CmdGetNodesState::GetState(sbuf, n);
-
-   return true;
-}
-
-
-void dabc::ApplicationRef::CheckWorkDone()
-{
-   Submit(Command("CheckWorkDone"));
-}
-
-
-bool dabc::ApplicationRef::IsWorkDone()
-{
-   return GetObject() ? GetObject()->IsWorkDone() : false;
-}
-
-bool dabc::ApplicationRef::IsFinished()
-{
-   return GetObject() ? GetObject()->IsFinished() : false;
 }

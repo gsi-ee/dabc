@@ -66,20 +66,20 @@ class IbTestApplication : public dabc::Application {
          
          if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
-         int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").Value().AsInt() * sizeof(IbTestConnRec);
+         int connect_packet_size = 1024 + dabc::mgr.NumNodes() * Par("TestNumLids").Value().AsInt() * sizeof(IbTestConnRec);
          int bufsize = 16*1024;
          while (bufsize < connect_packet_size) bufsize*=2;
 
-         dabc::mgr.CreateMemoryPool("SendPool", bufsize, NumNodes() * 4);
+         dabc::mgr.CreateMemoryPool("SendPool", bufsize, dabc::mgr.NumNodes() * 4);
 
          dabc::CmdCreateModule cmd("IbTestWorkerModule", IBTEST_WORKERNAME, "IbTestThrd");
          cmd.SetInt("NodeNumber", dabc::mgr()->NodeId());
-         cmd.SetInt("NumNodes", NumNodes());
-         cmd.SetInt("NumPorts", (dabc::mgr()->NodeId()==0) ? NumNodes()-1 : 1);
+         cmd.SetInt("NumNodes", dabc::mgr.NumNodes());
+         cmd.SetInt("NumPorts", (dabc::mgr()->NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
 
          if (!dabc::mgr.Execute(cmd)) return false;
 
-         for (unsigned node = 1; node < NumNodes(); node++) {
+         for (int node = 1; node < dabc::mgr.NumNodes(); node++) {
             std::string port1 = dabc::Url::ComposePortName(0, dabc::format("%s/Output", IBTEST_WORKERNAME), node-1);
 
             std::string port2 = dabc::Url::ComposePortName(node, dabc::format("%s/Input", IBTEST_WORKERNAME), 0);
@@ -101,7 +101,7 @@ class IbTestApplication : public dabc::Application {
       virtual int SMCommandTimeout() const
       {
          // all slaves should be able to connect inside 10 seconds, master timeout could be configurable
-         if (dabc::mgr()->NodeId()>0) return 10;
+         if (dabc::mgr.NodeId()>0) return 10;
 
          return Par("TestTimeout").Value().AsInt(20);
       }

@@ -57,7 +57,7 @@ bool bnet::Application::CreateAppModules()
    int connect_packet_size = 50000;
    int bufsize = 16*1024;
    while (bufsize < connect_packet_size) bufsize*=2;
-   dabc::mgr.CreateMemoryPool("BnetCtrlPool", bufsize, NumNodes() * 4);
+   dabc::mgr.CreateMemoryPool("BnetCtrlPool", bufsize, dabc::mgr.NumNodes() * 4);
 
    bufsize = Cfg(dabc::xmlBufferSize).AsInt(65536);
    int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
@@ -75,7 +75,7 @@ bool bnet::Application::CreateAppModules()
       dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", names::WorkerModule()));
    }
 
-   for (unsigned node = 1; node < NumNodes(); node++) {
+   for (int node = 1; node < dabc::mgr.NumNodes(); node++) {
       std::string port1 = dabc::Url::ComposePortName(0, dabc::format("%s/Port", names::WorkerModule()), node-1);
 
       std::string port2 = dabc::Url::ComposePortName(node, dabc::format("%s/Port", names::WorkerModule()), 0);
