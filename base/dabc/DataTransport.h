@@ -70,7 +70,7 @@ namespace dabc {
          inpCheckBuffer,   // here size of buffer will be checked
          inpHasBuffer,     // buffer is ready for use
          inpCallBack,      // in this mode transport waits for call-back
-         inpCompliting,    // one need to complete operation
+         inpCompleting,    // one need to complete operation
          inpComplitTimeout,// waiting timeout after Read_Complete
          inpReady,
          inpError,
@@ -90,12 +90,25 @@ namespace dabc {
          MemoryPoolRef      fPoolRef;
          unsigned           fExtraBufs;         //!< number of extra buffers provided to the transport addon
          std::string        fReconnect;         //!< when specified, tried to reconnect
+         bool               fStopRequested;     //!< if true transport will be stopped when next suitable state is achieved
+
 
          /** Method can be used in custom transport to start pool monitoring */
          void RequestPoolMonitoring();
 
          virtual bool StartTransport();
          virtual bool StopTransport();
+
+         void ChangeState(EInputStates state);
+
+         /** Returns true if state consider to be suitable to stop transport */
+         bool SuitableStateForStartStop() {
+            return (fInpState == inpInit) ||
+                   (fInpState == inpBegin) ||
+                   (fInpState == inpReady) ||
+                   (fInpState == inpError) ||
+                   (fInpState == inpClosed);
+         }
 
          void CloseInput();
 
@@ -150,19 +163,30 @@ namespace dabc {
          outWaitFinishCallback, // when waiting when buffer writing is finished
          outFinishWriting,
          outError,
-         outClosing,   // closing transport
+         outClosing,       // closing transport
          outClosed
       };
 
       protected:
 
-         DataOutput*        fOutput;
-         bool               fOutputOwner;
+         DataOutput*     fOutput;
+         bool            fOutputOwner;
 
-         EOutputStates      fState;
-         Buffer             fCurrentBuf;   // currently used buffer
+         EOutputStates   fOutState;
+         Buffer          fCurrentBuf;     //!< currently used buffer
+         bool            fStopRequested;  //!< if true transport will be stopped when next suitable state is achieved
 
          void CloseOutput();
+
+         /** Returns true if state consider to be suitable to stop transport */
+         bool SuitableStateForStartStop() {
+            return (fOutState == outInit) ||
+                   (fOutState == outError) ||
+                   (fOutState == outClosed);
+         }
+
+         void ChangeState(EOutputStates state);
+
 
          virtual bool StartTransport();
          virtual bool StopTransport();

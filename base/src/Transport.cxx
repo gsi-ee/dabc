@@ -207,9 +207,10 @@ int dabc::Transport::ExecuteCommand(Command cmd)
    return ModuleAsync::ExecuteCommand(cmd);
 }
 
-
 bool dabc::Transport::StartTransport()
 {
+   if (IsRunning()) return true;
+
    DOUT3("Start transport %s", GetName());
 
    fAddon.Notify("StartTransport");
@@ -219,6 +220,8 @@ bool dabc::Transport::StartTransport()
 
 bool dabc::Transport::StopTransport()
 {
+   if (!IsRunning()) return true;
+
    DOUT3("Stop transport %s", GetName());
 
    fAddon.Notify("StopTransport");

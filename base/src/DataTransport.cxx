@@ -32,7 +32,8 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
    fPoolChangeCounter(0),
    fPoolRef(),
    fExtraBufs(0),
-   fReconnect()
+   fReconnect(),
+   fStopRequested(false)
 {
    if (inp!=0) SetDataInput(inp, owner);
 
@@ -80,7 +81,7 @@ void dabc::InputTransport::RequestPoolMonitoring()
 
 bool dabc::InputTransport::StartTransport()
 {
-   Transport::StartTransport();
+   bool res = Transport::StartTransport();
 
    DOUT2("============================= Start InputTransport %s isrunning %s", ItemName().c_str(), DBOOL(IsRunning()));
 
@@ -93,14 +94,17 @@ bool dabc::InputTransport::StartTransport()
       return false;
    }
 
-   if (fInpState != inpInit) {
-      EOUT("Non-init state when starting transport");
+   // clear any existing previous request
+   fStopRequested = false;
+
+   if (!SuitableStateForStartStop()) {
+      EOUT("Start transport %s at not optimal state %u", GetName(), (unsigned) fInpState);
    }
 
-   fNextDataSize = 0;
+   // fNextDataSize = 0;
    ProduceOutputEvent();
 
-   return true;
+   return res;
 }
 
 bool dabc::InputTransport::StopTransport()
@@ -108,8 +112,16 @@ bool dabc::InputTransport::StopTransport()
 //   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    DOUT2("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+   if (SuitableStateForStartStop()) {
+      fStopRequested = false;
+      return Transport::StopTransport();
+   }
 
-   return Transport::StopTransport();
+   if (!fStopRequested) {
+      DOUT2("%s Try to wait until suitable state is achieved now %u", GetName(), (unsigned) fInpState);
+      fStopRequested = true;
+   }
+   return true;
 }
 
 bool dabc::InputTransport::ProcessBuffer(unsigned pool)
@@ -123,7 +135,7 @@ bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 
 //   DOUT0("@@@@@@@@@@ Process buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
 
-   fInpState = inpCheckBuffer;
+   ChangeState(inpCheckBuffer);
    ProcessOutputEvent(0);
 
    // we are interesting for next buffer event if we really waiting for the buffer
@@ -160,10 +172,10 @@ void dabc::InputTransport::TransportCleanup()
 void dabc::InputTransport::ProcessTimerEvent(unsigned timer)
 {
    if (fInpState == inpInitTimeout)
-      fInpState = inpInit;
+      ChangeState(inpInit);
 
    if (fInpState == inpComplitTimeout)
-      fInpState = inpCompliting;
+      ChangeState(inpCompleting);
 
    ProcessOutputEvent(0);
 }
@@ -176,13 +188,13 @@ int dabc::InputTransport::ExecuteCommand(Command cmd)
 
       if (fInpState != inpClosed) {
          CloseInput();
-         fInpState = inpClosed;
+         ChangeState(inpClosed);
       }
 
       if (fReconnect.empty()) {
          CloseTransport(isfailure);
       } else {
-         fInpState = inpReconnect;
+         ChangeState(inpReconnect);
          ShootTimer("SysTimer", 1.);
       }
 
@@ -209,7 +221,7 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
             EOUT("Call back at init state not with extra mode");
             exit(333);
          }
-         fInpState = inpCompliting;
+         fInpState = inpCompleting;
          break;
 
       case inpSizeCallBack:
@@ -219,7 +231,7 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
          break;
 
       case inpCallBack:
-         fInpState = inpCompliting;
+         fInpState = inpCompleting;
          break;
 
       default:
@@ -229,6 +241,18 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
 
    ProcessOutputEvent(0);
 }
+
+
+void dabc::InputTransport::ChangeState(EInputStates state)
+{
+   fInpState = state;
+
+   if (fStopRequested && SuitableStateForStartStop()) {
+      DOUT2("%s Stop transport at suitable state", GetName());
+      StopTransport();
+   }
+}
+
 
 bool dabc::InputTransport::ProcessSend(unsigned port)
 {
@@ -247,7 +271,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    if (fTransportDevice.DeviceDestroyed()) {
       if (fInpState != inpClosed) {
          CloseInput();
-         fInpState = inpClosed;
+         ChangeState(inpClosed);
       }
       CloseTransport(false);
       return false;
@@ -276,9 +300,8 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       SetDataInput(inp, true);
 
-      fInpState = inpInit;
+      ChangeState(inpInit);
    }
-
 
    if (fInput==0) {
       EOUT("InputTransport %s - no input object!!!!", GetName());
@@ -305,7 +328,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       // if internal queue already acquire as many buffers, wait
       if (fExtraBufs && (NumCanSend(port) <= fExtraBufs)) {
 //            DOUT0("There are too many buffers in the transport queue - start wait for the call-back buf %u", fCurrentBuf.GetTotalSize());
-         fInpState = inpCallBack;
+         ChangeState(inpCallBack);
          return false;
       }
 
@@ -318,16 +341,16 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
          case di_Repeat:
             return true;
          case di_RepeatTimeOut:
-            fInpState = inpInitTimeout;
+            ChangeState(inpInitTimeout);
             ShootTimer("SysTimer", fInput->Read_Timeout());
             return false;
          case di_CallBack:
-            fInpState = inpSizeCallBack;
+            ChangeState(inpSizeCallBack);
             fNextDataSize = 0;
             return false;
       }
 
-      fInpState = inpCheckSize;
+      ChangeState(inpCheckSize);
    }
 
    if (fInpState == inpCheckSize) {
@@ -338,24 +361,24 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
          case di_CallBack:
             EOUT("Wrong place for callback");
-            fInpState = inpError;
+            ChangeState(inpError);
             break;
 
          case di_EndOfStream:
-            fInpState = inpEnd;
+            ChangeState(inpEnd);
             break;
 
          case di_DfltBufSize:
-            fInpState = inpNeedBuffer;
+            ChangeState(inpNeedBuffer);
             fNextDataSize = 0;
             break;
 
          default:
-            if (fNextDataSize <= di_ValidSize)
-               fInpState = inpNeedBuffer;
-            else {
-               EOUT("Reading error");
-               fInpState = inpError;
+            if (fNextDataSize <= di_ValidSize) {
+               ChangeState(inpNeedBuffer);
+            } else {
+               DOUT0("Tr:%s Reading error", GetName());
+               ChangeState(inpError);
             }
       }
    }
@@ -372,10 +395,10 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 //      DOUT0("input transport taking buffer null %s size %u autopool %s connected %s", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize(), DBOOL(IsAutoPool()), DBOOL(IsPoolConnected()));
 
       if (!fCurrentBuf.null()) {
-         fInpState = inpCheckBuffer;
+         ChangeState(inpCheckBuffer);
       } else
       if (IsAutoPool()) {
-         fInpState = inpWaitBuffer;
+         ChangeState(inpWaitBuffer);
          return false;
       } else {
          EOUT("Did not get buffer and pool queue is not configured - use minimal timeout");
@@ -390,10 +413,10 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       // if buffer was provided, use it
       if (fCurrentBuf.GetTotalSize() < fNextDataSize) {
          EOUT("Requested buffer smaller than actual data size");
-         fInpState = inpError;
+         ChangeState(inpError);
       } else {
          if (fNextDataSize>0) fCurrentBuf.SetTotalSize(fNextDataSize);
-         fInpState = inpHasBuffer;
+         ChangeState(inpHasBuffer);
       }
    }
 
@@ -404,11 +427,11 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       switch (start_res) {
          case di_Ok:
             // this will allows to call Read_Complete method in next iteration
-            fInpState = inpCompliting;
+            ChangeState(inpCompleting);
             break;
          case di_CallBack:
             // if we starts callback, just not fire event
-            fInpState = inpCallBack;
+            ChangeState(inpCallBack);
             return false;
 
          case di_NeedMoreBuf:
@@ -417,15 +440,15 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             fExtraBufs++;
 
             if (start_res == di_NeedMoreBuf) {
-               fInpState = inpInit;
+               ChangeState(inpInit);
                return true;
             } else {
-               fInpState = inpCallBack;
+               ChangeState(inpCallBack);
                return false;
             }
 
          default:
-            fInpState = inpError;
+            ChangeState(inpError);
       }
    }
 
@@ -435,10 +458,10 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       return false;
    }
 
-   if (fInpState == inpCompliting) {
+   if (fInpState == inpCompleting) {
 
       if (fExtraBufs && !fCurrentBuf.null()) {
-         EOUT("Internal error - currbuf not null when compliting");
+         EOUT("Internal error - currbuf not null when completing");
          return false;
       }
 
@@ -456,8 +479,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       switch (res) {
          case di_Ok:
-            //
-            fInpState = inpReady;
+            ChangeState(inpReady);
             break;
          case di_MoreBufReady:
             // we send immediately buffer and will try to take more buffers out of transport
@@ -466,22 +488,22 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
          case di_SkipBuffer:
             fCurrentBuf.Release();
             DOUT4("Skip input buffer");
-            fInpState = inpInit;
+            ChangeState(inpInit);
             break;
          case di_EndOfStream:
             fCurrentBuf.Release();
             DOUT4("End of stream");
-            fInpState = inpEnd;
+            ChangeState(inpEnd);
             break;
          case di_Repeat:
             return true;
          case di_RepeatTimeOut:
-            fInpState = inpComplitTimeout;
+            ChangeState(inpComplitTimeout);
             ShootTimer("SysTimer", fInput->Read_Timeout());
             return false;
          default:
             EOUT("Error when do buffer reading res = %d", res);
-            fInpState = inpError;
+            ChangeState(inpError);
       }
    }
 
@@ -490,7 +512,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       Send(fCurrentBuf);
       fCurrentBuf.Release();
-      fInpState = inpInit;
+      ChangeState(inpInit);
    }
 
    if ((fInpState == inpError) || (fInpState == inpEnd)) {
@@ -508,7 +530,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       } else {
          fCurrentBuf.SetTypeId(dabc::mbt_EOF);
          Send(fCurrentBuf);
-         fInpState = inpClosed;
+         ChangeState(inpClosed);
       }
    }
 
@@ -526,8 +548,9 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
    dabc::Transport(cmd, 0, outport),
    fOutput(out),
    fOutputOwner(owner),
-   fState(outInit),
-   fCurrentBuf()
+   fOutState(outInit),
+   fCurrentBuf(),
+   fStopRequested(false)
 {
    AssignAddon(addon);
    CreateTimer("SysTimer");
@@ -553,26 +576,51 @@ void dabc::OutputTransport::CloseOutput()
    fCurrentBuf.Release();
 }
 
+void dabc::OutputTransport::ChangeState(EOutputStates state)
+{
+   fOutState = state;
+
+   if (fStopRequested && SuitableStateForStartStop()) {
+      StopTransport();
+   }
+}
+
 
 bool dabc::OutputTransport::StartTransport()
 {
    DOUT2("Starting OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
-   Transport::StartTransport();
+   bool res = Transport::StartTransport();
+
+   fStopRequested = false;
 
    if (fOutput==0) {
       EOUT("Output was not specified!!!");
       return false;
    }
 
-   return true;
+   if (!SuitableStateForStartStop()) {
+      EOUT("Start transport %s at not optimal state %u", GetName(), (unsigned) fOutState);
+   }
+
+   return res;
 }
 
 bool dabc::OutputTransport::StopTransport()
 {
    DOUT2("Stopping OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
-   return Transport::StopTransport();
+   if (SuitableStateForStartStop()) {
+      fStopRequested = false;
+      return Transport::StopTransport();
+   }
+
+   if (!fStopRequested) {
+      fStopRequested = true;
+      DOUT2("%s Try to wait until suitable state is achieved now %u", GetName(), (unsigned) fOutState);
+   }
+
+   return true;
 }
 
 
@@ -587,26 +635,26 @@ void dabc::OutputTransport::TransportCleanup()
 
 void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 {
- //  DOUT0("%s dabc::OutputTransport::ProcessEvent %u  state %u", GetName(), (unsigned) evnt.GetCode(), fState);
+ //  DOUT0("%s dabc::OutputTransport::ProcessEvent %u  state %u", GetName(), (unsigned) evnt.GetCode(), fOutState);
 
    if (evnt.GetCode() == evCallBack) {
 
       if (evnt.GetArg() != do_Ok) {
          EOUT("Callback with error argument");
-         fState = outClosing;
+         ChangeState(outClosing);
          CloseOutput();
          CloseTransport(true);
          return;
       }
 
-      if (fState == outWaitCallback) {
-         fState = outInit;
+      if (fOutState == outWaitCallback) {
+         ChangeState(outInit);
          ProcessInputEvent(0);
          return;
       }
 
-      if (fState == outWaitFinishCallback) {
-         fState = outFinishWriting;
+      if (fOutState == outWaitFinishCallback) {
+         ChangeState(outFinishWriting);
 
          // we need to call ProcessRecv directly at least once before entering into normal loop
          if (ProcessRecv(0))
@@ -624,21 +672,21 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 bool dabc::OutputTransport::ProcessRecv(unsigned port)
 {
 //   if (IsName("_OnlineServer_Output0_Transport_Slave0_Transport"))
-//      DOUT0("dabc::OutputTransport::ProcessRecv  %s state %u", GetName(), fState);
+//      DOUT0("dabc::OutputTransport::ProcessRecv  %s state %u", GetName(), fOutState);
 
    if (fOutput==0) {
       EOUT("Output object not specified");
-      fState = outError;
+      ChangeState(outError);
    }
 
    if (fTransportDevice.DeviceDestroyed()) {
-      fState = outClosed;
+      ChangeState(outClosed);
       CloseOutput();
       CloseTransport(false);
       return false;
    }
 
-   if (fState == outInit) {
+   if (fOutState == outInit) {
 
       unsigned ret(do_Ok);
 
@@ -664,41 +712,41 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
       switch (ret) {
          case do_Ok:
-            fState = outStartWriting;
+            ChangeState(outStartWriting);
             break;
          case do_Repeat:
             return true;
          case do_RepeatTimeOut:
-            fState = outInitTimeout;
+            ChangeState(outInitTimeout);
             ShootTimer("SysTimer", fOutput->Write_Timeout());
             return false;
          case do_CallBack:
-            fState = outWaitCallback;
+            ChangeState(outWaitCallback);
             return false;
          case do_Skip:
             Recv(port).Release();
             return true;
          case do_Close:
-            fState = outClosing;
+            ChangeState(outClosing);
             break;
          case do_Error:
-            fState = outError;
+            ChangeState(outError);
             break;
          default:
             EOUT("Wrong return value %u for the Write_Check", ret);
-            fState = outError;
+            ChangeState(outError);
       }
    }
 
-   if (fState == outInitTimeout) {
+   if (fOutState == outInitTimeout) {
       return false;
    }
 
-   if (fState == outWaitCallback) {
+   if (fOutState == outWaitCallback) {
       return false;
    }
 
-   if (fState == outStartWriting) {
+   if (fOutState == outStartWriting) {
 
       fCurrentBuf = Recv(port);
 
@@ -706,33 +754,33 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
       switch (ret) {
          case do_Ok:
-            fState = outFinishWriting;
+            ChangeState(outFinishWriting);
             break;
          case do_CallBack:
-            fState = outWaitFinishCallback;
+            ChangeState(outWaitFinishCallback);
             return false;
          case do_Skip:
-            fState = outInit;
+            ChangeState(outInit);
             return true;
          case do_Close:
-            fState = outClosing;
+            ChangeState(outClosing);
             break;
          case do_Error:
             DOUT0("Error when writing buffer in transport %s", GetName());
-            fState = outError;
+            ChangeState(outError);
             break;
          default:
             EOUT("Wrong return value %u for the Write_Buffer", ret);
-            fState = outError;
+            ChangeState(outError);
       }
    }
 
-   if (fState == outWaitFinishCallback) {
+   if (fOutState == outWaitFinishCallback) {
       // if we wait for call back, ignore all possible events
       return false;
    }
 
-   if (fState == outFinishWriting) {
+   if (fOutState == outFinishWriting) {
 
       fCurrentBuf.Release();
 
@@ -740,29 +788,29 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
       switch (ret) {
          case do_Ok:
-            fState = outInit;
+            ChangeState(outInit);
             break;
          case do_Close:
-            fState = outClosing;
+            ChangeState(outClosing);
             break;
          case do_Error:
-            fState = outError;
+            ChangeState(outError);
             break;
          default:
-            EOUT("Wrong return value %u for the Write_Complete", ret);
-            fState = outError;
+            EOUT("%s Wrong return value %u for the Write_Complete", GetName(), ret);
+            ChangeState(outError);
       }
    }
 
-   if (fState == outClosing) {
-      fState = outClosed;
+   if (fOutState == outClosing) {
+      ChangeState(outClosed);
       CloseOutput();
       CloseTransport(false);
       return false;
    }
 
-   if (fState == outError) {
-      fState = outClosed;
+   if (fOutState == outError) {
+      ChangeState(outClosed);
       // DOUT3("CLOSE OUTPUT TRANSPORT %s input connected %s", GetName(), DBOOL(IsInputConnected()));
       CloseOutput();
       CloseTransport(true);
@@ -779,8 +827,8 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
 void dabc::OutputTransport::ProcessTimerEvent(unsigned timer)
 {
-   if (fState == outInitTimeout)
-      fState = outInit;
+   if (fOutState == outInitTimeout)
+      ChangeState(outInit);
 
    ProcessInputEvent(0);
 }

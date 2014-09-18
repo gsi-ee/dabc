@@ -842,7 +842,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
             for (unsigned n=0;n<NumInputs();n++)
                if (Input(n)->IsConnected() || Input(n)->IsDoingReconnect()) return;
 
-            DOUT0("Module %s automatically stopped while all connections are now disconnected", GetName());
+            DOUT2("Module %s automatically stopped while all connections are now disconnected", GetName());
             DoStop();
          }
 

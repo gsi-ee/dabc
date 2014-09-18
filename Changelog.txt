@@ -10,7 +10,10 @@ current functionality of the framework.
    defined - 'Halted', 'Ready' and 'Running'. There is only method called 
    DoTransition(), where state could be changed.
 3. There are several commands defined to switch between states.         
-
+4. Try to stop input/output transports at the suitable moment, when communication 
+   with correspondent i/o object is in stable state. For instance, one should not
+   stop event processing when callback function is awaited.  
+ 
 
 17.09.2014
 1. In the dabc::Transport class reduce maximal number of input/output loops
