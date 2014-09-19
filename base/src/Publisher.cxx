@@ -598,14 +598,17 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
          case 5: {  // REMOVE WORKER
 
-            DOUT4("REMOVE WORKER %s", worker.c_str());
+            DOUT2("Publisher removes worker %s", worker.c_str());
 
             PublishersList::iterator iter = fPublishers.begin();
             while (iter!=fPublishers.end()) {
-               if (iter->worker == worker)
+               if (iter->worker == worker) {
+                  DOUT2("Publisher removes path %s of worker %s", iter->path.c_str(), worker.c_str());
+                  fLocal.GetFolder(iter->path).Destroy();
                   fPublishers.erase(iter++);
-               else
+               } else {
                   iter++;
+               }
             }
 
             SubscribersList::iterator iter2 = fSubscribers.begin();
