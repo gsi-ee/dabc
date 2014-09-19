@@ -1250,8 +1250,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_true;
    } else
    if (cmd.IsName("StopManagerMainLoop")) {
-      if (fMgrStoppedTime.null())
+      if (fMgrStoppedTime.null()) {
+         DOUT0("++++++++ Set stop time in StopManagerMainLoop command");
          fMgrStoppedTime.GetNow();
+      }
    } else
       cmd_res = cmd_false;
 
@@ -1608,6 +1610,7 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT0("Process CTRL-C signal");
 
    if (fMgrStoppedTime.null()) {
+      DOUT0("++++++++ Set stop time in Ctrl-C processing");
       fMgrStoppedTime.GetNow();
       return;
    }
@@ -1676,6 +1679,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
       // check if stop time was not set
       if (fMgrStoppedTime.null()) {
          if ((runtime <= 0) || !starttm.Expired(runtime)) continue;
+         DOUT0("++++++++ Set stop time while runtime expired");
          fMgrStoppedTime.GetNow();
       }
 
