@@ -712,23 +712,18 @@ bool dabc::Manager::IsAnyModuleRunning()
 
 dabc::Reference dabc::Manager::FindItem(const std::string& name, bool islocal)
 {
-   Reference ref;
    std::string server, itemname;
 
    if (islocal) {
       itemname = name;
    } else {
-      if (!DecomposeAddress(name, islocal, server, itemname)) return ref;
-      if (!islocal) return ref;
+      if (!DecomposeAddress(name, islocal, server, itemname)) return 0;
+      if (!islocal) return 0;
    }
 
-   if (itemname.empty()) return ref;
+   if (itemname.empty()) return 0;
 
-   if (itemname[0] != '/') ref = GetAppFolder().FindChild(itemname.c_str());
-
-   if (ref.null()) ref = FindChildRef(itemname.c_str());
-
-   return ref;
+   return FindChildRef(itemname.c_str());
 }
 
 dabc::ModuleRef dabc::Manager::FindModule(const std::string& name)
@@ -764,27 +759,14 @@ dabc::ApplicationRef dabc::Manager::app()
    return FindChildRef(xmlAppDfltName);
 }
 
-dabc::Reference dabc::Manager::GetAppFolder(bool force)
-{
-   return GetFolder(xmlAppDfltName, force);
-}
-
 void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool compact)
 {
    itemname.clear();
 
    if (ptr==0) return;
 
-   dabc::Reference app;
-
-   if (compact) app = GetAppFolder();
-
-   if (!app.null() && ptr->IsParent(app()))
-      ptr->FillFullName(itemname, app());
-   else {
-      itemname = "/";
-      ptr->FillFullName(itemname, this);
-   }
+   if (!compact) itemname = "/";
+   ptr->FillFullName(itemname, this);
 }
 
 int dabc::Manager::PreviewCommand(Command cmd)
@@ -1186,37 +1168,20 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    if (cmd.IsName(CmdCleanupApplication::CmdName())) {
       cmd_res = DoCleanupApplication();
    } else
-   if (cmd.IsName(CmdStartModule::CmdName())) {
+   if (cmd.IsName(CmdStartModule::CmdName()) || cmd.IsName(CmdStopModule::CmdName())) {
 
-      std::string name = cmd.GetStr(CmdStartModule::ModuleArg());
+      std::string name = cmd.GetStr(CmdModule::ModuleArg());
+      dabc::WorkerRef ref;
 
-      if (name.compare("*")==0) {
-         dabc::Module* m(0);
-         Iterator iter(GetAppFolder());
+      if (name.compare("*")==0)
+         ref = app();
+      else
+         ref = FindModule(name);
 
-         while (iter.next_cast(m))
-            m->Start();
-
-         cmd_res = cmd_true;
-
-      } else {
-         ModuleRef m = FindModule(name);
-         cmd_res = cmd_bool(m.Start());
-      }
-   } else
-   if (cmd.IsName(CmdStopModule::CmdName())) {
-      std::string name = cmd.GetStr(CmdStopModule::ModuleArg());
-
-      if (name.compare("*")==0) {
-         dabc::Module* m(0);
-         Iterator iter(GetAppFolder());
-
-         while (iter.next_cast(m))
-            m->Stop();
-      } else {
-         ModuleRef m = FindModule(cmd.GetStr("Module"));
-         cmd_res = cmd_bool(m.Stop());
-      }
+      if (ref.Submit(cmd))
+         cmd_res = cmd_postponed;
+      else
+         cmd_res = cmd_false;
    } else
    if (cmd.IsName(CmdDeleteModule::CmdName())) {
       ModuleRef ref = FindModule(cmd.GetStr(CmdDeleteModule::ModuleArg()));
@@ -1409,10 +1374,8 @@ bool dabc::Manager::DestroyObject(Reference ref)
 
 bool dabc::Manager::DoCleanupApplication()
 {
-   DOUT3("DoCleanupApplication starts numchilds %u", GetAppFolder().NumChilds());
-
    // destroy application if exist
-   GetAppFolder().Destroy();
+   app().Destroy();
 
    ProcessDestroyQueue();
 
@@ -2048,13 +2011,6 @@ dabc::WorkerRef dabc::ManagerRef::FindDevice(const std::string& name)
 {
    return GetObject() ? GetObject()->FindDevice(name) : dabc::WorkerRef();
 }
-
-
-dabc::Reference dabc::ManagerRef::GetAppFolder(bool force)
-{
-   return GetObject() ? GetObject()->GetAppFolder(force) : dabc::Reference();
-}
-
 
 dabc::ModuleRef dabc::ManagerRef::FindModule(const std::string& name)
 {

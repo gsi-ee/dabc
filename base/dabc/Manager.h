@@ -411,7 +411,6 @@ namespace dabc {
 
          Reference FindPort(const std::string& name);
 
-         Reference GetAppFolder(bool force = false);
          ApplicationRef app();
 
          bool IsAnyModuleRunning();
@@ -597,8 +596,6 @@ namespace dabc {
          DataInput* CreateDataInput(const std::string& kind);
 
       public:
-
-         Reference GetAppFolder(bool force = false);
 
          ApplicationRef app();
 

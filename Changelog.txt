@@ -5,6 +5,7 @@ current functionality of the framework.
 19.09.2014
 1. Correctly unregister worker from publisher - make it possible to register
    worker under same path again. Important when application shutdown and restarted again. 
+2. Remove application as direct parent of modules, devices and pools.
 
 
 18.09.2014

@@ -325,10 +325,10 @@ int dabc::Module::PreviewCommand(Command cmd)
          cmd_res = cmd_true;
       }
    } else
-   if (cmd.IsName("StartModule"))
+   if (cmd.IsName("StartModule") || cmd.IsName(CmdStartModule::CmdName()))
       cmd_res = cmd_bool(DoStart());
    else
-   if (cmd.IsName("StopModule"))
+   if (cmd.IsName("StopModule")|| cmd.IsName(CmdStopModule::CmdName()))
       cmd_res = cmd_bool(DoStop());
    else
    if (cmd.IsName("SetPriority")) {

@@ -193,9 +193,14 @@ namespace dabc {
       DABC_REFERENCE(ApplicationRef, WorkerRef, Application)
 
       bool ChangeState(const std::string& state)
-      {
-         return Execute(CmdStateTransition(state));
-      }
+      { return Execute(CmdStateTransition(state)); }
+
+      bool StartAllModules()
+      { return Execute("StartAllModules"); }
+
+      bool StopAllModules()
+      { return Execute("StopAllModules"); }
+
 
    };
 

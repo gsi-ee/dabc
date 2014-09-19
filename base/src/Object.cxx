@@ -950,7 +950,6 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
    }
 
    if (prnt.null() && withmanager && !isskipparent) {
-      if (!isrootfolder) prnt = dabc::mgr.GetAppFolder(true);
       if (prnt.null()) prnt = dabc::mgr;
    }
 

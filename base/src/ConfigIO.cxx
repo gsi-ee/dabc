@@ -157,8 +157,6 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
 
    // DOUT0("Start read of record maxlvl %d", maxlevel);
 
-   Reference app = dabc::mgr.GetAppFolder();
-
    // first loop - strict syntax in the selected context
    // second loop - wildcard syntax in all contexts
 
@@ -187,7 +185,6 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
 
       fCurrChld = 0;
       int level = max_depth;
-      int appskiplevel(-1);
 
       while (level >= 0) {
          // maximal level is manager itself, all other is several parents (if any)
@@ -271,21 +268,11 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
             EOUT("FIXME: problem in hierarchy search for %s lvl %d prnt %s", obj->ItemName().c_str(), level, prnt->GetName());
             EOUT("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem);
             break;
-         } else
-         if ((level>0) && (app == prnt))  {
-            // if we were trying to find application and didnot find it - no problem
-            // probably modules/pools/device configuration specified without application - lets try to find it
-
-            DOUT3("Skip missing application at level %d", level);
-
-            // remember on which level we skip application, do not try to rall back
-            appskiplevel = level--;
-
-            continue;
+         } else {
+            break;
          }
 
          level++;
-         if (level==appskiplevel) level++;
 
          if (level > max_depth) break;
 

@@ -109,6 +109,16 @@ int dabc::Application::ExecuteCommand(dabc::Command cmd)
       return cmd_true;
    }
 
+   if (cmd.IsName("StartAllModules") || cmd.IsName(CmdStartModule::CmdName())) {
+      StartModules();
+      return cmd_true;
+   }
+
+   if (cmd.IsName("StopAllModules")  || cmd.IsName(CmdStopModule::CmdName())) {
+      StopModules();
+      return cmd_true;
+   }
+
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
@@ -206,19 +216,8 @@ bool dabc::Application::CreateAppModules()
 
 bool dabc::Application::StartModules()
 {
-
    for (unsigned n=0;n<fAppModules.size();n++)
       dabc::mgr.StartModule(fAppModules[n]);
-
-/*   ReferencesVector vect;
-
-   GetAllChildRef(&vect);
-
-   while (vect.GetSize()>0) {
-      ModuleRef m = vect.TakeRef(0);
-      m.Start();
-   }
-   */
 
    return true;
 }
@@ -227,18 +226,6 @@ bool dabc::Application::StopModules()
 {
    for (unsigned n=0;n<fAppModules.size();n++)
       dabc::mgr.StopModule(fAppModules[n]);
-
-/*
-   ReferencesVector vect;
-
-   GetAllChildRef(&vect);
-
-   while (vect.GetSize()>0) {
-      ModuleRef m = vect.TakeRef(0);
-      m.Stop();
-   }
-*/
-   DOUT2("Stop modules");
 
    return true;
 }
