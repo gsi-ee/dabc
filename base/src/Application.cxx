@@ -137,13 +137,18 @@ bool dabc::Application::DoTransition(const std::string& tgtstate)
 
    if (currstate == tgtstate) return true;
 
-   // in case of failure state always bring application into halted state first
-   if (currstate == stFailure()) {
-      if (!CleanupApplication()) return false;
-      currstate = stHalted();
-   }
+   // it is not allowed to change transition state - it is internal
+   if (currstate == stTransition()) return false;
+
+   SetState(stTransition());
 
    bool res = true;
+
+   // in case of failure state always bring application into halted state first
+   if (currstate == stFailure()) {
+      res = CleanupApplication();
+      if (res)  currstate = stHalted();
+   }
 
    if (tgtstate == stHalted()) {
       if (currstate == stRunning()) res = StopModules();
@@ -168,7 +173,7 @@ bool dabc::Application::DoTransition(const std::string& tgtstate)
       StopModules();
    } else {
       EOUT("Unsupported state name %s", tgtstate.c_str());
-      return false;
+      res = false;
    }
 
    if (res) SetState(tgtstate);

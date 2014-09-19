@@ -1250,10 +1250,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_true;
    } else
    if (cmd.IsName("StopManagerMainLoop")) {
-      if (fMgrStoppedTime.null()) {
-         DOUT0("++++++++ Set stop time in StopManagerMainLoop command");
-         fMgrStoppedTime.GetNow();
-      }
+      if (fMgrStoppedTime.null()) fMgrStoppedTime.GetNow();
    } else
       cmd_res = cmd_false;
 
@@ -1610,7 +1607,6 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT0("Process CTRL-C signal");
 
    if (fMgrStoppedTime.null()) {
-      DOUT0("++++++++ Set stop time in Ctrl-C processing");
       fMgrStoppedTime.GetNow();
       return;
    }
@@ -2230,8 +2226,6 @@ void* dabc::ManagerRef::CreateAny(const std::string& classname, const std::strin
 void dabc::ManagerRef::StopApplication()
 {
    // Manager will be stopped regularly if it is in running
-
-   DOUT0("dabc::ManagerRef::StopApplication");
 
    Submit(dabc::Command("StopManagerMainLoop"));
 

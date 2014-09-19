@@ -94,6 +94,7 @@ namespace dabc {
          static const char* stReady()   { return "Ready"; }
          static const char* stRunning() { return "Running"; }
          static const char* stFailure() { return "Failure"; }
+         static const char* stTransition() { return "Transition"; }
 
          // these are commands provided by state machine
          static const char* stcmdDoConfigure() { return "DoConfigure"; }
