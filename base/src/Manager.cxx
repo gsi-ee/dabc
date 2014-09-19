@@ -1251,7 +1251,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("StopManagerMainLoop")) {
       if (fMgrStoppedTime.null())
-         fMgrStoppedTime = dabc::Now();
+         fMgrStoppedTime.GetNow();
    } else
       cmd_res = cmd_false;
 
@@ -1608,7 +1608,7 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT0("Process CTRL-C signal");
 
    if (fMgrStoppedTime.null()) {
-      fMgrStoppedTime = dabc::Now();
+      fMgrStoppedTime.GetNow();
       return;
    }
 
@@ -2226,9 +2226,14 @@ void* dabc::ManagerRef::CreateAny(const std::string& classname, const std::strin
 void dabc::ManagerRef::StopApplication()
 {
    // Manager will be stopped regularly if it is in running
-   if (GetObject())
-      if (GetObject()->fMgrStoppedTime.null())
-         GetObject()->fMgrStoppedTime = dabc::Now();
+
+   DOUT0("dabc::ManagerRef::StopApplication");
+
+   Submit(dabc::Command("StopManagerMainLoop"));
+
+//   if (GetObject())
+//      if (GetObject()->fMgrStoppedTime.null())
+//         GetObject()->fMgrStoppedTime = dabc::Now();
 }
 
 bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,
