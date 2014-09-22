@@ -22,6 +22,8 @@
 
 #include "TBufferJSON.h"
 
+#include <typeinfo>
+
 #include "Compression.h"
 
 #include "TArrayI.h"

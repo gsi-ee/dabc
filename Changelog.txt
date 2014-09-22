@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+22.09.2014
+1. Implement 'grid' display in ROOT JavaScript
+
+
 19.09.2014
 1. Correctly unregister worker from publisher - make it possible to register
    worker under same path again. Important when application shutdown and restarted again. 

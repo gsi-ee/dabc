@@ -16,6 +16,7 @@
 
 #include <string>
 #include <cstdlib>
+#include <stdlib.h>
 
 #ifdef COMPILED_WITH_DABC
    extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
