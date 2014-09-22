@@ -6,6 +6,7 @@ current functionality of the framework.
 1. Implement 'grid' display in ROOT JavaScript
 2. One could specify 'grid 3x3' or 'grid 4x2'.
    Display object created at the moment when first draw is performed.   
+3. Correctly update content of TProfile object 
 
 
 19.09.2014
