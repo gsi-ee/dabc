@@ -5,7 +5,8 @@ current functionality of the framework.
 23.09.2014
 1. Introduce painter class for TCanvas, support resize and update of canvas drawing.
 2. Move correspondent code into draw.htm, simplify it (no need for dummy hierarchy).
-3. Process resize event in the draw.htm.  
+3. Process resize event in the draw.htm
+4. Show wait cursor style while doing redraw of the picture 
      
 
 22.09.2014
