@@ -8,6 +8,7 @@ current functionality of the framework.
 2. Implement JSROOT.GetUrlOption to extract options from document URL. 
 3. Provide example file.htm how read and display item from ROOT file.
 4. Provide in context menu possibility to draw single element from the file. 
+5. Remove hsimple.htm, provide in index.htm possibility to specify filename via url options.
 
 
 23.09.2014
