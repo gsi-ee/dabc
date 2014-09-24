@@ -1338,7 +1338,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
          JSROOT.HierarchyPainter.prototype.CheckCanDo(node, cando);
    }
       
-   this.hpainter.OpenOnline("h.json?compact=3");
+   this.hpainter.OpenOnline();
 }
 
 
