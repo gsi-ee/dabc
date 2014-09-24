@@ -5,6 +5,8 @@ current functionality of the framework.
 24.09.2014
 1. Provide JSROOT.RegisterForResize functions to unify method how window resize
    events handled in different scripts.
+2. Implement JSROOT.GetUrlOption to extract options from document URL. 
+3. Provide example file.htm how read and display item from ROOT file.
 
 
 23.09.2014
