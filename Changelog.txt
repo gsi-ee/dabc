@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+24.09.2014
+1. Provide JSROOT.RegisterForResize functions to unify method how window resize
+   events handled in different scripts.
+
+
 23.09.2014
 1. Introduce painter class for TCanvas, support resize and update of canvas drawing.
 2. Move correspondent code into draw.htm, simplify it (no need for dummy hierarchy).
