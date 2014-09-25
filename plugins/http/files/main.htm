@@ -15,12 +15,12 @@
    <script type='text/javascript'>
    
       function initGUI() {
+
+         $("#grid_spinner").spinner({min:1,max:5});
       
          if (!DABC.mgr) DABC.mgr = new DABC.Manager(true);
          
          DABC.mgr.DisplayHiearchy("dabc_tree_holder");
-         
-         $("#grid_spinner").spinner({ min:1, max:5});
          
          setInterval(function() { DABC.mgr.UpdateAll(); }, 3000);
       }
@@ -32,13 +32,11 @@
 
 <body onload="JSROOT.AssertPrerequisites('2d', initGUI)">
    
-   <!--div id="overlay"><font face="Verdana" size="1px">DABC version 2.3.1</font></div-->
-   
    <div id="main" class="column">
    
       <h1>Objects hierarchy</h1>
 
-      Hierarchy in <a href="h.xml">xml</a> and <a href="h.json">json</a> format<br/><br/>
+      Hierarchy in <a href="h.json">json</a> and <a href="h.xml">xml</a> format<br/><br/>
 
       <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring        
       <input type="checkbox" name="show_history" id="show_history"/> History

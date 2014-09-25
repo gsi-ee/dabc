@@ -4,8 +4,6 @@ DABC.version = "2.6.7";
 
 DABC.mgr = 0;
 
-DABC.tree_limit = 200; // maximum number of elements drawn in the beginning
-
 // ============= start of DrawElement ================================= 
 
 DABC.DrawElement = function() {
@@ -664,7 +662,6 @@ DABC.FesaDrawElement.prototype.ClickItem = function() {
 }
 
 DABC.FesaDrawElement.prototype.RegularCheck = function() {
-
    
    // no need to do something when req not completed
    if (this.req!=null) return;
@@ -1170,10 +1167,6 @@ DABC.Manager.prototype.NewRequest = function() {
 
 DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
    
-//   var xhrcallback = function(res) {
-//      item.RequestCallback(res);
-//   }
-   
    return JSROOT.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
 }
 
@@ -1335,7 +1328,7 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
       if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
       if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
-         JSROOT.HierarchyPainter.prototype.CheckCanDo(node, cando);
+         JSROOT.HierarchyPainter.prototype.CheckCanDo.call(this, node, cando);
    }
       
    this.hpainter.OpenOnline();
