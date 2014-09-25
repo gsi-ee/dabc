@@ -4,6 +4,8 @@ current functionality of the framework.
 
 25.09.2014
 1. Introduce demo.htm, which demonstrates online usage of JSROOT.
+2. One could use demo.htm directly with THttpServer providing address like:
+     http://localhost:8080/jsrootsys/demo/demo.htm?addr=../../Files/job1.root/hpx/root.json.gz&layout=3x3
 
 
 24.09.2014
