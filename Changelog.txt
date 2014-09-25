@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+25.09.2014
+1. Introduce demo.htm, which demonstrates online usage of JSROOT.
+
+
 24.09.2014
 1. Provide JSROOT.RegisterForResize functions to unify method how window resize
    events handled in different scripts.
@@ -13,7 +17,7 @@ current functionality of the framework.
       http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&item=hpx;1
 6. Support direct reading of objects from subdirectories in JSROOT.TFile.
 7. Adjust callback interface when reading files, fix several problems, 
-   support of arbitrary sub-sub-directory level
+   support of arbitrary sub-sub-directory level when reading objects 
 
 
 23.09.2014
