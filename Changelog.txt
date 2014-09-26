@@ -6,7 +6,7 @@ current functionality of the framework.
 1. Adjust dabc.js to the current JSROOT code, exclude DABC.Manager class completely.
 2. Cleanup code in TBufferJSON - remove dummy class
 3. Introduce THttpCallArg::CompressWithGzip() method, which can be used now outside THttpServer  
-
+4. Also in online server process url options like "item", "items", "layout"
 
 25.09.2014
 1. Introduce demo.htm, which demonstrates online usage of JSROOT.
