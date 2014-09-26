@@ -7,6 +7,8 @@ current functionality of the framework.
 2. Cleanup code in TBufferJSON - remove dummy class
 3. Introduce THttpCallArg::CompressWithGzip() method, which can be used now outside THttpServer  
 4. Also in online server process url options like "item", "items", "layout"
+5. Possibility to generate URL, which reproduces opened page with layout and drawn items
+
 
 25.09.2014
 1. Introduce demo.htm, which demonstrates online usage of JSROOT.
