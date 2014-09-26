@@ -4,6 +4,8 @@ current functionality of the framework.
 
 26.09.2014
 1. Adjust dabc.js to the current JSROOT code, exclude DABC.Manager class completely.
+2. Cleanup code in TBufferJSON - remove dummy class
+3. Introduce THttpCallArg::CompressWithGzip() method, which can be used now outside THttpServer  
 
 
 25.09.2014

@@ -82,7 +82,6 @@ public:
    {
       fQuery = q;
    }
-
    const char *GetTopName() const
    {
       return fTopName.Data();
@@ -128,6 +127,8 @@ public:
    {
       fContentEncoding = typ;
    }
+
+   Bool_t CompressWithGzip();
 
    void SetExtraHeader(const char* name, const char* value)
    {

@@ -108,6 +108,8 @@ void THttpCallArg::SetPathAndFileName(const char *fullpath)
 //______________________________________________________________________________
 void THttpCallArg::FillHttpHeader(TString &hdr, const char* header)
 {
+   // fill HTTP header
+
    if (header==0) header = "HTTP/1.1";
 
    if ((fContentType.Length() == 0) || Is404()) {
@@ -139,6 +141,65 @@ void THttpCallArg::FillHttpHeader(TString &hdr, const char* header)
    hdr.Append("\r\n");
 }
 
+//______________________________________________________________________________
+Bool_t THttpCallArg::CompressWithGzip()
+{
+   // compress reply data with gzip compression
+
+   char *objbuf = (char*) GetContent();
+   Long_t objlen = GetContentLength();
+
+   unsigned long objcrc = R__crc32(0, NULL, 0);
+   objcrc = R__crc32(objcrc, (const unsigned char*) objbuf, objlen);
+
+   // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
+   Int_t buflen = 10 + objlen + 8;
+   if (buflen<512) buflen = 512;
+
+   void* buffer = malloc(buflen);
+
+   char *bufcur = (char*) buffer;
+
+   *bufcur++ = 0x1f;  // first byte of ZIP identifier
+   *bufcur++ = 0x8b;  // second byte of ZIP identifier
+   *bufcur++ = 0x08;  // compression method
+   *bufcur++ = 0x00;  // FLAG - empty, no any file names
+   *bufcur++ = 0;    // empty timestamp
+   *bufcur++ = 0;    //
+   *bufcur++ = 0;    //
+   *bufcur++ = 0;    //
+   *bufcur++ = 0;    // XFL (eXtra FLags)
+   *bufcur++ = 3;    // OS   3 means Unix
+   //strcpy(bufcur, "get.json");
+   //bufcur += strlen("get.json")+1;
+
+   char dummy[8];
+   memcpy(dummy, bufcur-6, 6);
+
+   // R__memcompress fills first 6 bytes with own header, therefore just overwrite them
+   unsigned long ziplen = R__memcompress(bufcur-6, objlen + 6, objbuf, objlen);
+
+   memcpy(bufcur-6, dummy, 6);
+
+   bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
+
+   *bufcur++ = objcrc & 0xff;    // CRC32
+   *bufcur++ = (objcrc >> 8) & 0xff;
+   *bufcur++ = (objcrc >> 16) & 0xff;
+   *bufcur++ = (objcrc >> 24) & 0xff;
+
+   *bufcur++ = objlen & 0xff;  // original data length
+   *bufcur++ = (objlen >> 8) & 0xff;  // original data length
+   *bufcur++ = (objlen >> 16) & 0xff;  // original data length
+   *bufcur++ = (objlen >> 24) & 0xff;  // original data length
+
+   SetBinData(buffer, bufcur - (char*) buffer);
+
+   SetEncoding("gzip");
+
+   return kTRUE;
+
+}
 
 // ====================================================================
 
@@ -520,68 +581,14 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
    if (arg->Is404()) return;
 
-
-   if (iszip) {
-
-      char *objbuf = (char*) arg->GetContent();
-      Long_t objlen = arg->GetContentLength();
-
-      unsigned long objcrc = R__crc32(0, NULL, 0);
-      objcrc = R__crc32(objcrc, (const unsigned char*) objbuf, objlen);
-
-      // 10 bytes (ZIP header), compressed data, 8 bytes (CRC and original length)
-      Int_t buflen = 10 + objlen + 8;
-      if (buflen<512) buflen = 512;
-
-      void* buffer = malloc(buflen);
-
-      char *bufcur = (char*) buffer;
-
-      *bufcur++ = 0x1f;  // first byte of ZIP identifier
-      *bufcur++ = 0x8b;  // second byte of ZIP identifier
-      *bufcur++ = 0x08;  // compression method
-      *bufcur++ = 0x00;  // FLAG - empty, no any file names
-      *bufcur++ = 0;    // empty timestamp
-      *bufcur++ = 0;    //
-      *bufcur++ = 0;    //
-      *bufcur++ = 0;    //
-      *bufcur++ = 0;    // XFL (eXtra FLags)
-      *bufcur++ = 3;    // OS   3 means Unix
-      //strcpy(bufcur, "get.json");
-      //bufcur += strlen("get.json")+1;
-
-      char dummy[8];
-      memcpy(dummy, bufcur-6, 6);
-
-      // R__memcompress fills first 6 bytes with own header, therefore just overwrite them
-      unsigned long ziplen = R__memcompress(bufcur-6, objlen + 6, objbuf, objlen);
-
-      memcpy(bufcur-6, dummy, 6);
-
-      bufcur += (ziplen-6); // jump over compressed data (6 byte is extra ROOT header)
-
-      *bufcur++ = objcrc & 0xff;    // CRC32
-      *bufcur++ = (objcrc >> 8) & 0xff;
-      *bufcur++ = (objcrc >> 16) & 0xff;
-      *bufcur++ = (objcrc >> 24) & 0xff;
-
-      *bufcur++ = objlen & 0xff;  // original data length
-      *bufcur++ = (objlen >> 8) & 0xff;  // original data length
-      *bufcur++ = (objlen >> 16) & 0xff;  // original data length
-      *bufcur++ = (objlen >> 24) & 0xff;  // original data length
-
-      arg->SetBinData(buffer, bufcur - (char*) buffer);
-
-      arg->SetEncoding("gzip");
-   }
+   if (iszip) arg->CompressWithGzip();
 
    if (filename == "root.bin") {
       // only for binary data master version is important
       // it allows to detect if streamer info was modified
       const char* parname = fSniffer->IsStreamerInfoItem(arg->fPathName.Data()) ? "BVersion" : "MVersion";
       arg->SetExtraHeader(parname, Form("%u", (unsigned) fSniffer->GetStreamerInfoHash()));
-
-      printf("Set header parameter %s = %u\n", parname, (unsigned) fSniffer->GetStreamerInfoHash());
+      // printf("Set header parameter %s = %u\n", parname, (unsigned) fSniffer->GetStreamerInfoHash());
    }
 }
 
