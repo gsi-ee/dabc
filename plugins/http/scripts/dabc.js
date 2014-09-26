@@ -2,16 +2,18 @@ DABC = {};
 
 DABC.version = "2.6.7";
 
-DABC.mgr = 0;
-
 // ============= start of DrawElement ================================= 
 
 DABC.DrawElement = function() {
+   JSROOT.TBasePainter.call(this);
    this.itemname = "";               // full item name in hierarchy
    this.version = new Number(-1);    // check which version of element is drawn
-   this.frameid = "";                // frame id of HTML element (ion most cases <div>), where object drawn 
+   this.frameid = "";                // frame id of HTML element (ion most cases <div>), where object drawn
+   this.is_dabc = true;              // indicate that this is dabc painter
    return this;
 }
+
+DABC.DrawElement.prototype = Object.create( JSROOT.TBasePainter.prototype );
 
 //method called when item is activated (clicked)
 //each item can react by itself
@@ -21,9 +23,14 @@ DABC.DrawElement.prototype.ClickItem = function() { return; }
 // it is responsibility of item perform any action
 DABC.DrawElement.prototype.RegularCheck = function() { return; }
 
+DABC.DrawElement.prototype.NewHttpRequest = function(url, kind) {
+   var item = this;
+   return JSROOT.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
+}
 
-DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
-   this.frameid = "dabc_dummy_" + cnt;
+
+DABC.DrawElement.prototype.CreateFrames = function(topid) {
+   this.frameid = $(topid).attr("id") + "_dummy";
 
    var entryInfo = 
       "<div id='" +this.frameid + "'>" + 
@@ -76,8 +83,8 @@ DABC.CommandDrawElement = function() {
 
 DABC.CommandDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
-   this.frameid = "dabc_command_" + cnt;
+DABC.CommandDrawElement.prototype.CreateFrames = function(topid) {
+   this.frameid = $(topid).attr("id") + "_command";
 
    var entryInfo = "<div id='" + this.frameid + "'/>";
    
@@ -85,6 +92,7 @@ DABC.CommandDrawElement.prototype.CreateFrames = function(topid,cnt) {
    $(topid).append(entryInfo);
    
    this.ShowCommand();
+   this.RequestCommand();
 }
 
 DABC.CommandDrawElement.prototype.NumArgs = function() {
@@ -130,7 +138,10 @@ DABC.CommandDrawElement.prototype.ShowCommand = function() {
       return;
    } 
    
-   var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"DABC.mgr.ExecuteCommand('" + this.itemname + "')\"/><br/>";
+   var cmd = "javascript: JSROOT.H('dabc').ExecuteCommand(\'"+this.itemname+"\')";
+
+   
+   var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"" + cmd + "\"/><br/>";
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argname = this.ArgName(cnt);
@@ -178,9 +189,9 @@ DABC.CommandDrawElement.prototype.RegularCheck = function() {
 DABC.CommandDrawElement.prototype.RequestCommand = function() {
    if (this.req) return;
 
-   var url = this.itemname + "get.json";
+   var url = this.itemname + "/get.json";
 
-   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
+   this.req = this.NewHttpRequest(url, "text");
 
    this.req.send(null);
 }
@@ -194,7 +205,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
       resdiv.append("<h5>Send command to server</h5>");
    }
    
-   var url = this.itemname + "execute";
+   var url = this.itemname + "/execute";
 
    for (var cnt=0;cnt<this.NumArgs();cnt++) {
       var argid = this.frameid + "_arg" + cnt;
@@ -214,7 +225,7 @@ DABC.CommandDrawElement.prototype.InvokeCommand = function() {
          url += new String(arginp.val());
    }
    
-   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
+   this.req = this.NewHttpRequest(url, "text");
 
    this.req.send(null);
 }
@@ -287,14 +298,9 @@ DABC.HistoryDrawElement.prototype.Clear = function() {
    this.force = true;
 }
 
-DABC.HistoryDrawElement.prototype.CreateFrames = function(topid, id) {
-}
-
 DABC.HistoryDrawElement.prototype.ClickItem = function() {
    if (this.req != null) return; 
 
-   if (!this.IsDrawn()) 
-      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
    this.force = true;
    
    this.RegularCheck();
@@ -311,11 +317,11 @@ DABC.HistoryDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + this.request_name + "?compact=3";
+   var url = this.itemname +"/" + this.request_name + "?compact=3";
 
    if (this.version>0) url += "&version=" + this.version; 
    if (this.hlimit>0) url += "&history=" + this.hlimit;
-   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
+   this.req = this.NewHttpRequest(url, "text");
 
    this.req.send(null);
 
@@ -367,7 +373,7 @@ DABC.HistoryDrawElement.prototype.RequestCallback = function(arg) {
    this.req = null;
    
    if (arg==null) {
-      console.log("no xml response from server");
+      console.log("no response from server");
       return;
    }
    
@@ -432,12 +438,11 @@ DABC.GaugeDrawElement = function() {
    this.gauge = 0;
 }
 
-// TODO: check how it works in different older browsers
 DABC.GaugeDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
+DABC.GaugeDrawElement.prototype.CreateFrames = function(topid) {
 
-   this.frameid = "dabc_gauge_" + id;
+   this.frameid = $(topid).attr('id') + "_gauge";
    this.min = 0;
    this.max = 10;
    this.gauge = null;
@@ -486,19 +491,19 @@ DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
 
 DABC.ImageDrawElement = function() {
    DABC.DrawElement.call(this);
+   this.imgcnt = 0;
 }
 
-// TODO: check how it works in different older browsers
 DABC.ImageDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
+DABC.ImageDrawElement.prototype.CreateFrames = function(topid) {
 
-   this.frameid = "dabc_image_" + id;
+   this.topid = $(topid).attr("id");
+   this.frameid = this.topid + "_image";
    
    var width = $(topid).width();
    
-   var url = this.itemname + "root.png.gz?w=400&h=300&opt=col";
-//   var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+   var url = this.itemname + "/root.png.gz?w=400&h=300&opt=col";
    var entryInfo = 
       "<div id='"+this.frameid+ "'>" +
       "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
@@ -506,6 +511,21 @@ DABC.ImageDrawElement.prototype.CreateFrames = function(topid, id) {
    $(topid).append(entryInfo);
 }
 
+DABC.ImageDrawElement.prototype.RegularCheck = function() {
+   var chkbox = document.getElementById("monitoring");
+   if (!chkbox || !chkbox.checked) return;
+
+   $("#"+this.topid).empty();
+
+   var width = $("#"+this.topid).width();
+   
+   var url = this.itemname + "/root.png.gz?w=400&h=300&opt=col&dummy=" + this.imgcnt++;
+   var entryInfo = 
+      "<div id='"+this.frameid+ "'>" +
+      "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
+      "</div>";
+   $("#"+this.topid).append(entryInfo);
+}
 
 // ======== end of ImageDrawElement ======================
 
@@ -518,8 +538,8 @@ DABC.LogDrawElement = function() {
 
 DABC.LogDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-DABC.LogDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = "dabc_log_" + id;
+DABC.LogDrawElement.prototype.CreateFrames = function(topid) {
+   this.frameid = $(topid).attr("id") + "_log";
    var entryInfo;
    if (this.isHistory()) {
       // var w = $(topid).width();
@@ -558,16 +578,9 @@ DABC.GenericDrawElement = function() {
 
 DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-DABC.GenericDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = "dabc_generic_" + id;
-   var entryInfo;
-//   if (this.isHistory()) {
-//      var w = $(topid).width();
-//      var h = $(topid).height();
-//      entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace; max-height:" + h + "px'/>";
-//   } else {
-      entryInfo = "<div id='"+this.frameid+ "'/>";
-//   }
+DABC.GenericDrawElement.prototype.CreateFrames = function(topid) {
+   this.frameid = $(topid).attr("id") + "_generic";
+   var entryInfo = "<div id='"+this.frameid+ "'/>";
    $(topid).append(entryInfo);
 }
 
@@ -579,8 +592,8 @@ DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
       if ('_kind' in this.jsonnode) {
          var itemname = this.itemname;
          var jsonnode = this.jsonnode;
-         DABC.mgr.ClearWindow();
-         DABC.mgr.DisplayItem(itemname, jsonnode);
+         JSROOT.H('dabc').clear();
+         JSROOT.H('dabc').display(itemname, "", jsonnode);
          return;
       }
    }
@@ -625,37 +638,16 @@ DABC.FesaDrawElement.prototype.Clear = function() {
    this.force = true;
 }
 
-DABC.FesaDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = "dabcobj" + id;
+DABC.FesaDrawElement.prototype.CreateFrames = function(topid) {
+   this.frameid = $(topid).attr("id") + "_fesa";
    
    var entryInfo = "<div id='" + this.frameid + "'/>";
    $(topid).append(entryInfo);
-   
-   var render_to = "#" + this.frameid;
-   var element = $(render_to);
-      
-   var fillcolor = 'white';
-   var factor = 0.66666;
-      
-   d3.select(render_to).style("background-color", fillcolor);
-   d3.select(render_to).style("width", "100%");
-
-   var w = element.width(), h = w * factor; 
-
-   this.vis = d3.select(render_to)
-                   .append("svg")
-                   .attr("width", w)
-                   .attr("height", h)
-                   .style("background-color", fillcolor);
-      
-   this.vis.append("svg:title").text(this.FullItemName());
 }
 
 DABC.FesaDrawElement.prototype.ClickItem = function() {
    if (this.req != null) return; 
 
-   if (!this.IsDrawn()) 
-      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
    this.force = true;
    
    this.RegularCheck();
@@ -672,11 +664,11 @@ DABC.FesaDrawElement.prototype.RegularCheck = function() {
       if (!chkbox || !chkbox.checked) return;
    }
         
-   var url = this.itemname + "dabc.bin";
+   var url = this.itemname + "/dabc.bin";
    
    if (this.version>0) url += "?version=" + this.version;
 
-   this.req = DABC.mgr.NewHttpRequest(url, "bin", this);
+   this.req = this.NewHttpRequest(url, "bin");
 
    this.req.send(null);
 
@@ -695,7 +687,6 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
          bversion = new Number(str);
          console.log("FESA data version is " + bversion);
       }
-      
    }
    
    this.req = null;
@@ -716,18 +707,17 @@ DABC.FesaDrawElement.prototype.RequestCallback = function(arg) {
    this.version = bversion;
 
    console.log("FESA data length is " + this.data.length);
-   
-   this.vis.select("title").text(this.FullItemName() + 
-         "\nversion = " + this.version + ", size = " + this.data.length);
 
+   var title = this.FullItemName() + "\nversion = " + this.version + ", size = " + this.data.length
+   
    if (!this.ReconstructObject()) return;
    
    if (this.root_painter != null) {
       this.root_painter.RedrawFrame();
+      this.root_painter.vis.select("title").text(title);
    } else {
-      this.root_painter = JSROOT.Painter.drawObjectInFrame(this.vis, this.root_obj);
-      
-      if (this.root_painter == -1) this.root_painter = null;
+      this.root_painter = JSROOT.draw(this.frameid, this.root_obj);
+      this.root_painter.vis.append("svg:title").text(this.FullItemName());
    }
 }
 
@@ -786,39 +776,18 @@ DABC.RateHistoryDrawElement.prototype.Clear = function() {
    this.root_painter = null;  // root painter, required for draw
 }
 
-DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid, id) {
+DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid) {
 
-   
-   this.frameid = "dabcobj" + id;
+   this.frameid = $(topid).attr("id") + "_rate_history";
    
    var entryInfo = "<div id='" + this.frameid + "'/>";
    $(topid).append(entryInfo);
-   
-   var render_to = "#" + this.frameid;
-   var element = $(render_to);
-      
-   var fillcolor = 'white';
-   var factor = 0.66666;
-      
-   d3.select(render_to).style("background-color", fillcolor);
-   d3.select(render_to).style("width", "100%");
-
-   var w = element.width(), h = w * factor; 
-
-   this.vis = d3.select(render_to)
-                   .append("svg")
-                   .attr("width", w)
-                   .attr("height", h)
-                   .style("background-color", fillcolor);
-      
-   this.vis.append("svg:title").text(this.itemname);
 }
 
 
 DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
-
-   this.vis.select("title").text(this.itemname + 
-         "\nversion = " + this.version + ", history = " + (this.history ? this.history.length : 0));
+   var title = this.itemname + "\nversion = " + this.version;
+   if (this.history) title += ", history = " + this.history.length;
    
    //console.log("Extract series");
    
@@ -830,7 +799,6 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
       x.push(x[0]+1);
       y.push(y[0]);
    } 
-   
 
    // here we should create TGraph object
 
@@ -857,505 +825,141 @@ DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
    
    if (this.root_painter && this.root_painter.UpdateObject(gr)) {
       this.root_painter.RedrawFrame();
+      this.root_painter.vis.select("title").text(title);
    } else {
-      this.root_painter = JSROOT.Painter.drawObjectInFrame(this.vis, gr, "L");
-      
-      if (this.root_painter == -1) this.root_painter = null;
-   }
-}
-
-// ======== start of RootDrawElement ======================
-
-DABC.RootDrawElement = function(_clname) {
-   DABC.DrawElement.call(this);
-   this.clname = _clname;    // ROOT class name
-   
-   this.obj = null;          // object itself, for streamer info is file instance
-   this.req = null;          // this is current request
-   this.painter = null;      // pointer on painter, can be used for update
-   this.version = 0;         // object version 
-   this.object_size = 0;      // size of raw data, can be displayed
-}
-
-DABC.RootDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
-
-DABC.RootDrawElement.prototype.Clear = function() {
-   
-   DABC.DrawElement.prototype.Clear.call(this);
-
-   this.obj = null;          // object itself, for streamer info is file instance
-   if (this.req) this.req.abort(); 
-   this.req = null;          // this is current request
-   this.painter = null;      // pointer on painter, can be used for update
-   this.version = 0;         // object version 
-   this.object_size = 0;     // size of raw data, can be displayed
-}
-
-DABC.RootDrawElement.prototype.IsObjectDraw = function()
-{
-   // returns true when normal ROOT drawing should be used
-   // when false, streamer info drawing is applied
-   return this.clname != 'TStreamerInfoList'; 
-}
-
-DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
-   this.frameid = "dabcobj" + id;
-   
-   var entryInfo = ""; 
-   if (this.IsObjectDraw()) {
-      entryInfo += "<div id='" + this.frameid + "'/>";
-   } else {
-      entryInfo += "<div style='overflow:auto'><span id='" + this.frameid +"' class='dtree'></span></div>";
-   }
-   //entryInfo+="</div>";
-   $(topid).append(entryInfo);
-   
-   if (this.IsObjectDraw()) {
-      var render_to = "#" + this.frameid;
-      var element = $(render_to);
-      
-      var fillcolor = 'white';
-      var factor = 0.66666;
-      
-      d3.select(render_to).style("background-color", fillcolor);
-      d3.select(render_to).style("width", "100%");
-
-      var w = element.width(), h = w * factor; 
-
-      this.vis = d3.select(render_to)
-                   .append("svg")
-                   .attr("width", w)
-                   .attr("height", h)
-                   .style("background-color", fillcolor);
-      
-      this.vis.append("svg:title").text(this.itemname);
-      
-//      console.log("create visual pane of width " + w + "  height " + h)
-   }
-   
-//   $(topid).data('any', 10);
-//   console.log("something = " + $(topid).data('any'));
-   
-}
-
-DABC.RootDrawElement.prototype.ClickItem = function() {
-   if (this.req != null) return; 
-
-   // TODO: TCanvas update do not work in JSRootIO
-   if (this.clname == "TCanvas") return;
-
-   if (!this.IsDrawn()) 
-      this.CreateFrames(DABC.mgr.NextCell(), DABC.mgr.cnt++);
-      
-   this.RegularCheck();
-}
-
-
-DABC.RootDrawElement.prototype.HasVersion = function(ver) {
-   return this.obj && (this.version >= ver);
-}
-
-// if frame created and exists
-DABC.RootDrawElement.prototype.DrawObject = function(newobj) {
-
-   if (!this.IsObjectDraw()) {
-      this.obj = newobj;
-      var painter = new JSROOT.HierarchyPainter('sinfo', this.frameid);
-      painter.ShowStreamerInfo(this.obj);
-      return;
-   }
-   
-   if (newobj != null) {
-      if (this.painter && this.painter.UpdateObject(newobj)) {
-         // if painter accepted object update, we need later just redraw frame
-         newobj = null;
-      } else { 
-         this.obj = newobj;
-         this.painter = null;
-      }
-   }
-   
-   if (this.obj == null) return;
-
-   if (this.vis!=null) {
-      var lbl = "";
-      if (this.version > 0) lbl += "version = " + this.version + ", ";
-      lbl += "size = " + this.object_size;
-      this.vis.select("title").text(this.FullItemName() + "\n" + lbl);
-   }
-
-   if (this.painter != null) {
-      this.painter.RedrawFrame();
-   } else {
-      this.painter = JSROOT.Painter.drawObjectInFrame(this.vis, this.obj);
-
-      if (this.painter == -1) this.painter = null;
-
-      // if (this.painter)  console.log("painter is created");
+      this.root_painter = JSROOT.draw(this.frameid, gr, "L");
+      this.root_painter.vis.append("svg:title").text(title);
    }
 }
 
 
-DABC.RootDrawElement.prototype.RequestCallback = function(arg) {
-   
-   var mversion = null, bversion = null;
-   
-   if (this.req!=null) {
-      mversion = this.req.getResponseHeader("MVersion");
-      if (mversion!=null) mversion = new Number(mversion);
-      bversion = this.req.getResponseHeader("BVersion");
-      if (bversion!=null) bversion = new Number(bversion);
-   }
 
-   if (mversion == null) mversion = new Number(0);
-   if (bversion == null) bversion = new Number(0);
-
-   // in any case, request pointer will be reseted
-   this.req = null;
-   
-   // console.log("Call back " + this.itemname);
-   
-   // if we got same version, do nothing - we are happy!!!
-   if ((bversion > 0) && (this.version == bversion)) {
-      console.log(" Get same version " + bversion + " of object " + this.itemname);
-      return;
-   } 
-   
-   var obj = JSROOT.parse(arg);
-
-   this.version = bversion;
-      
-   this.object_size = arg.length;
-      
-   if (obj && ('_typename' in obj)) {
-      // console.log("Get JSON object of " + obj['_typename']);
-      this.DrawObject(obj);
-   } 
+DABC.HierarchyPainter = function(name, frameid) {
+   JSROOT.HierarchyPainter.call(this, name, frameid);
 }
-
-DABC.RootDrawElement.prototype.RegularCheck = function() {
-
-   // if item ready, verify that we want to send request again
-   if (!this.IsDrawn()) return;
    
-   var chkbox = document.getElementById("monitoring");
-   if (!chkbox || !chkbox.checked) return;
+DABC.HierarchyPainter.prototype = Object.create(JSROOT.HierarchyPainter.prototype);
 
-   this.SendRequest();
-}
-
-DABC.RootDrawElement.prototype.SendRequest = function() {
-
-   if (this.req!=null) return;
+DABC.HierarchyPainter.prototype.CheckCanDo = function(node) {
    
-   // TODO: TCanvas update do not work in JSRootIO
-   if (this.clname == "TCanvas") return;
-   
-   var url = this.itemname + "root.json.gz?compact=3";
-   if (this.version>0) url += "&version=" + this.version;
-
-   this.req = DABC.mgr.NewHttpRequest(url, "text", this);
-
-   this.req.send(null);
-}
-
-
-// ======== end of RootDrawElement ======================
-
-
-
-// ============= start of DABC.Manager =============== 
-
-DABC.Manager = function(with_tree) {
-   this.cnt = new Number(0);      // counter to create new element 
-   this.arr = new Array();        // array of DrawElement
-   this.with_tree = with_tree;
-   
-   this.hpainter = null;  // painter used to to draw hierarchy
-   
-   if (this.with_tree) this.CreateTable(2,2);
-
-   // we could use ROOT drawing from beginning
-   JSROOT.gStyle.OptimizeDraw = true;
-   
-   return this;
-}
-
-DABC.Manager.prototype.CreateTable = function(divx, divy)
-{
-   var tablecontents = "";
-   var cnt = 0;
-   
-   var precx = Math.floor(100/divx);
-   var precy = Math.floor(100/divy);
-   
-   tablecontents = "<table width='100%' height='100%'>";
-   for (var i = 0; i < divy; i ++)
-   {
-      tablecontents += "<tr height='"+precy+"%'>";
-      for (var j = 0; j < divx; j ++) {
-         tablecontents += "<td id='draw_place_"+ cnt + "' width='" + precx 
-                       + "%' height='"+precy+"%'>" + i + "," + j + "</td>";
-         cnt++;
-      }
-      tablecontents += "</tr>";
-   }
-   tablecontents += "</table>";
-   $("#dabc_draw").empty();
-   document.getElementById("dabc_draw").innerHTML = tablecontents;
-
-   this.table_counter = 0;
-   this.table_number = divx*divy;
-}
-
-DABC.Manager.prototype.NextCell = function()
-{
-   var id = "#dabc_draw";
-   if (this.with_tree) {
-      var id = "#draw_place_" + this.table_counter;
-      this.table_counter++;
-      if (this.table_counter>=this.table_number) this.table_counter = 0;
-   }
-   $(id).empty();
-   return id;
-}
-
-
-DABC.Manager.prototype.FindItem = function(itemname) {
-   for (var i in this.arr) {
-      if (this.arr[i].itemname == itemname) return this.arr[i];
-   }
-}
-
-DABC.Manager.prototype.RemoveItem = function(item) {
-   var indx = this.arr.indexOf(item);
-   if (indx < 0) return;
-   this.arr.splice(indx, 1);
-   delete item;
-}
-
-DABC.Manager.prototype.empty = function() {
-   return this.arr.length == 0;
-}
-
-// this is used for text request 
-DABC.Manager.prototype.NewRequest = function() {
-   var req;
-   // For Safari, Firefox, and other non-MS browsers
-   if (window.XMLHttpRequest) {
-      try {
-         req = new XMLHttpRequest();
-      } catch (e) {
-         req = false;
-      }
-   } else if (window.ActiveXObject) {
-      // For Internet Explorer on Windows
-      try {
-         req = new ActiveXObject("Msxml2.XMLHTTP");
-      } catch (e) {
-         try {
-            req = new ActiveXObject("Microsoft.XMLHTTP");
-         } catch (e) {
-            req = false;
-         }
-      }
-   }
-
-   return req;
-}
-
-
-DABC.Manager.prototype.NewHttpRequest = function(url, kind, item) {
-   
-   return JSROOT.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
-}
-
-
-DABC.Manager.prototype.UpdateComplexFields = function() {
-   if (this.empty()) return;
-
-   for (var i in this.arr) 
-     this.arr[i].RegularCheck();
-}
-
-DABC.Manager.prototype.UpdateAll = function() {
-   this.UpdateComplexFields();
-}
-
-
-DABC.Manager.prototype.DisplayItem = function(itemname, node)
-{
-   if (!node) {
-      console.log("cannot find node for item " + itemname);
-      return;
-   } 
+   var cando = JSROOT.HierarchyPainter.prototype.CheckCanDo.call(this, node); 
    
    var kind = node["_kind"];
-   var history = node["_history"];
    var view = node["_view"];
    if (!kind) kind = "";
 
-   var elem;
+   if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
+   if (kind == "rate") { cando.display = true; } else
+   if (kind == "log") { cando.display = true; } else
+   if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
+   if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
+   if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
+   if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
+   if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
+   
+   return cando;
+}
+
+DABC.HierarchyPainter.prototype.display = function(itemname, options, node)
+{
+   if (!node) node = this.Find(itemname);
+   
+   if ((node==null) || !this.CreateDisplay()) return;
+   
+   var mdi = this['disp'];
+   
+   var kind = node["_kind"];
+   var view = node["_view"];
+   var history = node["_history"];
+   if (!kind) kind = "";
+
+   var objpainter = mdi.FindPainter(itemname);
+
+   if (objpainter && objpainter['is_dabc']) { 
+      objpainter.ClickItem();
+      return;
+   }
+   
+   var elem = null;
    
    if (view == "png") {
       elem = new DABC.ImageDrawElement();
-      elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      this.arr.push(elem);
-      return;
-   }
-   
+   } else
    if (kind == "DABC.Command") {
       elem = new DABC.CommandDrawElement();
-      elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      elem.RequestCommand();
-      this.arr.push(elem);
-      return;
-   }
-
-   // ratemeter
+   } else
    if (kind == "rate") { 
       if ((history == null) || !document.getElementById("show_history").checked) {
          elem = new DABC.GaugeDrawElement();
-         elem.itemname = itemname;
-         elem.CreateFrames(this.NextCell(), this.cnt++);
-         this.arr.push(elem);
-         return;
       } else {
          elem = new DABC.RateHistoryDrawElement();
-         elem.itemname = itemname;
-         elem.CreateFrames(this.NextCell(), this.cnt++);
-         this.arr.push(elem);
-         return;
       }
-   }
-   
+   } else
    if (kind == "log") {
       elem = new DABC.LogDrawElement();
-      elem.itemname = itemname;
-
       if ((history != null) && document.getElementById("show_history").checked) 
          elem.EnableHistory(100);
-      
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      this.arr.push(elem);
-      return;
-   }
-   
+   } else
    if (kind.indexOf("FESA.") == 0) {
       elem = new DABC.FesaDrawElement(kind.substr(5));
-      elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      this.arr.push(elem);
-      elem.RegularCheck();
-      return;
-   }
-
+   } else
    if (kind.indexOf("ROOT.") == 0) {
-      // procesing of ROOT classes
-      
-      elem = new DABC.RootDrawElement(kind.substr(5));
-      
+      return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options);
+   } else {
+      elem = new DABC.GenericDrawElement();
+   }
+   
+   if (elem) {
       elem.itemname = itemname;
-      elem.CreateFrames(this.NextCell(), this.cnt++);
-      this.arr.push(elem);
-
-      elem.SendRequest();
-      return;
-   }
-   
-   // create generic draw element, which just shows all attributes 
-   elem = new DABC.GenericDrawElement();
-   elem.itemname = itemname;
-   elem.CreateFrames(this.NextCell(), this.cnt++);
-   this.arr.push(elem);
-   return elem;
-}
-
-DABC.Manager.prototype.ExecuteCommand = function(itemname)
-{
-   var elem = this.FindItem(itemname);
-   if (elem) elem.InvokeCommand();
-}
-
-DABC.Manager.prototype.DisplayGeneric = function(itemname, recheck)
-{
-   var elem = new DABC.GenericDrawElement();
-   elem.itemname = itemname;
-   elem.CreateFrames(this.NextCell(), this.cnt++);
-   if (recheck) {
-      elem.recheck = true;
-      elem.request_name = "h.json"; // we do not need element but its description
-   }
-   this.arr.push(elem);
-}
-
-DABC.Manager.prototype.DisplayHiearchy = function(holder) {
-   if (this.hpainter!=null) return;
-   
-   this.hpainter = new JSROOT.HierarchyPainter('main', holder);
       
-   // this.hpainter['ondisplay'] = null;
-   
-   this.hpainter['display'] = function(itemname) {
-      var item = this.Find(itemname);
+      var frame = mdi.CreateFrame(itemname);
+      elem.CreateFrames(frame);
       
-      if (item==null) {
-         console.log("fail to find item " + itemname);
+      mdi.SetPainterForFrame(frame, elem);
+      
+      elem.RegularCheck();
+   }
+}
+
+DABC.HierarchyPainter.prototype.UpdateDabcElements = function()
+{
+   var mdi = this['disp'];
+   if (mdi==null) return;
+   
+   var monitoring = false;
+   
+   var chkbox = document.getElementById("monitoring");
+   if (chkbox && chkbox.checked) monitoring = true;  
+   
+   var h = this;
+   
+   mdi.ForEach(function(panel, itemname, painter) {
+      if (!painter) return;
+      if (painter['is_dabc']) {
+         painter.RegularCheck();
          return;
+      } 
+      if (!monitoring) return;
+      console.log("Try to update " + itemname);
+      
+      h.get(itemname, function(item, obj) {
+         if (painter.UpdateObject(obj)) {
+            document.body.style.cursor = 'wait';
+            painter.RedrawFrame();
+            document.body.style.cursor = 'auto';
+         }
+      });
+   });
+}
+
+DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname)
+{
+   var mdi = this['disp'];
+   if (mdi==null) return;
+   
+   mdi.ForEach(function(panel, itemname, painter) {
+      if ((cmditemname==itemname) && painter) {
+         painter.InvokeCommand();
       }
-      
-      // FIXME: avoid usage of extra slashes
-      DABC.mgr.DisplayItem(itemname + "/", item);
-   }
-   
-   this.hpainter['clear'] = function() {
-      DABC.mgr.ClearWindow();
-   }
-   
-   
-   this.hpainter['CheckCanDo'] = function(node, cando) {
-      var kind = node["_kind"];
-      var view = node["_view"];
-
-      cando.expand = ('_more' in node);
-
-      if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
-      if (kind == "rate") { cando.display = true; } else
-      if (kind == "log") { cando.display = true; } else
-      if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
-      if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
-      if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
-         JSROOT.HierarchyPainter.prototype.CheckCanDo.call(this, node, cando);
-   }
-      
-   this.hpainter.OpenOnline();
+   });
 }
-
-
-DABC.Manager.prototype.ClearWindow = function()
-{
-   delete this.arr;
-   this.arr = [];
-
-   if (this.with_tree) {
-      var num = $("#grid_spinner").spinner( "value" );
-      this.CreateTable(num,num);
-   }
-}
-
-
-DABC.Manager.prototype.ReloadSingleElement = function()
-{
-   if (this.arr.length == 0) return;
-
-   var itemname = this.arr[this.arr.length-1].itemname;
-   
-   this.ClearWindow();
-   
-   this.DisplayGeneric(itemname, true);
-}
-
-// ============= end of DABC.Manager =============== 

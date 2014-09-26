@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+26.09.2014
+1. Adjust dabc.js to the current JSROOT code, exclude DABC.Manager class completely.
+
+
 25.09.2014
 1. Introduce demo.htm, which demonstrates online usage of JSROOT.
 2. One could use demo.htm directly with THttpServer providing address like:

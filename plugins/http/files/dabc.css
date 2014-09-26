@@ -28,15 +28,14 @@ p { margin-top: 6px; padding: 0 10px 1em; }
 
 #main { left: 3px; right: 76%; overflow: auto; }
 
-#dabc_draw { height:100%; }
+#left-div { left: 2px; width: 300px; margin-right: 1px; overflow: auto; }
 
-#status { font-size:70%; }
+#separator-div { left: 304px; width: 4px; width: 2px; background-color: white; cursor: ew-resize } 
 
-#DabcPainterHolder {
-   left: 25%;
-   right: 3px;
-   overflow: auto;
-   font-size:9pt;font-weight:normal;color:#191970;
+#right-div {
+   left: 310px;
+   right: 2px;
+   margin-left: 1px;
 }
 
 div.column {
