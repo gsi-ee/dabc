@@ -4,6 +4,7 @@ current functionality of the framework.
 
 6.10.2014
 1. Several bugfixes in JSROOT.
+2. Add "shortcut icon" for DABC and ROOT servers
 
 
 26.09.2014
