@@ -13,6 +13,7 @@ current functionality of the framework.
 4. Evaluate 'monitoring' parameter for ROOT online server like:
       http://localhost:8080/?monitoring=1000. 
    Parameter defines how often displayed objects should be updated.
+5. Fix problem with zoom rectangle limits after frame resize.
    
 
 6.10.2014
