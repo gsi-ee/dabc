@@ -331,7 +331,9 @@
          if (!chkbox || !chkbox.checked) return;
       }
 
-      var url = this.itemname +"/" + this.request_name + "?compact=3";
+      var url = "";
+      if (this.itemname != "") url += this.itemname +"/";
+      url += this.request_name + "?compact=3";
 
       if (this.version>0) url += "&version=" + this.version; 
       if (this.hlimit>0) url += "&history=" + this.hlimit;
@@ -624,9 +626,7 @@
    }
 
 
-
-
-// ================ start of FesaDrawElement
+  // ================ start of FesaDrawElement
 
    DABC.FesaDrawElement = function(_clname) {
       DABC.DrawElement.call(this);
@@ -773,8 +773,7 @@
       return true;
    }
 
-
-// ========== start of RateHistoryDrawElement
+   // ========== start of RateHistoryDrawElement
 
    DABC.RateHistoryDrawElement = function() {
       DABC.HistoryDrawElement.call(this, "rate");
@@ -794,10 +793,9 @@
 
       this.frameid = $(topid).attr("id") + "_rate_history";
 
-      var entryInfo = "<div id='" + this.frameid + "'/>";
+      var entryInfo = "<div id='" + this.frameid + "' style='width:100%; height: 100%'/>";
       $(topid).append(entryInfo);
    }
-
 
    DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
       var title = this.itemname + "\nversion = " + this.version;
@@ -845,8 +843,49 @@
          this.root_painter.vis.append("svg:title").text(title);
       }
    }
+   
+   DABC.RateHistoryDrawElement.prototype.CheckResize = function(force) {
+      console.log("Check rate resize");
+      if (this.root_painter) this.root_painter.CheckResize(force);
+   }
 
 
+   DABC.CreateDrawElement = function(node, history_enabled) {
+      var kind = node["_kind"];
+      var view = node["_view"];
+      var history = node["_history"];
+      if (!kind) kind = "";
+      
+      // ROOT classes not supported
+      if (kind.indexOf("ROOT.") == 0) return null;
+
+      if (view == "png") 
+         return new DABC.ImageDrawElement();
+      
+      if (kind == "DABC.Command")
+         return new DABC.CommandDrawElement();
+      
+      if (kind == "rate") { 
+         if ((history == null) || !history_enabled) 
+            return new DABC.GaugeDrawElement();
+         else 
+            return new DABC.RateHistoryDrawElement();
+      }
+      
+      if (kind == "log") {
+         var elem = new DABC.LogDrawElement();
+         if ((history != null) && history_enabled)  
+            elem.EnableHistory(100);
+         return elem;
+      }
+      
+      if (kind.indexOf("FESA.") == 0) 
+         return new DABC.FesaDrawElement(kind.substr(5));
+      
+      return new DABC.GenericDrawElement();
+   }
+   
+   // ============================================================
 
    DABC.HierarchyPainter = function(name, frameid) {
       JSROOT.HierarchyPainter.call(this, name, frameid);
@@ -863,13 +902,13 @@
       if (!kind) kind = "";
 
       if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
-         if (kind == "rate") { cando.display = true; } else
-            if (kind == "log") { cando.display = true; } else
-               if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
-                  if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
-                     if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
-                        if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
-                           if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
+      if (kind == "rate") { cando.display = true; } else
+      if (kind == "log") { cando.display = true; } else
+      if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
+      if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
+      if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
+      if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
+      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
 
       return cando;
    }
@@ -893,35 +932,11 @@
          objpainter.ClickItem();
          return;
       }
+      
+      if ((kind.indexOf("ROOT.") == 0) && (view != "png"))
+         return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options);
 
-      var elem = null;
-
-      if (view == "png") {
-         elem = new DABC.ImageDrawElement();
-      } else
-         if (kind == "DABC.Command") {
-            elem = new DABC.CommandDrawElement();
-         } else
-            if (kind == "rate") { 
-               if ((history == null) || !document.getElementById("show_history").checked) {
-                  elem = new DABC.GaugeDrawElement();
-               } else {
-                  elem = new DABC.RateHistoryDrawElement();
-               }
-            } else
-               if (kind == "log") {
-                  elem = new DABC.LogDrawElement();
-                  if ((history != null) && document.getElementById("show_history").checked) 
-                     elem.EnableHistory(100);
-               } else
-                  if (kind.indexOf("FESA.") == 0) {
-                     elem = new DABC.FesaDrawElement(kind.substr(5));
-                  } else
-                     if (kind.indexOf("ROOT.") == 0) {
-                        return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options);
-                     } else {
-                        elem = new DABC.GenericDrawElement();
-                     }
+      var elem = DABC.CreateDrawElement(node, document.getElementById("show_history").checked);
 
       if (elem) {
          elem.itemname = itemname;

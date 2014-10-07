@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+7.10.2014
+1. Implement correct drawing of single DABC element. Like in JSROOT, one could
+   use draw.htm for single element or main.htm for hierarchy display.
+   
+
 6.10.2014
 1. Several bugfixes in JSROOT.
 2. Add "shortcut icon" for DABC and ROOT servers

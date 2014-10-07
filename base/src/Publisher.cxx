@@ -780,12 +780,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       bool islocal;
       std::string item_name, request_name, uri = cmd.GetStr("uri");
 
-      //DOUT0("before uri = %s", uri.c_str());
-
       if (!uri.empty())
          if (!IdentifyItem(false, uri, islocal, item_name, request_name)) return cmd_false;
-
-      //DOUT0("after uri = %s item %s request %s", uri.c_str(), item_name.c_str(), request_name.c_str());
 
       dabc::Hierarchy h = GetWorkItem(item_name);
 
@@ -798,8 +794,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          cmd.SetStr("path", item_name);
          cmd.SetStr("fname", request_name);
 
-         if (request_name.empty())
-            cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
+         //if (request_name.empty())
+         //   cmd.SetStr("ui_kind", h.NumChilds() > 0 ? "__tree__" : "__single__");
 
          // publisher can only identify existing entries
          // all extra entries (like objects members in Go4 events browser) appears as subfolders in request

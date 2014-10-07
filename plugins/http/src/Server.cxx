@@ -245,12 +245,20 @@ bool http::Server::Process(const char* uri, const char* _query,
       return true;
    }
 
-   if (filename.empty()) {
+   if (filename == "draw.htm") {
+      content_str = fHttpSys + "/files/draw.htm";
+      content_type = "__file__";
+      return true;
+   }
 
-      if (content_type == "__tree__") content_str = fHttpSys + "/files/main.htm"; else
-      if (content_type == "__single__") content_str = fHttpSys + "/files/single.htm"; else
-      { EOUT("Cannot define that return by uri %s", uri); return false; }
+   if ((filename == "rootdraw.htm") && !fJsRootSys.empty()) {
+      content_str = fJsRootSys + "/files/draw.htm";
+      content_type = "__file__";
+      return true;
+   }
 
+   if (filename.empty() || (filename=="main.htm")) {
+      content_str = fHttpSys + "/files/main.htm";
       content_type = "__file__";
       return true;
    }
