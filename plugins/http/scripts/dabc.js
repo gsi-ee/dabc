@@ -41,6 +41,14 @@
       var item = this;
       return JSROOT.NewHttpRequest(url, kind, function(res) { item.RequestCallback(res); }); 
    }
+   
+   DABC.DrawElement.prototype.MonitoringEnabled = function() {
+      if ('monitoring' in this) return this.monitoring; 
+
+      var chkbox = document.getElementById("monitoring");
+      if (!chkbox) return false
+      return chkbox.checked;
+   } 
 
 
    DABC.DrawElement.prototype.CreateFrames = function(topid) {
@@ -327,8 +335,7 @@
 
       // do update when monitoring enabled
       if ((this.version >= 0) && !this.force) {
-         var chkbox = document.getElementById("monitoring");
-         if (!chkbox || !chkbox.checked) return;
+         if (!this.MonitoringEnabled()) return;
       }
 
       var url = "";
@@ -516,26 +523,23 @@
 
       this.topid = $(topid).attr("id");
       this.frameid = this.topid + "_image";
-
-      var width = $(topid).width();
-
-      var url = this.itemname + "/root.png.gz?w=400&h=300&opt=col";
-      var entryInfo = 
-         "<div id='"+this.frameid+ "'>" +
-         "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
-         "</div>";
-      $(topid).append(entryInfo);
+      
+      this.DrawImage();
    }
 
    DABC.ImageDrawElement.prototype.RegularCheck = function() {
-      var chkbox = document.getElementById("monitoring");
-      if (!chkbox || !chkbox.checked) return;
-
+      if (this.MonitoringEnabled()) 
+         this.DrawImage();
+   }
+   
+   DABC.ImageDrawElement.prototype.DrawImage = function() {
       $("#"+this.topid).empty();
 
-      var width = $("#"+this.topid).width();
+      var width = parseInt($("#"+this.topid).width());
+      var height = parseInt($("#"+this.topid).height());
+      if (height < 10) height = width*2/3;
 
-      var url = this.itemname + "/root.png.gz?w=400&h=300&opt=col&dummy=" + this.imgcnt++;
+      var url = this.itemname + "/root.png.gz?w=" + width + "&h=" + height + "&opt=col&dummy=" + this.imgcnt++;
       var entryInfo = 
          "<div id='"+this.frameid+ "'>" +
          "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
@@ -674,8 +678,7 @@
 
       // do update when monitoring enabled
       if ((this.version >= 0) && !this.force) {
-         var chkbox = document.getElementById("monitoring");
-         if (!chkbox || !chkbox.checked) return;
+         if (!this.MonitoringEnabled()) return;
       }
 
       var url = this.itemname + "/dabc.bin";
@@ -831,8 +834,6 @@
       gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
 
       gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
-      gr['fHistogram']['fXaxis']['fTimeFormat'] = "";
-      // JSROOT.gStyle['TimeOffset'] = 0; // DABC uses UTC time, starting from 1/1/1970
       gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
 
       if (this.root_painter && this.root_painter.UpdateObject(gr)) {
@@ -850,23 +851,23 @@
    }
 
 
-   DABC.CreateDrawElement = function(node, history_enabled) {
+   DABC.CreateDrawElement = function(node, history_depth) {
       var kind = node["_kind"];
       var view = node["_view"];
       var history = node["_history"];
       if (!kind) kind = "";
-      
-      // ROOT classes not supported
-      if (kind.indexOf("ROOT.") == 0) return null;
 
       if (view == "png") 
          return new DABC.ImageDrawElement();
       
+      // ROOT classes not supported
+      if (kind.indexOf("ROOT.") == 0) return null;
+
       if (kind == "DABC.Command")
          return new DABC.CommandDrawElement();
       
       if (kind == "rate") { 
-         if ((history == null) || !history_enabled) 
+         if ((history_depth < 0) || !history)
             return new DABC.GaugeDrawElement();
          else 
             return new DABC.RateHistoryDrawElement();
@@ -874,8 +875,11 @@
       
       if (kind == "log") {
          var elem = new DABC.LogDrawElement();
-         if ((history != null) && history_enabled)  
-            elem.EnableHistory(100);
+         if (history) {
+            if (history_depth==0) elem.EnableHistory(100); else
+            if (history_depth>0) elem.EnableHistory(history_depth);
+         }
+            
          return elem;
       }
       
@@ -936,7 +940,7 @@
       if ((kind.indexOf("ROOT.") == 0) && (view != "png"))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options);
 
-      var elem = DABC.CreateDrawElement(node, document.getElementById("show_history").checked);
+      var elem = DABC.CreateDrawElement(node, this.HistoryDepth());
 
       if (elem) {
          elem.itemname = itemname;
@@ -949,16 +953,44 @@
          elem.RegularCheck();
       }
    }
+   
+   DABC.HierarchyPainter.prototype.MonitoringInterval = function(onlyurl) {
+      var monitor = JSROOT.GetUrlOption("monitoring");
+      if (monitor == "") return 3000;
+      if (monitor != null) {
+         monitor = parseInt(monitor);
+         return ((monitor == NaN) || (monitor<=0)) ? 3000 : monitor;
+      }
+      
+      if (!onlyurl) {
+         var chkbox = document.getElementById("monitoring");
+         if (chkbox && chkbox.checked) return 3000;
+      }
+      return 0;
+   }
+   
+   DABC.HierarchyPainter.prototype.HistoryDepth = function(onlyurl) {
+      var history = JSROOT.GetUrlOption("history");
+      if (history == "") return 0; // 0 is default value means maximum history
+      if (history != null) {
+         history = parseInt(history);
+         return ((history == NaN) || (history<=0)) ? 0 : history;
+      }
+      
+      if (!onlyurl) {
+         var chkbox = document.getElementById("show_history");
+         if (chkbox && chkbox.checked) return 0;
+      }
+      return -1; // history is disabled
+   }
+   
 
    DABC.HierarchyPainter.prototype.UpdateDabcElements = function()
    {
       var mdi = this['disp'];
       if (mdi==null) return;
 
-      var monitoring = false;
-
-      var chkbox = document.getElementById("monitoring");
-      if (chkbox && chkbox.checked) monitoring = true;  
+      var monitoring = this.MonitoringInterval() > 0;
 
       var h = this;
 
@@ -969,7 +1001,7 @@
             return;
          } 
          if (!monitoring) return;
-         console.log("Try to update " + itemname);
+         //console.log("Try to update " + itemname);
 
          h.get(itemname, function(item, obj) {
             if (painter.UpdateObject(obj)) {
@@ -991,6 +1023,20 @@
             painter.InvokeCommand();
          }
       });
+   }
+   
+   DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
+      
+      var drawurl = onlineprop.server + onlineprop.itemname + "/draw.htm";
+      
+      var mon = this.MonitoringInterval();
+      var separ = "?";
+      if (mon>0) { drawurl += separ + "monitoring=" + mon; separ = "&"; }
+      var hist = this.HistoryDepth();
+      if (hist==0) { drawurl += separ + "history"; } else
+      if (hist>0) { drawurl += separ + "history=" + hist; }    
+      
+      JSROOT.Painter.menuitem(menu,"Draw in new window", function() { window.open(drawurl); });
    }
 
 })();

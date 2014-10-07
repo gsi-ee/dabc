@@ -5,7 +5,11 @@ current functionality of the framework.
 7.10.2014
 1. Implement correct drawing of single DABC element. Like in JSROOT, one could
    use draw.htm for single element or main.htm for hierarchy display.
-   
+2. One can specify 'monitoring' and 'history' parameters for DABC pages like:
+       http://localhost:8090/?monitoring=3000&history
+       http://localhost:8090/FESA/Test/TestRate/draw.htm?monitoring=1000&history
+   If specified as parameter, monitoring or history checkbox will be disabled.
+
 
 6.10.2014
 1. Several bugfixes in JSROOT.

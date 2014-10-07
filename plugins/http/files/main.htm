@@ -27,7 +27,8 @@
                  '<div id="right-div" class="column"></div>';
                  
             $("#mainGUI").empty();     
-            $("#mainGUI").append(guiCode);     
+            $("#mainGUI").append(guiCode);
+                 
          
             $("#grid_spinner").spinner({
                min:1, max:5,
@@ -35,10 +36,55 @@
             }); 
          
             var h = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
+            
+            var interval = h.MonitoringInterval(true); 
+            
+            if (interval > 0) {
+               document.getElementById("monitoring").checked = true;
+               document.getElementById("monitoring").disabled = "disabled";
+            } 
+               
+            if (h.HistoryDepth(true) >=0) {
+               document.getElementById("show_history").checked = true;
+               document.getElementById("show_history").disabled = "disabled";
+            }   
+            
             h.SetDisplay('grid 3x3', 'right-div');
             h.OpenOnline();
          
-            setInterval(function() { h.UpdateDabcElements(); }, 3000);
+            setInterval(function() { h.UpdateDabcElements(); }, interval > 0 ? interval : 3000);
+            
+            var drag_sum = 0;
+   
+            var drag_move = d3.behavior.drag()
+              .origin(Object)
+              .on("dragstart", function() {
+                 d3.event.sourceEvent.preventDefault();
+                 drag_sum = 0;
+               })
+              .on("drag", function() {
+                 d3.event.sourceEvent.preventDefault();
+                 drag_sum += d3.event.dx;
+                 d3.event.sourceEvent.stopPropagation();
+               })
+               .on("dragend", function() {
+                  d3.event.sourceEvent.preventDefault();
+         
+                 var width = d3.select("#left-div").style('width');
+                 width = (parseInt(width.substr(0, width.length - 2)) + Number(drag_sum)).toString() + "px";
+                 d3.select("#left-div").style('width', width);
+         
+                 var left = d3.select("#separator-div").style('left');
+                 left = parseInt(left.substr(0, left.length - 2)) + Number(drag_sum);
+                 d3.select("#separator-div").style('left',left.toString() + "px");
+                 d3.select("#right-div").style('left',(left+6).toString() + "px");
+         
+                 h.CheckResize();
+               });
+   
+            d3.select("#separator-div").call(drag_move);
+            
+            JSROOT.RegisterForResize(h);
         });
      }
       
