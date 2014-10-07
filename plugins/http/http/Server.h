@@ -43,6 +43,9 @@ namespace http {
          std::string fJsRootSys;    ///< location of Root JS (if any)
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
+         /** Check if relative path below current dir - prevents file access to top directories via http */
+         static bool VerifyFilePath(const char* fname);
+
          /** Check if file is requested. Can only be from server */
          bool IsFileRequested(const char* uri, std::string& fname);
 

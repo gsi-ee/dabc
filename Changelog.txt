@@ -9,6 +9,7 @@ current functionality of the framework.
        http://localhost:8090/?monitoring=3000&history
        http://localhost:8090/FESA/Test/TestRate/draw.htm?monitoring=1000&history
    If specified as parameter, monitoring or history checkbox will be disabled.
+3. Try to prevent access to the files below httpsys, jsrootsys, dabcsys directories
 
 
 6.10.2014

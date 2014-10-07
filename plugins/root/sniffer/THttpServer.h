@@ -197,6 +197,8 @@ protected:
    // Here any request can be processed
    virtual void ProcessRequest(THttpCallArg *arg);
 
+   static Bool_t VerifyFilePath(const char* fname);
+
 public:
 
    THttpServer(const char *engine = "civetweb:8080");

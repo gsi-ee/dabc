@@ -17,6 +17,7 @@
 #include <string>
 #include <cstdlib>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef COMPILED_WITH_DABC
    extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
@@ -409,6 +410,48 @@ void THttpServer::SetTimer(Long_t milliSec, Bool_t mode)
 }
 
 //______________________________________________________________________________
+Bool_t THttpServer::VerifyFilePath(const char* fname)
+{
+   // checked that filename does not contains relative path below current directory
+   // Used to prevent access to files below jsrootsys directory
+
+   if ((fname==0) || (*fname==0)) return kFALSE;
+
+   Int_t level = 0;
+
+   while (*fname != 0) {
+
+      // find next slash or backslash
+      const char* next = strpbrk(fname, "/\\");
+      if (next==0) return kTRUE;
+
+      // most important - change to parent dir
+      if ((next == fname + 2) && (*fname == '.') && (*(fname+1) == '.')) {
+         fname += 3; level--;
+         if (level<0) return kFALSE;
+         continue;
+      }
+
+      // ignore current directory
+      if ((next == fname + 1) && (*fname == '.'))  {
+         fname += 2;
+         continue;
+      }
+
+      // ignore slash at the front
+      if (next==fname) {
+         fname ++;
+         continue;
+      }
+
+      fname = next+1;
+      level++;
+   }
+
+   return kTRUE;
+}
+
+//______________________________________________________________________________
 Bool_t THttpServer::IsFileRequested(const char *uri, TString &res) const
 {
    // verifies that request just file name
@@ -424,6 +467,11 @@ Bool_t THttpServer::IsFileRequested(const char *uri, TString &res) const
    Ssiz_t pos = fname.Index("jsrootsys/");
    if (pos != kNPOS) {
       fname.Remove(0, pos + 9);
+      // check that directory below jsrootsys will not be accessed
+      if (!VerifyFilePath(fname.Data())) {
+         // Error("IsFileRequested","Prevent access to filepath %s", fname.Data());
+         return kFALSE;
+      }
       res = fJsRootSys + fname;
       return kTRUE;
    }

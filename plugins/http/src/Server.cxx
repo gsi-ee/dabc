@@ -17,6 +17,8 @@
 
 //#include "dabc/threads.h"
 
+#include <string.h>
+
 #include "dabc/Hierarchy.h"
 #include "dabc/Manager.h"
 #include "dabc/Url.h"
@@ -132,6 +134,43 @@ http::Server::~Server()
 {
 }
 
+bool http::Server::VerifyFilePath(const char* fname)
+{
+   if ((fname==0) || (*fname==0)) return false;
+
+   int level = 0;
+
+   while (*fname != 0) {
+
+      // find next slash or backslash
+      const char* next = strpbrk(fname, "/\\");
+      if (next==0) return true;
+
+      // most important - change to parent dir
+      if ((next == fname + 2) && (*fname == '.') && (*(fname+1) == '.')) {
+         fname += 3; level--;
+         if (level<0) return false;
+         continue;
+      }
+
+      // ignore current directory
+      if ((next == fname + 1) && (*fname == '.'))  {
+         fname += 2;
+         continue;
+      }
+
+      // ignore slash at the front
+      if (next==fname) {
+         fname ++;
+         continue;
+      }
+
+      fname = next+1;
+      level++;
+   }
+
+   return true;
+}
 
 bool http::Server::IsFileRequested(const char* uri, std::string& res)
 {
@@ -141,6 +180,7 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
    size_t pos = fname.rfind("httpsys/");
    if (pos!=std::string::npos) {
       fname.erase(0, pos+7);
+      if (!VerifyFilePath(fname.c_str())) return false;
       res = fHttpSys + fname;
       return true;
    }
@@ -149,11 +189,13 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
       // DABCSYS can be only in the beginning
       if (fname.find("${DABCSYS}")==0) {
          fname.erase(0, 10);
+         if (!VerifyFilePath(fname.c_str())) return false;
          res = fDabcSys + fname;
          return true;
       }
       if (fname.find("dabcsys")==0) {
          fname.erase(0, 7);
+         if (!VerifyFilePath(fname.c_str())) return false;
          res = fDabcSys + fname;
          return true;
       }
@@ -163,6 +205,7 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
       pos = fname.rfind("jsrootsys/");
       if (pos!=std::string::npos) {
          fname.erase(0, pos+9);
+         if (!VerifyFilePath(fname.c_str())) return false;
          res = fJsRootSys + fname;
          return true;
       }
@@ -172,6 +215,7 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
       pos = fname.rfind("go4sys/");
       if (pos!=std::string::npos) {
          fname.erase(0, pos+6);
+         if (!VerifyFilePath(fname.c_str())) return false;
          res = fGo4Sys + fname;
          return true;
       }
@@ -212,8 +256,6 @@ bool http::Server::IsAuthRequired(const char* uri)
 
    return res > 0;
 }
-
-
 
 bool http::Server::Process(const char* uri, const char* _query,
                            std::string& content_type,
