@@ -11,9 +11,7 @@
    
    <script type='text/javascript'>
    
-      function initGUI() {
-         JSROOT.loadScript("/httpsys/scripts/raphael.2.1.0.min.js;/httpsys/scripts/justgage.1.0.1.min.js;/httpsys/files/dabc.css;/httpsys/scripts/dabc.js", function() {
-         
+      function createGUI() {
             var guiCode =
                  '<div id="left-div" class="column">'+
                  '  <h1>Objects hierarchy</h1>'+
@@ -85,15 +83,19 @@
             d3.select("#separator-div").call(drag_move);
             
             JSROOT.RegisterForResize(h);
-        });
-     }
-      
-   </script>
+       }
 
-   
+       function loadDABC() {
+          JSROOT.loadScript("/httpsys/scripts/raphael.2.1.0.min.js;"+
+                            "/httpsys/scripts/justgage.1.0.1.min.js;"+
+                            "/httpsys/files/dabc.css;"+ 
+                            "/httpsys/scripts/dabc.js", 
+                             createGUI, 'mainGUI');
+       }     
+   </script>
 </head>
 
-<body onload="JSROOT.AssertPrerequisites('2d', initGUI)">
+<body onload="JSROOT.AssertPrerequisites('2d', loadDABC, 'mainGUI')">
    <div id="mainGUI">
       loading scripts ...
    </div>

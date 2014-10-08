@@ -6,6 +6,7 @@ current functionality of the framework.
 1. Remove <dabc> node name from TRootSnifferStoreXml class, implement compact form. 
 2. When drawing 2D histograms with 'col' or 'colz' options, always scale pallette on
    bins in selected range. 
+3. Show progress with scripts loading in the browser window
 
 
 7.10.2014
