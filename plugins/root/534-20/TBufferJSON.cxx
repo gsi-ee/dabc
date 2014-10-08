@@ -956,8 +956,14 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
 //______________________________________________________________________________
 void TBufferJSON::ClassBegin(const TClass *cl, Version_t)
 {
-   // Special function for custom streamers.
-   // Should be called in the beginning
+   // Should be called in the beginning of custom class streamer.
+   // Informs buffer data about class which will be streamed now.
+   //
+   // ClassBegin(), ClassEnd() and ClassMemeber() should be used in
+   // custom class streamers to specify which kind of data are
+   // now streamed. Such information is used to correctly
+   // convert class data to JSON. Without that functions calls
+   // classes with custom streamers cannot be used with TBufferJSON
 
    WorkWithClass(0, cl);
 }
@@ -965,8 +971,8 @@ void TBufferJSON::ClassBegin(const TClass *cl, Version_t)
 //______________________________________________________________________________
 void TBufferJSON::ClassEnd(const TClass *)
 {
-   // Special function for custom streamers.
-   // Should be called at the end
+   // Should be called at the end of custom streamer
+   // See TBufferJSON::ClassBegin for more details
 
    DecrementLevel(0);
 }
@@ -975,8 +981,30 @@ void TBufferJSON::ClassEnd(const TClass *)
 void TBufferJSON::ClassMember(const char *name, const char *typeName,
                               Int_t arrsize1, Int_t arrsize2)
 {
-   // Special function for custom streamers.
-   // Provides possibility to mark name and type of stored data
+   // Method indicates name and typename of class member,
+   // which should be now streamed in custom streamer
+   // Following combinations are supported:
+   // 1. name = "ClassName", typeName = 0 or typename==ClassName
+   //    This is a case, when data of parent class "ClassName" should be streamed.
+   //     For instance, if class directly inherited from TObject, custom
+   //     streamer should include following code:
+   //       b.ClassMember("TObject");
+   //       TObject::Streamer(b);
+   // 2. Basic data type
+   //      b.ClassMember("fInt","Int_t");
+   //      b >> fInt;
+   // 3. Array of basic data types
+   //      b.ClassMember("fArr","Int_t", 5);
+   //      b.ReadFastArray(fArr, 5);
+   // 4. Object as data member
+   //      b.ClassMemeber("fName","TString");
+   //      fName.Streamer(b);
+   // 5. Pointer on object as data member
+   //      b.ClassMemeber("fObj","TObject*");
+   //      b.StreamObject(fObj);
+   //  arrsize1 and arrsize2 arguments (when specified) indicate first and
+   //  second dimension of array. Can be used for array of basic types.
+   //  See ClassBegin() method for more details.
 
    if (typeName == 0) typeName = name;
 
