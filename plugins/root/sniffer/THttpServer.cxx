@@ -592,10 +592,10 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
       arg->fContent.Form(
          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-         "<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\" path=\"%s\">\n", arg->fPathName.Data());
+         "<root>\n");
 
       {
-         TRootSnifferStoreXml store(arg->fContent);
+         TRootSnifferStoreXml store(arg->fContent, arg->fQuery.Index("compact")!=kNPOS);
 
          const char *topname = fTopName.Data();
          if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
@@ -603,7 +603,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
          fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
       }
 
-      arg->fContent.Append("</dabc>\n");
+      arg->fContent.Append("</root>\n");
       arg->SetXml();
    } else
 

@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+8.10.2014
+1. Remove <dabc> node name from TRootSnifferStoreXml class, implement compact form. 
+
+
 7.10.2014
 1. Implement correct drawing of single DABC element. Like in JSROOT, one could
    use draw.htm for single element or main.htm for hierarchy display.
