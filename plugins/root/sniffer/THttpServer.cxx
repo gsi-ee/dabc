@@ -209,8 +209,7 @@ Bool_t THttpCallArg::CompressWithGzip()
 // THttpTimer                                                           //
 //                                                                      //
 // Specialized timer for THttpServer                                    //
-// Main aim - provide regular call of THttpServer::ProcessRequests()    //
-// method                                                               //
+// Provides regular call of THttpServer::ProcessRequests() method       //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -245,7 +244,39 @@ public:
 //                                                                      //
 // THttpServer                                                          //
 //                                                                      //
-// Online server for arbitrary ROOT analysis                            //
+// Online http server for arbitrary ROOT application                    //
+//                                                                      //
+// Idea of THttpServer - provide remote http access to running          //
+// ROOT application and enable HTML/JavaScript user interface.          //
+// Any registered object can be requested and displayed in the browser. //
+// There are many benefits of such approach:                            //
+//     * standard http interface to ROOT application                    //
+//     * no any temporary ROOT files when access data                   //
+//     * user interface running in all browsers                         //
+//                                                                      //
+//  Starting HTTP server                                                //
+//                                                                      //
+// To start http server, at any time  create instance                   //
+// of the THttpServer class like:                                       //
+//    serv = new THttpServer("http:8080");                              //
+//                                                                      //
+// This will starts civetweb-based http server with http port 8080.     //
+// Than one should be able to open address "http://localhost:8080"      //
+// in any modern browser (IE, Firefox, Chrome) and browse objects,      //
+// created in application. By default, server can access files,         //
+// canvases and histograms via gROOT pointer. All such objects          //
+// can be displayed with JSROOT graphics.                               //
+//                                                                      //
+// At any time one could register other objects with the command:       //
+//                                                                      //
+// TGraph* gr = new TGraph(10);                                         //
+// gr->SetName("gr1");                                                  //
+// serv->Register("graphs/subfolder", gr);                              //
+// If objects content is changing in the application, one could         //
+// enable monitoring flag in the browser - than objects view            //
+// will be regularly updated.                                           //
+//                                                                      //
+// More information: http://root.cern.ch/drupal/content/users-guide     //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
@@ -344,14 +375,14 @@ void THttpServer::SetSniffer(TRootSniffer *sniff)
 //______________________________________________________________________________
 Bool_t THttpServer::CreateEngine(const char *engine)
 {
-   // factory method to create different http engine
+   // factory method to create different http engines
    // At the moment two engine kinds are supported:
    //  civetweb (default) and fastcgi
    // Examples:
-   //   "civetweb:8090" or "http:8090" or ":8090" - creates civetweb web server with http port 8090
+   //   "civetweb:8080" or "http:8080" or ":8080" - creates civetweb web server with http port 8080
    //   "fastcgi:9000" - creates fastcgi server with port 9000
-   //   "dabc:1237"   - create DABC server with port 1237 (only available with DABC installed)
-   //   "dabc:master_host:port" - attach to DABC master, running on master_host:port, (only available with DABC installed)
+   //   "dabc:1237"    - create DABC server with port 1237 (only available with DABC installed)
+   //   "dabc:master_host:port" - attach to DABC master, running on master_host:port (only available with DABC installed)
 
    if (engine == 0) return kFALSE;
 
