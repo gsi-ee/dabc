@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+9.10.2014
+1. Remove clamp(true), when creating logx/logy scales.  
+
+
 8.10.2014
 1. Remove <dabc> node name from TRootSnifferStoreXml class, implement compact form. 
 2. When drawing 2D histograms with 'col' or 'colz' options, always scale pallette on
