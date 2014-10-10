@@ -1,9 +1,12 @@
 # HTTP server in ROOT
 
-Idea of such server – provide direct access to the different data 
-from running ROOT application. Any object can be streamed at the moment 
-when request is coming and delivered to the browser. 
-Main benefit of such approach – one do not need to create any temporary ROOT files for such task. 
+Idea of THttpServer – provide remote http access to running ROOT application 
+and enable HTML/JavaScript user interface. 
+Any registered object can be requested and displayed in the browser. 
+There are many benefits of such approach:
+   * standard http interface to ROOT application  
+   * no any temporary ROOT files to access data
+   * user interface running in all browsers
 
 ## Starting HTTP server
 
@@ -19,7 +22,7 @@ Than one should be able to open address "http://localhost:8080"
 in any modern browser (IE, Firefox, Chrome, Opera) and browse objects,
 created in application. By default, server can access files, canvases 
 and histograms via gROOT pointer. All such objects can be displayed with
-JSRootIO graphics. 
+JSROOT graphics. 
 
 At any time one could register other objects with the command:
 
@@ -29,7 +32,7 @@ gr->SetName("gr1");
 serv->Register("graphs/subfolder", gr);
 ```
 
-If objects content is changing in the applicaion, one could
+If objects content is changing in the application, one could
 enable monitoring flag in the browser - than objects view will be regularly updated.
    
 
@@ -43,12 +46,12 @@ First of all, one should create password file, using **htdigest** utility.
 [shell] htdigest -c .htdigest domain_name user_name
 ```
 
-It is recommened not to use special symbols in domain or user names.
+It is recommended not to use special symbols in domain or user names.
 Several users can be add to the ".htdigetst" file. When server started,
 following arguments should be specified:
 
 ``` {.cpp}
-root [0] new THttpServer("http:8080/none?auth_file=.htdigest&auth_domain=domain_name");
+root [0] new THttpServer("http:8080?auth_file=.htdigest&auth_domain=domain_name");
 ```
 
 After that browser will automatically request to input name/password for domain "domain_name"
@@ -94,7 +97,7 @@ serv->CreateEngine("fastcgi:9000");
 One could specify debug parameter to be able adjust FastCGI configuration on the web server:
 
 ``` {.cpp}
-serv->CreateEngine("fastcgi:9000/none?debug=1");
+serv->CreateEngine("fastcgi:9000?debug=1");
 ```
  
 All user access will be ruled by web server - 
@@ -110,7 +113,7 @@ If necessary, any object can be registered directly to the server with **`THttpS
 
 Central point of integration - when and how THttpServer get access to data from running application.
 By default it is done during gSystem->ProcessEvents() call - THttpServer uses synchronous timer,
-which is activated every 100 ms. Such approach works perfectely when running macros in interactive ROOT shell.
+which is activated every 100 ms. Such approach works perfectly when running macros in interactive ROOT shell.
 
 If application runs in compiled code and does not contains gSystem->ProcessEvents() calls, 
 two method are available. 
@@ -188,8 +191,8 @@ One could access also class members of object like:
   
 Result will be: "title".
 
-If access to the server restricted with htdigest method,
-it is recommended to use **curl** program while only curl correctly supports htdigest method.
+If access to the server restricted with htdigest,
+it is recommended to use **curl** program while only curl correctly implements such authentication method.
 Command will look like:
 
 ``` {.sh}
@@ -197,20 +200,37 @@ Command will look like:
 ```
 
 Following requests can be performed:
-   * root.bin  - 20-byte header and zipped binary TBuffer content
+   * root.bin  - binary data produced by object streaming with TBufferFile
    * root.json - ROOT JSON representation for object and objects members
    * root.xml  - ROOT XML representation   
    * root.png  - PNG image   
    * root.gif  - GIF image   
    * root.jpeg - JPEG image   
 
+All data  will be automatically zipped if '.gz' extension appended. Like:
+``` {.sh}
+wget http://localhost:8080/Files/hsimple.root/hpx/root.bin.gz
+```
+ 
+
 For images one could specify h (height), w (width) and opt (draw) options. Like:
 
 ``` {.sh}
-http://localhost:8080/Files/hsimple.root/hpx/root.png?w=500&h=500&opt=lego1
+wget "http://localhost:8080/Files/hsimple.root/hpx/root.png?w=500&h=500&opt=lego1" -O lego1.png
 ```
 
+For root.json request one could specify 'compact' parameter, 
+which will reduce number of spaces and new lines without lost of data.
+Parameter can have values from '0' - no compression till '3' - no any spaces at all.
+ 
+Compare of different requests methods with TCanvas object: 
+   * root.bin               31215 bytes
+   * root.bin.gz             7077 bytes
+   * root.json              12843 bytes
+   * root.json?compact=3     8543 bytes  
+   * root.json.gz?compact=3  2047 bytes  
 
-## Using JSRootIO for ROOT files display
+
+## Using JSROOT for objects display from THttpServer
 
 To be done

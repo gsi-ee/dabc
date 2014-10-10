@@ -11,12 +11,21 @@
 
 //________________________________________________________________________
 //
-// Class for serializing object into JSON format.
-// It redefines most of TBuffer class function to convert simple types,
-// array of simple types and objects to text JSON representation.
-// TBufferJSON class uses streaming mechanism, provided by ROOT system,
-// therefore most of ROOT and user classes can be stored. There are
-// limitations for complex objects like TTree, which can not be yet converted to JSON.
+// Class for serializing object into JavaScript Object Notation (JSON) format.
+// It creates such object representation, which can be directly
+// used in JavaScript ROOT (JSROOT) for drawing.
+//
+// TBufferJSON implements TBuffer interface, therefore most of
+// ROOT and user classes can be converted into JSON.
+// There are certain limitations for classes with custom streamers,
+// which should be equipped specially for this purposes (see TCanvas::Streamer() as example).
+//
+// To perform conversion, one should use TBufferJSON::ConvertToJSON method like:
+//
+//    TH1* h1 = new TH1I("h1","title",100, 0, 10);
+//    h1->FillRandom("gaus",10000);
+//    TString json = TBufferJSON::ConvertToJSON(h1);
+//
 //________________________________________________________________________
 
 
