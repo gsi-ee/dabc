@@ -151,7 +151,7 @@ TBufferJSON::TBufferJSON() :
 //______________________________________________________________________________
 TBufferJSON::~TBufferJSON()
 {
-   // destroy xml buffer
+   // destroy json buffer
 
    fStack.Delete();
 }
@@ -521,9 +521,9 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
 //______________________________________________________________________________
 void TBufferJSON::WriteObject(const TObject *obj)
 {
-   // Convert object into xml structures.
+   // Convert object into json.
    // !!! Should be used only by TBufferJSON itself.
-   // Use ConvertToXML() methods to convert your object to xml
+   // Use ConvertToJSON() methods to convert your object to json
    // Redefined here to avoid gcc 3.x warning
 
    Info("WriteObject", "Object %p", obj);
@@ -546,7 +546,7 @@ TJSONStackObj *TBufferJSON::PushStack(Int_t inclevel)
 //______________________________________________________________________________
 TJSONStackObj *TBufferJSON::PopStack()
 {
-   // remove one level from xml stack
+   // remove one level from json stack
 
    TObject *last = fStack.Last();
    if (last != 0) {
@@ -560,7 +560,7 @@ TJSONStackObj *TBufferJSON::PopStack()
 //______________________________________________________________________________
 TJSONStackObj *TBufferJSON::Stack(Int_t depth)
 {
-   // return xml stack object of specified depth
+   // return json stack object of specified depth
 
    TJSONStackObj *stack = 0;
    if (depth <= fStack.GetLast())
@@ -615,13 +615,8 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl)
 {
    // Write object to buffer
    // If object was written before, only pointer will be stored
-   // Return pointer to top xml node, representing object
-
-   // static int  cnt = 0;
 
    if (!cl) obj = 0;
-
-   //if (cnt++>100) return;
 
    if (gDebug > 1)
       Info("JsonWriteObject", "Object %p class %s", obj, cl ? cl->GetName() : "null");
@@ -673,10 +668,6 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl)
       stack = PushStack(0);
    }
 
-//   if (strcmp(cl->GetName(), "TMethodCall") == 0) {
-//      gDebug=5; cl->GetStreamerInfo()->ls("*");
-//   }
-
    if (gDebug > 3)
       Info("JsonWriteObject", "Starting object %p write for class: %s",
            obj, cl->GetName());
@@ -691,8 +682,6 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl)
    if (gDebug > 3)
       Info("JsonWriteObject", "Done object %p write for class: %s",
            obj, cl->GetName());
-
-//   if (strcmp(cl->GetName(), "TMethodCall") == 0) gDebug=0;
 
    if (isarray) {
       if (stack->fValues.GetLast() != 0)
@@ -773,7 +762,7 @@ void TBufferJSON::JsonStreamCollection(TCollection *col, const TClass *)
 void TBufferJSON::IncrementLevel(TVirtualStreamerInfo *info)
 {
    // Function is called from TStreamerInfo WriteBuffer and Readbuffer functions
-   // and indent new level in xml structure.
+   // and indent new level in json hierarchy.
    // This call indicates, that TStreamerInfo functions starts streaming
    // object data of correspondent class
 
@@ -828,7 +817,7 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo *sinfo, const TClass *cl)
 void TBufferJSON::DecrementLevel(TVirtualStreamerInfo *info)
 {
    // Function is called from TStreamerInfo WriteBuffer and ReadBuffer functions
-   // and decrease level in xml structure.
+   // and decrease level in json hierarchy.
 
    fExpectedChain = kFALSE;
 
@@ -863,8 +852,8 @@ void TBufferJSON::DecrementLevel(TVirtualStreamerInfo *info)
 //______________________________________________________________________________
 void TBufferJSON::SetStreamerElementNumber(Int_t number)
 {
-   // Function is called from TStreamerInfo WriteBuffer and Readbuffer functions
-   // and add/verify next element of xml structure
+   // Function is called from TStreamerInfo WriteBuffer and ReadBuffer functions
+   // and add/verify next element of json structure
    // This calls allows separate data, correspondent to one class member, from another
 
    if (gDebug > 3)
@@ -1320,7 +1309,6 @@ void *TBufferJSON::ReadObjectAny(const TClass *)
 void TBufferJSON::SkipObjectAny()
 {
    // Skip any kind of object from buffer
-   // Actually skip only one node on current level of xml structure
 }
 
 //______________________________________________________________________________
@@ -1540,7 +1528,7 @@ Int_t TBufferJSON::ReadArrayDouble32(Double_t *&d, TStreamerElement * /*ele*/)
    TBufferJSON_ReadArray(Double_t, d);
 }
 
-// macro to read array from xml buffer
+// macro to read array from json buffer
 #define TBufferJSON_ReadStaticArray(vname)               \
    {                                                        \
       if (!vname) return 0;                                 \
@@ -2565,7 +2553,7 @@ void TBufferJSON::WriteTString(const TString &s)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Char_t value)
 {
-   // converts Char_t to string and add xml node to buffer
+   // converts Char_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%d", value);
@@ -2575,7 +2563,7 @@ void TBufferJSON::JsonWriteBasic(Char_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Short_t value)
 {
-   // converts Short_t to string and add xml node to buffer
+   // converts Short_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%hd", value);
@@ -2585,7 +2573,7 @@ void TBufferJSON::JsonWriteBasic(Short_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Int_t value)
 {
-   // converts Int_t to string and add xml node to buffer
+   // converts Int_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%d", value);
@@ -2595,7 +2583,7 @@ void TBufferJSON::JsonWriteBasic(Int_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Long_t value)
 {
-   // converts Long_t to string and add xml node to buffer
+   // converts Long_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%ld", value);
@@ -2605,7 +2593,7 @@ void TBufferJSON::JsonWriteBasic(Long_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Long64_t value)
 {
-   // converts Long64_t to string and add xml node to buffer
+   // converts Long64_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), FLong64, value);
@@ -2615,7 +2603,7 @@ void TBufferJSON::JsonWriteBasic(Long64_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Float_t value)
 {
-   // converts Float_t to string and add xml node to buffer
+   // converts Float_t to string and add to json value buffer
 
    char buf[200];
    snprintf(buf, sizeof(buf), fgFloatFmt, value);
@@ -2625,7 +2613,7 @@ void TBufferJSON::JsonWriteBasic(Float_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Double_t value)
 {
-   // converts Double_t to string and add xml node to buffer
+   // converts Double_t to string and add to json value buffer
 
    char buf[1000];
    snprintf(buf, sizeof(buf), fgFloatFmt, value);
@@ -2635,7 +2623,7 @@ void TBufferJSON::JsonWriteBasic(Double_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(Bool_t value)
 {
-   // converts Bool_t to string and add xml node to buffer
+   // converts Bool_t to string and add to json value buffer
 
    fValue.Append(value ? "true" : "false");
 }
@@ -2643,7 +2631,7 @@ void TBufferJSON::JsonWriteBasic(Bool_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(UChar_t value)
 {
-   // converts UChar_t to string and add xml node to buffer
+   // converts UChar_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%u", value);
@@ -2653,7 +2641,7 @@ void TBufferJSON::JsonWriteBasic(UChar_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(UShort_t value)
 {
-   // converts UShort_t to string and add xml node to buffer
+   // converts UShort_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%hu", value);
@@ -2663,7 +2651,7 @@ void TBufferJSON::JsonWriteBasic(UShort_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(UInt_t value)
 {
-   // converts UInt_t to string and add xml node to buffer
+   // converts UInt_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%u", value);
@@ -2673,7 +2661,7 @@ void TBufferJSON::JsonWriteBasic(UInt_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(ULong_t value)
 {
-   // converts ULong_t to string and add xml node to buffer
+   // converts ULong_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), "%lu", value);
@@ -2683,7 +2671,7 @@ void TBufferJSON::JsonWriteBasic(ULong_t value)
 //______________________________________________________________________________
 void TBufferJSON::JsonWriteBasic(ULong64_t value)
 {
-   // converts ULong64_t to string and add xml node to buffer
+   // converts ULong64_t to string and add to json value buffer
 
    char buf[50];
    snprintf(buf, sizeof(buf), FULong64, value);

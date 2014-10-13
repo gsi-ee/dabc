@@ -242,7 +242,9 @@ one need to perform several (about 5) file-reading operations via http protocol.
 There is no http file locking mechanism (at least not for standard web servers), 
 therefore there is no guarantee that file content is not changed/replaced 
 between consequent read operations. Therefore one should expect frequent I/O failures while
-trying to read data from ROOT binary files. 
+trying to read data from ROOT binary files. There is workaround for the problem - one could
+load file completely and exclude many partial I/O operations by this. To achieve this
+with JSROOT, one should add "+" sign at the end of filename.   
 
 Third problem is limitations of ROOT I/O in JavaScript. Although it tries to fully
 repeat binary I/O with streamerinfos evaluation, JavaScript ROOT I/O will never have 
@@ -263,12 +265,12 @@ Even without server-side application JSROOT provides nice ROOT-like graphics,
 which could be used in arbitrary HTML pages. 
 There is [example page](http://web-docs.gsi.de/~linev/js/3.0/files/example.htm),
 where 2-D histograms is artificially generated and displayed on the web page.
-Details about JSROOT API one can find on the next page. 
+Details about JSROOT API one can find in the next chapters. 
 
 
 ### JSROOT API
 
-JSROOT consists from several libraries (js files). They all collected in
+JSROOT consists from several libraries (.js files). They all collected in
 repository and available in 'scripts' subfolder. Only central classes and functions 
 are documented here.
   
@@ -291,8 +293,10 @@ Than one should call JSROOT.AssertPrerequisites(kind,callback,debug) methods, wh
 * callback - call back function which is called when all necessary scripts are loaded
 * debug - id of <div id='your_id'></div> block where debug information will be shown while scripts loading
 
-Parameter kind defines which JSROOT scripts are loaded. '2d' is core functionality plus 2D-graphic, 'io' also
-includes binary file I/O, '3d' adds 3D drawings for 2D histograms.  
+Parameter kind defines which JSROOT scripts are loaded:
+- '2d' is core functionality plus normal drawings for 1D/2D objects
+- '3d' adds 3D drawings for 2D/3D histograms 
+- 'io' graphic plus binary file I/O  
 
 JSROOT.AssertPrerequisites should be called before any other JSROOT functions can be used.
 At the best one call it with `onload` handler like:
