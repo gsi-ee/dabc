@@ -251,7 +251,7 @@ one need to implement them once again and keep synchronous with ROOT itself. And
 custom streamers! Therefore it is just nice feature and it is grate that one can read binary
 files from the browser, but one never should rely that such I/O works for all cases.
 Let say, major classes like TH1 or TGraph or TCanvas will be supported, but one will never
-see full support of TTree in JavaScript.
+see full support of TTree or RooWorkspace in JavaScript.
 
 If somebody still want to test such functionality, he/she could try monitoring 
 parameter with fileitem.htm page.
@@ -281,18 +281,18 @@ In the <head> sections of HTML page one should have line:
     <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.0/scripts/JSRootCore.js"></script>  
 
 Here default location of JSROOT is specified, one could have local copy on file system or private
-web server. Then JSROOT used with THttpServer, address looks like:
+web server. When JSROOT used with THttpServer, address looks like:
 
     <script type="text/javascript" src="http://your_root_server:8080/jsrootsys/scripts/JSRootCore.js"></script>  
 
 Than one should call JSROOT.AssertPrerequisites(kind,callback,debug) methods, which accepts following arguments:
 
-* kind - kind of functionality to load (can be combination of)
-- '2d' - 2D graphic,  
-- '3d' - 3D graphics, 
-- 'io' - Root files IO
+* kind - kind of functionality to load, can be '2d', '3d' or 'io'
 * callback - call back function which is called when all necessary scripts are loaded
 * debug - id of <div id='your_id'></div> block where debug information will be shown while scripts loading
+
+Parameter kind defines which JSROOT scripts are loaded. '2d' is core functionality plus 2D-graphic, 'io' also
+includes binary file I/O, '3d' adds 3D drawings for 2D histograms.  
 
 JSROOT.AssertPrerequisites should be called before any other JSROOT functions can be used.
 At the best one call it with `onload` handler like:
@@ -302,8 +302,7 @@ At the best one call it with `onload` handler like:
     </body>
      
 Internally JSROOT.loadScript(urllist, callback, debug) method is used. It can be useful
-when some other scripts should be loaded as well. Here `callback' and `debug` parameters 
-has same meaning. _urllist_ is string with names of scripts, separated with ';' symbol.
+when some other scripts should be loaded as well. _urllist_ is string with scripts names, separated by ';' symbol.
 If script name started with `$$$` (triple dollar sign), script will be loaded from location
 relative to main JSROOT directory. This location detected automatically when JSRootCore.js script 
 is loaded.  
@@ -321,8 +320,8 @@ One also can generate JSON representation, using [TBufferJSON](http://root.cern.
 
 To access JSON from remote web server, it is recommended to use 
 [XMLHttpRequest](http://en.wikipedia.org/wiki/XMLHttpRequest) class. 
-JSROOT provides special method to create such class and properly handle differences, 
-existing in different browsers. For receiving JSON from server one could use following code:
+JSROOT provides special method to create such class and properly handle it in different browsers. 
+For receiving JSON from server one could use following code:
 
     var req = JSROOT.NewHttpRequest("http://your_root_server:8080/Canvases/c1/root.json", 'text', userCallback);
     req.send(null);
@@ -355,6 +354,8 @@ Second argument is object to draw and third argument is draw options.
 Function return painter object, which can be used to update drawing like here: 
     
     var painter = JSROOT.draw("drawing", obj, "colz");
+    // some interval
+    // request object again
     var obj2 = JSROOT.parse(result2);
     painter.UpdateObject(obj2);   
     painter.RedrawFrame();
@@ -362,7 +363,7 @@ Function return painter object, which can be used to update drawing like here:
 
 #### File API
 
-JSROOT defines JSROOT.TFile class, which can be used to access ROOT files.
+JSROOT defines JSROOT.TFile class, which can be used to access binary ROOT files.
 
     var filename = "http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root";
     var f = new JSROOT.TFile(filename, fileReadyCallback);
