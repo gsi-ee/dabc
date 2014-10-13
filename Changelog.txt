@@ -3,7 +3,7 @@ In many cases it is the best place to find information about
 current functionality of the framework.
 
 13.10.2014
-1. Introduce docu file for JSROOT
+1. Introduce docu files for JSROOT
 2. When one appends "+" to the filename, its content read completely with first I/O operation.
 3. When drawing TCanvas/TPad on empty frame, scale it's height according original ratio.    
 

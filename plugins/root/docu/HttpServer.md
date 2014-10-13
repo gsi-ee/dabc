@@ -1,4 +1,4 @@
-# HTTP server in ROOT
+# HTTP server in ROOT {#httpserver}
 
 Idea of THttpServer – provide remote http access to running ROOT application 
 and enable HTML/JavaScript user interface. 
@@ -13,9 +13,9 @@ There are many benefits of such approach:
 To start http server, at any time  create instance
 of the **`THttpServer`** class like: 
 
-``` {.cpp}
+~~~~~~~~~{.cpp}
 serv = new THttpServer("http:8080");
-```
+~~~~~~~~~
 
 This will starts civetweb-based http server with http port 8080.
 Than one should be able to open address "http://localhost:8080"
@@ -231,6 +231,3 @@ Compare of different requests methods with TCanvas object:
    * root.json.gz?compact=3  2047 bytes  
 
 
-## Using JSROOT for objects display from THttpServer
-
-To be done
