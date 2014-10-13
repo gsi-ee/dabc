@@ -319,14 +319,14 @@ object. It can be requested from server with address like:
  
 One also can generate JSON representation, using [TBufferJSON](http://root.cern.ch/root/html/TBufferJSON.html) class.
 
-To access JSON from remote web server, it is recommended to use [XMLHttpRequest](http://en.wikipedia.org/wiki/XMLHttpRequest) class. 
-JSROOT provides special method to create such class and properly handle differences, existing in different browsers.
-For receiving JSON from server one could use following code:
+To access JSON from remote web server, it is recommended to use 
+[XMLHttpRequest](http://en.wikipedia.org/wiki/XMLHttpRequest) class. 
+JSROOT provides special method to create such class and properly handle differences, 
+existing in different browsers. For receiving JSON from server one could use following code:
 
     var req = JSROOT.NewHttpRequest("http://your_root_server:8080/Canvases/c1/root.json", 'text', userCallback);
     req.send(null);
     
-  
 In callback function one need to parse result with JSROOT.parse() function
 
     function userCallback(result) {
@@ -342,8 +342,9 @@ Warning - do not mix up JSROOT.parse with standard
 
 After object created, one can directly draw it. If somewhere in HTML pages there is element:
     
-    <div id="drawing">
-    </div>
+    ...
+    <div id="drawing"></div>
+    ...
  
 One could use JSROOT.draw function:
 
@@ -361,13 +362,26 @@ Function return painter object, which can be used to update drawing like here:
 
 #### File API
 
-JSROOT define JSROOT.TFile, which can be used to access ROOT files.
+JSROOT defines JSROOT.TFile class, which can be used to access ROOT files.
 
     var filename = "http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root";
     var f = new JSROOT.TFile(filename, fileReadyCallback);
     
-One should always remember that all I/O operations in 
+One should always remember that all I/O operations asynchronous in JSROOT.
+Therefore callback always used to react when I/O operation completed.
+For the example callback function looks like:
 
+    function fileReadyCallback(file) {
+       if (file==null) return;
+       file.ReadObject("hpxpy;1", objectReadyCallback);
+    }     
+
+Finally, one should implement callback function for getting ready object:
+
+    function objectReadyCallback(obj) {
+       if (obj==null) return;
+       JSROOT.draw("drawing", obj, "colz");
+    }
 
     
  
