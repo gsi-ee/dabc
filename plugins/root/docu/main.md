@@ -1,4 +1,4 @@
-# Main Page  {#mainpage}
+# JavaScript ROOT Documentation {#jsrootmain}
 
 [HTTP server in ROOT](@ref httpserver)
 
