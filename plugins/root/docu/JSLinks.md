@@ -15,7 +15,11 @@
 
 * http://web-docs.gsi.de/~linev/js/3.0/demo
 
-## Demonstration of JSROOT usage
+## Standalone JSROOT usage
+
+* http://web-docs.gsi.de/~linev/js/3.0/files/example.htm
+
+## Demonstration of online JSROOT usage
 
 * http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm
 * http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm?layout=grid3x2
