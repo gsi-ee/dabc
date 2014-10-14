@@ -4,6 +4,7 @@ current functionality of the framework.
 
 14.10.2014
 1. Create drawoptions.htm page, showing all supported options.
+2. Decode options directly in JSROOT.HistPainter class.
 
 
 13.10.2014
