@@ -1,5 +1,7 @@
 # JavaScript ROOT {#jsroot}
 
+[TOC]
+
 JSROOT project intends to implement ROOT graphics for web browsers.
 Also reading of binary ROOT files is supported.
 It is successor of JSRootIO project.
@@ -21,20 +23,20 @@ possibility interactively open ROOT files and draw objects like histogram or can
 
 In principle, one could open any ROOT file placed in the web, providing full URL to it.
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
-which by default enabled in most browsers and blocks access to any data outside current web page.
+which by default prevents browser to access data from other domains.
 
-There are two solutions. Either one enables requests to other web sites in the
-browser, or one copies all JSROOT files on the web server where data files are located.
-In second case one can use browsers with default settings.  
+There are two solutions. Either one configures accordingly web-server or 
+one copies JSROOT files to the same location where data files are.
+In second case one could use server with default settings.  
  
-One also could copy only top index.htm file on the server and specify full path 
+In simple case one could copy only top index.htm file on the server and specify full path 
 to JSRootCore.js script like:
 
     ...
     <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
     ...  
 
-One also can provide custom files list:
+Than one able to specify custom files list:
 
     ...
      <div id="simpleGUI" files="userfile1.root;subdir/usefile2.root">
@@ -61,7 +63,7 @@ It requires following parameters:
 
 Example: <A href='http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz'>http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz</A> 
 
-Such page very easily can be integrated into any other web page, using `<IFRAME src="link"></IFRAME>` HTML tag.  
+Such page can be very easily integrated into any other web page, using `<IFRAME src="link"></IFRAME>` HTML tag.  
 
 \htmlonly
 <iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz">
@@ -84,7 +86,7 @@ It is also possible to display single item from the THttpSerever server like
 http://web-docs.gsi.de/~linev/js/3.0/demo/Files/job1.root/hprof/draw.htm
 
 \htmlonly
-<iframe style="width:400px;height:400px" src="http://web-docs.gsi.de/~linev/js/3.0/demo/Files/job1.root/hprof/draw.htm">
+<iframe style="width:600px;height:400px" src="http://web-docs.gsi.de/~linev/js/3.0/demo/Files/job1.root/hprof/draw.htm">
 </iframe>
 \endhtmlonly
 
@@ -118,19 +120,18 @@ There is demonstration page which shows such functionality:
 http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm
  
 \htmlonly
-<iframe style="width:400px;height:300px" src="http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm">
+<iframe style="width:500px;height:300px" src="http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm">
 </iframe>
 \endhtmlonly
 
-This demo page reads 20 json files from the server in the cycle and display them.
+This demo page reads in the cycle 20 json files and displays them.
 
 If one have web server which already provides such JSON file, one could specify URL to this file like:
-
   
 http://web-docs.gsi.de/~linev/js/3.0/demo/demo.htm?addr=Canvases/c1/root.json.gz
 
 Here same problem with [Cross-Origin Request](https://developer.mozilla.org/en/http_access_control) can appear.
-Just copy JSROOT on the same web server to avoid problems with browsers configurations.
+If webserver configuration cannot be changed, just copy JSROOT to the web server.
 
 
 
@@ -143,10 +144,10 @@ could regularly read specified objects and update drawings. But such solution ha
 
 First of all, one need to store data of all objects, which only potentially could be displayed in
 the browser. In case of 10 objects it does not matter, for 1000 or 100000 objects it will be
-major performance penalty. And at the end only few histograms will be really displayed. 
+major performance penalty. With such big amount of data one never will achieve frequent update rate. 
 
-Second problem is I/O. To read any object from the ROOT file,
-one need to perform several (about 5) file-reading operations via http protocol. 
+Second problem is I/O. To read first object from the ROOT file,
+one need to perform several (about 7) file-reading operations via http protocol. 
 There is no http file locking mechanism (at least not for standard web servers), 
 therefore there is no guarantee that file content is not changed/replaced 
 between consequent read operations. Therefore one should expect frequent I/O failures while
@@ -163,8 +164,9 @@ files from the browser, but one never should rely that such I/O works for all ca
 Let say, major classes like TH1 or TGraph or TCanvas will be supported, but one will never
 see full support of TTree or RooWorkspace in JavaScript.
 
-If somebody still want to test such functionality, he/she could try monitoring 
-parameter with fileitem.htm page.
+If somebody still want to test such functionality, try monitoring parameter like:
+
+http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root+&item=hpx;1&monitoring=2000
 
 
 ## Stand-alone usage of JSROOT
@@ -178,9 +180,9 @@ Details about JSROOT API one can find in the next chapters.
 
 ## JSROOT API
 
-JSROOT consists from several libraries (.js files). They all collected in
-repository and available in 'scripts' subfolder. Only central classes and functions 
-are documented here.
+JSROOT consists from several libraries (.js files). They all provided in ROOT
+repository and available in 'etc/http/scripts/' subfolder. 
+Only central classes and functions will be documented here.
   
 ### Scripts loading
 
@@ -197,14 +199,13 @@ web server. When JSROOT used with THttpServer, address looks like:
 
 Than one should call JSROOT.AssertPrerequisites(kind,callback,debug) methods, which accepts following arguments:
 
-* kind - kind of functionality to load, can be '2d', '3d' or 'io'
-* callback - call back function which is called when all necessary scripts are loaded
-* debug - id of <div id='your_id'></div> block where debug information will be shown while scripts loading
+- kind - functionality to load, can be:
+  + '2d' core functionality plus normal drawings for 1D/2D objects
+  + '3d' adds 3D drawings for 2D/3D histograms 
+  + 'io' binary file I/O plus '2d' graphic  
+- callback - call back function which is called when all necessary scripts are loaded
+- debug - id of HTML element where debug information will be shown while scripts loading
 
-Parameter kind defines which JSROOT scripts are loaded:
-- '2d' is core functionality plus normal drawings for 1D/2D objects
-- '3d' adds 3D drawings for 2D/3D histograms 
-- 'io' graphic plus binary file I/O  
 
 JSROOT.AssertPrerequisites should be called before any other JSROOT functions can be used.
 At the best one call it with `onload` handler like:
@@ -223,14 +224,13 @@ is loaded.
 ### Use of JSON
 
 It is strongly recommended to use JSON when communicating with ROOT application.
-When THttpServer is used, it automatically provides JSON representation for every registered
-object. It can be requested from server with address like:
+THttpServer  provides JSON representation for every registered object with url address like: 
 
      http://your_root_server:8080/Canvases/c1/root.json
  
 One also can generate JSON representation, using [TBufferJSON](http://root.cern.ch/root/html/TBufferJSON.html) class.
 
-To access JSON from remote web server, it is recommended to use 
+To access data from remote web server, it is recommended to use 
 [XMLHttpRequest](http://en.wikipedia.org/wiki/XMLHttpRequest) class. 
 JSROOT provides special method to create such class and properly handle it in different browsers. 
 For receiving JSON from server one could use following code:

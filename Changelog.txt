@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+14.10.2014
+1. Create drawoptions.htm page, showing all supported options.
+
+
 13.10.2014
 1. Introduce docu files for JSROOT
 2. When one appends "+" to the filename, its content read completely with first I/O operation.
