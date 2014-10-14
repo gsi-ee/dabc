@@ -199,10 +199,10 @@ web server. When JSROOT used with THttpServer, address looks like:
 
 Than one should call JSROOT.AssertPrerequisites(kind,callback,debug) methods, which accepts following arguments:
 
-- kind - functionality to load, can be:
-  + '2d' core functionality plus normal drawings for 1D/2D objects
-  + '3d' adds 3D drawings for 2D/3D histograms 
-  + 'io' binary file I/O plus '2d' graphic  
+- kind - functionality to load, can be combination of:
+  + '2d' normal drawings for 1D/2D objects
+  + '3d' 3D drawings for 2D/3D histograms 
+  + 'io' binary file I/O  
 - callback - call back function which is called when all necessary scripts are loaded
 - debug - id of HTML element where debug information will be shown while scripts loading
 
