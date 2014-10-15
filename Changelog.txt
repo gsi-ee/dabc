@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+15.10.2014
+1. Tag current version as 2.7.0
+
+
 14.10.2014
 1. Create drawoptions.htm page, showing all supported options.
 2. Decode options directly in JSROOT.HistPainter class.

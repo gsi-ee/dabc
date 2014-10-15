@@ -18,7 +18,7 @@ Latest version of JSROOT can be found online on
 
 ## Reading ROOT files in JSROOT
 
-Central web page of the [JSROOT project](http://web-docs.gsi.de/~linev/js/3.0/) provides 
+[Main page](http://web-docs.gsi.de/~linev/js/3.0/) of the JSROOT project provides 
 possibility interactively open ROOT files and draw objects like histogram or canvas.
 
 In principle, one could open any ROOT file placed in the web, providing full URL to it.

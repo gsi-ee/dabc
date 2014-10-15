@@ -14,7 +14,7 @@
 
    DABC = {};
 
-   DABC.version = "2.6.7";
+   DABC.version = "2.7.0";
 
 // ============= start of DrawElement ================================= 
 
