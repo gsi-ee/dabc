@@ -21,29 +21,6 @@ Latest version of JSROOT can be found online on
 [Main page](http://web-docs.gsi.de/~linev/js/3.0/) of the JSROOT project provides 
 possibility interactively open ROOT files and draw objects like histogram or canvas.
 
-In principle, one could open any ROOT file placed in the web, providing full URL to it.
-But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
-which by default prevents browser to access data from other domains.
-
-There are two solutions. Either one configures accordingly web-server or 
-one copies JSROOT files to the same location where data files are.
-In second case one could use server with default settings.  
- 
-In simple case one could copy only top index.htm file on the server and specify full path 
-to JSRootCore.js script like:
-
-    ...
-    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
-    ...  
-
-Than one able to specify custom files list:
-
-    ...
-     <div id="simpleGUI" files="userfile1.root;subdir/usefile2.root">
-       loading scripts ...
-     </div>
-    ...
-
 Several parameters could be specified in the URL string:
 - file - name of the file, which will be automatically open with page loading
 - item - item name to display 
@@ -69,6 +46,34 @@ Such page can be very easily integrated into any other web page, using `<IFRAME 
 <iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz">
 </iframe>
 \endhtmlonly
+
+
+In principle, one could open any ROOT file placed in the web, providing full URL to it like:
+
+http://root.cern.ch/js/3.0/?file=http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root&item=hpx
+
+But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
+which by default prevents browser to access data from other domains.
+
+There are two solutions. Either one configures accordingly web-server or 
+one copies JSROOT files to the same location where data files are.
+In second case one could use server with default settings.  
+ 
+In simple case one could copy only top index.htm file on the server and specify full path 
+to JSRootCore.js script like:
+
+    ...
+    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
+    ...  
+
+In such case one also could specify custom files list:
+
+    ...
+     <div id="simpleGUI" files="userfile1.root;subdir/usefile2.root">
+       loading scripts ...
+     </div>
+    ...
+
 
 
 ## JSROOT with THttpServer
