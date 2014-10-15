@@ -12,6 +12,7 @@ current functionality of the framework.
 1. Create drawoptions.htm page, showing all supported options.
 2. Decode options directly in JSROOT.HistPainter class.
 3. Implement JS custom streamer for TCanvas, restore aspect ratio when drawing
+4. Fix problem while clamp() excluded and log scale with negative values fails. 
 
 
 13.10.2014
