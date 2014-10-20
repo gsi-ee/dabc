@@ -2,6 +2,17 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+
+20.10.2014
+1. Major redesign of JS painting code. 
+2. Painter class provided for every drawn object
+3. As first argument of any draw function divid should be specified.
+4. Clear organization of SVG containers for TCanvas/TPad, TFrame and each object
+5. Clear assignment of painters lists to canvas/pad painters.
+6. Now correct dynamic update and resize of canvas is possible (should be intensively tested).
+7. Also simple way to cleanup drawings via jQuery empty() method.  
+
+
 15.10.2014
 1. Tag current version as 2.7.0
 2. Remove extra svg:g container when drawing bins - only svg is used.
