@@ -229,7 +229,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 
 #ifdef WITH_ROOT
 
-   fWorkerHierarchy.GetHChild("StreamerInfo").SetField(dabc::prop_hash, fSniffer->GetStreamerInfoHash());
+   fWorkerHierarchy.GetHChild("StreamerInfo").SetField(dabc::prop_hash, (uint64_t) fSniffer->GetStreamerInfoHash());
 
    TH2I* h2 = (TH2I*) fHist;
    if (h2!=0) {
