@@ -21,7 +21,7 @@ Latest version of JSROOT can be found online on
 [Main page](http://web-docs.gsi.de/~linev/js/3.0/) of the JSROOT project provides 
 possibility interactively open ROOT files and draw objects like histogram or canvas.
 
-Several parameters could be specified in the URL string:
+Following parameters could be specified in the URL string:
 - file - name of the file, which will be automatically open with page loading
 - item - item name to display 
 - opt  - draw option for the item 
@@ -50,7 +50,7 @@ Such page can be very easily integrated into any other web page, using `<IFRAME 
 
 In principle, one could open any ROOT file placed in the web, providing full URL to it like:
 
-http://root.cern.ch/js/3.0/?file=http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root&item=hpx
+http://web-docs.gsi.de/~linev/js/3.0/?file=http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root&item=hpx
 
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
 which by default prevents browser to access data from other domains.
@@ -63,7 +63,7 @@ In simple case one could copy only top index.htm file on the server and specify 
 to JSRootCore.js script like:
 
     ...
-    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
+    <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.0/scripts/JSRootCore.js"></script>
     ...  
 
 In such case one also could specify custom files list:
@@ -148,15 +148,15 @@ which can be accessed via normal web server. From the browser side JSROOT
 could regularly read specified objects and update drawings. But such solution has three major caveats.
 
 First of all, one need to store data of all objects, which only potentially could be displayed in
-the browser. In case of 10 objects it does not matter, for 1000 or 100000 objects it will be
-major performance penalty. With such big amount of data one never will achieve frequent update rate. 
+the browser. In case of 10 objects it does not matter, for 1000 or 100000 objects this will be
+major performance penalty. With such big amount of data one will never achieve frequent update rate. 
 
 Second problem is I/O. To read first object from the ROOT file,
 one need to perform several (about 7) file-reading operations via http protocol. 
 There is no http file locking mechanism (at least not for standard web servers), 
 therefore there is no guarantee that file content is not changed/replaced 
 between consequent read operations. Therefore one should expect frequent I/O failures while
-trying to read data from ROOT binary files. There is workaround for the problem - one could
+trying to monitor data from ROOT binary files. There is workaround for the problem - one could
 load file completely and exclude many partial I/O operations by this. To achieve this
 with JSROOT, one should add "+" sign at the end of filename.   
 
@@ -169,7 +169,7 @@ files from the browser, but one never should rely that such I/O works for all ca
 Let say, major classes like TH1 or TGraph or TCanvas will be supported, but one will never
 see full support of TTree or RooWorkspace in JavaScript.
 
-If somebody still want to test such functionality, try monitoring parameter like:
+If somebody still want to test such functionality, try monitoring parameter like (be aware that example file is not changing):
 
 http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root+&item=hpx;1&monitoring=2000
 
@@ -179,7 +179,7 @@ http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root+&item=
 Even without server-side application JSROOT provides nice ROOT-like graphics,
 which could be used in arbitrary HTML pages. 
 There is [example page](http://web-docs.gsi.de/~linev/js/3.0/files/example.htm),
-where 2-D histograms is artificially generated and displayed on the web page.
+where 2-D histograms is artificially generated and displayed.
 Details about JSROOT API one can find in the next chapters. 
 
 

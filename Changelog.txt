@@ -2,6 +2,9 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+21.10.2014
+1. Fix problem with colz palette drawing from TCanvas. 
+
 
 20.10.2014
 1. Major redesign of JS painting code. 
