@@ -4,8 +4,7 @@ current functionality of the framework.
 
 21.10.2014
 1. Fix problem with colz palette drawing from TCanvas. 
-2. Re-enable 3D drawing for 2D histograms 
-
+2. Re-enable 3D drawing for 2D/3D histograms 
 
 20.10.2014
 1. Major redesign of JS painting code. 
