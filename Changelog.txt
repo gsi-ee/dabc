@@ -7,6 +7,8 @@ current functionality of the framework.
 2. Re-enable 3D drawing for 2D/3D histograms 
 3. Extract 3D drawings into separate JSRoot3DPainter.js script
 4. Use newest three.mjs (r68) for 3D drawings, solves problem with Firefox.
+5. Introduce generic list of draw functions for all supported classes.
+   Makes simpler to add support for user-specific classes.
 
 
 20.10.2014
