@@ -6,6 +6,7 @@ current functionality of the framework.
 1. Fix problem with colz palette drawing from TCanvas. 
 2. Re-enable 3D drawing for 2D/3D histograms 
 3. Extract 3D drawings into separate JSRoot3DPainter.js script
+4. Use newest three.mjs (r68) for 3D drawings, solves problem with Firefox.
 
 
 20.10.2014
