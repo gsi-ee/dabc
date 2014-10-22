@@ -519,6 +519,24 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
 }
 
 //______________________________________________________________________________
+Bool_t  TBufferJSON::CheckObject(const TObject * obj)
+{
+   // Check that object already stored in the buffer
+
+   if (obj==0) return kTRUE;
+   return fJsonrMap.find(obj) != fJsonrMap.end();
+}
+
+//______________________________________________________________________________
+Bool_t TBufferJSON::CheckObject(const void * ptr, const TClass * /*cl*/)
+{
+   // Check that object already stored in the buffer
+
+   if (ptr==0) return kTRUE;
+   return fJsonrMap.find(ptr) != fJsonrMap.end();
+}
+
+//______________________________________________________________________________
 void TBufferJSON::WriteObject(const TObject *obj)
 {
    // Convert object into json.
@@ -787,9 +805,9 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo *sinfo, const TClass *cl)
 
    TJSONStackObj *stack = Stack();
 
-   if ((stack != 0) && stack->IsStreamerElement() &&
-         (stack->fElem->GetType() == TStreamerInfo::kObject) &&
-         !stack->fIsObjStarted) {
+   if ((stack != 0) && stack->IsStreamerElement() && !stack->fIsObjStarted &&
+        ((stack->fElem->GetType() == TStreamerInfo::kObject) ||
+         (stack->fElem->GetType() == TStreamerInfo::kAny))) {
 
       stack->fIsObjStarted = kTRUE;
 

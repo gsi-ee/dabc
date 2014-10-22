@@ -7,6 +7,9 @@ current functionality of the framework.
 2. Add possibility to 'expand' normal objects in the hierarchy browser.
    For instance, this gives access to single elements of canvas, 
    when whole canvas cannot be drawn. 
+3. Correctly use colors map, provided with TCanvas.
+4. In TBufferJSON correctly process CheckObject method to enable store of 
+   colors map in the buffer. 
 
 
 21.10.2014

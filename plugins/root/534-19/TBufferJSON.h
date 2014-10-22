@@ -226,15 +226,11 @@ public:
 
    virtual void       TagStreamerInfo(TVirtualStreamerInfo * /*info*/) {}
 
+   virtual Bool_t     CheckObject(const TObject * /*obj*/);
+
+   virtual Bool_t     CheckObject(const void * /*ptr*/, const TClass * /*cl*/);
+
    // abstract virtual methods from TBuffer, which should be redefined to
-   virtual Bool_t     CheckObject(const TObject * /*obj*/)
-   {
-      /*Error("CheckObject","useless");*/ return kTRUE;
-   }
-   virtual Bool_t     CheckObject(const void * /*ptr*/, const TClass * /*cl*/)
-   {
-      /*Error("CheckObject","useless");*/ return kTRUE;
-   }
 
    virtual Int_t      ReadBuf(void * /*buf*/, Int_t /*max*/)
    {
