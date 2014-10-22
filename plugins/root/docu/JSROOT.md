@@ -271,11 +271,10 @@ Second argument is object to draw and third argument is draw options.
 Function return painter object, which can be used to update drawing like here: 
     
     var painter = JSROOT.draw("drawing", obj, "colz");
-    // some interval
+    // after some interval
     // request object again
     var obj2 = JSROOT.parse(result2);
-    painter.UpdateObject(obj2);   
-    painter.RedrawFrame();
+    painter.RedrawObject(obj2);
 
 
 ### File API

@@ -730,7 +730,7 @@
       if (!this.ReconstructObject()) return;
 
       if (this.root_painter != null) {
-         this.root_painter.RedrawFrame();
+         this.root_painter.RedrawPad();
          this.root_painter.vis.select("title").text(title);
       } else {
          this.root_painter = JSROOT.draw(this.frameid, this.root_obj);
@@ -837,7 +837,7 @@
       gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
 
       if (this.root_painter && this.root_painter.UpdateObject(gr)) {
-         this.root_painter.RedrawFrame();
+         this.root_painter.RedrawPad();
          this.root_painter.vis.select("title").text(title);
       } else {
          this.root_painter = JSROOT.draw(this.frameid, gr, "L");
@@ -1006,7 +1006,7 @@
          h.get(itemname, function(item, obj) {
             if (painter.UpdateObject(obj)) {
                document.body.style.cursor = 'wait';
-               painter.RedrawFrame();
+               painter.RedrawPad();
                document.body.style.cursor = 'auto';
             }
          });

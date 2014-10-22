@@ -12,6 +12,7 @@ current functionality of the framework.
    colors map in the buffer. 
 5. Repair logic with canvas monitoring, implement monitoring of different text painters. 
 6. TPaveText drawing use .attr("xml:space","preserve") to preserve multiple spaces in text.
+7. Introduce JSROOT.redraw() function which is capable to create or update object drawing.
 
 
 21.10.2014
