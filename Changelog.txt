@@ -11,6 +11,7 @@ current functionality of the framework.
 4. In TBufferJSON correctly process CheckObject method to enable store of 
    colors map in the buffer. 
 5. Repair logic with canvas monitoring, implement monitoring of different text painters. 
+6. TPaveText drawing use .attr("xml:space","preserve") to preserve multiple spaces in text.
 
 
 21.10.2014
