@@ -10,6 +10,7 @@ current functionality of the framework.
 3. Correctly use colors map, provided with TCanvas.
 4. In TBufferJSON correctly process CheckObject method to enable store of 
    colors map in the buffer. 
+5. Repair logic with canvas monitoring, implement monitoring of different text painters. 
 
 
 21.10.2014
