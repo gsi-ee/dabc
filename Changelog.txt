@@ -4,6 +4,9 @@ current functionality of the framework.
 
 22.10.2014
 1. Exclude zeros from TProfile drawing
+2. Add possibility to 'expand' normal objects in the hierarchy browser.
+   For instance, this gives access to single elements of canvas, 
+   when whole canvas cannot be drawn. 
 
 
 21.10.2014

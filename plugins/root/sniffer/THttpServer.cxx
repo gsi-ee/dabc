@@ -585,19 +585,13 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
    // Info("ProcessRequest", "Path %s File %s", arg->fPathName.Data(), arg->fFileName.Data());
 
    if (arg->fFileName.IsNull() || (arg->fFileName == "index.htm")) {
+      //Bool_t usedefaultpage =
+      //           fSniffer->CanExploreItem(arg->fPathName.Data()) ||
+      //          !fSniffer->CanDrawItem(arg->fPathName.Data());
+      //arg->fContent = usedefaultpage ? fDefaultPage : fDrawPage;
 
-      Bool_t usedefaultpage = kTRUE;
-
-      if (!fSniffer->CanExploreItem(arg->fPathName.Data()) &&
-            fSniffer->CanDrawItem(arg->fPathName.Data())) usedefaultpage = kFALSE;
-
-      if (usedefaultpage)
-         arg->fContent = fDefaultPage;
-      else
-         arg->fContent = fDrawPage;
-
+      arg->fContent = fDefaultPage;
       arg->SetFile();
-
       return;
    }
 
