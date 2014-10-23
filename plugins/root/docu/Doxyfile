@@ -542,10 +542,10 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = HttpServer.md JSROOT.md JSLinks.md main.md \
-                         ../js/scripts/JSRootCore.js \
-                         ../js/scripts/JSRootPainter.js \
-                         ../js/scripts/JSRootIOEvolution.js
+INPUT                  = HttpServer.md JSROOT.md JSLinks.md main.md 
+#                         ../js/scripts/JSRootCore.js \
+#                         ../js/scripts/JSRootPainter.js \
+#                         ../js/scripts/JSRootIOEvolution.js
 
 USE_MDFILE_AS_MAINPAGE = main.md
 

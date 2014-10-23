@@ -9,6 +9,7 @@
 
 * http://web-docs.gsi.de/~linev/js/3.0/?file=files/hsimple.root
 * http://web-docs.gsi.de/~linev/js/3.0/?file=files/hsimple.root&item=hpxpy;1&opt=colz
+* http://web-docs.gsi.de/~linev/js/3.0/?nobrowser&file=files/hsimple.root&item=hprof;1
 * <A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A>   
 
 ## Snapshot from running THttpServer

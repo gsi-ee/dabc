@@ -1,6 +1,6 @@
-# JavaScript ROOT {#jsroot}
+\tableofcontents
 
-[TOC]
+# JavaScript ROOT {#jsroot}
 
 JSROOT project intends to implement ROOT graphics for web browsers.
 Also reading of binary ROOT files is supported.
@@ -12,8 +12,7 @@ It is successor of JSRootIO project.
 Actual version of JSROOT can be found in ROOT repository, etc/http/ subfolder.
 There all necessary files are located. Just copy them on web server or 
 use directly from the file system.
-Latest version of JSROOT can be found online on 
-<http://root.cern.ch/js/3.0/>, mirror on <http://web-docs.gsi.de/~linev/js/3.0/> 
+Latest version of JSROOT also can be found online on <http://web-docs.gsi.de/~linev/js/>. 
  
 
 ## Reading ROOT files in JSROOT
@@ -49,7 +48,7 @@ In principle, one could open any ROOT file placed in the web, providing full URL
 http://web-docs.gsi.de/~linev/js/3.0/?file=http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root&item=hpx
 
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
-which by default prevents browser to access data from other domains.
+which normally prevents browser to access data from other domains.
 
 There are two solutions. Either one configures accordingly web-server or 
 one copies JSROOT files to the same location where data files are.
@@ -266,13 +265,14 @@ One could use JSROOT.draw function:
     
 First argument is id of the HTML element where drawing will be done.
 Second argument is object to draw and third argument is draw options.
-Function return painter object, which can be used to update drawing like here: 
-    
-    var painter = JSROOT.draw("drawing", obj, "colz");
+One also able to update drawing with new version of object:
+
     // after some interval
     // request object again
     var obj2 = JSROOT.parse(result2);
-    painter.RedrawObject(obj2);
+    JSROOT.redraw("drawing", obj2, "colz");
+    
+JSROOT.redraw function will call JSROOT.draw if drawing was not performed before.      
 
 
 ### File API
@@ -283,7 +283,7 @@ JSROOT defines JSROOT.TFile class, which can be used to access binary ROOT files
     var f = new JSROOT.TFile(filename, fileReadyCallback);
     
 One should always remember that all I/O operations asynchronous in JSROOT.
-Therefore callback always used to react when I/O operation completed.
+Therefore callback fuctions used to react when I/O operation completed.
 For the example callback function looks like:
 
     function fileReadyCallback(file) {
