@@ -13,7 +13,9 @@
 
 ## Snapshot from running THttpServer
 
-* http://web-docs.gsi.de/~linev/js/3.0/demo
+* http://web-docs.gsi.de/~linev/js/3.0/demo/
+* http://web-docs.gsi.de/~linev/js/3.0/demo/?item=Files/job1.root/hpxpy&opt=colz&monitoring=1000
+* http://web-docs.gsi.de/~linev/js/3.0/demo/Canvases/c1/fPrimitives/?item=hpx
 
 ## Standalone JSROOT usage
 

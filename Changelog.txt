@@ -6,6 +6,7 @@ current functionality of the framework.
 1. In main index.htm page browser can be disabled (nobrowser parameter) and
    page can be used to display only specified items from the file
 2. Also support layout parameter to display many file items
+3. Use central page when display file items (fileitem.htm is obsolete now)
 
 
 22.10.2014

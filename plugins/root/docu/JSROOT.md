@@ -28,22 +28,18 @@ Following parameters could be specified in the URL string:
 - items - array of objects to display like ['hpx;1', 'hpxpy;1']
 - opts - array of options ['any', 'colz']
 - layout - can be 'collapsible', 'tabs' or gridNxM where N and M are integer values
+- nobrowser - do not display file browser
 
 Example: <A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
 
-One also could display single item from the file, 
-using http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm page. 
-It requires following parameters:
-- file - name of the file
-- item - item name to display 
-- opt  - draw option for the item 
+To display histograms without file browser, just add `nobrower' parameter like:
 
-Example: <A href='http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz'>http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz</A> 
+<A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
 
 Such page can be very easily integrated into any other web page, using `<IFRAME src="link"></IFRAME>` HTML tag.  
 
 \htmlonly
-<iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root&item=hpxpy;1&opt=colz">
+<iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&item=hpxpy;1&opt=colz">
 </iframe>
 \endhtmlonly
 
@@ -169,9 +165,11 @@ files from the browser, but one never should rely that such I/O works for all ca
 Let say, major classes like TH1 or TGraph or TCanvas will be supported, but one will never
 see full support of TTree or RooWorkspace in JavaScript.
 
-If somebody still want to test such functionality, try monitoring parameter like (be aware that example file is not changing):
+If somebody still want to test such functionality, try monitoring parameter like:
 
-http://web-docs.gsi.de/~linev/js/3.0/files/fileitem.htm?file=hsimple.root+&item=hpx;1&monitoring=2000
+http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root+&item=hpx;1&monitoring=2000
+
+In this particular case histogram is not changing.
 
 
 ## Stand-alone usage of JSROOT
