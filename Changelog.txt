@@ -7,7 +7,9 @@ current functionality of the framework.
    page can be used to display only specified items from the file
 2. Also support layout parameter to display many file items
 3. Use central page when display file items (fileitem.htm is obsolete now)
-
+4. When redraw elements in the frame, do not delete container draw_g, but clean it.
+   Solves problem with histogram update, when zoom rect goes below histogram
+   
 
 22.10.2014
 1. Exclude zeros from TProfile drawing
