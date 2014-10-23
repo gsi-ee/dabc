@@ -9,6 +9,7 @@ current functionality of the framework.
 3. Use central page when display file items (fileitem.htm is obsolete now)
 4. When redraw elements in the frame, do not delete container draw_g, but clean it.
    Solves problem with histogram update, when zoom rect goes below histogram
+5. Fix problem with 2D X axis drawing when automatically shrink frame due to colz.
    
 
 22.10.2014
