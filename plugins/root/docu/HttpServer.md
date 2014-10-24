@@ -26,6 +26,16 @@ created in application. By default, server can access files, canvases
 and histograms via gROOT pointer. All such objects can be displayed with
 JSROOT graphics. 
 
+There is [snapshot (frozen copy)](http://web-docs.gsi.de/~linev/js/3.0/demo/) 
+of such server, running in httpserver.C macro from ROOT tutorial.  
+
+\htmlonly
+<iframe style="width:900px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/demo/?item=Canvases/c1">
+</iframe>
+\endhtmlonly
+
+
+
 At any time one could register other objects with the command:
 
 ~~~~~~~~~{.cpp}

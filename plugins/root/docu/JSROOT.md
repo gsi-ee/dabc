@@ -1,5 +1,3 @@
-\tableofcontents
-
 # JavaScript ROOT {#jsroot}
 
 JSROOT project intends to implement ROOT graphics for web browsers.
