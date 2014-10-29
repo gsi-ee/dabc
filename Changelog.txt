@@ -5,6 +5,8 @@ current functionality of the framework.
 29.10.2014
 1. Fix problem with nobrowser and several items drawing
 2. Process drawoptions when draw items from http server 
+3. Process immediately change of monitoring flag, 
+   do not submit next request for the object when previous not finished.  
 
 
 24.10.2014
