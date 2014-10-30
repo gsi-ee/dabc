@@ -4,6 +4,7 @@ current functionality of the framework.
 
 30.10.2014
 1. Repair functionality of gosip GUI.
+2. Add support of TPolyMarker3D in binary I/O
 
 
 29.10.2014
