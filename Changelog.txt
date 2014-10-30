@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+30.10.2014
+1. Repair functionality of gosip GUI. 
+
+
 29.10.2014
 1. Fix problem with nobrowser and several items drawing
 2. Process drawoptions when draw items from http server 

@@ -30,8 +30,8 @@ gosip::Player::Player(const std::string& name, dabc::Command cmd) :
    
    dabc::Hierarchy ui = fWorkerHierarchy.CreateHChild("UI");
    ui.SetField(dabc::prop_kind, "DABC.HTML");
-   ui.SetField("dabc:UserFilePath", "${DABCSYS}/plugins/gosip/htm/");
-   ui.SetField("dabc:UserFileMain", "gosip.htm");
+   ui.SetField("_UserFilePath", "${DABCSYS}/plugins/gosip/htm/");
+   ui.SetField("_UserFileMain", "main.htm");
 
    CreateTimer("update", 1., false);
    

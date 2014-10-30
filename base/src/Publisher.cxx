@@ -787,7 +787,8 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       if (islocal && h.Field(dabc::prop_kind).AsStr()=="DABC.HTML") {
          cmd.SetStr("ui_kind", "__user__");
-         cmd.SetStr("path", h.GetField("dabc:UserFilePath").AsStr());
+         cmd.SetStr("path", h.GetField("_UserFilePath").AsStr());
+         if (request_name.empty()) request_name = h.GetField("_UserFileMain").AsStr();
          cmd.SetStr("fname", request_name);
       } else {
 
