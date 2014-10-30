@@ -3,7 +3,7 @@ In many cases it is the best place to find information about
 current functionality of the framework.
 
 30.10.2014
-1. Repair functionality of gosip GUI. 
+1. Repair functionality of gosip GUI.
 
 
 29.10.2014
