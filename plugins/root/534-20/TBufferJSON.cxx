@@ -53,6 +53,8 @@
 #include "TStreamerInfoActions.h"
 #include "RVersion.h"
 #include "TClonesArray.h"
+#include "TVirtualMutex.h"
+#include "TInterpreter.h"
 
 #ifdef R__VISUAL_CPLUSPLUS
 #define FLong64    "%I64d"
@@ -525,8 +527,8 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
 Bool_t  TBufferJSON::CheckObject(const TObject * obj)
 {
    // Check that object already stored in the buffer
-
    if (obj==0) return kTRUE;
+
    return fJsonrMap.find(obj) != fJsonrMap.end();
 }
 
@@ -534,8 +536,8 @@ Bool_t  TBufferJSON::CheckObject(const TObject * obj)
 Bool_t TBufferJSON::CheckObject(const void * ptr, const TClass * /*cl*/)
 {
    // Check that object already stored in the buffer
-
    if (ptr==0) return kTRUE;
+
    return fJsonrMap.find(ptr) != fJsonrMap.end();
 }
 
@@ -2894,23 +2896,26 @@ Int_t TBufferJSON::WriteClassBuffer(const TClass *cl, void *pointer)
    //build the StreamerInfo if first time for the class
    TStreamerInfo *sinfo = (TStreamerInfo *)const_cast<TClass *>(cl)->GetCurrentStreamerInfo();
    if (sinfo == 0) {
-      const_cast<TClass *>(cl)->BuildRealData(pointer);
-      sinfo = new TStreamerInfo(const_cast<TClass *>(cl));
-      const_cast<TClass *>(cl)->SetCurrentStreamerInfo(sinfo);
-
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5,99,1)
-      const_cast<TClass *>(cl)->RegisterStreamerInfo(sinfo);
-#else
-      cl->GetStreamerInfos()->AddAtAndExpand(sinfo, cl->GetClassVersion());
-#endif
-
-      if (gDebug > 0)
-         printf("Creating StreamerInfo for class: %s, version: %d\n",
-                cl->GetName(), cl->GetClassVersion());
-      sinfo->Build();
+      //Have to be sure between the check and the taking of the lock if the current streamer has changed
+      R__LOCKGUARD(gCINTMutex);
+      sinfo = (TStreamerInfo*)const_cast<TClass*>(cl)->GetCurrentStreamerInfo();
+      if(sinfo == 0) {
+         const_cast<TClass *>(cl)->BuildRealData(pointer);
+         sinfo = new TStreamerInfo(const_cast<TClass *>(cl));
+         const_cast<TClass *>(cl)->SetCurrentStreamerInfo(sinfo);
+         cl->GetStreamerInfos()->AddAtAndExpand(sinfo, cl->GetClassVersion());
+         if (gDebug > 0)
+            printf("Creating StreamerInfo for class: %s, version: %d\n",
+                   cl->GetName(), cl->GetClassVersion());
+         sinfo->Build();
+      }
    } else if (!sinfo->IsCompiled()) {
-      const_cast<TClass *>(cl)->BuildRealData(pointer);
-      sinfo->BuildOld();
+      R__LOCKGUARD(gCINTMutex);
+      // Redo the test in case we have been victim of a data race on fIsCompiled.
+      if (!sinfo->IsCompiled()) {
+         const_cast<TClass *>(cl)->BuildRealData(pointer);
+         sinfo->BuildOld();
+      }
    }
 
    //write the class version number and reserve space for the byte count
