@@ -7,6 +7,8 @@ current functionality of the framework.
    It lets possibility to use some default location like /go4sys or
    one could assign item file like go4_condeditor.htm to $go4sys/html/condeditor.htm.
 2. Provide root_exe.txt method to execute any method of any registered object. 
+3. Provide in TRootSniffer possibility to redefine base object scan methods
+4. In JavaScript handle extra possibility to start context menu 
 
 
 30.10.2014

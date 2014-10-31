@@ -912,7 +912,8 @@
       if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
+      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
+      if ('_editor' in node) cando.ctxt = true;
 
       return cando;
    }
@@ -1027,7 +1028,11 @@
    
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
       
-      var drawurl = onlineprop.server + onlineprop.itemname + "/draw.htm";
+      var item = this.Find(itemname); 
+      
+      var baseurl = onlineprop.server + onlineprop.itemname + "/";
+      
+      var drawurl = baseurl + "draw.htm", editorurl = baseurl;
       
       var mon = this.MonitoringInterval();
       var separ = "?";
@@ -1037,6 +1042,11 @@
       if (hist>0) { drawurl += separ + "history=" + hist; }    
       
       JSROOT.Painter.menuitem(menu,"Draw in new window", function() { window.open(drawurl); });
+      
+      if ((item!=null) && ('_editor' in item)) {
+         editorurl += item['_editor'];
+         JSROOT.Painter.menuitem(menu,"Editor", function() { window.open(editorurl); });
+      } 
    }
 
 })();

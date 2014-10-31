@@ -477,6 +477,25 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
 
    if (rec.SetResult(obj, obj->IsA())) return;
 
+   TClass* obj_class = obj->IsA();
+
+   ScanObjectProperties(rec, obj, obj_class);
+
+   rec.SetRootClass(obj_class);
+
+   ScanObjectChilds(rec, obj);
+
+   // here we should know how many childs are accumulated
+   rec.SetResult(obj, obj_class, 0, rec.num_childs);
+}
+
+
+//______________________________________________________________________________
+void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj, TClass* &obj_class)
+{
+   // scans basic object properties
+   // here such fields as _typename, _title, _more properties can be specified
+
    const char* title = obj->GetTitle();
    if ((title!=0) && (*title!=0))
       rec.SetField(item_prop_title, title);
@@ -490,8 +509,6 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
 
    // special handling of TKey class - in non-readonly mode
    // sniffer allowed to fetch objects
-
-   TClass* obj_class = obj->IsA();
 
    if (!fReadOnly && obj->InheritsFrom(TKey::Class())) {
       TKey* key = (TKey *) obj;
@@ -510,8 +527,12 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
          obj_class = TClass::GetClass(key->GetClassName());
       }
    }
+}
 
-   rec.SetRootClass(obj_class);
+void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
+{
+   // scans object childs (if any)
+   // here one scans collection, branches, trees and so on
 
    if (obj->InheritsFrom(TFolder::Class())) {
       // starting from special folder, we automatically scan members
@@ -530,10 +551,8 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
    } else if (rec.CanExpandItem()) {
       ScanObjectMemebers(rec, obj->IsA(), (char *) obj, 0);
    }
-
-   // here we should know how many childs are accumulated
-   rec.SetResult(obj, obj_class, 0, rec.num_childs);
 }
+
 
 //______________________________________________________________________________
 void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,

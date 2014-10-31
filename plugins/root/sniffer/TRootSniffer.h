@@ -103,6 +103,10 @@ protected:
 
    void ScanObject(TRootSnifferScanRec &rec, TObject *obj);
 
+   virtual void ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj, TClass* &obj_class);
+
+   virtual void ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj);
+
    void ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                        const char *foldername = 0, Bool_t extra = kFALSE, TCollection* keys_lst = 0);
 
