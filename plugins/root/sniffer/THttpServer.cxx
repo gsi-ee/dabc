@@ -254,7 +254,7 @@ public:
 //     * no any temporary ROOT files when access data                   //
 //     * user interface running in all browsers                         //
 //                                                                      //
-//  Starting HTTP server                                                //
+// Starting HTTP server                                                 //
 //                                                                      //
 // To start http server, at any time  create instance                   //
 // of the THttpServer class like:                                       //
@@ -321,7 +321,7 @@ THttpServer::THttpServer(const char *engine) :
       fJsRootSys = TString::Format("%s/etc/http", rootsys);
 #endif
 
-   const char* jsrootsys = getenv("JSROOTSYS");
+   const char* jsrootsys = gSystem->Getenv("JSROOTSYS");
    if (jsrootsys!=0) fJsRootSys = jsrootsys;
 
    fDefaultPage = fJsRootSys + "/files/online.htm";
@@ -585,11 +585,6 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
    // Info("ProcessRequest", "Path %s File %s", arg->fPathName.Data(), arg->fFileName.Data());
 
    if (arg->fFileName.IsNull() || (arg->fFileName == "index.htm")) {
-      //Bool_t usedefaultpage =
-      //           fSniffer->CanExploreItem(arg->fPathName.Data()) ||
-      //          !fSniffer->CanDrawItem(arg->fPathName.Data());
-      //arg->fContent = usedefaultpage ? fDefaultPage : fDrawPage;
-
       arg->fContent = fDefaultPage;
       arg->SetFile();
       return;
@@ -661,7 +656,6 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       // it allows to detect if streamer info was modified
       const char* parname = fSniffer->IsStreamerInfoItem(arg->fPathName.Data()) ? "BVersion" : "MVersion";
       arg->SetExtraHeader(parname, Form("%u", (unsigned) fSniffer->GetStreamerInfoHash()));
-      // printf("Set header parameter %s = %u\n", parname, (unsigned) fSniffer->GetStreamerInfoHash());
    }
 }
 

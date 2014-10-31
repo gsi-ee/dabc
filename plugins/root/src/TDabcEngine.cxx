@@ -82,7 +82,7 @@ Bool_t TDabcEngine::Create(const char* args)
    }
 
    if (!url.IsValid()) {
-      EOUT("Wrong argument %s", args);
+      EOUT("Wrong arguments %s", args);
       return kFALSE;
    }
 
@@ -98,6 +98,7 @@ Bool_t TDabcEngine::Create(const char* args)
       if (dabc::mgr.FindItem("/http").null()) {
          dabc::CmdCreateObject cmd1("http::Civetweb","/http");
          cmd1.SetInt("port", url.GetPort());
+         cmd1.SetStr("urlopt", url.GetOptions());
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;
 
          dabc::WorkerRef w1 = cmd1.GetRef("Object");
@@ -110,6 +111,7 @@ Bool_t TDabcEngine::Create(const char* args)
          dabc::CmdCreateObject cmd1("http::FastCgi","/fastcgi");
          cmd1.SetInt("port", url.GetPort());
          cmd1.SetBool("debug", url.HasOption("debug"));
+         cmd1.SetStr("urlopt", url.GetOptions());
          if (!dabc::mgr.Execute(cmd1)) return kFALSE;
 
          dabc::WorkerRef w1 = cmd1.GetRef("Object");

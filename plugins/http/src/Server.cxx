@@ -104,35 +104,68 @@ const char* http::Server::GetMimeType(const char* path)
 
 http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
-   fDabcSys(),
+   fLocations(),
    fHttpSys(),
-   fGo4Sys(),
-   fJsRootSys(),
    fDefaultAuth(-1)
 {
    fHttpSys = ".";
-   fDabcSys = ".";
+
+   std::string jsroot;
 
    const char* dabcsys = getenv("DABCSYS");
    if (dabcsys!=0) {
-      fDabcSys = dabcsys;
+
+      AddLocation(dabcsys, "dabcsys/");
+      AddLocation(dabcsys, "${DABCSYS}/");
+      AddLocation(dabc::format("%s/plugins/http", dabcsys), "httpsys/", "dabc_", "/files/");
+
+      jsroot = dabc::format("%s/plugins/root/js", dabcsys);
+
       fHttpSys = dabc::format("%s/plugins/http", dabcsys);
-      fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
    }
 
-   const char* go4sys = getenv("GO4SYS");
-   if (go4sys!=0) fGo4Sys = go4sys;
+   std::string urlopt = cmd.GetStr("urlopt");
+   if (!urlopt.empty()) {
+      dabc::Url url;
+      url.SetOptions(urlopt);
+      unsigned cnt = 0;
+
+      while (cnt<100) {
+         std::string name = dabc::format("loc%u", cnt++);
+         if (!url.HasOption(name+"d") || !url.HasOption(name+"a")) break;
+         AddLocation(url.GetOptionStr(name+"d"), url.GetOptionStr(name+"a"), url.GetOptionStr(name+"n"), url.GetOptionStr(name+"s"));
+
+         // DOUT0("AddLocation %s %s %s %s", url.GetOptionStr(name+"d").c_str(), url.GetOptionStr(name+"a").c_str(), url.GetOptionStr(name+"n").c_str(), url.GetOptionStr(name+"s").c_str());
+      }
+   }
 
    const char* jsrootsys = getenv("JSROOTSYS");
-   if (jsrootsys!=0) fJsRootSys = jsrootsys;
+   if (jsrootsys!=0) jsroot = jsrootsys;
 
-   DOUT1("JSROOTSYS = %s ", fJsRootSys.c_str());
+   if (!jsroot.empty()) {
+      AddLocation(jsroot, "jsrootsys/", "root_", "/files/");
+      DOUT1("JSROOTSYS = %s ", jsroot.c_str());
+   }
+
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
 }
 
 http::Server::~Server()
 {
 }
+
+void http::Server::AddLocation(const std::string& filepath,
+                               const std::string& absprefix,
+                               const std::string& nameprefix,
+                               const std::string& nameprefixrepl)
+{
+   fLocations.push_back(Location());
+   fLocations.back().fFilePath = filepath;
+   fLocations.back().fAbsPrefix = absprefix;
+   fLocations.back().fNamePrefix = nameprefix;
+   fLocations.back().fNamePrefixRepl = nameprefixrepl;
+}
+
 
 bool http::Server::VerifyFilePath(const char* fname)
 {
@@ -177,46 +210,13 @@ bool http::Server::IsFileRequested(const char* uri, std::string& res)
    if ((uri==0) || (strlen(uri)==0)) return false;
 
    std::string fname = uri;
-   size_t pos = fname.rfind("httpsys/");
-   if (pos!=std::string::npos) {
-      fname.erase(0, pos+7);
-      if (!VerifyFilePath(fname.c_str())) return false;
-      res = fHttpSys + fname;
-      return true;
-   }
 
-   if (!fDabcSys.empty()) {
-      // DABCSYS can be only in the beginning
-      if (fname.find("${DABCSYS}")==0) {
-         fname.erase(0, 10);
-         if (!VerifyFilePath(fname.c_str())) return false;
-         res = fDabcSys + fname;
-         return true;
-      }
-      if (fname.find("dabcsys")==0) {
-         fname.erase(0, 7);
-         if (!VerifyFilePath(fname.c_str())) return false;
-         res = fDabcSys + fname;
-         return true;
-      }
-   }
-
-   if (!fJsRootSys.empty()) {
-      pos = fname.rfind("jsrootsys/");
+   for (unsigned n=0;n<fLocations.size();n++) {
+      size_t pos = fname.rfind(fLocations[n].fAbsPrefix);
       if (pos!=std::string::npos) {
-         fname.erase(0, pos+9);
+         fname.erase(0, pos + fLocations[n].fAbsPrefix.length() - 1);
          if (!VerifyFilePath(fname.c_str())) return false;
-         res = fJsRootSys + fname;
-         return true;
-      }
-   }
-
-   if (!fGo4Sys.empty()) {
-      pos = fname.rfind("go4sys/");
-      if (pos!=std::string::npos) {
-         fname.erase(0, pos+6);
-         if (!VerifyFilePath(fname.c_str())) return false;
-         res = fGo4Sys + fname;
+         res = fLocations[n].fFilePath + fname;
          return true;
       }
    }
@@ -270,8 +270,6 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    //ExtractPathAndFile(uri, pathname, filename);
 
-   //DOUT0("URI = %s path %s file %s", uri ? uri : "---", pathname.c_str(), filename.c_str());
-
    content_type = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(uri, pathname, filename);
 
    // DOUT0("URI = %s path %s file %s type %s", uri ? uri : "---", pathname.c_str(), filename.c_str(), content_type.c_str());
@@ -293,17 +291,24 @@ bool http::Server::Process(const char* uri, const char* _query,
       return true;
    }
 
-   if ((filename == "rootdraw.htm") && !fJsRootSys.empty()) {
-      content_str = fJsRootSys + "/files/draw.htm";
-      content_type = "__file__";
-      return true;
-   }
+   // check that filename starts with some special prefix, in such case redirect it to other location
 
    if (filename.empty() || (filename=="main.htm")) {
       content_str = fHttpSys + "/files/main.htm";
       content_type = "__file__";
       return true;
    }
+
+   for (unsigned n=0;n<fLocations.size();n++)
+      if (!fLocations[n].fNamePrefix.empty() && (filename.find(fLocations[n].fNamePrefix)==0)) {
+         size_t len = fLocations[n].fNamePrefix.length();
+         if ((filename.length()<=len) || (filename[len]=='.')) continue;
+         filename.erase(0, len);
+         if (!VerifyFilePath(filename.c_str())) return false;
+         content_str = fLocations[n].fFilePath + fLocations[n].fNamePrefixRepl + filename;
+         content_type = "__file__";
+         return true;
+      }
 
    if (_query!=0) query = _query;
 

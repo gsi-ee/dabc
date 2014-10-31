@@ -28,6 +28,8 @@
 #include "dabc/Buffer.h"
 #endif
 
+#include <vector>
+
 namespace http {
 
    /** \brief %Server provides http access to DABC
@@ -37,10 +39,16 @@ namespace http {
    class Server : public dabc::Worker  {
 
       protected:
-         std::string fDabcSys;      ///< location of DABC installation
+
+         struct Location {
+            std::string fFilePath;      ///< path on file system /home/user/dabc
+            std::string fAbsPrefix;     ///< prefix in http address like "/dabcsys"
+            std::string fNamePrefix;    ///< prefix in filename like "dabc_"
+            std::string fNamePrefixRepl; ///< replacement for name prefix like "/files/"
+         };
+
+         std::vector<Location> fLocations; ///< different locations known to server
          std::string fHttpSys;      ///< location of http plugin, need to read special files
-         std::string fGo4Sys;       ///< location of go4 (if any)
-         std::string fJsRootSys;    ///< location of Root JS (if any)
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
          /** Check if relative path below current dir - prevents file access to top directories via http */
@@ -65,6 +73,12 @@ namespace http {
          Server(const std::string& name, dabc::Command cmd = 0);
 
          virtual ~Server();
+
+         /** Add files location */
+         void AddLocation(const std::string& filepath,
+                          const std::string& absprefix,
+                          const std::string& nameprefix = "",
+                          const std::string& nameprefixrepl = "");
 
          static const char* GetMimeType(const char* fname);
    };

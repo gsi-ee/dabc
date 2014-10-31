@@ -2,9 +2,15 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+31.10.2014
+1. In http::Server add possibility to configure locations of files.
+   It lets possibility to use some default location like /go4sys or
+   one could assign item file like go4_condeditor.htm to $go4sys/html/condeditor.htm.
+
+
 30.10.2014
 1. Repair functionality of gosip GUI.
-2. Add support of TPolyMarker3D in binary I/O
+2. Add support of TPolyMarker3D in JavaScript I/O
 
 
 29.10.2014
