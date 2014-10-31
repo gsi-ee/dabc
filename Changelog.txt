@@ -6,6 +6,7 @@ current functionality of the framework.
 1. In http::Server add possibility to configure locations of files.
    It lets possibility to use some default location like /go4sys or
    one could assign item file like go4_condeditor.htm to $go4sys/html/condeditor.htm.
+2. Provide root_exe.txt method to execute any method of any registered object. 
 
 
 30.10.2014

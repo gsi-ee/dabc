@@ -837,7 +837,6 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       std::string itemname = cmd.GetStr("Item");
 
-
       // DOUT3("Publisher::CmdGetBinary for item %s", itemname.c_str());
 
       if (!RedirectCommand(cmd, itemname)) return cmd_false;

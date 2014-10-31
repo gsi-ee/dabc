@@ -22,6 +22,9 @@
 #include "TBranch.h"
 #include "TLeaf.h"
 #include "TClass.h"
+#include "TMethod.h"
+#include "TMethodArg.h"
+#include "TMethodCall.h"
 #include "TDataMember.h"
 #include "TDataType.h"
 #include "TBaseClass.h"
@@ -903,6 +906,80 @@ Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
 }
 
 //______________________________________________________________________________
+Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString &res)
+{
+   // execute command for specified object
+   // options include method and extra list of parameters
+
+   if ((path == 0) || (*path == 0)) return kFALSE;
+
+   if (*path == '/') path++;
+
+   TClass *obj_cl(0);
+   void *obj_ptr = FindInHierarchy(path, &obj_cl);
+   if ((obj_ptr == 0) || (obj_cl == 0)) return kFALSE;
+
+   TUrl url;
+   url.SetOptions(options);
+
+   const char* method_name = url.GetValueFromOptions("method");
+   if (method_name==0) return kFALSE;
+
+   TMethod* method = obj_cl->GetMethodAllAny(method_name);
+   if (method==0) return kFALSE;
+
+   TList* args = method->GetListOfMethodArgs();
+
+   res.Form("Method: %s\n", method_name);
+
+   TIter next(args);
+   TMethodArg* arg = 0;
+   TString call_args;
+   while ((arg = (TMethodArg*) next()) != 0) {
+
+      const char* val = url.GetValueFromOptions(arg->GetName());
+      if (val==0) val = arg->GetDefault();
+
+      if ((strcmp(arg->GetName(),"rest_url_opt")==0) &&
+          (strcmp(arg->GetFullTypeName(),"const char*")==0) && (args->GetSize()==1)) {
+         // very special case - function requires list of options after method=argument
+
+         const char* pos = strstr(options,"method=");
+         if ((pos == 0) || (strlen(pos) < strlen(method_name)+8)) return kFALSE;
+         call_args.Form("\"%s\"", pos + strlen(method_name)+8);
+         break;
+      }
+
+      res += TString::Format("  Argument:%s Type:%s Specified:%s \n", arg->GetName(), arg->GetFullTypeName(), val ? val : "<missed>");
+
+      if (val==0) { res += "missing argument\n"; return kTRUE; }
+
+      if (call_args.Length()>0) call_args+=", ";
+
+      if (strcmp(arg->GetFullTypeName(),"const char*")==0) {
+         int len = strlen(val);
+         if ((strlen(val)<2) || (*val != '\"') || (val[len-1]!='\"'))
+            call_args.Append(TString::Format("\"%s\"", val));
+         else
+            call_args.Append(val);
+      } else {
+         call_args.Append(val);
+      }
+   }
+
+   res += TString::Format("Calling obj->%s(%s);\n", method_name, call_args.Data());
+
+   TMethodCall call(obj_cl, method_name, call_args.Data());
+
+   if (!call.IsValid()) { res += "Fail: invalid TMethodCall\n"; return kTRUE; }
+
+   call.Execute(obj_ptr);
+
+   res += "Execution done!\n";
+   return kTRUE;
+}
+
+//______________________________________________________________________________
 Bool_t TRootSniffer::IsStreamerInfoItem(const char *itemname)
 {
    if ((itemname == 0) || (*itemname == 0)) return kFALSE;
@@ -1176,6 +1253,15 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    if ((strcmp(file, "root.json") == 0) || (strcmp(file, "get.json") == 0)) {
       TString res;
       if (!ProduceJson(path, options, res)) return kFALSE;
+      length = res.Length();
+      ptr = malloc(length);
+      memcpy(ptr, res.Data(), length);
+      return kTRUE;
+   }
+
+   if (strcmp(file, "root_exe.txt") == 0) {
+      TString res;
+      if (!ProduceExe(path, options, res)) return kFALSE;
       length = res.Length();
       ptr = malloc(length);
       memcpy(ptr, res.Data(), length);
