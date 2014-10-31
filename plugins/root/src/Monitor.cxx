@@ -141,16 +141,17 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
    DOUT3("Request item %s file %s ", itemname.c_str(), binkind.c_str());
 
-   // check if version was specified in query
-   uint64_t version = 0;
-   dabc::Url url(std::string("getbin?") + query);
-   if (url.IsValid() && url.HasOption("version"))
-      version = (unsigned) url.GetOptionInt("version", 0);
-
    dabc::Buffer buf;
 
    // for root.bin request verify that object must be really requested - it may be not changed at all
    if (binkind == "root.bin") {
+
+      // check if version was specified in query
+      uint64_t version = 0;
+      dabc::Url url(std::string("getbin?") + query);
+      if (url.IsValid() && url.HasOption("version"))
+         version = (unsigned) url.GetOptionInt("version", 0);
+
       ULong_t objhash = sniff->GetItemHash(itemname.c_str());
 
       bool binchanged = true;

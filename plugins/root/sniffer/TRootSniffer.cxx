@@ -1259,7 +1259,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
       return kTRUE;
    }
 
-   if (strcmp(file, "root_exe.txt") == 0) {
+   if (strcmp(file, "exe.txt") == 0) {
       TString res;
       if (!ProduceExe(path, options, res)) return kFALSE;
       length = res.Length();
