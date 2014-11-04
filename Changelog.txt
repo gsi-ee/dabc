@@ -7,7 +7,9 @@ current functionality of the framework.
 2. Fix warning in Firefox with "opacity" and "font-weight/style"
 3. Implement drawing of title via TPaveText object (like in ROOT),
    solve problem with title resize 
-
+4. Fix problem when adjust font size to existing pave - one need to 
+   account empty spaces and font size is integer.
+     
 
 31.10.2014
 1. In http::Server add possibility to configure locations of files.
