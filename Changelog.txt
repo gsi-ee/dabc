@@ -4,6 +4,7 @@ current functionality of the framework.
 
 4.11.2014
 1. Fix problem with disable/enable of tooltip when selecting region
+2. Fix warning in Firefox with "opacity" and "font-weight/style"
 
 
 31.10.2014
