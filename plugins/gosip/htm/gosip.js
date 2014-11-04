@@ -32,8 +32,8 @@ var POLAND_TS_NUM = 3,
     POLAND_REG_DO_OFFSET        = 0x200044,
     POLAND_REG_OFFSET_BASE      = 0x200100,
     POLAND_REG_MASTERMODE       = 0x200048,
-    POLAND_REG_ERRCOUNT_BASE    = 0x200;
-
+    POLAND_REG_ERRCOUNT_BASE    = 0x200,
+    POLAND_REG_TRIG_ON          = 0x20004C;
 
 
 function PolandSetup(cmdurl) {
@@ -73,7 +73,20 @@ function PolandSetup(cmdurl) {
    this.fDACOffset = 0;
    this.fDACDelta = 0;
    this.fDACCalibTime = 0;
+   this.fTriggerAcceptance=true;
 }
+
+PolandSetup.prototype.SetTriggerAcceptance  = function(on)
+{
+   this.fTriggerAcceptance = on;
+}
+
+PolandSetup.prototype.IsTriggerAcceptance = function()
+{
+  return (this.fTriggerAcceptance);
+}
+
+
 
 PolandSetup.prototype.SetTriggerMaster  = function(on)
 {
@@ -84,6 +97,10 @@ PolandSetup.prototype.IsTriggerMaster = function()
 {
   return ((this.fTriggerMode & 2) === 2);
 }
+
+
+
+
 
 PolandSetup.prototype.SetFesaMode = function(on)
 {
@@ -225,6 +242,28 @@ PolandSetup.prototype.RefreshCounters = function(base)
 }
 
 
+PolandSetup.prototype.RefreshTrigger = function()
+{
+	 var labelprefix="Trigger";
+	 var labelstate = this.fTriggerAcceptance ? " <span style=\" color:#00ff00;\">ON </span>" :
+	      " <span style=\"color:#ff0000;\">OFF</span>" ;
+	 
+	 document.getElementById("buttonTriggerLabel").innerHTML = labelprefix + labelstate;
+	
+	
+//	var label = this.fTriggerAcceptance ? "<span class=\"styleGreen\"> -Trigger On- </span>" : "<span class=\"styleRed\"> -Trigger Off- </span>";
+	
+//	 document.getElementById("buttonTriggerLabel").innerHTML =label;
+	 if(this.fTriggerAcceptance)
+		 {
+		 $( "#trigger_container" ).addClass("styleGreen").removeClass("styleRed");
+		 }
+	 else
+		 {
+		 	$( "#trigger_container" ).addClass("styleRed").removeClass("styleGreen");
+		 }
+}
+
 PolandSetup.prototype.GosipCommand = function(cmd, command_callback)
 {
    var xmlHttp = new XMLHttpRequest();
@@ -278,19 +317,24 @@ PolandSetup.prototype.GosipCommand = function(cmd, command_callback)
 PolandSetup.prototype.ReadRegisters = function(callback)
 {
    var regs = new Array();
-   regs.push(POLAND_REG_INTERNAL_TRIGGER, POLAND_REG_MASTERMODE, POLAND_REG_TRIGCOUNT, POLAND_REG_QFW_MODE); 
+   regs.push(POLAND_REG_INTERNAL_TRIGGER, POLAND_REG_MASTERMODE, POLAND_REG_TRIGCOUNT, POLAND_REG_QFW_MODE, POLAND_REG_TRIG_ON); 
 
    for (var i = 0; i < POLAND_TS_NUM; ++i)
    {
      regs.push(POLAND_REG_STEPS_BASE + 4 * i);
      regs.push(POLAND_REG_TIME_BASE + 4 * i);
    }
-
+   
+// evaluate location of error counter info in token memory from real data length
+// for errorcounter base we have to use previous token payload.
+// due to asynchronous and chained gosipcmd request, we can not easily read actual steps values before preparing
+// readout of error registers. But pressing show button 2 times should do the job anyway
+   var errcountstart = 4*(32 + this.fSteps[0] * 32 + this.fSteps[1] * 32 + this.fSteps[2] * 32);
    for (var e = 0; e < POLAND_ERRCOUNT_NUM; ++e)
    {
-     regs.push(POLAND_REG_ERRCOUNT_BASE + 4 * e);
+	   regs.push(errcountstart + 4 * e);
    }
-
+   
    regs.push(POLAND_REG_DAC_MODE, POLAND_REG_DAC_CAL_TIME, POLAND_REG_DAC_CAL_OFFSET, POLAND_REG_DAC_CAL_STARTVAL);
 
    for (var d = 0; d < POLAND_DAC_NUM; ++d)
@@ -314,6 +358,7 @@ PolandSetup.prototype.ReadRegisters = function(callback)
          pthis.fTriggerMode = Number(res[indx++]);
          pthis.fEventCounter = Number(res[indx++]);
          pthis.fQFWMode = Number(res[indx++]);
+         pthis.fTriggerAcceptance = Number(res[indx++]);
 
          for (var i = 0; i < POLAND_TS_NUM; ++i)
          {
@@ -335,6 +380,9 @@ PolandSetup.prototype.ReadRegisters = function(callback)
             pthis.fDACValue[d] = Number(res[indx++]);
          }
       }
+      
+ 
+      
       callback(isok);
    });
 }
@@ -349,12 +397,12 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
    // write register values from strucure with gosipcmd
    
    var regs = new Array();
-
+   var sfpsave,devsave;
    if (kind=="QFW") {
-      // reading of registers on QFW page
+      // writing of registers on QFW page
    
       if ((this.fSFP >= 0) && (this.fDEV >= 0)) {
-         // update trigger modes only in single device
+         // change trigger modes only in single device
          regs.push([POLAND_REG_INTERNAL_TRIGGER, this.fInternalTrigger]);
          regs.push([POLAND_REG_MASTERMODE, this.fTriggerMode]);
       }
@@ -369,7 +417,7 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
    }
    
    if (kind == "DAC") {
-      // reading of registers on DAC page
+      // writing of registers on DAC page
       
       regs.push([POLAND_REG_DAC_MODE, this.fDACMode]);
 
@@ -409,6 +457,16 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
       regs.push([POLAND_REG_DAC_PROGRAM , 0]);
    }
    
+   if (kind=="TRIGGER") {
+	      // change trigger acceptance on all frontends:
+	   sfpsave=this.fSFP;
+	   devsave=this.fDEV;
+	   this.fSFP=-1;
+	   this.fDEV=-1;
+	   regs.push([POLAND_REG_TRIG_ON , (this.fTriggerAcceptance ? 1 : 0)]);
+   
+	   
+   }
    
    var cmdtext = "[";
    
@@ -424,9 +482,17 @@ PolandSetup.prototype.SetRegisters = function(kind, callback)
          console.log("return length mismatch");
          isok = false;
       }
-      
       callback(isok);
    });
+   
+    if (kind=="TRIGGER") {
+	      // change trigger acceptance on all frontends:
+	   this.fSFP=sfpsave;
+	   this.fDEV=devsave;
+   // must restore original sfp and dev after broadcasting trigger acceptance state   
+      }
+   
+   
 }
 
 
