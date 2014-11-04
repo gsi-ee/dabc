@@ -1029,6 +1029,7 @@
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
       
       var item = this.Find(itemname); 
+      var painter = this;
       
       var baseurl = onlineprop.server + onlineprop.itemname + "/";
       
@@ -1040,6 +1041,8 @@
       var hist = this.HistoryDepth();
       if (hist==0) { drawurl += separ + "history"; } else
       if (hist>0) { drawurl += separ + "history=" + hist; }    
+      
+      JSROOT.Painter.menuitem(menu, "Draw", function() { painter.display(itemname); });
       
       JSROOT.Painter.menuitem(menu,"Draw in new window", function() { window.open(drawurl); });
       

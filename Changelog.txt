@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+4.11.2014
+1. Fix problem with disable/enable of tooltip when selecting region
+
+
 31.10.2014
 1. In http::Server add possibility to configure locations of files.
    It lets possibility to use some default location like /go4sys or
