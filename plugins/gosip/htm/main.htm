@@ -11,45 +11,56 @@
 			type="text/javascript"></script>
 		<script src="gosip.js" type="text/javascript"></script>
 		<style type="text/css">
-#header_container {
-	outline: outset medium;
-	position: fixed;
-	top: 0;
-	height: 3em;
-	left: 0;
-	width: 80%;
-	text-align: center;
-	outline-style: groove;
-}
+		#header_container {
+			outline: outset medium;
+			position: fixed;
+			top: 0;
+			height: 10%;
+			left: 0;
+			width: 80%;
+			text-align: center;
+			outline-style: groove;
+		}
 
 #content_left {
-	position: fixed;
-	top: 3em;
-	bottom: 3em;
-	left: 0;
-	width: 80%;
-}
+			position: fixed;
+			top: 11%;
+			left: 0;
+			width: 80%;
+			height: 42%;
+			overflow-y: auto;
+		}
+
+#content_log {
+			position: fixed;
+			height: 35%;
+			bottom: 11%;
+			left: 1%;
+			width: 79%;
+			text-align: left;
+			overflow-y: auto;
+		}
+
 
 #content_right {
-	border: medium outset;
 	position: fixed;
 	azimuth: rightwards;
-	top: 6.2em;
-	bottom: 9.3em;
+	bottom: 26%;
 	left: 81%;
 	width: 19%;
+	height: 60%;
 }
 
 #footer_container {
-	outline: outset medium;
-	position: fixed;
-	bottom: 0;
-	height: 3em;
-	left: 0;
-	width: 100%;
-	text-align: center;
-	background-color: white;
-}
+			outline: outset medium;
+			position: fixed;
+			bottom: 0;
+			height: 10%;
+			left: 0;
+			width: 100%;
+			text-align: center;
+			background-color: white;
+		}
 
 .DacEdit {
 	width: 90%;
@@ -65,15 +76,15 @@ label {
 }
 
 #trigger_container {
-	outline: outset medium;
-	position: fixed;
-	top: 0;
-	height: 6em;
-	left: 81%;
-	width: 19%;
-	text-align: center;
-	azimuth: rightwards;
-}
+			outline: outset medium;
+			position: fixed;
+			top: 0;
+			height: 13%;
+			left: 81%;
+			width: 19%;
+			text-align: center;
+			azimuth: rightwards;
+		}
 
 .styleGreen {
 	background-color: #00FF00;
@@ -83,401 +94,29 @@ label {
 	background-color: #FF0000;
 }
 
-.style2 {
-	border-style: solid;
-	border-width: 1px;
-	padding: 1px 4px;
-	text-align: left;
-}
-
-.style3 {
-	margin-left: 40px;
-}
-
 #displaymode_container {
-	outline: outset medium;
-	position: fixed;
-	height: 6em;
-	left: 81%;
-	width: 19%;
-	text-align: left;
-	azimuth: rightwards;
-	bottom: 3.2em;
-}
-</style>
+			outline: outset medium;
+			position: fixed;
+			height: 15%;
+			left: 81%;
+			width: 19%;
+			text-align: center;
+			azimuth: rightwards;
+			bottom: 11%;
+		}
+		.styleOffsetCal {
+			border-style: inset;
+			border-width: thin;
+			background-color: #C0C0C0;
+		}
+		</style>
 
-		<script type="text/javascript">
-   
-      function ExecCommand() {
-         //console.log("Execute");
-         
-         var elem = document.getElementById("status_message");
-         
-         var xmlHttp = new XMLHttpRequest();
-         
-         var cmdtext = '../CmdGosip/execute?sfp=' + $("#id_sfp").val() + '&dev='+$("#id_dev").val();
-         
-         cmdtext+="&cmd='[\"-r 0x876\",\"-r 0x176\",\"-w 0x564 0x234\"]'";
-         
-         elem.innerHTML = "Executing command ...";
-         
-         xmlHttp.open('GET', cmdtext, true);
-         
-         xmlHttp.onreadystatechange = function () {
-            // console.log("onready change " + xmlHttp.readyState); 
-            if (xmlHttp.readyState == 4) {
-               var reply = JSON.parse(xmlHttp.responseText);
-            
-               if (reply)
-                  elem.innerHTML = "Result = " + reply["_Result_"];
-               else
-                  elem.innerHTML = "command fail";
-            }
-         };
-         
-         xmlHttp.send(null);
-      }
-      
-      function ButtonAction() {
-         console.log("sfp = " + $("#id_sfp").val() + "  dev = " + $("#id_dev").val() 
-                      + " active = " + $("#tabs").tabs("option","active"));
-      }
 
-      var Setup;
-      
-      function ReadSlave() {
-         if (document.getElementById("broadcast").checked) {
-           Setup.fSFP = -1;
-           Setup.fDEV = -1;
-         } else {
-           Setup.fSFP = Number($("#id_sfp").val());
-           Setup.fDEV = Number($("#id_dev").val());
-         }
-         Setup.fLogging = document.getElementById("Verbose").checked;         
-      }
-      
-      function SetStatusMessage(info)
-      {
-         var d = new Date();
-         var txt = d.toLocaleTimeString() + " SFP:" + Setup.fSFP + " DEV:"+Setup.fDEV + "  " + info;
-         document.getElementById("status_message").innerHTML = txt; 
-      }
-      
-      function updateElementsSize()
-      {
-         var h = $('#tabs').height();
-         var t = $('#tabs').offset().top;
-         var h0 = $('#content_right').height();
-           
-         var lx = h0 - t - h;
-         if (lx<100) lx = 100;
-         $('#logging').height(lx);
-         
-         $("#QFWModeCombo").selectmenu("option","width", $('#tabs-1-table').width());
-         $("#DacModeCombo").selectmenu("option","width", $('#tabs-2-table').width());
-      }
-      
-      
-      function RefreshView(res) {
-      
-         SetStatusMessage("Reading registers " + (res ? "OK" : "Fail"));
-         
-         if (Setup.fLogData!=null) {
-            var ddd = "";
-            // console.log("log length = " + Setup.fLogData.length); 
-            for (var i in Setup.fLogData) {
-               ddd += "<pre>";
-               ddd += Setup.fLogData[i];
-               ddd += "</pre>";
-            }
-            
-            document.getElementById("logging").innerHTML += ddd;
-                
-            Setup.fLogData = null;
-         }
-
-         if (!res) return;
-         
-         var base = document.getElementById("HexMode").checked ? 16 : 10;
-         
-         Setup.RefreshQFW(base);
-         
-         Setup.RefreshDAC(base);
-         
-         Setup.RefreshCounters(base);
-         
-         Setup.RefreshTrigger();
-         
-         updateElementsSize();
-      }
-      
-      function CompleteCommand(res) {
-         
-         SetStatusMessage("Writing registers " + (res ? "OK" : "Fail"));
-         
-         if (Setup.fLogData!=null) {
-            var ddd = "";
-            //console.log("log length = " + Setup.fLogData.length); 
-            for (var i in Setup.fLogData) {
-               ddd += "<pre>";
-               ddd += Setup.fLogData[i];
-               ddd += "</pre>";
-            }
-            
-            document.getElementById("logging").innerHTML += ddd;
-            Setup.fLogData = null;
-         }
-      }
-       
-      $(function() {
-
-         Setup = new PolandSetup("../CmdGosip/execute");
-      
-         $("#tabs").tabs({
-            activate: function(event, ui) { updateElementsSize(); }
-         });
-         
-         $("#id_sfp").selectmenu();
-         $("#id_dev").selectmenu();
-         
-         $( "#broadcast" ).button().click(function(event) {
-      	
-			if ($(this).is(':checked')) {
-								$("#id_sfp").selectmenu("disable");
-						 	   $("#id_dev").selectmenu("disable");
-			} else {
-								$("#id_sfp").selectmenu("enable");
-                        $("#id_dev").selectmenu("enable");
-
-			}
-						});
-
-				$("#buttonScanOffset")
-						.button()
-						.click(
-								function() {
-									ReadSlave();
-
-									var response = confirm("Really scan offset for SFP chain "
-											+ Setup.fSFP
-											+ ", Slave "
-											+ Setup.fDEV + "?");
-									if (!response)
-										return;
-
-									SetStatusMessage("Doing offset measurement...");
-									var cmd = "[\"-w adr "
-											+ POLAND_REG_DO_OFFSET
-											+ " 1\", \"-w # "
-											+ POLAND_REG_DO_OFFSET + " 0\"]";
-									var dumpcmd = "-d -r -x adr 0x"
-											+ POLAND_REG_OFFSET_BASE
-													.toString(16) + " 0x20";
-
-									Setup
-											.GosipCommand(
-													cmd,
-													function(res) {
-														SetStatusMessage("Scan offset "
-																+ (res ? "OK"
-																		: "Fail"));
-														if (!res)
-															return;
-														Setup
-																.GosipCommand(
-																		dumpcmd,
-																		function(
-																				res) {
-																			SetStatusMessage("Dump data after scan "
-																					+ (res ? "OK"
-																							: "Fail"));
-																		});
-													});
-								});
-
-				$("#buttonInitChain").button().click(
-						function() {
-							ReadSlave();
-							var numslaves = prompt(
-									"Please specify NUMBER OF DEVICES to initialize at SFP "
-											+ Setup.fSFP, "4");
-							if (!numslaves)
-								return;
-
-							SetStatusMessage("Initializing chain...");
-
-							var cmd = "-i " + Setup.fSFP + " " + numslaves;
-
-							Setup.fLogging = true;
-
-							Setup.GosipCommand(cmd, function(res) {
-								SetStatusMessage("Initialize chain "
-										+ (res ? "OK" : "Fail"));
-							});
-
-						});
-				$("#buttonReset")
-						.button()
-						.click(
-								function() {
-									ReadSlave();
-									var requestmsg = "Really reset logic on POLAND device at SFP "
-											+ Setup.fSFP
-											+ " Slave "
-											+ Setup.fDEV + "?";
-									var response = confirm(requestmsg);
-									if (!response)
-										return;
-									SetStatusMessage("Resetting logic on POLAND...");
-									var cmd = "[\"-w adr " + POLAND_REG_RESET
-											+ " 0\", \"-w adr "
-											+ POLAND_REG_RESET + " 1\"]";
-									Setup
-											.GosipCommand(
-													cmd,
-													function(res) {
-														SetStatusMessage("Reset logic on POLAND "
-																+ (res ? "OK"
-																		: "Fail"));
-													});
-
-								});
-				$("#buttonResetPEX")
-						.button()
-						.click(
-								function() {
-									var requestmsg = "Really Reset gosip on pex board?";
-									var response = confirm(requestmsg);
-									if (!response)
-										return;
-									SetStatusMessage("Resetting PEXOR...");
-									Setup.fLogging = true;
-									Setup.GosipCommand("-z", function(res) {
-										SetStatusMessage("Reset of PEXOR "
-												+ (res ? "OK" : "Fail"));
-									});
-								});
-
-				$("#buttonTriggerLabel").button();
-
-				$("#buttonTrigger")
-						.button()
-						.click(
-								function() {
-
-									var requestmsg = "Really Change frontend Trigger acceptance?";
-									if (Setup.fTriggerAcceptance)
-										requestmsg = "Really disable Frontend Trigger acceptance?";
-									else
-										requestmsg = "Really enable Frontend Trigger acceptance?";
-
-									var response = confirm(requestmsg);
-									if (!response)
-										return;
-									Setup.fTriggerAcceptance ? Setup.fTriggerAcceptance = false
-											: Setup.fTriggerAcceptance = true;
-									var value = (Setup.fTriggerAcceptance ? 1
-											: 0);
-									var state = (Setup.fTriggerAcceptance ? "ON"
-											: "OFF");
-									SetStatusMessage("--- Set all devices trigger acceptance to "
-											+ state);
-									Setup.SetRegisters("TRIGGER",
-											CompleteCommand);
-									Setup.RefreshTrigger();
-
-								});
-
-				$("#DacModeCombo").selectmenu({
-					change : function(event, ui) {
-						Setup.fDACMode = ui.item.value;
-						Setup.RefreshDAC();
-					}
-				});
-
-				$("#QFWModeCombo").selectmenu({
-					change : function(event, ui) {
-						Setup.fQFWMode = ui.item.value;
-					}
-				});
-
-				$("#buttonShow").button().click(function() {
-					ReadSlave();
-					SetStatusMessage("Start register reading...");
-					Setup.ReadRegisters(RefreshView);
-				});
-
-				$("#buttonApply").button()
-						.click(
-								function() {
-									ReadSlave();
-									var cmd = ($("#tabs").tabs("option",
-	                                 "active") == 0) ? "QFW" : "DAC";
-									var requestmsg = "Really apply " + cmd + " settings  to SFP" + 
-			                                 + Setup.fSFP
-			                                 + " Device "
-			                                 + Setup.fDEV + "?";
-			                           var response = confirm(requestmsg);
-			                           if (!response)
-			                              return;
-									Setup.EvaluateDAC();
-									Setup.EvaluateQFW();
-									SetStatusMessage("Start writing " + cmd);
-									Setup.SetRegisters(cmd, CompleteCommand);
-								});
-
-				$("#buttonConfigure").button().click(function() {
-					ButtonAction();
-				});
-
-				$("#buttonDataDump")
-						.button()
-						.click(
-								function() {
-									ReadSlave();
-									Setup.fLogging = true;
-									SetStatusMessage("Dumping data...");
-									var numwords = 32 + Number(Setup.fSteps[0])
-											* 32 + Number(Setup.fSteps[1]) * 32
-											+ Number(Setup.fSteps[2]) * 32 + 32;
-									if (numwords > 512)
-										numwords = 512;
-
-									document.getElementById("logging").innerHTML += "--- Register Dump ---<br/>";
-
-									Setup.GosipCommand("-d -r -x adr 0 0x"
-											+ numwords.toString(16), function(
-											res) {
-										SetStatusMessage("Dump data "
-												+ (res ? "OK" : "Fail"));
-									});
-								});
-
-				$("#buttonClear")
-						.button()
-						.click(
-								function() {
-									document.getElementById("logging").innerHTML = "<br/>GOSIP web interface v 0.2, 31 Oct 2014<br/> S.Linev/J.Adamzewski-Musch<br/>";
-								});
-			});
-
-			function initGUI() {
-				var base = document.getElementById("HexMode").checked ? 16 : 10;
-				Setup.RefreshQFW(base);
-				Setup.RefreshDAC(base);
-				Setup.RefreshCounters(base);
-				$("#buttonClear").button().click();
-
-				updateElementsSize();
-			}
-
-			$(document).ready(initGUI);
-
-			$(window).on('resize', function() {
-				updateElementsSize();
-			});
-		</script>
 </head>
+
+
+
+
 <body>
 	<div id="header_container">
 		<table style="width: 100%; height: 100%">
@@ -553,7 +192,7 @@ label {
 					<option value="18">1000uA (+) [ 2.5pF & 0.25pC]</option>
 					<option value="19">1000uA (+) [25.0pF & 2.50pC]</option>
 				</select>
-				<table id="tabs-1-table" style="width: 100%">
+				<table id="QFW-table" style="width: 100%">
 					<tbody>
 						<tr>
 							<td></td>
@@ -592,7 +231,8 @@ label {
 					<option value="3">Calibrate (mode 3)</option>
 					<option value="4">All Constant (mode 4)</option>
 				</select>
-				<table id="tabs-2-table" style="width: 100%">
+				<hr>
+				<table id="DAC-Cali-table" style="width: 100%" class="styleOffsetCal">
 					<tbody>
 						<tr>
 							<td nowrap>Value</td>
@@ -600,7 +240,7 @@ label {
 							<td nowrap>Offset Delta</td>
 							<td nowrap>Cal. time (ms)</td>
 						</tr>
-						<tr>
+						<t>
 							<td><input class="DacEdit" id="DacStart" value="0"
 								type="text"></td>
 							<td><input class="DacEdit" id="DacOffset" value="0"
@@ -610,8 +250,13 @@ label {
 							<td><input class="DacEdit" id="DacCalibTime" value="0"
 								type="text"></td>
 						</tr>
-						<tr>
-						</tr>
+						
+						</tbody>
+				</table>
+				<hr>
+				<table id="DAC-Edit-table" style="width: 100%">
+					<tbody>
+
 						<tr>
 							<td><input class="DacEdit" id="DacEdit1" value="0"
 								type="text"></td>
@@ -696,10 +341,12 @@ label {
 				</table>
 			</div>
 		</div>
-
-		<div id="logging"
-			style="width: 100%; height: 300px; overflow-y: auto;"></div>
-	</div>
+		
+</div>
+<div id="content_log">
+<div id="logging"
+         style="width: 100%;"></div>
+</div>	
 	<div id="content_right" class="style1">
 		<h3 style="text-align: center">QFW Counters</h3>
 		<h3 style="text-align: center">Trigger</h3>
@@ -733,7 +380,7 @@ label {
 			</tbody>
 		</table>
 	</div>
-	<div id="trigger_container" class="styleGreen">
+	<div id="trigger_container" class="styleGreen style1">
 		<table style="width: 100%; height: 100%">
 			<tbody>
 				<td>
