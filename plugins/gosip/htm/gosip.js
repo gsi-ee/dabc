@@ -718,7 +718,7 @@ $(function() {
 
 				var cmd = "-i " + Setup.fSFP + " " + numslaves;
 
-				Setup.fLogging = true;
+				//Setup.fLogging = true;
 
 				Setup.GosipCommand(cmd, function(res) {
 					SetStatusMessage("Initialize chain "
@@ -749,7 +749,7 @@ $(function() {
 		if (!response)
 			return;
 		SetStatusMessage("Resetting PEXOR...");
-		Setup.fLogging = true;
+		//Setup.fLogging = true;
 		Setup.GosipCommand("-z", function(res) {
 			SetStatusMessage("Reset of PEXOR " + (res ? "OK" : "Fail"));
 		});
@@ -816,7 +816,24 @@ $(function() {
 			});
 
 	$("#buttonConfigure").button().click(function() {
-		ButtonAction();
+		//ButtonAction();
+		
+		var configfilename = prompt(
+				"Please type name of configuration file (*.gos) on server"
+						, "initqfw.gos");
+		if (!configfilename)
+			return;
+
+		SetStatusMessage("Apply configuration file "+configfilename+" ...");
+//
+		var cmd = "-x -c " + configfilename +" ";
+//
+//		Setup.fLogging = true;
+//
+		Setup.GosipCommand(cmd, function(res) {
+			SetStatusMessage("Configuration with "+ configfilename
+					+ (res ? " - OK" : " -Failed!"));
+		});
 	});
 
 	$("#buttonDataDump")
@@ -849,6 +866,10 @@ $(function() {
 						document.getElementById("logging").innerHTML = "<br/>GOSIP web interface v 0.4, 5-November 2014<br/> S.Linev/J.Adamzewski-Musch<br/>";
 						updateElementsSize();
 					});
+	
+	
+	$( document ).tooltip();
+	
 });
 
 function initGUI() {

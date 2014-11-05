@@ -122,15 +122,15 @@ label {
 		<table style="width: 100%; height: 100%">
 			<tbody>
 				<tr>
-					<td style="height: 30px"><label for="id_sfp">SFP</label> <select
-						name="name_id_sfp" id="id_sfp">
+					<td style="height: 30px"><label for="id_sfp" title="Number of sfp chain. -1 for broadcast to all chains">SFP</label> <select
+						name="name_id_sfp" id="id_sfp" >
 							<option selected="selected">0</option>
 							<option>1</option>
 							<option>2</option>
 							<option>3</option>
 					</select></td>
-					<td style="height: 30px"><label for="id_dev">DEV</label> <select
-						name="name_id_dev" id="id_dev">
+					<td style="height: 30px"><label for="id_dev" title="Number of device at sfp chain. -1 for broadcast setting.">DEV</label> <select
+						name="name_id_dev" id="id_dev" >
 							<option selected="selected">0</option>
 							<option>1</option>
 							<option>2</option>
@@ -141,28 +141,34 @@ label {
 							<option>7</option>
 							<option>8</option>
 							<option>9</option>
+							<option>10</option>
+                     <option>11</option>
+                     <option>12</option>
+                     <option>13</option>
+                     <option>14</option>
+                     <option>15</option>                     
 					</select></td>
-					<td style="height: 30px"><input id="broadcast" type="checkbox"><label
-							for="broadcast">All Devs</label></td>
+					<td style="height: 30px"><input id="broadcast" type="checkbox" ><label
+							for="broadcast" title="Set to broadcast mode">All Devs</label></td>
 					<td style="width: 21px; height: 30px;"></td>
 					<td style="height: 30px">
-						<button id="buttonScanOffset">ScanOffset</button>
+						<button id="buttonScanOffset" title="Trigger offset measurement at channel SFP and slave DEV as set in spinbox">ScanOffset</button>
 					</td>
 					<td style="height: 30px">
-						<button id="buttonInitChain">InitChain</button>
+						<button id="buttonInitChain" title="Initialize chain of slaves at SFP as set in spinbox">InitChain</button>
 					</td>
 					<td style="height: 30px">
-						<button id="buttonReset">Reset</button>
+						<button id="buttonReset" title="Reset logic on chosen POLAND device">Reset</button>
 					</td>
 					<td style="height: 30px">
-						<button id="buttonResetPEX">Reset PEX</button>
+						<button id="buttonResetPEX"title="Reset sfp engine on pex board">Reset PEX</button>
 					</td>
 				</tr>
 			</tbody>
 		</table>
 	</div>
 	<div id="content_left">
-		<h3 id="status_message">Status message</h3>
+		<h3 id="status_message" title="Currently shown device and last refresh time">Status message</h3>
 		<div id="tabs">
 			<ul>
 				<li><a href="#tabs-1">QFW</a></li>
@@ -172,7 +178,7 @@ label {
 				<table style="width: 100%">
 					<tbody>
 						<tr>
-							<td><input id="MasterTrigger" type="checkbox"><label
+							<td><input id="MasterTrigger" type="checkbox" title="Set Master trigger mode"><label
 									for="MasterTrigger">Trigger Master</label></td>
 							<td><input id="InternalTrigger" type="checkbox"><label
 									for="InternalTrigger">Internal Trigger</label></td>
@@ -181,10 +187,10 @@ label {
 						</tr>
 					</tbody>
 				</table>
-				<select name="QFWModeCombo" id="QFWModeCombo">
-					<option selected="selected" value="0">(-) [ 2.5pF &
+				<select name="QFWModeCombo" id="QFWModeCombo"  >
+					<option selected="selected" value="0" title="Select qfw measurement sensitivity range of board">(-) [ 2.5pF &
 						0.25pC]</option>
-					<option value="1">(-) [25.0pF & 2.50pC]</option>
+					<option value="1" title="Select qfw measurement sensitivity range of board" >(-) [25.0pF & 2.50pC]</option>
 					<option value="2">(+) [ 2.5pF & 0.25pC]</option>
 					<option value="3">(+) [25.0pF & 2.50pC]</option>
 					<option value="16">1000uA (-) [ 2.5pF & 0.25pC]</option>
@@ -201,30 +207,30 @@ label {
 						</tr>
 						<tr>
 							<td nowrap>Time slice 1</td>
-							<td><input class="DacEdit" id="TS1Loop" value="0"
+							<td><input class="DacEdit" id="TS1Loop" title="Number of steps in timeslice loop 1" value="0"
 								type="text"></td>
-							<td><input class="DacEdit" id="TS1Time" value="0"
+							<td><input class="DacEdit" id="TS1Time" title="Set time of single Timeslice in loop, units microseconds" value="0"
 								type="text"></td>
 						</tr>
 						<tr>
 							<td nowrap>Time slice 2</td>
-							<td><input class="DacEdit" id="TS2Loop" value="0"
+							<td><input class="DacEdit" id="TS2Loop" title="Number of steps in timeslice loop 2"value="0"
 								type="text"></td>
-							<td><input class="DacEdit" id="TS2Time" value="0"
+							<td><input class="DacEdit" id="TS2Time" title="Set time of single Timeslice in loop, units microseconds" value="0"
 								type="text"></td>
 						</tr>
 						<tr>
 							<td nowrap>Time slice 3</td>
-							<td><input class="DacEdit" id="TS3Loop" value="0"
+							<td><input class="DacEdit" id="TS3Loop" title="Number of steps in timeslice loop 3"value="0"
 								type="text"></td>
-							<td><input class="DacEdit" id="TS3Time" value="0"
+							<td><input class="DacEdit" id="TS3Time" title="Set time of single Timeslice in loop, units microseconds" value="0"
 								type="text"></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 			<div id="tabs-2">
-				<select name="DacModeCombo" id="DacModeCombo">
+				<select name="DacModeCombo" id="DacModeCombo" title="Select DAC setup mode">
 					<option selected="selected" value="1">Set Manually (mode
 						1)</option>
 					<option value="2">Test Structure (mode 2)</option>
@@ -242,13 +248,13 @@ label {
 						</tr>
 						<t>
 							<td><input class="DacEdit" id="DacStart" value="0"
-								type="text"></td>
+								type="text" title="Value to set to all DACs, or start value for offset calibration"></td>
 							<td><input class="DacEdit" id="DacOffset" value="0"
-								type="text"></td>
+								type="text" title="Offset value for DAC calibration"></td>
 							<td><input class="DacEdit" id="DacDeltaOffset" value="0"
-								type="text"></td>
+								type="text" title="Maximum offset tolerance for DAC calibration"></td>
 							<td><input class="DacEdit" id="DacCalibTime" value="0"
-								type="text"></td>
+								type="text" title="Calibration time in milliseconds"></td>
 						</tr>
 						
 						</tbody>
@@ -259,83 +265,83 @@ label {
 
 						<tr>
 							<td><input class="DacEdit" id="DacEdit1" value="0"
-								type="text"></td>
+								type="text" title="DAC 1 value"></td>
 							<td><input class="DacEdit" id="DacEdit2" value="0"
-								type="text"></td>
+								type="text" title="DAC 2 value"></td>
 							<td><input class="DacEdit" id="DacEdit3" value="0"
-								type="text"></td>
+								type="text" title="DAC 3 value"></td>
 							<td><input class="DacEdit" id="DacEdit4" value="0"
-								type="text"></td>
+								type="text" title="DAC 4 value"></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit5" value="0"
-								type="text"></td>
+								type="text" title="DAC 5 value"></td>
 							<td><input class="DacEdit" id="DacEdit6" value="0"
-								type="text"></td>
+								type="text" title="DAC 6 value"></td>
 							<td><input class="DacEdit" id="DacEdit7" value="0"
-								type="text"></td>
+								type="text" title="DAC 7 value" ></td>
 							<td><input class="DacEdit" id="DacEdit8" value="0"
-								type="text"></td>
+								type="text" title="DAC 8 value" ></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit9" value="0"
-								type="text"></td>
+								type="text" title="DAC 9 value"></td>
 							<td><input class="DacEdit" id="DacEdit10" value="0"
-								type="text"></td>
+								type="text" title="DAC 10 value"></td>
 							<td><input class="DacEdit" id="DacEdit11" value="0"
-								type="text"></td>
+								type="text" title="DAC 11 value"></td>
 							<td><input class="DacEdit" id="DacEdit12" value="0"
-								type="text"></td>
+								type="text" title="DAC 12 value"></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit13" value="0"
-								type="text"></td>
+								type="text" title="DAC 13 value"></td>
 							<td><input class="DacEdit" id="DacEdit14" value="0"
-								type="text"></td>
+								type="text" title="DAC 14 value"></td>
 							<td><input class="DacEdit" id="DacEdit15" value="0"
-								type="text"></td>
+								type="text" title="DAC 15 value"></td>
 							<td><input class="DacEdit" id="DacEdit16" value="0"
-								type="text"></td>
+								type="text" title="DAC 16 value" ></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit17" value="0"
-								type="text"></td>
+								type="text" title="DAC 17 value"></td>
 							<td><input class="DacEdit" id="DacEdit18" value="0"
-								type="text"></td>
+								type="text" title="DAC 18 value"></td>
 							<td><input class="DacEdit" id="DacEdit19" value="0"
-								type="text"></td>
+								type="text" title="DAC 19 value"></td>
 							<td><input class="DacEdit" id="DacEdit20" value="0"
-								type="text"></td>
+								type="text" title="DAC 20 value"></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit21" value="0"
-								type="text"></td>
+								type="text" title="DAC 21 value"></td>
 							<td><input class="DacEdit" id="DacEdit22" value="0"
-								type="text"></td>
+								type="text" title="DAC 22 value"></td>
 							<td><input class="DacEdit" id="DacEdit23" value="0"
-								type="text"></td>
+								type="text" title="DAC 23 value"></td>
 							<td><input class="DacEdit" id="DacEdit24" value="0"
-								type="text"></td>
+								type="text" title="DAC 24 value"></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit25" value="0"
-								type="text"></td>
+								type="text" title="DAC 25 value"></td>
 							<td><input class="DacEdit" id="DacEdit26" value="0"
-								type="text"></td>
+								type="text" title="DAC 26 value"></td>
 							<td><input class="DacEdit" id="DacEdit27" value="0"
-								type="text"></td>
+								type="text" title="DAC 27 value"></td>
 							<td><input class="DacEdit" id="DacEdit28" value="0"
-								type="text"></td>
+								type="text" title="DAC 28 value"></td>
 						</tr>
 						<tr>
 							<td><input class="DacEdit" id="DacEdit29" value="0"
-								type="text"></td>
+								type="text"title="DAC 29 value"></td>
 							<td><input class="DacEdit" id="DacEdit30" value="0"
-								type="text"></td>
+								type="text"title="DAC 30 value"></td>
 							<td><input class="DacEdit" id="DacEdit31" value="0"
-								type="text"></td>
+								type="text"title="DAC 31 value"></td>
 							<td><input class="DacEdit" id="DacEdit32" value="0"
-								type="text"></td>
+								type="text" title="DAC 32 value"></td>
 						</tr>
 					</tbody>
 				</table>
@@ -349,10 +355,10 @@ label {
 </div>	
 	<div id="content_right" class="style1">
 		<h3 style="text-align: center">QFW Counters</h3>
-		<h3 style="text-align: center">Trigger</h3>
-		<div align="center" id="TriggerLbl" style="width: 100%"></div>
+		<h3 style="text-align: center" >Trigger</h3>
+		<div align="center" id="TriggerLbl" title="Current internal trigger sequence number" style="width: 100%"></div>
 		<h3 style="text-align: center">Errors</h3>
-		<div align="center" id="ErrorsLbl" style="width: 100%"></div>
+		<div align="center" id="ErrorsLbl" title="QFW  Error Counter" style="width: 100%"></div>
 
 	</div>
 
@@ -361,20 +367,20 @@ label {
 			<tbody>
 				<tr>
 					<td>
-						<button id="buttonShow">Show</button>
+						<button id="buttonShow" title="Show values for current SFP and DEV">Show</button>
 					</td>
 					<td>
-						<button id="buttonApply">Apply</button>
+						<button id="buttonApply" title="Apply settings to selected SFP and DEV">Apply</button>
 					</td>
 					<td>
-						<button id="buttonConfigure">Configure</button>
+						<button id="buttonConfigure" title="Set up registers from configuration file (*.gos)">Configure</button>
 					</td>
 					<td><br /></td>
 					<td>
-						<button id="buttonDataDump">DataDump</button>
+						<button id="buttonDataDump" title="Dump main register contents of selected device">DataDump</button>
 					</td>
 					<td>
-						<button id="buttonClear">Clear</button>
+						<button id="buttonClear" title="Clear output text window">Clear</button>
 					</td>
 				</tr>
 			</tbody>
@@ -384,12 +390,12 @@ label {
 		<table style="width: 100%; height: 100%">
 			<tbody>
 				<td>
-					<button id="buttonTriggerLabel" style="width: 70%">
+					<button id="buttonTriggerLabel" title="Status of frontend trigger acceptance" style="width: 70%">
 						-Trigger On-</button>
 				</td>
 				<tr>
 					<td>
-						<button id="buttonTrigger" style="width: 70%">Trigger...</button>
+						<button id="buttonTrigger" title="Enable/Disable trigger acceptance of all frontends" style="width: 70%">Trigger...</button>
 					</td>
 				</tr>
 			</tbody>
@@ -400,11 +406,11 @@ label {
 		<table style="width: 100%; height: 100%">
 			<tbody>
 				<td><input id="HexMode" type="checkbox"><label
-						for="HexMode"> Hexmode</label></td>
+						for="HexMode" title="Check for hexadecimal numbers mode"> Hexmode</label></td>
 				<tr>
 
 					<td><input id="Verbose" type="checkbox"><label
-							for="Verbose"> Verbose</label></td>
+							for="Verbose" title="Check for verbose debug mode of gosipcmd"> Verbose</label></td>
 
 					<tbody>
 		</table>
