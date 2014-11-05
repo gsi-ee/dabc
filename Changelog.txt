@@ -7,6 +7,9 @@ current functionality of the framework.
 2. Adopt changes from Bertrand
 3. Adjust drawing of moving rect of stat box, better placement of text is stat box 
 4. Use rounded point coordinates when drawing TGraph and 2D histograms 
+5. Remove unnecessary circle elements for tooltips when drawing TGraph with markers.
+   Tooltips are specified for markres anyway.  
+6. When drawing TGraph as number of markers, filter out all markers from outside range.
 
 
 4.11.2014
