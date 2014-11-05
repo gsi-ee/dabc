@@ -53,7 +53,7 @@
     </Module>
 
     <Module name="mbs1" class="mbs::Monitor">
-       <node value="r4l-1"/>
+       <node value="x86l-18"/>
        <period value="1"/>
        <history value="100"/>
        <prompter value=""/>
