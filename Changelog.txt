@@ -8,7 +8,7 @@ current functionality of the framework.
 3. Size of font in TLatex is adjusted like in ROOT - by min from pad width or height 
 4. Automatically shrink frame from left when axis labels does not fit into canvas 
 5. Recover frame position if there is enough place again. 
-6. When doing move or resize of title/statbox, limit it by pad boundaries. 
+6. When doing move or resize of title/statbox, limit it by pad boundaries.
  
 
 5.11.2014
@@ -17,7 +17,7 @@ current functionality of the framework.
 3. Adjust drawing of moving rect of stat box, better placement of text is stat box 
 4. Use rounded point coordinates when drawing TGraph and 2D histograms 
 5. Remove unnecessary circle elements for tooltips when drawing TGraph with markers.
-   Tooltips are specified for markres anyway.  
+   Tooltips are specified for markers anyway.  
 6. When drawing TGraph as number of markers, filter out all markers from outside range.
 
 
@@ -28,15 +28,15 @@ current functionality of the framework.
    solve problem with title resize 
 4. Fix problem when adjust font size to existing pave - one need to 
    account empty spaces and font size is integer.
-     
+
 
 31.10.2014
 1. In http::Server add possibility to configure locations of files.
    It lets possibility to use some default location like /go4sys or
    one could assign item file like go4_condeditor.htm to $go4sys/html/condeditor.htm.
-2. Provide root_exe.txt method to execute any method of any registered object. 
+2. Provide exe.txt method to execute any method of any registered object. 
 3. Provide in TRootSniffer possibility to redefine base object scan methods
-4. In JavaScript handle extra possibility to start context menu 
+4. In JavaScript handle extra possibility to start context menu
 
 
 30.10.2014
