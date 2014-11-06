@@ -697,20 +697,25 @@ $(function() {
 					return;
 
 				SetStatusMessage("Doing offset measurement...");
-				var cmd = "[\"-w adr " + POLAND_REG_DO_OFFSET + " 1\", \"-w # "
-						+ POLAND_REG_DO_OFFSET + " 0\"]";
-				var dumpcmd = "-d -r -x adr 0x"
-						+ POLAND_REG_OFFSET_BASE.toString(16) + " 0x20";
-
+				var cmd = "[\"-w adr " + POLAND_REG_DO_OFFSET + " 1\", \"-w adr "
+						+ POLAND_REG_DO_OFFSET + " 0 ," +
+								" \"]";
+				
+				// read consecutively 32 offset registers and dump:
+				var dumpcmd ="-d -r -x -- "+Setup.fSFP.toString()+" "+Setup.fDEV.toString() +" 0x"+POLAND_REG_OFFSET_BASE.toString(16) + " 0x20 ";
+				
 				Setup.GosipCommand(cmd, function(res) {
 					SetStatusMessage("Scan offset " + (res ? "OK" : "Fail"));
 					if (!res)
 						return;
-					Setup.GosipCommand(dumpcmd, function(res) {
+					
+					});
+				Setup.fLogging = true;
+   			    Setup.GosipCommand(dumpcmd, function(res) {
 						SetStatusMessage("Dump data after scan "
 								+ (res ? "OK" : "Fail"));
-					});
-				});
+						Setup.fLogging = false;
+					});   			    
 			});
 
 	$("#buttonInitChain").button().click(
@@ -871,7 +876,7 @@ $(function() {
 			.button()
 			.click(
 					function() {
-						document.getElementById("logging").innerHTML = "<br/>GOSIP web interface v 0.4, 5-November 2014<br/> S.Linev/J.Adamzewski-Musch<br/>";
+						document.getElementById("logging").innerHTML = "Welcome to POLAND Web GUI!<br/>  -    v0.5, 6-November 2014 by S. Linev/ J. Adamzewski-Musch (JAM)<br/>";
 						updateElementsSize();
 					});
 	
