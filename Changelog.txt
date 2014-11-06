@@ -9,6 +9,7 @@ current functionality of the framework.
 4. Automatically shrink frame from left when axis labels does not fit into canvas 
 5. Recover frame position if there is enough place again. 
 6. When doing move or resize of title/statbox, limit it by pad boundaries.
+7. Move pave stats and drag box to the front always
  
 
 5.11.2014
