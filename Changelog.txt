@@ -2,6 +2,10 @@ This is log of changes in the dabc project, which is started in the beginning 20
 In many cases it is the best place to find information about 
 current functionality of the framework.
 
+6.11.2014
+1. When drawing TGraph as number of markers, preselect only visible markers
+ 
+
 5.11.2014
 1. Fix problem with TCanvas without TFrame
 2. Adopt changes from Bertrand
