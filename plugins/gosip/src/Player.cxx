@@ -69,7 +69,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       std::vector<std::string> gosipres;
       std::vector<std::string> gosiplog;
 
-      DOUT0("*** CmdGosip len %u ****", gosipcmd.size());
+      DOUT1("*** CmdGosip len %u ****", gosipcmd.size());
       for (unsigned n=0;n<gosipcmd.size();n++) {
 
          std::string currcmd = gosipcmd[n];
@@ -148,7 +148,7 @@ int gosip::Player::ExecuteCommand(dabc::Command cmd)
       if (log_output)
          cmd.SetField("log", gosiplog);
 
-      DOUT0("*** CmdGosip finished ****");
+      DOUT1("*** CmdGosip finished ****");
 
 
       return dabc::cmd_true;

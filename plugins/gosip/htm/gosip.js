@@ -291,9 +291,15 @@ PolandSetup.prototype.RefreshCounters = function(base) {
 	var txt = "";
 
 	for ( var i = 0; i < this.fErrorCounter.length; i++)
-		txt += "<h4>" + pre + this.fErrorCounter[i].toString(base) + "</h4>";
+		txt += "<div align=\"center\" ;style=\"font-size:200%\" title=\"QFW "+(i+1).toString()+" Error counter\" <p>" + pre + this.fErrorCounter[i].toString(base) + "</p>  </div>";
+// TODO: find out how to manipulate inner font size/weight correctly here!
+		
+    //	txt += "<div align=\"center\" ;style=\"width: 100% ; font-size:200%\" title=\"QFW "+(i+1).toString()+" Error counter\" <h2>" + pre + this.fErrorCounter[i].toString(base) + "</h2>  </div>";
+	//	txt += "\<div  title=\"QFW "+(i+1).toString()+" Error counter\" \<b\>" + pre + this.fErrorCounter[i].toString(base) + "\</b\> \</div\>";
 
-	document.getElementById("ErrorsLbl").innerHTML = txt;
+		
+	//(document.getElementById("ErrorsLbl").outerHTML = txt;
+	$("#ErrorsLbl").html(txt);
 }
 
 PolandSetup.prototype.RefreshTrigger = function() {
@@ -564,8 +570,8 @@ function ReadSlave() {
 
 function SetStatusMessage(info) {
 	var d = new Date();
-	var txt = d.toLocaleTimeString() + " SFP:" + Setup.fSFP + " DEV:"
-			+ Setup.fDEV + "  " + info;
+	var txt = " SFP:" + Setup.fSFP + " DEV:"
+			+ Setup.fDEV + " - " + d.toLocaleString() +"  >" + info;
 	document.getElementById("status_message").innerHTML = txt;
 }
 
@@ -663,6 +669,7 @@ $(function() {
 			$("#MasterTrigger").prop('disabled', true);
 			$("#InternalTrigger").prop('disabled', true);
 			$("#FESAMode").prop('disabled', true);
+			$("#buttonShow").prop('disabled', true);
 
 		} else {
 			$("#id_sfp").selectmenu("enable");
@@ -670,6 +677,7 @@ $(function() {
 			$("#MasterTrigger").prop('disabled', false);
 			$("#InternalTrigger").prop('disabled', false);
 			$("#FESAMode").prop('disabled', false);
+			$("#buttonShow").prop('disabled', false);
 		}
 	});
 
