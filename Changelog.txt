@@ -7,6 +7,7 @@ current functionality of the framework.
 2. Use polyline when drawing simple graph
 3. Size of font in TLatex is adjusted like in ROOT - by min from pad width or height 
 4. Automatically shrink frame from left when axis labels does not fit into canvas 
+5. Recover frame position if there is enough place again. 
  
 
 5.11.2014
