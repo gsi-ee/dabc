@@ -46,10 +46,8 @@
       if ('monitoring' in this) return this.monitoring; 
 
       var chkbox = document.getElementById("monitoring");
-      if (!chkbox) return false
-      return chkbox.checked;
+      return chkbox ? chkbox.checked : false;
    } 
-
 
    DABC.DrawElement.prototype.CreateFrames = function(topid) {
       this.frameid = $(topid).attr("id") + "_dummy";
@@ -938,7 +936,7 @@
                var fullname = painter.itemFullName(h);
                
                cnt++;
-               var html = "<button id='dabc_fastbtn_" + cnt + "'>" + h['_name'] + "</button>";
+               var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "'></button>";
                $("#fast_buttons").append(html);
                $("#dabc_fastbtn_"+cnt)
                     .text("")

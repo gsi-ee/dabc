@@ -6,6 +6,7 @@ current functionality of the framework.
 1. To avoid problem with CORS requests comment out "If-Modified-Since" header
 2. Support of fast buttons in DABC server and web browser
 3. Implement three commands in Go4 as fast buttons 
+4. Tag JSROOT as version 3, start 3.1 as developer version 
 
 
 6.11.2014
