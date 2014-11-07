@@ -846,10 +846,8 @@
    }
    
    DABC.RateHistoryDrawElement.prototype.CheckResize = function(force) {
-      console.log("Check rate resize");
       if (this.root_painter) this.root_painter.CheckResize(force);
    }
-
 
    DABC.CreateDrawElement = function(node, history_depth) {
       var kind = node["_kind"];
@@ -918,6 +916,49 @@
       return cando;
    }
 
+   DABC.HierarchyPainter.prototype.RefreshHtml = function(force) {
+      
+      JSROOT.HierarchyPainter.prototype.RefreshHtml.call(this, force);
+
+      $("#fast_buttons").empty();
+
+      if (this.h==null) return;
+      
+      var cnt = 0;
+      var painter = this;
+      //var html = "";
+      
+      function ScanLevel(h) {
+         if (h==null) return;
+         if (h['_kind'] == "DABC.Command")
+            if ('_fastcmd' in h) {
+               
+               //html += ("" + cnt + ':<img src="' + h['_fastcmd'] + '" alt="' + h['_name'] + '" /> ');
+               
+               var fullname = painter.itemFullName(h);
+               
+               cnt++;
+               var html = "<button id='dabc_fastbtn_" + cnt + "'>" + h['_name'] + "</button>";
+               $("#fast_buttons").append(html);
+               $("#dabc_fastbtn_"+cnt)
+                    .text("")
+                    .append('<img height="16" src="' + h['_fastcmd'] + '" width="16" />')
+                    .button()
+                    .click(function() { painter.ExecuteCommand(fullname, true); });
+               
+            }
+         
+         if ('_childs' in h)
+            for (var i in h['_childs'])
+               ScanLevel(h['_childs'][i]);
+      }
+      
+      ScanLevel(this.h);
+      
+      //$("#fast_buttons").append(html);
+   }
+   
+   
    DABC.HierarchyPainter.prototype.display = function(itemname, options, node)
    {
       if (!node) node = this.Find(itemname);
@@ -1014,8 +1055,14 @@
       });
    }
 
-   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname)
+   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname, direct)
    {
+      if (direct) {
+         var req = JSROOT.NewHttpRequest(cmditemname + "/execute", "text", function(res) { console.log(cmditemname+" done");});
+         req.send(null);
+         return;
+      }
+      
       var mdi = this['disp'];
       if (mdi==null) return;
 

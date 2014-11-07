@@ -4,6 +4,8 @@ current functionality of the framework.
 
 7.11.2014
 1. To avoid problem with CORS requests comment out "If-Modified-Since" header
+2. Support of fast buttons in DABC server and web browser
+3. Implement three commands in Go4 as fast buttons 
 
 
 6.11.2014
