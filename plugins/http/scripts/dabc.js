@@ -158,10 +158,7 @@
          return;
       } 
 
-      var cmd = "javascript: JSROOT.H('dabc').ExecuteCommand(\'"+this.itemname+"\')";
-
-
-      var entryInfo = "<input type='button' title='Execute' value='Execute' onclick=\"" + cmd + "\"/><br/>";
+      var entryInfo = "<input id='" + this.frameid + "_button' type='button' title='Execute' value='Execute'/><br/>";
 
       for (var cnt=0;cnt<this.NumArgs();cnt++) {
          var argname = this.ArgName(cnt);
@@ -179,6 +176,10 @@
       entryInfo += "<div id='" +this.frameid + "_res'/>";
 
       frame.append(entryInfo);
+      
+      var pthis = this;
+      
+      $("#"+ this.frameid + "_button").click(function() { pthis.InvokeCommand(); });
 
       for (var cnt=0;cnt<this.NumArgs();cnt++) {
          var argid = this.frameid + "_arg" + cnt;
@@ -942,7 +943,7 @@
                     .text("")
                     .append('<img height="16" src="' + h['_fastcmd'] + '" width="16" />')
                     .button()
-                    .click(function() { painter.ExecuteCommand(fullname, true); });
+                    .click(function() { painter.ExecuteCommand(fullname); });
                
             }
          
@@ -1053,22 +1054,11 @@
       });
    }
 
-   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname, direct)
+   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname)
    {
-      if (direct) {
-         var req = JSROOT.NewHttpRequest(cmditemname + "/execute", "text", function(res) { console.log(cmditemname+" done");});
-         req.send(null);
-         return;
-      }
-      
-      var mdi = this['disp'];
-      if (mdi==null) return;
-
-      mdi.ForEach(function(panel, itemname, painter) {
-         if ((cmditemname==itemname) && painter) {
-            painter.InvokeCommand();
-         }
-      });
+     var req = JSROOT.NewHttpRequest(cmditemname + "/execute", "text", 
+                                    function(res) { console.log(cmditemname+" done"); });
+     req.send(null);
    }
    
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
