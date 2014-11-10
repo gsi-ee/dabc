@@ -5,6 +5,8 @@ current functionality of the framework.
 10.11.2014
 1. Merge latest changes from Bertrand
 2. Use direct element pointer when executing command via button click  
+3. Add filesdir as parameter in index.htm
+4. Improve drawoptions.htm (no read files when only build minimal list)
 
 
 7.11.2014
