@@ -80,14 +80,9 @@
       this.pave = JSROOT.Create("TPaveStats");
       
       jQuery.extend(this.pave, { fX1NDC: 0.1, fY1NDC: 0.4, fX2NDC: 0.6, fY2NDC: 0.8,
-                                 fFillColor: JSROOT.gStyle.StatColor, 
-                                 fFillStyle : JSROOT.gStyle.StatStyle,
-                                 fTextAngle: 0,
-                                 fTextSize: JSROOT.gStyle.StatFontSize,
-                                 fTextAlign: 12,
-                                 fTextColor: JSROOT.gStyle.StatTextColor,
-                                 fTextFont: JSROOT.gStyle.StatFont,
                                  fBorderSize: 1 });
+      jQuery.extend(this.pave, JSROOT.gStyle.StatText);
+      jQuery.extend(this.pave, JSROOT.gStyle.StatFill);
       
       this.pave.AddText("Condition title");
       this.pave.AddText("X1 = 0");
