@@ -15,6 +15,110 @@
    DABC = {};
 
    DABC.version = "2.7.1";
+   
+   // ==============================================================================
+
+   DABC.TGo4WinCondPainter = function(cond) {
+      JSROOT.TObjectPainter.call(this, cond);
+      this.cond = cond;
+   }
+
+   DABC.TGo4WinCondPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
+
+   DABC.TGo4WinCondPainter.prototype.GetObject = function() {
+      return this.cond;
+   }
+
+   DABC.TGo4WinCondPainter.prototype.drawCondition = function() {
+      this.RecreateDrawG(false);
+      
+      var w = Number(this.svg_frame(true).attr("width")),
+          h = Number(this.svg_frame(true).attr("height"));
+      
+      var x = this.main_painter().x;
+      var y = this.main_painter().y;
+      
+      var line_color = JSROOT.Painter.root_colors[this.cond['fLineColor']];
+      var line_width = this.cond['fLineWidth'];
+      var line_style = JSROOT.Painter.root_line_styles[this.cond['fLineStyle']];
+
+      if ((this.cond['fFillStyle']==1001) && (this.cond['fFillColor']==19)) { 
+         this.cond['fFillStyle'] = 3006;
+         this.cond['fFillColor'] = 2;
+      }
+      
+      var fill_color = JSROOT.Painter.createFillPattern(this.svg_canvas(true), this.cond['fFillStyle'], this.cond['fFillColor']);
+      if (this.cond['fFillStyle'] >= 4000 && this.cond['fFillStyle'] <= 4100) fill_color = 'none';
+      
+      this.draw_g.append("svg:rect")
+             .attr("x", x(this.cond.fLow1))
+             .attr("y", 0)
+             .attr("width", x(this.cond.fUp1) - x(this.cond.fLow1))
+             .attr("height", h)
+             .style("fill", fill_color)
+             .style("stroke", line_color)
+             .style("stroke-width", line_width)
+             .style("stroke-dasharray", line_style);
+   }
+
+   DABC.TGo4WinCondPainter.prototype.Redraw = function() {
+      this.drawCondition();
+   }
+
+   
+   DABC.drawGo4WinCond = function(divid, cond, option) {
+      $('#'+divid).append("Here will be condition " + cond._typename);
+      
+      if (cond.fxHistoName=="") {
+         $('#'+divid).append("<br/>Histogram name not specified");
+         return;
+      }
+      
+      $('#'+divid).append("<br/>Histogram name is " + cond.fxHistoName);
+      
+      var dabc = JSROOT.H('dabc');
+      if (dabc==null) {
+         $('#'+divid).append("<br/>Error - did not found dabc painter");
+         return;
+      }
+      
+      var histofullpath = null;
+
+      function ScanLevel(h) {
+         if (h==null) return;
+         if ((h['_name'] == cond.fxHistoName) && (h['_kind'].indexOf("ROOT.TH")==0)) {
+            histofullpath = dabc.itemFullName(h);
+            return;
+         } 
+         if ('_childs' in h)
+            for (var i in h['_childs'])
+               ScanLevel(h['_childs'][i]);
+      }
+      
+      ScanLevel(dabc.h);
+      
+      if (histofullpath == null) {
+         $('#'+divid).append("<br/>Error - did not found histogram " + cond.fxHistoName);
+         return;
+      } 
+
+      $('#'+divid).append("<br/>Loading histogram " + histofullpath);
+      
+      var painter = new DABC.TGo4WinCondPainter(cond);
+      
+      dabc.get(histofullpath, function(item, obj) {
+         $('#'+divid).empty();
+         JSROOT.draw(divid, obj,"");
+         
+         painter.SetDivId(divid);
+         painter.drawCondition();
+      });
+
+      return painter;
+   }
+   
+   
+   JSROOT.addDrawFunc("TGo4WinCond", DABC.drawGo4WinCond);
 
 // ============= start of DrawElement ================================= 
 

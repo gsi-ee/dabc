@@ -1,11 +1,12 @@
-This is log of changes in the dabc project, which is started in the beginning 2013. 
-In many cases it is the best place to find information about 
-current functionality of the framework.
+This is log of changes in the DABC project. 
+It is the best (and sometimes the only) place to find information 
+about current functionality of the framework.
 
 11.11.2014
 1. Make more flexible central index.htm in JSROOT.
    One could specify separately files list and path where files are.
    'path' parameter also can be set in URL. 
+2. First implementation of Go4WinPainter class in JS
 
 
 10.11.2014
