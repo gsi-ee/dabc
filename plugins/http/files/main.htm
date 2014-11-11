@@ -46,10 +46,30 @@
             if (h.HistoryDepth(true) >=0) {
                document.getElementById("show_history").checked = true;
                document.getElementById("show_history").disabled = "disabled";
-            }   
+            }
+            
+            var itemsarr = [], optionsarr = [];
+            var itemname = JSROOT.GetUrlOption("item");
+            if (itemname) itemsarr.push(itemname);
+            var items = JSROOT.GetUrlOption("items");
+            if (items!=null) {
+               items = JSON.parse(items);
+               for (var i in items) itemsarr.push(items[i]);
+            }
+
+            var opt = JSROOT.GetUrlOption("opt");
+            if (opt) optionsarr.push(opt);
+            var opts = JSROOT.GetUrlOption("opts");
+            if (opts!=null) {
+               opts = JSON.parse(opts);
+               for (var i in opts) optionsarr.push(opts[i]);
+            }
             
             h.SetDisplay('grid 3x3', 'right-div');
-            h.OpenOnline();
+            
+            h.OpenOnline("", function() {
+               h.displayAll(itemsarr, optionsarr);
+            });
          
             setInterval(function() { h.UpdateDabcElements(); }, interval > 0 ? interval : 3000);
             

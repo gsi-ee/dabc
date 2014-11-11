@@ -7,6 +7,8 @@ about current functionality of the framework.
    One could specify separately files list and path where files are.
    'path' parameter also can be set in URL. 
 2. First implementation of Go4WinPainter class in JS
+3. Implement TCutG painter in JSROOT
+4. Use it for TGo4PolyCond painter
 
 
 10.11.2014

@@ -18,18 +18,28 @@
    
    // ==============================================================================
 
-   DABC.TGo4WinCondPainter = function(cond) {
+   DABC.Go4ConditionPainter = function(cond) {
       JSROOT.TObjectPainter.call(this, cond);
       this.cond = cond;
    }
 
-   DABC.TGo4WinCondPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
+   DABC.Go4ConditionPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
 
-   DABC.TGo4WinCondPainter.prototype.GetObject = function() {
+   DABC.Go4ConditionPainter.prototype.GetObject = function() {
       return this.cond;
    }
 
-   DABC.TGo4WinCondPainter.prototype.drawCondition = function() {
+   DABC.Go4ConditionPainter.prototype.drawCondition = function() {
+      
+      if (this.cond._typename == "TGo4PolyCond") {
+         if (this.cond.fxCut != null) {
+            this.cond.fxCut.fFillStyle = 3006;
+            this.cond.fxCut.fFillColor = 2;
+            JSROOT.draw(this.divid, this.cond.fxCut, "LF");
+         }
+         return;
+      }
+      
       this.RecreateDrawG(false);
       
       var w = Number(this.svg_frame(true).attr("width")),
@@ -48,20 +58,23 @@
       }
       
       var fill_color = JSROOT.Painter.createFillPattern(this.svg_canvas(true), this.cond['fFillStyle'], this.cond['fFillColor']);
-      if (this.cond['fFillStyle'] >= 4000 && this.cond['fFillStyle'] <= 4100) fill_color = 'none';
+      
+      this.draw_g.attr("class","cond_container");
+      
+      var ndim = this.cond.fiDim;
       
       this.draw_g.append("svg:rect")
              .attr("x", x(this.cond.fLow1))
-             .attr("y", 0)
+             .attr("y", (ndim==1) ? 0 : y(this.cond.fUp2))
              .attr("width", x(this.cond.fUp1) - x(this.cond.fLow1))
-             .attr("height", h)
+             .attr("height", (ndim==1) ? h : y(this.cond.fLow2) - y(this.cond.fUp2))
              .style("fill", fill_color)
              .style("stroke", line_color)
              .style("stroke-width", line_width)
              .style("stroke-dasharray", line_style);
    }
 
-   DABC.TGo4WinCondPainter.prototype.Redraw = function() {
+   DABC.Go4ConditionPainter.prototype.Redraw = function() {
       this.drawCondition();
    }
 
@@ -104,11 +117,11 @@
 
       $('#'+divid).append("<br/>Loading histogram " + histofullpath);
       
-      var painter = new DABC.TGo4WinCondPainter(cond);
+      var painter = new DABC.Go4ConditionPainter(cond);
       
       dabc.get(histofullpath, function(item, obj) {
          $('#'+divid).empty();
-         JSROOT.draw(divid, obj,"");
+         JSROOT.draw(divid, obj, obj.fDimension==2 ? "col" : "");
          
          painter.SetDivId(divid);
          painter.drawCondition();
@@ -119,6 +132,8 @@
    
    
    JSROOT.addDrawFunc("TGo4WinCond", DABC.drawGo4WinCond);
+   JSROOT.addDrawFunc("TGo4PolyCond", DABC.drawGo4WinCond);
+   
 
 // ============= start of DrawElement ================================= 
 
