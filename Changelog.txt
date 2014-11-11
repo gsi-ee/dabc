@@ -10,7 +10,8 @@ about current functionality of the framework.
 3. Implement TCutG painter in JSROOT
 4. Use it for TGo4PolyCond painter
 5. First try to draw condition statistic with TPaveStats
-6. Introduce JSROOT.Create() method to create all supported ROOT classes
+6. Introduce JSROOT.Create() method to create all supported ROOT classes,
+   use it at all places where required
 
 
 10.11.2014
