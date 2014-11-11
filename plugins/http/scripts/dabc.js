@@ -73,13 +73,36 @@
              .style("stroke-width", line_width)
              .style("stroke-dasharray", line_style);
    }
+   
+   DABC.Go4ConditionPainter.prototype.drawLabel = function() {
+      if (!this.cond.fbLabelDraw) return;
+      
+      this.pave = JSROOT.Create("TPaveStats");
+      
+      jQuery.extend(this.pave, { fX1NDC: 0.1, fY1NDC: 0.4, fX2NDC: 0.6, fY2NDC: 0.8,
+                                 fFillColor: JSROOT.gStyle.StatColor, 
+                                 fFillStyle : JSROOT.gStyle.StatStyle,
+                                 fTextAngle: 0,
+                                 fTextSize: JSROOT.gStyle.StatFontSize,
+                                 fTextAlign: 12,
+                                 fTextColor: JSROOT.gStyle.StatTextColor,
+                                 fTextFont: JSROOT.gStyle.StatFont,
+                                 fBorderSize: 1 });
+      
+      this.pave.AddText("Condition title");
+      this.pave.AddText("X1 = 0");
+      this.pave.AddText("X2 = 100");
+      
+      JSROOT.draw(this.divid, this.pave, ""); 
+   }
+
 
    DABC.Go4ConditionPainter.prototype.Redraw = function() {
       this.drawCondition();
    }
 
    
-   DABC.drawGo4WinCond = function(divid, cond, option) {
+   DABC.drawGo4Cond = function(divid, cond, option) {
       $('#'+divid).append("Here will be condition " + cond._typename);
       
       if (cond.fxHistoName=="") {
@@ -121,18 +144,21 @@
       
       dabc.get(histofullpath, function(item, obj) {
          $('#'+divid).empty();
-         JSROOT.draw(divid, obj, obj.fDimension==2 ? "col" : "");
+         JSROOT.draw(divid, obj, /* obj.fDimension==2 ? "col" : */ "");
          
          painter.SetDivId(divid);
          painter.drawCondition();
+         
+         painter.drawLabel();
+         
       });
 
       return painter;
    }
    
    
-   JSROOT.addDrawFunc("TGo4WinCond", DABC.drawGo4WinCond);
-   JSROOT.addDrawFunc("TGo4PolyCond", DABC.drawGo4WinCond);
+   JSROOT.addDrawFunc("TGo4WinCond", DABC.drawGo4Cond);
+   JSROOT.addDrawFunc("TGo4PolyCond", DABC.drawGo4Cond);
    
 
 // ============= start of DrawElement ================================= 
