@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. In hierarchy fix error how history is provided - 
    element with exact version number should not be delivered. 
 2. Add simple statbox drawing for condition
+3. Fix drawing of zero-rate in dabc.js
 
 
 11.11.2014

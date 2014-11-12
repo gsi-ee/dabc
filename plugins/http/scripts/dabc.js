@@ -509,19 +509,15 @@
    DABC.HistoryDrawElement.prototype.ExtractField = function(name, kind, node) {
 
       if (!node) node = this.jsonnode;    
-      if (!node) return;
+      if (!node || !(name in node)) return;
 
-      var val = node[name];
-      if (!val) return;
-
-      if (kind=="number") return Number(val); 
+      if (kind=="number") return Number(node[name]); 
       if (kind=="time") {
-         //return Number(val);
-         var d  = new Date(val);
+         var d  = new Date(node[name]);
          return d.getTime() / 1000.;
       }
 
-      return val;
+      return node[name];
    }
 
    DABC.HistoryDrawElement.prototype.ExtractSeries = function(name, kind) {
@@ -633,6 +629,8 @@
    DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
 
       var val = this.ExtractField("value", "number");
+      console.log("val = " + val);
+      
       var min = this.ExtractField("min", "number");
       var max = this.ExtractField("max", "number");
 
