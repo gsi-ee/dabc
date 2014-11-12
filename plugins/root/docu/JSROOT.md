@@ -16,7 +16,7 @@ Latest version of JSROOT also can be found online on
 
 ## Reading ROOT files in JSROOT
 
-[Main page](http://root.cern.ch/js/3.0/) of the JSROOT project provides 
+[Main page](http://web-docs.gsi.de/~linev/js/3.1/) of the JSROOT project provides 
 possibility interactively open ROOT files and draw objects like histogram or canvas.
 
 Following parameters could be specified in the URL string:
@@ -30,21 +30,21 @@ Following parameters could be specified in the URL string:
 
 Examples: 
 
-<A href='http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&item=hpx;1'>http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&item=hpx;1</A><br/> 
-<A href='http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&nobrowser&item=hpxpy;1&opt=colz'>http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&nobrowser&item=hpxpy;1&opt=colz</A><br/> 
-<A href='http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A><br/> 
+<A href='http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&item=hpx;1'>http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&item=hpx;1</A><br/> 
+<A href='http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&nobrowser&item=hpxpy;1&opt=colz'>http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&nobrowser&item=hpxpy;1&opt=colz</A><br/> 
+<A href='http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A><br/> 
 
 One can very easy integrate JSROOT graphic into other HTML pages using __iframe__ tag:  
 
 \htmlonly
-<iframe width="600" height="500" src="http://root.cern.ch/js/3.0/index.htm?nobrowser&file=../files/hsimple.root&item=hpxpy;1&opt=colz">
+<iframe width="600" height="500" src="http://web-docs.gsi.de/~linev/js/3.1/index.htm?nobrowser&file=../files/hsimple.root&item=hpxpy;1&opt=colz">
 </iframe>
 \endhtmlonly
 
 
 In principle, one could open any ROOT file placed in the web, providing full URL to it like:
 
-http://web-docs.gsi.de/~linev/js/3.0/?file=http://root.cern.ch/js/files/hsimple.root&item=hpx
+http://web-docs.gsi.de/~linev/js/3.1/?file=http://root.cern.ch/js/files/hsimple.root&item=hpx
 
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control),
 when web-server blocks requests coming from other domains. 
@@ -57,7 +57,7 @@ In simple case one could copy only top index.htm file on the server and specify 
 to JSRootCore.js script like:
 
     ...
-    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
+    <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.1/scripts/JSRootCore.js"></script>
     ...  
 
 In such case one also could specify custom files list:
@@ -77,13 +77,13 @@ JSROOT is used to implement user interface in the web browsers.
 
 Page layout of main page from THttpServer is similar to file I/O.
 One could browse existing items and display them. Snapshot of running
-server can be seen on the [demo page](http://root.cern.ch/js/3.0/demo/).
+server can be seen on the [demo page](http://web-docs.gsi.de/~linev/js/3.1/demo/).
 
 One also could specify similar URL parameters to configure displayed items and draw options.   
 
 It is also possible to display single item from the THttpSerever server like
 
-http://root.cern.ch/js/3.0/demo/Files/job1.root/hpxpy/draw.htm?opt=colz
+http://web-docs.gsi.de/~linev/js/3.1/demo/Files/job1.root/hpxpy/draw.htm?opt=colz
 
 
 ##  Data monitoring with JSROOT 
@@ -96,7 +96,7 @@ changes and request only items really displayed in the browser. To enable monito
 one should activate appropriate checkbox or provide __monitoring__ parameter in the URL 
 string like: 
 
-http://root.cern.ch/js/3.0/demo/Files/job1.root/hprof/draw.htm?monitoring=1000
+http://web-docs.gsi.de/~linev/js/3.1/demo/Files/job1.root/hprof/draw.htm?monitoring=1000
 
 Parameter value is update interval in milliseconds.  
 
@@ -112,10 +112,10 @@ via web server. Than one can use JSROOT to read such files and display objects i
            
 There is demonstration page which shows such functionality:
 
-http://root.cern.ch/js/3.0/demo/demo.htm
+http://web-docs.gsi.de/~linev/js/3.1/demo/demo.htm
  
 \htmlonly
-<iframe width="500" height="300" src="http://root.cern.ch/js/3.0/demo/demo.htm">
+<iframe width="500" height="300" src="http://web-docs.gsi.de/~linev/js/3.1/demo/demo.htm">
 </iframe>
 \endhtmlonly
 
@@ -123,7 +123,7 @@ This demo page reads in the cycle 20 json files and displays them.
 
 If one have web server which already provides such JSON file, one could specify URL to this file like:
   
-http://root.cern.ch/js/3.0/demo/demo.htm?addr=Canvases/c1/root.json.gz
+http://web-docs.gsi.de/~linev/js/3.1/demo/demo.htm?addr=Canvases/c1/root.json.gz
 
 Here same problem with [Cross-Origin Request](https://developer.mozilla.org/en/http_access_control) can appear.
 If webserver configuration cannot be changed, just copy JSROOT to the web server.
@@ -161,7 +161,7 @@ see full support of TTree or RooWorkspace in JavaScript.
 
 If somebody still want to test such functionality, try monitoring parameter like:
 
-http://root.cern.ch/js/3.0/index.htm?nobrowser&file=../files/hsimple.root+&item=hpx;1&monitoring=2000
+http://web-docs.gsi.de/~linev/js/3.1/index.htm?nobrowser&file=../files/hsimple.root+&item=hpx;1&monitoring=2000
 
 In this particular case histogram is not changing.
 
@@ -170,7 +170,7 @@ In this particular case histogram is not changing.
 
 Even without server-side application JSROOT provides nice ROOT-like graphics,
 which could be used in arbitrary HTML pages. 
-There is [example page](http://root.cern.ch/js/3.0/demo/example.htm),
+There is [example page](http://web-docs.gsi.de/~linev/js/3.1/demo/example.htm),
 where 2-D histograms is artificially generated and displayed.
 Details about JSROOT API one can find in the next chapters. 
 
@@ -187,7 +187,7 @@ Before JSROOT can be used, all appropriate scripts should be loaded.
 Any HTML pages, where JSROOT is used, should include JSRootCore.js script.
 In the <head> sections of HTML page one should have line:
 
-    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>  
+    <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.1/scripts/JSRootCore.js"></script>  
 
 Here default location of JSROOT is specified, one could have local copy on file system or private
 web server. When JSROOT used with THttpServer, address looks like:
@@ -283,31 +283,31 @@ For the example read object from the file and display it will look like:
 
 ### Loading ROOT files
 
-* http://root.cern.ch/js/3.0/?file=../files/hsimple.root
-* http://root.cern.ch/js/3.0/?file=../files/hsimple.root&item=hpxpy;1&opt=colz
-* http://root.cern.ch/js/3.0/?nobrowser&file=../files/hsimple.root&item=hprof;1
-* <A href='http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://root.cern.ch/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A>   
+* http://web-docs.gsi.de/~linev/js/3.1/?file=../files/hsimple.root
+* http://web-docs.gsi.de/~linev/js/3.1/?file=../files/hsimple.root&item=hpxpy;1&opt=colz
+* http://web-docs.gsi.de/~linev/js/3.1/?nobrowser&file=../files/hsimple.root&item=hprof;1
+* <A href='http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.1/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A>   
 
 ### Snapshot from running THttpServer
 
-* http://root.cern.ch/js/3.0/demo/
-* http://root.cern.ch/js/3.0/demo/?item=Files/job1.root/hpxpy&opt=colz&monitoring=1000
-* http://root.cern.ch/js/3.0/demo/Files/job1.root/hpxpy/draw.htm?opt=colz
-* http://root.cern.ch/js/3.0/demo/Canvases/c1/fPrimitives/?item=hpx
+* http://web-docs.gsi.de/~linev/js/3.1/demo/
+* http://web-docs.gsi.de/~linev/js/3.1/demo/?item=Files/job1.root/hpxpy&opt=colz&monitoring=1000
+* http://web-docs.gsi.de/~linev/js/3.1/demo/Files/job1.root/hpxpy/draw.htm?opt=colz
+* http://web-docs.gsi.de/~linev/js/3.1/demo/Canvases/c1/fPrimitives/?item=hpx
 
 ### Standalone JSROOT usage
 
-* http://root.cern.ch/js/3.0/demo/example.htm
+* http://web-docs.gsi.de/~linev/js/3.1/demo/example.htm
 
 ### Demonstration of online JSROOT usage
 
-* http://root.cern.ch/js/3.0/demo/demo.htm
-* http://root.cern.ch/js/3.0/demo/demo.htm?layout=grid3x2
+* http://web-docs.gsi.de/~linev/js/3.1/demo/demo.htm
+* http://web-docs.gsi.de/~linev/js/3.1/demo/demo.htm?layout=grid3x2
 
 ### All supported draw options
 
-* [Only options list](http://root.cern.ch/js/3.0/demo/drawoptions.htm?minimal)
-* [List and drawing with default options](http://root.cern.ch/js/3.0/demo/drawoptions.htm?default&w=800&h=600)
-* [All drawings at once (many large canvases)](http://root.cern.ch/js/3.0/demo/drawoptions.htm?all&w=1400&h=800)
+* [Only options list](http://web-docs.gsi.de/~linev/js/3.1/demo/drawoptions.htm?minimal)
+* [List and drawing with default options](http://web-docs.gsi.de/~linev/js/3.1/demo/drawoptions.htm?default&w=800&h=600)
+* [All drawings at once (many large canvases)](http://web-docs.gsi.de/~linev/js/3.1/demo/drawoptions.htm?all&w=1400&h=800)
    
    

@@ -22,11 +22,11 @@ created in application. By default, server can access files, canvases
 and histograms via gROOT pointer. All such objects can be displayed with
 JSROOT graphics. 
 
-There is [snapshot (frozen copy)](http://web-docs.gsi.de/~linev/js/3.0/demo/) 
+There is [snapshot (frozen copy)](http://web-docs.gsi.de/~linev/js/3.1/demo/) 
 of such server, running in httpserver.C macro from ROOT tutorial.  
 
 \htmlonly
-<iframe width="800" height="500" src="http://web-docs.gsi.de/~linev/js/3.0/demo/?item=Canvases/c1">
+<iframe width="800" height="500" src="http://web-docs.gsi.de/~linev/js/3.1/demo/?item=Canvases/c1">
 </iframe>
 \endhtmlonly
 
