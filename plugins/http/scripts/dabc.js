@@ -28,10 +28,14 @@
    DABC.Go4ConditionPainter.prototype.GetObject = function() {
       return this.cond;
    }
+   
+   DABC.Go4ConditionPainter.prototype.isPolyCond = function() {
+      return this.cond._typename == "TGo4PolyCond"; 
+   }
 
    DABC.Go4ConditionPainter.prototype.drawCondition = function() {
       
-      if (this.cond._typename == "TGo4PolyCond") {
+      if (this.isPolyCond()) {
          if (this.cond.fxCut != null) {
             this.cond.fxCut.fFillStyle = 3006;
             this.cond.fxCut.fFillColor = 2;
@@ -79,18 +83,30 @@
       
       this.pave = JSROOT.Create("TPaveStats");
       
-      jQuery.extend(this.pave, { fX1NDC: 0.1, fY1NDC: 0.4, fX2NDC: 0.6, fY2NDC: 0.8,
-                                 fBorderSize: 1 });
+      jQuery.extend(this.pave, { fX1NDC: 0.1, fY1NDC: 0.4, fX2NDC: 0.4, fY2NDC: 0.65, fBorderSize: 1 });
       jQuery.extend(this.pave, JSROOT.gStyle.StatText);
       jQuery.extend(this.pave, JSROOT.gStyle.StatFill);
       
-      this.pave.AddText("Condition title");
-      this.pave.AddText("X1 = 0");
-      this.pave.AddText("X2 = 100");
+      this.pave.AddText(this.cond.fName);
+      
+      if (this.cond.fbLimitsDraw)
+         if (this.isPolyCond()) {
+            this.pave.AddText("Xmin = " + Math.min.apply(Math, this.cond.fxCut.fX));
+            this.pave.AddText("Xmax = " + Math.max.apply(Math, this.cond.fxCut.fX));
+            this.pave.AddText("Ymin = " + Math.min.apply(Math, this.cond.fxCut.fY));
+            this.pave.AddText("Ymax = " + Math.max.apply(Math, this.cond.fxCut.fY));
+         } else {
+            this.pave.AddText("Xmin = " + this.cond.fLow1);
+            this.pave.AddText("Xmax = " + this.cond.fUp1);
+            if (this.cond.fiDim==2) {
+               this.pave.AddText("Ymin = " + this.cond.fLow2);
+               this.pave.AddText("Ymax = " + this.cond.fUp2);
+            }
+         }
+      
       
       JSROOT.draw(this.divid, this.pave, ""); 
    }
-
 
    DABC.Go4ConditionPainter.prototype.Redraw = function() {
       this.drawCondition();
@@ -479,7 +495,7 @@
 
       var url = "";
       if (this.itemname != "") url += this.itemname +"/";
-      url += this.request_name + "?compact=3";
+      url += this.request_name + "?compact=0";
 
       if (this.version>0) url += "&version=" + this.version; 
       if (this.hlimit>0) url += "&history=" + this.hlimit;

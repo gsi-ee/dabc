@@ -66,8 +66,8 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
       bool cross_boundary = false;
       for (unsigned n=first; n<fArr.Size();n++) {
          // we have longer history as requested
-         if ((version>0) && (fArr.Item(n).version < version)) {
-            cross_boundary = true;
+         if ((version>0) && (fArr.Item(n).version <= version)) {
+            cross_boundary = fArr.Item(n).version < version;
             continue;
          }
          storenum++;
@@ -80,7 +80,7 @@ bool dabc::HistoryContainer::Stream(iostream& s, uint64_t version, int hlimit)
       s.write_uint64(mask);
 
       for (uint32_t n=first;n<fArr.Size();n++) {
-         if ((version>0) && (fArr.Item(n).version < version)) continue;
+         if ((version>0) && (fArr.Item(n).version <= version)) continue;
          fArr.Item(n).fields->Stream(s);
       }
 
@@ -138,7 +138,7 @@ bool dabc::History::SaveTo(HStore& res)
       HistoryItem& item = GetObject()->fArr.Item(n);
 
       // we have longer history as requested
-      if (item.version < res.version()) continue;
+      if ((res.version()>0) && (item.version <= res.version())) continue;
 
       res.BeforeNextChild("history");
 
@@ -147,7 +147,6 @@ bool dabc::History::SaveTo(HStore& res)
       item.fields->SaveTo(res);
 
       res.CloseNode(0);
-//      DOUT0("    append item %u version %u value %s", n, (unsigned) item.version, item.fields->Field("value").AsStr().c_str());
    }
 
    res.CloseChilds();
