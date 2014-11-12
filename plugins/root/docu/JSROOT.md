@@ -79,11 +79,6 @@ Page layout of main page from THttpServer is similar to file I/O.
 One could browse existing items and display them. Snapshot of running
 server can be seen on the [demo page](http://root.cern.ch/js/3.0/demo/).
 
-\htmlonly
-<iframe width="600" height="400" src="http://root.cern.ch/js/3.0/demo/">
-</iframe>
-\endhtmlonly
-
 One also could specify similar URL parameters to configure displayed items and draw options.   
 
 It is also possible to display single item from the THttpSerever server like
