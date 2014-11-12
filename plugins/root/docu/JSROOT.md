@@ -27,23 +27,23 @@ Following parameters could be specified in the URL string:
 - layout - can be 'collapsible', 'tabs' or gridNxM where N and M are integer values
 - nobrowser - do not display file browser
 
-Example: <A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
+Example: <A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
 
 To display histograms without file browser, just add `nobrower' parameter like:
 
-<A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
+<A href='http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]'>http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=../files/hsimple.root&layout=grid2x2&items=["hpx;1", "hpxpy;1"]&opts=["", "colz"]</A> 
 
 Such page can be very easily integrated into any other web page, using `<IFRAME src="link"></IFRAME>` HTML tag.  
 
 \htmlonly
-<iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root&item=hpxpy;1&opt=colz">
+<iframe style="width:600px;height:500px" src="http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=../files/hsimple.root&item=hpxpy;1&opt=colz">
 </iframe>
 \endhtmlonly
 
 
 In principle, one could open any ROOT file placed in the web, providing full URL to it like:
 
-http://web-docs.gsi.de/~linev/js/3.0/?file=http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root&item=hpx
+http://web-docs.gsi.de/~linev/js/3.0/?file=http://root.cern.ch/js/files/hsimple.root&item=hpx
 
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control), 
 which normally prevents browser to access data from other domains.
@@ -56,7 +56,7 @@ In simple case one could copy only top index.htm file on the server and specify 
 to JSRootCore.js script like:
 
     ...
-    <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.0/scripts/JSRootCore.js"></script>
+    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>
     ...  
 
 In such case one also could specify custom files list:
@@ -164,7 +164,7 @@ see full support of TTree or RooWorkspace in JavaScript.
 
 If somebody still want to test such functionality, try monitoring parameter like:
 
-http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=files/hsimple.root+&item=hpx;1&monitoring=2000
+http://web-docs.gsi.de/~linev/js/3.0/index.htm?nobrowser&file=../files/hsimple.root+&item=hpx;1&monitoring=2000
 
 In this particular case histogram is not changing.
 
@@ -173,7 +173,7 @@ In this particular case histogram is not changing.
 
 Even without server-side application JSROOT provides nice ROOT-like graphics,
 which could be used in arbitrary HTML pages. 
-There is [example page](http://web-docs.gsi.de/~linev/js/3.0/files/example.htm),
+There is [example page](http://web-docs.gsi.de/~linev/js/3.0/demo/example.htm),
 where 2-D histograms is artificially generated and displayed.
 Details about JSROOT API one can find in the next chapters. 
 
@@ -190,7 +190,7 @@ Before JSROOT can be used, all appropriate scripts should be loaded.
 Any HTML pages, where JSROOT is used, should include JSRootCore.js script.
 In the <head> sections of HTML page one should have line:
 
-    <script type="text/javascript" src="http://web-docs.gsi.de/~linev/js/3.0/scripts/JSRootCore.js"></script>  
+    <script type="text/javascript" src="http://root.cern.ch/js/3.0/scripts/JSRootCore.js"></script>  
 
 Here default location of JSROOT is specified, one could have local copy on file system or private
 web server. When JSROOT used with THttpServer, address looks like:
@@ -277,7 +277,7 @@ JSROOT.redraw function will call JSROOT.draw if drawing was not performed before
 
 JSROOT defines JSROOT.TFile class, which can be used to access binary ROOT files.
 
-    var filename = "http://web-docs.gsi.de/~linev/js/3.0/files/hsimple.root";
+    var filename = "http://root.cern.ch/js/files/hsimple.root";
     var f = new JSROOT.TFile(filename, fileReadyCallback);
     
 One should always remember that all I/O operations asynchronous in JSROOT.
@@ -295,5 +295,4 @@ Finally, one should implement callback function for getting ready object:
        if (obj==null) return;
        JSROOT.draw("drawing", obj, "colz");
     }
-
 
