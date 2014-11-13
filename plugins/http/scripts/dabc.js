@@ -18,76 +18,6 @@
 
    // =============================================================================
 
-   
-   DABC.Go4ParameterPainter = function(par, aseditor) {
-      JSROOT.TObjectPainter.call(this, par);
-      this.par = par;
-      this.aseditor = aseditor;
-   }
-
-   DABC.Go4ParameterPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
-
-   DABC.Go4ParameterPainter.prototype.GetObject = function() {
-      return this.par;
-   }
-
-   DABC.Go4ParameterPainter.prototype.fillEditor = function() {
-      var id = "#"+this.divid;
-      var par = this.par;
-      
-      $(id).css("display","table");
-      $(id+" .par_name").text(par.fName);
-      $(id+" .par_type").text(par._typename);
-
-      $(id+" button:first")
-         .text("")
-         .append('<img src="/go4sys/icons/right.png"  height="16" width="16"/>')
-         .button()
-         .click(function() { console.log("get - do nothing"); })
-         .next()
-         .text("")
-         .append('<img src="/go4sys/icons/left.png"  height="16" width="16"/>')
-         .button()
-         .click(function() { console.log("set - do nothing"); })
-         .next()
-         .text("")
-         .append('<img src="/go4sys/icons/info1.png"  height="16" width="16"/>')
-         .button()
-         .click(function() { console.log("warn - do nothing"); })
-         .hide();
-      
-      var found_title = false;
-      
-      for (var key in par) {
-         if (typeof par[key] == 'function') continue;
-         if (key == 'fTitle') { found_title = true; continue; } 
-         if (!found_title) continue;
-         var value = (par[key]!=null ? par[key].toString() : "null");
-         $(id + " .par_values tbody").append('<tr><td>' + key.toString() + "</td><td><input type='text' value='" + value + "'/></td></tr>");
-      }
-   }
-   
-   DABC.Go4ParameterPainter.prototype.drawEditor = function() {
-      var pthis = this;
-       
-      $("#"+this.divid).empty();
-      $("#"+this.divid).load("/go4sys/html/pareditor.htm", "", 
-            function() { pthis.fillEditor(); });
-   }
-
-   DABC.drawGo4Parameter = function(divid, par, option) {
-      $('#'+divid).append("Here will be parameter " + par._typename);
-      
-      var painter = new DABC.Go4ParameterPainter(par, true);
-      painter.SetDivId(divid);
-      painter.drawEditor();
-      return painter;
-   }
-
-
-
-// ============= start of DrawElement ================================= 
-
    DABC.DrawElement = function() {
       JSROOT.TBasePainter.call(this);
       this.itemname = "";               // full item name in hierarchy
@@ -996,14 +926,6 @@
       
       if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
       
-      if ('_go4param' in node) { 
-         cando.ctxt = true; cando.display = true;
-         var partype = kind.slice(5);
-         
-         if (!JSROOT.canDraw(partype))
-            JSROOT.addDrawFunc(partype, DABC.drawGo4Parameter);
-      } 
-
       return cando;
    }
    
@@ -1014,7 +936,30 @@
          if ('_autoload' in h) scripts += h['_autoload'] + ";";
       });
 
-      JSROOT.loadScript(scripts, ready_callback);
+      var painter = this;
+      
+      JSROOT.loadScript(scripts, function() {
+         
+         painter.ForEach(function(h) {
+            if (!('_drawfunc' in h)) return;
+            if (h._kind.indexOf('ROOT.')!=0) return;
+            
+            var typename = h._kind.slice(5);
+            if (JSROOT.canDraw(typename)) return;
+            
+            var name = h['_drawfunc'];
+            var func = eval(name);
+            var separ = name.indexOf(".");
+            if (!func) func = window[name];
+            if (!func && (separ>0)) func = window[name.slice(0, separ-1)][name.slice(separ+1)];
+            
+            if (func) {
+               console.log("Add draw func for " + typename);
+               JSROOT.addDrawFunc(typename, func);
+            }
+         });   
+         ready_callback();
+      });
    }
 
    DABC.HierarchyPainter.prototype.RefreshHtml = function(force) {
