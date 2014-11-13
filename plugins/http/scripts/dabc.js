@@ -197,7 +197,7 @@
    DABC.drawGo4Cond = function(divid, cond, option) {
       $('#'+divid).append("Here will be condition " + cond._typename);
       
-      if (cond.fxHistoName=="") {
+      if ((cond.fxHistoName=="") || (option=='editor')) {
          $('#'+divid).append("<br/>Histogram name not specified");
          var painter = new DABC.Go4ConditionPainter(cond, true);
          painter.SetDivId(divid);
@@ -1306,7 +1306,7 @@
       
       var baseurl = onlineprop.server + onlineprop.itemname + "/";
       
-      var drawurl = baseurl + "draw.htm", editorurl = baseurl;
+      var drawurl = baseurl + "draw.htm", editorurl = baseurl + "draw.htm?opt=editor";
       
       var mon = this.MonitoringInterval();
       var separ = "?";
@@ -1320,7 +1320,6 @@
       JSROOT.Painter.menuitem(menu,"Draw in new window", function() { window.open(drawurl); });
       
       if ((item!=null) && ('_editor' in item)) {
-         editorurl += item['_editor'];
          JSROOT.Painter.menuitem(menu,"Editor", function() { window.open(editorurl); });
       } 
    }

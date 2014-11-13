@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+13.11.2014
+1. First draft of condition editor for go4. Load prepared html code and
+   implement jquery-based guis
+2. Support 'editor' option for conditions - painter automatically starts editor mode.     
+
+
 12.11.2014
 1. In hierarchy fix error how history is provided - 
    element with exact version number should not be delivered. 
