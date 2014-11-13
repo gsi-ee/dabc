@@ -933,7 +933,9 @@
       var scripts = "";
 
       this.ForEach(function(h) {
-         if ('_autoload' in h) scripts += h['_autoload'] + ";";
+         if ('_autoload' in h)
+            if (scripts.indexOf(h['_autoload'])<0) 
+               scripts += h['_autoload'] + ";";
       });
 
       var painter = this;
@@ -948,13 +950,13 @@
             if (JSROOT.canDraw(typename)) return;
             
             var name = h['_drawfunc'];
-            var func = eval(name);
+            var func = window[name];
             var separ = name.indexOf(".");
-            if (!func) func = window[name];
-            if (!func && (separ>0)) func = window[name.slice(0, separ-1)][name.slice(separ+1)];
+            if (!func && (separ>0) && window[name.slice(0, separ)]) 
+               func = window[name.slice(0, separ)][name.slice(separ+1)];
             
             if (func) {
-               console.log("Add draw func for " + typename);
+               console.log("Add draw func " + name + " for " + typename);
                JSROOT.addDrawFunc(typename, func);
             }
          });   

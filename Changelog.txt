@@ -10,6 +10,7 @@ about current functionality of the framework.
 4. Provide CompleteOnline method to perform actions as loading of extra scripts 
    before any HTML elements will be created  
 5. Move condition and parameter editor with JavaScript into go4 project
+6. Check that same scripts tried load only once.
 
 
 12.11.2014
