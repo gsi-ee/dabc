@@ -39,9 +39,30 @@
       console.log("DABC.Go4ConditionPainter.prototype.fillEditor " + this.cond.fName);
       $(id).css("display","table");
       
-      $(id+" .cond_name").append(this.cond.fName);
-      $(id+" .cond_type").append(this.cond._typename);
-      $(id+" .cond_tabs").tabs();  
+      $(id+" .cond_name").text(this.cond.fName);
+      $(id+" .cond_type").text(this.cond._typename);
+      $(id+" .cond_tabs").tabs();
+      
+      $(id+" button:first")
+         .text("")
+         .append('<img src="/go4sys/icons/right.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("get - do nothing"); })
+         .next()
+         .text("")
+         .append('<img src="/go4sys/icons/left.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("set - do nothing"); })
+         .next()
+         .text("")
+         .append('<img src="/go4sys/icons/clear.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("clear - do nothing"); })
+         .next()
+         .text("")
+         .append('<img src="/go4sys/icons/chart.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("draw - do nothing"); })
    }
    
    DABC.Go4ConditionPainter.prototype.drawEditor = function() {
