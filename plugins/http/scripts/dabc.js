@@ -88,6 +88,7 @@
          .append('<img src="/go4sys/icons/info1.png"  height="16" width="16"/>')
          .button()
          .click(function() { console.log("warn - do nothing"); })
+         .hide()
          .next()
          .text("")
          .append('<img src="/go4sys/icons/clear.png"  height="16" width="16"/>')
@@ -98,8 +99,6 @@
          .append('<img src="/go4sys/icons/chart.png"  height="16" width="16"/>')
          .button()
          .click(function() { console.log("draw - do nothing"); });
-      
-      $(id+" button:eq(2)").hide();
       
       this.refreshEditor();   
    }
@@ -254,7 +253,73 @@
    
    JSROOT.addDrawFunc("TGo4WinCond", DABC.drawGo4Cond);
    JSROOT.addDrawFunc("TGo4PolyCond", DABC.drawGo4Cond);
+
    
+   DABC.Go4ParameterPainter = function(par, aseditor) {
+      JSROOT.TObjectPainter.call(this, par);
+      this.par = par;
+      this.aseditor = aseditor;
+   }
+
+   DABC.Go4ParameterPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
+
+   DABC.Go4ParameterPainter.prototype.GetObject = function() {
+      return this.par;
+   }
+
+   DABC.Go4ParameterPainter.prototype.fillEditor = function() {
+      var id = "#"+this.divid;
+      var par = this.par;
+      
+      $(id).css("display","table");
+      $(id+" .par_name").text(par.fName);
+      $(id+" .par_type").text(par._typename);
+
+      $(id+" button:first")
+         .text("")
+         .append('<img src="/go4sys/icons/right.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("get - do nothing"); })
+         .next()
+         .text("")
+         .append('<img src="/go4sys/icons/left.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("set - do nothing"); })
+         .next()
+         .text("")
+         .append('<img src="/go4sys/icons/info1.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("warn - do nothing"); })
+         .hide();
+      
+      var found_title = false;
+      
+      for (var key in par) {
+         if (typeof par[key] == 'function') continue;
+         if (key == 'fTitle') { found_title = true; continue; } 
+         if (!found_title) continue;
+         $(id + " .par_values").append(key.toString() + " = " + (par[key]!=null ? par[key].toString() : "null") + "<br/>");
+      }
+   }
+   
+   DABC.Go4ParameterPainter.prototype.drawEditor = function() {
+      var pthis = this;
+       
+      $("#"+this.divid).empty();
+      $("#"+this.divid).load("/go4sys/html/pareditor.htm", "", 
+            function() { pthis.fillEditor(); });
+   }
+
+   DABC.drawGo4Parameter = function(divid, par, option) {
+      $('#'+divid).append("Here will be parameter " + par._typename);
+      
+      var painter = new DABC.Go4ParameterPainter(par, true);
+      painter.SetDivId(divid);
+      painter.drawEditor();
+      return painter;
+   }
+
+
 
 // ============= start of DrawElement ================================= 
 
@@ -1147,8 +1212,17 @@
       if (kind == "DABC.HTML") { cando.img1 = JSROOT.source_dir+'img/globe.gif'; cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
       if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png'; else
-      if ('_editor' in node) cando.ctxt = true;
+      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
+      
+      if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
+      
+      if ('_go4param' in node) { 
+         cando.ctxt = true; cando.display = true;
+         var partype = kind.slice(5);
+         
+         if (!JSROOT.canDraw(partype))
+            JSROOT.addDrawFunc(partype, DABC.drawGo4Parameter);
+      } 
 
       return cando;
    }

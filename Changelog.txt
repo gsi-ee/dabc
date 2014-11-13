@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. First draft of condition editor for go4. Load prepared html code and
    implement jquery-based guis
 2. Support 'editor' option for conditions - painter automatically starts editor mode.     
+3. First dummy version of go4 parameter editor.
 
 
 12.11.2014
