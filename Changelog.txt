@@ -7,6 +7,8 @@ about current functionality of the framework.
    implement jquery-based guis
 2. Support 'editor' option for conditions - painter automatically starts editor mode.     
 3. First dummy version of go4 parameter editor.
+4. Provide CompleteOnline method to perform actions as loading of extra scripts 
+   before any HTML elements will be created  
 
 
 12.11.2014
