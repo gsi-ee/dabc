@@ -34,14 +34,44 @@
       return this.cond._typename == "TGo4PolyCond"; 
    }
    
+   DABC.Go4ConditionPainter.prototype.refreshEditor = function() {
+      var id = "#"+this.divid;
+      var cond = this.cond;
+
+      $(id+" .cond_name").text(cond.fName);
+      $(id+" .cond_type").text(cond._typename);
+      
+      $(id+" .cond_xmin").val(cond.fLow1).change(function(){ $(id+" button:eq(2)").show(); });
+      $(id+" .cond_xmax").val(cond.fUp1).change(function(){ $(id+" button:eq(2)").show(); });
+      if (cond.fiDim==2) {
+         $(id+" .cond_ymin").val(cond.fLow2).change(function(){ $(id+" button:eq(2)").show(); });
+         $(id+" .cond_ymax").val(cond.fUp2).change(function(){ $(id+" button:eq(2)").show(); });
+      } else {
+         $(id+" .cond_ymin").prop('disabled', true);
+         $(id+" .cond_ymax").prop('disabled', true);
+      }
+      
+      $(id+" .cond_visible")
+         .prop('checked', cond.fbVisible)
+         .click(function() { cond.fbVisible = this.checked; });
+      $(id+" .cond_limits")
+         .prop('checked', cond.fbLimitsDraw)
+         .click(function() { cond.fbLimitsDraw = this.checked; });
+         
+      $(id+" .cond_label")
+         .prop('checked', cond.fbLabelDraw)
+         .click(function() { cond.fbLabelDraw = this.checked; });
+   }
+   
    DABC.Go4ConditionPainter.prototype.fillEditor = function() {
       var id = "#"+this.divid;
       console.log("DABC.Go4ConditionPainter.prototype.fillEditor " + this.cond.fName);
       $(id).css("display","table");
       
-      $(id+" .cond_name").text(this.cond.fName);
-      $(id+" .cond_type").text(this.cond._typename);
       $(id+" .cond_tabs").tabs();
+      
+      $(id+" .cond_execmode").selectmenu();
+      $(id+" .cond_invertmode").selectmenu();
       
       $(id+" button:first")
          .text("")
@@ -55,6 +85,11 @@
          .click(function() { console.log("set - do nothing"); })
          .next()
          .text("")
+         .append('<img src="/go4sys/icons/info1.png"  height="16" width="16"/>')
+         .button()
+         .click(function() { console.log("warn - do nothing"); })
+         .next()
+         .text("")
          .append('<img src="/go4sys/icons/clear.png"  height="16" width="16"/>')
          .button()
          .click(function() { console.log("clear - do nothing"); })
@@ -62,7 +97,11 @@
          .text("")
          .append('<img src="/go4sys/icons/chart.png"  height="16" width="16"/>')
          .button()
-         .click(function() { console.log("draw - do nothing"); })
+         .click(function() { console.log("draw - do nothing"); });
+      
+      $(id+" button:eq(2)").hide();
+      
+      this.refreshEditor();   
    }
    
    DABC.Go4ConditionPainter.prototype.drawEditor = function() {
