@@ -15,12 +15,13 @@
    DABC = {};
 
    DABC.version = "2.7.1";
-   
-   // ==============================================================================
 
-   DABC.Go4ConditionPainter = function(cond) {
+   // =============================================================================
+
+   DABC.Go4ConditionPainter = function(cond, aseditor) {
       JSROOT.TObjectPainter.call(this, cond);
       this.cond = cond;
+      this.aseditor = aseditor;
    }
 
    DABC.Go4ConditionPainter.prototype = Object.create(JSROOT.TObjectPainter.prototype);
@@ -31,6 +32,24 @@
    
    DABC.Go4ConditionPainter.prototype.isPolyCond = function() {
       return this.cond._typename == "TGo4PolyCond"; 
+   }
+   
+   DABC.Go4ConditionPainter.prototype.fillEditor = function() {
+      var id = "#"+this.divid;
+      console.log("DABC.Go4ConditionPainter.prototype.fillEditor " + this.cond.fName);
+      $(id).css("display","table");
+      
+      $(id+" .cond_name").append(this.cond.fName);
+      $(id+" .cond_type").append(this.cond._typename);
+      $(id+" .cond_tabs").tabs();  
+   }
+   
+   DABC.Go4ConditionPainter.prototype.drawEditor = function() {
+      var pthis = this;
+       
+      $("#"+this.divid).empty();
+      $("#"+this.divid).load("/go4sys/html/condeditorbody.htm", "", 
+            function() { pthis.fillEditor(); });
    }
 
    DABC.Go4ConditionPainter.prototype.drawCondition = function() {
@@ -104,12 +123,14 @@
             }
          }
       
-      
       JSROOT.draw(this.divid, this.pave, ""); 
    }
 
    DABC.Go4ConditionPainter.prototype.Redraw = function() {
-      this.drawCondition();
+      if (this.aseditor) 
+         $("#" + this.divid).append("<br/>Redraw not implemented");
+      else 
+         this.drawCondition();
    }
 
    
@@ -118,7 +139,10 @@
       
       if (cond.fxHistoName=="") {
          $('#'+divid).append("<br/>Histogram name not specified");
-         return;
+         var painter = new DABC.Go4ConditionPainter(cond, true);
+         painter.SetDivId(divid);
+         painter.drawEditor();
+         return painter;
       }
       
       $('#'+divid).append("<br/>Histogram name is " + cond.fxHistoName);
@@ -151,7 +175,7 @@
 
       $('#'+divid).append("<br/>Loading histogram " + histofullpath);
       
-      var painter = new DABC.Go4ConditionPainter(cond);
+      var painter = new DABC.Go4ConditionPainter(cond, false);
       
       dabc.get(histofullpath, function(item, obj) {
          $('#'+divid).empty();
