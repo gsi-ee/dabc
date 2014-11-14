@@ -134,8 +134,6 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
          std::string name = dabc::format("loc%u", cnt++);
          if (!url.HasOption(name+"d") || !url.HasOption(name+"a")) break;
          AddLocation(url.GetOptionStr(name+"d"), url.GetOptionStr(name+"a"), url.GetOptionStr(name+"n"), url.GetOptionStr(name+"s"));
-
-         // DOUT0("AddLocation %s %s %s %s", url.GetOptionStr(name+"d").c_str(), url.GetOptionStr(name+"a").c_str(), url.GetOptionStr(name+"n").c_str(), url.GetOptionStr(name+"s").c_str());
       }
    }
 

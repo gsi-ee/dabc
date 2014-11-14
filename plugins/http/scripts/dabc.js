@@ -473,8 +473,6 @@
    DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
 
       var val = this.ExtractField("value", "number");
-      console.log("val = " + val);
-      
       var min = this.ExtractField("min", "number");
       var max = this.ExtractField("max", "number");
 
