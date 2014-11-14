@@ -125,7 +125,7 @@ namespace dabc {
          virtual void ObjectCleanup();
 
          /** Directly changes value of the state parameter */
-         void SetState(const std::string& name) { Par(StateParName()).SetValue(name); }
+         void SetAppState(const std::string& name);
 
          /** Set external function, which creates all necessary components of the application */
          void SetInitFunc(ExternalFunction* initfunc);

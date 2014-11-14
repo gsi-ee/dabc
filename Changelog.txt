@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 14.11.2014
 1. When drawing single element, load all additional scripts as specified
+2. Export application state to hierarchy 
 
 
 13.11.2014

@@ -41,13 +41,9 @@ dabc::Application::Application(const char* classname) :
    CreateCmdDef(stcmdDoStop());
    CreateCmdDef(stcmdDoHalt());
 
-   SetState(stHalted());
+   SetAppState(stHalted());
 
    fSelfControl = Cfg("self").AsBool(true);
-
-   // DOUT0("Self control = %s", DBOOL(fSelfControl));
-
-   // if (dabc::mgr()->cfg()->UseControl() > 0) fSelfControl = false;
 
    PublishPars("$CONTEXT$/App");
 }
@@ -79,7 +75,6 @@ int dabc::Application::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(CmdStateTransition::CmdName()))
       return cmd_bool(DoTransition(cmd.GetStr("State")));
-
 
    if (cmd.IsName(stcmdDoConfigure()))
       return cmd_bool(DoTransition(stReady()));
@@ -128,6 +123,17 @@ void dabc::Application::SetInitFunc(ExternalFunction* initfunc)
    fInitFunc = initfunc;
 }
 
+void dabc::Application::SetAppState(const std::string& name)
+{
+   Parameter par = Par(StateParName());
+   par.SetValue(name);
+
+   Hierarchy chld = fWorkerHierarchy.FindChild(StateParName());
+   if (!chld.null()) {
+      par.ScanParamFields(&chld()->Fields());
+      fWorkerHierarchy.MarkChangedItems();
+   }
+}
 
 bool dabc::Application::DoTransition(const std::string& tgtstate)
 {
@@ -140,7 +146,7 @@ bool dabc::Application::DoTransition(const std::string& tgtstate)
    // it is not allowed to change transition state - it is internal
    if (currstate == stTransition()) return false;
 
-   SetState(stTransition());
+   SetAppState(stTransition());
 
    bool res = true;
 
@@ -176,8 +182,8 @@ bool dabc::Application::DoTransition(const std::string& tgtstate)
       res = false;
    }
 
-   if (res) SetState(tgtstate);
-       else SetState(stFailure());
+   if (res) SetAppState(tgtstate);
+       else SetAppState(stFailure());
 
    return res;
 }
