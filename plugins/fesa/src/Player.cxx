@@ -160,8 +160,6 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fSniffer = new MySniffer(h2);
 
    #endif
-
-   PublishPars("FESA/Test");
 }
 
 fesa::Player::~Player()

@@ -384,7 +384,6 @@ namespace dabc {
 
          static bool match_prefix(const std::string& name, const std::string& prefix);
 
-
       public:
 
          RecordFieldsMap();

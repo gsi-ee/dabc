@@ -167,7 +167,7 @@ namespace dabc {
 
          CommandsQueue    fWorkerCommands;             ///< all kinds of commands, processed by the worker
 
-         int              fWorkerCommandsLevel;      /** Number of process commands recursion */
+         int              fWorkerCommandsLevel;        /** Number of process commands recursion */
 
          Hierarchy        fWorkerHierarchy;            ///< place for publishing of worker parameters
 

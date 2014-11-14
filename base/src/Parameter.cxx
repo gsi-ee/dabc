@@ -273,9 +273,8 @@ bool dabc::ParameterContainer::_CalcRate(double& value, std::string& svalue)
    if (fStatistic==kindRate)
       value = fRateValueSum / fRateTimeSum;
    else
-   if ((fStatistic==kindAverage) && (fRateNumSum>0)) {
+   if ((fStatistic==kindAverage) && (fRateNumSum>0))
       value = fRateValueSum / fRateNumSum;
-   }
 
    fRateValueSum = 0.;
    fRateTimeSum = 0.;
@@ -318,9 +317,12 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
 {
    LockGuard lock(ObjectMutex());
 
+   bool force_value_modified = false;
+
    // mark that we are producing rate
    if (fStatistic == ParameterContainer::kindRate) {
       cont->Field(dabc::prop_kind).SetStr("rate");
+      force_value_modified = true;
    } else
    if (fKind == "cmddef") {
       cont->Field(dabc::prop_kind).SetStr("DABC.Command");
@@ -332,6 +334,9 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
 
    // just copy all fields, including value
    cont->CopyFrom(Fields());
+
+   if (force_value_modified && cont->HasField("value"))
+      cont->Field("value").SetModified(true);
 }
 
 // --------------------------------------------------------------------------------

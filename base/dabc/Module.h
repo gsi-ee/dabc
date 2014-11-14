@@ -74,6 +74,7 @@ namespace dabc {
          bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconnected
          dabc::Reference            fDfltPool;      ///< direct reference on memory pool, used when no pool handles are not created
          std::string                fInfoParName;   ///< full name of parameter, used as info
+         std::string                fPublishPars;   ///< path where module pars will be published
 
       private:
 

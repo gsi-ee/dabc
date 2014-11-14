@@ -40,12 +40,14 @@ dabc::Module::Module(const std::string& name, Command cmd) :
    fSysTimerIndex((unsigned)-1),
    fAutoStop(true),
    fDfltPool(),
-   fInfoParName()
+   fInfoParName(),
+   fPublishPars()
 {
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStr();
    int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(0);
    int numout = Cfg(dabc::xmlNumOutputs, cmd).AsInt(0);
    fAutoStop = Cfg("autostop", cmd).AsBool(fAutoStop);
+   fPublishPars = Cfg("publish", cmd).AsStr();
 
    DOUT2("Create module %s with pool:%s numinp:%d numout:%d", GetName(), poolname.c_str(), numinp, numout);
 
@@ -86,6 +88,9 @@ void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::stri
 void dabc::Module::OnThreadAssigned()
 {
    DOUT5("Module %s on thread assigned", GetName());
+
+   if (!fPublishPars.empty())
+      PublishPars(fPublishPars);
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = fItems[n];

@@ -44,6 +44,7 @@
     </Module>
 
     <Module name="fesa" class="fesa::Player">
+       <publish value="FESA/Test"/>
        <Synchron value="false"/>
        <Server value="DummyDevice_DU.linev.asl732"/>
        <Device value="MyDevice"/>
@@ -67,6 +68,7 @@
     </MemoryPool>
     
     <Module name="Multi" class="dabc::MultiplexerModule">
+       <publish value="/MBS/Gener"/>
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
        <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&tmout=100" queue="5" rate="GRate"/>
