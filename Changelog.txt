@@ -5,6 +5,8 @@ about current functionality of the framework.
 17.11.2014
 1. Account histogram statistic under conditions
 2. Fill stat box for different conditions kinds
+3. Detect DABC.source_dir where DABC scripts are located
+4. Load gauge scripts only when required 
 
 
 14.11.2014

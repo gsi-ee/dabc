@@ -15,6 +15,26 @@
    DABC = {};
 
    DABC.version = "2.7.1";
+   
+   DABC.loadGauge = false;
+   
+   DABC.source_dir = function(){
+      var scripts = document.getElementsByTagName('script');
+
+      for (var n in scripts) {
+         if (scripts[n]['type'] != 'text/javascript') continue;
+
+         var src = scripts[n]['src'];
+         if ((src == null) || (src.length == 0)) continue;
+
+         var pos = src.indexOf("dabc.js");
+         if (pos<0) continue;
+         
+         console.log("Set DABC.source_dir to " + src.substr(0, pos));
+         return src.substr(0, pos);
+      }
+      return "";
+   }(); 
 
    // =============================================================================
 
@@ -471,6 +491,17 @@
    }
 
    DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
+      if (DABC.loadGauge) return this.DrawGauge();
+      var element = this;
+      JSROOT.loadScript(DABC.source_dir + 'raphael.2.1.0.min.js;' + 
+                        DABC.source_dir + 'justgage.1.0.1.min.js', function() {
+         DABC.loadGauge = true;
+         element.DrawGauge();
+      });
+   }
+  
+   
+   DABC.GaugeDrawElement.prototype.DrawGauge = function() {
 
       var val = this.ExtractField("value", "number");
       var min = this.ExtractField("min", "number");
