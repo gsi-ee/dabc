@@ -799,8 +799,6 @@
       var title = this.itemname + "\nversion = " + this.version;
       if (this.history) title += ", history = " + this.history.length;
 
-      //console.log("Extract series");
-
       var x = this.ExtractSeries("time", "time");
       var y = this.ExtractSeries("value", "number");
 
@@ -813,6 +811,8 @@
       // here we should create TGraph object
 
       var gr = JSROOT.CreateTGraph();
+      gr['fLineColor'] = 2;
+      gr['fLineWidth'] = 2;
 
       gr['fX'] = x;
       gr['fY'] = y;
