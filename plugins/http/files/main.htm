@@ -106,17 +106,10 @@
             JSROOT.RegisterForResize(h);
        }
 
-       function loadDABC() {
-          JSROOT.loadScript("/httpsys/scripts/raphael.2.1.0.min.js;"+
-                            "/httpsys/scripts/justgage.1.0.1.min.js;"+
-                            "/httpsys/files/dabc.css;"+ 
-                            "/httpsys/scripts/dabc.js", 
-                             createGUI, 'mainGUI');
-       }     
    </script>
 </head>
 
-<body onload="JSROOT.AssertPrerequisites('2d', loadDABC, 'mainGUI')">
+<body onload="JSROOT.AssertPrerequisites('2d;user:/httpsys/scripts/raphael.2.1.0.min.js;/httpsys/scripts/justgage.1.0.1.min.js;/httpsys/files/dabc.css;/httpsys/scripts/dabc.js;', createGUI, 'mainGUI')">
    <div id="mainGUI">
       loading scripts ...
    </div>

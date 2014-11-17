@@ -994,9 +994,9 @@
    }
    
    
-   DABC.HierarchyPainter.prototype.display = function(itemname, options, node)
+   DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
    {
-      if (!node) node = this.Find(itemname);
+      var node = this.Find(itemname);
 
       if ((node==null) || !this.CreateDisplay()) return;
 
@@ -1015,20 +1015,22 @@
       }
       
       if ((kind.indexOf("ROOT.") == 0) && (view != "png"))
-         return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options);
+         return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
 
       var elem = DABC.CreateDrawElement(node, this.HistoryDepth());
 
-      if (elem) {
-         elem.itemname = itemname;
+      if (elem==null) return;
+         
+      elem.itemname = itemname;
+ 
+      var frame = mdi.CreateFrame(itemname);
+      elem.CreateFrames(frame);
 
-         var frame = mdi.CreateFrame(itemname);
-         elem.CreateFrames(frame);
+      mdi.SetPainterForFrame(frame, elem);
 
-         mdi.SetPainterForFrame(frame, elem);
-
-         elem.RegularCheck();
-      }
+      elem.RegularCheck();
+      
+      if (typeof call_back == 'function') call_back(elem);
    }
    
    DABC.HierarchyPainter.prototype.MonitoringInterval = function(onlyurl) {

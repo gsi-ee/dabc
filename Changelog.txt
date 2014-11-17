@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+17.11.2014
+1. Account histogram statistic under conditions
+2. Fill stat box for different conditions kinds
+
+
 14.11.2014
 1. When drawing single element, load all additional scripts as specified
 2. Export application state to hierarchy 
