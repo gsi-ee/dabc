@@ -69,14 +69,17 @@
       return chkbox ? chkbox.checked : false;
    } 
 
-   DABC.DrawElement.prototype.CreateFrames = function(topid) {
-      this.frameid = $(topid).attr("id") + "_dummy";
+   DABC.DrawElement.prototype.CreateFrames = function(frame) {
+      this.frameid = $(frame).attr('id') + "_dummy";
 
       var entryInfo = 
          "<div id='" +this.frameid + "'>" + 
          "<h2> CreateFrames for item " + this.itemname + " not implemented </h2>"+
-         "</div>"; 
-      $(topid).append(entryInfo);
+         "</div>";
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.DrawElement.prototype.IsDrawn = function() {
@@ -123,13 +126,15 @@
 
    DABC.CommandDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-   DABC.CommandDrawElement.prototype.CreateFrames = function(topid) {
-      this.frameid = $(topid).attr("id") + "_command";
+   DABC.CommandDrawElement.prototype.CreateFrames = function(frame) {
+      this.frameid = $(frame).attr('id') + "_command";
 
       var entryInfo = "<div id='" + this.frameid + "'/>";
 
-      $(topid).empty();
-      $(topid).append(entryInfo);
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      
+      this.SetDivId($(frame).attr('id'));
 
       this.ShowCommand();
       this.RequestCommand();
@@ -478,16 +483,19 @@
 
    DABC.GaugeDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-   DABC.GaugeDrawElement.prototype.CreateFrames = function(topid) {
+   DABC.GaugeDrawElement.prototype.CreateFrames = function(frame) {
 
-      this.frameid = $(topid).attr('id') + "_gauge";
+      this.frameid = $(frame).attr('id') + "_gauge";
       this.min = 0;
       this.max = 10;
       this.gauge = null;
 
 //    var entryInfo = "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
       var entryInfo = "<div id='"+this.frameid+ "'/>";
-      $(topid).append(entryInfo);
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.GaugeDrawElement.prototype.DrawHistoryElement = function() {
@@ -545,9 +553,9 @@
 
    DABC.ImageDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
-   DABC.ImageDrawElement.prototype.CreateFrames = function(topid) {
+   DABC.ImageDrawElement.prototype.CreateFrames = function(frame) {
 
-      this.topid = $(topid).attr("id");
+      this.topid = $(frame).attr('id');
       this.frameid = this.topid + "_image";
       
       this.DrawImage();
@@ -571,6 +579,8 @@
          "<img src='" + url + "' alt='some text' width='" + width + "'>" + 
          "</div>";
       $("#"+this.topid).append(entryInfo);
+      
+      this.SetDivId(this.topid);
    }
 
 // ======== end of ImageDrawElement ======================
@@ -584,19 +594,21 @@
 
    DABC.LogDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-   DABC.LogDrawElement.prototype.CreateFrames = function(topid) {
-      this.frameid = $(topid).attr("id") + "_log";
+   DABC.LogDrawElement.prototype.CreateFrames = function(frame) {
+      this.frameid = $(frame).attr('id') + "_log";
       var entryInfo;
       if (this.isHistory()) {
          // var w = $(topid).width();
-         var h = $(topid).height();
+         var h = $(frame).height();
          var maxhstyle = "";
          if (h>10) maxhstyle = "; max-height:" + h + "px"; 
          entryInfo = "<div id='" + this.frameid + "' style='overflow:auto; font-family:monospace" + maxhstyle + "'/>";
       } else {
          entryInfo = "<div id='"+this.frameid+ "'/>";
       }
-      $(topid).append(entryInfo);
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.LogDrawElement.prototype.DrawHistoryElement = function() {
@@ -624,10 +636,11 @@
 
    DABC.GenericDrawElement.prototype = Object.create( DABC.HistoryDrawElement.prototype );
 
-   DABC.GenericDrawElement.prototype.CreateFrames = function(topid) {
-      this.frameid = $(topid).attr("id") + "_generic";
+   DABC.GenericDrawElement.prototype.CreateFrames = function(frame) {
+      this.frameid = $(frame).attr('id') + "_generic";
       var entryInfo = "<div id='"+this.frameid+ "'/>";
-      $(topid).append(entryInfo);
+      $(frame).append(entryInfo);
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.GenericDrawElement.prototype.DrawHistoryElement = function() {
@@ -682,11 +695,13 @@
       this.force = true;
    }
 
-   DABC.FesaDrawElement.prototype.CreateFrames = function(topid) {
-      this.frameid = $(topid).attr("id") + "_fesa";
+   DABC.FesaDrawElement.prototype.CreateFrames = function(frame) {
+      this.frameid = $(frame).attr("id") + "_fesa";
 
       var entryInfo = "<div id='" + this.frameid + "'/>";
-      $(topid).append(entryInfo);
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.FesaDrawElement.prototype.ClickItem = function() {
@@ -757,11 +772,10 @@
 
       if (this.root_painter != null) {
          this.root_painter.RedrawPad();
-         this.root_painter.vis.select("title").text(title);
       } else {
          this.root_painter = JSROOT.draw(this.frameid, this.root_obj);
-         this.root_painter.vis.append("svg:title").text(this.FullItemName());
       }
+      $("#" + this.frameid).prop("title", title);
    }
 
    DABC.FesaDrawElement.prototype.ntou4 = function(b, o) {
@@ -818,12 +832,14 @@
       this.root_painter = null;  // root painter, required for draw
    }
 
-   DABC.RateHistoryDrawElement.prototype.CreateFrames = function(topid) {
+   DABC.RateHistoryDrawElement.prototype.CreateFrames = function(frame) {
 
-      this.frameid = $(topid).attr("id") + "_rate_history";
+      this.frameid = $(frame).attr('id') + "_rate_history";
 
       var entryInfo = "<div id='" + this.frameid + "' style='width:100%; height: 100%'/>";
-      $(topid).append(entryInfo);
+      $(frame).empty();
+      $(frame).append(entryInfo);
+      this.SetDivId($(frame).attr('id'));
    }
 
    DABC.RateHistoryDrawElement.prototype.DrawHistoryElement = function() {
@@ -864,11 +880,11 @@
 
       if (this.root_painter && this.root_painter.UpdateObject(gr)) {
          this.root_painter.RedrawPad();
-         this.root_painter.vis.select("title").text(title);
       } else {
          this.root_painter = JSROOT.draw(this.frameid, gr, "L");
-         this.root_painter.vis.append("svg:title").text(title);
       }
+      
+      $("#" + this.frameid).prop("title", title);
    }
    
    DABC.RateHistoryDrawElement.prototype.CheckResize = function(force) {
@@ -1057,8 +1073,6 @@
       var frame = mdi.CreateFrame(itemname);
       elem.CreateFrames(frame);
 
-      mdi.SetPainterForFrame(frame, elem);
-
       elem.RegularCheck();
       
       if (typeof call_back == 'function') call_back(elem);
@@ -1103,24 +1117,13 @@
       var monitoring = this.MonitoringInterval() > 0;
 
       var h = this;
-
-      mdi.ForEach(function(panel, itemname, painter) {
-         if (!painter) return;
-         if (painter['is_dabc']) {
-            painter.RegularCheck();
-            return;
-         } 
-         if (!monitoring) return;
-         //console.log("Try to update " + itemname);
-
-         h.get(itemname, function(item, obj) {
-            if (painter.UpdateObject(obj)) {
-               document.body.style.cursor = 'wait';
-               painter.RedrawPad();
-               document.body.style.cursor = 'auto';
-            }
-         });
+      
+      mdi.ForEachPainter(function(painter) {
+         if (painter['is_dabc']) painter.RegularCheck();
       });
+      
+      if (monitoring)
+         this.updateAll();
    }
 
    DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname)

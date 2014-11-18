@@ -19,7 +19,7 @@
                  '  <div id="fast_buttons"></div><br/>'+        
                  '  <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring'+        
                  '  <input type="checkbox" name="show_history" id="show_history"/> History'+
-                 '  <input id="grid_spinner" style="width:60px" value="3"/>' +    
+                 '  <input id="grid_spinner" style="width:60px" value="2"/>' +    
                  '  <div id="dabc_tree_holder"> </div>' +
                  '</div>'+
                  '<div id="separator-div" class="column"></div>' +
@@ -65,7 +65,7 @@
                for (var i in opts) optionsarr.push(opts[i]);
             }
             
-            h.SetDisplay('grid 3x3', 'right-div');
+            h.SetDisplay('grid2x2', 'right-div');
             
             h.OpenOnline("", function() {
                h.displayAll(itemsarr, optionsarr);

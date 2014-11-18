@@ -2,6 +2,15 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+18.11.2014
+1. Keep tracking which elements where drawn, provide possibility
+   to iterate over all painters in all frames
+2. Use TBasePainter for editors like param and cond editors, 
+   painter pointer is assigned to first child element in the frame
+3. Allow to draw several items in the same frame, keep possibility to 
+   update all of them independently.    
+   
+
 17.11.2014
 1. Account histogram statistic under conditions
 2. Fill stat box for different conditions kinds
