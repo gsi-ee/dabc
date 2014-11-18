@@ -1121,7 +1121,7 @@
       mdi.ForEachPainter(function(painter) {
          if (painter['is_dabc']) painter.RegularCheck();
       });
-      
+
       if (monitoring)
          this.updateAll();
    }

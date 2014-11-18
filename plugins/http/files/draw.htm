@@ -9,82 +9,14 @@
    
    <script type='text/javascript'>
    
-      function CreateRootGui() {
-         // analyze URL options
-         var drawopt = JSROOT.GetUrlOption("opt");
-         
-         var monitor = JSROOT.GetUrlOption("monitoring");
-         if (monitor == "") monitor = 3000; else
-         if (monitor != null) monitor = parseInt(monitor);  
-         
-         var objpainter = null;
-   
-         function drawfunction() {
-           
-            var req = JSROOT.NewHttpRequest("root.json.gz?compact=3", 'text', function(result) {
-                var obj = JSROOT.parse(result);
-                if (!obj) {
-                   if (!objpainter) $('#drawing').append("<h3>Can not get object from the server</h3>"); 
-                   return;
-                }
-                
-                document.body.style.cursor = 'wait';
-                objpainter = JSROOT.redraw('drawing', obj, drawopt); 
-                document.body.style.cursor = 'auto';
-                
-            });
-           
-            // submit request 
-            req.send(null);
-         }
-   
-         drawfunction();
-   
-         if (monitor!=null)
-            setInterval(drawfunction, monitor);
-   
-         JSROOT.RegisterForResize(function() { if (objpainter) objpainter.CheckResize(); });
-      }
-      
-      var dabc_elem = null;
-      
-      function buildGUI(node) {
-         $('#drawing').append("<br/>Get kind " + node._kind);   
-         
-         if (('_kind' in node) && (node._kind.indexOf("ROOT.")==0)) return CreateRootGui();
-         
-         var monitor = JSROOT.GetUrlOption("monitoring");
-         if (monitor == "") monitor = 3000; else
-         if (monitor != null) monitor = parseInt(monitor);
-         
-         var history = JSROOT.GetUrlOption("history");
-         if (history == null) history = -1; else
-         if (history == "") history = 0; else history = parseInt(history);
-         
-         dabc_elem = DABC.CreateDrawElement(node, history);
-         
-         if (dabc_elem==null) {
-            $('#drawing').append("<br/>Cannot draw element");
-            return;
-         }
-         
-         if (monitor!=null) dabc_elem.monitoring = true; 
-          
-         $('#drawing').empty();
-         dabc_elem.itemname = "";
-
-         dabc_elem.CreateFrames($('#drawing'));
-         
-         dabc_elem.RegularCheck();
-         
-         setInterval(function() { if (dabc_elem) dabc_elem.RegularCheck(); }, (monitor==null) ? 3000 : monitor);
-         
-         JSROOT.RegisterForResize(dabc_elem);
-      }
-   
-      function loadElementDescription() {
+      function buildGUI() {
          var dabc = new DABC.HierarchyPainter('dabc');
-         dabc.OpenOnline("", function() { buildGUI(dabc.h) });
+         var interval = dabc.MonitoringInterval(true);
+         dabc.SetDisplay('grid 1x1',"drawing");
+         var drawopt = JSROOT.GetUrlOption("opt");
+         dabc.OpenOnline("", function() { dabc.display("", drawopt); });
+         setInterval(function() { dabc.UpdateDabcElements(); }, interval > 0 ? interval : 3000);
+         JSROOT.RegisterForResize(dabc);
       }
    
    </script>
@@ -92,7 +24,7 @@
    
 </head>
 
-<body onload="JSROOT.AssertPrerequisites('2d;user:/httpsys/scripts/dabc.js;', loadElementDescription, 'drawing')">
+<body onload="JSROOT.AssertPrerequisites('2d;user:/httpsys/scripts/dabc.js;', buildGUI, 'drawing')">
 
    <div id="drawing" style="position:absolute; left:1px; top:1px; bottom:1px; right:1px">
       loading scripts...

@@ -9,6 +9,7 @@ about current functionality of the framework.
    painter pointer is assigned to first child element in the frame
 3. Allow to draw several items in the same frame, keep possibility to 
    update all of them independently.    
+4. Use DABC.HierarchyPainter when drawing single element with draw.htm
    
 
 17.11.2014
