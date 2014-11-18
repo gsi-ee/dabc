@@ -11,11 +11,11 @@
    
       function buildGUI() {
          var dabc = new DABC.HierarchyPainter('dabc');
-         var interval = dabc.MonitoringInterval(true);
          dabc.SetDisplay('grid 1x1',"drawing");
          var drawopt = JSROOT.GetUrlOption("opt");
          dabc.OpenOnline("", function() { dabc.display("", drawopt); });
-         setInterval(function() { dabc.UpdateDabcElements(); }, interval > 0 ? interval : 3000);
+         dabc.EnableMonitoring(JSROOT.GetUrlOption("monitoring")!=null);
+         setInterval(function() { dabc.UpdateDabcElements(); }, dabc.MonitoringInterval());
          JSROOT.RegisterForResize(dabc);
       }
    

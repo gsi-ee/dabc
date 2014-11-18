@@ -11,6 +11,7 @@ about current functionality of the framework.
    update all of them independently.    
 4. Use DABC.HierarchyPainter when drawing single element with draw.htm
 5. Implement fancy workaround in condition painter to guess full histogram name
+6. Clear interface for monitoring parameters in both JSROOT and DABC painter 
     
 
 17.11.2014

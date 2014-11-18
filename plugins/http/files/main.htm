@@ -36,9 +36,9 @@
          
             var h = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
             
-            var interval = h.MonitoringInterval(true); 
+            var monitor = JSROOT.GetUrlOption("monitoring");
             
-            if (interval > 0) {
+            if (monitor) {
                document.getElementById("monitoring").checked = true;
                document.getElementById("monitoring").disabled = "disabled";
             } 
@@ -70,8 +70,16 @@
             h.OpenOnline("", function() {
                h.displayAll(itemsarr, optionsarr);
             });
+            
+            h.EnableMonitoring(monitor!=null);
+            $("#monitoring")
+               .prop('checked', monitor!=null)
+               .click(function() {
+                  h.EnableMonitoring(this.checked);
+                  if (this.checked) h.UpdateDabcElements();
+               });
          
-            setInterval(function() { h.UpdateDabcElements(); }, interval > 0 ? interval : 3000);
+            setInterval(function() { h.UpdateDabcElements(); }, h.MonitoringInterval());
             
             var drag_sum = 0;
    

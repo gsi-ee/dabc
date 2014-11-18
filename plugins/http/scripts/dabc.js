@@ -1078,21 +1078,6 @@
       if (typeof call_back == 'function') call_back(elem);
    }
    
-   DABC.HierarchyPainter.prototype.MonitoringInterval = function(onlyurl) {
-      var monitor = JSROOT.GetUrlOption("monitoring");
-      if (monitor == "") return 3000;
-      if (monitor != null) {
-         monitor = parseInt(monitor);
-         return ((monitor == NaN) || (monitor<=0)) ? 3000 : monitor;
-      }
-      
-      if (!onlyurl) {
-         var chkbox = document.getElementById("monitoring");
-         if (chkbox && chkbox.checked) return 3000;
-      }
-      return 0;
-   }
-   
    DABC.HierarchyPainter.prototype.HistoryDepth = function(onlyurl) {
       var history = JSROOT.GetUrlOption("history");
       if (history == "") return 0; // 0 is default value means maximum history
@@ -1114,15 +1099,11 @@
       var mdi = this['disp'];
       if (mdi==null) return;
 
-      var monitoring = this.MonitoringInterval() > 0;
-
-      var h = this;
-      
       mdi.ForEachPainter(function(painter) {
          if (painter['is_dabc']) painter.RegularCheck();
       });
 
-      if (monitoring)
+      if (this.IsMonitoring())
          this.updateAll();
    }
 
@@ -1142,9 +1123,8 @@
       
       var drawurl = baseurl + "draw.htm", editorurl = baseurl + "draw.htm?opt=editor";
       
-      var mon = this.MonitoringInterval();
       var separ = "?";
-      if (mon>0) { drawurl += separ + "monitoring=" + mon; separ = "&"; }
+      if (this.IsMonitoring()) { drawurl += separ + "monitoring=" + this.MonitoringInterval(); separ = "&"; }
       var hist = this.HistoryDepth();
       if (hist==0) { drawurl += separ + "history"; } else
       if (hist>0) { drawurl += separ + "history=" + hist; }    
