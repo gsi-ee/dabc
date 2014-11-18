@@ -10,7 +10,8 @@ about current functionality of the framework.
 3. Allow to draw several items in the same frame, keep possibility to 
    update all of them independently.    
 4. Use DABC.HierarchyPainter when drawing single element with draw.htm
-   
+5. Implement fancy workaround in condition painter to guess full histogram name
+    
 
 17.11.2014
 1. Account histogram statistic under conditions
