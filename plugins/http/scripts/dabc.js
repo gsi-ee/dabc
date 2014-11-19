@@ -1032,7 +1032,7 @@
          $("#fast_buttons").append(html);
          $("#dabc_fastbtn_"+cnt)
                .text("")
-               .append('<img height="16" src="' + h['_fastcmd'] + '" width="16" />')
+               .append('<img height="16" src="' + h['_fastcmd'] + '" width="16"/>')
                .button()
                .click(function() { painter.ExecuteCommand(fullname); });
       });

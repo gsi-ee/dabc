@@ -4,6 +4,9 @@ about current functionality of the framework.
 
 19.11.2014
 1. Correctly locate $ROOTSYS/etc/http directory
+2. First step in using jQuery in hierarchy browser, some functions not yet working.
+   One could exclude multiple global ids in html, all differences between
+   items now handled in click processing. No need for global JSROOT.H('root') element.   
 
 
 18.11.2014
