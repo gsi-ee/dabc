@@ -11,6 +11,7 @@ about current functionality of the framework.
 4. Minimize html code, generated for dtree - overall reduce by about 40%.
    For a moment significant amount of code is used by url to different small images. 
    Should be optimized as well.    
+5. Replace major dtree icons with class definitions, further 10% reduction of html size 
 
 
 18.11.2014
