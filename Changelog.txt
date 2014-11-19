@@ -12,6 +12,7 @@ about current functionality of the framework.
    For a moment significant amount of code is used by url to different small images. 
    Should be optimized as well.    
 5. Replace major dtree icons with class definitions, further 10% reduction of html size 
+6. Remove all images from root/dabc, integrate in future all images in css files.
 
 
 18.11.2014

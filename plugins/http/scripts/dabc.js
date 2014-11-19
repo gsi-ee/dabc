@@ -960,14 +960,14 @@
       var view = node["_view"];
       if (!kind) kind = "";
 
-      if (view == "png") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; } else
+      if (view == "png") { cando.img1 = 'img_dabicon'; cando.display = true; } else
       if (kind == "rate") { cando.display = true; } else
       if (kind == "log") { cando.display = true; } else
       if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
       if (kind == "DABC.HTML") { cando.img1 = "img_globe"; cando.open = true; } else
-      if (kind == "DABC.Application") cando.img1 = 'httpsys/img/dabcicon.png'; else
-      if (kind == "DABC.Command") { cando.img1 = 'httpsys/img/dabcicon.png'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'go4sys/icons/go4logo2_small.png';
+      if (kind == "DABC.Application") cando.img1 = 'img_dabicon'; else
+      if (kind == "DABC.Command") { cando.img1 = 'img_dabicon'; cando.display = true; cando.scan = false; } else
+      if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon';
       
       if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
       
