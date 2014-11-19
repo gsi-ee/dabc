@@ -7,7 +7,10 @@ about current functionality of the framework.
 2. First step in using jQuery in hierarchy browser, some functions not yet working.
    One could exclude multiple global ids in html, all differences between
    items now handled in click processing. No need for global JSROOT.H('root') element.   
-3. Trigger buttons and context menu in dtree also with jquery  
+3. Trigger buttons and context menu in dtree also with jQuery
+4. Minimize html code, generated for dtree - overall reduce by about 40%.
+   For a moment significant amount of code is used by url to different small images. 
+   Should be optimized as well.    
 
 
 18.11.2014
