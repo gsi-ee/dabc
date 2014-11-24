@@ -5,6 +5,8 @@ about current functionality of the framework.
 24.11.2014
 1. Use <div> instead of <img> for building hierarchy. Solve problem with Chromium which
    always draws boundary around img without src. 
+2. For logarithmic scales try to find optimal minimum to represent histograms like in ROOT
+3. Interpret logx/logy options when drawing histogram 
 
 
 19.11.2014
