@@ -964,7 +964,7 @@
       if (kind == "rate") { cando.display = true; } else
       if (kind == "log") { cando.display = true; } else
       if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
-      if (kind == "DABC.HTML") { cando.img1 = "img_globe"; cando.open = true; } else
+      if (kind == "DABC.HTML") { cando.img1 = "img_globe"; cando.html = this.itemFullName(node); cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'img_dabicon'; else
       if (kind == "DABC.Command") { cando.img1 = 'img_dabicon'; cando.display = true; cando.scan = false; } else
       if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon';
