@@ -7,6 +7,7 @@ about current functionality of the framework.
    always draws boundary around img without src. 
 2. For logarithmic scales try to find optimal minimum to represent histograms like in ROOT
 3. Interpret logx/logy options when drawing histogram 
+4. Introduce plus_minus class to handle clicks on plus/minus sign correctly.
 
 
 19.11.2014
