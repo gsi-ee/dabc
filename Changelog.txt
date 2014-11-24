@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+24.11.2014
+1. Use <div> instead of <img> for building hierarchy. Solve problem with Chromium which
+   always draws boundary around img without src. 
+
+
 19.11.2014
 1. Correctly locate $ROOTSYS/etc/http directory
 2. First step in using jQuery in hierarchy browser, some functions not yet working.
@@ -12,7 +17,7 @@ about current functionality of the framework.
    For a moment significant amount of code is used by url to different small images. 
    Should be optimized as well.    
 5. Replace major dtree icons with class definitions, further 10% reduction of html size 
-6. Remove all images from root/dabc, integrate in future all images in css files.
+6. Remove all images from root/dabc, integrate in future all small icons in css files.
 
 
 18.11.2014
