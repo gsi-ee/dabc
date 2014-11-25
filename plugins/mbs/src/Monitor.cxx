@@ -203,6 +203,16 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       cmddef.AddArg("cmd", "string", true, "show rate");
    }
 
+
+   dabc::Hierarchy ui = fHierarchy.CreateHChild("ControlGUI");
+   ui.SetField(dabc::prop_kind, "DABC.HTML");
+   ui.SetField("_UserFilePath", "${DABCSYS}/plugins/mbs/htm/");
+   ui.SetField("_UserFileMain", "main.htm");
+
+   CreateTimer("update", 5., false);
+
+
+
    CreateTimer("MbsUpdate", fPeriod, false);
 
    fCounter = 0;

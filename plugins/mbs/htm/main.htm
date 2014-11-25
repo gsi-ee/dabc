@@ -1,0 +1,392 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge;text/html">
+	<title>MBS web GUI</title>
+	<link rel="icon" type="image/png" href="img/dllicon.png">
+		<script src="/jsrootsys/scripts/JSRootCore.js" type="text/javascript"></script>
+
+
+<style type="text/css">
+
+
+#mbs_container {
+	outline: outset medium;
+	position: fixed;
+	top: 2px;
+	min-height: 70px;
+	left: 2px;
+	width: 34.5%;
+	text-align: center;
+	overflow: hidden;
+	outline-style: groove;
+}
+
+/* #daq_container { */
+/* 	outline: outset medium; */
+/* 	position: fixed; */
+/* 	top: 2px; */
+/* 	min-height: 70px; */
+/* 	left: 20.5%; */
+/* 	width: 14%; */
+/* 	text-align: center; */
+/* 	overflow: hidden; */
+/* 	outline-style: groove; */
+/* } */
+
+#daq_log {
+	outline: outset medium;
+	position: fixed;
+	top: 79px;
+	height: 200px;
+	left: 2px;
+	width: 34.5%;
+	text-align: left;
+	overflow-y: auto;
+	outline-style: groove;
+}
+
+#gosip_container {
+	outline: outset medium;
+	position: fixed;
+	top: 280px;
+	min-height: 70px;
+	left: 2px;
+	width: 34.5%;
+	overflow: hidden;
+	text-align: center;
+	outline-style: groove;
+}
+
+#gosip_log {
+	outline: outset medium;
+	position: fixed;
+	top: 356px;
+	bottom: 2.7em;
+	left: 2px;
+	width: 34.5%;
+	text-align: left;
+	overflow-y: auto;
+	outline-style: groove;
+}
+
+#file_container {
+	outline: outset medium;
+	position: fixed;
+	top: 2px;
+	min-height: 70px;
+	left: 35%;
+	width: 35%;
+	text-align: center;
+	overflow: hidden;
+	outline-style: groove;
+}
+
+#file_log {
+	outline: outset medium;
+	position: fixed;
+	top: 79px;
+	bottom: 2.7em;
+	left: 35%;
+	width: 35%;
+	text-align: left;
+	overflow-y: auto;
+	outline-style: groove;
+}
+
+#monitoring_container {
+	outline: outset medium;
+	position: fixed;
+	top: 2px;
+	min-height: 70px;
+	left: 70.5%;
+	right: 2px;
+	overflow: hidden;
+	text-align: center;
+	outline-style: groove;
+}
+
+#ratemode_container {
+	outline: outset medium;
+	position: fixed;
+	top: 79px;
+	min-height: 70px;
+	left: 70.5%;
+	right: 2px;
+	overflow: hidden;
+	text-align: center;
+	outline-style: groove;
+}
+
+#rate_container {
+	outline: outset medium;
+	position: fixed;
+	top: 155px;
+	bottom: 2.7em;
+	left: 70.5%;
+	right: 2px;
+	text-align: center;
+	overflow-y: auto;
+	outline-style: groove;
+}
+
+#status_container {
+	outline: outset medium;
+	position: fixed;
+	bottom: 2px;
+	height: 1 em;
+	left: 2px;
+	right: 2px;
+	text-align: left;
+	outline-style: groove;
+}
+
+.styleGreen {
+	background-color: #00FF00;
+}
+
+.styleRed {
+	background-color: #FF0000;
+}
+
+.styleYellow {
+	background-color: #FFFF00;
+}
+
+.styleBlue {
+	background-color: #0000FF;
+}
+
+.MyButtonStyle {
+ 	transform: scale(1.5, 1.5); 
+}
+
+.MySpinnerStyle {
+	width: 50px;
+}
+
+
+</style>
+
+
+		<script type='text/javascript'>
+ function loadDABC() {
+          JSROOT.loadScript("/httpsys/scripts/raphael.2.1.0.min.js;"+
+                            "/httpsys/scripts/justgage.1.0.1.min.js;"+
+                            "/httpsys/files/dabc.css;"+ 
+                            "/httpsys/scripts/dabc.js;" + "mbs.js;" + "mbs.css;" );
+       }     
+   </script>
+</head>
+
+
+<body onload="JSROOT.AssertPrerequisites('2d',loadDABC, '')">
+
+
+
+	<div id="status_container">
+		<h3 id="status_message" title="Last Status">Status message</h3>
+
+	</div>
+
+
+<!-- 	<div id="dabc_container"> -->
+<!-- 		<table style="width: 100%; height: 50%"> -->
+<!-- 			<caption> -->
+<!-- 				<h3>DABC</h3> -->
+<!-- 			</caption> -->
+<!-- 			<tbody> -->
+<!-- 				<tr> -->
+<!-- 					<td style="height: 30px"> -->
+<!-- 						<button id="buttonConfigureDabc" -->
+<!-- 							title="Reconfigure DABC application">Configure Dabc</button> -->
+<!-- 					</td> -->
+<!-- 					<td style="height: 30px"> -->
+<!-- 						<button id="buttonStartDabc" title="Re-Start DABC application">Start -->
+<!-- 							Dabc</button> -->
+<!-- 					</td> -->
+<!-- 					<td style="height: 30px"> -->
+<!-- 						<button id="buttonStopDabc" title="Stop DABC application">Stop -->
+<!-- 							Dabc</button> -->
+<!-- 					</td> -->
+<!-- 					<td style="height: 30px"> -->
+<!-- 						<button id="buttonHaltDabc" title="Shutdown DABC application">Halt -->
+<!-- 							Dabc</button> -->
+<!-- 					</td> -->
+
+<!-- 				</tr> -->
+<!-- 			</tbody> -->
+<!-- 		</table> -->
+<!-- 	</div> -->
+
+
+
+	<div id="mbs_container">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>MBS</h3>
+			</caption>
+			<tbody>
+				<tr>
+					<td style="height: 30px">
+						<button id="buttonStartAcquisition"
+							title="Start Acquisition via soft trigger 14">Start
+							acquisition</button>
+					</td>
+					<td style="height: 30px">
+						<button id="buttonStopAcquisition"
+							title="Stop  Acquisition via soft trigger 15">Stop
+							acquisition</button>
+					</td>
+					<td style="height: 30px">
+						<button id="buttonInitAcquisition"
+							title="Re-Initialize  Acquisition">Init acquisition</button>
+					</td>
+					<td>
+					<form id="mbscmd_form" accept-charset="utf-8">
+					<label for="commandMBS" title="Input mbs command">
+							mbs> </label><input id="commandMBS" type="text" value="-">
+						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
+					</form>
+					</td>
+					
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div id="daq_log">
+		<td>
+			<div id="DeviceInfo"></div>
+		</td>
+	</div>
+
+
+	<div id="gosip_container" class="styleBlue">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>GOSIP</h3>
+			</caption>
+			<tbody>
+				<tr>
+
+					<td style="height: 30px">
+					<form id="gosipcmd_form" accept-charset="utf-8">
+					<label for="commandGosip" title="Input gosipcmd parameter">
+							gosipcmd </label><input id="commandGosip" type="text" value="-">
+						<button id="buttonExecuteGosip" title="Execute gosip command" type="submit">Execute</button>
+					</form>
+					</td>
+					<td style="height: 30px">
+						<button id="buttonClearGosipLog" title="Clear gosip logwindow">User
+							GUI</button>
+					</td>
+					<td style="height: 30px">
+						<button id="buttonUserGUI" title="Start Frontend GUI">User
+							GUI</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div id="gosip_log">
+		<td>
+			<div id="GosipLog"></div>
+		</td>
+	</div>
+
+
+	<div id="file_container">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>Data taking</h3>
+			</caption>
+			<tbody>
+				<tr>						
+					<td style="height: 30px">
+					<form id="lmd_file_form" accept-charset="utf-8">
+<!-- 					<input id="buttonStartFile" -->
+<!-- 						type="checkbox"><label for="buttonStartFile" -->
+<!-- 							style="height: 2em" title="Open lmd file for writing"> -->
+<!-- 								Start File?</label></td> -->
+						<button id="buttonStartFile" type="submit">Submit...</button>
+								
+					<input id="Filename" type="text" value="test.lmd"><label
+							for="Filename" title="Output file name (*.lmd)"> Filename</label>
+
+					<input id="Filesize" type="text" value="1000"
+						class="MySpinnerStyle"><label for="Filesize"
+							title="Maximum file size (will open next file after reaching this size)">
+								Max size</label>
+					</form>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div id="file_log">
+		<td>
+			<div id="ReadoutInfo"></div>
+		</td>
+	</div>
+
+
+
+	<div id="rate_container">
+		<div id="EvRateDisplay" title="Eventrate (Ev/s)"></div>
+		<div id="DatRateDisplay" title="Data Rate (MB/s)"></div>
+	</div>
+
+
+	<div id="ratemode_container" class="styleYellow">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>Rates display</h3>
+			</caption>
+			<tbody>
+				<tr>
+					<td><input id="Trending" type="checkbox"><label
+						for="Trending" style="height: 30px" title="Show Rates as trending">
+							Trending?</label></td>
+
+					<td><input id="Trendlength" type="text" value="100"
+						class="MySpinnerStyle"><label for="Trendlength"
+							title="Specify length of trending history"> Trending
+								history</label></td>
+
+				</tr>
+				<tbody>
+		</table>
+	</div>
+
+
+	<div id="monitoring_container">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>Display refresh</h3>
+			</caption>
+			<tbody>
+				<tr>
+					<td style="height: 30px">
+						<button id="buttonRefresh" title="Refresh view from server">Refresh
+							View</button>
+					</td>
+					<td><input id="Monitoring" type="checkbox"><label
+							for="Monitoring" style="height: 30px"
+							title="Activate frequent refresh"> Monitoring</label></td>
+
+					<td><input id="Refreshtime" type="number" value="1"
+						class="MySpinnerStyle"><label for="Refreshtime"
+							title="Specify update interval"> Refresh Interval [s]</label></td>
+				</tr>
+				<tbody>
+		</table>
+	</div>
+
+
+
+</body>

@@ -1,0 +1,108 @@
+
+/* Override / redefine here some of the jquery ui icons */
+
+
+.ui-button .ui-icon.ui-icon-poland {
+    background-image: url("img/PolandLogo.png");
+    background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-poland {
+    background-image: url("img/PolandLogo.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+
+/* .ui-button .ui-icon.ui-icon-mystop { */
+/*     background-image: url("img/Stop.png"); */
+/*     background-position: 0 0;   */
+/*     background-size: contain; */
+/* } */
+
+/* .ui-button.ui-state-hover .ui-icon.ui-icon-mystop { */
+/*     background-image: url("img/start.png"); */
+/*   	background-position: 0 0;   */
+/*     background-size: contain; */
+/* } */
+
+/* We just change the hovering view of standard icons by our widgets: */
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-stop {
+    background-image: url("img/Stop.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-play {
+    background-image: url("img/start.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-refresh {
+    background-image: url("img/refresh.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-disk {
+    background-image: url("img/filesave.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-image {
+    background-image: url("img/tgraph.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-wrench {
+    background-image: url("img/control.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-gear {
+    background-image: url("img/dllicon.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-trash {
+    background-image: url("img/clear.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-closethick {
+    background-image: url("img/close16.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-cancel {
+    background-image: url("img/shutanal.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-power {
+    background-image: url("img/launchanal.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-circle-arrow-n {
+    background-image: url("img/Speed.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+
+
+
+

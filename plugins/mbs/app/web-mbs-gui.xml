@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="web-mbs">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcGosip.so"/>
+    </Run>
+    
+    <HttpServer name="http" port="8095">
+<!--        <auth_file value="${DABCSYS}/.htdigest"/> -->
+<!--        <auth_domain value="dabc@server"/> -->
+<!--        <auth_default value="false"/> -->
+    </HttpServer>
+    
+    <Module name="mbs1" class="mbs::Monitor">
+       <node value="depc418"/>
+       <!--node value="r4-5"/-->
+       <period value="1"/>
+       <history value="100"/>
+       <logger value="true"/>
+       <cmd value="true"/>
+    </Module>
+    
+     <Module name="gosip_player" class="gosip::Player">
+	     </Module>
+    
+    
+  </Context>
+</dabc>
