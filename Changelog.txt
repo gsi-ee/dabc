@@ -8,6 +8,7 @@ about current functionality of the framework.
    Later server should be able to (re)define all these properties to affect drawings.   
 2. Remove last dtree style names, use only hierarchy to store tree properties.
 3. First try to implement drag and drop, now only with TH1 histograms  
+4. Optimize text drawing - use pad coordinates only when really required 
 
 
 24.11.2014
