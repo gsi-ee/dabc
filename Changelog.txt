@@ -10,6 +10,7 @@ about current functionality of the framework.
 3. First try to implement drag and drop, now only with TH1 histograms  
 4. Optimize text drawing - use pad coordinates only when really required 
 5. Introduce two layers in the frame <g> element - one for drawings, another for axis
+6. Introduce three layers in the pad - for main, text and statistic
 
 
 24.11.2014
