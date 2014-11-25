@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.11.2014
+1. Optimize dtree drawing - fix small errors, remove unused properties.
+   Main aim - all dtree properties should be exported to hierarchy. 
+   Later server should be able to (re)define all these properties to affect drawings.   
+
+
 24.11.2014
 1. Use <div> instead of <img> for building hierarchy. Solve problem with Chromium which
    always draws boundary around img without src. 
