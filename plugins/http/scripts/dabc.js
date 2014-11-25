@@ -940,15 +940,16 @@
    DABC.HierarchyPainter.prototype.ForEach = function(callback) {
       var ready = false;
       
-      function ScanLevel(h) {
+      function ScanLevel(h, parent) {
          if (ready || (h==null)) return;
+         if ((parent!=null) && !('_parent' in h)) h['_parent'] = parent;
          ready = callback(h);
-         if ('_childs' in h)
+         if (!ready && ('_childs' in h))
             for (var i in h['_childs'])
-               ScanLevel(h['_childs'][i]);
+               ScanLevel(h['_childs'][i], h);
       }
       
-      ScanLevel(this.h);
+      ScanLevel(this.h, null);
    }
    
 
@@ -1028,13 +1029,13 @@
          var fullname = painter.itemFullName(h);
                
          cnt++;
-         var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "'></button>";
+         var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "' item='" + fullname + "'></button>";
          $("#fast_buttons").append(html);
          $("#dabc_fastbtn_"+cnt)
                .text("")
                .append('<img height="16" src="' + h['_fastcmd'] + '" width="16"/>')
                .button()
-               .click(function() { painter.ExecuteCommand(fullname); });
+               .click(function() { painter.ExecuteCommand($(this).attr('item')); });
       });
       
       //$("#fast_buttons").append(html);
