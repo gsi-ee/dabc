@@ -7,6 +7,7 @@ about current functionality of the framework.
    Main aim - all dtree properties should be exported to hierarchy. 
    Later server should be able to (re)define all these properties to affect drawings.   
 2. Remove last dtree style names, use only hierarchy to store tree properties.
+3. First try to implement drag and drop, now only with TH1 histograms  
 
 
 24.11.2014
