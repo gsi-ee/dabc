@@ -12,6 +12,8 @@ about current functionality of the framework.
    menu or drga-and-drop functionality 
 5. In the item name one could use syntax item=item1+item2. In such case second item
    will be dropped on the first item and drawn with 'same' option
+6. Use <g> container in resize/move logic, avoid additional rect, 
+   simplify problem of additional rectangle
    
 
 25.11.2014
