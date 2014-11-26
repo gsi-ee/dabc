@@ -8,7 +8,11 @@ about current functionality of the framework.
 2. When doing draw optimization, search max and than min values in optimized range.
 3. When doing draw optimization in logx scale, analyze pixel coordinates to 
    detect interval where drawing could be optimized.
-
+4. Provide interactive url parameter, one could switch options like tooltip or context
+   menu or drga-and-drop functionality 
+5. In the item name one could use syntax item=item1+item2. In such case second item
+   will be dropped on the first item and drawn with 'same' option
+   
 
 25.11.2014
 1. Optimize dtree drawing - fix small errors, remove unused properties.
