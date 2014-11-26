@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+26.11.2014
+1. Improve range selection when using logy scale. One should use minimal non-zero value
+   to get correct range
+2. When doing draw optimization, search max and than min values in optimized range.
+3. When doing draw optimization in logx scale, analyze pixel coordinates to 
+   detect interval where drawing could be optimized.
+
+
 25.11.2014
 1. Optimize dtree drawing - fix small errors, remove unused properties.
    Main aim - all dtree properties should be exported to hierarchy. 
@@ -1375,7 +1383,7 @@ about current functionality of the framework.
    Only if hash changed, new binary data is generated and returned. 'hash' attributes 
    will be no longer propogated via names lists. 
 2. In JavaScript code make axis time format more like to original ROOT graphic.
-3. <ade gStyle.OptimizeDraw = false by default, in dabc.js optimized will be used.
+3. gStyle.OptimizeDraw = false by default, in dabc.js optimized will be used.
 4. Fill patterns in exclusion graphs (and not only) are working
    correctly now - pattern production is fixed.
 5. By THProfile drawing draw options is normal, before is lawys use DrawErrors=11.
