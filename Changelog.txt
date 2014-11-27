@@ -10,6 +10,7 @@ about current functionality of the framework.
    col2 is pixel map, scaled to visible range while 
    col3 is real drawing of each pixel as rectangle
 4. One could specify default color method via 'col=N' parameter in URL.
+5. Implement moving and resize of TLegend
 
 
 26.11.2014
