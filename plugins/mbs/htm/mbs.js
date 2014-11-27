@@ -156,10 +156,10 @@ MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
 		this.fDabcState = state;
 		
 		// workaraound: for the moment, mbs state is taken from dabc state
-		if (state=="Running")
-			this.fRunning=true;
-		else
-			this.fRunning=false;
+//		if (state=="Running")
+//			this.fRunning=true;
+//		else
+//			this.fRunning=false;
 		
 		
 	} else {
@@ -173,12 +173,12 @@ MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
 
 MbsState.prototype.Update= function(callback){
 	var pthis = this;
-	//this.DabcParameter("PexDevice/MBSAcquisitionRunning", pthis.UpdateRunstate);
-	//this.DabcParameter("PexReadout/PexorFileOn", pthis.UpdateFilestate);	
-//	this.DabcParameter("PexDevice/PexorAcquisitionRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
-//	this.DabcParameter("PexReadout/PexorFileOn",function(res,val) { pthis.UpdateFilestate(res,val); })
+	// TEST:
+	this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
+	this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
 //	
 	this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
+	
 	//this.fDabcState="Running";
 	//callback(); // will be done when last parameter update response has been processed
 }
@@ -249,6 +249,14 @@ MbsDisplay.prototype.SetRateTrending = function(history){
 	this.fTrendDa.CreateFrames($("#DatRateDisplay"));	
 }
 
+
+MbsDisplay.prototype.ClearDaqLog = function(){
+	this.fLogDevice.Clear();
+	this.fLogDevice.itemname = "../logger";
+	this.fLogDevice.EnableHistory(100);
+	this.fLogDevice.CreateFrames($("#DeviceInfo"));
+	
+}
 
 
 MbsDisplay.prototype.RefreshMonitor = function() {
@@ -338,19 +346,12 @@ MbsDisplay.prototype.RefreshView = function(){
 	 if (this.fMbsState.fFileOpen) {
 		 	//console.log("RefreshView finds open file");
 			$("#file_container").addClass("styleGreen").removeClass("styleRed");
-//			$("#buttonStartFile").prop('checked', true);
-//			$("label[for='buttonStartFile']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-closethick MyButtonStyle\"</span>");
-//			$("label[for='buttonStartFile']").attr("title", "Close output file");
     		$("#buttonStartFile").button("option", {icons: { primary: "ui-icon-closethick MyButtonStyle" }});
 			$("#buttonStartFile").attr("title", "Close output file");
 			
 		} else {
 			//console.log("RefreshView finds close file");
 			$("#file_container").addClass("styleRed").removeClass("styleGreen");
-//			$("#buttonStartFile").prop('checked', false);
-//			 $("label[for='buttonStartFile']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"</span>");
-//			 $("label[for='buttonStartFile']").attr("title", "Open lmd file for writing");
-//			 
 			 $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-disk MyButtonStyle" }}); 
 			 $("#buttonStartFile").attr("title", "Open lmd file for writing");
 			  
@@ -362,12 +363,10 @@ MbsDisplay.prototype.RefreshView = function(){
 	 
 	 if (this.fMonitoring) {
 			$("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
-			 //$("label[for='Monitoring']").html("<span class=\"ui-button-text\">  Stop Monitoring </span>");
 			 $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
 		} else {
 			$("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
-			//$("label[for='Monitoring']").html("<span class=\"ui-button-text\">  Start Monitoring </span>");
 			$("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Activate frequent refresh");	
 		}
@@ -376,14 +375,10 @@ MbsDisplay.prototype.RefreshView = function(){
 	 
 	 
 	 if (this.fTrending) {
-			 //$("label[for='Trending']").html("<span class=\"ui-button-text\">  Show Rate Gauges </span>");
 			 $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");//
-			 //.addClass("MyButtonStyle");
 			 $("label[for='Trending']").attr("title", "Show Rate Gauges");	
 		} else {
-			//$("label[for='Trending']").html("<span class=\"ui-button-text\">   Show Rate Trending </span>");
 			$("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");
-			//.addClass("MyButtonStyle");
 			$("label[for='Trending']").attr("title", "Show Rate Trending");		
 		}
 	 $("#Trendlength").prop('disabled', this.fTrending);
@@ -505,8 +500,6 @@ $(function() {
 						result) {
 					MyDisplay.SetStatusMessage(result ? "Start Acquisition command sent."
 							: "Start Acquisition FAILED.");
-//					if (result)
-//						MBS.fRunning = true;
 					MyDisplay.RefreshMonitor();
 				});
 			});
@@ -522,9 +515,6 @@ $(function() {
 						result) {
 					MyDisplay.SetStatusMessage(result ? "Stop Acquisition command sent."
 							: "Stop Acquisition FAILED.");
-//					if (result)
-//						MBS.fRunning = false;
-
 					MyDisplay.RefreshMonitor();
 				});
 			});
@@ -545,6 +535,10 @@ $(function() {
 	});
 
 	$("#buttonStartFile").button({text: false, icons: { primary: "ui-icon-disk MyButtonStyle"}});
+	
+	$("#FileAutoMode").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}});
+	
+	$("#FileRFIO").button({text: false, icons: { primary: "ui-icon-refresh MyButtonStyle"}});
 
 	$("#lmd_file_form").submit(
 				function(event) {
@@ -584,9 +578,16 @@ $(function() {
 						return;
 					}
 				
-					var options = "open file " + datafilename
-					 + " size=" + datafilelimit + " -DISK"; // todo: switch between rfio and disk
-
+					var options = "cmd= open file " + datafilename
+					 + " size=" + datafilelimit; 
+					if($("#FileRFIO").is(':checked'))
+						options += " -RFIO";
+					else
+						options += " -DISK";
+					
+					if($("#FileAutoMode").is(':checked'))
+						options += " -AUTO";
+					
 					MBS.DabcCommand("CmdMbs", options,function(
 							result) {
 						MyDisplay.SetStatusMessage(result ? "Start File command sent: "+options
@@ -690,7 +691,15 @@ $(function() {
 					});
 					event.preventDefault();
 				});
+	   
+	   $("#buttonClearMbsLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
+				function() {
+						MyDisplay.SetStatusMessage("Cleared mbs logoutput."); 
+						MyDisplay.ClearDaqLog();
+						// TODO: need to send command to dabc to reset log info here.
 						
+						 
+				});				
 	
 	
 	$("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
@@ -703,7 +712,7 @@ $(function() {
 	 
 	
 	
-// Use new jquery ui styled icon. However, here we would lose colors due to rendering
+// Use new jquery ui styled icon
 	$("#buttonUserGUI").button({text: false, icons: { primary: "ui-icon-poland MyButtonStyle"}}).click(
 			function() {
 					MyDisplay.SetStatusMessage("Launched gosip user gui."); 
@@ -711,17 +720,7 @@ $(function() {
 				});
 
 	
-	
-	// this works without replacing existing classes icons:
-//	$("#buttonUserGUI").text("").append('<img src="img/PolandLogo.png"  height="24" width="25"/>').button()
-//	.click(
-//			function() {
-//					MyDisplay.SetStatusMessage("Launched gosip user gui."); 
-//					window.open('/GOSIP/Test/UI/','_blank');
-//				});
-	
-
-	
+		
 	
 	
     $('#Refreshtime').spinner({

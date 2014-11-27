@@ -149,6 +149,10 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    bool publish = Cfg("publish", cmd).AsBool(true);
    fPrintf = Cfg("printf", cmd).AsBool(false);
 
+   fFileStateName="MbsFileOpen";
+   fAcqStateName="MbsAcqRunning";
+
+
    if (Cfg("logger", cmd).AsBool(false))
       fLoggerPort = 6007;
    else
@@ -196,6 +200,16 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
+
+   item = fHierarchy.CreateHChild(fFileStateName);
+   item.SetField(dabc::prop_kind, "log");
+   if (history>1) item.EnableHistory(history);
+
+   item = fHierarchy.CreateHChild(fAcqStateName);
+   item.SetField(dabc::prop_kind, "log");
+   if (history>1) item.EnableHistory(history);
+
+
    if (fCmdPort > 0) {
       dabc::CommandDefinition cmddef = fHierarchy.CreateHChild("CmdMbs");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
@@ -219,8 +233,15 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
 
+
+
+
+
+
    // from this point on Publisher want to get regular update for the hierarchy
-   if (publish) Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+   if (publish) {
+     Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+   }
 }
 
 
@@ -824,11 +845,54 @@ void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
 
       fCounter++;
    }
+   DOUT0("Got acquisitoin running=%d, file open=%d", stat.bh_acqui_running, stat.l_open_file);
+   UpdateMbsState(stat.bh_acqui_running);
+   UpdateFileState(stat.l_open_file);
+
+
 
    memcpy(&fStatus, &stat, sizeof(stat));
 
    fStatStamp = stamp;
 }
+
+
+void mbs::Monitor::UpdateFileState(int on)
+{
+  dabc::Hierarchy chld=fHierarchy.GetHChild(fFileStateName);
+  if (!chld.null())
+  {
+      chld.SetField("value", dabc::format("%d", on));
+       //par.ScanParamFields(&chld()->Fields());
+       fHierarchy.MarkChangedItems();
+       //DOUT0("ChangeFileState to %d", on);
+  }
+  else
+  {
+      DOUT0("ChangeFileState Could not find hierarchy child %s", fFileStateName.c_str());
+  }
+
+}
+
+void mbs::Monitor::UpdateMbsState(int on)
+{
+  dabc::Hierarchy chld=fHierarchy.GetHChild(fAcqStateName);
+    if (!chld.null())
+    {
+        chld.SetField("value", dabc::format("%d", on));
+         //par.ScanParamFields(&chld()->Fields());
+         fHierarchy.MarkChangedItems();
+         //DOUT0("ChangeFileState to %d", on);
+    }
+    else
+    {
+        DOUT0("ChangeFileState Could not find hierarchy child %s", fAcqStateName.c_str());
+    }
+
+}
+
+
+
 
 
 int mbs::Monitor::ExecuteCommand(dabc::Command cmd)

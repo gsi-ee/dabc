@@ -203,12 +203,23 @@ namespace mbs {
          mbs::DaqStatus    fStatus;     ///< current DAQ status
          dabc::TimeStamp   fStatStamp;  ///< time when last status was obtained
          bool              fPrintf;     ///< use printf for major debug output
+         std::string       fFileStateName;    ///< name of filestate parameter
+         std::string       fAcqStateName;    ///< name of acquisition running parameter
+
+
+
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
          virtual void OnThreadAssigned();
 
          virtual int ExecuteCommand(dabc::Command cmd);
+
+         /** update file on/off state*/
+         void UpdateFileState(int isopen);
+         /** update mbs acq running state*/
+         void UpdateMbsState(int isrunning);
+
 
          virtual void ProcessTimerEvent(unsigned timer);
 
