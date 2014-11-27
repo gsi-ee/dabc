@@ -5,6 +5,7 @@ about current functionality of the framework.
 27.11.2014
 1. Use similar optimize method for log and linear scale - distance between
    display points should not be far than 0.5 pixels 
+2. First simple drawing of 2D histogram with html5 canvas
 
 
 26.11.2014
