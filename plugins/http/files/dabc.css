@@ -57,67 +57,6 @@ input.tb {
    background-color: #eee;
 }
 
-#overlay {
-   z-index:1000;
-   position:absolute;
-   border: 1px solid #7777ff;
-   bottom:1px;
-   left:3px;
-   background:#ddddff;
-   opacity:0.6;
-   -moz-opacity:0.6;
-}
-
-/*--------------------------------------------------|
-| tooltip style                                     |
-|--------------------------------------------------*/
-
-#tt {
-   position:absolute;
-   display:block;
-}
-#tttop {
-   display:block;
-   height:5px;
-   margin-left:5px;
-   overflow:hidden;
-}
-#ttcont {
-   display:block;
-   padding:2px 12px 3px 7px;
-   margin-left:5px;
-   font-size: 11px;
-   background:#777;
-   color:#fff;
-}
-#ttbot {
-   display:block;
-   height:5px;
-   margin-left:5px;
-   overflow:hidden;
-}
-
-
-/* from JSRootD3Painter */
-.xaxis path, .xaxis line, .yaxis path, .yaxis line, .zaxis path, .zaxis line {
-   fill: none;
-   stroke: #000;
-   shape-rendering: crispEdges;
-}
-.brush .extent {
-    stroke: #fff;
-    fill-opacity: .125;
-    shape-rendering: crispEdges;
-}
-rect.zoom {
-    stroke: steelblue;
-    fill-opacity: 0.1;
-
-}
-/* Correct overflow not hidden in IE9 */
-svg:not(:root) { overflow: hidden; }
-
-
 .img_dabicon {
    display: inline-block;
    height: 16px;
