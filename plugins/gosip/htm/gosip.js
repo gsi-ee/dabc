@@ -576,18 +576,8 @@ function SetStatusMessage(info) {
 }
 
 function updateElementsSize() {
-	//	var h = $('#tabs').height();
-	//	var t = $('#tabs').offset().top;
-	//	var h0 = $('#content_right').height();
-	//
-	//	var lx = h0 - t - h;
-	//	if (lx < 100)
-	//		lx = 100;
-	//	$('#logging').height(lx);
-
-	//	var logelement=document.getElementById("logging");
-
-	$('#logging').scrollTop = $('#logging').scrollHeight;
+	
+	$("#content_log").scrollTop($("#content_log")[0].scrollHeight - $("#content_log").height());
 
 	$("#QFWModeCombo").selectmenu("option", "width", $('#QFW-table').width());
 	$("#DacModeCombo").selectmenu("option", "width",

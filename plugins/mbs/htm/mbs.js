@@ -406,13 +406,16 @@ MbsDisplay.prototype.RefreshView = function(){
 			$("#file_container").addClass("styleGreen").removeClass("styleRed");
     		$("#buttonStartFile").button("option", {icons: { primary: "ui-icon-closethick MyButtonStyle" }});
 			$("#buttonStartFile").attr("title", "Close output file");
+			$("#FileAutoMode").prop('disabled', true);
+			$("#FileRFIO").prop('disabled', true);
 			
 		} else {
 			//console.log("RefreshView finds close file");
 			$("#file_container").addClass("styleRed").removeClass("styleGreen");
 			 $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-seek-next MyButtonStyle" }}); 
 			 $("#buttonStartFile").attr("title", "Open lmd file for writing");
-			  
+			 $("#FileAutoMode").prop('disabled', false);
+			 $("#FileRFIO").prop('disabled', false); 
 			 
 			 
 			 
@@ -464,6 +467,9 @@ MbsDisplay.prototype.RefreshView = function(){
 		 $("label[for='FileAutoMode']").attr("title",  "Use exact file name. Will return error if file already exists.");
 
 		 }
+	 
+	 
+	
 	 
 	 
 	// console.log("RefreshView with dabc state = %s", this.fMbsState.fDabcState);

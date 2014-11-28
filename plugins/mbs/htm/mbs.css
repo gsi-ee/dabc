@@ -119,6 +119,11 @@
     background-size: contain;
 }
 
+.ui-button.ui-state-hover .ui-icon.ui-icon-link {
+    background-image: url("img/connect.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
 
 
 
