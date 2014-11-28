@@ -7,6 +7,8 @@ about current functionality of the framework.
 2. Put at one place generation of ROOT markers (decoding of TAttMarker)
 3. When drawing TGraph, specify translate attribute for central <g>    
 4. Correctly handle canvas color
+5. Handle TAttFill with same method
+6. Introduce grid_layer for axis grids
 
 
 27.11.2014
