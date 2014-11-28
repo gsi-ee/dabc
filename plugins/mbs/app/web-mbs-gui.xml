@@ -17,7 +17,7 @@
        <node value="depc418"/>
        <!--node value="r4-5"/-->
        <period value="1"/>
-       <history value="100"/>
+       <history value="500"/>
        <logger value="true"/>
        <cmd value="true"/>
     </Module>

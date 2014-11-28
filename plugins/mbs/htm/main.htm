@@ -84,10 +84,23 @@
 	outline-style: groove;
 }
 
-#file_log {
+#filelog_mode_container {
 	outline: outset medium;
 	position: fixed;
 	top: 79px;
+	min-height: 70px;
+	left: 35%;
+	width: 35%;
+	overflow: hidden;
+	text-align: center;
+	outline-style: groove;
+}
+
+
+#file_log {
+	outline: outset medium;
+	position: fixed;
+	top: 155px;
 	bottom: 2.7em;
 	left: 35%;
 	width: 35%;
@@ -156,7 +169,7 @@
 }
 
 .styleBlue {
-	background-color: #0000FF;
+	background-color: #00CCFF;
 }
 
 .MyButtonStyle {
@@ -240,10 +253,10 @@
 							title="Stop  Acquisition via soft trigger 15">Stop
 							acquisition</button>
 					</td>
-					<td style="height: 30px">
+					<!-- <td style="height: 30px">
 						<button id="buttonInitAcquisition"
 							title="Re-Initialize  Acquisition">Init acquisition</button>
-					</td>
+					</td> -->
 					<td>
 					<form id="mbscmd_form" accept-charset="utf-8">
 					<label for="commandMBS" title="Input mbs command">
@@ -251,10 +264,13 @@
 						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
 					</form>
 					</td>
-					<td style="height: 30px">
-						<button id="buttonClearMbsLog"
-							title="Clear MBS terminal">Clear MBS terminal</button>
-					</td>
+<!-- 					<td style="height: 30px"> -->
+<!-- 						<button id="buttonClearMbsLog" -->
+<!-- 							title="Clear MBS terminal">Clear MBS terminal</button> -->
+<!-- 					</td> -->
+					<td><input id="MbsLoglength" type="text" value="100"
+						class="MySpinnerStyle"><label for="MbsLoglength"
+							title="Specify length of MBS command logging history"> Log history</label></td>
 					
 					
 					
@@ -314,10 +330,6 @@
 				<tr>						
 					<td style="height: 30px">
 					<form id="lmd_file_form" accept-charset="utf-8">
-<!-- 					<input id="buttonStartFile" -->
-<!-- 						type="checkbox"><label for="buttonStartFile" -->
-<!-- 							style="height: 2em" title="Open lmd file for writing"> -->
-<!-- 								Start File?</label></td> -->
 						<button id="buttonStartFile" type="submit">Submit...</button>
 								
 					<input id="Filename" type="text" value="test.lmd"><label
@@ -346,6 +358,41 @@
 		</table>
 	</div>
 
+	<div id="filelog_mode_container" class="styleYellow">
+		<table style="width: 100%; height: 50%">
+			<caption>
+				<h3>Log modes</h3>
+			</caption>
+			<tbody>
+				<tr>
+					<td>
+						<div id="logmodes">
+							<input type="radio" id="rate" name="filelogmode" value='1' /><label
+								for="rate" title="Show size and rates for data, events and file output">rate</label>
+							 <input type="radio" id="rash"
+								name="filelogmode" value='2' />
+								<label for="rash" title="Show simple rates for data and events">rash</label> 
+							<input
+								type="radio" id="rast" name="filelogmode" value='3' />
+								<label for="rast" title="Show size and rates for data, events and online server">rast</label> 
+							<input type="radio" id="ratf"
+								name="filelogmode" value='4' checked="checked" />
+								<label for="ratf" title="Show all size and  rates for data, event, online server and file output">ratf</label>
+						</div>
+					</td>
+					<td><input id="Loglength" type="text" value="100"
+						class="MySpinnerStyle"><label for="Loglength"
+							title="Specify length of data taking log history"> Log
+								history</label></td>
+
+
+				</tr>
+				<tbody>
+		</table>
+	</div>
+
+
+
 	<div id="file_log">
 		<td>
 			<div id="ReadoutInfo"></div>
@@ -356,7 +403,8 @@
 
 	<div id="rate_container">
 		<div id="EvRateDisplay" title="Eventrate (Ev/s)"></div>
-		<div id="DatRateDisplay" title="Data Rate (MB/s)"></div>
+		<div id="DatRateDisplay" title="Data Rate (kB/s)"></div>
+		<div id="SrvRateDisplay" title="Online Monitor Rate (kB/s)"></div>
 	</div>
 
 

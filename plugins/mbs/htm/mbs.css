@@ -102,6 +102,22 @@
     background-size: contain;
 }
 
+.ui-button.ui-state-hover .ui-icon.ui-icon-star {
+    background-image: url("img/saveall.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-seek-next {
+    background-image: url("img/startselected.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+.ui-button.ui-state-hover .ui-icon.ui-icon-document {
+    background-image: url("img/filenew.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
 
 
 

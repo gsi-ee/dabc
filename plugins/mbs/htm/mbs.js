@@ -4,7 +4,7 @@ var MyDisplay;
 
 
 
-////////////// State class reflecting remote state and commnication:
+////////////// State class reflecting remote state and communication:
 function MbsState() {
 	this.fRunning = false;
 	this.fFileOpen = false;
@@ -155,17 +155,10 @@ MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
 	if (ok=="true") {
 		this.fDabcState = state;
 		
-		// workaraound: for the moment, mbs state is taken from dabc state
-//		if (state=="Running")
-//			this.fRunning=true;
-//		else
-//			this.fRunning=false;
-		
-		
 	} else {
 		console.log("UpdateDABCstate failed.");
 	}
-    console.log("UpdateDABCstate with ok=%s, value=%s, dabcstate=%s", ok, state, this.fDabcState);
+    //console.log("UpdateDABCstate with ok=%s, value=%s, dabcstate=%s", ok, state, this.fDabcState);
     refreshcall();
 }
 
@@ -190,12 +183,17 @@ function MbsDisplay(state){
 	this.fMonitoring=false;
 	this.fTrending=false;
 	this.fTrendingHistory=100;
+	this.fFileLogMode=4;
+	this.fLoggingHistory=100;
+	this.fMbsLoggingHistory=100;
 	this.fUpdateTimer=null;
 	this.fUpdateInterval=2000; // ms
 	this.fGaugeEv = null;
 	this.fGaugeDa = null;
+	this.fGaugeSv = null;
 	this.fTrendEv = null;
 	this.fTrendDa = null;
+	this.fTrendSv = null;
 	this.fLogDevice=null;
 	this.fLogReadout=null;
 }
@@ -211,16 +209,14 @@ MbsDisplay.prototype.BuildView = function(){
 	this.fGaugeDa = new DABC.GaugeDrawElement();
 	this.fTrendDa=new DABC.RateHistoryDrawElement();
 	
+	this.fGaugeSv = new DABC.GaugeDrawElement();
+	this.fTrendSv=new DABC.RateHistoryDrawElement();
+	
 	this.fLogDevice= new DABC.LogDrawElement();
-	this.fLogDevice.itemname = "../logger";
-	this.fLogDevice.EnableHistory(100);
-	this.fLogDevice.CreateFrames($("#DeviceInfo"));
+	this.SetMbsLog();
 	
 	this.fLogReadout= new DABC.LogDrawElement();
-	this.fLogReadout.itemname = "../ratf_log";
-	this.fLogReadout.EnableHistory(100);
-	this.fLogReadout.CreateFrames($("#ReadoutInfo"));
-	
+	this.SetFileLogMode(4, 100);	
 	this.SetRateGauges();
 	
 }
@@ -230,10 +226,15 @@ MbsDisplay.prototype.SetRateGauges = function(){
 	
 	this.fTrendEv.Clear();
 	this.fTrendDa.Clear();
+	this.fTrendSv.Clear();
 	this.fGaugeEv.itemname = "../EventRate";
 	this.fGaugeEv.CreateFrames($("#EvRateDisplay"));
 	this.fGaugeDa.itemname = "../DataRate";
 	this.fGaugeDa.CreateFrames($("#DatRateDisplay"));
+	this.fGaugeSv.itemname = "../ServerRate";
+	this.fGaugeSv.CreateFrames($("#SrvRateDisplay"));
+	
+	
 }
 
 MbsDisplay.prototype.SetRateTrending = function(history){
@@ -241,34 +242,87 @@ MbsDisplay.prototype.SetRateTrending = function(history){
 	this.fTrendingHistory=history;
 	this.fGaugeEv.Clear();
 	this.fGaugeDa.Clear();
+	this.fGaugeSv.Clear();
 	this.fTrendEv.itemname="../EventRate";
 	this.fTrendEv.EnableHistory(this.fTrendingHistory); 
 	this.fTrendEv.CreateFrames($("#EvRateDisplay"));
 	this.fTrendDa.itemname="../DataRate";
 	this.fTrendDa.EnableHistory(this.fTrendingHistory);
-	this.fTrendDa.CreateFrames($("#DatRateDisplay"));	
+	this.fTrendDa.CreateFrames($("#DatRateDisplay"));
+	this.fTrendSv.itemname="../ServerRate";
+	this.fTrendSv.EnableHistory(this.fTrendingHistory);
+	this.fTrendSv.CreateFrames($("#SrvRateDisplay"));	
+	
 }
 
 
 MbsDisplay.prototype.ClearDaqLog = function(){
 	this.fLogDevice.Clear();
 	this.fLogDevice.itemname = "../logger";
-	this.fLogDevice.EnableHistory(100);
+	this.fLogDevice.EnableHistory(0);
 	this.fLogDevice.CreateFrames($("#DeviceInfo"));
 	
+}
+
+MbsDisplay.prototype.SetFileLogMode= function(mode, history){
+	
+	if(history==0) history=this.fLoggingHistory;
+	if(mode==0) mode= this.fFileLogMode;
+	this.fLogReadout.Clear();
+	//console.log("SetFileLogMode with mode="+mode+" , history="+history);
+	switch (mode) {	
+	case "1":
+		// "rate" 
+		this.fLogReadout.itemname = "../rate_log";	
+		break;		
+	case "2":
+		// "rash" 
+		this.fLogReadout.itemname = "../rash_log";	
+		break;	
+	case "3":
+		// "rast" 
+		this.fLogReadout.itemname = "../rast_log";	
+		break;	
+	case "4":
+	default:
+		// "ratf" 
+		this.fLogReadout.itemname = "../ratf_log";	
+		break;		
+		
+		
+	};
+	this.fLogReadout.EnableHistory(history);
+	this.fLoggingHistory=history;
+	this.fFileLogMode=mode;
+	this.fLogReadout.CreateFrames($("#ReadoutInfo"));
+	
+}
+
+MbsDisplay.prototype.SetMbsLog= function(){
+	
+	//console.log("SetMbsLog with value:"+history);
+	this.fLogDevice.Clear();
+	this.fLogDevice.itemname = "../logger";
+	this.fLogDevice.EnableHistory(this.fMbsLoggingHistory);
+	this.fLogDevice.CreateFrames($("#DeviceInfo"));
 }
 
 
 MbsDisplay.prototype.RefreshMonitor = function() {
 
 	if (this.fTrending) {
-		this.fTrendEv.force = true;
-		
+		this.fTrendEv.force = true;		
 		this.fTrendEv.RegularCheck();
 		this.fTrendEv.CheckResize(true);			
 		this.fTrendDa.force = true;		
 		this.fTrendDa.RegularCheck();
-		this.fTrendDa.CheckResize(true);	
+		this.fTrendDa.CheckResize(true);
+		this.fTrendSv.force = true;		
+		this.fTrendSv.RegularCheck();
+		this.fTrendSv.CheckResize(true);
+		
+		
+		
 		
 	} else {
 		this.fGaugeEv.force = true;
@@ -277,6 +331,10 @@ MbsDisplay.prototype.RefreshMonitor = function() {
 		this.fGaugeDa.force = true;
 		this.fGaugeDa.RegularCheck();
 		this.fGaugeDa.CheckResize(true);
+		this.fGaugeSv.force = true;
+		this.fGaugeSv.RegularCheck();
+		this.fGaugeSv.CheckResize(true);
+		
 
 	}
 
@@ -321,12 +379,12 @@ MbsDisplay.prototype.SetTrending = function(on,history){
 	this.fTrending=on;
 	if(on)
 		{
-			console.log("SetTrending on");
+			//console.log("SetTrending on");
 			this.SetRateTrending(history); // todo: get interval from textbox
 		}
 	else
 		{
-			console.log("SetTrending off");
+			//console.log("SetTrending off");
 			this.SetRateGauges();
 		}
 	
@@ -352,7 +410,7 @@ MbsDisplay.prototype.RefreshView = function(){
 		} else {
 			//console.log("RefreshView finds close file");
 			$("#file_container").addClass("styleRed").removeClass("styleGreen");
-			 $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-disk MyButtonStyle" }}); 
+			 $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-seek-next MyButtonStyle" }}); 
 			 $("#buttonStartFile").attr("title", "Open lmd file for writing");
 			  
 			 
@@ -383,7 +441,32 @@ MbsDisplay.prototype.RefreshView = function(){
 		}
 	 $("#Trendlength").prop('disabled', this.fTrending);
 	 
-	 console.log("RefreshView with dabc state = %s", this.fMbsState.fDabcState);
+	 if($("#FileRFIO").is(':checked')){
+		 $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
+		 $("label[for='FileRFIO']").attr("title",  "Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
+	 }
+	 else
+		 {
+		 $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"></span>");
+		 $("label[for='FileRFIO']").attr("title", "Write to local disk");
+		 }
+		 
+		 
+	 if($("#FileAutoMode").is(':checked')){
+		 
+		 $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-star MyButtonStyle\"></span>");
+		 $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
+
+	 } 
+	 else
+		 {
+		 $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-document MyButtonStyle\"></span>");
+		 $("label[for='FileAutoMode']").attr("title",  "Use exact file name. Will return error if file already exists.");
+
+		 }
+	 
+	 
+	// console.log("RefreshView with dabc state = %s", this.fMbsState.fDabcState);
 	 
 //	 if (this.fMbsState.fDabcState=="Running") { 
 //		//	console.log("RefreshView finds Running state");
@@ -425,69 +508,8 @@ $(function() {
 	MyDisplay.BuildView();
 	MyDisplay.ChangeMonitoring(false);
 	
-	//////// first DABC generic commands
-	// later this should be part of the framework...
-//	$("#buttonStartDabc").button({text: false, icons: { primary: "ui-icon-play MyButtonStyle"}}).click(
-//			function() {
-//				var requestmsg = "Really Re-Start DABC Application?";
-//				var response = confirm(requestmsg);
-//				if (!response)
-//					return;
-//
-//				MBS.DabcCommand("App/DoStart", "", function(
-//						result) {
-//					MyDisplay.SetStatusMessage(result ? "Start DABC command sent."
-//							: "Start DABC FAILED.");
-//					MyDisplay.RefreshMonitor();
-//				});
-//			});
-//	
-//	$("#buttonStopDabc").button({text: false, icons: { primary: "ui-icon-stop MyButtonStyle"}}).click(
-//			function() {
-//				var requestmsg = "Really Stop DABC Application?";
-//				var response = confirm(requestmsg);
-//				if (!response)
-//					return;
-//
-//				MBS.DabcCommand("App/DoStop", "", function(
-//						result) {
-//					MyDisplay.SetStatusMessage(result ? "Stop DABC command sent."
-//							: "Stop DABC  FAILED.");
-//					MyDisplay.RefreshMonitor();
-//				});
-//			});
-//	
-//	$("#buttonConfigureDabc").button({text: false, icons: { primary: "ui-icon-power MyButtonStyle"}}).click(
-//			function() {
-//				var requestmsg = "Really Re-Configure DABC Application?";
-//				var response = confirm(requestmsg);
-//				if (!response)
-//					return;
-//
-//				MBS.DabcCommand("App/DoConfigure", "", function(
-//						result) {
-//					MyDisplay.SetStatusMessage(result ? "Configure DABC command sent."
-//							: "Configure DABC FAILED.");
-//					MyDisplay.RefreshMonitor();
-//				});
-//			});
-//	$("#buttonHaltDabc").button({text: false, icons: { primary: "ui-icon-cancel MyButtonStyle"}}).click(
-//			function() {
-//				var requestmsg = "Really Halt (shutdown) DABC Application?";
-//				var response = confirm(requestmsg);
-//				if (!response)
-//					return;
-//
-//				MBS.DabcCommand("App/DoHalt", "", function(
-//						result) {
-//					MyDisplay.SetStatusMessage(result ? "Halt DABC command sent."
-//							: "Halt DABC FAILED.");
-//					MyDisplay.RefreshMonitor();
-//				});
-//			});
-//	
 	
-///////////////////////////// pexor specific:	
+///////////////////////////// mbs specific:	
 	
 	$("#buttonStartAcquisition").button({text: false, icons: { primary: "ui-icon-play MyButtonStyle"}}).click(
 			function() {
@@ -518,27 +540,34 @@ $(function() {
 					MyDisplay.RefreshMonitor();
 				});
 			});
-	$("#buttonInitAcquisition").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(function() {
-		var requestmsg = "Really Initialize Acquisition?";
-		var response = confirm(requestmsg);
-		if (!response)
-			return;
-
-		MBS.DabcCommand("CmdMbs","cmd=\@startup",function(
-				result) {
-			MyDisplay.SetStatusMessage(result ? "Init Acquisition (@startup) command sent."
-					: "Init Acquisition FAILED.");
-			MyDisplay.RefreshMonitor();
-			
-		});
-
-	});
-
-	$("#buttonStartFile").button({text: false, icons: { primary: "ui-icon-disk MyButtonStyle"}});
 	
-	$("#FileAutoMode").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}});
+////////// startup command will not work at the moment:	
+//	$("#buttonInitAcquisition").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(function() {
+//		var requestmsg = "Really Initialize Acquisition?";
+//		var response = confirm(requestmsg);
+//		if (!response)
+//			return;
+//
+//		MBS.DabcCommand("CmdMbs","cmd=\@startup",function(
+//				result) {
+//			MyDisplay.SetStatusMessage(result ? "Init Acquisition (@startup) command sent."
+//					: "Init Acquisition FAILED.");
+//			MyDisplay.RefreshMonitor();
+//			
+//		});
+//
+//	});
+
+	$("#buttonStartFile").button({text: false, icons: { primary: "ui-icon-seek-next MyButtonStyle"}});
 	
-	$("#FileRFIO").button({text: false, icons: { primary: "ui-icon-refresh MyButtonStyle"}});
+	$("#FileAutoMode").button({text: false, icons: { primary: "ui-icon-star MyButtonStyle"}}).click(function() {
+		MyDisplay.RefreshView();
+	}
+			);
+	
+	$("#FileRFIO").button({text: false, icons: { primary: "ui-icon-link MyButtonStyle"}}).click(function() {
+			MyDisplay.RefreshView();}
+			);
 
 	$("#lmd_file_form").submit(
 				function(event) {
@@ -568,9 +597,17 @@ $(function() {
 						{							
 						var datafilename=document.getElementById("Filename").value;
 						var datafilelimit=document.getElementById("Filesize").value;
+						var options = "cmd= open file " + datafilename
+						 + " size=" + datafilelimit; 
+						if($("#FileRFIO").is(':checked'))
+							options += " -RFIO";
+						else
+							options += " -DISK";
 						
-					var requestmsg = "Really Start writing output file "
-					+ datafilename + ", maxsize=" + datafilelimit +" ?";
+						if($("#FileAutoMode").is(':checked'))
+							options += " -AUTO";
+					var requestmsg = "Really Start writing output file with "
+					+ options+" ?";
 				var response = confirm(requestmsg);
 				if (!response)
 					{
@@ -646,9 +683,6 @@ $(function() {
 						}
 					MBS.GosipCommand(cmdpar, function(ok,
 							logout, result) {
-						// todo: display output of result like in poland debug mode
-						
-						
 						MyDisplay.SetStatusMessage(ok ? "gosip command send."
 								: "gosip command FAILED.");
 						if(ok)
@@ -692,14 +726,17 @@ $(function() {
 					event.preventDefault();
 				});
 	   
-	   $("#buttonClearMbsLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
-				function() {
-						MyDisplay.SetStatusMessage("Cleared mbs logoutput."); 
-						MyDisplay.ClearDaqLog();
-						// TODO: need to send command to dabc to reset log info here.
-						
-						 
-				});				
+//	   $("#buttonClearMbsLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
+//				function() {
+//						MyDisplay.SetStatusMessage("Cleared mbs logoutput.");
+//						var history=MyDisplay.fMbsLoggingHistory;
+//						MyDisplay.fMbsLoggingHistory=0;
+//						MyDisplay.SetMbsLog();
+//						MyDisplay.RefreshMonitor();
+//						MyDisplay.fMbsLoggingHistory=history;
+//						MyDisplay.SetMbsLog();
+//						 
+//				});				
 	
 	
 	$("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
@@ -719,7 +756,13 @@ $(function() {
 					window.open('/GOSIP/Test/UI/','_blank');
 				});
 
-	
+	    $("#logmodes").buttonset();
+	    
+	    $("input[name='filelogmode']").on("change", function () {
+	    	var history=document.getElementById("Loglength").value;
+	    	console.log("logmodes got value="+this.value +", loglength="+history);	    	
+	    	MyDisplay.SetFileLogMode(this.value,history);
+	    });
 		
 	
 	
@@ -741,12 +784,22 @@ $(function() {
         step: 100
     });
     
+    $('#Loglength').spinner({
+        min: 10,
+        max: 100000,
+        step: 10,
+        spin: function( event, ui ) {MyDisplay.fLoggingHistory=ui.value;},
+    	stop: function( event, ui ) {	MyDisplay.SetFileLogMode(0,0);}
+    });
     
-    
+    $('#MbsLoglength').spinner({
+        min: 10,
+        max: 100000,
+        step: 10,
+        spin: function( event, ui ) {MyDisplay.fMbsLoggingHistory=ui.value;},
+    	stop: function( event, ui ) {	MyDisplay.SetMbsLog();}
+    });
  
-    
-    
-    
     
 	MyDisplay.RefreshView();
 	

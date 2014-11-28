@@ -753,8 +753,11 @@ void mbs::Monitor::FillStatistic(const std::string& options, const std::string& 
    if (options=="-u") {
       // printf("%s\n",c_out);
       fHierarchy.GetHChild("DataRate").SetField("value", dabc::format("%3.1f", r_rate_kb));
+      fHierarchy.GetHChild("DataRate").SetFieldModified("value");
       fHierarchy.GetHChild("EventRate").SetField("value", dabc::format("%3.1f", r_rate_evt));
+      fHierarchy.GetHChild("EventRate").SetFieldModified("value");
       fHierarchy.GetHChild("ServerRate").SetField("value", dabc::format("%3.1f", r_rate_strsrv_kb));
+      fHierarchy.GetHChild("ServerRate").SetFieldModified("value");
    }
 
    if (fDoRec) {
@@ -845,7 +848,7 @@ void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
 
       fCounter++;
    }
-   DOUT0("Got acquisitoin running=%d, file open=%d", stat.bh_acqui_running, stat.l_open_file);
+   DOUT3("Got acquisition running=%d, file open=%d", stat.bh_acqui_running, stat.l_open_file);
    UpdateMbsState(stat.bh_acqui_running);
    UpdateFileState(stat.l_open_file);
 
