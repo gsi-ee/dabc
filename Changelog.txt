@@ -9,6 +9,7 @@ about current functionality of the framework.
 4. Correctly handle canvas color
 5. Handle TAttFill with same method
 6. Introduce grid_layer for axis grids
+7. Introduce createAttLine for TAttLine class
 
 
 27.11.2014
