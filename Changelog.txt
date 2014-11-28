@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+28.11.2014
+1. Implement 'P' and 'P0' draw options for TH1 histogram
+2. Put at one place generation of ROOT markers (decoding of TAttMarker)
+3. When drawing TGraph, specify translate attribute for central <g>    
+
+
 27.11.2014
 1. Use similar optimize method for log and linear scale - distance between
    display points should not be far than 0.5 pixels 
