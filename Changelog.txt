@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Implement 'P' and 'P0' draw options for TH1 histogram
 2. Put at one place generation of ROOT markers (decoding of TAttMarker)
 3. When drawing TGraph, specify translate attribute for central <g>    
+4. Correctly handle canvas color
 
 
 27.11.2014
