@@ -5,6 +5,7 @@ about current functionality of the framework.
 1.12.2014
 1. Also getFontDetails return object, which could be applied with 
    .call(font.func) method to all selected by d3 nodes.
+2. Preliminary fix in TBufferJSON concerning nested classes.
 
 
 28.11.2014
