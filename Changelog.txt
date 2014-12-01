@@ -10,6 +10,7 @@ about current functionality of the framework.
 5. Handle TAttFill with same method
 6. Introduce grid_layer for axis grids
 7. Introduce createAttLine for TAttLine class
+8. Introduce createAttMarker for TAttMarker class
 
 
 27.11.2014

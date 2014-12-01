@@ -11,6 +11,8 @@
       e1.source = "dabc.js";
       throw e1;
    }
+   
+   JSROOT.gStyle.DragAndDrop = true;
 
    DABC = {};
 
