@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+1.12.2014
+1. Also getFontDetails return object, which could be applied with 
+   .call(font.func) method to all selected by d3 nodes.
+
+
 28.11.2014
 1. Implement 'P' and 'P0' draw options for TH1 histogram
 2. Put at one place generation of ROOT markers (decoding of TAttMarker)
