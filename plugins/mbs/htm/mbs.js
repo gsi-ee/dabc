@@ -196,6 +196,8 @@ function MbsDisplay(state){
 	this.fTrendSv = null;
 	this.fLogDevice=null;
 	this.fLogReadout=null;
+	this.fMiddlerightPos=0;
+	this.fMiddleWidth=0;
 }
 
 // set up view elements of display:
@@ -742,9 +744,32 @@ $(function() {
 //						MyDisplay.fMbsLoggingHistory=history;
 //						MyDisplay.SetMbsLog();
 //						 
-//				});				
-	
-	
+//				});		
+	   
+	   $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
+				function() {
+					var visible=$('#ShowGosipToggle').is(':checked');
+					if(visible){
+						$('#gosip_container').hide();
+						$('#gosip_log').hide();
+						//$('#daq_log').height("400px"); // this does not allow to set automatic stretch to bottom
+						$('#daq_log').css({
+							bottom: "2.7em",
+							height: "auto"
+							});
+						
+					}
+					else {
+						$('#gosip_container').show();
+						$('#gosip_log').show();		
+					//	$('#daq_log').height("270px");						}
+					$('#daq_log').css({
+						bottom: "auto",
+						height: "268px"
+						});		
+					   
+					}
+				});	
 	$("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
 			function() {
 					MyDisplay.SetStatusMessage("Cleared gosip logoutput."); 
@@ -806,6 +831,117 @@ $(function() {
     	stop: function( event, ui ) {	MyDisplay.SetMbsLog();}
     });
  
+    
+    
+    //$('#gosip_container').resizable().draggable().selectable();
+    
+    
+    $("#mbs_container").resizable({
+        handles: 'e',
+        minWidth: 600,
+        start: function( event, ui ) {
+        	MyDisplay.fMiddleWidth=$("#file_log").width();
+        	var middleleft=$("#file_log").position().left;
+        	MyDisplay.fMiddlerightPos=middleleft+MyDisplay.fMiddleWidth; // remember position of right edge middle column
+        	console.log("left="+middleleft+", right="+MyDisplay.fMiddlerightPos+", width="+MyDisplay.fMiddleWidth);
+        
+        },
+        
+        resize: function( event, ui ) {
+        	
+        	
+        	$("#file_log").css({
+        		left: (ui.size.width +2),
+        		right: MyDisplay.fMiddlerightPos,
+        		width:  (MyDisplay.fMiddlerightPos -  (ui.size.width -2))      		
+				});
+        	$("#file_container").css({
+        		left: (ui.size.width +2),
+        		right:  MyDisplay.fMiddlerightPos,
+        		width: (MyDisplay.fMiddlerightPos -  (ui.size.width -2)) 
+				});
+        	$("#filelog_mode_container").css({
+        		left: (ui.size.width +2),
+        		right:  MyDisplay.fMiddlerightPos,
+        		width: (MyDisplay.fMiddlerightPos -  (ui.size.width -2)) 
+				});
+        	$("#daq_log").css({
+        		width: (ui.size.width)
+				});
+        	$("#gosip_container").css({
+        		width: (ui.size.width)
+				});
+        	$("#gosip_log").css({
+        		width: (ui.size.width)
+				});
+
+        	// need to set absolute pixels for right column, too, otherwise we will have gap after next window resize...        	
+        	$("#monitoring_container").css({
+        		left: MyDisplay.fMiddlerightPos +4
+				});
+        	$("#ratemode_container").css({
+        		left: MyDisplay.fMiddlerightPos +4
+				});
+        	$("#rate_container").css({
+        		left: MyDisplay.fMiddlerightPos +4
+				});
+        	
+        	
+        	}
+    	});
+    
+    
+    $("#file_container").resizable({
+        handles: 'e',
+        minWidth: 400,
+        start: function( event, ui ) {
+        	MyDisplay.fMiddleWidth=ui.size.width;
+        	MyDisplay.fMiddlerightPos=$("#monitoring_container").position().left; // remember position of right edge middle column
+        	console.log("start resize file container - right="+MyDisplay.fMiddlerightPos);
+        
+        },
+        
+        resize: function( event, ui ) {
+        	
+        	
+        	$("#filelog_mode_container").css({
+        		width: (ui.size.width)
+				});
+        	$("#file_log").css({
+        		width: (ui.size.width)
+				});
+        	
+        	
+        	$("#monitoring_container").css({
+        		left: (MyDisplay.fMiddlerightPos - (MyDisplay.fMiddleWidth - ui.size.width))
+				});
+        	$("#ratemode_container").css({
+        		left: (MyDisplay.fMiddlerightPos - (MyDisplay.fMiddleWidth - ui.size.width))
+				});
+        	$("#rate_container").css({
+        		left: (MyDisplay.fMiddlerightPos - (MyDisplay.fMiddleWidth - ui.size.width))
+				});
+        	
+        	
+        	// need to set absolute pixels for left column, too, otherwise we will have gap after next window resize...        	
+        	$("#mbs_container").css({
+        		right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
+				});
+        	$("#daq_log").css({
+        		right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
+				});
+        	$("#gosip_container").css({
+        		right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
+				});        	
+        	$("#gosip_log").css({
+        		right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
+				});
+        	
+        	
+        	}
+    	});
+    
+    
     
 	MyDisplay.RefreshView();
 	

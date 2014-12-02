@@ -24,23 +24,12 @@
 	outline-style: groove;
 }
 
-/* #daq_container { */
-/* 	outline: outset medium; */
-/* 	position: fixed; */
-/* 	top: 2px; */
-/* 	min-height: 70px; */
-/* 	left: 20.5%; */
-/* 	width: 14%; */
-/* 	text-align: center; */
-/* 	overflow: hidden; */
-/* 	outline-style: groove; */
-/* } */
 
 #daq_log {
 	outline: outset medium;
 	position: fixed;
 	top: 79px;
-	height: 270px;
+	height: 268px;
 	left: 2px;
 	width: 34.5%;
 	text-align: left;
@@ -205,34 +194,6 @@
 	</div>
 
 
-<!-- 	<div id="dabc_container"> -->
-<!-- 		<table style="width: 100%; height: 50%"> -->
-<!-- 			<caption> -->
-<!-- 				<h3>DABC</h3> -->
-<!-- 			</caption> -->
-<!-- 			<tbody> -->
-<!-- 				<tr> -->
-<!-- 					<td style="height: 30px"> -->
-<!-- 						<button id="buttonConfigureDabc" -->
-<!-- 							title="Reconfigure DABC application">Configure Dabc</button> -->
-<!-- 					</td> -->
-<!-- 					<td style="height: 30px"> -->
-<!-- 						<button id="buttonStartDabc" title="Re-Start DABC application">Start -->
-<!-- 							Dabc</button> -->
-<!-- 					</td> -->
-<!-- 					<td style="height: 30px"> -->
-<!-- 						<button id="buttonStopDabc" title="Stop DABC application">Stop -->
-<!-- 							Dabc</button> -->
-<!-- 					</td> -->
-<!-- 					<td style="height: 30px"> -->
-<!-- 						<button id="buttonHaltDabc" title="Shutdown DABC application">Halt -->
-<!-- 							Dabc</button> -->
-<!-- 					</td> -->
-
-<!-- 				</tr> -->
-<!-- 			</tbody> -->
-<!-- 		</table> -->
-<!-- 	</div> -->
 
 
 
@@ -253,10 +214,10 @@
 							title="Stop  Acquisition via soft trigger 15">Stop
 							acquisition</button>
 					</td>
-					<!-- <td style="height: 30px">
+					<!-- <!-- <td style="height: 30px">
 						<button id="buttonInitAcquisition"
 							title="Re-Initialize  Acquisition">Init acquisition</button>
-					</td> -->
+					</td> --> 
 					<td>
 					<form id="mbscmd_form" accept-charset="utf-8">
 					<label for="commandMBS" title="Input mbs command">
@@ -264,11 +225,11 @@
 						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
 					</form>
 					</td>
-<!-- 					<td style="height: 30px"> -->
-<!-- 						<button id="buttonClearMbsLog" -->
-<!-- 							title="Clear MBS terminal">Clear MBS terminal</button> -->
-<!-- 					</td> -->
-					<td><input id="MbsLoglength" type="text" value="100"
+					<td><input id="ShowGosipToggle" type="checkbox" checked="checked"><label
+						for="ShowGosipToggle" style="height: 30px" title="Show Gosip command dock">
+							Show gosip command panel?</label></td>	
+							
+					<td><input id="MbsLoglength" type="text"  value="100"
 						class="MySpinnerStyle"><label for="MbsLoglength"
 							title="Specify length of MBS command logging history"> Log history</label></td>
 					
@@ -302,8 +263,7 @@
 					</form>
 					</td>
 					<td style="height: 30px">
-						<button id="buttonClearGosipLog" title="Clear gosip logwindow">User
-							GUI</button>
+						<button id="buttonClearGosipLog" title="Clear gosip logwindow">Clear log</button>
 					</td>
 					<td style="height: 30px">
 						<button id="buttonUserGUI" title="Start Frontend GUI">User
