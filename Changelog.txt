@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+2.12.2014
+1. Better support of STL classes in TBufferJSON
+2. Correct handling of objects saving in TBufferJSON
+
+
 1.12.2014
 1. Also getFontDetails return object, which could be applied with 
    .call(font.func) method to all selected by d3 nodes.
