@@ -5,6 +5,7 @@ about current functionality of the framework.
 2.12.2014
 1. Better support of STL classes in TBufferJSON
 2. Correct handling of objects saving in TBufferJSON
+3. Fix error with TCanvas update
 
 
 1.12.2014
