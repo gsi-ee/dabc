@@ -47,8 +47,9 @@ int usage(const char* errstr = 0)
    printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
-   printf("   -tdc mask               - printout raw data of tdc subsubevents (default none) \n");
+   printf("   -tdc mask               - printout raw data as TDC subsubevent (default none) \n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
+   printf("   -adc mask               - printout raw data as adc subsubevent (default none) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
@@ -169,6 +170,25 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if (!haschannel0) errmask |= tdcerr_MissCh0;
 }
 
+void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if ((ix>=sz) || (len==0)) return;
+   if ((len==0) || (ix + len > sz)) len = sz - ix;
+
+   unsigned wlen = 2;
+   if (len>99) wlen = 3; else
+   if (len>999) wlen = 4;
+
+   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+      unsigned msg = sub->Data(ix);
+      if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+      printf("\n");
+   }
+}
+
+
 
 int main(int argc, char* argv[])
 {
@@ -177,7 +197,7 @@ int main(int argc, char* argv[])
    long number(10), skip(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1);
    bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
-   unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0);
+   unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
 
    int n = 1;
    while (++n<argc) {
@@ -186,6 +206,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
+      if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
       if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
@@ -199,7 +220,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if ((tdcmask!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
+   if ((adcmask!=0) || (tdcmask!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -306,13 +327,16 @@ int main(int argc, char* argv[])
             unsigned datalen = (data >> 16) & 0xFFFF;
             unsigned datakind = data & 0xFFFF;
 
-            bool as_raw(false), as_tdc(false);
+            bool as_raw(false), as_tdc(false), as_adc(false);
 
             if ((onlytdc!=0) && (datakind==onlytdc)) {
                as_tdc = true;
             } else
             if ((tdcmask!=0) && ((datakind & 0xff) <= (tdcmask & 0xff)) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
                as_tdc = true;
+            } else
+            if ((adcmask!=0) && ((datakind & 0xff) <= (adcmask & 0xff)) && ((datakind & 0xff00) == (adcmask & 0xff00))) {
+               as_adc = true;
             } else
             if ((hubmask!=0) && (datakind==hubmask)) {
                // this is hack - skip hub header, inside is normal subsub events structure
@@ -332,18 +356,19 @@ int main(int argc, char* argv[])
             if (!dostat && !showrate) {
                // do raw printout when necessary
 
-               if (as_raw || as_tdc) {
+               if (as_raw || as_tdc || as_adc) {
                   if (!print_sub_header) {
                      sub->Dump(false);
                      print_sub_header = true;
                   }
-
-                  printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                }
+
+               printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
 
                unsigned errmask(0);
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask); else
+               if (as_adc) PrintAdcData(sub, ix, datalen, 9); else
                if (as_raw) sub->PrintRawData(ix,datalen,9);
 
                if (errmask!=0) {

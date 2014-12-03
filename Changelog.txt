@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 3.12.2014
 1. Fix drawing of TH2 histogram - minimal bin should be draw when not zero
+2. Support ADC printing in hldprint
 
 
 2.12.2014
