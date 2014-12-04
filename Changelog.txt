@@ -5,6 +5,8 @@ about current functionality of the framework.
 4.12.2014
 1. In TBufferJSON try to write unstored data in _blob field, test with std::map
 2. Start JSROOT version 3.2, fix display problem in css. 
+3. Implement integration of primary hierarchy in online.htm page, 
+   avoid extra h.json request at the beginning.  
 
 
 3.12.2014

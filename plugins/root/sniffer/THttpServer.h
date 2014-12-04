@@ -189,7 +189,9 @@ protected:
    TString      fTopName;     //! name of top folder, default - "ROOT"
 
    TString      fDefaultPage; //! file name for default page name
+   TString      fDefaultPageCont; //! content of the file content
    TString      fDrawPage;    //! file name for drawing of single element
+   TString      fDrawPageCont; //! content of draw page
 
    TMutex       fMutex;       //! mutex to protect list with arguments
    TList        fCallArgs;    //! submitted arguments
@@ -217,6 +219,7 @@ public:
    {
       fTopName = top;
    }
+
    const char *GetTopName() const
    {
       return fTopName.Data();
@@ -241,6 +244,9 @@ public:
 
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);
+
+   /** Reads content of file from the disk */
+   static char* ReadFileContent(const char* filename, Int_t& len);
 
    ClassDef(THttpServer, 0) // HTTP server for ROOT analysis
 };

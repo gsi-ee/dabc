@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <string.h>
+#include <fstream>
 
 #ifdef COMPILED_WITH_DABC
    extern "C" unsigned long crc32(unsigned long crc, const unsigned char* buf, unsigned int buflen);
@@ -290,6 +291,10 @@ THttpServer::THttpServer(const char *engine) :
    fMainThrdId(0),
    fJsRootSys(),
    fTopName("ROOT"),
+   fDefaultPage(),
+   fDefaultPageCont(),
+   fDrawPage(),
+   fDrawPageCont(),
    fMutex(),
    fCallArgs()
 {
@@ -593,14 +598,53 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
    // Info("ProcessRequest", "Path %s File %s", arg->fPathName.Data(), arg->fFileName.Data());
 
    if (arg->fFileName.IsNull() || (arg->fFileName == "index.htm")) {
-      arg->fContent = fDefaultPage;
-      arg->SetFile();
+
+      if (fDefaultPageCont.Length()==0) {
+         Int_t len = 0;
+         char* buf = ReadFileContent(fDefaultPage.Data(), len);
+         if (len>0) fDefaultPageCont.Append(buf);
+         delete buf;
+      }
+
+      if (fDefaultPageCont.Length()==0) {
+         arg->Set404();
+      } else {
+         const char* hjsontag = "\"$$$h.json$$$\"";
+
+         Ssiz_t pos = fDefaultPageCont.Index(hjsontag);
+         if (pos==kNPOS) {
+            arg->fContent = fDefaultPageCont;
+         } else {
+            TString h_json;
+            TRootSnifferStoreJson store(h_json, arg->fQuery.Index("compact")!=kNPOS);
+            const char *topname = fTopName.Data();
+            if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
+            fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
+
+            arg->fContent.Clear();
+            arg->fContent.Append(fDefaultPageCont, pos);
+            arg->fContent.Append(h_json);
+            arg->fContent.Append(fDefaultPageCont.Data() + pos + strlen(hjsontag));
+         }
+         arg->SetContentType("text/html");
+      }
       return;
    }
 
    if (arg->fFileName == "draw.htm") {
-      arg->fContent = fDrawPage;
-      arg->SetFile();
+      if (fDrawPageCont.Length()==0) {
+         Int_t len = 0;
+         char* buf = ReadFileContent(fDrawPage.Data(), len);
+         if (len>0) fDrawPageCont.Append(buf);
+         delete buf;
+      }
+
+      if (fDrawPageCont.Length()==0) {
+         arg->Set404();
+      } else {
+         arg->fContent = fDrawPageCont;
+         arg->SetContentType("text/html");
+      }
       return;
    }
 
@@ -758,4 +802,29 @@ const char *THttpServer::GetMimeType(const char *path)
    }
 
    return "text/plain";
+}
+
+//______________________________________________________________________________
+char* THttpServer::ReadFileContent(const char* filename, Int_t& len)
+{
+   // reads file content
+
+   len = 0;
+
+   std::ifstream is(filename);
+   if (!is) return 0;
+
+   is.seekg(0, is.end);
+   len = is.tellg();
+   is.seekg(0, is.beg);
+
+   char *buf = (char *) malloc(len);
+   is.read(buf, len);
+   if (!is) {
+      free(buf);
+      len = 0;
+      return 0;
+   }
+
+   return buf;
 }
