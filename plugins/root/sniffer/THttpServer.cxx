@@ -602,7 +602,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       if (fDefaultPageCont.Length()==0) {
          Int_t len = 0;
          char* buf = ReadFileContent(fDefaultPage.Data(), len);
-         if (len>0) fDefaultPageCont.Append(buf);
+         if (len>0) fDefaultPageCont.Append(buf, len);
          delete buf;
       }
 
@@ -616,7 +616,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
             arg->fContent = fDefaultPageCont;
          } else {
             TString h_json;
-            TRootSnifferStoreJson store(h_json, arg->fQuery.Index("compact")!=kNPOS);
+            TRootSnifferStoreJson store(h_json, kTRUE);
             const char *topname = fTopName.Data();
             if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
             fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
@@ -625,6 +625,10 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
             arg->fContent.Append(fDefaultPageCont, pos);
             arg->fContent.Append(h_json);
             arg->fContent.Append(fDefaultPageCont.Data() + pos + strlen(hjsontag));
+
+            // by default compress page with zip
+            if (arg->fQuery.Index("nozip")==kNPOS) arg->CompressWithGzip();
+            // arg->SetExtraHeader("Cache-Control", "max-age=10, public");
          }
          arg->SetContentType("text/html");
       }
@@ -635,7 +639,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       if (fDrawPageCont.Length()==0) {
          Int_t len = 0;
          char* buf = ReadFileContent(fDrawPage.Data(), len);
-         if (len>0) fDrawPageCont.Append(buf);
+         if (len>0) fDrawPageCont.Append(buf, len);
          delete buf;
       }
 
