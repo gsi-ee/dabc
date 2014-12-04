@@ -86,6 +86,8 @@ public:
    Bool_t            fIsPostProcessed;//! indicate that value is written
    Bool_t            fIsObjStarted;   //! indicate that object writing started, should be closed in postprocess
    Int_t             fIsSTLcont;      //! indicate if STL container is used
+   Bool_t            fNormalObject;   //! is normal streaming or kind of workaround like string or array
+   Bool_t            fBlobStarted;    //! blob container for custom streamers
    TObjArray         fValues;         //! raw values
    Int_t             fLevel;          //! indent level
 
@@ -100,6 +102,8 @@ public:
       fIsPostProcessed(kFALSE),
       fIsObjStarted(kFALSE),
       fIsSTLcont(0),
+      fNormalObject(kTRUE),
+      fBlobStarted(kFALSE),
       fValues(),
       fLevel(0)
    {
@@ -506,7 +510,7 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
       fValue.Append("\"");
       if (str != 0) fValue.Append(*str);
       fValue.Append("\"");
-   } else if (member->IsSTLContainer()>0) {
+   } else if ((member->IsSTLContainer()==ROOT::kSTLvector) || (member->IsSTLContainer()==ROOT::kSTLlist)) {
 
       if (memberClass)
          ((TClass *)memberClass)->Streamer((void *)ptr, *this);
@@ -686,18 +690,45 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       if (isstd) isstlcont = TClassEdit::IsSTLCont(cl->GetName());
    }
 
-   if (!isarray && !iscollect && !iststring && (fStack.GetLast() >= 0) && isstd && !isstlcont)
+   if (!isarray && !iscollect && !iststring && (fStack.GetLast() >= 0) && isstd && (isstlcont<=0))
       iststring = !strcmp(cl->GetName(),"string");
 
-   if (!isarray) {
-      JsonStartElement();
-   }
+   Bool_t normal_object = !isarray && !iststring && (isstlcont<=0);
 
    TJSONStackObj *stack = Stack();
 
    if (stack && stack->fIsSTLcont) {
       AppendOutput(stack->fIsSTLcont++==1 ? "[" : ",");
+   } else
+   if (stack && stack->fNormalObject && ((fValue.Length()>0) || (stack->fValues.GetLast()>=0))) {
+
+      const char* separ = fArraySepar.Data();
+
+      if (!stack->fBlobStarted) {
+         AppendOutput(fArraySepar.Data(),"\"_blob\"");
+         AppendOutput(fSemicolon.Data());
+         separ = "[";
+         stack->fBlobStarted = kTRUE;
+      }
+
+      for (Int_t k=0;k<=stack->fValues.GetLast();k++) {
+         AppendOutput(separ); separ = fArraySepar.Data();
+         AppendOutput(stack->fValues.At(k)->GetName());
+      }
+
+      if (fValue.Length()>0) {
+         AppendOutput(separ); separ = fArraySepar.Data();
+         AppendOutput(fValue.Data());
+      }
+      fValue.Clear();
+      stack->fValues.Delete();
+
+      AppendOutput(separ);
+   } else
+   if (!isarray) {
+      JsonStartElement();
    }
+
 
    if (obj == 0) {
       AppendOutput("null");
@@ -706,7 +737,7 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
 
 
    // for array and string different handling - they not recognized at the end as objects in JSON
-   if (!isarray && !iststring && !isstlcont) {
+   if (normal_object) {
       // add element name which should correspond to the object
 
       if (check_map) {
@@ -734,7 +765,8 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       Info("JsonWriteObject", "Starting object %p write for class: %s",
            obj, cl->GetName());
 
-   stack->fIsSTLcont = isstlcont ? 1 : 0;
+   stack->fIsSTLcont = (isstlcont>0) ? 1 : 0;
+   stack->fNormalObject = normal_object;
 
    if (iscollect)
       JsonStreamCollection((TCollection *) obj, cl);
@@ -763,14 +795,37 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       else
          AppendOutput(fValue.Data());
    } else {
-      if (stack->fValues.GetLast() >= 0)
-         Error("JsonWriteObject", "Non-empty values %d for class %s",
-               stack->fValues.GetLast() + 1, cl->GetName());
+
+      if ((stack->fValues.GetLast() >= 0) || (fValue.Length()>0)) {
+
+         const char* separ = fArraySepar.Data();
+
+         if (!stack->fBlobStarted) {
+            AppendOutput(fArraySepar.Data(),"\"_blob\"");
+            AppendOutput(fSemicolon.Data());
+            separ = "[";
+            stack->fBlobStarted = kTRUE;
+         }
+         for (Int_t k=0;k<=stack->fValues.GetLast();k++) {
+            AppendOutput(separ); separ = fArraySepar.Data();
+            AppendOutput(stack->fValues.At(k)->GetName());
+         }
+
+         if (fValue.Length()>0) {
+            AppendOutput(separ);
+            AppendOutput(fValue.Data());
+         }
+      }
+
+      fValue.Clear();
+      stack->fValues.Delete();
+
+      if (stack->fBlobStarted) AppendOutput("]");
    }
 
    PopStack();
 
-   if (!isarray && !iststring && !isstlcont) {
+   if (normal_object) {
       AppendOutput(0, "}");
    }
 }
@@ -824,6 +879,7 @@ void TBufferJSON::JsonStreamCollection(TCollection *col, const TClass *)
       AppendOutput(sopt.Data());
       /* fJsonrCnt++; */ // account array of options
    }
+   fValue.Clear();
 }
 
 

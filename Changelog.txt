@@ -2,9 +2,15 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+4.12.2014
+1. In TBufferJSON try to write unstored data in _blob field, test with std::map
+2. Start JSROOT version 3.2, fix display problem in css. 
+
+
 3.12.2014
 1. Fix drawing of TH2 histogram - minimal bin should be draw when not zero
 2. Support ADC printing in hldprint
+3. 'Tag' JSROOT version 3.1, organize root.cern.ch/js directory
 
 
 2.12.2014
