@@ -271,6 +271,9 @@ void *TFastCgi::run_func(void *args)
          FCGX_ROOT_send_file(&request, (const char *) arg.GetContent());
       } else {
 
+         // TODO: check in request header that gzip encoding is supported
+         if (arg.GetZipping()>0) arg.CompressWithGzip();
+
          arg.FillHttpHeader(hdr, "Status:");
          FCGX_FPrintF(request.out, hdr.Data());
 

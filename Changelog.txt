@@ -5,6 +5,9 @@ about current functionality of the framework.
 5.12.2014
 1. Insert into draw.htm root.json request. Avoid additional requests when drawing object.
 2. First try to specify "Cache-Control: max-age=3600", use for js and css files
+3. Perform content zipping in civetweb/fastcgi threads, reduce load on main thread
+4. For js/cs files specify optional zipping - when they are longer than 10K
+5. One could specify any number of additional headers in reply 
 
 
 4.12.2014

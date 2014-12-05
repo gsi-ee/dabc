@@ -44,9 +44,9 @@ protected:
    TCondition fCond;            //! condition used to wait for processing
 
    TString fContentType;        //! type of content
-   TString fContentEncoding;    //! type of content encoding
-   TString fExtraHeader;        //! extra line which could be append to http response
+   TString fHeader;             //! response header like ContentEncoding, Cache-Control and so on
    TString fContent;            //! text content (if any)
+   Int_t   fZipping;            //! indicate if content should be zipped 0 - off, 1 - when request header supports
 
    void *fBinData;              //! binary data, assigned with http call
    Long_t fBinDataLength;       //! length of binary data
@@ -107,10 +107,14 @@ public:
    {
       SetContentType("_404_");
    }
-   void SetFile()
+
+   // indicate that http request should response with file content
+   void SetFile(const char* filename = 0)
    {
       SetContentType("_file_");
+      if (filename!=0) fContent = filename;
    }
+
    void SetXml()
    {
       SetContentType("text/xml");
@@ -120,20 +124,39 @@ public:
       SetContentType("application/json");
    }
 
+   void AddHeader(const char* name, const char* value)
+   {
+      fHeader.Append(TString::Format("%s: %s\r\n", name, value));
+   }
+
    // Set encoding like gzip
    void SetEncoding(const char *typ)
    {
-      fContentEncoding = typ;
+      AddHeader("Content-Encoding", typ);
    }
 
+   // Compress content with gzip, provides appropriate header
    Bool_t CompressWithGzip();
+
+   // Set kind of content zipping
+   // 0 - none
+   // 1 - only when supported in request header
+   // 2 - if supported and content size bigger than 10K
+   // 3 - always
+   void SetZipping(Int_t kind)
+   {
+      fZipping = kind;
+   }
+
+   // return zipping
+   Int_t GetZipping() const
+   {
+      return fZipping;
+   }
 
    void SetExtraHeader(const char* name, const char* value)
    {
-      if ((name!=0) && (value!=0))
-         fExtraHeader.Form("%s: %s", name, value);
-      else
-         fExtraHeader.Clear();
+      AddHeader(name, value);
    }
 
    // Fill http header

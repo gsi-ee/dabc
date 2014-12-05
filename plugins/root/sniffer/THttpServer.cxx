@@ -50,9 +50,9 @@ THttpCallArg::THttpCallArg() :
    fQuery(),
    fCond(),
    fContentType(),
-   fContentEncoding(),
-   fExtraHeader(),
+   fHeader(),
    fContent(),
+   fZipping(0),
    fBinData(0),
    fBinDataLength(0)
 {
@@ -109,39 +109,27 @@ void THttpCallArg::SetPathAndFileName(const char *fullpath)
 }
 
 //______________________________________________________________________________
-void THttpCallArg::FillHttpHeader(TString &hdr, const char* header)
+void THttpCallArg::FillHttpHeader(TString &hdr, const char* kind)
 {
    // fill HTTP header
 
-   if (header==0) header = "HTTP/1.1";
+   if (kind==0) kind = "HTTP/1.1";
 
    if ((fContentType.Length() == 0) || Is404()) {
       hdr.Form("%s 404 Not Found\r\n"
                "Content-Length: 0\r\n"
-               "Connection: close\r\n\r\n", header);
-      return;
+               "Connection: close\r\n\r\n", kind);
+   } else {
+      hdr.Form("%s 200 OK\r\n"
+               "Content-Type: %s\r\n"
+               "Connection: keep-alive\r\n"
+               "Content-Length: %ld\r\n"
+               "%s\r\n",
+               kind,
+               GetContentType(),
+               GetContentLength(),
+               fHeader.Data());
    }
-
-   hdr.Form("%s 200 OK\r\n"
-            "Content-Type: %s\r\n"
-            "Connection: keep-alive\r\n"
-            "Content-Length: %ld\r\n",
-            header,
-            GetContentType(),
-            GetContentLength());
-
-   if (fContentEncoding.Length() > 0) {
-      hdr.Append("Content-Encoding: ");
-      hdr.Append(fContentEncoding);
-      hdr.Append("\r\n");
-   }
-
-   if (fExtraHeader.Length() > 0) {
-      hdr.Append(fExtraHeader);
-      hdr.Append("\r\n");
-   }
-
-   hdr.Append("\r\n");
 }
 
 //______________________________________________________________________________
@@ -627,7 +615,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
             arg->fContent.Append(fDefaultPageCont.Data() + pos + strlen(hjsontag));
 
             // by default compress page with zip
-            if (arg->fQuery.Index("nozip")==kNPOS) arg->CompressWithGzip();
+            if (arg->fQuery.Index("nozip")==kNPOS) arg->SetZipping(2);
             // arg->SetExtraHeader("Cache-Control", "max-age=10, public");
          }
          arg->SetContentType("text/html");
@@ -662,7 +650,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
                arg->fContent.Append(fDrawPageCont.Data() + pos + strlen(rootjsontag));
 
                // by default compress page with zip
-               if (arg->fQuery.Index("nozip")==kNPOS) arg->CompressWithGzip();
+               if (arg->fQuery.Index("nozip")==kNPOS) arg->SetZipping(2);
             } else {
                arg->fContent = fDrawPageCont;
             }
@@ -673,12 +661,13 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       return;
    }
 
-   if (IsFileRequested(arg->fFileName.Data(), arg->fContent)) {
-      arg->SetFile();
+   TString filename;
+   if (IsFileRequested(arg->fFileName.Data(), filename)) {
+      arg->SetFile(filename);
       return;
    }
 
-   TString filename = arg->fFileName;
+   filename = arg->fFileName;
    Bool_t iszip = kFALSE;
    if (filename.EndsWith(".gz")) {
       filename.Resize(filename.Length()-3);
@@ -726,13 +715,13 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
    if (arg->Is404()) return;
 
-   if (iszip) arg->CompressWithGzip();
+   if (iszip) arg->SetZipping(3);
 
    if (filename == "root.bin") {
       // only for binary data master version is important
       // it allows to detect if streamer info was modified
       const char* parname = fSniffer->IsStreamerInfoItem(arg->fPathName.Data()) ? "BVersion" : "MVersion";
-      arg->SetExtraHeader(parname, Form("%u", (unsigned) fSniffer->GetStreamerInfoHash()));
+      arg->AddHeader(parname, Form("%u", (unsigned) fSniffer->GetStreamerInfoHash()));
    }
 }
 
