@@ -646,7 +646,28 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       if (fDrawPageCont.Length()==0) {
          arg->Set404();
       } else {
-         arg->fContent = fDrawPageCont;
+         const char* rootjsontag = "\"$$$root.json$$$\"";
+
+         Ssiz_t pos = fDrawPageCont.Index(rootjsontag);
+         if (pos==kNPOS) {
+            arg->fContent = fDrawPageCont;
+         } else {
+            void* bindata(0);
+            Long_t bindatalen(0);
+
+            if (fSniffer->Produce(arg->fPathName.Data(), "root.json", arg->fQuery.Data(), bindata, bindatalen)) {
+               arg->fContent.Clear();
+               arg->fContent.Append(fDrawPageCont, pos);
+               arg->fContent.Append((char*) bindata, bindatalen);
+               arg->fContent.Append(fDrawPageCont.Data() + pos + strlen(rootjsontag));
+
+               // by default compress page with zip
+               if (arg->fQuery.Index("nozip")==kNPOS) arg->CompressWithGzip();
+            } else {
+               arg->fContent = fDrawPageCont;
+            }
+            free(bindata);
+         }
          arg->SetContentType("text/html");
       }
       return;

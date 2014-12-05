@@ -2,6 +2,9 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+5.12.2014
+1. Insert into draw.htm root.json request. Avoid additional requests when drawing object.
+
 4.12.2014
 1. In TBufferJSON try to write unstored data in _blob field, test with std::map
 2. Start JSROOT version 3.2, fix display problem in css. 
