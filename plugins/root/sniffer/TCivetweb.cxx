@@ -20,9 +20,28 @@ static int begin_request_handler(struct mg_connection *conn)
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
    TString filename;
-
    if (serv->IsFileRequested(request_info->uri, filename)) {
-      mg_send_file(conn, filename.Data());
+      if ((filename.Index(".js")!=kNPOS) || (filename.Index(".css")!=kNPOS)) {
+         THttpCallArg arg;
+         Int_t length = 0;
+         char *buf = THttpServer::ReadFileContent(filename.Data(), length);
+         if (buf==0) {
+            arg.Set404();
+         } else {
+            arg.SetContentType(THttpServer::GetMimeType(filename.Data()));
+            arg.SetBinData(buf, length);
+            arg.SetExtraHeader("Cache-Control", "max-age=3600");
+            arg.CompressWithGzip();
+         }
+         TString hdr;
+         arg.FillHttpHeader(hdr, "HTTP/1.1");
+         mg_printf(conn, "%s", hdr.Data());
+
+         if (arg.GetContentLength() > 0)
+            mg_write(conn, arg.GetContent(), (size_t) arg.GetContentLength());
+      } else {
+         mg_send_file(conn, filename.Data());
+      }
       return 1;
    }
 
