@@ -655,7 +655,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
             void* bindata(0);
             Long_t bindatalen(0);
 
-            if (fSniffer->Produce(arg->fPathName.Data(), "root.json", arg->fQuery.Data(), bindata, bindatalen)) {
+            if (fSniffer->Produce(arg->fPathName.Data(), "root.json", "compact=3", bindata, bindatalen)) {
                arg->fContent.Clear();
                arg->fContent.Append(fDrawPageCont, pos);
                arg->fContent.Append((char*) bindata, bindatalen);
