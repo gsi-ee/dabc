@@ -16,7 +16,7 @@
 	outline: outset medium;
 	position: fixed;
 	top: 2px;
-	min-height: 70px;
+	min-height: 147px;
 	left: 2px;
 	width: 34.5%;
 	text-align: center;
@@ -28,8 +28,8 @@
 #daq_log {
 	outline: outset medium;
 	position: fixed;
-	top: 79px;
-	height: 268px;
+	top: 155px;
+	height: 198px;
 	left: 2px;
 	width: 34.5%;
 	text-align: left;
@@ -214,30 +214,46 @@
 							title="Stop  Acquisition via soft trigger 15">Stop
 							acquisition</button>
 					</td>
-					<!-- <!-- <td style="height: 30px">
-						<button id="buttonInitAcquisition"
-							title="Re-Initialize  Acquisition">Init acquisition</button>
-					</td> --> 
-					<td>
-					<form id="mbscmd_form" accept-charset="utf-8">
-					<label for="commandMBS" title="Input mbs command">
-							mbs> </label><input id="commandMBS" type="text" value="">
-						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
-					</form>
-					</td>
+					<td style="height: 30px">
+						<button id="buttonStartupAcquisition"
+							title="Execute startup.scom script">Startup</button>
+					</td> 
+					<td style="height: 30px">
+						<button id="buttonShutdownAcquisition"
+							title="Execute shutdown.scom script">Shutdown</button>
+					</td> 
 					<td><input id="ShowGosipToggle" type="checkbox" checked="checked"><label
-						for="ShowGosipToggle" style="height: 30px" title="Show Gosip command dock">
+						for="ShowGosipToggle" style="height: 30px" title="Show/Hide Gosip command dock">
 							Show gosip command panel?</label></td>	
 							
+					
+				</tr>
+				<tr> 
+				<td colspan=5> &nbsp;</td>
+				</tr>
+				<tr> 
+				<td colspan=5> &nbsp;</td>
+				</tr>
+				
+				<tr>
+				<td colspan=4> <form id="mbscmd_form" accept-charset="utf-8">
+					<label for="commandMBS" title="Input mbs command">
+							mbs> </label><input id="commandMBS" type="text" size="35" value="">
+						<button id="buttonExecuteMBS" title="Execute MBS command" type="submit">Execute</button>
+					</form> </td>
 					<td><input id="MbsLoglength" type="text"  value="100"
 						class="MySpinnerStyle"><label for="MbsLoglength"
 							title="Specify length of MBS command logging history"> Log history</label></td>
 					
-					
-					
 				</tr>
+				
+				
+				
 			</tbody>
 		</table>
+		
+		
+		
 	</div>
 
 	<div id="daq_log">

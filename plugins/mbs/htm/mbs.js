@@ -550,22 +550,40 @@ $(function() {
 			});
 	
 ////////// startup command will not work at the moment:	
-//	$("#buttonInitAcquisition").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(function() {
-//		var requestmsg = "Really Initialize Acquisition?";
-//		var response = confirm(requestmsg);
-//		if (!response)
-//			return;
-//
-//		MBS.DabcCommand("CmdMbs","cmd=\@startup",function(
-//				result) {
-//			MyDisplay.SetStatusMessage(result ? "Init Acquisition (@startup) command sent."
-//					: "Init Acquisition FAILED.");
-//			MyDisplay.RefreshMonitor();
-//			
-//		});
-//
-//	});
+	$("#buttonStartupAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-n MyButtonStyle"}}).click(function() {
+		var requestmsg = "Really Initialize Acquisition?";
+		var response = confirm(requestmsg);
+		if (!response)
+			return;
 
+		MBS.DabcCommand("CmdMbs","cmd=\@startup",function(
+				result) {
+			MyDisplay.SetStatusMessage(result ? "Init Acquisition (@startup) command sent."
+					: "Init Acquisition FAILED.");
+			MyDisplay.RefreshMonitor();
+			
+		});
+
+	});
+
+	$("#buttonShutdownAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-s MyButtonStyle"}}).click(function() {
+		var requestmsg = "Really Shut down Acquisition?";
+		var response = confirm(requestmsg);
+		if (!response)
+			return;
+
+		MBS.DabcCommand("CmdMbs","cmd=\@shutdown",function(
+				result) {
+			MyDisplay.SetStatusMessage(result ? "Shutdwon Acquisition (@shutdown) command sent."
+					: "Shutdown Acquisition FAILED.");
+			MyDisplay.RefreshMonitor();
+			
+		});
+
+	});
+
+	
+	
 	$("#buttonStartFile").button({text: false, icons: { primary: "ui-icon-seek-next MyButtonStyle"}});
 	
 	$("#FileAutoMode").button({text: false, icons: { primary: "ui-icon-star MyButtonStyle"}}).click(function() {
@@ -734,17 +752,7 @@ $(function() {
 					event.preventDefault();
 				});
 	   
-//	   $("#buttonClearMbsLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
-//				function() {
-//						MyDisplay.SetStatusMessage("Cleared mbs logoutput.");
-//						var history=MyDisplay.fMbsLoggingHistory;
-//						MyDisplay.fMbsLoggingHistory=0;
-//						MyDisplay.SetMbsLog();
-//						MyDisplay.RefreshMonitor();
-//						MyDisplay.fMbsLoggingHistory=history;
-//						MyDisplay.SetMbsLog();
-//						 
-//				});		
+
 	   
 	   $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
 				function() {
@@ -765,7 +773,7 @@ $(function() {
 					//	$('#daq_log').height("270px");						}
 					$('#daq_log').css({
 						bottom: "auto",
-						height: "268px"
+						height: "198px"
 						});		
 					   
 					}
@@ -838,7 +846,7 @@ $(function() {
     
     $("#mbs_container").resizable({
         handles: 'e',
-        minWidth: 600,
+        minWidth: 400,
         start: function( event, ui ) {
         	MyDisplay.fMiddleWidth=$("#file_log").width();
         	var middleleft=$("#file_log").position().left;

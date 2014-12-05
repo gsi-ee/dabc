@@ -125,5 +125,17 @@
     background-size: contain;
 }
 
+.ui-button.ui-state-hover .ui-icon.ui-icon-arrowthick-1-s {
+    background-image: url("img/shutanal.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-arrowthick-1-n {
+    background-image: url("img/launchanal.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
 
 
