@@ -46,7 +46,7 @@ protected:
    TString fContentType;        //! type of content
    TString fHeader;             //! response header like ContentEncoding, Cache-Control and so on
    TString fContent;            //! text content (if any)
-   Int_t   fZipping;            //! indicate if content should be zipped 0 - off, 1 - when request header supports
+   Int_t   fZipping;            //! indicate if content should be zipped
 
    void *fBinData;              //! binary data, assigned with http call
    Long_t fBinDataLength;       //! length of binary data
@@ -119,6 +119,7 @@ public:
    {
       SetContentType("text/xml");
    }
+
    void SetJson()
    {
       SetContentType("application/json");
@@ -173,6 +174,7 @@ public:
    {
       return IsContentType("_404_");
    }
+
    Bool_t IsFile() const
    {
       return IsContentType("_file_");
@@ -189,6 +191,7 @@ public:
    {
       return IsBinData() ? fBinDataLength : fContent.Length();
    }
+
    const void *GetContent() const
    {
       return IsBinData() ? fBinData : fContent.Data();

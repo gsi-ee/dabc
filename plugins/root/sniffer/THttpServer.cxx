@@ -70,7 +70,6 @@ THttpCallArg::~THttpCallArg()
    }
 }
 
-
 //______________________________________________________________________________
 void THttpCallArg::SetBinData(void* data, Long_t length)
 {

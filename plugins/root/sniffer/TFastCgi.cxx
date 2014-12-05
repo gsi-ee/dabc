@@ -15,7 +15,6 @@
 #include <unistd.h>
 #endif
 
-
 #ifndef HTTP_WITHOUT_FASTCGI
 
 #include "fcgiapp.h"
