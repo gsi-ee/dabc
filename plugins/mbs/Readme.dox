@@ -180,5 +180,60 @@ At the moment logger is available in the MBS only together with the prompter.
 If enabled, module will readout log information and put into log record.
 
 
+### MBS/DABC command port (port 6019)
+This is a dedicated command socket to receive commands from mbs in the interactive dispatcher task.
+
+
+### How to connect mbs dispatcher with dabc web server:
+(Note: this requires MBS versions >=V6.3!)
+
+Two possibilities:
+
+1) Start mbs dispatcher as normal ("mbs"). Invoke mbs commands "start cmdrem" (port 6019) and "start logrem" (port 6007).
+Then run dabc process with web server that connects to these ports: "dabc_exe web-mbs-gui.xml" 
+(Please specify correct mbs node name in example xml configuration!)
+
+2) start mbs dispatcher with option: "mbs -dabc". This will open command and log sockets at startup. Then
+run  "dabc_exe web-mbs-gui.xml". The advantage of this method is that all startup commands can be send from
+web interface.
+
+
+### Customized web gui for kinpex/pexor node
+In addition to the generic web interface, a control gui implementation is provided that provides buttons and
+log panels to monitor and control a single node mbs with Linux PC and pexor/kinpex hardware.
+An example configuration file of this is \ref plugins/mbs/app/web-mbs-gui.xml
+To start specialized web gui, select in hierarchy treeview of the generic dabc website the
+entry "MBS/<nodename>/ControlGUI". This will open control gui in separate window/tab.
+
+#### Main Sections of Control gui:
+##### MBS: 
+- may send any mbs command to the dispatcher by command line
+- shortcut buttons for start acquisition, stop acquisition, @startup, @shutdown commands
+- shows output of logger, specifies history length
+- shows/hides gosip panel
+- background color indicates acquisition state of mbs (green: running, red: stopped)
+
+##### GOSIP:
+- may send any gosipcmd call to remote node
+- shows output of gosipcmd execution, my clear output history
+- starts user gui (POLAND frontend in this example) in new browser tab/window
+
+
+##### Data Taking:
+- may open and close lmd file on local disk or at rfio server
+- can toggle automatic file creation mode
+- shows output of rate/rash/rast/ratf monitors as in local mbs terminal
+- may specify log output history
+- background color indicates file state of mbs (green: open, red: closed)
+
+##### Display Refresh:
+- acquire update of shown status information from web server
+- may turn on timer with selectable interval for frequent refresh mode
+- background color indicates monitoring state of web gui (green: frequent refresh, red: manual refresh required)
+
+##### Rates Display:
+- shows ratemeters of collector data rate and event rate, and online monitoring data rate at optional stream server socket
+- may switch between gauge style display, or trending graph with selectable history
+
 */
 
