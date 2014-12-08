@@ -6,6 +6,9 @@ about current functionality of the framework.
 1. Specify Cache-Control for most requests to the THttpServer, try to avoid cashing. 
 2. Implement separator between browser and drawing area with jQuery Draggable class
 3. Fix grid layout problems (hide table borders, hide possible overflow) 
+4. Use preserveAspectRatio = none attribute of SVG canvas to scale content when
+   window is resized. It is much faster than recreating complete drawing once again.
+   If relative changes bigger than factor 2, redrawing will be performed anyway.  
 
 
 5.12.2014
