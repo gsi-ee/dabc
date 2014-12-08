@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 8.12.2014
 1. Specify Cache-Control for most requests to the THttpServer, try to avoid cashing. 
+2. Implement separator between browser and drawing area with jQuery Draggable class
 
 
 5.12.2014
