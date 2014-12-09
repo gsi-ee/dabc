@@ -5,6 +5,7 @@ about current functionality of the framework.
 9.12.2014
 1. When redraw canvas or pad, correctly update viewbox and viewport of
    correspondent SVG elements.
+2. Implement 'noselect' option to hide file-select elements in browser
 
 
 8.12.2014
