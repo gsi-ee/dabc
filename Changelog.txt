@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+9.12.2014
+1. When redraw canvas or pad, correctly update viewbox and viewport of
+   correspondent SVG elements.
+
+
 8.12.2014
 1. Specify Cache-Control for most requests to the THttpServer, try to avoid cashing. 
 2. Implement separator between browser and drawing area with jQuery Draggable class
