@@ -4,7 +4,8 @@ about current functionality of the framework.
 
 10.12.2014
 1. Optimize file reading in JavaScript, use small header cache to read 1024 bytes
-   of data in advance 
+   of file data in advance
+2. Reuse TDirectory streamer for TFile, eliminate unused TFile::ReadHeader method    
 
 
 9.12.2014
