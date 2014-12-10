@@ -2,12 +2,17 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+10.12.2014
+1. Optimize file reading in JavaScript, use small header cache to read 1024 bytes
+   of data in advance 
+
+
 9.12.2014
 1. When redraw canvas or pad, correctly update viewbox and viewport of
    correspondent SVG elements.
 2. Implement 'noselect' option to hide file-select elements in browser
 3. Chrome has problem with binary files cashing - lets help him.
-   Introduce extra stamp parameter if file requests to avoid cashing on the browser. 
+   Introduce extra stamp parameter in file requests to avoid cashing on the browser. 
 
 
 8.12.2014
