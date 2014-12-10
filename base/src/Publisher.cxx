@@ -666,8 +666,10 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 
       dabc::Hierarchy h = GetWorkItem(path);
 
+      DOUT3("Get names list %s query %s", path.c_str(), cmd.GetStr("query").c_str());
+
       // if item was not found directly, try to ask producer if it can be extended
-      if (h.null() || h.HasField(dabc::prop_more)) {
+      if (h.null() || h.HasField(dabc::prop_more) || (cmd.GetStr("query").find("more")!=std::string::npos)) {
          if (!RedirectCommand(cmd, path)) return cmd_false;
          DOUT3("ITEM %s CAN PROVIDE MORE!!!", path.c_str());
          return cmd_postponed;

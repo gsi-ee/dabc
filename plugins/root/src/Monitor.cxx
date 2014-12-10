@@ -139,7 +139,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
-   DOUT3("Request item %s file %s ", itemname.c_str(), binkind.c_str());
+   DOUT0("Request item %s file %s ", itemname.c_str(), binkind.c_str());
 
    dabc::Buffer buf;
 
@@ -220,14 +220,11 @@ void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
    dabc::Command cmd;
 
    while (doagain) {
-
       if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
          cmd.Reply(ProcessGetBinary(sniff, cmd));
       } else
       if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
          std::string item = cmd.GetStr("subitem");
-
-         DOUT3("Request extended ROOT hierarchy %s", item.c_str());
 
          dabc::Hierarchy res;
 

@@ -368,8 +368,6 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       content_type = "application/json";
 
-      DOUT3("Get global names list path %s", pathname.c_str());
-
       if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("json", pathname, query, content_str)) return false;
 
    } else {

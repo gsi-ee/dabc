@@ -8,6 +8,9 @@ about current functionality of the framework.
 2. Reuse TDirectory streamer for TFile, eliminate unused TFile::ReadHeader method    
 3. When convert string to integer check that no symbols like ',' or '.' present.
    Otherwise sscanf will return integer part without error message.
+4. If 'more' parameter specified in h.json query, it will be redirected to data source
+   to provide maximal information about object. Analog to _more property. 
+5. Export _title for data member when scanning objects members.      
 
 
 9.12.2014
