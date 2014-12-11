@@ -1052,7 +1052,7 @@
          if (!func && (separ>0) && window[statusfuncname.slice(0, separ)]) 
             func = window[statusfuncname.slice(0, separ)][statusfuncname.slice(separ+1)];
          if ((typeof func == 'function') && $('#status-div').empty()) {
-            this.CreateStatus(25);
+            this.CreateStatus(33);
             func('status-div', statusitem); 
          }
       }
