@@ -35,7 +35,7 @@
                spin: function( event, ui ) { h.SetDisplay('grid'+ui.value,'right-div'); }
             }); 
          
-            var h = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
+            DABC.hpainter = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
             
             var monitor = JSROOT.GetUrlOption("monitoring");
             
@@ -44,7 +44,7 @@
                document.getElementById("monitoring").disabled = "disabled";
             } 
                
-            if (h.HistoryDepth(true) >=0) {
+            if (DABC.hpainter.HistoryDepth(true) >=0) {
                document.getElementById("show_history").checked = true;
                document.getElementById("show_history").disabled = "disabled";
             }
@@ -66,25 +66,25 @@
                for (var i in opts) optionsarr.push(opts[i]);
             }
             
-            h.SetDisplay('grid2x2', 'right-div');
+            DABC.hpainter.SetDisplay('grid2x2', 'right-div');
             
-            h.OpenOnline("", function() {
-               h.displayAll(itemsarr, optionsarr);
+            DABC.hpainter.OpenOnline("", function() {
+               DABC.hpainter.displayAll(itemsarr, optionsarr);
             });
             
-            h.EnableMonitoring(monitor!=null);
+            DABC.hpainter.EnableMonitoring(monitor!=null);
             $("#monitoring")
                .prop('checked', monitor!=null)
                .click(function() {
-                  h.EnableMonitoring(this.checked);
-                  if (this.checked) h.UpdateDabcElements();
+                  DABC.hpainter.EnableMonitoring(this.checked);
+                  if (this.checked) DABC.hpainter.UpdateDabcElements();
                });
          
-            setInterval(function() { h.UpdateDabcElements(); }, h.MonitoringInterval());
+            setInterval(function() { DABC.hpainter.UpdateDabcElements(); }, DABC.hpainter.MonitoringInterval());
             
-            JSROOT.RegisterForResize(h);
+            JSROOT.RegisterForResize(DABC.hpainter);
             
-            JSROOT.ConfigureVSeparator(hpainter);
+            JSROOT.ConfigureVSeparator(DABC.hpainter);
             
             // h.CreateStatus(25);
        }

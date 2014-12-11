@@ -11,6 +11,7 @@
    
       function buildGUI() {
          var dabc = new DABC.HierarchyPainter('dabc');
+         DABC.hpainter = dabc;
          dabc.SetDisplay('grid 1x1',"drawing");
          var drawopt = JSROOT.GetUrlOption("opt");
          dabc.OpenOnline("", function() { dabc.display("", drawopt); });

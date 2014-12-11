@@ -655,8 +655,10 @@
          if ('_kind' in this.jsonnode) {
             var itemname = this.itemname;
             var jsonnode = this.jsonnode;
-            DABC.hpainter.clear();
-            DABC.hpainter.display(itemname, "", jsonnode);
+            if (DABC.hpainter) {
+               DABC.hpainter.clear();
+               DABC.hpainter.display(itemname, "", jsonnode);
+            }
             return;
          }
       }
