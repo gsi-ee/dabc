@@ -1022,9 +1022,15 @@
       
       var cnt = 0;
       var painter = this;
-      //var html = "";
+      var statusitem = null, statusfuncname = null;
       
       this.ForEach(function(h) {
+         if ((statusitem==null) && ('_status' in h)) {
+            statusitem = painter.itemFullName(h);
+            statusfuncname = h['_status'];
+            return;
+         }
+      
          if (h['_kind'] != "DABC.Command") return;
          if (!('_fastcmd' in h)) return;
                
@@ -1040,7 +1046,16 @@
                .click(function() { painter.ExecuteCommand($(this).attr('item')); });
       });
       
-      //$("#fast_buttons").append(html);
+      if (statusitem!=null) {
+         var func = window[statusfuncname];
+         var separ = statusfuncname.indexOf(".");
+         if (!func && (separ>0) && window[statusfuncname.slice(0, separ)]) 
+            func = window[statusfuncname.slice(0, separ)][statusfuncname.slice(separ+1)];
+         if ((typeof func == 'function') && $('#status-div').empty()) {
+            this.CreateStatus(25);
+            func('status-div', statusitem); 
+         }
+      }
    }
    
    
