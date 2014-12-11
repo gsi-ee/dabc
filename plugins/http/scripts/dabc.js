@@ -20,6 +20,8 @@
    
    DABC.loadGauge = false;
    
+   DABC.hpainter = null;  // hiearchy painter
+   
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
 
@@ -653,8 +655,8 @@
          if ('_kind' in this.jsonnode) {
             var itemname = this.itemname;
             var jsonnode = this.jsonnode;
-            JSROOT.H('dabc').clear();
-            JSROOT.H('dabc').display(itemname, "", jsonnode);
+            DABC.hpainter.clear();
+            DABC.hpainter.display(itemname, "", jsonnode);
             return;
          }
       }
@@ -1154,28 +1156,6 @@
       if ((item!=null) && ('_editor' in item)) {
          JSROOT.Painter.menuitem(menu,"Editor", function() { window.open(editorurl); });
       } 
-   }
-   
-   DABC.HierarchyPainter.prototype.ConfigureSeparator = function() {
-      var h = this;
-   
-      function adjustSize(left) {
-         var diff = $("#left-div").outerWidth() - $("#left-div").width();
-         $("#separator-div").css('left', left.toString() + "px");
-         $("#left-div").width(left-diff-1);
-         $("#right-div").css('left',(left+4).toString() + "px");
-         h.CheckResize();
-      }
-
-      $("#separator-div").draggable({
-         axis: "x" , zIndex: 100, cursor: "ew-resize",
-         helper : function() { return $("#separator-div").clone().css('background-color','grey'); },
-         stop: function(event,ui) { adjustSize(ui.position.left); }
-      });
-
-      var w0 = Math.round($(window).width() * 0.2);
-      if (w0<300) w0 = Math.min(300, Math.round($(window).width() * 0.5));
-      adjustSize(w0);
    }
    
    DABC.HierarchyPainter.prototype.CreateStatus = function(height) {

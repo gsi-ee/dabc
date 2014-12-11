@@ -7,7 +7,9 @@ about current functionality of the framework.
 2. Provide possibility to create special div for status information
 3. Eliminate usage of JSROOT.H() in JSRootInterface.js, hierarchy object 
    remains also when reset button is pressed
-4. Disable cacing in http::Server
+4. Disable caching in http::Server
+5. Completely eliminate usage of JSROOT.H()
+6. Use central function to handle vertical separator 
 
 
 10.12.2014
