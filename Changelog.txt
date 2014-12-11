@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+11.12.2014
+1. Use new draggable separator in dabc-specific main.htm
+
+
 10.12.2014
 1. Optimize file reading in JavaScript, use small header cache to read 1024 bytes
    of file data in advance

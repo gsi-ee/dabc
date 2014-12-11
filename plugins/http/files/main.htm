@@ -14,7 +14,8 @@
       function createGUI() {
             var guiCode =
                  '<div id="left-div" class="column">'+
-                 '  <h1>Objects hierarchy</h1>'+
+                 '  <h2>Objects hierarchy</h2>'+
+                 "  <p><font face='Verdana' size='1px'><a href='http://root.cern.ch/js/jsroot.html'>JSROOT</a> version <span style='color:green'><b>" + JSROOT.version + "</b></span></font></p>" + 
                  '  Hierarchy in <a href="h.json">json</a> and <a href="h.xml">xml</a> format<br/>'+
                  '  <div id="fast_buttons"></div><br/>'+        
                  '  <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring'+        
@@ -81,37 +82,25 @@
          
             setInterval(function() { h.UpdateDabcElements(); }, h.MonitoringInterval());
             
-            var drag_sum = 0;
-   
-            var drag_move = d3.behavior.drag()
-              .origin(Object)
-              .on("dragstart", function() {
-                 d3.event.sourceEvent.preventDefault();
-                 drag_sum = 0;
-               })
-              .on("drag", function() {
-                 d3.event.sourceEvent.preventDefault();
-                 drag_sum += d3.event.dx;
-                 d3.event.sourceEvent.stopPropagation();
-               })
-               .on("dragend", function() {
-                  d3.event.sourceEvent.preventDefault();
-         
-                 var width = d3.select("#left-div").style('width');
-                 width = (parseInt(width.substr(0, width.length - 2)) + Number(drag_sum)).toString() + "px";
-                 d3.select("#left-div").style('width', width);
-         
-                 var left = d3.select("#separator-div").style('left');
-                 left = parseInt(left.substr(0, left.length - 2)) + Number(drag_sum);
-                 d3.select("#separator-div").style('left',left.toString() + "px");
-                 d3.select("#right-div").style('left',(left+6).toString() + "px");
-         
-                 h.CheckResize();
-               });
-   
-            d3.select("#separator-div").call(drag_move);
-            
             JSROOT.RegisterForResize(h);
+            
+            function adjustSize(left) {
+               var diff = $("#left-div").outerWidth() - $("#left-div").width();
+               $("#separator-div").css('left', left.toString() + "px");
+               $("#left-div").width(left-diff-1);
+               $("#right-div").css('left',(left+4).toString() + "px");
+               h.CheckResize();
+            }
+
+            $("#separator-div").draggable({
+               axis: "x" , zIndex: 100, cursor: "ew-resize",
+               helper : function() { return $("#separator-div").clone().css('background-color','grey'); },
+               stop: function(event,ui) { adjustSize(ui.position.left); }
+            });
+
+            var w0 = Math.round($(window).width() * 0.2);
+            if (w0<300) w0 = Math.min(300, Math.round($(window).width() * 0.5));
+            adjustSize(w0);
        }
 
    </script>

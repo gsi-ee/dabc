@@ -15,36 +15,26 @@ h4 { font-size: 14pt; font-weight:bold; color:#C71585; margin-bottom:2px; margin
 h5 { font-size: 10pt; font-weight:bold; color:#6495ED; margin-bottom:2px; }
 h6 { font-size: 10pt; font-weight:bold; color:navy }
 
-body {
-   margin-left: 5px;
-   margin-right: 5px;
-   margin-top: 5px;
-   margin-bottom: 5px;
-}
+body { margin: 1px; }
 
 textarea { font-size: 100%;}
 
-p { margin-top: 6px; padding: 0 10px 1em; }
+p { margin-top: 5px; margin-bottom: 5px; }
 
-#main { left: 3px; right: 76%; overflow: auto; }
+#left-div { left: 1px; width: 300px; padding: 5px; overflow: auto; }
 
-#left-div { left: 2px; width: 300px; margin-right: 1px; overflow: auto; }
+#separator-div { left: 305px; width: 4px; border: 0px; position: absolute; top: 1px; bottom: 1px; background-color: white; cursor: ew-resize }
 
-#separator-div { left: 304px; width: 4px; width: 2px; background-color: white; cursor: ew-resize } 
+#right-div { left: 310px; right: 1px; margin-left: 0px; }
 
-#right-div {
-   left: 310px;
-   right: 2px;
-   margin-left: 1px;
-}
+#browser { font-size:70%; }
 
 div.column {
    border: 1px dotted #666;
    background-color: #E6E6FA;
    position: absolute;
-   top: 3px;
-   bottom: 3px;
-   padding: 8px;
+   top: 1px;
+   bottom: 1px;
 }
 
 input.tb {
