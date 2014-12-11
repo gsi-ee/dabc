@@ -1140,5 +1140,56 @@
          JSROOT.Painter.menuitem(menu,"Editor", function() { window.open(editorurl); });
       } 
    }
+   
+   DABC.HierarchyPainter.prototype.ConfigureSeparator = function() {
+      var h = this;
+   
+      function adjustSize(left) {
+         var diff = $("#left-div").outerWidth() - $("#left-div").width();
+         $("#separator-div").css('left', left.toString() + "px");
+         $("#left-div").width(left-diff-1);
+         $("#right-div").css('left',(left+4).toString() + "px");
+         h.CheckResize();
+      }
+
+      $("#separator-div").draggable({
+         axis: "x" , zIndex: 100, cursor: "ew-resize",
+         helper : function() { return $("#separator-div").clone().css('background-color','grey'); },
+         stop: function(event,ui) { adjustSize(ui.position.left); }
+      });
+
+      var w0 = Math.round($(window).width() * 0.2);
+      if (w0<300) w0 = Math.min(300, Math.round($(window).width() * 0.5));
+      adjustSize(w0);
+   }
+   
+   DABC.HierarchyPainter.prototype.CreateStatus = function(height) {
+      $('#mainGUI').append('<div id="separator-status" class="separator" style="left:1px; right:1px;  height:4px; bottom:16px; cursor: ns-resize"></div>');
+      $('#mainGUI').append('<div id="status-div" class="column" style="left:1px; right:1px; height:15px; bottom:1px"></div>');
+
+      var h = this;
+      
+      function adjustSize(height) {
+         $('#left-div').css('bottom', height + 'px');
+         $('#separator-div').css('bottom', height + 'px');
+         $('#right-div').css('bottom', height + 'px');
+         $('#separator-status').css('bottom', (height - 4) + 'px');
+         $('#status-div').css('height', (height - 5) + 'px');
+      
+         h.CheckResize();
+          //var diff = $("#left-div").outerWidth() - $("#left-div").width();
+          //$("#separator-div").css('left', left.toString() + "px");
+          //$("#left-div").width(left-diff-1);
+          //$("#right-div").css('left',(left+4).toString() + "px");
+      }
+
+      $("#separator-status").draggable({
+         axis: "y" , zIndex: 100, cursor: "ns-resize",
+         helper : function() { return $("#separator-status").clone().css('background-color','grey'); },
+         stop: function(event,ui) { adjustSize($(window).height() - ui.position.top); }
+      });
+      
+      adjustSize(height);
+   }
 
 })();

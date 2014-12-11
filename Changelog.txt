@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 11.12.2014
 1. Use new draggable separator in dabc-specific main.htm
+2. Provide possibility to create special div for status information
 
 
 10.12.2014
