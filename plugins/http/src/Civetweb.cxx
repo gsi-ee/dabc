@@ -129,8 +129,8 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn)
    if (!server->Process(request_info->uri, request_info->query_string,
                         content_type, content_header, content_str, content_bin)) {
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
-                "Content-Length: 0\r\n"
-                "Connection: close\r\n\r\n");
+                      "Content-Length: 0\r\n"
+                      "Connection: close\r\n\r\n");
    } else
 
    if (content_type=="__file__") {

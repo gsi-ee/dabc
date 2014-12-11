@@ -477,5 +477,8 @@ bool http::Server::Process(const char* uri, const char* _query,
 #endif
    }
 
+   // exclude caching of dynamic data
+   content_header.append("Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0\r\n");
+
    return true;
 }

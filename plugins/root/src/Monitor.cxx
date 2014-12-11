@@ -139,7 +139,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
-   DOUT0("Request item %s file %s ", itemname.c_str(), binkind.c_str());
+   DOUT2("Request item %s file %s ", itemname.c_str(), binkind.c_str());
 
    dabc::Buffer buf;
 
