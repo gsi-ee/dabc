@@ -1056,7 +1056,7 @@
          if (!func && (separ>0) && window[statusfuncname.slice(0, separ)]) 
             func = window[statusfuncname.slice(0, separ)][statusfuncname.slice(separ+1)];
          if ((typeof func == 'function') && $('#status-div').empty()) {
-            this.CreateStatus(33);
+            this.CreateStatus(28);
             func('status-div', statusitem); 
          }
       }
@@ -1165,20 +1165,18 @@
       $('#mainGUI').append('<div id="separator-status" class="separator" style="left:1px; right:1px;  height:4px; bottom:16px; cursor: ns-resize"></div>');
       $('#mainGUI').append('<div id="status-div" class="column" style="left:1px; right:1px; height:15px; bottom:1px"></div>');
 
-      var h = this;
+      var painter = this;
       
       function adjustSize(height) {
-         $('#left-div').css('bottom', height + 'px');
-         $('#separator-div').css('bottom', height + 'px');
-         $('#right-div').css('bottom', height + 'px');
-         $('#separator-status').css('bottom', (height - 4) + 'px');
-         $('#status-div').css('height', (height - 5) + 'px');
+         var h = JSROOT.touches ? 10 : 4;
+         
+         $('#left-div').css('bottom', height + h + 'px');
+         $('#separator-div').css('bottom', height + h + 'px');
+         $('#right-div').css('bottom', height + h + 'px');
+         $('#separator-status').css('bottom', height + 'px').height(h);
+         $('#status-div').height(height - 1);
       
-         h.CheckResize();
-          //var diff = $("#left-div").outerWidth() - $("#left-div").width();
-          //$("#separator-div").css('left', left.toString() + "px");
-          //$("#left-div").width(left-diff-1);
-          //$("#right-div").css('left',(left+4).toString() + "px");
+         painter.CheckResize();
       }
 
       $("#separator-status").draggable({

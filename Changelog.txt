@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 12.12.2014
 1. Remove unused HierarchyPainter.FindPainter method.
+2. Add touch-punch.min.js to process touch events in jQuery-ui
 
 
 11.12.2014
