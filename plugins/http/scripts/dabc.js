@@ -1050,7 +1050,7 @@
                .click(function() { painter.ExecuteCommand($(this).attr('item')); });
       });
       
-      if (statusitem!=null) {
+      if ((statusitem!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
          var func = window[statusfuncname];
          var separ = statusfuncname.indexOf(".");
          if (!func && (separ>0) && window[statusfuncname.slice(0, separ)]) 
@@ -1066,7 +1066,6 @@
    DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
    {
       var node = this.Find(itemname);
-
       if ((node==null) || !this.CreateDisplay()) return;
 
       var mdi = this['disp'];
@@ -1076,12 +1075,14 @@
       var history = node["_history"];
       if (!kind) kind = "";
 
-      var objpainter = mdi.FindPainter(itemname);
+      var isdabc = false;
 
-      if (objpainter && objpainter['is_dabc']) { 
-         objpainter.ClickItem();
-         return;
-      }
+      mdi.ForEachPainter(function(p) {
+         if (p.GetItemName() != itemname) return;
+         if (p['is_dabc']) { p.ClickItem(); isdabc = true; } 
+      });
+
+      if (isdabc) return;
       
       if ((kind.indexOf("ROOT.") == 0) && (view != "png"))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);

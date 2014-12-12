@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+12.12.2014
+1. Remove unused HierarchyPainter.FindPainter method.
+
+
 11.12.2014
 1. Use new draggable separator in dabc-specific main.htm
 2. Provide possibility to create special div for status information
