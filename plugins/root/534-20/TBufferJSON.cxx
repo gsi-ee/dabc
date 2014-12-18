@@ -203,7 +203,9 @@ TString TBufferJSON::ConvertToJSON(const void *obj, const TClass *cl,
 
    buf.SetCompact(compact);
 
-   return buf.JsonWriteAny(obj, cl);
+   buf.JsonWriteObject(obj, cl);
+
+   return buf.fOutBuffer;
 }
 
 //______________________________________________________________________________
@@ -228,19 +230,6 @@ TString TBufferJSON::ConvertToJSON(const void *ptr, TDataMember *member,
    buf.SetCompact(compact);
 
    return buf.JsonWriteMember(ptr, member, mcl);
-}
-
-//______________________________________________________________________________
-TString TBufferJSON::JsonWriteAny(const void *obj, const TClass *cl)
-{
-   // Convert object of any class to JSON structures
-   // Returns string with converted object
-
-   fOutBuffer.Clear();
-
-   JsonWriteObject(obj, cl);
-
-   return fOutBuffer;
 }
 
 //______________________________________________________________________________

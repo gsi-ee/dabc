@@ -407,10 +407,7 @@ protected:
 
    // end redefined protected virtual functions
 
-   TString          JsonWriteAny(const void *obj, const TClass *cl);
-
    TString          JsonWriteMember(const void *ptr, TDataMember *member, TClass *memberClass);
-
 
    TJSONStackObj   *PushStack(Int_t inclevel = 0);
    TJSONStackObj   *PopStack();
