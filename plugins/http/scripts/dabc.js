@@ -1182,7 +1182,7 @@
       $("#separator-status").draggable({
          axis: "y" , zIndex: 100, cursor: "ns-resize",
          helper : function() { return $("#separator-status").clone().css('background-color','grey'); },
-         stop: function(event,ui) { adjustSize($(window).height() - ui.position.top); }
+         stop: function(event,ui) { event.stopPropagation(); adjustSize($(window).height() - ui.position.top); }
       });
       
       adjustSize(height);

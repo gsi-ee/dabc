@@ -5,7 +5,8 @@ about current functionality of the framework.
 19.12.2014
 1. In TBufferJSON write element name immediately (not in post-processing)
 2. When writing objects arrays, only disable post-processing.
-
+3. When use separator as jquery draggable, stop event propogation.
+ 
 
 12.12.2014
 1. Remove unused HierarchyPainter.FindPainter method.
