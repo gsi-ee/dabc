@@ -624,24 +624,19 @@ void TBufferJSON::AppendOutput(const char *line0, const char *line1)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::JsonStartElement()
+void TBufferJSON::JsonStartElement(const TStreamerElement *elem)
+{
+   AppendOutput(",", "\"");
+   AppendOutput(elem->GetName());
+   AppendOutput("\"");
+   AppendOutput(fSemicolon.Data());
+}
+
+//______________________________________________________________________________
+void TBufferJSON::JsonDisablePostprocessing()
 {
    TJSONStackObj *stack = Stack();
-   if ((stack != 0) && stack->IsStreamerElement() && !stack->fIsObjStarted) {
-
-      if ((fValue.Length() > 0) || (stack->fValues.GetLast() >= 0))
-         Error("JsonWriteObject", "Non-empty value buffer when start writing object");
-
-      stack->fIsPostProcessed = kTRUE;
-      stack->fIsObjStarted = kTRUE;
-
-      if (!stack->fIsBaseClass) {
-         AppendOutput(",", "\"");
-         AppendOutput(stack->fElem->GetName());
-         AppendOutput("\"");
-         AppendOutput(fSemicolon.Data());
-      }
-   }
+   if (stack!=0) stack->fIsPostProcessed = kTRUE;
 }
 
 //______________________________________________________________________________
@@ -715,9 +710,8 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       AppendOutput(separ);
    } else
    if (!isarray) {
-      JsonStartElement();
+      JsonDisablePostprocessing();
    }
-
 
    if (obj == 0) {
       AppendOutput("null");
@@ -909,11 +903,8 @@ void  TBufferJSON::WorkWithClass(TStreamerInfo *sinfo, const TClass *cl)
 
       fJsonrCnt++;   // count object, but do not keep reference
 
-      AppendOutput(",", "\"");
-      AppendOutput(stack->fElem->GetName());
-
       stack = PushStack(2);
-      AppendOutput("\" : {", "\"_typename\"");
+      AppendOutput("{", "\"_typename\"");
       AppendOutput(fSemicolon.Data());
       AppendOutput("\"");
       AppendOutput(cl->GetName());
@@ -1060,6 +1051,8 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
    stack->fElemNumber = number;
    stack->fIsElemOwner = (number < 0);
    stack->fIsBaseClass = (base_class != 0);
+
+   if (!stack->fIsBaseClass) JsonStartElement(elem);
 }
 
 //______________________________________________________________________________
@@ -1236,13 +1229,6 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
    Bool_t isOffsetPArray = (elem->GetType() > TStreamerInfo::kOffsetP) && (elem->GetType() < TStreamerInfo::kOffsetP + 20);
 
    Bool_t isTArray = (strncmp("TArray", typname, 6) == 0);
-
-   if (!stack->fIsBaseClass && (elem != 0)) {
-      AppendOutput(",", "\"");
-      AppendOutput(elem->GetName());
-      AppendOutput("\"");
-      AppendOutput(fSemicolon.Data());
-   }
 
    if (isTString || isSTLstring) {
       // just remove all kind of string length information
@@ -2108,17 +2094,16 @@ void TBufferJSON::WriteArrayDouble32(const Double_t *d, Int_t n,
          Int_t index(0);                                                     \
          while (index<n) {                                                   \
             elem = (TStreamerElement*)info->GetElements()->At(startnumber++);\
+            if (index>0) JsonStartElement(elem);                             \
             if (elem->GetType()<TStreamerInfo::kOffsetL) {                   \
                JsonWriteBasic(vname[index]);                                 \
-               PerformPostProcessing(Stack(0), elem);                        \
                index++;                                                      \
-            }                                                                \
-            else {                                                           \
+            } else {                                                         \
                Int_t elemlen = elem->GetArrayLength();                       \
                TJSONWriteArrayContent((vname+index), elemlen);               \
                index+=elemlen;                                               \
-               PerformPostProcessing(Stack(0), elem);                        \
             }                                                                \
+            PerformPostProcessing(Stack(0), elem);                           \
          }                                                                   \
       }                                                                      \
       else {                                                                 \
@@ -2286,10 +2271,11 @@ void  TBufferJSON::WriteFastArray(void *start, const TClass *cl, Int_t n,
    // Recall TBuffer function to avoid gcc warning message
 
    if (gDebug > 2)
-      Info("WriteFastArray", "void *start n %d", n);
+      Info("WriteFastArray", "void *start cl %s n %d streamer %p",
+                        cl ? cl->GetName() : "---", n, streamer);
 
    if (streamer) {
-      JsonStartElement();
+      JsonDisablePostprocessing();
       (*streamer)(*this, start, 0);
       return;
    }
@@ -2299,21 +2285,19 @@ void  TBufferJSON::WriteFastArray(void *start, const TClass *cl, Int_t n,
    int size = cl->Size();
 
    if (n > 1) {
-      JsonStartElement();
+      JsonDisablePostprocessing();
       AppendOutput("[");
       /* fJsonrCnt++; */ // count array, but do not add to references
    }
 
    for (Int_t j = 0; j < n; j++, obj += size) {
-      // ((TClass*)cl)->Streamer(obj,*this);
-
       if (j > 0) AppendOutput(fArraySepar.Data());
 
       JsonWriteObject(obj, cl, kFALSE);
    }
 
    if (n > 1) {
-      AppendOutput(" ]");
+      AppendOutput("]");
    }
 
 }
@@ -2329,7 +2313,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n,
            cl->GetName(), n, streamer);
 
    if (streamer) {
-      JsonStartElement();
+      JsonDisablePostprocessing();
       (*streamer)(*this, (void *)start, 0);
       return 0;
    }
@@ -2337,7 +2321,7 @@ Int_t TBufferJSON::WriteFastArray(void **start, const TClass *cl, Int_t n,
    Int_t res = 0;
 
    if (n > 1) {
-      JsonStartElement();
+      JsonDisablePostprocessing();
       AppendOutput("[");
       /* fJsonrCnt++; */ // count array, but do not add to references
    }

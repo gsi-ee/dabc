@@ -416,6 +416,11 @@ protected:
    void             WorkWithClass(TStreamerInfo *info, const TClass *cl = 0);
    void             WorkWithElement(TStreamerElement *elem, Int_t comp_type);
 
+
+   void             JsonDisablePostprocessing();
+
+   void             JsonStartElement(const TStreamerElement *elem);
+
    void             PerformPostProcessing(TJSONStackObj *stack, const TStreamerElement *elem = 0);
 
    void              JsonWriteBasic(Char_t value);
@@ -435,8 +440,6 @@ protected:
    void              JsonWriteObject(const void *obj, const TClass *objClass, Bool_t check_map = kTRUE);
 
    void              JsonStreamCollection(TCollection *obj, const TClass *objClass);
-
-   void              JsonStartElement();
 
    void              AppendOutput(const char *line0, const char *line1 = 0);
 
