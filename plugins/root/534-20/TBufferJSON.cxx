@@ -136,6 +136,7 @@ public:
 TBufferJSON::TBufferJSON() :
    TBuffer(TBuffer::kWrite),
    fOutBuffer(),
+   fOutput(0),
    fValue(),
    fJsonrMap(),
    fJsonrCnt(0),
@@ -155,6 +156,7 @@ TBufferJSON::TBufferJSON() :
 
    fOutBuffer.Capacity(10000);
    fValue.Capacity(1000);
+   fOutput = &fOutBuffer;
 }
 
 //______________________________________________________________________________
@@ -607,18 +609,18 @@ void TBufferJSON::AppendOutput(const char *line0, const char *line1)
 {
    // Info("AppendOutput","  '%s' '%s'", line0, line1?line1 : "---");
 
-   if (line0 != 0) fOutBuffer.Append(line0);
+   if (line0 != 0) fOutput->Append(line0);
 
    if (line1 != 0) {
-      if (fCompact < 2) fOutBuffer.Append("\n");
+      if (fCompact < 2) fOutput->Append("\n");
 
       if (strlen(line1) > 0) {
          if (fCompact < 1) {
             TJSONStackObj *stack = Stack();
             if ((stack != 0) && (stack->fLevel > 0))
-               fOutBuffer.Append(' ', stack->fLevel);
+               fOutput->Append(' ', stack->fLevel);
          }
-         fOutBuffer.Append(line1);
+         fOutput->Append(line1);
       }
    }
 }

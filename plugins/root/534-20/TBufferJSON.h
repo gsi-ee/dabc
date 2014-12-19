@@ -443,7 +443,8 @@ protected:
 
    void              AppendOutput(const char *line0, const char *line1 = 0);
 
-   TString                   fOutBuffer;    //!  output buffer for json code
+   TString                   fOutBuffer;    //!  main output buffer for json code
+   TString                  *fOutput;       //!  current output buffer for json code
    TString                   fValue;        //!  buffer for current value
    std::map<const void *, unsigned>  fJsonrMap;   //!  map of recorded objects, used in JsonR to restore references
    unsigned                  fJsonrCnt;     //!  counter for all objects and arrays

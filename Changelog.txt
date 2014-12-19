@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. In TBufferJSON write element name immediately (not in post-processing)
 2. When writing objects arrays, only disable post-processing.
 3. When use separator as jquery draggable, stop event propogation.
+4. In TBufferJSON provide possibility to redirect current output.
  
 
 12.12.2014
