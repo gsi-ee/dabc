@@ -2,10 +2,16 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+21.12.2014
+1. More clear logic how special classes handled in TBufferJSON
+2. All STL containers are presented as JSON arrays
+3. Eliminate fN property from JS I/O - it is not exists in original ROOT classes
+
+
 19.12.2014
 1. In TBufferJSON write element name immediately (not in post-processing)
 2. When writing objects arrays, only disable post-processing.
-3. When use separator as jquery draggable, stop event propogation.
+3. When use separator as jquery draggable, stop event propagation.
 4. In TBufferJSON provide possibility to redirect current output.
  
 
