@@ -43,6 +43,7 @@
 #include "TClassEdit.h"
 #include "TDataType.h"
 #include "TDataMember.h"
+#include "TMath.h"
 #include "TExMap.h"
 #include "TMethodCall.h"
 #include "TStreamerInfo.h"
@@ -85,9 +86,7 @@ public:
    Bool_t            fIsBaseClass;    //! indicate if element is base-class, ignored by post processing
    Bool_t            fIsPostProcessed;//! indicate that value is written
    Bool_t            fIsObjStarted;   //! indicate that object writing started, should be closed in postprocess
-   Int_t             fIsSTLcont;      //! indicate if STL container is used
-   Bool_t            fNormalObject;   //! is normal streaming or kind of workaround like string or array
-   Bool_t            fBlobStarted;    //! blob container for custom streamers
+   Bool_t            fAccObjects;     //! if true, accumulate whole objects in values
    TObjArray         fValues;         //! raw values
    Int_t             fLevel;          //! indent level
 
@@ -101,9 +100,7 @@ public:
       fIsBaseClass(kFALSE),
       fIsPostProcessed(kFALSE),
       fIsObjStarted(kFALSE),
-      fIsSTLcont(0),
-      fNormalObject(kTRUE),
-      fBlobStarted(kFALSE),
+      fAccObjects(kFALSE),
       fValues(),
       fLevel(0)
    {
@@ -207,7 +204,7 @@ TString TBufferJSON::ConvertToJSON(const void *obj, const TClass *cl,
 
    buf.JsonWriteObject(obj, cl);
 
-   return buf.fOutBuffer;
+   return buf.fOutBuffer.Length() ? buf.fOutBuffer : buf.fValue;
 }
 
 //______________________________________________________________________________
@@ -626,12 +623,34 @@ void TBufferJSON::AppendOutput(const char *line0, const char *line1)
 }
 
 //______________________________________________________________________________
-void TBufferJSON::JsonStartElement(const TStreamerElement *elem)
+void TBufferJSON::JsonStartElement(const TStreamerElement *elem, const TClass* base_class)
 {
-   AppendOutput(",", "\"");
-   AppendOutput(elem->GetName());
-   AppendOutput("\"");
-   AppendOutput(fSemicolon.Data());
+   const char* elem_name = 0;
+
+   if (base_class == 0) {
+      elem_name = elem->GetName();
+   } else {
+      switch(JsonSpecialClass(base_class)) {
+         case TClassEdit::kVector : elem_name = "fVector"; break;
+         case TClassEdit::kList   : elem_name = "fList"; break;
+         case TClassEdit::kDeque  : elem_name = "fDeque"; break;
+         case TClassEdit::kMap    : elem_name = "fMap"; break;
+         case TClassEdit::kMultiMap : elem_name = "fMultiMap"; break;
+         case TClassEdit::kSet : elem_name = "fSet"; break;
+         case TClassEdit::kMultiSet : elem_name = "fMultiSet"; break;
+         case TClassEdit::kBitSet : elem_name = "fBitSet"; break;
+         // case 100: elem_name = "fArray"; break;
+         case 110:
+         case 120: elem_name = "fString"; break;
+      }
+   }
+
+   if (elem_name!=0) {
+      AppendOutput(",", "\"");
+      AppendOutput(elem_name);
+      AppendOutput("\"");
+      AppendOutput(fSemicolon.Data());
+   }
 }
 
 //______________________________________________________________________________
@@ -642,11 +661,40 @@ void TBufferJSON::JsonDisablePostprocessing()
 }
 
 //______________________________________________________________________________
+Int_t TBufferJSON::JsonSpecialClass(const TClass* cl) const
+{
+   // return non-zero value when class has special handling in JSON
+   // it is TCollection (-130), TArray (100), TString (110), std::string (120) and STL containers (1..6)
+
+   if (cl==0) return 0;
+
+   Bool_t isarray = strncmp("TArray", cl->GetName(), 6) == 0;
+   if (isarray) isarray = ((TClass *)cl)->GetBaseClassOffset(TArray::Class()) == 0;
+   if (isarray) return 100;
+
+   // negative value used to indicate that collection stored as object
+   if (((TClass *)cl)->GetBaseClassOffset(TCollection::Class()) == 0) return -130;
+
+   // special case for TString - it is saved as string in JSON
+   if (cl == TString::Class()) return 110;
+
+   bool isstd = TClassEdit::IsStdClass(cl->GetName());
+   int isstlcont(0);
+   if (isstd) isstlcont = TMath::Abs((Int_t)TClassEdit::IsSTLCont(cl->GetName()));
+   if (isstlcont>0) return isstlcont;
+
+   // also special handling for STL string, which handled similar to TString
+   if (isstd && !strcmp(cl->GetName(),"string")) return 120;
+
+   return 0;
+}
+
+//______________________________________________________________________________
 void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t check_map)
 {
    // Write object to buffer
    // If object was written before, only pointer will be stored
-   // If nomap==kTRUE, object will be stored anyway and pointer will not be registered in the map
+   // If check_map==kFALSE, object will be stored in any case and pointer will not be registered in the map
 
    // static int  cnt = 0;
 
@@ -657,79 +705,41 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
    if (gDebug > 1)
       Info("JsonWriteObject", "Object %p class %s check_map %s", obj, cl ? cl->GetName() : "null", check_map ? "true" : "false");
 
-   // special handling for TArray classes - they should appear not as object but JSON array
-   Bool_t isarray = strncmp("TArray", (cl ? cl->GetName() : ""), 6) == 0;
-   if (isarray) isarray = ((TClass *)cl)->GetBaseClassOffset(TArray::Class()) == 0;
-   Bool_t iscollect = !isarray && (cl != 0) && (((TClass *)cl)->GetBaseClassOffset(TCollection::Class()) == 0);
+   Int_t special_kind = JsonSpecialClass(cl);
 
-//   if (Stack() && Stack()->fElem && iscollect)
-//      Info("Write","Collection %s of class %s", Stack()->fElem->GetName(), cl->GetName());
-
-   // special case for TString - it is saved as string in JSON
-   Bool_t iststring = !isarray && !iscollect && (cl == TString::Class()) && (fStack.GetLast() >= 0);
-   // also special handling for STL string, which is same as TString
-
-   bool isstd(false);
-   int isstlcont(0);
-   if (cl!=0) {
-      isstd = TClassEdit::IsStdClass(cl->GetName());
-      if (isstd) isstlcont = TClassEdit::IsSTLCont(cl->GetName());
-   }
-
-   if (!isarray && !iscollect && !iststring && (fStack.GetLast() >= 0) && isstd && (isstlcont<=0))
-      iststring = !strcmp(cl->GetName(),"string");
-
-   Bool_t normal_object = !isarray && !iststring && (isstlcont<=0);
+   TString fObjectOutput, *fPrevOutput(0);
 
    TJSONStackObj *stack = Stack();
 
-   if (stack && stack->fIsSTLcont) {
-      AppendOutput(stack->fIsSTLcont++==1 ? "[" : ",");
-   } else
-   if (stack && stack->fNormalObject && ((fValue.Length()>0) || (stack->fValues.GetLast()>=0))) {
-
-      const char* separ = fArraySepar.Data();
-
-      if (!stack->fBlobStarted) {
-         AppendOutput(fArraySepar.Data(),"\"_blob\"");
-         AppendOutput(fSemicolon.Data());
-         separ = "[";
-         stack->fBlobStarted = kTRUE;
-      }
-
-      for (Int_t k=0;k<=stack->fValues.GetLast();k++) {
-         AppendOutput(separ); separ = fArraySepar.Data();
-         AppendOutput(stack->fValues.At(k)->GetName());
-      }
+   if (stack && stack->fAccObjects && ((fValue.Length()>0) || (stack->fValues.GetLast()>=0))) {
+      // accumulate data of super-object in stack
 
       if (fValue.Length()>0) {
-         AppendOutput(separ); separ = fArraySepar.Data();
-         AppendOutput(fValue.Data());
+         stack->fValues.Add(new TObjString(fValue));
+         fValue.Clear();
       }
-      fValue.Clear();
-      stack->fValues.Delete();
 
-      AppendOutput(separ);
+      // redirect output to local buffer, use it later as value
+      fPrevOutput = fOutput;
+      fOutput = &fObjectOutput;
    } else
-   if (!isarray) {
+   if ((special_kind<=0) || (special_kind>100)) {
+      // FIXME: later post processing should be active for all special classes, while they all keep output in the value
       JsonDisablePostprocessing();
    }
 
    if (obj == 0) {
       AppendOutput("null");
-      return;
+      goto post_process;
    }
 
-
-   // for array and string different handling - they not recognized at the end as objects in JSON
-   if (normal_object) {
+   if (special_kind<=0) {
       // add element name which should correspond to the object
-
       if (check_map) {
          std::map<const void *, unsigned>::const_iterator iter = fJsonrMap.find(obj);
          if (iter != fJsonrMap.end()) {
             AppendOutput(Form("\"$ref:%u\"", iter->second));
-            return;
+            goto post_process;
          }
          fJsonrMap[obj] = fJsonrCnt;
       }
@@ -743,6 +753,8 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       AppendOutput(cl->GetName());
       AppendOutput("\"");
    } else {
+      // for array, string and STL collections different handling -
+      // they not recognized at the end as objects in JSON
       stack = PushStack(0);
    }
 
@@ -750,10 +762,9 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       Info("JsonWriteObject", "Starting object %p write for class: %s",
            obj, cl->GetName());
 
-   stack->fIsSTLcont = (isstlcont>0) ? 1 : 0;
-   stack->fNormalObject = normal_object;
+   stack->fAccObjects = special_kind < 10;
 
-   if (iscollect)
+   if (special_kind==-130)
       JsonStreamCollection((TCollection *) obj, cl);
    else
       ((TClass *)cl)->Streamer((void *)obj, *this);
@@ -762,56 +773,108 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
       Info("JsonWriteObject", "Done object %p write for class: %s",
            obj, cl->GetName());
 
-   if (isarray) {
+   if (special_kind==100) {
       if (stack->fValues.GetLast() != 0)
          Error("JsonWriteObject", "Problem when writing array");
       stack->fValues.Delete();
-   } else if (iststring) {
+   } else if ((special_kind==110) || (special_kind==120)) {
       if (stack->fValues.GetLast() > 1)
-         Error("JsonWriteObject", "Problem when writing TString");
+         Error("JsonWriteObject", "Problem when writing TString or std::string");
       stack->fValues.Delete();
       AppendOutput(fValue.Data());
       fValue.Clear();
-   } else if (isstlcont>0) {
-      if (stack->fIsSTLcont > 1)
-         AppendOutput("]");
-      else if ((stack->fValues.GetLast() < 0) && (fValue=="0"))
-         AppendOutput("[]");
-      else
-         AppendOutput(fValue.Data());
-   } else {
+   } else if ((special_kind>0) && (special_kind<=TClassEdit::kBitSet)) {
+      // here make STL container processing
 
-      if ((stack->fValues.GetLast() >= 0) || (fValue.Length()>0)) {
-
-         const char* separ = fArraySepar.Data();
-
-         if (!stack->fBlobStarted) {
-            AppendOutput(fArraySepar.Data(),"\"_blob\"");
-            AppendOutput(fSemicolon.Data());
-            separ = "[";
-            stack->fBlobStarted = kTRUE;
+      if (stack->fValues.GetLast()<0) {
+         // empty container
+         if (fValue!="0") Error("JsonWriteObject", "With empty stack fValue!=0");
+         fValue = "[]";
+      } else if (stack->fValues.GetLast() == 0) {
+         // case of simple vector, array already in the value
+         stack->fValues.Delete();
+         if (fValue.Length()==0) {
+            Error("JsonWriteObject", "Empty value when it should contain something");
+            fValue = "[]";
          }
-         for (Int_t k=0;k<=stack->fValues.GetLast();k++) {
-            AppendOutput(separ); separ = fArraySepar.Data();
-            AppendOutput(stack->fValues.At(k)->GetName());
+
+      } else {
+         // write like blob values, but skipping first element with size
+         const char* separ = "[";
+         TString blob;
+
+         for (Int_t k=1;k<=stack->fValues.GetLast();k++) {
+            blob.Append(separ); separ = fArraySepar.Data();
+            blob.Append(stack->fValues.At(k)->GetName());
          }
 
          if (fValue.Length()>0) {
-            AppendOutput(separ);
-            AppendOutput(fValue.Data());
+            blob.Append(separ);
+            blob.Append(fValue);
          }
+
+         blob.Append("]");
+         stack->fValues.Delete();
+         fValue = blob;
       }
+
+      /*
+      switch(isstlcont) {
+         case TClassEdit::kVector : break;
+         case TClassEdit::kList   : break;
+         case TClassEdit::kDeque  : break;
+         case TClassEdit::kMap    : break;
+         case TClassEdit::kMultiMap : break;
+         case TClassEdit::kSet : break;
+         case TClassEdit::kMultiSet : break;
+         case TClassEdit::kBitSet : break;
+         default: break;
+      }
+      */
+   }
+
+   if ((special_kind==0) &&
+       ((stack->fValues.GetLast() >= 0) || (fValue.Length()>0))) {
+      if (gDebug>0)
+         Info("JsonWriteObject", "Create blob value for class %s", cl->GetName());
+
+      AppendOutput(fArraySepar.Data(),"\"_blob\"");
+      AppendOutput(fSemicolon.Data());
+
+      const char* separ = "[";
+
+      for (Int_t k=0;k<=stack->fValues.GetLast();k++) {
+         AppendOutput(separ); separ = fArraySepar.Data();
+         AppendOutput(stack->fValues.At(k)->GetName());
+      }
+
+      if (fValue.Length()>0) {
+         AppendOutput(separ);
+         AppendOutput(fValue.Data());
+      }
+
+      AppendOutput("]");
 
       fValue.Clear();
       stack->fValues.Delete();
-
-      if (stack->fBlobStarted) AppendOutput("]");
    }
 
    PopStack();
 
-   if (normal_object) {
+   if (special_kind<=0) {
       AppendOutput(0, "}");
+   }
+
+post_process:
+
+   if (fPrevOutput!=0) {
+      fOutput = fPrevOutput;
+      // for STL containers and TArray object in fValue itself
+      if ((special_kind<=0) || (special_kind>100))
+         fValue = fObjectOutput;
+      else
+         if (fObjectOutput.Length()!=0)
+            Error("JsonWriteObject", "Non-empty object output for special class %s", cl->GetName());
    }
 }
 
@@ -940,9 +1003,7 @@ void TBufferJSON::DecrementLevel(TVirtualStreamerInfo *info)
 
       PerformPostProcessing(stack);
 
-      PopStack();  // remove stack of last element
-
-      stack = Stack();
+      stack = PopStack();  // remove stack of last element
    }
 
    if (stack->fInfo != (TStreamerInfo *) info)
@@ -996,8 +1057,7 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
 
       PerformPostProcessing(stack);
 
-      PopStack();                    // go level back
-      stack = dynamic_cast<TJSONStackObj *>(fStack.Last());
+      stack = PopStack();                    // go level back
    }
 
    fValue.Clear();
@@ -1054,7 +1114,7 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
    stack->fIsElemOwner = (number < 0);
    stack->fIsBaseClass = (base_class != 0);
 
-   if (!stack->fIsBaseClass) JsonStartElement(elem);
+   JsonStartElement(elem, base_class);
 }
 
 //______________________________________________________________________________
@@ -1244,8 +1304,9 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
 
       if ((stack->fValues.GetLast() < 0) && (fValue == "0")) {
          fValue = "[]";
-      } else if ((stack->fValues.GetLast() == 0) &&
-                 (strcmp(stack->fValues.Last()->GetName(), "1") == 0)) {
+      } else
+      if ((stack->fValues.GetLast() == 0) &&
+          (strcmp(stack->fValues.Last()->GetName(), "1") == 0)) {
          stack->fValues.Delete();
       } else {
          Error("PerformPostProcessing", "Wrong values for kOffsetP type %s name %s",
@@ -1256,7 +1317,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
    } else if (isTObject) {
       if (stack->fValues.GetLast() != 0) {
          if (gDebug > 0)
-            Error("PerformPostProcessing", "When storing TObject, more than 2 items are stored");
+            Error("PerformPostProcessing", "When storing TObject, number of items %d not equal to 2", stack->fValues.GetLast());
          AppendOutput(",", "\"dummy\"");
          AppendOutput(fSemicolon.Data());
       } else {
@@ -1292,17 +1353,12 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
    }
 
    if (stack->fValues.GetLast() >= 0) {
-      AppendOutput("{ ");
-      fJsonrCnt++;   // count object, but do not keep reference
-      TString sbuf;
+      // append element blob data just as abstract array, user is responsible to decode it
+      AppendOutput("[");
       for (Int_t n = 0; n <= stack->fValues.GetLast(); n++) {
-         sbuf.Form("\"elem%d\"%s", n, fSemicolon.Data());
-         AppendOutput(sbuf.Data());
          AppendOutput(stack->fValues.At(n)->GetName());
          AppendOutput(fArraySepar.Data());
       }
-      sbuf.Form("\"elem%d\"%s", stack->fValues.GetLast() + 1, fSemicolon.Data());
-      AppendOutput(sbuf.Data());
    }
 
    if (fValue.Length() == 0) {
@@ -1313,7 +1369,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
    }
 
    if (stack->fValues.GetLast() >= 0)
-      AppendOutput("}");
+      AppendOutput("]");
 }
 
 //______________________________________________________________________________
@@ -2101,9 +2157,8 @@ void TBufferJSON::WriteArrayDouble32(const Double_t *d, Int_t n,
                JsonWriteBasic(vname[index]);                                 \
                index++;                                                      \
             } else {                                                         \
-               Int_t elemlen = elem->GetArrayLength();                       \
-               TJSONWriteArrayContent((vname+index), elemlen);               \
-               index+=elemlen;                                               \
+               TJSONWriteArrayContent((vname+index), elem->GetArrayLength());\
+               index+=elem->GetArrayLength();                                \
             }                                                                \
             PerformPostProcessing(Stack(0), elem);                           \
          }                                                                   \
