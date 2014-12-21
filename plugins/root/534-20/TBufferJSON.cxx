@@ -639,7 +639,7 @@ void TBufferJSON::JsonStartElement(const TStreamerElement *elem, const TClass* b
          case TClassEdit::kSet : elem_name = "fSet"; break;
          case TClassEdit::kMultiSet : elem_name = "fMultiSet"; break;
          case TClassEdit::kBitSet : elem_name = "fBitSet"; break;
-         // case 100: elem_name = "fArray"; break;
+         case 100: elem_name = "fArray"; break;
          case 110:
          case 120: elem_name = "fString"; break;
       }
@@ -702,7 +702,7 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
 
    //if (cnt++>100) return;
 
-   if (gDebug > 1)
+   if (gDebug > 0)
       Info("JsonWriteObject", "Object %p class %s check_map %s", obj, cl ? cl->GetName() : "null", check_map ? "true" : "false");
 
    Int_t special_kind = JsonSpecialClass(cl);
@@ -1044,7 +1044,7 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
       return;
    }
 
-   if (gDebug > 3)
+   if (gDebug > 0)
       Info("WorkWithElement", "    Start element %s type %d",
            elem ? elem->GetName() : "---", elem ? elem->GetType() : -1);
 
@@ -1072,11 +1072,8 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
       Error("WorkWithElement", "Problem in Inc/Dec level");
       return;
    }
-   Int_t number = info ? info->GetElements()->IndexOf(elem) : -1;
 
-   if (gDebug > 3)
-      Info("WorkWithElement", "    Start element %s type %d",
-           elem ? elem->GetName() : "---", elem ? elem->GetType() : -1);
+   Int_t number = info ? info->GetElements()->IndexOf(elem) : -1;
 
    if (elem == 0) {
       Error("WorkWithElement", "streamer info returns elem = 0");
@@ -1330,19 +1327,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
 
       stack->fValues.Delete();
    } else if (isTArray) {
-
-      // work around for TArray classes - remove first element with array length
-
-      // only for base class insert fN and fArray tags
-
-      if (stack->fIsBaseClass && (stack->fValues.GetLast() == 0)) {
-         AppendOutput(",", "\"fN\"");
-         AppendOutput(fSemicolon.Data());
-         AppendOutput(stack->fValues.At(0)->GetName());
-         AppendOutput(",", "\"fArray\"");
-         AppendOutput(fSemicolon.Data());
-      }
-
+      // for TArray one deletes complete stack
       stack->fValues.Delete();
    }
 
