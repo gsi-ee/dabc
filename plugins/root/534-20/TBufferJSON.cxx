@@ -83,7 +83,6 @@ public:
    Int_t             fElemNumber;     //! number of streamer element in streamer info
    Bool_t            fIsStreamerInfo; //!
    Bool_t            fIsElemOwner;    //!
-   Bool_t            fIsBaseClass;    //! indicate if element is base-class, ignored by post processing
    Bool_t            fIsPostProcessed;//! indicate that value is written
    Bool_t            fIsObjStarted;   //! indicate that object writing started, should be closed in postprocess
    Bool_t            fAccObjects;     //! if true, accumulate whole objects in values
@@ -97,7 +96,6 @@ public:
       fElemNumber(0),
       fIsStreamerInfo(kFALSE),
       fIsElemOwner(kFALSE),
-      fIsBaseClass(kFALSE),
       fIsPostProcessed(kFALSE),
       fIsObjStarted(kFALSE),
       fAccObjects(kFALSE),
@@ -1095,7 +1093,6 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
    stack->fElem = (TStreamerElement *) elem;
    stack->fElemNumber = number;
    stack->fIsElemOwner = (number < 0);
-   stack->fIsBaseClass = (base_class != 0);
 
    JsonStartElement(elem, base_class);
 }
@@ -1267,7 +1264,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
       return;
    }
 
-   const char *typname = stack->fIsBaseClass ? elem->GetName() : elem->GetTypeName();
+   const char *typname = elem->IsBase() ? elem->GetName() : elem->GetTypeName();
    Bool_t isTObject = (elem->GetType() == TStreamerInfo::kTObject) || (strcmp("TObject", typname) == 0);
    Bool_t isTString = elem->GetType() == TStreamerInfo::kTString;
    Bool_t isSTLstring = elem->GetType() == TStreamerInfo::kSTLstring;
@@ -1317,7 +1314,7 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
       stack->fValues.Delete();
    }
 
-   if (stack->fIsBaseClass && (fValue.Length() == 0)) {
+   if (elem->IsBase() && (fValue.Length() == 0)) {
       // here base class data already completely stored
       return;
    }
