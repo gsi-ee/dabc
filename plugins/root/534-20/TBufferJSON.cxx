@@ -800,6 +800,7 @@ void TBufferJSON::JsonWriteObject(const void *obj, const TClass *cl, Bool_t chec
 
       } else {
          // write like blob values, but skipping first element with size
+         // TODO: make special handling for std::map, should pack each each pair in separate object
          const char* separ = "[";
          TString blob;
 
@@ -1045,8 +1046,8 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
    }
 
    if (gDebug > 0)
-      Info("WorkWithElement", "    Start element %s type %d",
-           elem ? elem->GetName() : "---", elem ? elem->GetType() : -1);
+      Info("WorkWithElement", "    Start element %s type %d typename %s",
+           elem ? elem->GetName() : "---", elem ? elem->GetType() : -1, elem ? elem->GetTypeName() : "---");
 
    if (stack->IsStreamerElement()) {
       // this is post processing
@@ -1080,10 +1081,6 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
       return;
    }
 
-   if (gDebug > 3)
-      Info("WorkWithElement", "    Element %s type %d",
-           elem ? elem->GetName() : "---", elem ? elem->GetType() : -1);
-
    Bool_t isBasicType = (elem->GetType() > 0) && (elem->GetType() < 20);
 
    fExpectedChain = isBasicType && (comp_type - elem->GetType() == TStreamerInfo::kOffsetL);
@@ -1092,18 +1089,7 @@ void TBufferJSON::WorkWithElement(TStreamerElement *elem, Int_t comp_type)
       Info("WorkWithElement", "    Expects chain for elem %s number %d",
            elem->GetName(), number);
 
-   TClass *base_class = 0;
-
-   if ((elem->GetType() == TStreamerInfo::kBase) ||
-         ((elem->GetType() == TStreamerInfo::kTObject) &&
-          !strcmp(elem->GetName(), TObject::Class()->GetName())) ||
-         ((elem->GetType() == TStreamerInfo::kTNamed) &&
-          !strcmp(elem->GetName(), TNamed::Class()->GetName())))
-      base_class = elem->GetClassPointer();
-
-   if (base_class && (gDebug > 3))
-      Info("WorkWithElement", "   Expects base class %s with standard streamer",
-           base_class->GetName());
+   TClass *base_class = elem->IsBase() ? elem->GetClassPointer() : 0;
 
    stack = PushStack(0);
    stack->fElem = (TStreamerElement *) elem;
@@ -1331,9 +1317,8 @@ void TBufferJSON::PerformPostProcessing(TJSONStackObj *stack,
       stack->fValues.Delete();
    }
 
-   if (stack->fIsBaseClass && !isTArray && !isTObject) {
-      if ((fValue.Length() != 0) && (gDebug > 0))
-         Error("PerformPostProcessing", "Non-empty value for base class");
+   if (stack->fIsBaseClass && (fValue.Length() == 0)) {
+      // here base class data already completely stored
       return;
    }
 
