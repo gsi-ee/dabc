@@ -30,12 +30,12 @@
             $("#mainGUI").append(guiCode);
                  
          
+            DABC.hpainter = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
+
             $("#grid_spinner").spinner({
                min:1, max:5,
-               spin: function( event, ui ) { h.SetDisplay('grid'+ui.value,'right-div'); }
+               spin: function( event, ui ) { DABC.hpainter.SetDisplay('grid'+ui.value,'right-div'); }
             }); 
-         
-            DABC.hpainter = new DABC.HierarchyPainter("dabc", "dabc_tree_holder");
             
             var monitor = JSROOT.GetUrlOption("monitoring");
             
