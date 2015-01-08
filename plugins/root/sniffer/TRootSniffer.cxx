@@ -31,6 +31,7 @@
 #include "TObjString.h"
 #include "TUrl.h"
 #include "TImage.h"
+#include "RZip.h"
 
 #include "TRootSnifferStore.h"
 
@@ -42,9 +43,6 @@ const char *item_prop_title = "_title";
 const char *item_prop_typename = "_typename";
 const char *item_prop_arraydim = "_arraydim";
 const char *item_prop_realname = "_realname"; // real object name
-
-//extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
-extern "C" void R__zip(int cxlevel, int *srcsize, char* src, int *tgtsize, char* tgt, int* irep);
 
 // ============================================================================
 
