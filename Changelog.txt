@@ -11,6 +11,8 @@ about current functionality of the framework.
 3. Provide _typename and _arraydim fields for object members
 4. When TBufferJSON recognize storage of multidimensional array, it converts
    it into correspondent JSON multidimensional array
+5. Even when several TH1/TGraph/TF1 objects with fill attribute overlap each other,
+   one able to get tooltip for underlying objects.  
    
 
 6.01.2015
