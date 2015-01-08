@@ -9,6 +9,8 @@ about current functionality of the framework.
 2. Introduce extra version of TBufferJSON for ROOT between 534-20 and 534-23,
    still all kind of ROOT 6 is not yet supported in DABC
 3. Provide _typename and _arraydim fields for object members
+4. When TBufferJSON recognize storage of multidimensional array, it converts
+   it into correspondent JSON multidimensional array
    
 
 6.01.2015

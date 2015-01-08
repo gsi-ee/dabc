@@ -316,12 +316,8 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
             case kVoid_t:
                break;
          }
-      } else if ((member->GetArrayDim() == 1) || (fCompact > 0)) {
-
+      } else if (member->GetArrayDim()==1) {
          Int_t n = member->GetMaxIndex(0);
-         for (Int_t ndim = 1; ndim < member->GetArrayDim(); ndim++)
-            n *= member->GetMaxIndex(ndim);
-
          switch (tid) {
             case kChar_t:
                WriteFastArray((Char_t *)ptr, n);
@@ -395,8 +391,7 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
          while (cnt >= 0) {
             if (indexes[cnt] >= member->GetMaxIndex(cnt)) {
                fOutBuffer.Append(" ]");
-               indexes[cnt] = 0;
-               cnt--;
+               indexes[cnt--] = 0;
                if (cnt >= 0) indexes[cnt]++;
                continue;
             }
@@ -416,8 +411,6 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
                shift *= len;
 
                fValue.Clear();
-
-               WriteFastArray((Int_t *)ptr + shift, len);
 
                switch (tid) {
                   case kChar_t:
@@ -485,8 +478,7 @@ TString TBufferJSON::JsonWriteMember(const void *ptr, TDataMember *member,
                }
 
                fOutBuffer.Append(fValue);
-               cnt--;
-               indexes[cnt]++;
+               indexes[--cnt]++;
             }
          }
 
@@ -2130,8 +2122,30 @@ void TBufferJSON::WriteArrayDouble32(const Double_t *d, Int_t n,
             }                                                                \
             PerformPostProcessing(Stack(0), elem);                           \
          }                                                                   \
-      }                                                                      \
-      else {                                                                 \
+      } else                                                                 \
+      if ((elem!=0) && (elem->GetArrayDim()>1) && (elem->GetArrayLength()==n)) { \
+         TArrayI indexes(elem->GetArrayDim() - 1);                           \
+         indexes.Reset(0);                                                   \
+         Int_t cnt = 0;                                                      \
+         while (cnt >= 0) {                                                  \
+            if (indexes[cnt] >= elem->GetMaxIndex(cnt)) {                    \
+               fValue.Append("]");                                           \
+               indexes[cnt--] = 0;                                           \
+               if (cnt >= 0) indexes[cnt]++;                                 \
+               continue;                                                     \
+            }                                                                \
+            fValue.Append(indexes[cnt] == 0 ? "[" : fArraySepar.Data());     \
+            if (++cnt == indexes.GetSize()) {                                \
+               Int_t shift = 0;                                              \
+               for (Int_t k = 0; k < indexes.GetSize(); k++)                 \
+                  shift = shift * elem->GetMaxIndex(k) + indexes[k];         \
+               Int_t len = elem->GetMaxIndex(indexes.GetSize());             \
+               shift *= len;                                                 \
+               TJSONWriteArrayContent((vname+shift), len);                   \
+               indexes[--cnt]++;                                             \
+            }                                                                \
+         }                                                                   \
+      } else {                                                               \
          TJSONWriteArrayContent(vname, n);                                   \
       }                                                                      \
    }
