@@ -39,6 +39,8 @@
 const char *item_prop_kind = "_kind";
 const char *item_prop_more = "_more";
 const char *item_prop_title = "_title";
+const char *item_prop_typename = "_typename";
+const char *item_prop_arraydim = "_arraydim";
 const char *item_prop_realname = "_realname"; // real object name
 
 //extern "C" unsigned long R__memcompress(char* tgt, unsigned long tgtsize, char* src, unsigned long srcsize);
@@ -449,6 +451,20 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
          const char* title = member->GetTitle();
          if ((title!=0) && (strlen(title)!=0))
             chld.SetField(item_prop_title, title);
+
+         if (member->GetTypeName())
+           chld.SetField(item_prop_typename, member->GetTypeName());
+
+         if (member->GetArrayDim() > 0) {
+            // store array dimensions in form [N1,N2,N3,...]
+            TString dim("[");
+            for (Int_t n=0;n<member->GetArrayDim();n++) {
+               if (n>0) dim.Append(",");
+               dim.Append(TString::Format("%d", member->GetMaxIndex(n)));
+            }
+            dim.Append("]");
+            chld.SetField(item_prop_arraydim, dim);
+         }
 
          chld.SetRootClass(mcl);
 

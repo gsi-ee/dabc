@@ -8,6 +8,7 @@ about current functionality of the framework.
    all workaround are left.
 2. Introduce extra version of TBufferJSON for ROOT between 534-20 and 534-23,
    still all kind of ROOT 6 is not yet supported in DABC
+3. Provide _typename and _arraydim fields for object members
    
 
 6.01.2015
