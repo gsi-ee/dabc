@@ -601,7 +601,15 @@ std::vector<int64_t> dabc::RecordField::AsIntVect() const
             res.push_back((int64_t) arrDouble[n]);
          break;
       case kind_string: {
+         std::vector<std::string> svect;
          long res0;
+         // try to convert string in vector
+         if (StrToStrVect(valueStr, svect, false)) {
+           for (unsigned n=0;n<svect.size();n++)
+              if (str_to_lint(svect[n].c_str(), &res0))
+                 res.push_back(res0);
+           break;
+         }
          if (str_to_lint(valueStr, &res0)) res.push_back(res0);
          break;
       }
@@ -651,7 +659,16 @@ std::vector<uint64_t> dabc::RecordField::AsUIntVect() const
             res.push_back((uint64_t) arrDouble[n]);
          break;
       case kind_string: {
+         std::vector<std::string> svect;
          long unsigned res0;
+         // try to convert string in vector
+         if (StrToStrVect(valueStr, svect, false)) {
+           for (unsigned n=0;n<svect.size();n++)
+              if (str_to_luint(svect[n].c_str(), &res0))
+                 res.push_back(res0);
+           break;
+         }
+
          if (str_to_luint(valueStr, &res0)) res.push_back(res0);
          break;
       }
@@ -702,7 +719,15 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
             res.push_back(arrDouble[n]);
          break;
       case kind_string: {
+         std::vector<std::string> svect;
          double res0;
+         // try to convert string in vector
+         if (StrToStrVect(valueStr, svect, false)) {
+           for (unsigned n=0;n<svect.size();n++)
+              if (str_to_double(svect[n].c_str(), &res0))
+                 res.push_back(res0);
+           break;
+         }
          if (str_to_double(valueStr, &res0)) res.push_back(res0);
          break;
       }

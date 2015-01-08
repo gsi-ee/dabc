@@ -14,7 +14,9 @@ about current functionality of the framework.
 5. Even when several TH1/TGraph/TF1 objects with fill attribute overlap each other,
    one able to get tooltip for underlying objects.  
 6. Use RZip.h in TRootSniffer
-
+7. In TRootSnifferStore some of the fields stored in native format (without quotes)
+   Make appropriate changes in root::Monitor as well  
+ 
 
 6.01.2015
 1. Better support of STL containers in TBufferJSON, also as base class

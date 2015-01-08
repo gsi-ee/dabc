@@ -44,13 +44,23 @@ public:
       } else {
          curr = curr.CreateHChild(nodename, true);
       }
-      //DOUT0("Create node %s", nodename);
    }
-   virtual void SetField(Int_t lvl, const char* field, const char* value, Int_t nfld)
+   virtual void SetField(Int_t lvl, const char* field, const char* value, Bool_t with_quotes)
    {
+      if (!with_quotes) {
+         if (!strcmp("value", "true")) { curr.SetField(field, true); return; }
+         if (!strcmp("value", "false")) { curr.SetField(field, false); return; }
+         if ((strlen(value)>2) && (*value=='[')) {
+            dabc::RecordField f(value);
+            if (f.AsIntVect().size()>0) {
+               curr.SetField(field,f.AsIntVect());
+               return;
+            }
+         }
+      }
       curr.SetField(field, value);
-      //DOUT0("SetField curr:%s %s = %s", curr.GetName(), field, value);
    }
+
    virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t nfld)
    {
    }
@@ -58,7 +68,6 @@ public:
    virtual void CloseNode(Int_t lvl, const char* nodename, Int_t numchilds)
    {
       curr = curr.GetParentRef();
-      //DOUT0("Close node %s", nodename ? nodename : "---");
    }
 };
 

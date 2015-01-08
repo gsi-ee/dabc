@@ -82,11 +82,11 @@ TRootSnifferScanRec::~TRootSnifferScanRec()
 }
 
 //______________________________________________________________________________
-void TRootSnifferScanRec::SetField(const char *name, const char *value)
+void TRootSnifferScanRec::SetField(const char *name, const char *value, Bool_t with_quotes)
 {
    // record field for current element
 
-   if (CanSetFields()) store->SetField(lvl, name, value, num_fields);
+   if (CanSetFields()) store->SetField(lvl, name, value, with_quotes);
    num_fields++;
 }
 
@@ -440,7 +440,7 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
 
          Bool_t iscollection = (coll_offset >= 0);
          if (iscollection) {
-            chld.SetField(item_prop_more, "true");
+            chld.SetField(item_prop_more, "true", kFALSE);
             chld.has_more = kTRUE;
          }
 
@@ -461,14 +461,14 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
                dim.Append(TString::Format("%d", member->GetMaxIndex(n)));
             }
             dim.Append("]");
-            chld.SetField(item_prop_arraydim, dim);
+            chld.SetField(item_prop_arraydim, dim, kFALSE);
          }
 
          chld.SetRootClass(mcl);
 
          if (chld.CanExpandItem()) {
             if (iscollection) {
-               // chld.SetField("#members", "true");
+               // chld.SetField("#members", "true", kFALSE);
                ScanCollection(chld, (TCollection *)(member_ptr + coll_offset));
             }
          }
@@ -521,7 +521,7 @@ void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj,
    int isextra = rec.ExtraFolderLevel();
 
    if ((isextra == 1) || ((isextra > 1) && !IsDrawableClass(obj->IsA()))) {
-      rec.SetField(item_prop_more, "true");
+      rec.SetField(item_prop_more, "true", kFALSE);
       rec.has_more = kTRUE;
    }
 
@@ -538,7 +538,7 @@ void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj,
                obj_class = dir->IsA();
             }
          } else {
-            rec.SetField(item_prop_more, "true");
+            rec.SetField(item_prop_more, "true", kFALSE);
             rec.has_more = kTRUE;
          }
       } else {
