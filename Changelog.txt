@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+8.01.2015
+1. Integrate latest (non-official) version of TBufferJSON with TString and std::string
+   support. Should also work without modification in TBuffer interface while
+   all workaround are left.
+2. Introduce extra version of TBufferJSON for ROOT between 534-20 and 534-23,
+   still all kind of ROOT 6 is not yet supported in DABC
+   
+
 6.01.2015
 1. Better support of STL containers in TBufferJSON, also as base class
 2. Simplify handling of base class in TBufferJSON

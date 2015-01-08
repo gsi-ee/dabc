@@ -14,12 +14,15 @@ DABCROOT_DIRI      = $(DABCROOT_DIR)/root
 DABCROOT_DIRS      = $(DABCROOT_DIR)/src
 DABCROOT_DIRSNIFF  = $(DABCROOT_DIR)/sniffer
 
+ifneq ($(shell if [ $(DABC_ROOTIVERSION) -gt 53422 ] ; then echo gt ; fi),)
+DABCROOT_DIRVER    = $(DABCROOT_DIR)/534-23
+else
 ifneq ($(shell if [ $(DABC_ROOTIVERSION) -gt 53419 ] ; then echo gt ; fi),)
 DABCROOT_DIRVER    = $(DABCROOT_DIR)/534-20
 else
 DABCROOT_DIRVER    = $(DABCROOT_DIR)/534-19
 endif
-
+endif
 
 # move it to Makefile.config, while ROOT plugin used in some others plugins
 #DABCROOT_LIBNAME  = $(LIB_PREFIX)DabcRoot
