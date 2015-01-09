@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Add to DABC.HierarchyPainter methods to update condition on other panels
    and draw condition on suitable histogram
 2. Use jquery-ui menu for context menu
+3. Disable auto-zoom when all points in histogram filled
 
 
 8.01.2015
