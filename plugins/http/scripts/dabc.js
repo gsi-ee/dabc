@@ -974,7 +974,8 @@
       if (kind == "DABC.HTML") { cando.img1 = "img_globe"; cando.html = this.itemFullName(node) + "/"; cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'img_dabicon'; else
       if (kind == "DABC.Command") { cando.img1 = 'img_dabicon'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon';
+      if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon'; else
+      if (kind == "ROOT.TGo4AnalysisStatus") cando.img1 = 'img_go4icon';
       
       if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
       
