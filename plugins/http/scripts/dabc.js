@@ -20,7 +20,7 @@
    
    DABC.loadGauge = false;
    
-   DABC.hpainter = null;  // hiearchy painter
+   DABC.hpainter = null;  // hierarchy painter
    
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -1187,5 +1187,42 @@
       
       adjustSize(height);
    }
+   
+   DABC.HierarchyPainter.prototype.updateOnOtherFrames = function(painter, obj) {
+       // function should change object on other painters
+      var mdi = this['disp'];
+      if (mdi==null) return false;
 
+      var isany = false;
+      mdi.ForEachPainter(function(p, frame) {
+         if ((p===painter) || (p.GetItemName() != painter.GetItemName())) return;
+         mdi.ActivateFrame(frame);
+         p.RedrawObject(obj);
+         isany = true;
+      });
+      return isany;
+   }
+
+   DABC.HierarchyPainter.prototype.drawOnSuitableHistogram = function(painter, obj, is2d) {
+      
+      var mdi = this['disp'];
+      if (mdi==null) return false;
+      
+      var kind = is2d ? "TH2" : "TH1";
+      var found = false;
+      
+      mdi.ForEachPainter(function(p, frame) {
+         if ((p==painter) || found) return;
+         if (!('obj_typename' in p)) return;
+         if (p.obj_typename.indexOf(kind)!=0) return;
+         
+         found = true;
+         
+         var p2 = JSROOT.draw(p.divid, obj, 'same');
+         if (p2) p2.SetItemName(painter.GetItemName());
+      });      
+      
+      return found;
+   }
+   
 })();

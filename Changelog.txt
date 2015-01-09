@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+9.01.2015
+1. Add to DABC.HierarchyPainter methods to update condition on other panels
+   and draw condition on suitable histogram
+
+
 8.01.2015
 1. Integrate latest (non-official) version of TBufferJSON with TString and std::string
    support. Should also work without modification in TBuffer interface while
