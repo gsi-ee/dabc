@@ -5,6 +5,7 @@ about current functionality of the framework.
 9.01.2015
 1. Add to DABC.HierarchyPainter methods to update condition on other panels
    and draw condition on suitable histogram
+2. Use jquery-ui menu for context menu
 
 
 8.01.2015
