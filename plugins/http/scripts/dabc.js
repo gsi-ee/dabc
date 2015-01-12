@@ -1139,6 +1139,9 @@
       
       var item = this.Find(itemname); 
       var painter = this;
+      var opts = null;
+      if (item._kind.indexOf("ROOT.")==0)
+         opts = JSROOT.getDrawOptions(item._kind.substr(5), 'nosame');
       
       var baseurl = onlineprop.server + onlineprop.itemname + "/";
       
@@ -1150,13 +1153,12 @@
       if (hist==0) { drawurl += separ + "history"; } else
       if (hist>0) { drawurl += separ + "history=" + hist; }    
       
-      JSROOT.Painter.menuitem(menu, "Draw", function() { painter.display(itemname); });
+      menu.addDrawMenu("Draw", opts, function(arg) { painter.display(itemname, arg); });
+
+      menu.addDrawMenu("Draw in new window", opts, function(arg) { window.open(drawurl + separ + "opt=" + arg); });
       
-      JSROOT.Painter.menuitem(menu,"Draw in new window", function() { window.open(drawurl); });
-      
-      if ((item!=null) && ('_editor' in item)) {
-         JSROOT.Painter.menuitem(menu,"Editor", function() { window.open(editorurl); });
-      } 
+      if ((item!=null) && ('_editor' in item))
+         menu.add("Editor", function() { window.open(editorurl); });
    }
    
    DABC.HierarchyPainter.prototype.CreateStatus = function(height) {
