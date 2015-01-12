@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+12.01.2015
+1. In context menu provides possibility to select options for drawing 
+
+
 9.01.2015
 1. Add to DABC.HierarchyPainter methods to update condition on other panels
    and draw condition on suitable histogram

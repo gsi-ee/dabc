@@ -1008,10 +1008,7 @@
             if (!func && (separ>0) && window[name.slice(0, separ)]) 
                func = window[name.slice(0, separ)][name.slice(separ+1)];
             
-            if (func) {
-               console.log("Add draw func " + name + " for " + typename);
-               JSROOT.addDrawFunc(typename, func);
-            }
+            if (func) JSROOT.addDrawFunc(typename, func);
          });   
          ready_callback();
       });
