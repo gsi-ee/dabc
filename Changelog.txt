@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+13.01.2015
+1. Implement special handling of std::map class in TBufferJSON
+
+
 12.01.2015
 1. In context menu provides possibility to select options for drawing 
 2. Provide list of draw options also for online server
