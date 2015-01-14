@@ -7,7 +7,9 @@ about current functionality of the framework.
    and return result of execution in JSON format. Like:
      http://localhost:8080/Files/job1.root/ntuple/exe.json?method=GetTitle
    will return: "Demo ntuple"
-2. Implement TTreePlayer as TBasePainter  
+2. Provide possibility for executing TTree::Draw. One could access
+   object from gDirectory after command execution and return it as result 
+3. Implement TTreePlayer as TBasePainter  
 
 
 13.01.2015
