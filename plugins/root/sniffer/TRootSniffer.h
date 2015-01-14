@@ -116,6 +116,8 @@ protected:
 
    void CreateMemFile();
 
+   TString DecodeUrlOptionValue(const char* value, Bool_t remove_quotes = kTRUE);
+
 public:
 
    TRootSniffer(const char *name, const char *objpath = "online");
@@ -160,7 +162,7 @@ public:
 
    Bool_t ProduceImage(Int_t kind, const char *path, const char *options, void *&ptr, Long_t &length);
 
-   Bool_t ProduceExe(const char *path, const char *options, TString &res);
+   Bool_t ProduceExe(const char *path, const char *options, TString &res, Bool_t astxt = kFALSE);
 
    Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length);
 
