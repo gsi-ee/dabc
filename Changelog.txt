@@ -7,7 +7,7 @@ about current functionality of the framework.
    and return result of execution in JSON format. Like:
      http://localhost:8080/Files/job1.root/ntuple/exe.json?method=GetTitle
    will return: "Demo ntuple"
-2. First prototype for online TTree player  
+2. Implement TTreePlayer as TBasePainter  
 
 
 13.01.2015
