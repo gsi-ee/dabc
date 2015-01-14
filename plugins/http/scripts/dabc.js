@@ -1002,12 +1002,7 @@
             var typename = h._kind.slice(5);
             if (JSROOT.canDraw(typename)) return;
             
-            var name = h['_drawfunc'];
-            var func = window[name];
-            var separ = name.indexOf(".");
-            if (!func && (separ>0) && window[name.slice(0, separ)]) 
-               func = window[name.slice(0, separ)][name.slice(separ+1)];
-            
+            var func = JSROOT.findFunction(h['_drawfunc']);
             if (func) JSROOT.addDrawFunc(typename, func);
          });   
          ready_callback();
@@ -1049,17 +1044,13 @@
       });
       
       if ((statusitem!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
-         var func = window[statusfuncname];
-         var separ = statusfuncname.indexOf(".");
-         if (!func && (separ>0) && window[statusfuncname.slice(0, separ)]) 
-            func = window[statusfuncname.slice(0, separ)][statusfuncname.slice(separ+1)];
-         if ((typeof func == 'function') && $('#status-div').empty()) {
+         var func = JSROOT.findFunction(statusfuncname);
+         if (func && $('#status-div').empty()) {
             this.CreateStatus(28);
             func('status-div', statusitem); 
          }
       }
    }
-   
    
    DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
    {

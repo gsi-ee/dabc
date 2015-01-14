@@ -1053,7 +1053,7 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
    if (url.GetValueFromOptions("compact"))
       compact = url.GetIntValueFromOptions("compact");
 
-   TString res;
+   TString res = "null";
 
    switch(call.ReturnType()) {
       case TMethodCall::kLong: {
@@ -1065,16 +1065,14 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
       case TMethodCall::kDouble : {
          Double_t d(0.);
          call.Execute(obj_ptr, d);
-         ret.Form(TBufferJSON::GetFloatFormat(),d);
+         res.Form(TBufferJSON::GetFloatFormat(),d);
          break;
       }
       case TMethodCall::kString : {
          char* txt(0);
          call.Execute(obj_ptr, &txt);
-         if (txt!=0) {
+         if (txt!=0)
             res.Form("\"%s\"",txt);
-            // should we delete txt here???
-         }
          break;
       }
       case TMethodCall::kOther : {
@@ -1087,7 +1085,6 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
             if ((ret_cl!=0) && (ret_cl->GetBaseClassOffset(TObject::Class())!=0)) ret_cl = 0;
          }
 
-         res = "null";
          if (ret_cl!=0) {
             Long_t l(0);
             call.Execute(obj_ptr, l);
@@ -1101,10 +1098,8 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
       }
       case TMethodCall::kNone : {
          call.Execute(obj_ptr);
-         res = "null";
          break;
       }
-
    }
 
    if (debug) debug->Append(TString::Format("Result = %s\n", res.Data()));
