@@ -217,7 +217,7 @@ protected:
 
    Long_t       fMainThrdId;  //! id of the main ROOT process
 
-   TString      fJsRootSys;   //! location of Root JS (if any)
+   TString      fJsRootSys;   //! location of JSROOT files
    TString      fTopName;     //! name of top folder, default - "ROOT"
 
    TString      fDefaultPage; //! file name for default page name
@@ -246,6 +246,10 @@ public:
    }
 
    void SetSniffer(TRootSniffer *sniff);
+
+   Bool_t IsReadOnly() const;
+
+   void SetReadOnly(Bool_t readonly);
 
    void SetTopName(const char *top)
    {

@@ -368,8 +368,29 @@ THttpServer::~THttpServer()
 //______________________________________________________________________________
 void THttpServer::SetSniffer(TRootSniffer *sniff)
 {
+   // Set TRootSniffer to the server
+   // Server takes ownership over sniffer
+
    if (fSniffer) delete fSniffer;
    fSniffer = sniff;
+}
+
+//______________________________________________________________________________
+Bool_t THttpServer::IsReadOnly() const
+{
+   // returns read-only mode
+
+   return fSniffer ? fSniffer->IsReadOnly() : kTRUE;
+}
+
+//______________________________________________________________________________
+void THttpServer::SetReadOnly(Bool_t readonly)
+{
+   // Set read-only mode for the server (default on)
+   // In read-only server is not allowed to change any ROOT object, registered to the server
+   // Server also cannot execute objects method via exe.json request
+
+   if (fSniffer) fSniffer->SetReadOnly(readonly);
 }
 
 //______________________________________________________________________________
