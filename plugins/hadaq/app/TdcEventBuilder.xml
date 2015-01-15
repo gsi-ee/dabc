@@ -78,7 +78,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hadaq://host:10101"/>
+       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="tdccal"/>
        <InputPort name="Input1" url="hadaq://host:10102"/>
        <InputPort name="Input2" url="hadaq://host:10103"/>
        <InputPort name="Input3" url="hadaq://host:10104"/>

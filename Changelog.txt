@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 15.01.2015
 1. Finalize TTreePlayer, update JSROOT docu
+2. Introduce dummy hadaq::TdcCalibrationModule and provide possibility
+   to instantiate it via transport configuration 
 
 
 14.01.2015

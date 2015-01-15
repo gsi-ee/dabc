@@ -169,13 +169,6 @@ namespace dabc {
 
          std::string GetState() const { return Par(StateParName()).Value().AsStr(); }
 
-         /** Adds object into application list
-          *  List used when objects must be destroyed or application start/stop should be executed
-          * @param kind - 'device', 'pool', module'
-          * @param name - object name
-          * @return true if successes  */
-         bool AddObject(const std::string& kind, const std::string& name);
-
          virtual bool Find(ConfigIO &cfg);
 
          virtual const char* ClassName() const { return fAppClass.c_str(); }
@@ -202,6 +195,12 @@ namespace dabc {
       bool StopAllModules()
       { return Execute("StopAllModules"); }
 
+      /** Adds object into application list
+       *  List used when objects must be destroyed or application start/stop should be executed
+       * @param kind - 'device', 'pool', module'
+       * @param name - object name
+       * @return true if successes  */
+      bool AddObject(const std::string& kind, const std::string& name);
 
    };
 

@@ -63,14 +63,6 @@ void dabc::Application::ObjectCleanup()
    dabc::Worker::ObjectCleanup();
 }
 
-bool dabc::Application::AddObject(const std::string& kind, const std::string& name)
-{
-   dabc::Command cmd("AddAppObject");
-   cmd.SetStr("kind", kind);
-   cmd.SetStr("name", name);
-   return Execute(cmd);
-}
-
 int dabc::Application::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(CmdStateTransition::CmdName()))
@@ -405,4 +397,12 @@ bool dabc::Application::DefaultInitFunc()
 void dabc::Application::BuildFieldsMap(RecordFieldsMap* cont)
 {
    cont->Field(dabc::prop_kind).SetStr("DABC.Application");
+}
+
+bool dabc::ApplicationRef::AddObject(const std::string& kind, const std::string& name)
+{
+   dabc::Command cmd("AddAppObject");
+   cmd.SetStr("kind", kind);
+   cmd.SetStr("name", name);
+   return Execute(cmd);
 }

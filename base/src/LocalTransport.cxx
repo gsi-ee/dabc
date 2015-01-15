@@ -348,6 +348,8 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 
    if (port_out.null() || port_inp.null()) return cmd_false;
 
+   DOUT2("Connect ports %s -> %s", port_out.ItemName().c_str(), port_inp.ItemName().c_str());
+
    ModuleRef m1 = port_out.GetModule();
    ModuleRef m2 = port_inp.GetModule();
 

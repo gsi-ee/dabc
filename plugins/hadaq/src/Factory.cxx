@@ -32,6 +32,7 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
 #include "hadaq/TerminalModule.h"
+#include "hadaq/TdcCalibrationModule.h"
 #include "hadaq/Observer.h"
 #include "hadaq/api.h"
 
@@ -68,29 +69,40 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
 
    dabc::PortRef portref = port;
 
-   if (portref.IsInput() && (url.GetProtocol()=="hadaq") && !url.GetHostName().empty()) {
+   if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetHostName().empty())
+      return dabc::Factory::CreateTransport(port, typ, cmd);
 
-      int nport = url.GetPort();
-      int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
-      int mtu = url.GetOptionInt("mtu", 64512);
-      double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
-      bool observer = url.GetOptionBool("observer", false);
-      bool debug = url.HasOption("debug");
+   if (url.HasOption("tdccal")) {
 
+      std::string calname = dabc::format("%sCal", portref.GetName());
 
-      if (nport>0) {
+      dabc::ModuleRef calm = dabc::mgr.CreateModule("hadaq::TdcCalibrationModule", calname);
 
-         int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
+      dabc::LocalTransport::ConnectPorts(calm.FindPort("Output0"), portref);
 
-         if (fd>0) {
-            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug);
+      portref = calm.FindPort("Input0");
 
-            return new hadaq::DataTransport(cmd, portref, addon, observer);
-         }
-      }
+      // workaround - we say manager that it should connect transport with other port
+      cmd.SetStr(dabc::CmdCreateTransport::PortArg(), portref.ItemName());
+
+      dabc::mgr.app().AddObject("module", calname);
    }
 
-   return dabc::Factory::CreateTransport(port, typ, cmd);
+   int nport = url.GetPort();
+   if (nport<=0) return 0;
+
+   int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
+   int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
+   if (fd<=0) return 0;
+
+   int mtu = url.GetOptionInt("mtu", 64512);
+   double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
+   bool observer = url.GetOptionBool("observer", false);
+   bool debug = url.HasOption("debug");
+
+   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug);
+
+   return new hadaq::DataTransport(cmd, portref, addon, observer);
 }
 
 
@@ -107,6 +119,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::TerminalModule")
       return new hadaq::TerminalModule(modulename, cmd);
+
+   if (classname == "hadaq::TdcCalibrationModule")
+      return new hadaq::TdcCalibrationModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

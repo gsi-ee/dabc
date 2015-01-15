@@ -1018,8 +1018,9 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       // TODO: make url xml node attribute as for parameter
 
       std::string trkind = crcmd.TransportKind();
+      std::string portname = crcmd.PortName();
 
-      PortRef port = FindPort(crcmd.PortName());
+      PortRef port = FindPort(portname);
       if (trkind.empty()) {
          trkind = port.Cfg("url", cmd).AsStr();
 
@@ -1088,6 +1089,13 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       if (!tr.null()) {
 
+         if (portname != crcmd.PortName()) {
+            portname = crcmd.PortName();
+            DOUT2("Port name for created transport was changed on the fly %s", portname.c_str());
+            port = FindPort(portname);
+            if (port.null()) { tr.Destroy(); return cmd_false; }
+         }
+
          std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStr();
          if (thrdname.empty())
             switch (GetThreadsLayout()) {
@@ -1113,7 +1121,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          }
 
          DOUT3("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
-
       }
    } else
 
