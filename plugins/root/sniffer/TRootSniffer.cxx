@@ -572,7 +572,6 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
    }
 }
 
-
 //______________________________________________________________________________
 void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                                   const char *foldername, Bool_t extra, TCollection* keys_lst)
@@ -673,21 +672,6 @@ Bool_t TRootSniffer::IsDrawableClass(TClass *cl)
 }
 
 //______________________________________________________________________________
-Bool_t TRootSniffer::IsBrowsableClass(TClass *cl)
-{
-   // return true if object can be browsed?
-
-   if (cl == 0) return kFALSE;
-
-   if (cl->InheritsFrom(TTree::Class())) return kTRUE;
-   if (cl->InheritsFrom(TBranch::Class())) return kTRUE;
-   if (cl->InheritsFrom(TLeaf::Class())) return kTRUE;
-   if (cl->InheritsFrom(TFolder::Class())) return kTRUE;
-
-   return kFALSE;
-}
-
-//______________________________________________________________________________
 void TRootSniffer::ScanHierarchy(const char *topname, const char *path,
                                  TRootSnifferStore *store)
 {
@@ -716,14 +700,12 @@ void TRootSniffer::ScanHierarchy(const char *topname, const char *path,
 void *TRootSniffer::FindInHierarchy(const char *path, TClass **cl,
                                     TDataMember **member, Int_t *chld)
 {
-   // search element with specified path
-   // returns pointer on element
-   // optionally one could obtain element class, member description and number
-   // of childs
-   // when chld!=0, not only element is searched, but also number of childs are
-   // counted
-   // when member!=0, any object will be scanned for its data members (disregard
-   // of extra options)
+   // Search element with specified path
+   // Returns pointer on element
+   // Optionally one could obtain element class, member description
+   // and number of childs. When chld!=0, not only element is searched,
+   // but also number of childs are counted. When member!=0, any object
+   // will be scanned for its data members (disregard of extra options)
 
    TRootSnifferStore store;
 
@@ -745,7 +727,7 @@ void *TRootSniffer::FindInHierarchy(const char *path, TClass **cl,
 //______________________________________________________________________________
 TObject *TRootSniffer::FindTObjectInHierarchy(const char *path)
 {
-   // search element in hierarchy, derived from TObject
+   // Search element in hierarchy, derived from TObject
 
    TClass *cl(0);
 
@@ -757,8 +739,8 @@ TObject *TRootSniffer::FindTObjectInHierarchy(const char *path)
 //______________________________________________________________________________
 ULong_t TRootSniffer::GetStreamerInfoHash()
 {
-   // returns hash value for streamer infos
-   // at the moment - just number of items in streamer infos list.
+   // Returns hash value for streamer infos
+   // At the moment - just number of items in streamer infos list.
 
    return fSinfoSize;
 }
@@ -766,7 +748,7 @@ ULong_t TRootSniffer::GetStreamerInfoHash()
 //______________________________________________________________________________
 ULong_t TRootSniffer::GetItemHash(const char *itemname)
 {
-   // get hash function for specified item
+   // Get hash function for specified item
    // used to detect any changes in the specified object
 
    if (IsStreamerInfoItem(itemname)) return GetStreamerInfoHash();
@@ -779,7 +761,7 @@ ULong_t TRootSniffer::GetItemHash(const char *itemname)
 //______________________________________________________________________________
 Bool_t TRootSniffer::CanDrawItem(const char *path)
 {
-   // method verifies if object can be drawn
+   // Method verifies if object can be drawn
 
    TClass *obj_cl(0);
    void *res = FindInHierarchy(path, &obj_cl);
@@ -789,7 +771,7 @@ Bool_t TRootSniffer::CanDrawItem(const char *path)
 //______________________________________________________________________________
 Bool_t TRootSniffer::CanExploreItem(const char *path)
 {
-   // method returns true when object has childs or
+   // Method returns true when object has childs or
    // one could try to expand item
 
    TClass *obj_cl(0);
@@ -801,9 +783,9 @@ Bool_t TRootSniffer::CanExploreItem(const char *path)
 //______________________________________________________________________________
 void TRootSniffer::CreateMemFile()
 {
-   // creates TMemFile instance, which used for objects streaming
-   // One could not use TBuffer directly, while one also require streamer infos
-   // list
+   // Creates TMemFile instance, which used for objects streaming
+   // One could not use TBufferFile directly,
+   // while one also require streamer infos list
 
    if (fMemFile != 0) return;
 
@@ -1133,6 +1115,8 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
 //______________________________________________________________________________
 Bool_t TRootSniffer::IsStreamerInfoItem(const char *itemname)
 {
+   // Return true if it is streamer info item name
+
    if ((itemname == 0) || (*itemname == 0)) return kFALSE;
 
    return (strcmp(itemname, "StreamerInfo") == 0) || (strcmp(itemname, "StreamerInfo/") == 0);
@@ -1253,8 +1237,6 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&p
       memcpy(ptr, sbuf->Buffer(), sbuf->Length());
       length = sbuf->Length();
    }
-
-
 
    return kTRUE;
 }
@@ -1377,6 +1359,8 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    //   "root.gif"  - gif image
    //   "root.xml"  - xml representation
    //   "root.json" - json representation
+   //   "exe.json"  - method execution with json reply
+   //   "exe.txt"   - method execution with debug output
 
    if ((file == 0) || (*file == 0)) return kFALSE;
 

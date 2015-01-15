@@ -124,7 +124,6 @@ public:
    virtual ~TRootSniffer();
 
    static Bool_t IsDrawableClass(TClass *cl);
-   static Bool_t IsBrowsableClass(TClass *cl);
 
    /** When readonly on (default), sniffer is not allowed to change ROOT structures.
     * For instance, it is not allowed to read new objects from files */
