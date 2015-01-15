@@ -976,7 +976,15 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
 
    TString* debug = astxt ? &ret : 0;
 
-   if ((path == 0) || (*path == 0) || fReadOnly) return kFALSE;
+   if ((path == 0) || (*path == 0)) {
+      if (debug) debug->Append("Item name not specified\n");
+      return debug!=0;
+   }
+
+   if (fReadOnly) {
+      if (debug) debug->Append("Server runs in read-only mode, methods cannot be executed\n");
+      return debug!=0;
+   }
 
    if (*path == '/') path++;
 
@@ -1081,16 +1089,13 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
          std::string ret_kind = method->GetReturnTypeNormalizedName();
          if ((ret_kind.length()>0) && (ret_kind[ret_kind.length()-1]=='*')) {
             ret_kind.resize(ret_kind.length()-1);
-            ret_cl = gROOT->GetClass(ret_kind.c_str(), kFALSE,kTRUE);
-            if ((ret_cl!=0) && (ret_cl->GetBaseClassOffset(TObject::Class())!=0)) ret_cl = 0;
+            ret_cl = gROOT->GetClass(ret_kind.c_str(), kFALSE, kTRUE);
          }
 
          if (ret_cl!=0) {
             Long_t l(0);
             call.Execute(obj_ptr, l);
-            TObject* tobj = (TObject*) l;
-            if (tobj!=0)
-               res = TBufferJSON::ConvertToJSON(tobj, compact);
+            if (l!=0) res = TBufferJSON::ConvertToJSON((void*) l, ret_cl, compact);
          } else {
             call.Execute(obj_ptr);
          }

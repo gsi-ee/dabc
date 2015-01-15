@@ -223,4 +223,5 @@ Example of TTree::Draw command execution:
    
    [shell] wget 'http://localhost:8080/Files/job1.root/ntuple/exe.json?method=Draw&prototype="Option_t*"&opt="px:py>>h1"&_ret_object_=h1' -O exe.json
 
+To get debug information about command execution, one could submit 'exe.txt' request with same arguments.
    

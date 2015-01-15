@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+15.01.2015
+1. Finalize TTreePlayer, update JSROOT docu
+
+
 14.01.2015
 1. Implement exe.json request which allows to execute any object method
    and return result of execution in JSON format. Like:
