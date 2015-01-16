@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 16.01.2015
 1. Use exe.json.gz?compact=3 in TTreePlayer, update THttpServer docu 
+2. Add correct handling of '[' and ']' symbols in JSROOT and THttpServer,
+   update docu concerning CORS access.
 
 
 15.01.2015
