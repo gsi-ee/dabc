@@ -262,5 +262,4 @@ For example, reading an object from a file and displaying it will look like:
 
 ## Links collection
 
-Many different examples of JSROOT usage can be found on [links collection](https://root.cern.ch/js/3.2/jslinks.htm) page 
-
+Many different examples of JSROOT usage can be found on [links collection](https://root.cern.ch/js/3.2/demo/jslinks.htm) page 
