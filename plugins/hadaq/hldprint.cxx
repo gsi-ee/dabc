@@ -123,7 +123,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    errmask = 0;
 
    bool haschannel0 = false;
-   unsigned channel(0);
+   unsigned channel(0), fine(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
@@ -149,6 +149,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             if (prefix>0) printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
             break;
          case tdckind_Hit:
+         case tdckind_Hit1:
             channel = (msg >> 22) & 0x7F;
             if (channel == 0) haschannel0 = true;
             if (epoch_channel==-1) epoch_channel = channel;
@@ -156,9 +157,15 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
 
             tm = ((epoch << 11) + (msg & 0x7FF)) *5.; // coarse time
-            tm += (((msg >> 12) & 0x3FF) - 20)/470.*5.; // approx fine time 20-490
+            fine = (msg >> 12) & 0x3FF;
+            if (fine<0x3ff) {
+               if ((msg & tdckind_Mask) == tdckind_Hit1)
+                  tm += fine*5e-3;  // calibrated time, 5 ps/bin
+               else
+                  tm -= (fine - 20)/470.*5.; // simple approx of fine time from range 20-490
+            }
             if (prefix>0) printf("hit ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns\n",
-                                 (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), (msg >> 12) & 0x3FF, tm);
+                                 (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm);
             break;
          default:
             if (prefix>0) printf("undefined\n");

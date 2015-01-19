@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <endian.h>
- 
+
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
@@ -91,7 +91,7 @@ bool hadaq::HldOutput::StartNewFile()
    CloseFile();
 
    if (fRunNumber == 0) {
-      fRunNumber = hadaq::RawEvent::CreateRunId();
+      fRunNumber = hadaq::CreateRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
    }
@@ -117,10 +117,10 @@ bool hadaq::HldOutput::StartNewFile()
       else
       {
          EOUT("Could not find daq_disk parameter although disk demon mode is on!");
-      }	
+      }
    }
    // change file names according hades style:
-   std::string extens = hadaq::RawEvent::FormatFilename(fRunNumber,fEBNumber);
+   std::string extens = hadaq::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
 
    size_t pos = fname.rfind(".hld");
@@ -160,35 +160,35 @@ bool hadaq::HldOutput::StartNewFile()
       DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);
   }
 
-  
-//   if(fRunInfoToOracle) 
+
+//   if(fRunInfoToOracle)
 //   {
 //    //put reduced file name to combiner module parameter for oracle info:
 //     dabc::Parameter filenamepar = dabc::mgr.FindPar("Combiner/CurrentFile");
 //    if(!filenamepar.null()) {
-//      std::string reducedname; 
+//      std::string reducedname;
 //      pos = fCurrentFileName.rfind("/");
 //      if (pos == std::string::npos)
 // 	reducedname=fCurrentFileName;
 //      else
 //         reducedname=fCurrentFileName.substr(pos+1);
-//      
-//      DOUT0("Put reduced filename %s for oracle export.", reducedname.c_str(), fRunNumber); 
+//
+//      DOUT0("Put reduced filename %s for oracle export.", reducedname.c_str(), fRunNumber);
 //      filenamepar.SetValue(reducedname);
-//      
+//
 //    }
 //    else
 //    {
-//      EOUT("HldOutput could not find currentfilename parameter!");      
+//      EOUT("HldOutput could not find currentfilename parameter!");
 //     }
-//    
+//
 //   } // if not run2ora
-   
+
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
-   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber); 
-   
+   DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
+
    return true;
-  
+
 }
 
 bool hadaq::HldOutput::CloseFile()
@@ -331,7 +331,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       total_write_size += write_size;
    }
 
-   // TODO: in case of partial written buffer, account sizes to correct file 
+   // TODO: in case of partial written buffer, account sizes to correct file
    AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
 
    if (fEpicsSlave && fRfio && startnewfile)

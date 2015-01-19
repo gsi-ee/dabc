@@ -20,7 +20,26 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifdef WITH_STREAM
+
+#include "base/ProcMgr.h"
+
+class DabcProcMgr : public base::ProcMgr {
+   protected:
+
+   public:
+      DabcProcMgr();
+      virtual ~DabcProcMgr();
+};
+
+#endif
+
+
+class DabcProcMgr;
+
 namespace hadaq {
+
+   class TrbProcessor;
 
 /** \brief Perform calibration of FPGA TDC data
  *
@@ -31,12 +50,16 @@ namespace hadaq {
 
    protected:
 
+      DabcProcMgr* fProcMgr;
+      hadaq::TrbProcessor* fTrbProc;
+
       bool retransmit();
 
       virtual int ExecuteCommand(dabc::Command cmd);
 
    public:
       TdcCalibrationModule(const std::string& name, dabc::Command cmd = 0);
+      virtual ~TdcCalibrationModule();
 
       virtual bool ProcessBuffer(unsigned pool) { return retransmit(); }
 

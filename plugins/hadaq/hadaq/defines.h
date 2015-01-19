@@ -112,8 +112,6 @@
 
 namespace hadaq {
 
-
-
    enum {
       HADAQ_TIMEOFFSET       = 1200000000 /* needed to reconstruct time from runId */
    };
@@ -469,21 +467,6 @@ is unique throughout all events ever acquired by the system.
          void Dump();
 
          RawSubevent* NextSubevent(RawSubevent* prev = 0);
-
-         static uint32_t CreateRunId();
-
-         /*
-          * Format a HADES-convention filename string
-          * from a given run id and optional eventbuilder id
-          */
-         static std::string FormatFilename (uint32_t runid, uint16_t ebid);
-
-         
-         /* helper function to evaluate core affinity for process pid_t
-          * mostly stolen from daqdata/hadaq/stats.c   
-            we put it here since event structures are known almost everywhere*/
-         static int CoreAffinity(pid_t pid);
- 
    };
 
 }

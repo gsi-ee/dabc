@@ -74,7 +74,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
 
    if (url.HasOption("tdccal")) {
 
-      std::string calname = dabc::format("%sCal", portref.GetName());
+      std::string calname = dabc::format("%sTdcCal", portref.GetName());
 
       dabc::ModuleRef calm = dabc::mgr.CreateModule("hadaq::TdcCalibrationModule", calname);
 

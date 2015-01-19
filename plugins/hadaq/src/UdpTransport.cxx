@@ -326,15 +326,15 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       CreateNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber));
       CreateNetmemPar(dabc::format("portNr%d",fIdNumber));
       SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
-      
+
       CreateNetmemPar("coreNr");
       // exclude PID from shared mem not to interfere with default pid of observer
       // TODO: fix default pid export of worker ?
       CreateNetmemPar("PID");
-   
-     
+
+
       SetNetmemPar("PID", (int) addon->fPid);
-      SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
+      SetNetmemPar("coreNr", hadaq::CoreAffinity(addon->fPid));
       CreateTimer("ObserverTimer", 1, false);
       DOUT3("hadaq::DataTransport created observer parameters");
    }
@@ -386,13 +386,13 @@ bool hadaq::DataTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
    SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) (Par(fDataRateName).Value().AsDouble() * 1024 * 1024));
 
-// does updating the affinity cause performance loss?   
+// does updating the affinity cause performance loss?
 //    static int affcount=0;
 //    if(affcount++ % 20)
 //     {
 //     SetNetmemPar("PID", (int) addon->fPid);
-//     SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(addon->fPid));
-//     //SetNetmemPar("coreNr", hadaq::RawEvent::CoreAffinity(0));
+//     SetNetmemPar("coreNr", hadaq::CoreAffinity(addon->fPid));
+//     //SetNetmemPar("coreNr", hadaq::CoreAffinity(0));
 //     }
    return true;
 }

@@ -98,7 +98,8 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
    fFileName(url.GetFullName()),
    fFilesList(),
    fIO(0),
-   fCurrentName()
+   fCurrentName(),
+   fLoop(url.HasOption("loop"))
 {
 }
 
@@ -122,7 +123,19 @@ void dabc::FileInput::SetIO(dabc::FileInterface* io)
    }
 }
 
+bool dabc::FileInput::InitFilesList()
+{
+   if (fFileName.find_first_of("*?") != std::string::npos) {
+      fFilesList = fIO->fmatch(fFileName.c_str());
+   } else {
+      fFilesList = new dabc::Object(0, "FilesList");
+      new dabc::Object(fFilesList(), fFileName);
+   }
 
+   fFilesList.SetAutoDestroy(true);
+
+   return fFilesList.NumChilds() > 0;
+}
 
 bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
 {
@@ -137,22 +150,15 @@ bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
 
    if (fIO==0) fIO = new dabc::FileInterface;
 
-   if (fFileName.find_first_of("*?") != std::string::npos) {
-      fFilesList = fIO->fmatch(fFileName.c_str());
-   } else {
-      fFilesList = new dabc::Object(0, "FilesList");
-      new dabc::Object(fFilesList(), fFileName);
-   }
-
-   fFilesList.SetAutoDestroy(true);
-
-   return fFilesList.NumChilds() > 0;
+   return InitFilesList();
 }
 
 bool dabc::FileInput::TakeNextFileName()
 {
    fCurrentName.clear();
-   if (fFilesList.NumChilds() == 0) return false;
+   if (fFilesList.NumChilds() == 0) {
+      if (!fLoop || !InitFilesList()) return false;
+   }
    const char* nextname = fFilesList.GetChild(0).GetName();
    if (nextname!=0) fCurrentName = nextname;
    fFilesList.GetChild(0).Destroy();

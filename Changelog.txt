@@ -2,6 +2,17 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+19.01.2015
+1. For all files inputs one could provide 'loop' parameter, which
+   forces to read same file endless number of times. 
+2. Introduce hadaq::TdcCalibrationModule for automatic calibration of 
+   fine time stamp in the TDC data, use code from stream framework.
+   Will be compiled only when make with-stream=1 called
+3. In configuration for hadaq input one could activate tdc calibration,
+   specifying "hadaq://host:10101?tdccal" option. Rest of calibration 
+   parameters can be specified in Input0TdcCal module.
+
+
 16.01.2015
 1. Use exe.json.gz?compact=3 in TTreePlayer, update THttpServer docu 
 2. Add correct handling of '[' and ']' symbols in JSROOT and THttpServer,

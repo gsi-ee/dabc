@@ -230,16 +230,3 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 
    return checkedsz>0;
 }
-
-/*
-std::string hadaq::HldFile::FormatFilename (uint32_t id)
-{
-   // same
-   char buf[128];
-   time_t iocTime;
-   iocTime = id + HADAQ_TIMEOFFSET;
-   struct tm tm_res;
-   strftime(buf, 128, "%y%j%H%M%S", localtime_r(&iocTime, &tm_res));
-   return std::string(buf);
-}
-*/

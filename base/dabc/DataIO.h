@@ -234,7 +234,9 @@ namespace dabc {
          dabc::Reference      fFilesList;
          dabc::FileInterface* fIO;
          std::string          fCurrentName;
+         bool                 fLoop; // read file(s) in endless loop
 
+         bool InitFilesList();
          bool TakeNextFileName();
          const std::string& CurrentFileName() const { return fCurrentName; }
          void ClearCurrentFileName() { fCurrentName.clear(); }
