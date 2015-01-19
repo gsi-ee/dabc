@@ -10,7 +10,8 @@ about current functionality of the framework.
    Will be compiled only when make with-stream=1 called
 3. In configuration for hadaq input one could activate tdc calibration,
    specifying "hadaq://host:10101?tdccal" option. Rest of calibration 
-   parameters can be specified in Input0TdcCal module.
+   parameters can be specified in Input0TdcCal module itself.
+4. Enable auto-calibration of TDC channels.
 
 
 16.01.2015

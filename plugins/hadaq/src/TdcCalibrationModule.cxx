@@ -88,15 +88,19 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
          if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
             // this is debug mode when processing events from the file
+#ifdef WITH_STREAM
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextEvent()) {
                while (iter.NextSubEvent()) {
-#ifdef WITH_STREAM
-                  fTrbProc->CalibrateSubEvent((hadaqs::RawSubevent*)iter.subevnt());
-#endif
+                  fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt());
                }
             }
+            // at the end check if autocalibration can be done
+            if (fTrbProc->CheckAutoCalibration())
+               DOUT0("MADE CALIBRATION!!!");
+#endif
+
          } else
          if (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) {
 
