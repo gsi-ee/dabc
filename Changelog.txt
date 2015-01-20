@@ -8,6 +8,7 @@ about current functionality of the framework.
    available only in the  hadaq::TdcCalibrationModule
 2. Support DABC histogram in JavaScript. At the moment when histogram
    requested, DABC record converted into JSROOT.TH1 class
+3. Provide also emulation of TH2 class in DABC
     
 
 19.01.2015

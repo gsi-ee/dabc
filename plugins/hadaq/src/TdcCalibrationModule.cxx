@@ -50,7 +50,7 @@ base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbin
    h.SetField("right", right);
 
    std::vector<double> bins;
-   bins.resize(nbins+3, 0);
+   bins.resize(nbins+3, 0.);
    bins[0] = nbins;
    bins[1] = left;
    bins[2] = right;
@@ -64,9 +64,10 @@ void DabcProcMgr::FillH1(base::H1handle h1, double x, double weight)
    if (h1==0) return;
    double* arr = (double*) h1;
 
-   double bin = (x - arr[1]) / (arr[2] - arr[1]) * arr[0];
+   int nbin = (int) arr[0];
+   int bin = (int) floor(nbin * (x - arr[1]) / (arr[2] - arr[1]));
 
-   if ((bin>=0.) && (bin<arr[0]-0.75)) arr[(int)(bin+3)]+=weight;
+   if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
 }
 
 double DabcProcMgr::GetH1Content(base::H1handle h1, int nbin)
@@ -80,8 +81,64 @@ void DabcProcMgr::ClearH1(base::H1handle h1)
 {
    if (h1==0) return;
    double* arr = (double*) h1;
-   for (int n=0;n<arr[0];n++) arr[n+3] = 0;
+   for (int n=0;n<arr[0];n++) arr[n+3] = 0.;
 }
+
+base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
+{
+   DOUT0("Create TH2 %s", name);
+
+   dabc::Hierarchy h = fTop.CreateHChild(name);
+   if (h.null()) return 0;
+
+   h.SetField("_kind","ROOT.TH2D");
+   h.SetField("_title", title);
+   h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+   h.SetField("nbins1", nbins1);
+   h.SetField("left1", left1);
+   h.SetField("right1", right1);
+   h.SetField("nbins2", nbins2);
+   h.SetField("left2", left2);
+   h.SetField("right2", right2);
+
+   std::vector<double> bins;
+   bins.resize(nbins1*nbins2+6, 0.);
+   bins[0] = nbins1;
+   bins[1] = left1;
+   bins[2] = right1;
+   bins[3] = nbins2;
+   bins[4] = left2;
+   bins[5] = right2;
+   h.SetField("bins", bins);
+
+   return h.GetFieldPtr("bins")->GetDoubleArr();
+}
+
+void DabcProcMgr::FillH2(base::H1handle h2, double x, double y, double weight)
+{
+   if (h2==0) return;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+
+   int bin1 = (int) floor(nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
+   int bin2 = (int) floor(nbin2 * (x - arr[4]) / (arr[5] - arr[4]));
+
+   if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
+      arr[bin1 + bin2*nbin1 + 6]+=weight;
+}
+
+void DabcProcMgr::ClearH2(base::H2handle h2)
+{
+   if (h2==0) return;
+   double* arr = (double*) h2;
+
+   int nbin1 = (int) arr[0];
+   int nbin2 = (int) arr[3];
+   for (int n=0;n<nbin1*nbin2;n++) arr[n+6] = 0.;
+}
+
 
 #endif
 
@@ -94,8 +151,20 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    // we need one input and one output port
    EnsurePorts(1, 1);
 
-
 #ifdef WITH_STREAM
+
+
+   int finemin = Cfg("FineMin", cmd).AsInt(0);
+   int finemax = Cfg("FineMax", cmd).AsInt(0);
+   if ((finemin>0) && (finemax==0))
+      hadaq::TdcMessage::SetFineLimits(finemin, finemax);
+
+   int numch = Cfg("NumChannels", cmd).AsInt(65);
+   int edges = Cfg("EdgeMask", cmd).AsInt(1);
+
+   // default channel numbers and edges mask
+   hadaq::TrbProcessor::SetDefaults(numch, edges);
+
 
    fWorkerHierarchy.Create("Worker");
 
@@ -104,10 +173,17 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fProcMgr->fTop = fWorkerHierarchy;
 
    fTrbProc = new hadaq::TrbProcessor(0x0);
+   int hfill = Cfg("HistFilling", cmd).AsInt(1);
+
+   fTrbProc->SetHistFilling(hfill);
 
    std::vector<int64_t> tdcs = Cfg("TDC", cmd).AsIntVect();
    for(unsigned n=0;n<tdcs.size();n++)
       fTrbProc->CreateTDC(tdcs[n]);
+
+   std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
+   for (unsigned n=0;n<dis_ch.size();n++)
+      fTrbProc->DisableCalibrationFor(dis_ch[n]);
 
    fTrbProc->SetTDCCorrectionMode(1);
 

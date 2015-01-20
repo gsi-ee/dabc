@@ -1066,10 +1066,21 @@
          var obj = null;
          if (res && res._kind=='ROOT.TH1D') {
             obj = JSROOT.CreateTH1(res.nbins);
-            jQuery.extend(obj, { fName: res._name, fTitle: res._title, fXmin: res.left,  fXmax: res.right });
+            jQuery.extend(obj, { fName: res._name, fTitle: res._title });
+            jQuery.extend(obj['fXaxis'], { fXmin: res.left,  fXmax: res.right });
             for (var i=0;i<res.nbins;i++)
                obj.fArray[i+1] = res.bins[i+3]; // 3 first items in array are not bins
+         } else 
+         if (res && res._kind=='ROOT.TH2D') {
+            obj = JSROOT.CreateTH2(res.nbins1, res.nbins2);
+            jQuery.extend(obj, { fName: res._name, fTitle: res._title });
+            jQuery.extend(obj['fXaxis'], { fXmin: res.left1,  fXmax: res.right1 });
+            jQuery.extend(obj['fYaxis'], { fXmin: res.left2,  fXmax: res.right2 });
+            for (var i=0;i<res.nbins1;i++)
+               for (var j=0;j<res.nbins2;j++)
+                  obj['fArray'][i+1+(j+1)*(res.nbins1+2)] = res.bins[6+i+j*res.nbins1]; // 6 first items in array are not bins
          }
+            
 
          if (typeof callback == 'function')
             callback(item, obj);
