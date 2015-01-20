@@ -3,9 +3,11 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 20.01.2015
-1. Introduce 'virtual' DABC.H1 class, which will be used to 
+1. Introduce 'virtual' DABC histogram class, which will be used to 
    represent histograms in the hierarchy classes. For the moment
    available only in the  hadaq::TdcCalibrationModule
+2. Support DABC histogram in JavaScript. At the moment when histogram
+   requested, DABC record converted into JSROOT.TH1 class
     
 
 19.01.2015

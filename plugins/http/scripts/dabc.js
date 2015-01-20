@@ -1052,6 +1052,33 @@
       }
    }
    
+   DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, callback) {
+
+      if (!('_dabc_hist' in item))
+         return JSROOT.HierarchyPainter.prototype.GetOnlineItem.call(this, item, callback);
+      
+      var url = this.itemFullName(item);
+      if (url.length > 0) url += "/";
+      url += 'get.json.gz?compact=3';
+
+      var itemreq = JSROOT.NewHttpRequest(url, 'object', function(res) {
+         
+         var obj = null;
+         if (res && res._kind=='ROOT.TH1D') {
+            obj = JSROOT.CreateTH1(res.nbins);
+            jQuery.extend(obj, { fName: res._name, fTitle: res._title, fXmin: res.left,  fXmax: res.right });
+            for (var i=0;i<res.nbins;i++)
+               obj.fArray[i+1] = res.bins[i+3]; // 3 first items in array are not bins
+         }
+
+         if (typeof callback == 'function')
+            callback(item, obj);
+      });
+
+      itemreq.send(null);
+
+   }
+   
    DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
    {
       var node = this.Find(itemname);
@@ -1067,8 +1094,8 @@
       var isdabc = false;
 
       mdi.ForEachPainter(function(p) {
-         if (p.GetItemName() != itemname) return;
-         if (p['is_dabc']) { p.ClickItem(); isdabc = true; } 
+         if ((p.GetItemName() == itemname) && p['is_dabc']) 
+            { p.ClickItem(); isdabc = true; } 
       });
 
       if (isdabc) return;

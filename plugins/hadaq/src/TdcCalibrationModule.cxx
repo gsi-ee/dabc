@@ -42,8 +42,9 @@ base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbin
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
 
-   h.SetField("_kind","DABC.H1");
+   h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
+   h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
    h.SetField("nbins", nbins);
    h.SetField("left", left);
    h.SetField("right", right);
@@ -70,7 +71,7 @@ void DabcProcMgr::FillH1(base::H1handle h1, double x, double weight)
 
 double DabcProcMgr::GetH1Content(base::H1handle h1, int nbin)
 {
-   if (h1==0) return;
+   if (h1==0) return 0.;
    double* arr = (double*) h1;
    return (nbin>=0) && (nbin<arr[0]) ? arr[nbin+3] : 0;
 }
