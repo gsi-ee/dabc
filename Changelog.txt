@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+20.01.2015
+1. Introduce 'virtual' DABC.H1 class, which will be used to 
+   represent histograms in the hierarchy classes. For the moment
+   available only in the  hadaq::TdcCalibrationModule
+    
+
 19.01.2015
 1. For all files inputs one could provide 'loop' parameter, which
    forces to read same file endless number of times. 

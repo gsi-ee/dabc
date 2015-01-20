@@ -28,8 +28,16 @@ class DabcProcMgr : public base::ProcMgr {
    protected:
 
    public:
+      dabc::Hierarchy fTop;
+
       DabcProcMgr();
       virtual ~DabcProcMgr();
+
+      virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
+      virtual void FillH1(base::H1handle h1, double x, double weight = 1.);
+      virtual double GetH1Content(base::H1handle h1, int nbin);
+      virtual void ClearH1(base::H1handle h1);
+
 };
 
 #endif
