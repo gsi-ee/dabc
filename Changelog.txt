@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 21.01.2015
 1. Allow to activate player also with simple mouse click.
+2. Implement necessary parameters in the TdcCalibrationModule,
+   some of them can be specified from port url.  
 
 
 20.01.2015

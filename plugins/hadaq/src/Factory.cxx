@@ -72,11 +72,18 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetHostName().empty())
       return dabc::Factory::CreateTransport(port, typ, cmd);
 
-   if (url.HasOption("tdccal")) {
+   if (url.HasOption("tdc")) {
 
       std::string calname = dabc::format("%sTdcCal", portref.GetName());
 
-      dabc::ModuleRef calm = dabc::mgr.CreateModule("hadaq::TdcCalibrationModule", calname);
+      dabc::CmdCreateModule cmd("hadaq::TdcCalibrationModule", calname);
+      cmd.SetStr("TDC", url.GetOptionStr("tdc"));
+      if (url.HasOption("trb")) cmd.SetStr("TRB", url.GetOptionStr("trb"));
+      cmd.SetInt("portid", portref.ItemSubId());
+
+      dabc::mgr.Execute(cmd);
+
+      dabc::ModuleRef calm = dabc::mgr.FindModule(calname);
 
       dabc::LocalTransport::ConnectPorts(calm.FindPort("Output0"), portref);
 

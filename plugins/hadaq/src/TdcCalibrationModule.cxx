@@ -34,10 +34,9 @@ DabcProcMgr::~DabcProcMgr()
 {
 }
 
-
 base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   DOUT0("Create TH1 %s", name);
+   DOUT2("Create TH1 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
@@ -86,7 +85,7 @@ void DabcProcMgr::ClearH1(base::H1handle h1)
 
 base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   DOUT0("Create TH2 %s", name);
+   DOUT2("Create TH2 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
@@ -123,7 +122,7 @@ void DabcProcMgr::FillH2(base::H1handle h2, double x, double y, double weight)
    int nbin2 = (int) arr[3];
 
    int bin1 = (int) floor(nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
-   int bin2 = (int) floor(nbin2 * (x - arr[4]) / (arr[5] - arr[4]));
+   int bin2 = (int) floor(nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
 
    if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
       arr[bin1 + bin2*nbin1 + 6]+=weight;
@@ -168,11 +167,20 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    fWorkerHierarchy.Create("Worker");
 
+   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("Status");
+   item.SetField("value","Init");
+   item.SetField("_player", "DABC.HadaqEventBuilder");
+
+
+   int trbid = Cfg("TRB", cmd).AsInt(0x0);
+   int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
+   if (trbid==0) trbid = 0x8000 | portid;
+
    fProcMgr = new DabcProcMgr;
 
    fProcMgr->fTop = fWorkerHierarchy;
 
-   fTrbProc = new hadaq::TrbProcessor(0x0);
+   fTrbProc = new hadaq::TrbProcessor(trbid);
    int hfill = Cfg("HistFilling", cmd).AsInt(1);
 
    fTrbProc->SetHistFilling(hfill);
@@ -193,8 +201,9 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    std::string calfile = Cfg("CalibrFile", cmd).AsStr();
    if (!calfile.empty()) {
-      fTrbProc->LoadCalibrations(calfile.c_str());
       fTrbProc->SetWriteCalibrations(calfile.c_str(), true);
+      if (fTrbProc->LoadCalibrations(calfile.c_str()))
+         fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
    }
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
@@ -235,9 +244,8 @@ bool hadaq::TdcCalibrationModule::retransmit()
             }
             // at the end check if autocalibration can be done
             if (fTrbProc->CheckAutoCalibration())
-               DOUT0("MADE CALIBRATION!!!");
+               fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
 #endif
-
          } else
          if (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) {
 

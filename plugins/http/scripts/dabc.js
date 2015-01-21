@@ -978,6 +978,7 @@
       if (kind == "ROOT.TGo4AnalysisStatus") cando.img1 = 'img_go4icon';
       
       if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
+      if ('_player' in node) cando.display = true;
       
       return cando;
    }
@@ -1111,7 +1112,7 @@
 
       if (isdabc) return;
       
-      if ((kind.indexOf("ROOT.") == 0) && (view != "png"))
+      if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
 
       var elem = DABC.CreateDrawElement(node, this.HistoryDepth());
@@ -1166,10 +1167,12 @@
    
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
       
+      console.log("FillOnlineMenu " + itemname);
+      
       var item = this.Find(itemname); 
       var painter = this;
       var opts = null;
-      if (item._kind.indexOf("ROOT.")==0)
+      if (('_kind' in item) && (item._kind.indexOf("ROOT.")==0))
          opts = JSROOT.getDrawOptions(item._kind.substr(5), 'nosame');
       
       var baseurl = onlineprop.server + onlineprop.itemname + "/";
@@ -1182,12 +1185,16 @@
       if (hist==0) { drawurl += separ + "history"; } else
       if (hist>0) { drawurl += separ + "history=" + hist; }    
       
-      menu.addDrawMenu("Draw", opts, function(arg) { painter.display(itemname, arg); });
-
-      menu.addDrawMenu("Draw in new window", opts, function(arg) { window.open(drawurl + separ + "opt=" + arg); });
+      if ('_kind' in item) {
+         menu.addDrawMenu("Draw", opts, function(arg) { painter.display(itemname, arg); });
+         menu.addDrawMenu("Draw in new window", opts, function(arg) { window.open(drawurl + separ + "opt=" + arg); });
+      }
       
       if ((item!=null) && ('_editor' in item))
          menu.add("Editor", function() { window.open(editorurl); });
+      
+      if ('_player' in item)
+         menu.add("Player", function() { painter.player(itemname); });
    }
    
    DABC.HierarchyPainter.prototype.CreateStatus = function(height) {
@@ -1253,5 +1260,35 @@
       
       return found;
    }
+   
+   
+   // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script 
+   
+   DABC.HadaqEventBuilder = function(hpainter, itemname) {
+      var mdi = hpainter.CreateDisplay();
+      if (mdi == null) return null;
+
+      var frame = mdi.FindFrame(itemname, true);
+      if (frame==null) return null;
+
+      var divid = frame.attr('id');
+      
+      $('#'+divid).empty();
+      
+      var html = "<fieldset style='float:left; height: 100%'>" +
+      		     "<legend>DAQ</legend>" +
+      		     "<button>Start file</button>" +
+                 "<button>Stop file</button><br/>" +
+                 '<input type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
+                 "<label>File status:</label>"+
+      		     "</fieldset>" +
+      		     "<fieldset style='height: 100%'>" +
+      		     "<legend>Calibration</legend>" +
+                 "<label>Not Ready</label>"+
+                 "</fieldset>";
+      
+      $('#'+divid).html(html);
+   }
+   
    
 })();
