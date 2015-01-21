@@ -724,7 +724,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
       std::string binkind = cmd.GetStr("Kind");
       std::string query = cmd.GetStr("Query");
 
-      DOUT4("Worker %s Process CmdGetBinary %s kind %s", GetName(), item.c_str(), binkind.c_str());
+      DOUT4("Worker %s Process CmdGetBinary item:%s full:%s kind %s", GetName(), item.c_str(), fullname.c_str(), binkind.c_str());
 
       std::string surl = "getitem";
       if (query.length()>0) { surl.append("?"); surl.append(query); }

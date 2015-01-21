@@ -140,6 +140,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    PublishPars("$CONTEXT$/HadaqCombiner");
 
+   fWorkerHierarchy.SetField("_player", "DABC.HadaqDAQControl");
+
    if (fWithObserver) {
       CreateTimer("ObserverTimer", 0.2, false); // export timers 5 times a second
       RegisterExportedCounters();

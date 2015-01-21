@@ -64,6 +64,7 @@ namespace hadaq {
 
       DabcProcMgr* fProcMgr;
       hadaq::TrbProcessor* fTrbProc;
+      bool fDummy;  //! module creates all TDCs but do not perform any transformation
 
       bool retransmit();
 

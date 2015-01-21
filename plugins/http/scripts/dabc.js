@@ -1158,10 +1158,14 @@
          this.updateAll();
    }
 
-   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname)
-   {
-     var req = JSROOT.NewHttpRequest(cmditemname + "/execute", "text", 
-                                    function(res) { console.log(cmditemname+" done"); });
+   DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname, args, call_back) {
+      var url = cmditemname + "/execute";
+      if (args!=null) url += "?" + args;
+      
+     var req = JSROOT.NewHttpRequest(url, "text", function(res) { 
+        console.log(cmditemname+" done");
+        if (typeof call_back=='function') call_back(res);
+     });
      req.send(null);
    }
    
@@ -1264,7 +1268,7 @@
    
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script 
    
-   DABC.HadaqEventBuilder = function(hpainter, itemname) {
+   DABC.HadaqDAQControl = function(hpainter, itemname) {
       var mdi = hpainter.CreateDisplay();
       if (mdi == null) return null;
 
@@ -1273,22 +1277,69 @@
 
       var divid = frame.attr('id');
       
-      $('#'+divid).empty();
+      var item = hpainter.Find(itemname);
+      var calarr = [];
+      if (item) {
+         for (var n in item._parent._childs) {
+            var name = item._parent._childs[n]._name;
+            
+            if ((name.indexOf("Input")==0) && (name.indexOf("TdcCal")>0)) {
+               var fullname = hpainter.itemFullName(item._parent._childs[n]);
+               calarr.push(fullname);               
+            }
+         }
       
-      var html = "<fieldset style='float:left; height: 100%'>" +
+      }
+      
+      frame.empty();
+      
+      var html = "<fieldset>" +
       		     "<legend>DAQ</legend>" +
-      		     "<button>Start file</button>" +
-                 "<button>Stop file</button><br/>" +
-                 '<input type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
-                 "<label>File status:</label>"+
+      		     "<button class='hadaq_startfile'>Start file</button>" +
+                 "<button class='hadaq_stopfile'>Stop file</button>" +
+                 '<input class="hadaq_filename" type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
+                 "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
+                 "<label class='hadaq_info'>Info: __undefind__</label>"+
       		     "</fieldset>" +
-      		     "<fieldset style='height: 100%'>" +
-      		     "<legend>Calibration</legend>" +
-                 "<label>Not Ready</label>"+
-                 "</fieldset>";
+      		     "<fieldset>" +
+      		     "<legend>Calibration</legend>";
+      for (var n in calarr) {
+         html += "<label>" + calarr[n] + "</label><br/>";
+      }
+      html+="</fieldset>";
       
-      $('#'+divid).html(html);
+      frame.html(html);
+      
+      frame.find(".hadaq_startfile").button().click(function() { 
+         hpainter.ExecuteCommand(itemname+"/StartHldFile", "filename="+frame.find('.hadaq_filename').val()+"&maxsize=2000");
+      });
+      frame.find(".hadaq_stopfile").button().click(function() { 
+         hpainter.ExecuteCommand(itemname+"/StopHldFile");
+      });
+      
+      var inforeq = null;
+      
+      function UpdateDaqStatus(res) {
+         if (res==null) return;
+         for (var n in res._childs) {
+            var item = res._childs[n];
+            
+            if (item._name=='HadaqInfo')
+               frame.find('.hadaq_info').text("Info: " + item.value);                  
+            if (item._name=='HadaqData')
+               frame.find('.hadaq_rate').text("Rate: " + item.value + " " + item.units+"/s");                  
+         }
+      }
+      
+      setInterval(function() {
+         if (inforeq) return;
+         
+         inforeq = JSROOT.NewHttpRequest(itemname+"/get.json?compact=3", "object", function(res) {
+            inforeq = null;
+            UpdateDaqStatus(res);
+         });
+         inforeq.send(null);
+      }, 2000);
    }
-   
    
 })();

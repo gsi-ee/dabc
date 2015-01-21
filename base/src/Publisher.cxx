@@ -429,7 +429,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
       return false;
    }
 
-   DOUT3("PRODUCER %s REQUEST %s", producer_name.c_str(), request_name.c_str());
+   DOUT3("ITEM %s PRODUCER %s REQUEST %s", itemname.c_str(), producer_name.c_str(), request_name.c_str());
 
    bool producer_local(true);
    std::string producer_server, producer_item;

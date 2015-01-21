@@ -76,9 +76,12 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
 
       std::string calname = dabc::format("%sTdcCal", portref.GetName());
 
+      DOUT0("Create MODULE %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
+
       dabc::CmdCreateModule cmd("hadaq::TdcCalibrationModule", calname);
       cmd.SetStr("TDC", url.GetOptionStr("tdc"));
       if (url.HasOption("trb")) cmd.SetStr("TRB", url.GetOptionStr("trb"));
+      if (url.HasOption("dummy")) cmd.SetBool("dummy", true);
       cmd.SetInt("portid", portref.ItemSubId());
 
       dabc::mgr.Execute(cmd);

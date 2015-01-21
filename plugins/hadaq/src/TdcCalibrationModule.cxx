@@ -145,7 +145,8 @@ void DabcProcMgr::ClearH2(base::H2handle h2)
 hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
-   fTrbProc(0)
+   fTrbProc(0),
+   fDummy(false)
 {
    // we need one input and one output port
    EnsurePorts(1, 1);
@@ -164,17 +165,15 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    // default channel numbers and edges mask
    hadaq::TrbProcessor::SetDefaults(numch, edges);
 
-
    fWorkerHierarchy.Create("Worker");
 
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("Status");
    item.SetField("value","Init");
-   item.SetField("_player", "DABC.HadaqEventBuilder");
-
 
    int trbid = Cfg("TRB", cmd).AsInt(0x0);
    int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
    if (trbid==0) trbid = 0x8000 | portid;
+   fDummy = Cfg("dummy", cmd).AsBool(false);
 
    fProcMgr = new DabcProcMgr;
 
@@ -208,6 +207,9 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 
+   // remove pointer, let other modules to create and use it
+   base::ProcMgr::ClearInstancePointer();
+
 #endif
 
 }
@@ -230,7 +232,7 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
       dabc::Buffer buf = Recv();
 
-      if (fTrbProc!=0) {
+      if ((fTrbProc!=0) && !fDummy) {
 
          if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
             // this is debug mode when processing events from the file
@@ -252,8 +254,6 @@ bool hadaq::TdcCalibrationModule::retransmit()
          } else {
             EOUT("Error buffer type!!!");
          }
-
-
       }
       Send(buf);
 
