@@ -1304,7 +1304,7 @@
       		     "<fieldset>" +
       		     "<legend>Calibration</legend>";
       for (var n in calarr) {
-         html += "<label>" + calarr[n] + "</label><br/>";
+         html += "<label class='hadaq_calibr'>" + calarr[n] + "</label><br/>";
       }
       html+="</fieldset>";
       
@@ -1343,10 +1343,8 @@
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
             if (res==null) return;
-            for (var i in res) {
-               if (res[i].item==itemname) UpdateDaqStatus(res[i].result);
-            }
-            
+            UpdateDaqStatus(res[0].result);
+            frame.find('.hadaq_calibr').each(function(index) { $(this).text("Item:"+calarr[index]+" Status:"+res[index+1].result.value )})
          });
          inforeq.send(null);
       }, 2000);
