@@ -249,7 +249,7 @@ std::string dabc::Reference::ItemName(bool compact) const
 
 std::string dabc::Reference::RelativeName(const dabc::Reference& topitem)
 {
-   if (null() || topitem.null()) return "";
+   if (null() || topitem.null() || (topitem==*this)) return "";
 
    std::string res;
 
