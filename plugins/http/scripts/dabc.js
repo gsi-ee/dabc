@@ -1334,9 +1334,19 @@
       setInterval(function() {
          if (inforeq) return;
          
-         inforeq = JSROOT.NewHttpRequest(itemname+"/get.json?compact=3", "object", function(res) {
+         var url = "multiget.json?items=[";
+         url+="'" + itemname + "'";
+         for (var n in calarr)
+            url+= ",'" + calarr[n]+"/Status" + "'";
+         url+="]";
+         
+         inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
-            UpdateDaqStatus(res);
+            if (res==null) return;
+            for (var i in res) {
+               if (res[i].item==itemname) UpdateDaqStatus(res[i].result);
+            }
+            
          });
          inforeq.send(null);
       }, 2000);

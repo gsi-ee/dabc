@@ -369,6 +369,53 @@ bool http::Server::Process(const char* uri, const char* _query,
       content_type = "application/json";
 
       if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("json", pathname, query, content_str)) return false;
+   } else
+   if (filename == "multiget.json") {
+
+      content_type = "application/json";
+
+      std::string opt = query;
+      dabc::Url::ReplaceSpecialSymbols(opt);
+
+      if (opt.find("items=")==0) {
+         std::size_t separ = opt.find("&");
+         if (separ == std::string::npos) separ = opt.length();
+         std::string items = opt.substr(6, separ-6);
+         opt = opt.erase(0, separ+1);
+         DOUT3("MULTIGET path %s items=%s rest:%s", pathname.c_str(), items.c_str(), opt.c_str());
+
+         dabc::RecordField field(items);
+         std::vector<std::string> arr = field.AsStrVect();
+
+         content_str="[";
+         dabc::WorkerRef ref = GetPublisher();
+
+         for (unsigned n=0;n<arr.size();n++) {
+            if (n>0) content_str.append(",");
+
+            dabc::CmdGetBinary cmd(pathname+arr[n], "get.json", opt);
+            cmd.SetTimeout(5.);
+
+            if (ref.Execute(cmd) == dabc::cmd_true) {
+               content_bin = cmd.GetRawData();
+            }
+            content_str.append(dabc::format("{ \"item\": \"%s\", \"result\":", arr[n].c_str()));
+
+            if (content_bin.null())
+               content_str.append("null");
+            else
+               content_str.append((const char*) content_bin.SegmentPtr(), content_bin.SegmentSize());
+
+            content_str.append("}");
+
+            content_bin.Release();
+         }
+
+         content_str.append("]");
+
+      } else {
+         content_str = "null";
+      }
 
    } else {
 

@@ -6,6 +6,10 @@ about current functionality of the framework.
 1. Allow to activate player also with simple mouse click.
 2. Implement necessary parameters in the TdcCalibrationModule,
    some of them can be specified from port url.  
+3. Implement multiget.json?items=[]&...  request in http::Server
+   It allows to perform many get.json requests withint one operation and
+   reduces communication latency. 
+4. Preliminary use of multiget.json in HADAQ control GUI 
 
 
 20.01.2015

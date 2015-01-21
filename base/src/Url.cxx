@@ -71,15 +71,8 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
    // first question in url is position for options,
    pos = s.find("?");
    if (pos != std::string::npos) {
-      fOptions = s.substr(pos+1);
+      SetOptions(s.substr(pos+1));
       s.erase(pos);
-
-      // replace special symbols which could appear in the options string
-      if (fOptions.find("%2") != std::string::npos) {
-         while ((pos = fOptions.find("%27")) != std::string::npos) fOptions.replace(pos, 3, "\'");
-         while ((pos = fOptions.find("%22")) != std::string::npos) fOptions.replace(pos, 3, "\"");
-         while ((pos = fOptions.find("%20")) != std::string::npos) fOptions.replace(pos, 3, " ");
-      }
    }
 
    pos = s.find("/");
@@ -105,6 +98,28 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
 
    return fValid;
 }
+
+void dabc::Url::SetOptions(const std::string& opt)
+{
+   fOptions = opt;
+
+   ReplaceSpecialSymbols(fOptions);
+}
+
+void dabc::Url::ReplaceSpecialSymbols(std::string& opt)
+{
+   // replace special symbols which could appear in the options string
+
+   std::size_t pos = 0;
+   while ((pos = opt.find("%27")) != std::string::npos) opt.replace(pos, 3, "\'");
+   while ((pos = opt.find("%22")) != std::string::npos) opt.replace(pos, 3, "\"");
+   while ((pos = opt.find("%20")) != std::string::npos) opt.replace(pos, 3, " ");
+   while ((pos = opt.find("%3E")) != std::string::npos) opt.replace(pos, 3, ">");
+   while ((pos = opt.find("%3C")) != std::string::npos) opt.replace(pos, 3, "<");
+   while ((pos = opt.find("%5B")) != std::string::npos) opt.replace(pos, 3, "[");
+   while ((pos = opt.find("%5D")) != std::string::npos) opt.replace(pos, 3, "]");
+}
+
 
 std::string dabc::Url::GetFullName() const
 {

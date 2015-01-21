@@ -64,7 +64,7 @@ namespace dabc {
          std::string GetFullName() const;
 
          /** Method allows to set URL options directly to be able use all Get methods */
-         void SetOptions(const std::string& opt) { fOptions = opt; }
+         void SetOptions(const std::string& opt);
 
          std::string GetOptionsPart(int number = 0) const;
          bool HasOption(const std::string& optname) const { return GetOption(optname); }
@@ -84,6 +84,9 @@ namespace dabc {
 
          /** \brief Method decompose from url nodeid and full item name, which includes all parents */
          static bool DecomposeItemName(const std::string& url, int& nodeid, std::string& itemtname);
+
+         /**! \brief Replace all special symbols which could appear in URL, especially in query */
+         static void ReplaceSpecialSymbols(std::string& opt);
    };
 }
 
