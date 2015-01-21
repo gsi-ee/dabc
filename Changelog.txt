@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+21.01.2015
+1. Allow to activate player also with simple mouse click.
+
+
 20.01.2015
 1. Introduce 'virtual' DABC histogram class, which will be used to 
    represent histograms in the hierarchy classes. For the moment
