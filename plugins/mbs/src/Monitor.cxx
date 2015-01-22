@@ -229,9 +229,8 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
 
    // from this point on Publisher want to get regular update for the hierarchy
-   if (publish) {
-     Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
-   }
+   if (publish)
+      Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
 }
 
 

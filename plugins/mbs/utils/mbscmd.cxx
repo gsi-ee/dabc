@@ -29,12 +29,12 @@ int usage(const char* errstr = 0)
    printf("Utility for execute commands on remote MBS node\n");
    printf("   mbscmd nodename [args] -cmd cmd1 [-cmd cmd2] [-cmd cmd3] ...\n");
    printf("Arguments:\n");
-   printf("   -logport number         - port number of log channel (-1 - off, default 6007)\n");
-   printf("   -cmdport number         - port number of command channel (-1 - off, default 6019)\n");
-   printf("   -cmd mbs_command        - MBS command to execute (can be any number)\n");
-   printf("   -tmout time             - timeout for command execution (default 5 sec)\n");
-   printf("   -wait time              - wait time at the end of utility (default 1 sec)\n");
-   printf("When command port 6006 is used, connection to mbs prompter will be done\n");
+   printf("   -logport number      - port number of log channel (-1 - off, default 6007)\n");
+   printf("   -cmdport number      - port number of command channel (-1 - off, default 6019)\n");
+   printf("   -prompter            - connect to MBS prompter (same as -cmdport 6006)\n");
+   printf("   -cmd mbs_command     - MBS command to execute (can be any number)\n");
+   printf("   -tmout time          - timeout for command execution (default 5 sec)\n");
+   printf("   -wait time           - wait time at the end of utility (default 1 sec)\n");
 
    return errstr ? 1 : 0;
 }
@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 
    int n = 1;
    while (++n<argc) {
+      if (strcmp(argv[n],"-prompter")==0) { cmdport = 6006; } else
       if ((strcmp(argv[n],"-logport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &logport); } else
       if ((strcmp(argv[n],"-cmdport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &cmdport); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else

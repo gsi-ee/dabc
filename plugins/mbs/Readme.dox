@@ -106,6 +106,24 @@ Getting log information, statistic information, access to command channel.
 shell> mbscmd r4-5 -cmd 'type event'
 ~~~~~~~~~~~~~
 
+To be able submit commands or access log information, one should 
+call in mbs 'sta cmdrem' and 'sta logrem' commands. This functionality 
+available in MBS from version 6.3.
+
+mbscmd utitlity can be used to submit commands to MBS prompter 
+
+~~~~~~~~~~~~~
+shell> mbscmd x86l-33 -prompter -cmd '@startup' -cmd 'sta acq'
+~~~~~~~~~~~~~
+
+To be able submit commands, prompter should be started with '-r' options:
+
+~~~~~~~~~~~~~
+mbsnode> prm -r clinet_host_name
+~~~~~~~~~~~~~
+
+Where client_host_name is host name, from which mbscmd will be used. 
+
 */
 
 
@@ -126,8 +144,8 @@ Following parameters could be specified for the module:
 |      node | Name of MBS node |
 |    period | How often status information requested from MBS node [default 1 sec] |
 |   history | Size of preserved history [default 200] |
-|  prompter | Argument, used for starting prompter [default - empty] |
-|    logger | If not false, read log information when prompter is enabled [default - enabled] |
+|       cmd | port on MBS node to submit commands (typically 6019) [default - none] |
+|    logger | port on MBS node to read log information (normally 6007) [default - none] |
 
 
 Several MBS nodes can be readout at once:
@@ -142,9 +160,12 @@ Several MBS nodes can be readout at once:
     </Run>
     <Module name="mbs1" class="mbs::Monitor">
        <node value="r4-1"/>
+       <log value="6007"/>
+       <cmd value="6019"/>
     </Module>
     <Module name="mbs2" class="mbs::Monitor">
        <node value="r4l-1"/>
+       <log value="6007"/>
     </Module>
   </Context>
 </dabc>
@@ -158,34 +179,37 @@ mbs::Monitor module will periodically request status record and
 calculate several rate values - data rate, event rate. Several log variables
 are created, which reproduce output of **rate** command of MBS.
 
+
+### MBS remote command channel (port 6019)
+
+To enable it, one should call 'sta cmdrem' in normal MBS processs. This functionality available 
+starting from MBS version 6.3. If XML file contains line `<cmd value="6019"/>`,
+module will try to connect with MBS and will publish **CmdMbs** command.
+Via web interface user can than submit commands like
+"start acq", "stop acq", "@startup", "show rate" to MBS process.  
+
+ 
 ### MBS prompter (port 6006)
 
-MBS prompter allows to submit MBS commands remotely and only remotely.
+MBS prompter also allows to submit MBS commands remotely (but only remotely).
 To start prompter on mbs, one should do:
 
 ~~~~~~~~~~~~~
-rio4> rpm -r ARG
+rio4> rpm -r client_host_name
 ~~~~~~~~~~~~~
 
-Value of argument after -r (here ARG) should be specified as value of **prompter**
-configuration parameter in xml file. In that case module will publish **CmdMbs** command,
-which can be used from web interface to submit commands like
-"start acq", "stop acq", "@startup", "show rate" and others to MBS process.
+Value of argument after -r should be host name, where DABC will run.
 
 
 ### MBS logger (port 6007)
 
-When logger is enabled by MBS, one can connect to it and get log information.
+When logger is enabled by MBS ('sta logrem'), one can connect to it and get log information.
 At the moment logger is available in the MBS only together with the prompter.
 If enabled, module will readout log information and put into log record.
 
 
-### MBS/DABC command port (port 6019)
-This is a dedicated command socket to receive commands from mbs in the interactive dispatcher task.
-
-
 ### How to connect mbs dispatcher with dabc web server:
-(Note: this requires MBS versions >=V6.3!)
+(Note: this requires MBS versions >=6.3!)
 
 Two possibilities:
 
