@@ -271,16 +271,19 @@ bool hadaq::TdcCalibrationModule::retransmit()
                   fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt());
                }
             }
+
+            double progress = fTrbProc->CheckAutoCalibration();
+            dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+            item.SetField("progress", (int) (progress*100));
+
             // at the end check if autocalibration can be done
-            if (fTrbProc->CheckAutoCalibration()) {
-               dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+            if (progress>=1.) {
                item.SetField("value","Ready");
                dabc::DateTime tm;
                tm.GetNow();
                char sbuf[30];
                if (tm.OnlyTimeAsString(sbuf,sizeof(sbuf)))
                   item.SetField("time", sbuf);
-
             }
 #endif
          } else {

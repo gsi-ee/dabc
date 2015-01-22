@@ -10,6 +10,7 @@ about current functionality of the framework.
 3. In web gui for the hadaq::CombinerModule provide more information
    about calibration progress. With buttons allow fast show of most-important
    histogram.  
+4. Use progress information from stream hadaq::TrbProcessor 
 
 
 21.01.2015

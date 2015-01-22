@@ -1358,7 +1358,7 @@
                for (var j in info.tdc)
                   code+="<button hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
                
-               code +=" " + info.value + " ";
+               // code +=" " + info.value + " ";
                code +="</div>"; 
                code+="<div class='hadaq_progress' title='progress:" + info.progress + "%'></div>";
                
