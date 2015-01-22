@@ -55,8 +55,15 @@ namespace hadaq {
 
          bool IsData() const { return !fEvPtr.null(); }
 
+         /** Used for raw data from TRBs */
          bool NextHadTu();
+         /** Used for ready HLD events */
          bool NextEvent();
+
+         /** Depending from buffer type calls NextHadTu() or NextEvent() */
+         bool NextSubeventsBlock();
+
+         /** Used for sub-events iteration inside current block */
          bool NextSubEvent();
 
          hadaq::RawEvent* evnt() const { return (hadaq::RawEvent*) fEvPtr(); }

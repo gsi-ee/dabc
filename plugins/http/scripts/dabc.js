@@ -1338,13 +1338,13 @@
          url+="'" + itemname + "'";
          for (var n in calarr)
             url+= ",'" + calarr[n]+"/Status" + "'";
-         url+="]";
+         url+="]&compact=3";
          
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
-            frame.find('.hadaq_calibr').each(function(index) { $(this).text("Item:"+calarr[index]+" Status:"+res[index+1].result.value )})
+            frame.find('.hadaq_calibr').each(function(index) { $(this).text("Item:"+calarr[index]+" Status:"+res[index+1].result.value + " Progress:"+ res[index+1].result.progress )});
          });
          inforeq.send(null);
       }, 2000);

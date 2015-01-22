@@ -146,13 +146,14 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
    fTrbProc(0),
-   fDummy(false)
+   fDummy(false),
+   fAutoCalibr(1000),
+   fProgress(0)
 {
    // we need one input and one output port
    EnsurePorts(1, 1);
 
 #ifdef WITH_STREAM
-
 
    int finemin = Cfg("FineMin", cmd).AsInt(0);
    int finemax = Cfg("FineMax", cmd).AsInt(0);
@@ -175,6 +176,8 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    if (trbid==0) trbid = 0x8000 | portid;
    fDummy = Cfg("dummy", cmd).AsBool(false);
 
+   DOUT0("DUMMY %s", DBOOL(fDummy));
+
    fProcMgr = new DabcProcMgr;
 
    fProcMgr->fTop = fWorkerHierarchy;
@@ -194,9 +197,9 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    fTrbProc->SetTDCCorrectionMode(1);
 
-   int autocal = Cfg("Auto", cmd).AsInt();
-   if (autocal>1000)
-      fTrbProc->SetAutoCalibrations(autocal);
+   fAutoCalibr = Cfg("Auto", cmd).AsInt();
+   if (fAutoCalibr>0)
+      fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
    std::string calfile = Cfg("CalibrFile", cmd).AsStr();
    if (!calfile.empty()) {
@@ -232,14 +235,23 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
       dabc::Buffer buf = Recv();
 
-      if ((fTrbProc!=0) && !fDummy) {
+      if (fDummy) {
+         fProgress++;
+         if (fProgress>fAutoCalibr) {
+            fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
+            fProgress = 0;
+         }
+         if (fAutoCalibr>0)
+            fWorkerHierarchy.GetHChild("Status").SetField("progress",100*fProgress/fAutoCalibr);
+      } else
+      if (fTrbProc!=0) {
 
-         if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
+         if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) || (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit)) {
             // this is debug mode when processing events from the file
 #ifdef WITH_STREAM
 
             hadaq::ReadIterator iter(buf);
-            while (iter.NextEvent()) {
+            while (iter.NextSubeventsBlock()) {
                while (iter.NextSubEvent()) {
                   fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt());
                }
@@ -248,9 +260,6 @@ bool hadaq::TdcCalibrationModule::retransmit()
             if (fTrbProc->CheckAutoCalibration())
                fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
 #endif
-         } else
-         if (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) {
-
          } else {
             EOUT("Error buffer type!!!");
          }

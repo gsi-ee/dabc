@@ -163,6 +163,14 @@ bool hadaq::ReadIterator::NextEvent()
    return true;
 }
 
+bool hadaq::ReadIterator::NextSubeventsBlock()
+{
+   if (fBufType == mbt_HadaqTransportUnit ) return NextHadTu();
+   if (fBufType == mbt_HadaqEvents) return NextEvent();
+   return false;
+}
+
+
 bool hadaq::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 {
    if (fEvPtr.null()) {

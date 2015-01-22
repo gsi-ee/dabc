@@ -5,6 +5,8 @@ about current functionality of the framework.
 22.01.2015
 1. Add support of mbs prompter to mbs::Monitor class. 
    Only execution of normal MBS commands are supported. 
+2. One could put extra information in status record (like progress), 
+   which could be displayed in custom GUI.
 
 
 21.01.2015
@@ -12,7 +14,7 @@ about current functionality of the framework.
 2. Implement necessary parameters in the TdcCalibrationModule,
    some of them can be specified from port url.  
 3. Implement multiget.json?items=[]&...  request in http::Server
-   It allows to perform many get.json requests withint one operation and
+   It allows to perform many get.json requests within one operation and
    reduces communication latency. 
 4. Preliminary use of multiget.json in HADAQ control GUI 
 

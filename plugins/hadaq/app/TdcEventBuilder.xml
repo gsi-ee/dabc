@@ -72,6 +72,22 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
+    
+    <!-- these are default parameters for TDC calibration modules -->
+    <Module name="Input*TdcCal">    
+       <FineMin value="30"/>
+       <FineMax value="481"/>
+       <NumChannels value="65"/>
+       <EdgeMask value="1"/>
+       <HistFilling value="4"/>
+       <CalibrFile value="local"/>
+       <DisableCalibrationFor value="0"/>  
+       <Auto value="7000"/>
+       
+       <!-- TRB value="0x8010"/-->
+       <!-- TDC value="[0x8a00,0x8a01,0x8a02,0x8a03]"/-->
+    </Module>
+    
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
