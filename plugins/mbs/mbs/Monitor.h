@@ -40,10 +40,7 @@
 namespace mbs {
 
 
-   /** \brief Addon class to retrieve status record from MBS server
-    *
-    **/
-
+   /** \brief Addon class to retrieve status record from MBS server  **/
 
    class DaqStatusAddon : public dabc::SocketIOAddon {
 
@@ -116,8 +113,7 @@ namespace mbs {
    // ======================================================================
 
    /** Worker to handle connection with MBS remote command server.
-    * Server can be started in MBS with command 'start cmdrem'
-    */
+    * Server can be started in MBS with command 'start cmdrem' */
 
    class DaqRemCmdWorker : public dabc::Worker {
       protected:
@@ -173,6 +169,48 @@ namespace mbs {
 
    // ======================================================================
 
+   /** Worker to handle connection with MBS prompter.
+    * Prompter should be started with command: rpm -r client_host_name */
+
+   class PrompterWorker : public dabc::Worker {
+      protected:
+
+         enum IOState {
+            ioInit,           // initial state
+            ioWaitReply,      // waiting for command reply
+            ioError
+         };
+
+         std::string       fMbsNode;
+         int               fPort;
+         std::string       fPrefix;   // prefix used to identify client
+
+         dabc::CommandsQueue fCmds;
+
+         IOState           fState;
+         char              fSendBuf[256];
+         uint32_t          fRecvBuf[2];
+
+         virtual void ProcessEvent(const dabc::EventId&);
+
+         virtual double ProcessTimeout(double last_diff);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
+
+         void ProcessNextMbsCommand();
+
+         virtual void OnThreadAssigned();
+
+         bool CreateAddon();
+
+      public:
+         PrompterWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
+
+         virtual ~PrompterWorker();
+   };
+
+   // ======================================================================
+
 
    /** \brief Interface module for MBS monitoring and control
     *
@@ -206,9 +244,6 @@ namespace mbs {
          std::string       fFileStateName;    ///< name of filestate parameter
          std::string       fAcqStateName;    ///< name of acquisition running parameter
 
-
-
-
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
          virtual void OnThreadAssigned();
@@ -220,6 +255,7 @@ namespace mbs {
          /** update mbs acq running state*/
          void UpdateMbsState(int isrunning);
 
+         bool IsPrompter() const { return fCmdPort == 6006; }
 
          virtual void ProcessTimerEvent(unsigned timer);
 

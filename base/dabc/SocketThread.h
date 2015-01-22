@@ -384,9 +384,6 @@ namespace dabc {
 
          virtual void ProcessExtraThreadEvent(const EventId& evid);
 
-
-
-
       public:
 
          // list of all events for all kind of socket processors

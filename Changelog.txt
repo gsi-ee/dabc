@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+22.01.2015
+1. Add support of mbs prompter to mbs::Monitor class. 
+   Only execution of normal MBS commands are supported. 
+
+
 21.01.2015
 1. Allow to activate player also with simple mouse click.
 2. Implement necessary parameters in the TdcCalibrationModule,

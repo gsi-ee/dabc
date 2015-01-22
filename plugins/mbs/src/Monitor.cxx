@@ -152,13 +152,12 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fFileStateName="MbsFileOpen";
    fAcqStateName="MbsAcqRunning";
 
-
-   if (Cfg("logger", cmd).AsBool(false))
+   if (Cfg("logger", cmd).AsStr() == "true")
       fLoggerPort = 6007;
    else
       fLoggerPort = Cfg("logger", cmd).AsInt(0);
 
-   if (Cfg("cmd", cmd).AsBool(false))
+   if (Cfg("cmd", cmd).AsStr() == "true")
       fCmdPort = 6019;
    else
       fCmdPort = Cfg("cmd", cmd).AsInt(0);
@@ -217,26 +216,17 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       cmddef.AddArg("cmd", "string", true, "show rate");
    }
 
-
    dabc::Hierarchy ui = fHierarchy.CreateHChild("ControlGUI");
    ui.SetField(dabc::prop_kind, "DABC.HTML");
    ui.SetField("_UserFilePath", "${DABCSYS}/plugins/mbs/htm/");
    ui.SetField("_UserFileMain", "main.htm");
 
    CreateTimer("update", 5., false);
-
-
-
    CreateTimer("MbsUpdate", fPeriod, false);
 
    fCounter = 0;
 
    memset(&fStatus,0,sizeof(mbs::DaqStatus));
-
-
-
-
-
 
    // from this point on Publisher want to get regular update for the hierarchy
    if (publish) {
@@ -251,15 +241,19 @@ mbs::Monitor::~Monitor()
 
 void mbs::Monitor::OnThreadAssigned()
 {
-   if (fLoggerPort > 0) {
+   if ((fLoggerPort > 0) && !IsPrompter()) {
       DaqLogWorker* logger = new DaqLogWorker(this, "DaqLogger", fMbsNode, fLoggerPort);
       logger->AssignToThread(thread());
    }
 
+   dabc::Worker* remcmd = 0;
+   if (IsPrompter()) {
+      remcmd = new PrompterWorker(this, "DaqCmd", fMbsNode, fCmdPort);
+   } else
    if (fCmdPort>0) {
-      DaqRemCmdWorker* remcmd = new DaqRemCmdWorker(this, "DaqCmd", fMbsNode, fCmdPort);
-      remcmd->AssignToThread(thread());
+      remcmd = new DaqRemCmdWorker(this, "DaqCmd", fMbsNode, fCmdPort);
    }
+   if (remcmd) remcmd->AssignToThread(thread());
 
    mbs::MonitorSlowControl::OnThreadAssigned();
 }
@@ -796,7 +790,7 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
 //   DOUT0("+++++++++++++++++++++++++++ Process timer!!!");
 
    // this indicated that addon is active and we should not touch it
-   if (!fAddon.null()) return;
+   if (!fAddon.null() || IsPrompter()) return;
 
    int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
    if (fd<=0)
@@ -1196,4 +1190,172 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
    fSendBuf.l_status = 0;
    strcpy(fSendBuf.c_cmd, mbscmd.c_str());
    addon->StartSend(&fSendBuf, sizeof(fSendBuf));
+}
+
+// ===============================================================================================
+
+mbs::PrompterWorker::PrompterWorker(const dabc::Reference& parent, const std::string& name,
+                                     const std::string& mbsnode, int port) :
+   dabc::Worker(parent, name),
+   fMbsNode(mbsnode),
+   fPort(port),
+   fPrefix(),
+   fCmds(dabc::CommandsQueue::kindPostponed),
+   fState(ioInit)
+{
+   fPrefix = dabc::SocketThread::DefineHostName() + ":";
+   printf("Create prompter client with prefix %s\n", fPrefix.c_str());
+}
+
+mbs::PrompterWorker::~PrompterWorker()
+{
+   DOUT3("Destroy PrompterWorker");
+}
+
+void mbs::PrompterWorker::OnThreadAssigned()
+{
+   dabc::Worker::OnThreadAssigned();
+
+   CreateAddon();
+}
+
+bool mbs::PrompterWorker::CreateAddon()
+{
+   if (!fAddon.null()) return true;
+
+   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fPort);
+   if (fd<=0) {
+      EOUT("Fail open command port %d on node %s", fPort, fMbsNode.c_str());
+      ActivateTimeout(5);
+      return false;
+   }
+
+   dabc::SocketIOAddon* addon = new dabc::SocketIOAddon(fd);
+   addon->SetDeliverEventsToWorker(true);
+
+   DOUT2("ADDON:%p Created cmd socket %d to mbs %s:%d", addon, fd, fMbsNode.c_str(), fPort);
+
+   AssignAddon(addon);
+
+   // in any case receive next buffer
+   memset(fRecvBuf, 0, sizeof(fRecvBuf));
+   addon->StartRecv(fRecvBuf, sizeof(fRecvBuf));
+
+   return true;
+}
+
+
+void mbs::PrompterWorker::ProcessEvent(const dabc::EventId& evnt)
+{
+   switch (evnt.GetCode()) {
+      case dabc::SocketAddon::evntSocketSendInfo: {
+         // this is just confirmation that data was send - do nothing
+         break;
+      }
+      case dabc::SocketAddon::evntSocketRecvInfo: {
+         //DOUT0("mbs::PrompterWorker get evntSocketRecvInfo");
+
+         if ((fCmds.Size()>0) && (fState == ioWaitReply)) {
+            // TODO: when reply command - check result
+
+            DOUT3("mbs::PrompterWorker get reply for the command id %u", (unsigned) fRecvBuf.l_cmdid);
+
+            bool res = true;
+
+            if (fRecvBuf[0]!=1)
+               mbs::SwapData(fRecvBuf, sizeof(fRecvBuf));
+
+            if (fRecvBuf[0]!=1) {
+               EOUT("Wrong reply from the prompter");
+               res = false;
+            } else
+            if (fRecvBuf[1]!=0) {
+               res = false;
+            }
+
+            mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+            if (pl) pl->NewSendCommand(fCmds.Front().GetStr("cmd"), res ? 1 : 0);
+
+            fCmds.Pop().ReplyBool(res);
+            fState = ioInit;
+         }
+
+         dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
+
+         if (addon==0) {
+            EOUT("ADDON disappear !!!");
+            ActivateTimeout(3.);
+         } else {
+            memset(fRecvBuf, 0, sizeof(fRecvBuf));
+            addon->StartRecv(fRecvBuf, sizeof(fRecvBuf));
+         }
+
+         break;
+      }
+      case dabc::SocketAddon::evntSocketErrorInfo:
+      case dabc::SocketAddon::evntSocketCloseInfo:
+         // error, we cancel command execution and issue timeout to try again
+         AssignAddon(0);
+         if ((fState==ioWaitReply) && (fCmds.Size()>0)) {
+            fCmds.Pop().Reply(dabc::cmd_false);
+            fState = ioInit;
+         }
+
+         ActivateTimeout(1.);
+         break;
+      default:
+         dabc::Worker::ProcessEvent(evnt);
+   }
+}
+
+double mbs::PrompterWorker::ProcessTimeout(double last_diff)
+{
+   if (CreateAddon()) ProcessNextMbsCommand();
+
+   return -1;
+}
+
+int mbs::PrompterWorker::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
+      fCmds.Push(cmd);
+      ProcessNextMbsCommand();
+      return dabc::cmd_postponed;
+   }
+
+   return dabc::Worker::ExecuteCommand(cmd);
+}
+
+void mbs::PrompterWorker::ProcessNextMbsCommand()
+{
+   // start next command when previous is completed
+   if (fState != ioInit) return;
+
+   if (fCmds.Size()==0) return;
+
+   dabc::SocketIOAddon* addon = dynamic_cast<dabc::SocketIOAddon*> (fAddon());
+
+   if ((addon==0) || !addon->IsSocket()) {
+      EOUT("Something went wrong");
+      exit(5);
+   }
+
+   std::string mbscmd = fCmds.Front().GetStr("cmd");
+   if (mbscmd.length() >= sizeof(fSendBuf) - fPrefix.length()) {
+      EOUT("Send command too long %u", mbscmd.length());
+      fCmds.Pop().ReplyBool(false);
+      ProcessNextMbsCommand();
+      return;
+   }
+
+   DOUT2("Send MBS-CMD:  %s", mbscmd.c_str());
+
+   mbs::Monitor* pl = dynamic_cast<mbs::Monitor*> (GetParent());
+   if (pl) pl->NewSendCommand(mbscmd);
+
+   fState = ioWaitReply;
+
+   strcpy(fSendBuf, fPrefix.c_str());
+   strcat(fSendBuf, mbscmd.c_str());
+   addon->StartSend(fSendBuf, sizeof(fSendBuf));
 }

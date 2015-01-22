@@ -34,6 +34,7 @@ int usage(const char* errstr = 0)
    printf("   -cmd mbs_command        - MBS command to execute (can be any number)\n");
    printf("   -tmout time             - timeout for command execution (default 5 sec)\n");
    printf("   -wait time              - wait time at the end of utility (default 1 sec)\n");
+   printf("When command port 6006 is used, connection to mbs prompter will be done\n");
 
    return errstr ? 1 : 0;
 }
@@ -55,7 +56,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-wait")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &waittm); } else
       if ((strcmp(argv[n],"-cmd")==0) && (n+1<argc)) { cmds.push_back(argv[++n]); } else
-      usage("Unkcnown option");
+      usage("Unknown option");
    }
 
    mbs::MonitorHandle ref = mbs::MonitorHandle::Connect(argv[1], cmdport, logport);

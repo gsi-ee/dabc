@@ -1091,7 +1091,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
          if (portname != crcmd.PortName()) {
             portname = crcmd.PortName();
-            DOUT2("Port name for created transport was changed on the fly %s", portname.c_str());
+            DOUT0("Port name for created transport was changed on the fly %s", portname.c_str());
             port = FindPort(portname);
             if (port.null()) { tr.Destroy(); return cmd_false; }
          }
