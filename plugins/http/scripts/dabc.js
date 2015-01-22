@@ -1274,7 +1274,7 @@
 
       var frame = mdi.FindFrame(itemname, true);
       if (frame==null) return null;
-
+      
       var divid = frame.attr('id');
       
       var item = hpainter.Find(itemname);
@@ -1288,7 +1288,6 @@
                calarr.push(fullname);               
             }
          }
-      
       }
       
       frame.empty();
@@ -1304,7 +1303,7 @@
       		     "<fieldset>" +
       		     "<legend>Calibration</legend>";
       for (var n in calarr) {
-         html += "<label class='hadaq_calibr'>" + calarr[n] + "</label><br/>";
+         html += "<div class='hadaq_calibr' style='padding:2px;margin-top:2px'>" + calarr[n] + "</div>";
       }
       html+="</fieldset>";
       
@@ -1338,13 +1337,44 @@
          url+="'" + itemname + "'";
          for (var n in calarr)
             url+= ",'" + calarr[n]+"/Status" + "'";
-         url+="]&compact=3";
+         url+="]";
+         //url+="]&compact=3";
+         
+         function makehname(prefix, code, name) {
+            var str = code.toString(16).toUpperCase();
+            while (str.length<4) str = "0"+str;
+            return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
+         }
          
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
-            frame.find('.hadaq_calibr').each(function(index) { $(this).text("Item:"+calarr[index]+" Status:"+res[index+1].result.value + " Progress:"+ res[index+1].result.progress )});
+            frame.find('.hadaq_calibr').each(function(index) {
+               var info = res[index+1].result;
+               
+               var code = "<div style='float:left'>";
+               code += "<button hist='" + calarr[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
+               for (var j in info.tdc)
+                  code+="<button hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+               
+               code +=" " + info.value + " ";
+               code +="</div>"; 
+               code+="<div class='hadaq_progress' title='progress:" + info.progress + "%'></div>";
+               
+               $(this).html(code);
+               $(this).css('background-color', info.value=='Ready' ? 'green' : 'red');
+               $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
+               
+               $(this).find("button").button().click(function(){ 
+                  console.log("Draw hist " + $(this).attr('hist'));
+                  var drawframe = mdi.FindFrame(itemname+"_drawing", true);
+                  drawframe.empty();
+                  hpainter.display($(this).attr('hist'),"divid:"+drawframe.attr('id'));         
+                  
+               });
+               $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+            });
          });
          inforeq.send(null);
       }, 2000);

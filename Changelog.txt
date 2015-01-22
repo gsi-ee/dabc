@@ -7,6 +7,9 @@ about current functionality of the framework.
    Only execution of normal MBS commands are supported. 
 2. One could put extra information in status record (like progress), 
    which could be displayed in custom GUI.
+3. In web gui for the hadaq::CombinerModule provide more information
+   about calibration progress. With buttons allow fast show of most-important
+   histogram.  
 
 
 21.01.2015

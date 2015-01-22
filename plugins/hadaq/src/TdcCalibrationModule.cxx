@@ -16,6 +16,7 @@
 #include "hadaq/TdcCalibrationModule.h"
 #include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
+#include "dabc/timing.h"
 
 #include <math.h>
 
@@ -178,11 +179,17 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    DOUT0("DUMMY %s", DBOOL(fDummy));
 
+   item.SetField("trb", trbid);
+
+
    fProcMgr = new DabcProcMgr;
 
    fProcMgr->fTop = fWorkerHierarchy;
 
    fTrbProc = new hadaq::TrbProcessor(trbid);
+   int hubid = Cfg("HUB", cmd).AsInt(0x0);
+   if (hubid>0) fTrbProc->SetHadaqHUBId(hubid);
+
    int hfill = Cfg("HistFilling", cmd).AsInt(1);
 
    fTrbProc->SetHistFilling(hfill);
@@ -190,6 +197,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    std::vector<int64_t> tdcs = Cfg("TDC", cmd).AsIntVect();
    for(unsigned n=0;n<tdcs.size();n++)
       fTrbProc->CreateTDC(tdcs[n]);
+   item.SetField("tdc", tdcs);
 
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
    for (unsigned n=0;n<dis_ch.size();n++)
@@ -204,8 +212,15 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    std::string calfile = Cfg("CalibrFile", cmd).AsStr();
    if (!calfile.empty()) {
       fTrbProc->SetWriteCalibrations(calfile.c_str(), true);
-      if (fTrbProc->LoadCalibrations(calfile.c_str()))
-         fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
+      if (fTrbProc->LoadCalibrations(calfile.c_str())) {
+         dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+         item.SetField("value","File");
+         dabc::DateTime tm;
+         tm.GetNow();
+         char sbuf[30];
+         if (tm.OnlyTimeAsString(sbuf,sizeof(sbuf)))
+            item.SetField("time", sbuf);
+      }
    }
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
@@ -257,8 +272,16 @@ bool hadaq::TdcCalibrationModule::retransmit()
                }
             }
             // at the end check if autocalibration can be done
-            if (fTrbProc->CheckAutoCalibration())
-               fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
+            if (fTrbProc->CheckAutoCalibration()) {
+               dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+               item.SetField("value","Ready");
+               dabc::DateTime tm;
+               tm.GetNow();
+               char sbuf[30];
+               if (tm.OnlyTimeAsString(sbuf,sizeof(sbuf)))
+                  item.SetField("time", sbuf);
+
+            }
 #endif
          } else {
             EOUT("Error buffer type!!!");
