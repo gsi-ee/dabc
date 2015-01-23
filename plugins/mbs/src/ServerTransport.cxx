@@ -21,14 +21,20 @@
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/DataTransport.h"
+#include "dabc/Pointer.h"
 
-mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind) :
+mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::Reference& iter, uint32_t subid) :
    dabc::SocketIOAddon(fd, false, true),
    dabc::DataOutput(dabc::Url()),
    fState(oInit),
    fKind(kind),
    fSendBuffers(0),
-   fDroppedBuffers(0)
+   fDroppedBuffers(0),
+   fIter(iter),
+   fEvHdr(),
+   fSubHdr(),
+   fEvCounter(0),
+   fSubevId(subid)
 {
    DOUT3("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
 }
@@ -84,6 +90,29 @@ void mbs::ServerOutputAddon::OnSendCompleted()
       case oInitReq:
          fState = oWaitingBuffer;
          return;
+
+      case oSendingEvents: {
+         dabc::EventsIterator* iter = (dabc::EventsIterator*) fIter();
+
+         if (iter->NextEvent()) {
+            unsigned evsize = iter->EventSize();
+            if (evsize % 2) evsize++;
+
+            fSubHdr.InitFull(fSubevId);
+            fSubHdr.SetRawDataSize(evsize);
+
+            fEvHdr.Init(fEvCounter++);
+            fEvHdr.SetFullSize(evsize + sizeof(fEvHdr) + sizeof(fSubHdr));
+
+            StartSend(&fEvHdr, sizeof(fEvHdr), &fSubHdr, sizeof(fSubHdr), iter->Event(), evsize);
+
+            return;
+         }
+
+         iter->Close();
+         // we continue to next case - buffer is completed
+      }
+
 
       case oSendingBuffer:
          if (fKind == mbs::StreamServer)
@@ -190,14 +219,37 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
 //   DOUT0("mbs::ServerOutputAddon::Write_Buffer %u at state %d", buf.GetTotalSize(), fState);
 
+   unsigned sendsize = buf.GetTotalSize();
+
+   if (!fIter.null()) {
+      dabc::EventsIterator* iter = (dabc::EventsIterator*) fIter();
+      sendsize = 0;
+      iter->Assign(buf);
+
+      while (iter->NextEvent()) {
+         sendsize += sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
+         unsigned evsize = iter->EventSize();
+         if (evsize % 2) evsize++;
+         sendsize += evsize;
+      }
+      iter->Close();
+      iter->Assign(buf);
+   }
+
+
    fHeader.Init(true);
-   fHeader.SetUsedBufferSize(buf.GetTotalSize());
+   fHeader.SetUsedBufferSize(sendsize);
 
    // error in evapi, must be + sizeof(mbs::BufferHeader)
-   fHeader.SetFullSize(buf.GetTotalSize() - sizeof(mbs::BufferHeader));
-   fState = oSendingBuffer;
+   fHeader.SetFullSize(sendsize - sizeof(mbs::BufferHeader));
 
-   StartNetSend(&fHeader, sizeof(fHeader), buf);
+   if (fIter.null()) {
+      fState = oSendingBuffer;
+      StartNetSend(&fHeader, sizeof(fHeader), buf);
+   } else {
+      fState = oSendingEvents;
+      StartSend(&fHeader, sizeof(fHeader));
+   }
 
    return dabc::do_CallBack;
 }
@@ -205,23 +257,21 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
 void mbs::ServerOutputAddon::OnConnectionClosed()
 {
-   // disable autodestroy
-
+   // disable auto-destroy
    if (fState != oError) {
       fState = oError;
-      MakeCallback(dabc::do_Error);
+      MakeCallback(dabc::do_Close);
    }
 }
 
 void mbs::ServerOutputAddon::OnSocketError(int errnum, const std::string& info)
 {
-   // disable autodestroy
+   // disable auto-destroy
    if (fState != oError) {
       fState = oError;
-      MakeCallback(dabc::do_Error);
+      MakeCallback(dabc::do_Close);
    }
 }
-
 
 // ===============================================================================
 
@@ -232,7 +282,9 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    fClientsLimit(0),
    fDoingClose(0),
    fBlocking(false),
-   fDeliverAll(false)
+   fDeliverAll(false),
+   fIterKind(),
+   fSubevId(0x1f)
 {
    // this addon handles connection
    AssignAddon(connaddon);
@@ -242,6 +294,12 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
 
    if (url.HasOption("limit"))
       fClientsLimit = url.GetOptionInt("limit", fClientsLimit);
+
+   if (url.HasOption("iter"))
+      fIterKind = url.GetOptionStr("iter");
+
+   if (url.HasOption("subid"))
+      fSubevId = (unsigned) url.GetOptionInt("subid", fSubevId);
 
    // by default transport server is blocking and stream is unblocking
    // blocking has two meaning:
@@ -303,7 +361,18 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       DOUT3("Get new connection request with fd %d canrecv %s", fd, DBOOL(CanRecv()));
 
-      ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind);
+      dabc::Reference iter;
+
+      if (!fIterKind.empty()) {
+         iter = dabc::mgr.CreateObject(fIterKind,"iter");
+         if (dynamic_cast<dabc::EventsIterator*> (iter()) == 0) {
+            EOUT("Fail to create events iterator %s", fIterKind.c_str());
+            close(fd);
+            return dabc::cmd_true;
+         }
+      }
+
+      ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
       // FIXME: should we configure buffer size or could one ignore it???
       addon->FillServInfo(0x100000, true);
 

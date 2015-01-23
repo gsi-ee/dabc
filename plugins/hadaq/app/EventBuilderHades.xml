@@ -132,9 +132,13 @@ DAQDISK - switches disk demon mode on/off
        <InputPort name="Input32" url="hadaq://host:${UDP32}" thread="UdpThread3"/>
        <InputPort name="Input33" url="hadaq://host:${UDP33}" thread="UdpThread4"/>
        <InputPort name="Input34" url="hadaq://host:${UDP34}" thread="UdpThread5"/>
-                    
 
        <InputPort name="Input*" queue="30" urlopt="udpbuf=200000&mtu=64512&flush=0.2&observer=true"/>
+       
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:810${EBNUM}?iter=hadaq_iter&subid=0x1f"/>
+              
+       
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
        <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/>
 
@@ -168,28 +172,6 @@ DAQDISK - switches disk demon mode on/off
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="-1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="-1"/>
        
-       
-       
-       
-     </Module>
-
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
-
-       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
-
-       <OutputPort name="Output0" url="mbs://Stream:810${EBNUM}"/>
-       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
-
-       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
-       <SubeventFullId value="0x000001F"/>
-
-       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
-       <DoMergeSyncedEvents value="true"/>
-
-       <TransmitData width="5" prec="3" low="0" up="50" debug="-1"/>
-       <TransmitEvents width="4" prec="1" low="0" up="100" debug="-1"/>
      </Module>
 
   </Context>

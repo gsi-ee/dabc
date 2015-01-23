@@ -388,4 +388,3 @@ bool hadaq::WriteIterator::FinishEvent()
 
    return true;
 }
-

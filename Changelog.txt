@@ -7,6 +7,10 @@ about current functionality of the framework.
 2. In timing.h change signature of DateTime methods - all string conversion
    now returns std::string
 3. Implement 'history' draw option, which is now available via context menu
+4. In mbs::ServerTransport allow to use other kind of events. With special
+   EventsInterator instance transport iterates over events in the buffer
+   and automatically appends mbs event/subevent headers
+5. Remove from default HADAQ readout application transmitter module     
 
 
 22.01.2015

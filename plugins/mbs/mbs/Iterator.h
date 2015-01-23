@@ -155,6 +155,24 @@ namespace mbs {
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
    };
 
+   // ________________________________________________________________________________
+
+   class EventsIterator : public dabc::EventsIterator {
+      protected:
+         ReadIterator fIter;
+
+      public:
+         EventsIterator(const std::string& name) : dabc::EventsIterator(name), fIter() {}
+         virtual ~EventsIterator() {}
+
+         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
+         virtual void Close() { return fIter.Close(); }
+
+         virtual bool NextEvent() { return fIter.NextEvent(); };
+         virtual void* Event() { return fIter.evnt(); }
+         virtual dabc::BufferSize_t EventSize() { return fIter.GetEventSize(); }
+   };
+
 }
 
 #endif

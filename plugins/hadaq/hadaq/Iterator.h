@@ -67,6 +67,8 @@ namespace hadaq {
          bool NextSubEvent();
 
          hadaq::RawEvent* evnt() const { return (hadaq::RawEvent*) fEvPtr(); }
+         unsigned evntsize() const { return evnt() ? evnt()->GetPaddedSize() : 0; }
+
          hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
          bool AssignEventPointer(dabc::Pointer& ptr);
          hadaq::RawSubevent* subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
@@ -107,10 +109,28 @@ namespace hadaq {
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(hadaq::RawSubevent); }
 
       protected:
-         dabc::Buffer   fBuffer; // here we keep buffer - mean onwership is delivered to iterator
+         dabc::Buffer   fBuffer; // here we keep buffer - mean ownership is delivered to iterator
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::BufferSize_t fFullSize;
+   };
+
+   // _______________________________________________________________________________________________
+
+   class EventsIterator : public dabc::EventsIterator {
+      protected:
+         ReadIterator fIter;
+
+      public:
+         EventsIterator(const std::string& name) : dabc::EventsIterator(name), fIter() {}
+         virtual ~EventsIterator() {}
+
+         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
+         virtual void Close() { return fIter.Close(); }
+
+         virtual bool NextEvent() { return fIter.NextEvent(); };
+         virtual void* Event() { return fIter.evnt(); }
+         virtual dabc::BufferSize_t EventSize() { return fIter.evntsize(); }
    };
 
 }

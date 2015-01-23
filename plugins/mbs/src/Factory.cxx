@@ -37,6 +37,14 @@
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
 
 
+dabc::Reference mbs::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+{
+   if (classname=="mbs_iter")
+      return new mbs::EventsIterator(objname);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
+
 dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
 {
    dabc::Url url(typ);

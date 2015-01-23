@@ -32,6 +32,8 @@
 
        <InputPort name="Input0" url="hld:///data.local1/padiwa/beam801_ch48_0000.hld?loop"/>
 
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
        <FineMin value="30"/>
        <FineMax value="481"/>
        <NumChannels value="65"/>
@@ -44,27 +46,6 @@
        <Auto value="10000"/>
        <CalibrFile value="local"/>
      </Module>
-
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
-
-       <InputPort name="Input0" url="Calibr/Output0" queue="10"/>
-
-       <OutputPort name="Output0" url="mbs://Stream:6002"/>
-
-       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
-       <SubeventFullId value="0x000001F"/>
-
-       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
-       <DoMergeSyncedEvents value="true"/>
-
-       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
-     </Module>
-     
-     <!--  Uncomment to see terminal output like old event builder -->
-     <!-- Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="true"/ -->
 
   </Context>
 

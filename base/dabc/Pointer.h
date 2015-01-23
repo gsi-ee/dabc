@@ -207,6 +207,29 @@ namespace dabc {
          unsigned segmid() const { return fSegm; }
    };
 
+   // ==========================================================================
+
+   /** \brief Iterator over events in \ref dabc::Buffer class
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Allows to scan events in the buffer
+    */
+
+   class EventsIterator : public Object {
+      public:
+         EventsIterator(const std::string& name) : Object(name, flAutoDestroy) {}
+         virtual ~EventsIterator() {}
+
+         virtual bool Assign(const Buffer& buf) = 0;
+         virtual void Close() = 0;
+
+         virtual bool NextEvent() = 0;
+         virtual void* Event() = 0;
+         virtual BufferSize_t EventSize() = 0;
+
+         unsigned NumEvents(const Buffer& buf);
+   };
 }
 
 

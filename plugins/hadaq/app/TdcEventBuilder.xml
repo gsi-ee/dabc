@@ -90,7 +90,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
-        <!-- these parameters will force to create inputs/oputputs of module -->
+        <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
@@ -104,13 +104,12 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <ExtraDebug value="false"/>
 
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
        <!--  this is example of HLD file storage - local and RFIO -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
-
-       <!--  this is for debug purposes -->
-       <!--OutputPort name="Output1" url="block://host?time=0&sleep=true" thread="blockthrd1"/-->
-       <!--OutputPort name="Output2" url="block://host?time=0&sleep=true&err=100" onerror="exit" numreconn="2" thread="blockthrd2"/-->
 
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   
@@ -133,25 +132,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-     </Module>
-
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
-
-       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
-
-       <OutputPort name="Output0" url="mbs://Stream:6002"/>
-       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
-
-       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
-       <SubeventFullId value="0x000001F"/>
-
-       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
-       <DoMergeSyncedEvents value="true"/>
-
-       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
      </Module>
      
      <!--  Uncomment to see terminal output like old event builder -->

@@ -151,3 +151,14 @@ int dabc::Pointer::distance_to(const Pointer& child) const throw()
 
    return dist + (child.fPtr - left.fPtr);
 }
+
+// ======================================================================================
+
+unsigned dabc::EventsIterator::NumEvents(const Buffer& buf)
+{
+   if (!Assign(buf)) return 0;
+   unsigned cnt = 0;
+   while (NextEvent()) cnt++;
+   Close();
+   return cnt;
+}

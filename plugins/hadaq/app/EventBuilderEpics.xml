@@ -102,11 +102,14 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
        <ExtraDebug value="false"/>
+   
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
        
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=1" queue="200"/>
+       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=1" queue="200"/>
 
-      <!--  alternative setup for independent time tags on different eventbuilders: -->
-      <!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=1" queue="200"/> -->
+       <!--  alternative setup for independent time tags on different eventbuilders: -->
+       <!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=1" queue="200"/> -->
       
      </Module>
 

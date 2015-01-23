@@ -5,7 +5,7 @@ This is example file how HADAQ event building should be configured in DABC.
 Event building process implemented in Combiner module of hadaq::CombinerModule class.
 Module can have several inputs, each with separate port number for receiving data 
 from TRB boards. For every input one could configure only UDP port number - host name is ignored.
-First output of combiner module reserved for the connection to the MBS transmitter module. 
+First output of combiner module used for delivering data to online analysis (if any). 
 Second output can be use to store data in hld files. 
 To enable HLD file storage one should specify NumOutputs for Combiner module
 and provide hld file name for Output1 port   
@@ -14,12 +14,6 @@ and provide hld file name for Output1 port
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
      
 File name fill be extended according to HADAQ naming convetion.       
-
-Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
-To enable transmitter, one should specify auto="true" in configuration which says DABC
-to automatically create module when starting application. 
-First output of the module reserved for stream server, second output can be used to
-store data in lmd files. 
 
 By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
 put <HttpServer name="http" auto="false">. One could change http port number. 
@@ -38,8 +32,8 @@ should be specified.
 
 There is well-known problem with using VNC viewer and mbs stream server. 
 Both by default are using port 6002. One could change port number for stream server.
-Just set other number in configuration of output port of transmitter module, for instance
-       <OutputPort name="Output0" url="mbs://Stream:6789"/>
+Just set other number in configuration of first output port of combiner module, for instance:
+       <OutputPort name="Output0" url="mbs://Stream:6789?iter=hadaq_iter&subid=0x1f"/>
 In this case one should specify that port number when starting go4 analysis like:
    [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
 When starting analysis from the go4 gui, one should specify stream server with port number too.
@@ -88,13 +82,12 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <ExtraDebug value="false"/>
 
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
        <!--  this is example of HLD file storage - local and RFIO -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
-
-       <!--  this is for debug purposes -->
-       <!--OutputPort name="Output1" url="block://host?time=0&sleep=true" thread="blockthrd1"/-->
-       <!--OutputPort name="Output2" url="block://host?time=0&sleep=true&err=100" onerror="exit" numreconn="2" thread="blockthrd2"/-->
 
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   
@@ -117,25 +110,6 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-     </Module>
-
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
-
-       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
-
-       <OutputPort name="Output0" url="mbs://Stream:6002"/>
-       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
-
-       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
-       <SubeventFullId value="0x000001F"/>
-
-       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
-       <DoMergeSyncedEvents value="true"/>
-
-       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
      </Module>
      
      <!--  Uncomment to see terminal output like old event builder -->

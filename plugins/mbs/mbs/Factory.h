@@ -30,6 +30,8 @@ namespace mbs {
       public:
          Factory(const std::string& name) : dabc::Factory(name) {}
 
+         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+
          virtual dabc::Transport* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
 
          virtual dabc::DataInput* CreateDataInput(const std::string& typ);

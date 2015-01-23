@@ -33,11 +33,21 @@
 #include "hadaq/MbsTransmitterModule.h"
 #include "hadaq/TerminalModule.h"
 #include "hadaq/TdcCalibrationModule.h"
+#include "hadaq/Iterator.h"
 #include "hadaq/Observer.h"
 #include "hadaq/api.h"
 
 
 dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
+
+
+dabc::Reference hadaq::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+{
+   if (classname=="hadaq_iter")
+      return new hadaq::EventsIterator(objname);
+
+   return dabc::Factory::CreateObject(classname, objname, cmd);
+}
 
 
 dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string& typ)

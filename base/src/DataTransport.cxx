@@ -640,7 +640,7 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
    if (evnt.GetCode() == evCallBack) {
 
       if (evnt.GetArg() != do_Ok) {
-         EOUT("Callback with error argument");
+         if (evnt.GetArg() == do_Error) EOUT("Callback with error argument");
          ChangeState(outClosing);
          CloseOutput();
          CloseTransport(true);
