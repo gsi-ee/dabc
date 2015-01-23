@@ -4,8 +4,9 @@ about current functionality of the framework.
 
 23.01.2015
 1. Improve hadaq web control GUI.  
-2. In timing.h change signature of DateTime methods - all string convertion
+2. In timing.h change signature of DateTime methods - all string conversion
    now returns std::string
+3. Implement 'history' draw option, which is now available via context menu
 
 
 22.01.2015

@@ -1115,7 +1115,7 @@
       if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
 
-      var elem = DABC.CreateDrawElement(node, this.HistoryDepth());
+      var elem = DABC.CreateDrawElement(node, options=='history' ? this.HistoryDepth() : -1);
 
       if (elem==null) return;
          
@@ -1131,17 +1131,9 @@
    
    DABC.HierarchyPainter.prototype.HistoryDepth = function(onlyurl) {
       var history = JSROOT.GetUrlOption("history");
-      if (history == "") return 0; // 0 is default value means maximum history
-      if (history != null) {
-         history = parseInt(history);
-         return ((history == NaN) || (history<=0)) ? 0 : history;
-      }
-      
-      if (!onlyurl) {
-         var chkbox = document.getElementById("show_history");
-         if (chkbox && chkbox.checked) return 0;
-      }
-      return -1; // history is disabled
+      if ((history == "") || (history==null)) return 0; // 0 is default value means maximum history
+      history = parseInt(history);
+      return ((history == NaN) || (history<=0)) ? 0 : history;
    }
    
 
@@ -1178,6 +1170,9 @@
       var opts = null;
       if (('_kind' in item) && (item._kind.indexOf("ROOT.")==0))
          opts = JSROOT.getDrawOptions(item._kind.substr(5), 'nosame');
+      else if ('_history' in item) {
+         opts = ['','history'];
+      }
       
       var baseurl = onlineprop.server + onlineprop.itemname + "/";
       
@@ -1185,9 +1180,7 @@
       
       var separ = "?";
       if (this.IsMonitoring()) { drawurl += separ + "monitoring=" + this.MonitoringInterval(); separ = "&"; }
-      var hist = this.HistoryDepth();
-      if (hist==0) { drawurl += separ + "history"; } else
-      if (hist>0) { drawurl += separ + "history=" + hist; }    
+      if (this.HistoryDepth()>0) { drawurl += separ + "history=" + this.HistoryDepth(); separ = "&"; }    
       
       if ('_kind' in item) {
          menu.addDrawMenu("Draw", opts, function(arg) { painter.display(itemname, arg); });

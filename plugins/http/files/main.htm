@@ -14,13 +14,13 @@
       function createGUI() {
             var guiCode =
                  '<div id="left-div" class="column">'+
-                 '  <h2>Objects hierarchy</h2>'+
-                 "  <p><font face='Verdana' size='1px'><a href='http://root.cern.ch/js/jsroot.html'>JSROOT</a> version <span style='color:green'><b>" + JSROOT.version + "</b></span></font></p>" + 
+                 '  <h2>Objects</h2>'+
+                 "  <p><font face='Verdana' size='1px'><a href='http://dabc.gsi.de'>DABC</a> <span style='color:green'><b>" + DABC.version + "</b></span>, " + 
+                 "  <a href='http://root.cern.ch/js/jsroot.html'>JSROOT</a> <span style='color:green'><b>" + JSROOT.version + "</b></span></font></p>" + 
                  '  Hierarchy in <a href="h.json">json</a> and <a href="h.xml">xml</a> format<br/>'+
                  '  <div id="fast_buttons"></div><br/>'+        
                  '  <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring'+        
-                 '  <input type="checkbox" name="show_history" id="show_history"/> History'+
-                 '  <input id="grid_spinner" style="width:60px" value="2"/>' +    
+                 '  Grid <input id="grid_spinner" style="width:40px" value="2"/>' +    
                  '  <div id="dabc_tree_holder"></div>' +
                  '</div>'+
                  '<div id="separator-div" class="separator"></div>' +
@@ -43,11 +43,6 @@
                document.getElementById("monitoring").checked = true;
                document.getElementById("monitoring").disabled = "disabled";
             } 
-               
-            if (DABC.hpainter.HistoryDepth(true) >=0) {
-               document.getElementById("show_history").checked = true;
-               document.getElementById("show_history").disabled = "disabled";
-            }
             
             var itemsarr = [], optionsarr = [];
             var itemname = JSROOT.GetUrlOption("item");
