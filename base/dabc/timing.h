@@ -18,6 +18,10 @@
 
 #include <stdint.h>
 
+#ifndef DABC_string
+#include "dabc/string.h"
+#endif
+
 namespace dabc {
 
    /** \brief Class for acquiring and holding timestamps.
@@ -202,7 +206,7 @@ namespace dabc {
 
          bool null() const { return (tv_sec==0) && (tv_nsec==0); }
 
-         bool GetNow();
+         DateTime& GetNow();
 
          /** \brief Return date and time in seconds since 1.1.1970 */
          double AsDouble() const;
@@ -218,18 +222,18 @@ namespace dabc {
          }
 
          /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
-         bool AsString(char* sbuf, int len, int ndecimal = 0) const;
+         std::string AsString(int ndecimal = 0) const;
 
          /** \brief convert string into sec.frac format, can be interpret directly in JavaScript
           * ISO 8601 standard is used and produces string like  '2013-09-16T12:42:30.884Z'
           * Time in GMT time zone */
-         bool AsJSString(char* sbuf, int len, int ndecimal = 3) const;
+         std::string AsJSString(int ndecimal = 3) const;
 
          /** \brief Fills only date as string */
-         bool OnlyDateAsString(char* sbuf, int len) const;
+         std::string OnlyDateAsString() const;
 
          /** \brief Fills only time as string */
-         bool OnlyTimeAsString(char* sbuf, int len) const;
+         std::string OnlyTimeAsString() const;
 
          /** \brief Set only date part from the string */
          bool SetOnlyDate(const char* sbuf);

@@ -146,7 +146,7 @@ void dabc::Sleep(double tm)
 // ====================================================
 
 
-bool dabc::DateTime::GetNow()
+dabc::DateTime& dabc::DateTime::GetNow()
 {
    timespec tm;
    clock_gettime(CLOCK_REALTIME, &tm);
@@ -154,7 +154,7 @@ bool dabc::DateTime::GetNow()
    tv_sec = tm.tv_sec;
    tv_nsec = tm.tv_nsec;
 
-   return true;
+   return *this;
 }
 
 uint64_t dabc::DateTime::AsJSDate() const
@@ -163,9 +163,9 @@ uint64_t dabc::DateTime::AsJSDate() const
 }
 
 
-bool dabc::DateTime::AsString(char* sbuf, int len, int ndecimal) const
+std::string dabc::DateTime::AsString(int ndecimal) const
 {
-   if (null()) return false;
+   if (null()) return std::string();
 
    time_t src = tv_sec;
    int frac = 0;
@@ -188,14 +188,16 @@ bool dabc::DateTime::AsString(char* sbuf, int len, int ndecimal) const
 
    gmtime_r(&src, &res);
 
-   strftime(sbuf, len, "%Y-%m-%d %H:%M:%S", &res);
+   char sbuf[50];
+
+   strftime(sbuf, sizeof(sbuf), "%Y-%m-%d %H:%M:%S", &res);
 
    if (frac>0) {
       int rlen = strlen(sbuf);
-      if (len - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+      if ((int)sizeof(sbuf) - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
    }
 
-   return true;
+   return std::string(sbuf);
 }
 
 double dabc::DateTime::AsDouble() const
@@ -204,10 +206,10 @@ double dabc::DateTime::AsDouble() const
 }
 
 
-bool dabc::DateTime::AsJSString(char* sbuf, int len, int ndecimal) const
+std::string dabc::DateTime::AsJSString(int ndecimal) const
 {
-   if (null()) return false;
-   if (len < 22 + ndecimal) return false;
+   if (null()) return std::string();
+   char sbuf[50];
 
    time_t src = tv_sec;
    int frac = 0;
@@ -230,41 +232,43 @@ bool dabc::DateTime::AsJSString(char* sbuf, int len, int ndecimal) const
 
    gmtime_r(&src, &res);
 
-   strftime(sbuf, len, "%Y-%m-%dT%H:%M:%S", &res);
+   strftime(sbuf, sizeof(sbuf), "%Y-%m-%dT%H:%M:%S", &res);
 
    if (frac>0) {
       int rlen = strlen(sbuf);
-      if (len - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
+      if ((int)sizeof(sbuf) - rlen > ndecimal + 1) sprintf(sbuf+rlen, ".%0*d", ndecimal, frac);
    }
 
    int rlen = strlen(sbuf);
-   if (rlen >= len-1) return false;
+   if (rlen >= (int)sizeof(sbuf)-1) return std::string();
 
    sbuf[rlen] = 'Z';
    sbuf[rlen+1] = 0;
 
-   return true;
+   return std::string(sbuf);
 }
 
 
-bool dabc::DateTime::OnlyDateAsString(char* sbuf, int len) const
+std::string dabc::DateTime::OnlyDateAsString() const
 {
-   if (null()) return false;
+   if (null()) return std::string();
    time_t src = tv_sec;
    struct tm res;
    gmtime_r(&src, &res);
-   strftime(sbuf, len, "%Y-%m-%d", &res);
-   return true;
+   char sbuf[100];
+   strftime(sbuf, sizeof(sbuf), "%Y-%m-%d", &res);
+   return std::string(sbuf);
 }
 
-bool dabc::DateTime::OnlyTimeAsString(char* sbuf, int len) const
+std::string dabc::DateTime::OnlyTimeAsString() const
 {
-   if (null()) return false;
+   if (null()) return std::string();
    time_t src = tv_sec;
    struct tm res;
    gmtime_r(&src, &res);
-   strftime(sbuf, len, "%H:%M:%S", &res);
-   return true;
+   char sbuf[100];
+   strftime(sbuf, sizeof(sbuf), "%H:%M:%S", &res);
+   return std::string(sbuf);
 }
 
 bool dabc::DateTime::SetOnlyDate(const char* sbuf)

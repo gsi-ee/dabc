@@ -62,12 +62,10 @@ bool dabc::HierarchyStore::StartFile(dabc::Buffer buf)
    if ((path.length()>0) && (path[path.length()-1]!='/')) path.append("/");
 
    dabc::DateTime tm;
-   if (!tm.GetNow()) return false;
+   tm.GetNow();
 
-   char strdate[50], strtime[50];
-
-   tm.OnlyDateAsString(strdate, sizeof(strdate));
-   tm.OnlyTimeAsString(strtime, sizeof(strtime));
+   std::string strdate = tm.OnlyDateAsString();
+   std::string strtime = tm.OnlyTimeAsString();
 
    path.append(strdate);
 
@@ -228,11 +226,10 @@ std::string dabc::HierarchyReading::MakeFileName(const std::string& fpath, const
    std::string res = fpath;
    if ((res.length()>0) && (res[res.length()-1] != '/')) res.append("/");
 
-   char strdate[50], strtime[50];
-   dt.OnlyDateAsString(strdate, sizeof(strdate));
-   dt.OnlyTimeAsString(strtime, sizeof(strtime));
+   std::string strdate = dt.OnlyDateAsString();
+   std::string strtime = dt.OnlyTimeAsString();
 
-   res += dabc::format("%s/%s.dabc", strdate, strtime);
+   res += dabc::format("%s/%s.dabc", strdate.c_str(), strtime.c_str());
 
    return res;
 }
@@ -314,11 +311,7 @@ bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& 
 
       dabc::DateTime mindt(files.front()), maxdt(files.back());
 
-      char buf1[100], buf2[100];
-      mindt.AsJSString(buf1, sizeof(buf1));
-      maxdt.AsJSString(buf2, sizeof(buf2));
-
-      DOUT0("DIR: %s mintm: %s maxtm: %s files %u", dirname.c_str(), buf1, buf2, files.size());
+      DOUT0("DIR: %s mintm: %s maxtm: %s files %u", dirname.c_str(), mindt.AsJSString().c_str(), maxdt.AsJSString().c_str(), files.size());
 
       h.SetField("dabc:path", dirname);
       h.SetField("dabc:mindt", mindt);

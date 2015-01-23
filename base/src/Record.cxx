@@ -757,10 +757,8 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
       case kind_bool: return valueInt!=0 ? xmlTrueValue : xmlFalseValue;
       case kind_int: return dabc::format("%ld", (long) valueInt);
       case kind_datime: {
-         char sbuf[35];
-         if (dabc::DateTime(valueUInt).AsJSString(sbuf, sizeof(sbuf), 3))
-            return std::string(sbuf);
-         return dflt;
+         std::string res = dabc::DateTime(valueUInt).AsJSString(3);
+         return res.empty() ? dflt : res;
       }
       case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);
       case kind_double: return dabc::format("%g", valueDouble);
@@ -859,9 +857,9 @@ std::string dabc::RecordField::AsJson() const
       case kind_bool: return valueInt!=0 ? "true" : "false";
       case kind_int: return dabc::format("%ld", (long) valueInt);
       case kind_datime: {
-         char sbuf[35];
-         if (dabc::DateTime(valueUInt).AsJSString(sbuf, sizeof(sbuf), 3))
-            return dabc::format("\"%s\"", sbuf);
+         std::string res = dabc::DateTime(valueUInt).AsJSString(3);
+         if (res.length()>0)
+            return dabc::format("\"%s\"", res.c_str());
          break;
       }
       case kind_uint: return dabc::format("%lu", (long unsigned) valueUInt);

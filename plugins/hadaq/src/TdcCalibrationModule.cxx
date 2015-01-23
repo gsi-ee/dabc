@@ -215,11 +215,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
       if (fTrbProc->LoadCalibrations(calfile.c_str())) {
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
          item.SetField("value","File");
-         dabc::DateTime tm;
-         tm.GetNow();
-         char sbuf[30];
-         if (tm.OnlyTimeAsString(sbuf,sizeof(sbuf)))
-            item.SetField("time", sbuf);
+         item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
       }
    }
 
@@ -229,7 +225,6 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    base::ProcMgr::ClearInstancePointer();
 
 #endif
-
 }
 
 hadaq::TdcCalibrationModule::~TdcCalibrationModule()
@@ -255,6 +250,7 @@ bool hadaq::TdcCalibrationModule::retransmit()
          if (fProgress>fAutoCalibr) {
             fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
             fProgress = 0;
+            fWorkerHierarchy.GetHChild("Status").SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
          }
          if (fAutoCalibr>0)
             fWorkerHierarchy.GetHChild("Status").SetField("progress",100*fProgress/fAutoCalibr);
@@ -279,11 +275,7 @@ bool hadaq::TdcCalibrationModule::retransmit()
             // at the end check if autocalibration can be done
             if (progress>=1.) {
                item.SetField("value","Ready");
-               dabc::DateTime tm;
-               tm.GetNow();
-               char sbuf[30];
-               if (tm.OnlyTimeAsString(sbuf,sizeof(sbuf)))
-                  item.SetField("time", sbuf);
+               item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
             }
 #endif
          } else {

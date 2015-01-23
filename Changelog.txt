@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+23.01.2015
+1. Improve hadaq web control GUI.  
+2. In timing.h change signature of DateTime methods - all string convertion
+   now returns std::string
+
+
 22.01.2015
 1. Add support of mbs prompter to mbs::Monitor class. 
    Only execution of normal MBS commands are supported. 
@@ -10,7 +16,8 @@ about current functionality of the framework.
 3. In web gui for the hadaq::CombinerModule provide more information
    about calibration progress. With buttons allow fast show of most-important
    histogram.  
-4. Use progress information from stream hadaq::TrbProcessor 
+4. Use progress information in hadaq::TrbProcessor to decide
+   when autocalibration will be performed 
 
 
 21.01.2015

@@ -1303,7 +1303,7 @@
       		     "<fieldset>" +
       		     "<legend>Calibration</legend>";
       for (var n in calarr) {
-         html += "<div class='hadaq_calibr' style='padding:2px;margin-top:2px'>" + calarr[n] + "</div>";
+         html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       }
       html+="</fieldset>";
       
@@ -1317,6 +1317,7 @@
       });
       
       var inforeq = null;
+      var firsttime = true;
       
       function UpdateDaqStatus(res) {
          if (res==null) return;
@@ -1326,11 +1327,19 @@
             if (item._name=='HadaqInfo')
                frame.find('.hadaq_info').text("Info: " + item.value);                  
             if (item._name=='HadaqData')
-               frame.find('.hadaq_rate').text("Rate: " + item.value + " " + item.units+"/s");                  
+               frame.find('.hadaq_rate')
+                  .css("font-size","150%")
+                  .text("Rate: " + item.value + " " + item.units+"/s");                  
          }
       }
       
-      setInterval(function() {
+      var handler = setInterval(function() {
+         if ($("#"+divid+" .hadaq_info").length==0) {
+            // if main element disapper (reset), stop handler 
+            clearInterval(handler);
+            return;
+         }
+         
          if (inforeq) return;
          
          var url = "multiget.json?items=[";
@@ -1353,28 +1362,32 @@
             frame.find('.hadaq_calibr').each(function(index) {
                var info = res[index+1].result;
                
-               var code = "<div style='float:left'>";
-               code += "<button hist='" + calarr[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
-               for (var j in info.tdc)
-                  code+="<button hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+               if (firsttime) {
+                  var code = "<div style='float:left'>";
+                  code += "<button hist='" + calarr[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
+                  for (var j in info.tdc)
+                     code+="<button hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
                
-               // code +=" " + info.value + " ";
-               code +="</div>"; 
-               code+="<div class='hadaq_progress' title='progress:" + info.progress + "%'></div>";
+                  code +="</div>"; 
+                  code+="<div class='hadaq_progress'></div>";
+                  $(this).html(code);
+                  $(this).find("button").button().click(function(){ 
+                     console.log("Draw hist " + $(this).attr('hist'));
+                     var drawframe = mdi.FindFrame(itemname+"_drawing", true);
+                     drawframe.empty();
+                     hpainter.display($(this).attr('hist'),"divid:"+drawframe.attr('id'));         
+                  });
+                  $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+               }
                
-               $(this).html(code);
                $(this).css('background-color', info.value=='Ready' ? 'green' : 'red');
                $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
                
-               $(this).find("button").button().click(function(){ 
-                  console.log("Draw hist " + $(this).attr('hist'));
-                  var drawframe = mdi.FindFrame(itemname+"_drawing", true);
-                  drawframe.empty();
-                  hpainter.display($(this).attr('hist'),"divid:"+drawframe.attr('id'));         
-                  
-               });
-               $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+               $(this).find(".hadaq_progress")
+                  .attr("title", "progress: " + info.progress + "%")
+                  .progressbar("option", "value", info.progress);
             });
+            firsttime = false;
          });
          inforeq.send(null);
       }, 2000);

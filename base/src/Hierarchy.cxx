@@ -719,10 +719,7 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
       if (fChildsChanged) { fChildsVersion = ver; mask = mask | change_Childs; }
 
       if (fNodeChanged && fAutoTime) {
-         if (tm==0) {
-            dabc::DateTime dt;
-            if (dt.GetNow()) tm = dt.AsJSDate();
-         }
+         if (tm==0) tm = dabc::DateTime().GetNow().AsJSDate();
          Fields().Field(prop_time).SetDatime(tm);
       }
 
