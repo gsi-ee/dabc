@@ -696,7 +696,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
          "<root>\n");
 
       {
-         TRootSnifferStoreXml store(arg->fContent, arg->fQuery.Index("compact")!=kNPOS);
+         TRootSnifferStoreXml store(arg->fContent, arg->fQuery.Index("compact")!=kNPOS, arg->fQuery.Index("generic")!=kNPOS);
 
          const char *topname = fTopName.Data();
          if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();

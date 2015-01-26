@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+26.01.2015
+1. Slightly change h.xml file format. Always code item name into _name attribute
+2. Make similar changes in ROOT store. Original format remain, new 
+   format available with 'generic' attribute. 
+
+
 23.01.2015
 1. Improve hadaq web control GUI.  
 2. In timing.h change signature of DateTime methods - all string conversion

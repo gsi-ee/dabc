@@ -155,8 +155,9 @@ void dabc::HStore::CreateNode(const char *nodename)
    if (isxml()) {
       if (nodename==0) nodename = "item";
       // starts new xml node, will be closed by CloseNode
-      buf.append(dabc::format("%*s<%s", compact() > 0 ? 0 : lvl * 2, "", nodename));
+      buf.append(dabc::format("%*s<item", compact() > 0 ? 0 : lvl * 2, ""));
       if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
+      buf.append(dabc::format(" _name=\"%s\"", nodename));
       numchilds.push_back(0);
       numflds.push_back(0);
       lvl++;
@@ -231,8 +232,7 @@ void dabc::HStore::CloseNode(const char * nodename)
    if (isxml()) {
       lvl--;
       if (numchilds.back() > 0) {
-         if (nodename==0) nodename = "item";
-         buf.append(dabc::format("%*s</%s>", compact() > 0 ? 0 : lvl * 2, "", nodename));
+         buf.append(dabc::format("%*s</item>", compact() > 0 ? 0 : lvl * 2, ""));
          NewLine();
       } else {
          buf.append(dabc::format("/>"));
