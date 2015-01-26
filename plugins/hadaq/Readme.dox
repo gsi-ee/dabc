@@ -185,23 +185,19 @@ Only second output port (name Output1) can be use for HLD file storage.
 maxsize defines maximum size (in MB) of file, which than will be closed and new
 file will be started
 
-## Configure online server
+
+Configure online server
+-----------------------
  
-Combiner module should have at least one output and
-auto="true" should be specified for "OnlineServer" module.
-hadaq events will be delivered to "OnlineServer" module, where
-conversion into lmd format will be done (just adding lmd headers).
+First output of combiner module used for online server.
+It is MBS stream server, which simply adds MBS-specific header to
+each HLD events. Configuration for online server looks like:
 
-Produced data can be provided to online server - configured for Output0:
+    <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
-        <OutputPort name="Output0" url="mbs://Stream"/>
+For instance, online server can be used to printout raw data with `hldprint` command:
 
-At the same time, data can be stored to lmd file. One should set two output ports
-and name of output file provide in configuration of second output port:
-
-        <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
-
-Here maxsize also defines maximum size of output file.
+    [shell] hldprint localhost:6002
 
 
 Running DABC
