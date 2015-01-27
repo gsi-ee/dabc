@@ -270,7 +270,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
    content_type = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(uri, pathname, filename);
 
-   // DOUT0("URI = %s path %s file %s type %s", uri ? uri : "---", pathname.c_str(), filename.c_str(), content_type.c_str());
+   DOUT2("http::Server::Process uri %s path %s file %s type %s", uri ? uri : "---", pathname.c_str(), filename.c_str(), content_type.c_str());
 
    if (content_type == "__error__") return false;
 
@@ -361,7 +361,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("xml", pathname, query, xmlcode)) return false;
 
-      content_str = std::string("<?xml version=\"1.0\"?>\n") + xmlcode;
+      content_str = std::string("<?xml version=\"1.0\"?>\n<dabc>\n") + xmlcode + "</dabc>";
 
    } else
    if (filename == "h.json") {
