@@ -3,7 +3,7 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 27.01.2015
-1. Make h.xml format similar to h.xml?generic in ROOT. Use as top node <dabc> </dabc>.
+1. Make h.xml format similar to h.xml?generic in ROOT. Use 'dabc' as top node name.
 
 
 26.01.2015
