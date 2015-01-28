@@ -59,14 +59,12 @@ class TRootSnifferStoreXml : public TRootSnifferStore {
 protected:
    TString *buf;           //! output buffer
    Bool_t compact;         //! produce compact xml code
-   Bool_t generic;         //! produce generic format (nodename coded inside _name attribute)
 
 public:
-   TRootSnifferStoreXml(TString &_buf, Bool_t _compact = kFALSE, Bool_t _generic = kFALSE) :
+   TRootSnifferStoreXml(TString &_buf, Bool_t _compact = kFALSE) :
       TRootSnifferStore(),
       buf(&_buf),
-      compact(_compact),
-      generic(_generic) {}
+      compact(_compact) {}
 
    virtual ~TRootSnifferStoreXml() {}
 
