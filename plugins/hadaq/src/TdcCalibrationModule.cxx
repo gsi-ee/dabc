@@ -154,6 +154,8 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    // we need one input and one output port
    EnsurePorts(1, 1);
 
+   DOUT0("Create TdcCalibrationModule");
+
 #ifdef WITH_STREAM
 
    int finemin = Cfg("FineMin", cmd).AsInt(0);

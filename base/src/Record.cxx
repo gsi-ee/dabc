@@ -153,11 +153,11 @@ void dabc::HStore::CreateNode(const char *nodename)
    // starts new json node, will be closed by CloseNode
 
    if (isxml()) {
-      if (nodename==0) nodename = "item";
       // starts new xml node, will be closed by CloseNode
       buf.append(dabc::format("%*s<item", compact() > 0 ? 0 : lvl * 2, ""));
       if (first_node) { buf.append(" xmlns:dabc=\"http://dabc.gsi.de/xhtml\""); first_node = false; }
-      buf.append(dabc::format(" _name=\"%s\"", nodename));
+      if (nodename!=0)
+         buf.append(dabc::format(" _name=\"%s\"", nodename));
       numchilds.push_back(0);
       numflds.push_back(0);
       lvl++;
