@@ -57,14 +57,14 @@ public:
 
 class TRootSnifferStoreXml : public TRootSnifferStore {
 protected:
-   TString *buf;           //! output buffer
-   Bool_t compact;         //! produce compact xml code
+   TString *fBuf;          //! output buffer
+   Bool_t fCompact;        //! produce compact xml code
 
 public:
    TRootSnifferStoreXml(TString &_buf, Bool_t _compact = kFALSE) :
       TRootSnifferStore(),
-      buf(&_buf),
-      compact(_compact) {}
+      fBuf(&_buf),
+      fCompact(_compact) {}
 
    virtual ~TRootSnifferStoreXml() {}
 
@@ -83,13 +83,13 @@ public:
 
 class TRootSnifferStoreJson : public TRootSnifferStore {
 protected:
-   TString *buf;     //! output buffer
-   Bool_t compact;   //! produce compact json code
+   TString *fBuf;     //! output buffer
+   Bool_t fCompact;   //! produce compact json code
 public:
    TRootSnifferStoreJson(TString &_buf, Bool_t _compact = kFALSE) :
       TRootSnifferStore(),
-      buf(&_buf),
-      compact(_compact) {}
+      fBuf(&_buf),
+      fCompact(_compact) {}
    virtual ~TRootSnifferStoreJson() {}
 
    virtual void CreateNode(Int_t lvl, const char *nodename);
