@@ -61,11 +61,11 @@ public:
       curr.SetField(field, value);
    }
 
-   virtual void BeforeNextChild(Int_t lvl, Int_t nchld, Int_t nfld)
+   virtual void BeforeNextChild(Int_t, Int_t, Int_t)
    {
    }
 
-   virtual void CloseNode(Int_t lvl, const char* nodename, Int_t numchilds)
+   virtual void CloseNode(Int_t, Int_t)
    {
       curr = curr.GetParentRef();
    }
