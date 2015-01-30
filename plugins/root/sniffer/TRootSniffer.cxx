@@ -611,7 +611,7 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             TKey* key = dynamic_cast<TKey*> (kobj);
             if (key == 0) continue;
             TObject* obj = (lst == 0) ? 0 : lst->FindObject(key->GetName());
-            if ((obj!=0) && (master.fMask & kScan)) continue;
+            if ((obj!=0) && (master.fMask & TRootSnifferScanRec::kScan)) continue;
 
             if (obj==0) obj = key; // if object exists, provide it to for scan instead of  key
 
