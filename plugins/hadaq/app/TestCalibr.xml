@@ -46,6 +46,8 @@
        <!-- DisableCalibrationFor value="0"/-->  
        <Auto value="10000000"/>
        <!-- CalibrFile value="local"/-->
+       <Dummy value="false"/>
+       
      </Module>
 
   </Context>

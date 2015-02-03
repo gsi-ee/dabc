@@ -177,7 +177,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    int trbid = Cfg("TRB", cmd).AsInt(0x0);
    int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
    if (trbid==0) trbid = 0x8000 | portid;
-   fDummy = Cfg("dummy", cmd).AsBool(false);
+   fDummy = Cfg("Dummy", cmd).AsBool(false);
 
    DOUT0("DUMMY %s", DBOOL(fDummy));
 
@@ -208,8 +208,6 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
    for (unsigned n=0;n<dis_ch.size();n++)
       fTrbProc->DisableCalibrationFor(dis_ch[n]);
-
-   fTrbProc->SetTDCCorrectionMode(1);
 
    fAutoCalibr = Cfg("Auto", cmd).AsInt();
    if (fAutoCalibr>0)

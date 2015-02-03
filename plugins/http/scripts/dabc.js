@@ -1373,7 +1373,11 @@
                   $(this).find(".hadaq_progress").progressbar({ value: info.progress });
                }
                
-               $(this).css('background-color', info.value=='Ready' ? 'green' : 'red');
+               var col = 'red';
+               if (info.value=='Ready') col = 'green'; else
+               if (info.value=='File') col = 'yellow'; 
+               
+               $(this).css('background-color', col);
                $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
                
                $(this).find(".hadaq_progress")
