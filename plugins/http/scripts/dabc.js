@@ -1314,16 +1314,25 @@
       
       function UpdateDaqStatus(res) {
          if (res==null) return;
+         var rate = "";
          for (var n in res._childs) {
             var item = res._childs[n];
+            var lbl = "";
+            var units = "";
             
             if (item._name=='HadaqInfo')
                frame.find('.hadaq_info').text("Info: " + item.value);                  
-            if (item._name=='HadaqData')
-               frame.find('.hadaq_rate')
-                  .css("font-size","150%")
-                  .text("Rate: " + item.value + " " + item.units+"/s");                  
+            if (item._name=='HadaqData') { lbl = "Rate: "; units = " " + item.units+"/s"; }
+            if (item._name=='HadaqEvents') { lbl = "Ev: "; units = " Hz"; }
+            if (item._name=='HadaqLostEvents') { lbl = "Lost:"; units = " Hz"; }
+            if (lbl!="") {
+               if (rate.length>0) rate += " ";
+               rate += lbl + item.value + units;
+            }
          }
+         
+         frame.find('.hadaq_rate').css("font-size","120%").text(rate);                  
+
       }
       
       var handler = setInterval(function() {

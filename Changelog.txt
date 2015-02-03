@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Fix memory leak in TRootSniffer
 2. Implement exe.bin to be able use tree draw from Go4
 3. Fix problem with parsing hex constant with E inside
+4. Improve TDC calibration module, provide more information to web GUI 
 
 
 30.01.2015

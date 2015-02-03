@@ -82,7 +82,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <HistFilling value="4"/>
        <CalibrFile value="local"/>
        <DisableCalibrationFor value="0"/>  
-       <Auto value="7000"/>
+       <Auto value="1200"/>
        
        <!-- TRB value="0x8010"/-->
        <!-- HUB value="0x9000"/-->

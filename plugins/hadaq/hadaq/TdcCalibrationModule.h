@@ -20,6 +20,11 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifndef DABC_timing
+#include "dabc/timing.h"
+#endif
+
+
 #ifdef WITH_STREAM
 
 #include "base/ProcMgr.h"
@@ -67,6 +72,8 @@ namespace hadaq {
       bool fDummy;  //! module creates all TDCs but do not perform any transformation
       int  fAutoCalibr;  //! amount of statistic for the auto calibration in channels
       int  fProgress;    //! used in dummy
+      dabc::TimeStamp fLastCalibr; //! use not to check for calibration very often
+      std::vector<uint64_t> fTDCs; //! remember TDCs in the beginning
 
       bool retransmit();
 

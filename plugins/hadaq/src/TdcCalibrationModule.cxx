@@ -149,10 +149,13 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fTrbProc(0),
    fDummy(false),
    fAutoCalibr(1000),
-   fProgress(0)
+   fProgress(0),
+   fLastCalibr()
 {
    // we need one input and one output port
    EnsurePorts(1, 1);
+
+   fLastCalibr.GetNow();
 
    DOUT0("Create TdcCalibrationModule");
 
@@ -198,12 +201,12 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    DOUT2("Create TDCs %s", Cfg("TDC", cmd).AsStr().c_str());
 
-   std::vector<uint64_t> tdcs = Cfg("TDC", cmd).AsUIntVect();
-   for(unsigned n=0;n<tdcs.size();n++) {
-      DOUT2("Create TDC 0x%04x", (unsigned) tdcs[n]);
-      fTrbProc->CreateTDC(tdcs[n]);
+   fTDCs = Cfg("TDC", cmd).AsUIntVect();
+   for(unsigned n=0;n<fTDCs.size();n++) {
+      DOUT2("Create TDC 0x%04x", (unsigned) fTDCs[n]);
+      fTrbProc->CreateTDC(fTDCs[n]);
    }
-   item.SetField("tdc", tdcs);
+   item.SetField("tdc", fTDCs);
 
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
    for (unsigned n=0;n<dis_ch.size();n++)
@@ -213,10 +216,10 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    if (fAutoCalibr>0)
       fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
-   std::string calfile = Cfg("CalibrFile", cmd).AsStr();
-   if (!calfile.empty()) {
-      fTrbProc->SetWriteCalibrations(calfile.c_str(), true);
-      if (fTrbProc->LoadCalibrations(calfile.c_str())) {
+   std::string calibrfile = Cfg("CalibrFile", cmd).AsStr();
+   if (!calibrfile.empty()) {
+      fTrbProc->SetWriteCalibrations(calibrfile.c_str(), true);
+      if (fTrbProc->LoadCalibrations(calibrfile.c_str()) || fDummy) {
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
          item.SetField("value","File");
          item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
@@ -253,14 +256,32 @@ bool hadaq::TdcCalibrationModule::retransmit()
       dabc::Buffer buf = Recv();
 
       if (fDummy) {
+
+         dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+
+         std::string state;
+
          fProgress++;
          if (fProgress>fAutoCalibr) {
-            fWorkerHierarchy.GetHChild("Status").SetField("value","Ready");
+            state = "Ready";
             fProgress = 0;
-            fWorkerHierarchy.GetHChild("Status").SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+            item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
          }
-         if (fAutoCalibr>0)
-            fWorkerHierarchy.GetHChild("Status").SetField("progress",100*fProgress/fAutoCalibr);
+
+         if (fAutoCalibr>0) {
+            std::vector<int64_t> progr;
+            progr.assign(fTDCs.size(), (int) (100*fProgress/fAutoCalibr));
+            item.SetField("progress",(int) (100*fProgress/fAutoCalibr));
+            item.SetField("tdc_progr", progr);
+         }
+
+         if (state.length()>0) {
+            item.SetField("value","Ready");
+            std::vector<std::string> status;
+            status.assign(fTDCs.size(), state);
+            item.SetField("tdc_status", status);
+         }
+
       } else
       if (fTrbProc!=0) {
 
@@ -275,14 +296,37 @@ bool hadaq::TdcCalibrationModule::retransmit()
                }
             }
 
-            double progress = fTrbProc->CheckAutoCalibration();
-            dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-            item.SetField("progress", (int) (progress*100));
+            if (fLastCalibr.Expired(1.)) {
 
-            // at the end check if autocalibration can be done
-            if (progress>=1.) {
-               item.SetField("value","Ready");
-               item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+               double progress = fTrbProc->CheckAutoCalibration();
+               dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+               item.SetField("progress", (int) (progress*100));
+
+               // at the end check if autocalibration can be done
+               if (progress>=1.) {
+                  item.SetField("value","Ready");
+                  item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+               }
+
+               std::vector<int64_t> progr;
+               std::vector<std::string> status;
+
+               for (unsigned n=0;n<fTDCs.size();n++) {
+                  hadaq::TdcProcessor* tdc = fTrbProc->GetTDC(fTDCs[n]);
+
+                  if (tdc!=0) {
+                     progr.push_back((int) (tdc->GetCalibrProgress()*100.));
+                     status.push_back(tdc->GetCalibrStatus());
+                  } else {
+                     progr.push_back(0);
+                     status.push_back("Init");
+                  }
+               }
+
+               item.SetField("tdc_progr", progr);
+               item.SetField("tdc_status", status);
+
+               fLastCalibr.GetNow();
             }
 #endif
          } else {
