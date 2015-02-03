@@ -926,6 +926,7 @@ Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
    return res.Length() > 0;
 }
 
+//______________________________________________________________________________
 TString TRootSniffer::DecodeUrlOptionValue(const char* value, Bool_t remove_quotes)
 {
    // method replaces all kind of special symbols, which could appear in URL options
@@ -951,15 +952,15 @@ TString TRootSniffer::DecodeUrlOptionValue(const char* value, Bool_t remove_quot
    return res;
 }
 
-
 //______________________________________________________________________________
-Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString &ret, Bool_t astxt)
+Bool_t TRootSniffer::ProduceExe(const char *path, const char *options, Int_t reskind, TString *res_str, void **res_ptr, Long_t *res_length)
 {
    // execute command for specified object
    // options include method and extra list of parameters
    // sniffer should be not-readonly to allow execution of the commands
+   // reskind defines kind of result 0 - debug, 1 - json, 2 - binary
 
-   TString* debug = astxt ? &ret : 0;
+   TString* debug = (reskind == 0) ? res_str : 0;
 
    if ((path == 0) || (*path == 0)) {
       if (debug) debug->Append("Item name not specified\n");
@@ -1047,6 +1048,8 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
       compact = url.GetIntValueFromOptions("compact");
 
    TString res = "null";
+   void* ret_obj = 0;
+   TClass* ret_cl = 0;
 
    switch(call.ReturnType()) {
       case TMethodCall::kLong: {
@@ -1069,8 +1072,6 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
          break;
       }
       case TMethodCall::kOther : {
-         TClass* ret_cl = 0;
-
          std::string ret_kind = method->GetReturnTypeNormalizedName();
          if ((ret_kind.length()>0) && (ret_kind[ret_kind.length()-1]=='*')) {
             ret_kind.resize(ret_kind.length()-1);
@@ -1080,7 +1081,7 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
          if (ret_cl!=0) {
             Long_t l(0);
             call.Execute(obj_ptr, l);
-            if (l!=0) res = TBufferJSON::ConvertToJSON((void*) l, ret_cl, compact);
+            if (l!=0) ret_obj = (void*) l;
          } else {
             call.Execute(obj_ptr);
          }
@@ -1092,25 +1093,39 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char * options, TString 
       }
    }
 
-   if (debug) debug->Append(TString::Format("Result = %s\n", res.Data()));
-
-   const char* ret_obj = url.GetValueFromOptions("_ret_object_");
-   if (ret_obj!=0) {
+   const char* _ret_object_ = url.GetValueFromOptions("_ret_object_");
+   if (_ret_object_!=0) {
       TObject* obj = 0;
-      if (gDirectory!=0) obj = gDirectory->Get(ret_obj);
-      if (debug) debug->Append(TString::Format("Return object %s found %s\n", ret_obj, obj ? "true" : "false"));
+      if (gDirectory!=0) obj = gDirectory->Get(_ret_object_);
+      if (debug) debug->Append(TString::Format("Return object %s found %s\n", _ret_object_, obj ? "true" : "false"));
 
-      if (obj==0)
+      if (obj==0) {
          res = "null";
-      else
-         res = TBufferJSON::ConvertToJSON(obj, compact);
-
-      if (debug) debug->Append(TString::Format("Return:\n%s\n", res.Data()));
+      } else {
+         ret_obj = obj;
+         ret_cl = obj->IsA();
+      }
    }
 
-   if (debug) debug->Append("Execution done!\n");
+   if ((ret_obj!=0) && (ret_cl!=0)) {
+      if ((reskind==2) && (res_ptr!=0) && (res_length!=0) && (ret_cl->GetBaseClassOffset(TObject::Class()) == 0)) {
+         TObject *obj = (TObject *) ret_obj;
+         TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+         sbuf->MapObject(obj);
+         obj->Streamer(*sbuf);
 
-   if (!astxt) ret = res;
+         *res_ptr = malloc(sbuf->Length());
+         memcpy(*res_ptr, sbuf->Buffer(), sbuf->Length());
+         *res_length = sbuf->Length();
+         delete sbuf;
+      } else {
+         res = TBufferJSON::ConvertToJSON(ret_obj, ret_cl, compact);
+      }
+   }
+
+   if (debug) debug->Append(TString::Format("Result = %s\n", res.Data()));
+
+   if ((reskind == 1) && res_str) *res_str = res;
 
    return kTRUE;
 }
@@ -1199,7 +1214,7 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&p
 
       if ((fMemFile->GetClassIndex() == 0) ||
             (fMemFile->GetClassIndex()->fArray[0] == 0)) {
-         believe_not_changed = true;
+         believe_not_changed = kTRUE;
       }
 
       fMemFile->WriteStreamerInfo();
@@ -1240,6 +1255,8 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&p
       memcpy(ptr, sbuf->Buffer(), sbuf->Length());
       length = sbuf->Length();
    }
+
+   delete sbuf;
 
    return kTRUE;
 }
@@ -1379,34 +1396,35 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    if (strcmp(file, "root.gif") == 0)
       return ProduceImage(TImage::kGif, path, options, ptr, length);
 
+   if (strcmp(file, "exe.bin") == 0)
+      return ProduceExe(path, options, 2, 0, &ptr, &length);
+
+   TString res; // output will be stored as text
+
    if (strcmp(file, "root.xml") == 0) {
-      TString res;
       if (!ProduceXml(path, options, res)) return kFALSE;
-      length = res.Length();
-      ptr = malloc(length);
-      memcpy(ptr, res.Data(), length);
-      return kTRUE;
-   }
+   } else
 
    if ((strcmp(file, "root.json") == 0) || (strcmp(file, "get.json") == 0)) {
-      TString res;
       if (!ProduceJson(path, options, res)) return kFALSE;
-      length = res.Length();
-      ptr = malloc(length);
-      memcpy(ptr, res.Data(), length);
-      return kTRUE;
+   } else
+
+   if (strcmp(file, "exe.txt") == 0) {
+      // used for debugging
+      if (!ProduceExe(path, options, 0, &res)) return kFALSE;
+   } else
+
+   if (strcmp(file, "exe.json") == 0)  {
+      if (!ProduceExe(path, options, 1, &res)) return kFALSE;
+
+   } else {
+      return kFALSE;
    }
 
-   if ((strcmp(file, "exe.txt") == 0) || (strcmp(file, "exe.json") == 0))  {
-      TString res;
-      if (!ProduceExe(path, options, res, (strcmp(file, "exe.txt") == 0))) return kFALSE;
-      length = res.Length();
-      ptr = malloc(length);
-      memcpy(ptr, res.Data(), length);
-      return kTRUE;
-   }
-
-   return kFALSE;
+   length = res.Length();
+   ptr = malloc(length);
+   memcpy(ptr, res.Data(), length);
+   return kTRUE;
 }
 
 //______________________________________________________________________________

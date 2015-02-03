@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+3.02.2015
+1. Fix memory leak in TRootSniffer
+2. Implement exe.bin to be able use tree draw from Go4
+
+
 30.01.2015
 1. Use d3.time.scale for time display
 2. Fix naming convention issue in ROOT classes
