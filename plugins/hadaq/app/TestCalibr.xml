@@ -30,21 +30,22 @@
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hld:///data.local1/padiwa/beam801_ch48_0000.hld?loop"/>
+       <InputPort name="Input0" url="hld:///data.local1/trb3tdc/file.hld?loop"/>
 
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
-       <FineMin value="30"/>
-       <FineMax value="481"/>
-       <NumChannels value="65"/>
-       <EdgeMask value="1"/>
-       <HistFilling value="3"/>
+       <FineMin value="31"/>
+       <FineMax value="421"/>
+       <NumChannels value="33"/>
+       <EdgeMask value="3"/>
+       <HistFilling value="4"/>
        
-       <TRB value="0x8010"/>
-       <TDC value="[0x8a00,0x8a01,0x8a02,0x8a03]"/>
-       <DisableCalibrationFor value="0"/>  
-       <Auto value="10000"/>
-       <CalibrFile value="local"/>
+       <TRB value="0x8000"/>
+       <HUB value="0x8100"/>
+       <TDC value="[0xC100,0xC101,0xC000,0xC001,0xC003]"/>
+       <!-- DisableCalibrationFor value="0"/-->  
+       <Auto value="10000000"/>
+       <!-- CalibrFile value="local"/-->
      </Module>
 
   </Context>

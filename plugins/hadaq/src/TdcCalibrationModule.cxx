@@ -196,9 +196,13 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    fTrbProc->SetHistFilling(hfill);
 
-   std::vector<int64_t> tdcs = Cfg("TDC", cmd).AsIntVect();
-   for(unsigned n=0;n<tdcs.size();n++)
+   DOUT2("Create TDCs %s", Cfg("TDC", cmd).AsStr().c_str());
+
+   std::vector<uint64_t> tdcs = Cfg("TDC", cmd).AsUIntVect();
+   for(unsigned n=0;n<tdcs.size();n++) {
+      DOUT2("Create TDC 0x%04x", (unsigned) tdcs[n]);
       fTrbProc->CreateTDC(tdcs[n]);
+   }
    item.SetField("tdc", tdcs);
 
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
@@ -220,6 +224,9 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
          item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
       }
    }
+
+   // set ids and create more histograms
+   fProcMgr->UserPreLoop();
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 

@@ -109,15 +109,16 @@ bool dabc::str_to_int(const char* val, int* res)
 
    while (*val==' ') val++;
    if (*val==0) return false;
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
-
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
-      unsigned ures = 0;
+      unsigned ures(0);
       if (sscanf(val+2, "%x", &ures) == 1) {
          *res = ures;
          return true;
       }
+      return false;
    }
+
+   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    return sscanf(val, "%d", res) == 1;
 }
@@ -128,7 +129,6 @@ bool dabc::str_to_lint(const char* val, long* res)
 
    while (*val==' ') val++;
    if (*val==0) return false;
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
       long unsigned ures = 0;
@@ -136,7 +136,10 @@ bool dabc::str_to_lint(const char* val, long* res)
          *res = ures;
          return true;
       }
+      return false;
    }
+
+   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    return sscanf(val, "%ld", res) == 1;
 }
@@ -148,11 +151,12 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
 
    while (*val==' ') val++;
    if (*val==0) return false;
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
-      if (sscanf(val+2, "%x", res) == 1) return true;
+      return sscanf(val+2, "%x", res) == 1;
    }
+
+   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    return sscanf(val, "%u", res) == 1;
 }
@@ -163,11 +167,12 @@ bool dabc::str_to_luint(const char* val, long unsigned* res)
 
    while (*val==' ') val++;
    if (*val==0) return false;
-   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
-      if (sscanf(val+2, "%lx", res) == 1) return true;
+      return sscanf(val+2, "%lx", res) == 1;
    }
+
+   if (strpbrk(val,".,eE")!=0) return false; // avoid any float value
 
    return sscanf(val, "%lu", res) == 1;
 }
