@@ -147,7 +147,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
    fTrbProc(0),
-   fDummy(false),
+   fDummy(true),
    fAutoCalibr(1000),
    fDummyCounter(0),
    fLastCalibr(),
@@ -159,7 +159,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    fLastCalibr.GetNow();
 
-   DOUT0("Create TdcCalibrationModule");
+   fDummy = Cfg("Dummy", cmd).AsBool(false);
 
 #ifdef WITH_STREAM
 
@@ -182,9 +182,6 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fTRB = Cfg("TRB", cmd).AsUInt(0x0);
    int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
    if (fTRB==0) fTRB = 0x8000 | portid;
-   fDummy = Cfg("Dummy", cmd).AsBool(false);
-
-   DOUT0("DUMMY %s", DBOOL(fDummy));
 
    item.SetField("trb", fTRB);
 
@@ -234,8 +231,10 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    // remove pointer, let other modules to create and use it
    base::ProcMgr::ClearInstancePointer();
-
 #endif
+
+   DOUT0("TdcCalibrationModule dummy %s", DBOOL(fDummy));
+
 }
 
 hadaq::TdcCalibrationModule::~TdcCalibrationModule()

@@ -44,7 +44,7 @@
        <HUB value="0x8100"/>
        <TDC value="[0xC100,0xC101,0xC000,0xC001,0xC003]"/>
        <!-- DisableCalibrationFor value="0"/-->  
-       <Auto value="0"/>
+       <Auto value="1000000"/>
        <!-- CalibrFile value="local"/-->
        <Dummy value="false"/>
        
