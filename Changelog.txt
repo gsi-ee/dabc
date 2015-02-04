@@ -5,6 +5,7 @@ about current functionality of the framework.
 4.02.2015
 1. Provide calibration status and progress for each TDC
    Show this information in web GUI
+2. Provide information from calibration module in terminal output
 
 
 3.02.2015

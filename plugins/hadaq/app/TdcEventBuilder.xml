@@ -63,7 +63,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
     <HttpServer name="http" port="8090"/>
     
     <!-- If uncommented, all internal manager structures will be published in the web server -->
-    <!-- Publisher name="publ" manager="true"/ -->
+    <Publisher name="publ" manager="true"/>
     
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
@@ -136,7 +136,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
      </Module>
      
      <!--  Uncomment to see terminal output like old event builder -->
-     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="true"/>
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false"/>
 
   </Context>
 

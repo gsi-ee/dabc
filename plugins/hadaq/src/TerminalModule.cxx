@@ -23,7 +23,7 @@
 
 #include "hadaq/CombinerModule.h"
 #include "hadaq/UdpTransport.h"
-
+#include "hadaq/TdcCalibrationModule.h"
 
 hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
@@ -72,10 +72,10 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    fTotalDiscEvents = comb->fTotalDiscEvents;
    fTotalDroppedData = comb->fTotalDroppedData;
 
-   fprintf(stdout, "Events: %5lu   Rate: %5.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
+   fprintf(stdout, "Events:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalBuildEvents, rate1,
          dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
-   fprintf(stdout, "Lost:   %5lu   Rate: %5.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
+   fprintf(stdout, "Lost:  %7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalDiscEvents, rate3,
          dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
@@ -85,7 +85,20 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       if (addon==0) { fprintf(stdout,"  addon:null\n"); continue; }
 
-      fprintf(stdout, "  port:%5d pkt:%6lu data:%9s disc:%4lu data:%9s err32:%4lu  buf:%5lu queue:%2d\n",
+      std::string sbuf;
+
+      TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
+
+      if (cal) {
+         dabc::formats(sbuf," TRB:0x%04x TDC:[", cal->fTRB);
+         for (unsigned j=0;j<cal->fTDCs.size();j++) {
+            if (j>0) sbuf.append(",");
+            sbuf.append(dabc::format("%04x", cal->fTDCs[j]));
+         }
+         sbuf.append(dabc::format("] Progr:%d%s %s", cal->fProgress,"\%", cal->fState.c_str()));
+      }
+
+      fprintf(stdout, "  port:%5d pkt:%6lu data:%9s disc:%4lu data:%9s err32:%4lu  buf:%5lu queue:%2d%s\n",
             addon->fNPort,
             (long unsigned) addon->fTotalRecvPacket,
             dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
@@ -93,6 +106,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
             dabc::size_to_str(addon->fTotalDiscardBytes).c_str(),
             (long unsigned) addon->fTotalDiscard32Packet,
             (long unsigned) addon->fTotalProducedBuffers,
-            comb->fCfg[n].fNumCanRecv);
+            comb->fCfg[n].fNumCanRecv,
+            sbuf.c_str());
    }
 }

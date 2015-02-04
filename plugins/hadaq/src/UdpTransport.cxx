@@ -405,8 +405,7 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
       UpdateExportedCounters();
       return dabc::cmd_true;
    } else
-   if (cmd.IsName("GetDirectPointer")) {
-
+   if (cmd.IsName("GetHadaqTransportInfo")) {
       cmd.SetPtr("Addon", fAddon());
       return dabc::cmd_true;
    }

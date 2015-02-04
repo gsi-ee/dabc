@@ -238,7 +238,7 @@ void hadaq::CombinerModule::BeforeModuleStart()
 
    // direct addon pointers can be used for terminal printout
    for (unsigned n=0;n<fCfg.size();n++) {
-      dabc::Command cmd("GetDirectPointer");
+      dabc::Command cmd("GetHadaqTransportInfo");
       cmd.SetInt("id", n);
       SubmitCommandToTransport(InputName(n), Assign(cmd));
    }
@@ -1164,12 +1164,14 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetDirectPointer")) {
+   if (cmd.IsName("GetHadaqTransportInfo")) {
 
       unsigned id = cmd.GetUInt("id");
 
-      if (id < fCfg.size())
+      if (id < fCfg.size()) {
          fCfg[id].fAddon = cmd.GetPtr("Addon");
+         fCfg[id].fCalibr = cmd.GetPtr("CalibrModule");
+      }
 
       return true;
    }

@@ -92,6 +92,8 @@ namespace hadaq {
          /** Number buffers can be received */
          int fNumCanRecv;
 
+         void* fCalibr;    //!<  Direct pointer on calibration module, used only in terminal
+
          InputCfg() :
             fTrigNr(0),
             fLastTrigNr(0),
@@ -104,7 +106,8 @@ namespace hadaq {
             fDataError(false),
             fEmpty(true),
             fAddon(0),
-            fNumCanRecv(0)
+            fNumCanRecv(0),
+            fCalibr(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=0;
@@ -122,7 +125,8 @@ namespace hadaq {
             fDataError(src.fDataError),
             fEmpty(src.fEmpty),
             fAddon(src.fAddon),
-            fNumCanRecv(src.fNumCanRecv)
+            fNumCanRecv(src.fNumCanRecv),
+            fCalibr(src.fCalibr)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];
@@ -139,7 +143,7 @@ namespace hadaq {
             fErrorBits=0;
             fDataError = false;
             fEmpty = true;
-          // do not clear error bit statistics!  
+          // do not clear error bit statistics!
 //             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
 //                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
@@ -152,7 +156,7 @@ namespace hadaq {
 
          /** maximum allowed difference of trigger numbers (subevent sequence number)*/
          int fTriggerNrTolerance;
-         
+
          /** timeout in seconds since last complete event when previous buffers
           * are dropped*/
          double fEventBuildTimeout;
@@ -166,7 +170,7 @@ namespace hadaq {
          int fFlushCounter;
 
          int32_t fEBId; ///<  eventbuilder id <- node id
-         
+
          pid_t fPID; ///<  process id of combiner module
 
          bool fWithObserver;
@@ -184,7 +188,7 @@ namespace hadaq {
          /** switch between partial combining of smallest event ids (false)
           * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
-         
+
          double             fFlushTimeout;
 
          std::string        fDataRateName;
@@ -228,8 +232,8 @@ namespace hadaq {
          dabc::TimeStamp   fLastProcTm;   ///< last time when event building was called
          dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
          double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
-  
-         
+
+
          bool BuildEvent();
 
          bool FlushOutputBuffer();
@@ -276,7 +280,7 @@ namespace hadaq {
          std::string GenerateFileName(unsigned runid);
 
          void DoTerminalOutput();
-         
+
          /* helper methods to export ebctrl parameters */
          std::string GetEvtbuildParName(const std::string& name);
          void CreateEvtbuildPar(const std::string& name);
@@ -290,7 +294,7 @@ namespace hadaq {
       public:
          CombinerModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
-         
+
          virtual void ModuleCleanup();
 
          virtual bool ProcessBuffer(unsigned port);

@@ -57,6 +57,7 @@ class DabcProcMgr;
 namespace hadaq {
 
    class TrbProcessor;
+   class TerminalModule;
 
 /** \brief Perform calibration of FPGA TDC data
  *
@@ -65,15 +66,20 @@ namespace hadaq {
 
    class TdcCalibrationModule : public dabc::ModuleAsync {
 
+   friend class TerminalModule;
+
    protected:
 
       DabcProcMgr* fProcMgr;
       hadaq::TrbProcessor* fTrbProc;
       bool fDummy;  //! module creates all TDCs but do not perform any transformation
       int  fAutoCalibr;  //! amount of statistic for the auto calibration in channels
-      int  fProgress;    //! used in dummy
+      int  fDummyCounter;  //! used in dummy
       dabc::TimeStamp fLastCalibr; //! use not to check for calibration very often
       std::vector<uint64_t> fTDCs; //! remember TDCs in the beginning
+      unsigned fTRB;               //! remember TRB id
+      int fProgress;               //! total calibration progress
+      std::string fState;          //! current state
 
       bool retransmit();
 

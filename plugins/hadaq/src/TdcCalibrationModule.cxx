@@ -149,8 +149,10 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fTrbProc(0),
    fDummy(false),
    fAutoCalibr(1000),
+   fDummyCounter(0),
+   fLastCalibr(),
    fProgress(0),
-   fLastCalibr()
+   fState()
 {
    // we need one input and one output port
    EnsurePorts(1, 1);
@@ -175,23 +177,22 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fWorkerHierarchy.Create("Worker");
 
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("Status");
-   item.SetField("value","Init");
+   fState = "Init";
 
-   int trbid = Cfg("TRB", cmd).AsInt(0x0);
+   fTRB = Cfg("TRB", cmd).AsUInt(0x0);
    int portid = cmd.GetInt("portid", 0); // this is portid parameter from hadaq::Factory
-   if (trbid==0) trbid = 0x8000 | portid;
+   if (fTRB==0) fTRB = 0x8000 | portid;
    fDummy = Cfg("Dummy", cmd).AsBool(false);
 
    DOUT0("DUMMY %s", DBOOL(fDummy));
 
-   item.SetField("trb", trbid);
-
+   item.SetField("trb", fTRB);
 
    fProcMgr = new DabcProcMgr;
 
    fProcMgr->fTop = fWorkerHierarchy;
 
-   fTrbProc = new hadaq::TrbProcessor(trbid);
+   fTrbProc = new hadaq::TrbProcessor(fTRB);
    int hubid = Cfg("HUB", cmd).AsInt(0x0);
    if (hubid>0) fTrbProc->SetHadaqHUBId(hubid);
 
@@ -220,11 +221,12 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    if (!calibrfile.empty()) {
       fTrbProc->SetWriteCalibrations(calibrfile.c_str(), true);
       if (fTrbProc->LoadCalibrations(calibrfile.c_str()) || fDummy) {
-         dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-         item.SetField("value","File");
+         fState = "File";
          item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
       }
    }
+
+   item.SetField("value", fState);
 
    // set ids and create more histograms
    fProcMgr->UserPreLoop();
@@ -259,20 +261,21 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
-         fProgress++;
-         if (fProgress>fAutoCalibr) {
-            fProgress = 0;
-            item.SetField("value","Ready");
+         fDummyCounter++;
+         if (fDummyCounter>fAutoCalibr) {
+            fDummyCounter = 0;
+            fState = "Ready";
+            item.SetField("value", fState);
             item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
          }
 
-         int p = 0;
-         if (fAutoCalibr>0) p = (int) (100*fProgress/fAutoCalibr);
+         fProgress = 0;
+         if (fAutoCalibr>0) fProgress = (int) (100*fDummyCounter/fAutoCalibr);
 
-         item.SetField("progress", p);
+         item.SetField("progress", fProgress);
 
          std::vector<int64_t> progr;
-         progr.assign(fTDCs.size(), p);
+         progr.assign(fTDCs.size(), fProgress);
          item.SetField("tdc_progr", progr);
 
          std::vector<std::string> status;
@@ -297,11 +300,13 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
                double progress = fTrbProc->CheckAutoCalibration();
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-               item.SetField("progress", (int) fabs(progress*100));
+               fProgress = (int) fabs(progress*100);
+               item.SetField("progress", fProgress);
 
                // at the end check if autocalibration can be done
                if (progress>0) {
-                  item.SetField("value","Ready");
+                  fState = "Ready";
+                  item.SetField("value", fState);
                   item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
                }
 
@@ -341,5 +346,16 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
 int hadaq::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 {
+   if (cmd.IsName("ResetExportedCounters") ) {
+      // redirect command to real transport
+      if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+   }
+
+   if (cmd.IsName("GetHadaqTransportInfo")) {
+      // redirect command to real transport
+      cmd.SetPtr("CalibrModule", this);
+      if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+   }
+
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
