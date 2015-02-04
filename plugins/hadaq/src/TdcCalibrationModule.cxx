@@ -65,7 +65,7 @@ void DabcProcMgr::FillH1(base::H1handle h1, double x, double weight)
    double* arr = (double*) h1;
 
    int nbin = (int) arr[0];
-   int bin = (int) floor(nbin * (x - arr[1]) / (arr[2] - arr[1]));
+   int bin = (int) /*floor*/ (nbin * (x - arr[1]) / (arr[2] - arr[1]));
 
    if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
 }
@@ -122,8 +122,8 @@ void DabcProcMgr::FillH2(base::H1handle h2, double x, double y, double weight)
    int nbin1 = (int) arr[0];
    int nbin2 = (int) arr[3];
 
-   int bin1 = (int) floor(nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
-   int bin2 = (int) floor(nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
+   int bin1 = (int) /*floor*/ (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
+   int bin2 = (int) /*floor*/(nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
 
    if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
       arr[bin1 + bin2*nbin1 + 6]+=weight;
