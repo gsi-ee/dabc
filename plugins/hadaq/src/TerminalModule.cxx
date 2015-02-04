@@ -56,7 +56,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
 
    if (delta>0) {
-      for (unsigned n=0;n<comb->fCfg.size()+2;n++)
+      for (unsigned n=0;n<comb->fCfg.size()+3;n++)
          fputs("\033[A\033[2K",stdout);
       rewind(stdout);
       ftruncate(1,0);
@@ -65,6 +65,14 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       rate2 = (comb->fTotalRecvBytes - fTotalRecvBytes) / delta;
       rate3 = (comb->fTotalDiscEvents - fTotalDiscEvents) / delta;
       rate4 = (comb->fTotalDroppedData - fTotalDroppedData) / delta;
+   } else {
+      printf("HADAQ terminal info:\n");
+      printf("  disc - data discarded due to header error\n");
+      printf("  err32 - crc32 error\n");
+      printf("  bufs  - number of produced buffers\n");
+      printf("  qu    - input queue of combiner module\n");
+      printf("  lost  - lost subevents (recognized by combiner)\n");
+      printf("  progr - progress of TDC calibration\n");
    }
 
    fTotalBuildEvents = comb->fTotalBuildEvents;
@@ -79,34 +87,46 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          (long unsigned) fTotalDiscEvents, rate3,
          dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
+   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu lost    TRB         TDC        progr state\n");
+
    for (unsigned n=0;n<comb->fCfg.size();n++) {
-      fprintf(stdout,"inp:%2u", n);
+
+      std::string sbuf = dabc::format("%2u", n);
+
       hadaq::DataSocketAddon* addon = (hadaq::DataSocketAddon*) comb->fCfg[n].fAddon;
 
-      if (addon==0) { fprintf(stdout,"  addon:null\n"); continue; }
+      if (addon==0) {
+         sbuf.append("  missing addon ");
+      } else {
+         sbuf.append(dabc::format(" %5d %7lu %9s %4lu %5lu %5lu",
+               addon->fNPort,
+               (long unsigned) addon->fTotalRecvPacket,
+               dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
+               (long unsigned) addon->fTotalDiscardPacket,
+               (long unsigned) addon->fTotalDiscard32Packet,
+               (long unsigned) addon->fTotalProducedBuffers));
+      }
 
-      std::string sbuf;
+      sbuf.append(dabc::format(" %2d %4u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fLostTrig));
 
       TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
 
       if (cal) {
-         dabc::formats(sbuf," TRB:0x%04x TDC:[", cal->fTRB);
+         sbuf.append(dabc::format(" 0x%04x", cal->fTRB));
+
+         std::string tdc = " [";
          for (unsigned j=0;j<cal->fTDCs.size();j++) {
-            if (j>0) sbuf.append(",");
-            sbuf.append(dabc::format("%04x", cal->fTDCs[j]));
+            if (j>0) tdc.append(",");
+            tdc.append(dabc::format("%04x", cal->fTDCs[j]));
          }
-         sbuf.append(dabc::format("] Progr:%d%s %s", cal->fProgress,"\%", cal->fState.c_str()));
+         tdc.append("]");
+         while (tdc.length()<22) tdc.append(" ");
+         sbuf.append(tdc);
+
+         sbuf.append(dabc::format(" %2d %s", cal->fProgress, cal->fState.c_str()));
       }
 
-      fprintf(stdout, "  port:%5d pkt:%6lu data:%9s disc:%4lu data:%9s err32:%4lu  buf:%5lu queue:%2d%s\n",
-            addon->fNPort,
-            (long unsigned) addon->fTotalRecvPacket,
-            dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
-            (long unsigned) addon->fTotalDiscardPacket,
-            dabc::size_to_str(addon->fTotalDiscardBytes).c_str(),
-            (long unsigned) addon->fTotalDiscard32Packet,
-            (long unsigned) addon->fTotalProducedBuffers,
-            comb->fCfg[n].fNumCanRecv,
-            sbuf.c_str());
+      fprintf(stdout, sbuf.c_str());
+      fprintf(stdout, "\n");
    }
 }

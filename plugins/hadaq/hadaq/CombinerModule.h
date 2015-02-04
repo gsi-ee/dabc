@@ -53,46 +53,21 @@ namespace hadaq {
 
       struct InputCfg {
 
-         /** keeps current trigger sequence number */
-         uint32_t fTrigNr;
-
-         /** keeps previous trigger sequence number - used to control lost data */
-         uint32_t fLastTrigNr;
-
-         /** keeps current trigger tag */
-         uint32_t fTrigTag;
-
-         /* current subevent trigger type*/
-         uint32_t fTrigType;
-
-         /* current subevent id*/
-         uint32_t fSubId;
-
-         /* errorbit status word from payload end*/
-         uint32_t fErrorBits;
-
-         /* errorbit statistics counter */
-         uint32_t fErrorbitStats[HADAQ_NUMERRPATTS];
-
-         /* current input queue fill level*/
-         float fQueueLevel;
-
-         /* remember id of last build event*/
-         uint32_t fLastEvtBuildTrigId;
-
-         /** indicates if subevent has data error bit set in header id */
-         bool fDataError;
-
-         /** indicates if input has empty data */
-         bool fEmpty;
-
-         /** Direct transport pointer, used only for debugging */
-         void* fAddon;
-
-         /** Number buffers can be received */
-         int fNumCanRecv;
-
+         uint32_t fTrigNr; //!< keeps current trigger sequence number
+         uint32_t fLastTrigNr; //!< keeps previous trigger sequence number - used to control lost data
+         uint32_t fTrigTag; //!<  keeps current trigger tag
+         uint32_t fTrigType; //!< current subevent trigger type
+         uint32_t fSubId;  //!<  current subevent id
+         uint32_t fErrorBits; //!< errorbit status word from payload end
+         uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; //!< errorbit statistics counter
+         float fQueueLevel;  //!<  current input queue fill level
+         uint32_t fLastEvtBuildTrigId; //!< remember id of last build event
+         bool fDataError; //!< indicates if subevent has data error bit set in header id
+         bool fEmpty; //!< indicates if input has empty data
+         void* fAddon;  //!< Direct transport pointer, used only for debugging
+         int fNumCanRecv; //!< Number buffers can be received
          void* fCalibr;    //!<  Direct pointer on calibration module, used only in terminal
+         unsigned fLostTrig;  //!< number of lost triggers
 
          InputCfg() :
             fTrigNr(0),
@@ -107,7 +82,8 @@ namespace hadaq {
             fEmpty(true),
             fAddon(0),
             fNumCanRecv(0),
-            fCalibr(0)
+            fCalibr(0),
+            fLostTrig(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=0;
@@ -126,7 +102,8 @@ namespace hadaq {
             fEmpty(src.fEmpty),
             fAddon(src.fAddon),
             fNumCanRecv(src.fNumCanRecv),
-            fCalibr(src.fCalibr)
+            fCalibr(src.fCalibr),
+            fLostTrig(src.fLostTrig)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];

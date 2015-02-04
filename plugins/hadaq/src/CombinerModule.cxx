@@ -576,8 +576,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast)
       if (fCfg[ninp].fLastTrigNr != 0)
          diff = CalcTrigNumDiff(fCfg[ninp].fTrigNr, fCfg[ninp].fLastTrigNr);
 
-      if (diff!=1)
-         EOUT("%d triggers dropped on the input %u", diff, ninp);
+      if (diff>1) fCfg[ninp].fLostTrig += (diff-1);
    }
 
    return true;

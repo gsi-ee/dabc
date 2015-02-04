@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Provide calibration status and progress for each TDC
    Show this information in web GUI
 2. Provide information from calibration module in terminal output
+3. Accumulate lost statistic for each data input
 
 
 3.02.2015
