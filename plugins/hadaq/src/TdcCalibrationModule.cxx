@@ -259,28 +259,25 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
-         std::string state;
-
          fProgress++;
          if (fProgress>fAutoCalibr) {
-            state = "Ready";
             fProgress = 0;
+            item.SetField("value","Ready");
             item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
          }
 
-         if (fAutoCalibr>0) {
-            std::vector<int64_t> progr;
-            progr.assign(fTDCs.size(), (int) (100*fProgress/fAutoCalibr));
-            item.SetField("progress",(int) (100*fProgress/fAutoCalibr));
-            item.SetField("tdc_progr", progr);
-         }
+         int p = 0;
+         if (fAutoCalibr>0) p = (int) (100*fProgress/fAutoCalibr);
 
-         if (state.length()>0) {
-            item.SetField("value","Ready");
-            std::vector<std::string> status;
-            status.assign(fTDCs.size(), state);
-            item.SetField("tdc_status", status);
-         }
+         item.SetField("progress", p);
+
+         std::vector<int64_t> progr;
+         progr.assign(fTDCs.size(), p);
+         item.SetField("tdc_progr", progr);
+
+         std::vector<std::string> status;
+         status.assign(fTDCs.size(),  item.GetField("value").AsStr());
+         item.SetField("tdc_status", status);
 
       } else
       if (fTrbProc!=0) {
@@ -300,10 +297,10 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
                double progress = fTrbProc->CheckAutoCalibration();
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-               item.SetField("progress", (int) (progress*100));
+               item.SetField("progress", (int) fabs(progress*100));
 
                // at the end check if autocalibration can be done
-               if (progress>=1.) {
+               if (progress>0) {
                   item.SetField("value","Ready");
                   item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
                }

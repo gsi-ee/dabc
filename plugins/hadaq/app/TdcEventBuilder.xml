@@ -136,7 +136,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
      </Module>
      
      <!--  Uncomment to see terminal output like old event builder -->
-     <!-- Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="true"/ -->
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="true"/>
 
   </Context>
 

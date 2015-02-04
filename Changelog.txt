@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+4.02.2015
+1. Provide calibration status and progress for each TDC
+   Show this information in web GUI
+
+
 3.02.2015
 1. Fix memory leak in TRootSniffer
 2. Implement exe.bin to be able use tree draw from Go4

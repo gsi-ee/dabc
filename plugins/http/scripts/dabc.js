@@ -1356,6 +1356,12 @@
             while (str.length<4) str = "0"+str;
             return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
          }
+
+         function get_status_color(status) {
+            if (status.indexOf('Ready')==0) return 'green';
+            if (status.indexOf('File')==0) return 'yellow';
+            return 'red';
+         }
          
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
@@ -1368,7 +1374,7 @@
                   var code = "<div style='float:left'>";
                   code += "<button hist='" + calarr[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
                   for (var j in info.tdc)
-                     code+="<button hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+                     code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
                
                   code +="</div>"; 
                   code+="<div class='hadaq_progress'></div>";
@@ -1382,16 +1388,18 @@
                   $(this).find(".hadaq_progress").progressbar({ value: info.progress });
                }
                
-               var col = 'red';
-               if (info.value=='Ready') col = 'green'; else
-               if (info.value=='File') col = 'yellow'; 
-               
-               $(this).css('background-color', col);
+               $(this).css('background-color', get_status_color(info.value));
                $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
                
                $(this).find(".hadaq_progress")
                   .attr("title", "progress: " + info.progress + "%")
                   .progressbar("option", "value", info.progress);
+               
+               for (var j in info.tdc) {
+                  $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
+                         .css('color', get_status_color(info.tdc_status[j]))
+                         .attr("title", "TDC" + info.tdc[j].toString(16) + " " + info.tdc_status[j] + " Progress:" + info.tdc_progr[j]);
+               }
             });
             firsttime = false;
          });
