@@ -56,7 +56,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
 
    if (delta>0) {
-      for (unsigned n=0;n<comb->fCfg.size()+3;n++)
+      for (unsigned n=0;n<comb->fCfg.size()+4;n++)
          fputs("\033[A\033[2K",stdout);
       rewind(stdout);
       ftruncate(1,0);
@@ -67,11 +67,12 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       rate4 = (comb->fTotalDroppedData - fTotalDroppedData) / delta;
    } else {
       printf("HADAQ terminal info:\n");
-      printf("  disc - data discarded due to header error\n");
-      printf("  err32 - crc32 error\n");
+      printf("  disc  - all discarded packets in the UDP receiver\n");
+      printf("  err32 - 32-byte header does not match with 32-bytes footer\n");
       printf("  bufs  - number of produced buffers\n");
       printf("  qu    - input queue of combiner module\n");
-      printf("  lost  - lost subevents (recognized by combiner)\n");
+      printf("  drop  - dropped subevents (received by combiner but not useful)\n");
+      printf("  lost  - lost subevents (never seen by combiner)\n");
       printf("  progr - progress of TDC calibration\n");
    }
 
@@ -80,6 +81,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    fTotalDiscEvents = comb->fTotalDiscEvents;
    fTotalDroppedData = comb->fTotalDroppedData;
 
+   fprintf(stdout, "---------------------------------------------\n");
    fprintf(stdout, "Events:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalBuildEvents, rate1,
          dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
@@ -87,7 +89,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          (long unsigned) fTotalDiscEvents, rate3,
          dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
-   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu lost    TRB         TDC        progr state\n");
+   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu drop lost    TRB         TDC        progr state\n");
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
 
@@ -107,7 +109,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
                (long unsigned) addon->fTotalProducedBuffers));
       }
 
-      sbuf.append(dabc::format(" %2d %4u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fLostTrig));
+      sbuf.append(dabc::format(" %2d %4u %4u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fDroppedTrig, comb->fCfg[n].fLostTrig));
 
       TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
 

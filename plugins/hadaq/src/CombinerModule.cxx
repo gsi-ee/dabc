@@ -389,8 +389,6 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
       }
    }
 
-
-
    //    static int affcount=0;
    //    if(affcount++ % 20)
    //     {
@@ -517,7 +515,7 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
    return res;
 }
 
-bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast)
+bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
 {
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
    fCfg[ninp].Reset();
@@ -533,6 +531,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast)
          DOUT5("CombinerModule::ShiftToNextSubEvent in continue ninp %u", ninp);
          continue;
       }
+
+      if (dropped) fCfg[ninp].fDroppedTrig++;
 
       // no need to analyze data
       if (fast) return true;
@@ -596,7 +596,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
             numsubev++;
             droppeddata += fInp[ninp].subevnt()->GetSize();
          }
-      } while (ShiftToNextSubEvent(ninp, true));
+      } while (ShiftToNextSubEvent(ninp, true, true));
 
       if (numsubev>maxnumsubev) maxnumsubev = numsubev;
 
@@ -608,7 +608,6 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    Par(fDataDroppedRateName).SetValue(droppeddata/1024./1024.);
    fTotalDiscEvents += maxnumsubev;
    fTotalDroppedData += droppeddata;
-
 
    return true;
 }
@@ -726,6 +725,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
    uint32_t buildtag = fCfg[masterchannel].fTrigTag;
 
+   // printf("build evid = %u\n", buildevid);
+
    ////////////////////////////////////////////////////////////////////////
    // second input loop: skip all subevents until we reach current trignum
    // select inputs which will be used for building
@@ -763,12 +764,12 @@ bool hadaq::CombinerModule::BuildEvent()
 
             int droppedsize = fInp[ninp].subevnt() ? fInp[ninp].subevnt()->GetSize() : 1;
 
-//            DOUT0("Drop data inp %u size %d", ninp, droppedsize);
+            // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
             Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
             fTotalDroppedData+=droppedsize;
 
-            if(!ShiftToNextSubEvent(ninp)) {
+            if(!ShiftToNextSubEvent(ninp, false, true)) {
                if (fExtraDebug && fLastDebugTm.Expired(2.)) {
                   DOUT1("Cannot shift data from input %d", ninp);
                   fLastDebugTm.GetNow();

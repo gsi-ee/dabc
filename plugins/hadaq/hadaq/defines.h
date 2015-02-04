@@ -264,20 +264,18 @@ namespace hadaq {
             void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
             /* for trb3: each subevent contains trigger type in decoding word*/
-            uint8_t GetTrigTypeTrb3 () const {return (GetDecoding() & 0xF0) >> 4; }
+            uint8_t GetTrigTypeTrb3 () const { return (GetDecoding() & 0xF0) >> 4; }
 
             void Init(uint32_t trigger = 0)
             {
                SetTrigNr(trigger);
             }
 
-
             /** Return pointer on data by index - user should care itself about swapping */
             uint32_t* GetDataPtr(unsigned indx) const
             {
                return (uint32_t*) (this) + sizeof(RawSubevent)/sizeof(uint32_t) + indx;
             }
-
 
             /* returns number of payload data words, not maximum index!*/
             unsigned GetNrOfDataWords() const

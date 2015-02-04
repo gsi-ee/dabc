@@ -8,6 +8,9 @@ about current functionality of the framework.
 2. Provide information from calibration module in terminal output
 3. Accumulate lost statistic for each data input
 4. In hldprint provide possibility to show only events with tot less than specified
+5. In hldprint show TDC time relative to channel 0
+6. Correctly account dropped and lost subevents for each input, 
+   show it in the TerminalModule 
 
 
 3.02.2015

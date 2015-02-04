@@ -123,7 +123,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if (len>999) wlen = 4;
 
    unsigned epoch(0);
-   double tm;
+   double tm, ch0tm(0);
 
    errmask = 0;
 
@@ -195,7 +195,8 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns%s\n",
                                  ((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit ",
-                                 channel, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm, sbuf);
+                                 channel, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm - ch0tm, sbuf);
+            if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:
             if (prefix>0) printf("undefined\n");
@@ -304,8 +305,6 @@ int main(int argc, char* argv[])
    dabc::TimeStamp lastevtm = last;
 
    dabc::InstallCtrlCHandler();
-
-
 
    while (!dabc::CtrlCPressed()) {
 

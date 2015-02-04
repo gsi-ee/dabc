@@ -67,7 +67,8 @@ namespace hadaq {
          void* fAddon;  //!< Direct transport pointer, used only for debugging
          int fNumCanRecv; //!< Number buffers can be received
          void* fCalibr;    //!<  Direct pointer on calibration module, used only in terminal
-         unsigned fLostTrig;  //!< number of lost triggers
+         unsigned fLostTrig;  //!< number of lost triggers (never received by the combiner)
+         unsigned fDroppedTrig;  //!< number of dropped triggers (received but dropped by the combiner)
 
          InputCfg() :
             fTrigNr(0),
@@ -83,7 +84,8 @@ namespace hadaq {
             fAddon(0),
             fNumCanRecv(0),
             fCalibr(0),
-            fLostTrig(0)
+            fLostTrig(0),
+            fDroppedTrig(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=0;
@@ -103,7 +105,8 @@ namespace hadaq {
             fAddon(src.fAddon),
             fNumCanRecv(src.fNumCanRecv),
             fCalibr(src.fCalibr),
-            fLostTrig(src.fLostTrig)
+            fLostTrig(src.fLostTrig),
+            fDroppedTrig(src.fDroppedTrig)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];
@@ -229,7 +232,7 @@ namespace hadaq {
          bool ShiftToNextHadTu(unsigned ninp);
 
          /** Shifts to next subevent in the input queue */
-         bool ShiftToNextSubEvent(unsigned ninp, bool fast = false);
+         bool ShiftToNextSubEvent(unsigned ninp, bool fast = false, bool dropped = false);
 
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);
