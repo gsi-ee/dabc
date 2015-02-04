@@ -35,7 +35,7 @@
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
        <FineMin value="31"/>
-       <FineMax value="421"/>
+       <FineMax value="491"/>
        <NumChannels value="33"/>
        <EdgeMask value="3"/>
        <HistFilling value="4"/>
@@ -44,7 +44,7 @@
        <HUB value="0x8100"/>
        <TDC value="[0xC100,0xC101,0xC000,0xC001,0xC003]"/>
        <!-- DisableCalibrationFor value="0"/-->  
-       <Auto value="10000000"/>
+       <Auto value="0"/>
        <!-- CalibrFile value="local"/-->
        <Dummy value="false"/>
        

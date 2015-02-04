@@ -7,6 +7,7 @@ about current functionality of the framework.
    Show this information in web GUI
 2. Provide information from calibration module in terminal output
 3. Accumulate lost statistic for each data input
+4. In hldprint provide possibility to show only events with tot less than specified
 
 
 3.02.2015

@@ -213,9 +213,8 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    for (unsigned n=0;n<dis_ch.size();n++)
       fTrbProc->DisableCalibrationFor(dis_ch[n]);
 
-   fAutoCalibr = Cfg("Auto", cmd).AsInt();
-   if (fAutoCalibr>0)
-      fTrbProc->SetAutoCalibrations(fAutoCalibr);
+   fAutoCalibr = Cfg("Auto", cmd).AsInt(0);
+   fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
    std::string calibrfile = Cfg("CalibrFile", cmd).AsStr();
    if (!calibrfile.empty()) {
@@ -262,7 +261,7 @@ bool hadaq::TdcCalibrationModule::retransmit()
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
          fDummyCounter++;
-         if (fDummyCounter>fAutoCalibr) {
+         if ((fDummyCounter>fAutoCalibr) && (fAutoCalibr>0)) {
             fDummyCounter = 0;
             fState = "Ready";
             item.SetField("value", fState);

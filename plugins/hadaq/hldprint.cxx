@@ -48,7 +48,9 @@ int usage(const char* errstr = 0)
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -tdc mask               - printout raw data as TDC subsubevent (default none) \n");
+   printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff) \n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
+   printf("   -tot boundary           - printout only events with TOT less than specified boundary, should be combined with -onlytdc (default disabled) \n");
    printf("   -adc mask               - printout raw data as adc subsubevent (default none) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
@@ -106,11 +108,14 @@ struct SubevStat {
 };
 
 
-void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask)
+double tot_limit(-1);
+
+
+bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, bool check_conditions = false)
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
-   if (ix>=sz) return;
+   if (ix>=sz) return false;
    if ((len==0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
@@ -125,6 +130,14 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    bool haschannel0 = false;
    unsigned channel(0), fine(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
+
+   double last_rising[65], last_falling[65];
+   for (int n=0;n<66;n++) {
+      last_rising[n] = 0;
+      last_falling[n] = 0;
+   }
+
+   char sbuf[100];
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
@@ -160,12 +173,29 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             fine = (msg >> 12) & 0x3FF;
             if (fine<0x3ff) {
                if ((msg & tdckind_Mask) == tdckind_Hit1)
-                  tm += fine*5e-3;  // calibrated time, 5 ps/bin
+                  tm -= fine*5e-3;  // calibrated time, 5 ps/bin
                else
-                  tm -= (fine - 20)/470.*5.; // simple approx of fine time from range 20-490
+                  tm -= (fine - 31)/460.*5.; // simple approx of fine time from range 31-491
             }
-            if (prefix>0) printf("hit ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns\n",
-                                 (msg >> 22) & 0x7F, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm);
+
+            sbuf[0] = 0;
+            if ((msg >> 11) & 0x1) {
+               last_rising[channel] = tm;
+            } else {
+               last_falling[channel] = tm;
+               if (last_rising[channel] > 0) {
+                  double tot = last_falling[channel] - last_rising[channel];
+                  bool cond = (tot_limit > 0) && (tot < tot_limit);
+                  sprintf(sbuf," tot:%6.3f ns%s", tot,cond ? " !!!BINGO!!!" : "");
+                  last_rising[channel] = 0;
+
+                  if (check_conditions && cond) return true;
+               }
+            }
+
+            if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns%s\n",
+                                 ((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit ",
+                                 channel, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm, sbuf);
             break;
          default:
             if (prefix>0) printf("undefined\n");
@@ -175,6 +205,8 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
    if (len<2) errmask |= tdcerr_NoData; else
    if (!haschannel0) errmask |= tdcerr_MissCh0;
+
+   return false;
 }
 
 void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
@@ -195,8 +227,6 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
-
-
 int main(int argc, char* argv[])
 {
    if (argc<2) return usage();
@@ -204,14 +234,16 @@ int main(int argc, char* argv[])
    long number(10), skip(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1);
    bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
-   unsigned tdcmask(0), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
+   unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
+      if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
@@ -266,16 +298,20 @@ int main(int argc, char* argv[])
    hadaq::RawEvent* evnt(0);
 
    std::map<unsigned,SubevStat> stat;
-   long cnt(0), lastcnt(0), printcnt(0);
+   long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
 
    dabc::InstallCtrlCHandler();
 
+
+
    while (!dabc::CtrlCPressed()) {
 
       evnt = ref.NextEvent(maxage > 0 ? maxage/2. : 1., maxage);
+
+      cnt0++;
 
       if (debug_delay>0) dabc::Sleep(debug_delay);
 
@@ -289,7 +325,7 @@ int main(int argc, char* argv[])
          cnt++;
          lastevtm = curr;
       } else
-      if (curr - lastevtm > tmout) break;
+      if (curr - lastevtm > tmout) { printf("TIMEOUT %ld\n", cnt0); break; }
 
       if (showrate) {
 
@@ -309,6 +345,36 @@ int main(int argc, char* argv[])
       if (evnt==0) continue;
 
       if (skip>0) { skip--; continue; }
+
+      if ((onlytdc!=0) && (tot_limit>0)) {
+         hadaq::RawSubevent* sub = 0;
+         bool found(false), cond_res(false);
+         while (!found && ((sub=evnt->NextSubevent(sub))!=0)) {
+
+            unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
+            unsigned ix = 0;
+
+            while (ix < trbSubEvSize) {
+
+               unsigned data = sub->Data(ix++);
+
+               unsigned datalen = (data >> 16) & 0xFFFF;
+               unsigned datakind = data & 0xFFFF;
+
+               if ((hubmask!=0) && (datakind==hubmask)) continue;
+
+               if (datakind == onlytdc) {
+                  found = true;
+                  unsigned errmask(0);
+                  cond_res = PrintTdcData(sub, ix, datalen, 0, errmask, true);
+                  break;
+               }
+
+               ix+=datalen;
+            }
+         }
+         if (!cond_res) continue;
+      }
 
       printcnt++;
 
@@ -339,10 +405,10 @@ int main(int argc, char* argv[])
             if ((onlytdc!=0) && (datakind==onlytdc)) {
                as_tdc = true;
             } else
-            if ((tdcmask!=0) && ((datakind & 0xff) <= (tdcmask & 0xff)) && ((datakind & 0xff00) == (tdcmask & 0xff00))) {
+            if ((tdcmask!=0) && ((datakind & idrange) <= (tdcmask & idrange)) && ((datakind & ~idrange) == (tdcmask & ~idrange))) {
                as_tdc = true;
             } else
-            if ((adcmask!=0) && ((datakind & 0xff) <= (adcmask & 0xff)) && ((datakind & 0xff00) == (adcmask & 0xff00))) {
+            if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
                as_adc = true;
             } else
             if ((hubmask!=0) && (datakind==hubmask)) {
@@ -374,7 +440,7 @@ int main(int argc, char* argv[])
 
                unsigned errmask(0);
 
-               if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask); else
+               if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask, false); else
                if (as_adc) PrintAdcData(sub, ix, datalen, 9); else
                if (as_raw) sub->PrintRawData(ix,datalen,9);
 
@@ -393,7 +459,7 @@ int main(int argc, char* argv[])
                if (as_tdc) {
                   stat[datakind].istdc = true;
                   unsigned errmask(0);
-                  PrintTdcData(sub, ix, datalen,0, errmask);
+                  PrintTdcData(sub, ix, datalen, 0, errmask, false);
                   unsigned mask = 1;
                   for (int n=0;n<NumTdcErr;n++,mask*=2)
                      if (errmask & mask) stat[datakind].tdcerr[n]++;
@@ -404,7 +470,7 @@ int main(int argc, char* argv[])
          }
       }
 
-      if ((number>0) && (printcnt >= number)) break;
+      if ((number>0) && (printcnt>=number)) break;
    }
 
    if (showrate) {

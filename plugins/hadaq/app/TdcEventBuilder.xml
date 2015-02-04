@@ -75,8 +75,8 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="Input*TdcCal">    
-       <FineMin value="30"/>
-       <FineMax value="481"/>
+       <FineMin value="31"/>
+       <FineMax value="421"/>
        <NumChannels value="65"/>
        <EdgeMask value="1"/>
        <HistFilling value="4"/>
