@@ -98,7 +98,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    for (unsigned n=0;n<comb->fCfg.size();n++)
       if (comb->fCfg[n].fCalibr) istdccal = true;
 
-   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu drop lost");
+   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu  drop  lost");
    if (istdccal) fprintf(stdout,"    TRB         TDC        progr state\n");
             else fprintf(stdout,"\n");
 
@@ -120,7 +120,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
                (long unsigned) addon->fTotalProducedBuffers));
       }
 
-      sbuf.append(dabc::format(" %2d %4u %4u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fDroppedTrig, comb->fCfg[n].fLostTrig));
+      sbuf.append(dabc::format(" %2d %5u %5u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fDroppedTrig, comb->fCfg[n].fLostTrig));
 
       TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
 
