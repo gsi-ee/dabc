@@ -85,9 +85,14 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    fprintf(stdout, "Events:%8lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
          (long unsigned) fTotalBuildEvents, rate1,
          dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
-   fprintf(stdout, "Dropped:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
+   fprintf(stdout, "Dropped:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s",
          (long unsigned) fTotalDiscEvents, rate3,
          dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
+
+   if (comb->fTotalFullDrops>0)
+      fprintf(stdout, "Total: %lu\n", (long unsigned) comb->fTotalFullDrops);
+   else
+      fprintf(stdout, "\n");
 
    bool istdccal = false;
    for (unsigned n=0;n<comb->fCfg.size();n++)

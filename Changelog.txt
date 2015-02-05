@@ -8,6 +8,7 @@ about current functionality of the framework.
    JSROOT.AssertPrerequisites will also work.
 2. One also could provide 'load' and 'onload' parameters in 
    JSRootCore.js url.     
+3. Correctly account lost subevents in hadaq::CombinerModule
 
 
 4.02.2015
@@ -17,7 +18,7 @@ about current functionality of the framework.
 3. Accumulate lost statistic for each data input
 4. In hldprint provide possibility to show only events with tot less than specified
 5. In hldprint show TDC time relative to channel 0
-6. Correctly account dropped and lost subevents for each input, 
+6. Correctly account dropped subevents for each input, 
    show it in the TerminalModule 
 
 

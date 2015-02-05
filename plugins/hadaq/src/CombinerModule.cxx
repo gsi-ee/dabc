@@ -101,7 +101,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
       fInp.push_back(ReadIterator());
       fCfg.push_back(InputCfg());
       fInp[n].Close();
-      fCfg[n].Reset();
+      fCfg[n].Reset(true);
    }
 
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
@@ -518,11 +518,18 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
 bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
 {
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
-   fCfg[ninp].Reset();
+
+   fCfg[ninp].Reset(fast);
    bool foundevent(false);
-   //static unsigned ccount=0;
+
+   if (fast) DOUT0("FAST DROP on inp %d", ninp);
+
+   // account when subevent exists but intentionally dropped
+   if (dropped && fInp[ninp].subevnt()) fCfg[ninp].fDroppedTrig++;
+
    while (!foundevent) {
       bool res = fInp[ninp].NextSubEvent();
+
       if (!res || (fInp[ninp].subevnt() == 0)) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
          // retry in next hadtu container
@@ -532,15 +539,13 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          continue;
       }
 
-      if (dropped) fCfg[ninp].fDroppedTrig++;
-
       // no need to analyze data
       if (fast) return true;
 
       foundevent = true;
 
-      fCfg[ninp].fLastTrigNr = fCfg[ninp].fTrigNr;
       fCfg[ninp].fTrigNr = ((fInp[ninp].subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
+
       fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
       if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::RawSubevent)) {
          fCfg[ninp].fEmpty = false;
@@ -574,7 +579,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 #endif
       int diff = 1;
       if (fCfg[ninp].fLastTrigNr != 0)
-         diff = CalcTrigNumDiff(fCfg[ninp].fTrigNr, fCfg[ninp].fLastTrigNr);
+         diff = CalcTrigNumDiff(fCfg[ninp].fLastTrigNr, fCfg[ninp].fTrigNr);
+      fCfg[ninp].fLastTrigNr = fCfg[ninp].fTrigNr;
 
       if (diff>1) fCfg[ninp].fLostTrig += (diff-1);
    }
@@ -711,6 +717,8 @@ bool hadaq::CombinerModule::BuildEvent()
         DOUT0(msg.c_str());
 
         DropAllInputBuffers();
+
+        fTotalFullDrops++;
 
         if (fExtraDebug && fLastDebugTm.Expired(1.)) {
            DOUT1("Drop all buffers");

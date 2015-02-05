@@ -54,7 +54,7 @@ namespace hadaq {
       struct InputCfg {
 
          uint32_t fTrigNr; //!< keeps current trigger sequence number
-         uint32_t fLastTrigNr; //!< keeps previous trigger sequence number - used to control lost data
+         uint32_t fLastTrigNr; //!< keeps previous trigger sequence number - used to control data lost
          uint32_t fTrigTag; //!<  keeps current trigger tag
          uint32_t fTrigType; //!< current subevent trigger type
          uint32_t fSubId;  //!<  current subevent id
@@ -113,20 +113,20 @@ namespace hadaq {
 
          }
 
-         void Reset()
+         void Reset(bool complete = false)
          {
             fTrigNr = 0;
-            fLastTrigNr = 0;
             fTrigTag =0;
             fTrigType=0;
             fSubId=0;
             fErrorBits=0;
             fDataError = false;
             fEmpty = true;
-          // do not clear error bit statistics!
+           // do not clear error bit statistics!
 //             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
 //                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
+            if (complete) fLastTrigNr = 0;
          }
       };
 
@@ -183,6 +183,7 @@ namespace hadaq {
          uint64_t           fTotalDiscEvents;
          uint64_t           fTotalTagErrors;
          uint64_t           fTotalDataErrors;
+         uint64_t           fTotalFullDrops;   ///< number of complete drops
 
          unsigned fEventIdCount[HADAQ_NEVTIDS];
 
