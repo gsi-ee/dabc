@@ -565,7 +565,8 @@ void TRootSniffer::ScanItem(TRootSnifferScanRec &rec, TFolder* item)
    TObject* obj = 0;
    while ((obj = iter()) != 0) {
       if (obj->IsA()!=TNamed::Class()) continue;
-      rec.SetField(obj->GetName(), obj->GetTitle());
+      if (obj->GetName() || (*(obj->GetName()) == '_'))
+         rec.SetField(obj->GetName(), obj->GetTitle());
    }
 
    iter.Reset();
@@ -579,7 +580,6 @@ void TRootSniffer::ScanItem(TRootSnifferScanRec &rec, TFolder* item)
       }
    }
 }
-
 
 //_____________________________________________________________________
 void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
@@ -658,7 +658,6 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             }
          }
       }
-
    }
 }
 
@@ -918,6 +917,40 @@ Bool_t TRootSniffer::ProduceJson(const char *path, const char *options,
 
    return res.Length() > 0;
 }
+
+//______________________________________________________________________________
+Bool_t TRootSniffer::ExecuteCmd(const char *path, const char */*options*/,
+                                TString& res)
+{
+   // execute command marked as _kind=='Command'
+
+   TFolder* item = FindItem(path);
+
+   const char* kind = GetItemField(item, item_prop_kind);
+
+   if ((item==0) || (kind==0) || (strcmp(kind,"Command")!=0)) { res = "false"; return kTRUE; }
+
+   if (gDebug>0) Info("ExecuteCmd","Executing command %s", path);
+
+   const char* objaddr = GetItemField(item, "object");
+   const char* clname = GetItemField(item, "class");
+   const char* method = GetItemField(item, "method");
+   const char* args = GetItemField(item, "argument");
+
+   if ((clname==0) || (objaddr==0) || (method==0)) { res = "false"; return kTRUE; }
+
+   void *addr = (void*) TString(objaddr).Atoll();
+   TClass* cl = gROOT->GetClass(clname);
+
+   TMethodCall mcall(cl, method, args);
+
+   mcall.Execute(addr);
+
+   res = "true";
+
+   return kTRUE;
+}
+
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
@@ -1450,7 +1483,10 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 
    if (strcmp(file, "exe.json") == 0)  {
       if (!ProduceExe(path, options, 1, &res)) return kFALSE;
+   } else
 
+   if (strcmp(file, "cmd.json") == 0)  {
+     if (!ExecuteCmd(path, options, res)) return kFALSE;
    } else {
       return kFALSE;
    }
@@ -1515,15 +1551,17 @@ TFolder* TRootSniffer::GetSubFolder(const char* subfolder, Bool_t force, Bool_t 
 //______________________________________________________________________________
 Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 {
-   // register object in subfolder structure
+   // Register object in subfolder structure
    // subfolder parameter can have many levels like:
    //
    // TRootSniffer* sniff = new TRootSniffer("sniff");
-   // sniff->RegisterObject("/my/sub/subfolder", h1);
+   // sniff->RegisterObject("my/sub/subfolder", h1);
    //
    // Such objects can be later found in "Objects" folder of sniffer like
    //
    // h1 = sniff->FindTObjectInHierarchy("/Objects/my/sub/subfolder/h1");
+   //
+   // If subfolder name starts with '/', object will be registered in top folder.
    //
    // Objects, registered in "extra" sub-folder, can be explored.
    // Typically one used "extra" sub-folder to register event structures to
@@ -1537,10 +1575,13 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 
    TString path = fObjectsPath;
    if ((subfolder!=0) && (strlen(subfolder)>0)) {
-      if (*subfolder != '/') path.Append("/");
-      path.Append(subfolder);
+      if (*subfolder == '/') {
+         path = subfolder;
+      } else {
+         path.Append("/");
+         path.Append(subfolder);
+      }
    }
-
 
    TFolder* f = GetSubFolder(path.Data(), kTRUE, kFALSE);
    if (f==0) return kFALSE;
@@ -1616,3 +1657,20 @@ Bool_t TRootSniffer::SetItemField(TFolder* item, const char* name, const char* v
 }
 
 
+//______________________________________________________________________________
+TFolder* TRootSniffer::FindItem(const char* path)
+{
+   TFolder* item = dynamic_cast<TFolder *> (FindTObjectInHierarchy(path));
+   return item && item->TestBit(kItemFolder) ? item : 0;
+}
+
+//______________________________________________________________________________
+const char* TRootSniffer::GetItemField(TFolder* item, const char* name)
+{
+   if ((item==0) || !item->TestBit(kItemFolder)) return 0;
+
+   TNamed* field = dynamic_cast<TNamed*> (item->FindObject(name));
+
+   return field ? field->GetTitle() : 0;
+
+}

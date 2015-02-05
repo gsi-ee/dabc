@@ -151,6 +151,10 @@ public:
 
    Bool_t SetItemField(TFolder* item, const char* name, const char* value);
 
+   TFolder* FindItem(const char* path);
+
+   const char* GetItemField(TFolder* item, const char* name);
+
    /** Method scans normal objects, registered in ROOT */
    void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);
 
@@ -177,6 +181,8 @@ public:
    Bool_t ProduceImage(Int_t kind, const char *path, const char *options, void *&ptr, Long_t &length);
 
    Bool_t ProduceExe(const char *path, const char *options, Int_t reskind, TString *ret_str, void **ret_ptr = 0, Long_t *ret_length = 0);
+
+   Bool_t ExecuteCmd(const char *path, const char *options, TString& res);
 
    Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length);
 

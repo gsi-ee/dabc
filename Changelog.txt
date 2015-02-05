@@ -12,6 +12,9 @@ about current functionality of the framework.
 4. Add possibility to create 'hierarchy items' in TRootSniffer.
    They have similar meaning as dabc::Hierarchy class. 
    Idea to represent commands and log messages in such items.
+5. Provide possibility to register commands in TRootSniffer.
+   If command marked with '_fastcmd' property, 
+   it appears as button in browser. 
 
 
 4.02.2015

@@ -258,7 +258,8 @@ protected:
 
    Long_t       fMainThrdId;  //! id of the main ROOT process
 
-   TString      fJsRootSys;   //! location of JSROOT files
+   TString      fJSROOTSYS;   //! location of JSROOT files
+   TString      fROOTSYS;     //! location of ROOT files
    TString      fTopName;     //! name of top folder, default - "ROOT"
 
    TString      fDefaultPage; //! file name for default page name
@@ -268,6 +269,8 @@ protected:
 
    TMutex       fMutex;       //! mutex to protect list with arguments
    TList        fCallArgs;    //! submitted arguments
+
+   Bool_t       fRunningFlag; //! flag which can be changed from the control gui
 
    // Here any request can be processed
    virtual void ProcessRequest(THttpCallArg *arg);
@@ -321,6 +324,22 @@ public:
 
    /** Enable control functionality of the server */
    Bool_t EnableControl(Bool_t on = kTRUE);
+
+   virtual void SetRunning(Bool_t on = kTRUE)
+   {
+      // change running flag,
+      // method also can be called from web gui when control is enabled
+
+      fRunningFlag = on;
+   }
+
+   virtual Bool_t IsRunning() const
+   {
+      // returns running flag,
+      // method also can be called from web gui when control is enabled
+
+      return fRunningFlag;
+   }
 
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);

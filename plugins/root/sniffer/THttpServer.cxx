@@ -189,7 +189,6 @@ Bool_t THttpCallArg::CompressWithGzip()
    SetEncoding("gzip");
 
    return kTRUE;
-
 }
 
 // ====================================================================
@@ -278,14 +277,16 @@ THttpServer::THttpServer(const char *engine) :
    fTimer(0),
    fSniffer(0),
    fMainThrdId(0),
-   fJsRootSys(),
+   fJSROOTSYS(),
+   fROOTSYS(),
    fTopName("ROOT"),
    fDefaultPage(),
    fDefaultPageCont(),
    fDrawPage(),
    fDrawPageCont(),
    fMutex(),
-   fCallArgs()
+   fCallArgs(),
+   fRunningFlag(kTRUE)
 {
    // constructor
 
@@ -306,13 +307,13 @@ THttpServer::THttpServer(const char *engine) :
 #ifdef COMPILED_WITH_DABC
    const char *dabcsys = gSystem->Getenv("DABCSYS");
    if (dabcsys != 0)
-      fJsRootSys = TString::Format("%s/plugins/root/js", dabcsys);
+      fJSROOTSYS = TString::Format("%s/plugins/root/js", dabcsys);
 #endif
 
    const char *jsrootsys = gSystem->Getenv("JSROOTSYS");
-   if (jsrootsys != 0) fJsRootSys = jsrootsys;
+   if (jsrootsys != 0) fJSROOTSYS = jsrootsys;
 
-   if (fJsRootSys.Length() == 0) {
+   if (fJSROOTSYS.Length() == 0) {
 #ifdef ROOTETCDIR
       TString jsdir = TString::Format("%s/http", ROOTETCDIR);
 #else
@@ -320,14 +321,28 @@ THttpServer::THttpServer(const char *engine) :
 #endif
       if (gSystem->ExpandPathName(jsdir)) {
          Warning("THttpServer", "problems resolving '%s', use JSROOTSYS to specify $ROOTSYS/etc/http location", jsdir.Data());
-         fJsRootSys = ".";
+         fJSROOTSYS = ".";
       } else {
-         fJsRootSys = jsdir;
+         fJSROOTSYS = jsdir;
       }
    }
 
-   fDefaultPage = fJsRootSys + "/files/online.htm";
-   fDrawPage = fJsRootSys + "/files/draw.htm";
+   const char* rootsys = gSystem->Getenv("ROOTSYS");
+   if (rootsys!=0) fROOTSYS = rootsys;
+   if (fROOTSYS.Length()==0) {
+#ifdef ROOTPREFIX
+      TString sysdir = ROOTPREFIX;
+#else
+      TString sysdir = "$(ROOTSYS)";
+#endif
+      if (gSystem->ExpandPathName(sysdir))
+         fROOTSYS = ".";
+      else
+         fROOTSYS = sysdir;
+   }
+
+   fDefaultPage = fJSROOTSYS + "/files/online.htm";
+   fDrawPage = fJSROOTSYS + "/files/draw.htm";
 
    SetSniffer(new TRootSniffer("sniff"));
 
@@ -523,7 +538,16 @@ Bool_t THttpServer::IsFileRequested(const char *uri, TString &res) const
       fname.Remove(0, pos + 9);
       // check that directory below jsrootsys will not be accessed
       if (!VerifyFilePath(fname.Data())) return kFALSE;
-      res = fJsRootSys + fname;
+      res = fJSROOTSYS + fname;
+      return kTRUE;
+   }
+
+   pos = fname.Index("rootsys/");
+   if (pos != kNPOS) {
+      fname.Remove(0, pos + 7);
+      // check that directory below rootsys will not be accessed
+      if (!VerifyFilePath(fname.Data())) return kFALSE;
+      res = fROOTSYS + fname;
       return kTRUE;
    }
 
@@ -782,15 +806,27 @@ Bool_t THttpServer::EnableControl(Bool_t on)
       return kTRUE;
    }
 
+   TString addr = TString::Format("%lu", (long unsigned) this);
+
+
    TFolder* start = fSniffer->CreateItem("Control", "Start", "start command");
    fSniffer->SetItemField(start, "_kind", "Command");
+   fSniffer->SetItemField(start, "_fastcmd", "/rootsys/icons/replay.png");
+   fSniffer->SetItemField(start, "object", addr);
+   fSniffer->SetItemField(start, "class", ClassName());
+   fSniffer->SetItemField(start, "method", "SetRunning");
+   fSniffer->SetItemField(start, "argument", "kTRUE");
 
    TFolder* stop = fSniffer->CreateItem("Control", "Stop", "stop command");
    fSniffer->SetItemField(stop, "_kind", "Command");
+   fSniffer->SetItemField(stop, "_fastcmd", "/rootsys/icons/stop.png");
+   fSniffer->SetItemField(stop, "object", addr);
+   fSniffer->SetItemField(stop, "class", ClassName());
+   fSniffer->SetItemField(stop, "method", "SetRunning");
+   fSniffer->SetItemField(stop, "argument", "kFALSE");
 
    return kTRUE;
 }
-
 
 //______________________________________________________________________________
 const char *THttpServer::GetMimeType(const char *path)
