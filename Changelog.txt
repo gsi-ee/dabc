@@ -6,6 +6,8 @@ about current functionality of the framework.
 1. With JSRootCore.js script location one could specify JSROOT 
    functionality to be loaded: '2d', '3d', 'io'. Old method with
    JSROOT.AssertPrerequisites will also work.
+2. One also could provide 'load' and 'onload' parameters in 
+   JSRootCore.js url.     
 
 
 4.02.2015
