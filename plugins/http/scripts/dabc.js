@@ -1359,7 +1359,7 @@
 
          function get_status_color(status) {
             if (status.indexOf('Ready')==0) return 'green';
-            if (status.indexOf('File')==0) return 'yellow';
+            if (status.indexOf('File')==0) return 'blue';
             return 'red';
          }
          
@@ -1398,6 +1398,7 @@
                for (var j in info.tdc) {
                   $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
                          .css('color', get_status_color(info.tdc_status[j]))
+                         .css('background', 'white')
                          .attr("title", "TDC" + info.tdc[j].toString(16) + " " + info.tdc_status[j] + " Progress:" + info.tdc_progr[j]);
                }
             });
