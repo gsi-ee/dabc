@@ -498,19 +498,21 @@ void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
 
    TClass* obj_class = obj->IsA();
 
-   ScanObjectProperties(rec, obj, obj_class);
-
-   rec.SetRootClass(obj_class);
-
-   ScanObjectChilds(rec, obj);
+   if ((obj_class == TFolder::Class()) && obj->TestBit(kItemFolder)) {
+      ScanItem(rec, (TFolder*) obj);
+   } else {
+      ScanObjectProperties(rec, obj, obj_class);
+      rec.SetRootClass(obj_class);
+      ScanObjectChilds(rec, obj);
+   }
 
    // here we should know how many childs are accumulated
    rec.SetResult(obj, obj_class, 0, rec.fNumChilds);
 }
 
-
-//______________________________________________________________________________
-void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj, TClass* &obj_class)
+//_____________________________________________________________________
+void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec,
+                               TObject* &obj, TClass* &obj_class)
 {
    // scans basic object properties
    // here such fields as _typename, _title, _more properties can be specified
@@ -548,6 +550,38 @@ void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj,
    }
 }
 
+//_____________________________________________________________________
+void TRootSniffer::ScanItem(TRootSnifferScanRec &rec, TFolder* item)
+{
+   // scans basic object properties
+   // here such fields as _typename, _title, _more properties can be specified
+
+   const char* title = item->GetTitle();
+   if ((title!=0) && (*title!=0))
+      rec.SetField(item_prop_title, title);
+
+   // first all properties
+   TIter iter(item->GetListOfFolders());
+   TObject* obj = 0;
+   while ((obj = iter()) != 0) {
+      if (obj->IsA()!=TNamed::Class()) continue;
+      rec.SetField(obj->GetName(), obj->GetTitle());
+   }
+
+   iter.Reset();
+
+   while ((obj = iter()) != 0) {
+      if (obj->IsA()==TNamed::Class()) continue;
+      TRootSnifferScanRec chld;
+      if (chld.GoInside(rec, obj)) {
+         ScanObject(chld, obj);
+         if (chld.Done()) break;
+      }
+   }
+}
+
+
+//_____________________________________________________________________
 void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
 {
    // scans object childs (if any)
@@ -557,7 +591,7 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
       // starting from special folder, we automatically scan members
 
       TFolder *fold = (TFolder *) obj;
-      if (fold->TestBit(BIT(19))) rec.fMask = rec.fMask | TRootSnifferScanRec::kExtraFolder;
+      if (fold->TestBit(kMoreFolder)) rec.fMask = rec.fMask | TRootSnifferScanRec::kExtraFolder;
 
       ScanCollection(rec, fold->GetListOfFolders());
    } else if (obj->InheritsFrom(TDirectory::Class())) {
@@ -648,7 +682,7 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
       }
    }
 
-   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject(TString::Format("//root/%s", fObjectsPath.Data())));
+   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
 
    ScanCollection(rec, gROOT->GetList());
 
@@ -656,7 +690,7 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
 
    ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
 
-   ScanCollection(rec, topf ? topf->GetListOfFolders() : 0, "Objects");
+   ScanCollection(rec, topf ? topf->GetListOfFolders() : 0);
 }
 
 //______________________________________________________________________________
@@ -1427,6 +1461,57 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    return kTRUE;
 }
 
+
+//______________________________________________________________________________
+TFolder* TRootSniffer::GetSubFolder(const char* subfolder, Bool_t force, Bool_t owner)
+{
+   // creates subfolder where objects can be registered
+
+   TFolder *topf = gROOT->GetRootFolder();
+
+   if (topf == 0) {
+      Error("RegisterObject", "Not found top ROOT folder!!!");
+      return 0;
+   }
+
+   TFolder *httpfold = dynamic_cast<TFolder *>(topf->FindObject("http"));
+   if (httpfold == 0) {
+      if (!force) return 0;
+      httpfold = topf->AddFolder("http", "Top folder");
+      httpfold->SetOwner(kTRUE);
+   }
+
+   TFolder *fold = httpfold;
+
+   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
+
+      TObjArray *arr = TString(subfolder).Tokenize("/");
+      for (Int_t i = 0; i <= (arr ? arr->GetLast() : -1); i++) {
+
+         const char *subname = arr->At(i)->GetName();
+         if (strlen(subname) == 0) continue;
+
+         TFolder *subfold = dynamic_cast<TFolder *>(fold->FindObject(subname));
+         if (subfold == 0) {
+            if (!force) return 0;
+            subfold = fold->AddFolder(subname, "sub-folder");
+            subfold->SetOwner(owner);
+
+            if ((strcmp(subname, "extra") == 0) && !owner)
+               subfold->SetBit(kMoreFolder, kTRUE);
+         }
+         fold = subfold;
+      }
+   }
+
+   // register folder for cleanup
+   if (!gROOT->GetListOfCleanups()->FindObject(fold))
+      gROOT->GetListOfCleanups()->Add(fold);
+
+   return fold;
+}
+
+
 //______________________________________________________________________________
 Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 {
@@ -1450,50 +1535,20 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 
    if (obj == 0) return kFALSE;
 
-   TFolder *topf = gROOT->GetRootFolder();
-
-   if (topf == 0) {
-      Error("RegisterObject", "Not found top ROOT folder!!!");
-      return kFALSE;
+   TString path = fObjectsPath;
+   if ((subfolder!=0) && (strlen(subfolder)>0)) {
+      if (*subfolder != '/') path.Append("/");
+      path.Append(subfolder);
    }
 
-   TFolder *topdabcfold = dynamic_cast<TFolder *>(topf->FindObject(fObjectsPath.Data()));
-   if (topdabcfold == 0) {
-      topdabcfold = topf->AddFolder(fObjectsPath.Data(), "Top online folder");
-      topdabcfold->SetOwner(kFALSE);
-   }
 
-   TFolder *dabcfold = topdabcfold;
-
-   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
-
-      TObjArray *arr = TString(subfolder).Tokenize("/");
-      for (Int_t i = 0; i <= (arr ? arr->GetLast() : -1); i++) {
-
-         const char *subname = arr->At(i)->GetName();
-         if (strlen(subname) == 0) continue;
-
-         TFolder *fold = dynamic_cast<TFolder *>(dabcfold->FindObject(subname));
-         if (fold == 0) {
-            fold = dabcfold->AddFolder(subname, "sub-folder");
-            fold->SetOwner(kFALSE);
-
-            if ((dabcfold == topdabcfold) && (strcmp(subname, "extra") == 0))
-               fold->SetBit(BIT(19), kTRUE);
-         }
-         dabcfold = fold;
-      }
-
-   }
+   TFolder* f = GetSubFolder(path.Data(), kTRUE, kFALSE);
+   if (f==0) return kFALSE;
 
    // If object will be destroyed, it must be removed from the folders automatically
    obj->SetBit(kMustCleanup);
 
-   dabcfold->Add(obj);
-
-   // register folder for cleanup
-   if (!gROOT->GetListOfCleanups()->FindObject(dabcfold))
-      gROOT->GetListOfCleanups()->Add(dabcfold);
+   f->Add(obj);
 
    return kTRUE;
 }
@@ -1506,17 +1561,58 @@ Bool_t TRootSniffer::UnregisterObject(TObject *obj)
 
    if (obj == 0) return kTRUE;
 
-   TFolder *topf = gROOT->GetRootFolder();
+   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
 
    if (topf == 0) {
-      Error("UnregisterObject", "Not found top ROOT folder!!!");
+      Error("UnregisterObject", "Not found //root/http folder!!!");
       return kFALSE;
    }
 
-   TFolder *dabcfold = dynamic_cast<TFolder *>(topf->FindObject(fObjectsPath.Data()));
-
-   if (dabcfold) dabcfold->RecursiveRemove(obj);
+   if (topf) topf->RecursiveRemove(obj);
 
    return kTRUE;
 }
+
+
+//______________________________________________________________________________
+TFolder* TRootSniffer::CreateItem(const char* subfolder, const char* name, const char* title)
+{
+   // create item element
+
+   TFolder* f = GetSubFolder(subfolder, kTRUE, kTRUE);
+   if (f==0) return 0;
+
+   TFolder* item = new TFolder(name, title);
+   item->SetOwner(kTRUE);
+   item->SetBit(kMustCleanup);
+   item->SetBit(kItemFolder);
+   f->Add(item);
+
+   return item;
+}
+
+//______________________________________________________________________________
+Bool_t TRootSniffer::SetItemField(TFolder* item, const char* name, const char* value)
+{
+   // set field in the item
+   // each field coded with TNamed object
+
+   if ((item==0) || !item->TestBit(kItemFolder)) return kFALSE;
+
+   TNamed* field = dynamic_cast<TNamed*> (item->FindObject(name));
+   if (field==0) {
+      field = new TNamed(name, value);
+      field->SetBit(kMustCleanup);
+      item->Add(field);
+   } else
+   if (field->IsA()!=TNamed::Class()) {
+      Error("SetItemField", "Element for field %s has class other than TNamed", name);
+      return kFALSE;
+   } else {
+      field->SetTitle(value);
+   }
+
+   return kTRUE;
+}
+
 

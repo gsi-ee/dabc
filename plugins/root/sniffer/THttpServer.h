@@ -246,6 +246,7 @@ public:
    ClassDef(THttpCallArg, 0) // Arguments for single HTTP call
 };
 
+// ______________________________________________________________________
 
 class THttpServer : public TNamed {
 
@@ -317,6 +318,9 @@ public:
 
    /** Unregister object */
    Bool_t Unregister(TObject *obj);
+
+   /** Enable control functionality of the server */
+   Bool_t EnableControl(Bool_t on = kTRUE);
 
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);

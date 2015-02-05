@@ -12,6 +12,7 @@
 #include "TList.h"
 #endif
 
+class TFolder;
 class TMemFile;
 class TBufferFile;
 class TDataMember;
@@ -90,11 +91,16 @@ public:
    ClassDef(TRootSnifferScanRec, 0) // Scan record for objects sniffer
 };
 
+//_______________________________________________________________________
 
 class TRootSniffer : public TNamed {
-
+   enum {
+      kMoreFolder = BIT(19),  // all elements in such folder marked with _more
+                              // attribute and can be expanded from browser
+      kItemFolder = BIT(20)   // such folder interpreted as hierarchy item,
+                              // with attributes coded into TNamed elements
+   };
 protected:
-
    TString     fObjectsPath; //! path for registered objects
    TMemFile   *fMemFile;     //! file used to manage streamer infos
    Int_t       fSinfoSize;   //! number of elements in streamer info, used as version
@@ -107,6 +113,8 @@ protected:
    virtual void ScanObjectProperties(TRootSnifferScanRec &rec, TObject* &obj, TClass* &obj_class);
 
    virtual void ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj);
+
+   virtual void ScanItem(TRootSnifferScanRec &rec, TFolder* item);
 
    void ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                        const char *foldername = 0, Bool_t extra = kFALSE, TCollection* keys_lst = 0);
@@ -121,7 +129,7 @@ protected:
 
 public:
 
-   TRootSniffer(const char *name, const char *objpath = "online");
+   TRootSniffer(const char *name, const char *objpath = "Objects");
    virtual ~TRootSniffer();
 
    static Bool_t IsDrawableClass(TClass *cl);
@@ -136,6 +144,12 @@ public:
    Bool_t RegisterObject(const char *subfolder, TObject *obj);
 
    Bool_t UnregisterObject(TObject *obj);
+
+   TFolder* GetSubFolder(const char* foldername, Bool_t force = kFALSE, Bool_t owner = kFALSE);
+
+   TFolder* CreateItem(const char* subfolder, const char* name, const char* title);
+
+   Bool_t SetItemField(TFolder* item, const char* name, const char* value);
 
    /** Method scans normal objects, registered in ROOT */
    void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);

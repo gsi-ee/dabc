@@ -9,6 +9,9 @@ about current functionality of the framework.
 2. One also could provide 'load' and 'onload' parameters in 
    JSRootCore.js url.     
 3. Correctly account lost subevents in hadaq::CombinerModule
+4. Add possibility to create 'hierarchy items' in TRootSniffer.
+   They have similar meaning as dabc::Hierarchy class. 
+   Idea to represent commands and log messages in such items.
 
 
 4.02.2015

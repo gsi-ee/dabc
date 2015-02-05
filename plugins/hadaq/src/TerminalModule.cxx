@@ -90,7 +90,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
    if (comb->fTotalFullDrops>0)
-      fprintf(stdout, "Total: %lu\n", (long unsigned) comb->fTotalFullDrops);
+      fprintf(stdout, " Total:%lu\n", (long unsigned) comb->fTotalFullDrops);
    else
       fprintf(stdout, "\n");
 

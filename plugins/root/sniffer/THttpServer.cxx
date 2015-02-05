@@ -8,6 +8,7 @@
 #include "TImage.h"
 #include "TROOT.h"
 #include "TClass.h"
+#include "TFolder.h"
 #include "RVersion.h"
 #include "RConfigure.h"
 
@@ -521,11 +522,17 @@ Bool_t THttpServer::IsFileRequested(const char *uri, TString &res) const
    if (pos != kNPOS) {
       fname.Remove(0, pos + 9);
       // check that directory below jsrootsys will not be accessed
-      if (!VerifyFilePath(fname.Data())) {
-         // Error("IsFileRequested","Prevent access to filepath %s", fname.Data());
-         return kFALSE;
-      }
+      if (!VerifyFilePath(fname.Data())) return kFALSE;
       res = fJsRootSys + fname;
+      return kTRUE;
+   }
+
+   pos = fname.Index("currentdir/");
+   if (pos != kNPOS) {
+      fname.Remove(0, pos + 10);
+      // check that directory below currentdir will not be accessed
+      if (!VerifyFilePath(fname.Data())) return kFALSE;
+      res = TString(".") + fname;
       return kTRUE;
    }
 
@@ -764,6 +771,24 @@ Bool_t THttpServer::Unregister(TObject *obj)
    // See TRootSniffer::UnregisterObject() for more details
 
    return fSniffer->UnregisterObject(obj);
+}
+
+//______________________________________________________________________________
+Bool_t THttpServer::EnableControl(Bool_t on)
+{
+   if (!on) {
+      TFolder* f = fSniffer->GetSubFolder("Control");
+      if (f) delete f;
+      return kTRUE;
+   }
+
+   TFolder* start = fSniffer->CreateItem("Control", "Start", "start command");
+   fSniffer->SetItemField(start, "_kind", "Command");
+
+   TFolder* stop = fSniffer->CreateItem("Control", "Stop", "stop command");
+   fSniffer->SetItemField(stop, "_kind", "Command");
+
+   return kTRUE;
 }
 
 
