@@ -9,6 +9,8 @@ about current functionality of the framework.
    object methods, specifying "/Objects/hpx/->Reset()". 
    Here string '/->' is principle. 
 3. Provide animation of command execution with buttons
+4. Also allow to execute command with item click and via context menu,
+   use everywhere color animation 
 
 
 5.02.2015
