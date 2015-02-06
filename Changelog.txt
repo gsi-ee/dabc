@@ -11,6 +11,9 @@ about current functionality of the framework.
 3. Provide animation of command execution with buttons
 4. Also allow to execute command with item click and via context menu,
    use everywhere color animation 
+5. Use '_hidden' attribute to hide hierarchy elements from default display
+6. Each element could have '_icon' attribute, which is used in hierarchy display
+7. Let register commands in any folders, hide StreamerInfo element 
 
 
 5.02.2015

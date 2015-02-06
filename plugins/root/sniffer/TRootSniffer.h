@@ -16,6 +16,7 @@ class TFolder;
 class TMemFile;
 class TBufferFile;
 class TDataMember;
+class THttpServer;
 class TRootSnifferStore;
 
 class TRootSnifferScanRec {
@@ -94,6 +95,7 @@ public:
 //_______________________________________________________________________
 
 class TRootSniffer : public TNamed {
+   friend class THttpServer;
    enum {
       kMoreFolder = BIT(19),  // all elements in such folder marked with _more
                               // attribute and can be expanded from browser
@@ -127,6 +129,16 @@ protected:
 
    TString DecodeUrlOptionValue(const char* value, Bool_t remove_quotes = kTRUE);
 
+   TFolder* GetSubFolder(const char* foldername, Bool_t force = kFALSE, Bool_t owner = kFALSE);
+
+   TFolder* CreateItem(const char* fullname, const char* title);
+
+   Bool_t SetItemField(TFolder* item, const char* name, const char* value);
+
+   TFolder* FindItem(const char* path);
+
+   const char* GetItemField(TFolder* item, const char* name);
+
 public:
 
    TRootSniffer(const char *name, const char *objpath = "Objects");
@@ -144,16 +156,6 @@ public:
    Bool_t RegisterObject(const char *subfolder, TObject *obj);
 
    Bool_t UnregisterObject(TObject *obj);
-
-   TFolder* GetSubFolder(const char* foldername, Bool_t force = kFALSE, Bool_t owner = kFALSE);
-
-   TFolder* CreateItem(const char* subfolder, const char* name, const char* title);
-
-   Bool_t SetItemField(TFolder* item, const char* name, const char* value);
-
-   TFolder* FindItem(const char* path);
-
-   const char* GetItemField(TFolder* item, const char* name);
 
    /** Method scans normal objects, registered in ROOT */
    void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);

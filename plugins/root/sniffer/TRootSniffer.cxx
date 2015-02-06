@@ -43,6 +43,7 @@ extern "C" void R__zip(int cxlevel, int *srcsize, char* src, int *tgtsize, char*
 const char *item_prop_kind = "_kind";
 const char *item_prop_more = "_more";
 const char *item_prop_title = "_title";
+const char *item_prop_hidden = "_hidden";
 const char *item_prop_typename = "_typename";
 const char *item_prop_arraydim = "_arraydim";
 const char *item_prop_realname = "_realname"; // real object name
@@ -678,10 +679,9 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
       if (chld.GoInside(rec, 0, "StreamerInfo")) {
          chld.SetField(item_prop_kind, "ROOT.TStreamerInfoList");
          chld.SetField(item_prop_title, "List of streamer infos for binary I/O");
+         chld.SetField(item_prop_hidden, "true");
       }
    }
-
-   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
 
    ScanCollection(rec, gROOT->GetList());
 
@@ -689,7 +689,8 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
 
    ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
 
-   ScanCollection(rec, topf ? topf->GetListOfFolders() : 0);
+   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
+   if (topf) ScanCollection(rec, topf->GetListOfFolders());
 }
 
 //______________________________________________________________________________
@@ -932,7 +933,7 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char */*options*/,
 
    const char* method = GetItemField(item, "method");
 
-   Info("ExecuteCmd","Executing command %s method:%s", path, method);
+   if (gDebug>0) Info("ExecuteCmd","Executing command %s method:%s", path, method);
 
    TString item_method;
 
@@ -943,7 +944,7 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char */*options*/,
       if (obj!=0) {
          item_method.Form("((%s*)%lu)->%s", obj->ClassName(), (long unsigned) obj, separ + 3);
          method = item_method.Data();
-         Info("ExecuteCmd","Executing %s", method);
+         if (gDebug>2) Info("ExecuteCmd","Executing %s", method);
       }
    }
 
@@ -1535,6 +1536,7 @@ TFolder* TRootSniffer::GetSubFolder(const char* subfolder, Bool_t force, Bool_t 
             if (!force) return 0;
             subfold = fold->AddFolder(subname, "sub-folder");
             subfold->SetOwner(owner);
+            if (owner) subfold->SetBit(kItemFolder); // one only can set properties when onwer flag is enabled
 
             if ((strcmp(subname, "extra") == 0) && !owner)
                subfold->SetBit(kMoreFolder, kTRUE);
@@ -1617,13 +1619,24 @@ Bool_t TRootSniffer::UnregisterObject(TObject *obj)
    return kTRUE;
 }
 
-
 //______________________________________________________________________________
-TFolder* TRootSniffer::CreateItem(const char* subfolder, const char* name, const char* title)
+TFolder* TRootSniffer::CreateItem(const char* fullname, const char* title)
 {
    // create item element
 
-   TFolder* f = GetSubFolder(subfolder, kTRUE, kTRUE);
+   const char* name = fullname;
+   const char* slash = strrchr(fullname, '/');
+   TString subfolder;
+   if (slash!=0) {
+      subfolder.Append(name, slash - name);
+      name = slash+1;
+   } else {
+      subfolder = "/";
+   }
+
+   if (strlen(name)==0) return 0;
+
+   TFolder* f = GetSubFolder(subfolder.Data(), kTRUE, kTRUE);
    if (f==0) return 0;
 
    TFolder* item = new TFolder(name, title);
@@ -1645,15 +1658,18 @@ Bool_t TRootSniffer::SetItemField(TFolder* item, const char* name, const char* v
 
    TNamed* field = dynamic_cast<TNamed*> (item->FindObject(name));
    if (field==0) {
-      field = new TNamed(name, value);
-      field->SetBit(kMustCleanup);
-      item->Add(field);
+      if (value!=0) {
+         field = new TNamed(name, value);
+         field->SetBit(kMustCleanup);
+         item->Add(field);
+      }
    } else
    if (field->IsA()!=TNamed::Class()) {
       Error("SetItemField", "Element for field %s has class other than TNamed", name);
       return kFALSE;
    } else {
-      field->SetTitle(value);
+      if (value!=0) { field->SetTitle(value); }
+               else { item->Remove(field); delete field; }
    }
 
    return kTRUE;

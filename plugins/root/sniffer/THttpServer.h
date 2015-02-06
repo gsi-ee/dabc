@@ -323,6 +323,9 @@ public:
    /** Register command, which can be activated via web interface */
    Bool_t RegisterCommand(const char* cmdname, const char* method, const char* icon = 0);
 
+   /** Hide folder or element in objects hierarchy in web interface */
+   Bool_t Hide(const char* foldername, Bool_t hide = kTRUE);
+
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);
 

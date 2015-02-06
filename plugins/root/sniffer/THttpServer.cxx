@@ -799,12 +799,47 @@ Bool_t THttpServer::Unregister(TObject *obj)
 //______________________________________________________________________________
 Bool_t THttpServer::RegisterCommand(const char* cmdname, const char* method, const char* icon)
 {
-   TFolder* cmd = fSniffer->CreateItem("Control", cmdname, Form("command %s", method));
+   // Register command which can be executed from web interface
+   //
+   // As method one typically specifies string, which is executed with
+   // gROOT->ProcessLine() method. For instance
+   //    serv->RegisterCommand("Invoke","InvokeFunction()");
+   //
+   // Or one could specify any method of the object which is already registered
+   // to the server. For instance:
+   //     serv->Register("/", hpx);
+   //     serv->RegisterCommand("ResetHPX", "/hpx/->Reset()");
+   // Here symbols '/->' separates item name from method to be executed
+   //
+   // Optionally one could specify icon name which will appear in
+   // the web browser together with the command item.
+   // If icon name starts with 'button;' string, than shortcut button
+   // will appear on the top of the browser. For instance:
+   //    serv->RegisterCommand("Invoke","InvokeFunction()","button;/rootsys/icons/ed_execute.png");
+   // Here one see example of images usage from $ROOTSYS/icons directory.
+
+   TFolder* cmd = fSniffer->CreateItem(cmdname, Form("command %s", method));
    fSniffer->SetItemField(cmd, "_kind", "Command");
-   if (icon) fSniffer->SetItemField(cmd, "_fastcmd", icon);
+   if (icon!=0) {
+      if (strncmp(icon,"button;",7)==0) {
+         fSniffer->SetItemField(cmd, "_fastcmd", "true");
+         icon+=7;
+      }
+      if (*icon!=0) fSniffer->SetItemField(cmd, "_icon", icon);
+   }
    fSniffer->SetItemField(cmd, "method", method);
 
    return kTRUE;
+}
+
+//______________________________________________________________________________
+Bool_t THttpServer::Hide(const char* foldername, Bool_t hide)
+{
+   // hides folder from web gui
+
+   TFolder* f = fSniffer->GetSubFolder(foldername);
+
+   return fSniffer->SetItemField(f, "_hidden", hide ? "true" : (const char*) 0);
 }
 
 //______________________________________________________________________________
