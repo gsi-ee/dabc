@@ -14,7 +14,10 @@ about current functionality of the framework.
 5. Use '_hidden' attribute to hide hierarchy elements from default display
 6. Each element could have '_icon' attribute, which is used in hierarchy display
 7. Let register commands in any folders, hide StreamerInfo element 
-
+8. Remove custom zipping with root.bin request, 
+   it can be done with root.bin.gz request
+9. Do not draw functions when 'same' option was used of kNoStats bit is set
+    
 
 5.02.2015
 1. With JSRootCore.js script location one could specify JSROOT 
