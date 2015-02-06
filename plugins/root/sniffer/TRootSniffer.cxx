@@ -930,19 +930,22 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char */*options*/,
 
    if ((item==0) || (kind==0) || (strcmp(kind,"Command")!=0)) { res = "false"; return kTRUE; }
 
-   if (gDebug>0) Info("ExecuteCmd","Executing command %s", path);
-
-   // const char* objaddr = GetItemField(item, "object");
-   // const char* clname = GetItemField(item, "class");
-   // const char* method = GetItemField(item, "method");
-   // const char* args = GetItemField(item, "argument");
-   // if ((clname==0) || (objaddr==0) || (method==0)) { res = "false"; return kTRUE; }
-   // void *addr = (void*) TString(objaddr).Atoll();
-   // TClass* cl = gROOT->GetClass(clname);
-
-   // TMethodCall mcall(cl, method, args);
-
    const char* method = GetItemField(item, "method");
+
+   Info("ExecuteCmd","Executing command %s method:%s", path, method);
+
+   TString item_method;
+
+   const char* separ = strstr(method,"/->");
+   if (separ!=0) {
+      TString itemname(method, separ - method);
+      TObject* obj = FindTObjectInHierarchy(itemname.Data());
+      if (obj!=0) {
+         item_method.Form("((%s*)%lu)->%s", obj->ClassName(), (long unsigned) obj, separ + 3);
+         method = item_method.Data();
+         Info("ExecuteCmd","Executing %s", method);
+      }
+   }
 
    Long_t v = gROOT->ProcessLineSync(method);
 

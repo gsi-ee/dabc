@@ -5,6 +5,10 @@ about current functionality of the framework.
 6.02.2015
 1. Simplify command registration in THttpServer. It could be
    any line which can be processed with the gROOT->ProcessLine
+2. Instead of simple callback function one also could invoke
+   object methods, specifying "/Objects/hpx/->Reset()". 
+   Here string '/->' is principle. 
+3. Provide animation of command execution with buttons
 
 
 5.02.2015
