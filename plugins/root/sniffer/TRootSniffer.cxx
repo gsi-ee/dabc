@@ -932,21 +932,21 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char */*options*/,
 
    if (gDebug>0) Info("ExecuteCmd","Executing command %s", path);
 
-   const char* objaddr = GetItemField(item, "object");
-   const char* clname = GetItemField(item, "class");
+   // const char* objaddr = GetItemField(item, "object");
+   // const char* clname = GetItemField(item, "class");
+   // const char* method = GetItemField(item, "method");
+   // const char* args = GetItemField(item, "argument");
+   // if ((clname==0) || (objaddr==0) || (method==0)) { res = "false"; return kTRUE; }
+   // void *addr = (void*) TString(objaddr).Atoll();
+   // TClass* cl = gROOT->GetClass(clname);
+
+   // TMethodCall mcall(cl, method, args);
+
    const char* method = GetItemField(item, "method");
-   const char* args = GetItemField(item, "argument");
 
-   if ((clname==0) || (objaddr==0) || (method==0)) { res = "false"; return kTRUE; }
+   Long_t v = gROOT->ProcessLineSync(method);
 
-   void *addr = (void*) TString(objaddr).Atoll();
-   TClass* cl = gROOT->GetClass(clname);
-
-   TMethodCall mcall(cl, method, args);
-
-   mcall.Execute(addr);
-
-   res = "true";
+   res.Form("%ld", v);
 
    return kTRUE;
 }

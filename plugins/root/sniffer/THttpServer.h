@@ -270,8 +270,6 @@ protected:
    TMutex       fMutex;       //! mutex to protect list with arguments
    TList        fCallArgs;    //! submitted arguments
 
-   Bool_t       fRunningFlag; //! flag which can be changed from the control gui
-
    // Here any request can be processed
    virtual void ProcessRequest(THttpCallArg *arg);
 
@@ -322,24 +320,8 @@ public:
    /** Unregister object */
    Bool_t Unregister(TObject *obj);
 
-   /** Enable control functionality of the server */
-   Bool_t EnableControl(Bool_t on = kTRUE);
-
-   virtual void SetRunning(Bool_t on = kTRUE)
-   {
-      // change running flag,
-      // method also can be called from web gui when control is enabled
-
-      fRunningFlag = on;
-   }
-
-   virtual Bool_t IsRunning() const
-   {
-      // returns running flag,
-      // method also can be called from web gui when control is enabled
-
-      return fRunningFlag;
-   }
+   /** Register command, which can be activated via web interface */
+   Bool_t RegisterCommand(const char* cmdname, const char* method, const char* icon = 0);
 
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);

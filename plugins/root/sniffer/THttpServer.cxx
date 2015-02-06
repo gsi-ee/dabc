@@ -285,8 +285,7 @@ THttpServer::THttpServer(const char *engine) :
    fDrawPage(),
    fDrawPageCont(),
    fMutex(),
-   fCallArgs(),
-   fRunningFlag(kTRUE)
+   fCallArgs()
 {
    // constructor
 
@@ -798,32 +797,12 @@ Bool_t THttpServer::Unregister(TObject *obj)
 }
 
 //______________________________________________________________________________
-Bool_t THttpServer::EnableControl(Bool_t on)
+Bool_t THttpServer::RegisterCommand(const char* cmdname, const char* method, const char* icon)
 {
-   if (!on) {
-      TFolder* f = fSniffer->GetSubFolder("Control");
-      if (f) delete f;
-      return kTRUE;
-   }
-
-   TString addr = TString::Format("%lu", (long unsigned) this);
-
-
-   TFolder* start = fSniffer->CreateItem("Control", "Start", "start command");
-   fSniffer->SetItemField(start, "_kind", "Command");
-   fSniffer->SetItemField(start, "_fastcmd", "/rootsys/icons/replay.png");
-   fSniffer->SetItemField(start, "object", addr);
-   fSniffer->SetItemField(start, "class", ClassName());
-   fSniffer->SetItemField(start, "method", "SetRunning");
-   fSniffer->SetItemField(start, "argument", "kTRUE");
-
-   TFolder* stop = fSniffer->CreateItem("Control", "Stop", "stop command");
-   fSniffer->SetItemField(stop, "_kind", "Command");
-   fSniffer->SetItemField(stop, "_fastcmd", "/rootsys/icons/stop.png");
-   fSniffer->SetItemField(stop, "object", addr);
-   fSniffer->SetItemField(stop, "class", ClassName());
-   fSniffer->SetItemField(stop, "method", "SetRunning");
-   fSniffer->SetItemField(stop, "argument", "kFALSE");
+   TFolder* cmd = fSniffer->CreateItem("Control", cmdname, Form("command %s", method));
+   fSniffer->SetItemField(cmd, "_kind", "Command");
+   if (icon) fSniffer->SetItemField(cmd, "_fastcmd", icon);
+   fSniffer->SetItemField(cmd, "method", method);
 
    return kTRUE;
 }

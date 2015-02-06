@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+6.02.2015
+1. Simplify command registration in THttpServer. It could be
+   any line which can be processed with the gROOT->ProcessLine
+
+
 5.02.2015
 1. With JSRootCore.js script location one could specify JSROOT 
    functionality to be loaded: '2d', '3d', 'io'. Old method with
