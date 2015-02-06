@@ -1309,23 +1309,9 @@ Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&p
 
    if (sbuf==0) return kFALSE;
 
-   if ((query!=0) && (strstr(query,"zipped")!=0)) {
-      Int_t buflen = 20 + sbuf->Length() + sbuf->Length()/20; // keep safety margin
-      if (buflen<512) buflen = 512;
-
-      ptr = malloc(buflen);
-
-      int irep(0), srcsize(sbuf->Length()), tgtsize(buflen);
-
-      R__zip(5, &srcsize, (char*) sbuf->Buffer(), &tgtsize, (char*) ptr, &irep);
-
-      length = irep;
-
-   } else {
-      ptr = malloc(sbuf->Length());
-      memcpy(ptr, sbuf->Buffer(), sbuf->Length());
-      length = sbuf->Length();
-   }
+   ptr = malloc(sbuf->Length());
+   memcpy(ptr, sbuf->Buffer(), sbuf->Length());
+   length = sbuf->Length();
 
    delete sbuf;
 
@@ -1452,6 +1438,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    //   "root.json" - json representation
    //   "exe.json"  - method execution with json reply
    //   "exe.txt"   - method execution with debug output
+   //   "cmd.json"  - execution of registered commands
 
    if ((file == 0) || (*file == 0)) return kFALSE;
 
@@ -1500,7 +1487,6 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    memcpy(ptr, res.Data(), length);
    return kTRUE;
 }
-
 
 //______________________________________________________________________________
 TFolder* TRootSniffer::GetSubFolder(const char* subfolder, Bool_t force, Bool_t owner)
@@ -1551,7 +1537,6 @@ TFolder* TRootSniffer::GetSubFolder(const char* subfolder, Bool_t force, Bool_t 
 
    return fold;
 }
-
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
@@ -1674,7 +1659,6 @@ Bool_t TRootSniffer::SetItemField(TFolder* item, const char* name, const char* v
 
    return kTRUE;
 }
-
 
 //______________________________________________________________________________
 TFolder* TRootSniffer::FindItem(const char* path)
