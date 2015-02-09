@@ -9,6 +9,7 @@ about current functionality of the framework.
    with 'simple' display - avoid duplication of many functions
 4. Eliminate BuildNoBrowserGUI, always use HierarchyPainter
 5. Allow to open ROOT files in online session
+6. Implement correct monitoring of data from ROOT files :(
 
 
 6.02.2015
