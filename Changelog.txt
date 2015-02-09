@@ -7,6 +7,7 @@ about current functionality of the framework.
 2. Implement 'simple' layout - use right division completely for the display
 3. When showing objects without browser still create HierarchyPainter 
    with 'simple' display - avoid duplication of many functions
+4. Eliminate BuildNoBrowserGUI, always use HierarchyPainter
 
 
 6.02.2015
