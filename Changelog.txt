@@ -3,7 +3,10 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 9.02.2015
-1. Let load several ROOT files.
+1. Let load several ROOT files
+2. Implement 'simple' layout - use right division completely for the display
+3. When showing objects without browser still create HierarchyPainter 
+   with 'simple' display - avoid duplication of many functions
 
 
 6.02.2015

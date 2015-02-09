@@ -45,22 +45,8 @@
                document.getElementById("monitoring").disabled = "disabled";
             } 
             
-            var itemsarr = [], optionsarr = [];
-            var itemname = JSROOT.GetUrlOption("item");
-            if (itemname) itemsarr.push(itemname);
-            var items = JSROOT.GetUrlOption("items");
-            if (items!=null) {
-               items = JSON.parse(items);
-               for (var i in items) itemsarr.push(items[i]);
-            }
-
-            var opt = JSROOT.GetUrlOption("opt");
-            if (opt) optionsarr.push(opt);
-            var opts = JSROOT.GetUrlOption("opts");
-            if (opts!=null) {
-               opts = JSON.parse(opts);
-               for (var i in opts) optionsarr.push(opts[i]);
-            }
+            var itemsarr = JSROOT.GetUrlOptionAsArray("item;items");
+            var optionsarr = JSROOT.GetUrlOptionAsArray("opt;opts");
             
             DABC.hpainter.SetDisplay('grid2x2', 'right-div');
             
