@@ -1058,7 +1058,9 @@
       if (!('_dabc_hist' in item))
          return JSROOT.HierarchyPainter.prototype.GetOnlineItem.call(this, item, callback);
       
-      var url = this.itemFullName(item);
+      var top = item;
+      while ((top!=null) && (!('_online' in top))) top = top._parent;
+      var url = this.itemFullName(item, top);
       if (url.length > 0) url += "/";
       url += 'get.json.gz?compact=3';
 
@@ -1082,7 +1084,6 @@
                   obj['fArray'][i+1+(j+1)*(res.nbins1+2)] = res.bins[6+i+j*res.nbins1]; // 6 first items in array are not bins
          }
             
-
          if (typeof callback == 'function')
             callback(item, obj);
       });

@@ -8,6 +8,7 @@ about current functionality of the framework.
 3. When showing objects without browser still create HierarchyPainter 
    with 'simple' display - avoid duplication of many functions
 4. Eliminate BuildNoBrowserGUI, always use HierarchyPainter
+5. Allow to open ROOT files in online session
 
 
 6.02.2015
