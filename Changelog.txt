@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+9.02.2015
+1. Let load several ROOT files.
+
+
 6.02.2015
 1. Simplify command registration in THttpServer. It could be
    any line which can be processed with the gROOT->ProcessLine
@@ -16,7 +20,7 @@ about current functionality of the framework.
 7. Let register commands in any folders, hide StreamerInfo element 
 8. Remove custom zipping with root.bin request, 
    it can be done with root.bin.gz request
-9. Do not draw functions when 'same' option was used of kNoStats bit is set
+9. Do not draw functions when 'same' option was used or kNoStats bit is set
     
 
 5.02.2015
