@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+10.02.2015
+1. By default, files content monitored in no-browser mode.
+   Or when 'files_monitoring' url option specified
+
+
 9.02.2015
 1. Let load several ROOT files
 2. Implement 'simple' layout - use right division completely for the display
@@ -9,7 +14,7 @@ about current functionality of the framework.
    with 'simple' display - avoid duplication of many functions
 4. Eliminate BuildNoBrowserGUI, always use HierarchyPainter
 5. Allow to open ROOT files in online session
-6. Implement correct monitoring of data from ROOT files :(
+6. Implement correct monitoring of data from ROOT files.
 
 
 6.02.2015
