@@ -5,6 +5,8 @@ about current functionality of the framework.
 10.02.2015
 1. By default, files content monitored in no-browser mode.
    Or when 'files_monitoring' url option specified
+2. Correctly generate URL for reconstruct view in new window
+3. Assign own icons for online session and ROOT files  
 
 
 9.02.2015
