@@ -14,9 +14,9 @@ about current functionality of the framework.
 6. Implement 'autocol' draw option - histogram line colors will be numbered
    automatically. Also 'nostat' draw options is implemented 
 7. One could use '_same_' identifier when superimposing several histograms.
-   Than it will be replaced by item name from first drawn item 
-8. Correctly handle recursion in drawing and dropping items
-    
+   Than it will be replaced by item name from first drawn item
+8. Correctly handle recursion when drawing and than dropping items
+
 
 9.02.2015
 1. Let load several ROOT files
