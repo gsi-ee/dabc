@@ -7,6 +7,8 @@ about current functionality of the framework.
    Or when 'files_monitoring' url option specified
 2. Correctly generate URL for reconstruct view in new window
 3. Assign own icons for online session and ROOT files  
+4. After objects loaded from the file hierarchy is rebuild to 
+   show read subdirectories
 
 
 9.02.2015
