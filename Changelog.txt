@@ -42,6 +42,7 @@ about current functionality of the framework.
 8. Remove custom zipping with root.bin request, 
    it can be done with root.bin.gz request
 9. Do not draw functions when 'same' option was used or kNoStats bit is set
+10.Fix problem when parsing array in URL options 
     
 
 5.02.2015
