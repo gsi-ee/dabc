@@ -11,6 +11,8 @@ about current functionality of the framework.
    show read subdirectories
 5. With syntax item=file1.root/hpx+file2.root/hpx+file3.root/hpx
    allow to superimpose many histograms at once 
+6. Implement 'autocol' draw option - histogram line colors will be numbered
+   automatically. Also 'nostat' draw options is implemented 
     
 
 9.02.2015
