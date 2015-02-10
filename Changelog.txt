@@ -9,7 +9,9 @@ about current functionality of the framework.
 3. Assign own icons for online session and ROOT files  
 4. After objects loaded from the file hierarchy is rebuild to 
    show read subdirectories
-
+5. With syntax item=file1.root/hpx+file2.root/hpx+file3.root/hpx
+   allow to superimpose many histograms at once 
+    
 
 9.02.2015
 1. Let load several ROOT files
