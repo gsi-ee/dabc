@@ -1212,19 +1212,16 @@ Bool_t TRootSniffer::IsStreamerInfoItem(const char *itemname)
 }
 
 //______________________________________________________________________________
-Bool_t TRootSniffer::ProduceBinary(const char *path, const char* query, void *&ptr,
+Bool_t TRootSniffer::ProduceBinary(const char *path, const char*, void *&ptr,
                                    Long_t &length)
 {
    // produce binary data for specified item
-   // if "zipped" option specified in query, buffer will be compressed
 
    if ((path == 0) || (*path == 0)) return kFALSE;
 
    if (*path == '/') path++;
 
    TBufferFile *sbuf = 0;
-
-//   Info("ProduceBinary","Request %s", path);
 
    Bool_t istreamerinfo = IsStreamerInfoItem(path);
 
