@@ -18,10 +18,13 @@ class TBufferFile;
 class TDataMember;
 class THttpServer;
 class TRootSnifferStore;
+class TRootSniffer;
 
 class TRootSnifferScanRec {
-public:
 
+friend class TRootSniffer;
+
+protected:
    enum {
       kScan        = 0x0001,  ///< normal scan of hierarchy
       kExpand      = 0x0002,  ///< expand of specified item - allowed to scan object members
@@ -32,17 +35,19 @@ public:
    };
 
 
-   TRootSnifferScanRec *fParent; //! pointer on parent record
-   UInt_t fMask;                 //! defines operation kind
-   const char *fSearchPath;      //! current path searched
-   Int_t fLevel;                 //! current level of hierarchy
-   TList fItemsNames;            //! list of created items names, need to avoid duplication
+   TRootSnifferScanRec *fParent;      //! pointer on parent record
+   UInt_t               fMask;        //! defines operation kind
+   const char          *fSearchPath;  //! current path searched
+   Int_t                fLevel;       //! current level of hierarchy
+   TList                fItemsNames;  //! list of created items names, need to avoid duplication
 
-   TRootSnifferStore *fStore; //! object to store results
-   Bool_t fHasMore;           //! indicates that potentially there are more items can be found
-   Bool_t fNodeStarted;       //! indicate if node was started
-   Int_t fNumFields;          //! number of fields
-   Int_t fNumChilds;          //! number of childs
+   TRootSnifferStore   *fStore;       //! object to store results
+   Bool_t               fHasMore;     //! indicates that potentially there are more items can be found
+   Bool_t               fNodeStarted; //! indicate if node was started
+   Int_t                fNumFields;   //! number of fields
+   Int_t                fNumChilds;   //! number of childs
+
+public:
 
    TRootSnifferScanRec();
    virtual ~TRootSnifferScanRec();
@@ -73,7 +78,7 @@ public:
    Bool_t IsReadyForResult() const;
 
    /** Set result pointer and return true if result is found */
-   Bool_t SetResult(void *obj, TClass *cl, TDataMember *member = 0,  Int_t chlds = -1);
+   Bool_t SetResult(void *obj, TClass *cl, TDataMember *member = 0);
 
    /** Returns depth of hierarchy */
    Int_t Depth() const;
@@ -97,10 +102,10 @@ public:
 class TRootSniffer : public TNamed {
    friend class THttpServer;
    enum {
-      kMoreFolder = BIT(19),  // all elements in such folder marked with _more
+      kMoreFolder = BIT(19),   // all elements in such folder marked with _more
       // attribute and can be expanded from browser
-      kItemFolder = BIT(20)   // such folder interpreted as hierarchy item,
-                    // with attributes coded into TNamed elements
+      kItem = BIT(20),         // item with custom properties as TFolder
+      fItemProperty = BIT(21)  // item property as TNamed
    };
 protected:
    TString     fObjectsPath; //! path for registered objects
@@ -110,13 +115,9 @@ protected:
 
    void ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl, char *ptr, unsigned long int cloffset);
 
-   void ScanObject(TRootSnifferScanRec &rec, TObject *obj);
-
-   virtual void ScanObjectProperties(TRootSnifferScanRec &rec, TObject *&obj, TClass *&obj_class);
+   virtual void ScanObjectProperties(TRootSnifferScanRec &rec, TObject *obj);
 
    virtual void ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj);
-
-   virtual void ScanItem(TRootSnifferScanRec &rec, TFolder *item);
 
    void ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                        const char *foldername = 0, Bool_t extra = kFALSE, TCollection *keys_lst = 0);
@@ -129,15 +130,16 @@ protected:
 
    TString DecodeUrlOptionValue(const char *value, Bool_t remove_quotes = kTRUE);
 
-   TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE, Bool_t owner = kFALSE);
+   TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE, TFolder **get_parent = 0);
 
-   TFolder *CreateItem(const char *fullname, const char *title);
+   Bool_t CreateItem(const char *fullname, const char *title);
 
-   Bool_t SetItemField(TFolder *item, const char *name, const char *value);
+   Bool_t AccessField(TFolder *parent, TObject *item,
+                      const char *name, const char *value, TNamed **only_get = 0);
 
-   TFolder *FindItem(const char *path);
+   Bool_t SetItemField(const char* item, const char *name, const char *value);
 
-   const char *GetItemField(TFolder *item, const char *name);
+   const char *GetItemField(const char* item, const char *name);
 
 public:
 
@@ -162,6 +164,8 @@ public:
    Bool_t RegisterObject(const char *subfolder, TObject *obj);
 
    Bool_t UnregisterObject(TObject *obj);
+
+   Bool_t SetObjectField(const char *subfolder, TObject *obj, const char *field, const char *value);
 
    /** Method scans normal objects, registered in ROOT */
    void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);

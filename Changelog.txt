@@ -9,7 +9,11 @@ about current functionality of the framework.
    requested. When file monitoring enabled, just delete all buffered objects 
 3. Use JSROOT.CallBack everywhere when call-back optionally should be invoked
 4. Fix problem when decoding draw options for histograms
-
+5. Simplify logic how TRootSniffer scans hierarchy,
+   do TDirectory/TKey handling in central place 
+6. In TRootSniffer change way how properties are set. It allows 
+   to set them not only for TFolder, but also for other registered objects
+    
 
 10.02.2015
 1. By default, files content monitored in no-browser mode.

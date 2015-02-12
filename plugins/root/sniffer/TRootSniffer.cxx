@@ -210,7 +210,7 @@ Bool_t TRootSnifferScanRec::IsReadyForResult() const
 
 
 //______________________________________________________________________________
-Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member, Int_t chlds)
+Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member)
 {
    // set results of scanning
 
@@ -218,7 +218,7 @@ Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member
 
    if (!IsReadyForResult()) return kFALSE;
 
-   fStore->SetResult(obj, cl, member, chlds);
+   fStore->SetResult(obj, cl, member, fNumChilds);
 
    return Done();
 }
@@ -475,45 +475,13 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
             }
          }
 
-         if (chld.SetResult(member_ptr, mcl, member, chld.fNumChilds)) break;
+         if (chld.SetResult(member_ptr, mcl, member)) break;
       }
    }
 }
 
-//______________________________________________________________________________
-void TRootSniffer::ScanObject(TRootSnifferScanRec &rec, TObject *obj)
-{
-   // scan object content
-   // if object is known collection class (like TFolder),
-   // collection content will be scanned as well
-
-   if (obj == 0) return;
-
-   if (!fReadOnly && obj->InheritsFrom(TKey::Class()) && rec.IsReadyForResult()) {
-      TObject *keyobj = ((TKey *) obj)->ReadObj();
-      if (keyobj != 0)
-         if (rec.SetResult(keyobj, keyobj->IsA())) return;
-   }
-
-   if (rec.SetResult(obj, obj->IsA())) return;
-
-   TClass *obj_class = obj->IsA();
-
-   if ((obj_class == TFolder::Class()) && obj->TestBit(kItemFolder)) {
-      ScanItem(rec, (TFolder *) obj);
-   } else {
-      ScanObjectProperties(rec, obj, obj_class);
-      rec.SetRootClass(obj_class);
-      ScanObjectChilds(rec, obj);
-   }
-
-   // here we should know how many childs are accumulated
-   rec.SetResult(obj, obj_class, 0, rec.fNumChilds);
-}
-
 //_____________________________________________________________________
-void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec,
-                                        TObject *&obj, TClass *&obj_class)
+void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject *obj)
 {
    // scans basic object properties
    // here such fields as _typename, _title, _more properties can be specified
@@ -528,58 +496,6 @@ void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec,
       rec.SetField(item_prop_more, "true", kFALSE);
       rec.fHasMore = kTRUE;
    }
-
-   // special handling of TKey class - in non-readonly mode
-   // sniffer allowed to fetch objects
-
-   if (!fReadOnly && obj->InheritsFrom(TKey::Class())) {
-      TKey *key = (TKey *) obj;
-      if (strcmp(key->GetClassName(), "TDirectoryFile") == 0) {
-         if (rec.fLevel == 0) {
-            TDirectory *dir = dynamic_cast<TDirectory *>(key->ReadObj());
-            if (dir != 0) {
-               obj = dir;
-               obj_class = dir->IsA();
-            }
-         } else {
-            rec.SetField(item_prop_more, "true", kFALSE);
-            rec.fHasMore = kTRUE;
-         }
-      } else {
-         obj_class = TClass::GetClass(key->GetClassName());
-      }
-   }
-}
-
-//_____________________________________________________________________
-void TRootSniffer::ScanItem(TRootSnifferScanRec &rec, TFolder *item)
-{
-   // scans basic object properties
-   // here such fields as _typename, _title, _more properties can be specified
-
-   const char *title = item->GetTitle();
-   if ((title != 0) && (*title != 0))
-      rec.SetField(item_prop_title, title);
-
-   // first all properties
-   TIter iter(item->GetListOfFolders());
-   TObject *obj = 0;
-   while ((obj = iter()) != 0) {
-      if (obj->IsA() != TNamed::Class()) continue;
-      if (obj->GetName() || (*(obj->GetName()) == '_'))
-         rec.SetField(obj->GetName(), obj->GetTitle());
-   }
-
-   iter.Reset();
-
-   while ((obj = iter()) != 0) {
-      if (obj->IsA() == TNamed::Class()) continue;
-      TRootSnifferScanRec chld;
-      if (chld.GoInside(rec, obj)) {
-         ScanObject(chld, obj);
-         if (chld.Done()) break;
-      }
-   }
 }
 
 //_____________________________________________________________________
@@ -593,7 +509,6 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
 
       TFolder *fold = (TFolder *) obj;
       if (fold->TestBit(kMoreFolder)) rec.fMask = rec.fMask | TRootSnifferScanRec::kExtraFolder;
-
       ScanCollection(rec, fold->GetListOfFolders());
    } else if (obj->InheritsFrom(TDirectory::Class())) {
       TDirectory *dir = (TDirectory *) obj;
@@ -627,14 +542,30 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
 
       if (lst != 0) {
          TIter iter(lst);
-         TObject *obj(0);
+         TObject *next = iter();
 
-         while ((obj = iter()) != 0) {
+         while (next!=0) {
+            TObject* obj = next;
+
             TRootSnifferScanRec chld;
-            if (chld.GoInside(master, obj)) {
-               ScanObject(chld, obj);
-               if (chld.Done()) break;
+            if (!chld.GoInside(master, obj)) { next = iter(); continue; }
+
+            if (chld.SetResult(obj, obj->IsA())) return;
+
+            if ((obj->IsA() != TFolder::Class()) || !obj->TestBit(kItem))
+              chld.SetRootClass(obj->IsA());
+
+            ScanObjectProperties(chld, obj);
+            // now properties, coded as TNamed objects, placed after object in the hierarchy
+            while ((next = iter()) != 0) {
+               if (next->IsA()!=TNamed::Class()) break;
+               if (!next->TestBit(fItemProperty)) break;
+               chld.SetField(next->GetName(), next->GetTitle());
             }
+
+            ScanObjectChilds(chld, obj);
+
+            if (chld.SetResult(obj, obj->IsA())) return;
          }
       }
 
@@ -648,14 +579,52 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             TObject *obj = (lst == 0) ? 0 : lst->FindObject(key->GetName());
             if ((obj != 0) && (master.fMask & TRootSnifferScanRec::kScan)) continue;
 
-            if (obj == 0) obj = key; // if object exists, provide it to for scan instead of  key
+            Bool_t iskey = kFALSE;
+            // if object not exists, provide key itself for the scan
+            if (obj == 0) { obj = key; iskey = kTRUE; }
 
             TRootSnifferScanRec chld;
             TString fullname = TString::Format("%s;%d", key->GetName(), key->GetCycle());
 
             if (chld.GoInside(master, obj, fullname.Data())) {
-               ScanObject(chld, obj);
-               if (chld.Done()) break;
+
+               if (!fReadOnly && iskey && chld.IsReadyForResult()) {
+                  TObject *keyobj = key->ReadObj();
+                  if (keyobj != 0)
+                     if (chld.SetResult(keyobj, keyobj->IsA())) return;
+               }
+
+               if (chld.SetResult(obj, obj->IsA())) return;
+
+               TClass *obj_class = obj->IsA();
+
+               ScanObjectProperties(chld, obj);
+
+               // special handling of TKey class - in non-readonly mode
+               // sniffer allowed to fetch objects
+               if (!fReadOnly && iskey) {
+                  if (strcmp(key->GetClassName(), "TDirectoryFile") == 0) {
+                     if (chld.fLevel == 0) {
+                        TDirectory *dir = dynamic_cast<TDirectory *>(key->ReadObj());
+                        if (dir != 0) {
+                           obj = dir;
+                           obj_class = dir->IsA();
+                        }
+                     } else {
+                        chld.SetField(item_prop_more, "true", kFALSE);
+                        chld.fHasMore = kTRUE;
+                     }
+                  } else {
+                     obj_class = TClass::GetClass(key->GetClassName());
+                  }
+               }
+
+               rec.SetRootClass(obj_class);
+
+               ScanObjectChilds(chld, obj);
+
+               // here we should know how many childs are accumulated
+               if (chld.SetResult(obj, obj_class)) return;
             }
          }
       }
@@ -925,16 +894,18 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
 {
    // execute command marked as _kind=='Command'
 
-   TFolder *item = FindItem(path);
+   const char *kind = GetItemField(path, item_prop_kind);
 
-   const char *kind = GetItemField(item, item_prop_kind);
-
-   if ((item == 0) || (kind == 0) || (strcmp(kind, "Command") != 0)) {
+   if ((kind == 0) || (strcmp(kind, "Command") != 0)) {
       res = "false";
       return kTRUE;
    }
 
-   const char *method = GetItemField(item, "method");
+   const char *method = GetItemField(path, "method");
+   if ((method==0) || (strlen(method)==0)) {
+      res = "false";
+      return kTRUE;
+   }
 
    if (gDebug > 0) Info("ExecuteCmd", "Executing command %s method:%s", path, method);
 
@@ -1501,7 +1472,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 }
 
 //______________________________________________________________________________
-TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, Bool_t owner)
+TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, TFolder **get_parent)
 {
    // creates subfolder where objects can be registered
 
@@ -1516,10 +1487,10 @@ TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, Bool_t 
    if (httpfold == 0) {
       if (!force) return 0;
       httpfold = topf->AddFolder("http", "Top folder");
-      httpfold->SetOwner(kTRUE);
+      httpfold->SetBit(kCanDelete);
    }
 
-   TFolder *fold = httpfold;
+   TFolder *fold = httpfold, *parent = 0;
 
    if ((subfolder != 0) && (strlen(subfolder) > 0)) {
 
@@ -1533,12 +1504,12 @@ TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, Bool_t 
          if (subfold == 0) {
             if (!force) return 0;
             subfold = fold->AddFolder(subname, "sub-folder");
-            subfold->SetOwner(owner);
-            if (owner) subfold->SetBit(kItemFolder); // one only can set properties when onwer flag is enabled
+            subfold->SetBit(kCanDelete);
 
-            if ((strcmp(subname, "extra") == 0) && !owner)
+            if ((strcmp(subname, "extra") == 0))
                subfold->SetBit(kMoreFolder, kTRUE);
          }
+         parent = fold;
          fold = subfold;
       }
    }
@@ -1547,6 +1518,7 @@ TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, Bool_t 
    if (!gROOT->GetListOfCleanups()->FindObject(fold))
       gROOT->GetListOfCleanups()->Add(fold);
 
+   if (get_parent) *get_parent = parent;
    return fold;
 }
 
@@ -1563,7 +1535,7 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
    //
    // h1 = sniff->FindTObjectInHierarchy("/Objects/my/sub/subfolder/h1");
    //
-   // If subfolder name starts with '/', object will be registered in top folder.
+   // If subfolder name starts with '/', object will be registered starting from top folder.
    //
    // Objects, registered in "extra" sub-folder, can be explored.
    // Typically one used "extra" sub-folder to register event structures to
@@ -1585,16 +1557,39 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
       }
    }
 
-   TFolder *f = GetSubFolder(path.Data(), kTRUE, kFALSE);
+   TFolder *f = GetSubFolder(path.Data(), kTRUE);
    if (f == 0) return kFALSE;
 
-   // If object will be destroyed, it must be removed from the folders automatically
+   // If object will be destroyed, it will be removed from the folders automatically
    obj->SetBit(kMustCleanup);
 
    f->Add(obj);
 
    return kTRUE;
 }
+
+//______________________________________________________________________________
+Bool_t TRootSniffer::SetObjectField(const char *subfolder, TObject *obj,
+                            const char *field, const char *value)
+{
+   if (obj == 0) return kFALSE;
+
+   TString path = fObjectsPath;
+   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
+      if (*subfolder == '/') {
+         path = subfolder;
+      } else {
+         path.Append("/");
+         path.Append(subfolder);
+      }
+   }
+
+   TFolder *f = GetSubFolder(path.Data(), kTRUE);
+   if (f == 0) return kFALSE;
+
+   return AccessField(f, obj, field, value);
+}
+
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::UnregisterObject(TObject *obj)
@@ -1611,84 +1606,119 @@ Bool_t TRootSniffer::UnregisterObject(TObject *obj)
       return kFALSE;
    }
 
+   // TODO - probably we should remove all set properties
    if (topf) topf->RecursiveRemove(obj);
 
    return kTRUE;
 }
 
 //______________________________________________________________________________
-TFolder *TRootSniffer::CreateItem(const char *fullname, const char *title)
+Bool_t TRootSniffer::CreateItem(const char *fullname, const char *title)
 {
    // create item element
 
-   const char *name = fullname;
-   const char *slash = strrchr(fullname, '/');
-   TString subfolder;
-   if (slash != 0) {
-      subfolder.Append(name, slash - name);
-      name = slash + 1;
-   } else {
-      subfolder = "/";
-   }
+   TFolder *f = GetSubFolder(fullname, kTRUE);
+   if (f == 0) return kFALSE;
 
-   if (strlen(name) == 0) return 0;
-
-   TFolder *f = GetSubFolder(subfolder.Data(), kTRUE, kTRUE);
-   if (f == 0) return 0;
-
-   TFolder *item = new TFolder(name, title);
-   item->SetOwner(kTRUE);
-   item->SetBit(kMustCleanup);
-   item->SetBit(kItemFolder);
-   f->Add(item);
-
-   return item;
-}
-
-//______________________________________________________________________________
-Bool_t TRootSniffer::SetItemField(TFolder *item, const char *name, const char *value)
-{
-   // set field in the item
-   // each field coded with TNamed object
-
-   if ((item == 0) || !item->TestBit(kItemFolder)) return kFALSE;
-
-   TNamed *field = dynamic_cast<TNamed *>(item->FindObject(name));
-   if (field == 0) {
-      if (value != 0) {
-         field = new TNamed(name, value);
-         field->SetBit(kMustCleanup);
-         item->Add(field);
-      }
-   } else if (field->IsA() != TNamed::Class()) {
-      Error("SetItemField", "Element for field %s has class other than TNamed", name);
-      return kFALSE;
-   } else {
-      if (value != 0) {
-         field->SetTitle(value);
-      } else {
-         item->Remove(field);
-         delete field;
-      }
-   }
+   if (title) f->SetTitle(title);
+   f->SetBit(kItem);      // special bit - should distinguish from normal folder
 
    return kTRUE;
 }
 
 //______________________________________________________________________________
-TFolder *TRootSniffer::FindItem(const char *path)
+Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
+                                 const char *name, const char *value, TNamed **only_get)
 {
-   TFolder *item = dynamic_cast<TFolder *>(FindTObjectInHierarchy(path));
-   return item && item->TestBit(kItemFolder) ? item : 0;
+   // set or get field for the chld
+   // each field coded as TNamed object, placed after chld in the parent hierarchy
+
+   if (parent==0) return kFALSE;
+
+   if (chld==0) {
+      Info("SetField", "Should be special case for top folder, support later");
+      return kFALSE;
+   }
+
+   TIter iter(parent->GetListOfFolders());
+
+   TObject* obj = 0;
+   Bool_t find(kFALSE), last_find(kFALSE);
+   TNamed* curr = 0;
+   while ((obj = iter()) != 0) {
+      if ((obj->IsA() == TNamed::Class()) && obj->TestBit(fItemProperty)) {
+         if (last_find && (obj->GetName()!=0) && !strcmp(name, obj->GetName())) curr = (TNamed*) obj;
+      } else {
+         last_find = (obj == chld);
+         if (last_find) find = kTRUE;
+      }
+   }
+
+   // object must be in childs list
+   if (!find) return kFALSE;
+
+   if (only_get!=0) {
+      *only_get = curr;
+      return curr!=0;
+   }
+
+   if (curr!=0) {
+      if (value!=0) { curr->SetTitle(value); }
+               else { parent->Remove(curr); delete curr; }
+      return kTRUE;
+   }
+
+   curr = new TNamed(name, value);
+   curr->SetBit(fItemProperty);
+
+   if (last_find) {
+      // object is on last place, therefore just add property
+      parent->Add(curr);
+      return kTRUE;
+   }
+
+   // only here we do dynamic cast to the TList to use AddAfter
+   TList *lst = dynamic_cast<TList *> (parent->GetListOfFolders());
+   if (lst==0) {
+      Error("SetField", "Fail cast to TList");
+      return kFALSE;
+   }
+
+   lst->AddAfter(chld, curr);
+
+   return kTRUE;
+}
+
+//_____________________________________________________________
+Bool_t TRootSniffer::SetItemField(const char* item, const char *name, const char *value)
+{
+   // set field for specified item
+
+   if ((item==0) || (name==0)) return kFALSE;
+
+   TFolder *parent(0);
+   TFolder *sub = GetSubFolder(item, kFALSE, &parent);
+
+   if ((parent==0) || (sub==0)) return kFALSE;
+
+   return AccessField(parent, sub, name, value);
 }
 
 //______________________________________________________________________________
-const char *TRootSniffer::GetItemField(TFolder *item, const char *name)
+const char *TRootSniffer::GetItemField(const char* item, const char *name)
 {
-   if ((item == 0) || !item->TestBit(kItemFolder)) return 0;
+   // return field for specified item
 
-   TNamed *field = dynamic_cast<TNamed *>(item->FindObject(name));
+   if ((item==0) || (name==0)) return kFALSE;
+
+   TFolder *parent(0);
+   TFolder *sub = GetSubFolder(item, kFALSE, &parent);
+
+   if ((parent==0) || (sub==0)) return kFALSE;
+
+   TNamed *field(0);
+
+   if (!AccessField(parent, sub, name, 0, &field)) return 0;
 
    return field ? field->GetTitle() : 0;
-
 }
