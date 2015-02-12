@@ -8,6 +8,7 @@ about current functionality of the framework.
 2. Automatically reconstruct file hierarchy when object from sub-subdirectory 
    requested. When file monitoring enabled, just delete all buffered objects 
 3. Use JSROOT.CallBack everywhere when call-back optionally should be invoked
+4. Fix problem when decoding draw options for histograms
 
 
 10.02.2015

@@ -1086,9 +1086,8 @@
                for (var j=0;j<res.nbins2;j++)
                   obj['fArray'][i+1+(j+1)*(res.nbins1+2)] = res.bins[6+i+j*res.nbins1]; // 6 first items in array are not bins
          }
-            
-         if (typeof callback == 'function')
-            callback(item, obj);
+         
+         JSROOT.CallBack(callback, item, obj);
       });
 
       itemreq.send(null);
