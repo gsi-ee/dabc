@@ -5,6 +5,8 @@ about current functionality of the framework.
 12.02.2015
 1. Add protection for logx/logy scales. Introduce special
    grx/gry function where value less than axis minimum treated specially 
+2. Automatically reconstruct file hierarchy when object from sub-subdirectory 
+   requested. When file monitoring enabled, just delete all buffered objects 
 
 
 10.02.2015

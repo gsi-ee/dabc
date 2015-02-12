@@ -877,9 +877,12 @@
       if (gr['fHistogram']['fYaxis']['fXmin']>0)
          gr['fHistogram']['fYaxis']['fXmin'] *= 0.8;
       else
-         gr['fHistogram']['fYaxis']['fXmin'] *= 1.2;
+         gr['fHistogram']['fYaxis']['fXmin'] *= 1.1;
 
-      gr['fHistogram']['fYaxis']['fXmax'] *= 1.2;
+      if (gr['fHistogram']['fYaxis']['fXmax']>0)
+         gr['fHistogram']['fYaxis']['fXmax'] *= 1.1;
+      else
+         gr['fHistogram']['fYaxis']['fXmax'] *= 0.8;
 
       gr['fHistogram']['fXaxis']['fTimeDisplay'] = true;
       gr['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
