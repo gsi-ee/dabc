@@ -875,7 +875,7 @@
 
       gr['fHistogram']['fTitle'] = this.FullItemName();
       if (gr['fHistogram']['fYaxis']['fXmin']>0)
-         gr['fHistogram']['fYaxis']['fXmin'] = 0;
+         gr['fHistogram']['fYaxis']['fXmin'] *= 0.8;
       else
          gr['fHistogram']['fYaxis']['fXmin'] *= 1.2;
 
