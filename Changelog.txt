@@ -5,6 +5,7 @@ about current functionality of the framework.
 13.02.2015
 1. Fix memory leak in TRootSniffer, consolidate usage of folders, objects,
    items and properties in the sniffer. 
+2. By default, use everywhere Objects folder (if path not starts with slash).  
 
 
 12.02.2015

@@ -106,7 +106,7 @@ class TRootSniffer : public TNamed {
       fItemProperty = BIT(21)  // item property as TNamed
    };
 protected:
-   TString     fObjectsPath; //! path for registered objects
+   TString     fObjectsPath; //! default path for registered objects
    TMemFile   *fMemFile;     //! file used to manage streamer infos
    Int_t       fSinfoSize;   //! number of elements in streamer info, used as version
    Bool_t      fReadOnly;    //! indicate if sniffer allowed to change ROOT structures - for instance, read objects from files
@@ -128,9 +128,11 @@ protected:
 
    TString DecodeUrlOptionValue(const char *value, Bool_t remove_quotes = kTRUE);
 
-   TObject *GetItem(const char *fullname, TFolder *&parent, Bool_t force = kFALSE);
+   TObject *GetItem(const char *fullname, TFolder *&parent, Bool_t force = kFALSE, Bool_t within_objects = kTRUE);
 
    TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE);
+
+   const char *GetItemField(TFolder *parent, TObject *item, const char *name);
 
    Bool_t AccessField(TFolder *parent, TObject *item,
                       const char *name, const char *value, TNamed **only_get = 0);

@@ -899,14 +899,16 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
 {
    // execute command marked as _kind=='Command'
 
-   const char *kind = GetItemField(path, item_prop_kind);
+   TFolder *parent(0);
+   TObject *obj = GetItem(path, parent, kFALSE, kFALSE);
 
+   const char *kind = GetItemField(parent, obj, item_prop_kind);
    if ((kind == 0) || (strcmp(kind, "Command") != 0)) {
       res = "false";
       return kTRUE;
    }
 
-   const char *method = GetItemField(path, "method");
+   const char *method = GetItemField(parent, obj, "method");
    if ((method==0) || (strlen(method)==0)) {
       res = "false";
       return kTRUE;
@@ -1476,7 +1478,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 }
 
 //______________________________________________________________________________
-TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t force)
+TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t force, Bool_t within_objects)
 {
    // return item from the subfolders structure
 
@@ -1503,6 +1505,8 @@ TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t fo
 
    // when full path started not with slash, "Objects" subfolder is appended
    TString path = fullname;
+   if (within_objects && ((path.Length()==0) || (path[0]!='/')))
+      path = fObjectsPath + "/" + path;
 
    TString tok;
    Ssiz_t from(0);
@@ -1566,13 +1570,7 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
    // TEvent* ev = new TEvent;
    // sniff->RegisterObject("extra", ev);
 
-   TString path;
-   if (subfolder!=0) {
-      if (*subfolder=='/') path = subfolder;
-                      else path = fObjectsPath + "/" + subfolder;
-   }
-
-   TFolder *f = GetSubFolder(path, kTRUE);
+   TFolder *f = GetSubFolder(subfolder, kTRUE);
    if (f == 0) return kFALSE;
 
    // If object will be destroyed, it will be removed from the folders automatically
@@ -1696,20 +1694,29 @@ Bool_t TRootSniffer::SetItemField(const char *fullname, const char *name, const 
 }
 
 //______________________________________________________________________________
-const char *TRootSniffer::GetItemField(const char *fullname, const char *name)
+const char *TRootSniffer::GetItemField(TFolder *parent, TObject *obj, const char *name)
 {
-   // return field for specified item
+  // return field for specified item
 
-   if ((fullname==0) || (name==0)) return 0;
-
-   TFolder *parent(0);
-   TObject *obj = GetItem(fullname, parent);
-
-   if ((parent==0) || (obj==0)) return 0;
+   if ((parent==0) || (obj==0) || (name==0)) return 0;
 
    TNamed *field(0);
 
    if (!AccessField(parent, obj, name, 0, &field)) return 0;
 
    return field ? field->GetTitle() : 0;
+}
+
+
+//______________________________________________________________________________
+const char *TRootSniffer::GetItemField(const char *fullname, const char *name)
+{
+   // return field for specified item
+
+   if (fullname==0) return 0;
+
+   TFolder *parent(0);
+   TObject *obj = GetItem(fullname, parent);
+
+   return GetItemField(parent, obj, name);
 }

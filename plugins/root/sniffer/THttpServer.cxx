@@ -820,16 +820,16 @@ Bool_t THttpServer::RegisterCommand(const char *cmdname, const char *method, con
    //    serv->RegisterCommand("Invoke","InvokeFunction()","button;/rootsys/icons/ed_execute.png");
    // Here one see example of images usage from $ROOTSYS/icons directory.
 
-   fSniffer->CreateItem(cmdname, Form("command %s", method));
-   fSniffer->SetItemField(cmdname, "_kind", "Command");
+   CreateItem(cmdname, Form("command %s", method));
+   SetItemField(cmdname, "_kind", "Command");
    if (icon != 0) {
       if (strncmp(icon, "button;", 7) == 0) {
-         fSniffer->SetItemField(cmdname, "_fastcmd", "true");
+         SetItemField(cmdname, "_fastcmd", "true");
          icon += 7;
       }
-      if (*icon != 0) fSniffer->SetItemField(cmdname, "_icon", icon);
+      if (*icon != 0) SetItemField(cmdname, "_icon", icon);
    }
-   fSniffer->SetItemField(cmdname, "method", method);
+   SetItemField(cmdname, "method", method);
 
    return kTRUE;
 }
@@ -839,7 +839,7 @@ Bool_t THttpServer::Hide(const char *foldername, Bool_t hide)
 {
    // hides folder from web gui
 
-   return fSniffer->SetItemField(foldername, "_hidden", hide ? "true" : (const char *) 0);
+   return SetItemField(foldername, "_hidden", hide ? "true" : (const char *) 0);
 }
 
 //______________________________________________________________________________
