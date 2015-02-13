@@ -326,6 +326,12 @@ public:
    /** Hide folder or element in objects hierarchy in web interface */
    Bool_t Hide(const char *foldername, Bool_t hide = kTRUE);
 
+   Bool_t CreateItem(const char *fullname, const char *title);
+
+   Bool_t SetItemField(const char *fullname, const char *name, const char *value);
+
+   const char *GetItemField(const char *fullname, const char *name);
+
    /** Guess mime type base on file extension */
    static const char *GetMimeType(const char *path);
 

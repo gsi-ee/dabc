@@ -934,7 +934,6 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
    return kTRUE;
 }
 
-
 //______________________________________________________________________________
 Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
                                 TString &res)
@@ -1494,7 +1493,7 @@ TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t fo
       httpfold = topf->AddFolder("http", "Top folder");
       httpfold->SetBit(kCanDelete);
       // register top folder in list of cleanups
-      gROOT->GetListOfCleanups()->Add(topf);
+      gROOT->GetListOfCleanups()->Add(httpfold);
    }
 
    parent = httpfold;

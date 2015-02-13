@@ -843,6 +843,24 @@ Bool_t THttpServer::Hide(const char *foldername, Bool_t hide)
 }
 
 //______________________________________________________________________________
+Bool_t THttpServer::CreateItem(const char *fullname, const char *title)
+{
+   return fSniffer->CreateItem(fullname, title);
+}
+
+//______________________________________________________________________________
+Bool_t THttpServer::SetItemField(const char *fullname, const char *name, const char *value)
+{
+   return fSniffer->SetItemField(fullname, name, value);
+}
+
+//______________________________________________________________________________
+const char *THttpServer::GetItemField(const char *fullname, const char *name)
+{
+   return fSniffer->GetItemField(fullname, name);
+}
+
+//______________________________________________________________________________
 const char *THttpServer::GetMimeType(const char *path)
 {
    // Returns MIME type base on file extension
