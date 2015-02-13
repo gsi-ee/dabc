@@ -97,7 +97,7 @@ public:
 
 class TRootSniffer : public TNamed {
    enum {
-      fItemProperty = BIT(21)  // item property stored as TNamed
+      kItemField = BIT(21)  // item property stored as TNamed
    };
 protected:
    TString     fObjectsPath; //! default path for registered objects
@@ -127,6 +127,8 @@ protected:
    TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE);
 
    const char *GetItemField(TFolder *parent, TObject *item, const char *name);
+
+   Bool_t IsItemField(TObject* obj) const;
 
    Bool_t AccessField(TFolder *parent, TObject *item,
                       const char *name, const char *value, TNamed **only_get = 0);

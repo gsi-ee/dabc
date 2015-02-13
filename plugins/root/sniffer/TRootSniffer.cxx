@@ -511,6 +511,14 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
          TIter iter(lst);
          TObject *next = iter();
 
+         // special case - in the beginning one could have items for parent folder
+         while (IsItemField(next)) {
+            if ((next->GetName() != 0) && (*(next->GetName()) == '_'))
+               master.SetField(next->GetName(), next->GetTitle());
+
+            next = iter();
+         }
+
          while (next!=0) {
             TObject* obj = next;
 
@@ -524,8 +532,7 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             ScanObjectProperties(chld, obj);
             // now properties, coded as TNamed objects, placed after object in the hierarchy
             while ((next = iter()) != 0) {
-               if (next->IsA()!=TNamed::Class()) break;
-               if (!next->TestBit(fItemProperty)) break;
+               if (!IsItemField(next)) break;
                if ((next->GetName() != 0) && (*(next->GetName()) == '_')) {
                   // only fields starting with _ are stored
                   chld.SetField(next->GetName(), next->GetTitle());
@@ -1486,7 +1493,7 @@ TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t fo
 
       TIter iter(fold->GetListOfFolders());
       while ((obj = iter()) != 0) {
-         if ((obj->IsA() == TNamed::Class()) && obj->TestBit(fItemProperty)) continue;
+         if (!IsItemField(obj)) continue;
          if (tok.CompareTo(obj->GetName())==0) break;
       }
 
@@ -1581,6 +1588,15 @@ Bool_t TRootSniffer::CreateItem(const char *fullname, const char *title)
 }
 
 //______________________________________________________________________________
+Bool_t TRootSniffer::IsItemField(TObject* obj) const
+{
+   // return true when object is TNamed with kItemField bit set
+   // such objects used to keep field values for item
+
+   return (obj!=0) && (obj->IsA() == TNamed::Class()) && obj->TestBit(kItemField);
+}
+
+//______________________________________________________________________________
 Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
                                  const char *name, const char *value, TNamed **only_get)
 {
@@ -1600,7 +1616,7 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
    Bool_t find(kFALSE), last_find(kFALSE);
    TNamed* curr = 0;
    while ((obj = iter()) != 0) {
-      if ((obj->IsA() == TNamed::Class()) && obj->TestBit(fItemProperty)) {
+      if (IsItemField(obj)) {
          if (last_find && (obj->GetName()!=0) && !strcmp(name, obj->GetName())) curr = (TNamed*) obj;
       } else {
          last_find = (obj == chld);
@@ -1623,7 +1639,7 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
    }
 
    curr = new TNamed(name, value);
-   curr->SetBit(fItemProperty);
+   curr->SetBit(kItemField);
 
    if (last_find) {
       // object is on last place, therefore just add property
