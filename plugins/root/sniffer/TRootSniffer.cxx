@@ -239,25 +239,6 @@ Int_t TRootSnifferScanRec::Depth() const
 }
 
 //______________________________________________________________________________
-Int_t TRootSnifferScanRec::ExtraFolderLevel()
-{
-   // return level depth till folder, marked with extra flag
-   // Objects in such folder can be 'expanded' -
-   // one can get access to all class members
-   // If no extra folder found, -1 is returned
-
-   TRootSnifferScanRec *rec = this;
-   Int_t cnt = 0;
-   while (rec) {
-      if (rec->fMask & kExtraFolder) return cnt;
-      rec = rec->fParent;
-      cnt++;
-   }
-
-   return -1;
-}
-
-//______________________________________________________________________________
 Bool_t TRootSnifferScanRec::CanExpandItem()
 {
    // returns true if current item can be expanded - means one could explore
@@ -265,12 +246,10 @@ Bool_t TRootSnifferScanRec::CanExpandItem()
 
    if (fMask & (kExpand | kSearch | kCheckChilds)) return kTRUE;
 
-   if (!fHasMore) return kFALSE;
-
    // if parent has expand mask, allow to expand item
    if (fParent && (fParent->fMask & kExpand)) return kTRUE;
 
-   return kFALSE;
+   return fHasMore;
 }
 
 //______________________________________________________________________________
@@ -484,18 +463,11 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
 void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject *obj)
 {
    // scans basic object properties
-   // here such fields as _typename, _title, _more properties can be specified
+   // here such fields as _title properties can be specified
 
    const char *title = obj->GetTitle();
    if ((title != 0) && (*title != 0))
       rec.SetField(item_prop_title, title);
-
-   int isextra = rec.ExtraFolderLevel();
-
-   if ((isextra == 1) || ((isextra > 1) && !IsDrawableClass(obj->IsA()))) {
-      rec.SetField(item_prop_more, "true", kFALSE);
-      rec.fHasMore = kTRUE;
-   }
 }
 
 //_____________________________________________________________________
@@ -505,10 +477,7 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
    // here one scans collection, branches, trees and so on
 
    if (obj->InheritsFrom(TFolder::Class())) {
-      // starting from special folder, we automatically scan members
-
       TFolder *fold = (TFolder *) obj;
-      if (fold->TestBit(kMoreFolder)) rec.fMask = rec.fMask | TRootSnifferScanRec::kExtraFolder;
       ScanCollection(rec, fold->GetListOfFolders());
    } else if (obj->InheritsFrom(TDirectory::Class())) {
       TDirectory *dir = (TDirectory *) obj;
@@ -534,7 +503,6 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
    TRootSnifferScanRec folderrec;
    if (foldername) {
       if (!folderrec.GoInside(rec, 0, foldername)) return;
-      if (extra) folderrec.fMask = folderrec.fMask | TRootSnifferScanRec::kExtraFolder;
    }
 
    {
@@ -1524,12 +1492,9 @@ TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t fo
       }
 
       if (obj == 0) {
-        if (!force) return 0;
-        obj = fold->AddFolder(tok, "sub-folder");
-        obj->SetBit(kCanDelete);
-
-        if (tok == "extra")
-           obj->SetBit(kMoreFolder, kTRUE);
+         if (!force) return 0;
+         obj = fold->AddFolder(tok, "sub-folder");
+         obj->SetBit(kCanDelete);
       }
 
       parent = fold;
@@ -1563,12 +1528,13 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
    //
    // If subfolder name starts with '/', object will be registered starting from top folder.
    //
-   // Objects, registered in "extra" sub-folder, can be explored.
-   // Typically one used "extra" sub-folder to register event structures to
-   // be able expand it later in web-browser:
+   // One could provide additional fields for registered objects
+   // For instance, setting "_more" field to true let browser
+   // explore objects members. For instance:
    //
-   // TEvent* ev = new TEvent;
-   // sniff->RegisterObject("extra", ev);
+   // TEvent* ev = new TEvent("ev");
+   // sniff->RegisterObject("Events", ev);
+   // sniff->SetItemField("Events/ev", "_more", "true");
 
    TFolder *f = GetSubFolder(subfolder, kTRUE);
    if (f == 0) return kFALSE;

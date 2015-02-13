@@ -30,8 +30,7 @@ protected:
       kExpand      = 0x0002,  ///< expand of specified item - allowed to scan object members
       kSearch      = 0x0004,  ///< search for specified item (only objects and collections)
       kCheckChilds = 0x0008,  ///< check if there childs, very similar to search
-      kActions     = 0x000F,  ///< mask for actions, only actions copied to child rec
-      kExtraFolder = 0x0010   ///< bit marks folder where all childs can be expanded
+      kActions     = 0x000F   ///< mask for actions, only actions copied to child rec
    };
 
 
@@ -83,9 +82,6 @@ public:
    /** Returns depth of hierarchy */
    Int_t Depth() const;
 
-   /** Returns level till extra folder, marked as kExtraFolder */
-   Int_t ExtraFolderLevel();
-
    /** Method indicates that scanning can be interrupted while result is set */
    Bool_t Done() const;
 
@@ -101,9 +97,7 @@ public:
 
 class TRootSniffer : public TNamed {
    enum {
-      kMoreFolder = BIT(19),   // all elements in such folder marked with _more
-      // attribute and can be expanded from browser
-      fItemProperty = BIT(21)  // item property as TNamed
+      fItemProperty = BIT(21)  // item property stored as TNamed
    };
 protected:
    TString     fObjectsPath; //! default path for registered objects
