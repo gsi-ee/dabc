@@ -246,10 +246,12 @@ Bool_t TRootSnifferScanRec::CanExpandItem()
 
    if (fMask & (kExpand | kSearch | kCheckChilds)) return kTRUE;
 
+   if (!fHasMore) return kFALSE;
+
    // if parent has expand mask, allow to expand item
    if (fParent && (fParent->fMask & kExpand)) return kTRUE;
 
-   return fHasMore;
+   return kFALSE;
 }
 
 //______________________________________________________________________________
@@ -1493,7 +1495,7 @@ TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t fo
 
       TIter iter(fold->GetListOfFolders());
       while ((obj = iter()) != 0) {
-         if (!IsItemField(obj)) continue;
+         if (IsItemField(obj)) continue;
          if (tok.CompareTo(obj->GetName())==0) break;
       }
 
@@ -1614,6 +1616,8 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
 
    TObject* obj = 0;
    Bool_t find(kFALSE), last_find(kFALSE);
+   // this is special case of top folder - fields are on very top
+   if (parent == chld) { last_find = find = kTRUE; }
    TNamed* curr = 0;
    while ((obj = iter()) != 0) {
       if (IsItemField(obj)) {
@@ -1621,6 +1625,7 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
       } else {
          last_find = (obj == chld);
          if (last_find) find = kTRUE;
+         if (find && !last_find) break; // no need to continue
       }
    }
 
@@ -1654,7 +1659,10 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
       return kFALSE;
    }
 
-   lst->AddAfter(chld, curr);
+   if (parent==chld)
+      lst->AddFirst(curr);
+   else
+      lst->AddAfter(chld, curr);
 
    return kTRUE;
 }
