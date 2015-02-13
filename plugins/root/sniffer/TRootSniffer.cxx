@@ -552,16 +552,21 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
 
             if (chld.SetResult(obj, obj->IsA())) return;
 
-            if ((obj->IsA() != TFolder::Class()) || !obj->TestBit(kItem))
-              chld.SetRootClass(obj->IsA());
+            Bool_t has_kind = kFALSE;
 
             ScanObjectProperties(chld, obj);
             // now properties, coded as TNamed objects, placed after object in the hierarchy
             while ((next = iter()) != 0) {
                if (next->IsA()!=TNamed::Class()) break;
                if (!next->TestBit(fItemProperty)) break;
-               chld.SetField(next->GetName(), next->GetTitle());
+               if ((next->GetName() != 0) && (*(next->GetName()) == '_')) {
+                  // only fields starting with _ are stored
+                  chld.SetField(next->GetName(), next->GetTitle());
+                  if (strcmp(next->GetName(), item_prop_kind)==0) has_kind = kTRUE;
+               }
             }
+
+            if (!has_kind) chld.SetRootClass(obj->IsA());
 
             ScanObjectChilds(chld, obj);
 
@@ -1472,9 +1477,9 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 }
 
 //______________________________________________________________________________
-TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, TFolder **get_parent)
+TObject *TRootSniffer::GetItem(const char *fullname, TFolder *&parent, Bool_t force)
 {
-   // creates subfolder where objects can be registered
+   // return item from the subfolders structure
 
    TFolder *topf = gROOT->GetRootFolder();
 
@@ -1488,38 +1493,56 @@ TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force, TFolder
       if (!force) return 0;
       httpfold = topf->AddFolder("http", "Top folder");
       httpfold->SetBit(kCanDelete);
+      // register top folder in list of cleanups
+      gROOT->GetListOfCleanups()->Add(topf);
    }
 
-   TFolder *fold = httpfold, *parent = 0;
+   parent = httpfold;
+   TObject *obj = httpfold;
 
-   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
+   if (fullname==0) return httpfold;
 
-      TObjArray *arr = TString(subfolder).Tokenize("/");
-      for (Int_t i = 0; i <= (arr ? arr->GetLast() : -1); i++) {
+   // when full path started not with slash, "Objects" subfolder is appended
+   TString path = fullname;
 
-         const char *subname = arr->At(i)->GetName();
-         if (strlen(subname) == 0) continue;
+   TString tok;
+   Ssiz_t from(0);
 
-         TFolder *subfold = dynamic_cast<TFolder *>(fold->FindObject(subname));
-         if (subfold == 0) {
-            if (!force) return 0;
-            subfold = fold->AddFolder(subname, "sub-folder");
-            subfold->SetBit(kCanDelete);
+   while (path.Tokenize(tok,from,"/")) {
+      if (tok.Length()==0) continue;
 
-            if ((strcmp(subname, "extra") == 0))
-               subfold->SetBit(kMoreFolder, kTRUE);
-         }
-         parent = fold;
-         fold = subfold;
+      TFolder *fold = dynamic_cast<TFolder *> (obj);
+      if (fold == 0) return 0;
+
+      TIter iter(fold->GetListOfFolders());
+      while ((obj = iter()) != 0) {
+         if ((obj->IsA() == TNamed::Class()) && obj->TestBit(fItemProperty)) continue;
+         if (tok.CompareTo(obj->GetName())==0) break;
       }
+
+      if (obj == 0) {
+        if (!force) return 0;
+        obj = fold->AddFolder(tok, "sub-folder");
+        obj->SetBit(kCanDelete);
+
+        if (tok == "extra")
+           obj->SetBit(kMoreFolder, kTRUE);
+      }
+
+      parent = fold;
    }
 
-   // register folder for cleanup
-   if (!gROOT->GetListOfCleanups()->FindObject(fold))
-      gROOT->GetListOfCleanups()->Add(fold);
+   return obj;
+}
 
-   if (get_parent) *get_parent = parent;
-   return fold;
+//______________________________________________________________________________
+TFolder *TRootSniffer::GetSubFolder(const char *subfolder, Bool_t force)
+{
+   // creates subfolder where objects can be registered
+
+   TFolder *parent = 0;
+
+   return dynamic_cast<TFolder *> (GetItem(subfolder, parent, force));
 }
 
 //______________________________________________________________________________
@@ -1544,20 +1567,13 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
    // TEvent* ev = new TEvent;
    // sniff->RegisterObject("extra", ev);
 
-
-   if (obj == 0) return kFALSE;
-
-   TString path = fObjectsPath;
-   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
-      if (*subfolder == '/') {
-         path = subfolder;
-      } else {
-         path.Append("/");
-         path.Append(subfolder);
-      }
+   TString path;
+   if (subfolder!=0) {
+      if (*subfolder=='/') path = subfolder;
+                      else path = fObjectsPath + "/" + subfolder;
    }
 
-   TFolder *f = GetSubFolder(path.Data(), kTRUE);
+   TFolder *f = GetSubFolder(path, kTRUE);
    if (f == 0) return kFALSE;
 
    // If object will be destroyed, it will be removed from the folders automatically
@@ -1567,29 +1583,6 @@ Bool_t TRootSniffer::RegisterObject(const char *subfolder, TObject *obj)
 
    return kTRUE;
 }
-
-//______________________________________________________________________________
-Bool_t TRootSniffer::SetObjectField(const char *subfolder, TObject *obj,
-                            const char *field, const char *value)
-{
-   if (obj == 0) return kFALSE;
-
-   TString path = fObjectsPath;
-   if ((subfolder != 0) && (strlen(subfolder) > 0)) {
-      if (*subfolder == '/') {
-         path = subfolder;
-      } else {
-         path.Append("/");
-         path.Append(subfolder);
-      }
-   }
-
-   TFolder *f = GetSubFolder(path.Data(), kTRUE);
-   if (f == 0) return kFALSE;
-
-   return AccessField(f, obj, field, value);
-}
-
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::UnregisterObject(TObject *obj)
@@ -1606,7 +1599,7 @@ Bool_t TRootSniffer::UnregisterObject(TObject *obj)
       return kFALSE;
    }
 
-   // TODO - probably we should remove all set properties
+   // TODO - probably we should remove all set properties as well
    if (topf) topf->RecursiveRemove(obj);
 
    return kTRUE;
@@ -1621,7 +1614,6 @@ Bool_t TRootSniffer::CreateItem(const char *fullname, const char *title)
    if (f == 0) return kFALSE;
 
    if (title) f->SetTitle(title);
-   f->SetBit(kItem);      // special bit - should distinguish from normal folder
 
    return kTRUE;
 }
@@ -1630,7 +1622,7 @@ Bool_t TRootSniffer::CreateItem(const char *fullname, const char *title)
 Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
                                  const char *name, const char *value, TNamed **only_get)
 {
-   // set or get field for the chld
+   // set or get field for the child
    // each field coded as TNamed object, placed after chld in the parent hierarchy
 
    if (parent==0) return kFALSE;
@@ -1690,35 +1682,35 @@ Bool_t TRootSniffer::AccessField(TFolder *parent, TObject *chld,
 }
 
 //_____________________________________________________________
-Bool_t TRootSniffer::SetItemField(const char* item, const char *name, const char *value)
+Bool_t TRootSniffer::SetItemField(const char *fullname, const char *name, const char *value)
 {
    // set field for specified item
 
-   if ((item==0) || (name==0)) return kFALSE;
+   if ((fullname==0) || (name==0)) return kFALSE;
 
    TFolder *parent(0);
-   TFolder *sub = GetSubFolder(item, kFALSE, &parent);
+   TObject *obj = GetItem(fullname, parent);
 
-   if ((parent==0) || (sub==0)) return kFALSE;
+   if ((parent==0) || (obj==0)) return kFALSE;
 
-   return AccessField(parent, sub, name, value);
+   return AccessField(parent, obj, name, value);
 }
 
 //______________________________________________________________________________
-const char *TRootSniffer::GetItemField(const char* item, const char *name)
+const char *TRootSniffer::GetItemField(const char *fullname, const char *name)
 {
    // return field for specified item
 
-   if ((item==0) || (name==0)) return kFALSE;
+   if ((fullname==0) || (name==0)) return 0;
 
    TFolder *parent(0);
-   TFolder *sub = GetSubFolder(item, kFALSE, &parent);
+   TObject *obj = GetItem(fullname, parent);
 
-   if ((parent==0) || (sub==0)) return kFALSE;
+   if ((parent==0) || (obj==0)) return 0;
 
    TNamed *field(0);
 
-   if (!AccessField(parent, sub, name, 0, &field)) return 0;
+   if (!AccessField(parent, obj, name, 0, &field)) return 0;
 
    return field ? field->GetTitle() : 0;
 }

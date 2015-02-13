@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+13.02.2015
+1. Fix memory leak in TRootSniffer, consolidate usage of folders, objects,
+   items and properties in the sniffer. 
+
+
 12.02.2015
 1. Add protection for logx/logy scales. Introduce special
    grx/gry function where value less than axis minimum treated specially 

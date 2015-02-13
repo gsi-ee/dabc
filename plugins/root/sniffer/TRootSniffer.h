@@ -100,11 +100,9 @@ public:
 //_______________________________________________________________________
 
 class TRootSniffer : public TNamed {
-   friend class THttpServer;
    enum {
       kMoreFolder = BIT(19),   // all elements in such folder marked with _more
       // attribute and can be expanded from browser
-      kItem = BIT(20),         // item with custom properties as TFolder
       fItemProperty = BIT(21)  // item property as TNamed
    };
 protected:
@@ -130,16 +128,12 @@ protected:
 
    TString DecodeUrlOptionValue(const char *value, Bool_t remove_quotes = kTRUE);
 
-   TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE, TFolder **get_parent = 0);
+   TObject *GetItem(const char *fullname, TFolder *&parent, Bool_t force = kFALSE);
 
-   Bool_t CreateItem(const char *fullname, const char *title);
+   TFolder *GetSubFolder(const char *foldername, Bool_t force = kFALSE);
 
    Bool_t AccessField(TFolder *parent, TObject *item,
                       const char *name, const char *value, TNamed **only_get = 0);
-
-   Bool_t SetItemField(const char* item, const char *name, const char *value);
-
-   const char *GetItemField(const char* item, const char *name);
 
 public:
 
@@ -165,7 +159,11 @@ public:
 
    Bool_t UnregisterObject(TObject *obj);
 
-   Bool_t SetObjectField(const char *subfolder, TObject *obj, const char *field, const char *value);
+   Bool_t CreateItem(const char *fullname, const char *title);
+
+   Bool_t SetItemField(const char *fullname, const char *name, const char *value);
+
+   const char *GetItemField(const char *fullname, const char *name);
 
    /** Method scans normal objects, registered in ROOT */
    void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);
