@@ -1397,9 +1397,9 @@ Bool_t TRootSniffer::ProduceImage(Int_t kind, const char *path,
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::Produce(const char *path, const char *file,
-                             const char *options, void *&ptr, Long_t &length)
+                             const char *options, void *&ptr, Long_t &length, TString &str)
 {
-   // method to produce different kind of binary data
+   // method to produce different kind of data
    // Supported file (case sensitive):
    //   "root.bin"  - binary data
    //   "root.png"  - png image
@@ -1410,6 +1410,8 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    //   "exe.json"  - method execution with json reply
    //   "exe.txt"   - method execution with debug output
    //   "cmd.json"  - execution of registered commands
+   // Result returned either as string or binary buffer,
+   // which should be released with free() call
 
    if ((file == 0) || (*file == 0)) return kFALSE;
 
@@ -1428,35 +1430,23 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    if (strcmp(file, "exe.bin") == 0)
       return ProduceExe(path, options, 2, 0, &ptr, &length);
 
-   TString res; // output will be stored as text
+   if (strcmp(file, "root.xml") == 0)
+      return ProduceXml(path, options, str);
 
-   if (strcmp(file, "root.xml") == 0) {
-      if (!ProduceXml(path, options, res)) return kFALSE;
-   } else
+   if ((strcmp(file, "root.json") == 0) || (strcmp(file, "get.json") == 0))
+      return ProduceJson(path, options, str);
 
-      if ((strcmp(file, "root.json") == 0) || (strcmp(file, "get.json") == 0)) {
-         if (!ProduceJson(path, options, res)) return kFALSE;
-      } else
+   // used for debugging
+   if (strcmp(file, "exe.txt") == 0)
+      return ProduceExe(path, options, 0, &str);
 
-         if (strcmp(file, "exe.txt") == 0) {
-            // used for debugging
-            if (!ProduceExe(path, options, 0, &res)) return kFALSE;
-         } else
+   if (strcmp(file, "exe.json") == 0)
+      return ProduceExe(path, options, 1, &str);
 
-            if (strcmp(file, "exe.json") == 0)  {
-               if (!ProduceExe(path, options, 1, &res)) return kFALSE;
-            } else
+   if (strcmp(file, "cmd.json") == 0)
+      return ExecuteCmd(path, options, str);
 
-               if (strcmp(file, "cmd.json") == 0)  {
-                  if (!ExecuteCmd(path, options, res)) return kFALSE;
-               } else {
-                  return kFALSE;
-               }
-
-   length = res.Length();
-   ptr = malloc(length);
-   memcpy(ptr, res.Data(), length);
-   return kTRUE;
+   return kFALSE;
 }
 
 //______________________________________________________________________________

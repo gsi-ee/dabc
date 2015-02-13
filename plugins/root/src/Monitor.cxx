@@ -184,15 +184,19 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 
    void* ptr(0);
    Long_t length(0);
+   TString str;
 
    // use sniffer method to generate data
 
-   if (!sniff->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length)) {
+   if (!sniff->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length, str)) {
        EOUT("ROOT sniffer producer fails for item %s kind %s", itemname.c_str(), binkind.c_str());
        return dabc::cmd_false;
    }
 
-   buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+   if (ptr!=0)
+      buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+   else
+      buf = dabc::Buffer::CreateBuffer(str.Data(), str.Length());
 
    // for binary data set correct version into header
    if (binkind == "root.bin") {

@@ -688,20 +688,19 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
          if (pos == kNPOS) {
             arg->fContent = fDrawPageCont;
          } else {
-            void *bindata(0);
-            Long_t bindatalen(0);
-
-            if (fSniffer->Produce(arg->fPathName.Data(), "root.json", "compact=3", bindata, bindatalen)) {
+            TString str;
+            void *bindata = 0;
+            Long_t bindatalen = 0;
+            if (fSniffer->Produce(arg->fPathName.Data(), "root.json", "compact=3", bindata, bindatalen, str)) {
                arg->fContent.Clear();
                arg->fContent.Append(fDrawPageCont, pos);
-               arg->fContent.Append((char *) bindata, bindatalen);
+               arg->fContent.Append(str);
                arg->fContent.Append(fDrawPageCont.Data() + pos + strlen(rootjsontag));
                arg->AddHeader("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0");
                if (arg->fQuery.Index("nozip") == kNPOS) arg->SetZipping(2);
             } else {
                arg->fContent = fDrawPageCont;
             }
-            free(bindata);
          }
          arg->SetContentType("text/html");
       }
@@ -755,7 +754,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
          arg->SetJson();
       } else
 
-         if (fSniffer->Produce(arg->fPathName.Data(), filename.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength)) {
+         if (fSniffer->Produce(arg->fPathName.Data(), filename.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength, arg->fContent)) {
             // define content type base on extension
             arg->SetContentType(GetMimeType(filename.Data()));
          } else {

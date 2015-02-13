@@ -192,7 +192,7 @@ public:
 
    Bool_t ExecuteCmd(const char *path, const char *options, TString &res);
 
-   Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length);
+   Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length, TString &str);
 
    ClassDef(TRootSniffer, 0) // Sniffer of ROOT objects
 };

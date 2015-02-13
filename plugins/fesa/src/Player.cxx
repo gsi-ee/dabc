@@ -110,7 +110,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    item = fWorkerHierarchy.CreateHChild("TestRate");
    item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
-   
+
    CreateCmdDef("CmdReset").AddArg("counter", "int", true, "5");
 
    fServerName = Cfg("Server", cmd).AsStr();
@@ -122,7 +122,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    CreateTimer("update", 1., false);
 
    fCounter = 0;
-   
+
    #ifdef WITH_FESA
    if (!fServerName.empty() && !fDeviceName.empty()) {
       fRDAService = rdaRDAService::init();
@@ -132,13 +132,13 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
       } catch (...) {
          EOUT("Device %s on server %s not found", fDeviceName.c_str(), fServerName.c_str());
       }
-      
+
       if ((fDevice!=0) && !fService.empty()) {
          item = fWorkerHierarchy.CreateHChild(fService);
          item.SetField(dabc::prop_kind,"rate");
          item.EnableHistory(100);
       }
-      
+
    }
    #endif
 
@@ -164,7 +164,7 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
 fesa::Player::~Player()
 {
-  
+
    #ifdef WITH_ROOT
    if (fSniffer) {
       delete fSniffer;
@@ -200,7 +200,7 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
 #endif
 
    dabc::LockGuard lock(fWorkerHierarchy.GetHMutex());
-   
+
    dabc::Hierarchy item = fWorkerHierarchy.GetHChild("BeamProfile");
 
    // DOUT0("Set binary buffer %u to item %s %p", buf.GetTotalSize(), item.GetName(), item.GetObject());
@@ -276,9 +276,13 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 #ifdef WITH_ROOT
         void* ptr(0);
         Long_t length(0);
+        TString str;
 
-        if (fSniffer->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length)) {
-           buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+        if (fSniffer->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length, str)) {
+           if (ptr!=0)
+              buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
+           else
+              buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length());
            item.FillBinHeader("", cmd, fSniffer->GetStreamerInfoHash());
         } else {
            EOUT("Player fail to produce item %s", itemname.c_str());
@@ -308,7 +312,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
 double fesa::Player::doGet(const std::string& service, const std::string& field)
 {
    double res = 0.;
-  
+
    #ifdef WITH_FESA
       if (fDevice==0) return 0.;
       try {

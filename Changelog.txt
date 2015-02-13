@@ -11,6 +11,7 @@ about current functionality of the framework.
 4. Resolve problem with keys of same name, but different class 
 5. Fix problem with setting fields for top item. Can be used in different
    custom application. For instance, autoload of files or start view
+6. Use string buffer when TRootSniffer produces string as output 
 
 
 12.02.2015
