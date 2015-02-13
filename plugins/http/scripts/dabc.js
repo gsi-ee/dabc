@@ -1002,10 +1002,8 @@
          painter.ForEach(function(h) {
             if (!('_drawfunc' in h)) return;
             if (h._kind.indexOf('ROOT.')!=0) return;
-            
             var typename = h._kind.slice(5);
             if (JSROOT.canDraw(typename)) return;
-            
             var func = JSROOT.findFunction(h['_drawfunc']);
             if (func) JSROOT.addDrawFunc(typename, func);
          });   
@@ -1097,7 +1095,7 @@
    DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
    {
       var node = this.Find(itemname);
-      if ((node==null) || !this.CreateDisplay()) return;
+      if ((node==null) || !this.CreateDisplay()) return JSROOT.CallBack(call_back, null, itemname);
 
       var mdi = this['disp'];
 
@@ -1113,7 +1111,7 @@
             { p.ClickItem(); isdabc = true; } 
       });
 
-      if (isdabc) return;
+      if (isdabc) return JSROOT.CallBack(call_back, null, itemname);
       
       if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
@@ -1129,7 +1127,7 @@
 
       elem.RegularCheck();
       
-      if (typeof call_back == 'function') call_back(elem);
+      return JSROOT.CallBack(call_back, elem, itemname);
    }
    
    DABC.HierarchyPainter.prototype.HistoryDepth = function(onlyurl) {
