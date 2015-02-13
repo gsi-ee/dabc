@@ -148,7 +148,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
-   DOUT0("Request item %s file %s ", itemname.c_str(), binkind.c_str());
+   DOUT2("Request item %s file %s ", itemname.c_str(), binkind.c_str());
 
    dabc::Buffer buf;
 
@@ -196,7 +196,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    if (ptr!=0)
       buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
    else
-      buf = dabc::Buffer::CreateBuffer(str.Data(), str.Length());
+      buf = dabc::Buffer::CreateBuffer(str.Data(), str.Length(), false, true);
 
    // for binary data set correct version into header
    if (binkind == "root.bin") {

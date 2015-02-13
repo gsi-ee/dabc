@@ -282,7 +282,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
            if (ptr!=0)
               buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
            else
-              buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length());
+              buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
            item.FillBinHeader("", cmd, fSniffer->GetStreamerInfoHash());
         } else {
            EOUT("Player fail to produce item %s", itemname.c_str());

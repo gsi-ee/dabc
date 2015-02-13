@@ -919,6 +919,22 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
 }
 
 //______________________________________________________________________________
+Bool_t TRootSniffer::ProduceGet(const char *path, const char *options, TString &res)
+{
+   // produce json representation of item fields
+
+   TFolder *parent(0);
+   TObject *obj = GetItem(path, parent, kFALSE, kFALSE);
+
+   if ((parent==0) || (obj==0)) return kFALSE;
+
+
+
+
+   return kTRUE;
+}
+
+//______________________________________________________________________________
 Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
                                 TString &res)
 {
