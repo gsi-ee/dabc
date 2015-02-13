@@ -1007,8 +1007,8 @@
             if (JSROOT.canDraw(typename)) return;
             var func = JSROOT.findFunction(h['_drawfunc']);
             if (func) JSROOT.addDrawFunc(typename, func);
-         });   
-         ready_callback();
+         });
+         JSROOT.HierarchyPainter.prototype.CompleteOnline.call(this, ready_callback);
       });
    }
 

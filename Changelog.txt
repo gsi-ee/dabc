@@ -14,7 +14,12 @@ about current functionality of the framework.
 6. Use string buffer when TRootSniffer produces string as output 
 7. Implement get.json to request only fields of specified item.
    Just for fun also make analoge get.xml  
-   
+8. Implement several fields for top element, which are analyzed in the gui:
+      serv->SetItemField("/","_loadfile","/currentdir/hcopy.root");
+      serv->SetItemField("/","_monitoring","2000");
+      serv->SetItemField("/","_display","job1/Files/job1.root/hpx");
+   One can specify file to load, monitoring parameter, item to display
+
 
 12.02.2015
 1. Add protection for logx/logy scales. Introduce special
