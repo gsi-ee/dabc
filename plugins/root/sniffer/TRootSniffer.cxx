@@ -629,6 +629,10 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
 
    rec.SetField(item_prop_kind, "ROOT.Session");
 
+   // should be on the top while //root/http folder could have properties for itself
+   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
+   if (topf) ScanCollection(rec, topf->GetListOfFolders());
+
    {
       TRootSnifferScanRec chld;
       if (chld.GoInside(rec, 0, "StreamerInfo")) {
@@ -643,9 +647,6 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
    ScanCollection(rec, gROOT->GetListOfCanvases(), "Canvases");
 
    ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
-
-   TFolder *topf = dynamic_cast<TFolder *>(gROOT->FindObject("//root/http"));
-   if (topf) ScanCollection(rec, topf->GetListOfFolders());
 }
 
 //______________________________________________________________________________
