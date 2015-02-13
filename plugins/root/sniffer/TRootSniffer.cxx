@@ -293,6 +293,8 @@ Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec &super, TObject *obj,
    fParent = &super;
 
    if (fMask & kScan) {
+      // if scanning only fields, ignore all childs
+      if (super.ScanOnlyFields()) return kFALSE;
       // only when doing scan, increment level, used for text formatting
       fLevel++;
    } else {
@@ -312,11 +314,9 @@ Bool_t TRootSnifferScanRec::GoInside(TRootSnifferScanRec &super, TObject *obj,
       if (*separ == 0) {
          fSearchPath = 0;
          if (fMask & kExpand) {
-            fMask = kScan;
-            fSearchPath = 0;
-            fHasMore = kTRUE; // when found selected object, allow to scan it (and only it)
+            fMask = (fMask & kOnlyFields) | kScan;
+            fHasMore = (fMask & kOnlyFields) == 0;
          }
-
       } else {
          if (!isslash) return kFALSE;
          fSearchPath = separ;
@@ -515,7 +515,7 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
 
          // special case - in the beginning one could have items for parent folder
          while (IsItemField(next)) {
-            if ((next->GetName() != 0) && (*(next->GetName()) == '_'))
+            if ((next->GetName() != 0) && ((*(next->GetName()) == '_') || master.ScanOnlyFields()))
                master.SetField(next->GetName(), next->GetTitle());
 
             next = iter();
@@ -535,7 +535,7 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             // now properties, coded as TNamed objects, placed after object in the hierarchy
             while ((next = iter()) != 0) {
                if (!IsItemField(next)) break;
-               if ((next->GetName() != 0) && (*(next->GetName()) == '_')) {
+               if ((next->GetName() != 0) && ((*(next->GetName()) == '_') || chld.ScanOnlyFields())) {
                   // only fields starting with _ are stored
                   chld.SetField(next->GetName(), next->GetTitle());
                   if (strcmp(next->GetName(), item_prop_kind)==0) has_kind = kTRUE;
@@ -664,19 +664,20 @@ Bool_t TRootSniffer::IsDrawableClass(TClass *cl)
 
 //______________________________________________________________________________
 void TRootSniffer::ScanHierarchy(const char *topname, const char *path,
-                                 TRootSnifferStore *store)
+                                 TRootSnifferStore *store, Bool_t only_fields)
 {
    // scan ROOT hierarchy with provided store object
 
    TRootSnifferScanRec rec;
    rec.fSearchPath = path;
    if (rec.fSearchPath) {
-      if (*rec.fSearchPath == '/') rec.fSearchPath++;
+      while(*rec.fSearchPath == '/') rec.fSearchPath++;
       if (*rec.fSearchPath == 0) rec.fSearchPath = 0;
    }
 
    // if path non-empty, we should find item first and than start scanning
    rec.fMask = rec.fSearchPath == 0 ? TRootSnifferScanRec::kScan : TRootSnifferScanRec::kExpand;
+   if (only_fields) rec.fMask |= TRootSnifferScanRec::kOnlyFields;
 
    rec.fStore = store;
 
@@ -914,22 +915,6 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
    Long_t v = gROOT->ProcessLineSync(method);
 
    res.Form("%ld", v);
-
-   return kTRUE;
-}
-
-//______________________________________________________________________________
-Bool_t TRootSniffer::ProduceGet(const char *path, const char *options, TString &res)
-{
-   // produce json representation of item fields
-
-   TFolder *parent(0);
-   TObject *obj = GetItem(path, parent, kFALSE, kFALSE);
-
-   if ((parent==0) || (obj==0)) return kFALSE;
-
-
-
 
    return kTRUE;
 }
@@ -1449,7 +1434,7 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
    if (strcmp(file, "root.xml") == 0)
       return ProduceXml(path, options, str);
 
-   if ((strcmp(file, "root.json") == 0) || (strcmp(file, "get.json") == 0))
+   if (strcmp(file, "root.json") == 0)
       return ProduceJson(path, options, str);
 
    // used for debugging

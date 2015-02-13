@@ -25,12 +25,14 @@ class TRootSnifferScanRec {
 friend class TRootSniffer;
 
 protected:
+   // different bits used to scan hierarchy
    enum {
-      kScan        = 0x0001,  ///< normal scan of hierarchy
-      kExpand      = 0x0002,  ///< expand of specified item - allowed to scan object members
-      kSearch      = 0x0004,  ///< search for specified item (only objects and collections)
-      kCheckChilds = 0x0008,  ///< check if there childs, very similar to search
-      kActions     = 0x000F   ///< mask for actions, only actions copied to child rec
+      kScan         = 0x0001,  ///< normal scan of hierarchy
+      kExpand       = 0x0002,  ///< expand of specified item - allowed to scan object members
+      kSearch       = 0x0004,  ///< search for specified item (only objects and collections)
+      kCheckChilds  = 0x0008,  ///< check if there childs, very similar to search
+      kOnlyFields   = 0x0010,  ///< if set, only fields for specified item will be set (but all fields)
+      kActions      = 0x001F   ///< mask for actions, only actions copied to child rec
    };
 
 
@@ -54,9 +56,14 @@ public:
    void CloseNode();
 
    /** return true when fields could be set to the hierarchy item */
-   Bool_t CanSetFields()
+   Bool_t CanSetFields() const
    {
       return (fMask & kScan) && (fStore != 0);
+   }
+
+   Bool_t ScanOnlyFields() const
+   {
+      return (fMask & kOnlyFields) && (fMask & kScan);
    }
 
    /** Starts new node, must be closed at the end */
@@ -164,7 +171,8 @@ public:
    const char *GetItemField(const char *fullname, const char *name);
 
    /** Method scans normal objects, registered in ROOT */
-   void ScanHierarchy(const char *topname, const char *path, TRootSnifferStore *store);
+   void ScanHierarchy(const char *topname, const char *path,
+                      TRootSnifferStore *store, Bool_t only_fields = kFALSE);
 
    TObject *FindTObjectInHierarchy(const char *path);
 
@@ -191,8 +199,6 @@ public:
    Bool_t ProduceExe(const char *path, const char *options, Int_t reskind, TString *ret_str, void **ret_ptr = 0, Long_t *ret_length = 0);
 
    Bool_t ExecuteCmd(const char *path, const char *options, TString &res);
-
-   Bool_t ProduceGet(const char *path, const char *options, TString &res);
 
    Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length, TString &str);
 

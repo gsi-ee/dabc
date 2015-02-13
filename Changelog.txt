@@ -12,7 +12,9 @@ about current functionality of the framework.
 5. Fix problem with setting fields for top item. Can be used in different
    custom application. For instance, autoload of files or start view
 6. Use string buffer when TRootSniffer produces string as output 
-
+7. Implement get.json to request only fields of specified item.
+   Just for fun also make analoge get.xml  
+   
 
 12.02.2015
 1. Add protection for logx/logy scales. Introduce special

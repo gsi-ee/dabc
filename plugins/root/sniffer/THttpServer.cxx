@@ -720,7 +720,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       iszip = kTRUE;
    }
 
-   if (filename == "h.xml")  {
+   if ((filename == "h.xml") || (filename == "get.xml"))  {
 
       Bool_t compact = arg->fQuery.Index("compact") != kNPOS;
 
@@ -733,7 +733,7 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
 
          const char *topname = fTopName.Data();
          if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
-         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
+         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store, filename == "get.xml");
       }
 
       arg->fContent.Append("</root>");
@@ -742,25 +742,21 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       arg->SetXml();
    } else
 
-      if (filename == "h.json")  {
+   if ((filename == "h.json") || (filename == "get.json"))  {
+      TRootSnifferStoreJson store(arg->fContent, arg->fQuery.Index("compact") != kNPOS);
+      const char *topname = fTopName.Data();
+      if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
+      fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store, (filename == "get.json"));
+      arg->SetJson();
+   } else
 
-         TRootSnifferStoreJson store(arg->fContent, arg->fQuery.Index("compact") != kNPOS);
-
-         const char *topname = fTopName.Data();
-         if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
-
-         fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
-
-         arg->SetJson();
-      } else
-
-         if (fSniffer->Produce(arg->fPathName.Data(), filename.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength, arg->fContent)) {
-            // define content type base on extension
-            arg->SetContentType(GetMimeType(filename.Data()));
-         } else {
-            // request is not processed
-            arg->Set404();
-         }
+   if (fSniffer->Produce(arg->fPathName.Data(), filename.Data(), arg->fQuery.Data(), arg->fBinData, arg->fBinDataLength, arg->fContent)) {
+      // define content type base on extension
+      arg->SetContentType(GetMimeType(filename.Data()));
+   } else {
+      // request is not processed
+      arg->Set404();
+   }
 
    if (arg->Is404()) return;
 
