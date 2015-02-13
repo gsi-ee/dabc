@@ -8,6 +8,7 @@ about current functionality of the framework.
 2. By default, use everywhere Objects folder (if path not starts with slash).  
 3. Avoid special meaning for "extra" folder, 
    one can set "_more" property directly for each item
+4. Resolve problem with keys of same name, but different class  
 
 
 12.02.2015

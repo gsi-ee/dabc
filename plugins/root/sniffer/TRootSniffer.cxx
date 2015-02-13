@@ -558,6 +558,11 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
             TKey *key = dynamic_cast<TKey *>(kobj);
             if (key == 0) continue;
             TObject *obj = (lst == 0) ? 0 : lst->FindObject(key->GetName());
+
+            // even object with the name exists, it should also match with class name
+            if ((obj!=0) && (strcmp(obj->ClassName(),key->GetClassName())!=0)) obj = 0;
+
+            // if object of that name and of that class already in the list, ignore appropriate key
             if ((obj != 0) && (master.fMask & TRootSnifferScanRec::kScan)) continue;
 
             Bool_t iskey = kFALSE;
