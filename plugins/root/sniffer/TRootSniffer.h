@@ -112,7 +112,7 @@ protected:
    virtual void ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj);
 
    void ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
-                       const char *foldername = 0, Bool_t extra = kFALSE, TCollection *keys_lst = 0);
+                       const char *foldername = 0, TCollection *keys_lst = 0);
 
    /* Method is used to scan ROOT objects.
     * Can be reimplemented to extend scanning */

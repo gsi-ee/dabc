@@ -477,11 +477,10 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
    // here one scans collection, branches, trees and so on
 
    if (obj->InheritsFrom(TFolder::Class())) {
-      TFolder *fold = (TFolder *) obj;
-      ScanCollection(rec, fold->GetListOfFolders());
+      ScanCollection(rec, ((TFolder *) obj)->GetListOfFolders());
    } else if (obj->InheritsFrom(TDirectory::Class())) {
       TDirectory *dir = (TDirectory *) obj;
-      ScanCollection(rec, dir->GetList(), 0, kFALSE, dir->GetListOfKeys());
+      ScanCollection(rec, dir->GetList(), 0, dir->GetListOfKeys());
    } else if (obj->InheritsFrom(TTree::Class())) {
       if (!fReadOnly) rec.SetField("_player", "JSROOT.drawTreePlayer");
       ScanCollection(rec, ((TTree *) obj)->GetListOfLeaves());
@@ -494,7 +493,7 @@ void TRootSniffer::ScanObjectChilds(TRootSnifferScanRec &rec, TObject *obj)
 
 //______________________________________________________________________________
 void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
-                                  const char *foldername, Bool_t extra, TCollection *keys_lst)
+                                  const char *foldername, TCollection *keys_lst)
 {
    // scan collection content
 
