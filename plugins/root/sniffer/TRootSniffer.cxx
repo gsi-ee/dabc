@@ -904,9 +904,9 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
    const char *separ = strstr(method, "/->");
    if (separ != 0) {
       TString itemname(method, separ - method);
-      TObject *obj = FindTObjectInHierarchy(itemname.Data());
-      if (obj != 0) {
-         item_method.Form("((%s*)%lu)->%s", obj->ClassName(), (long unsigned) obj, separ + 3);
+      TObject *item_obj = FindTObjectInHierarchy(itemname.Data());
+      if (item_obj != 0) {
+         item_method.Form("((%s*)%lu)->%s", item_obj->ClassName(), (long unsigned) item_obj, separ + 3);
          method = item_method.Data();
          if (gDebug > 2) Info("ExecuteCmd", "Executing %s", method);
       }
