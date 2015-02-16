@@ -859,15 +859,15 @@ Bool_t THttpServer::RegisterCommand(const char *cmdname, const char *method, con
    // Or one could specify any method of the object which is already registered
    // to the server. For instance:
    //     serv->Register("/", hpx);
-   //     serv->RegisterCommand("ResetHPX", "/hpx/->Reset()");
+   //     serv->RegisterCommand("/ResetHPX", "/hpx/->Reset()");
    // Here symbols '/->' separates item name from method to be executed
    //
-   // Optionally one could specify icon name which will appear in
-   // the web browser together with the command item.
-   // If icon name starts with 'button;' string, than shortcut button
-   // will appear on the top of the browser. For instance:
-   //    serv->RegisterCommand("Invoke","InvokeFunction()","button;/rootsys/icons/ed_execute.png");
-   // Here one see example of images usage from $ROOTSYS/icons directory.
+   // Once command is registered, one could specify icon which will appear in the browser:
+   //     serv->SetIcon("/ResetHPX", "/rootsys/icons/ed_execute.png");
+   //
+   // One also can set extra property '_fastcmd', that command appear as
+   // tool button on the top of the browser tree:
+   //     serv->SetItemField("/ResetHPX", "_fastcmd", "true");
 
    CreateItem(cmdname, Form("command %s", method));
    SetItemField(cmdname, "_kind", "Command");
@@ -886,9 +886,20 @@ Bool_t THttpServer::RegisterCommand(const char *cmdname, const char *method, con
 //______________________________________________________________________________
 Bool_t THttpServer::Hide(const char *foldername, Bool_t hide)
 {
-   // hides folder from web gui
+   // hides folder or element from web gui
 
    return SetItemField(foldername, "_hidden", hide ? "true" : (const char *) 0);
+}
+
+//______________________________________________________________________________
+Bool_t THttpServer::SetIcon(const char *fullname, const char *iconname)
+{
+   // set name of icon, used in browser together with the item
+   //
+   // One could use images from $ROOTSYS directory like:
+   //    serv->SetIcon("/ResetHPX","/rootsys/icons/ed_execute.png");
+
+   return SetItemField(fullname, "_icon", iconname);
 }
 
 //______________________________________________________________________________

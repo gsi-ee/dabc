@@ -331,11 +331,11 @@ public:
    /** Unregister object */
    Bool_t Unregister(TObject *obj);
 
-   /** Register command, which can be activated via web interface */
    Bool_t RegisterCommand(const char *cmdname, const char *method, const char *icon = 0);
 
-   /** Hide folder or element in objects hierarchy in web interface */
-   Bool_t Hide(const char *foldername, Bool_t hide = kTRUE);
+   Bool_t Hide(const char *fullname, Bool_t hide = kTRUE);
+
+   Bool_t SetIcon(const char *fullname, const char *iconname);
 
    Bool_t CreateItem(const char *fullname, const char *title);
 
