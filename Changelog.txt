@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+16.02.2015
+1. Perform initialization only in JSRootInterface.js
+
+
 13.02.2015
 1. Fix memory leak in TRootSniffer, consolidate usage of folders, objects,
    items and properties in the sniffer. 
@@ -17,7 +21,8 @@ about current functionality of the framework.
 8. Implement several fields for top element, which are analyzed in the gui:
       serv->SetItemField("/","_loadfile","/currentdir/hcopy.root");
       serv->SetItemField("/","_monitoring","2000");
-      serv->SetItemField("/","_display","job1/Files/job1.root/hpx");
+      serv->SetItemField("/","_drawitem","job1/Files/job1.root/hpxpy");
+      serv->SetItemField("/","_drawopt","colz");
    One can specify file to load, monitoring parameter, item to display
 
 
