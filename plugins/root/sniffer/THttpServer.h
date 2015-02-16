@@ -258,9 +258,10 @@ protected:
 
    Long_t       fMainThrdId;  //! id of the main ROOT process
 
-   TString      fJSROOTSYS;   //! location of JSROOT files
+   TString      fJSROOTSYS;   //! location of local JSROOT files
    TString      fROOTSYS;     //! location of ROOT files
    TString      fTopName;     //! name of top folder, default - "ROOT"
+   TString      fJSROOT;      //! location of external JSROOT files
 
    TString      fDefaultPage; //! file name for default page name
    TString      fDefaultPageCont; //! content of the file content
@@ -284,6 +285,8 @@ public:
 
    TRootSniffer *GetSniffer() const
    {
+      // returns pointer on objects sniffer
+
       return fSniffer;
    }
 
@@ -295,13 +298,21 @@ public:
 
    void SetTopName(const char *top)
    {
+      // set name of top item in objects hierarchy
       fTopName = top;
    }
 
    const char *GetTopName() const
    {
+      // returns name of top item in objects hierarchy
       return fTopName.Data();
    }
+
+   void SetJSROOT(const char* location);
+
+   void SetDefaultPage(const char* filename);
+
+   void SetDrawPage(const char* filename);
 
    void SetTimer(Long_t milliSec = 100, Bool_t mode = kTRUE);
 

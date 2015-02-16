@@ -282,6 +282,7 @@ THttpServer::THttpServer(const char *engine) :
    fJSROOTSYS(),
    fROOTSYS(),
    fTopName("ROOT"),
+   fJSROOT(),
    fDefaultPage(),
    fDefaultPageCont(),
    fDrawPage(),
@@ -408,6 +409,54 @@ void THttpServer::SetReadOnly(Bool_t readonly)
    // Server also cannot execute objects method via exe.json request
 
    if (fSniffer) fSniffer->SetReadOnly(readonly);
+}
+
+//______________________________________________________________________________
+void THttpServer::SetJSROOT(const char* location)
+{
+   // Set location of JSROOT to use with the server
+   // One could specify address like:
+   //   https://root.cern.ch/js/3.3/
+   //   http://web-docs.gsi.de/~linev/js/3.3/
+   // This allows to get new JSROOT features with old server,
+   // reduce load on THttpServer instance, also startup time can be improved
+   // When empty string specified (default), local copy of JSROOT is used (distributed with ROOT)
+
+   fJSROOT = location ? location : "";
+}
+
+//______________________________________________________________________________
+void THttpServer::SetDefaultPage(const char* filename)
+{
+   // Set file name of HTML page, delivered by the server when
+   // http address is opened in the browser.
+   // By default, $ROOTSYS/etc/http/files/online.htm page is used
+   // When empty filename is specified, default page will be used
+
+   if ((filename!=0) && (*filename!=0))
+      fDefaultPage = filename;
+   else
+      fDefaultPage = fJSROOTSYS + "/files/online.htm";
+
+   // force to read page content next time again
+   fDefaultPageCont.Clear();
+}
+
+//______________________________________________________________________________
+void THttpServer::SetDrawPage(const char* filename)
+{
+   // Set file name of HTML page, delivered by the server when
+   // objects drawing page is requested from the browser
+   // By default, $ROOTSYS/etc/http/files/draw.htm page is used
+   // When empty filename is specified, default page will be used
+
+   if ((filename!=0) && (*filename!=0))
+      fDrawPage = filename;
+   else
+      fDrawPage = fJSROOTSYS + "/files/draw.htm";
+
+   // force to read page content next time again
+   fDrawPageCont.Clear();
 }
 
 //______________________________________________________________________________
@@ -646,22 +695,26 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       if (fDefaultPageCont.Length() == 0) {
          arg->Set404();
       } else {
+         arg->fContent = fDefaultPageCont;
+
+         // replace all references on JSROOT
+         if (fJSROOT.Length() > 0) {
+            TString repl = TString("=\"") + fJSROOT;
+            if (!repl.EndsWith("/")) repl+="/";
+            arg->fContent.ReplaceAll("=\"/jsrootsys/", repl);
+         }
+
          const char *hjsontag = "\"$$$h.json$$$\"";
 
-         Ssiz_t pos = fDefaultPageCont.Index(hjsontag);
-         if (pos == kNPOS) {
-            arg->fContent = fDefaultPageCont;
-         } else {
+         // add h.json caching
+         if (arg->fContent.Index(hjsontag) != kNPOS) {
             TString h_json;
             TRootSnifferStoreJson store(h_json, kTRUE);
             const char *topname = fTopName.Data();
             if (arg->fTopName.Length() > 0) topname = arg->fTopName.Data();
             fSniffer->ScanHierarchy(topname, arg->fPathName.Data(), &store);
 
-            arg->fContent.Clear();
-            arg->fContent.Append(fDefaultPageCont, pos);
-            arg->fContent.Append(h_json);
-            arg->fContent.Append(fDefaultPageCont.Data() + pos + strlen(hjsontag));
+            arg->fContent.ReplaceAll(hjsontag, h_json);
 
             arg->AddHeader("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0");
             if (arg->fQuery.Index("nozip") == kNPOS) arg->SetZipping(2);
@@ -684,22 +737,23 @@ void THttpServer::ProcessRequest(THttpCallArg *arg)
       } else {
          const char *rootjsontag = "\"$$$root.json$$$\"";
 
-         Ssiz_t pos = fDrawPageCont.Index(rootjsontag);
-         if (pos == kNPOS) {
-            arg->fContent = fDrawPageCont;
-         } else {
+         arg->fContent = fDrawPageCont;
+
+         // replace all references on JSROOT
+         if (fJSROOT.Length() > 0) {
+            TString repl = TString("=\"") + fJSROOT;
+            if (!repl.EndsWith("/")) repl+="/";
+            arg->fContent.ReplaceAll("=\"/jsrootsys/", repl);
+         }
+
+         if (arg->fContent.Index(rootjsontag) != kNPOS) {
             TString str;
             void *bindata = 0;
             Long_t bindatalen = 0;
             if (fSniffer->Produce(arg->fPathName.Data(), "root.json", "compact=3", bindata, bindatalen, str)) {
-               arg->fContent.Clear();
-               arg->fContent.Append(fDrawPageCont, pos);
-               arg->fContent.Append(str);
-               arg->fContent.Append(fDrawPageCont.Data() + pos + strlen(rootjsontag));
+               arg->fContent.ReplaceAll(rootjsontag, str);
                arg->AddHeader("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0");
                if (arg->fQuery.Index("nozip") == kNPOS) arg->SetZipping(2);
-            } else {
-               arg->fContent = fDrawPageCont;
             }
          }
          arg->SetContentType("text/html");
