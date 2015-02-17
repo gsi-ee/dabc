@@ -37,7 +37,7 @@ DabcProcMgr::~DabcProcMgr()
 
 base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   DOUT2("Create TH1 %s", name);
+   DOUT0("Create TH1 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
@@ -56,37 +56,12 @@ base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbin
    bins[2] = right;
    h.SetField("bins", bins);
 
-   return h.GetFieldPtr("bins")->GetDoubleArr();
-}
-
-void DabcProcMgr::FillH1(base::H1handle h1, double x, double weight)
-{
-   if (h1==0) return;
-   double* arr = (double*) h1;
-
-   int nbin = (int) arr[0];
-   int bin = (int) /*floor*/ (nbin * (x - arr[1]) / (arr[2] - arr[1]));
-
-   if ((bin>=0) && (bin<nbin)) arr[bin+3]+=weight;
-}
-
-double DabcProcMgr::GetH1Content(base::H1handle h1, int nbin)
-{
-   if (h1==0) return 0.;
-   double* arr = (double*) h1;
-   return (nbin>=0) && (nbin<arr[0]) ? arr[nbin+3] : 0;
-}
-
-void DabcProcMgr::ClearH1(base::H1handle h1)
-{
-   if (h1==0) return;
-   double* arr = (double*) h1;
-   for (int n=0;n<arr[0];n++) arr[n+3] = 0.;
+   return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 }
 
 base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   DOUT2("Create TH2 %s", name);
+   DOUT0("Create TH2 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
@@ -113,32 +88,6 @@ base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbin
 
    return h.GetFieldPtr("bins")->GetDoubleArr();
 }
-
-void DabcProcMgr::FillH2(base::H1handle h2, double x, double y, double weight)
-{
-   if (h2==0) return;
-   double* arr = (double*) h2;
-
-   int nbin1 = (int) arr[0];
-   int nbin2 = (int) arr[3];
-
-   int bin1 = (int) /*floor*/ (nbin1 * (x - arr[1]) / (arr[2] - arr[1]));
-   int bin2 = (int) /*floor*/(nbin2 * (y - arr[4]) / (arr[5] - arr[4]));
-
-   if ((bin1>=0) && (bin1<nbin1) && (bin2>=0) && (bin2<nbin2))
-      arr[bin1 + bin2*nbin1 + 6]+=weight;
-}
-
-void DabcProcMgr::ClearH2(base::H2handle h2)
-{
-   if (h2==0) return;
-   double* arr = (double*) h2;
-
-   int nbin1 = (int) arr[0];
-   int nbin2 = (int) arr[3];
-   for (int n=0;n<nbin1*nbin2;n++) arr[n+6] = 0.;
-}
-
 
 #endif
 
