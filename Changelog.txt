@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+17.02.2015
+1. Support native histogram format of stream framework,
+   only create histogram should be reimplemented
+2. Fix in TRootSniffer (ignore fields)
+
+
 16.02.2015
 1. All extra options of online server analyzed in JSRootInterface.js
 2. Let configure location of JSROOT in THttpServer, allows to use
