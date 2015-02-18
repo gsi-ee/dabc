@@ -9,7 +9,7 @@ It is the successor of the JSRootIO project.
 
 The actual version of JSROOT can be found in ROOT repository, etc/http/ subfolder.
 All necessary files are located there. Just copy them on any web server or use them directly from the file system.
-The latest version of JSROOT can also be found online on <http://root.cern.ch/js/> or <http://web-docs.gsi.de/~linev/js/>.
+The latest version of JSROOT can also be found online on <http://root.cern.ch/js/jsroot.html> or <http://web-docs.gsi.de/~linev/js/>.
  
 
 ## Reading ROOT files in JSROOT
