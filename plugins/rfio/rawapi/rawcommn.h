@@ -238,6 +238,13 @@
  *  3. 1.2014, H.G.: new IDENT_FILESIZE_REQUEST
  * 21. 2.2014, H.G.: get from rawclin.h: define MIN_SEQUENTIAL_FILES
  * 26. 2.2014, H.G.: new IDENT_SPACE_TREE1, IDENT_SPACE_TREE2
+ * 16. 9.2014, H.G.: new STA_FILE_CACHED_OVER 
+ * 12.11.2014, H.G.: new MAX_SIZE_CACHE_FILE: max file size in cache
+ * 28.11.2014, H.G.: srawComm.iReservation: document new usage in API
+ *                      client file loops
+ * 14. 1.2015, H.G.: srawComm.iSynchId: document new usage in API
+ *                      file delete
+ * 21. 1.2015, H.G.: SEND_FROM_CACHE: doc. enhanced usage for any cache
  * ********************************************************************
  */
 
@@ -271,12 +278,16 @@
 #define MAXLOOP_CACHE_FULL 3  /* max no of iter, if write cache full */
 
 #define DEF_FILESIZE  2044000000   /* assume <2GByte, if unavailable */
-#define MAX_FILE_SIZE 2147483647   /* max filesize 2GByte-1 (signed) */
-#define MAX_FILE_SIZE_U 4294967295   /* max size 4GByte-1 (unsigned) */
+#define MAX_FILE_SIZE 2147483647
+                      /* max filesize 2GByte-1 (byte, 32 bit signed) */
+#define MAX_FILE_SIZE_U 4294967295
+                    /* max filesize 4GByte-1 (byte, 32 bit unsigned) */
+#define MAX_SIZE_CACHE_FILE 4096000   /* max size cache file (MByte) */
+
 #define MAX_FILE_NO 1024         /* max number of file names in list */
 
 #define MIN_SEQUENTIAL_FILES 20
-                  /* limit for parallel actions and sequential stage */
+                          /* lower file limit for sequential staging */
 
 static const char cTooBig[8] = "(>=4GB)";
                /* for 32 bit clients: substitute for filesize >= 4GB */
@@ -444,7 +455,7 @@ enum ACTION                                                /* action */
    QUERY_ARCHIVE_RECORD,          /* 33: query before ARCHIVE_RECORD */
    STAGE_FROM_CACHE,                 /* 34: copy files from WC to RC */
    RETRIEVE_FROM_CACHE,                /* 35: retrieve files from WC */
-   SEND_FROM_CACHE,           /* 36: read in write cache, send to DM */
+   SEND_FROM_CACHE,             /* 36: read in any cache, send to DM */
    QUERY_RETRIEVE_STAGE,          /* 37: query before RETRIEVE_STAGE */
    COPY_RC_TO_FILESYSTEM,  /* 38: copy from read cache to mounted FS */
    RETRIEVE_TO_FILESYSTEM,    /* 39: retrieve from TSM to mounted FS */
@@ -496,7 +507,9 @@ typedef struct
             =1: active, =2 waiting, =3 suppressed (--> not yet impl) */
    int iWaitTime;         /* time to wait before execution (seconds) */
    int iSynchId;
-          /* = 1: RFIO write in DAQ mode (1st: select DM)
+          /* = 1: RFIO write in file loop (1st: select DM)
+             = 2: RFIO read in file loop (1st: select DM)
+             = 3: RFIO file delete
              =11: requested action recursive (cmd client only)
              =21: (else) check access rights also for admin user
             +100: as before, but use alternate prod TSM server */
@@ -520,8 +533,11 @@ typedef struct
    char cDataFS[MAX_FULL_FILE];      /* full path in central data FS */
    int iClient32;                   /* =1: 32 bit gstore/RFIO client */
    int iReservation;
-          /* <0: request filesize check comparing cacheDB - DM FS
-             >0: current object belongs to workspace with specified
+       /* <0: request filesize check comparing cacheDB - DM FS
+          >0: in API client file loops: no. of open connection, 
+                 appended to node name (lxgstore)
+                 i>1000 => server test system, used i-1000 
+              in servers: cur obj belongs to workspace with specified
                  space reservation number (--> not yet impl) */
    int iGlobalActionId; /* global actionId for parallel/sequ actions */
 } srawComm;
@@ -549,11 +565,13 @@ enum STATUS                                      /* status of action */
    STA_NO_ACCESS,      /* 17: requested access to archive not allowed */
    STA_SWITCH_ENTRY,   /* 18: switch entry server */
    STA_ENTRY_INFO,     /* 19: info: name of entry server */
-   STA_FILE_CACHED,    /* 20: file cached (WC) from central data FS */
+   STA_FILE_CACHED,  /* 20: file archived from central data FS to WC */
    STA_CACHE_COPY, /* 21: successfull copy from WC to central dataFS */
    STA_CACHE_COPY_ERROR,
              /* 22: error status for copy from WC to central data FS */
-   STA_FILE_AVAIL  /* 23: file already available in (G)RC or data FS */
+   STA_FILE_AVAIL, /* 23: file already available in (G)RC or data FS */
+   STA_FILE_CACHED_OVER
+                  /* 24: file in WC overwritten from central data FS */
 };
 
 typedef struct                                      /* Status buffer */

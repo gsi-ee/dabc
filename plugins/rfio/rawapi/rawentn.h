@@ -73,7 +73,7 @@ int rawGetFilelist( char *, int, char **);
 #endif /* Unix */
 
 int rawGetFileSize( char *, unsigned long *, unsigned int *);
-   /* get list of full file names from generic input */
+   /* get 64 bit file size of file */
 
 char *rawGetFSName( char *);
    /* get file space name from user identification */

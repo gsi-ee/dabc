@@ -11,6 +11,8 @@
  **********************************************************************
  * rawAddStrings:    add 2 messages avoiding overflows
  * rawCheckClientFile: check gStore naming conventions for client file
+ * rawDelFile:       delete single file in GSI mass storage
+ * rawDelList:       delete list of files in GSI mass storage
  * rawGetFSpName:    get file space name from user specification
  * rawGetHLName:     get high level object name from path
  * rawGetLLName:     get low level object name from file name
@@ -127,6 +129,15 @@
  *  4.12.2013, H.G.: rawRecvStatus: modify last arg to 'srawStatus *'
  * 23. 1.2014, H.G.: rawQueryFile: handle broken connection to master
  * 29. 1.2014, H.G.: rawCheckClientFile: adapted arg types, better names
+ * 12. 9.2014, H.G.: rawDelFile, rawDelList: added from rawCliProcn.c,
+ *                   as also needed on DMs for ARCHIVE_OVER from lustre
+ * 15. 9.2014, H.G.: rawDelFile, rawDelList: replace old printf()
+ *                      -> fprintf(fLogFile)
+ *                   rawQueryFile: provide storage info (for rawDelFile)
+ * 20.11.2014, H.G.: rawQueryFile: improve checks for file meta data
+ *                      consistency
+ *  9. 1.2015, H.G.: rawQueryFile: correct handling of WC files
+ *                      staged in GRC
  **********************************************************************
  */
 
@@ -162,6 +173,7 @@
 #include "rawapitd-gsin.h"
 #include "rawcommn.h"
 #include "rawdefn.h"
+#include "rawclin.h"
 #include "rawentn.h"
 #include "rawapplcli.h"
 
@@ -591,6 +603,364 @@ int rawCheckClientFile(
 
 } /* rawCheckClientFile */
 
+/*********************************************************************
+ * rawDelFile: delete single file in GSI mass storage
+ *
+ * created  8.10.1996, Horst Goeringer
+ *********************************************************************
+ */
+
+int rawDelFile( int iSocket, srawComm *psComm)
+{
+   char cModule[32] = "rawDelFile";
+   int iDebug = 0;
+
+   int iFSidRC = 0;
+   int iFSidWC = 0;
+
+   int iRC;
+   int iBufComm;
+   char *pcc;
+   void *pBuf;
+   char cMsg[STATUS_LEN] = "";
+
+   srawStatus sStatus;
+
+   iBufComm = ntohl(psComm->iCommLen) + HEAD_LEN;
+   if (iDebug) fprintf(fLogFile,
+      "\n-D- begin %s: delete file %s%s%s\n",
+      cModule, psComm->cNamefs, psComm->cNamehl, psComm->cNamell);
+
+   if (psComm->iStageFSid)
+      iFSidRC = ntohl(psComm->iStageFSid);
+   if (psComm->iFSidWC)
+      iFSidWC = ntohl(psComm->iFSidWC);
+
+   if (iDebug)
+   {
+      fprintf(fLogFile,
+         "    object %s%s%s found (objId %u-%u)", 
+         psComm->cNamefs, psComm->cNamehl, psComm->cNamell, 
+         ntohl(psComm->iObjHigh), ntohl(psComm->iObjLow));
+      if (iFSidRC) fprintf(fLogFile,
+         ", on %s in read cache FS %d\n", psComm->cNodeRC, iFSidRC);
+      else
+         fprintf(fLogFile, "\n"); 
+      if (iFSidWC) fprintf(fLogFile,
+         "     on %s in write cache FS %d\n", psComm->cNodeWC, iFSidWC);
+   }
+
+   psComm->iAction = htonl(REMOVE); 
+
+   pcc = (char *) psComm;
+   if ( (iRC = send( iSocket, pcc, (unsigned) iBufComm, 0 )) < iBufComm)
+   {
+      if (iRC < 0) fprintf(fLogFile,
+         "-E- %s: sending delete request for file %s (%d byte)\n",
+         cModule, psComm->cNamell, iBufComm);
+      else fprintf(fLogFile,
+         "-E- %s: delete request for file %s (%d byte) incompletely sent (%d byte)\n",
+         cModule, psComm->cNamell, iBufComm, iRC);
+      if (errno)
+         fprintf(fLogFile, "    %s\n", strerror(errno));
+      perror("-E- sending delete request");
+
+      return -1;
+   }
+
+   if (iDebug) fprintf(fLogFile,
+      "    delete command sent to server (%d bytes), look for reply\n",
+      iBufComm);
+
+   /******************* look for reply from server *******************/
+
+   iRC = rawRecvStatus(iSocket, &sStatus);
+   if (iRC != HEAD_LEN)
+   {
+      if (iRC < HEAD_LEN) fprintf(fLogFile,
+         "-E- %s: receiving status buffer\n", cModule);
+      else
+      {
+         fprintf(fLogFile,
+            "-E- %s: message received from server:\n", cModule);
+         fprintf(fLogFile, "%s", sStatus.cStatus);
+      }
+
+      if (iDebug)
+         fprintf(fLogFile, "\n-D- end %s\n\n", cModule);
+
+      return(-1);
+   }
+
+   if (iDebug) fprintf(fLogFile,
+      "    status (%d) received from server (%d bytes)\n",
+      sStatus.iStatus, iRC);
+
+   /* delete in this proc only if WC and RC, 2nd step WC */
+   if (iDebug)
+   {
+      fprintf(fLogFile,
+         "-I- gStore object %s%s%s successfully deleted",
+         psComm->cNamefs, psComm->cNamehl, psComm->cNamell);
+      if (iFSidWC)
+         fprintf(fLogFile, " from write cache\n"); 
+      else
+         fprintf(fLogFile, "\n"); 
+
+      fprintf(fLogFile, "-D- end %s\n\n", cModule);
+   }
+
+   return 0;
+
+} /* end rawDelFile */
+
+/*********************************************************************
+ * rawDelList:  delete list of files in GSI mass storage
+ *
+ * created 22.10.1997, Horst Goeringer
+ *********************************************************************
+ */
+
+int rawDelList( int iSocketMaster,
+                            /* socket for connection to entry server */
+                int iDataMover,                /* no. of data movers */
+                srawDataMoverAttr *pDataMover0,
+                srawComm *psComm,
+                char **pcFileList,
+                char **pcObjList) 
+{
+   char cModule[32] = "rawDelList";
+   int iDebug = 0;
+
+   int iSocket;
+   char *pcfl, *pcol;
+   int *pifl, *piol;
+   int ifile;
+   int iobj0, iobj;
+   int iobjBuf;
+
+   srawFileList *psFile, *psFile0;           /* files to be archived */
+   srawRetrList *psObj;                  /* objects already archived */
+   srawDataMoverAttr *pDataMover;              /* current data mover */
+
+   char *pcc, *pdelim;
+
+   bool_t bDelete, bDelDone;
+   int **piptr;                  /* points to pointer to next buffer */
+
+   int ii, jj, kk;
+   int iRC, idel;
+
+   pcfl = *pcFileList;
+   pifl = (int *) pcfl;
+   ifile = pifl[0];                            /* number of files */
+   psFile = (srawFileList *) ++pifl;  /* points now to first file */
+   psFile0 = psFile;
+   pifl--;                     /* points again to number of files */
+
+   if (iDebug)
+   {
+      fprintf(fLogFile, "\n-D- begin %s\n", cModule);
+      fprintf(fLogFile, "    initial %d files, first file %s\n",
+         ifile, psFile0->cFile);
+   } 
+
+   pDataMover = pDataMover0;
+   pcol = *pcObjList;
+   piol = (int *) pcol;
+   iobj0 = 0;                     /* total no. of archived objects */
+
+   iobjBuf = 0;                             /* count query buffers */
+   idel = 0;                                /* count deleted files */
+   bDelDone = bFalse;
+   while (!bDelDone)
+   {
+      iobjBuf++;
+      iobj = piol[0];            /* no. of objects in query buffer */
+      psObj = (srawRetrList *) ++piol;
+                                     /* points now to first object */
+      if (iDebug) fprintf(fLogFile,
+         "    buffer %d: %d objects, first obj %s%s (server %d)\n",
+         iobjBuf, iobj, psObj->cNamehl, psObj->cNamell,
+         psObj->iATLServer);
+
+      psComm->iAction = htonl(REMOVE);
+      for (ii=1; ii<=iobj; ii++)    /* loop over objects in buffer */
+      {
+         iobj0++;
+         pcc = (char *) psObj->cNamell;
+         pcc++;                          /* skip object delimiter  */
+
+         if (iDebug) fprintf(fLogFile,
+            "    obj %d: %s%s, objId %d-%d\n",
+            ii, psObj->cNamehl, psObj->cNamell,
+            psObj->iObjHigh, psObj->iObjLow);
+
+         bDelete = bFalse;
+         psFile = psFile0;
+         for (jj=1; jj<=ifile; jj++)                  /* file loop */
+         {
+            if (iDebug) fprintf(fLogFile,
+               "    file %d: %s\n", jj, psFile->cFile);
+
+            pdelim = strrchr(psFile->cFile, *pcFileDelim);
+            if (pdelim == NULL)
+            {
+#ifdef VMS
+               pdelim = strrchr(psFile->cFile, *pcFileDelim2);
+               if (pdelim != NULL) pdelim++;
+               else
+#endif
+               pdelim = psFile->cFile;
+            }
+            else pdelim++;                 /* skip file delimiter  */
+
+            iRC = strcmp(pdelim, pcc);
+            if ( iRC == 0 )
+            {
+               bDelete = bTrue;
+               break;
+            }
+            psFile++;
+         } /* file loop (jj) */
+
+         if (bDelete)
+         {
+            if (iDebug)
+            {
+               fprintf(fLogFile, "    matching file %d: %s, obj %d: %s%s",
+                      jj, psFile->cFile, ii, psObj->cNamehl, psObj->cNamell);
+
+               if (psObj->iStageFS) fprintf(fLogFile,
+                   ", on DM %s in StageFS %d\n",
+                   psObj->cMoverStage, psObj->iStageFS);
+               else if (psObj->iCacheFS)
+               {
+                  fprintf(fLogFile, ", on DM %s in ArchiveFS %d\n",
+                         psObj->cMoverStage, psObj->iCacheFS);
+                  fprintf(fLogFile, "    archived at %s by %s\n",
+                         psObj->cArchiveDate, psObj->cOwner);
+               }
+               else
+                  fprintf(fLogFile," (not in disk pool)\n");
+            }
+
+            psComm->iObjHigh = htonl(psObj->iObjHigh);
+            psComm->iObjLow = htonl(psObj->iObjLow);
+            psComm->iATLServer = htonl(psObj->iATLServer);
+
+            if (psObj->iStageFS)
+            {
+               psComm->iPoolIdRC = htonl(psObj->iPoolIdRC);
+               psComm->iStageFSid = htonl(psObj->iStageFS);
+               strcpy(psComm->cNodeRC, psObj->cMoverStage);
+            }
+            else
+            {
+               psComm->iPoolIdRC = htonl(0);
+               psComm->iStageFSid = htonl(0);
+               strcpy(psComm->cNodeRC, "");
+            }
+
+            if (psObj->iCacheFS)
+            {
+               if (psObj->iStageFS)
+                  psComm->iPoolIdWC = htonl(0); /* WC poolId unavail */
+               else
+                  psComm->iPoolIdWC = htonl(psObj->iPoolIdRC);
+               psComm->iFSidWC = htonl(psObj->iCacheFS);
+               strcpy(psComm->cNodeWC, psObj->cMoverCache);
+            }
+            else
+            {
+               psComm->iPoolIdWC = htonl(0);
+               psComm->iFSidWC = htonl(0);
+               strcpy(psComm->cNodeWC, "");
+            }
+
+            iRC = rawGetLLName(psFile->cFile,
+                               pcObjDelim, psComm->cNamell);
+
+            if (iDataMover > 1)
+            {
+               if ((strcmp(pDataMover->cNode, psObj->cMoverStage) == 0) ||
+                   (strlen(psObj->cMoverStage) == 0))  /* not staged */
+               {
+                  iSocket = pDataMover->iSocket;
+                  if (iDebug) fprintf(fLogFile,
+                     "    current data mover %s, socket %d\n",
+                     pDataMover->cNode, iSocket);
+               }
+               else
+               {
+                  pDataMover = pDataMover0;
+                  for (kk=1; kk<=iDataMover; kk++)
+                  {
+                     if (strcmp(pDataMover->cNode,
+                                psObj->cMoverStage) == 0)
+                        break;
+                     pDataMover++;
+                  }
+
+                  if (kk > iDataMover)
+                  {
+                     fprintf(fLogFile,
+                        "-E- %s: data mover %s not found in list\n",
+                        cModule, psObj->cMoverStage);
+
+                     return -1;
+                  }
+
+                  iSocket = pDataMover->iSocket;
+                  if (iDebug) fprintf(fLogFile,
+                     "    new data mover %s, socket %d\n",
+                     pDataMover->cNode, iSocket);
+               }
+            } /* (iDataMover > 1) */
+
+            iRC = rawDelFile(iSocketMaster, psComm);
+            if (iRC)
+            {
+               if (iDebug)
+                  fprintf(fLogFile, "    rawDelFile: rc = %d\n", iRC);
+               if (iRC < 0)
+               {
+                  fprintf(fLogFile,
+                     "-E- %s: file %s could not be deleted\n",
+                     cModule, psFile->cFile);
+                  if (iDebug)
+                     fprintf(fLogFile, "-D- end %s\n\n", cModule);
+
+                  return -1;
+               }
+               /* else: object not found, ignore */
+
+            } /* (iRC) */
+
+            idel++;
+
+         } /* if (bDelete) */
+         else if (iDebug) fprintf(fLogFile,
+            "    file %s: obj %s%s not found in gStore\n",
+            psFile0->cFile, psObj->cNamehl, psObj->cNamell);
+
+         psObj++;
+
+      } /* loop over objects in query buffer (ii) */
+
+      piptr = (int **) psObj;
+      if (*piptr == NULL) bDelDone = bTrue;
+      else piol = *piptr;
+
+   } /* while (!bDelDone) */
+
+   if (iDebug)
+      fprintf(fLogFile, "-D- end %s\n\n", cModule);
+
+   return(idel);
+
+} /* rawDelList */
+
 /**********************************************************************
  * rawGetFSpName
  *    get file space name from user specification
@@ -976,6 +1346,7 @@ int rawQueryFile(
    int iPoolId = 0;
    int iObjLow = 0;
    int iFS = 0;
+   int iMediaClass = 0;
 
    srawComm *pComm; 
    srawQueryResult *pQuery;
@@ -1004,6 +1375,7 @@ int rawQueryFile(
       case QUERY:
       case QUERY_ARCHIVE:
       case QUERY_ARCHIVE_RECORD:
+      case QUERY_ARCHIVE_OVER:
       case QUERY_ARCHIVE_TO_CACHE:
       case QUERY_ARCHIVE_MGR:
       case QUERY_REMOVE:
@@ -1202,13 +1574,87 @@ gNextReply:
 
       for (ii=1; ii<=iQuery; ii++)
       {
+         iPoolId = ntohl(pObjAttr->iPoolId);
+
          if (iDebug)
          {
-            iPoolId = ntohl(pObjAttr->iPoolId);
             fprintf(fLogFile, "%d: %s%s%s (poolId %d)\n",
                ii, pObjAttr->cNamefs, pObjAttr->cNamehl,
                pObjAttr->cNamell, iPoolId);
          }
+
+         /* fill comm. buffer values */
+         if (iQuery == 1)
+         {
+            pComm->iObjHigh = pObjAttr->iObjHigh;      /* net format */
+            pComm->iObjLow = pObjAttr->iObjLow;
+            iMediaClass = ntohl(pObjAttr->iMediaClass);
+
+            if ( (ntohl(pObjAttr->iObjHigh) == 0) &&
+                 (ntohl(pObjAttr->iObjLow) == 0) )
+            {
+               if ( (iMediaClass == GSI_MEDIA_CACHE) ||
+                    (iMediaClass == GSI_CACHE_LOCKED) ||
+                    (iMediaClass == GSI_CACHE_COPY) ||
+                    (iMediaClass == GSI_CACHE_INCOMPLETE) )
+               {
+                  pComm->iPoolIdWC = pObjAttr->iPoolId;
+                  pComm->iFSidWC = pObjAttr->iFS;
+                  strcpy(pComm->cNodeWC, pObjAttr->cNode);
+
+               } /* file in write cache and not staged */
+               else
+               {
+                  if ( (iPoolId == 1) || (iPoolId == 2) ||
+                       (iPoolId == 5) )
+                  {
+                     /* historically: ObjHigh/Low not available */
+                     if ( (iMediaClass == GSI_MEDIA_STAGE) ||
+                          (iMediaClass == GSI_MEDIA_LOCKED) ||
+                          (iMediaClass == GSI_MEDIA_INCOMPLETE) )
+                     {
+                        /* also in read cache */
+                        pComm->iPoolIdRC = pObjAttr->iPoolId;
+                        pComm->iStageFSid = pObjAttr->iFS;
+                        strcpy(pComm->cNodeRC, pObjAttr->cNode);
+                     }
+                     else fprintf(fLogFile,
+                        "-E- %s: unexpected meta data for file %s%s%s: objId High/Low %d-%d, poolId %d, iMediaClass %d\n",
+                        cModule, pObjAttr->cNamefs, pObjAttr->cNamehl,
+                        pObjAttr->cNamell, pObjAttr->iObjHigh,
+                        pObjAttr->iObjLow, iPoolId,
+                        iMediaClass);
+                  }
+                  else fprintf(fLogFile,
+                     "-E- %s: inconsistent meta data for file %s%s%s: objId High/Low %d-%d, poolId %d, iMediaClass %d\n",
+                     cModule, pObjAttr->cNamefs, pObjAttr->cNamehl,
+                     pObjAttr->cNamell, pObjAttr->iObjHigh,
+                     pObjAttr->iObjLow, iPoolId, iMediaClass);
+
+                     /* in GRC objIds should be available) */
+
+               } /* file not in write cache */
+            } /* (iObjHigh == 0) && (iObjLow == 0) */ 
+            else
+            {
+               /* file in TSM storage */
+               if ( (iMediaClass == GSI_MEDIA_STAGE) ||
+                    (iMediaClass == GSI_MEDIA_LOCKED) ||
+                    (iMediaClass == GSI_MEDIA_INCOMPLETE) )
+               {
+                  /* also in read cache */
+                  pComm->iPoolIdRC = pObjAttr->iPoolId;
+                  pComm->iStageFSid = pObjAttr->iFS;
+                  strcpy(pComm->cNodeRC, pObjAttr->cNode);
+               }
+               else
+               {
+                  pComm->iPoolIdRC = htonl(0);
+                  pComm->iStageFSid = htonl(0);
+                  strcpy(pComm->cNodeRC, "");
+               }
+            }
+         } /* (iQuery == 1) */
 
          iVersionObjAttr = ntohl(pObjAttr->iVersion);
          if ( (iVersionObjAttr != VERSION_SRAWOBJATTR) &&

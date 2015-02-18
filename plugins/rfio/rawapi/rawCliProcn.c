@@ -12,8 +12,6 @@
  * rawCheckFileList: remove objects already archived from file list
  * rawCheckObjList:  remove existing files from object and file list,
  *                   reorder according to restore parameter
- * rawDelFile:       delete single file in GSI mass storage
- * rawDelList:       delete list of files in GSI mass storage
  * rawGetFilelistEntries: get filelist entries from input file 
  * rawGetWSInfo:     get workspace and pool info from master
  * rawGetFullFile:   get full file name from generic input & ll name
@@ -145,6 +143,10 @@
  *  7.10.2013, H.G.: rawGetWSInfo: handle up to 5 pools, more debug info
  *  4.12.2013, H.G.: modify last arg of rawRecvStatus to 'srawStatus *'
  * 24. 2.2014, H.G.: rawGetWSInfo: enable printing of file sizes <99 PB
+ * 12. 9.2014, H.G.: rawDelFile, rawDelList: moved back to rawProcn.c,
+ *                   as also needed on DMs for ARCHIVE_OVER from lustre
+ * 10.10.2014, H.G.: rawGetWSInfo: correct size units (GB)
+ * 10.11.2014, H.G.: rawGetWSInfo: amount of pool info command dependent
  **********************************************************************
  */
 
@@ -1959,354 +1961,6 @@ gEndCheckObjlist:
 
 } /* rawCheckObjList */
 
-/*********************************************************************
- * rawDelFile: delete single file in GSI mass storage
- *
- * created  8.10.1996, Horst Goeringer
- *********************************************************************
- */
-
-int rawDelFile( int iSocket, srawComm *psComm)
-{
-   char cModule[32] = "rawDelFile";
-   int iDebug = 0;
-
-   int iFSidRC = 0;
-   int iFSidWC = 0;
-
-   int iRC;
-   int iBufComm;
-   char *pcc;
-   void *pBuf;
-   char cMsg[STATUS_LEN] = "";
-
-   srawStatus sStatus;
-
-   iBufComm = ntohl(psComm->iCommLen) + HEAD_LEN;
-   if (iDebug) printf(
-      "\n-D- begin %s: delete file %s%s%s\n",
-      cModule, psComm->cNamefs, psComm->cNamehl, psComm->cNamell);
-
-   if (psComm->iStageFSid)
-      iFSidRC = ntohl(psComm->iStageFSid);
-   if (psComm->iFSidWC)
-      iFSidWC = ntohl(psComm->iFSidWC);
-
-   if (iDebug)
-   {
-      printf("    object %s%s%s found (objId %u-%u)", 
-         psComm->cNamefs, psComm->cNamehl, psComm->cNamell, 
-         ntohl(psComm->iObjHigh), ntohl(psComm->iObjLow));
-      if (iFSidRC) printf(
-         ", on %s in read cache FS %d\n", psComm->cNodeRC, iFSidRC);
-      else
-         printf( "\n"); 
-      if (iFSidWC) printf(
-         "     on %s in write cache FS %d\n", psComm->cNodeWC, iFSidWC);
-   }
-
-   psComm->iAction = htonl(REMOVE); 
-
-   pcc = (char *) psComm;
-   if ( (iRC = send( iSocket, pcc, (unsigned) iBufComm, 0 )) < iBufComm)
-   {
-      if (iRC < 0) printf(
-         "-E- %s: sending delete request for file %s (%d byte)\n",
-         cModule, psComm->cNamell, iBufComm);
-      else printf(
-         "-E- %s: delete request for file %s (%d byte) incompletely sent (%d byte)\n",
-         cModule, psComm->cNamell, iBufComm, iRC);
-      if (errno)
-         printf("    %s\n", strerror(errno));
-      perror("-E- sending delete request");
-
-      return -1;
-   }
-
-   if (iDebug) printf(
-      "    delete command sent to server (%d bytes), look for reply\n",
-      iBufComm);
-
-   /******************* look for reply from server *******************/
-
-   iRC = rawRecvStatus(iSocket, &sStatus);
-   if (iRC != HEAD_LEN)
-   {
-      if (iRC < HEAD_LEN) printf(
-         "-E- %s: receiving status buffer\n", cModule);
-      else
-      {
-         printf("-E- %s: message received from server:\n", cModule);
-         printf("%s", sStatus.cStatus);
-      }
-
-      if (iDebug)
-         printf("\n-D- end %s\n\n", cModule);
-
-      return(-1);
-   }
-
-   if (iDebug) printf(
-      "    status (%d) received from server (%d bytes)\n",
-      sStatus.iStatus, iRC);
-
-   /* delete in this proc only if WC and RC, 2nd step WC */
-   printf("-I- gStore object %s%s%s successfully deleted",
-      psComm->cNamefs, psComm->cNamehl, psComm->cNamell);
-   if (iFSidWC)
-      printf( " from write cache\n"); 
-   else
-      printf( "!\n"); 
-
-   if (iDebug)
-      printf("-D- end %s\n\n", cModule);
-
-   return 0;
-
-} /* end rawDelFile */
-
-/*********************************************************************
- * rawDelList:  delete list of files in GSI mass storage
- *
- * created 22.10.1997, Horst Goeringer
- *********************************************************************
- */
-
-int rawDelList( int iSocketMaster,
-                            /* socket for connection to entry server */
-                int iDataMover,                /* no. of data movers */
-                srawDataMoverAttr *pDataMover0,
-                srawComm *psComm,
-                char **pcFileList,
-                char **pcObjList) 
-{
-   char cModule[32] = "rawDelList";
-   int iDebug = 0;
-
-   int iSocket;
-   char *pcfl, *pcol;
-   int *pifl, *piol;
-   int ifile;
-   int iobj0, iobj;
-   int iobjBuf;
-
-   srawFileList *psFile, *psFile0;           /* files to be archived */
-   srawRetrList *psObj;                  /* objects already archived */
-   srawDataMoverAttr *pDataMover;              /* current data mover */
-
-   char *pcc, *pdelim;
-
-   bool_t bDelete, bDelDone;
-   int **piptr;                  /* points to pointer to next buffer */
-
-   int ii, jj, kk;
-   int iRC, idel;
-
-   pcfl = *pcFileList;
-   pifl = (int *) pcfl;
-   ifile = pifl[0];                            /* number of files */
-   psFile = (srawFileList *) ++pifl;  /* points now to first file */
-   psFile0 = psFile;
-   pifl--;                     /* points again to number of files */
-
-   if (iDebug)
-   {
-      printf("\n-D- begin %s\n", cModule);
-      printf("    initial %d files, first file %s\n",
-             ifile, psFile0->cFile);
-   } 
-
-   pDataMover = pDataMover0;
-   pcol = *pcObjList;
-   piol = (int *) pcol;
-   iobj0 = 0;                     /* total no. of archived objects */
-
-   iobjBuf = 0;                             /* count query buffers */
-   idel = 0;                                /* count deleted files */
-   bDelDone = bFalse;
-   while (!bDelDone)
-   {
-      iobjBuf++;
-      iobj = piol[0];            /* no. of objects in query buffer */
-      psObj = (srawRetrList *) ++piol;
-                                     /* points now to first object */
-      if (iDebug)
-         printf("    buffer %d: %d objects, first obj %s%s (server %d)\n",
-                iobjBuf, iobj, psObj->cNamehl, psObj->cNamell, psObj->iATLServer);
-
-      psComm->iAction = htonl(REMOVE);
-      for (ii=1; ii<=iobj; ii++)    /* loop over objects in buffer */
-      {
-         iobj0++;
-         pcc = (char *) psObj->cNamell;
-         pcc++;                          /* skip object delimiter  */
-
-         if (iDebug) printf(
-            "    obj %d: %s%s, objId %d-%d\n",
-            ii, psObj->cNamehl, psObj->cNamell,
-            psObj->iObjHigh, psObj->iObjLow);
-
-         bDelete = bFalse;
-         psFile = psFile0;
-         for (jj=1; jj<=ifile; jj++)                  /* file loop */
-         {
-            if (iDebug) printf(
-               "    file %d: %s\n", jj, psFile->cFile);
-
-            pdelim = strrchr(psFile->cFile, *pcFileDelim);
-            if (pdelim == NULL)
-            {
-#ifdef VMS
-               pdelim = strrchr(psFile->cFile, *pcFileDelim2);
-               if (pdelim != NULL) pdelim++;
-               else
-#endif
-               pdelim = psFile->cFile;
-            }
-            else pdelim++;                 /* skip file delimiter  */
-
-            iRC = strcmp(pdelim, pcc);
-            if ( iRC == 0 )
-            {
-               bDelete = bTrue;
-               break;
-            }
-            psFile++;
-         } /* file loop (jj) */
-
-         if (bDelete)
-         {
-            if (iDebug)
-            {
-               printf("    matching file %d: %s, obj %d: %s%s",
-                      jj, psFile->cFile, ii, psObj->cNamehl, psObj->cNamell);
-               if (psObj->iStageFS)
-                  printf(", on DM %s in StageFS %d\n",
-                         psObj->cMoverStage, psObj->iStageFS);
-               else if (psObj->iCacheFS)
-               {
-                  printf(", on DM %s in ArchiveFS %d\n",
-                         psObj->cMoverStage, psObj->iCacheFS);
-                  printf("    archived at %s by %s\n",
-                         psObj->cArchiveDate, psObj->cOwner);
-               }
-               else
-                  printf(" (not in disk pool)\n");
-            }
-
-            psComm->iObjHigh = htonl(psObj->iObjHigh);
-            psComm->iObjLow = htonl(psObj->iObjLow);
-            psComm->iATLServer = htonl(psObj->iATLServer);
-
-            if (psObj->iStageFS)
-            {
-               psComm->iPoolIdRC = htonl(psObj->iPoolIdRC);
-               psComm->iStageFSid = htonl(psObj->iStageFS);
-               strcpy(psComm->cNodeRC, psObj->cMoverStage);
-            }
-            else
-            {
-               psComm->iPoolIdRC = htonl(0);
-               psComm->iStageFSid = htonl(0);
-               strcpy(psComm->cNodeRC, "");
-            }
-
-            if (psObj->iCacheFS)
-            {
-               if (psObj->iStageFS)
-                  psComm->iPoolIdWC = htonl(0); /* WC poolId unavail */
-               else
-                  psComm->iPoolIdWC = htonl(psObj->iPoolIdRC);
-               psComm->iFSidWC = htonl(psObj->iCacheFS);
-               strcpy(psComm->cNodeWC, psObj->cMoverCache);
-            }
-            else
-            {
-               psComm->iPoolIdWC = htonl(0);
-               psComm->iFSidWC = htonl(0);
-               strcpy(psComm->cNodeWC, "");
-            }
-
-            iRC = rawGetLLName(psFile->cFile,
-                               pcObjDelim, psComm->cNamell);
-
-            if (iDataMover > 1)
-            {
-               if ((strcmp(pDataMover->cNode, psObj->cMoverStage) == 0) ||
-                   (strlen(psObj->cMoverStage) == 0))  /* not staged */
-               {
-                  iSocket = pDataMover->iSocket;
-                  if (iDebug) printf(
-                     "    current data mover %s, socket %d\n",
-                     pDataMover->cNode, iSocket);
-               }
-               else
-               {
-                  pDataMover = pDataMover0;
-                  for (kk=1; kk<=iDataMover; kk++)
-                  {
-                     if (strcmp(pDataMover->cNode,
-                                psObj->cMoverStage) == 0)
-                        break;
-                     pDataMover++;
-                  }
-
-                  if (kk > iDataMover)
-                  {
-                     printf("-E- %s: data mover %s not found in list\n",
-                            cModule, psObj->cMoverStage);
-                     return -1;
-                  }
-
-                  iSocket = pDataMover->iSocket;
-                  if (iDebug) printf(
-                     "    new data mover %s, socket %d\n",
-                     pDataMover->cNode, iSocket);
-               }
-            } /* (iDataMover > 1) */
-
-            iRC = rawDelFile(iSocketMaster, psComm);
-            if (iRC)
-            {
-               if (iDebug)
-                  printf("    rawDelFile: rc = %d\n", iRC);
-               if (iRC < 0)
-               {
-                  printf("-E- %s: file %s could not be deleted\n",
-                         cModule, psFile->cFile);
-                  if (iDebug)
-                     printf("-D- end %s\n\n", cModule);
-
-                  return -1;
-               }
-               /* else: object not found, ignore */
-
-            } /* (iRC) */
-
-            idel++;
-
-         } /* if (bDelete) */
-         else if (iDebug) printf(
-            "    file %s: obj %s%s not found in gStore\n",
-            psFile0->cFile, psObj->cNamehl, psObj->cNamell);
-
-         psObj++;
-
-      } /* loop over objects in query buffer (ii) */
-
-      piptr = (int **) psObj;
-      if (*piptr == NULL) bDelDone = bTrue;
-      else piol = *piptr;
-
-   } /* while (!bDelDone) */
-
-   if (iDebug)
-      printf("-D- end %s\n\n", cModule);
-
-   return(idel);
-
-} /* rawDelList */
-
 /**********************************************************************
  * rawGetFilelistEntries:
  *    get filelist entries from input file
@@ -2905,7 +2559,8 @@ gErrorFilelist:
 
 int rawGetWSInfo( srawCliActionComm *pCliActionComm,
                   srawPoolStatus *pPoolInfo,
-                  srawWorkSpace **ppWorkSpace) 
+                  srawWorkSpace **ppWorkSpace,
+                  char *pcReportReadCache, char *pcReportGlobalReadCache) 
 {
    char cModule[32] = "rawGetWSInfo";
    int iDebug = 0;
@@ -2933,21 +2588,21 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
 
    char cPoolNameRetr[32] = "RetrievePool";
    char cPoolNameStage[32] = "StagePool";
-   int iHardwareMax = 0;            /* max space in hardware (MByte) */
-   int iHardwareFree = 0;          /* free space in hardware (MByte) */
-   int iPoolRetrMax = 0;     /* overall size of RetrievePool (MByte) */
-   int iPoolRetrFree = 0;      /* free space of RetrievePool (MByte) */
+   int iHardwareMax = 0;            /* max space in hardware (GByte) */
+   int iHardwareFree = 0;          /* free space in hardware (GByte) */
+   int iPoolRetrMax = 0;     /* overall size of RetrievePool (GByte) */
+   int iPoolRetrFree = 0;      /* free space of RetrievePool (GByte) */
    int iPoolRetrFiles = 0;    /* no. of files stored in RetrievePool */
-   int iPoolStageMax = 0;       /* overall size of StagePool (MByte) */
-   int iPoolStageFree = 0;        /* free space of StagePool (MByte) */
+   int iPoolStageMax = 0;       /* overall size of StagePool (GByte) */
+   int iPoolStageFree = 0;        /* free space of StagePool (GByte) */
    int iPoolStageFiles = 0;      /* no. of files stored in StagePool */
 
+   int iPoolStageAvail = 0;        /* guaranteed availability (days) */
    int iRandomExcess = 0;
-         /* unused space of other pools used in RetrievePool (MByte) */
-   int iPoolStageAvail = 0;
-   int iPoolStageMaxWS = 0;      /* max WS size in StagePool (MByte) */
+         /* unused space of other pools used in RetrievePool (GByte) */
+   int iPoolStageMaxWS = 0;      /* max WS size in StagePool (GByte) */
    int iPoolStageCheck = 0;
-                  /* min work space check size for StagePool (MByte) */
+                  /* min work space check size for StagePool (GByte) */
    int iStageSizeUnavail = 0;
                /* StagePool space currently allocated by other pools */
 
@@ -2967,13 +2622,21 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
    int iWorkSizeEst = 0;  /* part of requ. work space size estimated */
    int iWorkFilesEst = 0;
                    /* no. of files in work space with size estimated */
-   int iWorkStatus = 0;       /* status of work space sent by server */
+   int iWorkStatus = -1;
+          /* status of work space sent by server:
+             =0: requ. size available
+             =3: requ. size larger than GlobalPool HW
+                 (max size in GlobalPool: limited by HW,
+                  as spec. in lxha05:/tsmapi/home/archivepooln.data)
+             =1: not enough free space in GlobalPool
+             =2: requ. size larger than max work size in StagePool 
+                 (spec. in lxha05:/tsmapi/home/stagepooln.data)      */
 
 
    int *piBuffer;
    char *pcc;
    char cMsgPref[8] = "";
-   char cMisc[128] = "";
+   char cMisc[1024] = "";
    char pcGenFile[MAX_FULL_FILE] = "";   /* full (generic) file name */
 
    srawWorkSpace *pWorkSpace; 
@@ -2990,23 +2653,30 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
    if (iAction == QUERY_POOL)
    {
       iPoolId = pCliActionComm->iStatus;
-      if (iPoolId == 0)
-         iPrintPoolInfo = 3;
+      if (iPoolId == 0)                                 /* all pools */
+         iPrintPoolInfo = 6;
       else
+      {
          iPrintPoolInfo = iPoolId;
+         if (iPrintPoolInfo == 5)
+            iPrintPoolInfo = 3;
+      }
 
       iWorkSpaceInfo = 0;
    }
-   else
+   else if (iAction == STAGE)
+   {
+      iPoolId = pCliActionComm->iStatus;
+      iPrintPoolInfo = iPoolId;
+      if (iPrintPoolInfo == 5)
+         iPrintPoolInfo = 3;
+      iWorkSpaceInfo = 1;
+   }
+   else if (iAction == QUERY_WORKSPACE)
    {
       strcpy(pcGenFile, pCliActionComm->pcFile);
       iPoolId = 0;     /* show info about StagePool and RetrievePool */
-
-      if (pCliActionComm->iStatus > 0)
-         iPrintPoolInfo = pCliActionComm->iStatus;
-      else
-         iPrintPoolInfo = 0;
-
+      iPrintPoolInfo = 6;
       iWorkSpaceInfo = 1;
    }
 
@@ -3018,16 +2688,18 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
          printf(", print pool info");
 
          if (iAction == QUERY_POOL)
-            printf(", poolId  %d\n", iPoolId);
-         else
          {
-            if (iPrintPoolInfo == 1)
-               printf(" for RetrievePool\n");
-            else if (iPrintPoolInfo == 2)
-               printf(" for StagePool\n");
+            if (iPoolId)
+               printf(", for poolId  %d\n", iPoolId);
             else
-               printf(" for RetrievePool and StagePool\n");
+               printf(", for all pools\n");
          }
+         else if (iAction == STAGE)
+         {
+            printf(", poolId  %d\n", iPoolId);
+         }
+         else
+            printf("\n");
       }
       else
          printf("\n");
@@ -3132,9 +2804,6 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
       {
          printf("    status of %d pools received (%d bytes)\n",
             iPoolmax, iBufPool);
-         if ( (iPoolmax == 3) || (iPoolmax == 5) ) printf(
-            "    data of pools 2 (StagePool) and %d (GlobalPool) are merged\n",
-            iPoolmax);
       }
 
       /* get pool names first for info messages */
@@ -3157,12 +2826,15 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
             if ( (iPoolRetrFree == iPoolRetrMax) && (iPoolRetrFiles > 0) )
                iPoolRetrFree--;         /* eliminate rounding errors */
 
-            if ( (iPrintPoolInfo == 1) || (iPrintPoolInfo == 3) )
+            if ( (iPrintPoolInfo == 1) || (iPrintPoolInfo == 6) ||
+                 (iDebug) )
             {
-               printf("    %s: used for 'gstore retrieve'\n",
-                  pPoolInfoData->cPoolName);
-               printf("       free space  %8d GByte\n", iPoolRetrFree);
-               printf("       no min file lifetime of files\n");
+               sprintf(pcReportReadCache,
+                  "    %s: used for 'gstore retrieve' to all file systems except lustre\n       free space     %8d GByte\n       no min file lifetime of files\n",
+                  pPoolInfoData->cPoolName, iPoolRetrFree);
+
+               if (iDebug)
+                  printf("    info1 created:\n%s", pcReportReadCache);
             }
          }
 
@@ -3185,39 +2857,32 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
 
             iPoolStageAvail = ntohl(pPoolInfoData->iFileAvail);
 
-            if ( (iPrintPoolInfo == 2) || (iPrintPoolInfo == 3) ) printf(
-               "    %s: used for 'gstore stage'\n",
-               pPoolInfoData->cPoolName);
-
-            /* no global pool */
-            if ( (iPoolmax == 2) || (iPoolmax == 4) )
-            {
-               ii = iPoolStageFree + iPoolRetrFree;
-               if (iHardwareFree != ii)
+            ii = iPoolStageFree + iPoolRetrFree;
+            if (iHardwareFree != ii)
                iHardwareFree = ii;      /* eliminate rounding errors */
 
-               if ( (iPrintPoolInfo == 2) || (iPrintPoolInfo == 3) ||
-                    (iDebug) )
-               {
-                  printf("       free space  %8d GByte\n", iPoolStageFree);
-                  printf(
-                     "       min file availability of %d days guaranteed\n",
-                     ntohl(pPoolInfoData->iFileAvail));
-
-                  /* at end of last pool iteration, NOT after loop */
-                  printf(
-                     "    free HW space  %8d GByte, max available %8d GByte\n",
-                     iHardwareFree, iHardwareMax);
-                  printf(
-                     "    RetrievePool and StagePool share available disk space\n");
-               }
-            }
-            else if (iDebug)
+            if ( (iPrintPoolInfo == 2) || (iPrintPoolInfo == 6) ||
+                 (iDebug) )
             {
-               printf("       poolNo %d: free space  %8d GByte\n",
-                  iPoolcur, iPoolStageFree);
-               printf("          free HW space  %8d GByte, max available %8d GByte\n",
-                  iHardwareFree, iHardwareMax);
+               sprintf(cMisc, 
+                  "    %s: used for smaller staging transfers\n       free space     %8d GByte\n       min file availability of %d days guaranteed\n",
+                  pPoolInfoData->cPoolName, iPoolStageFree,
+                  ntohl(pPoolInfoData->iFileAvail));
+               strcat(pcReportReadCache, cMisc);
+
+               if (iDebug)
+                  printf("    info21 created:\n%s", cMisc);
+
+               if (iPrintPoolInfo != 2)
+               {
+                  sprintf(cMisc,
+                     "-I- StagePool shares available disk space with RetrievePool\n       free HW space  %8d GByte, total HW space %8d GByte\n",
+                     iHardwareFree, iHardwareMax);
+                  strcat(pcReportReadCache, cMisc);
+
+                  if (iDebug)
+                     printf("    info22 created:\n%s", cMisc);
+               }
             }
 
             if ( (iAction == STAGE) || (iAction == QUERY_WORKSPACE) )
@@ -3238,47 +2903,30 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
 
          if (iPoolcur == iPoolmax)                     /* GlobalPool */
          {
-            ii1 = ntohl(pPoolInfoData->iMaxSize)/1000;
-            iPoolStageMax += ii1;
-            ii2 = ntohl(pPoolInfoData->iFreeSize)/1000;
-            if (ii2 < 0)
-               ii2 = 0;
-            iPoolStageFree += ii2;
+            iPoolStageFiles = ntohl(pPoolInfoData->iFiles);
+            iPoolStageMax = ntohl(pPoolInfoData->iMaxSize)/1000;
+            iPoolStageFree = ntohl(pPoolInfoData->iFreeSize)/1000;
 
-            if (iDebug) printf(
-               "       poolNo %d: free space  %8d GByte\n",
-               iPoolcur, ii2);
-
-            /* corrected numbers, if deviating from 1st pool */
-            ii1 = ntohl(pPoolInfoData->iMaxSizeHW)/1000;
-            iHardwareMax += ii1;
-            ii2 = ntohl(pPoolInfoData->iFreeSizeHW)/1000;
-            iHardwareFree += ii2;
-
-            if (iDebug) printf(
-               "          free HW space  %8d GByte, max available %8d GByte\n",
-               ii2, ii1);
-
-            iPoolStageFiles += ntohl(pPoolInfoData->iFiles);
             if ( (iPoolStageFree == iPoolStageMax) &&
                  (iPoolStageFiles > 0) )
                iPoolStageFree--;        /* eliminate rounding errors */
+            if (iPoolStageFree < 0)
+               iPoolStageFree = 0;
 
-            ii = iPoolStageFree + iPoolRetrFree;
-            if (iHardwareFree != ii)
-               iHardwareFree = ii;      /* eliminate rounding errors */
+            iHardwareMax = ntohl(pPoolInfoData->iMaxSizeHW)/1000;
+            iHardwareFree = ntohl(pPoolInfoData->iFreeSizeHW)/1000;
 
-            if ( (iPrintPoolInfo == 2) || (iPrintPoolInfo == 3) ||
+            if ( (iPrintPoolInfo == 3) || (iPrintPoolInfo == 6) ||
                  (iDebug) )
             {
-               printf("       free space  %8d GByte\n", iPoolStageFree);
-               printf("       min file availability of %d days guaranteed\n",
+               sprintf(pcReportGlobalReadCache,
+                  "    %s: used for larger staging transfers and for archive from lustre\n       free space     %8d GByte, total HW space %8d GByte\n       for staged files min file availability of %d days guaranteed\n",
+                  pPoolInfoData->cPoolName,
+                  iPoolStageFree, iPoolStageMax,
                   iPoolStageAvail);    /* known from prev. iteration */
 
-               /* at end of last pool iteration, NOT after loop */
-               if (iDebug) printf(
-                  "    HW: free space  %8d GByte, max available %8d GByte\n",
-                  iHardwareFree, iHardwareMax);
+               if (iDebug)
+                  printf("    info3 created:\n%s", pcReportGlobalReadCache);
             }
          } /* (iPoolcur == iPoolmax) */
 
@@ -3400,80 +3048,74 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
       iWorkFilesStaRetr = iWorkFilesSta - iWorkFilesStaStage;
 
       /* provide infos if stage of large workspace or if ws_query */
-      if (iPoolInfo || (iAction == QUERY_WORKSPACE) || (iDebug) )
+      if ( ((iPrintPoolInfo) &&
+            (iWorkFilesAll > MIN_SEQUENTIAL_FILES)) ||
+           (iAction == QUERY_WORKSPACE) || (iDebug) )
       {
-         printf("    %d matching files, overall size %d MByte\n",
-            iWorkFilesAll, iWorkSizeAll);
-         if (iWorkFilesEst) printf(
-            "    size estimated for %d files: %d MByte\n",
-            iWorkFilesEst, iWorkSizeEst);
+         if (iAction != QUERY_WORKSPACE)
+         {
+            printf("    %d matching files, overall size %d MByte\n",
+               iWorkFilesAll, iWorkSizeAll);
+            if (iWorkFilesEst) printf(
+               "    size estimated for %d files: %d MByte\n",
+               iWorkFilesEst, iWorkSizeEst);
 
-         if (iWorkSizeSta == iWorkSizeAll)
-         {
-            if (iDebug)
+            if (iWorkSizeSta == iWorkSizeAll)
             {
-               printf(
-                  "\n    all files already available on central disk\n");
-               if ( (iPoolId == 2) &&
-                    iWorkSizeStaRetr &&
-                    (iAction == QUERY_WORKSPACE) )
+               if (iDebug) printf(
+                  "    all files already available on staging disk\n");
+            }
+            else if (iWorkSizeSta)
+            {
+               if (iDebug)
+               {
                   printf(
-                     "    to get a guaranteed availability of %d days on disk pool use 'gstore stage'\n",
-                     iPoolStageAvail);
+                     "    %d files already available on staging disk (%d MByte)\n",
+                     iWorkFilesSta, iWorkSizeSta);
+                  if (iWorkFilesStaStage) printf(
+                     "    %d files already in %s (%d MByte)\n",
+                     iWorkFilesStaStage, cPoolNameStage, iWorkSizeStaStage);
+               }
+
+               printf("    %d files still to be staged (%d MByte)\n",
+                  iWorkFilesAll-iWorkFilesSta,
+                  iWorkSizeAll - iWorkSizeSta);
             }
+            else
+               printf("    all files to be staged\n");
          }
-         else if (iWorkSizeSta)
-         {
-            if (iDebug)
-            {
-               printf(
-                  "\n    %d files already available on central disk (%d MByte)\n",
-                  iWorkFilesSta, iWorkSizeSta);
-               if (iWorkFilesStaStage) printf(
-                  "    %d files already in %s (%d MByte)\n",
-                  iWorkFilesStaStage, cPoolNameStage, iWorkSizeStaStage);
-            }
-            printf("    %d files still to be staged (%d MByte)\n",
-               iWorkFilesAll-iWorkFilesSta,
-               iWorkSizeAll - iWorkSizeSta);
-         }
-         else
-            printf("    all files to be staged\n");
 
          /* handle problems or limitations indicated by iWorkStatus:
             = 0: needed size ws available
-            = 1: overall size ws > free size StagePool
-            = 2: overall size ws > allowed size of ws
-            = 3: needed size ws > size StagePool
-            = 9: needed size ws > clean limit, but available: no sleep 
-            =10: needed size ws partially available,
-                 sleep 10 min before start staging
-            =20: needed size ws partially available,
-                 sleep 20 min before start staging
+            = 3: needed size ws > size GlobalPool
+            = 1: overall size ws > free size GlobalPool
+            = 2: overall size ws > allowed size of ws in StagePool
          */
-         if ( (iWorkStatus < 9) && (iWorkStatus != 0) )
+
+         if (iWorkStatus != 0)
          {
-            if ( (iAction == QUERY_WORKSPACE) ||
-                 (iWorkStatus == 2) )
+            if ( (iAction == QUERY_WORKSPACE) &&
+                 ((iWorkStatus == 1) || (iWorkStatus == 3)) )
             {
                strcpy(cMsgPref, "-W-");
                printf("%s requested workspace cannot be staged completely\n",
-                  cMsgPref);
-            }
-            else
-            {
-               strcpy(cMsgPref, "-E-");
-               printf("%s requested workspace cannot be staged:\n",
                   cMsgPref);
             }
 
             if (iWorkStatus < 0)
                printf("%s staging disk pool currently unavailable\n",
                       cMsgPref);
+            else if (iWorkStatus == 3)
+            {
+               printf( "%s overall size of %s is limited to %d GByte\n",
+                  cMsgPref, cPoolNameStage, iPoolStageMax);
+               printf(
+                  "-I- Please reduce your work space requirements\n");
+            }
             else if (iWorkStatus == 1)
             {
-               printf("    currently free in %s:   %d MByte\n",
-                      cPoolNameStage, iPoolStageFree);
+               printf("    currently free in cache:   %d GByte\n",
+                  iPoolStageFree);
                printf(
                   "    still needed:                  %d MByte (%d files)\n",
                   iWorkSizeAll-iWorkSizeSta,
@@ -3483,26 +3125,13 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
                else printf(
                   "-I- Query work space status before retrying later!\n");
             }
-            else if ( (iWorkStatus == 2) || (iWorkStatus == 3) )
-            {
-               if (iWorkStatus == 2) printf(
-                  "%s max work space allowed in '%s' is currently limited to %d MByte\n",
-                  cMsgPref, cPoolNameStage, iPoolStageMaxWS);
-               else printf(
-                  "%s overall size of %s is limited to %d MByte\n",
-                  cMsgPref, cPoolNameStage, iPoolStageMax);
-
-               if (iWorkStatus == 3) printf(
-                  "-I- Please reduce your work space requirements\n");
-            }
-            else if (iWorkStatus < 9)
-               printf(
-                  "-E- unexpected workspace status received from server (%d)\n",
-                  iWorkStatus);
+            else if (iWorkStatus != 2) printf(
+               "-E- unexpected workspace status received from server (%d)\n",
+               iWorkStatus);
 
             iWorkStatus = 0;
 
-         } /* (iWorkStatus < 9) && (iWorkStatus != 0) */
+         } /* (iWorkStatus != 0) */
 
          if ( (iDebug) && (iWorkSizeSta != iWorkSizeAll) )
          {
@@ -3513,24 +3142,24 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
                {
                   if (iWorkSizeNew > iHardwareFree)
                   {
-                     printf("    currently unused in %s: %d MByte\n",
+                     printf("    currently unused in %s: %d GByte\n",
                         cPoolNameStage, iPoolStageFree);
                      printf(
-                        "    currently free in %s:   %d MByte, remainder temporarily used by other pools\n",
+                        "    currently free in %s:   %d GByte, remainder temporarily used by other pools\n",
                         cPoolNameStage, iHardwareFree);
                   }
-                  else
-                     printf("    currently free in %s:   %d MByte\n",
-                         cPoolNameStage, iHardwareFree);
+                  else printf(
+                     "    currently free in cache:   %d GByte\n",
+                     iHardwareFree);
                }
                else printf(
-                  "    currently free in %s:   %d MByte\n",
-                  cPoolNameStage, iPoolStageFree);
+                  "    currently free in cache:   %d GByte\n",
+                  iPoolStageFree);
 
             } /* (iAction == QUERY_WORKSPACE) */
          } /* (iWorkSizeSta != iWorkSizeAll) */
 
-         /* server set clean request */
+         /* server set clean request, implemented??? DDD */
          if (iWorkStatus >= 9)
          {
             if (iDebug)
@@ -3540,7 +3169,7 @@ int rawGetWSInfo( srawCliActionComm *pCliActionComm,
                   negative values are not recognized!            */
                ii = ntohl(pPoolInfoData0->iFreeSize);
 
-               printf("-D- currently free (HW): %d MByte\n",
+               printf("-D- currently free (HW): %d GByte\n",
                       iHardwareFree);
                printf(
                   "    currently %d MByte unused in %s are allocated by other pools\n",
@@ -3837,8 +3466,8 @@ void rawQueryPrint(
    if ( (ipMode == 1) || (ipMode == 11) )
    {
       if (ntohl(pQAttr->iFS))
-         fprintf(fLogFile, "    %s on data mover %s, FS %d (poolId %d)\n",
-            cStatus, pQAttr->cNode, ntohl(pQAttr->iFS),
+         fprintf(fLogFile, "    on data mover %s in pool FS %d (poolId %d)\n",
+            pQAttr->cNode, ntohl(pQAttr->iFS),
             ntohl(pQAttr->iPoolId));
       fprintf(fLogFile,
          "    obj-Id: %u-%u, restore order: %u-%u-%u-%u-%u\n",
@@ -4019,7 +3648,7 @@ int rawQueryString(
       if (ntohl(pQAttr->iFS))
       {
          sprintf(cMsg1,
-            "    staged on data mover %s, FS %d (poolId %d)\n",
+            "    on data mover %s, FS %d (poolId %d)\n",
             pQAttr->cNode, ntohl(pQAttr->iFS),
             ntohl(pQAttr->iPoolId));
          strcat(cMsg, cMsg1);

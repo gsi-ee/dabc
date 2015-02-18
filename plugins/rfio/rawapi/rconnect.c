@@ -99,6 +99,12 @@ int rconnect( char *cNode,        /* input:  name of remote host */
                (char *)&lAddr, sizeof(lAddr), AF_INET ) ) == NULL )
       {
          fprintf(fLogFile, "-E- %s: unknown host %s\n", cModule, cNode );
+         if (errno)
+         {
+            fprintf(fLogFile, "    %s\n", strerror(errno));
+            errno = 0;
+         }
+
          iError = -1;
          goto gError;
       }
