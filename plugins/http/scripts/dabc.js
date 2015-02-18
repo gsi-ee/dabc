@@ -1055,10 +1055,10 @@
       }
    }
    
-   DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, callback) {
+   DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback) {
 
-      if (!('_dabc_hist' in item))
-         return JSROOT.HierarchyPainter.prototype.GetOnlineItem.call(this, item, callback);
+      if ((item==null) || !('_dabc_hist' in item))
+         return JSROOT.HierarchyPainter.prototype.GetOnlineItem.call(this, item, itemname, callback);
       
       var top = item;
       while ((top!=null) && (!('_online' in top))) top = top._parent;
