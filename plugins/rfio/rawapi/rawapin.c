@@ -4806,6 +4806,21 @@ RFILE *rfio_fopen_gsidaq(
 
 } /* rfio_fopen_gsidaq */
 
+
+
+
+int rfio_ffileid(RFILE *f)
+{
+   int id = 0;
+
+   for (id=0;id<iFileMax;id++)
+      if (pAPIFile[id] == f) return id;
+
+   return -1;
+}
+
+
+
 /*********************************************************************
  * rfio_fnewfile: continue with next remote file in GSI mass storage
  *
