@@ -104,7 +104,7 @@ void mbs::DaqStatusAddon::OnRecvCompleted()
 
       fState = ioRecvData;
 
-      if ((fStatus.l_version != 51) && (fStatus.l_version != 62))  {
+      if ((fStatus.l_version != 51) && (fStatus.l_version != 62) && (fStatus.l_version != 63))  {
          EOUT("Unsupported status version %u", (unsigned) fStatus.l_version);
          DeleteAddonItself();
          return;
