@@ -174,13 +174,12 @@ namespace mbs {
 
             uint64_t maxsz = *sz; *sz = 0;
 
-            printf("start buffer reading maxsz = %u\n", (unsigned) maxsz);
+            // printf("start buffer reading maxsz = %u\n", (unsigned) maxsz);
 
             // any data in LMD should be written with 4-byte wrapping
             size_t readsz = io->fread(ptr, 1, maxsz, fd);
 
-            printf("readsz = %u\n", (unsigned) readsz);
-
+            // printf("readsz = %u\n", (unsigned) readsz);
 
             if (readsz==0) return false;
 
