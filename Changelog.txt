@@ -5,12 +5,13 @@ about current functionality of the framework.
 19.02.2015
 1. When 'autozoom' specified in draw options, histogram zoomed into
    non-empty content. Same command available via context menu. 
+2. One could use _same_ also in different items
 
 
 18.02.2015
 1. Let get object from online server even when item in hierarchy 
    not exists 
-2. Integrate new RFIO version from Horst. 
+2. Integrate new RFIO version from Horst
 
 
 17.02.2015
