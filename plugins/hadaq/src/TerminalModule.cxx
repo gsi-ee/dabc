@@ -39,11 +39,11 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fWorkerHierarchy.Create("Term");
 
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("State");
-   item.SetField(dabc::prop_kind, "text");
+   item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "Init");
 
    item = fWorkerHierarchy.CreateHChild("Output");
-   item.SetField(dabc::prop_kind, "text");
+   item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "");
 
    Publish(fWorkerHierarchy, "$CONTEXT$/Terminal");

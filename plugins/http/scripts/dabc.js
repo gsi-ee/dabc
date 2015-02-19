@@ -1114,7 +1114,7 @@
 
       if (isdabc) return JSROOT.CallBack(call_back, null, itemname);
       
-      if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node))
+      if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text"))
          return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
 
       var elem = DABC.CreateDrawElement(node, options=='history' ? this.HistoryDepth() : -1);

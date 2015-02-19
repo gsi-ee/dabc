@@ -8,6 +8,9 @@ about current functionality of the framework.
 2. One could use _same_ also in different items
 3. Publish in hadaq::TerminalModule general application state and 
    generated debug output  
+4. One could create item of 'Text' kind, which will be displayed as 
+   plain text in the browser. 
+5. Use 'Text' kind in hadaq::TerminalModule for simple output.
 
 
 18.02.2015
