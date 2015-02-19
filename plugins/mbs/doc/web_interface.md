@@ -1,141 +1,11 @@
-/** 
-\page mbs_plugin MBS plugin for DABC (libDabcMbs.so)
+# Web interface to MBS {#mbs_web_interface}
 
-\ingroup dabc_plugins
-
-\subpage mbs_plugin_doc <br>
-
-\subpage mbs_api_doc <br>
-
-\subpage mbs_util_doc <br>
-
-\subpage mbs_web_interface
-*/
+@ref mbs::Monitor module provides possibility to interact with MBS over DABC web interface
 
 
-/** 
-\page mbs_plugin_doc Short description of MBS plugin
+## XML file syntax
 
-Plugin designed to work with GSI DAQ system [MBS](http://daq.gsi.de) and
-provides following components:
-+ \ref mbs::LmdFile  - class for reading and writing of lmd files
-+ \ref mbs::LmdOutput - output transport to store data in lmd files (like lmd://file.lmd)
-+ \ref mbs::LmdInput  - input transport for reading of lmd files
-+ \ref mbs::ClientTransport - input client transport to connect with running MBS node
-+ \ref mbs::ServerTransport - output server transport to provide data as MBS server dose
-+ \ref mbs::CombinerModule - module to combine events from several MBS sources
-+ \ref mbs::Monitor - module to interact with MBS over DABC web interface
-*/
-
-
-/** 
-\page mbs_api_doc MBS API documentation
-
-[MBS plugin in DABC](\ref mbs_plugin_doc) provides C++ based API to access MBS
-from user code. Two major classes are provided:
-
-+ \ref mbs::MonitorHandle - access logging, statistic and command channels of remote MBS nodes
-+ \ref mbs::ReadoutHandle - readout data from MBS servers and LMD files
-
-Complete API available via ["mbs/api.h"](\ref plugins/mbs/mbs/api.h) include file.
-
-### Simple MBS readout
-
-~~~~~~~~~~~~~
-#include "mbs/api.h"
-
-int main() 
-{
-   mbs::ReadoutHandle ref = mbs::ReadoutHandle::Connect("mbs://r4-5/Stream");
-   if (ref.null()) return 1;
-
-   mbs::EventHeader* evnt = ref.NextEvent(1.);
-
-   if (evnt) evnt->PrintHeader();
-
-   ref.Disconnect();
-   return 0;
-}
-~~~~~~~~~~~~~
-
-Example of usage such interface can be found in [mbsprint.cxx](\ref plugins/mbs/utils/mbsprint.cxx)
-
-
-### Command sending to MBS
-
-~~~~~~~~~~~~~
-#include "mbs/api.h"
-
-int main() 
-{
-   mbs::MonitorHandle ref = mbs::MonitorHandle::Connect("r4-5");
-   if (ref.null()) return 1;
-
-   ref.MbsCmd("type event");
-
-   ref.Disconnect();
-   return 0;
-}
-~~~~~~~~~~~~~
-
-Example of usage such interface can be found in [mbscmd.cxx](\ref plugins/mbs/utils/mbscmd.cxx)
-
-*/
-
-
-/** \page mbs_util_doc MBS utilities documentation
-
-Together with [MBS plugin in DABC](\ref mbs_plugin_doc) two command-line
-utilities are provided: mbsprint and mbscmd.
-
-### Utility mbsprint
-
-Printout of MBS events from MBS servers or LMD files. Example:
-
-~~~~~~~~~~~~~
-shell> mbsprint mbs://r4-5/Stream -num 10 -hex
-shell> mbsprint file.lmd -dec
-~~~~~~~~~~~~~
-
-
-### Utility mbscmd
-
-Getting log information, statistic information, access to command channel.
-
-~~~~~~~~~~~~~
-shell> mbscmd r4-5 -cmd 'type event'
-~~~~~~~~~~~~~
-
-To be able submit commands or access log information, one should 
-call in mbs 'sta cmdrem' and 'sta logrem' commands. This functionality 
-available in MBS from version 6.3.
-
-mbscmd utitlity can be used to submit commands to MBS prompter 
-
-~~~~~~~~~~~~~
-shell> mbscmd x86l-33 -prompter -cmd '@startup' -cmd 'sta acq'
-~~~~~~~~~~~~~
-
-To be able submit commands, prompter should be started with '-r' options:
-
-~~~~~~~~~~~~~
-mbsnode> prm -r clinet_host_name
-~~~~~~~~~~~~~
-
-Where client_host_name is host name, from which mbscmd will be used. 
-
-*/
-
-
-
-/** \page mbs_web_interface Web interface to MBS
-
-\ref mbs::Monitor module provides possibility to interact with MBS over DABC web interface
-
-
-### XML file syntax
-
-Example of configuration file is \ref plugins/mbs/app/web-mbs.xml
+Example of configuration file is @ref plugins/mbs/app/web-mbs.xml
 
 Following parameters could be specified for the module:
 
@@ -172,7 +42,7 @@ Several MBS nodes can be readout at once:
 ~~~~~~~~~~~~~
 
 
-### MBS status record (port 6008)
+## MBS status record (port 6008)
 
 In most situations started automatically by MBS.
 mbs::Monitor module will periodically request status record and
@@ -180,7 +50,7 @@ calculate several rate values - data rate, event rate. Several log variables
 are created, which reproduce output of **rate** command of MBS.
 
 
-### MBS remote command channel (port 6019)
+## MBS remote command channel (port 6019)
 
 To enable it, one should call 'sta cmdrem' in normal MBS processs. This functionality available 
 starting from MBS version 6.3. If XML file contains line `<cmd value="6019"/>`,
@@ -189,7 +59,7 @@ Via web interface user can than submit commands like
 "start acq", "stop acq", "@startup", "show rate" to MBS process.  
 
  
-### MBS prompter (port 6006)
+## MBS prompter (port 6006)
 
 MBS prompter also allows to submit MBS commands remotely (but only remotely).
 To start prompter on mbs, one should do:
@@ -201,14 +71,14 @@ rio4> rpm -r client_host_name
 Value of argument after -r should be host name, where DABC will run.
 
 
-### MBS logger (port 6007)
+## MBS logger (port 6007)
 
 When logger is enabled by MBS ('sta logrem'), one can connect to it and get log information.
 At the moment logger is available in the MBS only together with the prompter.
 If enabled, module will readout log information and put into log record.
 
 
-### How to connect mbs dispatcher with dabc web server:
+## How to connect mbs dispatcher with dabc web server:
 (Note: this requires MBS versions >=6.3!)
 
 Two possibilities:
@@ -222,42 +92,40 @@ run  "dabc_exe web-mbs-gui.xml". The advantage of this method is that all startu
 web interface.
 
 
-### Customized web gui for kinpex/pexor node
+## Customized web gui for kinpex/pexor node
 In addition to the generic web interface, a control gui implementation is provided that provides buttons and
 log panels to monitor and control a single node mbs with Linux PC and pexor/kinpex hardware.
 An example configuration file of this is \ref plugins/mbs/app/web-mbs-gui.xml
 To start specialized web gui, select in hierarchy treeview of the generic dabc website the
 entry "MBS/<nodename>/ControlGUI". This will open control gui in separate window/tab.
 
-#### Main Sections of Control gui:
-##### MBS: 
+### Main Sections of Control gui:
+#### MBS: 
 - may send any mbs command to the dispatcher by command line
 - shortcut buttons for start acquisition, stop acquisition, @startup, @shutdown commands
 - shows output of logger, specifies history length
 - shows/hides gosip panel
 - background color indicates acquisition state of mbs (green: running, red: stopped)
 
-##### GOSIP:
+#### GOSIP:
 - may send any gosipcmd call to remote node
 - shows output of gosipcmd execution, my clear output history
 - starts user gui (POLAND frontend in this example) in new browser tab/window
 
 
-##### Data Taking:
+#### Data Taking:
 - may open and close lmd file on local disk or at rfio server
 - can toggle automatic file creation mode
 - shows output of rate/rash/rast/ratf monitors as in local mbs terminal
 - may specify log output history
 - background color indicates file state of mbs (green: open, red: closed)
 
-##### Display Refresh:
+#### Display Refresh:
 - acquire update of shown status information from web server
 - may turn on timer with selectable interval for frequent refresh mode
 - background color indicates monitoring state of web gui (green: frequent refresh, red: manual refresh required)
 
-##### Rates Display:
+#### Rates Display:
 - shows ratemeters of collector data rate and event rate, and online monitoring data rate at optional stream server socket
 - may switch between gauge style display, or trending graph with selectable history
-
-*/
 

@@ -1,27 +1,6 @@
-/** \page hadaq_plugin HADAQ plugin for DABC (libDabcHadaq.so)
- *
- *  \subpage hadaq_plugin_doc <br>
- *
- *  \subpage hadaq_trb3_package
- *
- *
- *  \ingroup dabc_plugins
- *
- */
+# Software collection for TRB3 {#hadaq_trb3_package}  
 
-
-/** \page hadaq_plugin_doc Short description of HADAQ plugin
- *
- * This should be description of HADAQ plugin for DABC.
- *
- */
-
-
-/** \page hadaq_trb3_package Software collection for TRB3
-
-
-Introduction
-============
+## Introduction
 
 This is short instruction how dabc/go4/stream frameworks can be installed and
 used for data taking and online/offline analysis of [TRB3](http://trb.gsi.de) data.
@@ -34,14 +13,12 @@ The easiest way to install all necessary software components is use repository
    https://subversion.gsi.de/dabc/trb3
 
 
-Installation of all components in once
-======================================
+## Installation of all components in once
 
 This method describes how DABC, ROOT, Go4 and stream analysis can be installed
 with minimal efforts.
 
-Requirements
-------------
+### Requirements
 
 Following packages should be installed:
 * libqt4-devel
@@ -53,8 +30,7 @@ Following packages should be installed:
 It is recommended to use bash (at least, during compilation)
 
 
-Reuse existing ROOT installation
---------------------------------
+### Reuse existing ROOT installation
 
 Most of the time is consumed by ROOT compilation, therefore if ROOT
 already installed on your machine, it can be reused. Just configure
@@ -64,8 +40,7 @@ For instance, call thisroot.sh script:
     [shell] . your_root_path/bin/thisroot.sh
 
 
-Compilation
------------
+### Compilation
 
 To checkout and compile all components, just do:
 
@@ -78,8 +53,7 @@ In case of any compilation problem please send me (S.Linev@gsi.de)
 error message from that file.
 
 
-Before using
-------------
+### Before using
 
 There is login script 'trb3login', which must be called before software can be used
 
@@ -88,8 +62,7 @@ There is login script 'trb3login', which must be called before software can be u
 It set all shell variables, which are required for DAQ and analysis
 
 
-Update from repository
-----------------------
+### Update from repository
 
 To obtain newest version from repository do:
 
@@ -98,14 +71,12 @@ To obtain newest version from repository do:
 
 
 
-Installation of packages separately
-===================================
+## Installation of packages separately
 
 Use this methods only if installation of all packages at once did not work or
 one need only some specific package to install.
 
-Installation of DABC
---------------------
+### Installation of DABC
 
 If only DAQ functionality is required, than one need to install DABC only.
 It is much faster and easier. Just do:
@@ -114,13 +85,11 @@ It is much faster and easier. Just do:
     [shell] cd dabc; make nodim=1 -j4
     [shell] . ./dabclogin
 
-Installation of ROOT
---------------------
+### Installation of ROOT
 
 See http://root.cern.ch for information
 
-Installation of Go4
--------------------
+### Installation of Go4
 
 Main information in http://go4.gsi.de.
 To install from repository first initialize ROOT variables, than do:
@@ -129,8 +98,7 @@ To install from repository first initialize ROOT variables, than do:
     [shell] cd go4; make -j4
     [shell] . ./go4login
 
-Installation of stream
-----------------------
+### Installation of stream
 
 First compile and configure go4. Than:
 
@@ -140,8 +108,7 @@ First compile and configure go4. Than:
 
 
 
-Running of DAQ
-==============
+## Running of DAQ
 
 To run DAQ, only DABC installation is required.
 
@@ -150,14 +117,12 @@ Copy it in any suitable place and modify for your needs.
 
 Main configuration parameters:
 
-Memory pool
------------
+### Memory pool
 
 Defines number and size of buffers, used in application. Normally must remain as is.
 Should be increased if queue sizes of input/output ports are increased
 
-Combiner module
----------------
+### Combiner module
 
 It is central functional module of the DAQ application.
 It could have arbitrary number of inputs, defined by NumInputs parameter.
@@ -172,8 +137,7 @@ Events, produced by combiner module, can be stored in hld file or (and) delivere
 via online server to online analysis.
 
 
-Write HLD files
----------------
+### Write HLD files
 
 To write HLD files, one should specify following parameters in combiner module:
 
@@ -186,8 +150,7 @@ maxsize defines maximum size (in MB) of file, which than will be closed and new
 file will be started
 
 
-Configure online server
------------------------
+### Configure online server
  
 First output of combiner module used for online server.
 It is MBS stream server, which simply adds MBS-specific header to
@@ -200,8 +163,7 @@ For instance, online server can be used to printout raw data with `hldprint` com
     [shell] hldprint localhost:6002
 
 
-Running DABC
-------------
+### Running DABC
 
 Once configuration file is adjusted, one should call:
 
@@ -211,8 +173,7 @@ Execution can always be regularly stopped by Ctrl-C.
 All opened files will be closed normally.
 
 
-Usage of web-server
--------------------
+### Usage of web-server
 
 One able to observe and control running DAQ application via web browser.
 After DAQ is started, one could open in web browser address like 
@@ -228,8 +189,7 @@ For instance, in  "Hadaq/Combiner" folder there are two commands:
 + "StopHldFile" stop file writing.   
 
 
-Running analysis
-================
+## Running analysis
 
 Analysis code is provided in new __stream__ project.
 It is generic analysis framework, dedicated for synchronization and
@@ -245,8 +205,7 @@ It shows how to process data from several TDCs. Please read comment in script it
 One can always copy such script to any other location and modify it to specific needs.
 
 
-Running in batch
-----------------
+### Running in batch
 
 To run analysis in batch (offline), start from directory where first.C script is
 situated:
@@ -264,8 +223,7 @@ For instance, one can run only specified number of events or change output file 
     [shell] go4analysis -user file_0000.hld -number 100000 -asf new_name.root
 
 
-Running analysis online
------------------------
+### Running analysis online
 
 First of all, online server should be configured in DABC. In any moment one
 could start analysis from batch, connecting to DABC server with command:
@@ -290,8 +248,7 @@ Via analysis browser one can display and monitor any histogram.
 For more details about go4 see introduction on http://go4.gsi.de.
 
 
-Running hldprint
-================
+## Running hldprint
 
 hldprint is small utility to printout HLD data from different sources: 
 local hld files, remote hld files and running dabc application.
@@ -392,8 +349,7 @@ Result is:
 All options can be obtain when running "hldprint -help"
 
 
-Usage of hadaq API from DABC
-============================
+## Usage of hadaq API from DABC
 hldprint is just program with about 200 lines of code. 
 Source code can be found in [repository](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx)
 There is also [example](https://subversion.gsi.de/dabc/trunk/applications/hadaq/), which 
@@ -416,7 +372,4 @@ int main() {
 One can use such interface in any other standalone applications.
 
 
-
 Any comments and wishes: S.Linev(at)gsi.de
-
- */
