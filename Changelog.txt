@@ -10,7 +10,11 @@ about current functionality of the framework.
    generated debug output  
 4. One could create item of 'Text' kind, which will be displayed as 
    plain text in the browser. 
-5. Use 'Text' kind in hadaq::TerminalModule for simple output.
+5. Use 'Text' kind in hadaq::TerminalModule for simple output
+6. Introduce MathJax support - first in 'Text' item one should specify
+   property 'mathjax' to true.
+7. In droppable remove defualt-ui class - removes nasty coloring  
+8. In TRootSnifferStoreJson correctly handle all JSON escape symbols
 
 
 18.02.2015
