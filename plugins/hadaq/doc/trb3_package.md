@@ -424,6 +424,13 @@ In each calibration module one could see accumulated histograms - these are same
 histograms produced by stream framework inside DABC process. 
 One could display, superimpose and monitor them.  
 
+When terminal module is enabled (default on), it also provides information about progress
+of TDC calibration. One could request generic state for all TDC with request:
+
+    wget http://localhost:8090/EventBuilder/Terminal/State/value/get.json -O state.json
+
+If calibration peformed for all TDCs, "Ready" string will be returned, otherwise "Init"
+
 
 
 # Usage of hadaq API in other applications

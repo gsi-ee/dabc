@@ -6,6 +6,8 @@ about current functionality of the framework.
 1. When 'autozoom' specified in draw options, histogram zoomed into
    non-empty content. Same command available via context menu. 
 2. One could use _same_ also in different items
+3. Publish in hadaq::TerminalModule general application state and 
+   generated debug output  
 
 
 18.02.2015

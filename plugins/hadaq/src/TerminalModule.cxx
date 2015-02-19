@@ -35,6 +35,19 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    CreateTimer("update", period, false);
 
    fLastTm.Reset();
+
+   fWorkerHierarchy.Create("Term");
+
+   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("State");
+   item.SetField(dabc::prop_kind, "text");
+   item.SetField("value", "Init");
+
+   item = fWorkerHierarchy.CreateHChild("Output");
+   item.SetField(dabc::prop_kind, "text");
+   item.SetField("value", "");
+
+   Publish(fWorkerHierarchy, "$CONTEXT$/Terminal");
+
 }
 
 void hadaq::TerminalModule::BeforeModuleStart()
@@ -81,26 +94,30 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    fTotalDiscEvents = comb->fTotalDiscEvents;
    fTotalDroppedData = comb->fTotalDroppedData;
 
-   fprintf(stdout, "---------------------------------------------\n");
-   fprintf(stdout, "Events:%8lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
-         (long unsigned) fTotalBuildEvents, rate1,
-         dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
-   fprintf(stdout, "Dropped:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s",
-         (long unsigned) fTotalDiscEvents, rate3,
-         dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
+   std::string s;
+
+   s += "---------------------------------------------\n";
+   s += dabc::format("Events:%8lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
+                        (long unsigned) fTotalBuildEvents, rate1,
+                        dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
+   s += dabc::format("Dropped:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s",
+                        (long unsigned) fTotalDiscEvents, rate3,
+                        dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
    if (comb->fTotalFullDrops>0)
-      fprintf(stdout, " Total:%lu\n", (long unsigned) comb->fTotalFullDrops);
+      s += dabc::format(" Total:%lu\n", (long unsigned) comb->fTotalFullDrops);
    else
-      fprintf(stdout, "\n");
+      s += "\n";
 
    bool istdccal = false;
    for (unsigned n=0;n<comb->fCfg.size();n++)
       if (comb->fCfg[n].fCalibr) istdccal = true;
 
-   fprintf(stdout, "inp port     pkt      data disc err32  bufs qu  drop  lost");
-   if (istdccal) fprintf(stdout,"    TRB         TDC        progr state\n");
-            else fprintf(stdout,"\n");
+   s += "inp port     pkt      data disc err32  bufs qu  drop  lost";
+   if (istdccal) s += "    TRB         TDC        progr state\n";
+            else s += "\n";
+
+   bool isready = true;
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
 
@@ -137,9 +154,16 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          sbuf.append(tdc);
 
          sbuf.append(dabc::format(" %2d %s", cal->fProgress, cal->fState.c_str()));
+
+         if (cal->fState.find("Ready")!=0) isready = false;
       }
 
-      fprintf(stdout, sbuf.c_str());
-      fprintf(stdout, "\n");
+      s += sbuf;
+      s += "\n";
    }
+
+   fprintf(stdout, s.c_str());
+
+   fWorkerHierarchy.GetHChild("State").SetField("value", isready ? "Ready" : "Init");
+   fWorkerHierarchy.GetHChild("Output").SetField("value", s);
 }
