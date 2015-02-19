@@ -13,7 +13,7 @@ The easiest way to install all necessary software components is use repository
    https://subversion.gsi.de/dabc/trb3
 
 
-## Installation of all components in once
+# Installation of all components in once {#trb3_install}
 
 This method describes how DABC, ROOT, Go4 and stream analysis can be installed
 with minimal efforts.
@@ -49,7 +49,7 @@ To checkout and compile all components, just do:
     [shell] make -j4
 
 During compilation makelog.txt file will be created in each sub-directory.
-In case of any compilation problem please send me (S.Linev@gsi.de)
+In case of any compilation problem please send me (S.Linev(at)gsi.de)
 error message from that file.
 
 
@@ -108,7 +108,7 @@ First compile and configure go4. Than:
 
 
 
-## Running of DAQ
+# Running of DAQ {#trb3_daq}
 
 To run DAQ, only DABC installation is required.
 
@@ -173,7 +173,7 @@ Execution can always be regularly stopped by Ctrl-C.
 All opened files will be closed normally.
 
 
-### Usage of web-server
+### Usage of web-server ###
 
 One able to observe and control running DAQ application via web browser.
 After DAQ is started, one could open in web browser address like 
@@ -189,10 +189,10 @@ For instance, in  "Hadaq/Combiner" folder there are two commands:
 + "StopHldFile" stop file writing.   
 
 
-## Running analysis
+## Running analysis ##
 
-Analysis code is provided in new __stream__ project.
-It is generic analysis framework, dedicated for synchronization and
+Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/app/stream).
+It is dedicated for synchronization and
 processing of different kinds of time-stamped data streams. Classes,
 relevant for TRB3/FPGA-TDC processing located in 
 [header](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
@@ -207,7 +207,7 @@ One can always copy such script to any other location and modify it to specific 
 
 ### Running in batch
 
-To run analysis in batch (offline), start from directory where first.C script is
+To run analysis in batch (offline), start from directory where *first.C* script is
 situated:
 
     [shell]  go4analysis -user file_0000.hld
@@ -248,7 +248,7 @@ Via analysis browser one can display and monitor any histogram.
 For more details about go4 see introduction on http://go4.gsi.de.
 
 
-## Running hldprint
+# Running hldprint {#trb3_hldprint}
 
 hldprint is small utility to printout HLD data from different sources: 
 local hld files, remote hld files and running dabc application.
@@ -349,8 +349,86 @@ Result is:
 All options can be obtain when running "hldprint -help"
 
 
-## Usage of hadaq API from DABC
-hldprint is just program with about 200 lines of code. 
+
+# TDC calibration #  {#trb3_tdc}
+
+Now DABC application can be also used to calibrate data, provided by FPGA TDCs.
+For this functionality code from [stream framework](https://subversion.gsi.de/go4/app/stream) is used.
+Therefore DABC should be compiled together with stream - at best as (trb3 package)[https://subversion.gsi.de/dabc/trb3].
+
+### Configuration
+
+There is [example configuration file](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
+This loook like:
+
+~~~~~~~~~~~~~~~~
+       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
+       <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
+~~~~~~~~~~~~~~~~
+  
+For each input [TDC calibration module](@ref hadaq::TdcCalibrationModule) will be created with name 'Input0TdcCal' for first input, 'Input1TdcCal' for second input and so on. One could specify additional parameters for such modules in section:
+
+~~~~~~~~~~~~~~~~
+    <Module name="Input*TdcCal">
+       <!-- Minimal bin for linear calibration -->
+       <FineMin value="31"/>
+       <!-- Maximal bin for linear calibration -->
+       <FineMax value="480"/>
+       <!-- number of TDC channels -->
+       <NumChannels value="65"/>
+       <!-- 1 - only rising, 2 - both independent, 3 - falling edges uses calibr from rising, 4 - common statistic is used -->
+       <EdgeMask value="1"/>
+       <!-- histogram filling 0 - no histograms, 4 - for every channel  -->
+       <HistFilling value="4"/>
+       <!-- file prefix where calibration will be stored or loaded -->
+       <CalibrFile value="local"/>
+       <DisableCalibrationFor value="0"/>
+       <!-- Number of counts in each channel to perform calibration -->
+       <Auto value="100000"/>
+    </Module>
+~~~~~~~~~~~~~~~~
+
+Comments for all possible parameters provided in 
+[example file](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml)  
+
+
+### Running
+
+When running, calibration modules extracts hits data, accumulate statistics and produce calibration.
+Calibration module use such calibrations to replace original 10bit fine-counter value in hit message
+by new value, which is just 10 bit _NEGATIVE_ timestamp with 5ps bining. 
+Also message type will be changed - old type 0x80000000 replaced by 0xa0000000.     
+
+Every time calibration is produced, it is stored to binary files specified in configuration of calibration module. When application started next time, last produced calibration will be loaded and used until
+new calibration is ready.
+
+
+### Using in hldprint and analysis 
+
+Both `hldprint` and `stream` analysis will recognize new hit message type and provide
+time stamp without need to apply any kind of calibration. 
+
+
+### Monitoring with web
+
+DABC provides specialized web control gui, which shows DAQ and TDC calibration status.
+To activate it, one should open following address:
+
+    http://localhost:8090/?item=EventBuilder/HadaqCombiner 
+
+Or just click `EventBuilder/HadaqCombiner` in browser.
+
+One will see which TRB/TDC ids are configured and that are progress of TDC calibration.
+
+In each calibration module one could see accumulated histograms - these are same
+histograms produced by stream framework inside DABC process. 
+One could display, superimpose and monitor them.  
+
+
+
+# Usage of hadaq API in other applications
+hldprint is just program with originally about 150 lines of code 
+(now it is 500 due to many extra options). 
 Source code can be found in [repository](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx)
 There is also [example](https://subversion.gsi.de/dabc/trunk/applications/hadaq/), which 
 can be copied and modified for the user needs.

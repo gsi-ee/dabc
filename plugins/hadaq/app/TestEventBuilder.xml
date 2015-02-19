@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!-- 
-This is example file how HADAQ event building with TDC calibration could be configured in DABC.
+This is example file how HADAQ event building should be configured in DABC.
 Event building process implemented in Combiner module of hadaq::CombinerModule class.
 Module can have several inputs, each with separate port number for receiving data 
 from TRB boards. For every input one could configure only UDP port number - host name is ignored.
@@ -27,7 +27,7 @@ When dabc runs, in any browser address like
 http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
   - ratemeters from EventBuilder and Transmitter
   - log fields 
-  - commands to start/stop hld files storage from browser
+  - commands to start/stop hld and lmd files from browser
 
 It is also possible to attach go4 analysis to that server, that also histograms
 from online analysis will appear. For that one should specify 
@@ -75,21 +75,14 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="Input*TdcCal">    
-       <!-- Minimal bin for linear calibration -->
        <FineMin value="31"/>
-       <!-- Maximal bin for linear calibration -->
-       <FineMax value="480"/>
-       <!-- number of TDC channels -->
+       <FineMax value="421"/>
        <NumChannels value="65"/>
-       <!-- 1 - only rising, 2 - both independent, 3 - falling edges uses calibr from rising, 4 - common statistic is used -->
        <EdgeMask value="1"/>
-       <!-- histogram filling 0 - no histograms, 4 - for every channel  -->
        <HistFilling value="4"/>
-       <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
-       <DisableCalibrationFor value="0"/>
-       <!-- Number of counts in each channel to perform calibration -->
-       <Auto value="100000"/>
+       <DisableCalibrationFor value="0"/>  
+       <Auto value="1200"/>
        
        <!-- TRB value="0x8010"/-->
        <!-- HUB value="0x9000"/-->
@@ -102,11 +95,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
-       <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
-       <InputPort name="Input2" url="hadaq://host:10103" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]"/>
-       <InputPort name="Input3" url="hadaq://host:10104" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
-       <InputPort name="Input4" url="hadaq://host:10105" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
+       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&dummy"/>
+       <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]&dummy"/>
+       <InputPort name="Input2" url="hadaq://host:10103" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]&dummy"/>
+       <InputPort name="Input3" url="hadaq://host:10104" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]&dummy"/>
+       <InputPort name="Input4" url="hadaq://host:10105" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]&dummy"/>
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug"/>
 
@@ -119,7 +112,15 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
 
+       <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   
+
+       <!-- take event sequence number from vulom/roc sync message at cts -->
+       <UseSyncSequenceNumber value="false"/>
+       <SyncSubeventId value="0x8000"/>
+       <SyncTriggerMask value="0x01"/>
+       <PrintSync value="false"/>
+       <FlushBySync value="false"/>
        
        <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
