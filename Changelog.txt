@@ -7,7 +7,8 @@ about current functionality of the framework.
    TBufferJSON and dabc::Record  
 2. Let specify _layout item in httpcontrol.C, _drawitem and _drawopt 
    could be arrays
-
+3. Let display 'Text' item in draw.htm window too
+4. Support 'load' property in 'Text' to load arbitrary html code inside
 
 
 19.02.2015
