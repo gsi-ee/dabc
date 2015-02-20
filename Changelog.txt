@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 20.02.2015
 1. Once again fix problem with escape symbols in TRootSnifferStoreJson.  
+2. Let specify _layout item in httpcontrol.C, _drawitem and _drawopt 
+   could be arrays
 
 
 19.02.2015
