@@ -799,46 +799,41 @@ bool dabc::RecordField::NeedJsonReformat(const std::string& str)
 {
    // here we have situation that both single and double quotes present
    // first try to define which kind quotes preceding with escape character
-   bool is_last_escape(false);
 
    for (unsigned n=0;n<str.length();n++)
-
       switch (str[n]) {
-         case '\\' : is_last_escape = !is_last_escape; break;
-         case '\n' : return true; // new-line symbol should be replaced
-         case '\"' :
-            if (!is_last_escape) return true;
-            is_last_escape = false;
-            break;
-         case 'n' :
-            if (is_last_escape) return true; // string '\n' should be replaced by "\\n"
-            break;
-         default:
-            is_last_escape = false;
-            break;
+         case '\n':
+         case '\t':
+         case '\"':
+         case '\\':
+         case '\b':
+         case '\f':
+         case '\r':
+         case '/': return true;
+         default: if ((str[n] < 32) || (str[n]>126)) return true;
       }
 
-   return is_last_escape;
+   return false;
 }
 
 std::string dabc::RecordField::JsonReformat(const std::string& str)
 {
    std::string res;
 
-   for (unsigned n=0;n<str.length();n++) {
-      switch (str[n]) {
-         case '\n':
-            res += "\\\\n";
-            break;
-         case '\t':
-            res += "\\\\t";
-            break;
+   for (unsigned n = 0; n<str.length(); n++)
+      switch(str[n]) {
+         case '\n': res.append("\\n"); break;
+         case '\t': res.append("\\t"); break;
+         case '\"': res.append("\\\""); break;
+         case '\\': res.append("\\\\"); break;
+         case '\b': res.append("\\b"); break;
+         case '\f': res.append("\\f"); break;
+         case '\r': res.append("\\r"); break;
+         case '/': res.append("\\/"); break;
          default:
-            res += str[n];
-            // when escape character found, double it - keep only for \' and \" sequences
-            if ((str[n] == '\\') && ((n==str.length()-1) || ((str[n+1]!='\'') && (str[n+1]!='\"')))) res += "\\";
-      }
-   }
+            if ((str[n] > 31) && (str[n]<127)) res.append(1, str[n]);
+                                          else res.append(dabc::format("\\u%04x", (unsigned) str[n]));
+     }
 
    return res;
 }

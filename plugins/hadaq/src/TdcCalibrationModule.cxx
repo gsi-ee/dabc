@@ -37,7 +37,7 @@ DabcProcMgr::~DabcProcMgr()
 
 base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
 {
-   DOUT0("Create TH1 %s", name);
+   DOUT2("Create TH1 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
@@ -61,7 +61,7 @@ base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbin
 
 base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   DOUT0("Create TH2 %s", name);
+   DOUT2("Create TH2 %s", name);
 
    dabc::Hierarchy h = fTop.CreateHChild(name);
    if (h.null()) return 0;
