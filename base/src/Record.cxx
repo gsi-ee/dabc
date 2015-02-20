@@ -825,28 +825,21 @@ std::string dabc::RecordField::JsonReformat(const std::string& str)
 {
    std::string res;
 
-   bool is_last_escape(false);
-
    for (unsigned n=0;n<str.length();n++) {
-      if (str[n] == '\n') {
-         res += "\\\\n";
-         continue;
+      switch (str[n]) {
+         case '\n':
+            res += "\\\\n";
+            break;
+         case '\t':
+            res += "\\\\t";
+            break;
+         default:
+            res += str[n];
+            // when escape character found, double it - keep only for \' and \" sequences
+            if ((str[n] == '\\') && ((n==str.length()-1) || ((str[n+1]!='\'') && (str[n+1]!='\"')))) res += "\\";
       }
-
-      if (str[n] == '\t') {
-         res += "\\\\t";
-         continue;
-      }
-
-      if (str[n] == '\\') is_last_escape = !is_last_escape;
-
-      if ((str[n] == '\"') && !is_last_escape) res+='\\'; else
-      if ((str[n] == 'n') && is_last_escape) res += '\\'; // when appearing \n, replace by \\n
-
-      res += str[n];
    }
 
-   if (is_last_escape) res.append("\\");
    return res;
 }
 

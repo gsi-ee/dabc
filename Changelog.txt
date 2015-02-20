@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+20.02.2015
+1. Once again fix problem with escape symbols in TRootSnifferStoreJson.  
+
+
 19.02.2015
 1. When 'autozoom' specified in draw options, histogram zoomed into
    non-empty content. Same command available via context menu. 

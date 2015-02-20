@@ -146,30 +146,22 @@ void TRootSnifferStoreJson::SetField(Int_t lvl, const char *field,
    fBuf->Append(TString::Format("%*s\"%s\"%s", fCompact ? 0 : lvl * 4 + 2, "", field, (fCompact ? ":" : " : ")));
    if (!with_quotes) {
       fBuf->Append(value);
-   } else
-   if (strpbrk(value, "\n\t\\") == 0) {
-      fBuf->Append(TString::Format("\"%s\"", value));
    } else {
       fBuf->Append("\"");
-      const char *v = value;
-      Bool_t is_last_escape(false);
-      while (*v != 0) {
-         if (*v == '\n') {
-            fBuf->Append("\\\\n");
-            v++;
-            continue;
+      for (const char *v = value; *v != 0; v++) {
+         switch (*v) {
+            case '\n':
+               fBuf->Append("\\\\n");
+               break;
+            case '\t':
+               fBuf->Append("\\\\t");
+               break;
+            default:
+               fBuf->Append(*v);
+               // double escape character, only keep \' and \" sequences untouched
+               if ((*v == '\\') && (*(v+1) != '\'') && (*(v+1) != '\"')) fBuf->Append("\\");
          }
-         if (*v == '\t') {
-            fBuf->Append("\\\\t");
-            v++;
-            continue;
-         }
-         if (*v == '\\') is_last_escape = !is_last_escape;
-         if ((*v == '\"') && !is_last_escape) fBuf->Append('\\'); else
-         if ((*v == 'n') && is_last_escape) fBuf->Append('\\'); // when appearing \n, replace by \\n
-         fBuf->Append(*v++);
       }
-      if (is_last_escape) fBuf->Append("\\");
       fBuf->Append("\"");
    }
 }
