@@ -75,25 +75,35 @@ When starting analysis from the go4 gui, one should specify stream server with p
     
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="Input*TdcCal">    
-       <!-- Minimal bin for linear calibration -->
+       <!-- Minimal and maximal bins for linear calibration -->
        <FineMin value="31"/>
-       <!-- Maximal bin for linear calibration -->
        <FineMax value="480"/>
+       
        <!-- number of TDC channels -->
        <NumChannels value="65"/>
-       <!-- 1 - only rising, 2 - both independent, 3 - falling edges uses calibr from rising, 4 - common statistic is used -->
+       
+       <!-- 1 - use only rising edge, falling edge is ignore
+            2 - falling edge enabled and fully independent from rising edge
+            3 - falling edge enabled and uses calibration from rising edge
+            4 - falling edge enabled and common statistic is used for calibration -->
        <EdgeMask value="1"/>
-       <!-- histogram filling 0 - no histograms, 4 - for every channel  -->
+       
+       <!-- histogram filling level
+            0 - no histograms,
+            1 - only generic statistic for TRB
+            2 - basic statistic for TDC (like hits per channel)
+            3 - histograms for each active channel will be created, 
+            4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="4"/>
+       
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
-       <DisableCalibrationFor value="0"/>
+       
+       <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
+       <!--  DisableCalibrationFor value="0"/-->
+       
        <!-- Number of counts in each channel to perform calibration -->
        <Auto value="100000"/>
-       
-       <!-- TRB value="0x8010"/-->
-       <!-- HUB value="0x9000"/-->
-       <!-- TDC value="[0x8a00,0x8a01,0x8a02,0x8a03]"/-->
     </Module>
     
 
