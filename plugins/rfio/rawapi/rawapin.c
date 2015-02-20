@@ -24,6 +24,7 @@
  * rfio_stat64:     get file status (64 bit file size)
  * rfio_cache_stat: ! returns cache status of file
  *
+ * rfio_ffileid:    ! get file id from file ptr
  * rfio_fopen_gsidaq_dm: ! open remote file in gStore and lustre,
  *                         provide DM name and no.
  * rfio_fopen_gsidaq: ! open remote file in gStore and lustre
@@ -168,6 +169,7 @@
  *                      sComm.iSynchId=3
  * 21. 1.2015, H.G.: rfio_newfile: correct meta data upgrade after query
  * 17. 2.2015, H.G.: rfio_open_gsidaq: allow node names 'gstore'
+ * 18. 2.2015, H.G.: rfio_ffileid: new func to get file id from file ptr
  **********************************************************************
  */
 
@@ -4571,6 +4573,47 @@ int rfio_lseek(int iFileId,                              /* file id */
 } /* rfio_lseek */
 
 /********************************************************************
+ * rfio_ffileid:  get file id from file ptr
+ *   taken from DABC code (Sergei Linev)
+ *
+ * created 18. 2.2015, Horst Goeringer
+ ********************************************************************
+ */
+
+int rfio_ffileid(RFILE *fRemoteFile)                     /* file ptr */
+{
+   char cModule[32] = "rfio_ffileid";
+   int iDebug = 0;
+   int iFileId;
+
+   if (iDebug)
+      printf("\n-D- begin %s\n", cModule);
+
+   for (iFileId=0; iFileId<iFileMax; iFileId++)
+   {
+      if (pAPIFile[iFileId] == fRemoteFile)
+      {
+         if (iDebug)
+         {
+            printf("    fileId %d\n", iFileId);
+            printf("-D- end %s\n\n", cModule);
+         }
+
+         return iFileId;
+      }
+   }
+
+   if (iDebug)
+   {
+      printf("-W- no fileId found\n");
+      printf("-D- end %s\n\n", cModule);
+   }
+
+   return -1;
+
+} /* rfio_ffileid */
+
+/********************************************************************
  * rfio_fopen: open connection to gStore server and file
  *
  * created  4.12.2000, Horst Goeringer
@@ -4805,21 +4848,6 @@ RFILE *rfio_fopen_gsidaq(
    return pAPIFile[iFileId];        /* global, filled in rfio_open */
 
 } /* rfio_fopen_gsidaq */
-
-
-
-
-int rfio_ffileid(RFILE *f)
-{
-   int id = 0;
-
-   for (id=0;id<iFileMax;id++)
-      if (pAPIFile[id] == f) return id;
-
-   return -1;
-}
-
-
 
 /*********************************************************************
  * rfio_fnewfile: continue with next remote file in GSI mass storage

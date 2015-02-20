@@ -35,6 +35,7 @@
  * 26. 2.2010, H.G.: rfio_gsi_query: add parameter (len output string)
  *                   include unistd.h, if not yet done
  * 23. 4.2010, H.G.: new entry rfio_fopen_gsidaq_dm
+ * 18. 2.2015, H.G.: new entry rfio_ffileid
  *********************************************************************
  */
 
@@ -201,8 +202,8 @@ int rfio_fnewfile(RFILE *, char *);
 #ifdef __cplusplus
 extern "C" {
 #endif
-int rfio_ffileid(RFILE *);
-   /* returns file id */
+int rfio_mkdir(const char *, int);
+   /* open new file on already connected server */
 #ifdef __cplusplus
 }
 #endif
@@ -210,8 +211,8 @@ int rfio_ffileid(RFILE *);
 #ifdef __cplusplus
 extern "C" {
 #endif
-int rfio_mkdir(const char *, int);
-   /* open new file on already connected server */
+int rfio_ffileid(RFILE *);
+   /* get file id from file ptr */
 #ifdef __cplusplus
 }
 #endif
