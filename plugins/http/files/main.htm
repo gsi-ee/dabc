@@ -39,11 +39,7 @@
             }); 
             
             var monitor = JSROOT.GetUrlOption("monitoring");
-            
-            if (monitor) {
-               document.getElementById("monitoring").checked = true;
-               document.getElementById("monitoring").disabled = "disabled";
-            } 
+            DABC.hpainter.SetMonitoring(monitor);
             
             var itemsarr = JSROOT.GetUrlOptionAsArray("item;items");
             var optionsarr = JSROOT.GetUrlOptionAsArray("opt;opts");
@@ -54,9 +50,8 @@
                DABC.hpainter.displayAll(itemsarr, optionsarr);
             });
             
-            DABC.hpainter.EnableMonitoring(monitor!=null);
             $("#monitoring")
-               .prop('checked', monitor!=null)
+               .prop('checked', DABC.hpainter.IsMonitoring())
                .click(function() {
                   DABC.hpainter.EnableMonitoring(this.checked);
                   if (this.checked) DABC.hpainter.UpdateDabcElements();

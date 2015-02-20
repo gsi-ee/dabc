@@ -15,7 +15,7 @@
          dabc.SetDisplay('grid 1x1',"drawing");
          var drawopt = JSROOT.GetUrlOption("opt");
          dabc.OpenOnline("", function() { dabc.display("", drawopt); });
-         dabc.EnableMonitoring(JSROOT.GetUrlOption("monitoring")!=null);
+         dabc.SetMonitoring(JSROOT.GetUrlOption("monitoring"));
          setInterval(function() { dabc.UpdateDabcElements(); }, dabc.MonitoringInterval());
          JSROOT.RegisterForResize(dabc);
       }
