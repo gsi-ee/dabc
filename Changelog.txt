@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+24.02.2015
+1. Detect major browser kinds in JSROOT
+2. Do not use foreignObjects in IE
+3. Workaround for positioning problem of foreignObjects in Chrome/Safari  
+
+
 20.02.2015
 1. Once again fix problem with escape symbols in TRootSnifferStoreJson,
    TBufferJSON and dabc::Record  
