@@ -7,6 +7,7 @@ about current functionality of the framework.
 2. Do not use foreignObjects in IE
 3. Workaround for positioning problem of foreignObjects in Chrome/Safari  
 4. Very first try to draw latex with MathJax (#frac in legend first)
+5. One can enable MathJax usage with mathjax url option. By default off. 
 
 
 20.02.2015
