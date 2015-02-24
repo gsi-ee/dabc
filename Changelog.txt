@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Detect major browser kinds in JSROOT
 2. Do not use foreignObjects in IE
 3. Workaround for positioning problem of foreignObjects in Chrome/Safari  
+4. Very first try to draw latex with MathJax (#frac in legend first)
 
 
 20.02.2015
