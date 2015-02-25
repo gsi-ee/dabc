@@ -9,6 +9,8 @@ about current functionality of the framework.
 3. Use window.onload to initialize all scripts 
 4. Implement JSROOT.extend instead of jQuery.extend, reduce
    usage of jquery in core JSROOT classes
+5. Fix problem in JSROOT - one could not combine window.onload in 
+   JSRootCore.js with body.onload initialization 
 
 
 24.02.2015
