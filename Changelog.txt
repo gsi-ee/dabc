@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Mark JSROOT as version 3.3, start new version 3.4
 2. Support usage of minimized versions of .js and .css files.
    Minimized scripts used by default on web servers.
+3. Use window.onload to initialize all scripts 
 
 
 24.02.2015
