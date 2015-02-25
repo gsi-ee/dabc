@@ -1012,47 +1012,51 @@
       });
    }
 
-   DABC.HierarchyPainter.prototype.RefreshHtml = function(force) {
-      
-      JSROOT.HierarchyPainter.prototype.RefreshHtml.call(this, force);
+   DABC.HierarchyPainter.prototype.RefreshHtml = function(callback) {
 
-      $("#fast_buttons").empty();
-
-      if (this.h==null) return;
-      
-      var cnt = 0;
       var painter = this;
-      var statusitem = null, statusfuncname = null;
       
-      this.ForEach(function(h) {
-         if ((statusitem==null) && ('_status' in h)) {
-            statusitem = painter.itemFullName(h);
-            statusfuncname = h['_status'];
-            return;
+      JSROOT.HierarchyPainter.prototype.RefreshHtml.call(this, function() {
+
+         $("#fast_buttons").empty();
+
+         if (painter.h == null) return JSROOT.CallBack(callback);
+
+         var cnt = 0;
+         var statusitem = null, statusfuncname = null;
+
+         painter.ForEach(function(h) {
+            if ((statusitem==null) && ('_status' in h)) {
+               statusitem = painter.itemFullName(h);
+               statusfuncname = h['_status'];
+               return;
+            }
+
+            if (h['_kind'] != "DABC.Command") return;
+            if (!('_fastcmd' in h)) return;
+
+            var fullname = painter.itemFullName(h);
+
+            cnt++;
+            var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "' item='" + fullname + "'></button>";
+            $("#fast_buttons").append(html);
+            $("#dabc_fastbtn_"+cnt)
+            .text("")
+            .append('<img height="16" src="' + h['_fastcmd'] + '" width="16"/>')
+            .button()
+            .click(function() { painter.ExecuteCommand($(this).attr('item')); });
+         });
+
+         if ((statusitem!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
+            var func = JSROOT.findFunction(statusfuncname);
+            if (func && $('#status-div').empty()) {
+               painter.CreateStatus(28);
+               func('status-div', statusitem); 
+            }
          }
-      
-         if (h['_kind'] != "DABC.Command") return;
-         if (!('_fastcmd' in h)) return;
-               
-         var fullname = painter.itemFullName(h);
-               
-         cnt++;
-         var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "' item='" + fullname + "'></button>";
-         $("#fast_buttons").append(html);
-         $("#dabc_fastbtn_"+cnt)
-               .text("")
-               .append('<img height="16" src="' + h['_fastcmd'] + '" width="16"/>')
-               .button()
-               .click(function() { painter.ExecuteCommand($(this).attr('item')); });
+         
+         JSROOT.CallBack(callback);
       });
-      
-      if ((statusitem!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
-         var func = JSROOT.findFunction(statusfuncname);
-         if (func && $('#status-div').empty()) {
-            this.CreateStatus(28);
-            func('status-div', statusitem); 
-         }
-      }
    }
    
    DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback) {
