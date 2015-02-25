@@ -33,7 +33,7 @@
 
          var pos = src.indexOf("dabc.js");
          if (pos<0) continue;
-         if (src.indexOf("JSRootCore.js")>0) continue;
+         if (src.indexOf("JSRootCore.")>0) continue;
          
          console.log("Set DABC.source_dir to " + src.substr(0, pos));
          return src.substr(0, pos);

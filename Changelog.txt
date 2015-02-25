@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.02.2015
+1. Mark JSROOT as version 3.3, start new version 3.4
+2. Support usage of minimized versions of .js and .css files.
+   Minimized scripts used by default on web servers.
+
+
 24.02.2015
 1. Detect major browser kinds in JSROOT
 2. Do not use foreignObjects in IE
