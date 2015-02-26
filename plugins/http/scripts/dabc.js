@@ -1094,45 +1094,45 @@
       });
 
       itemreq.send(null);
-
    }
    
-   DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back)
-   {
-      var node = this.Find(itemname);
-      if ((node==null) || !this.CreateDisplay()) return JSROOT.CallBack(call_back, null, itemname);
-
-      var mdi = this['disp'];
-
-      var kind = node["_kind"];
-      var view = node["_view"];
-      var history = node["_history"];
+   DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back) {
+      var h = this;
+      
+      var node = h.Find(itemname);
+      var kind = node ? node["_kind"] : null;
+      var view = node ? node["_view"] : null;
+      var history = node ? node["_history"] : null;
       if (!kind) kind = "";
 
-      var isdabc = false;
+      if ((node==null) || ((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text"))
+         return JSROOT.HierarchyPainter.prototype.display.call(h, itemname, options, call_back);
+      
+      h.CreateDisplay(function(mdi) { 
+         if (!mdi) return JSROOT.CallBack(call_back, null, itemname);
 
-      mdi.ForEachPainter(function(p) {
-         if ((p.GetItemName() == itemname) && p['is_dabc']) 
+         var isdabc = false;
+
+         mdi.ForEachPainter(function(p) {
+            if ((p.GetItemName() == itemname) && p['is_dabc']) 
             { p.ClickItem(); isdabc = true; } 
+         });
+
+         if (isdabc) return JSROOT.CallBack(call_back, null, itemname);
+
+         var elem = DABC.CreateDrawElement(node, options=='history' ? h.HistoryDepth() : -1);
+
+         if (elem==null) return;
+
+         elem.itemname = itemname;
+
+         var frame = mdi.CreateFrame(itemname);
+         elem.CreateFrames(frame);
+
+         elem.RegularCheck();
+
+         return JSROOT.CallBack(call_back, elem, itemname);
       });
-
-      if (isdabc) return JSROOT.CallBack(call_back, null, itemname);
-      
-      if (((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text"))
-         return JSROOT.HierarchyPainter.prototype.display.call(this, itemname, options, call_back);
-
-      var elem = DABC.CreateDrawElement(node, options=='history' ? this.HistoryDepth() : -1);
-
-      if (elem==null) return;
-         
-      elem.itemname = itemname;
- 
-      var frame = mdi.CreateFrame(itemname);
-      elem.CreateFrames(frame);
-
-      elem.RegularCheck();
-      
-      return JSROOT.CallBack(call_back, elem, itemname);
    }
    
    DABC.HierarchyPainter.prototype.HistoryDepth = function(onlyurl) {
@@ -1268,7 +1268,7 @@
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script 
    
    DABC.HadaqDAQControl = function(hpainter, itemname) {
-      var mdi = hpainter.CreateDisplay();
+      var mdi = hpainter.GetDisplay();
       if (mdi == null) return null;
 
       var frame = mdi.FindFrame(itemname, true);

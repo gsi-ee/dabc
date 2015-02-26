@@ -44,7 +44,7 @@ One can very easy integrate JSROOT graphic into other HTML pages using a __ifram
 
 In principle, one could open any ROOT file placed in the web, providing the full URL to it like:
 
-<https://web-docs.gsi.de/~linev/js/3.3/?file=http://root.cern.ch/js/files/hsimple.root&item=hpx>
+<https://web-docs.gsi.de/~linev/js/3.3/?file=https://root.cern.ch/js/files/hsimple.root&item=hpx>
 
 But one should be aware of [Cross-Origin Request blocking](https://developer.mozilla.org/en/http_access_control),
 when the browser blocks requests to files from domains other than current web page.
@@ -91,7 +91,7 @@ One could also specify similar URL parameters to configure the displayed items a
 
 It is also possible to display one single item from the THttpServer server like:
 
-<https://root.cern.ch/js/3.3/demo/Files/job1.root/hpxpy/draw.htm?opt=colz>
+<https://root.cern.ch/js/3.3/httpserver.C/Files/job1.root/hpxpy/draw.htm?opt=colz>
 
 
 ##  Data monitoring with JSROOT
@@ -104,7 +104,7 @@ changes and request only the items currently displayed in the browser.
 To enable monitoring, one should activate the appropriate checkbox or
 provide __monitoring__ parameter in the URL string like:
 
-<https://root.cern.ch/js/3.3/demo/Files/job1.root/hprof/draw.htm?monitoring=1000>
+<https://root.cern.ch/js/3.3/httpserver.C/Files/job1.root/hprof/draw.htm?monitoring=1000>
 
 The parameter value is the update interval in milliseconds.
 
