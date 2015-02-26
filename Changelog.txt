@@ -8,7 +8,9 @@ about current functionality of the framework.
 3. Use DOM elements as frame handle in MDIDisplay 
 4. Separate jquery-dependent code from d3.js graphic.
    Now main 2-D graphic works without jquery  and jquery-ui at all!
-5. Implement nobrowser gui without jquery    
+5. Implement nobrowser gui without jquery
+6. When invoking callback after HTTP request, set this pointer on request itself.
+   Can be used to keep request-specific information.    
 
 
 25.02.2015
