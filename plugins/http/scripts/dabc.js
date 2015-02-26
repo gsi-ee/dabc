@@ -1274,7 +1274,7 @@
       var frame = mdi.FindFrame(itemname, true);
       if (frame==null) return null;
       
-      var divid = frame.attr('id');
+      var divid = d3.select(frame).attr('id');
       
       var item = hpainter.Find(itemname);
       var calarr = [];
@@ -1288,8 +1288,6 @@
             }
          }
       }
-      
-      frame.empty();
       
       var html = "<fieldset>" +
       		     "<legend>DAQ</legend>" +
@@ -1306,12 +1304,12 @@
       }
       html+="</fieldset>";
       
-      frame.html(html);
+      d3.select(frame).html(html);
       
-      frame.find(".hadaq_startfile").button().click(function() { 
+      $(frame).find(".hadaq_startfile").button().click(function() { 
          hpainter.ExecuteCommand(itemname+"/StartHldFile", "filename="+frame.find('.hadaq_filename').val()+"&maxsize=2000");
       });
-      frame.find(".hadaq_stopfile").button().click(function() { 
+      $(frame).find(".hadaq_stopfile").button().click(function() { 
          hpainter.ExecuteCommand(itemname+"/StopHldFile");
       });
       
@@ -1388,8 +1386,8 @@
                   $(this).find("button").button().click(function(){ 
                      console.log("Draw hist " + $(this).attr('hist'));
                      var drawframe = mdi.FindFrame(itemname+"_drawing", true);
-                     drawframe.empty();
-                     hpainter.display($(this).attr('hist'),"divid:"+drawframe.attr('id'));         
+                     $(drawframe).empty();
+                     hpainter.display($(this).attr('hist'),"divid:"+$(drawframe).attr('id'));         
                   });
                   $(this).find(".hadaq_progress").progressbar({ value: info.progress });
                }

@@ -5,6 +5,7 @@ about current functionality of the framework.
 26.02.2015
 1. Move CreateDisplay and Tabs/Collapsible displays into jquery part
 2. In CheckResize one could use element ids
+3. Use DOM elements as frame handle in MDIDisplay 
 
 
 25.02.2015
