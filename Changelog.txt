@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+26.02.2015
+1. Move CreateDisplay and Tabs/Collapsible displays into jquery part
+2. In CheckResize one could use element ids
+
+
 25.02.2015
 1. Mark JSROOT as version 3.3, start new version 3.4
 2. Support usage of minimized versions of .js and .css files.
