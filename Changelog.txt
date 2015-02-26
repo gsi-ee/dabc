@@ -6,6 +6,9 @@ about current functionality of the framework.
 1. Move CreateDisplay and Tabs/Collapsible displays into jquery part
 2. In CheckResize one could use element ids
 3. Use DOM elements as frame handle in MDIDisplay 
+4. Separate jquery-dependent code from d3.js graphic.
+   Now main 2-D graphic works without jquery  and jquery-ui at all!
+5. Implement nobrowser gui without jquery    
 
 
 25.02.2015
