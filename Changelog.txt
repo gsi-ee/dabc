@@ -10,7 +10,7 @@ about current functionality of the framework.
    work with MathJax 
 5. Introduce generic functions, which allow to draw many text entries
    with normal text or MathJax and than rescale them together.
-6. Apply new functionality for TLegend, TPaveText
+6. Apply new functionality for TLegend, TPaveText, TPaveLabel
     
 
 26.02.2015
