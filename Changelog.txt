@@ -10,8 +10,8 @@ about current functionality of the framework.
    work with MathJax 
 5. Introduce generic functions, which allow to draw many text entries
    with normal text or MathJax and than rescale them together.
-6. Apply new functionality for TLegend, TPaveText, TPaveLabel,
-   TText, TLatex
+6. Apply new functionality of text drawing for TLegend, TPaveText, 
+   TPaveLabel, TText, TLatex, TAxis
 7. Significantly simplify logic of move/resize, implement for TPaveLabel
     
 
