@@ -13,6 +13,7 @@ about current functionality of the framework.
 6. Apply new functionality of text drawing for TLegend, TPaveText, 
    TPaveLabel, TText, TLatex, TAxis
 7. Significantly simplify logic of move/resize, implement for TPaveLabel
+8. All latex-decoding can now be implemented in central place.
     
 
 26.02.2015
