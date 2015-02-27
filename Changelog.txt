@@ -8,6 +8,9 @@ about current functionality of the framework.
 3. In CallBack allows to provide abstract pointer as this argument
 4. In LegendPainter rescale text after drawing to simplify 
    work with MathJax 
+5. Introduce generic functions, which allow to draw many text entries
+   with normal text or MathJax and than rescale them together.
+   Apply first for TLegend
     
 
 26.02.2015
