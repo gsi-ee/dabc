@@ -5,7 +5,10 @@ about current functionality of the framework.
 27.02.2015
 1. When doing move and resize, do not react on right-mouse events.
 2. Better middle-position for MathJax inside foreignObject
-
+3. In CallBack allows to provide abstract pointer as this argument
+4. In LegendPainter rescale text after drawing to simplify 
+   work with MathJax 
+    
 
 26.02.2015
 1. Move CreateDisplay and Tabs/Collapsible displays into jquery part
