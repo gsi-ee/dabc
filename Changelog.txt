@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+2.03.2015
+1. When doing AssertPrerequisities, prevent loading same scripts
+   twice. Second, third and more requests stored in the queue and
+   processed when previous is completed.  
+ 
+
 27.02.2015
 1. When doing move and resize, do not react on right-mouse events.
 2. Better middle-position for MathJax inside foreignObject
