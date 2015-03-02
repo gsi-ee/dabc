@@ -6,7 +6,8 @@ about current functionality of the framework.
 1. When doing AssertPrerequisities, prevent loading same scripts
    twice. Second, third and more requests stored in the queue and
    processed when previous is completed.  
-2. Fast complete  support of MathJax for Latex
+2. Fast complete  support of MathJax for Latex, 
+3. Check first three examples for TLatex
  
 
 27.02.2015
