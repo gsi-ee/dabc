@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+3.03.2015
+1. In TPaveText correctly handle TLatex. 
+
+
 2.03.2015
 1. When doing AssertPrerequisities, prevent loading same scripts
    twice. Second, third and more requests stored in the queue and
