@@ -27,6 +27,7 @@ The following parameters can be specified in the URL string:
 - optimize - drawing optimization 0:off, 1:only large histograms (default), 2:always
 - interactive - enable/disable interactive functions 0-disable all, 1-enable all
 - noselect - hide file-selection part in the browser (only when file name is specified)
+- mathjax - use MathJax for latex output
 
 When specifying `file`, `item` or `opt` parameters, one could provide array like `file=['file1.root','file2.root']`.
 One could skip quotes when specifying elements names `item=[file1.root/hpx,file2.root/hpy]` or `opt=['',colz]`.
@@ -186,6 +187,7 @@ In URL string with JSRootCore.js script one should specify which JSROOT function
     + '2d' normal drawing for 1D/2D objects
     + '3d' 3D drawing for 2D/3D histograms
     + 'io' binary file I/O
+    + 'mathjax' loads MathJax and uses for latex output
     + 'gui' default gui for offline/online applications
     + 'load' name of user script(s) to load
     + 'onload' name of function to call when scripts loading completed
