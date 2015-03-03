@@ -5,6 +5,7 @@ about current functionality of the framework.
 3.03.2015
 1. In TPaveText correctly handle TLatex. 
 2. Draw label in pave text
+3. Support TMathText, always use MathJax for it
 
 
 2.03.2015
