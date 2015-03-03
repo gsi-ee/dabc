@@ -7,6 +7,7 @@ about current functionality of the framework.
 2. Draw label in pave text
 3. Support TMathText, always use MathJax for it
 4. Provide separate examples for TLatex
+5. Implement rotate on 270 degree (y-axis) for the MathJax drawings
 
 
 2.03.2015
