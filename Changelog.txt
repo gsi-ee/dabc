@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+4.03.2015
+1. First try of SVG output of MathJax. One take out central SVG element 
+   and insert in Canvas/Pad. One need to implement alignment again.
+
+
 3.03.2015
 1. In TPaveText correctly handle TLatex. 
 2. Draw label in pave text
