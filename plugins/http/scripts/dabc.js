@@ -1325,7 +1325,7 @@
             var units = "";
             
             if (item._name=='HadaqInfo')
-               frame.find('.hadaq_info').text("Info: " + item.value);                  
+               $(frame).find('.hadaq_info').text("Info: " + item.value);                  
             if (item._name=='HadaqData') { lbl = "Rate: "; units = " " + item.units+"/s"; }
             if (item._name=='HadaqEvents') { lbl = "Ev: "; units = " Hz"; }
             if (item._name=='HadaqLostEvents') { lbl = "Lost:"; units = " Hz"; }
@@ -1335,7 +1335,7 @@
             }
          }
          
-         frame.find('.hadaq_rate').css("font-size","120%").text(rate);                  
+         $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);                  
 
       }
       
@@ -1371,7 +1371,7 @@
             inforeq = null;
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
-            frame.find('.hadaq_calibr').each(function(index) {
+            $(frame).find('.hadaq_calibr').each(function(index) {
                var info = res[index+1].result;
                
                if (firsttime) {
