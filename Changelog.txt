@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 5.03.2015
 1. Adjust context menu position - do not get out of the window 
+2. Prevent monitoring of item where _player or _editor field specified.
+   One also could specify '_no_monitor' property for each item
 
 
 4.03.2015

@@ -981,7 +981,7 @@
       if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon'; else
       if (kind == "ROOT.TGo4AnalysisStatus") cando.img1 = 'img_go4icon';
       
-      if ('_editor' in node) { cando.ctxt = true; cando.display = true; }
+      if ('_editor' in node) { cando.ctxt = true; cando.display = true; cando.monitor = false; }
       if ('_player' in node) cando.display = true;
       
       return cando;
