@@ -109,7 +109,7 @@ class TRootSniffer : public TNamed {
 protected:
    TString     fObjectsPath; //! default path for registered objects
    TMemFile   *fMemFile;     //! file used to manage streamer infos
-   Int_t       fSinfoSize;   //! number of elements in streamer info, used as version
+   TList      *fSinfo;       //! last produced streamer info
    Bool_t      fReadOnly;    //! indicate if sniffer allowed to change ROOT structures - for instance, read objects from files
 
    void ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl, char *ptr, unsigned long int cloffset);
@@ -163,6 +163,8 @@ public:
    Bool_t RegisterObject(const char *subfolder, TObject *obj);
 
    Bool_t UnregisterObject(TObject *obj);
+
+   Bool_t RegisterCommand(const char *cmdname, const char *method, const char *icon);
 
    Bool_t CreateItem(const char *fullname, const char *title);
 

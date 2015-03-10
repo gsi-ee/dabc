@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+10.03.2015
+1. In TRootSniffer handle list of streamer infos as another kind of object.
+   It is can be found via FindInHierarchy method and regularly converted into
+   binary or json form.
+
+
 5.03.2015
 1. Adjust context menu position - do not get out of the window 
 2. Prevent monitoring of item where _player or _editor field specified.
