@@ -188,7 +188,6 @@ Bool_t TRootSnifferScanRec::Done() const
    return kFALSE;
 }
 
-
 //______________________________________________________________________________
 Bool_t TRootSnifferScanRec::IsReadyForResult() const
 {
@@ -207,7 +206,6 @@ Bool_t TRootSnifferScanRec::IsReadyForResult() const
 
    return kTRUE;
 }
-
 
 //______________________________________________________________________________
 Bool_t TRootSnifferScanRec::SetResult(void *obj, TClass *cl, TDataMember *member)
@@ -355,7 +353,8 @@ TRootSniffer::TRootSniffer(const char *name, const char *objpath) :
    fObjectsPath(objpath),
    fMemFile(0),
    fSinfo(0),
-   fReadOnly(kTRUE)
+   fReadOnly(kTRUE),
+   fScanGlobalDir(kTRUE)
 {
    // constructor
 }
@@ -465,12 +464,8 @@ void TRootSniffer::ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl,
 //_____________________________________________________________________
 void TRootSniffer::ScanObjectProperties(TRootSnifferScanRec &rec, TObject *obj)
 {
-   // scans basic object properties
-   // here such fields as _title properties can be specified
-
-   const char *title = obj->GetTitle();
-   if ((title != 0) && (*title != 0))
-      rec.SetField(item_prop_title, title);
+   // scans object properties
+   // here such fields as _autoload or _icon properties depending on class or object name could be assigned
 }
 
 //_____________________________________________________________________
@@ -535,7 +530,7 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
 
             if (chld.SetResult(obj, obj->IsA())) return;
 
-            Bool_t has_kind = kFALSE;
+            Bool_t has_kind(kFALSE), has_title(kFALSE);
 
             ScanObjectProperties(chld, obj);
             // now properties, coded as TNamed objects, placed after object in the hierarchy
@@ -545,10 +540,12 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                   // only fields starting with _ are stored
                   chld.SetField(next->GetName(), next->GetTitle());
                   if (strcmp(next->GetName(), item_prop_kind)==0) has_kind = kTRUE;
+                  if (strcmp(next->GetName(), item_prop_title)==0) has_title = kTRUE;
                }
             }
 
             if (!has_kind) chld.SetRootClass(obj->IsA());
+            if (!has_title && (obj->GetTitle()!=0)) chld.SetField(item_prop_title, obj->GetTitle());
 
             ScanObjectChilds(chld, obj);
 
@@ -591,6 +588,8 @@ void TRootSniffer::ScanCollection(TRootSnifferScanRec &rec, TCollection *lst,
                TClass *obj_class = obj->IsA();
 
                ScanObjectProperties(chld, obj);
+
+               if (obj->GetTitle()!=0) chld.SetField(item_prop_title, obj->GetTitle());
 
                // special handling of TKey class - in non-readonly mode
                // sniffer allowed to fetch objects
@@ -644,15 +643,17 @@ void TRootSniffer::ScanRoot(TRootSnifferScanRec &rec)
       if (chld.GoInside(rec, 0, "StreamerInfo")) {
          chld.SetField(item_prop_kind, "ROOT.TStreamerInfoList");
          chld.SetField(item_prop_title, "List of streamer infos for binary I/O");
-         // chld.SetField(item_prop_hidden, "true");
+         chld.SetField(item_prop_hidden, "true");
       }
    }
 
-   ScanCollection(rec, gROOT->GetList());
+   if (IsScanGlobalDir()) {
+      ScanCollection(rec, gROOT->GetList());
 
-   ScanCollection(rec, gROOT->GetListOfCanvases(), "Canvases");
+      ScanCollection(rec, gROOT->GetListOfCanvases(), "Canvases");
 
-   ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
+      ScanCollection(rec, gROOT->GetListOfFiles(), "Files");
+   }
 }
 
 //______________________________________________________________________________
@@ -914,6 +915,18 @@ Bool_t TRootSniffer::ExecuteCmd(const char *path, const char * /*options*/,
 
    return kTRUE;
 }
+
+//______________________________________________________________________________
+Bool_t TRootSniffer::ProduceItem(const char *path, const char *options, TString &res)
+{
+   // produce JSON for specified item
+   // contrary to h.json request, all fields for specified item without childs are stroed
+
+   TRootSnifferStoreJson store(res, strstr(options, "compact")!=0);
+   ScanHierarchy("top", path, &store, kTRUE);
+   return res.Length() > 0;
+}
+
 
 //______________________________________________________________________________
 Bool_t TRootSniffer::ProduceXml(const char *path, const char * /*options*/,
@@ -1366,6 +1379,9 @@ Bool_t TRootSniffer::Produce(const char *path, const char *file,
 
    if (strcmp(file, "cmd.json") == 0)
       return ExecuteCmd(path, options, str);
+
+   if (strcmp(file, "item.json") == 0)
+      return ProduceItem(path, options, str);
 
    return kFALSE;
 }

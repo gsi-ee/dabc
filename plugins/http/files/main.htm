@@ -19,7 +19,6 @@
                  "  <p><font face='Verdana' size='1px'><a href='http://dabc.gsi.de'>DABC</a> <span style='color:green'><b>" + DABC.version + "</b></span>, " + 
                  "  <a href='http://root.cern.ch/js/jsroot.html'>JSROOT</a> <span style='color:green'><b>" + JSROOT.version + "</b></span></font></p>" + 
                  '  Hierarchy in <a href="h.json">json</a> and <a href="h.xml">xml</a> format<br/>'+
-                 '  <div id="fast_buttons"></div><br/>'+        
                  '  <input type="checkbox" name="monitoring" id="monitoring"/> Monitoring'+        
                  '  Grid <input id="grid_spinner" style="width:40px" value="2"/>' +    
                  '  <div id="dabc_tree_holder"></div>' +
@@ -46,22 +45,28 @@
             
             DABC.hpainter.SetDisplay('grid2x2', 'right-div');
             
-            DABC.hpainter.OpenOnline("", function() {
-               DABC.hpainter.displayAll(itemsarr, optionsarr);
-            });
-            
-            $("#monitoring")
-               .prop('checked', DABC.hpainter.IsMonitoring())
-               .click(function() {
-                  DABC.hpainter.EnableMonitoring(this.checked);
-                  if (this.checked) DABC.hpainter.UpdateDabcElements();
-               });
-         
-            setInterval(function() { DABC.hpainter.UpdateDabcElements(); }, DABC.hpainter.MonitoringInterval());
-            
-            JSROOT.RegisterForResize(DABC.hpainter);
-            
             JSROOT.Painter.ConfigureVSeparator(DABC.hpainter);
+
+            DABC.hpainter.OpenOnline("", function() {
+            
+               DABC.hpainter.displayAll(itemsarr, optionsarr, function() {
+
+                 DABC.hpainter.RefreshHtml();
+
+                 $("#monitoring")
+                   .prop('checked', DABC.hpainter.IsMonitoring())
+                   .click(function() {
+                      DABC.hpainter.EnableMonitoring(this.checked);
+                      if (this.checked) DABC.hpainter.UpdateDabcElements();
+                   });
+
+
+                  JSROOT.RegisterForResize(DABC.hpainter);
+
+                  setInterval(function() { DABC.hpainter.UpdateDabcElements(); }, DABC.hpainter.MonitoringInterval());
+               
+               });
+            });
             
             // h.CreateStatus(25);
        }

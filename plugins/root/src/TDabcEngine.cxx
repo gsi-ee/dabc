@@ -174,5 +174,5 @@ void TDabcEngine::Process()
 
    root::MonitorRef player = dabc::mgr.FindItem("/ROOT");
 
-   player.ProcessActionsInRootContext(GetServer()->GetSniffer());
+   player.ProcessActionsInRootContext(GetServer(), GetServer()->GetSniffer());
 }

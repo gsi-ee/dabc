@@ -111,6 +111,7 @@ protected:
    TMemFile   *fMemFile;     //! file used to manage streamer infos
    TList      *fSinfo;       //! last produced streamer info
    Bool_t      fReadOnly;    //! indicate if sniffer allowed to change ROOT structures - for instance, read objects from files
+   Bool_t      fScanGlobalDir; //! when enabled (default), scan gROOT for histograms, canvases, open files
 
    void ScanObjectMemebers(TRootSnifferScanRec &rec, TClass *cl, char *ptr, unsigned long int cloffset);
 
@@ -147,18 +148,29 @@ public:
 
    static Bool_t IsDrawableClass(TClass *cl);
 
-   /** When readonly on (default), sniffer is not allowed to change ROOT structures.
-    * For instance, it is not allowed to read new objects from files */
    void  SetReadOnly(Bool_t on = kTRUE)
    {
+      // When readonly on (default), sniffer is not allowed to change ROOT structures
+      // For instance, it is not allowed to read new objects from files
+
       fReadOnly = on;
    }
 
-   /** Return readonly mode */
    Bool_t IsReadOnly() const
    {
+      // Returns readonly mode
+
       return fReadOnly;
    }
+
+   void SetScanGlobalDir(Bool_t on = kTRUE)
+   {
+      // When enabled (default), sniffer scans gROOT for files, canvases, histograms
+
+      fScanGlobalDir = on;
+   }
+
+   Bool_t IsScanGlobalDir() const { return fScanGlobalDir; }
 
    Bool_t RegisterObject(const char *subfolder, TObject *obj);
 
@@ -201,6 +213,8 @@ public:
    Bool_t ProduceExe(const char *path, const char *options, Int_t reskind, TString *ret_str, void **ret_ptr = 0, Long_t *ret_length = 0);
 
    Bool_t ExecuteCmd(const char *path, const char *options, TString &res);
+
+   Bool_t ProduceItem(const char *path, const char *options, TString &res);
 
    Bool_t Produce(const char *path, const char *file, const char *options, void *&ptr, Long_t &length, TString &str);
 

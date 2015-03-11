@@ -987,77 +987,6 @@
       return cando;
    }
    
-   DABC.HierarchyPainter.prototype.CompleteOnline = function(ready_callback) {
-      var scripts = "";
-
-      this.ForEach(function(h) {
-         if ('_autoload' in h)
-            if (scripts.indexOf(h['_autoload'])<0) 
-               scripts += h['_autoload'] + ";";
-      });
-
-      var painter = this;
-      
-      JSROOT.loadScript(scripts, function() {
-         
-         painter.ForEach(function(h) {
-            if (!('_drawfunc' in h)) return;
-            if (h._kind.indexOf('ROOT.')!=0) return;
-            var typename = h._kind.slice(5);
-            if (JSROOT.canDraw(typename)) return;
-            var func = JSROOT.findFunction(h['_drawfunc']);
-            if (func) JSROOT.addDrawFunc(typename, func);
-         });
-         JSROOT.HierarchyPainter.prototype.CompleteOnline.call(this, ready_callback);
-      });
-   }
-
-   DABC.HierarchyPainter.prototype.RefreshHtml = function(callback) {
-
-      var painter = this;
-      
-      JSROOT.HierarchyPainter.prototype.RefreshHtml.call(this, function() {
-
-         $("#fast_buttons").empty();
-
-         if (painter.h == null) return JSROOT.CallBack(callback);
-
-         var cnt = 0;
-         var statusitem = null, statusfuncname = null;
-
-         painter.ForEach(function(h) {
-            if ((statusitem==null) && ('_status' in h)) {
-               statusitem = painter.itemFullName(h);
-               statusfuncname = h['_status'];
-               return;
-            }
-
-            if (h['_kind'] != "DABC.Command") return;
-            if (!('_fastcmd' in h)) return;
-
-            var fullname = painter.itemFullName(h);
-
-            cnt++;
-            var html = "<button id='dabc_fastbtn_" + cnt + "' title='" + h['_name'] + "' item='" + fullname + "'></button>";
-            $("#fast_buttons").append(html);
-            $("#dabc_fastbtn_"+cnt)
-            .text("")
-            .append('<img height="16" src="' + h['_fastcmd'] + '" width="16"/>')
-            .button()
-            .click(function() { painter.ExecuteCommand($(this).attr('item')); });
-         });
-
-         if ((statusitem!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
-            var func = JSROOT.findFunction(statusfuncname);
-            if (func && $('#status-div').empty()) {
-               painter.CreateStatus(28);
-               func('status-div', statusitem); 
-            }
-         }
-         
-         JSROOT.CallBack(callback);
-      });
-   }
    
    DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback) {
 
@@ -1307,7 +1236,7 @@
       d3.select(frame).html(html);
       
       $(frame).find(".hadaq_startfile").button().click(function() { 
-         hpainter.ExecuteCommand(itemname+"/StartHldFile", "filename="+frame.find('.hadaq_filename').val()+"&maxsize=2000");
+         hpainter.ExecuteCommand(itemname+"/StartHldFile", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
       });
       $(frame).find(".hadaq_stopfile").button().click(function() { 
          hpainter.ExecuteCommand(itemname+"/StopHldFile");

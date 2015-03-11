@@ -274,7 +274,7 @@ If command registered to the server:
     
 It can be invoked with cmd.json request like:
 
-    [shell] wget 'http://localhost:8080/Folder/Start/cmd.json' -O title.txt
+    [shell] wget 'http://localhost:8080/Folder/Start/cmd.json' -O result.txt
 
 If command fails, `false` will be returned, otherwise result of gROOT->ProcessLineSync() execution
     

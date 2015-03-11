@@ -28,6 +28,7 @@
 #include "dabc/CommandsQueue.h"
 #endif
 
+class THttpServer;
 class TRootSniffer;
 
 namespace root {
@@ -70,12 +71,12 @@ namespace root {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         void ProcessActionsInRootContext(TRootSniffer* sniff);
+         void ProcessActionsInRootContext(THttpServer* serv, TRootSniffer* sniff);
 
          /** Execute extra command in ROOT context, used in Go4 plugin */
          virtual bool ProcessHCommand(const std::string& cmdname, dabc::Command cmd) { return false; }
 
-         virtual int ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd);
+         virtual int ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc::Command cmd);
 
       public:
          Monitor(const std::string& name, dabc::Command cmd = 0);
@@ -91,9 +92,9 @@ namespace root {
    class MonitorRef : public dabc::WorkerRef  {
       DABC_REFERENCE(MonitorRef, dabc::WorkerRef, Monitor);
 
-      void ProcessActionsInRootContext(TRootSniffer* sniff)
+      void ProcessActionsInRootContext(THttpServer* serv, TRootSniffer* sniff)
       {
-         if (GetObject()) GetObject()->ProcessActionsInRootContext(sniff);
+         if (GetObject()) GetObject()->ProcessActionsInRootContext(serv, sniff);
       }
 
    };

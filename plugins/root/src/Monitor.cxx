@@ -21,17 +21,20 @@
 #include "dabc/Iterator.h"
 #include "dabc/Publisher.h"
 
+#include "THttpServer.h"
 #include "TRootSniffer.h"
 #include "TRootSnifferStore.h"
 
 class TRootSnifferStoreDabc : public TRootSnifferStore {
 public:
    dabc::Hierarchy& top;
+   std::string prefix;
    dabc::Hierarchy curr;
 
-   TRootSnifferStoreDabc(dabc::Hierarchy& _top) :
+   TRootSnifferStoreDabc(dabc::Hierarchy& _top, const std::string &_prefix) :
       TRootSnifferStore(),
       top(_top),
+      prefix(_prefix.c_str()),
       curr() {}
 
    virtual ~TRootSnifferStoreDabc() {}
@@ -58,7 +61,18 @@ public:
             }
          }
       }
-      curr.SetField(field, value);
+
+      if ((strcmp(field,"_autoload")==0) && (*value == '/')) {
+         TString res = "/";
+         res.Append(prefix);
+         res.Append(value);
+         res.ReplaceAll(";/", std::string("/") + prefix);
+         curr.SetField(field, res.Data());
+      } else
+      if ((strcmp(field,"_icon")==0) && (*value == '/'))
+         curr.SetField(field, std::string("/") + prefix + value);
+      else
+         curr.SetField(field, value);
    }
 
    virtual void BeforeNextChild(Int_t, Int_t, Int_t)
@@ -133,13 +147,13 @@ void root::Monitor::RescanHierarchy(TRootSniffer* sniff, dabc::Hierarchy& main, 
 {
    main.Release();
 
-   TRootSnifferStoreDabc store(main);
+   TRootSnifferStoreDabc store(main, fPrefix);
 
    sniff->ScanHierarchy("DABC", path, &store);
 }
 
 
-int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
+int root::Monitor::ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc::Command cmd)
 {
    // command executed in ROOT context without locked mutex,
    // one can use as much ROOT as we want
@@ -148,9 +162,20 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
    std::string binkind = cmd.GetStr("Kind");
    std::string query = cmd.GetStr("Query");
 
-   DOUT2("Request item %s file %s ", itemname.c_str(), binkind.c_str());
-
    dabc::Buffer buf;
+
+   TString realfilename;
+   std::string filename = std::string("/") + itemname + std::string("/") + binkind;
+
+   if (serv->IsFileRequested(filename.c_str(), realfilename)) {
+      DOUT0("Item %s Send file %s ", filename.c_str(), realfilename.Data());
+
+      Int_t len = 0;
+      char *ptr = THttpServer::ReadFileContent(realfilename.Data(), len);
+      buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) len, true);
+      cmd.SetRawData(buf);
+      return dabc::cmd_true;
+   }
 
    // for root.bin request verify that object must be really requested - it may be not changed at all
    if (binkind == "root.bin") {
@@ -214,7 +239,7 @@ int root::Monitor::ProcessGetBinary(TRootSniffer* sniff, dabc::Command cmd)
 }
 
 
-void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
+void root::Monitor::ProcessActionsInRootContext(THttpServer* serv, TRootSniffer* sniff)
 {
    // DOUT0("ROOOOOOOT sniffer ProcessActionsInRootContext %p %s active %s", this, ClassName(), DBOOL(fWorkerActive));
 
@@ -234,7 +259,7 @@ void root::Monitor::ProcessActionsInRootContext(TRootSniffer* sniff)
 
    while (doagain) {
       if (cmd.IsName(dabc::CmdGetBinary::CmdName())) {
-         cmd.Reply(ProcessGetBinary(sniff, cmd));
+         cmd.Reply(ProcessGetBinary(serv, sniff, cmd));
       } else
       if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
          std::string item = cmd.GetStr("subitem");
