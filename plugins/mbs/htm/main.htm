@@ -1,12 +1,25 @@
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
 
-<meta http-equiv="X-UA-Compatible" content="IE=Edge;text/html">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge;text/html"/>
+
+
+
+
 	<title>MBS web GUI</title>
-	<link rel="icon" type="image/png" href="img/mbslogo.png">
-		<script src="/jsrootsys/scripts/JSRootCore.js" type="text/javascript"></script>
+	
+	<link rel="icon" type="image/png" href="img/mbslogo.png" />
+
+   <script src="/jsrootsys/scripts/JSRootCore.js?2d&jq2d&load=/httpsys/scripts/dabc.js;mbs.js" type="text/javascript"></script>
+  
+  <link rel="stylesheet" type="text/css" href="/httpsys/files/dabc.css" />
+  <link rel="stylesheet" type="text/css" href="mbs.css" />
+   
+	
+	
 
 
 <style type="text/css">
@@ -40,7 +53,7 @@
 #gosip_container {
 	outline: outset medium;
 	position: fixed;
-	top: 350px;
+	top: 354px;
 	min-height: 70px;
 	left: 2px;
 	width: 34.5%;
@@ -173,18 +186,11 @@
 </style>
 
 
-		<script type='text/javascript'>
- function loadDABC() {
-          JSROOT.loadScript("/httpsys/scripts/raphael.2.1.0.min.js;"+
-                            "/httpsys/scripts/justgage.1.0.1.min.js;"+
-                            "/httpsys/files/dabc.css;"+ 
-                            "/httpsys/scripts/dabc.js;" + "mbs.js;" + "mbs.css;" );
-       }     
-   </script>
+
 </head>
 
 
-<body onload="JSROOT.AssertPrerequisites('2d',loadDABC, '')">
+<body>
 
 
 
@@ -432,3 +438,5 @@
 
 
 </body>
+
+</html>

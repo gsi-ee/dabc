@@ -137,5 +137,10 @@
     background-size: contain;
 }
 
+.ui-resizable-helper {
+    border: 1px dotted #999;
+}
+
+
 
 

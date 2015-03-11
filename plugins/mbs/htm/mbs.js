@@ -846,6 +846,7 @@ $(function() {
     
     $("#mbs_container").resizable({
         handles: 'e',
+        //helper: "ui-resizable-helper",
         minWidth: 400,
         start: function( event, ui ) {
         	MyDisplay.fMiddleWidth=$("#file_log").width();
@@ -900,7 +901,8 @@ $(function() {
     
     
     $("#file_container").resizable({
-        handles: 'e',
+        handles: 'e', 
+        //helper: "ui-resizable-helper",
         minWidth: 400,
         start: function( event, ui ) {
         	MyDisplay.fMiddleWidth=ui.size.width;
