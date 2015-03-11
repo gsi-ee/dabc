@@ -11,6 +11,8 @@ about current functionality of the framework.
    which can be loaded and function (per name) invoked. 
 3. Provide WhenReady method for the painter class. It allows to invoke callback,
    when drawing is completed. Can be used for all JSROOT painters.    
+4. Via _drawfunc, _drawscript, _drawopt one could configure custom draw function for 
+   any other object.
  
 
 10.03.2015
