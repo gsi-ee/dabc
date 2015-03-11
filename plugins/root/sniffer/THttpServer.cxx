@@ -302,8 +302,6 @@ THttpServer::THttpServer(const char *engine) :
    // Typically JSROOT sources located in $ROOTSYS/etc/http directory,
    // but one could set JSROOTSYS variable to specify alternative location
 
-   fMainThrdId = TThread::SelfId();
-
    fLocations.SetOwner(kTRUE);
 
    // Info("THttpServer", "Create %p in thrd %ld", this, (long) fMainThrdId);
@@ -627,7 +625,7 @@ Bool_t THttpServer::ExecuteHttp(THttpCallArg *arg)
    // Method can be called from any thread
    // Actual execution will be done in main ROOT thread, where analysis code is running.
 
-   if (fMainThrdId == TThread::SelfId()) {
+   if ((fMainThrdId!=0) && (fMainThrdId == TThread::SelfId())) {
       // should not happen, but one could process requests directly without any signaling
 
       ProcessRequest(arg);
@@ -653,6 +651,8 @@ void THttpServer::ProcessRequests()
    // Regularly invoked by THttpTimer, when somewhere in the code
    // gSystem->ProcessEvents() is called.
    // User can call serv->ProcessRequests() directly, but only from main analysis thread.
+
+   if (fMainThrdId==0) fMainThrdId = TThread::SelfId();
 
    if (fMainThrdId != TThread::SelfId()) {
       Error("ProcessRequests", "Should be called only from main ROOT thread");
