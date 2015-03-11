@@ -7,7 +7,11 @@ about current functionality of the framework.
    Now any user-specific code should be placed in TRootSniffer (or derived) class.
    Thus root::Monitor class of DABC should be possible to use with any ROOT application,
    using THttpServer without need of specialization
-
+2. Implement lasy load for objects drawing. One could specify function from some other script,
+   which can be loaded and function (per name) invoked. 
+3. Provide WhenReady method for the painter class. It allows to invoke callback,
+   when drawing is completed. Can be used for all JSROOT painters.    
+ 
 
 10.03.2015
 1. In TRootSniffer handle list of streamer infos as another kind of object.
