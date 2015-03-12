@@ -2,6 +2,13 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+12.03.2015
+1. In collapsible and tabs layout drawing can be hidden. In such case client rect of
+   correspondent divs returns 0. To avoid problem with SVG drawing, one should just 
+   hide SVG element in such case. Similar problems appears during resize. Both problems
+   now fixed.
+   
+
 11.03.2015
 1. Significant redesign of connection between ROOT and DABC application.
    Now any user-specific code should be placed in TRootSniffer (or derived) class.
