@@ -7,6 +7,8 @@ about current functionality of the framework.
    correspondent divs returns 0. To avoid problem with SVG drawing, one should just 
    hide SVG element in such case. Similar problems appears during resize. Both problems
    now fixed.
+2. getBBox() for SVG elements makes problem for 'hidden' elements. 
+   Use getBoundingClientRect() instead - also returns required width and height 
    
 
 11.03.2015
