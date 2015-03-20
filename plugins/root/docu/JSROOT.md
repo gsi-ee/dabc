@@ -21,7 +21,7 @@ The following parameters can be specified in the URL string:
 - file, files - name of the file(s), which will be automatically open with page loading
 - item, items - name of the item(s) to be displayed
 - opt, opts - drawing option(s) for the item(s)
-- layout - can be 'collapsible', 'tabs' or 'gridNxM' where N and M are integer values
+- layout - can be 'simple', 'collapsible', 'tabs' or 'gridNxM' where N and M integer values
 - nobrowser - do not display file browser
 - load - name of JavaScript to load
 - optimize - drawing optimization 0:off, 1:only large histograms (default), 2:always
