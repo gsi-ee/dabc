@@ -6,7 +6,11 @@ about current functionality of the framework.
 1. For text drawing use 'dy' attribute to implement Y align. 
    It can be specified in 'em' units. 
 2. Special handling for IE, where "dominant-baseline" = "middle" not work.    
-
+3. In TBufferJSON when float or double value equal to floor(value), than
+   integer format is forced. Otherwise float conversion fails or is not optimal
+4. When drawing TGraph or TH1, fMinimum/fMaximum could be used for scale selection and
+   not as zooming - zooming always interactive.
+   
 
 19.03.2015
 1. Revert usage of getBoundingClientRect() in SVG to define size. It takes into account
