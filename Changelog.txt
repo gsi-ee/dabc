@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.03.2015
+1. For text drawing use 'dy' attribute to implement Y align. 
+   It can be specified in 'em' units. 
+2. Special handling for IE, where "dominant-baseline" = "middle" not work.    
+
 
 19.03.2015
 1. Revert usage of getBoundingClientRect() in SVG to define size. It takes into account
