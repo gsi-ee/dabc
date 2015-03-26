@@ -4,7 +4,10 @@ about current functionality of the framework.
 
 26.03.2015
 1. When drawing text with rescaling, hide only text itself and not container.
-
+2. When move/resize statbox or title, selection rect append to top svg:g
+   container that during drawing update such rect not disappears.
+3. Improve position calculation of such rect - especially when cursor get out of window 
+    
 
 25.03.2015
 1. For text drawing use 'dy' attribute to implement Y align. 
