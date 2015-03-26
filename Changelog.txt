@@ -7,6 +7,8 @@ about current functionality of the framework.
 2. When move/resize statbox or title, selection rect append to top svg:g
    container that during drawing update such rect not disappears.
 3. Improve position calculation of such rect - especially when cursor get out of window 
+4. One could modify title of the top folder, it is set into h.json file and
+   used and page title in the user interface 
     
 
 25.03.2015
