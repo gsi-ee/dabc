@@ -1156,21 +1156,6 @@
       adjustSize(height);
    }
    
-   DABC.HierarchyPainter.prototype.updateOnOtherFrames = function(painter, obj) {
-       // function should change object on other painters
-      var mdi = this['disp'];
-      if (mdi==null) return false;
-
-      var isany = false;
-      mdi.ForEachPainter(function(p, frame) {
-         if ((p===painter) || (p.GetItemName() != painter.GetItemName())) return;
-         mdi.ActivateFrame(frame);
-         p.RedrawObject(obj);
-         isany = true;
-      });
-      return isany;
-   }
-
    DABC.HierarchyPainter.prototype.drawOnSuitableHistogram = function(painter, obj, is2d) {
       
       var mdi = this['disp'];
