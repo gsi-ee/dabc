@@ -391,7 +391,7 @@ Every time calibration is produced, it is stored to binary files specified in co
 It is to large extend similar with original `hit` message. 
 There are two differences. First, it has 0xa0000000 message type insted of 0x80000000.
 Second, 10 bits of fine counter coding time value with 5 ps binning, which should be _SUBSTRUCTED_ 
-from the coarse time value. For instnce, value 56 means -112 ps, value 500 is -1ns.  
+from the coarse time value. For instnce, value 26 means -130 ps, value 200 is -1ns.  
 As in original hit message, value 0x3ff (or 1023) is error.
 
 
@@ -406,7 +406,8 @@ time stamp without need to apply any kind of calibration.
 DABC provides specialized web control gui, which shows DAQ and TDC calibration status.
 To activate it, one should open http://localhost:8090/?item=EventBuilder/HadaqCombiner
 or just click `EventBuilder/HadaqCombiner` in the browser. 
-One will see DAQ state, start/stop file writing, configured TRB/TDC ids and progress of TDC calibration.
+One could see DAQ state, configured TRB/TDC ids and progress of TDC calibration.
+It is also possible to start/stop file writing.
 
 In each calibration module one could see accumulated histograms - these are 
 histograms produced by stream framework inside DABC process. 
