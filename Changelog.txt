@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+8.04.2015
+1. nostat option should disable only TPaveStats drawings, other functions
+   should be drawn
+    
+
 26.03.2015
 1. When drawing text with rescaling, hide only text itself and not container.
 2. When move/resize statbox or title, selection rect append to top svg:g
