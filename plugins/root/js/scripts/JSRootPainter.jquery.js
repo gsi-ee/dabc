@@ -45,6 +45,11 @@
          if (typeof arg == 'function') { func = arg; arg = name; }
 
          if ((arg==null) || (typeof arg != 'string')) arg = name;
+
+         // special handling of first versions with menu support
+         if (($.ui.version.indexOf("1.10")==0) || ($.ui.version.indexOf("1.9")==0))
+            name = '<a href="#">' + name + '</a>';
+
          this.code += "<li cnt='" + this.cnt + "' arg='" + arg + "'>" + name + close_tag;
          if (typeof func == 'function') this.funcs[this.cnt] = func; // keep call-back function
 
@@ -301,11 +306,9 @@
 
       if ((status_item!=null) && (JSROOT.GetUrlOption('nostatus')==null)) {
          var func = JSROOT.findFunction(status_item._status);
-         var hdiv = func==null ? null : JSROOT.Painter.ConfigureHSeparator(30);
-         if (hdiv != null) {
-            // painter.CreateStatus(28);
+         var hdiv = (typeof func == 'function') ? JSROOT.Painter.ConfigureHSeparator(30) : null;
+         if (hdiv != null)
             func(hdiv, this.itemFullName(status_item));
-         }
       }
 
       JSROOT.CallBack(callback);
@@ -389,6 +392,9 @@
          if (cando.display)
             return this.display(itemname);
 
+         if ('_player' in hitem)
+            return this.player(itemname);
+
          if (cando.execute)
             return this.ExecuteCommand(itemname, node);
 
@@ -412,8 +418,6 @@
       if (hitem==null) return;
 
       var cando = this.CheckCanDo(hitem);
-
-      // if (!cando.display && !cando.ctxt && (itemname!="")) return;
 
       var painter = this;
 
@@ -936,7 +940,7 @@
    JSROOT.Painter.ConfigureHSeparator = function(height, onlyleft) {
 
       if ((JSROOT.Painter.separ == null) ||
-          (JSROOT.Painter.horizontal != null)) return null;
+          (JSROOT.Painter.separ.horizontal != null)) return null;
 
       JSROOT.Painter.separ['horizontal'] = 'horizontal-separator-div';
       JSROOT.Painter.separ['bottom'] = 'bottom-div';

@@ -14,7 +14,7 @@
 
    JSROOT = {};
 
-   JSROOT.version = "dev 24/04/2015";
+   JSROOT.version = "dev 6/05/2015";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -508,6 +508,7 @@
    }
 
    JSROOT.doing_assert = null; // array where all requests are collected
+   JSROOT.load_jquery = null;  // variable indicates if jquery was loaded
 
    JSROOT.AssertPrerequisites = function(kind, callback, debugout) {
       // one could specify kind of requirements
@@ -585,7 +586,7 @@
                      '$$$style/JSRootInterface' + ext + ".css;";
       }
 
-      if (need_jquery) {
+      if (need_jquery && (JSROOT.load_jquery==null)) {
          var has_jq = (typeof jQuery != 'undefined'), lst_jq = "";
 
          if (has_jq)
@@ -593,13 +594,20 @@
          else
             lst_jq += "$$$scripts/jquery.min.js;";
          if (has_jq && typeof $.ui != 'undefined')
-            JSROOT.console('Reuse existing jQuery-ui ' + $.ui.version + ", required 1.11");
+            JSROOT.console('Reuse existing jQuery-ui ' + $.ui.version + ", required 1.11.0");
          else
             lst_jq += '$$$style/jquery-ui.css;$$$scripts/jquery-ui.min.js;';
 
          allfiles = lst_jq + allfiles;
          if (JSROOT.touches)
             allfiles += '$$$scripts/touch-punch.min.js;';
+
+         JSROOT.load_jquery = true;
+         if ((typeof define == 'function') && (lst_jq.length>0)) {
+            // special workarond for requirejs - hide define variable when loading jquery
+            JSROOT.load_jquery = { define : define };
+            define = null;
+         }
       }
 
       var pos = kind.indexOf("user:");
@@ -607,6 +615,11 @@
       if (pos>=0) allfiles += kind.slice(pos+5);
 
       JSROOT.loadScript(allfiles, function() {
+         if ((JSROOT.load_jquery!=null) && (typeof JSROOT.load_jquery == 'object')
+             && ('define' in JSROOT.load_jquery)) {
+            define = JSROOT.load_jquery.define;
+            JSROOT.load_jquery = true;
+         }
          if (JSROOT.doing_assert.length==0) JSROOT.doing_assert = null;
          JSROOT.CallBack(callback);
          if (JSROOT.doing_assert && (JSROOT.doing_assert.length>0)) {

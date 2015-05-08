@@ -765,7 +765,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
          cmd.SetUInt("version", sub.GetVersion());
          cmd_res = cmd_true;
       } else
-      if ((binkind=="get.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
+      if ((binkind=="get.json") || (binkind=="item.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
          std::string field = url.GetOptionStr("field", "");
 
          if (sub.null() && field.empty()) {

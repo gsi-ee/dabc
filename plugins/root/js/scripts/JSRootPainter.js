@@ -998,15 +998,22 @@
          main.node().firstChild['painter'] = this;
    }
 
-   JSROOT.TBasePainter.prototype.SetItemName = function(name) {
-      if (name==null)
+   JSROOT.TBasePainter.prototype.SetItemName = function(name, opt) {
+      if (name==null) {
          delete this['_hitemname'];
-      else
+         delete this['_hdrawopt'];
+      } else {
          this['_hitemname'] = name;
+         this['_hdrawopt'] = opt;
+      }
    }
 
    JSROOT.TBasePainter.prototype.GetItemName = function() {
       return ('_hitemname' in this) ? this['_hitemname'] : null;
+   }
+
+   JSROOT.TBasePainter.prototype.GetItemDrawOpt = function() {
+      return ('_hdrawopt' in this) ? this['_hdrawopt'] : null;
    }
 
 
@@ -7614,7 +7621,7 @@
 
       if ((cando.img1.length==0) && ('_online' in node)) cando.img1 = "img_globe";
 
-      if ('_player' in node) { cando.display = true; cando.monitor = false; }
+      if ('_player' in node) cando.monitor = false;
       if ('_icon' in node) cando.img1 = node['_icon'];
       if ('_icon2' in node) cando.img2 = node['_icon2'];
 
@@ -7772,6 +7779,8 @@
             } else {
                mdi.ForEachPainter(function(p, frame) {
                   if (p.GetItemName() != itemname) return;
+                  // verify that object was drawn with same option as specified now (if any)
+                  if (!updating && (drawopt!=null) && (p.GetItemDrawOpt()!=drawopt)) return;
                   painter = p;
                   mdi.ActivateFrame(frame);
                   painter.RedrawObject(obj);
@@ -7783,13 +7792,14 @@
                   JSROOT.console("something went wrong - did not found painter when doing update of " + itemname);
                } else {
                   var frame = mdi.FindFrame(itemname, true);
+                  d3.select(frame).html("");
                   painter = h.draw(d3.select(frame).attr("id"), obj, drawopt);
                   mdi.ActivateFrame(frame);
                   h.enable_dropping(frame, itemname);
                }
             }
 
-            if (painter) painter.SetItemName(itemname); // mark painter as created from hierarchy
+            if (painter) painter.SetItemName(itemname, updating ? null : drawopt); // mark painter as created from hierarchy
 
             JSROOT.CallBack(call_back, painter, itemname);
          });
@@ -7918,8 +7928,11 @@
    }
 
    JSROOT.HierarchyPainter.prototype.reload = function() {
+      var hpainter = this;
       if ('_online' in this.h)
-         this.OpenOnline(this.h['_online']);
+         this.OpenOnline(this.h['_online'], function() {
+            hpainter.RefreshHtml();
+         });
    }
 
    JSROOT.HierarchyPainter.prototype.expand = function(itemname) {
@@ -8144,9 +8157,9 @@
       if (cando.display)
          menu.addDrawMenu("Draw in new window", opts, function(arg) { window.open(drawurl+separ+"opt=" +arg); });
 
-      if (cando.display)
-         menu.add("Draw as png", function() {
-            window.open(onlineprop.server + onlineprop.itemname + "/root.png?w=400&h=300&opt=");
+      if (cando.display && (opts!=null) && (opts.length > 0))
+         menu.addDrawMenu("Draw as png", opts, function(arg) {
+            window.open(onlineprop.server + onlineprop.itemname + "/root.png?w=400&h=300&opt=" + arg);
          });
 
       if ('_player' in node)
@@ -8456,22 +8469,28 @@
    JSROOT.SimpleDisplay.prototype = Object.create(JSROOT.MDIDisplay.prototype);
 
    JSROOT.SimpleDisplay.prototype.ForEachFrame = function(userfunc,  only_visible) {
-      var node = d3.select("#"+this.frameid);
-      if (!node.empty() && node.property('title') != '')
+      var node = d3.select("#"+this.frameid + "_simple_display");
+      if (!node.empty())
          JSROOT.CallBack(userfunc, node.node());
    }
 
    JSROOT.SimpleDisplay.prototype.CreateFrame = function(title) {
-      return d3.select("#"+this.frameid).html("").property('title', title).node();
+
+      return d3.select("#"+this.frameid)
+               .html("")
+               .append("div")
+               .attr("id", this.frameid + "_simple_display")
+               .style("width", "100%")
+               .style("height", "100%")
+               .style("overflow" ,"hidden")
+               .property("title", title)
+               .node();
    }
 
    JSROOT.SimpleDisplay.prototype.Reset = function() {
       JSROOT.MDIDisplay.prototype.Reset.call(this);
       // try to remove different properties from the div
-      d3.select("#"+this.frameid)
-              .property('title','')
-              .style('background','')
-              .classed({'ui-droppable':false, 'ui-state-default':false});
+      d3.select("#"+this.frameid).html("");
    }
 
    // ================================================
@@ -8548,7 +8567,7 @@
             content += "</table></div>";
 
             main.html(content);
-            main.selectAll('.grid_cell').style({ 'width':  w + 'px', 'height': h + 'px'});
+            main.selectAll('.grid_cell').style({ 'width':  w + 'px', 'height': h + 'px', 'overflow' : 'hidden'});
          }
 
          main = d3.select( "#" + topid + "_" + this.cnt);
