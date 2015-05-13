@@ -530,7 +530,7 @@ int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cm
 
     try {
 
-      DOUT3("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd());
+      DOUT3("********** Calling ExecteIn in thread %s %p", GetName(), this);
 
       // critical point - we want to submit command to other thread
       // if command receiver does not accept command means it either do not have thread or lost it

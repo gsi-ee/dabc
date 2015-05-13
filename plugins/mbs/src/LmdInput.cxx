@@ -92,7 +92,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
        bufsize = buf.SegmentSize(0);
 
        if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
-          DOUT3("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize());
+          DOUT3("File %s return 0 numev for buffer %u - end of file", CurrentFileName().c_str(), buf.GetTotalSize());
           if (!OpenNextFile()) return dabc::di_EndOfStream;
        }
 
