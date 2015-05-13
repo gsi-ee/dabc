@@ -55,6 +55,8 @@ int usage(const char* errstr = 0)
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
+   printf("   -fine-min value         - minimal fine counter value, used for liner time callibration (default 31) \n");
+   printf("   -hub value              - maximal fine counter value, used for liner time callibration (default 491) \n");
 
    return errstr ? 1 : 0;
 }
