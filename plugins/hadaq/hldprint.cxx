@@ -109,6 +109,7 @@ struct SubevStat {
 
 
 double tot_limit(-1);
+unsigned fine_min(31), fine_max(491);
 
 
 bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, bool check_conditions = false)
@@ -175,7 +176,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                if ((msg & tdckind_Mask) == tdckind_Hit1)
                   tm -= fine*5e-3;  // calibrated time, 5 ps/bin
                else
-                  tm -= (fine - 31)/460.*5.; // simple approx of fine time from range 31-491
+                  tm -= 5.*(fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
             }
 
             sbuf[0] = 0;
@@ -188,7 +189,6 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                   bool cond = (tot_limit > 0) && (tot < tot_limit);
                   sprintf(sbuf," tot:%6.3f ns%s", tot,cond ? " !!!BINGO!!!" : "");
                   last_rising[channel] = 0;
-
                   if (check_conditions && cond) return true;
                }
             }
@@ -244,6 +244,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
+      if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
       if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
