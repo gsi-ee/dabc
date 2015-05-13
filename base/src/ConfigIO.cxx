@@ -269,14 +269,15 @@ bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, R
             EOUT("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem);
             break;
          } else {
-            break;
+            // FIX from 13.05.2015.
+            // Here was code to skip application node, now it is gone
+            // break;
          }
 
          level++;
 
          if (level > max_depth) break;
 
-         // if we skip application node, we should not try to traverse it back
          fCurrChld = fCurrItem;
          fCurrItem = Xml::GetParent(fCurrItem);
 
