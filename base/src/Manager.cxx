@@ -1645,7 +1645,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
    }
 
    if (runtime>0)
-      DOUT0("Application mainloop will run for %3.1 s", runtime);
+      DOUT0("Application mainloop will run for %3.1f s", runtime);
    else
       DOUT0("Application mainloop is now running");
    DOUT0("       Press Ctrl-C for stop");
