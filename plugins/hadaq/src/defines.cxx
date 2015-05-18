@@ -22,8 +22,14 @@
 
 void hadaq::RawEvent::Dump()
 {
-   printf("*** Event #0x%06x fullid=0x%04x runid=0x%08x size %u *** \n",
-         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetRunNr(), (unsigned) GetSize());
+   char sbuf[50];
+   if (GetSize()!=GetPaddedSize())
+      snprintf(sbuf,sizeof(sbuf), "%u+%u", (unsigned) GetSize(), (unsigned) (GetPaddedSize() - GetSize()));
+   else
+      snprintf(sbuf,sizeof(sbuf),"%u", (unsigned) GetSize());
+
+   printf("*** Event #0x%06x fullid=0x%04x runid=0x%08x size %s *** \n",
+         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetRunNr(), sbuf);
 }
 
 void hadaq::RawEvent::InitHeader(uint32_t id)
@@ -83,8 +89,13 @@ void hadaq::RawSubevent::PrintRawData(unsigned ix, unsigned len, unsigned prefix
 
 void hadaq::RawSubevent::Dump(bool print_raw_data)
 {
-   printf("   *** Subevent size %3u decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
-             (unsigned) GetSize(),
+   char sbuf[50];
+   if (GetSize()!=GetPaddedSize())
+      snprintf(sbuf,sizeof(sbuf), "%4u+%u", (unsigned) GetSize(), (unsigned) (GetPaddedSize() - GetSize()));
+   else
+      snprintf(sbuf,sizeof(sbuf),"%6u", (unsigned) GetSize());
+   printf("   *** Subevent size %s decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
+             sbuf,
              (unsigned) GetDecoding(),
              (unsigned) GetId(),
              (unsigned) GetTrigNr(),
