@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+19.05.2015
+1. Check if HTTP classes provided by ROOT
+
+18.05.2015
+1. Fix compilation problems when make debug=4 called
+2. When printing hld events/subevents, show padding bytes (if any) 
+
+
 8.04.2015
 1. nostat option should disable only TPaveStats drawings, other functions
    should be drawn
