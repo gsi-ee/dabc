@@ -25,7 +25,7 @@ To be able submit commands or access log information, one should
 call in mbs 'sta cmdrem' and 'sta logrem' commands. This functionality 
 available in MBS from version 6.3.
 
-mbscmd utitlity can be used to submit commands to MBS prompter 
+mbscmd utility can be used to submit commands to MBS prompter 
 
 ~~~~~~~~~~~~~
 shell> mbscmd x86l-33 -prompter -cmd '@startup' -cmd 'sta acq'
