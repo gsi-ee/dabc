@@ -9,6 +9,7 @@ about current functionality of the framework.
 4. Introduce FileRate for MBS status record
 5. Add possibility to enable/disable stat record reading
 6. Also enable log channel when running with prompter
+7. Adjust makefiles for ROOT6 once again
 
 
 19.05.2015
