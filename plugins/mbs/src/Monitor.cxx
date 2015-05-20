@@ -177,11 +177,9 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
-   if (fLoggerPort > 0) {
-      item = fHierarchy.CreateHChild("logger");
-      item.SetField(dabc::prop_kind, "log");
-      if (history>1) item.EnableHistory(history);
-   }
+   item = fHierarchy.CreateHChild("logger");
+   item.SetField(dabc::prop_kind, "log");
+   if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateHChild("rate_log");
    item.SetField(dabc::prop_kind, "log");
@@ -231,6 +229,8 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    // from this point on Publisher want to get regular update for the hierarchy
    if (publish)
       Publish(fHierarchy, std::string("/MBS/") + fMbsNode);
+
+   if (fLoggerPort <= 0) NewMessage("!!! logger not activated !!!");
 }
 
 
@@ -708,7 +708,7 @@ void mbs::Monitor::FillStatistic(const std::string& options, const std::string& 
      }
      if (bFileFilled)
      {
-       sprintf (c_line, "%5.1f %% ", r_new_file_kb / new_daqst->l_file_size * 0.1);
+       sprintf (c_line, "%5.1f %% ", new_daqst->l_file_size > 0 ? r_new_file_kb / new_daqst->l_file_size * 0.1  : 0.);
        strcat (c_out, c_line);
      }
      if (bFileData_r)
@@ -789,7 +789,8 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
 //   DOUT0("+++++++++++++++++++++++++++ Process timer!!!");
 
    // this indicated that addon is active and we should not touch it
-   if (!fAddon.null() || IsPrompter()) return;
+   // SL 20.05.2015: allow to access status record also with prompter
+   if (!fAddon.null()/* || IsPrompter()*/) return;
 
    int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
    if (fd<=0)
