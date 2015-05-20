@@ -27,33 +27,6 @@
 #include <cmw-rda/ReplyHandler.h>
 #endif
 
-#ifdef WITH_ROOT
-#include "TH2.h"
-#include "TRandom.h"
-#include "TCanvas.h"
-#include "TROOT.h"
-#include "TRootSniffer.h"
-
-class MySniffer : public TRootSniffer {
-   public:
-      TH2* fHist;
-      MySniffer(TH2* hist) : TRootSniffer("MySniffer"), fHist(hist) {}
-
-      virtual void* FindInHierarchy(const char* path, TClass** cl=0, TDataMember** member = 0, Int_t* chld = 0)
-      {
-         if (path==0) return 0;
-         if (!strcmp(path, "ImageRoot") || !strcmp(path, "BeamRoot")) {
-            if (cl) *cl = fHist->IsA();
-            return fHist;
-         }
-         return 0;
-      }
-
-};
-
-#endif
-
-
 namespace fesa {
 
    struct BeamProfile {
@@ -141,42 +114,10 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    }
    #endif
-
-   #ifdef WITH_ROOT
-
-   fWorkerHierarchy.CreateHChild("StreamerInfo").SetField(dabc::prop_kind, "ROOT.TStreamerInfoList");
-
-   dabc::Hierarchy h1 = fWorkerHierarchy.CreateHChild("BeamRoot");
-   h1.SetField(dabc::prop_kind, "ROOT.TH2I");
-
-   h1 = fWorkerHierarchy.CreateHChild("ImageRoot");
-   h1.SetField(dabc::prop_kind, "ROOT.TH2I");
-   h1.SetField(dabc::prop_view, "png");
-
-   TH2I* h2 = new TH2I("BeamRoot","Root beam profile", 32, 0, 32, 32, 0, 32);
-   h2->SetDirectory(0);
-   fHist = h2;
-
-   fSniffer = new MySniffer(h2);
-
-   #endif
 }
 
 fesa::Player::~Player()
 {
-
-   #ifdef WITH_ROOT
-   if (fSniffer) {
-      delete fSniffer;
-      fSniffer = 0;
-   }
-   if (fHist) {
-      delete (TH2I*) fHist;
-      fHist = 0;
-   }
-   #endif
-
-   //fWorkerHierarchy.Destroy();
 }
 
 void fesa::Player::ProcessTimerEvent(unsigned timer)
@@ -225,25 +166,12 @@ void fesa::Player::ProcessTimerEvent(unsigned timer)
    v1 = 20 + (test & 0xfffffc) + (test & 3)*0.01;
    fWorkerHierarchy.GetHChild("TestRate").SetField("value", dabc::format("%4.2f", v1));
 
-#ifdef WITH_ROOT
-
-   fWorkerHierarchy.GetHChild("StreamerInfo").SetField(dabc::prop_hash, (uint64_t) fSniffer->GetStreamerInfoHash());
-
-   TH2I* h2 = (TH2I*) fHist;
-   if (h2!=0) {
-      for (int n=0;n<100;n++)
-         h2->Fill(gRandom->Gaus(16,4), gRandom->Gaus(16,2));
-      fWorkerHierarchy.GetHChild("BeamRoot").SetField(dabc::prop_hash, (uint64_t) h2->GetEntries());
-   }
-#endif
-
    fWorkerHierarchy.MarkChangedItems();
 
 #ifdef DABC_EXTRA_CHECKS
 //   if (fCounter % 10 == 0)
 //      dabc::Object::DebugObject();
 #endif
-
 }
 
 
@@ -271,23 +199,6 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
       if (binkind == "dabc.bin") {
          buf = item()->bindata();
          item.FillBinHeader("", cmd);
-      } else {
-
-#ifdef WITH_ROOT
-        void* ptr(0);
-        Long_t length(0);
-        TString str;
-
-        if (fSniffer->Produce(itemname.c_str(), binkind.c_str(), query.c_str(), ptr, length, str)) {
-           if (ptr!=0)
-              buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
-           else
-              buf = dabc::Buffer::CreateBuffer(str.Data(), (unsigned) str.Length(), false, true);
-           item.FillBinHeader("", cmd, fSniffer->GetStreamerInfoHash());
-        } else {
-           EOUT("Player fail to produce item %s", itemname.c_str());
-        }
-#endif
       }
 
       if (buf.null()) {

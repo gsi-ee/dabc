@@ -30,13 +30,6 @@ FESA_LIBS = -lDabcMbs
 FESA_STATIC =
 FESA_DEPEND = $(DABCMBS_LIB)   
 
-ifdef DABC_ISROOT
-FESA_DEFINITIONS += WITH_ROOT 
-FESA_INCLUDES += $(DABC_ROOTINCDIR)
-FESA_LIBS += -lDabcRoot 
-FESA_DEPEND += $(DABCROOT_LIB)
-endif
-
 # this is location of fesa 
 
 ifdef DABC_FESA
