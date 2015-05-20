@@ -69,10 +69,6 @@ ifdef extrachecks
 	@echo "" >> $@
 	@echo "   #define DABC_EXTRA_CHECKS" >> $@
 endif
-ifeq ($(DABC_ROOT_ASIMAGE),true)
-	@echo "" >> $@
-	@echo "   #define DABC_ROOT_ASIMAGE" >> $@
-endif
 	@echo "" >> $@
 	@echo "#endif" >> $@
 
