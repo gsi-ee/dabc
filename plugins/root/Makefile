@@ -95,12 +95,6 @@ else
 HTTPDEFEXTRA += HTTP_WITHOUT_FASTCGI
 endif
 
-#ifeq ($(DABC_ROOT_ASIMAGE),true)
-#DABCROOT_LIBDEP += $(DABC_ROOTLIBDIR)/libASImage.$(DllSuf)
-#else
-#HTTPDEFEXTRA += HTTP_WITHOUT_ASIMAGE
-#endif
-
 HTTPDEFEXTRA += COMPILED_WITH_DABC
 
 HTTPINCDIR += $(DABCROOT_DIR)/../http/civetweb
@@ -146,6 +140,8 @@ $(DABCINCPATH)/%.h: $(DABCROOT_DIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
+ifeq ($(DABC_ROOT_RHHTP),false)
+
 $(DABCINCPATH)/%.h: $(DABCROOT_DIRSNIFF)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
@@ -153,6 +149,9 @@ $(DABCINCPATH)/%.h: $(DABCROOT_DIRSNIFF)/%.h
 $(DABCINCPATH)/%.h: $(DABCROOT_DIRVER)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
+
+endif
+
 
 $(DABCROOT_LIB): $(DABCROOT_ALL_O) $(DABCROOT_DO)
 	$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_ALL_O) $(DABCROOT_DO)" $(TGTDLLPATH) "$(DABC_ROOTLIBS) $(HTTPLIBEXTRA)"

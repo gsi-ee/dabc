@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. When using MBS prompter, allow to read status record (was disabled before)
 2. Fix printout error with file statistic
 3. Even when log channel disabled, provide entry in hierarchy
+4. Introduce FileRate for MBS status record
 
 
 19.05.2015

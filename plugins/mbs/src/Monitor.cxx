@@ -177,6 +177,10 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    item.SetField(dabc::prop_kind, "rate");
    if (history>1) item.EnableHistory(history);
 
+   item = fHierarchy.CreateHChild("FileRate");
+   item.SetField(dabc::prop_kind, "rate");
+   if (history>1) item.EnableHistory(history);
+
    item = fHierarchy.CreateHChild("logger");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
@@ -751,6 +755,8 @@ void mbs::Monitor::FillStatistic(const std::string& options, const std::string& 
       fHierarchy.GetHChild("EventRate").SetFieldModified("value");
       fHierarchy.GetHChild("ServerRate").SetField("value", dabc::format("%3.1f", r_rate_strsrv_kb));
       fHierarchy.GetHChild("ServerRate").SetFieldModified("value");
+      fHierarchy.GetHChild("FileRate").SetField("value", dabc::format("%3.1f", r_rate_file_kb));
+      fHierarchy.GetHChild("FileRate").SetFieldModified("value");
    }
 
    if (fDoRec) {
@@ -758,6 +764,7 @@ void mbs::Monitor::FillStatistic(const std::string& options, const std::string& 
       fRec.AddDouble(prefix + "DataRate", r_rate_kb, true);
       fRec.AddDouble(prefix + "EventRate", r_rate_evt, true);
       fRec.AddDouble(prefix + "ServerRate", r_rate_strsrv_kb, true);
+      fRec.AddDouble(prefix + "FileRate", r_rate_file_kb, true);
    }
 
    fHierarchy.MarkChangedItems();
