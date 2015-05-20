@@ -14,13 +14,14 @@
     
     <Module name="mbs1" class="mbs::Monitor">
        <node value="X86L-15"/>
-       <!--node value="r4-5"/-->
+       <!-- node value="depc418"/-->
        <period value="1"/>
        <history value="100"/>
        <!-- MBS statistic record, read from port 6008 -->
        <stat value="true"/>
-       <!-- new logger channel, running with sta logrem command -->
-       <logger value="false"/>
+       <!-- new logger channel, running with sta logrem command 
+            Also can be specified, when MBS node started with prompter -->
+       <logger value="true"/>
        <!-- command channel: true means new command channel started with sta cmdrem command
             When prompter is running, one should specify 6006 -->
        <cmd value="6006"/>

@@ -163,6 +163,8 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    else
       fLoggerPort = Cfg("logger", cmd).AsInt(0);
 
+   DOUT0("Logger port %d", fLoggerPort);
+
    if (Cfg("cmd", cmd).AsStr() == "true")
       fCmdPort = 6019;
    else
@@ -249,7 +251,7 @@ mbs::Monitor::~Monitor()
 
 void mbs::Monitor::OnThreadAssigned()
 {
-   if ((fLoggerPort > 0) && !IsPrompter()) {
+   if (fLoggerPort > 0) {
       DaqLogWorker* logger = new DaqLogWorker(this, "DaqLogger", fMbsNode, fLoggerPort);
       logger->AssignToThread(thread());
    }
