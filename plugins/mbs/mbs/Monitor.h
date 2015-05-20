@@ -216,7 +216,7 @@ namespace mbs {
     *
     * Module could access MBS via three different control ports
     *
-    * + status port 6008 (always)
+    * + status port 6008 (optional)
     * + remote logger port 6007 (optional)
     * + remote command port 6019 (optional)
     *
@@ -236,6 +236,7 @@ namespace mbs {
 
          std::string       fMbsNode;    ///< name of MBS node to connect
          double            fPeriod;     ///< period how often status is requested
+         int               fStatPort;   ///< port, providing stat information (normally 6008)
          int               fLoggerPort; ///< port, providing log information
          int               fCmdPort;    ///< port, providing remote command access
          mbs::DaqStatus    fStatus;     ///< current DAQ status

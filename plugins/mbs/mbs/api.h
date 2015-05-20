@@ -110,7 +110,7 @@ namespace mbs {
        DABC_REFERENCE(MonitorHandle, dabc::ModuleAsyncRef, Monitor)
 
        /** Connect with MBS node */
-       static MonitorHandle Connect(const std::string& mbsnode, int cmdport = 6019, int logport = 6007);
+       static MonitorHandle Connect(const std::string& mbsnode, int cmdport = 6019, int logport = 6007, int statport = 6008);
 
        /** Check if handle is initialized */
        bool null() const { return dabc::ModuleAsyncRef::null(); }

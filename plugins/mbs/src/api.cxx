@@ -218,7 +218,7 @@ mbs::EventHeader* mbs::ReadoutHandle::GetEvent()
 
 // ============================================================================================
 
-mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string& mbsnode, int cmdport, int logport)
+mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string& mbsnode, int cmdport, int logport, int statport)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(-1);
@@ -235,6 +235,7 @@ mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string& mbsnode, int c
    cmd.SetStr("node", mbsnode);
    cmd.SetInt("logger", logport);
    cmd.SetInt("cmd", cmdport);
+   cmd.SetInt("stat", statport);
    cmd.SetBool("publish", false);
    cmd.SetBool("printf", true);
 

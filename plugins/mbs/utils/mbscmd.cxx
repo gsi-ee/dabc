@@ -32,6 +32,7 @@ int usage(const char* errstr = 0)
    printf("   -logport number      - port number of log channel (-1 - off, default 6007)\n");
    printf("   -cmdport number      - port number of command channel (-1 - off, default 6019)\n");
    printf("   -prompter            - connect to MBS prompter (same as -cmdport 6006)\n");
+   printf("   -stat                - enable reading of status record from port 6008 (default off)\n");
    printf("   -cmd mbs_command     - MBS command to execute (can be any number)\n");
    printf("   -tmout time          - timeout for command execution (default 5 sec)\n");
    printf("   -wait time           - wait time at the end of utility (default 1 sec)\n");
@@ -44,7 +45,7 @@ int main(int argc, char* argv[])
 {
    if (argc<2) return usage();
 
-   int logport(6007), cmdport(6019);
+   int logport(6007), cmdport(6019), statport(0);
    double tmout(5.), waittm(1.);
 
    std::vector<std::string> cmds;
@@ -52,6 +53,7 @@ int main(int argc, char* argv[])
    int n = 1;
    while (++n<argc) {
       if (strcmp(argv[n],"-prompter")==0) { cmdport = 6006; } else
+      if (strcmp(argv[n],"-stat")==0) { statport = 6008; } else
       if ((strcmp(argv[n],"-logport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &logport); } else
       if ((strcmp(argv[n],"-cmdport")==0) && (n+1<argc)) { dabc::str_to_int(argv[++n], &cmdport); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
@@ -60,7 +62,7 @@ int main(int argc, char* argv[])
       usage("Unknown option");
    }
 
-   mbs::MonitorHandle ref = mbs::MonitorHandle::Connect(argv[1], cmdport, logport);
+   mbs::MonitorHandle ref = mbs::MonitorHandle::Connect(argv[1], cmdport, logport, statport);
 
    dabc::SetDebugLevel(0);
 

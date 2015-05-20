@@ -7,6 +7,7 @@ about current functionality of the framework.
 2. Fix printout error with file statistic
 3. Even when log channel disabled, provide entry in hierarchy
 4. Introduce FileRate for MBS status record
+5. Add possibility to enable/disable stat record reading
 
 
 19.05.2015

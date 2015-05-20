@@ -137,6 +137,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fCounter(0),
    fMbsNode(),
    fPeriod(1.),
+   fStatPort(0),
    fLoggerPort(0),
    fCmdPort(0),
    fStatus(),
@@ -149,8 +150,13 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    bool publish = Cfg("publish", cmd).AsBool(true);
    fPrintf = Cfg("printf", cmd).AsBool(false);
 
-   fFileStateName="MbsFileOpen";
-   fAcqStateName="MbsAcqRunning";
+   fFileStateName = "MbsFileOpen";
+   fAcqStateName = "MbsAcqRunning";
+
+   if (Cfg("stat", cmd).AsStr() == "true")
+      fStatPort = 6008;
+   else
+      fStatPort = Cfg("stat", cmd).AsInt(0);
 
    if (Cfg("logger", cmd).AsStr() == "true")
       fLoggerPort = 6007;
@@ -200,7 +206,6 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    item = fHierarchy.CreateHChild("ratf_log");
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
-
 
    item = fHierarchy.CreateHChild(fFileStateName);
    item.SetField(dabc::prop_kind, "log");
@@ -797,11 +802,11 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
 
    // this indicated that addon is active and we should not touch it
    // SL 20.05.2015: allow to access status record also with prompter
-   if (!fAddon.null()/* || IsPrompter()*/) return;
+   if (!fAddon.null() || (fStatPort<=0)) return;
 
-   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), 6008);
+   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fStatPort);
    if (fd<=0)
-      EOUT("FAIL port 6008 for node %s", fMbsNode.c_str());
+      EOUT("FAIL status port %d for node %s", fStatPort, fMbsNode.c_str());
    else
       AssignAddon(new DaqStatusAddon(fd));
 }

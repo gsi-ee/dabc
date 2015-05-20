@@ -7,18 +7,23 @@
     </Run>
     
     <HttpServer name="http" port="8095">
-       <auth_file value="${DABCSYS}/.htdigest"/>
-       <auth_domain value="dabc@server"/>
-       <auth_default value="false"/>
+       <!-- auth_file value="${DABCSYS}/.htdigest"/-->
+       <!--auth_domain value="dabc@server"/-->
+       <!--auth_default value="false"/-->
     </HttpServer>
     
     <Module name="mbs1" class="mbs::Monitor">
-       <node value="X86L-9"/>
+       <node value="X86L-15"/>
        <!--node value="r4-5"/-->
        <period value="1"/>
        <history value="100"/>
-       <logger value="true"/>
-       <cmd value="true"/>
+       <!-- MBS statistic record, read from port 6008 -->
+       <stat value="true"/>
+       <!-- new logger channel, running with sta logrem command -->
+       <logger value="false"/>
+       <!-- command channel: true means new command channel started with sta cmdrem command
+            When prompter is running, one should specify 6006 -->
+       <cmd value="6006"/>
     </Module>
   </Context>
 </dabc>
