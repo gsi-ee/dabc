@@ -1107,7 +1107,7 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char *options, Int_t res
             std::string ret_kind = method->GetReturnTypeNormalizedName();
             if ((ret_kind.length() > 0) && (ret_kind[ret_kind.length() - 1] == '*')) {
                ret_kind.resize(ret_kind.length() - 1);
-               ret_cl = gROOT->GetClass(ret_kind.c_str(), kFALSE, kTRUE);
+               ret_cl = gROOT->GetClass(ret_kind.c_str(), kTRUE, kTRUE);
             }
 
             if (ret_cl != 0) {
@@ -1117,6 +1117,7 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char *options, Int_t res
             } else {
                call.Execute(obj_ptr);
             }
+
             break;
          }
       case TMethodCall::kNone : {
@@ -1158,6 +1159,11 @@ Bool_t TRootSniffer::ProduceExe(const char *path, const char *options, Int_t res
    if (debug) debug->Append(TString::Format("Result = %s\n", res.Data()));
 
    if ((reskind == 1) && res_str) *res_str = res;
+
+   if (url.HasOption("_destroy_result_") && (ret_obj != 0) && (ret_cl != 0)) {
+      ret_cl->Destructor(ret_obj);
+      if (debug) debug->Append("Destroy result object at the end\n");
+   }
 
    return kTRUE;
 }
