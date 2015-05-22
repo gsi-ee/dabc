@@ -61,7 +61,6 @@ void THttpCallArg::SetPostData(void *data, Long_t length)
    fPostDataLength = length;
 }
 
-
 //______________________________________________________________________________
 void THttpCallArg::SetBinData(void *data, Long_t length)
 {

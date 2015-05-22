@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+22.05.2015
+1. Implement POST requests in FastCGI, test with Go4 parameter editor
+
+
 21.05.2015
 1. Allow process POST requests with THttpServer
 2. Use it in exe.bin requests to send object as arguments
