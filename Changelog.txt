@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 22.05.2015
 1. Implement POST requests in FastCGI, test with Go4 parameter editor
+2. Implement debug mode in Civetweb
 
 
 21.05.2015
