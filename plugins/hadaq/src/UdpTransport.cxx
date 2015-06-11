@@ -145,8 +145,8 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       // if (fNPort == 10101) if (cnt++ % 789 == 0) errmsg = "just test";
 
       if (!errmsg.empty()) {
-         DOUT0("UDP:%d %s", fNPort, errmsg.c_str());
-         if (fDebug) {
+         DOUT3("UDP:%d %s", fNPort, errmsg.c_str());
+         if (fDebug && (dabc::lgr()->GetDebugLevel()>2)) {
             errmsg = dabc::format("   Packet length %d", res);
             uint32_t* ptr = (uint32_t*) hadTu;
             for (unsigned n=0;n<res/4;n++) {
