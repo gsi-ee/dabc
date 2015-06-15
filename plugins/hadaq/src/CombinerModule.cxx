@@ -775,7 +775,7 @@ bool hadaq::CombinerModule::BuildEvent()
             // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
             Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
-            fTotalDroppedData+=droppedsize;
+            fTotalDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
                if (fExtraDebug && fLastDebugTm.Expired(2.)) {
@@ -965,7 +965,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fLastBuildTm.GetNow();
    } else {
       Par(fLostEventRateName).SetValue(1);
-      fTotalDiscEvents+=1;
+      fTotalDiscEvents += 1;
    } // ensure outputbuffer
 
    std::string debugmask;
@@ -975,7 +975,7 @@ bool hadaq::CombinerModule::BuildEvent()
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
       if (fCfg[ninp].fTrigNr == buildevid) {
          debugmask[ninp] = 'o';
-         ShiftToNextSubEvent(ninp);
+         ShiftToNextSubEvent(ninp, false, !hasCompleteEvent);
       } else {
          debugmask[ninp] = 'x';
       }
