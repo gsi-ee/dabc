@@ -59,7 +59,7 @@ void hadaq::TerminalModule::BeforeModuleStart()
 std::string hadaq::TerminalModule::rate_to_str(double r)
 {
    if (r<1e4) return dabc::format("%6.1f ev/s",r);
-   return dabc::format("%5.1f kev/s",r);
+   return dabc::format("%5.1f kev/s",r/1e3);
 }
 
 
