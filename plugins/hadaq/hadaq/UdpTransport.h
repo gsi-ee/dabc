@@ -59,6 +59,7 @@ namespace hadaq {
          unsigned           fMTU;             ///< maximal size of packet expected from TRB
          double             fFlushTimeout;    ///< time when buffer will be flushed
          int                fSendCnt;         ///< counter of send buffers since last timeout active
+         int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
 
          uint64_t           fTotalRecvPacket;
          uint64_t           fTotalDiscardPacket;
@@ -81,7 +82,7 @@ namespace hadaq {
          virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
 
       public:
-         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug);
+         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop);
          virtual ~DataSocketAddon();
 
          // this is interface from DataInput

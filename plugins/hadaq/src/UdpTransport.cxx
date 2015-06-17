@@ -30,7 +30,7 @@
 #include "dabc/Manager.h"
 
 
-hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug) :
+hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop) :
    dabc::SocketAddon(fd),
    dabc::DataInput(),
    fNPort(nport),
@@ -39,6 +39,7 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
    fFlushTimeout(flush),
    fSendCnt(0),
+   fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fTotalRecvPacket(0),
    fTotalDiscardPacket(0),
    fTotalDiscard32Packet(0),
@@ -89,6 +90,7 @@ double hadaq::DataSocketAddon::ProcessTimeout(double lastdiff)
    return fFlushTimeout;
 }
 
+
 unsigned hadaq::DataSocketAddon::ReadUdp()
 {
    if (fTgtPtr.null()) {
@@ -102,7 +104,9 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       return dabc::di_Error;
    }
 
-   while (true) {
+   int cnt = fMaxLoopCnt;
+
+   while (cnt-- > 0) {
 
       /* this was old form which is not necessary - socket is already bind with the port */
       //  socklen_t socklen = sizeof(fSockAddr);
@@ -116,7 +120,6 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       }
 
       if (res<0) {
-
          // socket do not have data, one should enable event processing
          // otherwise we need to poll for the new data
          if (errno == EAGAIN) {
@@ -175,8 +178,8 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
          return dabc::di_Ok; // this is end
    }
 
-   EOUT("Never come here!!!");
-   return dabc::di_Error;
+   SetDoingInput(true);
+   return dabc::di_CallBack; // indicate that buffer reading will be finished by callback
 }
 
 
