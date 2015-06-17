@@ -4,7 +4,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class DabcRoot;
 #pragma link C++ class TDabcEngine;
 
 #endif
