@@ -40,6 +40,8 @@ namespace hadaq {
          bool            fDoClear;
          dabc::TimeStamp fLastTm;
 
+         std::string rate_to_str(double r);
+
       public:
 
          TerminalModule(const std::string& name, dabc::Command cmd = 0);

@@ -29,7 +29,15 @@ namespace dabc {
     * \param[in] prec    precision after decimal point,
     * \param[in] select  forces to use special units 0 - default, 1 - B, 2 - KB, 3 - MB, 4 - GB
     * \returns           string with converted value */
-   extern std::string size_to_str(unsigned long sz, int prec=1, int select = 0);
+   extern std::string size_to_str(unsigned long sz, int prec = 1, int select = 0);
+
+   /** \brief Convert number to string of form like 4.2G or 3.7M
+    *
+    * \param[in] sz      size value to convert
+    * \param[in] prec    precision after decimal point,
+    * \param[in] select  forces to use special units 0 - default, 1 - normal, 2 - K, 3 - M, 4 - G
+    * \returns           string with converted value */
+   extern std::string number_to_str(unsigned long num, int prec = 1, int select = 0);
 
    /** \brief Convert string to integer value
     * \param[in]  val   source string

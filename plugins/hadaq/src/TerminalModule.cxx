@@ -56,6 +56,12 @@ void hadaq::TerminalModule::BeforeModuleStart()
    if (fDoClear) system("clear");
 }
 
+std::string hadaq::TerminalModule::rate_to_str(double r)
+{
+   if (r<1e4) return dabc::format("%6.1f ev/s",r);
+   return dabc::format("%5.1f kev/s",r);
+}
+
 
 void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 {
@@ -97,15 +103,17 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    std::string s;
 
    s += "---------------------------------------------\n";
-   s += dabc::format("Events:%8lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s\n",
-                        (long unsigned) fTotalBuildEvents, rate1,
+   s += dabc::format("Events:%8s   Rate:%12s  Data: %10s  Rate:%6.3f MB/s\n",
+                        dabc::number_to_str(fTotalBuildEvents, 1).c_str(),
+                        rate_to_str(rate1).c_str(),
                         dabc::size_to_str(fTotalRecvBytes).c_str(), rate2/1024./1024.);
-   s += dabc::format("Dropped:%7lu   Rate:%7.1f ev/s  Data: %10s  Rate:%6.3f MB/s",
-                        (long unsigned) fTotalDiscEvents, rate3,
+   s += dabc::format("Dropped:%7s   Rate:%12s  Data: %10s  Rate:%6.3f MB/s",
+                        dabc::number_to_str(fTotalDiscEvents, 1).c_str(),
+                        rate_to_str(rate3).c_str(),
                         dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
    if (comb->fTotalFullDrops>0)
-      s += dabc::format(" Total:%lu\n", (long unsigned) comb->fTotalFullDrops);
+      s += dabc::format(" Total:%s\n", dabc::size_to_str(comb->fTotalFullDrops, 1).c_str());
    else
       s += "\n";
 
@@ -113,7 +121,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    for (unsigned n=0;n<comb->fCfg.size();n++)
       if (comb->fCfg[n].fCalibr) istdccal = true;
 
-   s += "inp port     pkt      data disc err32  bufs qu  drop  lost";
+   s += "inp port     pkt      data   disc  err32   bufs qu drop lost";
    if (istdccal) s += "    TRB         TDC        progr state\n";
             else s += "\n";
 
@@ -128,16 +136,19 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       if (addon==0) {
          sbuf.append("  missing addon ");
       } else {
-         sbuf.append(dabc::format(" %5d %7lu %9s %4lu %5lu %5lu",
+         sbuf.append(dabc::format(" %5d %7s %9s %6s %6s %6s",
                addon->fNPort,
-               (long unsigned) addon->fTotalRecvPacket,
+               dabc::number_to_str(addon->fTotalRecvPacket,1).c_str(),
                dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
-               (long unsigned) addon->fTotalDiscardPacket,
-               (long unsigned) addon->fTotalDiscard32Packet,
-               (long unsigned) addon->fTotalProducedBuffers));
+               dabc::number_to_str(addon->fTotalDiscardPacket).c_str(),
+               dabc::number_to_str(addon->fTotalDiscard32Packet).c_str(),
+               dabc::number_to_str(addon->fTotalProducedBuffers).c_str()));
       }
 
-      sbuf.append(dabc::format(" %2d %5u %5u",comb->fCfg[n].fNumCanRecv, comb->fCfg[n].fDroppedTrig, comb->fCfg[n].fLostTrig));
+      sbuf.append(dabc::format(" %2d %4s %4s",
+                   comb->fCfg[n].fNumCanRecv,
+                   dabc::number_to_str(comb->fCfg[n].fDroppedTrig,0).c_str(),
+                   dabc::number_to_str(comb->fCfg[n].fLostTrig,0).c_str()));
 
       TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
 

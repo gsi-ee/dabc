@@ -74,9 +74,10 @@ std::string dabc::format(const char *fmt, ...)
 std::string dabc::size_to_str(unsigned long sz, int prec, int select)
 {
    if (select==0) {
-      if (sz < 0x400LU) select = 1; else
-      if (sz < 0x100000LU) select = 2; else
-      if (sz < 0x40000000LU) select =3; else select = 4;
+      unsigned long mult = prec<=0 ? 10 : 1;
+      if (sz < 0x1000LU) select = 1; else
+      if (sz < 0x100000LU*mult) select = 2; else
+      if (sz < 0x40000000LU*mult) select =3; else select = 4;
    }
 
    switch (select) {
@@ -101,6 +102,40 @@ std::string dabc::size_to_str(unsigned long sz, int prec, int select)
 
    return dabc::format("%lu B", sz);
 }
+
+std::string dabc::number_to_str(unsigned long num, int prec, int select)
+{
+   if (select==0) {
+      unsigned long mult = prec<=0 ? 10 : 1;
+      if (num < 10000LU) select = 1; else
+      if (num < 1000000LU*mult) select = 2; else
+      if (num < 1000000000LU*mult) select = 3; else select = 4;
+   }
+
+   switch (select) {
+      case 1:
+         return dabc::format("%lu", num);
+      case 2:
+         if (prec<=0)
+            return dabc::format(" %luK", num/1000);
+         else
+            return dabc::format(" %*.*fK", prec+2, prec, num/1e3);
+      case 3:
+         if (prec<=0)
+            return dabc::format(" %luM", num/1000000LU);
+         else
+            return dabc::format(" %*.*fM", prec+2, prec, num/1e6);
+      case 4:
+         if (prec<=0)
+            return dabc::format(" %luG", num/1000000000LU);
+         else
+            return dabc::format(" %*.*fG", prec+2, prec, num/1e9);
+   }
+
+   return dabc::format("%lu", num);
+
+}
+
 
 
 bool dabc::str_to_int(const char* val, int* res)
