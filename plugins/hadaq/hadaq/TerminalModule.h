@@ -39,6 +39,7 @@ namespace hadaq {
 
          bool            fDoClear;
          dabc::TimeStamp fLastTm;
+         std::vector<long unsigned> fLastRecv;
 
          std::string rate_to_str(double r);
 

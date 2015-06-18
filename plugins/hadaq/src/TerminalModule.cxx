@@ -121,11 +121,15 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    for (unsigned n=0;n<comb->fCfg.size();n++)
       if (comb->fCfg[n].fCalibr) istdccal = true;
 
-   s += "inp port     pkt      data   disc  err32   bufs qu drop lost";
+   s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu  drop  lost";
    if (istdccal) s += "    TRB         TDC        progr state\n";
             else s += "\n";
 
    bool isready = true;
+
+   if (comb->fCfg.size() != fLastRecv.size())
+      fLastRecv.resize(comb->fCfg.size(), 0);
+
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
 
@@ -135,17 +139,23 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       if (addon==0) {
          sbuf.append("  missing addon ");
+         fLastRecv[n] = 0;
       } else {
-         sbuf.append(dabc::format(" %5d %7s %9s %6s %6s %6s",
+
+         double rate = (addon->fTotalRecvBytes - fLastRecv[n])/delta;
+
+         sbuf.append(dabc::format(" %5d %7s %9s %7.3f %6s %6s %6s",
                addon->fNPort,
                dabc::number_to_str(addon->fTotalRecvPacket,1).c_str(),
                dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
+               rate/1024./1024.,
                dabc::number_to_str(addon->fTotalDiscardPacket).c_str(),
                dabc::number_to_str(addon->fTotalDiscard32Packet).c_str(),
                dabc::number_to_str(addon->fTotalProducedBuffers).c_str()));
+         fLastRecv[n] = addon->fTotalRecvBytes;
       }
 
-      sbuf.append(dabc::format(" %2d %4s %4s",
+      sbuf.append(dabc::format(" %3d %5s %5s",
                    comb->fCfg[n].fNumCanRecv,
                    dabc::number_to_str(comb->fCfg[n].fDroppedTrig,0).c_str(),
                    dabc::number_to_str(comb->fCfg[n].fLostTrig,0).c_str()));
