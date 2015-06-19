@@ -29,8 +29,8 @@
  *
 */
 
-#define DABC_RELEASE "2.7.1"
-#define DABC_VERSION_CODE 0x20701
+#define DABC_RELEASE "2.7.5"
+#define DABC_VERSION_CODE 0x20705
 #define DABC_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 
 #endif
