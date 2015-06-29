@@ -163,8 +163,6 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    else
       fLoggerPort = Cfg("logger", cmd).AsInt(0);
 
-   DOUT0("Logger port %d", fLoggerPort);
-
    if (Cfg("cmd", cmd).AsStr() == "true")
       fCmdPort = 6019;
    else

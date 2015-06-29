@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <vector>
 
 #include "dabc/Manager.h"
 
@@ -46,8 +47,11 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "");
 
-   Publish(fWorkerHierarchy, "$CONTEXT$/Terminal");
+   item = fWorkerHierarchy.CreateHChild("Data");
+   item.SetField("value", "");
+   item.SetField("_hidden", "true");
 
+   Publish(fWorkerHierarchy, "$CONTEXT$/Terminal");
 }
 
 void hadaq::TerminalModule::BeforeModuleStart()
@@ -61,7 +65,6 @@ std::string hadaq::TerminalModule::rate_to_str(double r)
    if (r<1e4) return dabc::format("%6.1f ev/s",r);
    return dabc::format("%5.1f kev/s",r/1e3);
 }
-
 
 void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 {
@@ -130,6 +133,18 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    if (comb->fCfg.size() != fLastRecv.size())
       fLastRecv.resize(comb->fCfg.size(), 0);
 
+   dabc::Hierarchy ditem = fWorkerHierarchy.GetHChild("Data");
+   ditem.SetField("BuildEvents", fTotalBuildEvents);
+   ditem.SetField("BuildData", fTotalRecvBytes);
+   ditem.SetField("EventsRate", rate1);
+   ditem.SetField("DataRate", rate2);
+   ditem.SetField("LostEvents", fTotalDiscEvents);
+   ditem.SetField("LostData", fTotalDroppedData);
+   ditem.SetField("LostEventsRate", rate3);
+   ditem.SetField("LostDataRate", rate4);
+
+   std::vector<int64_t> ports, recvbytes, inpdrop, inplost;
+   std::vector<double> inprates;
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
 
@@ -153,12 +168,19 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
                dabc::number_to_str(addon->fTotalDiscard32Packet).c_str(),
                dabc::number_to_str(addon->fTotalProducedBuffers).c_str()));
          fLastRecv[n] = addon->fTotalRecvBytes;
+
+         ports.push_back(addon->fNPort);
+         recvbytes.push_back(addon->fTotalRecvBytes);
+         inprates.push_back(rate);
       }
 
       sbuf.append(dabc::format(" %3d %5s %5s",
                    comb->fCfg[n].fNumCanRecv,
                    dabc::number_to_str(comb->fCfg[n].fDroppedTrig,0).c_str(),
                    dabc::number_to_str(comb->fCfg[n].fLostTrig,0).c_str()));
+
+      inpdrop.push_back(comb->fCfg[n].fDroppedTrig);
+      inplost.push_back(comb->fCfg[n].fLostTrig);
 
       TdcCalibrationModule* cal = (TdcCalibrationModule*) comb->fCfg[n].fCalibr;
 
@@ -187,4 +209,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
    fWorkerHierarchy.GetHChild("State").SetField("value", isready ? "Ready" : "Init");
    fWorkerHierarchy.GetHChild("Output").SetField("value", s);
+   ditem.SetField("inputs", ports);
+   ditem.SetField("inprecv", recvbytes);
+   ditem.SetField("inprates", inprates);
+   ditem.SetField("inplost", inplost);
+   ditem.SetField("inpdrop", inpdrop);
 }
