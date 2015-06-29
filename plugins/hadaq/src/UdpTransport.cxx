@@ -76,6 +76,23 @@ void hadaq::DataSocketAddon::ProcessEvent(const dabc::EventId& evnt)
    dabc::SocketAddon::ProcessEvent(evnt);
 }
 
+long hadaq::DataSocketAddon::Notify(const std::string& msg, int arg)
+{
+   if (msg == "TransportWantToStop") {
+
+      if (fWaitMoreData) {
+         DOUT2("hadaq::DataSocketAddon notified, stop waiting data");
+         fWaitMoreData = false;
+         MakeCallback(dabc::di_Ok);
+      }
+
+      return 0;
+   }
+
+   return dabc::SocketAddon::Notify(msg, arg);
+}
+
+
 double hadaq::DataSocketAddon::ProcessTimeout(double lastdiff)
 {
    if (!fWaitMoreData) return -1;
@@ -122,11 +139,7 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
       if (res<0) {
          // socket do not have data, one should enable event processing
          // otherwise we need to poll for the new data
-         if (errno == EAGAIN) {
-            SetDoingInput(true);
-            return dabc::di_CallBack; // indicate that buffer reading will be finished by callback
-         }
-
+         if (errno == EAGAIN) break;
          EOUT("Socket error");
          return dabc::di_Error;
       }
@@ -143,9 +156,6 @@ unsigned hadaq::DataSocketAddon::ReadUdp()
          fTotalDiscard32Packet++;
          errmsg = "Trailing 32 bytes do not match to header - ignore packet";
       }
-
-      // static int cnt = 0;
-      // if (fNPort == 10101) if (cnt++ % 789 == 0) errmsg = "just test";
 
       if (!errmsg.empty()) {
          DOUT3("UDP:%d %s", fNPort, errmsg.c_str());

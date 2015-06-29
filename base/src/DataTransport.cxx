@@ -118,8 +118,9 @@ bool dabc::InputTransport::StopTransport()
    }
 
    if (!fStopRequested) {
-      DOUT2("%s Try to wait until suitable state is achieved now %u", GetName(), (unsigned) fInpState);
+      DOUT2("%s Try to wait until suitable state is achieved, now state = %u", GetName(), (unsigned) fInpState);
       fStopRequested = true;
+      fAddon.Notify("TransportWantToStop");
    }
    return true;
 }
@@ -249,7 +250,8 @@ void dabc::InputTransport::ChangeState(EInputStates state)
 
    if (fStopRequested && SuitableStateForStartStop()) {
       DOUT2("%s Stop transport at suitable state", GetName());
-      StopTransport();
+      fStopRequested = false;
+      Transport::StopTransport();
    }
 }
 

@@ -2,6 +2,13 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+29.06.2015
+1. Provide in hadaq::TerminalModule "Data" record with most fields
+   which could be interesting for outside application
+2. When stopping hadaq::UdpTransport, notify addon component to correctly
+   shutdown all correspondent components by Ctrl-C   
+
+
 22.05.2015
 1. Implement POST requests in FastCGI, test with Go4 parameter editor
 2. Implement debug mode in Civetweb

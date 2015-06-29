@@ -81,6 +81,9 @@ namespace hadaq {
 
          virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
 
+         /** Light-weight command interface, which can be used from worker */
+         virtual long Notify(const std::string&, int);
+
       public:
          DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop);
          virtual ~DataSocketAddon();
