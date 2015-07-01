@@ -1,9 +1,30 @@
 # JSROOT changelog
 
 ## Changes in master
-1. Try to provide workaround for websites where requirejs already loaded.
+1. Try to provide workaround for websites where require.js already loaded.
    This makes problem by direct loading of jquery and jquery-ui 
 2. Provide workaround for older version of jquery-ui 
+3. Prompt for input of command arguments
+4. After command execution one could automatically reload hierarchy (_hreload property) or
+   update view of displayed object (_update_item property)    
+5. Use HiearchyPainter for implementing draw.htm. This let us handle
+   all different kinds of extra attributes in central place 
+6. Fix problem in tabs layout - new tab should be add to direct child
+7. When drawing several tabs, activate frame before drawing - only then
+   real frame size will be set
+8. Fix problem with GetBBox - it only can be used for visible elements in mozilla.    
+9. Support drawing of fit parameters in stat box, use (as far as possible) stat and
+   fit format for statistic display 
+10.Implement 'g' formatting kind for stat box output - one need to checks 
+   significant digits when producing output.  
+11.Support new draw options for TGraph: 'C', 'B1', '0', '2', '3', '4', '[]'
+12.Primary support for STL containers in IO part. Allows to read ROOT6 TF1.
+13.Full support of TGraphBentErrors
+14.Support objects drawing from JSON files in default user interface, including
+   monitoring. One could open file from link like: 
+      https://root.cern.ch/js/dev/?json=demo/canvas_tf1.json 
+15.Introduce JSROOT.FFormat function to convert numeric values into string according
+   format like 6.4g or 5.7e. Used for statistic display.
 
 
 ## Changes in 3.5
