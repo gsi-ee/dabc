@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="web-mbs">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcGosip.so"/>
+    </Run>
+    
+    <HttpServer name="http" port="${HTPORT}">
+<!--        <auth_file value="${DABCSYS}/.htdigest"/> -->
+<!--        <auth_domain value="dabc@server"/> -->
+<!--        <auth_default value="false"/> -->
+    </HttpServer>
+    
+    <Module name="mbs1" class="mbs::Monitor">
+       <node value="localhost"/>
+       <!--node value="r4-5"/-->
+       <period value="1"/>
+       <history value="500"/>   
+      <!-- MBS statistic record, read from port 6008 -->
+       <stat value="true"/>
+       <stat value="true"/> 
+       <!-- new logger channel, running with sta logrem command 
+            Also can be specified, when MBS node started with prompter -->
+      <logger value="true"/>
+      <!-- command channel: true means new command channel started with sta cmdrem command
+            When prompter is running, one should specify 6006 -->
+    
+       
+    <cmd value="6006"/> 
+    </Module>
+    
+     <Module name="gosip_player" class="gosip::Player">
+	     </Module>
+    
+    
+  </Context>
+</dabc>
