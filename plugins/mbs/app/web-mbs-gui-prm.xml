@@ -5,6 +5,7 @@
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
       <lib value="libDabcGosip.so"/>
+       <slow-time value="true"/>
     </Run>
     
     <HttpServer name="http" port="${HTPORT}">
