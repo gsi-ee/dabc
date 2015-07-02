@@ -554,7 +554,7 @@ $(function() {
 	MBS = new MbsState();
 	MyDisplay=new MbsDisplay(MBS);
 	MyDisplay.BuildView();
-	MyDisplay.ChangeMonitoring(false);
+	MyDisplay.ChangeMonitoring(true);
 	
 	
 ///////////////////////////// mbs specific:	

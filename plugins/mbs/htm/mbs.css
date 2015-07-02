@@ -137,6 +137,19 @@
     background-size: contain;
 }
 
+.ui-button.ui-state-hover .ui-icon.ui-icon-alert {
+    background-image: url("img/info1.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+.ui-button.ui-state-hover .ui-icon.ui-icon-comment {
+    background-image: url("img/mb_question_s.png");
+  	background-position: 0 0;  
+    background-size: contain;
+}
+
+
 .ui-resizable-helper {
     border: 1px dotted #999;
 }
