@@ -25,30 +25,9 @@
 #endif
 
 
-#ifdef WITH_STREAM
-
-#include "base/ProcMgr.h"
-
-class DabcProcMgr : public base::ProcMgr {
-   protected:
-
-   public:
-      dabc::Hierarchy fTop;
-
-      DabcProcMgr();
-      virtual ~DabcProcMgr();
-
-      // redefine only make procedure, fill and clear should work
-      virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
-
-      virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
-
-};
-
-#endif
-
-
-class DabcProcMgr;
+namespace dabc {
+   class ProcMgr;
+}
 
 namespace hadaq {
 
@@ -66,7 +45,7 @@ namespace hadaq {
 
    protected:
 
-      DabcProcMgr* fProcMgr;
+      dabc::ProcMgr* fProcMgr;
       hadaq::TrbProcessor* fTrbProc;
       bool fDummy;  //! module creates all TDCs but do not perform any transformation
       int  fAutoCalibr;  //! amount of statistic for the auto calibration in channels

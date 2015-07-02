@@ -14,81 +14,19 @@
  ************************************************************/
 
 #include "hadaq/TdcCalibrationModule.h"
+
 #include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
+
 #include "dabc/timing.h"
 
 #include <math.h>
 
 
 #ifdef WITH_STREAM
+#include "dabc/ProcMgr.h"
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/TdcProcessor.h"
-
-DabcProcMgr::DabcProcMgr() :
-   base::ProcMgr(),
-   fTop()
-{
-}
-
-DabcProcMgr::~DabcProcMgr()
-{
-}
-
-base::H1handle DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle)
-{
-   DOUT2("Create TH1 %s", name);
-
-   dabc::Hierarchy h = fTop.CreateHChild(name);
-   if (h.null()) return 0;
-
-   h.SetField("_kind","ROOT.TH1D");
-   h.SetField("_title", title);
-   h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
-   h.SetField("nbins", nbins);
-   h.SetField("left", left);
-   h.SetField("right", right);
-
-   std::vector<double> bins;
-   bins.resize(nbins+3, 0.);
-   bins[0] = nbins;
-   bins[1] = left;
-   bins[2] = right;
-   h.SetField("bins", bins);
-
-   return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
-}
-
-base::H2handle DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
-{
-   DOUT2("Create TH2 %s", name);
-
-   dabc::Hierarchy h = fTop.CreateHChild(name);
-   if (h.null()) return 0;
-
-   h.SetField("_kind","ROOT.TH2D");
-   h.SetField("_title", title);
-   h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
-   h.SetField("nbins1", nbins1);
-   h.SetField("left1", left1);
-   h.SetField("right1", right1);
-   h.SetField("nbins2", nbins2);
-   h.SetField("left2", left2);
-   h.SetField("right2", right2);
-
-   std::vector<double> bins;
-   bins.resize(nbins1*nbins2+6, 0.);
-   bins[0] = nbins1;
-   bins[1] = left1;
-   bins[2] = right1;
-   bins[3] = nbins2;
-   bins[4] = left2;
-   bins[5] = right2;
-   h.SetField("bins", bins);
-
-   return h.GetFieldPtr("bins")->GetDoubleArr();
-}
-
 #endif
 
 
@@ -134,8 +72,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    item.SetField("trb", fTRB);
 
-   fProcMgr = new DabcProcMgr;
-
+   fProcMgr = new dabc::ProcMgr;
    fProcMgr->fTop = fWorkerHierarchy;
 
    fTrbProc = new hadaq::TrbProcessor(fTRB);
