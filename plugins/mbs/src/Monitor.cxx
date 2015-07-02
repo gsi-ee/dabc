@@ -152,6 +152,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    fFileStateName = "MbsFileOpen";
    fAcqStateName = "MbsAcqRunning";
+   fSetupStateName = "MbsSetupLoaded";
 
    if (Cfg("stat", cmd).AsStr() == "true")
       fStatPort = 6008;
@@ -212,6 +213,10 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    if (history>1) item.EnableHistory(history);
 
    item = fHierarchy.CreateHChild(fAcqStateName);
+   item.SetField(dabc::prop_kind, "log");
+   if (history>1) item.EnableHistory(history);
+
+   item = fHierarchy.CreateHChild(fSetupStateName);
    item.SetField(dabc::prop_kind, "log");
    if (history>1) item.EnableHistory(history);
 
@@ -855,8 +860,12 @@ void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
       fCounter++;
    }
    DOUT3("Got acquisition running=%d, file open=%d", stat.bh_acqui_running, stat.l_open_file);
+
+   UpdateSetupState((stat.bh_setup_loaded) && (stat.bh_running[SYS__util]));
+     // <- after shutdown, check also if util task is still there, bh_setup_loaded is not reset
    UpdateMbsState(stat.bh_acqui_running);
-   UpdateFileState(stat.l_open_file);
+   UpdateFileState((stat.l_open_file) && (stat.bh_running[SYS__transport]));
+   // <- after shutdown, check also if transport task is still there, l_open_file is not reset
 
 
 
@@ -891,7 +900,7 @@ void mbs::Monitor::UpdateMbsState(int on)
         chld.SetField("value", dabc::format("%d", on));
          //par.ScanParamFields(&chld()->Fields());
          fHierarchy.MarkChangedItems();
-         //DOUT0("ChangeFileState to %d", on);
+         //DOUT0("ChangeMBSState to %d", on);
     }
     else
     {
@@ -901,6 +910,22 @@ void mbs::Monitor::UpdateMbsState(int on)
 }
 
 
+void mbs::Monitor::UpdateSetupState(int on)
+{
+  dabc::Hierarchy chld=fHierarchy.GetHChild(fSetupStateName);
+    if (!chld.null())
+    {
+        chld.SetField("value", dabc::format("%d", on));
+         //par.ScanParamFields(&chld()->Fields());
+         fHierarchy.MarkChangedItems();
+         //DOUT0("ChangeSetup state to %d", on);
+    }
+    else
+    {
+        DOUT0("ChangeFileState Could not find hierarchy child %s", fSetupStateName.c_str());
+    }
+
+}
 
 
 

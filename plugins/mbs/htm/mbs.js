@@ -6,6 +6,7 @@ var MyDisplay;
 
 ////////////// State class reflecting remote state and communication:
 function MbsState() {
+	this.fSetupLoaded=false;
 	this.fRunning = false;
 	this.fFileOpen = false;
 	this.fFileName = "run0.lmd";
@@ -143,6 +144,18 @@ MbsState.prototype.UpdateFilestate = function(ok, state){
 	//console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
 }
 
+MbsState.prototype.UpdateSetupstate = function(ok, state){
+	
+	if (ok=="true") {
+		this.fSetupLoaded = (state==true);
+		} else {
+		console.log("UpdateSetupstate failed.");
+	}
+	//console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
+}
+
+
+
 MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
 // DABC states as strings:	
 //	"Halted"
@@ -167,8 +180,10 @@ MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
 MbsState.prototype.Update= function(callback){
 	var pthis = this;
 	// TEST:
+	this.DabcParameter("MbsSetupLoaded", function(res,val) { pthis.UpdateSetupstate(res,val); });
 	this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
 	this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
+	
 //	
 	this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
 	
@@ -180,7 +195,8 @@ MbsState.prototype.Update= function(callback){
 /////////////// DISPLAY class to manage current view:
 function MbsDisplay(state){
 	this.fMbsState=state;
-	this.fMonitoring=false;
+	this.fDoCommandConfirm=true;
+	this.fMonitoring=false;	
 	this.fTrending=false;
 	this.fTrendingHistory=100;
 	this.fFileLogMode=4;
@@ -392,13 +408,25 @@ MbsDisplay.prototype.SetTrending = function(on,history){
 	
 }
 
+MbsDisplay.prototype.SetCommandConfirm = function(on){
+	this.fDoCommandConfirm=on;	
+}
+
+
 MbsDisplay.prototype.RefreshView = function(){
 
 	
+	
+	
+	
 	 if (this.fMbsState.fRunning) {
-			$("#mbs_container").addClass("styleGreen").removeClass("styleRed");
+			$("#mbs_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow");
 		} else {
-			$("#mbs_container").addClass("styleRed").removeClass("styleGreen");
+			if (this.fMbsState.fSetupLoaded) {
+				$("#mbs_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
+			} else {
+				$("#mbs_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow");
+			}
 		}
 	 //console.log("RefreshView typeof fileopen=%s, value=%s globalvalue=%s", typeof(this.fMbsState.fFileOpen), 
 	//		 this.fMbsState.fFileOpen, Pexor.fFileOpen);
@@ -437,40 +465,46 @@ MbsDisplay.prototype.RefreshView = function(){
 	 $("#Refreshtime").prop('disabled', this.fMonitoring);
 	 
 	 
-	 if (this.fTrending) {
+	 if (!this.fTrending) {
 			 $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");//
-			 $("label[for='Trending']").attr("title", "Show Rate Gauges");	
+			 $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");	
 		} else {
 			$("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");
-			$("label[for='Trending']").attr("title", "Show Rate Trending");		
+			$("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");		
 		}
 	 $("#Trendlength").prop('disabled', this.fTrending);
 	 
 	 if($("#FileRFIO").is(':checked')){
 		 $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
-		 $("label[for='FileRFIO']").attr("title",  "Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
+		 $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
 	 }
 	 else
 		 {
 		 $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"></span>");
-		 $("label[for='FileRFIO']").attr("title", "Write to local disk");
+		 $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
 		 }
 		 
 		 
 	 if($("#FileAutoMode").is(':checked')){
 		 
 		 $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-star MyButtonStyle\"></span>");
-		 $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
+		 $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
 
 	 } 
 	 else
 		 {
 		 $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-document MyButtonStyle\"></span>");
-		 $("label[for='FileAutoMode']").attr("title",  "Use exact file name. Will return error if file already exists.");
+		 $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
 
 		 }
 	 
-	 
+	 if (this.fDoCommandConfirm) {
+		 $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
+		 $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is ON");	
+	} else {
+		$("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-alert MyButtonStyle\"></span>");
+		$("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");		
+	}
 	
 	 
 	 
@@ -506,6 +540,12 @@ MbsDisplay.prototype.SetStatusMessage= function(info) {
 }
 
 
+MbsDisplay.prototype.Confirm= function(msg) {
+	if(this.fDoCommandConfirm)
+		return (confirm(msg));
+	else
+		return true;
+}
 
 
 
@@ -522,7 +562,7 @@ $(function() {
 	$("#buttonStartAcquisition").button({text: false, icons: { primary: "ui-icon-play MyButtonStyle"}}).click(
 			function() {
 				var requestmsg = "Really Start Acquisition?";
-				var response = confirm(requestmsg);
+				var response = MyDisplay.Confirm(requestmsg);
 				if (!response)
 					return;
 
@@ -538,7 +578,7 @@ $(function() {
 			function() {
 
 				var requestmsg = "Really Stop Acquisition?";
-				var response = confirm(requestmsg);
+				var response = MyDisplay.Confirm(requestmsg);
 				if (!response)
 					return;
 				MBS.DabcCommand("CmdMbs", "cmd=sto acq", function(
@@ -552,7 +592,7 @@ $(function() {
 ////////// startup command will not work at the moment:	
 	$("#buttonStartupAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-n MyButtonStyle"}}).click(function() {
 		var requestmsg = "Really Initialize Acquisition?";
-		var response = confirm(requestmsg);
+		var response = MyDisplay.Confirm(requestmsg);
 		if (!response)
 			return;
 
@@ -568,7 +608,7 @@ $(function() {
 
 	$("#buttonShutdownAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-s MyButtonStyle"}}).click(function() {
 		var requestmsg = "Really Shut down Acquisition?";
-		var response = confirm(requestmsg);
+		var response = MyDisplay.Confirm(requestmsg);
 		if (!response)
 			return;
 
@@ -604,7 +644,7 @@ $(function() {
 						{
 						var requestmsg = "Really Stop writing output file "
 							+ MBS.fFileName + " ?";
-					var response = confirm(requestmsg);
+					var response = MyDisplay.Confirm(requestmsg);
 					if (!response)
 						{
 							event.preventDefault();
@@ -634,7 +674,7 @@ $(function() {
 							options += " -AUTO";
 					var requestmsg = "Really Start writing output file with "
 					+ options+" ?";
-				var response = confirm(requestmsg);
+				var response = MyDisplay.Confirm(requestmsg);
 				if (!response)
 					{
 						event.preventDefault();
@@ -702,7 +742,7 @@ $(function() {
 					var log=false;
 					var cmdpar=document.getElementById("commandGosip").value;
 					var requestmsg = "Really Execute  gosipcmd "+ cmdpar;
-					var response = confirm(requestmsg);
+					var response = MyDisplay.Confirm(requestmsg);
 					if (!response){
 						event.preventDefault();
 						return;
@@ -737,7 +777,7 @@ $(function() {
 					var log=false;
 					var cmdpar="cmd="+document.getElementById("commandMBS").value;
 					var requestmsg = "Really Execute  mbs command: "+ cmdpar;
-					var response = confirm(requestmsg);
+					var response = MyDisplay.Confirm(requestmsg);
 					if (!response){
 						event.preventDefault();
 						return;
@@ -757,7 +797,7 @@ $(function() {
 	   $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
 				function() {
 					var visible=$('#ShowGosipToggle').is(':checked');
-					if(visible){
+					if(!visible){
 						$('#gosip_container').hide();
 						$('#gosip_log').hide();
 						//$('#daq_log').height("400px"); // this does not allow to set automatic stretch to bottom
@@ -778,6 +818,7 @@ $(function() {
 					   
 					}
 				});	
+	   
 	$("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
 			function() {
 					MyDisplay.SetStatusMessage("Cleared gosip logoutput."); 
@@ -804,6 +845,17 @@ $(function() {
 	    });
 		
 	
+	    
+	    $("#ConfirmCommandToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
+				function() {
+					var doconfirm=$('#ConfirmCommandToggle').is(':checked');
+					MyDisplay.SetCommandConfirm(doconfirm);
+					MyDisplay.RefreshView();			
+					console.log("Command confirm is " + doconfirm);
+						
+				});	
+	    
+	    
 	
     $('#Refreshtime').spinner({
         min: 1,

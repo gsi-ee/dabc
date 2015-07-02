@@ -244,6 +244,7 @@ namespace mbs {
          bool              fPrintf;     ///< use printf for major debug output
          std::string       fFileStateName;    ///< name of filestate parameter
          std::string       fAcqStateName;    ///< name of acquisition running parameter
+         std::string       fSetupStateName;    ///< name of "daq setup is loaded" parameter
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
@@ -255,6 +256,9 @@ namespace mbs {
          void UpdateFileState(int isopen);
          /** update mbs acq running state*/
          void UpdateMbsState(int isrunning);
+
+         /** update mbs setup loaded state*/
+         void UpdateSetupState(int isloaded);
 
          bool IsPrompter() const { return fCmdPort == 6006; }
 
