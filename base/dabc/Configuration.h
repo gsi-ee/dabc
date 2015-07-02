@@ -67,6 +67,7 @@ namespace dabc {
          std::string InitFuncName();
          std::string RunFuncName();
          int ShowCpuInfo();
+         bool UseSlowTime();
 
          /** \brief Defines if control used in dabc node
           * \returns -1 - when control="false" specified, no control created

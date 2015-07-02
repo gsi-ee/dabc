@@ -151,6 +151,9 @@ int main(int numc, char* args[])
       return 1;
    }
 
+   if (cfg.UseSlowTime())
+      dabc::TimeStamp::SetUseSlow();
+
    // reserve special thread
    std::string affinity = cfg.Affinity();
    if (!affinity.empty())
