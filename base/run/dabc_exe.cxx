@@ -106,6 +106,9 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
+      if (strcmp(arg,"-slow-time")==0) {
+         dabc::TimeStamp::SetUseSlow();
+      } else
       if (strcmp(arg,"-nodeid")==0) {
          if (cnt < numc)
             nodeid = (unsigned) atoi(args[cnt++]);
