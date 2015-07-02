@@ -138,10 +138,6 @@ struct mg_callbacks {
        Parameters:
          status: HTTP error status code. */
     int  (*http_error)(struct mg_connection *, int status);
-
-    /* Called when authentication want to be requested */
-    int  (*auth_request)(struct mg_connection *, const char* path);
-
 };
 
 /* Start web server.
@@ -257,6 +253,12 @@ int mg_modify_passwords_file(const char *passwords_file_name,
 
 /* Return information associated with the request. */
 struct mg_request_info *mg_get_request_info(struct mg_connection *);
+
+/* Return context associated with connection. */
+const struct mg_context *mg_get_context(const struct mg_connection *conn);
+
+/* Return user data pointer for context. */
+void *mg_get_user_data(const struct mg_context *ctx);
 
 
 /* Send data to the client.

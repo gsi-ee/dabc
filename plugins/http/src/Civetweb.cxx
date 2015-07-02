@@ -30,6 +30,7 @@ http::Civetweb::Civetweb(const std::string& name, dabc::Command cmd) :
 {
    fHttpPort = Cfg("port", cmd).AsInt(8090);
    fHttpsPort = Cfg("ports", cmd).AsInt(0);
+   fNumThreads = Cfg("thrds", cmd).AsInt(5);
    fAuthFile = Cfg("auth_file", cmd).AsStr();
    fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
 
@@ -57,13 +58,15 @@ void http::Civetweb::OnThreadAssigned()
 {
    http::Server::OnThreadAssigned();
 
-   std::string sport;
+   std::string sport, sthrds;
 
    if (fHttpPort>0) sport = dabc::format("%d",fHttpPort);
    if (fHttpsPort>0) {
       if (!sport.empty()) sport.append(",");
       sport.append(dabc::format("%ds",fHttpsPort));
    }
+   sthrds = dabc::format("%d", fNumThreads);
+
    //std::string sport = dabc::format("%d", fHttpPort);
    DOUT0("Starting HTTP server on port %s", sport.c_str());
 
@@ -73,7 +76,7 @@ void http::Civetweb::OnThreadAssigned()
    options[op++] = "listening_ports";
    options[op++] = sport.c_str();
    options[op++] = "num_threads";
-   options[op++] = "5";
+   options[op++] = sthrds.c_str();
 
    if (!fSslCertif.empty()) {
       options[op++] = "ssl_certificate";
@@ -89,10 +92,12 @@ void http::Civetweb::OnThreadAssigned()
    options[op++] = 0;
 
    fCallbacks.begin_request = http::Civetweb::begin_request_handler;
-   fCallbacks.auth_request = http::Civetweb::auth_request_handler;
+   // fCallbacks.auth_request = http::Civetweb::auth_request_handler;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
+
+   if (fCtx==0) EOUT("Fail to start civetweb on port %s", sport.c_str());
 }
 
 int http::Civetweb::auth_request_handler(struct mg_connection *conn, const char* path)
