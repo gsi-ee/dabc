@@ -456,24 +456,26 @@ MbsDisplay.prototype.RefreshView = function(){
 			$("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
 			 $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
+			 $("#Refreshtime").spinner("disable");
 		} else {
 			$("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
 			$("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Activate frequent refresh");	
+			 $("#Refreshtime").spinner("enable");
 		}
-	 
-	 $("#Refreshtime").prop('disabled', this.fMonitoring);
 	 
 	 
 	 if (!this.fTrending) {
 			 $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");//
 			 $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");	
-		} else {
+				$("#Trendlength").spinner("enable");
+	 } else {
 			$("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");
 			$("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");		
-		}
-	 $("#Trendlength").prop('disabled', this.fTrending);
+			$("#Trendlength").spinner("disable");
+	 }
 	 
+ 
 	 if($("#FileRFIO").is(':checked')){
 		 $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
 		 $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
@@ -861,7 +863,7 @@ $(function() {
         min: 1,
         max: 120,
         step: 1
-    });
+    }).val(MyDisplay.fUpdateInterval/1000);
 
     $('#Trendlength').spinner({
         min: 10,
