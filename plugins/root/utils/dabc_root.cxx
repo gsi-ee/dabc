@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
          std::vector<double> bins = item.Field("bins").AsDoubleVect();
 
          for (int n=0;n<nbins+2;n++) hist->SetBinContent(n,bins[3+n]);
-
+         hist->ResetStats(); // recalculate statistic
          hist->Write();
       } else
       if (item.Field("_kind").AsStr() == "ROOT.TH2D") {
@@ -118,6 +118,7 @@ int main(int argc, char* argv[]) {
          std::vector<double> bins = item.Field("bins").AsDoubleVect();
 
          for (int n=0;n<(nbins1+2)*(nbins2+2);n++) hist->SetBinContent(n,bins[6+n]);
+         hist->ResetStats(); // recalculate statistic
          hist->Write();
       }
 
