@@ -228,7 +228,7 @@
 						<button id="buttonShutdownAcquisition"
 							title="Execute shutdown.scom script">Shutdown</button>
 					</td> 
-					<td><input id="ShowGosipToggle" type="checkbox" checked="checked"><label
+					<td><input id="ShowGosipToggle" type="checkbox"><label
 						for="ShowGosipToggle" style="height: 30px" title="Show/Hide Gosip command dock">
 							Show gosip command panel?</label></td>	
 							
@@ -306,7 +306,7 @@
 	<div id="file_container">
 		<table style="width: 100%; height: 50%">
 			<caption>
-				<h3>Data taking</h3>
+				<h3>File output</h3>
 			</caption>
 			<tbody>
 				<tr>						
@@ -343,7 +343,7 @@
 	<div id="filelog_mode_container" class="styleYellow">
 		<table style="width: 100%; height: 50%">
 			<caption>
-				<h3>Log modes</h3>
+				<h3>Rate logging</h3>
 			</caption>
 			<tbody>
 				<tr>
@@ -393,18 +393,18 @@
 	<div id="ratemode_container" class="styleYellow">
 		<table style="width: 100%; height: 50%">
 			<caption>
-				<h3>Rates display</h3>
+				<h3>Rate displays</h3>
 			</caption>
 			<tbody>
 				<tr>
-					<td><input id="Trending" type="checkbox"><label
+					<td><input id="Trending" type="checkbox" checked="true"><label
 						for="Trending" style="height: 30px" title="Show Rates as trending">
 							Trending?</label></td>
 
 					<td><input id="Trendlength" type="text" value="100"
 						class="MySpinnerStyle"><label for="Trendlength"
-							title="Specify length of trending history"> Trending
-								history</label></td>
+							title="Specify maximum visible trending history in seconds"> Trending
+								history (s)</label></td>
 
 				</tr>
 				<tbody>
@@ -415,7 +415,7 @@
 	<div id="monitoring_container">
 		<table style="width: 100%; height: 50%">
 			<caption>
-				<h3>Display refresh</h3>
+				<h3>GUI settings</h3>
 			</caption>
 			<tbody>
 				<tr>

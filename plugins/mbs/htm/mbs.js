@@ -196,12 +196,13 @@ MbsState.prototype.Update= function(callback){
 function MbsDisplay(state){
 	this.fMbsState=state;
 	this.fDoCommandConfirm=true;
+	this.fShowGosip=false;
 	this.fMonitoring=false;	
 	this.fTrending=false;
 	this.fTrendingHistory=100;
 	this.fFileLogMode=4;
 	this.fLoggingHistory=100;
-	this.fMbsLoggingHistory=100;
+	this.fMbsLoggingHistory=500;
 	this.fUpdateTimer=null;
 	this.fUpdateInterval=2000; // ms
 	this.fGaugeEv = null;
@@ -235,13 +236,13 @@ MbsDisplay.prototype.BuildView = function(){
 	
 	this.fLogReadout= new DABC.LogDrawElement();
 	this.SetFileLogMode(4, 100);	
-	this.SetRateGauges();
+	//this.SetTrending(false, 0)
+	this.SetTrending(true, 300)
 	
 }
 
 
 MbsDisplay.prototype.SetRateGauges = function(){
-	
 	this.fTrendEv.Clear();
 	this.fTrendDa.Clear();
 	this.fTrendSv.Clear();
@@ -256,7 +257,6 @@ MbsDisplay.prototype.SetRateGauges = function(){
 }
 
 MbsDisplay.prototype.SetRateTrending = function(history){
-	
 	this.fTrendingHistory=history;
 	this.fGaugeEv.Clear();
 	this.fGaugeDa.Clear();
@@ -413,6 +413,35 @@ MbsDisplay.prototype.SetCommandConfirm = function(on){
 }
 
 
+MbsDisplay.prototype.ShowGosipPanel = function(on){
+	
+	 if (!on) {
+			$('#gosip_container').hide();
+			$('#gosip_log').hide();
+			// $('#daq_log').height("400px"); // this does not allow to set
+			// automatic stretch to bottom
+			$('#daq_log').css({
+				bottom : "2.7em",
+				height : "auto"
+			});
+
+		} else {
+			$('#gosip_container').show();
+			$('#gosip_log').show();
+			// $('#daq_log').height("270px"); }
+			$('#daq_log').css({
+				bottom : "auto",
+				height : "198px"
+			});
+		}
+	 this.fShoWGosip=on;	 
+	
+}
+
+
+
+
+
 MbsDisplay.prototype.RefreshView = function(){
 
 	
@@ -438,6 +467,7 @@ MbsDisplay.prototype.RefreshView = function(){
 			$("#buttonStartFile").attr("title", "Close output file");
 			$("#FileAutoMode").prop('disabled', true);
 			$("#FileRFIO").prop('disabled', true);
+			$("#Filesize").spinner("disable");
 			
 		} else {
 			//console.log("RefreshView finds close file");
@@ -446,9 +476,7 @@ MbsDisplay.prototype.RefreshView = function(){
 			 $("#buttonStartFile").attr("title", "Open lmd file for writing");
 			 $("#FileAutoMode").prop('disabled', false);
 			 $("#FileRFIO").prop('disabled', false); 
-			 
-			 
-			 
+			 $("#Filesize").spinner("enable");
 		}
 	 
 	 
@@ -508,9 +536,11 @@ MbsDisplay.prototype.RefreshView = function(){
 		$("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");		
 	}
 	
+	 	
 	 
 	 
-	// console.log("RefreshView with dabc state = %s", this.fMbsState.fDabcState);
+	// console.log("RefreshView with dabc state = %s",
+	// this.fMbsState.fDabcState);
 	 
 //	 if (this.fMbsState.fDabcState=="Running") { 
 //		//	console.log("RefreshView finds Running state");
@@ -557,6 +587,8 @@ $(function() {
 	MyDisplay=new MbsDisplay(MBS);
 	MyDisplay.BuildView();
 	MyDisplay.ChangeMonitoring(true);
+    
+	
 	
 	
 ///////////////////////////// mbs specific:	
@@ -725,7 +757,9 @@ $(function() {
 				});
 	
 	
-	$("#Trending").button({text: false, icons: { primary: "ui-icon-image MyButtonStyle"}}).click(function() {
+	$("#Trending").button({text: false, icons: { primary: "ui-icon-image MyButtonStyle"}})
+	.prop('checked', MyDisplay.fTrending)
+	.click(function() {
 		MyDisplay.SetTrending($(this).is(':checked'), parseInt(document.getElementById("Trendlength").value));
 		MyDisplay.RefreshView();
 	});
@@ -796,30 +830,14 @@ $(function() {
 	   
 
 	   
-	   $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
-				function() {
-					var visible=$('#ShowGosipToggle').is(':checked');
-					if(!visible){
-						$('#gosip_container').hide();
-						$('#gosip_log').hide();
-						//$('#daq_log').height("400px"); // this does not allow to set automatic stretch to bottom
-						$('#daq_log').css({
-							bottom: "2.7em",
-							height: "auto"
-							});
-						
-					}
-					else {
-						$('#gosip_container').show();
-						$('#gosip_log').show();		
-					//	$('#daq_log').height("270px");						}
-					$('#daq_log').css({
-						bottom: "auto",
-						height: "198px"
-						});		
-					   
-					}
+	   $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}})
+	   .prop('checked', MyDisplay.fShowGosip)
+	   .click(
+				function() {					
+					MyDisplay.ShowGosipPanel($('#ShowGosipToggle').is(':checked'));				
 				});	
+	   
+	   
 	   
 	$("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
 			function() {
@@ -867,13 +885,13 @@ $(function() {
 
     $('#Trendlength').spinner({
         min: 10,
-        max: 10000,
+        max: 3600,
         step: 10
-    });
+    }).val(MyDisplay.fTrendingHistory);
 	
     $('#Filesize').spinner({
         min: 100,
-        max: 4000,
+        max: 2000,
         step: 100
     });
     
@@ -883,7 +901,7 @@ $(function() {
         step: 10,
         spin: function( event, ui ) {MyDisplay.fLoggingHistory=ui.value;},
     	stop: function( event, ui ) {	MyDisplay.SetFileLogMode(0,0);}
-    });
+    }).val(MyDisplay.fLoggingHistory);
     
     $('#MbsLoglength').spinner({
         min: 10,
@@ -891,7 +909,7 @@ $(function() {
         step: 10,
         spin: function( event, ui ) {MyDisplay.fMbsLoggingHistory=ui.value;},
     	stop: function( event, ui ) {	MyDisplay.SetMbsLog();}
-    });
+    }).val(MyDisplay.fMbsLoggingHistory);;
  
     
     
@@ -1007,10 +1025,12 @@ $(function() {
     
     
     
-	MyDisplay.RefreshView();
 	
-
 	
+    MyDisplay.ShowGosipPanel(false);
+    //MyDisplay.RefreshView();
+    
+	MyDisplay.RefreshMonitor();
 	
 	
 	
