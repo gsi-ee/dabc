@@ -18,7 +18,7 @@
        <node value="${REMNODE}"/>
        <!--node value="r4-5"/-->
        <period value="1"/>
-       <history value="500"/>   
+       <history value="3600"/>   
       <!-- MBS statistic record, read from port 6008 -->
        <stat value="true"/>
        <!-- new logger channel, running with sta logrem command 
