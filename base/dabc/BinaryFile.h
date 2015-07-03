@@ -213,7 +213,7 @@ namespace dabc {
 
             size_t res = io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd);
             if ((res!=1) || (fFileHdr.magic != BinaryFileMagicValue)) {
-               fprintf(stderr, "Failure reading file %s header", fname);
+               fprintf(stderr, "Failure reading file %s header\n", fname);
                Close();
                return false;
             }

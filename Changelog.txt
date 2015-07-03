@@ -5,6 +5,8 @@ about current functionality of the framework.
 3.07.2015
 1. Add logger function for civetweb errors
 2. Allow to specify http port as string - to be able bind with loopback address for instance
+3. Introduce dabc_root utility to convert DABC files in ROOT.
+   For the moment used to convert DABC histograms from stream framework.
 
 
 29.06.2015

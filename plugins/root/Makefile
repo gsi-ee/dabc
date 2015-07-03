@@ -5,9 +5,11 @@ include $(DABCSYS)/config/Makefile.config
 ifeq ($(DABC_ROOT_RHHTP), true)
 
 ifdef DABCMAINMAKE
-DABCROOT_DIR = plugins/root
+DABCROOT_DIR  = plugins/root
+DABCROOT_EXE  = $(DABCBINPATH)/dabc_root
 else
 DABCROOT_DIR = .
+DABCROOT_EXE  = dabc_root
 endif
 
 DABCROOT_DIRI      = $(DABCROOT_DIR)/root
@@ -40,13 +42,18 @@ DABCROOT_DS        = $(DABCROOT_DICT).$(SrcSuf)
 DABCROOT_DO        = $(DABCROOT_DICT).$(ObjSuf) 
 DABCROOT_DD        = $(DABCROOT_DICT).$(DepSuf)
 
+DABCROOT_EXES     = $(DABCROOT_DIR)/utils/dabc_root.$(SrcSuf)
+DABCROOT_EXEO     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCROOT_EXES))
+DABCROOT_EXED     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCROOT_EXES))
+
+
 DABCROOT_ALL_O     = $(DABCROOT_O)
 
 # used in the main Makefile
 
 ALLHDRS          += $(patsubst $(DABCROOT_DIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
 ALLHDRS          += $(patsubst $(DABCROOT_DIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_TOPINCL)) 
-ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) 
+ALLDEPENDENC     += $(DABCROOT_D) $(DABCROOT_DD) $(DABCROOT_EXED)  
 
 # when using ROOT libRHTTP 
 
@@ -58,6 +65,12 @@ HTTPLIBEXTRA += -lRHTTP -lXMLIO
 
 
 libs:: $(DABCROOT_LIB) $(DABCROOT_MAP)
+
+exes:: $(DABCROOT_EXE)
+
+clean::
+	rm -f $(DABCROOT_EXE)
+
 
 ##### local rules #####
 
@@ -91,13 +104,16 @@ $(DABCROOT_DS): $(DABCROOT_DICTINCL) $(DABCROOT_LINKDEF)
 $(DABCROOT_MAP) : $(DABCROOT_LIB) $(DABCROOT_LINKDEF) 
 	$(DABC_ROOTMAP) $(DABCROOT_LIB) "$(DABCROOT_LIBDEP)" $(DABCROOT_DS) $(DABCROOT_LINKDEF) "$(DABCROOT_DICTINCL)"
 
+$(DABCROOT_EXE) : $(DABCROOT_EXEO) $(DABCBASE_LIB) $(DABCROOT_LIB)
+	$(LD) -O $(DABCROOT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcRoot $(DABC_ROOTLIBS) -o $(DABCROOT_EXE)
+
 ########### extra rules #############
 
-$(DABCROOT_O) $(DABCROOT_DO) $(DABCROOT_D) $(DABCROOT_DD) : CXXFLAGS += $(DABC_ROOTCFLAGS)
+$(DABCROOT_O) $(DABCROOT_DO) $(DABCROOT_D) $(DABCROOT_DD) $(DABCROOT_EXEO) $(DABCROOT_EXED) : CXXFLAGS += $(DABC_ROOTCFLAGS)
 
 $(DABCROOT_DO) : INCLUDES += .
 
-$(DABCROOT_D) $(DABCROOT_DD) : INCLUDES += $(DABCROOT_DIR) .
+$(DABCROOT_D) $(DABCROOT_DD) $(DABCROOT_EXED) : INCLUDES += $(DABCROOT_DIR) .
 
 endif
 
