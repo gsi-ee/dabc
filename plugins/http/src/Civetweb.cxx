@@ -21,15 +21,15 @@
 
 http::Civetweb::Civetweb(const std::string& name, dabc::Command cmd) :
    http::Server(name, cmd),
-   fHttpPort(0),
-   fHttpsPort(0),
+   fHttpPort(),
+   fHttpsPort(),
    fAuthFile(),
    fAuthDomain(),
    fSslCertif(),
    fCtx(0)
 {
-   fHttpPort = Cfg("port", cmd).AsInt(8090);
-   fHttpsPort = Cfg("ports", cmd).AsInt(0);
+   fHttpPort = Cfg("port", cmd).AsStr("8090");
+   fHttpsPort = Cfg("ports", cmd).AsStr();
    fNumThreads = Cfg("thrds", cmd).AsInt(5);
    fAuthFile = Cfg("auth_file", cmd).AsStr();
    fAuthDomain = Cfg("auth_domain", cmd).AsStr("dabc@server");
@@ -39,8 +39,8 @@ http::Civetweb::Civetweb(const std::string& name, dabc::Command cmd) :
       fDefaultAuth = Cfg("auth_default", cmd).AsBool(true) ? 1 : 0;
 
    fSslCertif = Cfg("ssl_certif", cmd).AsStr("");
-   if (!fSslCertif.empty() && (fHttpsPort<=0)) fHttpsPort = 443;
-   if (fSslCertif.empty()) fHttpsPort = 0;
+   if (!fSslCertif.empty() && (fHttpsPort.length()==0)) fHttpsPort = "443";
+   if (fSslCertif.empty()) fHttpsPort.clear();
 
    memset(&fCallbacks, 0, sizeof(fCallbacks));
 }
@@ -60,15 +60,15 @@ void http::Civetweb::OnThreadAssigned()
 
    std::string sport, sthrds;
 
-   if (fHttpPort>0) sport = dabc::format("%d",fHttpPort);
-   if (fHttpsPort>0) {
+   if (fHttpPort.length()>0) sport = fHttpPort;
+   if (fHttpsPort.length()>0) {
       if (!sport.empty()) sport.append(",");
-      sport.append(dabc::format("%ds",fHttpsPort));
+      sport.append(fHttpsPort);
    }
    sthrds = dabc::format("%d", fNumThreads);
 
    //std::string sport = dabc::format("%d", fHttpPort);
-   DOUT0("Starting HTTP server on port %s", sport.c_str());
+   DOUT0("Starting HTTP server on port(s) %s", sport.c_str());
 
    const char *options[100];
    int op(0);
@@ -92,7 +92,7 @@ void http::Civetweb::OnThreadAssigned()
    options[op++] = 0;
 
    fCallbacks.begin_request = http::Civetweb::begin_request_handler;
-   // fCallbacks.auth_request = http::Civetweb::auth_request_handler;
+   fCallbacks.log_message = http::Civetweb::log_message_handler;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
@@ -100,15 +100,14 @@ void http::Civetweb::OnThreadAssigned()
    if (fCtx==0) EOUT("Fail to start civetweb on port %s", sport.c_str());
 }
 
-int http::Civetweb::auth_request_handler(struct mg_connection *conn, const char* path)
+int http::Civetweb::log_message_handler(const struct mg_connection *conn, const char *message)
 {
-   http::Civetweb* server = (http::Civetweb*) mg_get_request_info(conn)->user_data;
-   if (server==0) return 1;
+   //const struct mg_context *ctx = mg_get_context(conn);
+   //http::Civetweb* server = (http::Civetweb*) mg_get_user_data(ctx);
 
-   const struct mg_request_info *request_info = mg_get_request_info(conn);
+   EOUT("civetweb: %s",message);
 
-   // do not require authentication
-   return server->IsAuthRequired(request_info->uri) ? 1 : 0;
+   return 0;
 }
 
 
