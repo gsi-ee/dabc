@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
    printf("dabc_root utility, v %s\n", DABC_RELEASE);
 
    const char* inpfile(0), *outfile(0);
+   bool skipzero(false);
 
    for (int n=1;n<argc;n++) {
       if ((strcmp(argv[n],"-h")==0) && (n+1 < argc)) {
@@ -29,12 +30,17 @@ int main(int argc, char* argv[]) {
          outfile = argv[++n];
          continue;
       }
+      if (strcmp(argv[n],"-skip-zero")==0) {
+         skipzero = true;
+         continue;
+      }
    }
 
    if ((inpfile==0) || (outfile==0)) {
-      printf("Arguments missing\n");
+      printf("Some arguments:\n");
       printf("-h filename     -   input file with stored hierarchy\n");
       printf("-o filename.root -  output ROOT file with histograms\n");
+      printf("-skip-zero    -  skip empty histograms\n");
       return 1;
    }
 
@@ -100,9 +106,18 @@ int main(int argc, char* argv[]) {
 
       if (item.Field("_kind").AsStr() == "ROOT.TH1D") {
          int nbins = item.Field("nbins").AsInt();
+         std::vector<double> bins = item.Field("bins").AsDoubleVect();
+
+         if (skipzero) {
+            bool isany = false;
+            for (int n=0;n<nbins+2;n++) {
+               if (bins[3+n]!=0.) { isany = true; break; }
+            }
+            if (!isany) continue;
+         }
+
          TH1D* hist = new TH1D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins, item.Field("left").AsDouble(), item.Field("right").AsDouble());
-         std::vector<double> bins = item.Field("bins").AsDoubleVect();
 
          for (int n=0;n<nbins+2;n++) hist->SetBinContent(n,bins[3+n]);
          hist->ResetStats(); // recalculate statistic
@@ -111,11 +126,17 @@ int main(int argc, char* argv[]) {
       if (item.Field("_kind").AsStr() == "ROOT.TH2D") {
          int nbins1 = item.Field("nbins1").AsInt();
          int nbins2 = item.Field("nbins2").AsInt();
+         std::vector<double> bins = item.Field("bins").AsDoubleVect();
+         if (skipzero) {
+            bool isany = false;
+            for (int n=0;n<(nbins1+2)*(nbins2+2);n++) {
+               if (bins[6+n]!=0.) { isany = true; break; }
+            }
+            if (!isany) continue;
+         }
          TH2D* hist = new TH2D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins1, item.Field("left1").AsDouble(), item.Field("right1").AsDouble(),
                                nbins2, item.Field("left2").AsDouble(), item.Field("right2").AsDouble());
-
-         std::vector<double> bins = item.Field("bins").AsDoubleVect();
 
          for (int n=0;n<(nbins1+2)*(nbins2+2);n++) hist->SetBinContent(n,bins[6+n]);
          hist->ResetStats(); // recalculate statistic
@@ -125,9 +146,11 @@ int main(int argc, char* argv[]) {
       cnt++;
    }
 
-   printf("TOTAL %d histograms converted\n", cnt);
+   printf("TOTAL %d histograms converted, storing file %s ...\n", cnt, outfile);
 
    delete f;
+
+   printf("File %s stored\n", outfile);
 
    return 0;
 }

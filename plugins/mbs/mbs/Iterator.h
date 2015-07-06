@@ -78,7 +78,6 @@ namespace mbs {
          /** Returns pointer, which assign only on subevents */
          dabc::Pointer GetSubeventsPointer();
 
-
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
          unsigned rawdatasize() const { return fRawPtr.fullsize(); }

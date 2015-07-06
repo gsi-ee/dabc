@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+6.07.2015
+1. In dabc_root utility allow to skip empty histograms - with -skip-zero option
+
+
 3.07.2015
 1. Add logger function for civetweb errors
 2. Allow to specify http port as string - to be able bind with loopback address for instance
