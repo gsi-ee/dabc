@@ -265,7 +265,7 @@ MbsDisplay.prototype.BuildView = function(){
 	this.SetMbsLog();
 	
 	this.fLogReadout= new DABC.LogDrawElement();
-	this.SetFileLogMode(4, 100, 2);	// is initialized from server now
+	this.SetFileLogMode(4, 0, 0);	// init log window, but keep history and interval from server
 	//this.SetTrending(false, 0)
 	this.SetTrending(true, 300)
 	
@@ -322,14 +322,12 @@ MbsDisplay.prototype.SetFileLogMode= function(mode, history, deltat){
 	this.fLoggingHistory=history;
 	this.fRateInterval=deltat;
 	
-	if(mode==0) 
-		mode= this.fFileLogMode;
-	else
+	if(mode!=0)
 		this.fFileLogMode=mode;
 	
 	this.fLogReadout.Clear();
 	console.log("SetFileLogMode with mode="+mode+" , history="+history +" , deltat="+deltat);
-	switch (mode) {	
+	switch (this.fFileLogMode) {	
 	case "1":
 		// "rate" 
 		this.fLogReadout.itemname = "../rate_log";	
@@ -350,8 +348,8 @@ MbsDisplay.prototype.SetFileLogMode= function(mode, history, deltat){
 		
 		
 	};
-	
-	
+	this.fLogReadout.CreateFrames($("#ReadoutInfo"));
+	if(mode!=0) return; // only change display mode, do not start new trending history
 	
 	MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval, function(
 			result) {
@@ -367,8 +365,7 @@ MbsDisplay.prototype.SetFileLogMode= function(mode, history, deltat){
 	
 	this.fLogReadout.EnableHistory(history);
 	this.fLoggingHistory=history;
-	this.fFileLogMode=mode;
-	this.fLogReadout.CreateFrames($("#ReadoutInfo"));
+	
 	
 }
 
@@ -523,7 +520,7 @@ MbsDisplay.prototype.RefreshView = function(){
 			$("#buttonStartFile").attr("title", "Close output file");
 			$("#FileAutoMode").prop('disabled', true);
 			$("#FileRFIO").prop('disabled', true);
-			$("#Filesize").spinner("disable");
+       	    $("#Filesize").spinner("disable");
 			
 		} else {
 			//console.log("RefreshView finds close file");
@@ -541,11 +538,17 @@ MbsDisplay.prototype.RefreshView = function(){
 			 $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
 			 $("#Refreshtime").spinner("disable");
+			 $("#Loglength").spinner("disable");
+			 $("#Loginterval").spinner("disable");
+			 
 		} else {
 			$("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
 			$("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
 			 $("label[for='Monitoring']").attr("title", "Activate frequent refresh");	
 			 $("#Refreshtime").spinner("enable");
+			 $("#Loglength").spinner("enable");
+			 $("#Loginterval").spinner("enable");
+			 
 		}
 	 
 	 
@@ -917,9 +920,7 @@ $(function() {
 	    $("#logmodes").buttonset();
 	    
 	    $("input[name='filelogmode']").on("change", function () {
-	    	var history=document.getElementById("Loglength").value;
-	    	console.log("logmodes got value="+this.value +", loglength="+history);	    	
-	    	MyDisplay.SetFileLogMode(this.value,history,0);
+	    	MyDisplay.SetFileLogMode(this.value, 0 ,0);
 	    });
 		
 	
