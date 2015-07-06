@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
       return 1;
    }
 
-   int cnt = 0;
+   int cnt(0), emptycnt(0), currcnt(0);
    TString lastdir;
    dabc::Iterator iter(h);
    while (iter.next()) {
@@ -98,22 +98,30 @@ int main(int argc, char* argv[]) {
       }
 
       if (lastdir!=dirname) {
+         if ((lastdir.Length()>0) && (currcnt==0) && skipzero) {
+            if ((gDirectory->GetList()->GetSize()==0) && (gDirectory->GetListOfKeys()->GetSize()==0)) {
+               printf("Deleting empty directory %s\n", lastdir.Data());
+               f->rmdir(lastdir.Data());
+            }
+         }
+
          f->mkdir(dirname.Data());
          f->cd(dirname.Data());
+         currcnt = 0;
       }
 
       lastdir = dirname;
 
       if (item.Field("_kind").AsStr() == "ROOT.TH1D") {
          int nbins = item.Field("nbins").AsInt();
-         std::vector<double> bins = item.Field("bins").AsDoubleVect();
+         double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
 
          if (skipzero) {
             bool isany = false;
             for (int n=0;n<nbins+2;n++) {
                if (bins[3+n]!=0.) { isany = true; break; }
             }
-            if (!isany) continue;
+            if (!isany) { emptycnt++; continue; }
          }
 
          TH1D* hist = new TH1D(item.GetName(), item.Field("_title").AsStr().c_str(),
@@ -122,17 +130,19 @@ int main(int argc, char* argv[]) {
          for (int n=0;n<nbins+2;n++) hist->SetBinContent(n,bins[3+n]);
          hist->ResetStats(); // recalculate statistic
          hist->Write();
+
+         cnt++; currcnt++;
       } else
       if (item.Field("_kind").AsStr() == "ROOT.TH2D") {
          int nbins1 = item.Field("nbins1").AsInt();
          int nbins2 = item.Field("nbins2").AsInt();
-         std::vector<double> bins = item.Field("bins").AsDoubleVect();
+         double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
          if (skipzero) {
             bool isany = false;
             for (int n=0;n<(nbins1+2)*(nbins2+2);n++) {
                if (bins[6+n]!=0.) { isany = true; break; }
             }
-            if (!isany) continue;
+            if (!isany) { emptycnt++; continue; }
          }
          TH2D* hist = new TH2D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins1, item.Field("left1").AsDouble(), item.Field("right1").AsDouble(),
@@ -141,12 +151,13 @@ int main(int argc, char* argv[]) {
          for (int n=0;n<(nbins1+2)*(nbins2+2);n++) hist->SetBinContent(n,bins[6+n]);
          hist->ResetStats(); // recalculate statistic
          hist->Write();
+
+         cnt++; currcnt++;
       }
 
-      cnt++;
    }
 
-   printf("TOTAL %d histograms converted, storing file %s ...\n", cnt, outfile);
+   printf("TOTAL %d histograms converted, skipped %d, storing file %s ...\n", cnt, emptycnt, outfile);
 
    delete f;
 

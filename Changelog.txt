@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 6.07.2015
 1. In dabc_root utility allow to skip empty histograms - with -skip-zero option
+2. In dabc_root delete directory without histograms (when -skip-zero option specified) 
 
 
 3.07.2015
