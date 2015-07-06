@@ -235,7 +235,9 @@ namespace mbs {
          unsigned          fCounter;
 
          std::string       fMbsNode;    ///< name of MBS node to connect
-         double            fPeriod;     ///< period how often status is requested
+         double            fPeriod;     ///< period how often status is requested in seconds
+         double            fRateInterval; ///< period for measuring the rate averages in seconds
+         int               fHistory; ///< length of parameter history buffer
          int               fStatPort;   ///< port, providing stat information (normally 6008)
          int               fLoggerPort; ///< port, providing log information
          int               fCmdPort;    ///< port, providing remote command access
@@ -245,6 +247,8 @@ namespace mbs {
          std::string       fFileStateName;    ///< name of filestate parameter
          std::string       fAcqStateName;    ///< name of acquisition running parameter
          std::string       fSetupStateName;    ///< name of "daq setup is loaded" parameter
+         std::string       fRateIntervalName;    ///< name of rate sample interval parameter
+         std::string       fHistoryName;    ///< name of variable history parameter
 
          void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
@@ -259,6 +263,12 @@ namespace mbs {
 
          /** update mbs setup loaded state*/
          void UpdateSetupState(int isloaded);
+
+         /** set sampling interval for rates calculation*/
+         void SetRateInterval(double t);
+
+         /** set depth of variable history buffer*/
+         void SetHistoryDepth(int entries);
 
          bool IsPrompter() const { return fCmdPort == 6006; }
 

@@ -137,6 +137,8 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    fCounter(0),
    fMbsNode(),
    fPeriod(1.),
+   fRateInterval(1.),
+   fHistory(100),
    fStatPort(0),
    fLoggerPort(0),
    fCmdPort(0),
@@ -146,13 +148,16 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 {
    fMbsNode = Cfg("node", cmd).AsStr();
    fPeriod = Cfg("period", cmd).AsDouble(1.);
-   int history = Cfg("history", cmd).AsInt(200);
+   fRateInterval = Cfg("rateinterval", cmd).AsDouble(1.);
+   fHistory = Cfg("history", cmd).AsInt(200);
    bool publish = Cfg("publish", cmd).AsBool(true);
    fPrintf = Cfg("printf", cmd).AsBool(false);
 
    fFileStateName = "MbsFileOpen";
    fAcqStateName = "MbsAcqRunning";
    fSetupStateName = "MbsSetupLoaded";
+   fRateIntervalName ="MbsRateInterval";
+   fHistoryName="MbsHistoryDepth";
 
    if (Cfg("stat", cmd).AsStr() == "true")
       fStatPort = 6008;
@@ -174,58 +179,80 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    // this is just emulation, later one need list of real variables
    dabc::Hierarchy item = fHierarchy.CreateHChild("DataRate");
    item.SetField(dabc::prop_kind, "rate");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("EventRate");
    item.SetField(dabc::prop_kind, "rate");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("ServerRate");
    item.SetField(dabc::prop_kind, "rate");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("FileRate");
    item.SetField(dabc::prop_kind, "rate");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("logger");
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("rate_log");
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("rash_log");
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("rast_log");
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild("ratf_log");
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild(fFileStateName);
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild(fAcqStateName);
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
    item = fHierarchy.CreateHChild(fSetupStateName);
    item.SetField(dabc::prop_kind, "log");
-   if (history>1) item.EnableHistory(history);
+   if (fHistory>1) item.EnableHistory(fHistory);
 
+   item = fHierarchy.CreateHChild(fRateIntervalName);
+   item.SetField(dabc::prop_kind, "log");
+   if (fHistory>1) item.EnableHistory(fHistory);
+
+   item = fHierarchy.CreateHChild(fHistoryName);
+    item.SetField(dabc::prop_kind, "log");
+    if (fHistory>1) item.EnableHistory(fHistory);
+
+   SetRateInterval(fRateInterval); // update exported paramters here
+   SetHistoryDepth(fHistory);
 
    if (fCmdPort > 0) {
       dabc::CommandDefinition cmddef = fHierarchy.CreateHChild("CmdMbs");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
       cmddef.SetField(dabc::prop_auth, true); // require authentication
       cmddef.AddArg("cmd", "string", true, "show rate");
+
+      dabc::CommandDefinition cmddef_rate = fHierarchy.CreateHChild("CmdSetRateInterval");
+      cmddef_rate.SetField(dabc::prop_kind, "DABC.Command");
+      cmddef_rate.SetField(dabc::prop_auth, true); // require authentication
+      cmddef_rate.AddArg("time", "double", true, "1.0");
+
+      dabc::CommandDefinition cmddef_hist = fHierarchy.CreateHChild("CmdSetHistoryDepth");
+      cmddef_hist.SetField(dabc::prop_kind, "DABC.Command");
+      cmddef_hist.SetField(dabc::prop_auth, true); // require authentication
+      cmddef_hist.AddArg("entries", "int", true, "100");
+
+
    }
 
    dabc::Hierarchy ui = fHierarchy.CreateHChild("ControlGUI");
@@ -848,16 +875,23 @@ void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
       EOUT("Wrong time calculation");
       return;
    }
-
-   if (!fStatus.null() && (tmdiff>0)) {
+   double deltaT=fabs((tmdiff-fRateInterval)/tmdiff); // JAM smooth glitches between timer period and time stamp by this
+   DOUT3("NEW STATUS with rate interval:%f , dt=%f\n, delta=%f", fRateInterval, tmdiff, deltaT);
+   if ((tmdiff>0) && ((deltaT<1/fRateInterval) || (ceil(tmdiff) > 1 + fRateInterval) ) )
+     {
+     // last term ensures that we enter this section if fRateInterval is interactively changed to lower values
+     if (!fStatus.null()){
       FillStatistic("-u", "rate_log", &fStatus, &stat, tmdiff);
       FillStatistic("-rev -rda -nev -nda", "rash_log", &fStatus, &stat, tmdiff);
       FillStatistic("-rev -rda -nev -nda -rsda", "rast_log", &fStatus, &stat, tmdiff);
       FillStatistic("-rev -rda -nev -nda -rsda -fi", "ratf_log", &fStatus, &stat, tmdiff);
 
-      //DOUT0("MBS version is %u", fHierarchy.GetVersion());
-
+      DOUT3("Filled statistics with rate interval:%f after dt=%f\n", fRateInterval, tmdiff);
       fCounter++;
+     }
+
+      memcpy(&fStatus, &stat, sizeof(stat));
+      fStatStamp = stamp;
    }
    DOUT3("Got acquisition running=%d, file open=%d", stat.bh_acqui_running, stat.l_open_file);
 
@@ -869,9 +903,7 @@ void mbs::Monitor::NewStatus(mbs::DaqStatus& stat)
 
 
 
-   memcpy(&fStatus, &stat, sizeof(stat));
 
-   fStatStamp = stamp;
 }
 
 
@@ -887,7 +919,7 @@ void mbs::Monitor::UpdateFileState(int on)
   }
   else
   {
-      DOUT0("ChangeFileState Could not find hierarchy child %s", fFileStateName.c_str());
+      DOUT0("UpdateFileState Could not find hierarchy child %s", fFileStateName.c_str());
   }
 
 }
@@ -904,7 +936,7 @@ void mbs::Monitor::UpdateMbsState(int on)
     }
     else
     {
-        DOUT0("ChangeFileState Could not find hierarchy child %s", fAcqStateName.c_str());
+        DOUT0("UpdateMbsState Could not find hierarchy child %s", fAcqStateName.c_str());
     }
 
 }
@@ -922,42 +954,129 @@ void mbs::Monitor::UpdateSetupState(int on)
     }
     else
     {
-        DOUT0("ChangeFileState Could not find hierarchy child %s", fSetupStateName.c_str());
+        DOUT0("UpdateSetupState Could not find hierarchy child %s", fSetupStateName.c_str());
     }
 
 }
 
+void mbs::Monitor::SetRateInterval(double t)
+{
+  if(t<fPeriod) t=fPeriod;
+  fRateInterval=t;
+  dabc::Hierarchy chld=fHierarchy.GetHChild(fRateIntervalName);
+    if (!chld.null())
+    {
+        chld.SetField("value", dabc::format("%f", t));
+         //par.ScanParamFields(&chld()->Fields());
+         fHierarchy.MarkChangedItems();
+         DOUT0("Changed rate interval to %f seconds", t);
+    }
+    else
+    {
+        DOUT0("SetRateInterval Could not find hierarchy child %s", fRateIntervalName.c_str());
+    }
+}
 
 
-int mbs::Monitor::ExecuteCommand(dabc::Command cmd)
+void mbs::Monitor::SetHistoryDepth(int entries)
+{
+  fHistory=entries;
+  dabc::Hierarchy chld=fHierarchy.GetHChild(fHistoryName);
+      if (!chld.null())
+      {
+          chld.SetField("value", dabc::format("%d", entries));
+           //par.ScanParamFields(&chld()->Fields());
+           fHierarchy.MarkChangedItems();
+           DOUT0("Changed history depth to %d entries", entries);
+      }
+      else
+      {
+          DOUT0("SetHistoryDepth  Could not find hierarchy child %s", fHistoryName.c_str());
+      }
+
+  // here activate it immediately, does it work recursively?
+  //  fHierarchy.EnableHistory(0,true);
+  //  fHierarchy.EnableHistory(fHistory,true);
+  // NO, lets update explicitely all interesting records:
+
+    fHierarchy.GetHChild("DataRate").EnableHistory(0,true);
+    fHierarchy.GetHChild("DataRate").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("EventRate").EnableHistory(0,true);
+    fHierarchy.GetHChild("EventRate").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("ServerRate").EnableHistory(0,true);
+    fHierarchy.GetHChild("ServerRate").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("FileRate").EnableHistory(0,true);
+    fHierarchy.GetHChild("FileRate").EnableHistory(fHistory,true);
+
+
+    fHierarchy.GetHChild("rate_log").EnableHistory(0,true);
+    fHierarchy.GetHChild("rate_log").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("rash_log").EnableHistory(0,true);
+    fHierarchy.GetHChild("rash_log").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("rast_log").EnableHistory(0,true);
+    fHierarchy.GetHChild("rast_log").EnableHistory(fHistory,true);
+    fHierarchy.GetHChild("ratf_log").EnableHistory(0,true);
+    fHierarchy.GetHChild("ratf_log").EnableHistory(fHistory,true);
+
+    fCounter=0; // to print heading on top
+}
+
+
+int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
 {
 
-   if (cmd.IsName("ProcessDaqStatus")) {
+  if (cmd.IsName ("ProcessDaqStatus"))
+  {
 
-      mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon());
+    mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon ());
 
-      if (tr) NewStatus(tr->GetStatus());
+    if (tr)
+      NewStatus (tr->GetStatus ());
 
-      AssignAddon(0);
+    AssignAddon (0);
 
-      return dabc::cmd_true;
-   } else
-   if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
+    return dabc::cmd_true;
+  }
+  else if (cmd.IsName (dabc::CmdHierarchyExec::CmdName ()))
+  {
 
-      std::string cmdpath = cmd.GetStr("Item");
+    std::string cmdpath = cmd.GetStr ("Item");
 
-      if (cmdpath != "CmdMbs") return dabc::cmd_false;
+    //if (cmdpath != "CmdMbs") return dabc::cmd_false;
 
-      dabc::WorkerRef wrk = FindChildRef("DaqCmd");
+    if (cmdpath == "CmdMbs")
+    {
+      dabc::WorkerRef wrk = FindChildRef ("DaqCmd");
 
-      if ((fCmdPort<=0) || wrk.null()) return dabc::cmd_false;
+      if ((fCmdPort <= 0) || wrk.null ())
+        return dabc::cmd_false;
 
-      wrk.Submit(cmd);
+      wrk.Submit (cmd);
 
       return dabc::cmd_postponed;
-   }
+    }
+    else if (cmdpath == "CmdSetRateInterval")
+    {
+      DOUT0("ExecuteCommand  sees CmdSetRateInterval");
+      double deltat = cmd.GetDouble ("time", 3.0);    // JAM todo: put string identifier to define or static variable
+      SetRateInterval (deltat);
+      SetHistoryDepth (fHistory);    // need to clear old history entries when changing sampling period
+      return dabc::cmd_true;
+    }
+    else if (cmdpath == "CmdSetHistoryDepth")
+    {
+      DOUT0("ExecuteCommand  sees CmdSetHistoryDepth");
+      int entries = cmd.GetInt ("entries", 200);    // JAM todo: put string identifier to define or static variable
+      SetHistoryDepth (entries);
+      return dabc::cmd_true;
+    }
+    else
+    {
+      return dabc::cmd_false;
+    }
+  }
 
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
+  return dabc::ModuleAsync::ExecuteCommand (cmd);
 }
 
 unsigned mbs::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)

@@ -154,6 +154,28 @@ MbsState.prototype.UpdateSetupstate = function(ok, state){
 	//console.log("UpdateFilestate with ok=%s, value=%s, fileopen=%s, typeofFileopen=%s", ok, state, this.fFileOpen, typeof(this.fFileOpen));
 }
 
+MbsState.prototype.UpdateHistoryDepth = function(ok, val){
+	
+	if (ok=="true") {
+		MyDisplay.fLoggingHistory = val;
+		} else {
+		console.log("UpdateHistoryDepth failed.");
+	}
+	console.log("UpdateUpdateHistoryDepth with ok=%s, value=%s, loghistory=%d", ok, val, MyDisplay.fLoggingHistory);
+}
+
+MbsState.prototype.UpdateRateInterval = function(ok, val){
+	
+	if (ok=="true") {
+		MyDisplay.fRateInterval = val;
+		} else {
+		console.log("UpdateRateInterval failed.");
+	}
+	console.log("UpdateRateInterval with ok=%s, value=%s, interval=%d", ok, val, MyDisplay.fRateInterval);
+}
+
+
+
 
 
 MbsState.prototype.UpdateDABCstate = function(ok, state, refreshcall){
@@ -184,8 +206,15 @@ MbsState.prototype.Update= function(callback){
 	this.DabcParameter("MbsAcqRunning", function(res,val) { pthis.UpdateRunstate(res,val); });
 	this.DabcParameter("MbsFileOpen",function(res,val) { pthis.UpdateFilestate(res,val); })
 	
+	this.DabcParameter("MbsHistoryDepth",function(res,val) { pthis.UpdateHistoryDepth(res,val); })
+	this.DabcParameter("MbsRateInterval",function(res,val) { pthis.UpdateRateInterval(res,val); })
+	
 //	
 	this.DabcParameter("../../web-mbs/App/State",function(res,val) { pthis.UpdateDABCstate(res,val, callback); })
+	
+	
+
+	
 	
 	//this.fDabcState="Running";
 	//callback(); // will be done when last parameter update response has been processed
@@ -202,6 +231,7 @@ function MbsDisplay(state){
 	this.fTrendingHistory=100;
 	this.fFileLogMode=4;
 	this.fLoggingHistory=100;
+	this.fRateInterval=1;
 	this.fMbsLoggingHistory=500;
 	this.fUpdateTimer=null;
 	this.fUpdateInterval=2000; // ms
@@ -235,7 +265,7 @@ MbsDisplay.prototype.BuildView = function(){
 	this.SetMbsLog();
 	
 	this.fLogReadout= new DABC.LogDrawElement();
-	this.SetFileLogMode(4, 100);	
+	this.SetFileLogMode(4, 100, 2);	// is initialized from server now
 	//this.SetTrending(false, 0)
 	this.SetTrending(true, 300)
 	
@@ -282,12 +312,23 @@ MbsDisplay.prototype.ClearDaqLog = function(){
 	
 }
 
-MbsDisplay.prototype.SetFileLogMode= function(mode, history){
+MbsDisplay.prototype.SetFileLogMode= function(mode, history, deltat){
 	
-	if(history==0) history=this.fLoggingHistory;
-	if(mode==0) mode= this.fFileLogMode;
+	if(history==0) 
+		history=document.getElementById("Loglength").value;
+	if(deltat==0) 
+		deltat=document.getElementById("Loginterval").value;
+	
+	this.fLoggingHistory=history;
+	this.fRateInterval=deltat;
+	
+	if(mode==0) 
+		mode= this.fFileLogMode;
+	else
+		this.fFileLogMode=mode;
+	
 	this.fLogReadout.Clear();
-	//console.log("SetFileLogMode with mode="+mode+" , history="+history);
+	console.log("SetFileLogMode with mode="+mode+" , history="+history +" , deltat="+deltat);
 	switch (mode) {	
 	case "1":
 		// "rate" 
@@ -309,6 +350,21 @@ MbsDisplay.prototype.SetFileLogMode= function(mode, history){
 		
 		
 	};
+	
+	
+	
+	MBS.DabcCommand("CmdSetRateInterval", "time="+this.fRateInterval, function(
+			result) {
+		MyDisplay.SetStatusMessage(result ? "CmdSetRateInterval sent."
+				: "CmdSetRateInterval FAILED.");
+	});
+	
+	MBS.DabcCommand("CmdSetHistoryDepth", "entries="+this.fLoggingHistory, function(
+			result) {
+		MyDisplay.SetStatusMessage(result ? "CmdSetHistoryDepth  sent."
+				: "CmdSetHistoryDepth FAILED.");
+	});
+	
 	this.fLogReadout.EnableHistory(history);
 	this.fLoggingHistory=history;
 	this.fFileLogMode=mode;
@@ -536,7 +592,9 @@ MbsDisplay.prototype.RefreshView = function(){
 		$("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");		
 	}
 	
-	 	
+	   $('#Loglength').val(MyDisplay.fLoggingHistory);
+	   $('#Loginterval').val(MyDisplay.fRateInterval);
+	    
 	 
 	 
 	// console.log("RefreshView with dabc state = %s",
@@ -861,7 +919,7 @@ $(function() {
 	    $("input[name='filelogmode']").on("change", function () {
 	    	var history=document.getElementById("Loglength").value;
 	    	console.log("logmodes got value="+this.value +", loglength="+history);	    	
-	    	MyDisplay.SetFileLogMode(this.value,history);
+	    	MyDisplay.SetFileLogMode(this.value,history,0);
 	    });
 		
 	
@@ -899,9 +957,22 @@ $(function() {
         min: 10,
         max: 100000,
         step: 10,
-        spin: function( event, ui ) {MyDisplay.fLoggingHistory=ui.value;},
-    	stop: function( event, ui ) {	MyDisplay.SetFileLogMode(0,0);}
+//        spin: function( event, ui ) {console.log("Loglength spin"); MyDisplay.fLoggingHistory=ui.value;},
+//    	stop: function( event, ui ) {console.log("Loglength stop");},
+        change: function( event, ui ) {MyDisplay.SetFileLogMode(0,0,0);}
     }).val(MyDisplay.fLoggingHistory);
+    
+    $('#Loginterval').spinner({
+        min: 1,
+        max: 100000,
+        step: 1,
+//        spin: function( event, ui ) {console.log("Loginterval spin"); MyDisplay.fRateInterval=ui.value;},
+//    	stop: function( event, ui )  {console.log("Loginterval stop");},
+    	change: function( event, ui ){MyDisplay.SetFileLogMode(0,0,0);}
+        
+    }).val(MyDisplay.fRateInterval);
+    
+    
     
     $('#MbsLoglength').spinner({
         min: 10,
