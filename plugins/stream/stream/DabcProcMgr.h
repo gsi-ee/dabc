@@ -19,6 +19,7 @@
 #include "base/ProcMgr.h"
 
 #include "dabc/Hierarchy.h"
+#include "dabc/Command.h"
 
 namespace stream {
 
@@ -37,6 +38,9 @@ namespace stream {
          virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
 
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
+
+         bool ExecuteHCommand(dabc::Command cmd);
+
 
    };
 

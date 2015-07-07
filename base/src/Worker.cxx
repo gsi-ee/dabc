@@ -765,6 +765,24 @@ int dabc::Worker::PreviewCommand(Command cmd)
          cmd.SetUInt("version", sub.GetVersion());
          cmd_res = cmd_true;
       } else
+      if (binkind=="cmd.json") {
+         std::string cmdname = url.GetOptionStr("command");
+         if (cmdname.empty()) return cmd_ignore;
+
+         // make protection - append prefix to exclude misuse of interface
+         dabc::Command subcmd(std::string("HCMD_" + cmdname));
+         subcmd.SetRef("item", sub);
+         subcmd.SetStr("query", query);
+
+         // we misuse command interface for executing actions together with subitem
+         // one could have problems if any
+         if (ExecuteCommand(subcmd)!=cmd_true) return cmd_ignore;
+
+         Buffer raw = subcmd.GetRawData();
+         cmd.SetRawData(raw);
+
+         cmd_res = cmd_true;
+      } else
       if ((binkind=="get.json") || (binkind=="item.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
          std::string field = url.GetOptionStr("field", "");
 

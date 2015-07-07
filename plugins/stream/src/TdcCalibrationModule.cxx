@@ -221,6 +221,8 @@ bool stream::TdcCalibrationModule::retransmit()
 
 int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 {
+   if (fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
+
    if (cmd.IsName("ResetExportedCounters") ) {
       // redirect command to real transport
       if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;

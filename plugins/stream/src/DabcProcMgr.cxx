@@ -15,6 +15,10 @@
 
 #include "stream/DabcProcMgr.h"
 
+#include "dabc/Buffer.h"
+
+#include <math.h>
+
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
    std::string xtitle, xlbls;
@@ -116,4 +120,57 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    h.SetField("bins", bins);
 
    return (base::H2handle) h.GetFieldPtr("bins")->GetDoubleArr();
+}
+
+bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
+{
+   std::string name = cmd.GetName();
+   if (name.find("HCMD_Get")!=0) return false;
+
+   dabc::Hierarchy item = cmd.GetRef("item");
+   if (item.null()) return false;
+
+   std::string kind = item.GetField("_kind").AsStr();
+   if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;
+
+   double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
+   if (bins==0) return false;
+
+   name.erase(0,5);
+
+   std::string res = "null";
+
+   if ((name == "GetMean") || (name=="GetRMS") || (name=="GetEntries")) {
+      if (kind != "ROOT.TH1D") return false;
+      int nbins = item.GetField("nbins").AsInt();
+      double left = item.GetField("left").AsDouble();
+      double right = item.GetField("right").AsDouble();
+
+      double sum0(0), sum1(0), sum2(0);
+
+      for (int n=0;n<nbins;n++) {
+         double x = left + (right-left)/nbins*(n+0.5);
+         sum0 += bins[n+4];
+         sum1 += x*bins[n+4];
+         sum2 += x*x*bins[n+4];
+      }
+      double mean(0), rms(0);
+      if (sum0>0) {
+         mean = sum1/sum0;
+         rms = sqrt(sum2/sum0 - mean*mean);
+      }
+      if (name == "GetEntries") res = dabc::format("%14.7g",sum0);
+      else if (name == "GetMean") res = dabc::format("%8.6g",mean);
+      else res = dabc::format("%8.6g",rms);
+
+   } else {
+      return false;
+   }
+
+
+
+   dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
+   cmd.SetRawData(raw);
+
+   return true;
 }

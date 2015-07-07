@@ -242,6 +242,8 @@ void stream::RunModule::ProduceMergedHierarchy()
 
 int stream::RunModule::ExecuteCommand(dabc::Command cmd)
 {
+   if (fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
+
    if (cmd.IsName("SlaveFinished")) {
       if (--fStopMode == 0) {
          ProduceMergedHierarchy();

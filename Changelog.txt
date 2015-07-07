@@ -8,6 +8,16 @@ about current functionality of the framework.
 2. Create stream plugin, where all stream-specific classes are collected.
    These are TdcCalibrationModule and runengine for stream framework. Plugin
    compiled only when with-stream=1 compile flag is enabled.
+3. Allow to execute cmd.json requests on the hierarchy item. Syntax is:
+      path/to/item/cmd.json?command=name_of_command
+   Such call will produce command name HCMD_name_of_command, which can
+   be processed in the producer inside ExecuteCommand method. Result should
+   be returned as raw buffer 
+4. cmd.json method used to request mean/rms value for histograms, produced by
+   DabcProcMgr. Requests looks like:
+   http://localhost:8090/Stream/Run/HLD/HLD_EvSize/cmd.json?command=GetEntries
+   http://localhost:8090/Stream/Run/HLD/HLD_EvSize/cmd.json?command=GetMean
+   http://localhost:8090/Stream/Run/HLD/HLD_EvSize/cmd.json?command=GetRMS
 
 
 6.07.2015
