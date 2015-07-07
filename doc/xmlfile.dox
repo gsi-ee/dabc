@@ -80,8 +80,8 @@ Inside context following nodes can be presented:
 
 ## Run parameters
 
-Run parameters set different global parameters and are normally set in the beginning,
-when dabc_exe process is started. Here is table of parameters, 
+In `<Run>` section different global parameters defined, which are normally set 
+in the beginning, when dabc_exe process is started. Here is table of parameters, 
 which can be specified in `<Run>` section. 
 
 | Name       | Description |
@@ -110,7 +110,9 @@ which can be specified in `<Run>` section.
 | stdout     | redirection for standard output, for instance file name |
 | errout     | redirection for error output, for instance file name |
 | nullout    | if true, all output will be redirected ro /dev/null |
+| slow-time  | which methods used for time measuremens, default is true |
  
+
 ## Memory pool
 
 The typical configuration for memory pool look like this.
