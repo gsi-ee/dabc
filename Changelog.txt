@@ -5,6 +5,9 @@ about current functionality of the framework.
 7.07.2015
 1. Make slow-time mode by default while it does not work correctly on 
    multi-core machines. Only for special applications fast timing is important.
+2. Create stream plugin, where all stream-specific classes are collected.
+   These are TdcCalibrationModule and runengine for stream framework. Plugin
+   compiled only when with-stream=1 compile flag is enabled.
 
 
 6.07.2015

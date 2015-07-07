@@ -41,6 +41,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <lib value="libDabcRfio.so"/>  
+      <lib value="libDabcStream.so"/>  
       <logfile value="hadaqevtbuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
@@ -91,7 +92,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!--  DisableCalibrationFor value="0"/-->
        
        <!-- Number of counts in each channel to perform calibration -->
-       <Auto value="100000"/>
+       <Auto value="1000"/>
     </Module>
     
 
@@ -106,7 +107,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input3" url="hadaq://host:10104" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
        <InputPort name="Input4" url="hadaq://host:10105" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug&dummy"/>
 
        <ExtraDebug value="false"/>
 
@@ -134,7 +135,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
      
      <!-- Terminal output like old event builder -->
      <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false"/>
-
+     
   </Context>
 
 </dabc>

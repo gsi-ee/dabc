@@ -66,9 +66,9 @@ namespace hadaq {
          bool fEmpty; //!< indicates if input has empty data
          void* fAddon;  //!< Direct transport pointer, used only for debugging
          int fNumCanRecv; //!< Number buffers can be received
-         void* fCalibr;    //!<  Direct pointer on calibration module, used only in terminal
-         unsigned fLostTrig;  //!< number of lost triggers (never received by the combiner)
-         unsigned fDroppedTrig;  //!< number of dropped triggers (received but dropped by the combiner)
+         std::string fCalibr;       //!< name of calibration module, used only in terminal
+         unsigned fLostTrig;        //!< number of lost triggers (never received by the combiner)
+         unsigned fDroppedTrig;     //!< number of dropped triggers (received but dropped by the combiner)
 
          InputCfg() :
             fTrigNr(0),
@@ -83,7 +83,7 @@ namespace hadaq {
             fEmpty(true),
             fAddon(0),
             fNumCanRecv(0),
-            fCalibr(0),
+            fCalibr(),
             fLostTrig(0),
             fDroppedTrig(0)
          {

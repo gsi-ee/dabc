@@ -32,6 +32,16 @@ namespace hadaq {
    class TerminalModule : public dabc::ModuleAsync {
       protected:
 
+         struct CalibrRect {
+            long unsigned         lastrecv;
+            bool                  send_request;
+            unsigned              trb;
+            std::vector<uint64_t> tdcs;
+            int                   progress;
+            std::string           state;
+            CalibrRect() : lastrecv(0), send_request(false), trb(0), tdcs(), progress(0), state() {}
+         };
+
          uint64_t        fTotalBuildEvents;
          uint64_t        fTotalRecvBytes;
          uint64_t        fTotalDiscEvents;
@@ -39,9 +49,11 @@ namespace hadaq {
 
          bool            fDoClear;
          dabc::TimeStamp fLastTm;
-         std::vector<long unsigned> fLastRecv;
+         std::vector<CalibrRect> fCalibr;
 
          std::string rate_to_str(double r);
+
+         virtual bool ReplyCommand(dabc::Command cmd);
 
       public:
 

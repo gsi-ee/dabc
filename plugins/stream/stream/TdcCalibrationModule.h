@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef HADAQ_TdcCalibrationModule
-#define HADAQ_TdcCalibrationModule
+#ifndef STREAM_TdcCalibrationModule
+#define STREAM_TdcCalibrationModule
 
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
@@ -24,15 +24,15 @@
 #include "dabc/timing.h"
 #endif
 
+#ifndef STREAM_DabcProcMgr
+#include "stream/DabcProcMgr.h"
+#endif
 
-namespace dabc {
-   class ProcMgr;
-}
+#include "hadaq/TrbProcessor.h"
 
-namespace hadaq {
 
-   class TrbProcessor;
-   class TerminalModule;
+namespace stream {
+
 
 /** \brief Perform calibration of FPGA TDC data
  *
@@ -41,11 +41,9 @@ namespace hadaq {
 
    class TdcCalibrationModule : public dabc::ModuleAsync {
 
-   friend class TerminalModule;
-
    protected:
 
-      dabc::ProcMgr* fProcMgr;
+      DabcProcMgr* fProcMgr;
       hadaq::TrbProcessor* fTrbProc;
       bool fDummy;  //! module creates all TDCs but do not perform any transformation
       int  fAutoCalibr;  //! amount of statistic for the auto calibration in channels

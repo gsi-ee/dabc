@@ -25,7 +25,7 @@
        <NumBuffers value="1000"/>
     </MemoryPool>
 
-    <Module name="Calibr" class="hadaq::TdcCalibrationModule">    
+    <Module name="Calibr" class="stream::TdcCalibrationModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="1"/>
        <NumOutputs value="1"/>

@@ -1178,7 +1178,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 
       if (id < fCfg.size()) {
          fCfg[id].fAddon = cmd.GetPtr("Addon");
-         fCfg[id].fCalibr = cmd.GetPtr("CalibrModule");
+         fCfg[id].fCalibr = cmd.GetStr("CalibrModule");
       }
 
       return true;

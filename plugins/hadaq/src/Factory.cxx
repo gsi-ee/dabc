@@ -32,7 +32,6 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
 #include "hadaq/TerminalModule.h"
-#include "hadaq/TdcCalibrationModule.h"
 #include "hadaq/Iterator.h"
 #include "hadaq/Observer.h"
 #include "hadaq/api.h"
@@ -88,7 +87,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
 
       DOUT0("Create MODULE %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
 
-      dabc::CmdCreateModule mcmd("hadaq::TdcCalibrationModule", calname);
+      dabc::CmdCreateModule mcmd("stream::TdcCalibrationModule", calname);
       mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
       if (url.HasOption("trb")) mcmd.SetStr("TRB", url.GetOptionStr("trb"));
       if (url.HasOption("hub")) mcmd.SetStr("HUB", url.GetOptionStr("hub"));
@@ -141,9 +140,6 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::TerminalModule")
       return new hadaq::TerminalModule(modulename, cmd);
-
-   if (classname == "hadaq::TdcCalibrationModule")
-      return new hadaq::TdcCalibrationModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

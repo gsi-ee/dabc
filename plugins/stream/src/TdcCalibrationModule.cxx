@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "hadaq/TdcCalibrationModule.h"
+#include "stream/TdcCalibrationModule.h"
 
 #include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
@@ -23,14 +23,10 @@
 #include <math.h>
 
 
-#ifdef WITH_STREAM
-#include "dabc/ProcMgr.h"
-#include "hadaq/TrbProcessor.h"
 #include "hadaq/TdcProcessor.h"
-#endif
 
 
-hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc::Command cmd) :
+stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
    fTrbProc(0),
@@ -38,6 +34,7 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fAutoCalibr(1000),
    fDummyCounter(0),
    fLastCalibr(),
+   fTRB(0),
    fProgress(0),
    fState()
 {
@@ -47,8 +44,6 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
    fLastCalibr.GetNow();
 
    fDummy = Cfg("Dummy", cmd).AsBool(false);
-
-#ifdef WITH_STREAM
 
    int finemin = Cfg("FineMin", cmd).AsInt(0);
    int finemax = Cfg("FineMax", cmd).AsInt(0);
@@ -72,8 +67,8 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    item.SetField("trb", fTRB);
 
-   fProcMgr = new dabc::ProcMgr;
-   fProcMgr->fTop = fWorkerHierarchy;
+   fProcMgr = new stream::DabcProcMgr();
+   fProcMgr->SetTop(fWorkerHierarchy);
 
    fTrbProc = new hadaq::TrbProcessor(fTRB);
    int hubid = Cfg("HUB", cmd).AsInt(0x0);
@@ -117,22 +112,20 @@ hadaq::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc:
 
    // remove pointer, let other modules to create and use it
    base::ProcMgr::ClearInstancePointer();
-#endif
 
-   DOUT0("TdcCalibrationModule dummy %s", DBOOL(fDummy));
-
+   DOUT0("TdcCalibrationModule dummy %s auto %d", DBOOL(fDummy), fAutoCalibr);
 }
 
-hadaq::TdcCalibrationModule::~TdcCalibrationModule()
+stream::TdcCalibrationModule::~TdcCalibrationModule()
 {
-#ifdef WITH_STREAM
    fTrbProc = 0;
-   delete fProcMgr;
-   fProcMgr = 0;
-#endif
+   if (fProcMgr) {
+      delete fProcMgr;
+      fProcMgr = 0;
+   }
 }
 
-bool hadaq::TdcCalibrationModule::retransmit()
+bool stream::TdcCalibrationModule::retransmit()
 {
    // method reads one buffer, calibrate it and send further
 
@@ -171,7 +164,6 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) || (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit)) {
             // this is debug mode when processing events from the file
-#ifdef WITH_STREAM
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
@@ -214,7 +206,6 @@ bool hadaq::TdcCalibrationModule::retransmit()
 
                fLastCalibr.GetNow();
             }
-#endif
          } else {
             EOUT("Error buffer type!!!");
          }
@@ -228,17 +219,26 @@ bool hadaq::TdcCalibrationModule::retransmit()
 }
 
 
-int hadaq::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
+int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ResetExportedCounters") ) {
       // redirect command to real transport
       if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
    }
 
+   if (cmd.IsName("GetCalibrState")) {
+      cmd.SetUInt("trb", fTRB);
+      cmd.SetField("tdcs", fTDCs);
+      cmd.SetInt("progress", fProgress);
+      cmd.SetStr("state", fState);
+      return dabc::cmd_true;
+   }
+
    if (cmd.IsName("GetHadaqTransportInfo")) {
       // redirect command to real transport
-      cmd.SetPtr("CalibrModule", this);
+      cmd.SetStr("CalibrModule", ItemName());
       if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+      return dabc::cmd_true;
    }
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);

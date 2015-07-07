@@ -38,16 +38,6 @@ HLDPRINT_EXED     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(HLDPRINT_E
 DABCHADAQ_O       = $(HADAQ_O) $(HADAQ_CO)
 DABCHADAQ_D       = $(HADAQ_D) $(HADAQ_CD)
 
-DABCHADAQ_LIBS    = -lrt
-
-ifdef with-stream
-ifdef STREAMSYS
-DABCHADAQ_LIBS += -Wl,-rpath,$(STREAMSYS)/lib -L$(STREAMSYS)/lib -lStream
-DABCHADAQ_DEFS += WITH_STREAM  
-DABCHADAQ_INCL += $(STREAMSYS)/include 
-endif
-endif
-
 # used in the main Makefile
 
 ALLHDRS           += $(patsubst $(HADAQDIR)/%.h, $(DABCINCPATH)/%.h, $(HADAQ_H))
@@ -68,14 +58,12 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@cp -f $< $@
 
 $(DABCHADAQ_LIB):   $(DABCHADAQ_O)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "$(DABCHADAQ_LIBS)"
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt"
 
 $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
 
 ########### extra rules #############
 $(HADAQ_CO) $(HADAQ_CD): C_INCLUDES += $(HADAQDIRI) 
-$(BLD_DIR)/$(HADAQDIRS)/TdcCalibrationModule.o $(BLD_DIR)/$(HADAQDIRS)/TdcCalibrationModule.d: INCLUDES += $(DABCHADAQ_INCL) 
-$(BLD_DIR)/$(HADAQDIRS)/TdcCalibrationModule.o $(BLD_DIR)/$(HADAQDIRS)/TdcCalibrationModule.d: DEFINITIONS += $(DABCHADAQ_DEFS) 
 
 include $(DABCSYS)/config/Makefile.rules
