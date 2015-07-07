@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+7.07.2015
+1. Make slow-time mode by default while it does not work correctly on 
+   multi-core machines. Only for special applications fast timing is important.
+
+
 6.07.2015
 1. In dabc_root utility allow to skip empty histograms - with -skip-zero option
 2. In dabc_root delete directory without histograms (when -skip-zero option specified) 

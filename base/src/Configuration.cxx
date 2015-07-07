@@ -147,11 +147,11 @@ int dabc::Configuration::ShowCpuInfo()
 
 bool dabc::Configuration::UseSlowTime()
 {
-   if (fSelected==0) return false;
+   if (fSelected==0) return true;
    std::string res = Find1(fSelected, "", xmlRunNode, "slow-time");
    if (res == xmlFalseValue) return false;
    if (res == xmlTrueValue) return true;
-   return false;
+   return true;
 }
 
 int dabc::Configuration::UseControl()
