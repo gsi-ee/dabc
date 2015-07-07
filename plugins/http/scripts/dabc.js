@@ -1018,6 +1018,13 @@
             obj.fArray = res.bins;
          }
          
+         if (obj!=null) {
+            if ('xtitle' in res) obj['fXaxis'].fTitle = res.xtitle;         
+            if ('ytitle' in res) obj['fYaxis'].fTitle = res.ytitle;   
+            // if ('xlabels' in res) console.log("XLABELS = " + res.xlabels);
+            // if ('ylabels' in res) console.log("YLABELS = " + res.ylabels);
+         }
+         
          JSROOT.CallBack(callback, item, obj);
       });
 
