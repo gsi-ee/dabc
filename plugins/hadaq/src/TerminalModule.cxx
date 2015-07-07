@@ -67,9 +67,7 @@ bool hadaq::TerminalModule::ReplyCommand(dabc::Command cmd)
    }
 
    return true;
-
 }
-
 
 void hadaq::TerminalModule::BeforeModuleStart()
 {
