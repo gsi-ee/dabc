@@ -19,6 +19,8 @@ about current functionality of the framework.
        "never"        - queue never blocks, buffers can be lost
        "always"       - queue is always blocks
 6. Support custom histogram labels in JavaScript
+7. For DABC histograms, used in stream framework, set _make_request and 
+   _after_request fields. This let use standard JSROOT requests scheme. 
 
 
 7.07.2015

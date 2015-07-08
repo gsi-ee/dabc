@@ -987,68 +987,63 @@
       return cando;
    }
    
-   
-   DABC.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback) {
-
-      if ((item==null) || !('_dabc_hist' in item))
-         return JSROOT.HierarchyPainter.prototype.GetOnlineItem.call(this, item, itemname, callback);
-      
-      var top = item;
-      while ((top!=null) && (!('_online' in top))) top = top._parent;
-      var url = this.itemFullName(item, top);
-      if (url.length > 0) url += "/";
-      url += 'get.json.gz?compact=3';
-
-      var itemreq = JSROOT.NewHttpRequest(url, 'object', function(res) {
-         
-         var obj = null;
-         if (res && res._kind=='ROOT.TH1D') {
-            obj = JSROOT.CreateTH1(res.nbins);
-            JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
-            JSROOT.extend(obj['fXaxis'], { fXmin: res.left,  fXmax: res.right });
-            res.bins.splice(0,3); // 3 first items in array are not bins
-            obj.fArray = res.bins; 
-         } else 
-         if (res && res._kind=='ROOT.TH2D') {
-            obj = JSROOT.CreateTH2(res.nbins1, res.nbins2);
-            JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
-            JSROOT.extend(obj['fXaxis'], { fXmin: res.left1,  fXmax: res.right1 });
-            JSROOT.extend(obj['fYaxis'], { fXmin: res.left2,  fXmax: res.right2 });
-            res.bins.splice(0,6); // 6 first items in array are not bins
-            obj.fArray = res.bins;
-         }
-         
-         if (obj!=null) {
-            if ('xtitle' in res) obj['fXaxis'].fTitle = res.xtitle;         
-            if ('ytitle' in res) obj['fYaxis'].fTitle = res.ytitle;   
-            if ('xlabels' in res) {
-               obj['fXaxis'].fLabels = JSROOT.Create('THashList');
-               var lbls = res.xlabels.split(",");
-               for (var n in lbls) {
-                  var lbl = JSROOT.Create('TObjString');
-                  lbl.fUniqueID = parseInt(n)+1;
-                  lbl.fString = lbls[n];
-                  obj['fXaxis'].fLabels.Add(lbl);
-               }
-            }
-            if ('ylabels' in res) {
-               obj['fYaxis'].fLabels = JSROOT.Create('THashList');
-               var lbls = res.ylabels.split(",");
-               for (var n in lbls) {
-                  var lbl = JSROOT.Create('TObjString');
-                  lbl.fUniqueID = parseInt(n)+1;
-                  lbl.fString = lbls[n];
-                  obj['fYaxis'].fLabels.Add(lbl);
-               }
-            }
-         }
-         
-         JSROOT.CallBack(callback, item, obj);
-      });
-
-      itemreq.send(null);
+   DABC.ReqH = function(hpainter, item, url) {
+      return 'get.json.gz?compact=3';
    }
-   
+
+   DABC.ConvertH = function(hpainter, item, obj) {
+      if (obj==null) return;
+
+      var res = JSROOT.clone(obj);
+      for (var k in res)
+         delete obj[k]; // delete all keys, only object remains
+      
+      if (res._kind=='ROOT.TH1D') {
+         obj['_typename'] = 'TH1I';
+         JSROOT.Create("TH1I", obj);
+         JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
+         JSROOT.extend(obj['fXaxis'], { fNbins:res.nbins, fXmin: res.left,  fXmax: res.right });
+         res.bins.splice(0,3); // 3 first items in array are not bins
+         obj.fArray = res.bins; 
+         obj.fNcells = res.nbins + 2;
+      } else 
+      if (res._kind=='ROOT.TH2D') {
+         obj['_typename'] = 'TH2I';
+         JSROOT.Create("TH2I", obj);
+         JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
+         
+         JSROOT.extend(obj['fXaxis'], { fNbins:res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
+         JSROOT.extend(obj['fYaxis'], { fNbins:res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
+         res.bins.splice(0,6); // 6 first items in array are not bins
+         obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
+         obj.fArray = res.bins;
+      } else
+         return;
+
+      if ('xtitle' in res) obj['fXaxis'].fTitle = res.xtitle;         
+      if ('ytitle' in res) obj['fYaxis'].fTitle = res.ytitle;   
+      if ('xlabels' in res) {
+         obj['fXaxis'].fLabels = JSROOT.Create('THashList');
+         var lbls = res.xlabels.split(",");
+         for (var n in lbls) {
+            var lbl = JSROOT.Create('TObjString');
+            lbl.fUniqueID = parseInt(n)+1;
+            lbl.fString = lbls[n];
+            obj['fXaxis'].fLabels.Add(lbl);
+         }
+      }
+      if ('ylabels' in res) {
+         obj['fYaxis'].fLabels = JSROOT.Create('THashList');
+         var lbls = res.ylabels.split(",");
+         for (var n in lbls) {
+            var lbl = JSROOT.Create('TObjString');
+            lbl.fUniqueID = parseInt(n)+1;
+            lbl.fString = lbls[n];
+            obj['fYaxis'].fLabels.Add(lbl);
+         }
+      }
+   }
+
    DABC.HierarchyPainter.prototype.display = function(itemname, options, call_back) {
       var h = this;
       

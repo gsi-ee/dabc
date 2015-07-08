@@ -50,6 +50,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
    h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+   h.SetField("_make_request", "DABC.ReqH"); // provide proper request
+   h.SetField("_after_request", "DABC.ConvertH"); // convert object into ROOT histogram
    h.SetField("nbins", nbins);
    h.SetField("left", left);
    h.SetField("right", right);
@@ -98,6 +100,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    h.SetField("_kind","ROOT.TH2D");
    h.SetField("_title", title);
    h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
+   h.SetField("_make_request", "DABC.ReqH"); // provide proper request
+   h.SetField("_after_request", "DABC.ConvertH"); // convert object into ROOT histogram
    h.SetField("nbins1", nbins1);
    h.SetField("left1", left1);
    h.SetField("right1", right1);
