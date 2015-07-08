@@ -1068,10 +1068,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       PortRef port2 = FindPort(trkind);
       if (!port2.null()) {
          // this is local connection between two ports
-         cmd_res = dabc::LocalTransport::ConnectPorts(port2, port);
+         cmd_res = dabc::LocalTransport::ConnectPorts(port2, port, cmd);
          // connect also bind ports (if exists)
          if (cmd_res == cmd_true)
-            cmd_res = dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
+            cmd_res = dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort(), cmd);
 
          return cmd_res;
       }
@@ -1115,9 +1115,9 @@ int dabc::Manager::ExecuteCommand(Command cmd)
             tr.ConnectPoolHandles();
             cmd_res = cmd_true;
             if (port.IsInput())
-               dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
+               dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port, cmd);
             if (port.IsOutput())
-               dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
+               dabc::LocalTransport::ConnectPorts(port, tr.InputPort(), cmd);
          }
 
          DOUT3("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));

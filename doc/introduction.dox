@@ -124,9 +124,17 @@ Depending on the module type, there are different possibilities to
 work with the ports in the processing functions of the module.
 These are described in respective sectiops of dabc::ModuleSync and dabc::ModuleAsync.
 
-One could configure that happens when port connection is closed due to error.
+One could specify "blocking" parameter for output or/and input port to define
+how queue between two ports behaves if it full. Possible values are:
+   "connected"    - queue only blocks when both ports are connected (default)
+   "disconnected" - queue only blocks when input port not connected
+   "never"        - queue never blocks, buffers can be lost
+   "always"       - queue is always blocks
+
+One also could configure that happens when port connection is closed due to error.
 It is done via "onerror" property in xml file or \ref dabc::Port::ConfigureOnError() method.
 Allowed values are: "none", "close", "stop", "exit", "abort"
+
 
 
 ## Transport

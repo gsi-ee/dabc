@@ -98,7 +98,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
 
       dabc::ModuleRef calm = dabc::mgr.FindModule(calname);
 
-      dabc::LocalTransport::ConnectPorts(calm.FindPort("Output0"), portref);
+      dabc::LocalTransport::ConnectPorts(calm.FindPort("Output0"), portref, cmd);
 
       portref = calm.FindPort("Input0");
 

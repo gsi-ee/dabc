@@ -11,6 +11,13 @@ about current functionality of the framework.
    "retry" option which could be configured for output port. If returns true,
    after timeout DataTransport tries to reinitialize input again.
    Provided in HldOutput 
+5. Introduce "blocking" parameter for the port. It defines that happens with
+   the queue when it full - should port be blocked or one can send buffers into
+   the queue, causing drop of data. Possible values are:
+       "connected"    - queue only blocks when both ports are connected (default)
+       "disconnected" - queue only blocks when input port not connected
+       "never"        - queue never blocks, buffers can be lost
+       "always"       - queue is always blocks
 
 
 7.07.2015

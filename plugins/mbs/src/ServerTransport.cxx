@@ -384,7 +384,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       // transport will be started automatically
 
-      dabc::LocalTransport::ConnectPorts(FindPort(OutputName(portindx)), tr.InputPort());
+      dabc::LocalTransport::ConnectPorts(FindPort(OutputName(portindx)), tr.InputPort(), cmd);
 
       DOUT3("mbs::ServerTransport create new connection at running=%s", DBOOL(isTransportRunning()));
 

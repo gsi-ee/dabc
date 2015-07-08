@@ -31,7 +31,8 @@ dabc::LocalTransport::LocalTransport(unsigned capacity, bool withmutex) :
     fInpSignKind(0),
     fSignalInp(3),  // signal input after any first operation
     fConnected(0),
-    fBlockWhenUnconnected(false)
+    fBlockWhenUnconnected(false),
+    fBlockWhenConnected(true)
 {
    SetFlag(flAutoDestroy, true);
 
@@ -82,8 +83,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
       if (buf.NumReferences() > 1)
          EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.NumReferences());
 
-      // when queue is not connected, we could skip oldest buffer
-      if ((fConnected != MaskConn) && !fBlockWhenUnconnected && fQueue.Full())
+      // when queue is full and transport in non-blocking mode, skip latest buffer
+      if (fQueue.Full() && !((fConnected == MaskConn) ? fBlockWhenConnected : fBlockWhenUnconnected))
          fQueue.PopBuffer(skipbuf);
 
       if (!fQueue.PushBuffer(buf)) {
@@ -339,7 +340,7 @@ void dabc::LocalTransport::PortActivated(int itemkind, bool on)
    other.FireEvent(on ? evntConnStart : evntConnStop, otherid);
 }
 
-int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
+int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref, Command cmd)
 {
    if (port1ref.null() && port2ref.null()) return cmd_true;
 
@@ -347,6 +348,9 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
    PortRef port_inp = port2ref;
 
    if (port_out.null() || port_inp.null()) return cmd_false;
+
+   std::string blocking = port_out.Cfg("blocking", cmd).AsStr();
+   if (blocking.empty()) blocking = port_inp.Cfg("blocking").AsStr("connected");
 
    DOUT2("Connect ports %s -> %s", port_out.ItemName().c_str(), port_inp.ItemName().c_str());
 
@@ -388,6 +392,22 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
       DOUT3("REUSE queue of input port %s", port_inp.ItemName().c_str());
    } else {
       q = new LocalTransport(queuesize, withmutex);
+   }
+
+   if (blocking == "disconnected") {
+      q()->fBlockWhenUnconnected = true;
+      q()->fBlockWhenConnected = false;
+   } else
+   if (blocking == "never") {
+      q()->fBlockWhenUnconnected = true;
+      q()->fBlockWhenConnected = false;
+   } else
+   if (blocking == "always") {
+      q()->fBlockWhenUnconnected = true;
+      q()->fBlockWhenConnected = true;
+   } else {
+      q()->fBlockWhenUnconnected = false;
+      q()->fBlockWhenConnected = true;
    }
 
    if (assign_inp) {

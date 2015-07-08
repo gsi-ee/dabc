@@ -60,6 +60,7 @@ namespace dabc {
          unsigned fConnected;
 
          bool fBlockWhenUnconnected; ///< should queue block when input port not connected, default false
+         bool fBlockWhenConnected;   ///< should queue block when input port connected, default true
 
          enum { MaskInp = 0x1, MaskOut = 0x2, MaskConn = 0x3 };
 
@@ -75,23 +76,25 @@ namespace dabc {
 
          void CleanupQueue();
 
-         bool IsConnected() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn); }
+         bool IsConnected() const
+         {
+            LockGuard lock(QueueMutex());
+            return (fConnected == MaskConn);
+         }
 
          /** How many buffers can be add to the queue */
          unsigned NumCanSend() const
          {
             LockGuard lock(QueueMutex());
-            return ((fConnected == MaskConn) || fBlockWhenUnconnected) ? fQueue.Capacity() - fQueue.Size() : fQueue.Capacity();
+            if (!fQueue.Full()) return fQueue.Capacity() - fQueue.Size();
+            // when queue is full and transport in non-blocking state, one buffer can be add (oldest will be lost)
+            return ((fConnected == MaskConn) ? fBlockWhenConnected : fBlockWhenUnconnected) ? 0 : 1;
          }
 
          /** Returns true when send operation will add buffer into the queue
           * When queue is not connected, buffer can always be add to the queue - this
           * will left in the queue newest buffers */
-         bool CanSend() const
-         {
-            LockGuard lock(QueueMutex());
-            return ((fConnected == MaskConn) || fBlockWhenUnconnected) ? !fQueue.Full() : true;
-         }
+         bool CanSend() const { return NumCanSend() > 0; }
 
          bool Send(Buffer& buf);
 
@@ -118,7 +121,7 @@ namespace dabc {
 
       public:
 
-         static int ConnectPorts(Reference port1ref, Reference port2ref);
+         static int ConnectPorts(Reference port1ref, Reference port2ref, Command cmd = 0);
    };
 
    // ________________________________________________________________________

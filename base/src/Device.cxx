@@ -73,9 +73,9 @@ int dabc::Device::ExecuteCommand(Command cmd)
 
       tr.ConnectPoolHandles();
       if (port.IsInput())
-         dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
+         dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port, cmd);
       if (port.IsOutput())
-         dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
+         dabc::LocalTransport::ConnectPorts(port, tr.InputPort(), cmd);
 
       DOUT1("Device %s transport is created for port %p %s", GetName(), port(), port.ItemName().c_str());
 

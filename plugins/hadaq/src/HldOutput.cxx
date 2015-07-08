@@ -216,7 +216,7 @@ bool hadaq::HldOutput::CloseFile()
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
-//   if (gggcnt++ > 100) return dabc::do_Error;
+//  if (gggcnt++ > 100) return dabc::do_Error;
 
    if (buf.null()) return dabc::do_Error;
 

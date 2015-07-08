@@ -44,7 +44,6 @@ namespace dabc {
    };
 
    class MemoryPool;
-   class LocalTransport;
 
    /** \brief Structure with descriptor of single memory segment */
    struct MemSegment {
