@@ -155,7 +155,7 @@ namespace dabc {
       enum EDataEvents { evCallBack = evntModuleLast };
 
       enum EOutputStates {
-         outInit,
+         outReady,          // initial state, next buffer can be written
          outInitTimeout,   // state when timeout should be completed before next check can be done
          outWaitCallback,  // when waiting callback to inform when writing can be started
          outStartWriting,  // we can apply buffer for start writing
@@ -163,7 +163,8 @@ namespace dabc {
          outFinishWriting,
          outError,
          outClosing,       // closing transport
-         outClosed
+         outClosed,
+         outRetry          // waiting for retry
       };
 
       protected:
@@ -174,19 +175,21 @@ namespace dabc {
          EOutputStates   fOutState;
          Buffer          fCurrentBuf;     //!< currently used buffer
          bool            fStopRequested;  //!< if true transport will be stopped when next suitable state is achieved
+         double          fRetryPeriod;    //!< if retry option enabled, transport will try to reinit output
 
          void CloseOutput();
 
          /** Returns true if state consider to be suitable to stop transport */
          bool SuitableStateForStartStop() {
-            return (fOutState == outInit) ||
+            return (fOutState == outReady) ||
                    (fOutState == outError) ||
                    (fOutState == outClosed);
          }
 
-         std::string StateAsStr() const {
+         std::string StateAsStr() const
+         {
             switch (fOutState) {
-               case outInit: return "Init";
+               case outReady: return "Ready";
                case outInitTimeout: return "InitTimeout";
                case outWaitCallback: return "WaitCallback";
                case outStartWriting: return "StartWriting";
@@ -195,12 +198,14 @@ namespace dabc {
                case outError: return "Error";
                case outClosing: return "Closing";
                case outClosed: return "Closed";
+               case outRetry: return "Retry";
             }
             return "undefined";
          }
 
          void ChangeState(EOutputStates state);
 
+         void CloseOnError();
 
          virtual bool StartTransport();
          virtual bool StopTransport();
@@ -210,7 +215,7 @@ namespace dabc {
          virtual void ProcessEvent(const EventId&);
 
          virtual bool ProcessRecv(unsigned port);
-         virtual void ProcessTimerEvent(unsigned timer);
+         virtual void ProcessTimerEvent(unsigned);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 

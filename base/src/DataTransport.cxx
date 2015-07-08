@@ -556,12 +556,15 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
    dabc::Transport(cmd, 0, outport),
    fOutput(out),
    fOutputOwner(owner),
-   fOutState(outInit),
+   fOutState(outReady),
    fCurrentBuf(),
-   fStopRequested(false)
+   fStopRequested(false),
+   fRetryPeriod(-1.)
 {
    AssignAddon(addon);
    CreateTimer("SysTimer");
+
+   fRetryPeriod = outport.Cfg("retry", cmd).AsDouble(-1);
 
    if (!fTransportInfoName.empty() && fOutput)
       fOutput->SetInfoParName(fTransportInfoName);
@@ -643,6 +646,20 @@ void dabc::OutputTransport::TransportCleanup()
    dabc::Transport::TransportCleanup();
 }
 
+void dabc::OutputTransport::CloseOnError()
+{
+
+   if ((fRetryPeriod < 0.) || (fOutput==0) || !fOutput->Write_Retry()) {
+      ChangeState(outClosed);
+      CloseOutput();
+      CloseTransport(true);
+   }
+
+   ChangeState(outRetry);
+   ShootTimer("SysTimer", fRetryPeriod);
+}
+
+
 void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 {
  //  DOUT0("%s dabc::OutputTransport::ProcessEvent %u  state %u", GetName(), (unsigned) evnt.GetCode(), fOutState);
@@ -651,14 +668,12 @@ void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
 
       if (evnt.GetArg() != do_Ok) {
          if (evnt.GetArg() == do_Error) EOUT("Callback with error argument");
-         ChangeState(outClosing);
-         CloseOutput();
-         CloseTransport(true);
+         CloseOnError();
          return;
       }
 
       if (fOutState == outWaitCallback) {
-         ChangeState(outInit);
+         ChangeState(outReady);
          ProcessInputEvent(0);
          return;
       }
@@ -696,7 +711,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
       return false;
    }
 
-   if (fOutState == outInit) {
+   if (fOutState == outReady) {
 
       unsigned ret(do_Ok);
 
@@ -770,7 +785,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
             ChangeState(outWaitFinishCallback);
             return false;
          case do_Skip:
-            ChangeState(outInit);
+            ChangeState(outReady);
             return true;
          case do_Close:
             ChangeState(outClosing);
@@ -798,7 +813,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 
       switch (ret) {
          case do_Ok:
-            ChangeState(outInit);
+            ChangeState(outReady);
             break;
          case do_Close:
             ChangeState(outClosing);
@@ -820,10 +835,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
    }
 
    if (fOutState == outError) {
-      ChangeState(outClosed);
-      // DOUT3("CLOSE OUTPUT TRANSPORT %s input connected %s", GetName(), DBOOL(IsInputConnected()));
-      CloseOutput();
-      CloseTransport(true);
+      CloseOnError();
       return false;
    }
 
@@ -835,10 +847,19 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
    return true;
 }
 
-void dabc::OutputTransport::ProcessTimerEvent(unsigned timer)
+void dabc::OutputTransport::ProcessTimerEvent(unsigned)
 {
    if (fOutState == outInitTimeout)
-      ChangeState(outInit);
+      ChangeState(outReady);
+
+   if (fOutState == outRetry) {
+      if (fOutput && fOutput->Write_Init())
+         ChangeState(outReady);
+      else {
+         ShootTimer("SysTimer", fRetryPeriod);
+         return;
+      }
+   }
 
    ProcessInputEvent(0);
 }

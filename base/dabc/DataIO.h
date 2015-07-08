@@ -224,6 +224,10 @@ namespace dabc {
 
          /** Fill different statistic parameters into provided command */
          virtual bool Write_Stat(dabc::Command cmd) { return false; }
+
+         /** Returns true if output object can be reinitialized for recover error */
+         virtual bool Write_Retry() { return false; }
+
    };
 
    // ===========================================================

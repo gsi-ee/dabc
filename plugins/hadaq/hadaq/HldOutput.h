@@ -47,7 +47,7 @@ namespace hadaq {
          std::string         fUrlOptions;     // remember URL options, may be used for RFIO file open
 
          std::string         fRunInfoToOraFilename;
-         
+
          dabc::TimeStamp     fLastUpdate;     // time when last parameter update was performed
 
          hadaq::HldFile      fFile;
@@ -71,6 +71,8 @@ namespace hadaq {
          virtual ~HldOutput();
 
          virtual bool Write_Init();
+
+         virtual bool Write_Retry();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
    };

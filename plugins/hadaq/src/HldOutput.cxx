@@ -67,8 +67,12 @@ hadaq::HldOutput::~HldOutput()
    CloseFile();
 }
 
+static int gggcnt = 0;
+
 bool hadaq::HldOutput::Write_Init()
 {
+   gggcnt = 0;
+
    if (!dabc::FileOutput::Write_Init()) return false;
 
    if (fEpicsSlave) {
@@ -191,6 +195,16 @@ bool hadaq::HldOutput::StartNewFile()
 
 }
 
+bool hadaq::HldOutput::Write_Retry()
+{
+   // HLD output supports retry option
+
+   CloseFile();
+   fRunNumber = 0;
+   return true;
+}
+
+
 bool hadaq::HldOutput::CloseFile()
 {
    if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
@@ -202,6 +216,8 @@ bool hadaq::HldOutput::CloseFile()
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
+//   if (gggcnt++ > 100) return dabc::do_Error;
+
    if (buf.null()) return dabc::do_Error;
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
