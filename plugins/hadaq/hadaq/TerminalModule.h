@@ -50,6 +50,8 @@ namespace hadaq {
          bool            fDoClear;
          dabc::TimeStamp fLastTm;
          std::vector<CalibrRect> fCalibr;
+         dabc::Command   fLastFileCmd; // last received data from file transport
+         bool            fFileReqRunning; // is file request running
 
          std::string rate_to_str(double r);
 

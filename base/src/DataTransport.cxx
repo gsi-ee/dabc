@@ -202,6 +202,12 @@ int dabc::InputTransport::ExecuteCommand(Command cmd)
       return cmd_true;
    }
 
+   if (cmd.IsName("GetTransportStatistic")) {
+      // take statistic from output element
+      if (fInput) fInput->Read_Stat(cmd);
+      return cmd_true;
+   }
+
    return dabc::Transport::ExecuteCommand(cmd);
 }
 
@@ -559,6 +565,8 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
 
    if (!fTransportInfoName.empty() && fOutput)
       fOutput->SetInfoParName(fTransportInfoName);
+
+   DOUT0("Create out transport %s  %s", GetName(), ItemName().c_str());
 }
 
 dabc::OutputTransport::~OutputTransport()
@@ -833,4 +841,16 @@ void dabc::OutputTransport::ProcessTimerEvent(unsigned timer)
       ChangeState(outInit);
 
    ProcessInputEvent(0);
+}
+
+int dabc::OutputTransport::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("GetTransportStatistic")) {
+      // take statistic from output element
+      cmd.SetStr("OutputState",StateAsStr());
+      if (fOutput) fOutput->Write_Stat(cmd);
+      return cmd_true;
+   }
+
+   return dabc::Transport::ExecuteCommand(cmd);
 }

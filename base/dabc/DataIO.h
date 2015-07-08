@@ -129,12 +129,19 @@ namespace dabc {
           * specified timeout will be used before next operation will be done */
          virtual double Read_Timeout() { return 0.1; }
 
-         /** \brief Reads complete buffer
 
+         /** \brief Provide timeout value
+          *
+          * Take statistic from DataInput object */
+         virtual bool Read_Stat(dabc::Command cmd) { return false; }
+
+         /** \brief Reads complete buffer
+          *
           * Perform consequent call of Read_Size(), Read_Start() and Read_Complete() methods
           *
           * \returns filled buffer */
          Buffer ReadBuffer();
+
    };
 
    // _________________________________________________________________
@@ -214,6 +221,9 @@ namespace dabc {
 
          /** Write buffer to the output. If callback is required, will fail */
          bool WriteBuffer(Buffer& buf);
+
+         /** Fill different statistic parameters into provided command */
+         virtual bool Write_Stat(dabc::Command cmd) { return false; }
    };
 
    // ===========================================================
@@ -251,6 +261,7 @@ namespace dabc {
 
          virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd);
 
+         virtual bool Read_Stat(dabc::Command cmd);
    };
 
    // ============================================================================
@@ -301,6 +312,8 @@ namespace dabc {
          virtual std::string ProvideInfo();
 
          virtual bool Write_Init();
+
+         virtual bool Write_Stat(dabc::Command cmd);
    };
 
 }

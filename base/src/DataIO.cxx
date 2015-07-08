@@ -165,6 +165,14 @@ bool dabc::FileInput::TakeNextFileName()
    return !fCurrentName.empty();
 }
 
+bool dabc::FileInput::Read_Stat(dabc::Command cmd)
+{
+   cmd.SetStr("InputFileName", fFileName);
+   cmd.SetStr("InputCurrFileName", fCurrentName);
+   return true;
+}
+
+
 // ================================================================
 
 dabc::FileOutput::FileOutput(const dabc::Url& url, const std::string& ext) :
@@ -310,4 +318,16 @@ std::string dabc::FileOutput::ProvideInfo()
    }
 
    return info;
+}
+
+bool dabc::FileOutput::Write_Stat(dabc::Command cmd)
+{
+   cmd.SetStr("OutputFileName", fFileName);
+   cmd.SetInt("OutputFileEvents", fTotalNumEvents);
+   cmd.SetInt("OutputFileSize", fTotalFileSize);
+
+   cmd.SetStr("OutputCurrFileName", fCurrentFileName);
+   cmd.SetInt("OutputCurrFileSize", fCurrentFileSize);
+
+   return true;
 }

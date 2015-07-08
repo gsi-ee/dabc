@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+8.07.2015
+1. Allow to request statistic from the data transports. 
+   Implemented in file transports
+2. Try to display file output information in the hadaq::TerminalModule   
+
+
 7.07.2015
 1. Make slow-time mode by default while it does not work correctly on 
    multi-core machines. Only for special applications fast timing is important.

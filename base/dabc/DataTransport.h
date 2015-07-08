@@ -122,7 +122,6 @@ namespace dabc {
 
          virtual int ExecuteCommand(Command cmd);
 
-
       public:
 
          InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp = 0, bool owner = false);
@@ -185,6 +184,21 @@ namespace dabc {
                    (fOutState == outClosed);
          }
 
+         std::string StateAsStr() const {
+            switch (fOutState) {
+               case outInit: return "Init";
+               case outInitTimeout: return "InitTimeout";
+               case outWaitCallback: return "WaitCallback";
+               case outStartWriting: return "StartWriting";
+               case outWaitFinishCallback: return "WaitFinishCallback";
+               case outFinishWriting: return "FinishWriting";
+               case outError: return "Error";
+               case outClosing: return "Closing";
+               case outClosed: return "Closed";
+            }
+            return "undefined";
+         }
+
          void ChangeState(EOutputStates state);
 
 
@@ -197,6 +211,8 @@ namespace dabc {
 
          virtual bool ProcessRecv(unsigned port);
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
 

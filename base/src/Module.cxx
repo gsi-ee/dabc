@@ -319,6 +319,13 @@ int dabc::Module::PreviewCommand(Command cmd)
 
    DOUT3("Module:%s PreviewCommand %s", GetName(), cmd.GetName());
 
+   if (cmd.HasField("_for_the_port_")) {
+      // redirect submitted command to the port transport
+      std::string portname = cmd.GetStr("_for_the_port_");
+      cmd.RemoveField("_for_the_port_");
+      if (SubmitCommandToTransport(portname, cmd)) cmd_res = cmd_postponed;
+                                              else cmd_res = cmd_false;
+   } else
    if (cmd.IsName("SetQueue")) {
       PortRef port = FindPort(cmd.GetStr("Port"));
       Reference q = cmd.GetRef("Queue");
