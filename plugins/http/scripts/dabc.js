@@ -1021,8 +1021,26 @@
          if (obj!=null) {
             if ('xtitle' in res) obj['fXaxis'].fTitle = res.xtitle;         
             if ('ytitle' in res) obj['fYaxis'].fTitle = res.ytitle;   
-            // if ('xlabels' in res) console.log("XLABELS = " + res.xlabels);
-            // if ('ylabels' in res) console.log("YLABELS = " + res.ylabels);
+            if ('xlabels' in res) {
+               obj['fXaxis'].fLabels = JSROOT.Create('THashList');
+               var lbls = res.xlabels.split(",");
+               for (var n in lbls) {
+                  var lbl = JSROOT.Create('TObjString');
+                  lbl.fUniqueID = parseInt(n)+1;
+                  lbl.fString = lbls[n];
+                  obj['fXaxis'].fLabels.Add(lbl);
+               }
+            }
+            if ('ylabels' in res) {
+               obj['fYaxis'].fLabels = JSROOT.Create('THashList');
+               var lbls = res.ylabels.split(",");
+               for (var n in lbls) {
+                  var lbl = JSROOT.Create('TObjString');
+                  lbl.fUniqueID = parseInt(n)+1;
+                  lbl.fString = lbls[n];
+                  obj['fYaxis'].fLabels.Add(lbl);
+               }
+            }
          }
          
          JSROOT.CallBack(callback, item, obj);

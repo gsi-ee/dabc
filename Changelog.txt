@@ -18,6 +18,7 @@ about current functionality of the framework.
        "disconnected" - queue only blocks when input port not connected
        "never"        - queue never blocks, buffers can be lost
        "always"       - queue is always blocks
+6. Support custom histogram labels in JavaScript
 
 
 7.07.2015
