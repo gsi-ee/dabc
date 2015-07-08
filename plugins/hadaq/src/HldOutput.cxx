@@ -67,11 +67,11 @@ hadaq::HldOutput::~HldOutput()
    CloseFile();
 }
 
-static int gggcnt = 0;
+//static int gggcnt = 0;
 
 bool hadaq::HldOutput::Write_Init()
 {
-   gggcnt = 0;
+//   gggcnt = 0;
 
    if (!dabc::FileOutput::Write_Init()) return false;
 
@@ -216,7 +216,7 @@ bool hadaq::HldOutput::CloseFile()
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
-//  if (gggcnt++ > 100) return dabc::do_Error;
+//   if (gggcnt++ > 100) { ::sleep(10); return dabc::do_Error; }
 
    if (buf.null()) return dabc::do_Error;
 

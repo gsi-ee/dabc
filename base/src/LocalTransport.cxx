@@ -399,7 +399,8 @@ int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref, C
       q()->fBlockWhenConnected = false;
    } else
    if (blocking == "never") {
-      q()->fBlockWhenUnconnected = true;
+      DOUT0("Never block output port %s", port_out.ItemName().c_str());
+      q()->fBlockWhenUnconnected = false;
       q()->fBlockWhenConnected = false;
    } else
    if (blocking == "always") {

@@ -146,7 +146,6 @@ bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 void dabc::InputTransport::CloseInput()
 {
    if ((fInput!=0) && fInputOwner) {
-      // printf("keep input\n");
       delete fInput;
    }
    fInput = 0;

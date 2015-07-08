@@ -262,7 +262,10 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       return false;
    }
 
-   if (!CanSendToAllOutputs()) return false;
+   if (!CanSendToAllOutputs()) {
+      printf("Cannt send to all outputs - why???");
+      return false;
+   }
 
    dabc::Buffer buf = fOut.Close();
    SendToAllOutputs(buf);
