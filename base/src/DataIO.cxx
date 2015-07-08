@@ -323,11 +323,11 @@ std::string dabc::FileOutput::ProvideInfo()
 bool dabc::FileOutput::Write_Stat(dabc::Command cmd)
 {
    cmd.SetStr("OutputFileName", fFileName);
-   cmd.SetInt("OutputFileEvents", fTotalNumEvents);
-   cmd.SetInt("OutputFileSize", fTotalFileSize);
+   cmd.SetDouble("OutputFileEvents", fTotalNumEvents);
+   cmd.SetDouble("OutputFileSize", fTotalFileSize);
 
    cmd.SetStr("OutputCurrFileName", fCurrentFileName);
-   cmd.SetInt("OutputCurrFileSize", fCurrentFileSize);
+   cmd.SetDouble("OutputCurrFileSize", fCurrentFileSize);
 
    return true;
 }

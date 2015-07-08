@@ -34,10 +34,12 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fDoClear(false),
    fLastTm(),
    fCalibr(),
+   fFilePort(1),
    fLastFileCmd(),
    fFileReqRunning(false)
 {
    double period = Cfg("period", cmd).AsDouble(1);
+   fFilePort = Cfg("fileport", cmd).AsInt(1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
 
@@ -109,7 +111,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
 
    if (delta>0) {
-      for (unsigned n=0;n<comb->fCfg.size()+5;n++)
+      unsigned nlines = comb->fCfg.size()+4;
+      if (fFilePort>=0) nlines++;
+      for (unsigned n=0;n<nlines;n++)
          fputs("\033[A\033[2K",stdout);
       rewind(stdout);
       ftruncate(1,0);
@@ -152,14 +156,15 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       s += "\n";
 
 
-   if (fLastFileCmd.null()) {
-      s.append("File: missing, failed or not found on Combiner/Output1\n");
-   } else {
-      s += dabc::format("File:  %8s   Curr:  %10s  Total:%10s  Name:%s\n",
-                        dabc::number_to_str(fLastFileCmd.GetInt("OutputFileEvents"),1).c_str(),
-                        dabc::size_to_str(fLastFileCmd.GetInt("OutputCurrFileSize")).c_str(),
-                        dabc::size_to_str(fLastFileCmd.GetInt("OutputFileSize")).c_str(),
-                        fLastFileCmd.GetStr("OutputCurrFileName").c_str());
+   if (fFilePort>=0) {
+      if (fLastFileCmd.null())
+         s += dabc::format("File: missing, failed or not found on Combiner/Output%d\n", fFilePort);
+      else
+         s += dabc::format("File:  %8s   Curr:  %10s  Data: %10s  Name: %s\n",
+                           dabc::number_to_str(fLastFileCmd.GetDouble("OutputFileEvents"),1).c_str(),
+                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputCurrFileSize")).c_str(),
+                           dabc::size_to_str(fLastFileCmd.GetDouble("OutputFileSize")).c_str(),
+                           fLastFileCmd.GetStr("OutputCurrFileName").c_str());
    }
 
    if (comb->fCfg.size() != fCalibr.size())
@@ -264,9 +269,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    ditem.SetField("inplost", inplost);
    ditem.SetField("inpdrop", inpdrop);
 
-   if (!fFileReqRunning) {
+   if (!fFileReqRunning && (fFilePort>=0)) {
       dabc::Command cmd("GetTransportStatistic");
-      cmd.SetStr("_for_the_port_","Output1");
+      cmd.SetStr("_for_the_port_", dabc::format("Output%d", fFilePort));
       m.Submit(Assign(cmd));
    }
 }

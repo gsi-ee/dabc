@@ -6,6 +6,7 @@ about current functionality of the framework.
 1. Allow to request statistic from the data transports. 
    Implemented in file transports
 2. Try to display file output information in the hadaq::TerminalModule   
+3. Add configurable fileport for terminal module
 
 
 7.07.2015
