@@ -994,9 +994,9 @@
    DABC.ConvertH = function(hpainter, item, obj) {
       if (obj==null) return;
 
-      var res = JSROOT.clone(obj);
-      for (var k in res)
-         delete obj[k]; // delete all keys, only object remains
+      var res = {};
+      for (var k in obj) res[k] = obj[k]; // first copy all keys 
+      for (var k in res) delete obj[k];   // then delete them from source
       
       if (res._kind=='ROOT.TH1D') {
          obj['_typename'] = 'TH1I';
