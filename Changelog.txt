@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+9.07.2015
+1. Provide example how stream analysis can be run as additional module 
+   in event builder process. Histograms can be accessed via http channel
+   from web browser or go4 GUI.
+
+
 8.07.2015
 1. Allow to request statistic from the data transports. 
    Implemented in file transports

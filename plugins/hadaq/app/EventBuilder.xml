@@ -61,7 +61,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
     </MemoryPool>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
-        <!-- these parameters will force to create inputs/oputputs of module -->
+        <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
@@ -90,7 +90,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <ExtraDebug value="false"/>
 
        <!-- how often output will be flushed -->
-       <FlushTimeout value="2.0"/>   
+       <FlushTimeout value="0.5"/>   
 
        <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
