@@ -290,7 +290,7 @@ Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-s
 where histograms will be stored and number of **parallel** threads used for analysis (default 0). 
 During analysis run histogram content can be monitored via http channel, using web browser or Go4 GUI.
 
-With single process one gains about 30% of the performance. If run on 15 cores (on lxhadeb06 machine), performance increase on 800%.    
+With single process one achieve ~10-30% gain compare with ROOT histograms filling. If running parallel  on 15 cores (on lxhadeb06 machine), performance increased on 800% compare with single-thread analysis.    
  
 
 ### Online analysis in DAQ task

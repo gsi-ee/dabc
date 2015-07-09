@@ -767,10 +767,11 @@ int dabc::Worker::PreviewCommand(Command cmd)
       } else
       if (binkind=="cmd.json") {
          std::string cmdname = url.GetOptionStr("command");
-         if (cmdname.empty()) return cmd_ignore;
-
          // make protection - append prefix to exclude misuse of interface
-         dabc::Command subcmd(std::string("HCMD_" + cmdname));
+         if (!cmdname.empty()) cmdname = std::string("HCMD_") + cmdname; else
+         if (sub.HasField("_numargs")) cmdname = "ROOTCMD";
+         if (cmdname.empty()) return cmd_ignore;
+         dabc::Command subcmd(cmdname);
          subcmd.SetRef("item", sub);
          subcmd.SetStr("query", query);
 

@@ -27,12 +27,17 @@ namespace stream {
       protected:
 
          dabc::Hierarchy fTop;
+         bool fWorkingFlag;
+
+         bool ClearHistogram(dabc::Hierarchy& item);
 
       public:
-         DabcProcMgr() : base::ProcMgr(), fTop() {}
+         DabcProcMgr() : base::ProcMgr(), fTop(), fWorkingFlag(true) {}
          virtual ~DabcProcMgr() {}
 
-         void SetTop(dabc::Hierarchy& top) { fTop = top; }
+         void SetTop(dabc::Hierarchy& top, bool withcmds = false);
+
+         bool IsWorking() const { return fWorkingFlag; }
 
          // redefine only make procedure, fill and clear should work
          virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
@@ -40,6 +45,8 @@ namespace stream {
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
          bool ExecuteHCommand(dabc::Command cmd);
+
+         void ClearAllHistograms();
 
 
    };

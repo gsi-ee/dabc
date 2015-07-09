@@ -141,7 +141,7 @@ void stream::RunModule::OnThreadAssigned()
       entryfunc* func = (entryfunc*) fInitFunc;
 
       fProcMgr = new DabcProcMgr;
-      fProcMgr->SetTop(fWorkerHierarchy);
+      fProcMgr->SetTop(fWorkerHierarchy, fParallel==0);
 
       func();
 
@@ -218,7 +218,7 @@ void stream::RunModule::ProduceMergedHierarchy()
             double* arr1 = item1.GetFieldPtr("bins")->GetDoubleArr();
             double* arr2 = item2.GetFieldPtr("bins")->GetDoubleArr();
             int indx = item1.GetField("_kind").AsStr()=="ROOT.TH1D" ? 2 : 5;
-            int len = item1.GetField("bins").GetArraySize();
+            int len = item1.GetFieldPtr("bins")->GetArraySize();
             if (n==1) nhist++;
 
             if (arr1 && arr2)
@@ -242,7 +242,10 @@ void stream::RunModule::ProduceMergedHierarchy()
 
 int stream::RunModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
+   if (fProcMgr && fProcMgr->ExecuteHCommand(cmd)) {
+      if (fProcMgr->IsWorking()) ActivateInput(); // when working set, just ensure that module reads input
+      return dabc::cmd_true;
+   }
 
    if (cmd.IsName("SlaveFinished")) {
       if (--fStopMode == 0) {
@@ -374,6 +377,8 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
 bool stream::RunModule::ProcessNextBuffer()
 {
+   if (fProcMgr && !fProcMgr->IsWorking()) return false;
+
    dabc::Buffer buf = Recv();
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {

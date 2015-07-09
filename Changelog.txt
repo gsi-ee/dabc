@@ -6,6 +6,9 @@ about current functionality of the framework.
 1. Provide example how stream analysis can be run as additional module 
    in event builder process. Histograms can be accessed via http channel
    from web browser or go4 GUI.
+2. Support ROOT-kind commands in hierarchy
+3. Implement Start/Stop/Clear commands for DabcProcMgr, let control worker from Go4GUI 
+4. Implement Clear command for individual histograms in DabcProcMgr 
 
 
 8.07.2015
