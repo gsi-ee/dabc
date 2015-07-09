@@ -57,7 +57,7 @@ void dabc::Port::ReadPortConfiguration()
 
    ConfigureOnError(Cfg("onerror").AsStr());
 
-   ConfigureReconnect(Cfg(xmlReconnectAttr).AsDouble(-1.), Cfg(xmlNumReconnAttr).AsInt(-1.));
+   ConfigureReconnect(Cfg(xmlReconnectAttr).AsDouble(-1.), Cfg(xmlNumReconnAttr).AsInt(-1));
 }
 
 

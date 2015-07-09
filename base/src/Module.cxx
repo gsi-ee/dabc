@@ -797,10 +797,8 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
 
-         if (port) {
+         if (port)
             port->GetConnReq().ChangeState(ConnectionObject::sConnected, true);
-
-         }
 
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
