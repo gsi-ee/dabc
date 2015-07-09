@@ -38,6 +38,9 @@ ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting.
 For instance, call thisroot.sh script:
 
     [shell] . your_root_path/bin/thisroot.sh
+    
+Be aware that at least ROOT 5-34-32 version should be used and
+compiled with '--enable-http' flag.      
 
 
 ### Compilation
@@ -189,7 +192,7 @@ For instance, in  "Hadaq/Combiner" folder there are two commands:
 + "StopHldFile" stop file writing.   
 
 
-## Running analysis ##
+## Running analysis ## {#trb3_stream_go4}
 
 Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/app/stream).
 It is dedicated for synchronization and
@@ -201,7 +204,7 @@ relevant for TRB3/FPGA-TDC processing located in
 In principle, in most cases it is not required to change these classes -
 all user-specific configurations provided in ROOT script, which can be found in 
 [example](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory.
-It shows how to process data from several TDCs. Please read comment in script itself.
+It shows how to process data from several TDCs. Please read comment in scripts themself.
 One can always copy such script to any other location and modify it to specific needs.
 
 
@@ -246,6 +249,40 @@ all histogram in live mode. For that one need:
 
 Via analysis browser one can display and monitor any histogram.
 For more details about go4 see introduction on http://go4.gsi.de.
+
+
+
+## Running analysis in DAQ process ## {#trb3_stream_dabc}
+
+Core functionality of stream framework written without ROOT usage and
+can be run with different engines. Such run engine is now provided in DABC. 
+Main difference between Go4/ROOT and DABC engines - with DABC special histogram
+format is used, which makes code ~30% faster. Histograms, filled in DABC processes,
+can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
+Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
+ 
+ 
+
+### Batch job with multiple threads
+
+DABC provides possibility to run code in parallel in several threads, merging produced histograms
+at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists). 
+
+To run analysis, one requires configuration file like in 
+[example](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml).
+Just copy it in directory where scripts are and run with the command:
+
+    dabc_exe stream.xml file="pilas_1517816245*.hld" asf=test.root parallel=4
+    
+Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf** 
+where histograms will be stored at the end and **parallel** parameter defining number of threads 
+running analysis. During analysis run histogram content can be monitored via http server,
+using web browser or Go4 GUI.  
+ 
+
+### Online analysis in DAQ task
+
+
 
 
 # Running hldprint {#trb3_hldprint}
