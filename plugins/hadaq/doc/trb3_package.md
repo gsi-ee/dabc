@@ -140,7 +140,7 @@ Events, produced by combiner module, can be stored in hld file or (and) delivere
 via online server to online analysis.
 
 
-### Write HLD files
+### Write HLD files {#trb3_hld_files}
 
 To write HLD files, one should specify following parameters in combiner module:
 
@@ -148,10 +148,28 @@ To write HLD files, one should specify following parameters in combiner module:
 
      <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
 
-Only second output port (name Output1) can be use for HLD file storage.
-maxsize defines maximum size (in MB) of file, which than will be closed and new
-file will be started
+Typically second output port (name Output1) used for HLD file storage, but several output files could be opened in parallel. `maxsize` parameter defines maximum size (in MB) of file, which than will be closed and new file will be started.
 
+In case of any I/O error file is closed, but DAQ continues to run. One could change such default behavior. For instance, application will be immediately stopped if `onerror="exit"` property specified:
+
+     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30" onerror="exit"/>
+     
+Or one could try to reestablish file transport, providing following parameters:
+
+     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30" reconnect="3" onerror="exit"/>
+     
+Here `reconnect="3"` means that transport will be try to reconnected after 3 seconds pause.
+If 10 attempts fail, application will exit as specified with `onerror` parameter. One could specify
+number of attempts with `numreconn="5"` parameter. While reconnecting, buffers will be skipped.        
+
+Different approach is - keep transport running in any case, just retrying to open new file with some time period. Like:
+
+    <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/>
+
+With such configuration file transport after error will try to start writing new file after 5 second wait time. Parameter `blocking="never"` says DABC, that transport should not block event building. 
+If file writing hangs (or too slow), buffers could be skipped and not block main building process. Special thread is assigned, while write operation on full disk can hang for many seconds, blocking other transports running by default in the same thread. Such configuration good to produce files for debugging purposes - if possible such file is written, if not - this not disturb main DAQ process.   
+
+    
 
 ### Configure online server
  
