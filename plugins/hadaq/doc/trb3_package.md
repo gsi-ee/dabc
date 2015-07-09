@@ -115,7 +115,7 @@ First compile and configure go4. Than:
 
 To run DAQ, only DABC installation is required.
 
-Example configuration file can be found in [`$DABCSYS/plugins/hadaq/app/EventBuilder.xml`](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilder.xml).
+Example configuration file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilder.xml).
 Copy it in any suitable place and modify for your needs.
 
 Main configuration parameters:
@@ -140,7 +140,7 @@ Events, produced by combiner module, can be stored in hld file or (and) delivere
 via online server to online analysis.
 
 
-### Write HLD files {#trb3_hld_files}
+### Write HLD files
 
 To write HLD files, one should specify following parameters in combiner module:
 
@@ -271,7 +271,7 @@ For more details about go4 see introduction on http://go4.gsi.de.
 Core functionality of stream framework written without ROOT usage and
 can be run with different engines. Such run engine is now provided in DABC. 
 Main difference between Go4/ROOT and DABC engines - with DABC special histogram
-format is used, which makes code ~30% faster. Histograms, filled in DABC processes,
+format is used, which makes code ~10-30% faster. Histograms, filled in DABC processes,
 can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
 Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
  
