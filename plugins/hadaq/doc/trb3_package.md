@@ -252,7 +252,7 @@ For more details about go4 see introduction on http://go4.gsi.de.
 
 
 
-## Running analysis in DAQ process ## {#trb3_stream_dabc}
+## Running analysis in DABC process ## {#trb3_stream_dabc}
 
 Core functionality of stream framework written without ROOT usage and
 can be run with different engines. Such run engine is now provided in DABC. 
@@ -261,28 +261,44 @@ format is used, which makes code ~30% faster. Histograms, filled in DABC process
 can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
 Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
  
- 
 
 ### Batch job with multiple threads
 
 DABC provides possibility to run code in parallel in several threads, merging produced histograms
 at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists). 
 
-To run analysis, one requires configuration file like in 
-[example](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml).
-Just copy it in directory where scripts are and run with the command:
+To run analysis, one requires configuration file like 
+[$DABCSYS/plugins/stream/app/stream.xml](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml). Just copy it in directory where scripts are and run with the command:
 
     dabc_exe stream.xml file="pilas_1517816245*.hld" asf=test.root parallel=4
     
 Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf** 
-where histograms will be stored at the end and **parallel** parameter defining number of threads 
-running analysis. During analysis run histogram content can be monitored via http server,
-using web browser or Go4 GUI.  
+where histograms will be stored and number of **parallel** threads used for analysis (default 0). 
+During analysis run histogram content can be monitored via http channel, using web browser or Go4 GUI.
+
+With single process one gains about 30% of the performance. If run on 15 cores (on lxhadeb06 machine), performance increase on 800%.    
  
 
 ### Online analysis in DAQ task
 
+One also could run analysis in the same process where event builder is running.
+Analysis will process as much events as possible and produce histograms, which could be monitored via web browser.
 
+Main benefit of such approach - one do not require extra process running,
+quality monitoring always available via http channel. Example configuration
+file can be found in [`$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml`](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilderStream.xml).
+
+Scripts first.C and (optional) second.C should be copied into directory where DABC will be started.
+When DAQ is running, one could always open web browser with address `http://localhost:8090` or
+directly `http://localhost:8090/EventBuilder/Analysis/`. 
+
+One could get direct access to every histogram and produce statistic, submitting request like:
+
+     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetEntries -O entries.txt
+     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
+     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
+
+   
 
 
 # Running hldprint {#trb3_hldprint}
