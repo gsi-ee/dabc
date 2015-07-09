@@ -115,7 +115,7 @@ First compile and configure go4. Than:
 
 To run DAQ, only DABC installation is required.
 
-Example configuration file is in https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilder.xml
+Example configuration file can be found in [`$DABCSYS/plugins/hadaq/app/EventBuilder.xml`](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilder.xml).
 Copy it in any suitable place and modify for your needs.
 
 Main configuration parameters:
@@ -180,16 +180,14 @@ All opened files will be closed normally.
 
 One able to observe and control running DAQ application via web browser.
 After DAQ is started, one could open in web browser address like 
-`http://your_host:8090`. Port number 8090 can be changed in configuration
-of HttpServer.
+http://localhost:8090. Port number 8090 can be changed in configuration
+of _HttpServer_.
 
-In browser one should be able to see hierarchy with "Hadaq/Combiner" folder
+In browser one should be able to see hierarchy with "EventBuilder/Combiner" folder
 for parameters and commands of main combiner module.
 
-Most useful part of web-server now - possibility to start/stop file writings. 
-For instance, in  "Hadaq/Combiner" folder there are two commands:
-+ "StartHldFile" start file writing
-+ "StopHldFile" stop file writing.   
+One of the reason for web-server usage - possibility to interactively start/stop file writings.
+For this two commands can be used: `StartHldFile` for starting file and `StopHldFile` for stopping.   
 
 
 ## Running analysis ## {#trb3_stream_go4}
@@ -198,19 +196,17 @@ Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/
 It is dedicated for synchronization and
 processing of different kinds of time-stamped data streams. Classes,
 relevant for TRB3/FPGA-TDC processing located in 
-[header](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
-[source](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
+[$STREAMSYS/include/hadaq](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
+[$STREAMSYS/framework/hadaq](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
  
 In principle, in most cases it is not required to change these classes -
 all user-specific configurations provided in ROOT script, which can be found in 
-[example](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory.
-It shows how to process data from several TDCs. Please read comment in scripts themself.
-One can always copy such script to any other location and modify it to specific needs.
+[$STREAMSYS/applications/trb3tdc/](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory. It shows how to process data from several TDCs. Please read comments in scripts for more details. One can always copy such script to any other location and modify it to specific needs.
 
 
 ### Running in batch
 
-To run analysis in batch (offline), start from directory where *first.C* script is
+To run analysis in batch (offline), start from directory where _first.C_ script is
 situated:
 
     [shell]  go4analysis -user file_0000.hld
@@ -237,7 +233,7 @@ With Ctrl-C one can always stop execution and check histograms in auto-save file
 
 But more convenient way is to run analysis from the gui to be able monitor
 all histogram in live mode. For that one need:
-1. start go4 gui (type go4) from directory with first.C macro
+1. start go4 gui (type go4) from directory with _first.C_ macro
 2. Select "Launch analysis" menu command in go4
 3. set "Dir" parameter to "." (current directory)
 4. keep empty library name file of analysis code
@@ -252,7 +248,7 @@ For more details about go4 see introduction on http://go4.gsi.de.
 
 
 
-## Running analysis in DABC process ## {#trb3_stream_dabc}
+## Running analysis with DABC ## {#trb3_stream_dabc}
 
 Core functionality of stream framework written without ROOT usage and
 can be run with different engines. Such run engine is now provided in DABC. 
@@ -286,17 +282,21 @@ Analysis will process as much events as possible and produce histograms, which c
 
 Main benefit of such approach - one do not require extra process running,
 quality monitoring always available via http channel. Example configuration
-file can be found in [`$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml`](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilderStream.xml).
+file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilderStream.xml).
 
-Scripts first.C and (optional) second.C should be copied into directory where DABC will be started.
+Scripts _first.C_ and (optional) _second.C_ should be copied into directory where DABC will be started.
 When DAQ is running, one could always open web browser with address `http://localhost:8090` or
 directly `http://localhost:8090/EventBuilder/Analysis/`. 
 
-One could get direct access to every histogram and produce statistic, submitting request like:
+Interested histograms can be shown directly, opening address like:
 
-     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetEntries -O entries.txt
-     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
-     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
+    http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/draw.htm 
+
+One also could produce 1-D histogram statistic, submitting requests like:
+
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetEntries -O entries.txt
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
 
    
 
@@ -409,7 +409,7 @@ Therefore DABC should be compiled together with stream - at best as [trb3 packag
 
 ### Configuration
 
-There is [example configuration file](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
+There is example configuration file [$DABCSYS/plugins/hadaq/app/TdcEventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
 This loook like:
 
        <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
@@ -427,8 +427,8 @@ For each input [TDC calibration module](@ref stream::TdcCalibrationModule) will 
        <Auto value="100000"/>
     </Module>
 
-Comments for most parameters provided in 
-[example file](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml)  
+Comments for most parameters are provided in example file. 
+  
 
 
 ### Running
@@ -479,11 +479,11 @@ If calibration peformed for all TDCs, "Ready" string will be returned, otherwise
 
 
 # Usage of hadaq API in other applications
+
 hldprint is just program with originally about 150 lines of code 
 (now it is 500 due to many extra options). 
-Source code can be found in [repository](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx)
-There is also [example](https://subversion.gsi.de/dabc/trunk/applications/hadaq/), which 
-can be copied and modified for the user needs.
+Source code located in [$DABCSYS/plugins/hadaq/hldprint.cxx](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx). 
+There is also example in [$DABCSYS/applications/hadaq/](https://subversion.gsi.de/dabc/trunk/applications/hadaq/) directory, which can be copied and modified for the user needs.
 
 In simplified form access to any data source (local file, remote file or online server) looks like:
 
