@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+10.07.2015
+1. Provide icons for Start/Stop/Clear commands, let execute these ROOT-like commands
+   from the browser.
+
+
 9.07.2015
 1. Provide example how stream analysis can be run as additional module 
    in event builder process. Histograms can be accessed via http channel

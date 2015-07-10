@@ -1053,7 +1053,7 @@
       var history = node ? node["_history"] : null;
       if (!kind) kind = "";
 
-      if ((node==null) || ((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text"))
+      if ((node==null) || ((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text") || (kind=='Command'))
          return JSROOT.HierarchyPainter.prototype.display.call(h, itemname, options, call_back);
       
       h.CreateDisplay(function(mdi) { 
@@ -1089,7 +1089,6 @@
       history = parseInt(history);
       return ((history == NaN) || (history<=0)) ? 0 : history;
    }
-   
 
    DABC.HierarchyPainter.prototype.UpdateDabcElements = function()
    {
@@ -1105,19 +1104,22 @@
    }
 
    DABC.HierarchyPainter.prototype.ExecuteCommand = function(cmditemname, args, call_back) {
+      
+      var item = this.Find(cmditemname);
+      if (item && (item._kind == 'Command'))
+         return JSROOT.HierarchyPainter.prototype.ExecuteCommand.call(this, cmditemname, args, call_back);
+      
       var url = cmditemname + "/execute";
       if (args!=null) url += "?" + args;
       
-     var req = JSROOT.NewHttpRequest(url, "text", function(res) { 
-        console.log(cmditemname+" done");
-        if (typeof call_back=='function') call_back(res);
-     });
-     req.send(null);
+      var req = JSROOT.NewHttpRequest(url, "text", function(res) { 
+         console.log(cmditemname+" done");
+         if (typeof call_back=='function') call_back(res);
+      });
+      req.send(null);
    }
    
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
-      
-      console.log("FillOnlineMenu " + itemname);
       
       var item = this.Find(itemname); 
       var painter = this;

@@ -29,16 +29,22 @@ void stream::DabcProcMgr::SetTop(dabc::Hierarchy& top, bool withcmds)
    dabc::Hierarchy h = fTop.CreateHChild("Control/Clear");
    h.SetField("_kind","Command");
    h.SetField("_title", "Clear all histograms in the server");
+   h.SetField("_icon", "dabcsys/plugins/stream/icons/clear.png");
+   h.SetField("_fastcmd", "true");
    h.SetField("_numargs", "0");
 
    h = fTop.CreateHChild("Control/Start");
    h.SetField("_kind","Command");
    h.SetField("_title", "Start processing of data");
+   h.SetField("_icon", "dabcsys/plugins/stream/icons/start.png");
+   h.SetField("_fastcmd", "true");
    h.SetField("_numargs", "0");
 
    h = fTop.CreateHChild("Control/Stop");
    h.SetField("_kind","Command");
    h.SetField("_title", "Stop processing of data");
+   h.SetField("_icon", "dabcsys/plugins/stream/icons/stop.png");
+   h.SetField("_fastcmd", "true");
    h.SetField("_numargs", "0");
 }
 
