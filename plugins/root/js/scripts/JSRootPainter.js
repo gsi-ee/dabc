@@ -1,25 +1,38 @@
 /// @file JSRootPainter.js
 /// JavaScript ROOT graphics
 
-(function() {
+(function( factory ) {
+   if ( typeof define === "function" && define.amd ) {
+      // AMD. Register as an anonymous module.
+      define( ['JSRootCore', 'd3'], factory );
+   } else {
 
-   if (typeof JSROOT != 'object') {
-      var e1 = new Error('JSROOT is not defined');
-      e1.source = 'JSRootPainter.js';
-      throw e1;
-   }
+      if (typeof JSROOT == 'undefined') {
+         var e1 = new Error('JSROOT is not defined');
+         e1.source = 'JSRootPainter.js';
+         throw e1;
+      }
 
-   if (typeof d3 != 'object') {
-      var e1 = new Error('This extension requires d3.v3.js');
-      e1.source = 'JSRootPainter.js';
-      throw e1;
-   }
+      if (typeof d3 != 'object') {
+         var e1 = new Error('d3 is not defined');
+         e1.source = 'JSRootPainter.js';
+         throw e1;
+      }
 
-   if (typeof JSROOT.Painter == 'object') {
-      var e1 = new Error('JSROOT.Painter already defined');
-      e1.source = 'JSRootPainter.js';
-      throw e1;
+      if (typeof JSROOT.Painter == 'object') {
+         var e1 = new Error('JSROOT.Painter already defined');
+         e1.source = 'JSRootPainter.js';
+         throw e1;
+      }
+
+      factory(JSROOT, d3);
    }
+} (function(JSROOT, d3) {
+
+
+   // do it here while require.js does not provide method to load css files
+   if ( typeof define === "function" && define.amd )
+      JSROOT.loadScript('$$$style/JSRootPainter.css');
 
    // list of user painters, called with arguments painter(vis, obj, opt)
    JSROOT.fDrawFunc = new Array;
@@ -7518,7 +7531,6 @@
       this.frameid = frameid;
       this.h = null; // hierarchy
       this.files_monitoring = (frameid == null); // by default files monitored when nobrowser option specified
-      this.cando_cache = {};  // object with cached cando properties
 
       // remember only very first instance
       if (JSROOT.hpainter == null)
@@ -7831,17 +7843,15 @@
    }
 
    JSROOT.HierarchyPainter.prototype.CheckCanDo = function(node) {
-      
+
       var kind = node["_kind"];
       if ((kind==null) || (typeof kind != "string")) kind = "";
-      
-      if ((kind.length>0) && (kind in this.cando_cache)) return this.cando_cache[kind]; 
 
       var cando = { expand : false, display : false, scan : true, open : false, monitor:null,
                     img1 : "", img2 : "", html : "", ctxt : false, typename : "", execute: false };
-      
+
       if (kind.indexOf("ROOT.") == 0) cando.typename = kind.slice(5);
-      
+
       var draw_handle = null;
       if (cando.typename.length>0)
          draw_handle = JSROOT.getDrawHandle(cando.typename);
@@ -7917,12 +7927,13 @@
          cando.scan = false;
          cando.display = true;
       }
-      
+
       if (draw_handle!=null) {
          if ('func' in draw_handle) cando.display = true;
          if ('icon' in draw_handle) cando.img1 = draw_handle.icon;
          if ('icon2' in draw_handle) cando.img2 = draw_handle.icon2;
-         if ('monitor' in draw_handle) cando.monitor = draw_handle.monitor; 
+         if ('monitor' in draw_handle) cando.monitor = draw_handle.monitor;
+         if ('aslink' in draw_handle) { cando.html = this.itemFullName(node); cando.open = true; }
       }
 
       if (cando.monitor==null) cando.monitor = cando.display;
@@ -7933,8 +7944,6 @@
       if ('_icon' in node) cando.img1 = node['_icon'];
       if ('_icon2' in node) cando.img2 = node['_icon2'];
 
-      this.cando_cache[kind] = cando;
-      
       return cando;
    }
 
@@ -7979,7 +7988,7 @@
       if (this.frameid == null) return JSROOT.CallBack(callback);
       var hpainter = this;
       JSROOT.AssertPrerequisites('jq2d', function() {
-         hpainter.RefreshHtml(callback);
+          hpainter.RefreshHtml(callback);
       });
    }
 
@@ -8006,7 +8015,7 @@
 
    JSROOT.HierarchyPainter.prototype.get = function(itemname, callback, options) {
       // get object item with specified name
-      // depending from provided option, same item can generate different object types 
+      // depending from provided option, same item can generate different object types
 
       var item = this.Find(itemname);
 
@@ -8344,11 +8353,11 @@
             var h1 = pthis.FileHierarchy(file);
             h1._isopen = true;
             if (pthis.h == null) pthis.h = h1; else
-            if (pthis.h._kind == 'JSROOT.TopFolder') pthis.h._childs.push(h1); else {
-               var h0 = pthis.h;
-               var topname = (h0._kind == "ROOT.TFile") ? "Files" : "Items";
-               pthis.h = { _name: topname, _kind: 'JSROOT.TopFolder', _childs : [h0, h1] };
-            }
+               if (pthis.h._kind == 'JSROOT.TopFolder') pthis.h._childs.push(h1); else {
+                  var h0 = pthis.h;
+                  var topname = (h0._kind == "ROOT.TFile") ? "Files" : "Items";
+                  pthis.h = { _name: topname, _kind: 'JSROOT.TopFolder', _childs : [h0, h1] };
+               }
 
             pthis.RefreshHtml(call_back);
          });
@@ -8398,18 +8407,18 @@
          } else
          if ('_make_request' in item) {
             func = JSROOT.findFunction(item['_make_request']);
-         } else 
+         } else
          if (('_kind' in item) && (item._kind.indexOf("ROOT.")!=0)) {
             draw_handle = JSROOT.getDrawHandle("kind:"+item._kind);
-            if ((draw_handle!=null) && ('make_request' in draw_handle)) 
-               func = draw_handle['make_request']; 
+            if ((draw_handle!=null) && ('make_request' in draw_handle))
+               func = draw_handle['make_request'];
          }
 
          if (typeof func == 'function') {
             // ask to make request
             var dreq = func(pthis, item, url, option);
             // result can be simple string or object with req and kind fields
-            if (dreq!=null) 
+            if (dreq!=null)
                if (typeof dreq == 'string') req = dreq; else {
                   if ('req' in dreq) req = dreq.req;
                   if ('kind' in dreq) req_kind = dreq.kind;
@@ -8435,10 +8444,10 @@
       var itemreq = JSROOT.NewHttpRequest(url, req_kind, function(obj) {
 
          var func = null;
-         
+
          if (!h_get && (item!=null) && ('_after_request' in item)) {
             func = JSROOT.findFunction(item['_after_request']);
-         } else 
+         } else
          if ((draw_handle!=null) && ('after_request' in draw_handle))
             func = draw_handle['after_request'];
 
@@ -8504,7 +8513,7 @@
 
             painter.ForEach(function(item) {
                if (!('_drawfunc' in item) || !('_kind' in item)) return;
-               var typename = "kind:" + item._kind; 
+               var typename = "kind:" + item._kind;
                if (item._kind.indexOf('ROOT.')==0) typename = item._kind.slice(5);
                var drawopt = item['_drawopt'];
                if (!JSROOT.canDraw(typename) || (drawopt!=null))
@@ -8555,9 +8564,9 @@
       var opts = JSROOT.getDrawOptions(cando.typename, 'nosame');
       if (((opts==null) || (opts.length==0)) && ('_kind' in node))
          opts = JSROOT.getDrawOptions("kind:" + node._kind, 'nosame');
-      
+
       console.log('online menu draw opt for ' + node._kind + ' is ' + opts);
-      
+
       if (cando.display)
          menu.addDrawMenu("Draw", opts, function(arg) { painter.display(itemname, arg); });
 
@@ -9155,7 +9164,7 @@
    JSROOT.getDrawFunc = function(classname, drawopt) {
       var handle = JSROOT.getDrawHandle(classname, drawopt);
       if ((handle==null) || !('func' in handle)) return null;
-      if (typeof handle.func == 'function') return handle.func;  
+      if (typeof handle.func == 'function') return handle.func;
       return JSROOT.findFunction(handle.func);
    }
 
@@ -9205,11 +9214,11 @@
       var handle = null;
       if ('_typename' in obj) handle = JSROOT.getDrawHandle(obj['_typename'], opt);
       else if ('_kind' in obj) handle = JSROOT.getDrawHandle('kind:' + obj['_kind'], opt);
-      
+
       if ((handle==null) || !('func' in handle)) return null;
-      
+
       if (typeof handle.func == 'function') return handle.func(divid, obj, opt);
-      
+
       var funcname = "", prereq = "";
       if (typeof handle.func == 'object') {
          if ('func' in handle.func) funcname = handle.func.func;
@@ -9217,18 +9226,18 @@
       } else
       if (typeof handle.func == 'string') {
          funcname = handle.func;
-         if (('prereq' in handle) && (typeof handle.prereq == 'string')) prereq = handle.prereq;  
-         if (('script' in handle) && (typeof handle.script == 'string')) prereq += ";user:" + handle.script;  
-      }   
+         if (('prereq' in handle) && (typeof handle.prereq == 'string')) prereq = handle.prereq;
+         if (('script' in handle) && (typeof handle.script == 'string')) prereq += ";user:" + handle.script;
+      }
 
       if (funcname.length==0) return null;
 
       if (prereq.length > 0) {
          // special handling for painters, which should be loaded via extra scripts
          // such painter get extra last argument - pointer on TBasePainter object
-         
+
          var painter = new JSROOT.TBasePainter();
-         
+
          JSROOT.AssertPrerequisites(prereq, function() {
             var func = JSROOT.findFunction(funcname);
             if (func==null) {
@@ -9244,7 +9253,7 @@
 
          return painter;
       }
-      
+
       var func = JSROOT.findFunction(funcname);
       if (func != null) return func(divid, obj, opt);
 
@@ -9286,7 +9295,9 @@
       return JSROOT.draw(divid, obj, opt);
    }
 
-})();
+   return JSROOT;
+
+}));
 
 // JSRootPainter.js ends
 

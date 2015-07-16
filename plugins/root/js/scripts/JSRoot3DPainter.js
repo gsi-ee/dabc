@@ -1,25 +1,35 @@
 /// @file JSRoot3DPainter.js
 /// JavaScript ROOT 3D graphics
 
-(function() {
+(function( factory ) {
+   if ( typeof define === "function" && define.amd ) {
+      // AMD. Register as an anonymous module.
+      define( ['jquery','jquery-ui', 'd3', 'JSRootPainter', 'three_fonts'], factory );
+   } else {
 
-   if (typeof JSROOT != 'object') {
-      var e1 = new Error('JSROOT is not defined');
-      e1.source = 'JSRoot3DPainter.js';
-      throw e1;
-   }
+      if (typeof JSROOT == 'undefined') {
+         var e1 = new Error('JSROOT is not defined');
+         e1.source = 'JSRoot3DPainter.js';
+         throw e1;
+      }
 
-   if (typeof d3 != 'object') {
-      var e1 = new Error('This extension requires d3.v3.js');
-      e1.source = 'JSRoot3DPainter.js';
-      throw e1;
-   }
+      if (typeof d3 != 'object') {
+         var e1 = new Error('This extension requires d3.v3.js');
+         e1.source = 'JSRoot3DPainter.js';
+         throw e1;
+      }
 
-   if (typeof JSROOT.Painter != 'object') {
-      var e1 = new Error('JSROOT.Painter is not defined');
-      e1.source = 'JSRoot3DPainter.js';
-      throw e1;
+      if (typeof JSROOT.Painter != 'object') {
+         var e1 = new Error('JSROOT.Painter is not defined');
+         e1.source = 'JSRoot3DPainter.js';
+         throw e1;
+      }
+
+      factory(jQuery, jQuery.ui, d3, JSROOT);
    }
+} (function($, myui, d3, JSROOT) {
+
+   console.log("Loading JSRoot3DPainter...");
 
    JSROOT.Painter.add3DInteraction = function(renderer, scene, camera, toplevel, painter) {
       // add 3D mouse interactive functions
@@ -817,5 +827,7 @@
       return painter.DrawingReady();
    }
 
-})();
+   return JSROOT.Painter;
+
+}));
 

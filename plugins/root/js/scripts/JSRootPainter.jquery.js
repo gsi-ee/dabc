@@ -1,31 +1,49 @@
 /// @file JSRootPainter.jquery.js
 /// Part of JavaScript ROOT graphics, dependent from jQuery functionality
 
-(function() {
+(function( factory ) {
+   if ( typeof define === "function" && define.amd ) {
+      // AMD. Register as an anonymous module.
+      define( ['jquery', 'jquery-ui', 'd3', 'JSRootPainter'], factory );
+   } else {
 
-   if (typeof JSROOT != 'object') {
-      var e1 = new Error('JSROOT is not defined');
-      e1.source = 'JSRootPainter.jquery.js';
-      throw e1;
-   }
+      if (typeof jQuery == 'undefined') {
+         var e1 = new Error('jQuery not defined ');
+         e1.source = 'JSRootPainter.jquery.js';
+         throw e1;
+      }
 
-   if (typeof d3 != 'object') {
-      var e1 = new Error('This extension requires d3.v3.js');
-      e1.source = 'JSRootPainter.jquery.js';
-      throw e1;
-   }
+      if (typeof jQuery.ui == 'undefined') {
+         var e1 = new Error('jQuery-ui not defined ');
+         e1.source = 'JSRootPainter.jquery.js';
+         throw e1;
+      }
 
-   if (typeof JSROOT.Painter != 'object') {
-      var e1 = new Error('JSROOT.Painter not defined');
-      e1.source = 'JSRootPainter.jquery.js';
-      throw e1;
-   }
+      if (typeof d3 != 'object') {
+         var e1 = new Error('This extension requires d3.v3.js');
+         e1.source = 'JSRootPainter.jquery.js';
+         throw e1;
+      }
 
-   if (typeof jQuery == 'undefined') {
-      var e1 = new Error('jQuery not defined ');
-      e1.source = 'JSRootPainter.jquery.js';
-      throw e1;
+      if (typeof JSROOT == 'undefined') {
+         var e1 = new Error('JSROOT is not defined');
+         e1.source = 'JSRootPainter.jquery.js';
+         throw e1;
+      }
+
+      if (typeof JSROOT.Painter != 'object') {
+         var e1 = new Error('JSROOT.Painter not defined');
+         e1.source = 'JSRootPainter.jquery.js';
+         throw e1;
+      }
+
+      // Browser globals
+      factory(jQuery, jQuery.ui, d3, JSROOT);
    }
+} (function($, myui, d3, JSROOT) {
+
+   if ( typeof define === "function" && define.amd )
+      JSROOT.loadScript('$$$style/jquery-ui.css');
 
    JSROOT.Painter.createMenu = function(maincallback, menuname) {
       if (!menuname) menuname = "root_ctx_menu";
@@ -962,5 +980,7 @@
       return JSROOT.Painter.separ.bottom;
    }
 
+   return JSROOT.Painter;
 
-})();
+}));
+

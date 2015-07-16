@@ -598,6 +598,12 @@
       func: 'DABC.DrawCommand'
    });
 
+   // only indicate that item with such kind can be opened as direct link
+   JSROOT.addDrawFunc({
+      name: "kind:DABC.HTML",
+      icon: "httpsys/img/dabc.png",
+      aslink: true
+   });
    
    // example of external scripts loading
    JSROOT.addDrawFunc({ 
