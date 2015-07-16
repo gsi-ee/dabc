@@ -106,11 +106,10 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fLocations(),
    fHttpSys(),
+   fJsRootSys(),
    fDefaultAuth(-1)
 {
    fHttpSys = ".";
-
-   std::string jsroot;
 
    const char* dabcsys = getenv("DABCSYS");
    if (dabcsys!=0) {
@@ -119,7 +118,7 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
       AddLocation(dabcsys, "${DABCSYS}/");
       AddLocation(dabc::format("%s/plugins/http", dabcsys), "httpsys/", "dabc_", "/files/");
 
-      jsroot = dabc::format("%s/plugins/root/js", dabcsys);
+      fJsRootSys = dabc::format("%s/plugins/root/js", dabcsys);
 
       fHttpSys = dabc::format("%s/plugins/http", dabcsys);
    }
@@ -138,11 +137,11 @@ http::Server::Server(const std::string& name, dabc::Command cmd) :
    }
 
    const char* jsrootsys = getenv("JSROOTSYS");
-   if (jsrootsys!=0) jsroot = jsrootsys;
+   if (jsrootsys!=0) fJsRootSys = jsrootsys;
 
-   if (!jsroot.empty()) {
-      AddLocation(jsroot, "jsrootsys/", "root_", "/files/");
-      DOUT1("JSROOTSYS = %s ", jsroot.c_str());
+   if (!fJsRootSys.empty()) {
+      AddLocation(fJsRootSys, "jsrootsys/", "root_", "/files/");
+      DOUT1("JSROOTSYS = %s ", fJsRootSys.c_str());
    }
 
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
@@ -284,15 +283,15 @@ bool http::Server::Process(const char* uri, const char* _query,
    }
 
    if (filename == "draw.htm") {
-      content_str = fHttpSys + "/files/draw.htm";
+      content_str = fJsRootSys + "/files/draw.htm";
       content_type = "__file__";
       return true;
    }
 
    // check that filename starts with some special prefix, in such case redirect it to other location
 
-   if (filename.empty() || (filename=="main.htm")) {
-      content_str = fHttpSys + "/files/main.htm";
+   if (filename.empty() || (filename=="main.htm") || (filename=="index.htm")) {
+      content_str = fJsRootSys + "/files/online.htm";
       content_type = "__file__";
       return true;
    }
@@ -309,28 +308,6 @@ bool http::Server::Process(const char* uri, const char* _query,
       }
 
    if (_query!=0) query = _query;
-
-   // DOUT0("Process %s filename '%s'", pathname.c_str(), filename.c_str());
-
-   // if no file specified, we tried to detect that is requested
-/*   if (filename.empty()) {
-
-      content_str = dabc::PublisherRef(GetPublisher()).UserInterfaceKind(pathname);
-
-      DOUT0("UI kind '%s'", content_str.c_str());
-
-      if (content_str.empty()) return false;
-
-      if (content_str == "__tree__") content_str = fHttpSys + "/files/main.htm"; else
-      if (content_str == "__single__") content_str = fHttpSys + "/files/single.htm"; else {
-         // here we only allow to check filename for prefixes like DABCSYS
-         IsFileRequested(content_str.c_str(), content_str);
-      }
-
-      content_type = "__file__";
-      return true;
-   }
-*/
 
    if (filename == "execute") {
       if (pathname.empty()) return false;

@@ -403,9 +403,10 @@ bool dabc::HierarchyContainer::Stream(iostream& s, unsigned kind, uint64_t versi
 }
 
 
-bool dabc::HierarchyContainer::SaveTo(HStore& res)
+bool dabc::HierarchyContainer::SaveTo(HStore& res, bool create_node)
 {
-   res.CreateNode(GetName());
+   if (create_node)
+      res.CreateNode(GetName());
 
    fFields->SaveTo(res);
 
@@ -432,7 +433,8 @@ bool dabc::HierarchyContainer::SaveTo(HStore& res)
       }
    }
 
-   res.CloseNode(GetName());
+   if (create_node)
+      res.CloseNode(GetName());
 
    return true;
 }

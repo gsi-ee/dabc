@@ -72,11 +72,13 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
    fWorkerHierarchy.Create("FESA", true);
 
    // this is just emulation, later one need list of real variables
-   fWorkerHierarchy.CreateHChild("BeamProfile").SetField(dabc::prop_kind, "FESA.2D");
+   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("BeamProfile");
+   item.SetField(dabc::prop_kind, "FESA.2D");
+   item.SetField("_autoload", "dabcsys/plugins/fesa/fesa.js");
 
    fWorkerHierarchy.CreateHChild("BeamRate").SetField(dabc::prop_kind, "rate");
 
-   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("BeamRate2");
+   item = fWorkerHierarchy.CreateHChild("BeamRate2");
    item.SetField(dabc::prop_kind, "rate");
    item.EnableHistory(100);
 
@@ -114,6 +116,8 @@ fesa::Player::Player(const std::string& name, dabc::Command cmd) :
 
    }
    #endif
+
+   Publish(fWorkerHierarchy, "FESA/Player");
 }
 
 fesa::Player::~Player()

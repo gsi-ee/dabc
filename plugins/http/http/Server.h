@@ -49,6 +49,7 @@ namespace http {
 
          std::vector<Location> fLocations; ///< different locations known to server
          std::string fHttpSys;      ///< location of http plugin, need to read special files
+         std::string fJsRootSys;    ///< location of JSROOT code, need to read special files
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
          /** Check if relative path below current dir - prevents file access to top directories via http */

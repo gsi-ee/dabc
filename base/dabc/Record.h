@@ -476,7 +476,7 @@ namespace dabc {
          virtual bool SetField(const std::string& name, const RecordField& v)
             { return Fields().Field(name).SetValue(v); }
 
-         virtual bool SaveTo(HStore& store);
+         virtual bool SaveTo(HStore& store, bool create_node = true);
 
       public:
 
@@ -532,8 +532,8 @@ namespace dabc {
       }
 
       /** \brief Store hierarchy in json/xml form  */
-      bool SaveTo(HStore& store)
-      {  return null() ? false : GetObject()->SaveTo(store); }
+      bool SaveTo(HStore& store, bool create_node = true)
+      {  return null() ? false : GetObject()->SaveTo(store, create_node); }
 
       /** \brief Store record in JSON form */
       std::string SaveToJson(unsigned mask = 0);

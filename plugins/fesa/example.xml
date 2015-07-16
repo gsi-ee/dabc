@@ -20,6 +20,8 @@
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
+    
+    <Module name="test" class="fesa::Player"/>
 
     <Module name="fesa_monitor" class="fesa::Monitor">
        <Server value="DummyDevice_DU.linev.asl732"/>

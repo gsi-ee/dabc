@@ -1639,11 +1639,13 @@ void dabc::RecordContainer::Print(int lvl)
    }
 }
 
-bool dabc::RecordContainer::SaveTo(HStore& store)
+bool dabc::RecordContainer::SaveTo(HStore& store, bool create_node)
 {
-   store.CreateNode(GetName());
+   if (create_node)
+      store.CreateNode(GetName());
    bool res = fFields->SaveTo(store);
-   store.CloseNode(GetName());
+   if (create_node)
+      store.CloseNode(GetName());
    return res;
 }
 

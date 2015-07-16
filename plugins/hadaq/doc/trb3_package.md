@@ -90,11 +90,11 @@ It is much faster and easier. Just do:
 
 ### Installation of ROOT
 
-See http://root.cern.ch for information
+See http://root.cern.ch for information, compile at least 5-34-32 version with `--enable-http` flag.
 
 ### Installation of Go4
 
-Main information in http://go4.gsi.de.
+Main information on http://go4.gsi.de.
 To install from repository first initialize ROOT variables, than do:
 
     [shell] svn co https://subversion.gsi.de/go4/trunk go4
@@ -103,7 +103,7 @@ To install from repository first initialize ROOT variables, than do:
 
 ### Installation of stream
 
-First compile and configure go4. Than:
+First compile and configure go4. Then:
 
     [shell] svn co https://subversion.gsi.de/go4/app/stream stream
     [shell] cd stream; make -j4

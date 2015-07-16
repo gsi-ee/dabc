@@ -253,8 +253,8 @@ namespace dabc {
 
          void CreateHMutex();
 
-         /** \brief Save hierarchy in JSON/xml form. */
-         virtual bool SaveTo(HStore& res);
+         /** \brief Save hierarchy in json/xml form. */
+         virtual bool SaveTo(HStore& res, bool create_node = true);
 
       public:
          HierarchyContainer(const std::string& name);

@@ -398,7 +398,7 @@
 
       // xml node must have attribute, which will be extracted
       var val = this.ExtractField(name, kind, this.jsonnode);
-      if (val==null) return;
+      if (val==null) return null;
 
       var arr = new Array();
       arr.push(val);
@@ -977,9 +977,7 @@
       if (kind.indexOf("FESA.") == 0) { cando.display = true; } else         
       if (kind == "DABC.HTML") { cando.img1 = "img_globe"; cando.html = this.itemFullName(node) + "/"; cando.open = true; } else
       if (kind == "DABC.Application") cando.img1 = 'img_dabicon'; else
-      if (kind == "DABC.Command") { cando.img1 = 'img_dabicon'; cando.display = true; cando.scan = false; } else
-      if (kind == "GO4.Analysis") cando.img1 = 'img_go4icon'; else
-      if (kind == "ROOT.TGo4AnalysisStatus") cando.img1 = 'img_go4icon';
+      if (kind == "DABC.Command") { cando.img1 = 'img_dabicon'; cando.display = true; cando.scan = false; } 
       
       if ('_editor' in node) { cando.ctxt = true; cando.display = true; cando.monitor = false; }
       if ('_player' in node) cando.display = true;
@@ -1053,7 +1051,9 @@
       var history = node ? node["_history"] : null;
       if (!kind) kind = "";
 
-      if ((node==null) || ((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text") || (kind=='Command'))
+//      if((node==null) || (kind=="rate") || (kind=="log") ||
+//            (kind=="DABC.Command") || 
+//            ((kind.indexOf("ROOT.") == 0) && (view != "png")) || ('_player' in node) || (kind == "Text") || (kind=='Command'))
          return JSROOT.HierarchyPainter.prototype.display.call(h, itemname, options, call_back);
       
       h.CreateDisplay(function(mdi) { 
@@ -1120,6 +1120,8 @@
    }
    
    DABC.HierarchyPainter.prototype.FillOnlineMenu = function(menu, onlineprop, itemname) {
+      
+      return JSROOT.HierarchyPainter.prototype.FillOnlineMenu.call(this, menu, onlineprop, itemname);
       
       var item = this.Find(itemname); 
       var painter = this;
@@ -1346,5 +1348,391 @@
          inforeq.send(null);
       }, 2000);
    }
+   
+   // ================================== NEW CODE ========================================================
+
+   DABC.ExtractSeries = function(name, kind, obj, history) {
+
+      var ExtractField = function(node) {
+         if (!node || !(name in node)) return null;
+
+         if (kind=="number") return Number(node[name]); 
+         if (kind=="time") {
+            var d  = new Date(node[name]);
+            return d.getTime() / 1000.;
+         }
+         return node[name];
+      }
+      
+      // xml node must have attribute, which will be extracted
+      var val = ExtractField(obj);
+      if (val==null) return null;
+
+      var arr = new Array();
+      arr.push(val);
+
+      if (history!=null) 
+         for (var n=history.length-1;n>=0;n--) {
+            // in any case stop iterating when see property delete 
+            if ("dabc:del" in history[n]) break; 
+            var newval = ExtractField(history[n]);
+            if (newval!=null) val = newval;
+            arr.push(val);
+         }
+
+      arr.reverse();
+      return arr;
+   }
+   
+   DABC.MakeItemRequest = function(h, item, fullpath, option) {
+      item['fullitemname'] = fullpath;
+      
+      console.log('fullpath = ' + fullpath);
+      
+      if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0"; 
+      
+      if (!('hlimit' in item)) item['hlimit'] = 100;
+      var url = "get.json?compact=0&history=" + item['hlimit'];
+      if (('request_version' in item) && (item.request_version>0)) url += "&version=" + item.request_version;
+      item['request_version'] = 0;
+      return url;      
+   }
+   
+   DABC.AfterItemRequest = function(h, item, obj, option) {
+      if (obj==null) return;
+      
+      if (!('_history' in item) || (option=="gauge") || (option=='last')) {
+         obj['fullitemname'] = item['fullitemname']; 
+         console.log('set path to object = ' + obj['fullitemname']);
+         // for gauge output special scripts should be loaded, use unique class name for it
+         if (obj._kind == 'rate') obj['_typename'] = "DABC_RateGauge";
+         return;
+      }
+      
+      var new_version = Number(obj["_version"]);
+
+      var modified = (item.request_version != new_version);
+
+      this.request_version = new_version;
+
+      // this is array with history entries 
+      var arr = obj["history"];
+
+      if (arr!=null) {
+         // gap indicates that we could not get full history relative to provided version number
+         var gap = obj["history_gap"];
+
+         // join both arrays with history entries
+         if ((item.history == null) || (arr.length >= item['hlimit']) || gap) {
+            item.history = arr;
+         } else
+            if (arr.length>0) {
+               modified = true;
+               var total = item.history.length + arr.length; 
+               if (total > item['hlimit']) 
+                  this.history.splice(0, total - item['hlimit']);
+
+               item.history = item.history.concat(arr);
+            }
+      }
+      
+      if (obj._kind == "log") {
+         obj.log = DABC.ExtractSeries("value","string", obj, item.history);
+         return;
+      }
+      
+      // now we should produce TGraph from the object
+
+      var x = DABC.ExtractSeries("time", "time", obj, item.history);
+      var y = DABC.ExtractSeries("value", "number", obj, item.history);
+
+      for (var k in obj) delete obj[k];  // delete all object keys
+      
+      obj['_typename'] = 'TGraph';
+      JSROOT.Create('TGraph', obj);
+
+      JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: item._title, 
+                           fX:x, fY:y, fNpoints: x.length,
+                           fLineColor: 2, fLineWidth: 2 });
+
+      JSROOT.AdjustTGraphRanges(obj, 0.1);
+      
+      obj['fHistogram']['fXaxis']['fTimeDisplay'] = true;
+      obj['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
+
+   }
+
+   
+   DABC.DrawGauage = function(divid, obj, opt, painter) {
+      
+      // at this momemnt justgage should be loaded
+
+      if (typeof JustGage == 'undefined') {
+         alert('JustGage not loaded');
+         return null;
+      }
+
+      if (painter == null) {
+         alert('JSROOT draw interface changed - do not get base painter as instance');
+         return null;
+      }
+      
+      painter.obj = obj;
+      painter.gauge = null;
+      painter.SetDivId(divid);
+      
+      painter.Draw = function() {
+         if (this.obj == null) return;
+
+         var val = Number(this.obj["value"]);
+         var min = Number(this.obj["min"]);
+         var max = Number(this.obj["max"]);
+
+         if (max!=null) this.max = max; 
+         if (min!=null) this.min = min; 
+
+         if (val > this.max) {
+            if (this.gauge!=null) {
+               this.gauge = null;
+               d3.select("#" + this.divid).html("");
+            }
+            this.max = 1;
+            var cnt = 0;
+            while (val > this.max) 
+               this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
+         }
+
+         
+         if (this.gauge==null) {
+            this.gauge = new JustGage({
+               id: this.divid, 
+               value: val,
+               min: this.min,
+               max: this.max,
+               title: "temporary title"
+            });
+         } else {
+            this.gauge.refresh(val);
+         }
+      }
+      
+      painter.RedrawObject = function(obj) {
+         this.obj = obj;
+         this.Draw();
+         return true;
+      }
+      
+      painter.Draw();
+      
+      return painter.DrawingReady();
+   }
+   
+   // ==========================================================================================
+
+   DABC.DrawLog = function(divid, obj, opt) {
+      var painter = new JSROOT.TBasePainter();
+      painter.SetDivId(divid);
+      painter.obj = obj;
+      painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
+      
+      var frame = d3.select("#"+ divid);
+      if (painter.history) {
+         frame.html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
+      } else {
+         frame.html("<div></div>");
+      }
+      
+      painter.RedrawObject = function(obj) {
+         this.obj = obj;
+         this.Draw();
+         return true;
+      }
+      
+      painter.Draw = function() {
+         var html = "";
+         
+         if (this.history && ('log' in this.obj)) {
+            
+            console.log("length = " + this.obj.log.length);
+            for (var i in this.obj.log) {
+               html+="<PRE>"+this.obj.log[i]+"</PRE><br/>";
+               console.log(this.obj.log[i]);
+            }
+         } else {
+            html += "itemname <br/>";
+            html += "<h5>"+ this.obj.value +"</h5>";
+         }
+         d3.select("#" + this.divid + " > div").html(html);
+      }
+      
+      painter.Draw();
+      
+      return painter.DrawingReady();
+   }
+   
+   
+   DABC.DrawCommand = function(divid, obj, opt, painter) {
+      painter.SetDivId(divid);
+      painter.jsonnode = obj;
+      painter.req = null;
+
+      painter.NumArgs = function() {
+         if (this.jsonnode==null) return 0;
+         return this.jsonnode["numargs"];
+      }
+
+      painter.ArgName = function(n) {
+         return (n<this.NumArgs()) ? this.jsonnode["arg"+n] : "";
+      }
+
+      painter.ArgKind = function(n) {
+         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_kind"] : "";
+      }
+
+      painter.ArgDflt = function(n) {
+         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_dflt"] : "";
+      }
+
+      painter.ArgMin = function(n) {
+         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_min"] : null;
+      }
+
+      painter.ArgMax = function(n) {
+         return (n<this.NumArgs()) ? this.jsonnode["arg"+n+"_max"] : null;
+      }
+      
+      painter.ShowCommand = function() {
+
+         var frame = $("#" + this.divid);
+
+         frame.empty();
+
+         if (this.jsonnode==null) {
+            frame.append("cannotr access command definition...<br/>");
+            return;
+         } 
+
+         frame.append("<h3>" + this.jsonnode.fullitemname + "</h3>");
+         
+         var entryInfo = "<input id='" + this.divid + "_button' type='button' title='Execute' value='Execute'/><br/>";
+
+         for (var cnt=0;cnt<this.NumArgs();cnt++) {
+            var argname = this.ArgName(cnt);
+            var argkind = this.ArgKind(cnt);
+            var argdflt = this.ArgDflt(cnt);
+
+            var argid = this.divid + "_arg" + cnt; 
+            var argwidth = (argkind=="int") ? "80px" : "170px";
+
+            entryInfo += "Arg: " + argname + " "; 
+            entryInfo += "<input id='" + argid + "' style='width:" + argwidth + "' value='"+argdflt+"' argname = '" + argname + "'/>";    
+            entryInfo += "<br/>";
+         }
+
+         entryInfo += "<div id='" +this.divid + "_res'/>";
+
+         frame.append(entryInfo);
+         
+         var pthis = this;
+         
+         $("#"+ this.divid + "_button").click(function() { pthis.InvokeCommand(); });
+
+         for (var cnt=0;cnt<this.NumArgs();cnt++) {
+            var argid = this.divid + "_arg" + cnt;
+            var argkind = this.ArgKind(cnt);
+            var argmin = this.ArgMin(cnt);
+            var argmax = this.ArgMax(cnt);
+
+            if ((argkind=="int") && (argmin!=null) && (argmax!=null))
+               $("#"+argid).spinner({ min:argmin, max:argmax});
+         }
+      }
+      
+      painter.InvokeCommand = function() {
+         if (this.req!=null) return;
+
+         var resdiv = $("#" + this.divid + "_res");
+         resdiv.html("<h5>Send command to server</h5>");
+
+         var url = this.jsonnode.fullitemname + "/execute";
+
+         for (var cnt=0;cnt<this.NumArgs();cnt++) {
+            var argid = this.divid + "_arg" + cnt;
+            var argkind = this.ArgKind(cnt);
+            var argmin = this.ArgMin(cnt);
+            var argmax = this.ArgMax(cnt);
+
+            var arginp = $("#"+argid);
+
+            if (cnt==0) url+="?"; else url+="&";
+
+            url += arginp.attr("argname");
+            url += "=";
+            if ((argkind=="int") && (argmin!=null) && (argmax!=null))
+               url += arginp.spinner("value");
+            else
+               url += new String(arginp.val());
+         }
+
+         var pthis = this;
+         
+         this.req = JSROOT.NewHttpRequest(url,"object", function(res) {
+            pthis.req = null;
+            if (res==null) resdiv.html("<h5>missing reply from server</h5>");
+            else resdiv.html("<h5>Get reply res=" + res['_Result_'] + "</h5>");
+         });
+
+         this.req.send(null);
+
+      }
+      
+      painter.ShowCommand();
+      
+      return painter.DrawingReady();
+   }
+   
+   // =============================================================
+   
+   
+   JSROOT.addDrawFunc({
+      name: "kind:rate",
+      icon: "httpsys/img/gauge.png",
+      // func: DABC.DrawRateHistory,
+      opt: "line;gauge",
+      monitor: true,
+      make_request: DABC.MakeItemRequest,
+      after_request: DABC.AfterItemRequest,
+   });
+
+   JSROOT.addDrawFunc({
+      name: "kind:log",
+      icon: "img_text", 
+      func: DABC.DrawLog,
+      opt: "log;last",
+      make_request: DABC.MakeItemRequest,
+      after_request: DABC.AfterItemRequest,
+   });
+
+   JSROOT.addDrawFunc({
+      name: "kind:DABC.Command",
+      icon: "httpsys/img/dabc.png",
+      make_request: DABC.MakeItemRequest,
+      after_request: DABC.AfterItemRequest,
+      opt: "command",
+      prereq: 'jq',
+      monitor: false,
+      func: 'DABC.DrawCommand'
+   });
+
+   
+   // example of external scripts loading
+   JSROOT.addDrawFunc({ 
+      name: "DABC_RateGauge", 
+      func: "DABC.DrawGauage", 
+      opt: "gauge",
+      script: DABC.source_dir + 'raphael.2.1.0.min.js;' + 
+              DABC.source_dir + 'justgage.1.0.1.min.js' 
+   });
+
    
 })();
