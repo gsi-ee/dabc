@@ -2895,9 +2895,6 @@
    }
 
    JSROOT.Painter.drawGraph = function(divid, graph, opt) {
-
-      console.log('draw graph with opt ' + opt);
-
       var painter = new JSROOT.TGraphPainter(graph);
       painter.CreateBins();
 

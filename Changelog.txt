@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+16.07.2015
+1. Avoid usage of DABC.HierarchyPainter in js code.
+   One could fully use standard JSROOT pages, just providing custom painter codes in dabc.js.
+   Significantly simplifies code management, provides many new features in JSROOT.
+
+
 10.07.2015
 1. Provide icons for Start/Stop/Clear commands, let execute these ROOT-like commands
    from the browser.
