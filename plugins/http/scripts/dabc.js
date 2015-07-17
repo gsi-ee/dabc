@@ -295,7 +295,6 @@
       
       if (!('_history' in item) || (option=="gauge") || (option=='last')) {
          obj['fullitemname'] = item['fullitemname']; 
-         console.log('set path to object = ' + obj['fullitemname']);
          // for gauge output special scripts should be loaded, use unique class name for it
          if (obj._kind == 'rate') obj['_typename'] = "DABC_RateGauge";
          return;
@@ -354,7 +353,6 @@
       obj['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
 
    }
-
    
    DABC.DrawGauage = function(divid, obj, opt, painter) {
       
@@ -424,7 +422,6 @@
 
    DABC.DrawLog = function(divid, obj, opt) {
       var painter = new JSROOT.TBasePainter();
-      painter.SetDivId(divid);
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
       
@@ -434,6 +431,8 @@
       } else {
          frame.html("<div></div>");
       }
+      // set divid after child element created - only then we could set painter
+      painter.SetDivId(divid);
       
       painter.RedrawObject = function(obj) {
          this.obj = obj;
@@ -445,14 +444,11 @@
          var html = "";
          
          if (this.history && ('log' in this.obj)) {
-            
-            console.log("length = " + this.obj.log.length);
             for (var i in this.obj.log) {
                html+="<PRE>"+this.obj.log[i]+"</PRE><br/>";
-               console.log(this.obj.log[i]);
             }
          } else {
-            html += "itemname <br/>";
+            html += obj['fullitemname'] + "<br/>";
             html += "<h5>"+ this.obj.value +"</h5>";
          }
          d3.select("#" + this.divid + " > div").html(html);
@@ -601,6 +597,7 @@
       icon: "img_text", 
       func: DABC.DrawLog,
       opt: "log;last",
+      monitor: 'always',
       make_request: DABC.MakeItemRequest,
       after_request: DABC.AfterItemRequest
    });
