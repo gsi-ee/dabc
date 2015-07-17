@@ -18,6 +18,25 @@
 
    DABC.version = "2.7.5";
    
+   DABC.source_dir = function(){
+      var scripts = document.getElementsByTagName('script');
+
+      for (var n in scripts) {
+         if (scripts[n]['type'] != 'text/javascript') continue;
+
+         var src = scripts[n]['src'];
+         if ((src == null) || (src.length == 0)) continue;
+
+         var pos = src.indexOf("dabc.js");
+         if (pos<0) continue;
+         if (src.indexOf("JSRootCore.")>0) continue;
+         
+         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos));
+         return src.substr(0, pos);
+      }
+      return "";
+   }(); 
+   
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script 
    
    DABC.HadaqDAQControl = function(hpainter, itemname) {
@@ -261,8 +280,6 @@
    
    DABC.MakeItemRequest = function(h, item, fullpath, option) {
       item['fullitemname'] = fullpath;
-      
-      console.log('fullpath = ' + fullpath);
       
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0"; 
       
@@ -570,12 +587,12 @@
    
    JSROOT.addDrawFunc({
       name: "kind:rate",
-      icon: "httpsys/img/gauge.png",
-      // func: DABC.DrawRateHistory,
+      icon: DABC.source_dir + "../img/gauge.png",
+      func: "<dummy>",
       opt: "line;gauge",
       monitor: true,
       make_request: DABC.MakeItemRequest,
-      after_request: DABC.AfterItemRequest,
+      after_request: DABC.AfterItemRequest
    });
 
    JSROOT.addDrawFunc({
@@ -584,24 +601,24 @@
       func: DABC.DrawLog,
       opt: "log;last",
       make_request: DABC.MakeItemRequest,
-      after_request: DABC.AfterItemRequest,
+      after_request: DABC.AfterItemRequest
    });
 
    JSROOT.addDrawFunc({
       name: "kind:DABC.Command",
-      icon: "httpsys/img/dabc.png",
+      icon: DABC.source_dir + "../img/dabc.png",
       make_request: DABC.MakeItemRequest,
       after_request: DABC.AfterItemRequest,
       opt: "command",
       prereq: 'jq',
-      monitor: false,
+      monitor: 'never',
       func: 'DABC.DrawCommand'
    });
 
    // only indicate that item with such kind can be opened as direct link
    JSROOT.addDrawFunc({
       name: "kind:DABC.HTML",
-      icon: "httpsys/img/dabc.png",
+      icon: DABC.source_dir + "../img/dabc.png",
       aslink: true
    });
    

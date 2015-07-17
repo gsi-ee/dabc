@@ -4,7 +4,7 @@
 (function( factory ) {
    if ( typeof define === "function" && define.amd ) {
       // AMD. Register as an anonymous module.
-      define( ['jquery','jquery-ui', 'd3', 'JSRootPainter', 'three_fonts'], factory );
+      define( ['jquery','jquery-ui', 'd3', 'JSRootPainter', 'THREE', 'jquery.mousewheel'], factory );
    } else {
 
       if (typeof JSROOT == 'undefined') {
@@ -25,11 +25,15 @@
          throw e1;
       }
 
+      if (typeof THREE == 'undefined') {
+         var e1 = new Error('THREE is not defined');
+         e1.source = 'JSRoot3DPainter.js';
+         throw e1;
+      }
+
       factory(jQuery, jQuery.ui, d3, JSROOT);
    }
 } (function($, myui, d3, JSROOT) {
-
-   console.log("Loading JSRoot3DPainter...");
 
    JSROOT.Painter.add3DInteraction = function(renderer, scene, camera, toplevel, painter) {
       // add 3D mouse interactive functions
@@ -522,7 +526,7 @@
       JSROOT.Painter.add3DInteraction(renderer, scene, camera, toplevel, painter);
    }
 
-   JSROOT.Painter.real_drawHistogram3D = function(divid, histo, opt, painter) {
+   JSROOT.Painter.drawHistogram3D = function(divid, histo, opt, painter) {
 
       var logx = false, logy = false, logz = false, gridx = false, gridy = false, gridz = false;
 

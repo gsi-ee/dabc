@@ -76,7 +76,6 @@
    }
 
    ReadFile = function() {
-      console.log('call Read File');
       var navigator_version = navigator.appVersion;
       if (typeof ActiveXObject == "function") { // Windows
          // detect obsolete browsers
@@ -211,7 +210,7 @@
             .prop('checked', hpainter.IsMonitoring())
             .click(function() {
                hpainter.EnableMonitoring(this.checked);
-               if (this.checked) hpainter.updateAll();
+               hpainter.updateAll(!this.checked);
             });
          } else {
             var fname = "";
