@@ -342,6 +342,7 @@
       
       obj['_typename'] = 'TGraph';
       JSROOT.Create('TGraph', obj);
+      obj.fHistogram = JSROOT.CreateTH1(x.length);
 
       JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: item._title, 
                            fX:x, fY:y, fNpoints: x.length,
