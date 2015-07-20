@@ -28,6 +28,11 @@
 #include "dabc/Pointer.h"
 #endif
 
+#ifndef DABC_eventsapi
+#include "dabc/eventsapi.h"
+#endif
+
+
 namespace mbs {
 
    /** \brief Read iterator for MBS events/subevents */

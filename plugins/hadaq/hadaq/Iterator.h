@@ -17,8 +17,18 @@
 #define HADAQ_Iterator
 
 #include "hadaq/HadaqTypeDefs.h"
+
+#ifndef DABC_Buffer
 #include "dabc/Buffer.h"
+#endif
+
+#ifndef DABC_Pointer
 #include "dabc/Pointer.h"
+#endif
+
+#ifndef DABC_eventsapi
+#include "dabc/eventsapi.h"
+#endif
 
 namespace hadaq {
 
@@ -132,6 +142,32 @@ namespace hadaq {
          virtual void* Event() { return fIter.evnt(); }
          virtual dabc::BufferSize_t EventSize() { return fIter.evntsize(); }
    };
+
+   // _______________________________________________________________________________________________
+
+   class EventsProducer : public dabc::EventsProducer {
+      protected:
+         WriteIterator fIter;
+
+      public:
+         EventsProducer(const std::string& name) : dabc::EventsProducer(name), fIter() {}
+         virtual ~EventsProducer() {}
+
+         virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }
+         virtual void Close() { fIter.Close(); }
+
+         virtual bool GenerateEvent(uint64_t evid, uint64_t subid, uint64_t raw_size)
+         {
+            if (!fIter.IsPlaceForEvent(raw_size)) return false;
+            if (!fIter.NewEvent(evid)) return false;
+            if (!fIter.NewSubevent(raw_size)) return false;
+
+            if (!fIter.FinishSubEvent(raw_size)) return false;
+            fIter.FinishEvent();
+            return true;
+         }
+   };
+
 
 }
 

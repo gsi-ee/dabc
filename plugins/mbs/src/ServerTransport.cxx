@@ -21,7 +21,7 @@
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/DataTransport.h"
-#include "dabc/Pointer.h"
+#include "dabc/eventsapi.h"
 
 mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::Reference& iter, uint32_t subid) :
    dabc::SocketIOAddon(fd, false, true),
