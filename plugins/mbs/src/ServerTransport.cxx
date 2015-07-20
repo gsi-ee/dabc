@@ -21,9 +21,8 @@
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/DataTransport.h"
-#include "dabc/eventsapi.h"
 
-mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::Reference& iter, uint32_t subid) :
+mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid) :
    dabc::SocketIOAddon(fd, false, true),
    dabc::DataOutput(dabc::Url()),
    fState(oInit),
@@ -92,7 +91,7 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          return;
 
       case oSendingEvents: {
-         dabc::EventsIterator* iter = (dabc::EventsIterator*) fIter();
+         dabc::EventsIterator* iter = fIter();
 
          if (iter->NextEvent()) {
             unsigned evsize = iter->EventSize();
@@ -222,7 +221,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    unsigned sendsize = buf.GetTotalSize();
 
    if (!fIter.null()) {
-      dabc::EventsIterator* iter = (dabc::EventsIterator*) fIter();
+      dabc::EventsIterator* iter = fIter();
       sendsize = 0;
       iter->Assign(buf);
 
@@ -361,11 +360,11 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       DOUT3("Get new connection request with fd %d canrecv %s", fd, DBOOL(CanRecv()));
 
-      dabc::Reference iter;
+      dabc::EventsIteratorRef iter;
 
       if (!fIterKind.empty()) {
          iter = dabc::mgr.CreateObject(fIterKind,"iter");
-         if (dynamic_cast<dabc::EventsIterator*> (iter()) == 0) {
+         if (iter.null()) {
             EOUT("Fail to create events iterator %s", fIterKind.c_str());
             close(fd);
             return dabc::cmd_true;

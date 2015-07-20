@@ -28,9 +28,15 @@
 #include "dabc/DataIO.h"
 #endif
 
+#ifndef DABC_eventsapi
+#include "dabc/eventsapi.h"
+#endif
+
 #ifndef MBS_MbsTypeDefs
 #include "mbs/MbsTypeDefs.h"
 #endif
+
+
 
 
 namespace mbs {
@@ -61,7 +67,7 @@ namespace mbs {
          mbs::BufferHeader     fHeader;
          long                  fSendBuffers;
          long                  fDroppedBuffers;
-         dabc::Reference       fIter;
+         dabc::EventsIteratorRef fIter;
          mbs::EventHeader      fEvHdr;  // additional MBS event header (for non-MBS events)
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
          uint32_t              fEvCounter; // special events counter
@@ -80,7 +86,7 @@ namespace mbs {
          virtual void OnSocketError(int errnum, const std::string& info);
 
       public:
-         ServerOutputAddon(int fd, int kind, dabc::Reference& iter, uint32_t subid);
+         ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
          virtual ~ServerOutputAddon();
 
          void FillServInfo(int32_t maxbytes, bool isnewformat);
