@@ -27,12 +27,20 @@
 #include "dabc/Worker.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
+#include "dabc/string.h"
 
 
 
 #ifdef DABC_EXTRA_CHECKS
 unsigned dabc::Thread::maxlimit = 1000;
 #endif
+
+
+
+std::string dabc::EventId::asstring() const
+{
+   return dabc::format("Code:%x Item:%x Arg:%x", GetCode(), GetItem(), GetArg());
+}
 
 
 /** \brief  - helper class to use methods, available in dabc::Worker in thread itself
