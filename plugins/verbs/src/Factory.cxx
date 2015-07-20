@@ -2,7 +2,6 @@
 
 #include "dabc/Manager.h"
 
-#include "verbs/BnetRunnable.h"
 #include "verbs/Device.h"
 #include "verbs/Thread.h"
 
@@ -10,9 +9,6 @@ dabc::FactoryPlugin verbsfactory(new verbs::Factory("verbs"));
 
 dabc::Reference verbs::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
 {
-   if (classname == "verbs::BnetRunnable")
-      return new verbs::BnetRunnable(objname);
-
    return 0;
 }
 
