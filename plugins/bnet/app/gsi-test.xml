@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<dabc version="2">
+   <Context host="lxg0538" port="5433"/>
+   <Context host="lxg0534" port="5434"/>
+   <Context host="lxg0546" port="5435"/>
+   <Context host="*">
+     <Run>
+       <lib value="libDabcBnet.so"/>
+       <logfile value="Node${DABCNODEID}.log"/>
+       <debuglevel value="1"/>
+       <debugger value="false"/>
+       <loglevel value="1"/>
+       <loglimit value="1000000"/>
+       <runtime value="10"/>
+     </Run>
+     
+     <MemoryPool name="Pool">
+       <BufferSize value="8192"/>
+       <NumBuffers value="500"/>
+     </MemoryPool>
+
+     <Module name="Gener" class="bnet::GeneratorModule">    
+       <NumOutputs value="1"/>
+     </Module>
+     
+     <Module name="Send" class="bnet::SenderModule">    
+       <NumInputs value="1"/>
+       <InputPort name="Input0" url="Gener/Output0"/>
+       <NumOutputs value="${DABCNUMNODES}"/>
+     </Module>
+
+     <Module name="Recv" class="bnet::ReceiverModule">    
+       <NumInputs value="${DABCNUMNODES}"/>
+       <NumOutputs value="1"/>
+     </Module>
+     
+     <Device name="NetDev" class="dabc::SocketDevice"/>
+     
+     <Connection kind="all-to-all" output="Send" input="Recv" device="NetDev" pool="Pool"/>
+     
+   </Context>
+</dabc>
