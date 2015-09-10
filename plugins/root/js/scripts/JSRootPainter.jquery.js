@@ -168,6 +168,10 @@
          }
       }
 
+      if ('_player' in hitem) {
+         can_click = true;
+      }
+
       if (img2.length==0) img2 = img1;
       if (img1.length==0) img1 = has_childs ? "img_folder" : "img_page";
       if (img2.length==0) img2 = has_childs ? "img_folderopen" : "img_page";
@@ -399,7 +403,7 @@
          var handle = JSROOT.getDrawHandle(hitem._kind);
          if (handle!=null) {
             if ('aslink' in handle)
-               return window.open(itemname);
+               return window.open(itemname + "/");
 
             if ('func' in handle)
                return this.display(itemname);
@@ -752,10 +756,12 @@
 
    // ========== performs tree drawing on server ==================
 
-   JSROOT.TTreePlayer = function(itemname) {
+   JSROOT.TTreePlayer = function(itemname, url, askey) {
       JSROOT.TBasePainter.call(this);
       this.SetItemName(itemname);
-      this.hpainter = null;
+      this.url = url;
+      this.hist_painter = null;
+      this.askey = askey;
       return this;
    }
 
@@ -801,9 +807,9 @@
 
    JSROOT.TTreePlayer.prototype.PerformDraw = function() {
 
-      var frame = $("#" + this.divid);
+      var frame = $(this.select_main().node());
 
-      var url = this.GetItemName() + '/exe.json.gz?compact=3&method=Draw';
+      var url = this.url + '/exe.json.gz?compact=3&method=Draw';
       var expr = frame.find('.treedraw_varexp').val();
       var hname = "h_tree_draw";
 
@@ -838,26 +844,39 @@
 
       var player = this;
 
-      var req = JSROOT.NewHttpRequest(url, 'object', function(res) {
-         if (res==0) return;
-         $("#"+player.drawid).empty();
-         player.hpainter = JSROOT.draw(player.drawid, res)
-      });
-      req.send();
+      function SubmitDrawRequest() {
+         JSROOT.NewHttpRequest(url, 'object', function(res) {
+            if (res==null) return;
+            $("#"+player.drawid).empty();
+            player.hist_painter = JSROOT.draw(player.drawid, res)
+         }).send();
+      }
+
+      if (this.askey) {
+         // first let read tree from the file
+         this.askey = false;
+         JSROOT.NewHttpRequest(this.url + "/root.json", 'text', SubmitDrawRequest).send();
+      } else SubmitDrawRequest();
    }
 
    JSROOT.TTreePlayer.prototype.CheckResize = function(force) {
-      $("#" + this.drawid).width($("#" + this.divid).width());
-      var h = $("#" + this.divid).height();
-      var h0 = $("#" + this.divid +" .treedraw_buttons").height();
+      var main = $(this.select_main().node());
+
+      $("#" + this.drawid).width(main.width());
+      var h = main.height();
+      var h0 = main.find(".treedraw_buttons").height();
       if (h>h0+30) $("#" + this.drawid).height(h - 1 - h0);
 
-      if (this.hpainter) {
-         this.hpainter.CheckResize(force);
+      if (this.hist_painter) {
+         this.hist_painter.CheckResize(force);
       }
    }
 
-   JSROOT.drawTreePlayer = function(hpainter, itemname) {
+   JSROOT.drawTreePlayer = function(hpainter, itemname, askey) {
+
+      var url = hpainter.GetOnlineItemUrl(itemname);
+      if (url == null) return null;
+
       var mdi = hpainter.GetDisplay();
       if (mdi == null) return null;
 
@@ -866,10 +885,17 @@
 
       var divid = d3.select(frame).attr('id');
 
-      var player = new JSROOT.TTreePlayer(itemname);
+      var player = new JSROOT.TTreePlayer(itemname, url, askey);
       player.Show(divid);
       return player;
    }
+
+   JSROOT.drawTreePlayerKey = function(hpainter, itemname) {
+      // function used when tree is not yet loaded on the server
+
+      return JSROOT.drawTreePlayer(hpainter, itemname, true);
+   }
+
 
    // =======================================================================
 

@@ -970,6 +970,7 @@
    // ==============================================================================
 
    JSROOT.TBasePainter = function() {
+      this.divid = null; // either id of element (preferable) or element itself
    }
 
    JSROOT.TBasePainter.prototype.Cleanup = function() {
@@ -1016,13 +1017,20 @@
    JSROOT.TBasePainter.prototype.CheckResize = function(force) {
    }
 
+   JSROOT.TBasePainter.prototype.select_main = function() {
+      // return d3.select for main element, defined with divid
+      if (this.divid==null) return d3.select(null);
+      if ((typeof this.divid == "string") &&
+          (this.divid.charAt(0) != "#")) return d3.select("#" + this.divid);
+      return d3.select(this.divid);
+   }
+
    JSROOT.TBasePainter.prototype.SetDivId = function(divid) {
       // base painter does not creates canvas or frames
       // it registered in the first child element
 
       this['divid'] = divid;
-
-      var main = d3.select("#" + divid);
+      var main = this.select_main();
       if (main.node() && main.node().firstChild)
          main.node().firstChild['painter'] = this;
    }
@@ -1057,18 +1065,21 @@
 
    JSROOT.TObjectPainter.prototype = Object.create(JSROOT.TBasePainter.prototype);
 
+
+   JSROOT.TObjectPainter.prototype.pad_painter = function(active_pad) {
+      var can = active_pad ? this.svg_pad() : this.svg_canvas();
+      return can.empty() ? null : can.property('pad_painter');
+   }
+
    JSROOT.TObjectPainter.prototype.CheckResize = function(force) {
-      // no canvas - no resize
-      var can = this.svg_canvas();
-
-      var pad_painter = can.empty() ? null : can.property('pad_painter');
-
+      // no painter - no resize
+      var pad_painter = this.pad_painter();
       if (pad_painter) pad_painter.CheckCanvasResize();
    }
 
    JSROOT.TObjectPainter.prototype.RemoveDrawG = function() {
-      // generic method to delete all graphical elements, associated with
-      // painter may not work for all cases
+      // generic method to delete all graphical elements, associated with painter
+      // may not work for all cases
 
       if (this.draw_g != null) {
          this.draw_g.remove();
@@ -1083,7 +1094,7 @@
          this.draw_g.selectAll("*").remove();
 
       if (take_pad) {
-         if (layer==null) layer = ".text_layer"
+         if (layer==null) layer = ".text_layer";
          if (!this.draw_g)
             this.draw_g = this.svg_pad().select(layer).append("svg:g");
       } else {
@@ -1112,7 +1123,7 @@
 
    /** This is main graphical SVG element, where all Canvas drawing are performed */
    JSROOT.TObjectPainter.prototype.svg_canvas = function() {
-      return d3.select("#" + this.divid + " .root_canvas");
+      return this.select_main().select(".root_canvas");
    }
 
    /** This is SVG element, correspondent to current pad */
@@ -1124,9 +1135,33 @@
    }
 
    JSROOT.TObjectPainter.prototype.root_pad = function() {
-      var p = this.svg_pad();
-      var pad_painter = p.empty() ? null : p.property('pad_painter');
+      var pad_painter = this.pad_painter(true);
       return pad_painter ? pad_painter.pad : null;
+   }
+
+   /** Converts pad x or y coordinate into NDC value */
+   JSROOT.TObjectPainter.prototype.ConvertToNDC = function(axis, value, isndc) {
+      var pad = this.root_pad();
+      if (isndc == null) isndc = false;
+
+      if (isndc || (pad==null)) return value;
+
+      if (axis=="y") {
+         if (pad['fLogy'])
+            value = (value>0) ? JSROOT.Math.log10(value) : pad['fUymin'];
+         return (value - pad['fY1']) / (pad['fY2'] - pad['fY1']);
+      }
+      if (pad['fLogx'])
+         value = (value>0) ? JSROOT.Math.log10(value) : pad['fUxmin'];
+      return (value - pad['fX1']) / (pad['fX2'] - pad['fX1']);
+   }
+
+   /** Converts pad x or y coordinate into SVG value,
+    *  which could be used directly for drawing. */
+   JSROOT.TObjectPainter.prototype.PadToSvg = function(axis, value, ndc) {
+      if (!ndc) value = this.ConvertToNDC(axis, value);
+      if (axis=="y") return (1-value)*this.pad_height();
+      return value * this.pad_width();
    }
 
    /** This is SVG element with current frame */
@@ -1218,7 +1253,7 @@
       if (svg_p.property('pad_painter') != this)
          svg_p.property('pad_painter').painters.push(this);
 
-      if ((is_main > 0) && (svg_p.property('mainpainter')==null))
+      if ((is_main > 0) && (svg_p.property('mainpainter') == null))
          // when this is first main painter in the pad
          svg_p.property('mainpainter', this);
    }
@@ -1360,31 +1395,27 @@
    JSROOT.TObjectPainter.prototype.ForEachPainter = function(userfunc) {
       // Iterate over all known painters
 
-      var main = d3.select("#" + this.divid);
+      var main = this.select_main();
       var painter = (main.node() && main.node().firstChild) ? main.node().firstChild['painter'] : null;
-      if (painter!=null) { userfunc(painter); return; }
+      if (painter!=null) { userfunc(painter); return; } 
 
-      var svg_c = this.svg_canvas();
-      if (svg_c.empty()) return;
+      var pad_painter = this.pad_painter();
+      if (pad_painter == null) return;
 
-      userfunc(svg_c.property('pad_painter'));
-      var painters = svg_c.property('pad_painter').painters;
-      for (var k in painters) userfunc(painters[k]);
+      userfunc(pad_painter);
+      if ('painters' in pad_painter)
+         for (var k in pad_painter.painters) userfunc(pad_painter.painters[k]);
    }
 
    JSROOT.TObjectPainter.prototype.Cleanup = function() {
       // generic method to cleanup painters
-      d3.select("#" + this.divid).html("");
+      this.select_main().html("");
    }
 
    JSROOT.TObjectPainter.prototype.RedrawPad = function() {
       // call Redraw methods for each painter in the frame
       // if selobj specified, painter with selected object will be redrawn
-
-      var pad = this.svg_pad();
-
-      var pad_painter = pad.empty() ? null : pad.property('pad_painter');
-
+      var pad_painter = this.pad_painter(true);
       if (pad_painter) pad_painter.Redraw();
    }
 
@@ -1555,8 +1586,8 @@
       // can be used to find painter for some special objects, registered as
       // histogram functions
 
-      var ppp = this.svg_pad();
-      var painters = ppp.empty() ? null : ppp.property('pad_painter').painters;
+      var painter = this.pad_painter(true);
+      var painters = painter==null ? null : painter.painters;
       if (painters == null) return null;
 
       for (var n in painters) {
@@ -3238,7 +3269,7 @@
 
    JSROOT.TPadPainter.prototype.CreateCanvasSvg = function(check_resize) {
 
-      var render_to = d3.select("#" + this.divid);
+      var render_to = this.select_main();
 
       var rect = render_to.node().getBoundingClientRect();
 
@@ -3311,7 +3342,7 @@
 
          render_to.style("background-color", fill.color);
 
-         svg = d3.select("#" + this.divid)
+         svg = this.select_main()
              .append("svg")
              .attr("class", "root_canvas")
              .style("background-color", fill.color)
@@ -3472,7 +3503,6 @@
    }
 
    JSROOT.Painter.drawPad = function(divid, pad) {
-
       var painter = new JSROOT.TPadPainter(pad, false);
       painter.SetDivId(divid); // pad painter will be registered in the canvas painters list
 
@@ -5667,8 +5697,8 @@
          }
 
          if (print_rms > 0) {
-            stat.AddLine("RMS = " + stat.Format(data.rmsx));
-            stat.AddLine("RMS y = " + stat.Format(data.rmsy));
+            stat.AddLine("Std Dev = " + stat.Format(data.rmsx));
+            stat.AddLine("Std Dev y = " + stat.Format(data.rmsy));
          }
 
       } else {
@@ -5681,7 +5711,7 @@
          }
 
          if (print_rms > 0) {
-            stat.AddLine("RMS = " + stat.Format(data.rmsx));
+            stat.AddLine("Std Dev = " + stat.Format(data.rmsx));
          }
 
          if (print_under > 0) {
@@ -6400,8 +6430,8 @@
       }
 
       if (print_rms > 0) {
-         stat.AddLine("RMS x = " + stat.Format(data.rmsx));
-         stat.AddLine("RMS y = " + stat.Format(data.rmsy));
+         stat.AddLine("Std Dev x = " + stat.Format(data.rmsx));
+         stat.AddLine("Std Dev y = " + stat.Format(data.rmsy));
       }
 
       if (print_integral > 0) {
@@ -7308,8 +7338,19 @@
 
       var w = this.pad_width(), h = this.pad_height();
 
+      if (pavelabel.fInit == 0) {
+         // recalculate NDC coordiantes if not yet done
+         pavelabel.fInit = 1;
+         var isndc = (pavelabel.fOption.indexOf("NDC") >= 0);
+         pavelabel['fX1NDC'] = this.ConvertToNDC("x", pavelabel['fX1'], isndc);
+         pavelabel['fX2NDC'] = this.ConvertToNDC("x", pavelabel['fX2'], isndc);
+         pavelabel['fY1NDC'] = this.ConvertToNDC("y", pavelabel['fY1'], isndc);
+         pavelabel['fY2NDC'] = this.ConvertToNDC("y", pavelabel['fY2'], isndc);
+      }
+
       var pos_x = pavelabel['fX1NDC'] * w;
       var pos_y = (1.0 - pavelabel['fY1NDC']) * h;
+
       var width = Math.abs(pavelabel['fX2NDC'] - pavelabel['fX1NDC']) * w;
       var height = Math.abs(pavelabel['fY2NDC'] - pavelabel['fY1NDC']) * h;
       pos_y -= height;
@@ -7334,17 +7375,17 @@
       var lcolor = JSROOT.Painter.createAttLine(pavelabel, lwidth);
 
       var pave = this.draw_g
-                   .attr("x", pos_x)
-                   .attr("y", pos_y)
-                   .attr("width", width)
-                   .attr("height", height)
-                   .attr("transform", "translate(" + pos_x + "," + pos_y + ")");
+                   .attr("x", pos_x.toFixed(1))
+                   .attr("y", pos_y.toFixed(1))
+                   .attr("width", width.toFixed(1))
+                   .attr("height", height.toFixed(1))
+                   .attr("transform", "translate(" + pos_x.toFixed(1) + "," + pos_y.toFixed(1) + ")");
 
       pave.append("svg:rect")
              .attr("x", 0)
              .attr("y", 0)
-             .attr("width", width)
-             .attr("height", height)
+             .attr("width", width.toFixed(1))
+             .attr("height", height.toFixed(1))
              .call(fcolor.func)
              .style("stroke-width", lwidth ? 1 : 0)
              .style("stroke", lcolor.color);
@@ -7385,20 +7426,14 @@
          pos_x = pos_x * w;
          pos_y = (1 - pos_y) * h;
       } else
-      if (this.main_painter()!=null) {
+      if (this.main_painter() != null) {
          w = this.frame_width(); h = this.frame_height(); use_pad = false;
          pos_x = this.main_painter().grx(pos_x);
          pos_y = this.main_painter().gry(pos_y);
       } else
-      if (this.root_pad()!=null) {
-         var pad = this.root_pad();
-         if (pad['fLogx'])
-            pos_x = (pos_x > 0) ? JSROOT.Math.log10(pos_x) : pad['fUxmin'];
-         if (pad['fLogy'])
-            pos_y = (pos_y > 0) ? JSROOT.Math.log10(pos_y) : pad['fUymin'];
-
-         pos_x = ((Math.abs(pad['fX1']) + pos_x) / (pad['fX2'] - pad['fX1'])) * w;
-         pos_y = (1 - ((Math.abs(pad['fY1']) + pos_y) / (pad['fY2'] - pad['fY1']))) * h;
+      if (this.root_pad() != null) {
+         pos_x = this.ConvertToNDC("x", pos_x) * w;
+         pos_y = (1 - this.ConvertToNDC("y", pos_y)) * h;
       } else {
          JSROOT.console("Cannot draw text at x/y coordinates without real TPad object");
          pos_x = w/2;
@@ -7481,7 +7516,7 @@
             txt += "<pre>" + arr[i] + "</pre>";
       }
 
-      var frame = d3.select("#" + this.divid);
+      var frame = this.select_main();
       var main = frame.select("div");
       if (main.empty())
          main = frame.append("div")
@@ -7947,6 +7982,11 @@
       return JSROOT.draw(divid, obj, drawopt);
    }
 
+   JSROOT.HierarchyPainter.prototype.redraw = function(divid, obj, drawopt) {
+      // just envelope, one should be able to redefine it for sub-classes
+      return JSROOT.redraw(divid, obj, drawopt);
+   }
+
    JSROOT.HierarchyPainter.prototype.player = function(itemname, option, call_back) {
       var item = this.Find(itemname);
 
@@ -7974,16 +8014,16 @@
       var painter = null;
 
       function display_callback() { JSROOT.CallBack(call_back, painter, itemname); }
-
+      
       h.CreateDisplay(function(mdi) {
          if (!mdi) return display_callback();
-
-         var updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
 
          var item = h.Find(itemname);
 
          if ((item!=null) && ('_player' in item))
             return h.player(itemname, drawopt, display_callback);
+
+         var updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
 
          if (updating) {
             drawopt = drawopt.substr(7);
@@ -7995,18 +8035,21 @@
             var handle = JSROOT.getDrawHandle(item._kind, drawopt);
             if ((handle==null) || !('func' in handle)) return display_callback();
          }
+         
+         var divid = "";
+         if ((typeof(drawopt)=='string') && (drawopt.indexOf("divid:")>=0)) {
+            var pos = drawopt.indexOf("divid:");
+            divid = drawopt.slice(pos+6);
+            drawopt = drawopt.slice(0, pos);
+         }
 
          h.get(itemname, function(item, obj) {
 
             if (updating && item) delete item['_doing_update'];
             if (obj==null) return display_callback();
 
-            var pos = drawopt ? drawopt.indexOf("divid:") : -1;
-
-            if (pos>=0) {
-               var divid = drawopt.slice(pos+6);
-               drawopt = drawopt.slice(0, pos);
-               painter = h.draw(divid, obj, drawopt);
+            if (divid.length > 0) {
+               painter = updating ? h.redraw(divid, obj, drawopt) : h.draw(divid, obj, drawopt);
             } else {
                mdi.ForEachPainter(function(p, frame) {
                   if (p.GetItemName() != itemname) return;
@@ -8090,8 +8133,10 @@
       var mdi = this['disp'];
       if (mdi == null) return;
 
-      var allitems = [], options = [], hpainter = this;
+      var allitems = [], options = [], hpainter = this, cnt = 0;
 
+      mdi.ForEachFrame(function(f) {cnt++;});
+      
       // first collect items
       mdi.ForEachPainter(function(p) {
          var itemname = p.GetItemName();
@@ -8126,7 +8171,7 @@
             painter.ForEach(function(fitem) { delete fitem['_readobj'] }, item);
             delete item['_file'];
          });
-
+      
       this.displayAll(allitems, options);
    }
 
@@ -8326,18 +8371,26 @@
          obj['_typename'] = 'TStreamerInfoList';
    }
 
+   JSROOT.HierarchyPainter.prototype.GetOnlineItemUrl = function(item) {
+      // returns URL, which could be used to request item from the online server
+      if ((item!=null) && (typeof item == "string")) item = this.Find(item);
+      if (item==null) return null;
+      var top = item;
+      while ((top!=null) && (!('_online' in top))) top = top._parent;
+      var path = this.itemFullName(item, top);
+      if (top && ('_online' in top) && (top._online!="")) path = top._online + path; 
+      return path;
+   }
+
    JSROOT.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback, option) {
       // method used to request object from the http server
 
       var url = itemname, h_get = false, req = "", req_kind = "object", pthis = this, draw_handle = null;
 
       if (item != null) {
-         var top = item;
-         while ((top!=null) && (!('_online' in top))) top = top._parent;
-         url = this.itemFullName(item, top);
+         url = this.GetOnlineItemUrl(item);
          var func = null;
          if ('_kind' in item) draw_handle = JSROOT.getDrawHandle(item._kind);
-         
 
          if ('_doing_expand' in item) {
             h_get = true;
@@ -8565,8 +8618,14 @@
    }
 
    JSROOT.HierarchyPainter.prototype.SetDisplay = function(layout, frameid) {
-      this['disp_kind'] = layout;
-      this['disp_frameid'] = frameid;
+      if ((frameid==null) && (typeof layout == 'object')) {
+         this['disp'] = layout;
+         this['disp_kind'] = 'custom';
+         this['disp_frameid'] = null;
+      } else {
+         this['disp_kind'] = layout;
+         this['disp_frameid'] = frameid;
+      }
    }
 
    JSROOT.HierarchyPainter.prototype.GetLayout = function() {
@@ -8599,7 +8658,7 @@
       var h = this;
 
       if ('disp' in this) {
-         if (h['disp'].NumDraw() > 0) return JSROOT.CallBack(callback, h['disp']);
+         if ((h['disp'].NumDraw() > 0) || (h['disp_kind'] == "custom")) return JSROOT.CallBack(callback, h['disp']);
          h['disp'].Reset();
          delete h['disp'];
       }
@@ -8844,6 +8903,47 @@
 
    // ==================================================
 
+   JSROOT.CustomDisplay = function() {
+      JSROOT.MDIDisplay.call(this, "dummy");
+      this.frames = {}; // array of configured frames
+   }
+
+   JSROOT.CustomDisplay.prototype = Object.create(JSROOT.MDIDisplay.prototype);
+
+   JSROOT.CustomDisplay.prototype.AddFrame = function(divid, itemname) {
+      if (!(divid in this.frames)) this.frames[divid] = "";
+         
+      this.frames[divid] += (itemname + ";");
+   }
+   
+   JSROOT.CustomDisplay.prototype.ForEachFrame = function(userfunc,  only_visible) {
+      var ks = Object.keys(this.frames);
+      for (var k = 0; k < ks.length; k++) {
+         var node = d3.select("#"+ks[k]);
+         if (!node.empty())
+            JSROOT.CallBack(userfunc, node.node());
+      }
+   }
+
+   JSROOT.CustomDisplay.prototype.CreateFrame = function(title) {
+      var ks = Object.keys(this.frames);
+      for (var k = 0; k < ks.length; k++) {
+         var items = this.frames[ks[k]];
+         if (items.indexOf(title+";")>=0)
+            return d3.select("#"+ks[k]).node();
+      }
+      return null;
+   }
+
+   JSROOT.CustomDisplay.prototype.Reset = function() {
+      JSROOT.MDIDisplay.prototype.Reset.call(this);
+      this.ForEachFrame(function(frame) {
+         d3.select(frame).html("");
+      });
+   }
+
+   // ================================================
+
    JSROOT.SimpleDisplay = function(frameid) {
       JSROOT.MDIDisplay.call(this, frameid);
    }
@@ -8857,7 +8957,6 @@
    }
 
    JSROOT.SimpleDisplay.prototype.CreateFrame = function(title) {
-
       return d3.select("#"+this.frameid)
                .html("")
                .append("div")
@@ -8875,7 +8974,8 @@
       d3.select("#"+this.frameid).html("");
    }
 
-   // ================================================
+   
+   // ===========================================
 
    JSROOT.GridDisplay = function(frameid, sizex, sizey) {
       // create grid display object
@@ -9160,7 +9260,7 @@
     * Draw object in specified HTML element with given draw options  */
 
    JSROOT.draw = function(divid, obj, opt) {
-      if (typeof obj != 'object') return null;
+      if ((obj==null) || (typeof obj != 'object')) return null;
 
       var handle = null;
       if ('_typename' in obj) handle = JSROOT.getDrawHandle("ROOT." + obj['_typename'], opt);
@@ -9193,7 +9293,7 @@
          JSROOT.AssertPrerequisites(prereq, function() {
             var func = JSROOT.findFunction(funcname);
             if (func==null) {
-               alert('Fail to find function ' + funcname + ' after loading script ' + scriptname);
+               alert('Fail to find function ' + funcname + ' after loading ' + prereq);
                return null;
             }
 
@@ -9220,8 +9320,10 @@
    JSROOT.redraw = function(divid, obj, opt) {
       if (obj==null) return;
 
-      var can = d3.select("#" + divid + " .root_canvas");
-      var can_painter = can.empty() ? null : can.property('pad_painter');
+
+      var dummy = new JSROOT.TObjectPainter();
+      dummy.SetDivId(divid, -1);
+      var can_painter = dummy.pad_painter();
 
       if (can_painter != null) {
          if (obj._typename=="TCanvas") {
@@ -9243,7 +9345,7 @@
       if (can_painter)
           JSROOT.console("Cannot find painter to update object of type " + obj._typename);
 
-      d3.select("#"+divid).html("");
+      dummy.select_main().html("");
       return JSROOT.draw(divid, obj, opt);
    }
 

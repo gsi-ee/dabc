@@ -33,14 +33,17 @@
           'THREE'           : 'helvetiker_regular.typeface'
        },
        shim: {
-          helvetiker_bold: {
+          'touch-punch': {
+             deps: ['jquery']
+          },
+          'helvetiker_bold': {
              deps: ['three.min']
           },
-          THREE: {
+          'THREE': {
              deps: ['helvetiker_bold']
           },
-          MathJax: {
-             exports: "MathJax",
+          'MathJax': {
+             exports: 'MathJax',
              init: function () {
                 MathJax.Hub.Config({ TeX: { extensions: ["color.js"] }});
                 MathJax.Hub.Register.StartupHook("SVG Jax Ready",function () {
@@ -74,7 +77,7 @@
    }
 } (function(JSROOT) {
 
-   JSROOT.version = "dev 20/07/2015";
+   JSROOT.version = "dev 10/09/2015";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -930,7 +933,10 @@
 
       if (miny==maxy) maxy = miny + 1;
 
-      if (graph['fHistogram'] == null) graph['fHistogram'] = JSROOT.CreateTH1(graph['fNpoints']);
+      if (graph['fHistogram'] == null) {
+         graph['fHistogram'] = JSROOT.CreateTH1(graph['fNpoints']);
+         graph.fHistogram.fTitle = graph.fTitle;
+      }
 
       graph['fHistogram']['fXaxis']['fXmin'] = minx;
       graph['fHistogram']['fXaxis']['fXmax'] = maxx;

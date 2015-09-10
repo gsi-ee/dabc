@@ -280,9 +280,7 @@
    
    DABC.MakeItemRequest = function(h, item, fullpath, option) {
       item['fullitemname'] = fullpath;
-      
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0"; 
-      
       if (!('hlimit' in item)) item['hlimit'] = 100;
       var url = "get.json?compact=0&history=" + item['hlimit'];
       if (('request_version' in item) && (item.request_version>0)) url += "&version=" + item.request_version;
@@ -343,10 +341,14 @@
       JSROOT.Create('TGraph', obj);
       obj.fHistogram = JSROOT.CreateTH1(x.length);
 
-      JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: item._title, 
+      var _title = item._title;
+      if ((_title==null) || (_title.length==0)) _title = item['fullitemname'];
+      
+      JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: _title, 
                            fX:x, fY:y, fNpoints: x.length,
                            fLineColor: 2, fLineWidth: 2 });
-
+      
+      obj.fHistogram.fTitle = obj.fTitle;
       JSROOT.AdjustTGraphRanges(obj, 0.1);
       
       obj['fHistogram']['fXaxis']['fTimeDisplay'] = true;
@@ -370,10 +372,10 @@
       
       painter.obj = obj;
       painter.gauge = null;
-      painter.SetDivId(divid);
       
-      painter.Draw = function() {
+      painter.Draw = function(divid) {
          if (this.obj == null) return;
+         if (!divid) divid = this.divid;
 
          var val = Number(this.obj["value"]);
          var min = Number(this.obj["min"]);
@@ -393,14 +395,16 @@
                this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
          }
 
+         var _title = this.GetItemName();
+         if (!_title) _title = "temporary title"; 
          
          if (this.gauge==null) {
             this.gauge = new JustGage({
-               id: this.divid, 
+               id: divid, 
                value: val,
                min: this.min,
                max: this.max,
-               title: "temporary title"
+               title: _title
             });
          } else {
             this.gauge.refresh(val);
@@ -413,7 +417,10 @@
          return true;
       }
       
-      painter.Draw();
+      painter.Draw(divid);
+      
+      // set set divid after first drawing to set painter to the first child 
+      painter.SetDivId(divid); 
       
       return painter.DrawingReady();
    }
@@ -445,7 +452,7 @@
          
          if (this.history && ('log' in this.obj)) {
             for (var i in this.obj.log) {
-               html+="<PRE>"+this.obj.log[i]+"</PRE><br/>";
+               html+="<pre>"+this.obj.log[i]+"</pre>";
             }
          } else {
             html += obj['fullitemname'] + "<br/>";
