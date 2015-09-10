@@ -2,14 +2,6 @@
 var MBS;
 var MyDisplay;
 
-(function() {
-   console.log("in the MBS.js script");
-})();
-
-
-
-
-
 ////////////// State class reflecting remote state and communication:
 function MbsState() {
    this.fSetupLoaded=false;
@@ -19,7 +11,6 @@ function MbsState() {
    this.fFileInterval = 1000;
    this.fLogging = false;
    this.fLogData = null;
-
 }
 
 MbsState.prototype.DabcCommand = function(cmd, option, callback) {
@@ -559,8 +550,6 @@ MbsDisplay.prototype.Confirm= function(msg) {
 
 $(function() {
 
-   console.log("initialize MBS display");
-
    MBS = new MbsState();
    MyDisplay = new MbsDisplay(MBS);
    MyDisplay.BuildView();
@@ -956,14 +945,13 @@ $(function() {
         //helper: "ui-resizable-helper",
         minWidth: 400,
         start: function( event, ui ) {
-           MyDisplay.fMiddleWidth=ui.size.width;
-           MyDisplay.fMiddlerightPos=$("#monitoring_container").position().left; // remember position of right edge middle column
+           MyDisplay.fMiddleWidth = ui.size.width;
+           MyDisplay.fMiddlerightPos = $("#monitoring_container").position().left; // remember position of right edge middle column
            console.log("start resize file container - right="+MyDisplay.fMiddlerightPos);
 
         },
 
         resize: function( event, ui ) {
-
 
            $("#filelog_mode_container").css({
               width: (ui.size.width)
@@ -971,7 +959,6 @@ $(function() {
            $("#file_log").css({
               width: (ui.size.width)
             });
-
 
            $("#monitoring_container").css({
               left: (MyDisplay.fMiddlerightPos - (MyDisplay.fMiddleWidth - ui.size.width))
@@ -986,7 +973,7 @@ $(function() {
 
            // need to set absolute pixels for left column, too, otherwise we will have gap after next window resize...
            $("#mbs_container").css({
-              right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
+              right: MyDisplay.fMiddlerightPos-2-MyDisplay.fMiddleWidth
             });
            $("#daq_log").css({
               right: MyDisplay.fMiddlerightPos - 2  -MyDisplay.fMiddleWidth
@@ -1004,13 +991,10 @@ $(function() {
 
 
 
-
-
-    MyDisplay.ShowGosipPanel(false);
+   MyDisplay.ShowGosipPanel(false);
     //MyDisplay.RefreshView();
 
    MyDisplay.RefreshMonitor();
-
 
 
    $(document).tooltip();
