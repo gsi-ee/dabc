@@ -1,4 +1,35 @@
 
+
+
+/* took from old dabc.css to keep layout:*/
+
+* { padding: 0; margin: 0; }
+* html, body { height: 100%; }
+
+body, textarea {
+   font-family: "lucida sans", verdana, arial, helvetica, sans-serif;
+   font-size: 80%;
+}
+
+h1 { font-size: 20pt }
+h2 { font-size: 18pt; font-weight:bold; color: navy }
+h3 { font-size: 16pt; font-weight:bold; color: #483d8b }
+h4 { font-size: 14pt; font-weight:bold; color:#C71585; margin-bottom:2px; margin-top:8px; }
+h5 { font-size: 10pt; font-weight:bold; color:#6495ED; margin-bottom:2px; }
+h6 { font-size: 10pt; font-weight:bold; color:navy }
+
+body {
+   margin-left: 5px;
+   margin-right: 5px;
+   margin-top: 5px;
+   margin-bottom: 5px;
+}
+
+textarea { font-size: 100%;}
+
+p { margin-top: 6px; padding: 0 10px 1em; }
+
+
 /* Override / redefine here some of the jquery ui icons */
 
 
