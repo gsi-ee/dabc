@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 23.09.2015
 1. Allow multiple hub ids in the hldprint.
+2. Allow multiple TDC ids in the hldprint.
 
 
 16.07.2015

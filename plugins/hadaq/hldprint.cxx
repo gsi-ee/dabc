@@ -241,12 +241,13 @@ int main(int argc, char* argv[])
    bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
    unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
    std::vector<unsigned> hubs;
+   std::vector<unsigned> tdcs;
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
-      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); } else
+      if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
       if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
@@ -267,7 +268,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if ((adcmask!=0) || (tdcmask!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
+   if ((adcmask!=0) || (tdcs.size()!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -408,10 +409,13 @@ int main(int argc, char* argv[])
 
             bool as_raw(false), as_tdc(false), as_adc(false);
 
+            for (unsigned n=0;n<tdcs.size();n++)
+               if (((datakind & idrange) <= (tdcs[n] & idrange)) && ((datakind & ~idrange) == (tdcs[n] & ~idrange)))
+                  as_tdc = true;
+
+            if (!as_tdc) {
+
             if ((onlytdc!=0) && (datakind==onlytdc)) {
-               as_tdc = true;
-            } else
-            if ((tdcmask!=0) && ((datakind & idrange) <= (tdcmask & idrange)) && ((datakind & ~idrange) == (tdcmask & ~idrange))) {
                as_tdc = true;
             } else
             if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
@@ -433,6 +437,7 @@ int main(int argc, char* argv[])
             } else
             if (printraw) {
                as_raw = (onlytdc==0) && (onlyraw==0);
+            }
             }
 
             if (!dostat && !showrate) {
