@@ -71,8 +71,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fProcMgr->SetTop(fWorkerHierarchy);
 
    fTrbProc = new hadaq::TrbProcessor(fTRB);
-   int hubid = Cfg("HUB", cmd).AsInt(0x0);
-   if (hubid>0) fTrbProc->SetHadaqHUBId(hubid);
+   std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
+   for (unsigned n=0;n<hubid.size();n++)
+      fTrbProc->AddHadaqHUBId(hubid[n]);
 
    int hfill = Cfg("HistFilling", cmd).AsInt(1);
 
