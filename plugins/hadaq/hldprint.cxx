@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <map>
+#include <vector>
+#include <algorithm>
 
 #include "hadaq/api.h"
 #include "dabc/string.h"
@@ -238,6 +240,7 @@ int main(int argc, char* argv[])
    double tmout(-1.), maxage(-1.), debug_delay(-1);
    bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
    unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
+   std::vector<unsigned> hubs;
 
    int n = 1;
    while (++n<argc) {
@@ -252,7 +255,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
-      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); } else
+      if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.push_back(hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
@@ -364,7 +367,7 @@ int main(int argc, char* argv[])
                unsigned datalen = (data >> 16) & 0xFFFF;
                unsigned datakind = data & 0xFFFF;
 
-               if ((hubmask!=0) && (datakind==hubmask)) continue;
+               if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) continue;
 
                if (datakind == onlytdc) {
                   found = true;
@@ -414,11 +417,14 @@ int main(int argc, char* argv[])
             if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
                as_adc = true;
             } else
-            if ((hubmask!=0) && (datakind==hubmask)) {
+            if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
                // this is hack - skip hub header, inside is normal subsub events structure
                if (dostat) {
                   stat[datakind].num++;
                   stat[datakind].sizesum+=datalen;
+               } else
+               if (!showrate) {
+                  printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                }
                continue;
             } else

@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+23.09.2015
+1. Allow multiple hub ids in the hldprint.
+
+
 16.07.2015
 1. Avoid usage of DABC.HierarchyPainter in js code.
    One could fully use standard JSROOT pages, just providing custom painter codes in dabc.js.
