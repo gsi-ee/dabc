@@ -36,6 +36,15 @@
       }
       return "";
    }(); 
+
+   
+   DABC.InvokeCommand = function(itemname, args) {
+      var url = itemname + "/execute";
+      if (args!=null) url += "?" + args; 
+      
+      JSROOT.NewHttpRequest(url,"object").send();
+   }
+   
    
    // method for custom HADAQ-specific GUI, later could be moved into hadaq.js script 
    
@@ -79,10 +88,10 @@
       d3.select(frame).html(html);
       
       $(frame).find(".hadaq_startfile").button().click(function() { 
-         hpainter.ExecuteCommand(itemname+"/StartHldFile", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
+         DABC.InvokeCommand(itemname+"/StartHldFile", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
       });
       $(frame).find(".hadaq_stopfile").button().click(function() { 
-         hpainter.ExecuteCommand(itemname+"/StopHldFile");
+         DABC.InvokeCommand(itemname+"/StopHldFile");
       });
       
       var inforeq = null;
