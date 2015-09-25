@@ -403,7 +403,7 @@
          var handle = JSROOT.getDrawHandle(hitem._kind);
          if (handle!=null) {
             if ('aslink' in handle)
-               return window.open(itemname + "/");
+               return window.open(itemname);
 
             if ('func' in handle)
                return this.display(itemname);
@@ -833,7 +833,7 @@
 
          // if any of optional arguments specified, specify all of them
          if ((option!="") || (nentries!="") || (firstentry!="")) {
-            if (nentries=="") nentries = "1000000000";
+            if (nentries=="") nentries = "TTree::kMaxEntries";
             if (firstentry=="") firstentry = "0";
             url += '&option="' + option + '"&nentries=' + nentries + '&firstentry=' + firstentry;
          }

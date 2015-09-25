@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.09.2015
+1. Replace gauge display with implementation from https://gist.github.com/tomerd/1499279
+   It is d3.js-based and like google gauge.  
+
+
 23.09.2015
 1. Allow multiple hub ids in the hldprint.
 2. Allow multiple TDC ids in the hldprint.

@@ -10,6 +10,13 @@
 2. TreePlayer can also be used for trees, which not yet read from the file.
    Requires appropriate changes in TRootSniffer class. 
 3. Fix error in I/O with members like:   `Double_t *fArr; //[fN]`  
+4. Introduce JSROOT.OpenFile function. It loads I/O functionality automatically,
+   therefore can be used directly after loading JSRootCore.js script
+5. Same is done with JSROOT.draw function. It is defined in the JSRootCore.js
+   and can be used directly. Makes usage of JSROOT easier    
+6. Introduce JSRootPainter.more.js script, where painters for auxiliary classes
+   will be implemented.
+7. Implement painter for TEllipse, TLine, TArrow classes     
 
 
 ## Changes in 3.7

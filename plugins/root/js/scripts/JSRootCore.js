@@ -77,7 +77,7 @@
    }
 } (function(JSROOT) {
 
-   JSROOT.version = "dev 10/09/2015";
+   JSROOT.version = "dev 25/09/2015";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -629,6 +629,12 @@
 
       if (kind.indexOf('jq;')>=0) need_jquery = true;
 
+      if (kind.indexOf('more2d;')>=0) {
+         mainfiles += '$$$scripts/JSRootPainter.more' + ext + ".js;";
+         modules.push('JSRootPainter.more');
+         need_jquery = true;
+      }
+
       if (kind.indexOf('jq2d;')>=0) {
          mainfiles += '$$$scripts/JSRootPainter.jquery' + ext + ".js;";
          modules.push('JSRootPainter.jquery');
@@ -691,7 +697,7 @@
       if (pos>=0) extrafiles += kind.slice(pos+5);
 
       var load_callback = function() {
-         if (jsroot.doing_assert.length==0) jsroot.doing_assert = null;
+         if (jsroot.doing_assert && jsroot.doing_assert.length==0) jsroot.doing_assert = null;
          jsroot.CallBack(callback);
          if (jsroot.doing_assert && (jsroot.doing_assert.length>0)) {
             jsroot.AssertPrerequisites('shift');
@@ -706,6 +712,22 @@
       } else {
          jsroot.loadScript(mainfiles + extrafiles, load_callback, debugout);
       }
+   }
+
+   // function can be used to open ROOT file, I/O functionality will be loaded when missing
+   JSROOT.OpenFile = function(filename, callback) {
+      JSROOT.AssertPrerequisites("io", function() {
+         new JSROOT.TFile(filename, callback);
+      });
+   }
+
+   // function can be used to draw supported ROOT classes,
+   // required functionality will be loaded automatically
+   // if painter pointer required, one should load '2d' functionlity itself
+   JSROOT.draw = function(divid, obj, opt) {
+      JSROOT.AssertPrerequisites("2d", function() {
+         JSROOT.draw(divid, obj, opt);
+      });
    }
 
    JSROOT.BuildSimpleGUI = function(user_scripts, andThen) {
@@ -935,7 +957,7 @@
 
       if (graph['fHistogram'] == null) {
          graph['fHistogram'] = JSROOT.CreateTH1(graph['fNpoints']);
-         graph.fHistogram.fTitle = graph.fTitle;
+         graph['fHistogram'].fTitle = graph.fTitle;
       }
 
       graph['fHistogram']['fXaxis']['fXmin'] = minx;
@@ -1211,7 +1233,7 @@
             if (this['fSumw2'].length == 0 && h1['fSumw2'].length != 0) this.sumw2();
 
             // - Add statistics
-            if (this['fEntries'] == NaN) this['fEntries'] = 0;
+            if (isNaN(this['fEntries'])) this['fEntries'] = 0;
             var entries = Math.abs( this['fEntries'] + c1 * h1['fEntries'] );
 
             // statistics can be preserved only in case of positive coefficients
@@ -1952,7 +1974,7 @@
       var isexp = null;
       var prec = fmt.indexOf(".");
       if (prec<0) prec = 4; else prec = Number(fmt.slice(prec+1));
-      if ((prec==NaN) || (prec<0) || (prec==null)) prec = 4;
+      if (isNaN(prec) || (prec<0) || (prec==null)) prec = 4;
       var significance = false;
       if ((last=='e') || (last=='E')) { isexp = true; } else
       if (last=='Q') { isexp = true; significance = true; } else

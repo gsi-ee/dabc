@@ -369,11 +369,11 @@
       
       // at this momemnt justgage should be loaded
 
-      if (typeof JustGage == 'undefined') {
-         alert('JustGage not loaded');
+      if (typeof Gauge == 'undefined') {
+         alert('gauge.js not loaded');
          return null;
       }
-
+      
       if (painter == null) {
          alert('JSROOT draw interface changed - do not get base painter as instance');
          return null;
@@ -381,55 +381,83 @@
       
       painter.obj = obj;
       painter.gauge = null;
+      painter.min = 0;
+      painter.max = 1;
       
-      painter.Draw = function(divid) {
-         if (this.obj == null) return;
+      painter.Draw = function(obj, divid) {
+         if (obj == null) return;
          if (!divid) divid = this.divid;
-
-         var val = Number(this.obj["value"]);
-         var min = Number(this.obj["min"]);
-         var max = Number(this.obj["max"]);
-
-         if (max!=null) this.max = max; 
-         if (min!=null) this.min = min; 
-
+         
+         var val = Number(obj["value"]);
+         if (this.gauge==null) val = 123;
+         
+         if ('low' in obj) {
+            var min = Number(obj["low"]);
+            if (!isNaN(min) && (min<this.min)) this.min = min;
+         }
+         
+         if ('up' in obj) {
+            var max = Number(obj["up"]);
+            if (!isNaN(max) && (max>this.max)) this.max = max;
+         }
+         
          if (val > this.max) {
-            if (this.gauge!=null) {
-               this.gauge = null;
-               d3.select("#" + this.divid).html("");
-            }
             this.max = 1;
             var cnt = 0;
             while (val > this.max) 
                this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
+            
+            d3.select("#"+divid).selectAll("*").remove();
+            this.gauge = null; 
          }
 
-         var _title = this.GetItemName();
-         if (!_title) _title = "temporary title"; 
+         var _title = obj._name;
+         if (!_title) _title = "gauge"; 
+         val = JSROOT.FFormat(val,"5.3g");
          
          if (this.gauge==null) {
-            this.gauge = new JustGage({
-               id: divid, 
-               value: val,
+            
+            var rect = d3.select("#"+divid).node().getBoundingClientRect();
+            
+            var sz = rect.width > rect.height ? rect.height : rect.width;
+            if (sz>300) sz = 300; 
+            
+            var config =  {
+               size: sz,
+               label: _title,
                min: this.min,
                max: this.max,
-               title: _title
-            });
+               majorTicks : 6,
+               minorTicks: 5
+            };
+            
+            if ('units' in obj) config['units'] = obj['units'] + "/s";
+            
+            if (this.gauge == null)
+               this.gauge = new Gauge(divid, config);
+            else
+               this.gauge.configure(config);
+            
+            this.gauge.render(val);
+
+            // set set divid after first drawing to set painter to the first child 
+            this.SetDivId(divid);       
          } else {
-            this.gauge.refresh(val);
+            this.gauge.redraw(val);
          }
       }
       
+      painter.CheckResize = function() {
+         console.log("Check resize");
+      }
+
+      
       painter.RedrawObject = function(obj) {
-         this.obj = obj;
-         this.Draw();
+         this.Draw(obj);
          return true;
       }
       
-      painter.Draw(divid);
-      
-      // set set divid after first drawing to set painter to the first child 
-      painter.SetDivId(divid); 
+      painter.Draw(obj, divid);
       
       return painter.DrawingReady();
    }
@@ -641,8 +669,7 @@
       name: "DABC_RateGauge", 
       func: "DABC.DrawGauage", 
       opt: "gauge",
-      script: DABC.source_dir + 'raphael.2.1.0.min.js;' + 
-              DABC.source_dir + 'justgage.1.0.1.min.js' 
+      script: DABC.source_dir + 'gauge.js' 
    });
 
    
