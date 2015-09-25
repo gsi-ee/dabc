@@ -383,13 +383,15 @@
       painter.gauge = null;
       painter.min = 0;
       painter.max = 1;
+      painter.lastval = 0;
+      painter.lastsz = 0;
+      painter._title = "";
       
       painter.Draw = function(obj, divid) {
          if (obj == null) return;
          if (!divid) divid = this.divid;
          
          var val = Number(obj["value"]);
-         if (this.gauge==null) val = 123;
          
          if ('low' in obj) {
             var min = Number(obj["low"]);
@@ -401,30 +403,43 @@
             if (!isNaN(max) && (max>this.max)) this.max = max;
          }
          
+         var redo = false;
+         
          if (val > this.max) {
             this.max = 1;
             var cnt = 0;
             while (val > this.max) 
                this.max *= (((cnt++ % 3) == 1) ? 2.5 : 2);
             
+            redo = true;
+         }
+
+         this._title = obj._name;
+         if (!this._title) this._title = "gauge"; 
+         val = JSROOT.FFormat(val,"5.3g");
+
+         this.DrawValue(val, divid, redo);
+      }
+      
+      painter.DrawValue = function(val, divid, force) {
+         var rect = d3.select("#"+divid).node().getBoundingClientRect();
+         var sz = Math.min(rect.height, rect.width);
+         
+         if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true; 
+         
+         if (force) {
             d3.select("#"+divid).selectAll("*").remove();
             this.gauge = null; 
          }
-
-         var _title = obj._name;
-         if (!_title) _title = "gauge"; 
-         val = JSROOT.FFormat(val,"5.3g");
+         
+         this.lastval = val;
          
          if (this.gauge==null) {
-            
-            var rect = d3.select("#"+divid).node().getBoundingClientRect();
-            
-            var sz = rect.width > rect.height ? rect.height : rect.width;
-            if (sz>300) sz = 300; 
+            this.lastsz = sz;   
             
             var config =  {
                size: sz,
-               label: _title,
+               label: this._title,
                min: this.min,
                max: this.max,
                majorTicks : 6,
@@ -448,9 +463,8 @@
       }
       
       painter.CheckResize = function() {
-         console.log("Check resize");
+         this.DrawValue(this.lastval, this.divid);
       }
-
       
       painter.RedrawObject = function(obj) {
          this.Draw(obj);

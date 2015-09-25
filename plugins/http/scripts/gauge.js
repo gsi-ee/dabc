@@ -37,7 +37,9 @@ function Gauge(placeholderName, configuration)
 							.append("svg:svg")
 							.attr("class", "gauge")
 							.attr("width", this.config.size)
-							.attr("height", this.config.size);
+							.attr("height", this.config.size)
+							.style("display", "block")
+							.style("margin", "auto");
 		
 		this.body.append("svg:circle")
 					.attr("cx", this.config.cx)
