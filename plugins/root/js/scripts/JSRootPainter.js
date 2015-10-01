@@ -312,38 +312,38 @@
          "5, 3, 1, 3, 1, 3", "20, 5", "20, 10, 1, 10", "1, 2");
 
    // Initialize ROOT markers
-   JSROOT.Painter.root_markers = new Array('fcircle', 'fcircle', 'fcross',
-         'dcross', 'ocircle', 'gcross', 'fcircle', 'fcircle', 'fcircle',
-         'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
-         'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',
-         'fsquare', 'ftriangle-up', 'ftriangle-down', 'ocircle', 'osquare',
-         'otriangle-up', 'odiamond', 'ocross', 'fstar', 'ostar', 'dcross',
-         'otriangle-down', 'fdiamond', 'fcross');
+   JSROOT.Painter.root_markers = new Array(
+         'fcircle', 'fcircle', 'oplus', 'oasterisk', 'ocircle',        // 0..4
+         'omult', 'fcircle', 'fcircle', 'fcircle', 'fcircle',          // 5..9
+         'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',        // 10..14
+         'fcircle', 'fcircle', 'fcircle', 'fcircle', 'fcircle',        // 15..19
+         'fcircle', 'fsquare', 'ftriangle-up', 'ftriangle-down', 'ocircle', // 20..24
+         'osquare', 'otriangle-up', 'odiamond', 'ocross', 'fstar',     // 25..29
+         'ostar', 'dcross', 'otriangle-down', 'fdiamond', 'fcross');   // 30..34
 
    /** Function returns the ready to use marker for drawing */
    JSROOT.Painter.createAttMarker = function(attmarker, style) {
 
       if (style==null) style = attmarker['fMarkerStyle'];
 
-      var marker_name = JSROOT.Painter.root_markers[style];
+      var marker_name = (style < JSROOT.Painter.root_markers.length) ? JSROOT.Painter.root_markers[style] : "fcircle";
 
-      var info = { shape: 0, toFill: true, toRotate: false };
+      var shape = 0, toFill = true;
 
       if (typeof (marker_name) != 'undefined') {
-         switch (marker_name.charAt(0)) {
-            case 'd': info.shape = 7; break;
-            case 'o': info.toFill = false; break;
-            case 'g': info.toRotate = true; break;
-         }
+         if (marker_name.charAt(0) == '0') toFill = false;
 
          switch (marker_name.substr(1)) {
-           case "circle":  info.shape = 0; break;
-           case "cross":   info.shape = 1; break;
-           case "diamond": info.shape = 2; break;
-           case "square":  info.shape = 3; break;
-           case "triangle-up": info.shape = 4; break;
-           case "triangle-down": info.shape = 5; break;
-           case "star":    info.shape = 6; break;
+           case "circle":  shape = 0; break;
+           case "cross":   shape = 1; break;
+           case "diamond": shape = 2; break;
+           case "square":  shape = 3; break;
+           case "triangle-up": shape = 4; break;
+           case "triangle-down": shape = 5; break;
+           case "star":    shape = 6; break;
+           case "asterisk":  shape = 7; break;
+           case "plus":     shape = 8; break;
+           case "mult":     shape = 9; break;
          }
       }
 
@@ -355,24 +355,33 @@
       var marker_color = JSROOT.Painter.root_colors[attmarker['fMarkerColor']];
 
       var res = { stroke: marker_color, fill: marker_color, marker: "" };
-      if (!info.toFill) res['fill'] = 'none';
+      if (!toFill) res['fill'] = 'none';
 
-      if (info.shape==6)
-         res['marker'] = "M " + (-4*markerSize) + " " + (-1*markerSize) +
-                " L " + 4*markerSize + " " + (-1*markerSize) +
-                " L " + (-2.4*markerSize) + " " + 4*markerSize +
-                " L 0 " + (-4*markerSize) +
-                " L " + 2.8*markerSize + " " + 4*markerSize + " z";
-      else
-      if (info.shape==7)
-         res['marker'] = "M " + (-4*markerSize) + " " + (-4*markerSize) +
-                 " L " + 4*markerSize + " " + 4*markerSize +
-                 " M 0 " + (-4*markerSize) + " 0 " + 4*markerSize +
-                 " M "  + 4*markerSize + " " + (-4*markerSize) +
-                 " L " + (-4*markerSize) + " " + 4*markerSize +
-                 " M " + (-4*markerSize) + " 0 L " + 4*markerSize + " 0";
-      else
-         res['marker'] = d3.svg.symbol().type(d3.svg.symbolTypes[info.shape]).size(markerSize * markerScale);
+      switch(shape) {
+      case 6: // star
+         res['marker'] = "M" + (-4*markerSize) + "," + (-1*markerSize) +
+                        " L" + 4*markerSize + "," + (-1*markerSize) +
+                        " L" + (-2.4*markerSize) + "," + 4*markerSize +
+                        " L0," + (-4*markerSize) +
+                        " L" + 2.8*markerSize + "," + 4*markerSize + " z"; break;
+      case 7: // asterisk
+         res['marker'] = "M " + (-4*markerSize) + "," + (-4*markerSize) +
+                        " L" + 4*markerSize + "," + 4*markerSize +
+                        " M 0," + (-4*markerSize) + " L 0," + 4*markerSize +
+                        " M "  + 4*markerSize + "," + (-4*markerSize) +
+                        " L " + (-4*markerSize) + "," + 4*markerSize +
+                        " M " + (-4*markerSize) + ",0 L " + 4*markerSize + ",0"; break;
+      case 8: // plus
+         res['marker'] = "M 0," + (-4*markerSize) + " L 0," + 4*markerSize +
+                        " M " + (-4*markerSize) + ",0 L " + 4*markerSize + ",0"; break;
+      case 9: // mult
+         res['marker'] = "M " + (-4*markerSize) + "," + (-4*markerSize) +
+                        " L" + 4*markerSize + "," + 4*markerSize +
+                        " M "  + 4*markerSize + "," + (-4*markerSize) +
+                        " L " + (-4*markerSize) + "," + 4*markerSize; break;
+      default:
+         res['marker'] = d3.svg.symbol().type(d3.svg.symbolTypes[shape]).size(markerSize * markerScale);
+      }
 
       res.SetMarker = function(selection) {
          selection.style("fill", this.fill)
@@ -4234,14 +4243,15 @@
          option.Line = 1;
          option.Hist = -1;
       }
+
       if (chopt.indexOf('P') != -1) {
          option.Mark = 1;
          option.Hist = -1;
+         if (chopt.indexOf('P0') != -1) option.Mark = 10;
       }
       if (chopt.indexOf('Z') != -1) option.Zscale = 1;
       if (chopt.indexOf('*') != -1) option.Star = 1;
       if (chopt.indexOf('H') != -1) option.Hist = 2;
-      if (chopt.indexOf('P0') != -1) option.Mark = 10;
       if (this.IsTH2Poly()) {
          if (option.Fill + option.Line + option.Mark != 0) option.Scat = 0;
       }
@@ -4716,7 +4726,7 @@
          }
       } else {
          if (this.x_kind=='labels') {
-            if (this.x_nticks > 8) this.x_nticks = 8;
+            this.x_nticks = 30; // for text output allow max 30 names
             var scale_xrange = this.scale_xmax - this.scale_xmin;
             if (this.x_nticks > scale_xrange)
                this.x_nticks = parseInt(scale_xrange);
@@ -5110,9 +5120,7 @@
    JSROOT.THistPainter.prototype.Zoom = function(xmin, xmax, ymin, ymax, zmin, zmax) {
       var obj = this.main_painter();
       if (!obj) obj = this;
-
       var isany = false;
-
       if ((xmin != xmax) && (Math.abs(xmax-xmin) > obj.binwidthx*2.0)) {
          obj['zoom_xmin'] = xmin;
          obj['zoom_xmax'] = xmax;
@@ -5128,7 +5136,6 @@
          obj['zoom_zmax'] = zmax;
          isany = true;
       }
-
       if (isany) this.RedrawPad();
    }
 
@@ -5896,8 +5903,8 @@
 
    JSROOT.TH1Painter.prototype.DrawAsMarkers = function(draw_bins, w, h) {
 
-      /* Add a panel for each data point */
-      var draw_bins = this.CreateDrawBins(w, h, this.IsTProfile() || (this.Mark==10));
+      /* Calculate coordinates for each point, exclude zeros if not p0 or e0 option */
+      var draw_bins = this.CreateDrawBins(w, h, (this.options.Error!=10) && (this.options.Mark!=10));
 
       // here are up to five elements are collected, try to group them
       var nodes = this.draw_g.selectAll("g")
@@ -5917,7 +5924,7 @@
             .attr("y", function(d) { return (-d.yerr).toFixed(1); })
             .attr("width", function(d) { return (2*d.xerr).toFixed(1); })
             .attr("height", function(d) { return (2*d.yerr).toFixed(1); })
-            .call(this.attline.func)
+            // .call(this.attline.func)
             .call(this.fill.func)
             .style("pointer-events","visibleFill") // even when fill attribute not specified, get mouse events
             .property("fill0", this.fill.color) // remember color
@@ -5975,7 +5982,7 @@
                  .call(this.attline.func);
       }
 
-      if ((this.options.Mark > 0) || (this.options.Error == 12)) {
+      if (this.options.Mark > 0) {
          // draw markers also when e2 option was specified
          var marker = JSROOT.Painter.createAttMarker(this.histo);
          nodes.append("svg:path").call(marker.func);
@@ -5993,7 +6000,7 @@
 
       this.RecreateDrawG(false, ".main_layer", false);
 
-      if (this.IsTProfile() || (this.options.Error > 0) || (this.options.Mark > 0))
+      if ((this.options.Error > 0) || (this.options.Mark > 0))
          return this.DrawAsMarkers(width, height);
 
       var draw_bins = this.CreateDrawBins(width, height);
@@ -7995,6 +8002,11 @@
       return JSROOT.draw(divid, obj, drawopt);
    }
 
+   JSROOT.HierarchyPainter.prototype.redraw = function(divid, obj, drawopt) {
+      // just envelope, one should be able to redefine it for sub-classes
+      return JSROOT.redraw(divid, obj, drawopt);
+   }
+
    JSROOT.HierarchyPainter.prototype.player = function(itemname, option, call_back) {
       var item = this.Find(itemname);
 
@@ -8026,12 +8038,12 @@
       h.CreateDisplay(function(mdi) {
          if (!mdi) return display_callback();
 
-         var updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
-
          var item = h.Find(itemname);
 
          if ((item!=null) && ('_player' in item))
             return h.player(itemname, drawopt, display_callback);
+
+         var updating = (typeof(drawopt)=='string') && (drawopt.indexOf("update:")==0);
 
          if (updating) {
             drawopt = drawopt.substr(7);
@@ -8044,17 +8056,20 @@
             if ((handle==null) || !('func' in handle)) return display_callback();
          }
 
+         var divid = "";
+         if ((typeof(drawopt)=='string') && (drawopt.indexOf("divid:")>=0)) {
+            var pos = drawopt.indexOf("divid:");
+            divid = drawopt.slice(pos+6);
+            drawopt = drawopt.slice(0, pos);
+         }
+
          h.get(itemname, function(item, obj) {
 
             if (updating && item) delete item['_doing_update'];
             if (obj==null) return display_callback();
 
-            var pos = drawopt ? drawopt.indexOf("divid:") : -1;
-
-            if (pos>=0) {
-               var divid = drawopt.slice(pos+6);
-               drawopt = drawopt.slice(0, pos);
-               painter = h.draw(divid, obj, drawopt);
+            if (divid.length > 0) {
+               painter = updating ? h.redraw(divid, obj, drawopt) : h.draw(divid, obj, drawopt);
             } else {
                mdi.ForEachPainter(function(p, frame) {
                   if (p.GetItemName() != itemname) return;
@@ -8260,7 +8275,12 @@
       alert('expand ' + itemname + ' can be used only jquery part loaded');
    }
 
-   JSROOT.HierarchyPainter.prototype.GetTopOnlineItem = function() {
+   JSROOT.HierarchyPainter.prototype.GetTopOnlineItem = function(item) {
+      if (item!=null) {
+         while ((item!=null) && (!('_online' in item))) item = item._parent;
+         return item;
+      }
+
       if (this.h==null) return null;
       if ('_online' in this.h) return this.h;
       if ((this.h._childs!=null) && ('_online' in this.h._childs[0])) return this.h._childs[0];
@@ -8377,10 +8397,12 @@
    JSROOT.HierarchyPainter.prototype.GetOnlineItemUrl = function(item) {
       // returns URL, which could be used to request item from the online server
       if ((item!=null) && (typeof item == "string")) item = this.Find(item);
+      var top = this.GetTopOnlineItem(item);
       if (item==null) return null;
-      var top = item;
-      while ((top!=null) && (!('_online' in top))) top = top._parent;
-      return this.itemFullName(item, top);
+
+      var urlpath = this.itemFullName(item, top);
+      if (top && ('_online' in top) && (top._online!="")) urlpath = top._online + urlpath;
+      return urlpath;
    }
 
    JSROOT.HierarchyPainter.prototype.GetOnlineItem = function(item, itemname, callback, option) {
@@ -8392,7 +8414,6 @@
          url = this.GetOnlineItemUrl(item);
          var func = null;
          if ('_kind' in item) draw_handle = JSROOT.getDrawHandle(item._kind);
-
 
          if ('_doing_expand' in item) {
             h_get = true;
@@ -8620,8 +8641,14 @@
    }
 
    JSROOT.HierarchyPainter.prototype.SetDisplay = function(layout, frameid) {
-      this['disp_kind'] = layout;
-      this['disp_frameid'] = frameid;
+      if ((frameid==null) && (typeof layout == 'object')) {
+         this['disp'] = layout;
+         this['disp_kind'] = 'custom';
+         this['disp_frameid'] = null;
+      } else {
+         this['disp_kind'] = layout;
+         this['disp_frameid'] = frameid;
+      }
    }
 
    JSROOT.HierarchyPainter.prototype.GetLayout = function() {
@@ -8654,7 +8681,7 @@
       var h = this;
 
       if ('disp' in this) {
-         if (h['disp'].NumDraw() > 0) return JSROOT.CallBack(callback, h['disp']);
+         if ((h['disp'].NumDraw() > 0) || (h['disp_kind'] == "custom")) return JSROOT.CallBack(callback, h['disp']);
          h['disp'].Reset();
          delete h['disp'];
       }
@@ -8899,6 +8926,47 @@
 
    // ==================================================
 
+   JSROOT.CustomDisplay = function() {
+      JSROOT.MDIDisplay.call(this, "dummy");
+      this.frames = {}; // array of configured frames
+   }
+
+   JSROOT.CustomDisplay.prototype = Object.create(JSROOT.MDIDisplay.prototype);
+
+   JSROOT.CustomDisplay.prototype.AddFrame = function(divid, itemname) {
+      if (!(divid in this.frames)) this.frames[divid] = "";
+
+      this.frames[divid] += (itemname + ";");
+   }
+
+   JSROOT.CustomDisplay.prototype.ForEachFrame = function(userfunc,  only_visible) {
+      var ks = Object.keys(this.frames);
+      for (var k = 0; k < ks.length; k++) {
+         var node = d3.select("#"+ks[k]);
+         if (!node.empty())
+            JSROOT.CallBack(userfunc, node.node());
+      }
+   }
+
+   JSROOT.CustomDisplay.prototype.CreateFrame = function(title) {
+      var ks = Object.keys(this.frames);
+      for (var k = 0; k < ks.length; k++) {
+         var items = this.frames[ks[k]];
+         if (items.indexOf(title+";")>=0)
+            return d3.select("#"+ks[k]).node();
+      }
+      return null;
+   }
+
+   JSROOT.CustomDisplay.prototype.Reset = function() {
+      JSROOT.MDIDisplay.prototype.Reset.call(this);
+      this.ForEachFrame(function(frame) {
+         d3.select(frame).html("");
+      });
+   }
+
+   // ==================================================
+
    JSROOT.SimpleDisplay = function(frameid) {
       JSROOT.MDIDisplay.call(this, frameid);
    }
@@ -9107,7 +9175,7 @@
    JSROOT.addDrawFunc({ name: "TText", func:JSROOT.Painter.drawText });
    JSROOT.addDrawFunc({ name: "TPaveLabel", func:JSROOT.Painter.drawText });
    JSROOT.addDrawFunc({ name: /^TH1/, icon: "img_histo1d", func:JSROOT.Painter.drawHistogram1D, opt:";P;P0;E;E1;E2;same"});
-   JSROOT.addDrawFunc({ name: "TProfile", icon: "img_profile", func:JSROOT.Painter.drawHistogram1D, opt:";E1;E2"});
+   JSROOT.addDrawFunc({ name: "TProfile", icon: "img_profile", func:JSROOT.Painter.drawHistogram1D, opt:";E0;E1;E2;p;hist"});
    JSROOT.addDrawFunc({ name: /^TH2/, icon: "img_histo2d", func:JSROOT.Painter.drawHistogram2D, opt:";COL;COLZ;COL3;LEGO;same" });
    JSROOT.addDrawFunc({ name: /^TH3/, icon: 'img_histo3d', prereq: "3d", func: "JSROOT.Painter.drawHistogram3D" });
    JSROOT.addDrawFunc({ name: "THStack", func:JSROOT.Painter.drawHStack });
@@ -9220,13 +9288,19 @@
    JSROOT.draw = function(divid, obj, opt) {
       if ((obj==null) || (typeof obj != 'object')) return null;
 
-      var handle = null;
+      var handle = null, painter = null;
       if ('_typename' in obj) handle = JSROOT.getDrawHandle("ROOT." + obj['_typename'], opt);
       else if ('_kind' in obj) handle = JSROOT.getDrawHandle(obj['_kind'], opt);
 
       if ((handle==null) || !('func' in handle)) return null;
 
-      if (typeof handle.func == 'function') return handle.func(divid, obj, opt);
+      function performDraw() {
+         if ((painter==null) && ('painter_kind' in handle))
+            painter = (handle['painter_kind'] == "base") ? new JSROOT.TBasePainter() : new JSROOT.TObjectPainter();
+         return handle.func(divid, obj, opt, painter);
+      }
+
+      if (typeof handle.func == 'function') return performDraw();
 
       var funcname = "", prereq = "";
       if (typeof handle.func == 'object') {
@@ -9245,8 +9319,10 @@
          // special handling for painters, which should be loaded via extra scripts
          // such painter get extra last argument - pointer on dummy painter object
 
-         var painter = (funcname.indexOf("JSROOT.Painter")==0) ?
-                        new JSROOT.TObjectPainter() : new JSROOT.TBasePainter();
+         if (!('painter_kind' in handle))
+            handle['painter_kind'] = (funcname.indexOf("JSROOT.Painter")==0) ? "object" : "base";
+
+         painter = (handle['painter_kind'] == "base") ? new JSROOT.TBasePainter() : new JSROOT.TObjectPainter();
 
          JSROOT.AssertPrerequisites(prereq, function() {
             var func = JSROOT.findFunction(funcname);
@@ -9255,8 +9331,8 @@
                return null;
             }
 
-            //handle.func = func; // remember function once it found
-            var ppp = func(divid, obj, opt, painter);
+            handle.func = func; // remember function once it found
+            var ppp = performDraw();
 
             if (ppp !== painter)
                alert('Painter function ' + funcname + ' do not follow rules of dynamicaly loaded painters');
@@ -9268,8 +9344,8 @@
       var func = JSROOT.findFunction(funcname);
       if (func == null) return null;
 
-      //handle.func = func; // remember function once it found
-      return func(divid, obj, opt);
+      handle.func = func; // remember function once it found
+      return performDraw();
    }
 
    /** @fn JSROOT.redraw(divid, obj, opt)
