@@ -259,8 +259,7 @@ MbsDisplay.prototype.BuildView = function() {
       
       pthis.hpainter = hpainter;
       
-      pthis.SetTrending(300);
-      // pthis.SetRateGauges();
+      pthis.SetTrending(false, 300);
       
       hpainter.display("logger");
       
