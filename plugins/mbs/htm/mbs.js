@@ -399,113 +399,96 @@ MbsDisplay.prototype.ShowGosipPanel = function(on){
          });
       }
     this.fShoWGosip=on;
-
 }
 
 
+MbsDisplay.prototype.RefreshView = function() {
 
-
-
-MbsDisplay.prototype.RefreshView = function(){
-
-    if (this.fMbsState.fRunning) {
-         $("#mbs_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow");
+   if (this.fMbsState.fRunning) {
+      $("#mbs_container").addClass("styleGreen").removeClass("styleRed").removeClass("styleYellow");
+   } else {
+      if (this.fMbsState.fSetupLoaded) {
+         $("#mbs_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
       } else {
-         if (this.fMbsState.fSetupLoaded) {
-            $("#mbs_container").addClass("styleYellow").removeClass("styleRed").removeClass("styleGreen");
-         } else {
-            $("#mbs_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow");
-         }
+         $("#mbs_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow");
       }
+   }
     //console.log("RefreshView typeof fileopen=%s, value=%s globalvalue=%s", typeof(this.fMbsState.fFileOpen),
    //       this.fMbsState.fFileOpen, Pexor.fFileOpen);
 
-    if (this.fMbsState.fFileOpen) {
-          //console.log("RefreshView finds open file");
-         $("#file_container").addClass("styleGreen").removeClass("styleRed");
-          $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-closethick MyButtonStyle" }});
-         $("#buttonStartFile").attr("title", "Close output file");
-         $("#FileAutoMode").prop('disabled', true);
-         $("#FileRFIO").prop('disabled', true);
-              $("#Filesize").spinner("disable");
+   if (this.fMbsState.fFileOpen) {
+      //console.log("RefreshView finds open file");
+      $("#file_container").addClass("styleGreen").removeClass("styleRed");
+      $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-closethick MyButtonStyle" }});
+      $("#buttonStartFile").attr("title", "Close output file");
+      $("#FileAutoMode").prop('disabled', true);
+      $("#FileRFIO").prop('disabled', true);
+      $("#Filesize").spinner("disable");
 
-      } else {
-         //console.log("RefreshView finds close file");
-         $("#file_container").addClass("styleRed").removeClass("styleGreen");
-          $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-seek-next MyButtonStyle" }});
-          $("#buttonStartFile").attr("title", "Open lmd file for writing");
-          $("#FileAutoMode").prop('disabled', false);
-          $("#FileRFIO").prop('disabled', false);
-          $("#Filesize").spinner("enable");
-      }
+   } else {
+      //console.log("RefreshView finds close file");
+      $("#file_container").addClass("styleRed").removeClass("styleGreen");
+      $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-seek-next MyButtonStyle" }});
+      $("#buttonStartFile").attr("title", "Open lmd file for writing");
+      $("#FileAutoMode").prop('disabled', false);
+      $("#FileRFIO").prop('disabled', false);
+      $("#Filesize").spinner("enable");
+   }
 
+   if (this.fMonitoring) {
+      $("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
+      $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
+      $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
+      $("#Refreshtime").spinner("disable");
+      $("#Loglength").spinner("disable");
+      $("#Loginterval").spinner("disable");
 
-    if (this.fMonitoring) {
-         $("#monitoring_container").addClass("styleGreen").removeClass("styleRed");
-          $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-stop MyButtonStyle\"></span>");
-          $("label[for='Monitoring']").attr("title", "Stop frequent refresh");
-          $("#Refreshtime").spinner("disable");
-          $("#Loglength").spinner("disable");
-          $("#Loginterval").spinner("disable");
+   } else {
+      $("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
+      $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
+      $("label[for='Monitoring']").attr("title", "Activate frequent refresh");
+      $("#Refreshtime").spinner("enable");
+      $("#Loglength").spinner("enable");
+      $("#Loginterval").spinner("enable");
 
-      } else {
-         $("#monitoring_container").addClass("styleRed").removeClass("styleGreen");
-         $("label[for='Monitoring']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-play MyButtonStyle\"></span>");
-          $("label[for='Monitoring']").attr("title", "Activate frequent refresh");
-          $("#Refreshtime").spinner("enable");
-          $("#Loglength").spinner("enable");
-          $("#Loginterval").spinner("enable");
+   }
 
-      }
+   if (!this.fTrending) {
+      $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");//
+      $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");
+      $("#Trendlength").spinner("enable");
+   } else {
+      $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");
+      $("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");
+      $("#Trendlength").spinner("disable");
+   }
 
+   if($("#FileRFIO").is(':checked')){
+      $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
+      $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
+   } else {
+      $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"></span>");
+      $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
+   }
 
-    if (!this.fTrending) {
-          $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-circle-arrow-n MyButtonStyle\"></span>");//
-          $("label[for='Trending']").attr("title", "Rates are displayed as gauges. Press to switch to trending graphs.");
-            $("#Trendlength").spinner("enable");
-    } else {
-         $("label[for='Trending']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-image MyButtonStyle\"></span>");
-         $("label[for='Trending']").attr("title", "Rates are displayed as trending graphs. Press to switch to gauges.");
-         $("#Trendlength").spinner("disable");
-    }
+   if($("#FileAutoMode").is(':checked')){
+      $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-star MyButtonStyle\"></span>");
+      $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
+   } else {
+      $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-document MyButtonStyle\"></span>");
+      $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
+   }
 
-
-    if($("#FileRFIO").is(':checked')){
-       $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
-       $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
-    }
-    else
-       {
-       $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"></span>");
-       $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
-       }
-
-
-    if($("#FileAutoMode").is(':checked')){
-
-       $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-star MyButtonStyle\"></span>");
-       $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
-
-    }
-    else
-       {
-       $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-document MyButtonStyle\"></span>");
-       $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
-
-       }
-
-    if (this.fDoCommandConfirm) {
-       $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
-       $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is ON");
+   if (this.fDoCommandConfirm) {
+      $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-comment MyButtonStyle\"></span>");//
+      $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is ON");
    } else {
       $("label[for='ConfirmCommandToggle']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-alert MyButtonStyle\"></span>");
       $("label[for='ConfirmCommandToggle']").attr("title", "Command Confirmation Mode is OFF");
    }
 
-      $('#Loglength').val(MyDisplay.fLoggingHistory);
-      $('#Loginterval').val(MyDisplay.fRateInterval);
-
-
+   $('#Loglength').val(MyDisplay.fLoggingHistory);
+   $('#Loginterval').val(MyDisplay.fRateInterval);
 
    // console.log("RefreshView with dabc state = %s",
    // this.fMbsState.fDabcState);
@@ -527,10 +510,7 @@ MbsDisplay.prototype.RefreshView = function(){
 //       //console.log("RefreshView finds other state");
 //         $("#dabc_container").addClass("styleRed").removeClass("styleGreen").removeClass("styleYellow").removeClass("styleBlue");
 //      }
-
-
-
-};
+}
 
 
 MbsDisplay.prototype.SetStatusMessage= function(info) {
@@ -539,8 +519,7 @@ MbsDisplay.prototype.SetStatusMessage= function(info) {
    document.getElementById("status_message").innerHTML = txt;
 }
 
-
-MbsDisplay.prototype.Confirm= function(msg) {
+MbsDisplay.prototype.Confirm = function(msg) {
    if(this.fDoCommandConfirm)
       return (confirm(msg));
    else
@@ -553,7 +532,6 @@ $(function() {
    MyDisplay = new MbsDisplay(MBS);
    MyDisplay.BuildView();
    MyDisplay.ChangeMonitoring(true);
-
 
 ///////////////////////////// mbs specific:
 
