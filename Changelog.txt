@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+23.10.2015
+1. Introduce stream::RecalibrateModule to allow recalibrate HLD files one again.
+   Here main problem - one should split HLD events on subevents and redistribute them
+   over apporopriate TdcCalibrationModule's
+
+
 25.09.2015
 1. Replace gauge display with implementation from https://gist.github.com/tomerd/1499279
    It is d3.js-based and like google gauge.  

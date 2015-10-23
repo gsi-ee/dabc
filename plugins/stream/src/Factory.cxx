@@ -17,6 +17,7 @@
 
 #include "stream/RunModule.h"
 #include "stream/TdcCalibrationModule.h"
+#include "stream/RecalibrateModule.h"
 
 dabc::FactoryPlugin streamfactory(new stream::Factory("stream"));
 
@@ -27,6 +28,9 @@ dabc::Module* stream::Factory::CreateModule(const std::string& classname, const 
 
    if (classname == "stream::TdcCalibrationModule")
       return new stream::TdcCalibrationModule(modulename, cmd);
+
+   if (classname == "stream::RecalibrateModule")
+      return new stream::RecalibrateModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

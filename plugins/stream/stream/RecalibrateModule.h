@@ -13,8 +13,8 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef STREAM_RunModule
-#define STREAM_RunModule
+#ifndef STREAM_RecalibrateModule
+#define STREAM_RecalibrateModule
 
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
@@ -30,39 +30,24 @@ namespace stream {
     * Module used to run code, available in stream framework
     */
 
-   class RunModule : public dabc::ModuleAsync {
+   class RecalibrateModule : public dabc::ModuleAsync {
 
    protected:
-      int          fParallel; // how many parallel processes to start
-      void        *fInitFunc; // init function
-      int          fStopMode; // for central module waiting that others finish
-      DabcProcMgr* fProcMgr;
-      std::string  fAsf;
-      bool         fDidMerge;
-      long unsigned fTotalSize;
-      long unsigned fTotalEvnts;
-      long unsigned fTotalOutEvnts;
+
       virtual int ExecuteCommand(dabc::Command cmd);
 
       virtual void OnThreadAssigned();
 
-      bool ProcessNextEvent(void* evnt, unsigned evntsize);
-
-      bool ProcessNextBuffer();
-
-      bool RedistributeBuffers();
-
-      void ProduceMergedHierarchy();
-
-      void SaveHierarchy(dabc::Buffer buf);
+      bool retransmit();
 
    public:
-      RunModule(const std::string& name, dabc::Command cmd = 0);
-      virtual ~RunModule();
 
-      virtual bool ProcessRecv(unsigned port);
+      RecalibrateModule(const std::string& name, dabc::Command cmd = 0);
+      virtual ~RecalibrateModule();
 
-      virtual bool ProcessSend(unsigned port) { return RedistributeBuffers(); }
+      virtual bool ProcessRecv(unsigned) { return retransmit(); }
+
+      virtual bool ProcessSend(unsigned) { return retransmit(); }
 
       virtual void BeforeModuleStart();
 

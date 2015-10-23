@@ -163,8 +163,8 @@ bool stream::TdcCalibrationModule::retransmit()
       } else
       if (fTrbProc!=0) {
 
-         if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) || (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit)) {
-            // this is debug mode when processing events from the file
+         if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file
+             (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit)) { // this is normal operation mode
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
