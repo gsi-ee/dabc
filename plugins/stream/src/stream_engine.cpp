@@ -1,4 +1,6 @@
-// this file used to compile stream initialization scripts on the fly
+// $Id$
+
+// This file used to compile stream initialization scripts on the fly
 
 #include "base/ProcMgr.h"
 
