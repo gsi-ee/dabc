@@ -34,6 +34,9 @@ namespace stream {
 
    protected:
 
+      int fNumSub;             // number of sub-modules
+      DabcProcMgr* fProcMgr;   // central process manager
+
       virtual int ExecuteCommand(dabc::Command cmd);
 
       virtual void OnThreadAssigned();

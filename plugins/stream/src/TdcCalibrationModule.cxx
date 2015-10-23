@@ -29,6 +29,7 @@
 stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
+   fOwnProcMgr(false),
    fTrbProc(0),
    fDummy(true),
    fAutoCalibr(1000),
@@ -38,8 +39,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fProgress(0),
    fState()
 {
-   // we need one input and one output port
-   EnsurePorts(1, 1);
+   // normally one input and output are required, but for recalibration no ports are used
+   EnsurePorts(0, 0);
 
    fLastCalibr.GetNow();
 
@@ -67,8 +68,13 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 
    item.SetField("trb", fTRB);
 
-   fProcMgr = new stream::DabcProcMgr();
-   fProcMgr->SetTop(fWorkerHierarchy);
+   fProcMgr = (stream::DabcProcMgr*) cmd.GetPtr("ProcMgr");
+
+   if (fProcMgr==0) {
+      fOwnProcMgr = true;
+      fProcMgr = new stream::DabcProcMgr();
+      fProcMgr->SetTop(fWorkerHierarchy);
+   }
 
    fTrbProc = new hadaq::TrbProcessor(fTRB);
    std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
@@ -107,12 +113,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    item.SetField("value", fState);
 
    // set ids and create more histograms
-   fProcMgr->UserPreLoop();
+   if (fOwnProcMgr) fProcMgr->UserPreLoop();
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 
    // remove pointer, let other modules to create and use it
-   base::ProcMgr::ClearInstancePointer();
+   if (fOwnProcMgr) base::ProcMgr::ClearInstancePointer();
 
    DOUT0("TdcCalibrationModule dummy %s auto %d", DBOOL(fDummy), fAutoCalibr);
 }
@@ -120,11 +126,16 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 stream::TdcCalibrationModule::~TdcCalibrationModule()
 {
    fTrbProc = 0;
-   if (fProcMgr) {
-      delete fProcMgr;
-      fProcMgr = 0;
-   }
+   if (fOwnProcMgr) delete fProcMgr;
+   fOwnProcMgr = false;
+   fProcMgr = 0;
 }
+
+void stream::TdcCalibrationModule::OnThreadAssigned()
+{
+   DOUT3("Assign module %s with thread %s", GetName(), ThreadName().c_str());
+}
+
 
 bool stream::TdcCalibrationModule::retransmit()
 {
@@ -222,7 +233,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
 int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
+   if (fOwnProcMgr && fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
 
    if (cmd.IsName("ResetExportedCounters") ) {
       // redirect command to real transport

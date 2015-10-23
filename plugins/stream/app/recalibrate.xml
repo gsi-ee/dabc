@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context host="localhost" name="Recalibrate">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcStream.so"/>  
+      <logfile value="caltest.log"/>
+      <loglevel value="-1"/>
+      <loglimit value="1000"/>
+      <control value="true"/>
+      <threads_layout value="balanced"/>
+    </Run>
+    
+    <HttpServer name="http" port="8090"/>
+    
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+    
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+
+    <!-- these are genetic parameters for all calibration modules -->
+    <Module name="Sub*" thread="CalcThread" auto="false">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <NumInputs value="0"/>
+       <NumOutputs value="0"/>
+
+       <FineMin value="31"/>
+       <FineMax value="491"/>
+       <NumChannels value="33"/>
+       <EdgeMask value="4"/>
+       <HistFilling value="4"/>
+       
+       <!-- DisableCalibrationFor value="0"/-->  
+       <Auto value="100000"/>
+       <!-- CalibrFile value="local"/-->
+       <Dummy value="false"/>
+     </Module>
+
+    <!-- these are special parameter for first subevent -->
+    <Module name="Sub0">    
+       <TRB value="0x8000"/>
+       <HUB value="0x8100"/>
+       <TDC value="[0xC000,0xC001,0xC100,0xC101,0xC003]"/>
+    </Module>
+
+    <!-- these are special parameter for second subevent -->
+    <Module name="Sub1">    
+       <TRB value="0x8003"/>
+       <TDC value="[0xC00C,0xC00D,0xC00E,0xC00F]"/>
+    </Module>
+
+    <!-- these are special parameter for third subevent -->
+    <Module name="Sub1">    
+       <TRB value="0x8002"/>
+       <TDC value="[0xC008,0xC009,0xC00A]"/>
+    </Module>
+
+    <Module name="Recalibrate" class="stream::RecalibrateModule" thread="CalcThread">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <NumInputs value="0"/>
+       <NumOutputs value="0"/>
+
+       <InputPort name="Input0" url="hld:///data.local1/trb3tdc/file_raw.hld?loop"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
+       <!-- how many sub-modules are created -->
+       <NumSub value="3"/>
+     </Module>
+
+
+  </Context>
+
+</dabc>

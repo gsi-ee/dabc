@@ -43,8 +43,9 @@ namespace stream {
 
    protected:
 
-      DabcProcMgr* fProcMgr;
-      hadaq::TrbProcessor* fTrbProc;
+      DabcProcMgr           *fProcMgr;     //! stream process manager
+      bool                   fOwnProcMgr;  //! if created in the module
+      hadaq::TrbProcessor   *fTrbProc;     //! TRB processor
       bool fDummy;  //! module creates all TDCs but do not perform any transformation
       int  fAutoCalibr;  //! amount of statistic for the auto calibration in channels
       int  fDummyCounter;  //! used in dummy
@@ -57,6 +58,8 @@ namespace stream {
       bool retransmit();
 
       virtual int ExecuteCommand(dabc::Command cmd);
+
+      virtual void OnThreadAssigned();
 
    public:
       TdcCalibrationModule(const std::string& name, dabc::Command cmd = 0);
