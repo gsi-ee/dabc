@@ -69,6 +69,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    item.SetField("trb", fTRB);
 
    fProcMgr = (stream::DabcProcMgr*) cmd.GetPtr("ProcMgr");
+   hadaq::HldProcessor* hld = (hadaq::HldProcessor*) cmd.GetPtr("HLDProc");
 
    if (fProcMgr==0) {
       fOwnProcMgr = true;
@@ -76,7 +77,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
       fProcMgr->SetTop(fWorkerHierarchy);
    }
 
-   fTrbProc = new hadaq::TrbProcessor(fTRB);
+   fTrbProc = new hadaq::TrbProcessor(fTRB, hld);
    std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
    for (unsigned n=0;n<hubid.size();n++)
       fTrbProc->AddHadaqHUBId(hubid[n]);

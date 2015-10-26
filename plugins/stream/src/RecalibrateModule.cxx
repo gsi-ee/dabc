@@ -19,7 +19,7 @@
 
 #include "hadaq/Iterator.h"
 #include "mbs/Iterator.h"
-#include "hadaq/TdcProcessor.h"
+#include "hadaq/HldProcessor.h"
 #include "stream/DabcProcMgr.h"
 
 #include "dabc/Manager.h"
@@ -38,7 +38,8 @@
 stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fNumSub(0),
-   fProcMgr(0)
+   fProcMgr(0),
+   fHLD(0)
 {
    EnsurePorts(1, 1);
 
@@ -48,11 +49,14 @@ stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Comm
    fProcMgr = new DabcProcMgr;
    fProcMgr->SetTop(fWorkerHierarchy, true);
 
+   fHLD = new hadaq::HldProcessor();
+
    for (int n=0;n<fNumSub;n++) {
       std::string mname = dabc::format("Sub%d",n);
 
       dabc::CmdCreateModule cmd("stream::TdcCalibrationModule", mname);
       cmd.SetPtr("ProcMgr", fProcMgr);
+      cmd.SetPtr("HLDProc", fHLD);
 
       DOUT0("Create module %s", mname.c_str());
 
@@ -78,6 +82,15 @@ bool stream::RecalibrateModule::retransmit()
 {
    if (CanSend() && CanRecv()) {
       dabc::Buffer buf = Recv();
+      if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
+         hadaq::ReadIterator iter(buf);
+         while (iter.NextEvent()) {
+            fHLD->TransformEvent(iter.evnt(), iter.evntsize());
+         }
+      } else {
+         DOUT0("Buffer of unsupported type %d", buf.GetTypeId());
+      }
+
       Send(buf);
       return true;
    }

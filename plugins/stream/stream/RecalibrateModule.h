@@ -20,6 +20,10 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+namespace hadaq {
+   class HldProcessor;
+}
+
 namespace stream {
 
    class DabcProcMgr;
@@ -34,8 +38,9 @@ namespace stream {
 
    protected:
 
-      int fNumSub;             // number of sub-modules
-      DabcProcMgr* fProcMgr;   // central process manager
+      int fNumSub;                // number of sub-modules
+      DabcProcMgr* fProcMgr;      // central process manager
+      hadaq::HldProcessor*  fHLD; // processor of HLD events
 
       virtual int ExecuteCommand(dabc::Command cmd);
 
