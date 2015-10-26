@@ -42,6 +42,8 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fFilePort = Cfg("fileport", cmd).AsInt(1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
+   fRingSize = Cfg("showtrig", cmd).AsInt(0);
+   if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
 
    CreateTimer("update", period, false);
 
@@ -211,7 +213,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       std::string sbuf = dabc::format("%2u", n);
 
-      hadaq::DataSocketAddon* addon = (hadaq::DataSocketAddon*) comb->fCfg[n].fAddon;
+      hadaq::CombinerModule::InputCfg& cfg = comb->fCfg[n];
+
+      hadaq::DataSocketAddon* addon = (hadaq::DataSocketAddon*) cfg.fAddon;
 
       if (addon==0) {
          sbuf.append("  missing addon ");
@@ -236,14 +240,14 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       }
 
       sbuf.append(dabc::format(" %3d %5s %5s",
-                   comb->fCfg[n].fNumCanRecv,
-                   dabc::number_to_str(comb->fCfg[n].fDroppedTrig,0).c_str(),
-                   dabc::number_to_str(comb->fCfg[n].fLostTrig,0).c_str()));
+                   cfg.fNumCanRecv,
+                   dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
+                   dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 
-      inpdrop.push_back(comb->fCfg[n].fDroppedTrig);
-      inplost.push_back(comb->fCfg[n].fLostTrig);
+      inpdrop.push_back(cfg.fDroppedTrig);
+      inplost.push_back(cfg.fLostTrig);
 
-      if (comb->fCfg[n].fCalibr.length() > 0) {
+      if (cfg.fCalibr.length() > 0) {
          sbuf.append(dabc::format(" 0x%04x", fCalibr[n].trb));
 
          std::string tdc = " [";
@@ -261,6 +265,17 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       }
 
       s += sbuf;
+
+      if (fRingSize>0) {
+         sbuf = "";
+         unsigned cnt = cfg.fRingCnt;
+         for (int n=0;n<fRingSize;n++) {
+            if (cnt>0) cnt--; else cnt = HADAQ_RINGSIZE-1;
+            sbuf = dabc::format("0x%06x ",(unsigned)cfg.fTrigNumRing[cnt]) + sbuf;
+         }
+         s += " trig:" + sbuf;
+      }
+
       s += "\n";
    }
 

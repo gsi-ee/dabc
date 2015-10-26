@@ -522,6 +522,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 {
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
+   InputCfg& cfg = fCfg[ninp];
+
    fCfg[ninp].Reset(fast);
    bool foundevent(false);
 
@@ -549,6 +551,9 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       fCfg[ninp].fTrigNr = ((fInp[ninp].subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
 
+      cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+      cfg.fRingCnt = (cfg.fRingCnt+1) % HADAQ_RINGSIZE;
+
       fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
       if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::RawSubevent)) {
          fCfg[ninp].fEmpty = false;
@@ -557,7 +562,9 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
 //      DOUT0("Inp:%u trig:%08u", ninp, fCfg[ninp].fTrigNr);
 
-      fCfg[ninp].fSubId = fInp[ninp].subevnt()->GetId() & 0x7fffffffUL ;
+      fCfg[ninp].fSubId = fInp[ninp].subevnt()->GetId() & 0x7fffffffUL;
+
+
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/

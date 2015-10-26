@@ -34,6 +34,7 @@
 #define HADAQ_NEVTIDS 64UL             /* must be 2^n */
 #define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
 #define HADAQ_NUMERRPATTS 5
+#define HADAQ_RINGSIZE 100
 
 namespace hadaq {
 
@@ -69,6 +70,8 @@ namespace hadaq {
          std::string fCalibr;       //!< name of calibration module, used only in terminal
          unsigned fLostTrig;        //!< number of lost triggers (never received by the combiner)
          unsigned fDroppedTrig;     //!< number of dropped triggers (received but dropped by the combiner)
+         uint32_t  fTrigNumRing[HADAQ_RINGSIZE]; // values of last seen TU ID
+         unsigned  fRingCnt;                // where next value will be written
 
          InputCfg() :
             fTrigNr(0),
@@ -85,10 +88,13 @@ namespace hadaq {
             fNumCanRecv(0),
             fCalibr(),
             fLostTrig(0),
-            fDroppedTrig(0)
+            fDroppedTrig(0),
+            fRingCnt(0)
          {
-            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+            for(int i=0;i<HADAQ_NUMERRPATTS;i++)
                fErrorbitStats[i]=0;
+            for (int i=0;i<HADAQ_RINGSIZE;i++)
+               fTrigNumRing[i]=0;
          }
 
          InputCfg(const InputCfg& src) :
@@ -106,11 +112,13 @@ namespace hadaq {
             fNumCanRecv(src.fNumCanRecv),
             fCalibr(src.fCalibr),
             fLostTrig(src.fLostTrig),
-            fDroppedTrig(src.fDroppedTrig)
+            fDroppedTrig(src.fDroppedTrig),
+            fRingCnt(src.fRingCnt)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];
-
+            for (int i=0;i<HADAQ_RINGSIZE;i++)
+               fTrigNumRing[i]=src.fTrigNumRing[i];
          }
 
          void Reset(bool complete = false)
@@ -188,7 +196,6 @@ namespace hadaq {
          unsigned fEventIdCount[HADAQ_NEVTIDS];
 
          uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
-
 
          std::string fRunInfoToOraFilename;
          std::string fPrefix;

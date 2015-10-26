@@ -53,6 +53,7 @@ namespace hadaq {
          int             fFilePort;
          dabc::Command   fLastFileCmd; // last received data from file transport
          bool            fFileReqRunning; // is file request running
+         int             fRingSize; // number of last IDs shown
 
          std::string rate_to_str(double r);
 
