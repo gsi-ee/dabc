@@ -53,29 +53,33 @@ namespace hadaq {
       protected:
 
       struct InputCfg {
-
-         uint32_t fTrigNr; //!< keeps current trigger sequence number
-         uint32_t fLastTrigNr; //!< keeps previous trigger sequence number - used to control data lost
-         uint32_t fTrigTag; //!<  keeps current trigger tag
-         uint32_t fTrigType; //!< current subevent trigger type
-         uint32_t fSubId;  //!<  current subevent id
-         uint32_t fErrorBits; //!< errorbit status word from payload end
+         hadaq::RawSubevent* subevnt; //!< actual subevent
+         uint32_t fTrigNr;       //!< keeps current trigger sequence number
+         uint32_t fLastTrigNr;   //!< keeps previous trigger sequence number - used to control data lost
+         uint32_t fTrigTag;      //!<  keeps current trigger tag
+         uint32_t fTrigType;     //!< current subevent trigger type
+         uint32_t fSubId;        //!<  current subevent id
+         uint32_t fErrorBits;    //!< errorbit status word from payload end
          uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; //!< errorbit statistics counter
-         float fQueueLevel;  //!<  current input queue fill level
+         float fQueueLevel;      //!<  current input queue fill level
          uint32_t fLastEvtBuildTrigId; //!< remember id of last build event
-         bool fDataError; //!< indicates if subevent has data error bit set in header id
-         bool fEmpty; //!< indicates if input has empty data
-         void* fAddon;  //!< Direct transport pointer, used only for debugging
-         int fNumCanRecv; //!< Number buffers can be received
-         std::string fCalibr;       //!< name of calibration module, used only in terminal
-         unsigned fLostTrig;        //!< number of lost triggers (never received by the combiner)
-         unsigned fDroppedTrig;     //!< number of dropped triggers (received but dropped by the combiner)
-         uint32_t  fTrigNumRing[HADAQ_RINGSIZE]; // values of last seen TU ID
-         unsigned  fRingCnt;                // where next value will be written
+         bool fDataError;        //!< indicates if subevent has data error bit set in header id
+         bool fEmpty;            //!< indicates if input has empty data
+         void* fAddon;           //!< Direct transport pointer, used only for debugging
+         int fNumCanRecv;        //!< Number buffers can be received
+         std::string fCalibr;    //!< name of calibration module, used only in terminal
+         unsigned fLostTrig;     //!< number of lost triggers (never received by the combiner)
+         unsigned fDroppedTrig;  //!< number of dropped triggers (received but dropped by the combiner)
+         uint32_t  fTrigNumRing[HADAQ_RINGSIZE]; //!< values of last seen TU ID
+         unsigned  fRingCnt;     //!< where next value will be written
+         unsigned  fResort;       //!< enables resorting of events
+         ReadIterator fIter;      //!< main iterator
+         ReadIterator fResortIter; //!< additional iterator to check resort
 
          InputCfg() :
+            subevnt(0),
             fTrigNr(0),
-            fLastTrigNr(0),
+            fLastTrigNr(0xffffffff),
             fTrigTag(0),
             fTrigType(0),
             fSubId(0),
@@ -89,7 +93,10 @@ namespace hadaq {
             fCalibr(),
             fLostTrig(0),
             fDroppedTrig(0),
-            fRingCnt(0)
+            fRingCnt(0),
+            fResort(false),
+            fIter(),
+            fResortIter()
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;i++)
                fErrorbitStats[i]=0;
@@ -98,6 +105,7 @@ namespace hadaq {
          }
 
          InputCfg(const InputCfg& src) :
+            subevnt(src.subevnt),
             fTrigNr(src.fTrigNr),
             fLastTrigNr(src.fLastTrigNr),
             fTrigTag(src.fTrigTag),
@@ -113,7 +121,10 @@ namespace hadaq {
             fCalibr(src.fCalibr),
             fLostTrig(src.fLostTrig),
             fDroppedTrig(src.fDroppedTrig),
-            fRingCnt(src.fRingCnt)
+            fRingCnt(src.fRingCnt),
+            fResort(src.fResort),
+            fIter(src.fIter),
+            fResortIter(src.fResortIter)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                fErrorbitStats[i]=src.fErrorbitStats[i];
@@ -123,6 +134,8 @@ namespace hadaq {
 
          void Reset(bool complete = false)
          {
+            // used to reset current subevent
+            subevnt = 0;
             fTrigNr = 0;
             fTrigTag =0;
             fTrigType=0;
@@ -134,7 +147,14 @@ namespace hadaq {
 //             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
 //                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
-            if (complete) fLastTrigNr = 0;
+            if (complete) fLastTrigNr = 0xffffffff;
+         }
+
+         void Close()
+         {
+            // used to close all iterators
+            fIter.Close();
+            fResortIter.Close();
          }
       };
 
@@ -151,8 +171,8 @@ namespace hadaq {
 
          uint32_t fLastTrigNr;  ///<  last number of build event
 
-         std::vector<InputCfg> fCfg;
-         std::vector<ReadIterator> fInp;
+         std::vector<InputCfg> fCfg; ///< all input-dependent configurations
+
          WriteIterator fOut;
 
          int fFlushCounter;

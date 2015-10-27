@@ -36,7 +36,7 @@
 
 hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fInp(),
+   fCfg(),
    fOut(),
    fFlushCounter(0),
    fWithObserver(false),
@@ -69,14 +69,14 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;
 
-   fLastTrigNr = 0;
+   fLastTrigNr = 0xffffffff;
    fMaxHadaqTrigger = 0;
    fTriggerRangeMask = 0;
 
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
-   fEpicsSlave =   Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
+   fEpicsSlave = Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
 
-   if(fEpicsSlave) fRunNumber=0; // ignore data without valid run id at beginning!
+   if(fEpicsSlave) fRunNumber = 0; // ignore data without valid run id at beginning!
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
@@ -98,10 +98,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    std::string ratesprefix = "Hadaq";
 
    for (unsigned n = 0; n < NumInputs(); n++) {
-      fInp.push_back(ReadIterator());
       fCfg.push_back(InputCfg());
-      fInp[n].Close();
       fCfg[n].Reset(true);
+      fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
    }
 
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
@@ -156,8 +155,6 @@ hadaq::CombinerModule::~CombinerModule()
    fOut.Close().Release();
 
    fCfg.clear();
-
-   fInp.clear();
 }
 
 void hadaq::CombinerModule::ModuleCleanup()
@@ -166,10 +163,8 @@ void hadaq::CombinerModule::ModuleCleanup()
 
    fOut.Close().Release();
 
-   for (unsigned n=0;n<fInp.size();n++)
-      fInp[n].Reset();
-
-   fCfg.clear();
+   for (unsigned n=0;n<fCfg.size();n++)
+      fCfg[n].Reset();
 
 //   DOUT0("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1);
 //   if (numsync>0)
@@ -468,7 +463,10 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
    DOUT5("CombinerModule::ShiftToNextBuffer %d ", ninp);
-   fInp[ninp].Close();
+
+   ReadIterator& iter = fCfg[ninp].fIter;
+
+   iter.Close();
 
    if(!CanRecv(ninp)) return false;
 
@@ -476,27 +474,23 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
    fNumReadBuffers++;
 
-   if(!fInp[ninp].Reset(buf)) {
-      // use new first buffer of input for work iterator, but leave it in input queue
-      DOUT5("CombinerModule::ShiftToNextBuffer %d could not reset to FirstInputBuffer", ninp);
-      // skip buffer and try again
-      return false;
-   }
-
-   return true;
+   return iter.Reset(buf);
 }
 
 bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5("CombinerModule::ShiftToNextHadTu %d begins", ninp);
+
+   ReadIterator& iter = fCfg[ninp].fIter;
+
    bool foundhadtu(false);
-   //static unsigned ccount=0;
+
    while (!foundhadtu) {
-      if (!fInp[ninp].IsData())
+      if (!iter.IsData())
          if (!ShiftToNextBuffer(ninp)) return false;
 
-      bool res = fInp[ninp].NextHadTu();
-      if (!res || (fInp[ninp].hadtu() == 0)) {
+      bool res = iter.NextHadTu();
+      if (!res || (iter.hadtu() == 0)) {
          DOUT5("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp);
 
          if(!ShiftToNextBuffer(ninp)) return false;
@@ -523,15 +517,15 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
    InputCfg& cfg = fCfg[ninp];
-   ReadIterator& iter = fInp[ninp];
+   ReadIterator& iter = fCfg[ninp].fIter;
+
+   // account when subevent exists but intentionally dropped
+   if (dropped && cfg.subevnt) cfg.fDroppedTrig++;
 
    cfg.Reset(fast);
    bool foundevent(false);
 
    if (fast) DOUT0("FAST DROP on inp %d", ninp);
-
-   // account when subevent exists but intentionally dropped
-   if (dropped && iter.subevnt()) cfg.fDroppedTrig++;
 
    while (!foundevent) {
       bool res = iter.NextSubEvent();
@@ -545,27 +539,30 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          continue;
       }
 
+      // this is selected subevent
+      cfg.subevnt = iter.subevnt();
+
       // no need to analyze data
       if (fast) return true;
 
       foundevent = true;
 
-      cfg.fTrigNr = ((iter.subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
-      cfg.fTrigTag = iter.subevnt()->GetTrigNr() & 0xFF;
+      cfg.fTrigNr = ((cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
+      cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % HADAQ_RINGSIZE;
 
-      cfg.fEmpty = iter.subevnt()->GetSize() <= sizeof(hadaq::RawSubevent);
-      cfg.fDataError = iter.subevnt()->GetDataError();
+      cfg.fEmpty = cfg.subevnt->GetSize() <= sizeof(hadaq::RawSubevent);
+      cfg.fDataError = cfg.subevnt->GetDataError();
 
 //      DOUT0("Inp:%u trig:%08u", ninp, cfg.fTrigNr);
 
-      cfg.fSubId = iter.subevnt()->GetId() & 0x7fffffffUL;
+      cfg.fSubId = cfg.subevnt->GetId() & 0x7fffffffUL;
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
-      uint32_t val = iter.subevnt()->GetTrigTypeTrb3();
+      uint32_t val = cfg.subevnt->GetTrigTypeTrb3();
       if (val) {
          cfg.fTrigType = val;
          //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, cfg.fTrigType);
@@ -575,17 +572,17 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          uint32_t bitmask = 0xff000000; /* extended mask to contain spill on/off bit*/
          uint32_t bitshift = 24;
          // above from args.c defaults
-         val = iter.subevnt()->Data(wordNr - 1);
+         val = cfg.subevnt->Data(wordNr - 1);
          cfg.fTrigType = (val & bitmask) >> bitshift;
          //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, cfg.fTrigType);
       }
 #ifndef HADERRBITDEBUG
-      cfg.fErrorBits = iter.subevnt()->GetErrBits();
+      cfg.fErrorBits = cfg.subevnt->GetErrBits();
 #else
       cfg.fErrorBits = ninp;
 #endif
       int diff = 1;
-      if (cfg.fLastTrigNr != 0)
+      if (cfg.fLastTrigNr != 0xffffffff)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
       cfg.fLastTrigNr = cfg.fTrigNr;
 
@@ -605,15 +602,15 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
       unsigned numsubev = 0;
 
       do {
-         if (fInp[ninp].subevnt()) {
+         if (fCfg[ninp].subevnt) {
             numsubev++;
-            droppeddata += fInp[ninp].subevnt()->GetSize();
+            droppeddata += fCfg[ninp].subevnt->GetSize();
          }
       } while (ShiftToNextSubEvent(ninp, true, true));
 
       if (numsubev>maxnumsubev) maxnumsubev = numsubev;
 
-      fInp[ninp].Close();
+      fCfg[ninp].Close();
       while (SkipInputBuffers(ninp, 100)); // drop input port queue buffers until no more there
    }
 
@@ -647,7 +644,6 @@ bool hadaq::CombinerModule::BuildEvent()
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
-   //static unsigned ccount=0;
 
    if (fExtraDebug) {
       double tm = fLastProcTm.SpentTillNow(true);
@@ -663,7 +659,7 @@ bool hadaq::CombinerModule::BuildEvent()
    int missing_inp(-1);
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-      if (fInp[ninp].subevnt() == 0)
+      if (fCfg[ninp].subevnt == 0)
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
@@ -769,7 +765,7 @@ bool hadaq::CombinerModule::BuildEvent()
                if (haserror) {
                   dataError = true;
                }
-               subeventssize += fInp[ninp].subevnt()->GetPaddedSize();
+               subeventssize += fCfg[ninp].subevnt->GetPaddedSize();
             }
             foundsubevent = true;
             break;
@@ -777,7 +773,7 @@ bool hadaq::CombinerModule::BuildEvent()
          } else
          if (CalcTrigNumDiff(trignr, buildevid) > 0) {
 
-            int droppedsize = fInp[ninp].subevnt() ? fInp[ninp].subevnt()->GetSize() : 1;
+            int droppedsize = fCfg[ninp].subevnt ? fCfg[ninp].subevnt->GetSize() : 1;
 
             // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
@@ -818,7 +814,7 @@ bool hadaq::CombinerModule::BuildEvent()
       hasCompleteEvent = false;
 
       // we may put sync id from subevent payload to event sequence number already here.
-      hadaq::RawSubevent* syncsub = fInp[0].subevnt(); // for the moment, sync number must be in first udp input
+      hadaq::RawSubevent* syncsub = fCfg[0].subevnt; // for the moment, sync number must be in first udp input
       // TODO: put this to configuration
 
       if (syncsub->GetId() != fSyncSubeventId) {
@@ -944,14 +940,14 @@ bool hadaq::CombinerModule::BuildEvent()
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].fEmpty) continue;
-         fOut.AddSubevent(fInp[ninp].subevnt());
+         fOut.AddSubevent(fCfg[ninp].subevnt);
          DoInputSnapshot(ninp); // record current state of event tag and queue level for control system
       } // for ninp
 
       fOut.FinishEvent();
 
       int diff = 1;
-      if (fLastTrigNr!=0) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if (fLastTrigNr!=0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
       fLastTrigNr = buildevid;
 
