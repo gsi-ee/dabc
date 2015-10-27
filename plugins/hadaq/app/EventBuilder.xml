@@ -65,19 +65,19 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hadaq://host:10101"/>
-       <InputPort name="Input1" url="hadaq://host:10102"/>
-       <InputPort name="Input2" url="hadaq://host:10103"/>
-       <InputPort name="Input3" url="hadaq://host:10104"/>
-       <InputPort name="Input4" url="hadaq://host:10105"/>
+       <InputPort name="Input0" url="hadaq://host:50000"/>
+       <InputPort name="Input1" url="hadaq://host:50001"/>
+       <InputPort name="Input2" url="hadaq://host:50002"/>
+       <InputPort name="Input3" url="hadaq://host:50003"/>
+       <InputPort name="Input4" url="hadaq://host:50004"/>
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
-       <!--  this is example of HLD file storage - local -->
-       <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
+       <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
        
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
@@ -106,7 +106,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
      </Module>
      
      <!-- Terminal output like old event builder -->
-     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" showtrig="0"/>
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" showtrig="16"/>
 
   </Context>
 
