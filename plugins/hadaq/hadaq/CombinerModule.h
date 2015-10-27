@@ -75,6 +75,7 @@ namespace hadaq {
          unsigned  fResort;       //!< enables resorting of events
          ReadIterator fIter;      //!< main iterator
          ReadIterator fResortIter; //!< additional iterator to check resort
+         int          fResortIndx;  //!< index of buffer in the queue used for resort iterator (-1 - off)
 
          InputCfg() :
             subevnt(0),
@@ -96,40 +97,13 @@ namespace hadaq {
             fRingCnt(0),
             fResort(false),
             fIter(),
-            fResortIter()
+            fResortIter(),
+            fResortIndx(-1)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;i++)
                fErrorbitStats[i]=0;
             for (int i=0;i<HADAQ_RINGSIZE;i++)
                fTrigNumRing[i]=0;
-         }
-
-         InputCfg(const InputCfg& src) :
-            subevnt(src.subevnt),
-            fTrigNr(src.fTrigNr),
-            fLastTrigNr(src.fLastTrigNr),
-            fTrigTag(src.fTrigTag),
-            fTrigType(src.fTrigType),
-            fSubId(src.fSubId),
-            fErrorBits(src.fErrorBits),
-            fQueueLevel(src.fQueueLevel),
-            fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
-            fDataError(src.fDataError),
-            fEmpty(src.fEmpty),
-            fAddon(src.fAddon),
-            fNumCanRecv(src.fNumCanRecv),
-            fCalibr(src.fCalibr),
-            fLostTrig(src.fLostTrig),
-            fDroppedTrig(src.fDroppedTrig),
-            fRingCnt(src.fRingCnt),
-            fResort(src.fResort),
-            fIter(src.fIter),
-            fResortIter(src.fResortIter)
-         {
-            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-               fErrorbitStats[i]=src.fErrorbitStats[i];
-            for (int i=0;i<HADAQ_RINGSIZE;i++)
-               fTrigNumRing[i]=src.fTrigNumRing[i];
          }
 
          void Reset(bool complete = false)
@@ -155,6 +129,7 @@ namespace hadaq {
             // used to close all iterators
             fIter.Close();
             fResortIter.Close();
+            fResortIndx = -1;
          }
       };
 

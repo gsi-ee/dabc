@@ -101,6 +101,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
       fCfg.push_back(InputCfg());
       fCfg[n].Reset(true);
       fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
+      if (fCfg[n].fResort) DOUT0("Do resort on input %u",n);
    }
 
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
@@ -464,15 +465,27 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
    DOUT5("CombinerModule::ShiftToNextBuffer %d ", ninp);
 
-   ReadIterator& iter = fCfg[ninp].fIter;
+   InputCfg& cfg = fCfg[ninp];
+
+   ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
    iter.Close();
 
-   if(!CanRecv(ninp)) return false;
+   dabc::Buffer buf;
 
-   dabc::Buffer buf = Recv(ninp);
+   if (cfg.fResortIndx < 0) {
+      // normal way to take next buffer
+      if(!CanRecv(ninp)) return false;
+      buf = Recv(ninp);
+      fNumReadBuffers++;
+   } else {
 
-   fNumReadBuffers++;
+      // do not try to look further than one more buffer
+      if (cfg.fResortIndx>1) return false;
+
+      // when doing resort, try to access buffers from the input queue
+      buf = RecvQueueItem(ninp, cfg.fResortIndx++);
+   }
 
    return iter.Reset(buf);
 }
@@ -481,26 +494,23 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5("CombinerModule::ShiftToNextHadTu %d begins", ninp);
 
-   ReadIterator& iter = fCfg[ninp].fIter;
+   InputCfg& cfg = fCfg[ninp];
+   ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
-   bool foundhadtu(false);
+   while (true) {
 
-   while (!foundhadtu) {
-      if (!iter.IsData())
-         if (!ShiftToNextBuffer(ninp)) return false;
+      bool res = false;
+      if (iter.IsData())
+         res = iter.NextHadTu();
 
-      bool res = iter.NextHadTu();
-      if (!res || (iter.hadtu() == 0)) {
-         DOUT5("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp);
+      if (res && (iter.hadtu() != 0)) return true;
 
-         if(!ShiftToNextBuffer(ninp)) return false;
-         //return false;
-         DOUT5("CombinerModule::ShiftToNextHadTu in continue ninp:%u", ninp);
-         continue;
-      }
-      foundhadtu = true;
+      DOUT5("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp);
+
+      if(!ShiftToNextBuffer(ninp)) return false;
    } //  while (!foundhadtu)
-   return true;
+
+   return false;
 }
 
 
@@ -517,37 +527,81 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
    InputCfg& cfg = fCfg[ninp];
-   ReadIterator& iter = fCfg[ninp].fIter;
 
-   // account when subevent exists but intentionally dropped
-   if (dropped && cfg.subevnt) cfg.fDroppedTrig++;
+   bool foundevent(false), doshift(true), tryresort(cfg.fResort);
+
+   if (cfg.fResortIndx >= 0) {
+      doshift = false; // do not shift event in main iterator
+      if (cfg.subevnt) cfg.subevnt->SetTrigNr(0xffffffff); // mark subevent as used
+      cfg.fResortIndx = -1;
+      cfg.fResortIter.Close();
+   } else {
+      // account when subevent exists but intentionally dropped
+      if (dropped && cfg.subevnt) cfg.fDroppedTrig++;
+   }
 
    cfg.Reset(fast);
-   bool foundevent(false);
 
    if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    while (!foundevent) {
-      bool res = iter.NextSubEvent();
+      ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
+
+      bool res = true;
+      if (doshift) res = iter.NextSubEvent();
+      doshift = true;
 
       if (!res || (iter.subevnt() == 0)) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
-         // retry in next hadtu container
-         if (!ShiftToNextHadTu(ninp))
-            return false; // no more input buffers available
-         DOUT5("CombinerModule::ShiftToNextSubEvent in continue ninp %u", ninp);
-         continue;
-      }
 
-      // this is selected subevent
-      cfg.subevnt = iter.subevnt();
+//         if (cfg.fResortIndx>=0)
+//            printf("Input %u try to find in next TU queue full:%d numcanrev %u capacity %d\n", ninp, RecvQueueFull(ninp), NumCanRecv(ninp), InputQueueCapacity(ninp));
+
+         // retry in next hadtu container
+         if (ShiftToNextHadTu(ninp)) continue;
+
+         if ((cfg.fResortIndx>=0) && (NumCanRecv(ninp) > 1)) {
+
+            // printf("Input %u fail to find event, use next in normal queue full:%d numcanrev %u capacity %d\n", ninp, RecvQueueFull(ninp), NumCanRecv(ninp), InputQueueCapacity(ninp));
+
+            // we have at least 2 buffers in the queue and cannot find required subevent
+            // seems to be, we should use next event from normal queue
+            cfg.fResortIndx = -1;
+            cfg.fResortIter.Close();
+            doshift = false;
+            tryresort = false;
+            continue;
+         }
+
+         // no more input buffers available
+         return false;
+      }
 
       // no need to analyze data
       if (fast) return true;
 
+      if (tryresort && (cfg.fLastTrigNr!=0xffffffff)) {
+         uint32_t trignr = iter.subevnt()->GetTrigNr();
+         if (trignr==0xffffffff) continue; // this is processed trigger, exclude it
+
+         int diff = CalcTrigNumDiff(cfg.fLastTrigNr, (trignr >> 8) & fTriggerRangeMask);
+
+         if (diff!=1) {
+
+            if (cfg.fResortIndx < 0) {
+               cfg.fResortIndx = 0; cfg.fResortIter = cfg.fIter;
+               // printf("Input %u found difference of %d - try resort\n", ninp, diff);
+            }
+            continue;
+         }
+      }
+
       foundevent = true;
 
-      cfg.fTrigNr = ((cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
+      // this is selected subevent
+      cfg.subevnt = iter.subevnt();
+
+      cfg.fTrigNr = (cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask;
       cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
@@ -610,6 +664,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
 
       if (numsubev>maxnumsubev) maxnumsubev = numsubev;
 
+      fCfg[ninp].Reset();
       fCfg[ninp].Close();
       while (SkipInputBuffers(ninp, 100)); // drop input port queue buffers until no more there
    }
