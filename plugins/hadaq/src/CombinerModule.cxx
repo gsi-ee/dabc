@@ -524,13 +524,13 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    InputCfg& cfg = fCfg[ninp];
 
-   fCfg[ninp].Reset(fast);
+   cfg.Reset(fast);
    bool foundevent(false);
 
    if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    // account when subevent exists but intentionally dropped
-   if (dropped && fInp[ninp].subevnt()) fCfg[ninp].fDroppedTrig++;
+   if (dropped && fInp[ninp].subevnt()) cfg.fDroppedTrig++;
 
    while (!foundevent) {
       bool res = fInp[ninp].NextSubEvent();
@@ -549,29 +549,28 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       foundevent = true;
 
-      fCfg[ninp].fTrigNr = ((fInp[ninp].subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
+      cfg.fTrigNr = ((fInp[ninp].subevnt()->GetTrigNr() >> 8) & fTriggerRangeMask); // only use 16 bit range for trb2/trb3
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % HADAQ_RINGSIZE;
 
-      fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
+      cfg.fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
       if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::RawSubevent)) {
-         fCfg[ninp].fEmpty = false;
+         cfg.fEmpty = false;
       }
-      fCfg[ninp].fDataError = fInp[ninp].subevnt()->GetDataError();
+      cfg.fDataError = fInp[ninp].subevnt()->GetDataError();
 
-//      DOUT0("Inp:%u trig:%08u", ninp, fCfg[ninp].fTrigNr);
+//      DOUT0("Inp:%u trig:%08u", ninp, cfg.fTrigNr);
 
-      fCfg[ninp].fSubId = fInp[ninp].subevnt()->GetId() & 0x7fffffffUL;
-
+      cfg.fSubId = fInp[ninp].subevnt()->GetId() & 0x7fffffffUL;
 
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
       uint32_t val = fInp[ninp].subevnt()->GetTrigTypeTrb3();
       if (val) {
-         fCfg[ninp].fTrigType = val;
-         //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
+         cfg.fTrigType = val;
+         //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, cfg.fTrigType);
       } else {
          /* evaluate trigger type as in HADESproduction eventbuilders here:*/
          unsigned wordNr = 2;
@@ -579,20 +578,20 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          uint32_t bitshift = 24;
          // above from args.c defaults
          val = fInp[ninp].subevnt()->Data(wordNr - 1);
-         fCfg[ninp].fTrigType = (val & bitmask) >> bitshift;
-         //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, fCfg[ninp].fTrigType);
+         cfg.fTrigType = (val & bitmask) >> bitshift;
+         //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, cfg.fTrigType);
       }
 #ifndef HADERRBITDEBUG
-      fCfg[ninp].fErrorBits = fInp[ninp].subevnt()->GetErrBits();
+      cfg.fErrorBits = fInp[ninp].subevnt()->GetErrBits();
 #else
-      fCfg[ninp].fErrorBits = ninp;
+      cfg.fErrorBits = ninp;
 #endif
       int diff = 1;
-      if (fCfg[ninp].fLastTrigNr != 0)
-         diff = CalcTrigNumDiff(fCfg[ninp].fLastTrigNr, fCfg[ninp].fTrigNr);
-      fCfg[ninp].fLastTrigNr = fCfg[ninp].fTrigNr;
+      if (cfg.fLastTrigNr != 0)
+         diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
+      cfg.fLastTrigNr = cfg.fTrigNr;
 
-      if (diff>1) fCfg[ninp].fLostTrig += (diff-1);
+      if (diff>1) cfg.fLostTrig += (diff-1);
    }
 
    return true;
