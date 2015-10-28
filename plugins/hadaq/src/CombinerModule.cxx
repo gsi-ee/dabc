@@ -479,12 +479,15 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
       buf = Recv(ninp);
       fNumReadBuffers++;
    } else {
-
       // do not try to look further than one more buffer
       if (cfg.fResortIndx>1) return false;
-
       // when doing resort, try to access buffers from the input queue
       buf = RecvQueueItem(ninp, cfg.fResortIndx++);
+   }
+
+   if (buf.GetTypeId() == dabc::mbt_EOF) {
+      Stop();
+      return false;
    }
 
    return iter.Reset(buf);
@@ -542,7 +545,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    cfg.Reset(fast);
 
-   if (fast) DOUT0("FAST DROP on inp %d", ninp);
+   // if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    while (!foundevent) {
       ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
