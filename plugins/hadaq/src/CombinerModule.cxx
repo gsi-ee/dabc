@@ -259,7 +259,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
    }
 
    if (!CanSendToAllOutputs()) {
-      printf("Cannt send to all outputs - why???");
+      printf("Cannt send to all outputs - why out0:%s  out1:%s???\n", DBOOL(CanSend(0)), DBOOL(CanSend(1)));
       return false;
    }
 
@@ -930,7 +930,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
    if (hasCompleteEvent) {
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
-         // no, we close current buffer
+         // first we close current buffer
          if (!FlushOutputBuffer()) {
             if (fExtraDebug && fLastDebugTm.Expired(1.)) {
                std::string sendmask;
