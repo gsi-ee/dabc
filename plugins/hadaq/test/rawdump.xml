@@ -8,6 +8,7 @@
       <lib value="libDabcHadaq.so"/>
       <logfile value="Example.log"/>
       <loglimit value="1000000"/>
+      <debuglevel value="1"/>
     </Run>
     
     <MemoryPool name="Pool">
@@ -15,12 +16,22 @@
       <NumBuffers value="50"/>
     </MemoryPool>
 
-    <Module name="Dump" class="dabc::MultiplexerModule">
-       <NumInputs value="1"/>
-       <NumOutputs value="1"/>
-       <InputPort name="Input0" url="hadaq://host:50000" rate="RawRate" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50"/>
-       <OutputPort name="Output0" url="bin://localfile.bin?maxsize=1000"/>
-       <GRate width="5" prec="3" low="0" up="50" debug="0"/>
+    <Module name="Dump" class="dabc::RepeaterModule">
+       <NumInputs value="5"/>
+       <NumOutputs value="5"/>
+       <DataRateName value="DataRate"/>
+       <InputPort name="Input0" url="hadaq://host:50000"/>
+       <InputPort name="Input1" url="hadaq://host:50001"/>
+       <InputPort name="Input2" url="hadaq://host:50002"/>
+       <InputPort name="Input3" url="hadaq://host:50003"/>
+       <InputPort name="Input4" url="hadaq://host:50004"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+       <OutputPort name="Output0" url="bin://out0.bin"/>
+       <OutputPort name="Output1" url="bin://out1.bin"/>
+       <OutputPort name="Output2" url="bin://out2.bin"/>
+       <OutputPort name="Output3" url="bin://out3.bin"/>
+       <OutputPort name="Output4" url="bin://out4.bin"/>
+       <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
      </Module>
   </Context>
 </dabc>

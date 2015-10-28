@@ -269,13 +269,19 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       if (fRingSize>0) {
          sbuf = "";
          unsigned cnt = cfg.fRingCnt, prev = 0;
-         if ((int)cnt < fRingSize) cnt = cnt+HADAQ_RINGSIZE;
+         if ((int)cnt < fRingSize) cnt+=HADAQ_RINGSIZE;
+         bool first = true;
          cnt -= fRingSize;
          for (int n=0;n<fRingSize;n++) {
-            if (n==0)
+            if (first && (cfg.fTrigNumRing[cnt]==0) && (n!=fRingSize-1)) {
+               // ignore 0 in the beginning
+            } else
+            if (first) {
                sbuf.append(dabc::format(" 0x%06x",(unsigned)cfg.fTrigNumRing[cnt]));
-            else
-               sbuf.append(dabc::format(" %1d",(int)cfg.fTrigNumRing[cnt] - (int)cfg.fTrigNumRing[prev]));
+               first = false;
+            } else
+               sbuf.append(dabc::format(" %d",(int)cfg.fTrigNumRing[cnt] - (int)cfg.fTrigNumRing[prev]));
+
             prev = cnt; cnt = (cnt+1) % HADAQ_RINGSIZE;
          }
          s += " trig:" + sbuf;

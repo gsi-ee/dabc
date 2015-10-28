@@ -486,7 +486,7 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
    }
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
-      Stop();
+      // Stop();
       return false;
    }
 

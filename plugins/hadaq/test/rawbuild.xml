@@ -19,12 +19,14 @@
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
-       <NumInputs value="1"/>
-       <NumOutputs value="2"/>
+       <NumInputs value="5"/>
+       <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="bin://localfile*.bin"/>
-
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+       <InputPort name="Input0" url="bin://out0*.bin"/>
+       <InputPort name="Input1" url="bin://out1*.bin"/>
+       <InputPort name="Input2" url="bin://out2*.bin"/>
+       <InputPort name="Input3" url="bin://out3*.bin"/>
+       <InputPort name="Input4" url="bin://out4*.bin"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
