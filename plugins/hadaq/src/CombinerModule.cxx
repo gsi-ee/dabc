@@ -259,7 +259,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
    }
 
    if (!CanSendToAllOutputs()) {
-      printf("Cannt send to all outputs - why out0:%s  out1:%s???\n", DBOOL(CanSend(0)), DBOOL(CanSend(1)));
+      // printf("Cannt send to all outputs - why out0:%s  out1:%s???\n", DBOOL(CanSend(0)), DBOOL(CanSend(1)));
       return false;
    }
 

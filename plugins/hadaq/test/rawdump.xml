@@ -1,0 +1,26 @@
+<!-- This is example how raw data from HADAQ input can be dump in binary DABC file --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="raw-dump">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <logfile value="Example.log"/>
+      <loglimit value="1000000"/>
+    </Run>
+    
+    <MemoryPool name="Pool">
+      <BufferSize value="200000"/>
+      <NumBuffers value="50"/>
+    </MemoryPool>
+
+    <Module name="Dump" class="dabc::MultiplexerModule">
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input0" url="hadaq://host:50000" rate="RawRate" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50"/>
+       <OutputPort name="Output0" url="bin://localfile.bin?maxsize=1000"/>
+       <GRate width="5" prec="3" low="0" up="50" debug="0"/>
+     </Module>
+  </Context>
+</dabc>

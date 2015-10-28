@@ -120,8 +120,8 @@ namespace mbs {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         virtual bool ProcessRecv(unsigned port) { return SendNextBuffer(); }
-         virtual bool ProcessSend(unsigned port) { return SendNextBuffer(); }
+         virtual bool ProcessRecv(unsigned) { return SendNextBuffer(); }
+         virtual bool ProcessSend(unsigned) { return SendNextBuffer(); }
 
          bool SendNextBuffer();
 

@@ -413,7 +413,7 @@ bool mbs::ServerTransport::SendNextBuffer()
       if (fDeliverAll) return false;
       // if server do not blocks, first wait until input queue will be filled
       if (!RecvQueueFull()) {
-         DOUT3("mbs::ServerTransport::ProcessRecv LET input queue to be filled size:%u", NumCanRecv());
+         DOUT3("mbs::ServerTransport::ProcessRecv let input queue to be filled size:%u", NumCanRecv());
          //dabc::SetDebugLevel(1);
          SignalRecvWhenFull();
          return false;
