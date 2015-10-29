@@ -192,7 +192,7 @@ bool stream::TdcCalibrationModule::retransmit()
                fProgress = (int) fabs(progress*100);
                item.SetField("progress", fProgress);
 
-               // at the end check if autocalibration can be done
+               // at the end check if auto-calibration can be done
                if (progress>0) {
                   fState = "Ready";
                   item.SetField("value", fState);

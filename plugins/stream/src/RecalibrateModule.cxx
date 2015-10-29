@@ -67,6 +67,8 @@ stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Comm
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 
    base::ProcMgr::ClearInstancePointer();
+
+   fLastCalibr.GetNow();
 }
 
 stream::RecalibrateModule::~RecalibrateModule()
@@ -94,6 +96,12 @@ bool stream::RecalibrateModule::retransmit()
       }
 
       Send(buf);
+
+      if (fLastCalibr.Expired(1.)) {
+         fHLD->CheckAutoCalibration();
+         fLastCalibr.GetNow();
+      }
+
       return true;
    }
 

@@ -41,6 +41,7 @@ namespace stream {
       int fNumSub;                // number of sub-modules
       DabcProcMgr* fProcMgr;      // central process manager
       hadaq::HldProcessor*  fHLD; // processor of HLD events
+      dabc::TimeStamp  fLastCalibr;
 
       virtual int ExecuteCommand(dabc::Command cmd);
 
