@@ -99,8 +99,11 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
    fFilesList(),
    fIO(0),
    fCurrentName(),
-   fLoop(url.HasOption("loop"))
+   fLoop(url.HasOption("loop")),
+   fReduce(url.GetOptionDouble("reduce",1.))
 {
+   if (fReduce>1.) fReduce = 1; else
+   if (fReduce<0.01) fReduce = 0.01;
 }
 
 dabc::FileInput::~FileInput()

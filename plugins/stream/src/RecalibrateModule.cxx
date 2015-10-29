@@ -38,12 +38,14 @@
 stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fNumSub(0),
+   fReplace(false),
    fProcMgr(0),
    fHLD(0)
 {
    EnsurePorts(1, 1);
 
    fNumSub = Cfg("NumSub",cmd).AsInt(1);
+   fReplace = Cfg("Replace",cmd).AsBool(true);
 
    fWorkerHierarchy.Create("Worker");
    fProcMgr = new DabcProcMgr;

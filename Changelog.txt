@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+29.10.2015
+1. When making file input, once could specify "reduce" parameter in URL options.
+   It let reduce buffer size, which will be filled by reading. 
+   Used in hadaq::HldInput and mbs::LmdInput 
+   
 
 27.10.2015
 1. Add optional "resort" parameter for inputs of hadaq::CombinerModule.

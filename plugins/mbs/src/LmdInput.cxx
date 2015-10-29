@@ -89,7 +89,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
 
        // TODO: read into segmented buffer
 
-       bufsize = buf.SegmentSize(0);
+       bufsize = ((uint64_t) (buf.SegmentSize(0) * fReduce))/8*8;
 
        if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
           DOUT3("File %s return 0 numev for buffer %u - end of file", CurrentFileName().c_str(), buf.GetTotalSize());

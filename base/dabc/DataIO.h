@@ -248,7 +248,8 @@ namespace dabc {
          dabc::Reference      fFilesList;
          dabc::FileInterface* fIO;
          std::string          fCurrentName;
-         bool                 fLoop; // read file(s) in endless loop
+         bool                 fLoop; //!< read file(s) in endless loop
+         double               fReduce; //!< factor to reduce buffer size when reading
 
          bool InitFilesList();
          bool TakeNextFileName();

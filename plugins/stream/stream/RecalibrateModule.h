@@ -38,10 +38,11 @@ namespace stream {
 
    protected:
 
-      int fNumSub;                // number of sub-modules
-      DabcProcMgr* fProcMgr;      // central process manager
-      hadaq::HldProcessor*  fHLD; // processor of HLD events
-      dabc::TimeStamp  fLastCalibr;
+      int fNumSub;                  // number of sub-modules
+      bool fReplace;                // replace or not TDC messages
+      DabcProcMgr *fProcMgr;        // central process manager
+      hadaq::HldProcessor *fHLD;    // processor of HLD events
+      dabc::TimeStamp  fLastCalibr; // time to perform calibration
 
       virtual int ExecuteCommand(dabc::Command cmd);
 
