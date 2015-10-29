@@ -21,8 +21,9 @@
 namespace hadaq {
 
    enum EHadaqBufferTypes {
-      mbt_HadaqEvents = 142,        // event/subevent structure
-      mbt_HadaqTransportUnit = 143  //plain hadtu container with single subevents
+      mbt_HadaqEvents = 142,         // event/subevent structure
+      mbt_HadaqTransportUnit = 143,  //plain hadtu container with single subevents
+      mbt_HadaqSubevents = 144       // only subevents, no event
   };
 
    extern const char* typeUdpDevice;

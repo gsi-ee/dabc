@@ -13,6 +13,8 @@ about current functionality of the framework.
    introducing additional calibration messages. File increase
    in second case about 26%.
 4. Support new message kind in hldprint
+5. Introduce new buffer kind mbt_HadaqSubevents. Use it when reformat hadTU data.
+   Only subevents are stored in such buffer. Reduces memory usage.  
    
 
 27.10.2015

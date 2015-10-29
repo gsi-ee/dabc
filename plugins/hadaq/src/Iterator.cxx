@@ -64,8 +64,8 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    fBufType = buf.GetTypeId();
 
-   if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) ) {
-      EOUT("Only buffer format mbt_HadaqEvents or mbt_HadaqTransportUnit is supported");
+   if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) || fBufType == mbt_HadaqSubevents ) {
+      EOUT("Buffer format %u not supported", (unsigned) fBufType);
       return false;
    }
 
@@ -167,6 +167,15 @@ bool hadaq::ReadIterator::NextSubeventsBlock()
 {
    if (fBufType == mbt_HadaqTransportUnit ) return NextHadTu();
    if (fBufType == mbt_HadaqEvents) return NextEvent();
+   if (fBufType == mbt_HadaqSubevents) {
+      // here only subevents
+      if (!fFirstEvent || fEvPtr.null()) return false;
+      fFirstEvent = false;
+      fSubPtr.reset();
+      fRawPtr.reset();
+      return true;
+   }
+
    return false;
 }
 
@@ -187,25 +196,26 @@ bool hadaq::ReadIterator::NextSubEvent()
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
       // this function is used both in hadtu and in event mode. Check out mode:
-      dabc::BufferSize_t headsize = 0;
-      size_t containersize = 0;
+      dabc::BufferSize_t headsize(0), containersize(0);
       if (fBufType == mbt_HadaqEvents) {
          headsize = sizeof(hadaq::RawEvent);
          containersize = evnt()->GetPaddedSize();
       } else if (fBufType == mbt_HadaqTransportUnit) {
          headsize = sizeof(hadaq::HadTu);
          containersize = hadtu()->GetPaddedSize();
+      } else if (fBufType == mbt_HadaqSubevents) {
+         headsize = 0;
+         containersize = fEvPtr.fullsize();
       } else {
-         EOUT("NextSubEvent only allowed for buffer type mbt_HadaqEvents or mbt_HadaqTransportUnit. Check your code!");
+         EOUT("NextSubEvent not allowed for buffer type %u. Check your code!", (unsigned) fBufType);
          return false;
       }
 
       if (containersize < headsize) {
-         EOUT("Hadaq format error - tu container fullsize %u too small", containersize);
+         EOUT("Hadaq format error - tu container fullsize %u too small", (unsigned) containersize);
          return false;
       }
       fSubPtr.reset(fEvPtr, 0, containersize);
-
       fSubPtr.shift(headsize);
    } else {
       fSubPtr.shift(subevnt()->GetPaddedSize());
@@ -218,10 +228,9 @@ bool hadaq::ReadIterator::NextSubEvent()
 
    if (subevnt()->GetSize() < sizeof(hadaq::RawSubevent)) {
       EOUT("Hadaq format error - subevent fullsize %u too small", subevnt()->GetSize());
-      char* ptr = (char*) subevnt();
-      for(int i=0; i<20; ++i)
-         printf("sub(%d)=0x%02x\n", i, (unsigned) *ptr++);
-
+      //char* ptr = (char*) subevnt();
+      //for(int i=0; i<20; ++i)
+      //   printf("sub(%d)=0x%02x\n", i, (unsigned) *ptr++);
 
       fSubPtr.reset();
       return false;

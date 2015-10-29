@@ -32,6 +32,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fOwnProcMgr(false),
    fTrbProc(0),
    fDummy(true),
+   fReplace(true),
    fAutoCalibr(1000),
    fDummyCounter(0),
    fLastCalibr(),
@@ -45,6 +46,10 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fLastCalibr.GetNow();
 
    fDummy = Cfg("Dummy", cmd).AsBool(false);
+   fReplace = Cfg("Replace", cmd).AsBool(true);
+
+   // one need additional buffers
+   if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
 
    int finemin = Cfg("FineMin", cmd).AsInt(0);
    int finemax = Cfg("FineMax", cmd).AsInt(0);
@@ -145,6 +150,8 @@ bool stream::TdcCalibrationModule::retransmit()
    // nothing to do
    if (CanSend() && CanRecv()) {
 
+      if (!fReplace && !CanTakeBuffer()) return false;
+
       dabc::Buffer buf = Recv();
 
       if (fDummy) {
@@ -176,13 +183,37 @@ bool stream::TdcCalibrationModule::retransmit()
       if (fTrbProc!=0) {
 
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file
-             (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit)) { // this is normal operation mode
+             (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
+             (buf.GetTypeId() == hadaq::mbt_HadaqSubevents)) { // this could be data after sorting
+
+            unsigned char* tgt = 0;
+            unsigned tgtlen(0), reslen(0);
+            dabc::Buffer resbuf;
+            if (!fReplace) {
+               dabc::Buffer resbuf = TakeBuffer();
+               tgt = (unsigned char*) resbuf.SegmentPtr();
+               tgtlen = resbuf.SegmentSize();
+            }
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
                while (iter.NextSubEvent()) {
-                  fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt());
+                  if (tgt && (tgtlen - reslen < iter.subevnt()->GetPaddedSize())) {
+                     EOUT("Not enough space for subevent in output buffer");
+                     exit(4); return false;
+                  }
+                  unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen);
+                  if (tgt) {
+                     tgt += sublen;
+                     reslen += sublen;
+                  }
                }
+            }
+
+            if (!fReplace) {
+               resbuf.SetTotalSize(reslen);
+               resbuf.SetTypeId(hadaq::mbt_HadaqSubevents);
+               buf = resbuf;
             }
 
             if (fLastCalibr.Expired(1.)) {
