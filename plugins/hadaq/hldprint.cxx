@@ -71,8 +71,7 @@ enum TdcMessageKind {
    tdckind_Mask     = 0xe0000000,
    tdckind_Hit      = 0x80000000,
    tdckind_Hit1     = 0xa0000000,
-   tdckind_Hit2     = 0xc0000000,
-   tdckind_Hit3     = 0xe0000000
+   tdckind_Calibr   = 0xe0000000
 };
 
 enum { NumTdcErr = 4 };
@@ -143,6 +142,8 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 
    char sbuf[100];
+   unsigned calibr[2] = { 0xffff, 0xffff };
+   int ncalibr = 2;
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
@@ -166,6 +167,12 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             epoch_channel = -1; // indicate that we have new epoch
             if (prefix>0) printf("epoch %u tm %6.3f ns\n", msg & 0xFFFFFFF, tm);
             break;
+         case tdckind_Calibr:
+            calibr[0] = msg & 0x3fff;
+            calibr[1] = (msg >> 14) & 0x3fff;
+            ncalibr = 0;
+            if (prefix>0) printf("tdc calibr v1 0x%04x v2 0x%04x\n", calibr[0], calibr[1]);
+            break;
          case tdckind_Hit:
          case tdckind_Hit1:
             channel = (msg >> 22) & 0x7F;
@@ -174,13 +181,19 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
 
-            tm = ((epoch << 11) + (msg & 0x7FF)) *5.; // coarse time
+            tm = ((epoch << 11) + (msg & 0x7FF)) * 5.; // coarse time
             fine = (msg >> 12) & 0x3FF;
             if (fine<0x3ff) {
-               if ((msg & tdckind_Mask) == tdckind_Hit1)
-                  tm -= fine*5e-3;  // calibrated time, 5 ps/bin
-               else
+               if ((msg & tdckind_Mask) == tdckind_Hit1) {
+                  // calibrated time, 5 ps/bin
+                  tm -= fine*5e-3;
+               } else
+               if (ncalibr<2) {
+                  // calibrated time, 5 ns correspond to value 0x3ffe or about 0.30521 ps/bin
+                  tm -= calibr[ncalibr++]*5./0x3ffe;
+               } else {
                   tm -= 5.*(fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
+               }
             }
 
             sbuf[0] = 0;

@@ -60,6 +60,7 @@ namespace hadaq {
          double             fFlushTimeout;    ///< time when buffer will be flushed
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
+         double             fReduce;          ///< reduce filled buffer size to let reformat data later
 
          uint64_t           fTotalRecvPacket;
          uint64_t           fTotalDiscardPacket;
@@ -68,7 +69,7 @@ namespace hadaq {
          uint64_t           fTotalDiscardBytes;
          uint64_t           fTotalProducedBuffers;
 
-         pid_t fPid;                        // process id
+         pid_t fPid;                        ///< process id
          bool   fDebug;                     ///< when true, produce more debug output
 
          virtual void ProcessEvent(const dabc::EventId&);
@@ -85,7 +86,7 @@ namespace hadaq {
          virtual long Notify(const std::string&, int);
 
       public:
-         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop);
+         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce);
          virtual ~DataSocketAddon();
 
          // this is interface from DataInput

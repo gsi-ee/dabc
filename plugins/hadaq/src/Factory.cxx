@@ -118,10 +118,11 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    int mtu = url.GetOptionInt("mtu", 64512);
    int maxloop = url.GetOptionInt("maxloop", 100);
    double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
+   double reduce = url.GetOptionDouble("reduce", 1.);
    bool observer = url.GetOptionBool("observer", false);
    bool debug = url.HasOption("debug");
 
-   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop);
+   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
 
    return new hadaq::DataTransport(cmd, portref, addon, observer);
 }

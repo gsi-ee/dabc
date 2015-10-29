@@ -30,7 +30,7 @@
 #include "dabc/Manager.h"
 
 
-hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop) :
+hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    dabc::DataInput(),
    fNPort(nport),
@@ -40,6 +40,7 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fFlushTimeout(flush),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
+   fReduce(reduce < 1. ? reduce : 1.),
    fTotalRecvPacket(0),
    fTotalDiscardPacket(0),
    fTotalDiscard32Packet(0),
@@ -214,7 +215,9 @@ unsigned hadaq::DataSocketAddon::Read_Start(dabc::Buffer& buf)
       return dabc::di_Error;
    }
 
-   fTgtPtr.reset(buf);
+   unsigned bufsize = ((unsigned) (buf.SegmentSize(0) * fReduce)) /4 * 4;
+
+   fTgtPtr.reset(buf, 0, bufsize);
 
    if (fTgtPtr.rawsize() < fMTU) {
       EOUT("not enough space in the buffer - at least %u is required", fMTU);

@@ -59,6 +59,8 @@ namespace stream {
 
       virtual bool ProcessSend(unsigned) { return retransmit(); }
 
+      virtual bool ProcessBuffer(unsigned) { return retransmit(); }
+
       virtual void BeforeModuleStart();
 
       virtual void AfterModuleStop();

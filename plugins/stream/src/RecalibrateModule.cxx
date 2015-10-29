@@ -42,10 +42,10 @@ stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Comm
    fProcMgr(0),
    fHLD(0)
 {
-   EnsurePorts(1, 1);
-
    fNumSub = Cfg("NumSub",cmd).AsInt(1);
    fReplace = Cfg("Replace",cmd).AsBool(true);
+
+   EnsurePorts(1, 1, fReplace ? "" : dabc::xmlWorkPool);
 
    fWorkerHierarchy.Create("Worker");
    fProcMgr = new DabcProcMgr;
@@ -85,19 +85,48 @@ void stream::RecalibrateModule::OnThreadAssigned()
 
 bool stream::RecalibrateModule::retransmit()
 {
-   if (CanSend() && CanRecv()) {
+   if (CanSendToAllOutputs() && CanRecv()) {
+
+      if (!fReplace && !CanTakeBuffer()) return false;
+
       dabc::Buffer buf = Recv();
       Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
+
       if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
-         hadaq::ReadIterator iter(buf);
-         while (iter.NextEvent()) {
-            fHLD->TransformEvent(iter.evnt(), iter.evntsize());
+
+         if (fReplace) {
+            // this is easier to handle, but hit messages are replaced
+            hadaq::ReadIterator iter(buf);
+            while (iter.NextEvent())
+               fHLD->TransformEvent(iter.evnt(), iter.evntsize());
+         } else {
+
+            dabc::Buffer resbuf = TakeBuffer();
+
+            hadaq::ReadIterator iter(buf);
+            dabc::Pointer tgt(resbuf);
+
+            //DOUT0("Buffer size %u Original size %u", buf.GetTotalSize(), tgt.distance_to(resbuf));
+
+            while (iter.NextEvent()) {
+               unsigned len = fHLD->TransformEvent(iter.evnt(), iter.evntsize(), tgt(), tgt.rawsize());
+               if (len==0) { EOUT("Fail to transform HLD event"); break; }
+               if (tgt.shift(len)!=len) { EOUT("no enough space to shift to next event"); exit(5); break; }
+               //DOUT0("New event size %u diff %d distance %d", len, len - iter.evnt()->GetPaddedSize(), tgt.distance_to(resbuf));
+            }
+
+            //DOUT0("Buffer size %u Result size %d", buf.GetTotalSize(), tgt.distance_to_ownbuf());
+
+            resbuf.SetTotalSize(tgt.distance_to_ownbuf());
+            resbuf.SetTypeId(hadaq::mbt_HadaqEvents);
+            buf = resbuf;
          }
+
       } else {
          DOUT0("Buffer of unsupported type %d", buf.GetTypeId());
       }
 
-      Send(buf);
+      SendToAllOutputs(buf);
 
       if (fLastCalibr.Expired(1.)) {
          fHLD->CheckAutoCalibration();

@@ -60,14 +60,19 @@
     <Module name="Recalibrate" class="stream::RecalibrateModule" thread="CalcThread">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="1"/>
-       <NumOutputs value="1"/>
+       <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="hld:///data.local1/trb3tdc/file_raw.hld?loop&reduce=0.6"/>
+       <InputPort name="Input0" url="hld:///data.local1/trb3tdc/file_raw.hld?reduce=0.6"/>
 
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
+       <OutputPort name="Output1" url="hld:///data.local1/trb3tdc/file_cal2.hld"/>
+
        <!-- how many sub-modules are created -->
        <NumSub value="3"/>
+
+       <!-- do replace of TDC hits or add additional messages -->
+       <Replace value="false"/>
 
        <DataRate debug="0"/>
      </Module>
