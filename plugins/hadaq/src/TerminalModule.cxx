@@ -42,7 +42,7 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fFilePort = Cfg("fileport", cmd).AsInt(1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
-   fRingSize = Cfg("showtrig", cmd).AsInt(0);
+   fRingSize = Cfg("showtrig", cmd).AsInt(10);
    if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
 
    CreateTimer("update", period, false);

@@ -64,10 +64,14 @@ This code is experimental, plese contact S.Linev if you want to use it
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
        
-       <!-- Number of counts in each channel to perform calibration -->
-       <Auto value="1000"/>
+       <!-- Number of counts in each channel to perform calibration, 0 - off -->
+       <Auto value="10000000"/>
+
+       <!-- Should calibrated value replace old message (true, set by default) or
+            new calibration data should be inserted before hit messages (false)
+            When Replace==false, size of HLD data increased by 25%, but original data are preserved -->
+       <Replace value="true"/>
     </Module>
-    
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
