@@ -449,7 +449,7 @@ void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, b
    if (name==InputName()) {
       dabc::Transport::ProcessConnectionActivated(name, on);
    } else {
-      DOUT0("mbs::ServerTransport detect new client on %s %s", name.c_str(), (on ? "CONNECTED" : "DISCONNECTED") );
+      DOUT2("mbs::ServerTransport detect new client on %s %s", name.c_str(), (on ? "CONNECTED" : "DISCONNECTED") );
 
       if (on) {
          ProcessInputEvent(0);
@@ -463,7 +463,7 @@ void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, b
          for (unsigned n=0;n<NumOutputs();n++)
             if (IsOutputConnected(n)) isany = true;
          if (!isany) {
-            DOUT1("Close server transport while all clients are closed");
+            DOUT2("Close server transport while all clients are closed");
             CloseTransport(false);
             fDoingClose = 2;
          }

@@ -568,7 +568,7 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
    if (!fTransportInfoName.empty() && fOutput)
       fOutput->SetInfoParName(fTransportInfoName);
 
-   DOUT0("Create out transport %s  %s", GetName(), ItemName().c_str());
+   DOUT2("Create out transport %s  %s", GetName(), ItemName().c_str());
 }
 
 dabc::OutputTransport::~OutputTransport()

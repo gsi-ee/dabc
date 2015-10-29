@@ -14,20 +14,14 @@
     </Run>
     
     <HttpServer name="http" port="8090"/>
-    
-    <!-- If uncommented, all internal manager structures will be published in the web server -->
-    <!-- Publisher name="publ" manager="true"/ -->
-    
-    <!-- If uncommented, profiling will be enabled for all threads -->
-    <!-- Thread name="*" publ="true" prof="true"/ -->
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
 
     <!-- these are genetic parameters for all calibration modules -->
-    <Module name="Sub*" thread="CalcThread" auto="false">    
+    <Module name="Sub*">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="0"/>
        <NumOutputs value="0"/>
@@ -58,15 +52,15 @@
     </Module>
 
     <!-- these are special parameter for third subevent -->
-    <Module name="Sub1">    
+    <Module name="Sub2">    
        <TRB value="0x8002"/>
        <TDC value="[0xC008,0xC009,0xC00A]"/>
     </Module>
 
     <Module name="Recalibrate" class="stream::RecalibrateModule" thread="CalcThread">    
         <!-- these parameters will force to create inputs/outputs of module -->
-       <NumInputs value="0"/>
-       <NumOutputs value="0"/>
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
 
        <InputPort name="Input0" url="hld:///data.local1/trb3tdc/file_raw.hld?loop"/>
 
@@ -74,6 +68,8 @@
 
        <!-- how many sub-modules are created -->
        <NumSub value="3"/>
+
+       <DataRate debug="0"/>
      </Module>
 
 

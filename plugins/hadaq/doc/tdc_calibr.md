@@ -13,13 +13,13 @@ To produce time stamp for registered hit we should use following equation:
 
     STAMP = epoch*5ns - Calibr(fine)
     
-One should understand - large values of **fine** counter means longer distance to the next epoch, but smaller value of time stamp.
+One should understand - larger value of **fine** counter means longer distance to the next epoch, but smaller value of time stamp.
 
-Form of **Calibr** function individual for each channel and can vary with temperature, core voltage,
-  
-        
+Form of **Calibr** function individual for each channel and can vary with temperature, core voltage or other factors.
+          
 
 ### Can one use liner approximation?
+
 
 
 

@@ -51,19 +51,20 @@ stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Comm
 
    fHLD = new hadaq::HldProcessor();
 
+   CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
+
    for (int n=0;n<fNumSub;n++) {
       std::string mname = dabc::format("Sub%d",n);
 
       dabc::CmdCreateModule cmd("stream::TdcCalibrationModule", mname);
       cmd.SetPtr("ProcMgr", fProcMgr);
       cmd.SetPtr("HLDProc", fHLD);
-
-      DOUT0("Create module %s", mname.c_str());
-
       dabc::mgr.Execute(cmd);
-
-      DOUT0("Create module %s done", mname.c_str());
    }
+
+   fProcMgr->UserPreLoop();
+
+   Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 
    base::ProcMgr::ClearInstancePointer();
 }
@@ -75,13 +76,14 @@ stream::RecalibrateModule::~RecalibrateModule()
 
 void stream::RecalibrateModule::OnThreadAssigned()
 {
-   DOUT0("Start RecalibrateModule in %s", ThreadName().c_str());
+   // DOUT0("Start RecalibrateModule in %s", ThreadName().c_str());
 }
 
 bool stream::RecalibrateModule::retransmit()
 {
    if (CanSend() && CanRecv()) {
       dabc::Buffer buf = Recv();
+      Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
       if (buf.GetTypeId() == hadaq::mbt_HadaqEvents) {
          hadaq::ReadIterator iter(buf);
          while (iter.NextEvent()) {

@@ -86,7 +86,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 
    fTrbProc->SetHistFilling(hfill);
 
-   DOUT2("Create TDCs %s", Cfg("TDC", cmd).AsStr().c_str());
+   DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
 
    fTDCs = Cfg("TDC", cmd).AsUIntVect();
    for(unsigned n=0;n<fTDCs.size();n++) {
@@ -114,12 +114,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    item.SetField("value", fState);
 
    // set ids and create more histograms
-   if (fOwnProcMgr) fProcMgr->UserPreLoop();
-
-   Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
-
-   // remove pointer, let other modules to create and use it
-   if (fOwnProcMgr) base::ProcMgr::ClearInstancePointer();
+   if (fOwnProcMgr) {
+      fProcMgr->UserPreLoop();
+      Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
+      // remove pointer, let other modules to create and use it
+      base::ProcMgr::ClearInstancePointer();
+   }
 
    DOUT0("TdcCalibrationModule dummy %s auto %d", DBOOL(fDummy), fAutoCalibr);
 }

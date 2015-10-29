@@ -19,14 +19,13 @@
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
-       <NumInputs value="5"/>
+       <NumInputs value="4"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="bin://out0*.bin"/>
-       <InputPort name="Input1" url="bin://out1*.bin"/>
-       <InputPort name="Input2" url="bin://out2*.bin"/>
-       <InputPort name="Input3" url="bin://out3*.bin"/>
-       <InputPort name="Input4" url="bin://out4*.bin"/>
+       <InputPort name="Input0" url="bin:///data.local1/trb3tdc/dump/out0*.bin" resort="true"/>
+       <InputPort name="Input1" url="bin:///data.local1/trb3tdc/dump/out1*.bin"/>
+       <InputPort name="Input2" url="bin:///data.local1/trb3tdc/dump/out2*.bin"/>
+       <InputPort name="Input3" url="bin:///data.local1/trb3tdc/dump/out3*.bin"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
@@ -41,7 +40,7 @@
        <FlushTimeout value="0.5"/>   
 
        <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
-       <TriggerNumRange value="0x1000000"/>
+       <TriggerNumRange value="0x10000"/>
        
        <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
