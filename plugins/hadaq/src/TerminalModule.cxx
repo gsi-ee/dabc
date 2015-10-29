@@ -34,11 +34,15 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fDoClear(false),
    fLastTm(),
    fCalibr(),
+   fServPort(0),
+   fLastServCmd(),
+   fServReqRunning(false),
    fFilePort(1),
    fLastFileCmd(),
    fFileReqRunning(false)
 {
    double period = Cfg("period", cmd).AsDouble(1);
+   fServPort = Cfg("servport", cmd).AsInt(-1);
    fFilePort = Cfg("fileport", cmd).AsInt(1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
@@ -69,9 +73,16 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
 bool hadaq::TerminalModule::ReplyCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetTransportStatistic")) {
-      fFileReqRunning = false;
-      if (cmd.GetResult() == dabc::cmd_true) fLastFileCmd = cmd;
-                                        else fLastFileCmd.Release();
+      if (cmd.GetBool("_file_req")) {
+         fFileReqRunning = false;
+         if (cmd.GetResult() == dabc::cmd_true) fLastFileCmd = cmd;
+                                           else fLastFileCmd.Release();
+      } else
+      if (cmd.GetBool("_serv_req")) {
+         fServReqRunning = false;
+         if (cmd.GetResult() == dabc::cmd_true) fLastServCmd = cmd;
+                                           else fLastServCmd.Release();
+      }
       return true;
    }
 
@@ -113,7 +124,8 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
 
    if (delta>0) {
-      unsigned nlines = comb->fCfg.size()+4;
+      unsigned nlines = comb->fCfg.size() + 4;
+      if (fServPort>=0) nlines++;
       if (fFilePort>=0) nlines++;
       for (unsigned n=0;n<nlines;n++)
          fputs("\033[A\033[2K",stdout);
@@ -132,6 +144,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       printf("  qu    - input queue of combiner module\n");
       printf("  drop  - dropped subevents (received by combiner but not useful)\n");
       printf("  lost  - lost subevents (never seen by combiner)\n");
+      printf("  trigger - last trigger values (after masking them in combiner module)\n");
       printf("  progr - progress of TDC calibration\n");
    }
 
@@ -157,6 +170,13 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    else
       s += "\n";
 
+   if (fServPort>=0) {
+      if (fLastServCmd.null()) {
+         s += dabc::format("Server: missing, failed or not found on Combiner/Output%d\n", fServPort);
+      } else {
+         s += dabc::format("Server: clients:%d inpqueue:%d cansend:%s\n", fLastServCmd.GetInt("NumClients"), fLastServCmd.GetInt("NumCanRecv"), fLastServCmd.GetStr("NumCanSend").c_str());
+      }
+   }
 
    if (fFilePort>=0) {
       if (fLastFileCmd.null()) {
@@ -191,8 +211,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       }
 
    s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu  drop  lost";
-   if (istdccal) s += "    TRB         TDC        progr state\n";
-            else s += "\n";
+   if (istdccal) s += "    TRB         TDC        progr state";
+   if (fRingSize>0) s += "   triggers";
+   s += "\n";
 
    bool isready = true;
 
@@ -284,7 +305,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
             prev = cnt; cnt = (cnt+1) % HADAQ_RINGSIZE;
          }
-         s += " trig:" + sbuf;
+         s += "  " + sbuf;
       }
 
       s += "\n";
@@ -303,6 +324,15 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    if (!fFileReqRunning && (fFilePort>=0)) {
       dabc::Command cmd("GetTransportStatistic");
       cmd.SetStr("_for_the_port_", dabc::format("Output%d", fFilePort));
+      cmd.SetBool("_file_req", true);
       m.Submit(Assign(cmd));
    }
+
+   if (!fServReqRunning && (fServPort>=0)) {
+      dabc::Command cmd("GetTransportStatistic");
+      cmd.SetStr("_for_the_port_", dabc::format("Output%d", fServPort));
+      cmd.SetBool("_serv_req", true);
+      m.Submit(Assign(cmd));
+   }
+
 }

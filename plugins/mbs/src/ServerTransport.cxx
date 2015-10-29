@@ -390,6 +390,25 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
+   if (cmd.IsName("GetTransportStatistic")) {
+
+      int cnt = 0;
+      std::vector<uint64_t> cansend;
+      for(unsigned n=0;n<NumOutputs();n++) {
+         if (IsOutputConnected(n)) {
+            cnt++; cansend.push_back(NumCanSend(n));
+         }
+      }
+
+      cmd.SetInt("NumClients", cnt);
+      cmd.SetInt("NumCanRecv", NumCanRecv());
+      if (cnt==1)
+         cmd.SetField("NumCanSend", cansend[0]);
+      else
+      if (cnt>1)
+         cmd.SetField("NumCanSend", cansend);
+      return dabc::cmd_true;
+   }
 
    return dabc::Transport::ExecuteCommand(cmd);
 }
@@ -429,11 +448,11 @@ bool mbs::ServerTransport::SendNextBuffer()
    SendToAllOutputs(buf);
 
    if (iseof) {
-      DOUT0("Server transport saw EOF buffer");
+      DOUT2("Server transport saw EOF buffer");
       fDoingClose = 1;
 
       if ((NumOutputs()==0) || !fBlocking) {
-         DOUT0("One could close server transport immediately");
+         DOUT2("One could close server transport immediately");
          CloseTransport(false);
          fDoingClose = 2;
          return false;

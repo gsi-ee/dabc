@@ -16,6 +16,7 @@ about current functionality of the framework.
 5. Introduce new buffer kind mbt_HadaqSubevents. Use it when reformat hadTU data.
    Only subevents are stored in such buffer. Reduces memory usage.
 6. Support mbt_HadaqSubevents in combiner module     
+7. Provide information about mbs server in terminal module
    
 
 27.10.2015
