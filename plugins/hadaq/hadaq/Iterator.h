@@ -80,6 +80,7 @@ namespace hadaq {
          unsigned evntsize() const { return evnt() ? evnt()->GetPaddedSize() : 0; }
 
          hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
+
          bool AssignEventPointer(dabc::Pointer& ptr);
          hadaq::RawSubevent* subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }

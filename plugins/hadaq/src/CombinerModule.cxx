@@ -495,8 +495,6 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
 bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
-   DOUT5("CombinerModule::ShiftToNextHadTu %d begins", ninp);
-
    InputCfg& cfg = fCfg[ninp];
    ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
@@ -504,11 +502,9 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 
       bool res = false;
       if (iter.IsData())
-         res = iter.NextHadTu();
+         res = iter.NextSubeventsBlock();
 
-      if (res && (iter.hadtu() != 0)) return true;
-
-      DOUT5("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp);
+      if (res && iter.IsData()) return true;
 
       if(!ShiftToNextBuffer(ninp)) return false;
    } //  while (!foundhadtu)

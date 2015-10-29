@@ -14,7 +14,8 @@ about current functionality of the framework.
    in second case about 26%.
 4. Support new message kind in hldprint
 5. Introduce new buffer kind mbt_HadaqSubevents. Use it when reformat hadTU data.
-   Only subevents are stored in such buffer. Reduces memory usage.  
+   Only subevents are stored in such buffer. Reduces memory usage.
+6. Support mbt_HadaqSubevents in combiner module     
    
 
 27.10.2015
