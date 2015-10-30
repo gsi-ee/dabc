@@ -64,7 +64,7 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    fBufType = buf.GetTypeId();
 
-   if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) || fBufType == mbt_HadaqSubevents ) {
+   if (!((fBufType == mbt_HadaqEvents) || (fBufType == mbt_HadaqTransportUnit) || (fBufType == mbt_HadaqSubevents))) {
       EOUT("Buffer format %u not supported", (unsigned) fBufType);
       return false;
    }

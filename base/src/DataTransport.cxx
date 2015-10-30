@@ -384,7 +384,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             if (fNextDataSize <= di_ValidSize) {
                ChangeState(inpNeedBuffer);
             } else {
-               DOUT0("Tr:%s Reading error", GetName());
+               DOUT0("Tr:%s Reading error nextsz = 0x%08x", GetName(), fNextDataSize);
                ChangeState(inpError);
             }
       }

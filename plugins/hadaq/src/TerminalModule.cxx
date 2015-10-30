@@ -239,7 +239,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       hadaq::DataSocketAddon* addon = (hadaq::DataSocketAddon*) cfg.fAddon;
 
       if (addon==0) {
-         sbuf.append("  missing addon ");
+         sbuf.append("  missing add-on                                     ");
          fCalibr[n].lastrecv = 0;
       } else {
 

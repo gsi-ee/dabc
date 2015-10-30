@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+30.10.2015
+1. Introduce hadaq::SorterModule. It should sort subevents according trigger number.
+
+
 29.10.2015
 1. When making file input, once could specify "reduce" parameter in URL options.
    It let reduce buffer size, which will be filled by reading. 

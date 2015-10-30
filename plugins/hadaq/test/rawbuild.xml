@@ -7,22 +7,32 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
-      <loglevel value="-1"/>
+      <debuglevel value="0"/>
+      <loglevel value="1"/>
       <logfile value="rawbuild.log"/>
-      <loglimit value="1000"/>
+      <loglimit value="1000000"/>
     </Run>
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
+    
+    <Module name="Sorter" class="hadaq::SorterModule">    
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input0" url="bin:///data.local1/trb3tdc/dump/out0*.bin"/>
+       <TriggerNumRange value="0x10000"/>
+    </Module>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="4"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="bin:///data.local1/trb3tdc/dump/out0*.bin" resort="true"/>
+       <!--InputPort name="Input0" url="bin:///data.local1/trb3tdc/dump/out0*.bin" resort="false"/-->
+       
+       <InputPort name="Input0" url="Sorter/Output0"/>
        <InputPort name="Input1" url="bin:///data.local1/trb3tdc/dump/out1*.bin"/>
        <InputPort name="Input2" url="bin:///data.local1/trb3tdc/dump/out2*.bin"/>
        <InputPort name="Input3" url="bin:///data.local1/trb3tdc/dump/out3*.bin"/>

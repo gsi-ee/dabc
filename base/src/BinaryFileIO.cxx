@@ -71,7 +71,12 @@ unsigned dabc::BinaryFileInput::Read_Size()
    fCurrentBufSize = 0;
    fCurrentBufType = 0;
 
-   if (!fFile.ReadBufHeader(&fCurrentBufSize, &fCurrentBufType)) return di_Error;
+   if (fFile.eof()) return di_EndOfStream;
+
+   if (!fFile.ReadBufHeader(&fCurrentBufSize, &fCurrentBufType)) {
+      DOUT1("Error reading file %s", CurrentFileName().c_str());
+      return di_Error;
+   }
 
    return fCurrentBufSize;
 }

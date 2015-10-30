@@ -20,6 +20,12 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifndef DABC_Pointer
+#include "dabc/Pointer.h"
+#endif
+
+#include <vector>
+
 namespace hadaq {
 
 
@@ -31,8 +37,34 @@ namespace hadaq {
 
    class SorterModule : public dabc::ModuleAsync {
 
-   protected:
-      int    fFlushCnt;
+   public:
+         struct SubsRec {
+            void*     subevnt;  //!< direct pointer on subevent
+            uint32_t  trig;     //!< trigger number
+            uint32_t  buf;      //!< buffer indx
+            uint32_t  sz;       //!< padded size
+         };
+
+         struct SubsComp {
+            SorterModule* m;
+            SubsComp(SorterModule* _m) : m(_m) {}
+            // use in std::sort for sorting elements of std::vector<SubsRec>
+            bool operator() (const SubsRec& l,const SubsRec& r) { return m->Diff(l.trig, r.trig) > 0; }
+         };
+
+
+      int       fFlushCnt;
+      uint32_t  fTriggersRange;   //!< valid range for the triggers, normally 0x1000000
+      uint32_t  fLastTrigger;     //!< last trigger copied into output
+      unsigned  fNextBufIndx;     //!< next buffer which could be processed
+      unsigned  fReadyBufIndx;    //!< input buffer index which could be send directly
+      std::vector<SubsRec> fSubs; //!< vector with subevents data in the buffers
+      dabc::Buffer fOutBuf;       //!< output buffer
+      dabc::Pointer fOutPtr;      //!< place for new data
+
+      void DecremntInputIndex(unsigned cnt=1);
+
+      bool RemoveUsedSubevents(unsigned num);
 
       bool retransmit();
 
@@ -48,6 +80,15 @@ namespace hadaq {
       virtual bool ProcessSend(unsigned) { return retransmit(); }
 
       virtual void ProcessTimerEvent(unsigned);
+
+      int Diff(uint32_t trig1, uint32_t trig2)
+      {
+         int res = (int) (trig2) - trig1;
+         if (res > ((int) fTriggersRange)/2) return res - fTriggersRange;
+         if (res < ((int) fTriggersRange)/-2) return res + fTriggersRange;
+         return res;
+      }
+
 
    };
 
