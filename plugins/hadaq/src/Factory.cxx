@@ -29,6 +29,7 @@
 #include "hadaq/HldInput.h"
 #include "hadaq/HldOutput.h"
 #include "hadaq/UdpTransport.h"
+#include "hadaq/SorterModule.h"
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
 #include "hadaq/TerminalModule.h"
@@ -132,6 +133,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 {
    if (classname == "hadaq::CombinerModule")
       return new hadaq::CombinerModule(modulename, cmd);
+
+   if (classname == "hadaq::SorterModule")
+      return new hadaq::SorterModule(modulename, cmd);
 
    if (classname == "hadaq::MbsTransmitterModule")
       return new hadaq::MbsTransmitterModule(modulename, cmd);
