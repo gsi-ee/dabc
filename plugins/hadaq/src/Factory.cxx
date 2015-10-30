@@ -82,11 +82,16 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetHostName().empty())
       return dabc::Factory::CreateTransport(port, typ, cmd);
 
+   unsigned trignum = portref.GetModule().Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
+
+   std::string portname = portref.GetName();
+
    if (url.HasOption("tdc")) {
+      // first create TDC calibration module, connected to combiner
 
-      std::string calname = dabc::format("%sTdcCal", portref.GetName());
+      std::string calname = dabc::format("%sTdcCal", portname.c_str());
 
-      DOUT0("Create MODULE %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
+      DOUT0("Create calibration module %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
 
       dabc::CmdCreateModule mcmd("stream::TdcCalibrationModule", calname);
       mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
@@ -107,6 +112,29 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
       cmd.SetStr(dabc::CmdCreateTransport::PortArg(), portref.ItemName());
 
       dabc::mgr.app().AddObject("module", calname);
+   }
+
+   if (url.HasOption("resort")) {
+      // then create resort module, connected to combiner or TDC calibration
+
+      std::string sortname = dabc::format("%sResort", portname.c_str());
+
+      DOUT0("Create sort module %s trignum 0x%06x", sortname.c_str(), trignum);
+
+      dabc::CmdCreateModule mcmd("hadaq::SorterModule", sortname);
+      mcmd.SetUInt(hadaq::xmlHadaqTrignumRange, trignum);
+      dabc::mgr.Execute(mcmd);
+
+      dabc::ModuleRef sortm = dabc::mgr.FindModule(sortname);
+
+      dabc::LocalTransport::ConnectPorts(sortm.FindPort("Output0"), portref, cmd);
+
+      portref = sortm.FindPort("Input0");
+
+      // workaround - we say manager that it should connect transport with other port
+      cmd.SetStr(dabc::CmdCreateTransport::PortArg(), portref.ItemName());
+
+      dabc::mgr.app().AddObject("module", sortname);
    }
 
    int nport = url.GetPort();

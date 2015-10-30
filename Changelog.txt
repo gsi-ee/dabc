@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 30.10.2015
 1. Introduce hadaq::SorterModule. It should sort subevents according trigger number.
+2. SorterModule can be created when "resort" url option for UDP transport specified
+   SorterModule can be combined (connected in chain) with TdcCalibrationModule.  
 
 
 29.10.2015
