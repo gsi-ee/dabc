@@ -150,7 +150,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
    double reduce = url.GetOptionDouble("reduce", 1.);
    bool observer = url.GetOptionBool("observer", false);
    bool debug = url.HasOption("debug");
-   int udp_queue = url.GetOptionInt("upd_queue", cmd).AsUInt(0);
+   int udp_queue = url.GetOptionInt("upd_queue", 0);
 
    DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
 
