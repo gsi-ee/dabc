@@ -283,5 +283,10 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
 
 int hadaq::SorterModule::ExecuteCommand(dabc::Command cmd)
 {
+   if (cmd.IsName("GetHadaqTransportInfo")) {
+      if (SubmitCommandToTransport(InputName(0), cmd)) return dabc::cmd_postponed;
+      return dabc::cmd_true;
+   }
+
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
