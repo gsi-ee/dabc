@@ -134,7 +134,34 @@ For each input only correct UDP port number should be specified like:
 
      <InputPort name="Input0" url="hadaq://host:10101"/>
 
-Here only port number 10101 is relevant, all other parameters must remain as is.
+Here only port number 10101 is relevant, all other parameters could remain as is.
+Transport parameters typically speicfied in extra xml line for all ports together:
+
+     <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+
+Following URL parameters can be used for UDP transport:
+
+| Parameter | Description |
+| --------: | :----------- |
+|   udpbuf  |  size of socket buffer for receiving UDP packets (default 200000)   |
+|   mtu     |  Maximial Transport Unit (MTU) for UDP packet (default 64512) |
+|   flush   |  flush time in seconds, how fast data will be delivered to combiner (default 1 sec) |
+|  observer |  when true, generates information for HADES control system (default false) |
+|  maxloop  |  how many single UDP packets can be read in single loop (default 100), could be reduced for fair thread resource sharing |
+|    reduce |  reduce factor for output buffer size, may be configured together with TDC calibration option where more data could be produced, default 1 |
+|       tdc |  array of TDC IDs like [0x1001,0x1002]. Activates TDC calibration |
+|       trb |  value of TRB ID, to verify when data used for TDC calibration |
+|       hub |  value of HUB ID(s), to correctly unpack data for TDC calibration |
+|    resort |  when specified, resorting of packets order done with trigger number order |
+| upd_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) | 
+
+If parameter (like resort) should be specified only for particular port, one could write:
+
+       <InputPort name="Input2" url="hadaq://host:10101" urlopt2="resort&udp_queue=20"/>
+ 
+ Or to activate TDC calibration
+ 
+       <InputPort name="Input3" url="hadaq://host:10101" urlopt2="tdc=[0xC001,0xC002]&trb=0x8010"/>
 
 Events, produced by combiner module, can be stored in hld file or (and) delivered
 via online server to online analysis.
@@ -182,6 +209,9 @@ each HLD events. Configuration for online server looks like:
 For instance, online server can be used to printout raw data with `hldprint` command:
 
     [shell] hldprint localhost:6002
+
+Very often default port for online server [6002] used by VNC. Select any other port, use it in **hldprint** or **go4analysis** to connect with the server.
+ 
 
 
 ### Running DABC

@@ -51,11 +51,13 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    std::string poolname;
 
    if (!inpport.null()) {
+
+      unsigned trqueue = inpport.Cfg("TransportQueue", cmd).AsUInt(1);
+      if (trqueue < inpport.QueueCapacity()) trqueue = inpport.QueueCapacity();
+
       poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
-//      DOUT0("Inpport %s pool %s", inpport.ItemName(false).c_str(), poolname.c_str());
-
-      CreateOutput("Output", inpport.QueueCapacity());
+      CreateOutput("Output", trqueue);
 
       SetPortLoopLength(OutputName(), 1);
 
@@ -66,11 +68,12 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
    if (!outport.null()) {
 
+      unsigned trqueue = outport.Cfg("TransportQueue", cmd).AsUInt(1);
+      if (trqueue < outport.QueueCapacity()) trqueue = outport.QueueCapacity();
+
       poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStr(poolname);
 
-//      DOUT0("Outport %s pool %s cmdhaspool %s", outport.ItemName(false).c_str(), poolname.c_str(), DBOOL(cmd.HasField(dabc::xmlPoolName)));
-
-      CreateInput("Input", outport.QueueCapacity());
+      CreateInput("Input", trqueue);
 
       SetPortLoopLength(InputName(), 1);
 

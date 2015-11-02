@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+2.11.2015
+1. Let configure output queue size of hadaq::UdpTransport - it not always same
+   as input queue size of combiner module. Only for UdpTransport queue size is criticial
+
+
 30.10.2015
 1. Introduce hadaq::SorterModule. It should sort subevents according trigger number.
 2. SorterModule can be created when "resort" url option for UDP transport specified
