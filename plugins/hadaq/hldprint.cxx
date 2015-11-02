@@ -320,10 +320,12 @@ int main(int argc, char* argv[])
    hadaq::RawEvent* evnt(0);
 
    std::map<unsigned,SubevStat> stat;
+   unsigned trig_stat[256];
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
+   for (int n=0;n<256;n++) trig_stat[n] = 0;
 
    dabc::InstallCtrlCHandler();
 
@@ -345,7 +347,7 @@ int main(int argc, char* argv[])
          cnt++;
          lastevtm = curr;
       } else
-      if (curr - lastevtm > tmout) { printf("TIMEOUT %ld\n", cnt0); break; }
+      if (curr - lastevtm > tmout) { /*printf("TIMEOUT %ld\n", cnt0);*/ break; }
 
       if (showrate) {
 
@@ -372,10 +374,9 @@ int main(int argc, char* argv[])
          while (!found && ((sub=evnt->NextSubevent(sub))!=0)) {
 
             unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-            unsigned ix = 0;
+            unsigned ix(0);
 
             while (ix < trbSubEvSize) {
-
                unsigned data = sub->Data(ix++);
 
                unsigned datalen = (data >> 16) & 0xFFFF;
@@ -402,13 +403,19 @@ int main(int argc, char* argv[])
          evnt->Dump();
 
       hadaq::RawSubevent* sub = 0;
-      while ((sub=evnt->NextSubevent(sub))!=0) {
+      bool first = true;
+      while ((sub = evnt->NextSubevent(sub)) != 0) {
 
          bool print_sub_header(false);
-
          if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
+         }
+
+         if (first) {
+            unsigned tag = sub->GetTrigTypeTrb3() & 0xFF;
+            trig_stat[tag]++;
+            first = false;
          }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
@@ -509,9 +516,13 @@ int main(int argc, char* argv[])
 
    if (dostat) {
       printf("Statistic: %ld events analyzed\n", printcnt);
+      for (unsigned n=0;n<256;n++)
+         if (trig_stat[n]>0)
+            printf("   tag 0x%02x  number %u\n", n, trig_stat[n]);
 
       int width = 3;
       if (printcnt > 1000) width = 6;
+
 
       for (std::map<unsigned,SubevStat>::iterator iter = stat.begin(); iter!=stat.end(); iter++) {
          printf("   Subevent 0x%04x : cnt %*lu averlen %5.1f", iter->first, width, iter->second.num, iter->second.aver_size());
