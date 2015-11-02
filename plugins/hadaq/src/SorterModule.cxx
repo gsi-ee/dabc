@@ -26,6 +26,8 @@
 hadaq::SorterModule::SorterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fFlushCnt(5),
+   fBufCnt(0),
+   fLastRet(false),
    fNextBufIndx(0),
    fReadyBufIndx(0),
    fSubs(),
@@ -123,17 +125,19 @@ bool hadaq::SorterModule::retransmit()
       // either flush all data or just forward EOF buffer
       if (buf.GetTypeId()==dabc::mbt_EOF) {
          if (fNextBufIndx==0) {
-            if (!CanSend()) return false;
+            if (!CanSend()) { fLastRet = 50; return false; }
             buf = Recv();
             DecremntInputIndex();
             Send(buf);
-            return false;
+            fFlushCnt = 5;
+            fLastRet = 40;
+            return true;
          }
          flush_data = true; break;
       }
 
       hadaq::ReadIterator iter(buf);
-
+      fBufCnt++;
       bool was_empty = fSubs.size() == 0;
 
       // scan buffer
@@ -144,6 +148,8 @@ bool hadaq::SorterModule::retransmit()
             rec.buf = fNextBufIndx;
             rec.trig = (iter.subevnt()->GetTrigNr() >> 8) & (fTriggersRange-1);
             rec.sz = iter.subevnt()->GetPaddedSize();
+
+            // DOUT1("Event 0x%06x size %3u", rec.trig, rec.sz);
 
             fSubs.push_back(rec);
             new_data = true;
@@ -183,14 +189,15 @@ bool hadaq::SorterModule::retransmit()
       DecremntInputIndex();
       Send(buf);
       fFlushCnt = 5;
+      fLastRet = 30;
       return true;
    }
 
    // no need to try if cannot send buffer
-   if (!CanSend()) return false;
+   if (!CanSend()) { fLastRet = 20; return false; }
 
    if (fOutBuf.null()) {
-      if (!CanTakeBuffer()) return false;
+      if (!CanTakeBuffer()) { fLastRet = 10; return false; }
       fOutBuf = TakeBuffer();
       fOutBuf.SetTypeId(hadaq::mbt_HadaqSubevents);
       fOutPtr.reset(fOutBuf);
@@ -205,19 +212,20 @@ bool hadaq::SorterModule::retransmit()
 
       if (diff!=1) {
 
-         DOUT1("Saw difference %d with trigger 0x%06x", diff, fSubs[cnt].trig);
-
          if (diff<0) {
-            EOUT("problem in sorting - older events appeared. Most probably, flush time has wrong value");
+            EOUT("Buf:%3d problem in sorting - older events appeared. Most probably, flush time has wrong value", fBufCnt);
             cnt++; // skip subevent
             continue;
          }
 
          // if buffer for such subevents in two last buffers, wait for next data
          // if EOF buffer was seen before, flush subevents immediately
-         if ((fSubs[cnt].buf + 2 >= NumCanRecv()) && !full_recv_queue && !flush_data) break;
+         if ((fSubs[cnt].buf + 2 > fNextBufIndx) && !full_recv_queue && !flush_data) break;
 
-         DOUT1("Saw difference %d with trigger 0x%06x", diff, fSubs[cnt].trig);
+
+         DOUT1("Buf:%3d  Saw difference %d with trigger 0x%06x", fBufCnt, diff, fSubs[cnt].trig);
+
+         DOUT1("Allow gap full:%s numcanrecv:%u indx:%u nextbufind:%u", DBOOL(full_recv_queue), NumCanRecv(), fSubs[cnt].buf, fNextBufIndx);
 
          // even after the gap, event taken into output buffer
       }
@@ -243,7 +251,9 @@ bool hadaq::SorterModule::retransmit()
    // if buffers were removed from input queue, call retransmit again
    if (RemoveUsedSubevents(cnt)) flush_data = true;
 
-   return flush_data;
+   fLastRet = 7;
+
+   return true;
 }
 
 
@@ -258,6 +268,7 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
    // flush buffer if any data is accumulated
    unsigned len = fOutPtr.distance_to_ownbuf();
    if (len>0) {
+      DOUT1("Buf:%3d  Flush output counter %d subs.size %u nextbuf:%u numcanrev:%u lastret:%d", fBufCnt, fFlushCnt, fSubs.size(), fNextBufIndx, NumCanRecv(), fLastRet);
       fOutBuf.SetTotalSize(len);
       fOutPtr.reset();
       Send(fOutBuf);
@@ -266,7 +277,6 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
    }
 
    if (fFlushCnt >= 0) return;
-
    // send any remained data and clear buffers
 
 }

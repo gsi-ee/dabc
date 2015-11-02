@@ -54,6 +54,8 @@ namespace hadaq {
 
 
       int       fFlushCnt;
+      int       fBufCnt;          //!< total number of buffers
+      int       fLastRet;         //!< debug
       uint32_t  fTriggersRange;   //!< valid range for the triggers, normally 0x1000000
       uint32_t  fLastTrigger;     //!< last trigger copied into output
       unsigned  fNextBufIndx;     //!< next buffer which could be processed
