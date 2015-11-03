@@ -123,16 +123,16 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if ((len==0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
-   if (len>99) wlen = 3; else
-   if (len>999) wlen = 4;
+   if (sz>99) wlen = 3; else
+   if (sz>999) wlen = 4;
 
    unsigned epoch(0);
    double tm, ch0tm(0);
 
    errmask = 0;
 
-   bool haschannel0 = false;
-   unsigned channel(0), fine(0);
+   bool haschannel0(false);
+   unsigned channel(0), fine(0), ndebug(0), nheader(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    double last_rising[65], last_falling[65];
@@ -156,9 +156,11 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             if (prefix>0) printf("reserved\n");
             break;
          case tdckind_Header:
+            nheader++;
             if (prefix>0) printf("tdc header\n");
             break;
          case tdckind_Debug:
+            ndebug++;
             if (prefix>0) printf("tdc debug\n");
             break;
          case tdckind_Epoch:
@@ -221,8 +223,8 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       }
    }
 
-   if (len<2) errmask |= tdcerr_NoData; else
-   if (!haschannel0) errmask |= tdcerr_MissCh0;
+   if (len<2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
+   if (!haschannel0 && (ndebug==0)) errmask |= tdcerr_MissCh0;
 
    return false;
 }
@@ -235,8 +237,8 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if ((len==0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
-   if (len>99) wlen = 3; else
-   if (len>999) wlen = 4;
+   if (sz>99) wlen = 3; else
+   if (sz>999) wlen = 4;
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
@@ -319,13 +321,12 @@ int main(int argc, char* argv[])
 
    hadaq::RawEvent* evnt(0);
 
-   std::map<unsigned,SubevStat> stat;
-   unsigned trig_stat[256];
+   std::map<unsigned,SubevStat> idstat; // events id counter
+   std::map<unsigned,SubevStat> stat;   // subevents statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
-   for (int n=0;n<256;n++) trig_stat[n] = 0;
 
    dabc::InstallCtrlCHandler();
 
@@ -340,6 +341,11 @@ int main(int argc, char* argv[])
       dabc::TimeStamp curr = dabc::Now();
 
       if (evnt!=0) {
+
+         if (dostat) {
+            idstat[evnt->GetId()].num++;
+            idstat[evnt->GetId()].sizesum+=evnt->GetSize();
+         }
 
          // ignore events which are nor match with specified id
          if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
@@ -403,19 +409,12 @@ int main(int argc, char* argv[])
          evnt->Dump();
 
       hadaq::RawSubevent* sub = 0;
-      bool first = true;
       while ((sub = evnt->NextSubevent(sub)) != 0) {
 
          bool print_sub_header(false);
          if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
-         }
-
-         if (first) {
-            unsigned tag = sub->GetTrigTypeTrb3() & 0xFF;
-            trig_stat[tag]++;
-            first = false;
          }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
@@ -434,30 +433,29 @@ int main(int argc, char* argv[])
                   as_tdc = true;
 
             if (!as_tdc) {
-
-            if ((onlytdc!=0) && (datakind==onlytdc)) {
-               as_tdc = true;
-            } else
-            if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
-               as_adc = true;
-            } else
-            if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
-               // this is hack - skip hub header, inside is normal subsub events structure
-               if (dostat) {
-                  stat[datakind].num++;
-                  stat[datakind].sizesum+=datalen;
+               if ((onlytdc!=0) && (datakind==onlytdc)) {
+                  as_tdc = true;
                } else
-               if (!showrate) {
-                  printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+               if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
+                  as_adc = true;
+               } else
+               if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
+                  // this is hack - skip hub header, inside is normal subsub events structure
+                  if (dostat) {
+                     stat[datakind].num++;
+                     stat[datakind].sizesum+=datalen;
+                  } else
+                  if (!showrate) {
+                     printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+                  }
+                  continue;
+               } else
+               if ((onlyraw!=0) && (datakind==onlyraw)) {
+                  as_raw = true;
+               } else
+               if (printraw) {
+                  as_raw = (onlytdc==0) && (onlyraw==0);
                }
-               continue;
-            } else
-            if ((onlyraw!=0) && (datakind==onlyraw)) {
-               as_raw = true;
-            } else
-            if (printraw) {
-               as_raw = (onlytdc==0) && (onlyraw==0);
-            }
             }
 
             if (!dostat && !showrate) {
@@ -476,7 +474,7 @@ int main(int argc, char* argv[])
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask, false); else
                if (as_adc) PrintAdcData(sub, ix, datalen, 9); else
-               if (as_raw) sub->PrintRawData(ix,datalen,9);
+               if (as_raw) sub->PrintRawData(ix, datalen, 9);
 
                if (errmask!=0) {
                   printf("         !!!! TDC errors detected:");
@@ -516,16 +514,17 @@ int main(int argc, char* argv[])
 
    if (dostat) {
       printf("Statistic: %ld events analyzed\n", printcnt);
-      for (unsigned n=0;n<256;n++)
-         if (trig_stat[n]>0)
-            printf("   tag 0x%02x  number %u\n", n, trig_stat[n]);
 
       int width = 3;
       if (printcnt > 1000) width = 6;
 
+      printf("  Events ids:\n");
+      for (std::map<unsigned,SubevStat>::iterator iter = idstat.begin(); iter!=idstat.end(); iter++)
+         printf("   0x%04x : cnt %*lu averlen %5.1f\n", iter->first, width, iter->second.num, iter->second.aver_size());
 
+      printf("  Subevents ids:\n");
       for (std::map<unsigned,SubevStat>::iterator iter = stat.begin(); iter!=stat.end(); iter++) {
-         printf("   Subevent 0x%04x : cnt %*lu averlen %5.1f", iter->first, width, iter->second.num, iter->second.aver_size());
+         printf("   0x%04x : cnt %*lu averlen %5.1f", iter->first, width, iter->second.num, iter->second.aver_size());
 
          if (iter->second.istdc) {
             printf(" TDC");

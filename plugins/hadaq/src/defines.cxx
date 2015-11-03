@@ -77,11 +77,11 @@ void hadaq::RawSubevent::PrintRawData(unsigned ix, unsigned len, unsigned prefix
    if (ix + len > sz) len = sz - ix;
 
    unsigned wlen = 2;
-   if (len>99) wlen = 3; else
-   if (len>999) wlen = 4;
+   if (sz>99) wlen = 3; else
+   if (sz>999) wlen = 4;
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++)
-      printf("%*s[%*u] %08x%s", (cnt%8 ? 2 : 2+prefix), "", wlen, ix, (unsigned) Data(ix), (cnt % 8 == 7 ? "\n" : ""));
+      printf("%*s[%*u] %08x%s", (cnt%8 ? 2 : prefix), "", wlen, ix, (unsigned) Data(ix), (cnt % 8 == 7 ? "\n" : ""));
 
    if (len % 8 != 0) printf("\n");
 }
