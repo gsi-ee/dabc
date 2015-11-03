@@ -152,6 +152,7 @@ Following URL parameters can be used for UDP transport:
 |       tdc |  array of TDC IDs like [0x1001,0x1002]. Activates TDC calibration |
 |       trb |  value of TRB ID, to verify when data used for TDC calibration |
 |       hub |  value of HUB ID(s), to correctly unpack data for TDC calibration |
+|      trig |  trigger type used for calibration (default all or 0xFFFFF), can be 0xD |
 |    resort |  when specified, resorting of packets order done with trigger number order |
 | upd_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) | 
 

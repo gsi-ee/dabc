@@ -35,6 +35,7 @@
        <!-- DisableCalibrationFor value="0"/-->  
        <Auto value="1000000"/>
        <CalibrFile value="reaclibr_"/>
+       <CalibrTrigger value="0xffff"/>
        <Dummy value="false"/>
      </Module>
 

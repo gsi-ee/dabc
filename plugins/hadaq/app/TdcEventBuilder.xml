@@ -61,6 +61,9 @@ This code is experimental, plese contact S.Linev if you want to use it
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
        
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser -->
+       <CalibrTrigger value="0xffff"/>
+       
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
        

@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+3.11.2015
+1. Add possibility to configure trigger type used for calibration.
+   Can be specified in the TdcCalibrationModule or as "trig" parameter in URL string
+
+
 2.11.2015
 1. Let configure output queue size of hadaq::UdpTransport - it not always same
    as input queue size of combiner module. Only for UdpTransport queue size is criticial

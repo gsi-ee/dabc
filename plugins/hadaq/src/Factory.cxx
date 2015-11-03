@@ -97,6 +97,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, co
       mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
       if (url.HasOption("trb")) mcmd.SetStr("TRB", url.GetOptionStr("trb"));
       if (url.HasOption("hub")) mcmd.SetStr("HUB", url.GetOptionStr("hub"));
+      if (url.HasOption("trig")) mcmd.SetStr("CalibrTrigger", url.GetOptionStr("trig"));
       if (url.HasOption("dummy")) mcmd.SetBool("Dummy", true);
       mcmd.SetInt("portid", portref.ItemSubId());
 
