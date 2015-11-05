@@ -53,12 +53,12 @@ int usage(const char* errstr = 0)
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff) \n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
    printf("   -tot boundary           - printout only events with TOT less than specified boundary, should be combined with -onlytdc (default disabled) \n");
-   printf("   -adc mask               - printout raw data as adc subsubevent (default none) \n");
+   printf("   -adc mask               - printout raw data as ADC subsubevent (default none) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
-   printf("   -fine-min value         - minimal fine counter value, used for liner time callibration (default 31) \n");
-   printf("   -hub value              - maximal fine counter value, used for liner time callibration (default 491) \n");
+   printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
+   printf("   -hub value              - maximal fine counter value, used for liner time calibration (default 491) \n");
 
    return errstr ? 1 : 0;
 }
@@ -132,7 +132,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    errmask = 0;
 
    bool haschannel0(false);
-   unsigned channel(0), fine(0), ndebug(0), nheader(0);
+   unsigned channel(0), fine(0), ndebug(0), nheader(0), isrising(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    double last_rising[65], last_falling[65];
@@ -180,6 +180,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             channel = (msg >> 22) & 0x7F;
             if (channel == 0) haschannel0 = true;
             if (epoch_channel==-1) epoch_channel = channel;
+            isrising = (msg >> 11) & 0x1;
 
             if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
 
@@ -187,8 +188,13 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             fine = (msg >> 12) & 0x3FF;
             if (fine<0x3ff) {
                if ((msg & tdckind_Mask) == tdckind_Hit1) {
-                  // calibrated time, 5 ps/bin
-                  tm -= fine*5e-3;
+                  if (isrising) {
+                     tm -= fine*5e-3; // calibrated time, 5 ps/bin
+                  } else {
+                     tm -= (fine & 0x1FF)*10e-3; // for falling edge 10 ps binning is used
+                     if (fine & 0x200) tm -= 0x800 * 5.; // in rare case time correction leads to
+                  }
+
                } else
                if (ncalibr<2) {
                   // calibrated time, 5 ns correspond to value 0x3ffe or about 0.30521 ps/bin
@@ -199,7 +205,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             }
 
             sbuf[0] = 0;
-            if ((msg >> 11) & 0x1) {
+            if (isrising) {
                last_rising[channel] = tm;
             } else {
                last_falling[channel] = tm;
@@ -214,7 +220,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns%s\n",
                                  ((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit ",
-                                 channel, (msg >> 11) & 0x1, (msg & 0x7FF), fine, tm - ch0tm, sbuf);
+                                 channel, isrising, (msg & 0x7FF), fine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:

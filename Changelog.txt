@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+5.11.2015
+1. In hldprint support new format of hit1 message for falling edge - one
+   need to check possible epoch overflow due to shift correction.
+
+
 3.11.2015
 1. Add possibility to configure trigger type used for calibration.
    Can be specified in the TdcCalibrationModule or as "trig" parameter in URL string
