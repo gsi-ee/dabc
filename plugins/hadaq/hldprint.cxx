@@ -192,13 +192,14 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                      tm -= fine*5e-3; // calibrated time, 5 ps/bin
                   } else {
                      tm -= (fine & 0x1FF)*10e-3; // for falling edge 10 ps binning is used
-                     if (fine & 0x200) tm -= 0x800 * 5.; // in rare case time correction leads to
+                     if (fine & 0x200) tm -= 0x800 * 5.; // in rare case time correction leads to epoch overflow
                   }
-
                } else
                if (ncalibr<2) {
                   // calibrated time, 5 ns correspond to value 0x3ffe or about 0.30521 ps/bin
-                  tm -= calibr[ncalibr++]*5./0x3ffe;
+                  double corr = calibr[ncalibr++]*5./0x3ffe;
+                  if (!isrising) corr*=10.; // for falling edge correction 50 ns range is used
+                  tm -= corr;
                } else {
                   tm -= 5.*(fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
                }
