@@ -222,10 +222,9 @@ bool hadaq::SorterModule::retransmit()
          // if EOF buffer was seen before, flush subevents immediately
          if ((fSubs[cnt].buf + 2 > fNextBufIndx) && !full_recv_queue && !flush_data) break;
 
+         DOUT3("Buf:%3d  Saw difference %d with trigger 0x%06x cnt:%u", fBufCnt, diff, fSubs[cnt].trig, fOutPtr.distance_to_ownbuf());
 
-         DOUT1("Buf:%3d  Saw difference %d with trigger 0x%06x", fBufCnt, diff, fSubs[cnt].trig);
-
-         DOUT1("Allow gap full:%s numcanrecv:%u indx:%u nextbufind:%u", DBOOL(full_recv_queue), NumCanRecv(), fSubs[cnt].buf, fNextBufIndx);
+         DOUT3("Allow gap full:%s numcanrecv:%u indx:%u nextbufind:%u", DBOOL(full_recv_queue), NumCanRecv(), fSubs[cnt].buf, fNextBufIndx);
 
          // even after the gap, event taken into output buffer
       }
