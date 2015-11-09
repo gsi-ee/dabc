@@ -44,11 +44,11 @@ namespace stream {
 
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
+         virtual bool CallFunc(const char* funcname, void* arg);
+
          bool ExecuteHCommand(dabc::Command cmd);
 
          void ClearAllHistograms();
-
-
    };
 
 }

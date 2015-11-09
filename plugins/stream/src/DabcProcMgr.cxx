@@ -17,6 +17,7 @@
 
 #include "dabc/Buffer.h"
 #include "dabc/Iterator.h"
+#include "dabc/Factory.h"
 
 #include <math.h>
 
@@ -250,6 +251,22 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
 
    dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
    cmd.SetRawData(raw);
+
+   return true;
+}
+
+typedef void StreamCallFunc(void*);
+
+bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
+{
+   if (funcname==0) return false;
+
+   void* symbol = dabc::Factory::FindSymbol(funcname);
+   if (symbol == 0) return false;
+
+   StreamCallFunc* func = (StreamCallFunc*) symbol;
+
+   func(arg);
 
    return true;
 }
