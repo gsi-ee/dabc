@@ -333,40 +333,20 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
    fProcMgr->ProvideRawData(bbuf);
 
-   // scan new data
-   fProcMgr->ScanNewData();
-
-   if (fProcMgr->IsRawAnalysis()) {
-
-      fProcMgr->SkipAllData();
-
-   } else {
-
-      //TGo4Log::Info("Analyze data");
-
-      // analyze new sync markers
-      if (fProcMgr->AnalyzeSyncMarkers()) {
-
-         // get and redistribute new triggers
-         fProcMgr->CollectNewTriggers();
-
-         // scan for new triggers
-         fProcMgr->ScanDataForNewTriggers();
-      }
-   }
-
    base::Event* outevent = 0;
 
-   // now producing events as much as possible
-   while (fProcMgr->ProduceNextEvent(outevent)) {
+   // scan new data
+   bool new_event = fProcMgr->AnalyzeNewData(outevent);
 
+   while (new_event) {
       fTotalOutEvnts++;
-
       bool store = fProcMgr->ProcessEvent(outevent);
 
       if (store) {
          // implement events store later
       }
+
+      new_event = fProcMgr->ProduceNextEvent(outevent);
    }
 
    delete outevent;
