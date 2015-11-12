@@ -47,7 +47,7 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
    fTotalEvnts(0),
    fTotalOutEvnts(0)
 {
-   fParallel = Cfg("parallel",cmd).AsInt(0);
+   fParallel = Cfg("parallel", cmd).AsInt(0);
 
    // we need one input and no outputs
    EnsurePorts(1, fParallel<0 ? 0 : fParallel);
@@ -76,11 +76,17 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
          return;
       }
 
+      std::string extra_include;
+      if (cmd.GetBool("use_autotdc"))
+         if (system("ls first.C >/dev/null 2>/dev/null") != 0)
+            extra_include = dabc::format("-I%s/applications/autotdc", streamsys);
+
       bool second = system("ls second.C >/dev/null 2>/dev/null") == 0;
 
-      std::string exec = dabc::format("g++ %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -I. -I%s/include %s"
+      std::string exec = dabc::format("g++ %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -I. -I%s/include %s %s"
             "-shared -Wl,-soname,librunstream.so -Wl,--no-as-needed -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
-            dabcsys, streamsys, (second ? "-D_SECOND_ " : ""), dabcsys, streamsys);
+            dabcsys, streamsys, extra_include.c_str(),
+            (second ? "-D_SECOND_ " : ""), dabcsys, streamsys);
 
       system("rm -f ./librunstream.so");
 
@@ -232,8 +238,6 @@ void stream::RunModule::ProduceMergedHierarchy()
       } else {
          DOUT0("Merged %d histograms", nhist);
       }
-
-
    }
 
    if (fAsf.length()>0) SaveHierarchy(main.SaveToBuffer());

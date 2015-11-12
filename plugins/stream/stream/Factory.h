@@ -31,6 +31,9 @@ namespace stream {
          Factory(const std::string& name) : dabc::Factory(name) {}
 
          virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+
+         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
+
    };
 
 }

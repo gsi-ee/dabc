@@ -15,6 +15,10 @@
 
 #include "stream/Factory.h"
 
+#include "dabc/Url.h"
+#include "dabc/Port.h"
+#include "dabc/Manager.h"
+
 #include "stream/RunModule.h"
 #include "stream/TdcCalibrationModule.h"
 #include "stream/RecalibrateModule.h"
@@ -33,4 +37,19 @@ dabc::Module* stream::Factory::CreateModule(const std::string& classname, const 
       return new stream::RecalibrateModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
+}
+
+
+dabc::Module* stream::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+{
+   dabc::Url url(typ);
+
+   dabc::PortRef portref = port;
+
+   if (!portref.IsOutput() || (url.GetProtocol()!="stream"))
+      return dabc::Factory::CreateTransport(port, typ, cmd);
+
+   cmd.SetBool("use_autotdc", true);
+
+   return new stream::RunModule("StreamMonitor", cmd);
 }

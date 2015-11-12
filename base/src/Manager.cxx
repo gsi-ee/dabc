@@ -1081,7 +1081,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       )
 
       if (!tr.null()) {
-
          if (portname != crcmd.PortName()) {
             portname = crcmd.PortName();
             DOUT0("Port name for created transport was changed on the fly %s", portname.c_str());
@@ -1111,9 +1110,12 @@ int dabc::Manager::ExecuteCommand(Command cmd)
                dabc::LocalTransport::ConnectPorts(tr.FindPort(tr.OutputName(0, false)), port, cmd);
             if (port.IsOutput())
                dabc::LocalTransport::ConnectPorts(port, tr.FindPort(tr.InputName(0, false)), cmd);
+
+            // if normal module assign as transport, it automatically starts
+            if (TransportRef(tr).null()) tr.Start();
          }
 
-         DOUT0("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
+         DOUT3("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
       }
    } else
 

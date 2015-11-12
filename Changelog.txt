@@ -10,6 +10,9 @@ about current functionality of the framework.
    in other plugins.     
 3. When creating transport via factory, use Module as return pointer. This allows to 
    just create arbitrary module when creating transport via url parameters.
+   Such module automatically started when created 
+4. First try to create stream analysis as output transport. Idea to add TDC monitoring
+   and optional ROOT output directly into DABC application 
  
 
 9.11.2015
