@@ -542,6 +542,56 @@ namespace dabc {
          bool AttrModified() const { return GetBool("AttrMod", false); }
    };
 
+
+   // --------------------------------------------------------------------------
+
+   /** \brief Active object, which is working only in calling thread
+    *
+    * It main field of application - exchange functionality between plugins
+    * For instance, if one wants to use TTree output without direct linking of ROOT and
+    * without introducing many virtual classes in the DABC core library
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
+
+   class LocalWorkerRef;
+
+   class LocalWorker : public Object {
+      protected:
+
+         friend class LocalWorkerRef;
+
+         /** Main method where commands are executed */
+         virtual int ExecuteCommand(Command) { return cmd_false; }
+
+      public:
+
+         LocalWorker(const std::string& name) : Object(name, flAutoDestroy) {}
+         virtual ~LocalWorker() {}
+
+   };
+
+   class LocalWorkerRef : public Reference {
+
+      DABC_REFERENCE(LocalWorkerRef, Reference, LocalWorker)
+
+      public:
+
+         bool Execute(Command cmd)
+         {
+            if (GetObject())
+               return GetObject()->ExecuteCommand(cmd) == cmd_true;
+            return false;
+         }
+
+         bool Execute(const std::string& cmd)
+         {
+            return Execute(Command(cmd));
+         }
+   };
+
+
 }
 
 #endif

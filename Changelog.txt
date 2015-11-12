@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+12.11.2015
+1. Introduce LocalWorker. It is minimalistic class to exchange funxtionality between plugins
+   without introducing linker dependencies. Will be used to provide tree storage for
+   the stream plugin in DABC
+2. Introduce TreeStore in ROOT plugin. It is wrapper for use ROOT TTree functionality
+   in other plugins.     
+
+
 9.11.2015
 1. Support function call from DabcProcMgr. 
 
