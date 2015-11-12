@@ -1074,7 +1074,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       DOUT1("Request transport for port %s kind %s", port.ItemName().c_str(), trkind.c_str());
 
-      TransportRef tr;
+      ModuleRef tr;
       FOR_EACH_FACTORY(
          tr = factory->CreateTransport(port, trkind, cmd);
          if (!tr.null()) break;
@@ -1108,12 +1108,12 @@ int dabc::Manager::ExecuteCommand(Command cmd)
             tr.ConnectPoolHandles();
             cmd_res = cmd_true;
             if (port.IsInput())
-               dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port, cmd);
+               dabc::LocalTransport::ConnectPorts(tr.FindPort(tr.OutputName(0, false)), port, cmd);
             if (port.IsOutput())
-               dabc::LocalTransport::ConnectPorts(port, tr.InputPort(), cmd);
+               dabc::LocalTransport::ConnectPorts(port, tr.FindPort(tr.InputName(0, false)), cmd);
          }
 
-         DOUT3("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
+         DOUT0("Created transport for port %s is port connected %s", port.ItemName().c_str(), DBOOL(port.IsConnected()));
       }
    } else
 

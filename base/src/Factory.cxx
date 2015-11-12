@@ -60,7 +60,7 @@ dabc::Factory::Factory(const std::string& name) :
 }
 
 
-dabc::Transport* dabc::Factory::CreateTransport(const Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::string& typ, dabc::Command cmd)
 {
    dabc::PortRef portref = port;
 

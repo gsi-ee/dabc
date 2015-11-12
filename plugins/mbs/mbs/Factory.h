@@ -32,7 +32,7 @@ namespace mbs {
 
          virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
 
-         virtual dabc::Transport* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
+         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
 
          virtual dabc::DataInput* CreateDataInput(const std::string& typ);
 

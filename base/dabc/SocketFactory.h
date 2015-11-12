@@ -37,7 +37,7 @@ namespace dabc {
 
          virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
 
-         virtual Transport* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
+         virtual Module* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
 
       protected:
 

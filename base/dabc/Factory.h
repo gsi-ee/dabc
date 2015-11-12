@@ -81,7 +81,7 @@ namespace dabc {
          virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd) { return 0; }
 
          /** Factory method to create transport */
-         virtual Transport* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
+         virtual Module* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
 
          /** Factory method to create data input */
          virtual DataInput* CreateDataInput(const std::string& typ) { return 0; }

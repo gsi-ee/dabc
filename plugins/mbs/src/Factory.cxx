@@ -45,7 +45,7 @@ dabc::Reference mbs::Factory::CreateObject(const std::string& classname, const s
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }
 
-dabc::Transport* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 

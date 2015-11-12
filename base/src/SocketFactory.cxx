@@ -93,7 +93,7 @@ dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::s
    return Reference(thrd);
 }
 
-dabc::Transport* dabc::SocketFactory::CreateTransport(const Reference& ref, const std::string& typ, Command cmd)
+dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const std::string& typ, Command cmd)
 {
    dabc::PortRef port = ref;
 

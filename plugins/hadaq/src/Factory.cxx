@@ -73,7 +73,7 @@ dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string& typ)
    return 0;
 }
 
-dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 
