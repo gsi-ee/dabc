@@ -42,7 +42,7 @@ $(DABCINCPATH)/%.h: $(DABCSTREAMDIR)/%.h
 	@cp -f $< $@
 
 
-$(DABCSTREAM_LIB):   $(DABCSTREAM_O)
+$(DABCSTREAM_LIB):   $(DABCSTREAM_O) $(DABCHADAQ_LIB)
 	@$(MakeLib) $(DABCSTREAM_LIBNAME) "$(DABCSTREAM_O)" $(TGTDLLPATH) "$(DABCSTREAM_LIBS)"
 
 ########### extra rules #############

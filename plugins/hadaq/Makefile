@@ -57,10 +57,10 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCHADAQ_LIB):   $(DABCHADAQ_O)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt"
+$(DABCHADAQ_LIB):   $(DABCHADAQ_O) $(DABCMBS_LIB)
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt -lDabcMbs"
 
-$(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB) $(DABCHADAQ_LIB)
+$(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
 
 ########### extra rules #############

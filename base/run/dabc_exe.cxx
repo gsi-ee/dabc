@@ -88,7 +88,7 @@ int main(int numc, char* args[])
 
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;
-   bool dorun = false;
+   //bool dorun = false;
 
    dabc::Configuration cfg(cfgfile);
    if (!cfg.IsOk()) {
@@ -117,12 +117,12 @@ int main(int numc, char* args[])
          if (cnt < numc)
             numnodes = (unsigned) atoi(args[cnt++]);
       } else
-      if (strcmp(arg,"-run")==0)
-         dorun = true;
-      else
-      if (strcmp(arg,"-norun")==0)
-         dorun = false;
-      else {
+      if (strcmp(arg,"-run")==0) {
+         //dorun = true;
+      } else
+      if (strcmp(arg,"-norun")==0) {
+         //dorun = false;
+      } else {
          const char* separ = strchr(arg,'=');
          if ((separ!=0) && (separ!=arg)) {
             std::string argname, argvalue;
