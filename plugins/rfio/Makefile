@@ -67,6 +67,8 @@ clean::
 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += Linux
 
+$(RFIO_O) : CXXFLAGS += -Wno-unused-variable
+
 ifdef DABC_64BIT 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += SYSTEM64 
 endif
