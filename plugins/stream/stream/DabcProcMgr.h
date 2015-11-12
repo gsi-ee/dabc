@@ -20,6 +20,7 @@
 
 #include "dabc/Hierarchy.h"
 #include "dabc/Command.h"
+#include "dabc/Worker.h"
 
 namespace stream {
 
@@ -28,6 +29,8 @@ namespace stream {
 
          dabc::Hierarchy fTop;
          bool fWorkingFlag;
+
+         dabc::LocalWorkerRef fStore;
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
@@ -45,6 +48,14 @@ namespace stream {
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
          virtual bool CallFunc(const char* funcname, void* arg);
+
+         virtual bool CreateStore(const char* storename);
+         virtual bool CloseStore();
+
+         virtual bool CreateBranch(const char* name, const char* class_name, void** obj);
+         virtual bool CreateBranch(const char* name, void* member, const char* kind);
+
+         virtual bool StoreEvent();
 
          bool ExecuteHCommand(dabc::Command cmd);
 

@@ -60,6 +60,13 @@ int root::TreeStore::ExecuteCommand(dabc::Command cmd)
       else
          fTree->Branch(cmd.GetStr("name").c_str(), cmd.GetStr("class_name").c_str(), (void**) cmd.GetPtr("obj"));
       return dabc::cmd_true;
+   } else
+   if (cmd.IsName("Create")) {
+      if (fTree || fFile) CloseTree();
+      fFile = TFile::Open(cmd.GetStr("fname","f.root").c_str(), "RECREATE", cmd.GetStr("ftitle","ROOT file store").c_str());
+      if (fFile==0) return dabc::cmd_false;
+      fTree = new TTree(cmd.GetStr("tname","T").c_str(), cmd.GetStr("ttitle","ROOT Tree").c_str());
+      return dabc::cmd_true;
    }
 
    return dabc::cmd_false;

@@ -18,6 +18,7 @@
 #include "dabc/Buffer.h"
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
+#include "dabc/Manager.h"
 
 #include <math.h>
 
@@ -269,4 +270,50 @@ bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
    func(arg);
 
    return true;
+}
+
+
+bool stream::DabcProcMgr::CreateStore(const char* storename)
+{
+   fStore = dabc::mgr.CreateObject("root::TreeStore","stream_store");
+   if (fStore.null()) return false;
+
+   dabc::Command cmd("Create");
+   cmd.SetStr("fname", storename);
+   cmd.SetStr("ftitle", "File with stored stream data");
+   cmd.SetStr("tname", "T");
+   cmd.SetStr("ttitle", "Tree with stream data");
+
+   return fStore.Execute(cmd);
+}
+
+bool stream::DabcProcMgr::CloseStore()
+{
+   fStore.Execute("Close");
+   fStore.Release();
+   return true;
+}
+
+bool stream::DabcProcMgr::CreateBranch(const char* name, const char* class_name, void** obj)
+{
+   dabc::Command cmd("CreateBranch");
+   cmd.SetStr("name", name);
+   cmd.SetStr("class_name", class_name);
+   cmd.SetPtr("obj", (void*) obj);
+   return fStore.Execute(cmd);
+}
+
+bool stream::DabcProcMgr::CreateBranch(const char* name, void* member, const char* kind)
+{
+   dabc::Command cmd("CreateBranch");
+   cmd.SetStr("name", name);
+   cmd.SetPtr("member", member);
+   cmd.SetStr("kind", kind);
+   return fStore.Execute(cmd);
+}
+
+bool stream::DabcProcMgr::StoreEvent()
+{
+   dabc::Command cmd("Fill");
+   return fStore.Execute(cmd);
 }
