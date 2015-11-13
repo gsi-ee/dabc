@@ -80,9 +80,8 @@
       		     "</fieldset>" +
       		     "<fieldset>" +
       		     "<legend>Calibration</legend>";
-      for (var n in calarr) {
+      for (var n in calarr)
          html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
-      }
       html+="</fieldset>";
       
       d3.select(frame).html(html);
@@ -95,7 +94,6 @@
       });
       
       var inforeq = null;
-      var firsttime = true;
       
       function UpdateDaqStatus(res) {
          if (res==null) return;
@@ -117,7 +115,6 @@
          }
          
          $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);                  
-
       }
       
       var handler = setInterval(function() {
@@ -152,42 +149,132 @@
             inforeq = null;
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
-            $(frame).find('.hadaq_calibr').each(function(index) {
-               var info = res[index+1].result;
-               
-               if (firsttime) {
-                  var code = "<div style='float:left'>";
-                  code += "<button hist='" + calarr[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
-                  for (var j in info.tdc)
-                     code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + calarr[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
-               
-                  code +="</div>"; 
-                  code+="<div class='hadaq_progress'></div>";
-                  $(this).html(code);
-                  $(this).find("button").button().click(function(){ 
-                     console.log("Draw hist " + $(this).attr('hist'));
-                     var drawframe = mdi.FindFrame(itemname+"_drawing", true);
-                     $(drawframe).empty();
-                     hpainter.display($(this).attr('hist'),"divid:"+$(drawframe).attr('id'));         
-                  });
-                  $(this).find(".hadaq_progress").progressbar({ value: info.progress });
-               }
-               
-               $(this).css('background-color', get_status_color(info.value));
-               $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
-               
-               $(this).find(".hadaq_progress")
-                  .attr("title", "progress: " + info.progress + "%")
-                  .progressbar("option", "value", info.progress);
-               
-               for (var j in info.tdc) {
-                  $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
-                         .css('color', get_status_color(info.tdc_status[j]))
-                         .css('background', 'white')
-                         .attr("title", "TDC" + info.tdc[j].toString(16) + " " + info.tdc_status[j] + " Progress:" + info.tdc_progr[j]);
-               }
+            res.shift();
+            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), calarr, res, hpainter);
+         });
+         inforeq.send(null);
+      }, 2000);
+   }
+   
+   DABC.UpdateTRBStatus = function(holder, items, res, hpainter) {
+      
+      function makehname(prefix, code, name) {
+         var str = code.toString(16).toUpperCase();
+         while (str.length<4) str = "0"+str;
+         return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
+      }
+
+      function get_status_color(status) {
+         if (status.indexOf('Ready')==0) return 'green';
+         if (status.indexOf('File')==0) return 'blue';
+         return 'red';
+      }
+      
+      holder.each(function(index) {
+         var info = res[index].result;
+         
+         if ($(this).children().length == 0) {
+            var code = "<div style='float:left'>";
+            code += "<button hist='" + items[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
+            for (var j in info.tdc)
+               code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + items[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+         
+            code += "</div>"; 
+            code += "<div class='hadaq_progress'></div>";
+            $(this).html(code);
+            $(this).find("button").button().click(function(){ 
+               var drawframe = hpainter.GetDisplay().FindFrame("tdccalibr_drawing", true);
+               $(drawframe).empty();
+               hpainter.display($(this).attr('hist'),"divid:"+$(drawframe).attr('id'));         
             });
-            firsttime = false;
+            $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+         }
+         
+         $(this).css('background-color', get_status_color(info.value));
+         $(this).attr('title',"TRB:" + info.trb.toString(16) + " State: " + info.value + " Time:" + info.time);
+         
+         $(this).find(".hadaq_progress")
+            .attr("title", "progress: " + info.progress + "%")
+            .progressbar("option", "value", info.progress);
+         
+         for (var j in info.tdc) {
+            $(this).find(".tdc_btn[tdc='"+info.tdc[j]+"']")
+                   .css('color', get_status_color(info.tdc_status[j]))
+                   .css('background', 'white')
+                   .attr("title", "TDC" + info.tdc[j].toString(16) + " " + info.tdc_status[j] + " Progress:" + info.tdc_progr[j]);
+         }
+      });
+   }
+   
+   
+   DABC.StreamControl = function(hpainter, itemname) {
+      var mdi = hpainter.GetDisplay();
+      if (mdi == null) return null;
+
+      var frame = mdi.FindFrame(itemname, true);
+      if (frame==null) return null;
+      
+      var divid = d3.select(frame).attr('id');
+      
+      var item = hpainter.Find(itemname + "/Status");
+      var calarr = [];
+      if (item) {
+         for (var n in item._childs) 
+            calarr.push(hpainter.itemFullName(item._childs[n]));
+      }
+      
+      var html = "<fieldset>" +
+                 "<legend>Stream</legend>" +
+                 "<button class='hadaq_startfile'>Start file</button>" +
+                 "<button class='hadaq_stopfile'>Stop file</button>" +
+                 '<input class="hadaq_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
+                 "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
+                 "<label class='hadaq_info'>Info: __undefind__</label>"+
+                 "</fieldset>" +
+                 "<fieldset>" +
+                 "<legend>Calibration</legend>";
+      for (var n in calarr) 
+         html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
+      html+="</fieldset>";
+      
+      d3.select(frame).html(html);
+      
+      $(frame).find(".hadaq_startfile").button().click(function() { 
+         DABC.InvokeCommand(itemname+"/Control/StartStorage", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
+      });
+      $(frame).find(".hadaq_stopfile").button().click(function() { 
+         DABC.InvokeCommand(itemname+"/Control/StopStorage");
+      });
+      
+      var inforeq = null;
+      
+      function UpdateStreamStatus(res) {
+         if (res==null) return;
+         var rate = "3.5";
+         $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);                  
+      }
+      
+      var handler = setInterval(function() {
+         if ($("#"+divid+" .hadaq_info").length==0) {
+            // if main element disapper (reset), stop handler 
+            clearInterval(handler);
+            return;
+         }
+         
+         if (inforeq) return;
+         
+         var url = "multiget.json?items=[";
+         url+="'" + itemname + "/Status'";
+         for (var n in calarr)
+            url+= ",'" + calarr[n]+ "'";
+         url+="]";
+         
+         inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
+            inforeq = null;
+            if (res==null) return;
+            UpdateStreamStatus(res[0].result);
+            res.shift();
+            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), calarr, res, hpainter);
          });
          inforeq.send(null);
       }, 2000);

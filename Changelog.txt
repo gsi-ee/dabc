@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 13.11.2015
 1. First working version with root file store with stream output
+2. First web-based GUI for calibration code running in stream framework via RunModule
+   Reuse central components from interface for TdcCalibrationModule  
 
 
 12.11.2015

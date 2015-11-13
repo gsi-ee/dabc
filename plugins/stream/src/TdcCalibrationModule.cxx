@@ -158,6 +158,8 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    if (progress>0) {
       item.SetField("value", "Ready");
       item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+   } else {
+      item.SetField("value", "Init");
    }
 
    std::vector<int64_t> tdcs;
