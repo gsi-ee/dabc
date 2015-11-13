@@ -74,6 +74,8 @@ namespace stream {
 
       virtual void BeforeModuleStart() { DOUT2("START CALIBR MODULE"); }
 
+      static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb);
+
    };
 
 }

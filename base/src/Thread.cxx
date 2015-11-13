@@ -1297,7 +1297,6 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
 
          rec->tmout_addon.SetNextFire(now, dist, min_tmout);
       }
-
    }
 
    if (min_tmout>=0.)

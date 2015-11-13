@@ -23,9 +23,12 @@
 #include "dabc/Url.h"
 #include "dabc/BinaryFile.h"
 
+#include "stream/TdcCalibrationModule.h"
+
 #include "hadaq/Iterator.h"
 #include "mbs/Iterator.h"
 #include "hadaq/TdcProcessor.h"
+#include "hadaq/TrbProcessor.h"
 #include "hadaq/HldProcessor.h"
 
 #include <stdlib.h>
@@ -130,6 +133,12 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
 
    fWorkerHierarchy.Create("Worker");
 
+   if (fParallel<=0) {
+      DOUT0("!!!! Create TIMER!!!!!");
+      CreateTimer("Update", 1., false);
+      fWorkerHierarchy.CreateHChild("Status");
+   }
+
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
 }
 
@@ -146,6 +155,8 @@ typedef void* entryfunc();
 
 void stream::RunModule::OnThreadAssigned()
 {
+   dabc::ModuleAsync::OnThreadAssigned();
+
    if ((fInitFunc!=0) && (fParallel<=0)) {
 
       entryfunc* func = (entryfunc*) fInitFunc;
@@ -203,6 +214,8 @@ void stream::RunModule::OnThreadAssigned()
          m.Start();
       }
    }
+
+   DOUT0("!!!! Assigned to thread %s  !!!!!", thread().GetName());
 }
 
 void stream::RunModule::ProduceMergedHierarchy()
@@ -329,6 +342,8 @@ void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
 void stream::RunModule::AfterModuleStop()
 {
    if (fProcMgr) fProcMgr->UserPostLoop();
+
+   DOUT0("!!!! thread on start %s  !!!!!", thread().GetName());
 
    DOUT0("STOP STREAM MODULE %s len %lu evnts %lu out %lu", GetName(), fTotalSize, fTotalEvnts, fTotalOutEvnts);
 
@@ -467,9 +482,27 @@ bool stream::RunModule::ProcessRecv(unsigned port)
 {
    if (fParallel<=0) {
       if (CanRecv()) return ProcessNextBuffer();
-      return true;
+      return false;
    }
 
    return RedistributeBuffers();
+}
+
+void stream::RunModule::ProcessTimerEvent(unsigned)
+{
+   hadaq::HldProcessor* hld = dynamic_cast<hadaq::HldProcessor*> (fProcMgr->FindProc("HLD"));
+   if (hld==0) return;
+
+   dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
+
+   for (unsigned n=0;n<hld->NumberOfTRB();n++) {
+      hadaq::TrbProcessor* trb = hld->GetTRB(n);
+      if (trb==0) continue;
+
+      dabc::Hierarchy item = folder.CreateHChild(trb->GetName());
+
+      TdcCalibrationModule::SetTRBStatus(item, trb);
+   }
+
 }
 

@@ -40,9 +40,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fProgress(0),
    fState()
 {
-   // normally one input and output are required, but for recalibration no ports are used
-   EnsurePorts(0, 0);
-
    fLastCalibr.GetNow();
 
    fDummy = Cfg("Dummy", cmd).AsBool(false);
@@ -101,7 +98,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    }
    item.SetField("tdc", fTDCs);
 
-
    fTrbProc->SetCalibrTrigger(cal_trig);
 
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
@@ -109,6 +105,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
       fTrbProc->DisableCalibrationFor(dis_ch[n]);
 
    fAutoCalibr = Cfg("Auto", cmd).AsInt(0);
+   if (fDummy) fAutoCalibr = 1000;
    fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
    std::string calibrfile = Cfg("CalibrFile", cmd).AsStr();
@@ -143,8 +140,49 @@ stream::TdcCalibrationModule::~TdcCalibrationModule()
 
 void stream::TdcCalibrationModule::OnThreadAssigned()
 {
+   dabc::ModuleAsync::OnThreadAssigned();
+
    DOUT3("Assign module %s with thread %s", GetName(), ThreadName().c_str());
 }
+
+void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb)
+{
+   if (item.null() || (trb==0)) return;
+
+   double progress = trb->GetCalibrProgress();
+
+   item.SetField("progress", (int) fabs(progress*100));
+   item.SetField("trb", trb->GetID());
+
+   // at the end check if auto-calibration can be done
+   if (progress>0) {
+      item.SetField("value", "Ready");
+      item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+   }
+
+   std::vector<int64_t> tdcs;
+   std::vector<int64_t> progr;
+   std::vector<std::string> status;
+
+   for (unsigned n=0;n<trb->NumberOfTDC();n++) {
+      hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
+
+      if (tdc!=0) {
+         tdcs.push_back(tdc->GetID());
+         progr.push_back((int) (tdc->GetCalibrProgress()*100.));
+         status.push_back(tdc->GetCalibrStatus());
+      } else {
+         tdcs.push_back(0);
+         progr.push_back(0);
+         status.push_back("Init");
+      }
+   }
+
+   item.SetField("tdc", tdcs);
+   item.SetField("tdc_progr", progr);
+   item.SetField("tdc_status", status);
+}
+
 
 
 bool stream::TdcCalibrationModule::retransmit()
@@ -223,36 +261,15 @@ bool stream::TdcCalibrationModule::retransmit()
             if (fLastCalibr.Expired(1.)) {
 
                double progress = fTrbProc->CheckAutoCalibration();
-               dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
                fProgress = (int) fabs(progress*100);
-               item.SetField("progress", fProgress);
-
-               // at the end check if auto-calibration can be done
-               if (progress>0) {
-                  fState = "Ready";
-                  item.SetField("value", fState);
-                  item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
-               }
-
-               std::vector<int64_t> progr;
-               std::vector<std::string> status;
-
-               for (unsigned n=0;n<fTDCs.size();n++) {
-                  hadaq::TdcProcessor* tdc = fTrbProc->GetTDC(fTDCs[n]);
-
-                  if (tdc!=0) {
-                     progr.push_back((int) (tdc->GetCalibrProgress()*100.));
-                     status.push_back(tdc->GetCalibrStatus());
-                  } else {
-                     progr.push_back(0);
-                     status.push_back("Init");
-                  }
-               }
-
-               item.SetField("tdc_progr", progr);
-               item.SetField("tdc_status", status);
+               if (progress>0) fState = "Ready";
 
                fLastCalibr.GetNow();
+
+               dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+
+               SetTRBStatus(item, fTrbProc);
+
             }
          } else {
             EOUT("Error buffer type!!!");

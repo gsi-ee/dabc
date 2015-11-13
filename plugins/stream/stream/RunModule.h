@@ -43,6 +43,7 @@ namespace stream {
       long unsigned fTotalSize;
       long unsigned fTotalEvnts;
       long unsigned fTotalOutEvnts;
+
       virtual int ExecuteCommand(dabc::Command cmd);
 
       virtual void OnThreadAssigned();
@@ -63,7 +64,9 @@ namespace stream {
 
       virtual bool ProcessRecv(unsigned port);
 
-      virtual bool ProcessSend(unsigned port) { return RedistributeBuffers(); }
+      virtual bool ProcessSend(unsigned) { return RedistributeBuffers(); }
+
+      virtual void ProcessTimerEvent(unsigned);
 
       virtual void BeforeModuleStart();
 

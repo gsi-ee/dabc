@@ -29,7 +29,8 @@
        <NumOutputs value="1"/>
        <DataRateName value="DataRate"/>
        <InputPort name="Input0" url="hld:///data.local1/trb3tdc/pulser/file15307140901.hld?loop"/>
-       <OutputPort name="Output0" url="stream://file.root?maxsize=3000&kind=2&hlevel=2"/>
+       <OutputPort name="Output0" url="stream://nofile?hlevel=2"/>
+       <!--OutputPort name="Output0" url="stream://file.root?maxsize=3000&kind=2&hlevel=2"/-->
        <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
     </Module>
 

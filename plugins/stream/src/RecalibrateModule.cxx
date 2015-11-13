@@ -80,7 +80,7 @@ stream::RecalibrateModule::~RecalibrateModule()
 
 void stream::RecalibrateModule::OnThreadAssigned()
 {
-   // DOUT0("Start RecalibrateModule in %s", ThreadName().c_str());
+   dabc::ModuleAsync::OnThreadAssigned();
 }
 
 bool stream::RecalibrateModule::retransmit()
