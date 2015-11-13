@@ -52,5 +52,7 @@ dabc::Module* stream::Factory::CreateTransport(const dabc::Reference& port, cons
    cmd.SetBool("use_autotdc", true);
    cmd.SetStr("fileurl", typ);
 
+   dabc::mgr.app().AddObject("module", "StreamMonitor");
+
    return new stream::RunModule("StreamMonitor", cmd);
 }

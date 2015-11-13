@@ -81,11 +81,11 @@ This code is experimental, plese contact S.Linev if you want to use it
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
 
-       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
-       <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
-       <InputPort name="Input2" url="hadaq://host:10103" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]"/>
-       <InputPort name="Input3" url="hadaq://host:10104" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
-       <InputPort name="Input4" url="hadaq://host:10105" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
+       <InputPort name="Input0" url="hadaq://host:50000" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
+       <InputPort name="Input1" url="hadaq://host:50001" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
+       <InputPort name="Input2" url="hadaq://host:50002" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]"/>
+       <InputPort name="Input3" url="hadaq://host:50003" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
+       <InputPort name="Input4" url="hadaq://host:50004" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
 
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug&dummy"/>
 

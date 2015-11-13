@@ -79,7 +79,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    dabc::PortRef portref = port;
 
-   if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetHostName().empty())
+   if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetFullName().empty())
       return dabc::Factory::CreateTransport(port, typ, cmd);
 
    unsigned trignum = portref.GetModule().Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
@@ -100,6 +100,8 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
       if (url.HasOption("trig")) mcmd.SetStr("CalibrTrigger", url.GetOptionStr("trig"));
       if (url.HasOption("dummy")) mcmd.SetBool("Dummy", true);
       mcmd.SetInt("portid", portref.ItemSubId());
+      mcmd.SetInt(dabc::xmlNumInputs, 1);
+      mcmd.SetInt(dabc::xmlNumOutputs, 1);
 
       dabc::mgr.Execute(mcmd);
 
@@ -139,11 +141,13 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    }
 
    int nport = url.GetPort();
-   if (nport<=0) return 0;
+   if (nport<=0) { EOUT("Port not specified"); return 0; }
 
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
    int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
-   if (fd<=0) return 0;
+   if (fd<=0) { EOUT("Cannot open UDP soocket for port %d", nport); return 0; }
+
+   DOUT0("Start UDP transport with port %d", nport);
 
    int mtu = url.GetOptionInt("mtu", 64512);
    int maxloop = url.GetOptionInt("maxloop", 100);
