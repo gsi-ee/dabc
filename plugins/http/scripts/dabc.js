@@ -150,13 +150,13 @@
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), calarr, res, hpainter);
+            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter);
          });
          inforeq.send(null);
       }, 2000);
    }
    
-   DABC.UpdateTRBStatus = function(holder, items, res, hpainter) {
+   DABC.UpdateTRBStatus = function(holder, res, hpainter) {
       
       function makehname(prefix, code, name) {
          var str = code.toString(16).toUpperCase();
@@ -279,7 +279,7 @@
             if (res==null) return;
             UpdateStreamStatus(res[0].result);
             res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), calarr, res, hpainter);
+            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter);
          });
          inforeq.send(null);
       }, 2000);
