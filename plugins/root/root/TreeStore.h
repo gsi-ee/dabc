@@ -20,7 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-class TFile;
 class TTree;
 
 namespace root {
@@ -28,7 +27,6 @@ namespace root {
    class TreeStore : public dabc::LocalWorker {
       protected:
 
-         TFile* fFile;
          TTree* fTree;
 
          void CloseTree();

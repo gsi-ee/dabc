@@ -38,6 +38,7 @@ namespace stream {
       int          fStopMode; // for central module waiting that others finish
       DabcProcMgr* fProcMgr;
       std::string  fAsf;
+      std::string  fFileUrl;  //!< configured file URL - module used to produce output
       bool         fDidMerge;
       long unsigned fTotalSize;
       long unsigned fTotalEvnts;

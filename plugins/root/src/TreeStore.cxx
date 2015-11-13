@@ -15,12 +15,13 @@
 
 #include "root/TreeStore.h"
 
+#include "dabc/Url.h"
+
 #include "TTree.h"
 #include "TFile.h"
 
 root::TreeStore::TreeStore(const std::string& name) :
    dabc::LocalWorker(name),
-   fFile(0),
    fTree(0)
 {
 }
@@ -32,13 +33,13 @@ root::TreeStore::~TreeStore()
 
 void root::TreeStore::CloseTree()
 {
-   if (fTree && fFile) {
-      fFile->cd();
+   if (fTree) {
+      TFile* f = fTree->GetCurrentFile();
+      f->cd();
       fTree->Write();
       delete fTree;
       fTree = 0;
-      delete fFile;
-      fFile = 0;
+      delete f;
    }
 }
 
@@ -62,10 +63,17 @@ int root::TreeStore::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("Create")) {
-      if (fTree || fFile) CloseTree();
-      fFile = TFile::Open(cmd.GetStr("fname","f.root").c_str(), "RECREATE", cmd.GetStr("ftitle","ROOT file store").c_str());
-      if (fFile==0) return dabc::cmd_false;
+      if (fTree) CloseTree();
+
+      dabc::Url url(cmd.GetStr("fname","f.root"));
+
+      int64_t maxsize = url.GetOptionInt("maxsize", cmd.GetInt("maxsize",0));
+
+      TFile *f = TFile::Open(url.GetFullName().c_str(), "RECREATE", cmd.GetStr("ftitle","ROOT file store").c_str());
+      if (f==0) return dabc::cmd_false;
+      if (maxsize>0) TTree::SetMaxTreeSize(maxsize*1024*1024);
       fTree = new TTree(cmd.GetStr("tname","T").c_str(), cmd.GetStr("ttitle","ROOT Tree").c_str());
+      cmd.SetPtr("tree_ptr", fTree);
       return dabc::cmd_true;
    }
 

@@ -284,11 +284,16 @@ bool stream::DabcProcMgr::CreateStore(const char* storename)
    cmd.SetStr("tname", "T");
    cmd.SetStr("ttitle", "Tree with stream data");
 
-   return fStore.Execute(cmd);
+   if (!fStore.Execute(cmd)) return false;
+
+   // set pointer to inform base class that storage exists
+   fTree = (TTree*) cmd.GetPtr("tree_ptr");
+   return true;
 }
 
 bool stream::DabcProcMgr::CloseStore()
 {
+   fTree = 0;
    fStore.Execute("Close");
    fStore.Release();
    return true;
@@ -296,6 +301,8 @@ bool stream::DabcProcMgr::CloseStore()
 
 bool stream::DabcProcMgr::CreateBranch(const char* name, const char* class_name, void** obj)
 {
+   DOUT3("Create Branch1 %s", name);
+
    dabc::Command cmd("CreateBranch");
    cmd.SetStr("name", name);
    cmd.SetStr("class_name", class_name);
@@ -305,6 +312,8 @@ bool stream::DabcProcMgr::CreateBranch(const char* name, const char* class_name,
 
 bool stream::DabcProcMgr::CreateBranch(const char* name, void* member, const char* kind)
 {
+   DOUT3("Create Branch2 %s", name);
+
    dabc::Command cmd("CreateBranch");
    cmd.SetStr("name", name);
    cmd.SetPtr("member", member);

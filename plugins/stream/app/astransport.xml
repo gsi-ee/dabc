@@ -5,10 +5,12 @@
 <dabc version="2">
   <Context host="localhost" name="EventBuilder">
     <Run>
+      <lib value="libDabcHttp.so"/>  
       <lib value="libDabcMbs.so"/>  
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcStream.so"/>  
-      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcRoot.so"/>  
+      <lib value="libStreamDict.so"/>  
       <debuglevel value="0"/>
       <loglevel value="1"/>
       <logfile value="rawbuild.log"/>
@@ -27,7 +29,7 @@
        <NumOutputs value="1"/>
        <DataRateName value="DataRate"/>
        <InputPort name="Input0" url="hld:///data.local1/trb3tdc/pulser/file15307140901.hld?loop"/>
-       <OutputPort name="Output0" url="stream://nofile"/>
+       <OutputPort name="Output0" url="stream://file.root?maxsize=3000&kind=2&hlevel=2"/>
        <Parameter name="DataRate" width="5" prec="3" low="0" up="50" debug="0"/>
     </Module>
 

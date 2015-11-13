@@ -13,19 +13,20 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dabc/BinaryFile.h"
-
 #include "stream/RunModule.h"
-
-#include "hadaq/Iterator.h"
-#include "mbs/Iterator.h"
-#include "hadaq/TdcProcessor.h"
 
 #include "dabc/Manager.h"
 #include "dabc/Factory.h"
 #include "dabc/Iterator.h"
 #include "dabc/Buffer.h"
 #include "dabc/Publisher.h"
+#include "dabc/Url.h"
+#include "dabc/BinaryFile.h"
+
+#include "hadaq/Iterator.h"
+#include "mbs/Iterator.h"
+#include "hadaq/TdcProcessor.h"
+#include "hadaq/HldProcessor.h"
 
 #include <stdlib.h>
 
@@ -42,6 +43,7 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
    fStopMode(0),
    fProcMgr(0),
    fAsf(),
+   fFileUrl(),
    fDidMerge(false),
    fTotalSize(0),
    fTotalEvnts(0),
@@ -53,6 +55,8 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
    EnsurePorts(1, fParallel<0 ? 0 : fParallel);
 
    fInitFunc = cmd.GetPtr("initfunc");
+
+   fFileUrl = cmd.GetStr("fileurl");
 
    if ((fParallel>=0) && (fInitFunc==0)) {
       // first generate and load init func
@@ -150,6 +154,26 @@ void stream::RunModule::OnThreadAssigned()
       fProcMgr->SetTop(fWorkerHierarchy, fParallel==0);
 
       func();
+
+      if (fFileUrl.length()>0) {
+         dabc::Url url(fFileUrl);
+
+         std::string fname = url.GetFullName();
+
+         if (fname.rfind(".root") == fname.length() - 5) {
+            fProcMgr->SetTriggeredAnalysis(true);
+            int kind = url.GetOptionInt("kind", -1);
+            if (kind!=-1) fProcMgr->SetStoreKind(kind);
+            if (!fProcMgr->CreateStore(fFileUrl.c_str()))
+               EOUT("Fail to create store %s - check if libDabcRoot.so plugin in the xml file", fFileUrl.c_str());
+         }
+
+         int hlevel = url.GetOptionInt("hlevel", -111);
+         if (hlevel != -111) fProcMgr->SetHistFilling(hlevel);
+
+         int hldfilter = url.GetOptionInt("hldfilter", -111);
+         if (hldfilter>=0) new hadaq::HldFilter(hldfilter);
+      }
 
       // remove pointer, let other modules to create and use it
       base::ProcMgr::ClearInstancePointer();
