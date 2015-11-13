@@ -161,7 +161,12 @@
       function makehname(prefix, code, name) {
          var str = code.toString(16).toUpperCase();
          while (str.length<4) str = "0"+str;
-         return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
+         str = prefix+"_"+str + "_" + name;
+         var hitem = null;
+         hpainter.ForEach(function(item) { if ((item._name == str) && (hitem==null)) hitem = item; });
+         if (hitem) return hpainter.itemFullName(hitem);
+         console.log("did not found histogram " + str);
+         return str;
       }
 
       function get_status_color(status) {
@@ -175,9 +180,9 @@
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
-            code += "<button hist='" + items[index] + makehname("TRB", info.trb, "TdcDistr") + "' >"+info.trb.toString(16)+"</button>";
+            code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "' >"+info.trb.toString(16)+"</button>";
             for (var j in info.tdc)
-               code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + items[index] + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+               code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
          
             code += "</div>"; 
             code += "<div class='hadaq_progress'></div>";
