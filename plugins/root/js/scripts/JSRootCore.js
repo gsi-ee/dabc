@@ -7,7 +7,7 @@
 (function( factory ) {
    if ( typeof define === "function" && define.amd ) {
 
-      var dir = "scripts";
+      var dir = "scripts", ext = "";
       var scripts = document.getElementsByTagName('script');
       for (var n in scripts) {
          if (scripts[n]['type'] != 'text/javascript') continue;
@@ -15,34 +15,46 @@
          if ((src == null) || (src.length == 0)) continue;
          var pos = src.indexOf("scripts/JSRootCore.");
          if (pos>=0) {
-            dir = src.substr(0, pos+7);
+            dir = src.substr(0, pos+8);
+            if (src.indexOf("scripts/JSRootCore.min.js")==pos) ext = ".min";
             break;
          }
       }
 
-      // first configure all dependencies
+      var paths = {
+            'd3'                   : dir+'d3.v3.min',
+            'jquery'               : dir+'jquery.min',
+            'jquery-ui'            : dir+'jquery-ui.min',
+            'touch-punch'          : dir+'touch-punch.min',
+            'rawinflate'           : dir+'rawinflate'+ext,
+            'MathJax'              : 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG&amp;delayStartupUntil=configured',
+            'THREE'                : dir+'three.min',
+            'THREE_ALL'            : dir+'jquery.mousewheel'+ext,
+            'helvetiker_regular'   : dir+'helvetiker_regular.typeface',
+            'helvetiker_bold'      : dir+'helvetiker_bold.typeface',
+            'JSRootCore'           : dir+'JSRootCore'+ext,
+            'JSRootInterface'      : dir+'JSRootInterface'+ext,
+            'JSRootIOEvolution'    : dir+'JSRootIOEvolution'+ext,
+            'JSRootPainter'        : dir+'JSRootPainter'+ext,
+            'JSRootPainter.more'   : dir+'JSRootPainter.more'+ext,
+            'JSRootPainter.jquery' : dir+'JSRootPainter.jquery'+ext,
+            'JSRoot3DPainter'      : dir+'JSRoot3DPainter'+ext
+         };
+
+      // check if modules are already loaded
+      for (var module in paths)
+        if (requirejs.defined(module))
+           delete paths[module];
+
+      // configure all dependencies
       requirejs.config({
-       baseUrl: dir,
-       paths: {
-          'd3'              : 'd3.v3.min',
-          'helvetiker_bold' : 'helvetiker_bold.typeface',
-          'jquery'          : 'jquery.min',
-          'jquery-ui'       : 'jquery-ui.min',
-          'touch-punch'     : 'touch-punch.min',
-          'MathJax'         : 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG&amp;delayStartupUntil=configured',
-          'THREE'           : 'helvetiker_regular.typeface'
-       },
+       paths: paths,
        shim: {
-          'touch-punch': {
-             deps: ['jquery']
-          },
-          'helvetiker_bold': {
-             deps: ['three.min']
-          },
-          'THREE': {
-             deps: ['helvetiker_bold']
-          },
-          'MathJax': {
+         'touch-punch': { deps: ['jquery'] },
+         'helvetiker_regular': { deps: ['THREE'] },
+         'helvetiker_bold': { deps: ['THREE'] },
+         'THREE_ALL': {deps: ['jquery', 'jquery-ui', 'THREE', 'helvetiker_regular', 'helvetiker_bold'] },
+         'MathJax': {
              exports: 'MathJax',
              init: function () {
                 MathJax.Hub.Config({ TeX: { extensions: ["color.js"] }});
@@ -64,11 +76,8 @@
       define( factory );
    } else {
 
-      if (typeof JSROOT != 'undefined') {
-         var e1 = new Error("JSROOT is already defined");
-         e1.source = "JSRootCore.js";
-         throw e1;
-      }
+      if (typeof JSROOT != 'undefined')
+         throw new Error("JSROOT is already defined", "JSRootCore.js");
 
       JSROOT = {};
 
@@ -77,7 +86,7 @@
    }
 } (function(JSROOT) {
 
-   JSROOT.version = "dev 1/10/2015";
+   JSROOT.version = "dev 26/10/2015";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -133,7 +142,7 @@
    // wrapper for console.log, avoids missing console in IE
    // if divid specified, provide output to the HTML element
    JSROOT.console = function(value, divid) {
-      if ((divid!=null) && (typeof document.getElementById(divid)!='undefined'))
+      if ((divid!=null) && (typeof divid=='string') && ((typeof document.getElementById(divid))!='undefined'))
          document.getElementById(divid).innerHTML = value;
       else
       if ((typeof console != 'undefined') && (typeof console.log == 'function'))
@@ -782,6 +791,7 @@
       formula = formula.replace('abs(', 'Math.abs(');
       formula = formula.replace('sin(', 'Math.sin(');
       formula = formula.replace('cos(', 'Math.cos(');
+      formula = formula.replace('exp(', 'Math.exp(');
       var code = obj['fName'] + " = function(x) { return " + formula + " };";
       eval(code);
       var sig = obj['fName']+'(x)';
@@ -1056,33 +1066,33 @@
       if ((obj_typename.indexOf("TFormula") != -1) ||
           (obj_typename.indexOf("TF1") == 0)) {
          obj['evalPar'] = function(x) {
-            var i, _function = this['fTitle'];
-            _function = _function.replace('TMath::Exp(', 'Math.exp(');
-            _function = _function.replace('TMath::Abs(', 'Math.abs(');
-            _function = _function.replace('gaus(', 'JSROOT.Math.gaus(this, ' + x + ', ');
-            _function = _function.replace('gausn(', 'JSROOT.Math.gausn(this, ' + x + ', ');
-            _function = _function.replace('expo(', 'JSROOT.Math.expo(this, ' + x + ', ');
-            _function = _function.replace('landau(', 'JSROOT.Math.landau(this, ' + x + ', ');
-            _function = _function.replace('landaun(', 'JSROOT.Math.landaun(this, ' + x + ', ');
-            _function = _function.replace('pi', 'Math.PI');
-            for (i=0;i<this['fNpar'];++i) {
-               while(_function.indexOf('['+i+']') != -1)
-                  _function = _function.replace('['+i+']', this['fParams'][i])
+            var _func = this['fTitle'];
+            _func = _func.replace('TMath::Exp(', 'Math.exp(');
+            _func = _func.replace('TMath::Abs(', 'Math.abs(');
+            _func = _func.replace('gaus(', 'JSROOT.Math.gaus(this, ' + x + ', ');
+            _func = _func.replace('gausn(', 'JSROOT.Math.gausn(this, ' + x + ', ');
+            _func = _func.replace('expo(', 'JSROOT.Math.expo(this, ' + x + ', ');
+            _func = _func.replace('landau(', 'JSROOT.Math.landau(this, ' + x + ', ');
+            _func = _func.replace('landaun(', 'JSROOT.Math.landaun(this, ' + x + ', ');
+            _func = _func.replace('pi', 'Math.PI');
+            for (var i=0;i<this['fNpar'];++i) {
+               while(_func.indexOf('['+i+']') != -1)
+                  _func = _func.replace('['+i+']', this['fParams'][i]);
             }
-            for (i=0;i<JSROOT.function_list.length;++i) {
+            for (var i=0;i<JSROOT.function_list.length;++i) {
                var f = JSROOT.function_list[i].substring(0, JSROOT.function_list[i].indexOf('('));
-               if (_function.indexOf(f) != -1) {
+               if (_func.indexOf(f) != -1) {
                   var fa = JSROOT.function_list[i].replace('(x)', '(' + x + ')');
-                  _function = _function.replace(f, fa);
+                  _func = _func.replace(f, fa);
                }
             }
             // use regex to replace ONLY the x variable (i.e. not 'x' in Math.exp...)
-            _function = _function.replace(/\b(x)\b/gi, x)
-            _function = _function.replace(/\b(sin)\b/gi, 'Math.sin')
-            _function = _function.replace(/\b(cos)\b/gi, 'Math.cos')
-            _function = _function.replace(/\b(tan)\b/gi, 'Math.tan')
-            var ret = eval(_function);
-            return ret;
+            _func = _func.replace(/\b(x)\b/gi, x);
+            _func = _func.replace(/\b(sin)\b/gi, 'Math.sin');
+            _func = _func.replace(/\b(cos)\b/gi, 'Math.cos');
+            _func = _func.replace(/\b(tan)\b/gi, 'Math.tan');
+            _func = _func.replace(/\b(exp)\b/gi, 'Math.exp');
+            return eval(_func);
          };
       }
 
@@ -2041,12 +2051,8 @@
 
    JSROOT.Math = {};
 
-
    JSROOT.Math.lgam = function( x ) {
-      var p, q, u, w, z;
-      var i;
-
-      var sgngam = 1;
+      var p, q, u, w, z, i, sgngam = 1;
 
       if (x >= Number.POSITIVE_INFINITY)
          return(Number.POSITIVE_INFINITY);
