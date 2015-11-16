@@ -60,8 +60,6 @@ namespace stream {
 
       virtual int ExecuteCommand(dabc::Command cmd);
 
-      virtual void OnThreadAssigned();
-
    public:
       TdcCalibrationModule(const std::string& name, dabc::Command cmd = 0);
       virtual ~TdcCalibrationModule();
@@ -74,7 +72,7 @@ namespace stream {
 
       virtual void BeforeModuleStart() { DOUT2("START CALIBR MODULE"); }
 
-      static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb);
+      static double SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb);
 
    };
 

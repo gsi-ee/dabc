@@ -137,21 +137,44 @@ stream::TdcCalibrationModule::~TdcCalibrationModule()
    fProcMgr = 0;
 }
 
-void stream::TdcCalibrationModule::OnThreadAssigned()
+double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb)
 {
-   dabc::ModuleAsync::OnThreadAssigned();
+   if (item.null() || (trb==0)) return 0.;
 
-   DOUT3("Assign module %s with thread %s", GetName(), ThreadName().c_str());
-}
-
-void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb)
-{
-   if (item.null() || (trb==0)) return;
-
-   double progress = trb->CheckAutoCalibration();
-
-   item.SetField("progress", (int) fabs(progress*100));
    item.SetField("trb", trb->GetID());
+
+   std::vector<int64_t> tdcs;
+   std::vector<int64_t> tdc_progr;
+   std::vector<std::string> status;
+
+   double p0(0), p1(1);
+   bool ready(true);
+
+   for (unsigned n=0;n<trb->NumberOfTDC();n++) {
+      hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
+
+      if (tdc!=0) {
+
+         double progr = tdc->GetCalibrProgress();
+
+         if (tdc->GetCalibrStatus().find("Ready")==0) {
+            if (p1 > progr) p1 = progr;
+         } else {
+            if (p0 < progr) p0 = progr;
+            ready = false;
+         }
+
+         tdcs.push_back(tdc->GetID());
+         tdc_progr.push_back((int) (progr*100.));
+         status.push_back(tdc->GetCalibrStatus());
+      } else {
+         tdcs.push_back(0);
+         tdc_progr.push_back(0);
+         status.push_back("Init");
+      }
+   }
+
+   double progress = ready ? p1 : -p0;
 
    // at the end check if auto-calibration can be done
    if (progress>0) {
@@ -161,27 +184,12 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
       item.SetField("value", "Init");
    }
 
-   std::vector<int64_t> tdcs;
-   std::vector<int64_t> progr;
-   std::vector<std::string> status;
-
-   for (unsigned n=0;n<trb->NumberOfTDC();n++) {
-      hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
-
-      if (tdc!=0) {
-         tdcs.push_back(tdc->GetID());
-         progr.push_back((int) (tdc->GetCalibrProgress()*100.));
-         status.push_back(tdc->GetCalibrStatus());
-      } else {
-         tdcs.push_back(0);
-         progr.push_back(0);
-         status.push_back("Init");
-      }
-   }
-
+   item.SetField("progress", (int)(fabs(progress)*100));
    item.SetField("tdc", tdcs);
-   item.SetField("tdc_progr", progr);
+   item.SetField("tdc_progr", tdc_progr);
    item.SetField("tdc_status", status);
+
+   return progress;
 }
 
 
@@ -260,17 +268,13 @@ bool stream::TdcCalibrationModule::retransmit()
             }
 
             if (fLastCalibr.Expired(1.)) {
-
-               double progress = fTrbProc->CheckAutoCalibration();
-               fProgress = (int) fabs(progress*100);
-               if (progress>0) fState = "Ready";
-
                fLastCalibr.GetNow();
 
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
-               SetTRBStatus(item, fTrbProc);
-
+               double p = SetTRBStatus(item, fTrbProc);
+               fProgress = (int) (p*100);
+               if (fProgress>0) fState = "Ready";
             }
          } else {
             EOUT("Error buffer type!!!");
