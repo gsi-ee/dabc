@@ -22,7 +22,6 @@
 
 #include <math.h>
 
-
 #include "hadaq/TdcProcessor.h"
 
 
@@ -149,7 +148,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
 {
    if (item.null() || (trb==0)) return;
 
-   double progress = trb->GetCalibrProgress();
+   double progress = trb->CheckAutoCalibration();
 
    item.SetField("progress", (int) fabs(progress*100));
    item.SetField("trb", trb->GetID());

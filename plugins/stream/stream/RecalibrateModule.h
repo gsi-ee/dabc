@@ -42,7 +42,6 @@ namespace stream {
       bool fReplace;                // replace or not TDC messages
       DabcProcMgr *fProcMgr;        // central process manager
       hadaq::HldProcessor *fHLD;    // processor of HLD events
-      dabc::TimeStamp  fLastCalibr; // time to perform calibration
 
       virtual int ExecuteCommand(dabc::Command cmd);
 

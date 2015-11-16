@@ -4,6 +4,8 @@ about current functionality of the framework.
 
 16.11.2015
 1. Provide start/stop ROOT file commands in stream::RunModule
+2. Display run/file status 
+3. Correctly update TDC calibration progress   
 
 
 13.11.2015

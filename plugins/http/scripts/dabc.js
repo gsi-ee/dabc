@@ -150,13 +150,13 @@
             if (res==null) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter);
+            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
          });
          inforeq.send(null);
       }, 2000);
    }
    
-   DABC.UpdateTRBStatus = function(holder, res, hpainter) {
+   DABC.UpdateTRBStatus = function(holder, res, hpainter, multiget) {
       
       function makehname(prefix, code, name) {
          var str = code.toString(16).toUpperCase();
@@ -176,7 +176,11 @@
       }
       
       holder.each(function(index) {
-         var info = res[index].result;
+         if (res==null) return;
+         var info = res[index];
+         // when doing multiget, return object stored as result field
+         if (('result' in info) && multiget) info = info.result;
+         if (info==null) return;
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
@@ -272,18 +276,11 @@
          
          if (inforeq) return;
          
-         var url = "multiget.json?items=[";
-         url+="'" + itemname + "/Status'";
-         for (var n in calarr)
-            url+= ",'" + calarr[n]+ "'";
-         url+="]";
-         
-         inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
+         inforeq = JSROOT.NewHttpRequest(itemname + "/Status/get.json", "object", function(res) {
             inforeq = null;
             if (res==null) return;
-            UpdateStreamStatus(res[0].result);
-            res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res, hpainter);
+            UpdateStreamStatus(res);
+            DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res._childs, hpainter, false);
          });
          inforeq.send(null);
       }, 2000);
