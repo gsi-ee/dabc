@@ -233,7 +233,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
     item.SetField(dabc::prop_kind, "log");
     if (fHistory>1) item.EnableHistory(fHistory);
 
-   SetRateInterval(fRateInterval); // update exported paramters here
+   SetRateInterval(fRateInterval); // update exported parameters here
    SetHistoryDepth(fHistory);
 
    if (fCmdPort > 0) {
@@ -251,8 +251,6 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       cmddef_hist.SetField(dabc::prop_kind, "DABC.Command");
       cmddef_hist.SetField(dabc::prop_auth, true); // require authentication
       cmddef_hist.AddArg("entries", "int", true, "100");
-
-
    }
 
    dabc::Hierarchy ui = fHierarchy.CreateHChild("ControlGUI");
@@ -265,7 +263,7 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    fCounter = 0;
 
-   memset(&fStatus,0,sizeof(mbs::DaqStatus));
+   memset(&fStatus, 0, sizeof(mbs::DaqStatus));
 
    // from this point on Publisher want to get regular update for the hierarchy
    if (publish)
@@ -1025,8 +1023,7 @@ void mbs::Monitor::SetHistoryDepth(int entries)
 int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
 {
 
-  if (cmd.IsName ("ProcessDaqStatus"))
-  {
+  if (cmd.IsName ("ProcessDaqStatus")) {
 
     mbs::DaqStatusAddon* tr = dynamic_cast<mbs::DaqStatusAddon*> (fAddon ());
 
@@ -1036,29 +1033,28 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
     AssignAddon (0);
 
     return dabc::cmd_true;
-  }
-  else if (cmd.IsName (dabc::CmdHierarchyExec::CmdName ()))
-  {
+  } else
+  if (cmd.IsName (dabc::CmdHierarchyExec::CmdName ())) {
 
-    std::string cmdpath = cmd.GetStr ("Item");
+    std::string cmdpath = cmd.GetStr("Item");
 
     //if (cmdpath != "CmdMbs") return dabc::cmd_false;
 
     if (cmdpath == "CmdMbs")
     {
-      dabc::WorkerRef wrk = FindChildRef ("DaqCmd");
+      dabc::WorkerRef wrk = FindChildRef("DaqCmd");
 
       if ((fCmdPort <= 0) || wrk.null ())
         return dabc::cmd_false;
 
-      wrk.Submit (cmd);
+      wrk.Submit(cmd);
 
       return dabc::cmd_postponed;
     }
     else if (cmdpath == "CmdSetRateInterval")
     {
       DOUT0("ExecuteCommand  sees CmdSetRateInterval");
-      double deltat = cmd.GetDouble ("time", 3.0);    // JAM todo: put string identifier to define or static variable
+      double deltat = cmd.GetDouble("time", 3.0);    // JAM todo: put string identifier to define or static variable
       SetRateInterval (deltat);
       SetHistoryDepth (fHistory);    // need to clear old history entries when changing sampling period
       return dabc::cmd_true;
@@ -1066,7 +1062,7 @@ int mbs::Monitor::ExecuteCommand (dabc::Command cmd)
     else if (cmdpath == "CmdSetHistoryDepth")
     {
       DOUT0("ExecuteCommand  sees CmdSetHistoryDepth");
-      int entries = cmd.GetInt ("entries", 200);    // JAM todo: put string identifier to define or static variable
+      int entries = cmd.GetInt("entries", 200);    // JAM todo: put string identifier to define or static variable
       SetHistoryDepth (entries);
       return dabc::cmd_true;
     }

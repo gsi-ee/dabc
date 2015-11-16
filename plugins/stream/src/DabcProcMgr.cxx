@@ -288,6 +288,7 @@ bool stream::DabcProcMgr::CreateStore(const char* storename)
 
    // set pointer to inform base class that storage exists
    fTree = (TTree*) cmd.GetPtr("tree_ptr");
+
    return true;
 }
 

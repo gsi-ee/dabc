@@ -137,6 +137,17 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
       CreateTimer("Update", 1., false);
       fWorkerHierarchy.CreateHChild("Status");
       fWorkerHierarchy.SetField("_player", "DABC.StreamControl");
+
+      dabc::CommandDefinition cmddef = fWorkerHierarchy.CreateHChild("Control/StartRootFile");
+      cmddef.SetField(dabc::prop_kind, "DABC.Command");
+      // cmddef.SetField(dabc::prop_auth, true); // require authentication
+      cmddef.AddArg("fname", "string", true, "file.root");
+      cmddef.AddArg("kind", "int", false, "2");
+      cmddef.AddArg("maxsize", "int", false, "1900");
+
+      cmddef = fWorkerHierarchy.CreateHChild("Control/StopRootFile");
+      cmddef.SetField(dabc::prop_kind, "DABC.Command");
+      // cmddef.SetField(dabc::prop_auth, true); // require authentication
    }
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
@@ -288,13 +299,40 @@ int stream::RunModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
+   if (cmd.IsName (dabc::CmdHierarchyExec::CmdName ())) {
+      std::string cmdpath = cmd.GetStr("Item");
+      DOUT0("Execute command %s", cmdpath.c_str());
+
+      if (cmdpath == "Control/StartRootFile") {
+         std::string fname = cmd.GetStr("fname","file.root");
+         int kind = cmd.GetInt("kind", 2);
+         int maxsize = cmd.GetInt("maxsize", 1900);
+         fname += dabc::format("?maxsize=%d", maxsize);
+         if (fProcMgr)
+            if (fProcMgr->CreateStore(fname.c_str())) {
+               // only in triggered mode storing is allowed
+               if (fProcMgr->IsRawAnalysis()) fProcMgr->SetTriggeredAnalysis(true);
+               fProcMgr->SetStoreKind(kind);
+               fProcMgr->UserPreLoop(0, true);
+
+            }
+         return dabc::cmd_true;
+
+      } else
+      if (cmdpath == "Control/StopRootFile") {
+         if (fProcMgr) fProcMgr->CloseStore();
+
+         return dabc::cmd_true;
+      } else
+         return dabc::cmd_false;
+   }
+
    if (cmd.IsName("SlaveFinished")) {
       if (--fStopMode == 0) {
          ProduceMergedHierarchy();
          DOUT0("Stop ourself");
          Stop();
       }
-
       return dabc::cmd_true;
    } else
    if (cmd.IsName("GetHierarchy")) {
@@ -383,11 +421,10 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 
    while (new_event) {
       fTotalOutEvnts++;
-      bool store = fProcMgr->ProcessEvent(outevent);
 
-      if (store) {
-         // implement events store later
-      }
+      // if (fTotalOutEvnts < 100) DOUT0("Event %p", outevent);
+
+      fProcMgr->ProcessEvent(outevent);
 
       new_event = fProcMgr->ProduceNextEvent(outevent);
    }

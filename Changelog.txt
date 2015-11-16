@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+16.11.2015
+1. Provide start/stop ROOT file commands in stream::RunModule
+
+
 13.11.2015
 1. First working version with root file store with stream output
 2. First web-based GUI for calibration code running in stream framework via RunModule
