@@ -230,25 +230,28 @@
       
       var html = "<fieldset>" +
                  "<legend>Stream</legend>" +
-                 "<button class='hadaq_startfile'>Start file</button>" +
-                 "<button class='hadaq_stopfile'>Stop file</button>" +
-                 '<input class="hadaq_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
-                 "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
-                 "<label class='hadaq_info'>Info: __undefind__</label>"+
+                 "<button class='store_startfile'>Start file</button>" +
+                 "<button class='store_stopfile'>Stop file</button>" +
+                 '<input class="store_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
+                 "<label class='stream_rate'>Rate: __undefind__</label><br/>"+
+                 "<label class='stream_info'>Info: __undefind__</label>"+
                  "</fieldset>" +
                  "<fieldset>" +
                  "<legend>Calibration</legend>";
       for (var n in calarr) 
-         html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
+         html += "<div class='stream_tdc_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
       
       d3.select(frame).html(html);
       
-      $(frame).find(".hadaq_startfile").button().click(function() { 
-         DABC.InvokeCommand(itemname+"/Control/StartStorage", "filename="+$(frame).find('.hadaq_filename').val()+"&maxsize=2000");
+      $(frame).find(".store_startfile")
+         .button()
+         .prop("title", "name of root file. Can specify kind and maxsize with args like\n file.root&kind=2&maxsize=2000")
+         .click(function() { 
+         DABC.InvokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
       });
-      $(frame).find(".hadaq_stopfile").button().click(function() { 
-         DABC.InvokeCommand(itemname+"/Control/StopStorage");
+      $(frame).find(".store_stopfile").button().click(function() { 
+         DABC.InvokeCommand(itemname+"/Control/StopRootFile");
       });
       
       var inforeq = null;
@@ -256,11 +259,11 @@
       function UpdateStreamStatus(res) {
          if (res==null) return;
          var rate = "3.5";
-         $(frame).find('.hadaq_rate').css("font-size","120%").text(rate);                  
+         $(frame).find('.stream_rate').css("font-size","120%").text(rate);                  
       }
       
       var handler = setInterval(function() {
-         if ($("#"+divid+" .hadaq_info").length==0) {
+         if ($("#"+divid+" .stream_info").length==0) {
             // if main element disapper (reset), stop handler 
             clearInterval(handler);
             return;
@@ -279,7 +282,7 @@
             if (res==null) return;
             UpdateStreamStatus(res[0].result);
             res.shift();
-            DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter);
+            DABC.UpdateTRBStatus($(frame).find('.stream_tdc_calibr'), res, hpainter);
          });
          inforeq.send(null);
       }, 2000);

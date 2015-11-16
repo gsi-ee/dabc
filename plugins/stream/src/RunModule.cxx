@@ -422,8 +422,6 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
    while (new_event) {
       fTotalOutEvnts++;
 
-      // if (fTotalOutEvnts < 100) DOUT0("Event %p", outevent);
-
       fProcMgr->ProcessEvent(outevent);
 
       new_event = fProcMgr->ProduceNextEvent(outevent);
