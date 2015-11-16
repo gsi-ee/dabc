@@ -46,7 +46,10 @@ void root::TreeStore::CloseTree()
 int root::TreeStore::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("Fill")) {
-      if (fTree) fTree->Fill();
+      if (fTree) {
+         fTree->Fill();
+         cmd.SetStr("StoreInfo", dabc::format("File:%s Tree:%s Size:%s", fTree->GetCurrentFile()->GetName(), fTree->GetName(), dabc::size_to_str(fTree->GetTotBytes()).c_str()));
+      }
       return dabc::cmd_true;
    } else
    if (cmd.IsName("Close")) {

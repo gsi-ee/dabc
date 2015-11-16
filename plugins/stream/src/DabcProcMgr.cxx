@@ -22,6 +22,19 @@
 
 #include <math.h>
 
+stream::DabcProcMgr::DabcProcMgr() :
+   base::ProcMgr(),
+   fTop(),
+   fWorkingFlag(true),
+   fStore(),
+   fStoreInfo("no store created")
+{
+}
+
+stream::DabcProcMgr::~DabcProcMgr()
+{
+}
+
 void stream::DabcProcMgr::SetTop(dabc::Hierarchy& top, bool withcmds)
 {
    fTop = top;
@@ -276,7 +289,10 @@ bool stream::DabcProcMgr::CallFunc(const char* funcname, void* arg)
 bool stream::DabcProcMgr::CreateStore(const char* storename)
 {
    fStore = dabc::mgr.CreateObject("root::TreeStore","stream_store");
-   if (fStore.null()) return false;
+   if (fStore.null()) {
+      fStoreInfo = "Fail to create root::TreeStore, check libDabcRoot plugin";
+      return false;
+   }
 
    dabc::Command cmd("Create");
    cmd.SetStr("fname", storename);
@@ -284,10 +300,15 @@ bool stream::DabcProcMgr::CreateStore(const char* storename)
    cmd.SetStr("tname", "T");
    cmd.SetStr("ttitle", "Tree with stream data");
 
-   if (!fStore.Execute(cmd)) return false;
+   if (!fStore.Execute(cmd)) {
+      fStoreInfo = dabc::format("Fail to create ROOT file %s", storename);
+      return false;
+   }
 
    // set pointer to inform base class that storage exists
    fTree = (TTree*) cmd.GetPtr("tree_ptr");
+
+   fStoreInfo = dabc::format("Create ROOT file %s", storename);
 
    return true;
 }
@@ -297,6 +318,7 @@ bool stream::DabcProcMgr::CloseStore()
    fTree = 0;
    fStore.Execute("Close");
    fStore.Release();
+   fStoreInfo = "ROOT store closed";
    return true;
 }
 
@@ -324,6 +346,12 @@ bool stream::DabcProcMgr::CreateBranch(const char* name, void* member, const cha
 
 bool stream::DabcProcMgr::StoreEvent()
 {
+   if (fStore.null()) return false;
+
    dabc::Command cmd("Fill");
-   return fStore.Execute(cmd);
+   if (!fStore.Execute(cmd)) return false;
+
+   fStoreInfo = cmd.GetStr("StoreInfo");
+
+   return true;
 }

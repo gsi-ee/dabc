@@ -31,12 +31,13 @@ namespace stream {
          bool fWorkingFlag;
 
          dabc::LocalWorkerRef fStore;
+         std::string fStoreInfo;  //!< last info about storage
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
       public:
-         DabcProcMgr() : base::ProcMgr(), fTop(), fWorkingFlag(true) {}
-         virtual ~DabcProcMgr() {}
+         DabcProcMgr();
+         virtual ~DabcProcMgr();
 
          void SetTop(dabc::Hierarchy& top, bool withcmds = false);
 
@@ -60,6 +61,8 @@ namespace stream {
          bool ExecuteHCommand(dabc::Command cmd);
 
          void ClearAllHistograms();
+
+         std::string GetStoreInfo() const { return fStoreInfo; }
    };
 
 }

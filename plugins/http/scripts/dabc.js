@@ -230,8 +230,8 @@
       
       var html = "<fieldset>" +
                  "<legend>Stream</legend>" +
-                 "<button class='store_startfile'>Start file</button>" +
-                 "<button class='store_stopfile'>Stop file</button>" +
+                 "<button class='store_startfile' title='Start storage of ROOT file'>Start file</button>" +
+                 "<button class='store_stopfile' title='Stop storage of ROOT file'>Stop file</button>" +
                  '<input class="store_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
                  "<label class='stream_rate'>Rate: __undefind__</label><br/>"+
                  "<label class='stream_info'>Info: __undefind__</label>"+
@@ -244,22 +244,23 @@
       
       d3.select(frame).html(html);
       
+      $(frame).find(".store_filename").prop("title", "Name of ROOT file to store.\nOne can specify store kind and maxsize with args like:\n file.root&kind=2&maxsize=2000");
+      
       $(frame).find(".store_startfile")
          .button()
-         .prop("title", "name of root file. Can specify kind and maxsize with args like\n file.root&kind=2&maxsize=2000")
          .click(function() { 
-         DABC.InvokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
-      });
-      $(frame).find(".store_stopfile").button().click(function() { 
-         DABC.InvokeCommand(itemname+"/Control/StopRootFile");
-      });
+            DABC.InvokeCommand(itemname+"/Control/StartRootFile", "fname="+$(frame).find('.store_filename').val());
+         });
+      $(frame).find(".store_stopfile")
+         .button()
+         .click(function() { DABC.InvokeCommand(itemname+"/Control/StopRootFile"); });
       
       var inforeq = null;
       
       function UpdateStreamStatus(res) {
          if (res==null) return;
-         var rate = "3.5";
-         $(frame).find('.stream_rate').css("font-size","120%").text(rate);                  
+         $(frame).find('.stream_rate').css("font-size","120%").text("Rate: " + res.EventsRate + " ev/s");                  
+         $(frame).find('.stream_info').text("Info: " + res.StoreInfo);                  
       }
       
       var handler = setInterval(function() {

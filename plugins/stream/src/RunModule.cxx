@@ -138,6 +138,8 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
       fWorkerHierarchy.CreateHChild("Status");
       fWorkerHierarchy.SetField("_player", "DABC.StreamControl");
 
+      CreatePar("EventsRate").SetRatemeter(false, 3.).SetUnits("Ev");
+
       dabc::CommandDefinition cmddef = fWorkerHierarchy.CreateHChild("Control/StartRootFile");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
       // cmddef.SetField(dabc::prop_auth, true); // require authentication
@@ -397,6 +399,8 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 {
    if (fProcMgr==0) return false;
 
+   Par("EventsRate").SetValue(1);
+
    fTotalEvnts++;
 
    if (fParallel==0) Par("Events").SetValue(1);
@@ -529,6 +533,10 @@ void stream::RunModule::ProcessTimerEvent(unsigned)
    if (hld==0) return;
 
    dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
+
+   folder.SetField("EventsRate", Par("EventsRate").GetField("value").AsDouble());
+   folder.SetField("EventsCount", fTotalEvnts);
+   folder.SetField("StoreInfo", fProcMgr->GetStoreInfo());
 
    for (unsigned n=0;n<hld->NumberOfTRB();n++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(n);
