@@ -16,23 +16,34 @@
 /** \page root_plugin_doc Short description of ROOT plugin
  
 Plugin provides:
-- [THttpServer implementation](\ref httpserver) (if not compiled in ROOT itself)
 - [JavaScript ROOT](\ref jsrootmain)
 - [Implementation of DABC-based THttpEngine](\ref root_plugin_usage) 
- 
 */
 
 
 
-/** \page root_plugin_usage  Usage of DABC in ROOT
+/** \page root_plugin_usage  Usage of DABC with ROOT
 
 Introduction
 ============
 
-Main motivation for writing of libDabcRoot plugin -  
-provide web interface to the arbitrary ROOT-based analysis. 
-Therefore here functionality of DABC web server
-and its usage is described
+Oroginal motivation for writing of libDabcRoot plugin was 
+providing web interface to the arbitrary ROOT-based analysis. 
+Current THttpServer class in ROOT fully solving such tasks.
+
+Now idea of this plugin - access to ROOT application with DABC methods.
+Any ROOT application which runs THttpServer can create TDabcEngine and
+be attached to master DABC application. It could be many of such ROOT process and
+all of them could be access seamless via central http server, implemented in DABC.   
+
+Plugin also provides root::TreeStore class, which let use TTree storage in DABC
+without direct linking of ROOT functionality to DABC plugins.
+
+There is also dabc_root utility, which let convert DABC internal histograms 
+into ROOT representation.  
+
+Also this plugin was a place where JavaScript ROOT was developed for a while.
+Now it is just copy of central JSROOT repository from https://github.com/linev/jsroot 
 
 
 DABC Compilation

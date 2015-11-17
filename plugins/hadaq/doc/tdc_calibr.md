@@ -34,9 +34,9 @@ Typical sub-subevebt, produced by FPGA TDC looks like (_using hldprint_):
 ~~~~~~~~~~~~~~~
  
 Such subevent starts with TDC header (not discussed here).
-Then epoch counter is specified following by one or several hit messages.    
+Then epoch counter followed by one or several hit messages.    
  
-Hit message provided with two time values.
+Hit message provides channel number, rising(1) or falling(0) edge code and two time values.
 First is **coarse** counter (*tc* in printout), incremented with 200 MHz frequency.
 Second is **fine** counter (*tf* in printout), which started with the hit detection and ends with the next 5ns period. To produce time stamp for registered hit we should use following equation:
 
