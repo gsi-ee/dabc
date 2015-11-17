@@ -1,6 +1,6 @@
 --------------------------------------------------------------
           The Data Acquisition Backbone Core 
-         DABC Release v2.8.0 (20-July-2015)
+         DABC Release v2.9.0 (17-November-2015)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
@@ -52,6 +52,10 @@ INSTALLATION:
        noverbs=1 - disable compilation of IB VERBS plugin. In some situation
                    plugin can have problem during compilation and can be disabled
                    with such option
+
+       nodim=1 - disable compilation of DIM plugin.
+
+       with-stream=1 - if available, build plugin for 'stream' analysis framework.
        
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used 

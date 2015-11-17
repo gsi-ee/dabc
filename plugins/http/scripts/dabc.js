@@ -16,7 +16,7 @@
 
    DABC = {};
 
-   DABC.version = "2.8.0";
+   DABC.version = "2.9.0";
    
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
