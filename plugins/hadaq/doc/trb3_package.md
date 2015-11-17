@@ -454,77 +454,9 @@ All options can be obtain when running "hldprint -help"
 
 Now DABC application can be also used to calibrate data, provided by FPGA TDCs.
 For this functionality code from [stream framework](https://subversion.gsi.de/go4/app/stream) is used.
-Therefore DABC should be compiled together with stream - at best as [trb3 package](https://subversion.gsi.de/dabc/trb3).
+Therefore DABC should be compiled together with stream - at best as [trb3 package](https://subversion.gsi.de/dabc/trb3) as described in very beginning.
 
-### Configuration
-
-There is example configuration file [$DABCSYS/plugins/hadaq/app/TdcEventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
-This loook like:
-
-       <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
-       <InputPort name="Input1" url="hadaq://host:10102" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]"/>
-  
-For each input [TDC calibration module](@ref stream::TdcCalibrationModule) will be created with name 'Input0TdcCal' for first input, 'Input1TdcCal' for second input and so on. One could specify additional parameters for such modules in section:
-
-    <Module name="Input*TdcCal">
-       <FineMin value="31"/>
-       <FineMax value="480"/>
-       <NumChannels value="65"/>
-       <EdgeMask value="1"/>
-       <HistFilling value="3"/>
-       <CalibrFile value="local"/>
-       <Auto value="100000"/>
-    </Module>
-
-Comments for most parameters are provided in example file. 
-  
-
-
-### Running
-
-When running, calibration modules extracts hits data, accumulate statistics and produce calibration.
-Calibration module use such calibrations to calculate fine time and replaces original hit messages with new `hit1` message type.  
-
-Every time calibration is produced, it is stored to binary files specified in configuration of calibration module - parameter `CalibrFile`. When application started next time, last produced calibration will be loaded and used until new calibration is ready.
-
-
-### New `hit1` message format
-
-It is to large extend similar with original `hit` message. 
-There are two differences. First, it has 0xa0000000 message type insted of 0x80000000.
-Second, 10 bits of fine counter coding time value with 5 ps binning, which should be _SUBSTRUCTED_ 
-from the coarse time value. For instnce, value 26 means -130 ps, value 200 is -1ns.  
-As in original hit message, value 0x3ff (or 1023) is error.
-
-
-### Using in hldprint and analysis 
-
-Both `hldprint` and `stream` analysis will recognize new hit message type and provide
-time stamp without need to apply any kind of calibration. 
-
-
-### Monitoring with web
-
-DABC provides specialized web control gui, which shows DAQ and TDC calibration status.
-To activate it, one should open http://localhost:8090/?item=EventBuilder/HadaqCombiner
-or just click `EventBuilder/HadaqCombiner` in the browser. 
-One could see DAQ state, configured TRB/TDC ids and progress of TDC calibration.
-It is also possible to start/stop file writing.
-
-In each calibration module one could see accumulated histograms - these are 
-histograms produced by stream framework inside DABC process. 
-One could display, superimpose and monitor them in the web browser. 
-One also could display and monitor them in `go4`, starting with the command:
-
-    go4 http://localhost:8090 
-
-When terminal module is enabled (default on), it also provides information about progress
-of TDC calibration. One could request generic state for all TDC with request:
-
-    wget http://localhost:8090/EventBuilder/Terminal/State/value/get.json -O state.json
-
-If calibration peformed for all TDCs, "Ready" string will be returned, otherwise "Init"
-
+All details about TDC calibration in DABC or in Go4 can be found on [TDC calibration](@ref hadaq_tdc_calibr) page.
 
 
 # Usage of hadaq API in other applications
