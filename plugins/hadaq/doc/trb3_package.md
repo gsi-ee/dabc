@@ -1,5 +1,16 @@
 # Software collection for TRB3 {#hadaq_trb3_package}  
 
+## Table of content
+
+- [Installation](@ref trb3_install)
+- [Running of DAQ](@ref trb3_daq)
+- [hldprint](@ref trb3_hldprint)
+- [Running analysis](@ref trb3_stream_go4)
+- [Running analysis with DABC](@ref trb3_stream_dabc)
+- [TDC calibration](@ref hadaq_tdc_calibr)
+- [API for data access](@ref trb3_api) 
+
+
 ## Introduction
 
 This is short instruction how dabc/go4/stream frameworks can be installed and
@@ -18,7 +29,7 @@ The easiest way to install all necessary software components is use repository
 This method describes how DABC, ROOT, Go4 and stream analysis can be installed
 with minimal efforts.
 
-### Requirements
+## Requirements
 
 Following packages should be installed:
 * libqt4-devel
@@ -30,20 +41,16 @@ Following packages should be installed:
 It is recommended to use bash (at least, during compilation)
 
 
-### Reuse existing ROOT installation
+## Reuse existing ROOT installation
 
-Most of the time is consumed by ROOT compilation, therefore if ROOT
-already installed on your machine, it can be reused. Just configure
-ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting.
-For instance, call thisroot.sh script:
+Most of the time is consumed by ROOT compilation, therefore if ROOT already installed on your machine, it can be reused. Just configure ROOTSYS, PATH and LD_LIBRARY_PATH variables before starting. For instance, call thisroot.sh script:
 
     [shell] . your_root_path/bin/thisroot.sh
     
-Be aware that at least ROOT 5-34-32 version should be used and
-compiled with '--enable-http' flag.      
+Be aware that at least ROOT 5-34-32 version should be used and compiled with '--enable-http' flag.      
 
 
-### Compilation
+## Compilation
 
 To checkout and compile all components, just do:
 
@@ -56,7 +63,7 @@ In case of any compilation problem please send me (S.Linev(at)gsi.de)
 error message from that file.
 
 
-### Before using
+## Before using
 
 There is login script 'trb3login', which must be called before software can be used
 
@@ -65,50 +72,12 @@ There is login script 'trb3login', which must be called before software can be u
 It set all shell variables, which are required for DAQ and analysis
 
 
-### Update from repository
+## Update from repository
 
 To obtain newest version from repository do:
 
     [shell] cd your_trb3_path
     [shell] make -j4 update
-
-
-
-## Installation of packages separately
-
-Use this methods only if installation of all packages at once did not work or
-one need only some specific package to install.
-
-### Installation of DABC
-
-If only DAQ functionality is required, than one need to install DABC only.
-It is much faster and easier. Just do:
-
-    [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
-    [shell] cd dabc; make nodim=1 -j4
-    [shell] . ./dabclogin
-
-### Installation of ROOT
-
-See http://root.cern.ch for information, compile at least 5-34-32 version with `--enable-http` flag.
-
-### Installation of Go4
-
-Main information on http://go4.gsi.de.
-To install from repository first initialize ROOT variables, than do:
-
-    [shell] svn co https://subversion.gsi.de/go4/trunk go4
-    [shell] cd go4; make -j4
-    [shell] . ./go4login
-
-### Installation of stream
-
-First compile and configure go4. Then:
-
-    [shell] svn co https://subversion.gsi.de/go4/app/stream stream
-    [shell] cd stream; make -j4
-    [shell] . ./streamlogin
-
 
 
 # Running of DAQ {#trb3_daq}
@@ -154,7 +123,7 @@ Following URL parameters can be used for UDP transport:
 |       hub |  value of HUB ID(s), to correctly unpack data for TDC calibration |
 |      trig |  trigger type used for calibration (default all or 0xFFFFF), can be 0xD |
 |    resort |  when specified, resorting of packets order done with trigger number order |
-| upd_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) | 
+| udp_queue |  buffers queue size, used by UDP transport (use together with *tdc* or *resort* parameter) | 
 
 If parameter (like resort) should be specified only for particular port, one could write:
 
@@ -239,118 +208,9 @@ One of the reason for web-server usage - possibility to interactively start/stop
 For this two commands can be used: `StartHldFile` for starting file and `StopHldFile` for stopping.   
 
 
-## Running analysis ## {#trb3_stream_go4}
-
-Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/app/stream).
-It is dedicated for synchronization and
-processing of different kinds of time-stamped data streams. Classes,
-relevant for TRB3/FPGA-TDC processing located in 
-[$STREAMSYS/include/hadaq](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
-[$STREAMSYS/framework/hadaq](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
- 
-In principle, in most cases it is not required to change these classes -
-all user-specific configurations provided in ROOT script, which can be found in 
-[$STREAMSYS/applications/trb3tdc/](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory. It shows how to process data from several TDCs. Please read comments in scripts for more details. One can always copy such script to any other location and modify it to specific needs.
 
 
-### Running in batch
-
-To run analysis in batch (offline), start from directory where _first.C_ script is
-situated:
-
-    [shell]  go4analysis -user file_0000.hld
-
-After analysis finished, filled histograms will be saved in Go4AutoSave.root file and
-can be viewed in ROOT or in Go4 browser. Just type:
-
-    [shell] go4 Go4AutoSave.root
-
-There are many parameters of go4analysis executable (run go4analysis -help).
-For instance, one can run only specified number of events or change output file name:
-
-    [shell] go4analysis -user file_0000.hld -number 100000 -asf new_name.root
-
-
-### Running analysis online
-
-First of all, online server should be configured in DABC. In any moment one
-could start analysis from batch, connecting to DABC server with command:
-
-    [shell] go4analysis -stream dabc_host_name
-
-With Ctrl-C one can always stop execution and check histograms in auto-save file.
-
-But more convenient way is to run analysis from the gui to be able monitor
-all histogram in live mode. For that one need:
-1. start go4 gui (type go4) from directory with _first.C_ macro
-2. Select "Launch analysis" menu command in go4
-3. set "Dir" parameter to "." (current directory)
-4. keep empty library name file of analysis code
-    (library will be located automatically by go4 itself)
-5. when analysis configuration window appears,
-   select "MBS stream server" and host name of DABC
-   (can be localhost if DABC runs on same machine)
-6. press "Submit and start" button
-
-Via analysis browser one can display and monitor any histogram.
-For more details about go4 see introduction on http://go4.gsi.de.
-
-
-
-## Running analysis with DABC ## {#trb3_stream_dabc}
-
-Core functionality of stream framework written without ROOT usage and
-can be run with different engines. Such run engine is now provided in DABC. 
-Main difference between Go4/ROOT and DABC engines - with DABC special histogram
-format is used, which makes code ~10-30% faster. Histograms, filled in DABC processes,
-can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
-Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
- 
-
-### Batch job with multiple threads
-
-DABC provides possibility to run code in parallel in several threads, merging produced histograms
-at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists). 
-
-To run analysis, one requires configuration file like 
-[$DABCSYS/plugins/stream/app/stream.xml](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml). Just copy it in directory where scripts are and run with the command:
-
-    dabc_exe stream.xml file="pilas_1517816245*.hld" asf=test.root parallel=4
-    
-Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf** 
-where histograms will be stored and number of **parallel** threads used for analysis (default 0). 
-During analysis run histogram content can be monitored via http channel, using web browser or Go4 GUI.
-
-With single process one achieve ~10-30% gain compare with ROOT histograms filling. If running parallel  on 15 cores (on lxhadeb06 machine), performance increased on 800% compare with single-thread analysis.    
- 
-
-### Online analysis in DAQ task
-
-One also could run analysis in the same process where event builder is running.
-Analysis will process as much events as possible and produce histograms, which could be monitored via web browser.
-
-Main benefit of such approach - one do not require extra process running,
-quality monitoring always available via http channel. Example configuration
-file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilderStream.xml).
-
-Scripts _first.C_ and (optional) _second.C_ should be copied into directory where DABC will be started.
-When DAQ is running, one could always open web browser with address `http://localhost:8090` or
-directly `http://localhost:8090/EventBuilder/Analysis/`. 
-
-Interested histograms can be shown directly, opening address like:
-
-    http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/draw.htm 
-
-One also could produce 1-D histogram statistic, submitting requests like:
-
-    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetEntries -O entries.txt
-    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
-    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
-
-   
-
-
-# Running hldprint {#trb3_hldprint}
+# Running hldprint #   {#trb3_hldprint}
 
 hldprint is small utility to printout HLD data from different sources: 
 local hld files, remote hld files and running dabc application.
@@ -450,6 +310,116 @@ All options can be obtain when running "hldprint -help"
 
 
 
+# Running analysis # {#trb3_stream_go4}
+
+Analysis code is provided with [stream framework](https://subversion.gsi.de/go4/app/stream).
+It is dedicated for synchronization and
+processing of different kinds of time-stamped data streams. Classes,
+relevant for TRB3/FPGA-TDC processing located in 
+[$STREAMSYS/include/hadaq](https://subversion.gsi.de/go4/app/stream/include/hadaq/) and 
+[$STREAMSYS/framework/hadaq](https://subversion.gsi.de/go4/app/stream/framework/hadaq/) directories. 
+ 
+In principle, in most cases it is not required to change these classes -
+all user-specific configurations provided in ROOT script, which can be found in 
+[$STREAMSYS/applications/trb3tdc/](https://subversion.gsi.de/go4/app/stream/applications/trb3tdc/) directory. It shows how to process data from several TDCs. Please read comments in scripts for more details. One can always copy such script to any other location and modify it to specific needs.
+
+
+### Running in batch
+
+To run analysis in batch (offline), start from directory where _first.C_ script is
+situated:
+
+    [shell]  go4analysis -user file_0000.hld
+
+After analysis finished, filled histograms will be saved in Go4AutoSave.root file and
+can be viewed in ROOT or in Go4 browser. Just type:
+
+    [shell] go4 Go4AutoSave.root
+
+There are many parameters of go4analysis executable (run go4analysis -help).
+For instance, one can run only specified number of events or change output file name:
+
+    [shell] go4analysis -user file_0000.hld -number 100000 -asf new_name.root
+
+
+### Running analysis online
+
+First of all, online server should be configured in DABC. In any moment one
+could start analysis from batch, connecting to DABC server with command:
+
+    [shell] go4analysis -stream dabc_host_name
+
+With Ctrl-C one can always stop execution and check histograms in auto-save file.
+
+But more convenient way is to run analysis from the gui to be able monitor
+all histogram in live mode. For that one need:
+1. start go4 gui (type go4) from directory with _first.C_ macro
+2. Select "Launch analysis" menu command in go4
+3. set "Dir" parameter to "." (current directory)
+4. keep empty library name file of analysis code
+    (library will be located automatically by go4 itself)
+5. when analysis configuration window appears,
+   select "MBS stream server" and host name of DABC
+   (can be localhost if DABC runs on same machine)
+6. press "Submit and start" button
+
+Via analysis browser one can display and monitor any histogram.
+For more details about go4 see introduction on http://go4.gsi.de.
+
+
+
+# Running analysis with DABC # {#trb3_stream_dabc}
+
+Core functionality of stream framework written without ROOT usage and
+can be run with different engines. Such run engine is now provided in DABC. 
+Main difference between Go4/ROOT and DABC engines - with DABC special histogram
+format is used, which makes code ~10-30% faster. Histograms, filled in DABC processes,
+can be displayed with normal ROOT graphics in web browser or in Go4 GUI. 
+Such histograms can be stored in normal ROOT files as TH1/TH2 objects.   
+ 
+
+### Batch job with multiple threads
+
+DABC provides possibility to run code in parallel in several threads, merging produced histograms
+at the end and storing them in ROOT file. Existing _first.C_ and _second.C_ files can be used as it is, only ROOT-specific parts should be removed (if exists). 
+
+To run analysis, one requires configuration file like 
+[$DABCSYS/plugins/stream/app/stream.xml](https://subversion.gsi.de/dabc/trunk/plugins/stream/app/stream.xml). Just copy it in directory where scripts are and run with the command:
+
+    dabc_exe stream.xml file="pilas_1517816245*.hld" asf=test.root parallel=4
+    
+Here one specifies input HLD **file(s)** (one could use wildcard symbol), auto-save ROOT file **asf** 
+where histograms will be stored and number of **parallel** threads used for analysis (default 0). 
+During analysis run histogram content can be monitored via http channel, using web browser or Go4 GUI.
+
+With single process one achieve ~10-30% gain compare with ROOT histograms filling. If running parallel  on 15 cores (on lxhadeb06 machine), performance increased on 800% compare with single-thread analysis.    
+ 
+
+### Online analysis in DAQ task
+
+One also could run analysis in the same process where event builder is running.
+Analysis will process as much events as possible and produce histograms, which could be monitored via web browser.
+
+Main benefit of such approach - one do not require extra process running,
+quality monitoring always available via http channel. Example configuration
+file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilderStream.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilderStream.xml).
+
+Scripts _first.C_ and (optional) _second.C_ should be copied into directory where DABC will be started.
+When DAQ is running, one could always open web browser with address `http://localhost:8090` or
+directly `http://localhost:8090/EventBuilder/Analysis/`. 
+
+Interested histograms can be shown directly, opening address like:
+
+    http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/draw.htm 
+
+One also could produce 1-D histogram statistic, submitting requests like:
+
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetEntries -O entries.txt
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetMean -O mean.txt
+    wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
+
+   
+
 # TDC calibration #  {#trb3_tdc}
 
 Now DABC application can be also used to calibrate data, provided by FPGA TDCs.
@@ -459,7 +429,7 @@ Therefore DABC should be compiled together with stream - at best as [trb3 packag
 All details about TDC calibration in DABC or in Go4 can be found on [TDC calibration](@ref hadaq_tdc_calibr) page.
 
 
-# Usage of hadaq API in other applications
+# Usage of hadaq API in other applications #     {#trb3_api} 
 
 hldprint is just program with originally about 150 lines of code 
 (now it is 500 due to many extra options). 

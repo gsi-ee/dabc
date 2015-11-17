@@ -1,10 +1,16 @@
-# FPGA TDC calibration {#hadaq_tdc_calibr}
+# FPGA TDC calibration #      {#hadaq_tdc_calibr}
 
-  
-## Basics 
+## Table of contents
+
+- [Basics](@ref hadaq_tdc_calibr_basics)
+- [TDC calibrations in stream framework](@ref hadaq_tdc_calibr_stream)
+- [Run code with go4](@ref hadaq_tdc_calibr_go4)
+- [Run code with DABC](@ref hadaq_tdc_calibr_dabc)
+
+# Basics # {#hadaq_tdc_calibr_basics}
 
 
-### That is measured by FPGA TDC?
+## That is measured by FPGA TDC?
  
 Typical sub-subevebt, produced by FPGA TDC looks like (_using hldprint_):
 
@@ -38,7 +44,7 @@ One should understand - larger value of **fine** counter means longer distance t
 Form of **Calibr** function individual for each channel and can vary - for instance, because of temperature change.
           
 
-### Can one use liner approximation?
+## Can one use liner approximation?
 
 In general yes - one could use liner approximation for **Calibr(fine)** function. Typically such function characterized by min and max value of **fine** counter bin. Minimal fine counter bin value (typically ~30) correspond to 0 shift, maximal fine counter (around 450-500) to -5 ns shift.   
 
@@ -48,7 +54,7 @@ But liner approximation has several drawbacks. First of al, it introduces error 
 
 
 
-### Statistical approach for fine-counter calibration
+## Statistical approach for fine-counter calibration
 
 Approach is very simple - for _every_ channel one measures many (~1e5) hits from _random_ signal and build distribution for fine-counter values. Higher value in such distribution - larger width of correspondent bin. While sum of all bins widths is 5 ns, one can very easily calculate time shift corresponding to each fine counter.
 
@@ -56,14 +62,13 @@ This link shows shows typical distribution of fine-counter bins in the channel:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingFine;1>
 
-![Fine counter distribution](/data.local1/trb3tdc/images/finecounter.jpg "Fine counter distribution") 
-
+![Fine counter distribution](http://dabc.gsi.de/doc/images/finecounter.jpg "Fine counter distribution") 
 
 As result from such distribution calibration function is build:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1>
  
-![Fine counter calibration](/data.local1/trb3tdc/images/finecalibr.jpg "Fine counter calibration") 
+![Fine counter calibration](http://dabc.gsi.de/doc/images/finecalibr.jpg "Fine counter calibration") 
 
  
 At the moment it is best-known method for calibration of fine counter. 
@@ -73,10 +78,10 @@ But it has some disadvantages. First - it typically requires special measurement
 Another problem of such calibration approach - significant size of produced calibration curves. For every channel one creates lookup table with approx 500 bins. If one uses setup with 1000 channels (not very big), every calibration set consume 1000 channels _X_ 500bins _X_ 4bytes = 2 MB of data.             
 
 
-### Effect of temparature on the measurements
+## Effect of temparature on the measurements
 
 Effect is clear - calibration curves changing with the temperature. 
-[This link compare calibration curves](http://jsroot.gsi.de/dev/index.htm?nobrowser&path=../files/&files=[temp44.root,temp35.root,temp28.root]&item=temp44.root/Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1+temp35.root/_same_+temp28.root/_same_&opt=autocol,nostat), measured for three different temperatures - 28, 35 and 44 oC. One could see difference upto 120 ps caused by temperature difference of about 16 grad. 
+[This link compare calibration curves](http://jsroot.gsi.de/dev/index.htm?nobrowser&path=../files/&files=[temp44.root,temp35.root,temp28.root]&item=temp44.root/Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1+temp35.root/_same_+temp28.root/_same_&opt=autocol,nostat), measured for three different temperatures: 28, 35 and 44 C. One could see difference upto 120 ps caused by temperature difference of about 16 grad. 
  
 
 Such changes can be compensated if perfrom calibration frequently. In ideal case calibration should be done constantly - every time when temperature changes more than 0.5 grad. 
@@ -84,17 +89,16 @@ Such changes can be compensated if perfrom calibration frequently. In ideal case
 If calibration procedure is not performed, temperature changes will affect mean and rms values. Very rough estimation gives 10 ps change for temperature change on 1 grad. Potentially one could compensate tempreture changes without constantly calibrating TDCs channels , but at the moment it is not yet clear how. 
 
 
-### Time stamp of falling edges - time-over-threshold measurement
+## Time stamp of falling edges - time-over-threshold measurement
 
 FPGA TDC introducing time shifts for the falling edge of measured signals. Such time shift is individual for every channel and vary between 28 and 42 ns. This value should be subtracted from every fallind edge time stamp. How to measure this values?
 
 Most simple approach - use internal pulse generator, which actiavted with trigger type 0xD. This signal has 30 ns pulse width. If one measures distance between rising and falling edges in this test pulse, one could easily estimate time shift, which could be later applyed for every falling-edge stamp.  
    
 
+# TDC calibration with `stream` frameowrk #   {#hadaq_tdc_calibr_stream}
 
-## TDC calibration with `stream` frameowrk
-
-### That is `stream` framework? 
+## That is `stream` framework? 
 
 It is code to analyze data streams. Main features:
 
@@ -115,7 +119,7 @@ Original source code can be found in [Subversion repository](https://subversion.
 copy on the [github](https://github.com/linev/stream) 
 
 
-### How to use `stream` framework for TRB/TDC
+## How to use `stream` framework for TRB/TDC
 
 Normally any analysis configured in `first.C` script.
 Example of such macros can be found in [applications folder](https://subversion.gsi.de/go4/app/stream/applications/).
@@ -176,7 +180,7 @@ void first()
 Idea of such configuration - all required elements are created when first HLD event is processed.
 
 
-### Configure calibration
+## Configure calibration
 
 Central method is:
 
@@ -213,7 +217,7 @@ When specifying file prefix with automatic calibration, then after every calibra
 This allows to reuse latest calibration function when restarting analysis - in online or offline mode.   
 
 
-### Enable data storage 
+## Enable data storage 
 
 After unpacking and calibration, produced TDC data can be stored in ROOT TTree. For that one should use:
 
@@ -237,7 +241,7 @@ In all cases each TDC processor creates separate branch in the TTree, where corr
 Definition of all message types can be found in [TdcSubEvent.h](https://subversion.gsi.de/go4/app/stream/include/hadaq/TdcSubEvent.h)
 
 
-### Produce monitoring histograms
+## Produce monitoring histograms
 
 Many different histograms can be accumulated to monitor quality of data and quality of TDC calibration.
 First of all, one should specify histogramming level:
@@ -291,7 +295,7 @@ Here one uses channel 1 as reference for all other channels:
 Third argument (0xffff) can be ID of any other TDC where reference channel could be used. Next three arguments are number of bins and min/max time (ns) for histogram where reference time will be accumulated. 
 
 
-## Use of `stream` framework in `Go4`
+# Use of `stream` framework in `Go4` #    {#hadaq_tdc_calibr_go4}
 
 [Go4](http://go4.gsi.de) is ROOT-based analyzis framework and provide many useful tools to run arbitrary code in online/offline environment. 
 
@@ -303,12 +307,14 @@ After configuring all environemnt variables (typically with `. trb3login`) one c
 TDC calibration, ROOT file storage, histogram monitoring works as described in previous section.
 
 
-## TDC calibration in `DABC`
+
+
+# TDC calibration in `DABC` # {#hadaq_tdc_calibr_dabc}
 
 Code, developed in `stream` framework, can be run directly in DABC. DABC compiles **libDabcStream.so** library, which provides binding of `stream` code with DABC. This library should be always included in DABC xml configuration file if `stream` code should be used in DABC. If ROOT file storage should be used, one should also include **libDabcRoot.so** library for ROOT binding.   
 
 
-### Run first.C after event building
+## Run first.C after event building
 
 Most easy way of using `stream` in DABC. In _hadaq::CombinerModule_ one configures additional output, which activates `stream` code in DABC. Like:
 
@@ -326,11 +332,11 @@ DABC also provides web interface for controlling TDC calibration status and for 
 
 
 
-### Produce HLD files with calibrated values
+## Produce HLD files with calibrated values
 
 Such mode allows to produce HLD files with already calibrated values.
 
-#### Configuration
+### Configuration
 
 There is example configuration file [$DABCSYS/plugins/hadaq/app/TdcEventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
 This loook like:
@@ -354,7 +360,7 @@ For each input [TDC calibration module](@ref stream::TdcCalibrationModule) will 
 Comments for most parameters are provided in example file. 
   
 
-#### Output formats
+### Output formats
 
 When running, calibration modules extracts hits data, accumulate statistics and produce calibration.
 Calibration module use such calibrations to calculate correct value which correspond to the **fine time** counter. For falling edge also time shift is compensated.
@@ -364,7 +370,7 @@ Result can be stored in two different ways. Either one replace **fine time**  in
 Or one could insert additional `calibr` message in the data stream, where calibrated value is stored. This increase size of HLD data (approx by 25%), but preserve original hits as they are. Such method is also more precise, while instead of 10 bits one could use 14 bits for storing result. Such method used when `<Replace value="false"/>` specified in configuration.        
 
 
-#### `hit1` message format
+### `hit1` message format
 
 It is to large extend similar with original `hit` message. There are two differences. First, it has 0xa0000000 message type insted of 0x80000000. Second, 10 bits of fine counter coding time used for coding of calibrated fine time value, which should be _SUBSTRUCTED_ from coarse time value. As in original hit message, value 0x3ff (or 1023) is error.
 
@@ -373,7 +379,7 @@ Decoding of these 10 bits depend on the edge bit. For rising edge 5ps binning is
 For falling edge lower 9 bits used to code value with 10ps binning. Means value 25 correspond to -250 ps time shift. When higher bit set, it indicates overflow of coarse counter due to time-shift compensation. In this case time for whole epoch (2048*5ns) should be substracted from global time stamp        
   
 
-#### `calibr` message format
+### `calibr` message format
 
 This message kind used to store calibrated values without change of the original data.
 This is message has type 0xe0000000. Available 28 bits shared between two following hit messages: lower 14 bits correspond to first message, higher 14 bits to second hit message. Decoding depends from edge kind.
@@ -384,13 +390,13 @@ For rising edge hits time shift could be calculated with equation : value / 0x3f
 For falling edge hits time shift could be calculated as: value / 0x3ffe * 50ns or approximately 3.0519 ps binning.
 
 
-#### Using in hldprint and analysis 
+### Using in hldprint and analysis 
 
 Both `hldprint` and `stream` analysis will recognize new message types and provide
 time stamp without need to apply any kind of calibration. 
 
 
-#### Control with web interface
+### Control with web interface
 
 DABC also provides specialized web control gui, which shows DAQ and TDC calibration status.
 To activate it, one should open _http://localhost:8090/?item=EventBuilder/HadaqCombiner_
