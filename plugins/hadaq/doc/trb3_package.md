@@ -23,6 +23,7 @@ There are two main parts of software:
 The easiest way to install all necessary software components is use repository
    https://subversion.gsi.de/dabc/trb3
 
+---------------------------
 
 # Installation of all components in once {#trb3_install}
 
@@ -78,6 +79,8 @@ To obtain newest version from repository do:
 
     [shell] cd your_trb3_path
     [shell] make -j4 update
+
+---------------------------
 
 
 # Running of DAQ {#trb3_daq}
@@ -208,6 +211,7 @@ One of the reason for web-server usage - possibility to interactively start/stop
 For this two commands can be used: `StartHldFile` for starting file and `StopHldFile` for stopping.   
 
 
+---------------------------
 
 
 # Running hldprint #   {#trb3_hldprint}
@@ -308,6 +312,7 @@ Result is:
  
 All options can be obtain when running "hldprint -help"
 
+---------------------------
 
 
 # Running analysis # {#trb3_stream_go4}
@@ -367,6 +372,7 @@ Via analysis browser one can display and monitor any histogram.
 For more details about go4 see introduction on http://go4.gsi.de.
 
 
+---------------------------
 
 # Running analysis with DABC # {#trb3_stream_dabc}
 
@@ -419,6 +425,7 @@ One also could produce 1-D histogram statistic, submitting requests like:
     wget http://localhost:8090/EventBuilder/Analysis/HLD/HLD_EvSize/cmd.json?command=GetRMS -O rms.txt
 
    
+---------------------------
 
 # TDC calibration #  {#trb3_tdc}
 
@@ -429,6 +436,8 @@ Therefore DABC should be compiled together with stream - at best as [trb3 packag
 All details about TDC calibration in DABC or in Go4 can be found on [TDC calibration](@ref hadaq_tdc_calibr) page.
 
 
+---------------------------
+
 # Usage of hadaq API in other applications #     {#trb3_api} 
 
 hldprint is just program with originally about 150 lines of code 
@@ -438,7 +447,7 @@ There is also example in [$DABCSYS/applications/hadaq/](https://subversion.gsi.d
 
 In simplified form access to any data source (local file, remote file or online server) looks like:
 
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~{.c}
 #include "hadaq/api.h"
 int main() {
    hadaq::ReadoutHandle ref = hadaq::ReadoutHandle::Connect("file.hld");

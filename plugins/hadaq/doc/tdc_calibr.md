@@ -7,6 +7,9 @@
 - [Run code with go4](@ref hadaq_tdc_calibr_go4)
 - [Run code with DABC](@ref hadaq_tdc_calibr_dabc)
 
+
+---------------------------
+
 # Basics # {#hadaq_tdc_calibr_basics}
 
 
@@ -94,6 +97,8 @@ If calibration procedure is not performed, temperature changes will affect mean 
 FPGA TDC introducing time shifts for the falling edge of measured signals. Such time shift is individual for every channel and vary between 28 and 42 ns. This value should be subtracted from every fallind edge time stamp. How to measure this values?
 
 Most simple approach - use internal pulse generator, which actiavted with trigger type 0xD. This signal has 30 ns pulse width. If one measures distance between rising and falling edges in this test pulse, one could easily estimate time shift, which could be later applyed for every falling-edge stamp.  
+
+---------------------------
    
 
 # TDC calibration with `stream` frameowrk #   {#hadaq_tdc_calibr_stream}
@@ -294,6 +299,7 @@ Here one uses channel 1 as reference for all other channels:
    
 Third argument (0xffff) can be ID of any other TDC where reference channel could be used. Next three arguments are number of bins and min/max time (ns) for histogram where reference time will be accumulated. 
 
+---------------------------
 
 # Use of `stream` framework in `Go4` #    {#hadaq_tdc_calibr_go4}
 
@@ -307,6 +313,7 @@ After configuring all environemnt variables (typically with `. trb3login`) one c
 TDC calibration, ROOT file storage, histogram monitoring works as described in previous section.
 
 
+---------------------------
 
 
 # TDC calibration in `DABC` # {#hadaq_tdc_calibr_dabc}
