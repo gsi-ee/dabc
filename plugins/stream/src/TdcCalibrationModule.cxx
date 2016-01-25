@@ -54,7 +54,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 
    int numch = Cfg("NumChannels", cmd).AsInt(65);
    int edges = Cfg("EdgeMask", cmd).AsInt(1);
-   unsigned cal_trig = Cfg("CalibrTrigger", cmd).AsUInt(0xFFFF);
+   std::vector<uint64_t> caltr = Cfg("CalibrTrigger", cmd).AsUIntVect();
 
    // default channel numbers and edges mask
    hadaq::TrbProcessor::SetDefaults(numch, edges);
@@ -97,7 +97,11 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    }
    item.SetField("tdc", fTDCs);
 
-   fTrbProc->SetCalibrTrigger(cal_trig);
+   unsigned calmask = 0;
+   for (unsigned n=0;n<caltr.size();n++)
+      calmask |= (1<<caltr[n]);
+
+   fTrbProc->SetCalibrTriggerMask(calmask);
 
    std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
    for (unsigned n=0;n<dis_ch.size();n++)
