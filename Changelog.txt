@@ -4,7 +4,7 @@ about current functionality of the framework.
 
 25.01.2016
 1. Extend hldprint functionality - print debug values with text info
-2. Support temperature and design id printing
+2. Support tdc trailer, temperature and design id printing
 
 
 16.11.2015

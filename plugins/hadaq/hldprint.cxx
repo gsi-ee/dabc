@@ -189,7 +189,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
-            if (prefix>0) printf("reserved\n");
+            if (prefix>0) printf("tdc trailer ttyp:0x%01x rnd:0x%02x err:0x%04x\n", (msg >> 24) & 0xF,  (msg >> 16) & 0xFF, msg & 0xFFFF);
             break;
          case tdckind_Header:
             nheader++;
