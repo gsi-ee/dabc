@@ -205,8 +205,10 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                rawtime += (dvalue << 16);
                time_t t = (time_t) rawtime;
                sprintf(sbuf, "  design 0x%08x %s", rawtime, ctime(&t));
+               int len = strlen(sbuf);
+               if (sbuf[len-1]==10) sbuf[len-1] = 0;
             } else
-            if (dkind == 0xE) sprintf(sbuf, "  %3.1fC", dvalue*0.1);
+            if (dkind == 0xE) sprintf(sbuf, " %3.1fC", dvalue*0.1);
 
             if (prefix>0)
                printf("tdc debug 0x%02x: 0x%06x %s%s\n", dkind, dvalue, debug_name[dkind], sbuf);
