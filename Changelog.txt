@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.01.2016
+1. Extend hldprint functionality - print debug values with text info
+2. Support temperature and design id printing
+
+
 16.11.2015
 1. Provide start/stop ROOT file commands in stream::RunModule
 2. Display run/file status 

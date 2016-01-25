@@ -19,6 +19,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <time.h>
 
 #include "hadaq/api.h"
 #include "dabc/string.h"
@@ -58,7 +59,7 @@ int usage(const char* errstr = 0)
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
-   printf("   -hub value              - maximal fine counter value, used for liner time calibration (default 491) \n");
+   printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
 
    return errstr ? 1 : 0;
 }
@@ -115,6 +116,41 @@ double tot_limit(-1);
 unsigned fine_min(31), fine_max(491);
 
 
+const char* debug_name[32] = {
+      "Number of valid triggers",
+      "Number of release signals send",
+      "Number of valid timing triggers received",
+      "Valid NOtiming trigger number",
+      "Invalid trigger number",
+      "Multi timing trigger number",
+      "Spurious trigger number",
+      "Wrong readout number",
+      "Spike number",
+      "Idle time",
+      "Wait time",
+      "Total empty channels",
+      "Readout time",
+      "Timeout number",
+      "Temperature",
+      "RESERVED",
+      "Compile time 1",
+      "Compile time 2",
+      "debug 0x10010",
+      "debug 0x10011",
+      "debug 0x10100",
+      "debug 0x10101",
+      "debug 0x10110",
+      "debug 0x10111",
+      "debug 0x11000",
+      "debug 0x11001",
+      "debug 0x11010",
+      "debug 0x11011",
+      "debug 0x11100",
+      "debug 0x11101",
+      "debug 0x11110",
+      "debug 0x11111"
+};
+
 bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, bool check_conditions = false)
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
@@ -132,7 +168,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    errmask = 0;
 
    bool haschannel0(false);
-   unsigned channel(0), fine(0), ndebug(0), nheader(0), isrising(0);
+   unsigned channel(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    double last_rising[65], last_falling[65];
@@ -161,7 +197,19 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             break;
          case tdckind_Debug:
             ndebug++;
-            if (prefix>0) printf("tdc debug\n");
+            dkind = (msg >> 24) & 0x1F;
+            dvalue = msg & 0xFFFFFF;
+            sbuf[0] = 0;
+            if (dkind == 0x10) rawtime = dvalue; else
+            if (dkind == 0x11) {
+               rawtime += (dvalue << 16);
+               time_t t = (time_t) rawtime;
+               sprintf(sbuf, "  design 0x%08x %s", rawtime, ctime(&t));
+            } else
+            if (dkind == 0xE) sprintf(sbuf, "  %3.1fC", dvalue*0.1);
+
+            if (prefix>0)
+               printf("tdc debug 0x%02x: 0x%06x %s%s\n", dkind, dvalue, debug_name[dkind], sbuf);
             break;
          case tdckind_Epoch:
             epoch = msg & 0xFFFFFFF;
