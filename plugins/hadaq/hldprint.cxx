@@ -60,6 +60,7 @@ int usage(const char* errstr = 0)
    printf("   -rate                   - display only events rate\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
+   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
 
    return errstr ? 1 : 0;
 }
@@ -91,7 +92,7 @@ const char* TdcErrName(int cnt) {
       case 2: return "epoch";
       case 3: return "nodata";
    }
-   return "uncknown";
+   return "unknown";
 }
 
 struct SubevStat {
@@ -114,7 +115,7 @@ struct SubevStat {
 
 double tot_limit(-1);
 unsigned fine_min(31), fine_max(491);
-
+bool bubble_mode = false;
 
 const char* debug_name[32] = {
       "Number of valid triggers",
@@ -151,8 +152,42 @@ const char* debug_name[32] = {
       "debug 0x11111"
 };
 
+bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix) {
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if (ix>=sz) return false;
+   if ((len==0) || (ix + len > sz)) len = sz - ix;
+
+   if (prefix==0) return false;
+
+   unsigned lastch = 0xFFFF;
+
+   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+      unsigned msg = sub->Data(ix);
+
+      if ((msg & tdckind_Mask) != tdckind_Hit) continue;
+
+      unsigned chid = (msg >> 22) & 0x7F;
+
+      if (chid != lastch) {
+         if (lastch < 0xFFFF) printf("\n");
+         printf("%*s ch%02u: ",  prefix, "", chid);
+         lastch = chid;
+      }
+      printf("%04x", msg & 0xFFFF);
+   }
+
+   if (lastch<0xFFFF) printf("\n");
+
+   return true;
+
+}
+
+
 bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, bool check_conditions = false)
 {
+   if (bubble_mode) return PrintBubbleData(sub, ix, len, prefix);
+
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
    if (ix>=sz) return false;
@@ -332,6 +367,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
+      if (strcmp(argv[n],"-bubble")==0) { bubble_mode = true; } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
