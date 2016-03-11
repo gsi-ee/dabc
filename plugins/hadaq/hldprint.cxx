@@ -152,6 +152,7 @@ const char* debug_name[32] = {
       "debug 0x11111"
 };
 
+
 bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix) {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
@@ -161,29 +162,30 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
    if (prefix==0) return false;
 
    unsigned lastch = 0xFFFF;
+   unsigned bubble[190];
+   unsigned bcnt = 0, msg = 0, chid = 0;
 
-   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
-      unsigned msg = sub->Data(ix);
-
-      if ((msg & tdckind_Mask) != tdckind_Hit) continue;
-
-      unsigned chid = (msg >> 22) & 0x7F;
+   for (unsigned cnt=0;cnt<=len;cnt++,ix++) {
+      chid = 0xFFFF; msg = 0;
+      if (cnt<len) {
+         msg = sub->Data(ix);
+         if ((msg & tdckind_Mask) != tdckind_Hit) continue;
+         chid = (msg >> 22) & 0x7F;
+      }
 
       if (chid != lastch) {
-         if (lastch < 0xFFFF) printf("\n");
-         printf("%*s ch%02u: ",  prefix, "", chid);
-         lastch = chid;
-      }
-      unsigned data = msg & 0xFFFF, swap_data = 0;
-      for (int n=0;n<16;n++) {
-         swap_data = (swap_data >> 1) | ((data & 0x8000) ? 0x8000 : 0);
-         data = data << 1;
+         if (lastch != 0xFFFF) {
+            printf("%*s ch%02u: ", prefix, "", lastch);
+            if (bcnt>0)
+               for (unsigned d=bcnt;d>0;d--) printf("%04x",bubble[d-1]);
+            printf("\n");
+         }
+         lastch = chid; bcnt = 0;
       }
 
-      printf("%04x", swap_data);
+      bubble[bcnt++] = msg & 0xFFFF;
+      // printf("here\n");
    }
-
-   if (lastch<0xFFFF) printf("\n");
 
    return true;
 
