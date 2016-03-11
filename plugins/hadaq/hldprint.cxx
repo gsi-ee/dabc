@@ -174,7 +174,13 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
          printf("%*s ch%02u: ",  prefix, "", chid);
          lastch = chid;
       }
-      printf("%04x", msg & 0xFFFF);
+      unsigned data = msg & 0xFFFF, swap_data = 0;
+      for (int n=0;n<16;n++) {
+         swap_data = (swap_data >> 1) | ((data & 0x8000) ? 0x8000 : 0);
+         data = data << 1;
+      }
+
+      printf("%04x", swap_data);
    }
 
    if (lastch<0xFFFF) printf("\n");
