@@ -153,6 +153,88 @@ const char* debug_name[32] = {
 };
 
 
+int BubbleWidth(unsigned* bubble) {
+
+   unsigned pos = 0, last = 1;
+   int p1 = 0, p2 = 0;
+   for (unsigned n=0;n<19;n++) {
+      unsigned data = bubble[n];
+
+      // this is error - first bit always 1
+      if ((n==0) && ((data & 1)== 0)) { return -1; }
+
+      for (unsigned b=0;b<16;b++) {
+
+         if ((data & 1) != last) {
+            if (last==1) {
+               if (p1!=0) return -2;
+               p1 = pos;
+            } else {
+               if (p2!=0) return -3;
+               p2 = pos;
+            }
+         }
+
+         last = (data & 1);
+         data = data >> 1;
+         pos++;
+      }
+   }
+
+   return p2 -  p1;
+}
+
+void PrintBubbleError(unsigned* bubble) {
+   // first normal position
+   int p1 = 0;
+   for (unsigned n=0;n<19;n++) {
+      unsigned data = bubble[n];
+      for (unsigned b=0;b<16;b++) {
+         if ((data & 1) == 0) { p1 = -p1; break; }
+         data = data >> 1; p1++;
+      }
+      if (p1 < 0) break;
+   }
+
+   int p2 = 19*16;
+   for (unsigned n=19;n>0;n--) {
+      unsigned data = bubble[n-1];
+      for (unsigned b=0;b<16;b++) {
+         if ((data & 0x8000) == 0) { p2 = -p2; break; }
+         data = data << 1; p2--;
+      }
+      if (p2 < 0) break;
+   }
+
+   p1 = -p1; p2 = -p2;
+   printf("  W=%2d ", p2-p1);
+   int pos = 19*16, nlen = 0;
+   unsigned last = 0x8000, nflip = 0, nlenerr = 0;
+
+   for (unsigned n=19;n>0;n--) {
+      unsigned data = bubble[n-1];
+      for (unsigned b=0;b<16;b++) {
+         if ((pos>=p1-1) && (pos<=p2+2)) printf("%u", (data & 0x8000) >> 15);
+
+         if (last != (data & 0x8000)) {
+            // checking for long error sequences inside range like 1001001 or 1011101
+            if (nlen>1) {
+               if ((last==0) && (pos-nlen>p1) && (pos<p2)) nlenerr++; else
+               if ((last!=0) && (pos-nlen>p1+1) && (pos<p2-1)) nlenerr++;
+            }
+            nflip++; nlen = 0;
+         } else { nlen++; }
+
+         last = data & 0x8000;
+         data = data << 1; pos--;
+     }
+   }
+
+   if (nflip > 4) printf(" nflip %u", nflip);
+   if (nlenerr > 0) printf("  NLEN %u", nlenerr);
+
+}
+
 bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix) {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
@@ -176,8 +258,21 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
       if (chid != lastch) {
          if (lastch != 0xFFFF) {
             printf("%*s ch%02u: ", prefix, "", lastch);
-            if (bcnt>0)
+            if (bcnt==19) {
                for (unsigned d=bcnt;d>0;d--) printf("%04x",bubble[d-1]);
+
+               int width = BubbleWidth(bubble);
+
+               if (width > 0) printf("  w=%2d", width);
+
+               if (width == -1) exit(1); // should never happen
+
+               if (width < -1) PrintBubbleError(bubble);
+
+            } else {
+               printf("data error bubble length = %u", bcnt);
+            }
+
             printf("\n");
          }
          lastch = chid; bcnt = 0;
