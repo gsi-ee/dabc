@@ -208,26 +208,27 @@ void PrintBubbleError(unsigned* bubble) {
 
    p1 = -p1; p2 = -p2;
    printf("  W=%2d ", p2-p1);
-   int pos = 19*16, nlen = 0;
-   unsigned last = 0x8000, nflip = 0, nlenerr = 0;
 
-   for (unsigned n=19;n>0;n--) {
-      unsigned data = bubble[n-1];
+   int pos = 0, nlen = 0;
+   unsigned last = 0x1, nflip = 0, nlenerr = 0;
+
+   for (unsigned n=0;n<19;n++) {
+      unsigned data = bubble[n];
       for (unsigned b=0;b<16;b++) {
-         if ((pos>=p1-1) && (pos<=p2+2)) printf("%u", (data & 0x8000) >> 15);
+         if ((pos>=p1-2) && (pos<=p2+1)) printf("%u", (data & 1));
 
-         if (last != (data & 0x8000)) {
+         if (last != (data & 0x1)) {
             // checking for long error sequences inside range like 1001001 or 1011101
             if (nlen>1) {
-               if ((last==0) && (pos-nlen>p1) && (pos<p2)) nlenerr++; else
-               if ((last!=0) && (pos-nlen>p1+1) && (pos<p2-1)) nlenerr++;
+               if ((last==0) && (pos-nlen>p1-1) && (pos<p2-2)) nlenerr++; else
+               if ((last!=0) && (pos-nlen>p1) && (pos<p2-3)) nlenerr++;
             }
             nflip++; nlen = 0;
          } else { nlen++; }
 
-         last = data & 0x8000;
-         data = data << 1; pos--;
-     }
+         last = data & 0x1;
+         data = data >> 1; pos++;
+      }
    }
 
    if (nflip > 4) printf(" nflip %u", nflip);
@@ -259,7 +260,18 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
          if (lastch != 0xFFFF) {
             printf("%*s ch%02u: ", prefix, "", lastch);
             if (bcnt==19) {
-               for (unsigned d=bcnt;d>0;d--) printf("%04x",bubble[d-1]);
+               // print in original order
+               // for (unsigned d=bcnt;d>0;d--) printf("%04x",bubble[d-1]);
+
+               // print in reverse order
+               for (unsigned d=0;d<19;d++) {
+                  unsigned origin = bubble[d], swap = 0;
+                  for (unsigned dd = 0;dd<16;++dd) {
+                     swap = (swap << 1) | (origin & 1);
+                     origin = origin >> 1;
+                  }
+                  printf("%04x",swap);
+               }
 
                int width = BubbleWidth(bubble);
 
@@ -270,7 +282,7 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
                if (width < -1) PrintBubbleError(bubble);
 
             } else {
-               printf("data error bubble length = %u", bcnt);
+               printf("bubble data error length = %u, expected 19", bcnt);
             }
 
             printf("\n");
