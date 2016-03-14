@@ -152,28 +152,43 @@ const char* debug_name[32] = {
       "debug 0x11111"
 };
 
+#define BUBBLE_SIZE 19    // 19*16
+#define BUBBLE_BITS 304
 
-int BubbleWidth(unsigned* bubble) {
+unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
+   p1 = 0; p2 = 0;
 
-   unsigned pos = 0, last = 1;
-   int p1 = 0, p2 = 0;
-   for (unsigned n=0;n<19;n++) {
-      unsigned data = bubble[n];
+   unsigned pos = 0, last = 1, nflip = 0;
+
+   int b1 = 0, b2 = 0;
+
+   unsigned fliparr[BUBBLE_SIZE*16];
+
+   for (unsigned n=0;n<BUBBLE_SIZE; n++) {
+      unsigned data = bubble[n] & 0xFFFF;
+      if (n < BUBBLE_SIZE-1) data = data | ((bubble[n+1] & 0xFFFF) << 16); // use word to recognize bubble
 
       // this is error - first bit always 1
-      if ((n==0) && ((data & 1)== 0)) { return -1; }
+      if ((n==0) && ((data & 1) == 0)) { return -1; }
 
       for (unsigned b=0;b<16;b++) {
-
          if ((data & 1) != last) {
             if (last==1) {
-               if (p1!=0) return -2;
-               p1 = pos;
+               if (p1==0) p1 = pos; // take first change from 1 to 0
             } else {
-               if (p2!=0) return -3;
-               p2 = pos;
+               p2 = pos; // use last change from 0 to 1
             }
+            nflip++;
          }
+
+         fliparr[pos] = nflip; // remember flip counts to analyze them later
+
+         // check for simple bubble at the beginning 1101000 or 0xB in swapped order
+         if ((data & 0xFF) == 0x0B) b1 = pos+2;
+
+         // check for simple bubble at the end 00001011 or 0xD0 in swapped order
+         if ((data & 0xFF) == 0xD0) b2 = pos+5;
+
 
          last = (data & 1);
          data = data >> 1;
@@ -181,60 +196,63 @@ int BubbleWidth(unsigned* bubble) {
       }
    }
 
-   return p2 -  p1;
+   if (nflip == 2) return 0; // both are ok
+
+   if ((nflip == 4) && (b1>0) && (b2==0)) { p1 = b1; return 0x10; } // bubble in the begin
+
+   if ((nflip == 4) && (b1==0) && (b2>0)) { p2 = b2; return 0x01; } // bubble at the end
+
+   if ((nflip == 6) && (b1>0) && (b2>0)) { p1 = b1; p2 = b2; return 0x11; } // bubble on both side
+
+   // up to here was simple errors, now we should do more complex analysis
+
+   if (p1 < p2-10) {
+      // take flip count at the middle and check how many transitions was in between
+      int mid = (p2+p1)/2;
+      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20; // hard error in the beginning
+      if (fliparr[p1] == fliparr[mid]) return 0x02; // hard error at the end
+   }
+
+   return 0x22; // mark both as errors, should analyze better
 }
 
-void PrintBubbleError(unsigned* bubble) {
-   // first normal position
-   int p1 = 0;
-   for (unsigned n=0;n<19;n++) {
-      unsigned data = bubble[n];
-      for (unsigned b=0;b<16;b++) {
-         if ((data & 1) == 0) { p1 = -p1; break; }
-         data = data >> 1; p1++;
+void PrintBubble(unsigned* bubble) {
+   // print in original order, time from right to left
+   // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
+
+   // print in reverse order, time from left to right
+   for (unsigned d=0;d<BUBBLE_SIZE;d++) {
+      unsigned origin = bubble[d], swap = 0;
+      for (unsigned dd = 0;dd<16;++dd) {
+         swap = (swap << 1) | (origin & 1);
+         origin = origin >> 1;
       }
-      if (p1 < 0) break;
+      printf("%04x",swap);
    }
-
-   int p2 = 19*16;
-   for (unsigned n=19;n>0;n--) {
-      unsigned data = bubble[n-1];
-      for (unsigned b=0;b<16;b++) {
-         if ((data & 0x8000) == 0) { p2 = -p2; break; }
-         data = data << 1; p2--;
-      }
-      if (p2 < 0) break;
-   }
-
-   p1 = -p1; p2 = -p2;
-   printf("  W=%2d ", p2-p1);
-
-   int pos = 0, nlen = 0;
-   unsigned last = 0x1, nflip = 0, nlenerr = 0;
-
-   for (unsigned n=0;n<19;n++) {
-      unsigned data = bubble[n];
-      for (unsigned b=0;b<16;b++) {
-         if ((pos>=p1-2) && (pos<=p2+1)) printf("%u", (data & 1));
-
-         if (last != (data & 0x1)) {
-            // checking for long error sequences inside range like 1001001 or 1011101
-            if (nlen>1) {
-               if ((last==0) && (pos-nlen>p1-1) && (pos<p2-2)) nlenerr++; else
-               if ((last!=0) && (pos-nlen>p1) && (pos<p2-3)) nlenerr++;
-            }
-            nflip++; nlen = 0;
-         } else { nlen++; }
-
-         last = data & 0x1;
-         data = data >> 1; pos++;
-      }
-   }
-
-   if (nflip > 4) printf(" nflip %u", nflip);
-   if (nlenerr > 0) printf("  NLEN %u", nlenerr);
-
 }
+
+void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
+   if (p1<0) p1 = 0;
+   if (p2<=p1) p2 = BUBBLE_SIZE*16;
+
+   int pos = 0;
+   char sbuf[1000];
+   char* ptr  = sbuf;
+
+   for (unsigned d=0;d<BUBBLE_SIZE;d++) {
+      unsigned origin = bubble[d];
+      for (unsigned dd = 0;dd<16;++dd) {
+         if ((pos>=p1) && (pos<=p2))
+            *ptr++ = (origin & 0x1) ? '1' : '0';
+         origin = origin >> 1;
+         pos++;
+      }
+   }
+
+   *ptr++ = 0;
+   printf(sbuf);
+}
+
 
 bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix) {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
@@ -247,6 +265,7 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
    unsigned lastch = 0xFFFF;
    unsigned bubble[190];
    unsigned bcnt = 0, msg = 0, chid = 0;
+   int p1 = 0, p2 = 0;
 
    for (unsigned cnt=0;cnt<=len;cnt++,ix++) {
       chid = 0xFFFF; msg = 0;
@@ -259,27 +278,18 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
       if (chid != lastch) {
          if (lastch != 0xFFFF) {
             printf("%*s ch%02u: ", prefix, "", lastch);
-            if (bcnt==19) {
-               // print in original order
-               // for (unsigned d=bcnt;d>0;d--) printf("%04x",bubble[d-1]);
+            if (bcnt==BUBBLE_SIZE) {
 
-               // print in reverse order
-               for (unsigned d=0;d<19;d++) {
-                  unsigned origin = bubble[d], swap = 0;
-                  for (unsigned dd = 0;dd<16;++dd) {
-                     swap = (swap << 1) | (origin & 1);
-                     origin = origin >> 1;
-                  }
-                  printf("%04x",swap);
+               PrintBubble(bubble);
+
+               int chk = BubbleCheck(bubble, p1, p2);
+
+               if (chk==0) printf(" norm"); else
+               if (((chk & 0xF0) < 0x20) && ((chk & 0x0D) < 0x2)) {
+                  printf(" bubb "); PrintBubbleBinary(bubble, p1-2, p2+1);
+               } else {
+                  printf(" stra "); PrintBubbleBinary(bubble, p1-2, p2+1);
                }
-
-               int width = BubbleWidth(bubble);
-
-               if (width > 0) printf("  w=%2d", width);
-
-               if (width == -1) exit(1); // should never happen
-
-               if (width < -1) PrintBubbleError(bubble);
 
             } else {
                printf("bubble data error length = %u, expected 19", bcnt);
