@@ -206,11 +206,18 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
    // up to here was simple errors, now we should do more complex analysis
 
-   if (p1 < p2-10) {
+   if (p1 < p2 - 8) {
       // take flip count at the middle and check how many transitions was in between
       int mid = (p2+p1)/2;
-      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20; // hard error in the beginning
-      if (fliparr[p1] == fliparr[mid]) return 0x02; // hard error at the end
+      // hard error in the beginning
+      if (fliparr[mid] + 1 == fliparr[p2]) return 0x20;
+      // hard error in begin, bubble at the end
+      if ((fliparr[mid] + 3 == fliparr[p2]) && (b2>0)) { p2 = b2; return 0x21; }
+
+      // hard error at the end
+      if (fliparr[p1] == fliparr[mid]) return 0x02;
+      // hard error at the end, bubble at the begin
+      if ((fliparr[p1] + 2 == fliparr[mid]) && (b1>0)) { p1 = b1; return 0x12; }
    }
 
    return 0x22; // mark both as errors, should analyze better
