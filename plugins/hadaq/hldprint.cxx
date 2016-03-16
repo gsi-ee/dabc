@@ -292,10 +292,13 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
                int chk = BubbleCheck(bubble, p1, p2);
 
                if (chk==0) printf(" norm"); else
-               if (((chk & 0xF0) < 0x20) && ((chk & 0x0D) < 0x2)) {
+               if (chk==0x22) {
+                  printf(" corr "); PrintBubbleBinary(bubble, p1-2, p2+1);
+               } else
+               if (((chk & 0xF0) < 0x20) && ((chk & 0x0F) < 0x02)) {
                   printf(" bubb "); PrintBubbleBinary(bubble, p1-2, p2+1);
                } else {
-                  printf(" stra "); PrintBubbleBinary(bubble, p1-2, p2+1);
+                  printf(" mixe "); PrintBubbleBinary(bubble, p1-2, p2+1);
                }
 
             } else {
