@@ -183,11 +183,30 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
          fliparr[pos] = nflip; // remember flip counts to analyze them later
 
-         // check for simple bubble at the beginning 1101000 or 0xB in swapped order
-         if ((data & 0xFF) == 0x0B) b1 = pos+2;
+         // check for simple bubble at the beginning 1101000 or 0x0B in swapped order
+         // set position on last 1 ? Expecting following sequence
+         //  1110000 - here pos=4
+         //     ^
+         //  1110100 - here pos=5
+         //      ^
+         //  1111100 - here pos=6
+         //       ^
+         if ((data & 0xFF) == 0x0B) b1 = pos+3;
 
          // check for simple bubble at the end 00001011 or 0xD0 in swapped order
+         // set position of 0 in bubble, expecting such sequence
+         //  0001111 - here pos=4
+         //     ^
+         //  0001011 - here pos=5
+         //      ^
+         //  0000011 - here pos=6
+         //       ^
          if ((data & 0xFF) == 0xD0) b2 = pos+5;
+
+         // simple bubble at very end 00000101 or 0xA0 in swapped order
+         // here not enough space for two bits
+         if (((pos == BUBBLE_BITS - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
+            b2 = pos + 6;
 
 
          last = (data & 1);
