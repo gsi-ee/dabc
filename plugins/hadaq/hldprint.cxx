@@ -152,8 +152,7 @@ const char* debug_name[32] = {
       "debug 0x11111"
 };
 
-#define BUBBLE_SIZE 19    // 19*16
-#define BUBBLE_BITS 304
+unsigned BUBBLE_SIZE = 19;
 
 unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    p1 = 0; p2 = 0;
@@ -162,7 +161,7 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
    int b1 = 0, b2 = 0;
 
-   unsigned fliparr[BUBBLE_SIZE*16];
+   std::vector<unsigned> fliparr(BUBBLE_SIZE*16);
 
    for (unsigned n=0;n<BUBBLE_SIZE; n++) {
       unsigned data = bubble[n] & 0xFFFF;
@@ -205,7 +204,7 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
 
          // simple bubble at very end 00000101 or 0xA0 in swapped order
          // here not enough space for two bits
-         if (((pos == BUBBLE_BITS - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
+         if (((pos == BUBBLE_SIZE*16 - 8)) && (b2 == 0) && ((data & 0xFF) == 0xA0))
             b2 = pos + 6;
 
 
@@ -309,19 +308,23 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
                PrintBubble(bubble);
 
                int chk = BubbleCheck(bubble, p1, p2);
+               int left = p1-2;
+               int right = p2+1;
+               if ((chk & 0xF0) == 0x10) left--;
+               if ((chk & 0x0F) == 0x01) right++;
 
                if (chk==0) printf(" norm"); else
                if (chk==0x22) {
-                  printf(" corr "); PrintBubbleBinary(bubble, p1-2, p2+1);
+                  printf(" corr "); PrintBubbleBinary(bubble, left, right);
                } else
                if (((chk & 0xF0) < 0x20) && ((chk & 0x0F) < 0x02)) {
-                  printf(" bubb "); PrintBubbleBinary(bubble, p1-2, p2+1);
+                  printf(" bubb "); PrintBubbleBinary(bubble, left, right);
                } else {
-                  printf(" mixe "); PrintBubbleBinary(bubble, p1-2, p2+1);
+                  printf(" mixe "); PrintBubbleBinary(bubble, left, right);
                }
 
             } else {
-               printf("bubble data error length = %u, expected 19", bcnt);
+               printf("bubble data error length = %u, expected %u", bcnt, BUBBLE_SIZE);
             }
 
             printf("\n");
@@ -522,6 +525,8 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
       if (strcmp(argv[n],"-bubble")==0) { bubble_mode = true; } else
+      if (strcmp(argv[n],"-bubb18")==0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
+      if (strcmp(argv[n],"-bubb19")==0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
