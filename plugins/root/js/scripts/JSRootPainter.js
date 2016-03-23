@@ -1009,8 +1009,8 @@
    JSROOT.TBasePainter.prototype.SetItemName = function(name, opt) {
       if (typeof name === 'string') this._hitemname = name;
                                else delete this._hitemname;
+      // only upate draw option, never delete. null specified when update drawing
       if (typeof opt === 'string') this._hdrawopt = opt;
-                             else  delete this._hdrawopt;
    }
 
    JSROOT.TBasePainter.prototype.GetItemName = function() {
@@ -3005,8 +3005,6 @@
 
    JSROOT.TPadPainter.prototype.CreateCanvasSvg = function(check_resize, new_size) {
 
-      if (check_resize > 0) console.log("CreateCanvasSvg " + JSON.stringify(new_size));
-
       var render_to = this.select_main();
 
       var rect = this.main_visible_rect();
@@ -3053,7 +3051,6 @@
                return false;
             }
 
-         console.log('doresize ' + check_resize + ' w/oldw=' + (w/oldw).toFixed(4) + ' h/oldh='+ (h/oldh).toFixed(4) + '  redraw_by_resize ' + svg.property('redraw_by_resize'));
 
       } else {
 
@@ -3357,7 +3354,7 @@
 
       var gr_range = Math.abs(this.func.range()[1] - this.func.range()[0]);
       if (gr_range<=0) gr_range = 100;
-      
+
       if (this.kind == 'time') {
          if (this.nticks > 8) this.nticks = 8;
 

@@ -314,34 +314,34 @@
          JSROOT.Create("TH2I", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
          
-         JSROOT.extend(obj['fXaxis'], { fNbins:res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
-         JSROOT.extend(obj['fYaxis'], { fNbins:res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
+         JSROOT.extend(obj.fXaxis, { fNbins:res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
+         JSROOT.extend(obj.fYaxis, { fNbins:res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
          res.bins.splice(0,6); // 6 first items in array are not bins
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
       } else
          return;
 
-      if ('xtitle' in res) obj['fXaxis'].fTitle = res.xtitle;         
-      if ('ytitle' in res) obj['fYaxis'].fTitle = res.ytitle;   
+      if ('xtitle' in res) obj.fXaxis.fTitle = res.xtitle;         
+      if ('ytitle' in res) obj.fYaxis.fTitle = res.ytitle;   
       if ('xlabels' in res) {
-         obj['fXaxis'].fLabels = JSROOT.Create('THashList');
+         obj.fXaxis.fLabels = JSROOT.Create('THashList');
          var lbls = res.xlabels.split(",");
          for (var n in lbls) {
             var lbl = JSROOT.Create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
-            obj['fXaxis'].fLabels.Add(lbl);
+            obj.fXaxis.fLabels.Add(lbl);
          }
       }
       if ('ylabels' in res) {
-         obj['fYaxis'].fLabels = JSROOT.Create('THashList');
+         obj.fYaxis.fLabels = JSROOT.Create('THashList');
          var lbls = res.ylabels.split(",");
          for (var n in lbls) {
             var lbl = JSROOT.Create('TObjString');
             lbl.fUniqueID = parseInt(n)+1;
             lbl.fString = lbls[n];
-            obj['fYaxis'].fLabels.Add(lbl);
+            obj.fYaxis.fLabels.Add(lbl);
          }
       }
    }
