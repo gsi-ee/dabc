@@ -385,7 +385,8 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             break;
          case tdckind_Header:
             nheader++;
-            if (prefix>0) printf("tdc header\n");
+            if (prefix>0)
+               printf("tdc header fmt:%x %s\n", ((msg >> 24) & 0x0F), ((msg >> 24) & 0x0F) == 0x01 ? "double edges" : "normal");
             break;
          case tdckind_Debug:
             ndebug++;
