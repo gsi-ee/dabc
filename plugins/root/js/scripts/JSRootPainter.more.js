@@ -2104,6 +2104,7 @@
    }
 
    JSROOT.Painter.drawGraph = function(divid, graph, opt) {
+      
       JSROOT.extend(this, new JSROOT.TGraphPainter(graph));
 
       this.CreateBins();

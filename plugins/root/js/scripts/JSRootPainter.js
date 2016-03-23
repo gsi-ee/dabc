@@ -3355,6 +3355,9 @@
 
       if (axis && !is_gaxis && (this.nticks > 7)) this.nticks = 7;
 
+      var gr_range = Math.abs(this.func.range()[1] - this.func.range()[0]);
+      if (gr_range<=0) gr_range = 100;
+      
       if (this.kind == 'time') {
          if (this.nticks > 8) this.nticks = 8;
 
@@ -3363,7 +3366,7 @@
          var tf1 = JSROOT.Painter.getTimeFormat(axis);
          if ((tf1.length == 0) || (scale_range < 0.1 * (this.full_max - this.full_min)))
             tf1 = JSROOT.Painter.chooseTimeFormat(scale_range / this.nticks, true);
-         var tf2 = JSROOT.Painter.chooseTimeFormat(scale_range/w, false);
+         var tf2 = JSROOT.Painter.chooseTimeFormat(scale_range / gr_range, false);
 
          this.tfunc1 = this.tfunc2 = d3.time.format(tf1);
          if (tf2!==tf1)

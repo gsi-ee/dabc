@@ -450,11 +450,18 @@
                            fX:x, fY:y, fNpoints: x.length,
                            fLineColor: 2, fLineWidth: 2 });
       
+      var xrange = x[x.length-1] - x[0];
       obj.fHistogram.fTitle = obj.fTitle;
-      JSROOT.AdjustTGraphRanges(obj, 0.1);
+      obj.fHistogram.fXaxis.fXmin = x[0] - xrange*0.03;
+      obj.fHistogram.fXaxis.fXmax = x[x.length-1] + xrange*0.03;
       
-      obj['fHistogram']['fXaxis']['fTimeDisplay'] = true;
-      obj['fHistogram']['fXaxis']['fTimeFormat'] = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
+      var ymin = Math.min.apply(null,y), ymax = Math.max.apply(null,y);  
+      
+      obj.fHistogram.fYaxis.fXmin = ymin - 0.05 * (ymax-ymin);
+      obj.fHistogram.fYaxis.fXmax = ymax + 0.05 * (ymax-ymin);
+      
+      obj.fHistogram.fXaxis.fTimeDisplay = true;
+      obj.fHistogram.fXaxis.fTimeFormat = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
 
    }
    
