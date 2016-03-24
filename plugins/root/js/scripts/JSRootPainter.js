@@ -1232,10 +1232,16 @@
       return 1; // default is overlay
    }
 
-   JSROOT.TObjectPainter.prototype.size_for_3d = function() {
+   JSROOT.TObjectPainter.prototype.size_for_3d = function(can3d) {
       // one uses frame sizes for the 3D drawing - like TH2/TH3 objects
 
+      if (can3d === undefined) can3d = this.embed_3d();
+
       var pad = this.svg_pad();
+
+      var clname = this.pad_name;
+      if (clname == '') clname = 'canvas';
+      clname = "draw3d_" + clname;
 
       if (pad.empty()) {
          // this is a case when object drawn without canvas
@@ -1246,15 +1252,14 @@
             rect.height = Math.round(0.66*rect.width);
             this.select_main().style('height', rect.height + "px");
          }
-         rect.x = 0; rect.y = 0;
+         rect.x = 0; rect.y = 0; rect.clname = clname; rect.can3d = -1;
          return rect;
       }
 
       var elem = pad;
-      if (this.embed_3d() == 0)
-         elem = this.svg_canvas();
+      if (can3d == 0) elem = this.svg_canvas();
 
-      var size = { x: 0, y: 0, width: 100, height:100 };
+      var size = { x: 0, y: 0, width: 100, height:100, clname: clname, can3d: can3d };
 
       if (this.frame_painter()!==null) {
          elem = this.svg_frame();
@@ -1265,12 +1270,15 @@
       size.width = elem.property("draw_width");
       size.height = elem.property("draw_height");
 
-      if ((this.frame_painter()===null) && (this.embed_3d() > 0)) {
+      if ((this.frame_painter()===null) && (can3d > 0)) {
          size.x = Math.round(size.x + size.width*0.1);
          size.y = Math.round(size.y + size.height*0.1);
          size.width = Math.round(size.width*0.8);
          size.height = Math.round(size.height*0.8);
       }
+
+      if (can3d === 1)
+         this.CalcAbsolutePosition(this.svg_pad(), size);
 
       return size;
    }
@@ -1281,31 +1289,25 @@
 
       this.svg_pad().property('can3d', null);
 
-      if (can3d === 0) {
+      var size = this.size_for_3d(can3d);
+
+      if (size.can3d === 0) {
          d3.select(this.svg_canvas().node().nextSibling).remove(); // remove html5 canvas
          this.svg_canvas().style('display', null); // show SVG canvas
       } else {
          if (this.svg_pad().empty()) return;
-         var clname = this.pad_name;
-         if (clname == "") clname = 'canvas';
-         clname = ".draw3d_" + clname;
-         if (can3d > 1) {
-            this.svg_pad().select(".special_layer").select(clname).remove();
-         } else {
-            d3.select(this.svg_canvas().node().parentNode).select(clname).remove();
-         }
+
+         this.apply_3d_size(size).remove();
 
          this.svg_frame().style('display', null);
       }
    }
 
-   JSROOT.TObjectPainter.prototype.add_3d_canvas = function(canv) {
+   JSROOT.TObjectPainter.prototype.add_3d_canvas = function(size, canv) {
 
-      var can3d = this.embed_3d();
+      if ((canv == null) || (size.can3d < -1)) return;
 
-      if ((canv == null) || (can3d < 0)) return;
-
-      if (this.svg_canvas().empty()) {
+      if (size.can3d === -1) {
          // case when 3D object drawn without canvas
 
          var main = this.select_main().node();
@@ -1317,57 +1319,64 @@
          return;
       }
 
-      this.svg_pad().property('can3d', can3d);
+      this.svg_pad().property('can3d', size.can3d);
 
-      if (can3d === 0) {
+      if (size.can3d === 0) {
          this.svg_canvas().style('display', 'none'); // hide SVG canvas
 
-         this.svg_canvas().node().parentNode.appendChild(canv); // add
+         this.svg_canvas().node().parentNode.appendChild(canv); // add directly
       } else {
          if (this.svg_pad().empty()) return;
 
          // first hide normal frame
          this.svg_frame().style('display', 'none');
 
-         var size = this.size_for_3d();
+         var elem = this.apply_3d_size(size);
 
-         var fo;
-
-         var clname = this.pad_name;
-         if (clname == '') clname = 'canvas';
-         clname = "draw3d_" + clname;
-
-         if (can3d == 1) {
-            // we need translate position of 3d drawing, starting from the pad
-            size = this.CalcAbsolutePosition(this.svg_pad(), size);
-
-            // force redraw by resize
-            this.svg_canvas().property('redraw_by_resize', true);
-
-            fo = d3.select(this.svg_canvas().node().parentNode).append('div');
-            fo.style('position','absolute')
-              .style('left', size.x + 'px')
-              .style('top', size.y + 'px')
-              .style('width', size.width + 'px')
-              .style('height', size.height + 'px');
-         } else {
-            fo = this.svg_pad().select(".special_layer").append("foreignObject");
-
-            // set frame dimensions
-            fo.attr('width', size.width)
-              .attr('height', size.height)
-              .attr('viewBox', "0 0 " + size.width + " " + size.height)
-              .attr('preserveAspectRatio','xMidYMid');
-
-            // and position
-            this.SetForeignObjectPosition(fo, size);
-         }
-
-         fo.attr('class',clname)
-           .attr('title', "")
-           .node().appendChild(canv);
+         elem.attr('title','').node().appendChild(canv);
       }
    }
+
+   JSROOT.TObjectPainter.prototype.apply_3d_size = function(size) {
+
+      if (size.can3d < 0) return d3.select(null);
+
+      var elem;
+
+      if (size.can3d > 1) {
+
+         elem = this.svg_pad().select(".special_layer").select("." + size.clname);
+         if (elem.empty())
+            elem = this.svg_pad().select(".special_layer")
+                       .append("foreignObject").attr("class", size.clname);
+
+         elem.attr('x', size.x)
+             .attr('y', size.y)
+             .attr('width', size.width)
+             .attr('height', size.height)
+             .attr('viewBox', "0 0 " + size.width + " " + size.height)
+             .attr('preserveAspectRatio','xMidYMid');
+
+      } else {
+         // force redraw by resize
+         this.svg_canvas().property('redraw_by_resize', true);
+
+         elem = d3.select(this.svg_canvas().node().parentNode).select("." + size.clname);
+         if (elem.empty()) {
+            elem = d3.select(this.svg_canvas().node().parentNode)
+                     .append('div').attr("class", size.clname);
+         }
+
+         elem.style('position','absolute')
+             .style('left', size.x + 'px')
+             .style('top', size.y + 'px')
+             .style('width', size.width + 'px')
+             .style('height', size.height + 'px');
+      }
+
+      return elem;
+   }
+
 
    /** Returns main pad painter - normally TH1/TH2 painter, which draws all axis */
    JSROOT.TObjectPainter.prototype.main_painter = function() {
@@ -1453,21 +1462,6 @@
          sel = d3.select(sel.node().parentNode);
       }
       return pos;
-   }
-
-   JSROOT.TObjectPainter.prototype.SetForeignObjectPosition = function(fo, pos) {
-      // method used to set absolute coordinates for foreignObject
-      // it is known problem of WebKit http://bit.ly/1wjqCQ9
-
-      if (!pos) pos = { x: 0, y: 0 };
-
-      if (JSROOT.browser.isWebKit) {
-         // force canvas redraw when foreign object used - it is not correctly scaled
-         this.svg_canvas().property('redraw_by_resize', true);
-         pos = this.CalcAbsolutePosition(fo, pos);
-      }
-
-      fo.attr("x",pos.x).attr("y",pos.y);
    }
 
 
@@ -3084,6 +3078,7 @@
              .property('pad_painter', this) // this is custom property
              .property('mainpainter', null) // this is custom property
              .property('current_pad', "") // this is custom property
+             .property('redraw_by_resize', false); // could be enabled to force redraw by each resize
 
           svg.append("svg:title").text("ROOT canvas");
           svg.append("svg:g").attr("class","root_frame");
@@ -3109,8 +3104,7 @@
          .property('draw_x', 0)
          .property('draw_y', 0)
          .property('draw_width', w)
-         .property('draw_height', h)
-         .property('redraw_by_resize', false);
+         .property('draw_height', h);
 
       return true;
    }
@@ -3214,7 +3208,7 @@
       pp.WhenReady(this.DrawPrimitive.bind(this, indx+1, callback));
    }
 
-   JSROOT.TPadPainter.prototype.Redraw = function() {
+   JSROOT.TPadPainter.prototype.Redraw = function(resize) {
       if (this.iscan)
          this.CreateCanvasSvg(2);
       else
@@ -3222,7 +3216,7 @@
 
       // at the moment canvas painter donot redraw its subitems
       for (var i = 0; i < this.painters.length; ++i)
-         this.painters[i].Redraw();
+         this.painters[i].Redraw(resize);
    }
 
    JSROOT.TPadPainter.prototype.CheckCanvasResize = function(size, force) {
@@ -3235,7 +3229,7 @@
       // if canvas changed, redraw all its subitems
       if (changed)
          for (var i = 0; i < this.painters.length; ++i)
-            this.painters[i].Redraw();
+            this.painters[i].Redraw(true);
 
       return changed;
    }
@@ -3450,12 +3444,12 @@
          var gr_range = Math.abs(this.func.range()[1] - this.func.range()[0]);
 
          // avoid black filling by middle-size
-         if ((handle.middle.length <= handle.major.length) || (handle.middle.length > gr_range / 4)) {
+         if ((handle.middle.length <= handle.major.length) || (handle.middle.length > gr_range/3.5)) {
             handle.minor = handle.middle = handle.major;
          } else
          if ((this.nticks3 > 1) && (this.kind !== 'log'))  {
             handle.minor = this.func.ticks(handle.middle.length * this.nticks3);
-            if ((handle.minor.length <= handle.middle.length) || (handle.minor.length > gr_range/2)) handle.minor = handle.middle;
+            if ((handle.minor.length <= handle.middle.length) || (handle.minor.length > gr_range/1.7)) handle.minor = handle.middle;
          }
       }
 
@@ -7400,7 +7394,7 @@
                hitem._expand = JSROOT.findFunction(handle.expand);
                if (typeof hitem['_expand'] == 'function') {
                   hitem._more = true; // use as workaround - not try to repeat same action
-                  hpainter.expand(itemname, call_back, tree_node);
+                  hpainter.expand(itemname, call_back, d3cont);
                   delete hitem._more;
                }
             });
@@ -8125,8 +8119,6 @@
       // perform resize for each frame
       var resized_frame = null;
 
-      console.log(' MDI resize ' + window.innerHeight + ',' + window.innerWidth);
-
       this.ForEachPainter(function(painter, frame) {
 
          if ((only_frame_id !== null) && (d3.select(frame).attr('id') != only_frame_id)) return;
@@ -8134,9 +8126,6 @@
          if ((painter.GetItemName()!==null) && (typeof painter.CheckResize == 'function')) {
             // do not call resize for many painters on the same frame
             if (resized_frame === frame) return;
-
-            console.log(' painter resize ' + painter.GetItemName());
-
             painter.CheckResize(size);
             resized_frame = frame;
          }
@@ -8365,7 +8354,7 @@
 
       if ((handle===null) || (handle === undefined)) return;
 
-      var myInterval = null, myDelay = delay ? delay : 100;
+      var myInterval = null, myDelay = delay ? delay : 300;
 
       if (myDelay < 20) myDelay = 20;
 
