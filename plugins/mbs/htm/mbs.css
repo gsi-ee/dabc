@@ -32,6 +32,16 @@ p { margin-top: 6px; padding: 0 10px 1em; }
 
 /* Override / redefine here some of the jquery ui icons */
 
+.ui-spinner-input {
+   margin: 0.2em;
+}
+
+
+.ui-button-text-only
+.ui-button-text {
+   padding: 0.3em 0.3em;
+}
+
 
 .ui-button .ui-icon.ui-icon-poland {
     background-image: url("img/PolandLogo.png");

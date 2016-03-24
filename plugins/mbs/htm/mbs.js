@@ -488,7 +488,7 @@ MbsDisplay.prototype.RefreshView = function() {
    }
 
    $('#Loglength').val(MyDisplay.fLoggingHistory);
-   $('#Loginterval').val(MyDisplay.fRateInterval);
+   $('#Loginterval').val(Math.round(MyDisplay.fRateInterval));
 
    // console.log("RefreshView with dabc state = %s",
    // this.fMbsState.fDabcState);
