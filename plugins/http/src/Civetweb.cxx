@@ -113,10 +113,9 @@ int http::Civetweb::log_message_handler(const struct mg_connection *conn, const 
 
 int http::Civetweb::begin_request_handler(struct mg_connection *conn)
 {
-   http::Civetweb* server = (http::Civetweb*) mg_get_request_info(conn)->user_data;
-   if (server==0) return 0;
-
    const struct mg_request_info *request_info = mg_get_request_info(conn);
+   http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : 0);
+   if (server==0) return 0;
 
    DOUT2("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
 
