@@ -91,11 +91,13 @@ void http::Civetweb::OnThreadAssigned()
    }
    options[op++] = 0;
 
-   fCallbacks.begin_request = http::Civetweb::begin_request_handler;
+   // fCallbacks.begin_request = http::Civetweb::begin_request_handler;
    fCallbacks.log_message = http::Civetweb::log_message_handler;
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
+
+   mg_set_request_handler(fCtx,"/",http::Civetweb::begin_request_handler,0);
 
    if (fCtx==0) EOUT("Fail to start civetweb on port %s", sport.c_str());
 }
@@ -111,7 +113,7 @@ int http::Civetweb::log_message_handler(const struct mg_connection *conn, const 
 }
 
 
-int http::Civetweb::begin_request_handler(struct mg_connection *conn)
+int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
    http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : 0);
