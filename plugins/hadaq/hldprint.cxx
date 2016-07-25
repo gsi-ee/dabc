@@ -661,6 +661,8 @@ int main(int argc, char* argv[])
       if (!showrate && !dostat)
          evnt->Dump();
 
+      char errbuf[100];
+
       hadaq::RawSubevent* sub = 0;
       while ((sub = evnt->NextSubevent(sub)) != 0) {
 
@@ -671,13 +673,22 @@ int main(int argc, char* argv[])
          }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-         unsigned ix = 0;
+         unsigned ix = 0, maxsublen = 0;
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
             unsigned data = sub->Data(ix++);
 
             unsigned datalen = (data >> 16) & 0xFFFF;
             unsigned datakind = data & 0xFFFF;
+
+            errbuf[0] = 0;
+            if (maxsublen>0) {
+               if (datalen >= maxsublen) {
+                  sprintf(errbuf," wrong format, want size 0x%04x", datalen);
+                  datalen = maxsublen-1;
+               }
+               maxsublen -= (datalen+1);
+            }
 
             bool as_raw(false), as_tdc(false), as_adc(false);
 
@@ -701,6 +712,7 @@ int main(int argc, char* argv[])
                   if (!showrate) {
                      printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
+                  maxsublen = datalen;
                   continue;
                } else
                if ((onlyraw!=0) && (datakind==onlyraw)) {
@@ -721,7 +733,7 @@ int main(int argc, char* argv[])
                   }
                }
 
-               printf("      *** Subsubevent size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+               printf("      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
 
                unsigned errmask(0);
 
