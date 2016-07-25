@@ -363,7 +363,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned channel(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
-   double last_rising[65], last_falling[65];
+   double last_rising[66], last_falling[66];
    for (int n=0;n<66;n++) {
       last_rising[n] = 0;
       last_falling[n] = 0;
