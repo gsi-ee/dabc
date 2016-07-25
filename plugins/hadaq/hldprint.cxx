@@ -673,7 +673,7 @@ int main(int argc, char* argv[])
          }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-         unsigned ix = 0, maxsublen = 0;
+         unsigned ix = 0, maxhublen = 0;
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
             unsigned data = sub->Data(ix++);
@@ -682,12 +682,12 @@ int main(int argc, char* argv[])
             unsigned datakind = data & 0xFFFF;
 
             errbuf[0] = 0;
-            if (maxsublen>0) {
-               if (datalen >= maxsublen) {
+            if (maxhublen>0) {
+               if (datalen >= maxhublen) {
                   sprintf(errbuf," wrong format, want size 0x%04x", datalen);
-                  datalen = maxsublen-1;
+                  datalen = maxhublen-1;
                }
-               maxsublen -= (datalen+1);
+               maxhublen -= (datalen+1);
             }
 
             bool as_raw(false), as_tdc(false), as_adc(false);
@@ -703,7 +703,7 @@ int main(int argc, char* argv[])
                if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
                   as_adc = true;
                } else
-               if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
+               if ((maxhublen==0) && std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
                   // this is hack - skip hub header, inside is normal subsub events structure
                   if (dostat) {
                      stat[datakind].num++;
@@ -712,7 +712,7 @@ int main(int argc, char* argv[])
                   if (!showrate) {
                      printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
-                  maxsublen = datalen;
+                  maxhublen = datalen;
                   continue;
                } else
                if ((onlyraw!=0) && (datakind==onlyraw)) {
