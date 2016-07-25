@@ -673,7 +673,7 @@ int main(int argc, char* argv[])
          }
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-         unsigned ix = 0, maxhublen = 0;
+         unsigned ix = 0, maxhublen = 0, lasthubid = 0, lasthublen = 0;
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
             unsigned data = sub->Data(ix++);
@@ -688,9 +688,11 @@ int main(int argc, char* argv[])
                   datalen = maxhublen-1;
                }
                maxhublen -= (datalen+1);
+            } else {
+               lasthubid = 0;
             }
 
-            bool as_raw(false), as_tdc(false), as_adc(false);
+            bool as_raw(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0));
 
             for (unsigned n=0;n<tdcs.size();n++)
                if (((datakind & idrange) <= (tdcs[n] & idrange)) && ((datakind & ~idrange) == (tdcs[n] & ~idrange)))
@@ -699,6 +701,7 @@ int main(int argc, char* argv[])
             if (!as_tdc) {
                if ((onlytdc!=0) && (datakind==onlytdc)) {
                   as_tdc = true;
+                  print_subsubhdr = true;
                } else
                if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
                   as_adc = true;
@@ -709,14 +712,17 @@ int main(int argc, char* argv[])
                      stat[datakind].num++;
                      stat[datakind].sizesum+=datalen;
                   } else
-                  if (!showrate) {
+                  if (!showrate && print_subsubhdr) {
                      printf("      *** HUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
                   maxhublen = datalen;
+                  lasthubid = datakind;
+                  lasthublen = datalen;
                   continue;
                } else
                if ((onlyraw!=0) && (datakind==onlyraw)) {
                   as_raw = true;
+                  print_subsubhdr = true;
                } else
                if (printraw) {
                   as_raw = (onlytdc==0) && (onlyraw==0);
@@ -729,11 +735,14 @@ int main(int argc, char* argv[])
                if (as_raw || as_tdc || as_adc) {
                   if (!print_sub_header) {
                      sub->Dump(false);
+                     if (lasthubid!=0)
+                        printf("      *** HUB size %3u id 0x%04x\n", lasthublen, lasthubid);
                      print_sub_header = true;
                   }
                }
 
-               printf("      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
+               if (print_subsubhdr)
+                  printf("      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
 
                unsigned errmask(0);
 
