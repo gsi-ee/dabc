@@ -241,12 +241,13 @@ unsigned BubbleCheck(unsigned* bubble, int &p1, int &p2) {
    return 0x22; // mark both as errors, should analyze better
 }
 
-void PrintBubble(unsigned* bubble) {
+void PrintBubble(unsigned* bubble, unsigned len = 0) {
    // print in original order, time from right to left
    // for (unsigned d=BUBBLE_SIZE;d>0;d--) printf("%04x",bubble[d-1]);
 
+   if (len==0) len = BUBBLE_SIZE;
    // print in reverse order, time from left to right
-   for (unsigned d=0;d<BUBBLE_SIZE;d++) {
+   for (unsigned d=0;d<len;d++) {
       unsigned origin = bubble[d], swap = 0;
       for (unsigned dd = 0;dd<16;++dd) {
          swap = (swap << 1) | (origin & 1);
@@ -369,12 +370,32 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
       last_falling[n] = 0;
    }
 
+   unsigned bubble[100];
+   int bubble_len = -1;
+   unsigned bubble_ix = 0, bubble_ch;
+
    char sbuf[100];
    unsigned calibr[2] = { 0xffff, 0xffff };
    int ncalibr = 2;
+   const char* hdrkind = "";
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
+      if (bubble_len>=0) {
+         channel = (msg >> 22) & 0x7F;
+         if (bubble_len==0) { bubble_ix = ix; bubble_ch = channel; }
+         bubble[bubble_len++] = msg & 0xFFFF;
+         if ((bubble_len >= 100) || (cnt==len-1) || (channel!=bubble_ch)) {
+            if (prefix>0) {
+               printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, ix, bubble_ch);
+               PrintBubble(bubble, (unsigned) bubble_len);
+               printf("\n");
+            }
+            bubble_len = 0;
+         }
+         continue;
+      }
+
       if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
 
       if ((cnt==0) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
@@ -385,8 +406,14 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             break;
          case tdckind_Header:
             nheader++;
+            switch ((msg >> 24) & 0x0F) {
+               case 0x01: hdrkind = "double edges"; break;
+               case 0x0F: hdrkind = "bubbles"; bubble_len = 0; break;
+               default: hdrkind = "normal"; break;
+            }
+
             if (prefix>0)
-               printf("tdc header fmt:%x %s\n", ((msg >> 24) & 0x0F), ((msg >> 24) & 0x0F) == 0x01 ? "double edges" : "normal");
+               printf("tdc header fmt:%x %s\n", ((msg >> 24) & 0x0F), hdrkind);
             break;
          case tdckind_Debug:
             ndebug++;
