@@ -372,7 +372,7 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
    unsigned bubble[100];
    int bubble_len = -1, nbubble = 0;
-   unsigned bubble_ix = 0, bubble_ch;
+   unsigned bubble_ix = 0, bubble_ch = 0, bubble_eix = 0;
 
    char sbuf[100];
    unsigned calibr[2] = { 0xffff, 0xffff };
@@ -385,17 +385,21 @@ bool PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          bool israw = (msg & tdckind_Mask) == tdckind_Calibr;
          if (israw) {
             channel = (msg >> 22) & 0x7F;
-            if (bubble_len==0) { bubble_ix = ix; bubble_ch = channel; }
-            bubble[bubble_len++] = msg & 0xFFFF;
+            if (bubble_len==0) { bubble_eix = bubble_ix = ix; bubble_ch = channel; }
+            if (bubble_ch == channel) { bubble[bubble_len++] = msg & 0xFFFF; bubble_eix = ix; }
          }
          if ((bubble_len >= 100) || (cnt==len-1) || (channel!=bubble_ch) || (!israw && (bubble_len > 0))) {
             if (prefix>0) {
-               printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, ix, bubble_ch);
+               printf("%*s[%*u..%*u] Ch:%02x bubble: ",  prefix, "", wlen, bubble_ix, wlen, bubble_eix, bubble_ch);
                PrintBubble(bubble, (unsigned) bubble_len);
                printf("\n");
                nbubble++;
             }
-            bubble_len = 0;
+            bubble_len = 0; bubble_eix = bubble_ix = ix;
+            if (bubble_ch != channel) {
+               bubble_ch = channel;
+               bubble[bubble_len++] = msg & 0xFFFF;
+            }
          }
          if (israw) continue;
          bubble_len = -1; // no bubbles
