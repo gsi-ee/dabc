@@ -33,7 +33,7 @@ namespace dabc {
 
    /** \brief Convert number to string of form like 4.2G or 3.7M
     *
-    * \param[in] sz      size value to convert
+    * \param[in] num     number to convert
     * \param[in] prec    precision after decimal point,
     * \param[in] select  forces to use special units 0 - default, 1 - normal, 2 - K, 3 - M, 4 - G
     * \returns           string with converted value */
