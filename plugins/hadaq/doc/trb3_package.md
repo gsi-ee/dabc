@@ -41,6 +41,17 @@ Following packages should be installed:
 
 It is recommended to use bash (at least, during compilation)
 
+## gcc version
+
+At the moment ROOT5 is used, which only supports gcc4.x and gcc5, but not new gcc6.
+But on the new Linux distributions gcc6 used as predefined compiler.
+To change this, one should install gcc-5, g++-5 and gfortran-5 compilers and than set them as default.
+This can be done with following commands:
+
+    $ update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
+    $ update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
+    $ update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-5 20
+ 
 
 ## Reuse existing ROOT installation
 
