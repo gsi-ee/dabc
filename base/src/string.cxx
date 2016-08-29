@@ -85,19 +85,19 @@ std::string dabc::size_to_str(unsigned long sz, int prec, int select)
          return dabc::format("%lu B", sz);
       case 2:
          if (prec<=0)
-            return dabc::format(" %lu KB", sz/1024);
+            return dabc::format("%lu KB", sz/1024);
          else
-            return dabc::format(" %*.*f KB", prec+2, prec, sz/1024.);
+            return dabc::format("%*.*f KB", prec+2, prec, sz/1024.);
       case 3:
          if (prec<=0)
-            return dabc::format(" %lu MB", sz/0x100000LU);
+            return dabc::format("%lu MB", sz/0x100000LU);
          else
-            return dabc::format(" %*.*f MB", prec+2, prec, sz/1024./1024.);
+            return dabc::format("%*.*f MB", prec+2, prec, sz/1024./1024.);
       case 4:
          if (prec<=0)
-            return dabc::format(" %lu GB", sz/0x40000000LU);
+            return dabc::format("%lu GB", sz/0x40000000LU);
          else
-            return dabc::format(" %*.*f GB", prec+2, prec, sz/1024./1024./1024.);
+            return dabc::format("%*.*f GB", prec+2, prec, sz/1024./1024./1024.);
    }
 
    return dabc::format("%lu B", sz);
@@ -117,19 +117,19 @@ std::string dabc::number_to_str(unsigned long num, int prec, int select)
          return dabc::format("%lu", num);
       case 2:
          if (prec<=0)
-            return dabc::format(" %luk", num/1000);
+            return dabc::format("%luk", num/1000);
          else
-            return dabc::format(" %*.*fk", prec+2, prec, num/1e3);
+            return dabc::format("%*.*fk", prec+2, prec, num/1e3);
       case 3:
          if (prec<=0)
-            return dabc::format(" %lum", num/1000000LU);
+            return dabc::format("%lum", num/1000000LU);
          else
-            return dabc::format(" %*.*fm", prec+2, prec, num/1e6);
+            return dabc::format("%*.*fm", prec+2, prec, num/1e6);
       case 4:
          if (prec<=0)
-            return dabc::format(" %lug", num/1000000000LU);
+            return dabc::format("%lug", num/1000000000LU);
          else
-            return dabc::format(" %*.*fg", prec+2, prec, num/1e9);
+            return dabc::format("%*.*fg", prec+2, prec, num/1e9);
    }
 
    return dabc::format("%lu", num);
