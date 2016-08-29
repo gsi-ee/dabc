@@ -88,7 +88,7 @@ bool dabc::LocalTransport::Send(Buffer& buf)
          fQueue.PopBuffer(skipbuf);
 
       if (!fQueue.PushBuffer(buf)) {
-         EOUT("Not able to push buffer into the %s queue", ItemName().c_str());
+         EOUT("Not able to push buffer into the %s -> %s queue", fOut.ItemName().c_str(), fInp.ItemName().c_str());
       }
 
       if (!buf.null()) { EOUT("Something went wrong - buffer is not null here"); exit(3); }
