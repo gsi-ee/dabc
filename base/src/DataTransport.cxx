@@ -333,11 +333,13 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       if (!isTransportRunning()) return false;
 
       // if internal queue already acquire as many buffers, wait
-      if (fExtraBufs && (NumCanSend(port) <= fExtraBufs)) {
+      if ((fExtraBufs > 0) && (NumCanSend(port) <= fExtraBufs)) {
 //            DOUT0("There are too many buffers in the transport queue - start wait for the call-back buf %u", fCurrentBuf.GetTotalSize());
          ChangeState(inpCallBack);
          return false;
       }
+
+      if (NumCanSend(port) == 0) { EOUT("Logical failure in input transport"); exit(333); }
 
       fNextDataSize = fInput->Read_Size();
 
@@ -490,6 +492,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             break;
          case di_MoreBufReady:
             // we send immediately buffer and will try to take more buffers out of transport
+            if (NumCanSend(port) == 0) { EOUT("Logical failure in input transport"); exit(333); }
             Send(fCurrentBuf);
             return true;
          case di_SkipBuffer:
@@ -517,6 +520,8 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    if (fInpState == inpReady) {
       // DOUT0("Input transport sends buf %u", (unsigned) fCurrentBuf.SegmentId(0));
 
+      if (NumCanSend(port) == 0) { EOUT("Logical failure in input transport"); exit(333); }
+
       Send(fCurrentBuf);
       fCurrentBuf.Release();
       ChangeState(inpInit);
@@ -536,6 +541,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
          return false;
       } else {
          fCurrentBuf.SetTypeId(dabc::mbt_EOF);
+         if (NumCanSend(port) == 0) { EOUT("Logical failure in input transport"); exit(333); }
          Send(fCurrentBuf);
          ChangeState(inpClosed);
       }
