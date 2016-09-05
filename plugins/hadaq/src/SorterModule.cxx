@@ -262,6 +262,8 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
    // if after 3 timer events no data was send, any data filled into output buffer will be send
    // if nothing happened after 6 timer events, any indexed data will be placed into output buffer and send
 
+   if (!CanSend()) return; // first of all, check if we can send data
+
    if (--fFlushCnt > 2) return;
 
    // flush buffer if any data is accumulated
