@@ -1,0 +1,56 @@
+/** \page saft plugin Simplified API For Timing (SAFT)plugin for DABC (libDabcSaft.so)
+	
+	15-September-2016 by JAM(j.adamczewski@gsi.de)
+
+
+ 
+  \subpage saft_plugin_doc
+ 
+  \ingroup dabc_plugins
+ 
+ */
+
+
+/** \page saft_plugin_doc Short description of SAFT plugin
+
+Compilation
+===========
+Saftlib installation can be done as described at
+https://www-acc.gsi.de/wiki/Timing/TimingSystemHowConfigureEnvironment
+
+If Saftlib is already installed on the system, dabc will try to detect it automatically and
+build the saftdabc plugin from the top Makefile.
+If detection fails, corresponding locations of saftlib and libgiomm can be specified at
+build/Makefile.config
+
+To disable compilation of SAFT plugin, call
+
+   [shell] make nosaft=1 
+
+
+
+Usage
+=====
+1)Please adjust the configuration file SaftRead.xml to match the White Rabbit events to monitor.
+This can be either latched pulses on the named Timing Receiver Inputs (e.g. "IO2" on EXPLODER5a),
+or White Rabbit events received over the timing network.
+The first case is defined by entries in tag <SaftHardwareInputNames>.
+The second case can be specified by tags <SaftSnoop*> with corresponding ordered entries for
+event id, mask, offset and flags.
+
+
+2) Start DABC data capturing from timing receiver  by
+
+"dabc_run SaftRead.xml"
+
+Data will be exported via mbs event structures at stream server in first example.
+Can be inspected/printed with go4analysis -print -stream localhost:6111.
+
+
+
+
+
+
+*/
+
+	

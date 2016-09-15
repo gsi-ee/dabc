@@ -1,0 +1,121 @@
+// $Id: Definitions.h 2216 2014-04-03 13:59:28Z linev $
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
+#ifndef SAFT_DEFINITIONS_H
+#define SAFT_DEFINITIONS_H
+
+
+/** JAM we use the same definitions from saft-io-ctl. Is there any include file here? */
+#define ECA_EVENT_ID_LATCH     UINT64_C(0xfffe000000000000) /* FID=MAX & GRPID=MAX-1 */
+#define ECA_EVENT_MASK_LATCH   UINT64_C(0xfffe000000000000)
+#define IO_CONDITION_OFFSET    5000
+
+/** from eca_flags.h not yet installed to saftlib system includes:*/
+#define ECA_LATE      0
+#define ECA_EARLY     1
+#define ECA_CONFLICT  2
+#define ECA_DELAYED   3
+#define ECA_VALID     4
+#define ECA_OVERFLOW  5
+#define ECA_MAX_FULL  6
+
+#define ECA_LINUX         0
+#define ECA_WBM           1
+#define ECA_EMBEDDED_CPU  2
+#define ECA_SCUBUS        3
+
+/** these flags are dabc proprietary up to now, since saftlib uses separate boolean setters:*/
+#define SAFT_DABC_ACCEPT_LATE      (1 << ECA_LATE)
+#define SAFT_DABC_ACCEPT_EARLY     (1 << ECA_EARLY)
+#define SAFT_DABC_ACCEPT_CONFLICT  (1 << ECA_CONFLICT)
+#define SAFT_DABC_ACCEPT_DELAYED   (1 << ECA_DELAYED)
+
+/** length of descriptor text field in timing event structure*/
+#define SAFT_DABC_DESCRLEN 64
+
+
+
+
+namespace saftdabc {
+
+/*
+ * Common definition of string constants to be used in factory/application.
+ * Implemented in Factory.cxx
+ * */
+
+/** name of the saft device, e.g. "baseboard"*/
+extern const char* xmlDeviceName;
+
+/** EXPLODER input name items that should be latched with timestamp*/
+extern const char* xmlInputs;
+
+/** WR event masks to snoop*/
+extern const char* xmlMasks;
+
+/** WR event ids to snoop*/
+extern const char* xmlEventIds;
+
+/** WR event offsets to snoop*/
+extern const char* xmlOffsets;
+
+/** WR event accept flags to snoop*/
+extern const char* xmlAcceptFlags;
+
+
+/** time out for polling mode*/
+extern const char* xmlTimeout;
+
+/** switch between polling for data or callback mode*/
+extern const char* xmlCallbackMode;
+
+
+
+ /* full subevent id for timestamp data*/
+ extern const char* xmlSaftSubeventId;
+
+
+ /** Command to invoke the glib/dbus mainloop*/
+ extern const char* commandRunMainloop;
+
+
+ /** \brief The saftlib input event data structure.
+  */
+ class Timing_Event
+ {
+
+ public:
+
+   uint64_t fEvent;
+   uint64_t fParam;
+   uint64_t fDeadline;
+   uint64_t fExecuted;
+   uint64_t fFlags;
+   char     fDescription[SAFT_DABC_DESCRLEN]; //< specifies input type. we use simple char field for mbs buffers etc.
+
+   Timing_Event (uint64_t event = 0, uint64_t param = 0, uint64_t deadline = 0, uint64_t executed = 0,
+       uint64_t flags = 0, const char* description=0) :
+       fEvent (event), fParam (param), fDeadline (deadline), fExecuted (executed), fFlags (flags)
+   {
+     if(description)
+       snprintf(fDescription, SAFT_DABC_DESCRLEN, "%s",description);
+   }
+
+ };
+
+
+
+}
+
+#endif

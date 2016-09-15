@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<dabc version="2">
+ <Context name="Saft">
+  <Run> 	
+     <lib value="libDabcHttp.so"/>
+     <lib value="libDabcMbs.so"/>
+     <lib value="libDabcSaft.so"/>
+     <logfile value="Saft.log"/>
+  </Run> 
+
+  <MemoryPool name="Pool">
+     <BufferSize value="1024"/>
+     <NumBuffers value="100"/>
+  </MemoryPool>
+  
+  <HttpServer name="http">
+	  <port value="8091" />
+   </HttpServer>
+  
+  
+  
+  <Device name="SaftDevice" class="saftdabc::Device">
+		<SaftBoard value="baseboard" />			
+  </Device>
+  
+  
+  
+  
+  <Module name="Repeater" class="mbs::CombinerModule">
+     <NumInputs value="1"/>
+     <NumOutputs value="1"/>
+     <CombinerRatesPrefix value="Saft"/>
+     
+     <InputPort name="Input0" queue="20" url="device://SaftDevice" thread="inp0thread">
+     	
+	    <SaftSubeventId value="0x000000A"/>
+	    <SaftTimeout value="0.01"/>
+	    <SaftTransportCallback value="false"/>
+	    
+	    <SaftHardwareInputNames>
+	       <item value="IO1"/>
+	       <item value="IO8"/>
+	    </SaftHardwareInputNames>
+
+ 		<SaftSnoopEventIds>
+	       <item value="0xfffff00000000000"/>
+	       <item value="0xfffff00000000000"/>
+	    </SaftSnoopEventIds>
+	    
+	     <SaftSnoopEventMasks>
+	       <item value="0xffffffffffffffff"/>
+           <item value="0xffffffffffffffff"/>
+	     </SaftSnoopEventMasks>
+
+		<SaftSnoopOffsets>
+	       <item value="0x0"/>
+	       <item value="2000"/>
+	    </SaftSnoopOffsets>
+	    
+<!-- 	      contains  accept flag bitmask of all events to be snooped:
+           0x1=late, 0x2=early, 0x4= conflict, 0x8=delayed -->	     
+	     <SaftSnoopFlags>
+	        <item value="0xf"/>
+	        <item value="0xf"/>
+	     </SaftSnoopFlags>
+     </InputPort>
+     
+     <OutputPort name="Output0" queue="20" url="mbs://Stream:6111"/>
+     <OutputPort name="Output1" queue="10" url="lmd://test.lmd?maxsize=30"/>
+     
+     <SaftData width="5" prec="3" low="0" up="50" debug="1"/>
+     <SaftEvents width="5" prec="3" low="0" up="50" debug="1"/>
+  </Module>
+  
+ </Context>
+</dabc>
