@@ -34,6 +34,10 @@
 //#include "saftdabc/Factory.h"
 #include "saftdabc/Input.h"
 
+
+
+
+
 saftdabc::Device::Device (const std::string& name, dabc::Command cmd) :
     dabc::Device (name)
 {
@@ -44,7 +48,18 @@ saftdabc::Device::Device (const std::string& name, dabc::Command cmd) :
   std::map<Glib::ustring, Glib::ustring> devices = saftlib::SAFTd_Proxy::create()->getDevices();
 
   fTimingReceiver = saftlib::TimingReceiver_Proxy::create(devices[fBoardName]);
-  PublishPars ("$CONTEXT$/SaftDevice");
+
+
+// TODO: export some interactive commands for web interface
+     CreateCmdDef (saftdabc::commandRunMainloop);
+    CreatePar (saftdabc::parEventRate).SetRatemeter (false, 3.).SetUnits ("Events");
+
+    SetDevInfoParName("SaftDeviceInfo");
+    CreatePar(fDevInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
+   // PublishPars ("$CONTEXT$/SaftDevice");
+// note that access to web parameters is blocked after mainloop is executed in device thread!
+
+
 
   DOUT1("Created SAFTDABC device %s\n",fBoardName.c_str());
 
@@ -64,6 +79,9 @@ void saftdabc::Device::OnThreadAssigned()
 
 void saftdabc::Device::RunGlibMainLoop()
 {
+  // TODO: put mainloop into background thread here?
+
+
   DOUT1("RunGlibMainLoop starts.");
   fGlibMainloop->run();
   DOUT1("RunGlibMainLoop after fGlibMainloop->run();");
@@ -333,7 +351,11 @@ const std::string saftdabc::Device::GetInputDescription (guint64 event)
   }
 }
 
+void saftdabc::Device::AddEventStatistics (unsigned numevents)
+{
+  Par (saftdabc::parEventRate).SetValue (numevents);
 
+}
 
 bool saftdabc::Device::ClearConditions ()
 {
@@ -383,4 +405,97 @@ bool saftdabc::Device::ClearConditions ()
 
   return true;
 }
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+//////// following is taken from saftlib Commonfunctions.cpp which is not available in include interface
+
+std::string saftdabc::tr_formatDate(guint64 time, guint32 pmode)
+{
+  guint64 ns    = time % 1000000000;
+  time_t  s     = time / 1000000000;
+  struct tm *tm = gmtime(&s);
+  char date[40];
+  char full[80];
+  std::string temp;
+
+  if (pmode & PMODE_VERBOSE) {
+    strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
+    snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+  }
+  else if (pmode & PMODE_DEC)
+    snprintf(full, sizeof(full), "0d%lu.%09ld",s,(long)ns);
+  else
+    snprintf(full, sizeof(full), "0x%016llx", (unsigned long long)time);
+
+  temp = full;
+
+  return temp;
+} //tr_formatDate
+
+/* format EvtID to a string */
+std::string saftdabc::tr_formatActionEvent(guint64 id, guint32 pmode)
+{
+  std::stringstream full;
+  std::string fmt = "";
+  int width = 0;
+
+  if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
+  if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
+  if (pmode & PMODE_VERBOSE) {
+    full << " FID: "   << fmt << std::setw(1) << ((id >> 60) & 0xf);
+    full << " GID: "   << fmt << std::setw(4) << ((id >> 48) & 0xfff);
+    full << " EVTNO: " << fmt << std::setw(4) << ((id >> 36) & 0xfff);
+    full << " SID: "   << fmt << std::setw(4) << ((id >> 24) & 0xfff);
+    full << " BPID: "  << fmt << std::setw(5) << ((id >> 14) & 0x3fff);
+    full << " RES: "   << fmt << std::setw(4) << (id & 0x3ff);
+  }
+  else full << " EvtID: " << fmt << std::setw(width) << std::setfill('0') << id;
+
+  return full.str();
+} //tr_formatActionEvent
+
+std::string saftdabc::tr_formatActionParam(guint64 param, guint32 evtNo, guint32 pmode)
+{
+  std::stringstream full;
+  std::string fmt = "";
+  int width = 0;
+
+  if (pmode & PMODE_HEX) {full << std::hex << std::setfill('0'); width = 16; fmt = "0x";}
+  if (pmode & PMODE_DEC) {full << std::dec << std::setfill('0'); width = 20; fmt = "0d";}
+
+  switch (evtNo) {
+  case 0x0 :
+    // add some code
+    break;
+  case 0x1 :
+    // add some code
+    break;
+  default :
+    full << " Param: " << fmt << std::setw(width) << param;
+  } // switch evtNo
+
+  return full.str();
+} // tr_formatActionParam
+
+std::string saftdabc::tr_formatActionFlags(guint16 flags, guint64 delay, guint32 pmode)
+{
+  std::stringstream full;
+
+  full << "";
+
+  if (flags) {
+    full  << "!";
+    if (flags & 1) full << "late (by " << delay << " ns)";
+    if (flags & 2) full << "early (by " << -delay << " ns)";
+    if (flags & 4) full << "conflict (delayed by " << delay << " ns)";
+    if (flags & 8) full << "delayed (by " << delay << " ns)";
+  } // if flags
+
+  return full.str();
+} // tr_formatActionFlags
+
+
 

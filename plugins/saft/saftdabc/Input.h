@@ -59,6 +59,14 @@ private:
    * events are queued until read out by dabc*/
   std::queue<saftdabc::Timing_Event> fTimingEventQueue;
 
+
+  /** Mutex to protect timingeventqueue*/
+  dabc::Mutex fQueueMutex;
+
+  /** flag to avoid invoking transport callback before transport done*/
+  bool fWaitingForCallback;
+
+
 protected:
 
 
@@ -150,6 +158,7 @@ public:
   void SetTransportRef(dabc::InputTransport* trans);
 
   virtual unsigned Read_Size ();
+  virtual unsigned Read_Start (dabc::Buffer& buf);
   virtual unsigned Read_Complete (dabc::Buffer& buf);
 
   virtual double Read_Timeout ()

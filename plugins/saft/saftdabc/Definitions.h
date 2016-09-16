@@ -43,7 +43,7 @@
 #define SAFT_DABC_ACCEPT_DELAYED   (1 << ECA_DELAYED)
 
 /** length of descriptor text field in timing event structure*/
-#define SAFT_DABC_DESCRLEN 64
+#define SAFT_DABC_DESCRLEN 16
 
 
 
@@ -89,6 +89,9 @@ extern const char* xmlCallbackMode;
  /** Command to invoke the glib/dbus mainloop*/
  extern const char* commandRunMainloop;
 
+ /** Name of event rate parameter*/
+ extern const char* parEventRate;
+
 
  /** \brief The saftlib input event data structure.
   */
@@ -114,8 +117,12 @@ extern const char* xmlCallbackMode;
 
  };
 
-
-
 }
+
+
+
+
+
+
 
 #endif

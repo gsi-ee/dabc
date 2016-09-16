@@ -10,14 +10,14 @@
 
   <MemoryPool name="Pool">
      <BufferSize value="1024"/>
-     <NumBuffers value="100"/>
+     <NumBuffers value="30"/>
   </MemoryPool>
   
   <HttpServer name="http">
 	  <port value="8091" />
    </HttpServer>
   
-  
+ <!--  <Publisher name="publ" manager="true"/> -->
   
   <Device name="SaftDevice" class="saftdabc::Device">
 		<SaftBoard value="baseboard" />			
@@ -26,16 +26,17 @@
   
   
   
-  <Module name="Repeater" class="mbs::CombinerModule">
+  <Module name="SaftReadout" class="mbs::CombinerModule">
      <NumInputs value="1"/>
      <NumOutputs value="1"/>
+     <BuildCompleteEvents value="true"/>
      <CombinerRatesPrefix value="Saft"/>
      
      <InputPort name="Input0" queue="20" url="device://SaftDevice" thread="inp0thread">
      	
 	    <SaftSubeventId value="0x000000A"/>
 	    <SaftTimeout value="0.01"/>
-	    <SaftTransportCallback value="false"/>
+	    <SaftTransportCallback value="true"/>
 	    
 	    <SaftHardwareInputNames>
 	       <item value="IO1"/>
@@ -43,18 +44,21 @@
 	    </SaftHardwareInputNames>
 
  		<SaftSnoopEventIds>
-	       <item value="0xfffff00000000000"/>
-	       <item value="0xfffff00000000000"/>
+	       <item value="0x0fffffff00000000"/>
+	       <item value="0xabcdef0000000000"/>
+	       <item value="0xdeadaffe00000000"/>
 	    </SaftSnoopEventIds>
 	    
 	     <SaftSnoopEventMasks>
 	       <item value="0xffffffffffffffff"/>
            <item value="0xffffffffffffffff"/>
+           <item value="0xffffffffffffffff"/>
 	     </SaftSnoopEventMasks>
 
 		<SaftSnoopOffsets>
-	       <item value="0x0"/>
-	       <item value="2000"/>
+	       <item value="0"/>
+	       <item value="0"/>
+           <item value="50"/>
 	    </SaftSnoopOffsets>
 	    
 <!-- 	      contains  accept flag bitmask of all events to be snooped:
@@ -62,6 +66,7 @@
 	     <SaftSnoopFlags>
 	        <item value="0xf"/>
 	        <item value="0xf"/>
+		    <item value="0xf"/>	
 	     </SaftSnoopFlags>
      </InputPort>
      

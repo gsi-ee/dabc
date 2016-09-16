@@ -62,6 +62,7 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
    fEventRateName = ratesprefix+"Events";
    fDataRateName = ratesprefix+"Data";
    fInfoName = ratesprefix+"Info";
+   fFileStateName= ratesprefix + "FileOn";
 
    DOUT0("Create rate %s", fDataRateName.c_str());
 
@@ -83,8 +84,16 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
    CreateCmdDef(mbs::comStopServer);
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
+   CreatePar(fFileStateName).Dflt(false);
+
+   PublishPars (dabc::format("$CONTEXT$/%sCombinerModule",ratesprefix.c_str()));
 
    SetInfo(dabc::format("MBS combiner module ready. Mode: full events only:%d, subids check:%d flush:%3.1f" ,fBuildCompleteEvents,fCheckSubIds,flushtmout), true);
+
+
+
+
+
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -461,7 +470,8 @@ bool mbs::CombinerModule::BuildEvent()
          SetInfo( dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full) );
 //       DOUT0("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full);
       } else {
-         SetInfo( dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()) );
+// JAM2016: better supress this output:
+//         SetInfo( dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()) );
 //         DOUT0("Build event %u with %u inputs selected %s", buildevid, num_selected_all, sel_str.c_str());
       }
 
@@ -550,40 +560,91 @@ bool mbs::CombinerModule::BuildEvent()
 
 int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName(mbs::comStartFile)) {
-      if (NumOutputs()<2) {
-         EOUT("No ports was created for the file");
-         return dabc::cmd_false;
+
+
+
+///// JAM this is old section, we replace it with new features as implemented in pexorplugin
+//   if (cmd.IsName(mbs::comStartFile)) {
+//      if (NumOutputs()<2) {
+//         EOUT("No ports was created for the file");
+//         return dabc::cmd_false;
+//      }
+//
+//      // TODO: check if it works, probably some parameters should be taken from original command
+//      bool res = dabc::mgr.CreateTransport(OutputName(1, true));
+//      return cmd_bool(res);
+//   } else
+//   if (cmd.IsName(mbs::comStopFile)) {
+//
+//      FindPort(OutputName(1)).Disconnect();
+//
+//      SetInfo("Stop file", true);
+//
+//      return dabc::cmd_true;
+//   } else
+//   if (cmd.IsName(mbs::comStartServer)) {
+//      if (NumOutputs()<1) {
+//         EOUT("No ports was created for the server");
+//         return dabc::cmd_false;
+//      }
+//
+//      bool res = dabc::mgr.CreateTransport(OutputName(0, true));
+//
+//      return cmd_bool(res);
+//   } else
+//   if (cmd.IsName(mbs::comStopServer)) {
+//      FindPort(OutputName()).Disconnect();
+//
+//      SetInfo("Stop server", true);
+//      return dabc::cmd_true;
+//   }
+///////////////////////////////////////////////////////////////////////////////////7
+
+
+////// begin new part from pexorplugin:
+  if (cmd.IsName(mbs::comStartFile)) {
+
+     std::string fname = cmd.GetStr(dabc::xmlFileName); //"filename")
+     int maxsize = cmd.GetInt(dabc::xml_maxsize, 30); // maxsize
+     std::string url = dabc::format("%s://%s?%s=%d", mbs::protocolLmd, fname.c_str(), dabc::xml_maxsize, maxsize);
+     EnsurePorts(0, 2);
+     bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
+     DOUT0("Started file %s res = %d", url.c_str(), res);
+     SetInfo(dabc::format("Execute StartFile for %s, result=%d",url.c_str(), res), true);
+     ChangeFileState(true);
+     return cmd_bool(res);
+      } else
+      if (cmd.IsName(mbs::comStopFile)) {
+         FindPort(OutputName(1)).Disconnect();
+         SetInfo("Stopped file", true);
+         ChangeFileState(false);
+         return dabc::cmd_true;
+      } else
+      if (cmd.IsName(mbs::comStartServer)) {
+         if (NumOutputs()<1) {
+            EOUT("No ports was created for the server");
+            return dabc::cmd_false;
+         }
+         std::string skind = cmd.GetStr(mbs::xmlServerKind);
+
+         int port = cmd.GetInt(mbs::xmlServerPort, 6666);
+         std::string url = dabc::format("mbs://%s?%s=%d", skind.c_str(), mbs::xmlServerPort,  port);
+         EnsurePorts(0, 1);
+         bool res = dabc::mgr.CreateTransport(OutputName(0, true));
+         DOUT0("Started server %s res = %d", url.c_str(), res);
+         SetInfo(dabc::format("Execute StartServer for %s, result=%d",url.c_str(), res), true);
+         return cmd_bool(res);
+      } else
+      if (cmd.IsName(mbs::comStopServer)) {
+         FindPort(OutputName(0)).Disconnect();
+         SetInfo("Stopped server", true);
+         return dabc::cmd_true;
       }
+////////////// end new part from pexorplugin
 
-      // TODO: check if it works, probably some parameters should be taken from original command
-      bool res = dabc::mgr.CreateTransport(OutputName(1, true));
-      return cmd_bool(res);
-   } else
-   if (cmd.IsName(mbs::comStopFile)) {
 
-      FindPort(OutputName(1)).Disconnect();
 
-      SetInfo("Stop file", true);
-
-      return dabc::cmd_true;
-   } else
-   if (cmd.IsName(mbs::comStartServer)) {
-      if (NumOutputs()<1) {
-         EOUT("No ports was created for the server");
-         return dabc::cmd_false;
-      }
-
-      bool res = dabc::mgr.CreateTransport(OutputName(0, true));
-
-      return cmd_bool(res);
-   } else
-   if (cmd.IsName(mbs::comStopServer)) {
-      FindPort(OutputName()).Disconnect();
-
-      SetInfo("Stop server", true);
-      return dabc::cmd_true;
-   } else
+   else
    if (cmd.IsName("ConfigureInput")) {
       unsigned ninp = cmd.GetUInt("Port", 0);
 //      DOUT0("Start input configure %u size %u", ninp, fCfg.size());
@@ -640,3 +701,30 @@ unsigned int mbs::CombinerModule::GetOverflowEventNumber() const
 {
    return 0xffffffff;
 }
+
+
+// JAM2016 - adopted from pexorplugin readout module
+void  mbs::CombinerModule::ChangeFileState(bool on)
+{
+  dabc::Parameter par=Par (fFileStateName);
+  par.SetValue (on);
+  dabc::Hierarchy chld = fWorkerHierarchy.FindChild(fFileStateName.c_str());
+  if (!chld.null())
+  {
+       par.ScanParamFields(&chld()->Fields());
+       fWorkerHierarchy.MarkChangedItems();
+       DOUT0("ChangeFileState to %d", on);
+  }
+  else
+  {
+      DOUT0("ChangeFileState Could not find parameter %s", fFileStateName.c_str());
+  }
+
+
+
+
+
+}
+
+
+

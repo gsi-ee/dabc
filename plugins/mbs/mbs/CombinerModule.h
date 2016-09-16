@@ -155,6 +155,7 @@ namespace mbs {
          std::string                fEventRateName;
          std::string                fDataRateName;
          std::string                fInfoName;
+         std::string                fFileStateName;
 
          bool BuildEvent();
          bool FlushBuffer();
@@ -173,6 +174,10 @@ namespace mbs {
          void SetInfo(const std::string& info, bool forceinfo = false);
 
          bool IsOptionalInput(unsigned ninp) { return ninp<fCfg.size() ? (fCfg[ninp].optional_input || fCfg[ninp].no_evnt_num) : true; }
+
+
+         /** change file on/off state in application*/
+         void ChangeFileState(bool on);
 
       public:
 

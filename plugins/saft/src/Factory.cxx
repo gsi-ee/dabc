@@ -55,6 +55,7 @@ const char* saftdabc::xmlTimeout = "SaftTimeout";
 
 const char* saftdabc::commandRunMainloop = "RunGlibMainloop";
 
+const char* saftdabc::parEventRate= "ReceiveEventRate";
 
 dabc::FactoryPlugin saftfactory(new saftdabc::Factory("saftdabc"));
 
@@ -75,5 +76,7 @@ dabc::Device* saftdabc::Factory::CreateDevice (const std::string& classname, con
   dabc::Device* dev = new saftdabc::Device (devname, cmd);
   return dev;
 }
+
+
 
 
