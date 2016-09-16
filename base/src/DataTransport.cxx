@@ -245,7 +245,8 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
          fInpState = inpError;
    }
 
-   ProcessOutputEvent(0);
+   ActivateOutput(0);
+   // ProcessOutputEvent(0);
 }
 
 
@@ -430,18 +431,21 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    }
 
    if (fInpState == inpHasBuffer) {
-//      DOUT0("Read_Start buf %u", fCurrentBuf.GetTotalSize());
+
+      // special handling for call back
+      // when function returns di_CallBack, it already can invoke callback
+      // therefore change state temporary before correspondent call
+
+      fInpState = inpCallBack;
+
       unsigned start_res = fInput->Read_Start(fCurrentBuf);
-//      DOUT0("Read_Start res = %x buf %u", start_res, fCurrentBuf.GetTotalSize());
+
+      // state should be overwritten in following switch
       switch (start_res) {
          case di_Ok:
             // this will allows to call Read_Complete method in next iteration
             ChangeState(inpCompleting);
             break;
-         case di_CallBack:
-            // if we starts callback, just not fire event
-            ChangeState(inpCallBack);
-            return false;
 
          case di_NeedMoreBuf:
          case di_HasEnoughBuf:
@@ -455,6 +459,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
                ChangeState(inpCallBack);
                return false;
             }
+         case di_CallBack:
+            // if state already change, process such change
+            return (fInpState != inpCallBack);
 
          default:
             ChangeState(inpError);
