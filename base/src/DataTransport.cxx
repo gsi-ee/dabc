@@ -342,12 +342,17 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       if (NumCanSend(port) == 0) { EOUT("Logical failure in input transport"); exit(333); }
 
-      fNextDataSize = fInput->Read_Size();
+      fInpState = inpSizeCallBack;
+      fNextDataSize = 0;
+
+      unsigned size_res = fInput->Read_Size();
+
+      if (size_res != di_CallBack) fInpState = inpInit;
 
       // this is case when input want to repeat operation
       // when we return true, we say that we want to continue processing
 
-      switch (fNextDataSize) {
+      switch (size_res) {
          case di_Repeat:
             return true;
          case di_RepeatTimeOut:
@@ -355,10 +360,11 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             ShootTimer("SysTimer", fInput->Read_Timeout());
             return false;
          case di_CallBack:
-            ChangeState(inpSizeCallBack);
-            fNextDataSize = 0;
-            return false;
+            // if state already changed, process it
+            return fInpState != inpSizeCallBack;
       }
+
+      fNextDataSize = size_res;
 
       ChangeState(inpCheckSize);
    }
@@ -440,7 +446,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       unsigned start_res = fInput->Read_Start(fCurrentBuf);
 
-      // state should be overwritten in following switch
+      // current value in state variable may be incorrect
+      // therefore one should change it in any case
+
       switch (start_res) {
          case di_Ok:
             // this will allows to call Read_Complete method in next iteration
@@ -448,17 +456,15 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             break;
 
          case di_NeedMoreBuf:
-         case di_HasEnoughBuf:
             // this is case when transport internally uses queue and need more buffers
             fExtraBufs++;
+            ChangeState(inpInit);
+            return true;
 
-            if (start_res == di_NeedMoreBuf) {
-               ChangeState(inpInit);
-               return true;
-            } else {
-               ChangeState(inpCallBack);
-               return false;
-            }
+         case di_HasEnoughBuf:
+            fExtraBufs++;
+            return (fInpState != inpCallBack);
+
          case di_CallBack:
             // if state already change, process such change
             return (fInpState != inpCallBack);
