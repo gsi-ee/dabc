@@ -89,6 +89,7 @@ namespace dabc {
          unsigned           fPoolChangeCounter; //!<
          MemoryPoolRef      fPoolRef;
          unsigned           fExtraBufs;         //!< number of extra buffers provided to the transport addon
+         bool               fActivateWorkaround;  //!< special flag for hadaq transport
          std::string        fReconnect;         //!< when specified, tried to reconnect
          bool               fStopRequested;     //!< if true transport will be stopped when next suitable state is achieved
 

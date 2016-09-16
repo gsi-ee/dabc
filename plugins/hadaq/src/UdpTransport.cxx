@@ -321,6 +321,8 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
    // do not process to much events at once, let another transports a chance
    SetPortLoopLength(OutputName(), 2);
 
+   fActivateWorkaround = true; // while transport runs in same thread, can use
+
    fIdNumber = inpport.ItemSubId();
 
    DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);

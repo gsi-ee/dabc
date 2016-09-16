@@ -32,6 +32,7 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
    fPoolChangeCounter(0),
    fPoolRef(),
    fExtraBufs(0),
+   fActivateWorkaround(false),
    fReconnect(),
    fStopRequested(false)
 {
@@ -216,14 +217,13 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
    // this inform that we are
    if (sz == dabc::di_QueueBufReady) {
       // in case when transport waiting for next buffer, switch state to receiving of next ready buffer
-      if ((fInpState == inpWaitBuffer) && (fExtraBufs>0))
-         fInpState = inpCallBack;
+      if (fExtraBufs) fInpState = inpCallBack;
    }
 
    switch (fInpState) {
 
       case inpInit:
-         if (fExtraBufs==0) {
+         if (!fExtraBufs) {
             EOUT("Call back at init state not with extra mode");
             exit(333);
          }
@@ -245,8 +245,10 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
          fInpState = inpError;
    }
 
-   ActivateOutput(0);
-   // ProcessOutputEvent(0);
+   if (fActivateWorkaround)
+      ProcessOutputEvent(0);
+   else
+      ActivateOutput(0);
 }
 
 
