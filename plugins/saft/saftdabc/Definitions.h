@@ -80,7 +80,8 @@ extern const char* xmlTimeout;
 /** switch between polling for data or callback mode*/
 extern const char* xmlCallbackMode;
 
-
+/** switch between silent or verbose event receiver  mode*/
+extern const char* xmlSaftVerbose;
 
  /* full subevent id for timestamp data*/
  extern const char* xmlSaftSubeventId;
@@ -113,6 +114,15 @@ extern const char* xmlCallbackMode;
    {
      if(description)
        snprintf(fDescription, SAFT_DABC_DESCRLEN, "%s",description);
+   }
+
+
+   int InfoMessage(char* str, size_t len)
+   {
+      if(str==0) return -1;
+      return snprintf(str, len, "saftdabc::Timing_Event - event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%lx, description:%s",
+          fEvent, fParam , fDeadline, fExecuted, fFlags, fDescription);
+
    }
 
  };

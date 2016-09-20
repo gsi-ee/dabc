@@ -10,7 +10,7 @@
 
   <MemoryPool name="Pool">
      <BufferSize value="1024"/>
-     <NumBuffers value="30"/>
+     <NumBuffers value="500"/>
   </MemoryPool>
   
   <HttpServer name="http">
@@ -34,9 +34,10 @@
      
      <InputPort name="Input0" queue="20" url="device://SaftDevice" thread="inp0thread">
      	
-	    <SaftSubeventId value="0x000000A"/>
+	    <SaftMBSSubeventId value="0x000000A"/>
 	    <SaftTimeout value="0.01"/>
-	    <SaftTransportCallback value="true"/>
+	    <SaftTransportCallback value="false"/>
+	    <SaftVerbose value="false"/>
 	    
 	    <SaftHardwareInputNames>
 	       <item value="IO1"/>

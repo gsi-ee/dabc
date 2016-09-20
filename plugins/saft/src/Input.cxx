@@ -34,7 +34,7 @@
 
 
 saftdabc::Input::Input (const saftdabc::DeviceRef &owner) :
-    dabc::DataInput (),  fQueueMutex(true), fWaitingForCallback(false), fDevice(owner), fTimeout (1e-2), fUseCallbackMode(false), fSubeventId (8),fEventNumber (0)
+    dabc::DataInput (),  fQueueMutex(true), fWaitingForCallback(false), fDevice(owner), fTimeout (1e-2), fUseCallbackMode(false), fSubeventId (8),fEventNumber (0),fVerbose(false)
 {
   DOUT3("saftdabc::Input CTOR");
   ClearEventQueue ();
@@ -60,11 +60,13 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
   fTimeout = wrk.Cfg (saftdabc::xmlTimeout, cmd).AsDouble (fTimeout);
   fUseCallbackMode=wrk.Cfg (saftdabc::xmlCallbackMode, cmd).AsBool (fUseCallbackMode);
   fSubeventId = wrk.Cfg (saftdabc::xmlSaftSubeventId, cmd).AsInt (fSubeventId);
+  fVerbose= wrk.Cfg (saftdabc::xmlSaftVerbose, cmd).AsBool (fVerbose);
   fInput_Names = wrk.Cfg (saftdabc::xmlInputs, cmd).AsStrVect ();
   fSnoop_Ids = wrk.Cfg (saftdabc::xmlEventIds, cmd).AsUIntVect ();
   fSnoop_Masks = wrk.Cfg (saftdabc::xmlMasks, cmd).AsUIntVect ();
   fSnoop_Offsets = wrk.Cfg (saftdabc::xmlOffsets, cmd).AsUIntVect ();
   fSnoop_Flags = wrk.Cfg (saftdabc::xmlAcceptFlags, cmd).AsUIntVect ();
+
 
   if (! (fSnoop_Ids.size () == fSnoop_Masks.size ()) &&
         (fSnoop_Ids.size () == fSnoop_Offsets.size ()) &&
@@ -78,7 +80,8 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
 
 
   DOUT1(
-      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, subevtid:%d, %d hardware inputs, %d snoop event ids ", wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), fSubeventId, fInput_Names.size(), fSnoop_Ids.size());
+      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, subevtid:%d, %d hardware inputs, %d snoop event ids, verbose=%s ",
+      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), fSubeventId, fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
 
 
   // There set up the software conditions
@@ -133,7 +136,7 @@ unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
     if(fUseCallbackMode)
     {
         fWaitingForCallback=true;
-        DOUT5("saftdabc::Input::Read_Start sets fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
+        DOUT1("saftdabc::Input::Read_Start sets fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
         return dabc::di_CallBack;
      }
     else
@@ -154,7 +157,7 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 
   dabc::LockGuard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
 
-  DOUT5("saftdabc::Input::Read_Read_Complete with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
+  DOUT3("saftdabc::Input::Read_Read_Complete with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
 
   // TODO: switch between mbs and hadaq output formats!
   mbs::WriteIterator iter (buf);
@@ -237,14 +240,16 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
   /* This is the signalhandler that treats condition events from saftlib*/
   dabc::LockGuard(fQueueMutex,true); // protect against Transport thread
 
-  std::string description=fDevice.GetInputDescription(event);
+ std::string description=fDevice.GetInputDescription(event);
+if(fVerbose)
+{
   DOUT0("Input::EventHandler sees event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%x, description:%s",
       event, param , deadline, executed, flags, description.c_str());
   DOUT0("Formatted Date:%s",
       saftdabc::tr_formatDate(executed, PMODE_VERBOSE).c_str());
   DOUT0("Eventid:%s",
        saftdabc::tr_formatActionEvent(event,PMODE_VERBOSE).c_str());
-
+}
   fTimingEventQueue.push(Timing_Event (event, param , deadline, executed, flags, description.c_str()));
   DOUT3("TimingEventQueue is filled with %d elements", fTimingEventQueue.size());
 
@@ -252,7 +257,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       saftdabc::tr_formatActionEvent(event,PMODE_VERBOSE).c_str(),
       saftdabc::tr_formatDate(executed, PMODE_VERBOSE).c_str()));
 
-  DOUT5("saftdabc::Input::EventHandler with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
+  DOUT3("saftdabc::Input::EventHandler with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
   if (fUseCallbackMode && fWaitingForCallback)
   {
       // do not call Read_CallBack again during transport running
@@ -266,6 +271,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       unsigned datasize=dabc::di_DfltBufSize; // always use full buffer anyway.
       tr->Read_CallBack (datasize);
       fWaitingForCallback=false;
+      DOUT1("saftdabc::Input::EventHandler after Read_CallBack, fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
     }
     else
     {
@@ -276,3 +282,4 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
 
 }
+

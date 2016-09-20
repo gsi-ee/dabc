@@ -45,6 +45,9 @@ const char* saftdabc::xmlOffsets           = "SaftSnoopOffsets";
 const char* saftdabc::xmlAcceptFlags        = "SaftSnoopFlags";
 
 
+const char* saftdabc::xmlSaftVerbose        = "SaftVerbose";
+
+
 
 const char* saftdabc::xmlSaftSubeventId         = "SaftMBSSubeventId";
 
