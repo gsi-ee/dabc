@@ -57,7 +57,6 @@ int usage(const char* errstr = 0)
    printf("   -adc mask               - printout raw data as ADC subsubevent (default none) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -hub value              - identify hub inside subevent to printout raw data inside (default none) \n");
-   printf("   -hhub value             - identify hub inside subsubevent to printout raw data inside (default none) \n");
    printf("   -rate                   - display only events rate\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
@@ -534,106 +533,16 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
-bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
-unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
-std::vector<unsigned> hubs;
-std::vector<unsigned> tdcs;
-std::vector<unsigned> hhubs; // sub-sub hubs
-bool print_subhdr(false), print_subsubhdr(false);
-char errbuf[100], subsubhrd[200];
-std::map<unsigned,SubevStat> idstat; // events id counter
-std::map<unsigned,SubevStat> stat;   // subevents statistic
-
-
-void PrintHHubData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask) {
-   unsigned limit = ix + len;
-   while (ix < limit) {
-      unsigned data = sub->Data(ix++);
-
-      unsigned datalen = (data >> 16) & 0xFFFF;
-      unsigned datakind = data & 0xFFFF;
-
-      bool as_raw(false), as_tdc(false), as_adc(false),
-            print_subsubsubhdr((onlytdc==0) && (onlyraw==0));
-
-      for (unsigned n=0;n<tdcs.size();n++)
-        if (((datakind & idrange) <= (tdcs[n] & idrange)) && ((datakind & ~idrange) == (tdcs[n] & ~idrange)))
-           as_tdc = true;
-
-      if (!as_tdc) {
-        if ((onlytdc!=0) && (datakind==onlytdc)) {
-            as_tdc = true;
-            print_subsubsubhdr = true;
-        } else
-        if ((adcmask!=0) && ((datakind & idrange) <= (adcmask & idrange)) && ((datakind & ~idrange) == (adcmask & ~idrange))) {
-           as_adc = true;
-        } else
-        if ((onlyraw!=0) && (datakind==onlyraw)) {
-           as_raw = true;
-           print_subsubsubhdr = true;
-        } else
-        if (printraw) {
-           as_raw = (onlytdc==0) && (onlyraw==0);
-        }
-      }
-
-      if (!dostat && !showrate) {
-         // do raw printout when necessary
-
-         if (as_raw || as_tdc || as_adc) {
-            if (!print_subhdr) {
-               sub->Dump(false);
-               print_subhdr = true;
-            }
-
-            if (!print_subsubhdr) {
-               printf(subsubhrd);
-               print_subsubhdr = true;
-            }
-         }
-
-         if (print_subsubsubhdr)
-            printf("         *** Subsubsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
-
-         unsigned errmask(0);
-
-         if (as_tdc) PrintTdcData(sub, ix, datalen, prefix+3, errmask, false); else
-         if (as_adc) PrintAdcData(sub, ix, datalen, prefix+3); else
-         if (as_raw) sub->PrintRawData(ix, datalen, prefix+3);
-
-         if (errmask!=0) {
-            printf("         !!!! TDC errors detected:");
-            unsigned mask = 1;
-            for (int n=0;n<NumTdcErr;n++,mask*=2)
-               if (errmask & mask) printf(" err_%s", TdcErrName(n));
-            printf("\n");
-         }
-
-      } else
-      if (dostat) {
-         stat[datakind].num++;
-         stat[datakind].sizesum+=datalen;
-         if (as_tdc) {
-            stat[datakind].istdc = true;
-            unsigned errmask(0);
-            PrintTdcData(sub, ix, datalen, 0, errmask, false);
-            unsigned mask = 1;
-            for (int n=0;n<NumTdcErr;n++,mask*=2)
-               if (errmask & mask) stat[datakind].tdcerr[n]++;
-         }
-      }
-
-      ix+=datalen;
-   }
-}
-
-
 int main(int argc, char* argv[])
 {
    if (argc<2) return usage();
 
    long number(10), skip(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1);
+   bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false);
+   unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
+   std::vector<unsigned> hubs;
+   std::vector<unsigned> tdcs;
 
    int n = 1;
    while (++n<argc) {
@@ -648,7 +557,6 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
-      if ((strcmp(argv[n],"-hhub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hhubs.push_back(hubmask); } else
       if ((strcmp(argv[n],"-hub")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &hubmask); hubs.push_back(hubmask); } else
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
@@ -702,6 +610,8 @@ int main(int argc, char* argv[])
 
    hadaq::RawEvent* evnt(0);
 
+   std::map<unsigned,SubevStat> idstat; // events id counter
+   std::map<unsigned,SubevStat> stat;   // subevents statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
@@ -787,17 +697,20 @@ int main(int argc, char* argv[])
       if (!showrate && !dostat)
          evnt->Dump();
 
+      char errbuf[100];
+
       hadaq::RawSubevent* sub = 0;
       while ((sub = evnt->NextSubevent(sub)) != 0) {
 
-         print_subhdr = false;
+         bool print_sub_header(false);
          if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat) {
             sub->Dump(printraw && !printsub);
-            print_subhdr = true;
+            print_sub_header = true;
          }
 
-         unsigned trbSubEvSize = sub->GetSize() / 4 - 4;
-         unsigned ix = 0, maxhublen = 0, lasthubid = 0, lasthublen = 0;
+         unsigned trbSubEvSize = sub->GetSize() / 4 - 4, ix = 0,
+                  maxhublen = 0, lasthubid = 0, lasthublen = 0,
+                  maxhhublen = 0, lasthhubid = 0, lasthhublen = 0;
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
             unsigned data = sub->Data(ix++);
@@ -806,7 +719,32 @@ int main(int argc, char* argv[])
             unsigned datakind = data & 0xFFFF;
 
             errbuf[0] = 0;
+            if (maxhhublen>0) {
+               if (datalen >= maxhhublen) datalen = maxhhublen-1;
+               maxhhublen -= (datalen+1);
+            } else {
+               lasthhubid = 0;
+            }
+
+            bool as_raw(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0));
+
             if (maxhublen>0) {
+
+               if (std::find(hubs.begin(), hubs.end(), datakind) != hubs.end()) {
+                  maxhublen--; // just decrement
+                  if (dostat) {
+                     stat[datakind].num++;
+                     stat[datakind].sizesum+=datalen;
+                  } else
+                  if (!showrate && print_subsubhdr) {
+                     printf("      *** HHUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+                  }
+                  maxhhublen = datalen;
+                  lasthhubid = datakind;
+                  lasthhublen = datalen;
+                  continue;
+               }
+
                if (datalen >= maxhublen) {
                   sprintf(errbuf," wrong format, want size 0x%04x", datalen);
                   datalen = maxhublen-1;
@@ -816,8 +754,6 @@ int main(int argc, char* argv[])
                lasthubid = 0;
             }
 
-            bool as_raw(false), as_tdc(false), as_adc(false), as_hhub(false);
-            print_subsubhdr = (onlytdc==0) && (onlyraw==0);
 
             for (unsigned n=0;n<tdcs.size();n++)
                if (((datakind & idrange) <= (tdcs[n] & idrange)) && ((datakind & ~idrange) == (tdcs[n] & ~idrange)))
@@ -845,9 +781,6 @@ int main(int argc, char* argv[])
                   lasthublen = datalen;
                   continue;
                } else
-               if (std::find(hhubs.begin(), hhubs.end(), datakind) != hhubs.end()) {
-                  as_hhub = true;
-               } else
                if ((onlyraw!=0) && (datakind==onlyraw)) {
                   as_raw = true;
                   print_subsubhdr = true;
@@ -861,23 +794,23 @@ int main(int argc, char* argv[])
                // do raw printout when necessary
 
                if (as_raw || as_tdc || as_adc) {
-                  if (!print_subhdr) {
+                  if (!print_sub_header) {
                      sub->Dump(false);
                      if (lasthubid!=0)
                         printf("      *** HUB size %3u id 0x%04x\n", lasthublen, lasthubid);
-                     print_subhdr = true;
+                     if (lasthhubid!=0)
+                        printf("      *** HHUB size %3u id 0x%04x\n", lasthhublen, lasthhubid);
+                     print_sub_header = true;
                   }
                }
 
-               sprintf(subsubhrd, "      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
-
-               if (print_subsubhdr) printf(subsubhrd);
+               if (print_subsubhdr)
+                  printf("      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
 
                unsigned errmask(0);
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask, false); else
                if (as_adc) PrintAdcData(sub, ix, datalen, 9); else
-               if (as_hhub) PrintHHubData(sub, ix, datalen, 9, errmask); else
                if (as_raw) sub->PrintRawData(ix, datalen, 9);
 
                if (errmask!=0) {
