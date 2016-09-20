@@ -1,4 +1,4 @@
-ifndef nosaft
+ifdef withsaft
 
 include $(DABCSYS)/config/Makefile.config
 
