@@ -24,6 +24,13 @@
 
 #include "TSaftParam.h"
 
+
+#define GO4_PMODE_NONE  0x0
+#define GO4_PMODE_DEC   0x1
+#define GO4_PMODE_HEX   0x2
+#define GO4_PMODE_VERBOSE  0x4
+
+
 class TSaftProc : public TGo4EventProcessor {
    protected:
 
@@ -32,6 +39,9 @@ class TSaftProc : public TGo4EventProcessor {
 
    /** time difference of subsequent events*/
    TH1* hDeltaT;
+
+   /** time difference of subsequent events, coarse range overview*/
+   TH1* hDeltaT_coarse;
 
    /** sequence number diff of events*/
    TH1* hDeltaN;
@@ -44,12 +54,20 @@ class TSaftProc : public TGo4EventProcessor {
    /** remember last time stamp received*/
    uint64_t fLastTime;
 
+
+   /** remember last time stamp of large deltat*/
+   uint64_t fLastFlipTime;
+
+
    public:
       TSaftProc() ;
       TSaftProc(const char* name);
       virtual ~TSaftProc() ;
 
       Bool_t BuildEvent(TGo4EventElement*); // event processing function
+
+
+      static std::string FormatDate(uint64_t time, uint32_t pmode);
 
 
    ClassDef(TSaftProc,1)

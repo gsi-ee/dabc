@@ -49,7 +49,7 @@
 
 
 //***********************************************************
-TSaftProc::TSaftProc() : TGo4EventProcessor(), fLastEventNumber(0), fLastTime(0)
+TSaftProc::TSaftProc() : TGo4EventProcessor(), fLastEventNumber(0), fLastTime(0),fLastFlipTime(0)
 {
 
 
@@ -68,6 +68,9 @@ TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumb
    TGo4Log::Info("TSaftProc: Create instance %s", name);
    hDeltaN=MakeTH1('I',"DeltaN","MBS Eventnumber difference", 1000, 0,1000);
    hDeltaT=MakeTH1('I',"DeltaT","Timing Events  execution difference", 5000000, 0, 5000000,"us","N");    // resolution is milliseconds
+   hDeltaT_coarse=MakeTH1('I',"DeltaT_coarse","Coarse Timing Events  execution difference",
+       10000, 0, 1.0e12,"ns","N"); // 100s range, 10 ms resolution
+
    fPar=dynamic_cast<TSaftParam*>(MakeParameter("SaftParam", "TSaftParam", "set_SaftParam.C"));
 
 }
@@ -78,6 +81,7 @@ TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumb
 // event function
 Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
 {  // called by framework. We dont fill any output event here at all
+   static saftdabc::Timing_Event lastEvent;
 
    if ((GetInputEvent()==0) || (GetInputEvent()->IsA() != TGo4MbsEvent::Class())) {
       TGo4Log::Error("TSaftProc: no input MBS event found!");
@@ -110,19 +114,19 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
         {
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fEvent = (hi<<32) + lo;
+          theEvent.fEvent = (hi<<32) | (lo & 0xFFFFFFFF);
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fParam = (hi<<32) + lo;
+          theEvent.fParam = (hi<<32) | (lo & 0xFFFFFFFF);
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fDeadline = (hi<<32) + lo;
+          theEvent.fDeadline = (hi<<32) | (lo & 0xFFFFFFFF);
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fExecuted = (hi<<32) + lo;
+          theEvent.fExecuted = (hi<<32) | (lo & 0xFFFFFFFF);
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fFlags = (hi<<32) + lo;
+          theEvent.fFlags = (hi<<32) | lo;
           snprintf(theEvent.fDescription,SAFT_DABC_DESCRLEN, "%s", (const char*)(pdata));
           if(theEvent.InfoMessage(buf,1024)<0)
           {
@@ -132,16 +136,18 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
           }
           if(fPar->fVerbose)
           {
-            printf("TSaftProc::BuildEvent sees %s",buf);
+            printf("TSaftProc::BuildEvent of event %d sees %s\n",evnt->GetCount(), buf);
+            printf("Date: %s",TSaftProc::FormatDate(theEvent.fExecuted, GO4_PMODE_VERBOSE).c_str());
+
             std::cout << std::endl;
           }
 
 //// DEBUG occurence of unwanted events?
-          if(strstr(buf,"IO1")==0)
-          {
-            printf("TSaftProc::BuildEvent unexpected timing event %s",buf);
-            std::cout << std::endl;
-          }
+//          if(strstr(buf,"IO1")==0)
+//          {
+//            printf("TSaftProc::BuildEvent unexpected timing event %s",buf);
+//            std::cout << std::endl;
+//          }
 /////////// end debug
           // here histograms of delta t and event numbers
 
@@ -150,9 +156,30 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
             uint64_t delta=theEvent.fExecuted - fLastTime;
             Double_t deltaus=delta/1.0e3; // ns to microseconds
             hDeltaT->Fill(deltaus);
+            hDeltaT_coarse->Fill(delta);
+            // DEBUG big deltas:
+            if(delta>1.0e+9)
+            {
+              printf("******** Found delta= 0x%lx units (%ld ns) (%E us)\n", delta, delta, deltaus);
+              printf("** %s\n",buf);
+              printf("** Last time:0x%lx\n",fLastTime);
+              lastEvent.InfoMessage(buf,1024);
+              printf("** Last Event: %s\n",buf);
+              uint64_t deltaflip=fLastTime - fLastFlipTime;
+              printf("** Delta since last flip=0x%lx units\n",deltaflip);
+              printf("*************************************");
+              std::cout << std::endl;
+
+
+              fLastFlipTime=fLastTime;
+            }
+
+
+
+
             }
           fLastTime=theEvent.fExecuted;
-
+          lastEvent=theEvent;
           // skip size of description text:
           int textsize=SAFT_DABC_DESCRLEN/sizeof(Int_t);
           while(textsize--)
@@ -175,4 +202,27 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
 }
 
 
+/** stolen from saftlib to check the real time stamp delivered:*/
+std::string TSaftProc::FormatDate(uint64_t time, uint32_t pmode)
+{
+  uint64_t ns    = time % 1000000000;
+  time_t  s     = time / 1000000000;
+  struct tm *tm = gmtime(&s);
+  char date[40];
+  char full[80];
+  std::string temp;
+
+  if (pmode & GO4_PMODE_VERBOSE) {
+    strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);
+    snprintf(full, sizeof(full), "%s.%09ld", date, (long)ns);
+  }
+  else if (pmode & GO4_PMODE_DEC)
+    snprintf(full, sizeof(full), "0d%lu.%09ld",s,(long)ns);
+  else
+    snprintf(full, sizeof(full), "0x%016llx", (unsigned long long)time);
+
+  temp = full;
+
+  return temp;
+} //tr_formatDate
 

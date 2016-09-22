@@ -6,10 +6,11 @@
      <lib value="libDabcMbs.so"/>
      <lib value="libDabcSaft.so"/>
      <logfile value="Saft.log"/>
+     <loglimit value="100000000"/>
   </Run> 
 
   <MemoryPool name="Pool">
-     <BufferSize value="1024"/>
+     <BufferSize value="16384"/>
      <NumBuffers value="500"/>
   </MemoryPool>
   

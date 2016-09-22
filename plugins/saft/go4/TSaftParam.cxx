@@ -25,12 +25,15 @@ TSaftParam::TSaftParam(const char* name) : TGo4Parameter(name),
 {
   fSubeventID=0x000000A;
 
-
 }
 //***********************************************************
 TSaftParam::~TSaftParam()
 {
 }
 //***********************************************************
+
+
+
+
 
 //----------------------------END OF GO4 SOURCE FILE ---------------------

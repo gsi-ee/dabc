@@ -120,6 +120,10 @@ unsigned saftdabc::Input::Read_Size ()
   // here may do forwarding to callback or poll with timeout if no data in queues
   dabc::LockGuard (fQueueMutex, true); // protect against saftlib callback <-Device thread
   bool nodata=fTimingEventQueue.empty();
+  if(fVerbose)
+    {
+      if(nodata) DOUT3("saftdabc::Input::Read_Size returns with timeout!");
+    }
   return (nodata ? dabc::di_RepeatTimeOut: dabc::di_DfltBufSize);
 
 
@@ -163,17 +167,27 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
   mbs::WriteIterator iter (buf);
 // may specify special trigger type here?
 //iter.evnt()->iTrigger=42;
+
+  if(fVerbose) DOUT0("saftdabc::Input::Read_Complete begins new event %d", fEventNumber);
+
   iter.NewEvent (fEventNumber++);
   iter.NewSubevent2 (fSubeventId);
   unsigned size = 0;
   while (!fTimingEventQueue.empty ())
   {
     Timing_Event theEvent = fTimingEventQueue.front ();
+    fTimingEventQueue.pop ();
+    if(fVerbose)
+    {
+      char buf[1024];
+      theEvent.InfoMessage(buf,1024);
+      DOUT0("saftdabc::Input::Read_Read_Complete sees event: %s",buf);
+    }
     unsigned len = sizeof(Timing_Event);
     if (!iter.AddRawData (&theEvent, len))
       break;
     size += len;
-    fTimingEventQueue.pop ();
+    //fTimingEventQueue.pop ();
     fDevice.AddEventStatistics(1);
   }
   iter.FinishSubEvent (size);
