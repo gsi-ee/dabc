@@ -15,7 +15,7 @@
 #include "saftdabc/Input.h"
 #include "saftdabc/Definitions.h"
 
-//#include "dabc/Pointer.h"
+#include "dabc/Pointer.h"
 //#include "dabc/timing.h"
 //#include "dabc/Manager.h"
 #include "dabc/DataTransport.h"
@@ -30,7 +30,7 @@
 
 
 #include <time.h>
-
+#include "dabc/Exception.h"
 
 
 saftdabc::Input::Input (const saftdabc::DeviceRef &owner) :
@@ -114,11 +114,14 @@ bool saftdabc::Input::Close ()
 
 unsigned saftdabc::Input::Read_Size ()
 {
+  try
+
+{
   DOUT3("saftdabc::Input::Read_Size...");
   if(fUseCallbackMode) return dabc::di_DfltBufSize;
 
   // here may do forwarding to callback or poll with timeout if no data in queues
-  dabc::LockGuard (fQueueMutex, true); // protect against saftlib callback <-Device thread
+  dabc::LockGuard gard (fQueueMutex, true); // protect against saftlib callback <-Device thread
   bool nodata=fTimingEventQueue.empty();
   if(fVerbose)
     {
@@ -126,41 +129,58 @@ unsigned saftdabc::Input::Read_Size ()
     }
   return (nodata ? dabc::di_RepeatTimeOut: dabc::di_DfltBufSize);
 
-
-
 //  if(fUseCallbackMode && nodata) fWaitingForCallback=true;
 //  return (nodata ? (fUseCallbackMode ? dabc::di_CallBack : dabc::di_RepeatTimeOut): dabc::di_DfltBufSize);
+
+
+}    // try
+  catch (std::exception& ex)    // also handles std::exception
+  {
+    EOUT(" saftdabc::Input::Read_Size with std exception %s ", ex.what());
+    return dabc::di_Error;
+  }
+  return dabc::di_Error;
 }
 
 unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 {
-  dabc::LockGuard (fQueueMutex, true); // protect against saftlib callback <-Device thread
-  if(fTimingEventQueue.empty())
+  try
   {
-    if(fUseCallbackMode)
+    dabc::LockGuard gard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
+    if (fTimingEventQueue.empty ())
     {
-        fWaitingForCallback=true;
-        DOUT1("saftdabc::Input::Read_Start sets fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
+      if (fUseCallbackMode)
+      {
+        fWaitingForCallback = true;
+        DOUT1("saftdabc::Input::Read_Start sets fWaitingForCallback=%s", DBOOL(fWaitingForCallback));
         return dabc::di_CallBack;
-     }
-    else
-    {
-      EOUT("saftdabc::Input::Read_Start() with empty queue in polling mode!");
-      return dabc::di_Error;
-    }
+      }
+      else
+      {
+        EOUT("saftdabc::Input::Read_Start() with empty queue in polling mode!");
+        return dabc::di_Error;
+      }
 
     }
-  return dabc::di_Ok;
+    return dabc::di_Ok;
+
+  }    // try
+  catch (std::exception& ex)    // also handles std::exception
+  {
+    EOUT(" saftdabc::Input::Read_Start with std exception %s ", ex.what());
+    return dabc::di_Error;
+  }
+
+  return dabc::di_Error;
 }
-
 
 
 unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 {
+  try{
+
   DOUT5("saftdabc::Input::Read_Complete...");
-
-  dabc::LockGuard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
-
+  dabc::LockGuard gard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
   DOUT3("saftdabc::Input::Read_Read_Complete with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
 
   // TODO: switch between mbs and hadaq output formats!
@@ -170,33 +190,70 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 
   if(fVerbose) DOUT0("saftdabc::Input::Read_Complete begins new event %d", fEventNumber);
 
+  if(!iter.IsPlaceForEvent(sizeof(Timing_Event), true))
+    {
+      // NEVER COME HERE for correctly configured pool?
+      EOUT("saftdabc::Input::Read_Complete: buffer too small for a single Timing Event!");
+      return dabc::di_SkipBuffer;
+    }
   iter.NewEvent (fEventNumber++);
   iter.NewSubevent2 (fSubeventId);
-  unsigned size = 0;
+  //unsigned size = 0;
   while (!fTimingEventQueue.empty ())
   {
+    if (!iter.IsPlaceForRawData(sizeof(Timing_Event)))
+        {
+            //dabc::Pointer* pp= (dabc::Pointer*) iter.subevnt();
+            DOUT0("saftdabc::Input::Read_Complete - buffer remaining size %ld too small for next timing event!",
+                iter.maxrawdatasize());
+            fVerbose=true; // switch on full debug for the following things
+            break;
+        }
+
+
     Timing_Event theEvent = fTimingEventQueue.front ();
-    fTimingEventQueue.pop ();
     if(fVerbose)
     {
       char buf[1024];
       theEvent.InfoMessage(buf,1024);
-      DOUT0("saftdabc::Input::Read_Read_Complete sees event: %s",buf);
+      DOUT0("saftdabc::Input::Read_Complete sees event: %s",buf);
     }
     unsigned len = sizeof(Timing_Event);
-    if (!iter.AddRawData (&theEvent, len))
+    if (!iter.AddRawData (&theEvent, len)){
+
+      DOUT0("saftdabc::Input::Read_Complete could not add data of len=%ld to subevent of maxraw=%ld, queuelen=%d",
+          len, iter.maxrawdatasize(), fTimingEventQueue.size());
       break;
-    size += len;
-    //fTimingEventQueue.pop ();
+    }
+    //size += len;
+    fTimingEventQueue.pop ();
     fDevice.AddEventStatistics(1);
   }
-  iter.FinishSubEvent (size);
+  //iter.FinishSubEvent (size);
+  iter.FinishSubEvent();
   iter.FinishEvent ();
   buf = iter.Close ();
 //
   DOUT3("Read buf size = %u", buf.GetTotalSize());
 
   return dabc::di_Ok;
+
+
+}    // try
+
+  catch (const Glib::Error& error)
+  {
+    EOUT("saftdabc::Input::Read_Complete with Glib error %s", error.what().c_str());
+    return dabc::di_Error;
+  }
+  catch (std::exception& ex) // also handles std::exception
+  {
+    EOUT(" saftdabc::Input::Read_Complete with std exception %s ", ex.what());
+    return dabc::di_Error;
+  }
+
+
+
 }
 
 bool saftdabc::Input::SetupConditions ()
@@ -242,6 +299,11 @@ bool saftdabc::Input::SetupConditions ()
     EOUT("Glib error %s in SetupConditions", error.what().c_str());
     return false;
   }
+  catch (std::exception& ex)
+   {
+     EOUT("std exception %s in SetupConditions", ex.what());
+     return false;
+   }
 
   return true;
 }
@@ -252,48 +314,57 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
   DOUT3("saftdabc::Input::EventHandler...");
   /* This is the signalhandler that treats condition events from saftlib*/
-  dabc::LockGuard(fQueueMutex,true); // protect against Transport thread
-
- std::string description=fDevice.GetInputDescription(event);
-if(fVerbose)
-{
-  DOUT0("Input::EventHandler sees event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%x, description:%s",
-      event, param , deadline, executed, flags, description.c_str());
-  DOUT0("Formatted Date:%s",
-      saftdabc::tr_formatDate(executed, PMODE_VERBOSE).c_str());
-  DOUT0("Eventid:%s",
-       saftdabc::tr_formatActionEvent(event,PMODE_VERBOSE).c_str());
-}
-  fTimingEventQueue.push(Timing_Event (event, param , deadline, executed, flags, description.c_str()));
-  DOUT3("TimingEventQueue is filled with %d elements", fTimingEventQueue.size());
-
-  fDevice.SetInfo(dabc::format("Received %s at %s!",
-      saftdabc::tr_formatActionEvent(event,PMODE_VERBOSE).c_str(),
-      saftdabc::tr_formatDate(executed, PMODE_VERBOSE).c_str()));
-
-  DOUT3("saftdabc::Input::EventHandler with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
-  if (fUseCallbackMode && fWaitingForCallback)
+  dabc::LockGuard gard(fQueueMutex, true);    // protect against Transport thread
+  try
   {
+    std::string description = fDevice.GetInputDescription (event);
+    if (fVerbose)
+    {
+      DOUT0(
+          "Input::EventHandler sees event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%x, description:%s", event, param, deadline, executed, flags, description.c_str());
+      DOUT0("Formatted Date:%s", saftdabc::tr_formatDate(executed, PMODE_VERBOSE).c_str());
+      DOUT0("Eventid:%s", saftdabc::tr_formatActionEvent(event,PMODE_VERBOSE).c_str());
+    }
+    fTimingEventQueue.push (Timing_Event (event, param, deadline, executed, flags, description.c_str ()));
+    DOUT3("TimingEventQueue is filled with %d elements", fTimingEventQueue.size());
+
+    fDevice.SetInfo (
+        dabc::format ("Received %s at %s!", saftdabc::tr_formatActionEvent (event, PMODE_VERBOSE).c_str (),
+            saftdabc::tr_formatDate (executed, PMODE_VERBOSE).c_str ()));
+
+    DOUT3("saftdabc::Input::EventHandler with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
+    if (fUseCallbackMode && fWaitingForCallback)
+    {
       // do not call Read_CallBack again during transport running
-    // issue callback to dabc transport here:
-    dabc::InputTransport* tr = dynamic_cast<dabc::InputTransport*> (fTransport ());
-    if (tr != 0)
-    {
-      //unsigned datasize=fTimingEventQueue.size()* sizeof(saftdabc::Timing_Event) + sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
-      // todo: adjust if using different output data format, e.g. hadtu
+      // issue callback to dabc transport here:
+      dabc::InputTransport* tr = dynamic_cast<dabc::InputTransport*> (fTransport ());
+      if (tr != 0)
+      {
+        //unsigned datasize=fTimingEventQueue.size()* sizeof(saftdabc::Timing_Event) + sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
+        // todo: adjust if using different output data format, e.g. hadtu
 
-      unsigned datasize=dabc::di_DfltBufSize; // always use full buffer anyway.
-      tr->Read_CallBack (datasize);
-      fWaitingForCallback=false;
-      DOUT1("saftdabc::Input::EventHandler after Read_CallBack, fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
-    }
-    else
-    {
-      EOUT("Worker %p is not an InputTransport, can not Read_CallBack", fTransport());
-    }
+        unsigned datasize = dabc::di_DfltBufSize;    // always use full buffer anyway.
+        tr->Read_CallBack (datasize);
+        fWaitingForCallback = false;
+        DOUT1("saftdabc::Input::EventHandler after Read_CallBack, fWaitingForCallback=%s", DBOOL(fWaitingForCallback));
+      }
+      else
+      {
+        EOUT("Worker %p is not an InputTransport, can not Read_CallBack", fTransport());
+      }
 
+    }    //  if (fUseCallbackMode &
+
+  }    // try
+
+  catch (const Glib::Error& error)
+  {
+    EOUT("saftdabc::Input::EventHandler with Glib error %s", error.what().c_str());
   }
-
+  catch (std::exception& ex)
+  {
+    EOUT(" saftdabc::Input::EventHandler with std exception %s ", ex.what());
+  }
 
 }
 

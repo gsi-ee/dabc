@@ -37,23 +37,34 @@ class TSaftProc : public TGo4EventProcessor {
 
     TSaftParam* fPar;
 
-   /** time difference of subsequent events*/
+   /** "executed" time difference of subsequent events*/
    TH1* hDeltaT;
+
+   /** "deadline" time difference of subsequent events*/
+   TH1* hDeltaT_deadline;
 
    /** time difference of subsequent events, coarse range overview*/
    TH1* hDeltaT_coarse;
 
+   /** time difference of subsequent events, fine detail of deadline*/
+   TH1* hDeltaT_deadline_fine;
+
    /** sequence number diff of events*/
    TH1* hDeltaN;
 
+   /** counts lost events by checking leading/trailing edge alternation*/
+   TH1* hLostSequence;
 
 
    /** remember last mbs event number received*/
    unsigned fLastEventNumber;
 
-   /** remember last time stamp received*/
+   /** remember last time stamp (executed) received*/
    uint64_t fLastTime;
 
+
+   /** remember last time stamp (deadling) received*/
+   uint64_t fLastTimeDeadline;
 
    /** remember last time stamp of large deltat*/
    uint64_t fLastFlipTime;

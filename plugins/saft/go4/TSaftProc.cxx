@@ -49,7 +49,7 @@
 
 
 //***********************************************************
-TSaftProc::TSaftProc() : TGo4EventProcessor(), fLastEventNumber(0), fLastTime(0),fLastFlipTime(0)
+TSaftProc::TSaftProc() : TGo4EventProcessor(), fLastEventNumber(0), fLastTime(0),fLastTimeDeadline(0), fLastFlipTime(0)
 {
 
 
@@ -67,9 +67,16 @@ TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumb
 {
    TGo4Log::Info("TSaftProc: Create instance %s", name);
    hDeltaN=MakeTH1('I',"DeltaN","MBS Eventnumber difference", 1000, 0,1000);
-   hDeltaT=MakeTH1('I',"DeltaT","Timing Events  execution difference", 5000000, 0, 5000000,"us","N");    // resolution is milliseconds
+   hDeltaT=MakeTH1('I',"DeltaT","Timing Events  execution difference", 1000000, 0, 1000000,"us","N");    // resolution is milliseconds
+   hDeltaT_deadline=MakeTH1('I',"DeltaT_deadline","Timing Events  deadline difference", 1000000, 0, 1000000,"us","N");
+
    hDeltaT_coarse=MakeTH1('I',"DeltaT_coarse","Coarse Timing Events  execution difference",
        10000, 0, 1.0e12,"ns","N"); // 100s range, 10 ms resolution
+
+
+   hDeltaT_deadline_fine=MakeTH1('I',"DeltaT_deadline_fine","Timing Events deadline fine difference", 1000000, 0, 1000000,"ns","N");
+
+
 
    fPar=dynamic_cast<TSaftParam*>(MakeParameter("SaftParam", "TSaftParam", "set_SaftParam.C"));
 
@@ -154,9 +161,17 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
           if(fLastTime>0)
             {
             uint64_t delta=theEvent.fExecuted - fLastTime;
+            hDeltaT_coarse->Fill(delta);
             Double_t deltaus=delta/1.0e3; // ns to microseconds
             hDeltaT->Fill(deltaus);
-            hDeltaT_coarse->Fill(delta);
+
+            uint64_t deltaDead=theEvent.fDeadline - fLastTimeDeadline;
+            Double_t deltadeadaus=deltaDead/1.0e3; // ns to microseconds
+            hDeltaT_deadline->Fill(deltadeadaus);
+
+
+
+            hDeltaT_deadline_fine->Fill(deltaDead);
             // DEBUG big deltas:
             if(delta>1.0e+9)
             {
@@ -177,8 +192,9 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
 
 
 
-            }
+          } //if(fLastTime>0)
           fLastTime=theEvent.fExecuted;
+          fLastTimeDeadline=theEvent.fDeadline;
           lastEvent=theEvent;
           // skip size of description text:
           int textsize=SAFT_DABC_DESCRLEN/sizeof(Int_t);
