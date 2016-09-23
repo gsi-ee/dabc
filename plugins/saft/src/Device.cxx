@@ -41,7 +41,7 @@
 saftdabc::Device::Device (const std::string& name, dabc::Command cmd) :
     dabc::Device (name)
 {
-  Gio::init(); // required at the beginnning ?
+  Gio::init(); // required at the beginnning !
   fBoardName = Cfg (saftdabc::xmlDeviceName, cmd).AsStr (name);
 
   fGlibMainloop= Glib::MainLoop::create(); //Glib::MainLoop::create(true) to run immediately?
@@ -99,6 +99,7 @@ bool saftdabc::Device::DestroyByOwnThread ()
 
   DOUT1("DDDDDDDDDDd saftdabc::Device DestroyByOwnThread()was called \n");
   // optionally clenaup something here?
+  fGlibMainloop->quit();
   return dabc::Device::DestroyByOwnThread ();
 }
 
@@ -109,7 +110,7 @@ void saftdabc::Device::ObjectCleanup ()
 {
   DOUT1("_______saftdabc::Device::ObjectCleanup...");
 
-  ClearConditions();
+  //ClearConditions();
   fGlibMainloop->quit();
   dabc::Device::ObjectCleanup ();
 
@@ -370,6 +371,7 @@ bool saftdabc::Device::ClearConditions ()
       Glib::RefPtr < saftlib::SoftwareCondition_Proxy > destroy_condition = *cit;
       if (destroy_condition->getDestructible () && (destroy_condition->getOwner () == ""))
       {
+        DOUT0("ClearConditions will destroy condition of ID:0x%lx .", destroy_condition->getID());
         destroy_condition->Destroy ();
         // JAM: why does saft-io-ctl example use here container
         //     std::vector <Glib::RefPtr<saftlib::InputCondition_Proxy> > prox;
@@ -378,7 +380,7 @@ bool saftdabc::Device::ClearConditions ()
         //         prox.back()->Destroy();
         // non optimized code or mandatory for some reasons?
         //
-        DOUT0("ClearConditions destroyed condition of ID:0x%x .", destroy_condition->getID());
+
       }
       else
       {
@@ -398,7 +400,7 @@ bool saftdabc::Device::ClearConditions ()
   catch (const Glib::Error& error)
   {
     /* Catch error(s) */
-    EOUT("Glib error %s in SetupConditions", error.what().c_str());
+    EOUT("Glib error %s in ClearConditions", error.what().c_str());
     return false;
 
   }

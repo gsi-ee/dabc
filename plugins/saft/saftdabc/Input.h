@@ -119,19 +119,6 @@ protected:
   /** set up saftlib conditions from the configuration.*/
   bool SetupConditions ();
 
-//  /** clean up existing saftlib conditions*/
-//  bool ClearConditions ();
-//
-//  /** Register input of name to snoop on
-//   * NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);*/
-//  bool RegisterInputCondition (std::string ioname);
-//
-//  /** Register input event per id to snoop on
-//   /** NewCondition(bool active, guint64 id, guint64 mask, gint64 offset);
-//   * acceptflags contain bitmask for accept flags: 0x1=late, 0x2=early, 0x4= conflict, 0x8=delayed
-//   * */
-//  bool RegisterEventCondition (guint64 id, guint64 mask, gint64 offset, unsigned char acceptflags);
-
 
   void ResetDescriptors ()
   {
@@ -142,11 +129,8 @@ protected:
     fSnoop_Flags.clear ();
   }
 
-  void ClearEventQueue ()
-  {
-    //single queue for all WR events:
-    while(!fTimingEventQueue.empty()) fTimingEventQueue.pop();
-  }
+  /** clear input queue of timing events */
+  void ClearEventQueue ();
 
   bool Close ();
 

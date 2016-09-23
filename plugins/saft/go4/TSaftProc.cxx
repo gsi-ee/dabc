@@ -76,7 +76,12 @@ TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumb
 
    hDeltaT_deadline_fine=MakeTH1('I',"DeltaT_deadline_fine","Timing Events deadline fine difference", 1000000, 0, 1000000,"ns","N");
 
-
+   hLostSequence=MakeTH1('I',"LostEdges","Lost rising or falling edges",2,0,2);
+   if(IsObjMade())
+   {
+     hLostSequence->GetXaxis()->SetBinLabel(1,"Rising");
+     hLostSequence->GetXaxis()->SetBinLabel(2,"Falling");
+   }
 
    fPar=dynamic_cast<TSaftParam*>(MakeParameter("SaftParam", "TSaftParam", "set_SaftParam.C"));
 
@@ -189,6 +194,16 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
               fLastFlipTime=fLastTime;
             }
 
+            if((lastEvent.fEvent & 0x1) == (theEvent.fEvent & 0x1))
+            {
+              // same type of input edges (rising or falling) since last event. not possible with pulser test
+
+              if(theEvent.fEvent & 0x1)
+                hLostSequence->Fill(1); // we are rising edge and have lost a falling edge before
+              else
+                hLostSequence->Fill(0); // we are falling edge and have lost a rising befoe
+            }
+
 
 
 
@@ -196,6 +211,9 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
           fLastTime=theEvent.fExecuted;
           fLastTimeDeadline=theEvent.fDeadline;
           lastEvent=theEvent;
+
+
+
           // skip size of description text:
           int textsize=SAFT_DABC_DESCRLEN/sizeof(Int_t);
           while(textsize--)

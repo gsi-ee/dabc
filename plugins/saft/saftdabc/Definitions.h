@@ -113,7 +113,7 @@ extern const char* xmlSaftVerbose;
        fEvent (event), fParam (param), fDeadline (deadline), fExecuted (executed), fFlags (flags)
    {
      if(description)
-       snprintf(fDescription, SAFT_DABC_DESCRLEN, "%s",description);
+       snprintf(fDescription, SAFT_DABC_DESCRLEN-2, "%s",description);
    }
 
 
