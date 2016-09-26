@@ -27,6 +27,9 @@
 
 //#include "saftdabc/Device.h"
 
+// test here if it matters to use dabc lockguard
+#define SAFTDABC_USE_LOCKGUARD 1
+
 
 
 #include <time.h>
@@ -119,10 +122,17 @@ bool saftdabc::Input::Close ()
 
 void saftdabc::Input::ClearEventQueue ()
  {
-   //dabc::LockGuard gard (fQueueMutex, true);
-   fQueueMutex.Lock();
+
+#ifdef   SAFTDABC_USE_LOCKGUARD
+   dabc::LockGuard gard (fQueueMutex);
+#else
+  fQueueMutex.Lock();
+#endif
    while(!fTimingEventQueue.empty()) fTimingEventQueue.pop();
+
+#ifndef   SAFTDABC_USE_LOCKGUARD
    fQueueMutex.Unlock();
+#endif
  }
 
 
@@ -136,13 +146,19 @@ unsigned saftdabc::Input::Read_Size ()
   if(fUseCallbackMode) return dabc::di_DfltBufSize;
 
   // here may do forwarding to callback or poll with timeout if no data in queues
+#ifdef   SAFTDABC_USE_LOCKGUARD
+dabc::LockGuard gard (fQueueMutex);
+#else
   fQueueMutex.Lock();
+#endif
   bool nodata=fTimingEventQueue.empty();
   if(fVerbose)
     {
       if(nodata) DOUT3("saftdabc::Input::Read_Size returns with timeout!");
     }
+#ifndef   SAFTDABC_USE_LOCKGUARD
   fQueueMutex.Unlock();
+#endif
   return (nodata ? dabc::di_RepeatTimeOut: dabc::di_DfltBufSize);
 
 //  if(fUseCallbackMode && nodata) fWaitingForCallback=true;
@@ -153,7 +169,9 @@ unsigned saftdabc::Input::Read_Size ()
   catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Size with std exception %s ", ex.what());
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
     return dabc::di_Error;
   }
   return dabc::di_Error;
@@ -166,32 +184,44 @@ unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 
   try
   {
+#ifdef   SAFTDABC_USE_LOCKGUARD
+    dabc::LockGuard gard (fQueueMutex);
+#else
     fQueueMutex.Lock();
+#endif
     if (fTimingEventQueue.empty ())
     {
       if (fUseCallbackMode)
       {
         fWaitingForCallback = true;
         DOUT1("saftdabc::Input::Read_Start sets fWaitingForCallback=%s", DBOOL(fWaitingForCallback));
+#ifndef   SAFTDABC_USE_LOCKGUARD
         fQueueMutex.Unlock();
+#endif
         return dabc::di_CallBack;
       }
       else
       {
         EOUT("saftdabc::Input::Read_Start() with empty queue in polling mode!");
+#ifndef   SAFTDABC_USE_LOCKGUARD
         fQueueMutex.Unlock();
+#endif
         return dabc::di_Error;
       }
 
     }
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
     return dabc::di_Ok;
 
   }    // try
   catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Start with std exception %s ", ex.what());
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
     return dabc::di_Error;
   }
 
@@ -206,7 +236,11 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 
   try{
   DOUT5("saftdabc::Input::Read_Complete...");
+#ifdef   SAFTDABC_USE_LOCKGUARD
+    dabc::LockGuard gard (fQueueMutex);
+#else
   fQueueMutex.Lock();
+#endif
   DOUT3("saftdabc::Input::Read_Read_Complete with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
 
   // TODO: switch between mbs and hadaq output formats!
@@ -238,7 +272,7 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
             uint32_t rest= iter.maxrawdatasize() - ec * sizeof(Timing_Event);
             DOUT0("saftdabc::Input::Read_Complete - buffer remaining size is %d bytes too small for next timing event!",
                 rest);
-            fVerbose=true; // switch on full debug for the following things
+            //fVerbose=true; // switch on full debug for the following things
             break;
         }
 
@@ -271,8 +305,9 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 //
   DOUT3("Read buf size = %u", buf.GetTotalSize());
   if(fVerbose) DOUT0("saftdabc::Input::Read_Complete closes new event %d, read buffer size=%u", fEventNumber, buf.GetTotalSize());
-
+#ifndef   SAFTDABC_USE_LOCKGUARD
   fQueueMutex.Unlock();
+#endif
   return dabc::di_Ok;
 
 
@@ -281,13 +316,18 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
   catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::Read_Complete with Glib error %s", error.what().c_str());
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
     return dabc::di_Error;
   }
   catch (std::exception& ex) // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Complete with std exception %s ", ex.what());
+
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
     return dabc::di_Error;
   }
 
@@ -357,7 +397,11 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
   try
   {
+#ifdef SAFTDABC_USE_LOCKGUARD
+    dabc::LockGuard gard (fQueueMutex);
+#else
     fQueueMutex.Lock();
+#endif
     std::string description = fDevice.GetInputDescription (event);
     if (fVerbose)
     {
@@ -395,18 +439,25 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       }
 
     }    //  if (fUseCallbackMode &
+
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
   }    // try
 
   catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::EventHandler with Glib error %s", error.what().c_str());
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
   }
   catch (std::exception& ex)
   {
     EOUT(" saftdabc::Input::EventHandler with std exception %s ", ex.what());
+#ifndef   SAFTDABC_USE_LOCKGUARD
     fQueueMutex.Unlock();
+#endif
   }
 
 }
