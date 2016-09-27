@@ -106,11 +106,12 @@ extern const char* xmlSaftVerbose;
    uint64_t fDeadline;
    uint64_t fExecuted;
    uint64_t fFlags;
+   uint64_t fOverflows;
    char     fDescription[SAFT_DABC_DESCRLEN]; //< specifies input type. we use simple char field for mbs buffers etc.
 
    Timing_Event (uint64_t event = 0, uint64_t param = 0, uint64_t deadline = 0, uint64_t executed = 0,
-       uint64_t flags = 0, const char* description=0) :
-       fEvent (event), fParam (param), fDeadline (deadline), fExecuted (executed), fFlags (flags)
+       uint64_t flags = 0, uint64_t overflows = 0,const char* description=0) :
+       fEvent (event), fParam (param), fDeadline (deadline), fExecuted (executed), fFlags (flags), fOverflows(overflows)
    {
      if(description)
        snprintf(fDescription, SAFT_DABC_DESCRLEN-2, "%s",description);
@@ -120,8 +121,8 @@ extern const char* xmlSaftVerbose;
    int InfoMessage(char* str, size_t len)
    {
       if(str==0) return -1;
-      return snprintf(str, len, "saftdabc::Timing_Event - event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%lx, description:%s",
-          fEvent, fParam , fDeadline, fExecuted, fFlags, fDescription);
+      return snprintf(str, len, "saftdabc::Timing_Event - event=0x%lx, param=0x%lx , deadline=0x%lx, executed=0x%lx, flags=0x%lx, overflows=0x%lx, description:%s",
+          fEvent, fParam , fDeadline, fExecuted, fFlags, fOverflows, fDescription);
 
    }
 

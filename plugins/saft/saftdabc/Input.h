@@ -67,6 +67,14 @@ private:
   bool fWaitingForCallback;
 
 
+  /** current overflow counter of all configured inputs*/
+  uint64_t fOverflowCount;
+
+  /** previous overflow counter of all configured inputs*/
+  uint64_t fLastOverflowCount;
+
+
+
 protected:
 
 
@@ -155,12 +163,12 @@ public:
   }
 
 
-  /* This is the signalhandler that treats condition events from saftlib
-     TODO: link to condition by
-     sigc::slot<void, int> sl = sigc::mem_fun(my_foo, &foo::bar);*/
+    /** This is the signalhandler that treats condition events from saftlib*/
     void EventHandler (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags = 0xF);
 
 
+    /** This is a signalhandler that treats overflow counter events*/
+    void OverflowHandler(guint64 count);
 
 };
 

@@ -83,6 +83,16 @@ TSaftProc::TSaftProc(const char* name) : TGo4EventProcessor(name),fLastEventNumb
      hLostSequence->GetXaxis()->SetBinLabel(2,"Falling");
    }
 
+
+   hOverflowCounts=MakeTH1('I',"OverflowCounts","Relative Action sink overflows",1000,0,1000);
+   hOverflowScaler=MakeTH1('I',"OverflowScaler","Action sink Overflow sum",2,0,2);
+   if(IsObjMade())
+     {
+       hOverflowScaler->GetXaxis()->SetBinLabel(1,"No loss");
+       hOverflowScaler->GetXaxis()->SetBinLabel(2,"Overflows");
+     }
+
+
    fPar=dynamic_cast<TSaftParam*>(MakeParameter("SaftParam", "TSaftParam", "set_SaftParam.C"));
 
 }
@@ -138,7 +148,12 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
           theEvent.fExecuted = (hi<<32) | (lo & 0xFFFFFFFF);
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
-          theEvent.fFlags = (hi<<32) | lo;
+          theEvent.fFlags = (hi<<32) | (lo & 0xFFFFFFFF);
+          lo=(uint64_t)(*pdata++);
+          hi=(uint64_t)(*pdata++);
+          theEvent.fOverflows = (hi<<32) | (lo & 0xFFFFFFFF);
+
+
           snprintf(theEvent.fDescription,SAFT_DABC_DESCRLEN, "%s", (const char*)(pdata));
           if(theEvent.InfoMessage(buf,1024)<0)
           {
@@ -201,11 +216,18 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
               if(theEvent.fEvent & 0x1)
                 hLostSequence->Fill(1); // we are rising edge and have lost a falling edge before
               else
-                hLostSequence->Fill(0); // we are falling edge and have lost a rising befoe
+                hLostSequence->Fill(0); // we are falling edge and have lost a rising before
             }
 
-
-
+            if(theEvent.fOverflows)
+            {
+                hOverflowCounts->Fill(theEvent.fOverflows);
+                hOverflowScaler->Fill(1,theEvent.fOverflows);
+            }
+            else
+            {
+                hOverflowScaler->Fill(0);
+            }
 
           } //if(fLastTime>0)
           fLastTime=theEvent.fExecuted;

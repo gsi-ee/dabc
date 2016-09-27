@@ -149,6 +149,10 @@ protected:
    std::vector<Glib::RefPtr<saftlib::SoftwareActionSink_Proxy> > fActionSinks;
 
 
+   /** Mutex to protect list of condition proxies*/
+   dabc::Mutex fConditionMutex;
+
+
    /** Translation table IO name <> prefix
       * like in  saft-io-ctl implementation*/
     std::map<Glib::ustring, guint64> fMap_PrefixName;

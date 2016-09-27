@@ -55,6 +55,12 @@ class TSaftProc : public TGo4EventProcessor {
    /** counts lost events by checking leading/trailing edge alternation*/
    TH1* hLostSequence;
 
+   /** histogram of increase of overflow counter as taken from action sink. Part of our timing event structure*/
+   TH1* hOverflowCounts;
+
+
+   /** scaler for total overflow counter versus timing events without loss*/
+   TH1* hOverflowScaler;
 
    /** remember last mbs event number received*/
    unsigned fLastEventNumber;

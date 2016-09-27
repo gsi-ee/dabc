@@ -39,7 +39,7 @@
 
 
 saftdabc::Device::Device (const std::string& name, dabc::Command cmd) :
-    dabc::Device (name)
+    dabc::Device (name),fConditionMutex(true)
 {
   Gio::init(); // required at the beginnning !
   fBoardName = Cfg (saftdabc::xmlDeviceName, cmd).AsStr (name);
@@ -99,6 +99,7 @@ bool saftdabc::Device::DestroyByOwnThread ()
 
   DOUT1("DDDDDDDDDDd saftdabc::Device DestroyByOwnThread()was called \n");
   // optionally clenaup something here?
+
   fGlibMainloop->quit();
   return dabc::Device::DestroyByOwnThread ();
 }
@@ -201,6 +202,7 @@ bool saftdabc::Device::RegisterInputCondition(saftdabc::Input* receiver, std::st
   if(receiver==0) return false;
 
   try{
+    dabc::LockGuard gard(fConditionMutex);
     bool found=false;
     const char* ioname=name.c_str(); // JAM need this hop because of map with Glib::ustring? better copy as is...
 
@@ -272,7 +274,9 @@ bool saftdabc::Device::RegisterEventCondition (saftdabc::Input* receiver, guint6
 
   try
   {
+    dabc::LockGuard gard(fConditionMutex);
     fActionSinks.push_back (saftlib::SoftwareActionSink_Proxy::create (fTimingReceiver->NewSoftwareActionSink ("")));
+    fActionSinks.back()->OverflowCount.connect(sigc::mem_fun (receiver, &saftdabc::Input::OverflowHandler));
     fConditionProxies.push_back (
         saftlib::SoftwareCondition_Proxy::create (fActionSinks.back ()->NewCondition (true, id, mask, offset)));
     fConditionProxies.back ()->Action.connect (sigc::mem_fun (receiver, &saftdabc::Input::EventHandler));
@@ -313,6 +317,7 @@ const std::string saftdabc::Device::GetInputDescription (guint64 event)
 {
   try
   {
+    dabc::LockGuard gard(fConditionMutex);
     Glib::ustring catched_io = "WR_Event";
     for (std::map<Glib::ustring, guint64>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)
     {
@@ -363,6 +368,7 @@ bool saftdabc::Device::ClearConditions ()
 
   try
   {
+    dabc::LockGuard gard(fConditionMutex);
     // first destroy conditions if possible:
     // we use our existing handles in container:_
     for (std::vector<Glib::RefPtr<saftlib::SoftwareCondition_Proxy> >::iterator cit = fConditionProxies.begin ();
@@ -389,6 +395,10 @@ bool saftdabc::Device::ClearConditions ()
             "ClearConditions found non destructible condition of ID:0x%x , owner=%s", destroy_condition->getID(), destroy_condition->getOwner().c_str());
       }
     }
+
+    // clear registered proxies
+    fConditionProxies.clear();
+
 
    // then clean up action sinks:
    // the remote action sinks in saftd service will have removed their conditions on Destroy()

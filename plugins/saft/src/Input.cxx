@@ -37,7 +37,8 @@
 
 
 saftdabc::Input::Input (const saftdabc::DeviceRef &owner) :
-    dabc::DataInput (),  fQueueMutex(false), fWaitingForCallback(false), fDevice(owner), fTimeout (1e-2), fUseCallbackMode(false), fSubeventId (8),fEventNumber (0),fVerbose(false)
+    dabc::DataInput (),  fQueueMutex(false), fWaitingForCallback(false), fOverflowCount(0), fLastOverflowCount(0), fDevice(owner), fTimeout (1e-2),
+    fUseCallbackMode(false), fSubeventId (8),fEventNumber (0),fVerbose(false)
 {
   DOUT0("saftdabc::Input CTOR");
   ClearEventQueue ();
@@ -109,12 +110,12 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
 
 bool saftdabc::Input::Close ()
 {
-  fDevice.ClearConditions();
+  //fDevice.ClearConditions();
   // TODO: method that just removes conditions belonging to this device?
 
   ClearEventQueue ();
   ResetDescriptors ();
-  DOUT1("Input::Close");
+  DOUT1("Input::Close - Overflow counts:%lu, previous:%lu",fOverflowCount, fLastOverflowCount);
   return true;
 }
 
@@ -232,12 +233,11 @@ unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 {
 
-  //dabc::LockGuard gard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
-
   try{
   DOUT5("saftdabc::Input::Read_Complete...");
 #ifdef   SAFTDABC_USE_LOCKGUARD
-    dabc::LockGuard gard (fQueueMutex);
+    dabc::LockGuard gard (fQueueMutex); // protect against saftlib callback <-Device thread
+
 #else
   fQueueMutex.Lock();
 #endif
@@ -248,8 +248,7 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 // may specify special trigger type here?
 //iter.evnt()->iTrigger=42;
 
-  if(fVerbose) DOUT0("saftdabc::Input::Read_Complete begins new event %d, mutex=0x%x, instance=0x%x",
-      fEventNumber, &fQueueMutex, (unsigned long) this);
+
 
   if(!iter.IsPlaceForEvent(sizeof(Timing_Event), true))
     {
@@ -259,6 +258,8 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
     }
   iter.NewEvent (fEventNumber++);
   iter.NewSubevent2 (fSubeventId);
+  if(fVerbose) DOUT0("saftdabc::Input::Read_Complete begins new event %d, mutex=0x%x, instance=0x%x",
+      fEventNumber, &fQueueMutex, (unsigned long) this);
   //unsigned size = 0;
   unsigned ec=0;
   while (!fTimingEventQueue.empty ())
@@ -269,10 +270,13 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
             // following check does not work, since rawdata pointer is updated in FinishSubEvent only ?
             //uint32_t rest= iter.maxrawdatasize() - (uint32_t) ((ulong) iter.rawdata() - (ulong) iter.subevnt());
             // no public access in mbs interator to remaining size. workaround:
+            if(fVerbose)
+            {
             uint32_t rest= iter.maxrawdatasize() - ec * sizeof(Timing_Event);
             DOUT0("saftdabc::Input::Read_Complete - buffer remaining size is %d bytes too small for next timing event!",
                 rest);
             //fVerbose=true; // switch on full debug for the following things
+            }
             break;
         }
 
@@ -281,9 +285,9 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
     if(fVerbose)
     {
       DOUT0("saftdabc::Input::Read_Complete with queue length %u",fTimingEventQueue.size());
-      char buf[1024];
-      theEvent.InfoMessage(buf,1024);
-      DOUT0("saftdabc::Input::Read_Complete sees event: %s",buf);
+      char txt[1024];
+      theEvent.InfoMessage(txt,1024);
+      DOUT0("saftdabc::Input::Read_Complete sees event: %s",txt);
     }
     unsigned len = sizeof(Timing_Event);
     if (!iter.AddRawData (&theEvent, len)){
@@ -303,7 +307,7 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
   iter.FinishEvent ();
   buf = iter.Close ();
 //
-  DOUT3("Read buf size = %u", buf.GetTotalSize());
+  //DOUT3("Read buf size = %u", buf.GetTotalSize());
   if(fVerbose) DOUT0("saftdabc::Input::Read_Complete closes new event %d, read buffer size=%u", fEventNumber, buf.GetTotalSize());
 #ifndef   SAFTDABC_USE_LOCKGUARD
   fQueueMutex.Unlock();
@@ -393,12 +397,10 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
   DOUT3("saftdabc::Input::EventHandler...");
   /* This is the signalhandler that treats condition events from saftlib*/
-  //dabc::LockGuard gard(fQueueMutex, true);    // protect against Transport thread
-
   try
   {
 #ifdef SAFTDABC_USE_LOCKGUARD
-    dabc::LockGuard gard (fQueueMutex);
+    dabc::LockGuard gard (fQueueMutex);// protect against Transport thread
 #else
     fQueueMutex.Lock();
 #endif
@@ -415,7 +417,16 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 //        dabc::format ("Received %s at %s!", saftdabc::tr_formatActionEvent (event, PMODE_VERBOSE).c_str (),
 //            saftdabc::tr_formatDate (deadline, PMODE_VERBOSE).c_str ()));
     }
-    fTimingEventQueue.push (Timing_Event (event, param, deadline, executed, flags, description.c_str ()));
+
+
+    uint64_t doverflow= fOverflowCount-fLastOverflowCount;
+     if (fVerbose)
+    {
+      DOUT0("saftdabc::Input::EventHandler sees overflowcount=%lu, previous=%lu, delta=%lu",fOverflowCount, fLastOverflowCount, doverflow);
+    }
+
+    fLastOverflowCount=fOverflowCount;
+    fTimingEventQueue.push (Timing_Event (event, param, deadline, executed, flags, doverflow, description.c_str ()));
     DOUT3("TimingEventQueue is filled with %d elements", fTimingEventQueue.size());
     DOUT3("saftdabc::Input::EventHandler with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
     if (fUseCallbackMode && fWaitingForCallback)
@@ -461,4 +472,15 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
   }
 
 }
+
+
+
+void saftdabc::Input::OverflowHandler(guint64 count)
+{
+  DOUT3("saftdabc::Input::OverflowHandler with counts=%lu",count);
+  dabc::LockGuard gard(fQueueMutex); // protect also the counter
+  fOverflowCount=count;
+  DOUT3("saftdabc::Input::OverflowHandler sees overflowcount=%lu, previous=%lu",fOverflowCount, fLastOverflowCount);
+}
+
 
