@@ -20,6 +20,7 @@
 #include "dabc/logging.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
+#include "dabc/Publisher.h"
 
 const unsigned dabc::AcknoledgeQueueLength = 2;
 
@@ -204,6 +205,14 @@ int dabc::Transport::ExecuteCommand(Command cmd)
 {
    if (cmd.IsName("CloseTransport")) {
       CloseTransport(cmd.GetBool("IsError", true));
+      return cmd_true;
+   } else
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName()) && (cmd.GetStr("Kind")=="transport.json")) {
+      dabc::Record info;
+      info.CreateRecord(GetName());
+      info.SetField("IsInput", IsInputTransport());
+      info.SetField("IsOutput", IsOutputTransport());
+      cmd.SetStr("StringReply", info.SaveToJson());
       return cmd_true;
    }
 

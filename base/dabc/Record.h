@@ -547,8 +547,6 @@ namespace dabc {
 
       bool ReadFromBuffer(const dabc::Buffer& buf);
 
-      protected:
-
       virtual void CreateRecord(const std::string& name);
 
    };

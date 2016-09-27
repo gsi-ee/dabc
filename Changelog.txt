@@ -2,6 +2,16 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+
+27.09.2016
+1. Implement module.json debug request. It is processed by any published module
+   and returns number of input/output ports and fill state of input queues.
+   Can be used as http://server:8090/Module/module.json
+2. Implement transport.json debug request. Return elementary state of transport,
+   assigned with module input or output port. Can be used as
+      http://server:8090/Module/Input0/transport.json 
+
+
 25.01.2016
 1. Extend hldprint functionality - print debug values with text info
 2. Support tdc trailer, temperature and design id printing

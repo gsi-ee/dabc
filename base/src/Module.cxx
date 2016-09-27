@@ -27,6 +27,7 @@
 #include "dabc/Application.h"
 #include "dabc/ConfigBase.h"
 #include "dabc/Hierarchy.h"
+#include "dabc/Publisher.h"
 
 // __________________________________________________________________
 
@@ -465,6 +466,44 @@ int dabc::Module::PreviewCommand(Command cmd)
       } else {
          cmd_res = cmd_false;
       }
+   } else
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName()) && (cmd.GetStr("Kind")=="module.json")) {
+
+      dabc::Record info;
+
+      info.CreateRecord(GetName());
+
+      info.SetField("NumInputs", NumInputs());
+      info.SetField("NumOutputs", NumOutputs());
+      info.SetField("NumPools", NumPools());
+
+      std::vector<int64_t> outq, inpq, cansend, canrecv, cantake;
+      for (unsigned indx=0;indx<NumOutputs();++indx) {
+         outq.push_back(OutputQueueCapacity(indx));
+         cansend.push_back(fOutputs[indx]->NumCanSend());
+      }
+      for (unsigned indx=0;indx<NumInputs();++indx) {
+         inpq.push_back(InputQueueCapacity(indx));
+         canrecv.push_back(fInputs[indx]->NumCanRecv());
+      }
+      for (unsigned indx=0;indx<NumPools();++indx) {
+         cantake.push_back(fPools[indx]->CanTakeBuffer() ? 0 : 1);
+      }
+
+      info.SetField("InputQueueCapacity", inpq);
+      info.SetField("OutputQueueCapacity", outq);
+      info.SetField("NumCanSend", cansend);
+      info.SetField("NumCanRecv", canrecv);
+
+      cmd.SetStr("StringReply", info.SaveToJson());
+
+      cmd_res = cmd_true;
+   } else
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName()) && (cmd.GetStr("Kind")=="transport.json") && !FindPort(cmd.GetStr("subitem")).null()) {
+      std::string portname = cmd.GetStr("subitem");
+      cmd.RemoveField("subitem");
+      if (SubmitCommandToTransport(portname, cmd)) cmd_res = cmd_postponed;
+                                              else cmd_res = cmd_false;
    } else
       cmd_res = Worker::PreviewCommand(cmd);
 

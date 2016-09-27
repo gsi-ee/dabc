@@ -20,6 +20,7 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
+#include "dabc/Publisher.h"
 
 
 dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner) :
@@ -205,6 +206,17 @@ int dabc::InputTransport::ExecuteCommand(Command cmd)
    if (cmd.IsName("GetTransportStatistic")) {
       // take statistic from output element
       if (fInput) fInput->Read_Stat(cmd);
+      return cmd_true;
+   }
+
+   if (cmd.IsName(dabc::CmdGetBinary::CmdName()) && (cmd.GetStr("Kind")=="transport.json")) {
+      dabc::Record info;
+      info.CreateRecord(GetName());
+      info.SetField("IsInput", IsInputTransport());
+      info.SetField("IsOutput", IsOutputTransport());
+      info.SetField("HasInput", fInput ? true : false);
+      info.SetField("InpState", (int) fInpState);
+      cmd.SetStr("StringReply", info.SaveToJson());
       return cmd_true;
    }
 
