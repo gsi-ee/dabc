@@ -139,7 +139,12 @@ void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
 
 bool mbs::CombinerModule::FlushBuffer()
 {
-   if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
+   unsigned cnt = 0;
+
+   if (fOut.IsEmpty() || !fOut.IsBuffer())
+      while ((cnt<100) && BuildEvent()) ++cnt;
+
+   if (cnt==0) return false;
 
    if (!CanSendToAllOutputs()) return false;
 
@@ -422,7 +427,7 @@ bool mbs::CombinerModule::BuildEvent()
 
          continue;
       }
-      
+
       sel_str += dabc::format(" %d", ninp);
 
       num_selected_all++;
@@ -448,8 +453,8 @@ bool mbs::CombinerModule::BuildEvent()
    }
 
    bool do_skip_data = false;
-   
-   
+
+
 
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u selected  %s", buildevid, num_selected_important, NumObligatoryInputs(), sel_str.c_str()));
