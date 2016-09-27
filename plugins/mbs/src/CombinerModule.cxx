@@ -133,15 +133,16 @@ void mbs::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 
 void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
-   if (fFlushFlag) FlushBuffer();
+   if (fFlushFlag) {
+      unsigned cnt = 0;
+      while (IsRunning() && (cnt<100) && BuildEvent()) ++cnt;
+      FlushBuffer();
+   }
    fFlushFlag = true;
 }
 
 bool mbs::CombinerModule::FlushBuffer()
 {
-   unsigned cnt = 0;
-   while (IsRunning() && (cnt<100) && BuildEvent()) ++cnt;
-
    if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
 
    if (!CanSendToAllOutputs()) return false;
