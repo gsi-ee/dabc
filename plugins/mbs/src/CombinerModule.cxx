@@ -140,11 +140,9 @@ void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
 bool mbs::CombinerModule::FlushBuffer()
 {
    unsigned cnt = 0;
+   while ((cnt<100) && BuildEvent()) ++cnt;
 
-   if (fOut.IsEmpty() || !fOut.IsBuffer())
-      while ((cnt<100) && BuildEvent()) ++cnt;
-
-   if (cnt==0) return false;
+   if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
 
    if (!CanSendToAllOutputs()) return false;
 
