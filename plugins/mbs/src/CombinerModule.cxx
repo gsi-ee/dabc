@@ -140,7 +140,7 @@ void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
 bool mbs::CombinerModule::FlushBuffer()
 {
    unsigned cnt = 0;
-   while ((cnt<100) && BuildEvent()) ++cnt;
+   while (IsRunning() && (cnt<100) && BuildEvent()) ++cnt;
 
    if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
 
@@ -164,7 +164,9 @@ void mbs::CombinerModule::BeforeModuleStart()
 
    // FIXME: why event processing already done here ???
 
-   while (BuildEvent());
+   unsigned cnt=0;
+
+   while (cnt<100 && BuildEvent()) cnt++;
 
    DOUT0("mbs::CombinerModule::BeforeModuleStart name: %s is finished %u %u", GetName(), NumInputs(), NumOutputs());
 }
