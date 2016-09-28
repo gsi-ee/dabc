@@ -38,7 +38,7 @@
 
 saftdabc::Input::Input (const saftdabc::DeviceRef &owner) :
     dabc::DataInput (),  fQueueMutex(false), fWaitingForCallback(false), fOverflowCount(0), fLastOverflowCount(0), fDevice(owner), fTimeout (1e-2),
-    fUseCallbackMode(false), fSubeventId (8),fEventNumber (0),fVerbose(false)
+    fUseCallbackMode(false), fSubeventId (8),fEventNumber (0),fVerbose(false),fSingleEvents(false)
 {
   DOUT0("saftdabc::Input CTOR");
   ClearEventQueue ();
@@ -65,6 +65,7 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
   fTimeout = wrk.Cfg (saftdabc::xmlTimeout, cmd).AsDouble (fTimeout);
   fUseCallbackMode=wrk.Cfg (saftdabc::xmlCallbackMode, cmd).AsBool (fUseCallbackMode);
   fSubeventId = wrk.Cfg (saftdabc::xmlSaftSubeventId, cmd).AsInt (fSubeventId);
+  fSingleEvents= wrk.Cfg (saftdabc::xmlSaftSingleEvent, cmd).AsBool (fSingleEvents);
   fVerbose= wrk.Cfg (saftdabc::xmlSaftVerbose, cmd).AsBool (fVerbose);
   fInput_Names = wrk.Cfg (saftdabc::xmlInputs, cmd).AsStrVect ();
   fSnoop_Ids = wrk.Cfg (saftdabc::xmlEventIds, cmd).AsUIntVect ();
@@ -85,8 +86,8 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
 
 
   DOUT1(
-      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, subevtid:%d, %d hardware inputs, %d snoop event ids, verbose=%s ",
-      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), fSubeventId, fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
+      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, subevtid:%d, single event:%s, %d hardware inputs, %d snoop event ids, verbose=%s ",
+      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), fSubeventId, DBOOL(fSingleEvents), fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
 
 
   // There set up the software conditions
@@ -139,8 +140,6 @@ void saftdabc::Input::ClearEventQueue ()
 
 unsigned saftdabc::Input::Read_Size ()
 {
-
-  //dabc::LockGuard gard (fQueueMutex, true); // protect against saftlib callback <-Device thread
   try
 {
   DOUT3("saftdabc::Input::Read_Size...");
@@ -180,9 +179,6 @@ dabc::LockGuard gard (fQueueMutex);
 
 unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 {
-
-   //dabc::LockGuard gard (fQueueMutex, true);    // protect against saftlib callback <-Device thread
-
   try
   {
 #ifdef   SAFTDABC_USE_LOCKGUARD
@@ -264,6 +260,15 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
   unsigned ec=0;
   while (!fTimingEventQueue.empty ())
   {
+    if(fSingleEvents && (ec==1))
+      {
+        if(fVerbose){
+          DOUT0("saftdabc::Input::Read_Complete has filled single event, closing container.");
+        }
+        break;
+      }
+
+
     ec++;
     if (!iter.IsPlaceForRawData(sizeof(Timing_Event)))
         {
@@ -302,7 +307,6 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
     // Disable event statistics, not usable with blocked device thread
     //fDevice.AddEventStatistics(1);
   }
-  //iter.FinishSubEvent (size);
   iter.FinishSubEvent();
   iter.FinishEvent ();
   buf = iter.Close ();
@@ -405,6 +409,13 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
     fQueueMutex.Lock();
 #endif
     std::string description = fDevice.GetInputDescription (event);
+    // here check if we have input condition, then substract the offset:
+    if(description.compare(std::string(NON_IO_CONDITION_LABEL))!=0)
+      {
+        deadline -= IO_CONDITION_OFFSET; // like in saft-io-ctl
+      }
+
+
     if (fVerbose)
     {
       DOUT0("saftdabc::Input::EventHandler holds mutex 0x%x, instance=0x%x",(unsigned long) &fQueueMutex, (unsigned long) this);
@@ -417,6 +428,8 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 //        dabc::format ("Received %s at %s!", saftdabc::tr_formatActionEvent (event, PMODE_VERBOSE).c_str (),
 //            saftdabc::tr_formatDate (deadline, PMODE_VERBOSE).c_str ()));
     }
+
+
 
 
     uint64_t doverflow= fOverflowCount-fLastOverflowCount;
@@ -478,7 +491,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 void saftdabc::Input::OverflowHandler(guint64 count)
 {
   DOUT3("saftdabc::Input::OverflowHandler with counts=%lu",count);
-  dabc::LockGuard gard(fQueueMutex); // protect also the counter
+  dabc::LockGuard gard(fQueueMutex); // protect also the counter?
   fOverflowCount=count;
   DOUT3("saftdabc::Input::OverflowHandler sees overflowcount=%lu, previous=%lu",fOverflowCount, fLastOverflowCount);
 }

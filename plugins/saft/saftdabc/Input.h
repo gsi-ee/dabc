@@ -102,6 +102,9 @@ protected:
   /** verbose mode for timing events*/
   bool fVerbose;
 
+  /** single events for each mbs container*/
+  bool fSingleEvents;
+
   /** contains names of all hardware inputs to be latched*/
   std::vector<std::string> fInput_Names;
 

@@ -22,6 +22,10 @@
 #define ECA_EVENT_MASK_LATCH   UINT64_C(0xfffe000000000000)
 #define IO_CONDITION_OFFSET    5000
 
+
+/** this marks conditions that are not input conditions:*/
+#define NON_IO_CONDITION_LABEL "WR_Event"
+
 /** from eca_flags.h not yet installed to saftlib system includes:*/
 #define ECA_LATE      0
 #define ECA_EARLY     1
@@ -85,6 +89,11 @@ extern const char* xmlSaftVerbose;
 
  /* full subevent id for timestamp data*/
  extern const char* xmlSaftSubeventId;
+
+
+ /* switch to fill single timing event for each (MBS or hadaq) Event container*/
+  extern const char* xmlSaftSingleEvent;
+
 
 
  /** Command to invoke the glib/dbus mainloop*/

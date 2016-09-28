@@ -16,22 +16,11 @@
 #include "dabc/logging.h"
 #include "dabc/Command.h"
 #include "dabc/DataTransport.h"
-//#include "dabc/Manager.h"
-//#include "dabc/Application.h"
 
 
 #include "mbs/MbsTypeDefs.h"
 
-//#include "mbs/Factory.h"
-
-//#include "dabc/MemoryPool.h"
-//#include "dabc/Buffer.h"
-//#include "dabc/Pointer.h"
-
-//#include "dabc/Port.h"
-
 #include "saftdabc/Definitions.h"
-//#include "saftdabc/Factory.h"
 #include "saftdabc/Input.h"
 
 
@@ -99,7 +88,7 @@ bool saftdabc::Device::DestroyByOwnThread ()
 
   DOUT1("DDDDDDDDDDd saftdabc::Device DestroyByOwnThread()was called \n");
   // optionally clenaup something here?
-
+  //ClearConditions();
   fGlibMainloop->quit();
   return dabc::Device::DestroyByOwnThread ();
 }
@@ -112,7 +101,7 @@ void saftdabc::Device::ObjectCleanup ()
   DOUT1("_______saftdabc::Device::ObjectCleanup...");
 
   //ClearConditions();
-  fGlibMainloop->quit();
+  //fGlibMainloop->quit();
   dabc::Device::ObjectCleanup ();
 
   DOUT1("_______saftdabc::Device::ObjectCleanup leaving.");
@@ -318,7 +307,7 @@ const std::string saftdabc::Device::GetInputDescription (guint64 event)
   try
   {
     dabc::LockGuard gard(fConditionMutex);
-    Glib::ustring catched_io = "WR_Event";
+    Glib::ustring catched_io = NON_IO_CONDITION_LABEL ;//"WR_Event";
     for (std::map<Glib::ustring, guint64>::iterator it = fMap_PrefixName.begin (); it != fMap_PrefixName.end (); ++it)
     {
       if (event == it->second)
@@ -334,7 +323,7 @@ const std::string saftdabc::Device::GetInputDescription (guint64 event)
       }
     } /* Falling */
 
-    if (catched_io != "WR_Event")
+    if (catched_io != NON_IO_CONDITION_LABEL)
     {
       if ((event & 1))
       {
