@@ -49,6 +49,8 @@
 /** length of descriptor text field in timing event structure*/
 #define SAFT_DABC_DESCRLEN 16
 
+/** tag the timing events with special trigger type. configurable later?*/
+#define SAFT_DABC_TRIGTYPE 0xA
 
 
 
@@ -93,6 +95,10 @@ extern const char* xmlSaftVerbose;
 
  /* switch to fill single timing event for each (MBS or hadaq) Event container*/
   extern const char* xmlSaftSingleEvent;
+
+  /* specify output event format: mbs, hadaq, or raw*/
+  extern const char* xmlEventFormat;
+
 
 
 

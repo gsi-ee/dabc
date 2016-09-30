@@ -40,6 +40,13 @@ namespace saftdabc
 //class DeviceRef;
 
 
+enum EventFormats_t
+{
+  saft_Format_Raw,
+  saft_Format_Mbs,
+  saft_Format_Hadaq
+};
+
 
 
 /** \brief The saftlib timing message input implementation for DABC.
@@ -105,6 +112,9 @@ protected:
   /** single events for each mbs container*/
   bool fSingleEvents;
 
+  /** */
+  EventFormats_t fEventFormat;
+
   /** contains names of all hardware inputs to be latched*/
   std::vector<std::string> fInput_Names;
 
@@ -145,8 +155,14 @@ protected:
 
   bool Close ();
 
+  /** Fill output buffer with mbs formatted data.*/
+  unsigned Write_Mbs (dabc::Buffer& buf);
 
+  /** Fill output buffer with hadaq formatted data.*/
+  unsigned Write_Hadaq (dabc::Buffer& buf);
 
+  /** Fill output buffer with raw timing events.*/
+  unsigned Write_Raw (dabc::Buffer& buf);
 
 public:
   Input (const saftdabc::DeviceRef &owner);

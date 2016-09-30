@@ -47,6 +47,19 @@ Data will be exported via mbs event structures at stream server in first example
 Can be inspected/printed with go4analysis -print -stream localhost:6111.
 
 
+3) optional Go4 analysis for SAFT data
+======================================
+Subdirectory plugins/saft/go4 contains simple analysis,
+which can monitor the dataas provided by saftplugin.
+Just configure Go4 environment (via  '. go4login') and call make in the directory
+ start go4 monitoring in subfolder by: "go4analysis -stream hostname:6111"
+
+This analysis is specialized for latched input timing events, e.g. delivered by a pulser at EXPLODER5 IO1.
+Several histograms check for lost timing events by histogramming the overflow counts ("OverflowScaler"), and by missing alternation
+of rising and falling edges ("LostEdges"). Additionally, the delta timestamps of subsequent timing events are histogrammed in
+"DeltaT" (execution time), "DeltaT_deadline" and "DeltaT_deadline_fine" (deadline time). Note that for input latch the deadline time
+denotes the arrival time of the input, not the execution time!
+
 
 
 

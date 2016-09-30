@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<dabc version="2">
+ <Context name="Saft">
+  <Run> 	
+     <lib value="libDabcHttp.so"/>
+     <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+     <lib value="libDabcSaft.so"/>
+     <logfile value="Saft.log"/>
+     <loglimit value="100000000"/>
+  </Run> 
+
+  <MemoryPool name="Pool">
+     <BufferSize value="8192"/>
+     <NumBuffers value="2000"/>
+  </MemoryPool>
+  
+  <HttpServer name="http">
+	  <port value="8091" />
+   </HttpServer>
+  
+  <Publisher name="publ" manager="true"/>
+  
+  <Device name="SaftDevice" class="saftdabc::Device">
+		<SaftBoard value="baseboard" />			
+  </Device>
+  
+  
+  
+  
+  <Module name="Combiner" class="hadaq::CombinerModule">
+     <NumInputs value="1"/>
+     <NumOutputs value="1"/>
+	<!-- when true, extra debug output produced every second -->
+     <ExtraDebug value="false"/>
+     
+     
+     <InputPort name="Input0" queue="20" url="device://SaftDevice" thread="inp0thread">
+	    <SaftEventFormat value="HADAQ"/>
+	    <SaftSubeventId value="0x000000A"/>
+	    <SaftSingleEvents value="true"/>
+	    <SaftTimeout value="0.01"/>
+	    <SaftTransportCallback value="false"/>
+	    <SaftVerbose value="false"/>
+	    
+	    <SaftHardwareInputNames>
+	       <item value="IO1"/>
+	       <item value="IO8"/>
+	    </SaftHardwareInputNames>
+
+ 		<SaftSnoopEventIds>
+	       <item value="0x0fffffff00000000"/>
+	       <item value="0xabcdef0000000000"/>
+	       <item value="0xdeadaffe00000000"/>
+	    </SaftSnoopEventIds>
+	    
+	     <SaftSnoopEventMasks>
+	       <item value="0xffffffffffffffff"/>
+           <item value="0xffffffffffffffff"/>
+           <item value="0xffffffffffffffff"/>
+	     </SaftSnoopEventMasks>
+
+		<SaftSnoopOffsets>
+	       <item value="0"/>
+	       <item value="0"/>
+           <item value="50"/>
+	    </SaftSnoopOffsets>
+	    
+<!-- 	      contains  accept flag bitmask of all events to be snooped:
+           0x1=late, 0x2=early, 0x4= conflict, 0x8=delayed -->	     
+	     <SaftSnoopFlags>
+	        <item value="0xf"/>
+	        <item value="0xf"/>
+		    <item value="0xf"/>	
+	     </SaftSnoopFlags>
+     </InputPort>
+     
+     <OutputPort name="Output0" queue="500" url="mbs://Stream:6111?iter=hadaq_iter&subid=0x1f"/>
+     <OutputPort name="Output1" queue="10" url="hld://dabc.hld?maxsize=2000"/>
+     
+     
+     
+      <FlushTimeout value="2.0"/>   
+       
+       <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
+       <TriggerNumRange value="0x1000000"/>
+       
+       <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <AccountLostEventDiff value="true"/>
+       
+       <!-- rate meters configuration -->
+       <HadaqData width="5" prec="3" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="3" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+     
+     
+     
+     
+  </Module>
+  
+  
+  
+   <!-- Terminal output like old event builder -->
+    <!--  <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false"/>
+   -->
+  
+  
+ </Context>
+</dabc>

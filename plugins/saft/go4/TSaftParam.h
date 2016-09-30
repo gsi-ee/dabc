@@ -30,7 +30,9 @@ class TSaftParam : public TGo4Parameter {
 
       Int_t fSubeventID; // saft mbs subevent id as defined in dabc set up
 
-    ClassDef(TSaftParam,1)
+      Bool_t fHadaqMode; // switch to hadtu format inside mbs containers
+
+    ClassDef(TSaftParam,2)
 };
 
 #endif //SPAR_H

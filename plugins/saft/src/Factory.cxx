@@ -50,9 +50,11 @@ const char* saftdabc::xmlSaftVerbose        = "SaftVerbose";
 
 
 
-const char* saftdabc::xmlSaftSubeventId         = "SaftMBSSubeventId";
+const char* saftdabc::xmlSaftSubeventId         = "SaftSubeventId";
 
 const char* saftdabc::xmlSaftSingleEvent        ="SaftSingleEvents";
+
+const char* saftdabc::xmlEventFormat        ="SaftEventFormat";
 
 
 const char* saftdabc::xmlCallbackMode = "SaftTransportCallback";

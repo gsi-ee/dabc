@@ -34,6 +34,7 @@
 
 
 #include "../saftdabc/Definitions.h"
+#include "../../hadaq/hadaq/defines.h"
 
 
 #define SAFT_PROCID 0xa
@@ -128,12 +129,94 @@ Bool_t TSaftProc::BuildEvent(TGo4EventElement*)
 
       Int_t* pdata = psubevt->GetDataField();
       Int_t* theEnd = psubevt->GetDataField() + psubevt->GetIntLen();
+      Int_t* evtEnd = theEnd;
+      Int_t* evtPaddedEnd = theEnd;
+      Int_t* subEnd = theEnd;
+      Int_t* subPaddedEnd = theEnd;
+      hadaq::RawEvent* hadevt=0;
+      hadaq::RawSubevent* hadsub =0;
+
+      if(fPar->fHadaqMode)
+      {
+        // skip hades event and subevent headers:
+        hadevt = (hadaq::RawEvent*) pdata;
+        pdata += sizeof(hadaq::RawEvent)/sizeof(Int_t);
+        hadsub = (hadaq::RawSubevent*) pdata;
+        pdata += sizeof(hadaq::RawSubevent)/sizeof(Int_t);
+          // adjust end of payload with respect to hades padding
+        evtEnd=   (Int_t*)( ((char*) hadevt) + hadevt->GetSize());
+        evtPaddedEnd=   (Int_t*)( ((char*) hadevt) + hadevt->GetPaddedSize());
+        subEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetSize());
+        subPaddedEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetPaddedSize());
+        if(fPar->fVerbose)
+            {
+                printf("TSaftProc::BuildEvent sees first hadaq event in buffer of size %d, padded:%d, subevt size:%d padded:%d\n",
+                    hadevt->GetSize(), hadevt->GetPaddedSize(),hadsub->GetSize(), hadsub->GetPaddedSize());
+                std::cout << std::endl;
+            }
+      }
+
+
+
+
       char buf[1024];
       saftdabc::Timing_Event theEvent;
       uint64_t lo=0, hi=0;
 
       while(pdata<theEnd)
         {
+            // check here for ends of hades events and subevents in mbs:
+            if(fPar->fHadaqMode)
+              {
+                  if(pdata==evtEnd)
+                    {
+
+
+
+                      // new hades event in buffer:
+                      pdata=evtPaddedEnd+1;
+                      if(pdata>=theEnd) break;
+                      hadevt = (hadaq::RawEvent*) pdata;
+                      pdata += sizeof(hadaq::RawEvent)/sizeof(Int_t);
+                      hadsub = (hadaq::RawSubevent*) pdata;
+                      pdata += sizeof(hadaq::RawSubevent)/sizeof(Int_t);
+                      evtEnd=   (Int_t*)( ((char*) hadevt) + hadevt->GetSize());
+                      evtPaddedEnd=   (Int_t*)( ((char*) hadevt) + hadevt->GetPaddedSize());
+                      subEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetSize());
+                      subPaddedEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetPaddedSize());
+                      if(fPar->fVerbose)
+                         {
+                           printf("TSaftProc::BuildEvent sees new hadaq event of size %d, padded:%d, subevt size:%d padded:%d\n",
+                               hadevt->GetSize(), hadevt->GetPaddedSize(),hadsub->GetSize(), hadsub->GetPaddedSize());
+                           std::cout << std::endl;
+                         }
+                      continue;
+                    }
+
+                if(pdata==subEnd)
+                {
+                    // new hades subevent in buffer
+                    pdata=subPaddedEnd+1;
+                    if(pdata>=theEnd) break;
+                    hadsub = (hadaq::RawSubevent*) pdata;
+                    pdata += sizeof(hadaq::RawSubevent)/sizeof(Int_t);
+                    subEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetSize());
+                    subPaddedEnd=(Int_t*)( ((char*) hadsub) + hadsub->GetPaddedSize());
+                    if(fPar->fVerbose)
+                        {
+                          printf("TSaftProc::BuildEvent sees new hadaq subevent of size:%d padded:%d\n",
+                              hadsub->GetSize(), hadsub->GetPaddedSize());
+                          std::cout << std::endl;
+                        }
+
+                    continue;
+                }
+
+              }
+
+
+
+
           lo=(uint64_t)(*pdata++);
           hi=(uint64_t)(*pdata++);
           theEvent.fEvent = (hi<<32) | (lo & 0xFFFFFFFF);

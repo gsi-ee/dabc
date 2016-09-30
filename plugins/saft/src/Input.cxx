@@ -16,21 +16,13 @@
 #include "saftdabc/Definitions.h"
 
 #include "dabc/Pointer.h"
-//#include "dabc/timing.h"
-//#include "dabc/Manager.h"
 #include "dabc/DataTransport.h"
 
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
-#include "mbs/SlowControlData.h"
+//#include "mbs/SlowControlData.h"
 
-
-//#include "saftdabc/Device.h"
-
-// test here if it matters to use dabc lockguard
-#define SAFTDABC_USE_LOCKGUARD 1
-
-
+#include "hadaq/Iterator.h"
 
 #include <time.h>
 #include "dabc/Exception.h"
@@ -73,6 +65,17 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
   fSnoop_Offsets = wrk.Cfg (saftdabc::xmlOffsets, cmd).AsUIntVect ();
   fSnoop_Flags = wrk.Cfg (saftdabc::xmlAcceptFlags, cmd).AsUIntVect ();
 
+  std::string format=wrk.Cfg (saftdabc::xmlEventFormat, cmd).AsStr("MBS");
+
+  if(format.compare(std::string("RAW"))==0)
+      fEventFormat=saft_Format_Raw;
+  else if (format.compare(std::string("MBS"))==0)
+      fEventFormat=saft_Format_Mbs;
+  else if (format.compare(std::string("HADAQ"))==0)
+      fEventFormat=saft_Format_Hadaq;
+  else
+    fEventFormat=saft_Format_Mbs;
+
 
   if (! (fSnoop_Ids.size () == fSnoop_Masks.size ()) &&
         (fSnoop_Ids.size () == fSnoop_Offsets.size ()) &&
@@ -86,8 +89,8 @@ bool saftdabc::Input::Read_Init (const dabc::WorkerRef& wrk, const dabc::Command
 
 
   DOUT1(
-      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, subevtid:%d, single event:%s, %d hardware inputs, %d snoop event ids, verbose=%s ",
-      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), fSubeventId, DBOOL(fSingleEvents), fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
+      "saftdabc::Input  %s - Timeout = %e s, callbackmode:%s, format:%s, subevtid:%d, single event:%s, %d hardware inputs, %d snoop event ids, verbose=%s ",
+      wrk.GetName(), fTimeout, DBOOL(fUseCallbackMode), format.c_str(), fSubeventId, DBOOL(fSingleEvents), fInput_Names.size(), fSnoop_Ids.size(), DBOOL(fVerbose));
 
 
   // There set up the software conditions
@@ -124,17 +127,8 @@ bool saftdabc::Input::Close ()
 
 void saftdabc::Input::ClearEventQueue ()
  {
-
-#ifdef   SAFTDABC_USE_LOCKGUARD
    dabc::LockGuard gard (fQueueMutex);
-#else
-  fQueueMutex.Lock();
-#endif
    while(!fTimingEventQueue.empty()) fTimingEventQueue.pop();
-
-#ifndef   SAFTDABC_USE_LOCKGUARD
-   fQueueMutex.Unlock();
-#endif
  }
 
 
@@ -146,19 +140,12 @@ unsigned saftdabc::Input::Read_Size ()
   if(fUseCallbackMode) return dabc::di_DfltBufSize;
 
   // here may do forwarding to callback or poll with timeout if no data in queues
-#ifdef   SAFTDABC_USE_LOCKGUARD
-dabc::LockGuard gard (fQueueMutex);
-#else
-  fQueueMutex.Lock();
-#endif
+  dabc::LockGuard gard (fQueueMutex);
   bool nodata=fTimingEventQueue.empty();
   if(fVerbose)
     {
       if(nodata) DOUT3("saftdabc::Input::Read_Size returns with timeout!");
     }
-#ifndef   SAFTDABC_USE_LOCKGUARD
-  fQueueMutex.Unlock();
-#endif
   return (nodata ? dabc::di_RepeatTimeOut: dabc::di_DfltBufSize);
 
 //  if(fUseCallbackMode && nodata) fWaitingForCallback=true;
@@ -169,9 +156,6 @@ dabc::LockGuard gard (fQueueMutex);
   catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Size with std exception %s ", ex.what());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
     return dabc::di_Error;
   }
   return dabc::di_Error;
@@ -181,44 +165,28 @@ unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 {
   try
   {
-#ifdef   SAFTDABC_USE_LOCKGUARD
     dabc::LockGuard gard (fQueueMutex);
-#else
-    fQueueMutex.Lock();
-#endif
     if (fTimingEventQueue.empty ())
     {
       if (fUseCallbackMode)
       {
         fWaitingForCallback = true;
         DOUT1("saftdabc::Input::Read_Start sets fWaitingForCallback=%s", DBOOL(fWaitingForCallback));
-#ifndef   SAFTDABC_USE_LOCKGUARD
-        fQueueMutex.Unlock();
-#endif
         return dabc::di_CallBack;
       }
       else
       {
         EOUT("saftdabc::Input::Read_Start() with empty queue in polling mode!");
-#ifndef   SAFTDABC_USE_LOCKGUARD
-        fQueueMutex.Unlock();
-#endif
         return dabc::di_Error;
       }
 
     }
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
     return dabc::di_Ok;
 
   }    // try
   catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Start with std exception %s ", ex.what());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
     return dabc::di_Error;
   }
 
@@ -229,119 +197,212 @@ unsigned saftdabc::Input::Read_Start (dabc::Buffer& buf)
 unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
 {
 
-  try{
-  DOUT5("saftdabc::Input::Read_Complete...");
-#ifdef   SAFTDABC_USE_LOCKGUARD
-    dabc::LockGuard gard (fQueueMutex); // protect against saftlib callback <-Device thread
-
-#else
-  fQueueMutex.Lock();
-#endif
-  DOUT3("saftdabc::Input::Read_Read_Complete with fWaitingForCallback=%s",DBOOL(fWaitingForCallback));
-
-  // TODO: switch between mbs and hadaq output formats!
-  mbs::WriteIterator iter (buf);
-// may specify special trigger type here?
-//iter.evnt()->iTrigger=42;
-
-
-
-  if(!iter.IsPlaceForEvent(sizeof(Timing_Event), true))
-    {
-      // NEVER COME HERE for correctly configured pool?
-      EOUT("saftdabc::Input::Read_Complete: buffer too small for a single Timing Event!");
-      return dabc::di_SkipBuffer;
-    }
-  iter.NewEvent (fEventNumber++);
-  iter.NewSubevent2 (fSubeventId);
-  if(fVerbose) DOUT0("saftdabc::Input::Read_Complete begins new event %d, mutex=0x%x, instance=0x%x",
-      fEventNumber, &fQueueMutex, (unsigned long) this);
-  //unsigned size = 0;
-  unsigned ec=0;
-  while (!fTimingEventQueue.empty ())
+  try
   {
-    if(fSingleEvents && (ec==1))
-      {
-        if(fVerbose){
-          DOUT0("saftdabc::Input::Read_Complete has filled single event, closing container.");
-        }
-        break;
-      }
-
-
-    ec++;
-    if (!iter.IsPlaceForRawData(sizeof(Timing_Event)))
-        {
-            // following check does not work, since rawdata pointer is updated in FinishSubEvent only ?
-            //uint32_t rest= iter.maxrawdatasize() - (uint32_t) ((ulong) iter.rawdata() - (ulong) iter.subevnt());
-            // no public access in mbs interator to remaining size. workaround:
-            if(fVerbose)
-            {
-            uint32_t rest= iter.maxrawdatasize() - ec * sizeof(Timing_Event);
-            DOUT0("saftdabc::Input::Read_Complete - buffer remaining size is %d bytes too small for next timing event!",
-                rest);
-            //fVerbose=true; // switch on full debug for the following things
-            }
-            break;
-        }
-
-
-    Timing_Event theEvent = fTimingEventQueue.front ();
-    if(fVerbose)
+    DOUT5("saftdabc::Input::Read_Complete...");
+    switch (fEventFormat)
     {
-      DOUT0("saftdabc::Input::Read_Complete with queue length %u",fTimingEventQueue.size());
-      char txt[1024];
-      theEvent.InfoMessage(txt,1024);
-      DOUT0("saftdabc::Input::Read_Complete sees event: %s",txt);
-    }
-    unsigned len = sizeof(Timing_Event);
-    if (!iter.AddRawData (&theEvent, len)){
-
-      DOUT0("saftdabc::Input::Read_Complete could not add data of len=%ld to subevent of maxraw=%ld, queuelen=%u",
-          len, iter.maxrawdatasize(), fTimingEventQueue.size());
-      break;
-    }
-    //size += len;
-    fTimingEventQueue.pop ();
-
-    // Disable event statistics, not usable with blocked device thread
-    //fDevice.AddEventStatistics(1);
-  }
-  iter.FinishSubEvent();
-  iter.FinishEvent ();
-  buf = iter.Close ();
-//
-  //DOUT3("Read buf size = %u", buf.GetTotalSize());
-  if(fVerbose) DOUT0("saftdabc::Input::Read_Complete closes new event %d, read buffer size=%u", fEventNumber, buf.GetTotalSize());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-  fQueueMutex.Unlock();
-#endif
-  return dabc::di_Ok;
-
-
-}    // try
+      case saft_Format_Raw:
+        return (Write_Raw (buf));
+        break;
+      case saft_Format_Hadaq:
+        return (Write_Hadaq (buf));
+        break;
+      case saft_Format_Mbs:
+      default:
+        return (Write_Mbs (buf));
+        break;
+    };
+    return dabc::di_Error;
+  }    // try
 
   catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::Read_Complete with Glib error %s", error.what().c_str());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
     return dabc::di_Error;
   }
-  catch (std::exception& ex) // also handles std::exception
+  catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Complete with std exception %s ", ex.what());
 
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
     return dabc::di_Error;
   }
 
-
-
 }
+
+
+ unsigned saftdabc::Input::Write_Mbs (dabc::Buffer& buf)
+ {
+   DOUT5("saftdabc::Input::Write_Mbs...");
+   dabc::LockGuard gard (fQueueMutex); // protect against saftlib callback <-Device thread
+   mbs::WriteIterator iter (buf);
+    if(!iter.IsPlaceForEvent(sizeof(Timing_Event), true))
+      {
+        // NEVER COME HERE for correctly configured pool?
+        EOUT("saftdabc::Input::Write_Mbs: buffer too small for a single Timing Event!");
+        return dabc::di_SkipBuffer;
+      }
+    iter.NewEvent (fEventNumber++);
+    iter.NewSubevent2 (fSubeventId);
+    iter.evnt()->iTrigger=SAFT_DABC_TRIGTYPE;
+    if(fVerbose) DOUT0("saftdabc::Input::Write_Mbs begins new event %d, mutex=0x%x, instance=0x%x",
+        fEventNumber, &fQueueMutex, (unsigned long) this);
+    //unsigned size = 0;
+    unsigned ec=0;
+    while (!fTimingEventQueue.empty ())
+    {
+      if(fSingleEvents && (ec==1))
+        {
+          if(fVerbose){
+            DOUT0("saftdabc::Input::Write_Mbs has filled single event, closing container.");
+          }
+          break;
+        }
+
+
+      ec++;
+      if (!iter.IsPlaceForRawData(sizeof(Timing_Event)))
+          {
+              // following check does not work, since rawdata pointer is updated in FinishSubEvent only ?
+              //uint32_t rest= iter.maxrawdatasize() - (uint32_t) ((ulong) iter.rawdata() - (ulong) iter.subevnt());
+              // no public access in mbs interator to remaining size. workaround:
+              if(fVerbose)
+              {
+              uint32_t rest= iter.maxrawdatasize() - ec * sizeof(Timing_Event);
+              DOUT0("saftdabc::Input::Write_Mbs - buffer remaining size is %d bytes too small for next timing event!",
+                  rest);
+              //fVerbose=true; // switch on full debug for the following things
+              }
+              break;
+          }
+
+
+      Timing_Event theEvent = fTimingEventQueue.front ();
+      if(fVerbose)
+      {
+        DOUT0("saftdabc::Input::Write_Mbswith queue length %u",fTimingEventQueue.size());
+        char txt[1024];
+        theEvent.InfoMessage(txt,1024);
+        DOUT0("saftdabc::Input::Write_Mbs sees event: %s",txt);
+      }
+      unsigned len = sizeof(Timing_Event);
+      if (!iter.AddRawData (&theEvent, len)){
+
+        DOUT0("saftdabc::Input::Write_Mbs could not add data of len=%ld to subevent of maxraw=%ld, queuelen=%u",
+            len, iter.maxrawdatasize(), fTimingEventQueue.size());
+        break;
+      }
+      fTimingEventQueue.pop ();
+
+      // Disable event statistics, not usable with blocked device thread
+      //fDevice.AddEventStatistics(1);
+    }
+    iter.FinishSubEvent();
+    iter.FinishEvent ();
+    buf = iter.Close ();
+  //
+    //DOUT3("Read buf size = %u", buf.GetTotalSize());
+    if(fVerbose) DOUT0("saftdabc::Input::Write_Mbs closes new event %d, read buffer size=%u", fEventNumber, buf.GetTotalSize());
+    return dabc::di_Ok;
+ }
+
+
+
+
+ unsigned saftdabc::Input::Write_Hadaq (dabc::Buffer& buf)
+ {
+   DOUT5("saftdabc::Input::Write_Hadaq...");
+     dabc::LockGuard gard (fQueueMutex); // protect against saftlib callback <-Device thread
+     hadaq::WriteIterator iter (buf);
+
+     // probably this is redundant with the following check in NewEvent:
+     if(!iter.IsPlaceForEvent(sizeof(Timing_Event)))
+        {
+          // NEVER COME HERE for correctly configured pool?
+          EOUT("saftdabc::Input::Write_Hadaq: buffer too small for a single Timing Event!");
+          return dabc::di_SkipBuffer;
+        }
+
+      // we misuse the subevent id as run number here. should be ignored by combiner module anyway.
+      if(!iter.NewEvent (fEventNumber++, fSubeventId, sizeof(hadaq::RawSubevent)+ sizeof(Timing_Event)))
+        {
+        // NEVER COME HERE for correctly configured pool?
+        EOUT("saftdabc::Input::Write_Hadaq: NewEvent fails to hold single Timing Event!");
+        return dabc::di_SkipBuffer;
+        }
+
+      iter.NewSubevent(sizeof(Timing_Event), SAFT_DABC_TRIGTYPE);
+      char* rawbase= (char*) iter.rawdata();
+      char* cursor=rawbase;
+
+
+      if(fVerbose) DOUT0("saftdabc::Input::Write_Hadaq begins new event %d, mutex=0x%x, instance=0x%x",
+          fEventNumber, &fQueueMutex, (unsigned long) this);
+      unsigned rawsize = sizeof(hadaq::RawSubevent); // =0 account header in rawsize for hadtu?;
+      unsigned ec=0;
+      while (!fTimingEventQueue.empty ())
+      {
+        if(fSingleEvents && (ec==1))
+          {
+            if(fVerbose){
+              DOUT0("saftdabc::Input::Write_Hadaq has filled single event, closing container.");
+            }
+            break;
+          }
+
+
+        ec++;
+        if((cursor - rawbase + sizeof(Timing_Event) ) > iter.maxrawdatasize())
+            {
+                if(fVerbose)
+                {
+                uint32_t rest= iter.maxrawdatasize() - ec * sizeof(Timing_Event);
+                DOUT0("saftdabc::Input::Write_Hadaq - buffer remaining size is %d bytes too small for next timing event!",
+                    rest);
+                //fVerbose=true; // switch on full debug for the following things
+                }
+                break;
+            }
+
+
+        Timing_Event theEvent = fTimingEventQueue.front ();
+        if(fVerbose)
+        {
+          DOUT0("saftdabc::Input::Write_Hadaq with queue length %u",fTimingEventQueue.size());
+          char txt[1024];
+          theEvent.InfoMessage(txt,1024);
+          DOUT0("saftdabc::Input::Write_Hadaq sees event: %s",txt);
+        }
+
+        unsigned len = sizeof(Timing_Event);
+        memcpy(cursor, &theEvent,len);
+        rawsize+=len;
+        cursor+=len;
+
+        fTimingEventQueue.pop ();
+
+        // Disable event statistics, not usable with blocked device thread
+        //fDevice.AddEventStatistics(1);
+      } // while timing queue is not empty
+
+      iter.FinishSubEvent(rawsize);
+      iter.FinishEvent ();
+      buf = iter.Close ();
+      if(fVerbose) DOUT0("saftdabc::Input::Write_Hadaq closes new event %d, read buffer size=%u", fEventNumber, buf.GetTotalSize());
+      return dabc::di_Ok;
+ }
+
+ unsigned saftdabc::Input::Write_Raw (dabc::Buffer& buf)
+ {
+   // dummy:
+   while (!fTimingEventQueue.empty ())
+     fTimingEventQueue.pop ();
+   return dabc::di_Ok;
+ }
+
+
+
+
 
 bool saftdabc::Input::SetupConditions ()
 {
@@ -403,11 +464,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
   /* This is the signalhandler that treats condition events from saftlib*/
   try
   {
-#ifdef SAFTDABC_USE_LOCKGUARD
     dabc::LockGuard gard (fQueueMutex);// protect against Transport thread
-#else
-    fQueueMutex.Lock();
-#endif
     std::string description = fDevice.GetInputDescription (event);
     // here check if we have input condition, then substract the offset:
     if(description.compare(std::string(NON_IO_CONDITION_LABEL))!=0)
@@ -464,24 +521,15 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
     }    //  if (fUseCallbackMode &
 
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
   }    // try
 
   catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::EventHandler with Glib error %s", error.what().c_str());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
   }
   catch (std::exception& ex)
   {
     EOUT(" saftdabc::Input::EventHandler with std exception %s ", ex.what());
-#ifndef   SAFTDABC_USE_LOCKGUARD
-    fQueueMutex.Unlock();
-#endif
   }
 
 }

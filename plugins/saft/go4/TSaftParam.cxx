@@ -24,6 +24,7 @@ TSaftParam::TSaftParam(const char* name) : TGo4Parameter(name),
     fVerbose(kFALSE)
 {
   fSubeventID=0x000000A;
+  fHadaqMode=false;
 
 }
 //***********************************************************
