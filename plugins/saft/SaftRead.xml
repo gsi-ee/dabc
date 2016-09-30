@@ -4,21 +4,22 @@
   <Run> 	
      <lib value="libDabcHttp.so"/>
      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
      <lib value="libDabcSaft.so"/>
      <logfile value="Saft.log"/>
      <loglimit value="100000000"/>
   </Run> 
 
   <MemoryPool name="Pool">
-     <BufferSize value="16384"/>
-     <NumBuffers value="500"/>
+     <BufferSize value="8192"/>
+     <NumBuffers value="2000"/>
   </MemoryPool>
   
   <HttpServer name="http">
 	  <port value="8091" />
    </HttpServer>
   
- <!--  <Publisher name="publ" manager="true"/> -->
+  <Publisher name="publ" manager="true"/>
   
   <Device name="SaftDevice" class="saftdabc::Device">
 		<SaftBoard value="baseboard" />			
@@ -34,8 +35,9 @@
      <CombinerRatesPrefix value="Saft"/>
      
      <InputPort name="Input0" queue="20" url="device://SaftDevice" thread="inp0thread">
-     	
-	    <SaftMBSSubeventId value="0x000000A"/>
+	    <SaftEventFormat value="MBS"/>
+	    <SaftSubeventId value="0x000000A"/>
+	    <SaftSingleEvents value="true"/>
 	    <SaftTimeout value="0.01"/>
 	    <SaftTransportCallback value="false"/>
 	    <SaftVerbose value="false"/>
@@ -72,7 +74,7 @@
 	     </SaftSnoopFlags>
      </InputPort>
      
-     <OutputPort name="Output0" queue="20" url="mbs://Stream:6111"/>
+     <OutputPort name="Output0" queue="500" url="mbs://Stream:6111"/>
      <OutputPort name="Output1" queue="10" url="lmd://test.lmd?maxsize=30"/>
      
      <SaftData width="5" prec="3" low="0" up="50" debug="1"/>
