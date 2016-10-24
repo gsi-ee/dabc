@@ -535,7 +535,7 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
 int main(int argc, char* argv[])
 {
-   if (argc<2) return usage();
+   if ((argc<2) || !strcmp(argv[1],"-help") || !strcmp(argv[1],"?")) return usage();
 
    long number(10), skip(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1);
