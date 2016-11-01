@@ -94,11 +94,12 @@ void hadaq::RawSubevent::Dump(bool print_raw_data)
       snprintf(sbuf,sizeof(sbuf), "%4u+%u", (unsigned) GetSize(), (unsigned) (GetPaddedSize() - GetSize()));
    else
       snprintf(sbuf,sizeof(sbuf),"%6u", (unsigned) GetSize());
-   printf("   *** Subevent size %s decoding 0x%06x id 0x%04x trig 0x%08x %s align %u *** \n",
+   printf("   *** Subevent size %s decoding 0x%06x id 0x%04x trig 0x%08x typ %x %s align %u ***\n",
              sbuf,
              (unsigned) GetDecoding(),
              (unsigned) GetId(),
              (unsigned) GetTrigNr(),
+             (unsigned) GetTrigTypeTrb3(),
              IsSwapped() ? "swapped" : "not swapped",
              (unsigned) Alignment());
 
