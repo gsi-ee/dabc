@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -27,7 +28,7 @@
 
 #include "worker.h"
 
-static sigReceived = 0;
+static int sigReceived = 0;
 
 static void noopHandler(int sig)
 {
