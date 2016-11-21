@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+21.11.2016
+1. Introduce plugin for A1 DAQ (AQUA framework).
+   Preliminary client-side code - server should be provoded by AQUA 
+
+
 
 27.09.2016
 1. Implement module.json debug request. It is processed by any published module

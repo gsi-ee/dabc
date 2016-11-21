@@ -12,7 +12,7 @@ include config/Makefile.config
 ## disable possibility, that rules included many times 
 Dabc_Makefile_rules = true
 
-CREATE_DIRS += $(DABCDLLPATH) $(DABCBINPATH) $(DABCINCPATH)/
+CREATE_DIRS += $(DABCDLLPATH) $(DABCBINPATH) $(DABCINCPATH)
 
 
 include base/Makefile.mk
