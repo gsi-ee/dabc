@@ -40,13 +40,20 @@ void aqua::ClientOutput::OnRecvCompleted()
 
 void aqua::ClientOutput::OnConnectionClosed()
 {
-    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Error);
+    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
+    DOUT0("Connection to AQUA closed  %s:%d", fServerName.c_str(), fServerPort);
+
+    CancelIOOperations();
+
     fState = oDisconnected;
 }
 
 void aqua::ClientOutput::OnSocketError(int errnum, const std::string& info)
 {
-   if (fState == oSendingBuffer) MakeCallBack(dabc::do_Error);
+   if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
+   DOUT0("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, errnum, info.c_str());
+
+   CancelIOOperations();
    fState = oError;
 }
 
@@ -58,6 +65,7 @@ double aqua::ClientOutput::ProcessTimeout(double lastdiff)
 aqua::ClientOutput::ClientOutput(dabc::Url& url) :
    dabc::SocketIOAddon(),
    dabc::DataOutput(url),
+   fLastConnect(),
    fState(oDisconnected),
    fBufCounter(0)
 {
@@ -68,6 +76,7 @@ aqua::ClientOutput::ClientOutput(dabc::Url& url) :
 
 aqua::ClientOutput::~ClientOutput()
 {
+   DOUT0("Destroy AQUA output");
 }
 
 void aqua::ClientOutput::MakeCallBack(unsigned arg)
@@ -88,6 +97,11 @@ void aqua::ClientOutput::MakeCallBack(unsigned arg)
 bool aqua::ClientOutput::ConnectAquaServer()
 {
    CloseSocket();
+
+   // do not try connection request too often
+   if (!fLastConnect.Expired(3.)) return false;
+
+   fLastConnect.GetNow();
 
    int fd = dabc::SocketThread::StartClient(fServerName.c_str(), fServerPort);
    if (fd < 0) return false;
@@ -116,7 +130,11 @@ unsigned aqua::ClientOutput::Write_Check()
    switch (fState) {
       case oDisconnected:        // when server not connected
       case oError:               // error state
-         if (!ConnectAquaServer()) return dabc::do_Skip;
+         if (!ConnectAquaServer()) {
+            fBufCounter++;
+            if (fBufCounter % 100 == 0) DOUT0("Skip buffers for aqua");
+            return dabc::do_Skip;
+         }
          fState = oReady;
          return dabc::do_Ok;     // state changed, can continue
 
@@ -156,7 +174,8 @@ unsigned aqua::ClientOutput::Write_Complete()
       return dabc::do_Ok;
    }
 
-   return dabc::do_Error;
+   // this is not normal, but return OK to try start from beginning
+   return dabc::do_Ok;
 }
 
 double aqua::ClientOutput::Write_Timeout()

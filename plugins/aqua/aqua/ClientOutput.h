@@ -48,6 +48,7 @@ namespace aqua {
             oError                // error state
          };
 
+         dabc::TimeStamp       fLastConnect;
          std::string           fServerName;
          int                   fServerPort;
 
