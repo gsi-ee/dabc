@@ -41,7 +41,7 @@ void aqua::ClientOutput::OnRecvCompleted()
 void aqua::ClientOutput::OnConnectionClosed()
 {
     if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
-    DOUT0("Connection to AQUA closed  %s:%d", fServerName.c_str(), fServerPort);
+    DOUT1("Connection to AQUA closed  %s:%d", fServerName.c_str(), fServerPort);
 
     CancelIOOperations();
 
@@ -51,7 +51,7 @@ void aqua::ClientOutput::OnConnectionClosed()
 void aqua::ClientOutput::OnSocketError(int errnum, const std::string& info)
 {
    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
-   DOUT0("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, errnum, info.c_str());
+   DOUT1("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, errnum, info.c_str());
 
    CancelIOOperations();
    fState = oError;
@@ -71,6 +71,8 @@ aqua::ClientOutput::ClientOutput(dabc::Url& url) :
 {
    fServerName = url.GetHostName();
    fServerPort = url.GetPort();
+
+   fReconnectTmout = url.GetOptionInt("tmout", 3.);
 }
 
 
@@ -99,7 +101,7 @@ bool aqua::ClientOutput::ConnectAquaServer()
    CloseSocket();
 
    // do not try connection request too often
-   if (!fLastConnect.Expired(3.)) return false;
+   if (!fLastConnect.Expired(fReconnectTmout)) return false;
 
    fLastConnect.GetNow();
 
@@ -108,7 +110,7 @@ bool aqua::ClientOutput::ConnectAquaServer()
 
    SetSocket(fd);
 
-   DOUT0("Connect AQUA server %s:%d", fServerName.c_str(), fServerPort);
+   DOUT1("Connect AQUA server %s:%d", fServerName.c_str(), fServerPort);
 
    // receiving not used in the transport
    // StartRecv(fRecvBuf, 16);
@@ -132,7 +134,6 @@ unsigned aqua::ClientOutput::Write_Check()
       case oError:               // error state
          if (!ConnectAquaServer()) {
             fBufCounter++;
-            if (fBufCounter % 100 == 0) DOUT0("Skip buffers for aqua");
             return dabc::do_Skip;
          }
          fState = oReady;

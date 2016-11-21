@@ -49,6 +49,7 @@ namespace aqua {
          };
 
          dabc::TimeStamp       fLastConnect;
+         double                fReconnectTmout;
          std::string           fServerName;
          int                   fServerPort;
 
