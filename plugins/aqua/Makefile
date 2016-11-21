@@ -7,9 +7,11 @@ include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
 AQUADIR = plugins/aqua
+AQUATEST_EXE  = $(DABCBINPATH)/aquatest
 else
 AQUADIR = .
 INCLUDES += $(AQUADIR)
+AQUATEST_EXE  = aquatest
 endif
 
 AQUADIRI         = $(AQUADIR)/aqua
@@ -45,6 +47,8 @@ ALLDEPENDENC      += $(DABCAQUA_D)
 
 libs:: $(DABCAQUA_LIB)
 
+exes:: $(AQUATEST_EXE)
+
 ##### local rules #####
 
 $(DABCINCPATH)/%.h: $(AQUADIR)/%.h
@@ -53,6 +57,9 @@ $(DABCINCPATH)/%.h: $(AQUADIR)/%.h
 
 $(DABCAQUA_LIB):   $(DABCAQUA_O) $(AQUA_DEPEND)  
 	@$(MakeLib) $(DABCAQUA_LIBNAME) "$(DABCAQUA_O) $(AQUA_STATIC)" $(TGTDLLPATH) "$(AQUA_LIBS)" 
+
+$(AQUATEST_EXE) : $(AQUADIR)/aquatest.c
+	$(CC) $< -o $@
 
 ########### extra rules #############
 $(DABCAQUA_O) $(DABCAQUA_D) : DEFINITIONS += $(AQUA_DEFINITIONS) 

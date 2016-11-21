@@ -58,7 +58,8 @@ double aqua::ClientOutput::ProcessTimeout(double lastdiff)
 aqua::ClientOutput::ClientOutput(dabc::Url& url) :
    dabc::SocketIOAddon(),
    dabc::DataOutput(url),
-   fState(oDisconnected)
+   fState(oDisconnected),
+   fBufCounter(0)
 {
    fServerName = url.GetHostName();
    fServerPort = url.GetPort();
@@ -74,7 +75,7 @@ void aqua::ClientOutput::MakeCallBack(unsigned arg)
    dabc::OutputTransport* tr = dynamic_cast<dabc::OutputTransport*> (fWorker());
 
    if (tr==0) {
-      EOUT("Didnot found OutputTransport on other side worker %p", fWorker());
+      EOUT("Did not found OutputTransport on other side worker %s", fWorker.GetName());
       fState = oError;
       SubmitWorkerCmd(dabc::Command("CloseTransport"));
    } else {
@@ -92,6 +93,8 @@ bool aqua::ClientOutput::ConnectAquaServer()
    if (fd < 0) return false;
 
    SetSocket(fd);
+
+   DOUT0("Connect AQUA server %s:%d", fServerName.c_str(), fServerPort);
 
    // receiving not used in the transport
    // StartRecv(fRecvBuf, 16);
@@ -113,7 +116,7 @@ unsigned aqua::ClientOutput::Write_Check()
    switch (fState) {
       case oDisconnected:        // when server not connected
       case oError:               // error state
-         if (!ConnectAquaServer()) return dabc::do_RepeatTimeOut;
+         if (!ConnectAquaServer()) return dabc::do_Skip;
          fState = oReady;
          return dabc::do_Ok;     // state changed, can continue
 
@@ -138,8 +141,10 @@ unsigned aqua::ClientOutput::Write_Buffer(dabc::Buffer& buf)
 
    fState = oSendingBuffer;
 
-   strcpy(fSendHdr,"any info");
-   StartNetSend(fSendHdr, sizeof(fSendHdr), buf);
+   fSendHdr.bufsize = buf.GetTotalSize();
+   fSendHdr.counter = fBufCounter++;
+
+   StartNetSend(&fSendHdr, sizeof(fSendHdr), buf);
 
    return dabc::do_CallBack;
 }

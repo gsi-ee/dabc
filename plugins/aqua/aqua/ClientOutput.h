@@ -31,6 +31,11 @@ namespace aqua {
     *
     **/
 
+   struct SendHeader {
+      int64_t counter;
+      int64_t bufsize;
+   };
+
    class ClientOutput : public dabc::SocketIOAddon,
                         public dabc::DataOutput {
       protected:
@@ -46,9 +51,10 @@ namespace aqua {
          std::string           fServerName;
          int                   fServerPort;
 
-         char fSendHdr[16];
+         SendHeader fSendHdr;
 
          OutputState           fState;
+         int64_t               fBufCounter;
 
          virtual void OnThreadAssigned();
          virtual void OnSendCompleted();
