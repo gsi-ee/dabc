@@ -85,6 +85,8 @@ namespace mbs {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const std::string& info);
 
+         virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
+
       public:
          ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid);
          virtual ~ServerOutputAddon();

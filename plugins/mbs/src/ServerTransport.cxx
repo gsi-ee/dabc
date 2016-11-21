@@ -377,7 +377,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
-      dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, false, addon);
+      dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, true);
 
       tr()->AssignToThread(thread(), true);
 

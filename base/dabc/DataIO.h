@@ -165,10 +165,16 @@ namespace dabc {
 
    class DataOutput {
 
+      friend class OutputTransport;
+
       protected:
          std::string         fInfoName;     // parameter name for info settings
 
          DataOutput(const dabc::Url& url);
+
+         /** Returns addon, provided by data output
+          * If specified, supposed that I/O object is double-deriver from DataOutput and Addon */
+         virtual WorkerAddon* Write_GetAddon() { return 0; }
 
          void ShowInfo(int lvl, const std::string& info);
 
@@ -202,14 +208,14 @@ namespace dabc {
           *    do_Ok     - operation is started, Write_Complete() must be called
           *    do_Error  - error
           *    do_Skip   - buffer must be skipped
-          *    do_Close    - output is closed  */
+          *    do_Close  - output is closed  */
          virtual unsigned Write_Buffer(Buffer& buf) { return do_Ok; }
 
          /** Complete writing of the buffer.
           * Return values:
           *    do_Ok     - writing is done
           *    do_Error  - error
-          *    do_Close    - output is closed  */
+          *    do_Close  - output is closed  */
          virtual unsigned Write_Complete() { return do_Ok; }
 
          /** Timeout in seconds for write operation.

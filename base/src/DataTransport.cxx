@@ -584,16 +584,17 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
 // ====================================================================================
 
-dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport, DataOutput* out, bool owner, WorkerAddon* addon) :
+dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport, DataOutput* out, bool owner) :
    dabc::Transport(cmd, 0, outport),
-   fOutput(out),
-   fOutputOwner(owner),
+   fOutput(0),
+   fOutputOwner(false),
    fOutState(outReady),
    fCurrentBuf(),
    fStopRequested(false),
    fRetryPeriod(-1.)
 {
-   AssignAddon(addon);
+   SetDataOutput(out, owner);
+
    CreateTimer("SysTimer");
 
    fRetryPeriod = outport.Cfg("retry", cmd).AsDouble(-1);
@@ -608,6 +609,27 @@ dabc::OutputTransport::~OutputTransport()
 {
    // DOUT0("DESTROY OUTPUT TRANSPORT %s", GetName());
    CloseOutput();
+}
+
+void dabc::OutputTransport::SetDataOutput(DataOutput* out, bool owner)
+{
+
+   CloseOutput();
+
+   if (out==0) return;
+
+   fOutput = out;
+   fOutputOwner = false;
+   WorkerAddon* addon = out->Write_GetAddon();
+
+   if (addon==0) {
+      fOutputOwner = owner;
+   } else
+   if (owner)
+      AssignAddon(addon);
+   else
+      EOUT("Cannot assigned addon while owner flag is not specified");
+
 }
 
 void dabc::OutputTransport::CloseOutput()

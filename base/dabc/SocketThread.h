@@ -422,7 +422,7 @@ namespace dabc {
          /** \brief Attach datagram socket to multicast group to make receiving */
          static bool AttachMulticast(int handle, const std::string& addr);
 
-         /** \brief Dettach datagram socket from multicast group */
+         /** \brief Detach datagram socket from multicast group */
          static void DettachMulticast(int handle, const std::string& addr);
 
 

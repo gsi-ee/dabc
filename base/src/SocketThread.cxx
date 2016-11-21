@@ -1433,8 +1433,6 @@ dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string
       return 0;
    }
 
-
-
    SocketClientAddon* addon = 0;
 
    DOUT5("CreateClientAddon %s:%s", host.c_str(), service.c_str());
