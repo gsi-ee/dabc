@@ -109,9 +109,17 @@ namespace dabc {
          bool CanTakeBuffer(unsigned pool = 0)
          { return pool < fPools.size() ? fPools[pool]->CanTakeBuffer() : false; }
 
+         /** Method return number of buffers which could be taken from data queue assigned with the pool.
+          * These buffers already provided by the pool therefore directly available */
+         unsigned NumCanTake(unsigned pool = 0) const
+            { return pool < fPools.size() ? fPools[pool]->NumCanTake() : 0; }
+
          /** \brief Take buffer from memory pool */
          Buffer TakeBuffer(unsigned pool = 0)
          { return (pool < fPools.size()) ? fPools[pool]->TakeBuffer() : ((pool==0) ? TakeDfltBuffer() : Buffer()); }
+
+         /** \brief Returns buffer from queue assigned with the pool */
+         Buffer PoolQueueItem(unsigned pool = 0, unsigned nbuf = 0);
 
          /** \brief Produces event for specified pool handle.
           * \details Should be used when processing was stopped due to return false in ProcessBuffer method */

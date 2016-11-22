@@ -42,6 +42,13 @@ dabc::Buffer dabc::ModuleAsync::RecvQueueItem(unsigned indx, unsigned nbuf)
    return dabc::Buffer();
 }
 
+dabc::Buffer dabc::ModuleAsync::PoolQueueItem(unsigned poolindex, unsigned nbuf)
+{
+   PoolHandle* pool = Pool(poolindex);
+   if (pool) return pool->Item(nbuf);
+   return dabc::Buffer();
+}
+
 void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
     switch (evid) {
