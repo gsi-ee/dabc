@@ -430,3 +430,297 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
 
    return dabc::InputTransport::ExecuteCommand(cmd);
 }
+
+// =================================================================================================
+
+
+hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce) :
+   dabc::SocketAddon(fd),
+   fNPort(nport),
+   fTgtPtr(),
+   fWaitMoreData(false),
+   fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
+   fFlushTimeout(flush),
+   fSendCnt(0),
+   fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
+   fReduce(reduce < 1. ? reduce : 1.),
+   fTotalRecvPacket(0),
+   fTotalDiscardPacket(0),
+   fTotalDiscard32Packet(0),
+   fTotalRecvBytes(0),
+   fTotalDiscardBytes(0),
+   fTotalProducedBuffers(0),
+   fDebug(debug)
+{
+   fPid = syscall(SYS_gettid);
+}
+
+hadaq::NewAddon::~NewAddon()
+{
+}
+
+void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)
+{
+   if (evnt.GetCode() == evntSocketRead) {
+      // inside method if necessary SetDoingInput(true); should be done
+
+      // ignore events when not waiting for the new data
+      if (fWaitMoreData) ReadUdp();
+
+      return;
+   }
+
+   dabc::SocketAddon::ProcessEvent(evnt);
+}
+
+long hadaq::NewAddon::Notify(const std::string& msg, int arg)
+{
+   if (msg == "TransportWantToStop") {
+
+      if (fWaitMoreData) {
+         fWaitMoreData = false;
+         SetDoingInput(false);
+      }
+
+      return 0;
+   }
+
+   return dabc::SocketAddon::Notify(msg, arg);
+}
+
+
+double hadaq::NewAddon::ProcessTimeout(double lastdiff)
+{
+   if (!fWaitMoreData) return -1;
+
+   if ((fTgtPtr.distance_to_ownbuf()>0) && (fSendCnt==0)) {
+      DOUT0("DO BUFFER FLUSH");
+   }
+
+   // check buffer with period of fFlushTimeout
+   return fFlushTimeout;
+}
+
+void hadaq::NewAddon::ClearCounters()
+{
+   fTotalRecvPacket = 0;
+   fTotalDiscardPacket = 0;
+   fTotalDiscard32Packet = 0;
+   fTotalRecvBytes = 0;
+   fTotalDiscardBytes = 0;
+   fTotalProducedBuffers = 0;
+}
+
+
+bool hadaq::NewAddon::ReadUdp()
+{
+   if (fTgtPtr.null()) {
+      // if call was done from socket, just do nothing and wait buffer
+      DOUT0("UDP:%d ReadUdp at wrong moment - no buffer to read", fNPort);
+      return false;
+   }
+
+   if (fTgtPtr.rawsize() < fMTU) {
+      DOUT0("UDP:%d Should never happen - rest size is smaller than MTU", fNPort);
+      return false;
+   }
+
+   int cnt = fMaxLoopCnt;
+
+   while (cnt-- > 0) {
+
+      /* this was old form which is not necessary - socket is already bind with the port */
+      //  socklen_t socklen = sizeof(fSockAddr);
+      //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
+
+      ssize_t res = recv(Socket(), fTgtPtr.ptr(), fMTU, 0);
+
+      if (res == 0) {
+         DOUT0("UDP:%d Seems to be, socket was closed", fNPort);
+         return false;
+      }
+
+      if (res<0) {
+         // socket do not have data, one should enable event processing
+         // otherwise we need to poll for the new data
+         if (errno == EAGAIN) break;
+         EOUT("Socket error");
+         return false;
+      }
+
+      hadaq::HadTu* hadTu = (hadaq::HadTu*) fTgtPtr.ptr();
+      int msgsize = hadTu->GetPaddedSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
+
+      std::string errmsg;
+
+      if (res != msgsize) {
+         errmsg = dabc::format("Send buffer %d differ from message size %d - ignore it", res, msgsize);
+      } else
+      if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
+         fTotalDiscard32Packet++;
+         errmsg = "Trailing 32 bytes do not match to header - ignore packet";
+      }
+
+      if (!errmsg.empty()) {
+         DOUT3("UDP:%d %s", fNPort, errmsg.c_str());
+         if (fDebug && (dabc::lgr()->GetDebugLevel()>2)) {
+            errmsg = dabc::format("   Packet length %d", res);
+            uint32_t* ptr = (uint32_t*) hadTu;
+            for (unsigned n=0;n<res/4;n++) {
+               if (n%8 == 0) {
+                  printf("   %s\n", errmsg.c_str());
+                  errmsg = dabc::format("0x%04x:", n*4);
+               }
+
+               errmsg.append(dabc::format(" 0x%08x", (unsigned) ptr[n]));
+            }
+            printf("   %s\n",errmsg.c_str());
+         }
+
+         fTotalDiscardPacket++;
+         fTotalDiscardBytes+=res;
+         continue;
+      }
+
+      fTotalRecvPacket++;
+      fTotalRecvBytes += res;
+
+      fTgtPtr.shift(hadTu->GetPaddedSize());
+
+      // when rest size is smaller that mtu, one should close buffer
+      if (fTgtPtr.rawsize() < fMTU) return true;
+   }
+
+   SetDoingInput(true);
+
+   return true; // indicate that buffer reading will be finished by callback
+}
+
+
+
+
+hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer) :
+   dabc::Transport(cmd, inpport, 0),
+   fIdNumber(0),
+   fWithObserver(observer),
+   fDataRateName()
+{
+   // do not process to much events at once, let another transports a chance
+   SetPortLoopLength(OutputName(), 2);
+
+   fIdNumber = inpport.ItemSubId();
+
+   AssignAddon(addon);
+
+   DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
+
+   if(!fWithObserver) return;
+
+   // workaround to suppress problems with dim observer when this ratemeter is registered:
+   fDataRateName = dabc::format("%s-Datarate", inpport.GetName());
+   CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
+   //Par(fDataRateName).SetDebugLevel(1);
+   SetPortRatemeter(OutputName(), Par(fDataRateName));
+
+   CreateNetmemPar(dabc::format("pktsReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("pktsDiscarded%d",fIdNumber));
+   CreateNetmemPar(dabc::format("msgsReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("msgsDiscarded%d",fIdNumber));
+   CreateNetmemPar(dabc::format("bytesReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("netmemBuff%d",fIdNumber));
+   CreateNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber));
+   CreateNetmemPar(dabc::format("portNr%d",fIdNumber));
+   SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
+
+   CreateNetmemPar("coreNr");
+   // exclude PID from shared mem not to interfere with default pid of observer
+   // TODO: fix default pid export of worker ?
+   CreateNetmemPar("PID");
+
+   SetNetmemPar("PID", (int) addon->fPid);
+   SetNetmemPar("coreNr", hadaq::CoreAffinity(addon->fPid));
+   CreateTimer("ObserverTimer", 1, false);
+   DOUT3("hadaq::DataTransport created observer parameters");
+}
+
+hadaq::NewTransport::~NewTransport()
+{
+
+}
+
+void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
+{
+   if (TimerName(timer) == "ObserverTimer")
+      UpdateExportedCounters();
+
+   dabc::Transport::ProcessTimerEvent(timer);
+}
+
+
+std::string  hadaq::NewTransport::GetNetmemParName(const std::string& name)
+{
+   return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
+}
+
+void hadaq::NewTransport::CreateNetmemPar(const std::string& name)
+{
+   CreatePar(GetNetmemParName(name));
+}
+
+void hadaq::NewTransport::SetNetmemPar(const std::string& name, unsigned value)
+{
+   Par(GetNetmemParName(name)).SetValue(value);
+}
+
+bool hadaq::NewTransport::UpdateExportedCounters()
+{
+   NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
+
+   if(!fWithObserver || (addon==0)) return false;
+
+   SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), addon->fTotalRecvPacket);
+   SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
+   SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), addon->fTotalRecvPacket);
+   SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
+   SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), addon->fTotalRecvBytes);
+   unsigned capacity = PortQueueCapacity(OutputName());
+   float ratio = 100.;
+   if (capacity>0) ratio -= 100.* NumCanSend()/capacity;
+   SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
+   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) (Par(fDataRateName).Value().AsDouble() * 1024 * 1024));
+
+   return true;
+}
+
+int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("ResetExportedCounters")) {
+      NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
+      if (addon!=0) addon->ClearCounters();
+      UpdateExportedCounters();
+      return dabc::cmd_true;
+   } else
+   if (cmd.IsName("GetHadaqTransportInfo")) {
+      cmd.SetPtr("Addon", fAddon());
+      return dabc::cmd_true;
+   }
+
+   return dabc::Transport::ExecuteCommand(cmd);
+}
+
+
+bool hadaq::NewTransport::StartTransport()
+{
+   fAddon.Notify("TransportWantToStart");
+
+   return dabc::Transport::StartTransport();
+}
+
+bool hadaq::NewTransport::StopTransport()
+{
+   fAddon.Notify("TransportWantToStop");
+
+   return dabc::Transport::StopTransport();
+}
+
+

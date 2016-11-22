@@ -42,6 +42,7 @@
 namespace hadaq {
 
    class DataTransport;
+   class NewTransport;
    class TerminalModule;
 
    /** \brief %Addon for socket thread to handle UDP data stream from TRB */
@@ -132,6 +133,83 @@ namespace hadaq {
          virtual ~DataTransport();
 
    };
+
+   // ==================================================================================
+
+
+   class NewAddon : public dabc::SocketAddon {
+      protected:
+
+         friend class TerminalModule;  // use only to access statistic, nothing else
+         friend class NewTransport;
+
+         int                fNPort;           ///< upd port number
+         dabc::Pointer      fTgtPtr;          ///< pointer used to read data
+         bool               fWaitMoreData;    ///< indicate that transport waits for more data
+         unsigned           fMTU;             ///< maximal size of packet expected from TRB
+         double             fFlushTimeout;    ///< time when buffer will be flushed
+         int                fSendCnt;         ///< counter of send buffers since last timeout active
+         int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
+         double             fReduce;          ///< reduce filled buffer size to let reformat data later
+
+         uint64_t           fTotalRecvPacket;
+         uint64_t           fTotalDiscardPacket;
+         uint64_t           fTotalDiscard32Packet;
+         uint64_t           fTotalRecvBytes;
+         uint64_t           fTotalDiscardBytes;
+         uint64_t           fTotalProducedBuffers;
+
+         pid_t              fPid;               ///< process id
+         bool               fDebug;             ///< when true, produce more debug output
+
+         virtual void ProcessEvent(const dabc::EventId&);
+         virtual double ProcessTimeout(double lastdiff);
+
+         /** Light-weight command interface, which can be used from worker */
+         virtual long Notify(const std::string&, int);
+
+         /* Use codes which are valid for Read_Start */
+         bool ReadUdp();
+
+      public:
+         NewAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce);
+         virtual ~NewAddon();
+
+         // this is interface from DataInput
+
+         void ClearCounters();
+   };
+
+
+   class NewTransport : public dabc::Transport {
+
+      protected:
+
+         int            fIdNumber;
+         bool           fWithObserver;
+         std::string    fDataRateName;
+
+         std::string GetNetmemParName(const std::string& name);
+         void CreateNetmemPar(const std::string& name);
+         void SetNetmemPar(const std::string& name, unsigned value);
+
+         void RegisterExportedCounters();
+         bool UpdateExportedCounters();
+
+         virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
+
+      public:
+         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, bool observer);
+         virtual ~NewTransport();
+
+         /** Methods activated by Port, when transport starts/stops. */
+         virtual bool StartTransport();
+         virtual bool StopTransport();
+
+   };
+
 
 }
 

@@ -378,6 +378,11 @@ namespace dabc {
 
          // inline MemoryPool* Pool() const { return fPool(); }
 
+         /** Defines how many buffers can be received */
+         inline unsigned NumCanTake() const { return fQueue.Size(); }
+
+         inline Buffer Item(unsigned indx) { return fQueue.Item(indx); }
+
          inline bool CanTakeBuffer() const
          {
             return (QueueCapacity()==0) ? true : fQueue.CanRecv();

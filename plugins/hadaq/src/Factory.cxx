@@ -79,7 +79,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    dabc::PortRef portref = port;
 
-   if (!portref.IsInput() || (url.GetProtocol()!="hadaq") || url.GetFullName().empty())
+   if (!portref.IsInput() || ((url.GetProtocol()!="hadaq") && (url.GetProtocol()!="nhadaq")) || url.GetFullName().empty())
       return dabc::Factory::CreateTransport(port, typ, cmd);
 
    unsigned trignum = portref.GetModule().Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
@@ -157,10 +157,14 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    bool debug = url.HasOption("debug");
    int udp_queue = url.GetOptionInt("upd_queue", 0);
 
-   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
-
    if (udp_queue>0) cmd.SetInt("TransportQueue", udp_queue);
 
+   if (url.GetProtocol()=="nhadaq") {
+	   NewAddon* addon = new NewAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
+	   return new hadaq::NewTransport(cmd, portref, addon, observer);
+   }
+
+   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
    return new hadaq::DataTransport(cmd, portref, addon, observer);
 }
 
