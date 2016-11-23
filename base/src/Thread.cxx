@@ -65,7 +65,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          fPublish(false),
          fCnt(0)
       {
-         fWorkerPriority = 0;
+         SetWorkerPriority(0);
          // special case - thread keep only pointer
          SetAutoDestroy(false);
 

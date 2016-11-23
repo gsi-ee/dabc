@@ -70,6 +70,7 @@ dabc::SocketAddon::SocketAddon(int fd) :
    fSocket(fd),
    fDoingInput(false),
    fDoingOutput(false),
+   fIOPriority(1),
    fDeliverEventsToWorker(false),
    fDeleteWorkerOnClose(false)
 {
@@ -1613,14 +1614,14 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
          }
 
          if (f_ufds[n].revents & (POLLIN | POLLPRI)) {
-            _PushEvent(EventId(SocketAddon::evntSocketRead, f_recs[n].indx), 1);
+            _PushEvent(EventId(SocketAddon::evntSocketRead, f_recs[n].indx), addon->fIOPriority);
             addon->SetDoingInput(false);
             IncWorkerFiredEvents(worker);
             isany = true;
          }
 
          if (f_ufds[n].revents & POLLOUT) {
-            _PushEvent(EventId(SocketAddon::evntSocketWrite, f_recs[n].indx), 1);
+            _PushEvent(EventId(SocketAddon::evntSocketWrite, f_recs[n].indx), addon->fIOPriority);
             addon->SetDoingOutput(false);
             IncWorkerFiredEvents(worker);
             isany = true;
