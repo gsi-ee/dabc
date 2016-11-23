@@ -113,9 +113,6 @@ namespace hadaq {
          virtual unsigned Read_Start(dabc::Buffer& buf);
          virtual unsigned Read_Complete(dabc::Buffer& buf);
          virtual double Read_Timeout() { return 0.1; }
-
-         static int OpenUdp(int nport, int rcvbuflen);
-
    };
 
    // ================================================================
@@ -188,6 +185,8 @@ namespace hadaq {
          virtual ~NewAddon();
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
+
+         static int OpenUdp(int nport, int rcvbuflen);
    };
 
 

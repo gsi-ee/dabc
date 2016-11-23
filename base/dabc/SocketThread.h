@@ -78,10 +78,6 @@ namespace dabc {
           * When it will be possible, worker get evntSocketWrite event */
          inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
 
-         /** \brief Method defines priority level for socket IO events.
-          * Allowed values are from 0-maximal, 1-normal or 2-minimal */
-         inline void SetIOPriority(int prior = 1) { fIOPriority = prior; }
-
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const std::string& info);
 
@@ -129,6 +125,10 @@ namespace dabc {
 
          bool IsDeliverEventsToWorker() const { return fDeliverEventsToWorker; }
          void SetDeliverEventsToWorker(bool on = true) { fDeliverEventsToWorker = on; }
+
+         /** \brief Method defines priority level for socket IO events.
+          * Allowed values are from 0-maximal, 1-normal or 2-minimal */
+         inline void SetIOPriority(int prior = 1) { fIOPriority = prior; }
    };
 
 

@@ -85,6 +85,8 @@ namespace dabc {
          void SetItemId(unsigned id) { fItemId = id; }
          void SetItemSubId(unsigned id) { fSubId = id; }
 
+         void SetItemPriority(int pri = -1) { SetWorkerPriority((pri < 0) ? 1 : pri); }
+
          virtual void DoStart() {}
          virtual void DoStop() {}
 

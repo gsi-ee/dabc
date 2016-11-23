@@ -291,6 +291,14 @@ bool dabc::Module::DisconnectPort(const std::string& portname, bool witherr)
 }
 
 
+void dabc::Module::SetModulePriority(int pri)
+{
+   SetWorkerPriority(pri);
+
+   for (unsigned n=0;n<fItems.size();n++)
+      if (fItems[n]) fItems[n]->SetItemPriority(pri);
+}
+
 void dabc::Module::DisconnectAllPorts(bool witherr)
 {
    for (unsigned n=0;n<fItems.size();n++) {

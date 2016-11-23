@@ -254,46 +254,6 @@ unsigned hadaq::DataSocketAddon::Read_Complete(dabc::Buffer& buf)
    return dabc::di_Ok;
 }
 
-int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
-{
-   int fd = socket(PF_INET, SOCK_DGRAM, 0);
-   if (fd < 0) return -1;
-
-   if (!dabc::SocketThread::SetNonBlockSocket(fd)) {
-      EOUT("Cannot set non-blocking mode");
-      close(fd);
-      return -1;
-   }
-
-   sockaddr_in addr;
-   memset(&addr, 0, sizeof(addr));
-   addr.sin_family = AF_INET;
-   addr.sin_port = htons(nport);
-
-   if (rcvbuflen > 0) {
-       // for hadaq application: set receive buffer length _before_ bind:
-       //         int rcvBufLenReq = 1 * (1 << 20);
-       int rcvBufLenRet;
-       socklen_t rcvBufLenLen = sizeof(rcvbuflen);
-       if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
-          EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
-       }
-
-      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, &rcvBufLenLen) == -1) {
-          EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
-      }
-
-      if (rcvBufLenRet < rcvbuflen) {
-         EOUT("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvbuflen);
-         rcvbuflen = rcvBufLenRet;
-      }
-   }
-
-   if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) return fd;
-   close(fd);
-   return -1;
-}
-
 // =================================================================================
 
 hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer) :
@@ -573,6 +533,49 @@ bool hadaq::NewAddon::ReadUdp()
    return true; // indicate that buffer reading will be finished by callback
 }
 
+int hadaq::NewAddon::OpenUdp(int nport, int rcvbuflen)
+{
+   int fd = socket(PF_INET, SOCK_DGRAM, 0);
+   if (fd < 0) return -1;
+
+   if (!dabc::SocketThread::SetNonBlockSocket(fd)) {
+      EOUT("Cannot set non-blocking mode for UDP socket %d", fd);
+      close(fd);
+      return -1;
+   }
+
+   sockaddr_in addr;
+   memset(&addr, 0, sizeof(addr));
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(nport);
+
+   if (rcvbuflen > 0) {
+       // for hadaq application: set receive buffer length _before_ bind:
+       //         int rcvBufLenReq = 1 * (1 << 20);
+       int rcvBufLenRet;
+       socklen_t rcvBufLenLen = sizeof(rcvbuflen);
+       if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
+          EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
+       }
+
+      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, &rcvBufLenLen) == -1) {
+          EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
+      }
+
+      if (rcvBufLenRet < rcvbuflen) {
+         EOUT("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvbuflen);
+         rcvbuflen = rcvBufLenRet;
+      }
+   }
+
+   if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) return fd;
+   close(fd);
+   return -1;
+}
+
+
+
+// ========================================================================================
 
 hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer, double flush) :
    dabc::Transport(cmd, inpport, 0),
@@ -585,6 +588,11 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 {
    // do not process to much events at once, let another transports a chance
    SetPortLoopLength(OutputName(), 2);
+
+   // low-down priority of module/port events, let process I/O events faster
+   SetModulePriority(2);
+
+   addon->SetIOPriority(1); // this is priority of main I/O events, higher than module events
 
    fIdNumber = inpport.ItemSubId();
 
@@ -626,7 +634,6 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 
 hadaq::NewTransport::~NewTransport()
 {
-
 }
 
 std::string  hadaq::NewTransport::GetNetmemParName(const std::string& name)
@@ -791,4 +798,3 @@ void hadaq::NewTransport::FlushBuffer(bool onclose)
 
    fLastSendCnt = addon->fSendCnt;
 }
-

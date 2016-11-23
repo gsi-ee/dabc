@@ -33,7 +33,8 @@ dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string& name)
    if (m==0)
       throw dabc::Exception(ex_Generic, "Item created without module or in wrong place of hierarchy", ItemName());
 
-   SetWorkerPriority(1);
+   // use module priority for the all port items
+   SetItemPriority(m->WorkerPriority());
 }
 
 dabc::ModuleItem::~ModuleItem()

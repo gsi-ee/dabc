@@ -144,7 +144,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    if (nport<=0) { EOUT("Port not specified"); return 0; }
 
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
-   int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
+   int fd = NewAddon::OpenUdp(nport, rcvbuflen);
    if (fd<=0) { EOUT("Cannot open UDP soocket for port %d", nport); return 0; }
 
    DOUT0("Start UDP transport with port %d", nport);

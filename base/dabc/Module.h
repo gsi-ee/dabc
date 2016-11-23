@@ -93,7 +93,7 @@ namespace dabc {
 
       protected:
 
-         /** \brief Inherited method, called during module destroyment.
+         /** \brief Inherited method, called during module destroy.
           *
           * Used to stop module if it is still running. */
          virtual void ObjectCleanup();
@@ -103,6 +103,8 @@ namespace dabc {
 
          virtual void OnThreadAssigned();
          virtual int PreviewCommand(Command cmd);
+
+         virtual void SetModulePriority(int pri = -1);
 
          virtual void ProcessEvent(const EventId&);
 
