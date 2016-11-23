@@ -147,8 +147,6 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    int fd = NewAddon::OpenUdp(nport, rcvbuflen);
    if (fd<=0) { EOUT("Cannot open UDP soocket for port %d", nport); return 0; }
 
-   DOUT0("Start UDP transport with port %d", nport);
-
    int mtu = url.GetOptionInt("mtu", 64512);
    int maxloop = url.GetOptionInt("maxloop", 100);
    double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
@@ -164,6 +162,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 	   return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
    }
 
+   DOUT0("Start UDP transport with port %d", nport);
    DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
    return new hadaq::DataTransport(cmd, portref, addon, observer);
 }

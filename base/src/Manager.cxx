@@ -1072,7 +1072,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       cmd_res = cmd_false;
 
-      DOUT1("Request transport for port %s kind %s", port.ItemName().c_str(), trkind.c_str());
+      DOUT1("%s create %s", port.ItemName().c_str(), trkind.c_str());
 
       ModuleRef tr;
       FOR_EACH_FACTORY(
