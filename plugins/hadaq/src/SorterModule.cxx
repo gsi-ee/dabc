@@ -27,7 +27,7 @@ hadaq::SorterModule::SorterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fFlushCnt(5),
    fBufCnt(0),
-   fLastRet(false),
+   fLastRet(0),
    fNextBufIndx(0),
    fReadyBufIndx(0),
    fSubs(),
@@ -133,7 +133,8 @@ bool hadaq::SorterModule::retransmit()
             fLastRet = 40;
             return true;
          }
-         flush_data = true; break;
+         flush_data = true;
+         break;
       }
 
       hadaq::ReadIterator iter(buf);
@@ -250,9 +251,9 @@ bool hadaq::SorterModule::retransmit()
    // if buffers were removed from input queue, call retransmit again
    if (RemoveUsedSubevents(cnt)) flush_data = true;
 
-   fLastRet = 7;
+   fLastRet = flush_data ? 60 : 70;
 
-   return true;
+   return flush_data;
 }
 
 
@@ -269,7 +270,7 @@ void hadaq::SorterModule::ProcessTimerEvent(unsigned)
    // flush buffer if any data is accumulated
    unsigned len = fOutPtr.distance_to_ownbuf();
    if (len>0) {
-      DOUT1("Buf:%3d  Flush output counter %d subs.size %u nextbuf:%u numcanrev:%u lastret:%d", fBufCnt, fFlushCnt, fSubs.size(), fNextBufIndx, NumCanRecv(), fLastRet);
+      // DOUT1("Buf:%3d  Flush output counter %d subs.size %u nextbuf:%u numcanrev:%u lastret:%d", fBufCnt, fFlushCnt, fSubs.size(), fNextBufIndx, NumCanRecv(), fLastRet);
       fOutBuf.SetTotalSize(len);
       fOutPtr.reset();
       Send(fOutBuf);
