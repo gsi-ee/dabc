@@ -65,7 +65,7 @@ namespace hadaq {
          uint32_t fLastEvtBuildTrigId; //!< remember id of last build event
          bool fDataError;        //!< indicates if subevent has data error bit set in header id
          bool fEmpty;            //!< indicates if input has empty data
-         void* fAddon;           //!< Direct transport pointer, used only for debugging
+         void* fInfo;            //!< Direct pointer on transport info, used only for debugging
          int fNumCanRecv;        //!< Number buffers can be received
          std::string fCalibr;    //!< name of calibration module, used only in terminal
          unsigned fLostTrig;     //!< number of lost triggers (never received by the combiner)
@@ -89,7 +89,7 @@ namespace hadaq {
             fLastEvtBuildTrigId(0),
             fDataError(false),
             fEmpty(true),
-            fAddon(0),
+            fInfo(0),
             fNumCanRecv(0),
             fCalibr(),
             fLostTrig(0),

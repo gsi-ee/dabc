@@ -160,8 +160,8 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    if (udp_queue>0) cmd.SetInt("TransportQueue", udp_queue);
 
    if (url.GetProtocol()=="nhadaq") {
-	   NewAddon* addon = new NewAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
-	   return new hadaq::NewTransport(cmd, portref, addon, observer);
+	   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce);
+	   return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
    }
 
    DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);

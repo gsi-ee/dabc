@@ -1234,7 +1234,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       unsigned id = cmd.GetUInt("id");
 
       if (id < fCfg.size()) {
-         fCfg[id].fAddon = cmd.GetPtr("Addon");
+         fCfg[id].fInfo = cmd.GetPtr("Info");
          fCfg[id].fCalibr = cmd.GetStr("CalibrModule");
       }
 

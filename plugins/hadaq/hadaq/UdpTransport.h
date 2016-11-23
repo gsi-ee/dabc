@@ -45,16 +45,41 @@ namespace hadaq {
    class NewTransport;
    class TerminalModule;
 
+   struct TransportInfo {
+      int                fNPort;           ///< upd port number
+
+      uint64_t           fTotalRecvPacket;
+      uint64_t           fTotalDiscardPacket;
+      uint64_t           fTotalDiscard32Packet;
+      uint64_t           fTotalRecvBytes;
+      uint64_t           fTotalDiscardBytes;
+      uint64_t           fTotalProducedBuffers;
+
+      void ClearCounters()
+      {
+         fTotalRecvPacket = 0;
+         fTotalDiscardPacket = 0;
+         fTotalDiscard32Packet = 0;
+         fTotalRecvBytes = 0;
+         fTotalDiscardBytes = 0;
+         fTotalProducedBuffers = 0;
+      }
+
+      TransportInfo(int port) :
+         fNPort(port) { ClearCounters(); }
+   };
+
+
    /** \brief %Addon for socket thread to handle UDP data stream from TRB */
 
    class DataSocketAddon : public dabc::SocketAddon,
-                           public dabc::DataInput {
+                           public dabc::DataInput,
+                           public TransportInfo {
       protected:
 
          friend class TerminalModule;  // use only to access statistic, nothing else
          friend class DataTransport;
 
-         int                fNPort;           ///< upd port number
          dabc::Pointer      fTgtPtr;          ///< pointer used to read data
          bool               fWaitMoreData;    ///< indicate that transport waits for more data
          unsigned           fMTU;             ///< maximal size of packet expected from TRB
@@ -62,13 +87,6 @@ namespace hadaq {
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
-
-         uint64_t           fTotalRecvPacket;
-         uint64_t           fTotalDiscardPacket;
-         uint64_t           fTotalDiscard32Packet;
-         uint64_t           fTotalRecvBytes;
-         uint64_t           fTotalDiscardBytes;
-         uint64_t           fTotalProducedBuffers;
 
          pid_t fPid;                        ///< process id
          bool   fDebug;                     ///< when true, produce more debug output
@@ -95,8 +113,6 @@ namespace hadaq {
          virtual unsigned Read_Start(dabc::Buffer& buf);
          virtual unsigned Read_Complete(dabc::Buffer& buf);
          virtual double Read_Timeout() { return 0.1; }
-
-         void ClearCounters();
 
          static int OpenUdp(int nport, int rcvbuflen);
 
@@ -137,7 +153,8 @@ namespace hadaq {
    // ==================================================================================
 
 
-   class NewAddon : public dabc::SocketAddon {
+   class NewAddon : public dabc::SocketAddon,
+                    public TransportInfo {
       protected:
 
          friend class TerminalModule;  // use only to access statistic, nothing else
@@ -147,17 +164,9 @@ namespace hadaq {
          dabc::Pointer      fTgtPtr;          ///< pointer used to read data
          bool               fWaitMoreData;    ///< indicate that transport waits for more data
          unsigned           fMTU;             ///< maximal size of packet expected from TRB
-         double             fFlushTimeout;    ///< time when buffer will be flushed
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
-
-         uint64_t           fTotalRecvPacket;
-         uint64_t           fTotalDiscardPacket;
-         uint64_t           fTotalDiscard32Packet;
-         uint64_t           fTotalRecvBytes;
-         uint64_t           fTotalDiscardBytes;
-         uint64_t           fTotalProducedBuffers;
 
          pid_t              fPid;               ///< process id
          bool               fDebug;             ///< when true, produce more debug output
@@ -175,12 +184,10 @@ namespace hadaq {
          bool CloseBuffer();
 
       public:
-         NewAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce);
+         NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce);
          virtual ~NewAddon();
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
-
-         void ClearCounters();
    };
 
 
@@ -207,7 +214,7 @@ namespace hadaq {
          virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
-         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, bool observer);
+         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, bool observer, double flush = 1);
          virtual ~NewTransport();
 
          /** Methods activated by Port, when transport starts/stops. */

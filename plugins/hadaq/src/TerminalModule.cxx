@@ -236,27 +236,27 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       hadaq::CombinerModule::InputCfg& cfg = comb->fCfg[n];
 
-      hadaq::DataSocketAddon* addon = (hadaq::DataSocketAddon*) cfg.fAddon;
+      hadaq::TransportInfo* info = (hadaq::TransportInfo*) cfg.fInfo;
 
-      if (addon==0) {
-         sbuf.append("  missing add-on                                     ");
+      if (info==0) {
+         sbuf.append("  missing transport-info                             ");
          fCalibr[n].lastrecv = 0;
       } else {
 
-         double rate = (addon->fTotalRecvBytes - fCalibr[n].lastrecv)/delta;
+         double rate = (info->fTotalRecvBytes - fCalibr[n].lastrecv)/delta;
 
          sbuf.append(dabc::format(" %5d %7s %9s %7.3f %6s %6s %6s",
-               addon->fNPort,
-               dabc::number_to_str(addon->fTotalRecvPacket,1).c_str(),
-               dabc::size_to_str(addon->fTotalRecvBytes).c_str(),
+               info->fNPort,
+               dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
+               dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                rate/1024./1024.,
-               dabc::number_to_str(addon->fTotalDiscardPacket).c_str(),
-               dabc::number_to_str(addon->fTotalDiscard32Packet).c_str(),
-               dabc::number_to_str(addon->fTotalProducedBuffers).c_str()));
-         fCalibr[n].lastrecv = addon->fTotalRecvBytes;
+               dabc::number_to_str(info->fTotalDiscardPacket).c_str(),
+               dabc::number_to_str(info->fTotalDiscard32Packet).c_str(),
+               dabc::number_to_str(info->fTotalProducedBuffers).c_str()));
+         fCalibr[n].lastrecv = info->fTotalRecvBytes;
 
-         ports.push_back(addon->fNPort);
-         recvbytes.push_back(addon->fTotalRecvBytes);
+         ports.push_back(info->fNPort);
+         recvbytes.push_back(info->fTotalRecvBytes);
          inprates.push_back(rate);
       }
 

@@ -33,7 +33,7 @@
 hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
    dabc::DataInput(),
-   fNPort(nport),
+   TransportInfo(nport),
    fTgtPtr(),
    fWaitMoreData(false),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
@@ -41,12 +41,6 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 1. ? reduce : 1.),
-   fTotalRecvPacket(0),
-   fTotalDiscardPacket(0),
-   fTotalDiscard32Packet(0),
-   fTotalRecvBytes(0),
-   fTotalDiscardBytes(0),
-   fTotalProducedBuffers(0),
    fDebug(debug)
 {
    fPid = syscall(SYS_gettid);
@@ -260,16 +254,6 @@ unsigned hadaq::DataSocketAddon::Read_Complete(dabc::Buffer& buf)
    return dabc::di_Ok;
 }
 
-void hadaq::DataSocketAddon::ClearCounters()
-{
-   fTotalRecvPacket = 0;
-   fTotalDiscardPacket = 0;
-   fTotalDiscard32Packet = 0;
-   fTotalRecvBytes = 0;
-   fTotalDiscardBytes = 0;
-   fTotalProducedBuffers = 0;
-}
-
 int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
 {
    int fd = socket(PF_INET, SOCK_DGRAM, 0);
@@ -424,7 +408,7 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("GetHadaqTransportInfo")) {
-      cmd.SetPtr("Addon", fAddon());
+      cmd.SetPtr("Info", (TransportInfo*) (dynamic_cast<DataSocketAddon*> (fAddon())));
       return dabc::cmd_true;
    }
 
@@ -434,22 +418,15 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
 // =================================================================================================
 
 
-hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce) :
+hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce) :
    dabc::SocketAddon(fd),
-   fNPort(nport),
+   TransportInfo(nport),
    fTgtPtr(),
    fWaitMoreData(false),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
-   fFlushTimeout(flush),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 1. ? reduce : 1.),
-   fTotalRecvPacket(0),
-   fTotalDiscardPacket(0),
-   fTotalDiscard32Packet(0),
-   fTotalRecvBytes(0),
-   fTotalDiscardBytes(0),
-   fTotalProducedBuffers(0),
    fDebug(debug),
    fRunning(false)
 {
@@ -490,16 +467,6 @@ long hadaq::NewAddon::Notify(const std::string& msg, int arg)
    return dabc::SocketAddon::Notify(msg, arg);
 }
 
-
-void hadaq::NewAddon::ClearCounters()
-{
-   fTotalRecvPacket = 0;
-   fTotalDiscardPacket = 0;
-   fTotalDiscard32Packet = 0;
-   fTotalRecvBytes = 0;
-   fTotalDiscardBytes = 0;
-   fTotalProducedBuffers = 0;
-}
 
 bool hadaq::NewAddon::CloseBuffer()
 {
@@ -607,7 +574,7 @@ bool hadaq::NewAddon::ReadUdp()
 }
 
 
-hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer) :
+hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer, double flush) :
    dabc::Transport(cmd, inpport, 0),
    fIdNumber(0),
    fWithObserver(observer),
@@ -623,8 +590,8 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 
    AssignAddon(addon);
 
-   if (addon->fFlushTimeout > 0)
-      CreateTimer("FlushTimer", addon->fFlushTimeout, false);
+   if (flush > 0)
+      CreateTimer("FlushTimer", flush, false);
 
    DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
 
@@ -706,7 +673,7 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("GetHadaqTransportInfo")) {
-      cmd.SetPtr("Addon", fAddon());
+      cmd.SetPtr("Info", (TransportInfo*) (dynamic_cast<NewAddon*> (fAddon())));
       return dabc::cmd_true;
    }
 
