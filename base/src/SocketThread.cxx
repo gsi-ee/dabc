@@ -1634,7 +1634,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
    if (isany) {
       fCheckNewEvents = false;
       _PushEvent(evntEnableCheck, 1);
-      fBalanceCnt = (fBalanceCnt + 1) % fWorkers.size();
+      fBalanceCnt = (fBalanceCnt + 1) % 100000; // just use big number, fWorker.size() is not proper here
    }
 
    #ifdef DABC_EXTRA_CHECKS
