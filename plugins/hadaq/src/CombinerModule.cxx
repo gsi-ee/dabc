@@ -42,7 +42,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver(false),
    fEpicsSlave(false),
    fRunToOracle(false),
-   fBuildCompleteEvents(true),
+   fCheckTag(false),
    fFlushTimeout(0.),
    fEvnumDiffStatistics(true)
 {
@@ -65,6 +65,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    if (fEBId<0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
+
+   fCheckTag = Cfg("CheckTag", cmd).AsBool(false);
 
    fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;
@@ -803,7 +805,6 @@ bool hadaq::CombinerModule::BuildEvent()
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       bool foundsubevent = false;
       while (!foundsubevent) {
-
          uint32_t trignr = fCfg[ninp].fTrigNr;
          uint32_t trigtag = fCfg[ninp].fTrigTag;
          bool isempty = fCfg[ninp].fEmpty;
@@ -813,12 +814,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
             if (!isempty) {
                // check also trigtag:
-               if (trigtag != buildtag) {
-                  tagError = true;
-               }
-               if (haserror) {
-                  dataError = true;
-               }
+               if (trigtag != buildtag) tagError = true;
+               if (haserror) dataError = true;
                subeventssize += fCfg[ninp].subevnt->GetPaddedSize();
             }
             foundsubevent = true;
@@ -863,6 +860,11 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // for sync sequence number, check first if we have error from cts:
    uint32_t sequencenumber = fTotalBuildEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
+
+   if (hasCompleteEvent && fCheckTag && tagError) {
+      hasCompleteEvent = false;
+      fTotalTagErrors++;
+   }
 
    if(fUseSyncSeqNumber && hasCompleteEvent) {
       hasCompleteEvent = false;
@@ -916,8 +918,8 @@ bool hadaq::CombinerModule::BuildEvent()
             DOUT5("***  --- Found not accepted trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata);
          } else {
             //                  DOUT1("FIND SYNC in HADAQ %06x", syncnum);
-            sequencenumber=syncnum;
-            hasCompleteEvent=true;
+            sequencenumber = syncnum;
+            hasCompleteEvent = true;
          }
 
       } // if (syncsub->GetId() != fSyncSubeventId)
@@ -980,10 +982,8 @@ bool hadaq::CombinerModule::BuildEvent()
       fTotalBuildEvents++;
 
       fOut.evnt()->SetDataError((dataError || tagError));
-      if (dataError)
-         fTotalDataErrors++;
-      if (tagError)
-         fTotalTagErrors++;
+      if (dataError) fTotalDataErrors++;
+      if (tagError) fTotalTagErrors++;
 
       // here event id, always from "cts master channel" 0
       unsigned currentid = fCfg[0].fTrigType | (2 << 12); // DAQVERSION=2 for dabc

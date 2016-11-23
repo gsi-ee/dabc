@@ -168,9 +168,7 @@ namespace hadaq {
 
          int  fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
 
-         /** switch between partial combining of smallest event ids (false)
-          * and building of complete events only (true)*/
-         bool               fBuildCompleteEvents;
+         bool               fCheckTag;
 
          double             fFlushTimeout;
 

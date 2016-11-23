@@ -92,13 +92,16 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!-- how often output will be flushed -->
        <FlushTimeout value="0.5"/>   
 
-       <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
+       <!-- TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
+
+       <!-- CheckTag: when true events will be discarded if tag mismatched between subevents  -->
+       <CheckTag value="false"/>
        
-       <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
        
-       <!-- rate meters configuration -->
+       <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
