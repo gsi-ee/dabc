@@ -22,9 +22,9 @@
 #include <stdio.h>
 
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
-
 
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
@@ -450,7 +450,8 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, double flush, bool debug, 
    fTotalRecvBytes(0),
    fTotalDiscardBytes(0),
    fTotalProducedBuffers(0),
-   fDebug(debug)
+   fDebug(debug),
+   fRunning(false)
 {
    fPid = syscall(SYS_gettid);
 }
@@ -462,44 +463,33 @@ hadaq::NewAddon::~NewAddon()
 void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)
 {
    if (evnt.GetCode() == evntSocketRead) {
-      // inside method if necessary SetDoingInput(true); should be done
+
+      // DOUT0("Addon %d get read event", fNPort);
 
       // ignore events when not waiting for the new data
-      if (fWaitMoreData) ReadUdp();
-
-      return;
+      if (fRunning) { ReadUdp(); SetDoingInput(true); }
+   } else {
+      dabc::SocketAddon::ProcessEvent(evnt);
    }
-
-   dabc::SocketAddon::ProcessEvent(evnt);
 }
 
 long hadaq::NewAddon::Notify(const std::string& msg, int arg)
 {
+   if (msg == "TransportWantToStart") {
+      fRunning = true;
+      SetDoingInput(true);
+      return 0;
+   }
+
    if (msg == "TransportWantToStop") {
-
-      if (fWaitMoreData) {
-         fWaitMoreData = false;
-         SetDoingInput(false);
-      }
-
+      fRunning = false;
+      SetDoingInput(false);
       return 0;
    }
 
    return dabc::SocketAddon::Notify(msg, arg);
 }
 
-
-double hadaq::NewAddon::ProcessTimeout(double lastdiff)
-{
-   if (!fWaitMoreData) return -1;
-
-   if ((fTgtPtr.distance_to_ownbuf()>0) && (fSendCnt==0)) {
-      DOUT0("DO BUFFER FLUSH");
-   }
-
-   // check buffer with period of fFlushTimeout
-   return fFlushTimeout;
-}
 
 void hadaq::NewAddon::ClearCounters()
 {
@@ -511,13 +501,31 @@ void hadaq::NewAddon::ClearCounters()
    fTotalProducedBuffers = 0;
 }
 
+bool hadaq::NewAddon::CloseBuffer()
+{
+   if (fTgtPtr.null()) return false;
+   unsigned fill_sz = fTgtPtr.distance_to_ownbuf();
+   if (fill_sz == 0) return false;
+
+   fTgtPtr.buf().SetTypeId(hadaq::mbt_HadaqTransportUnit);
+   fTgtPtr.buf().SetTotalSize(fill_sz);
+   fTgtPtr.reset();
+
+   fSendCnt++;
+   fTotalProducedBuffers++;
+   return true;
+}
+
 
 bool hadaq::NewAddon::ReadUdp()
 {
+   if (!fRunning) return false;
+
+   hadaq::NewTransport* tr = dynamic_cast<hadaq::NewTransport*> (fWorker());
+   if (tr == 0) {EOUT("No transport assigned"); return false; }
+
    if (fTgtPtr.null()) {
-      // if call was done from socket, just do nothing and wait buffer
-      DOUT0("UDP:%d ReadUdp at wrong moment - no buffer to read", fNPort);
-      return false;
+      if (!tr->AssignNewBuffer(0,this)) return false;
    }
 
    if (fTgtPtr.rawsize() < fMTU) {
@@ -533,7 +541,7 @@ bool hadaq::NewAddon::ReadUdp()
       //  socklen_t socklen = sizeof(fSockAddr);
       //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
 
-      ssize_t res = recv(Socket(), fTgtPtr.ptr(), fMTU, 0);
+      ssize_t res = recv(Socket(), fTgtPtr.ptr(), fMTU, MSG_DONTWAIT);
 
       if (res == 0) {
          DOUT0("UDP:%d Seems to be, socket was closed", fNPort);
@@ -588,22 +596,25 @@ bool hadaq::NewAddon::ReadUdp()
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
       // when rest size is smaller that mtu, one should close buffer
-      if (fTgtPtr.rawsize() < fMTU) return true;
+      if (fTgtPtr.rawsize() < fMTU) {
+         CloseBuffer();
+         tr->BufferReady();
+         if (!tr->AssignNewBuffer(0,this)) return false;
+      }
    }
-
-   SetDoingInput(true);
 
    return true; // indicate that buffer reading will be finished by callback
 }
-
-
 
 
 hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer) :
    dabc::Transport(cmd, inpport, 0),
    fIdNumber(0),
    fWithObserver(observer),
-   fDataRateName()
+   fDataRateName(),
+   fNumReadyBufs(0),
+   fBufAssigned(false),
+   fLastSendCnt(0)
 {
    // do not process to much events at once, let another transports a chance
    SetPortLoopLength(OutputName(), 2);
@@ -611,6 +622,9 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
    fIdNumber = inpport.ItemSubId();
 
    AssignAddon(addon);
+
+   if (addon->fFlushTimeout > 0)
+      CreateTimer("FlushTimer", addon->fFlushTimeout, false);
 
    DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
 
@@ -647,15 +661,6 @@ hadaq::NewTransport::~NewTransport()
 {
 
 }
-
-void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
-{
-   if (TimerName(timer) == "ObserverTimer")
-      UpdateExportedCounters();
-
-   dabc::Transport::ProcessTimerEvent(timer);
-}
-
 
 std::string  hadaq::NewTransport::GetNetmemParName(const std::string& name)
 {
@@ -711,6 +716,8 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
 
 bool hadaq::NewTransport::StartTransport()
 {
+   AssignNewBuffer(0); // provide immediately buffer - if possible
+
    fAddon.Notify("TransportWantToStart");
 
    return dabc::Transport::StartTransport();
@@ -718,9 +725,103 @@ bool hadaq::NewTransport::StartTransport()
 
 bool hadaq::NewTransport::StopTransport()
 {
+   FlushBuffer(true);
+
    fAddon.Notify("TransportWantToStop");
 
    return dabc::Transport::StopTransport();
 }
 
+void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
+{
+   if (TimerName(timer) == "FlushTimer") {
+      FlushBuffer(false);
+   } else
+   if (TimerName(timer) == "ObserverTimer") {
+      UpdateExportedCounters();
+   } else {
+      dabc::Transport::ProcessTimerEvent(timer);
+   }
+}
+
+bool hadaq::NewTransport::ProcessSend(unsigned port)
+{
+   if (fNumReadyBufs > 0) {
+      dabc::Buffer buf = TakeBuffer(0);
+      Send(port, buf);
+      fNumReadyBufs--;
+   }
+
+   return fNumReadyBufs > 0;
+}
+
+bool hadaq::NewTransport::ProcessBuffer(unsigned pool)
+{
+   // check that required element available in the pool
+
+   NewAddon* addon = (NewAddon*) fAddon();
+
+   if (AssignNewBuffer(pool, addon))
+      addon->ReadUdp();
+
+   return false;
+}
+
+bool hadaq::NewTransport::AssignNewBuffer(unsigned pool, NewAddon* addon)
+{
+   // assign  new buffer to the addon
+
+   if (fBufAssigned || (NumCanTake(pool) <= fNumReadyBufs)) return false;
+
+   if (!addon) addon = (NewAddon*) fAddon();
+
+   if (addon->HasBuffer()) {
+      EOUT("should not happen");
+      return false;
+   }
+
+   dabc::Buffer buf = PoolQueueItem(pool, fNumReadyBufs);
+   if (buf.null()) {
+      EOUT("Empty buffer when all checks already done - strange");
+      CloseTransport(true);
+      return false;
+   }
+
+   unsigned bufsize = (unsigned) buf.SegmentSize(0);
+
+   addon->fTgtPtr.reset(buf, 0, bufsize);
+
+   fBufAssigned = true;
+
+   if (addon->fTgtPtr.rawsize() < addon->fMTU) {
+      EOUT("not enough space in the buffer - at least %u is required", addon->fMTU);
+      CloseTransport(true);
+      return false;
+   }
+
+   return true;
+}
+
+void hadaq::NewTransport::BufferReady()
+{
+   fBufAssigned = false;
+   fNumReadyBufs++;
+
+   while (CanSend(0))
+      if (!ProcessSend(0)) break;
+}
+
+void hadaq::NewTransport::FlushBuffer(bool onclose)
+{
+   NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
+
+   if (onclose || (fLastSendCnt == addon->fSendCnt)) {
+      if (addon->CloseBuffer()) {
+         BufferReady();
+         if (!onclose) AssignNewBuffer(0, addon);
+      }
+   }
+
+   fLastSendCnt = addon->fSendCnt;
+}
 

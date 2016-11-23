@@ -162,20 +162,23 @@ namespace hadaq {
          pid_t              fPid;               ///< process id
          bool               fDebug;             ///< when true, produce more debug output
 
-         virtual void ProcessEvent(const dabc::EventId&);
-         virtual double ProcessTimeout(double lastdiff);
+         bool               fRunning;         ///< is transport running
 
-         /** Light-weight command interface, which can be used from worker */
+         virtual void ProcessEvent(const dabc::EventId&);
+
+         /** Light-weight command interface */
          virtual long Notify(const std::string&, int);
 
          /* Use codes which are valid for Read_Start */
          bool ReadUdp();
 
+         bool CloseBuffer();
+
       public:
          NewAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce);
          virtual ~NewAddon();
 
-         // this is interface from DataInput
+         bool HasBuffer() const { return !fTgtPtr.null(); }
 
          void ClearCounters();
    };
@@ -188,6 +191,9 @@ namespace hadaq {
          int            fIdNumber;
          bool           fWithObserver;
          std::string    fDataRateName;
+         unsigned       fNumReadyBufs; ///< number of filled buffers which could be posted
+         bool           fBufAssigned;  ///< if next buffer assigned
+         int            fLastSendCnt;  ///< used for flushing
 
          std::string GetNetmemParName(const std::string& name);
          void CreateNetmemPar(const std::string& name);
@@ -207,6 +213,13 @@ namespace hadaq {
          /** Methods activated by Port, when transport starts/stops. */
          virtual bool StartTransport();
          virtual bool StopTransport();
+
+         virtual bool ProcessSend(unsigned port);
+         virtual bool ProcessBuffer(unsigned pool);
+
+         bool AssignNewBuffer(unsigned pool, NewAddon* addon = 0);
+         void BufferReady();
+         void FlushBuffer(bool onclose = false);
 
    };
 

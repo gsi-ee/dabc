@@ -133,7 +133,6 @@ namespace dabc {
             if (fullsz>0) setfullsize(fullsz);
          }
 
-
          inline void reset()
          {
             fBuf.Release();
@@ -148,6 +147,8 @@ namespace dabc {
          inline bool null() const { return (fPtr==0) || (fullsize()==0); }
          inline BufferSize_t rawsize() const { return fRawSize; }
          inline BufferSize_t fullsize() const { return fFullSize; }
+
+         inline Buffer buf() { return fBuf; }
 
          inline BufferSize_t shift(BufferSize_t sz) throw()
          {
