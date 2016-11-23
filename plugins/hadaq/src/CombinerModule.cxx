@@ -42,7 +42,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver(false),
    fEpicsSlave(false),
    fRunToOracle(false),
-   fCheckTag(false),
+   fCheckTag(true),
    fFlushTimeout(0.),
    fEvnumDiffStatistics(true)
 {
@@ -66,7 +66,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
-   fCheckTag = Cfg("CheckTag", cmd).AsBool(false);
+   fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
    fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;

@@ -96,7 +96,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <TriggerNumRange value="0x1000000"/>
 
        <!-- CheckTag: when true events will be discarded if tag mismatched between subevents  -->
-       <CheckTag value="false"/>
+       <CheckTag value="true"/>
        
        <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>

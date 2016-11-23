@@ -12,7 +12,8 @@ about current functionality of the framework.
    Increase priority of socket events. First tests shows much less
    lost rate comare to old implementation.
 3. Provide option to discard HLD events if TAG is not matched in the subevents.
-   One should provide CheckTag value="true" in XML file. Default false.
+   One should provide CheckTag value="true" in XML file. 
+   Default is now true - config for HADES event builders should be adjusted.
    
 
 21.11.2016

@@ -157,10 +157,13 @@ DAQDISK - switches disk demon mode on/off
        <SyncTriggerMask value="0x01"/>
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
-       <TriggerNumRange value="0x1000000"/> 
-          <!--TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
+       <!-- TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
+       <TriggerNumRange value="0x1000000"/>
+       <!--  Do not throw away events when subevens TAGs are differ  --> 
+       <CheckTag value="false"/>
+
+       <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="false"/>
-          <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
         
        <BuildDropTimeout value="30.0"/>    
           
