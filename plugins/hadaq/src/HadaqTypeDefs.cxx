@@ -46,10 +46,6 @@ const char* hadaq::xmlExternalRunid       = "RunIdFromEPICS";
 const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
 const char* hadaq::xmlMbsMergeSyncMode    = "DoMergeSyncedEvents";
 
-const char* hadaq::xmlSyncSeqNumberEnabled ="UseSyncSequenceNumber";
-const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";
-const char* hadaq::xmlSyncAcceptedTriggerMask       = "SyncTriggerMask";
-
 const char* hadaq::xmlHadaqTrignumRange       = "TriggerNumRange";
 const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
 const char* hadaq::xmlEvtbuildTimeout = "BuildDropTimeout";

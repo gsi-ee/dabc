@@ -87,15 +87,6 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fTriggerNrTolerance = fMaxHadaqTrigger / 4;
    fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
-   fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
-   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);        //0x8000;
-   fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
-   fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
-
-   if (fUseSyncSeqNumber)
-      DOUT1("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x", (unsigned) fSyncSubeventId, (unsigned) fSyncTriggerMask);
-   else
-      DOUT1("HADAQ combiner module with independent event sequence number");
 
    std::string ratesprefix = "Hadaq";
 
@@ -865,67 +856,6 @@ bool hadaq::CombinerModule::BuildEvent()
       hasCompleteEvent = false;
       fTotalTagErrors++;
    }
-
-   if(fUseSyncSeqNumber && hasCompleteEvent) {
-      hasCompleteEvent = false;
-
-      // we may put sync id from subevent payload to event sequence number already here.
-      hadaq::RawSubevent* syncsub = fCfg[0].subevnt; // for the moment, sync number must be in first udp input
-      // TODO: put this to configuration
-
-      if (syncsub->GetId() != fSyncSubeventId) {
-         // main subevent has same id as cts/hub subsubevent
-         DOUT1("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.", 0, syncsub->GetId());
-      } else {
-         unsigned datasize = syncsub->GetNrOfDataWords();
-         unsigned syncdata(0), syncnum(0), trigtype(0); //, trignum(0);
-         for (unsigned ix = 0; ix < datasize; ix++) {
-            //scan through trb3 data words and look for the cts subsubevent
-            unsigned data = syncsub->Data(ix);
-            //! Central hub header and inside
-            if ((data & 0xFFFF) != fSyncSubeventId) continue;
-
-            unsigned centHubLen = ((data >> 16) & 0xFFFF);
-            DOUT5("***  --- central hub header: 0x%x, size=%d", data, centHubLen);
-
-            // evaluate trigger type from cts:
-            data = syncsub->Data(ix + 1);
-            // old HADES style:
-            //                   trigtype=(syncdata >> 24) & 0xFF;
-            //                   trignum= (syncdata >> 16) & 0xFF;
-            // new cts
-            trigtype = (data & 0xFFFF);
-            //trignum = (data >> 16) & 0xF;
-            DOUT5("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, (data >> 16) & 0xF);
-            fCfg[0].fTrigType=trigtype; // overwrite default trigger type from main hades cts format
-            syncdata = syncsub->Data(ix + centHubLen);
-            syncnum = (syncdata & 0xFFFFFF);
-            DOUT5("***  --- found sync data: 0x%x, sync number is %d, errorbit %s", syncdata, syncnum, DBOOL((syncdata >> 31) & 0x1) );
-            if (fPrintSync) DOUT1("SYNC: 0x%06X, errorbit %s", syncnum, DBOOL((syncdata >> 31) & 0x1) );
-            break;
-         }
-         if(syncnum==0)
-         {
-            DOUT5("***  --- Found zero sync number!, full sync data:0x%x",syncdata);
-         }
-         else if ( ((syncdata >> 31) & 0x1) == 0x1)
-         {
-            DOUT5("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata);
-         }
-         //else if (trigtype   != 0) // todo: configure which trigger type contains the sync, currently it'S 0
-         else if ((trigtype & fSyncTriggerMask) == 0x0)
-         {
-            DOUT5("***  --- Found not accepted trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata);
-         } else {
-            //                  DOUT1("FIND SYNC in HADAQ %06x", syncnum);
-            sequencenumber = syncnum;
-            hasCompleteEvent = true;
-         }
-
-      } // if (syncsub->GetId() != fSyncSubeventId)
-
-   } // if(fUseSyncSeqNumber)
-
 
    // provide normal buffer
 

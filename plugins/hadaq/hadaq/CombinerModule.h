@@ -161,11 +161,6 @@ namespace hadaq {
 
          bool fRunToOracle;
 
-         bool fUseSyncSeqNumber; ///< if true, use vulom/roc syncnumber for event sequence number
-         bool fPrintSync; ///<  if true, print syncs with DOUT1
-         uint32_t fSyncSubeventId; ///<  id number of sync subevent
-         uint32_t fSyncTriggerMask; ///<  bit mask for accepted trigger inputs in sync mode
-
          int  fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
 
          bool               fCheckTag;
