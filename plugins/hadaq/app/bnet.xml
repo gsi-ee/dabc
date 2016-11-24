@@ -7,9 +7,9 @@
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <lib value="libDabcRfio.so"/>  
-      <logfile value="hadaqevtbuild.log"/>
-      <loglevel value="-1"/>
-      <loglimit value="1000"/>
+      <logfile value="bnet.log"/>
+      <loglevel value="1"/>
+      <loglimit value="100000"/>
       <control value="true"/>
       <threads_layout value="balanced"/>
     </Run>

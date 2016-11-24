@@ -243,8 +243,8 @@ void hadaq::CombinerModule::BeforeModuleStart()
 void hadaq::CombinerModule::AfterModuleStop()
 {
    std::string info = dabc::format(
-      "HADAQ Combiner stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
-       (int) fTotalBuildEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
+      "HADAQ %s stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
+       GetName(), (int) fTotalBuildEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
@@ -266,6 +266,8 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
    }
 
    dabc::Buffer buf = fOut.Close();
+
+   // if (fBNETsend) DOUT0("%s FLUSH buffer", GetName());
 
    if (dest<0)
       SendToAllOutputs(buf);
@@ -514,6 +516,8 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
       if (res && iter.IsData()) return true;
 
       if(!ShiftToNextBuffer(ninp)) return false;
+
+      // DOUT0("Inp%u next buffer distance %u", ninp, iter.OnlyDebug());
    } //  while (!foundhadtu)
 
    return false;
@@ -540,10 +544,9 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 
    ReadIterator& iter = cfg.fIter;
 
-   while (!iter.NextEvent()) {
-     // retry in next hadtu container
-     if (!ShiftToNextHadTu(ninp)) return false;
-   }
+   if (!iter.NextEvent())
+      // retry in next hadtu container
+      if (!ShiftToNextHadTu(ninp)) return false;
 
    // no need to analyze data
    if (fast) return true;
@@ -566,6 +569,10 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 
    cfg.fTrigType = cfg.evnt->GetId() & 0xF;
 
+   // int diff = CalcTrigNumDiff(cfg.fLastTrigNr,cfg.fTrigNr);
+   // if (diff != 1)
+   //   DOUT0("Inp%u Diff%d %x %x distance: %u", ninp, diff, cfg.fLastTrigNr, cfg.fTrigNr, iter.OnlyDebug());
+
    cfg.fLastTrigNr = cfg.fTrigNr;
 
    return true;
@@ -574,9 +581,9 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool drop
 
 bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
 {
-   DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
-
    if (fBNETrecv) return ShiftToNextEvent(ninp, fast, dropped);
+
+   DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
    InputCfg& cfg = fCfg[ninp];
 
@@ -923,6 +930,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
    if (hasCompleteEvent && fCheckTag && tagError) {
       hasCompleteEvent = false;
+
+      if (fBNETrecv) DOUT0("TAG error");
+
       fTotalTagErrors++;
    }
 
@@ -1003,7 +1013,11 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       int diff = 1;
-      if ((fLastTrigNr!=0xffffffff) && !fBNETrecv) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if (fLastTrigNr!=0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+
+      //if (fBNETsend && (diff!=1))
+      //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
+      // if (fBNETsend) DOUT0("%s trig %x size %u", GetName(), buildevid, subeventssize);
 
       fLastTrigNr = buildevid;
 

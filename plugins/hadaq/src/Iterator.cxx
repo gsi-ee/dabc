@@ -387,10 +387,6 @@ bool hadaq::WriteIterator::AddSubevent(hadaq::RawSubevent* sub)
 
 bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent* evnt)
 {
-   if (!evnt) {
-      EOUT("EMPTY EVENT"); exit(1);
-   }
-
    return AddSubevent(dabc::Pointer(evnt->FirstSubevent(), evnt->AllSubeventsSize()));
 }
 
@@ -401,7 +397,7 @@ bool hadaq::WriteIterator::FinishEvent()
    dabc::BufferSize_t dist = sizeof(hadaq::RawEvent);
    if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
    evnt()->SetSize(dist);
-   dabc::BufferSize_t paddeddist=evnt()->GetPaddedSize();
+   dabc::BufferSize_t paddeddist = evnt()->GetPaddedSize();
    fFullSize += paddeddist;
    fEvPtr.shift(paddeddist);
 
