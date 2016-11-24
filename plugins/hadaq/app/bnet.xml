@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+
+<dabc version="2">
+  <Context host="localhost" name="EventBuilder">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcRfio.so"/>  
+      <logfile value="hadaqevtbuild.log"/>
+      <loglevel value="-1"/>
+      <loglimit value="1000"/>
+      <control value="true"/>
+      <threads_layout value="balanced"/>
+    </Run>
+    
+    <HttpServer name="http" port="8090"/>
+    
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+    
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+    
+    <Module name="Comb*">    
+       <ExtraDebug value="false"/>
+       <FlushTimeout value="0.5"/>   
+       <TriggerNumRange value="0x1000000"/>
+    </Module>
+
+    <Module name="Comb1" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETsend value="true"/>
+       <NumInputs value="3"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input0" url="nhadaq://host:50000"/>
+       <InputPort name="Input1" url="nhadaq://host:50001"/>
+       <InputPort name="Input2" url="nhadaq://host:50002"/>
+       <AccountLostEventDiff value="true"/>
+     </Module>
+
+    <Module name="Comb2" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETsend value="true"/>
+       <NumInputs value="2"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input0" url="nhadaq://host:50003"/>
+       <InputPort name="Input1" url="nhadaq://host:50004"/>
+       <AccountLostEventDiff value="true"/>
+     </Module>
+    
+
+    <Module name="Combiner" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETrecv value="true"/>
+       <NumInputs value="2"/>
+       <NumOutputs value="1"/>
+
+       <InputPort name="Input0" url="Comb1/Output0"/>
+       <InputPort name="Input1" url="Comb2/Output0"/>
+
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6789?iter=hadaq_iter&subid=0x1f"/>
+
+       <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+       
+       <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
+             transport runs in own thread to exclude blocking of other transports if file operation hangs -->
+       <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
+     </Module>
+     
+     <!-- Terminal output like old event builder -->
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" servport="0" showtrig="16"/>
+
+  </Context>
+
+</dabc>

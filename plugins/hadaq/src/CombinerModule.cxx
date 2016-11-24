@@ -85,7 +85,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
-   DOUT1("HADAQ combiner module using maxtrigger 0x%x, rangemask:0x%x", fMaxHadaqTrigger, fTriggerRangeMask);
+   DOUT1("HADAQ %s module using maxtrigger 0x%x, rangemask:0x%x", GetName(), fMaxHadaqTrigger, fTriggerRangeMask);
    fEvnumDiffStatistics = Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
 
    fTriggerNrTolerance = fMaxHadaqTrigger / 4;
@@ -134,7 +134,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
 
-   PublishPars("$CONTEXT$/HadaqCombiner");
+   if (IsName("Combiner"))
+      PublishPars("$CONTEXT$/HadaqCombiner");
+   else
+      PublishPars(dabc::format("$CONTEXT$/%s", GetName()));
 
    fWorkerHierarchy.SetField("_player", "DABC.HadaqDAQControl");
 
@@ -218,8 +221,8 @@ bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 void hadaq::CombinerModule::BeforeModuleStart()
 {
    std::string info = dabc::format(
-         "HADAQ Combiner starts. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
-         (int) fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
+         "HADAQ %s starts. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
+         GetName(), (int) fRunNumber, NumInputs(), NumOutputs(), fFlushTimeout);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
@@ -229,11 +232,12 @@ void hadaq::CombinerModule::BeforeModuleStart()
    fLastBuildTm.GetNow();
 
    // direct addon pointers can be used for terminal printout
-   for (unsigned n=0;n<fCfg.size();n++) {
-      dabc::Command cmd("GetHadaqTransportInfo");
-      cmd.SetInt("id", n);
-      SubmitCommandToTransport(InputName(n), Assign(cmd));
-   }
+   if (!fBNETrecv)
+      for (unsigned n=0;n<fCfg.size();n++) {
+         dabc::Command cmd("GetHadaqTransportInfo");
+         cmd.SetInt("id", n);
+         SubmitCommandToTransport(InputName(n), Assign(cmd));
+      }
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -254,13 +258,20 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       return false;
    }
 
-   if (!CanSendToAllOutputs()) {
-      // printf("Cannt send to all outputs - why out0:%s  out1:%s???\n", DBOOL(CanSend(0)), DBOOL(CanSend(1)));
-      return false;
+   int dest = DestinationPort(fLastTrigNr);
+   if (dest<0) {
+      if (!CanSendToAllOutputs()) return false;
+   } else {
+      if (!CanSend(dest)) return false;
    }
 
    dabc::Buffer buf = fOut.Close();
-   SendToAllOutputs(buf);
+
+   if (dest<0)
+      SendToAllOutputs(buf);
+   else
+      Send(dest, buf);
+
    fFlushCounter = 0; // indicate that next flush timeout one not need to send buffer
 
    return true;
@@ -710,6 +721,20 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    return true;
 }
 
+int hadaq::CombinerModule::DestinationPort(uint32_t trignr)
+{
+   if (!fBNETsend || (NumOutputs()<2)) return -1;
+
+   return (trignr/16) % NumOutputs();
+}
+
+bool hadaq::CombinerModule::CheckDestination(uint32_t trignr)
+{
+   if (!fBNETsend || (fLastTrigNr==0xffffffff)) return true;
+
+   return DestinationPort(fLastTrigNr) == DestinationPort(trignr);
+}
+
 bool hadaq::CombinerModule::BuildEvent()
 {
    // RETURN VALUE: true - event is successfully build, recall immediately
@@ -904,7 +929,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // provide normal buffer
 
    if (hasCompleteEvent) {
-      if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize)) {
+      if (fOut.IsBuffer() && (!fOut.IsPlaceForEvent(subeventssize) || !CheckDestination(buildevid))) {
          // first we close current buffer
          if (!FlushOutputBuffer()) {
             if (fExtraDebug && fLastDebugTm.Expired(1.)) {
@@ -968,7 +993,7 @@ bool hadaq::CombinerModule::BuildEvent()
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].fEmpty) continue;
-         if (fBNETsend)
+         if (fBNETrecv)
             fOut.AddAllSubevents(fCfg[ninp].evnt);
          else
             fOut.AddSubevent(fCfg[ninp].subevnt);
@@ -978,7 +1003,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       int diff = 1;
-      if (fLastTrigNr!=0xffffffff) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
+      if ((fLastTrigNr!=0xffffffff) && !fBNETrecv) diff = CalcTrigNumDiff(fLastTrigNr, buildevid);
 
       fLastTrigNr = buildevid;
 

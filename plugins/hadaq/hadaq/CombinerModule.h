@@ -278,6 +278,9 @@ namespace hadaq {
          void CreateNetmemPar(const std::string& name);
          void SetNetmemPar(const std::string& name, unsigned value);
 
+         int DestinationPort(uint32_t trignr);
+         bool CheckDestination(uint32_t trignr);
+
       public:
          CombinerModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~CombinerModule();

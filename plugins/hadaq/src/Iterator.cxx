@@ -387,6 +387,10 @@ bool hadaq::WriteIterator::AddSubevent(hadaq::RawSubevent* sub)
 
 bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent* evnt)
 {
+   if (!evnt) {
+      EOUT("EMPTY EVENT"); exit(1);
+   }
+
    return AddSubevent(dabc::Pointer(evnt->FirstSubevent(), evnt->AllSubeventsSize()));
 }
 
