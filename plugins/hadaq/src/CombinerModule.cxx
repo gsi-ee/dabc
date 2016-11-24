@@ -529,7 +529,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fResortIter.Close();
    } else {
       // account when subevent exists but intentionally dropped
-      if (dropped && cfg.subevnt) cfg.fDroppedTrig++;
+      if (dropped && cfg.has_data) cfg.fDroppedTrig++;
    }
 
    cfg.Reset(fast);
@@ -546,16 +546,10 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       if (!res || (iter.subevnt() == 0)) {
          DOUT5("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp);
 
-//         if (cfg.fResortIndx>=0)
-//            printf("Input %u try to find in next TU queue full:%d numcanrev %u capacity %d\n", ninp, RecvQueueFull(ninp), NumCanRecv(ninp), InputQueueCapacity(ninp));
-
          // retry in next hadtu container
          if (ShiftToNextHadTu(ninp)) continue;
 
          if ((cfg.fResortIndx>=0) && (NumCanRecv(ninp) > 1)) {
-
-            // printf("Input %u fail to find event, use next in normal queue full:%d numcanrev %u capacity %d\n", ninp, RecvQueueFull(ninp), NumCanRecv(ninp), InputQueueCapacity(ninp));
-
             // we have at least 2 buffers in the queue and cannot find required subevent
             // seems to be, we should use next event from normal queue
             cfg.fResortIndx = -1;
@@ -581,8 +575,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          if (diff!=1) {
 
             if (cfg.fResortIndx < 0) {
-               cfg.fResortIndx = 0; cfg.fResortIter = cfg.fIter;
-               // printf("Input %u found difference of %d - try resort\n", ninp, diff);
+               cfg.fResortIndx = 0;
+               cfg.fResortIter = cfg.fIter;
             }
             continue;
          }
@@ -592,6 +586,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       // this is selected subevent
       cfg.subevnt = iter.subevnt();
+      cfg.has_data = true;
+      cfg.data_size = cfg.subevnt->GetPaddedSize();
 
       cfg.fTrigNr = (cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask;
       cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
@@ -602,9 +598,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fEmpty = cfg.subevnt->GetSize() <= sizeof(hadaq::RawSubevent);
       cfg.fDataError = cfg.subevnt->GetDataError();
 
-//      DOUT0("Inp:%u trig:%08u", ninp, cfg.fTrigNr);
-
-      cfg.fSubId = cfg.subevnt->GetId() & 0x7fffffffUL;
+      // cfg.fSubId = cfg.subevnt->GetId() & 0x7fffffffUL;
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
@@ -648,10 +642,8 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
       unsigned numsubev = 0;
 
       do {
-         if (fCfg[ninp].subevnt) {
-            numsubev++;
-            droppeddata += fCfg[ninp].subevnt->GetSize();
-         }
+         if (fCfg[ninp].has_data) numsubev++;
+         droppeddata += fCfg[ninp].data_size;
       } while (ShiftToNextSubEvent(ninp, true, true));
 
       if (numsubev>maxnumsubev) maxnumsubev = numsubev;
@@ -706,7 +698,7 @@ bool hadaq::CombinerModule::BuildEvent()
    int missing_inp(-1);
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-      if (fCfg[ninp].subevnt == 0)
+      if (!fCfg[ninp].has_data)
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
@@ -807,7 +799,7 @@ bool hadaq::CombinerModule::BuildEvent()
                // check also trigtag:
                if (trigtag != buildtag) tagError = true;
                if (haserror) dataError = true;
-               subeventssize += fCfg[ninp].subevnt->GetPaddedSize();
+               subeventssize += fCfg[ninp].data_size;
             }
             foundsubevent = true;
             break;
@@ -815,7 +807,7 @@ bool hadaq::CombinerModule::BuildEvent()
          } else
          if (CalcTrigNumDiff(trignr, buildevid) > 0) {
 
-            int droppedsize = fCfg[ninp].subevnt ? fCfg[ninp].subevnt->GetSize() : 1;
+            int droppedsize = fCfg[ninp].data_size;
 
             // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 

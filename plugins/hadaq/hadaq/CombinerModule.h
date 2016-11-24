@@ -54,11 +54,12 @@ namespace hadaq {
 
       struct InputCfg {
          hadaq::RawSubevent* subevnt; //!< actual subevent
+         bool     has_data;      //!< when true, input has data (subevent or bunch of sub events)
+         uint32_t data_size;     //!< padded size of current subevent, required in output buffer
          uint32_t fTrigNr;       //!< keeps current trigger sequence number
          uint32_t fLastTrigNr;   //!< keeps previous trigger sequence number - used to control data lost
          uint32_t fTrigTag;      //!<  keeps current trigger tag
          uint32_t fTrigType;     //!< current subevent trigger type
-         uint32_t fSubId;        //!<  current subevent id
          uint32_t fErrorBits;    //!< errorbit status word from payload end
          uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; //!< errorbit statistics counter
          float fQueueLevel;      //!<  current input queue fill level
@@ -79,11 +80,12 @@ namespace hadaq {
 
          InputCfg() :
             subevnt(0),
+            has_data(false),
+            data_size(0),
             fTrigNr(0),
             fLastTrigNr(0xffffffff),
             fTrigTag(0),
             fTrigType(0),
-            fSubId(0),
             fErrorBits(0),
             fQueueLevel(0),
             fLastEvtBuildTrigId(0),
@@ -110,11 +112,12 @@ namespace hadaq {
          {
             // used to reset current subevent
             subevnt = 0;
+            has_data = false;
+            data_size = 0;
             fTrigNr = 0;
-            fTrigTag =0;
-            fTrigType=0;
-            fSubId=0;
-            fErrorBits=0;
+            fTrigTag = 0;
+            fTrigType = 0;
+            fErrorBits = 0;
             fDataError = false;
             fEmpty = true;
            // do not clear error bit statistics!
