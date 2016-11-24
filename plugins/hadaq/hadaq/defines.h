@@ -465,6 +465,10 @@ is unique throughout all events ever acquired by the system.
          void Dump();
 
          RawSubevent* NextSubevent(RawSubevent* prev = 0);
+
+         RawSubevent* FirstSubevent();
+
+         uint32_t AllSubeventsSize();
    };
 
 }

@@ -64,6 +64,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fEBId = Cfg("NodeId", cmd).AsInt(-1);
    if (fEBId<0) fEBId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
+   fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
+   fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
+
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
@@ -514,9 +517,55 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
    return res;
 }
 
+bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool dropped)
+{
+   // function used to shift to next event - used in BNET mode
+
+   InputCfg& cfg = fCfg[ninp];
+
+   if (dropped && cfg.has_data) cfg.fDroppedTrig++;
+
+   cfg.Reset(fast);
+
+   ReadIterator& iter = cfg.fIter;
+
+   while (!iter.NextEvent()) {
+     // retry in next hadtu container
+     if (!ShiftToNextHadTu(ninp)) return false;
+   }
+
+   // no need to analyze data
+   if (fast) return true;
+
+   // this is selected event
+   cfg.evnt = iter.evnt();
+   cfg.has_data = true;
+   cfg.data_size = cfg.evnt->AllSubeventsSize();
+
+   uint32_t seq = cfg.evnt->GetSeqNr();
+
+   cfg.fTrigNr = (seq >> 8) & fTriggerRangeMask;
+   cfg.fTrigTag = seq & 0xFF;
+
+   cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
+   cfg.fRingCnt = (cfg.fRingCnt+1) % HADAQ_RINGSIZE;
+
+   cfg.fEmpty = (cfg.data_size == 0);
+   cfg.fDataError = cfg.evnt->GetDataError();
+
+   cfg.fTrigType = cfg.evnt->GetId() & 0xF;
+
+   cfg.fLastTrigNr = cfg.fTrigNr;
+
+   return true;
+}
+
+
 bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool dropped)
 {
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
+
+   if (fBNETrecv) return ShiftToNextEvent(ninp, fast, dropped);
 
    InputCfg& cfg = fCfg[ninp];
 
@@ -844,6 +893,9 @@ bool hadaq::CombinerModule::BuildEvent()
    // for sync sequence number, check first if we have error from cts:
    uint32_t sequencenumber = fTotalBuildEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
 
+   if (fBNETsend)
+      sequencenumber = (fCfg[masterchannel].fTrigNr << 8) | fCfg[masterchannel].fTrigTag;
+
    if (hasCompleteEvent && fCheckTag && tagError) {
       hasCompleteEvent = false;
       fTotalTagErrors++;
@@ -916,7 +968,10 @@ bool hadaq::CombinerModule::BuildEvent()
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].fEmpty) continue;
-         fOut.AddSubevent(fCfg[ninp].subevnt);
+         if (fBNETsend)
+            fOut.AddAllSubevents(fCfg[ninp].evnt);
+         else
+            fOut.AddSubevent(fCfg[ninp].subevnt);
          DoInputSnapshot(ninp); // record current state of event tag and queue level for control system
       } // for ninp
 

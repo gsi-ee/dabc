@@ -51,14 +51,22 @@ void hadaq::RawEvent::InitHeader(uint32_t id)
    SetTime(clock);
 }
 
+hadaq::RawSubevent* hadaq::RawEvent::FirstSubevent()
+{
+   if (GetSize() - sizeof(hadaq::RawEvent) < sizeof(hadaq::RawSubevent)) return 0;
+
+   return (hadaq::RawSubevent*) ((char*) this + sizeof(hadaq::RawEvent));
+}
+
+uint32_t hadaq::RawEvent::AllSubeventsSize()
+{
+   if (GetPaddedSize() < sizeof(hadaq::RawEvent)) return 0;
+   return GetPaddedSize() - sizeof(hadaq::RawEvent);
+}
+
 hadaq::RawSubevent* hadaq::RawEvent::NextSubevent(RawSubevent* prev)
 {
-   if (prev == 0) {
-
-      if (GetSize() - sizeof(hadaq::RawEvent) < sizeof(hadaq::RawSubevent)) return 0;
-
-      return (hadaq::RawSubevent*) ((char*) this + sizeof(hadaq::RawEvent));
-   }
+   if (prev == 0) return FirstSubevent();
 
    char* next = (char*) prev + prev->GetPaddedSize();
 

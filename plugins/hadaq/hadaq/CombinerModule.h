@@ -53,12 +53,13 @@ namespace hadaq {
       protected:
 
       struct InputCfg {
-         hadaq::RawSubevent* subevnt; //!< actual subevent
+         hadaq::RawSubevent  *subevnt; //!< actual subevent
+         hadaq::RawEvent  *evnt; //!< actual event
          bool     has_data;      //!< when true, input has data (subevent or bunch of sub events)
          uint32_t data_size;     //!< padded size of current subevent, required in output buffer
          uint32_t fTrigNr;       //!< keeps current trigger sequence number
          uint32_t fLastTrigNr;   //!< keeps previous trigger sequence number - used to control data lost
-         uint32_t fTrigTag;      //!<  keeps current trigger tag
+         uint32_t fTrigTag;      //!< keeps current trigger tag
          uint32_t fTrigType;     //!< current subevent trigger type
          uint32_t fErrorBits;    //!< errorbit status word from payload end
          uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; //!< errorbit statistics counter
@@ -80,6 +81,7 @@ namespace hadaq {
 
          InputCfg() :
             subevnt(0),
+            evnt(0),
             has_data(false),
             data_size(0),
             fTrigNr(0),
@@ -112,6 +114,7 @@ namespace hadaq {
          {
             // used to reset current subevent
             subevnt = 0;
+            evnt = 0;
             has_data = false;
             data_size = 0;
             fTrigNr = 0;
@@ -168,6 +171,9 @@ namespace hadaq {
 
          bool               fCheckTag;
 
+         bool               fBNETsend;  // indicate that combiner used as BNET sender
+         bool               fBNETrecv;  // indicate that second-level event building is perfomed
+
          double             fFlushTimeout;
 
          std::string        fDataRateName;
@@ -212,7 +218,6 @@ namespace hadaq {
          dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
          double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
 
-
          bool BuildEvent();
 
          bool FlushOutputBuffer();
@@ -229,6 +234,9 @@ namespace hadaq {
          virtual void AfterModuleStop();
 
          bool ShiftToNextHadTu(unsigned ninp);
+
+         /** Shifts to next event in the input queue */
+         bool ShiftToNextEvent(unsigned ninp, bool fast = false, bool dropped = false);
 
          /** Shifts to next subevent in the input queue */
          bool ShiftToNextSubEvent(unsigned ninp, bool fast = false, bool dropped = false);

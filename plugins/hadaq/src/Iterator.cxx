@@ -64,7 +64,7 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    fBufType = buf.GetTypeId();
 
-   if (!((fBufType == mbt_HadaqEvents) || (fBufType == mbt_HadaqTransportUnit) || (fBufType == mbt_HadaqSubevents))) {
+   if ((fBufType != mbt_HadaqEvents) && (fBufType != mbt_HadaqTransportUnit) && (fBufType != mbt_HadaqSubevents)) {
       EOUT("Buffer format %u not supported", (unsigned) fBufType);
       return false;
    }
@@ -165,7 +165,7 @@ bool hadaq::ReadIterator::NextEvent()
 
 bool hadaq::ReadIterator::NextSubeventsBlock()
 {
-   if (fBufType == mbt_HadaqTransportUnit ) return NextHadTu();
+   if (fBufType == mbt_HadaqTransportUnit) return NextHadTu();
    if (fBufType == mbt_HadaqEvents) return NextEvent();
    if (fBufType == mbt_HadaqSubevents) {
       // here only subevents
@@ -383,6 +383,11 @@ bool hadaq::WriteIterator::AddSubevent(const dabc::Pointer& source)
 bool hadaq::WriteIterator::AddSubevent(hadaq::RawSubevent* sub)
 {
    return AddSubevent(dabc::Pointer(sub, sub->GetPaddedSize()));
+}
+
+bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent* evnt)
+{
+   return AddSubevent(dabc::Pointer(evnt->FirstSubevent(), evnt->AllSubeventsSize()));
 }
 
 bool hadaq::WriteIterator::FinishEvent()

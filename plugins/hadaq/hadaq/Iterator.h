@@ -110,6 +110,7 @@ namespace hadaq {
 
          bool AddSubevent(const dabc::Pointer& source);
          bool AddSubevent(hadaq::RawSubevent* sub);
+         bool AddAllSubevents(hadaq::RawEvent* evnt);
          bool FinishEvent();
 
          dabc::Buffer Close();
