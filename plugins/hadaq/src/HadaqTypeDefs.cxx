@@ -43,8 +43,6 @@ const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 const char* hadaq::xmlObserverEnabled      = "DoShmControl";
 
 const char* hadaq::xmlExternalRunid       = "RunIdFromEPICS";
-const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
-const char* hadaq::xmlMbsMergeSyncMode    = "DoMergeSyncedEvents";
 
 const char* hadaq::xmlHadaqTrignumRange       = "TriggerNumRange";
 const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";

@@ -35,8 +35,6 @@ namespace hadaq {
 
    extern const char* xmlObserverEnabled;
    extern const char* xmlExternalRunid;
-   extern const char* xmlMbsSubeventId;
-   extern const char* xmlMbsMergeSyncMode;
 
    extern const char* xmlHadaqTrignumRange;
    extern const char* xmlHadaqDiffEventStats;
