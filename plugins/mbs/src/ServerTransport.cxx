@@ -112,7 +112,6 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          // we continue to next case - buffer is completed
       }
 
-
       case oSendingBuffer:
          if (fKind == mbs::StreamServer)
             fState = oWaitingReq;
@@ -121,8 +120,13 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          MakeCallback(dabc::do_Ok);
          return;
 
+      case oDoingClose:
+      case oError:
+         // ignore all input events in such case
+         return;
+
       default:
-         EOUT("Send complete at wrong state");
+         EOUT("Send complete at wrong state %d", fState);
          break;
    }
 }
@@ -132,8 +136,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
 //   DOUT0("mbs::ServerOutputAddon::OnRecvCompleted %s  inp:%s out:%s", f_sbuf, DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
 
    if (strcmp(f_sbuf, "CLOSE")==0) {
-      fState = oDoingClose;
-      SubmitWorkerCmd(dabc::Command("CloseTransport"));
+      OnConnectionClosed(); // do same as connection was closed
       return;
    }
 
@@ -256,19 +259,39 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
 void mbs::ServerOutputAddon::OnConnectionClosed()
 {
-   // disable auto-destroy
-   if (fState != oError) {
-      fState = oError;
-      MakeCallback(dabc::do_Close);
+   switch (fState) {
+      case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
+      case oSendingBuffer:
+      case oWaitingReqBack:
+         fState = oDoingClose;
+         MakeCallback(dabc::do_Close);
+         return;
+
+      case oDoingClose: return;
+      case oError: return;
+
+      default:
+         fState = oDoingClose;
+         SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 }
 
 void mbs::ServerOutputAddon::OnSocketError(int errnum, const std::string& info)
 {
-   // disable auto-destroy
-   if (fState != oError) {
-      fState = oError;
-      MakeCallback(dabc::do_Close);
+   switch (fState) {
+      case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
+      case oSendingBuffer:
+      case oWaitingReqBack:
+         fState = oError;
+         MakeCallback(dabc::do_Close);
+         return;
+
+      case oDoingClose: return;
+      case oError: return;
+
+      default:
+         fState = oError;
+         SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 }
 
