@@ -360,6 +360,8 @@ bool dabc::Application::DefaultInitFunc()
       }
    }
 
+   int nconn = 0;
+
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlConnectionNode, false)) {
 
       const char* outputname = Xml::GetAttr(node, "output");
@@ -373,7 +375,9 @@ bool dabc::Application::DefaultInitFunc()
       if ((kind==0) || (strcmp(kind,"all-to-all")!=0)) {
          dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
          req.SetConfigFromXml(node);
+         if (!req.null()) nconn++;
       } else {
+         nconn++;
          int numnodes = dabc::mgr.NumNodes();
 
          DOUT2("Create all-to-all connections for %d nodes", numnodes);
@@ -389,6 +393,8 @@ bool dabc::Application::DefaultInitFunc()
             }
       }
    }
+
+   if (nconn>0) dabc::mgr.ActivateConnections(5);
 
    return true;
 }

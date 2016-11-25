@@ -1112,62 +1112,65 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 
    int firsttest = portnum;
 
+   std::string localhost = dabc::SocketThread::DefineHostName(false);
+
    for(int ntest=0;ntest<numtests;ntest++) {
 
-     if ((ntest==0) && (portnum<0)) continue;
+      if ((ntest==0) && (portnum<0)) continue;
 
-     if (ntest>0) portnum = portmin - 1 + ntest;
+      if (ntest>0) portnum = portmin - 1 + ntest;
 
-     int sockfd = -1;
+      int sockfd = -1;
 
-     struct addrinfo hints, *info;
+      struct addrinfo hints, *info;
 
-     memset(&hints, 0, sizeof(hints));
-     hints.ai_flags    = AI_PASSIVE;
-     hints.ai_family   = AF_UNSPEC; //AF_INET;
-     hints.ai_socktype = SOCK_STREAM;
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_flags    = AI_PASSIVE;
+      hints.ai_family   = AF_UNSPEC; //AF_INET;
+      hints.ai_socktype = SOCK_STREAM;
 
-     std::string localhost = dabc::SocketThread::DefineHostName(false);
+      const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
+      char service[100];
+      sprintf(service, "%d", portnum);
 
-     const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
-     char service[100];
-     sprintf(service, "%d", portnum);
+      int n = getaddrinfo(myhostname, service, &hints, &info);
 
-     int n = getaddrinfo(myhostname, service, &hints, &info);
+      DOUT2("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n);
 
-     DOUT2("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n);
+      if (n < 0) {
+         EOUT("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service);
+         continue;
+      }
 
-     if (n < 0) {
-        EOUT("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service);
-        continue;
-     }
+      for (struct addrinfo *t = info; t; t = t->ai_next) {
 
-     for (struct addrinfo *t = info; t; t = t->ai_next) {
+         sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
+         if (sockfd >= 0) {
 
-        sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
-        if (sockfd >= 0) {
+            int opt = 1;
 
-           int opt = 1;
+            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-           setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+            if (!bind(sockfd, t->ai_addr, t->ai_addrlen)) break;
+            close(sockfd);
+            sockfd = -1;
+         }
+      }
 
-           if (!bind(sockfd, t->ai_addr, t->ai_addrlen)) break;
-           close(sockfd);
-           sockfd = -1;
-        }
-     }
+      freeaddrinfo(info);
 
-     freeaddrinfo(info);
+      if (sockfd<0) {
+         DOUT3("Cannot bind socket to service %s", service);
+         continue;
+      }
 
-     if (sockfd<0) {
-       DOUT3("Cannot bind socket to service %s", service);
-       continue;
-     }
+      if (dabc::SocketThread::SetNonBlockSocket(sockfd)) {
+         DOUT3("BIND SOCKET ON %s:%d", localhost.c_str(), portnum);
+         return sockfd;
+      }
 
-     if (dabc::SocketThread::SetNonBlockSocket(sockfd)) return sockfd;
-
-     EOUT("Cannot set nonblocking flag for server socket");
-     close(sockfd);
+      EOUT("Cannot set nonblocking flag for server socket");
+      close(sockfd);
    }
 
    EOUT("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax);

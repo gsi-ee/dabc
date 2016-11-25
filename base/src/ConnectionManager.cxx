@@ -70,8 +70,6 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 
    if (evnt.ParValue() != ConnectionObject::GetStateName(ConnectionObject::sPending)) return;
 
-   DOUT0("Get pending event for connection %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
-
    ConnectionRequestFull req = dabc::mgr.FindPar(evnt.ParName());
    if (req.null()) {
       EOUT("Connection handle not found !!!! ");
@@ -93,19 +91,11 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
    if (req.IsServerSide())
       req.SetConnId(dabc::format("Node%dConn%d", dabc::mgr.NodeId(), reccnt++));
 
-   DOUT0("Add connection to the list doing %d", fDoingConnection);
-
    fRecs.Add(req);
 
    // TODO: in current implementation connection requests are collected and activated only when
    // special command is send to connection manager. Later one should react automatically on all connection
    // changes and restart connection if this is specified by the user
-
-   if (fDoingConnection <= 0) {
-      fDoingConnection = 1;
-      ActivateTimeout(0.);
-   }
-
 }
 
 
@@ -284,7 +274,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
             // we use 1 sec more while command itself should be timed out correctly
             req()->SetDelay(req.GetConnTimeout()+1., true);
 
-            DOUT0("CONN %s server %s receiver %s tmout %f", req.GetConnInfo().c_str(), remserver.c_str(), dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()).c_str(), req.GetConnTimeout());
+            DOUT3("CONN %s server %s receiver %s tmout %f", req.GetConnInfo().c_str(), remserver.c_str(), dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()).c_str(), req.GetConnTimeout());
 
             cmd.SetTimeout(req.GetConnTimeout());
 
@@ -338,7 +328,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
-      DOUT0("Get request for %s -> %s  found:%p",
+      DOUT2("Get request for %s -> %s  found:%p",
             cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req());
 
       if (req.null()) {

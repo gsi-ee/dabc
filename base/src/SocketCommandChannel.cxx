@@ -104,7 +104,7 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
       return false;
    }
 
-   DOUT0("ALLOCATE %u", fRecvBufSize);
+   DOUT3("%s ALLOCATE %u", ItemName().c_str(), fRecvBufSize);
 
    return true;
 }
@@ -113,14 +113,14 @@ void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
 {
    if (msg!=0) {
       if (iserr)
-         EOUT("Worker %s closing connection due to error %s", ItemName().c_str(), msg);
+         EOUT("%s closing connection due to error %s", ItemName().c_str(), msg);
       else
-         DOUT0("Worker %s closing connection due to %s", ItemName().c_str(), msg);
+         DOUT1("%s closing connection due to %s", ItemName().c_str(), msg);
    }
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0)) {
       AssignAddon(0); // we destroy current addon
-      DOUT0("Try to reconnect worker %s to remote node %s", ItemName().c_str(), fRemoteHostName.c_str());
+      DOUT1("Try to reconnect worker %s to remote node %s", ItemName().c_str(), fRemoteHostName.c_str());
       fState = stConnecting;
       ActivateTimeout(fReconnectPeriod);
    } else {
@@ -484,16 +484,7 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
       }
    }
 
-   // cancel execution of commands due to timeout
-
-   if (fSendQueue.Size()>0) {
-      DOUT0("%s SEND CMD %s timedout %s ", GetName(), fSendQueue.Front().GetName(), DBOOL(fSendQueue.Front().IsTimedout()));
-   }
-
-   if (fWaitQueue.Size()>0) {
-      DOUT0("%s WAIT CMD %s timedout %s ", GetName(), fWaitQueue.Front().GetName(), DBOOL(fWaitQueue.Front().IsTimedout()));
-   }
-
+   // check when commands are timedout
    fWaitQueue.ReplyTimedout();
    fSendQueue.ReplyTimedout();
 
@@ -574,7 +565,7 @@ int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 
    if (worker.null()) return dabc::Worker::PreviewCommand(cmd);
 
-   DOUT0("Append command %s to client %s", cmd.GetName(), worker.ItemName().c_str());
+   DOUT4("Append command %s to client %s", cmd.GetName(), worker.ItemName().c_str());
 
    worker()->AddCommand(cmd, false);
 
