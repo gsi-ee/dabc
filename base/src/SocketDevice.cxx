@@ -183,12 +183,14 @@ namespace dabc {
 
 // ______________________________________________________________________
 
-dabc::SocketDevice::SocketDevice(const std::string& name) :
+dabc::SocketDevice::SocketDevice(const std::string& name, Command cmd) :
    dabc::Device(name),
    fConnRecs(),
+   fProtocols(),
    fConnCounter(0)
 {
-   // MakeThreadForWorker(GetName());
+   fBindHost = Cfg("host", cmd).AsStr();
+   fBindPort = Cfg("port", cmd).AsInt(-1);
 }
 
 dabc::SocketDevice::~SocketDevice()
@@ -205,33 +207,24 @@ dabc::SocketDevice::~SocketDevice()
 
 }
 
-bool dabc::SocketDevice::StartServerAddon(Command cmd, std::string& servid)
+std::string dabc::SocketDevice::StartServerAddon()
 {
    SocketServerAddon* serv = dynamic_cast<SocketServerAddon*> (fAddon());
 
    if (serv == 0) {
 
-      int port0(-1), portmin(7000), portmax(9000);
+      int port0 = fBindPort, portmin(7000), portmax(9000);
 
-      if (!cmd.null()) {
-         port0 = cmd.GetInt("SocketPort", port0);
-         portmin = cmd.GetInt("SocketRangeMin", portmin);
-         portmax = cmd.GetInt("SocketRangeMax", portmax);
-      }
+      serv = dabc::SocketThread::CreateServerAddon(fBindHost.c_str(), port0, portmin, portmax);
 
-      serv = dabc::SocketThread::CreateServerAddon(port0, portmin, portmax);
+      DOUT0("SocketDevice creates server with ID %s", serv->ServerId().c_str());
 
-      DOUT0("SocketDevice creates server with ID:%s", serv->ServerId().c_str());
-
-      // fServer->SetConnHandler(this, "---"); // we will automatically get connection
       AssignAddon(serv);
    }
 
-   if (serv==0) return false;
+   if (!serv) return std::string();
 
-   servid = serv->ServerId();
-
-   return true;
+   return serv->ServerId();
 }
 
 
@@ -320,8 +313,8 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
       // here on initializes connection
       case ConnectionManager::progrDoingInit: {
          if (req.IsServerSide()) {
-            std::string serverid;
-            if (!StartServerAddon(0, serverid)) return cmd_false;
+            std::string serverid = StartServerAddon();
+            if (serverid.empty()) return cmd_false;
             req.SetServerId(serverid);
          } else
             req.SetClientId("");

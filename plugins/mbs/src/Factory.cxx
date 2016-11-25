@@ -80,14 +80,13 @@ dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const s
 
       if (portnum==0) portnum = DefualtServerPort(kind);
 
-      int fd = dabc::SocketThread::StartServer(portnum);
 
-      if (fd<=0) {
+      dabc::SocketServerAddon* addon = dabc::SocketThread::CreateServerAddon("", portnum);
+
+      if (addon==0) {
          DOUT3("Fail assign MBS server to port:%d", portnum);
          return 0;
       }
-
-      dabc::SocketServerAddon* addon = new dabc::SocketServerAddon(fd, portnum);
 
       return new mbs::ServerTransport(cmd, portref, kind, portnum, addon, url);
    }

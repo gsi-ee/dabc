@@ -39,20 +39,13 @@ namespace dabc {
       friend class SocketProtocolAddon;
       friend class SocketCommandChannel;
 
-      public:
-         enum {
-            headerConnect = 175404571, // 32-bit value used to identify connect request,
-            ProtocolMsgSize = 100      // total length of request buffer size
-         };
-
-         SocketDevice(const std::string& name);
-         virtual ~SocketDevice();
-
-         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
-
-         virtual bool StartServerAddon(Command cmd, std::string& servid);
-
       protected:
+
+         PointersVector         fConnRecs; // list of connections recs
+         PointersVector         fProtocols; // list of protocol start processors
+         long                   fConnCounter;
+         std::string            fBindHost;   // host name used for socket binding
+         int                    fBindPort;   // selected port number
 
          virtual double ProcessTimeout(double last_diff);
 
@@ -74,11 +67,20 @@ namespace dabc {
 
          int HandleManagerConnectionRequest(Command cmd);
 
+         std::string StartServerAddon();
+
+      public:
+         enum {
+            headerConnect = 175404571, // 32-bit value used to identify connect request,
+            ProtocolMsgSize = 100      // total length of request buffer size
+         };
+
+         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
          virtual const char* ClassName() const { return dabc::typeSocketDevice; }
 
-         PointersVector         fConnRecs; // list of connections recs
-         PointersVector         fProtocols; // list of protocol start processors
-         long                   fConnCounter;
+         SocketDevice(const std::string& name, Command cmd);
+         virtual ~SocketDevice();
+
    };
 
 }

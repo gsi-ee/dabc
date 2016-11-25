@@ -42,25 +42,24 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
 
       dabc::SocketServerAddon* addon = 0;
 
-      std::string addrid = dabc::SocketThread::DefineHostName();
+      std::string addrid;
 
       if (cmd.GetBool("WithServer", true)) {
          int nport = cmd.GetInt("ServerPort");
          if (nport <= 0) nport = dabc::defaultDabcPort;
-         int fd = dabc::SocketThread::StartServer(nport);
-         if (fd<=0) {
+
+         addon = dabc::SocketThread::CreateServerAddon("", nport);
+         if (addon == 0) {
             EOUT("Cannot open cmd socket on port %d", nport);
             return 0;
          }
-
-         addrid += dabc::format(":%d", nport);
-         addon = new dabc::SocketServerAddon(fd, nport);
          addon->SetDeliverEventsToWorker(true);
+         addrid = addon->ServerId();
 
          DOUT0("Start DABC server on port %d", nport);
 
       } else {
-         addrid += dabc::format("_pid%d", (int) getpid());
+         addrid = dabc::format("%s_pid%d", dabc::SocketThread::DefineHostName().c_str(), (int) getpid());
       }
 
       cmd.SetStr("localaddr", addrid);
@@ -75,10 +74,10 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
 
 
 dabc::Device* dabc::SocketFactory::CreateDevice(const std::string& classname,
-                                                const std::string& devname, Command)
+                                                const std::string& devname, Command cmd)
 {
    if (classname == dabc::typeSocketDevice)
-      return new SocketDevice(devname);
+      return new SocketDevice(devname, cmd);
 
    return 0;
 }

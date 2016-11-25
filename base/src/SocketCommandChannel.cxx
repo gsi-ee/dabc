@@ -551,7 +551,6 @@ dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std
 }
 
 
-
 int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 {
    std::string receiver = cmd.GetReceiver();
@@ -646,6 +645,14 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
       worker()->fClientNameSufix = cmd.GetStr("NameSufix");
 
       return dabc::cmd_true;
+   } else
+   if (cmd.IsName("GetServerId")) {
+      SocketServerAddon* addon = dynamic_cast<SocketServerAddon*> (fAddon());
+      if (addon) {
+         cmd.SetStr("ServerId", addon->ServerId());
+         return dabc::cmd_true;
+      }
+      return dabc::cmd_false;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);

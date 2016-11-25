@@ -773,12 +773,13 @@ void dabc::SocketIOAddon::CancelIOOperations()
 
 // ___________________________________________________________________
 
-dabc::SocketServerAddon::SocketServerAddon(int serversocket, int portnum) :
+dabc::SocketServerAddon::SocketServerAddon(int serversocket, const char* hostname, int portnum) :
    SocketConnectAddon(serversocket),
-   fServerPortNumber(portnum),
-   fServerHostName()
+   fServerHostName(hostname ? hostname : ""),
+   fServerPortNumber(portnum)
 {
-   fServerHostName = dabc::SocketThread::DefineHostName(true);
+   if (fServerHostName.empty())
+      fServerHostName = dabc::SocketThread::DefineHostName(true);
 
    SetDoingInput(true);
    listen(Socket(), 10);
@@ -1105,15 +1106,12 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
 }
 
 
-int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
+int dabc::SocketThread::StartServer(const char* myhostname, int& portnum, int portmin, int portmax)
 {
    int numtests = 1; // at least test value of portnum
    if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
 
    int firsttest = portnum;
-
-   std::string localhost = dabc::SocketThread::DefineHostName(false);
-   const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
 
    for(int ntest=0;ntest<numtests;ntest++) {
 
@@ -1241,11 +1239,16 @@ std::string dabc::SocketThread::DefineHostName(bool force)
    return host;
 }
 
-dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(int nport, int portmin, int portmax)
+dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const char* hostname, int nport, int portmin, int portmax)
 {
-   int fd = dabc::SocketThread::StartServer(nport, portmin, portmax);
+   std::string localhost = dabc::SocketThread::DefineHostName(false);
 
-   return fd < 0 ? 0 : new SocketServerAddon(fd, nport);
+   if ((hostname!=0) && (*hostname==0) && !localhost.empty())
+      hostname = localhost.c_str();
+
+   int fd = dabc::SocketThread::StartServer(hostname, nport, portmin, portmax);
+
+   return (fd < 0) ? 0 : new SocketServerAddon(fd, hostname, nport);
 }
 
 int dabc::SocketThread::StartClient(const char* host, int nport, bool nonblocking)

@@ -289,24 +289,24 @@ namespace dabc {
     */
 
    class SocketServerAddon : public SocketConnectAddon {
+      protected:
+         std::string fServerHostName;
+         int  fServerPortNumber;
+
+         virtual void OnClientConnected(int fd);
+
       public:
-         SocketServerAddon(int serversocket, int portnum = -1);
+         SocketServerAddon(int serversocket, const char* hostname = 0, int portnum = -1);
          virtual ~SocketServerAddon() {}
 
          virtual void ProcessEvent(const EventId&);
 
-         int ServerPortNumber() const { return fServerPortNumber; }
          const char* ServerHostName() { return fServerHostName.c_str(); }
+         int ServerPortNumber() const { return fServerPortNumber; }
          std::string ServerId() { return dabc::format("%s:%d", ServerHostName(), ServerPortNumber()); }
 
          virtual const char* ClassName() const { return "SocketServerAddon"; }
 
-      protected:
-
-         virtual void OnClientConnected(int fd);
-
-         int  fServerPortNumber;
-         std::string fServerHostName;
    };
 
    // ______________________________________________________________
@@ -400,7 +400,8 @@ namespace dabc {
          virtual bool CompatibleClass(const std::string& clname) const;
 
          static bool SetNonBlockSocket(int fd);
-         static int StartServer(int& nport, int portmin=-1, int portmax=-1);
+
+         static int StartServer(const char* host, int& nport, int portmin=-1, int portmax=-1);
          static int StartClient(const char* host, int nport, bool nonblocking = true);
 
          /** \brief Wrapper for send method, should be used for blocking sockets */
@@ -435,7 +436,12 @@ namespace dabc {
 
          static int ConnectUdp(int fd, const std::string& remhost, int remport);
 
-         static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
+         /** \brief Create handle for server-side connection
+          * If hostname == 0, any available address will be selected
+          * If hostname == "", configured hostname or just $HOST variable will be used
+          * If hostname is not empty, only selected host will be tried to bin
+          * One could bind such connection to specified port or try to choose from available ports  */
+         static SocketServerAddon* CreateServerAddon(const char* hostname, int nport, int portmin=-1, int portmax=-1);
 
          static SocketClientAddon* CreateClientAddon(const std::string& servid, int dflt_port = -1);
    };
