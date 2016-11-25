@@ -68,9 +68,9 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 {
     // here one should analyze
 
-   DOUT0("Get change event for connection %s value %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
-
    if (evnt.ParValue() != ConnectionObject::GetStateName(ConnectionObject::sPending)) return;
+
+   DOUT0("Get pending event for connection %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
 
    ConnectionRequestFull req = dabc::mgr.FindPar(evnt.ParName());
    if (req.null()) {
@@ -93,11 +93,19 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
    if (req.IsServerSide())
       req.SetConnId(dabc::format("Node%dConn%d", dabc::mgr.NodeId(), reccnt++));
 
+   DOUT0("Add connection to the list doing %d", fDoingConnection);
+
    fRecs.Add(req);
 
    // TODO: in current implementation connection requests are collected and activated only when
    // special command is send to connection manager. Later one should react automatically on all connection
    // changes and restart connection if this is specified by the user
+
+   if (fDoingConnection <= 0) {
+      fDoingConnection = 1;
+      ActivateTimeout(0.);
+   }
+
 }
 
 
@@ -247,13 +255,20 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
             // should we send a request - only for the client
 
             if (req.IsServerSide()) {
-               // server just waiting that client is connect
+               // server just waiting when client connects
                // can we do here more action - just declare connection as failed
                req()->SetDelay(2, true);
                break;
             }
 
-            DOUT2("Send request from client  %s", req.GetConnInfo().c_str());
+            bool islocal = false;
+            std::string remserver, remitem;
+
+            if (!dabc::mgr.DecomposeAddress(req.GetRemoteUrl(), islocal, remserver, remitem)) {
+               EOUT("Fail to detect server from URL %s", req.GetRemoteUrl().c_str());
+               req.SetProgress(progrFailed);
+               break;
+            }
 
             dabc::CmdGlobalConnect cmd;
             // we change order that on other node one can compare directly
@@ -261,13 +276,15 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
             cmd.SetUrl2(req.GetLocalUrl());
             cmd.SetStr("ClientId", req.GetClientId());
 
-            cmd.SetReceiver(dabc::mgr.ComposeAddress(req.GetRemoteUrl(), dabc::Manager::ConnMgrName()));
+            cmd.SetReceiver(dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()));
 
             req.SetProgress(progrWaitReply);
 
             // FIXME: this is important delay value, should be configurable, may be even in connect port method
             // we use 1 sec more while command itself should be timed out correctly
             req()->SetDelay(req.GetConnTimeout()+1., true);
+
+            DOUT0("CONN %s server %s receiver %s tmout %f", req.GetConnInfo().c_str(), remserver.c_str(), dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()).c_str(), req.GetConnTimeout());
 
             cmd.SetTimeout(req.GetConnTimeout());
 
@@ -321,11 +338,11 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
-      DOUT2("Get request for %s -> %s  found:%p",
+      DOUT0("Get request for %s -> %s  found:%p",
             cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req());
 
       if (req.null()) {
-         EOUT("Request from remote for undefined connection");
+         EOUT("Request from remote for undefined connection %s %s", cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str());
          return cmd_false;
       }
 

@@ -47,8 +47,6 @@ namespace dabc {
 
          virtual bool StartServerAddon(Command cmd, std::string& servid);
 
-         static std::string GetLocalHost(bool force = false);
-
       protected:
 
          virtual double ProcessTimeout(double last_diff);

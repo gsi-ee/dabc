@@ -148,7 +148,7 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
       SocketIOAddon* addon = new SocketIOAddon(fd);
       addon->SetDeliverEventsToWorker(true);
 
-      DOUT0("SocketCommand - create client side fd:%d worker:%s", fd, GetName());
+      DOUT0("SocketCommand - create client side fd:%d worker:%s for:%s", fd, GetName(), fRemoteHostName.c_str());
 
       AssignAddon(addon);
 
@@ -467,15 +467,11 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
 
 double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 {
-//   DOUT0("dabc::SocketCommandClient::ProcessTimeout");
-
    double next_tmout = 1.;
 
-   if (!fRemoteHostName.empty() && (fReconnectPeriod>0) && fAddon.null()) {
+   if (fAddon.null() && !fRemoteHostName.empty() && (fReconnectPeriod>0)) {
 
       SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(fRemoteHostName, defaultDabcPort);
-
-      // DOUT0("Create client %p to host %s", client, fRemoteHostName.c_str());
 
       if (client!=0) {
          client->SetRetryOpt(2000000000, fReconnectPeriod);
@@ -489,6 +485,14 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
    }
 
    // cancel execution of commands due to timeout
+
+   if (fSendQueue.Size()>0) {
+      DOUT0("%s SEND CMD %s timedout %s ", GetName(), fSendQueue.Front().GetName(), DBOOL(fSendQueue.Front().IsTimedout()));
+   }
+
+   if (fWaitQueue.Size()>0) {
+      DOUT0("%s WAIT CMD %s timedout %s ", GetName(), fWaitQueue.Front().GetName(), DBOOL(fWaitQueue.Front().IsTimedout()));
+   }
 
    fWaitQueue.ReplyTimedout();
    fSendQueue.ReplyTimedout();
@@ -570,7 +574,7 @@ int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 
    if (worker.null()) return dabc::Worker::PreviewCommand(cmd);
 
-   DOUT3("Append command %s to client %s", cmd.GetName(), worker.ItemName().c_str());
+   DOUT0("Append command %s to client %s", cmd.GetName(), worker.ItemName().c_str());
 
    worker()->AddCommand(cmd, false);
 

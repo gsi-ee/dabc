@@ -129,26 +129,36 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
    if ((node==0) || null()) return;
 
    const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
-   if (thrdname!=0)
+   if (thrdname!=0) {
+      SetAllowedField(xmlThreadAttr);
       SetConnThread(thrdname);
+   }
 
    const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
-   if (useackn!=0)
+   if (useackn!=0) {
+      SetAllowedField(xmlUseacknAttr);
       SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
+   }
 
    const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
-   if (optional!=0)
+   if (optional!=0) {
+      SetAllowedField(xmlOptionalAttr);
       SetOptional(strcmp(optional, xmlTrueValue)==0);
+   }
 
    const char* poolname = Xml::GetAttr(node, xmlPoolAttr);
    if (poolname!=0) SetPoolName(poolname);
 
    const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
-   if (devname!=0)
+   if (devname!=0) {
+      SetAllowedField(xmlDeviceAttr);
       SetConnDevice(devname);
+   }
 
    const char* tmout = Xml::GetAttr(node, xmlTimeoutAttr);
    double tmout_val(10.);
-   if ((tmout!=0) && str_to_double(tmout, &tmout_val))
+   if ((tmout!=0) && str_to_double(tmout, &tmout_val)) {
+      SetAllowedField(xmlTimeoutAttr);
       SetConnTimeout(tmout_val);
+   }
 }

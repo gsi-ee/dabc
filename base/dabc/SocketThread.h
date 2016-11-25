@@ -430,8 +430,8 @@ namespace dabc {
          /** \brief Detach datagram socket from multicast group */
          static void DettachMulticast(int handle, const std::string& addr);
 
-
-         static std::string DefineHostName();
+         /** \brief Return current host name. If configured, uses sockethost value from XML file */
+         static std::string DefineHostName(bool force = true);
 
          static int ConnectUdp(int fd, const std::string& remhost, int remport);
 

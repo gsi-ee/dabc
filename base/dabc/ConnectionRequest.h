@@ -240,9 +240,9 @@ namespace dabc {
 
       protected:
 
-      /** Change state of the connection to init that other parameters can be changed */
       void ChangeState(ConnectionObject::EState state, bool force);
 
+      /** Change state of the connection to init that other parameters can be changed */
       void SetInitState() { ChangeState(ConnectionObject::sInit, true); }
 
       void SetAllowedField(const std::string& name = "");

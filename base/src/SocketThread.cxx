@@ -26,7 +26,7 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Buffer.h"
-#include "dabc/SocketDevice.h"
+#include "dabc/Configuration.h"
 
 const char* SocketErr(int err)
 {
@@ -778,9 +778,7 @@ dabc::SocketServerAddon::SocketServerAddon(int serversocket, int portnum) :
    fServerPortNumber(portnum),
    fServerHostName()
 {
-   fServerHostName = dabc::SocketDevice::GetLocalHost(true);
-
-//   dabc::SocketThread::DefineHostName();
+   fServerHostName = dabc::SocketThread::DefineHostName(true);
 
    SetDoingInput(true);
    listen(Socket(), 10);
@@ -1129,7 +1127,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      hints.ai_family   = AF_UNSPEC; //AF_INET;
      hints.ai_socktype = SOCK_STREAM;
 
-     std::string localhost = dabc::SocketDevice::GetLocalHost(false);
+     std::string localhost = dabc::SocketThread::DefineHostName(false);
 
      const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
      char service[100];
@@ -1224,15 +1222,20 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 */
 
 
-std::string dabc::SocketThread::DefineHostName()
+std::string dabc::SocketThread::DefineHostName(bool force)
 {
-   char hostname[1024];
-   if (gethostname(hostname, sizeof(hostname))) {
-      EOUT("ERROR gethostname");
-      return std::string();
+   std::string host = dabc::Configuration::GetLocalHost();
+
+   if (host.empty() && force) {
+      char sbuf[500];
+      if (gethostname(sbuf, sizeof(sbuf))) {
+         EOUT("Error to get local host name");
+         host = "localhost";
+      } else
+         host = sbuf;
    }
-   DOUT3("gethostname = %s", hostname);
-   return std::string(hostname);
+
+   return host;
 }
 
 dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(int nport, int portmin, int portmax)

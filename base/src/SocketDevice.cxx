@@ -481,7 +481,7 @@ bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char
    {
       LockGuard guard(DeviceMutex());
       if ((rec==0) || !fConnRecs.has_ptr(rec)) {
-         EOUT("Protocol completed without rec");
+         EOUT("Protocol completed without rec %p", rec);
          fProtocols.remove(proc);
          destr = true;
       }
@@ -528,19 +528,4 @@ void dabc::SocketDevice::RemoveProtocolAddon(SocketProtocolAddon* proc, bool res
    }
 
    DestroyRec(rec, res);
-}
-
-std::string dabc::SocketDevice::GetLocalHost(bool force)
-{
-   std::string host = dabc::Configuration::GetLocalHost();
-   if (host.empty() && force) {
-      char sbuf[500];
-      if (gethostname(sbuf, sizeof(sbuf))) {
-         EOUT("Error to get local host name");
-         host = "localhost";
-      } else
-         host = sbuf;
-   }
-
-   return host;
 }

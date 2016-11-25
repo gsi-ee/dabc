@@ -778,7 +778,8 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
       if (cmd.GetBool("#local_cmd")) islocal = true;
 
-      DOUT5("MGR: Preview command %s item %s tgtnode %d", cmd.GetName(), url.c_str(), tgtnode);
+      if (!islocal)
+         DOUT0("MGR: Preview command %s item %s tgtnode %s", cmd.GetName(), url.c_str(), server.c_str());
 
       if (!islocal) {
 
