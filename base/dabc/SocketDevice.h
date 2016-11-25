@@ -40,6 +40,11 @@ namespace dabc {
       friend class SocketCommandChannel;
 
       public:
+         enum {
+            headerConnect = 175404571, // 32-bit value used to identify connect request,
+            ProtocolMsgSize = 100      // total length of request buffer size
+         };
+
          SocketDevice(const std::string& name);
          virtual ~SocketDevice();
 

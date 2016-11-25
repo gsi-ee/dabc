@@ -1113,6 +1113,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    int firsttest = portnum;
 
    std::string localhost = dabc::SocketThread::DefineHostName(false);
+   const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
 
    for(int ntest=0;ntest<numtests;ntest++) {
 
@@ -1129,7 +1130,6 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
       hints.ai_family   = AF_UNSPEC; //AF_INET;
       hints.ai_socktype = SOCK_STREAM;
 
-      const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
       char service[100];
       sprintf(service, "%d", portnum);
 

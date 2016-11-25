@@ -24,9 +24,6 @@
 
 #define SocketServerTmout 0.2
 
-// this is fixed-size message for exchanging during protocol execution
-#define ProtocolMsgSize 100
-
 namespace dabc {
 
    class SocketProtocolAddon;
@@ -42,7 +39,6 @@ namespace dabc {
          std::string            fConnId;     //! connection id
          Command                fLocalCmd;   ///< command from connection manager which should be replied when connection established or failed
 
-
          NewConnectRec() :
             fReqItem(),
             fClient(0),
@@ -52,7 +48,6 @@ namespace dabc {
             fLocalCmd()
          {
          }
-
 
          NewConnectRec(const std::string& item,
                        ConnectionRequestFull& req,
@@ -88,8 +83,8 @@ namespace dabc {
          SocketDevice* fDevice;
          NewConnectRec* fRec;
          EState fState;
-         char fInBuf[ProtocolMsgSize];
-         char fOutBuf[ProtocolMsgSize];
+         char fInBuf[SocketDevice::ProtocolMsgSize];
+         char fOutBuf[SocketDevice::ProtocolMsgSize];
       public:
 
          SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec) :
@@ -125,18 +120,22 @@ namespace dabc {
          {
             dabc::SocketIOAddon::OnThreadAssigned();
 
+            uint32_t header = SocketDevice::headerConnect;
+
             switch (fState) {
                case stServerProto:
-                  StartRecv(fInBuf, ProtocolMsgSize);
+                  StartRecv(fInBuf, SocketDevice::ProtocolMsgSize);
                   break;
                case stClientProto:
                   // we can start both send and recv operations simultaneously,
                   // while buffer will be received only when server answer on request
-                  strcpy(fOutBuf, fRec->ConnId());
+
+                  memcpy(fOutBuf, &header, sizeof(header));
+                  strcpy(fOutBuf + sizeof(header), fRec->ConnId());
                   strcpy(fInBuf, "denied");
 
-                  StartSend(fOutBuf, ProtocolMsgSize);
-                  StartRecv(fInBuf, ProtocolMsgSize);
+                  StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
+                  StartRecv(fInBuf, SocketDevice::ProtocolMsgSize);
                   break;
                default:
                   EOUT("Wrong state %d", fState);
@@ -148,12 +147,12 @@ namespace dabc {
          {
             switch (fState) {
                case stServerProto:
-                  DOUT5("Server job finished");
+                  // DOUT5("Server job finished");
                   if (fDevice->ProtocolCompleted(this, 0))
                      DeleteWorker();
                   break;
                case stClientProto:
-                  DOUT5("Client send request, wait reply");
+                  // DOUT5("Client send request, wait reply");
                   break;
                default:
                   EOUT("Wrong state %d", fState);
@@ -166,7 +165,7 @@ namespace dabc {
             switch (fState) {
                case stServerProto:
                   fDevice->ServerProtocolRequest(this, fInBuf, fOutBuf);
-                  StartSend(fOutBuf, ProtocolMsgSize);
+                  StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
                   break;
                case stClientProto:
                   DOUT5("Client job finished");
@@ -234,7 +233,6 @@ bool dabc::SocketDevice::StartServerAddon(Command cmd, std::string& servid)
 
    return true;
 }
-
 
 
 void dabc::SocketDevice::AddRec(NewConnectRec* rec)
@@ -455,11 +453,17 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon* proc, const 
 {
    strcpy(outmsg, "denied");
 
+   uint32_t *header = (uint32_t*) inmsg;
+   if (*header != SocketDevice::headerConnect) {
+      EOUT("Wrong header identifier in the SOCKET connect");
+      return;
+   }
+
    NewConnectRec* rec = 0;
 
    {
       LockGuard guard(DeviceMutex());
-      rec = _FindRec(inmsg);
+      rec = _FindRec(inmsg+sizeof(uint32_t));
       if (rec==0) return;
    }
 
@@ -469,7 +473,6 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon* proc, const 
    fProtocols.remove(proc);
    rec->fProtocol = proc;
    proc->fRec = rec;
-
 }
 
 bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char* inmsg)

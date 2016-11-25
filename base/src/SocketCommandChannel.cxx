@@ -219,7 +219,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
    dabc::Command cmd;
 
-   if (fRecvHdr.data_cmdsize ==0) {
+   if (fRecvHdr.data_cmdsize==0) {
       CloseClient(true, "received empty command");
       return;
    }
