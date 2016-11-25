@@ -2292,8 +2292,6 @@ bool dabc::ManagerRef::CreateControl(bool withserver, int serv_port, bool allow_
 
    GetObject()->fLocalAddress = cmd.GetStr("localaddr");
 
-   DOUT0("Set Local addr %s", GetObject()->fLocalAddress.c_str());
-
    ref.MakeThreadForWorker("CmdThrd");
 
    return true;

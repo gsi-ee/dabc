@@ -2,6 +2,16 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+25.11.2016
+1. Improve server-side socket creation - hostname can be directly specified.
+2. Let configure hostnname and port number used by socket device for connections.
+3. Let reuse command channel socket for other socket connections. 
+   If SocketDevice does not require special port/hostname, one just use
+   same interface as command channel for the connections
+4. First working prototype of HADAQ BNET via network connections between
+   sender and receivers. 
+
+
 24.11.2016
 1. Introduce BNET modes in CombinerModule. This allows to implement
    two-level events building. On the first level groups of subevents will 

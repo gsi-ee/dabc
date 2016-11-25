@@ -94,6 +94,7 @@ namespace dabc {
          enum ERecvState {
             recvInit,     // receiver  ready to accept new command
             recvHeader,   // command is assigned and executing
+            recvDevConnect, // special case of socket device connect via command channel
             recvData      // command is sends back, one need to release command only when it is replied
          };
 
@@ -187,6 +188,7 @@ namespace dabc {
          int             fNodeId;         ///<  current node id
          bool            fClientsAllowed; ///<  when true, incomming clients are allowed
          int             fClientCnt;      ///<  counter for new clients
+         std::string     fRedirectDevice; ///< name of socket device, which can get redirection
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);

@@ -56,15 +56,13 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          addon->SetDeliverEventsToWorker(true);
          addrid = addon->ServerId();
 
-         DOUT0("Start DABC server on port %d", nport);
+         DOUT0("Start DABC server on %s", addrid.c_str());
 
       } else {
          addrid = dabc::format("%s_pid%d", dabc::SocketThread::DefineHostName().c_str(), (int) getpid());
       }
 
       cmd.SetStr("localaddr", addrid);
-
-      DOUT0("Start command channel with id %s", addrid.c_str());
 
       return new SocketCommandChannel(objname, addon, cmd);
    }

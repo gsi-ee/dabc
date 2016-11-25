@@ -26,6 +26,7 @@
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"
 
+#include "dabc/SocketDevice.h"
 
 dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string& name,
                                                SocketAddon* addon,
@@ -325,8 +326,6 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
       case SocketAddon::evntSocketRecvInfo: {
 
-         // DOUT0("Recv something via socket!");
-
          if (fRecvState == recvInit) {
             CloseClient(true, "Receive data in init state");
             return;
@@ -341,6 +340,23 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
 
          if (fRecvState == recvHeader) {
             // received header
+
+            SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
+
+            if (fRecvHdr.dabc_header == dabc::SocketDevice::headerConnect) {
+
+               SocketCommandChannel* ch = dynamic_cast<SocketCommandChannel*> (GetParent());
+               if ((ch==0) || ch->fRedirectDevice.empty()) {
+                  CloseClient(true, "Wrong socket device connect from network");
+                  return;
+               }
+
+               EnsureRecvBuffer(dabc::SocketDevice::ProtocolMsgSize);
+               memcpy(fRecvBuf, &fRecvHdr, sizeof(fRecvHdr));
+               fRecvState = recvDevConnect;
+               io->StartRecv(fRecvBuf + sizeof(fRecvHdr), dabc::SocketDevice::ProtocolMsgSize - sizeof(fRecvHdr));
+               return;
+            }
 
             if (fRecvHdr.dabc_header != headerDabc) {
                CloseClient(true, "Wrong packet from network");
@@ -360,10 +376,26 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
             }
 
             fRecvState = recvData;
-            SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
             io->StartRecv(fRecvBuf, fRecvHdr.data_size);
 
             // DOUT0("Start command recv data_size %u", fRecvHdr.data_size);
+         }
+
+         if (fRecvState == recvDevConnect) {
+            // here we should get all data for connection
+            // redirect it to the device
+
+            SocketCommandChannel* ch = dynamic_cast<SocketCommandChannel*> (GetParent());
+            SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
+
+            dabc::Command cmd("RedirectConnect");
+            cmd.SetInt("Socket", io->TakeSocket());
+            cmd.SetRawData(dabc::Buffer::CreateBuffer(fRecvBuf, dabc::SocketDevice::ProtocolMsgSize, false, true));
+
+            cmd.SetReceiver(ch->fRedirectDevice);
+            dabc::mgr.Submit(cmd);
+
+            CloseClient(false, "redirect connect");
          }
 
          break;
@@ -494,7 +526,6 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 // =======================================================================================
 
 
-
 dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd) :
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
@@ -598,7 +629,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       worker()->AssignToThread(thread());
 
-      DOUT0("SocketCommand - create server side fd:%d worker:%s thread:%s", fd, worker_name.c_str(), thread().GetName());
+      DOUT3("SocketCommand - create server side fd:%d worker:%s thread:%s", fd, worker_name.c_str(), thread().GetName());
 
       worker.Release();
 
@@ -646,9 +677,10 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       return dabc::cmd_true;
    } else
-   if (cmd.IsName("GetServerId")) {
+   if (cmd.IsName("RedirectSocketConnect")) {
       SocketServerAddon* addon = dynamic_cast<SocketServerAddon*> (fAddon());
-      if (addon) {
+      if (addon && fRedirectDevice.empty()) {
+         fRedirectDevice = cmd.GetStr("Device");
          cmd.SetStr("ServerId", addon->ServerId());
          return dabc::cmd_true;
       }

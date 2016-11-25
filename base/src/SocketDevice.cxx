@@ -78,7 +78,7 @@ namespace dabc {
 
       protected:
 
-         enum EState { stServerProto, stClientProto, stDone, stError };
+         enum EState { stServerProto, stClientProto, stRedirect, stDone, stError };
 
          SocketDevice* fDevice;
          NewConnectRec* fRec;
@@ -87,12 +87,16 @@ namespace dabc {
          char fOutBuf[SocketDevice::ProtocolMsgSize];
       public:
 
-         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec) :
+         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec, void* redirect = 0) :
             dabc::SocketIOAddon(connfd),
             fDevice(dev),
             fRec(rec),
             fState(rec==0 ? stServerProto : stClientProto)
          {
+            if (redirect!=0) {
+               fState = stRedirect;
+               memcpy(fInBuf, redirect, SocketDevice::ProtocolMsgSize); // as it was received
+            }
          }
 
          virtual ~SocketProtocolAddon()
@@ -137,6 +141,11 @@ namespace dabc {
                   StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
                   StartRecv(fInBuf, SocketDevice::ProtocolMsgSize);
                   break;
+               case stRedirect:
+                  // do like we receive input buffer ourself
+                  fDevice->ServerProtocolRequest(this, fInBuf, fOutBuf);
+                  StartSend(fOutBuf, SocketDevice::ProtocolMsgSize);
+                  break;
                default:
                   EOUT("Wrong state %d", fState);
                   FinishWork(false);
@@ -147,6 +156,7 @@ namespace dabc {
          {
             switch (fState) {
                case stServerProto:
+               case stRedirect:
                   // DOUT5("Server job finished");
                   if (fDevice->ProtocolCompleted(this, 0))
                      DeleteWorker();
@@ -187,10 +197,23 @@ dabc::SocketDevice::SocketDevice(const std::string& name, Command cmd) :
    dabc::Device(name),
    fConnRecs(),
    fProtocols(),
-   fConnCounter(0)
+   fConnCounter(0),
+   fCmdChannelId()
 {
    fBindHost = Cfg("host", cmd).AsStr();
    fBindPort = Cfg("port", cmd).AsInt(-1);
+
+   if (fBindHost.empty() && (fBindPort<0)) {
+      dabc::WorkerRef chl = dabc::mgr.GetCommandChannel();
+      if (!chl.null()) {
+         dabc::Command cmd("RedirectSocketConnect");
+         cmd.SetStr("Device", ItemName());
+         if (chl.Execute(cmd)) fCmdChannelId = cmd.GetStr("ServerId");
+      }
+
+      if (!fCmdChannelId.empty()) DOUT0("Socket device %s reuses %s for connections", GetName(), fCmdChannelId.c_str());
+   }
+
 }
 
 dabc::SocketDevice::~SocketDevice()
@@ -209,6 +232,9 @@ dabc::SocketDevice::~SocketDevice()
 
 std::string dabc::SocketDevice::StartServerAddon()
 {
+   // in standard case use server socket of command channel
+   if (!fCmdChannelId.empty()) return fCmdChannelId;
+
    SocketServerAddon* serv = dynamic_cast<SocketServerAddon*> (fAddon());
 
    if (serv == 0) {
@@ -437,7 +463,22 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
       } else
          cmd_res = cmd_false;
    } else
+   if (cmd.IsName("RedirectConnect")) {
+      int fd = cmd.GetInt("Socket");
+      Buffer buf = cmd.GetRawData();
+
+      SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, 0, buf.SegmentPtr());
+
+      thread().MakeWorkerFor(proto, fCmdChannelId);
+
+      LockGuard guard(DeviceMutex());
+      fProtocols.push_back(proto);
+
+      cmd_res = cmd_true;
+
+   } else {
       cmd_res = dabc::Device::ExecuteCommand(cmd);
+   }
 
    return cmd_res;
 }
