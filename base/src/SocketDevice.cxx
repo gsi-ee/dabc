@@ -189,11 +189,7 @@ dabc::SocketDevice::SocketDevice(const std::string& name) :
    fConnRecs(),
    fConnCounter(0)
 {
-   DOUT5("Start SocketDevice constructor");
-
-   MakeThreadForWorker(GetName());
-
-   DOUT5("Did SocketDevice constructor");
+   // MakeThreadForWorker(GetName());
 }
 
 dabc::SocketDevice::~SocketDevice()

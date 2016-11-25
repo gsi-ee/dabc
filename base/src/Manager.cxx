@@ -1224,8 +1224,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string mask = cmd.GetStr("Mask");
       std::string remote = cmd.GetStr("RemoteWorker");
 
-      DOUT2("Subscription with mask %s", mask.c_str());
-
       if (cmd.GetBool("IsSubscribe")) {
 
          // first add empty record to avoid usage of copy constructor
@@ -2126,12 +2124,10 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
 
 bool dabc::ManagerRef::IsLocalItem(const std::string& name)
 {
-   std::string itemname;
-   int nodeid(-1);
-   if (!Url::DecomposeItemName(name, nodeid, itemname)) return true;
-   return (nodeid<0) || (nodeid==NodeId());
+   Url url;
+   if (!url.SetUrl(name, false)) return true;
+   return url.GetProtocol().compare("dabc") != 0;
 }
-
 
 dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, const std::string& port2name)
 {

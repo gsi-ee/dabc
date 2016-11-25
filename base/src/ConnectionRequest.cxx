@@ -46,7 +46,7 @@ bool dabc::ConnectionObject::_CanChangeField(const std::string& name)
       return true;
    }
 
-   if (name.empty() && (fAllowedField=="%%state%%")) {
+   if ((name == "state") && (fAllowedField=="%%state%%")) {
       fAllowedField.clear();
       return true;
    }
@@ -151,6 +151,4 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
    double tmout_val(10.);
    if ((tmout!=0) && str_to_double(tmout, &tmout_val))
       SetConnTimeout(tmout_val);
-
-
 }

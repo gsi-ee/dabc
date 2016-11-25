@@ -55,7 +55,7 @@ dabc::ConnectionManager::ConnectionManager(const std::string& name, Command cmd)
    // we want to see all events which produced by any of connection object
    RegisterForParameterEvent(ConnectionObject::ObjectName());
 
-   DOUT2("Connection manager created parent %p", GetParent());
+   DOUT3("Connection manager created parent %p", GetParent());
 }
 
 dabc::ConnectionManager::~ConnectionManager()
@@ -68,7 +68,7 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 {
     // here one should analyze
 
-   DOUT3("Get change event for connection %s value %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
+   DOUT0("Get change event for connection %s value %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
 
    if (evnt.ParValue() != ConnectionObject::GetStateName(ConnectionObject::sPending)) return;
 
@@ -120,9 +120,7 @@ void dabc::ConnectionManager::ModuleCleanup()
 
 void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_timeout)
 {
-   bool iserror = false;
-
-   bool isonlyoptional = true;
+   bool iserror = false, isonlyoptional = true;
 
    unsigned n = 0;
 

@@ -77,14 +77,12 @@ int main(int numc, char* args[])
 
    DOUT2("Start  cnt = %u", dabc::Object::NumInstances());
 
-   if ((numc>1) and (strcmp(args[1],"cmd")==0)) {
+   if ((numc>1) and (strcmp(args[1],"cmd")==0))
       return command_shell(numc>2 ? args[2] : "");
-   }
 
    const char* cfgfile(0);
 
    if(numc > 1) cfgfile = args[1];
-
 
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;

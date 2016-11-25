@@ -104,7 +104,7 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
    std::string name = _name.empty() ? DefaultFiledName() : _name;
    bool is_dflt_name = (name == DefaultFiledName());
 
-   DOUT4("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value.AsStr().c_str());
+   DOUT4("ParameterContainer::SetField %s dflt %s", name.c_str(), DBOOL(is_dflt_name));
 
    {
       LockGuard lock(ObjectMutex());
@@ -158,7 +158,7 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
          fAttrModified = true;
       }
 
-      // we sumbit any signal to worker only when previous is processed
+      // we submit any signal to worker only when previous is processed
       if ((fMonitored || fRecorded) && res && fire && !fWaitWorker) {
          fWaitWorker = true;
          doworker = true;
@@ -177,7 +177,7 @@ bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordFi
    if (fire && res) FireModified(svalue);
 
    DOUT4("ParameterContainer::SetField %s = %s  res %s fire %s",
-         name.c_str(), value.AsStr().c_str(), DBOOL(res), DBOOL(fire));
+            name.c_str(), value.AsStr().c_str(), DBOOL(res), DBOOL(fire));
 
    return res;
 }

@@ -327,7 +327,7 @@ bool dabc::Worker::MakeThreadForWorker(const std::string& thrdname)
 bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
 {
    if (HasThread()) {
-      EOUT("Thread is already assigned");
+      EOUT("Worker %s already has assigned thred %s", GetName(), ThreadName().c_str());
       return false;
    }
 
