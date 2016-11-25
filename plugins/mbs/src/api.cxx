@@ -39,8 +39,6 @@ int mbs::ReadoutModule::ExecuteCommand(dabc::Command cmd)
       // previous command not processed - cannot be
       if (!fCmd.null()) return dabc::cmd_false;
 
-      // DOUT0("Call nextbuffer");
-
       fCmd = cmd;
       double tm = fCmd.TimeTillTimeout();
 
@@ -60,8 +58,6 @@ void mbs::ReadoutModule::ProcessData()
    // ignore input event as long as command is not specified
    if (fCmd.null()) return;
 
-   // DOUT0("process input event");
-
    double maxage = fCmd.GetDouble("maxage", -1);
 
    int res = dabc::cmd_false;
@@ -73,7 +69,6 @@ void mbs::ReadoutModule::ProcessData()
       if (fLastNotFullTm.null() || (now - fLastNotFullTm > maxage)) cleanqueue = true;
 
    if (cleanqueue) fLastNotFullTm = now;
-//   if (cleanqueue) printf("Clean client queue\n");
 
    while (CanRecv()) {
       dabc::Buffer buf = Recv();
@@ -121,8 +116,6 @@ void mbs::ReadoutModule::ProcessInputEvent(unsigned)
 
 void mbs::ReadoutModule::ProcessTimerEvent(unsigned)
 {
-   // DOUT0("process timer event");
-
    // if timeout happened, reply
    ProcessData();
 }
@@ -192,9 +185,6 @@ mbs::EventHeader* mbs::ReadoutHandle::NextEvent(double tmout, double maxage)
    if (null()) return 0;
 
    bool intime = GetObject()->GetEventInTime(maxage);
-
-   // if (maxage>0) printf("Max age %f!!!\n", maxage);
-   // if (!intime) printf("Skip buffer!!!\n");
 
    if (intime && GetObject()->fIter.NextEvent())
       return GetObject()->fIter.evnt();

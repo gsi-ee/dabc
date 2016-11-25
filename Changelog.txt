@@ -2,6 +2,14 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+24.11.2016
+1. Introduce BNET modes in CombinerModule. This allows to implement
+   two-level events building. On the first level groups of subevents will 
+   be produced (BNETsend = true). On the second level complete event from 
+   such groups will be build (BNETrecv = true). BNET sender can distribute 
+   groups over several builders.
+
+
 23.11.2016
 1. Let configure priority for module, module items and sockets.
    This allow to increase priority for important I/O events,

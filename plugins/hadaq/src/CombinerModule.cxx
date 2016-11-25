@@ -29,8 +29,6 @@
 #include "hadaq/Observer.h"
 #include "hadaq/UdpTransport.h"
 
-#include "mbs/MbsTypeDefs.h"
-
 //#define HADERRBITDEBUG 1
 
 
