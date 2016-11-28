@@ -2225,9 +2225,6 @@ void dabc::ManagerRef::StopApplication()
 
    Submit(dabc::Command("StopManagerMainLoop"));
 
-//   if (GetObject())
-//      if (GetObject()->fMgrStoppedTime.null())
-//         GetObject()->fMgrStoppedTime = dabc::Now();
 }
 
 bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,

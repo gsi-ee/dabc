@@ -8,6 +8,7 @@ about current functionality of the framework.
    streame and transport servers. Now one can clearly set hostname which
    should be bind for both server kinds. If mbs:// is used, still hostname
    can determine protocol. 
+3. Application will be terminated if any module/transport/connection cannot be created.
 
 
 25.11.2016

@@ -190,7 +190,7 @@ double dabc::Application::ProcessTimeout(double)
    if (!fAnyModuleWasRunning) return 0.2;
 
    // application decide to stop manager main loop
-   dabc::mgr.Submit(dabc::Command("StopManagerMainLoop"));
+   dabc::mgr.StopApplication();
 
    return -1;
 }
@@ -210,8 +210,11 @@ bool dabc::Application::IsModulesRunning()
 bool dabc::Application::CreateAppModules()
 {
    // if no init func was specified, default will be called
-   if (fInitFunc==0)
-      return DefaultInitFunc();
+   if (fInitFunc==0) {
+      bool res = DefaultInitFunc();
+      if (!res) dabc::mgr.StopApplication();
+      return res;
+   }
 
    fInitFunc();
    return true;
@@ -394,9 +397,9 @@ bool dabc::Application::DefaultInitFunc()
       }
    }
 
-   if (nconn>0) dabc::mgr.ActivateConnections(5);
+   if (nconn==0) return true;
 
-   return true;
+   return dabc::mgr.ActivateConnections(5);
 }
 
 
