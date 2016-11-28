@@ -119,7 +119,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
          return 0;
       }
 
-      int fd = dabc::SocketThread::StartClient(url.GetHostName().c_str(), portnum);
+      int fd = dabc::SocketThread::StartClient(url.GetHostName(), portnum);
 
       if (fd<=0) {
          DOUT3("Fail connecting to host:%s port:%d", url.GetHostName().c_str(), portnum);

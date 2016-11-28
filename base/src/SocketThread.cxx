@@ -1198,21 +1198,18 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
    return 0;
 }
 
-int dabc::SocketThread::StartClient(const char* host, int nport, bool nonblocking)
+int dabc::SocketThread::StartClient(const std::string& host, int nport, bool nonblocking)
 {
    char service[100];
-
    sprintf(service, "%d", nport);
 
-   struct addrinfo *info;
-   struct addrinfo hints;
+   struct addrinfo hints, *info = 0;
    memset(&hints, 0, sizeof(hints));
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
 
    int sockfd(-1);
-
-   if (getaddrinfo(host, service, &hints, &info)!=0) return sockfd;
+   if (getaddrinfo(host.c_str(), service, &hints, &info)!=0) return sockfd;
 
    for (struct addrinfo *t = info; t; t = t->ai_next) {
 

@@ -105,7 +105,7 @@ bool aqua::ClientOutput::ConnectAquaServer()
 
    fLastConnect.GetNow();
 
-   int fd = dabc::SocketThread::StartClient(fServerName.c_str(), fServerPort);
+   int fd = dabc::SocketThread::StartClient(fServerName, fServerPort);
    if (fd < 0) return false;
 
    SetSocket(fd);

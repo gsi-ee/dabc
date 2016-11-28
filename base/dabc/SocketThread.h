@@ -401,8 +401,7 @@ namespace dabc {
 
          static bool SetNonBlockSocket(int fd);
 
-         static int StartServer(const char* host, int& nport, int portmin=-1, int portmax=-1);
-         static int StartClient(const char* host, int nport, bool nonblocking = true);
+         static int StartClient(const std::string& host, int nport, bool nonblocking = true);
 
          /** \brief Wrapper for send method, should be used for blocking sockets */
          static int SendBuffer(int fd, void* buf, int len);

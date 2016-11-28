@@ -834,7 +834,7 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
    // SL 20.05.2015: allow to access status record also with prompter
    if (!fAddon.null() || (fStatPort<=0)) return;
 
-   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fStatPort);
+   int fd = dabc::SocketThread::StartClient(fMbsNode, fStatPort);
    if (fd<=0)
       EOUT("FAIL status port %d for node %s", fStatPort, fMbsNode.c_str());
    else
@@ -1100,7 +1100,7 @@ bool mbs::DaqLogWorker::CreateAddon()
 {
    if (!fAddon.null()) return true;
 
-   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fPort);
+   int fd = dabc::SocketThread::StartClient(fMbsNode, fPort);
    if (fd<=0) {
       EOUT("Fail open log %d port on node %s", fPort, fMbsNode.c_str());
       return false;
@@ -1200,7 +1200,7 @@ bool mbs::DaqRemCmdWorker::CreateAddon()
 {
    if (!fAddon.null()) return true;
 
-   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fPort);
+   int fd = dabc::SocketThread::StartClient(fMbsNode, fPort);
    if (fd<=0) {
       EOUT("Fail open command port %d on node %s", fPort, fMbsNode.c_str());
       ActivateTimeout(5);
@@ -1375,7 +1375,7 @@ bool mbs::PrompterWorker::CreateAddon()
 {
    if (!fAddon.null()) return true;
 
-   int fd = dabc::SocketThread::StartClient(fMbsNode.c_str(), fPort);
+   int fd = dabc::SocketThread::StartClient(fMbsNode, fPort);
    if (fd<=0) {
       EOUT("Fail open command port %d on node %s", fPort, fMbsNode.c_str());
       ActivateTimeout(5);
