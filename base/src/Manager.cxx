@@ -2130,6 +2130,10 @@ bool dabc::ManagerRef::IsLocalItem(const std::string& name)
 
 dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, const std::string& port2name)
 {
+   // configure conection between two ports
+   // Normally port1 is output and port2 is input port1->port2
+   // But bidirectional connection can be established as well
+
    if (GetObject()==0) return dabc::ConnectionRequest();
 
    PortRef port1 = FindPort(port1name);
@@ -2170,10 +2174,10 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, 
    dabc::ConnectionRequest req;
 
    if (!port1.null())
-      req = port1.MakeConnReq(port2name, false);
+      req = port1.MakeConnReq(port2name, true);
 
    if (!port2.null())
-      req = port2.MakeConnReq(port1name, true);
+      req = port2.MakeConnReq(port1name, false);
 
    // if not configured differently, specify
    if (req.GetConnDevice().empty() && GetObject())

@@ -863,11 +863,9 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
             ConnectionRequest req = port->GetConnReq();
 
-            if (iserror) DOUT0("CONNECTION ERROR %s %s", GetName(), port->GetName());
-
             if (!req.null()) {
                if (req.IsOptional())
-                  req.ChangeState(ConnectionObject::sPending, true);
+                  req.ChangeState(ConnectionObject::sBroken, true);
                else
                   req.ChangeState(ConnectionObject::sDisconnected, true);
             }

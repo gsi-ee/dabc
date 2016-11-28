@@ -60,7 +60,7 @@ namespace dabc {
             sConnecting,    ///< connection is in progress
             sConnected,     ///< connection is up and working
             sDisconnected,  ///< connection is down by user, will not be reconnected
-            sBroken,        ///< connection is broken , if allowed connection manager will reactivate connection immediately
+            sBroken,        ///< connection is broken and should be reactivated by connection manager
             sFailed         ///< connection cannot be established by connection manager
          };
 

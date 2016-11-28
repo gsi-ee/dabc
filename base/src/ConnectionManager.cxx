@@ -69,7 +69,12 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 {
     // here one should analyze
 
-   if (evnt.ParValue() != ConnectionObject::GetStateName(ConnectionObject::sPending)) return;
+   std::string value = evnt.ParValue();
+
+   bool ispending = (value == ConnectionObject::GetStateName(ConnectionObject::sPending));
+   bool isbroken = (value == ConnectionObject::GetStateName(ConnectionObject::sBroken));
+
+   if (!ispending && !isbroken) return;
 
    ConnectionRequestFull req = dabc::mgr.FindPar(evnt.ParName());
    if (req.null()) {
@@ -96,7 +101,7 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
    // special command is send to connection manager. Later one should react automatically on all connection
    // changes and restart connection if this is specified by the user
 
-   if ((fDoingConnection == 0) && fConnCmd.null()) {
+   if ((fDoingConnection == 0) && fConnCmd.null() && isbroken) {
       DOUT0("Reactivate connection manager");
       fDoingConnection = 1;
       ActivateTimeout(0.);
@@ -280,7 +285,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
             // we use 1 sec more while command itself should be timed out correctly
             req()->SetDelay(req.GetConnTimeout()+1., true);
 
-            DOUT3("CONN %s server %s receiver %s tmout %f", req.GetConnInfo().c_str(), remserver.c_str(), dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()).c_str(), req.GetConnTimeout());
+            DOUT0("CONN %s isserv %s server %s receiver %s tmout %f", req.GetConnInfo().c_str(), DBOOL(req.IsServerSide()), remserver.c_str(), dabc::mgr.ComposeAddress(remserver, dabc::Manager::ConnMgrName()).c_str(), req.GetConnTimeout());
 
             cmd.SetTimeout(req.GetConnTimeout());
 
