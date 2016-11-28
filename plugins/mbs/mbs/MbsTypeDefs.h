@@ -20,6 +20,8 @@
 #include "LmdTypeDefs.h"
 #endif
 
+#include <string>
+
 namespace mbs {
 
    enum EMbsTriggerTypes {
@@ -356,13 +358,15 @@ namespace mbs {
    };
 
    extern const char* ServerKindToStr(int kind);
-   extern int StrToServerKind(const char* str);
+   extern int StrToServerKind(const std::string& str);
    extern int DefualtServerPort(int kind);
 
    extern void SwapData(void* data, unsigned bytessize);
 
    extern const char* protocolLmd;
    extern const char* protocolMbs;
+   extern const char* protocolMbss;
+   extern const char* protocolMbst;
 
    extern const char* comStartServer;
    extern const char* comStopServer;

@@ -116,8 +116,7 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
    if (log.length()>0)
       dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
 
-   std::string sockethost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
-   if (!sockethost.empty()) fLocalHost = sockethost;
+   fLocalHost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
 
    return true;
 }

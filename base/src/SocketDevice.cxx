@@ -214,6 +214,8 @@ dabc::SocketDevice::SocketDevice(const std::string& name, Command cmd) :
       if (!fCmdChannelId.empty()) DOUT0("Socket device %s reuses %s for connections", GetName(), fCmdChannelId.c_str());
    }
 
+   if (fCmdChannelId.empty() && fBindHost.empty())
+      fBindHost = dabc::Configuration::GetLocalHost();
 }
 
 dabc::SocketDevice::~SocketDevice()
@@ -240,8 +242,9 @@ std::string dabc::SocketDevice::StartServerAddon()
    if (serv == 0) {
 
       int port0 = fBindPort, portmin(7000), portmax(9000);
+      if (port0 > 0) portmin = portmax = 0;
 
-      serv = dabc::SocketThread::CreateServerAddon(fBindHost.c_str(), port0, portmin, portmax);
+      serv = dabc::SocketThread::CreateServerAddon(fBindHost, port0, portmin, portmax);
 
       DOUT0("SocketDevice creates server with ID %s", serv->ServerId().c_str());
 

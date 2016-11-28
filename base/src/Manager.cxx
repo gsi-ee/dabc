@@ -2280,9 +2280,15 @@ bool dabc::ManagerRef::CreateControl(bool withserver, int serv_port, bool allow_
    cmd.SetBool("ClientsAllowed", allow_clients);
    if (withserver) {
       int port = 0;
-      if (GetObject()->cfg()) port = GetObject()->cfg()->MgrPort();
+      std::string host;
+      if (GetObject()->cfg()) {
+         port = GetObject()->cfg()->MgrPort();
+         host = GetObject()->cfg()->MgrHost();
+         if (host.empty()) host = dabc::Configuration::GetLocalHost();
+      }
       if (port<=0) port = serv_port;
       if (port<=0) port = defaultDabcPort;
+      cmd.SetStr("ServerHost", host);
       cmd.SetInt("ServerPort", port);
    }
 

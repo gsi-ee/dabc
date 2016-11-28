@@ -45,10 +45,11 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
       std::string addrid;
 
       if (cmd.GetBool("WithServer", true)) {
+         std::string host = cmd.GetStr("ServerHost");
          int nport = cmd.GetInt("ServerPort");
          if (nport <= 0) nport = dabc::defaultDabcPort;
 
-         addon = dabc::SocketThread::CreateServerAddon("", nport);
+         addon = dabc::SocketThread::CreateServerAddon(host, nport);
          if (addon == 0) {
             EOUT("Cannot open cmd socket on port %d", nport);
             return 0;

@@ -1106,121 +1106,6 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
 }
 
 
-int dabc::SocketThread::StartServer(const char* myhostname, int& portnum, int portmin, int portmax)
-{
-   int numtests = 1; // at least test value of portnum
-   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
-
-   int firsttest = portnum;
-
-   for(int ntest=0;ntest<numtests;ntest++) {
-
-      if ((ntest==0) && (portnum<0)) continue;
-
-      if (ntest>0) portnum = portmin - 1 + ntest;
-
-      int sockfd = -1;
-
-      struct addrinfo hints, *info;
-
-      memset(&hints, 0, sizeof(hints));
-      hints.ai_flags    = AI_PASSIVE;
-      hints.ai_family   = AF_UNSPEC; //AF_INET;
-      hints.ai_socktype = SOCK_STREAM;
-
-      char service[100];
-      sprintf(service, "%d", portnum);
-
-      int n = getaddrinfo(myhostname, service, &hints, &info);
-
-      DOUT2("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n);
-
-      if (n < 0) {
-         EOUT("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service);
-         continue;
-      }
-
-      for (struct addrinfo *t = info; t; t = t->ai_next) {
-
-         sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
-         if (sockfd >= 0) {
-
-            int opt = 1;
-
-            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-            if (!bind(sockfd, t->ai_addr, t->ai_addrlen)) break;
-            close(sockfd);
-            sockfd = -1;
-         }
-      }
-
-      freeaddrinfo(info);
-
-      if (sockfd<0) {
-         DOUT3("Cannot bind socket to service %s", service);
-         continue;
-      }
-
-      if (dabc::SocketThread::SetNonBlockSocket(sockfd)) {
-         DOUT3("BIND SOCKET ON %s:%d", localhost.c_str(), portnum);
-         return sockfd;
-      }
-
-      EOUT("Cannot set nonblocking flag for server socket");
-      close(sockfd);
-   }
-
-   EOUT("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax);
-   portnum = -1;
-   return -1;
-}
-
-
-/*
-
-int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
-{
-   int numtests = 1; // at least test value of portnum
-   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
-
-   int firsttest = portnum;
-
-   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-   if (sockfd < 0) {
-      EOUT("ERROR create socket");
-      return -1;
-   }
-
-   for(int ntest=0;ntest<numtests;ntest++) {
-
-     if ((ntest==0) && (portnum<0)) continue;
-
-     if (ntest>0) portnum = portmin - 1 + ntest;
-
-     struct sockaddr_in serv_addr;
-
-     memset((char *) &serv_addr, 0, sizeof(serv_addr));
-     serv_addr.sin_family = AF_INET;
-     serv_addr.sin_addr.s_addr = INADDR_ANY;
-     serv_addr.sin_port = htons(portnum);
-
-     // Now bind the host address using bind() call.
-     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) continue;
-
-     if (!dabc::SocketThread::SetNonBlockSocket(sockfd))
-        EOUT("Cannot set nonblocking flag for server socket");
-
-     return sockfd;
-   }
-
-   close(sockfd);
-
-   EOUT("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax);
-   portnum = -1;
-   return -1;
-}
-*/
 
 
 std::string dabc::SocketThread::DefineHostName(bool force)
@@ -1239,16 +1124,78 @@ std::string dabc::SocketThread::DefineHostName(bool force)
    return host;
 }
 
-dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const char* hostname, int nport, int portmin, int portmax)
+dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string& host, int nport, int portmin, int portmax)
 {
-   std::string localhost = dabc::SocketThread::DefineHostName(false);
+   char nameinfo[1024], serviceinfo[1024];
 
-   if ((hostname!=0) && (*hostname==0) && !localhost.empty())
-      hostname = localhost.c_str();
+   int numtests = 1; // at least test value of nport
+   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
 
-   int fd = dabc::SocketThread::StartServer(hostname, nport, portmin, portmax);
+   const char* hostname = host.empty() ? 0 : host.c_str();
 
-   return (fd < 0) ? 0 : new SocketServerAddon(fd, hostname, nport);
+   for(int ntest=0;ntest<numtests;ntest++) {
+
+      int serviceid = (ntest==0) ? nport : portmin - 1 + ntest;
+
+      if (serviceid < 0) continue;
+
+      struct addrinfo hints, *info = 0;
+
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_flags    = AI_PASSIVE;
+      hints.ai_family   = AF_UNSPEC; //AF_INET;
+      hints.ai_socktype = SOCK_STREAM;
+
+      char service[100];
+      sprintf(service, "%d", serviceid);
+
+      int n = getaddrinfo(hostname, service, &hints, &info);
+
+      DOUT2("GetAddrInfo %s:%s res = %d", host.c_str(), service, n);
+
+      if (n < 0) {
+         EOUT("Cannot get addr info for service %s:%s", host.c_str(), service);
+         continue;
+      }
+
+      int sockfd = -1;
+
+      for (struct addrinfo *t = info; t; t = t->ai_next) {
+
+         sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
+         if (sockfd >= 0) {
+
+            int opt = 1;
+            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+            if (bind(sockfd, t->ai_addr, t->ai_addrlen) == 0) {
+               int ni = getnameinfo(t->ai_addr, t->ai_addrlen,
+                                    nameinfo, sizeof(nameinfo),
+                                    serviceinfo, sizeof(serviceinfo),
+                                    /* NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
+
+               // if (ni==0) DOUT0("Get NAME INFO %s %s addrlen %d", nameinfo, serviceinfo, t->ai_addrlen);
+
+               if (host.empty() && (ni==0) && (strcmp(nameinfo,"0.0.0.0")!=0)) hostname = nameinfo;
+               break;
+            }
+            close(sockfd);
+            sockfd = -1;
+         }
+      }
+
+      freeaddrinfo(info);
+
+      if (sockfd<0) continue;
+
+      if (dabc::SocketThread::SetNonBlockSocket(sockfd))
+         return new SocketServerAddon(sockfd, hostname ? hostname : "localhost", serviceid);
+
+      close(sockfd);
+   }
+
+   EOUT("Cannot bind server socket to port %d or find its in range %d:%d", nport, portmin, portmax);
+   return 0;
 }
 
 int dabc::SocketThread::StartClient(const char* host, int nport, bool nonblocking)

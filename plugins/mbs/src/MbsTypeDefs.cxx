@@ -22,6 +22,8 @@
 
 const char* mbs::protocolLmd          = "lmd";
 const char* mbs::protocolMbs          = "mbs";
+const char* mbs::protocolMbss         = "mbss";
+const char* mbs::protocolMbst         = "mbst";
 
 // Command names used in combiner module:
 const char* mbs::comStartServer       = "StartServer";
@@ -211,13 +213,13 @@ int mbs::DefualtServerPort(int kind)
    return 0;
 }
 
-int mbs::StrToServerKind(const char* str)
+int mbs::StrToServerKind(const std::string& str)
 {
-   if (str==0) return NoServer;
-   if (strcmp(str, "Transport") == 0) return TransportServer;
-   if (strcmp(str, "Stream") == 0) return StreamServer;
-   if (strcmp(str, "OldTransport") == 0) return OldTransportServer;
-   if (strcmp(str, "OldStream") == 0) return OldStreamServer;
+   if (str.empty()) return NoServer;
+   if (str == "Transport") return TransportServer;
+   if (str == "Stream") return StreamServer;
+   if (str == "OldTransport") return OldTransportServer;
+   if (str == "OldStream") return OldStreamServer;
    return NoServer;
 }
 

@@ -441,7 +441,7 @@ namespace dabc {
           * If hostname == "", configured hostname or just $HOST variable will be used
           * If hostname is not empty, only selected host will be tried to bin
           * One could bind such connection to specified port or try to choose from available ports  */
-         static SocketServerAddon* CreateServerAddon(const char* hostname, int nport, int portmin=-1, int portmax=-1);
+         static SocketServerAddon* CreateServerAddon(const std::string& host, int nport, int portmin=-1, int portmax=-1);
 
          static SocketClientAddon* CreateClientAddon(const std::string& servid, int dflt_port = -1);
    };
