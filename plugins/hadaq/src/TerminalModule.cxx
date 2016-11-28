@@ -32,6 +32,7 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fTotalDiscEvents(0),
    fTotalDroppedData(0),
    fDoClear(false),
+   fDoShow(true),
    fLastTm(),
    fCalibr(),
    fServPort(0),
@@ -46,6 +47,7 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fFilePort = Cfg("fileport", cmd).AsInt(1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
+   fDoShow = Cfg("show", cmd).AsBool(true);
    fRingSize = Cfg("showtrig", cmd).AsInt(10);
    if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
 
@@ -102,8 +104,10 @@ bool hadaq::TerminalModule::ReplyCommand(dabc::Command cmd)
 
 void hadaq::TerminalModule::BeforeModuleStart()
 {
-   dabc::SetDebugLevel(-1);
-   if (fDoClear) system("clear");
+   if (fDoShow) {
+      dabc::SetDebugLevel(-1);
+      if (fDoClear) system("clear");
+   }
 }
 
 std::string hadaq::TerminalModule::rate_to_str(double r)
@@ -122,30 +126,33 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double delta = fLastTm.SpentTillNow(true);
 
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
-
    if (delta>0) {
-      unsigned nlines = comb->fCfg.size() + 4;
-      if (fServPort>=0) nlines++;
-      if (fFilePort>=0) nlines++;
-      for (unsigned n=0;n<nlines;n++)
-         fputs("\033[A\033[2K",stdout);
-      rewind(stdout);
-      ftruncate(1,0);
-
       rate1 = (comb->fTotalBuildEvents - fTotalBuildEvents) / delta;
       rate2 = (comb->fTotalRecvBytes - fTotalRecvBytes) / delta;
       rate3 = (comb->fTotalDiscEvents - fTotalDiscEvents) / delta;
       rate4 = (comb->fTotalDroppedData - fTotalDroppedData) / delta;
-   } else {
-      printf("HADAQ terminal info:\n");
-      printf("  disc  - all discarded packets in the UDP receiver\n");
-      printf("  err32 - 32-byte header does not match with 32-bytes footer\n");
-      printf("  bufs  - number of produced buffers\n");
-      printf("  qu    - input queue of combiner module\n");
-      printf("  drop  - dropped subevents (received by combiner but not useful)\n");
-      printf("  lost  - lost subevents (never seen by combiner)\n");
-      printf("  trigger - last trigger values (after masking them in combiner module)\n");
-      printf("  progr - progress of TDC calibration\n");
+   }
+
+   if (fDoShow) {
+      if (delta>0) {
+         unsigned nlines = comb->fCfg.size() + 4;
+         if (fServPort>=0) nlines++;
+         if (fFilePort>=0) nlines++;
+         for (unsigned n=0;n<nlines;n++)
+            fputs("\033[A\033[2K",stdout);
+         rewind(stdout);
+         ftruncate(1,0);
+      } else {
+         fprintf(stdout,"HADAQ terminal info:\n"
+                        "  disc  - all discarded packets in the UDP receiver\n"
+                        "  err32 - 32-byte header does not match with 32-bytes footer\n"
+                        "  bufs  - number of produced buffers\n"
+                        "  qu    - input queue of combiner module\n"
+                        "  drop  - dropped subevents (received by combiner but not useful)\n"
+                        "  lost  - lost subevents (never seen by combiner)\n"
+                        "  trigger - last trigger values (after masking them in combiner module)\n"
+                        "  progr - progress of TDC calibration\n");
+      }
    }
 
    fTotalBuildEvents = comb->fTotalBuildEvents;
@@ -311,7 +318,8 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       s += "\n";
    }
 
-   fprintf(stdout, s.c_str());
+   if (fDoShow)
+      fprintf(stdout, s.c_str());
 
    fWorkerHierarchy.GetHChild("State").SetField("value", isready ? "Ready" : "Init");
    fWorkerHierarchy.GetHChild("Output").SetField("value", s);
