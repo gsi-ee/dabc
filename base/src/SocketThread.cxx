@@ -32,6 +32,7 @@ const char* SocketErr(int err)
 {
    switch (err) {
       case -1: return "Internal";
+      case 0: return "Close";
       case EAGAIN: return "EAGAIN";
       case EBADF:  return "EBADF";
       case ECONNREFUSED: return "ECONNREFUSED";
@@ -92,7 +93,7 @@ void dabc::SocketAddon::ProcessEvent(const EventId& evnt)
          break;
 
       case evntSocketError:
-         OnSocketError(0, "When working");
+         OnSocketError(-1, "get error event");
          break;
 
       default:
@@ -136,11 +137,11 @@ int dabc::SocketAddon::TakeSocketError()
    return myerrno;
 }
 
-void dabc::SocketAddon::OnConnectionClosed()
+void dabc::SocketAddon::OnSocketError(int msg, const std::string& info)
 {
    if (IsDeliverEventsToWorker()) {
       DOUT2("Addon:%p Connection closed - worker should process", this);
-      FireWorkerEvent(evntSocketCloseInfo);
+      FireWorkerEvent(msg==0 ? evntSocketCloseInfo : evntSocketErrorInfo);
    } else
    if (fDeleteWorkerOnClose) {
       DOUT2("Connection closed - destroy socket");
@@ -153,29 +154,13 @@ void dabc::SocketAddon::OnConnectionClosed()
    }
 }
 
-void dabc::SocketAddon::OnSocketError(int errnum, const std::string& info)
-{
-   EOUT("SocketError fd:%d %d:%s %s", Socket(), errnum, SocketErr(errnum), info.c_str());
-
-   if (IsDeliverEventsToWorker()) {
-      FireWorkerEvent(evntSocketErrorInfo);
-   } else
-   if (fDeleteWorkerOnClose) {
-      CloseSocket();
-      DeleteWorker();
-   } else {
-      CloseSocket();
-      DeleteAddonItself();
-   }
-}
-
 ssize_t dabc::SocketAddon::DoRecvBuffer(void* buf, ssize_t len)
 {
    ssize_t res = recv(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnConnectionClosed(); else
+   if (res==0) OnSocketError(0, "closed during recv()"); else
    if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+      if (errno!=EAGAIN) OnSocketError(errno, "when recv()");
    }
 
    return res;
@@ -203,9 +188,9 @@ ssize_t dabc::SocketAddon::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    ssize_t res = recvmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnConnectionClosed(); else
+   if (res==0) OnSocketError(0, "when recvmsg()"); else
    if (res<0) {
-      if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+      if (errno!=EAGAIN) OnSocketError(errno, "when recvmsg()");
    }
 
    return res;
@@ -215,7 +200,7 @@ ssize_t dabc::SocketAddon::DoSendBuffer(void* buf, ssize_t len)
 {
    ssize_t res = send(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnConnectionClosed(); else
+   if (res==0) OnSocketError(0, "when send()"); else
    if (res<0) {
       if (errno!=EAGAIN) OnSocketError(errno, "When send()");
    }
@@ -246,7 +231,7 @@ ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf,
 
    ssize_t res = sendmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-   if (res==0) OnConnectionClosed(); else
+   if (res==0) OnSocketError(0, "when sendmsg()"); else
    if (res<0) {
       if (errno!=EAGAIN) OnSocketError(errno, "When sendmsg()");
    }
@@ -560,7 +545,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 
           if ((fRecvIOV==0) || (fSocket<0)) {
              EOUT("HARD PROBLEM when reading socket");
-             OnSocketError(1, "Missing socket when evntSocketRead fired");
+             OnSocketError(-1, "Missing socket when evntSocketRead fired");
              return;
           }
 
@@ -605,13 +590,13 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 
           if (res==0) {
              // DOUT0("Addon:%p socket:%d res==0 when doing read usemsg %s numseg %u seg0.len %u", this, fSocket, DBOOL(fRecvUseMsg), fRecvIOVNumber - fRecvIOVFirst, fRecvIOV[fRecvIOVFirst].iov_len);
-             OnConnectionClosed();
+             OnSocketError(0, "when recvmsg()");
              return;
           }
 
           if (res<0) {
              if (errno!=EAGAIN) {
-                OnSocketError(errno, "When recvmsg()");
+                OnSocketError(errno, "when recvmsg()");
              } else {
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?
@@ -710,7 +695,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 
 
           if (res==0) {
-             OnConnectionClosed();
+             OnSocketError(0, "when sendmsg()");
              return;
           }
 
@@ -718,7 +703,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
              DOUT2("Error when sending via socket %d  usemsg %s first %d number %d", fSocket, DBOOL(fSendUseMsg), fSendIOVFirst, fSendIOVNumber);
 
              if (errno!=EAGAIN) {
-                OnSocketError(errno, "When sendmsg()");
+                OnSocketError(errno, "when sendmsg()");
              } else {
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?

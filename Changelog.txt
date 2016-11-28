@@ -11,7 +11,9 @@ about current functionality of the framework.
 3. Application will be terminated if any module/transport/connection cannot be created.
 4. When connecting output port with input port, change server/client assignment.
    Now output port will be server-side and await for connection. 
-    
+5. In core socket classes call OnSocketError() also when coneection is closed.
+   OnCloseConnection() method is obsolete.
+
 
 25.11.2016
 1. Improve server-side socket creation - hostname can be directly specified.

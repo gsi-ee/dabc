@@ -38,23 +38,14 @@ void aqua::ClientOutput::OnRecvCompleted()
    // StartRecv(fRecvBuf, 16);
 }
 
-void aqua::ClientOutput::OnConnectionClosed()
-{
-    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
-    DOUT1("Connection to AQUA closed  %s:%d", fServerName.c_str(), fServerPort);
-
-    CancelIOOperations();
-
-    fState = oDisconnected;
-}
-
-void aqua::ClientOutput::OnSocketError(int errnum, const std::string& info)
+void aqua::ClientOutput::OnSocketError(int err, const std::string& info)
 {
    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
-   DOUT1("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, errnum, info.c_str());
+   DOUT1("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, err, info.c_str());
 
    CancelIOOperations();
-   fState = oError;
+
+   fState = err!=0 ? oError : oDisconnected;
 }
 
 double aqua::ClientOutput::ProcessTimeout(double lastdiff)

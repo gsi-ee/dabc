@@ -84,6 +84,14 @@ void dabc::SocketNetworkInetrface::SubmitRecv(uint32_t recid)
 }
 
 
+void dabc::SocketNetworkInetrface::OnSocketError(int msg, const std::string& info)
+{
+   NetworkTransport* tr = (NetworkTransport*) fWorker();
+   if (tr) tr->CloseTransport(msg!=0);
+      else EOUT("Socket msg without transport %d %s", msg, info.c_str());
+}
+
+
 void dabc::SocketNetworkInetrface::OnSendCompleted()
 {
    NetworkTransport* tr = (NetworkTransport*) fWorker();

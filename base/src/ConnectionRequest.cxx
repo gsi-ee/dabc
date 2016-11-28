@@ -97,7 +97,7 @@ void dabc::ConnectionObject::ChangeState(EState state, bool force)
 
       fConnState = state;
 
-      signal = state!=sInit;
+      signal = (state!=sInit);
 
       if (signal) fAllowedField = "%%state%%";
    }

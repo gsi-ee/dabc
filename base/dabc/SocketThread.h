@@ -78,8 +78,8 @@ namespace dabc {
           * When it will be possible, worker get evntSocketWrite event */
          inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
 
-         virtual void OnConnectionClosed();
-         virtual void OnSocketError(int errnum, const std::string& info);
+         /** Generic error handler. Also invoked when socket is closed (msg==0) */
+         virtual void OnSocketError(int msg, const std::string& info);
 
          ssize_t DoRecvBuffer(void* buf, ssize_t len);
          ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);

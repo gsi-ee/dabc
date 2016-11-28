@@ -860,7 +860,17 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
 
          if (port!=0) {
-            port->GetConnReq().ChangeState(ConnectionObject::sDisconnected, true);
+
+            ConnectionRequest req = port->GetConnReq();
+
+            if (iserror) DOUT0("CONNECTION ERROR %s %s", GetName(), port->GetName());
+
+            if (!req.null()) {
+               if (req.IsOptional())
+                  req.ChangeState(ConnectionObject::sPending, true);
+               else
+                  req.ChangeState(ConnectionObject::sDisconnected, true);
+            }
 
             DOUT3("Module %s running %s get disconnect event for port %s connected %s err %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()), DBOOL(iserror));
 
@@ -871,7 +881,8 @@ void dabc::Module::ProcessEvent(const EventId& evid)
             ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
             // if reconnect is specified and port is not declared as non-automatic
-            if (port->TryNextReconnect(iserror)) {
+            // if port was connected with connect manager, let do work by connetion manager
+            if (req.null() && port->TryNextReconnect(iserror)) {
                std::string timername = dabc::format("ConnTimer_%s", port->GetName());
 
                ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));

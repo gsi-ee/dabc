@@ -64,7 +64,7 @@ void dabc::Port::ReadPortConfiguration()
 bool dabc::Port::SetSignaling(EventsProducing kind)
 {
    if (IsConnected()) {
-      EOUT("Cannot change signalling kind with connected port!!!");
+      EOUT("Cannot change signaling kind with connected port!!!");
       return false;
    }
 

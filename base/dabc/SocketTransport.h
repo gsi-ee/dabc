@@ -54,8 +54,9 @@ namespace dabc {
          virtual long Notify(const std::string&, int);
 
          virtual void OnSendCompleted();
-
          virtual void OnRecvCompleted();
+
+         virtual void OnSocketError(int msg, const std::string& info);
 
       public:
          SocketNetworkInetrface(int fd, bool datagram = false);

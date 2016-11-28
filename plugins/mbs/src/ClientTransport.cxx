@@ -176,31 +176,24 @@ void mbs::ClientTransport::OnRecvCompleted()
    }
 }
 
-void mbs::ClientTransport::OnConnectionClosed()
+void mbs::ClientTransport::OnSocketError(int err, const std::string& info)
 {
-   DOUT3("MBS client Socket close\n");
+   if (err==0) {
+      DOUT3("MBS client Socket close\n");
 
-   fState = ioClosed;
+      fState = ioClosed;
 
-   SubmitWorkerCmd(dabc::CmdDataInputClosed());
+      SubmitWorkerCmd(dabc::CmdDataInputClosed());
 
-   // TODO: probably, one do not need call parent method
-   // dabc::SocketIOAddon::OnConnectionClosed();
+   } else {
+
+      DOUT3("MBS client Socket Error\n");
+
+      fState = ioError;
+
+      SubmitWorkerCmd(dabc::CmdDataInputFailed());
+   }
 }
-
-
-void mbs::ClientTransport::OnSocketError(int errnum, const std::string& info)
-{
-   DOUT3("MBS client Socket Error\n");
-
-   fState = ioError;
-
-   SubmitWorkerCmd(dabc::CmdDataInputFailed());
-
-   // TODO: probably, one do not need call parent method
-   // dabc::SocketIOAddon::OnSocketError(errnum, info);
-}
-
 
 void mbs::ClientTransport::OnThreadAssigned()
 {

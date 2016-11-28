@@ -95,6 +95,13 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
    // TODO: in current implementation connection requests are collected and activated only when
    // special command is send to connection manager. Later one should react automatically on all connection
    // changes and restart connection if this is specified by the user
+
+   if ((fDoingConnection == 0) && fConnCmd.null()) {
+      DOUT0("Reactivate connection manager");
+      fDoingConnection = 1;
+      ActivateTimeout(0.);
+   }
+
 }
 
 

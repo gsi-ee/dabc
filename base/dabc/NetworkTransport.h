@@ -141,7 +141,7 @@ namespace dabc {
          virtual const char* ClassName() const { return "NetworkTransport"; }
 
          NetworkTransport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport,
-                             bool useackn, WorkerAddon* addon);
+                          bool useackn, WorkerAddon* addon);
          virtual ~NetworkTransport();
 
          unsigned GetFullHeaderSize() const { return fFullHeaderSize; }

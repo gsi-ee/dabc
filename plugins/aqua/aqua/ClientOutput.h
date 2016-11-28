@@ -62,7 +62,6 @@ namespace aqua {
          virtual void OnSendCompleted();
          virtual void OnRecvCompleted();
 
-         virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const std::string& info);
 
          virtual double ProcessTimeout(double lastdiff);

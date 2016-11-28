@@ -136,7 +136,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
 //   DOUT0("mbs::ServerOutputAddon::OnRecvCompleted %s  inp:%s out:%s", f_sbuf, DBOOL(IsDoingInput()), DBOOL(IsDoingOutput()));
 
    if (strcmp(f_sbuf, "CLOSE")==0) {
-      OnConnectionClosed(); // do same as connection was closed
+      OnSocketError(0, "get CLOSE event"); // do same as connection was closed
       return;
    }
 
@@ -257,13 +257,13 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 }
 
 
-void mbs::ServerOutputAddon::OnConnectionClosed()
+void mbs::ServerOutputAddon::OnSocketError(int err, const std::string& info)
 {
    switch (fState) {
       case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
       case oSendingBuffer:
       case oWaitingReqBack:
-         fState = oDoingClose;
+         fState = (err==0) ? oDoingClose : oError;
          MakeCallback(dabc::do_Close);
          return;
 
@@ -271,26 +271,7 @@ void mbs::ServerOutputAddon::OnConnectionClosed()
       case oError: return;
 
       default:
-         fState = oDoingClose;
-         SubmitWorkerCmd(dabc::Command("CloseTransport"));
-   }
-}
-
-void mbs::ServerOutputAddon::OnSocketError(int errnum, const std::string& info)
-{
-   switch (fState) {
-      case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
-      case oSendingBuffer:
-      case oWaitingReqBack:
-         fState = oError;
-         MakeCallback(dabc::do_Close);
-         return;
-
-      case oDoingClose: return;
-      case oError: return;
-
-      default:
-         fState = oError;
+         fState = (err==0) ? oDoingClose : oError;
          SubmitWorkerCmd(dabc::Command("CloseTransport"));
    }
 }

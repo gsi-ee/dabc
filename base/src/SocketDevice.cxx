@@ -110,12 +110,7 @@ namespace dabc {
             DeleteWorker();
          }
 
-         virtual void OnConnectionClosed()
-         {
-            FinishWork(false);
-         }
-
-         virtual void OnSocketError(int errnum, const std::string& info)
+         virtual void OnSocketError(int, const std::string&)
          {
             FinishWork(false);
          }

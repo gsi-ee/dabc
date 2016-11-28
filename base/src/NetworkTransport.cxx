@@ -389,8 +389,6 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
    if (hdr->kind & netot_HdrSend) {
       uint32_t extras = hdr->size;
 
-//         DOUT1("Get ackn counter = %llu", extras);
-
       fAcknAllowedOper += extras;
       SubmitAllowedSendOperations();
 
@@ -405,7 +403,6 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
       FillRecvQueue(&buf);
 
    } else {
-//         DOUT0("ProcessRecvCompl recid %u totalsize %u bufsize %u", recid, hdr->size, fRecs[recid].buf.GetTotalSize());
 
       fInputQueueSize--;
 
@@ -421,22 +418,15 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
       ReleaseRec(recid);
 
-//      DOUT0("Get buffer %u queue size %u", buf.GetTotalSize(), fInputQueueSize));
-
       Send(buf);
    }
 
-//   DOUT0("Network transport complete fire: %s buf %p", DBOOL(dofire), buf);
 }
-
-
 
 
 void dabc::NetworkTransport::OnThreadAssigned()
 {
    dabc::Transport::OnThreadAssigned();
-
-   // this is like PortAssigned in case of
 
    FillRecvQueue();
 }
@@ -458,8 +448,6 @@ void dabc::NetworkTransport::ProcessInputEvent(unsigned port)
       }
 
       fOutputQueueSize++;
-
-//      DOUT0("Submit new record %u to the send queue acknq %u", recid, fAcknSendQueue.Size());
 
       // from this moment buf should be used from record directly
       if (fAcknSendQueue.Capacity() > 0) {
