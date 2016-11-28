@@ -81,8 +81,6 @@ dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
    // at the moment when first connection request will be created,
    // connection manager should be already there
 
-   DOUT0("Create CONNREQ %s ", ItemName().c_str());
-
    req = new dabc::ConnectionObject(this, dabc::mgr.ComposeAddress("",ItemName()));
 
    ConfigIO io(dabc::mgr()->cfg());
