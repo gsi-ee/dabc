@@ -50,7 +50,8 @@ dabc::ConnectionManager::ConnectionManager(const std::string& name, Command cmd)
    ModuleAsync(name, cmd),
    fRecs(),
    fConnCmd(),
-   fDoingConnection(0)
+   fDoingConnection(0),
+   fConnCounter(0)
 {
    // we want to see all events which produced by any of connection object
    RegisterForParameterEvent(ConnectionObject::ObjectName());
@@ -81,15 +82,13 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
       return;
    }
 
-   static int reccnt = 0;
-
    req.ResetConnData();
 
    DOUT2("We starting connection for %s url %s", evnt.ParName().c_str(), req.GetRemoteUrl().c_str());
 
    // FIXME: derive connection id from unique application code
    if (req.IsServerSide())
-      req.SetConnId(dabc::format("Node%dConn%d", dabc::mgr.NodeId(), reccnt++));
+      req.SetConnId(dabc::format("%s_Conn%d", dabc::mgr.GetLocalAddress().c_str(), fConnCounter++));
 
    fRecs.Add(req);
 

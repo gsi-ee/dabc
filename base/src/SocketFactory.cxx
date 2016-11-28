@@ -42,8 +42,6 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
 
       dabc::SocketServerAddon* addon = 0;
 
-      std::string addrid;
-
       if (cmd.GetBool("WithServer", true)) {
          std::string host = cmd.GetStr("ServerHost");
          int nport = cmd.GetInt("ServerPort");
@@ -55,15 +53,10 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
             return 0;
          }
          addon->SetDeliverEventsToWorker(true);
-         addrid = addon->ServerId();
 
-         DOUT0("Start DABC server on %s", addrid.c_str());
-
-      } else {
-         addrid = dabc::format("%s_pid%d", dabc::SocketThread::DefineHostName().c_str(), (int) getpid());
+         cmd.SetStr("localaddr", addon->ServerId());
+         DOUT0("Start DABC server on %s", addon->ServerId().c_str());
       }
-
-      cmd.SetStr("localaddr", addrid);
 
       return new SocketCommandChannel(objname, addon, cmd);
    }

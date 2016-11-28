@@ -140,6 +140,12 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
       SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
    }
 
+   const char* isserver = Xml::GetAttr(node, "server");
+   if (isserver!=0) {
+      SetAllowedField("server");
+      SetServerSide(strcmp(isserver, xmlTrueValue)==0);
+   }
+
    const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
    if (optional!=0) {
       SetAllowedField(xmlOptionalAttr);

@@ -301,9 +301,9 @@ namespace dabc {
 
          virtual void ProcessEvent(const EventId&);
 
-         const char* ServerHostName() { return fServerHostName.c_str(); }
+         std::string ServerHostName() { return fServerHostName; }
          int ServerPortNumber() const { return fServerPortNumber; }
-         std::string ServerId() { return dabc::format("%s:%d", ServerHostName(), ServerPortNumber()); }
+         std::string ServerId() { return dabc::format("%s:%d", fServerHostName.c_str(), fServerPortNumber); }
 
          virtual const char* ClassName() const { return "SocketServerAddon"; }
 

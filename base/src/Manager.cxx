@@ -281,6 +281,9 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       dabc::SetDebugPrefix(GetName());
    }
 
+   // set unique ID for application, which can be used to identify instance
+   fLocalAddress = dabc::format("local_pid%d", (int) getpid());
+
    if (cfg) {
       fCfgHost = cfg->MgrHost();
       fNodeId = cfg->MgrNodeId();
@@ -1435,8 +1438,6 @@ std::string dabc::Manager::GetNodeAddress(int nodeid)
 
    if (fCfg==0) return std::string();
 
-   if ((nodeid==fNodeId) && !fLocalAddress.empty()) return fLocalAddress;
-
    Url url(fCfg->NodeName(nodeid));
    return url.GetHostNameWithPort(defaultDabcPort);
 }
@@ -1444,7 +1445,6 @@ std::string dabc::Manager::GetNodeAddress(int nodeid)
 
 std::string dabc::Manager::GetLocalAddress()
 {
-   LockGuard lock(fMgrMutex);
    return fLocalAddress;
 }
 
@@ -1491,8 +1491,6 @@ bool dabc::Manager::DecomposeAddress(const std::string& addr, bool& islocal, std
    }
 
    if (nodeid>=0) server = GetNodeAddress(nodeid);
-
-   LockGuard lock(fMgrMutex);
 
    if ((nodeid>=0) && (fNodeId==nodeid)) islocal = true; else
    if (server == fLocalAddress) islocal = true; else
@@ -2172,10 +2170,10 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, 
    dabc::ConnectionRequest req;
 
    if (!port1.null())
-      req = port1.MakeConnReq(port2name, true);
+      req = port1.MakeConnReq(port2name, false);
 
    if (!port2.null())
-      req = port2.MakeConnReq(port1name, false);
+      req = port2.MakeConnReq(port1name, true);
 
    // if not configured differently, specify
    if (req.GetConnDevice().empty() && GetObject())
@@ -2293,7 +2291,9 @@ bool dabc::ManagerRef::CreateControl(bool withserver, int serv_port, bool allow_
 
    if (ref.null()) return false;
 
-   GetObject()->fLocalAddress = cmd.GetStr("localaddr");
+   std::string localaddr = cmd.GetStr("localaddr");
+   if (!localaddr.empty() /* && localaddr.find("localhost") == std::string::npos*/)
+      GetObject()->fLocalAddress = localaddr;
 
    ref.MakeThreadForWorker("CmdThrd");
 

@@ -506,7 +506,6 @@ namespace dabc {
          /** \brief Return address of current application */
          std::string GetLocalAddress();
 
-
          /** Return address of the node to be able communicate with it */
          std::string GetNodeAddress(int nodeid);
          /** From address like dabc://nodeabc:988/item/subtim extracts server (with port) and itemname

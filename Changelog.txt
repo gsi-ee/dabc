@@ -9,7 +9,9 @@ about current functionality of the framework.
    should be bind for both server kinds. If mbs:// is used, still hostname
    can determine protocol. 
 3. Application will be terminated if any module/transport/connection cannot be created.
-
+4. When connecting output port with input port, change server/client assignment.
+   Now output port will be server-side and await for connection. 
+    
 
 25.11.2016
 1. Improve server-side socket creation - hostname can be directly specified.

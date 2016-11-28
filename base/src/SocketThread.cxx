@@ -1172,7 +1172,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
                int ni = getnameinfo(t->ai_addr, t->ai_addrlen,
                                     nameinfo, sizeof(nameinfo),
                                     serviceinfo, sizeof(serviceinfo),
-                                    /* NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
+                                    /*NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
 
                // if (ni==0) DOUT0("Get NAME INFO %s %s addrlen %d", nameinfo, serviceinfo, t->ai_addrlen);
 

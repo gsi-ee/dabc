@@ -93,11 +93,10 @@ namespace dabc {
 
          // these fields and methods used only by connection manager
          // therefore it is enough to have reference on it (no mutex required)
-         double      fAccDelay;    ///< accounting spent time, when negative - record is active
-         double      fSetDelay;    ///< set value for delay, will be activated first time timeout processing done
+         double       fAccDelay;    ///< accounting spent time, when negative - record is active
+         double       fSetDelay;    ///< set value for delay, will be activated first time timeout processing done
 
          std::string  fAllowedField;  ///< name of field which is allowed to change in any state
-
 
          ConnectionObject(Reference port, const std::string& localurl);
          virtual ~ConnectionObject();
