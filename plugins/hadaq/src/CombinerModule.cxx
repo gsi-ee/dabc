@@ -246,6 +246,9 @@ void hadaq::CombinerModule::AfterModuleStop()
 
    SetInfo(info, true);
    DOUT0(info.c_str());
+
+   // when BNET receiver module stopped, lead to application stop
+   if (fBNETrecv) dabc::mgr.StopApplication();
 }
 
 

@@ -855,19 +855,23 @@ void dabc::Module::ProcessEvent(const EventId& evid)
       case evntPortDisconnect:
       case evntPortError: {
 
-         bool iserror = (evid.GetCode() == evntPortError);
+         bool iserror = (evid.GetCode() == evntPortError), dostop = false;
 
          Port* port = dynamic_cast<Port*> (GetItem(evid.GetArg()));
+
+         // DOUT0("PORT DISCONNECTED iserr %s port %s autostop %s", DBOOL(iserror), port->ItemName().c_str(), DBOOL(fAutoStop));
 
          if (port!=0) {
 
             ConnectionRequest req = port->GetConnReq();
 
             if (!req.null()) {
-               if (req.IsOptional())
+               if (req.IsOptional()) {
                   req.ChangeState(ConnectionObject::sBroken, true);
-               else
+               } else {
                   req.ChangeState(ConnectionObject::sDisconnected, true);
+                  dostop = fAutoStop && IsRunning(); // stop module if port is not optional
+               }
             }
 
             DOUT3("Module %s running %s get disconnect event for port %s connected %s err %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()), DBOOL(iserror));
@@ -901,13 +905,17 @@ void dabc::Module::ProcessEvent(const EventId& evid)
             }
          }
 
-         if (fAutoStop && IsRunning()) {
+         if (fAutoStop && IsRunning() && !dostop) {
             for (unsigned n=0;n<NumOutputs();n++)
                if (Output(n)->IsConnected() || Output(n)->IsDoingReconnect()) return;
 
             for (unsigned n=0;n<NumInputs();n++)
                if (Input(n)->IsConnected() || Input(n)->IsDoingReconnect()) return;
 
+            dostop = true;
+         }
+
+         if (dostop) {
             DOUT2("Module %s automatically stopped while all connections are now disconnected", GetName());
             DoStop();
          }
