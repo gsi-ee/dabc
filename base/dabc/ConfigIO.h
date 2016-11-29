@@ -51,6 +51,7 @@ namespace dabc {
          XMLNodePointer_t fCurrItem;    ///< currently found item
          XMLNodePointer_t fCurrChld;    ///< selected child in current item
          bool             fCurrStrict;  ///< must have strict syntax match
+         int              fCgfId;       ///< special ID which can be used ${}# formula
 
          XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
 
@@ -59,7 +60,7 @@ namespace dabc {
          std::string ResolveEnv(const char* value);
 
       public:
-         ConfigIO(Configuration* cfg);
+         ConfigIO(Configuration* cfg, int id = -1);
 
          ConfigIO(const ConfigIO& src);
 

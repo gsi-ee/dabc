@@ -54,6 +54,7 @@ void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
     switch (evid) {
        case evntInput:
           ((Port*) item)->ConfirmEvent();
+          /* no break */
        case evntInputReinj:
           if (item->GetType() == mitPool)
              ProcessPoolEvent(item->fSubId);
@@ -62,6 +63,7 @@ void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
           break;
        case evntOutput:
           ((Port*) item)->ConfirmEvent();
+          /* no break */
        case evntOutputReinj:
           ProcessOutputEvent(item->fSubId);
           break;

@@ -83,7 +83,7 @@ namespace dabc {
          virtual bool ItemNeedThread() const { return false; }
 
          void SetItemId(unsigned id) { fItemId = id; }
-         void SetItemSubId(unsigned id) { fSubId = id; }
+         void SetItemSubId(unsigned id) { fSubId = id; SetWorkerCfgId((int)id); }
 
          void SetItemPriority(int pri = -1) { SetWorkerPriority((pri < 0) ? 1 : pri); }
 

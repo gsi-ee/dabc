@@ -434,7 +434,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
 }
 
 
-std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
+std::string dabc::ConfigBase::ResolveEnv(const std::string& arg, int id)
 {
    if (arg.empty()) return arg;
 
@@ -480,11 +480,34 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
             if (value.empty()) value = "0"; else
             if ((value[0]!='[') || (value[value.length()-1]!=']')) value = "1"; else {
                int cnt = 1;
-               for (unsigned i=1;i<value.length()-1;++i)
+               for (size_t i=1;i<value.length()-1;++i)
                   if (value[i]==',') cnt++;
                value = dabc::format("%d", cnt);
             }
             name.erase(--pos1, 1);
+         } else
+         if ((id>=0) && (pos1 < name.length()) && (name[pos1] == '#') && !value.empty()) {
+            name.erase(pos1, 1);
+            // extract element of array
+            if ((value[0]!='[') || (value[value.length()-1]!=']')) {
+               if (id!=0) value.clear();
+            } else {
+               int cnt = 0;
+               size_t prev = 1;
+               for (size_t i=1;i<value.length();++i) {
+                  if ((value[i]==',') || (i==value.length()-1)) {
+                     if (cnt == id) {
+                        value = value.substr(prev, i-prev);
+                        prev = 0; // just mark
+                        break;
+                     }
+                     prev = i+1;
+                     cnt++;
+                  }
+               }
+               if (prev!=0) value.clear();
+            }
+
          }
 
          if (!value.empty()) name.insert(pos1, value);

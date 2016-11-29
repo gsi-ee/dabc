@@ -10,6 +10,14 @@ about current functionality of the framework.
 3. Let use #${varname} in config file. Replaced with counts of entries in the variable.
    Can be 0 (for empty variable), 1 for non-array and N for array of any elements.
    Main function - create required number of ports for provided list of services
+4. Let use ${varname}# in config file. Replaced with appropriate element from `varname` array.
+   Index of each element predefined by framework. Namely used for indexing input/output ports.
+   Example of usage with hadaq:
+     <hadaqports1 value="[50000,50001,50002]"/>
+     <Module name="FirstLevel" class="hadaq::CombinerModule">    
+       <NumInputs value="#${hadaqports1}"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#"/>
+     </Module>
 
 
 28.11.2016

@@ -195,7 +195,7 @@ namespace dabc {
          std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0);
 
          /** Replaces entries like ${name} be variable value */
-         std::string ResolveEnv(const std::string& arg);
+         std::string ResolveEnv(const std::string& arg, int id = -1);
 
          /** Add variable from command line */
          void AddCmdVariable(const char* name, const char* value);

@@ -26,11 +26,12 @@
 #include <fnmatch.h>
 #include <string.h>
 
-dabc::ConfigIO::ConfigIO(Configuration* cfg) :
+dabc::ConfigIO::ConfigIO(Configuration* cfg, int id) :
    fCfg(cfg),
    fCurrItem(0),
    fCurrChld(0),
-   fCurrStrict(true)
+   fCurrStrict(true),
+   fCgfId(id)
 {
 }
 
@@ -38,7 +39,8 @@ dabc::ConfigIO::ConfigIO(const ConfigIO& src) :
    fCfg(src.fCfg),
    fCurrItem(src.fCurrItem),
    fCurrChld(src.fCurrChld),
-   fCurrStrict(src.fCurrStrict)
+   fCurrStrict(src.fCurrStrict),
+   fCgfId(src.fCgfId)
 {
 }
 
@@ -129,7 +131,7 @@ std::string dabc::ConfigIO::ResolveEnv(const char* value)
 
    if ((strstr(value,"${")==0) || (fCfg==0)) return std::string(value);
 
-   return fCfg->ResolveEnv(value);
+   return fCfg->ResolveEnv(value, fCgfId);
 }
 
 bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, RecordField* field, RecordFieldsMap* fieldsmap)

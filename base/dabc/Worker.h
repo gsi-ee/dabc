@@ -156,7 +156,7 @@ namespace dabc {
          WorkerAddonRef   fAddon;                      ///< extension of worker for some special events
          Reference        fPublisher;                  ///< reference on publisher, once found, remain until end of object live
 
-         uint32_t         fWorkerId;
+         uint32_t         fWorkerId;                   ///< worker id in thread list, used for events submit
          int              fWorkerPriority;             ///< priority of events, submitted by worker to the thread
 
          Mutex*           fThreadMutex;                ///< pointer on main thread mutex
@@ -167,9 +167,11 @@ namespace dabc {
 
          CommandsQueue    fWorkerCommands;             ///< all kinds of commands, processed by the worker
 
-         int              fWorkerCommandsLevel;        /** Number of process commands recursion */
+         int              fWorkerCommandsLevel;        ///< Number of process commands recursion
 
          Hierarchy        fWorkerHierarchy;            ///< place for publishing of worker parameters
+
+         int              fWorkerCfgId;                ///< special ID, can be used in XML configuration in ${}# formula
 
 
          /** \brief Inherited method from Object, invoked at the moment when worker requested to be destroyed by its thread */
@@ -186,6 +188,10 @@ namespace dabc {
           * If destruction or halt of the worker starts, no new events can be submitted (execpt command with magic priority)
           * In this phase IsWorkerActive() will already return false  */
          inline bool IsWorkerActive() const { return fWorkerActive; }
+
+         /** \brief Set identifier which can be used in XML configuration ${}# formula
+          * It means that correspondent to the ID element of array will be extracted */
+         void SetWorkerCfgId(int id = -1) { fWorkerCfgId = id; }
 
          /** \brief Special constructor, designed for inherited classes */
          Worker(const ConstructorPair& pair);

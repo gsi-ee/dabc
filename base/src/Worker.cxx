@@ -122,7 +122,9 @@ dabc::Worker::Worker(const ConstructorPair& pair) :
 
    fWorkerCommands(CommandsQueue::kindNone),
 
-   fWorkerCommandsLevel(0)
+   fWorkerCommandsLevel(0),
+   fWorkerHierarchy(),
+   fWorkerCfgId(-1)
 {
    SetFlag(flHasThread, false);
 
@@ -536,7 +538,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
    DOUT3("Check Cfg %s in xml file", name.c_str());
 
    // third - in xml file
-   ConfigIO io(dabc::mgr()->cfg());
+   ConfigIO io(dabc::mgr()->cfg(), fWorkerCfgId);
    if (io.ReadRecordField((Object*) this, name, &res, 0)) {
       DOUT2("Worker %s Cfg %s xml %s", ItemName().c_str(), name.c_str(), res.AsStr().c_str());
       return res;

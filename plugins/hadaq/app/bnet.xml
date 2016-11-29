@@ -5,6 +5,8 @@
   <Variables>
      <bnetsenders value="[localhost:12501,localhost:12502]"/>
      <bnetreceivers value="[localhost:12101,localhost:12102]"/>
+     <hadaqports1 value="[50000,50001,50002]"/>
+     <hadaqports2 value="[50003,50004]"/>
   </Variables>
 
   <Context host="localhost" name="FirstLvl1" port="12501">
@@ -29,13 +31,13 @@
     <Module name="FirstLevel" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
-       <NumInputs value="3"/>
+       <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
        
-       <InputPort name="Input0" url="nhadaq://host:50000"/>
-       <InputPort name="Input1" url="nhadaq://host:50001"/>
-       <InputPort name="Input2" url="nhadaq://host:50002"/>
+<!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
+<!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
+<!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
        <OutputPort name="Output*" optional="true"/>
        
        <AccountLostEventDiff value="true"/>
@@ -80,11 +82,11 @@
     <Module name="FirstLevel" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
-       <NumInputs value="2"/>
+       <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
-       <InputPort name="Input0" url="nhadaq://host:50003"/>
-       <InputPort name="Input1" url="nhadaq://host:50004"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#"  urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+<!--        <InputPort name="Input0" url="nhadaq://host:50003"/> -->
+<!--        <InputPort name="Input1" url="nhadaq://host:50004"/> -->
        
        <OutputPort name="Output*" optional="true"/>
        
