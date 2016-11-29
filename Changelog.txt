@@ -2,6 +2,13 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+29.11.2016
+1. Improve timeout handling of commands - let wait 0.5 s more than actual timeout.
+   This gives executing instance to correctly treat and issue timeout.
+2. Let configure multiple connections in single <Connection> XML element.
+   With the "list" attribute one could specify several nodes or any other string arguments.      
+
+
 28.11.2016
 1. Use getnameinfo() to identify hostname which was bound with server socket.
 2. For MBS servers reintroduce "mbss" and "mbst" protocols names for

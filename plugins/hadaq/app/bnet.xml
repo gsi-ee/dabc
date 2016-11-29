@@ -1,17 +1,125 @@
 <?xml version="1.0"?>
 
 <dabc version="2">
-  <Context host="localhost" name="EventBuilder">
+
+  <Variables>
+     <bnetsenders value="[localhost:12501,localhost:12502]"/>
+     <bnetreceivers value="[localhost:12101]"/>
+  </Variables>
+
+  <Context host="localhost" name="FirstLvl1" port="12501">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcHttp.so"/>  
-      <lib value="libDabcRfio.so"/>  
-      <logfile value="bnet.log"/>
+      <logfile value="first1.log"/>
       <loglevel value="1"/>
+      <debuglevel value="1"/>
       <loglimit value="100000"/>
       <control value="true"/>
       <threads_layout value="balanced"/>
+      <runtime value="5000"/>
+    </Run>
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="300"/>
+    </MemoryPool>
+    
+    <Device name="NetDev" class="dabc::SocketDevice"/>
+    
+    <Module name="FirstLevel" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETsend value="true"/>
+       <NumInputs value="3"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       
+       <InputPort name="Input0" url="nhadaq://host:50000"/>
+       <InputPort name="Input1" url="nhadaq://host:50001"/>
+       <InputPort name="Input2" url="nhadaq://host:50002"/>
+       <OutputPort name="Output*" optional="true"/>
+       
+       <AccountLostEventDiff value="true"/>
+       <ExtraDebug value="false"/>
+       <FlushTimeout value="0.5"/>   
+       <TriggerNumRange value="0x1000000"/>
+       
+       <!-- rate meters configuration, not seen with terminal module -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+       
+     </Module>
+     
+     <Connection device="NetDev" list="${bnetreceivers}" 
+                 output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input0"/>
+     
+<!--      <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input0"/> -->
+     
+  </Context>
+
+  <Context host="localhost" name="FirstLvl2" port="12502">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <logfile value="first2.log"/>
+      <loglevel value="1"/>
+      <debuglevel value="1"/>
+      <loglimit value="100000"/>
+      <control value="true"/>
+      <threads_layout value="balanced"/>
+      <runtime value="5000"/>
+    </Run>
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="300"/>
+    </MemoryPool>
+
+    <Device name="NetDev" class="dabc::SocketDevice"/>
+    
+    <Module name="FirstLevel" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETsend value="true"/>
+       <NumInputs value="2"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input0" url="nhadaq://host:50003"/>
+       <InputPort name="Input1" url="nhadaq://host:50004"/>
+       <OutputPort name="Output*" optional="true"/>
+       
+       <AccountLostEventDiff value="true"/>
+       <ExtraDebug value="false"/>
+       <FlushTimeout value="0.5"/>   
+       <TriggerNumRange value="0x1000000"/>
+       
+       <!-- rate meters configuration, not seen with terminal module -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+       
+    </Module>
+
+     <Connection device="NetDev" list="${bnetreceivers}" 
+                 output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input1"/>
+
+<!--     <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input1"/> -->
+    
+  </Context>
+
+  <Context host="localhost" name="EventBuilder1" port="12101">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <logfile value="builder1.log"/>
+      <loglevel value="1"/>
+      <debuglevel value="1"/>
+      <loglimit value="100000"/>
+      <control value="true"/>
+      <threads_layout value="balanced"/>
+      <runtime value="5"/>
     </Run>
     
     <HttpServer name="http" port="8090"/>
@@ -24,47 +132,16 @@
     
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
-       <NumBuffers value="1000"/>
+       <NumBuffers value="500"/>
     </MemoryPool>
-    
-    <Module name="Comb*">    
-       <ExtraDebug value="false"/>
-       <FlushTimeout value="0.5"/>   
-       <TriggerNumRange value="0x1000000"/>
-    </Module>
 
-    <Module name="Comb1" class="hadaq::CombinerModule">    
-        <!-- these parameters will force to create inputs/outputs of module -->
-       <BNETsend value="true"/>
-       <NumInputs value="3"/>
-       <NumOutputs value="1"/>
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
-       <InputPort name="Input0" url="nhadaq://host:50000"/>
-       <InputPort name="Input1" url="nhadaq://host:50001"/>
-       <InputPort name="Input2" url="nhadaq://host:50002"/>
-       <AccountLostEventDiff value="true"/>
-     </Module>
-
-    <Module name="Comb2" class="hadaq::CombinerModule">    
-        <!-- these parameters will force to create inputs/outputs of module -->
-       <BNETsend value="true"/>
-       <NumInputs value="2"/>
-       <NumOutputs value="1"/>
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
-       <InputPort name="Input0" url="nhadaq://host:50003"/>
-       <InputPort name="Input1" url="nhadaq://host:50004"/>
-       <AccountLostEventDiff value="true"/>
-     </Module>
-    
+    <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <NumInputs value="2"/>
        <NumOutputs value="1"/>
-
-       <InputPort name="Input0" url="Comb1/Output0"/>
-       <InputPort name="Input1" url="Comb2/Output0"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6789?iter=hadaq_iter&subid=0x1f"/>
@@ -75,10 +152,26 @@
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
+       
+       <ExtraDebug value="false"/>
+       <FlushTimeout value="0.5"/>   
+       <TriggerNumRange value="0x1000000"/>
+       
+       <!-- rate meters configuration, not seen with terminal module -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+       
      </Module>
      
+     <Connection device="NetDev" list="${bnetsenders}" 
+                 output="dabc://%name%/FirstLevel/Output0" input="Combiner/Input%id%"/>
+     
+<!--      <Connection device="NetDev" output="dabc://localhost:12502/FirstLevel/Output0" input="Combiner/Input1"  pool="Pool"/> -->
+     
      <!-- Terminal output like old event builder -->
-     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" servport="0" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
 
   </Context>
 

@@ -280,8 +280,9 @@ bool dabc::Application::Find(ConfigIO &cfg)
 bool dabc::Application::DefaultInitFunc()
 {
    XMLNodePointer_t node = 0;
+   dabc::Configuration* cfg = dabc::mgr()->cfg();
 
-   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlDeviceNode, true)) {
+   while (cfg->NextCreationNode(node, xmlDeviceNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       if ((name==0) || (clname==0)) continue;
@@ -294,7 +295,7 @@ bool dabc::Application::DefaultInitFunc()
       }
    }
 
-   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlThreadNode, true)) {
+   while (cfg->NextCreationNode(node, xmlThreadNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
@@ -305,7 +306,7 @@ bool dabc::Application::DefaultInitFunc()
       dabc::mgr.CreateThread(name, clname, devname);
    }
 
-   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
+   while (cfg->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       fAppPools.push_back(name);
       DOUT2("Create memory pool %s", name);
@@ -315,7 +316,7 @@ bool dabc::Application::DefaultInitFunc()
       }
    }
 
-   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlModuleNode, true)) {
+   while (cfg->NextCreationNode(node, xmlModuleNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
@@ -365,7 +366,7 @@ bool dabc::Application::DefaultInitFunc()
 
    int nconn = 0;
 
-   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlConnectionNode, false)) {
+   while (cfg->NextCreationNode(node, xmlConnectionNode, false)) {
 
       const char* outputname = Xml::GetAttr(node, "output");
       const char* inputname = Xml::GetAttr(node, "input");
@@ -393,11 +394,11 @@ bool dabc::Application::DefaultInitFunc()
             }
       } else
       if (lst && *lst) {
-         dabc::RecordField fld(lst);
+         dabc::RecordField fld(cfg->ResolveEnv(lst));
          std::vector<std::string> arr = fld.AsStrVect();
          for (unsigned n = 0; n < arr.size(); ++n) {
-            std::string out = dabc::replace_all(outputname, "%name%", arr[n]),
-                        inp = dabc::replace_all(inputname, "%name%", arr[n]),
+            std::string out = dabc::replace_all(cfg->ResolveEnv(outputname), "%name%", arr[n]),
+                        inp = dabc::replace_all(cfg->ResolveEnv(inputname), "%name%", arr[n]),
                         id = dabc::format("%u", n);
             out = dabc::replace_all(out, "%id%", id);
             inp = dabc::replace_all(inp, "%id%", id);
