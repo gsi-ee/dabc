@@ -77,6 +77,14 @@ namespace dabc {
     *\returns true if succeed */
    extern bool str_to_bool(const char* val, bool* res);
 
+   /** \brief Replace all matches in the string
+    * \param[in] str     initial string
+    * \param[in] match   find content
+    * \param[in] replace replace content
+    *\returns result string */
+   extern std::string replace_all(const std::string& str, const std::string& match, const std::string& replace);
+
+
 };
 
 #endif

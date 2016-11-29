@@ -233,4 +233,19 @@ bool dabc::str_to_bool(const char* val, bool* res)
    return false;
 }
 
+std::string dabc::replace_all(const std::string& str, const std::string& match, const std::string& replace)
+{
+   if (match.empty()) return str;
+
+   std::string res = str;
+   size_t last = 0, pos = 0;
+
+   while ((pos = res.find(match, last)) != std::string::npos) {
+      res.erase(pos, match.length());
+      res.insert(pos, replace);
+      last = pos + replace.length();
+   }
+
+   return res;
+}
 
