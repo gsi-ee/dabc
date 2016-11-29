@@ -142,8 +142,7 @@ namespace hadaq {
 
       public:
 
-         HadTu() {}
-         ~HadTu() {}
+         HadTu() : tuSize(0), tuDecoding(0) {}
 
          /** msb of decode word is always non zero...? */
          inline bool IsSwapped() const  { return  tuDecoding > 0xffffff; }
@@ -190,8 +189,7 @@ namespace hadaq {
 
       public:
 
-         HadTuId() {}
-         ~HadTuId() {}
+         HadTuId() : HadTu(), tuId(0)  {}
 
          inline uint32_t GetId() const { return Value(&tuId); }
          void SetId(uint32_t id) { SetValue(&tuId, id); }
@@ -255,8 +253,7 @@ namespace hadaq {
 
          public:
 
-            RawSubevent() {}
-            ~RawSubevent() {}
+            RawSubevent() : HadTuId(), subEvtTrigNr(0) {}
 
             unsigned Alignment() const { return 1 << ( GetDecoding() >> 16 & 0xff); }
 
@@ -439,8 +436,7 @@ is unique throughout all events ever acquired by the system.
 
       public:
 
-         RawEvent() {}
-         ~RawEvent() {}
+         RawEvent() : HadTuId(), evtSeqNr(0), evtDate(0), evtTime(0), evtRunNr(0), evtPad(0) {}
 
          uint32_t GetSeqNr() const { return Value(&evtSeqNr); }
          void SetSeqNr(uint32_t n) { SetValue(&evtSeqNr, n); }
