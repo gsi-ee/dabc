@@ -157,7 +157,6 @@ namespace hadaq {
          friend class TerminalModule;  // use only to access statistic, nothing else
          friend class NewTransport;
 
-         int                fNPort;           ///< upd port number
          dabc::Pointer      fTgtPtr;          ///< pointer used to read data
          bool               fWaitMoreData;    ///< indicate that transport waits for more data
          unsigned           fMTU;             ///< maximal size of packet expected from TRB

@@ -299,7 +299,8 @@ void dabc::HStore::CloseChilds()
 dabc::RecordField::RecordField() :
    fKind(kind_none),
    fModified(false),
-   fTouched(false)
+   fTouched(false),
+   fProtected(false)
 {
 }
 

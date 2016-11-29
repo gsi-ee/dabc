@@ -111,6 +111,7 @@ void mbs::ServerOutputAddon::OnSendCompleted()
          iter->Close();
          // we continue to next case - buffer is completed
       }
+      /* no break */
 
       case oSendingBuffer:
          if (fKind == mbs::StreamServer)

@@ -99,7 +99,8 @@ dabc::Worker::Worker(Reference parent, const std::string& name) :
    fWorkerCommands(CommandsQueue::kindNone),
 
    fWorkerCommandsLevel(0),
-   fWorkerHierarchy()
+   fWorkerHierarchy(),
+   fWorkerCfgId(-1)
 {
    SetFlag(flHasThread, false);
 
