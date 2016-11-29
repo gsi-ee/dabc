@@ -183,7 +183,7 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
       // in any case optional commands will be continued
 
       if (isonlyoptional) {
-         DOUT2("ALL NON-OPTIONAL CONNECTIONS FINSIHED OK, OPTIONAL WILL BE CONTINUED");
+         DOUT0("ALL NON-OPTIONAL CONNECTIONS FINSIHED OK, OPTIONAL WILL BE CONTINUED");
          fConnCmd.ReplyTrue();
       } else {
          EOUT("CONNECTION COMMAND is TIMEDOUT");
@@ -310,7 +310,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
       }
    }
 
-   double cmd_tmout = fConnCmd.TimeTillTimeout();
+   double cmd_tmout = fConnCmd.TimeTillTimeout(-0.5); // process timeout 0.5 sec before actual timeout happened
 
    if ((cmd_tmout>0) && (cmd_tmout<mindelay)) mindelay = cmd_tmout;
 
@@ -383,7 +383,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
    if (cmd.IsName("ActivateConnections")) {
       fConnCmd.ReplyFalse();
 
-      DOUT3("Start processing of connections  number %u", fRecs.GetSize());
+      DOUT2("Start processing of connections  number %u", fRecs.GetSize());
 
       fDoingConnection = 1;
       fConnCmd = cmd;
@@ -394,7 +394,6 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
    } else
    if (cmd.IsName("ShutdownConnection")) {
-
       fConnCmd.ReplyFalse();
 
       fDoingConnection = -1;

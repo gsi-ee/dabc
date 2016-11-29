@@ -132,17 +132,18 @@ bool dabc::Command::IsTimeoutSet() const
    return !cont->fTimeout.null();
 }
 
-double dabc::Command::TimeTillTimeout() const
+double dabc::Command::TimeTillTimeout(double extra) const
 {
    CommandContainer* cont = (CommandContainer*) GetObject();
-   if (cont==0) return -1;
+   if (cont==0) return -1.;
 
    LockGuard lock(ObjectMutex());
-   if (cont->fTimeout.null()) return -1;
+   if (cont->fTimeout.null()) return -1.;
 
-   TimeStamp now = TimeStamp::Now();
+   double now = TimeStamp::Now().AsDouble();
+   double ref = cont->fTimeout.AsDouble() + extra;
 
-   return cont->fTimeout < now ? 0. : cont->fTimeout - now;
+   return (now > ref) ? 0. : (ref - now);
 }
 
 int dabc::Command::GetPriority() const

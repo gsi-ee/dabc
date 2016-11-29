@@ -183,8 +183,9 @@ namespace dabc {
 
          /** \brief Returns time which remains until command should be timed out.
           * If returns positive value, timeout was specified and not yet expired (value is time in seconds till timeout)
-          * If returns 0 timeout is happened. If returns negative value, timeout was not specified for the command. */
-         double TimeTillTimeout() const;
+          * If returns 0 timeout is happened. If returns negative value, timeout was not specified for the command.
+          * Parameter extra allows to increase/decrease timeout time */
+         double TimeTillTimeout(double extra = 0.) const;
 
          /** \brief Returns true if command timeout is expired */
          bool IsTimedout() const { return TimeTillTimeout() == 0.; }

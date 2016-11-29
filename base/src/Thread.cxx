@@ -528,7 +528,6 @@ int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cm
 
    { // this is begin of parenthesis for RecursionGuard
 
-
       // we indicate that processor involved in
       Thread::RecursionGuard iguard(this, caller->fWorkerId);
 
@@ -552,8 +551,8 @@ int dabc::Thread::RunCommandInTheThread(Worker* caller, Worker* dest, Command cm
 
          do {
 
-            // account timeout
-            double tmout = cmd.TimeTillTimeout();
+            // account timeout, whait 0.5 second longer as specified timeout
+            double tmout = cmd.TimeTillTimeout(0.5);
 
             if (tmout==0.) {
                res = cmd_timedout;
