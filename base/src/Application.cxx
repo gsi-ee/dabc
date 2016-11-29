@@ -374,12 +374,9 @@ bool dabc::Application::DefaultInitFunc()
       if ((outputname==0) || (inputname==0)) continue;
 
       const char* kind = Xml::GetAttr(node, "kind");
+      const char* lst = Xml::GetAttr(node, "list");
 
-      if ((kind==0) || (strcmp(kind,"all-to-all")!=0)) {
-         dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
-         req.SetConfigFromXml(node);
-         if (!req.null()) nconn++;
-      } else {
+      if (kind && (strcmp(kind,"all-to-all")==0)) {
          nconn++;
          int numnodes = dabc::mgr.NumNodes();
 
@@ -394,6 +391,25 @@ bool dabc::Application::DefaultInitFunc()
                dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
                req.SetConfigFromXml(node);
             }
+      } else
+      if (lst && *lst) {
+         dabc::RecordField fld(lst);
+         std::vector<std::string> arr = fld.AsStrVect();
+         for (unsigned n = 0; n < arr.size(); ++n) {
+            std::string out = dabc::replace_all(outputname, "%name%", arr[n]),
+                        inp = dabc::replace_all(inputname, "%name%", arr[n]),
+                        id = dabc::format("%u", n);
+            out = dabc::replace_all(out, "%id%", id);
+            inp = dabc::replace_all(inp, "%id%", id);
+
+            dabc::ConnectionRequest req = dabc::mgr.Connect(out, inp);
+            req.SetConfigFromXml(node);
+            if (!req.null()) nconn++;
+         }
+      } else {
+         dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
+         req.SetConfigFromXml(node);
+         if (!req.null()) nconn++;
       }
    }
 
