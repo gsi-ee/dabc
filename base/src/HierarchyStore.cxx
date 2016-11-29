@@ -245,7 +245,7 @@ bool dabc::HierarchyReading::ScanFiles(const std::string& dirname, const DateTim
       fname.erase(0, dirname.length());
 
       size_t pos = fname.find(".dabc");
-      if (pos == fname.npos) {
+      if (pos == std::string::npos) {
          EOUT("Wrong time file name %s", fname.c_str());
          continue;
       }

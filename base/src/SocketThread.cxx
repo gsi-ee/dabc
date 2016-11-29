@@ -1361,7 +1361,7 @@ dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string
    std::string host, service;
 
    size_t pos = serverid.find(':');
-   if (pos != serverid.npos) {
+   if (pos != std::string::npos) {
       host = serverid.substr(0, pos);
       service = serverid.substr(pos+1, serverid.length()-pos);
    } else

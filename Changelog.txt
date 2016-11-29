@@ -7,6 +7,9 @@ about current functionality of the framework.
    This gives executing instance to correctly treat and issue timeout.
 2. Let configure multiple connections in single <Connection> XML element.
    With the "list" attribute one could specify several nodes or any other string arguments.      
+3. Let use #${varname} in config file. Replaced with counts of entries in the variable.
+   Can be 0 (for empty variable), 1 for non-array and N for array of any elements.
+   Main function - create required number of ports for provided list of services
 
 
 28.11.2016

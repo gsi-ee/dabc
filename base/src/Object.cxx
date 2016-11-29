@@ -1019,9 +1019,9 @@ bool dabc::Object::NameMatch(const std::string& name, const std::string& mask)
    }
 
 
-   if (mask.find_first_of("*?")==mask.npos) return name == mask;
+   if (mask.find_first_of("*?") == std::string::npos) return name == mask;
 
-   if (mask=="*") return true;
+   if (mask == "*") return true;
 
    return fnmatch(mask.c_str(), name.c_str(), FNM_NOESCAPE)==0;
 }

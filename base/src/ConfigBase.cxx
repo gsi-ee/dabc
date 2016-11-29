@@ -444,11 +444,11 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
 
    size_t pos1, pos2;
 
-   while ((pos1 = name.find("${")) != name.npos) {
+   while ((pos1 = name.find("${")) != std::string::npos) {
 
-      pos2 = name.find("}");
+      pos2 = name.find("}", pos1);
 
-      if ((pos1>pos2) || (pos2==name.npos)) {
+      if (pos2==std::string::npos) {
          EOUT("Wrong variable parenthesis %s", arg.c_str());
          return arg;
       }
@@ -475,9 +475,22 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
          }
          if (value.empty()) value = GetEnv(var.c_str());
 
+         // allow #${} to get number of entries from variable (if not array - 1)
+         if ((pos1>0) && (name[pos1-1] == '#')) {
+            if (value.empty()) value = "0"; else
+            if ((value[0]!='[') || (value[value.length()-1]!=']')) value = "1"; else {
+               int cnt = 1;
+               for (unsigned i=1;i<value.length()-1;++i)
+                  if (value[i]==',') cnt++;
+               value = dabc::format("%d", cnt);
+            }
+            name.erase(--pos1, 1);
+         }
+
          if (!value.empty()) name.insert(pos1, value);
       }
    }
+
    return name;
 }
 

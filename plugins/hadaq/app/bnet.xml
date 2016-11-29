@@ -3,9 +3,7 @@
 <dabc version="2">
 
   <Variables>
-     <bnetnumsend value="2"/>
      <bnetsenders value="[localhost:12501,localhost:12502]"/>
-     <bnetnumrecv value="2"/>
      <bnetreceivers value="[localhost:12101,localhost:12102]"/>
   </Variables>
 
@@ -17,7 +15,6 @@
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
       <runtime value="5000"/>
     </Run>
@@ -33,7 +30,7 @@
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
        <NumInputs value="3"/>
-       <NumOutputs value="${bnetnumrecv}"/>
+       <NumOutputs value="#${bnetreceivers}"/>
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
        
        <InputPort name="Input0" url="nhadaq://host:50000"/>
@@ -69,7 +66,6 @@
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
       <runtime value="5000"/>
     </Run>
@@ -85,7 +81,7 @@
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
        <NumInputs value="2"/>
-       <NumOutputs value="${bnetnumrecv}"/>
+       <NumOutputs value="#${bnetreceivers}"/>
        <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
        <InputPort name="Input0" url="nhadaq://host:50003"/>
        <InputPort name="Input1" url="nhadaq://host:50004"/>
@@ -120,7 +116,6 @@
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
       <runtime value="20"/>
     </Run>
@@ -143,7 +138,7 @@
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
-       <NumInputs value="${bnetnumsend}"/>
+       <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="1"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
@@ -186,7 +181,6 @@
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
       <runtime value="20"/>
     </Run>
@@ -209,7 +203,7 @@
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
-       <NumInputs value="${bnetnumsend}"/>
+       <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="1"/>
 
        <!--  this is stream server for online monitoring, normally always on -->

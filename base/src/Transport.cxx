@@ -32,7 +32,7 @@ std::string dabc::Transport::MakeName(const PortRef& inpport, const PortRef& out
    name += "_Transport";
 
    size_t pos;
-   while ((pos=name.find("/")) != name.npos)
+   while ((pos=name.find("/")) != std::string::npos)
       name[pos] = '_';
 
    return std::string("#") + name;
