@@ -116,12 +116,12 @@ void dabc::SocketCommandClient::CloseClient(bool iserr, const char* msg)
       if (iserr)
          EOUT("%s closing connection due to error %s", ItemName().c_str(), msg);
       else
-         DOUT1("%s closing connection due to %s", ItemName().c_str(), msg);
+         DOUT2("%s closing connection due to %s", ItemName().c_str(), msg);
    }
 
    if (!fRemoteHostName.empty() && (fReconnectPeriod>0)) {
       AssignAddon(0); // we destroy current addon
-      DOUT1("Try to reconnect worker %s to remote node %s", ItemName().c_str(), fRemoteHostName.c_str());
+      DOUT2("Try to reconnect worker %s to remote node %s", ItemName().c_str(), fRemoteHostName.c_str());
       fState = stConnecting;
       ActivateTimeout(fReconnectPeriod);
    } else {
