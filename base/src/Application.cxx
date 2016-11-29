@@ -63,23 +63,46 @@ void dabc::Application::ObjectCleanup()
    dabc::Worker::ObjectCleanup();
 }
 
+
+bool dabc::Application::ReplyCommand(Command cmd)
+{
+   Command statecmd = cmd.GetRef("StateCmd");
+   if (statecmd.null()) return dabc::Worker::ReplyCommand(cmd);
+
+   // this is finish of modules connection - we should complete state transition
+   std::string tgtstate = cmd.GetStr("StateCmdTarget");
+   int res = cmd.GetResult();
+
+   if (tgtstate == stRunning() && (res == cmd_true)) {
+      if (!StartModules()) res = cmd_false;
+      // use timeout to control if application should be shutdown
+      if ((res==cmd_true) && fSelfControl) ActivateTimeout(0.2);
+   }
+
+   if (res==cmd_true) SetAppState(tgtstate);
+   if (res==cmd_false) SetAppState(stFailure());
+
+   statecmd.Reply(res);
+   return true;
+}
+
+
 int dabc::Application::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(CmdStateTransition::CmdName()))
-      return cmd_bool(DoTransition(cmd.GetStr("State")));
+      return DoTransition(cmd.GetStr("State"), cmd);
 
    if (cmd.IsName(stcmdDoConfigure()))
-      return cmd_bool(DoTransition(stReady()));
+      return DoTransition(stReady(), cmd);
 
    if (cmd.IsName(stcmdDoStart()))
-      return cmd_bool(DoTransition(stRunning()));
+      return DoTransition(stRunning(), cmd);
 
    if (cmd.IsName(stcmdDoStop()))
-      return cmd_bool(DoTransition(stReady()));
+      return DoTransition(stReady(), cmd);
 
    if (cmd.IsName(stcmdDoHalt()))
-      return cmd_bool(DoTransition(stHalted()));
-
+      return DoTransition(stHalted(), cmd);
 
    if (cmd.IsName("AddAppObject")) {
       if (cmd.GetStr("kind") == "device")
@@ -127,20 +150,20 @@ void dabc::Application::SetAppState(const std::string& name)
    }
 }
 
-bool dabc::Application::DoTransition(const std::string& tgtstate)
+int dabc::Application::DoTransition(const std::string& tgtstate, Command cmd)
 {
    std::string currstate = GetState();
 
-   DOUT3("DoTransition curr %s tgt %s", currstate.c_str(), tgtstate.c_str());
+   DOUT3("Doing transition curr %s tgt %s", currstate.c_str(), tgtstate.c_str());
 
-   if (currstate == tgtstate) return true;
+   if (currstate == tgtstate) return cmd_true;
 
    // it is not allowed to change transition state - it is internal
-   if (currstate == stTransition()) return false;
+   if (currstate == stTransition()) return cmd_false;
 
    SetAppState(stTransition());
 
-   bool res = true;
+   int res = cmd_true;
 
    // in case of failure state always bring application into halted state first
    if (currstate == stFailure()) {
@@ -149,33 +172,34 @@ bool dabc::Application::DoTransition(const std::string& tgtstate)
    }
 
    if (tgtstate == stHalted()) {
-      if (currstate == stRunning()) res = StopModules();
-      if (!CleanupApplication()) res = false;
+      if (currstate == stRunning()) res = cmd_bool(StopModules());
+      if (!CleanupApplication()) res = cmd_false;
    } else
    if (tgtstate == stReady()) {
-      if (currstate == stHalted()) res = CreateAppModules(); else
-      if (currstate == stRunning()) res = StopModules();
+      if (currstate == stHalted()) res = CallInitFunc(cmd, tgtstate); else
+      if (currstate == stRunning()) res = cmd_bool(StopModules());
    } else
    if (tgtstate == stRunning()) {
       if (currstate == stHalted()) {
-         if (CreateAppModules()) currstate = stReady(); else res = false;
+         res = CallInitFunc(cmd, tgtstate);
+         if (res == cmd_true) currstate = stReady();
       }
       if (currstate == stReady())
-         if (!StartModules()) res = false;
+         if (!StartModules()) res = cmd_false;
 
       // use timeout to control if application should be shutdown
-      if (res && fSelfControl) ActivateTimeout(0.2);
+      if ((res==cmd_true) && fSelfControl) ActivateTimeout(0.2);
 
    } else
    if (tgtstate == stFailure()) {
       StopModules();
    } else {
       EOUT("Unsupported state name %s", tgtstate.c_str());
-      res = false;
+      res = cmd_false;
    }
 
-   if (res) SetAppState(tgtstate);
-       else SetAppState(stFailure());
+   if (res==cmd_true) SetAppState(tgtstate);
+   if (res==cmd_false) SetAppState(stFailure());
 
    return res;
 }
@@ -207,18 +231,167 @@ bool dabc::Application::IsModulesRunning()
 }
 
 
-bool dabc::Application::CreateAppModules()
+int dabc::Application::CallInitFunc(Command statecmd, const std::string& tgtstate)
 {
-   // if no init func was specified, default will be called
-   if (fInitFunc==0) {
-      bool res = DefaultInitFunc();
-      if (!res) dabc::mgr.StopApplication();
-      return res;
+   if (fInitFunc) {
+      fInitFunc();
+      return cmd_true;
    }
 
-   fInitFunc();
-   return true;
+   // TODO: check that function is redefined
+   if (CreateAppModules()) return cmd_true;
+
+   XMLNodePointer_t node = 0;
+   dabc::Configuration* cfg = dabc::mgr()->cfg();
+
+   while (cfg->NextCreationNode(node, xmlDeviceNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      if ((name==0) || (clname==0)) continue;
+
+      fAppDevices.push_back(name);
+
+      if (!dabc::mgr.CreateDevice(clname, name)) {
+         EOUT("Fail to create device %s class %s", name, clname);
+         return cmd_false;
+      }
+   }
+
+   while (cfg->NextCreationNode(node, xmlThreadNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+      if (name==0) continue;
+      if (clname==0) clname = dabc::typeThread;
+      if (devname==0) devname = "";
+      DOUT2("Create thread %s", name);
+      dabc::mgr.CreateThread(name, clname, devname);
+   }
+
+   while (cfg->NextCreationNode(node, xmlMemoryPoolNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      fAppPools.push_back(name);
+      DOUT2("Create memory pool %s", name);
+      if (!dabc::mgr.CreateMemoryPool(name)) {
+         EOUT("Fail to create memory pool %s", name);
+         return cmd_false;
+      }
+   }
+
+   while (cfg->NextCreationNode(node, xmlModuleNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+      if (clname==0) continue;
+      if (thrdname==0) thrdname="";
+
+      // check that module with such name exists
+      dabc::ModuleRef m = dabc::mgr.FindModule(name);
+      if (!m.null()) continue;
+
+      // FIXME: for old xml files, remove after 12.2014
+      if (strcmp(clname, "dabc::Publisher")==0) continue;
+
+      fAppModules.push_back(name);
+
+      DOUT2("Create module %s class %s", name, clname);
+
+      m = dabc::mgr.CreateModule(clname, name, thrdname);
+
+      if (m.null()) {
+         EOUT("Fail to create module %s class %s", name, clname);
+         return cmd_false;
+      }
+
+      for (unsigned n = 0; n < m.NumInputs(); n++) {
+
+         PortRef port = m.FindPort(m.InputName(n, false));
+         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
+
+         if (!dabc::mgr.CreateTransport(m.InputName(n))) {
+            EOUT("Cannot create input transport for port %s", m.InputName(n).c_str());
+            return cmd_false;
+         }
+      }
+
+      for (unsigned n = 0; n < m.NumOutputs(); n++) {
+
+         PortRef port = m.FindPort(m.OutputName(n, false));
+         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
+
+         if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
+            EOUT("Cannot create output transport for port %s", m.OutputName(n).c_str());
+            return cmd_false;
+         }
+      }
+   }
+
+   int nconn = 0;
+
+   while (cfg->NextCreationNode(node, xmlConnectionNode, false)) {
+
+      const char* outputname = Xml::GetAttr(node, "output");
+      const char* inputname = Xml::GetAttr(node, "input");
+
+      // output and input should always be specified
+      if ((outputname==0) || (inputname==0)) continue;
+
+      const char* kind = Xml::GetAttr(node, "kind");
+      const char* lst = Xml::GetAttr(node, "list");
+
+      if (kind && (strcmp(kind,"all-to-all")==0)) {
+         nconn++;
+         int numnodes = dabc::mgr.NumNodes();
+
+         DOUT2("Create all-to-all connections for %d nodes", numnodes);
+
+         for (int nsender=0; nsender<numnodes; nsender++)
+            for (int nreceiver=0;nreceiver<numnodes;nreceiver++) {
+               std::string port1 = dabc::Url::ComposePortName(nsender, dabc::format("%s/Output", outputname), nreceiver);
+
+               std::string port2 = dabc::Url::ComposePortName(nreceiver, dabc::format("%s/Input", inputname), nsender);
+
+               dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
+               req.SetConfigFromXml(node);
+            }
+      } else
+      if (lst && *lst) {
+         dabc::RecordField fld(cfg->ResolveEnv(lst));
+         std::vector<std::string> arr = fld.AsStrVect();
+         for (unsigned n = 0; n < arr.size(); ++n) {
+            std::string out = dabc::replace_all(cfg->ResolveEnv(outputname), "%name%", arr[n]),
+                        inp = dabc::replace_all(cfg->ResolveEnv(inputname), "%name%", arr[n]),
+                        id = dabc::format("%u", n);
+            out = dabc::replace_all(out, "%id%", id);
+            inp = dabc::replace_all(inp, "%id%", id);
+
+            dabc::ConnectionRequest req = dabc::mgr.Connect(out, inp);
+            req.SetConfigFromXml(node);
+            if (!req.null()) nconn++;
+         }
+      } else {
+         dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
+         req.SetConfigFromXml(node);
+         if (!req.null()) nconn++;
+      }
+   }
+
+   if (nconn==0) return cmd_true;
+
+   dabc::Command cmd("ActivateConnections");
+   cmd.SetTimeout(5);
+   cmd.SetReceiver(dabc::Manager::ConnMgrName());
+
+   cmd.SetRef("StateCmd", statecmd);
+   cmd.SetStr("StateCmdTarget", tgtstate);
+
+   dabc::mgr.Submit(Assign(cmd));
+
+   return cmd_postponed;
+
+//   return cmd_bool(dabc::mgr.ActivateConnections(5));
 }
+
 
 bool dabc::Application::StartModules()
 {
@@ -276,149 +449,6 @@ bool dabc::Application::Find(ConfigIO &cfg)
 
    return false;
 }
-
-bool dabc::Application::DefaultInitFunc()
-{
-   XMLNodePointer_t node = 0;
-   dabc::Configuration* cfg = dabc::mgr()->cfg();
-
-   while (cfg->NextCreationNode(node, xmlDeviceNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      if ((name==0) || (clname==0)) continue;
-
-      fAppDevices.push_back(name);
-
-      if (!dabc::mgr.CreateDevice(clname, name)) {
-         EOUT("Fail to create device %s class %s", name, clname);
-         return false;
-      }
-   }
-
-   while (cfg->NextCreationNode(node, xmlThreadNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
-      if (name==0) continue;
-      if (clname==0) clname = dabc::typeThread;
-      if (devname==0) devname = "";
-      DOUT2("Create thread %s", name);
-      dabc::mgr.CreateThread(name, clname, devname);
-   }
-
-   while (cfg->NextCreationNode(node, xmlMemoryPoolNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      fAppPools.push_back(name);
-      DOUT2("Create memory pool %s", name);
-      if (!dabc::mgr.CreateMemoryPool(name)) {
-         EOUT("Fail to create memory pool %s", name);
-         return false;
-      }
-   }
-
-   while (cfg->NextCreationNode(node, xmlModuleNode, true)) {
-      const char* name = Xml::GetAttr(node, xmlNameAttr);
-      const char* clname = Xml::GetAttr(node, xmlClassAttr);
-      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
-      if (clname==0) continue;
-      if (thrdname==0) thrdname="";
-
-      // check that module with such name exists
-      dabc::ModuleRef m = dabc::mgr.FindModule(name);
-      if (!m.null()) continue;
-
-      // FIXME: for old xml files, remove after 12.2014
-      if (strcmp(clname, "dabc::Publisher")==0) continue;
-
-      fAppModules.push_back(name);
-
-      DOUT2("Create module %s class %s", name, clname);
-
-      m = dabc::mgr.CreateModule(clname, name, thrdname);
-
-      if (m.null()) {
-         EOUT("Fail to create module %s class %s", name, clname);
-         return false;
-      }
-
-      for (unsigned n = 0; n < m.NumInputs(); n++) {
-
-         PortRef port = m.FindPort(m.InputName(n, false));
-         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
-
-         if (!dabc::mgr.CreateTransport(m.InputName(n))) {
-            EOUT("Cannot create input transport for port %s", m.InputName(n).c_str());
-            return false;
-         }
-      }
-
-      for (unsigned n = 0; n < m.NumOutputs(); n++) {
-
-         PortRef port = m.FindPort(m.OutputName(n, false));
-         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
-
-         if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
-            EOUT("Cannot create output transport for port %s", m.OutputName(n).c_str());
-            return false;
-         }
-      }
-   }
-
-   int nconn = 0;
-
-   while (cfg->NextCreationNode(node, xmlConnectionNode, false)) {
-
-      const char* outputname = Xml::GetAttr(node, "output");
-      const char* inputname = Xml::GetAttr(node, "input");
-
-      // output and input should always be specified
-      if ((outputname==0) || (inputname==0)) continue;
-
-      const char* kind = Xml::GetAttr(node, "kind");
-      const char* lst = Xml::GetAttr(node, "list");
-
-      if (kind && (strcmp(kind,"all-to-all")==0)) {
-         nconn++;
-         int numnodes = dabc::mgr.NumNodes();
-
-         DOUT2("Create all-to-all connections for %d nodes", numnodes);
-
-         for (int nsender=0; nsender<numnodes; nsender++)
-            for (int nreceiver=0;nreceiver<numnodes;nreceiver++) {
-               std::string port1 = dabc::Url::ComposePortName(nsender, dabc::format("%s/Output", outputname), nreceiver);
-
-               std::string port2 = dabc::Url::ComposePortName(nreceiver, dabc::format("%s/Input", inputname), nsender);
-
-               dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
-               req.SetConfigFromXml(node);
-            }
-      } else
-      if (lst && *lst) {
-         dabc::RecordField fld(cfg->ResolveEnv(lst));
-         std::vector<std::string> arr = fld.AsStrVect();
-         for (unsigned n = 0; n < arr.size(); ++n) {
-            std::string out = dabc::replace_all(cfg->ResolveEnv(outputname), "%name%", arr[n]),
-                        inp = dabc::replace_all(cfg->ResolveEnv(inputname), "%name%", arr[n]),
-                        id = dabc::format("%u", n);
-            out = dabc::replace_all(out, "%id%", id);
-            inp = dabc::replace_all(inp, "%id%", id);
-
-            dabc::ConnectionRequest req = dabc::mgr.Connect(out, inp);
-            req.SetConfigFromXml(node);
-            if (!req.null()) nconn++;
-         }
-      } else {
-         dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
-         req.SetConfigFromXml(node);
-         if (!req.null()) nconn++;
-      }
-   }
-
-   if (nconn==0) return true;
-
-   return dabc::mgr.ActivateConnections(5);
-}
-
 
 void dabc::Application::BuildFieldsMap(RecordFieldsMap* cont)
 {

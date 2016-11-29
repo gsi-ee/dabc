@@ -2187,17 +2187,17 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, 
 }
 
 
-bool dabc::ManagerRef::ActivateConnections(double tmout)
+bool dabc::ManagerRef::ActivateConnections(double tmout, bool sync)
 {
    // ensure that all commands are executed, for instance creation of connection manager is done
-   SyncWorker();
+   if (sync) SyncWorker();
 
    ModuleRef conn = FindModule(Manager::ConnMgrName());
    if (conn.null()) return true;
 
    dabc::Command cmd("ActivateConnections");
    cmd.SetTimeout(tmout);
-   return conn.Execute(cmd);
+   return sync ? conn.Execute(cmd) : conn.Submit(cmd);
 }
 
 bool dabc::ManagerRef::CreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname)

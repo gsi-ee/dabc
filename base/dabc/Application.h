@@ -102,6 +102,10 @@ namespace dabc {
          static const char* stcmdDoStop()  { return "DoStop"; }
          static const char* stcmdDoHalt()  { return "DoHalt"; }
 
+      private:
+
+         int CallInitFunc(Command statecmd, const std::string& tgtstate);
+
       protected:
 
          std::string        fAppClass;
@@ -117,6 +121,7 @@ namespace dabc {
          std::vector<std::string> fAppModules;   ///< list of modules, created by application
 
          virtual int ExecuteCommand(Command cmd);
+         virtual bool ReplyCommand(Command cmd);
 
          /** \brief Method called at thread assignment - application may switch into running state */
          virtual void OnThreadAssigned();
@@ -130,15 +135,11 @@ namespace dabc {
          /** Set external function, which creates all necessary components of the application */
          void SetInitFunc(ExternalFunction* initfunc);
 
-         /** Default method to automatically create all components like pools, modules, connections, ...
-          * Returns true if specified components were created successfully */
-         bool DefaultInitFunc();
-
          /** Return true if all application-relevant modules are running */
          virtual bool IsModulesRunning();
 
          /** Create application modules */
-         virtual bool CreateAppModules();
+         virtual bool CreateAppModules() { return false; }
 
          /** Start all application modules */
          virtual bool StartModules();
@@ -150,7 +151,7 @@ namespace dabc {
          virtual bool CleanupApplication();
 
          /** Do action, required to make transition into specified state */
-         virtual bool DoTransition(const std::string& state);
+         virtual int DoTransition(const std::string& state, Command cmd);
 
          /** Default state machine command timeout */
          virtual int SMCommandTimeout() const { return 10; }

@@ -120,7 +120,7 @@ namespace dabc {
 
       public:
          /** \brief Default constructor, creates empty reference on the command */
-//         Command() {}
+         // Command() {}
 
          Command(const std::string& name) throw();
 
@@ -273,7 +273,6 @@ namespace dabc {
 
          /** Name of the parameter, used to keep command priority */
          static const char* PriorityParName() { return "_Priority_"; }
-
    };
 
 

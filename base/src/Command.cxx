@@ -51,7 +51,6 @@ dabc::CommandContainer::~CommandContainer()
    if (fCallers.size()>0) {
       EOUT("Non empty callers list in cmd %s destructor", GetName());
       fCallers.clear();
-      EOUT("Did clear callers in cmd %s", GetName());
    }
 
    DOUT4("CMD:%p name %s deleted", this, GetName());
@@ -113,9 +112,9 @@ dabc::Command& dabc::Command::SetTimeout(double tm)
    CommandContainer* cont = (CommandContainer*) GetObject();
    if (cont!=0) {
       LockGuard lock(ObjectMutex());
-      if (tm<=0.)
+      if (tm<=0.) {
          cont->fTimeout.Reset();
-      else {
+      } else {
          cont->fTimeout.GetNow();
          cont->fTimeout += tm;
       }
@@ -150,7 +149,6 @@ int dabc::Command::GetPriority() const
 {
    return GetInt(PriorityParName(), Worker::priorityDefault);
 }
-
 
 void dabc::Command::SetPtr(const std::string& name, void* p)
 {

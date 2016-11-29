@@ -660,7 +660,7 @@ namespace dabc {
 
          void* CreateAny(const std::string& classname, const std::string& objname = "");
 
-         bool ActivateConnections(double tmout);
+         bool ActivateConnections(double tmout, bool sync = true);
 
          Reference FindItem(const std::string& name);
 
