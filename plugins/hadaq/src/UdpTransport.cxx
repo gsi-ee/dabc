@@ -533,7 +533,7 @@ bool hadaq::NewAddon::ReadUdp()
    return true; // indicate that buffer reading will be finished by callback
 }
 
-int hadaq::NewAddon::OpenUdp(int nport, int rcvbuflen)
+int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
 {
    int fd = socket(PF_INET, SOCK_DGRAM, 0);
    if (fd < 0) return -1;
@@ -543,11 +543,6 @@ int hadaq::NewAddon::OpenUdp(int nport, int rcvbuflen)
       close(fd);
       return -1;
    }
-
-   sockaddr_in addr;
-   memset(&addr, 0, sizeof(addr));
-   addr.sin_family = AF_INET;
-   addr.sin_port = htons(nport);
 
    if (rcvbuflen > 0) {
        // for hadaq application: set receive buffer length _before_ bind:
@@ -568,7 +563,33 @@ int hadaq::NewAddon::OpenUdp(int nport, int rcvbuflen)
       }
    }
 
+   if ((host.length()>0) && (host!="host")) {
+      struct addrinfo hints, *info = 0;
+
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_flags    = AI_PASSIVE;
+      hints.ai_family   = AF_UNSPEC; //AF_INET;
+      hints.ai_socktype = SOCK_DGRAM;
+
+      char service[100];
+      sprintf(service, "%d", nport);
+
+      DOUT0("BIND WITH HOST %s", host.c_str());
+
+      getaddrinfo(host.c_str(), service, &hints, &info);
+
+      for (struct addrinfo *t = info; t; t = t->ai_next) {
+         if (bind(fd, t->ai_addr, t->ai_addrlen) == 0) return fd;
+      }
+   }
+
+   sockaddr_in addr;
+   memset(&addr, 0, sizeof(addr));
+   addr.sin_family = AF_INET;
+   addr.sin_port = htons(nport);
+
    if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) return fd;
+
    close(fd);
    return -1;
 }

@@ -143,7 +143,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    if (nport<=0) { EOUT("Port not specified"); return 0; }
 
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
-   int fd = NewAddon::OpenUdp(nport, rcvbuflen);
+   int fd = NewAddon::OpenUdp(url.GetHostName(), nport, rcvbuflen);
    if (fd<=0) { EOUT("Cannot open UDP soocket for port %d", nport); return 0; }
 
    int mtu = url.GetOptionInt("mtu", 64512);

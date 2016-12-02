@@ -18,7 +18,7 @@
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="5000"/>
+      <runtime value="50"/>
     </Run>
     
     <MemoryPool name="Pool">
@@ -69,7 +69,7 @@
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="5000"/>
+      <runtime value="50"/>
     </Run>
     
     <MemoryPool name="Pool">
@@ -119,7 +119,7 @@
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="20"/>
+      <runtime value="50"/>
     </Run>
     
     <!-- HttpServer name="http" port="8090"/-->
@@ -179,12 +179,12 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
-      <logfile value="builder1.log"/>
+      <logfile value="builder2.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="20"/>
+      <runtime value="50"/>
     </Run>
     
     <!-- HttpServer name="http" port="8090"/-->

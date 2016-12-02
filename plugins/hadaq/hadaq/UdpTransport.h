@@ -185,7 +185,7 @@ namespace hadaq {
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
 
-         static int OpenUdp(int nport, int rcvbuflen);
+         static int OpenUdp(const std::string& host, int nport, int rcvbuflen);
    };
 
 
