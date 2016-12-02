@@ -2,10 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
-
 2.12.2016
 1. When create HADAQ UDP transport, use specified hostname to bind UDP socket
    with specified host address. Useful when many interfaces are exists. 
+
 
 29.11.2016
 1. Improve timeout handling of commands - let wait 0.5 s more than actual timeout.

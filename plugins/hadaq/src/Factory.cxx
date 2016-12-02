@@ -78,7 +78,8 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    dabc::PortRef portref = port;
 
-   if (!portref.IsInput() || ((url.GetProtocol()!="hadaq") && (url.GetProtocol()!="nhadaq")) || url.GetFullName().empty())
+   if (!portref.IsInput() ||  url.GetFullName().empty() ||
+       ((url.GetProtocol()!="hadaq") && (url.GetProtocol()!="nhadaq") && (url.GetProtocol()!="ohadaq")))
       return dabc::Factory::CreateTransport(port, typ, cmd);
 
    unsigned trignum = portref.GetModule().Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
@@ -144,7 +145,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    int rcvbuflen = url.GetOptionInt("udpbuf", 200000);
    int fd = NewAddon::OpenUdp(url.GetHostName(), nport, rcvbuflen);
-   if (fd<=0) { EOUT("Cannot open UDP soocket for port %d", nport); return 0; }
+   if (fd<=0) { EOUT("Cannot open UDP socket for %s", url.GetHostNameWithPort().c_str()); return 0; }
 
    int mtu = url.GetOptionInt("mtu", 64512);
    int maxloop = url.GetOptionInt("maxloop", 100);
@@ -156,12 +157,13 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    if (udp_queue>0) cmd.SetInt("TransportQueue", udp_queue);
 
-   if (url.GetProtocol()=="nhadaq") {
+   DOUT0("Start HADAQ UDP transport on %s", url.GetHostNameWithPort().c_str());
+
+   if ((url.GetProtocol()=="nhadaq") || (url.GetProtocol()=="hadaq")) {
 	   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce);
 	   return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
    }
 
-   DOUT0("Start UDP transport with port %d", nport);
    DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
    return new hadaq::DataTransport(cmd, portref, addon, observer);
 }

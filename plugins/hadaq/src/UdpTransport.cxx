@@ -574,13 +574,9 @@ int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
       char service[100];
       sprintf(service, "%d", nport);
 
-      DOUT0("BIND WITH HOST %s", host.c_str());
-
       getaddrinfo(host.c_str(), service, &hints, &info);
 
-      for (struct addrinfo *t = info; t; t = t->ai_next) {
-         if (bind(fd, t->ai_addr, t->ai_addrlen) == 0) return fd;
-      }
+      if (info && bind(fd, info->ai_addr, info->ai_addrlen) == 0) return fd;
    }
 
    sockaddr_in addr;
@@ -588,7 +584,7 @@ int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
    addr.sin_family = AF_INET;
    addr.sin_port = htons(nport);
 
-   if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) return fd;
+   if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == 0) return fd;
 
    close(fd);
    return -1;
