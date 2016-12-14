@@ -73,7 +73,7 @@ DAQDISK - switches disk demon mode on/off
   </Variables>
 
 
-  <Context host="localhost" name="BNET-EB-${BNEBNUM}" port="1210${BNEBNUM}">
+  <Context host="${MYHOST}" name="BNET-EB-${BNEBNUM}" port="1210${BNEBNUM}">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>        

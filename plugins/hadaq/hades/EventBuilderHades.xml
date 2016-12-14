@@ -58,7 +58,7 @@ DAQDISK - switches disk demon mode on/off
 -->
 
 <dabc version="2">
-  <Context host="localhost" name="DABC-EB-${EBNUM}" port="770${EBNUM}" >
+  <Context host="${MYHOST}" name="DABC-EB-${EBNUM}" port="770${EBNUM}" >
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcRfio.so"/>
