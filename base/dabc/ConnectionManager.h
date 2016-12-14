@@ -88,10 +88,7 @@ namespace dabc {
 
        std::string GetConnInfo()
        {
-          std::string res = GetLocalUrl();
-          res += " <-> ";
-          res += GetRemoteUrl();
-          return res;
+          return IsServerSide() ? (GetLocalUrl() + " --> " + GetRemoteUrl()) : (GetRemoteUrl() + " --> " + GetLocalUrl());
        }
 
        void ResetConnData()

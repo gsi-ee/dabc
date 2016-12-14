@@ -230,6 +230,8 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 
                req()->SetDelay(5, true); // let 5 second to prepare record, one
 
+               DOUT0("REGISTERED CONN %s isserv %s", req.GetConnInfo().c_str(), DBOOL(req.IsServerSide()));
+
                //FIXME: specify 5 second for submitted command as well
                dev.Submit(Assign(CmdConnectionManagerHandle(req)));
             }
