@@ -73,7 +73,7 @@ DAQDISK - switches disk demon mode on/off
   </Variables>
 
 
-  <Context host="${MYHOST}" name="BNET-EB-${BNEBNUM}" port="1210${BNEBNUM}">
+  <Context host="${MYHOST}" name="BNET-EB-${BNEBNUM}" port="1210${BNEBID}">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>        
@@ -96,7 +96,8 @@ DAQDISK - switches disk demon mode on/off
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="50"/>
+<!--       <runtime value="50"/>
+ -->    
     </Run>
     
     
