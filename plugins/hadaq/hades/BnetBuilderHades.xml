@@ -127,6 +127,8 @@ DAQDISK - switches disk demon mode on/off
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
+    
+       <NodeId value="${BNEBNUM}"/>    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
