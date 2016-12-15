@@ -78,7 +78,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <BNETsend value="true"/>
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="30" url="nhadaq://host:${hadaqports}#" urlopt="udpbuf=200000&mtu=64512&flush=0.2&observer=false&maxloop=1"/>
        
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
@@ -100,6 +100,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
      
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input${BNINPID}"/>
+     
+     
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
      
      
   </Context>
