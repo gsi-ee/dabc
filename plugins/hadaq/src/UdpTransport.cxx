@@ -20,6 +20,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sched.h>
 
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -28,6 +29,8 @@
 
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
+
+#define DEFAULT_MTU 63*1024
 
 
 hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce) :
@@ -43,7 +46,6 @@ hadaq::DataSocketAddon::DataSocketAddon(int fd, int nport, int mtu, double flush
    fReduce(reduce < 1. ? reduce : 1.),
    fDebug(debug)
 {
-   fPid = syscall(SYS_gettid);
 }
 
 hadaq::DataSocketAddon::~DataSocketAddon()
@@ -294,9 +296,10 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
       // TODO: fix default pid export of worker ?
       CreateNetmemPar("PID");
 
+      pid_t  pid = syscall(SYS_gettid);          ///< process id
 
-      SetNetmemPar("PID", (int) addon->fPid);
-      SetNetmemPar("coreNr", hadaq::CoreAffinity(addon->fPid));
+      SetNetmemPar("PID", pid);
+      SetNetmemPar("coreNr", hadaq::CoreAffinity(pid));
       CreateTimer("ObserverTimer", 1, false);
       DOUT3("hadaq::DataTransport created observer parameters");
    }
@@ -382,7 +385,6 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
-   fWaitMoreData(false),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
@@ -390,7 +392,6 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fDebug(debug),
    fRunning(false)
 {
-   fPid = syscall(SYS_gettid);
 }
 
 hadaq::NewAddon::~NewAddon()
@@ -449,7 +450,7 @@ bool hadaq::NewAddon::ReadUdp()
    if (!fRunning) return false;
 
    hadaq::NewTransport* tr = dynamic_cast<hadaq::NewTransport*> (fWorker());
-   if (tr == 0) {EOUT("No transport assigned"); return false; }
+   if (tr == 0) { EOUT("No transport assigned"); return false; }
 
    if (fTgtPtr.null()) {
       if (!tr->AssignNewBuffer(0,this)) return false;
@@ -643,8 +644,10 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
    // TODO: fix default pid export of worker ?
    CreateNetmemPar("PID");
 
-   SetNetmemPar("PID", (int) addon->fPid);
-   SetNetmemPar("coreNr", hadaq::CoreAffinity(addon->fPid));
+   pid_t  pid = syscall(SYS_gettid);          ///< process id
+
+   SetNetmemPar("PID", (int) pid);
+   SetNetmemPar("coreNr", hadaq::CoreAffinity(pid));
    CreateTimer("ObserverTimer", 1, false);
    DOUT3("hadaq::DataTransport created observer parameters");
 }

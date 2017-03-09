@@ -33,11 +33,9 @@
 #include "dabc/DataTransport.h"
 #endif
 
+#ifndef HADAQ_HadaqTypeDefs
 #include "hadaq/HadaqTypeDefs.h"
-
-#include <sched.h>
-
-#define DEFAULT_MTU 63 * 1024
+#endif
 
 namespace hadaq {
 
@@ -88,7 +86,6 @@ namespace hadaq {
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
 
-         pid_t fPid;                        ///< process id
          bool   fDebug;                     ///< when true, produce more debug output
 
          virtual void ProcessEvent(const dabc::EventId&);
@@ -158,13 +155,11 @@ namespace hadaq {
          friend class NewTransport;
 
          dabc::Pointer      fTgtPtr;          ///< pointer used to read data
-         bool               fWaitMoreData;    ///< indicate that transport waits for more data
          unsigned           fMTU;             ///< maximal size of packet expected from TRB
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
 
-         pid_t              fPid;               ///< process id
          bool               fDebug;             ///< when true, produce more debug output
 
          bool               fRunning;         ///< is transport running
