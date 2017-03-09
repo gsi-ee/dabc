@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+9.03.2017
+1. When UDP transport blocks, it starts read and discard single UDP packets.
+   This seen as packets discarded due to formatting error.
+     
+
 2.12.2016
 1. When create HADAQ UDP transport, use specified hostname to bind UDP socket
    with specified host address. Useful when many interfaces are exists. 

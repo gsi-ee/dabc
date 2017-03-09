@@ -386,16 +386,20 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    TransportInfo(nport),
    fTgtPtr(),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
+   fMtuBuffer(0),
+   fSkipCnt(0),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 1. ? reduce : 1.),
    fDebug(debug),
    fRunning(false)
 {
+   fMtuBuffer = malloc(fMTU);
 }
 
 hadaq::NewAddon::~NewAddon()
 {
+   free(fMtuBuffer);
 }
 
 void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)
@@ -452,24 +456,34 @@ bool hadaq::NewAddon::ReadUdp()
    hadaq::NewTransport* tr = dynamic_cast<hadaq::NewTransport*> (fWorker());
    if (tr == 0) { EOUT("No transport assigned"); return false; }
 
+   void* tgt = 0;
+
    if (fTgtPtr.null()) {
-      if (!tr->AssignNewBuffer(0,this)) return false;
+      if (!tr->AssignNewBuffer(0,this)) {
+         if (fSkipCnt++<10) return false;
+         tgt = fMtuBuffer;
+      }
    }
 
-   if (fTgtPtr.rawsize() < fMTU) {
-      DOUT0("UDP:%d Should never happen - rest size is smaller than MTU", fNPort);
-      return false;
+   if (tgt != fMtuBuffer) {
+      if (fTgtPtr.rawsize() < fMTU) {
+         DOUT0("UDP:%d Should never happen - rest size is smaller than MTU", fNPort);
+         return false;
+      }
+      fSkipCnt = 0;
    }
 
    int cnt = fMaxLoopCnt;
 
    while (cnt-- > 0) {
 
+      if (tgt != fMtuBuffer) tgt = fTgtPtr.ptr();
+
       /* this was old form which is not necessary - socket is already bind with the port */
       //  socklen_t socklen = sizeof(fSockAddr);
       //  ssize_t res = recvfrom(Socket(), fTgtPtr.ptr(), fMTU, 0, (sockaddr*) &fSockAddr, &socklen);
 
-      ssize_t res = recv(Socket(), fTgtPtr.ptr(), fMTU, MSG_DONTWAIT);
+      ssize_t res = recv(Socket(), tgt, fMTU, MSG_DONTWAIT);
 
       if (res == 0) {
          DOUT0("UDP:%d Seems to be, socket was closed", fNPort);
@@ -484,7 +498,7 @@ bool hadaq::NewAddon::ReadUdp()
          return false;
       }
 
-      hadaq::HadTu* hadTu = (hadaq::HadTu*) fTgtPtr.ptr();
+      hadaq::HadTu* hadTu = (hadaq::HadTu*) tgt;
       int msgsize = hadTu->GetPaddedSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
 
       std::string errmsg;
@@ -516,6 +530,13 @@ bool hadaq::NewAddon::ReadUdp()
          fTotalDiscardPacket++;
          fTotalDiscardBytes+=res;
          continue;
+      }
+
+      if (tgt == fMtuBuffer) {
+         // skip single MTU
+         fTotalDiscardPacket++;
+         fTotalDiscardBytes+=res;
+         return false;
       }
 
       fTotalRecvPacket++;

@@ -156,6 +156,8 @@ namespace hadaq {
 
          dabc::Pointer      fTgtPtr;          ///< pointer used to read data
          unsigned           fMTU;             ///< maximal size of packet expected from TRB
+         void*              fMtuBuffer;       ///< buffer used to skip packets when no normal buffer is available
+         int                fSkipCnt;         ///< counter used to control buffers skipping
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
