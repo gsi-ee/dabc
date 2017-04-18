@@ -28,8 +28,8 @@ void hadaq::RawEvent::Dump()
    else
       snprintf(sbuf,sizeof(sbuf),"%u", (unsigned) GetSize());
 
-   printf("*** Event #0x%06x fullid=0x%04x runid=0x%08x size %s *** \n",
-         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetRunNr(), sbuf);
+   printf("*** Event #0x%06x fullid=0x%04x runid=0x%08x typ %x size %s *** \n",
+         (unsigned) GetSeqNr(), (unsigned) GetId(), (unsigned) GetRunNr(), (unsigned) (GetId() & 0xf), sbuf);
 }
 
 void hadaq::RawEvent::InitHeader(uint32_t id)
