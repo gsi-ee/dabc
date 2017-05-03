@@ -2,6 +2,13 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+
+3.05.2017
+1. New: ltsm plugin for storage interface, first version. Uses light tivoli storage manager software
+   by Thomas Stibor and Joerg Beherendt (https://github.com/tstibor/ltsm)
+2. Corrected mbs plugin lmd file to keep and use url options when opening a file. 
+   Required to test ltsm plugin with mbs random event generator.
+
 9.03.2017
 1. When UDP transport blocks, it starts read and discard single UDP packets.
    This seen as packets discarded due to formatting error.

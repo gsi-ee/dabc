@@ -5,9 +5,13 @@ ifndef noltsm
 
 include $(DABCSYS)/config/Makefile.config
 
+ifdef DABC_LTSM
+
 # TODO: install headers at system include location
-LTSMAPI = /home/adamczew/git/ltsm_jb/src/lib
-TSMAPI  =/opt/tivoli/tsm/client/api/bin64/sample/
+
+# all definitions checks are in Makefile.config now
+#LTSMAPI = /home/adamczew/git/ltsm_jb/src/lib
+#TSMAPI  =/opt/tivoli/tsm/client/api/bin64/sample/
 
 
 
@@ -17,8 +21,8 @@ else
 LTSMDIR = .
 endif
 
-DABC_TSM_LIBDIR	 = /usr/lib64/
-TSM_LINKLIBS     = -lApiTSM64 
+#DABC_TSM_LIBDIR	 = /usr/lib64/
+#TSM_LINKLIBS     = -lApiTSM64 
 
 LTSMDIRI         = $(LTSMDIR)/ltsm
 LTSMDIRS         = $(LTSMDIR)/src
@@ -39,7 +43,6 @@ DABCLTSM_O       += $(wildcard $(LTSMAPI)/*.a)
 
  
 $(LTSM_O) $(LTSM_D) : INCLUDES += $(LTSMAPI) $(TSMAPI)
-#$(LTSM_O) $(LTSM_D) : DEFINITIONS += ORIGIN_LTSM 
 
 
 DABCLTSM_D       = $(LTSM_D)
@@ -63,8 +66,7 @@ $(DABCINCPATH)/%.h: $(LTSMDIR)/%.h
 	@cp -f $< $@
 
 $(DABCLTSM_LIB):   $(DABCLTSM_O)
-	@$(MakeLib) $(DABCLTSM_LIBNAME) "$(DABCLTSM_O)" $(TGTDLLPATH) 
-#@$(MakeLib) $(DABCLTSM_LIBNAME) "$(DABCLTSM_O)" $(TGTDLLPATH) "$(call lddiropt,$(DABC_TSM_LIBDIR)) $(TSM_LINKLIBS)"
+	@$(MakeLib) $(DABCLTSM_LIBNAME) "$(DABCLTSM_O)" $(TGTDLLPATH) "$(call lddiropt,$(TSM_LIBDIR)) $(TSM_LINKLIBS)"
 
 clean::
 #	rm -f $(LTSMFAPI_PACKAGE)
@@ -81,4 +83,5 @@ endif
 
 include $(DABCSYS)/config/Makefile.rules
 
+endif
 endif

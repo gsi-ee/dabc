@@ -9,7 +9,7 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
-      <lib value="/usr/lib64/libApiTSM64.so"/>
+<!--       <lib value="/usr/lib64/libApiTSM64.so"/> -->
 	  <lib value="libDabcLtsm.so"/>
       <lib value="libDabcHttp.so"/>  
       
@@ -36,7 +36,7 @@
        <InputPort name="Input*" queue="5" timeout="5"/>
 <!--        <OutputPort name="Output0" url="mbs://Stream"/> -->
 <!-- 			<OutputPort name="Output0" url="hld:///home/adamczew/data/dabcdata.hld"/> -->
-       <OutputPort name="Output0" url="lmd:///home/adamczew/dabctest/dabc_generated_1.lmd?maxsize=500&ltsm&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
+       <OutputPort name="Output0" url="lmd:///home/adamczew/dabctest/dabc_generated_2.lmd?maxsize=500&ltsm&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
    
        <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
        <MbsEvents width="5" prec="1" low="5" up="50" debug="1"/>
