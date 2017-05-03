@@ -1,5 +1,3 @@
-// $Id$
-
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -13,37 +11,20 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef MBS_LmdOutput
-#define MBS_LmdOutput
+#ifndef LTSM_Factory
+#define LTSM_Factory
 
-#ifndef DABC_DataIO
-#include "dabc/DataIO.h"
+#ifndef DABC_Factory
+#include "dabc/Factory.h"
 #endif
 
-#ifndef MBS_LmdFile
-#include "mbs/LmdFile.h"
-#endif
+namespace ltsm {
 
-namespace mbs {
-
-   /** \brief Output for LMD files (lmd:) */
-
-   class LmdOutput : public dabc::FileOutput {
-      protected:
-
-         mbs::LmdFile       fFile;
-         std::string        fUrlOptions;     // remember URL options, may be used for RFIO/LTSM file open
-         bool CloseFile();
-         bool StartNewFile();
-
+   class Factory : public dabc::Factory {
       public:
+         Factory(const std::string& name) : dabc::Factory(name) {}
 
-         LmdOutput(const dabc::Url& url);
-         virtual ~LmdOutput();
-
-         virtual bool Write_Init();
-
-         virtual unsigned Write_Buffer(dabc::Buffer& buf);
+         virtual void* CreateAny(const std::string& classname, const std::string& objname, dabc::Command cmd);
    };
 
 }

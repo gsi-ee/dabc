@@ -60,6 +60,19 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
          EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
       }
    }
+   else if(url.HasOption("ltsm"))
+   {
+	   dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface");
+	   if (io!=0) {
+		   fUrlOptions = url.GetOptions();
+		   fFile.SetIO(io, true);
+	   } else {
+		   EOUT("Cannot create LTSM object, check if libDabcLtsm.so loaded");
+	   }
+   }
+
+
+
 }
 
 hadaq::HldOutput::~HldOutput()

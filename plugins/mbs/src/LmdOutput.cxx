@@ -33,10 +33,14 @@
 
 mbs::LmdOutput::LmdOutput(const dabc::Url& url) :
    dabc::FileOutput(url, ".lmd"),
-   fFile()
+   fFile(),fUrlOptions()
 {
+	 fUrlOptions = url.GetOptions();
+
    if (url.HasOption("rfio"))
       fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
+   else if (url.HasOption("ltsm"))
+   	  fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface"), true);
 }
 
 mbs::LmdOutput::~LmdOutput()
@@ -57,7 +61,7 @@ bool mbs::LmdOutput::StartNewFile()
 
    ProduceNewFileName();
 
-   if (!fFile.OpenWriting(CurrentFileName().c_str())) {
+   if (!fFile.OpenWriting(CurrentFileName().c_str(), fUrlOptions.c_str())) {
       ShowInfo(-1, dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }

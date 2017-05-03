@@ -45,7 +45,7 @@ namespace mbs {
             Close();
          }
 
-         bool OpenReading(const char* fname)
+         bool OpenReading(const char* fname, const char* opt = 0)
          {
             if (isOpened()) return false;
 
@@ -56,7 +56,7 @@ namespace mbs {
 
             CheckIO();
 
-            fd = io->fopen(fname,  "r");
+            fd = io->fopen(fname,  "r", opt);
             if (fd==0) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
                return false;
@@ -101,7 +101,7 @@ namespace mbs {
             return true;
          }
 
-         bool OpenWriting(const char* fname)
+         bool OpenWriting(const char* fname, const char* opt = 0)
          {
             if (isOpened()) return false;
 
@@ -112,7 +112,7 @@ namespace mbs {
 
             CheckIO();
 
-            fd = io->fopen(fname, "w");
+            fd = io->fopen(fname, "w", opt);
             if (fd==0) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
                return false;
