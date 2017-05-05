@@ -1,15 +1,11 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Variables>
-     <bufsize value="65536"/>
-  </Variables>
-
+ 
 
   <Context host="hades45" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
-<!--       <lib value="/usr/lib64/libApiTSM64.so"/> -->
 	  <lib value="libDabcLtsm.so"/>
       <lib value="libDabcHttp.so"/>  
       
@@ -25,18 +21,21 @@
     
     
     <MemoryPool name="Pool">
-       <NumBuffers value="100"/>
-       <BufferSize value="${bufsize}"/>
+       <NumBuffers value="3000"/>
+       <BufferSize value="200000"/>
     </MemoryPool>
-    <Module name="Combiner" class="dabc::RepeaterModule">
+<!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
+  <Module name="Combiner" class="mbs::CombinerModule"> -->
+
        <NumInputs value="1"/>
-       <NumOutputs value="2"/>
-       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=1&procid=${DABCNODEID}"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input0" url="lmd://Generator?size=10000&numsub=1&procid=${DABCNODEID}&go4=false"/>
 <!--        <InputPort name="Input0" url="hld:///home/adamczew/data/hld/fw1206920381501.hld"/>  -->
        <InputPort name="Input*" queue="5" timeout="5"/>
 <!--        <OutputPort name="Output0" url="mbs://Stream"/> -->
-<!-- 			<OutputPort name="Output0" url="hld:///home/adamczew/data/dabcdata.hld"/> -->
-       <OutputPort name="Output0" url="lmd:///home/adamczew/dabctest/dabc_generated_2.lmd?maxsize=500&ltsm&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
+<!-- 			<OutputPort name="Output0" url="lmd:///home/adamczew/data/dabc_generated_200k_3000_10k_local_2.lmd?maxsize=1000"/> -->
+       <OutputPort name="Output0" url="lmd:///home/adamczew/dabctest/dabc_generated_200k_3000_10k.lmd?maxsize=1000&ltsm&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
+   
    
        <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
        <MbsEvents width="5" prec="1" low="5" up="50" debug="1"/>
