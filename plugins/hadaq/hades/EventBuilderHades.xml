@@ -73,7 +73,7 @@ DAQDISK - switches disk demon mode on/off
       <loglimit value="1000000"/>
 <!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
       <control value="true"/>
-      <affinity value="-1"/>
+     <affinity value="-1"/>
      <!--  <threads_layout value="maximal"/>-->
     </Run>
     
@@ -87,7 +87,8 @@ DAQDISK - switches disk demon mode on/off
      <NodeId value="${EBNUM}"/>     
     </Observer>  
    
-    
+      <Thread name="UdpThread*" class="dabc::SocketThread" affinity="+0"/>
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="3000"/>
@@ -98,7 +99,7 @@ DAQDISK - switches disk demon mode on/off
         <!-- these parameters will force to create inputs/oputputs of module -->        
        <NumInputs value="${STREAMS}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
-       <Thread name="UdpThread*" class="dabc::SocketThread" affinity="+0"/>
+       <!-- <Thread name="UdpThread*" class="dabc::SocketThread" affinity="+0"/> -->
 
        <InputPort name="Input0" url="hadaq://host:${UDP00}" thread="UdpThread1"/>
        <InputPort name="Input1" url="hadaq://host:${UDP01}" thread="UdpThread2"/>
