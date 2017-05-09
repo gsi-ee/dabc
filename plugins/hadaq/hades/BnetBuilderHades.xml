@@ -78,6 +78,7 @@ DAQDISK - switches disk demon mode on/off
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>        
       <lib value="libDabcRfio.so"/>
+      <lib value="libDabcLtsm.so"/> 
       <lib value="libDabcHttp.so"/>  
       <logfile value="BNETEB_${BNEBNUM}.log"/>
       <loglevel value="1"/>
