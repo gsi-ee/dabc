@@ -56,7 +56,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
       <sysloglevel value="0"/>
       <loglimit value="1000000"/>
       <control value="true"/>
-      <affinity value="-1"/>
+       <!-- <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
      <!--  <runtime value="50"/> -->
     </Run>
