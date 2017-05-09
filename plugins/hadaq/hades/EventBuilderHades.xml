@@ -62,6 +62,7 @@ DAQDISK - switches disk demon mode on/off
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcRfio.so"/>
+      <lib value="libDabcLtsm.so"/>
       <lib value="libDabcHadaq.so"/>  
       <lib value="libDabcHttp.so"/>  
       <logfile value="EB_${EBNUM}.log"/>
@@ -142,8 +143,10 @@ DAQDISK - switches disk demon mode on/off
               
        
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&diskdemon=${DAQDISK}" queue="500"/>
-       <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/>
 
+      <!--   <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/> -->
+
+ <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}"/>
        <ExtraDebug value="false"/>
         
 

@@ -326,7 +326,21 @@ sub getEBArgs()
     my $rfio_iPathConv     = $temp_args_href->{'Parallel'}->{'RFIO_iPathConvention'};
     
     my @rfio_list = split(/\s+/, $rfio);
-
+    
+    
+    
+    #- LTSM settings
+    my $listOfLTSM = $temp_args_href->{'Parallel'}->{'LTSM'};
+    my @ltsm_list = split(/\s+/, $listOfLTSM);
+    
+    my $ltsm_path          = $temp_args_href->{'Parallel'}->{'LTSM_PATH'};
+    my $ltsm_server          = $temp_args_href->{'Parallel'}->{'LTSM_Server'};
+    my $ltsm_node          = $temp_args_href->{'Parallel'}->{'LTSM_Node'};
+    my $ltsm_passwd          = $temp_args_href->{'Parallel'}->{'LTSM_Passwd'};
+    
+    
+    
+    
     #- EPICS Controled 
     my $epics_ctrl = $temp_args_href->{'Parallel'}->{'EPICS_CTRL'};
 
@@ -439,6 +453,15 @@ sub getEBArgs()
         $href->{$ebproc}->{'RFIO_iCopyFrac'}   = $rfio_iCopyFrac;
         $href->{$ebproc}->{'RFIO_iMaxFile'}    = $rfio_iMaxFile;
         $href->{$ebproc}->{'RFIO_iPathConv'}   = $rfio_iPathConv;
+        
+        
+        
+        $href->{$ebproc}->{'LTSM'}             = $ltsm_list[$ebproc];  # 0|1
+        $href->{$ebproc}->{'LTSM_PATH'}        = $ltsm_path;
+        $href->{$ebproc}->{'LTSM_Server'}        = $ltsm_server;
+        $href->{$ebproc}->{'LTSM_Node'}        = $ltsm_node;
+        $href->{$ebproc}->{'LTSM_Passwd'}        = $ltsm_passwd;
+        
 
         $href->{$ebproc}->{'EPICS_CTRL'}       = $epics_list[$ebproc];  # 0|1
 
@@ -766,7 +789,6 @@ sub startEvtBuilders()
 
  if( $EB_Args_href->{$ebproc}->{'DABC'} ){
     print "Starting DABC process..\n";
-# TODO: here evaluate parameters and code into dabc command execution
 
 #". /home/joern/dabcwork/head/dabclogin;cd /home/joern/dabcwork/head/plugins/hadaq/app; export EBNUM=1; export STREAMS=5; export UDP00=10101; export UDP01=10102; export UDP02=10103; export UDP03=10104; export UDP04=10105 export PREFIX=be; /home/joern/dabcwork/head/bin/dabc_exe EventBuilderHades.xml &" > /dev/null 2>&1  &
 
@@ -825,20 +847,35 @@ sub startEvtBuilders()
 		 $exports = $exports . "export DAQDISK=0; export OUTDIR=" . $EB_Args_href->{$ebproc}->{'OUTDIR'} .";";
              }
          
-         if( $EB_Args_href->{$ebproc}->{'RFIO'} ){
+         if( $EB_Args_href->{$ebproc}->{'LTSM'} ){
          
          $exports = $exports . " export FILEOUTPUTS=3;";
-	# additional exports for RFIO
+	# additional exports for LTSM
 
-	$exports = $exports . " export RFIOPATH=". $EB_Args_href->{$ebproc}->{'RFIO_PATH'} . ";";
-         $exports = $exports . " export RFIOLUSTREPATH=". $EB_Args_href->{$ebproc}->{'RFIO_pcCopyPath'} . ";";
-         $exports = $exports . " export RFIOCOPYMODE=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyMode'} . ";";
-         $exports = $exports . " export RFIOCOPYFRAC=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyFrac'} . ";";
-         $exports = $exports . " export RFIOMAXFILE=". $EB_Args_href->{$ebproc}->{'RFIO_iMaxFile'} . ";";
-         $exports = $exports . " export RFIOPATHCONV=". $EB_Args_href->{$ebproc}->{'RFIO_iPathConv'} . ";";
-	
+	 $exports = $exports . " export LTSMPATH=". $EB_Args_href->{$ebproc}->{'LTSM_PATH'} . ";";
+         $exports = $exports . " export LTSMSERVER=". $EB_Args_href->{$ebproc}->{'LTSM_Server'} . ";";
+         $exports = $exports . " export LTSMNODE=". $EB_Args_href->{$ebproc}->{'LTSM_Node'} . ";";
+         $exports = $exports . " export LTSMPASSWD=". $EB_Args_href->{$ebproc}->{'LTSM_Passwd'} . ";";
+ 	
 # switch on by number of outputs
 	}
+################## deprecated, keep code for optional testing?
+# JAM 5-2017 - we never run rfio and ltsm in parallel.	
+# 	 if( $EB_Args_href->{$ebproc}->{'RFIO'} ){
+#          
+#          $exports = $exports . " export FILEOUTPUTS=3;";
+# 	# additional exports for RFIO
+# 
+# 	$exports = $exports . " export RFIOPATH=". $EB_Args_href->{$ebproc}->{'RFIO_PATH'} . ";";
+#          $exports = $exports . " export RFIOLUSTREPATH=". $EB_Args_href->{$ebproc}->{'RFIO_pcCopyPath'} . ";";
+#          $exports = $exports . " export RFIOCOPYMODE=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyMode'} . ";";
+#          $exports = $exports . " export RFIOCOPYFRAC=". $EB_Args_href->{$ebproc}->{'RFIO_iCopyFrac'} . ";";
+#          $exports = $exports . " export RFIOMAXFILE=". $EB_Args_href->{$ebproc}->{'RFIO_iMaxFile'} . ";";
+#          $exports = $exports . " export RFIOPATHCONV=". $EB_Args_href->{$ebproc}->{'RFIO_iPathConv'} . ";";
+# 	
+# # switch on by number of outputs
+# 	}
+#######################################
 	else
 	{
 	     # no rfio, just local file 
@@ -860,16 +897,6 @@ sub startEvtBuilders()
 
 
 
-#  my $rfio;
-#         if( $EB_Args_href->{$ebproc}->{'RFIO'} ){
-#             $rfio = " --rfio "       . $EB_Args_href->{$ebproc}->{'RFIO_PATH'} .
-#                 " --rfiolustre "     . $EB_Args_href->{$ebproc}->{'RFIO_pcCopyPath'} .
-#                 " --rfio_pcoption "  . $EB_Args_href->{$ebproc}->{'RFIO_pcOptions'} .
-#                 " --rfio_icopymode " . $EB_Args_href->{$ebproc}->{'RFIO_iCopyMode'} .
-#                 " --rfio_icopyfrac " . $EB_Args_href->{$ebproc}->{'RFIO_iCopyFrac'} .
-#                 " --rfio_imaxfile "  . $EB_Args_href->{$ebproc}->{'RFIO_iMaxFile'} .
-#                 " --rfio_ipathconv " . $EB_Args_href->{$ebproc}->{'RFIO_iPathConv'};
-#         }
 
 
 # 	EPICSCONTROL ? always enabled for production
@@ -1093,7 +1120,7 @@ sub cpPortList2EB()
     my $exe_cp = "scp $tmpfile hadaq\@$cpu:/tmp/ 1>/dev/null 2>/dev/null";
     system($exe_cp);
 }
-
+ 
 sub startIOC()
 {
     my $ioc_dir = "/home/scs/ebctrl/ioc/iocBoot/iocebctrl";
