@@ -88,6 +88,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fTriggerNrTolerance = fMaxHadaqTrigger / 4;
    fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
+   fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
 
    std::string ratesprefix = "Hadaq";
 
@@ -671,7 +672,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
       uint32_t val = cfg.subevnt->GetTrigTypeTrb3();
-      if (val) {
+      if (val || !fHadesTriggerType) {
          cfg.fTrigType = val;
          //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, cfg.fTrigType);
       } else {

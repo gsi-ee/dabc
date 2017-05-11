@@ -146,9 +146,11 @@ namespace hadaq {
          /** maximum allowed difference of trigger numbers (subevent sequence number)*/
          int fTriggerNrTolerance;
 
-         /** timeout in seconds since last complete event when previous buffers
-          * are dropped*/
+         /** timeout in seconds since last complete event when previous buffers are dropped*/
          double fEventBuildTimeout;
+
+         /** When true, read trigger type as in original hades event builders */
+         bool fHadesTriggerType;
 
          uint32_t fLastTrigNr;  ///<  last number of build event
 

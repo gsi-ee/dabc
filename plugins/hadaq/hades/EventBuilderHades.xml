@@ -147,13 +147,13 @@ DAQDISK - switches disk demon mode on/off
 
       <!--   <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/> -->
 
- <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}" queue="500" onerror="exit"/>
+       <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}" queue="500" onerror="exit"/>
        <ExtraDebug value="false"/>
-        
 
        <DoShmControl value="true"/>  
        <RunIdFromEPICS value="true"/>  
-       <FlushTimeout value="0.5"/>   
+       <FlushTimeout value="0.5"/>
+       <HadesTriggerType value="true"/>
 
        <!-- take event sequence number from vulom/roc sync message at cts -->
        <UseSyncSequenceNumber value="false"/>

@@ -144,6 +144,7 @@ DAQDISK - switches disk demon mode on/off
        <DoShmControl value="true"/>  
        <RunIdFromEPICS value="true"/>  
        <FlushTimeout value="0.5"/>   
+       <HadesTriggerType value="true"/>
 
 
  <!-- take event sequence number from vulom/roc sync message at cts -->

@@ -88,7 +88,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        
        <AccountLostEventDiff value="false"/>
        <ExtraDebug value="false"/>
-       <FlushTimeout value="0.5"/>   
+       <FlushTimeout value="0.5"/>
+       <HadesTriggerType value="true"/>
        <TriggerNumRange value="0x1000000"/>
        
        <!-- rate meters configuration, not seen with terminal module -->
