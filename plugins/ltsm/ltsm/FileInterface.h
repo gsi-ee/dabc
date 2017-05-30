@@ -1,13 +1,34 @@
 #ifndef LTSM_FileInterface
 #define LTSM_FileInterface
 
+
+// this switches between first version of ltsm file api (Jörg Behrendt) and new version (Thomas Stibor)
+//#define LTSM_OLD_FILEAPI 1
+
+
+
 #ifndef DABC_BinaryFile
 #include "dabc/BinaryFile.h"
 #endif
 
+
+
+
+#ifdef LTSM_OLD_FILEAPI
 extern "C" {
 #include "tsmfileapi.h"
 }
+#else
+extern "C" {
+#include "tsmapi.h"
+}
+
+#endif
+
+#ifndef DABC_string
+#include "dabc/string.h"
+#endif
+
 
 namespace ltsm {
 
@@ -18,11 +39,13 @@ namespace ltsm {
 //         int    fDataMoverIndx;       //! obtained data mover index
 //         char   fDataMoverName[64];   //! obtained data mover name
 
-
-
-	   /** keep file handle ???  todo: later list of all handles in use for cleanup??*/
-	   //struct tsm_filehandle_t* fTsmFilehandle;
-
+	   std::string fCurrentFile; // remember last open file, for info output
+	   std::string fServername;
+	   std::string fNode;
+	   std::string fPassword;
+	   std::string fOwner;
+	   std::string fFsname;
+	   std::string fDescription;
 
 
       public:
