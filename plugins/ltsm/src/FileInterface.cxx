@@ -176,8 +176,12 @@ int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
 
     if (strcmp(parname, "RFIO")==0) return -1; // return RFIO version number
     if (strcmp(parname, "DataMoverIndx")==0) {
-	return atoi(fNode.c_str()); //take first number from node name.
-    }
+	int index=42;
+	std::string suffix=fNode.substr(fNode.size() - 2);
+	index=atoi (suffix.c_str());
+	return index; //take first number from node name.
+    
+}
     return 0;
     }
 
