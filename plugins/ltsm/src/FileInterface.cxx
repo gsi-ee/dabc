@@ -174,9 +174,10 @@ int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
     {
     // TODO: meaningful info for HADES epics display?
 
-    //if (strcmp(parname, "RFIO")==0) return 8; // return RFIO version number
-    //if (fRemote && strcmp(parname, "DataMoverIndx")==0) return fDataMoverIndx;
-
+    if (strcmp(parname, "RFIO")==0) return -1; // return RFIO version number
+    if (strcmp(parname, "DataMoverIndx")==0) {
+	return atoi(fNode.c_str()); //take first number from node name.
+    }
     return 0;
     }
 

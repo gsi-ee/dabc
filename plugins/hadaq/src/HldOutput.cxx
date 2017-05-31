@@ -37,6 +37,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fEBNumber(0),
    fUseDaqDisk(false),
    fRfio(false),
+   fLtsm(false),
    fUrlOptions(),
    fLastUpdate(),
    fFile()
@@ -46,6 +47,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
    fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
    fRfio = url.HasOption("rfio");
+   fLtsm = url.HasOption("ltsm");
    if (fRfio) {
 
       dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface");
@@ -60,7 +62,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
          EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
       }
    }
-   else if(url.HasOption("ltsm"))
+   else if(fLtsm)
    {
 	   dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface");
 	   if (io!=0) {
@@ -163,7 +165,7 @@ bool hadaq::HldOutput::StartNewFile()
    if (fEpicsSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
-   if (fEpicsSlave && fRfio) {
+   if (fEpicsSlave && (fRfio || fLtsm)) {
       // use parameters only in slave mode
 
       int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
@@ -173,33 +175,9 @@ bool hadaq::HldOutput::StartNewFile()
 
       dabc::CmdSetParameter cmd("Evtbuild-dataMover", indx);
       dabc::mgr.FindModule("Combiner").Submit(cmd);
-
-      DOUT0("Connected to datamover %s, Number:%d", sbuf, indx);
+      DOUT0("Connected to %s %s, Number:%d", (fRfio ? "Datamover" : "TSM Server") , sbuf, indx);
   }
 
-
-//   if(fRunInfoToOracle)
-//   {
-//    //put reduced file name to combiner module parameter for oracle info:
-//     dabc::Parameter filenamepar = dabc::mgr.FindPar("Combiner/CurrentFile");
-//    if(!filenamepar.null()) {
-//      std::string reducedname;
-//      pos = fCurrentFileName.rfind("/");
-//      if (pos == std::string::npos)
-// 	reducedname=fCurrentFileName;
-//      else
-//         reducedname=fCurrentFileName.substr(pos+1);
-//
-//      DOUT0("Put reduced filename %s for oracle export.", reducedname.c_str(), fRunNumber);
-//      filenamepar.SetValue(reducedname);
-//
-//    }
-//    else
-//    {
-//      EOUT("HldOutput could not find currentfilename parameter!");
-//     }
-//
-//   } // if not run2ora
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
