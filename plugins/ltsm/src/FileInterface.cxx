@@ -20,6 +20,8 @@ ltsm::FileInterface::FileInterface() :
 
 ltsm::FileInterface::~FileInterface()
     {
+
+    DOUT0("ltsm::FileInterface::DTOR ... ");
 #ifdef LTSM_OLD_FILEAPI
     dsmCleanUp(DSM_MULTITHREAD);
 #else
@@ -200,7 +202,7 @@ bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
 
 void ltsm::FileInterface::fclose(Handle f)
     {
-
+    DOUT0("ltsm::FileInterface::fclose ... ");
     if (f == 0)
 	return;
 #ifdef LTSM_OLD_FILEAPI

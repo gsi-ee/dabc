@@ -14,7 +14,7 @@
  ************************************************************/
 
 #include "hadaq/HldFile.h"
-
+#include "dabc/logging.h"
 
 hadaq::HldFile::HldFile() :
    dabc::BasicFile(),
@@ -107,6 +107,7 @@ bool hadaq::HldFile::OpenRead(const char* fname, const char* opt)
 
 void hadaq::HldFile::Close()
 {
+   DOUT0("hadaq::HldFile::Close()... ");
   if (isWriting()) {
       // need to add empty terminating event:
       hadaq::RawEvent evnt;

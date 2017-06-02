@@ -98,11 +98,12 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
 
 mbs::CombinerModule::~CombinerModule()
 {
+    DOUT0("mbs::CombinerModule::DTOR - does nothing!");
 }
 
 void mbs::CombinerModule::ModuleCleanup()
 {
-   DOUT3("mbs::CombinerModule::ModuleCleanup()");
+   DOUT0("mbs::CombinerModule::ModuleCleanup()");
 
    fOut.Close().Release();
    for (unsigned n=0;n<fInp.size();n++)

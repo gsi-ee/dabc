@@ -151,6 +151,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
 hadaq::CombinerModule::~CombinerModule()
 {
+   DOUT0("hadaq::CombinerModule::DTOR...");
    fOut.Close().Release();
 
    fCfg.clear();
@@ -158,6 +159,7 @@ hadaq::CombinerModule::~CombinerModule()
 
 void hadaq::CombinerModule::ModuleCleanup()
 {
+   DOUT0("hadaq::CombinerModule::ModuleCleanup()");
    StoreRunInfoStop(true); // run info with exit mode
 
    fOut.Close().Release();

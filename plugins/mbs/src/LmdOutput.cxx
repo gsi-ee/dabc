@@ -45,6 +45,7 @@ mbs::LmdOutput::LmdOutput(const dabc::Url& url) :
 
 mbs::LmdOutput::~LmdOutput()
 {
+    DOUT0(" mbs::LmdOutput::DTOR");
    CloseFile();
 }
 
@@ -73,6 +74,7 @@ bool mbs::LmdOutput::StartNewFile()
 
 bool mbs::LmdOutput::CloseFile()
 {
+   DOUT0(" mbs::LmdOutput::CloseFile()");
    if (fFile.isWriting()) {
       ShowInfo(0, dabc::format("Close file %s", CurrentFileName().c_str()));
       fFile.Close();
