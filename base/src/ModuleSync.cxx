@@ -46,7 +46,7 @@ dabc::ModuleSync::~ModuleSync()
    }
 }
 
-bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout) throw (Exception)
+bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout)
 {
    PortRef port = FindPort(name);
 
@@ -67,7 +67,7 @@ bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout) thro
 
 }
 
-bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (dabc::Exception)
+bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout)
 {
    OutputPort* port = Output(indx);
 
@@ -91,7 +91,7 @@ bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (d
 }
 
 
-dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (dabc::Exception)
+dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout)
 {
    InputPort* port = Input(indx);
 
@@ -112,7 +112,7 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (dabc::
    return Buffer();
 }
 
-dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) throw (dabc::Exception)
+dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout)
 {
    PoolHandle* handle = Pool(poolindx);
    if (handle==0) return (poolindx==0) ? TakeDfltBuffer() : Buffer();
@@ -126,8 +126,7 @@ dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) thr
 }
 
 
-
-dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw (dabc::Exception)
+dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout)
 {
    uint16_t evid(evntModuleNone);
    ModuleItem* resitem(0);
@@ -158,7 +157,7 @@ dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw
 }
 
 
-bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double timeout) throw (Exception)
+bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double timeout)
 {
    InputPort* port = Input(indx);
 
@@ -177,7 +176,7 @@ bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double ti
    return false;
 }
 
-bool dabc::ModuleSync::ModuleWorking(double timeout) throw (Exception)
+bool dabc::ModuleSync::ModuleWorking(double timeout)
 {
    AsyncProcessCommands();
 
@@ -187,7 +186,7 @@ bool dabc::ModuleSync::ModuleWorking(double timeout) throw (Exception)
    return true;
 }
 
-uint16_t dabc::ModuleSync::WaitEvent(double timeout) throw (Exception)
+uint16_t dabc::ModuleSync::WaitEvent(double timeout)
 {
    uint16_t evid = 0;
 
@@ -292,7 +291,7 @@ void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
    }
 }
 
-bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem) throw (Exception)
+bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem)
 {
    if (tmout<0) return false;
 
