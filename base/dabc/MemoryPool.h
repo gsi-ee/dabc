@@ -82,7 +82,7 @@ namespace dabc {
          unsigned                 fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
 
          bool                     fUseThread;      ///< indicate if thread functionality should be used to process supplied requests
-         
+
          static unsigned          fDfltAlignment;   ///< default alignment for memory allocation
          static unsigned          fDfltBufSize;     ///< default buffer size
 
@@ -242,7 +242,7 @@ namespace dabc {
 
       void SetMem(unsigned buffersize, unsigned numbuffers, unsigned align = 0)
       {
-         if (buffersize*numbuffers) {
+         if (buffersize*numbuffers != 0) {
             SetUInt(xmlNumBuffers, numbuffers);
             SetUInt(xmlBufferSize, buffersize);
          }
