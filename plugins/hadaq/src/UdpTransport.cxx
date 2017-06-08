@@ -20,6 +20,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sched.h>
 
 #include <netinet/in.h>
@@ -381,7 +382,7 @@ int hadaq::DataTransport::ExecuteCommand(dabc::Command cmd)
 // =================================================================================================
 
 
-hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce) :
+hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
@@ -391,6 +392,8 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
    fReduce(reduce < 1. ? reduce : 1.),
+   fLostRate(lost),
+   fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
    fRunning(false)
 {
@@ -496,6 +499,13 @@ bool hadaq::NewAddon::ReadUdp()
          if (errno == EAGAIN) break;
          EOUT("Socket error");
          return false;
+      }
+
+      if ((fLostCnt > 0) && (--fLostCnt == 0)) {
+         // artificial drop of received UDP packet
+         fLostCnt = (int) 1 / fLostRate * (0.5 + 1.* rand() / RAND_MAX);
+         if (fLostCnt < 3) fLostCnt = 3;
+         continue;
       }
 
       hadaq::HadTu* hadTu = (hadaq::HadTu*) tgt;

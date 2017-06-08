@@ -161,8 +161,10 @@ namespace hadaq {
          int                fSendCnt;         ///< counter of send buffers since last timeout active
          int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
+         double             fLostRate;        ///< artificial lost of received UDP packets
+         int                fLostCnt;         ///< counter used to drop buffers
 
-         bool               fDebug;             ///< when true, produce more debug output
+         bool               fDebug;           ///< when true, produce more debug output
 
          bool               fRunning;         ///< is transport running
 
@@ -177,7 +179,7 @@ namespace hadaq {
          bool CloseBuffer();
 
       public:
-         NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce);
+         NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost);
          virtual ~NewAddon();
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
