@@ -160,13 +160,8 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    DOUT0("Start HADAQ UDP transport on %s", url.GetHostNameWithPort().c_str());
 
-   if ((url.GetProtocol()=="nhadaq") || (url.GetProtocol()=="hadaq")) {
-	   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce, lost_rate);
-	   return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
-   }
-
-   DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu, flush, debug, maxloop, reduce);
-   return new hadaq::DataTransport(cmd, portref, addon, observer);
+   NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce, lost_rate);
+	return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
 }
 
 

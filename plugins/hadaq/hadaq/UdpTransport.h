@@ -68,82 +68,6 @@ namespace hadaq {
    };
 
 
-   /** \brief %Addon for socket thread to handle UDP data stream from TRB */
-
-   class DataSocketAddon : public dabc::SocketAddon,
-                           public dabc::DataInput,
-                           public TransportInfo {
-      protected:
-
-         friend class TerminalModule;  // use only to access statistic, nothing else
-         friend class DataTransport;
-
-         dabc::Pointer      fTgtPtr;          ///< pointer used to read data
-         bool               fWaitMoreData;    ///< indicate that transport waits for more data
-         unsigned           fMTU;             ///< maximal size of packet expected from TRB
-         double             fFlushTimeout;    ///< time when buffer will be flushed
-         int                fSendCnt;         ///< counter of send buffers since last timeout active
-         int                fMaxLoopCnt;      ///< maximal number of UDP packets, read at once
-         double             fReduce;          ///< reduce filled buffer size to let reformat data later
-
-         bool   fDebug;                     ///< when true, produce more debug output
-
-         virtual void ProcessEvent(const dabc::EventId&);
-         virtual double ProcessTimeout(double lastdiff);
-
-         void MakeCallback(unsigned sz);
-
-         /* Use codes which are valid for Read_Start */
-         unsigned ReadUdp();
-
-         virtual dabc::WorkerAddon* Read_GetAddon() { return this; }
-
-         /** Light-weight command interface, which can be used from worker */
-         virtual long Notify(const std::string&, int);
-
-      public:
-         DataSocketAddon(int fd, int nport, int mtu, double flush, bool debug, int maxloop, double reduce);
-         virtual ~DataSocketAddon();
-
-         // this is interface from DataInput
-         virtual unsigned Read_Size() { return dabc::di_DfltBufSize; }
-         virtual unsigned Read_Start(dabc::Buffer& buf);
-         virtual unsigned Read_Complete(dabc::Buffer& buf);
-         virtual double Read_Timeout() { return 0.1; }
-   };
-
-   // ================================================================
-
-   /** \brief Special HADAQ input transport
-    *
-    * Required to be able export different ratemeters to EPICS
-    */
-
-   class DataTransport : public dabc::InputTransport {
-
-      protected:
-
-         int            fIdNumber;
-         bool           fWithObserver;
-         std::string    fDataRateName;
-
-         std::string GetNetmemParName(const std::string& name);
-         void CreateNetmemPar(const std::string& name);
-         void SetNetmemPar(const std::string& name, unsigned value);
-
-         void RegisterExportedCounters();
-         bool UpdateExportedCounters();
-
-         virtual void ProcessTimerEvent(unsigned timer);
-
-         virtual int ExecuteCommand(dabc::Command cmd);
-
-      public:
-         DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon, bool observer);
-         virtual ~DataTransport();
-
-   };
-
    // ==================================================================================
 
 
@@ -226,7 +150,6 @@ namespace hadaq {
          void FlushBuffer(bool onclose = false);
 
    };
-
 
 }
 
