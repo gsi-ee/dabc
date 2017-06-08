@@ -212,6 +212,8 @@ bool hadaq::ReadIterator::NextSubEvent()
          return false;
       }
 
+      if (containersize == 0) return false; // typical problem of artifical generated events
+
       if (containersize < headsize) {
          EOUT("Hadaq format error - tu container fullsize %u too small", (unsigned) containersize);
          return false;
