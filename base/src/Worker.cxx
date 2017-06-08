@@ -1004,7 +1004,7 @@ bool dabc::Worker::GetCommandReply(dabc::Command& cmd, bool* exe_ready)
 
    if (!_FireEvent(evntReplyCommand, id, 0)) {
       fWorkerCommands.PopWithId(id);
-      EOUT("Worker %s don't want get command for reply", GetName());
+      if (!cmd.HasField("#no_warnings")) EOUT("Worker %s don't want get command for reply", GetName());
       return false;
    }
 

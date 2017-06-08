@@ -251,7 +251,8 @@ void dabc::Command::Reply(int res)
 
       if (rec.worker->GetCommandReply(*this, rec.exe_ready)) break;
 
-      EOUT("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s worker %p", GetName(), rec.worker);
+      if (!HasField("#no_warnings"))
+         EOUT("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s worker %p", GetName(), rec.worker);
    }
 
    // in any case release reference at the end

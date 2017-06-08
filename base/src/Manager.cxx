@@ -654,6 +654,7 @@ bool dabc::Manager::ProcessParameterEvents()
          CmdParameterEvent evnt(fullname, value, rec.event, attrmodified);
 
          evnt.SetPtr("#Iterator", &(*iter));
+         evnt.SetBool("#no_warnings",true);
 
          iter->queue++;
 
