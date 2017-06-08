@@ -88,6 +88,15 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          DOUT3("Destroy EXEC worker %p", this);
       }
 
+      /** Just workaround to check if execution is still performed */
+      bool DirtyWorkaround() {
+         if (fWorkerCommandsLevel <= 0) return false;
+         fThread.Release();
+         fThreadMutex = 0;
+         return true;
+      }
+
+
       virtual const char* ClassName() const { return "Thread"; }
 
       virtual int ExecuteCommand(Command cmd)
@@ -285,7 +294,10 @@ dabc::Thread::~Thread()
    }
 
    exec->ClearThreadRef();
-   dabc::Object::Destroy(exec);
+   if (exec->DirtyWorkaround())
+      EOUT("Execution instance for the thread %s is blocked - KEEP EXEC ALIVE AND FIX LATER", GetName());
+   else
+      dabc::Object::Destroy(exec); // normally destroy should be called
 
    for (unsigned n=0;n<fWorkers.size();n++) {
       if (fWorkers[n]) {
