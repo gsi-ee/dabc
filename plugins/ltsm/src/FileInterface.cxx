@@ -212,7 +212,8 @@ void ltsm::FileInterface::fclose(Handle f)
 	return;
     if(fIsClosing)
       {
-	 DOUT0("ltsm::FileInterface::fclose is called during closing, ignore!");
+	 DOUT0("ltsm::FileInterface::fclose is called during closing - do tsm_cleanup!");
+	 tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return;
       }
     fIsClosing=true;
@@ -252,7 +253,8 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 
      if(fIsClosing)
       {
-	 DOUT0("ltsm::FileInterface::fwrite is called during closing, ignore!");
+	 DOUT0("ltsm::FileInterface::fwrite is called during closing - do tsm_cleanup!");
+	 tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return 0;
       }
 
