@@ -16,6 +16,8 @@
 
 #ifdef LTSM_OLD_FILEAPI
 extern "C" {
+//#include "tsmapi.h"
+// deprecated, intermediate branch of jb:
 #include "tsmfileapi.h"
 }
 #else

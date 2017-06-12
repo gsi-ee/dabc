@@ -2,7 +2,7 @@
 <dabc version="2">
  
 
-  <Context host="hades45" name="Combiner">
+  <Context host="lxhadeb02" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
@@ -10,7 +10,7 @@
       <lib value="libDabcHttp.so"/>  
       
       
-      <logfile value="ltsmtest.log"/>
+      <logfile value="ltsmfile.log"/>
       <debuglevel value="1"/>
       <debugger value="false"/>
     </Run>
@@ -32,9 +32,9 @@
        <InputPort name="Input0" url="lmd://Generator?size=10000&numsub=1&procid=${DABCNODEID}&go4=false"/>
 <!--        <InputPort name="Input0" url="hld:///home/adamczew/data/hld/fw1206920381501.hld"/>  -->
        <InputPort name="Input*" queue="5" timeout="5"/>
-<!--        <OutputPort name="Output0" url="mbs://Stream"/> -->
-<!-- 			<OutputPort name="Output0" url="lmd:///home/adamczew/data/dabc_generated_200k_3000_10k_local_2.lmd?maxsize=1000"/> -->
-       <OutputPort name="Output0" url="lmd:///home/adamczew/dabctest/dabc_generated_200k_3000_10k.lmd?maxsize=1000&ltsm&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
+<!--       <OutputPort name="Output0" url="mbs://Stream"/> -->
+<!-- 			<OutputPort name="Output0" url="lmd:///data01/data/tmp/dabc_generated_200k_3000_10k_local.lmd?maxsize=1000"/> -->       
+  <OutputPort name="Output0" url="lmd:///home/hadaq/test/dabc_generated_lxhadeb02_2.lmd?maxsize=1000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01-tsm-server&ltsmNode=LTSM_TEST01&ltsmPass=LTSM_TEST01"/>
    
    
        <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
