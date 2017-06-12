@@ -48,7 +48,8 @@ namespace ltsm {
 	   std::string fOwner;
 	   std::string fFsname;
 	   std::string fDescription;
-
+	   
+	   bool fIsClosing; //< avoid double fclose on termination by this
 
       public:
 

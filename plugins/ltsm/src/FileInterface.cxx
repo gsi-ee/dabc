@@ -7,7 +7,7 @@
 #include "dabc/timing.h"
 
 ltsm::FileInterface::FileInterface() :
-	dabc::FileInterface()
+  dabc::FileInterface(),fIsClosing(false)
     {
     DOUT0("tsm::FileInterface::FileInterface() ctor starts...");
     api_msg_set_level(API_MSG_NORMAL);
@@ -173,6 +173,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
 #endif
     fCurrentFile = fname;
+    fIsClosing=false;
     return theHandle;
     }
 
@@ -209,6 +210,12 @@ void ltsm::FileInterface::fclose(Handle f)
       DOUT0("ltsm::FileInterface::fclose with handle 0x%x... ",f);
     if (f == 0)
 	return;
+    if(fIsClosing)
+      {
+	 DOUT0("ltsm::FileInterface::fclose is called during closing, ignore!");
+	return;
+      }
+    fIsClosing=true;
 #ifdef LTSM_OLD_FILEAPI
     struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
     tsm_file_close(theHandle);
@@ -242,6 +249,13 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 
     if ((f == 0) || (ptr == 0) || (sz == 0))
 	return 0;
+
+     if(fIsClosing)
+      {
+	 DOUT0("ltsm::FileInterface::fwrite is called during closing, ignore!");
+	return 0;
+      }
+
 
 #ifdef LTSM_OLD_FILEAPI
     struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
