@@ -166,6 +166,7 @@ namespace hadaq {
 
          bool fWithObserver;
          bool fEpicsSlave;
+	 bool fIsTerminating;
 
          bool fRunToOracle;
 

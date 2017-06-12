@@ -75,9 +75,10 @@ hadaq::Observer::Observer(const std::string& name) :
 
 hadaq::Observer::~Observer()
 {
-   DOUT1("############# Destroy SHMEM observer #############");
-   if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
-   if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
+   DOUT1("############# Destroy SHMEM observer without worker fini#############");
+   //if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
+   //if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
+   // JAM2017 - avoid trouble with sigaction in dtors!
 }
 
 
@@ -305,7 +306,9 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 void hadaq::sigHandler(int sig)
 {
-   DOUT1("hadaq Observer caught signal %d", sig);
+   DOUT1("hadaq Observer caught signal %d ", sig);
+   //DABC_GLOBAL_CtrlCHandler(int sig);
+   //return;
    // following is copy of dabc_exe dabc_CtrlCHandler
    // probably use this directly?
    static int SigCnt=0;

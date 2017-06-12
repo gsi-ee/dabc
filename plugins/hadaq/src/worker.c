@@ -133,6 +133,10 @@ static int closeStatShm(Worker *my)
 
 static int removeSigHandlers(Worker *my)
 {
+  
+  //return 0; // test
+  // jam2017
+
 	return sigaction(my->signal0, my->oldSigAction0, NULL)
 		| sigaction(my->signal1, my->oldSigAction1, NULL)
 		| sigaction(my->signal2, my->oldSigAction2, NULL);
@@ -140,6 +144,8 @@ static int removeSigHandlers(Worker *my)
 
 static int installSigHandlers(Worker *my, int s0, int s1, int s2, void (*sigHandler) (int))
 {
+  //return 0; // test
+  // jam2017
 	int retVal;
 	struct sigaction actS, *act = &actS;
 

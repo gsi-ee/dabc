@@ -39,6 +39,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fFlushCounter(0),
    fWithObserver(false),
    fEpicsSlave(false),
+   fIsTerminating(false),
    fRunToOracle(false),
    fCheckTag(true),
    fFlushTimeout(0.),
@@ -151,21 +152,30 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
 hadaq::CombinerModule::~CombinerModule()
 {
-   DOUT0("hadaq::CombinerModule::DTOR...");
-   fOut.Close().Release();
+   DOUT0("hadaq::CombinerModule::DTOR..does nothing now!.");
+   //fOut.Close().Release();
 
-   fCfg.clear();
+   //fCfg.clear();
 }
 
 void hadaq::CombinerModule::ModuleCleanup()
 {
    DOUT0("hadaq::CombinerModule::ModuleCleanup()");
-   StoreRunInfoStop(true); // run info with exit mode
+   fIsTerminating=true;
+   //StoreRunInfoStop(true); // run info with exit mode
 
    fOut.Close().Release();
 
+ DOUT0("hadaq::CombinerModule::ModuleCleanup() after fOut Close");
+
+   StoreRunInfoStop(true); // run info with exit mode
+
+
+
    for (unsigned n=0;n<fCfg.size();n++)
       fCfg[n].Reset();
+
+ DOUT0("hadaq::CombinerModule::ModuleCleanup() after  fCfg[n].Reset()");
 
 //   DOUT0("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1);
 //   if (numsync>0)
@@ -357,7 +367,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 bool hadaq::CombinerModule::UpdateExportedCounters()
 {
    if(!fWithObserver) return false;
-
+   if(fIsTerminating) return false; // JAM2017: suppress warnings on termination
    // written bytes is updated by hldoutput directly, required by epics control of file size limit
    //SetEvtbuildPar("bytesWritten", fTotalRecvBytes);
 

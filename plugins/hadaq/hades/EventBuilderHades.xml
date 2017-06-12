@@ -74,6 +74,8 @@ DAQDISK - switches disk demon mode on/off
 <!--       <init value=". /home/joern/dabcwork/head/dabclogin"/> -->
       <control value="true"/>
      <affinity value="-1"/>
+      <!-- runtime value="30"/ -->
+      <halttime value="10"/>
      <!--  <threads_layout value="maximal"/>-->
     </Run>
     
