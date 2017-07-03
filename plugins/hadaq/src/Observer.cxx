@@ -75,7 +75,7 @@ hadaq::Observer::Observer(const std::string& name) :
 
 hadaq::Observer::~Observer()
 {
-   DOUT1("############# Destroy SHMEM observer #############");
+   DOUT1("############# Destroy SHMEM observer with worker fini 2nd try#############");
    if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
    if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
 }
@@ -305,9 +305,9 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 void hadaq::sigHandler(int sig)
 {
-   // JAM2017: note that this signal handler is no longer used. instead dabc will handle keyboard interrupt signal
-    DOUT1("hadaq Observer caught signal %d - never come here!", sig);
-   return; // JAM2017
+   // JAM2017: note that this signal handler is still used todo: check what happens with epics!
+    DOUT1("hadaq Observer caught signal %d - !", sig);
+   //return; // JAM2017
     // following is copy of dabc_exe dabc_CtrlCHandler
    // probably use this directly?
    static int SigCnt=0;

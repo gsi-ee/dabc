@@ -144,7 +144,7 @@ static int removeSigHandlers(Worker *my)
 static int installSigHandlers(Worker *my, int s0, int s1, int s2, void (*sigHandler) (int))
 {
   return 0; // test
-  // jam2017: we disable signal handles of shared memory workers and just use dabc native ctrl-c handler
+  // jam2017: ? may we disable signal handles of shared memory workers and just use dabc native ctrl-c handler
 	int retVal;
 	struct sigaction actS, *act = &actS;
 

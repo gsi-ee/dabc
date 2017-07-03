@@ -18,15 +18,28 @@ use Data::Dumper;
 # sleep 2;
 # @out_list = `ps -C $pname`;
 # &killHardProcs(\@out_list, $pname);
+##########################################
 
-my $pname = "dabc_exe";
+my $pname = "dabc_exe.head";
 my @out_list = `ps -C $pname`;
+&killKeyboardInterrupt(\@out_list, $pname);
+
+$pname = "dabc_exe.275";
+@out_list = `ps -C $pname`;
+&killKeyboardInterrupt(\@out_list, $pname);
+
+$pname = "dabc_exe";
+@out_list = `ps -C $pname`;
+&killKeyboardInterrupt(\@out_list, $pname);
+
+######################################
 #&killSoftProcs(\@out_list, $pname);
+# do not kill dabc twice!
 #sleep 2;
 # @out_list = `ps -C $pname`;
 # &killHardProcs(\@out_list, $pname);
-
-&killKeyboardInterrupt(\@out_list, $pname);
+#
+#&killKeyboardInterrupt(\@out_list, $pname);
 
 #- Remove shared memory segments if remained
 
@@ -55,6 +68,8 @@ sub killSoftProcs()
 	    my $PID = $items[0];
 
 	    system("kill $PID");
+	  print "kill $PID with signal TERM \n"
+
 	}
     }
 }
