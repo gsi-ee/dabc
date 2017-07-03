@@ -9,24 +9,24 @@
 ltsm::FileInterface::FileInterface() :
   dabc::FileInterface(),fIsClosing(false)
     {
-    DOUT0("tsm::FileInterface::FileInterface() ctor starts...");
+    DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
     api_msg_set_level(API_MSG_NORMAL);
     DOUT0(
 	    "tsm::FileInterface::FileInterface() ctor set api message level to %d",
 	   API_MSG_NORMAL);
-    //tsm_init (DSM_MULTITHREAD); // do we need multithread here?
-    DOUT0("tsm::FileInterface::FileInterface() ctor leaving...");
+    tsm_init (DSM_MULTITHREAD); // do we need multithread here?
+    DOUT3("tsm::FileInterface::FileInterface() ctor leaving...");
     }
 
 ltsm::FileInterface::~FileInterface()
     {
 
     DOUT0("ltsm::FileInterface::DTOR ... ");
-    //#ifdef LTSM_OLD_FILEAPI
-    //dsmCleanUp(DSM_MULTITHREAD);
-    //#else
-    //tsm_cleanup (DSM_MULTITHREAD);
-    //#endif
+    #ifdef LTSM_OLD_FILEAPI
+    dsmCleanUp(DSM_MULTITHREAD);
+    #else
+    tsm_cleanup (DSM_MULTITHREAD);
+    #endif
 
     }
 
@@ -41,7 +41,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
 
     // workaround for cleanup problem: do init in open, cleanup in close
-    tsm_init (DSM_MULTITHREAD);
+    //tsm_init (DSM_MULTITHREAD);
     fCurrentFile = "none";
     fServername = "lxltsm01-tsm-server";
     fNode = "LTSM_TEST01";
@@ -53,7 +53,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	    "This file was created by DABC ltsm interface at %s",
 	    dt.GetNow().AsJSString().c_str());
 
-    DOUT1("ltsm::FileInterface::fopen before options with options %s \n", opt);
+    DOUT3("ltsm::FileInterface::fopen before options with options %s \n", opt);
     dabc::Url url;
     url.SetOptions(opt);
     if (url.HasOption("ltsmServer"))
@@ -212,8 +212,8 @@ void ltsm::FileInterface::fclose(Handle f)
 	return;
     if(fIsClosing)
       {
-	 DOUT0("ltsm::FileInterface::fclose is called during closing - do tsm_cleanup!");
-	 tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
+	 DOUT0("ltsm::FileInterface::fclose is called during closing - ignored!");
+	 //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return;
       }
     fIsClosing=true;
@@ -221,7 +221,7 @@ void ltsm::FileInterface::fclose(Handle f)
     struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
     tsm_file_close(theHandle);
     free(theHandle);
-    dsmCleanUp(DSM_MULTITHREAD); // workaround JAM
+    //dsmCleanUp(DSM_MULTITHREAD); // workaround JAM
 #else
 
     struct session_t* theHandle = (struct session_t*) f;
@@ -233,9 +233,9 @@ void ltsm::FileInterface::fclose(Handle f)
 		fCurrentFile.c_str(), fServername.c_str(), fNode.c_str(),
 		fFsname.c_str());
 	}
- DOUT0("ltsm::FileInterface::fclose after tsm_fclose with rc %d... ",rc);
+    DOUT0("ltsm::FileInterface::fclose after tsm_fclose with rc %d... ",rc);
     free(theHandle);
-    tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
+    //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 
 #endif
 
@@ -253,8 +253,8 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 
      if(fIsClosing)
       {
-	 DOUT0("ltsm::FileInterface::fwrite is called during closing - do tsm_cleanup!");
-	 tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
+	 DOUT0("ltsm::FileInterface::fwrite is called during closing - ignored!");
+	 //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return 0;
       }
 

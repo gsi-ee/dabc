@@ -75,10 +75,9 @@ hadaq::Observer::Observer(const std::string& name) :
 
 hadaq::Observer::~Observer()
 {
-   DOUT1("############# Destroy SHMEM observer without worker fini#############");
-   //if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
-   //if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
-   // JAM2017 - avoid trouble with sigaction in dtors!
+   DOUT1("############# Destroy SHMEM observer #############");
+   if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
+   if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
 }
 
 
@@ -306,14 +305,13 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 void hadaq::sigHandler(int sig)
 {
-   DOUT1("hadaq Observer caught signal %d ", sig);
-   //DABC_GLOBAL_CtrlCHandler(int sig);
-   //return;
-   // following is copy of dabc_exe dabc_CtrlCHandler
+   // JAM2017: note that this signal handler is no longer used. instead dabc will handle keyboard interrupt signal
+    DOUT1("hadaq Observer caught signal %d - never come here!", sig);
+   return; // JAM2017
+    // following is copy of dabc_exe dabc_CtrlCHandler
    // probably use this directly?
    static int SigCnt=0;
    SigCnt++;
-
    if ((SigCnt>2) || dabc::mgr.null()) {
       EOUT("hadaq Observer Force application exit");
       dabc::lgr()->CloseFile();

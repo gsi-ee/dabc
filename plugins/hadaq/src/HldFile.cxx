@@ -107,7 +107,7 @@ bool hadaq::HldFile::OpenRead(const char* fname, const char* opt)
 
 void hadaq::HldFile::Close()
 {
-   DOUT0("hadaq::HldFile::Close()... ");
+   DOUT3("hadaq::HldFile::Close()... ");
   if (isWriting()) {
       // need to add empty terminating event:
       hadaq::RawEvent evnt;

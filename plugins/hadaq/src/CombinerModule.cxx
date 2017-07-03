@@ -152,9 +152,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
 hadaq::CombinerModule::~CombinerModule()
 {
-   DOUT0("hadaq::CombinerModule::DTOR..does nothing now!.");
+   DOUT3("hadaq::CombinerModule::DTOR..does nothing now!.");
    //fOut.Close().Release();
-
    //fCfg.clear();
 }
 
@@ -162,20 +161,15 @@ void hadaq::CombinerModule::ModuleCleanup()
 {
    DOUT0("hadaq::CombinerModule::ModuleCleanup()");
    fIsTerminating=true;
-   //StoreRunInfoStop(true); // run info with exit mode
-
-   fOut.Close().Release();
-
- DOUT0("hadaq::CombinerModule::ModuleCleanup() after fOut Close");
-
    StoreRunInfoStop(true); // run info with exit mode
+   fOut.Close().Release();
 
 
 
    for (unsigned n=0;n<fCfg.size();n++)
       fCfg[n].Reset();
 
- DOUT0("hadaq::CombinerModule::ModuleCleanup() after  fCfg[n].Reset()");
+   DOUT5("hadaq::CombinerModule::ModuleCleanup() after  fCfg[n].Reset()");
 
 //   DOUT0("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1);
 //   if (numsync>0)

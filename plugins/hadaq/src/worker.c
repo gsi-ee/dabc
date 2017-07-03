@@ -133,9 +133,8 @@ static int closeStatShm(Worker *my)
 
 static int removeSigHandlers(Worker *my)
 {
-  
-  //return 0; // test
-  // jam2017
+  return 0; // test
+  // jam2017 we disable signal handles of shared memory workers and just use dabc native ctrl-c handler
 
 	return sigaction(my->signal0, my->oldSigAction0, NULL)
 		| sigaction(my->signal1, my->oldSigAction1, NULL)
@@ -144,8 +143,8 @@ static int removeSigHandlers(Worker *my)
 
 static int installSigHandlers(Worker *my, int s0, int s1, int s2, void (*sigHandler) (int))
 {
-  //return 0; // test
-  // jam2017
+  return 0; // test
+  // jam2017: we disable signal handles of shared memory workers and just use dabc native ctrl-c handler
 	int retVal;
 	struct sigaction actS, *act = &actS;
 

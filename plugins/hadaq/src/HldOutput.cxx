@@ -79,7 +79,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
 
 hadaq::HldOutput::~HldOutput()
 {
-   DOUT0(" hadaq::HldOutput::DTOR");
+   DOUT3(" hadaq::HldOutput::DTOR");
    CloseFile();
 }
 
@@ -199,7 +199,7 @@ bool hadaq::HldOutput::Write_Retry()
 
 bool hadaq::HldOutput::CloseFile()
 {
-   DOUT0(" hadaq::HldOutput::CloseFile()");
+   DOUT3(" hadaq::HldOutput::CloseFile()");
    if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
    fCurrentFileSize = 0;

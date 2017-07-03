@@ -21,11 +21,12 @@ use Data::Dumper;
 
 my $pname = "dabc_exe";
 my @out_list = `ps -C $pname`;
-&killSoftProcs(\@out_list, $pname);
-sleep 2;
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#&killSoftProcs(\@out_list, $pname);
+#sleep 2;
+# @out_list = `ps -C $pname`;
+# &killHardProcs(\@out_list, $pname);
 
+&killKeyboardInterrupt(\@out_list, $pname);
 
 #- Remove shared memory segments if remained
 
@@ -74,3 +75,22 @@ sub killHardProcs()
 	}
     }
 }
+
+sub killKeyboardInterrupt()
+{
+    my ($list_aref, $proc_name) = @_;
+
+    foreach my $line (@$list_aref){
+
+	if( $line =~ /$proc_name/ ){
+	    $line =~ s/^\s+//;  # remove leading spaces
+	    my @items = split( /\s+/, $line );
+
+	    my $PID = $items[0];
+
+	    system("kill -2 $PID");
+	    print "kill $PID with keyboard interrupt\n"
+	}
+    }
+}
+
