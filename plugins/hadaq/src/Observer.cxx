@@ -119,6 +119,12 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
       //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
    }
 
+   //entry = FindEntry("bytesWritten",netname);
+   //if(entry){
+   //   entry->UpdateParameter();
+   //   //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
+   //}
+
    return fFlushTimeout;
 }
 
@@ -305,9 +311,9 @@ int hadaq::Observer::Args_prefixCode(const char* prefix)
 
 void hadaq::sigHandler(int sig)
 {
-   // JAM2017: note that this signal handler is still used todo: check what happens with epics!
-    DOUT1("hadaq Observer caught signal %d - !", sig);
-   //return; // JAM2017
+   // JAM2017: note that this signal handler is not used anymore!
+    DOUT1("hadaq Observer caught signal %d - never come here!", sig);
+   return; // JAM2017
     // following is copy of dabc_exe dabc_CtrlCHandler
    // probably use this directly?
    static int SigCnt=0;
