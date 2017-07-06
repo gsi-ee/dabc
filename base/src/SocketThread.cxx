@@ -1048,8 +1048,8 @@ dabc::SocketThread::~SocketThread()
 {
    // !!!!!! we should stop thread before destroying anything while
    // thread may use some structures in the MainLoop !!!!!!!!
-
-   Stop(1.);
+  DOUT3("~~~~~~~~~~~~~~ SOCKThread %s destructor with timeout 6s", GetName());
+  Stop(6.); // JAM 6.7.2017 - try with larger timeout for ltsm
 
    if (fPipe[0]!=0) { close(fPipe[0]);  fPipe[0] = 0; }
    if (fPipe[1]!=0) { close(fPipe[1]);  fPipe[1] = 0; }

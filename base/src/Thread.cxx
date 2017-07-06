@@ -275,12 +275,13 @@ dabc::Thread::~Thread()
 {
    // !!!!!!!! Do not forgot stopping thread in destructors of inherited classes too  !!!!!
 
-   DOUT3("~~~~~~~~~~~~~~ THRD %s destructor", GetName());
+   DOUT3("~~~~~~~~~~~~~~ THRD %s destructor with timeout 5s", GetName());
 
    // we stop thread in destructor, in all inherited classes stop also should be called
    // otherwise one get problem here if stop will use inherited methods which is no longer available
 
-   Stop(1.);
+   //Stop(1.); JAM 6.7.2017 - try with larger timeout for ltsm
+   Stop(5.);
 
    ExecWorker* exec = 0;
 
@@ -712,7 +713,7 @@ bool dabc::Thread::Stop(double timeout_sec)
 
    bool res(false);
 
-   DOUT3("Start doing stop");
+   DOUT3("Start doing thread %s stop with timeout %f s", GetName(),timeout_sec);
 
    if (!needstop) {
 
