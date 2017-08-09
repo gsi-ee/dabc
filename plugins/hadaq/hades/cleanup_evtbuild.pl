@@ -32,6 +32,10 @@ $pname = "dabc_exe";
 @out_list = `ps -C $pname`;
 &killKeyboardInterrupt(\@out_list, $pname);
 
+
+# JAM 8-2017 this might be required to give epics time for distribution of new runid?
+sleep 5;
+
 ######################################
 #&killSoftProcs(\@out_list, $pname);
 # do not kill dabc twice!
