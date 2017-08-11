@@ -34,7 +34,28 @@ $pname = "dabc_exe";
 
 
 # JAM 8-2017 this might be required to give epics time for distribution of new runid?
-sleep 5;
+
+print "waiting 10 seconds for files to close properly...\n";
+sleep 10;
+
+# JAM 8-2017 to ensure dabc processes have gone, kill everything that still remains on the hard way: 
+
+
+$pname = "dabc_exe.head";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
+
+$pname = "dabc_exe.275";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
+
+$pname = "dabc_exe";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
+
+
+
+
 
 ######################################
 #&killSoftProcs(\@out_list, $pname);
