@@ -119,7 +119,7 @@ dabc::Logger::Logger(bool withmutex)
    fErrorMask = lPrefix | lTStamp  | lFile | lFunc | lLine | lMessage;
    fFileMask = lNoPrefix | lTime; // disable prefix and enable time
 
-   fMutex = withmutex ? new Mutex : 0;
+   fMutex = withmutex ? new Mutex(true) : 0;
    fMaxLine = 0;
    fLines = 0;
 
