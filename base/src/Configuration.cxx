@@ -197,6 +197,15 @@ double dabc::Configuration::GetHaltTime()
    return dabc::str_to_double(res.c_str(), &halttime) ? halttime : 0.;
 }
 
+double dabc::Configuration::GetThrdStopTime()
+{
+   if (fSelected==0) return 0.;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlThrdStopTime);
+   if (res.empty()) return 0.;
+   double stoptime(0.);
+   return dabc::str_to_double(res.c_str(), &stoptime) ? stoptime : 0.;
+}
+
 bool dabc::Configuration::NormalMainThread()
 {
    if (fSelected==0) return true;

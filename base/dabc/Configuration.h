@@ -26,7 +26,6 @@
 
 #include <list>
 
-
 namespace dabc {
 
    class Object;
@@ -42,15 +41,15 @@ namespace dabc {
       friend class ConfigIO;
 
       protected:
-         XMLNodePointer_t  fSelected; // selected context node
+         XMLNodePointer_t    fSelected; // selected context node
 
-         std::string      fMgrHost;
-         int              fMgrPort;
-         std::string      fMgrName;
-         int              fMgrNodeId;
-         int              fMgrNumNodes;
+         std::string         fMgrHost;
+         int                 fMgrPort;
+         std::string         fMgrName;
+         int                 fMgrNodeId;
+         int                 fMgrNumNodes;
 
-         static std::string      fLocalHost;
+         static std::string  fLocalHost;
 
       public:
          Configuration(const char* fname = 0);
@@ -86,6 +85,9 @@ namespace dabc {
          /** \brief Returns time, required to halt DABC process */
          double GetHaltTime();
 
+         /** \brief Returns time, required for normal thread stopping */
+         double GetThrdStopTime();
+
          bool NormalMainThread();
          std::string ThreadsLayout();
 
@@ -112,7 +114,6 @@ namespace dabc {
          static std::string GetLocalHost() { return fLocalHost; }
 
    };
-
 
 }
 

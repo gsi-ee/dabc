@@ -298,8 +298,9 @@ namespace dabc {
          TimeStamp            fLastProfileTime;  ///< when doing profiling, last time when profiling was done
          double               fThreadRunTime;    ///< total run time (user and sys), measured by getrusage
 
-         static unsigned      fThreadInstances;
+         double               fThrdStopTimeout;  ///< time in second set as timeout when stopping thred
 
+         static unsigned      fThreadInstances;
 
 
          /** \brief Internal DABC method, used to verify if worker can be halted now while recursion is over
@@ -337,6 +338,10 @@ namespace dabc {
 
          inline bool IsItself() const { return PosixThread::IsItself(); }
          void SetPriority(int prio = 0) { PosixThread::SetPriority(prio); }
+
+         // set stop timeout if required in the thread destructir
+         void SetStopTimeout(double timeout_sec) { fThrdStopTimeout = timeout_sec; }
+         double GetStopTimeout() const { return fThrdStopTimeout; }
 
          // thread manipulation, thread safe routines
          bool Start(double timeout_sec = -1., bool real_thread = true);

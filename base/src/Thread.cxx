@@ -28,6 +28,7 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/string.h"
+#include "dabc/Configuration.h"
 
 
 
@@ -230,7 +231,8 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
    fCheckThrdCleanup(false),
    fProfiling(false),
    fLastProfileTime(),
-   fThreadRunTime(0.)
+   fThreadRunTime(0.),
+   fThrdStopTimeout(0.)
 {
    fThreadInstances++;
 
@@ -264,6 +266,10 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
          DOUT0("Thread %s specified affinity %s mask %s", GetName(), affinity.c_str(), sbuf);
    }
 
+   fThrdStopTimeout = fExec->Cfg(xmlThrdStopTime, cmd).AsDouble();
+   if ((fThrdStopTimeout <= 0) && !dabc::mgr.null()) fThrdStopTimeout = dabc::mgr()->cfg()->GetThrdStopTime();
+   if (fThrdStopTimeout <= 0) fThrdStopTimeout = 5.;
+
    fWorkers.push_back(new WorkerRec(fExec,0));
 
 //   SetLogging(true);
@@ -275,13 +281,13 @@ dabc::Thread::~Thread()
 {
    // !!!!!!!! Do not forgot stopping thread in destructors of inherited classes too  !!!!!
 
-   DOUT3("~~~~~~~~~~~~~~ THRD %s destructor with timeout 5s", GetName());
+   DOUT3("~~~~~~~~~~~~~~ THRD %s destructor with timeout %3.1f s", GetName(), GetStopTimeout());
 
    // we stop thread in destructor, in all inherited classes stop also should be called
    // otherwise one get problem here if stop will use inherited methods which is no longer available
 
    //Stop(1.); JAM 6.7.2017 - try with larger timeout for ltsm
-   Stop(5.);
+   Stop(GetStopTimeout());
 
    ExecWorker* exec = 0;
 

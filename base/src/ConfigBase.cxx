@@ -71,6 +71,7 @@ namespace dabc {
    const char* xmlSyslog           = "syslog";
    const char* xmlRunTime          = "runtime";
    const char* xmlHaltTime         = "halttime";
+   const char* xmlThrdStopTime     = "thrdstoptime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
    const char* xmlAffinity         = "affinity";
    const char* xmlThreadsLayout    = "threads_layout";

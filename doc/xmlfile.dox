@@ -107,6 +107,7 @@ which can be specified in `<Run>` section.
 | taskset    | taskset arguments like "-c 10-15" to set affinity of whole dabc_exe process. See [here](@ref dabc_affinity) for more details |
 | affinity   | affinity mask which defines how threads code be used. See [here](@ref dabc_affinity) for more details |
 | threads_layout  | "minimal", "permodule", "balanced" (default), "maximal" |
+| thrdstoptime  | timeout when stopping thread in destructor, default 5 sec |
 | stdout     | redirection for standard output, for instance file name |
 | errout     | redirection for error output, for instance file name |
 | nullout    | if true, all output will be redirected ro /dev/null |
@@ -137,6 +138,14 @@ Following parameters could be specified:
 | Alignment | Alignment of memory buffer in bytes (default 16) |
 
 
+## Thread
+
+Following parameters can be specified for each thread separately:
+
+| Parameter  | Description |
+| --------:  | :---------- |
+| thrdstoptime  | timeout when stopping thread in destructor, default 5 sec |
+| affinity  | thread affinity, see appropriate section in introduction |
 
 
 ## Module
