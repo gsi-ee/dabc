@@ -75,7 +75,7 @@ hadaq::Observer::Observer(const std::string& name) :
 
 hadaq::Observer::~Observer()
 {
-   DOUT1("############# Destroy SHMEM observer with worker fini 2nd try#############");
+   DOUT3("############# Destroy SHMEM observer with worker fini try#############");
    if (fEvtbuildWorker) ::Worker_fini(fEvtbuildWorker);
    if (fNetmemWorker) ::Worker_fini(fNetmemWorker);
 }
