@@ -39,21 +39,22 @@ print "waiting 10 seconds for files to close properly...\n";
 sleep 10;
 
 # JAM 8-2017 to ensure dabc processes have gone, kill everything that still remains on the hard way: 
+# for the moment, test dabc shutdown again-
 
 
-$pname = "dabc_exe.head";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#$pname = "dabc_exe.head";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
-$pname = "dabc_exe.275";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#$pname = "dabc_exe.275";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
-$pname = "dabc_exe";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#$pname = "dabc_exe";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
-
+print "                ...done.\n";
 
 
 
@@ -112,6 +113,8 @@ sub killHardProcs()
 	    my $PID = $items[0];
 
 	    system("kill -9 $PID");
+	     print "kill $PID with signal -9 \n"
+
 	}
     }
 }

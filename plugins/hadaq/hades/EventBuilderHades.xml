@@ -76,6 +76,8 @@ DAQDISK - switches disk demon mode on/off
      <affinity value="-1"/>
       <!-- runtime value="30"/ -->
       <halttime value="60"/>
+      <thrdstoptime value="10"/>
+
      <!--  <threads_layout value="maximal"/>-->
     </Run>
     
