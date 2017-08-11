@@ -53,7 +53,7 @@ RFIOMAXFILE  - Maxfile 100,
 RFIOPATHCONV - pathconvention=1 to create new subfolder on lustre after 100 events
 
 FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
-DAQDISK - switches disk demon mode on/off
+DAQDISK - switches disk demon mode on/off/co
 
 -->
 
@@ -76,7 +76,7 @@ DAQDISK - switches disk demon mode on/off
      <affinity value="-1"/>
       <!-- runtime value="30"/ -->
       <halttime value="60"/>
-      <thrdstoptime value="10"/>
+      <thrdstoptime value="20"/>
 
      <!--  <threads_layout value="maximal"/>-->
     </Run>
