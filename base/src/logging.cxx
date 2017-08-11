@@ -129,6 +129,7 @@ dabc::Logger::Logger(bool withmutex)
    fLogReopenTime = 0.;
    fLogFileModified = false;
    fLogLimit = 100;
+   fLogReopenDisabled = false;
 
    LockGuard lock(fMutex);
    _ExtendLines(1024);
@@ -375,7 +376,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    } // end of LockGuard
 
    if (!syslogout.empty()) {
-      openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);     
+      openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
       syslog(level < 0 ? LOG_ERR : LOG_INFO, syslogout.c_str());
       closelog();
    }
@@ -384,7 +385,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
 void dabc::Logger::_DoCheckTimeout()
 {
-   if ((fFile==0) || fLogFileName.empty() || !fLogFileModified) return;
+   if (fLogReopenDisabled || (fFile==0) || fLogFileName.empty() || !fLogFileModified) return;
 
    double now = dabc::Now().AsDouble();
 
@@ -398,11 +399,15 @@ void dabc::Logger::_DoCheckTimeout()
 
 void dabc::Logger::CheckTimeout()
 {
-   if (Instance()==0) return;
+   if ((Instance()==0) || Instance()->fLogReopenDisabled) return;
    LockGuard lock(Instance()->fMutex);
    Instance()->_DoCheckTimeout();
 }
 
+void dabc::Logger::DisableLogReopen()
+{
+   if (Instance()) Instance()->fLogReopenDisabled = true;
+}
 
 void dabc::Logger::ShowStat(bool tofile)
 {

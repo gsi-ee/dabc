@@ -6,6 +6,8 @@ about current functionality of the framework.
 11.08.2017
 1. Add "thrdstoptime" parameter. Can be specified in <Run> section for all threads or 
    individually for each thread. Default is 5 seconds.
+2. When processing Ctrl-C signal, do not reopen log file. Normally logfile flushed 
+   every 3 seconds by closing and opening it again. 
      
 
 11.05.2017

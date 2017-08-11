@@ -95,6 +95,8 @@ namespace dabc {
 
          static void CheckTimeout();
 
+         static void DisableLogReopen();
+
          static inline Logger* Instance() { return gDebug; }
 
          static inline void Debug(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
@@ -120,7 +122,7 @@ namespace dabc {
          LoggerLineEntry **fLines;
          unsigned          fMaxLine;
          Mutex            *fMutex;
-         FILE             *fFile;          // ouptut file for log messages
+         FILE             *fFile;          // output file for log messages
          std::string       fSyslogPrefix;  // if specified, send message to syslog
          unsigned          fDebugMask;     // mask for debug output
          unsigned          fErrorMask;     // mask for error output
@@ -133,7 +135,8 @@ namespace dabc {
          std::string       fLogFileName;   // name of logfile
          double            fLogReopenTime; // last time when logfile was reopened
          bool              fLogFileModified; // true if any string was written into file
-         unsigned          fLogLimit;   // maximum number of log messages before drop
+         unsigned          fLogLimit;     // maximum number of log messages before drop
+         bool              fLogReopenDisabled; // disable file reopen when doing shutdown
    };
 
    #define DOUT(level, args ... ) \

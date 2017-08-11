@@ -1601,6 +1601,9 @@ void dabc::Manager::ProcessFactory(Factory* factory)
 
 void dabc::Manager::ProcessCtrlCSignal()
 {
+   // during shutdown do not try to reopen log file
+   dabc::Logger::DisableLogReopen();
+
    DOUT0("Process CTRL-C signal");
 
    if (fMgrStoppedTime.null()) {
