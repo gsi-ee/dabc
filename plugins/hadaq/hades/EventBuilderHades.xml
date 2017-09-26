@@ -151,7 +151,7 @@ DAQDISK - switches disk demon mode on/off/co
 
       <!--   <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/> -->
 
-       <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}" queue="500" onerror="exit"/>
+       <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${EBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}" queue="500" onerror="exit"/>
        <ExtraDebug value="false"/>
 
        <DoShmControl value="true"/>  
