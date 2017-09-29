@@ -37,7 +37,8 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
     {
 
     DOUT3("ltsm::FileInterface::fopen ... ");
-
+    dabc::Url url;
+    url.SetOptions(opt);
     if (fSession == 0)
 	{
 	// open session before first file is written.
@@ -47,14 +48,9 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	fPassword = "LTSM_TEST01";
 	fOwner = "";
 	fFsname = DEFAULT_FSNAME;
-	dabc::DateTime dt;
-	fDescription = dabc::format(
-		"This file was created by DABC ltsm interface at %s",
-		dt.GetNow().AsJSString().c_str());
 
 	DOUT3("ltsm::FileInterface::fopen before options with options %s \n", opt);
-	dabc::Url url;
-	url.SetOptions(opt);
+
 	if (url.HasOption("ltsmServer"))
 	    {
 	    fServername = url.GetOptionStr("ltsmServer", fServername);
@@ -75,10 +71,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	    {
 	    fFsname = url.GetOptionStr("ltsmFsname", fFsname);
 	    }
-	if (url.HasOption("ltsmDescription"))
-	    {
-	    fDescription = url.GetOptionStr("ltsmDescription", fDescription);
-	    }
+
 
 	DOUT2(
 		"Prepare open LTSM file for writing -  "
@@ -114,7 +107,18 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
 	} // if fSesssion==0
 
+    // default description is per file, not per session:
+    dabc::DateTime dt;
+    fDescription = dabc::format(
+	    "This file was created by DABC ltsm interface at %s",
+    		    dt.GetNow().AsJSString().c_str());
 
+
+
+    if (url.HasOption("ltsmDescription"))
+    	    {
+    	    fDescription = url.GetOptionStr("ltsmDescription", fDescription);
+    	    }
 
     if (strstr(mode, "w") != 0)
 	{
