@@ -7,13 +7,13 @@
 #include "dabc/timing.h"
 
 ltsm::FileInterface::FileInterface() :
-  dabc::FileInterface(),fIsClosing(false)
+	dabc::FileInterface(), fSession(0), fIsClosing(false)
     {
     DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
     api_msg_set_level(API_MSG_NORMAL);
-    DOUT0(
+    DOUT3(
 	    "tsm::FileInterface::FileInterface() ctor set api message level to %d",
-	   API_MSG_NORMAL);
+	    API_MSG_NORMAL);
     tsm_init (DSM_MULTITHREAD); // do we need multithread here?
     DOUT3("tsm::FileInterface::FileInterface() ctor leaving...");
     }
@@ -21,174 +21,147 @@ ltsm::FileInterface::FileInterface() :
 ltsm::FileInterface::~FileInterface()
     {
 
-    DOUT0("ltsm::FileInterface::DTOR ... ");
-    #ifdef LTSM_OLD_FILEAPI
-    dsmCleanUp(DSM_MULTITHREAD);
-    #else
+    DOUT3("ltsm::FileInterface::DTOR ... ");
+    if (fSession)
+	{
+	fclose(fSession->tsm_file);
+	tsm_fdisconnect(fSession);
+	free(fSession);
+	fSession = 0;
+	}
     tsm_cleanup (DSM_MULTITHREAD);
-    #endif
-
     }
 
 dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	const char* mode, const char* opt)
     {
 
-    //TODO: create on heap struct tsm_filehandle_t fTsmFilehandle;
-    // do the open according to options
-    // return pointer on this handle as dabc Handle
     DOUT3("ltsm::FileInterface::fopen ... ");
 
-
-    // workaround for cleanup problem: do init in open, cleanup in close
-    //tsm_init (DSM_MULTITHREAD);
-    fCurrentFile = "none";
-    fServername = "lxltsm01-tsm-server";
-    fNode = "LTSM_TEST01";
-    fPassword = "LTSM_TEST01";
-    fOwner = "";
-    fFsname = DEFAULT_FSNAME;
-    dabc::DateTime dt;
-    fDescription = dabc::format(
-	    "This file was created by DABC ltsm interface at %s",
-	    dt.GetNow().AsJSString().c_str());
-
-    DOUT3("ltsm::FileInterface::fopen before options with options %s \n", opt);
-    dabc::Url url;
-    url.SetOptions(opt);
-    if (url.HasOption("ltsmServer"))
+    if (fSession == 0)
 	{
-	fServername = url.GetOptionStr("ltsmServer", fServername);
-	}
-    if (url.HasOption("ltsmNode"))
-	{
-	fNode = url.GetOptionStr("ltsmNode", fNode);
-	}
-    if (url.HasOption("ltsmPass"))
-	{
-	fPassword = url.GetOptionStr("ltsmPass", fPassword);
-	}
-    if (url.HasOption("ltsmOwner"))
-	{
-	fOwner = url.GetOptionStr("ltsmOwner", fOwner);
-	}
-    if (url.HasOption("ltsmFsname"))
-	{
-	fFsname = url.GetOptionStr("ltsmFsname", fFsname);
-	}
-    if (url.HasOption("ltsmDescription"))
-	{
-	fDescription = url.GetOptionStr("ltsmDescription", fDescription);
-	}
+	// open session before first file is written.
+	fCurrentFile = "none";
+	fServername = "lxltsm01-tsm-server";
+	fNode = "LTSM_TEST01";
+	fPassword = "LTSM_TEST01";
+	fOwner = "";
+	fFsname = DEFAULT_FSNAME;
+	dabc::DateTime dt;
+	fDescription = dabc::format(
+		"This file was created by DABC ltsm interface at %s",
+		dt.GetNow().AsJSString().c_str());
 
-    DOUT2(
-	    "Prepare open LTSM file for writing -  "
-		    "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-	    fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-	    fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
+	DOUT3("ltsm::FileInterface::fopen before options with options %s \n", opt);
+	dabc::Url url;
+	url.SetOptions(opt);
+	if (url.HasOption("ltsmServer"))
+	    {
+	    fServername = url.GetOptionStr("ltsmServer", fServername);
+	    }
+	if (url.HasOption("ltsmNode"))
+	    {
+	    fNode = url.GetOptionStr("ltsmNode", fNode);
+	    }
+	if (url.HasOption("ltsmPass"))
+	    {
+	    fPassword = url.GetOptionStr("ltsmPass", fPassword);
+	    }
+	if (url.HasOption("ltsmOwner"))
+	    {
+	    fOwner = url.GetOptionStr("ltsmOwner", fOwner);
+	    }
+	if (url.HasOption("ltsmFsname"))
+	    {
+	    fFsname = url.GetOptionStr("ltsmFsname", fFsname);
+	    }
+	if (url.HasOption("ltsmDescription"))
+	    {
+	    fDescription = url.GetOptionStr("ltsmDescription", fDescription);
+	    }
 
-    struct login_t tsmlogin;
+	DOUT2(
+		"Prepare open LTSM file for writing -  "
+		"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
+		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
 
-    login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-	    fOwner.c_str(), LINUX_PLATFORM, fFsname.c_str(), DEFAULT_FSTYPE);
+	struct login_t tsmlogin;
 
-#ifdef LTSM_OLD_FILEAPI
+	login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(),
+		fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
+		fFsname.c_str(), DEFAULT_FSTYPE);
 
-    struct tsm_filehandle_t* theHandle=0;
-    theHandle= (struct tsm_filehandle_t*) malloc(sizeof(struct tsm_filehandle_t)); // todo: may we use new instead?
-    memset(theHandle, 0, sizeof(struct tsm_filehandle_t));
+	fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
+	memset(fSession, 0, sizeof(struct session_t));
 
-    if(strstr(mode,"w")!=0)
-	{
-	int rc = tsm_file_open(theHandle, &tsmlogin, (char*) fname, (char*) fDescription.c_str(), TSM_FILE_MODE_WRITE);
+	int rc = tsm_fconnect(&tsmlogin, fSession);
 	if (rc)
 	    {
-	    EOUT("Fail to create LTSM file for writing, using following arguments"
-		    "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		    fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(), fOwner.c_str(),
-		    fFsname.c_str(), fDescription.c_str());
-	    free(theHandle);
+	    EOUT("Fail to connect LTSM session using following arguments"
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n",
+		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		    fOwner.c_str(), fFsname.c_str());
+	    free(fSession);
 	    return 0;
 	    }
-	DOUT0("Opened LTSM file for writing: "
-		"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(), fOwner.c_str(),
-		fFsname.c_str(), fDescription.c_str());
-	}
-    else if(strstr(mode,"r")!=0)
-	{
-	char descriptionbuffer[DSM_MAX_DESCR_LENGTH + 1]; // avoid that retrieved description probably crashes our string
-	int rc = tsm_file_open(theHandle, &tsmlogin, (char*) fname, descriptionbuffer, TSM_FILE_MODE_READ);
-	if (rc)
-	    {
-	    EOUT("Fail to create LTSM file for reading, using following arguments"
-		    "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n",
-		    fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(), fOwner.c_str(),
-		    fFsname.c_str());
-	    free(theHandle);
-	    return 0;
-	    }
-	DOUT0("Opened LTSM file for reading: "
-		"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(), fOwner.c_str(),
-		fFsname.c_str(), descriptionbuffer);
-	}
 
-    //
-#else
+	  DOUT0("Successfully conncted LTSM session with parameter: "
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s\n",
+		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		    fOwner.c_str(), fFsname.c_str());
+
+
+	} // if fSesssion==0
 
 
 
-    // for the moment, the pointer to the session object is the file handle
-    // when we keep the session handle open for subsequent files, we may use the session->tsm_file
-    // pointer as dabc handle and keep the session pointer as FileInterface member
-    struct session_t* theHandle = 0;
-    theHandle = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
-    memset(theHandle, 0, sizeof(struct session_t));
     if (strstr(mode, "w") != 0)
 	{
+
 	int rc = tsm_fopen(fFsname.c_str(), (char*) fname,
-		(char*) fDescription.c_str(), &tsmlogin, theHandle);
+		(char*) fDescription.c_str(), fSession);
 	if (rc)
 	    {
 	    EOUT(
-		    "Fail to create LTSM file for writing, using following arguments"
+		    "Fail to oen LTSM file for writing, using following arguments"
 			    "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		    fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-		    fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
-	    free(theHandle);
+		    fname, fServername.c_str(), fNode.c_str(),
+		    fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
+		    fDescription.c_str());
+	    free(fSession);
+	    fSession = 0; // on failure we retry open the session. Or keep it?
 	    return 0;
 	    }
-	DOUT0(
-		"Opened LTSM file for writing: "
-			"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-		fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
+	DOUT0("Opened LTSM file for writing: "
+		"File=%s, Servername=%s,  Description=%s\n", fname,
+		fServername.c_str(), fDescription.c_str());
 	}
-    else if(strstr(mode,"r")!=0)
-   	{
+    else if (strstr(mode, "r") != 0)
+	{
 	EOUT("tsm_fread is not yet supported!");
-   	return 0;
-   	}
+	return 0;
+	}
 
-#endif
     fCurrentFile = fname;
-    fIsClosing=false;
-    return theHandle;
+    fIsClosing = false;
+    return fSession->tsm_file; // pointer to file structure is the handle
     }
 
 int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
     {
     // TODO: meaningful info for HADES epics display?
 
-    if (strcmp(parname, "RFIO")==0) return -1; // return RFIO version number
-    if (strcmp(parname, "DataMoverIndx")==0) {
-	int index=42;
-	std::string suffix=fNode.substr(fNode.size() - 2);
-	index=atoi (suffix.c_str());
+    if (strcmp(parname, "RFIO") == 0)
+	return -1; // return RFIO version number
+    if (strcmp(parname, "DataMoverIndx") == 0)
+	{
+	int index = 42;
+	std::string suffix = fNode.substr(fNode.size() - 2);
+	index = atoi(suffix.c_str());
 	return index; //take first number from node name.
-    
-}
+	// this works for LTSM_TEST01, but not for lxbkhebe.
+	}
     return 0;
     }
 
@@ -207,25 +180,30 @@ bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
 
 void ltsm::FileInterface::fclose(Handle f)
     {
-      DOUT0("ltsm::FileInterface::fclose with handle 0x%x... ",f);
+    DOUT3("ltsm::FileInterface::fclose with handle 0x%x... ", f);
     if (f == 0)
 	return;
-    if(fIsClosing)
-      {
-	 DOUT0("ltsm::FileInterface::fclose is called during closing - ignored!");
-	 //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
+    if (fIsClosing)
+	{
+	DOUT0(
+		"ltsm::FileInterface::fclose is called during closing - ignored!");
 	return;
-      }
-    fIsClosing=true;
-#ifdef LTSM_OLD_FILEAPI
-    struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
-    tsm_file_close(theHandle);
-    free(theHandle);
-    //dsmCleanUp(DSM_MULTITHREAD); // workaround JAM
-#else
+	}
+    fIsClosing = true;
 
-    struct session_t* theHandle = (struct session_t*) f;
-    int rc = tsm_fclose(theHandle);
+    // todo: is this the right file handle here? fSession->tsm_file ?
+    struct tsm_file_t* theHandle = (struct tsm_file_t*) f;
+    if (theHandle != fSession->tsm_file)
+	{
+
+	EOUT(
+		"Inconsistent file  handles (0x%x != 0x%x) when closing LTSM file: "
+			"File=%s, Servername=%s, Node=%s, Fsname=%s .... try to close most recent file in session\n",
+		theHandle, fSession->tsm_file, fCurrentFile.c_str(),
+		fServername.c_str(), fNode.c_str(), fFsname.c_str());
+	}
+
+    int rc = tsm_fclose(fSession);
     if (rc)
 	{
 	EOUT("Failed to close LTSM file: "
@@ -233,84 +211,59 @@ void ltsm::FileInterface::fclose(Handle f)
 		fCurrentFile.c_str(), fServername.c_str(), fNode.c_str(),
 		fFsname.c_str());
 	}
-    DOUT0("ltsm::FileInterface::fclose after tsm_fclose with rc %d... ",rc);
-    free(theHandle);
-    //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
-
-#endif
-
-
-    DOUT0("ltsm::FileInterface::fclose END ");
+    DOUT0("ltsm::FileInterface has closed file %s", fCurrentFile.c_str());
+    fIsClosing = false; // do we need such protection anymore? keep it for signalhandler tests maybe.
+    DOUT3("ltsm::FileInterface::fclose END ");
     }
 
 size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
 	Handle f)
     {
 
-
     if ((f == 0) || (ptr == 0) || (sz == 0))
 	return 0;
 
-     if(fIsClosing)
-      {
-	 DOUT0("ltsm::FileInterface::fwrite is called during closing - ignored!");
-	 //tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
-	return 0;
-      }
-
-
-#ifdef LTSM_OLD_FILEAPI
-    struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
-    int rc = tsm_file_write(theHandle, (void*) ptr, sz, nmemb);
-    if (rc)
+    if (fIsClosing)
 	{
-	EOUT("tsm_file_write failed, handle:0x%x, size:%d, nmemb:%d",f, sz,nmemb);
+	DOUT0(
+		"ltsm::FileInterface::fwrite is called during closing - ignored!");
+	//tsm_cleanup (DSM_MULTITHREAD); // workaround JAM
 	return 0;
 	}
-    DOUT2("ltsm::FileInterface::fwrite: successfull - handle:0x%x, size:%d, nmemb:%d",f, sz,nmemb);
-#else
-    struct session_t* theHandle = (struct session_t*) f;
-    int rc = tsm_fwrite(ptr, sz, nmemb, theHandle);
+    struct tsm_file_t* theHandle = (struct tsm_file_t*) f;
+    if (theHandle != fSession->tsm_file)
+	{
+
+	EOUT(
+		"Inconsistent tsm_file_t handles (0x%x != 0x%x) when writing to LTSM: "
+			"File=%s, Servername=%s, Node=%s, Fsname=%s .... something is wrong!\n",
+		theHandle, fSession->tsm_file, fCurrentFile.c_str(),
+		fServername.c_str(), fNode.c_str(), fFsname.c_str());
+	return 0;
+	}
+
+
+    int rc = tsm_fwrite(ptr, sz, nmemb, fSession);
     if (rc < 0)
 	{
 	EOUT("tsm_fwrite failed, handle:0x%x, size:%d, nmemb:%d", f, sz, nmemb);
 	return 0;
 	}
 
-    if(rc != int(sz*nmemb))
+    if (rc != int(sz * nmemb))
 	{
-	EOUT("tsm_fwrite size mismatch, wrote %d bytes from requested %d bytes", rc, sz*nmemb);
+	EOUT("tsm_fwrite size mismatch, wrote %d bytes from requested %d bytes",
+		rc, sz * nmemb);
 	}
-
-#endif
 
     return nmemb; // return value is count of written elements (buffers) - fwrite convention
     }
 
 size_t ltsm::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
     {
-    //return ((f==0) || (ptr==0) || (sz==0)) ? 0 : ltsm_fread((char*) ptr, sz, nmemb, (RFILE*) f) / sz;
-    if ((f == 0) || (ptr == 0) || (sz == 0))
-	return 0;
-
-#ifdef LTSM_OLD_FILEAPI
-
-    struct tsm_filehandle_t* theHandle=(tsm_filehandle_t*) f;
-    size_t bytes_read = 0;
-    int rc = tsm_file_read(theHandle, ptr, sz, nmemb, &bytes_read);
-    if (rc && rc!=DSM_RC_MORE_DATA)
-	{
-	EOUT("tsm_file_read failed with return code %d - handle:0x%x, size:%d, nmemb:%d",rc, f, sz, nmemb);
-	return 0;
-	}
-    DOUT2("ltsm::FileInterface::fread:  read %d bytes - handle:0x%x, size:%d, nmemb:%d",bytes_read, f, sz,nmemb);
-
-#else
-    EOUT("tsm_fread is not yet supported!");
+    EOUT("ltsm::FileInterface::fread is not yet supported!");
     return 0;
-#endif
 
-    return nmemb; // return value is count of written elements (buffers) - fread convention
     }
 
 bool ltsm::FileInterface::fseek(Handle f, long int offset, bool relative)
