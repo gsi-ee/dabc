@@ -737,7 +737,7 @@ int main(int argc, char* argv[])
                      stat[datakind].sizesum+=datalen;
                   } else
                   if (!showrate && print_subsubhdr) {
-                     printf("      *** HHUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
+                     printf("         *** HHUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
                   }
                   maxhhublen = datalen;
                   lasthhubid = datakind;
@@ -799,19 +799,20 @@ int main(int argc, char* argv[])
                      if (lasthubid!=0)
                         printf("      *** HUB size %3u id 0x%04x\n", lasthublen, lasthubid);
                      if (lasthhubid!=0)
-                        printf("      *** HHUB size %3u id 0x%04x\n", lasthhublen, lasthhubid);
+                        printf("         *** HHUB size %3u id 0x%04x\n", lasthhublen, lasthhubid);
                      print_sub_header = true;
                   }
                }
 
+               unsigned errmask(0), prefix(9);
+               if (lasthhubid!=0) prefix = 15; else if (lasthubid!=0) prefix = 12;
+
                if (print_subsubhdr)
-                  printf("      *** Subsubevent size %3u id 0x%04x full %08x%s\n", datalen, datakind, data, errbuf);
+                  printf("%*s*** Subsubevent size %3u id 0x%04x full %08x%s\n", prefix-3, "", datalen, datakind, data, errbuf);
 
-               unsigned errmask(0);
-
-               if (as_tdc) PrintTdcData(sub, ix, datalen, 9, errmask, false); else
-               if (as_adc) PrintAdcData(sub, ix, datalen, 9); else
-               if (as_raw) sub->PrintRawData(ix, datalen, 9);
+               if (as_tdc) PrintTdcData(sub, ix, datalen, prefix, errmask, false); else
+               if (as_adc) PrintAdcData(sub, ix, datalen, prefix); else
+               if (as_raw) sub->PrintRawData(ix, datalen, prefix);
 
                if (errmask!=0) {
                   printf("         !!!! TDC errors detected:");
