@@ -83,12 +83,20 @@ bool dabc::LocalTransport::Send(Buffer& buf)
       if (buf.NumReferences() > 1)
          EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.NumReferences());
 
+      // printf("PUSH: %s -> %s cap:%u sz:%u conn: %s flags: %s %s\n",
+      //        fOut.ItemName().c_str(), fInp.ItemName().c_str(), fQueue.Capacity(), fQueue.Size(),
+      //        DBOOL(fConnected == MaskConn), DBOOL(fBlockWhenConnected), DBOOL(fBlockWhenUnconnected));
+
       // when queue is full and transport in non-blocking mode, skip latest buffer
-      if (fQueue.Full() && !((fConnected == MaskConn) ? fBlockWhenConnected : fBlockWhenUnconnected))
+      if (fQueue.Full() && !((fConnected == MaskConn) ? fBlockWhenConnected : fBlockWhenUnconnected)) {
          fQueue.PopBuffer(skipbuf);
+         printf("SKIP: %s -> %s cap:%u sz:%u \n", fOut.ItemName().c_str(), fInp.ItemName().c_str(), fQueue.Capacity(), fQueue.Size());
+      }
 
       if (!fQueue.PushBuffer(buf)) {
-         EOUT("Not able to push buffer into the %s -> %s queue", fOut.ItemName().c_str(), fInp.ItemName().c_str());
+         EOUT("Not able to push buffer into the %s -> %s queue, skipped: %s, queuefull: %s, connected: %s, blflags: %s %s",
+               fOut.ItemName().c_str(), fInp.ItemName().c_str(), DBOOL(!skipbuf.null()), DBOOL(fQueue.Full()),
+               DBOOL(fConnected == MaskConn), DBOOL(fBlockWhenConnected), DBOOL(fBlockWhenUnconnected));
       }
 
       if (!buf.null()) { EOUT("Something went wrong - buffer is not null here"); exit(3); }
