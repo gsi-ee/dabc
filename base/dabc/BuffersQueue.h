@@ -60,24 +60,20 @@ namespace dabc {
 
          bool PushBuffer(Buffer& buf)
          {
-            if (size<vect.size()) {
-               vect[tail] << buf;
-               size++;
-               tail = (tail+1) % vect.size();
-               return true;
-            }
-            return false;
+            if (size == vect.size()) return false;
+            vect[tail] << buf;
+            size++;
+            tail = (tail+1) % vect.size();
+            return true;
          }
 
          bool PopBuffer(Buffer& buf)
          {
-            if (size>0) {
-               buf << vect[front];
-               size--;
-               front = (front+1) % vect.size();
-               return true;
-            }
-            return false;
+            if (size == 0) return false;
+            buf << vect[front];
+            size--;
+            front = (front+1) % vect.size();
+            return true;
          }
 
          unsigned Size() const { return size; }
@@ -96,9 +92,7 @@ namespace dabc {
           * one can create any kind of buffer copies from it */
          Buffer Item(unsigned n) const
          {
-            n+=front;
-            if (n>=vect.size()) n = n % vect.size();
-            return this->vect[n];
+            return this->vect[(n+front) % vect.size()];
          }
 
    };
