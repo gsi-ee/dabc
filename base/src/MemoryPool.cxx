@@ -543,6 +543,13 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
          continue;
       }
 
+      if (!IsOutputConnected(portid)) {
+         // if port was disconnected, just skip all pending requests
+         fReqests[portid].pending = false;
+         fPending.Pop();
+         continue;
+      }
+
       if (!fReqests[portid].pending) {
          EOUT("Request %u was not pending", portid);
          fReqests[portid].pending = true;
@@ -571,6 +578,8 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
 
 
       DOUT5("Memory pool %s send buffer size %u to output %u", GetName(), buf.GetTotalSize(), portid);
+
+      // printf("POOL - port %u is connected %s\n", portid, DBOOL(IsOutputConnected(portid)));
 
       Send(portid, buf);
       fPending.Pop();
