@@ -77,7 +77,7 @@ namespace dabc {
          Queue<unsigned, true>    fPending;    ///< queue with requester indexes which are waiting release of the memory
 
          bool                     fEvntFired;      ///< indicates if event was fired to process memory requests
-         bool                     fWaitingRelease; ///< flag indicate that memory pool waiting release of next buffer
+         bool                     fProcessingReq;  ///< flag indicate if memory pool processing requests, for debug purposes
 
          unsigned                 fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
 

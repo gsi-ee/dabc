@@ -154,7 +154,7 @@ dabc::MemoryPool::MemoryPool(const std::string& name, bool withmanager) :
    fReqests(),
    fPending(16),  // size 16 is preliminary and always can be extended
    fEvntFired(false),
-   fWaitingRelease(false),
+   fProcessingReq(false),
    fChangeCounter(0),
    fUseThread(false)
 {
@@ -514,7 +514,6 @@ void dabc::MemoryPool::ProcessEvent(const EventId& ev)
       {
          LockGuard guard(ObjectMutex());
          fEvntFired = false;
-         fWaitingRelease = false;
       }
 
       RecheckRequests();
@@ -530,7 +529,14 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
    // method called when one need to check if any requester need buffer and
    // was blocked by lack of free memory
 
+   if (fProcessingReq) {
+      EOUT("Event processing mismatch in the POOL - called for the second time");
+      return false;
+   }
+
    int cnt(100);
+
+   fProcessingReq = true;
 
    while (!fPending.Empty() && (cnt-->0)) {
 
@@ -569,25 +575,30 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
 
          buf = _TakeBuffer(sz, false, true);
 
-         if (buf.null()) { fWaitingRelease = true; return false; }
-
-         fWaitingRelease = false;
+         if (buf.null()) { fProcessingReq = false; return false; }
       }
 
       // we cannot get buffer, break loop and do not
 
-
       DOUT5("Memory pool %s send buffer size %u to output %u", GetName(), buf.GetTotalSize(), portid);
 
+      if (CanSend(portid)) {
+         Send(portid, buf);
+      } else {
+        EOUT("Buffer %u is ready, but cannot be add to the queue", buf.GetTotalSize());
+        buf.Release();
+      }
       // printf("POOL - port %u is connected %s\n", portid, DBOOL(IsOutputConnected(portid)));
 
-      Send(portid, buf);
       fPending.Pop();
       fReqests[portid].pending = false;
 
 //      DOUT0("Send buffer to the port %u cansend %s", portid, DBOOL(CanSend(portid)));
 
-      if (from_recv && fPending.Empty()) return true;
+      if (from_recv && fPending.Empty()) {
+         fProcessingReq = false;
+         return true;
+      }
 
       // if there are still requests pending, put it in the queue back
       if (CanSend(portid)) {
@@ -599,6 +610,8 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
    // we need to fire event again while not all requests was processed
    if (!fPending.Empty() && (cnt<=0))
       FireEvent(evntProcessRequests);
+
+   fProcessingReq = false;
 
    return fPending.Empty();
 }

@@ -94,8 +94,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
       }
 
       if (!fQueue.PushBuffer(buf)) {
-         EOUT("Not able to push buffer into the %s -> %s queue, skipped: %s, queuefull: %s %u %s, connected: %s, blflags: %s %s",
-               fOut.ItemName().c_str(), fInp.ItemName().c_str(), DBOOL(!skipbuf.null()), DBOOL(fQueue.Full()), fQueue.Size(), fQueue.Capacity(),
+         EOUT("Not able to push buffer into the %s -> %s queue, mutex: %s skipped: %s, queuefull: %s %u %s, connected: %s, blflags: %s %s",
+               fOut.ItemName().c_str(), fInp.ItemName().c_str(), DBOOL(QueueMutex()!=0), DBOOL(!skipbuf.null()), DBOOL(fQueue.Full()), fQueue.Size(), fQueue.Capacity(),
                DBOOL(fConnected == MaskConn), DBOOL(fBlockWhenConnected), DBOOL(fBlockWhenUnconnected));
       }
 
