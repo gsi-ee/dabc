@@ -3,6 +3,10 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 
+4.12.2017
+1. Automatically recognize HUBs and TDCs in the hldprint. 
+
+
 11.08.2017
 1. Add "thrdstoptime" parameter. Can be specified in <Run> section for all threads or 
    individually for each thread. Default is 5 seconds.
