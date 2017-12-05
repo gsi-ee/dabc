@@ -3,8 +3,9 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 
-4.12.2017
+5.12.2017
 1. Automatically recognize HUBs and TDCs in the hldprint. 
+2. Recognize rising/falling seuqence error and low ToT errors in hldprint 
 
 
 11.08.2017
