@@ -90,7 +90,6 @@ bool dabc::LocalTransport::Send(Buffer& buf)
       // when queue is full and transport in non-blocking mode, skip latest buffer
       if (fQueue.Full() && !((fConnected == MaskConn) ? fBlockWhenConnected : fBlockWhenUnconnected)) {
          fQueue.PopBuffer(skipbuf);
-         printf("SKIP: %s -> %s cap:%u sz:%u \n", fOut.ItemName().c_str(), fInp.ItemName().c_str(), fQueue.Capacity(), fQueue.Size());
       }
 
       if (!fQueue.PushBuffer(buf)) {

@@ -63,11 +63,8 @@ namespace dabc {
          {
             if (fArr==0) return;
 
-//            printf("Release memblock %p size %u arr %p\n", this, fNumber, fArr);
-
             for (unsigned n=0;n<fNumber;n++) {
                if (fArr[n].buf && fArr[n].owner) {
-//                  printf("    destroy buf %3u %p size %u\n", n, fArr[n].buf, (unsigned) fArr[n].size);
                   free(fArr[n].buf);
                }
                fArr[n].buf = 0;
@@ -77,8 +74,6 @@ namespace dabc {
             delete[] fArr;
             fArr = 0;
             fNumber = 0;
-
-//            printf("Release memblock %p done\n", this);
 
             fFree.Reset();
          }
@@ -134,10 +129,7 @@ namespace dabc {
             return true;
          }
 
-
    };
-
-
 
 }
 
@@ -585,15 +577,12 @@ bool dabc::MemoryPool::RecheckRequests(bool from_recv)
       if (CanSend(portid)) {
          Send(portid, buf);
       } else {
-        EOUT("Buffer %u is ready, but cannot be add to the queue", buf.GetTotalSize());
-        buf.Release();
+         EOUT("Buffer %u is ready, but cannot be add to the queue", buf.GetTotalSize());
+         buf.Release();
       }
-      // printf("POOL - port %u is connected %s\n", portid, DBOOL(IsOutputConnected(portid)));
 
       fPending.Pop();
       fReqests[portid].pending = false;
-
-//      DOUT0("Send buffer to the port %u cansend %s", portid, DBOOL(CanSend(portid)));
 
       if (from_recv && fPending.Empty()) {
          fProcessingReq = false;
