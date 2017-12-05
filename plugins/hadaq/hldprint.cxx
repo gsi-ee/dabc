@@ -51,6 +51,7 @@ int usage(const char* errstr = 0)
    printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
+   printf("   -onlyerr                - printout only TDC data with errors\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none) \n");
    printf("   -adc id                 - printout raw data as ADC subsubevent (default none) \n");
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
@@ -137,7 +138,7 @@ struct SubevStat {
 
 double tot_limit(20.);
 unsigned fine_min(31), fine_max(491);
-bool bubble_mode = false;
+bool bubble_mode = false, only_errors = false;
 
 const char* debug_name[32] = {
       "Number of valid triggers",
@@ -388,12 +389,18 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned channel(0), maxch(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
-   double last_rising[66], last_falling[66];
-   int leading_trailing[66];
-   for (int n=0;n<66;n++) {
+   static unsigned NumCh = 66;
+
+   double last_rising[NumCh], last_falling[NumCh];
+   int leading_trailing[NumCh], num_leading[NumCh], num_trailing[NumCh];
+   bool seq_err[NumCh];
+   for (unsigned n=0;n<NumCh;n++) {
       last_rising[n] = 0;
       last_falling[n] = 0;
       leading_trailing[n] = 0;
+      num_leading[n] = 0;
+      num_trailing[n] = 0;
+      seq_err[n] = false;
    }
 
    unsigned bubble[100];
@@ -487,11 +494,15 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             if (epoch_channel==-1) epoch_channel = channel;
             isrising = (msg >> 11) & 0x1;
             if (maxch<channel) maxch = channel;
-            if (isrising) {
-               if (++leading_trailing[channel] > 1) errmask |= tdcerr_Sequence;
-            } else {
-               if (--leading_trailing[channel] < 0) errmask |= tdcerr_Sequence;
-               leading_trailing[channel] = 0;
+            if (channel < NumCh) {
+               if (isrising) {
+                  num_leading[channel]++;
+                  if (++leading_trailing[channel] > 1) seq_err[channel] = true;
+               } else {
+                  if (--leading_trailing[channel] < 0) seq_err[channel] = true;
+                  num_trailing[channel]++;
+                  leading_trailing[channel] = 0;
+               }
             }
 
             if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
@@ -544,6 +555,11 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
    if (len<2) { if (nheader!=1) errmask |= tdcerr_NoData; } else
    if (!haschannel0 && (ndebug==0) && (nbubble==0)) errmask |= tdcerr_MissCh0;
+
+   for (unsigned n=1;n<NumCh;n++)
+      if ((num_leading[n] > 0) && (num_trailing[n] > 0))
+         if (seq_err[n] || (num_leading[n]!=num_trailing[n]))
+            errmask |= tdcerr_Sequence;
 
    if (substat) {
       if (substat->maxch < maxch) substat->maxch = maxch;
@@ -635,6 +651,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-bubble")==0) { bubble_mode = true; } else
       if (strcmp(argv[n],"-bubb18")==0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
       if (strcmp(argv[n],"-bubb19")==0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
+      if (strcmp(argv[n],"-onlyerr")==0) { only_errors = true; } else
       if (strcmp(argv[n],"-raw")==0) { printraw = true; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-auto")==0) { autoid = true; printsub = true; } else
@@ -737,8 +754,12 @@ int main(int argc, char* argv[])
 
       printcnt++;
 
-      if (!showrate && !dostat)
+      bool print_header(false);
+
+      if (!showrate && !dostat && !only_errors) {
+         print_header = true;
          evnt->Dump();
+      }
 
       char errbuf[100];
 
@@ -746,7 +767,7 @@ int main(int argc, char* argv[])
       while ((sub = evnt->NextSubevent(sub)) != 0) {
 
          bool print_sub_header(false);
-         if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat) {
+         if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat && !only_errors) {
             sub->Dump(printraw && !printsub);
             print_sub_header = true;
          }
@@ -769,7 +790,7 @@ int main(int argc, char* argv[])
                lasthhubid = 0;
             }
 
-            bool as_raw(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0));
+            bool as_raw(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0) && !only_errors);
 
             if (maxhublen>0) {
 
@@ -833,7 +854,24 @@ int main(int argc, char* argv[])
             if (!dostat && !showrate) {
                // do raw printout when necessary
 
+               unsigned errmask(0);
+
+               if (only_errors) {
+                  // only check data without printing
+                  if (as_tdc) PrintTdcData(sub, ix, datalen, 0, errmask);
+                  // no errors - no print
+                  if (errmask==0) { ix+=datalen; continue; }
+
+                  print_subsubhdr = true;
+                  errmask = 0;
+               }
+
                if (as_raw || as_tdc || as_adc) {
+                  if (!print_header) {
+                     print_header = true;
+                     evnt->Dump();
+                  }
+
                   if (!print_sub_header) {
                      sub->Dump(false);
                      if (lasthubid!=0)
@@ -844,7 +882,7 @@ int main(int argc, char* argv[])
                   }
                }
 
-               unsigned errmask(0), prefix(9);
+               unsigned prefix(9);
                if (lasthhubid!=0) prefix = 15; else if (lasthubid!=0) prefix = 12;
 
                if (print_subsubhdr)
@@ -858,7 +896,7 @@ int main(int argc, char* argv[])
                if (as_raw) sub->PrintRawData(ix, datalen, prefix);
 
                if (errmask!=0) {
-                  printf("         !!!! TDC errors detected:");
+                  printf("         %s!!!! TDC errors:%s", col_RED, col_RESET);
                   unsigned mask = 1;
                   for (int n=0;n<NumTdcErr;n++,mask*=2)
                      if (errmask & mask) printf(" err_%s", TdcErrName(n));
