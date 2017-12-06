@@ -661,7 +661,7 @@ int main(int argc, char* argv[])
       return usage("Unknown option");
    }
 
-   if ((adcmask!=0) || (tdcs.size()!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; printraw = true; }
+   if ((adcmask!=0) || (tdcs.size()!=0) || (onlytdc!=0) || (onlyraw!=0)) { printsub = true; }
 
    printf("Try to open %s\n", argv[1]);
 
@@ -818,7 +818,7 @@ int main(int argc, char* argv[])
                lasthubid = 0;
             }
 
-            if (is_tdc(datakind)) as_tdc = true;
+            if (is_tdc(datakind)) as_tdc = !onlytdc;
 
             if (!as_tdc) {
                if ((onlytdc!=0) && (datakind==onlytdc)) {
@@ -885,11 +885,15 @@ int main(int argc, char* argv[])
                unsigned prefix(9);
                if (lasthhubid!=0) prefix = 15; else if (lasthubid!=0) prefix = 12;
 
-               if (print_subsubhdr)
-                  printf("%*s*** Subsubevent size %3u id 0x%04x full %08x%s\n", prefix-3, "", datalen, datakind, data, errbuf);
-
                // when print raw selected with autoid, really print raw
                if (printraw && autoid && as_tdc) { as_tdc = false; as_raw = true; }
+
+               if (print_subsubhdr) {
+                  const char *kind = "Subsubevent";
+                  if (as_tdc) kind = "TDC "; else
+                  if (as_adc) kind = "ADC ";
+                  printf("%*s*** %s size %3u id 0x%04x full %08x%s\n", prefix-3, "", kind, datalen, datakind, data, errbuf);
+               }
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, prefix, errmask); else
                if (as_adc) PrintAdcData(sub, ix, datalen, prefix); else
