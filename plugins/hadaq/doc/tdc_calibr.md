@@ -53,7 +53,7 @@ In general yes - one could use liner approximation for **Calibr(fine)** function
 
 Main (and probably only) advantage of linear approximation - it is simple. 
 
-But liner approximation has several drawbacks. First of al, it introduces error into stamp value in the order of ~200 ps. It could be acceptable for signals with worse resultion. But another typical effect of linear approximation - it introduces double-peak structure on the signals which does not have double peaks at all. Especially such effect can be very well seen with test pulses.   
+But liner approximation has several drawbacks. First of al, it introduces error into stamp value in the order of ~100 ps. It could be acceptable for signals with worse resultion. But another typical effect of linear approximation - it introduces double-peak structure on the signals which does not have double peaks at all. Especially such effect can be very well seen with test pulses.   
 
 
 
@@ -189,7 +189,7 @@ Idea of such configuration - all required elements are created when first HLD ev
 
 Central method is:
 
-    hld->ConfigureCalibration("", 100000, 0xD);
+    hld->ConfigureCalibration("", 100000, (1 << 0xD));
 
 Method has three parameters. 
 
@@ -203,7 +203,7 @@ Example shows normal configuration of automatic calibration, used for online tes
 
 Another approach of calibration - produce calibration on some predefined data set and use it for other data. In such case one should configre:
 
-      hld->ConfigureCalibration("prefix_", -1, 0xD);
+      hld->ConfigureCalibration("prefix_", -1, (1 << 0xD));
       
 And run analysis with calibration data set. If using go4, one do:
 
@@ -211,16 +211,38 @@ And run analysis with calibration data set. If using go4, one do:
      
 At the end calibration will be produced for every TDC and such calibration can be used:
 
-    hld->ConfigureCalibration("prefix_", 0, 0xD);
+    hld->ConfigureCalibration("prefix_", 0, (1 << 0xD));
 
 Now one could process any other hld file (or even same file again). Calibration will not change.
 
 When specifying file prefix with automatic calibration, then after every calibration loop produced calibration function will be stored in the file. Like:
 
-    hld->ConfigureCalibration("prefix_", 100000, 0xD);
+    hld->ConfigureCalibration("prefix_", 100000, (1 << 0xD));
 
 This allows to reuse latest calibration function when restarting analysis - in online or offline mode.   
 
+
+## Configure linear calibration
+
+If no any other calibration is applied, linear calibration with identical min/max limits for all channels is used.
+This limits can be configured with the call:
+
+    hadaq::TdcMessage::SetFineLimits(22, 480);
+    
+But such linear approximation is very inprecise, while different channels can have very different maximal value.
+
+One could enable special mode in calibarion algorithm, which search and assigns individual min/max limits for each channel. To enable such mode, one should use **10077** as number (or **10000*M+77**) of hits for automatic calibration:
+
+    hld->ConfigureCalibration("prefix_", 100077, (1 << 0xD));
+ 
+In such case not a real calibration function will be created, but just min/max values of fine counter will be identified and linear function for correspondent channel will be created. 
+ 
+If individual linear calibrations should be produced base on HLD file, one should use **-77** instead of -1 argument:
+ 
+    hld->ConfigureCalibration("prefix_", -77, (1 << 0xD));
+      
+This will search min/max value for each channel in whole HLD file data and create linear calibration at the end.     
+    
 
 ## Enable data storage 
 

@@ -43,10 +43,9 @@ It is recommended to use bash (at least, during compilation)
 
 ## gcc version
 
-At the moment ROOT5 is used, which only supports gcc4.x and gcc5, but not new gcc6.
-But on the new Linux distributions gcc6 used as predefined compiler.
-To change this, one should install gcc-5, g++-5 and gfortran-5 compilers and than set them as default.
-This can be done with following commands:
+Currently ROOT6 is used, which requires at least gcc 4.8. All following gcc version should work as well.
+ROOT compiled with system default compiler. If there is a strong reson (other software requires older/newer gcc version), 
+one could change default compiler with following commands:
 
     $ update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
     $ update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
@@ -321,7 +320,7 @@ Result is:
            [92] 00000001
 ~~~~~~~~~~~~~~~~
  
-All options can be obtain when running "hldprint -help"
+All options can be obtain when running "hldprint -help". 
 
 ---------------------------
 
