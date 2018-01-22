@@ -14,6 +14,7 @@
  ************************************************************/
 
 #include <stdlib.h>
+#include <locale.h>
 
 #include "dabc/logging.h"
 #include "dabc/threads.h"
@@ -71,6 +72,8 @@ int command_shell(const char* node)
 
 int main(int numc, char* args[])
 {
+   ::setlocale(LC_ALL, "C");
+
    dabc::InstallCtrlCHandler();
 
 //   dabc::SetDebugLevel(0);
