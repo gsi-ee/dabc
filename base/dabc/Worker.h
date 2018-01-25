@@ -519,8 +519,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdParameterEvent, "CmdParameterEvent")
 
-
-      CmdParameterEvent(const std::string& parname, const std::string& parvalue, int evid, bool attrmodified = false) :
+      CmdParameterEvent(const std::string& parname, const std::string& parvalue, int evid, bool attrmodified = false) throw() :
          dabc::Command(CmdName())
       {
          SetStr("ParName", parname);
