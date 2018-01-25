@@ -609,7 +609,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
             while (iter!=fPublishers.end()) {
                if (iter->worker == worker) {
                   DOUT2("Publisher removes path %s of worker %s", iter->path.c_str(), worker.c_str());
-                  fLocal.GetFolder(iter->path).Destroy();
+                  if (iter->local) fLocal.GetFolder(iter->path).Destroy();
                   fPublishers.erase(iter++);
                } else {
                   iter++;
