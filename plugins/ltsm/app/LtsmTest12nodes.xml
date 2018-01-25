@@ -2,7 +2,7 @@
 <dabc version="2">
  
 
-  <Context host="*" name="*">
+  <Context host="*" name="*"> 
     <Run> 
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
