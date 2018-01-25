@@ -1468,7 +1468,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
       }
 
       if (!inp->ShiftCurrent(commentlen+3)) { resvalue = -1; return node; }
-      if (!inp->SkipSpaces()) { resvalue = -1; return node; }
+      if (!inp->SkipSpaces() && !inp->EndOfStream()) { resvalue = -1; return node; }
 
       resvalue = 2;
       return node;
