@@ -20,7 +20,7 @@
        <BufferSize value="200000"/>
     </MemoryPool>
     
-    <OutputPort name="*" onerror="exit" />
+   
     
      <Module name="Combiner" class="mbs::CombinerModule"> -->
 
@@ -29,6 +29,7 @@
        <InputPort name="Input0" url="lmd://Generator?size=10000&numsub=1&procid=${DABCNODEID}&go4=false"/>
 
        <InputPort name="Input*" queue="5" timeout="5"/>
+        <OutputPort name="*" onerror="exit" />
    
        <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
        <MbsEvents width="5" prec="1" low="5" up="50" debug="1"/>
