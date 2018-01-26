@@ -14,7 +14,7 @@
       <workdir value="/home/hadaq/soft/dabc/head/plugins/ltsm/app"/> 
       <copycfg value="true"/>
       <master value="lxhadeb05:4321"/> 
-    </Run>
+    </Run> 
   
      <MemoryPool name="Pool">
        <NumBuffers value="3000"/>
