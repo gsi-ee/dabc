@@ -32,8 +32,12 @@
        <InputPort name="Input*" queue="5" timeout="5"/>
         <OutputPort name="*" onerror="exit" />
    
-       <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
-       <MbsEvents width="5" prec="1" low="5" up="50" debug="1"/>
+	 <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:700${DABCNODEID}?iter=hadaq_iter&subid=0x1f"/>
+	
+	
+       <MbsData width="5" prec="2" low="5" up="50" debug="-1"/>
+       <MbsEvents width="5" prec="1" low="5" up="50" debug="-1"/>
      </Module>
     
     
@@ -58,9 +62,9 @@
     
    
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
-  <Module name="Combiner" class="mbs::CombinerModule"> -->
+  <Module name="Combiner" class="mbs::CombinerModule">
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb05_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+    <!--  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb05_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
      </Module>
   </Context>
 
@@ -80,9 +84,12 @@
     
    
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
-  <Module name="Combiner" class="mbs::CombinerModule"> -->
+    <Module name="Combiner" class="mbs::CombinerModule">
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb02_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+  <!--    <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb02_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
+      
+      
+      
      </Module>
   </Context>
 
@@ -104,7 +111,9 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+      <!--<OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
+      
+      
      </Module>
   </Context>
 
@@ -127,7 +136,9 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+     <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
+      
+      
      </Module>
   </Context>
 
@@ -150,7 +161,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb05_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+  <!--<OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabc_generated_lxhadeb05_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
       
      </Module>
   </Context>
@@ -171,7 +182,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb02_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+  <!--<OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabc_generated_lxhadeb02_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
       
      </Module>
   </Context>
@@ -192,7 +203,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+ <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
       
      </Module>
   </Context>
@@ -214,7 +225,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+ <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
       
      </Module>
   </Context>
@@ -223,22 +234,8 @@
   
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
 <!-- ########################################################################################################## -->
-  <Context host="lxhadeb05" port="1113" name="Combiner_3">
+  <Context host="lxhadeb05" port="1113" name="Combiner_${DABCNODEID}_lxhadeb05">
     <Run>
       <taskset value="-c 7-9"/>
       <logfile value="ltsmdabc_lxhadeb05_3.log"/>     
@@ -251,8 +248,12 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb05_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+ <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabc_generated_lxhadeb05_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
+  
+  
      </Module>
+     
+     
   </Context>
   
 <!-- ########################################################################################################## -->
@@ -262,7 +263,7 @@
  
 
 <!-- ########################################################################################################## -->
-  <Context host="lxhadeb02" port="1113" name="Combiner_3">
+  <Context host="lxhadeb02" port="1113" name="Combiner_${DABCNODEID}_lxhadeb02">
     <Run>
       <taskset value="-c 7-9"/>
       <logfile value="ltsmdabc_lxhadeb02_3.log"/>     
@@ -275,8 +276,10 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb02_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
-     </Module>
+ <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabc_generated_lxhadeb02_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+     -->
+  
+  </Module>
   </Context>
   
   
@@ -284,7 +287,7 @@
 
  
 <!-- ########################################################################################################## -->
-  <Context host="lxhadeb03" port="1113"  name="Combiner_3">
+  <Context host="lxhadeb03" port="1113" name="Combiner_${DABCNODEID}_lxhadeb03">
     <Run>
       <taskset value="-c 7-9"/>
       <logfile value="ltsmdabc_lxhadeb03_3.log"/>     
@@ -297,7 +300,9 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+  <!--<OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb03_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>-->
+  
+  
      </Module>
   </Context>
   
@@ -305,7 +310,7 @@
  
 
 <!-- ########################################################################################################## -->
-  <Context host="lxhadeb04" port="1113" name="Combiner_3">
+  <Context host="lxhadeb04" port="1113" name="Combiner_${DABCNODEID}_lxhadeb04">
     <Run>
       <taskset value="-c 7-9"/>
       <logfile value="ltsmdabc_lxhadeb04_3.log"/>     
@@ -318,7 +323,9 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+ <!-- <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/dabctest_lxhadeb04_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hadestest&ltsmPass=hadestest&ltsmFsname='/lustre/hebe'"/>
+  -->
+  
      </Module>
   </Context>
   
