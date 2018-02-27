@@ -280,10 +280,10 @@ namespace dabc {
    public: \
       static const char* CmdName() { return cmd_name; } \
       cmd_class() : dabc::Command(CmdName()) {} \
-      cmd_class(const dabc::Command& src) throw() : dabc::Command(src) \
+      cmd_class(const dabc::Command& src) : dabc::Command(src) \
         { if (!src.IsName(CmdName())) throw dabc::Exception(dabc::ex_Command, "Wrong command name in assignment constructor", src.GetName()); } \
-      cmd_class& operator=(const cmd_class& cmd) throw() { dabc::Command::operator=(cmd); return *this; } \
-      cmd_class& operator=(const dabc::Command& cmd) throw() { \
+      cmd_class& operator=(const cmd_class& cmd) { dabc::Command::operator=(cmd); return *this; } \
+      cmd_class& operator=(const dabc::Command& cmd) { \
          if (!cmd.IsName(CmdName())) throw dabc::Exception(dabc::ex_Command, "Wrong command name in assignment operator", cmd.GetName()); \
          dabc::Command::operator=(cmd); return *this;  \
       }
