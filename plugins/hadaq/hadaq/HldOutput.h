@@ -65,7 +65,6 @@ namespace hadaq {
          /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
          char* Unit(unsigned long v);
 
-
       public:
 
          HldOutput(const dabc::Url& url);
@@ -76,6 +75,8 @@ namespace hadaq {
          virtual bool Write_Retry();
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
+
+         virtual bool Write_Restart(dabc::Command cmd);
    };
 }
 

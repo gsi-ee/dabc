@@ -72,9 +72,6 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
 		   EOUT("Cannot create LTSM object, check if libDabcLtsm.so loaded");
 	   }
    }
-
-
-
 }
 
 hadaq::HldOutput::~HldOutput()
@@ -206,6 +203,18 @@ bool hadaq::HldOutput::CloseFile()
    //std::cout <<"Close File resets file size." << std::endl;
    return true;
 }
+
+bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
+{
+   if (fFile.isWriting()) {
+      CloseFile();
+      fRunNumber = 0;
+      StartNewFile();
+      cmd.SetStr("FileName", fCurrentFileName);
+   }
+   return true;
+}
+
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {

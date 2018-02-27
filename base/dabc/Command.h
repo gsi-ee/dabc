@@ -122,7 +122,10 @@ namespace dabc {
          /** \brief Default constructor, creates empty reference on the command */
          // Command() {}
 
-         Command(const std::string& name) throw();
+         Command(const std::string &name) throw();
+
+         /** \brief Change command name, should not be used for remote commands */
+         void ChangeName(const std::string &name);
 
          /** Compare operator, returns true when command contains pointer on same object */
          friend int operator==(const Command& cmd1, const Command& cmd2)

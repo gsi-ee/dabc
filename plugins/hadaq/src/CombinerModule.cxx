@@ -131,6 +131,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
       .AddArg(dabc::xml_maxsize, "int", false, 1500)
       .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
    CreateCmdDef("StopHldFile");
+   CreateCmdDef("RestartHldFile");
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
 
@@ -1107,39 +1108,48 @@ void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
 
 int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("StartHldFile")) {
+   bool do_start = false, do_stop = false;
 
-      std::string fname = cmd.GetStr("filename");
-      int maxsize = cmd.GetInt(dabc::xml_maxsize, 30);
+   if (cmd.IsName("StartHldFile")) {
+      do_start = do_stop = true;
+      SetInfo("Execute StartHldFile");
+   } else if (cmd.IsName("StopHldFile")) {
+      do_stop = true;
+      SetInfo("Execute StopHldFile");
+   } else if (cmd.IsName("RestartHldFile")) {
+      if (NumOutputs()<2) return dabc::cmd_false;
+      SetInfo("Execute RestartHldFile");
+      cmd.ChangeName("RestartTransport");
+      SubmitCommandToTransport(OutputName(1), cmd);
+      return dabc::cmd_postponed;
+   } else {
+      return dabc::ModuleAsync::ExecuteCommand(cmd);
+   }
+
+   bool res = true;
+
+   if (do_stop) {
+      if (NumOutputs()>1)
+         res = DisconnectPort(OutputName(1));
+
+      DOUT0("Stop HLD file res = %s", DBOOL(res));
+   }
+
+   if (do_start && res) {
+      std::string fname = cmd.GetStr("filename", "file.hld");
+      int maxsize = cmd.GetInt(dabc::xml_maxsize, 1500);
 
       std::string url = dabc::format("hld://%s?%s=%d", fname.c_str(), dabc::xml_maxsize, maxsize);
 
       // we guarantee, that at least two ports will be created
       EnsurePorts(0, 2);
 
-      bool res = dabc::mgr.CreateTransport(OutputName(1, true), url);
+      res = dabc::mgr.CreateTransport(OutputName(1, true), url);
 
       DOUT0("Start HLD file %s res = %s", fname.c_str(), DBOOL(res));
-
-      SetInfo("Execute StartHldFile");
-
-      return cmd_bool(res);
-   } else
-   if (cmd.IsName("StopHldFile")) {
-
-      bool res = true;
-
-      SetInfo("Execute StopHldFile");
-
-      if (NumOutputs()>1)
-         res = DisconnectPort(OutputName(1));
-
-      DOUT0("Stop HLD file res = %s", DBOOL(res));
-
-      return cmd_bool(res);
    }
 
-   return dabc::ModuleAsync::ExecuteCommand(cmd);
+   return cmd_bool(res);
 }
 
 

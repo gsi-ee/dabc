@@ -178,18 +178,19 @@ namespace dabc {
          bool            fStopRequested;  //!< if true transport will be stopped when next suitable state is achieved
          double          fRetryPeriod;    //!< if retry option enabled, transport will try to reinit output
 
-
          void SetDataOutput(DataOutput* out, bool owner);
 
          void CloseOutput();
 
          /** Returns true if state consider to be suitable to stop transport */
-         bool SuitableStateForStartStop() {
+         bool SuitableStateForStartStop()
+         {
             return (fOutState == outReady) ||
                    (fOutState == outError) ||
                    (fOutState == outClosed);
          }
 
+         /** Returns state in string form */
          std::string StateAsStr() const
          {
             switch (fOutState) {

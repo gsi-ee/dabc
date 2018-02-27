@@ -67,6 +67,12 @@ dabc::Command::Command(const std::string& name) throw()
       SetObject(new dabc::CommandContainer(name.c_str()));
 }
 
+void dabc::Command::ChangeName(const std::string &name)
+{
+   CommandContainer* cont = static_cast<CommandContainer*> (GetObject());
+   if (cont) cont->SetNameDirect(name.c_str());
+}
+
 void dabc::Command::AddCaller(Worker* worker, bool* exe_ready)
 {
    CommandContainer* cont = (CommandContainer*) GetObject();

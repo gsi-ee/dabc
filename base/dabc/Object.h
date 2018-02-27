@@ -464,6 +464,9 @@ namespace dabc {
          /** \brief Changes object name. Should not be used if any references exists on the object */
          void SetName(const char* name);
 
+         /** \brief Changes object name disregard of existing references */
+         void SetNameDirect(const char* name);
+
          /** \brief Method should be used by the object to delete itself */
          void DeleteThis();
    };

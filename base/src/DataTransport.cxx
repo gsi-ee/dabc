@@ -925,6 +925,9 @@ int dabc::OutputTransport::ExecuteCommand(dabc::Command cmd)
       cmd.SetStr("OutputState",StateAsStr());
       if (fOutput) fOutput->Write_Stat(cmd);
       return cmd_true;
+   } else if (cmd.IsName("RestartTransport")) {
+      bool res = fOutput ? fOutput->Write_Restart(cmd) : false;
+      return cmd_bool(res);
    }
 
    return dabc::Transport::ExecuteCommand(cmd);

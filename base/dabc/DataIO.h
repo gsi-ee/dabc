@@ -173,7 +173,7 @@ namespace dabc {
          DataOutput(const dabc::Url& url);
 
          /** Returns addon, provided by data output
-          * If specified, supposed that I/O object is double-deriver from DataOutput and Addon */
+          * If specified, supposed that I/O object is double-derived from DataOutput and Addon */
          virtual WorkerAddon* Write_GetAddon() { return 0; }
 
          void ShowInfo(int lvl, const std::string& info);
@@ -233,6 +233,9 @@ namespace dabc {
 
          /** Returns true if output object can be reinitialized for recover error */
          virtual bool Write_Retry() { return false; }
+
+         /** Method used to restart output - like recreate new output file */
+         virtual bool Write_Restart(dabc::Command cmd) { return false; }
 
    };
 

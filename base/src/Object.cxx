@@ -877,7 +877,7 @@ bool dabc::Object::RemoveChilds(bool cleanup)
    return true;
 }
 
-void dabc::Object::SetName(const char* name)
+void dabc::Object::SetName(const char *name)
 {
    LockGuard guard(fObjectMutex);
 
@@ -885,6 +885,14 @@ void dabc::Object::SetName(const char* name)
       EOUT("Cannot change object name when reference counter %d is not zero!!!", fObjectRefCnt);
       throw dabc::Exception(ex_Object, "Cannot change object name when refcounter is not zero", GetName());
    }
+
+   fObjectName = name;
+}
+
+
+void dabc::Object::SetNameDirect(const char* name)
+{
+   LockGuard guard(fObjectMutex);
 
    fObjectName = name;
 }
