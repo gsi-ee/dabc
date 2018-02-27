@@ -560,23 +560,15 @@
       }
       
       painter.RedrawObject = function(obj) {
-         console.log('Redraw gauge!!!', obj.value);
          this.Draw(obj);
          return true;
       }
-      
-//      painter.UpdateObject = function(obj) {
-//         console.log('Update gauge', obj._typename, this.GetObject()._typename);
-//         return false;
-//      }
-         
-      // set set divid after first drawing to set painter to the first child 
-
       
       painter.SetDivId(divid, -1);
       
       painter.Draw(obj);
       
+      // set set divid after first drawing to set painter to the first child 
       painter.SetDivId(divid);
       
       return painter.DrawingReady();
