@@ -138,16 +138,21 @@ function Gauge(placeholderName, configuration)
       
       var pointerPath = this.buildPointerPath(midValue);
       
-      var pointerLine = d3.svg.line()
-                           .x(function(d) { return d.x })
-                           .y(function(d) { return d.y })
-                           .interpolate("basis");
+      var ddd = "";
+      for (var n=0;n<pointerPath.length;++n) {
+         ddd += (n>0 ? "L" : "M") + Math.round(pointerPath[n].x)+","+Math.round(pointerPath[n].y);
+      }
+      
+//      var pointerLine = d3.svg.line()
+//                         .x(function(d) { return d.x })
+//                           .y(function(d) { return d.y })
+//                           .interpolate("basis");
       
       pointerContainer.selectAll("path")
                      .data([pointerPath])
                      .enter()
                         .append("svg:path")
-                           .attr("d", pointerLine)
+                           .attr("d", ddd+"Z")
                            .style("fill", "#dc3912")
                            .style("stroke", "#c63310")
                            .style("fill-opacity", 0.7)

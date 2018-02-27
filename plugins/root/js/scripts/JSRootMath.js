@@ -1,10 +1,15 @@
-/// @file JSRootMath.js
-/// Special mathematical functions
+/** @file JSRootMath.js
+  * Special mathematical functions */
+
+/** @namespace JSROOT.Math
+  * Holder of mathematical functions, analogue to TMath class of ROOT */
 
 (function( factory ) {
    if ( typeof define === "function" && define.amd ) {
-      // AMD. Register as an anonymous module.
       define( ['JSRootCore'], factory );
+   } else
+   if (typeof exports === 'object' && typeof module !== 'undefined') {
+       factory(require("./JSRootCore.js"));
    } else {
       if (typeof JSROOT == 'undefined')
          throw new Error("This extension requires JSRootCore.js", "JSRootMath.js");
@@ -17,8 +22,13 @@
 } (function(JSROOT) {
    // math methods for Javascript ROOT
 
+   "use strict";
+
+   JSROOT.sources.push("math");
+
    JSROOT.Math = {};
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.lgam = function( x ) {
       var p, q, u, w, z, i, sgngam = 1;
       var kMAXLGM  = 2.556348e305;
@@ -122,10 +132,12 @@
       return( q );
    };
 
-   /*
+   /**
     * calculates a value of a polynomial of the form:
     * a[0]x^N+a[1]x^(N-1) + ... + a[N]
-   */
+    *
+    * @memberOf JSROOT.Math
+    */
    JSROOT.Math.Polynomialeval = function(x, a, N) {
       if (N==0) return a[0];
       else {
@@ -136,10 +148,12 @@
       }
    };
 
-   /*
+   /**
     * calculates a value of a polynomial of the form:
     * x^N+a[0]x^(N-1) + ... + a[N-1]
-   */
+    *
+    * @memberOf JSROOT.Math
+    */
    JSROOT.Math.Polynomial1eval = function(x, a, N) {
       if (N==0) return a[0];
       else {
@@ -150,6 +164,7 @@
       }
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.ndtri = function( y0 ) {
       if ( y0 <= 0.0 )
          return( Number.NEGATIVE_INFINITY );
@@ -248,8 +263,13 @@
       if ( code != 0 )
          x = -x;
       return( x );
-   }
+   };
 
+   JSROOT.Math.normal_quantile = function(z, sigma) {
+      return  sigma * JSROOT.Math.ndtri(z);
+   };
+
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.igam = function(a,x) {
       var kMACHEP = 1.11022302462515654042363166809e-16;
       var kMAXLOG = 709.782712893383973096206318587;
@@ -262,12 +282,12 @@
       if (x <= 0)  return 0.0;
 
       if( (x > 1.0) && (x > a ) )
-         return( 1.0 - this.igamc(a,x) );
+         return 1.0 - this.igamc(a,x);
 
       /* Compute  x**a * exp(-x) / gamma(a)  */
       ax = a * Math.log(x) - x - this.lgam(a);
       if( ax < -kMAXLOG )
-         return( 0.0 );
+         return 0.0;
 
       ax = Math.exp(ax);
 
@@ -284,9 +304,10 @@
       }
       while( c/ans > kMACHEP );
 
-      return( ans * ax/a );
-   }
+      return ans * ax/a;
+   };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.igamc = function(a,x) {
       var kMACHEP = 1.11022302462515654042363166809e-16;
       var kMAXLOG = 709.782712893383973096206318587;
@@ -352,14 +373,13 @@
       }
       while( t > kMACHEP );
 
-      return( ans * ax );
-   }
+      return ans * ax;
+   };
 
-
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.igami = function(a, y0) {
-      var x0, x1, x, yl, yh, y, d, lgm, dithresh;
-      var i, dir;
-      var kMACHEP = 1.11022302462515654042363166809e-16;
+      var x0, x1, x, yl, yh, y, d, lgm, dithresh, i, dir,
+          kMACHEP = 1.11022302462515654042363166809e-16;
 
       // check the domain
       if (a <= 0) {
@@ -469,24 +489,29 @@
             dir -= 1;
          }
       }
-      return( x );
+      return x;
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.gamma_quantile_c = function(z, alpha, theta) {
       return theta * this.igami( alpha, z);
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.gamma_quantile = function(z, alpha, theta) {
       return theta * this.igami( alpha, 1.- z);
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.log10 = function(n) {
       return Math.log(n) / Math.log(10);
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.landau_pdf = function(x, xi, x0) {
       // LANDAU pdf : algorithm from CERNLIB G110 denlan
       // same algorithm is used in GSL
+      if (x0===undefined) x0 = 0;
       if (xi <= 0) return 0;
       var v = (x - x0)/xi;
       var u, ue, us, denlan;
@@ -541,21 +566,61 @@
       return denlan/xi;
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.Landau = function(x, mpv, sigma, norm) {
       if (sigma <= 0) return 0;
       var den = JSROOT.Math.landau_pdf((x - mpv) / sigma, 1, 0);
       if (!norm) return den;
       return den/sigma;
-   }
+   };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.inc_gamma_c = function(a,x) {
       return JSROOT.Math.igamc(a,x);
-   }
+   };
 
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.inc_gamma = function(a,x) {
+      return JSROOT.Math.igam(a,x);
+   };
+
+   JSROOT.Math.lgamma = function(z) {
+      return JSROOT.Math.lgam(z);
+   };
+
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.inc_gamma = function(a,x) {
+      return JSROOT.Math.igam(a,x);
+   };
+
+   JSROOT.Math.lgamma = function(z) {
+      return JSROOT.Math.lgam(z);
+   };
+
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.chisquared_cdf_c = function(x,r,x0) {
-     return JSROOT.Math.inc_gamma_c ( 0.5 * r , 0.5* (x-x0) );
-   }
+      if (x0===undefined) x0 = 0;
+      return JSROOT.Math.inc_gamma_c ( 0.5 * r , 0.5*(x-x0) );
+   };
 
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.chisquared_cdf = function(x,r,x0) {
+      if (x0===undefined) x0 = 0;
+      return JSROOT.Math.inc_gamma ( 0.5 * r , 0.5*(x-x0) );
+   };
+
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.chisquared_pdf = function(x,r,x0) {
+      if (x0===undefined) x0 = 0;
+      if ((x-x0) < 0) return 0.0;
+      var a = r/2 -1.;
+      // let return inf for case x  = x0 and treat special case of r = 2 otherwise will return nan
+      if (x == x0 && a == 0) return 0.5;
+
+      return Math.exp ((r/2 - 1) * Math.log((x-x0)/2) - (x-x0)/2 - JSROOT.Math.lgamma(r/2))/2;
+   };
+
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.Prob = function(chi2, ndf) {
       if (ndf <= 0) return 0; // Set CL to zero in case ndf<=0
 
@@ -565,26 +630,79 @@
       }
 
       return JSROOT.Math.chisquared_cdf_c(chi2,ndf,0);
-   }
+   };
 
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.Gaus = function(x, mean, sigma) {
+      return Math.exp(-0.5 * Math.pow((x-mean) / sigma, 2));
+   };
+
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.gaus = function(f, x, i) {
-      return f['fParams'][i+0] * Math.exp(-0.5 * Math.pow((x-f['fParams'][i+1]) / f['fParams'][i+2], 2));
+      // function used when gaus(0) used in the TFormula
+      return f.GetParValue(i+0) * Math.exp(-0.5 * Math.pow((x-f.GetParValue(i+1)) / f.GetParValue(i+2), 2));
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.gausn = function(f, x, i) {
-      return JSROOT.Math.gaus(f, x, i)/(Math.sqrt(2 * Math.PI) * f['fParams'][i+2]);
+      return JSROOT.Math.gaus(f, x, i)/(Math.sqrt(2 * Math.PI) * f.GetParValue(i+2));
    };
 
+   /** @memberOf JSROOT.Math */
+   JSROOT.Math.gausxy = function(f, x, y, i) {
+      // function used when xygaus(0) used in the TFormula
+
+      return f.GetParValue(i+0) * Math.exp(-0.5 * Math.pow((x-f.GetParValue(i+1)) / f.GetParValue(i+2), 2))
+                                * Math.exp(-0.5 * Math.pow((y-f.GetParValue(i+3)) / f.GetParValue(i+4), 2));
+   };
+
+
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.expo = function(f, x, i) {
-      return Math.exp(f['fParams'][i+0] + f['fParams'][i+1] * x);
+      return Math.exp(f.GetParValue(i+0) + f.GetParValue(i+1) * x);
    };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.landau = function(f, x, i) {
-      return JSROOT.Math.Landau(x, f['fParams'][i+1],f['fParams'][i+2], false);
-   }
+      return JSROOT.Math.Landau(x, f.GetParValue(i+1),f.GetParValue(i+2), false);
+   };
 
+   /** @memberOf JSROOT.Math */
    JSROOT.Math.landaun = function(f, x, i) {
-      return JSROOT.Math.Landau(x, f['fParams'][i+1],f['fParams'][i+2], true);
+      return JSROOT.Math.Landau(x, f.GetParValue(i+1),f.GetParValue(i+2), true);
+   };
+
+   // =========================================================================
+
+   JSROOT.getMoreMethods = function(m,typename, obj) {
+      // different methods which are typically used in TTree::Draw
+
+      if (typename.indexOf("ROOT::Math::LorentzVector")===0) {
+         m.Px = m.X = function() { return this.fCoordinates.Px(); }
+         m.Py = m.Y = function() { return this.fCoordinates.Py(); }
+         m.Pz = m.Z = function() { return this.fCoordinates.Pz(); }
+         m.E = m.T = function() { return this.fCoordinates.E(); }
+         m.M2 = function() { return this.fCoordinates.M2(); }
+         m.M = function() { return this.fCoordinates.M(); }
+         m.R = m.P = function() { return this.fCoordinates.R(); }
+         m.P2 = function() { return this.P() * this.P(); }
+      }
+
+      if (typename.indexOf("ROOT::Math::PxPyPzE4D")===0) {
+         m.Px = m.X = function() { return this.fX; }
+         m.Py = m.Y = function() { return this.fY; }
+         m.Pz = m.Z = function() { return this.fZ; }
+         m.E = m.T = function() { return this.fT; }
+         m.P2 = function() { return this.fX*this.fX + this.fY*this.fY + this.fZ*this.fZ; }
+         m.R = m.P = function() { return Math.sqrt(this.P2()); }
+         m.Mag2 = m.M2 = function() { return this.fT*this.fT - this.fX*this.fX - this.fY*this.fY - this.fZ*this.fZ; }
+         m.Mag = m.M = function() {
+            var mm = this.M2();
+            if (mm >= 0) return Math.sqrt(mm);
+            return -Math.sqrt(-mm);
+         }
+         m.Perp2 = m.Pt2 = function() { return this.fX*this.fX + this.fY*this.fY;}
+      }
    }
 
    return JSROOT;

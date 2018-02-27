@@ -43,7 +43,7 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       dabc::HStore store(mask);
       store.CreateNode(res.GetName());
       // workaround, later global autoload variable should be used here
-      store.SetField("_autoload","\"jq;httpsys/scripts/dabc.js\"");
+      store.SetField("_autoload","\"jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;\"");
       store.SetField("_toptitle","\"DABC online server\"");
       if (res.SaveTo(store, false)) {
          store.CloseNode(res.GetName());

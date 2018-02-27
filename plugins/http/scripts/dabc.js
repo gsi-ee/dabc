@@ -383,8 +383,8 @@
    DABC.MakeItemRequest = function(h, item, fullpath, option) {
       item['fullitemname'] = fullpath;
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0"; 
-      if (!('hlimit' in item)) item['hlimit'] = 100;
-      var url = "get.json?compact=0&history=" + item['hlimit'];
+      if (!('hlimit' in item)) item.hlimit = 100;
+      var url = "get.json?compact=0&history=" + item.hlimit;
       if (('request_version' in item) && (item.request_version>0)) url += "&version=" + item.request_version;
       item['request_version'] = 0;
       return url;      
@@ -394,24 +394,24 @@
       if (obj==null) return;
       
       if (!('_history' in item) || (option=="gauge") || (option=='last')) {
-         obj['fullitemname'] = item['fullitemname']; 
+         obj.fullitemname = item.fullitemname; 
          // for gauge output special scripts should be loaded, use unique class name for it
-         if (obj._kind == 'rate') obj['_typename'] = "DABC_RateGauge";
+         if (obj._kind == 'rate') obj._typename = "DABC_RateGauge";
          return;
       }
       
-      var new_version = Number(obj["_version"]);
+      var new_version = Number(obj._version);
 
       var modified = (item.request_version != new_version);
 
       this.request_version = new_version;
 
       // this is array with history entries 
-      var arr = obj["history"];
+      var arr = obj.history;
 
       if (arr!=null) {
          // gap indicates that we could not get full history relative to provided version number
-         var gap = obj["history_gap"];
+         var gap = obj.history_gap;
 
          // join both arrays with history entries
          if ((item.history == null) || (arr.length >= item['hlimit']) || gap) {
@@ -465,7 +465,7 @@
 
    }
    
-   DABC.DrawGauage = function(divid, obj, opt, painter) {
+   DABC.DrawGauage = function(divid, obj, opt) {
       
       // at this momemnt justgage should be loaded
 
@@ -474,12 +474,8 @@
          return null;
       }
       
-      if (painter == null) {
-         alert('JSROOT draw interface changed - do not get base painter as instance');
-         return null;
-      }
+      var painter = new JSROOT.TObjectPainter(obj);
       
-      painter.obj = obj;
       painter.gauge = null;
       painter.min = 0;
       painter.max = 1;
@@ -487,9 +483,8 @@
       painter.lastsz = 0;
       painter._title = "";
       
-      painter.Draw = function(obj, divid) {
+      painter.Draw = function(obj) {
          if (obj == null) return;
-         if (!divid) divid = this.divid;
          
          var val = Number(obj["value"]);
          
@@ -518,17 +513,17 @@
          if (!this._title) this._title = "gauge"; 
          val = JSROOT.FFormat(val,"5.3g");
 
-         this.DrawValue(val, divid, redo);
+         this.DrawValue(val, redo);
       }
       
-      painter.DrawValue = function(val, divid, force) {
-         var rect = d3.select("#"+divid).node().getBoundingClientRect();
+      painter.DrawValue = function(val, force) {
+         var rect = d3.select("#"+this.divid).node().getBoundingClientRect();
          var sz = Math.min(rect.height, rect.width);
          
          if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true; 
          
          if (force) {
-            d3.select("#"+divid).selectAll("*").remove();
+            d3.select("#"+this.divid).selectAll("*").remove();
             this.gauge = null; 
          }
          
@@ -549,29 +544,40 @@
             if ('units' in obj) config['units'] = obj['units'] + "/s";
             
             if (this.gauge == null)
-               this.gauge = new Gauge(divid, config);
+               this.gauge = new Gauge(this.divid, config);
             else
                this.gauge.configure(config);
             
             this.gauge.render(val);
 
-            // set set divid after first drawing to set painter to the first child 
-            this.SetDivId(divid);       
          } else {
             this.gauge.redraw(val);
          }
       }
       
       painter.CheckResize = function() {
-         this.DrawValue(this.lastval, this.divid);
+         this.DrawValue(this.lastval);
       }
       
       painter.RedrawObject = function(obj) {
+         console.log('Redraw gauge!!!', obj.value);
          this.Draw(obj);
          return true;
       }
       
-      painter.Draw(obj, divid);
+//      painter.UpdateObject = function(obj) {
+//         console.log('Update gauge', obj._typename, this.GetObject()._typename);
+//         return false;
+//      }
+         
+      // set set divid after first drawing to set painter to the first child 
+
+      
+      painter.SetDivId(divid, -1);
+      
+      painter.Draw(obj);
+      
+      painter.SetDivId(divid);
       
       return painter.DrawingReady();
    }
@@ -618,8 +624,11 @@
    }
    
    
-   DABC.DrawCommand = function(divid, obj, opt, painter) {
-      painter.SetDivId(divid);
+   DABC.DrawCommand = function(divid, obj, opt) {
+      
+      painter = new JSROOT.TBasePainter;
+      
+      painter.SetDivId(divid, -1);
       painter.jsonnode = obj;
       painter.req = null;
 
@@ -734,6 +743,8 @@
       }
       
       painter.ShowCommand();
+      
+      painter.SetDivId(divid);
       
       return painter.DrawingReady();
    }
