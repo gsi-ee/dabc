@@ -165,7 +165,7 @@ void first()
    // third parameter is trigger type used for calibration
    //   0xD - special trigger with internal pulser, used also for TOT calibration
    //0xFFFF - all kind of trigger types will be used for calibration, no TOT calibration
-   hld->ConfigureCalibration("", 100000, 0xD);
+   hld->ConfigureCalibration("", 100000, (1 << 0xD));
 
    // only accept trigger type 0x1 when storing file
    // new hadaq::HldFilter(0x1);
