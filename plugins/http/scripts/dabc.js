@@ -439,12 +439,11 @@
 
       for (var k in obj) delete obj[k];  // delete all object keys
       
-      obj['_typename'] = 'TGraph';
+      obj._typename = 'TGraph';
       JSROOT.Create('TGraph', obj);
       obj.fHistogram = JSROOT.CreateTH1(x.length);
 
-      var _title = item._title;
-      if ((_title==null) || (_title.length==0)) _title = item['fullitemname'];
+      var _title = item._title || item.fullitemname;
       
       JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: _title, 
                            fX:x, fY:y, fNpoints: x.length,
@@ -462,12 +461,11 @@
       
       obj.fHistogram.fXaxis.fTimeDisplay = true;
       obj.fHistogram.fXaxis.fTimeFormat = "%H:%M:%S%F0"; // %FJanuary 1, 1970 00:00:00
-
    }
    
    DABC.DrawGauage = function(divid, obj, opt) {
       
-      // at this momemnt justgage should be loaded
+      // at this momemnt justgauge should be loaded
 
       if (typeof Gauge == 'undefined') {
          alert('gauge.js not loaded');
@@ -484,7 +482,7 @@
       painter._title = "";
       
       painter.Draw = function(obj) {
-         if (obj == null) return;
+         if (!obj) return;
          
          var val = Number(obj["value"]);
          
@@ -509,10 +507,8 @@
             redo = true;
          }
 
-         this._title = obj._name;
-         if (!this._title) this._title = "gauge"; 
+         this._title = obj._name || "gauge"
          val = JSROOT.FFormat(val,"5.3g");
-
          this.DrawValue(val, redo);
       }
       
@@ -529,7 +525,7 @@
          
          this.lastval = val;
          
-         if (this.gauge==null) {
+         if (!this.gauge) {
             this.lastsz = sz;   
             
             var config =  {
@@ -553,6 +549,9 @@
          } else {
             this.gauge.redraw(val);
          }
+         
+         // always set painter 
+         this.SetDivId(this.divid);
       }
       
       painter.CheckResize = function() {
@@ -567,9 +566,6 @@
       painter.SetDivId(divid, -1);
       
       painter.Draw(obj);
-      
-      // set set divid after first drawing to set painter to the first child 
-      painter.SetDivId(divid);
       
       return painter.DrawingReady();
    }
