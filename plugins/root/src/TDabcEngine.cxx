@@ -23,6 +23,7 @@
 #include "root/Monitor.h"
 
 #include "THttpServer.h"
+#include "TRootSniffer.h"
 
 TDabcEngine::TDabcEngine() : THttpEngine("dabc","Bridge between DABC and ROOT")
 {
@@ -170,9 +171,12 @@ void TDabcEngine::Process()
 {
    // method called from ROOT context and used to perform actions in root context
 
-   if ((GetServer()==0) || (GetServer()->GetSniffer()==0)) return;
+   if (!GetServer()) return;
+
+   TRootSniffer *sniff = dynamic_cast<TRootSniffer*> (GetServer()->GetSniffer());
+   if (!sniff) return;
 
    root::MonitorRef player = dabc::mgr.FindItem("/ROOT");
 
-   player.ProcessActionsInRootContext(GetServer(), GetServer()->GetSniffer());
+   player.ProcessActionsInRootContext(GetServer(), sniff);
 }
