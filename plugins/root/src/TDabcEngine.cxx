@@ -171,12 +171,9 @@ void TDabcEngine::Process()
 {
    // method called from ROOT context and used to perform actions in root context
 
-   if (!GetServer()) return;
-
-   TRootSniffer *sniff = dynamic_cast<TRootSniffer*> (GetServer()->GetSniffer());
-   if (!sniff) return;
+   if (!GetServer() || !GetServer()->GetSniffer()) return;
 
    root::MonitorRef player = dabc::mgr.FindItem("/ROOT");
 
-   player.ProcessActionsInRootContext(GetServer(), sniff);
+   player.ProcessActionsInRootContext(GetServer(), GetServer()->GetSniffer());
 }
