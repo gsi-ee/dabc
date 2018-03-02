@@ -53,7 +53,8 @@ namespace mbs {
             oWaitingReq,       // waiting request from client
             oWaitingReqBack,   // waiting request from client and need to make call-back
             oWaitingBuffer,
-            oSendingEvents,
+            oSendingEvents,    // sending events
+            oSendingLastEvent, // waiting for completion of last event
             oSendingBuffer,
             oDoingClose,
             oError
@@ -72,6 +73,7 @@ namespace mbs {
          mbs::SubeventHeader   fSubHdr; // additional MBS subevent header (for non-MBS events)
          uint32_t              fEvCounter; // special events counter
          uint32_t              fSubevId;  // full id of subevent
+         bool                  fHasExtraRequest;
 
          // from addon
          virtual void OnThreadAssigned();

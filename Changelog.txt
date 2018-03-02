@@ -3,6 +3,11 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 
+2.03.2018
+1. Fix race condition in mbs::ServerTransport. Appears when next client request processed
+   before send-complition event. Now flag used to remember such extra state.
+
+
 25.01.2018
 1. Fix tiny problem with master-side Publisher
 2. Switch in compilation with c++11, supported starting from gcc 4.8,

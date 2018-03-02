@@ -33,7 +33,8 @@ mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIterator
    fEvHdr(),
    fSubHdr(),
    fEvCounter(0),
-   fSubevId(subid)
+   fSubevId(subid),
+   fHasExtraRequest(false)
 {
    DOUT3("Create MBS server addon fd:%d kind:%s", fd, mbs::ServerKindToStr(kind));
 }
@@ -93,31 +94,34 @@ void mbs::ServerOutputAddon::OnSendCompleted()
       case oSendingEvents: {
          dabc::EventsIterator* iter = fIter();
 
-         if (iter->NextEvent()) {
-            unsigned evsize = iter->EventSize();
-            if (evsize % 2) evsize++;
+         unsigned evsize = iter->EventSize();
+         if (evsize % 2) evsize++;
 
-            fSubHdr.InitFull(fSubevId);
-            fSubHdr.SetRawDataSize(evsize);
+         fSubHdr.InitFull(fSubevId);
+         fSubHdr.SetRawDataSize(evsize);
 
-            fEvHdr.Init(fEvCounter++);
-            fEvHdr.SetFullSize(evsize + sizeof(fEvHdr) + sizeof(fSubHdr));
+         fEvHdr.Init(fEvCounter++);
+         fEvHdr.SetFullSize(evsize + sizeof(fEvHdr) + sizeof(fSubHdr));
 
-            StartSend(&fEvHdr, sizeof(fEvHdr), &fSubHdr, sizeof(fSubHdr), iter->Event(), evsize);
+         StartSend(&fEvHdr, sizeof(fEvHdr), &fSubHdr, sizeof(fSubHdr), iter->Event(), evsize);
 
-            return;
-         }
+         if (!iter->NextEvent())
+            // if there are no move event - close iterator and wait for completion
+            fState = oSendingLastEvent;
 
-         iter->Close();
-         // we continue to next case - buffer is completed
+         return;
       }
-      /* no break */
+
+      case oSendingLastEvent:
+         fIter()->Close(); // close here to ensure memory for send operation
+         /* no break */
 
       case oSendingBuffer:
          if (fKind == mbs::StreamServer)
-            fState = oWaitingReq;
+            fState = fHasExtraRequest ? oWaitingBuffer : oWaitingReq;
          else
             fState = oWaitingBuffer;
+         fHasExtraRequest = false;
          MakeCallback(dabc::do_Ok);
          return;
 
@@ -146,6 +150,7 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
 
    memset(f_sbuf, 0, sizeof(f_sbuf));
    StartRecv(f_sbuf, 12);
+   fHasExtraRequest = false;
 
    switch (fState) {
       case oInit:
@@ -163,6 +168,10 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
       case oWaitingReqBack:
          MakeCallback(dabc::do_Ok);
          fState = oWaitingBuffer;
+         break;
+      case oSendingLastEvent:
+      case oSendingBuffer:
+         fHasExtraRequest = false;
          break;
       default:
          EOUT("Get request at wrong state %d", fState);
@@ -224,19 +233,27 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
    unsigned sendsize = buf.GetTotalSize();
 
+   if (sendsize == 0) return dabc::do_Skip;
+
    if (!fIter.null()) {
       dabc::EventsIterator* iter = fIter();
       sendsize = 0;
       iter->Assign(buf);
+      unsigned rawsize = 0;
 
       while (iter->NextEvent()) {
          sendsize += sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader);
          unsigned evsize = iter->EventSize();
          if (evsize % 2) evsize++;
          sendsize += evsize;
+         rawsize += evsize;
       }
       iter->Close();
+
+      if (rawsize == 0) return dabc::do_Skip;
+
       iter->Assign(buf);
+      iter->NextEvent(); // shift to first event
    }
 
 
