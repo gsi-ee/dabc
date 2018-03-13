@@ -303,7 +303,8 @@ void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
 }
 
 
-bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix) {
+bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
    if (ix>=sz) return false;
@@ -380,7 +381,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    if (sz>99) wlen = 3; else
    if (sz>999) wlen = 4;
 
-   unsigned epoch(0);
+   unsigned long long epoch(0);
    double tm, ch0tm(0);
 
    errmask = 0;
