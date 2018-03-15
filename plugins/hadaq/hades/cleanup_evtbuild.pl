@@ -42,17 +42,17 @@ sleep 10;
 # for the moment, test dabc shutdown again-
 
 
-#$pname = "dabc_exe.head";
-#@out_list = `ps -C $pname`;
-#&killHardProcs(\@out_list, $pname);
+$pname = "dabc_exe.head";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
 
-#$pname = "dabc_exe.275";
-#@out_list = `ps -C $pname`;
-#&killHardProcs(\@out_list, $pname);
+$pname = "dabc_exe.275";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
 
-#$pname = "dabc_exe";
-#@out_list = `ps -C $pname`;
-#&killHardProcs(\@out_list, $pname);
+$pname = "dabc_exe";
+@out_list = `ps -C $pname`;
+&killHardProcs(\@out_list, $pname);
 
 print "                ...done.\n";
 
