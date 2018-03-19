@@ -40,6 +40,8 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
 
       if (kind == "xml") mask |= dabc::storemask_AsXML;
 
+      dabc::NumericLocale loc;
+
       dabc::HStore store(mask);
       store.CreateNode(res.GetName());
       // workaround, later global autoload variable should be used here

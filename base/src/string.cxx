@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <locale.h>
 
 #include "dabc/ConfigBase.h"
 
@@ -248,4 +249,20 @@ std::string dabc::replace_all(const std::string& str, const std::string& match, 
 
    return res;
 }
+
+dabc::NumericLocale::NumericLocale() : fPrev()
+{
+   char *loc = setlocale(LC_NUMERIC, NULL);
+   if (loc && (strcmp(loc, "C") != 0)) {
+      fPrev = loc;
+      setlocale(LC_NUMERIC, "C");
+   }
+}
+
+dabc::NumericLocale::~NumericLocale()
+{
+   if (!fPrev.empty())
+      setlocale(LC_NUMERIC, fPrev.c_str());
+}
+
 

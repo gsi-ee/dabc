@@ -85,6 +85,14 @@ namespace dabc {
    extern std::string replace_all(const std::string& str, const std::string& match, const std::string& replace);
 
 
+   class NumericLocale {
+   protected:
+      std::string fPrev;
+   public:
+      NumericLocale();
+      ~NumericLocale();
+   };
+
 };
 
 #endif

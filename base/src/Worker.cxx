@@ -807,6 +807,8 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          std::string replybuf;
 
+         dabc::NumericLocale loc; // ensure correct locale for conversion
+
          if (field.empty()) {
             if (compact<0) compact = 0; else
             if (compact>storemask_Compact) compact = storemask_Compact;

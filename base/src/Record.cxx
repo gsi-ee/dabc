@@ -1655,6 +1655,7 @@ bool dabc::RecordContainer::SaveTo(HStore& store, bool create_node)
 
 std::string dabc::Record::SaveToJson(unsigned mask)
 {
+   dabc::NumericLocale loc;
    dabc::HStore store(mask);
    if (SaveTo(store)) return store.GetResult();
    return "";
@@ -1662,6 +1663,7 @@ std::string dabc::Record::SaveToJson(unsigned mask)
 
 std::string dabc::Record::SaveToXml(unsigned mask)
 {
+   dabc::NumericLocale loc;
    dabc::HStore store(mask | dabc::storemask_AsXML);
    if (SaveTo(store)) return store.GetResult();
    return "";
