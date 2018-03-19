@@ -7,7 +7,7 @@
 #include "dabc/timing.h"
 
 ltsm::FileInterface::FileInterface() :
-	dabc::FileInterface(), fSession(0), fIsClosing(false)
+	dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fIsClosing(false), fSessionFileCount(0)
     {
     DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
     api_msg_set_level(API_MSG_NORMAL);
@@ -20,15 +20,8 @@ ltsm::FileInterface::FileInterface() :
 
 ltsm::FileInterface::~FileInterface()
     {
-
     DOUT3("ltsm::FileInterface::DTOR ... ");
-    if (fSession)
-	{
-	fclose(fSession->tsm_file);
-	tsm_fdisconnect(fSession);
-	free(fSession);
-	fSession = 0;
-	}
+    CloseTSMSession();
     tsm_cleanup (DSM_MULTITHREAD);
     }
 
@@ -36,75 +29,32 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	const char* mode, const char* opt)
     {
 
-    DOUT3("ltsm::FileInterface::fopen ... ");
+    DOUT0("ltsm::FileInterface::fopen with options %s",opt);
     dabc::Url url;
     url.SetOptions(opt);
+    
+    //here optionally close current session if we exceed file counter:
+  
+    if (url.HasOption("ltsmMaxSessionFiles"))
+        {
+          fMaxFilesPerSession = url.GetOptionInt("ltsmMaxSessionFiles", fMaxFilesPerSession);
+	  DOUT0("tsm::FileInterface::fopen uses %d max session files from url options.",fMaxFilesPerSession);
+ 	}
+ else
+    {	
+        DOUT0("tsm::FileInterface::fopen uses %d max session files from DEFAULTS.",fMaxFilesPerSession);
+      
+    }   
+    
+    if(fSessionFileCount >= fMaxFilesPerSession)
+    {
+      CloseTSMSession();      
+    }
+    
+    // open session before first file is written, or if we have closed previous session to start tape migration on server    
     if (fSession == 0)
 	{
-	// open session before first file is written.
-	fCurrentFile = "none";
-	fServername = "lxltsm01-tsm-server";
-	fNode = "LTSM_TEST01";
-	fPassword = "LTSM_TEST01";
-	fOwner = "";
-	fFsname = DEFAULT_FSNAME;
-
-	DOUT3("ltsm::FileInterface::fopen before options with options %s \n", opt);
-
-	if (url.HasOption("ltsmServer"))
-	    {
-	    fServername = url.GetOptionStr("ltsmServer", fServername);
-	    }
-	if (url.HasOption("ltsmNode"))
-	    {
-	    fNode = url.GetOptionStr("ltsmNode", fNode);
-	    }
-	if (url.HasOption("ltsmPass"))
-	    {
-	    fPassword = url.GetOptionStr("ltsmPass", fPassword);
-	    }
-	if (url.HasOption("ltsmOwner"))
-	    {
-	    fOwner = url.GetOptionStr("ltsmOwner", fOwner);
-	    }
-	if (url.HasOption("ltsmFsname"))
-	    {
-	    fFsname = url.GetOptionStr("ltsmFsname", fFsname);
-	    }
-
-
-	DOUT2(
-		"Prepare open LTSM file for writing -  "
-		"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
-		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-		fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
-
-	struct login_t tsmlogin;
-
-	login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(),
-		fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
-		fFsname.c_str(), DEFAULT_FSTYPE);
-
-	fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
-	memset(fSession, 0, sizeof(struct session_t));
-
-	int rc = tsm_fconnect(&tsmlogin, fSession);
-	if (rc)
-	    {
-	    EOUT("Fail to connect LTSM session using following arguments"
-		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n",
-		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-		    fOwner.c_str(), fFsname.c_str());
-	    free(fSession);
-	    return 0;
-	    }
-
-	  DOUT0("Successfully conncted LTSM session with parameter: "
-		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s\n",
-		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
-		    fOwner.c_str(), fFsname.c_str());
-
-
+	  if(!OpenTSMSession(opt)) return 0;
 	} // if fSesssion==0
 
     // default description is per file, not per session:
@@ -128,7 +78,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	if (rc)
 	    {
 	    EOUT(
-		    "Fail to oen LTSM file for writing, using following arguments"
+		    "Fail to open LTSM file for writing, using following arguments"
 			    "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
 		    fname, fServername.c_str(), fNode.c_str(),
 		    fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
@@ -137,8 +87,9 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	    fSession = 0; // on failure we retry open the session. Or keep it?
 	    return 0;
 	    }
-	DOUT0("Opened LTSM file for writing: "
-		"File=%s, Servername=%s,  Description=%s\n", fname,
+	fSessionFileCount++;
+	DOUT0("Opened LTSM file (session count %d) for writing: "
+		"File=%s, Servername=%s,  Description=%s\n", fSessionFileCount, fname,
 		fServername.c_str(), fDescription.c_str());
 	}
     else if (strstr(mode, "r") != 0)
@@ -312,3 +263,92 @@ dabc::Object* ltsm::FileInterface::fmatch(const char* fmask, bool select_files)
     {
     return 0;
     }
+
+    
+    
+bool ltsm::FileInterface::OpenTSMSession(const char* opt)
+{
+  DOUT3("ltsm::FileInterface::OpenTSMSession ... ");
+  dabc::Url url;
+  url.SetOptions(opt);
+  // open session before first file is written.
+  fCurrentFile = "none";
+  fServername = "lxltsm01-tsm-server";
+  fNode = "LTSM_TEST01";
+  fPassword = "LTSM_TEST01";
+  fOwner = "";
+  fFsname = DEFAULT_FSNAME;
+
+	DOUT1("ltsm::FileInterface::fOpenTSMSession before options with options %s \n", opt);
+
+	if (url.HasOption("ltsmServer"))
+	    {
+	    fServername = url.GetOptionStr("ltsmServer", fServername);
+	    }
+	if (url.HasOption("ltsmNode"))
+	    {
+	    fNode = url.GetOptionStr("ltsmNode", fNode);
+	    }
+	if (url.HasOption("ltsmPass"))
+	    {
+	    fPassword = url.GetOptionStr("ltsmPass", fPassword);
+	    }
+	if (url.HasOption("ltsmOwner"))
+	    {
+	    fOwner = url.GetOptionStr("ltsmOwner", fOwner);
+	    }
+	if (url.HasOption("ltsmFsname"))
+	    {
+	    fFsname = url.GetOptionStr("ltsmFsname", fFsname);
+	    }
+
+
+	DOUT2(
+		"Prepare open LTSM file for writing -  "
+		"File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s\n",
+		fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
+
+	struct login_t tsmlogin;
+
+	login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(),
+		fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
+		fFsname.c_str(), DEFAULT_FSTYPE);
+
+	fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
+	memset(fSession, 0, sizeof(struct session_t));
+
+	int rc = tsm_fconnect(&tsmlogin, fSession);
+	if (rc)
+	    {
+	    EOUT("Fail to connect LTSM session using following arguments"
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n",
+		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		    fOwner.c_str(), fFsname.c_str());
+	    free(fSession);
+	    return false;
+	    }
+
+	  DOUT0("Successfully conncted LTSM session with parameter: "
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s\n",
+		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		    fOwner.c_str(), fFsname.c_str()); 
+  
+ return true; 
+}
+
+
+bool ltsm::FileInterface::CloseTSMSession()
+{
+  if (fSession)
+  {
+  //fclose(fSession->tsm_file);
+  tsm_fdisconnect(fSession);
+  free(fSession);
+  fSession = 0;
+  fSessionFileCount=0;
+  return true;
+  }  
+ return false;	  
+}
+    

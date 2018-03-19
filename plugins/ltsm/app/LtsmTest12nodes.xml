@@ -27,7 +27,7 @@
 
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
-       <InputPort name="Input0" url="lmd://Generator?size=10000&numsub=1&procid=${DABCNODEID}&go4=false"/>
+       <InputPort name="Input0" url="lmd://Generator?size=10000&numsub=1&procid=${DABCNODEID}&go4=false&tmout=1"/>
 
        <InputPort name="Input*" queue="5" timeout="5"/>
         <OutputPort name="*" onerror="exit" />

@@ -30,9 +30,22 @@ namespace ltsm
 	std::string fOwner;
 	std::string fFsname;
 	std::string fDescription;
+	
+	int fMaxFilesPerSession; //< set maximum number of files before re-opening session. For correct migration job on TSM server
 
 	bool fIsClosing; //< avoid double fclose on termination by this
+	
+	int fSessionFileCount; //< count number of files in current session
+	
+	
+	/** Re-open session with parameters specified in dabc options string*/
+	bool OpenTSMSession(const char* options);
 
+	/** Shut down current TSM session*/
+	bool CloseTSMSession();
+	
+	
+	
     public:
 
 	FileInterface();
