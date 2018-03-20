@@ -28,9 +28,9 @@ $pname = "dabc_exe.275";
 @out_list = `ps -C $pname`;
 &killKeyboardInterrupt(\@out_list, $pname);
 
-$pname = "dabc_exe";
-@out_list = `ps -C $pname`;
-&killKeyboardInterrupt(\@out_list, $pname);
+#$pname = "dabc_exe";
+#@out_list = `ps -C $pname`;
+#&killKeyboardInterrupt(\@out_list, $pname);
 
 
 # JAM 8-2017 this might be required to give epics time for distribution of new runid?
@@ -50,9 +50,9 @@ $pname = "dabc_exe.275";
 @out_list = `ps -C $pname`;
 &killHardProcs(\@out_list, $pname);
 
-$pname = "dabc_exe";
-@out_list = `ps -C $pname`;
-&killHardProcs(\@out_list, $pname);
+#$pname = "dabc_exe";
+#@out_list = `ps -C $pname`;
+#&killHardProcs(\@out_list, $pname);
 
 print "                ...done.\n";
 
