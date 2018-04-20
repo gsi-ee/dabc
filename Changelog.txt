@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+20.04.2018
+1. Add SkipEmpty flag to hadaq::CombinerModule. If false, when false, subevents without raw data will 
+   not be skipped and inserted into final event. Default is true - empty subevents are dropped
+
 
 2.03.2018
 1. Fix race condition in mbs::ServerTransport. Appears when next client request processed

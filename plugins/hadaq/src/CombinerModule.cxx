@@ -70,6 +70,8 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fCheckTag = Cfg("CheckTag", cmd).AsBool(true);
 
+   fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
+
    fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;
 
@@ -885,7 +887,7 @@ bool hadaq::CombinerModule::BuildEvent()
          DoErrorBitStatistics(ninp); // also for not complete events
          if (trignr == buildevid) {
 
-            if (!isempty) {
+            if (!isempty || !fSkipEmpty) {
                // check also trigtag:
                if (trigtag != buildtag) tagError = true;
                if (haserror) dataError = true;
@@ -1011,7 +1013,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-         if (fCfg[ninp].fEmpty) continue;
+         if (fCfg[ninp].fEmpty && fSkipEmpty) continue;
          if (fBNETrecv)
             fOut.AddAllSubevents(fCfg[ninp].evnt);
          else

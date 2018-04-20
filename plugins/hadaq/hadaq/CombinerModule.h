@@ -166,7 +166,8 @@ namespace hadaq {
 
          bool fWithObserver;
          bool fEpicsSlave;
-	 bool fIsTerminating;
+         bool fIsTerminating;
+         bool fSkipEmpty;     ///< skip empty subevents in final event, default true
 
          bool fRunToOracle;
 
