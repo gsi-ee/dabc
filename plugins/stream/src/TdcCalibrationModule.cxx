@@ -290,8 +290,10 @@ bool stream::TdcCalibrationModule::retransmit()
             if (auto_create) {
                unsigned num = fTrbProc->NumberOfTDC();
                for (unsigned indx=0;indx<num;++indx) {
-                  fTDCs.emplace_back(fTrbProc->GetTDCWithIndex(indx)->GetID());
-                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, fTDCs.back());
+                  hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
+                  if (fAutoMode==0) tdc->SetUseLinear(); // force linear
+                  fTDCs.emplace_back(tdc->GetID());
+                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
                }
             }
 
