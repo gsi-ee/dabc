@@ -84,25 +84,26 @@ namespace dabc {
    const char* xmlSocketHost       = "sockethost";
    const char* xmlUseControl       = "control";
    const char* xmlMasterProcess    = "master";
+   const char* xmlPublisher        = "publisher";
 
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
-   fDoc(0),
+   fDoc(nullptr),
    fVersion(-1),
-   fCmdVariables(0),
-   fVariables(0),
+   fCmdVariables(nullptr),
+   fVariables(nullptr),
    envDABCSYS(),
    envDABCUSERDIR(),
    envDABCNODEID(),
    envContext()
 {
-   if (fname==0) return;
+   if (!fname) return;
 
    fDoc = Xml::ParseFile(fname, true);
-   if (fDoc==0) return;
+   if (!fDoc) return;
 
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
 
@@ -111,7 +112,7 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    } else {
       EOUT("Xml file %s not in dabc format", fname);
       Xml::FreeDoc(fDoc);
-      fDoc = 0;
+      fDoc = nullptr;
       fVersion = -1;
    }
 }
@@ -119,23 +120,23 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
 dabc::ConfigBase::~ConfigBase()
 {
    Xml::FreeDoc(fDoc);
-   fDoc = 0;
+   fDoc = nullptr;
 
    Xml::FreeNode(fCmdVariables);
-   fCmdVariables = 0;
+   fCmdVariables = nullptr;
 
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
 {
-   if ((fDoc==0) || (fVariables!=0)) return fVariables;
+   if (!fDoc || fVariables) return fVariables;
 
-   fVariables = 0;
+   fVariables = nullptr;
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return 0;
+   if (!rootnode) return nullptr;
 
    XMLNodePointer_t node = Xml::GetChild(rootnode);
-   while (node!=0) {
+   while (node!=nullptr) {
       if (IsNodeName(node, xmlVariablesNode)) {
          fVariables = node;
          break;
@@ -148,20 +149,20 @@ dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
 
 void dabc::ConfigBase::AddCmdVariable(const char* name, const char* value)
 {
-   if (fCmdVariables==0) fCmdVariables = Xml::NewChild(0, 0, "CmdVariables", 0);
+   if (!fCmdVariables) fCmdVariables = Xml::NewChild(nullptr, nullptr, "CmdVariables", nullptr);
 
-   XMLNodePointer_t node = Xml::NewChild(fCmdVariables, 0, name, 0);
-   Xml::NewAttr(node, 0, xmlValueAttr, value);
+   XMLNodePointer_t node = Xml::NewChild(fCmdVariables, nullptr, name, nullptr);
+   Xml::NewAttr(node, nullptr, xmlValueAttr, value);
 }
 
 
 bool dabc::ConfigBase::IsNodeName(XMLNodePointer_t node, const char* name)
 {
-   if ((node==0) || (name==0)) return false;
+   if (!node || !name) return false;
 
-   const char* n = Xml::GetNodeName(node);
+   const char *n = Xml::GetNodeName(node);
 
-   return n==0 ? false : strcmp(n,name) == 0;
+   return !n ? false : strcmp(n,name) == 0;
 }
 
 const char* dabc::ConfigBase::GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue)
@@ -178,13 +179,13 @@ int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char* attr, int de
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const char* name)
 {
-   if (node==0) return 0;
+   if (!node) return nullptr;
    XMLNodePointer_t child = Xml::GetChild(node);
-   while (child!=0) {
+   while (child!=nullptr) {
       if (IsNodeName(child, name)) return child;
       child = Xml::GetNext(child);
    }
-   return 0;
+   return nullptr;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmatch,
@@ -254,7 +255,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
                                                    const char* sub2,
                                                    const char* sub3)
 {
-   if (node==0) return 0;
+   if (!node) return nullptr;
 
    // first of all, check if node has specified subitem
 
@@ -418,24 +419,24 @@ bool dabc::ConfigBase::IsContextNode(XMLNodePointer_t node)
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
 {
-   if (fDoc==0) return 0;
+   if (!fDoc) return nullptr;
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return 0;
+   if (!rootnode) return nullptr;
    XMLNodePointer_t node = Xml::GetChild(rootnode);
    unsigned cnt = 0;
 
-   while (node!=0) {
+   while (node!=nullptr) {
       if (IsContextNode(node)) {
          if (cnt++ == id) return node;
       }
       node = Xml::GetNext(node);
    }
 
-   return 0;
+   return nullptr;
 }
 
 
-std::string dabc::ConfigBase::ResolveEnv(const std::string& arg, int id)
+std::string dabc::ConfigBase::ResolveEnv(const std::string &arg, int id)
 {
    if (arg.empty()) return arg;
 

@@ -29,7 +29,7 @@ std::string dabc::Configuration::fLocalHost = "";
 
 dabc::Configuration::Configuration(const char* fname) :
    ConfigBase(fname),
-   fSelected(0),
+   fSelected(nullptr),
    fMgrHost(),
    fMgrPort(0),
    fMgrName("Manager"),
@@ -46,7 +46,7 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
 {
    fSelected = FindContext(nodeid);
 
-   if (fSelected==0) return false;
+   if (!fSelected) return false;
 
    envDABCNODEID = dabc::format("%u", nodeid);
    envDABCNUMNODES = dabc::format("%u", numnodes);
@@ -123,21 +123,21 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
 
 std::string dabc::Configuration::InitFuncName()
 {
-   if (fSelected==0) return std::string("");
+   if (!fSelected) return std::string("");
 
    return Find1(fSelected, "", xmlRunNode, xmlInitFunc);
 }
 
 std::string dabc::Configuration::RunFuncName()
 {
-   if (fSelected==0) return std::string("");
+   if (!fSelected) return std::string("");
 
    return Find1(fSelected, "", xmlRunNode, xmlRunFunc);
 }
 
 int dabc::Configuration::ShowCpuInfo()
 {
-   if (fSelected==0) return -1;
+   if (!fSelected) return -1;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlCpuInfo);
    if (res.empty()) return -1;
    int kind(0);
@@ -146,7 +146,7 @@ int dabc::Configuration::ShowCpuInfo()
 
 bool dabc::Configuration::UseSlowTime()
 {
-   if (fSelected==0) return true;
+   if (!fSelected) return true;
    std::string res = Find1(fSelected, "", xmlRunNode, "slow-time");
    if (res == xmlFalseValue) return false;
    if (res == xmlTrueValue) return true;
@@ -155,7 +155,7 @@ bool dabc::Configuration::UseSlowTime()
 
 int dabc::Configuration::UseControl()
 {
-   if (fSelected==0) return 0;
+   if (!fSelected) return 0;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlUseControl);
    if (res == xmlFalseValue) return -1;
    if (res == xmlTrueValue) return 1;
@@ -164,8 +164,8 @@ int dabc::Configuration::UseControl()
 
 int dabc::Configuration::WithPublisher()
 {
-   if (fSelected==0) return 0;
-   std::string res = Find1(fSelected, "", xmlRunNode, "publisher");
+   if (!fSelected) return 0;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlPublisher);
    if (res == xmlFalseValue) return -1;
    if (res == xmlTrueValue) return 1;
    return 0;
@@ -174,14 +174,14 @@ int dabc::Configuration::WithPublisher()
 
 std::string dabc::Configuration::MasterName()
 {
-   if (fSelected==0) return std::string("");
+   if (!fSelected) return std::string("");
 
    return Find1(fSelected, "", xmlRunNode, xmlMasterProcess);
 }
 
 double dabc::Configuration::GetRunTime()
 {
-   if (fSelected==0) return 0.;
+   if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlRunTime);
    if (res.empty()) return 0.;
    double runtime(0.);
@@ -190,7 +190,7 @@ double dabc::Configuration::GetRunTime()
 
 double dabc::Configuration::GetHaltTime()
 {
-   if (fSelected==0) return 0.;
+   if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlHaltTime);
    if (res.empty()) return 0.;
    double halttime(0.);
@@ -199,7 +199,7 @@ double dabc::Configuration::GetHaltTime()
 
 double dabc::Configuration::GetThrdStopTime()
 {
-   if (fSelected==0) return 0.;
+   if (!fSelected) return 0.;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlThrdStopTime);
    if (res.empty()) return 0.;
    double stoptime(0.);
@@ -208,20 +208,20 @@ double dabc::Configuration::GetThrdStopTime()
 
 bool dabc::Configuration::NormalMainThread()
 {
-   if (fSelected==0) return true;
+   if (!fSelected) return true;
    return Find1(fSelected, "", xmlRunNode, xmlNormalMainThrd) == xmlTrueValue;
 }
 
 std::string dabc::Configuration::Affinity()
 {
-   if (fSelected==0) return "";
+   if (!fSelected) return "";
 
    return Find1(fSelected, "", xmlRunNode, xmlAffinity);
 }
 
 std::string dabc::Configuration::ThreadsLayout()
 {
-   if (fSelected==0) return "";
+   if (!fSelected) return "";
 
    return Find1(fSelected, "", xmlRunNode, xmlThreadsLayout);
 }
@@ -229,7 +229,7 @@ std::string dabc::Configuration::ThreadsLayout()
 
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
 {
-   if (fSelected==0) return std::string("");
+   if (!fSelected) return std::string("");
    return Find1(fSelected, dflt ? dflt : "", xmlUserNode, name);
 }
 
@@ -243,7 +243,7 @@ int dabc::Configuration::GetUserParInt(const char* name, int dflt)
 
 std::string dabc::Configuration::ConetextAppClass()
 {
-   if (fSelected==0) return std::string();
+   if (!fSelected) return std::string();
 
    XMLNodePointer_t node = Xml::GetChild(fSelected);
 
@@ -263,7 +263,7 @@ std::string dabc::Configuration::ConetextAppClass()
 
 bool dabc::Configuration::LoadLibs()
 {
-    if (fSelected==0) return false;
+    if (!fSelected) return false;
 
     std::string libname;
     XMLNodePointer_t last = 0;

@@ -84,6 +84,7 @@ namespace dabc {
    extern const char* xmlSocketHost;
    extern const char* xmlUseControl;
    extern const char* xmlMasterProcess;
+   extern const char* xmlPublisher;
 
    extern const char* xmlTrueValue;
    extern const char* xmlFalseValue;
