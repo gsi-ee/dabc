@@ -228,16 +228,16 @@ int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
    }
 
    if (rcvbuflen > 0) {
-       // for hadaq application: set receive buffer length _before_ bind:
-       //         int rcvBufLenReq = 1 * (1 << 20);
-       int rcvBufLenRet;
-       socklen_t rcvBufLenLen = sizeof(rcvbuflen);
-       if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
-          EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
-       }
+      // for hadaq application: set receive buffer length _before_ bind:
+      //         int rcvBufLenReq = 1 * (1 << 20);
+      socklen_t rcvBufLenLen = sizeof(rcvbuflen);
+      if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
+         EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
+      }
 
+      int rcvBufLenRet = 0;
       if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, &rcvBufLenLen) == -1) {
-          EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
+         EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
       }
 
       if (rcvBufLenRet < rcvbuflen) {
@@ -247,17 +247,16 @@ int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
    }
 
    if ((host.length()>0) && (host!="host")) {
-      struct addrinfo hints, *info = 0;
+      struct addrinfo hints, *info = nullptr;
 
       memset(&hints, 0, sizeof(hints));
       hints.ai_flags    = AI_PASSIVE;
       hints.ai_family   = AF_UNSPEC; //AF_INET;
       hints.ai_socktype = SOCK_DGRAM;
 
-      char service[100];
-      sprintf(service, "%d", nport);
+      std::string service = std::to_string(nport);
 
-      getaddrinfo(host.c_str(), service, &hints, &info);
+      getaddrinfo(host.c_str(), service.c_str(), &hints, &info);
 
       if (info && bind(fd, info->ai_addr, info->ai_addrlen) == 0) return fd;
    }
