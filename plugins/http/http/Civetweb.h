@@ -43,7 +43,7 @@ namespace http {
          virtual void OnThreadAssigned();
 
       public:
-         Civetweb(const std::string& name, dabc::Command cmd = 0);
+         Civetweb(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~Civetweb();
 
          virtual const char* ClassName() const { return "HttpServer"; }

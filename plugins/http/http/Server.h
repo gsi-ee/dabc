@@ -71,7 +71,7 @@ namespace http {
                       dabc::Buffer& content_bin);
 
       public:
-         Server(const std::string& name, dabc::Command cmd = 0);
+         Server(const std::string& name, dabc::Command cmd = nullptr);
 
          virtual ~Server();
 

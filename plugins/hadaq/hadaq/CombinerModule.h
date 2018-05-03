@@ -286,7 +286,7 @@ namespace hadaq {
          bool CheckDestination(uint32_t trignr);
 
       public:
-         CombinerModule(const std::string& name, dabc::Command cmd = 0);
+         CombinerModule(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
 
          virtual void ModuleCleanup();

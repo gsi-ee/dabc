@@ -79,7 +79,7 @@ namespace root {
          virtual int ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc::Command cmd);
 
       public:
-         Monitor(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = nullptr);
 
          virtual ~Monitor();
 

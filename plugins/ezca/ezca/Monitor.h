@@ -74,7 +74,7 @@ namespace ezca {
          std::string GetItemName(const std::string& ezcaname);
 
       public:
-         Monitor(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = nullptr);
 
          virtual void ProcessTimerEvent(unsigned timer);
    };

@@ -48,7 +48,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
    public:
 
-      TestModuleAsync(const std::string& name, dabc::Command cmd = 0) :
+      TestModuleAsync(const std::string& name, dabc::Command cmd = nullptr) :
          dabc::ModuleAsync(name, cmd),
          fKind(0),
          fCntRecv(0),
@@ -159,7 +159,7 @@ class TestModuleSync : public dabc::ModuleSync {
       int                 fKind; // 0 - first in chain, 1 - repeater, 2 - last in chain,
 
    public:
-      TestModuleSync(const std::string& name, dabc::Command cmd = 0) :
+      TestModuleSync(const std::string& name, dabc::Command cmd = nullptr) :
          dabc::ModuleSync(name),
          fKind(0)
       {

@@ -56,7 +56,7 @@ namespace fesa {
 
       public:
 
-         Monitor(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
          void ReportServiceChanged(const std::string& name, const rdaData* v);

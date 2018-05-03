@@ -278,7 +278,7 @@ namespace mbs {
 
       public:
 
-         Monitor(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
          virtual std::string RequiredThrdClass() const

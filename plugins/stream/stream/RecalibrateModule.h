@@ -51,7 +51,7 @@ namespace stream {
 
    public:
 
-      RecalibrateModule(const std::string& name, dabc::Command cmd = 0);
+      RecalibrateModule(const std::string& name, dabc::Command cmd = nullptr);
       virtual ~RecalibrateModule();
 
       virtual bool ProcessRecv(unsigned) { return retransmit(); }

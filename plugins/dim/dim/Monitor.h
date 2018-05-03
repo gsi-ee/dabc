@@ -69,7 +69,7 @@ namespace dim {
 
 
       public:
-         Monitor(const std::string& name, dabc::Command cmd = 0);
+         Monitor(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
          virtual void ProcessTimerEvent(unsigned timer);

@@ -62,7 +62,7 @@ namespace fesa {
 
       public:
 
-         Player(const std::string& name, dabc::Command cmd = 0);
+         Player(const std::string& name, dabc::Command cmd = nullptr);
          virtual ~Player();
 
          virtual void ModuleCleanup() {}
