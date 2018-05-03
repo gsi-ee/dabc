@@ -42,19 +42,25 @@ namespace stream {
    class TdcCalibrationModule : public dabc::ModuleAsync {
 
    protected:
-      DabcProcMgr *fProcMgr;         ///< stream process manager
-      bool fOwnProcMgr;              ///< if created in the module
-      hadaq::TrbProcessor *fTrbProc; ///< TRB processor
-      bool fDummy;                   ///< module creates all TDCs but do not perform any transformation
-      bool fReplace;                 ///< replace hit messages (true) or add calibration messages (false)
-      int fAutoCalibr;               ///< amount of statistic for the auto calibration in channels
-      int fDummyCounter;             ///< used in dummy
-      dabc::TimeStamp fLastCalibr;   ///< use not to check for calibration very often
-      int fAutoMode;                 ///< automatic mode of TDC creation
-      std::vector<uint64_t> fTDCs;   ///< remember TDCs in the beginning
-      unsigned fTRB;                 ///< remember TRB id
-      int fProgress;                 ///< total calibration progress
-      std::string fState;            ///< current state
+      DabcProcMgr *fProcMgr{nullptr};         ///< stream process manager
+      bool fOwnProcMgr;                       ///< if created in the module
+      hadaq::TrbProcessor *fTrbProc{nullptr}; ///< TRB processor
+      bool fDummy;                            ///< module creates all TDCs but do not perform any transformation
+      bool fReplace;                          ///< replace hit messages (true) or add calibration messages (false)
+      int fAutoCalibr;                        ///< amount of statistic for the auto calibration in channels
+      int fDummyCounter;                      ///< used in dummy
+      dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often
+      int fAutoMode{0};                       ///< automatic mode of TDC creation
+      std::vector<uint64_t> fTDCs;            ///< remember TDCs in the beginning
+      unsigned fTRB{0};                       ///< remember TRB id, used in module name
+      int fProgress;                          ///< total calibration progress
+      std::string fState;                     ///< current state
+      int fFineMin{0};                        ///< configure min value
+      int fFineMax{0};                        ///< configure max value
+      unsigned fTdcMin{0};                    ///< configured min TDC id
+      unsigned fTdcMax{0};                    ///< configured max TDC value
+      int fNumCh{33};                         ///< configured number of channel
+      int fEdges{1};                          ///< configured edges
 
       bool retransmit();
 

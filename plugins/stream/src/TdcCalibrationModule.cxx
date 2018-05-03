@@ -47,17 +47,20 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    // one need additional buffers
    if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
 
-   int finemin = Cfg("FineMin", cmd).AsInt(0);
-   int finemax = Cfg("FineMax", cmd).AsInt(0);
-   if ((finemin>0) && (finemax==0))
-      hadaq::TdcMessage::SetFineLimits(finemin, finemax);
+   fFineMin = Cfg("FineMin", cmd).AsInt();
+   fFineMax = Cfg("FineMax", cmd).AsInt();
+   if ((fFineMin > 0) && (fFineMax > fFineMin))
+      hadaq::TdcMessage::SetFineLimits(fFineMin, fFineMax);
 
-   int numch = Cfg("NumChannels", cmd).AsInt(65);
-   int edges = Cfg("EdgeMask", cmd).AsInt(1);
+   fNumCh = Cfg("NumChannels", cmd).AsInt(65);
+   fEdges = Cfg("EdgeMask", cmd).AsInt(1);
+   fTdcMin = Cfg("TdcMin", cmd).AsUInt();
+   fTdcMax = Cfg("TdcMax", cmd).AsUInt();
+
    std::vector<uint64_t> caltr = Cfg("CalibrTrigger", cmd).AsUIntVect();
 
    // default channel numbers and edges mask
-   hadaq::TrbProcessor::SetDefaults(numch, edges);
+   hadaq::TrbProcessor::SetDefaults(fNumCh, fEdges);
 
    fWorkerHierarchy.Create("Worker");
 
@@ -92,16 +95,21 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 
    fTrbProc->SetHistFilling(hfill);
 
-   DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
-
    fAutoMode = Cfg("AutoMode", cmd).AsInt();
 
-   fTDCs = Cfg("TDC", cmd).AsUIntVect();
-   for(unsigned n=0;n<fTDCs.size();n++) {
-      DOUT2("Create TDC 0x%04x", (unsigned) fTDCs[n]);
-      fTrbProc->CreateTDC(fTDCs[n]);
+   if (fAutoMode == 0) {
+
+      DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
+
+      fTDCs = Cfg("TDC", cmd).AsUIntVect();
+      for(unsigned n=0;n<fTDCs.size();n++) {
+         DOUT2("Create TDC 0x%04x", (unsigned) fTDCs[n]);
+         fTrbProc->CreateTDC(fTDCs[n]);
+      }
+      item.SetField("tdc", fTDCs);
+   } else {
+      DOUT0("TRB 0x%04x configured in auto mode %d TDC min 0x%04x max 0x%04x", (unsigned) fTRB, fAutoMode, fTdcMin, fTdcMax);
    }
-   item.SetField("tdc", fTDCs);
 
    unsigned calmask = 0xffff;
    if ((caltr.size() > 0) && (caltr[0] != 0xffff)) {
@@ -243,14 +251,13 @@ bool stream::TdcCalibrationModule::retransmit()
          status.assign(fTDCs.size(),  item.GetField("value").AsStr());
          item.SetField("tdc_status", status);
 
-      } else
-      if (fTrbProc!=0) {
+      } else if (fTrbProc) {
 
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file
              (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
              (buf.GetTypeId() == hadaq::mbt_HadaqSubevents)) { // this could be data after sorting
 
-            unsigned char* tgt = 0;
+            unsigned char* tgt = nullptr;
             unsigned tgtlen(0), reslen(0);
             dabc::Buffer resbuf;
             if (!fReplace) {
@@ -259,6 +266,8 @@ bool stream::TdcCalibrationModule::retransmit()
                tgtlen = resbuf.SegmentSize();
             }
 
+            bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin < fTdcMax);
+
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
                while (iter.NextSubEvent()) {
@@ -266,11 +275,23 @@ bool stream::TdcCalibrationModule::retransmit()
                      EOUT("Not enough space for subevent in output buffer");
                      exit(4); return false;
                   }
+
+                  if (auto_create)
+                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
+
                   unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen);
                   if (tgt) {
                      tgt += sublen;
                      reslen += sublen;
                   }
+               }
+            }
+
+            if (auto_create) {
+               unsigned num = fTrbProc->NumberOfTDC();
+               for (unsigned indx=0;indx<num;++indx) {
+                  fTDCs.emplace_back(fTrbProc->GetTDCWithIndex(indx)->GetID());
+                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, fTDCs.back());
                }
             }
 
@@ -280,10 +301,12 @@ bool stream::TdcCalibrationModule::retransmit()
                buf = resbuf;
             }
 
-            if (fLastCalibr.Expired(1.)) {
+            if (fLastCalibr.Expired(1.) || auto_create) {
                fLastCalibr.GetNow();
 
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+
+               if (auto_create) item.SetField("tdc", fTDCs);
 
                double p = SetTRBStatus(item, fTrbProc);
                fProgress = (int) (p*100);
