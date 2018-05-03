@@ -63,7 +63,7 @@
          for (var n in item._parent._childs) {
             var name = item._parent._childs[n]._name;
             
-            if ((name.indexOf("Input")==0) && (name.indexOf("TdcCal")>0)) {
+            if ((name.indexOf("TRB")==0) && (name.indexOf("TdcCal")>0)) {
                var fullname = hpainter.itemFullName(item._parent._childs[n]);
                calarr.push(fullname);               
             }

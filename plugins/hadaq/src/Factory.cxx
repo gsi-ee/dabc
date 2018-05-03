@@ -86,16 +86,22 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    std::string portname = portref.GetName();
 
-   if (url.HasOption("tdc")) {
+   if (url.HasOption("trb") && (url.HasOption("tdc") || url.HasOption("calibr"))) {
       // first create TDC calibration module, connected to combiner
 
-      std::string calname = dabc::format("%sTdcCal", portname.c_str());
+      std::string calname = dabc::format("TRB%04x_TdcCal", (unsigned) url.GetOptionInt("trb"));
 
-      DOUT0("Create calibration module %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
+      if (url.HasOption("tdc"))
+         DOUT0("Create calibration module %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
+      else
+         DOUT0("Create calibration module %s AUTOMODE %d", calname.c_str(), url.GetOptionInt("calibr"));
 
       dabc::CmdCreateModule mcmd("stream::TdcCalibrationModule", calname);
-      mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
-      if (url.HasOption("trb")) mcmd.SetStr("TRB", url.GetOptionStr("trb"));
+      mcmd.SetStr("TRB", url.GetOptionStr("trb"));
+      if (url.HasOption("tdc"))
+         mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
+      else
+         mcmd.SetInt("AutoMode", url.GetOptionInt("calibr"));
       if (url.HasOption("hub")) mcmd.SetStr("HUB", url.GetOptionStr("hub"));
       if (url.HasOption("trig")) mcmd.SetStr("CalibrTrigger", url.GetOptionStr("trig"));
       if (url.HasOption("dummy")) mcmd.SetBool("Dummy", true);

@@ -83,12 +83,18 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
    for (unsigned n=0;n<hubid.size();n++)
       fTrbProc->AddHadaqHUBId(hubid[n]);
+   unsigned hubmin = Cfg("HUBmin", cmd).AsUInt();
+   unsigned hubmax = Cfg("HUBmax", cmd).AsUInt();
+   for (unsigned n=hubmin;n<hubmax;n++)
+      fTrbProc->AddHadaqHUBId(hubid[n]);
 
    int hfill = Cfg("HistFilling", cmd).AsInt(1);
 
    fTrbProc->SetHistFilling(hfill);
 
    DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
+
+   fAutoMode = Cfg("AutoMode", cmd).AsInt();
 
    fTDCs = Cfg("TDC", cmd).AsUIntVect();
    for(unsigned n=0;n<fTDCs.size();n++) {
@@ -97,9 +103,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    }
    item.SetField("tdc", fTDCs);
 
-   unsigned calmask = 0;
-   for (unsigned n=0;n<caltr.size();n++)
-      calmask |= (1<<caltr[n]);
+   unsigned calmask = 0xffff;
+   if ((caltr.size() > 0) && (caltr[0] != 0xffff)) {
+      calmask = 0;
+      for (unsigned n=0;n<caltr.size();n++)
+         calmask |= (1 << caltr[n]);
+   }
 
    fTrbProc->SetCalibrTriggerMask(calmask);
 

@@ -42,19 +42,19 @@ namespace stream {
    class TdcCalibrationModule : public dabc::ModuleAsync {
 
    protected:
-
-      DabcProcMgr           *fProcMgr;     //! stream process manager
-      bool                   fOwnProcMgr;  //! if created in the module
-      hadaq::TrbProcessor   *fTrbProc;     //! TRB processor
-      bool fDummy;                 //! module creates all TDCs but do not perform any transformation
-      bool fReplace;               //! replace hit messages (true) or add calibration messages (false)
-      int  fAutoCalibr;            //! amount of statistic for the auto calibration in channels
-      int  fDummyCounter;          //! used in dummy
-      dabc::TimeStamp fLastCalibr; //! use not to check for calibration very often
-      std::vector<uint64_t> fTDCs; //! remember TDCs in the beginning
-      unsigned fTRB;               //! remember TRB id
-      int fProgress;               //! total calibration progress
-      std::string fState;          //! current state
+      DabcProcMgr *fProcMgr;         ///< stream process manager
+      bool fOwnProcMgr;              ///< if created in the module
+      hadaq::TrbProcessor *fTrbProc; ///< TRB processor
+      bool fDummy;                   ///< module creates all TDCs but do not perform any transformation
+      bool fReplace;                 ///< replace hit messages (true) or add calibration messages (false)
+      int fAutoCalibr;               ///< amount of statistic for the auto calibration in channels
+      int fDummyCounter;             ///< used in dummy
+      dabc::TimeStamp fLastCalibr;   ///< use not to check for calibration very often
+      int fAutoMode;                 ///< automatic mode of TDC creation
+      std::vector<uint64_t> fTDCs;   ///< remember TDCs in the beginning
+      unsigned fTRB;                 ///< remember TRB id
+      int fProgress;                 ///< total calibration progress
+      std::string fState;            ///< current state
 
       bool retransmit();
 
@@ -77,6 +77,5 @@ namespace stream {
    };
 
 }
-
 
 #endif

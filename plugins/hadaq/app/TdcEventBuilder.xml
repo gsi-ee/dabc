@@ -36,7 +36,7 @@ This code is experimental, plese contact S.Linev if you want to use it
     </MemoryPool>
     
     <!-- these are default parameters for TDC calibration modules -->
-    <Module name="Input*TdcCal">    
+    <Module name="TRB*_TdcCal">    
        <!-- Minimal and maximal bins for linear calibration -->
        <FineMin value="31"/>
        <FineMax value="480"/>
@@ -50,6 +50,10 @@ This code is experimental, plese contact S.Linev if you want to use it
             4 - falling edge enabled and common statistic is used for calibration -->
        <EdgeMask value="1"/>
        
+       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+            In the URL it is coded as "calibr" parameter -->
+       <AutoMode value="0"/>
+       
        <!-- histogram filling level
             0 - no histograms,
             1 - only generic statistic for TRB
@@ -61,7 +65,7 @@ This code is experimental, plese contact S.Linev if you want to use it
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
        
-       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser -->
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
        <CalibrTrigger value="0xffff"/>
        
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->

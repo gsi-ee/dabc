@@ -278,7 +278,6 @@ bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::str
    return false;
 }
 
-
 std::string dabc::Url::GetOptionStr(const std::string& optname, const std::string& dflt) const
 {
    std::string res;
