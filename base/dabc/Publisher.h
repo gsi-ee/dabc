@@ -60,7 +60,9 @@ namespace dabc {
    class CmdGetNamesList : public Command {
       DABC_COMMAND(CmdGetNamesList, "CmdGetNamesList");
 
-      static void SetResNamesList(dabc::Command& cmd, Hierarchy& res);
+      static void SetResNamesList(dabc::Command &cmd, Hierarchy& res);
+
+      static Hierarchy GetResNamesList(dabc::Command &cmd);
    };
 
 
@@ -177,17 +179,17 @@ namespace dabc {
          bool DoStorage() const { return !fStoreDir.empty(); }
 
          /** \brief Return hierarchy item selected for work */
-         Hierarchy GetWorkItem(const std::string& path, bool* islocal = 0);
+         Hierarchy GetWorkItem(const std::string& path, bool *islocal = nullptr);
 
          /** \brief Command redirected to local modules or remote publisher,
           * where it should be processed
           * Primary usage - for GetBinary commands, but also for any extra requests */
-         bool RedirectCommand(dabc::Command cmd, const std::string& itemname);
+         bool RedirectCommand(dabc::Command cmd, const std::string &itemname);
 
          /** Try to find producer which potentially could deliver item
           * It could happen that item is not exists in hierarchy, therefore
           * shorter name will be tried */
-         bool IdentifyItem(bool asproducer, const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name);
+         bool IdentifyItem(bool asproducer, const std::string &itemname, bool &islocal, std::string &producer_name, std::string &request_name);
 
       public:
 
@@ -246,9 +248,7 @@ namespace dabc {
       Command ExeCmd(const std::string& fullname, const std::string& query);
 
       protected:
-
-      bool OwnCommand(int id, const std::string& path, const std::string& workername, void* hier = 0);
-
+         bool OwnCommand(int id, const std::string &path, const std::string &workername, void *hier = nullptr);
    };
 
 }

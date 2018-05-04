@@ -16,6 +16,7 @@
 #include "hadaq/BnetMasterModule.h"
 
 #include "dabc/Manager.h"
+#include "dabc/Publisher.h"
 
 hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
@@ -47,7 +48,12 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
 
 bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("GetTransportStatistic")) {
+   if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
+      DOUT0("Get hierarchy");
+
+
+      dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
+
       return true;
    }
 
@@ -60,4 +66,6 @@ void hadaq::BnetMasterModule::BeforeModuleStart()
 
 void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 {
+   dabc::CmdGetNamesList cmd;
+   dabc::PublisherRef(GetPublisher()).Submit(Assign(cmd));
 }

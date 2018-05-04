@@ -20,7 +20,7 @@
 #include "dabc/HierarchyStore.h"
 
 
-void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
+void dabc::CmdGetNamesList::SetResNamesList(dabc::Command &cmd, Hierarchy &res)
 {
    if (res.null()) return;
 
@@ -53,6 +53,27 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
       }
    }
 }
+
+
+dabc::Hierarchy dabc::CmdGetNamesList::GetResNamesList(dabc::Command &cmd)
+{
+   dabc::Hierarchy res;
+
+   dabc::Buffer buf = cmd.GetRawData();
+
+   if (buf.null()) {
+      EOUT("No raw data when requesting hierarchy");
+      return res;
+   }
+
+   if (!res.ReadFromBuffer(buf)) {
+      EOUT("Error decoding hierarchy data from buffer");
+      res.Release();
+   }
+
+   return res;
+}
+
 
 // ==========================================================
 
@@ -421,7 +442,6 @@ bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string& itemname,
 
    return false;
 }
-
 
 
 bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& itemname)

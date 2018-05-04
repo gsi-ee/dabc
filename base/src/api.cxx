@@ -66,6 +66,7 @@ void DABC_GLOBAL_CtrlCHandler(int number)
    dabc::mgr()->ProcessCtrlCSignal();
 }
 
+
 bool dabc::InstallCtrlCHandler()
 {
    if (DABC_SigThrd!=0) {
@@ -82,6 +83,7 @@ bool dabc::InstallCtrlCHandler()
 
    return true;
 }
+
 
 bool dabc::CtrlCPressed()
 {
@@ -100,6 +102,7 @@ bool dabc::DestroyManager()
    return true;
 }
 
+
 std::string dabc::MakeNodeName(const std::string& arg)
 {
    size_t pos = arg.find("dabc://");
@@ -109,7 +112,6 @@ std::string dabc::MakeNodeName(const std::string& arg)
 
    return std::string();
 }
-
 
 
 bool dabc::ConnectDabcNode(const std::string& nodeaddr)
@@ -158,19 +160,7 @@ dabc::Hierarchy dabc::GetNodeHierarchy(const std::string& nodeaddr)
       return res;
    }
 
-   dabc::Buffer buf = cmd.GetRawData();
-
-   if (buf.null()) {
-      EOUT("No raw data when requesting hierarchy");
-      return res;
-   }
-
-   // DOUT0("Get raw data %p %u", buf.SegmentPtr(), buf.GetTotalSize());
-   if (!res.ReadFromBuffer(buf)) {
-      EOUT("Error decoding hierarchy data from buffer");
-      res.Release();
-   }
+   res = dabc::CmdGetNamesList::GetResNamesList(cmd);
 
    return res;
 }
-
