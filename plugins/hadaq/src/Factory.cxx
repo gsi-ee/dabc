@@ -32,6 +32,7 @@
 #include "hadaq/SorterModule.h"
 #include "hadaq/CombinerModule.h"
 #include "hadaq/TerminalModule.h"
+#include "hadaq/BnetMasterModule.h"
 #include "hadaq/Iterator.h"
 #include "hadaq/Observer.h"
 #include "hadaq/api.h"
@@ -181,7 +182,7 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::MbsTransmitterModule") {
       EOUT("MbsTransmitterModule class no longer supported");
-      return 0;
+      return nullptr;
    }
 
    if (classname == "hadaq::ReadoutModule")
@@ -189,6 +190,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
    if (classname == "hadaq::TerminalModule")
       return new hadaq::TerminalModule(modulename, cmd);
+
+   if (classname == "hadaq::BnetMasterModule")
+      return new hadaq::BnetMasterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
