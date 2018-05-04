@@ -22,7 +22,6 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
-#include "dabc/Iterator.h"
 #include "dabc/Factory.h"
 
 std::string dabc::Configuration::fLocalHost = "";

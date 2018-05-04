@@ -388,23 +388,23 @@ namespace dabc {
       void DisableReadingAsChild();
 
       /** \brief Enable element and all its parents to read data */
-      void EnableReading(const Hierarchy& upto = 0);
+      void EnableReading(const Hierarchy &upto = nullptr);
 
       /** \brief Return child, if necessary creates with full subfolder
        * If force specified, missing childs and folders will be recreated
        * If allowslahes enabled, instead of subfolders item with coded name will be created */
-      Hierarchy GetHChild(const std::string& name, bool allowslahes = false, bool force = false);
+      Hierarchy GetHChild(const std::string &name, bool allowslahes = false, bool force = false);
 
       /** \brief Create child item in hierarchy with specified name
        * If allowslahes enabled, instead of subfolders item with coded name will be created */
-      Hierarchy CreateHChild(const std::string& name, bool allowslahes = false)
+      Hierarchy CreateHChild(const std::string &name, bool allowslahes = false)
         { return GetHChild(name, allowslahes, true); }
 
       /** Delete H item, including all empty parent folders */
-      bool RemoveHChild(const std::string& name, bool allowslahes = false);
+      bool RemoveHChild(const std::string &name, bool allowslahes = false);
 
       /** \brief Create folder in hierarchy, one could use it to add new childs to it */
-      Hierarchy CreateFolder(const std::string& name) { return GetHChild(name, true); }
+      Hierarchy CreateFolder(const std::string &name) { return GetHChild(name, true); }
 
       /** \brief Produce history iterator */
       HistoryIter MakeHistoryIter();

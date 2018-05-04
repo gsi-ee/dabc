@@ -22,7 +22,6 @@
 
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
-#include "dabc/Iterator.h"
 #include "dabc/Device.h"
 #include "dabc/Application.h"
 #include "dabc/ConfigBase.h"

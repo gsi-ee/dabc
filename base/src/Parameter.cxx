@@ -18,10 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
-#include "dabc/Iterator.h"
 #include "dabc/Worker.h"
 #include "dabc/ConfigBase.h"
 #include "dabc/Hierarchy.h"

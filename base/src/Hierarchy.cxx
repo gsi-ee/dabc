@@ -18,7 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dabc/Iterator.h"
 #include "dabc/timing.h"
 #include "dabc/threads.h"
 #include "dabc/logging.h"
@@ -26,7 +25,6 @@
 #include "dabc/Command.h"
 #include "dabc/ConfigBase.h"
 #include "dabc/ReferencesVector.h"
-
 
 const char* dabc::prop_version = "_version";
 const char* dabc::prop_kind = "_kind";
@@ -971,13 +969,11 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowsl
       dabc::Hierarchy res = FindChild(name.c_str());
       if (!res.null() && !res.HasField(dabc::prop_realname)) {
          return res;
-      } else
-      if (res.null()) {
+      } else if (res.null()) {
          if (force) res = GetObject()->CreateChildAt(name, -1);
          return res;
       }
    }
-
 
    for (unsigned n=0;n<NumChilds();n++) {
       dabc::Hierarchy res = GetChild(n);

@@ -21,7 +21,6 @@
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"
 #include "dabc/Url.h"
-#include "dabc/Iterator.h"
 #include "dabc/Hierarchy.h"
 
 dabc::Application::Application(const char* classname) :

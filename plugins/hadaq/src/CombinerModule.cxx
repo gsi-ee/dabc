@@ -144,6 +144,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    fWorkerHierarchy.SetField("_player", "DABC.HadaqDAQControl");
 
+   if (fBNETsend) fWorkerHierarchy.SetField("_bnet", "sender");
+   if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
+
    if (fWithObserver) {
       CreateTimer("ObserverTimer", 0.2, false); // export timers 5 times a second
       RegisterExportedCounters();

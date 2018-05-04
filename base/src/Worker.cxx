@@ -21,7 +21,6 @@
 #include "dabc/ConfigBase.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/Iterator.h"
 #include "dabc/ReferencesVector.h"
 #include "dabc/Publisher.h"
 #include "dabc/HierarchyStore.h"

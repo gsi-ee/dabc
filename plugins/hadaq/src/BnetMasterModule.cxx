@@ -17,6 +17,7 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Publisher.h"
+#include "dabc/Iterator.h"
 
 hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
@@ -33,12 +34,12 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
 
    item = fWorkerHierarchy.CreateHChild("Inputs");
    item.SetField(dabc::prop_kind, "Text");
-   item.SetField("value", "Init");
+   item.SetField("value", "");
    item.SetField("_hidden", "true");
 
-   item = fWorkerHierarchy.CreateHChild("Outputs");
+   item = fWorkerHierarchy.CreateHChild("Builders");
    item.SetField(dabc::prop_kind, "Text");
-   item.SetField("value", "Init");
+   item.SetField("value", "");
    item.SetField("_hidden", "true");
 
    Publish(fWorkerHierarchy, "$CONTEXT$/BNET");
@@ -49,10 +50,22 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
 bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
-      DOUT0("Get hierarchy");
-
-
+      //DOUT0("Get hierarchy");
       dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
+      dabc::Iterator iter(h);
+      std::vector<std::string> binp, bbuild;
+      while (iter.next()) {
+         dabc::Hierarchy item = iter.ref();
+         if (item.HasField("_bnet")) {
+            std::string kind = item.GetField("_bnet").AsStr();
+            if (kind == "sender") binp.push_back(item.ItemName());
+            if (kind == "receiver") bbuild.push_back(item.ItemName());
+            //DOUT0("Get BNET %s", item.ItemName().c_str());
+         }
+      }
+
+      fWorkerHierarchy.GetHChild("Inputs").SetField("value", binp);
+      fWorkerHierarchy.GetHChild("Builders").SetField("value", bbuild);
 
       return true;
    }

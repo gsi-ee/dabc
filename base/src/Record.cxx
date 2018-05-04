@@ -1675,7 +1675,6 @@ void dabc::Record::CreateRecord(const std::string& name)
    SetObject(new RecordContainer(name));
 }
 
-
 bool dabc::Record::Stream(iostream& s)
 {
    uint64_t pos = s.size();

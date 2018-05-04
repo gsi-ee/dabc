@@ -541,7 +541,7 @@ namespace dabc {
       /** \brief Store record in XML form */
       std::string SaveToXml(unsigned mask = 0);
 
-      bool Stream(iostream& s);
+      bool Stream(iostream &s);
 
       dabc::Buffer SaveToBuffer();
 
