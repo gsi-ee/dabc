@@ -58,10 +58,10 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command& cmd, Hierarchy& res)
 
 dabc::PublisherEntry::~PublisherEntry()
 {
-   if (store!=0) {
+   if (store) {
       store->CloseFile();
       delete store;
-      store = 0;
+      store = nullptr;
    }
 }
 
@@ -432,7 +432,7 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
    DOUT3("PUBLISHER CMD %s ITEM %s", cmd.GetName(), itemname.c_str());
 
    if (!IdentifyItem(true, itemname, islocal, producer_name, request_name)) {
-      EOUT("Not found producer for item %s", itemname.c_str());
+      DOUT2("Not found producer for item %s", itemname.c_str());
       return false;
    }
 
@@ -800,7 +800,6 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          if (request_name.empty()) request_name = h.GetField("_UserFileMain").AsStr();
          cmd.SetStr("fname", request_name);
       } else {
-
          cmd.SetStr("path", item_name);
          cmd.SetStr("fname", request_name);
 
@@ -810,11 +809,10 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
          // publisher can only identify existing entries
          // all extra entries (like objects members in Go4 events browser) appears as subfolders in request
          size_t pos = request_name.rfind("/");
-         if ((pos!=std::string::npos) && (pos != request_name.length()-1)) {
+         if ((pos != std::string::npos) && (pos != request_name.length()-1)) {
             cmd.SetStr("path", item_name + request_name.substr(0, pos));
             cmd.SetStr("fname", request_name.substr(pos+1));
          }
-
       }
 
       return cmd_true;

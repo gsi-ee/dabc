@@ -340,14 +340,13 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       content_str = std::string("<?xml version=\"1.0\"?>\n<dabc>\n") + xmlcode + "</dabc>";
 
-   } else
-   if (filename == "h.json") {
+   } else if (filename == "h.json") {
 
       content_type = "application/json";
 
       if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("json", pathname, query, content_str)) return false;
-   } else
-   if (filename == "multiget.json") {
+
+   } else if (filename == "multiget.json") {
 
       content_type = "application/json";
 
@@ -419,7 +418,7 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       // TODO: in some cases empty binary may be not an error
       if (content_bin.null() && (content_str.length()==0)) {
-         DOUT0("Is empty buffer is error for uri %s ?", uri);
+         DOUT2("Is empty buffer is error for uri %s ?", uri);
          return false;
       }
    }
