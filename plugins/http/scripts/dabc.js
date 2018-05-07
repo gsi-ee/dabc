@@ -299,14 +299,12 @@
       return true;
    }
    
-   DABC.BnetPainter = function(hpainter, itemname) {
+   DABC.BnetPainter = function(hpainter, mdi, itemname) {
       JSROOT.TBasePainter.call(this);
       
       this.hpainter = hpainter;
+      this.mdi = mdi;
       this.itemname = itemname;
-      
-      this.mdi = hpainter.GetDisplay();
-      if (!this.mdi) return;
       
       this.frame = this.mdi.FindFrame(itemname, true);
       if (!this.frame) return;
@@ -331,68 +329,128 @@
          clearInterval(this.main_timer);
          delete this.main_timer;
       }
+      
+      delete this.hpainter;
+      delete this.mdi;
    }
    
    DABC.BnetPainter.prototype.active = function() {
       return this.mdi && this.frame;
    }
    
+   DABC.BnetPainter.prototype.wrap = function(txt, sz) {
+      while (txt.length<sz) txt += " ";
+      if (txt.length > sz) txt = txt.substr(0, sz);
+      return txt;
+   }
+   
+   DABC.BnetPainter.prototype.MakeLabel = function(attr, txt, sz) {
+      var lbl = "<label";
+      if (attr) lbl += " " + attr;
+      lbl +=">";
+      if (txt === undefined) txt = "<undef>"; else
+      if (txt === null) txt = "null"; else
+      if (typeof txt != 'string') txt = txt.toString();
+      lbl += this.wrap(txt,sz);
+      lbl += "</label>";
+      return lbl;
+   }
+   
    DABC.BnetPainter.prototype.RefreshHTML = function() {
       
       console.log('DOING RefreshHTML');
       
-      var html = "<h3 class='bnet_info'> BNET Header </h3>";
+      var html = "";
       
-      html += "<fieldset>" +
+      html += "<fieldset style='margin:5px'>" +
               "<legend>Input nodes</legend>" +
-              "<div style='display:flex;flex-direction:column'>";
+              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
+      html += "<div style='float:left' class='bnet_inputs_header'>"
+      html += "<pre style='margin:0'>";
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "TRBs", 30);    
+      html += "</pre>";
+      html += "</div>";
       for (var node in this.InputItems) {
          html += "<div style='float:left' class='bnet_input" + node + "'>";
+         html += "<pre style='margin:0'>";
          html += "<label>" + this.InputItems[node] + "</label>";
-         html += "</div>";
-      }
-
-      html += "</div>" +
-              "</fieldset>" +
-              "<fieldset>" +
-              "<legend>Builder nodes</legend>" +
-              "<div style='display:flex;flex-direction:column'>";
-      for (var node in this.BuilderItems) {
-         html += "<div style='float:left' class='bnet_builder" + node + "'>";
-         html += "<label>" + this.BuilderItems[node] + "</label>";
+         html += "</pre>";
          html += "</div>";
       }
 
       html += "</div>" +
               "</fieldset>";
       
-      d3.select(this.frame).html(html);
+      
+      html += "<fieldset style='margin:5px'>" +
+              "<legend>Builder nodes</legend>" +
+              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
+      html += "<div style='float:left' class='bnet_builders_header'>"
+      html += "<pre style='margin:0'>";
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "Info", 30);    
+      html += "</pre>";
+      html += "</div>";
+      for (var node in this.BuilderItems) {
+         html += "<div style='float:left' class='bnet_builder" + node + "'>";
+         html += "<pre style='margin:0'>";
+         html += "<label>" + this.BuilderItems[node] + "</label>";
+         html += "</pre>";
+         html += "</div>";
+      }
+
+      html += "</div>" +
+              "</fieldset>";
+      
+      d3.select(this.frame).html(html).classed("jsroot_fixed_frame", true);
       
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
    
+   DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
+      if (!this.mdi) return;
+      
+      var frame = this.mdi.FindFrame("bnet_drawing");
+      if (frame) this.mdi.CleanupFrame(frame);
+      frame = this.mdi.FindFrame("bnet_drawing", true);
+      if (frame) 
+         this.hpainter.display(itemname.substr(1), "divid:"+d3.select(frame).attr('id'));         
+   }
+   
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
-      var frame = d3.select(this.frame), elem, lbl = "";
+      var frame = d3.select(this.frame), elem, 
+          html = "", itemname = "";
+      
+      html += "<pre style='margin:0'>";
       
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         lbl = this.BuilderNodes[indx];
+         html += this.MakeLabel("", this.BuilderNodes[indx].substr(7), 15);
+         itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
-         lbl = this.InputNodes[indx];
+         html += this.MakeLabel("", this.InputNodes[indx].substr(7), 15);
+         itemname = this.InputItems[indx];
       }
+      
+      var prefix = "class='bnet_item_label' itemname='" + itemname + "/";
       
       for (var n=0;n<res._childs.length;++n) {
          var chld = res._childs[n];
-         if (chld._name == "HadaqData") lbl += " Data: " + chld.value + " " + chld.units + "/s"; 
-         if (chld._name == "HadaqEvents") lbl += " Evnt: " + chld.value + " " + chld.units + "/s"; 
-         if (chld._name == "HadaqInfo") lbl += " Info: " + chld.value; 
+         if (chld._name == "HadaqData") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
+         if (chld._name == "HadaqEvents") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
+         if (chld._name == "HadaqInfo") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 30);
       }
+      
+      html += "</pre>";
+      
+      var painter = this;
 
-      elem.html(lbl);
+      elem.html(html).selectAll(".bnet_item_label").on("click", function() {
+         painter.DisplayItem(d3.select(this).attr("itemname"));
+      });
    }
    
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
@@ -419,7 +477,6 @@
          }
          
          if (!DABC.CompareArrays(pthis.InputItems,inp)) {
-            console.log('Input nodes changed');
             pthis.InputItems = inp;
             pthis.InputNodes = ninp;
             pthis.InputInfo = [];
@@ -427,14 +484,16 @@
          }
          
          if (!DABC.CompareArrays(pthis.BuilderItems,bld)) {
-            console.log('Builder nodes changed');
             pthis.BuilderItems = bld;
             pthis.BuilderNodes = nbld;
             pthis.BuilderInfo = [];
             changed = true;
          }
          
-         if (changed) pthis.RefreshHTML();
+         if (changed) {
+            pthis.RefreshHTML();
+            pthis.hpainter.reload(); // also refresh hpainter - most probably items are changed 
+         }
 
          pthis.SendInfoRequests();
       });
@@ -444,11 +503,13 @@
    }
    
    DABC.BnetControl = function(hpainter, itemname) {
-      var painter = new DABC.BnetPainter(hpainter, itemname);
-      if (painter.active()) {
-         painter.RefreshHTML();
-         painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
-      }
+      hpainter.CreateCustomDisplay(itemname, "vert2", function(mdi) {
+         var painter = new DABC.BnetPainter(hpainter, mdi, itemname);
+         if (painter.active()) {
+            painter.RefreshHTML();
+            painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
+         }
+      });
    }
    
    // ================================== NEW CODE ========================================================
