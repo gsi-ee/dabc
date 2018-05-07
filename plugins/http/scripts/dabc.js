@@ -311,6 +311,8 @@
       
       this.InputNodes = [];
       this.BuilderNodes = [];
+      this.InputInfo = [];
+      this.BuilderInfo = [];
       this.inforeq = null;
    } 
    
@@ -319,23 +321,65 @@
    }
    
    DABC.BnetPainter.prototype.RefreshHTML = function() {
+      
+      console.log('DOING RefreshHTML');
+      
       var divid = d3.select(this.frame).attr('id');
       var html = "<h3 class='bnet_info'> BNET Header </h3>";
       
       html += "<fieldset>" +
-              "<legend>Input nodes</legend>";
-      for (var node in this.InputNodes)
-         html += "<label class='bnet_info'>" + this.InputNodes[node] + "</label><br/>"
+              "<legend>Input nodes</legend>" +
+              "<div style='display:flex;flex-direction:column'>";
+      for (var node in this.InputNodes) {
+         html += "<div style='float:left' class='bnet_input" + node + "'>";
+         html += "<label>" + this.InputNodes[node] + "</label>";
+         html += "</div>";
+      }
 
-      html += "</fieldset>" +
+      html += "</div>" +
+              "</fieldset>" +
               "<fieldset>" +
-              "<legend>Builder nodes</legend>";
-      for (var node in this.BuilderNodes)
-         html += "<label class='bnet_info'>" + this.BuilderNodes[node] + "</label><br/>"
+              "<legend>Builder nodes</legend>" +
+              "<div style='display:flex;flex-direction:column'>";
+      for (var node in this.BuilderNodes) {
+         html += "<div style='float:left' class='bnet_builder" + node + "'>";
+         html += "<label>" + this.BuilderNodes[node] + "</label>";
+         html += "</div>";
+      }
 
-      html += "</fieldset>";
+      html += "</div>" +
+              "</fieldset>";
       
       d3.select(this.frame).html(html);
+   }
+   
+   DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
+      var frame = d3.select(this.frame), elem;
+      
+      if (isbuild) {
+         this.BuilderInfo[indx] = res;
+         elem = frame.select(".bnet_builder" + indx);
+      } else {
+         this.InputInfo[indx] = res;
+         elem = frame.select(".bnet_input" + indx);
+      }
+      
+      var lbl = "";
+      for (var n=0;n<res._childs.length;++n) {
+         var chld = res._childs[n];
+         if (chld._name == "HadaqData") lbl += " Data: " + chld.value + " " + chld.units + "/s"; 
+         if (chld._name == "HadaqEvents") lbl += " Evnt: " + chld.value + " " + chld.units + "/s"; 
+         if (chld._name == "HadaqInfo") lbl += " Info: " + chld.value; 
+      }
+
+      elem.html(lbl);
+   }
+   
+   DABC.BnetPainter.prototype.SendInfoRequests = function() {
+      for (var n in this.InputNodes)
+         JSROOT.NewHttpRequest(this.InputNodes[n] + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
+      for (var n in this.BuilderNodes)
+         JSROOT.NewHttpRequest(this.BuilderNodes[n] + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
    }
    
    DABC.BnetPainter.prototype.SendMainRequest = function() {
@@ -347,20 +391,30 @@
          pthis.mainreq = null;
          if (!res) return;
          
-         var inp = null, bld = null;
+         var inp = null, bld = null, changed = false;
          for (var k in res._childs) {
             var elem = res._childs[k];
             if (elem._name == "Inputs") inp = elem.value; else
             if (elem._name == "Builders") bld = elem.value; 
          }
          
-         if (!DABC.CompareArrays(pthis.InputNodes,inp)) console.log('Input nodes changed');
-         pthis.InputNodes = inp;
+         if (!DABC.CompareArrays(pthis.InputNodes,inp)) {
+            console.log('Input nodes changed');
+            pthis.InputNodes = inp;
+            pthis.InputInfo = [];
+            changed = true;
+         }
          
-         if (!DABC.CompareArrays(pthis.BuilderNodes,bld)) console.log('Builder nodes changed');
-         pthis.BuilderNodes = bld;
+         if (!DABC.CompareArrays(pthis.BuilderNodes,bld)) {
+            console.log('Builder nodes changed');
+            pthis.BuilderNodes = bld;
+            pthis.BuilderInfo = [];
+            changed = true;
+         }
          
-         pthis.RefreshHTML();
+         if (changed) pthis.RefreshHTML();
+
+         pthis.SendInfoRequests();
       });
 
       this.mainreq.send();
