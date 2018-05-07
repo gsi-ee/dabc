@@ -74,6 +74,7 @@
       		     "<legend>DAQ</legend>" +
       		     "<button class='hadaq_startfile'>Start file</button>" +
                  "<button class='hadaq_stopfile'>Stop file</button>" +
+                 "<button class='hadaq_restartfile'>Restart file</button>" +
                  '<input class="hadaq_filename" type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
                  "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
                  "<label class='hadaq_info'>Info: __undefind__</label>"+
@@ -92,6 +93,9 @@
       $(frame).find(".hadaq_stopfile").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopHldFile");
       });
+      $(frame).find(".hadaq_restartfile").button().click(function() { 
+         DABC.InvokeCommand(itemname+"/RestartHldFile");
+      });
       
       var inforeq = null;
       
@@ -99,16 +103,14 @@
          if (res==null) return;
          var rate = "";
          for (var n in res._childs) {
-            var item = res._childs[n];
-            var lbl = "";
-            var units = "";
+            var item = res._childs[n], lbl = "", units = "";
             
             if (item._name=='HadaqInfo')
                $(frame).find('.hadaq_info').text("Info: " + item.value);                  
             if (item._name=='HadaqData') { lbl = "Rate: "; units = " " + item.units+"/s"; }
             if (item._name=='HadaqEvents') { lbl = "Ev: "; units = " Hz"; }
             if (item._name=='HadaqLostEvents') { lbl = "Lost:"; units = " Hz"; }
-            if (lbl!="") {
+            if (lbl) {
                if (rate.length>0) rate += " ";
                rate += lbl + item.value + units;
             }
@@ -147,7 +149,7 @@
          
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
-            if (res==null) return;
+            if (!res) return;
             UpdateDaqStatus(res[0].result);
             res.shift();
             DABC.UpdateTRBStatus($(frame).find('.hadaq_calibr'), res, hpainter, true);
@@ -288,48 +290,90 @@
    
    
    // =========================================== BNET ============================================
-
-   DABC.BnetControl = function(hpainter, itemname) {
-      var mdi = hpainter.GetDisplay();
-      if (!mdi) return null;
-
-      var frame = mdi.FindFrame(itemname, true);
-      if (!frame) return null;
+   
+   DABC.CompareArrays = function(arr1, arr2) {
+      if (!arr1 || !arr2) return arr1 == arr2;
+      if (arr1.length != arr2.length) return false;
+      for (var k=0;k<arr1.length;++k)
+         if (arr1[k] != arr2[k]) return false;
+      return true;
+   }
+   
+   DABC.BnetPainter = function(hpainter, itemname) {
+      this.hpainter = hpainter;
+      this.itemname = itemname;
       
-      var divid = d3.select(frame).attr('id');
+      this.mdi = hpainter.GetDisplay();
+      if (!this.mdi) return;
       
+      this.frame = this.mdi.FindFrame(itemname, true);
+      if (!this.frame) return;
+      
+      this.InputNodes = [];
+      this.BuilderNodes = [];
+      this.inforeq = null;
+   } 
+   
+   DABC.BnetPainter.prototype.active = function() {
+      return this.mdi && this.frame;
+   }
+   
+   DABC.BnetPainter.prototype.RefreshHTML = function() {
+      var divid = d3.select(this.frame).attr('id');
       var html = "<h3 class='bnet_info'> BNET Header </h3>";
+      
+      html += "<fieldset>" +
+              "<legend>Input nodes</legend>";
+      for (var node in this.InputNodes)
+         html += "<label class='bnet_info'>" + this.InputNodes[node] + "</label><br/>"
 
-      d3.select(frame).html(html);
+      html += "</fieldset>" +
+              "<fieldset>" +
+              "<legend>Builder nodes</legend>";
+      for (var node in this.BuilderNodes)
+         html += "<label class='bnet_info'>" + this.BuilderNodes[node] + "</label><br/>"
+
+      html += "</fieldset>";
       
-      var inforeq = null;
+      d3.select(this.frame).html(html);
+   }
+   
+   DABC.BnetPainter.prototype.SendMainRequest = function() {
+      if (this.mainreq) return;
       
-      var handler = setInterval(function() {
-         if ($("#"+divid+" .bnet_info").length==0) {
-            // if main element disapper (reset), stop handler 
-            clearInterval(handler);
-            return;
+      var pthis = this;
+      
+      this.mainreq = JSROOT.NewHttpRequest(this.itemname + "/get.json", "object", function(res) {
+         pthis.mainreq = null;
+         if (!res) return;
+         
+         var inp = null, bld = null;
+         for (var k in res._childs) {
+            var elem = res._childs[k];
+            if (elem._name == "Inputs") inp = elem.value; else
+            if (elem._name == "Builders") bld = elem.value; 
          }
          
-         if (inforeq) return;
+         if (!DABC.CompareArrays(pthis.InputNodes,inp)) console.log('Input nodes changed');
+         pthis.InputNodes = inp;
          
-         inforeq = JSROOT.NewHttpRequest(itemname + "/get.json", "object", function(res) {
-            inforeq = null;
-            if (!res) return;
-            
-            var html = "<h3 class='bnet_info'> BNET Header </h3>";
-            html+="<p> BNET inp: " + res._childs[1].value.toString() + "</p><br>";
-            html+="<p> BNET out: " + res._childs[2].value.toString() + "</p><br>";
-
-            d3.select(frame).html(html);
-         });
+         if (!DABC.CompareArrays(pthis.BuilderNodes,bld)) console.log('Builder nodes changed');
+         pthis.BuilderNodes = bld;
          
-         inforeq.send();
-      }, 2000);
+         pthis.RefreshHTML();
+      });
 
+      this.mainreq.send();
       
    }
    
+   DABC.BnetControl = function(hpainter, itemname) {
+      var painter = new DABC.BnetPainter(hpainter, itemname);
+      if (painter.active()) {
+         painter.RefreshHTML();
+         painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
+      }
+   }
    
    // ================================== NEW CODE ========================================================
 
