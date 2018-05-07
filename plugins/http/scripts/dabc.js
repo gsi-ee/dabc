@@ -300,6 +300,8 @@
    }
    
    DABC.BnetPainter = function(hpainter, itemname) {
+      JSROOT.TBasePainter.call(this);
+      
       this.hpainter = hpainter;
       this.itemname = itemname;
       
@@ -309,12 +311,27 @@
       this.frame = this.mdi.FindFrame(itemname, true);
       if (!this.frame) return;
       
+      this.InputItems = [];
+      this.BuilderItems = [];
       this.InputNodes = [];
       this.BuilderNodes = [];
       this.InputInfo = [];
       this.BuilderInfo = [];
       this.inforeq = null;
    } 
+   
+   DABC.BnetPainter.prototype = Object.create(JSROOT.TBasePainter.prototype);
+   
+   DABC.BnetPainter.prototype.Cleanup = function(arg) {
+      console.log('CLEANUP DABC PAINTER');
+      
+      JSROOT.TBasePainter.prototype.Cleanup.call(this, arg);
+      
+      if (this.main_timer) {
+         clearInterval(this.main_timer);
+         delete this.main_timer;
+      }
+   }
    
    DABC.BnetPainter.prototype.active = function() {
       return this.mdi && this.frame;
@@ -324,15 +341,14 @@
       
       console.log('DOING RefreshHTML');
       
-      var divid = d3.select(this.frame).attr('id');
       var html = "<h3 class='bnet_info'> BNET Header </h3>";
       
       html += "<fieldset>" +
               "<legend>Input nodes</legend>" +
               "<div style='display:flex;flex-direction:column'>";
-      for (var node in this.InputNodes) {
+      for (var node in this.InputItems) {
          html += "<div style='float:left' class='bnet_input" + node + "'>";
-         html += "<label>" + this.InputNodes[node] + "</label>";
+         html += "<label>" + this.InputItems[node] + "</label>";
          html += "</div>";
       }
 
@@ -341,9 +357,9 @@
               "<fieldset>" +
               "<legend>Builder nodes</legend>" +
               "<div style='display:flex;flex-direction:column'>";
-      for (var node in this.BuilderNodes) {
+      for (var node in this.BuilderItems) {
          html += "<div style='float:left' class='bnet_builder" + node + "'>";
-         html += "<label>" + this.BuilderNodes[node] + "</label>";
+         html += "<label>" + this.BuilderItems[node] + "</label>";
          html += "</div>";
       }
 
@@ -351,20 +367,24 @@
               "</fieldset>";
       
       d3.select(this.frame).html(html);
+      
+      // set DivId after drawing
+      this.SetDivId(this.frame);
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
-      var frame = d3.select(this.frame), elem;
+      var frame = d3.select(this.frame), elem, lbl = "";
       
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
+         lbl = this.BuilderNodes[indx];
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
+         lbl = this.InputNodes[indx];
       }
       
-      var lbl = "";
       for (var n=0;n<res._childs.length;++n) {
          var chld = res._childs[n];
          if (chld._name == "HadaqData") lbl += " Data: " + chld.value + " " + chld.units + "/s"; 
@@ -376,10 +396,10 @@
    }
    
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
-      for (var n in this.InputNodes)
-         JSROOT.NewHttpRequest(this.InputNodes[n] + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
-      for (var n in this.BuilderNodes)
-         JSROOT.NewHttpRequest(this.BuilderNodes[n] + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
+      for (var n in this.InputItems)
+         JSROOT.NewHttpRequest(this.InputItems[n] + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
+      for (var n in this.BuilderItems)
+         JSROOT.NewHttpRequest(this.BuilderItems[n] + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
    }
    
    DABC.BnetPainter.prototype.SendMainRequest = function() {
@@ -391,23 +411,25 @@
          pthis.mainreq = null;
          if (!res) return;
          
-         var inp = null, bld = null, changed = false;
+         var inp = null, bld = null, ninp = [], nbld = [],  changed = false;
          for (var k in res._childs) {
             var elem = res._childs[k];
-            if (elem._name == "Inputs") inp = elem.value; else
-            if (elem._name == "Builders") bld = elem.value; 
+            if (elem._name == "Inputs") {inp = elem.value; ninp = elem.nodes; } else
+            if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } 
          }
          
-         if (!DABC.CompareArrays(pthis.InputNodes,inp)) {
+         if (!DABC.CompareArrays(pthis.InputItems,inp)) {
             console.log('Input nodes changed');
-            pthis.InputNodes = inp;
+            pthis.InputItems = inp;
+            pthis.InputNodes = ninp;
             pthis.InputInfo = [];
             changed = true;
          }
          
-         if (!DABC.CompareArrays(pthis.BuilderNodes,bld)) {
+         if (!DABC.CompareArrays(pthis.BuilderItems,bld)) {
             console.log('Builder nodes changed');
-            pthis.BuilderNodes = bld;
+            pthis.BuilderItems = bld;
+            pthis.BuilderNodes = nbld;
             pthis.BuilderInfo = [];
             changed = true;
          }

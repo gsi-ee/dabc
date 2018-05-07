@@ -55,19 +55,26 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       //DOUT0("Get hierarchy");
       dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
       dabc::Iterator iter(h);
-      std::vector<std::string> binp, bbuild;
+      std::vector<std::string> binp, bbuild, nodes_inp, nodes_build;
       while (iter.next()) {
          dabc::Hierarchy item = iter.ref();
          if (item.HasField("_bnet")) {
-            std::string kind = item.GetField("_bnet").AsStr();
-            if (kind == "sender") binp.push_back(item.ItemName());
-            if (kind == "receiver") bbuild.push_back(item.ItemName());
+            std::string kind = item.GetField("_bnet").AsStr(),
+                        producer = item.GetField("_producer").AsStr();
+
+            std::size_t pos = producer.find_last_of("/");
+            if (pos != std::string::npos) producer.resize(pos);
+
+            if (kind == "sender") { binp.push_back(item.ItemName()); nodes_inp.push_back(producer); }
+            if (kind == "receiver") { bbuild.push_back(item.ItemName()); nodes_build.push_back(producer); }
             //DOUT0("Get BNET %s", item.ItemName().c_str());
          }
       }
 
       fWorkerHierarchy.GetHChild("Inputs").SetField("value", binp);
+      fWorkerHierarchy.GetHChild("Inputs").SetField("nodes", nodes_inp);
       fWorkerHierarchy.GetHChild("Builders").SetField("value", bbuild);
+      fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
       return true;
    }
