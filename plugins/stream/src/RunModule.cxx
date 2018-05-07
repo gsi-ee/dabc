@@ -134,7 +134,7 @@ stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
    fWorkerHierarchy.Create("Worker");
 
    if (fParallel<=0) {
-      CreateTimer("Update", 1., false);
+      CreateTimer("Update", 1.);
 
       fWorkerHierarchy.CreateHChild("Status");
       fWorkerHierarchy.SetField("_player", "DABC.StreamControl");

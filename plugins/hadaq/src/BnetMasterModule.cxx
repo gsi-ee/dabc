@@ -24,7 +24,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
 {
    double period = Cfg("period", cmd).AsDouble(1);
 
-   CreateTimer("update", period, false);
+   CreateTimer("update", period);
 
    fWorkerHierarchy.Create("Bnet");
 

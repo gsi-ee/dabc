@@ -51,7 +51,7 @@ hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd
    fRingSize = Cfg("showtrig", cmd).AsInt(10);
    if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
 
-   CreateTimer("update", period, false);
+   CreateTimer("update", period);
 
    fLastTm.Reset();
 

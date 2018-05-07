@@ -57,7 +57,7 @@ mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
 
    fNumObligatoryInputs = NumInputs();
 
-   if (flushtmout>0.) CreateTimer("FlushTimer", flushtmout, false);
+   if (flushtmout>0.) CreateTimer("FlushTimer", flushtmout);
 
    fEventRateName = ratesprefix+"Events";
    fDataRateName = ratesprefix+"Data";

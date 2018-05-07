@@ -40,7 +40,7 @@ hadaq::SorterModule::SorterModule(const std::string& name, dabc::Command cmd) :
    double flushtime = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(0.3);
 
    if (flushtime > 0.)
-      CreateTimer("FlushTimer", flushtime, false);
+      CreateTimer("FlushTimer", flushtime);
 
    fTriggersRange = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fLastTrigger = 0xffffffff;

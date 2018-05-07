@@ -298,7 +298,7 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
    AssignAddon(addon);
 
    if (flush > 0)
-      CreateTimer("FlushTimer", flush, false);
+      CreateTimer("FlushTimer", flush);
 
    DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
 
@@ -329,7 +329,7 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 
    SetNetmemPar("PID", (int) pid);
    SetNetmemPar("coreNr", hadaq::CoreAffinity(pid));
-   CreateTimer("ObserverTimer", 1, false);
+   CreateTimer("ObserverTimer", 1);
    DOUT3("hadaq::DataTransport created observer parameters");
 }
 

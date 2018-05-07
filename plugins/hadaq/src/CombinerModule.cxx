@@ -107,7 +107,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    // provide timeout with period/2, but trigger flushing after 3 counts
    // this will lead to effective flush time between FlushTimeout and FlushTimeout*1.5
    if (fFlushTimeout > 0.)
-      CreateTimer("FlushTimer", fFlushTimeout/2., false);
+      CreateTimer("FlushTimer", fFlushTimeout/2.);
 
    //CreatePar("RunId");
    //Par("RunId").SetValue(fRunNumber); // to communicate with file components
@@ -148,7 +148,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
 
    if (fWithObserver) {
-      CreateTimer("ObserverTimer", 0.2, false); // export timers 5 times a second
+      CreateTimer("ObserverTimer", 0.2); // export timers 5 times a second
       RegisterExportedCounters();
    }
 
@@ -170,8 +170,6 @@ void hadaq::CombinerModule::ModuleCleanup()
    StoreRunInfoStop(true); // run info with exit mode
    fOut.Close().Release();
 
-
-
    for (unsigned n=0;n<fCfg.size();n++)
       fCfg[n].Reset();
 
@@ -181,7 +179,6 @@ void hadaq::CombinerModule::ModuleCleanup()
 //   if (numsync>0)
 //      DOUT0("Step %5.2f rate %5.2f sync/s", (lastsync-firstsync + 0.) / numsync, (numsync + 0.) / (tm2-tm1));
 }
-
 
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)

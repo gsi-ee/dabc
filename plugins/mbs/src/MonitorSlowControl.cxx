@@ -37,7 +37,7 @@ mbs::MonitorSlowControl::MonitorSlowControl(const std::string& name, const std::
    fFlushTime = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(10.);
 
    if (fDoRec)
-      CreateTimer("update", (period>0.01) ? period : 0.01, false);
+      CreateTimer("update", (period>0.01) ? period : 0.01);
 }
 
 mbs::MonitorSlowControl::~MonitorSlowControl()

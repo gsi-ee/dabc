@@ -80,7 +80,7 @@ ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    if (fTimeout<=0.001) fTimeout = 0.001;
 
-   CreateTimer("EpicsRead", fTimeout, false);
+   CreateTimer("EpicsRead", fTimeout);
 
    if (fTopFolder.empty())
       Publish(fWorkerHierarchy, "EZCA");

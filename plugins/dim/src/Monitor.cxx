@@ -45,7 +45,7 @@ dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
 
    fDimPeriod = Cfg("DimPeriod", cmd).AsDouble(1);
 
-   CreateTimer("DimTimer", (fDimPeriod>0.01) ? fDimPeriod : 0.01, false);
+   CreateTimer("DimTimer", (fDimPeriod>0.01) ? fDimPeriod : 0.01);
 
 
    Publish(fWorkerHierarchy, "DIMC");

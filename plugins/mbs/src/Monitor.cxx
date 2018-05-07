@@ -258,8 +258,8 @@ mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
    ui.SetField("_UserFilePath", "${DABCSYS}/plugins/mbs/htm/");
    ui.SetField("_UserFileMain", "main.htm");
 
-   CreateTimer("update", 5., false);
-   CreateTimer("MbsUpdate", fPeriod, false);
+   CreateTimer("update", 5.);
+   CreateTimer("MbsUpdate", fPeriod);
 
    fCounter = 0;
 

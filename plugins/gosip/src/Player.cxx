@@ -27,14 +27,14 @@ gosip::Player::Player(const std::string& name, dabc::Command cmd) :
    dabc::CommandDefinition cmddef = CreateCmdDef("CmdGosip");
    //cmddef.SetField(dabc::prop_auth, true); // require authentication
    cmddef.AddArg("cmd", "string", true, "-");
-   
+
    dabc::Hierarchy ui = fWorkerHierarchy.CreateHChild("UI");
    ui.SetField(dabc::prop_kind, "DABC.HTML");
    ui.SetField("_UserFilePath", "${DABCSYS}/plugins/gosip/htm/");
    ui.SetField("_UserFileMain", "main.htm");
 
-   CreateTimer("update", 1., false);
-   
+   CreateTimer("update", 1.);
+
    PublishPars("GOSIP/Test");
 }
 
