@@ -1336,7 +1336,7 @@ bool dabc::RecordField::SetArrDouble(int64_t size, double* arr, bool owner)
 bool dabc::RecordField::SetArrStr(int64_t size, char* arr, bool owner)
 {
    if (cannot_modify()) return false;
-   if (size<=0) return false;
+   if (size<0) return false;
    // TODO: check if content was not changed
    release();
    SetArrStrDirect(size, arr, owner);
