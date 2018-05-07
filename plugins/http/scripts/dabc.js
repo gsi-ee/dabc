@@ -50,10 +50,10 @@
    
    DABC.HadaqDAQControl = function(hpainter, itemname) {
       var mdi = hpainter.GetDisplay();
-      if (mdi == null) return null;
+      if (!mdi) return null;
 
       var frame = mdi.FindFrame(itemname, true);
-      if (frame==null) return null;
+      if (!frame) return null;
       
       var divid = d3.select(frame).attr('id');
       
@@ -218,10 +218,10 @@
    
    DABC.StreamControl = function(hpainter, itemname) {
       var mdi = hpainter.GetDisplay();
-      if (mdi == null) return null;
+      if (!mdi) return null;
 
       var frame = mdi.FindFrame(itemname, true);
-      if (frame==null) return null;
+      if (!frame) return null;
       
       var divid = d3.select(frame).attr('id');
       
@@ -285,6 +285,51 @@
          inforeq.send(null);
       }, 2000);
    }
+   
+   
+   // =========================================== BNET ============================================
+
+   DABC.BnetControl = function(hpainter, itemname) {
+      var mdi = hpainter.GetDisplay();
+      if (!mdi) return null;
+
+      var frame = mdi.FindFrame(itemname, true);
+      if (!frame) return null;
+      
+      var divid = d3.select(frame).attr('id');
+      
+      var html = "<h3 class='bnet_info'> BNET Header </h3>";
+
+      d3.select(frame).html(html);
+      
+      var inforeq = null;
+      
+      var handler = setInterval(function() {
+         if ($("#"+divid+" .bnet_info").length==0) {
+            // if main element disapper (reset), stop handler 
+            clearInterval(handler);
+            return;
+         }
+         
+         if (inforeq) return;
+         
+         inforeq = JSROOT.NewHttpRequest(itemname + "/get.json", "object", function(res) {
+            inforeq = null;
+            if (!res) return;
+            
+            var html = "<h3 class='bnet_info'> BNET Header </h3>";
+            html+="<p> BNET inp: " + res._childs[1].value.toString() + "</p><br>";
+            html+="<p> BNET out: " + res._childs[2].value.toString() + "</p><br>";
+
+            d3.select(frame).html(html);
+         });
+         
+         inforeq.send();
+      }, 2000);
+
+      
+   }
+   
    
    // ================================== NEW CODE ========================================================
 

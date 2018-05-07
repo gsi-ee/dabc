@@ -28,6 +28,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
 
    fWorkerHierarchy.Create("Bnet");
 
+   fWorkerHierarchy.SetField("_player","DABC.BnetControl");
+
    dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("State");
    item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "Init");
