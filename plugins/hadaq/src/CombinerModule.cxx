@@ -147,6 +147,9 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    if (fBNETsend) fWorkerHierarchy.SetField("_bnet", "sender");
    if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
 
+   if (fBNETsend || fBNETrecv)
+      CreateTimer("BnetTimer", 2.); // check BNET values
+
    if (fWithObserver) {
       CreateTimer("ObserverTimer", 0.2); // export timers 5 times a second
       RegisterExportedCounters();
@@ -200,6 +203,12 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
       UpdateExportedCounters();
       return;
    }
+
+   if (TimerName(timer) == "BnetTimer") {
+      UpdateBnetInfo();
+      return;
+   }
+
 
    if (++fFlushCounter > 2) {
       fFlushCounter = 0;
@@ -360,6 +369,22 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    SetEvtbuildPar("coreNr", hadaq::CoreAffinity(fPID));
 }
 
+void hadaq::CombinerModule::UpdateBnetInfo()
+{
+   if (fBNETrecv) {
+
+   }
+
+   if (fBNETsend) {
+      std::vector<uint64_t> hubs, ports;
+      for (unsigned n=0;n<fCfg.size();n++) {
+         hubs.push_back(fCfg[n].fHubId);
+         ports.push_back(fCfg[n].fUdpPort);
+      }
+      fWorkerHierarchy.SetField("hubs", hubs);
+      fWorkerHierarchy.SetField("ports", ports);
+   }
+}
 
 bool hadaq::CombinerModule::UpdateExportedCounters()
 {
@@ -453,20 +478,18 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       SetEvtbuildPar(dabc::format("evtId%d",i), fEventIdCount[i]);
 
-
    // test: provide here some frequent output for logfile
-   double drate= Par(fDataRateName).Value().AsDouble();
-   double erate= Par(fEventRateName).Value().AsDouble();
-   double losterate=Par(fLostEventRateName).Value().AsDouble();
-   double dropdrate=Par(fDataDroppedRateName).Value().AsDouble();
-   static double oldlostrate=0;
+   double drate = Par(fDataRateName).Value().AsDouble();
+   double erate = Par(fEventRateName).Value().AsDouble();
+   double losterate = Par(fLostEventRateName).Value().AsDouble();
+   double dropdrate = Par(fDataDroppedRateName).Value().AsDouble();
+   static double oldlostrate = 0;
    /////////////////
    // lostrate of 1 is expected since we still have
    // wrong overflow behaviour for triggernumber.
    // so only logfile warnings beyond 1 ->
-   if((losterate>1 || dropdrate>0) && (losterate!=oldlostrate))
-   {
-      oldlostrate=losterate;
+   if((losterate>1 || dropdrate>0) && (losterate!=oldlostrate)) {
+      oldlostrate = losterate;
       std::string info = dabc::format(
             "Lost Event rate: %.0f Ev/s, Dropped data rate: %.3f Mb/s  (at %.0f Ev/s, %.3f Mb/s)",
             losterate, dropdrate , erate, drate);
@@ -676,7 +699,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fEmpty = cfg.subevnt->GetSize() <= sizeof(hadaq::RawSubevent);
       cfg.fDataError = cfg.subevnt->GetDataError();
 
-      // cfg.fSubId = cfg.subevnt->GetId() & 0x7fffffffUL;
+      cfg.fHubId = cfg.subevnt->GetId() & 0xffff;
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
@@ -1271,6 +1294,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 
       if (id < fCfg.size()) {
          fCfg[id].fInfo = cmd.GetPtr("Info");
+         fCfg[id].fUdpPort = cmd.GetUInt("UdpPort");
          fCfg[id].fCalibr = cmd.GetStr("CalibrModule");
       }
 

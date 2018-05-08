@@ -53,7 +53,7 @@ namespace hadaq {
       protected:
 
       struct InputCfg {
-         hadaq::RawSubevent  *subevnt; //!< actual subevent
+         hadaq::RawSubevent *subevnt; //!< actual subevent
          hadaq::RawEvent  *evnt; //!< actual event
          bool     has_data;      //!< when true, input has data (subevent or bunch of sub events)
          uint32_t data_size;     //!< padded size of current subevent, required in output buffer
@@ -63,6 +63,8 @@ namespace hadaq {
          uint32_t fTrigType;     //!< current subevent trigger type
          uint32_t fErrorBits;    //!< errorbit status word from payload end
          uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; //!< errorbit statistics counter
+         unsigned fHubId{0};     //!< subevent id from given input
+         unsigned fUdpPort{0};    //!< if configured, port id
          float fQueueLevel;      //!<  current input queue fill level
          uint32_t fLastEvtBuildTrigId; //!< remember id of last build event
          bool fDataError;        //!< indicates if subevent has data error bit set in header id
@@ -122,12 +124,14 @@ namespace hadaq {
             fTrigType = 0;
             fErrorBits = 0;
             fDataError = false;
+            fHubId = 0;
             fEmpty = true;
            // do not clear error bit statistics!
 //             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
 //                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
             if (complete) fLastTrigNr = 0xffffffff;
+            if (complete) fUdpPort = 0;
          }
 
          void Close()
@@ -284,6 +288,7 @@ namespace hadaq {
 
          int DestinationPort(uint32_t trignr);
          bool CheckDestination(uint32_t trignr);
+         void UpdateBnetInfo();
 
       public:
          CombinerModule(const std::string& name, dabc::Command cmd = nullptr);

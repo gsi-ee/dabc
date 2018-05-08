@@ -360,14 +360,14 @@
       
       console.log('DOING RefreshHTML');
       
-      var html = "";
+      var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
       
       html += "<fieldset style='margin:5px'>" +
               "<legend>Input nodes</legend>" +
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "TRBs", 30);    
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "TRBs", 40);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.InputItems) {
@@ -380,7 +380,6 @@
 
       html += "</div>" +
               "</fieldset>";
-      
       
       html += "<fieldset style='margin:5px'>" +
               "<legend>Builder nodes</legend>" +
@@ -400,6 +399,8 @@
 
       html += "</div>" +
               "</fieldset>";
+      
+      html += "</div>";
       
       d3.select(this.frame).html(html).classed("jsroot_fixed_frame", true);
       
@@ -441,7 +442,20 @@
          var chld = res._childs[n];
          if (chld._name == "HadaqData") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
          if (chld._name == "HadaqEvents") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
-         if (chld._name == "HadaqInfo") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 30);
+         if ((chld._name == "HadaqInfo") && isbuild) html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 30);
+      }
+      
+      if (!isbuild) {
+         // info with HUBs and port numbers
+         var txt = "";
+         if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
+            for (var k=0;k<res.ports.length;++k) {
+               if (txt) txt += " ";
+               txt += "0x"+res.hubs[k].toString(16) + ":" + res.ports[k];
+            }
+         } 
+
+         html += "| "  + this.MakeLabel("", txt || "fail", 40);
       }
       
       html += "</pre>";

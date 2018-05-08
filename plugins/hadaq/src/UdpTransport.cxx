@@ -381,7 +381,9 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else
    if (cmd.IsName("GetHadaqTransportInfo")) {
-      cmd.SetPtr("Info", (TransportInfo*) (dynamic_cast<NewAddon*> (fAddon())));
+      TransportInfo *info = (TransportInfo*) (dynamic_cast<NewAddon*> (fAddon()));
+      cmd.SetPtr("Info", info);
+      cmd.SetUInt("UdpPort", info ? info->fNPort : 0);
       return dabc::cmd_true;
    }
 

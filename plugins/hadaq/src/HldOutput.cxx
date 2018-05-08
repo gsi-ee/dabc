@@ -176,7 +176,6 @@ bool hadaq::HldOutput::StartNewFile()
       DOUT0("Connected to %s %s, Number:%d", (fRfio ? "Datamover" : "TSM Server") , sbuf, indx);
   }
 
-
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
 
