@@ -367,7 +367,7 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "TRBs", 40);    
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "HUBs", 40);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.InputItems) {
@@ -447,15 +447,18 @@
       
       if (!isbuild) {
          // info with HUBs and port numbers
-         var txt = "";
+         var totallen = 0;
+         html += "|";
          if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
             for (var k=0;k<res.ports.length;++k) {
-               if (txt) txt += " ";
-               txt += "0x"+res.hubs[k].toString(16) + ":" + res.ports[k];
+               var txt = "0x"+res.hubs[k].toString(16);
+               totallen += txt.length;
+               html += " " + this.MakeLabel("title='udpport:" + res.ports[k] + "'", txt, txt.length);
+               if (totallen>40) break;
             }
          } 
 
-         html += "| "  + this.MakeLabel("", txt || "fail", 40);
+         if (!totallen) html += " " + this.MakeLabel("", "failure", 40);
       }
       
       html += "</pre>";
