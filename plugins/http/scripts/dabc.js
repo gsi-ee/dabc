@@ -178,11 +178,11 @@
       }
       
       holder.each(function(index) {
-         if (res==null) return;
-         var info = res[index];
+         if (!res) return;
+         var info = multiget ? res[index] : res;
          // when doing multiget, return object stored as result field
          if (('result' in info) && multiget) info = info.result;
-         if (info==null) return;
+         if (!info) return;
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
@@ -311,10 +311,12 @@
       
       this.InputItems = [];
       this.BuilderItems = [];
+      this.CalibrItem = "";
       this.InputNodes = [];
       this.BuilderNodes = [];
       this.InputInfo = [];
       this.BuilderInfo = [];
+      this.CalibrInfo = null;
       this.inforeq = null;
    } 
    
@@ -382,6 +384,11 @@
               "</fieldset>";
       
       html += "<fieldset style='margin:5px'>" +
+              "<legend>Calibration</legend>";
+      html += "<div class='bnet_tdc_calibr'></div>";
+      html += "</fieldset>";
+      
+      html += "<fieldset style='margin:5px'>" +
               "<legend>Builder nodes</legend>" +
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_builders_header'>"
@@ -416,6 +423,11 @@
       frame = this.mdi.FindFrame("bnet_drawing", true);
       if (frame) 
          this.hpainter.display(itemname.substr(1), "divid:"+d3.select(frame).attr('id'));         
+   }
+   
+   DABC.BnetPainter.prototype.DisplayCalItem = function(itemname) {
+      this.CalibrItem = itemname;
+      $(this.frame).find('.bnet_tdc_calibr').html("");
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
@@ -453,7 +465,16 @@
             for (var k=0;k<res.ports.length;++k) {
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               html += " " + this.MakeLabel("title='udpport:" + res.ports[k] + "'", txt, txt.length);
+               var title = "udpport:" + res.ports[k] + " state:" + res.cal_state[k];
+               var style = "background-color:" + ((res.cal_state[k]=="Ready") ? "lightgreen" : "red");
+               var attr = "";
+               
+               if (res.calibr[k]) {
+                  var calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
+                  attr = " itemname='" + calitem + "' class='bnet_cal_label'";
+               }
+               
+               html += " " + this.MakeLabel("title='" + title + "' style='" + style + "'" + attr, txt, txt.length);
                if (totallen>40) break;
             }
          } 
@@ -463,11 +484,23 @@
       
       html += "</pre>";
       
-      var painter = this;
-
-      elem.html(html).selectAll(".bnet_item_label").on("click", function() {
-         painter.DisplayItem(d3.select(this).attr("itemname"));
+      var painter = this, 
+          main = elem.html(html);
+      
+      main.selectAll(".bnet_item_label").on("click", function() {
+        painter.DisplayItem(d3.select(this).attr("itemname"));
       });
+      main.selectAll(".bnet_cal_label").on("click", function() {
+         painter.DisplayCalItem(d3.select(this).attr("itemname"));
+      });
+   }
+   
+   DABC.BnetPainter.prototype.ProcessCalibrReq = function(res) {
+      if (!res) return;
+      
+      this.CalibrInfo = res;
+      
+      DABC.UpdateTRBStatus($(this.frame).find('.bnet_tdc_calibr'), res, this.hpainter, false);
    }
    
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
@@ -475,6 +508,8 @@
          JSROOT.NewHttpRequest(this.InputItems[n] + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
       for (var n in this.BuilderItems)
          JSROOT.NewHttpRequest(this.BuilderItems[n] + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
+      if (this.CalibrItem)
+         JSROOT.NewHttpRequest(this.CalibrItem + "/Status/get.json", "object", this.ProcessCalibrReq.bind(this)).send();
    }
    
    DABC.BnetPainter.prototype.SendMainRequest = function() {

@@ -248,6 +248,13 @@ bool stream::TdcCalibrationModule::retransmit()
          status.assign(fTDCs.size(),  item.GetField("value").AsStr());
          item.SetField("tdc_status", status);
 
+         hadaq::ReadIterator iter(buf);
+         while (iter.NextSubeventsBlock()) {
+            while (iter.NextSubEvent()) {
+               iter.subevnt()->SetId(fTRB);
+            }
+         }
+
       } else if (fTrbProc) {
 
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file

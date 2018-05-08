@@ -167,7 +167,7 @@ bool hadaq::NewAddon::ReadUdp()
       if (res != msgsize) {
          errmsg = dabc::format("Send buffer %d differ from message size %d - ignore it", res, msgsize);
       } else
-      if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)!=0) {
+      if (memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32) != 0) {
          fTotalDiscard32Packet++;
          errmsg = "Trailing 32 bytes do not match to header - ignore packet";
       }

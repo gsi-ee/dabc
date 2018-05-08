@@ -87,9 +87,7 @@ namespace hadaq {
          double             fReduce;          ///< reduce filled buffer size to let reformat data later
          double             fLostRate;        ///< artificial lost of received UDP packets
          int                fLostCnt;         ///< counter used to drop buffers
-
          bool               fDebug;           ///< when true, produce more debug output
-
          bool               fRunning;         ///< is transport running
 
          virtual void ProcessEvent(const dabc::EventId&);

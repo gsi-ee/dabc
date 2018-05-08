@@ -376,13 +376,38 @@ void hadaq::CombinerModule::UpdateBnetInfo()
    }
 
    if (fBNETsend) {
+      std::string full_state = "Ready";
+
       std::vector<uint64_t> hubs, ports;
+      std::vector<std::string> calibr, cal_state;
       for (unsigned n=0;n<fCfg.size();n++) {
-         hubs.push_back(fCfg[n].fHubId);
-         ports.push_back(fCfg[n].fUdpPort);
+         InputCfg &inp = fCfg[n];
+
+         hubs.push_back(inp.fHubId);
+         ports.push_back(inp.fUdpPort);
+         calibr.push_back(inp.fCalibr);
+
+         if (!inp.fCalibrReq && !inp.fCalibr.empty()) {
+            dabc::Command cmd("GetCalibrState");
+            cmd.SetInt("indx",n);
+            cmd.SetReceiver(inp.fCalibr);
+            dabc::mgr.Submit(Assign(cmd));
+            fCfg[n].fCalibrReq = true;
+         }
+
+         std::string state = "";
+         if (!inp.fCalibr.empty()) {
+            state = inp.fCalibrState;
+            if (state.empty()) state = "Init";
+            if (state != "Ready") full_state = "Init";
+         }
+         cal_state.push_back(state);
       }
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("ports", ports);
+      fWorkerHierarchy.SetField("calibr", calibr);
+      fWorkerHierarchy.SetField("cal_state", cal_state);
+      fWorkerHierarchy.SetField("full_state", full_state);
    }
 }
 
@@ -1289,16 +1314,22 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetHadaqTransportInfo")) {
-
       unsigned id = cmd.GetUInt("id");
-
       if (id < fCfg.size()) {
          fCfg[id].fInfo = cmd.GetPtr("Info");
          fCfg[id].fUdpPort = cmd.GetUInt("UdpPort");
          fCfg[id].fCalibr = cmd.GetStr("CalibrModule");
       }
-
       return true;
+   } else if (cmd.IsName("GetCalibrState")) {
+      unsigned n = cmd.GetUInt("indx");
+      if (n < fCfg.size()) {
+         fCfg[n].fCalibrReq = false;
+         // fCfg[n].trb = cmd.GetUInt("trb");
+         // fCfg[n].tdcs = cmd.GetField("tdcs").AsUIntVect();
+         fCfg[n].fCalibrProgr = cmd.GetInt("progress");
+         fCfg[n].fCalibrState = cmd.GetStr("state");
+      }
    }
 
    return dabc::ModuleAsync::ReplyCommand(cmd);
