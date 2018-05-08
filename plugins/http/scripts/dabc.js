@@ -537,24 +537,22 @@
    }
 
    DABC.ConvertH = function(hpainter, item, obj) {
-      if (obj==null) return;
+      if (!obj) return;
 
       var res = {};
       for (var k in obj) res[k] = obj[k]; // first copy all keys 
       for (var k in res) delete obj[k];   // then delete them from source
       
-      if (res._kind=='ROOT.TH1D') {
-         obj['_typename'] = 'TH1I';
-         JSROOT.Create("TH1I", obj);
+      if (res._kind == 'ROOT.TH1D') {
+         JSROOT.Create("TH1D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
-         JSROOT.extend(obj['fXaxis'], { fNbins:res.nbins, fXmin: res.left,  fXmax: res.right });
+         
+         JSROOT.extend(obj.fXaxis, { fNbins: res.nbins, fXmin: res.left,  fXmax: res.right });
          res.bins.splice(0,3); // 3 first items in array are not bins
          obj.fArray = res.bins; 
          obj.fNcells = res.nbins + 2;
-      } else 
-      if (res._kind=='ROOT.TH2D') {
-         obj['_typename'] = 'TH2I';
-         JSROOT.Create("TH2I", obj);
+      } else if (res._kind == 'ROOT.TH2D') {
+         JSROOT.Create("TH2D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
          
          JSROOT.extend(obj.fXaxis, { fNbins:res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
@@ -562,8 +560,9 @@
          res.bins.splice(0,6); // 6 first items in array are not bins
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
-      } else
+      } else {
          return;
+      }
 
       if ('xtitle' in res) obj.fXaxis.fTitle = res.xtitle;         
       if ('ytitle' in res) obj.fYaxis.fTitle = res.ytitle;   

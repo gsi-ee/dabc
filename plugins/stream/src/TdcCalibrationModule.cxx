@@ -76,7 +76,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fProcMgr = (stream::DabcProcMgr*) cmd.GetPtr("ProcMgr");
    hadaq::HldProcessor* hld = (hadaq::HldProcessor*) cmd.GetPtr("HLDProc");
 
-   if (fProcMgr==0) {
+   if (!fProcMgr) {
       fOwnProcMgr = true;
       fProcMgr = new stream::DabcProcMgr();
       fProcMgr->SetTop(fWorkerHierarchy);
@@ -98,14 +98,10 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
    fAutoMode = Cfg("AutoMode", cmd).AsInt();
 
    if (fAutoMode == 0) {
-
       DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
-
       fTDCs = Cfg("TDC", cmd).AsUIntVect();
-      for(unsigned n=0;n<fTDCs.size();n++) {
-         DOUT2("Create TDC 0x%04x", (unsigned) fTDCs[n]);
+      for(unsigned n=0;n<fTDCs.size();n++)
          fTrbProc->CreateTDC(fTDCs[n]);
-      }
       item.SetField("tdc", fTDCs);
    } else {
       DOUT0("TRB 0x%04x configured in auto mode %d TDC min 0x%04x max 0x%04x", (unsigned) fTRB, fAutoMode, fTdcMin, fTdcMax);
@@ -141,6 +137,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc
 
    // set ids and create more histograms
    if (fOwnProcMgr) {
+      DOUT0("%s USER PRELLOP NUMCHILDS %u", GetName(), fWorkerHierarchy.NumChilds());
       fProcMgr->UserPreLoop();
       Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
       // remove pointer, let other modules to create and use it
