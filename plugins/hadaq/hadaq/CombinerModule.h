@@ -83,6 +83,7 @@ namespace hadaq {
          bool        fCalibrReq;   ///< when true, request was send
          int         fCalibrProgr; ///< calibration progress
          std::string fCalibrState; ///< calibration state
+         uint64_t    fHubLastSize; ///< last size
 
 
          InputCfg() :
@@ -111,7 +112,8 @@ namespace hadaq {
             fCalibr(),
             fCalibrReq(false),
             fCalibrProgr(0),
-            fCalibrState()
+            fCalibrState(),
+            fHubLastSize(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;i++)
                fErrorbitStats[i]=0;

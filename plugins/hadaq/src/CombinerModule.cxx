@@ -379,7 +379,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       std::string full_state = "Ready";
 
       std::vector<uint64_t> hubs, ports;
-      std::vector<std::string> calibr, cal_state;
+      std::vector<std::string> calibr, cal_state, hubs_info;
       for (unsigned n=0;n<fCfg.size();n++) {
          InputCfg &inp = fCfg[n];
 
@@ -402,8 +402,30 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             if (state != "Ready") full_state = "Init";
          }
          cal_state.push_back(state);
+
+         std::string sinfo = "";
+         hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
+
+         if (!info) {
+            sinfo = "missing transport-info";
+         } else {
+            double rate = (info->fTotalRecvBytes - inp.fHubLastSize)/2.0;
+            inp.fHubLastSize = info->fTotalRecvBytes;
+            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s",
+                       info->fNPort,
+                       rate/1024./1024.,
+                       dabc::size_to_str(info->fTotalRecvBytes).c_str(),
+                       dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
+                       dabc::number_to_str(info->fTotalProducedBuffers).c_str(),
+                       dabc::number_to_str(info->fTotalDiscardPacket).c_str(),
+                       dabc::number_to_str(info->fTotalDiscard32Packet).c_str(),
+                       dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
+                       dabc::number_to_str(inp.fLostTrig,0).c_str());
+         }
+         hubs_info.push_back(sinfo);
       }
       fWorkerHierarchy.SetField("hubs", hubs);
+      fWorkerHierarchy.SetField("hubs_info", hubs_info);
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
       fWorkerHierarchy.SetField("cal_state", cal_state);

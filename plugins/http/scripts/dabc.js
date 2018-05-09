@@ -311,6 +311,7 @@
       
       this.InputItems = [];
       this.BuilderItems = [];
+      this.CalibrHub = 0; 
       this.CalibrItem = "";
       this.InputNodes = [];
       this.BuilderNodes = [];
@@ -369,7 +370,8 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "HUBs", 40);    
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + 
+              this.MakeLabel("class='bnet_trb_clear'", "HUBs", 40);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.InputItems) {
@@ -383,10 +385,11 @@
       html += "</div>" +
               "</fieldset>";
       
-      html += "<fieldset style='margin:5px'>" +
-              "<legend>Calibration</legend>";
-      html += "<div class='bnet_tdc_calibr'></div>";
-      html += "</fieldset>";
+      html += "<fieldset class='bnet_trb_info' style='margin:5px;display:none'>" +
+              "<legend>Calibration</legend>" +
+              "<div class='bnet_hub_info'></div>" +
+              "<div class='bnet_tdc_calibr'></div>" +
+              "</fieldset>";
       
       html += "<fieldset style='margin:5px'>" +
               "<legend>Builder nodes</legend>" +
@@ -409,8 +412,10 @@
       
       html += "</div>";
       
-      d3.select(this.frame).html(html).classed("jsroot_fixed_frame", true);
-      
+      var main = d3.select(this.frame).html(html);
+      main.classed("jsroot_fixed_frame", true);
+      main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
+
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
@@ -425,9 +430,15 @@
          this.hpainter.display(itemname.substr(1), "divid:"+d3.select(frame).attr('id'));         
    }
    
-   DABC.BnetPainter.prototype.DisplayCalItem = function(itemname) {
+   DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
+      this.CalibrHub = hubid;
       this.CalibrItem = itemname;
-      $(this.frame).find('.bnet_tdc_calibr').html("");
+      
+      d3.select(this.frame).select('.bnet_trb_info')
+                           .style("display", itemname ? null : "none")
+                           .select("legend").html("HUB: 0x" + hubid.toString(16));
+      
+      d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
@@ -463,15 +474,17 @@
          html += "|";
          if (res.ports && res.hubs && (res.ports.length == res.hubs.length)) {
             for (var k=0;k<res.ports.length;++k) {
+               if (this.CalibrHub == res.hubs[k])
+                  frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               var title = "udpport:" + res.ports[k] + " state:" + res.cal_state[k];
+               var title = "state:" + res.cal_state[k] + " " + res.hubs_info[k];
                var style = "background-color:" + ((res.cal_state[k]=="Ready") ? "lightgreen" : "red");
                var attr = "";
                
                if (res.calibr[k]) {
                   var calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
-                  attr = " itemname='" + calitem + "' class='bnet_cal_label'";
+                  attr = " hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='bnet_trb_label'";
                }
                
                html += " " + this.MakeLabel("title='" + title + "' style='" + style + "'" + attr, txt, txt.length);
@@ -490,8 +503,8 @@
       main.selectAll(".bnet_item_label").on("click", function() {
         painter.DisplayItem(d3.select(this).attr("itemname"));
       });
-      main.selectAll(".bnet_cal_label").on("click", function() {
-         painter.DisplayCalItem(d3.select(this).attr("itemname"));
+      main.selectAll(".bnet_trb_label").on("click", function() {
+         painter.DisplayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
       });
    }
    
@@ -543,6 +556,7 @@
          }
          
          if (changed) {
+            pthis.DisplayCalItem(0, "");
             pthis.RefreshHTML();
             pthis.hpainter.reload(); // also refresh hpainter - most probably items are changed 
          }
