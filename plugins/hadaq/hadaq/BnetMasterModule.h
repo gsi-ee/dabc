@@ -34,6 +34,7 @@ namespace hadaq {
          bool          fControl;  ///< when true, master actively controls BNET nodes and switches to new RUNs
          uint64_t      fMaxRunSize; ///< maximal run size
          dabc::Command fCurrentCmd; ///< currently running cmd
+         int           fCmdCnt;    ///< just counter to avoid mismatch
 
          virtual bool ReplyCommand(dabc::Command cmd);
 

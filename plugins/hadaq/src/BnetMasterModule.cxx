@@ -28,6 +28,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
    double period = Cfg("period", cmd).AsDouble(fControl ? 0.2 : 1);
    CreateTimer("update", period);
 
+   fCmdCnt = 1;
+
    fWorkerHierarchy.Create("Bnet");
 
    fWorkerHierarchy.SetField("_player","DABC.BnetControl");
@@ -85,7 +87,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
       return true;
-   } else if (cmd.GetBool("#bnet_subcmd")) {
+   } else if (cmd.GetInt("#bnet_cnt")==fCmdCnt) {
       if (!fCurrentCmd.null()) {
          int cnt = cmd.GetInt("#RetCnt");
          cmd.SetInt("#RetCnt", cnt--);
@@ -106,6 +108,10 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 {
    dabc::CmdGetNamesList cmd;
    dabc::PublisherRef(GetPublisher()).Submit(Assign(cmd));
+
+   if (!fCurrentCmd.null() && fCurrentCmd.IsTimedout())
+      fCurrentCmd.Reply(dabc::cmd_false);
+
 }
 
 int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
@@ -118,6 +124,9 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (builders.size() == 0) return dabc::cmd_true;
 
       fCurrentCmd = cmd;
+      fCmdCnt++;
+
+      if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
 
       bool isstart = cmd.IsName("StartRun");
 
@@ -134,7 +143,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          if (isstart) query = dabc::format("filename=ff%d.hld&maxsize=2000", n);
 
          dabc::CmdGetBinary subcmd(cmdpath, "execute", query);
-         subcmd.SetBool("#bnet_subcmd", true);
+         subcmd.SetInt("#bnet_cnt", fCmdCnt);
 
          bool res = ref.Submit(Assign(subcmd));
 
