@@ -435,7 +435,7 @@
       this.CalibrItem = itemname;
       
       d3.select(this.frame).select('.bnet_trb_info')
-                           .style("display", itemname ? null : "none")
+                           .style("display", (itemname || hubid) ? null : "none")
                            .select("legend").html("HUB: 0x" + hubid.toString(16));
       
       d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
@@ -480,14 +480,12 @@
                totallen += txt.length;
                var title = "state:" + res.cal_state[k] + " " + res.hubs_info[k];
                var style = "background-color:" + ((res.cal_state[k]=="Ready") ? "lightgreen" : "red");
-               var attr = "";
+               var calitem = "";
+               if (res.calibr[k]) 
+                  calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
+               var attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='bnet_trb_label'";
                
-               if (res.calibr[k]) {
-                  var calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
-                  attr = " hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='bnet_trb_label'";
-               }
-               
-               html += " " + this.MakeLabel("title='" + title + "' style='" + style + "'" + attr, txt, txt.length);
+               html += " " + this.MakeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
                if (totallen>40) break;
             }
          } 
