@@ -1190,9 +1190,13 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("StartHldFile")) {
       do_start = do_stop = true;
       SetInfo("Execute StartHldFile");
+
+      DOUT0("******************* START HLD FILE *************");
    } else if (cmd.IsName("StopHldFile")) {
       do_stop = true;
       SetInfo("Execute StopHldFile");
+      DOUT0("******************* STOP HLD FILE *************");
+
    } else if (cmd.IsName("RestartHldFile")) {
       if (NumOutputs()<2) return dabc::cmd_false;
       SetInfo("Execute RestartHldFile");
@@ -1362,7 +1366,6 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.SetField("runsize", cmd.GetUInt("RunSize"));
       fWorkerHierarchy.SetField("runname", cmd.GetStr("RunName"));
    }
-
 
    return dabc::ModuleAsync::ReplyCommand(cmd);
 }

@@ -22,8 +22,10 @@
 hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-   double period = Cfg("period", cmd).AsDouble(1);
+   fControl = Cfg("Controller", cmd).AsBool(false);
+   fMaxRunSize = Cfg("MaxRunSize", cmd).AsUInt(2000000000LU);
 
+   double period = Cfg("period", cmd).AsDouble(fControl ? 0.2 : 1);
    CreateTimer("update", period);
 
    fWorkerHierarchy.Create("Bnet");
@@ -44,9 +46,15 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command
    item.SetField("value", "");
    item.SetField("_hidden", "true");
 
-   Publish(fWorkerHierarchy, "$CONTEXT$/BNET");
+   if (fControl) {
+      CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run");
+      CreateCmdDef("StopRun");
+   }
 
-   DOUT0("BNET MASTER period %3.1f", period);
+   // Publish(fWorkerHierarchy, "$CONTEXT$/BNET");
+   PublishPars("$CONTEXT$/BNET");
+
+   DOUT0("BNET MASTER Control %s period %3.1f ", DBOOL(fControl), period);
 }
 
 bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
@@ -77,9 +85,17 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
       return true;
+   } else if (cmd.GetBool("#bnet_subcmd")) {
+      if (!fCurrentCmd.null()) {
+         int cnt = cmd.GetInt("#RetCnt");
+         cmd.SetInt("#RetCnt", cnt--);
+         if (cnt<=0) fCurrentCmd.Reply(dabc::cmd_true);
+      }
+
+      return true;
    }
 
-   return true;
+   return dabc::Module::ReplyCommand(cmd);
 }
 
 void hadaq::BnetMasterModule::BeforeModuleStart()
@@ -90,4 +106,45 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 {
    dabc::CmdGetNamesList cmd;
    dabc::PublisherRef(GetPublisher()).Submit(Assign(cmd));
+}
+
+int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("StartRun") || cmd.IsName("StopRun")) {
+      if (!fCurrentCmd.null()) fCurrentCmd.Reply(dabc::cmd_false);
+
+      std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").Field("value").AsStrVect();
+
+      if (builders.size() == 0) return dabc::cmd_true;
+
+      fCurrentCmd = cmd;
+
+      bool isstart = cmd.IsName("StartRun");
+
+      cmd.SetInt("#RetCnt", builders.size());
+
+      dabc::WorkerRef ref = GetPublisher();
+
+      for (int n=0;n<(int) builders.size();++n) {
+
+         std::string cmdpath = builders[n] + (isstart ? "/StartHldFile" : "/StopHldFile");
+
+         std::string query;
+
+         if (isstart) query = dabc::format("filename=ff%d.hld&maxsize=2000", n);
+
+         dabc::CmdGetBinary subcmd(cmdpath, "execute", query);
+         subcmd.SetBool("#bnet_subcmd", true);
+
+         bool res = ref.Submit(Assign(subcmd));
+
+         DOUT0("SEND COMMAND %s to %s res %s", subcmd.GetName(), cmdpath.c_str(), DBOOL(res));
+         // subcmd.SetReceiver(builders[n]);
+         // dabc::mgr.Submit(Assign(subcmd));
+      }
+      return dabc::cmd_postponed;
+   }
+
+   return dabc::cmd_true;
+
 }

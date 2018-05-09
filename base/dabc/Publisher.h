@@ -168,6 +168,7 @@ namespace dabc {
 
          virtual bool ReplyCommand(Command cmd);
 
+         dabc::Command CreateExeCmd(const std::string &path, const std::string &query, dabc::Command tgt = nullptr);
 
          void CheckDnsSubscribers();
 
@@ -234,10 +235,10 @@ namespace dabc {
        *          "__tree__"    -- tree hierarchy
        *          "__single__"  -- single element
        *          "__file__"    -- just a file name */
-      std::string UserInterfaceKind(const char* uri, std::string& path, std::string& fname);
+      std::string UserInterfaceKind(const char *uri, std::string &path, std::string &fname);
 
       /** Returns 1 - need auth,  0 - no need auth, -1 - undefined */
-      int NeedAuth(const std::string& path);
+      int NeedAuth(const std::string &path);
 
       /** Return different kinds of binary data, depends from kind */
       Buffer GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout = 5.);
@@ -245,7 +246,7 @@ namespace dabc {
       Hierarchy GetItem(const std::string& fullname, const std::string& query = "", double tmout = 5.);
 
       /** \brief Execute item is command, providing parameters in query */
-      Command ExeCmd(const std::string& fullname, const std::string& query);
+      Command ExeCmd(const std::string &fullname, const std::string &query);
 
       protected:
          bool OwnCommand(int id, const std::string &path, const std::string &workername, void *hier = nullptr);

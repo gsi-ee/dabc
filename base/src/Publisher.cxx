@@ -444,7 +444,7 @@ bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string& itemname,
 }
 
 
-bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& itemname)
+bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string &itemname)
 {
    std::string producer_name, request_name;
    bool islocal(true);
@@ -501,6 +501,111 @@ bool dabc::Publisher::RedirectCommand(dabc::Command cmd, const std::string& item
    cmd.SetBool("analyzed", true);
    dabc::mgr.Submit(cmd);
    return true;
+}
+
+
+dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::string &query, dabc::Command res)
+{
+   bool islocal(true);
+   dabc::Hierarchy def = GetWorkItem(path, &islocal);
+   if (def.null()) return nullptr;
+
+   if (def.Field(dabc::prop_kind).AsStr()!="DABC.Command") return nullptr;
+
+   std::string request_name;
+   std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
+   if (producer_name.empty()) return nullptr;
+
+   if (def.GetField("_parcmddef").AsBool(false)) {
+      DOUT3("Create normal command %s for path %s", def.GetName(), path.c_str());
+      if (res.null()) {
+         res = dabc::Command(def.GetName());
+      } else {
+         res.ChangeName(def.GetName());
+      }
+   } else {
+      DOUT3("Create hierarchy command %s for path %s", request_name.c_str(), path.c_str());
+      if (res.null()) {
+         res = dabc::CmdHierarchyExec(request_name);
+      } else {
+         res.ChangeName(dabc::CmdHierarchyExec::CmdName());
+         res.SetStr("Item", request_name);
+      }
+   }
+
+   dabc::Url url(std::string("execute?") + query);
+
+   if (url.IsValid()) {
+      int cnt = 0;
+      std::string part;
+      do {
+         part = url.GetOptionsPart(cnt++);
+         if (part.empty()) break;
+
+         size_t p = part.find("=");
+         if ((p==std::string::npos) || (p==0) || (p==part.length()-1)) break;
+
+         std::string parname = part.substr(0,p);
+         std::string parvalue = part.substr(p+1);
+
+         size_t pos;
+         while ((pos = parvalue.find("%20")) != std::string::npos)
+            parvalue.replace(pos, 3, " ");
+
+         bool quotes = false;
+
+         if ((parvalue.length()>1) && ((parvalue[0]=='\'') || (parvalue[0]=='\"'))
+               && (parvalue[0] == parvalue[parvalue.length()-1])) {
+            parvalue.erase(0,1);
+            parvalue.resize(parvalue.length()-1);
+            quotes = true;
+         }
+
+         // DOUT0("parname %s parvalue %s", parname.c_str(), parvalue.c_str());
+
+         if (quotes) {
+
+            std::vector<std::string> vect;
+            std::vector<double> dblvect;
+            std::vector<int64_t> intvect;
+
+            if (!dabc::RecordField::StrToStrVect(parvalue.c_str(), vect)) {
+               res.SetStr(parname, parvalue);
+               continue;
+            }
+
+            if (vect.size()==0) {
+               res.SetField(parname, parvalue);
+               continue;
+            }
+
+            for (unsigned n=0;n<vect.size();n++) {
+               double ddd;
+               long iii;
+               if (str_to_double(vect[n].c_str(), &ddd)) dblvect.push_back(ddd);
+               if (str_to_lint(vect[n].c_str(), &iii)) intvect.push_back(ddd);
+            }
+
+            if (intvect.size()==vect.size()) res.SetField(parname, intvect); else
+            if (dblvect.size()==vect.size()) res.SetField(parname, dblvect); else
+            res.SetField(parname, vect);
+
+         } else {
+
+            double ddd;
+            long iii;
+            if (str_to_lint(parvalue.c_str(), &iii)) res.SetInt(parname, iii); else
+            if (str_to_double(parvalue.c_str(), &ddd)) res.SetDouble(parname, ddd); else
+               res.SetStr(parname, parvalue);
+
+         }
+
+      } while (!part.empty());
+   }
+
+   res.SetReceiver(producer_name);
+
+   return res;
 }
 
 
@@ -707,98 +812,9 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       return cmd_true;
    } else
    if (cmd.IsName("CreateExeCmd")) {
-      std::string path = cmd.GetStr("path");
 
-      bool islocal(true);
-      dabc::Hierarchy def = GetWorkItem(path, &islocal);
-      if (def.null()) return cmd_false;
-
-      if (def.Field(dabc::prop_kind).AsStr()!="DABC.Command") return cmd_false;
-
-      std::string request_name;
-      std::string producer_name = def.FindBinaryProducer(request_name, !islocal);
-      if (producer_name.empty()) return cmd_false;
-
-      dabc::Command res;
-      if (def.GetField("_parcmddef").AsBool(false)) {
-         DOUT3("Create normal command %s for path %s", def.GetName(), path.c_str());
-         res = dabc::Command(def.GetName());
-      } else {
-         DOUT3("Create hierarchy command %s for path %s", request_name.c_str(), path.c_str());
-         res = dabc::CmdHierarchyExec(request_name);
-      }
-
-      dabc::Url url(std::string("execute?") + cmd.GetStr("query"));
-
-      if (url.IsValid()) {
-         int cnt = 0;
-         std::string part;
-         do {
-            part = url.GetOptionsPart(cnt++);
-            if (part.empty()) break;
-
-            size_t p = part.find("=");
-            if ((p==std::string::npos) || (p==0) || (p==part.length()-1)) break;
-
-            std::string parname = part.substr(0,p);
-            std::string parvalue = part.substr(p+1);
-
-            size_t pos;
-            while ((pos = parvalue.find("%20")) != std::string::npos)
-               parvalue.replace(pos, 3, " ");
-
-            bool quotes = false;
-
-            if ((parvalue.length()>1) && ((parvalue[0]=='\'') || (parvalue[0]=='\"'))
-                  && (parvalue[0] == parvalue[parvalue.length()-1])) {
-               parvalue.erase(0,1);
-               parvalue.resize(parvalue.length()-1);
-               quotes = true;
-            }
-
-            // DOUT0("parname %s parvalue %s", parname.c_str(), parvalue.c_str());
-
-            if (quotes) {
-
-               std::vector<std::string> vect;
-               std::vector<double> dblvect;
-               std::vector<int64_t> intvect;
-
-               if (!dabc::RecordField::StrToStrVect(parvalue.c_str(), vect)) {
-                  res.SetStr(parname, parvalue);
-                  continue;
-               }
-
-               if (vect.size()==0) {
-                  res.SetField(parname, parvalue);
-                  continue;
-               }
-
-               for (unsigned n=0;n<vect.size();n++) {
-                  double ddd;
-                  long iii;
-                  if (str_to_double(vect[n].c_str(), &ddd)) dblvect.push_back(ddd);
-                  if (str_to_lint(vect[n].c_str(), &iii)) intvect.push_back(ddd);
-               }
-
-               if (intvect.size()==vect.size()) res.SetField(parname, intvect); else
-               if (dblvect.size()==vect.size()) res.SetField(parname, dblvect); else
-               res.SetField(parname, vect);
-
-            } else {
-
-               double ddd;
-               long iii;
-               if (str_to_lint(parvalue.c_str(), &iii)) res.SetInt(parname, iii); else
-               if (str_to_double(parvalue.c_str(), &ddd)) res.SetDouble(parname, ddd); else
-                  res.SetStr(parname, parvalue);
-
-            }
-
-         } while (!part.empty());
-      }
-
-      res.SetReceiver(producer_name);
+      dabc::Command res = CreateExeCmd(cmd.GetStr("path"), cmd.GetStr("query"));
+      if (res.null()) return cmd_false;
 
       cmd.SetRef("ExeCmd", res);
 
@@ -863,6 +879,24 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
       // if we get command here, we need to find destination for it
 
       std::string itemname = cmd.GetStr("Item");
+
+      // this is executing of the command
+      if (cmd.GetStr("Kind") == "execute") {
+         std::string query = cmd.GetStr("Query");
+
+         cmd.RemoveField("Item");
+         cmd.RemoveField("Kind");
+         cmd.RemoveField("Query");
+
+         dabc::Command res = CreateExeCmd(itemname, query, cmd);
+
+         if (res == cmd) {
+            dabc::mgr.Submit(cmd);
+            return cmd_postponed;
+         } else {
+            return cmd_false;
+         }
+      }
 
       // DOUT3("Publisher::CmdGetBinary for item %s", itemname.c_str());
 
@@ -982,7 +1016,6 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const st
 
    return 0;
 }
-
 
 dabc::Hierarchy dabc::PublisherRef::GetItem(const std::string& fullname, const std::string& query, double tmout)
 {

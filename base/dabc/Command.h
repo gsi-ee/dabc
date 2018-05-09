@@ -109,14 +109,14 @@ namespace dabc {
 
       private:
 
-         void AddCaller(Worker* worker, bool* exe_ready = 0);
-         void RemoveCaller(Worker* worker, bool* exe_ready = 0);
+         void AddCaller(Worker *worker, bool *exe_ready = nullptr);
+         void RemoveCaller(Worker *worker, bool *exe_ready = nullptr);
 
          bool IsLastCallerSync();
 
       protected:
 
-         virtual void CreateRecord(const std::string& name) { SetObject(new CommandContainer(name)); }
+         virtual void CreateRecord(const std::string &name) { SetObject(new CommandContainer(name)); }
 
       public:
          /** \brief Default constructor, creates empty reference on the command */

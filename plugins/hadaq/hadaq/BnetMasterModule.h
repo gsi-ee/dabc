@@ -31,6 +31,10 @@ namespace hadaq {
    class BnetMasterModule : public dabc::ModuleAsync {
       protected:
 
+         bool          fControl;  ///< when true, master actively controls BNET nodes and switches to new RUNs
+         uint64_t      fMaxRunSize; ///< maximal run size
+         dabc::Command fCurrentCmd; ///< currently running cmd
+
          virtual bool ReplyCommand(dabc::Command cmd);
 
       public:
@@ -40,6 +44,9 @@ namespace hadaq {
          virtual void BeforeModuleStart();
 
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
+
    };
 }
 
