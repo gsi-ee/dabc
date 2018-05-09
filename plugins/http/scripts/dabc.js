@@ -335,6 +335,7 @@
       
       delete this.hpainter;
       delete this.mdi;
+      delete this.frame;
    }
    
    DABC.BnetPainter.prototype.active = function() {
@@ -396,7 +397,8 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + this.MakeLabel("", "Info", 30);    
+      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + 
+              "| " + this.MakeLabel("", "File", 23) +  "| " + this.MakeLabel("", "Size, MB", 10) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
       html += "</pre>";
       html += "</div>";
       for (var node in this.BuilderItems) {
@@ -459,16 +461,20 @@
          itemname = this.InputItems[indx];
       }
       
-      var prefix = "class='bnet_item_label' itemname='" + itemname + "/";
+      var prefix = "class='bnet_item_label' itemname='" + itemname + "/", hadaqinfo = null;
       
       for (var n=0;n<res._childs.length;++n) {
          var chld = res._childs[n];
          if (chld._name == "HadaqData") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
-         if (chld._name == "HadaqEvents") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
-         if ((chld._name == "HadaqInfo") && isbuild) html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 30);
+         if (chld._name == "HadaqEvents") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10);
+         if (chld._name == "HadaqInfo") hadaqinfo = chld;
       }
       
-      if (!isbuild) {
+      if (isbuild) {
+         html += "| " + this.MakeLabel("", res.runname, 23);
+         html += "| " + this.MakeLabel("", (res.runsize/1024/1024).toFixed(2), 10);
+         // if (hadaqinfo) html += "| " + this.MakeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
+      } else {
          // info with HUBs and port numbers
          var totallen = 0;
          html += "|";

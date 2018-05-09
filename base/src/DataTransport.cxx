@@ -922,7 +922,7 @@ int dabc::OutputTransport::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("GetTransportStatistic")) {
       // take statistic from output element
-      cmd.SetStr("OutputState",StateAsStr());
+      cmd.SetStr("OutputState", StateAsStr());
       if (fOutput) fOutput->Write_Stat(cmd);
       return cmd_true;
    } else if (cmd.IsName("RestartTransport")) {

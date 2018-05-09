@@ -112,8 +112,7 @@ bool hadaq::HldOutput::StartNewFile()
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
    }
-   if(fUseDaqDisk)
-   {
+   if(fUseDaqDisk) {
       dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild-diskNum");
       if(!fDiskNumberPar.null()) {
          std::string prefix;
@@ -213,6 +212,18 @@ bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
    }
    return true;
 }
+
+bool hadaq::HldOutput::Write_Stat(dabc::Command cmd)
+{
+   bool res = dabc::FileOutput::Write_Stat(cmd);
+
+   cmd.SetUInt("RunId", fRunNumber);
+   cmd.SetUInt("RunSize", fCurrentFileSize);
+   cmd.SetStr("RunName", fCurrentFileName);
+
+   return res;
+}
+
 
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)

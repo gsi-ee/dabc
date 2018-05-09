@@ -148,7 +148,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
 
    if (fBNETsend || fBNETrecv)
-      CreateTimer("BnetTimer", 2.); // check BNET values
+      CreateTimer("BnetTimer", 1.); // check BNET values
 
    if (fWithObserver) {
       CreateTimer("ObserverTimer", 0.2); // export timers 5 times a second
@@ -372,7 +372,12 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 void hadaq::CombinerModule::UpdateBnetInfo()
 {
    if (fBNETrecv) {
-
+      dabc::Command cmd("GetTransportStatistic");
+      if ((NumOutputs() < 2) || !SubmitCommandToTransport(OutputName(1), Assign(cmd))) {
+         fWorkerHierarchy.SetField("runid", 0);
+         fWorkerHierarchy.SetField("runsize", 0);
+         fWorkerHierarchy.SetField("runname", std::string());
+      }
    }
 
    if (fBNETsend) {
@@ -409,11 +414,11 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (!info) {
             sinfo = "missing transport-info";
          } else {
-            double rate = (info->fTotalRecvBytes - inp.fHubLastSize)/2.0;
+            double rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
             inp.fHubLastSize = info->fTotalRecvBytes;
             sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s",
                        info->fNPort,
-                       rate/1024./1024.,
+                       rate,
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                        dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
                        dabc::number_to_str(info->fTotalProducedBuffers).c_str(),
@@ -1329,7 +1334,7 @@ char* hadaq::CombinerModule::Unit(unsigned long v)
 
 std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
-   return fPrefix +  hadaq::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
+   return fPrefix + hadaq::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 }
 
 
@@ -1352,7 +1357,12 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          fCfg[n].fCalibrProgr = cmd.GetInt("progress");
          fCfg[n].fCalibrState = cmd.GetStr("state");
       }
+   } else if (cmd.IsName("GetTransportStatistic")) {
+      fWorkerHierarchy.SetField("runid", cmd.GetUInt("RunId"));
+      fWorkerHierarchy.SetField("runsize", cmd.GetUInt("RunSize"));
+      fWorkerHierarchy.SetField("runname", cmd.GetStr("RunName"));
    }
+
 
    return dabc::ModuleAsync::ReplyCommand(cmd);
 }

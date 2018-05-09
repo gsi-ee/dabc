@@ -76,6 +76,8 @@ namespace hadaq {
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
 
+         virtual bool Write_Stat(dabc::Command cmd);
+
          virtual bool Write_Restart(dabc::Command cmd);
    };
 }

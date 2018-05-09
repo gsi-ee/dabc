@@ -169,22 +169,19 @@ namespace hadaq {
 
          std::vector<InputCfg> fCfg; ///< all input-dependent configurations
 
-         WriteIterator fOut;
+         WriteIterator      fOut;
 
-         int fFlushCounter;
+         int                fFlushCounter;
+         int32_t            fEBId; ///<  eventbuilder id <- node id
+         pid_t              fPID; ///<  process id of combiner module
+         bool               fWithObserver;
+         bool               fEpicsSlave;
+         bool               fIsTerminating;
+         bool               fSkipEmpty;     ///< skip empty subevents in final event, default true
 
-         int32_t fEBId; ///<  eventbuilder id <- node id
+         bool               fRunToOracle;
 
-         pid_t fPID; ///<  process id of combiner module
-
-         bool fWithObserver;
-         bool fEpicsSlave;
-         bool fIsTerminating;
-         bool fSkipEmpty;     ///< skip empty subevents in final event, default true
-
-         bool fRunToOracle;
-
-         int  fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
+         int                fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
 
          bool               fCheckTag;
 
