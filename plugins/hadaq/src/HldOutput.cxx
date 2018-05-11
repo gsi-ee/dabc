@@ -36,6 +36,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fRunNumber(0),
    fEBNumber(0),
    fUseDaqDisk(false),
+   fDisabled(false),
    fRfio(false),
    fLtsm(false),
    fUrlOptions(),
@@ -46,13 +47,13 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
    fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
    fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
+   fDisabled = url.HasOption("disabled");
    fRfio = url.HasOption("rfio");
    fLtsm = url.HasOption("ltsm");
    if (fRfio) {
-
       dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface");
 
-      if (io!=0) {
+      if (io) {
          fUrlOptions = url.GetOptions();
          fFile.SetIO(io, true);
          // set default protocol and node name, can only be used in GSI
@@ -61,9 +62,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
       } else {
          EOUT("Cannot create RFIO object, check if libDabcRfio.so loaded");
       }
-   }
-   else if(fLtsm)
-   {
+   } else if(fLtsm) {
 	   dabc::FileInterface* io = (dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface");
 	   if (io!=0) {
 		   fUrlOptions = url.GetOptions();
@@ -106,6 +105,8 @@ bool hadaq::HldOutput::Write_Init()
 bool hadaq::HldOutput::StartNewFile()
 {
    CloseFile();
+
+   if (fDisabled) return true;
 
    if (fRunNumber == 0) {
       fRunNumber = hadaq::CreateRunId();
@@ -186,14 +187,17 @@ bool hadaq::HldOutput::Write_Retry()
 {
    // HLD output supports retry option
 
+   if (fDisabled) return true;
+
    CloseFile();
    fRunNumber = 0;
    return true;
 }
 
-
 bool hadaq::HldOutput::CloseFile()
 {
+   if (fDisabled) return true;
+
    DOUT3(" hadaq::HldOutput::CloseFile()");
    if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
@@ -225,11 +229,8 @@ bool hadaq::HldOutput::Write_Stat(dabc::Command cmd)
 }
 
 
-
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
-//   if (gggcnt++ > 100) { ::sleep(10); return dabc::do_Error; }
-
    if (buf.null()) return dabc::do_Error;
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
@@ -241,6 +242,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
       return dabc::do_Error;
    }
+
+   if (fDisabled) return dabc::do_Ok;
 
    unsigned cursor(0);
    bool startnewfile(false);
