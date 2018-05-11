@@ -152,8 +152,12 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    if (fBNETsend) fWorkerHierarchy.SetField("_bnet", "sender");
    if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
 
-   if (fBNETsend || fBNETrecv)
+   if (fBNETsend || fBNETrecv) {
       CreateTimer("BnetTimer", 1.); // check BNET values
+      dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("State");
+      item.SetField(dabc::prop_kind, "Text");
+      item.SetField("value", "Init");
+   }
 
    if (fWithObserver) {
       CreateTimer("ObserverTimer", 0.2); // export timers 5 times a second
@@ -389,7 +393,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
    }
 
    if (fBNETsend) {
-      std::string full_state = "";
+      std::string nodestate = "";
 
       std::vector<uint64_t> hubs, ports;
       std::vector<std::string> calibr, hubs_state, hubs_info;
@@ -433,19 +437,20 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (!inp.fCalibr.empty() && (inp.fCalibrState != "Ready")) state = "NoCalibr";
 
          if (state.empty()) state = "Ready"; else
-         if (full_state.empty() && (full_state != "NoData")) full_state = state;
+         if (nodestate.empty() && (nodestate != "NoData")) nodestate = state;
          hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
       }
 
-      if (full_state.empty()) full_state = "Ready";
+      if (nodestate.empty()) nodestate = "Ready";
 
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("hubs_info", hubs_info);
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
-      fWorkerHierarchy.SetField("full_state", full_state);
+
+      fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
    }
 }
 
@@ -1402,7 +1407,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       if (Par(fEventRateName).Value().AsDouble() == 0) state = "NoData"; else
       if ((runid==0) && runname.empty()) state = "NoFile";
 
-      fWorkerHierarchy.SetField("full_state", state);
+      fWorkerHierarchy.GetHChild("State").SetField("value", state);
 
       return true;
    } else if (cmd.IsName("RestartTransport")) {

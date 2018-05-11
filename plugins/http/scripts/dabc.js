@@ -468,36 +468,40 @@
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
       var frame = d3.select(this.frame), elem, 
-          html = "", itemname = "";
-      
+          html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
+
+      for (var n=0;n<res._childs.length;++n) {
+         var chld = res._childs[n];
+         if (chld._name == "HadaqData") hadaqdata = chld; else 
+         if (chld._name == "HadaqEvents") hadaqevents = chld; else
+         if (chld._name == "HadaqInfo") hadaqinfo = chld; else
+         if (chld._name == "State") hadaqstate = chld;
+      }
+
       html += "<pre style='margin:0'>";
       
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
          var col = "red";
-         if (res.full_state=="NoFile") col = "yellow"; else
-         if (res.full_state=="Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + res.full_state + "'", this.BuilderNodes[indx].substr(7), 15);
+         if (hadaqstate.value == "NoFile") col = "yellow"; else
+         if (hadaqstate.value == "Ready") col = "lightgreen";
+         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 15);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
          var col = "red";
-         if (res.full_state=="NoCalibr") col = "yellow"; else
-         if (res.full_state=="Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + res.full_state + "'", this.InputNodes[indx].substr(7), 15);
+         if (hadaqstate.value == "NoCalibr") col = "yellow"; else
+         if (hadaqstate.value == "Ready") col = "lightgreen";
+         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 15);
          itemname = this.InputItems[indx];
       }
       
-      var prefix = "class='bnet_item_label' itemname='" + itemname + "/", hadaqinfo = null;
+      var prefix = "class='bnet_item_label' itemname='" + itemname + "/";
       
-      for (var n=0;n<res._childs.length;++n) {
-         var chld = res._childs[n];
-         if (chld._name == "HadaqData") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10); 
-         if (chld._name == "HadaqEvents") html += "| " + this.MakeLabel(prefix + chld._name + "'", chld.value, 10);
-         if (chld._name == "HadaqInfo") hadaqinfo = chld;
-      }
+      html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 10); 
+      html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 10);
       
       if (isbuild) {
          html += "| " + this.MakeLabel("", res.runname, 23);

@@ -7,6 +7,8 @@ about current functionality of the framework.
    Required to dynamically stop/start preconfigured HLD outputs from BNet master  
 2. Implement run control from BNet master. One can start/stop run with changed prefix 
    from the master - all event builder just change file name and keep all other config.
+3. Provide "value.json" request to get value field of requested record.
+4. Create "State" record for each BNet node, use it in control GUI
 
 
 4.05.2018
