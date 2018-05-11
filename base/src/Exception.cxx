@@ -26,7 +26,7 @@ dabc::Exception::Exception() throw() :
    DOUT2("Generic exception");
 }
 
-dabc::Exception::Exception(const std::string& info, const std::string& item) throw() :
+dabc::Exception::Exception(const std::string &info, const std::string &item) throw() :
    std::exception(),
    fKind(ex_Generic),
    fWhat(info),
@@ -36,7 +36,7 @@ dabc::Exception::Exception(const std::string& info, const std::string& item) thr
 }
 
 
-dabc::Exception::Exception(ExceptionKind _kind, const std::string& info, const std::string& item) throw() :
+dabc::Exception::Exception(ExceptionKind _kind, const std::string &info, const std::string &item) throw() :
    std::exception(),
    fKind(_kind),
    fWhat(info),

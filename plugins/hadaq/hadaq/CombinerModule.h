@@ -264,7 +264,7 @@ namespace hadaq {
 
          //uint32_t CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
-         void SetInfo(const std::string& info, bool forceinfo = false);
+         void SetInfo(const std::string &info, bool forceinfo = false);
 
 
          /* Methods to export run begin to oracle via text file*/
@@ -284,21 +284,21 @@ namespace hadaq {
          void DoTerminalOutput();
 
          /* helper methods to export ebctrl parameters */
-         std::string GetEvtbuildParName(const std::string& name);
-         void CreateEvtbuildPar(const std::string& name);
-         void SetEvtbuildPar(const std::string& name, unsigned value);
-         unsigned GetEvtbuildParValue(const std::string& name);
+         std::string GetEvtbuildParName(const std::string &name);
+         void CreateEvtbuildPar(const std::string &name);
+         void SetEvtbuildPar(const std::string &name, unsigned value);
+         unsigned GetEvtbuildParValue(const std::string &name);
 
-         std::string GetNetmemParName(const std::string& name);
-         void CreateNetmemPar(const std::string& name);
-         void SetNetmemPar(const std::string& name, unsigned value);
+         std::string GetNetmemParName(const std::string &name);
+         void CreateNetmemPar(const std::string &name);
+         void SetNetmemPar(const std::string &name, unsigned value);
 
          int DestinationPort(uint32_t trignr);
          bool CheckDestination(uint32_t trignr);
          void UpdateBnetInfo();
 
       public:
-         CombinerModule(const std::string& name, dabc::Command cmd = nullptr);
+         CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
 
          virtual void ModuleCleanup();

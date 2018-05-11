@@ -171,7 +171,7 @@ namespace mbs {
 
          mbs::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
-         void SetInfo(const std::string& info, bool forceinfo = false);
+         void SetInfo(const std::string &info, bool forceinfo = false);
 
          bool IsOptionalInput(unsigned ninp) { return ninp<fCfg.size() ? (fCfg[ninp].optional_input || fCfg[ninp].no_evnt_num) : true; }
 
@@ -181,7 +181,7 @@ namespace mbs {
 
       public:
 
-         CombinerModule(const std::string& name, dabc::Command cmd = nullptr);
+         CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
 
          virtual void ModuleCleanup();

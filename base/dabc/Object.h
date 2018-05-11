@@ -242,7 +242,7 @@ namespace dabc {
          bool _IsNormalState();
 
          /** \brief Method used to create new item to be placed as child of the object */
-         virtual Object* CreateObject(const std::string& name) { return new Object(0, name); }
+         virtual Object* CreateObject(const std::string &name) { return new Object(0, name); }
 
          /** \brief Method called when new childs are add or old are removed */
          virtual void _ChildsChanged() {}
@@ -265,23 +265,23 @@ namespace dabc {
           * \param[in] fullname    relative to parent path and name
           * \param[in] withmanager identify if object should be inserted into manager hierarchy (default) or not
           * \returns               instance of ConstructorPair object*/
-         static ConstructorPair MakePair(Reference prnt, const std::string& fullname, bool withmanager = true);
+         static ConstructorPair MakePair(Reference prnt, const std::string &fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
-         static ConstructorPair MakePair(Object* prnt, const std::string& fullname, bool withmanager = true);
+         static ConstructorPair MakePair(Object* prnt, const std::string &fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
-         static ConstructorPair MakePair(const std::string& fullname, bool withmanager = true);
+         static ConstructorPair MakePair(const std::string &fullname, bool withmanager = true);
 
          Object(const ConstructorPair& pair, unsigned flags = flIsOwner);
 
       public:
 
-         Object(const std::string& name, unsigned flags = flIsOwner);
+         Object(const std::string &name, unsigned flags = flIsOwner);
 
-         Object(Reference parent, const std::string& name, unsigned flags = flIsOwner);
+         Object(Reference parent, const std::string &name, unsigned flags = flIsOwner);
 
          // FIXME: one should find a way to catch a call to the destructor
          virtual ~Object();
@@ -302,7 +302,7 @@ namespace dabc {
          bool IsName(const char* str) const { return fObjectName.compare(str)==0; }
 
          /** \brief Checks if object name is same as provided string, __thread safe__ */
-         bool IsName(const std::string& str) const { return fObjectName.compare(str)==0; }
+         bool IsName(const std::string &str) const { return fObjectName.compare(str)==0; }
 
          /** \brief Checks if object name is same as provided, __thread safe__
           *
@@ -314,7 +314,7 @@ namespace dabc {
          bool IsName(const char* str, int len) const;
 
          /** Check if object name match to the mask */
-         bool IsNameMatch(const std::string& mask) const;
+         bool IsNameMatch(const std::string &mask) const;
 
          /** \brief Returns true if object is owner of its children, __thread safe__ */
          bool IsOwner() const;
@@ -393,7 +393,7 @@ namespace dabc {
           * \param[in] name    folder name
           * \param[in] force   if true, missing folder will be created
           * \returns           reference on the folder */
-         Reference GetFolder(const std::string& name, bool force = false) throw();
+         Reference GetFolder(const std::string &name, bool force = false) throw();
 
          /** \brief Print object content on debug output */
          virtual void Print(int lvl = 0);
@@ -449,12 +449,12 @@ namespace dabc {
          /** \brief Check if name matches to specified mask
           *
           * Mask can include special symbols `*` and `?` */
-         static bool NameMatch(const std::string& name, const std::string& mask);
+         static bool NameMatch(const std::string &name, const std::string &mask);
 
          /** \brief Check if name matches to specified mask.
           *
           * Mask can be a list of masks separated by semicolon like `name1*:name2*:??name??` */
-         static bool NameMatchM(const std::string& name, const std::string& mask);
+         static bool NameMatchM(const std::string &name, const std::string &mask);
 
 #ifdef DABC_EXTRA_CHECKS
          static void DebugObject(const char* classname = 0, Object* instance = 0, int kind = 0);

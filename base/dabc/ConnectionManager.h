@@ -52,10 +52,10 @@ namespace dabc {
        void SetConnTimeoutDirectly(double tm) { SetAllowedField(xmlTimeoutAttr); SetConnTimeout(tm); }
 
        std::string GetServerId() const { GET_PAR_FIELD(fServerId,"") }
-       void SetServerId(const std::string& id) { SET_PAR_FIELD(fServerId, id) }
+       void SetServerId(const std::string &id) { SET_PAR_FIELD(fServerId, id) }
 
        std::string GetClientId() const { GET_PAR_FIELD(fClientId,"") }
-       void SetClientId(const std::string& id) { SET_PAR_FIELD(fClientId, id) }
+       void SetClientId(const std::string &id) { SET_PAR_FIELD(fClientId, id) }
 
        int GetInlineDataSize() const { GET_PAR_FIELD(fInlineDataSize,0) }
        void SetInlineDataSize(int size) { SET_PAR_FIELD(fInlineDataSize, size) }
@@ -64,7 +64,7 @@ namespace dabc {
        void SetCustomData(Reference ref) { SET_PAR_FIELD(fCustomData, ref) }
 
        std::string GetConnId() const { GET_PAR_FIELD(fConnId,"") }
-       void SetConnId(const std::string& id) { SET_PAR_FIELD(fConnId, id) }
+       void SetConnId(const std::string &id) { SET_PAR_FIELD(fConnId, id) }
 
        int progress() const { GET_PAR_FIELD(fProgress,0) }
        void SetProgress(int pr) { SET_PAR_FIELD(fProgress, pr) }
@@ -125,8 +125,8 @@ namespace dabc {
 
       DABC_COMMAND(CmdGlobalConnect, "CmdGlobalConnect")
 
-      void SetUrl1(const std::string& url1) { SetStr("Url1", url1); }
-      void SetUrl2(const std::string& url2) { SetStr("Url2", url2); }
+      void SetUrl1(const std::string &url1) { SetStr("Url1", url1); }
+      void SetUrl2(const std::string &url2) { SetStr("Url2", url2); }
 
       std::string GetUrl1() const { return GetStr("Url1"); }
       std::string GetUrl2() const { return GetStr("Url2"); }
@@ -192,10 +192,10 @@ namespace dabc {
             progrFailed        ///< fail state, request will be ignored forever
          };
 
-         ConnectionManager(const std::string& name, Command cmd = nullptr);
+         ConnectionManager(const std::string &name, Command cmd = nullptr);
          virtual ~ConnectionManager();
 
-         ConnectionRequestFull FindConnection(const std::string& url1, const std::string& url2);
+         ConnectionRequestFull FindConnection(const std::string &url1, const std::string &url2);
    };
 
 }

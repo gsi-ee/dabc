@@ -1,6 +1,6 @@
 #include "bnet/ReceiverModule.h"
 
-bnet::ReceiverModule::ReceiverModule(const std::string& name, dabc::Command cmd) :
+bnet::ReceiverModule::ReceiverModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name,cmd)
 {
    DOUT0("%s num inputs %d", GetName(), NumInputs());

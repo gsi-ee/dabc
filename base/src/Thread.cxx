@@ -212,7 +212,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
 unsigned dabc::Thread::fThreadInstances = 0;
 
-dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
+dabc::Thread::Thread(Reference parent, const std::string &name, Command cmd) :
    Object(parent, name),
    PosixThread(),
    Runnable(),
@@ -429,7 +429,7 @@ bool dabc::Thread::_GetNextEvent(dabc::EventId& evnt)
 }
 
 
-bool dabc::Thread::CompatibleClass(const std::string& clname) const
+bool dabc::Thread::CompatibleClass(const std::string &clname) const
 {
    if (clname.empty()) return true;
 
@@ -1447,7 +1447,7 @@ bool dabc::ThreadRef::_ActivateAddonTimeout(unsigned workerid, int priority, dou
 }
 
 
-bool dabc::ThreadRef::MakeWorkerFor(WorkerAddon* addon, const std::string& name)
+bool dabc::ThreadRef::MakeWorkerFor(WorkerAddon* addon, const std::string &name)
 {
    if (null()) return false;
    Worker* worker = new Worker(0, name.empty() ? "dummy" : name.c_str());

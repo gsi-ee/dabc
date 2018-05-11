@@ -21,7 +21,7 @@
 
 #include "hadaq/HadaqTypeDefs.h"
 
-hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command cmd) :
+hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
    fControl = Cfg("Controller", cmd).AsBool(false);

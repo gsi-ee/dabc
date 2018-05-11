@@ -25,7 +25,7 @@
 #include "hadaq/TdcProcessor.h"
 
 
-stream::TdcCalibrationModule::TdcCalibrationModule(const std::string& name, dabc::Command cmd) :
+stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fProcMgr(0),
    fOwnProcMgr(false),

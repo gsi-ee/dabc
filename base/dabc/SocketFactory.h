@@ -29,15 +29,15 @@ namespace dabc {
 
    class SocketFactory : public Factory {
       public:
-         SocketFactory(const std::string& name) : Factory(name) {}
+         SocketFactory(const std::string &name) : Factory(name) {}
 
-         virtual Reference CreateObject(const std::string& classname, const std::string& objname, Command cmd);
+         virtual Reference CreateObject(const std::string &classname, const std::string &objname, Command cmd);
 
-         virtual Device* CreateDevice(const std::string& classname, const std::string& devname, Command cmd);
+         virtual Device* CreateDevice(const std::string &classname, const std::string &devname, Command cmd);
 
-         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
+         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd);
 
-         virtual Module* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
+         virtual Module* CreateTransport(const Reference& port, const std::string &typ, Command cmd);
 
       protected:
 

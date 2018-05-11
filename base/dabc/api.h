@@ -27,7 +27,7 @@ namespace dabc {
     *  cmd_port < 0  - nothing will be done (default)
     *  cmd_port == 0 - communication channel without server socket
     *  cmd_port > 0  - communication channel with specified server socket */
-   extern bool CreateManager(const std::string& name, int cmd_port = -1);
+   extern bool CreateManager(const std::string &name, int cmd_port = -1);
 
    /** Method is used to install DABC-specific Ctrl-C handler
     * It allows to correctly stop program execution when pressing Ctrl-C */
@@ -41,15 +41,15 @@ namespace dabc {
    extern bool DestroyManager();
 
    /** \brief Function creates node name, which can be supplied as receiver of dabc commands */
-   extern std::string MakeNodeName(const std::string& arg);
+   extern std::string MakeNodeName(const std::string &arg);
 
    /** \brief Function establish connection with specified dabc node
     *
     * \details Address should look like dabc://nodname:port */
-   extern bool ConnectDabcNode(const std::string& nodeaddr);
+   extern bool ConnectDabcNode(const std::string &nodeaddr);
 
    /** \brief Function request hierarchy of objects on remote node */
-   extern Hierarchy GetNodeHierarchy(const std::string& nodeaddr);
+   extern Hierarchy GetNodeHierarchy(const std::string &nodeaddr);
 }
 
 #endif

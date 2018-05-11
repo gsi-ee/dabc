@@ -65,7 +65,7 @@ verbs::VerbsNetworkInetrface::~VerbsNetworkInetrface()
    dabc::Object::Destroy(fHeadersPool); fHeadersPool = 0;
 }
 
-long verbs::VerbsNetworkInetrface::Notify(const std::string& cmd, int arg)
+long verbs::VerbsNetworkInetrface::Notify(const std::string &cmd, int arg)
 {
    if (cmd == "GetNetworkTransportInetrface") return (long) ((dabc::NetworkInetrface*) this);
 

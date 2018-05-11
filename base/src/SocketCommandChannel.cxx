@@ -28,9 +28,9 @@
 
 #include "dabc/SocketDevice.h"
 
-dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string& name,
+dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string &name,
                                                SocketAddon* addon,
-                                               const std::string& hostname,
+                                               const std::string &hostname,
                                                double reconnect) :
    dabc::Worker(MakePair(parent, name)),
    fRemoteHostName(hostname),
@@ -526,7 +526,7 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 // =======================================================================================
 
 
-dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd) :
+dabc::SocketCommandChannel::SocketCommandChannel(const std::string &name, SocketServerAddon* connaddon, Command cmd) :
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
    fClientsAllowed(true),
@@ -542,7 +542,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, Socket
    SetOwner(true);
 }
 
-std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str)
+std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string &url_str)
 {
    std::string server, itemname;
    bool islocal(true);
@@ -554,7 +554,7 @@ std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str
 }
 
 
-dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std::string& remnodename, double conn_tmout)
+dabc::SocketCommandClientRef dabc::SocketCommandChannel::ProvideWorker(const std::string &remnodename, double conn_tmout)
 {
    SocketCommandClientRef worker;
 
@@ -660,7 +660,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       Url url(cmd.GetStr("Master"));
 
-      // std::string dabc::Manager::ComposeAddress(const std::string& server, const std::string& itemname)
+      // std::string dabc::Manager::ComposeAddress(const std::string &server, const std::string &itemname)
 
       std::string remnode = url.GetHostNameWithPort(defaultDabcPort);
 

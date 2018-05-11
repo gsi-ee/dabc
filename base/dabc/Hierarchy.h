@@ -198,7 +198,7 @@ namespace dabc {
           * \details If indx value specified, child will be created or kept at this position
           * All intermediate childs will be removed
           * \returns pointer on the child */
-         HierarchyContainer* CreateChildAt(const std::string& name, int indx);
+         HierarchyContainer* CreateChildAt(const std::string &name, int indx);
 
          /** \brief Update hierarchy from provided container
           * \details Some field or childs could be extracted and change there ownership
@@ -243,7 +243,7 @@ namespace dabc {
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
 
-         virtual Object* CreateObject(const std::string& name) { return new HierarchyContainer(name); }
+         virtual Object* CreateObject(const std::string &name) { return new HierarchyContainer(name); }
 
          virtual void _ChildsChanged() { fNamesChanged = true; fChildsChanged = true; fNodeChanged = true;  }
 
@@ -257,7 +257,7 @@ namespace dabc {
          virtual bool SaveTo(HStore& res, bool create_node = true);
 
       public:
-         HierarchyContainer(const std::string& name);
+         HierarchyContainer(const std::string &name);
          virtual ~HierarchyContainer();
 
          virtual const char* ClassName() const { return "Hierarchy"; }
@@ -295,7 +295,7 @@ namespace dabc {
       DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 
       /** \brief Create top-level object with specified name */
-      void Create(const std::string& name, bool withmutex = false);
+      void Create(const std::string &name, bool withmutex = false);
 
       Mutex* GetHMutex() const { return null() ? 0 : GetObject()->fHierarchyMutex; }
 
@@ -308,8 +308,8 @@ namespace dabc {
        * \par topmost identify where in hierarchy producer property will be searched */
       std::string FindBinaryProducer(std::string& request_name, bool topmost = true);
 
-      //RecordField& Field(const std::string& name) { return GetObject()->Fields().Field(name); }
-      const RecordField& Field(const std::string& name) const { return GetObject()->Fields().Field(name); }
+      //RecordField& Field(const std::string &name) { return GetObject()->Fields().Field(name); }
+      const RecordField& Field(const std::string &name) const { return GetObject()->Fields().Field(name); }
 
       bool IsAnyFieldChanged() const { return GetObject() ? GetObject()->Fields().WasChanged() : false; }
 
@@ -361,16 +361,16 @@ namespace dabc {
 
       /** \brief Return true if one could suppose that binary item is changed and
        *  binary data must be regenerated. First of all version is proved and than hash (if available) */
-      bool IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version = 0);
+      bool IsBinItemChanged(const std::string &itemname, uint64_t hash, uint64_t last_version = 0);
 
       /** \brief Fill binary header with item and master versions */
-      bool FillBinHeader(const std::string& itemname, dabc::Command& cmd, uint64_t mhash = 0, const std::string& dflt_master_name = "");
+      bool FillBinHeader(const std::string &itemname, dabc::Command& cmd, uint64_t mhash = 0, const std::string &dflt_master_name = "");
 
       /** \brief Return child element from hierarchy */
       Hierarchy FindChild(const char* name) { return Record::FindChild(name); }
 
       /** Removes folder and its parents as long as no other childs are present */
-      bool RemoveEmptyFolders(const std::string& path);
+      bool RemoveEmptyFolders(const std::string &path);
 
       /** \brief Name which is used as item name in hierarchy. Name of top object is not included */
       std::string ItemName() const;

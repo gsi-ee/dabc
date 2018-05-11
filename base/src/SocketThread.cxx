@@ -137,7 +137,7 @@ int dabc::SocketAddon::TakeSocketError()
    return myerrno;
 }
 
-void dabc::SocketAddon::OnSocketError(int msg, const std::string& info)
+void dabc::SocketAddon::OnSocketError(int msg, const std::string &info)
 {
    if (IsDeliverEventsToWorker()) {
       DOUT2("Addon:%p Connection closed - worker should process", this);
@@ -292,7 +292,7 @@ dabc::SocketIOAddon::~SocketIOAddon()
    AllocateRecvIOV(0);
 }
 
-void dabc::SocketIOAddon::SetSendAddr(const std::string& host, int port)
+void dabc::SocketIOAddon::SetSendAddr(const std::string &host, int port)
 {
    if (!IsDatagramSocket()) {
       EOUT("Cannot specify send addr for non-datagram sockets");
@@ -1014,7 +1014,7 @@ void dabc::SocketClientAddon::OnConnectionFailed()
 
 // _______________________________________________________________________
 
-dabc::SocketThread::SocketThread(Reference parent, const std::string& name, Command cmd) :
+dabc::SocketThread::SocketThread(Reference parent, const std::string &name, Command cmd) :
    dabc::Thread(parent, name, cmd),
    fPipeFired(false),
    fWaitFire(false),
@@ -1069,7 +1069,7 @@ dabc::SocketThread::~SocketThread()
    #endif
 }
 
-bool dabc::SocketThread::CompatibleClass(const std::string& clname) const
+bool dabc::SocketThread::CompatibleClass(const std::string &clname) const
 {
    if (Thread::CompatibleClass(clname)) return true;
    return clname == typeSocketThread;
@@ -1109,7 +1109,7 @@ std::string dabc::SocketThread::DefineHostName(bool force)
    return host;
 }
 
-dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string& host, int nport, int portmin, int portmax)
+dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string &host, int nport, int portmin, int portmax)
 {
    char nameinfo[1024], serviceinfo[1024];
 
@@ -1183,7 +1183,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
    return 0;
 }
 
-int dabc::SocketThread::StartClient(const std::string& host, int nport, bool nonblocking)
+int dabc::SocketThread::StartClient(const std::string &host, int nport, bool nonblocking)
 {
    char service[100];
    sprintf(service, "%d", nport);
@@ -1230,7 +1230,7 @@ int dabc::SocketThread::RecvBuffer(int fd, void* buf, int len)
    return recv(fd, buf, len, MSG_NOSIGNAL);
 }
 
-bool dabc::SocketThread::AttachMulticast(int socket_descriptor, const std::string& host)
+bool dabc::SocketThread::AttachMulticast(int socket_descriptor, const std::string &host)
 {
    if (host.empty() || (socket_descriptor<=0)) {
       EOUT("Multicast address or socket handle not specified");
@@ -1273,7 +1273,7 @@ bool dabc::SocketThread::AttachMulticast(int socket_descriptor, const std::strin
 }
 
 
-void dabc::SocketThread::DettachMulticast(int handle, const std::string& host)
+void dabc::SocketThread::DettachMulticast(int handle, const std::string &host)
 {
    if ((handle<0) || host.empty()) return;
 
@@ -1328,7 +1328,7 @@ int dabc::SocketThread::BindUdp(int fd, int nport, int portmin, int portmax)
    return -1;
 }
 
-int dabc::SocketThread::ConnectUdp(int fd, const std::string& remhost, int remport)
+int dabc::SocketThread::ConnectUdp(int fd, const std::string &remhost, int remport)
 {
    if (fd<0) return fd;
 
@@ -1354,7 +1354,7 @@ int dabc::SocketThread::ConnectUdp(int fd, const std::string& remhost, int rempo
    return fd;
 }
 
-dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string& serverid, int dflt_port)
+dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string &serverid, int dflt_port)
 {
    if (serverid.empty()) return 0;
 

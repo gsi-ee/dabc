@@ -73,7 +73,7 @@ namespace dabc {
       public:
          static const char* CmdName() { return "DeletePool"; }
 
-         CmdDeletePool(const std::string& name) : Command(CmdName())
+         CmdDeletePool(const std::string &name) : Command(CmdName())
             { SetStr("PoolName", name); }
    };
 
@@ -82,7 +82,7 @@ namespace dabc {
       public:
          static const char* ModuleArg() { return "Module"; }
 
-         CmdModule(const char* cmdname, const std::string& module) : Command(cmdname)
+         CmdModule(const char* cmdname, const std::string &module) : Command(cmdname)
          {
             SetStr(ModuleArg(), module);
          }
@@ -92,7 +92,7 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateModule"; }
 
-         CmdCreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname = "") :
+         CmdCreateModule(const std::string &classname, const std::string &modulename, const std::string &thrdname = "") :
             CmdModule(CmdName(), modulename)
             {
                SetStr(xmlClassAttr, classname);
@@ -104,21 +104,21 @@ namespace dabc {
       public:
          static const char* CmdName() { return "StartModule"; }
 
-         CmdStartModule(const std::string& modulename = "*") : CmdModule(CmdName(), modulename) {}
+         CmdStartModule(const std::string &modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
    class CmdStopModule : public CmdModule {
       public:
          static const char* CmdName() { return "StopModule"; }
 
-         CmdStopModule(const std::string& modulename = "*") : CmdModule(CmdName(), modulename) {}
+         CmdStopModule(const std::string &modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
    class CmdDeleteModule : public CmdModule {
       public:
          static const char* CmdName() { return "DeleteModule"; }
 
-         CmdDeleteModule(const std::string& modulename) : CmdModule(CmdName(), modulename) {}
+         CmdDeleteModule(const std::string &modulename) : CmdModule(CmdName(), modulename) {}
    };
 
    class CmdCleanupApplication : public Command {
@@ -129,7 +129,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateApplication, "CreateApplication");
 
-      CmdCreateApplication(const std::string& appclass, const std::string& thrdname = "") :
+      CmdCreateApplication(const std::string &appclass, const std::string &thrdname = "") :
          Command(CmdName())
       {
          SetStr("AppClass", appclass);
@@ -142,7 +142,7 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateDevice"; }
 
-         CmdCreateDevice(const std::string& devclass, const std::string& devname) :
+         CmdCreateDevice(const std::string &devclass, const std::string &devname) :
             Command(CmdName())
          {
             SetStr("DevClass", devclass);
@@ -154,7 +154,7 @@ namespace dabc {
       public:
          static const char* CmdName() { return "DestroyDevice"; }
 
-         CmdDestroyDevice(const std::string& devname) :
+         CmdDestroyDevice(const std::string &devname) :
             Command(CmdName())
          {
             SetStr("DevName", devname);
@@ -167,7 +167,7 @@ namespace dabc {
 
          static const char* ThrdNameArg() { return "ThrdName"; }
 
-         CmdCreateThread(const std::string& thrdname, const std::string& thrdclass = "",  const std::string& devname = "") :
+         CmdCreateThread(const std::string &thrdname, const std::string &thrdclass = "",  const std::string &devname = "") :
             Command(CmdName())
          {
             SetStr(ThrdNameArg(), thrdname);
@@ -182,7 +182,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateObject, "CreateObject");
 
-      CmdCreateObject(const std::string& classname, const std::string& objname) :
+      CmdCreateObject(const std::string &classname, const std::string &objname) :
          Command(CmdName())
       {
          SetStr("ClassName", classname);
@@ -202,7 +202,7 @@ namespace dabc {
       static const char* PortArg() { return "PortName"; }
       static const char* KindArg() { return "TransportKind"; }
 
-      CmdCreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname = "") :
+      CmdCreateTransport(const std::string &portname, const std::string &transportkind, const std::string &thrdname = "") :
          Command(CmdName())
       {
          SetStr(PortArg(), portname);
@@ -210,7 +210,7 @@ namespace dabc {
          if (!thrdname.empty()) SetStr(xmlThreadAttr, thrdname);
       }
 
-      void SetPoolName(const std::string& name) { if (!name.empty()) SetStr(xmlPoolName, name); }
+      void SetPoolName(const std::string &name) { if (!name.empty()) SetStr(xmlPoolName, name); }
 
       std::string PortName() const { return GetStr(PortArg()); }
       std::string TransportKind() const { return GetStr(KindArg()); }
@@ -221,7 +221,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdDestroyTransport, "DestroyTransport");
 
-      CmdDestroyTransport(const std::string& portname) :
+      CmdDestroyTransport(const std::string &portname) :
             Command(CmdName())
       {
          SetStr("PortName", portname);
@@ -240,13 +240,13 @@ namespace dabc {
       static const char* ParName() { return "ParName"; }
       static const char* ParValue() { return "ParValue"; }
 
-      CmdSetParameter(const std::string& parname) :
+      CmdSetParameter(const std::string &parname) :
          Command(CmdName())
       {
          SetStr(ParName(), parname);
       }
 
-      CmdSetParameter(const std::string& parname, const RecordField& v) :
+      CmdSetParameter(const std::string &parname, const RecordField& v) :
          Command(CmdName())
       {
          SetStr(ParName(), parname);
@@ -273,7 +273,7 @@ namespace dabc {
          sbuf[node] = on ? 'x' : 'o';
       }
 
-      static bool GetState(const std::string& sbuf, unsigned node)
+      static bool GetState(const std::string &sbuf, unsigned node)
       {
          if (node>=sbuf.length()) return false;
          return sbuf[node] == 'x';
@@ -393,23 +393,23 @@ namespace dabc {
 
          /** Find object in manager hierarchy with specified itemname.
           * Itemname can be complete url or just local path (islocal = true) */
-         Reference FindItem(const std::string& itemname, bool islocal = false);
+         Reference FindItem(const std::string &itemname, bool islocal = false);
 
          /** Method should be used to produce name of object, which can be used as item name
           * in different Find methods of manager. Item name later can be used to produce url to the item*/
          void FillItemName(const Object* ptr, std::string& itemname, bool compact = true);
 
-         ThreadRef FindThread(const std::string& name, const std::string& required_class = "");
+         ThreadRef FindThread(const std::string &name, const std::string &required_class = "");
 
          ThreadRef CurrentThread();
 
-         WorkerRef FindDevice(const std::string& name);
+         WorkerRef FindDevice(const std::string &name);
 
-         Reference FindPool(const std::string& name);
+         Reference FindPool(const std::string &name);
 
-         ModuleRef FindModule(const std::string& name);
+         ModuleRef FindModule(const std::string &name);
 
-         Reference FindPort(const std::string& name);
+         Reference FindPort(const std::string &name);
 
          ApplicationRef app();
 
@@ -424,11 +424,11 @@ namespace dabc {
           * \param[in] devname     device name to use for thread creation
           * \param[in] cmd         command object with additional optional arguments
           * \returns               reference on created thread */
-         ThreadRef DoCreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "", Command cmd = nullptr);
+         ThreadRef DoCreateThread(const std::string &thrdname, const std::string &classname = "", const std::string &devname = "", Command cmd = nullptr);
 
-         WorkerRef DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd);
+         WorkerRef DoCreateModule(const std::string &classname, const std::string &modulename, Command cmd);
 
-         Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = nullptr);
+         Reference DoCreateObject(const std::string &classname, const std::string &objname = "", Command cmd = nullptr);
 
          /** \brief Return reference on command channel
           * \details should be used from manager thread only */
@@ -459,7 +459,7 @@ namespace dabc {
          void RunManagerMainLoop(double runtime = 0.);
 
          /** \brief Runs manager command loop - when command shell is used. */
-         void RunManagerCmdLoop(double runtime = 0., const std::string& remnode = "");
+         void RunManagerCmdLoop(double runtime = 0., const std::string &remnode = "");
 
          bool DoCleanupApplication();
 
@@ -475,7 +475,7 @@ namespace dabc {
 
       public:
 
-         Manager(const std::string& managername, Configuration* cfg = 0);
+         Manager(const std::string &managername, Configuration* cfg = 0);
          virtual ~Manager();
 
          virtual const char* ClassName() const { return "Manager"; }
@@ -510,9 +510,9 @@ namespace dabc {
          std::string GetNodeAddress(int nodeid);
          /** From address like dabc://nodeabc:988/item/subtim extracts server (with port) and itemname
           * If server name corresponds to local name, islocal set to true */
-         bool DecomposeAddress(const std::string& url, bool& islocal, std::string& server, std::string& itemtname);
+         bool DecomposeAddress(const std::string &url, bool& islocal, std::string& server, std::string& itemtname);
          /** Provides string, which can be used as receiver argument */
-         std::string ComposeAddress(const std::string& server, const std::string& itemtname = "");
+         std::string ComposeAddress(const std::string &server, const std::string &itemtname = "");
 
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 
@@ -586,13 +586,13 @@ namespace dabc {
          friend class Port;   // need to activate connection manager
          friend class InputTransport;  // need to create input object
 
-         bool ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string& mask, bool onlychangeevent = true);
+         bool ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string &mask, bool onlychangeevent = true);
 
          /** Returns true, if name of the item should specify name in local context or from remote node */
-         bool IsLocalItem(const std::string& name);
+         bool IsLocalItem(const std::string &name);
 
          /** Create data input, using factories methods */
-         DataInput* CreateDataInput(const std::string& kind);
+         DataInput* CreateDataInput(const std::string &kind);
 
       public:
 
@@ -615,26 +615,26 @@ namespace dabc {
          std::string GetNodeAddress(int nodeid)
             { return null() ? std::string() : GetObject()->GetNodeAddress(nodeid); }
 
-         bool DecomposeAddress(const std::string& url, bool& islocal, std::string& server, std::string& itemtname)
+         bool DecomposeAddress(const std::string &url, bool& islocal, std::string& server, std::string& itemtname)
            { return null() ? false : GetObject()->DecomposeAddress(url, islocal, server, itemtname); }
 
-         std::string ComposeAddress(const std::string& server, const std::string& itemname = "")
+         std::string ComposeAddress(const std::string &server, const std::string &itemname = "")
            {  return null() ? std::string() : GetObject()->ComposeAddress(server, itemname); }
 
-         bool CreateApplication(const std::string& classname = "", const std::string& appthrd = "");
+         bool CreateApplication(const std::string &classname = "", const std::string &appthrd = "");
 
-         ThreadRef CreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "");
+         ThreadRef CreateThread(const std::string &thrdname, const std::string &classname = "", const std::string &devname = "");
 
          /** \brief Returns reference on the thread, which is now active.
           * If thread object for given context does not exists (foreign thread),
           * null reference will be return */
          ThreadRef CurrentThread();
 
-         bool CreateDevice(const std::string& classname, const std::string& devname);
-         bool DeleteDevice(const std::string& devname);
-         WorkerRef FindDevice(const std::string& name);
+         bool CreateDevice(const std::string &classname, const std::string &devname);
+         bool DeleteDevice(const std::string &devname);
+         WorkerRef FindDevice(const std::string &name);
 
-         Reference CreateObject(const std::string& classname, const std::string& objname);
+         Reference CreateObject(const std::string &classname, const std::string &objname);
 
          /** Generic method to create memory pool.
            * Creates memory pool with numbuffers buffers of size buffersize.
@@ -642,35 +642,35 @@ namespace dabc {
            * If none (arguments or xml file) provides non-zero values, only pool instance
            * without buffers will be created.
            * For more sophisticated configuration of memory pool CmdCreateMemoryPool should be used */
-         bool CreateMemoryPool(const std::string& poolname,
+         bool CreateMemoryPool(const std::string &poolname,
                                unsigned buffersize = 0,
                                unsigned numbuffers = 0);
 
-         bool DeletePool(const std::string& name);
+         bool DeletePool(const std::string &name);
 
-         ModuleRef CreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname = "");
-         ModuleRef FindModule(const std::string& name);
-         void StartModule(const std::string& modulename);
-         void StopModule(const std::string& modulename);
+         ModuleRef CreateModule(const std::string &classname, const std::string &modulename, const std::string &thrdname = "");
+         ModuleRef FindModule(const std::string &name);
+         void StartModule(const std::string &modulename);
+         void StopModule(const std::string &modulename);
          bool StartAllModules();
          bool StopAllModules();
-         bool DeleteModule(const std::string& name);
+         bool DeleteModule(const std::string &name);
 
-         bool CreateTransport(const std::string& portname, const std::string& transportkind = "", const std::string& thrdname = "");
+         bool CreateTransport(const std::string &portname, const std::string &transportkind = "", const std::string &thrdname = "");
 
-         void* CreateAny(const std::string& classname, const std::string& objname = "");
+         void* CreateAny(const std::string &classname, const std::string &objname = "");
 
          bool ActivateConnections(double tmout, bool sync = true);
 
-         Reference FindItem(const std::string& name);
+         Reference FindItem(const std::string &name);
 
-         Reference FindPort(const std::string& port);
+         Reference FindPort(const std::string &port);
 
-         Parameter FindPar(const std::string& parname);
+         Parameter FindPar(const std::string &parname);
 
-         Reference FindPool(const std::string& name);
+         Reference FindPool(const std::string &name);
 
-         ThreadRef FindThread(const std::string& name, const std::string& required_class = "")
+         ThreadRef FindThread(const std::string &name, const std::string &required_class = "")
             { return null() ? ThreadRef() : GetObject()->FindThread(name, required_class); }
 
          unsigned NumThreads() const
@@ -685,7 +685,7 @@ namespace dabc {
           * If one of the port is local and other is remote, new connection request will be created.
           * Depending on current application state connection establishing will be started immediately or will
           * be performed by DoEnable state transition. */
-         ConnectionRequest Connect(const std::string& port1, const std::string& port2);
+         ConnectionRequest Connect(const std::string &port1, const std::string &port2);
 
          void StopApplication();
 
@@ -699,7 +699,7 @@ namespace dabc {
             { if (GetObject()) GetObject()->RunManagerMainLoop(runtime); }
 
          /** \brief Run manager command loop */
-         void RunCmdLoop(double runtime = 0., const std::string& remnode = "")
+         void RunCmdLoop(double runtime = 0., const std::string &remnode = "")
             { if (GetObject()) GetObject()->RunManagerCmdLoop(runtime, remnode); }
 
          WorkerRef GetCommandChannel()

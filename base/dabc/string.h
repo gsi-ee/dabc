@@ -82,7 +82,7 @@ namespace dabc {
     * \param[in] match   find content
     * \param[in] replace replace content
     *\returns result string */
-   extern std::string replace_all(const std::string& str, const std::string& match, const std::string& replace);
+   extern std::string replace_all(const std::string &str, const std::string &match, const std::string &replace);
 
 
    class NumericLocale {

@@ -25,7 +25,7 @@
 
 dabc::FactoryPlugin streamfactory(new stream::Factory("stream"));
 
-dabc::Module* stream::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* stream::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "stream::RunModule")
       return new stream::RunModule(modulename, cmd);
@@ -40,7 +40,7 @@ dabc::Module* stream::Factory::CreateModule(const std::string& classname, const 
 }
 
 
-dabc::Module* stream::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* stream::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 

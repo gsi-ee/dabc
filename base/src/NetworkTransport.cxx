@@ -506,7 +506,7 @@ void dabc::NetworkTransport::GetRequiredQueuesSizes(const PortRef& port, unsigne
 }
 
 
-bool dabc::NetworkTransport::Make(const ConnectionRequest& req, WorkerAddon* addon, const std::string& devthrdname)
+bool dabc::NetworkTransport::Make(const ConnectionRequest& req, WorkerAddon* addon, const std::string &devthrdname)
 {
    PortRef port = req.GetPort();
 

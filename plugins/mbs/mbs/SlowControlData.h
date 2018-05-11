@@ -104,7 +104,7 @@ namespace mbs {
          uint32_t GetEventTime() const { return fEventTime; }
 
          /** Method add long record. If specified, name duplication will be checked */
-         void AddLong(const std::string& name, int64_t value, bool checkduplicate = false)
+         void AddLong(const std::string &name, int64_t value, bool checkduplicate = false)
          {
             if (checkduplicate)
                for (unsigned n=0;n<fLongRecords.size();n++)
@@ -118,7 +118,7 @@ namespace mbs {
          }
 
          /** Method add double record. If specified, name duplication will be checked  */
-         void AddDouble(const std::string& name, double value, bool checkduplicate = false)
+         void AddDouble(const std::string &name, double value, bool checkduplicate = false)
          {
             if (checkduplicate)
                for (unsigned n=0;n<fDoubleRecords.size();n++)

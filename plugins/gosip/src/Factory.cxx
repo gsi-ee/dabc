@@ -20,7 +20,7 @@
 dabc::FactoryPlugin fesafactory(new gosip::Factory("gosip"));
 
 
-dabc::Module* gosip::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* gosip::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "gosip::Player")
       return new gosip::Player(modulename, cmd);

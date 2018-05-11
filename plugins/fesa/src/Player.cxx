@@ -61,7 +61,7 @@ namespace fesa {
 
 
 
-fesa::Player::Player(const std::string& name, dabc::Command cmd) :
+fesa::Player::Player(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fCounter(0),
    fSniffer(0),
@@ -224,7 +224,7 @@ int fesa::Player::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
 
-double fesa::Player::doGet(const std::string& service, const std::string& field)
+double fesa::Player::doGet(const std::string &service, const std::string &field)
 {
    double res = 0.;
 

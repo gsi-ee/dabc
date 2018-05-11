@@ -20,7 +20,7 @@ namespace bnet {
          dabc::EventsProducerRef  fEventsProducer;
 
       public:
-         GeneratorModule(const std::string& name, dabc::Command cmd = nullptr);
+         GeneratorModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void BeforeModuleStart();
 

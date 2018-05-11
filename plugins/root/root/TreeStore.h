@@ -34,7 +34,7 @@ namespace root {
          virtual int ExecuteCommand(dabc::Command);
 
       public:
-         TreeStore(const std::string& name);
+         TreeStore(const std::string &name);
          virtual ~TreeStore();
 
    };

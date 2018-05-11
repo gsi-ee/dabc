@@ -17,7 +17,7 @@
 
 dabc::FactoryPlugin ltsmfactory(new ltsm::Factory("ltsm"));
 
-void* ltsm::Factory::CreateAny(const std::string& classname, const std::string&, dabc::Command)
+void* ltsm::Factory::CreateAny(const std::string &classname, const std::string&, dabc::Command)
 {
    if (classname == "ltsm::FileInterface") {
       DOUT0("Create file interface instance for the LTSM");

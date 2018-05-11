@@ -35,7 +35,7 @@ namespace dabc {
    class CmdStateTransition : public Command {
       DABC_COMMAND(CmdStateTransition, "CmdStateTransition");
 
-      CmdStateTransition(const std::string& state) :
+      CmdStateTransition(const std::string &state) :
          dabc::Command(CmdName())
       {
          SetStr("State", state);
@@ -104,7 +104,7 @@ namespace dabc {
 
       private:
 
-         int CallInitFunc(Command statecmd, const std::string& tgtstate);
+         int CallInitFunc(Command statecmd, const std::string &tgtstate);
 
       protected:
 
@@ -130,7 +130,7 @@ namespace dabc {
          virtual void ObjectCleanup();
 
          /** Directly changes value of the state parameter */
-         void SetAppState(const std::string& name);
+         void SetAppState(const std::string &name);
 
          /** Set external function, which creates all necessary components of the application */
          void SetInitFunc(ExternalFunction* initfunc);
@@ -151,7 +151,7 @@ namespace dabc {
          virtual bool CleanupApplication();
 
          /** Do action, required to make transition into specified state */
-         virtual int DoTransition(const std::string& state, Command cmd);
+         virtual int DoTransition(const std::string &state, Command cmd);
 
          /** Default state machine command timeout */
          virtual int SMCommandTimeout() const { return 10; }
@@ -187,7 +187,7 @@ namespace dabc {
 
       DABC_REFERENCE(ApplicationRef, WorkerRef, Application)
 
-      bool ChangeState(const std::string& state)
+      bool ChangeState(const std::string &state)
       { return Execute(CmdStateTransition(state)); }
 
       bool StartAllModules()
@@ -201,7 +201,7 @@ namespace dabc {
        * @param kind - 'device', 'pool', module'
        * @param name - object name
        * @return true if successes  */
-      bool AddObject(const std::string& kind, const std::string& name);
+      bool AddObject(const std::string &kind, const std::string &name);
 
    };
 

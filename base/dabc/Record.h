@@ -88,10 +88,10 @@ namespace dabc {
 
 
          /** \brief Returns bytes count, required to store string. Bytes count rounded to 64 bit */
-         static uint64_t str_storesize(const std::string& str);
+         static uint64_t str_storesize(const std::string &str);
 
          /** \brief Store string in the stream */
-         bool write_str(const std::string& str);
+         bool write_str(const std::string &str);
 
          /** \brief Restore string from the stream */
          bool read_str(std::string& str);
@@ -281,7 +281,7 @@ namespace dabc {
          RecordField();
          RecordField(const RecordField& src);
          RecordField(const char* v) { constructor(); SetStr(v); }
-         RecordField(const std::string& v) { constructor(); SetStr(v); }
+         RecordField(const std::string &v) { constructor(); SetStr(v); }
          RecordField(const int& v) { constructor(); SetInt(v); }
          RecordField(const int64_t& v) { constructor(); SetInt(v); }
          RecordField(const unsigned& v) { constructor(); SetUInt(v); }
@@ -321,7 +321,7 @@ namespace dabc {
          int64_t AsInt(int64_t dflt = 0) const;
          uint64_t AsUInt(uint64_t dflt = 0) const;
          double AsDouble(double dflt = 0.) const;
-         std::string AsStr(const std::string& dflt = "") const;
+         std::string AsStr(const std::string &dflt = "") const;
          std::vector<int64_t> AsIntVect() const;
          int64_t* GetIntArr() const { return fKind == kind_arrint ? arrInt : 0; }
          std::vector<uint64_t> AsUIntVect() const;
@@ -343,7 +343,7 @@ namespace dabc {
          bool SetDatime(const DateTime& v);
          bool SetUInt(uint64_t v);
          bool SetDouble(double v);
-         bool SetStr(const std::string& v);
+         bool SetStr(const std::string &v);
          bool SetStr(const char* v);
          bool SetStrVect(const std::vector<std::string>& vect);
          bool SetBuffer(const Buffer& buf);
@@ -366,8 +366,8 @@ namespace dabc {
          uint64_t StoreSize();
          bool Stream(iostream& s);
 
-         static bool NeedJsonReformat(const std::string& str);
-         static std::string JsonReformat(const std::string& str);
+         static bool NeedJsonReformat(const std::string &str);
+         static std::string JsonReformat(const std::string &str);
 
          static bool StrToStrVect(const char* str, std::vector<std::string>& vect, bool verbose = true);
    };
@@ -382,24 +382,24 @@ namespace dabc {
 
          void clear() { fMap.clear(); }
 
-         static bool match_prefix(const std::string& name, const std::string& prefix);
+         static bool match_prefix(const std::string &name, const std::string &prefix);
 
       public:
 
          RecordFieldsMap();
          virtual ~RecordFieldsMap();
 
-         uint64_t StoreSize(const std::string& nameprefix = "");
-         bool Stream(iostream& s, const std::string& nameprefix = "");
+         uint64_t StoreSize(const std::string &nameprefix = "");
+         bool Stream(iostream& s, const std::string &nameprefix = "");
 
-         bool HasField(const std::string& name) const;
-         bool RemoveField(const std::string& name);
+         bool HasField(const std::string &name) const;
+         bool RemoveField(const std::string &name);
 
          unsigned NumFields() const { return fMap.size(); }
          std::string FieldName(unsigned n) const;
 
          /** \brief Direct access to the fields */
-         RecordField& Field(const std::string& name) { return fMap[name]; }
+         RecordField& Field(const std::string &name) { return fMap[name]; }
 
          /** Save all field in json format */
          bool SaveTo(HStore& res);
@@ -425,7 +425,7 @@ namespace dabc {
          bool WasChanged() const;
 
          /** \brief Returns true when fields with specified prefix were changed */
-         bool WasChangedWith(const std::string& prefix);
+         bool WasChangedWith(const std::string &prefix);
 
          /** \brief Clear all change flags */
          void ClearChangeFlags();
@@ -447,9 +447,9 @@ namespace dabc {
       protected:
          RecordFieldsMap* fFields;
 
-         RecordContainer(const std::string& name, unsigned flags = flIsOwner);
+         RecordContainer(const std::string &name, unsigned flags = flIsOwner);
 
-         RecordContainer(Reference parent, const std::string& name, unsigned flags = flIsOwner);
+         RecordContainer(Reference parent, const std::string &name, unsigned flags = flIsOwner);
 
          /** \brief Remove map and returns to the user.
           * It is user responsibility to correctly destroy it */
@@ -458,10 +458,10 @@ namespace dabc {
          /** \brief Replaces existing fields map */
          void SetFieldsMap(RecordFieldsMap* newmap);
 
-         virtual bool HasField(const std::string& name) const
+         virtual bool HasField(const std::string &name) const
             { return Fields().HasField(name); }
 
-         virtual bool RemoveField(const std::string& name)
+         virtual bool RemoveField(const std::string &name)
             { return Fields().RemoveField(name); }
 
          virtual unsigned NumFields() const
@@ -470,10 +470,10 @@ namespace dabc {
          virtual std::string FieldName(unsigned cnt) const
             { return Fields().FieldName(cnt); }
 
-         virtual RecordField GetField(const std::string& name) const
+         virtual RecordField GetField(const std::string &name) const
             { return Fields().Field(name); }
 
-         virtual bool SetField(const std::string& name, const RecordField& v)
+         virtual bool SetField(const std::string &name, const RecordField& v)
             { return Fields().Field(name).SetValue(v); }
 
          virtual bool SaveTo(HStore& store, bool create_node = true);
@@ -496,10 +496,10 @@ namespace dabc {
 
       DABC_REFERENCE(Record, Reference, RecordContainer)
 
-      bool HasField(const std::string& name) const
+      bool HasField(const std::string &name) const
         { return null() ? false : GetObject()->HasField(name); }
 
-      bool RemoveField(const std::string& name)
+      bool RemoveField(const std::string &name)
         { return null() ? false : GetObject()->RemoveField(name); }
 
       unsigned NumFields() const
@@ -508,23 +508,23 @@ namespace dabc {
       std::string FieldName(unsigned cnt) const
         { return null() ? std::string() : GetObject()->FieldName(cnt); }
 
-      RecordField GetField(const std::string& name) const
+      RecordField GetField(const std::string &name) const
         { return null() ? RecordField() : GetObject()->GetField(name); }
 
-      RecordField* GetFieldPtr(const std::string& name) const
+      RecordField* GetFieldPtr(const std::string &name) const
         { return HasField(name) ?  &(GetObject()->Fields().Field(name)) : 0; }
 
-      bool SetField(const std::string& name, const RecordField& v)
+      bool SetField(const std::string &name, const RecordField& v)
         { return null() ? false : GetObject()->SetField(name, v); }
 
-      bool SetFieldModified(const std::string& name, bool on = true)
+      bool SetFieldModified(const std::string &name, bool on = true)
       {
          if (!HasField(name)) return false;
          GetObject()->Fields().Field(name).SetModified(on);
          return true;
       }
 
-      bool SetFieldProtected(const std::string& name, bool on = true)
+      bool SetFieldProtected(const std::string &name, bool on = true)
       {
          if (!HasField(name)) return false;
          GetObject()->Fields().Field(name).SetProtected(on);

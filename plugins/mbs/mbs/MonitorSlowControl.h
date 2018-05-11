@@ -60,7 +60,7 @@ namespace mbs {
 
       public:
 
-         MonitorSlowControl(const std::string& name, const std::string& prefix, dabc::Command cmd = nullptr);
+         MonitorSlowControl(const std::string &name, const std::string &prefix, dabc::Command cmd = nullptr);
          virtual ~MonitorSlowControl();
 
          virtual void ProcessTimerEvent(unsigned timer);

@@ -28,10 +28,10 @@ namespace aqua {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
+         Factory(const std::string &name) : dabc::Factory(name) {}
 
          /** Factory method to create data output */
-         virtual dabc::DataOutput* CreateDataOutput(const std::string& typ);
+         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
    };
 
 }

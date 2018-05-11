@@ -84,7 +84,7 @@ namespace mbs {
 
          virtual double ProcessTimeout(double last_diff);
 
-         virtual void OnSocketError(int err, const std::string& info);
+         virtual void OnSocketError(int err, const std::string &info);
 
          virtual dabc::WorkerAddon* Write_GetAddon() { return this; }
 
@@ -128,7 +128,7 @@ namespace mbs {
 
          bool SendNextBuffer();
 
-         void ProcessConnectionActivated(const std::string& name, bool on);
+         void ProcessConnectionActivated(const std::string &name, bool on);
 
       public:
 

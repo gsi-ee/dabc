@@ -53,7 +53,7 @@ namespace dabc {
     *      DABC_REFERENCE(WorkerRef, Reference, Worker)
     *
     *      public:
-    *         bool Execute(const std::string& cmdname)
+    *         bool Execute(const std::string &cmdname)
     *           { return GetObject() ? GetObject()->Execute(cmdname) : false; }
     *    };
     *
@@ -201,7 +201,7 @@ namespace dabc {
           * \param[in] name     requested folder name
           * \param[in] force    if true, missing folder will be created
           * \returns            reference on the folder */
-         Reference GetFolder(const std::string& name, bool force = false) throw();
+         Reference GetFolder(const std::string &name, bool force = false) throw();
 
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call */

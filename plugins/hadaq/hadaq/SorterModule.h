@@ -73,7 +73,7 @@ namespace hadaq {
       virtual int ExecuteCommand(dabc::Command cmd);
 
    public:
-      SorterModule(const std::string& name, dabc::Command cmd = nullptr);
+      SorterModule(const std::string &name, dabc::Command cmd = nullptr);
 
       virtual bool ProcessBuffer(unsigned) { return retransmit(); }
 

@@ -49,7 +49,7 @@ namespace dabc {
          {
          }
 
-         NewConnectRec(const std::string& item,
+         NewConnectRec(const std::string &item,
                        ConnectionRequestFull& req,
                        SocketClientAddon* clnt) :
             fReqItem(item),
@@ -188,7 +188,7 @@ namespace dabc {
 
 // ______________________________________________________________________
 
-dabc::SocketDevice::SocketDevice(const std::string& name, Command cmd) :
+dabc::SocketDevice::SocketDevice(const std::string &name, Command cmd) :
    dabc::Device(name),
    fConnRecs(),
    fProtocols(),

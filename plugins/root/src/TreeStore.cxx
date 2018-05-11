@@ -20,7 +20,7 @@
 #include "TTree.h"
 #include "TFile.h"
 
-root::TreeStore::TreeStore(const std::string& name) :
+root::TreeStore::TreeStore(const std::string &name) :
    dabc::LocalWorker(name),
    fTree(0)
 {

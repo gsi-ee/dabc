@@ -7,13 +7,13 @@
 
 dabc::FactoryPlugin verbsfactory(new verbs::Factory("verbs"));
 
-dabc::Reference verbs::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference verbs::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
 {
    return 0;
 }
 
-dabc::Device* verbs::Factory::CreateDevice(const std::string& classname,
-                                           const std::string& devname,
+dabc::Device* verbs::Factory::CreateDevice(const std::string &classname,
+                                           const std::string &devname,
                                            dabc::Command cmd)
 {
    if (classname == verbs::typeDevice) {
@@ -24,7 +24,7 @@ dabc::Device* verbs::Factory::CreateDevice(const std::string& classname,
    return 0;
 }
 
-dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, dabc::Command cmd)
+dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, dabc::Command cmd)
 {
    if (classname != verbs::typeThread) return dabc::Reference();
 

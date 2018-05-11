@@ -79,7 +79,7 @@ namespace dabc {
          virtual std::string RequiredThrdClass() const { return typeSocketThread; }
          virtual const char* ClassName() const { return dabc::typeSocketDevice; }
 
-         SocketDevice(const std::string& name, Command cmd);
+         SocketDevice(const std::string &name, Command cmd);
          virtual ~SocketDevice();
 
    };

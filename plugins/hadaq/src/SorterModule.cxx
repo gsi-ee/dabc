@@ -23,7 +23,7 @@
 #include "hadaq/Iterator.h"
 
 
-hadaq::SorterModule::SorterModule(const std::string& name, dabc::Command cmd) :
+hadaq::SorterModule::SorterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fFlushCnt(5),
    fBufCnt(0),

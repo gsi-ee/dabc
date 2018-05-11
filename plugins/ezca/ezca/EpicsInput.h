@@ -103,19 +103,19 @@ namespace ezca {
 
          unsigned NumLongRecords() const { return fLongRecords.size(); }
 
-         const std::string& GetLongRecord(unsigned i) const { return fLongRecords[i]; }
+         const std::string &GetLongRecord(unsigned i) const { return fLongRecords[i]; }
 
          unsigned NumDoubleRecords() const { return fDoubleRecords.size(); }
 
-         const std::string& GetDoubleRecord(unsigned i) const { return fDoubleRecords[i]; }
+         const std::string &GetDoubleRecord(unsigned i) const { return fDoubleRecords[i]; }
 
          /* Wrapper for ezca get with long values. Contains error message handling.
           * Returns ezca error code.*/
-         int CA_GetLong(const std::string& name, long& val);
+         int CA_GetLong(const std::string &name, long& val);
 
          /* Wrapper for ezca get with double values. Contains error message handling
           * Returns ezca error code.*/
-         int CA_GetDouble(const std::string& name, double& val);
+         int CA_GetDouble(const std::string &name, double& val);
 
          /** Return error string with error description */
          std::string CA_ErrorString();
@@ -125,7 +125,7 @@ namespace ezca {
          bool Close();
 
       public:
-         EpicsInput(const std::string& name = "");
+         EpicsInput(const std::string &name = "");
          virtual ~EpicsInput();
 
          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);

@@ -36,7 +36,7 @@ void dabc::SocketFactory::Initialize()
 }
 
 
-dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, const std::string& objname, Command cmd)
+dabc::Reference dabc::SocketFactory::CreateObject(const std::string &classname, const std::string &objname, Command cmd)
 {
    if (classname == "SocketCommandChannel") {
 
@@ -65,8 +65,8 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
 }
 
 
-dabc::Device* dabc::SocketFactory::CreateDevice(const std::string& classname,
-                                                const std::string& devname, Command cmd)
+dabc::Device* dabc::SocketFactory::CreateDevice(const std::string &classname,
+                                                const std::string &devname, Command cmd)
 {
    if (classname == dabc::typeSocketDevice)
       return new SocketDevice(devname, cmd);
@@ -74,7 +74,7 @@ dabc::Device* dabc::SocketFactory::CreateDevice(const std::string& classname,
    return 0;
 }
 
-dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd)
+dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd)
 {
    dabc::Thread* thrd = 0;
 
@@ -84,7 +84,7 @@ dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::s
    return Reference(thrd);
 }
 
-dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const std::string& typ, Command cmd)
+dabc::Module* dabc::SocketFactory::CreateTransport(const Reference& ref, const std::string &typ, Command cmd)
 {
    dabc::PortRef port = ref;
 

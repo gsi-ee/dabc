@@ -39,7 +39,7 @@
 
 // ==================================================================================
 
-stream::RunModule::RunModule(const std::string& name, dabc::Command cmd) :
+stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fParallel(0),
    fInitFunc(0),

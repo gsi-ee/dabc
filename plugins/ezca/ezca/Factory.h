@@ -30,11 +30,11 @@ namespace ezca {
 
       public:
 
-         Factory(const std::string& name);
+         Factory(const std::string &name);
 
-         virtual dabc::DataInput* CreateDataInput(const std::string& typ);
+         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
 
-         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
    };
 
 }

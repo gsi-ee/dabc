@@ -68,7 +68,7 @@ namespace stream {
 
    public:
 
-      TdcCalibrationModule(const std::string& name, dabc::Command cmd = nullptr);
+      TdcCalibrationModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~TdcCalibrationModule();
 
       virtual bool ProcessBuffer(unsigned) { return retransmit(); }

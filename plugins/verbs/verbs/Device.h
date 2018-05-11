@@ -50,7 +50,7 @@ namespace verbs {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         QueuePair* CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type,
+         QueuePair* CreatePortQP(const std::string &thrd_name, dabc::Reference port, int conn_type,
                                  dabc::ThreadRef &thrd);
 
          virtual dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port);
@@ -65,7 +65,7 @@ namespace verbs {
 
       public:
 
-         Device(const std::string& name);
+         Device(const std::string &name);
          virtual ~Device();
 
          ContextRef IbContext() { return fIbContext; }
@@ -92,7 +92,7 @@ namespace verbs {
 
    };
 
-   extern bool ConvertStrToGid(const std::string& s, ibv_gid &gid);
+   extern bool ConvertStrToGid(const std::string &s, ibv_gid &gid);
    extern std::string ConvertGidToStr(ibv_gid &gid);
 }
 

@@ -33,7 +33,7 @@ class rdaDabcHandler : public rdaReplyHandler
     rdaRequest* fRequest;
     rdaData fContext;
 
-    rdaDabcHandler(fesa::Monitor* p, const std::string& serv) :
+    rdaDabcHandler(fesa::Monitor* p, const std::string &serv) :
        rdaReplyHandler(),
        fPlayer(p),
        fService(serv),
@@ -42,7 +42,7 @@ class rdaDabcHandler : public rdaReplyHandler
        {
        }
 
-       bool subscribe(rdaDeviceHandle* device, const std::string& cycle)
+       bool subscribe(rdaDeviceHandle* device, const std::string &cycle)
        {
          try {
             fRequest = device->monitorOn(fService.c_str(), cycle.c_str(), false, this, fContext);
@@ -96,7 +96,7 @@ class rdaDabcHandler : public rdaReplyHandler
 
 #endif
 
-fesa::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+fesa::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    mbs::MonitorSlowControl(name, "Fesa", cmd),
    fHierarchy(),
    fRDAService(0),
@@ -156,7 +156,7 @@ fesa::Monitor::~Monitor()
 
 }
 
-void fesa::Monitor::ReportServiceError(const std::string& name, const std::string& err)
+void fesa::Monitor::ReportServiceError(const std::string &name, const std::string &err)
 {
    dabc::LockGuard lock(fHierarchy.GetHMutex());
 
@@ -169,7 +169,7 @@ void fesa::Monitor::ReportServiceError(const std::string& name, const std::strin
 }
 
 
-void fesa::Monitor::ReportServiceChanged(const std::string& name, const rdaData* value)
+void fesa::Monitor::ReportServiceChanged(const std::string &name, const rdaData* value)
 {
    // DOUT0("REPORT FESA SERVICE %s = %5.3f", name.c_str());
 

@@ -102,7 +102,7 @@ namespace mbs {
          virtual void ProcessEvent(const dabc::EventId&);
 
       public:
-         DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
+         DaqLogWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port);
          virtual ~DaqLogWorker();
 
          virtual std::string RequiredThrdClass() const
@@ -161,7 +161,7 @@ namespace mbs {
 
 
       public:
-         DaqRemCmdWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
+         DaqRemCmdWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port);
 
          virtual ~DaqRemCmdWorker();
    };
@@ -204,7 +204,7 @@ namespace mbs {
          bool CreateAddon();
 
       public:
-         PrompterWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port);
+         PrompterWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port);
 
          virtual ~PrompterWorker();
    };
@@ -250,7 +250,7 @@ namespace mbs {
          std::string       fRateIntervalName;    ///< name of rate sample interval parameter
          std::string       fHistoryName;    ///< name of variable history parameter
 
-         void FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
+         void FillStatistic(const std::string &options, const std::string &itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double difftime);
 
          virtual void OnThreadAssigned();
 
@@ -278,7 +278,7 @@ namespace mbs {
 
       public:
 
-         Monitor(const std::string& name, dabc::Command cmd = nullptr);
+         Monitor(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
          virtual std::string RequiredThrdClass() const
@@ -287,10 +287,10 @@ namespace mbs {
          std::string MbsNodeName() const { return fMbsNode; }
 
          /** Called by LogWorker to inform about new message */
-         void NewMessage(const std::string& msg);
+         void NewMessage(const std::string &msg);
 
          /** Called by CmdWorker to inform about new command send (or getting reply) */
-         void NewSendCommand(const std::string& cmd, int res = -1);
+         void NewSendCommand(const std::string &cmd, int res = -1);
 
          /** Called by DaqStatusAddon to inform about new daq status */
          void NewStatus(mbs::DaqStatus& stat);

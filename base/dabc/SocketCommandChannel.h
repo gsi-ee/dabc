@@ -160,9 +160,9 @@ namespace dabc {
          bool ExecuteCommandByItself(Command cmd);
 
       public:
-         SocketCommandClient(Reference parent, const std::string& name,
+         SocketCommandClient(Reference parent, const std::string &name,
                              SocketAddon* addon,
-                             const std::string& hostname = "",
+                             const std::string &hostname = "",
                              double reconnect = 0.);
          virtual ~SocketCommandClient();
    };
@@ -194,17 +194,17 @@ namespace dabc {
          virtual int ExecuteCommand(Command cmd);
 
          /** \brief Provide string for connection to remote node */
-         std::string GetRemoteNode(const std::string& url);
+         std::string GetRemoteNode(const std::string &url);
 
          /** \brief Provide client for remote node.
           * If conn_tmout>0 and address include port number, new worker will be forced */
-         SocketCommandClientRef ProvideWorker(const std::string& remnodename, double conn_tmout = -1);
+         SocketCommandClientRef ProvideWorker(const std::string &remnodename, double conn_tmout = -1);
 
          /** timeout used in channel to update node hierarchy, which than can be requested from remote */
          virtual double ProcessTimeout(double last_diff);
 
       public:
-         SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon, Command cmd);
+         SocketCommandChannel(const std::string &name, SocketServerAddon* connaddon, Command cmd);
          virtual ~SocketCommandChannel() {}
 
          /** \brief As name said, command channel requires socket thread for the work */

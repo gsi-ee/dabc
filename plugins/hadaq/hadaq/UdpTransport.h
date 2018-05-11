@@ -106,7 +106,7 @@ namespace hadaq {
 
          bool HasBuffer() const { return !fTgtPtr.null(); }
 
-         static int OpenUdp(const std::string& host, int nport, int rcvbuflen);
+         static int OpenUdp(const std::string &host, int nport, int rcvbuflen);
    };
 
 
@@ -121,9 +121,9 @@ namespace hadaq {
          bool           fBufAssigned;  ///< if next buffer assigned
          int            fLastSendCnt;  ///< used for flushing
 
-         std::string GetNetmemParName(const std::string& name);
-         void CreateNetmemPar(const std::string& name);
-         void SetNetmemPar(const std::string& name, unsigned value);
+         std::string GetNetmemParName(const std::string &name);
+         void CreateNetmemPar(const std::string &name);
+         void SetNetmemPar(const std::string &name, unsigned value);
 
          void RegisterExportedCounters();
          bool UpdateExportedCounters();

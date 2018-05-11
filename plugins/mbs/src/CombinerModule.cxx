@@ -20,7 +20,7 @@
 #include "dabc/Manager.h"
 
 
-mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
+mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fInp(),
    fOut(),
@@ -111,7 +111,7 @@ void mbs::CombinerModule::ModuleCleanup()
 }
 
 
-void mbs::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
+void mbs::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 {
 
    Par(fInfoName).SetValue(info);

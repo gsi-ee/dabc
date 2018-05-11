@@ -60,9 +60,9 @@ namespace dabc {
          bool isTransportError() const { return GetTransportState() == stError; }
 
          /** Method called when module on other side is started */
-         virtual void ProcessConnectionActivated(const std::string& name, bool on);
+         virtual void ProcessConnectionActivated(const std::string &name, bool on);
 
-         virtual void ProcessConnectEvent(const std::string& name, bool on);
+         virtual void ProcessConnectEvent(const std::string &name, bool on);
 
          virtual int ExecuteCommand(Command cmd);
 
@@ -77,7 +77,7 @@ namespace dabc {
          virtual void TransportCleanup() {}
 
          /** \brief Method provides transport info to specified parameter */
-         void ProvideInfo(int lvl, const std::string& info);
+         void ProvideInfo(int lvl, const std::string &info);
 
          static std::string MakeName(const PortRef& inpport, const PortRef& outport);
 

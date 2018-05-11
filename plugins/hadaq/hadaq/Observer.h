@@ -53,20 +53,20 @@ namespace hadaq {
 
          bool IsEmulation() const { return (fNetmemWorker==0) && (fEvtbuildWorker==0); }
 
-         ShmEntry*  FindEntry(const std::string& parname)
+         ShmEntry*  FindEntry(const std::string &parname)
          {
             return FindEntry(ReducedName(parname), ShmName(parname));
          }
 
-         ShmEntry*  FindEntry(const std::string& statsname, const std::string& shmemname);
+         ShmEntry*  FindEntry(const std::string &statsname, const std::string &shmemname);
 
          /* strip netmem or evtbuild prefix from parameter name*/
-         std::string ReducedName(const std::string& dabcname);
+         std::string ReducedName(const std::string &dabcname);
 
          /* evaluate name of shm file from parameter name prefix*/
-         std::string ShmName(const std::string& dabcname);
+         std::string ShmName(const std::string &dabcname);
 
-         bool CreateShmEntry(const std::string& parname);
+         bool CreateShmEntry(const std::string &parname);
 
          void RemoveEntry(ShmEntry* entry);
 
@@ -75,7 +75,7 @@ namespace hadaq {
          virtual void OnThreadAssigned();
 
       public:
-         Observer(const std::string& name);
+         Observer(const std::string &name);
 
          virtual ~Observer();
 

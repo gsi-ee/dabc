@@ -77,7 +77,7 @@ namespace verbs {
       public:
          // list of all events for all kind of socket processors
 
-         Thread(dabc::Reference parent, const std::string& name, dabc::Command cmd, ContextRef ctx);
+         Thread(dabc::Reference parent, const std::string &name, dabc::Command cmd, ContextRef ctx);
          virtual ~Thread();
 
          void CloseThread();
@@ -90,7 +90,7 @@ namespace verbs {
 
          virtual const char* ClassName() const { return verbs::typeThread; }
 
-         virtual bool CompatibleClass(const std::string& clname) const;
+         virtual bool CompatibleClass(const std::string &clname) const;
 
          static const char* StatusStr(int code);
 

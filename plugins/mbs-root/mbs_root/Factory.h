@@ -24,11 +24,11 @@ namespace mbs_root {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
+         Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::DataInput* CreateDataInput(const std::string& typ);
+         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
 
-         virtual dabc::DataOutput* CreateDataOutput(const std::string& typ);
+         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
    };
 
 }

@@ -3,7 +3,7 @@
 #include "dabc/Manager.h"
 
 
-bnet::SenderModule::SenderModule(const std::string& name, dabc::Command cmd) :
+bnet::SenderModule::SenderModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name,cmd)
 {
    DOUT0("%s num outputs %d", GetName(), NumOutputs());

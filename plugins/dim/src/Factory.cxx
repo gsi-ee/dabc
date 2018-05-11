@@ -18,7 +18,7 @@
 
 dabc::FactoryPlugin dimcfactory(new dim::Factory("dim"));
 
-dabc::Module* dim::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* dim::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "dim::Monitor")
       return new dim::Monitor(modulename, cmd);

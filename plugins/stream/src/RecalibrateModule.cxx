@@ -35,7 +35,7 @@
 
 // ==================================================================================
 
-stream::RecalibrateModule::RecalibrateModule(const std::string& name, dabc::Command cmd) :
+stream::RecalibrateModule::RecalibrateModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fNumSub(0),
    fReplace(false),

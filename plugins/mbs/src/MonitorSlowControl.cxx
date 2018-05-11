@@ -19,7 +19,7 @@
 #include <math.h>
 
 
-mbs::MonitorSlowControl::MonitorSlowControl(const std::string& name, const std::string& prefix, dabc::Command cmd) :
+mbs::MonitorSlowControl::MonitorSlowControl(const std::string &name, const std::string &prefix, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fRec(),
    fDoRec(false),

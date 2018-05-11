@@ -102,7 +102,7 @@ const char* http::Server::GetMimeType(const char* path)
 }
 
 
-http::Server::Server(const std::string& name, dabc::Command cmd) :
+http::Server::Server(const std::string &name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fLocations(),
    fHttpSys(),
@@ -151,10 +151,10 @@ http::Server::~Server()
 {
 }
 
-void http::Server::AddLocation(const std::string& filepath,
-                               const std::string& absprefix,
-                               const std::string& nameprefix,
-                               const std::string& nameprefixrepl)
+void http::Server::AddLocation(const std::string &filepath,
+                               const std::string &absprefix,
+                               const std::string &nameprefix,
+                               const std::string &nameprefixrepl)
 {
    fLocations.push_back(Location());
    fLocations.back().fFilePath = filepath;

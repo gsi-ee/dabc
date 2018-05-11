@@ -61,7 +61,7 @@ class Device: public dabc::Device
 
 public:
 
-  Device (const std::string& name, dabc::Command cmd);
+  Device (const std::string &name, dabc::Command cmd);
   virtual ~Device ();
 
   /** need to start timeout here*/
@@ -105,7 +105,7 @@ public:
    void AddEventStatistics (unsigned numevents);
 
    /** set info parameter. For webgui.*/
-   void SetInfo(const std::string& info, bool forceinfo=true);
+   void SetInfo(const std::string &info, bool forceinfo=true);
 
 protected:
 
@@ -118,7 +118,7 @@ protected:
 
 
 
-  void SetDevInfoParName(const std::string& name)
+  void SetDevInfoParName(const std::string &name)
   {
     fDevInfoName = name;
   }
@@ -197,7 +197,7 @@ protected:
     {
       if(GetObject()) GetObject ()->AddEventStatistics(numevents);
     }
-  void SetInfo(const std::string& info, bool forceinfo=true)
+  void SetInfo(const std::string &info, bool forceinfo=true)
     {
         if(GetObject()) GetObject ()->SetInfo(info, forceinfo);
     }

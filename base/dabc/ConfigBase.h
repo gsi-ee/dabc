@@ -140,7 +140,7 @@ namespace dabc {
                                     const char* sub3 = 0);
 
          std::string Find1(XMLNodePointer_t node,
-                           const std::string& dflt,
+                           const std::string &dflt,
                            const char* sub1,
                            const char* sub2 = 0,
                            const char* sub3 = 0);
@@ -197,7 +197,7 @@ namespace dabc {
          std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0);
 
          /** Replaces entries like ${name} be variable value */
-         std::string ResolveEnv(const std::string& arg, int id = -1);
+         std::string ResolveEnv(const std::string &arg, int id = -1);
 
          /** Add variable from command line */
          void AddCmdVariable(const char* name, const char* value);

@@ -15,7 +15,7 @@
 
 #include "hadaq/api.h"
 
-hadaq::ReadoutModule::ReadoutModule(const std::string& name, dabc::Command cmd) :
+hadaq::ReadoutModule::ReadoutModule(const std::string &name, dabc::Command cmd) :
    mbs::ReadoutModule(name, cmd),
    fIter2()
 {
@@ -31,7 +31,7 @@ int hadaq::ReadoutModule::AcceptBuffer(dabc::Buffer& buf)
 // =========================================================================
 
 
-hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string& src)
+hadaq::ReadoutHandle hadaq::ReadoutHandle::Connect(const std::string &src)
 {
    std::string newurl = src;
 

@@ -43,7 +43,7 @@ dabc::HierarchyStore::~HierarchyStore()
    }
 }
 
-bool dabc::HierarchyStore::SetBasePath(const std::string& path)
+bool dabc::HierarchyStore::SetBasePath(const std::string &path)
 {
    if (fFile.isOpened()) {
       EOUT("Cannot change base path when current file is opened");
@@ -215,13 +215,13 @@ dabc::HierarchyReading::~HierarchyReading()
    }
 }
 
-void dabc::HierarchyReading::SetBasePath(const std::string& path)
+void dabc::HierarchyReading::SetBasePath(const std::string &path)
 {
    fBasePath = path;
    if ((fBasePath.length()>0) && (fBasePath[fBasePath.length()-1] != '/')) fBasePath.append("/");
 }
 
-std::string dabc::HierarchyReading::MakeFileName(const std::string& fpath, const DateTime& dt)
+std::string dabc::HierarchyReading::MakeFileName(const std::string &fpath, const DateTime& dt)
 {
    std::string res = fpath;
    if ((res.length()>0) && (res[res.length()-1] != '/')) res.append("/");
@@ -234,7 +234,7 @@ std::string dabc::HierarchyReading::MakeFileName(const std::string& fpath, const
    return res;
 }
 
-bool dabc::HierarchyReading::ScanFiles(const std::string& dirname, const DateTime& onlydate, std::vector<uint64_t>& vect)
+bool dabc::HierarchyReading::ScanFiles(const std::string &dirname, const DateTime& onlydate, std::vector<uint64_t>& vect)
 {
    std::string mask = dirname + "*.dabc";
 
@@ -264,7 +264,7 @@ bool dabc::HierarchyReading::ScanFiles(const std::string& dirname, const DateTim
 }
 
 
-bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string& dirname)
+bool dabc::HierarchyReading::ScanTreeDir(dabc::Hierarchy& h, const std::string &dirname)
 {
    if (h.null() || dirname.empty()) return false;
 
@@ -353,7 +353,7 @@ dabc::Buffer dabc::HierarchyReading::ReadBuffer(dabc::BinaryFile& f)
    return buf;
 }
 
-bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& from_date, const DateTime& till_date, const std::string& entry, Hierarchy& tgt)
+bool dabc::HierarchyReading::ProduceStructure(Hierarchy& tree, const DateTime& from_date, const DateTime& till_date, const std::string &entry, Hierarchy& tgt)
 {
    if (tree.null()) return false;
 
@@ -441,7 +441,7 @@ bool dabc::HierarchyReading::GetStrucutre(Hierarchy& tgt, const DateTime& dt)
    return ProduceStructure(fTree, dt, 0, "", tgt);
 }
 
-dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string& entry, const DateTime& from, const DateTime& till)
+dabc::Hierarchy dabc::HierarchyReading::GetSerie(const std::string &entry, const DateTime& from, const DateTime& till)
 {
    dabc::Hierarchy h, res;
 

@@ -35,7 +35,7 @@ namespace dabc {
    class CmdGetBinary : public Command {
       DABC_COMMAND(CmdGetBinary, "CmdGetBinary");
 
-      CmdGetBinary(const std::string& path, const std::string& kind, const std::string& query) :
+      CmdGetBinary(const std::string &path, const std::string &kind, const std::string &query) :
          Command(CmdName())
       {
          SetStr("Item", path);
@@ -49,7 +49,7 @@ namespace dabc {
    class CmdHierarchyExec : public Command {
       DABC_COMMAND(CmdHierarchyExec, "CmdHierarchyExec");
 
-      CmdHierarchyExec(const std::string& path) :
+      CmdHierarchyExec(const std::string &path) :
          Command(CmdName())
       {
          SetStr("Item", path);
@@ -180,7 +180,7 @@ namespace dabc {
          bool DoStorage() const { return !fStoreDir.empty(); }
 
          /** \brief Return hierarchy item selected for work */
-         Hierarchy GetWorkItem(const std::string& path, bool *islocal = nullptr);
+         Hierarchy GetWorkItem(const std::string &path, bool *islocal = nullptr);
 
          /** \brief Command redirected to local modules or remote publisher,
           * where it should be processed
@@ -194,7 +194,7 @@ namespace dabc {
 
       public:
 
-         Publisher(const std::string& name, dabc::Command cmd = nullptr);
+         Publisher(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Publisher();
 
          static const char* DfltName() { return "/publ"; }
@@ -207,28 +207,28 @@ namespace dabc {
    class PublisherRef : public WorkerRef {
       DABC_REFERENCE(PublisherRef, WorkerRef, Publisher)
 
-      bool Register(const std::string& path, const std::string& workername, void* hierarchy)
+      bool Register(const std::string &path, const std::string &workername, void* hierarchy)
       {  return OwnCommand(1, path, workername, hierarchy); }
 
-      bool Unregister(const std::string& path, const std::string& workername, void* hierarchy)
+      bool Unregister(const std::string &path, const std::string &workername, void* hierarchy)
       {  return OwnCommand(2, path, workername, hierarchy); }
 
-      bool Subscribe(const std::string& path, const std::string& workername)
+      bool Subscribe(const std::string &path, const std::string &workername)
       {  return OwnCommand(3, path, workername); }
 
-      bool Unsubscribe(const std::string& path, const std::string& workername)
+      bool Unsubscribe(const std::string &path, const std::string &workername)
       {  return OwnCommand(4, path, workername); }
 
-      bool RemoveWorker(const std::string& workername, bool sync = true)
+      bool RemoveWorker(const std::string &workername, bool sync = true)
       {  return OwnCommand(sync ? 5 : -5, "", workername); }
 
-      bool AddRemote(const std::string& remnode, const std::string& workername)
+      bool AddRemote(const std::string &remnode, const std::string &workername)
       {  return OwnCommand(6, remnode, workername); }
 
       /** Store hierarchy in xml/json to use in the browser for display */
-      bool SaveGlobalNamesListAs(const std::string& kind,
-                                 const std::string& path,
-                                 const std::string& query,
+      bool SaveGlobalNamesListAs(const std::string &kind,
+                                 const std::string &path,
+                                 const std::string &query,
                                  std::string& str);
 
       /** Returns "" - undefined,
@@ -241,9 +241,9 @@ namespace dabc {
       int NeedAuth(const std::string &path);
 
       /** Return different kinds of binary data, depends from kind */
-      Buffer GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout = 5.);
+      Buffer GetBinary(const std::string &fullname, const std::string &kind, const std::string &query, double tmout = 5.);
 
-      Hierarchy GetItem(const std::string& fullname, const std::string& query = "", double tmout = 5.);
+      Hierarchy GetItem(const std::string &fullname, const std::string &query = "", double tmout = 5.);
 
       /** \brief Execute item is command, providing parameters in query */
       Command ExeCmd(const std::string &fullname, const std::string &query);

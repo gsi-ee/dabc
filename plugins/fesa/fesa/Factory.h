@@ -28,9 +28,9 @@ namespace fesa {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
+         Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
 
       protected:
 

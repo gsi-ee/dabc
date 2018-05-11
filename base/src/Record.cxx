@@ -71,7 +71,7 @@ bool dabc::iostream::verify_size(uint64_t pos, uint64_t sz)
 }
 
 
-uint64_t dabc::iostream::str_storesize(const std::string& str)
+uint64_t dabc::iostream::str_storesize(const std::string &str)
 {
    uint64_t res = sizeof(int32_t);
    res += str.length() + 1; // null-terminated string will be stored
@@ -79,7 +79,7 @@ uint64_t dabc::iostream::str_storesize(const std::string& str)
    return res;
 }
 
-bool dabc::iostream::write_str(const std::string& str)
+bool dabc::iostream::write_str(const std::string &str)
 {
    uint64_t sz = str_storesize(str);
    if (sz > maxstoresize()) {
@@ -751,7 +751,7 @@ std::vector<double> dabc::RecordField::AsDoubleVect() const
    return res;
 }
 
-std::string dabc::RecordField::AsStr(const std::string& dflt) const
+std::string dabc::RecordField::AsStr(const std::string &dflt) const
 {
    switch (fKind) {
       case kind_none: return dflt;
@@ -796,7 +796,7 @@ std::string dabc::RecordField::AsStr(const std::string& dflt) const
    return dflt;
 }
 
-bool dabc::RecordField::NeedJsonReformat(const std::string& str)
+bool dabc::RecordField::NeedJsonReformat(const std::string &str)
 {
    // here we have situation that both single and double quotes present
    // first try to define which kind quotes preceding with escape character
@@ -817,7 +817,7 @@ bool dabc::RecordField::NeedJsonReformat(const std::string& str)
    return false;
 }
 
-std::string dabc::RecordField::JsonReformat(const std::string& str)
+std::string dabc::RecordField::JsonReformat(const std::string &str)
 {
    std::string res;
 
@@ -1131,7 +1131,7 @@ bool dabc::RecordField::SetDouble(double v)
    return modified();
 }
 
-bool dabc::RecordField::SetStr(const std::string& v)
+bool dabc::RecordField::SetStr(const std::string &v)
 {
    if (cannot_modify()) return false;
 
@@ -1376,12 +1376,12 @@ dabc::RecordFieldsMap::~RecordFieldsMap()
 {
 }
 
-bool dabc::RecordFieldsMap::HasField(const std::string& name) const
+bool dabc::RecordFieldsMap::HasField(const std::string &name) const
 {
    return fMap.find(name) != fMap.end();
 }
 
-bool dabc::RecordFieldsMap::RemoveField(const std::string& name)
+bool dabc::RecordFieldsMap::RemoveField(const std::string &name)
 {
    FieldsMap::iterator iter = fMap.find(name);
    if (iter==fMap.end()) return false;
@@ -1413,7 +1413,7 @@ bool dabc::RecordFieldsMap::WasChanged() const
    return false;
 }
 
-bool dabc::RecordFieldsMap::WasChangedWith(const std::string& prefix)
+bool dabc::RecordFieldsMap::WasChangedWith(const std::string &prefix)
 {
    // returns true when field with specified prefix was modified
 
@@ -1443,14 +1443,14 @@ dabc::RecordFieldsMap* dabc::RecordFieldsMap::Clone()
    return res;
 }
 
-uint64_t dabc::RecordFieldsMap::StoreSize(const std::string& nameprefix)
+uint64_t dabc::RecordFieldsMap::StoreSize(const std::string &nameprefix)
 {
    sizestream s;
    Stream(s, nameprefix);
    return s.size();
 }
 
-bool dabc::RecordFieldsMap::match_prefix(const std::string& name, const std::string& prefix)
+bool dabc::RecordFieldsMap::match_prefix(const std::string &name, const std::string &prefix)
 {
    if (name.empty()) return false;
    // all fields started with # are invisible for I/O
@@ -1460,7 +1460,7 @@ bool dabc::RecordFieldsMap::match_prefix(const std::string& name, const std::str
 }
 
 
-bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string& nameprefix)
+bool dabc::RecordFieldsMap::Stream(iostream& s, const std::string &nameprefix)
 {
    uint32_t storesz(0), storenum(0), storevers(0);
    uint64_t sz(0);
@@ -1598,13 +1598,13 @@ void dabc::RecordFieldsMap::ApplyDiff(const RecordFieldsMap& diff)
 
 
 
-dabc::RecordContainer::RecordContainer(const std::string& name, unsigned flags) :
+dabc::RecordContainer::RecordContainer(const std::string &name, unsigned flags) :
    Object(0, name, flags | flAutoDestroy),
    fFields(new RecordFieldsMap)
 {
 }
 
-dabc::RecordContainer::RecordContainer(Reference parent, const std::string& name, unsigned flags) :
+dabc::RecordContainer::RecordContainer(Reference parent, const std::string &name, unsigned flags) :
    Object(MakePair(parent, name), flags | flAutoDestroy),
    fFields(new RecordFieldsMap)
 {
@@ -1669,7 +1669,7 @@ std::string dabc::Record::SaveToXml(unsigned mask)
    return "";
 }
 
-void dabc::Record::CreateRecord(const std::string& name)
+void dabc::Record::CreateRecord(const std::string &name)
 {
    Release();
    SetObject(new RecordContainer(name));

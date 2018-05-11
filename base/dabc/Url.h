@@ -40,16 +40,16 @@ namespace dabc {
          std::string fFileName; ///< file name
          std::string fOptions;  ///< list of options
 
-         bool GetOption(const std::string& optname, int optionnumber = -1, std::string* value = 0) const;
+         bool GetOption(const std::string &optname, int optionnumber = -1, std::string* value = 0) const;
 
       public:
          Url();
          Url(const char* url);
-         Url(const std::string& url);
+         Url(const std::string &url);
          virtual ~Url();
 
          void Reset();
-         bool SetUrl(const std::string& url, bool showerr = true);
+         bool SetUrl(const std::string &url, bool showerr = true);
 
          std::string GetUrl() const      { return fUrl; }
          bool IsValid() const            { return fValid; }
@@ -64,26 +64,26 @@ namespace dabc {
          std::string GetFullName() const;
 
          /** Method allows to set URL options directly to be able use all Get methods */
-         void SetOptions(const std::string& opt);
+         void SetOptions(const std::string &opt);
 
          std::string GetOptionsPart(int number = 0) const;
-         bool HasOption(const std::string& optname) const { return GetOption(optname); }
-         std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;
-         int GetOptionInt(const std::string& optname, int dflt = 0) const;
-         double GetOptionDouble(const std::string& optname, double dflt = 0.) const;
-         bool GetOptionBool(const std::string& optname, bool dflt = false) const;
+         bool HasOption(const std::string &optname) const { return GetOption(optname); }
+         std::string GetOptionStr(const std::string &optname, const std::string &dflt = "") const;
+         int GetOptionInt(const std::string &optname, int dflt = 0) const;
+         double GetOptionDouble(const std::string &optname, double dflt = 0.) const;
+         bool GetOptionBool(const std::string &optname, bool dflt = false) const;
 
          /**! \brief Produces url string with unique address of specified item */
-         static std::string ComposeItemName(int nodeid, const std::string& itemname = "");
+         static std::string ComposeItemName(int nodeid, const std::string &itemname = "");
 
          /**! Method creates url string with port address, which includes nodeid and full portname
           * If optional parameter portid is specified, it added as last symbols of the address
           * Like call dabc::Url::ComposePortName(1, "MyModule/Output", 2) will produce string
           * "dabc://node1/MyModule/Output2" */
-         static std::string ComposePortName(int nodeid, const std::string& fullportname, int portid = -1);
+         static std::string ComposePortName(int nodeid, const std::string &fullportname, int portid = -1);
 
          /** \brief Method decompose from url nodeid and full item name, which includes all parents */
-         static bool DecomposeItemName(const std::string& url, int& nodeid, std::string& itemtname);
+         static bool DecomposeItemName(const std::string &url, int& nodeid, std::string& itemtname);
 
          /**! \brief Replace all special symbols which could appear in URL, especially in query */
          static void ReplaceSpecialSymbols(std::string& opt);

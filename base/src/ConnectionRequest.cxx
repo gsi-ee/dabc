@@ -16,7 +16,7 @@
 #include "dabc/ConnectionRequest.h"
 
 
-dabc::ConnectionObject::ConnectionObject(Reference port, const std::string& localurl) :
+dabc::ConnectionObject::ConnectionObject(Reference port, const std::string &localurl) :
    ParameterContainer(port, ObjectName(), "connection", true),
    fConnState(sInit), // specify non-init state to be able change it
    fLocalUrl(localurl),
@@ -38,7 +38,7 @@ dabc::ConnectionObject::~ConnectionObject()
 {
 }
 
-bool dabc::ConnectionObject::_CanChangeField(const std::string& name)
+bool dabc::ConnectionObject::_CanChangeField(const std::string &name)
 {
    // special case when only field can be changed once
    if (!fAllowedField.empty() && (fAllowedField==name)) {
@@ -116,7 +116,7 @@ void dabc::ConnectionRequest::ChangeState(ConnectionObject::EState state, bool f
 }
 
 
-void dabc::ConnectionRequest::SetAllowedField(const std::string& name)
+void dabc::ConnectionRequest::SetAllowedField(const std::string &name)
 {
    LockGuard lock(ObjectMutex());
 

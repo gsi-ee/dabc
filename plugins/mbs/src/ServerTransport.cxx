@@ -275,7 +275,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 }
 
 
-void mbs::ServerOutputAddon::OnSocketError(int err, const std::string& info)
+void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &info)
 {
    switch (fState) {
       case oSendingEvents:  // only at this states callback is required to inform transport that data should be closed
@@ -485,7 +485,7 @@ bool mbs::ServerTransport::SendNextBuffer()
 }
 
 
-void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, bool on)
+void mbs::ServerTransport::ProcessConnectionActivated(const std::string &name, bool on)
 {
    if (name==InputName()) {
       dabc::Transport::ProcessConnectionActivated(name, on);

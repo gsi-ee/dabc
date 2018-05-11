@@ -22,13 +22,13 @@
 
 dabc::FactoryPlugin mbsrootfactory(new mbs_root::Factory("mbs-root"));
 
-dabc::DataInput* mbs_root::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* mbs_root::Factory::CreateDataInput(const std::string &typ)
 {
    return 0;
 }
 
 
-dabc::DataOutput* mbs_root::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* mbs_root::Factory::CreateDataOutput(const std::string &typ)
 {
 
    DOUT3("mbs_root::Factory::CreateDataOutput typ:%s", typ.c_str());

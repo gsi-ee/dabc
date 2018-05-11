@@ -22,7 +22,7 @@
 dabc::FactoryPlugin aquafactory(new aqua::Factory("aqua"));
 
 
-dabc::DataOutput* aqua::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* aqua::Factory::CreateDataOutput(const std::string &typ)
 {
 
    dabc::Url url(typ);

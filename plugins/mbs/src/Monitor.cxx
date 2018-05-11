@@ -131,7 +131,7 @@ void mbs::DaqStatusAddon::OnRecvCompleted()
 
 // =========================================================================
 
-mbs::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+mbs::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    mbs::MonitorSlowControl(name, "Mbs", cmd),
    fHierarchy(),
    fCounter(0),
@@ -296,7 +296,7 @@ void mbs::Monitor::OnThreadAssigned()
    mbs::MonitorSlowControl::OnThreadAssigned();
 }
 
-void mbs::Monitor::FillStatistic(const std::string& options, const std::string& itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
+void mbs::Monitor::FillStatistic(const std::string &options, const std::string &itemname, mbs::DaqStatus* old_daqst, mbs::DaqStatus* new_daqst, double diff_time)
 {
    int bStreams_n = 0, bBuffers_n = 0, bEvents_n = 0, bData_n = 0;
    int bStreams_r = 0, bBuffers_r = 0, bEvents_r = 0, bData_r = 0;
@@ -841,7 +841,7 @@ void mbs::Monitor::ProcessTimerEvent(unsigned timer)
       AssignAddon(new DaqStatusAddon(fd));
 }
 
-void mbs::Monitor::NewMessage(const std::string& msg)
+void mbs::Monitor::NewMessage(const std::string &msg)
 {
    dabc::Hierarchy item = fHierarchy.GetHChild("logger");
 
@@ -855,7 +855,7 @@ void mbs::Monitor::NewMessage(const std::string& msg)
 }
 
 
-void mbs::Monitor::NewSendCommand(const std::string& cmd, int res)
+void mbs::Monitor::NewSendCommand(const std::string &cmd, int res)
 {
    if (!fPrintf) return;
    if (res>=0) printf("replcmd>%s res=%s\n", cmd.c_str(), DBOOL(res));
@@ -1084,7 +1084,7 @@ unsigned mbs::Monitor::WriteRecRawData(void* ptr, unsigned maxsize)
 
 // =====================================================================
 
-mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string& name, const std::string& mbsnode, int port) :
+mbs::DaqLogWorker::DaqLogWorker(const dabc::Reference& parent, const std::string &name, const std::string &mbsnode, int port) :
    dabc::Worker(parent, name),
    fMbsNode(mbsnode),
    fPort(port)
@@ -1173,8 +1173,8 @@ void mbs::DaqLogWorker::ProcessEvent(const dabc::EventId& evnt)
 
 // =================================================================
 
-mbs::DaqRemCmdWorker::DaqRemCmdWorker(const dabc::Reference& parent, const std::string& name,
-                                     const std::string& mbsnode, int port) :
+mbs::DaqRemCmdWorker::DaqRemCmdWorker(const dabc::Reference& parent, const std::string &name,
+                                     const std::string &mbsnode, int port) :
    dabc::Worker(parent, name),
    fMbsNode(mbsnode),
    fPort(port),
@@ -1346,8 +1346,8 @@ void mbs::DaqRemCmdWorker::ProcessNextMbsCommand()
 
 // ===============================================================================================
 
-mbs::PrompterWorker::PrompterWorker(const dabc::Reference& parent, const std::string& name,
-                                     const std::string& mbsnode, int port) :
+mbs::PrompterWorker::PrompterWorker(const dabc::Reference& parent, const std::string &name,
+                                     const std::string &mbsnode, int port) :
    dabc::Worker(parent, name),
    fMbsNode(mbsnode),
    fPort(port),

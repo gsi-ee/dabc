@@ -132,7 +132,7 @@ namespace dabc {
          void SetDataInput(DataInput* inp, bool owner);
 
          /** Set URL, use to reconnect data input */
-         void EnableReconnect(const std::string& reconn);
+         void EnableReconnect(const std::string &reconn);
 
          // in implementation user can get informed when something changed in the memory pool
          virtual void ProcessPoolChanged(MemoryPool* pool) {}

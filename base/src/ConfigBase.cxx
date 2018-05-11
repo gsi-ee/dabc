@@ -301,7 +301,7 @@ std::string dabc::ConfigBase::GetAttrValue(XMLNodePointer_t node, const char* na
  */
 
 std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
-                                    const std::string& dflt,
+                                    const std::string &dflt,
                                     const char* sub1,
                                     const char* sub2,
                                     const char* sub3)

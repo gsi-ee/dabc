@@ -46,7 +46,7 @@ dabc::CmdConnectionManagerHandle::CmdConnectionManagerHandle(ConnectionRequestFu
    SetStr(ReqArg(), req.ItemName());
 }
 
-dabc::ConnectionManager::ConnectionManager(const std::string& name, Command cmd) :
+dabc::ConnectionManager::ConnectionManager(const std::string &name, Command cmd) :
    ModuleAsync(name, cmd),
    fRecs(),
    fConnCmd(),
@@ -321,7 +321,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
    return mindelay;
 }
 
-dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::string& local, const std::string& remote)
+dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::string &local, const std::string &remote)
 {
    for (unsigned n=0; n<fRecs.GetSize(); n++) {
       ConnectionRequestFull req = fRecs[n];

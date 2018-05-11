@@ -41,7 +41,7 @@
 dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
 
 
-dabc::Reference hadaq::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference hadaq::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
 {
    if (classname=="hadaq_iter")
       return new hadaq::EventsIterator(objname);
@@ -50,7 +50,7 @@ dabc::Reference hadaq::Factory::CreateObject(const std::string& classname, const
 }
 
 
-dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string &typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="hld") {
@@ -62,7 +62,7 @@ dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string& typ)
    return 0;
 }
 
-dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string &typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="hld") {
@@ -73,7 +73,7 @@ dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string& typ)
    return 0;
 }
 
-dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 
@@ -172,7 +172,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 }
 
 
-dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* hadaq::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "hadaq::CombinerModule")
       return new hadaq::CombinerModule(modulename, cmd);

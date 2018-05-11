@@ -33,7 +33,7 @@
 #include "ezca.h"
 
 
-ezca::EpicsInput::EpicsInput(const std::string& name) :
+ezca::EpicsInput::EpicsInput(const std::string &name) :
    dabc::DataInput(),
    fName(name),
    fTimeout(1),
@@ -245,7 +245,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 }
 
 
-int ezca::EpicsInput::CA_GetLong(const std::string& name, long& val)
+int ezca::EpicsInput::CA_GetLong(const std::string &name, long& val)
 {
    int rev = ezcaGet((char*) name.c_str(), ezcaLong, 1, &val);
    if(rev!=EZCA_OK)
@@ -255,7 +255,7 @@ int ezca::EpicsInput::CA_GetLong(const std::string& name, long& val)
    return rev;
 }
 
-int ezca::EpicsInput::CA_GetDouble(const std::string& name, double& val)
+int ezca::EpicsInput::CA_GetDouble(const std::string &name, double& val)
 {
    int rev=ezcaGet((char*) name.c_str(), ezcaDouble, 1, &val);
    if(rev!=EZCA_OK)

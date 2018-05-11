@@ -88,7 +88,7 @@ dabc::PublisherEntry::~PublisherEntry()
 
 // ======================================================================
 
-dabc::Publisher::Publisher(const std::string& name, dabc::Command cmd) :
+dabc::Publisher::Publisher(const std::string &name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fGlobal(),
    fLocal(),
@@ -374,7 +374,7 @@ bool dabc::Publisher::ReplyCommand(Command cmd)
 }
 
 
-dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path, bool* islocal)
+dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string &path, bool* islocal)
 {
 
    dabc::Hierarchy top = fGlobal.null() ? fLocal : fGlobal;
@@ -386,7 +386,7 @@ dabc::Hierarchy dabc::Publisher::GetWorkItem(const std::string& path, bool* islo
    return top.FindChild(path.c_str());
 }
 
-bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string& itemname, bool& islocal, std::string& producer_name, std::string& request_name)
+bool dabc::Publisher::IdentifyItem(bool asproducer, const std::string &itemname, bool& islocal, std::string& producer_name, std::string& request_name)
 {
    if (asproducer && (itemname.length()==0)) return false;
 
@@ -911,7 +911,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
 // ===================================================================
 
 
-bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::string& workername, void* hier)
+bool dabc::PublisherRef::OwnCommand(int id, const std::string &path, const std::string &workername, void* hier)
 {
    if (null()) return false;
 
@@ -935,9 +935,9 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string& path, const std::
 }
 
 
-bool dabc::PublisherRef::SaveGlobalNamesListAs(const std::string& kind,
-                                               const std::string& path,
-                                               const std::string& query,
+bool dabc::PublisherRef::SaveGlobalNamesListAs(const std::string &kind,
+                                               const std::string &path,
+                                               const std::string &query,
                                                std::string& str)
 {
    if (null()) return false;
@@ -968,7 +968,7 @@ std::string dabc::PublisherRef::UserInterfaceKind(const char* uri, std::string& 
    return cmd.GetStr("ui_kind");
 }
 
-int dabc::PublisherRef::NeedAuth(const std::string& path)
+int dabc::PublisherRef::NeedAuth(const std::string &path)
 {
    if (null()) return -1;
 
@@ -982,7 +982,7 @@ int dabc::PublisherRef::NeedAuth(const std::string& path)
 
 
 
-dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std::string& query)
+dabc::Command dabc::PublisherRef::ExeCmd(const std::string &fullname, const std::string &query)
 {
    dabc::Command res;
    if (null()) return res;
@@ -1004,7 +1004,7 @@ dabc::Command dabc::PublisherRef::ExeCmd(const std::string& fullname, const std:
 }
 
 
-dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const std::string& kind, const std::string& query, double tmout)
+dabc::Buffer dabc::PublisherRef::GetBinary(const std::string &fullname, const std::string &kind, const std::string &query, double tmout)
 {
    if (null()) return 0;
 
@@ -1017,7 +1017,7 @@ dabc::Buffer dabc::PublisherRef::GetBinary(const std::string& fullname, const st
    return 0;
 }
 
-dabc::Hierarchy dabc::PublisherRef::GetItem(const std::string& fullname, const std::string& query, double tmout)
+dabc::Hierarchy dabc::PublisherRef::GetItem(const std::string &fullname, const std::string &query, double tmout)
 {
    dabc::Hierarchy res;
 

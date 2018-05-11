@@ -24,7 +24,7 @@ namespace bnet {
          bool fFirstEvent;
 
       public:
-         TestEventsIterator(const std::string& name) : dabc::EventsIterator(name), fPtr(), fFirstEvent(true) {}
+         TestEventsIterator(const std::string &name) : dabc::EventsIterator(name), fPtr(), fFirstEvent(true) {}
          virtual ~TestEventsIterator() {}
 
          virtual bool Assign(const dabc::Buffer& buf)
@@ -75,7 +75,7 @@ namespace bnet {
          dabc::Buffer fBuf;
          dabc::Pointer fPtr;
       public:
-         TestEventsProducer(const std::string& name) : dabc::EventsProducer(name), fBuf(), fPtr() {}
+         TestEventsProducer(const std::string &name) : dabc::EventsProducer(name), fBuf(), fPtr() {}
          virtual ~TestEventsProducer() {}
 
          virtual bool Assign(const dabc::Buffer& buf)

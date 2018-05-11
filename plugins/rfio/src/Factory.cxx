@@ -17,7 +17,7 @@
 
 dabc::FactoryPlugin rfiofactory(new rfio::Factory("rfio"));
 
-void* rfio::Factory::CreateAny(const std::string& classname, const std::string&, dabc::Command)
+void* rfio::Factory::CreateAny(const std::string &classname, const std::string&, dabc::Command)
 {
    if (classname == "rfio::FileInterface") {
       DOUT0("Create file interface instance for the RFIO");

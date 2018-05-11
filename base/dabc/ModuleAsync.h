@@ -43,7 +43,7 @@ namespace dabc {
       protected:
          /** Constructor of ModuleAsync class.
           * Made protected to exclude possibility to create instance of class itself */
-         ModuleAsync(const std::string& name, Command cmd = nullptr) : Module(name, cmd) { }
+         ModuleAsync(const std::string &name, Command cmd = nullptr) : Module(name, cmd) { }
 
          /** Destructor of ModuleAsync class. */
          virtual ~ModuleAsync();
@@ -151,7 +151,7 @@ namespace dabc {
            * \details Can be reimplemented by the user.
            * Called when input/output port or pool handle are connected or disconnected diregard
            * of running state of the module */
-         virtual void ProcessConnectEvent(const std::string& name, bool on) {}
+         virtual void ProcessConnectEvent(const std::string &name, bool on) {}
 
          /** \brief Method called by framework when timer event is produced.
            * \details Can be reimplemented by the user. */

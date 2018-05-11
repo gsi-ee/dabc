@@ -67,7 +67,7 @@ void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
 
 }
 
-void dabc::InputTransport::EnableReconnect(const std::string& reconn)
+void dabc::InputTransport::EnableReconnect(const std::string &reconn)
 {
    fReconnect = reconn;
 }

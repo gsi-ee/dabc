@@ -25,7 +25,7 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/UdpTransport.h"
 
-hadaq::TerminalModule::TerminalModule(const std::string& name, dabc::Command cmd) :
+hadaq::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fTotalBuildEvents(0),
    fTotalRecvBytes(0),

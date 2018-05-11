@@ -19,7 +19,7 @@
 #include "dabc/Manager.h"
 
 
-dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string& name) :
+dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string &name) :
    Worker(parent, name.c_str()),
    fItemType(typ),
    fItemId(0),
@@ -87,7 +87,7 @@ std::string dabc::ModuleItemRef::InfoParName() const
 // ==============================================================================
 
 
-dabc::Timer::Timer(Reference parent, bool systimer, const std::string& name, double period, bool synchron) :
+dabc::Timer::Timer(Reference parent, bool systimer, const std::string &name, double period, bool synchron) :
    ModuleItem(mitTimer, parent, name),
    fSysTimer(systimer),
    fPeriod(period),
@@ -148,7 +148,7 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
 // ==============================================================================
 
-dabc::ConnTimer::ConnTimer(Reference parent, const std::string& name, const std::string& portname) :
+dabc::ConnTimer::ConnTimer(Reference parent, const std::string &name, const std::string &portname) :
    ModuleItem(mitConnTimer, parent, name),
    fPortName(portname),
    fErrorFlag(false)

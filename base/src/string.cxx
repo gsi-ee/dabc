@@ -234,7 +234,7 @@ bool dabc::str_to_bool(const char* val, bool* res)
    return false;
 }
 
-std::string dabc::replace_all(const std::string& str, const std::string& match, const std::string& replace)
+std::string dabc::replace_all(const std::string &str, const std::string &match, const std::string &replace)
 {
    if (match.empty()) return str;
 

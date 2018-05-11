@@ -78,7 +78,7 @@ namespace dabc {
          unsigned    fItemId;    // sequence id of the item in complete items list
          unsigned    fSubId;     // sequence number of input/output/pool/timer port, used by module
 
-         ModuleItem(int typ, Reference parent, const std::string& name);
+         ModuleItem(int typ, Reference parent, const std::string &name);
 
          virtual bool ItemNeedThread() const { return false; }
 
@@ -184,7 +184,7 @@ namespace dabc {
          virtual double ProcessTimeout(double last_diff);
 
       private:
-         Timer(Reference parent, bool systimer, const std::string& name, double timeout = -1., bool synchron = false);
+         Timer(Reference parent, bool systimer, const std::string &name, double timeout = -1., bool synchron = false);
 
    };
 
@@ -212,7 +212,7 @@ namespace dabc {
 
       private:
 
-         ConnTimer(Reference parent, const std::string& name, const std::string& portname);
+         ConnTimer(Reference parent, const std::string &name, const std::string &portname);
    };
 
 }

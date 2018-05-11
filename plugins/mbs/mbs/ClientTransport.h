@@ -83,7 +83,7 @@ namespace mbs {
          virtual void OnSendCompleted();
          virtual void OnRecvCompleted();
 
-         virtual void OnSocketError(int err, const std::string& info);
+         virtual void OnSocketError(int err, const std::string &info);
 
          void SubmitRequest();
          void MakeCallback(unsigned sz);

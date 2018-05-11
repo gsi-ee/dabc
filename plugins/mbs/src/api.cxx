@@ -19,7 +19,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Publisher.h"
 
-mbs::ReadoutModule::ReadoutModule(const std::string& name, dabc::Command cmd) :
+mbs::ReadoutModule::ReadoutModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fIter(),
    fLastNotFullTm(),
@@ -129,7 +129,7 @@ bool mbs::ReadoutModule::GetEventInTime(double maxage)
 
 // ===================================================================================
 
-mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string& url, const char* classname)
+mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const char* classname)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(-1);
@@ -208,7 +208,7 @@ mbs::EventHeader* mbs::ReadoutHandle::GetEvent()
 
 // ============================================================================================
 
-mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string& mbsnode, int cmdport, int logport, int statport)
+mbs::MonitorHandle mbs::MonitorHandle::Connect(const std::string &mbsnode, int cmdport, int logport, int statport)
 {
    if (dabc::mgr.null()) {
       dabc::SetDebugLevel(-1);
@@ -253,7 +253,7 @@ bool mbs::MonitorHandle::Disconnect()
    return true;
 }
 
-bool mbs::MonitorHandle::MbsCmd(const std::string& mbscmd, double tmout)
+bool mbs::MonitorHandle::MbsCmd(const std::string &mbscmd, double tmout)
 {
    if (null()) return false;
 

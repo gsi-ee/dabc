@@ -28,7 +28,7 @@ dabc::Url::Url(const char* url)
    SetUrl(std::string(url ? url : ""));
 }
 
-dabc::Url::Url(const std::string& url)
+dabc::Url::Url(const std::string &url)
 {
    SetUrl(url);
 }
@@ -43,7 +43,7 @@ void dabc::Url::Reset()
 }
 
 
-bool dabc::Url::SetUrl(const std::string& url, bool showerr)
+bool dabc::Url::SetUrl(const std::string &url, bool showerr)
 {
    fValid = false;
    fUrl.clear();
@@ -99,7 +99,7 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
    return fValid;
 }
 
-void dabc::Url::SetOptions(const std::string& opt)
+void dabc::Url::SetOptions(const std::string &opt)
 {
    fOptions = opt;
 
@@ -144,14 +144,14 @@ std::string dabc::Url::GetHostNameWithPort(int dfltport) const
    return (port>0) ?  fHostName + dabc::format(":%d", port) : fHostName;
 }
 
-std::string dabc::Url::ComposeItemName(int nodeid, const std::string& itemname)
+std::string dabc::Url::ComposeItemName(int nodeid, const std::string &itemname)
 {
    if (nodeid<0) return std::string();
 
    return dabc::format("dabc://node%d/%s", nodeid, itemname.length() > 0 ? itemname.c_str() : "");
 }
 
-std::string dabc::Url::ComposePortName(int nodeid, const std::string& fullportname, int portid)
+std::string dabc::Url::ComposePortName(int nodeid, const std::string &fullportname, int portid)
 {
    std::string sbuf;
    if ((nodeid<0) || fullportname.empty()) return sbuf;
@@ -164,7 +164,7 @@ std::string dabc::Url::ComposePortName(int nodeid, const std::string& fullportna
    return sbuf;
 }
 
-bool dabc::Url::DecomposeItemName(const std::string& name, int& nodeid, std::string& fullportname)
+bool dabc::Url::DecomposeItemName(const std::string &name, int& nodeid, std::string& fullportname)
 {
    Url url;
 
@@ -200,7 +200,7 @@ std::string dabc::Url::GetOptionsPart(int number) const
 }
 
 
-bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::string* value) const
+bool dabc::Url::GetOption(const std::string &optname, int optionnumber, std::string* value) const
 {
    if (value) value->clear();
 
@@ -278,7 +278,7 @@ bool dabc::Url::GetOption(const std::string& optname, int optionnumber, std::str
    return false;
 }
 
-std::string dabc::Url::GetOptionStr(const std::string& optname, const std::string& dflt) const
+std::string dabc::Url::GetOptionStr(const std::string &optname, const std::string &dflt) const
 {
    std::string res;
 
@@ -287,7 +287,7 @@ std::string dabc::Url::GetOptionStr(const std::string& optname, const std::strin
    return dflt;
 }
 
-int dabc::Url::GetOptionInt(const std::string& optname, int dflt) const
+int dabc::Url::GetOptionInt(const std::string &optname, int dflt) const
 {
    std::string res = GetOptionStr(optname);
 
@@ -299,7 +299,7 @@ int dabc::Url::GetOptionInt(const std::string& optname, int dflt) const
    return dflt;
 }
 
-double dabc::Url::GetOptionDouble(const std::string& optname, double dflt) const
+double dabc::Url::GetOptionDouble(const std::string &optname, double dflt) const
 {
    std::string res = GetOptionStr(optname);
 
@@ -311,7 +311,7 @@ double dabc::Url::GetOptionDouble(const std::string& optname, double dflt) const
    return dflt;
 }
 
-bool dabc::Url::GetOptionBool(const std::string& optname, bool dflt) const
+bool dabc::Url::GetOptionBool(const std::string &optname, bool dflt) const
 {
    std::string res = GetOptionStr(optname);
 

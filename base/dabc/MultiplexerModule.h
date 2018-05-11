@@ -48,7 +48,7 @@ namespace dabc {
          void CheckDataSending();
 
       public:
-         MultiplexerModule(const std::string& name, dabc::Command cmd = nullptr);
+         MultiplexerModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void ProcessInputEvent(unsigned port);
          virtual void ProcessOutputEvent(unsigned port);
@@ -69,7 +69,7 @@ namespace dabc {
    class RepeaterModule : public dabc::ModuleAsync {
 
       public:
-         RepeaterModule(const std::string& name, dabc::Command cmd = nullptr);
+         RepeaterModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual bool ProcessRecv(unsigned port);
          virtual bool ProcessSend(unsigned port);

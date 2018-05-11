@@ -213,7 +213,7 @@ int mbs::DefualtServerPort(int kind)
    return 0;
 }
 
-int mbs::StrToServerKind(const std::string& str)
+int mbs::StrToServerKind(const std::string &str)
 {
    if (str.empty()) return NoServer;
    if (str == "Transport") return TransportServer;

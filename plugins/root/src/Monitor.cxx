@@ -88,7 +88,7 @@ public:
 
 // ==============================================================================
 
-root::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+root::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
    fRoot(),

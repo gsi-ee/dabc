@@ -44,12 +44,12 @@ const char* ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Co
 dabc::FactoryPlugin epicsfactory(new ezca::Factory("ezca"));
 
 
-ezca::Factory::Factory(const std::string& name) :
+ezca::Factory::Factory(const std::string &name) :
    dabc::Factory(name)
 {
 }
 
-dabc::DataInput* ezca::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* ezca::Factory::CreateDataInput(const std::string &typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="ezca")
@@ -58,7 +58,7 @@ dabc::DataInput* ezca::Factory::CreateDataInput(const std::string& typ)
    return 0;
 }
 
-dabc::Module* ezca::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* ezca::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "ezca::Monitor")
       return new ezca::Monitor(modulename, cmd);

@@ -28,7 +28,7 @@
 #include "mbs/Iterator.h"
 #include "mbs/SlowControlData.h"
 
-ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+ezca::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    mbs::MonitorSlowControl(name, "Epics", cmd),
    fEzcaTimeout(-1.),
    fEzcaRetryCnt(-1),
@@ -88,7 +88,7 @@ ezca::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
       Publish(fWorkerHierarchy, std::string("EZCA/") + fTopFolder);
 }
 
-std::string ezca::Monitor::GetItemName(const std::string& ezcaname)
+std::string ezca::Monitor::GetItemName(const std::string &ezcaname)
 {
    std::string res = ezcaname;
 
@@ -216,7 +216,7 @@ bool ezca::Monitor::DoEpicsReadout()
 }
 
 
-int ezca::Monitor::CA_GetLong(const std::string& name, long& val)
+int ezca::Monitor::CA_GetLong(const std::string &name, long& val)
 {
    int rev = ezcaGet((char*) name.c_str(), ezcaLong, 1, &val);
    if(rev!=EZCA_OK)
@@ -226,7 +226,7 @@ int ezca::Monitor::CA_GetLong(const std::string& name, long& val)
    return rev;
 }
 
-int ezca::Monitor::CA_GetDouble(const std::string& name, double& val)
+int ezca::Monitor::CA_GetDouble(const std::string &name, double& val)
 {
    int rev=ezcaGet((char*) name.c_str(), ezcaDouble, 1, &val);
    if(rev!=EZCA_OK)

@@ -139,7 +139,7 @@ unsigned dabc::MemoryPool::fDfltAlignment = 16;
 unsigned dabc::MemoryPool::fDfltBufSize = 4096;
 
 
-dabc::MemoryPool::MemoryPool(const std::string& name, bool withmanager) :
+dabc::MemoryPool::MemoryPool(const std::string &name, bool withmanager) :
    dabc::ModuleAsync(std::string(withmanager ? "" : "#") + name),
    fMem(0),
    fAlignment(fDfltAlignment),
@@ -681,7 +681,7 @@ int dabc::MemoryPool::ExecuteCommand(Command cmd)
    return ModuleAsync::ExecuteCommand(cmd);
 }
 
-void dabc::MemoryPool::ProcessConnectionActivated(const std::string& name, bool on)
+void dabc::MemoryPool::ProcessConnectionActivated(const std::string &name, bool on)
 {
    DOUT4(" MemoryPool %s Port %s active=%s", GetName(), name.c_str(), DBOOL(on));
 
@@ -689,7 +689,7 @@ void dabc::MemoryPool::ProcessConnectionActivated(const std::string& name, bool 
 }
 
 
-void dabc::MemoryPool::ProcessConnectEvent(const std::string& name, bool on)
+void dabc::MemoryPool::ProcessConnectEvent(const std::string &name, bool on)
 {
    unsigned portid = FindOutput(name);
    if (portid >= fReqests.size()) return;

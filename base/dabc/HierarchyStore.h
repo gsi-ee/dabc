@@ -54,7 +54,7 @@ namespace dabc {
          virtual ~HierarchyStore();
 
          /** \brief Set base path for data storage, can only be changed when all files are closed */
-         bool SetBasePath(const std::string& path);
+         bool SetBasePath(const std::string &path);
 
 
          bool StartFile(dabc::Buffer buf);
@@ -85,13 +85,13 @@ namespace dabc {
 
          dabc::Hierarchy  fTree;     ///! scanned files tree
 
-         bool ScanTreeDir(dabc::Hierarchy& h, const std::string& dirname);
+         bool ScanTreeDir(dabc::Hierarchy& h, const std::string &dirname);
 
-         bool ScanFiles(const std::string& dirname, const DateTime& onlydate, std::vector<uint64_t>& vect);
+         bool ScanFiles(const std::string &dirname, const DateTime& onlydate, std::vector<uint64_t>& vect);
 
-         std::string MakeFileName(const std::string& fpath, const DateTime& dt);
+         std::string MakeFileName(const std::string &fpath, const DateTime& dt);
 
-         bool ProduceStructure(Hierarchy& tree, const DateTime& from, const DateTime& till, const std::string& entry, Hierarchy& tgt);
+         bool ProduceStructure(Hierarchy& tree, const DateTime& from, const DateTime& till, const std::string &entry, Hierarchy& tgt);
 
          dabc::Buffer ReadBuffer(dabc::BinaryFile& f);
 
@@ -101,7 +101,7 @@ namespace dabc {
          virtual ~HierarchyReading();
 
          /** Set top directory for all recorded data */
-         void SetBasePath(const std::string& path);
+         void SetBasePath(const std::string &path);
 
          /** Scan only directories, do not open any files */
          bool ScanTree();
@@ -110,7 +110,7 @@ namespace dabc {
          bool GetStrucutre(Hierarchy& h, const DateTime& dt = 0);
 
          /** Get entry with history for specified time interval */
-         Hierarchy GetSerie(const std::string& entry, const DateTime& from, const DateTime& till);
+         Hierarchy GetSerie(const std::string &entry, const DateTime& from, const DateTime& till);
 
    };
 

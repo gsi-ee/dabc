@@ -71,15 +71,15 @@ namespace http {
                       dabc::Buffer& content_bin);
 
       public:
-         Server(const std::string& name, dabc::Command cmd = nullptr);
+         Server(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual ~Server();
 
          /** Add files location */
-         void AddLocation(const std::string& filepath,
-                          const std::string& absprefix,
-                          const std::string& nameprefix = "",
-                          const std::string& nameprefixrepl = "");
+         void AddLocation(const std::string &filepath,
+                          const std::string &absprefix,
+                          const std::string &nameprefix = "",
+                          const std::string &nameprefixrepl = "");
 
          static const char* GetMimeType(const char* fname);
    };

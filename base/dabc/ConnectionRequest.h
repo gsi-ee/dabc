@@ -98,7 +98,7 @@ namespace dabc {
 
          std::string  fAllowedField;  ///< name of field which is allowed to change in any state
 
-         ConnectionObject(Reference port, const std::string& localurl);
+         ConnectionObject(Reference port, const std::string &localurl);
          virtual ~ConnectionObject();
 
          /** Reimplement virtual method of ParameterContainer to block field change if object in non-init state.
@@ -197,7 +197,7 @@ namespace dabc {
       std::string GetLocalUrl() const { GET_PAR_FIELD(fLocalUrl,"") }
 
       std::string GetPoolName() const { GET_PAR_FIELD(fPoolName,"") }
-      void SetPoolName(const std::string& name) { SET_PAR_FIELD(fPoolName, name) }
+      void SetPoolName(const std::string &name) { SET_PAR_FIELD(fPoolName, name) }
 
       /** Return url of data source to which connection should be established */
       std::string GetRemoteUrl() const { return GetField("url").AsStr(); }
@@ -221,11 +221,11 @@ namespace dabc {
       double GetConnTimeout() const { return GetField(xmlTimeoutAttr).AsDouble(10.); }
 
       // fields can be changed only in initial state right after creation of the request
-      void SetRemoteUrl(const std::string& url) { SetField("url", url); }
+      void SetRemoteUrl(const std::string &url) { SetField("url", url); }
 
       void SetServerSide(bool isserver = true) { SetField("server", isserver); }
 
-      void SetConnDevice(const std::string& dev) { SetField(xmlDeviceAttr, dev); }
+      void SetConnDevice(const std::string &dev) { SetField(xmlDeviceAttr, dev); }
 
       void SetOptional(bool on = true) { SetField(xmlOptionalAttr, on); }
 
@@ -233,7 +233,7 @@ namespace dabc {
 
       void SetConnTimeout(double tm) { SetField(xmlTimeoutAttr, tm); }
 
-      void SetConnThread(const std::string& name) { SetField(xmlThreadAttr, name); }
+      void SetConnThread(const std::string &name) { SetField(xmlThreadAttr, name); }
 
       void SetConfigFromXml(XMLNodePointer_t node);
 
@@ -244,7 +244,7 @@ namespace dabc {
       /** Change state of the connection to init that other parameters can be changed */
       void SetInitState() { ChangeState(ConnectionObject::sInit, true); }
 
-      void SetAllowedField(const std::string& name = "");
+      void SetAllowedField(const std::string &name = "");
 
       /** Indicates that only connection kind can be assigned to the reference */
       virtual const char* ParReferenceKind() { return "connection"; }

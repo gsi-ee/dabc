@@ -38,7 +38,7 @@ void aqua::ClientOutput::OnRecvCompleted()
    // StartRecv(fRecvBuf, 16);
 }
 
-void aqua::ClientOutput::OnSocketError(int err, const std::string& info)
+void aqua::ClientOutput::OnSocketError(int err, const std::string &info)
 {
    if (fState == oSendingBuffer) MakeCallBack(dabc::do_Ok);
    DOUT1("Connection to AQUA broken  %s:%d - %d:%s", fServerName.c_str(), fServerPort, err, info.c_str());

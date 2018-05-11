@@ -40,7 +40,7 @@ namespace gosip {
 
       public:
 
-         Player(const std::string& name, dabc::Command cmd = nullptr);
+         Player(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Player();
 
          virtual void ModuleCleanup() {}

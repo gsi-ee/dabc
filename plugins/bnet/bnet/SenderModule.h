@@ -29,7 +29,7 @@ namespace bnet {
 
       public:
 
-         SenderModule(const std::string& name, dabc::Command cmd);
+         SenderModule(const std::string &name, dabc::Command cmd);
 
          virtual ~SenderModule();
 

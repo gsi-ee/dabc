@@ -37,7 +37,7 @@
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
 
 
-dabc::Reference mbs::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference mbs::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
 {
    if (classname=="mbs_iter")
       return new mbs::EventsIterator(objname);
@@ -45,7 +45,7 @@ dabc::Reference mbs::Factory::CreateObject(const std::string& classname, const s
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }
 
-dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 
@@ -82,7 +82,7 @@ dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const s
 }
 
 
-dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* mbs::Factory::CreateDataInput(const std::string &typ)
 {
    dabc::Url url(typ);
    if ((url.GetProtocol()==mbs::protocolLmd) && (url.GetFullName() == "Generator")) {
@@ -134,7 +134,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
    return 0;
 }
 
-dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string &typ)
 {
    DOUT2("Factory::CreateDataOutput typ:%s", typ.c_str());
 
@@ -147,7 +147,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
    return 0;
 }
 
-dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* mbs::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "mbs::CombinerModule")
       return new mbs::CombinerModule(modulename, cmd);

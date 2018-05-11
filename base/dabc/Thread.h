@@ -330,7 +330,7 @@ namespace dabc {
 
          static unsigned NumThreadInstances() { return fThreadInstances; }
 
-         Thread(Reference parent, const std::string& name, Command cmd = nullptr);
+         Thread(Reference parent, const std::string &name, Command cmd = nullptr);
 
          virtual ~Thread();
 
@@ -350,7 +350,7 @@ namespace dabc {
 
          virtual const char* ClassName() const { return typeThread; }
 
-         virtual bool CompatibleClass(const std::string& clname) const;
+         virtual bool CompatibleClass(const std::string &clname) const;
 
          void FireDoNothingEvent();
 
@@ -505,7 +505,7 @@ namespace dabc {
          inline bool IsRealThrd() const { return GetObject() ? GetObject()->fRealThrd : false; }
 
          /** Make dummy worker to run addon inside the thread */
-         bool MakeWorkerFor(WorkerAddon* addon, const std::string& name = "");
+         bool MakeWorkerFor(WorkerAddon* addon, const std::string &name = "");
    };
 
 }

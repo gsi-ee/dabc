@@ -58,11 +58,11 @@ namespace fesa {
          rdaRDAService* fRDAService;
          rdaDeviceHandle* fDevice;
          
-         double doGet(const std::string& service, const std::string& field);
+         double doGet(const std::string &service, const std::string &field);
 
       public:
 
-         Player(const std::string& name, dabc::Command cmd = nullptr);
+         Player(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Player();
 
          virtual void ModuleCleanup() {}

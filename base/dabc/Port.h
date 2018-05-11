@@ -85,7 +85,7 @@ namespace dabc {
          virtual void DoCleanup();
 
          Port(int kind, Reference parent,
-                  const std::string& name,
+                  const std::string &name,
                   unsigned queuesize);
          virtual ~Port();
 
@@ -117,7 +117,7 @@ namespace dabc {
          void Disconnect(bool witherr = false) { fQueue.Disconnect(IsInput(), witherr); }
 
          /** Set name of bind port - when input and output ports should use same transport */
-         void SetBindName(const std::string& name);
+         void SetBindName(const std::string &name);
 
          /** Returns name of bind port */
          std::string GetBindName() const;
@@ -172,7 +172,7 @@ namespace dabc {
           *    "abort" - immediate abort of application
           *
           */
-         void ConfigureOnError(const std::string& action = "") { fOnError = action; }
+         void ConfigureOnError(const std::string &action = "") { fOnError = action; }
 
       public:
 
@@ -218,7 +218,7 @@ namespace dabc {
       PortRef GetBindPort();
 
       /** \brief Configure action in case of error */
-      void ConfigureOnError(const std::string& action = "")
+      void ConfigureOnError(const std::string &action = "")
          { if (GetObject()) GetObject()->ConfigureOnError(action); }
 
       /** \brief Configure reconnect parameters  */
@@ -230,7 +230,7 @@ namespace dabc {
        * isserver flag should identify which side is server
        * and which is client during connection establishing
        * TODO: one should try in future avoid isserver flag completely, it can be ruled later by connection manager */
-      ConnectionRequest MakeConnReq(const std::string& url, bool isserver = false);
+      ConnectionRequest MakeConnReq(const std::string &url, bool isserver = false);
    };
 
 
@@ -250,7 +250,7 @@ namespace dabc {
 
       private:
          InputPort(Reference parent,
-                   const std::string& name,
+                   const std::string &name,
                    unsigned queuesize);
 
       protected:
@@ -307,7 +307,7 @@ namespace dabc {
          bool   fSendallFlag; // flag, used by SendToAllOutputs to mark, which output must be used for sending
 
          OutputPort(Reference parent,
-                   const std::string& name,
+                   const std::string &name,
                    unsigned queuesize);
 
       protected:
@@ -354,7 +354,7 @@ namespace dabc {
 
          PoolHandle(Reference parent,
                     Reference pool,
-                    const std::string& name,
+                    const std::string &name,
                     unsigned queuesize);
 
       protected:

@@ -32,7 +32,7 @@
 //#define HADERRBITDEBUG 1
 
 
-hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
+hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fCfg(),
    fOut(),
@@ -189,7 +189,7 @@ void hadaq::CombinerModule::ModuleCleanup()
 }
 
 
-void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
+void hadaq::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 {
 //   DOUT0("SET INFO: %s", info.c_str());
 
@@ -1260,37 +1260,37 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 }
 
 
-std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string& name)
+std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string &name)
 {
    return dabc::format("%s-%s",hadaq::EvtbuildPrefix,name.c_str());
 }
 
-void hadaq::CombinerModule::CreateEvtbuildPar(const std::string& name)
+void hadaq::CombinerModule::CreateEvtbuildPar(const std::string &name)
 {
    CreatePar(GetEvtbuildParName(name)).SetSynchron(true, 0.2);
 }
 
-void hadaq::CombinerModule::SetEvtbuildPar(const std::string& name, unsigned value)
+void hadaq::CombinerModule::SetEvtbuildPar(const std::string &name, unsigned value)
 {
     Par(GetEvtbuildParName(name)).SetValue(value);
 }
 
-unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string& name)
+unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string &name)
 {
    return Par(GetEvtbuildParName(name)).Value().AsUInt();
 }
 
-std::string  hadaq::CombinerModule::GetNetmemParName(const std::string& name)
+std::string  hadaq::CombinerModule::GetNetmemParName(const std::string &name)
 {
    return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
 }
 
-void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)
+void hadaq::CombinerModule::CreateNetmemPar(const std::string &name)
 {
    CreatePar(GetNetmemParName(name)).SetSynchron(true, 0.2);
 }
 
-void hadaq::CombinerModule::SetNetmemPar(const std::string& name, unsigned value)
+void hadaq::CombinerModule::SetNetmemPar(const std::string &name, unsigned value)
 {
    Par(GetNetmemParName(name)).SetValue(value);
 }

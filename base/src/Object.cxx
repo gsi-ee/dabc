@@ -109,7 +109,7 @@ namespace dabc {
  */
 
 
-dabc::Object::Object(const std::string& name, unsigned flags) :
+dabc::Object::Object(const std::string &name, unsigned flags) :
    fObjectFlags(flags),
    fObjectParent(),
    fObjectName(name),
@@ -123,7 +123,7 @@ dabc::Object::Object(const std::string& name, unsigned flags) :
    Constructor();
 }
 
-dabc::Object::Object(Reference parent, const std::string& name, unsigned flags) :
+dabc::Object::Object(Reference parent, const std::string &name, unsigned flags) :
    fObjectFlags(flags),
    fObjectParent(parent),
    fObjectName(name),
@@ -820,7 +820,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 }
 
 
-dabc::Reference dabc::Object::GetFolder(const std::string& name, bool force) throw()
+dabc::Reference dabc::Object::GetFolder(const std::string &name, bool force) throw()
 {
    Reference ref(this);
 
@@ -940,7 +940,7 @@ bool dabc::Object::Find(ConfigIO &cfg)
    return GetParent()==0 ? false : cfg.FindItem(GetName());
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::string& fullnamearg, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::string &fullnamearg, bool withmanager)
 {
    if (fullnamearg.empty() && prnt.null())
       return ConstructorPair();
@@ -980,12 +980,12 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::
    return pair;
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(Object* prnt, const std::string& fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(Object* prnt, const std::string &fullname, bool withmanager)
 {
    return dabc::Object::MakePair(Reference(prnt), fullname, withmanager);
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(const std::string& fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(const std::string &fullname, bool withmanager)
 {
    return dabc::Object::MakePair(Reference(), fullname, withmanager);
 }
@@ -1005,12 +1005,12 @@ bool dabc::Object::IsParent(Object* obj) const
 }
 
 
-bool dabc::Object::IsNameMatch(const std::string& mask) const
+bool dabc::Object::IsNameMatch(const std::string &mask) const
 {
    return NameMatch(fObjectName, mask);
 }
 
-bool dabc::Object::NameMatch(const std::string& name, const std::string& mask)
+bool dabc::Object::NameMatch(const std::string &name, const std::string &mask)
 {
    if ((mask.length()==0) || (name.length()==0))
       return name.length()==mask.length();
@@ -1034,7 +1034,7 @@ bool dabc::Object::NameMatch(const std::string& name, const std::string& mask)
    return fnmatch(mask.c_str(), name.c_str(), FNM_NOESCAPE)==0;
 }
 
-bool dabc::Object::NameMatchM(const std::string& name, const std::string& mask)
+bool dabc::Object::NameMatchM(const std::string &name, const std::string &mask)
 {
    size_t separ = mask.find_first_of(':');
 

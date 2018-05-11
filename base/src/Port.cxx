@@ -21,7 +21,7 @@
 #include "dabc/MemoryPool.h"
 
 
-dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned queuesize) :
+dabc::Port::Port(int kind, Reference parent, const std::string &name, unsigned queuesize) :
    ModuleItem(kind, parent, name),
    fQueueCapacity(queuesize),
    fRate(),
@@ -104,7 +104,7 @@ unsigned dabc::Port::QueueCapacity() const
    return fQueueCapacity;
 }
 
-void dabc::Port::SetBindName(const std::string& name)
+void dabc::Port::SetBindName(const std::string &name)
 {
    dabc::LockGuard lock(ObjectMutex());
    fBindName = name;
@@ -261,7 +261,7 @@ bool dabc::PortRef::IsConnected()
 }
 
 
-dabc::ConnectionRequest dabc::PortRef::MakeConnReq(const std::string& url, bool isserver)
+dabc::ConnectionRequest dabc::PortRef::MakeConnReq(const std::string &url, bool isserver)
 {
    dabc::ConnectionRequest req;
 
@@ -282,7 +282,7 @@ dabc::ConnectionRequest dabc::PortRef::MakeConnReq(const std::string& url, bool 
 
 
 dabc::InputPort::InputPort(Reference parent,
-                           const std::string& name,
+                           const std::string &name,
                            unsigned queuesize) :
    Port(dabc::mitInpPort, parent, name, queuesize)
 {
@@ -334,7 +334,7 @@ dabc::Buffer dabc::InputPort::Recv()
 // ====================================================================================
 
 dabc::OutputPort::OutputPort(Reference parent,
-                             const std::string& name,
+                             const std::string &name,
                              unsigned queuesize) :
    Port(dabc::mitOutPort, parent, name, queuesize),
    fSendallFlag(false)
@@ -387,7 +387,7 @@ unsigned dabc::OutputPort::NumStartEvents()
 
 dabc::PoolHandle::PoolHandle(Reference parent,
                              Reference pool,
-                             const std::string& name,
+                             const std::string &name,
                              unsigned queuesize) :
    Port(dabc::mitPool, parent, name, queuesize),
    fPool(pool)

@@ -27,7 +27,7 @@
 #include "dabc/Url.h"
 
 
-dabc::WorkerAddon::WorkerAddon(const std::string& name) :
+dabc::WorkerAddon::WorkerAddon(const std::string &name) :
    Object(0, name),
    fWorker()
 {
@@ -83,7 +83,7 @@ void dabc::WorkerAddon::SubmitWorkerCmd(Command cmd)
 // ================================================================================
 
 
-dabc::Worker::Worker(Reference parent, const std::string& name) :
+dabc::Worker::Worker(Reference parent, const std::string &name) :
    Object(parent, name),
    fThread(),
    fAddon(),
@@ -302,7 +302,7 @@ void dabc::Worker::AssignAddon(WorkerAddon* addon)
 }
 
 
-bool dabc::Worker::MakeThreadForWorker(const std::string& thrdname)
+bool dabc::Worker::MakeThreadForWorker(const std::string &thrdname)
 {
    std::string newname = thrdname;
 
@@ -516,12 +516,12 @@ bool dabc::Worker::ActivateMainLoop()
 
 // all about parameters handling
 
-dabc::Parameter dabc::Worker::Par(const std::string& name) const
+dabc::Parameter dabc::Worker::Par(const std::string &name) const
 {
    return FindChildRef(name.c_str());
 }
 
-dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
+dabc::RecordField dabc::Worker::Cfg(const std::string &name, Command cmd) const
 {
 
    DOUT2("Worker %s Cfg %s", ItemName().c_str(), name.c_str());
@@ -558,7 +558,7 @@ dabc::RecordField dabc::Worker::Cfg(const std::string& name, Command cmd) const
    return res;
 }
 
-dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::string& kind)
+dabc::Parameter dabc::Worker::CreatePar(const std::string &name, const std::string &kind)
 {
    Parameter par = Par(name);
    if (par.null()) {
@@ -578,7 +578,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
    return par;
 }
 
-bool dabc::Worker::DestroyPar(const std::string& name)
+bool dabc::Worker::DestroyPar(const std::string &name)
 {
    Parameter par = Par(name);
 
@@ -589,7 +589,7 @@ bool dabc::Worker::DestroyPar(const std::string& name)
    return true;
 }
 
-dabc::CommandDefinition dabc::Worker::CreateCmdDef(const std::string& name)
+dabc::CommandDefinition dabc::Worker::CreateCmdDef(const std::string &name)
 {
    return CreatePar(name, "cmddef");
 }
@@ -606,7 +606,7 @@ bool dabc::Worker::Find(ConfigIO &cfg)
    return false;
 }
 
-void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer* par, const std::string& value)
+void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer* par, const std::string &value)
 {
    if (force_call || IsOwnThread()) {
 
@@ -1036,13 +1036,13 @@ void dabc::Worker::WorkerSleep(double tmout)
 }
 
 
-bool dabc::Worker::RegisterForParameterEvent(const std::string& mask, bool onlychangeevent)
+bool dabc::Worker::RegisterForParameterEvent(const std::string &mask, bool onlychangeevent)
 {
    return dabc::mgr.ParameterEventSubscription(this, true, mask, onlychangeevent);
 }
 
 
-bool dabc::Worker::UnregisterForParameterEvent(const std::string& mask)
+bool dabc::Worker::UnregisterForParameterEvent(const std::string &mask)
 {
    return dabc::mgr.ParameterEventSubscription(this, false, mask);
 }
@@ -1061,13 +1061,13 @@ dabc::Reference dabc::Worker::GetPublisher()
 }
 
 
-bool dabc::Worker::Publish(const Hierarchy& h, const std::string& path)
+bool dabc::Worker::Publish(const Hierarchy& h, const std::string &path)
 {
    return PublisherRef(GetPublisher()).Register(path, ItemName(), h());
 }
 
 
-bool dabc::Worker::PublishPars(const std::string& path)
+bool dabc::Worker::PublishPars(const std::string &path)
 {
    // no need to publish if publisher not exists
    if (GetPublisher().null()) return true;
@@ -1101,17 +1101,17 @@ bool dabc::Worker::PublishPars(const std::string& path)
 }
 
 
-bool dabc::Worker::Unpublish(const Hierarchy& h, const std::string& path)
+bool dabc::Worker::Unpublish(const Hierarchy& h, const std::string &path)
 {
    return PublisherRef(GetPublisher()).Unregister(path, ItemName(), h());
 }
 
-bool dabc::Worker::Subscribe(const std::string& path)
+bool dabc::Worker::Subscribe(const std::string &path)
 {
    return PublisherRef(GetPublisher()).Subscribe(path, ItemName());
 }
 
-bool dabc::Worker::Unsubscribe(const std::string& path)
+bool dabc::Worker::Unsubscribe(const std::string &path)
 {
    return PublisherRef(GetPublisher()).Unsubscribe(path, ItemName());
 }
@@ -1143,13 +1143,13 @@ bool dabc::WorkerRef::Execute(Command cmd, double tmout)
    return GetObject()->Execute(cmd, tmout);
 }
 
-bool dabc::WorkerRef::Execute(const std::string& cmd, double tmout)
+bool dabc::WorkerRef::Execute(const std::string &cmd, double tmout)
 {
    if (GetObject()==0) return false;
    return GetObject()->Execute(cmd, tmout);
 }
 
-dabc::Parameter dabc::WorkerRef::Par(const std::string& name) const
+dabc::Parameter dabc::WorkerRef::Par(const std::string &name) const
 {
    if (GetObject()==0) return dabc::Parameter();
    return GetObject()->Par(name);

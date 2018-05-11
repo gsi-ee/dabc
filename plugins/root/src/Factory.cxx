@@ -29,7 +29,7 @@ void root::Factory::Initialize()
 {
 }
 
-dabc::Reference root::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference root::Factory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
 {
    if (classname=="root::Monitor")
       return new root::Monitor(objname, cmd);
@@ -41,13 +41,13 @@ dabc::Reference root::Factory::CreateObject(const std::string& classname, const 
 }
 
 
-dabc::DataInput* root::Factory::CreateDataInput(const std::string& typ)
+dabc::DataInput* root::Factory::CreateDataInput(const std::string &typ)
 {
    return 0;
 }
 
 
-dabc::DataOutput* root::Factory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* root::Factory::CreateDataOutput(const std::string &typ)
 {
    dabc::Url url(typ);
 

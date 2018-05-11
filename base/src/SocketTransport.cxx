@@ -56,7 +56,7 @@ void dabc::SocketNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigne
 }
 
 
-long dabc::SocketNetworkInetrface::Notify(const std::string& cmd, int arg)
+long dabc::SocketNetworkInetrface::Notify(const std::string &cmd, int arg)
 {
    if (cmd == "GetNetworkTransportInetrface") return (long) ((NetworkInetrface*) this);
 
@@ -83,7 +83,7 @@ void dabc::SocketNetworkInetrface::SubmitRecv(uint32_t recid)
 }
 
 
-void dabc::SocketNetworkInetrface::OnSocketError(int msg, const std::string& info)
+void dabc::SocketNetworkInetrface::OnSocketError(int msg, const std::string &info)
 {
    NetworkTransport* tr = (NetworkTransport*) fWorker();
    if (tr) tr->CloseTransport(msg!=0);

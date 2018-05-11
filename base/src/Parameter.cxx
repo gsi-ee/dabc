@@ -24,7 +24,7 @@
 #include "dabc/ConfigBase.h"
 #include "dabc/Hierarchy.h"
 
-dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind, bool hidden) :
+dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string &name, const std::string &parkind, bool hidden) :
    dabc::RecordContainer(worker, name, flIsOwner | (hidden ? flHidden : 0)),
    fKind(parkind),
    fLastChangeTm(),
@@ -80,7 +80,7 @@ std::string dabc::ParameterContainer::DefaultFiledName() const
 }
 
 
-dabc::RecordField dabc::ParameterContainer::GetField(const std::string& name) const
+dabc::RecordField dabc::ParameterContainer::GetField(const std::string &name) const
 {
    LockGuard lock(ObjectMutex());
 
@@ -92,7 +92,7 @@ dabc::RecordField dabc::ParameterContainer::GetField(const std::string& name) co
 }
 
 
-bool dabc::ParameterContainer::SetField(const std::string& _name, const RecordField& value)
+bool dabc::ParameterContainer::SetField(const std::string &_name, const RecordField& value)
 {
 
    bool res(false), fire(false), doworker(false);
@@ -192,7 +192,7 @@ unsigned dabc::ParameterContainer::ConfirmFromWorker()
    return res;
 }
 
-void dabc::ParameterContainer::FireModified(const std::string& svalue)
+void dabc::ParameterContainer::FireModified(const std::string &svalue)
 {
    FireParEvent(parModified);
 
@@ -305,7 +305,7 @@ dabc::Worker* dabc::ParameterContainer::GetWorker() const
    return 0;
 }
 
-const std::string& dabc::ParameterContainer::Kind() const
+const std::string &dabc::ParameterContainer::Kind() const
 {
    LockGuard lock(ObjectMutex());
    return fKind;
@@ -584,7 +584,7 @@ std::string dabc::CommandDefinition::ArgName(int n) const
    return GetField(dabc::format("arg%d",n)).AsStr();
 }
 
-int dabc::CommandDefinition::FindArg(const std::string& name) const
+int dabc::CommandDefinition::FindArg(const std::string &name) const
 {
    int num = NumArgs();
 
@@ -593,7 +593,7 @@ int dabc::CommandDefinition::FindArg(const std::string& name) const
    return -1;
 }
 
-dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name, const std::string& kind, bool required, const RecordField& dflt)
+dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string &name, const std::string &kind, bool required, const RecordField& dflt)
 {
    if (name.empty() || null()) return *this;
 
@@ -618,7 +618,7 @@ dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name
    return *this;
 }
 
-dabc::CommandDefinition& dabc::CommandDefinition::SetArgMinMax(const std::string& name, const RecordField& min, const RecordField& max)
+dabc::CommandDefinition& dabc::CommandDefinition::SetArgMinMax(const std::string &name, const RecordField& min, const RecordField& max)
 {
    int id = FindArg(name);
    if (id<0) return *this;

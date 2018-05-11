@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 
-gosip::Player::Player(const std::string& name, dabc::Command cmd) :
+gosip::Player::Player(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
    fWorkerHierarchy.Create("FESA", true);

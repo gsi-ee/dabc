@@ -5,7 +5,7 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/Command.h"
 
-bnet::GeneratorModule::GeneratorModule(const std::string& name, dabc::Command cmd) :
+bnet::GeneratorModule::GeneratorModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fEventCnt(0),
    fUniqueId(0),

@@ -48,7 +48,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
    public:
 
-      TestModuleAsync(const std::string& name, dabc::Command cmd = nullptr) :
+      TestModuleAsync(const std::string &name, dabc::Command cmd = nullptr) :
          dabc::ModuleAsync(name, cmd),
          fKind(0),
          fCntRecv(0),
@@ -159,7 +159,7 @@ class TestModuleSync : public dabc::ModuleSync {
       int                 fKind; // 0 - first in chain, 1 - repeater, 2 - last in chain,
 
    public:
-      TestModuleSync(const std::string& name, dabc::Command cmd = nullptr) :
+      TestModuleSync(const std::string &name, dabc::Command cmd = nullptr) :
          dabc::ModuleSync(name),
          fKind(0)
       {
@@ -259,16 +259,16 @@ class CoreTestApplication : public dabc::Application {
 class CoreTestFactory : public dabc::Factory  {
    public:
 
-      CoreTestFactory(const std::string& name) : dabc::Factory(name) {}
+      CoreTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd)
+      virtual dabc::Application* CreateApplication(const std::string &classname, dabc::Command cmd)
       {
          if (classname == "CoreTestApp")
             return new CoreTestApplication();
          return dabc::Factory::CreateApplication(classname, cmd);
       }
 
-      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
       {
          if (classname == "TestModuleAsync")
             return new TestModuleAsync(modulename, cmd);
@@ -395,7 +395,7 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
       long                fCounter2;
 
    public:
-      TimeoutTestModuleAsync(const std::string& name, bool withrate = false) :
+      TimeoutTestModuleAsync(const std::string &name, bool withrate = false) :
          dabc::ModuleAsync(name),
          fCounter1(0),
          fCounter2(0)
@@ -727,7 +727,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
 
       enum { MaxLoop = 10 };
 
-      TestModuleCmd(const std::string& name, int next, bool timeout = false, bool samecmd = true) :
+      TestModuleCmd(const std::string &name, int next, bool timeout = false, bool samecmd = true) :
          dabc::ModuleAsync(name),
          fNext(next),
          fCount(0),

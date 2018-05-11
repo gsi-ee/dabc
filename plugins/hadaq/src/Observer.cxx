@@ -29,7 +29,7 @@ extern "C" {
 #include <signal.h>
 #include <stdlib.h>
 
-hadaq::Observer::Observer(const std::string& name) :
+hadaq::Observer::Observer(const std::string &name) :
    dabc::Worker(MakePair(name)),
    fNodeId(-1),
    fFlushTimeout(0.2),
@@ -130,7 +130,7 @@ double hadaq::Observer::ProcessTimeout(double lastdiff)
 
 
 
-bool hadaq::Observer::CreateShmEntry(const std::string& parname)
+bool hadaq::Observer::CreateShmEntry(const std::string &parname)
 {
    //dabc::LockGuard guard(fEntryMutex);
 
@@ -175,7 +175,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
    return true;
 }
 
-std::string hadaq::Observer::ReducedName(const std::string& dabcname)
+std::string hadaq::Observer::ReducedName(const std::string &dabcname)
 {
    std::string res = "";
    size_t sep = dabcname.rfind("-"); // need to look for last score, otherwise problems with DABC parameter naming!
@@ -184,7 +184,7 @@ std::string hadaq::Observer::ReducedName(const std::string& dabcname)
    return res;
 }
 
-std::string hadaq::Observer::ShmName(const std::string& dabcname)
+std::string hadaq::Observer::ShmName(const std::string &dabcname)
 {
    std::string res = "";
    size_t sep = dabcname.find("-");
@@ -204,7 +204,7 @@ std::string hadaq::Observer::ShmName(const std::string& dabcname)
 }
 
 
-hadaq::ShmEntry* hadaq::Observer::FindEntry(const std::string& statsname, const std::string& shmemname)
+hadaq::ShmEntry* hadaq::Observer::FindEntry(const std::string &statsname, const std::string &shmemname)
 {
    //dabc::LockGuard guard(fEntryMutex);
    ShmEntriesList::iterator iter = fEntries.begin();

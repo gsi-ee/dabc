@@ -25,7 +25,7 @@
 
 // std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
 
-bool dabc::Factory::LoadLibrary(const std::string& fname)
+bool dabc::Factory::LoadLibrary(const std::string &fname)
 {
    void* lib = dlopen(fname.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
@@ -39,7 +39,7 @@ bool dabc::Factory::LoadLibrary(const std::string& fname)
    return true;
 }
 
-bool dabc::Factory::CreateManager(const std::string& name, Configuration* cfg)
+bool dabc::Factory::CreateManager(const std::string &name, Configuration* cfg)
 {
    if (dabc::mgr.null())
       new dabc::Manager(name.c_str(), cfg);
@@ -48,19 +48,19 @@ bool dabc::Factory::CreateManager(const std::string& name, Configuration* cfg)
 }
 
 
-void* dabc::Factory::FindSymbol(const std::string& symbol)
+void* dabc::Factory::FindSymbol(const std::string &symbol)
 {
    return symbol.empty() ? 0 : dlsym(RTLD_DEFAULT, symbol.c_str());
 }
 
-dabc::Factory::Factory(const std::string& name) :
+dabc::Factory::Factory(const std::string &name) :
    Object(0, name)
 {
    DOUT2("Factory %s is created", GetName());
 }
 
 
-dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::string& typ, dabc::Command cmd)
+dabc::Module* dabc::Factory::CreateTransport(const Reference& port, const std::string &typ, dabc::Command cmd)
 {
    dabc::PortRef portref = port;
 

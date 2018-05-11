@@ -166,7 +166,7 @@ namespace mbs {
          ReadIterator fIter;
 
       public:
-         EventsIterator(const std::string& name) : dabc::EventsIterator(name), fIter() {}
+         EventsIterator(const std::string &name) : dabc::EventsIterator(name), fIter() {}
          virtual ~EventsIterator() {}
 
          virtual bool Assign(const dabc::Buffer& buf) { return fIter.Reset(buf); }

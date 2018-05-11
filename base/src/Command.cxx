@@ -27,7 +27,7 @@
 #include "dabc/XmlEngine.h"
 
 
-dabc::CommandContainer::CommandContainer(const std::string& name) :
+dabc::CommandContainer::CommandContainer(const std::string &name) :
    RecordContainer(name),
    fCallers(),
    fTimeout(),
@@ -61,7 +61,7 @@ dabc::CommandContainer::~CommandContainer()
 
 }
 
-dabc::Command::Command(const std::string& name) throw()
+dabc::Command::Command(const std::string &name) throw()
 {
    if (!name.empty())
       SetObject(new dabc::CommandContainer(name.c_str()));
@@ -156,14 +156,14 @@ int dabc::Command::GetPriority() const
    return GetInt(PriorityParName(), Worker::priorityDefault);
 }
 
-void dabc::Command::SetPtr(const std::string& name, void* p)
+void dabc::Command::SetPtr(const std::string &name, void* p)
 {
    char buf[100];
    sprintf(buf,"%p",p);
    SetStr(name, buf);
 }
 
-void* dabc::Command::GetPtr(const std::string& name, void* deflt) const
+void* dabc::Command::GetPtr(const std::string &name, void* deflt) const
 {
    std::string val = GetStr(name);
    if (val.empty()) return deflt;
@@ -173,14 +173,14 @@ void* dabc::Command::GetPtr(const std::string& name, void* deflt) const
    return res>0 ? p : deflt;
 }
 
-bool dabc::Command::SetRef(const std::string& name, Reference ref)
+bool dabc::Command::SetRef(const std::string &name, Reference ref)
 {
    std::string field = dabc::format("#%s", name.c_str());
 
    return SetField(field, ref);
 }
 
-dabc::Reference dabc::Command::GetRef(const std::string& name)
+dabc::Reference dabc::Command::GetRef(const std::string &name)
 {
    std::string field = dabc::format("#%s", name.c_str());
 
@@ -266,7 +266,7 @@ void dabc::Command::Reply(int res)
 }
 
 
-size_t find_symbol(const std::string& str, size_t pos, char symb)
+size_t find_symbol(const std::string &str, size_t pos, char symb)
 {
    bool quote = false;
 
@@ -297,7 +297,7 @@ bool remove_quotes(std::string& str)
    return true;
 }
 
-bool dabc::Command::ReadFromCmdString(const std::string& str)
+bool dabc::Command::ReadFromCmdString(const std::string &str)
 {
    Release();
 

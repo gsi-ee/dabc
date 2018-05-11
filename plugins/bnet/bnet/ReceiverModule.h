@@ -14,7 +14,7 @@ namespace bnet {
 
       public:
 
-         ReceiverModule(const std::string& name, dabc::Command cmd);
+         ReceiverModule(const std::string &name, dabc::Command cmd);
 
          virtual ~ReceiverModule();
 

@@ -126,7 +126,7 @@ bool dabc::Transport::InfoExpected() const
    return fTransportInfoTm.Expired(fTransportInfoInterval);
 }
 
-void dabc::Transport::ProvideInfo(int lvl, const std::string& info)
+void dabc::Transport::ProvideInfo(int lvl, const std::string &info)
 {
    if (fTransportInfoName.empty()) return;
 
@@ -140,7 +140,7 @@ void dabc::Transport::ProvideInfo(int lvl, const std::string& info)
 }
 
 
-void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool on)
+void dabc::Transport::ProcessConnectionActivated(const std::string &name, bool on)
 {
    // ignore connect/disconnect from pool handles
    if (IsValidPool(FindPool(name))) return;
@@ -174,7 +174,7 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
    }
 }
 
-void dabc::Transport::ProcessConnectEvent(const std::string& name, bool on)
+void dabc::Transport::ProcessConnectEvent(const std::string &name, bool on)
 {
    DOUT5("$$$$$$ Transport %s %p %s event port %s\n", GetName(), this, on ? "connect" : "DISCONNECT", name.c_str());
 

@@ -91,7 +91,7 @@ namespace dabc {
 
          virtual std::string RequiredThrdClass() const { return std::string(); }
 
-         WorkerAddon(const std::string& name);
+         WorkerAddon(const std::string &name);
          virtual ~WorkerAddon();
    };
 
@@ -105,7 +105,7 @@ namespace dabc {
    class WorkerAddonRef : public Reference {
       DABC_REFERENCE(WorkerAddonRef, Reference, WorkerAddon)
 
-      long Notify(const std::string& cmd, int arg = 0)
+      long Notify(const std::string &cmd, int arg = 0)
          { return GetObject() ? GetObject()->Notify(cmd,arg) : 0; }
    };
 
@@ -214,7 +214,7 @@ namespace dabc {
               priorityMagic = -77    // this priority allows to submit commands even when processor is stopped
          };
 
-         Worker(Reference parent, const std::string& name);
+         Worker(Reference parent, const std::string &name);
          virtual ~Worker();
 
          virtual const char* ClassName() const { return "Worker"; }
@@ -234,7 +234,7 @@ namespace dabc {
          bool AssignToThread(ThreadRef thrd, bool sync = true);
 
          /** \brief Creates appropriate thread for worker and assign worker to the thread */
-         bool MakeThreadForWorker(const std::string& thrdname = "");
+         bool MakeThreadForWorker(const std::string &thrdname = "");
 
          /** \brief Detach worker from the thread, later worker can be assigned to some other thread
           * Method especially useful to normally finish object recursion (if it possible).
@@ -268,7 +268,7 @@ namespace dabc {
          // this all about parameters list, which can be managed for any working processor
 
          /** \brief Returns reference on worker parameter object */
-         Parameter Par(const std::string& name) const;
+         Parameter Par(const std::string &name) const;
 
          /** \brief Returns configuration field of specified name
           * Configuration value of specified name searched in following places:
@@ -277,7 +277,7 @@ namespace dabc {
           * 3. As value in xml file
           * 4. As parameter value of all parents
           * */
-         RecordField Cfg(const std::string& name, Command cmd = nullptr) const;
+         RecordField Cfg(const std::string &name, Command cmd = nullptr) const;
 
          /** ! Assign command with processor before command be submitted to other processor
           * This produce ReplyCommand() call when command execution is finished
@@ -293,7 +293,7 @@ namespace dabc {
          /** Execute command in the processor. Event loop of caller thread is kept running */
          bool Execute(Command cmd, double tmout = -1.);
 
-         bool Execute(const std::string& cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
+         bool Execute(const std::string &cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
 
          /** \brief Return address, which can be used to submit command to the worker
           * If full specified, command can be submitted from any node, which has connection to this node */
@@ -397,18 +397,18 @@ namespace dabc {
 
          virtual bool Find(ConfigIO &cfg);
 
-         virtual Parameter CreatePar(const std::string& name, const std::string& kind = "");
+         virtual Parameter CreatePar(const std::string &name, const std::string &kind = "");
 
-         CommandDefinition CreateCmdDef(const std::string& name);
+         CommandDefinition CreateCmdDef(const std::string &name);
 
          /** \brief Method must be used if worker wants to destroy parameter */
-         bool DestroyPar(const std::string& name);
+         bool DestroyPar(const std::string &name);
 
          /** Subscribe to parameter events from local or remote node */
-         bool RegisterForParameterEvent(const std::string& mask, bool onlychangeevent = true);
+         bool RegisterForParameterEvent(const std::string &mask, bool onlychangeevent = true);
 
          /** Unsubscribe to parameter events from local or remote node */
-         bool UnregisterForParameterEvent(const std::string& mask);
+         bool UnregisterForParameterEvent(const std::string &mask);
 
          /** Interface method to retrieve subscribed parameter events */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
@@ -420,15 +420,15 @@ namespace dabc {
           * all registered structures.    */
          Reference GetPublisher();
 
-         virtual bool Publish(const Hierarchy& h, const std::string& path);
+         virtual bool Publish(const Hierarchy& h, const std::string &path);
 
-         virtual bool PublishPars(const std::string& path);
+         virtual bool PublishPars(const std::string &path);
 
-         virtual bool Unpublish(const Hierarchy& h, const std::string& path);
+         virtual bool Unpublish(const Hierarchy& h, const std::string &path);
 
-         virtual bool Subscribe(const std::string& path);
+         virtual bool Subscribe(const std::string &path);
 
-         virtual bool Unsubscribe(const std::string& path);
+         virtual bool Unsubscribe(const std::string &path);
 
          /** \brief Release reference on publisher and unsubscribe/unpublish all registered entries */
          void CleanupPublisher(bool sync = true);
@@ -451,7 +451,7 @@ namespace dabc {
           * Method is called from the thread where parameter is changing - it could be not a worker thread.
           * Means one should use protected by the mutex worker fields.
           * If monitoring field for parameter is specified, ParameterEvent will be to the worker thread */
-         void WorkerParameterChanged(bool forcecall, ParameterContainer* par, const std::string& value);
+         void WorkerParameterChanged(bool forcecall, ParameterContainer* par, const std::string &value);
 
          /** Method to process parameter recording in worker thread */
          void ProcessParameterRecording(ParameterContainer* par);
@@ -474,13 +474,13 @@ namespace dabc {
 
          bool Execute(Command cmd, double tmout = -1.);
 
-         bool Execute(const std::string& cmd, double tmout = -1.);
+         bool Execute(const std::string &cmd, double tmout = -1.);
 
          /** \brief Returns reference on parameter */
-         Parameter Par(const std::string& name) const;
+         Parameter Par(const std::string &name) const;
 
          /** \brief Returns configuration record of specified name */
-         RecordField Cfg(const std::string& name, Command cmd = nullptr) const
+         RecordField Cfg(const std::string &name, Command cmd = nullptr) const
          { return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.GetField(name); }
 
          /** \brief Returns true when thread is assigned to the worker */
@@ -496,7 +496,7 @@ namespace dabc {
          /** \brief Returns true if two workers share same thread */
          bool IsSameThread(const WorkerRef& ref);
 
-         bool MakeThreadForWorker(const std::string& thrdname = "")
+         bool MakeThreadForWorker(const std::string &thrdname = "")
            { return GetObject() ? GetObject()->MakeThreadForWorker(thrdname) : false; }
 
          /** \brief Returns true if command can be submitted to the worker */
@@ -519,7 +519,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdParameterEvent, "CmdParameterEvent")
 
-      CmdParameterEvent(const std::string& parname, const std::string& parvalue, int evid, bool attrmodified = false) throw() :
+      CmdParameterEvent(const std::string &parname, const std::string &parvalue, int evid, bool attrmodified = false) throw() :
          dabc::Command(CmdName())
       {
          SetStr("ParName", parname);
@@ -572,7 +572,7 @@ namespace dabc {
 
       public:
 
-         LocalWorker(const std::string& name) : Object(name, flAutoDestroy) {}
+         LocalWorker(const std::string &name) : Object(name, flAutoDestroy) {}
          virtual ~LocalWorker() {}
 
    };
@@ -590,7 +590,7 @@ namespace dabc {
             return false;
          }
 
-         bool Execute(const std::string& cmd)
+         bool Execute(const std::string &cmd)
          {
             return Execute(Command(cmd));
          }

@@ -23,7 +23,7 @@
 #include "mbs/SlowControlData.h"
 
 
-dim::Monitor::Monitor(const std::string& name, dabc::Command cmd) :
+dim::Monitor::Monitor(const std::string &name, dabc::Command cmd) :
    mbs::MonitorSlowControl(name, "Dim", cmd),
    DimInfoHandler(),
    fDimDns(),

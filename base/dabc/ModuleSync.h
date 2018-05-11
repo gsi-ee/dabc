@@ -119,7 +119,7 @@ namespace dabc {
          virtual void ObjectCleanup();
 
          /** Normal constructor */
-         ModuleSync(const std::string& name, Command cmd = nullptr);
+         ModuleSync(const std::string &name, Command cmd = nullptr);
 
          /** Destructor */
          virtual ~ModuleSync();
@@ -146,7 +146,7 @@ namespace dabc {
          uint16_t WaitEvent(double timeout = -1);
 
          /** Waits for connection for specified port */
-         bool WaitConnect(const std::string& name, double timeout = -1);
+         bool WaitConnect(const std::string &name, double timeout = -1);
 
          /** Waits until input port has specified number of buffers in the queue */
          bool WaitInput(unsigned indx, unsigned minqueuesize = 1, double timeout = -1);

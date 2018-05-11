@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-hadaq::ShmEntry::ShmEntry(const std::string& statsname, const std::string& shmemname, ::Worker* handle, dabc::Parameter& par) :
+hadaq::ShmEntry::ShmEntry(const std::string &statsname, const std::string &shmemname, ::Worker* handle, dabc::Parameter& par) :
    fStatsName(statsname),
    fShmName(shmemname),
    fWorker(handle),
@@ -36,7 +36,7 @@ hadaq::ShmEntry::~ShmEntry()
 {
 }
 
-void hadaq::ShmEntry::UpdateValue(const std::string& value)
+void hadaq::ShmEntry::UpdateValue(const std::string &value)
 {
    int i(0);
    if (dabc::str_to_int(value.c_str(), &i) && (fShmPtr!=0))

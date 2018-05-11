@@ -59,7 +59,7 @@ namespace stream {
       void SaveHierarchy(dabc::Buffer buf);
 
    public:
-      RunModule(const std::string& name, dabc::Command cmd = nullptr);
+      RunModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~RunModule();
 
       virtual bool ProcessRecv(unsigned port);

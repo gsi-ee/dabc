@@ -33,7 +33,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       unsigned            fIgnoreNode;
 
    public:
-      NetTestSenderModule(const std::string& name, dabc::Command cmd) :
+      NetTestSenderModule(const std::string &name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          fKind = Cfg("Kind", cmd).AsStr();
@@ -145,7 +145,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
       int                  fSleepTime;
 
    public:
-      NetTestReceiverModule(const std::string& name, dabc::Command cmd) :
+      NetTestReceiverModule(const std::string &name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          // we will use queue (second true) in the signal to detect order of signal fire
@@ -206,7 +206,7 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
       int fCnt;
 
    public:
-      NetTestSpecialModule(const std::string& name, dabc::Command cmd) :
+      NetTestSpecialModule(const std::string &name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          fReceiver = dabc::mgr.NodeId() < dabc::mgr.NumNodes() - 1;
@@ -246,9 +246,9 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
 class NetTestFactory : public dabc::Factory  {
    public:
 
-      NetTestFactory(const std::string& name) : dabc::Factory(name) {}
+      NetTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
       {
          if (classname == "NetTestSenderModule")
             return new NetTestSenderModule(modulename, cmd);

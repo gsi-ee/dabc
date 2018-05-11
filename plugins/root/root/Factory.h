@@ -25,11 +25,11 @@ namespace root {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
+         Factory(const std::string &name) : dabc::Factory(name) {}
 
          virtual void Initialize();
 
-         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
 
          virtual dabc::DataInput* CreateDataInput(const std::string&);
 

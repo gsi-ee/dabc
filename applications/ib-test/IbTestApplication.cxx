@@ -113,9 +113,9 @@ class IbTestApplication : public dabc::Application {
 class IbTestFactory : public dabc::Factory  {
    public:
 
-      IbTestFactory(const std::string& name) : dabc::Factory(name) {}
+      IbTestFactory(const std::string &name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd)
+      virtual dabc::Application* CreateApplication(const std::string &classname, dabc::Command cmd)
       {
          if (classname == "IbTestApp")
             return new IbTestApplication();
@@ -124,7 +124,7 @@ class IbTestFactory : public dabc::Factory  {
       }
 
 
-      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+      virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
       {
          if (classname == "IbTestWorkerModule")
             return new IbTestWorkerModule(modulename, cmd);

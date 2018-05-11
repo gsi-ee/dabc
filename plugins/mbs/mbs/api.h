@@ -63,7 +63,7 @@ namespace mbs {
 
       public:
 
-         ReadoutModule(const std::string& name, dabc::Command cmd);
+         ReadoutModule(const std::string &name, dabc::Command cmd);
 
    };
 
@@ -76,7 +76,7 @@ namespace mbs {
       DABC_REFERENCE(ReadoutHandle, dabc::ModuleAsyncRef, ReadoutModule)
 
       /** Connect with MBS server */
-      static ReadoutHandle Connect(const std::string& url)
+      static ReadoutHandle Connect(const std::string &url)
       {
          return DoConnect(url, "mbs::ReadoutModule");
       }
@@ -99,7 +99,7 @@ namespace mbs {
       protected:
 
 
-      static ReadoutHandle DoConnect(const std::string& url, const char* classname);
+      static ReadoutHandle DoConnect(const std::string &url, const char* classname);
 
    };
 
@@ -110,7 +110,7 @@ namespace mbs {
        DABC_REFERENCE(MonitorHandle, dabc::ModuleAsyncRef, Monitor)
 
        /** Connect with MBS node */
-       static MonitorHandle Connect(const std::string& mbsnode, int cmdport = 6019, int logport = 6007, int statport = 6008);
+       static MonitorHandle Connect(const std::string &mbsnode, int cmdport = 6019, int logport = 6007, int statport = 6008);
 
        /** Check if handle is initialized */
        bool null() const { return dabc::ModuleAsyncRef::null(); }
@@ -119,7 +119,7 @@ namespace mbs {
        bool Disconnect();
 
        /** Execute MBS command */
-       bool MbsCmd(const std::string& cmd, double tmout=5.);
+       bool MbsCmd(const std::string &cmd, double tmout=5.);
    };
 
 }

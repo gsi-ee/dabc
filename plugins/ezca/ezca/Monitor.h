@@ -55,11 +55,11 @@ namespace ezca {
 
          /* Wrapper for ezca get with long values. Contains error message handling.
           * Returns ezca error code.*/
-         int CA_GetLong(const std::string& name, long& val);
+         int CA_GetLong(const std::string &name, long& val);
 
          /* Wrapper for ezca get with double values. Contains error message handling
           * Returns ezca error code.*/
-         int CA_GetDouble(const std::string& name, double& val);
+         int CA_GetDouble(const std::string &name, double& val);
 
          /** Return error string with error description */
          std::string CA_ErrorString();
@@ -71,10 +71,10 @@ namespace ezca {
 
          virtual unsigned GetRecRawSize();
 
-         std::string GetItemName(const std::string& ezcaname);
+         std::string GetItemName(const std::string &ezcaname);
 
       public:
-         Monitor(const std::string& name, dabc::Command cmd = nullptr);
+         Monitor(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void ProcessTimerEvent(unsigned timer);
    };

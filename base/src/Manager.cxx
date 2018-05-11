@@ -56,17 +56,17 @@ namespace dabc {
 
    class StdManagerFactory : public Factory {
       public:
-         StdManagerFactory(const std::string& name) : Factory(name) { }
+         StdManagerFactory(const std::string &name) : Factory(name) { }
 
-         virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd);
+         virtual Module* CreateModule(const std::string &classname, const std::string &modulename, Command cmd);
 
-         virtual Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+         virtual Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
 
-         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
+         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd);
 
-         virtual DataOutput* CreateDataOutput(const std::string& typ);
+         virtual DataOutput* CreateDataOutput(const std::string &typ);
 
-         virtual DataInput* CreateDataInput(const std::string& typ);
+         virtual DataInput* CreateDataInput(const std::string &typ);
    };
 
 
@@ -107,7 +107,7 @@ namespace dabc {
          queue(0)
       {}
 
-      bool match(const std::string& parname, int event, const std::string& fullname)
+      bool match(const std::string &parname, int event, const std::string &fullname)
       {
          if (only_change && (event!=parModified)) return false;
 
@@ -159,7 +159,7 @@ namespace dabc {
    };
 }
 
-dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname, const std::string& modulename, Command cmd)
+dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string &classname, const std::string &modulename, Command cmd)
 {
    if (classname == "dabc::CpuInfoModule")
       return new CpuInfoModule(modulename, cmd);
@@ -176,7 +176,7 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname
    return 0;
 }
 
-dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
+dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd)
 {
    if (classname == "dabc::Publisher")
       return new dabc::Publisher(objname, cmd);
@@ -185,7 +185,7 @@ dabc::Reference dabc::StdManagerFactory::CreateObject(const std::string& classna
 }
 
 
-dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd)
+dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd)
 {
    dabc::Thread* thrd = 0;
 
@@ -196,7 +196,7 @@ dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const st
 }
 
 
-dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string& typ)
+dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string &typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="bin") {
@@ -209,7 +209,7 @@ dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string& t
    return 0;
 }
 
-dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string& typ)
+dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string &typ)
 {
    dabc::Url url(typ);
    if (url.GetProtocol()=="bin") {
@@ -255,7 +255,7 @@ void dabc::Manager::SetAutoDestroy(bool on)
 }
 
 
-dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
+dabc::Manager::Manager(const std::string &managername, Configuration* cfg) :
    Worker(0, managername),
    fMgrStoppedTime(),
    fAppFinished(false),
@@ -707,7 +707,7 @@ bool dabc::Manager::IsAnyModuleRunning()
 }
 
 
-dabc::Reference dabc::Manager::FindItem(const std::string& name, bool islocal)
+dabc::Reference dabc::Manager::FindItem(const std::string &name, bool islocal)
 {
    std::string server, itemname;
 
@@ -723,13 +723,13 @@ dabc::Reference dabc::Manager::FindItem(const std::string& name, bool islocal)
    return FindChildRef(itemname.c_str());
 }
 
-dabc::ModuleRef dabc::Manager::FindModule(const std::string& name)
+dabc::ModuleRef dabc::Manager::FindModule(const std::string &name)
 {
    return FindItem(name);
 }
 
 
-dabc::Reference dabc::Manager::FindPort(const std::string& name)
+dabc::Reference dabc::Manager::FindPort(const std::string &name)
 {
    PortRef ref = FindItem(name);
 
@@ -737,14 +737,14 @@ dabc::Reference dabc::Manager::FindPort(const std::string& name)
 }
 
 
-dabc::Reference dabc::Manager::FindPool(const std::string& name)
+dabc::Reference dabc::Manager::FindPool(const std::string &name)
 {
    MemoryPoolRef ref = FindItem(name);
 
    return ref;
 }
 
-dabc::WorkerRef dabc::Manager::FindDevice(const std::string& name)
+dabc::WorkerRef dabc::Manager::FindDevice(const std::string &name)
 {
    DeviceRef ref = FindItem(name);
 
@@ -834,7 +834,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
    } \
 }
 
-dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd)
+dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string &classname, const std::string &modulename, Command cmd)
 {
    ModuleRef mdl = FindModule(modulename);
 
@@ -873,7 +873,7 @@ dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, cons
 }
 
 
-dabc::Reference dabc::Manager::DoCreateObject(const std::string& classname, const std::string& objname, Command cmd)
+dabc::Reference dabc::Manager::DoCreateObject(const std::string &classname, const std::string &objname, Command cmd)
 {
 
    dabc::Reference ref;
@@ -1138,9 +1138,9 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
 
    if (cmd.IsName(CmdCreateThread::CmdName())) {
-      const std::string& thrdname = cmd.GetStr(CmdCreateThread::ThrdNameArg());
-      const std::string& thrdclass = cmd.GetStr("ThrdClass");
-      const std::string& thrddev = cmd.GetStr("ThrdDev");
+      const std::string &thrdname = cmd.GetStr(CmdCreateThread::ThrdNameArg());
+      const std::string &thrdclass = cmd.GetStr("ThrdClass");
+      const std::string &thrddev = cmd.GetStr("ThrdDev");
 
       ThreadRef thrd = DoCreateThread(thrdname, thrdclass, thrddev, cmd);
 
@@ -1449,7 +1449,7 @@ std::string dabc::Manager::GetLocalAddress()
    return fLocalAddress;
 }
 
-std::string dabc::Manager::ComposeAddress(const std::string& server, const std::string& itemname)
+std::string dabc::Manager::ComposeAddress(const std::string &server, const std::string &itemname)
 {
    std::string res = server;
    if (res.empty()) res = GetLocalAddress();
@@ -1464,7 +1464,7 @@ std::string dabc::Manager::ComposeAddress(const std::string& server, const std::
    return res;
 }
 
-bool dabc::Manager::DecomposeAddress(const std::string& addr, bool& islocal, std::string& server, std::string& itemtname)
+bool dabc::Manager::DecomposeAddress(const std::string &addr, bool& islocal, std::string& server, std::string& itemtname)
 {
 
    dabc::Url url;
@@ -1707,7 +1707,7 @@ int inputAvailable()
 
 #include <iostream>
 
-void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string& remnode)
+void dabc::Manager::RunManagerCmdLoop(double runtime, const std::string &remnode)
 {
    DOUT0("Enter dabc::Manager::RunManagerCmdLoop");
 
@@ -1893,7 +1893,7 @@ bool dabc::Manager::Find(ConfigIO &cfg)
 // =================================== classes from ManagerRef class ==================================
 
 
-dabc::ThreadRef dabc::Manager::FindThread(const std::string& name, const std::string& required_class)
+dabc::ThreadRef dabc::Manager::FindThread(const std::string &name, const std::string &required_class)
 {
    ThreadRef ref = GetThreadsFolder().FindChild(name.c_str());
 
@@ -1917,7 +1917,7 @@ dabc::ThreadRef dabc::Manager::CurrentThread()
    return ThreadRef();
 }
 
-dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const std::string& thrdclass, const std::string& thrddev, Command cmd)
+dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string &thrdname, const std::string &thrdclass, const std::string &thrddev, Command cmd)
 {
    std::string newname = thrdname;
    int basecnt = 0;
@@ -1969,20 +1969,20 @@ dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const
 // ========================================== ManagerRef methods ================================
 
 
-bool dabc::ManagerRef::CreateApplication(const std::string& classname, const std::string& appthrd)
+bool dabc::ManagerRef::CreateApplication(const std::string &classname, const std::string &appthrd)
 {
    return Execute(CmdCreateApplication(classname, appthrd));
 }
 
 
-dabc::ModuleRef dabc::ManagerRef::CreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname)
+dabc::ModuleRef dabc::ManagerRef::CreateModule(const std::string &classname, const std::string &modulename, const std::string &thrdname)
 {
    CmdCreateModule cmd(classname, modulename, thrdname);
 
    return Execute(cmd) ? FindModule(modulename) : dabc::ModuleRef();
 }
 
-dabc::ThreadRef dabc::ManagerRef::CreateThread(const std::string& thrdname, const std::string& classname, const std::string& devname)
+dabc::ThreadRef dabc::ManagerRef::CreateThread(const std::string &thrdname, const std::string &classname, const std::string &devname)
 {
    CmdCreateThread cmd(thrdname,  classname, devname);
 
@@ -1995,34 +1995,34 @@ dabc::ThreadRef dabc::ManagerRef::CurrentThread()
 }
 
 
-bool dabc::ManagerRef::CreateDevice(const std::string& classname, const std::string& devname)
+bool dabc::ManagerRef::CreateDevice(const std::string &classname, const std::string &devname)
 {
    return Execute(CmdCreateDevice(classname, devname));
 }
 
 
-bool dabc::ManagerRef::DeleteDevice(const std::string& devname)
+bool dabc::ManagerRef::DeleteDevice(const std::string &devname)
 {
    return Execute(CmdDestroyDevice(devname));
 }
 
 
-dabc::WorkerRef dabc::ManagerRef::FindDevice(const std::string& name)
+dabc::WorkerRef dabc::ManagerRef::FindDevice(const std::string &name)
 {
    return GetObject() ? GetObject()->FindDevice(name) : dabc::WorkerRef();
 }
 
-dabc::ModuleRef dabc::ManagerRef::FindModule(const std::string& name)
+dabc::ModuleRef dabc::ManagerRef::FindModule(const std::string &name)
 {
    return GetObject() ? GetObject()->FindModule(name) : dabc::ModuleRef();
 }
 
-void dabc::ManagerRef::StartModule(const std::string& modulename)
+void dabc::ManagerRef::StartModule(const std::string &modulename)
 {
    Execute(dabc::CmdStartModule(modulename));
 }
 
-void dabc::ManagerRef::StopModule(const std::string& modulename)
+void dabc::ManagerRef::StopModule(const std::string &modulename)
 {
    Execute(dabc::CmdStopModule(modulename));
 }
@@ -2037,33 +2037,33 @@ bool dabc::ManagerRef::StopAllModules()
    return Execute(CmdStopModule("*"));
 }
 
-bool dabc::ManagerRef::DeleteModule(const std::string& name)
+bool dabc::ManagerRef::DeleteModule(const std::string &name)
 {
    return Execute(CmdDeleteModule(name));
 }
 
-bool dabc::ManagerRef::DeletePool(const std::string& name)
+bool dabc::ManagerRef::DeletePool(const std::string &name)
 {
    return Execute(CmdDeletePool(name));
 }
 
 
-dabc::Reference dabc::ManagerRef::FindItem(const std::string& name)
+dabc::Reference dabc::ManagerRef::FindItem(const std::string &name)
 {
    return GetObject() ? GetObject()->FindItem(name) : Reference();
 }
 
-dabc::Reference dabc::ManagerRef::FindPort(const std::string& portname)
+dabc::Reference dabc::ManagerRef::FindPort(const std::string &portname)
 {
    return GetObject() ? GetObject()->FindPort(portname) : Reference();
 }
 
-dabc::Reference dabc::ManagerRef::FindPool(const std::string& name)
+dabc::Reference dabc::ManagerRef::FindPool(const std::string &name)
 {
    return GetObject() ? GetObject()->FindPool(name) : Reference();
 }
 
-dabc::Parameter dabc::ManagerRef::FindPar(const std::string& parname)
+dabc::Parameter dabc::ManagerRef::FindPar(const std::string &parname)
 {
    return GetObject() ? GetObject()->FindItem(parname) : Reference();
 }
@@ -2090,7 +2090,7 @@ int dabc::ManagerRef::NumNodes() const
    return GetObject() ? GetObject()->NumNodes() : 0;
 }
 
-bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string& mask, bool onlychangeevent)
+bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string &mask, bool onlychangeevent)
 {
    if (ptr == 0) return false;
 
@@ -2125,14 +2125,14 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
    return Submit(cmd);
 }
 
-bool dabc::ManagerRef::IsLocalItem(const std::string& name)
+bool dabc::ManagerRef::IsLocalItem(const std::string &name)
 {
    Url url;
    if (!url.SetUrl(name, false)) return true;
    return url.GetProtocol().compare("dabc") != 0;
 }
 
-dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, const std::string& port2name)
+dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string &port1name, const std::string &port2name)
 {
    // configure conection between two ports
    // Normally port1 is output and port2 is input port1->port2
@@ -2204,7 +2204,7 @@ bool dabc::ManagerRef::ActivateConnections(double tmout, bool sync)
    return sync ? conn.Execute(cmd) : conn.Submit(cmd);
 }
 
-bool dabc::ManagerRef::CreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname)
+bool dabc::ManagerRef::CreateTransport(const std::string &portname, const std::string &transportkind, const std::string &thrdname)
 {
    PortRef port = FindPort(portname);
 
@@ -2213,7 +2213,7 @@ bool dabc::ManagerRef::CreateTransport(const std::string& portname, const std::s
    return Execute(CmdCreateTransport(portname, transportkind, thrdname));
 }
 
-void* dabc::ManagerRef::CreateAny(const std::string& classname, const std::string& objname)
+void* dabc::ManagerRef::CreateAny(const std::string &classname, const std::string &objname)
 {
    CmdCreateAny cmd;
    cmd.SetStr("ClassName", classname);
@@ -2233,7 +2233,7 @@ void dabc::ManagerRef::StopApplication()
 
 }
 
-bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,
+bool dabc::ManagerRef::CreateMemoryPool(const std::string &poolname,
                                         unsigned buffersize,
                                         unsigned numbuffers)
 {
@@ -2245,7 +2245,7 @@ bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,
    return Execute(cmd);
 }
 
-dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, const std::string& objname)
+dabc::Reference dabc::ManagerRef::CreateObject(const std::string &classname, const std::string &objname)
 {
    CmdCreateObject cmd(classname, objname);
 
@@ -2254,7 +2254,7 @@ dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, con
    return cmd.GetRef("Object");
 }
 
-dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string& kind)
+dabc::DataInput* dabc::ManagerRef::CreateDataInput(const std::string &kind)
 {
    CmdCreateDataInput cmd;
    cmd.SetStr("Kind", kind);

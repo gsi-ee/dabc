@@ -23,7 +23,7 @@
 #include "dabc/Configuration.h"
 #include "dabc/Manager.h"
 
-bool dabc::CreateManager(const std::string& name, int cmd_port)
+bool dabc::CreateManager(const std::string &name, int cmd_port)
 {
    bool dofactories = false;
 
@@ -103,7 +103,7 @@ bool dabc::DestroyManager()
 }
 
 
-std::string dabc::MakeNodeName(const std::string& arg)
+std::string dabc::MakeNodeName(const std::string &arg)
 {
    size_t pos = arg.find("dabc://");
    if (pos==std::string::npos)
@@ -114,7 +114,7 @@ std::string dabc::MakeNodeName(const std::string& arg)
 }
 
 
-bool dabc::ConnectDabcNode(const std::string& nodeaddr)
+bool dabc::ConnectDabcNode(const std::string &nodeaddr)
 {
    if (dabc::mgr.null()) {
       EOUT("Manager was not created");
@@ -141,7 +141,7 @@ bool dabc::ConnectDabcNode(const std::string& nodeaddr)
    return true;
 }
 
-dabc::Hierarchy dabc::GetNodeHierarchy(const std::string& nodeaddr)
+dabc::Hierarchy dabc::GetNodeHierarchy(const std::string &nodeaddr)
 {
    dabc::Hierarchy res;
 

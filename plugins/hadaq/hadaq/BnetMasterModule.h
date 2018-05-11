@@ -40,7 +40,7 @@ namespace hadaq {
 
       public:
 
-         BnetMasterModule(const std::string& name, dabc::Command cmd = nullptr);
+         BnetMasterModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void BeforeModuleStart();
 

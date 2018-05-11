@@ -81,7 +81,7 @@ namespace dabc {
          bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
 
          // make destructor protected that nobody can delete command directly
-         CommandContainer(const std::string& name = "Command");
+         CommandContainer(const std::string &name = "Command");
 
          virtual ~CommandContainer();
 
@@ -133,32 +133,32 @@ namespace dabc {
 
          // set of methods to keep old interface, it is preferable to use field methods
 
-         bool SetStr(const std::string& name, const char* value) { return value==0 ? RemoveField(name) : SetField(name, value); }
-         bool SetStr(const std::string& name, const std::string& value) { return SetField(name, value); }
-         std::string GetStr(const std::string& name, const std::string& dflt = "") const { return GetField(name).AsStr(dflt); }
+         bool SetStr(const std::string &name, const char* value) { return value==0 ? RemoveField(name) : SetField(name, value); }
+         bool SetStr(const std::string &name, const std::string &value) { return SetField(name, value); }
+         std::string GetStr(const std::string &name, const std::string &dflt = "") const { return GetField(name).AsStr(dflt); }
 
-         bool SetInt(const std::string& name, int v) { return SetField(name, v); }
-         int GetInt(const std::string& name, int dflt = 0) const { return GetField(name).AsInt(dflt); }
+         bool SetInt(const std::string &name, int v) { return SetField(name, v); }
+         int GetInt(const std::string &name, int dflt = 0) const { return GetField(name).AsInt(dflt); }
 
-         bool SetBool(const std::string& name, bool v) { return SetField(name, v); }
-         bool GetBool(const std::string& name, bool dflt = false) const { return GetField(name).AsBool(dflt); }
+         bool SetBool(const std::string &name, bool v) { return SetField(name, v); }
+         bool GetBool(const std::string &name, bool dflt = false) const { return GetField(name).AsBool(dflt); }
 
-         bool SetDouble(const std::string& name, double v) { return SetField(name, v); }
-         double GetDouble(const std::string& name, double dflt = 0.) const { return GetField(name).AsDouble(dflt); }
+         bool SetDouble(const std::string &name, double v) { return SetField(name, v); }
+         double GetDouble(const std::string &name, double dflt = 0.) const { return GetField(name).AsDouble(dflt); }
 
-         bool SetUInt(const std::string& name, unsigned v) { return SetField(name, v); }
-         unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return GetField(name).AsUInt(dflt); }
+         bool SetUInt(const std::string &name, unsigned v) { return SetField(name, v); }
+         unsigned GetUInt(const std::string &name, unsigned dflt = 0) const { return GetField(name).AsUInt(dflt); }
 
          /** \brief Set pointer argument for the command */
-         void SetPtr(const std::string& name, void* p);
+         void SetPtr(const std::string &name, void* p);
          /** \brief Get pointer argument from the command */
-         void* GetPtr(const std::string& name, void* deflt = 0) const;
+         void* GetPtr(const std::string &name, void* deflt = 0) const;
 
          /** Set reference to the command */
-         bool SetRef(const std::string& name, Reference ref);
+         bool SetRef(const std::string &name, Reference ref);
 
          /** \brief Returns reference from the command, can be called only once */
-         Reference GetRef(const std::string& name);
+         Reference GetRef(const std::string &name);
 
          /** \brief Set raw data to the command, which can be transported also between nodes */
          bool SetRawData(Buffer rawdata);
@@ -260,7 +260,7 @@ namespace dabc {
            * dabc://node.domain:8765/Item
            * If connection with such node established, command will be delivered */
 
-         Command& SetReceiver(const std::string& itemname)
+         Command& SetReceiver(const std::string &itemname)
            { SetStr(ReceiverParName(), itemname); return *this; }
 
          std::string GetReceiver() const { return GetStr(ReceiverParName()); }

@@ -65,7 +65,7 @@ void IbTestClusterRouting::Reset()
    fSwitchNames.clear();
 }
 
-int IbTestClusterRouting::FindNode(const std::string& name)
+int IbTestClusterRouting::FindNode(const std::string &name)
 {
    NodesMap::iterator iter = fNodes.find(name);
 
@@ -75,7 +75,7 @@ int IbTestClusterRouting::FindNode(const std::string& name)
 }
 
 
-int IbTestClusterRouting::AddNode(const std::string& name, int lid, int* liddiff)
+int IbTestClusterRouting::AddNode(const std::string &name, int lid, int* liddiff)
 {
    NodesMap::iterator iter = fNodes.find(name);
 
@@ -103,7 +103,7 @@ int IbTestClusterRouting::AddNode(const std::string& name, int lid, int* liddiff
    return id;
 }
 
-int IbTestClusterRouting::AddSwitch(const std::string& name)
+int IbTestClusterRouting::AddSwitch(const std::string &name)
 {
    NamesMap::iterator iter = fSwitchNames.find(name);
 
@@ -118,7 +118,7 @@ int IbTestClusterRouting::AddSwitch(const std::string& name)
    return id;
 }
 
-int IbTestClusterRouting::FindSwitch(const std::string& name)
+int IbTestClusterRouting::FindSwitch(const std::string &name)
 {
    NamesMap::iterator iter = fSwitchNames.find(name);
 
@@ -1054,7 +1054,7 @@ int IbTestClusterRouting::GetNodeSwitch(int node)
 }
 
 
-bool IbTestClusterRouting::SelectNodes(const std::string& all_args, IbTestIntColumn& ids)
+bool IbTestClusterRouting::SelectNodes(const std::string &all_args, IbTestIntColumn& ids)
 {
    ids.SetSize(NumNodes());
    ids.Fill(-1);
@@ -1139,7 +1139,7 @@ bool IbTestClusterRouting::SelectNodes(const std::string& all_args, IbTestIntCol
 }
 
 
-bool IbTestClusterRouting::SaveNodesList(const std::string& fname, const IbTestIntColumn& ids)
+bool IbTestClusterRouting::SaveNodesList(const std::string &fname, const IbTestIntColumn& ids)
 {
    FILE *f = fopen (fname.c_str(), "w");
 
@@ -1156,7 +1156,7 @@ bool IbTestClusterRouting::SaveNodesList(const std::string& fname, const IbTestI
    return true;
 }
 
-bool IbTestClusterRouting::LoadNodesList(const std::string& fname, IbTestIntColumn& ids)
+bool IbTestClusterRouting::LoadNodesList(const std::string &fname, IbTestIntColumn& ids)
 {
 
    FILE *f = fopen (fname.c_str(), "r");
@@ -2371,7 +2371,7 @@ void IbTestSchedule::FillRegularTime(double schedule_step)
 }
 
 
-bool IbTestSchedule::SaveToFile(const std::string& fname)
+bool IbTestSchedule::SaveToFile(const std::string &fname)
 {
    FILE *f = fopen (fname.c_str(), "w");
 
@@ -2397,7 +2397,7 @@ bool IbTestSchedule::SaveToFile(const std::string& fname)
    return true;
 }
 
-bool IbTestSchedule::ReadFromFile(const std::string& fname)
+bool IbTestSchedule::ReadFromFile(const std::string &fname)
 {
    char sbuf[100];
 

@@ -56,7 +56,7 @@ namespace dabc {
          virtual void OnSendCompleted();
          virtual void OnRecvCompleted();
 
-         virtual void OnSocketError(int msg, const std::string& info);
+         virtual void OnSocketError(int msg, const std::string &info);
 
       public:
          SocketNetworkInetrface(int fd, bool datagram = false);

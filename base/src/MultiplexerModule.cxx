@@ -17,7 +17,7 @@
 
 #include "dabc/Manager.h"
 
-dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Command cmd) :
+dabc::MultiplexerModule::MultiplexerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fQueue(100),
    fDataRateName()
@@ -72,7 +72,7 @@ void dabc::MultiplexerModule::CheckDataSending()
 
 
 
-dabc::RepeaterModule::RepeaterModule(const std::string& name, dabc::Command cmd) :
+dabc::RepeaterModule::RepeaterModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
    EnsurePorts(1, 1);

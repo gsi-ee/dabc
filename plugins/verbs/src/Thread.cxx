@@ -80,7 +80,7 @@ namespace verbs {
 
 // ____________________________________________________________________
 
-verbs::Thread::Thread(dabc::Reference parent, const std::string& name, dabc::Command cmd, ContextRef ctx) :
+verbs::Thread::Thread(dabc::Reference parent, const std::string &name, dabc::Command cmd, ContextRef ctx) :
    dabc::Thread(parent, name, cmd),
    fContext(ctx),
    fChannel(0),
@@ -137,7 +137,7 @@ verbs::Thread::~Thread()
    DOUT3("Verbs thread %p %s destroyed", this, GetName());
 }
 
-bool verbs::Thread::CompatibleClass(const std::string& clname) const
+bool verbs::Thread::CompatibleClass(const std::string &clname) const
 {
    if (dabc::Thread::CompatibleClass(clname)) return true;
    return clname == verbs::typeThread;

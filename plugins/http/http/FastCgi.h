@@ -39,7 +39,7 @@ namespace http {
 
          virtual void OnThreadAssigned();
       public:
-         FastCgi(const std::string& name, dabc::Command cmd = nullptr);
+         FastCgi(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~FastCgi();
 
          virtual const char* ClassName() const { return "FastCgiServer"; }

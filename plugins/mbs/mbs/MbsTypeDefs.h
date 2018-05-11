@@ -358,7 +358,7 @@ namespace mbs {
    };
 
    extern const char* ServerKindToStr(int kind);
-   extern int StrToServerKind(const std::string& str);
+   extern int StrToServerKind(const std::string &str);
    extern int DefualtServerPort(int kind);
 
    extern void SwapData(void* data, unsigned bytessize);

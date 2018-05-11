@@ -176,14 +176,14 @@ namespace dabc {
           * If specified, supposed that I/O object is double-derived from DataOutput and Addon */
          virtual WorkerAddon* Write_GetAddon() { return 0; }
 
-         void ShowInfo(int lvl, const std::string& info);
+         void ShowInfo(int lvl, const std::string &info);
 
       public:
 
          virtual ~DataOutput() {}
 
          /** \brief Methods set parameter name, which could be used for debug output */
-         void SetInfoParName(const std::string& name);
+         void SetInfoParName(const std::string &name);
 
          /** \brief Method can be used to get debug info about output */
          virtual std::string ProvideInfo() { return std::string(); }
@@ -262,7 +262,7 @@ namespace dabc {
 
          bool InitFilesList();
          bool TakeNextFileName();
-         const std::string& CurrentFileName() const { return fCurrentName; }
+         const std::string &CurrentFileName() const { return fCurrentName; }
          void ClearCurrentFileName() { fCurrentName.clear(); }
 
          FileInput(const dabc::Url& url);
@@ -306,16 +306,16 @@ namespace dabc {
          long                 fTotalNumEvents;
 
          void ProduceNewFileName();
-         const std::string& CurrentFileName() const { return fCurrentFileName; }
+         const std::string &CurrentFileName() const { return fCurrentFileName; }
 
          /** Return true if new file should be started */
          bool CheckBufferForNextFile(unsigned sz);
 
          void AccountBuffer(unsigned sz, int numev = 0);
 
-         FileOutput(const dabc::Url& url, const std::string& ext = "");
+         FileOutput(const dabc::Url& url, const std::string &ext = "");
 
-         std::string ProduceFileName(const std::string& suffix);
+         std::string ProduceFileName(const std::string &suffix);
 
       public:
 

@@ -47,7 +47,7 @@ namespace dabc {
 
          bool  fDeviceDestroyed;     //!<  if true, device and all transports should not be used
 
-         Device(const std::string& name);
+         Device(const std::string &name);
 
          virtual bool Find(ConfigIO &cfg);
 

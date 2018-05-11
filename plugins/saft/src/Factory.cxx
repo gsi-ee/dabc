@@ -68,13 +68,13 @@ const char* saftdabc::parEventRate= "ReceiveEventRate";
 dabc::FactoryPlugin saftfactory(new saftdabc::Factory("saftdabc"));
 
 
-saftdabc::Factory::Factory(const std::string& name) :
+saftdabc::Factory::Factory(const std::string &name) :
    dabc::Factory(name)
 {
 }
 
 
-dabc::Device* saftdabc::Factory::CreateDevice (const std::string& classname, const std::string& devname,
+dabc::Device* saftdabc::Factory::CreateDevice (const std::string &classname, const std::string &devname,
     dabc::Command cmd)
 {
   DOUT0 ("saftdabc::Factory::CreateDevice called for class:%s, device:%s", classname.c_str (), devname.c_str ());

@@ -9,11 +9,11 @@ namespace bnet {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name);
+         Factory(const std::string &name);
 
-         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
 
-         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
    };
 
 }

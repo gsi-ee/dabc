@@ -69,7 +69,7 @@ void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)
    }
 }
 
-long hadaq::NewAddon::Notify(const std::string& msg, int arg)
+long hadaq::NewAddon::Notify(const std::string &msg, int arg)
 {
    if (msg == "TransportWantToStart") {
       fRunning = true;
@@ -216,7 +216,7 @@ bool hadaq::NewAddon::ReadUdp()
    return true; // indicate that buffer reading will be finished by callback
 }
 
-int hadaq::NewAddon::OpenUdp(const std::string& host, int nport, int rcvbuflen)
+int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 {
    int fd = socket(PF_INET, SOCK_DGRAM, 0);
    if (fd < 0) return -1;
@@ -337,17 +337,17 @@ hadaq::NewTransport::~NewTransport()
 {
 }
 
-std::string  hadaq::NewTransport::GetNetmemParName(const std::string& name)
+std::string  hadaq::NewTransport::GetNetmemParName(const std::string &name)
 {
    return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
 }
 
-void hadaq::NewTransport::CreateNetmemPar(const std::string& name)
+void hadaq::NewTransport::CreateNetmemPar(const std::string &name)
 {
    CreatePar(GetNetmemParName(name));
 }
 
-void hadaq::NewTransport::SetNetmemPar(const std::string& name, unsigned value)
+void hadaq::NewTransport::SetNetmemPar(const std::string &name, unsigned value)
 {
    Par(GetNetmemParName(name)).SetValue(value);
 }

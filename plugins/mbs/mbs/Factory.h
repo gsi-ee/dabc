@@ -28,17 +28,17 @@ namespace mbs {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const std::string& name) : dabc::Factory(name) {}
+         Factory(const std::string &name) : dabc::Factory(name) {}
 
-         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
+         virtual dabc::Reference CreateObject(const std::string &classname, const std::string &objname, dabc::Command cmd);
 
-         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
+         virtual dabc::Module* CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd);
 
-         virtual dabc::DataInput* CreateDataInput(const std::string& typ);
+         virtual dabc::DataInput* CreateDataInput(const std::string &typ);
 
-         virtual dabc::DataOutput* CreateDataOutput(const std::string& typ);
+         virtual dabc::DataOutput* CreateDataOutput(const std::string &typ);
 
-         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd);
 
       protected:
 

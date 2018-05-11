@@ -18,7 +18,7 @@
 #include "dabc/logging.h"
 #include "dabc/CommandsQueue.h"
 
-dabc::ModuleSync::ModuleSync(const std::string& name, Command cmd) :
+dabc::ModuleSync::ModuleSync(const std::string &name, Command cmd) :
    Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
@@ -46,7 +46,7 @@ dabc::ModuleSync::~ModuleSync()
    }
 }
 
-bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout)
+bool dabc::ModuleSync::WaitConnect(const std::string &name, double timeout)
 {
    PortRef port = FindPort(name);
 

@@ -65,7 +65,7 @@ namespace hadaq {
 
       public:
 
-         TerminalModule(const std::string& name, dabc::Command cmd = nullptr);
+         TerminalModule(const std::string &name, dabc::Command cmd = nullptr);
 
          virtual void BeforeModuleStart();
 

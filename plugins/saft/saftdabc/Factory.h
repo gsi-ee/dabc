@@ -30,9 +30,9 @@ namespace saftdabc {
 
       public:
 
-         Factory(const std::string& name);
+         Factory(const std::string &name);
 
-         dabc::Device* CreateDevice (const std::string& classname, const std::string& devname,
+         dabc::Device* CreateDevice (const std::string &classname, const std::string &devname,
              dabc::Command cmd);
 
    };

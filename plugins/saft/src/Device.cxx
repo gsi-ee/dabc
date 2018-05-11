@@ -27,7 +27,7 @@
 
 
 
-saftdabc::Device::Device (const std::string& name, dabc::Command cmd) :
+saftdabc::Device::Device (const std::string &name, dabc::Command cmd) :
     dabc::Device (name),fConditionMutex(true)
 {
   Gio::init(); // required at the beginnning !
@@ -171,7 +171,7 @@ dabc::Transport* saftdabc::Device::CreateTransport (dabc::Command cmd, const dab
 
 
 
-void saftdabc::Device::SetInfo(const std::string& info, bool forceinfo)
+void saftdabc::Device::SetInfo(const std::string &info, bool forceinfo)
 {
 //   DOUT0("SET INFO: %s", info.c_str());
 

@@ -43,7 +43,7 @@ namespace dabc {
 
    class EventsIterator : public Object {
       public:
-         EventsIterator(const std::string& name) : Object(name, flAutoDestroy) {}
+         EventsIterator(const std::string &name) : Object(name, flAutoDestroy) {}
          virtual ~EventsIterator() {}
 
          virtual bool Assign(const Buffer& buf) = 0;
@@ -72,7 +72,7 @@ namespace dabc {
 
    class EventsProducer : public Object {
       public:
-         EventsProducer(const std::string& name) : Object(name, flAutoDestroy) {}
+         EventsProducer(const std::string &name) : Object(name, flAutoDestroy) {}
          virtual ~EventsProducer() {}
 
          virtual bool Assign(const Buffer& buf) = 0;

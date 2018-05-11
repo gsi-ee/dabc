@@ -64,8 +64,8 @@ namespace dabc {
      public:
          Exception() throw();
 
-         Exception(const std::string& info, const std::string& item = "") throw();
-         Exception(ExceptionKind _kind, const std::string& info, const std::string& item) throw();
+         Exception(const std::string &info, const std::string &item = "") throw();
+         Exception(ExceptionKind _kind, const std::string &info, const std::string &item) throw();
          virtual ~Exception() throw();
 
          virtual const char* what() const throw();

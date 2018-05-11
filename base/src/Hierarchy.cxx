@@ -156,7 +156,7 @@ bool dabc::History::SaveTo(HStore& res)
 // ===============================================================================
 
 
-dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
+dabc::HierarchyContainer::HierarchyContainer(const std::string &name) :
    dabc::RecordContainer(name, flNoMutex | flIsOwner),
    fNodeVersion(0),
    fNamesVersion(0),
@@ -553,7 +553,7 @@ bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
    return fChildsChanged || fNodeChanged;
 }
 
-dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::string& name, int indx)
+dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::string &name, int indx)
 {
    while ((indx>=0) && (indx<(int) NumChilds())) {
       dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
@@ -932,7 +932,7 @@ bool dabc::Hierarchy::UpdateFromBuffer(const dabc::Buffer& buf, HierarchyStreamK
 }
 
 
-void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
+void dabc::Hierarchy::Create(const std::string &name, bool withmutex)
 {
    Release();
 
@@ -942,7 +942,7 @@ void dabc::Hierarchy::Create(const std::string& name, bool withmutex)
 }
 
 
-dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowslahes, bool force)
+dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowslahes, bool force)
 {
    // DOUT0("GetHChild main:%p name:%s force %s", this, name.c_str(), DBOOL(force));
 
@@ -996,7 +996,7 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string& name, bool allowsl
    return res;
 }
 
-bool dabc::Hierarchy::RemoveHChild(const std::string& path, bool allowslahes)
+bool dabc::Hierarchy::RemoveHChild(const std::string &path, bool allowslahes)
 {
    dabc::Hierarchy h = GetHChild(path, allowslahes);
    if (h.null()) return false;
@@ -1025,7 +1025,7 @@ dabc::Hierarchy dabc::Hierarchy::FindMaster() const
 }
 
 
-bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t hash, uint64_t last_version)
+bool dabc::Hierarchy::IsBinItemChanged(const std::string &itemname, uint64_t hash, uint64_t last_version)
 {
    if (null()) return false;
 
@@ -1048,7 +1048,7 @@ bool dabc::Hierarchy::IsBinItemChanged(const std::string& itemname, uint64_t has
 }
 
 
-bool dabc::Hierarchy::FillBinHeader(const std::string& itemname, dabc::Command& cmd, uint64_t mhash, const std::string& dflt_master_name)
+bool dabc::Hierarchy::FillBinHeader(const std::string &itemname, dabc::Command& cmd, uint64_t mhash, const std::string &dflt_master_name)
 {
    if (null()) return false;
 
@@ -1095,7 +1095,7 @@ std::string dabc::Hierarchy::FindBinaryProducer(std::string& request_name, bool 
 }
 
 
-bool dabc::Hierarchy::RemoveEmptyFolders(const std::string& path)
+bool dabc::Hierarchy::RemoveEmptyFolders(const std::string &path)
 {
    dabc::Hierarchy h = GetFolder(path);
    if (h.null()) return false;

@@ -21,7 +21,7 @@
 #include "dabc/Transport.h"
 
 
-dabc::Device::Device(const std::string& name) :
+dabc::Device::Device(const std::string &name) :
    Worker(MakePair(name)),
    fDeviceDestroyed(false)
 {

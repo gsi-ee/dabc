@@ -128,16 +128,16 @@ namespace dabc {
          virtual int ExecuteCommand(Command cmd);
 
          /** Method called when port started or stopped. We could start buffer sending */
-         virtual void ProcessConnectionActivated(const std::string& name, bool on);
+         virtual void ProcessConnectionActivated(const std::string &name, bool on);
 
-         virtual void ProcessConnectEvent(const std::string& name, bool on);
+         virtual void ProcessConnectEvent(const std::string &name, bool on);
 
 
          bool RecheckRequests(bool from_recv = false);
 
       public:
 
-         MemoryPool(const std::string& name, bool withmanager = false);
+         MemoryPool(const std::string &name, bool withmanager = false);
          virtual ~MemoryPool();
 
          virtual const char* ClassName() const { return "MemoryPool"; }
@@ -235,7 +235,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateMemoryPool, "CreateMemoryPool")
 
-      CmdCreateMemoryPool(const std::string& poolname) : Command(CmdName())
+      CmdCreateMemoryPool(const std::string &poolname) : Command(CmdName())
       {
          SetStr(xmlPoolName, poolname);
       }

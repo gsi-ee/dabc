@@ -95,17 +95,17 @@ class IbTestClusterRouting {
 
       void Reset();
 
-      int FindNode(const std::string& name);
+      int FindNode(const std::string &name);
       /* Adds node of name and lid to the list of nodes.
        * If node with such name exists, liddiff will return difference
        * between base lid and specified lid parameter */
-      int AddNode(const std::string& name, int lid = 0, int* liddiff = 0);
-      int AddSwitch(const std::string& name);
+      int AddNode(const std::string &name, int lid = 0, int* liddiff = 0);
+      int AddSwitch(const std::string &name);
 
       void ExcludeNode(int nodeid);
 
       /** Returns switch id, -1 if name not found */
-      int FindSwitch(const std::string& name);
+      int FindSwitch(const std::string &name);
 
 
    public:
@@ -163,7 +163,7 @@ class IbTestClusterRouting {
 
       /** Select nodes id according arguments list
        * For a moment it is switch names */
-      bool SelectNodes(const std::string& all_args, IbTestIntColumn& ids);
+      bool SelectNodes(const std::string &all_args, IbTestIntColumn& ids);
 
       /** Method tries to build optimal routes to balance load over spine switches */
       void BuildOptimalRoutes();
@@ -176,10 +176,10 @@ class IbTestClusterRouting {
       int CheckUsefulLIDs();
 
       /** Save names of selected nodes in the file */
-      bool SaveNodesList(const std::string& fname, const IbTestIntColumn& ids);
+      bool SaveNodesList(const std::string &fname, const IbTestIntColumn& ids);
 
       /** Load nodes names from the file */
-      bool LoadNodesList(const std::string& fname, IbTestIntColumn& ids);
+      bool LoadNodesList(const std::string &fname, IbTestIntColumn& ids);
 
 };
 
@@ -325,9 +325,9 @@ class IbTestSchedule {
       /** \brief Copies schedule content to new object */
       bool CopyTo(IbTestSchedule& new_sch);
 
-      bool SaveToFile(const std::string& fname);
+      bool SaveToFile(const std::string &fname);
 
-      bool ReadFromFile(const std::string& fname);
+      bool ReadFromFile(const std::string &fname);
 };
 
 

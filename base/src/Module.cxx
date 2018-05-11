@@ -30,7 +30,7 @@
 
 // __________________________________________________________________
 
-dabc::Module::Module(const std::string& name, Command cmd) :
+dabc::Module::Module(const std::string &name, Command cmd) :
    Worker(MakePair(name.empty() ? cmd.GetStr("Name","module") : name)),
    fRunState(false),
    fInputs(),
@@ -72,7 +72,7 @@ dabc::Module::~Module()
    if (fRunState) EOUT("Module %s destroyed in running state", GetName());
 }
 
-void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::string& poolname)
+void dabc::Module::EnsurePorts(unsigned numinp, unsigned numout, const std::string &poolname)
 {
    while (NumInputs() < numinp)
       CreateInput(format("Input%u", NumInputs()));
@@ -106,7 +106,7 @@ std::string dabc::Module::TimerName(unsigned indx, bool fullname) const
    return fTimers[indx]->GetName();
 }
 
-unsigned dabc::Module::FindTimer(const std::string& name)
+unsigned dabc::Module::FindTimer(const std::string &name)
 {
    if (!name.empty())
       for (unsigned n=0;n<fTimers.size();n++)
@@ -115,7 +115,7 @@ unsigned dabc::Module::FindTimer(const std::string& name)
 }
 
 
-unsigned dabc::Module::CreateTimer(const std::string& name, double period_sec, bool synchron)
+unsigned dabc::Module::CreateTimer(const std::string &name, double period_sec, bool synchron)
 {
    unsigned indx = FindTimer(name);
    if (IsValidTimer(indx)) return indx;
@@ -135,7 +135,7 @@ unsigned dabc::Module::CreateTimer(const std::string& name, double period_sec, b
    return timer->ItemSubId();
 }
 
-dabc::Parameter dabc::Module::CreatePar(const std::string& name, const std::string& kind)
+dabc::Parameter dabc::Module::CreatePar(const std::string &name, const std::string &kind)
 {
    dabc::Parameter par = dabc::Worker::CreatePar(name, kind);
 
@@ -149,7 +149,7 @@ dabc::Parameter dabc::Module::CreatePar(const std::string& name, const std::stri
    return par;
 }
 
-void dabc::Module::SetInfoParName(const std::string& parname)
+void dabc::Module::SetInfoParName(const std::string &parname)
 {
    dabc::LockGuard lock(ObjectMutex());
    fInfoParName = parname;
@@ -163,7 +163,7 @@ std::string dabc::Module::GetInfoParName() const
 }
 
 
-unsigned dabc::Module::FindOutput(const std::string& name) const
+unsigned dabc::Module::FindOutput(const std::string &name) const
 {
    if (!name.empty())
       for (unsigned n=0;n<fOutputs.size();n++)
@@ -171,7 +171,7 @@ unsigned dabc::Module::FindOutput(const std::string& name) const
    return (unsigned) -1;
 }
 
-unsigned dabc::Module::FindInput(const std::string& name) const
+unsigned dabc::Module::FindInput(const std::string &name) const
 {
    if (!name.empty())
       for (unsigned n=0;n<fInputs.size();n++)
@@ -179,7 +179,7 @@ unsigned dabc::Module::FindInput(const std::string& name) const
    return (unsigned) -1;
 }
 
-unsigned dabc::Module::FindPool(const std::string& name) const
+unsigned dabc::Module::FindPool(const std::string &name) const
 {
    if (!name.empty())
       for (unsigned n=0;n<fPools.size();n++)
@@ -209,7 +209,7 @@ std::string dabc::Module::PoolName(unsigned indx, bool fullname) const
 }
 
 
-unsigned dabc::Module::CreateUserItem(const std::string& name)
+unsigned dabc::Module::CreateUserItem(const std::string &name)
 {
    unsigned indx = FindUserItem(name);
    if (IsValidUserItem(indx)) return indx;
@@ -225,7 +225,7 @@ unsigned dabc::Module::CreateUserItem(const std::string& name)
    return item->ItemSubId();
 }
 
-unsigned dabc::Module::FindUserItem(const std::string& name)
+unsigned dabc::Module::FindUserItem(const std::string &name)
 {
    if (!name.empty())
       for (unsigned n=0;n<fUsers.size();n++)
@@ -275,7 +275,7 @@ dabc::Buffer dabc::Module::TakeDfltBuffer()
    return dabc::Buffer();
 }
 
-bool dabc::Module::DisconnectPort(const std::string& portname, bool witherr)
+bool dabc::Module::DisconnectPort(const std::string &portname, bool witherr)
 {
    PortRef port = FindPort(portname);
 
@@ -307,7 +307,7 @@ void dabc::Module::DisconnectAllPorts(bool witherr)
 }
 
 
-bool dabc::Module::SubmitCommandToTransport(const std::string& portname, Command cmd)
+bool dabc::Module::SubmitCommandToTransport(const std::string &portname, Command cmd)
 {
    PortRef port = FindPort(portname);
 
@@ -612,7 +612,7 @@ bool dabc::Module::DoStop()
    return true;
 }
 
-unsigned dabc::Module::CreatePoolHandle(const std::string& poolname, unsigned queue)
+unsigned dabc::Module::CreatePoolHandle(const std::string &poolname, unsigned queue)
 {
    unsigned index = FindPool(poolname);
    if (IsValidPool(index)) return index;
@@ -704,12 +704,12 @@ void dabc::Module::RemoveModuleItem(ModuleItem* item)
 }
 
 
-dabc::PortRef dabc::Module::FindPort(const std::string& name) const
+dabc::PortRef dabc::Module::FindPort(const std::string &name) const
 {
    return FindChildRef(name.c_str());
 }
 
-unsigned dabc::Module::CreateInput(const std::string& name, unsigned queue)
+unsigned dabc::Module::CreateInput(const std::string &name, unsigned queue)
 {
    unsigned indx = FindInput(name);
    if (IsValidInput(indx)) return indx;
@@ -732,7 +732,7 @@ unsigned dabc::Module::CreateInput(const std::string& name, unsigned queue)
    return port->ItemSubId();
 }
 
-unsigned dabc::Module::CreateOutput(const std::string& name, unsigned queue)
+unsigned dabc::Module::CreateOutput(const std::string &name, unsigned queue)
 {
    unsigned indx = FindOutput(name);
    if (IsValidOutput(indx)) return indx;
@@ -755,7 +755,7 @@ unsigned dabc::Module::CreateOutput(const std::string& name, unsigned queue)
    return port->ItemSubId();
 }
 
-bool dabc::Module::BindPorts(const std::string& inpname, const std::string& outname)
+bool dabc::Module::BindPorts(const std::string &inpname, const std::string &outname)
 {
    unsigned inpindx = FindInput(inpname);
    unsigned outindx = FindOutput(outname);
@@ -790,13 +790,13 @@ void dabc::Module::ProduceOutputEvent(unsigned indx, unsigned cnt)
       FireEvent(evntOutput, fOutputs[indx]->ItemId());
 }
 
-bool dabc::Module::IsPortConnected(const std::string& name) const
+bool dabc::Module::IsPortConnected(const std::string &name) const
 {
    return FindPort(name).IsConnected();
 }
 
 
-bool dabc::Module::SetPortSignaling(const std::string& name, Port::EventsProducing signal)
+bool dabc::Module::SetPortSignaling(const std::string &name, Port::EventsProducing signal)
 {
    PortRef port = FindPort(name);
    if (!port.null()) {
@@ -807,7 +807,7 @@ bool dabc::Module::SetPortSignaling(const std::string& name, Port::EventsProduci
    return false;
 }
 
-bool dabc::Module::SetPortRatemeter(const std::string& name, const Parameter& ref)
+bool dabc::Module::SetPortRatemeter(const std::string &name, const Parameter& ref)
 {
    PortRef port = FindPort(name);
    if (!port.null()) {
@@ -817,7 +817,7 @@ bool dabc::Module::SetPortRatemeter(const std::string& name, const Parameter& re
    return true;
 }
 
-bool dabc::Module::SetPortLoopLength(const std::string& name, unsigned cnt)
+bool dabc::Module::SetPortLoopLength(const std::string &name, unsigned cnt)
 {
    PortRef port = FindPort(name);
    if (!port.null()) {
@@ -1035,12 +1035,12 @@ bool dabc::ModuleRef::ConnectPoolHandles()
    return true;
 }
 
-dabc::PortRef dabc::ModuleRef::FindPort(const std::string& name)
+dabc::PortRef dabc::ModuleRef::FindPort(const std::string &name)
 {
    return FindChild(name.c_str());
 }
 
-bool dabc::ModuleRef::IsPortConnected(const std::string& name)
+bool dabc::ModuleRef::IsPortConnected(const std::string &name)
 {
    dabc::Command cmd("IsPortConnected");
    cmd.SetStr("Port", name);

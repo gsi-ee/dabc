@@ -74,7 +74,7 @@ double DoublesVector::Max()
 
 
 
-IbTestWorkerModule::IbTestWorkerModule(const std::string& name, dabc::Command cmd) :
+IbTestWorkerModule::IbTestWorkerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd),
    fStamping()
 {

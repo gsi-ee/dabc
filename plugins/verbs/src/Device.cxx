@@ -233,7 +233,7 @@ void verbs::ProtocolAddon::VerbsProcessOperError(uint32_t bufid)
 
 // ____________________________________________________________________
 
-verbs::Device::Device(const std::string& name) :
+verbs::Device::Device(const std::string &name) :
    dabc::Device(name),
    fIbContext(),
    fAllocateIndividualCQ(false)
@@ -257,7 +257,7 @@ verbs::Device::~Device()
    DOUT5("verbs::Device::~Device()");
 }
 
-verbs::QueuePair* verbs::Device::CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
+verbs::QueuePair* verbs::Device::CreatePortQP(const std::string &thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
 
@@ -482,7 +482,7 @@ double verbs::Device::ProcessTimeout(double last_diff)
    return -1;
 }
 
-bool verbs::ConvertStrToGid(const std::string& s, ibv_gid &gid)
+bool verbs::ConvertStrToGid(const std::string &s, ibv_gid &gid)
 {
    unsigned raw[16];
 

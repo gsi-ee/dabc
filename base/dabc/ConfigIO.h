@@ -71,7 +71,7 @@ namespace dabc {
          /** \brief Check if item, found by FindItem routine, has attribute with specified value */
          bool CheckAttr(const char* name, const char* value);
 
-         bool ReadRecordField(Object* obj, const std::string& name, RecordField* field, RecordFieldsMap* fieldsmap);
+         bool ReadRecordField(Object* obj, const std::string &name, RecordField* field, RecordFieldsMap* fieldsmap);
    };
 
 }

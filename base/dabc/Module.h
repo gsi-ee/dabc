@@ -78,7 +78,7 @@ namespace dabc {
 
       private:
 
-         Module(const std::string& name, Command cmd);
+         Module(const std::string &name, Command cmd);
          virtual ~Module();
 
          void AddModuleItem(ModuleItem* item);
@@ -131,22 +131,22 @@ namespace dabc {
           * and provides fast access to memory pool functionality.
           * Memory pool should exist before handle can be created
           * Returns index of pool handle, which can be used later with operation like TakeBuffer */
-         unsigned CreatePoolHandle(const std::string& poolname, unsigned queue = 10);
+         unsigned CreatePoolHandle(const std::string &poolname, unsigned queue = 10);
 
-         unsigned CreateInput(const std::string& name, unsigned queue = 10);
-         unsigned CreateOutput(const std::string& name, unsigned queue = 10);
+         unsigned CreateInput(const std::string &name, unsigned queue = 10);
+         unsigned CreateOutput(const std::string &name, unsigned queue = 10);
 
-         unsigned CreateTimer(const std::string& name, double period_sec = -1., bool synchron = false);
+         unsigned CreateTimer(const std::string &name, double period_sec = -1., bool synchron = false);
 
-         unsigned CreateUserItem(const std::string& name);
+         unsigned CreateUserItem(const std::string &name);
 
 
          /** Method ensure that at least specified number of input and output ports will be created. */
-         void EnsurePorts(unsigned numinp = 0, unsigned numout = 0, const std::string& poolname = "");
+         void EnsurePorts(unsigned numinp = 0, unsigned numout = 0, const std::string &poolname = "");
 
          /** Bind input and output ports that both will share same connection.
           * In local case ports will be connected to appropriate pair of bind ports from other module */
-         bool BindPorts(const std::string& inpname, const std::string& outname);
+         bool BindPorts(const std::string &inpname, const std::string &outname);
 
 
          // these are new methods, which should be protected
@@ -154,7 +154,7 @@ namespace dabc {
          bool IsValidOutput(unsigned indx = 0) const { return indx < fOutputs.size(); }
          bool IsOutputConnected(unsigned indx = 0) const { return indx < fOutputs.size() ? fOutputs[indx]->IsConnected() : false; }
          unsigned OutputQueueCapacity(unsigned indx = 0) const { return indx < fOutputs.size() ? fOutputs[indx]->QueueCapacity() : 0; }
-         unsigned FindOutput(const std::string& name) const;
+         unsigned FindOutput(const std::string &name) const;
          std::string OutputName(unsigned indx = 0, bool fullname = false) const;
 
          unsigned NumInputs() const { return fInputs.size(); }
@@ -162,36 +162,36 @@ namespace dabc {
          bool IsInputConnected(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->IsConnected() : false; }
          bool InputQueueFull(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->QueueFull() : false; }
          unsigned InputQueueCapacity(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->QueueCapacity() : 0; }
-         unsigned FindInput(const std::string& name) const;
+         unsigned FindInput(const std::string &name) const;
          std::string InputName(unsigned indx = 0, bool fullname = false) const;
 
          unsigned NumPools() const { return fPools.size(); }
          bool IsValidPool(unsigned indx = 0) const { return indx < fPools.size(); }
          bool IsPoolConnected(unsigned indx = 0) const { return indx < fPools.size() ? fPools[indx]->IsConnected() : false; }
-         unsigned FindPool(const std::string& name) const;
+         unsigned FindPool(const std::string &name) const;
          std::string PoolName(unsigned indx = 0, bool fullname = false) const;
          /** Returns true when handle automatically delivers buffers via the connection */
          bool IsAutoPool(unsigned indx = 0) const { return indx<fPools.size() ? fPools[indx]->QueueCapacity() > 0 : false; }
 
 
-         PortRef FindPort(const std::string& name) const;
-         bool IsPortConnected(const std::string& name) const;
+         PortRef FindPort(const std::string &name) const;
+         bool IsPortConnected(const std::string &name) const;
 
          /** Disconnect port from transport. Should be called only from Module thread */
-         bool DisconnectPort(const std::string& name, bool witherr = false);
+         bool DisconnectPort(const std::string &name, bool witherr = false);
 
          /** Method disconnects all module ports, should be called only from Module thread */
          void DisconnectAllPorts(bool witherr = false);
 
          /** Submits command to transport, assigned with the port */
-         bool SubmitCommandToTransport(const std::string& portname, Command cmd);
+         bool SubmitCommandToTransport(const std::string &portname, Command cmd);
 
-         unsigned PortQueueCapacity(const std::string& name) const { return FindPort(name).QueueCapacity(); }
-         bool SetPortSignaling(const std::string& name, Port::EventsProducing signal);
-         bool SetPortRatemeter(const std::string& name, const Parameter& ref);
-         bool SetPortLoopLength(const std::string& name, unsigned cnt);
+         unsigned PortQueueCapacity(const std::string &name) const { return FindPort(name).QueueCapacity(); }
+         bool SetPortSignaling(const std::string &name, Port::EventsProducing signal);
+         bool SetPortRatemeter(const std::string &name, const Parameter& ref);
+         bool SetPortLoopLength(const std::string &name, unsigned cnt);
 
-         unsigned FindTimer(const std::string& name);
+         unsigned FindTimer(const std::string &name);
          bool IsValidTimer(unsigned indx) const { return indx < fTimers.size(); }
          unsigned NumTimers() const { return fTimers.size(); }
          std::string TimerName(unsigned n = 0, bool fullname = false) const;
@@ -204,21 +204,21 @@ namespace dabc {
             }
          }
 
-         void ShootTimer(const std::string& name, double delay_sec = 0.)
+         void ShootTimer(const std::string &name, double delay_sec = 0.)
            {  ShootTimer(FindTimer(name), delay_sec); }
 
          ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? fItems[id] : 0; }
 
-         unsigned FindUserItem(const std::string& name);
+         unsigned FindUserItem(const std::string &name);
          bool IsValidUserItem(unsigned indx) const { return indx < fUsers.size(); }
          std::string UserItemName(unsigned indx = 0, bool fullname = false) const;
          EventId ConstructUserItemEvent(unsigned indx = 0)
          { return EventId(evntUser, 0, indx < fUsers.size() ? fUsers[indx]->ItemId() : 0); }
 
 
-         virtual Parameter CreatePar(const std::string& name, const std::string& kind = "");
+         virtual Parameter CreatePar(const std::string &name, const std::string &kind = "");
 
-         void SetInfoParName(const std::string& name);
+         void SetInfoParName(const std::string &name);
 
 
          // TODO: move to respective module classes
@@ -263,7 +263,7 @@ namespace dabc {
          // generic users event processing function
          virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid) {}
 
-         virtual void ProcessConnectionActivated(const std::string& name, bool on) {}
+         virtual void ProcessConnectionActivated(const std::string &name, bool on) {}
 
       public:
 
@@ -315,10 +315,10 @@ namespace dabc {
          unsigned NumOutputs();
 
          /** Return reference on the port */
-         PortRef FindPort(const std::string& name);
+         PortRef FindPort(const std::string &name);
 
          /** Returns true if port with specified name is connected - thread safe */
-         bool IsPortConnected(const std::string& name);
+         bool IsPortConnected(const std::string &name);
 
          /** Return item name of the input, can be used in connect command */
          std::string InputName(unsigned n = 0, bool itemname = true);

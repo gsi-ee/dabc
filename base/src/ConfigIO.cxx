@@ -134,7 +134,7 @@ std::string dabc::ConfigIO::ResolveEnv(const char* value)
    return fCfg->ResolveEnv(value, fCgfId);
 }
 
-bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string& itemname, RecordField* field, RecordFieldsMap* fieldsmap)
+bool dabc::ConfigIO::ReadRecordField(Object* obj, const std::string &itemname, RecordField* field, RecordFieldsMap* fieldsmap)
 {
    // here we search all nodes in config file which are compatible with for specified object
    // and config name. From all places we reconstruct all fields and attributes which can belong

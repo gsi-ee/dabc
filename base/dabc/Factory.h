@@ -63,40 +63,40 @@ namespace dabc {
       friend class FactoryPlugin;
 
       public:
-         Factory(const std::string& name);
+         Factory(const std::string &name);
 
          /** Factory method to create application */
-         virtual Application* CreateApplication(const std::string& classname, Command cmd) { return 0; }
+         virtual Application* CreateApplication(const std::string &classname, Command cmd) { return 0; }
 
          /** Factory method to create object */
-         virtual Reference CreateObject(const std::string& classname, const std::string& objname, Command cmd) { return 0; }
+         virtual Reference CreateObject(const std::string &classname, const std::string &objname, Command cmd) { return 0; }
 
          /** Factory method to create device */
-         virtual Device* CreateDevice(const std::string& classname, const std::string& devname, Command cmd) { return 0; }
+         virtual Device* CreateDevice(const std::string &classname, const std::string &devname, Command cmd) { return 0; }
 
          /** Factory method to create thread */
-         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd) { return Reference(); }
+         virtual Reference CreateThread(Reference parent, const std::string &classname, const std::string &thrdname, const std::string &thrddev, Command cmd) { return Reference(); }
 
          /** Factory method to create module */
-         virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd) { return 0; }
+         virtual Module* CreateModule(const std::string &classname, const std::string &modulename, Command cmd) { return 0; }
 
          /** Factory method to create transport */
-         virtual Module* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
+         virtual Module* CreateTransport(const Reference& port, const std::string &typ, Command cmd);
 
          /** Factory method to create data input */
-         virtual DataInput* CreateDataInput(const std::string& typ) { return 0; }
+         virtual DataInput* CreateDataInput(const std::string &typ) { return 0; }
 
          /** Factory method to create data output */
-         virtual DataOutput* CreateDataOutput(const std::string& typ) { return 0; }
+         virtual DataOutput* CreateDataOutput(const std::string &typ) { return 0; }
 
          /** Factory method to create arbitrary object kind */
-         virtual void* CreateAny(const std::string& classname, const std::string& objname, Command cmd) { return 0; }
+         virtual void* CreateAny(const std::string &classname, const std::string &objname, Command cmd) { return 0; }
 
-         static bool LoadLibrary(const std::string& fname);
+         static bool LoadLibrary(const std::string &fname);
 
-         static void* FindSymbol(const std::string& symbol);
+         static void* FindSymbol(const std::string &symbol);
 
-         static bool CreateManager(const std::string& name = "mgr", Configuration* cfg = 0);
+         static bool CreateManager(const std::string &name = "mgr", Configuration* cfg = 0);
 
          virtual const char* ClassName() const { return "Factory"; }
 

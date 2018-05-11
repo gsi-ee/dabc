@@ -15,7 +15,7 @@
 
 #include "dabc/CpuInfoModule.h"
 
-dabc::CpuInfoModule::CpuInfoModule(const std::string& name, dabc::Command cmd, int kind) :
+dabc::CpuInfoModule::CpuInfoModule(const std::string &name, dabc::Command cmd, int kind) :
    dabc::ModuleAsync(name, cmd),
    fStat(true),
    fKind(kind)

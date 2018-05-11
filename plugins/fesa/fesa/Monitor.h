@@ -49,19 +49,19 @@ namespace fesa {
 
          bool fBlockRec; ///< when true, slow-control record cannot be updated
 
-         double doGet(const std::string& service, const std::string& field);
+         double doGet(const std::string &service, const std::string &field);
 
          virtual unsigned GetRecRawSize();
          virtual unsigned WriteRecRawData(void* ptr, unsigned maxsize);
 
       public:
 
-         Monitor(const std::string& name, dabc::Command cmd = nullptr);
+         Monitor(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~Monitor();
 
-         void ReportServiceChanged(const std::string& name, const rdaData* v);
+         void ReportServiceChanged(const std::string &name, const rdaData* v);
 
-         void ReportServiceError(const std::string& name, const std::string& err);
+         void ReportServiceError(const std::string &name, const std::string &err);
 
    };
 }

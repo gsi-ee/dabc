@@ -42,15 +42,15 @@ namespace hadaq {
       public:
 
          /** ctor will create service from given dabc parameter*/
-         ShmEntry(const std::string& dabcname , const std::string& shmemname, ::Worker* handle, dabc::Parameter& par);
+         ShmEntry(const std::string &dabcname , const std::string &shmemname, ::Worker* handle, dabc::Parameter& par);
 
          virtual ~ShmEntry();
 
-         bool IsStatsName(const std::string& name) const { return fStatsName == name; }
-         bool IsShmemName(const std::string& name) const { return fShmName == name; }
+         bool IsStatsName(const std::string &name) const { return fStatsName == name; }
+         bool IsShmemName(const std::string &name) const { return fShmName == name; }
 
          /** Update shm value from parameter */
-         void UpdateValue(const std::string& value);
+         void UpdateValue(const std::string &value);
 
          /** Update backpointed parameter  from shm */
          void UpdateParameter();

@@ -88,7 +88,7 @@ void FCGX_DABC_send_file(FCGX_Request* request, const char* fname)
 #endif
 
 
-http::FastCgi::FastCgi(const std::string& name, dabc::Command cmd) :
+http::FastCgi::FastCgi(const std::string &name, dabc::Command cmd) :
    http::Server(name, cmd),
    fCgiPort(9000),
    fDebugMode(false),

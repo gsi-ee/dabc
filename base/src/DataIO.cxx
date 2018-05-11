@@ -56,13 +56,13 @@ dabc::DataOutput::DataOutput(const dabc::Url& url) :
 {
 }
 
-void dabc::DataOutput::SetInfoParName(const std::string& name)
+void dabc::DataOutput::SetInfoParName(const std::string &name)
 {
    fInfoName = name;
 }
 
 
-void dabc::DataOutput::ShowInfo(int lvl, const std::string& info)
+void dabc::DataOutput::ShowInfo(int lvl, const std::string &info)
 {
    dabc::InfoParameter par;
    if (!fInfoName.empty())
@@ -178,7 +178,7 @@ bool dabc::FileInput::Read_Stat(dabc::Command cmd)
 
 // ================================================================
 
-dabc::FileOutput::FileOutput(const dabc::Url& url, const std::string& ext) :
+dabc::FileOutput::FileOutput(const dabc::Url& url, const std::string &ext) :
    DataOutput(url),
    fFileName(url.GetFullName()),
    fSizeLimitMB(url.GetOptionInt(dabc::xml_maxsize,0)),
@@ -253,7 +253,7 @@ bool dabc::FileOutput::Write_Init()
    return true;
 }
 
-std::string dabc::FileOutput::ProduceFileName(const std::string& suffix)
+std::string dabc::FileOutput::ProduceFileName(const std::string &suffix)
 {
    std::string fname = fFileName;
 

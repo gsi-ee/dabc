@@ -21,7 +21,7 @@
 dabc::FactoryPlugin fesafactory(new fesa::Factory("fesa"));
 
 
-dabc::Module* fesa::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
+dabc::Module* fesa::Factory::CreateModule(const std::string &classname, const std::string &modulename, dabc::Command cmd)
 {
    if (classname == "fesa::Player")
       return new fesa::Player(modulename, cmd);

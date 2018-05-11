@@ -82,10 +82,10 @@ namespace dabc {
 
          virtual std::string DefaultFiledName() const;
 
-         virtual bool HasField(const std::string& name) const
+         virtual bool HasField(const std::string &name) const
          { LockGuard guard(ObjectMutex()); return RecordContainer::HasField(name); }
 
-         virtual bool RemoveField(const std::string& name)
+         virtual bool RemoveField(const std::string &name)
          { LockGuard guard(ObjectMutex()); return RecordContainer::RemoveField(name); }
 
          virtual unsigned NumFields() const
@@ -94,9 +94,9 @@ namespace dabc {
          virtual std::string FieldName(unsigned cnt) const
             { LockGuard guard(ObjectMutex()); return RecordContainer::FieldName(cnt); }
 
-         virtual RecordField GetField(const std::string& name) const;
+         virtual RecordField GetField(const std::string &name) const;
 
-         virtual bool SetField(const std::string& name, const RecordField& v);
+         virtual bool SetField(const std::string &name, const RecordField& v);
 
          /** Method called from manager thread when parameter configured as asynchronous.
           * It is done intentionally to avoid situation that in non-deterministic way event processing
@@ -104,7 +104,7 @@ namespace dabc {
           * TODO: should be invocation of parModified events generally done from the manager thread, or keep it only for asynchron parameters? */
          void ProcessTimeout(double last_dif);
 
-         ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "", bool hidden = false);
+         ParameterContainer(Reference worker, const std::string &name, const std::string &parkind = "", bool hidden = false);
          virtual ~ParameterContainer();
 
          inline void Modified() { FireParEvent(parModified); }
@@ -135,7 +135,7 @@ namespace dabc {
 
          /** Internal method, used to inform system that parameter is modified
           * If configured, also debug output will be produced */
-         void FireModified(const std::string& svalue);
+         void FireModified(const std::string &svalue);
 
          /** \brief Save parameter attributes into container */
          virtual void BuildFieldsMap(RecordFieldsMap* cont);
@@ -148,7 +148,7 @@ namespace dabc {
 
          virtual const char* ClassName() const { return "Parameter"; }
 
-         const std::string& Kind() const;
+         const std::string &Kind() const;
    };
 
    // _______________________________________________________________________
@@ -257,7 +257,7 @@ namespace dabc {
          Parameter& SetWidthPrecision(unsigned width, unsigned prec);
 
          /** Set units field of parameter */
-         Parameter& SetUnits(const std::string& unit) { SetField("units", unit); return *this; }
+         Parameter& SetUnits(const std::string &unit) { SetField("units", unit); return *this; }
 
          /** Return units of parameter value */
          const std::string GetUnits() const { return GetField("units").AsStr(); }
@@ -309,10 +309,10 @@ namespace dabc {
 
          DABC_REFERENCE(InfoParameter, Parameter, ParameterContainer)
 
-         void SetInfo(const std::string& info) { SetValue(info); }
+         void SetInfo(const std::string &info) { SetValue(info); }
          std::string GetInfo() const { return Value().AsStr(); }
 
-         void SetColor(const std::string& name) { SetField("color", name); }
+         void SetColor(const std::string &name) { SetField("color", name); }
          std::string GetColor() const { return GetField("color").AsStr("Green"); }
 
          void SetVerbosity(int level) { SetField("verbosity", level); }
@@ -343,15 +343,15 @@ namespace dabc {
 
          DABC_REFERENCE(CommandDefinition, Record, RecordContainer)
 
-         CommandDefinition& AddArg(const std::string& name, const std::string& kind = "string", bool required = true, const RecordField& dflt = RecordField());
+         CommandDefinition& AddArg(const std::string &name, const std::string &kind = "string", bool required = true, const RecordField& dflt = RecordField());
 
-         CommandDefinition& SetArgMinMax(const std::string& name, const RecordField& min, const RecordField& max);
+         CommandDefinition& SetArgMinMax(const std::string &name, const RecordField& min, const RecordField& max);
 
          int NumArgs() const;
 
-         int FindArg(const std::string& name) const;
+         int FindArg(const std::string &name) const;
 
-         bool HasArg(const std::string& name) const { return FindArg(name) >=0; }
+         bool HasArg(const std::string &name) const { return FindArg(name) >=0; }
 
          bool GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const;
 

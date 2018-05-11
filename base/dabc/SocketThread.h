@@ -79,7 +79,7 @@ namespace dabc {
          inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
 
          /** Generic error handler. Also invoked when socket is closed (msg==0) */
-         virtual void OnSocketError(int msg, const std::string& info);
+         virtual void OnSocketError(int msg, const std::string &info);
 
          ssize_t DoRecvBuffer(void* buf, ssize_t len);
          ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);
@@ -220,7 +220,7 @@ namespace dabc {
 
          /** \brief Set destination address for all send operations,
           * \details Can be only specified for datagram sockets */
-         void SetSendAddr(const std::string& host = "", int port = 0);
+         void SetSendAddr(const std::string &host = "", int port = 0);
 
          bool StartSend(const void* buf, unsigned size,
                         const void* buf2 = 0, unsigned size2 = 0,
@@ -268,7 +268,7 @@ namespace dabc {
          virtual ~SocketConnectAddon() {}
 
          /** Set connection handler. By default, worker will handle connection from addon */
-         void SetConnHandler(const WorkerRef& rcv, const std::string& connid)
+         void SetConnHandler(const WorkerRef& rcv, const std::string &connid)
          {
             fConnRcv = rcv;
             fConnId = connid;
@@ -393,15 +393,15 @@ namespace dabc {
 
          // list of all events for all kind of socket processors
 
-         SocketThread(Reference parent, const std::string& name, Command cmd);
+         SocketThread(Reference parent, const std::string &name, Command cmd);
          virtual ~SocketThread();
 
          virtual const char* ClassName() const { return typeSocketThread; }
-         virtual bool CompatibleClass(const std::string& clname) const;
+         virtual bool CompatibleClass(const std::string &clname) const;
 
          static bool SetNonBlockSocket(int fd);
 
-         static int StartClient(const std::string& host, int nport, bool nonblocking = true);
+         static int StartClient(const std::string &host, int nport, bool nonblocking = true);
 
          /** \brief Wrapper for send method, should be used for blocking sockets */
          static int SendBuffer(int fd, void* buf, int len);
@@ -425,24 +425,24 @@ namespace dabc {
          static void CloseUdp(int fd);
 
          /** \brief Attach datagram socket to multicast group to make receiving */
-         static bool AttachMulticast(int handle, const std::string& addr);
+         static bool AttachMulticast(int handle, const std::string &addr);
 
          /** \brief Detach datagram socket from multicast group */
-         static void DettachMulticast(int handle, const std::string& addr);
+         static void DettachMulticast(int handle, const std::string &addr);
 
          /** \brief Return current host name. If configured, uses sockethost value from XML file */
          static std::string DefineHostName(bool force = true);
 
-         static int ConnectUdp(int fd, const std::string& remhost, int remport);
+         static int ConnectUdp(int fd, const std::string &remhost, int remport);
 
          /** \brief Create handle for server-side connection
           * If hostname == 0, any available address will be selected
           * If hostname == "", configured hostname or just $HOST variable will be used
           * If hostname is not empty, only selected host will be tried to bin
           * One could bind such connection to specified port or try to choose from available ports  */
-         static SocketServerAddon* CreateServerAddon(const std::string& host, int nport, int portmin=-1, int portmax=-1);
+         static SocketServerAddon* CreateServerAddon(const std::string &host, int nport, int portmin=-1, int portmax=-1);
 
-         static SocketClientAddon* CreateClientAddon(const std::string& servid, int dflt_port = -1);
+         static SocketClientAddon* CreateClientAddon(const std::string &servid, int dflt_port = -1);
    };
 }
 

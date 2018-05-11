@@ -137,7 +137,7 @@ void dabc::Application::SetInitFunc(ExternalFunction* initfunc)
    fInitFunc = initfunc;
 }
 
-void dabc::Application::SetAppState(const std::string& name)
+void dabc::Application::SetAppState(const std::string &name)
 {
    Parameter par = Par(StateParName());
    par.SetValue(name);
@@ -149,7 +149,7 @@ void dabc::Application::SetAppState(const std::string& name)
    }
 }
 
-int dabc::Application::DoTransition(const std::string& tgtstate, Command cmd)
+int dabc::Application::DoTransition(const std::string &tgtstate, Command cmd)
 {
    std::string currstate = GetState();
 
@@ -230,7 +230,7 @@ bool dabc::Application::IsModulesRunning()
 }
 
 
-int dabc::Application::CallInitFunc(Command statecmd, const std::string& tgtstate)
+int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstate)
 {
    if (fInitFunc) {
       fInitFunc();
@@ -454,7 +454,7 @@ void dabc::Application::BuildFieldsMap(RecordFieldsMap* cont)
    cont->Field(dabc::prop_kind).SetStr("DABC.Application");
 }
 
-bool dabc::ApplicationRef::AddObject(const std::string& kind, const std::string& name)
+bool dabc::ApplicationRef::AddObject(const std::string &kind, const std::string &name)
 {
    dabc::Command cmd("AddAppObject");
    cmd.SetStr("kind", kind);
