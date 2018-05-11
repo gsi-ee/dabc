@@ -411,12 +411,35 @@
 
       html += "</div>" +
               "</fieldset>";
+
+      html += "<fieldset style='margin:5px'>" +
+              "<legend>Run control</legend>" +
+              "<button class='bnet_startrun'>Start run</button>" +
+              "<select class='bnet_selectrun'>" + 
+              "<option>data</option>" +
+              "<option>test</option>" +
+              "<option>cosmic</option>" +
+              "</select>" +
+              "<button class='bnet_stoprun'>Stop file</button>" +
+              "</fieldset>";
       
       html += "</div>";
       
       var main = d3.select(this.frame).html(html);
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
+      
+      var itemname = this.itemname;
+      
+      $(main.node()).find(".bnet_selectrun").selectmenu({ width: 150 } );
+      
+      $(main.node()).find(".bnet_startrun").button().click(function() {
+         DABC.InvokeCommand(itemname+"/StartRun", "prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
+      });
+      $(main.node()).find(".bnet_stoprun").button().click(function() { 
+         DABC.InvokeCommand(itemname+"/StopRun");
+      });
+
 
       // set DivId after drawing
       this.SetDivId(this.frame);
