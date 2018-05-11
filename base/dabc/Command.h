@@ -196,7 +196,6 @@ namespace dabc {
          /** \brief Disable timeout for the command */
          void ResetTimeout() { SetTimeout(-1); }
 
-
          /** \brief Read command from string, which is typed in std output
           *  \details in simple case string is just command name
           *  One could specify arguments as list parameters, separated by spaces
@@ -206,7 +205,7 @@ namespace dabc {
           *     ping lxg0534
           *     ping addr=lxg0534 port=2233
           */
-         bool ReadFromCmdString(const std::string& str);
+         bool ReadFromCmdString(const std::string &str);
 
          /** Set command priority, defines how fast command should be treated
           *  In special cases priority allows to execute command also in worker which is not active */

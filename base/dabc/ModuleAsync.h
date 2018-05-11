@@ -43,7 +43,7 @@ namespace dabc {
       protected:
          /** Constructor of ModuleAsync class.
           * Made protected to exclude possibility to create instance of class itself */
-         ModuleAsync(const std::string& name, Command cmd = 0) : Module(name, cmd) { }
+         ModuleAsync(const std::string& name, Command cmd = nullptr) : Module(name, cmd) { }
 
          /** Destructor of ModuleAsync class. */
          virtual ~ModuleAsync();

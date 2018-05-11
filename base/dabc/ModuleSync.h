@@ -119,7 +119,7 @@ namespace dabc {
          virtual void ObjectCleanup();
 
          /** Normal constructor */
-         ModuleSync(const std::string& name, Command cmd = 0);
+         ModuleSync(const std::string& name, Command cmd = nullptr);
 
          /** Destructor */
          virtual ~ModuleSync();

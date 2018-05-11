@@ -121,7 +121,7 @@ namespace dabc {
 
       public:
 
-         static int ConnectPorts(Reference port1ref, Reference port2ref, Command cmd = 0);
+         static int ConnectPorts(Reference port1ref, Reference port2ref, Command cmd = nullptr);
    };
 
    // ________________________________________________________________________

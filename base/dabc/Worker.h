@@ -277,7 +277,7 @@ namespace dabc {
           * 3. As value in xml file
           * 4. As parameter value of all parents
           * */
-         RecordField Cfg(const std::string& name, Command cmd = 0) const;
+         RecordField Cfg(const std::string& name, Command cmd = nullptr) const;
 
          /** ! Assign command with processor before command be submitted to other processor
           * This produce ReplyCommand() call when command execution is finished
@@ -480,7 +480,7 @@ namespace dabc {
          Parameter Par(const std::string& name) const;
 
          /** \brief Returns configuration record of specified name */
-         RecordField Cfg(const std::string& name, Command cmd = 0) const
+         RecordField Cfg(const std::string& name, Command cmd = nullptr) const
          { return GetObject() ? GetObject()->Cfg(name, cmd) : cmd.GetField(name); }
 
          /** \brief Returns true when thread is assigned to the worker */

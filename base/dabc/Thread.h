@@ -307,7 +307,7 @@ namespace dabc {
           * Request indicates that halt action is requested : actDestroy = 1 or actHalt = 2.
           * Returns true when worker is really halted **/
 
-         int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = 0);
+         int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = nullptr);
 
          void IncWorkerFiredEvents(Worker* work);
 
@@ -330,7 +330,7 @@ namespace dabc {
 
          static unsigned NumThreadInstances() { return fThreadInstances; }
 
-         Thread(Reference parent, const std::string& name, Command cmd = 0);
+         Thread(Reference parent, const std::string& name, Command cmd = nullptr);
 
          virtual ~Thread();
 

@@ -532,7 +532,7 @@ namespace dabc {
       }
 
       /** \brief Store hierarchy in json/xml form  */
-      bool SaveTo(HStore& store, bool create_node = true)
+      bool SaveTo(HStore &store, bool create_node = true)
       {  return null() ? false : GetObject()->SaveTo(store, create_node); }
 
       /** \brief Store record in JSON form */
@@ -545,9 +545,9 @@ namespace dabc {
 
       dabc::Buffer SaveToBuffer();
 
-      bool ReadFromBuffer(const dabc::Buffer& buf);
+      bool ReadFromBuffer(const dabc::Buffer &buf);
 
-      virtual void CreateRecord(const std::string& name);
+      virtual void CreateRecord(const std::string &name);
 
    };
 

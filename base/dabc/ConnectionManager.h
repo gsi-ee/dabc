@@ -192,7 +192,7 @@ namespace dabc {
             progrFailed        ///< fail state, request will be ignored forever
          };
 
-         ConnectionManager(const std::string& name, Command cmd = 0);
+         ConnectionManager(const std::string& name, Command cmd = nullptr);
          virtual ~ConnectionManager();
 
          ConnectionRequestFull FindConnection(const std::string& url1, const std::string& url2);

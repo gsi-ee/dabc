@@ -424,11 +424,11 @@ namespace dabc {
           * \param[in] devname     device name to use for thread creation
           * \param[in] cmd         command object with additional optional arguments
           * \returns               reference on created thread */
-         ThreadRef DoCreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "", Command cmd = 0);
+         ThreadRef DoCreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "", Command cmd = nullptr);
 
          WorkerRef DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd);
 
-         Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = 0);
+         Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = nullptr);
 
          /** \brief Return reference on command channel
           * \details should be used from manager thread only */
