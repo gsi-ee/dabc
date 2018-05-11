@@ -34,7 +34,7 @@ namespace hadaq {
          bool          fControl;  ///< when true, master actively controls BNET nodes and switches to new RUNs
          unsigned      fMaxRunSize; ///< maximal run size in MB
          std::string   fRunPrefix;  ///< configured run prefix
-         dabc::Command fCurrentCmd; ///< currently running cmd
+         dabc::Command fCurrentFileCmd; ///< currently running cmd to switch files
          int           fCmdCnt;     ///< just counter to avoid mismatch
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send

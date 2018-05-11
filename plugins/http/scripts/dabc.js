@@ -413,14 +413,14 @@
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
-              "<legend>Run control</legend>" +
+              "<legend class='bnet_state'>Run control</legend>" +
               "<button class='bnet_startrun'>Start run</button>" +
               "<select class='bnet_selectrun'>" + 
               "<option>data</option>" +
               "<option>test</option>" +
               "<option>cosmic</option>" +
               "</select>" +
-              "<button class='bnet_stoprun'>Stop file</button>" +
+              "<button class='bnet_stoprun'>Stop run</button>" +
               "</fieldset>";
       
       html += "</div>";
@@ -573,11 +573,16 @@
          pthis.mainreq = null;
          if (!res) return;
          
-         var inp = null, bld = null, ninp = [], nbld = [],  changed = false;
+         var inp = null, bld = null, state = null, ninp = [], nbld = [],  changed = false;
          for (var k in res._childs) {
             var elem = res._childs[k];
-            if (elem._name == "Inputs") {inp = elem.value; ninp = elem.nodes; } else
-            if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } 
+            if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
+            if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
+            if (elem._name == "State") { state = elem.value }
+         }
+         
+         if (state !== null) {
+            d3.select(pthis.frame).select(".bnet_state").text("Run control: "+state);
          }
          
          if (!DABC.CompareArrays(pthis.InputItems,inp)) {
@@ -593,6 +598,7 @@
             pthis.BuilderInfo = [];
             changed = true;
          }
+         
          
          if (changed) {
             pthis.DisplayCalItem(0, "");
