@@ -46,10 +46,13 @@
    THistPainter.prototype.PrepareFrame = function(divid) {
       this.SetDivId(divid, -1);
 
-      if (!this.frame_painter())
-         JSROOT.v7.drawFrame(divid, null);
+      if (!this.frame_painter()) {
+         var pad = this.root_pad(),
+             fr = pad ? pad.fFrame : null;
+         JSROOT.v7.drawFrame(divid, fr);
+      }
 
-      this.SetDivId(divid);
+      this.SetDivId(divid, 1);
    }
 
    THistPainter.prototype.GetHisto = function() {
@@ -97,8 +100,6 @@
 
    THistPainter.prototype.DecodeOptions = function(opt) {
       if (!this.options) this.options = { Hist : 1 };
-
-
    }
 
    THistPainter.prototype.Clear3DScene = function() {
@@ -268,11 +269,19 @@
       this.zmax = axis.max;
    }
 
+   THistPainter.prototype.AddInteractive = function() {
+      // only first painter in list allowed to add interactive functionality to the frame
+
+      if (this.is_main_painter()) {
+         var fp = this.frame_painter();
+         if (fp) fp.AddInteractive();
+      }
+   }
+
 
    THistPainter.prototype.DrawBins = function() {
       alert("HistPainter.DrawBins not implemented");
    }
-
 
    THistPainter.prototype.ToggleTitle = function(arg) {
       return false;
@@ -1371,30 +1380,26 @@
           histo = this.GetHisto(), xaxis = this.GetAxis("x"),
           x1 = xaxis.GetBinCoord(bin),
           x2 = xaxis.GetBinCoord(bin+1),
-          cont = histo.getBinContent(bin+1);
+          cont = histo.getBinContent(bin+1),
+          xlbl = "", xnormal = false;
 
       if (name.length>0) tips.push(name);
 
+      if (pmain.x_kind === 'labels') xlbl = pmain.AxisAsText("x", x1); else
+      if (pmain.x_kind === 'time') xlbl = pmain.AxisAsText("x", (x1+x2)/2); else
+        { xnormal = true; xlbl = "[" + pmain.AxisAsText("x", x1) + ", " + pmain.AxisAsText("x", x2) + ")"; }
+
       if (this.options.Error || this.options.Mark) {
-         tips.push("x = " + pmain.AxisAsText("x", (x1+x2)/2));
+         tips.push("x = " + xlbl);
          tips.push("y = " + pmain.AxisAsText("y", cont));
          if (this.options.Error) {
-            tips.push("error x = " + ((x2 - x1) / 2).toPrecision(4));
+            if (xnormal) tips.push("error x = " + ((x2 - x1) / 2).toPrecision(4));
             tips.push("error y = " + histo.getBinError(bin + 1).toPrecision(4));
          }
       } else {
          tips.push("bin = " + (bin+1));
-
-         if (pmain.x_kind === 'labels')
-            tips.push("x = " + pmain.AxisAsText("x", x1));
-         else
-         if (pmain.x_kind === 'time')
-            tips.push("x = " + pmain.AxisAsText("x", (x1+x2)/2));
-         else
-            tips.push("x = [" + pmain.AxisAsText("x", x1) + ", " + pmain.AxisAsText("x", x2) + ")");
-
+         tips.push("x = " + xlbl);
          if (histo['$baseh']) cont -= histo['$baseh'].getBinContent(bin+1);
-
          if (cont === Math.round(cont))
             tips.push("entries = " + cont);
          else
@@ -1721,7 +1726,7 @@
          this.DrawBins();
       // this.DrawTitle();
       // this.UpdateStatWebCanvas();
-      // this.AddInteractive();
+      this.AddInteractive();
       JSROOT.CallBack(call_back);
    }
 
@@ -3515,7 +3520,7 @@
 
       // this.UpdateStatWebCanvas();
 
-      // this.AddInteractive();
+      this.AddInteractive();
 
       JSROOT.CallBack(call_back);
    }

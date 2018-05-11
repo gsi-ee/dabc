@@ -1339,6 +1339,7 @@
             break;
          case "TPaveStats":
             painter.PaveDrawFunc = painter.DrawPaveStats;
+            painter.$secondary = true; // indicates that painter created from others
             break;
          case "TPaveText":
          case "TPavesText":
@@ -1400,8 +1401,8 @@
          axis.fTickSize = 0.6 * s_width / width; // adjust axis ticks size
 
          if (contour) {
-            zmin = Math.min(contour[0], main.zmin);
-            zmax = Math.max(contour[contour.length-1], main.zmax);
+            zmin = Math.min(contour[0], framep.zmin);
+            zmax = Math.max(contour[contour.length-1], framep.zmax);
          } else
          if ((main.gmaxbin!==undefined) && (main.gminbin!==undefined)) {
             // this is case of TH2 (needs only for size adjustment)
@@ -1609,8 +1610,8 @@
       if (d.check('NOTOOLTIP') && fp) fp.tooltip_allowed = false;
       if (d.check('TOOLTIP') && fp) fp.tooltip_allowed = true;
 
-      if (d.check('LOGX') && pad) pad.fLogx = 1;
-      if (d.check('LOGY') && pad) pad.fLogy = 1;
+      if (d.check('LOGX') && pad) { pad.fLogx = 1; pad.fUxmin = 0; pad.fUxmax = 1; pad.fX1 = 0; pad.fX2 = 1; }
+      if (d.check('LOGY') && pad) { pad.fLogy = 1; pad.fUymin = 0; pad.fUymax = 1; pad.fY1 = 0; pad.fY2 = 1; }
       if (d.check('LOGZ') && pad) pad.fLogz = 1;
       if (d.check('GRIDXY') && pad) pad.fGridx = pad.fGridy = 1;
       if (d.check('GRIDX') && pad) pad.fGridx = 1;
@@ -1864,6 +1865,16 @@
    }
 
    // ==============================================================================
+
+
+   /**
+    * @summary Basic painter for histogram classes
+    *
+    * @constructor
+    * @memberof JSROOT
+    * @augments JSROOT.TObjectPainter
+    * @param {object} histo - histogram object
+    */
 
    function THistPainter(histo) {
       JSROOT.TObjectPainter.call(this, histo);
@@ -2217,6 +2228,9 @@
       if (!fp)
          return console.warn("histogram drawn without frame - not supported");
 
+      // artifically add y range to display axes
+      if (this.ymin === this.ymax) this.ymax += 1;
+
       fp.SetAxesRanges(histo.fXaxis, this.xmin, this.xmax, histo.fYaxis, this.ymin, this.ymax, histo.fZaxis, 0, 0);
       fp.CreateXY({ ndim: this.Dimension(),
                     check_pad_range: this.check_pad_range,
@@ -2396,20 +2410,26 @@
       return indx;
    }
 
-   THistPainter.prototype.FindStat = function() {
-      if (this.histo.fFunctions !== null)
-         for (var i = 0; i < this.histo.fFunctions.arr.length; ++i) {
-            var func = this.histo.fFunctions.arr[i];
+   THistPainter.prototype.FindFunction = function(type_name, obj_name) {
+      var histo = this.GetObject(),
+          funcs = histo && histo.fFunctions ? histo.fFunctions.arr : null;
 
-            if ((func._typename == 'TPaveStats') &&
-                (func.fName == 'stats')) return func;
-         }
+      if (!funcs) return null;
+
+      for (var i = 0; i < funcs.length; ++i) {
+         if (obj_name && (funcs[i].fName !== obj_name)) continue;
+         if (funcs[i]._typename === type_name) return funcs[i];
+      }
 
       return null;
    }
 
+   THistPainter.prototype.FindStat = function() {
+      return this.FindFunction('TPaveStats', 'stats');
+   }
+
    THistPainter.prototype.IgnoreStatsFill = function() {
-      return !this.histo || (!this.draw_content && !this.create_stats) || (this.options.Axis>0);
+      return !this.GetObject() || (!this.draw_content && !this.create_stats) || (this.options.Axis>0);
    }
 
    THistPainter.prototype.CreateStat = function(force) {
@@ -2470,16 +2490,6 @@
          histo.fFunctions.AddFirst(obj);
       else
          histo.fFunctions.Add(obj);
-   }
-
-   THistPainter.prototype.FindFunction = function(type_name) {
-      var funcs = this.GetObject().fFunctions;
-      if (funcs === null) return null;
-
-      for (var i = 0; i < funcs.arr.length; ++i)
-         if (funcs.arr[i]._typename === type_name) return funcs.arr[i];
-
-      return null;
    }
 
    THistPainter.prototype.DrawNextFunction = function(indx, callback) {
@@ -2868,9 +2878,10 @@
             this.fContour.push(this.colzmin + dz*level);
       }
 
-      if (this.Dimension() < 3) {
-         this.zmin = this.colzmin;
-         this.zmax = this.colzmax;
+      var fp = this.frame_painter();
+      if ((this.Dimension() < 3) && fp) {
+         fp.zmin = this.colzmin;
+         fp.zmax = this.colzmax;
       }
 
       return this.fContour;
@@ -2879,7 +2890,8 @@
    THistPainter.prototype.GetContour = function() {
       if (this.fContour) return this.fContour;
 
-      var main = this.main_painter();
+      var main = this.main_painter(),
+          fp = this.frame_painter();
       if ((main !== this) && main.fContour) {
          this.fContour = main.fContour;
          this.fCustomContour = main.fCustomContour;
@@ -2898,9 +2910,9 @@
          zmin = this.options.minimum;
          zmax = this.options.maximum;
       }
-      if (this.zoom_zmin != this.zoom_zmax) {
-         zmin = this.zoom_zmin;
-         zmax = this.zoom_zmax;
+      if (fp && (fp.zoom_zmin != fp.zoom_zmax)) {
+         zmin = fp.zoom_zmin;
+         zmax = fp.zoom_zmax;
       }
 
       if (histo.fContour && (histo.fContour.length>1) && histo.TestBit(JSROOT.TH1StatusBits.kUserContour)) {
@@ -2909,9 +2921,9 @@
          this.colzmin = zmin;
          this.colzmax = zmax;
          if (zmax > this.fContour[this.fContour.length-1]) this.fContour.push(zmax);
-         if (this.Dimension()<3) {
-            this.zmin = this.colzmin;
-            this.zmax = this.colzmax;
+         if ((this.Dimension()<3) && fp) {
+            fp.zmin = this.colzmin;
+            fp.zmax = this.colzmax;
          }
          return this.fContour;
       }
@@ -3079,6 +3091,9 @@
          pal_painter.Enabled = true;
          pal_painter.DrawPave(arg);
       }
+
+      // mark painter as secondary - not in list of TCanvas primitives
+      pal_painter.$secondary = true;
 
       // make dummy redraw, palette will be updated only from histogram painter
       pal_painter.Redraw = function() {};
@@ -3249,7 +3264,16 @@
       return res;
    }
 
-   // ======= TH1 painter================================================
+   // ========================================================================
+
+   /**
+    * @summary Painter for TH1 classes
+    *
+    * @constructor
+    * @memberof JSROOT
+    * @augments JSROOT.THistPainter
+    * @param {object} histo - histogram object
+    */
 
    function TH1Painter(histo) {
       THistPainter.call(this, histo);
@@ -3895,30 +3919,26 @@
           histo = this.GetHisto(),
           x1 = histo.fXaxis.GetBinLowEdge(bin+1),
           x2 = histo.fXaxis.GetBinLowEdge(bin+2),
-          cont = histo.getBinContent(bin+1);
+          cont = histo.getBinContent(bin+1),
+          xlbl = "", xnormal = false;
 
       if (name.length>0) tips.push(name);
 
+      if (pmain.x_kind === 'labels') xlbl = pmain.AxisAsText("x", x1); else
+      if (pmain.x_kind === 'time') xlbl = pmain.AxisAsText("x", (x1+x2)/2); else
+       { xnormal = true; xlbl = "[" + pmain.AxisAsText("x", x1) + ", " + pmain.AxisAsText("x", x2) + ")"; }
+
       if (this.options.Error || this.options.Mark) {
-         tips.push("x = " + pmain.AxisAsText("x", (x1+x2)/2));
+         tips.push("x = " + xlbl);
          tips.push("y = " + pmain.AxisAsText("y", cont));
          if (this.options.Error) {
-            tips.push("error x = " + ((x2 - x1) / 2).toPrecision(4));
+            if (xnormal) tips.push("error x = " + ((x2 - x1) / 2).toPrecision(4));
             tips.push("error y = " + histo.getBinError(bin + 1).toPrecision(4));
          }
       } else {
          tips.push("bin = " + (bin+1));
-
-         if (pmain.x_kind === 'labels')
-            tips.push("x = " + pmain.AxisAsText("x", x1));
-         else
-         if (pmain.x_kind === 'time')
-            tips.push("x = " + pmain.AxisAsText("x", (x1+x2)/2));
-         else
-            tips.push("x = [" + pmain.AxisAsText("x", x1) + ", " + pmain.AxisAsText("x", x2) + ")");
-
+         tips.push("x = " + xlbl);
          if (histo['$baseh']) cont -= histo['$baseh'].getBinContent(bin+1);
-
          if (cont === Math.round(cont))
             tips.push("entries = " + cont);
          else
@@ -4290,7 +4310,16 @@
       return painter;
    }
 
-   // ==================== painter for TH2 histograms ==============================
+   // ========================================================================
+
+   /**
+    * @summary Painter for TH2 classes
+    *
+    * @constructor
+    * @memberof JSROOT
+    * @augments JSROOT.THistPainter
+    * @param {object} histo - histogram object
+    */
 
    function TH2Painter(histo) {
       THistPainter.call(this, histo);
@@ -6323,7 +6352,7 @@
       return res;
    }
 
-   THStackPainter.prototype.DrawNextHisto = function(indx, opt, mm, subp) {
+   THStackPainter.prototype.DrawNextHisto = function(indx, opt, mm, subp, reenter) {
       if (mm === "callback") {
          mm = null; // just misuse min/max argument to indicate callback
          if (indx<0) this.firstpainter = subp;
@@ -6340,6 +6369,9 @@
          this._pfc = this._plc = this._pmc = false; // disable auto coloring at the end
          return this.DrawingReady();
       }
+
+      if ((indx % 500 === 499) && !reenter)
+         return setTimeout(this.DrawNextHisto.bind(this, indx, opt, mm, subp, true), 0);
 
       if (indx>=0) {
          rindx = this.horder ? indx : nhists-indx-1;

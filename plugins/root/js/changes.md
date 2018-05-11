@@ -1,10 +1,480 @@
 # JSROOT changelog
 
+## Changes in dev
+1. Introduce JSROOT.StoreJSON() function. It creates JSON code for the 
+   TCanvas with all drawn objects inside. Allows to store current canvas state
+2. Support "item=img:file.png" parameter to insert images in existing layout (#151)
+3. Support TTree drawing into TGraph (#153), thanks @cozzyd
+4. Let configure "&toolbar=right" in URL to change position of tool buttons
+5. Let configure "&divsize=500x400" in URL of size of main div element (default - full browser)  
+
+
+## Changes in 5.4.0
+1. New supported classes:
+   - TDiamond
+   - TArc
+   - TCurlyLine
+   - TCurlyArc
+   - TCrown
+2. New draw options:
+   - "RX" and "RY" for TGraph to reverse axis
+   - "noopt" for TGraph to disable drawing optimization
+   - "CPN" for TCanvas to create color palette from N last colors
+   - "line" for TGraph2D
+3. New features:
+   - support LZ4 compression
+   - tooltips and zooming in TGraphPolar drawings
+   - TPavesText with multiple underlying paves
+   - implement all fill styles
+   - draw borders for TWbox
+   - draw all objects from TList/TObjArray as they appear in list of primitives
+   - let enable/disable highlight of extra objects in geometry viewer
+   - draw axis labels on both sides when pad.fTick[x/y] > 1
+   - make drawing of TCanvas with many primitives smoother
+   - add fOptTitle, fOptLogx/y/z fields in JSROOT.gStyle
+4. Behavior changes:
+   - disable automatic frame adjustment, can be enabled with "&adjframe" parameter in URL
+   - when drawing TH2/TH3 scatter plots, always generate same "random" pattern
+   - use barwidth/baroffset parameters in lego plots
+5. Bug fixes:
+   - use same number of points to draw lines and markers on the TGraph
+   - correctly draw filled TArrow endings
+   - let combine "L" or "C" TGraph draw option with others
+   - correct positioning of custom axis labels
+   - correctly toggle lin/log axes in lego plot
+   - let correctly change marker attributes interactively 
+
+
+## Changes in 5.3.5
+1. Fix - correctly show histogram with negative bins and fill attributes (#143)
+2. Fix - correct animation for status line (when visible)
+3. Fix - correctly set lin/log settings back top TPad object
+4. Fix - correctly use preloaded d3.js in notebooks/require.js environment
+5. Cached Latex regex to improve drawing speed (#145)
+
+
+## Changes in 5.3.4
+1. Fix - several problem in TLatex preprocessing for MathJax.js
+2. Fix - use "E" draw options for THStack only when no any other specified
+
+
+## Changes in 5.3.3
+1. Use latest jsdom and mathjax-node packages (Node.js only) 
+
+
+## Changes in 5.3.2
+1. Fix - use FontSize when draw TLegend entries
+2. Fix - correctly show TH2 overflow stats
+3. Fix - tooltips handling for TH1 hbar drawings
+4. Implement JSROOT.toJSON() function to produce ROOT JSON string
+
+
+## Changes in 5.3.1
+1. Fix - show TH2 projections also when tooltip is disabled
+2. Fix - use z_handle to format Z-axis labels
+3. Fix - support labels on TH3 Z axis
+4. Fix - TH1 zooming in 3D mode
+5. Fix - suppress empty {} in TLatex
+6. Add several math symbols for TLatex
+7. Fix - font kind 1 is italic times roman
+8. Fix - do not let expand parent item in hierarchy
+9. Fix - use correct painter to check range
+10. Fix - change proper axis attributes in context menu
+11. Fix - correctly show axis labels on 3D plot
+12. Fix - correctly handle circle (marker style 24) as marker kind
+13. Fix - correct circle drawing with coordinates rounding
+14. Fix - TLatex #frac and #splitline, adjust vertical position
+15. Fix - workaround for y range when fMinimum==fMaximum!=-1111
+16. Fix - correct tooltips for graph with marker drawing
+
+
+## Changes in 5.3.0
+1. New supported classes:
+    - TGraphPolar
+    - TGraphTime
+    - TSpline3
+    - TSpline5
+    - TPolyLine3D
+    - TPolyMarker
+    - TEfficiency
+    - TH1K
+2. New supported options:
+     "PFC" - auto fill color (histograms and graphs)
+     "PLC" - auto line color
+     "PMC" - auto marker color
+     "A"  - fully disables axes drawing for histograms painters
+     "TEXT" - for TH2Poly
+     "SAMES" - draw stat box for superimposed histograms
+     "NOCOL" - ignore stored in the TCanvas colors list
+     "NOPAL" - ignore stored in the TCanvas color palette
+3. Improvements in existing painters:
+     - use color palette stored in the TCanvas
+     - draw stats box when really required
+     - let resize frames and paves in all eight directions
+     - support lines, boxes and arbitrary text positions in TPaveText
+     - automatic title positioning of vertical axis when fTitleOffset==0
+     - when pad.fTickx/y==2 draw axes labels on opposite side
+     - editing of TGraph objects - moving of the graph bins
+     - draw X/Y/Z axis titles in lego plots
+     - use canvas Theta/Phi angles to set initial camera position in 3D plots
+4. New TLatex processor supports most ROOT features, still MathJax can be used
+5. New X/Y projections display for TH2 histograms (aka TH2::SetShowProjectionX/Y)
+6. New in geometry viewer:
+    - provide shape parameters in TGeo tooltips
+    - let inspect selected TGeoNode
+    - provide text info when geometry drawing takes too long
+7. Change in JSROOT.draw functionality. Now valid painter instance can be only
+   obtained via call-back - forth argument of JSROOT.draw() function.
+8. Use latest three.js r86 with improved Projector and CanvasRenderer
+   Still use own SVGRenderer which supported direct SVG text dump
+9. Introduce openui5 components for webgui functionality
+10. In all sources specify "use strict" directive
+
+
+## Changes in 5.2.4
+1. Fix - support pow(x,n) function in formula
+2. Fix - use pad.fFillColor for frame when fFrameFillColor==0
+3. Fix - correctly identify horizontal TGaxis with reverse scale
+4. Fix - correctly handle negative line width in exclusion
+5. Fix - tooltips handling for TF1
+
+
+## Changes in 5.2.3
+1. Fix - potential mix-up in marker attributes handling
+2. Fix - unzomming of log scale https://root-forum.cern.ch/t/25889
+3. Fix - ignore not-supported options in TMultiGraph https://root-forum.cern.ch/t/25888
+4. Fix - correctly use fGridColor from TStyle
+5. Fix - prevent error when TPaveText includes TLine or TBox in list of lines
+6. Fix - bin errors calculations in TProfile
+
+
+## Changes in 5.2.2
+1. Fix several problems, discovered with "use strict" directive
+
+
+## Changes in 5.2.1
+1. Fix - correctly handle new TF1 parameter coding convention (#132)
+2. Fix - Check if pad name can be used as element id (#133)
+3. Fix - adjust title position for vertical axis with fTitleOffset==0
+
+
+## Changes in 5.2.0
+1. Basic JSROOT functionality can be used in Node.js:
+       var jsroot = require("path/to/JSRootCore.js");
+   One could parse ROOT JSON, read binary ROOT files (local and remote) and produce SVG.
+2. Implement dropping of TTree object on the geometry drawing.
+   This automatically invokes extract_geo_tracks() function, which
+   should extract TGeoTracks from provided TTree.
+   Example can be found in demo/alice_esd.js and in api.htm.
+3. Implement projection of geometry on given plane.
+   One could reuse drawing of geometry in other div (should be drawn with main option).
+   In control GUI one could change position of the projection plane
+4. One of the TGeo drawing can be assigned as main. When same object drawn next time,
+   its drawing will be derived from the main. Useful for geometry projections.
+   Also all tracks and hits will be imported from main drawing.
+5. Let change background color of geo drawing.
+6. One can change web browser title, providing &title="any string" in URL.
+7. Introduce event status line, which is similar to ROOT TCanvas.
+   Shown information similar to output in tooltip.
+   One can enable both tooltips and status line at the same time.
+8. Introduce JSROOT.GEO.build function to create three.js model for
+   any supported TGeo class. Such model can be inserted in any three.js scene
+   independent from normal JSROOT drawings.
+9. Improve rendering of geometries with transparency. Use EVE approach, when transparent
+   objects rendered after opaque and without writing depth buffer. Provide different
+   methods to produce render order for transparent objects.
+10. Let specify initial zoom factor for geometry like opt=zoom50.
+11. Support also TPolyMarker3D class in geo painter.
+12. Implement TGeoScaledShape.
+13. Limit complexity of composite shape. If it has too many components, only most left is used.
+14. When produce canvas or pad screenshot, render 3D objects with SVGRenderer.
+    Allows to combine 2D and 3D objects in same PNG image
+15. Improve MathJax.js output. It scales correctly in Firefox, makes correct alignment
+    and works significantly faster.
+16. When creating image in SVG format, correctly convert url("#id") references
+17. Use latest three.js r85
+18. Fix 'transpXY' URL parameter handling - it was used as opacity, but opacity=1-transparency
+
+
+## Changes in 5.1.2
+1. Fix - support newest TFormula in TF1 (#127)
+2. Fix - ignore NaN value in saved TF1 buffer
+3. Fix - correctly treat transparency in geo painter
+4. Fix - disable useFontCache for SVG mathjax output
+5. Fix - produce PNG image for objects with special symbols in names
+
+
+## Changes in 5.1.1
+1. Fix - invoke callback in JSROOT.draw() at proper time
+2. Fix - support TGeoHMatrix, produced after GDML conversion
+3. Fix - support also TGeoScale and TGeoGenTrans matrices
+4. Fix - update histograms with all provided functions (#125)
+
+
+## Changes in 5.1.0
+1. New 'float' browser kind overlays with objects drawing
+2. Browser can be enabled after drawing with 'nobrowser' mode
+3. One can hide browser or switch browser kind at any time
+4. New 'horizontal' and 'vertical' layouts for object display.
+   One could configure several frames, each divided on sub-frames.
+   Like display=horiz231 will create three horizontal frames,
+   divided on 2,3 and 1 sub-frames.
+5. One could enable status line where current tooltip info will be shown
+6. Improve enlarge functionality - now works with all layouts
+7. Do not display all canvas tool buttons by default - provide toggle button instead
+8. Let move TAxis title, its position now similar to ROOT graphics
+9. Support 'col0' option for TH2Poly class to suppress empty bins
+10. Implement for TH3 'box2', 'box3', 'glbox2', 'glcol' draw options
+11. Support more superscript/subscript letters in normal text output
+12. Correctly handle unzoom with logx/logy scales
+13. Let disable stamp parameter in file url with "-" sign at the end of file name
+14. Let use quotes in the URL parameters to protect complex arguments with special symbols
+15. Introduce direct streamers - like TBasket or TRef
+    Benefit - one can add custom streamers of such kind or reuse existing
+16. Handle TMatrixTSym classes in I/O
+17. Correctly count TH3 statistic in TTree::Draw
+18. Recognize bower installation when "bower_components/jsroot/scripts" string
+    appears in the script path (#120)
+
+
+## Changes in 5.0.3
+1. Fix - prevent exception when discover HTML element position (#121)
+2. Fix - prevent I/O failure when server automatically gzip response (#119)
+3. Fix - lego drawing for stacked TH1 histograms
+4. Fix - when change global tooltips settings, also change for each sub-pad
+
+
+## Changes in 5.0.2
+1. Fix - read branch entries as arrays
+2. Fix - command submission to THttpServer
+3. Fix - let refill statbox also for empty histogram
+4. Fix - problem with online TTree::Draw and ROOT6
+
+
+## Changes in 5.0.1
+1. Support older ROOT files, created before 2010
+2. Support TBranchObject - appears in old files
+3. Correctly set TBasket buffer position for the entry
+4. Fix - problem with empty STL containers
+5. Fix - empty baskets at the end of branch store
+6. Fix - problem with zooming in THStack
+
+
+## Changes in 5.0.0
+1. Reading TTree data
+    - all kinds of branches, including split STL containers
+    - branches with several elementary leaves
+    - branches from different ROOT files
+    - JSROOT.TSelector class to access TTree data
+    - simple access to branch data with "dump" draw option
+2. TTree::Draw support
+    - simple 1D/2D/3D histograms
+    - simple cut conditions
+    - configurable histogram like "px:py>>hist(50,-5,5,50,-5,5)"
+    - strings support
+    - iterate over arrays indexes, let use another branch as index values
+    - support "Entry$" and "Entries$" variables in expressions
+    - bits histogram like "event.fTracks.fBits>>bits(16)"
+    - special handling of TBits
+    - arbitrary math function from JavaScript Math class, some TMath:: function from ROOT
+    - if branch is object, one could use methods "TMath::Abs(lep1_p4.X()+lep1_p4.Y())"
+    - interactive player to configure and execute draw expression
+3. Full support of Float16_t and Double32_t types in I/O
+4. Drawing of RooPlot objects, I/O support for RooFit classes
+5. Many improvements in object inspector
+    - support of large lists; only first part is shown
+    - support of large arrays; values group in decades
+    - allow to call draw function for sub-elements in inspector
+6. Canvas or selected sub-pad can be enlarged when double-clicked outside frame (#116)
+   Complete drawing will be expanded to the visible space.
+   Not available for flex, tabs and collapsible layouts.
+7. Support reading of local ROOT files with HTML5 FileReader.
+   Files can be selected only with interactive dialog.
+8. Combine "Ctrl" and "Shift" keys with mouse click on the items:
+     - with Shift key typically object inspector will be activated
+     - with Ctrl key alternative draw options will be used (like colz for TH2)
+9. Update libraries
+      - d3.js     - 4.4.4
+      - three.js  - 84
+      - jquery    - 3.3.1
+      - jquery-ui - 1.12.1
+
+
+## Changes in 4.8.2
+1. Support compressed array, produced with newest TBufferJSON
+   - $arr field identify such array and contains data type
+   - native arrays are used when decoding such array
+   - zero values are not stored
+   - many similar values stored as one with repetition factor
+   - position stored only when differ from produced with previous block
+   - array [3,3,3,3,3,3,1,2,2,2,2,2,2,2] compressed as {$arr:"Int",len:14,v:3,n:6,v1:1,v2:2,n2:7}
+
+
+## Changes in 4.8.1
+1. Support new JSON format, produced with newest TBufferJSON
+   - object references stored as {"$ref":12}
+   - pair objects for std::map marked with "$pair" : "pair<type1,type2>" data member
+   - old JSON format will be recognized automatically and supported as well
+2. Fix - better selection of Y range for log scale
+3. Provide JSROOT.parse_multi function to correctly parse response of multi.json request,
+   support it in the JSROOT.NewHttpRequest method as well.
+4. Fix - correctly calculate integral for TH1
+5. Partially support new TFormula with complex C code inside
+
+
+## Changes in 4.8.0
+1. Many improvements in the I/O part
+   - support most of STL containers
+   - support TMap and TClonesArray containers
+   - all kind of multidimensional arrays
+   - correct treatment of foreign classes
+   - supports different versions of class in the same file
+   - support members like ClassName* fField; //[fCnt]
+   - support const char*
+   - support fixed-size array of TString, TObject and TNamed
+2. Many new draw options for different classes are supported:
+    - TGraph  - 'z', 'x', '||', '[]', '>', '|>', '5', 'X+', 'Y+'
+    - TH1     - '*', 'L', 'LF2', 'B', 'B1', 'TEXT', 'E0', 'E3', 'E4', 'EX0', 'X+', 'Y+'
+    - TH2     - 'E', 'col1', 'box', 'box1', 'surf3', 'surf7', 'base0'
+    - TH2     - 'same' with 'box', 'col', 'cont', 'lego', 'surf'
+    - TH3     - 'scat', use by default
+    - TF1/TF2 - 'nosave' to ignore saved buffer
+    - TCanvas - logx/y/z, gridx/y, tickx/y
+    - THStack - 'lego' and other 3D draw options
+3. Implement drawing of TProfile2D, TF2, TGraph2D, TGraph2DErrors and TMarker
+4. Fix - correctly place TGAxis relative to frame (when exists)
+5. When superimpose items, one can specify individual options
+     ...&item=histo1+histo2&opt=hist+e1
+     ...&item=[histo1,histo2]&opt=[hist,e1]
+6. Support loading of TStyle object, providing in URL
+     ...&style=item_name  or ...&style=json_file_name
+   All values are copied directly to JSROOT.gStyle object.
+7. Add callback argument into JSROOT.draw() function.
+   Function will be called after drawing of object is completed.
+   Painter for drawn object will be provided as first argument (or null in case of error).
+8. Improve cleanup of JSROOT objects
+
+
+## Changes in 4.7.1
+1. Workaround for MathJax output - scaling not always works in Firefox
+2. Fix - bin scaling for box draw option for TH2 and TH3 histograms
+3. Fix - increase points limits for contour plots
+4. Fix - position of 3D canvas in WebKit browsers
+5. Fix - use abs bin content in RMS calculations
+6. Fix - support char star* and object arrays in I/O
+7. Fix - correct decoding of TAxis time offset
+8. Fix - checksum reading for foreign classes
+
+
+## Changes in 4.7.0
+1. Implement simple TTree::Draw over single leaf (#80)
+   Support basic types, fixed-size arrays and several vector types
+2. Display of TEveTrack(s) and TEvePointSet(s) over drawn geometry (drag and drop)
+   Also browsing, toggling, highlight of tracks and hits are done.
+3. Let set default geo colors as TGeoManager::DefaultColors() does
+4. Let use original ROOT macros to configure visibility of geometry volumes. Like:
+     &file=files/alice2.root&item=Geometry;1&opt=macro:macros/geomAlice.C
+   One can set default colors or colors/transparency for selected volumes.
+   Also volume, selected for drawing in the macro, will be used in the JSROOT
+5. Support drawing of TH2Poly class with 'col' and 'lego' options
+6. Implement 'CONT', 'ARR' and 'SURF' draw options for TH2 class
+7. Support basic drawing of TPolyLine class
+8. Interactive axis zooming in 3D with mouse, very much like to 2D
+9. Zooming and tool buttons via keyboards
+
+
+## Changes in 4.6.0
+1. Improvements in TGeo drawings
+   - support of large (~10M volumes) models, only most significant volumes are shown
+   - one could activate several clip planes (only with WebGL)
+   - interaction with object browser to change visibility flags or focus on selected volume
+   - support of floating browser for TGeo objects
+   - intensive use of HTML Worker to offload computation tasks and keep interactivity
+   - enable more details when changing camera position/zoom
+   - better and faster build of composite shapes
+2. Improvements in histograms 3D drawing
+   - all lego options: lego1..lego4, combined with 'fb', 'bb', '0' or 'z'
+   - support axis labels on lego plots
+   - support lego plots for TH1
+3. Improvements in all 3D graphics
+   - upgrade three.js to r79
+   - use of THREE.BufferGeometry for all components
+   - significant (up to factor 10) performance improvement
+4. Implement box and hbox draw options for TH1 class
+5. Implement drawing of axes ticks on opposite side (when fTickx/y specified)
+6. Preliminary support of candle plot (many options to be implemented)
+7. Update draw attributes (fill/line/position) when monitor objects
+
+
+## Changes in 4.5.3
+1. Fix - position of TFrame in canvas/pad
+2. Fix - use histogram fMinimum/fMaximum when creating color palette
+3. Fix - correctly draw empty th2 bins when zmin<0 is specified
+4. Fix - limit th2 text output size
+5. Fix - use histogram fMinimum/fMaximum when drawing z axis in lego plot
+6. Fix - error in TGeoCtub shape creation
+7. Fix - error in pcon/pgon shapes when Rmin===0
+
+
+## Changes in 4.5.1
+1. Fix - correctly handle ^2..^9 in TFormula equations
+2. Fix - support TMath::Gaus in TFormula
+3. Fix - correctly display ^2 and ^3 in SVG text output
+4. Fix - do not show tooltips for empty TProfile bins
+5. Fix - statbox toggling was not working on subpads
+6. Fix - positioning of 3D objects in Webkit browsers in complex layouts
+7. Fix - difference in TF1 between ROOT5/6 (#54)
+
+
+## Changes in 4.5.0
+1. Zooming with mouse wheel
+2. Context menus for many different objects attributes are provided
+3. Context menu for every drawn object can be activated via toolbar button
+4. Support browsing of TTask and derived classes (#40)
+5. Apply user range for drawing TH1/TH2 histograms, also when superimposed (#44)
+6. Implement scaling factor like x10^3 on the vertical axes
+7. Provide shortcut buttons for each subpad
+8. Implement simple drawing for TBox, TWbox, TSliderBox classes
+
+
+## Changes in 4.4.4
+1. Fix - toggling of statbox was not working in all situations
+2. Fix - for mouse rect zooming use only left mouse button
+3. Fix - correctly draw TH2 with lego option, when histogram has negative bin content
+4. Fix - log axis drawing with no visible ticks
+
+
+## Changes in 4.4.3
+1. Fix - wrong selection of TH1 Y axis range when errors are displayed (#44)
+2. Fix - apply user range for TH1 X-axis zooming (#44)
+3. Fix - protect against pathological case of 1-bin histogram
+4. Fix - use error plot by default in TH1 only when positive sumw2 entry exists
+5. Fix - for TH2 box draw option draw at least 1px rect for non-empty bin
+6. Fix - support transparency (alpha) in TColor (#45)
+7. Fix - correct tooltip handling for graphs with lines and markers
+8. Fix - interactive zooming in TH2 when doing histogram update
+
+
+## Changes in 4.4.2
+1. Fix - statistic collection for TH2
+2. Fix - correct handling of empty TList in browser/inspector
+3. Fix - support TFolder in browser/inspector (#40)
+
+
+## Changes in 4.4.1
+1. Fix - colz palette resize when drawing histogram second time
+2. Fix - use embedded in TCanvas color for background color of canvas itself
+3. Fix - rotate too long X axis text labels
+4. Fix - draw histogram bins on frame boundary
+5. Fix - use alternative color for shapes with default black color
+6. Fix - correctly handle pcon/pgon shape with rmin==rmax on top or bottom side
+
+
 ## Changes in 4.4
-1. Fix faces orientation for all TGeo shapes. 
+1. Fix faces orientation for all TGeo shapes.
 2. Improve TGeoTorus creation - handle all parameters combinations
 3. Implement TGeoCompositeShape, using ThreeCSG.js
-4. Fix problem with color pallete when switch to 3D mode (#28)
+4. Fix problem with color palette when switch to 3D mode (#28)
 5. Use nested CSS classes to avoid conflicts with other libraries (#29)
 6. Let move and resize TFrame
 7. Improve TH1/TH2 drawings
@@ -15,57 +485,57 @@
 9. Provide new tooltip kind
    - created only when needed (minimizing SVG code)
    - tooltip can be drawn for every object in the frame
-   - touch devices are supported 
+   - touch devices are supported
 10. Fix - let draw same object on the canvas with different options
-11. Create cached list of known class methods. It can be extended by users. 
-12. Use of cached methods improves binary I/O perfromance by 20%
+11. Create cached list of known class methods. It can be extended by users.
+12. Use of cached methods improves binary I/O performance by 20%
 13. Support TGaxis
-14. Project now can be obtained via 'bower install jsroot' 
-15. Support 'scat' and 'text' draw options for TH2 
+14. Project now can be obtained via 'bower install jsroot'
+15. Support 'scat' and 'text' draw options for TH2
 16. Support in binary I/O zipped buffer bigger than 16M
 17. Correctly handle in binary I/O pointer on TArray object (like in THnSparseArrayChunk)
 
 
 ## Changes in 4.3
 1. Implement TGeoCtub, TGeoParaboloid and TGeoHype shapes
-2. Support TGeoTube with Rmin==0 
-3. Exclude empty faces in TGeoArb8  
-4. Improve TGeoSphere creation - handle all parameters combinations  
-5. Introduce JSROOT.cleanup() function to safely clear all drawn objects 
+2. Support TGeoTube with Rmin==0
+3. Exclude empty faces in TGeoArb8
+4. Improve TGeoSphere creation - handle all parameters combinations
+5. Introduce JSROOT.cleanup() function to safely clear all drawn objects
 6. Fix wrong resize method in 'tabs' and 'collapsible' layouts
 7. Fix canvas resize problem (issue #27)
 8. Fix zero-height canvas when draw TGeo in collapsible layout
 9. Fix problem of simultaneous move TGeo drawings and canvas in flexible layout
- 
+
 
 ## Changes in 4.2
-1. Significant performance improvements in 3D drawings - TGeo/TH2/TH3 
+1. Significant performance improvements in 3D drawings - TGeo/TH2/TH3
 2. Implement TGeoPara, TGeoGtra, TGeoXtru and TGeoEltu shapes
-3. Optimize (reduce vertices number) for others TGeo shapes 
-4. Correct rotation/translation/scaling of TGeo nodes 
-5. Workaround for axis reflection (not directly supported in three.js) 
+3. Optimize (reduce vertices number) for others TGeo shapes
+4. Correct rotation/translation/scaling of TGeo nodes
+5. Workaround for axis reflection (not directly supported in three.js)
 6. Support array of objects in I/O (like in TAxis3D)
 7. Correct reading of multi-dim arrays like Double_t fXY[8][2];
-8. Provide canvas toolbar for actions like savepng or unzoom  
-9. Implement JSROOT.resize() function to let resize drawing after changes in page layout 
-10. Fix error with title display/update 
- 
+8. Provide canvas toolbar for actions like savepng or unzoom
+9. Implement JSROOT.resize() function to let resize drawing after changes in page layout
+10. Fix error with title display/update
+
 
 ## Changes in 4.1
 1. Introduce object inspector - one could browse object members of any class
 2. Let draw sub-items from TCanvas list of primitives like sub-pad or TLatex
-3. Provide possibility to save drawn SVG canvas as PNG 
-4. TGraph drawing optimization - limit number of drawn points   
+3. Provide possibility to save drawn SVG canvas as PNG
+4. TGraph drawing optimization - limit number of drawn points
 5. Implement painter for TPolyMarker3D
-6. Improve drawing and update of TMultiGraph 
-7. Reorganize 3D drawing of TH2/TH3 histograms, allow to mix 2D and 3D display together  
+6. Improve drawing and update of TMultiGraph
+7. Reorganize 3D drawing of TH2/TH3 histograms, allow to mix 2D and 3D display together
 8. Support overlay of 3D graphic over SVG canvas (used for IE)
 9. Fix problems and improve flex(ible) layout
 
 
 ## Changes in 4.0
 1. New TGeo classes support:
-   - browsing  through volumes hieararchy
+   - browsing  through volumes hierarchy
    - changing visibility flags
    - drawing of selected volumes
 2. New 'flex' layout:
@@ -74,12 +544,12 @@
 3. Significant (factor 4) I/O performance improvement:
    - use ArrayBuffer class in HTTP requests instead of String
    - use native arrays (like Int32Array) for array data members
-   - highly optimize streamer infos handling 
+   - highly optimize streamer infos handling
 4. TH2 drawing optimization:
    - if there are too many non-empty bins, combine them together
    - when zoom-in, all original bins will be displayed separately
    - let draw big TH2 histogram faster than in 1 sec
-   - optimization can be disabled by providing '&optimize=0' in URL             
+   - optimization can be disabled by providing '&optimize=0' in URL
 5. TF1 drawing optimization:
    - function 'compiled' only once
 6. Reorganize scripts structure:
@@ -87,12 +557,12 @@
    - TH2, TF1, THStack and TMultiGraph painters moved into JSRootPainter.more.js script
    - reduce size of scripts required for default functionality
 7. Update all basic libraries:
-    - d3.js - v3.5.9, 
-    - jquery.js - v2.1.4, 
-    - jquery-ui.js - v1.11.4, 
-    - three.js - r73  
+    - d3.js - v3.5.9,
+    - jquery.js - v2.1.4,
+    - jquery-ui.js - v1.11.4,
+    - three.js - r73
 8. Implement ROOT6-like color palettes:
-    - all palettes in range 51...112 are implemented 
+    - all palettes in range 51...112 are implemented
     - by default palette 57 is used
     - one could change default palette with '&palette=111' in URL
     - or palette can be specified in draw option like '&opt=colz,pal77'
@@ -100,14 +570,14 @@
 
 ## Changes in 3.9
 1. Support non-equidistant bins for TH1/TH2 objects.
-2. Display entries count from histo.fEntries member, only when not set use computed value  
+2. Display entries count from histo.fEntries member, only when not set use computed value
 3. Support italic and bold text when used with MathJax
 4. Improve TF1 drawing - support exp function in TFormula, fix errors with logx scale, enable zoom-in, (re)calculate function points when zooming
 5. Support several columns in TLegend
 6. Introduce context menus for x/y axis, add some items similar to native ROOT menus
-7. Introduce context menu for TPaveStats, let switch single elements in the box   
-8. Enable usage of all context menus on touch devices 
-9. Implement JSROOT.Math.Prob function, provides probability value in stat box 
+7. Introduce context menu for TPaveStats, let switch single elements in the box
+8. Enable usage of all context menus on touch devices
+9. Implement JSROOT.Math.Prob function, provides probability value in stat box
 10. Introduce context menu for color palette (z axis)
 11. Implement col0 and col0z draw option for TH2 histograms, similar to ROOT6
 
@@ -116,61 +586,61 @@
 1. Let use HTML element pointer in JSROOT.draw function like:
        JSROOT.draw(document.getElementsByTagName("div")[0], obj, "hist");
    Normally unique identifier was used before, which is not required any longer.
-   Of course, old functionality with element identifier will work as well. 
+   Of course, old functionality with element identifier will work as well.
 2. TreePlayer can also be used for trees, which not yet read from the file.
-   Requires appropriate changes in TRootSniffer class. 
-3. Fix error in I/O with members like:   `Double_t *fArr; //[fN]`  
+   Requires appropriate changes in TRootSniffer class.
+3. Fix error in I/O with members like:   `Double_t *fArr; //[fN]`
 4. Introduce JSROOT.OpenFile function. It loads I/O functionality automatically,
    therefore can be used directly after loading JSRootCore.js script
 5. Same is done with JSROOT.draw function. It is defined in the JSRootCore.js
-   and can be used directly. Makes usage of JSROOT easier    
+   and can be used directly. Makes usage of JSROOT easier
 6. Introduce JSRootPainter.more.js script, where painters for auxiliary classes
    will be implemented.
-7. Implement painter for TEllipse, TLine, TArrow classes     
-8. Fix several problems with markers drawing; implement plus, asterisk, mult symbols. 
+7. Implement painter for TEllipse, TLine, TArrow classes
+8. Fix several problems with markers drawing; implement plus, asterisk, mult symbols.
 9. Implement custom layout, which allows to configure user-defined layout for displayed objects
-10. Fix errors with scaling of axis labels.     
-11. Support also Y axis with custom labels like: http://jsroot.gsi.de/dev/?nobrowser&file=../files/atlas.root&item=LEDShapeHeightCorr_Gain0;1&opt=col   
+10. Fix errors with scaling of axis labels.
+11. Support also Y axis with custom labels like: http://jsroot.gsi.de/dev/?nobrowser&file=../files/atlas.root&item=LEDShapeHeightCorr_Gain0;1&opt=col
 
 
 ## Changes in 3.7
-1. Support of X axis with custom labels like: http://jsroot.gsi.de/dev/index.htm?nobrowser&json=../files/hist_xlabels.json
+1. Support of X axis with custom labels like: http://jsroot.gsi.de/dev/?nobrowser&json=../files/hist_xlabels.json
 2. Extend functionality of JSROOT.addDrawFunc() function. One could register type-specific
    `make_request` and `after_request` functions; `icon`, `prereq`, `script`, `monitor` properties.
-   This let add more custom elements to the generic gui, implemented with JSROOT.HierarchyPainter   
+   This let add more custom elements to the generic gui, implemented with JSROOT.HierarchyPainter
 3. Provide full support of require.js. One could load now JSRootCore.js script like:
 
       <script type="text/javascript" src="require.js" data-main="scripts/JSRootCore.js"></script>
-      
+
    After this several modules are defined and can be used with syntax like:
-   
+
       require(['JSRootPainter'], function(jsroot) { /*any user code*/});
-      
-   Also inside JSROOT require.js used to load all dependencies. 
+
+   Also inside JSROOT require.js used to load all dependencies.
 
 
 ## Changes in 3.6
 1. Try to provide workaround for websites where require.js already loaded.
-   This makes problem by direct loading of jquery and jquery-ui 
-2. Provide workaround for older version of jquery-ui 
+   This makes problem by direct loading of jquery and jquery-ui
+2. Provide workaround for older version of jquery-ui
 3. Prompt for input of command arguments
 4. After command execution one could automatically reload hierarchy (_hreload property) or
-   update view of displayed object (_update_item property)    
+   update view of displayed object (_update_item property)
 5. Use HiearchyPainter for implementing draw.htm. This let us handle
-   all different kinds of extra attributes in central place 
+   all different kinds of extra attributes in central place
 6. Fix problem in tabs layout - new tab should be add to direct child
 7. When drawing several tabs, activate frame before drawing - only then
    real frame size will be set
-8. Fix problem with GetBBox - it only can be used for visible elements in mozilla.    
+8. Fix problem with GetBBox - it only can be used for visible elements in mozilla.
 9. Support drawing of fit parameters in stat box, use (as far as possible) stat and
-   fit format for statistic display 
-10. Implement 'g' formatting kind for stat box output - one need to checks 
-    significant digits when producing output.  
+   fit format for statistic display
+10. Implement 'g' formatting kind for stat box output - one need to checks
+    significant digits when producing output.
 11. Support new draw options for TGraph: 'C', 'B1', '0', '2', '3', '4', '[]'
 12. Primary support for STL containers in IO part. Allows to read ROOT6 TF1.
 13. Full support of TGraphBentErrors
 14. Support objects drawing from JSON files in default user interface, including
-    monitoring. One could open file from link like: https://root.cern.ch/js/dev/?json=demo/canvas_tf1.json 
+    monitoring. One could open file from link like: https://root.cern.ch/js/dev/?json=demo/canvas_tf1.json
 15. Introduce JSROOT.FFormat function to convert numeric values into string according
     format like 6.4g or 5.7e. Used for statistic display.
 
@@ -178,17 +648,17 @@
 ## Changes in 3.5
 1. Fix error in vertical text alignment
 2. Many improvements in TPaletteAxis drawing - draw label, avoid too large ticks.
-3. Fix error with col drawing - bin with maximum value got wrong color  
-4. Test for existing jquery.js, jquery-ui.js and d3.js libraries, reuse when provided 
+3. Fix error with col drawing - bin with maximum value got wrong color
+4. Test for existing jquery.js, jquery-ui.js and d3.js libraries, reuse when provided
 5. Fix several I/O problems; now one could read files, produced in Geant4
-6. Implement 'e2' drawing option for TH1 class, 
+6. Implement 'e2' drawing option for TH1 class,
    use by default 'e' option when TH1 has non-empty fSumw2
-7. Reuse statistic from histogram itself, when no axis selection done 
+7. Reuse statistic from histogram itself, when no axis selection done
 8. Support log/lin z scale for color drawing
-9. Implement interactive z-scale selection on TPaletteAxis 
+9. Implement interactive z-scale selection on TPaletteAxis
 10. Allow to redraw item with other draw options (before one should clear drawings)
 11. Several improvements in THttpServer user interface - repair hierarchy reload,
-    hide unsupported context menu entries, status line update 
+    hide unsupported context menu entries, status line update
 
 
 ## Changes in 3.4
@@ -312,7 +782,7 @@
 6. Add correct filling of statistic for TProfile,
    fix small problem with underflow/overflow bins.
 7. Provide way to select display kind ('collapsible', 'tabs') in the simple GUI.
-8. Implement 'grid' display, one could specify any number of devision like
+8. Implement 'grid' display, one could specify any number of division like
    'grid 3x3' or 'grid 4x2'.
 9. MDI display object created at the moment when first draw is performed.
 10. Introduce painter class for TCanvas, support resize and update of canvas drawing
@@ -356,7 +826,7 @@
         <http://localhost:8080/Files/job1.root/hpxpy/draw.htm?opt=col&monitor=2000>
      Such link is best possibility to integrate display into different HTML pages,
      using `<iframe/>` tag like:
-        `<iframe src="http://localhost:8080/Files/job1.root/hpx/draw.htm"` 
+        `<iframe src="http://localhost:8080/Files/job1.root/hpx/draw.htm"`
           `style="width: 800px; height:600px"></iframe>`
 15. Remove 'JSROOTIO.' prefix from _typename. Now real class name is used.
 16. Use in all scripts JSROOT as central 'namespace'
@@ -381,7 +851,7 @@
    in ROOT repository
 
 ### March 2014
-1. Introduce JSROOT.TBuffer class, which plays similar role
+1. Introduce TBuffer class, which plays similar role
    as TBuffer in native ROOT I/O. Simplifies I/O logic,
    reduce duplication of code in many places, fix errors.
    Main advantage - one could try to keep code synchronous with C++.
