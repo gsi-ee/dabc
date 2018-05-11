@@ -174,6 +174,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          DOUT2("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
          if (fControl && fCtrlSzLimit && fCurrentFileCmd.null()) {
+            // this is a place, where new run automatically started
             dabc::Command newrun("StartRun");
             newrun.SetTimeout(20);
             fCtrlCnt = -1;

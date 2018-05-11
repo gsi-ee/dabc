@@ -564,53 +564,57 @@
          JSROOT.NewHttpRequest(this.CalibrItem + "/Status/get.json", "object", this.ProcessCalibrReq.bind(this)).send();
    }
    
+   DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
+      this.mainreq = null;
+      if (!res) return;
+
+      var inp = null, bld = null, state = null, ninp = [], nbld = [],  changed = false;
+      for (var k in res._childs) {
+         var elem = res._childs[k];
+         if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
+         if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
+         if (elem._name == "State") { state = elem.value }
+      }
+      
+      if (state !== null) {
+         d3.select(this.frame).select(".bnet_state").text("Run control: "+state);
+         
+         var col = "red";
+         if (state=="Ready") col = "lightgreen"; else
+         if ((state=="NoFile") || (state == "NoCalibr")) col = "yellow"; 
+         
+         $(this.frame).find(".bnet_startrun").css('background-color',col);
+      }
+      
+      if (!DABC.CompareArrays(this.InputItems,inp)) {
+         this.InputItems = inp;
+         this.InputNodes = ninp;
+         this.InputInfo = [];
+         changed = true;
+      }
+      
+      if (!DABC.CompareArrays(this.BuilderItems,bld)) {
+         this.BuilderItems = bld;
+         this.BuilderNodes = nbld;
+         this.BuilderInfo = [];
+         changed = true;
+      }
+      
+      
+      if (changed) {
+         this.DisplayCalItem(0, "");
+         this.RefreshHTML();
+         this.hpainter.reload(); // also refresh hpainter - most probably items are changed 
+      }
+
+      this.SendInfoRequests();
+   }
+   
    DABC.BnetPainter.prototype.SendMainRequest = function() {
-      if (this.mainreq) return;
-      
-      var pthis = this;
-      
-      this.mainreq = JSROOT.NewHttpRequest(this.itemname + "/get.json", "object", function(res) {
-         pthis.mainreq = null;
-         if (!res) return;
-         
-         var inp = null, bld = null, state = null, ninp = [], nbld = [],  changed = false;
-         for (var k in res._childs) {
-            var elem = res._childs[k];
-            if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
-            if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
-            if (elem._name == "State") { state = elem.value }
-         }
-         
-         if (state !== null) {
-            d3.select(pthis.frame).select(".bnet_state").text("Run control: "+state);
-         }
-         
-         if (!DABC.CompareArrays(pthis.InputItems,inp)) {
-            pthis.InputItems = inp;
-            pthis.InputNodes = ninp;
-            pthis.InputInfo = [];
-            changed = true;
-         }
-         
-         if (!DABC.CompareArrays(pthis.BuilderItems,bld)) {
-            pthis.BuilderItems = bld;
-            pthis.BuilderNodes = nbld;
-            pthis.BuilderInfo = [];
-            changed = true;
-         }
-         
-         
-         if (changed) {
-            pthis.DisplayCalItem(0, "");
-            pthis.RefreshHTML();
-            pthis.hpainter.reload(); // also refresh hpainter - most probably items are changed 
-         }
-
-         pthis.SendInfoRequests();
-      });
-
-      this.mainreq.send();
-      
+      if (!this.mainreq) {
+         this.mainreq = JSROOT.NewHttpRequest(this.itemname + "/get.json", "object", this.ProcessMainRequest.bind(this));
+         this.mainreq.send();
+      }
    }
    
    DABC.BnetControl = function(hpainter, itemname) {

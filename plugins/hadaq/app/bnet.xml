@@ -7,18 +7,23 @@
      <bnetreceivers value="[localhost:12101,localhost:12102]"/>
      <hadaqports1 value="[50000,50001,50002]"/>
      <hadaqports2 value="[50003,50004]"/>
+     <masteraddr value="localhost:23456"/>
+     <test_time value="3000"/>
   </Variables>
 
   <Context host="localhost" name="FirstLvl1" port="12501">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcStream.so"/>  
       <logfile value="first1.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="50"/>
+      <runtime value="${test_time}"/>
+      <master value="${masteraddr}"/>
+      <publisher value="true"/>
     </Run>
     
     <MemoryPool name="Pool">
@@ -27,14 +32,69 @@
     </MemoryPool>
     
     <Device name="NetDev" class="dabc::SocketDevice"/>
-    
-    <Module name="FirstLevel" class="hadaq::CombinerModule">    
+
+    <!-- these are default parameters for TDC calibration modules -->
+    <Module name="TRB*_TdcCal">    
+       <!-- Minimal and maximal bins for linear calibration -->
+       <FineMin value="31"/>
+       <FineMax value="480"/>
+       
+       <!-- number of TDC channels -->
+       <NumChannels value="65"/>
+       
+       <!-- 1 - use only rising edge, falling edge is ignore
+            2 - falling edge enabled and fully independent from rising edge
+            3 - falling edge enabled and uses calibration from rising edge
+            4 - falling edge enabled and common statistic is used for calibration -->
+       <EdgeMask value="1"/>
+       
+       <!-- when auto mode enabled - this is allowed range for TDC ids -->
+       <TdcMin value="0x1000"/>
+       <TdcMax value="0x5000"/>
+       
+       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+            In the URL it is coded as "calibr" parameter -->
+       <AutoMode value="0"/>
+       
+       <!-- histogram filling level
+            0 - no histograms,
+            1 - only generic statistic for TRB
+            2 - basic statistic for TDC (like hits per channel)
+            3 - histograms for each active channel will be created, 
+            4 - also reference histograms could be created (not yet available in DABC)  -->
+       <HistFilling value="4"/>
+       
+       <!-- file prefix where calibration will be stored or loaded -->
+       <CalibrFile value="local"/>
+       
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
+       <CalibrTrigger value="0xffff"/>
+       
+       <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
+       <!--  DisableCalibrationFor value="0"/-->
+       
+       <!-- Number of counts in each channel to perform calibration, 0 - off -->
+       <Auto value="10000000"/>
+
+       <!-- Should calibrated value replace old message (true, set by default) or
+            new calibration data should be inserted before hit messages (false)
+            When Replace==false, size of HLD data increased by 25%, but original data are preserved -->
+       <Replace value="true"/>
+    </Module>
+
+   <Module name="FirstLevel" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
        <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
+
+       <InputPort name="Input0" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&dummy"/>
+       <InputPort name="Input1" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]&dummy"/>
+       <InputPort name="Input2" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]&dummy"/>
+
        <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
-       
+
+
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
@@ -64,12 +124,15 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcStream.so"/>  
       <logfile value="first2.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="50"/>
+      <runtime value="${test_time}"/>
+      <master value="${masteraddr}"/>
+      <publisher value="true"/>
     </Run>
     
     <MemoryPool name="Pool">
@@ -78,15 +141,70 @@
     </MemoryPool>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
+
+    <!-- these are default parameters for TDC calibration modules -->
+    <Module name="TRB*_TdcCal">    
+       <!-- Minimal and maximal bins for linear calibration -->
+       <FineMin value="31"/>
+       <FineMax value="480"/>
+       
+       <!-- number of TDC channels -->
+       <NumChannels value="65"/>
+       
+       <!-- 1 - use only rising edge, falling edge is ignore
+            2 - falling edge enabled and fully independent from rising edge
+            3 - falling edge enabled and uses calibration from rising edge
+            4 - falling edge enabled and common statistic is used for calibration -->
+       <EdgeMask value="1"/>
+       
+       <!-- when auto mode enabled - this is allowed range for TDC ids -->
+       <TdcMin value="0x1000"/>
+       <TdcMax value="0x5000"/>
+       
+       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+            In the URL it is coded as "calibr" parameter -->
+       <AutoMode value="0"/>
+       
+       <!-- histogram filling level
+            0 - no histograms,
+            1 - only generic statistic for TRB
+            2 - basic statistic for TDC (like hits per channel)
+            3 - histograms for each active channel will be created, 
+            4 - also reference histograms could be created (not yet available in DABC)  -->
+       <HistFilling value="4"/>
+       
+       <!-- file prefix where calibration will be stored or loaded -->
+       <CalibrFile value="local"/>
+       
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
+       <CalibrTrigger value="0xffff"/>
+       
+       <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
+       <!--  DisableCalibrationFor value="0"/-->
+       
+       <!-- Number of counts in each channel to perform calibration, 0 - off -->
+       <Auto value="10000000"/>
+
+       <!-- Should calibrated value replace old message (true, set by default) or
+            new calibration data should be inserted before hit messages (false)
+            When Replace==false, size of HLD data increased by 25%, but original data are preserved -->
+       <Replace value="true"/>
+    </Module>
+
     
     <Module name="FirstLevel" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
        <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#"  urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+
+       <InputPort name="Input0" urlopt1="trb=0x8100&tdc=[0x4000,0x4001,0x4002,0x4003]&dummy"/>
+       <InputPort name="Input1" urlopt1="trb=0x8110&tdc=[0x4010,0x4011,0x4012,0x4013]&dummy"/>
+
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
 <!--        <InputPort name="Input0" url="nhadaq://host:50003"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50004"/> -->
+
        
        <OutputPort name="Output*" optional="true"/>
        
@@ -119,13 +237,12 @@
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="50"/>
+      <runtime value="${test_time}"/>
+      <master value="${masteraddr}"/>
+      <publisher value="true"/>
     </Run>
     
     <!-- HttpServer name="http" port="8090"/-->
-    
-    <!-- If uncommented, all internal manager structures will be published in the web server -->
-    <!-- Publisher name="publ" manager="true"/ -->
     
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
@@ -137,17 +254,17 @@
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
-    <Module name="Combiner" class="hadaq::CombinerModule">    
+    <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
-       <NumOutputs value="1"/>
+       <NumOutputs value="2"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6781?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=1&disabled"/>
        
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
@@ -184,14 +301,13 @@
       <debuglevel value="1"/>
       <loglimit value="100000"/>
       <threads_layout value="balanced"/>
-      <runtime value="50"/>
+      <runtime value="${test_time}"/>
+      <master value="${masteraddr}"/>
+      <publisher value="true"/>
     </Run>
     
     <!-- HttpServer name="http" port="8090"/-->
-    
-    <!-- If uncommented, all internal manager structures will be published in the web server -->
-    <!-- Publisher name="publ" manager="true"/ -->
-    
+
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
     
@@ -206,22 +322,22 @@
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
-       <NumOutputs value="1"/>
+       <NumOutputs value="2"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6782?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=2&disabled"/>
        
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
        
        <ExtraDebug value="false"/>
-       <FlushTimeout value="0.5"/>   
+       <FlushTimeout value="0.5"/>
        <TriggerNumRange value="0x1000000"/>
-       
+
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
