@@ -5,6 +5,8 @@ about current functionality of the framework.
 11.05.2018
 1. Provide dummy mode for hld file output. It is created, but not writes any files.
    Required to dynamically stop/start preconfigured HLD outputs from BNet master  
+2. Implement run control from BNet master. One can start/stop run with changed prefix 
+   from the master - all event builder just change file name and keep all other config.
 
 
 4.05.2018

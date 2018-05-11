@@ -102,7 +102,7 @@ bool hadaq::HldOutput::Write_Init()
 }
 
 
-bool hadaq::HldOutput::StartNewFile()
+bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
 {
    CloseFile();
 
@@ -130,9 +130,7 @@ bool hadaq::HldOutput::StartNewFile()
 
          dabc::CmdSetParameter cmd("Evtbuild-diskNumEB", disknumber);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
-      }
-      else
-      {
+      } else {
          EOUT("Could not find daq_disk parameter although disk demon mode is on!");
       }
    }
@@ -140,11 +138,24 @@ bool hadaq::HldOutput::StartNewFile()
    std::string extens = hadaq::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
 
+   if (!prefix.empty()) {
+      // when run in BNet mode, only file path used
+      size_t slash = fname.rfind("/");
+      DOUT0("PRECONFIGURE FILE NAME is %s slash %d", fname.c_str(), slash);
+
+      if (slash == std::string::npos)
+         fname = "";
+      else
+         fname.erase(slash+1);
+      fname.append(prefix);
+      DOUT0("BNET FNAME %s", fname.c_str());
+   }
+
    size_t pos = fname.rfind(".hld");
    if (pos == std::string::npos)
       pos = fname.rfind(".HLD");
 
-   if (pos == fname.length()-4) {
+   if ((pos != std::string::npos) && (pos == fname.length()-4)) {
       fname.insert(pos, extens);
    } else {
       fname += extens;
@@ -202,13 +213,26 @@ bool hadaq::HldOutput::CloseFile()
    if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
    fCurrentFileSize = 0;
+   fRunNumber = 0;
+   fCurrentFileName = "";
    //std::cout <<"Close File resets file size." << std::endl;
    return true;
 }
 
 bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
 {
-   if (fFile.isWriting()) {
+   std::string mode = cmd.GetStr("mode");
+
+   if (mode == "stop") {
+      CloseFile();
+      fRunNumber = 0;
+      fDisabled = true;
+   } else if (mode == "start") {
+      CloseFile();
+      fDisabled = false;
+      fRunNumber = cmd.GetUInt("runid");
+      StartNewFile(cmd.GetStr("prefix"));
+   } else if (fFile.isWriting()) {
       CloseFile();
       fRunNumber = 0;
       StartNewFile();

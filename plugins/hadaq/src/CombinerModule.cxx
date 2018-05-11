@@ -43,6 +43,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fRunToOracle(false),
    fCheckTag(true),
    fFlushTimeout(0.),
+   fBnetFileCmd(),
    fEvnumDiffStatistics(true)
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
@@ -128,12 +129,16 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    CreatePar(fLostEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
-   CreateCmdDef("StartHldFile")
-      .AddArg("filename", "string", true, "file.hld")
-      .AddArg(dabc::xml_maxsize, "int", false, 1500)
-      .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
-   CreateCmdDef("StopHldFile");
-   CreateCmdDef("RestartHldFile");
+   if (fBNETrecv) {
+      CreateCmdDef("BnetFileControl").SetField("_hidden", true);
+   } else {
+      CreateCmdDef("StartHldFile")
+         .AddArg("filename", "string", true, "file.hld")
+         .AddArg(dabc::xml_maxsize, "int", false, 1500)
+         .SetArgMinMax(dabc::xml_maxsize, 1, 5000);
+      CreateCmdDef("StopHldFile");
+      CreateCmdDef("RestartHldFile");
+   }
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
 
@@ -372,6 +377,9 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 void hadaq::CombinerModule::UpdateBnetInfo()
 {
    if (fBNETrecv) {
+
+      if (!fBnetFileCmd.null() && fBnetFileCmd.IsTimedout()) fBnetFileCmd.Reply(dabc::cmd_false);
+
       dabc::Command cmd("GetTransportStatistic");
       if ((NumOutputs() < 2) || !SubmitCommandToTransport(OutputName(1), Assign(cmd))) {
          fWorkerHierarchy.SetField("runid", 0);
@@ -1203,6 +1211,24 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       cmd.ChangeName("RestartTransport");
       SubmitCommandToTransport(OutputName(1), cmd);
       return dabc::cmd_postponed;
+   } else if (cmd.IsName("BnetFileControl")) {
+      if (NumOutputs()<2) return dabc::cmd_false;
+      if (!fBnetFileCmd.null()) fBnetFileCmd.Reply(dabc::cmd_false);
+
+      for (unsigned k=1;k<NumOutputs();++k) {
+         dabc::Command subcmd("RestartTransport");
+         subcmd.SetStr("mode", cmd.GetStr("mode"));
+         subcmd.SetUInt("runid", cmd.GetUInt("runid"));
+         subcmd.SetStr("prefix", cmd.GetStr("prefix"));
+         SubmitCommandToTransport(OutputName(k), Assign(subcmd));
+      }
+
+      SetInfo("Execute BnetFileControl");
+      fBnetFileCmd = cmd;
+      fBnetFileCmd.SetInt("#replies", NumOutputs()-1);
+      if (!fBnetFileCmd.IsTimeoutSet()) fBnetFileCmd.SetTimeout(30);
+
+      return dabc::cmd_postponed;
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);
    }
@@ -1361,10 +1387,19 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          fCfg[n].fCalibrProgr = cmd.GetInt("progress");
          fCfg[n].fCalibrState = cmd.GetStr("state");
       }
+      return true;
    } else if (cmd.IsName("GetTransportStatistic")) {
       fWorkerHierarchy.SetField("runid", cmd.GetUInt("RunId"));
       fWorkerHierarchy.SetField("runsize", cmd.GetUInt("RunSize"));
       fWorkerHierarchy.SetField("runname", cmd.GetStr("RunName"));
+      return true;
+   } else if (cmd.IsName("RestartTransport")) {
+      int num = fBnetFileCmd.GetInt("#replies");
+      if (num == 1)
+         fBnetFileCmd.Reply(dabc::cmd_true);
+      else
+         fBnetFileCmd.SetInt("#replies", num-1);
+      return true;
    }
 
    return dabc::ModuleAsync::ReplyCommand(cmd);

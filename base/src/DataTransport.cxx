@@ -703,7 +703,7 @@ void dabc::OutputTransport::TransportCleanup()
 void dabc::OutputTransport::CloseOnError()
 {
 
-   if ((fRetryPeriod < 0.) || (fOutput==0) || !fOutput->Write_Retry()) {
+   if ((fRetryPeriod < 0.) || !fOutput || !fOutput->Write_Retry()) {
       ChangeState(outClosed);
       CloseOutput();
       CloseTransport(true);

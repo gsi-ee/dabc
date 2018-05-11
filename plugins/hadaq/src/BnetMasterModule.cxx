@@ -19,6 +19,8 @@
 #include "dabc/Publisher.h"
 #include "dabc/Iterator.h"
 
+#include "hadaq/HadaqTypeDefs.h"
+
 hadaq::BnetMasterModule::BnetMasterModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
@@ -120,8 +122,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (!fCurrentCmd.null()) fCurrentCmd.Reply(dabc::cmd_false);
 
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").Field("value").AsStrVect();
-
       if (builders.size() == 0) return dabc::cmd_true;
+
+      dabc::WorkerRef publ = GetPublisher();
+      if (publ.null()) return dabc::cmd_false;
 
       fCurrentCmd = cmd;
       fCmdCnt++;
@@ -132,25 +136,25 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       cmd.SetInt("#RetCnt", builders.size());
 
-      dabc::WorkerRef ref = GetPublisher();
-
       for (int n=0;n<(int) builders.size();++n) {
-
-         std::string cmdpath = builders[n] + (isstart ? "/StartHldFile" : "/StopHldFile");
 
          std::string query;
 
-         if (isstart) query = dabc::format("filename=ff%d.hld&maxsize=2000", n);
+         if (isstart) {
+            unsigned runid = cmd.GetUInt("runid");
+            if (runid==0) runid = hadaq::CreateRunId();
+            std::string prefix = cmd.GetStr("prefix", "test");
+            query = dabc::format("mode=start&runid=%u&prefix=%s", runid, prefix.c_str());
+         } else {
+            query = "mode=stop";
+         }
 
-         dabc::CmdGetBinary subcmd(cmdpath, "execute", query);
+         dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
          subcmd.SetInt("#bnet_cnt", fCmdCnt);
 
-         bool res = ref.Submit(Assign(subcmd));
-
-         DOUT0("SEND COMMAND %s to %s res %s", subcmd.GetName(), cmdpath.c_str(), DBOOL(res));
-         // subcmd.SetReceiver(builders[n]);
-         // dabc::mgr.Submit(Assign(subcmd));
+         publ.Submit(Assign(subcmd));
       }
+
       return dabc::cmd_postponed;
    }
 

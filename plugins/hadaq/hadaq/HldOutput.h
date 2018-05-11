@@ -55,7 +55,7 @@ namespace hadaq {
          hadaq::HldFile      fFile;
 
          bool CloseFile();
-         bool StartNewFile();
+         bool StartNewFile(const std::string &prefix = "");
 
          /* Methods to export run begin to oracle via text file*/
          void StoreRunInfoStart();

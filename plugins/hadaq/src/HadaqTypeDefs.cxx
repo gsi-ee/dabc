@@ -104,5 +104,3 @@ uint32_t hadaq::CreateRunId()
    gettimeofday(&tv, NULL);
    return tv.tv_sec - hadaq::HADAQ_TIMEOFFSET;
 }
-
-
