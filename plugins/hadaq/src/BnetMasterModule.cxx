@@ -25,12 +25,17 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    dabc::ModuleAsync(name, cmd)
 {
    fControl = Cfg("Controller", cmd).AsBool(false);
-   fMaxRunSize = Cfg("MaxRunSize", cmd).AsUInt(2000000000LU);
+   fRunPrefix = Cfg("RunPrefix", cmd).AsStr();
+   fMaxRunSize = Cfg("MaxRunSize", cmd).AsUInt(2000);
 
    double period = Cfg("period", cmd).AsDouble(fControl ? 0.2 : 1);
    CreateTimer("update", period);
 
    fCmdCnt = 1;
+
+   fCtrlId = 1;
+   fCtrlTm.GetNow();
+   fCtrlCnt = 0;
 
    fWorkerHierarchy.Create("Bnet");
 
@@ -89,7 +94,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
       return true;
-   } else if (cmd.GetInt("#bnet_cnt")==fCmdCnt) {
+   } else if (cmd.GetInt("#bnet_cnt") == fCmdCnt) {
       if (!fCurrentCmd.null()) {
          int cnt = cmd.GetInt("#RetCnt");
          cmd.SetInt("#RetCnt", cnt--);
@@ -97,6 +102,41 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       }
 
       return true;
+   } if (cmd.GetInt("#bnet_ctrl_id") == fCtrlId) {
+      fCtrlCnt--;
+
+      dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
+      dabc::Iterator iter(h);
+
+      while (iter.next()) {
+         dabc::Hierarchy item = iter.ref();
+         if (!item.HasField("_bnet")) continue;
+         // normally only that item should be used
+
+         std::string state = item.GetField("state").AsStr();
+
+         if (state=="Ready") {
+            // ok
+         } else if (((state=="NoCalibr") || (state=="NoFile")) && (fCtrlState<2)) {
+            fCtrlState = 1;
+            if (fCtrlStateName.empty()) fCtrlStateName = state;
+         } else {
+            fCtrlState = 2;
+            fCtrlStateName = "Error";
+         }
+
+         if ((fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
+            fCtrlSzLimit = true;
+
+         // DOUT0("BNET reply from %s state %s sz %u", item.GetField("_bnet").AsStr().c_str(), item.GetField("state").AsStr().c_str(), item.GetField("runsize").AsUInt());
+      }
+
+      if (fCtrlCnt==0) {
+         if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
+         fWorkerHierarchy.GetHChild("State").SetField("value", fCtrlStateName);
+         DOUT0("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+      }
+
    }
 
    return dabc::Module::ReplyCommand(cmd);
@@ -109,11 +149,50 @@ void hadaq::BnetMasterModule::BeforeModuleStart()
 void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 {
    dabc::CmdGetNamesList cmd;
-   dabc::PublisherRef(GetPublisher()).Submit(Assign(cmd));
+   dabc::WorkerRef publ = GetPublisher();
+
+   publ.Submit(Assign(cmd));
 
    if (!fCurrentCmd.null() && fCurrentCmd.IsTimedout())
       fCurrentCmd.Reply(dabc::cmd_false);
 
+   if (!fControl) return;
+
+   if (fCtrlCnt>0) {
+      // wait at least 2 seconds before sending new request
+      if (!fCtrlTm.Expired(2.)) return;
+
+      EOUT("Fail to get %d control records", fCtrlCnt);
+
+   }
+
+   fCtrlCnt = 0;
+   fCtrlId++;
+   fCtrlTm.GetNow();
+
+   fCtrlSzLimit = false;
+   fCtrlState = 0;
+   fCtrlStateName = "";
+
+   std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").Field("value").AsStrVect();
+   std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").Field("value").AsStrVect();
+
+   for (unsigned n=0;n<builders.size();++n) {
+      dabc::CmdGetBinary subcmd(builders[n], "hierarchy","");
+      subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
+      publ.Submit(Assign(subcmd));
+      fCtrlCnt++;
+   }
+
+   for (unsigned n=0;n<inputs.size();++n) {
+      dabc::CmdGetBinary subcmd(inputs[n], "hierarchy", "");
+      subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
+      publ.Submit(Assign(subcmd));
+      fCtrlCnt++;
+   }
+
+   if (fCtrlCnt == 0)
+      fWorkerHierarchy.GetHChild("State").SetField("value", "NoNodes");
 }
 
 int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
@@ -143,8 +222,8 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          if (isstart) {
             unsigned runid = cmd.GetUInt("runid");
             if (runid==0) runid = hadaq::CreateRunId();
-            std::string prefix = cmd.GetStr("prefix", "test");
-            query = dabc::format("mode=start&runid=%u&prefix=%s", runid, prefix.c_str());
+            fRunPrefix = cmd.GetStr("prefix", "test");
+            query = dabc::format("mode=start&runid=%u&prefix=%s", runid, fRunPrefix.c_str());
          } else {
             query = "mode=stop";
          }

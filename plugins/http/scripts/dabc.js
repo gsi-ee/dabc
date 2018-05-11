@@ -518,7 +518,9 @@
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
                var title = "state:" + res.hubs_state[k] + " " + res.hubs_info[k];
-               var style = "background-color:" + ((res.hubs_state[k]=="Ready") ? "lightgreen" : "red");
+               var style = "background-color:";
+               if (res.hubs_state[k]=="Ready") style+="lightgreen"; else
+               if (res.hubs_state[k]=="NoCalibr") style+="lightblue"; else style+="red";
                var calitem = "";
                if (res.calibr[k]) 
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];

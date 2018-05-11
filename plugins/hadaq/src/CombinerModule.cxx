@@ -389,6 +389,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          fWorkerHierarchy.SetField("runid", 0);
          fWorkerHierarchy.SetField("runsize", 0);
          fWorkerHierarchy.SetField("runname", std::string());
+         fWorkerHierarchy.SetField("state", "NoFile");
+         fWorkerHierarchy.GetHChild("State").SetField("value", "NoFile");
       }
    }
 
@@ -449,6 +451,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
+      fWorkerHierarchy.SetField("state", nodestate);
 
       fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
    }
@@ -1407,6 +1410,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       if (Par(fEventRateName).Value().AsDouble() == 0) state = "NoData"; else
       if ((runid==0) && runname.empty()) state = "NoFile";
 
+      fWorkerHierarchy.SetField("state", state);
       fWorkerHierarchy.GetHChild("State").SetField("value", state);
 
       return true;

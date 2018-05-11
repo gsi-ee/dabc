@@ -32,9 +32,16 @@ namespace hadaq {
       protected:
 
          bool          fControl;  ///< when true, master actively controls BNET nodes and switches to new RUNs
-         uint64_t      fMaxRunSize; ///< maximal run size
+         unsigned      fMaxRunSize; ///< maximal run size in MB
+         std::string   fRunPrefix;  ///< configured run prefix
          dabc::Command fCurrentCmd; ///< currently running cmd
-         int           fCmdCnt;    ///< just counter to avoid mismatch
+         int           fCmdCnt;     ///< just counter to avoid mismatch
+         int           fCtrlId;     ///< counter for control requests
+         dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
+         int           fCtrlCnt;    ///< how many control replies are awaited
+         int           fCtrlState;  ///< 0-ok (green), 1-partially (yellow), 2-red
+         std::string   fCtrlStateName; ///< current name
+         bool          fCtrlSzLimit; ///< when true, size limit was exceed
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
