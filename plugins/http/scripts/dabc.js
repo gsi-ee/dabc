@@ -371,7 +371,9 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + "| " + 
+      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
               this.MakeLabel("class='bnet_trb_clear'", "HUBs", 40);    
       html += "</pre>";
       html += "</div>";
@@ -397,8 +399,11 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("", "Node", 15) + "| " + this.MakeLabel("", "Data", 10) + "| " + this.MakeLabel("", "Events", 10) + 
-              "| " + this.MakeLabel("", "File", 23) +  "| " + this.MakeLabel("", "Size, MB", 10) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
+      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__bld__/HadaqData'", "Data", 10) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__bld__/HadaqEvents'", "Events", 10) + "| " + 
+              this.MakeLabel("", "File", 23) +  "| " + 
+              this.MakeLabel("", "Size, MB", 10) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
       html += "</pre>";
       html += "</div>";
       for (var node in this.BuilderItems) {
@@ -426,8 +431,16 @@
       html += "</div>";
       
       var main = d3.select(this.frame).html(html);
+      var painter = this;
+      
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
+
+      main.selectAll(".bnet_item_clear").on("click", this.ClearDisplay.bind(this));
+      
+      main.selectAll(".bnet_item_label").on("click", function() {
+         painter.DisplayItem(d3.select(this).attr("itemname"));
+       });
       
       var itemname = this.itemname;
       
@@ -439,20 +452,45 @@
       $(main.node()).find(".bnet_stoprun").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
       });
-
-
+      
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
    
+   DABC.BnetPainter.prototype.ClearDisplay = function() {
+      var frame = this.mdi ? this.mdi.FindFrame("bnet_drawing") : null;
+      if (frame) {
+         this.mdi.CleanupFrame(frame);
+         JSROOT.cleanup(frame);
+      }
+   }
+   
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
       if (!this.mdi) return;
+
+      if (itemname.indexOf("__inp__")==0) {
+         if (!this.InputItems) return;
+         var subitem = itemname.substr(7); itemname = "";
+         for (var k=0;k<this.InputItems.length;++k) {
+            if (itemname) itemname+="+";
+            itemname += this.InputItems[k].substr(1) + subitem;
+         }
+      } else if (itemname.indexOf("__bld__")==0) {
+         if (!this.BuilderItems) return;
+         var subitem = itemname.substr(7); itemname = "";
+         for (var k=0;k<this.BuilderItems.length;++k) {
+            if (itemname) itemname+="+";
+            itemname += this.BuilderItems[k].substr(1) + subitem;
+         }
+      } else {
+         itemname = itemname.substr(1);
+      }
       
-      var frame = this.mdi.FindFrame("bnet_drawing");
-      if (frame) this.mdi.CleanupFrame(frame);
-      frame = this.mdi.FindFrame("bnet_drawing", true);
+      this.ClearDisplay();
+
+      var frame = this.mdi.FindFrame("bnet_drawing", true);
       if (frame) 
-         this.hpainter.display(itemname.substr(1), "divid:"+d3.select(frame).attr('id'));         
+         this.hpainter.displayAll([itemname], ["frameid:bnet_drawing"]);         
    }
    
    DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
