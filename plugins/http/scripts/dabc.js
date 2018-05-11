@@ -465,32 +465,62 @@
       }
    }
    
+   DABC.BnetPainter.prototype.ProcessGetItem = function(items, arr, resitem, resobj) {
+      if (resobj) { 
+         if (resobj!==true) {
+            resobj.fName = items.shift();
+            arr.push(resobj);
+         }
+      } else {
+         // fail to produce result object
+         return false;
+      }
+      
+      if (items.length>0)
+         return this.hpainter.get(items[0], this.ProcessGetItem.bind(this, items, arr));
+      
+      var mgraph = JSROOT.Create("TMultiGraph");
+      
+      for(var i=0; i<arr.length; ++i)
+          mgraph.fGraphs.Add(arr[i], "");
+
+      this.ClearDisplay();
+      var frame = this.mdi.FindFrame("bnet_drawing", true);
+      
+      if (frame) 
+         JSROOT.draw(d3.select(frame).attr('id'), mgraph, "plc");
+   }
+   
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
       if (!this.mdi) return;
 
       if (itemname.indexOf("__inp__")==0) {
          if (!this.InputItems) return;
-         var subitem = itemname.substr(7); itemname = "";
-         for (var k=0;k<this.InputItems.length;++k) {
-            if (itemname) itemname+="+";
-            itemname += this.InputItems[k].substr(1) + subitem;
-         }
+         
+         var subitem = itemname.substr(7); items = [];
+         for (var k=0;k<this.InputItems.length;++k) 
+            items.push(this.InputItems[k].substr(1) + subitem);
+         
+         if (items.length>1)
+            return this.ProcessGetItem(items, [], null, true);
+         
       } else if (itemname.indexOf("__bld__")==0) {
          if (!this.BuilderItems) return;
-         var subitem = itemname.substr(7); itemname = "";
-         for (var k=0;k<this.BuilderItems.length;++k) {
-            if (itemname) itemname+="+";
-            itemname += this.BuilderItems[k].substr(1) + subitem;
-         }
+         
+         var subitem = itemname.substr(7); items = [];
+         for (var k=0;k<this.BuilderItems.length;++k) 
+            items.push(this.BuilderItems[k].substr(1) + subitem);
+         
+         if (items.length>1)
+            return this.ProcessGetItem(items, [], null, true);
       } else {
-         itemname = itemname.substr(1);
+         itemname = [ itemname.substr(1) ];
       }
       
       this.ClearDisplay();
-
       var frame = this.mdi.FindFrame("bnet_drawing", true);
       if (frame) 
-         this.hpainter.displayAll([itemname], ["frameid:bnet_drawing"]);         
+         this.hpainter.displayAll(itemname, ["frameid:bnet_drawing"]);         
    }
    
    DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
