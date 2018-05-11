@@ -389,10 +389,10 @@ void hadaq::CombinerModule::UpdateBnetInfo()
    }
 
    if (fBNETsend) {
-      std::string full_state = "Ready";
+      std::string full_state = "";
 
       std::vector<uint64_t> hubs, ports;
-      std::vector<std::string> calibr, cal_state, hubs_info;
+      std::vector<std::string> calibr, hubs_state, hubs_info;
       for (unsigned n=0;n<fCfg.size();n++) {
          InputCfg &inp = fCfg[n];
 
@@ -408,21 +408,14 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             fCfg[n].fCalibrReq = true;
          }
 
-         std::string state = "";
-         if (!inp.fCalibr.empty()) {
-            state = inp.fCalibrState;
-            if (state.empty()) state = "Init";
-            if (state != "Ready") full_state = "Init";
-         }
-         cal_state.push_back(state);
-
-         std::string sinfo = "";
+         std::string state = "", sinfo = "";
          hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
+         double rate = 0.;
 
          if (!info) {
             sinfo = "missing transport-info";
          } else {
-            double rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
+            rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
             inp.fHubLastSize = info->fTotalRecvBytes;
             sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s",
                        info->fNPort,
@@ -435,13 +428,23 @@ void hadaq::CombinerModule::UpdateBnetInfo()
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
                        dabc::number_to_str(inp.fLostTrig,0).c_str());
          }
+
+         if (rate<=0) state = "NoData"; else
+         if (!inp.fCalibr.empty() && (inp.fCalibrState != "Ready")) state = "NoCalibr";
+
+         if (state.empty()) state = "Ready"; else
+         if (full_state.empty() && (full_state != "NoData")) full_state = state;
+         hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
       }
+
+      if (full_state.empty()) full_state = "Ready";
+
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("hubs_info", hubs_info);
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
-      fWorkerHierarchy.SetField("cal_state", cal_state);
+      fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("full_state", full_state);
    }
 }
@@ -1346,7 +1349,6 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
 }
 
 
-
 char* hadaq::CombinerModule::Unit(unsigned long v)
 {
 
@@ -1366,7 +1368,6 @@ std::string hadaq::CombinerModule::GenerateFileName(unsigned runid)
 {
    return fPrefix + hadaq::FormatFilename(fRunNumber,fEBId) + std::string(".hld");
 }
-
 
 bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 {
@@ -1389,9 +1390,20 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       }
       return true;
    } else if (cmd.IsName("GetTransportStatistic")) {
-      fWorkerHierarchy.SetField("runid", cmd.GetUInt("RunId"));
+
+      unsigned runid = cmd.GetUInt("RunId");
+      std::string runname = cmd.GetStr("RunName");
+
+      fWorkerHierarchy.SetField("runid", runid);
       fWorkerHierarchy.SetField("runsize", cmd.GetUInt("RunSize"));
-      fWorkerHierarchy.SetField("runname", cmd.GetStr("RunName"));
+      fWorkerHierarchy.SetField("runname", runname);
+
+      std::string state = "Ready";
+      if (Par(fEventRateName).Value().AsDouble() == 0) state = "NoData"; else
+      if ((runid==0) && runname.empty()) state = "NoFile";
+
+      fWorkerHierarchy.SetField("full_state", state);
+
       return true;
    } else if (cmd.IsName("RestartTransport")) {
       int num = fBnetFileCmd.GetInt("#replies");

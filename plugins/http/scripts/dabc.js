@@ -475,12 +475,18 @@
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         html += this.MakeLabel("", this.BuilderNodes[indx].substr(7), 15);
+         var col = "red";
+         if (res.full_state=="NoFile") col = "yellow"; else
+         if (res.full_state=="Ready") col = "lightgreen";
+         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + res.full_state + "'", this.BuilderNodes[indx].substr(7), 15);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
-         html += this.MakeLabel("", this.InputNodes[indx].substr(7), 15);
+         var col = "red";
+         if (res.full_state=="NoCalibr") col = "yellow"; else
+         if (res.full_state=="Ready") col = "lightgreen";
+         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + res.full_state + "'", this.InputNodes[indx].substr(7), 15);
          itemname = this.InputItems[indx];
       }
       
@@ -507,8 +513,8 @@
                   frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               var title = "state:" + res.cal_state[k] + " " + res.hubs_info[k];
-               var style = "background-color:" + ((res.cal_state[k]=="Ready") ? "lightgreen" : "red");
+               var title = "state:" + res.hubs_state[k] + " " + res.hubs_info[k];
+               var style = "background-color:" + ((res.hubs_state[k]=="Ready") ? "lightgreen" : "red");
                var calitem = "";
                if (res.calibr[k]) 
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
