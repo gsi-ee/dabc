@@ -786,8 +786,10 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
          cmd_res = cmd_true;
       } else
-      if ((binkind=="get.json") || (binkind=="item.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
-         std::string field = url.GetOptionStr("field", "");
+      if ((binkind=="get.json") || (binkind=="value.json") || (binkind=="item.json") || (binkind=="get.xml") || (binkind=="dabc.json") || (binkind=="dabc.xml")) {
+         std::string field = "";
+         if (binkind=="value.json") field = "value";
+                               else field = url.GetOptionStr("field", "");
 
          if (sub.null() && field.empty()) {
             size_t separ = item.find_last_of('/');
