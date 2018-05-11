@@ -47,6 +47,7 @@ namespace hadaq {
          bool                fRfio;           ///< true if we write to rfio
          bool                fLtsm;           ///< true if we write to ltsm
          std::string         fUrlOptions;     ///< remember URL options, may be used for RFIO file open
+         std::string         fLastPrefix;     ///< last prefix submitted from BNet master
 
          std::string         fRunInfoToOraFilename;
 

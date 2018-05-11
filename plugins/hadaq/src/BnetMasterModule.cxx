@@ -25,7 +25,6 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    dabc::ModuleAsync(name, cmd)
 {
    fControl = Cfg("Controller", cmd).AsBool(false);
-   fRunPrefix = Cfg("RunPrefix", cmd).AsStr();
    fMaxRunSize = Cfg("MaxRunSize", cmd).AsUInt(2000);
 
    double period = Cfg("period", cmd).AsDouble(fControl ? 0.2 : 1);
@@ -172,11 +171,10 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       if (fCtrlCnt==0) {
          if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
          fWorkerHierarchy.GetHChild("State").SetField("value", fCtrlStateName);
-         DOUT0("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+         DOUT2("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
-         if (fControl && fCtrlSzLimit && !fRunPrefix.empty() && fCurrentFileCmd.null()) {
+         if (fControl && fCtrlSzLimit && fCurrentFileCmd.null()) {
             dabc::Command newrun("StartRun");
-            newrun.SetStr("prefix", fRunPrefix);
             newrun.SetTimeout(20);
             fCtrlCnt = -1;
             fCtrlId++;
@@ -229,10 +227,14 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (isstart) {
          unsigned runid = cmd.GetUInt("runid");
          if (runid==0) runid = hadaq::CreateRunId();
-         fRunPrefix = cmd.GetStr("prefix", "test");
-         query = dabc::format("mode=start&runid=%u&prefix=%s", runid, fRunPrefix.c_str());
+         query = dabc::format("mode=start&runid=%u", runid);
 
-         DOUT0("Starting new run %u prefix %s", runid, fRunPrefix.c_str());
+         std::string prefix = cmd.GetStr("prefix");
+         if (!prefix.empty()) {
+            query.append("&prefix=");
+            query.append(prefix);
+         }
+         DOUT0("Starting new run %s", query.c_str());
       } else {
          query = "mode=stop";
       }

@@ -40,6 +40,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fRfio(false),
    fLtsm(false),
    fUrlOptions(),
+   fLastPrefix(),
    fLastUpdate(),
    fFile()
 {
@@ -141,14 +142,11 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
    if (!prefix.empty()) {
       // when run in BNet mode, only file path used
       size_t slash = fname.rfind("/");
-      DOUT0("PRECONFIGURE FILE NAME is %s slash %d", fname.c_str(), slash);
-
       if (slash == std::string::npos)
          fname = "";
       else
          fname.erase(slash+1);
       fname.append(prefix);
-      DOUT0("BNET FNAME %s", fname.c_str());
    }
 
    size_t pos = fname.rfind(".hld");
@@ -231,7 +229,10 @@ bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
       CloseFile();
       fDisabled = false;
       fRunNumber = cmd.GetUInt("runid");
-      StartNewFile(cmd.GetStr("prefix"));
+      // command used by BNet, prefix is not directly stored by the master
+      std::string prefix = cmd.GetStr("prefix");
+      if (!prefix.empty()) fLastPrefix = prefix;
+      StartNewFile(fLastPrefix);
    } else if (fFile.isWriting()) {
       CloseFile();
       fRunNumber = 0;
