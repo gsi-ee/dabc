@@ -799,7 +799,7 @@
    }
    
    DABC.AfterItemRequest = function(h, item, obj, option) {
-      if (obj==null) return;
+      if (!obj) return;
       
       if (!('_history' in item) || (option=="gauge") || (option=='last')) {
          obj.fullitemname = item.fullitemname; 
