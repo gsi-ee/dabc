@@ -40,11 +40,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
 
    fWorkerHierarchy.SetField("_player","DABC.BnetControl");
 
-   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("State");
-   item.SetField(dabc::prop_kind, "Text");
-   item.SetField("value", "Init");
-
-   item = fWorkerHierarchy.CreateHChild("Inputs");
+   dabc::Hierarchy item = fWorkerHierarchy.CreateHChild("Inputs");
    item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "");
    item.SetField("_hidden", "true");
@@ -53,6 +49,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "");
    item.SetField("_hidden", "true");
+
+   CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
 
    CreatePar("DataRate").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
    CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
@@ -127,7 +125,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       }
 
       if (fCtrlCnt == 0)
-         fWorkerHierarchy.GetHChild("State").SetField("value", "NoNodes");
+         SetParValue("State", "NoNodes");
 
       return true;
 
@@ -184,8 +182,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if (fCtrlCnt==0) {
          if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
-         Par("State").SetField("value", fCtrlStateName);
-         DOUT2("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+         SetParValue("State", fCtrlStateName);
+
+         DOUT0("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
          Par("DataRate").SetValue(fCtrlData);
          Par("EventsRate").SetValue(fCtrlEvents);

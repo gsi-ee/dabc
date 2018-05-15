@@ -139,14 +139,7 @@ void dabc::Application::SetInitFunc(ExternalFunction* initfunc)
 
 void dabc::Application::SetAppState(const std::string &name)
 {
-   Parameter par = Par(StateParName());
-   par.SetValue(name);
-
-   Hierarchy chld = fWorkerHierarchy.FindChild(StateParName());
-   if (!chld.null()) {
-      par.ScanParamFields(&chld()->Fields());
-      fWorkerHierarchy.MarkChangedItems();
-   }
+   SetParValue(StateParName(), name);
 }
 
 int dabc::Application::DoTransition(const std::string &tgtstate, Command cmd)

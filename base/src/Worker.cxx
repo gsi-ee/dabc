@@ -578,6 +578,21 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string &name, const std::stri
    return par;
 }
 
+void dabc::Worker::SetParValue(const std::string &name, const RecordField &v)
+{
+   Parameter par = Par(name);
+   if (par.null()) return;
+
+   par.SetValue(v);
+
+   Hierarchy chld = fWorkerHierarchy.FindChild(name.c_str());
+   if (!chld.null()) {
+      par.ScanParamFields(&chld()->Fields());
+      fWorkerHierarchy.MarkChangedItems();
+   }
+}
+
+
 bool dabc::Worker::DestroyPar(const std::string &name)
 {
    Parameter par = Par(name);
@@ -612,10 +627,10 @@ void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer *p
 
       unsigned mask = par->ConfirmFromWorker();
 
-      if ((mask & 1) != 0)
+      if (mask & 1)
          ProcessParameterRecording(par);
 
-      if ((mask & 2) != 0)
+      if (mask & 2)
          ProcessParameterEvent(CmdParameterEvent(par->GetName(), value, parModified));
    } else {
       CmdParameterEvent evnt(par->GetName(), value, parModified);

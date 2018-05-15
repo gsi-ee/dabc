@@ -707,15 +707,7 @@ unsigned int mbs::CombinerModule::GetOverflowEventNumber() const
 // JAM2016 - adopted from pexorplugin readout module
 void  mbs::CombinerModule::ChangeFileState(bool on)
 {
-  dabc::Parameter par = Par(fFileStateName);
-  par.SetValue(on);
-  dabc::Hierarchy chld = fWorkerHierarchy.FindChild(fFileStateName.c_str());
-  if (!chld.null()) {
-      par.ScanParamFields(&chld()->Fields());
-      fWorkerHierarchy.MarkChangedItems();
-  } else {
-      DOUT0("ChangeFileState Could not find parameter %s", fFileStateName.c_str());
-  }
+   SetParValue(fFileStateName, on);
 }
 
 

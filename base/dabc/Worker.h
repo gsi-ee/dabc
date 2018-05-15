@@ -399,6 +399,9 @@ namespace dabc {
 
          virtual Parameter CreatePar(const std::string &name, const std::string &kind = "");
 
+         /** \brief Set parameter value and sync with worker hierarchy */
+         void SetParValue(const std::string &name, const RecordField &v);
+
          CommandDefinition CreateCmdDef(const std::string &name);
 
          /** \brief Method must be used if worker wants to destroy parameter */
@@ -411,7 +414,7 @@ namespace dabc {
          bool UnregisterForParameterEvent(const std::string &mask);
 
          /** Interface method to retrieve subscribed parameter events */
-         virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
+         virtual void ProcessParameterEvent(const ParameterEvent &evnt) {}
 
          /** \brief Return reference on publisher.
           * First time publisher is searched in objects hierarchy and reference
@@ -420,7 +423,7 @@ namespace dabc {
           * all registered structures.    */
          Reference GetPublisher();
 
-         virtual bool Publish(const Hierarchy& h, const std::string &path);
+         virtual bool Publish(const Hierarchy &h, const std::string &path);
 
          virtual bool PublishPars(const std::string &path);
 
