@@ -342,12 +342,6 @@
       return this.mdi && this.frame;
    }
    
-   DABC.BnetPainter.prototype.wrap = function(txt, sz) {
-      while (txt.length<sz) txt += " ";
-      if (txt.length > sz) txt = txt.substr(0, sz);
-      return txt;
-   }
-   
    DABC.BnetPainter.prototype.MakeLabel = function(attr, txt, sz) {
       var lbl = "<label";
       if (attr) lbl += " " + attr;
@@ -355,8 +349,16 @@
       if (txt === undefined) txt = "<undef>"; else
       if (txt === null) txt = "null"; else
       if (typeof txt != 'string') txt = txt.toString();
-      lbl += this.wrap(txt,sz);
+      if (txt.length > sz) txt = txt.substr(0, sz);
+      lbl += txt;
       lbl += "</label>";
+
+      if (txt.length<sz) {
+         lbl += "<label>";
+         while (txt.length<sz) { txt += " "; lbl += " "; }
+         lbl += "</label>";
+      }
+      
       return lbl;
    }
    
@@ -381,17 +383,17 @@
       html += "<fieldset style='margin:5px'>" +
               "<legend>Builder nodes</legend>" +
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
-      html += "<div style='float:left' class='bnet_builders_header'>"
+      html += "<div style='float:left' class='jsroot bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__bld__/HadaqData'", "Data", 10) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__bld__/HadaqEvents'", "Events", 10) + "| " + 
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 15) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 10) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 10) + "| " + 
               this.MakeLabel("", "File", 23) +  "| " + 
               this.MakeLabel("", "Size, MB", 10) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
       html += "</pre>";
       html += "</div>";
       for (var node in this.BuilderItems) {
-         html += "<div style='float:left' class='bnet_builder" + node + "'>";
+         html += "<div style='float:left' class='jsroot bnet_builder" + node + "'>";
          html += "<pre style='margin:0'>";
          html += "<label>" + this.BuilderItems[node] + "</label>";
          html += "</pre>";
@@ -403,16 +405,16 @@
       html += "<fieldset style='margin:5px'>" +
               "<legend>Input nodes</legend>" +
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
-      html += "<div style='float:left' class='bnet_inputs_header'>"
+      html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
-              this.MakeLabel("class='bnet_trb_clear'", "HUBs", 40);    
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 15) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
+              this.MakeLabel("class='bnet_trb_clear h_item'", "HUBs", 4);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.InputItems) {
-         html += "<div style='float:left' class='bnet_input" + node + "'>";
+         html += "<div style='float:left' class='jsroot bnet_input" + node + "'>";
          html += "<pre style='margin:0'>";
          html += "<label>" + this.InputItems[node] + "</label>";
          html += "</pre>";
@@ -553,7 +555,7 @@
          itemname = this.InputItems[indx];
       }
       
-      var prefix = "class='bnet_item_label' itemname='" + itemname + "/";
+      var prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
       
       html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 10); 
       html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 10);
@@ -579,7 +581,7 @@
                var calitem = "";
                if (res.calibr[k]) 
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
-               var attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='bnet_trb_label'";
+               var attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
                
                html += " " + this.MakeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
                if (totallen>40) break;
