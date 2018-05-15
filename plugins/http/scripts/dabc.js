@@ -493,34 +493,37 @@
    
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
       if (!this.mdi) return;
+      
+      var items = null, opt = "";
 
       if (itemname.indexOf("__inp__")==0) {
-         if (!this.InputItems) return;
-         
-         var subitem = itemname.substr(7); items = [];
-         for (var k=0;k<this.InputItems.length;++k) 
-            items.push(this.InputItems[k].substr(1) + subitem);
-         
-         if (items.length>1)
-            return this.ProcessGetItem(items, [], null, true);
-         
+         items = this.InputItems;
       } else if (itemname.indexOf("__bld__")==0) {
-         if (!this.BuilderItems) return;
-         
-         var subitem = itemname.substr(7); items = [];
-         for (var k=0;k<this.BuilderItems.length;++k) 
-            items.push(this.BuilderItems[k].substr(1) + subitem);
-         
-         if (items.length>1)
-            return this.ProcessGetItem(items, [], null, true);
+         items = this.BuilderItems;
       } else {
-         itemname = [ itemname.substr(1) ];
+         itemname = itemname.substr(1);
+         opt = "frameid:bnet_drawing";
       }
+      
+      if (items !== null) {
+         if (items.length<2) return;
+         
+         var subitem = itemname.substr(7);
+         itemname = "";
+         for (var k=0;k<items.length;++k) {
+            itemname += (k>0 ? "," : "[") + items[k].substr(1) + subitem;
+            opt += (k>0 ? "," : "[") + "plc";
+            if (k==0) opt += "frameid:bnet_drawing";
+         }
+         
+         itemname += ",$legend]";
+         opt += ",any]";
+      } 
       
       this.ClearDisplay();
       var frame = this.mdi.FindFrame("bnet_drawing", true);
       if (frame) 
-         this.hpainter.displayAll(itemname, ["frameid:bnet_drawing"]);         
+         this.hpainter.displayAll([itemname], [opt]);         
    }
    
    DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
