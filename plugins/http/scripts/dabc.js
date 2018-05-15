@@ -194,9 +194,10 @@
             code += "<div class='hadaq_progress'></div>";
             $(this).html(code);
             $(this).find("button").button().click(function(){ 
-               var drawframe = hpainter.GetDisplay().FindFrame("tdccalibr_drawing", true);
-               $(drawframe).empty();
-               hpainter.display($(this).attr('hist'),"divid:"+$(drawframe).attr('id'));         
+               var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
+               if (frame) hpainter.GetDisplay().CleanupFrame(frame);
+               var histname = $(this).attr('hist'); 
+               hpainter.displayAll([histname],["frameid:dabc_drawing"]);         
             });
             $(this).find(".hadaq_progress").progressbar({ value: info.progress });
          }
@@ -299,14 +300,13 @@
       return true;
    }
    
-   DABC.BnetPainter = function(hpainter, mdi, itemname) {
+   DABC.BnetPainter = function(hpainter, itemname) {
       JSROOT.TBasePainter.call(this);
       
       this.hpainter = hpainter;
-      this.mdi = mdi;
       this.itemname = itemname;
       
-      this.frame = this.mdi.FindFrame(itemname, true);
+      this.frame = hpainter.GetDisplay().FindFrame(itemname, true);
       if (!this.frame) return;
       
       this.InputItems = [];
@@ -334,12 +334,11 @@
       }
       
       delete this.hpainter;
-      delete this.mdi;
       delete this.frame;
    }
    
    DABC.BnetPainter.prototype.active = function() {
-      return this.mdi && this.frame;
+      return this.hpainter && this.frame;
    }
    
    DABC.BnetPainter.prototype.MakeLabel = function(attr, txt, sz) {
@@ -368,16 +367,16 @@
 
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state'>Run control</legend>" +
-              "<button class='bnet_startrun'>Start run</button>" +
+              "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
+              "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" + 
               "<option>data</option>" +
               "<option>test</option>" +
               "<option>cosmic</option>" +
               "</select>" +
-              "<button class='bnet_stoprun'>Stop run</button>" +
-              "<button class='bnet_totalrate'>0.0 MB/s</button>" +
-              "<button class='bnet_totalevents'>0.0 Ev/s</button>" +
-              "<button class='bnet_clear'>Clr</button>" +
+              "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
+              "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
+              "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -410,7 +409,7 @@
       html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 15) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
-              this.MakeLabel("class='bnet_trb_clear h_item'", "HUBs", 4);    
+              this.MakeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.InputItems) {
@@ -470,16 +469,11 @@
    }
    
    DABC.BnetPainter.prototype.ClearDisplay = function() {
-      var frame = this.mdi ? this.mdi.FindFrame("bnet_drawing") : null;
-      if (frame) {
-         this.mdi.CleanupFrame(frame);
-         JSROOT.cleanup(frame);
-      }
+      var frame = this.hpainter.GetDisplay().FindFrame("dabc_drawing");
+      if (frame) this.hpainter.GetDisplay().CleanupFrame(frame);
    }
    
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
-      if (!this.mdi) return;
-      
       var items = null, opt = "";
 
       if (itemname.indexOf("__inp__")==0) {
@@ -488,7 +482,7 @@
          items = this.BuilderItems;
       } else {
          itemname = itemname.substr(1);
-         opt = "frameid:bnet_drawing";
+         opt = "frameid:dabc_drawing";
       }
       
       if (items !== null) {
@@ -499,7 +493,7 @@
          for (var k=0;k<items.length;++k) {
             itemname += (k>0 ? "," : "[") + items[k].substr(1) + subitem;
             opt += (k>0 ? "," : "[") + "plc";
-            if (k==0) opt += "frameid:bnet_drawing";
+            if (k==0) opt += "frameid:dabc_drawing";
          }
          
          itemname += ",$legend]";
@@ -507,9 +501,7 @@
       } 
       
       this.ClearDisplay();
-      var frame = this.mdi.FindFrame("bnet_drawing", true);
-      if (frame) 
-         this.hpainter.displayAll([itemname], [opt]);         
+      this.hpainter.displayAll([itemname], [opt]);         
    }
    
    DABC.BnetPainter.prototype.DisplayCalItem = function(hubid, itemname) {
@@ -683,8 +675,8 @@
    }
    
    DABC.BnetControl = function(hpainter, itemname) {
-      hpainter.CreateCustomDisplay(itemname, "vert2", function(mdi) {
-         var painter = new DABC.BnetPainter(hpainter, mdi, itemname);
+      hpainter.CreateCustomDisplay(itemname, "vert2", function() {
+         var painter = new DABC.BnetPainter(hpainter, itemname);
          if (painter.active()) {
             painter.RefreshHTML();
             painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
