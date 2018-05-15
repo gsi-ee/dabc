@@ -451,10 +451,10 @@ namespace dabc {
           * Method is called from the thread where parameter is changing - it could be not a worker thread.
           * Means one should use protected by the mutex worker fields.
           * If monitoring field for parameter is specified, ParameterEvent will be to the worker thread */
-         void WorkerParameterChanged(bool forcecall, ParameterContainer* par, const std::string &value);
+         void WorkerParameterChanged(bool forcecall, ParameterContainer *par, const std::string &value);
 
          /** Method to process parameter recording in worker thread */
-         void ProcessParameterRecording(ParameterContainer* par);
+         void ProcessParameterRecording(ParameterContainer *par);
    };
 
    // __________________________________________________________________________

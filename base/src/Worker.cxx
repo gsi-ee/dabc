@@ -606,8 +606,10 @@ bool dabc::Worker::Find(ConfigIO &cfg)
    return false;
 }
 
-void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer* par, const std::string &value)
+void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer *par, const std::string &value)
 {
+   if (par->IsName("EventsRate")) DOUT0("WorkerParameterChanged - EventsRate");
+
    if (force_call || IsOwnThread()) {
 
       unsigned mask = par->ConfirmFromWorker();
@@ -624,7 +626,7 @@ void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer* p
    }
 }
 
-void dabc::Worker::ProcessParameterRecording(ParameterContainer* par)
+void dabc::Worker::ProcessParameterRecording(ParameterContainer *par)
 {
    if (fWorkerHierarchy.null()) return;
 
@@ -635,7 +637,6 @@ void dabc::Worker::ProcessParameterRecording(ParameterContainer* par)
    if (!chld.null()) par->BuildFieldsMap(&chld()->Fields());
    fWorkerHierarchy.MarkChangedItems();
 }
-
 
 int dabc::Worker::PreviewCommand(Command cmd)
 {
@@ -740,6 +741,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
       unsigned hlimit(0);
       uint64_t version(0);
       int compact(0);
+      bool with_childs(false);
 
       if (url.HasOption("history")) {
          int hist = url.GetOptionInt("history", 0);
@@ -751,7 +753,8 @@ int dabc::Worker::PreviewCommand(Command cmd)
       }
       if (url.HasOption("compact"))
          compact = url.GetOptionInt("compact", 3);
-
+      if (url.HasOption("childs"))
+         with_childs = true;
 
       LockGuard lock(h.GetHMutex());
 
@@ -760,7 +763,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
       if (binkind=="hierarchy") {
          if (sub.null()) return cmd_ignore;
          // we record only fields, everything else is ignored - even name of entry is not stored
-         Buffer raw = sub.SaveToBuffer(dabc::stream_Value, version, hlimit);
+         Buffer raw = sub.SaveToBuffer(with_childs ? dabc::stream_Full : dabc::stream_Value, version, hlimit);
          if (raw.null()) return cmd_ignore;
 
          cmd.SetRawData(raw);

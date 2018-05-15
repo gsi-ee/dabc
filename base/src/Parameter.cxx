@@ -74,6 +74,7 @@ bool dabc::ParameterContainer::IsDeliverAllEvents() const
    return fDeliverAllEvents;
 }
 
+
 std::string dabc::ParameterContainer::DefaultFiledName() const
 {
    return xmlValueAttr;
@@ -92,9 +93,8 @@ dabc::RecordField dabc::ParameterContainer::GetField(const std::string &name) co
 }
 
 
-bool dabc::ParameterContainer::SetField(const std::string &_name, const RecordField& value)
+bool dabc::ParameterContainer::SetField(const std::string &_name, const RecordField &value)
 {
-
    bool res(false), fire(false), doworker(false);
    double ratevalue(0.);
    std::string svalue;
@@ -311,9 +311,13 @@ const std::string &dabc::ParameterContainer::Kind() const
    return fKind;
 }
 
-void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
+void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap *cont)
 {
+
    LockGuard lock(ObjectMutex());
+
+   if (IsName("Inputs")) DOUT0("COPY FIELDS FROM INPUTS %s", Fields().Field("nodes").AsStr().c_str());
+
 
    bool force_value_modified = false;
 
@@ -321,12 +325,10 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
    if (fStatistic == ParameterContainer::kindRate) {
       cont->Field(dabc::prop_kind).SetStr("rate");
       force_value_modified = true;
-   } else
-   if (fKind == "cmddef") {
+   } else if (fKind == "cmddef") {
       cont->Field(dabc::prop_kind).SetStr("DABC.Command");
       cont->Field("_parcmddef").SetBool(true);
-   } else
-   if (fKind == "info") {
+   } else if (fKind == "info") {
       cont->Field(dabc::prop_kind).SetStr("log");
    }
 
@@ -338,7 +340,6 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap* cont)
 }
 
 // --------------------------------------------------------------------------------
-
 
 bool dabc::Parameter::NeedTimeout()
 {
@@ -492,7 +493,7 @@ bool dabc::Parameter::IsAverage() const
 }
 
 
-dabc::Parameter& dabc::Parameter::SetSynchron(bool on, double interval, bool everyevnt)
+dabc::Parameter &dabc::Parameter::SetSynchron(bool on, double interval, bool everyevnt)
 {
    if (GetObject()!=0)
       GetObject()->SetSynchron(on, interval, everyevnt);
@@ -507,6 +508,7 @@ dabc::Reference dabc::Parameter::GetWorker() const
 {
    return GetObject() ? GetObject()->GetWorker() : 0;
 }
+
 
 int dabc::Parameter::ExecuteChange(Command cmd)
 {

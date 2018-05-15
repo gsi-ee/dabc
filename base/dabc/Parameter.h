@@ -222,42 +222,42 @@ namespace dabc {
          Reference GetWorker() const;
 
          /** Indicate if parameter is should generate events synchron with code which modified it*/
-         Parameter& SetSynchron(bool on, double interval = 1., bool everyevnt = false);
+         Parameter &SetSynchron(bool on, double interval = 1., bool everyevnt = false);
 
          /** Converts parameter in ratemeter - all values will be summed up and divided on specified interval.
           * Result value will have units/second dimension */
-         Parameter& SetRatemeter(bool synchron = false, double interval = 1.0);
+         Parameter &SetRatemeter(bool synchron = false, double interval = 1.0);
 
          /** Returns true if rate measurement is activated */
          bool IsRatemeter() const;
 
          /** Disable ratemeter functionality */
-         Parameter& DisableRatemeter();
+         Parameter &DisableRatemeter();
 
          /** Converts parameter in statistic variable.
           * All values will be summed up and average over interval will be calculated.
           * Result will have units of original variable */
-         Parameter& SetAverage(bool synchron = false, double interval = 1.0);
+         Parameter &SetAverage(bool synchron = false, double interval = 1.0);
 
          /** Disables averaging  functionality */
-         Parameter& DisableAverage();
+         Parameter &DisableAverage();
 
          /** Returns true if average calculation is active */
          bool IsAverage() const;
 
          /** Specify if parameter event should be delivered to the worker */
-         Parameter& SetMonitored(bool on = true);
+         Parameter &SetMonitored(bool on = true);
 
          /** Enable/disable debug output when parameter value is changed */
-         Parameter& SetDebugOutput(bool on = true, int level = 1) { return SetDebugLevel(on ? level : -1); }
-         Parameter& SetDebugLevel(int level = 1) { SetField("debug", level); return *this; }
+         Parameter &SetDebugOutput(bool on = true, int level = 1) { return SetDebugLevel(on ? level : -1); }
+         Parameter &SetDebugLevel(int level = 1) { SetField("debug", level); return *this; }
          int GetDebugLevel() const;
 
          /** Set parameter to convert double values to the string - used for ratemeter */
-         Parameter& SetWidthPrecision(unsigned width, unsigned prec);
+         Parameter &SetWidthPrecision(unsigned width, unsigned prec);
 
          /** Set units field of parameter */
-         Parameter& SetUnits(const std::string &unit) { SetField("units", unit); return *this; }
+         Parameter &SetUnits(const std::string &unit) { SetField("units", unit); return *this; }
 
          /** Return units of parameter value */
          const std::string GetUnits() const { return GetField("units").AsStr(); }
