@@ -31,7 +31,7 @@
          if (pos<0) continue;
          if (src.indexOf("JSRootCore.")>0) continue;
          
-         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos));
+         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos) + ", ver. " + DABC.version);
          return src.substr(0, pos);
       }
       return "";
@@ -375,6 +375,7 @@
               "<button class='bnet_stoprun'>Stop run</button>" +
               "<button class='bnet_totalrate'>0.0 MB/s</button>" +
               "<button class='bnet_totalevents'>0.0 Ev/s</button>" +
+              "<button class='bnet_clear'>Clr</button>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -452,6 +453,16 @@
          DABC.InvokeCommand(itemname+"/StopRun");
       });
       
+      jnode.find(".bnet_totalrate").button().click(function() {
+         painter.DisplayItem("/" + itemname+"/DataRate");
+      });
+      
+      jnode.find(".bnet_totalevents").button().click(function() {
+         painter.DisplayItem("/" + itemname+"/EventsRate");
+      });
+
+      jnode.find(".bnet_clear").button().click(this.ClearDisplay.bind(this));
+
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
@@ -612,12 +623,14 @@
       this.mainreq = null;
       if (!res) return;
 
-      var inp = null, bld = null, state = null, ninp = [], nbld = [],  changed = false;
+      var inp = null, bld = null, state = null, drate = null, erate = null, ninp = [], nbld = [],  changed = false;
       for (var k in res._childs) {
          var elem = res._childs[k];
          if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
          if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
-         if (elem._name == "State") { state = elem.value }
+         if (elem._name == "State") { state = elem.value } else
+         if (elem._name == "DataRate") { drate = elem.value } else
+         if (elem._name == "EventsRate") { erate = elem.value } 
       }
       
       if (state !== null) {
@@ -630,6 +643,12 @@
          $(this.frame).find(".bnet_startrun").css('background-color',col);
       }
       
+      if (drate !== null)
+         $(this.frame).find(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").css('background-color', (drate>0) ? "lightgreen" : "yellow");
+
+      if (erate !== null)
+         $(this.frame).find(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").css('background-color', (erate>0) ? "lightgreen" : "yellow");
+
       if (!DABC.CompareArrays(this.InputItems,inp)) {
          this.InputItems = inp;
          this.InputNodes = ninp;
