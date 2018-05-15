@@ -608,8 +608,6 @@ bool dabc::Worker::Find(ConfigIO &cfg)
 
 void dabc::Worker::WorkerParameterChanged(bool force_call, ParameterContainer *par, const std::string &value)
 {
-   if (par->IsName("EventsRate")) DOUT0("WorkerParameterChanged - EventsRate");
-
    if (force_call || IsOwnThread()) {
 
       unsigned mask = par->ConfirmFromWorker();
@@ -1089,11 +1087,7 @@ bool dabc::Worker::PublishPars(const std::string &path)
 
       chld = fWorkerHierarchy.CreateHChild(par.GetName());
 
-      if (par.IsRatemeter()) {
-         chld.EnableHistory(100);
-         par()->fRecorded = true;
-      } else
-      if (par.Kind() == "info") {
+      if (par.IsRatemeter() || (par.Kind() == "info") || par.GetField("#record").AsBool()) {
          chld.EnableHistory(100);
          par()->fRecorded = true;
       }

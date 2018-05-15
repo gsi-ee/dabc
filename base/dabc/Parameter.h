@@ -273,6 +273,8 @@ namespace dabc {
 
          Parameter& SetLimits(double low, double up) { SetLowerLimit(low); SetUpperLimit(up); return *this; }
 
+         Parameter &SetFld(const std::string &name, const RecordField &v) { SetField(name, v); return *this; }
+
          const std::string Kind() const;
 
          /** Can be called by user to signal framework that parameter was modified.

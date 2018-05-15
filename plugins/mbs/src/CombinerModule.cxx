@@ -86,14 +86,9 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
    CreatePar(fFileStateName).Dflt(false);
 
-   PublishPars (dabc::format("$CONTEXT$/%sCombinerModule",ratesprefix.c_str()));
+   PublishPars(dabc::format("$CONTEXT$/%sCombinerModule",ratesprefix.c_str()));
 
    SetInfo(dabc::format("MBS combiner module ready. Mode: full events only:%d, subids check:%d flush:%3.1f" ,fBuildCompleteEvents,fCheckSubIds,flushtmout), true);
-
-
-
-
-
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -709,28 +704,18 @@ unsigned int mbs::CombinerModule::GetOverflowEventNumber() const
    return 0xffffffff;
 }
 
-
 // JAM2016 - adopted from pexorplugin readout module
 void  mbs::CombinerModule::ChangeFileState(bool on)
 {
-  dabc::Parameter par=Par (fFileStateName);
-  par.SetValue (on);
+  dabc::Parameter par = Par(fFileStateName);
+  par.SetValue(on);
   dabc::Hierarchy chld = fWorkerHierarchy.FindChild(fFileStateName.c_str());
-  if (!chld.null())
-  {
-       par.ScanParamFields(&chld()->Fields());
-       fWorkerHierarchy.MarkChangedItems();
-       DOUT0("ChangeFileState to %d", on);
-  }
-  else
-  {
+  if (!chld.null()) {
+      par.ScanParamFields(&chld()->Fields());
+      fWorkerHierarchy.MarkChangedItems();
+  } else {
       DOUT0("ChangeFileState Could not find parameter %s", fFileStateName.c_str());
   }
-
-
-
-
-
 }
 
 

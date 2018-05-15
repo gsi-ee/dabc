@@ -514,7 +514,7 @@ namespace dabc {
       RecordField* GetFieldPtr(const std::string &name) const
         { return HasField(name) ?  &(GetObject()->Fields().Field(name)) : 0; }
 
-      bool SetField(const std::string &name, const RecordField& v)
+      bool SetField(const std::string &name, const RecordField &v)
         { return null() ? false : GetObject()->SetField(name, v); }
 
       bool SetFieldModified(const std::string &name, bool on = true)
