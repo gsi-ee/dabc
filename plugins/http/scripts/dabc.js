@@ -16,7 +16,7 @@
 
    DABC = {};
 
-   DABC.version = "2.9.1";
+   DABC.version = "2.9.9";
    
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -373,6 +373,8 @@
               "<option>cosmic</option>" +
               "</select>" +
               "<button class='bnet_stoprun'>Stop run</button>" +
+              "<button class='bnet_totalrate'>0.0 MB/s</button>" +
+              "<button class='bnet_totalevents'>0.0 Ev/s</button>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -440,12 +442,13 @@
       
       var itemname = this.itemname;
       
-      $(main.node()).find(".bnet_selectrun").selectmenu({ width: 150 } );
+      var jnode = $(main.node()); 
       
-      $(main.node()).find(".bnet_startrun").button().click(function() {
+      jnode.find(".bnet_startrun").button().click(function() {
          DABC.InvokeCommand(itemname+"/StartRun", "prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
       });
-      $(main.node()).find(".bnet_stoprun").button().click(function() { 
+      jnode.find(".bnet_selectrun").selectmenu({ width: 150 } );
+      jnode.find(".bnet_stoprun").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
       });
       

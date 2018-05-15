@@ -1,6 +1,6 @@
 --------------------------------------------------------------
           The Data Acquisition Backbone Core 
-         DABC Release v2.9.1 (18-November-2015)
+         DABC Release v2.9.9 (15-May-2018)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 

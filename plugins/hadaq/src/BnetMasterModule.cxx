@@ -184,7 +184,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
          SetParValue("State", fCtrlStateName);
 
-         DOUT0("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+         DOUT3("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
          Par("DataRate").SetValue(fCtrlData);
          Par("EventsRate").SetValue(fCtrlEvents);
