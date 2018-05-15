@@ -54,6 +54,9 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("value", "");
    item.SetField("_hidden", "true");
 
+   CreatePar("DataRate").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
+   CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
+
    if (fControl) {
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run");
       CreateCmdDef("StopRun");
@@ -104,18 +107,20 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlSzLimit = false;
       fCtrlState = 0;
       fCtrlStateName = "";
+      fCtrlData = 0.;
+      fCtrlEvents = 0.;
 
       dabc::WorkerRef publ = GetPublisher();
 
       for (unsigned n=0;n<bbuild.size();++n) {
-         dabc::CmdGetBinary subcmd(bbuild[n], "hierarchy","");
+         dabc::CmdGetBinary subcmd(bbuild[n], "hierarchy", "childs");
          subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
          publ.Submit(Assign(subcmd));
          fCtrlCnt++;
       }
 
       for (unsigned n=0;n<binp.size();++n) {
-         dabc::CmdGetBinary subcmd(binp[n], "hierarchy", "");
+         dabc::CmdGetBinary subcmd(binp[n], "hierarchy", "childs");
          subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
          publ.Submit(Assign(subcmd));
          fCtrlCnt++;
@@ -145,10 +150,19 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
       dabc::Iterator iter(h);
 
+      bool is_builder = false;
+
+
       while (iter.next()) {
          dabc::Hierarchy item = iter.ref();
-         if (!item.HasField("_bnet")) continue;
+         if (!item.HasField("_bnet")) {
+            if (item.IsName("HadaqData") && is_builder) fCtrlData += item.GetField("value").AsDouble(); else
+            if (item.IsName("HadaqEvents") && is_builder) fCtrlEvents += item.GetField("value").AsDouble();
+            continue;
+         }
          // normally only that item should be used
+
+         if (item.GetField("_bnet").AsStr() == "receiver") is_builder = true;
 
          std::string state = item.GetField("state").AsStr();
 
@@ -170,8 +184,11 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if (fCtrlCnt==0) {
          if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
-         fWorkerHierarchy.GetHChild("State").SetField("value", fCtrlStateName);
+         Par("State").SetField("value", fCtrlStateName);
          DOUT2("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+
+         Par("DataRate").SetValue(fCtrlData);
+         Par("EventsRate").SetValue(fCtrlEvents);
 
          if (fControl && fCtrlSzLimit && fCurrentFileCmd.null()) {
             // this is a place, where new run automatically started
@@ -208,7 +225,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("StartRun") || cmd.IsName("StopRun")) {
       if (!fCurrentFileCmd.null()) fCurrentFileCmd.Reply(dabc::cmd_false);
 
-      std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").Field("value").AsStrVect();
+      std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
       if (builders.size() == 0) return dabc::cmd_true;
 
       dabc::WorkerRef publ = GetPublisher();

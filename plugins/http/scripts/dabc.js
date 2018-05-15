@@ -362,38 +362,19 @@
    
    DABC.BnetPainter.prototype.RefreshHTML = function() {
       
-      console.log('DOING RefreshHTML');
-      
       var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
-      
-      html += "<fieldset style='margin:5px'>" +
-              "<legend>Input nodes</legend>" +
-              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
-      html += "<div style='float:left' class='bnet_inputs_header'>"
-      html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
-              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
-              this.MakeLabel("class='bnet_trb_clear'", "HUBs", 40);    
-      html += "</pre>";
-      html += "</div>";
-      for (var node in this.InputItems) {
-         html += "<div style='float:left' class='bnet_input" + node + "'>";
-         html += "<pre style='margin:0'>";
-         html += "<label>" + this.InputItems[node] + "</label>";
-         html += "</pre>";
-         html += "</div>";
-      }
 
-      html += "</div>" +
+      html += "<fieldset style='margin:5px'>" +
+              "<legend class='bnet_state'>Run control</legend>" +
+              "<button class='bnet_startrun'>Start run</button>" +
+              "<select class='bnet_selectrun'>" + 
+              "<option>data</option>" +
+              "<option>test</option>" +
+              "<option>cosmic</option>" +
+              "</select>" +
+              "<button class='bnet_stoprun'>Stop run</button>" +
               "</fieldset>";
-      
-      html += "<fieldset class='bnet_trb_info' style='margin:5px;display:none'>" +
-              "<legend>Calibration</legend>" +
-              "<div class='bnet_hub_info'></div>" +
-              "<div class='bnet_tdc_calibr'></div>" +
-              "</fieldset>";
-      
+
       html += "<fieldset style='margin:5px'>" +
               "<legend>Builder nodes</legend>" +
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
@@ -413,21 +394,36 @@
          html += "</pre>";
          html += "</div>";
       }
-
       html += "</div>" +
               "</fieldset>";
-
+      
       html += "<fieldset style='margin:5px'>" +
-              "<legend class='bnet_state'>Run control</legend>" +
-              "<button class='bnet_startrun'>Start run</button>" +
-              "<select class='bnet_selectrun'>" + 
-              "<option>data</option>" +
-              "<option>test</option>" +
-              "<option>cosmic</option>" +
-              "</select>" +
-              "<button class='bnet_stoprun'>Stop run</button>" +
+              "<legend>Input nodes</legend>" +
+              "<div style='display:flex;flex-direction:column;font-family:monospace'>";
+      html += "<div style='float:left' class='bnet_inputs_header'>"
+      html += "<pre style='margin:0'>";
+      html += this.MakeLabel("class='bnet_item_clear'", "Node", 15) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
+              this.MakeLabel("class='bnet_item_label' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
+              this.MakeLabel("class='bnet_trb_clear'", "HUBs", 40);    
+      html += "</pre>";
+      html += "</div>";
+      for (var node in this.InputItems) {
+         html += "<div style='float:left' class='bnet_input" + node + "'>";
+         html += "<pre style='margin:0'>";
+         html += "<label>" + this.InputItems[node] + "</label>";
+         html += "</pre>";
+         html += "</div>";
+      }
+      html += "</div>" +
               "</fieldset>";
       
+      html += "<fieldset class='bnet_trb_info' style='margin:5px;display:none'>" +
+              "<legend>Calibration</legend>" +
+              "<div class='bnet_hub_info'></div>" +
+              "<div class='bnet_tdc_calibr'></div>" +
+              "</fieldset>";
+
       html += "</div>";
       
       var main = d3.select(this.frame).html(html);
@@ -463,32 +459,6 @@
          this.mdi.CleanupFrame(frame);
          JSROOT.cleanup(frame);
       }
-   }
-   
-   DABC.BnetPainter.prototype.ProcessGetItem = function(items, arr, resitem, resobj) {
-      if (resobj) { 
-         if (resobj!==true) {
-            resobj.fName = items.shift();
-            arr.push(resobj);
-         }
-      } else {
-         // fail to produce result object
-         return false;
-      }
-      
-      if (items.length>0)
-         return this.hpainter.get(items[0], this.ProcessGetItem.bind(this, items, arr));
-      
-      var mgraph = JSROOT.Create("TMultiGraph");
-      
-      for(var i=0; i<arr.length; ++i)
-          mgraph.fGraphs.Add(arr[i], "");
-
-      this.ClearDisplay();
-      var frame = this.mdi.FindFrame("bnet_drawing", true);
-      
-      if (frame) 
-         JSROOT.draw(d3.select(frame).attr('id'), mgraph, "plc");
    }
    
    DABC.BnetPainter.prototype.DisplayItem = function(itemname) {
@@ -557,7 +527,7 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 15);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 15);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
@@ -565,7 +535,7 @@
          var col = "red";
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 15);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 15);
          itemname = this.InputItems[indx];
       }
       

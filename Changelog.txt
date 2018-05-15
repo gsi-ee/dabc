@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+15.05.2018
+1. Let configure parameter as recorded - all value changes will be automatically recorded.
+   Before only ratemeter and info parameter were working this way
+
+
 11.05.2018
 1. Provide dummy mode for hld file output. It is created, but not writes any files.
    Required to dynamically stop/start preconfigured HLD outputs from BNet master  
