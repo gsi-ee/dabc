@@ -495,8 +495,10 @@
       if (JSROOT.GetUrlOption("notouch", url)!==null) JSROOT.touches = false;
       if (JSROOT.GetUrlOption("adjframe", url)!==null) JSROOT.gStyle.CanAdjustFrame = true;
 
-      JSROOT.gStyle.fOptStat = JSROOT.GetUrlOption("optstat", url, JSROOT.gStyle.fOptStat);
-      JSROOT.gStyle.fOptFit = JSROOT.GetUrlOption("optfit", url, JSROOT.gStyle.fOptFit);
+      var optstat = JSROOT.GetUrlOption("optstat", url);
+      if (optstat!==null) JSROOT.gStyle.fOptStat = parseInt(optstat);
+      var optfit = JSROOT.GetUrlOption("optfit", url);
+      if (optfit!==null) JSROOT.gStyle.fOptFit = parseInt(optfit);
       JSROOT.gStyle.fStatFormat = JSROOT.GetUrlOption("statfmt", url, JSROOT.gStyle.fStatFormat);
       JSROOT.gStyle.fFitFormat = JSROOT.GetUrlOption("fitfmt", url, JSROOT.gStyle.fFitFormat);
 
@@ -506,8 +508,9 @@
          if (toolbar.indexOf('popup')>=0) val = 'popup';
          if (toolbar.indexOf('left')>=0) { JSROOT.gStyle.ToolBarSide = 'left'; val = 'popup'; }
          if (toolbar.indexOf('right')>=0) { JSROOT.gStyle.ToolBarSide = 'right'; val = 'popup'; }
+         if (toolbar.indexOf('vert')>=0) { JSROOT.gStyle.ToolBarVert = true; val = 'popup'; }
          if (toolbar.indexOf('show')>=0) val = true;
-         JSROOT.gStyle.ToolBar = val || ((toolbar.indexOf("0")<0) && (toolbar.indexOf("false")<0));
+         JSROOT.gStyle.ToolBar = val || ((toolbar.indexOf("0")<0) && (toolbar.indexOf("false")<0) && (toolbar.indexOf("off")<0));
       }
 
       var palette = JSROOT.GetUrlOption("palette", url);
@@ -5705,8 +5708,7 @@
 
    /** @summary Scan streamer infos for derived classes
     * @desc Assign draw functions for such derived classes
-    * @private
-    */
+    * @private */
    JSROOT.addStreamerInfos = function(lst) {
       if (!lst) return;
 

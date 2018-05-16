@@ -96,7 +96,7 @@
 
    "use strict";
 
-   JSROOT.version = "dev 11/05/2018";
+   JSROOT.version = "dev 16/05/2018";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -154,6 +154,7 @@
          DragAndDrop : true,  // enables drag and drop functionality
          ToolBar : 'popup',  // show additional tool buttons on the canvas, false - disabled, true - enabled, 'popup' - only toggle button
          ToolBarSide : 'left', // 'left' left-bottom corner on canvas, 'right' - right-bottom corner on canvas, opposite on sub-pads
+         ToolBarVert : false,  // display tool bar vertical (default false)
          CanEnlarge : true,  // if drawing inside particular div can be enlarged on full window
          CanAdjustFrame : false,  // if frame position can be adjusted to let show axis or colz labels
          ApproxTextSize : false,  // calculation of text size consumes time and can be skipped to improve performance (but with side effects on text adjustments)
@@ -1435,13 +1436,13 @@
                                  fBits2: 0, fTimeDisplay: false, fTimeFormat: "", fLabels: null });
             break;
          case 'TAttLine':
-            JSROOT.extend(obj, { fLineColor: 1, fLineStyle : 1, fLineWidth : 1 });
+            JSROOT.extend(obj, { fLineColor: 1, fLineStyle: 1, fLineWidth: 1 });
             break;
          case 'TAttFill':
-            JSROOT.extend(obj, { fFillColor: 0, fFillStyle : 0 } );
+            JSROOT.extend(obj, { fFillColor: 0, fFillStyle: 0 } );
             break;
          case 'TAttMarker':
-            JSROOT.extend(obj, { fMarkerColor: 1, fMarkerStyle : 1, fMarkerSize : 1. });
+            JSROOT.extend(obj, { fMarkerColor: 1, fMarkerStyle: 1, fMarkerSize: 1. });
             break;
          case 'TLine':
             JSROOT.Create("TObject", obj);

@@ -796,7 +796,7 @@
 
    function TGraphPainter(graph) {
       JSROOT.TObjectPainter.call(this, graph);
-      this.ownhisto = false; // indicate if graph histogram was drawn for axes
+      this.axes_draw = false; // indicate if graph histogram was drawn for axes
       this.bins = null;
       this.xmin = this.ymin = this.xmax = this.ymax = 0;
       this.wheel_zoomy = true;
@@ -934,7 +934,7 @@
    }
 
    TGraphPainter.prototype.CreateHistogram = function() {
-      // bins should be created
+      // bins should be created when calling this function
 
       var xmin = this.xmin, xmax = this.xmax, ymin = this.ymin, ymax = this.ymax;
 
@@ -1053,27 +1053,19 @@
           w = this.frame_width(),
           h = this.frame_height(),
           graph = this.GetObject(),
-          excl_width = 0;
+          excl_width = 0,
+          pp = this.pad_painter();
 
       if (!pmain) return;
 
       this.CreateG(!pmain.pad_layer);
 
-      if (this.options._pfc || this.options._plc || this.options._pmc) {
-         if (!this.pallette && JSROOT.Painter.GetColorPalette)
-            this.palette = JSROOT.Painter.GetColorPalette();
+      if (pp && (this.options._pfc || this.options._plc || this.options._pmc)) {
+         var icolor = pp.CreateAutoColor(this);
 
-         var pp = this.pad_painter();
-         if (this.palette && pp) {
-            var indx = pp.GetCurrentPrimitiveIndx(), num = pp.GetNumPrimitives();
-
-            var color = this.palette.calcColor(indx, num);
-            var icolor = this.add_color(color);
-
-            if (this.options._pfc) { graph.fFillColor = icolor; delete this.fillatt; }
-            if (this.options._plc) { graph.fLineColor = icolor; delete this.lineatt; }
-            if (this.options._pmc) { graph.fMarkerColor = icolor; delete this.markeratt; }
-         }
+         if (this.options._pfc) { graph.fFillColor = icolor; delete this.fillatt; }
+         if (this.options._plc) { graph.fLineColor = icolor; delete this.lineatt; }
+         if (this.options._pmc) { graph.fMarkerColor = icolor; delete this.markeratt; }
 
          this.options._pfc = this.options._plc = this.options._pmc = false;
       }
@@ -1775,9 +1767,9 @@
       this.CreateBins();
 
       // if our own histogram was used as axis drawing, we need update histogram  as well
-      if (this.ownhisto) {
+      if (this.axes_draw) {
          var main = this.main_painter();
-         if (obj.fHistogram) main.UpdateObject(obj.fHistogram);
+         main.UpdateObject(obj.fHistogram || this.CreateHistogram());
          main.GetObject().fTitle = graph.fTitle; // copy title
       }
 
@@ -1817,7 +1809,7 @@
             var func = gr.fFunctions.arr[i];
             if ((func._typename == 'TF1') || (func._typename == 'TF2')) return func;
          }
-      return func;
+      return null;
    }
 
    TGraphPainter.prototype.FindStat = function() {
@@ -1906,7 +1898,7 @@
    }
 
    TGraphPainter.prototype.PerformDrawing = function(divid, hpainter) {
-      if (hpainter) this.ownhisto = true;
+      if (hpainter) this.axes_draw = true;
       this.SetDivId(divid);
       this.DrawBins();
       this.DrawNextFunction(0, this.DrawingReady.bind(this));
@@ -3093,9 +3085,10 @@
    TMultiGraphPainter.prototype.ScanGraphsRange = function(graphs, histo, pad) {
       var mgraph = this.GetObject(),
           maximum, minimum, dx, dy, uxmin = 0, uxmax = 0, logx = false, logy = false,
+          time_display = false, time_format = "",
           rw = {  xmin: 0, xmax: 0, ymin: 0, ymax: 0, first: true };
 
-      if (pad!=null) {
+      if (pad) {
          logx = pad.fLogx;
          logy = pad.fLogy;
          rw.xmin = pad.fUxmin;
@@ -3104,10 +3097,10 @@
          rw.ymax = pad.fUymax;
          rw.first = false;
       }
-      if (histo!=null) {
+      if (histo) {
          minimum = histo.fYaxis.fXmin;
          maximum = histo.fYaxis.fXmax;
-         if (pad!=null) {
+         if (pad) {
             uxmin = this.padtoX(pad, rw.xmin);
             uxmax = this.padtoX(pad, rw.xmax);
          }
@@ -3116,6 +3109,11 @@
 
          for (var i = 0; i < graphs.arr.length; ++i)
             this.ComputeGraphRange(rw, graphs.arr[i]);
+
+         if (graphs.arr[0] && graphs.arr[0].fHistogram && graphs.arr[0].fHistogram.fXaxis.fTimeDisplay) {
+            time_display = true;
+            time_format = graphs.arr[0].fHistogram.fXaxis.fTimeFormat;
+         }
 
          if (rw.xmin == rw.xmax) rw.xmax += 1.;
          if (rw.ymin == rw.ymax) rw.ymax += 1.;
@@ -3160,7 +3158,8 @@
          histo.fTitle = mgraph.fTitle;
          histo.fXaxis.fXmin = uxmin;
          histo.fXaxis.fXmax = uxmax;
-
+         histo.fXaxis.fTimeDisplay = time_display;
+         if (time_display) histo.fXaxis.fTimeFormat = time_format;
      }
 
       histo.fYaxis.fXmin = minimum;

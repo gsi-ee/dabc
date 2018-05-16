@@ -7,6 +7,11 @@
 3. Support TTree drawing into TGraph (#153), thanks @cozzyd
 4. Let configure "&toolbar=right" in URL to change position of tool buttons
 5. Let configure "&divsize=500x400" in URL of size of main div element (default - full browser)  
+6. Implement "optstat1001" and "optfit101" draw options for histograms
+7. Remove "autocol" options - standard "plc" should be used instead
+8. Provide drawing of artificial "$legend" item - it creates TLegend for all primitives in pad
+   Can be used when several histograms or several graphs superimposed.
+9. Let configure "&toolbar=vert" in URL to change orientation of tool buttons
 
 
 ## Changes in 5.4.0

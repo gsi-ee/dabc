@@ -1556,6 +1556,56 @@
       return painter.DrawingReady();
    }
 
+   /** @summary Produce and draw TLegend object for the specified divid
+    * @desc Should be called when all other objects are painted
+    * Invoked when item "$legend" specified in JSROOT URL string
+    * @private */
+   function produceLegend(divid, opt) {
+      var main_painter = JSROOT.GetMainPainter(divid);
+      if (!main_painter) return;
+
+      var pp = main_painter.pad_painter(),
+          pad = main_painter.root_pad();
+      if (!pp || !pad) return;
+
+      var leg = JSROOT.Create("TLegend");
+
+      for (var k=0;k<pp.painters.length;++k) {
+         var painter = pp.painters[k],
+             obj = painter.GetObject();
+
+         if (!obj) continue;
+
+         var entry = JSROOT.Create("TLegendEntry");
+         entry.fObject = obj;
+         entry.fLabel = (opt == "all") ? obj.fName : painter.GetItemName();
+         entry.fOption = "";
+         if (!entry.fLabel) continue;
+
+         if (painter.lineatt && painter.lineatt.used) entry.fOption+="l";
+         if (painter.fillatt && painter.fillatt.used) entry.fOption+="f";
+         if (painter.markeratt && painter.markeratt.used) entry.fOption+="m";
+         if (!entry.fOption) entry.fOption = "l";
+
+         leg.fPrimitives.Add(entry);
+      }
+
+      // no entries - no need to draw legend
+      var szx = 0.4, szy = leg.fPrimitives.arr.length;
+      if (!szy) return;
+      if (szy>8) szy = 8;
+      szy *= 0.1;
+
+      JSROOT.extend(leg, {
+         fX1NDC: szx*pad.fLeftMargin + (1-szx)*(1-pad.fRightMargin),
+         fY1NDC: (1-szy)*(1-pad.fTopMargin) + szy*pad.fBottomMargin,
+         fX2NDC: 0.99-pad.fRightMargin,
+         fY2NDC: 0.99-pad.fTopMargin
+      });
+      leg.fFillStyle = 1001;
+
+      return drawPave(divid, leg);
+   }
 
    // ==============================================================================
 
@@ -1575,7 +1625,7 @@
               Spec: false, Pie: false, List: false, Zscale: false, Candle: "",
               GLBox: 0, GLColor: false, Project: "",
               System: JSROOT.Painter.Coord.kCARTESIAN,
-              AutoColor: 0, NoStat: false, ForceStat: false, AutoZoom: false,
+              AutoColor: false, NoStat: false, ForceStat: false, AutoZoom: false,
               HighRes: 0, Zero: true, Palette: 0, BaseLine: false,
               Optimize: JSROOT.gStyle.OptimizeDraw, Mode3D: false,
               FrontBox: true, BackBox: true,
@@ -1601,8 +1651,11 @@
       if (d.check('NOOPTIMIZE')) this.Optimize = 0;
       if (d.check('OPTIMIZE')) this.Optimize = 2;
 
-      if (d.check('AUTOCOL')) this.AutoColor = 1; // color index
+      if (d.check('AUTOCOL')) this.AutoColor = true;
       if (d.check('AUTOZOOM')) this.AutoZoom = true;
+
+      if (d.check('OPTSTAT',true)) this.optstat = d.partAsInt();
+      if (d.check('OPTFIT',true)) this.optfit = d.partAsInt();
 
       if (d.check('NOSTAT')) this.NoStat = true;
       if (d.check('STAT')) this.ForceStat = true;
@@ -1759,7 +1812,7 @@
       if ((hdim==3) && d.check('BB')) this.BackBox = false;
 
       this._pfc = d.check("PFC");
-      this._plc = d.check("PLC");
+      this._plc = d.check("PLC") || this.AutoColor;
       this._pmc = d.check("PMC");
 
       if (d.check('L')) { this.Line = true; this.Hist = false; this.Error = false; }
@@ -1989,14 +2042,6 @@
       }, "objects");
    }
 
-   THistPainter.prototype.GetAutoColor = function(col) {
-      if (this.options.AutoColor<=0) return col;
-
-      var id = this.options.AutoColor;
-      this.options.AutoColor = id % 8 + 1;
-      return JSROOT.Painter.root_colors[id];
-   }
-
    THistPainter.prototype.ScanContent = function(when_axis_changed) {
       // function will be called once new histogram or
       // new histogram content is assigned
@@ -2015,39 +2060,20 @@
 
    THistPainter.prototype.CheckHistDrawAttributes = function() {
 
-      var histo = this.GetHisto();
+      var histo = this.GetHisto(),
+          pp = this.pad_painter();
 
-      if (this.options._pfc || this.options._plc || this.options._pmc) {
-         if (!this.pallette && JSROOT.Painter.GetColorPalette)
-            this.palette = JSROOT.Painter.GetColorPalette();
-
-         var pp = this.pad_painter();
-         if (this.palette && pp) {
-            var indx = pp.GetCurrentPrimitiveIndx(), num = pp.GetNumPrimitives();
-
-            var color = this.palette.calcColor(indx, num);
-            var icolor = this.add_color(color);
-
-            if (this.options._pfc) { histo.fFillColor = icolor; delete this.fillatt; }
-            if (this.options._plc) { histo.fLineColor = icolor; delete this.lineatt; }
-            if (this.options._pmc) { histo.fMarkerColor = icolor; delete this.markeratt; }
-         }
-
+      if (pp && (this.options._pfc || this.options._plc || this.options._pmc)) {
+         var icolor = pp.CreateAutoColor();
+         if (this.options._pfc) { histo.fFillColor = icolor; delete this.fillatt; }
+         if (this.options._plc) { histo.fLineColor = icolor; delete this.lineatt; }
+         if (this.options._pmc) { histo.fMarkerColor = icolor; delete this.markeratt; }
          this.options._pfc = this.options._plc = this.options._pmc = false;
       }
 
       this.createAttFill({ attr: histo, color: this.options.histoFillColor, kind: 1 });
 
       this.createAttLine({ attr: histo, color0: this.options.histoLineColor });
-
-      if (!this.lineatt.changed) {
-         var main = this.main_painter();
-
-         if (main) {
-            var newcol = main.GetAutoColor(this.lineatt.color);
-            if (newcol !== this.lineatt.color) { this.lineatt.color = newcol; this.lineatt.changed = true; }
-         }
-      }
    }
 
    THistPainter.prototype.UpdateObject = function(obj, opt) {
@@ -2112,14 +2138,14 @@
          function CopyAxis(tgt,src) {
             tgt.fTitle = src.fTitle;
             tgt.fLabels = src.fLabels;
+            tgt.fXmin = src.fXmin;
+            tgt.fXmax = src.fXmax;
          }
          CopyAxis(histo.fXaxis, obj.fXaxis);
          CopyAxis(histo.fYaxis, obj.fYaxis);
          CopyAxis(histo.fZaxis, obj.fZaxis);
          if (!fp.zoom_changed_interactive) {
             function CopyZoom(tgt,src) {
-               tgt.fXmin = src.fXmin;
-               tgt.fXmax = src.fXmax;
                tgt.fFirst = src.fFirst;
                tgt.fLast = src.fLast;
                tgt.fBits = src.fBits;
@@ -2442,15 +2468,29 @@
 
       this.create_stats = true;
 
-      var stats = this.FindStat();
-      if (stats) return stats;
+      var stats = this.FindStat(), st = JSROOT.gStyle,
+          optstat = this.options.optstat, optfit = this.options.optfit;
 
-      var st = JSROOT.gStyle;
+      if (optstat !== undefined) {
+         if (stats) stats.fOptStat = optstat;
+         delete this.options.optstat;
+      } else {
+         optstat = this.histo.$custom_stat || st.fOptStat;
+      }
+
+      if (optfit !== undefined) {
+         if (stats) stats.fOptFit = optfit;
+         delete this.options.optfit;
+      } else {
+         optfit = st.fOptFit;
+      }
+
+      if (stats) return stats;
 
       stats = JSROOT.Create('TPaveStats');
       JSROOT.extend(stats, { fName : 'stats',
-                             fOptStat: this.histo.$custom_stat || st.fOptStat,
-                             fOptFit: st.fOptFit,
+                             fOptStat: optstat,
+                             fOptFit: optfit,
                              fBorderSize : 1} );
 
       stats.fX1NDC = st.fStatX - st.fStatW;
@@ -6623,6 +6663,7 @@
    JSROOT.Painter.drawPaveText = drawPave;
 
    JSROOT.Painter.drawPave = drawPave;
+   JSROOT.Painter.produceLegend = produceLegend;
    JSROOT.Painter.drawPaletteAxis = drawPaletteAxis;
    JSROOT.Painter.drawHistogram1D = drawHistogram1D;
    JSROOT.Painter.drawHistogram2D = drawHistogram2D;
