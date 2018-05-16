@@ -68,11 +68,11 @@ namespace dabc {
          SetStr("query", query);
       }
 
-      void AddHeader(const std::string &name, const std::string &value)
+      void AddHeader(const std::string &name, const std::string &value, bool withquotes = true)
       {
          int num = GetInt("NumHdrs");
          SetStr(dabc::format("OptHdrName%d", num), name);
-         SetStr(dabc::format("OptHdrValue%d", num), value);
+         SetStr(dabc::format("OptHdrValue%d", num), withquotes ? std::string("\"") + value + "\"" : value);
          SetInt("NumHdrs", num+1);
       }
 

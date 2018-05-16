@@ -52,6 +52,10 @@ namespace http {
          std::string fJsRootSys;    ///< location of JSROOT code, need to read special files
          int         fDefaultAuth;  ///< 0 - false, 1 - true, -1 - ignored
 
+         std::string fAutoLoad;    ///< _autoload value in h.json
+         std::string fTopTitle;    ///< _toptitle value in h.json
+         std::string fBrowser;     ///< _browser value in h.json
+
          /** Check if relative path below current dir - prevents file access to top directories via http */
          static bool VerifyFilePath(const char* fname);
 
@@ -80,6 +84,8 @@ namespace http {
                           const std::string &absprefix,
                           const std::string &nameprefix = "",
                           const std::string &nameprefixrepl = "");
+
+         virtual const char* ClassName() const { return "HttpServer"; }
 
          static const char* GetMimeType(const char* fname);
    };

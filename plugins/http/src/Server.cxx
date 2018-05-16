@@ -145,6 +145,10 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
    }
 
    DOUT1("HTTPSYS = %s", fHttpSys.c_str());
+
+   fAutoLoad = Cfg("AutoLoad", cmd).AsStr("jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;");
+   fTopTitle = Cfg("TopTitle", cmd).AsStr("DABC online server");
+   fBrowser = Cfg("Browser", cmd).AsStr("");
 }
 
 http::Server::~Server()
@@ -337,9 +341,9 @@ bool http::Server::Process(const char* uri, const char* _query,
 
       dabc::CmdGetNamesList cmd(isxml ? "xml" : "json", pathname, query);
 
-      cmd.AddHeader("_autoload","\"jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;\"");
-      cmd.AddHeader("_toptitle","\"DABC online server\"");
-      cmd.AddHeader("_browser","\"off\"");
+      if (!fAutoLoad.empty()) cmd.AddHeader("_autoload", fAutoLoad);
+      if (!fTopTitle.empty()) cmd.AddHeader("_toptitle", fTopTitle);
+      if (!fBrowser.empty()) cmd.AddHeader("_browser", fBrowser);
 
       dabc::WorkerRef wrk = GetPublisher();
 
