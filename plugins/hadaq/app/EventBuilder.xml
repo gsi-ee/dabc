@@ -104,6 +104,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
        
+       <!--  When event cannot be build too long, complete data drop will be performed -->
+       <BuildDropTimeout value="20.0"/>    
+       
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
