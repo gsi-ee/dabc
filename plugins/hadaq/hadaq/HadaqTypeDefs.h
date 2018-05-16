@@ -37,6 +37,7 @@ namespace hadaq {
    extern const char* xmlExternalRunid;
 
    extern const char* xmlHadaqTrignumRange;
+   extern const char* xmlHadaqTriggerTollerance;
    extern const char* xmlHadaqDiffEventStats;
    extern const char* xmlEvtbuildTimeout;
    extern const char* xmlHadesTriggerType;

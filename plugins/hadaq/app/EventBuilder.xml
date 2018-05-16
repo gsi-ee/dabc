@@ -98,6 +98,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!-- TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
 
+       <!-- TriggerTollerance: defines allowed difference between events, when exceed - total reset will be performed
+            Default value is 1/4 of TriggerNumRange. When 0, no checks is performed -->
+       <!--  <TriggerTollerance value="0"/>  -->
+
        <!-- CheckTag: when true events will be discarded if tag mismatched between subevents  -->
        <CheckTag value="true"/>
        
@@ -105,7 +109,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <AccountLostEventDiff value="true"/>
        
        <!--  When event cannot be build too long, complete data drop will be performed -->
-       <BuildDropTimeout value="20.0"/>    
+       <BuildDropTimeout value="20.0"/>
        
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>

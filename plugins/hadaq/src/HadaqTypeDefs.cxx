@@ -45,6 +45,7 @@ const char* hadaq::xmlObserverEnabled      = "DoShmControl";
 const char* hadaq::xmlExternalRunid       = "RunIdFromEPICS";
 
 const char* hadaq::xmlHadaqTrignumRange   = "TriggerNumRange";
+const char* hadaq::xmlHadaqTriggerTollerance = "TriggerTollerance";
 const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
 const char* hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
 const char* hadaq::xmlHadesTriggerType    = "HadesTriggerType";

@@ -90,7 +90,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    DOUT1("HADAQ %s module using maxtrigger 0x%x, rangemask:0x%x", GetName(), fMaxHadaqTrigger, fTriggerRangeMask);
    fEvnumDiffStatistics = Cfg(hadaq::xmlHadaqDiffEventStats, cmd).AsBool(true);
 
-   fTriggerNrTolerance = fMaxHadaqTrigger / 4;
+   fTriggerNrTolerance = Cfg(hadaq::xmlHadaqTriggerTollerance, cmd).AsInt(-1);
+   if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxHadaqTrigger / 4;
    fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
    fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
 
