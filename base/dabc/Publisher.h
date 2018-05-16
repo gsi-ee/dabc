@@ -60,6 +60,22 @@ namespace dabc {
    class CmdGetNamesList : public Command {
       DABC_COMMAND(CmdGetNamesList, "CmdGetNamesList");
 
+      CmdGetNamesList(const std::string &kind, const std::string &path, const std::string &query) :
+         Command(CmdName())
+      {
+         SetStr("textkind", kind);
+         SetStr("path", path);
+         SetStr("query", query);
+      }
+
+      void AddHeader(const std::string &name, const std::string &value)
+      {
+         int num = GetInt("NumHdrs");
+         SetStr(dabc::format("OptHdrName%d", num), name);
+         SetStr(dabc::format("OptHdrValue%d", num), value);
+         SetInt("NumHdrs", num+1);
+      }
+
       static void SetResNamesList(dabc::Command &cmd, Hierarchy& res);
 
       static Hierarchy GetResNamesList(dabc::Command &cmd);
@@ -224,12 +240,6 @@ namespace dabc {
 
       bool AddRemote(const std::string &remnode, const std::string &workername)
       {  return OwnCommand(6, remnode, workername); }
-
-      /** Store hierarchy in xml/json to use in the browser for display */
-      bool SaveGlobalNamesListAs(const std::string &kind,
-                                 const std::string &path,
-                                 const std::string &query,
-                                 std::string& str);
 
       /** Returns "" - undefined,
        *          "__tree__"    -- tree hierarchy

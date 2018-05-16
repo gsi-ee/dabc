@@ -44,9 +44,14 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command &cmd, Hierarchy &res)
 
       dabc::HStore store(mask);
       store.CreateNode(res.GetName());
-      // workaround, later global autoload variable should be used here
-      store.SetField("_autoload","\"jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;\"");
-      store.SetField("_toptitle","\"DABC online server\"");
+
+      int num = cmd.GetInt("NumHdrs");
+      for (int n=0;n<num;++n) {
+         std::string name = cmd.GetStr(dabc::format("OptHdrName%d", n)),
+                     value = cmd.GetStr(dabc::format("OptHdrValue%d", n));
+         store.SetField(name.c_str(), value.c_str());
+      }
+
       if (res.SaveTo(store, false)) {
          store.CloseNode(res.GetName());
          cmd.SetStr("astext", store.GetResult());
@@ -934,25 +939,6 @@ bool dabc::PublisherRef::OwnCommand(int id, const std::string &path, const std::
    return Execute(cmd) == cmd_true;
 }
 
-
-bool dabc::PublisherRef::SaveGlobalNamesListAs(const std::string &kind,
-                                               const std::string &path,
-                                               const std::string &query,
-                                               std::string& str)
-{
-   if (null()) return false;
-
-   CmdGetNamesList cmd;
-   cmd.SetStr("textkind", kind);
-   cmd.SetStr("path", path);
-   cmd.SetStr("query", query);
-
-   if (Execute(cmd) != cmd_true) return false;
-
-   str = cmd.GetStr("astext");
-
-   return true;
-}
 
 std::string dabc::PublisherRef::UserInterfaceKind(const char* uri, std::string& path, std::string& fname)
 {

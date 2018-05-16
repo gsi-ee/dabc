@@ -331,20 +331,28 @@ bool http::Server::Process(const char* uri, const char* _query,
       iszipped = true;
    }
 
-   if (filename == "h.xml") {
-      content_type = "text/xml";
+   if ((filename == "h.xml") || (filename == "h.json")) {
 
-      std::string xmlcode;
+      bool isxml = (filename == "h.xml");
 
-      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("xml", pathname, query, xmlcode)) return false;
+      dabc::CmdGetNamesList cmd(isxml ? "xml" : "json", pathname, query);
 
-      content_str = std::string("<?xml version=\"1.0\"?>\n<dabc>\n") + xmlcode + "</dabc>";
+      cmd.AddHeader("_autoload","\"jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;\"");
+      cmd.AddHeader("_toptitle","\"DABC online server\"");
+      cmd.AddHeader("_browser","\"off\"");
 
-   } else if (filename == "h.json") {
+      dabc::WorkerRef wrk = GetPublisher();
 
-      content_type = "application/json";
+      if (wrk.Execute(cmd) != dabc::cmd_true) return false;
 
-      if (!dabc::PublisherRef(GetPublisher()).SaveGlobalNamesListAs("json", pathname, query, content_str)) return false;
+      content_str = cmd.GetStr("astext");
+
+      if (isxml) {
+         content_type = "text/xml";
+         content_str = std::string("<?xml version=\"1.0\"?>\n<dabc>\n") + content_str + "</dabc>";
+      } else {
+         content_type = "application/json";
+      }
 
    } else if (filename == "multiget.json") {
 
