@@ -132,7 +132,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    if (fBNETrecv) {
       CreateCmdDef("BnetFileControl").SetField("_hidden", true);
-   } else {
+   } else if (!fBNETrecv) {
       CreateCmdDef("StartHldFile")
          .AddArg("filename", "string", true, "file.hld")
          .AddArg(dabc::xml_maxsize, "int", false, 1500)
