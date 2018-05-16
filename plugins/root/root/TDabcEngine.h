@@ -27,7 +27,7 @@ class TDabcEngine : public THttpEngine {
       TDabcEngine();
       virtual ~TDabcEngine();
 
-      virtual Bool_t Create(const char* args);
+      virtual Bool_t Create(const char *args);
 
    ClassDef(TDabcEngine, 0) // dabc engine for THttpServer
 };

@@ -24,6 +24,7 @@
 #include "THttpServer.h"
 #include "TRootSniffer.h"
 #include "TRootSnifferStore.h"
+#include "RVersion.h"
 
 class TRootSnifferStoreDabc : public TRootSnifferStore {
 public:
@@ -207,7 +208,20 @@ int root::Monitor::ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc
       }
    }
 
-   void* ptr(0);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,13,0)
+
+   std::string str;
+
+   if (!sniff->Produce(itemname, binkind, query, str)) {
+       EOUT("ROOT sniffer producer fails for item %s kind %s", itemname.c_str(), binkind.c_str());
+       return dabc::cmd_false;
+   }
+
+   buf = dabc::Buffer::CreateBuffer(str.data(), str.length(), false, true);
+
+#else
+
+   void* ptr(nullptr);
    Long_t length(0);
    TString str;
 
@@ -218,10 +232,12 @@ int root::Monitor::ProcessGetBinary(THttpServer* serv, TRootSniffer* sniff, dabc
        return dabc::cmd_false;
    }
 
-   if (ptr!=0)
+   if (ptr)
       buf = dabc::Buffer::CreateBuffer(ptr, (unsigned) length, true);
    else
       buf = dabc::Buffer::CreateBuffer(str.Data(), str.Length(), false, true);
+
+#endif
 
    // for binary data set correct version into header
    if (binkind == "root.bin") {

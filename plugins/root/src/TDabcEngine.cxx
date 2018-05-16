@@ -23,7 +23,6 @@
 #include "root/Monitor.h"
 
 #include "THttpServer.h"
-#include "TRootSniffer.h"
 
 TDabcEngine::TDabcEngine() : THttpEngine("dabc","Bridge between DABC and ROOT")
 {
