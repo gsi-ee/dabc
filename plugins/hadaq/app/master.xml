@@ -20,6 +20,10 @@
        <!--ssl_certif value="${DABCSYS}/ssl_cert.pem"/-->
        <!--auth_file value="${DABCSYS}/.htdigest"/-->
        <!--auth_domain value="dabc@server"/-->
+       <TopTitle value="HADES BNET control"/>
+       <Browser value="off"/>
+       <DrawItem value="Master/BNET"/>
+       <DrawOpt value=""/>
     </HttpServer>
 
     <Publisher name="publ">
@@ -36,9 +40,7 @@
        <Controller value="true"/>
        <period value="1"/>
        <RunPrefix value=""/>
-       <MaxRunSize value="200"/>
+       <MaxRunSize value="2000"/>
     </Module>
-
-
   </Context>
 </dabc>
