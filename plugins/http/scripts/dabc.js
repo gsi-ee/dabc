@@ -516,6 +516,8 @@
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
+      if (!res) return;
+      
       var frame = d3.select(this.frame), elem, 
           html = "", itemname = "", hadaqinfo = null, hadaqdata = null, hadaqevents = null, hadaqstate = null;
 
@@ -606,11 +608,11 @@
    
    DABC.BnetPainter.prototype.SendInfoRequests = function() {
       for (var n in this.InputItems)
-         JSROOT.NewHttpRequest(this.InputItems[n] + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
+         JSROOT.NewHttpRequest(this.InputItems[n].substr(1) + "/get.json", "object", this.ProcessReq.bind(this, false, n)).send();
       for (var n in this.BuilderItems)
-         JSROOT.NewHttpRequest(this.BuilderItems[n] + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
+         JSROOT.NewHttpRequest(this.BuilderItems[n].substr(1) + "/get.json", "object", this.ProcessReq.bind(this, true, n)).send();
       if (this.CalibrItem)
-         JSROOT.NewHttpRequest(this.CalibrItem + "/Status/get.json", "object", this.ProcessCalibrReq.bind(this)).send();
+         JSROOT.NewHttpRequest(this.CalibrItem.substr(1) + "/Status/get.json", "object", this.ProcessCalibrReq.bind(this)).send();
    }
    
    DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
