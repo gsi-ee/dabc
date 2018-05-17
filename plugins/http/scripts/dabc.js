@@ -16,7 +16,7 @@
 
    DABC = {};
 
-   DABC.version = "2.9.9";
+   DABC.version = "2.9.9 17/05/2018";
    
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -31,7 +31,7 @@
          if (pos<0) continue;
          if (src.indexOf("JSRootCore.")>0) continue;
          
-         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos) + ", ver. " + DABC.version);
+         JSROOT.console("Set DABC.source_dir to " + src.substr(0, pos) + ", " + DABC.version);
          return src.substr(0, pos);
       }
       return "";
@@ -616,6 +616,9 @@
    
    DABC.BnetPainter.prototype.ProcessMainRequest = function(res) {
       this.mainreq = null;
+      
+      d3.select(this.frame).style('background-color', res ? null : "grey");
+      
       if (!res) return;
 
       var inp = null, bld = null, state = null, drate, erate, ninp = [], nbld = [],  changed = false;
