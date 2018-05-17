@@ -20,6 +20,9 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#include <vector>
+#include <string>
+
 
 namespace hadaq {
 
@@ -45,6 +48,8 @@ namespace hadaq {
          double        fCtrlEvents;   ///< accumulated events rate
 
          virtual bool ReplyCommand(dabc::Command cmd);
+
+         void AddItem(std::vector<std::string> &items, std::vector<std::string> &nodes, const std::string &item, const std::string &node);
 
       public:
 

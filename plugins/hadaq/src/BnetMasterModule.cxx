@@ -66,6 +66,26 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    DOUT0("BNET MASTER Control %s period %3.1f ", DBOOL(fControl), period);
 }
 
+void hadaq::BnetMasterModule::AddItem(std::vector<std::string> &items, std::vector<std::string> &nodes, const std::string &item, const std::string &node)
+{
+   auto iter1 = items.begin();
+   auto iter2 = nodes.begin();
+   while (iter1 != items.end()) {
+      if (*iter1 > item) {
+         items.insert(iter1, item);
+         nodes.insert(iter2, node);
+         return;
+      }
+      ++iter1;
+      ++iter2;
+   }
+
+   items.emplace_back(item);
+   nodes.emplace_back(node);
+}
+
+
+
 bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 {
    if (cmd.IsName(dabc::CmdGetNamesList::CmdName())) {
@@ -82,8 +102,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             std::size_t pos = producer.find_last_of("/");
             if (pos != std::string::npos) producer.resize(pos);
 
-            if (kind == "sender") { binp.push_back(item.ItemName()); nodes_inp.push_back(producer); }
-            if (kind == "receiver") { bbuild.push_back(item.ItemName()); nodes_build.push_back(producer); }
+            if (kind == "sender") AddItem(binp, nodes_inp, item.ItemName(), producer);
+            if (kind == "receiver") AddItem(bbuild, nodes_build, item.ItemName(), producer);
             //DOUT0("Get BNET %s", item.ItemName().c_str());
          }
       }
