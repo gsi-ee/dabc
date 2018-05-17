@@ -693,6 +693,12 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    InputCfg& cfg = fCfg[ninp];
 
+#ifdef HADAQ_DEBUG
+   if (dropped && cfg.has_data)
+      fprintf(stderr, "Input%u Trig:%6x Tag:%2x DROP\n", ninp, cfg.fTrigNr, cfg.fTrigTag);
+#endif
+
+
    bool foundevent(false), doshift(true), tryresort(cfg.fResort);
 
    if (cfg.fResortIndx >= 0) {
@@ -764,6 +770,10 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       cfg.fTrigNr = (cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask;
       cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
+
+#ifdef HADAQ_DEBUG
+      fprintf(stderr, "Input%u Trig:%6x Tag:%2x\n", ninp, cfg.fTrigNr, cfg.fTrigTag);
+#endif
 
       cfg.fTrigNumRing[cfg.fRingCnt] = cfg.fTrigNr;
       cfg.fRingCnt = (cfg.fRingCnt+1) % HADAQ_RINGSIZE;
@@ -945,6 +955,10 @@ bool hadaq::CombinerModule::BuildEvent()
         SetInfo(msg, true);
         DOUT0(msg.c_str());
 
+#ifdef HADAQ_DEBUG
+      fprintf(stderr, "DROP ALL\n");
+#endif
+
         DropAllInputBuffers();
 
         fTotalFullDrops++;
@@ -995,6 +1009,10 @@ bool hadaq::CombinerModule::BuildEvent()
          if (CalcTrigNumDiff(trignr, buildevid) > 0) {
 
             int droppedsize = fCfg[ninp].data_size;
+
+#ifdef HADAQ_DEBUG
+      fprintf(stderr, "Input%u TrigNr:%6x Skip while building %6x diff %u\n", ninp, trignr, buildevid, CalcTrigNumDiff(trignr, buildevid));
+#endif
 
             // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
@@ -1124,6 +1142,10 @@ bool hadaq::CombinerModule::BuildEvent()
       //if (fBNETsend && (diff!=1))
       //   DOUT0("%s %x %x %d", GetName(), fLastTrigNr, buildevid, diff);
       // if (fBNETsend) DOUT0("%s trig %x size %u", GetName(), buildevid, subeventssize);
+
+#ifdef HADAQ_DEBUG
+      fprintf(stderr, "BUILD:%6x\n", buildevid);
+#endif
 
       fLastTrigNr = buildevid;
 

@@ -64,6 +64,10 @@ $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
 
 ########### extra rules #############
-$(HADAQ_CO) $(HADAQ_CD): C_INCLUDES += $(HADAQDIRI) 
+$(HADAQ_CO) $(HADAQ_CD): C_INCLUDES += $(HADAQDIRI)
+
+ifdef hadaq-debug
+$(DABCHADAQ_O): DEFINITIONS += HADAQ_DEBUG 
+endif
 
 include $(DABCSYS)/config/Makefile.rules
