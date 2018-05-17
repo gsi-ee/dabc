@@ -461,7 +461,10 @@
          painter.DisplayItem("/" + itemname+"/EventsRate");
       });
 
-      jnode.find(".bnet_clear").button().click(this.ClearDisplay.bind(this));
+      jnode.find(".bnet_clear").button().click(function() {
+         painter.DisplayCalItem(0, "");
+         painter.ClearDisplay();
+      });
 
       // set DivId after drawing
       this.SetDivId(this.frame);
