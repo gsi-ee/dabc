@@ -367,7 +367,6 @@
 
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state'>Run control</legend>" +
-              "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" + 
               "<option>data</option>" +
@@ -377,6 +376,7 @@
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
+              "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -430,8 +430,7 @@
 
       html += "</div>";
       
-      var main = d3.select(this.frame).html(html);
-      var painter = this;
+      var painter = this, main = d3.select(this.frame).html(html);
       
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
@@ -440,7 +439,7 @@
       
       main.selectAll(".bnet_item_label").on("click", function() {
          painter.DisplayItem(d3.select(this).attr("itemname"));
-       });
+      });
       
       var itemname = this.itemname;
       
@@ -619,7 +618,7 @@
       this.mainreq = null;
       if (!res) return;
 
-      var inp = null, bld = null, state = null, drate = null, erate = null, ninp = [], nbld = [],  changed = false;
+      var inp = null, bld = null, state = null, drate, erate, ninp = [], nbld = [],  changed = false;
       for (var k in res._childs) {
          var elem = res._childs[k];
          if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
@@ -629,8 +628,8 @@
          if (elem._name == "EventsRate") { erate = elem.value } 
       }
       
-      if (state !== null) {
-         d3.select(this.frame).select(".bnet_state").text("Run control: "+state);
+      if (state) {
+         d3.select(this.frame).select(".bnet_state").text("Run control: " + state);
          
          var col = "red";
          if (state=="Ready") col = "lightgreen"; else
@@ -639,10 +638,10 @@
          $(this.frame).find(".bnet_startrun").css('background-color',col);
       }
       
-      if (drate !== null)
+      if (typeof drate == 'number')
          $(this.frame).find(".bnet_totalrate").text(drate.toFixed(2) + " MB/s").css('background-color', (drate>0) ? "lightgreen" : "yellow");
 
-      if (erate !== null)
+      if (typeof erate == 'number')
          $(this.frame).find(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").css('background-color', (erate>0) ? "lightgreen" : "yellow");
 
       if (!DABC.CompareArrays(this.InputItems,inp)) {
@@ -658,7 +657,6 @@
          this.BuilderInfo = [];
          changed = true;
       }
-      
       
       if (changed) {
          this.DisplayCalItem(0, "");
