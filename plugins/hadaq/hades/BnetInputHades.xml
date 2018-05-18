@@ -62,6 +62,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
      <!--  <runtime value="50"/> -->
+      <master value="lxhadeb03:23456"/>
     </Run>
     
     <MemoryPool name="Pool">

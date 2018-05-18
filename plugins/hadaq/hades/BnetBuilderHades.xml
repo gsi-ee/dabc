@@ -89,7 +89,7 @@ DAQDISK - switches disk demon mode on/off
       <control value="true"/>
      <!--    <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
-   
+      <master value="lxhadeb03:23456"/>
            
 <!--       <runtime value="50"/>
  -->    
