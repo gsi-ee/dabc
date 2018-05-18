@@ -405,6 +405,12 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          fWorkerHierarchy.SetField("ltsmrefix", std::string());
          Par("LtsmFileSize").SetValue(0.);
       }
+
+      dabc::Command cmd3("GetTransportStatistic");
+      cmd3.SetBool("#mbs", true);
+      if ((NumOutputs() < 1) || !SubmitCommandToTransport(OutputName(0), Assign(cmd3))) {
+         fWorkerHierarchy.SetField("mbsinfo", "");
+      }
    }
 
    if (fBNETsend) {
@@ -1433,6 +1439,10 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       }
       return true;
    } else if (cmd.IsName("GetTransportStatistic")) {
+      if (cmd.GetBool("#mbs")) {
+         fWorkerHierarchy.SetField("mbsinfo", cmd.GetStr("MbsInfo"));
+         return true;
+      }
 
       unsigned runid = cmd.GetUInt("RunId");
       std::string runname = cmd.GetStr("RunName");

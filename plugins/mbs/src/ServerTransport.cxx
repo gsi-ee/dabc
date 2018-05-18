@@ -299,6 +299,7 @@ void mbs::ServerOutputAddon::OnSocketError(int err, const std::string &info)
 mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, int portnum, dabc::SocketServerAddon* connaddon, const dabc::Url& url) :
    dabc::Transport(cmd, 0, outport),
    fKind(kind),
+   fPortNum(portnum),
    fSlaveQueueLength(5),
    fClientsLimit(0),
    fDoingClose(0),
@@ -336,7 +337,7 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
    if (url.HasOption("deliverall")) fDeliverAll = true;
 
    DOUT0("Create MBS server fd:%d kind:%s port:%d limit:%d blocking:%s deliverall:%s",
-         connaddon->Socket(), mbs::ServerKindToStr(fKind), portnum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll));
+         connaddon->Socket(), mbs::ServerKindToStr(fKind), fPortNum, fClientsLimit, DBOOL(fBlocking), DBOOL(fDeliverAll));
 
    if (fClientsLimit>0) DOUT0("Set client limit for MBS server to %d", fClientsLimit);
 
@@ -428,6 +429,10 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       if (cnt==1) cmd.SetField("NumCanSend", cansend[0]); else
       if (cnt>1) cmd.SetField("NumCanSend", cansend); else
       cmd.SetField("NumCanSend", 0);
+
+      cmd.SetStr("MbsKind", mbs::ServerKindToStr(fKind));
+      cmd.SetInt("MbsPort", fPortNum);
+      cmd.SetStr("MbsInfo", dabc::format("%s:%d NumClients:%d", mbs::ServerKindToStr(fKind), fPortNum, cnt));
 
       return dabc::cmd_true;
    }

@@ -552,7 +552,7 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 18);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + "'", this.BuilderNodes[indx].substr(7), 18);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;

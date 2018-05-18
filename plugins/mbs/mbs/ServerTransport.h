@@ -110,6 +110,7 @@ namespace mbs {
       protected:
 
          int fKind;             ///< kind of transport, stream or transport
+         int fPortNum;          ///< used port number (only for info)
          int fSlaveQueueLength; ///< queue length, used for slaves connections
          int fClientsLimit;     ///< maximum number of simultaneous clients
          int fDoingClose;       ///< 0 - normal, 1 - saw EOF, 2 - all clients are gone
