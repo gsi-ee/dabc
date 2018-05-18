@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+
+<!-- 
+This is example file how HADAQ event building should be configured in DABC.
+Event building process implemented in Combiner module of hadaq::CombinerModule class.
+Module can have several inputs, each with separate port number for receiving data 
+from TRB boards. For every input one could configure only UDP port number - host name is ignored.
+First output of combiner module used for delivering data to online analysis (if any). 
+Second output can be use to store data in hld files. 
+To enable HLD file storage one should specify NumOutputs for Combiner module
+and provide hld file name for Output1 port   
+
+     <NumOutputs value="2"/>
+     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+     
+File name fill be extended according to HADAQ naming convention.       
+
+By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
+put <HttpServer name="http" auto="false">. One could change http port number. 
+When dabc runs, in any browser address like
+http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
+  - ratemeters from EventBuilder
+  - log fields 
+  - commands to start/stop hld files storage from browser
+
+There is well-known problem with using VNC viewer and mbs stream server. 
+Both by default are using port 6002. One could change port number for stream server.
+Just set other number in configuration of first output port of combiner module, for instance:
+       <OutputPort name="Output0" url="mbs://Stream:6789?iter=hadaq_iter&subid=0x1f"/>
+In this case one should specify that port number when starting go4 analysis like:
+   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
+When starting analysis from the go4 gui, one should specify stream server with port number too.
+
+-->
+
+<dabc version="2">
+  <Context host="localhost" name="EventBuilder">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcStream.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <logfile value="hadaqevtbuild.log"/>
+      <loglevel value="-1"/>
+      <loglimit value="1000"/>
+      <control value="true"/>
+      <threads_layout value="balanced"/>
+      <master value="localhost:23456"/>
+    </Run>
+    
+    <HttpServer name="http" port="8091"/>
+    
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+    
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+    
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="1000"/>
+    </MemoryPool>
+
+    <Module name="Combiner" class="hadaq::CombinerModule">    
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <NumInputs value="5"/>
+       <NumOutputs value="2"/>
+
+       <InputPort name="Input0" url="hadaq://host:50000"/>
+       <InputPort name="Input1" url="hadaq://host:50001"/>
+       <InputPort name="Input2" url="hadaq://host:50002"/>
+       <InputPort name="Input3" url="hadaq://host:50003"/>
+       <InputPort name="Input4" url="hadaq://host:50004"/>
+
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
+       <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
+       <!-- OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/ -->
+       
+       <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
+             transport runs in own thread to exclude blocking of other transports if file operation hangs -->
+       <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
+       
+       <!--  this is example of HLD file storage - RFIO -->
+       <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
+
+       <!-- when false, subevents without raw data will not be skipped and inserted into final event -->
+       <SkipEmpty value="true"/>
+
+       <!-- when true, extra debug output produced every second -->
+       <ExtraDebug value="false"/>
+
+       <!-- how often output will be flushed -->
+       <FlushTimeout value="0.5"/>   
+
+       <!-- TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
+       <TriggerNumRange value="0x1000000"/>
+
+       <!-- CheckTag: when true events will be discarded if tag mismatched between subevents  -->
+       <CheckTag value="true"/>
+       
+       <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <AccountLostEventDiff value="true"/>
+       
+       <!-- rate meters configuration, not seen with terminal module -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+     </Module>
+     
+     <Module name="Run" class="stream::RunModule">
+       <!--asf value="file.root"/-->
+       <parallel value="0"/>
+       <InputPort name="Input0" url="Combiner/Output1"/>
+       <OutputPort name="*" auto="false"/>
+       <Events width="4" prec="1" low="0" up="1000" debug="0"/>
+    </Module>
+
+     <!-- Terminal output like old event builder -->
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" servport="0" showtrig="16"/>
+
+  </Context>
+
+</dabc>
