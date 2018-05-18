@@ -51,6 +51,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
       <lib value="libDabcHadaq.so"/>        
      <!--  <lib value="libDabcRfio.so"/> -->
       <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcStream.so"/>  
       <logfile value="BNETIN_${BNINPNUM}.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
