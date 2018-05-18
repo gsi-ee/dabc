@@ -132,6 +132,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    if (fBNETrecv) {
       CreatePar("RunFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
+      CreatePar("LtsmFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
       CreateCmdDef("BnetFileControl").SetField("_hidden", true);
    } else if (!fBNETrecv) {
       CreateCmdDef("StartHldFile")
@@ -392,6 +393,15 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          fWorkerHierarchy.SetField("runname", std::string());
          fWorkerHierarchy.SetField("state", "NoFile");
          fWorkerHierarchy.GetHChild("State").SetField("value", "NoFile");
+      }
+
+      dabc::Command cmd2("GetTransportStatistic");
+      cmd2.SetBool("#ltsm", true);
+      if ((NumOutputs() < 3) || !SubmitCommandToTransport(OutputName(2), Assign(cmd2))) {
+         fWorkerHierarchy.SetField("ltsmid", 0);
+         fWorkerHierarchy.SetField("ltsmsize", 0);
+         fWorkerHierarchy.SetField("ltsmname", std::string());
+         Par("LtsmFileSize").SetValue(0.);
       }
    }
 
@@ -1425,6 +1435,16 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       unsigned runid = cmd.GetUInt("RunId");
       std::string runname = cmd.GetStr("RunName");
       unsigned runsz = cmd.GetUInt("RunSize");
+
+      if (cmd.GetBool("#ltsm")) {
+         // this is LTSM info
+         fWorkerHierarchy.SetField("ltsmid", runid);
+         fWorkerHierarchy.SetField("ltsmsize", runsz);
+         fWorkerHierarchy.SetField("ltsmname", runname);
+
+         Par("LtsmFileSize").SetValue(runsz/1024./1024.);
+         return true;
+      }
 
       fWorkerHierarchy.SetField("runid", runid);
       fWorkerHierarchy.SetField("runsize", runsz);

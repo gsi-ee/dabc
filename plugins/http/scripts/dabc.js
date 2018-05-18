@@ -396,8 +396,10 @@
       html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 18) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " + 
-              this.MakeLabel("", "File", 24) +  "| " + 
-              this.MakeLabel("class='bnet_item_label h_item' title='display file sizes' itemname='__bld__/RunFileSize'", "Size", 8) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
+              this.MakeLabel("", "File local", 24) +  "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display local file sizes' itemname='__bld__/RunFileSize'", "Size", 8) + "| " +    
+              this.MakeLabel("", "File LTSM", 24) +  "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display LTSM file sizes' itemname='__bld__/LtsmFileSize'", "Size", 8);    
       html += "</pre>";
       html += "</div>";
       for (var node in this.BuilderItems) {
@@ -566,12 +568,20 @@
       html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
       
       if (isbuild) {
-         var fname = res.runname;
+         var fname = res.runname || "";
          if (fname && (fname.lastIndexOf("/")>0))
             fname = fname.substr(fname.lastIndexOf("/")+1);
          
          html += "| " + this.MakeLabel("title='Full name: " + res.runname + "'", fname, 24);
-         html += "| " + this.MakeLabel(prefix + "RunFileSize'", (res.runsize/1024/1024).toFixed(2), 8);
+         html += "| " + this.MakeLabel(prefix + "RunFileSize'", ((res.runsize || 0)/1024/1024).toFixed(2), 8);
+         
+         fname = res.ltsmname || "";;
+         if (fname && (fname.lastIndexOf("/")>0))
+            fname = fname.substr(fname.lastIndexOf("/")+1);
+
+         html += "| " + this.MakeLabel("title='Full name: " + res.ltsmname + "'", fname, 24);
+         html += "| " + this.MakeLabel(prefix + "LtsmFileSize'", ((res.ltsmsize || 0)/1024/1024).toFixed(2), 8);
+
          // if (hadaqinfo) html += "| " + this.MakeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
       } else {
          // info with HUBs and port numbers
