@@ -44,8 +44,10 @@ namespace hadaq {
          int           fCtrlState;  ///< 0-ok (green), 1-partially (yellow), 2-red
          std::string   fCtrlStateName; ///< current name
          bool          fCtrlSzLimit; ///< when true, size limit was exceed
-         double        fCtrlData;   ///< accumulated data rate
+         double        fCtrlData;    ///< accumulated data rate
          double        fCtrlEvents;   ///< accumulated events rate
+         unsigned      fCtrlRunId;    ///< received run id from builders
+         std::string   fCtrlRunPrefix; ///< received run prefix from builders
 
          virtual bool ReplyCommand(dabc::Command cmd);
 

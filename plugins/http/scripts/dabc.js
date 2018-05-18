@@ -71,16 +71,16 @@
       }
       
       var html = "<fieldset>" +
-      		     "<legend>DAQ</legend>" +
-      		     "<button class='hadaq_startfile'>Start file</button>" +
+                 "<legend>DAQ</legend>" +
+                 "<button class='hadaq_startfile'>Start file</button>" +
                  "<button class='hadaq_stopfile'>Stop file</button>" +
                  "<button class='hadaq_restartfile'>Restart file</button>" +
                  '<input class="hadaq_filename" type="text" name="filename" value="file.hld" style="margin-top:5px;"/><br/>' +
                  "<label class='hadaq_rate'>Rate: __undefind__</label><br/>"+
                  "<label class='hadaq_info'>Info: __undefind__</label>"+
-      		     "</fieldset>" +
-      		     "<fieldset>" +
-      		     "<legend>Calibration</legend>";
+                 "</fieldset>" +
+                 "<fieldset>" +
+                 "<legend>Calibration</legend>";
       for (var n in calarr)
          html += "<div class='hadaq_calibr' style='padding:2px;margin:2px'>" + calarr[n] + "</div>";
       html+="</fieldset>";
@@ -373,19 +373,21 @@
               "<option>NO_FILE</option>" +
               "<option value='te'>Test files</option>" +
               "<option>co</option>" +
-	      "<option>md</option>" +
+              "<option>md</option>" +
               "<option>ri</option>" +
-	      "<option>ec</option>" +
-	      "<option>st</option>" +
-	      "<option>rp</option>" +
-	      "<option>fw</option>" +
-	      "<option>pt</option>" +	   
+              "<option>ec</option>" +
+              "<option>st</option>" +
+              "<option>rp</option>" +
+              "<option>fw</option>" +
+              "<option>pt</option>" +
               "<option>tc</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
               "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
+              "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
+              "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -647,14 +649,16 @@
       
       if (!res) return;
 
-      var inp = null, bld = null, state = null, drate, erate, ninp = [], nbld = [],  changed = false;
+      var inp = null, bld = null, state = null, drate, erate, ninp = [], nbld = [], runid = "", runprefix = "", changed = false;
       for (var k in res._childs) {
          var elem = res._childs[k];
          if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
          if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
          if (elem._name == "State") { state = elem.value } else
          if (elem._name == "DataRate") { drate = elem.value } else
-         if (elem._name == "EventsRate") { erate = elem.value } 
+         if (elem._name == "EventsRate") { erate = elem.value } else 
+         if (elem._name == "RunIdStr") { runid = elem.value } else 
+         if (elem._name == "RunPrefix") { runprefix = elem.value }  
       }
       
       if (state) {
@@ -672,7 +676,10 @@
 
       if (typeof erate == 'number')
          $(this.frame).find(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").css('background-color', (erate>0) ? "lightgreen" : "yellow");
-
+      
+      $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
+      $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
+      
       if (!DABC.CompareArrays(this.InputItems,inp)) {
          this.InputItems = inp;
          this.InputNodes = ninp;

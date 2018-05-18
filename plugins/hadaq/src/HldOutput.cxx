@@ -249,6 +249,7 @@ bool hadaq::HldOutput::Write_Stat(dabc::Command cmd)
    cmd.SetUInt("RunId", fRunNumber);
    cmd.SetUInt("RunSize", fCurrentFileSize);
    cmd.SetStr("RunName", fCurrentFileName);
+   cmd.SetStr("RunPrefix", fLastPrefix);
 
    return res;
 }

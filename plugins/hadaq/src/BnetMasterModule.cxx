@@ -52,6 +52,10 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
 
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
 
+   CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
+   CreatePar("RunIdStr").SetFld(dabc::prop_kind, "Text").SetValue("--");
+   CreatePar("RunPrefix").SetFld(dabc::prop_kind, "Text").SetValue("--");
+
    CreatePar("DataRate").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
    CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
 
@@ -128,6 +132,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlData = 0.;
       fCtrlEvents = 0.;
 
+      fCtrlRunId = 0;
+      fCtrlRunPrefix = "";
+
       dabc::WorkerRef publ = GetPublisher();
 
       for (unsigned n=0;n<bbuild.size();++n) {
@@ -170,7 +177,6 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       bool is_builder = false;
 
-
       while (iter.next()) {
          dabc::Hierarchy item = iter.ref();
          if (!item.HasField("_bnet")) {
@@ -194,8 +200,27 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             fCtrlStateName = "Error";
          }
 
-         if ((fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
-            fCtrlSzLimit = true;
+         if (is_builder) {
+            // check maximal size
+            if ((fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
+               fCtrlSzLimit = true;
+
+            // check current runid
+            unsigned runid = item.GetField("runid").AsUInt();
+            std::string runprefix = item.GetField("runprefix").AsStr();
+
+            if (runid && !runprefix.empty()) {
+               if (!fCtrlRunId) {
+                  fCtrlRunId = runid;
+                  fCtrlRunPrefix = runprefix;
+               } else if ((fCtrlRunId != runid) || (fCtrlRunPrefix != runprefix)) {
+                  if (fCtrlState<2) {
+                     fCtrlStateName = "RunMismatch";
+                     fCtrlState = 2;
+                  }
+               }
+            }
+         }
 
          // DOUT0("BNET reply from %s state %s sz %u", item.GetField("_bnet").AsStr().c_str(), item.GetField("state").AsStr().c_str(), item.GetField("runsize").AsUInt());
       }
@@ -203,6 +228,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       if (fCtrlCnt==0) {
          if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
          SetParValue("State", fCtrlStateName);
+         SetParValue("RunId", fCtrlRunId);
+         SetParValue("RunIdStr", fCtrlRunId ? hadaq::FormatFilename(fCtrlRunId,0) : std::string("0"));
+         SetParValue("RunPrefix", fCtrlRunPrefix);
 
          DOUT3("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
@@ -271,7 +299,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          if (runid==0) runid = hadaq::CreateRunId();
          query = dabc::format("mode=start&runid=%u", runid);
 
-    
+
          if (!prefix.empty()) {
             query.append("&prefix=");
             query.append(prefix);
