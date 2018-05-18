@@ -131,6 +131,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
    if (fBNETrecv) {
+      CreatePar("RunFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
       CreateCmdDef("BnetFileControl").SetField("_hidden", true);
    } else if (!fBNETrecv) {
       CreateCmdDef("StartHldFile")
@@ -218,7 +219,6 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
       UpdateBnetInfo();
       return;
    }
-
 
    if (++fFlushCounter > 2) {
       fFlushCounter = 0;
@@ -1424,10 +1424,13 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 
       unsigned runid = cmd.GetUInt("RunId");
       std::string runname = cmd.GetStr("RunName");
+      unsigned runsz = cmd.GetUInt("RunSize");
 
       fWorkerHierarchy.SetField("runid", runid);
-      fWorkerHierarchy.SetField("runsize", cmd.GetUInt("RunSize"));
+      fWorkerHierarchy.SetField("runsize", runsz);
       fWorkerHierarchy.SetField("runname", runname);
+
+      Par("RunFileSize").SetValue(runsz/1024./1024.);
 
       std::string state = "Ready";
       if (Par(fEventRateName).Value().AsDouble() == 0) state = "NoData"; else

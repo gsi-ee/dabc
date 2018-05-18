@@ -393,11 +393,11 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 15) + "| " + 
-              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 10) + "| " + 
-              this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 10) + "| " + 
-              this.MakeLabel("", "File", 23) +  "| " + 
-              this.MakeLabel("", "Size, MB", 10) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 18) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " + 
+              this.MakeLabel("", "File", 24) +  "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display file sizes' itemname='__bld__/RunFileSize'", "Size", 8) /* +  "| " + this.MakeLabel("", "Info", 30) */;    
       html += "</pre>";
       html += "</div>";
       for (var node in this.BuilderItems) {
@@ -415,9 +415,9 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 15) + "| " + 
-              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 10) + "| " + 
-              this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 10) + "| " + 
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 18) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " + 
+              this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " + 
               this.MakeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);    
       html += "</pre>";
       html += "</div>";
@@ -548,7 +548,7 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 15);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "'", this.BuilderNodes[indx].substr(7), 18);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
@@ -556,18 +556,22 @@
          var col = "red";
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 15);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 18);
          itemname = this.InputItems[indx];
       }
       
       var prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
       
-      html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 10); 
-      html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 10);
+      html += "| " + this.MakeLabel(prefix + hadaqdata._name + "'", hadaqdata.value, 8); 
+      html += "| " + this.MakeLabel(prefix + hadaqevents._name + "'", hadaqevents.value, 8);
       
       if (isbuild) {
-         html += "| " + this.MakeLabel("", res.runname, 23);
-         html += "| " + this.MakeLabel("", (res.runsize/1024/1024).toFixed(2), 10);
+         var fname = res.runname;
+         if (fname && (fname.lastIndexOf("/")>0))
+            fname = fname.substr(fname.lastIndexOf("/")+1);
+         
+         html += "| " + this.MakeLabel("title='Full name: " + res.runname + "'", fname, 24);
+         html += "| " + this.MakeLabel(prefix + "RunFileSize'", (res.runsize/1024/1024).toFixed(2), 8);
          // if (hadaqinfo) html += "| " + this.MakeLabel(prefix + hadaqinfo._name + "'", hadaqinfo.value, 30);
       } else {
          // info with HUBs and port numbers
