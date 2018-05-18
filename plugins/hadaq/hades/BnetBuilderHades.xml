@@ -90,6 +90,7 @@ DAQDISK - switches disk demon mode on/off
      <!--    <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
       <master value="lxhadeb03:23456"/>
+      <publisher value="true"/>
            
 <!--       <runtime value="50"/>
  -->    
@@ -142,7 +143,7 @@ DAQDISK - switches disk demon mode on/off
         
 
        <DoShmControl value="true"/>  
-       <RunIdFromEPICS value="true"/>  
+       <RunIdFromEPICS value="false"/>  
        <FlushTimeout value="0.5"/>   
        <HadesTriggerType value="true"/>
 
