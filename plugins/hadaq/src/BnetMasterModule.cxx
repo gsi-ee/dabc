@@ -260,13 +260,18 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       cmd.SetInt("#RetCnt", builders.size());
 
       std::string query;
-
+      std::string prefix;
       if (isstart) {
-         unsigned runid = cmd.GetUInt("runid");
+	 prefix = cmd.GetStr("prefix");
+	 if(prefix == "NO_FILE" || prefix == "--")
+	   isstart=false;
+      }
+      if (isstart) {
+	 unsigned runid = cmd.GetUInt("runid");
          if (runid==0) runid = hadaq::CreateRunId();
          query = dabc::format("mode=start&runid=%u", runid);
 
-         std::string prefix = cmd.GetStr("prefix");
+    
          if (!prefix.empty()) {
             query.append("&prefix=");
             query.append(prefix);

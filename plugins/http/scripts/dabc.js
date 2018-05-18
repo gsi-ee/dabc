@@ -369,9 +369,18 @@
               "<legend class='bnet_state'>Run control</legend>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" + 
-              "<option>data</option>" +
-              "<option>test</option>" +
-              "<option>cosmic</option>" +
+              "<option>be</option>" +
+              "<option>NO_FILE</option>" +
+              "<option value='te'>Test files</option>" +
+              "<option>co</option>" +
+	      "<option>md</option>" +
+              "<option>ri</option>" +
+	      "<option>ec</option>" +
+	      "<option>st</option>" +
+	      "<option>rp</option>" +
+	      "<option>fw</option>" +
+	      "<option>pt</option>" +	   
+              "<option>tc</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
