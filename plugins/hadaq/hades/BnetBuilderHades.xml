@@ -132,11 +132,11 @@ DAQDISK - switches disk demon mode on/off
 
 
   	   <OutputPort name="Output0" url="mbs://Stream:810${BNEBNUM}?iter=hadaq_iter&subid=0x1f"/>
-       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&diskdemon=${DAQDISK}" queue="500"/>
+       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&diskdemon=${DAQDISK}&slave" queue="500"/>
 
       <!--   <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&epicsctrl&ebnumber=${BNEBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/> -->
 
-        <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}" queue="500" onerror="exit"/>
+        <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}&slave" queue="500" onerror="exit"/>
        <ExtraDebug value="false"/>
 
        <ExtraDebug value="false"/>

@@ -40,10 +40,10 @@ namespace hadaq {
       protected:
 
          bool                fEpicsSlave;     ///< true if run id is controlled by epics master
+         bool                fRunSlave;       ///< true if run id is controlled by combiner
          uint32_t            fRunNumber;      ///< id number of current run
          uint16_t            fEBNumber;       ///< id of parent event builder process
          bool                fUseDaqDisk;     ///< true if /data number is taken from daq_disk (HADES setup)
-         bool                fDisabled;       ///< when true, all buffers are discarded
          bool                fRfio;           ///< true if we write to rfio
          bool                fLtsm;           ///< true if we write to ltsm
          std::string         fUrlOptions;     ///< remember URL options, may be used for RFIO file open
@@ -56,7 +56,7 @@ namespace hadaq {
          hadaq::HldFile      fFile;
 
          bool CloseFile();
-         bool StartNewFile(const std::string &prefix = "");
+         bool StartNewFile();
 
          /* Methods to export run begin to oracle via text file*/
          void StoreRunInfoStart();

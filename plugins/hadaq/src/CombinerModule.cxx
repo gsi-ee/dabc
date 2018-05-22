@@ -73,7 +73,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
 
-   fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
    fEpicsRunNumber = 0;
 
    fLastTrigNr = 0xffffffff;
@@ -83,7 +82,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
    fEpicsSlave = Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
 
-   if(fEpicsSlave) fRunNumber = 0; // ignore data without valid run id at beginning!
+   if(fEpicsSlave || fBNETrecv || fBNETsend) fRunNumber = 0; // ignore data without valid run id at beginning!
+   else fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;
@@ -1267,20 +1267,31 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       if (NumOutputs()<2) return dabc::cmd_false;
       if (!fBnetFileCmd.null()) fBnetFileCmd.Reply(dabc::cmd_false);
 
-      for (unsigned k=1;k<NumOutputs();++k) {
-         dabc::Command subcmd("RestartTransport");
-         subcmd.SetStr("mode", cmd.GetStr("mode"));
-         subcmd.SetUInt("runid", cmd.GetUInt("runid"));
-         subcmd.SetStr("prefix", cmd.GetStr("prefix"));
-         SubmitCommandToTransport(OutputName(k), Assign(subcmd));
+      std::string mode = cmd.GetStr("mode");
+
+      if (mode == "start") {
+         SetInfo("Execute BnetFileControl");
+         for (unsigned k=1;k<NumOutputs();++k) {
+            dabc::Command subcmd("RestartTransport");
+            subcmd.SetBool("only_prefix", true);
+            subcmd.SetStr("prefix", cmd.GetStr("prefix"));
+            SubmitCommandToTransport(OutputName(k), Assign(subcmd));
+         }
+         fBnetFileCmd = cmd;
+         fBnetFileCmd.SetInt("#replies", NumOutputs()-1);
+         if (!fBnetFileCmd.IsTimeoutSet()) fBnetFileCmd.SetTimeout(30);
+         return dabc::cmd_postponed;
       }
 
-      SetInfo("Execute BnetFileControl");
-      fBnetFileCmd = cmd;
-      fBnetFileCmd.SetInt("#replies", NumOutputs()-1);
-      if (!fBnetFileCmd.IsTimeoutSet()) fBnetFileCmd.SetTimeout(30);
+      if (mode == "stop") {
+         if (fRunNumber) StoreRunInfoStop();
+         // reset runid
+         fRunNumber = 0;
+         DOUT0("STOP FILE WRITING - set RUNID to 0!!!");
+      }
 
-      return dabc::cmd_postponed;
+      return dabc::cmd_true;
+
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);
    }
@@ -1476,10 +1487,15 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       return true;
    } else if (cmd.IsName("RestartTransport")) {
       int num = fBnetFileCmd.GetInt("#replies");
-      if (num == 1)
+      if (num == 1) {
+         if (fRunNumber) StoreRunInfoStop();
+         fRunNumber = fBnetFileCmd.GetUInt("runid");
+         DOUT0("COMBINER SWITCHES RUN NUMBER %u %x", fRunNumber, fRunNumber);
+         StoreRunInfoStart();
          fBnetFileCmd.Reply(dabc::cmd_true);
-      else
+      } else {
          fBnetFileCmd.SetInt("#replies", num-1);
+      }
       return true;
    }
 

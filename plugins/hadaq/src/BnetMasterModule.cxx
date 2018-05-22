@@ -290,16 +290,15 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       std::string query;
       std::string prefix;
       if (isstart) {
-	 prefix = cmd.GetStr("prefix");
-	 if(prefix == "NO_FILE" || prefix == "--")
-	   isstart=false;
+         prefix = cmd.GetStr("prefix");
+         if (prefix == "NO_FILE" || prefix == "--")
+            isstart = false;
       }
       if (isstart) {
-	 unsigned runid = cmd.GetUInt("runid");
-         if (runid==0) runid = hadaq::CreateRunId();
+         unsigned runid = cmd.GetUInt("runid");
+         if (runid == 0)
+            runid = hadaq::CreateRunId();
          query = dabc::format("mode=start&runid=%u", runid);
-
-
          if (!prefix.empty()) {
             query.append("&prefix=");
             query.append(prefix);

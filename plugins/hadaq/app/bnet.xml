@@ -264,7 +264,7 @@
        <OutputPort name="Output0" url="mbs://Stream:6781?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=1&disabled"/>
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=1&slave"/>
        
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
@@ -328,7 +328,7 @@
        <OutputPort name="Output0" url="mbs://Stream:6782?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=2&disabled"/>
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=5000&ebnumber=2&slave"/>
        
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->

@@ -33,10 +33,10 @@
 hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
    fEpicsSlave(false),
+   fRunSlave(false),
    fRunNumber(0),
    fEBNumber(0),
    fUseDaqDisk(false),
-   fDisabled(false),
    fRfio(false),
    fLtsm(false),
    fUrlOptions(),
@@ -45,10 +45,10 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fFile()
 {
    fEpicsSlave = url.HasOption("epicsctrl");
+   fRunSlave = url.HasOption("slave");
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
    fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
    fUseDaqDisk = url.GetOptionInt("diskdemon", 0); // if specified, use number of /data partition from daq_disk demon
-   fDisabled = url.HasOption("disabled");
    fRfio = url.HasOption("rfio");
    fLtsm = url.HasOption("ltsm");
    if (fRfio) {
@@ -88,16 +88,14 @@ bool hadaq::HldOutput::Write_Init()
 
    if (!dabc::FileOutput::Write_Init()) return false;
 
-   if (fEpicsSlave) {
+   if (fEpicsSlave || fRunSlave) {
       // use parameters only in slave mode
 
       fLastUpdate.GetNow();
 
       fRunNumber = 0;
 
-      DOUT0("Reset RUNID in HldOutput::Write_Init");
-
-      ShowInfo(0, "EPICS slave mode is enabled, waiting for runid");
+      ShowInfo(0, dabc::format("%s slave mode is enabled, waiting for runid", (fRunSlave ? "RUN" : "EPICS")));
       return true;
    }
 
@@ -105,18 +103,15 @@ bool hadaq::HldOutput::Write_Init()
 }
 
 
-bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
+bool hadaq::HldOutput::StartNewFile()
 {
    CloseFile();
 
-   if (fDisabled) return true;
-
    if (fRunNumber == 0) {
-      if (fEpicsSlave) {
+      if (fEpicsSlave || fRunSlave) {
          EOUT("Cannot start new file without valid RUNID");
          return false;
       }
-
 
       fRunNumber = hadaq::CreateRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
@@ -148,14 +143,14 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
    std::string extens = hadaq::FormatFilename(fRunNumber,fEBNumber);
    std::string fname = fFileName;
 
-   if (!prefix.empty()) {
+   if (!fLastPrefix.empty() && fRunSlave) {
       // when run in BNet mode, only file path used
       size_t slash = fname.rfind("/");
       if (slash == std::string::npos)
          fname = "";
       else
          fname.erase(slash+1);
-      fname.append(prefix);
+      fname.append(fLastPrefix);
    }
 
    size_t pos = fname.rfind(".hld");
@@ -170,7 +165,7 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
    }
    fCurrentFileName = fname;
 
-   if (fEpicsSlave && fRfio)
+   if ((fEpicsSlave || fRunSlave) && fRfio)
       DOUT1("Before open file %s for writing", CurrentFileName().c_str());
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber, fUrlOptions.c_str())) {
@@ -178,7 +173,7 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
       return false;
    }
 
-   if (fEpicsSlave && fRfio)
+   if ((fEpicsSlave || fRunSlave) && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 
    if (fEpicsSlave && (fRfio || fLtsm)) {
@@ -187,12 +182,12 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
       int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
 
       char sbuf[100];
-      if (fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf))); // can use data mover name here
+      fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf)); // can use data mover name here
 
       dabc::CmdSetParameter cmd("Evtbuild-dataMover", indx);
       dabc::mgr.FindModule("Combiner").Submit(cmd);
       DOUT0("Connected to %s %s, Number:%d", (fRfio ? "Datamover" : "TSM Server") , sbuf, indx);
-  }
+   }
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
@@ -205,17 +200,13 @@ bool hadaq::HldOutput::Write_Retry()
 {
    // HLD output supports retry option
 
-   if (fDisabled) return true;
-
    CloseFile();
-   if (!fEpicsSlave) fRunNumber = 0;
+   if (!fEpicsSlave && !fRunSlave) fRunNumber = 0;
    return true;
 }
 
 bool hadaq::HldOutput::CloseFile()
 {
-   if (fDisabled) return true;
-
    DOUT3(" hadaq::HldOutput::CloseFile()");
    if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
    fFile.Close();
@@ -228,20 +219,10 @@ bool hadaq::HldOutput::CloseFile()
 
 bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
 {
-   std::string mode = cmd.GetStr("mode");
-
-   if (mode == "stop") {
-      CloseFile();
-      fRunNumber = 0;
-      fDisabled = true;
-   } else if (mode == "start") {
-      CloseFile();
-      fDisabled = false;
-      fRunNumber = cmd.GetUInt("runid");
+   if (cmd.GetBool("only_prefix")) {
       // command used by BNet, prefix is not directly stored by the master
       std::string prefix = cmd.GetStr("prefix");
       if (!prefix.empty()) fLastPrefix = prefix;
-      StartNewFile(fLastPrefix);
    } else if (fFile.isWriting()) {
       CloseFile();
       fRunNumber = 0;
@@ -278,18 +259,15 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Error;
    }
 
-   if (fDisabled) return dabc::do_Ok;
-
    unsigned cursor(0);
    bool startnewfile(false);
-   if (fEpicsSlave) {
+   if (fEpicsSlave || fRunSlave) {
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
       unsigned numevents(0), payload(0);
 
-      while (bufiter.NextEvent())
-      {
+      while (bufiter.NextEvent()) {
          uint32_t nextrunid = bufiter.evnt()->GetRunNr();
          if (nextrunid == fRunNumber) {
             numevents++;
@@ -323,7 +301,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
             unsigned write_size = buf.SegmentSize(n);
             if (write_size > payload) write_size = payload;
 
-            if (fEpicsSlave && fRfio)
+            if (fRfio)
                DOUT1("HldOutput write %u bytes from buffer with old runid", write_size);
 
             if (!fFile.WriteBuffer(buf.SegmentPtr(n), write_size)) return dabc::do_Error;
@@ -337,7 +315,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
       //#endif // oldmode
 
-      if (fLastUpdate.Expired(0.2)) {
+      if (fLastUpdate.Expired(0.2) && fEpicsSlave) {
          dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
          fLastUpdate.GetNow();
@@ -351,6 +329,13 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    } // epicsslave
 
    if(startnewfile) {
+      if ((fEpicsSlave || fRunSlave) && (fRunNumber == 0)) {
+         // in slave mode 0 runnumber means do nothing
+         CloseFile();
+         DOUT0("CLOSE FILE WRITING in slave mode");
+         return dabc::do_Ok;
+      }
+
       if (!StartNewFile()) {
          EOUT("Cannot start new file for writing");
          return dabc::do_Error;
@@ -385,12 +370,12 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          cursor = 0;
       }
 
-      if (fEpicsSlave && fRfio && startnewfile)
+      if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
          DOUT1("HldOutput write %u bytes after new file was started", write_size);
 
       if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
-      if (fEpicsSlave && fRfio && startnewfile)
+      if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
          DOUT1("HldOutput did write %u bytes after new file was started", write_size);
 
       total_write_size += write_size;
@@ -399,7 +384,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    // TODO: in case of partial written buffer, account sizes to correct file
    AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
 
-   if (fEpicsSlave && fRfio && startnewfile)
+   if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
       DOUT1("HldOutput write complete first buffer after new file was started");
 
    return dabc::do_Ok;
