@@ -95,6 +95,8 @@ bool hadaq::HldOutput::Write_Init()
 
       fRunNumber = 0;
 
+      DOUT0("Reset RUNID in HldOutput::Write_Init");
+
       ShowInfo(0, "EPICS slave mode is enabled, waiting for runid");
       return true;
    }
@@ -113,6 +115,8 @@ bool hadaq::HldOutput::StartNewFile(const std::string &prefix)
       fRunNumber = hadaq::CreateRunId();
       //std::cout <<"HldOutput Generates New Runid"<<fRunNumber << std::endl;
       ShowInfo(0, dabc::format("HldOutput Generates New Runid %d (0x%x)", fRunNumber, fRunNumber));
+      DOUT0("Generate new RUNID %u 0x%x", fRunNumber, fRunNumber);
+
    }
    if(fUseDaqDisk) {
       dabc::Parameter fDiskNumberPar = dabc::mgr.FindPar("Combiner/Evtbuild-diskNum");
@@ -200,6 +204,7 @@ bool hadaq::HldOutput::Write_Retry()
 
    CloseFile();
    fRunNumber = 0;
+   DOUT0("Reset RUNID in HldOutput::Write_Retry");
    return true;
 }
 
@@ -212,6 +217,8 @@ bool hadaq::HldOutput::CloseFile()
    fFile.Close();
    fCurrentFileSize = 0;
    fRunNumber = 0;
+   DOUT0("Reset RUNID in HldOutput::CloseFile");
+
    fCurrentFileName = "";
    //std::cout <<"Close File resets file size." << std::endl;
    return true;
@@ -224,11 +231,13 @@ bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
    if (mode == "stop") {
       CloseFile();
       fRunNumber = 0;
+      DOUT0("Reset RUNID in HldOutput::Write_Restart1");
       fDisabled = true;
    } else if (mode == "start") {
       CloseFile();
       fDisabled = false;
       fRunNumber = cmd.GetUInt("runid");
+      DOUT0("Reset RUNID in HldOutput::Write_Restart2");
       // command used by BNet, prefix is not directly stored by the master
       std::string prefix = cmd.GetStr("prefix");
       if (!prefix.empty()) fLastPrefix = prefix;
@@ -238,6 +247,7 @@ bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
      if (fFile.isWriting()) {
       CloseFile();
       fRunNumber = 0;
+      DOUT0("Reset RUNID in HldOutput::Write_Restart3");
       StartNewFile();
       cmd.SetStr("FileName", fCurrentFileName);
    }
@@ -340,6 +350,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       if (CheckBufferForNextFile(buf.GetTotalSize())) {
          fRunNumber = 0;
          startnewfile = true;
+         DOUT0("Reset RUNID in HldOutput::Write_Buffer");
       }
 
    } // epicsslave
