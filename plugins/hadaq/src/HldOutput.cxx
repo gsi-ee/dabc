@@ -233,7 +233,9 @@ bool hadaq::HldOutput::Write_Restart(dabc::Command cmd)
       std::string prefix = cmd.GetStr("prefix");
       if (!prefix.empty()) fLastPrefix = prefix;
       StartNewFile(fLastPrefix);
-   } else if (fFile.isWriting()) {
+   } else
+
+     if (fFile.isWriting()) {
       CloseFile();
       fRunNumber = 0;
       StartNewFile();
