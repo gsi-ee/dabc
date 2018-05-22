@@ -265,7 +265,7 @@ bool stream::TdcCalibrationModule::retransmit()
             unsigned tgtlen(0), reslen(0);
             dabc::Buffer resbuf;
             if (!fReplace) {
-               dabc::Buffer resbuf = TakeBuffer();
+               resbuf = TakeBuffer();
                tgt = (unsigned char*) resbuf.SegmentPtr();
                tgtlen = resbuf.SegmentSize();
             }
@@ -281,7 +281,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
 
                   if (auto_create)
-                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
+                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges, (fAutoMode==1));
 
                   unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen);
                   if (tgt) {
@@ -295,7 +295,6 @@ bool stream::TdcCalibrationModule::retransmit()
                unsigned num = fTrbProc->NumberOfTDC();
                for (unsigned indx=0;indx<num;++indx) {
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
-                  if (fAutoMode==1) tdc->SetUseLinear(); // force linear
                   fTDCs.emplace_back(tdc->GetID());
                   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
                }
