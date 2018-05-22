@@ -144,7 +144,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       base::ProcMgr::ClearInstancePointer();
    }
 
-   DOUT0("TdcCalibrationModule dummy %s auto %d", DBOOL(fDummy), fAutoCalibr);
+   DOUT0("TdcCalibrationModule dummy %s auto %d histfill %d ", DBOOL(fDummy), fAutoCalibr, hfill);
 }
 
 stream::TdcCalibrationModule::~TdcCalibrationModule()
@@ -295,7 +295,7 @@ bool stream::TdcCalibrationModule::retransmit()
                unsigned num = fTrbProc->NumberOfTDC();
                for (unsigned indx=0;indx<num;++indx) {
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
-                  if (fAutoMode==0) tdc->SetUseLinear(); // force linear
+                  if (fAutoMode==1) tdc->SetUseLinear(); // force linear
                   fTDCs.emplace_back(tdc->GetID());
                   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
                }
