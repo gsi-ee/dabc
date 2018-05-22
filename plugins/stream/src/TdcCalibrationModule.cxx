@@ -82,7 +82,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       fProcMgr->SetTop(fWorkerHierarchy);
    }
 
-   fTrbProc = new hadaq::TrbProcessor(fTRB, hld);
+   int hfill = Cfg("HistFilling", cmd).AsInt(1);
+
+   fTrbProc = new hadaq::TrbProcessor(fTRB, hld, hfill);
    std::vector<uint64_t> hubid = Cfg("HUB", cmd).AsUIntVect();
    for (unsigned n=0;n<hubid.size();n++)
       fTrbProc->AddHadaqHUBId(hubid[n]);
@@ -90,10 +92,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    unsigned hubmax = Cfg("HUBmax", cmd).AsUInt();
    for (unsigned n=hubmin;n<hubmax;n++)
       fTrbProc->AddHadaqHUBId(hubid[n]);
-
-   int hfill = Cfg("HistFilling", cmd).AsInt(1);
-
-   fTrbProc->SetHistFilling(hfill);
 
    fAutoMode = Cfg("Mode", cmd).AsInt();
 
@@ -261,14 +259,7 @@ bool stream::TdcCalibrationModule::retransmit()
              (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
              (buf.GetTypeId() == hadaq::mbt_HadaqSubevents)) { // this could be data after sorting
 
-            unsigned char* tgt = nullptr;
-            unsigned tgtlen(0), reslen(0);
-            dabc::Buffer resbuf;
-            if (!fReplace) {
-               resbuf = TakeBuffer();
-               tgt = (unsigned char*) resbuf.SegmentPtr();
-               tgtlen = resbuf.SegmentSize();
-            }
+            // this is special case when TDC should be created
 
             bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin < fTdcMax);
 
@@ -312,6 +303,18 @@ bool stream::TdcCalibrationModule::retransmit()
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
                if (num==0) EOUT("No any TDC found");
+            }
+
+
+            // from here starts transformation of the data
+
+            unsigned char* tgt = nullptr;
+            unsigned tgtlen(0), reslen(0);
+            dabc::Buffer resbuf;
+            if (!fReplace) {
+               resbuf = TakeBuffer();
+               tgt = (unsigned char*) resbuf.SegmentPtr();
+               tgtlen = resbuf.SegmentSize();
             }
 
             hadaq::ReadIterator iter(buf);
