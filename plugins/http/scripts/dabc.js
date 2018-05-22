@@ -368,19 +368,19 @@
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state'>Run control</legend>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
-              "<select class='bnet_selectrun'>" + 
-              "<option>be</option>" +
-              "<option>NO_FILE</option>" +
-              "<option value='te'>Test files</option>" +
-              "<option>co</option>" +
-              "<option>md</option>" +
-              "<option>ri</option>" +
-              "<option>ec</option>" +
-              "<option>st</option>" +
-              "<option>rp</option>" +
-              "<option>fw</option>" +
-              "<option>pt</option>" +
-              "<option>tc</option>" +
+              "<select class='bnet_selectrun'>" +
+	      "<option>NO_FILE</option>" +
+              "<option value='be'>Beam file</option>" +
+              "<option value='te'>Test file</option>" +
+              "<option value='co'>Cosmics file</option>" +
+              "<option value='md'>MDC file</option>" +
+              "<option value='ri'>RICH file</option>" +
+              "<option value='ec'>ECAL file</option>" +
+              "<option value='st'>Start file</option>" +
+              "<option value='rp'>RPC file</option>" +
+              "<option value='fw'>FW file</option>" +
+              "<option value='pt'>Pion Tracker file</option>" +
+              "<option value='tc'>TDC Calibration file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
