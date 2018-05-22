@@ -104,7 +104,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
       if (url.HasOption("tdc"))
          mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
       else
-         mcmd.SetInt("AutoMode", calibr);
+         mcmd.SetInt("Mode", calibr);
       if (url.HasOption("hub")) mcmd.SetStr("HUB", url.GetOptionStr("hub"));
       if (url.HasOption("trig")) mcmd.SetStr("CalibrTrigger", url.GetOptionStr("trig"));
       if (url.HasOption("dummy")) mcmd.SetBool("Dummy", true);

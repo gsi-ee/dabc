@@ -95,7 +95,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fTrbProc->SetHistFilling(hfill);
 
-   fAutoMode = Cfg("AutoMode", cmd).AsInt();
+   fAutoMode = Cfg("Mode", cmd).AsInt();
 
    if (fAutoMode == 0) {
       DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
@@ -107,27 +107,27 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       DOUT0("TRB 0x%04x configured in auto mode %d TDC min 0x%04x max 0x%04x", (unsigned) fTRB, fAutoMode, fTdcMin, fTdcMax);
    }
 
-   unsigned calmask = 0xffff;
+   fCalibrMask = 0xffff;
    if ((caltr.size() > 0) && (caltr[0] != 0xffff)) {
-      calmask = 0;
+      fCalibrMask = 0;
       for (unsigned n=0;n<caltr.size();n++)
-         calmask |= (1 << caltr[n]);
+         fCalibrMask |= (1 << caltr[n]);
    }
 
-   fTrbProc->SetCalibrTriggerMask(calmask);
+   fTrbProc->SetCalibrTriggerMask(fCalibrMask);
 
-   std::vector<int64_t> dis_ch = Cfg("DisableCalibrationFor", cmd).AsIntVect();
-   for (unsigned n=0;n<dis_ch.size();n++)
-      fTrbProc->DisableCalibrationFor(dis_ch[n]);
+   fDisabledCh = Cfg("DisableCalibrationFor", cmd).AsIntVect();
+   for (unsigned n=0;n<fDisabledCh.size();n++)
+      fTrbProc->DisableCalibrationFor(fDisabledCh[n]);
 
    fAutoCalibr = Cfg("Auto", cmd).AsInt(0);
    if (fDummy) fAutoCalibr = 1000;
    fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
-   std::string calibrfile = Cfg("CalibrFile", cmd).AsStr();
-   if (!calibrfile.empty()) {
-      fTrbProc->SetWriteCalibrations(calibrfile.c_str(), true);
-      if (fTrbProc->LoadCalibrations(calibrfile.c_str()) || fDummy) {
+   fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
+   if (!fCalibrFile.empty()) {
+      fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
+      if (fTrbProc->LoadCalibrations(fCalibrFile.c_str()) || fDummy) {
          fState = "File";
          item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
       }
@@ -272,6 +272,48 @@ bool stream::TdcCalibrationModule::retransmit()
 
             bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin < fTdcMax);
 
+            if (auto_create) {
+               // special loop over data to create missing TDCs
+
+               hadaq::ReadIterator iter0(buf);
+               // take only first event - all other ignored
+               if (iter0.NextSubeventsBlock()) {
+                  while (iter0.NextSubEvent()) {
+                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter0.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
+                  }
+               }
+
+               fTrbProc->SetCalibrTriggerMask(fCalibrMask);
+
+               for (unsigned n=0;n<fDisabledCh.size();n++)
+                  fTrbProc->DisableCalibrationFor(fDisabledCh[n]);
+
+               fTrbProc->SetAutoCalibrations(fAutoCalibr);
+
+               if (!fCalibrFile.empty()) {
+                  fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
+                  if (fTrbProc->LoadCalibrations(fCalibrFile.c_str())) {
+                     fState = "File";
+                     fWorkerHierarchy.GetHChild("Status").SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+                  }
+               }
+
+               unsigned num = fTrbProc->NumberOfTDC();
+               for (unsigned indx=0;indx<num;++indx) {
+                  hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
+
+                  if (fAutoMode==1) tdc->SetUseLinear(); // force linear
+
+                  fTDCs.emplace_back(tdc->GetID());
+                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
+               }
+
+               // set field with TDCs
+               fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
+
+               if (num==0) EOUT("No any TDC found");
+            }
+
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
                while (iter.NextSubEvent()) {
@@ -279,9 +321,6 @@ bool stream::TdcCalibrationModule::retransmit()
                      EOUT("Not enough space for subevent in output buffer");
                      exit(4); return false;
                   }
-
-                  if (auto_create)
-                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges, (fAutoMode==1));
 
                   unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen);
                   if (tgt) {
@@ -291,27 +330,16 @@ bool stream::TdcCalibrationModule::retransmit()
                }
             }
 
-            if (auto_create) {
-               unsigned num = fTrbProc->NumberOfTDC();
-               for (unsigned indx=0;indx<num;++indx) {
-                  hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
-                  fTDCs.emplace_back(tdc->GetID());
-                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
-               }
-            }
-
             if (!fReplace) {
                resbuf.SetTotalSize(reslen);
                resbuf.SetTypeId(hadaq::mbt_HadaqSubevents);
                buf = resbuf;
             }
 
-            if (fLastCalibr.Expired(1.) || auto_create) {
+            if (fLastCalibr.Expired(1.)) {
                fLastCalibr.GetNow();
 
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
-
-               if (auto_create) item.SetField("tdc", fTDCs);
 
                double p = SetTRBStatus(item, fTrbProc);
                fProgress = (int) (p*100);

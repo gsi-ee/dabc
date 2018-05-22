@@ -48,7 +48,10 @@ namespace stream {
       bool fDummy;                            ///< module creates all TDCs but do not perform any transformation
       bool fReplace;                          ///< replace hit messages (true) or add calibration messages (false)
       int fAutoCalibr;                        ///< amount of statistic for the auto calibration in channels
-      int fDummyCounter;                      ///< used in dummy
+      std::string fCalibrFile;                ///< names to load calibrations
+      unsigned fCalibrMask{0};                ///< mask to used for triggers
+      std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels
+      int fDummyCounter{0};                   ///< used in dummy
       dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often
       int fAutoMode{0};                       ///< automatic mode of TDC creation
       std::vector<uint64_t> fTDCs;            ///< remember TDCs in the beginning
