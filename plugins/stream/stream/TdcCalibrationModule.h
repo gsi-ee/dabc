@@ -53,7 +53,7 @@ namespace stream {
       std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels
       int fDummyCounter{0};                   ///< used in dummy
       dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often
-      int fAutoMode{0};                       ///< automatic mode of TDC creation
+      int fAutoTdcMode{0};                    ///< automatic mode of TDC creation
       std::vector<uint64_t> fTDCs;            ///< remember TDCs in the beginning
       unsigned fTRB{0};                       ///< remember TRB id, used in module name
       int fProgress;                          ///< total calibration progress

@@ -44,9 +44,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fDummy = Cfg("Dummy", cmd).AsBool(false);
    fReplace = Cfg("Replace", cmd).AsBool(true);
 
-   // one need additional buffers
-   if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
-
    fFineMin = Cfg("FineMin", cmd).AsInt();
    fFineMax = Cfg("FineMax", cmd).AsInt();
    if ((fFineMin > 0) && (fFineMax > fFineMin))
@@ -93,16 +90,16 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    for (unsigned n=hubmin;n<hubmax;n++)
       fTrbProc->AddHadaqHUBId(hubid[n]);
 
-   fAutoMode = Cfg("Mode", cmd).AsInt();
+   fAutoTdcMode = Cfg("Mode", cmd).AsInt(-1);
 
-   if (fAutoMode == 0) {
+   if (fAutoTdcMode < 0) {
       DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
       fTDCs = Cfg("TDC", cmd).AsUIntVect();
       for(unsigned n=0;n<fTDCs.size();n++)
          fTrbProc->CreateTDC(fTDCs[n]);
       item.SetField("tdc", fTDCs);
    } else {
-      DOUT0("TRB 0x%04x configured in auto mode %d", (unsigned) fTRB, fAutoMode);
+      DOUT0("TRB 0x%04x configured in auto mode %d", (unsigned) fTRB, fAutoTdcMode);
       for (unsigned n=0;n<fTdcMin.size();++n)
          DOUT0("   TDC range 0x%04x - 0x%04x", (unsigned) fTdcMin[n], (unsigned) fTdcMax[n]);
    }
@@ -144,7 +141,14 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       base::ProcMgr::ClearInstancePointer();
    }
 
-   DOUT0("TdcCalibrationModule dummy %s auto %d histfill %d ", DBOOL(fDummy), fAutoCalibr, hfill);
+   // in AutoTDCMode==0 no data is changed, but also no new buffer are required
+   if ((fAutoTdcMode==0) && !fReplace) fReplace = true;
+
+   // one need additional buffers
+   if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
+
+
+   DOUT0("TdcCalibrationModule dummy %s autotdc %d histfill %d replace %s", DBOOL(fDummy), fAutoCalibr, hfill, DBOOL(fReplace));
 }
 
 stream::TdcCalibrationModule::~TdcCalibrationModule()
@@ -263,7 +267,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
             // this is special case when TDC should be created
 
-            bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0);
+            bool auto_create = (fAutoTdcMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0);
 
             if (auto_create) {
                // special loop over data to create missing TDCs
@@ -295,7 +299,7 @@ bool stream::TdcCalibrationModule::retransmit()
                for (unsigned indx=0;indx<num;++indx) {
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
-                  if (fAutoMode==1) tdc->SetUseLinear(); // force linear
+                  if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
 
                   fTDCs.emplace_back(tdc->GetID());
                   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
@@ -327,7 +331,7 @@ bool stream::TdcCalibrationModule::retransmit()
                      exit(4); return false;
                   }
 
-                  unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen);
+                  unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
                   if (tgt) {
                      tgt += sublen;
                      reslen += sublen;

@@ -87,9 +87,9 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
    std::string portname = portref.GetName();
 
-   int calibr = url.GetOptionInt("calibr");
+   int calibr = url.GetOptionInt("calibr", -1);
 
-   if (url.HasOption("trb") && (url.HasOption("tdc") || ((url.HasOption("calibr") && (calibr>0))))) {
+   if (url.HasOption("trb") && (url.HasOption("tdc") || (calibr>=0))) {
       // first create TDC calibration module, connected to combiner
 
       std::string calname = dabc::format("TRB%04x_TdcCal", (unsigned) url.GetOptionInt("trb"));

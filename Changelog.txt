@@ -5,6 +5,7 @@ about current functionality of the framework.
 23.05.2018
 1. Enable "reduce" parameter for hadaq::UdpTransport. Reduce allowed amount of buffer which
    can be filled by transport. Should be between 0.1 and 1. 
+2. When "calibr=0" specified for UdpTransport, calibration module will only fill basic histograms
 
 
 15.05.2018

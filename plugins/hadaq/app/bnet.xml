@@ -52,7 +52,7 @@
        <TdcMin value="0x1000"/>
        <TdcMax value="0x5000"/>
        
-       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+       <!-- If TDC created automatically, 0-only histograms, 1 - with linear configuration, 2 - with normal calibrations 
             In the URL it is coded as "calibr" parameter -->
        <AutoMode value="0"/>
        
@@ -74,7 +74,7 @@
        <!--  DisableCalibrationFor value="0"/-->
        
        <!-- Number of counts in each channel to perform calibration, 0 - off -->
-       <Auto value="10000000"/>
+       <Auto value="10000"/>
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)
