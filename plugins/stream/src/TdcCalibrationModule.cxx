@@ -54,8 +54,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fNumCh = Cfg("NumChannels", cmd).AsInt(65);
    fEdges = Cfg("EdgeMask", cmd).AsInt(1);
-   fTdcMin = Cfg("TdcMin", cmd).AsUInt();
-   fTdcMax = Cfg("TdcMax", cmd).AsUInt();
+   fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
+   fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
 
    std::vector<uint64_t> caltr = Cfg("CalibrTrigger", cmd).AsUIntVect();
 
@@ -102,7 +102,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          fTrbProc->CreateTDC(fTDCs[n]);
       item.SetField("tdc", fTDCs);
    } else {
-      DOUT0("TRB 0x%04x configured in auto mode %d TDC min 0x%04x max 0x%04x", (unsigned) fTRB, fAutoMode, fTdcMin, fTdcMax);
+      DOUT0("TRB 0x%04x configured in auto mode %d", (unsigned) fTRB, fAutoMode);
+      for (unsigned n=0;n<fTdcMin.size();++n)
+         DOUT0("   TDC range 0x%04x - 0x%04x", (unsigned) fTdcMin[n], (unsigned) fTdcMax[n]);
    }
 
    fCalibrMask = 0xffff;
@@ -261,7 +263,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
             // this is special case when TDC should be created
 
-            bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin < fTdcMax);
+            bool auto_create = (fAutoMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0);
 
             if (auto_create) {
                // special loop over data to create missing TDCs

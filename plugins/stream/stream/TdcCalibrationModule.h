@@ -60,8 +60,8 @@ namespace stream {
       std::string fState;                     ///< current state
       int fFineMin{0};                        ///< configure min value
       int fFineMax{0};                        ///< configure max value
-      unsigned fTdcMin{0};                    ///< configured min TDC id
-      unsigned fTdcMax{0};                    ///< configured max TDC value
+      std::vector<uint64_t> fTdcMin;          ///< configured min TDC id
+      std::vector<uint64_t> fTdcMax;          ///< configured max TDC id
       int fNumCh{33};                         ///< configured number of channel
       int fEdges{1};                          ///< configured edges
 
