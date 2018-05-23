@@ -50,7 +50,6 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>        
      <!--  <lib value="libDabcRfio.so"/> -->
-      <lib value="libDabcHttp.so"/>  
       <lib value="libDabcStream.so"/>  
       <logfile value="BNETIN_${BNINPNUM}.log"/>
       <loglevel value="1"/>
@@ -70,15 +69,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <BufferSize value="200000"/>
        <NumBuffers value="3000"/>
     </MemoryPool>
-
-
-	 <HttpServer name="http">
-       <port value="612${BNINPNUM}"/>
-     </HttpServer>
     
     <Device name="NetDev" class="dabc::SocketDevice"/>
     <Thread name="SpecialThrd" affinity="+1"/>
-    
     
        <!-- these are default parameters for TDC calibration modules -->
     <Module name="TRB*_TdcCal">    
