@@ -12,6 +12,8 @@
       throw e1;
    }
    
+   "use strict";
+   
    JSROOT.gStyle.DragAndDrop = true;
 
    DABC = {};
