@@ -33,17 +33,12 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 <dabc version="2">
 
   <Variables>
-  	<bnetsenders value="${BNETSENDERS}"/>
- 	<bnetreceivers value="${BNETRECEIVERS}"/>
- 	<hadaqports value="${HADAQPORTS}"/>
-	<subevents value="${SUBEVENTS}"/>
-	<calibflags value="${CALIBFLAGS}"/>
-   <udpthreads value="[UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5]"/>
- 	 
-     <!-- <bnetsenders value="[localhost:12501,localhost:12502]"/>
-     <bnetreceivers value="[localhost:12101,localhost:12102]"/>
-     <hadaqports1 value="[50000,50001,50002]"/>
-     <hadaqports2 value="[50003,50004]"/> -->
+     <bnetsenders value="${BNETSENDERS}"/>
+     <bnetreceivers value="${BNETRECEIVERS}"/>
+     <hadaqports value="${HADAQPORTS}"/>
+     <subevents value="${SUBEVENTS}"/>
+     <calibflags value="${CALIBFLAGS}"/>
+     <udpthreads value="[UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5]"/>
   </Variables>
 
   <Context host="${MYHOST}" name="BNET-IN-${BNINPNUM}" port="${BNINPPORT}">
@@ -75,7 +70,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     
     <!--  Thread name="SpecialThrd" affinity="+1"/-->
     
-       <!-- these are default parameters for TDC calibration modules -->
+    <!-- these are default parameters for TDC calibration modules -->
     <Module name="TRB*_TdcCal">    
        <!-- Minimal and maximal bins for linear calibration -->
        <FineMin value="31"/>

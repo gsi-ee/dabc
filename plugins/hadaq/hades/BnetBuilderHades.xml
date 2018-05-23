@@ -52,31 +52,18 @@ DAQDISK - switches disk demon mode on/off
 
 
 
-
-
-
-
-
-
-
 <dabc version="2">
 
   <Variables>
-  		<bnetsenders value="${BNETSENDERS}"/>
- 		<bnetreceivers value="${BNETRECEIVERS}"/>
- 		<hadaqports value="${HADAQPORTS}"/>
- 	 
-     <!-- <bnetsenders value="[localhost:12501,localhost:12502]"/>
-     <bnetreceivers value="[localhost:12101,localhost:12102]"/>
-     <hadaqports1 value="[50000,50001,50002]"/>
-     <hadaqports2 value="[50003,50004]"/> -->
+      <bnetsenders value="${BNETSENDERS}"/>
+      <bnetreceivers value="${BNETRECEIVERS}"/>
+      <hadaqports value="${HADAQPORTS}"/>
   </Variables>
-
 
   <Context host="${MYHOST}" name="BNET-EB-${BNEBNUM}" port="${BNEBPORT}">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>        
+      <lib value="libDabcHadaq.so"/>
       <lib value="libDabcRfio.so"/>
       <lib value="libDabcLtsm.so"/> 
       <logfile value="BNETEB_${BNEBNUM}.log"/>
@@ -112,7 +99,7 @@ DAQDISK - switches disk demon mode on/off
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
-    <Module name="Combiner" class="hadaq::CombinerModule">    
+    <Module name="Combiner" class="hadaq::CombinerModule">
     
        <NodeId value="${BNEBNUM}"/>    
         <!-- these parameters will force to create inputs/outputs of module -->
@@ -130,11 +117,10 @@ DAQDISK - switches disk demon mode on/off
 
        <ExtraDebug value="false"/>
 
-       <DoShmControl value="true"/>  
-       <RunIdFromEPICS value="false"/>  
-       <FlushTimeout value="0.5"/>   
+       <DoShmControl value="true"/>
+       <RunIdFromEPICS value="false"/>
+       <FlushTimeout value="0.5"/>
        <HadesTriggerType value="true"/>
-
 
  <!-- take event sequence number from vulom/roc sync message at cts -->
        <UseSyncSequenceNumber value="false"/>
@@ -154,10 +140,8 @@ DAQDISK - switches disk demon mode on/off
           
        <Runinfo2ora value="true"/>  
     
-       <FilePrefix value="${PREFIX}"/>  
- 
-          
-       
+       <FilePrefix value="${PREFIX}"/>
+
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
@@ -174,11 +158,6 @@ DAQDISK - switches disk demon mode on/off
      <!-- Terminal output like old event builder -->
   <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
  
- 
- 
- 
   </Context>
-
-
 
 </dabc>
