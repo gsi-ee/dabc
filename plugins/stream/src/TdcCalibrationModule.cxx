@@ -305,7 +305,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
                }
 
-               fTrbProc->CreatePerTDCHistos();
+               if (num > 0) fTrbProc->CreatePerTDCHistos();
 
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
