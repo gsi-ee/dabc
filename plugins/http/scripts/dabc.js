@@ -367,7 +367,7 @@
       return lbl;
    }
    
-   DABC.BnetPainter.prototype.RefreshHTML = function() {
+   DABC.BnetPainter.prototype.RefreshHTML = function(lastprefix) {
       
       var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
 
@@ -375,7 +375,7 @@
               "<legend class='bnet_state'>Run control</legend>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" +
-	      "<option>NO_FILE</option>" +
+              "<option>NO_FILE</option>" +
               "<option value='be'>Beam file</option>" +
               "<option value='te'>Test file</option>" +
               "<option value='co'>Cosmics file</option>" +
@@ -467,7 +467,9 @@
       jnode.find(".bnet_startrun").button().click(function() {
          DABC.InvokeCommand(itemname+"/StartRun", "prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
       });
-      jnode.find(".bnet_selectrun").selectmenu({ width: 150 } );
+      var sm = jnode.find(".bnet_selectrun");
+      sm.selectmenu({ width: 150 });
+      if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
       jnode.find(".bnet_stoprun").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
       });
@@ -655,16 +657,20 @@
       
       if (!res) return;
 
-      var inp = null, bld = null, state = null, drate, erate, ninp = [], nbld = [], runid = "", runprefix = "", changed = false;
+      var inp = null, bld = null, state = null, drate, erate, ninp = [], 
+          nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "";
       for (var k in res._childs) {
          var elem = res._childs[k];
-         if (elem._name == "Inputs") { inp = elem.value; ninp = elem.nodes; } else
-         if (elem._name == "Builders") { bld = elem.value; nbld = elem.nodes; } else
-         if (elem._name == "State") { state = elem.value } else
-         if (elem._name == "DataRate") { drate = elem.value } else
-         if (elem._name == "EventsRate") { erate = elem.value } else 
-         if (elem._name == "RunIdStr") { runid = elem.value } else 
-         if (elem._name == "RunPrefix") { runprefix = elem.value }  
+         switch (elem._name) {
+            case "Inputs": inp = elem.value; ninp = elem.nodes; break;
+            case "Builders": bld = elem.value; nbld = elem.nodes; break;
+            case "LastPrefix": lastprefix = elem.value; break;
+            case "State": state = elem.value; break;
+            case "DataRate": drate = elem.value; break;
+            case "EventsRate":  erate = elem.value; break; 
+            case "RunIdStr": runid = elem.value; break; 
+            case "RunPrefix": runprefix = elem.value; break;
+         }
       }
       
       if (state) {
@@ -702,7 +708,7 @@
       
       if (changed) {
          this.DisplayCalItem(0, "");
-         this.RefreshHTML();
+         this.RefreshHTML(lastprefix);
          this.hpainter.reload(); // also refresh hpainter - most probably items are changed 
       }
 

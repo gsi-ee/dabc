@@ -50,6 +50,11 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("value", "");
    item.SetField("_hidden", "true");
 
+   item = fWorkerHierarchy.CreateHChild("LastPrefix");
+   item.SetField(dabc::prop_kind, "Text");
+   item.SetField("value", "");
+   item.SetField("_hidden", "true");
+
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
 
    CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
@@ -87,7 +92,6 @@ void hadaq::BnetMasterModule::AddItem(std::vector<std::string> &items, std::vect
    items.emplace_back(item);
    nodes.emplace_back(node);
 }
-
 
 
 bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
@@ -232,6 +236,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          SetParValue("RunIdStr", fCtrlRunId ? hadaq::FormatFilename(fCtrlRunId,0) : std::string("0"));
          SetParValue("RunPrefix", fCtrlRunPrefix);
 
+         fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", fCtrlRunPrefix);
+
          DOUT3("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
 
          Par("DataRate").SetValue(fCtrlData);
@@ -307,6 +313,8 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       } else {
          query = "mode=stop";
       }
+
+      fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
       for (unsigned n=0; n<builders.size(); ++n) {
          dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
