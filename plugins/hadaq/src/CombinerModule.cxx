@@ -1278,7 +1278,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       }
 
       if (mode == "stop") {
-         if (fRunNumber) { StoreRunInfoStop(); ResetInfoCounters(); }
+         if (fRunNumber) StoreRunInfoStop();
          // reset runid
          fRunNumber = 0;
          DOUT0("STOP FILE WRITING - set RUNID to 0!!!");
@@ -1495,9 +1495,9 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.IsName("RestartTransport")) {
       int num = fBnetFileCmd.GetInt("#replies");
       if (num == 1) {
-         if (fRunNumber) { StoreRunInfoStop(); ResetInfoCounters(); }
+         if (fRunNumber) StoreRunInfoStop();
          fRunNumber = fBnetFileCmd.GetUInt("runid");
-         DOUT0("COMBINER SWITCHES RUN NUMBER %u %x", fRunNumber, fRunNumber);
+         ResetInfoCounters();
          StoreRunInfoStart();
          fBnetFileCmd.Reply(dabc::cmd_true);
       } else {
