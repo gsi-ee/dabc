@@ -203,6 +203,9 @@ namespace dabc {
 
          int distance_to_ownbuf() const { return fBuf.null() ? 0 : Pointer(fBuf).distance_to(*this); }
 
+         /** Returns ratio between filled size and buffer size, 0 when exmpy */
+         float consumed_size() const;
+
          bool is_same_buf(const Pointer& ptr) const { return fBuf == ptr.fBuf; }
 
          unsigned segmid() const { return fSegm; }

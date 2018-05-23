@@ -42,7 +42,7 @@ hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, d
    fSkipCnt(0),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
-   fReduce(reduce < 1. ? reduce : 1.),
+   fReduce(reduce < 0.1 ? 0.1 : (reduce > 1. ? 1. : reduce)),
    fLostRate(lost),
    fLostCnt(lost>0 ? 1 : -1),
    fDebug(debug),
@@ -206,7 +206,7 @@ bool hadaq::NewAddon::ReadUdp()
       fTgtPtr.shift(hadTu->GetPaddedSize());
 
       // when rest size is smaller that mtu, one should close buffer
-      if (fTgtPtr.rawsize() < fMTU) {
+      if ((fTgtPtr.rawsize() < fMTU) || (fTgtPtr.consumed_size() > fReduce)) {
          CloseBuffer();
          tr->BufferReady();
          if (!tr->AssignNewBuffer(0,this)) return false;

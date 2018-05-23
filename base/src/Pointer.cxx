@@ -151,3 +151,10 @@ int dabc::Pointer::distance_to(const Pointer& child) const throw()
 
    return dist + (child.fPtr - left.fPtr);
 }
+
+float dabc::Pointer::consumed_size() const
+{
+   BufferSize_t bufsz = fBuf.GetTotalSize();
+   return (bufsz == 0) ? 0. : 1. * distance_to_ownbuf() / bufsz;
+}
+

@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+23.05.2018
+1. Enable "reduce" parameter for hadaq::UdpTransport. Reduce allowed amount of buffer which
+   can be filled by transport. Should be between 0.1 and 1. 
+
+
 15.05.2018
 1. Let configure parameter as recorded - all value changes will be automatically recorded.
    Before only ratemeter and info parameter were working this way
