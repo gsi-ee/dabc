@@ -274,6 +274,8 @@ namespace hadaq {
               if this is called on eventbuilder exit, we use local time instead ioc/runnumber time*/
          void StoreRunInfoStop(bool onexit=false);
 
+         void ResetInfoCounters();
+
          /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
          char* Unit(unsigned long v);
 

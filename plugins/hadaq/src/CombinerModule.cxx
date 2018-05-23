@@ -496,13 +496,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
          StoreRunInfoStop();
          fRunNumber = fEpicsRunNumber;
 
-         fTotalRecvBytes = 0;
-         fTotalBuildEvents = 0;
-         fTotalDiscEvents = 0;
-         fTotalDroppedData = 0;
-         fTotalTagErrors = 0;
-         fTotalDataErrors = 0;
-
+         ResetInfoCounters();
 
          for (unsigned n=0;n<NumInputs();n++)
          {
@@ -1284,7 +1278,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       }
 
       if (mode == "stop") {
-         if (fRunNumber) StoreRunInfoStop();
+         if (fRunNumber) { StoreRunInfoStop(); ResetInfoCounters(); }
          // reset runid
          fRunNumber = 0;
          DOUT0("STOP FILE WRITING - set RUNID to 0!!!");
@@ -1401,12 +1395,25 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
    struct tm tm_res;
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
    fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
-        std::string filename=GenerateFileName(fRunNumber); // old run number defines old filename
-        fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents));
-        fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
-        fclose(fp);
+   std::string filename = GenerateFileName(fRunNumber); // old run number defines old filename
+   fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents));
+   fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
+   fclose(fp);
    DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents),Unit(fTotalRecvBytes));
+
 }
+
+void hadaq::CombinerModule::ResetInfoCounters()
+{
+   fTotalRecvBytes = 0;
+   fTotalBuildEvents = 0;
+   fTotalDiscEvents = 0;
+   fTotalDroppedData = 0;
+   fTotalTagErrors = 0;
+   fTotalDataErrors = 0;
+
+}
+
 
 
 char* hadaq::CombinerModule::Unit(unsigned long v)
@@ -1488,7 +1495,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.IsName("RestartTransport")) {
       int num = fBnetFileCmd.GetInt("#replies");
       if (num == 1) {
-         if (fRunNumber) StoreRunInfoStop();
+         if (fRunNumber) { StoreRunInfoStop(); ResetInfoCounters(); }
          fRunNumber = fBnetFileCmd.GetUInt("runid");
          DOUT0("COMBINER SWITCHES RUN NUMBER %u %x", fRunNumber, fRunNumber);
          StoreRunInfoStart();
