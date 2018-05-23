@@ -38,6 +38,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
  	<hadaqports value="${HADAQPORTS}"/>
 	<subevents value="${SUBEVENTS}"/>
 	<calibflags value="${CALIBFLAGS}"/>
+   <udpthreads value="[UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5]"/>
  	 
      <!-- <bnetsenders value="[localhost:12501,localhost:12502]"/>
      <bnetreceivers value="[localhost:12101,localhost:12102]"/>
@@ -128,7 +129,10 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <BNETsend value="true"/>
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="30" url="nhadaq://host:${hadaqports}#" urlopt1="calibr=${calibflags}#&trb=${subevents}#" urlopt="udpbuf=200000&mtu=64512&flush=0.2&observer=false&maxloop=1"/>
+       <InputPort name="Input*" queue="30" thread="${udpthreads}#" 
+                  url="nhadaq://host:${hadaqports}#" 
+                  urlopt1="calibr=${calibflags}#&trb=${subevents}#" 
+                  urlopt="udpbuf=200000&mtu=64512&flush=0.2&observer=false&maxloop=1&reduce=0.7"/>
        
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
