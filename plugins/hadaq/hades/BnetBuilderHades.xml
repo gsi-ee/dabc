@@ -129,7 +129,6 @@ DAQDISK - switches disk demon mode on/off
        <ExtraDebug value="false"/>
 
        <ExtraDebug value="false"/>
-        
 
        <DoShmControl value="true"/>  
        <RunIdFromEPICS value="false"/>  
