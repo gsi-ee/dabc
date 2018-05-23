@@ -94,17 +94,19 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
       std::string calname = dabc::format("TRB%04x_TdcCal", (unsigned) url.GetOptionInt("trb"));
 
-      if (url.HasOption("tdc"))
-         DOUT0("Create calibration module %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
-      else
+
+      if (calibr>=0)
          DOUT0("Create calibration module %s AUTOMODE %d", calname.c_str(), calibr);
+      else
+         DOUT0("Create calibration module %s TDCS %s", calname.c_str(), url.GetOptionStr("tdc").c_str());
 
       dabc::CmdCreateModule mcmd("stream::TdcCalibrationModule", calname);
       mcmd.SetStr("TRB", url.GetOptionStr("trb"));
-      if (url.HasOption("tdc"))
-         mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
-      else
+      if (calibr>=0)
          mcmd.SetInt("Mode", calibr);
+      else
+         mcmd.SetStr("TDC", url.GetOptionStr("tdc"));
+
       if (url.HasOption("hub")) mcmd.SetStr("HUB", url.GetOptionStr("hub"));
       if (url.HasOption("trig")) mcmd.SetStr("CalibrTrigger", url.GetOptionStr("trig"));
       if (url.HasOption("dummy")) mcmd.SetBool("Dummy", true);
