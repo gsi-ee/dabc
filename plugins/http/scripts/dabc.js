@@ -186,12 +186,17 @@
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
-            code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "' >"+info.trb.toString(16)+"</button>";
-            for (var j in info.tdc)
-               code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
-         
+            if (!info.tdc) {
+               code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "' >"+info.trb.toString(16)+"_TrigType</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "' >"+info.trb.toString(16)+"_SubevSize</button>";
+            } else {
+               code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "' >"+info.trb.toString(16)+"</button>";
+               for (var j in info.tdc)
+                  code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
+            }
             code += "</div>"; 
-            code += "<div class='hadaq_progress'></div>";
+            if (info.tdc)
+               code += "<div class='hadaq_progress'></div>";
             $(this).html(code);
             $(this).find("button").button().click(function(){ 
                var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
@@ -199,7 +204,8 @@
                var histname = $(this).attr('hist'); 
                hpainter.displayAll([histname],["frameid:dabc_drawing"]);         
             });
-            $(this).find(".hadaq_progress").progressbar({ value: info.progress });
+            if (info.tdc)
+               $(this).find(".hadaq_progress").progressbar({ value: info.progress });
          }
          
          $(this).css('background-color', get_status_color(info.value));
