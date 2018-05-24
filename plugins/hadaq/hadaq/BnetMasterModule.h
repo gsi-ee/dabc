@@ -48,6 +48,9 @@ namespace hadaq {
          double        fCtrlEvents;   ///< accumulated events rate
          unsigned      fCtrlRunId;    ///< received run id from builders
          std::string   fCtrlRunPrefix; ///< received run prefix from builders
+         std::vector<std::string> fLastBuilders; ///< last list of builder nodes
+         int           fSameBuildersCnt; ///< how many time same number of inputs was detected
+         dabc::Command fInitRunCmd;   ///< command used to start run at very beginning, uses delay technique
 
          virtual bool ReplyCommand(dabc::Command cmd);
 

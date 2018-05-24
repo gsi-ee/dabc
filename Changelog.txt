@@ -6,6 +6,10 @@ about current functionality of the framework.
 1. Change logic how stream plugin build - now it is done automatically when STREAMSYS is configured.
    To disable stream compilation, make nostream=1 should be used
 2. Provide method to clear histograms in DabcProcMgr
+3. Provide "oninit" parameter for StartRun command in BNET master.
+   When URL like StartRun/execute?prefix=te&oninit=true is submitted, 
+   command check at least 3 cycle that same and not-empty list of builder nodes is presented.
+   Only then it start execution of the command
 
 
 23.05.2018

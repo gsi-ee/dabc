@@ -30,6 +30,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    double period = Cfg("period", cmd).AsDouble(fControl ? 0.2 : 1);
    CreateTimer("update", period);
 
+   fSameBuildersCnt = 0;
+
    fCmdCnt = 1;
 
    fCtrlId = 1;
@@ -65,7 +67,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
 
    if (fControl) {
-      CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run");
+      CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
+                              .AddArg("oninit", "string", false, "false");
       CreateCmdDef("StopRun");
    }
 
@@ -115,6 +118,25 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             //DOUT0("Get BNET %s", item.ItemName().c_str());
          }
       }
+
+      if ((fLastBuilders.size()>0) && (fLastBuilders == bbuild)) {
+         fSameBuildersCnt++;
+         if ((fSameBuildersCnt>2) && !fInitRunCmd.null()) {
+            DOUT0("DETECTED SAME BUILDERS %d", fSameBuildersCnt);
+
+            fInitRunCmd.SetBool("#verified", true);
+            int res = ExecuteCommand(fInitRunCmd);
+            if (res != dabc::cmd_postponed)
+               fInitRunCmd.Reply(res);
+            else
+               fInitRunCmd.Release();
+         }
+
+      } else {
+         fSameBuildersCnt = 0;
+      }
+
+      fLastBuilders = bbuild;
 
       fWorkerHierarchy.GetHChild("Inputs").SetField("value", binp);
       fWorkerHierarchy.GetHChild("Inputs").SetField("nodes", nodes_inp);
@@ -271,11 +293,31 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 
    if (!fCurrentFileCmd.null() && fCurrentFileCmd.IsTimedout())
       fCurrentFileCmd.Reply(dabc::cmd_false);
+
+   if (!fInitRunCmd.null() && fInitRunCmd.IsTimedout())
+      fInitRunCmd.Reply(dabc::cmd_false);
 }
 
 int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("StartRun") || cmd.IsName("StopRun")) {
+
+      bool isstart = cmd.IsName("StartRun");
+
+      DOUT0("Command %s oninit %s", cmd.GetName(), cmd.GetStr("oninit").c_str());
+
+      if (isstart && cmd.GetBool("oninit") && !cmd.GetBool("#verified")) {
+         DOUT0("Detect START RUN with oninit flag!!!!");
+
+         // this is entry point for StartRun command during initialization
+         // we remember it and checks that at least two time same list of input nodes are collected
+         if (!fInitRunCmd.null()) fInitRunCmd.Reply(dabc::cmd_false);
+         fInitRunCmd = cmd;
+         fSameBuildersCnt = 0; // reset counter
+         if (!cmd.IsTimeoutSet()) cmd.SetTimeout(60.);
+         return dabc::cmd_postponed;
+      }
+
       if (!fCurrentFileCmd.null()) fCurrentFileCmd.Reply(dabc::cmd_false);
 
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
@@ -288,8 +330,6 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCmdCnt++;
 
       if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
-
-      bool isstart = cmd.IsName("StartRun");
 
       cmd.SetInt("#RetCnt", builders.size());
 
