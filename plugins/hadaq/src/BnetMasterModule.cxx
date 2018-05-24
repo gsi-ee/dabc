@@ -68,7 +68,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
 
    if (fControl) {
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
-                              .AddArg("oninit", "string", false, "false");
+                              .AddArg("oninit", "int", false, "0");
       CreateCmdDef("StopRun");
    }
 
@@ -121,7 +121,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if ((fLastBuilders.size()>0) && (fLastBuilders == bbuild)) {
          fSameBuildersCnt++;
-         if ((fSameBuildersCnt>2) && !fInitRunCmd.null()) {
+         if ((fSameBuildersCnt>1) && !fInitRunCmd.null()) {
             DOUT0("DETECTED SAME BUILDERS %d", fSameBuildersCnt);
 
             fInitRunCmd.SetBool("#verified", true);
@@ -306,15 +306,15 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       DOUT0("Command %s oninit %s", cmd.GetName(), cmd.GetStr("oninit").c_str());
 
-      if (isstart && cmd.GetBool("oninit") && !cmd.GetBool("#verified")) {
+      if (isstart && (cmd.GetInt("oninit")>0) && !cmd.GetBool("#verified")) {
          DOUT0("Detect START RUN with oninit flag!!!!");
 
          // this is entry point for StartRun command during initialization
          // we remember it and checks that at least two time same list of input nodes are collected
          if (!fInitRunCmd.null()) fInitRunCmd.Reply(dabc::cmd_false);
          fInitRunCmd = cmd;
-         fSameBuildersCnt = 0; // reset counter
-         if (!cmd.IsTimeoutSet()) cmd.SetTimeout(60.);
+         fSameBuildersCnt = -cmd.GetInt("oninit"); // reset counter
+         if (!cmd.IsTimeoutSet()) cmd.SetTimeout(30. + cmd.GetInt("oninit")*2.);
          return dabc::cmd_postponed;
       }
 
