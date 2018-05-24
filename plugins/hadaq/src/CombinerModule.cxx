@@ -94,6 +94,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxHadaqTrigger / 4;
    fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
    fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
+   fHadesTriggerHUB = Cfg(hadaq::xmlHadesTriggerHUB, cmd).AsUInt(0x8800);
+
 
    std::string ratesprefix = "Hadaq";
 
@@ -652,7 +654,7 @@ int hadaq::CombinerModule::CalcTrigNumDiff(const uint32_t& prev, const uint32_t&
 
 bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp, bool fast, bool dropped)
 {
-   // function used to shift to next event - used in BNET mode
+   // function used to shift to next event - used in BNET builder mode
 
    InputCfg& cfg = fCfg[ninp];
 
@@ -797,20 +799,20 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
       /* Evaluate trigger type:*/
       /* NEW for trb3: trigger type is part of decoding word*/
-      uint32_t val = cfg.subevnt->GetTrigTypeTrb3();
-      if (val || !fHadesTriggerType) {
-         cfg.fTrigType = val;
-         //DOUT0("Inp:%u found trb3 trigger type 0x%x", ninp, cfg.fTrigType);
-      } else {
-         /* evaluate trigger type as in HADESproduction eventbuilders here:*/
+      if (!fHadesTriggerType) {
+         cfg.fTrigType = cfg.subevnt->GetTrigTypeTrb3();
+      } else if (cfg.fHubId == fHadesTriggerHUB) {
          unsigned wordNr = 2;
          uint32_t bitmask = 0xff000000; /* extended mask to contain spill on/off bit*/
          uint32_t bitshift = 24;
          // above from args.c defaults
-         val = cfg.subevnt->Data(wordNr - 1);
+         uint32_t val = cfg.subevnt->Data(wordNr - 1);
          cfg.fTrigType = (val & bitmask) >> bitshift;
          //DOUT0("Inp:%u use trb2 trigger type 0x%x", ninp, cfg.fTrigType);
+      } else {
+         cfg.fTrigType = 0;
       }
+
 #ifndef HADERRBITDEBUG
       cfg.fErrorBits = cfg.subevnt->GetErrBits();
 #else
@@ -1130,8 +1132,14 @@ bool hadaq::CombinerModule::BuildEvent()
       if (dataError) fTotalDataErrors++;
       if (tagError) fTotalTagErrors++;
 
+      unsigned trigtyp = 0;
+      for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+         trigtyp = fCfg[ninp].fTrigType;
+         if (trigtyp) break;
+      }
+
       // here event id, always from "cts master channel" 0
-      unsigned currentid = fCfg[0].fTrigType | (2 << 12); // DAQVERSION=2 for dabc
+      unsigned currentid = trigtyp | (2 << 12); // DAQVERSION=2 for dabc
       //fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
       fEventIdCount[currentid & 0xF]++; // JAM: problem with spill bit?
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));

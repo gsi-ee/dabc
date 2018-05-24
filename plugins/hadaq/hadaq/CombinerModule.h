@@ -164,6 +164,7 @@ namespace hadaq {
 
          /** When true, read trigger type as in original hades event builders */
          bool fHadesTriggerType;
+         unsigned fHadesTriggerHUB;
 
          uint32_t fLastTrigNr;  ///<  last number of build event
 

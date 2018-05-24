@@ -41,6 +41,7 @@ namespace hadaq {
    extern const char* xmlHadaqDiffEventStats;
    extern const char* xmlEvtbuildTimeout;
    extern const char* xmlHadesTriggerType;
+   extern const char* xmlHadesTriggerHUB;
 
    extern const char* NetmemPrefix;
    extern const char* EvtbuildPrefix;

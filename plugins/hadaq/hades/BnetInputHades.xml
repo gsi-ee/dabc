@@ -138,8 +138,11 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <AccountLostEventDiff value="false"/>
        <ExtraDebug value="false"/>
        <FlushTimeout value="0.5"/>
-       <HadesTriggerType value="true"/>
        <TriggerNumRange value="0x1000000"/>
+
+<!--  specifies that trigger type should be extracted from configured CTS hub -->
+       <HadesTriggerType value="true"/>
+       <HadesTriggerHUB value="0x8800"/>
        
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>

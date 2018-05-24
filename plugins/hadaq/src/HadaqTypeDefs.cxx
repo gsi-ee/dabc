@@ -49,6 +49,7 @@ const char* hadaq::xmlHadaqTriggerTollerance = "TriggerTollerance";
 const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
 const char* hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
 const char* hadaq::xmlHadesTriggerType    = "HadesTriggerType";
+const char* hadaq::xmlHadesTriggerHUB     = "HadesTriggerHUB";
 
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";
