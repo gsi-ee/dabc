@@ -222,10 +222,9 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
       }
 
    } else if (name == "HCMD_ClearHistos") {
-      DOUT0("CLEAR HISTOS FOR ITEM");
 
-      res = "false";
-      if (ClearAllHistograms(item)) res = "true";
+      res = ClearAllHistograms(item) ? "true" : "false";
+
    } else {
       std::string kind = item.GetField("_kind").AsStr();
       if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;
@@ -233,7 +232,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
       double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
       if (bins==0) return false;
 
-      name.erase(0,5);
+      name.erase(0,5); // remove HCMD_ prefix
 
       if ((name == "GetMean") || (name=="GetRMS") || (name=="GetEntries")) {
          if (kind != "ROOT.TH1D") return false;

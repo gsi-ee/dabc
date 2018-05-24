@@ -400,10 +400,11 @@
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
-              "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
+              "<button class='bnet_frameclear' title='Clear drawings'>Clr</button>" +
+              "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
+              "<button class='bnet_histclear' title='Clear all histograms'>Hist</button>" +
               "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
               "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
-              "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -498,11 +499,16 @@
          painter.DisplayItem("/" + itemname+"/EventsRate");
       });
 
-      jnode.find(".bnet_clear").button().click(function() {
+      jnode.find(".bnet_frameclear").button().click(function() {
          painter.DisplayCalItem(0, "");
          painter.ClearDisplay();
       });
 
+      jnode.find(".bnet_histclear").button().click(function() {
+         painter.ClearAllHistograms();
+      });
+
+      
       // set DivId after drawing
       this.SetDivId(this.frame);
    }
@@ -552,6 +558,23 @@
                            .select("legend").html("HUB: 0x" + hubid.toString(16));
       
       d3.select(this.frame).select('.bnet_tdc_calibr').html(""); // clear
+   }
+   
+   DABC.BnetPainter.prototype.ClearAllHistograms = function() {
+       for(var indx=0;indx<this.InputItems.length;++indx) {
+          var itemname = this.InputItems[indx],
+              info = this.InputInfo[indx]; 
+          
+          if (!itemname || !info || !info.calibr) continue;
+          
+          itemname = itemname.substr(1, itemname.lastIndexOf("/"));
+          
+          for (var k=0;k<info.calibr.length;++k)  
+             if (info.calibr[k]) 
+                JSROOT.NewHttpRequest(itemname + info.calibr[k] + "/cmd.json?command=ClearHistos", "object").send();
+       }
+       
+       setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
