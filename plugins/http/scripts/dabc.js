@@ -735,6 +735,12 @@
       $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
       $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
       
+      var sm = $(this.frame).find(".bnet_selectrun");
+      if (runprefix && (sm.val() != runprefix)) {
+         sm.val(runprefix); 
+         sm.selectmenu("refresh");
+      }
+      
       if (!DABC.CompareArrays(this.InputItems,inp)) {
          this.InputItems = inp;
          this.InputNodes = ninp;
