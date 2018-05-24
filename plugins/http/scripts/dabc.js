@@ -248,8 +248,8 @@
                  "<button class='store_startfile' title='Start storage of ROOT file'>Start file</button>" +
                  "<button class='store_stopfile' title='Stop storage of ROOT file'>Stop file</button>" +
                  '<input class="store_filename" type="text" name="filename" value="file.root" style="margin-top:5px;"/><br/>' +
-                 "<label class='stream_rate'>Rate: __undefind__</label><br/>"+
-                 "<label class='stream_info'>Info: __undefind__</label>"+
+                 "<label class='stream_rate'>Rate: __undefind__</label><br/>" +
+                 "<label class='stream_info'>Info: __undefind__</label>" +
                  "</fieldset>" +
                  "<fieldset>" +
                  "<legend>Calibration</legend>";
@@ -396,6 +396,7 @@
               "<button class='bnet_clear' title='Clear drawings'>Clr</button>" +
               "<label class='bnet_runid_lbl' title='Current RUNID'>Runid: </label>" +
               "<label class='bnet_runprefix_lbl' title='Current Run Prefix'>Prefix: </label>" +
+              "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
               "</fieldset>";
 
       html += "<fieldset style='margin:5px'>" +
@@ -457,6 +458,12 @@
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
 
       main.selectAll(".bnet_item_clear").on("click", this.ClearDisplay.bind(this));
+      
+      main.select(".bnet_monitoring").on("click", function() {
+         var on = d3.select(this).property('checked');
+         painter.hpainter.EnableMonitoring(on);
+         painter.hpainter.updateAll(!on);
+      });
       
       main.selectAll(".bnet_item_label").on("click", function() {
          painter.DisplayItem(d3.select(this).attr("itemname"));
