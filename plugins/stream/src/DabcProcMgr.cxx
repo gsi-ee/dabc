@@ -183,15 +183,15 @@ bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy& item)
    return true;
 }
 
-void stream::DabcProcMgr::ClearAllHistograms()
+bool stream::DabcProcMgr::ClearAllHistograms(dabc::Hierarchy &folder)
 {
-   dabc::Iterator iter(fTop);
+   dabc::Iterator iter(folder);
+   bool isany = true;
    while (iter.next()) {
-
       dabc::Hierarchy item = iter.ref();
-
-      ClearHistogram(item);
+      if (ClearHistogram(item)) isany = true;
    }
+   return isany;
 }
 
 bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
@@ -207,15 +207,13 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
    if (name == "ROOTCMD") {
       if (item.IsName("Clear")) {
          DOUT0("Call CLEAR");
-         ClearAllHistograms();
+         ClearAllHistograms(fTop);
          res = "true";
-      } else
-      if (item.IsName("Start")) {
+      } else if (item.IsName("Start")) {
          DOUT0("Call START");
          fWorkingFlag = true;
          res = "true";
-      } else
-      if (item.IsName("Stop")) {
+      } else if (item.IsName("Stop")) {
          DOUT0("Call STOP");
          fWorkingFlag = false;
          res = "true";
@@ -223,6 +221,11 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
          res = "false";
       }
 
+   } else if (name == "HCMD_ClearHistos") {
+      DOUT0("CLEAR HISTOS FOR ITEM");
+
+      res = "false";
+      if (ClearAllHistograms(item)) res = "true";
    } else {
       std::string kind = item.GetField("_kind").AsStr();
       if ((kind != "ROOT.TH2D") && (kind != "ROOT.TH1D")) return false;

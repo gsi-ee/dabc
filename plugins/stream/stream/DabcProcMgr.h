@@ -60,7 +60,7 @@ namespace stream {
 
          bool ExecuteHCommand(dabc::Command cmd);
 
-         void ClearAllHistograms();
+         bool ClearAllHistograms(dabc::Hierarchy &folder);
 
          std::string GetStoreInfo() const { return fStoreInfo; }
    };

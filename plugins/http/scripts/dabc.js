@@ -165,7 +165,8 @@
       function makehname(prefix, code, name) {
          var str = code.toString(16).toUpperCase();
          while (str.length<4) str = "0"+str;
-         str = prefix+"_"+str + "_" + name;
+         str = prefix+"_"+str;
+         if (name) str += "_"+name;
          var hitem = null;
          hpainter.ForEach(function(item) { if ((item._name == str) && (hitem==null)) hitem = item; });
          if (hitem) return hpainter.itemFullName(hitem);
@@ -188,6 +189,7 @@
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
+            code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "' >"+"Clr</button>";
             if (!info.tdc) {
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "' >"+info.trb.toString(16)+"_TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "' >"+info.trb.toString(16)+"_SubevSize</button>";
@@ -200,10 +202,15 @@
             if (info.tdc)
                code += "<div class='hadaq_progress'></div>";
             $(this).html(code);
-            $(this).find("button").button().click(function(){ 
+            $(this).find("button").button().click(function(){
+               var histname = $(this).attr('hist');
+               if ($(this).text() == "Clr") {
+                  JSROOT.NewHttpRequest(histname+"/cmd.json?command=ClearHistos", "object").send();
+                  return;
+               }
                var frame = hpainter.GetDisplay().FindFrame("dabc_drawing");
                if (frame) hpainter.GetDisplay().CleanupFrame(frame);
-               var histname = $(this).attr('hist'); 
+                
                hpainter.displayAll([histname],["frameid:dabc_drawing"]);         
             });
             if (info.tdc)
