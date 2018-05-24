@@ -2,6 +2,12 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+24.05.2018
+1. Change logic how stream plugin build - now it is done automatically when STREAMSYS is configured.
+   To disable stream compilation, make nostream=1 should be used
+2. Provide method to clear histograms in DabcProcMgr
+
+
 23.05.2018
 1. Enable "reduce" parameter for hadaq::UdpTransport. Reduce allowed amount of buffer which
    can be filled by transport. Should be between 0.1 and 1. 
