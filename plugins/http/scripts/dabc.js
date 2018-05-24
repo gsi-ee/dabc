@@ -664,6 +664,10 @@
       
       d3.select(this.frame).style('background-color', res ? null : "grey");
       
+      var chkbox = d3.select(this.frame).select(".bnet_monitoring");
+      if (!chkbox.empty() && (chkbox.property('checked') !== this.hpainter.IsMonitoring()))
+         chkbox.property('checked', this.hpainter.IsMonitoring());
+      
       if (!res) return;
 
       var inp = null, bld = null, state = null, drate, erate, ninp = [], 
