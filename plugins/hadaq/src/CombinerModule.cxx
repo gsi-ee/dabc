@@ -181,7 +181,7 @@ hadaq::CombinerModule::~CombinerModule()
 void hadaq::CombinerModule::ModuleCleanup()
 {
    DOUT0("hadaq::CombinerModule::ModuleCleanup()");
-   fIsTerminating=true;
+   fIsTerminating = true;
    StoreRunInfoStop(true); // run info with exit mode
    fOut.Close().Release();
 
@@ -493,7 +493,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
         // run number 0 can occur when master eventbuilder terminates
         // ignore this case, since it may store wrong run info stop time
          DOUT1("Combiner in EPICS slave mode found new RUN ID %d (previous=%d)!",fEpicsRunNumber, fRunNumber);
-         StoreRunInfoStop();
+         StoreRunInfoStop(false, fEpicsRunNumber);
          fRunNumber = fEpicsRunNumber;
 
          ResetInfoCounters();
@@ -1281,7 +1281,6 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
          if (fRunNumber) StoreRunInfoStop();
          // reset runid
          fRunNumber = 0;
-         DOUT0("STOP FILE WRITING - set RUNID to 0!!!");
       }
 
       return dabc::cmd_true;
@@ -1373,7 +1372,7 @@ void hadaq::CombinerModule::StoreRunInfoStart()
 
 }
 
-void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
+void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
 {
    /* open ascii file eb_runinfo2ora.txt to store simple information for
       the stoped RUN. The format: stop <run_id> <date> <time> <events> <bytes>
@@ -1386,10 +1385,10 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit)
    // note that this problem also occured with old EBs
    // only exception: when eventbuilder is discarded we use termination time!
    time_t t;
-   if(onexit)
+   if(onexit || (newrunid==0))
       t = time(NULL);
    else
-      t = fEpicsRunNumber + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
+      t = newrunid + hadaq::HADAQ_TIMEOFFSET; // new run number defines stop time
    FILE *fp;
    char ltime[20];            /* local time */
    struct tm tm_res;
@@ -1495,8 +1494,9 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.IsName("RestartTransport")) {
       int num = fBnetFileCmd.GetInt("#replies");
       if (num == 1) {
-         if (fRunNumber) StoreRunInfoStop();
-         fRunNumber = fBnetFileCmd.GetUInt("runid");
+         unsigned newrunid = fBnetFileCmd.GetUInt("runid");
+         if (fRunNumber) StoreRunInfoStop(false, newrunid);
+         fRunNumber = newrunid;
          ResetInfoCounters();
          StoreRunInfoStart();
          fBnetFileCmd.Reply(dabc::cmd_true);

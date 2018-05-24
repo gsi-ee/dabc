@@ -272,7 +272,7 @@ namespace hadaq {
 
          /* Methods to export run end and statistics to oracle via text file
               if this is called on eventbuilder exit, we use local time instead ioc/runnumber time*/
-         void StoreRunInfoStop(bool onexit=false);
+         void StoreRunInfoStop(bool onexit=false, unsigned newrunid = 0);
 
          void ResetInfoCounters();
 

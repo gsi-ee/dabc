@@ -58,12 +58,6 @@ namespace hadaq {
          bool CloseFile();
          bool StartNewFile();
 
-         /* Methods to export run begin to oracle via text file*/
-         void StoreRunInfoStart();
-
-         /* Methods to export run end and statistics to oracle via text file*/
-         void StoreRunInfoStop();
-
          /* stolen from daqdata/hadaq/logger.c to keep oracle export output format of numbers*/
          char* Unit(unsigned long v);
 
