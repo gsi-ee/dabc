@@ -107,7 +107,7 @@ DAQDISK - switches disk demon mode on/off
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
        
-       <InputPort name="Input*" queue="30"/>
+       <InputPort name="Input*" queue="30" optional="true"/>
 
        <OutputPort name="Output0" url="mbs://Stream:810${BNEBNUM}?iter=hadaq_iter&subid=0x1f"/>
        <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&diskdemon=${DAQDISK}&slave" queue="500"/>
