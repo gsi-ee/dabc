@@ -1303,6 +1303,17 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       return dabc::cmd_true;
 
+   } else if (cmd.IsName("HCMD_DropAllBuffers")) {
+      DOUT0("DROP ALL BUFFERS");
+
+      DropAllInputBuffers();
+      fTotalFullDrops++;
+      fLastDropTm.GetNow();
+
+      std::string res = "true";
+      dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
+      cmd.SetRawData(raw);
+      return dabc::cmd_true;
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);
    }
@@ -1428,10 +1439,7 @@ void hadaq::CombinerModule::ResetInfoCounters()
    fTotalDroppedData = 0;
    fTotalTagErrors = 0;
    fTotalDataErrors = 0;
-
 }
-
-
 
 char* hadaq::CombinerModule::Unit(unsigned long v)
 {

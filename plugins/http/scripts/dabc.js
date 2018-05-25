@@ -398,6 +398,7 @@
               "<option value='tc'>TDC Calibration file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
+              "<button class='bnet_resetdaq' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
               "<button class='bnet_frameclear' title='Clear drawings'>Clr</button>" +
@@ -412,7 +413,7 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_builders_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 18) + "| " + 
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__bld__/HadaqData'", "Data", 8) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all event rates' itemname='__bld__/HadaqEvents'", "Events", 8) + "| " + 
               this.MakeLabel("", "File local", 24) +  "| " + 
@@ -436,7 +437,7 @@
               "<div style='display:flex;flex-direction:column;font-family:monospace'>";
       html += "<div style='float:left' class='jsroot bnet_inputs_header'>"
       html += "<pre style='margin:0'>";
-      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 18) + "| " + 
+      html += this.MakeLabel("class='bnet_item_clear h_item' title='clear drawings'", "Node", 20) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all data rates' itemname='__inp__/HadaqData'", "Data", 8) + "| " + 
               this.MakeLabel("class='bnet_item_label h_item' title='display all events rates' itemname='__inp__/HadaqEvents'", "Events", 8) + "| " + 
               this.MakeLabel("class='bnet_trb_clear h_item' title='remove hubs display'", "HUBs", 4);    
@@ -489,6 +490,11 @@
       if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
       jnode.find(".bnet_stoprun").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
+      });
+      
+      jnode.find(".bnet_resetdaq").button().click(function() { 
+         // if (confirm("Really reset all BNET nodes"))
+            painter.ResetDAQ();
       });
       
       jnode.find(".bnet_totalrate").button().click(function() {
@@ -577,6 +583,17 @@
        setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
    }
    
+   DABC.BnetPainter.prototype.ResetDAQ = function() {
+      for(var indx=0;indx<this.InputItems.length;++indx) {
+         var itemname = this.InputItems[indx].substr(1);
+         JSROOT.NewHttpRequest(itemname+"/cmd.json?command=DropAllBuffers","object").send();
+      }
+      for(var indx=0;indx<this.BuilderItems.length;++indx) {
+         var itemname = this.BuilderItems[indx].substr(1);
+         JSROOT.NewHttpRequest(itemname+"/cmd.json?command=DropAllBuffers","object").send();
+      }
+   }
+   
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
       if (!res) return;
       
@@ -599,7 +616,7 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " queues:" + (res.queues || "-") + "'", this.BuilderNodes[indx].substr(7), 18);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
@@ -607,7 +624,7 @@
          var col = "red";
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + " queues:" + (res.queues || "-") + "'", this.InputNodes[indx].substr(7), 18);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + " cansend:[" + (res.queues || "-") + "]'", this.InputNodes[indx].substr(7), 20);
          itemname = this.InputItems[indx];
       }
       
