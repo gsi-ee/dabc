@@ -265,8 +265,7 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
       }
    }
 
-   dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
-   cmd.SetRawData(raw);
+   cmd.SetStrRawData(res);
 
    return true;
 }

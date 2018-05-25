@@ -345,6 +345,13 @@ bool dabc::Command::SetRawData(Buffer rawdata)
 }
 
 
+bool dabc::Command::SetStrRawData(const std::string &str)
+{
+   dabc::Buffer raw = dabc::Buffer::CreateBuffer(str.c_str(), str.length(), false, true);
+   return SetRawData(raw);
+}
+
+
 dabc::Buffer dabc::Command::GetRawData()
 {
    dabc::Buffer buf = GetField("#RawData").AsBuffer();

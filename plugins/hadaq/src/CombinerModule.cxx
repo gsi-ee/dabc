@@ -1309,9 +1309,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       fTotalFullDrops++;
       fLastDropTm.GetNow();
 
-      std::string res = "true";
-      dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
-      cmd.SetRawData(raw);
+      cmd.SetStrRawData("true");
       return dabc::cmd_true;
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);

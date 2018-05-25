@@ -844,8 +844,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
             replybuf = sub.GetField(field).AsJson();
          }
 
-         Buffer raw = dabc::Buffer::CreateBuffer(replybuf.c_str(), replybuf.length(), false, true);
-         cmd.SetRawData(raw);
+         cmd.SetStrRawData(replybuf);
 
          cmd_res = cmd_true;
       }

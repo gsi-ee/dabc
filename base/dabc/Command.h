@@ -163,6 +163,9 @@ namespace dabc {
          /** \brief Set raw data to the command, which can be transported also between nodes */
          bool SetRawData(Buffer rawdata);
 
+         /** \brief Set raw data with string content */
+         bool SetStrRawData(const std::string &str);
+
          /** \brief Returns reference on raw data
           * Can be called only once - raw data reference will be cleaned */
          Buffer GetRawData();
