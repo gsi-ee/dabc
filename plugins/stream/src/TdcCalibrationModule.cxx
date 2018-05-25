@@ -276,6 +276,10 @@ bool stream::TdcCalibrationModule::retransmit()
                // take only first event - all other ignored
                if (iter0.NextSubeventsBlock()) {
                   while (iter0.NextSubEvent()) {
+                     if (iter0.subevnt()->GetPaddedSize() > iter0.rawdata_maxsize()) {
+                        EOUT("Creating TDCs HUB %u Wrong subevent header len %u maximial %u", fTrbProc->GetID(), iter0.subevnt()->GetPaddedSize(), iter0.rawdata_maxsize());
+                        break;
+                     }
                      fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter0.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
                   }
                }
@@ -328,8 +332,14 @@ bool stream::TdcCalibrationModule::retransmit()
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
                while (iter.NextSubEvent()) {
+
+                  if (iter.subevnt()->GetPaddedSize() > iter.rawdata_maxsize()) {
+                     EOUT("TransferData HUB %u Wrong subevent header len %u maximial %u", fTrbProc->GetID(), iter.subevnt()->GetPaddedSize(), iter.rawdata_maxsize());
+                     break;
+                  }
+
                   if (tgt && (tgtlen - reslen < iter.subevnt()->GetPaddedSize())) {
-                     EOUT("Not enough space for subevent in output buffer");
+                     EOUT("Not enough space for subevent in output buffer for event %u", iter.subevnt()->GetPaddedSize());
                      exit(4); return false;
                   }
 

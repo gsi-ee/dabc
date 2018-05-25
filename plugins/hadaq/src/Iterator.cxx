@@ -245,6 +245,13 @@ bool hadaq::ReadIterator::NextSubEvent()
    return true;
 }
 
+unsigned hadaq::ReadIterator::rawdata_maxsize() const
+{
+   unsigned sz0 = fEvPtr.rawsize(), sz1 = 0;
+   if (!fSubPtr.null()) sz1 = fEvPtr.distance_to(fSubPtr);
+   return sz0>sz1 ? sz0-sz1 : 0;
+}
+
 unsigned hadaq::ReadIterator::NumEvents(const dabc::Buffer& buf)
 {
    ReadIterator iter(buf);

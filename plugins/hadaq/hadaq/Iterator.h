@@ -40,8 +40,7 @@ namespace hadaq {
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::Pointer  fRawPtr;
-
-         unsigned fBufType;
+         unsigned       fBufType;
 
       public:
          ReadIterator();
@@ -67,6 +66,7 @@ namespace hadaq {
 
          /** Used for raw data from TRBs */
          bool NextHadTu();
+
          /** Used for ready HLD events */
          bool NextEvent();
 
@@ -85,6 +85,9 @@ namespace hadaq {
          hadaq::RawSubevent* subevnt() const { return (hadaq::RawSubevent*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
          uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
+
+         /** Try to define maximal length for the raw data */
+         unsigned rawdata_maxsize() const;
 
          static unsigned NumEvents(const dabc::Buffer& buf);
    };
