@@ -92,6 +92,8 @@ DAQDISK - switches disk demon mode on/off
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
     
+    <Application ConnTimeout="60"/>
+    
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="3000"/>

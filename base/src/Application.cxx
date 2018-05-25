@@ -44,6 +44,8 @@ dabc::Application::Application(const char* classname) :
 
    fSelfControl = Cfg("self").AsBool(true);
 
+   fConnTimeout = Cfg("ConnTimeout").AsDouble(5);
+
    PublishPars("$CONTEXT$/App");
 }
 
@@ -140,6 +142,7 @@ void dabc::Application::SetInitFunc(ExternalFunction* initfunc)
 void dabc::Application::SetAppState(const std::string &name)
 {
    SetParValue(StateParName(), name);
+   if (name == stFailure()) DOUT0("Application switched to FAILURE state");
 }
 
 int dabc::Application::DoTransition(const std::string &tgtstate, Command cmd)
@@ -371,7 +374,7 @@ int dabc::Application::CallInitFunc(Command statecmd, const std::string &tgtstat
    if (nconn==0) return cmd_true;
 
    dabc::Command cmd("ActivateConnections");
-   cmd.SetTimeout(5);
+   cmd.SetTimeout(fConnTimeout);
    cmd.SetReceiver(dabc::Manager::ConnMgrName());
 
    cmd.SetRef("StateCmd", statecmd);
