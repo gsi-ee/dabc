@@ -599,7 +599,7 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + "'", this.BuilderNodes[indx].substr(7), 18);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " queues:" + (res.queues || "-") + "'", this.BuilderNodes[indx].substr(7), 18);
          itemname = this.BuilderItems[indx];
       } else {
          this.InputInfo[indx] = res;
@@ -607,7 +607,7 @@
          var col = "red";
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + "'", this.InputNodes[indx].substr(7), 18);
+         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + " queues:" + (res.queues || "-") + "'", this.InputNodes[indx].substr(7), 18);
          itemname = this.InputItems[indx];
       }
       

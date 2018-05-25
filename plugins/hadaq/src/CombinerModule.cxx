@@ -413,6 +413,11 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       if ((NumOutputs() < 1) || !SubmitCommandToTransport(OutputName(0), Assign(cmd3))) {
          fWorkerHierarchy.SetField("mbsinfo", "");
       }
+
+      std::vector<int64_t> qsz;
+      for (unsigned n=0;n<NumInputs();++n)
+         qsz.push_back(NumCanRecv(n));
+      fWorkerHierarchy.SetField("queues", qsz);
    }
 
    if (fBNETsend) {
@@ -465,6 +470,10 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          hubs_info.push_back(sinfo);
       }
 
+      std::vector<int64_t> qsz;
+      for (unsigned n=0;n<NumOutputs();++n)
+         qsz.push_back(NumCanSend(n));
+
       if (nodestate.empty()) nodestate = "Ready";
 
       fWorkerHierarchy.SetField("hubs", hubs);
@@ -473,6 +482,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("calibr", calibr);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("state", nodestate);
+      fWorkerHierarchy.SetField("queues", qsz);
 
       fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
    }
