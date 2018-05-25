@@ -121,7 +121,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if ((fLastBuilders.size()>0) && (fLastBuilders == bbuild)) {
          fSameBuildersCnt++;
-         if ((fSameBuildersCnt>1) && !fInitRunCmd.null()) {
+         if (!fInitRunCmd.null() && (fSameBuildersCnt>cmd.GetInt("oninit"))) {
             DOUT0("DETECTED SAME BUILDERS %d", fSameBuildersCnt);
 
             fInitRunCmd.SetBool("#verified", true);
@@ -313,7 +313,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          // we remember it and checks that at least two time same list of input nodes are collected
          if (!fInitRunCmd.null()) fInitRunCmd.Reply(dabc::cmd_false);
          fInitRunCmd = cmd;
-         fSameBuildersCnt = -cmd.GetInt("oninit"); // reset counter
+         fSameBuildersCnt = 0; // reset counter
          if (!cmd.IsTimeoutSet()) cmd.SetTimeout(30. + cmd.GetInt("oninit")*2.);
          return dabc::cmd_postponed;
       }
