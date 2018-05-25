@@ -493,7 +493,7 @@
       });
       
       jnode.find(".bnet_resetdaq").button().click(function() { 
-         // if (confirm("Really reset all BNET nodes"))
+         if (confirm("Really drop buffers on all BNET nodes"))
             painter.ResetDAQ();
       });
       
@@ -584,14 +584,7 @@
    }
    
    DABC.BnetPainter.prototype.ResetDAQ = function() {
-      for(var indx=0;indx<this.InputItems.length;++indx) {
-         var itemname = this.InputItems[indx].substr(1);
-         JSROOT.NewHttpRequest(itemname+"/cmd.json?command=DropAllBuffers","object").send();
-      }
-      for(var indx=0;indx<this.BuilderItems.length;++indx) {
-         var itemname = this.BuilderItems[indx].substr(1);
-         JSROOT.NewHttpRequest(itemname+"/cmd.json?command=DropAllBuffers","object").send();
-      }
+      JSROOT.NewHttpRequest(this.itemname + "/cmd.json?command=DropAllBuffers", "object").send();
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {

@@ -363,6 +363,28 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       }
 
       return dabc::cmd_postponed;
+   } else if (cmd.IsName("HCMD_DropAllBuffers")) {
+      std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
+      std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
+
+      dabc::WorkerRef publ = GetPublisher();
+      if (publ.null()) return dabc::cmd_false;
+
+      for (unsigned n=0; n<inputs.size(); ++n) {
+         dabc::CmdGetBinary subcmd(inputs[n], "cmd.json", "command=DropAllBuffers");
+         publ.Submit(subcmd);
+      }
+
+      for (unsigned n=0; n<builders.size(); ++n) {
+         dabc::CmdGetBinary subcmd(builders[n], "cmd.json", "command=DropAllBuffers");
+         publ.Submit(subcmd);
+      }
+
+      std::string res = "true";
+      dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
+      cmd.SetRawData(raw);
+
+      return dabc::cmd_true;
    }
 
    return dabc::cmd_true;

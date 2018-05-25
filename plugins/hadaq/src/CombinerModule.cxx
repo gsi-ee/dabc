@@ -1304,7 +1304,6 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
 
    } else if (cmd.IsName("HCMD_DropAllBuffers")) {
-      DOUT0("DROP ALL BUFFERS");
 
       DropAllInputBuffers();
       fTotalFullDrops++;
