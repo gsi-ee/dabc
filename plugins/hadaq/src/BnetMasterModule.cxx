@@ -70,6 +70,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
                               .AddArg("oninit", "int", false, "0");
       CreateCmdDef("StopRun");
+      CreateCmdDef("ResetDAQ");
    }
 
    // Publish(fWorkerHierarchy, "$CONTEXT$/BNET");
@@ -363,7 +364,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       }
 
       return dabc::cmd_postponed;
-   } else if (cmd.IsName("HCMD_DropAllBuffers")) {
+   } else if (cmd.IsName("ResetDAQ")) {
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
       std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
 
@@ -379,10 +380,6 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          dabc::CmdGetBinary subcmd(builders[n], "cmd.json", "command=DropAllBuffers");
          publ.Submit(subcmd);
       }
-
-      std::string res = "true";
-      dabc::Buffer raw = dabc::Buffer::CreateBuffer(res.c_str(), res.length(), false, true);
-      cmd.SetRawData(raw);
 
       return dabc::cmd_true;
    }

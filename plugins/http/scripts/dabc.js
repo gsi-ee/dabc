@@ -494,7 +494,7 @@
       
       jnode.find(".bnet_resetdaq").button().click(function() { 
          if (confirm("Really drop buffers on all BNET nodes"))
-            painter.ResetDAQ();
+            DABC.InvokeCommand(itemname+"/ResetDAQ");
       });
       
       jnode.find(".bnet_totalrate").button().click(function() {
@@ -581,10 +581,6 @@
        }
        
        setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
-   }
-   
-   DABC.BnetPainter.prototype.ResetDAQ = function() {
-      JSROOT.NewHttpRequest(this.itemname + "/cmd.json?command=DropAllBuffers", "object").send();
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
