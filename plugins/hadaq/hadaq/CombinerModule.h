@@ -150,6 +150,28 @@ namespace hadaq {
             fResortIter.Close();
             fResortIndx = -1;
          }
+
+         std::string TriggerRingAsStr(int RingSize) {
+            std::string sbuf;
+
+            unsigned cnt = fRingCnt, prev = 0;
+            if ((int)cnt < RingSize) cnt += HADAQ_RINGSIZE;
+            bool first = true;
+            cnt -= RingSize;
+            for (int n=0;n<RingSize;n++) {
+               if (first && (fTrigNumRing[cnt]==0) && (n!=RingSize-1)) {
+                  // ignore 0 in the beginning
+               } else if (first) {
+                  sbuf.append(dabc::format(" 0x%06x",(unsigned)fTrigNumRing[cnt]));
+                  first = false;
+               } else {
+                  sbuf.append(dabc::format(" %d",(int)fTrigNumRing[cnt] - (int)fTrigNumRing[prev]));
+               }
+
+               prev = cnt; cnt = (cnt+1) % HADAQ_RINGSIZE;
+            }
+            return sbuf;
+         }
       };
 
 

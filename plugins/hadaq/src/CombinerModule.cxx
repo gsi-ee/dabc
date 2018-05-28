@@ -449,7 +449,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          } else {
             rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
             inp.fHubLastSize = info->fTotalRecvBytes;
-            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s",
+            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s  ",
                        info->fNPort,
                        rate,
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
@@ -459,6 +459,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
                        dabc::number_to_str(info->fTotalDiscard32Packet).c_str(),
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
                        dabc::number_to_str(inp.fLostTrig,0).c_str());
+
+            sinfo += inp.TriggerRingAsStr(16);
          }
 
          if (rate<=0) state = "NoData"; else
