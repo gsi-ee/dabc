@@ -658,7 +658,7 @@
                var attr = "hubid='" + res.hubs[k] + "' itemname='" + calitem + "' class='h_item bnet_trb_label'";
                
                html += " " + this.MakeLabel("title='" + title + "' style='" + style + "' " + attr, txt, txt.length);
-               if (totallen>40) break;
+               // if (totallen>40) break;
             }
          } 
 
