@@ -49,6 +49,9 @@ hadaq::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
    fDoClear = Cfg("clear", cmd).AsBool(false);
    fDoShow = Cfg("show", cmd).AsBool(true);
    fRingSize = Cfg("showtrig", cmd).AsInt(10);
+
+   fModuleName = Cfg("mname", cmd).AsStr("Combiner");
+
    if (fRingSize > HADAQ_RINGSIZE) fRingSize = HADAQ_RINGSIZE;
 
    CreateTimer("update", period);
@@ -118,10 +121,10 @@ std::string hadaq::TerminalModule::rate_to_str(double r)
 
 void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 {
-   dabc::ModuleRef m = dabc::mgr.FindModule("Combiner");
+   dabc::ModuleRef m = dabc::mgr.FindModule(fModuleName);
 
-   hadaq::CombinerModule* comb = dynamic_cast<hadaq::CombinerModule*> (m());
-   if (comb==0) return;
+   hadaq::CombinerModule *comb = dynamic_cast<hadaq::CombinerModule*> (m());
+   if (!comb) return;
 
    double delta = fLastTm.SpentTillNow(true);
 
@@ -179,7 +182,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
    if (fServPort>=0) {
       if (fLastServCmd.null()) {
-         s += dabc::format("Server: missing, failed or not found on Combiner/Output%d\n", fServPort);
+         s += dabc::format("Server: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fServPort);
       } else {
          s += dabc::format("Server: clients:%d inpqueue:%d cansend:%s\n", fLastServCmd.GetInt("NumClients"), fLastServCmd.GetInt("NumCanRecv"), fLastServCmd.GetStr("NumCanSend").c_str());
       }
@@ -187,7 +190,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
    if (fFilePort>=0) {
       if (fLastFileCmd.null()) {
-         s += dabc::format("File: missing, failed or not found on Combiner/Output%d\n", fFilePort);
+         s += dabc::format("File: missing, failed or not found on %s/Output%d\n", fModuleName.c_str(), fFilePort);
       } else {
          std::string state = fLastFileCmd.GetStr("OutputState");
          if (state!="Ready") state = std::string(" State: ") + state;

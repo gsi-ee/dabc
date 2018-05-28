@@ -47,17 +47,19 @@ namespace hadaq {
          uint64_t        fTotalDiscEvents;
          uint64_t        fTotalDroppedData;
 
-         bool            fDoClear;      //!< clear terminal when start module
-         bool            fDoShow;       //!< perform output
+         bool            fDoClear;       ///< clear terminal when start module
+         bool            fDoShow;        ///< perform output
          dabc::TimeStamp fLastTm;
          std::vector<CalibrRect> fCalibr;
          int             fServPort;
-         dabc::Command   fLastServCmd;    //!< last received data from file transport
-         bool            fServReqRunning; //!<  is file request running
+         dabc::Command   fLastServCmd;    ///< last received data from file transport
+         bool            fServReqRunning; ///<  is file request running
          int             fFilePort;
-         dabc::Command   fLastFileCmd;    //!< last received data from file transport
-         bool            fFileReqRunning; //!< is file request running
-         int             fRingSize;       //! number of last IDs shown
+         dabc::Command   fLastFileCmd;    ///< last received data from file transport
+         bool            fFileReqRunning; ///< is file request running
+         int             fRingSize;       ///< number of last IDs shown
+
+         std::string     fModuleName;    ///< name of hadaq combiner module
 
          std::string rate_to_str(double r);
 
