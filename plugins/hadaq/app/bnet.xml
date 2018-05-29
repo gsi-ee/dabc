@@ -85,6 +85,8 @@
    <Module name="FirstLevel" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
+       <!-- number of event send to same event builder -->
+       <EB_EVENTS value="16"/>
        <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 
@@ -195,6 +197,8 @@
     <Module name="FirstLevel" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
+       <!-- number of event send to same event builder -->
+       <EB_EVENTS value="16"/>
        <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 

@@ -125,6 +125,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Module name="FirstLevel" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
+        <!-- number of events send to the same event builder -->
+       <EB_EVENTS value="16"/>
+       
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>
        <InputPort name="Input*" queue="30" thread="${udpthreads}#" 

@@ -66,6 +66,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
    fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
+   fBNETbunch = Cfg("EB_EVENTS", cmd).AsBool(16);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
@@ -874,7 +875,7 @@ int hadaq::CombinerModule::DestinationPort(uint32_t trignr)
 {
    if (!fBNETsend || (NumOutputs()<2)) return -1;
 
-   return (trignr/16) % NumOutputs();
+   return (trignr/fBNETbunch) % NumOutputs();
 }
 
 bool hadaq::CombinerModule::CheckDestination(uint32_t trignr)
