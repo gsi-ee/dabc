@@ -1290,7 +1290,6 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
             dabc::Command subcmd("RestartTransport");
             subcmd.SetBool("only_prefix", true);
             subcmd.SetStr("prefix", cmd.GetStr("prefix"));
-	    fPrefix = cmd.GetStr("prefix"); // need to reset prefix here for run info JAM2018
             SubmitCommandToTransport(OutputName(k), Assign(subcmd));
          }
          fBnetFileCmd = cmd;
@@ -1523,6 +1522,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       if (num == 1) {
          unsigned newrunid = fBnetFileCmd.GetUInt("runid");
          if (fRunNumber) StoreRunInfoStop(false, newrunid);
+	 fPrefix =fBnetFileCmd.GetStr("prefix"); // need to reset prefix here for run info JAM2018
          fRunNumber = newrunid;
          ResetInfoCounters();
          StoreRunInfoStart();
