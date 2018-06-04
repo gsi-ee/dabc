@@ -1290,6 +1290,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
             dabc::Command subcmd("RestartTransport");
             subcmd.SetBool("only_prefix", true);
             subcmd.SetStr("prefix", cmd.GetStr("prefix"));
+	    fPrefix = cmd.GetStr("prefix"); // need to reset prefix here for run info JAM2018
             SubmitCommandToTransport(OutputName(k), Assign(subcmd));
          }
          fBnetFileCmd = cmd;
