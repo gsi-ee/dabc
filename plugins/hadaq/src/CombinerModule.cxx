@@ -1522,7 +1522,8 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       if (num == 1) {
          unsigned newrunid = fBnetFileCmd.GetUInt("runid");
          if (fRunNumber) StoreRunInfoStop(false, newrunid);
-	 fPrefix =fBnetFileCmd.GetStr("prefix"); // need to reset prefix here for run info JAM2018
+	 std::string newprefix=fBnetFileCmd.GetStr("prefix");
+	 if(!newprefix.empty()) fPrefix = newprefix; // need to reset prefix here for run info JAM2018
          fRunNumber = newrunid;
          ResetInfoCounters();
          StoreRunInfoStart();
