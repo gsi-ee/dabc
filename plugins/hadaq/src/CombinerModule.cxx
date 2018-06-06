@@ -963,7 +963,7 @@ bool hadaq::CombinerModule::BuildEvent()
    ///////////////////////////////////////////////////////////////////////////////
    // check too large triggertag difference on input channels, flush input buffers
    if (fLastDropTm.Expired(5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || (fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size()>1))) {
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || ((fEventBuildTimeout>0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size()>1))) {
 
         std::string msg;
         if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
