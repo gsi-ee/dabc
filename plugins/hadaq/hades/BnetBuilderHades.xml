@@ -95,8 +95,8 @@ DAQDISK - switches disk demon mode on/off
     <Application ConnTimeout="60"/>
     
     <MemoryPool name="Pool">
-       <BufferSize value="200000"/>
-       <NumBuffers value="3000"/>
+       <BufferSize value="500000"/>
+       <NumBuffers value="5000"/>
     </MemoryPool>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
