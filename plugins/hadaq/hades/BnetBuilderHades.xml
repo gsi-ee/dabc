@@ -82,7 +82,7 @@ DAQDISK - switches disk demon mode on/off
     
      <!-- shmem control config -->
     <Observer name="shm">
-       <DoShmControl value="true"/>
+       <DoShmControl value="false"/>
        <NodeId value="${BNEBNUM}"/>     
     </Observer>  
     
