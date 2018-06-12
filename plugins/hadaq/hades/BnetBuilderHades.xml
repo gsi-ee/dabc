@@ -121,7 +121,7 @@ DAQDISK - switches disk demon mode on/off
 
        <ExtraDebug value="false"/>
 
-       <DoShmControl value="true"/>
+       <DoShmControl value="false"/>
        <RunIdFromEPICS value="false"/>
        <FlushTimeout value="0.5"/>
        
