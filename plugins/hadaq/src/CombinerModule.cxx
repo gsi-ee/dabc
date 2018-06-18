@@ -513,20 +513,20 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 
          ResetInfoCounters();
 
-         for (unsigned n=0;n<NumInputs();n++)
-         {
-            SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
-
-            // JAM BUGFIX JUL14: errorbits not reset
-            for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
-               fErrorbitPattern[ptrn] = 0;
-               fCfg[n].fErrorbitStats[ptrn]=0;
-            }
-            fCfg[n].fLastEvtBuildTrigId=0;
-         }
-
-         for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
-            fEventIdCount[i]=0;
+//          for (unsigned n=0;n<NumInputs();n++)
+//          {
+//             SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
+// 
+//             // JAM BUGFIX JUL14: errorbits not reset
+//             for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
+//                fErrorbitPattern[ptrn] = 0;
+//                fCfg[n].fErrorbitStats[ptrn]=0;
+//             }
+//             fCfg[n].fLastEvtBuildTrigId=0;
+//          }
+// 
+//          for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
+//             fEventIdCount[i]=0;
 
          StoreRunInfoStart();
       }
@@ -1438,7 +1438,22 @@ void hadaq::CombinerModule::ResetInfoCounters()
    fTotalDiscEvents = 0;
    fTotalDroppedData = 0;
    fTotalTagErrors = 0;
-   fTotalDataErrors = 0;
+   fTotalDataErrors = 0;      
+    for (unsigned n=0;n<NumInputs();n++)
+         {
+            SubmitCommandToTransport(InputName(n), dabc::Command("ResetExportedCounters"));
+
+            // JAM BUGFIX JUL14: errorbits not reset
+            for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
+               fErrorbitPattern[ptrn] = 0;
+               fCfg[n].fErrorbitStats[ptrn]=0;
+            }
+            fCfg[n].fLastEvtBuildTrigId=0;
+         }
+
+         for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
+            fEventIdCount[i]=0;
+     
 }
 
 char* hadaq::CombinerModule::Unit(unsigned long v)
