@@ -135,7 +135,7 @@ DAQDISK - switches disk demon mode on/off
        <PrintSync value="false"/>
        <FlushBySync value="false"/>
        <!-- TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
-       <TriggerNumRange value="0x10000"/>
+       <TriggerNumRange value="0x1000000"/>
        <!--  Do not throw away events when subevens TAGs are differ  --> 
        <CheckTag value="false"/>
 
