@@ -78,7 +78,7 @@ namespace dabc {
             Object(0,"cont", flAutoDestroy | flIsOwner),
             fEnabled(false),
             fChildsEnabled(false),
-            fPrev(0),
+            fPrev(nullptr),
             fArr(),
             fRemoteReqVersion(0),
             fLocalReqVersion(0),
@@ -87,17 +87,17 @@ namespace dabc {
 
          virtual ~HistoryContainer()
          {
-            delete fPrev; fPrev = 0;
+            delete fPrev; fPrev = nullptr;
          }
 
          uint64_t StoreSize(uint64_t version, int hist_limit = -1);
 
-         bool Stream(iostream& s, uint64_t version, int hist_limit = -1);
+         bool Stream(iostream &s, uint64_t version, int hist_limit = -1);
 
          RecordFieldsMap* TakeNext()
          {
-            if (fArr.Size()==0) return 0;
-            RecordFieldsMap* next = fArr.Front().take();
+            if (fArr.Size()==0) return nullptr;
+            RecordFieldsMap *next = fArr.Front().take();
             fArr.PopOnly();
             return next;
          }

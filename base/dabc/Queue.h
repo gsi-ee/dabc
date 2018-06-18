@@ -156,11 +156,11 @@ namespace dabc {
          {
             if (fSize>0) {
                if (fHead>fTail) {
-                  memcpy(tgt, fTail, (fHead - fTail) * sizeof(T));
+                  memcpy((void *)tgt, fTail, (fHead - fTail) * sizeof(T));
                } else {
                   unsigned sz = fBorder - fTail;
-                  memcpy(tgt, fTail, sz * sizeof(T));
-                  memcpy(tgt + sz, fQueue, (fHead - fQueue) * sizeof(T));
+                  memcpy((void *)tgt, fTail, sz * sizeof(T));
+                  memcpy((void *) (tgt + sz), fQueue, (fHead - fQueue) * sizeof(T));
                }
             }
          }
