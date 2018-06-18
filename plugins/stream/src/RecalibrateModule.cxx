@@ -110,7 +110,6 @@ bool stream::RecalibrateModule::retransmit()
                unsigned len = fHLD->TransformEvent(iter.evnt(), iter.evntsize(), tgt(), tgt.rawsize());
                if (len==0) { EOUT("Fail to transform HLD event"); break; }
                if (tgt.shift(len)!=len) { EOUT("no enough space to shift to next event"); exit(5); break; }
-               //DOUT0("New event size %u diff %d distance %d", len, len - iter.evnt()->GetPaddedSize(), tgt.distance_to(resbuf));
             }
 
             //DOUT0("Buffer size %u Result size %d", buf.GetTotalSize(), tgt.distance_to_ownbuf());

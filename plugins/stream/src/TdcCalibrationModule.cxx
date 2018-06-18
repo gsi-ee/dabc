@@ -30,7 +30,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fProcMgr(0),
    fOwnProcMgr(false),
    fTrbProc(0),
-   fDummy(true),
+   fDummy(false),
    fReplace(true),
    fAutoCalibr(1000),
    fDummyCounter(0),
@@ -42,6 +42,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fLastCalibr.GetNow();
 
    fDummy = Cfg("Dummy", cmd).AsBool(false);
+   fDebug = Cfg("Debug", cmd).AsBool(false);
    fReplace = Cfg("Replace", cmd).AsBool(true);
 
    fFineMin = Cfg("FineMin", cmd).AsInt();
@@ -147,6 +148,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    // one need additional buffers
    if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
 
+   if (fDebug) CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
 
    DOUT0("TdcCalibrationModule dummy %s autotdc %d histfill %d replace %s", DBOOL(fDummy), fAutoCalibr, hfill, DBOOL(fReplace));
 }
@@ -215,7 +217,6 @@ double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::
 }
 
 
-
 bool stream::TdcCalibrationModule::retransmit()
 {
    // method reads one buffer, calibrate it and send further
@@ -226,6 +227,8 @@ bool stream::TdcCalibrationModule::retransmit()
       if (!fReplace && !CanTakeBuffer()) return false;
 
       dabc::Buffer buf = Recv();
+
+      if (fDebug) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
       if (fDummy) {
 
@@ -343,7 +346,12 @@ bool stream::TdcCalibrationModule::retransmit()
                      exit(4); return false;
                   }
 
-                  unsigned sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
+                  unsigned sublen = 0;
+
+                  // sublen = iter.subevnt()->GetPaddedSize();
+
+                  sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
+
                   if (tgt) {
                      tgt += sublen;
                      reslen += sublen;
