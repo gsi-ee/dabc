@@ -122,6 +122,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    if (fDummy) fAutoCalibr = 1000;
    fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
+   fCountLinear = Cfg("CountLinear", cmd).AsInt(10000);
+   fCountNormal = Cfg("CountNormal", cmd).AsInt(100000);
+
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
    if (!fCalibrFile.empty()) {
       fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
@@ -180,8 +183,9 @@ double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::
       if (tdc!=0) {
 
          double progr = tdc->GetCalibrProgress();
+         std::string sname = tdc->GetCalibrStatus();
 
-         if (tdc->GetCalibrStatus().find("Ready")==0) {
+         if (sname.find("Ready")==0) {
             if (p1 > progr) p1 = progr;
          } else {
             if (p0 < progr) p0 = progr;
@@ -190,7 +194,7 @@ double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::
 
          tdcs.push_back(tdc->GetID());
          tdc_progr.push_back((int) (progr*100.));
-         status.push_back(tdc->GetCalibrStatus());
+         status.push_back(sname);
       } else {
          tdcs.push_back(0);
          tdc_progr.push_back(0);
@@ -295,7 +299,8 @@ bool stream::TdcCalibrationModule::retransmit()
                fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
                if (!fCalibrFile.empty()) {
-                  fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
+                  if (fAutoCalibr > 0)
+                      fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
                   if (fTrbProc->LoadCalibrations(fCalibrFile.c_str())) {
                      fState = "File";
                      fWorkerHierarchy.GetHChild("Status").SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());

@@ -49,6 +49,8 @@ namespace stream {
       bool fDebug{false};                     ///< when specified, provides more debug output
       bool fReplace;                          ///< replace hit messages (true) or add calibration messages (false)
       int fAutoCalibr;                        ///< amount of statistic for the auto calibration in channels
+      int fCountLinear;                       ///< number of count for liner calibrations when starting explicitly
+      int fCountNormal;                       ///< number of counts for normal calibrations when starting explicitly
       std::string fCalibrFile;                ///< names to load calibrations
       unsigned fCalibrMask{0};                ///< mask to used for triggers
       std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels

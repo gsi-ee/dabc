@@ -79,9 +79,12 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <FineMax value="480"/>
        
        <!-- number of TDC channels -->
-       <NumChannels value="65"/>
+       <NumChannels value="33"/>
        
-       <!-- 1 - use only rising edge, falling edge is ignore
+       <!-- this is configuration of input, connected with UdpTransport -->
+       <InputPort name="*" queue="300"/>       
+       
+       <!-- 1 - use only rising edge, falling edge is ignored
             2 - falling edge enabled and fully independent from rising edge
             3 - falling edge enabled and uses calibration from rising edge
             4 - falling edge enabled and common statistic is used for calibration -->
@@ -91,9 +94,10 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <TdcMin value="0x5000"/>
        <TdcMax value="0x8000"/>
        
-       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+       <!-- Which calibration mode is used, when TDC created automatically:
+            0 - none, 1 - linear mode, 2 - with normal calibrations 
             In the URL it is coded as "calibr" parameter -->
-       <AutoMode value="0"/>
+       <Mode value="1"/>
        
        <!-- histogram filling level
             0 - no histograms,
@@ -106,14 +110,19 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
        
-       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
+       <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - array with trigger types -->
        <CalibrTrigger value="0xffff"/>
        
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
        
-       <!-- Number of counts in each channel to perform calibration, 0 - off -->
-       <Auto value="2000"/>
+       <!-- Number of counts in each channel to perform calibration, 0 - switch off auto calibration -->
+       <Auto value="100000"/>
+
+       <!-- Number of counts for different kinds of calibrations -->
+       <CountLinear value="10000"/>
+       <CountNormal value="100000"/>
+       
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)
