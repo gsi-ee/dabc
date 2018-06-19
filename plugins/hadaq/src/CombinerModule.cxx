@@ -97,7 +97,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
    fHadesTriggerHUB = Cfg(hadaq::xmlHadesTriggerHUB, cmd).AsUInt(0x8800);
 
-
    std::string ratesprefix = "Hadaq";
 
    for (unsigned n = 0; n < NumInputs(); n++) {
@@ -137,8 +136,9 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
       CreatePar("RunFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
       CreatePar("LtsmFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
       CreateCmdDef("BnetFileControl").SetField("_hidden", true);
+   } else if (fBNETsend) {
       CreateCmdDef("BnetCalibrControl").SetField("_hidden", true);
-   } else if (!fBNETrecv) {
+   } else {
       CreateCmdDef("StartHldFile")
          .AddArg("filename", "string", true, "file.hld")
          .AddArg(dabc::xml_maxsize, "int", false, 1500)
@@ -1302,7 +1302,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    } else if (cmd.IsName("BnetCalibrControl")) {
 
-      if (!fBNETrecv && fWithObserver && !fIsTerminating)
+      if (fBNETsend && !fIsTerminating)
          for (unsigned n = 0; n < NumInputs(); n++) {
             dabc::Command subcmd("TdcCalibrations");
             subcmd.SetStr("mode", cmd.GetStr("mode"));

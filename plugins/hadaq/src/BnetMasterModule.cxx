@@ -355,6 +355,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          query = "mode=stop";
       }
 
+      std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
       fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
       for (unsigned n=0; n<builders.size(); ++n) {
@@ -365,13 +366,14 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       query = "";
 
-      if (isstart && (prefix == "tc")) {
+      if (isstart && (prefix == "tc") && lastprefix.empty()) {
          query = "mode=start";
-      } else if (!isstart && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr() == "tc")) {
+      } else if (!isstart && (lastprefix == "tc")) {
          query = "mode=stop";
       }
 
       if (!query.empty()) {
+
          // trigger calibration start for all TDCs
          std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
 
