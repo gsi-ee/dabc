@@ -102,7 +102,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
 
       dabc::CmdCreateModule mcmd("stream::TdcCalibrationModule", calname);
       mcmd.SetStr("TRB", url.GetOptionStr("trb"));
-      if (calibr>=0)
+      if ((calibr>=0) && !url.HasOption("dummy"))
          mcmd.SetInt("Mode", calibr);
       else
          mcmd.SetStr("TDC", url.GetOptionStr("tdc"));

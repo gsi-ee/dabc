@@ -363,6 +363,24 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          publ.Submit(Assign(subcmd));
       }
 
+      query = "";
+
+      if (isstart && (prefix == "tc")) {
+         query = "mode=start";
+      } else if (!isstart && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr() == "tc")) {
+         query = "mode=stop";
+      }
+
+      if (!query.empty()) {
+         // trigger calibration start for all TDCs
+         std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
+
+         for (unsigned n=0; n<inputs.size(); ++n) {
+            dabc::CmdGetBinary subcmd(inputs[n] + "/BnetCalibrControl", "execute", query);
+            publ.Submit(subcmd);
+         }
+      }
+
       return dabc::cmd_postponed;
    } else if (cmd.IsName("ResetDAQ")) {
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();

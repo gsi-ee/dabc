@@ -53,6 +53,7 @@ namespace stream {
       int fCountNormal;                       ///< number of counts for normal calibrations when starting explicitly
       std::string fCalibrFile;                ///< names to load calibrations
       unsigned fCalibrMask{0};                ///< mask to used for triggers
+      bool fDoingTdcCalibr{false};            ///< indicates if module doing explicit TDC calibrations
       std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels
       int fDummyCounter{0};                   ///< used in dummy
       dabc::TimeStamp fLastCalibr;            ///< use not to check for calibration very often

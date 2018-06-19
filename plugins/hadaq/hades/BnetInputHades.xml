@@ -117,12 +117,11 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!--  DisableCalibrationFor value="0"/-->
        
        <!-- Number of counts in each channel to perform calibration, 0 - switch off auto calibration -->
-       <Auto value="100000"/>
+       <Auto value="0"/>
 
        <!-- Number of counts for different kinds of calibrations -->
        <CountLinear value="10000"/>
        <CountNormal value="100000"/>
-       
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)

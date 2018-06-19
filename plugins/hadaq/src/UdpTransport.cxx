@@ -379,11 +379,17 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
       if (addon!=0) addon->ClearCounters();
       UpdateExportedCounters();
       return dabc::cmd_true;
-   } else
+   }
+
    if (cmd.IsName("GetHadaqTransportInfo")) {
       TransportInfo *info = (TransportInfo*) (dynamic_cast<NewAddon*> (fAddon()));
       cmd.SetPtr("Info", info);
       cmd.SetUInt("UdpPort", info ? info->fNPort : 0);
+      return dabc::cmd_true;
+   }
+
+   if (cmd.IsName("TdcCalibrations")) {
+      // ignore this command
       return dabc::cmd_true;
    }
 

@@ -8,7 +8,7 @@
      <hadaqports1 value="[50000,50001,50002]"/>
      <hadaqports2 value="[50003,50004]"/>
      <masteraddr value="localhost:23456"/>
-     <test_time value="3000"/>
+     <test_time value="300000"/>
   </Variables>
 
   <Context host="localhost" name="FirstLvl1" port="12501">
@@ -40,7 +40,7 @@
        <FineMax value="480"/>
        
        <!-- number of TDC channels -->
-       <NumChannels value="65"/>
+       <NumChannels value="33"/>
        
        <!-- 1 - use only rising edge, falling edge is ignore
             2 - falling edge enabled and fully independent from rising edge
@@ -52,9 +52,9 @@
        <TdcMin value="0x1000"/>
        <TdcMax value="0x5000"/>
        
-       <!-- If TDC created automatically, 0-only histograms, 1 - with linear configuration, 2 - with normal calibrations 
+       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
             In the URL it is coded as "calibr" parameter -->
-       <AutoMode value="0"/>
+       <Mode value="0"/>
        
        <!-- histogram filling level
             0 - no histograms,
@@ -74,7 +74,11 @@
        <!--  DisableCalibrationFor value="0"/-->
        
        <!-- Number of counts in each channel to perform calibration, 0 - off -->
-       <Auto value="10000"/>
+       <Auto value="0"/>
+
+       <!-- Number of counts for different kinds of calibrations -->
+       <CountLinear value="10000"/>
+       <CountNormal value="100000"/>
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)
@@ -90,21 +94,20 @@
        <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 
-       <InputPort name="Input0" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&dummy"/>
-       <InputPort name="Input1" urlopt1="trb=0x8010&tdc=[0x3010,0x3011,0x3012,0x3013]&dummy"/>
-       <InputPort name="Input2" urlopt1="trb=0x8020&tdc=[0x3020,0x3021,0x3022,0x3023]&dummy"/>
+       <InputPort name="Input0" urlopt1="trb=0x8000&calibr=0"/>
+       <InputPort name="Input1" urlopt1="trb=0x8010&calibr=0"/>
+       <InputPort name="Input2" urlopt1="trb=0x8020&calibr=0"/>
 
        <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
-
 
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
-       <OutputPort name="Output*" optional="true"/>
+       <OutputPort name="Output*" optional="true" queue="30"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>
-       <FlushTimeout value="0.5"/>   
+       <FlushTimeout value="0.5"/>
        <TriggerNumRange value="0x1000000"/>
        
        <!-- rate meters configuration, not seen with terminal module -->
@@ -117,6 +120,8 @@
      
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input0"/>
+
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
      
 <!--      <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input0"/> -->
      
@@ -151,7 +156,7 @@
        <FineMax value="480"/>
        
        <!-- number of TDC channels -->
-       <NumChannels value="65"/>
+       <NumChannels value="33"/>
        
        <!-- 1 - use only rising edge, falling edge is ignore
             2 - falling edge enabled and fully independent from rising edge
@@ -160,12 +165,12 @@
        <EdgeMask value="1"/>
        
        <!-- when auto mode enabled - this is allowed range for TDC ids -->
-       <TdcMin value="0x1000"/>
-       <TdcMax value="0x5000"/>
+       <TdcMin value="[0x1000, 0x3000]"/>
+       <TdcMax value="[0x2000, 0x5000]"/>
        
        <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
             In the URL it is coded as "calibr" parameter -->
-       <AutoMode value="0"/>
+       <Mode value="-1"/>
        
        <!-- histogram filling level
             0 - no histograms,
@@ -173,7 +178,7 @@
             2 - basic statistic for TDC (like hits per channel)
             3 - histograms for each active channel will be created, 
             4 - also reference histograms could be created (not yet available in DABC)  -->
-       <HistFilling value="4"/>
+       <HistFilling value="3"/>
        
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
@@ -185,7 +190,11 @@
        <!--  DisableCalibrationFor value="0"/-->
        
        <!-- Number of counts in each channel to perform calibration, 0 - off -->
-       <Auto value="10000000"/>
+       <Auto value="0"/>
+
+       <!-- Number of counts for different kinds of calibrations -->
+       <CountLinear value="10000"/>
+       <CountNormal value="100000"/>
 
        <!-- Should calibrated value replace old message (true, set by default) or
             new calibration data should be inserted before hit messages (false)
@@ -202,15 +211,15 @@
        <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 
-       <InputPort name="Input0" urlopt1="trb=0x8100&tdc=[0x4000,0x4001,0x4002,0x4003]&dummy"/>
-       <InputPort name="Input1" urlopt1="trb=0x8110&tdc=[0x4010,0x4011,0x4012,0x4013]&dummy"/>
+       <InputPort name="Input0" urlopt1="trb=0x8100&calibr=0"/>
+       <InputPort name="Input1" urlopt1="trb=0x8110&calibr=0"/>
 
        <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
 <!--        <InputPort name="Input0" url="nhadaq://host:50003"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50004"/> -->
 
        
-       <OutputPort name="Output*" optional="true"/>
+       <OutputPort name="Output*" optional="true" queue="30"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>
@@ -227,6 +236,8 @@
 
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input1"/>
+
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
 
 <!--     <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input1"/> -->
     
@@ -255,6 +266,8 @@
        <BufferSize value="200000"/>
        <NumBuffers value="500"/>
     </MemoryPool>
+    
+    <Application ConnTimeout="60"/>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
@@ -263,6 +276,8 @@
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="2"/>
+
+       <InputPort name="*" queue="30" optional="true"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6781?iter=hadaq_iter&subid=0x1f"/>
@@ -321,12 +336,16 @@
     </MemoryPool>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
+    
+    <Application ConnTimeout="60"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="2"/>
+
+       <InputPort name="*" queue="30" optional="true"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6782?iter=hadaq_iter&subid=0x1f"/>

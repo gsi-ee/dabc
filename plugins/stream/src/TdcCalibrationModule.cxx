@@ -93,7 +93,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fAutoTdcMode = Cfg("Mode", cmd).AsInt(-1);
 
-   if (fAutoTdcMode < 0) {
+   if ((fAutoTdcMode < 0) || fDummy) {
       DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
       fTDCs = Cfg("TDC", cmd).AsUIntVect();
       for(unsigned n=0;n<fTDCs.size();n++)
@@ -119,7 +119,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       fTrbProc->DisableCalibrationFor(fDisabledCh[n]);
 
    fAutoCalibr = Cfg("Auto", cmd).AsInt(0);
-   if (fDummy) fAutoCalibr = 1000;
+   if (fDummy && (fAutoCalibr>0)) fAutoCalibr = 1000;
    fTrbProc->SetAutoCalibrations(fAutoCalibr);
 
    fCountLinear = Cfg("CountLinear", cmd).AsInt(10000);
@@ -239,17 +239,18 @@ bool stream::TdcCalibrationModule::retransmit()
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
          fDummyCounter++;
-         if ((fDummyCounter>fAutoCalibr) && (fAutoCalibr>0)) {
-            fDummyCounter = 0;
+
+         fProgress = 0;
+         if (fAutoCalibr>0) fProgress = (int) (100*fDummyCounter/fAutoCalibr); else
+         if (fDoingTdcCalibr) fProgress = (int) (100*fDummyCounter/1000);
+         item.SetField("progress", fProgress);
+
+         if (fProgress >= 100) {
+            if (fAutoCalibr>0) fDummyCounter = 0;
             fState = "Ready";
             item.SetField("value", fState);
             item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
          }
-
-         fProgress = 0;
-         if (fAutoCalibr>0) fProgress = (int) (100*fDummyCounter/fAutoCalibr);
-
-         item.SetField("progress", fProgress);
 
          std::vector<int64_t> progr;
          progr.assign(fTDCs.size(), fProgress);
@@ -413,6 +414,23 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       // redirect command to real transport
       cmd.SetStr("CalibrModule", ItemName());
       if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+      return dabc::cmd_true;
+   }
+
+   if (cmd.IsName("TdcCalibrations")) {
+      fDummyCounter = 0; // only for debugging
+
+      fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
+
+      unsigned num = fTrbProc->NumberOfTDC();
+      for (unsigned indx=0;indx<num;++indx) {
+         hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
+
+         if (cmd.GetStr("mode") == "start")
+            tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
+         else
+            tdc->CompleteCalibration();
+      }
       return dabc::cmd_true;
    }
 
