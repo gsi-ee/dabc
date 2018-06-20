@@ -326,6 +326,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
 		    fOwner.c_str(), fFsname.c_str());
 	    free(fSession);
+	    fSession=0;  
 	    return false;
 	    }
 
