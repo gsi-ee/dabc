@@ -605,16 +605,20 @@
          var col = "red";
          if (hadaqstate.value == "NoFile") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.BuilderItems[indx] + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
          itemname = this.BuilderItems[indx];
+         var pos = itemname.lastIndexOf("/");
+         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + 
+                                 col + "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
          var col = "red";
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
-         html += this.MakeLabel("style='background-color:" + col + "' title='Item: " + this.InputItems[indx] + "  State: " + hadaqstate.value + " cansend:[" + (res.queues || "-") + "]'", this.InputNodes[indx].substr(7), 20);
          itemname = this.InputItems[indx];
+         var pos = itemname.lastIndexOf("/");
+         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col + 
+                                "' title='Item: " + itemname + "  State: " + hadaqstate.value + " cansend:[" + (res.queues || "-") + "]'", this.InputNodes[indx].substr(7), 20);
       }
       
       var prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
@@ -671,7 +675,7 @@
           main = elem.html(html);
       
       main.selectAll(".bnet_item_label").on("click", function() {
-        painter.DisplayItem(d3.select(this).attr("itemname"));
+         painter.DisplayItem(d3.select(this).attr("itemname"));
       });
       main.selectAll(".bnet_trb_label").on("click", function() {
          painter.DisplayCalItem(parseInt(d3.select(this).attr("hubid")), d3.select(this).attr("itemname"));
