@@ -96,8 +96,13 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    if ((fAutoTdcMode < 0) || fDummy) {
       DOUT0("TRB 0x%04x  creates TDCs %s", (unsigned) fTRB, Cfg("TDC", cmd).AsStr().c_str());
       fTDCs = Cfg("TDC", cmd).AsUIntVect();
-      for(unsigned n=0;n<fTDCs.size();n++)
+      for(unsigned n=0;n<fTDCs.size();n++) {
          fTrbProc->CreateTDC(fTDCs[n]);
+
+         hadaq::TdcProcessor *tdc = fTrbProc->GetTDC(fTDCs[n], true);
+         if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
+         tdc->UseExplicitCalibration();
+      }
       item.SetField("tdc", fTDCs);
    } else {
       DOUT0("TRB 0x%04x configured in auto mode %d", (unsigned) fTRB, fAutoTdcMode);
@@ -313,6 +318,8 @@ bool stream::TdcCalibrationModule::retransmit()
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
                   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
+
+                  tdc->UseExplicitCalibration();
 
                   fTDCs.emplace_back(tdc->GetID());
                   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
