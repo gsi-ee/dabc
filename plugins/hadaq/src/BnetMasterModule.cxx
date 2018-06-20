@@ -216,10 +216,13 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          if (item.GetField("_bnet").AsStr() == "receiver") is_builder = true;
 
          std::string state = item.GetField("state").AsStr();
+         // double quality = item.GetField("quality").AsDouble();
 
          if (state=="Ready") {
             // ok
-         } else if (((state=="NoCalibr") || (state=="NoFile")) && (fCtrlState<2)) {
+         } else if (!is_builder && state == "File") {
+            // ok - calibrations taken from file
+         } else if (((state=="Accumulating") || (state=="NoFile")) && (fCtrlState<2)) {
             fCtrlState = 1;
             if (fCtrlStateName.empty()) fCtrlStateName = state;
          } else {

@@ -608,12 +608,18 @@
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
          var col = "red";
+         if (hadaqstate.value == "Accumulating") col = "lightblue"; else
          if (hadaqstate.value == "NoCalibr") col = "yellow"; else
          if (hadaqstate.value == "Ready") col = "lightgreen";
          itemname = this.InputItems[indx];
+         var title = "Item: " + itemname + "  State: " + hadaqstate.value;
+         if ((hadaqstate.value == "Accumulating") && (res.quality>100))
+            title += " progress:" + ((res.quality-100)*100).toFixed(0); 
+         title += " cansend:[" + (res.queues || "-") + "]";
+
          var pos = itemname.lastIndexOf("/");
          html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col + 
-                                "' title='Item: " + itemname + "  State: " + hadaqstate.value + " cansend:[" + (res.queues || "-") + "]'", this.InputNodes[indx].substr(7), 20);
+                                "' title='" + title + "'", this.InputNodes[indx].substr(7), 20);
       }
       
       var prefix = "class='bnet_item_label h_item' itemname='" + itemname + "/";
@@ -737,7 +743,8 @@
          
          var col = "red";
          if (state=="Ready") col = "lightgreen"; else
-         if ((state=="NoFile") || (state == "NoCalibr")) col = "yellow"; 
+         if (state=="Accumulating") col = "lightblue"; else 
+         if (state=="NoFile") col = "yellow"; 
          
          $(this.frame).find(".bnet_startrun").css('background-color',col);
       }

@@ -424,6 +424,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
    if (fBNETsend) {
       std::string nodestate = "";
+      double node_quality = 1e10;
 
       std::vector<uint64_t> hubs, ports;
       std::vector<std::string> calibr, hubs_state, hubs_info;
@@ -445,7 +446,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
          std::string state = "", sinfo = "";
          hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
-         double rate = 0.;
+         double rate = 0., hub_quality = 1e6;
 
          if (!info) {
             sinfo = "missing transport-info";
@@ -466,11 +467,17 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo += inp.TriggerRingAsStr(16);
          }
 
-         if (rate<=0) state = "NoData"; else
-         if (!inp.fCalibr.empty() && (inp.fCalibrState != "Ready")) state = "NoCalibr";
+         if (rate<=0) { state = "NoData"; hub_quality = 0.1; } else
+         if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
+            state = inp.fCalibrState;
+            hub_quality = inp.fCalibrQuality;
+         }
 
-         if (state.empty()) state = "Ready"; else
-         if (nodestate.empty() && (nodestate != "NoData")) nodestate = state;
+         if (hub_quality < node_quality) {
+            node_quality = hub_quality;
+            nodestate = state;
+         }
+
          hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
          hubs_quality.push_back(inp.fCalibrQuality);
@@ -480,7 +487,12 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       for (unsigned n=0;n<NumOutputs();++n)
          qsz.push_back(NumCanSend(n));
 
-      if (nodestate.empty()) nodestate = "Ready";
+      if (nodestate.empty() || ((node_quality>0.7) && (node_quality <= 2))) {
+         nodestate = "Ready";
+         node_quality = 1.;
+      } else if ((nodestate == "Accumulating") && (node_quality>=101)) {
+         nodestate = "Ready";
+      }
 
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("hubs_info", hubs_info);
@@ -488,6 +500,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("calibr", calibr);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("state", nodestate);
+      fWorkerHierarchy.SetField("quality", node_quality);
       fWorkerHierarchy.SetField("queues", qsz);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
 

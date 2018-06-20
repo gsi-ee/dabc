@@ -133,11 +133,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
    if (!fCalibrFile.empty()) {
-      fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
-      if (fTrbProc->LoadCalibrations(fCalibrFile.c_str()) || fDummy) {
-         fState = "File";
-         item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
-      }
+      if ((fAutoTdcMode < 0) && (fAutoCalibr>0))
+         fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
+      fTrbProc->LoadCalibrations(fCalibrFile.c_str());
    }
 
    item.SetField("value", fState);
@@ -247,7 +245,6 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    item.SetField("tdc_status", status);
    item.SetField("tdc_quality", tdc_quality);
 
-
    if (res_progress) *res_progress = (int) (fabs(progress)*100);
    if (res_quality) *res_quality = worse_quality;
    if (res_state) *res_state = worse_status;
@@ -347,10 +344,7 @@ bool stream::TdcCalibrationModule::retransmit()
                if (!fCalibrFile.empty()) {
                   if (fAutoCalibr > 0)
                       fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
-                  if (fTrbProc->LoadCalibrations(fCalibrFile.c_str())) {
-                     fState = "File";
-                     fWorkerHierarchy.GetHChild("Status").SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
-                  }
+                  fTrbProc->LoadCalibrations(fCalibrFile.c_str());
                }
 
                unsigned num = fTrbProc->NumberOfTDC();
@@ -458,7 +452,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       cmd.SetUInt("trb", fTRB);
       cmd.SetField("tdcs", fTDCs);
       cmd.SetInt("progress", fProgress);
-      cmd.SetInt("quality", fQuality);
+      cmd.SetDouble("quality", fQuality);
       cmd.SetStr("state", fState);
       return dabc::cmd_true;
    }
@@ -474,8 +468,6 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fDummyCounter = 0; // only for debugging
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
-
-      DOUT0("%s GET TdcCalibrations command start %s", GetName(), DBOOL(fDoingTdcCalibr));
 
       unsigned num = fTrbProc->NumberOfTDC();
       for (unsigned indx=0;indx<num;++indx) {
