@@ -41,7 +41,7 @@ namespace hadaq {
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
          int           fCtrlCnt;    ///< how many control replies are awaited
-         int           fCtrlState;  ///< 0-ok (green), 1-partially (yellow), 2-red
+         double        fCtrlStateQuality;  ///< <0.3 error, <0.7 warning, more is ok
          std::string   fCtrlStateName; ///< current name
          bool          fCtrlSzLimit; ///< when true, size limit was exceed
          double        fCtrlData;    ///< accumulated data rate

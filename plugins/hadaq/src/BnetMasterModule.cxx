@@ -58,6 +58,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("_hidden", "true");
 
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
+   CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("1.0");
 
    CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
    CreatePar("RunIdStr").SetFld(dabc::prop_kind, "Text").SetValue("--");
@@ -154,7 +155,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlTm.GetNow(3.);
 
       fCtrlSzLimit = false;
-      fCtrlState = 0;
+      fCtrlStateQuality = 1e10;
       fCtrlStateName = "";
       fCtrlData = 0.;
       fCtrlEvents = 0.;
@@ -216,18 +217,11 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          if (item.GetField("_bnet").AsStr() == "receiver") is_builder = true;
 
          std::string state = item.GetField("state").AsStr();
-         // double quality = item.GetField("quality").AsDouble();
+         double quality = item.GetField("quality").AsDouble();
 
-         if (state=="Ready") {
-            // ok
-         } else if (!is_builder && state == "File") {
-            // ok - calibrations taken from file
-         } else if (((state=="Accumulating") || (state=="NoFile")) && (fCtrlState<2)) {
-            fCtrlState = 1;
-            if (fCtrlStateName.empty()) fCtrlStateName = state;
-         } else {
-            fCtrlState = 2;
-            fCtrlStateName = "Error";
+         if (fCtrlStateName.empty() || (quality < fCtrlStateQuality)) {
+            fCtrlStateQuality = quality;
+            fCtrlStateName = state;
          }
 
          if (is_builder) {
@@ -244,9 +238,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
                   fCtrlRunId = runid;
                   fCtrlRunPrefix = runprefix;
                } else if ((fCtrlRunId != runid) || (fCtrlRunPrefix != runprefix)) {
-                  if (fCtrlState<2) {
+                  if (fCtrlStateQuality>0) {
                      fCtrlStateName = "RunMismatch";
-                     fCtrlState = 2;
+                     fCtrlStateQuality = 0;
                   }
                }
             }
@@ -256,8 +250,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       }
 
       if (fCtrlCnt==0) {
-         if (fCtrlStateName.empty()) fCtrlStateName = "Ready";
+         if (fCtrlStateName.empty()) { fCtrlStateName = "Ready"; fCtrlStateQuality = 1.; }
          SetParValue("State", fCtrlStateName);
+         SetParValue("Quality", fCtrlStateQuality);
          SetParValue("RunId", fCtrlRunId);
          SetParValue("RunIdStr", fCtrlRunId ? hadaq::FormatFilename(fCtrlRunId,0) : std::string("0"));
          SetParValue("RunPrefix", fCtrlRunPrefix);

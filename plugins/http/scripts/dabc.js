@@ -578,6 +578,15 @@
        setTimeout(this.hpainter.updateAll.bind(this.hpainter, false), 1000);
    }
    
+   DABC.BnetPainter.prototype.GetQualityColor = function(quality) {
+      if (quality <= 0) return "red";
+      if (quality < 0.3) return "pink";
+      if (quality < 0.7) return "yellow";
+      if (quality<=1) return "lightgreen";
+      if (quality<=2) return "green"; 
+      return "lightblue";
+   }
+   
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
       if (!res) return;
       
@@ -597,20 +606,22 @@
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         var col = "red";
-         if (hadaqstate.value == "NoFile") col = "yellow"; else
-         if (hadaqstate.value == "Ready") col = "lightgreen";
+         //var col = "red";
+         //if (hadaqstate.value == "NoFile") col = "yellow"; else
+         //if (hadaqstate.value == "Ready") col = "lightgreen";
+         var col = this.GetQualityColor(res.quality);
+         console.log('state', res.quality, col);
          itemname = this.BuilderItems[indx];
          var pos = itemname.lastIndexOf("/");
-         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + 
-                                 col + "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
+         html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col + 
+                                "' title='Item: " + itemname + "  State: " + hadaqstate.value + "  " + (res.mbsinfo || "") + " canrecv:[" + (res.queues || "-") + "]'", this.BuilderNodes[indx].substr(7), 20);
       } else {
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
-         var col = "red";
-         if (hadaqstate.value == "Accumulating") col = "lightblue"; else
-         if (hadaqstate.value == "NoCalibr") col = "yellow"; else
-         if (hadaqstate.value == "Ready") col = "lightgreen";
+         var col = this.GetQualityColor(res.quality);
+         // if (hadaqstate.value == "Accumulating") col = "lightblue"; else
+         // if ((hadaqstate.value == "NoCalibr") || (hadaqstate.value == "LowStat")) col = "yellow"; else
+         // if (hadaqstate.value == "Ready") col = "lightgreen";
          itemname = this.InputItems[indx];
          var title = "Item: " + itemname + "  State: " + hadaqstate.value;
          if ((hadaqstate.value == "Accumulating") && (res.quality>100))
@@ -658,16 +669,7 @@
                if (res.hubs_quality[k] < 2) title += " quality:" + res.hubs_quality[k]; else
                if (res.hubs_quality[k] >= 100) title += " progress:" + ((res.hubs_quality[k]-100)*100).toFixed(0);
                title += " " + res.hubs_info[k];
-               var style = "background-color:";
-               
-               if (res.hubs_quality[k]==0) style+="red"; else
-               if (res.hubs_quality[k]<0.3) style+="lightred"; else
-               if (res.hubs_quality[k]<0.7) style+="yellow"; else
-               if (res.hubs_quality[k]<=1) style+="lightgreen"; else
-               if (res.hubs_quality[k]<=2) style+="green"; else style+="lightblue";
-               
-               //if (res.hubs_state[k]=="Ready") style+="lightgreen"; else
-               //if (res.hubs_state[k]=="NoCalibr") style+="lightblue"; else style+="red";
+               var style = "background-color:" + this.GetQualityColor(res.hubs_quality[k]);
                var calitem = "";
                if (res.calibr[k]) 
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];
@@ -722,7 +724,7 @@
       
       if (!res) return;
 
-      var inp = null, bld = null, state = null, drate, erate, ninp = [], 
+      var inp = null, bld = null, state = null, quality = null, drate, erate, ninp = [], 
           nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "";
       for (var k in res._childs) {
          var elem = res._childs[k];
@@ -731,6 +733,7 @@
             case "Builders": bld = elem.value; nbld = elem.nodes; break;
             case "LastPrefix": lastprefix = elem.value; break;
             case "State": state = elem.value; break;
+            case "Quality": quality = elem.value; break;
             case "DataRate": drate = elem.value; break;
             case "EventsRate":  erate = elem.value; break; 
             case "RunIdStr": runid = elem.value; break; 
@@ -739,14 +742,12 @@
       }
       
       if (state) {
-         d3.select(this.frame).select(".bnet_state").text("Run control: " + state);
-         
-         var col = "red";
-         if (state=="Ready") col = "lightgreen"; else
-         if (state=="Accumulating") col = "lightblue"; else 
-         if (state=="NoFile") col = "yellow"; 
-         
-         $(this.frame).find(".bnet_startrun").css('background-color',col);
+         var col = this.GetQualityColor(quality || 0);
+         // col = "red";
+         //if (state=="Ready") col = "lightgreen"; else
+         //if (state=="Accumulating") col = "lightblue"; else 
+         //if (state=="NoFile") col = "yellow";
+         d3.select(this.frame).select(".bnet_state").text("Run control: " + state).style('background-color',col);
       }
       
       if (typeof drate == 'number')

@@ -398,6 +398,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          fWorkerHierarchy.SetField("runprefix", std::string());
          fWorkerHierarchy.SetField("state", "NoFile");
          fWorkerHierarchy.GetHChild("State").SetField("value", "NoFile");
+         fWorkerHierarchy.SetField("quality", 0.5); // not very bad - just inform that file not written
       }
 
       dabc::Command cmd2("GetTransportStatistic");
@@ -1539,11 +1540,13 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 
       Par("RunFileSize").SetValue(runsz/1024./1024.);
 
-      std::string state = "Ready";
-      if (Par(fEventRateName).Value().AsDouble() == 0) state = "NoData"; else
-      if ((runid==0) && runname.empty()) state = "NoFile";
+      std::string state = "File";
+      double quality = 0.99;
+      if (Par(fEventRateName).Value().AsDouble() == 0) { state = "NoData"; quality = 0.1; } else
+      if ((runid==0) && runname.empty()) { state = "NoFile"; quality = 0.5; }
 
       fWorkerHierarchy.SetField("state", state);
+      fWorkerHierarchy.SetField("quality", quality);
       fWorkerHierarchy.GetHChild("State").SetField("value", state);
 
       return true;
