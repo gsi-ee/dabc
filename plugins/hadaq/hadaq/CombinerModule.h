@@ -83,6 +83,7 @@ namespace hadaq {
          bool        fCalibrReq;   ///< when true, request was send
          int         fCalibrProgr; ///< calibration progress
          std::string fCalibrState; ///< calibration state
+         double      fCalibrQuality; ///< calibration quality
          uint64_t    fHubLastSize; ///< last size
 
 
@@ -113,6 +114,7 @@ namespace hadaq {
             fCalibrReq(false),
             fCalibrProgr(0),
             fCalibrState(),
+            fCalibrQuality(0.),
             fHubLastSize(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;i++)

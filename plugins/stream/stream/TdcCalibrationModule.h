@@ -62,6 +62,7 @@ namespace stream {
       unsigned fTRB{0};                       ///< remember TRB id, used in module name
       int fProgress;                          ///< total calibration progress
       std::string fState;                     ///< current state
+      double fQuality;                        ///< current calibration quality
       int fFineMin{0};                        ///< configure min value
       int fFineMax{0};                        ///< configure max value
       std::vector<uint64_t> fTdcMin;          ///< configured min TDC id
@@ -86,7 +87,7 @@ namespace stream {
 
       virtual void BeforeModuleStart() { DOUT2("START CALIBR MODULE"); }
 
-      static double SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb);
+      static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress = 0, double *res_quality = 0, std::string *res_state = 0);
 
    };
 

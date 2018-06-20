@@ -427,6 +427,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
       std::vector<uint64_t> hubs, ports;
       std::vector<std::string> calibr, hubs_state, hubs_info;
+      std::vector<double> hubs_quality;
       for (unsigned n=0;n<fCfg.size();n++) {
          InputCfg &inp = fCfg[n];
 
@@ -472,6 +473,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (nodestate.empty() && (nodestate != "NoData")) nodestate = state;
          hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
+         hubs_quality.push_back(inp.fCalibrQuality);
       }
 
       std::vector<int64_t> qsz;
@@ -487,6 +489,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("state", nodestate);
       fWorkerHierarchy.SetField("queues", qsz);
+      fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
 
       fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
    }
@@ -1492,6 +1495,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          // fCfg[n].tdcs = cmd.GetField("tdcs").AsUIntVect();
          fCfg[n].fCalibrProgr = cmd.GetInt("progress");
          fCfg[n].fCalibrState = cmd.GetStr("state");
+         fCfg[n].fCalibrQuality = cmd.GetDouble("quality");
       }
       return true;
    } else if (cmd.IsName("GetTransportStatistic")) {

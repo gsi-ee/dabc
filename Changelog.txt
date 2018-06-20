@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+20.06.2018
+1. Implement implicit calibration mode for DABC. In this case calibration is started by 
+   the command from the control GUI and all hits are accumulated for calibration. 
+ 
+
 25.05.2018
 1. Add connection timeout to Application configuration. Should be configured like:
       <Application ConnTimeout="60"/>

@@ -18,7 +18,7 @@
 
    DABC = {};
 
-   DABC.version = "2.9.9 25/05/2018";
+   DABC.version = "2.9.9 20/06/2018";
    
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');
@@ -143,12 +143,6 @@
             return "/"+prefix+"_"+str+"/"+prefix+"_"+str+"_"+name;
          }
 
-         function get_status_color(status) {
-            if (status.indexOf('Ready')==0) return 'green';
-            if (status.indexOf('File')==0) return 'blue';
-            return 'red';
-         }
-         
          inforeq = JSROOT.NewHttpRequest(url, "object", function(res) {
             inforeq = null;
             if (!res) return;
@@ -177,6 +171,7 @@
       function get_status_color(status) {
          if (status.indexOf('Ready')==0) return 'green';
          if (status.indexOf('File')==0) return 'blue';
+         if (status.indexOf('Accum')==0) return 'lightblue';
          return 'red';
       }
       
@@ -652,10 +647,21 @@
                   frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               var title = "state:" + res.hubs_state[k] + " " + res.hubs_info[k];
+               var title = "state:" + res.hubs_state[k];
+               // quality == 2 is file, quality >= 100 is accumulating of new statistic
+               if (res.hubs_quality[k] < 2) title += " quality:" + res.hubs_quality[k]; else
+               if (res.hubs_quality[k] >= 100) title += " progress:" + ((res.hubs_quality[k]-100)*100).toFixed(0);
+               title += " " + res.hubs_info[k];
                var style = "background-color:";
-               if (res.hubs_state[k]=="Ready") style+="lightgreen"; else
-               if (res.hubs_state[k]=="NoCalibr") style+="lightblue"; else style+="red";
+               
+               if (res.hubs_quality[k]==0) style+="red"; else
+               if (res.hubs_quality[k]<0.3) style+="lightred"; else
+               if (res.hubs_quality[k]<0.7) style+="yellow"; else
+               if (res.hubs_quality[k]<=1) style+="lightgreen"; else
+               if (res.hubs_quality[k]<=2) style+="green"; else style+="lightblue";
+               
+               //if (res.hubs_state[k]=="Ready") style+="lightgreen"; else
+               //if (res.hubs_state[k]=="NoCalibr") style+="lightblue"; else style+="red";
                var calitem = "";
                if (res.calibr[k]) 
                   calitem = itemname.substr(0, itemname.lastIndexOf("/")+1) + res.calibr[k];

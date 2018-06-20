@@ -541,7 +541,7 @@ void stream::RunModule::ProcessTimerEvent(unsigned)
 
    for (unsigned n=0;n<hld->NumberOfTRB();n++) {
       hadaq::TrbProcessor* trb = hld->GetTRB(n);
-      if (trb==0) continue;
+      if (!trb) continue;
 
       dabc::Hierarchy item = folder.CreateHChild(trb->GetName());
 

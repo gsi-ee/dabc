@@ -37,7 +37,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fLastCalibr(),
    fTRB(0),
    fProgress(0),
-   fState()
+   fState(),
+   fQuality(0)
 {
    fLastCalibr.GetNow();
 
@@ -169,18 +170,20 @@ stream::TdcCalibrationModule::~TdcCalibrationModule()
    fProcMgr = 0;
 }
 
-double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb)
+void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
 {
-   if (item.null() || (trb==0)) return 0.;
+   if (item.null() || (trb==0)) return;
 
    item.SetField("trb", trb->GetID());
 
    std::vector<int64_t> tdcs;
    std::vector<int64_t> tdc_progr;
+   std::vector<double> tdc_quality;
    std::vector<std::string> status;
 
-   double p0(0), p1(1);
-   bool ready(true);
+   double p0(0), p1(1), worse_quality(1e6), worse_progress(1e6);
+   bool ready(true), explicitmode(true);
+   std::string worse_status; // overall status from all TDCs
 
    for (unsigned n=0;n<trb->NumberOfTDC();n++) {
       hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
@@ -189,40 +192,65 @@ double stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::
 
          double progr = tdc->GetCalibrProgress();
          std::string sname = tdc->GetCalibrStatus();
+         double quality = tdc->GetCalibrQuality();
+         int mode = tdc->GetExplicitCalibrationMode();
 
-         if (sname.find("Ready")==0) {
-            if (p1 > progr) p1 = progr;
+         if (quality < worse_quality) {
+            worse_quality = quality;
+            worse_status = sname;
+         }
+
+         if (mode < 0) {
+            explicitmode = false;
+            // auto calibration
+            if (sname.find("Ready")==0) {
+               if (p1 > progr) p1 = progr;
+            } else {
+               if (p0 < progr) p0 = progr;
+               ready = false;
+            }
          } else {
-            if (p0 < progr) p0 = progr;
-            ready = false;
+            if (progr<worse_progress) worse_progress = progr;
          }
 
          tdcs.push_back(tdc->GetID());
          tdc_progr.push_back((int) (progr*100.));
          status.push_back(sname);
+         tdc_quality.push_back(quality);
       } else {
          tdcs.push_back(0);
          tdc_progr.push_back(0);
          status.push_back("Init");
+         tdc_quality.push_back(0);
       }
    }
 
-   double progress = ready ? p1 : -p0;
+   double progress = 1.;
 
-   // at the end check if auto-calibration can be done
-   if (progress>0) {
-      item.SetField("value", "Ready");
-      item.SetField("time", dabc::DateTime().GetNow().OnlyTimeAsString());
+   if (explicitmode) {
+      progress = worse_progress;
    } else {
-      item.SetField("value", "Init");
+      progress = ready ? p1 : -p0;
+      // at the end check if auto-calibration can be done
+      if (progress > 0) {
+         worse_status = "Ready";
+      } else {
+         worse_status = "Init";
+      }
    }
 
+   item.SetField("value", worse_status);
    item.SetField("progress", (int)(fabs(progress)*100));
+   item.SetField("quality", worse_quality);
    item.SetField("tdc", tdcs);
    item.SetField("tdc_progr", tdc_progr);
    item.SetField("tdc_status", status);
+   item.SetField("tdc_quality", tdc_quality);
 
-   return progress;
+
+   if (res_progress) *res_progress = (int) (fabs(progress)*100);
+   if (res_quality) *res_quality = worse_quality;
+   if (res_state) *res_state = worse_status;
 }
 
 
@@ -239,7 +267,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
       if (fDebug) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
-      if (fDummy) {
+      if (fDummy && false) {
 
          dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
@@ -250,7 +278,11 @@ bool stream::TdcCalibrationModule::retransmit()
          if (fDoingTdcCalibr) fProgress = (int) (100*fDummyCounter/1000);
          item.SetField("progress", fProgress);
 
+         fQuality = 0;
+         if (fProgress > 0) fQuality = 100. + fProgress/100.;
+
          if (fProgress >= 100) {
+            fQuality = 1;
             if (fAutoCalibr>0) fDummyCounter = 0;
             fState = "Ready";
             item.SetField("value", fState);
@@ -262,8 +294,12 @@ bool stream::TdcCalibrationModule::retransmit()
          item.SetField("tdc_progr", progr);
 
          std::vector<std::string> status;
-         status.assign(fTDCs.size(),  item.GetField("value").AsStr());
+         status.assign(fTDCs.size(), item.GetField("value").AsStr());
          item.SetField("tdc_status", status);
+
+         std::vector<double> tdc_quality;
+         tdc_quality.assign(fTDCs.size(), fQuality);
+         item.SetField("tdc_quality", tdc_quality);
 
          hadaq::ReadIterator iter(buf);
          while (iter.NextSubeventsBlock()) {
@@ -272,15 +308,19 @@ bool stream::TdcCalibrationModule::retransmit()
             }
          }
 
+         item.SetField("quality", fQuality);
+
       } else if (fTrbProc) {
 
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file
              (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
-             (buf.GetTypeId() == hadaq::mbt_HadaqSubevents)) { // this could be data after sorting
+             (buf.GetTypeId() == hadaq::mbt_HadaqSubevents) || fDummy) { // this could be data after sorting
 
             // this is special case when TDC should be created
 
-            bool auto_create = (fAutoTdcMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0);
+            fDummyCounter++;
+
+            bool auto_create = (fAutoTdcMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0) && !fDummy;
 
             if (auto_create) {
                // special loop over data to create missing TDCs
@@ -363,7 +403,12 @@ bool stream::TdcCalibrationModule::retransmit()
 
                   // sublen = iter.subevnt()->GetPaddedSize();
 
-                  sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
+                  if (fDummy) {
+                     iter.subevnt()->SetId(fTRB);
+                     sublen = fTrbProc->EmulateTransform((hadaqs::RawSubevent*)iter.subevnt(), fDummyCounter);
+                  } else {
+                     sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
+                  }
 
                   if (tgt) {
                      tgt += sublen;
@@ -383,9 +428,9 @@ bool stream::TdcCalibrationModule::retransmit()
 
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
-               double p = SetTRBStatus(item, fTrbProc);
-               fProgress = (int) (p*100);
-               if (fProgress>0) fState = "Ready";
+               SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
+
+               // if (fProgress>0) fState = "Ready";
             }
          } else {
             EOUT("Error buffer type!!!");
@@ -413,6 +458,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       cmd.SetUInt("trb", fTRB);
       cmd.SetField("tdcs", fTDCs);
       cmd.SetInt("progress", fProgress);
+      cmd.SetInt("quality", fQuality);
       cmd.SetStr("state", fState);
       return dabc::cmd_true;
    }
@@ -429,6 +475,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
 
+      DOUT0("%s GET TdcCalibrations command start %s", GetName(), DBOOL(fDoingTdcCalibr));
+
       unsigned num = fTrbProc->NumberOfTDC();
       for (unsigned indx=0;indx<num;++indx) {
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
@@ -436,7 +484,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          if (cmd.GetStr("mode") == "start")
             tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
          else
-            tdc->CompleteCalibration();
+            tdc->CompleteCalibration(fDummy);
       }
       return dabc::cmd_true;
    }
