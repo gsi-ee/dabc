@@ -610,7 +610,6 @@
          //if (hadaqstate.value == "NoFile") col = "yellow"; else
          //if (hadaqstate.value == "Ready") col = "lightgreen";
          var col = this.GetQualityColor(res.quality);
-         console.log('state', res.quality, col);
          itemname = this.BuilderItems[indx];
          var pos = itemname.lastIndexOf("/");
          html += this.MakeLabel("class='bnet_item_label h_item' itemname='" + itemname.substr(0,pos) + "/Terminal/Output' style='background-color:" + col + 
