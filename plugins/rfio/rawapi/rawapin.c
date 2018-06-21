@@ -389,7 +389,7 @@ int rfio_open_gsidaq(
                 */
 {
    char cModule[32] = "rfio_open_gsidaq";
-   int iDebug = 0;
+   int iDebug = 2; // JAM2016
    int iRC;
    int iPort = 0;
    int iMaxConnect = 0;            /* try connection to servers once */
@@ -4817,7 +4817,7 @@ RFILE *rfio_fopen_gsidaq(
                 */
 {
    char cModule[32] = "rfio_fopen_gsidaq";
-   int iDebug = 0;
+   int iDebug = 1; // JAM2016
    int iFileId = -1;      /* file identifier for server connection */
 
    if (iDebug)
@@ -4860,7 +4860,7 @@ int rfio_fnewfile(RFILE *pRemFile,      /* remote file control block */
                    char *pcFile)                        /* file name */
 {
    char cModule[32] = "rfio_fnewfile";
-   int iDebug = 0;
+   int iDebug = 1; // JAM2016
    int iRC;
    int ii;
    int iFileId;             /* file identifier for server connection */

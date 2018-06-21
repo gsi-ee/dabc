@@ -4,6 +4,8 @@
   <Context name="Repeater">
     <Run>
       <lib value="libDabcMbs.so"/>
+      <lib value="libDabcRfio.so"/>
+
       <runtime value="1000"/>
       <debuglevel value="1"/>
       <loglimit value="10000000"/>

@@ -176,7 +176,6 @@ int main(int numc, char* args[])
    int res = 0;
 
    if (!cfg.LoadLibs()) res = -2;
-
    if (res==0)
       if (!CreateManagerControl(cfg)) res = -1;
 
