@@ -66,7 +66,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
    fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
-   fBNETbunch = Cfg("EB_EVENTS", cmd).AsBool(16);
+   fBNETbunch = Cfg("EB_EVENTS", cmd).AsInt(16);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
