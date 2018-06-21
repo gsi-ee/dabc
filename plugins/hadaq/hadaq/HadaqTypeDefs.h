@@ -55,7 +55,7 @@ namespace hadaq {
     * Format a HADES-convention filename string
     * from a given run id and optional eventbuilder id
     */
-   extern std::string FormatFilename (uint32_t runid, uint16_t ebid);
+   extern std::string FormatFilename (uint32_t runid, uint16_t ebid = 0);
 
    extern uint32_t CreateRunId();
 

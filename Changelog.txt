@@ -4,6 +4,7 @@ about current functionality of the framework.
 
 31.08.2018
 1. Set thread name to be able monitor it in tools like htop
+2. Provide possibility to store calibrations in extra location
 
 
 20.06.2018

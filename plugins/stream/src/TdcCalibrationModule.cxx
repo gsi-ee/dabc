@@ -21,6 +21,7 @@
 #include "dabc/timing.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 #include "hadaq/TdcProcessor.h"
 
@@ -132,6 +133,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fCountNormal = Cfg("CountNormal", cmd).AsInt(100000);
 
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
+   fCalibrDir = Cfg("CalibrDir", cmd).AsStr();
    if (!fCalibrFile.empty()) {
       if ((fAutoTdcMode < 0) && (fAutoCalibr>0))
          fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
@@ -473,6 +475,23 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fDummyCounter = 0; // only for debugging
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
+      if (fDoingTdcCalibr) fCalibrRunDir = cmd.GetStr("rundir");
+
+      std::string subdir;
+
+      if ((cmd.GetStr("mode") != "start") && !fCalibrDir.empty() && !fCalibrRunDir.empty() && !fCalibrFile.empty()) {
+         subdir = fCalibrDir;
+         subdir.append("/");
+         subdir.append(fCalibrRunDir);
+         std::string mkdir = "mkdir -p ";
+         mkdir.append(subdir);
+         system(mkdir.c_str());
+         subdir.append("/");
+         subdir.append(fCalibrFile);
+      }
+
+      if (cmd.GetStr("mode") != "start") DOUT0("STORE CALIBRATIONS IN %s %s", fCalibrFile.c_str(), subdir.c_str());
+
 
       unsigned num = fTrbProc->NumberOfTDC();
       for (unsigned indx=0;indx<num;++indx) {
@@ -481,7 +500,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          if (cmd.GetStr("mode") == "start")
             tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
          else
-            tdc->CompleteCalibration(fDummy);
+            tdc->CompleteCalibration(fDummy, fCalibrFile, subdir);
       }
       return dabc::cmd_true;
    }

@@ -1324,12 +1324,16 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       cmd.SetStrRawData("true");
       return dabc::cmd_true;
+
    } else if (cmd.IsName("BnetCalibrControl")) {
+
+      std::string rundir = hadaq::FormatFilename(cmd.GetUInt("runid"));
 
       if (fBNETsend && !fIsTerminating)
          for (unsigned n = 0; n < NumInputs(); n++) {
             dabc::Command subcmd("TdcCalibrations");
             subcmd.SetStr("mode", cmd.GetStr("mode"));
+            subcmd.SetStr("rundir", rundir);
             SubmitCommandToTransport(InputName(n), subcmd);
          }
 

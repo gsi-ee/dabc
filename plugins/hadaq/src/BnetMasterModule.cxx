@@ -334,13 +334,14 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       std::string query;
       std::string prefix;
+      unsigned runid = 0;
       if (isstart) {
          prefix = cmd.GetStr("prefix");
          if (prefix == "NO_FILE" || prefix == "--")
             isstart = false;
       }
       if (isstart) {
-         unsigned runid = cmd.GetUInt("runid");
+         runid = cmd.GetUInt("runid");
          if (runid == 0)
             runid = hadaq::CreateRunId();
          query = dabc::format("mode=start&runid=%u", runid);
@@ -365,7 +366,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       query = "";
 
       if (isstart && (prefix == "tc") && lastprefix.empty()) {
-         query = "mode=start";
+         query = dabc::format("mode=start&runid=%u", runid);
       } else if (!isstart && (lastprefix == "tc")) {
          query = "mode=stop";
       }

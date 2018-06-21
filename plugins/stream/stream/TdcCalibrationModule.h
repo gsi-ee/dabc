@@ -51,7 +51,9 @@ namespace stream {
       int fAutoCalibr;                        ///< amount of statistic for the auto calibration in channels
       int fCountLinear;                       ///< number of count for liner calibrations when starting explicitly
       int fCountNormal;                       ///< number of counts for normal calibrations when starting explicitly
-      std::string fCalibrFile;                ///< names to load calibrations
+      std::string fCalibrFile;                ///< names to load/store calibrations
+      std::string fCalibrDir;                 ///< name of extra directory where to store calibrations
+      std::string fCalibrRunDir;              ///< name of run when calibration was started
       unsigned fCalibrMask{0};                ///< mask to used for triggers
       bool fDoingTdcCalibr{false};            ///< indicates if module doing explicit TDC calibrations
       std::vector<int64_t> fDisabledCh;       ///< disabled for calibrations channels
