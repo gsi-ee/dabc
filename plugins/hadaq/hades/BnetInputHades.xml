@@ -38,7 +38,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
      <hadaqports value="${HADAQPORTS}"/>
      <subevents value="${SUBEVENTS}"/>
      <calibflags value="${CALIBFLAGS}"/>
-     <udpthreads value="[UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5]"/>
+     <udpthreads value="[UdpThrd1,UdpThrd2,UdpThrd3,UdpThrd4,UdpThrd5,UdpThrd6,UdpThrd7,UdpThrd8,UdpThrd9,UdpThrd10,UdpThrd11,UdpThrd12,UdpThrd13,UdpThrd14,UdpThrd15,UdpThrd16,UdpThrd17,UdpThrd18,UdpThrd19,UdpThrd20]"/>
   </Variables>
 
   <Context host="${MYHOST}" name="BNET-IN-${BNINPNUM}" port="${BNINPPORT}">
