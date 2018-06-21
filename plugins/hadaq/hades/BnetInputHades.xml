@@ -141,7 +141,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <InputPort name="Input*" queue="300" thread="${udpthreads}#" 
                   url="nhadaq://host:${hadaqports}#" 
                   urlopt1="calibr=${calibflags}#&trb=${subevents}#" 
-                  urlopt="udpbuf=200000&mtu=64512&flush=0.2&observer=false&maxloop=5&reduce=0.5"/>
+                  urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=30&reduce=0.5"/>
        
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
