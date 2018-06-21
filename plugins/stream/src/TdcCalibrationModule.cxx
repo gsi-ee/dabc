@@ -393,7 +393,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
 
                   if (tgt && (tgtlen - reslen < iter.subevnt()->GetPaddedSize())) {
-                     EOUT("Not enough space for subevent sz %u in output buffer sz %u seg0 %u filled %u remains %u", iter.subevnt()->GetPaddedSize(), buf.GetTotalSize(), tgtlen, reslen, iter.remained_size());
+                     EOUT("Not enough space for subevent sz %u in output buffer sz %u seg0 %u filled %u remains in src %u", iter.subevnt()->GetPaddedSize(), resbuf.GetTotalSize(), tgtlen, reslen, iter.remained_size());
                      exit(4);
                      return false;
                   }
