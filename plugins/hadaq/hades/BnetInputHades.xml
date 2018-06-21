@@ -105,7 +105,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
             2 - basic statistic for TDC (like hits per channel)
             3 - histograms for each active channel will be created, 
             4 - also reference histograms could be created (not yet available in DABC)  -->
-       <HistFilling value="4"/>
+       <HistFilling value="1"/>
        
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
