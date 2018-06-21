@@ -79,6 +79,9 @@ namespace hadaq {
          hadaq::RawEvent* evnt() const { return (hadaq::RawEvent*) fEvPtr(); }
          unsigned evntsize() const { return evnt() ? evnt()->GetPaddedSize() : 0; }
 
+         /** Returns size used by current event plus rest */
+         unsigned remained_size() const { return fEvPtr.fullsize(); }
+
          hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
 
          bool AssignEventPointer(dabc::Pointer& ptr);
