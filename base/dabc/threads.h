@@ -368,6 +368,9 @@ namespace dabc {
          /** \brief Change thread priority */
          void SetPriority(int prio);
 
+         /** \bried Set thread name, which can be seen from htop */
+         void SetThreadName(const char *thrdname);
+
          /** \brief \returns handle of thread object. */
          inline Thread_t Id() const { return fThrd; }
 

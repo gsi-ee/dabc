@@ -661,7 +661,12 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
    if (fRealThrd) {
       PosixThread::Start(this);
 
-      if (fExec==0) {
+      std::string tname = GetName();
+      if (tname.length()>15) tname.resize(15);
+
+      PosixThread::SetThreadName(tname.c_str());
+
+      if (!fExec) {
          EOUT("Start thread without EXEC???");
          exit(765);
       }

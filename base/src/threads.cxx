@@ -394,6 +394,10 @@ void dabc::PosixThread::Cancel()
    pthread_cancel(fThrd);
 }
 
+void dabc::PosixThread::SetThreadName(const char *thrdname)
+{
+   pthread_setname_np(fThrd, thrdname);
+}
 
 bool dabc::PosixThread::GetDfltAffinity(char* buf, unsigned maxbuf)
 {
