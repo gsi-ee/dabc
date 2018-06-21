@@ -179,9 +179,9 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    std::vector<double> tdc_quality;
    std::vector<std::string> status;
 
-   double p0(0), p1(1), worse_quality(1e6), worse_progress(1e6);
+   double p0(0), p1(1), worse_quality(1), worse_progress(1);
    bool ready(true), explicitmode(true);
-   std::string worse_status; // overall status from all TDCs
+   std::string worse_status = "Ready"; // overall status from all TDCs
 
    for (unsigned n=0;n<trb->NumberOfTDC();n++) {
       hadaq::TdcProcessor* tdc = trb->GetTDCWithIndex(n);
@@ -192,6 +192,8 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
          std::string sname = tdc->GetCalibrStatus();
          double quality = tdc->GetCalibrQuality();
          int mode = tdc->GetExplicitCalibrationMode();
+
+//         DOUT0("TDC 0x%04x Quality %5.4f Progress %5.4f", tdc->GetID(), progr, quality);
 
          if (quality < worse_quality) {
             worse_quality = quality;
@@ -244,6 +246,8 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    item.SetField("tdc_progr", tdc_progr);
    item.SetField("tdc_status", status);
    item.SetField("tdc_quality", tdc_quality);
+
+//   DOUT0("Calibr Quality %5.4f Progress %5.4f", progress, worse_quality);
 
    if (res_progress) *res_progress = (int) (fabs(progress)*100);
    if (res_quality) *res_quality = worse_quality;

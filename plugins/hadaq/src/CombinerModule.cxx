@@ -425,9 +425,10 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
    if (fBNETsend) {
       std::string nodestate = "";
-      double node_quality = 1e10;
+      double node_quality = 1;
+      int node_progress = 0;
 
-      std::vector<uint64_t> hubs, ports;
+      std::vector<uint64_t> hubs, ports, hubs_progress;
       std::vector<std::string> calibr, hubs_state, hubs_info;
       std::vector<double> hubs_quality;
       for (unsigned n=0;n<fCfg.size();n++) {
@@ -447,7 +448,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
          std::string state = "", sinfo = "";
          hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
-         double rate = 0., hub_quality = 1e6;
+         double rate = 0., hub_quality = 1;
+         int hub_progress = 0;
 
          if (!info) {
             sinfo = "missing transport-info";
@@ -472,7 +474,11 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
             state = inp.fCalibrState;
             hub_quality = inp.fCalibrQuality;
+            hub_progress = inp.fCalibrProgr;
          }
+
+         if ((hub_progress>0) && ((node_progress==0) || (hub_progress<node_progress)))
+            node_progress = hub_progress;
 
          if (hub_quality < node_quality) {
             node_quality = hub_quality;
@@ -482,28 +488,29 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
          hubs_quality.push_back(inp.fCalibrQuality);
+         hubs_progress.push_back(inp.fCalibrProgr);
       }
 
       std::vector<int64_t> qsz;
       for (unsigned n=0;n<NumOutputs();++n)
          qsz.push_back(NumCanSend(n));
 
-      if (nodestate.empty() || ((node_quality>0.7) && (node_quality <= 2))) {
+      if (nodestate.empty()) {
          nodestate = "Ready";
          node_quality = 1.;
-      } else if ((nodestate == "Accumulating") && (node_quality>=101)) {
-         nodestate = "Ready";
       }
 
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("hubs_info", hubs_info);
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
-      fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("state", nodestate);
       fWorkerHierarchy.SetField("quality", node_quality);
+      fWorkerHierarchy.SetField("progress", node_progress);
       fWorkerHierarchy.SetField("queues", qsz);
+      fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
+      fWorkerHierarchy.SetField("hubs_progress", hubs_progress);
 
       fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
    }

@@ -579,12 +579,10 @@
    }
    
    DABC.BnetPainter.prototype.GetQualityColor = function(quality) {
-      if (quality <= 0) return "red";
-      if (quality < 0.3) return "pink";
+      if (quality <= 0.3) return "red";
       if (quality < 0.7) return "yellow";
-      if (quality<=1) return "lightgreen";
-      if (quality<=2) return "green"; 
-      return "lightblue";
+      if (quality < 0.8) return "lightblue";
+      return "lightgreen";
    }
    
    DABC.BnetPainter.prototype.ProcessReq = function(isbuild, indx, res) {
@@ -606,9 +604,6 @@
       if (isbuild) {
          this.BuilderInfo[indx] = res;
          elem = frame.select(".bnet_builder" + indx);
-         //var col = "red";
-         //if (hadaqstate.value == "NoFile") col = "yellow"; else
-         //if (hadaqstate.value == "Ready") col = "lightgreen";
          var col = this.GetQualityColor(res.quality);
          itemname = this.BuilderItems[indx];
          var pos = itemname.lastIndexOf("/");
@@ -618,13 +613,9 @@
          this.InputInfo[indx] = res;
          elem = frame.select(".bnet_input" + indx);
          var col = this.GetQualityColor(res.quality);
-         // if (hadaqstate.value == "Accumulating") col = "lightblue"; else
-         // if ((hadaqstate.value == "NoCalibr") || (hadaqstate.value == "LowStat")) col = "yellow"; else
-         // if (hadaqstate.value == "Ready") col = "lightgreen";
          itemname = this.InputItems[indx];
          var title = "Item: " + itemname + "  State: " + hadaqstate.value;
-         if ((hadaqstate.value == "Accumulating") && (res.quality>100))
-            title += " progress:" + ((res.quality-100)*100).toFixed(0); 
+         if (res.progress) title += " progress:" + res.progress; 
          title += " cansend:[" + (res.queues || "-") + "]";
 
          var pos = itemname.lastIndexOf("/");
@@ -663,11 +654,10 @@
                   frame.select(".bnet_hub_info").html("<pre>" + res.hubs_info[k] + "</pre>");
                var txt = "0x"+res.hubs[k].toString(16);
                totallen += txt.length;
-               var title = "state:" + res.hubs_state[k];
-               // quality == 2 is file, quality >= 100 is accumulating of new statistic
-               if (res.hubs_quality[k] < 2) title += " quality:" + res.hubs_quality[k]; else
-               if (res.hubs_quality[k] >= 100) title += " progress:" + ((res.hubs_quality[k]-100)*100).toFixed(0);
-               title += " " + res.hubs_info[k];
+               var title = "state:" + res.hubs_state[k] + 
+                           " quality:" + res.hubs_quality[k] +
+                           " progr:" + res.hubs_progress[k] +
+                           " " + res.hubs_info[k];
                var style = "background-color:" + this.GetQualityColor(res.hubs_quality[k]);
                var calitem = "";
                if (res.calibr[k]) 

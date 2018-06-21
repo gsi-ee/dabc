@@ -58,7 +58,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("_hidden", "true");
 
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
-   CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("1.0");
+   CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("0.5");
 
    CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
    CreatePar("RunIdStr").SetFld(dabc::prop_kind, "Text").SetValue("--");
@@ -155,7 +155,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlTm.GetNow(3.);
 
       fCtrlSzLimit = false;
-      fCtrlStateQuality = 1e10;
+      fCtrlStateQuality = 1;
       fCtrlStateName = "";
       fCtrlData = 0.;
       fCtrlEvents = 0.;
