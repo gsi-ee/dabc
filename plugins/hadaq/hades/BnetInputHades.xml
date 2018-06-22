@@ -64,8 +64,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Application ConnTimeout="60"/>
     
     <MemoryPool name="Pool">
-       <BufferSize value="200000"/>
-       <NumBuffers value="100000"/>
+       <BufferSize value="400000"/>
+       <NumBuffers value="10000"/>
     </MemoryPool>
     
     <Device name="NetDev" class="dabc::SocketDevice"/>
