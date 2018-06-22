@@ -118,6 +118,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input0" url="Combiner/Output1"/>
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
+       <DataRate width="4" prec="2" low="0" up="10" debug="0"/>
     </Module>
 
      <!-- Terminal output like old event builder -->

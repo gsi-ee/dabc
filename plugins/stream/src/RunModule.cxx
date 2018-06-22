@@ -140,6 +140,7 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
       fWorkerHierarchy.SetField("_player", "DABC.StreamControl");
 
       CreatePar("EventsRate").SetRatemeter(false, 3.).SetUnits("Ev");
+      CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
 
       dabc::CommandDefinition cmddef = fWorkerHierarchy.CreateHChild("Control/StartRootFile");
       cmddef.SetField(dabc::prop_kind, "DABC.Command");
@@ -400,8 +401,6 @@ bool stream::RunModule::ProcessNextEvent(void* evnt, unsigned evntsize)
 {
    if (fProcMgr==0) return false;
 
-   Par("EventsRate").SetValue(1);
-
    fTotalEvnts++;
 
    if (fParallel==0) Par("Events").SetValue(1);
@@ -443,6 +442,8 @@ bool stream::RunModule::ProcessNextBuffer()
    if (fProcMgr && !fProcMgr->IsWorking()) return false;
 
    dabc::Buffer buf = Recv();
+
+   if (fParallel==0) Par("DataRate").SetValue(buf.GetTotalSize()/1024./1024.);
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       if (fParallel<0) {
