@@ -434,7 +434,7 @@ bool stream::TdcCalibrationModule::retransmit()
                // if (fProgress>0) fState = "Ready";
             }
          } else {
-            EOUT("Error buffer type!!!");
+            EOUT("Error buffer type!!! %d", buf.GetTypeId());
          }
       }
       Send(buf);
