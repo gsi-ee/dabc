@@ -421,6 +421,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       for (unsigned n=0;n<NumInputs();++n)
          qsz.push_back(NumCanRecv(n));
       fWorkerHierarchy.SetField("queues", qsz);
+      fWorkerHierarchy.SetField("ninputs", NumInputs());
    }
 
    if (fBNETsend) {

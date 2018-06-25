@@ -160,6 +160,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlData = 0.;
       fCtrlEvents = 0.;
       fCtrlInpNodesCnt = 0;
+      fCtrlInpNodesExpect = 0;
       fCtrlBldNodesCnt = 0;
       fCtrlBldNodesExpect = 0;
 
@@ -250,6 +251,15 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
                   }
                }
             }
+
+            int ninputs = item.GetField("ninputs").AsInt();
+            if (fCtrlInpNodesExpect == 0) fCtrlInpNodesExpect = ninputs;
+
+            if ((fCtrlInpNodesExpect != ninputs) && (fCtrlStateQuality > 0)) {
+               fCtrlStateName = "InputsMismatch";
+               fCtrlStateQuality = 0;
+            }
+
          } else {
             int nbuilders = item.GetField("nbuilders").AsInt();
             if (fCtrlBldNodesExpect==0) fCtrlBldNodesExpect = nbuilders;
@@ -271,6 +281,12 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             fCtrlStateName = "NoInputs";
             fCtrlStateQuality = 0;
          }
+
+         if ((fCtrlInpNodesExpect != fCtrlInpNodesCnt) && (fCtrlStateQuality > 0)) {
+            fCtrlStateName = "InputsMismatch";
+            fCtrlStateQuality = 0;
+         }
+
          if ((fCtrlBldNodesCnt == 0)  && (fCtrlStateQuality > 0)) {
             fCtrlStateName = "NoBuilders";
             fCtrlStateQuality = 0;

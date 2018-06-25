@@ -44,6 +44,7 @@ namespace hadaq {
          double        fCtrlStateQuality;  ///< <0.3 error, <0.7 warning, more is ok
          std::string   fCtrlStateName; ///< current name
          int           fCtrlInpNodesCnt; ///< count of recognized input nodes
+         int           fCtrlInpNodesExpect; ///< count of expected input nodes
          int           fCtrlBldNodesCnt; ///< count of recognized builder nodes
          int           fCtrlBldNodesExpect; ///< count of expected builder nodes
          bool          fCtrlSzLimit; ///< when true, size limit was exceed

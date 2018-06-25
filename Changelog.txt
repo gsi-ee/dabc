@@ -3,7 +3,7 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 25.06.2018
-1. Control number of input and builder nodes in master.
+1. Control number of input and builder nodes from master.
    Set error state if some of nodes are missing 
    
 
