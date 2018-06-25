@@ -19,6 +19,8 @@ DABCSTREAMDIRS   = $(DABCSTREAMDIR)/src
 DABCSTREAM_LIBNAME = $(LIB_PREFIX)DabcStream
 DABCSTREAM_LIB     = $(TGTDLLPATH)/$(DABCSTREAM_LIBNAME).$(DllSuf)
 
+DABCSTREAM_STREAMLIB = $(DABC_STREAMSYS)/lib/libStream.$(DllSuf)
+
 DABCSTREAM_H     = $(wildcard $(DABCSTREAMDIRI)/*.$(HedSuf))
 DABCSTREAM_S     = $(wildcard $(DABCSTREAMDIRS)/*.$(SrcSuf))
 DABCSTREAM_O     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCSTREAM_S))
@@ -46,7 +48,10 @@ $(DABCSTREAM_LIB):   $(DABCSTREAM_O) $(DABCMBS_LIB) $(DABCHADAQ_LIB)
 	@$(MakeLib) $(DABCSTREAM_LIBNAME) "$(DABCSTREAM_O)" $(TGTDLLPATH) "$(DABCSTREAM_LIBS)"
 
 ########### extra rules #############
-$(DABCSTREAM_O) $(DABCSTREAM_D): INCLUDES += $(DABC_STREAMSYS)/include 
+$(DABCSTREAM_O) $(DABCSTREAM_D): INCLUDES += $(DABC_STREAMSYS)/include
+
+#force rebuilding of sources
+$(DABCSTREAM_O): $(DABCSTREAM_STREAMLIB) 
 
 include $(DABCSYS)/config/Makefile.rules
 
