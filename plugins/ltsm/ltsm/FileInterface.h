@@ -32,10 +32,17 @@ namespace ltsm
 	std::string fDescription;
 	
 	int fMaxFilesPerSession; //< set maximum number of files before re-opening session. For correct migration job on TSM server
+	
+	int fSessionConnectRetries;//< number of attempts to connect new tsm session
+	
 
 	bool fIsClosing; //< avoid double fclose on termination by this
 	
+	
 	int fSessionFileCount; //< count number of files in current session
+	
+	
+	
 	
 	
 	/** Re-open session with parameters specified in dabc options string*/

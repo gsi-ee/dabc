@@ -7,7 +7,7 @@
 #include "dabc/timing.h"
 
 ltsm::FileInterface::FileInterface() :
-	dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fIsClosing(false), fSessionFileCount(0)
+	dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0)
     {
     DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
     api_msg_set_level(API_MSG_NORMAL);
@@ -45,6 +45,10 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
         DOUT0("tsm::FileInterface::fopen uses %d max session files from DEFAULTS.",fMaxFilesPerSession);
       
     }   
+    
+ 
+    
+    
     
     if(fSessionFileCount >= fMaxFilesPerSession)
     {
@@ -302,6 +306,17 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 	    fFsname = url.GetOptionStr("ltsmFsname", fFsname);
 	    }
 
+      if (url.HasOption("ltsmSessionConnectRetries"))
+        {
+          fMaxFilesPerSession = url.GetOptionInt("ltsmMaxSessionFiles", fSessionConnectRetries);
+	  DOUT0("tsm::FileInterface::fopen uses %d session connect retries from url options.",fSessionConnectRetries);
+ 	}
+      else
+       {	
+        DOUT0("tsm::FileInterface::fopen uses %d session connect retries from DEFAULTS.", fSessionConnectRetries);      
+       }   
+	    
+	    
 
 	DOUT2(
 		"Prepare open LTSM file for writing -  "
@@ -317,12 +332,29 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 
 	fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
 	memset(fSession, 0, sizeof(struct session_t));
-
-	int rc = tsm_fconnect(&tsmlogin, fSession);
+	int connectcount=0;
+	int rc=0;
+	while (connectcount++ <fSessionConnectRetries)
+	{
+	    rc = tsm_fconnect(&tsmlogin, fSession);
+	    if (rc==0)
+	    {
+	      break;
+	    }
+	    else
+	    {
+	      EOUT("Fail to connect LTSM session using following arguments"
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...\n",
+		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+		    fOwner.c_str(), fFsname.c_str(), connectcount);
+	      sleep(1);
+	    }
+	  
+	} // while
 	if (rc)
 	    {
-	    EOUT("Fail to connect LTSM session using following arguments"
-		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n",
+	    EOUT("Finally FAILED to connect LTSM session after %d retries!! -  using following arguments"
+		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s \n", connectcount,
 		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
 		    fOwner.c_str(), fFsname.c_str());
 	    free(fSession);
