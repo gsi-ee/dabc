@@ -1563,7 +1563,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       Par("RunFileSize").SetValue(runsz/1024./1024.);
 
       std::string state = "File";
-      double quality = 0.99;
+      double quality = 0.98;
       if (Par(fEventRateName).Value().AsDouble() == 0) { state = "NoData"; quality = 0.1; } else
       if ((runid==0) && runname.empty()) { state = "NoFile"; quality = 0.5; }
 
