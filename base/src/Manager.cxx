@@ -1391,7 +1391,7 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
 
    ThreadRef thrd = CurrentThread();
 
-   if (thrd()==0) {
+   if (thrd.null()) {
       if (prefix) {
          fprintf(stdout, "%s    ", prefix);
          int sec = lrint(tmout);
@@ -1437,7 +1437,7 @@ std::string dabc::Manager::GetNodeAddress(int nodeid)
 
    if ((nodeid<0) || (nodeid>=fNumNodes)) return std::string();
 
-   if (fCfg==0) return std::string();
+   if (!fCfg) return std::string();
 
    Url url(fCfg->NodeName(nodeid));
    return url.GetHostNameWithPort(defaultDabcPort);
