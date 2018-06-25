@@ -1335,6 +1335,15 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
       fTotalFullDrops++;
       fLastDropTm.GetNow();
 
+      if (fBNETsend && !fIsTerminating) {
+         for (unsigned n = 0; n < NumInputs(); n++) {
+            fCfg[n].fDroppedTrig = 0;
+            fCfg[n].fLostTrig = 0;
+            dabc::Command subcmd("ResetTransportStat");
+            SubmitCommandToTransport(InputName(n), subcmd);
+         }
+      }
+
       cmd.SetStrRawData("true");
       return dabc::cmd_true;
 

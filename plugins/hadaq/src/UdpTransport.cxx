@@ -376,8 +376,14 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ResetExportedCounters")) {
       NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
-      if (addon!=0) addon->ClearCounters();
+      if (addon) addon->ClearCounters();
       UpdateExportedCounters();
+      return dabc::cmd_true;
+   }
+
+   if (cmd.IsName("ResetTransportStat")) {
+      NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
+      if (addon) addon->ClearCounters();
       return dabc::cmd_true;
    }
 
