@@ -518,6 +518,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("state", nodestate);
       fWorkerHierarchy.SetField("quality", node_quality);
       fWorkerHierarchy.SetField("progress", node_progress);
+      fWorkerHierarchy.SetField("nbuilders", NumOutputs());
       fWorkerHierarchy.SetField("queues", qsz);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);

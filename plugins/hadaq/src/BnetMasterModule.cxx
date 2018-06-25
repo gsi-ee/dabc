@@ -159,6 +159,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlStateName = "";
       fCtrlData = 0.;
       fCtrlEvents = 0.;
+      fCtrlInpNodesCnt = 0;
+      fCtrlBldNodesCnt = 0;
+      fCtrlBldNodesExpect = 0;
 
       fCtrlRunId = 0;
       fCtrlRunPrefix = "";
@@ -216,6 +219,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          if (item.GetField("_bnet").AsStr() == "receiver") is_builder = true;
 
+         if (is_builder) fCtrlBldNodesCnt++;
+                    else fCtrlInpNodesCnt++;
+
          std::string state = item.GetField("state").AsStr();
          double quality = item.GetField("quality").AsDouble();
 
@@ -244,13 +250,36 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
                   }
                }
             }
+         } else {
+            int nbuilders = item.GetField("nbuilders").AsInt();
+            if (fCtrlBldNodesExpect==0) fCtrlBldNodesExpect = nbuilders;
+            if ((fCtrlBldNodesExpect != nbuilders) && (fCtrlStateQuality > 0)) {
+               fCtrlStateName = "BuildersMismatch";
+               fCtrlStateQuality = 0;
+            }
          }
 
          // DOUT0("BNET reply from %s state %s sz %u", item.GetField("_bnet").AsStr().c_str(), item.GetField("state").AsStr().c_str(), item.GetField("runsize").AsUInt());
       }
 
       if (fCtrlCnt==0) {
-         if (fCtrlStateName.empty()) { fCtrlStateName = "Ready"; fCtrlStateQuality = 1.; }
+         if (fCtrlStateName.empty()) {
+            fCtrlStateName = "Ready";
+            fCtrlStateQuality = 1.;
+         }
+         if ((fCtrlInpNodesCnt == 0) && (fCtrlStateQuality > 0)) {
+            fCtrlStateName = "NoInputs";
+            fCtrlStateQuality = 0;
+         }
+         if ((fCtrlBldNodesCnt == 0)  && (fCtrlStateQuality > 0)) {
+            fCtrlStateName = "NoBuilders";
+            fCtrlStateQuality = 0;
+         }
+         if ((fCtrlBldNodesExpect != fCtrlBldNodesCnt) && (fCtrlStateQuality > 0)) {
+            fCtrlStateName = "BuildersMismatch";
+            fCtrlStateQuality = 0;
+         }
+
          SetParValue("State", fCtrlStateName);
          SetParValue("Quality", fCtrlStateQuality);
          SetParValue("RunId", fCtrlRunId);
