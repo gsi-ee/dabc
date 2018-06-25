@@ -284,6 +284,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          std::string tdc = " [";
          for (unsigned j=0;j<fCalibr[n].tdcs.size();j++) {
             if (j>0) tdc.append(",");
+            if (j>4) { tdc.append("..."); break; }
             tdc.append(dabc::format("%04x", (unsigned) fCalibr[n].tdcs[j]));
          }
          tdc.append("]");
