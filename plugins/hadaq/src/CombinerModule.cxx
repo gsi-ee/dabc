@@ -455,6 +455,17 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo = "missing transport-info";
          } else {
             rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
+            inp.fHubSizeTmCnt++;
+
+            // last 10 seconds calculate rate with previous value
+            if ((rate==0.) && (inp.fHubSizeTmCnt<=10))
+               rate = (info->fTotalRecvBytes - inp.fHubPrevSize)/1024.0/1024.0/inp.fHubSizeTmCnt;
+
+            if (inp.fHubLastSize != info->fTotalRecvBytes) {
+               inp.fHubSizeTmCnt = 0;
+               inp.fHubPrevSize = inp.fHubLastSize;
+            }
+
             inp.fHubLastSize = info->fTotalRecvBytes;
             sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s  ",
                        info->fNPort,

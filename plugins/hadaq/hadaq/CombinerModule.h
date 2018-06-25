@@ -85,6 +85,8 @@ namespace hadaq {
          std::string fCalibrState; ///< calibration state
          double      fCalibrQuality; ///< calibration quality
          uint64_t    fHubLastSize; ///< last size
+         uint64_t    fHubPrevSize; ///< last size
+         int         fHubSizeTmCnt; ///< count how many time data was the same
 
 
          InputCfg() :
@@ -115,7 +117,9 @@ namespace hadaq {
             fCalibrProgr(0),
             fCalibrState(),
             fCalibrQuality(0.),
-            fHubLastSize(0)
+            fHubLastSize(0),
+            fHubPrevSize(0),
+            fHubSizeTmCnt(0)
          {
             for(int i=0;i<HADAQ_NUMERRPATTS;i++)
                fErrorbitStats[i]=0;
