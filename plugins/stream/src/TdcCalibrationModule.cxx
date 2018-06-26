@@ -195,7 +195,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
          double quality = tdc->GetCalibrQuality();
          int mode = tdc->GetExplicitCalibrationMode();
 
-//         DOUT0("TDC 0x%04x Quality %5.4f Progress %5.4f", tdc->GetID(), progr, quality);
+         DOUT0("TDC 0x%04x mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), mode, progr, quality, sname.c_str());
 
          if (quality < worse_quality) {
             worse_quality = quality;
