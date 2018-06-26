@@ -53,7 +53,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
       hadaq::TdcMessage::SetFineLimits(fFineMin, fFineMax);
 
    fNumCh = Cfg("NumChannels", cmd).AsInt(65);
-   fEdges = Cfg("EdgeMask", cmd).AsInt(1);
+   fEdges = Cfg("EdgeMask", cmd).AsUInt(1);
    fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
    fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
 
@@ -508,7 +508,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
             std::string s2 = dabc::format("AFTER mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
 
-            DOUT0("TDC %04x %s %s", tdc->GetID(), s1.c_str(), s2.c_str());
+            DOUT0("TDC %04x edges %u %s %s", tdc->GetID(), tdc->GetEdgeMask(), s1.c_str(), s2.c_str());
          }
       }
 
