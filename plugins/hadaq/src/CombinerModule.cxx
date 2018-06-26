@@ -425,7 +425,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
    }
 
    if (fBNETsend) {
-      std::string nodestate = "";
+      std::string node_state = "";
       double node_quality = 1;
       int node_progress = 0;
 
@@ -447,10 +447,10 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             fCfg[n].fCalibrReq = true;
          }
 
-         std::string state = "", sinfo = "";
+         std::string hub_state = "", sinfo = "";
          hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
          double rate = 0., hub_quality = 1;
-         int hub_progress = 0;
+         int hub_progress = 100;
 
          if (!info) {
             sinfo = "missing transport-info";
@@ -482,9 +482,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo += inp.TriggerRingAsStr(16);
          }
 
-         if (rate<=0) { state = "NoData"; hub_quality = 0.1; } else
+         if (rate<=0) { hub_state = "NoData"; hub_quality = 0.1; hub_progress = 0; } else
          if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
-            state = inp.fCalibrState;
+            hub_state = inp.fCalibrState;
             hub_quality = inp.fCalibrQuality;
             hub_progress = inp.fCalibrProgr;
          }
@@ -494,29 +494,30 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
          if (hub_quality < node_quality) {
             node_quality = hub_quality;
-            nodestate = state;
+            node_state = hub_state;
          }
 
-         hubs_state.push_back(state);
+         hubs_state.push_back(hub_state);
          hubs_info.push_back(sinfo);
          hubs_quality.push_back(hub_quality);
-         hubs_progress.push_back(inp.fCalibrProgr);
+         hubs_progress.push_back(hub_progress);
       }
 
       std::vector<int64_t> qsz;
       for (unsigned n=0;n<NumOutputs();++n)
          qsz.push_back(NumCanSend(n));
 
-      if (nodestate.empty()) {
-         nodestate = "Ready";
+      if (node_state.empty()) {
+         node_state = "Ready";
          node_quality = 1.;
+         node_progress = 100;
       }
 
       fWorkerHierarchy.SetField("hubs", hubs);
       fWorkerHierarchy.SetField("hubs_info", hubs_info);
       fWorkerHierarchy.SetField("ports", ports);
       fWorkerHierarchy.SetField("calibr", calibr);
-      fWorkerHierarchy.SetField("state", nodestate);
+      fWorkerHierarchy.SetField("state", node_state);
       fWorkerHierarchy.SetField("quality", node_quality);
       fWorkerHierarchy.SetField("progress", node_progress);
       fWorkerHierarchy.SetField("nbuilders", NumOutputs());
@@ -525,7 +526,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
       fWorkerHierarchy.SetField("hubs_progress", hubs_progress);
 
-      fWorkerHierarchy.GetHChild("State").SetField("value", nodestate);
+      fWorkerHierarchy.GetHChild("State").SetField("value", node_state);
    }
 }
 

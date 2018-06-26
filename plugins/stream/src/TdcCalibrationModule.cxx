@@ -212,7 +212,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
                ready = false;
             }
          } else {
-            if (progr<worse_progress) worse_progress = progr;
+            if (progr < worse_progress) worse_progress = progr;
          }
 
          tdcs.push_back(tdc->GetID());
@@ -227,14 +227,10 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
       }
    }
 
-   double progress = 1.;
-
-   if (explicitmode) {
-      progress = worse_progress;
-   } else {
-      progress = ready ? p1 : -p0;
+   if (!explicitmode) {
+      worse_progress = ready ? p1 : -p0;
       // at the end check if auto-calibration can be done
-      if (progress > 0) {
+      if (worse_progress > 0) {
          worse_status = "Ready";
       } else {
          worse_status = "Init";
@@ -242,7 +238,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    }
 
    item.SetField("value", worse_status);
-   item.SetField("progress", (int)(fabs(progress)*100));
+   item.SetField("progress", (int)(fabs(worse_progress)*100));
    item.SetField("quality", worse_quality);
    item.SetField("tdc", tdcs);
    item.SetField("tdc_progr", tdc_progr);
@@ -251,7 +247,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
 
 //   DOUT0("Calibr Quality %5.4f Progress %5.4f", progress, worse_quality);
 
-   if (res_progress) *res_progress = (int) (fabs(progress)*100);
+   if (res_progress) *res_progress = (int) (fabs(worse_progress)*100);
    if (res_quality) *res_quality = worse_quality;
    if (res_state) *res_state = worse_status;
 }
@@ -430,6 +426,8 @@ bool stream::TdcCalibrationModule::retransmit()
                dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
 
                SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
+
+               DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", fProgress, fQuality, fState.c_str());
 
                // if (fProgress>0) fState = "Ready";
             }
