@@ -5,15 +5,16 @@
 #include "dabc/Url.h"
 #include "dabc/logging.h"
 #include "dabc/timing.h"
+#include "dabc/Manager.h"
 
 ltsm::FileInterface::FileInterface() :
 	dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0)
     {
     DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
-    api_msg_set_level(API_MSG_NORMAL);
-    DOUT3(
+    api_msg_set_level(API_MSG_ERROR);
+    DOUT0(
 	    "tsm::FileInterface::FileInterface() ctor set api message level to %d",
-	    API_MSG_NORMAL);
+	    API_MSG_ERROR);
     tsm_init (DSM_MULTITHREAD); // do we need multithread here?
     DOUT3("tsm::FileInterface::FileInterface() ctor leaving...");
     }
@@ -309,11 +310,11 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
       if (url.HasOption("ltsmSessionConnectRetries"))
         {
           fMaxFilesPerSession = url.GetOptionInt("ltsmMaxSessionFiles", fSessionConnectRetries);
-	  DOUT0("tsm::FileInterface::fopen uses %d session connect retries from url options.",fSessionConnectRetries);
+	  DOUT0("tsm::FileInterface::OpenTSMSession uses %d session connect retries from url options.",fSessionConnectRetries);
  	}
       else
        {	
-        DOUT0("tsm::FileInterface::fopen uses %d session connect retries from DEFAULTS.", fSessionConnectRetries);      
+        DOUT0("tsm::FileInterface::OpenTSMSession uses %d session connect retries from DEFAULTS.", fSessionConnectRetries);      
        }   
 	    
 	    
@@ -331,11 +332,11 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 		fFsname.c_str(), DEFAULT_FSTYPE);
 
 	fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
-	memset(fSession, 0, sizeof(struct session_t));
 	int connectcount=0;
 	int rc=0;
 	while (connectcount++ <fSessionConnectRetries)
 	{
+	    memset(fSession, 0, sizeof(struct session_t)); 
 	    rc = tsm_fconnect(&tsmlogin, fSession);
 	    if (rc==0)
 	    {
@@ -347,7 +348,7 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 		    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...\n",
 		    fServername.c_str(), fNode.c_str(), fPassword.c_str(),
 		    fOwner.c_str(), fFsname.c_str(), connectcount);
-	      sleep(1);
+	      dabc::mgr.Sleep(1);
 	    }
 	  
 	} // while
