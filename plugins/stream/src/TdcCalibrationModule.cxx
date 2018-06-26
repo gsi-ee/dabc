@@ -498,11 +498,23 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       for (unsigned indx=0;indx<num;++indx) {
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
-         if (cmd.GetStr("mode") == "start")
+         if (cmd.GetStr("mode") == "start") {
             tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
-         else
+         } else {
+            DOUT0("TDC %04x BEFORE mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
+
             tdc->CompleteCalibration(fDummy, fCalibrFile, subdir);
+
+            DOUT0("TDC %04x AFTER  mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
+         }
       }
+
+      fLastCalibr.GetNow();
+      dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
+      SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
+
+      DOUT0("RESULT!!! %s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
+
       return dabc::cmd_true;
    }
 
