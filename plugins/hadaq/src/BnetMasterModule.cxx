@@ -348,7 +348,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       bool isstart = cmd.IsName("StartRun");
 
-      DOUT0("Command %s oninit %s", cmd.GetName(), cmd.GetStr("oninit").c_str());
+      // DOUT0("Command %s oninit %s", cmd.GetName(), cmd.GetStr("oninit").c_str());
 
       if (isstart && (cmd.GetInt("oninit")>0) && !cmd.GetBool("#verified")) {
          DOUT0("Detect START RUN with oninit flag!!!!");
@@ -377,8 +377,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       cmd.SetInt("#RetCnt", builders.size());
 
-      std::string query;
-      std::string prefix;
+      std::string query, prefix;
       unsigned runid = 0;
       if (isstart) {
          prefix = cmd.GetStr("prefix");
@@ -400,13 +399,16 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       }
 
       std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
-      fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
+      if (isstart && !prefix.empty())
+         fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
       for (unsigned n=0; n<builders.size(); ++n) {
          dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
          subcmd.SetInt("#bnet_cnt", fCmdCnt);
          publ.Submit(Assign(subcmd));
       }
+
+      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str());
 
       query = "";
 
@@ -418,7 +420,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       if (!query.empty()) {
 
-         DOUT0("Mster CLIBRATION query %s", query.c_str());
+         DOUT0("CALIBRATION query:%s", query.c_str());
 
          // trigger calibration start for all TDCs
          std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
