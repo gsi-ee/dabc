@@ -66,6 +66,8 @@
        
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
+
+       <CalibrDir value="calibrdir"/>
        
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
        <CalibrTrigger value="0xffff"/>
@@ -182,13 +184,14 @@
        
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
-       
+       <CalibrDir value="calibrdir"/>
+
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
        <CalibrTrigger value="0xffff"/>
-       
+
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
-       
+
        <!-- Number of counts in each channel to perform calibration, 0 - off -->
        <Auto value="0"/>
 

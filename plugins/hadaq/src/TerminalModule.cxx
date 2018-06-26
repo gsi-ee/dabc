@@ -221,7 +221,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       }
 
    s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu  drop  lost";
-   if (istdccal) s += "    TRB         TDC        progr state";
+   if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
 
@@ -284,14 +284,14 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          std::string tdc = " [";
          for (unsigned j=0;j<fCalibr[n].tdcs.size();j++) {
             if (j>0) tdc.append(",");
-            if (j>4) { tdc.append("..."); break; }
+            if ((j>3) && (fCalibr[n].tdcs.size()>4)) { tdc.append(" ..."); break; }
             tdc.append(dabc::format("%04x", (unsigned) fCalibr[n].tdcs[j]));
          }
          tdc.append("]");
-         while (tdc.length()<22) tdc.append(" ");
+         while (tdc.length()<27) tdc.append(" ");
          sbuf.append(tdc);
 
-         sbuf.append(dabc::format(" %2d %s", fCalibr[n].progress, fCalibr[n].state.c_str()));
+         sbuf.append(dabc::format(" %3d %10s", fCalibr[n].progress, fCalibr[n].state.c_str()));
 
          if (fCalibr[n].state.find("Ready")!=0) isready = false;
       }
