@@ -499,7 +499,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
          hubs_state.push_back(state);
          hubs_info.push_back(sinfo);
-         hubs_quality.push_back(inp.fCalibrQuality);
+         hubs_quality.push_back(hub_quality);
          hubs_progress.push_back(inp.fCalibrProgr);
       }
 
