@@ -427,7 +427,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
                SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
 
-               DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", fProgress, fQuality, fState.c_str());
+               DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
                // if (fProgress>0) fState = "Ready";
             }
