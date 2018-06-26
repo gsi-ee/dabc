@@ -501,11 +501,14 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          if (cmd.GetStr("mode") == "start") {
             tdc->BeginCalibration(fAutoTdcMode==1 ? fCountLinear : fCountNormal);
          } else {
-            DOUT0("TDC %04x BEFORE mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
+
+            std::string s1 = dabc::format("BEFORE mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
 
             tdc->CompleteCalibration(fDummy, fCalibrFile, subdir);
 
-            DOUT0("TDC %04x AFTER  mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
+            std::string s2 = dabc::format("AFTER mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetExplicitCalibrationMode(), tdc->GetCalibrProgress(), tdc->GetCalibrQuality(), tdc->GetCalibrStatus().c_str());
+
+            DOUT0("TDC %04x %s %s", tdc->GetID(), s1.c_str(), s2.c_str());
          }
       }
 
