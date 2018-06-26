@@ -1351,6 +1351,8 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       std::string rundir = hadaq::FormatFilename(cmd.GetUInt("runid"));
 
+      DOUT0("Combiner get BnetCalibrControl mode %s rundir %s", cmd.GetStr("mode"), rundir.c_str());
+
       if (fBNETsend && !fIsTerminating)
          for (unsigned n = 0; n < NumInputs(); n++) {
             dabc::Command subcmd("TdcCalibrations");

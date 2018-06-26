@@ -491,8 +491,10 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          subdir.append(fCalibrFile);
       }
 
-      if (cmd.GetStr("mode") != "start") DOUT0("%s STORE CALIBRATIONS IN %s %s", GetName(), fCalibrFile.c_str(), subdir.c_str());
-
+      if (cmd.GetStr("mode") == "start")
+         DOUT0("%s START CALIBRATIONS autotdc %d", GetName(), fAutoTdcMode);
+      else
+         DOUT0("%s STORE CALIBRATIONS IN %s %s", GetName(), fCalibrFile.c_str(), subdir.c_str());
 
       unsigned num = fTrbProc->NumberOfTDC();
       for (unsigned indx=0;indx<num;++indx) {
