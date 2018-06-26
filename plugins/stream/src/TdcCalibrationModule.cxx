@@ -453,6 +453,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
    if (cmd.IsName("ResetExportedCounters") || cmd.IsName("ResetTransportStat")) {
       // redirect command to real transport
       if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+      return dabc::cmd_false;
    }
 
    if (cmd.IsName("GetCalibrState")) {
@@ -490,7 +491,7 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          subdir.append(fCalibrFile);
       }
 
-      if (cmd.GetStr("mode") != "start") DOUT0("STORE CALIBRATIONS IN %s %s", fCalibrFile.c_str(), subdir.c_str());
+      if (cmd.GetStr("mode") != "start") DOUT0("%s STORE CALIBRATIONS IN %s %s", GetName(), fCalibrFile.c_str(), subdir.c_str());
 
 
       unsigned num = fTrbProc->NumberOfTDC();
