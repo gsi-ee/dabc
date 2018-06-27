@@ -19,14 +19,20 @@ void first()
 
    // range which TDC
    proc->SetTdcRange(0x1000, 0x1100);
-   
+
    // 1. level to detect spill on
    // 2. level to detect spill of
    // 3. number of bins in HLD_Hits histogram to analyze
    proc->SetSpillDetect(5000, 1000, 3);
-   
+
    // maximal spill length in seconds
    proc->SetMaxSpillLength(10.);
+
+   // set channels lookup table
+   // 1. channel id
+   // 2. strip id X:0..15 Y:100..115
+   proc->SetChannelsLookup(1, 1);
+   proc->SetChannelsLookup(16, 100);
 
    // create ROOT file store
    // base::ProcMgr::instance()->CreateStore("td.root");
