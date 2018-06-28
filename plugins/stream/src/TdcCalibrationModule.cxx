@@ -44,7 +44,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fLastCalibr.GetNow();
 
    fDummy = Cfg("Dummy", cmd).AsBool(false);
-   fDebug = Cfg("Debug", cmd).AsBool(false);
+   fDebug = Cfg("Debug", cmd).AsInt(0);
    fReplace = Cfg("Replace", cmd).AsBool(true);
 
    fFineMin = Cfg("FineMin", cmd).AsInt();
@@ -195,7 +195,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
          double quality = tdc->GetCalibrQuality();
          int mode = tdc->GetExplicitCalibrationMode();
 
-         DOUT0("TDC 0x%04x mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), mode, progr, quality, sname.c_str());
+         // DOUT0("TDC 0x%04x mode %d Progress %5.4f Quality %5.4f state %s", tdc->GetID(), mode, progr, quality, sname.c_str());
 
          if (quality < worse_quality) {
             worse_quality = quality;
@@ -367,8 +367,14 @@ bool stream::TdcCalibrationModule::retransmit()
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
                if (num==0) EOUT("No any TDC found");
-            }
 
+               if (fDebug == 2) {
+                  // just start explicit calculations
+                  dabc::Command cmd("TdcCalibrations");
+                  cmd.SetStr("mode", "start");
+                  ExecuteCommand(cmd);
+               }
+            }
 
             // from here starts transformation of the data
 
@@ -427,7 +433,7 @@ bool stream::TdcCalibrationModule::retransmit()
 
                SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
 
-               DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
+               // DOUT0("%s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
                // if (fProgress>0) fState = "Ready";
             }

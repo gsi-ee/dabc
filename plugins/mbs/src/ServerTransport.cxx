@@ -396,7 +396,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
 
       ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
       // FIXME: should we configure buffer size or could one ignore it???
-      addon->FillServInfo(0x100000, true);
+      addon->FillServInfo(0x400000, true);
 
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 

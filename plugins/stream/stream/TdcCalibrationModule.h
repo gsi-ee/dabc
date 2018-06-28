@@ -46,7 +46,7 @@ namespace stream {
       bool fOwnProcMgr;                       ///< if created in the module
       hadaq::TrbProcessor *fTrbProc{nullptr}; ///< TRB processor
       bool fDummy;                            ///< module creates all TDCs but do not perform any transformation
-      bool fDebug{false};                     ///< when specified, provides more debug output
+      int fDebug{0};                          ///< when specified, provides more debug output and special mode
       bool fReplace;                          ///< replace hit messages (true) or add calibration messages (false)
       int fAutoCalibr;                        ///< amount of statistic for the auto calibration in channels
       int fCountLinear;                       ///< number of count for liner calibrations when starting explicitly
