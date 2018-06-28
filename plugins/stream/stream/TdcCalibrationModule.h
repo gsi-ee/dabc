@@ -88,6 +88,7 @@ namespace stream {
       virtual bool ProcessSend(unsigned) { return retransmit(); }
 
       virtual void BeforeModuleStart() { DOUT2("START CALIBR MODULE"); }
+      virtual void AfterModuleStop();
 
       static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress = 0, double *res_quality = 0, std::string *res_state = 0);
 

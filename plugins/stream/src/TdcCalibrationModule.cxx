@@ -529,3 +529,14 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 }
+
+
+void stream::TdcCalibrationModule::AfterModuleStop()
+{
+   if (fDebug == 2) {
+      // just start explicit calculations
+      dabc::Command cmd("TdcCalibrations");
+      cmd.SetStr("mode", "stop");
+      ExecuteCommand(cmd);
+   }
+}
