@@ -382,7 +382,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
       if (isstart) {
          prefix = cmd.GetStr("prefix");
-         if (prefix == "NO_FILE" || prefix == "--" || lastprefix == "--" || lastprefix.empty())
+         if (prefix == "NO_FILE" || prefix == "--" || (prefix.empty() && (lastprefix == "--" || lastprefix.empty())))
             isstart = false;
       }
       if (isstart) {
