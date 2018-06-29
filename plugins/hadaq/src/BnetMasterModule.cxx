@@ -381,7 +381,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       unsigned runid = 0;
       if (isstart) {
          prefix = cmd.GetStr("prefix");
-         if (prefix == "NO_FILE" || prefix == "--")
+         if (prefix == "NO_FILE" || prefix == "--" || prefix.empty())
             isstart = false;
       }
       if (isstart) {
