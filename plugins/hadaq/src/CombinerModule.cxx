@@ -1593,6 +1593,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          if (fRunNumber) StoreRunInfoStop(false, newrunid);
          std::string newprefix = fBnetFileCmd.GetStr("prefix");
          if(!newprefix.empty()) fPrefix = newprefix; // need to reset prefix here for run info JAM2018
+         SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(fPrefix.c_str())); // also export changed prefix to EPICS
          fRunNumber = newrunid;
          ResetInfoCounters();
          StoreRunInfoStart();
