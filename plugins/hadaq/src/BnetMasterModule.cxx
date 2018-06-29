@@ -379,9 +379,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       std::string query, prefix;
       unsigned runid = 0;
+      std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
       if (isstart) {
          prefix = cmd.GetStr("prefix");
-         if (prefix == "NO_FILE" || prefix == "--" || prefix.empty())
+         if (prefix == "NO_FILE" || prefix == "--" || lastprefix == "--")
             isstart = false;
       }
       if (isstart) {
@@ -398,7 +399,6 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          query = "mode=stop";
       }
 
-      std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
       if (isstart && !prefix.empty())
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
