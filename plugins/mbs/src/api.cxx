@@ -66,7 +66,9 @@ void mbs::ReadoutModule::ProcessData()
 
    bool cleanqueue = false;
    if ((maxage>0) && InputQueueFull())
-      if (fLastNotFullTm.null() || (now - fLastNotFullTm > maxage)) cleanqueue = true;
+      if (fLastNotFullTm.null() || (now - fLastNotFullTm > maxage)) {
+         cleanqueue = true;
+      }
 
    if (cleanqueue) fLastNotFullTm = now;
 
@@ -137,7 +139,7 @@ mbs::ReadoutHandle mbs::ReadoutHandle::DoConnect(const std::string &url, const c
    }
 
    if (dabc::mgr.FindPool(dabc::xmlWorkPool).null()) {
-      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 4*1024*1024, 25)) {
+      if (!dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool, 4*1024*1024, 50)) {
          return 0;
       }
    }
