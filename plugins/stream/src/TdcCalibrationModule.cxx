@@ -361,7 +361,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
                   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
-                  if (fAutoToTRange>0) tdc->SetToTRange(10., 30., 60.); // special mode for DiRICH
+                  if (fAutoToTRange>0) tdc->SetToTRange(15., 30., 60.); // special mode for DiRICH
 
                   tdc->UseExplicitCalibration();
 
