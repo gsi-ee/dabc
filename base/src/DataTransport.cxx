@@ -51,7 +51,7 @@ void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
 {
    CloseInput();
 
-   if (inp==0) return;
+   if (!inp) return;
 
    fInput = inp;
    fInputOwner = false;
@@ -59,19 +59,17 @@ void dabc::InputTransport::SetDataInput(DataInput* inp, bool owner)
 
    if (addon==0) {
       fInputOwner = owner;
-   } else
-   if (owner)
+   } else if (owner) {
       AssignAddon(addon);
-   else
-      EOUT("Cannot assigned addon while owner flag is not specified");
-
+   } else {
+      EOUT("Transport %s cannot assign addon while owner flag is not specified", GetName());
+   }
 }
 
 void dabc::InputTransport::EnableReconnect(const std::string &reconn)
 {
    fReconnect = reconn;
 }
-
 
 void dabc::InputTransport::RequestPoolMonitoring()
 {
