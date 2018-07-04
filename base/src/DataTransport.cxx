@@ -420,12 +420,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       fCurrentBuf = TakeBuffer();
 
-//      DOUT0("input transport taking buffer null %s size %u autopool %s connected %s", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize(), DBOOL(IsAutoPool()), DBOOL(IsPoolConnected()));
-
       if (!fCurrentBuf.null()) {
          ChangeState(inpCheckBuffer);
-      } else
-      if (IsAutoPool()) {
+      } else if (IsAutoPool()) {
          ChangeState(inpWaitBuffer);
          return false;
       } else {

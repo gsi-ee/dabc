@@ -2,6 +2,11 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information 
 about current functionality of the framework.
 
+4.07.2018
+1. Fix problem with auto buffers delivery in memory pool.
+   It was stopped when number of buffers was not sufficient  
+
+
 25.06.2018
 1. Control number of input and builder nodes from master.
    Set error state if some of nodes are missing 

@@ -483,6 +483,7 @@ void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num) throw()
 
       if (--(fMem->fArr[id].refcnt) == 0) fMem->fFree.Push(id);
    }
+
 }
 
 
@@ -493,9 +494,9 @@ bool dabc::MemoryPool::ProcessSend(unsigned port)
       fReqests[port].pending = true;
    }
 
-//   DOUT0("MemoryPool::ProcessSend %u pending %u", port, fPending.Size());
+   RecheckRequests(true);
 
-   return RecheckRequests(true);
+   return true; // always
 }
 
 
