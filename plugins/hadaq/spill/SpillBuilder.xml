@@ -34,7 +34,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
 -->
 
 <dabc version="2">
-  <Context host="localhost" name="EventBuilder">
+  <Context host="localhost" name="SpillBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
@@ -43,19 +43,11 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <logfile value="hadaqevtbuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
-      <master value="localhost:23456"/>
     </Run>
-    
+
     <HttpServer name="http" port="8091"/>
-    
-    <!-- If uncommented, all internal manager structures will be published in the web server -->
-    <!-- Publisher name="publ" manager="true"/ -->
-    
-    <!-- If uncommented, profiling will be enabled for all threads -->
-    <!-- Thread name="*" publ="true" prof="true"/ -->
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>

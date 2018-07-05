@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<dabc version="2">
+  <Context host="localhost" name="StartMonitor">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>
+      <logfile value="start.log"/>
+      <loglevel value="1"/>
+      <loglimit value="1000"/>
+      <threads_layout value="balanced"/>
+    </Run>
+
+    <HttpServer name="http" port="8093"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="4000000"/>
+       <NumBuffers value="50"/>
+    </MemoryPool>
+
+     <Module name="Run" class="stream::RunModule">
+       <!--asf value="file.root"/-->
+       <parallel value="0"/>
+       <InputPort name="Input0" url="mbss://lxhadeb09:81010"/>
+       <OutputPort name="*" auto="false"/>
+       <Events width="4" prec="1" low="0" up="1000" debug="0"/>
+       <DataRate width="4" prec="2" low="0" up="10" debug="1"/>
+    </Module>
+
+  </Context>
+
+</dabc>
