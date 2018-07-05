@@ -113,7 +113,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          fAutoTdcMode = fAutoTdcMode % 10;
       }
 
-      DOUT0("TRB 0x%04x configured in auto mode %d ToT range %d", (unsigned) fTRB, fAutoTdcMode, fAutoToTRange);
+      DOUT0("TRB 0x%04x configured in auto mode %d ToT range %d NumCh %d Edges %d", (unsigned) fTRB, fAutoTdcMode, fAutoToTRange, fNumCh, fEdges);
 
       for (unsigned n=0;n<fTdcMin.size();++n)
          DOUT0("   TDC range 0x%04x - 0x%04x", (unsigned) fTdcMin[n], (unsigned) fTdcMax[n]);
@@ -361,7 +361,7 @@ bool stream::TdcCalibrationModule::retransmit()
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
                   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
-                  if (fAutoToTRange>0) tdc->SetToTRange(15., 30., 60.); // special mode for DiRICH
+                  if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
 
                   tdc->UseExplicitCalibration();
 

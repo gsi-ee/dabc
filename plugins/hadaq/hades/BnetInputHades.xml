@@ -71,6 +71,18 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     <Device name="NetDev" class="dabc::SocketDevice"/>
     
     <!--  Thread name="SpecialThrd" affinity="+1"/-->
+
+    <!-- special configuration for START detector -->
+    <Module name="TRB888*_TdcCal">
+       <!-- number of TDC channels -->
+       <NumChannels value="17"/>
+    </Module>    
+
+    <!-- special configuration for ECAL HUBs -->
+    <Module name="TRB8a*_TdcCal">
+       <!-- number of TDC channels -->
+       <NumChannels value="49"/>
+    </Module>    
     
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="TRB*_TdcCal">    
