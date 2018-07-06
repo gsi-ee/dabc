@@ -220,7 +220,7 @@ namespace dabc {
          return maxsize;
       }
 
-      bool ExpandStream()
+      bool ExpandStream(char *&curr)
       {
          if (EndOfFile()) return false;
          fBufSize*=2;
@@ -231,6 +231,7 @@ namespace dabc {
          fMaxAddr = newbuf + (fMaxAddr - fBuf);
          fCurrent = newbuf + (fCurrent - fBuf);
          fLimitAddr = newbuf + (fLimitAddr - fBuf);
+         curr = newbuf + (curr - fBuf);
          fBuf = newbuf;
 
          int len = DoRead(fMaxAddr, fBufSize-curlength);
@@ -291,9 +292,9 @@ namespace dabc {
       {
          // Check if in current position we see specified string
          int len = strlen(str);
-         while (fCurrent+len>fMaxAddr)
-            if (!ExpandStream()) return false;
          char* curr = fCurrent;
+         while (curr+len>fMaxAddr)
+            if (!ExpandStream(curr)) return false;
          while (*str != 0)
             if (*str++ != *curr++) return false;
          return ShiftCurrent(len);
@@ -310,7 +311,7 @@ namespace dabc {
          do {
             curr++;
             while (curr+len>fMaxAddr)
-               if (!ExpandStream()) return -1;
+               if (!ExpandStream(curr)) return -1;
             char* chk0 = curr;
             const char* chk = str;
             bool find = true;
@@ -335,7 +336,7 @@ namespace dabc {
          do {
             curr++;
             if (curr>=fMaxAddr)
-               if (!ExpandStream()) return 0;
+               if (!ExpandStream(curr)) return 0;
             symb = *curr;
             ok = ((symb>='a') && (symb<='z')) ||
                   ((symb>='A') && (symb<='Z')) ||
@@ -354,7 +355,7 @@ namespace dabc {
             if (symb=='<') return curr - fCurrent;
             curr++;
             if (curr>=fMaxAddr)
-               if (!ExpandStream()) return -1;
+               if (!ExpandStream(curr)) return -1;
          }
          return -1;
       }
@@ -363,16 +364,16 @@ namespace dabc {
       {
          char* curr = start;
          if (curr>=fMaxAddr)
-            if (!ExpandStream()) return 0;
+            if (!ExpandStream(curr)) return 0;
          if (*curr!='=') return 0;
          curr++;
          if (curr>=fMaxAddr)
-            if (!ExpandStream()) return 0;
+            if (!ExpandStream(curr)) return 0;
          if (*curr!='"') return 0;
          do {
             curr++;
             if (curr>=fMaxAddr)
-               if (!ExpandStream()) return 0;
+               if (!ExpandStream(curr)) return 0;
             if (*curr=='"') return curr-start+1;
          } while (curr<fMaxAddr);
          return 0;
