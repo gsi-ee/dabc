@@ -1081,7 +1081,7 @@ dabc::XMLDocPointer_t dabc::Xml::ParseString(const char* xmlstring, bool showerr
    // parses content of string and tries to produce xml structures
 
    if ((xmlstring==0) || (strlen(xmlstring)==0)) return 0;
-   XmlInputStream inp(false, xmlstring, 2*strlen(xmlstring) );
+   XmlInputStream inp(false, xmlstring, 100000);
    return ParseStream(&inp, showerr);
 }
 
