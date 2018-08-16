@@ -173,7 +173,7 @@
 }
 
 .MyButtonStyle {
- 	transform: scale(1.5, 1.5); 
+  	transform: scale(1.5, 1.5); 
 }
 
 .MySpinnerStyle {
@@ -227,8 +227,7 @@
 							title="Execute shutdown.scom script">Shutdown</button>
 					</td> 
 					<td><input id="ShowGosipToggle" type="checkbox"><label
-						for="ShowGosipToggle" style="height: 30px" title="Show/Hide Gosip command dock">
-							Show gosip command panel?</label></td>	
+						for="ShowGosipToggle" title="Show/Hide Gosip command dock"> <span class="ui-icon ui-icon-wrench MyButtonStyle"> </span> </label></td>	
 							
 					
 				</tr>
@@ -319,12 +318,10 @@
 								Max size</label>
 								
 							<td><input id="FileAutoMode" type="checkbox"><label
-						for="FileAutoMode" style="height: 30px" title="Automatic file numbering">
-							FileAuto?</label></td>	
+						for="FileAutoMode"  title="Exact file names." ><span class="ui-icon ui-icon-star MyButtonStyle"></span></label></td>	
 							
 							<td><input id="FileRFIO" type="checkbox"><label
-						for="FileRFIO" style="height: 30px" title="Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE.">
-							RFIO on??</label></td>	
+						for="FileRFIO"  title="Write to RFIO server. Must be connected first with command connect rfio -DISK or -ARCHIVE."><span class="ui-icon ui-icon-disk MyButtonStyle"></span></label></td>	
 								
 					</form>
 					</td>
@@ -392,8 +389,8 @@
 			<tbody>
 				<tr>
 					<td><input id="Trending" type="checkbox" checked="true"><label
-						for="Trending" style="height: 30px" title="Show Rates as trending">
-							Trending?</label></td>
+						for="Trending" title="Show Rates as trending">
+							<span class="ui-icon ui-icon-image MyButtonStyle"></span></label></td>
 
 					<td><input id="Trendlength" type="text" value="100"
 						class="MySpinnerStyle"><label for="Trendlength"
@@ -418,16 +415,16 @@
 							View</button>
 					</td>
 					<td><input id="Monitoring" type="checkbox" checked="checked"><label
-							for="Monitoring" style="height: 30px"
-							title="Activate frequent refresh"> Monitoring</label></td>
+							for="Monitoring" 
+							title="Activate frequent refresh"> <span class="ui-icon ui-icon-play MyButtonStyle"></span></label></td>
 
 					<td><input id="Refreshtime" type="number" value="1"
 						class="MySpinnerStyle"><label for="Refreshtime"
 							title="Specify update interval"> Refresh Interval [s]</label></td>
 							
 							<td><input id="ConfirmCommandToggle" type="checkbox" checked="checked"><label
-						for="ConfirmCommandToggle" style="height: 30px" title="Comfirm remote commands with dialog">
-							Comfirm remote commands with dialog</label></td>	
+						for="ConfirmCommandToggle"  title="Comfirm remote commands with dialog"> 
+						<span class="ui-icon ui-icon-wrench MyButtonStyle"></span></label></td>	
 				</tr>
 				<tbody>
 		</table>

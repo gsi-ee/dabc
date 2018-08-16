@@ -419,7 +419,7 @@ MbsDisplay.prototype.RefreshView = function() {
    if (this.fMbsState.fFileOpen) {
       //console.log("RefreshView finds open file");
       $("#file_container").addClass("styleGreen").removeClass("styleRed");
-      $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-closethick MyButtonStyle" }});
+      $("#buttonStartFile").button("option", {icon:  "ui-icon-closethick MyButtonStyle" });
       $("#buttonStartFile").attr("title", "Close output file");
       $("#FileAutoMode").prop('disabled', true);
       $("#FileRFIO").prop('disabled', true);
@@ -428,7 +428,7 @@ MbsDisplay.prototype.RefreshView = function() {
    } else {
       //console.log("RefreshView finds close file");
       $("#file_container").addClass("styleRed").removeClass("styleGreen");
-      $("#buttonStartFile").button("option", {icons: { primary: "ui-icon-seek-next MyButtonStyle" }});
+      $("#buttonStartFile").button("option", {icon:  "ui-icon-seek-next MyButtonStyle" });
       $("#buttonStartFile").attr("title", "Open lmd file for writing");
       $("#FileAutoMode").prop('disabled', false);
       $("#FileRFIO").prop('disabled', false);
@@ -464,18 +464,18 @@ MbsDisplay.prototype.RefreshView = function() {
    }
 
    if($("#FileRFIO").is(':checked')){
-      $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-link MyButtonStyle\"></span>");
+      $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-link MyButtonStyle\"></span>");
       $("label[for='FileRFIO']").attr("title",  "Write to RFIO server is enabled. Must be connected first with command connect rfio -DISK or -ARCHIVE.");
    } else {
-      $("label[for='FileRFIO']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-disk MyButtonStyle\"></span>");
+      $("label[for='FileRFIO']").html("<span class=\"ui-icon ui-icon-disk MyButtonStyle\"></span>");
       $("label[for='FileRFIO']").attr("title", "Write to local disk is enabled.");
    }
 
    if($("#FileAutoMode").is(':checked')){
-      $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-star MyButtonStyle\"></span>");
+      $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-star MyButtonStyle\"></span>");
       $("label[for='FileAutoMode']").attr("title",  "Automatic file numbering is enabled. Names of the form namexxx.lmd are created with consecutive numbers xxx.");
    } else {
-      $("label[for='FileAutoMode']").html("<span class=\"ui-button-icon-primary ui-icon ui-icon-document MyButtonStyle\"></span>");
+      $("label[for='FileAutoMode']").html("<span class=\"ui-icon ui-icon-document MyButtonStyle\"></span>");
       $("label[for='FileAutoMode']").attr("title",  "Use exact file name is enabled. Will return error if file already exists.");
    }
 
@@ -535,7 +535,7 @@ $(function() {
 
 ///////////////////////////// mbs specific:
 
-   $("#buttonStartAcquisition").button({text: false, icons: { primary: "ui-icon-play MyButtonStyle"}}).click(
+   $("#buttonStartAcquisition").button({showLabel: false, icon:  "ui-icon-play MyButtonStyle"}).click(
          function() {
             var requestmsg = "Really Start Acquisition?";
             var response = MyDisplay.Confirm(requestmsg);
@@ -550,7 +550,7 @@ $(function() {
             });
          });
 
-   $("#buttonStopAcquisition").button({text: false, icons: { primary: "ui-icon-stop MyButtonStyle"}}).click(
+   $("#buttonStopAcquisition").button({showLabel: false, icon:  "ui-icon-stop MyButtonStyle"}).click(
          function() {
 
             var requestmsg = "Really Stop Acquisition?";
@@ -566,7 +566,7 @@ $(function() {
          });
 
 ////////// startup command will not work at the moment:
-   $("#buttonStartupAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-n MyButtonStyle"}}).click(function() {
+   $("#buttonStartupAcquisition").button({showLabel: false, icon:  "ui-icon-arrowthick-1-n MyButtonStyle"}).click(function() {
       var requestmsg = "Really Initialize Acquisition?";
       var response = MyDisplay.Confirm(requestmsg);
       if (!response)
@@ -582,7 +582,7 @@ $(function() {
 
    });
 
-   $("#buttonShutdownAcquisition").button({text: false, icons: { primary: "ui-icon-arrowthick-1-s MyButtonStyle"}}).click(function() {
+   $("#buttonShutdownAcquisition").button({showLabel: false, icon:  "ui-icon-arrowthick-1-s MyButtonStyle"}).click(function() {
       var requestmsg = "Really Shut down Acquisition?";
       var response = MyDisplay.Confirm(requestmsg);
       if (!response)
@@ -600,12 +600,12 @@ $(function() {
 
 
 
-   $("#buttonStartFile").button({text: false, icons: { primary: "ui-icon-seek-next MyButtonStyle"}});
+   $("#buttonStartFile").button({showLabel: false, icon:  "ui-icon-seek-next MyButtonStyle"});
 
-   $("#FileAutoMode").button({text: false, icons: { primary: "ui-icon-star MyButtonStyle"}})
+   $("#FileAutoMode").checkboxradio({icon: false})
                      .click(function() { MyDisplay.RefreshView(); });
 
-   $("#FileRFIO").button({text: false, icons: { primary: "ui-icon-link MyButtonStyle"}})
+   $("#FileRFIO").checkboxradio({icon: false})
                  .click(function() { MyDisplay.RefreshView();} );
 
    $("#lmd_file_form").submit(
@@ -682,20 +682,21 @@ $(function() {
 
 
 
-   $("#Monitoring").button({text: false, icons: { primary: "ui-icon-play MyButtonStyle"}}).click(function() {
+   $("#Monitoring").checkboxradio({icon: false})
+      .click(function() {
       MyDisplay.fUpdateInterval=1000*parseInt(document.getElementById("Refreshtime").value);
       MyDisplay.ChangeMonitoring($(this).is(':checked'));
       MyDisplay.RefreshView();
    });
 
 
-   $("#buttonRefresh").button({text: false, icons: { primary: "ui-icon-refresh MyButtonStyle"}}).click(
+   $("#buttonRefresh").button({showLabel: false, icon:  "ui-icon-refresh MyButtonStyle"}).click(
          function() {
                MyDisplay.RefreshMonitor();
             });
 
 
-   $("#Trending").button({text: false, icons: { primary: "ui-icon-image MyButtonStyle"}})
+   $("#Trending").checkboxradio({icon: false})
    .prop('checked', MyDisplay.fTrending)
    .click(function() {
       MyDisplay.SetTrending($(this).is(':checked'), parseInt(document.getElementById("Trendlength").value));
@@ -704,7 +705,7 @@ $(function() {
 
 
 
-   $("#buttonExecuteGosip").button({text: false, icons: { primary: "ui-icon-gear MyButtonStyle"}});
+   $("#buttonExecuteGosip").button({showLabel: false, icon:  "ui-icon-gear MyButtonStyle"});
 
 
 
@@ -741,7 +742,7 @@ $(function() {
 
 
 
-      $("#buttonExecuteMBS").button({text: false, icons: { primary: "ui-icon-gear MyButtonStyle"}});
+      $("#buttonExecuteMBS").button({showLabel: false, icon:  "ui-icon-gear MyButtonStyle"});
 
 
       $( "#mbscmd_form" ).submit(
@@ -768,7 +769,7 @@ $(function() {
 
 
 
-      $("#ShowGosipToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}})
+      $("#ShowGosipToggle").checkboxradio({icon: false})
       .prop('checked', MyDisplay.fShowGosip)
       .click(
             function() {
@@ -777,7 +778,7 @@ $(function() {
 
 
 
-   $("#buttonClearGosipLog").button({text: false, icons: { primary: "ui-icon-trash MyButtonStyle"}}).click(
+   $("#buttonClearGosipLog").button({showLabel: false, icon:  "ui-icon-trash MyButtonStyle"}).click(
          function() {
                MyDisplay.SetStatusMessage("Cleared gosip logoutput.");
                document.getElementById("GosipLog").innerHTML="";
@@ -788,7 +789,7 @@ $(function() {
 
 
 // Use new jquery ui styled icon
-   $("#buttonUserGUI").button({text: false, icons: { primary: "ui-icon-poland MyButtonStyle"}}).click(
+   $("#buttonUserGUI").button({showLabel: false, icon:  "ui-icon-poland MyButtonStyle"}).click(
          function() {
                MyDisplay.SetStatusMessage("Launched gosip user gui.");
                window.open('/GOSIP/Test/UI/','_blank');
@@ -800,7 +801,7 @@ $(function() {
           MyDisplay.SetFileLogMode(this.value, 0 ,0);
        });
 
-       $("#ConfirmCommandToggle").button({text: false, icons: { primary: "ui-icon-wrench MyButtonStyle"}}).click(
+       $("#ConfirmCommandToggle").checkboxradio({icon: false}).click(
             function() {
                var doconfirm=$('#ConfirmCommandToggle').is(':checked');
                MyDisplay.SetCommandConfirm(doconfirm);
