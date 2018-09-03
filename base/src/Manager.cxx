@@ -1625,6 +1625,22 @@ void dabc::Manager::ProcessCtrlCSignal()
    exit(0);
 }
 
+void dabc::Manager::ProcessPipeSignal()
+{
+   // during shutdown do not try to reopen log file
+   dabc::Logger::DisableLogReopen();
+
+   DOUT0("Process signal SIGPIPE - Socket error from plug-in libraries?");
+
+   if (fMgrStoppedTime.null()) {
+      fMgrStoppedTime.GetNow();
+      return;
+   }
+
+}
+
+
+
 void dabc::Manager::RunManagerMainLoop(double runtime)
 {
    DOUT2("Enter dabc::Manager::RunManagerMainLoop");

@@ -31,7 +31,7 @@ namespace dabc {
 
    /** Method is used to install DABC-specific Ctrl-C handler
     * It allows to correctly stop program execution when pressing Ctrl-C */
-   extern bool InstallCtrlCHandler();
+   extern bool InstallSignalHandlers();
 
    /** Returns true when CtrlC was pressed in handler */
    extern bool CtrlCPressed();

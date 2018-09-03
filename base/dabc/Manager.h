@@ -550,8 +550,9 @@ namespace dabc {
           * Opposite to RegisterDependency call */
          bool UnregisterDependency(Object* src, Object* tgt, bool bidirectional = false);
 
-         bool InstallCtrlCHandler();
+         bool InstallSignalHandlers();
          void ProcessCtrlCSignal();
+         void ProcessPipeSignal();
 
          virtual bool Find(ConfigIO &cfg);
 

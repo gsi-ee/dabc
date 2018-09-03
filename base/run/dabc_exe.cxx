@@ -74,7 +74,7 @@ int main(int numc, char* args[])
 {
    ::setlocale(LC_ALL, "C");
 
-   dabc::InstallCtrlCHandler();
+   dabc::InstallSignalHandlers();
 
 //   dabc::SetDebugLevel(0);
 

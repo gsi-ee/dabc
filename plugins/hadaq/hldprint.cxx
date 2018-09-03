@@ -707,7 +707,7 @@ int main(int argc, char* argv[])
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
 
-   dabc::InstallCtrlCHandler();
+   dabc::InstallSignalHandlers();
 
    while (!dabc::CtrlCPressed()) {
 
