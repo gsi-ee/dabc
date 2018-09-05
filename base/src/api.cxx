@@ -66,20 +66,20 @@ void DABC_GLOBAL_CtrlCHandler(int number)
    dabc::mgr()->ProcessCtrlCSignal();
 }
 
-//void DABC_GLOBAL_SigPipeHandler(int number)
-//{
-//  // JAM2018:This was introduced to catch socket signals raised by external plugin libraries like LTSM/TSM client
-//  // note that DABC sockets have SIGPIPE disabled by default
-//  // todo: maybe one global signal handlers for all signals. For the moment, keep things rather separate...
-//   if (DABC_SigThrd != dabc::PosixThread::Self()) return;
-//   if (dabc::mgr()==0) {
-//      printf("DABC_GLOBAL_SigPipeHandler: no manager, Force application exit\n");
-//      if (dabc::lgr()!=0) dabc::lgr()->CloseFile();
-//      exit(0);
-//   }
-//   dabc::mgr()->ProcessPipeSignal();
-//}
-//
+void DABC_GLOBAL_SigPipeHandler(int number)
+{
+ // JAM2018:This was introduced to catch socket signals raised by external plugin libraries like LTSM/TSM client
+ // note that DABC sockets have SIGPIPE disabled by default
+ // todo: maybe one global signal handlers for all signals. For the moment, keep things rather separate...
+  if (DABC_SigThrd != dabc::PosixThread::Self()) return;
+  if (dabc::mgr()==0) {
+     printf("DABC_GLOBAL_SigPipeHandler: no manager, Force application exit\n");
+     if (dabc::lgr()!=0) dabc::lgr()->CloseFile();
+     exit(0);
+  }
+  dabc::mgr()->ProcessPipeSignal();
+}
+
 
 
 
@@ -97,10 +97,10 @@ bool dabc::InstallSignalHandlers()
       return false;
    }
 
-   // if (signal(SIGPIPE, DABC_GLOBAL_SigPipeHandler)==SIG_ERR) {
-   //      printf("Cannot change handler for SIGPIPE\n");
-   //      return false;
-   //  }
+   if (signal(SIGPIPE, DABC_GLOBAL_SigPipeHandler)==SIG_ERR) {
+        printf("Cannot change handler for SIGPIPE\n");
+        return false;
+    }
 
    return true;
 }
