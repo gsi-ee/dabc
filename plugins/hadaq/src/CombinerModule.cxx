@@ -1326,6 +1326,22 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
          if (fRunNumber) StoreRunInfoStop();
          // reset runid
          fRunNumber = 0;
+
+         FlushOutputBuffer(); // need to ensure that all output data are moved to outputs
+
+         // submit dummy buffer to the HLD output to stop current file
+         for (unsigned k=1;k<NumOutputs();++k) {
+            if (CanSend(k)) {
+               dabc::Buffer eolbuf = TakeBuffer();
+               if (eolbuf.null()) {
+                  EOUT("FAIL to SEND EOL buffer to OUTPUT %d", k);
+               } else {
+                  DOUT2("SEND EOL to OUTPUT %d %d", k, eolbuf.GetTotalSize());
+                  eolbuf.SetTypeId(hadaq::mbt_HadaqStopRun);
+                  Send(k, eolbuf);
+               }
+            }
+         }
       }
 
       return dabc::cmd_true;

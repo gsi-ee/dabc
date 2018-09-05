@@ -254,14 +254,21 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Close;
    }
 
-   if (buf.GetTypeId() != hadaq::mbt_HadaqEvents) {
+   bool is_eol = buf.GetTypeId() == hadaq::mbt_HadaqStopRun;
+
+   if ((buf.GetTypeId() != hadaq::mbt_HadaqEvents) && !is_eol) {
       ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
       return dabc::do_Error;
    }
 
    unsigned cursor(0);
    bool startnewfile(false);
-   if (fEpicsSlave || fRunSlave) {
+   if (is_eol) {
+      // just reset number
+      fRunNumber = 0;
+      startnewfile = true;
+      DOUT2("HLD output process EOL");
+   } else if (fEpicsSlave || fRunSlave) {
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
