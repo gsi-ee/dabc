@@ -97,10 +97,10 @@ bool dabc::InstallSignalHandlers()
       return false;
    }
 
-   if (signal(SIGPIPE, DABC_GLOBAL_SigPipeHandler)==SIG_ERR) {
-        printf("Cannot change handler for SIGPIPE\n");
-        return false;
-    }
+   // if (signal(SIGPIPE, DABC_GLOBAL_SigPipeHandler)==SIG_ERR) {
+   //      printf("Cannot change handler for SIGPIPE\n");
+   //      return false;
+   //  }
 
    return true;
 }
