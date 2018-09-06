@@ -373,6 +373,8 @@ bool PrintBubbleData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigne
 
 void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix, unsigned& errmask, SubevStat *substat = 0)
 {
+   if (len == 0) return;
+
    if (bubble_mode) {
       PrintBubbleData(sub, ix, len, prefix);
       return;
@@ -381,6 +383,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
 
    if (ix>=sz) return;
+   // here when len was 0 - rest of subevent was printed
    if ((len==0) || (ix + len > sz)) len = sz - ix;
 
    unsigned wlen = 2;
