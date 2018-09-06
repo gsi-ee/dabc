@@ -61,6 +61,7 @@ int usage(const char* errstr = 0)
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -rate                   - display only events rate\n");
+   printf("   -bw                     - disable colors\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
@@ -138,7 +139,12 @@ struct SubevStat {
 
 double tot_limit(20.);
 unsigned fine_min(31), fine_max(491);
-bool bubble_mode = false, only_errors = false;
+bool bubble_mode = false, only_errors = false, use_colors = true;
+
+const char *getCol(const char *col_name)
+{
+   return use_colors ? col_name : "";
+}
 
 const char* debug_name[32] = {
       "Number of valid triggers",
@@ -538,7 +544,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                   double tot = last_falling[channel] - last_rising[channel];
                   bool cond = ((tot >= 0) && (tot < tot_limit));
                   if (cond) errmask |= tdcerr_ToT;
-                  sprintf(sbuf," tot:%s%6.3f ns%s", cond ? col_RED : col_GREEN, tot, col_RESET);
+                  sprintf(sbuf," tot:%s%6.3f ns%s", getCol(cond ? col_RED : col_GREEN), tot, getCol(col_RESET));
                   last_rising[channel] = 0;
                }
             }
@@ -658,6 +664,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-auto")==0) { autoid = true; printsub = true; } else
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
+      if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
@@ -901,7 +908,7 @@ int main(int argc, char* argv[])
                if (as_raw) sub->PrintRawData(ix, datalen, prefix);
 
                if (errmask!=0) {
-                  printf("         %s!!!! TDC errors:%s", col_RED, col_RESET);
+                  printf("         %s!!!! TDC errors:%s", getCol(col_RED), getCol(col_RESET));
                   unsigned mask = 1;
                   for (int n=0;n<NumTdcErr;n++,mask*=2)
                      if (errmask & mask) printf(" err_%s", TdcErrName(n));
