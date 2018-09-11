@@ -16,6 +16,7 @@ http://your_dabc_host_name:8090 can be opened. At the moment http server provide
 
 
 Variables for hades multiple eventbuilder mode:
+BNETMASTER - hostname wher master controller module is running
 BNINPNUM   - number of bnet input process (1...4)
 BNINPID    - index of bnet input process (0...3)
 BNETSENDERS - list of first level bnet senders (input nodes and port)
@@ -57,7 +58,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
      <!--  <runtime value="50"/> -->
-      <master value="lxhadeb03:23456"/>
+      <master value="${BNETMASTER}:23456"/>
       <publisher value="true"/>
     </Run>
 

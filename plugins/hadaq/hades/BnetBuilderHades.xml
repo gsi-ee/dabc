@@ -29,6 +29,7 @@ In this case one should specify that port number when starting go4 analysis like
 When starting analysis from the go4 gui, one should specify stream server with port number too.
 
 Variables for hades multiple eventbuilder mode:
+BNETMASTER - hostname wher master controller module is running
 BNEBNUM   - number of event builder process (1...16)
 BNEBID    - index of event builder process (0...15)
 BNETSENDERS - list of first level bnet senders (input nodes and port)
@@ -75,7 +76,7 @@ DAQDISK - switches disk demon mode on/off
       <control value="true"/>
      <!--    <affinity value="-1"/> -->
       <threads_layout value="balanced"/>
-      <master value="lxhadeb03:23456"/>
+      <master value="${BNETMASTER}:23456"/>
       <publisher value="true"/>
       <!--       <runtime value="50"/>  -->    
     </Run>
