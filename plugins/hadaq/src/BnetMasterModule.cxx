@@ -66,6 +66,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
 
    CreatePar("DataRate").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
    CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
+   CreatePar("LostRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
 
    if (fControl) {
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
@@ -159,6 +160,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlStateName = "";
       fCtrlData = 0.;
       fCtrlEvents = 0.;
+      fCtrlLost = 0.;
       fCtrlInpNodesCnt = 0;
       fCtrlInpNodesExpect = 0;
       fCtrlBldNodesCnt = 0;
@@ -213,7 +215,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          dabc::Hierarchy item = iter.ref();
          if (!item.HasField("_bnet")) {
             if (item.IsName("HadaqData") && is_builder) fCtrlData += item.GetField("value").AsDouble(); else
-            if (item.IsName("HadaqEvents") && is_builder) fCtrlEvents += item.GetField("value").AsDouble();
+            if (item.IsName("HadaqEvents") && is_builder) fCtrlEvents += item.GetField("value").AsDouble(); else
+            if (item.IsName("HadaqLostEvents") && is_builder) fCtrlLost += item.GetField("value").AsDouble();
             continue;
          }
          // normally only that item should be used
@@ -308,6 +311,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          Par("DataRate").SetValue(fCtrlData);
          Par("EventsRate").SetValue(fCtrlEvents);
+         Par("LostRate").SetValue(fCtrlLost);
 
          if (fControl && fCtrlSzLimit && fCurrentFileCmd.null()) {
             // this is a place, where new run automatically started

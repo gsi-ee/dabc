@@ -396,6 +396,7 @@
               "<button class='bnet_resetdaq' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
+              "<button class='bnet_lostevents' title='Total lost events'>0.0 Ev/s</button>" +
               "<button class='bnet_frameclear' title='Clear drawings'>Clr</button>" +
               "<input style='vertical-align:middle;' title='regular update of histograms' type='checkbox' class='bnet_monitoring'/>" +
               "<button class='bnet_histclear' title='Clear all histograms'>Hist</button>" +
@@ -493,11 +494,15 @@
       });
       
       jnode.find(".bnet_totalrate").button().click(function() {
-         painter.DisplayItem("/" + itemname+"/DataRate");
+         painter.DisplayItem("/"+itemname+"/DataRate");
       });
       
       jnode.find(".bnet_totalevents").button().click(function() {
-         painter.DisplayItem("/" + itemname+"/EventsRate");
+         painter.DisplayItem("/"+itemname+"/EventsRate");
+      });
+
+      jnode.find(".bnet_lostevents").button().click(function() {
+         painter.DisplayItem("/"+itemname+"/LostRate");
       });
 
       jnode.find(".bnet_frameclear").button().click(function() {
@@ -713,7 +718,7 @@
       
       if (!res) return;
 
-      var inp = null, bld = null, state = null, quality = null, drate, erate, ninp = [], 
+      var inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [], 
           nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "";
       for (var k in res._childs) {
          var elem = res._childs[k];
@@ -725,6 +730,7 @@
             case "Quality": quality = elem.value; break;
             case "DataRate": drate = elem.value; break;
             case "EventsRate":  erate = elem.value; break; 
+            case "LostRate":  lrate = elem.value; break; 
             case "RunIdStr": runid = elem.value; break; 
             case "RunPrefix": runprefix = elem.value; break;
          }
@@ -744,6 +750,10 @@
 
       if (typeof erate == 'number')
          $(this.frame).find(".bnet_totalevents").text(erate.toFixed(1) + " Ev/s").css('background-color', (erate>0) ? "lightgreen" : "yellow");
+
+      if (typeof lrate == 'number')
+         $(this.frame).find(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").css('background-color', (lrate > 0) ? "yellow" : "lightgreen");
+
       
       $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
       $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);

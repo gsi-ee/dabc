@@ -50,6 +50,7 @@ namespace hadaq {
          bool          fCtrlSzLimit; ///< when true, size limit was exceed
          double        fCtrlData;    ///< accumulated data rate
          double        fCtrlEvents;   ///< accumulated events rate
+         double        fCtrlLost;     ///< accumulated lost rate
          unsigned      fCtrlRunId;    ///< received run id from builders
          std::string   fCtrlRunPrefix; ///< received run prefix from builders
          std::vector<std::string> fLastBuilders; ///< last list of builder nodes
