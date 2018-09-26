@@ -266,6 +266,12 @@ namespace hadaq {
          std::string       fBnetInfo;     ///< info for showing of bnet sender
          std::string       fBnetStat;     ///< gener-purpose statistic in text form
 
+         long              fBldCalls{0};   ///< number of build event calls
+         long              fInpCalls{0};   ///< number of input processing calls
+         long              fOutCalls{0};   ///< number of output processing calls
+         long              fBufCalls{0};   ///< number of buffer processing calls
+         long              fTimerCalls{0}; ///< number of timer events calls
+
          bool BuildEvent();
 
          bool FlushOutputBuffer();
@@ -339,8 +345,8 @@ namespace hadaq {
          virtual void ModuleCleanup();
 
          virtual bool ProcessBuffer(unsigned port);
-         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
-         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
+         virtual bool ProcessRecv(unsigned port) { fInpCalls++; return BuildEvent(); }
+         virtual bool ProcessSend(unsigned port) { fOutCalls++; return BuildEvent(); }
 
          virtual void ProcessTimerEvent(unsigned timer);
 

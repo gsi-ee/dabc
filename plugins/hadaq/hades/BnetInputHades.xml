@@ -184,7 +184,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input${BNINPID}"/>
      
-     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
      
      
   </Context>

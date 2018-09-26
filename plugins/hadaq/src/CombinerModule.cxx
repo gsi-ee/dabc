@@ -230,6 +230,8 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
       FlushOutputBuffer();
    }
 
+   fTimerCalls++;
+
    // try to build event - just to keep event loop running
    int cnt =100;
    while (cnt > 0 && BuildEvent()) cnt--;
@@ -240,6 +242,8 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
 bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 {
+   fBufCalls++;
+
    // try to build event - just to keep event loop running
    int cnt =100;
    while (cnt > 0 && BuildEvent()) cnt--;
@@ -541,6 +545,10 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
       fWorkerHierarchy.GetHChild("State").SetField("value", node_state);
    }
+
+   fBnetStat = dabc::format("BldStat: calls:%ld inp:%ld out:%ld buf:%ld timer:%ld", fBldCalls, fInpCalls, fOutCalls, fBufCalls, fTimerCalls);
+
+   fBldCalls = fInpCalls = fOutCalls = fBufCalls = fTimerCalls = 0;
 }
 
 bool hadaq::CombinerModule::UpdateExportedCounters()
@@ -944,6 +952,8 @@ bool hadaq::CombinerModule::BuildEvent()
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
+
+   fBldCalls++;
 
    if (fExtraDebug) {
       double tm = fLastProcTm.SpentTillNow(true);

@@ -205,6 +205,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
                            fLastFileCmd.GetStr("OutputCurrFileName").c_str(),
                            state.c_str());
       }
+   } else if (comb->fBNETsend || comb->fBNETrecv) {
+      s += comb->fBnetStat;
+      s += "\n";
    }
 
    if (comb->fCfg.size() != fCalibr.size())

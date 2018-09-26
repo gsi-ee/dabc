@@ -121,7 +121,7 @@
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input0"/>
 
-     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
      
 <!--      <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input0"/> -->
      
@@ -237,7 +237,7 @@
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input1"/>
 
-     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
 
 <!--     <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input1"/> -->
     
