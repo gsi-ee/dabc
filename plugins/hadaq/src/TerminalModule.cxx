@@ -186,6 +186,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       } else {
          s += dabc::format("Server: clients:%d inpqueue:%d cansend:%s\n", fLastServCmd.GetInt("NumClients"), fLastServCmd.GetInt("NumCanRecv"), fLastServCmd.GetStr("NumCanSend").c_str());
       }
+   } else if (comb->fBNETsend || comb->fBNETrecv) {
+      s += comb->fBnetInfo;
+      s += "\n";
    }
 
    if (fFilePort>=0) {
@@ -244,9 +247,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       std::string sbuf = dabc::format("%2u", n);
 
-      hadaq::CombinerModule::InputCfg& cfg = comb->fCfg[n];
+      hadaq::CombinerModule::InputCfg &cfg = comb->fCfg[n];
 
-      hadaq::TransportInfo* info = (hadaq::TransportInfo*) cfg.fInfo;
+      hadaq::TransportInfo *info = (hadaq::TransportInfo *) cfg.fInfo;
 
       if (info==0) {
          sbuf.append("  missing transport-info                             ");

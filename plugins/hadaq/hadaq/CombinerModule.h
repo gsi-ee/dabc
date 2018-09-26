@@ -263,6 +263,9 @@ namespace hadaq {
          dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
          double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
 
+         std::string       fBnetInfo;     ///< info for showing of bnet sender
+         std::string       fBnetStat;     ///< gener-purpose statistic in text form
+
          bool BuildEvent();
 
          bool FlushOutputBuffer();

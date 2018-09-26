@@ -417,9 +417,16 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          fWorkerHierarchy.SetField("mbsinfo", "");
       }
 
+      std::string info = "BnetRecv: ";
       std::vector<int64_t> qsz;
-      for (unsigned n=0;n<NumInputs();++n)
-         qsz.push_back(NumCanRecv(n));
+      for (unsigned n=0;n<NumInputs();++n) {
+         unsigned len = NumCanRecv(n);
+         info.append(" ");
+         info.append(std::to_string(len));
+         qsz.push_back(len);
+      }
+      fBnetInfo = info;
+
       fWorkerHierarchy.SetField("queues", qsz);
       fWorkerHierarchy.SetField("ninputs", NumInputs());
    }
@@ -503,9 +510,15 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          hubs_progress.push_back(hub_progress);
       }
 
+      std::string info = "BnetSend:";
       std::vector<int64_t> qsz;
-      for (unsigned n=0;n<NumOutputs();++n)
-         qsz.push_back(NumCanSend(n));
+      for (unsigned n=0;n<NumOutputs();++n) {
+         unsigned len = NumCanSend(n);
+         info.append(" ");
+         info.append(std::to_string(len));
+         qsz.push_back(len);
+      }
+      fBnetInfo = info;
 
       if (node_state.empty()) {
          node_state = "Ready";
