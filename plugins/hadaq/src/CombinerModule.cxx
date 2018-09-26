@@ -991,14 +991,15 @@ bool hadaq::CombinerModule::BuildEvent()
          mineventid = evid;
          maxeventid = evid;
          buildevid = evid;
-      }
-
-      if (CalcTrigNumDiff(evid, maxeventid) < 0)
-         maxeventid = evid;
-
-      if (CalcTrigNumDiff(mineventid, evid) < 0) {
-         mineventid = evid;
          min_inp = ninp;
+      } else {
+         if (CalcTrigNumDiff(evid, maxeventid) < 0)
+            maxeventid = evid;
+
+         if (CalcTrigNumDiff(mineventid, evid) < 0) {
+            mineventid = evid;
+            min_inp = ninp;
+         }
       }
    } // for ninp
 
@@ -1227,10 +1228,21 @@ bool hadaq::CombinerModule::BuildEvent()
       fprintf(stderr, "BUILD:%6x\n", buildevid);
 #endif
 
+      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1)) {
+         // check if we really lost these events
+
+         if (diff > fBNETbunch) {
+            diff -= fBNETbunch * (NumInputs()-1);
+            if (diff <= 0) diff = fBNETbunch;
+         }
+      }
+
       fLastTrigNr = buildevid;
 
       Par(fEventRateName).SetValue(1);
+
       if (fEvnumDiffStatistics && (diff>1)) {
+
          if (fExtraDebug && fLastDebugTm.Expired(1.)) {
             DOUT1("Events gap %d", diff-1);
             fLastDebugTm.GetNow();

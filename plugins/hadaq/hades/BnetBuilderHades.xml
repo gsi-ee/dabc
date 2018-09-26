@@ -107,6 +107,8 @@ DAQDISK - switches disk demon mode on/off
        <NodeId value="${BNEBNUM}"/>    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
+       <EB_EVENTS value="16"/>
+       
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
        
@@ -141,7 +143,7 @@ DAQDISK - switches disk demon mode on/off
        <CheckTag value="false"/>
 
        <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
-       <AccountLostEventDiff value="false"/>
+       <AccountLostEventDiff value="true"/>
         
        <BuildDropTimeout value="30.0"/>    
           
