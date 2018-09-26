@@ -1413,13 +1413,14 @@ bool dabc::RecordFieldsMap::WasChanged() const
    return false;
 }
 
+
 bool dabc::RecordFieldsMap::WasChangedWith(const std::string &prefix)
 {
    // returns true when field with specified prefix was modified
 
-   for (FieldsMap::const_iterator iter = fMap.begin(); iter!=fMap.end(); iter++) {
-      if (iter->second.IsModified())
-         if (iter->first.find(prefix)==0) return true;
+   for (auto &&fld: fMap) {
+      if (fld.second.IsModified())
+         if (fld.first.find(prefix)==0) return true;
    }
 
    return false;
@@ -1429,13 +1430,13 @@ bool dabc::RecordFieldsMap::WasChangedWith(const std::string &prefix)
 void dabc::RecordFieldsMap::ClearChangeFlags()
 {
    fChanged = false;
-   for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
-      iter->second.SetModified(false);
+   for (auto &&fld: fMap)
+      fld.second.SetModified(false);
 }
 
-dabc::RecordFieldsMap* dabc::RecordFieldsMap::Clone()
+dabc::RecordFieldsMap *dabc::RecordFieldsMap::Clone()
 {
-   dabc::RecordFieldsMap* res = new dabc::RecordFieldsMap;
+   dabc::RecordFieldsMap *res = new dabc::RecordFieldsMap;
 
    for (FieldsMap::iterator iter = fMap.begin(); iter!=fMap.end(); iter++)
       res->Field(iter->first).SetValue(iter->second);
@@ -1567,15 +1568,15 @@ void dabc::RecordFieldsMap::MakeAsDiffTo(const RecordFieldsMap& current)
 {
    std::vector<std::string> delfields;
 
-   for (FieldsMap::const_iterator iter = current.fMap.begin(); iter!=current.fMap.end(); iter++) {
-      if (!HasField(iter->first))
-         delfields.push_back(iter->first);
+   for (auto &&fld : current.fMap) {
+      if (!HasField(fld.first))
+         delfields.push_back(fld.first);
       else
-         if (!iter->second.fModified) RemoveField(iter->first);
+         if (!fld.second.fModified) RemoveField(fld.first);
    }
 
    // we remember fields, which should be delete when we start to reconstruct history
-   if (delfields.size()>0)
+   if (delfields.size() > 0)
       Field("dabc:del").SetStrVect(delfields);
 }
 
@@ -1593,9 +1594,7 @@ void dabc::RecordFieldsMap::ApplyDiff(const RecordFieldsMap& diff)
    }
 }
 
-
 // ===============================================================================
-
 
 
 dabc::RecordContainer::RecordContainer(const std::string &name, unsigned flags) :

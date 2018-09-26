@@ -592,7 +592,6 @@ void dabc::Worker::SetParValue(const std::string &name, const RecordField &v)
    }
 }
 
-
 bool dabc::Worker::DestroyPar(const std::string &name)
 {
    Parameter par = Par(name);
@@ -654,8 +653,6 @@ void dabc::Worker::ProcessParameterRecording(ParameterContainer *par)
 int dabc::Worker::PreviewCommand(Command cmd)
 {
    int cmd_res = cmd_ignore;
-
-   DOUT5("Worker::PreviewCommand %s", cmd.GetName());
 
    if (cmd.IsName(CmdSetParameter::CmdName())) {
 

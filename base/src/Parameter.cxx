@@ -295,14 +295,15 @@ void dabc::ParameterContainer::SetSynchron(bool on, double interval, bool everye
    fDeliverAllEvents = everyevnt;
 }
 
-dabc::Worker* dabc::ParameterContainer::GetWorker() const
+dabc::Worker *dabc::ParameterContainer::GetWorker() const
 {
-   Object* prnt = GetParent();
-   while (prnt!=0) {
+   Object *prnt = GetParent();
+   while (prnt) {
       Worker* w = dynamic_cast<Worker*> (prnt);
-      if (w!=0) return w;
+      if (w) return w;
+      prnt = prnt->GetParent();
    }
-   return 0;
+   return nullptr;
 }
 
 const std::string &dabc::ParameterContainer::Kind() const
@@ -313,11 +314,7 @@ const std::string &dabc::ParameterContainer::Kind() const
 
 void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap *cont)
 {
-
    LockGuard lock(ObjectMutex());
-
-   if (IsName("Inputs")) DOUT0("COPY FIELDS FROM INPUTS %s", Fields().Field("nodes").AsStr().c_str());
-
 
    bool force_value_modified = false;
 
@@ -330,6 +327,8 @@ void dabc::ParameterContainer::BuildFieldsMap(RecordFieldsMap *cont)
       cont->Field("_parcmddef").SetBool(true);
    } else if (fKind == "info") {
       cont->Field(dabc::prop_kind).SetStr("log");
+   } else if (Fields().HasField("#record")) {
+      force_value_modified = true;
    }
 
    // just copy all fields, including value

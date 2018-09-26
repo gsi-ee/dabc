@@ -652,7 +652,7 @@ bool dabc::HierarchyContainer::CheckIfDoingHistory()
    if (!fHist.null()) return fHist.DoHistory();
 
    HierarchyContainer* prnt = dynamic_cast<HierarchyContainer*> (GetParent());
-   while (prnt != 0) {
+   while (prnt != nullptr) {
 
       if (prnt->fHist.DoHistory() && prnt->fHist()->fChildsEnabled) {
          fHist.Allocate(prnt->fHist.Capacity());
@@ -726,9 +726,9 @@ unsigned dabc::HierarchyContainer::MarkVersionIfChanged(uint64_t ver, uint64_t& 
       if (CheckIfDoingHistory() && fields_were_chaneged) {
          // we need to be sure that really something changed,
          // otherwise we will produce empty entry
-         RecordFieldsMap* prev = fHist()->fPrev;
+         RecordFieldsMap *prev = fHist()->fPrev;
 
-         if (prev!=0) {
+         if (prev != nullptr) {
             prev->MakeAsDiffTo(Fields());
             AddHistory(prev);
          }
