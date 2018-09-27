@@ -44,7 +44,7 @@ hadaq::TerminalModule::TerminalModule(const std::string &name, dabc::Command cmd
 {
    double period = Cfg("period", cmd).AsDouble(1);
    fServPort = Cfg("servport", cmd).AsInt(-1);
-   fFilePort = Cfg("fileport", cmd).AsInt(1);
+   fFilePort = Cfg("fileport", cmd).AsInt(-1);
 
    fDoClear = Cfg("clear", cmd).AsBool(false);
    fDoShow = Cfg("show", cmd).AsBool(true);
