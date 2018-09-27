@@ -1,0 +1,46 @@
+<!-- This is example of master node configuration,
+     which should provide http access to connected clients --> 
+
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Master" host="lxhadeb07" port="23456">
+    <Run>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <logfile value="master.log"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+      <!--runtime value="100"/-->
+    </Run>
+
+    <HttpServer name="http">
+       <port value="8099"/>
+       <!--ports value="8091"/-->
+       <!--ssl_certif value="${DABCSYS}/ssl_cert.pem"/-->
+       <!--auth_file value="${DABCSYS}/.htdigest"/-->
+       <!--auth_domain value="dabc@server"/-->
+       <TopTitle value="HADES BNET control"/>
+       <Browser value="off"/>
+       <DrawItem value="Master/BNET"/>
+       <DrawOpt value=""/>
+    </HttpServer>
+
+    <Publisher name="publ">
+       <manager value="false"/>
+       <store value="false"/>
+       <storedir value="/data.local1/hstore/"/>
+       <storesel value="FESA/Test"/>
+       <filelimit value="100"/>
+       <timelimit value="600"/>
+       <period value="10"/>
+    </Publisher>
+
+    <Module name="BnetMaster" class="hadaq::BnetMasterModule">
+       <Controller value="true"/>
+       <period value="1"/>
+       <RunPrefix value=""/>
+       <MaxRunSize value="1500"/>
+    </Module>
+  </Context>
+</dabc>

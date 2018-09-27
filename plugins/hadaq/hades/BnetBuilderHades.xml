@@ -107,7 +107,9 @@ DAQDISK - switches disk demon mode on/off
        <NodeId value="${BNEBNUM}"/>    
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
-       <EB_EVENTS value="16"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
+       <EB_EVENTS value="160"/>
        
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>

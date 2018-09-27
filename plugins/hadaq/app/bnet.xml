@@ -91,6 +91,9 @@
        <BNETsend value="true"/>
        <!-- number of event send to same event builder -->
        <EB_EVENTS value="16"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
+       
        <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 
@@ -208,6 +211,8 @@
        <BNETsend value="true"/>
        <!-- number of event send to same event builder -->
        <EB_EVENTS value="16"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
        <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
 
@@ -274,6 +279,10 @@
     <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
+       <EB_EVENTS value="16"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
+       
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="2"/>
 
@@ -344,6 +353,9 @@
        <BNETrecv value="true"/>
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="2"/>
+       <EB_EVENTS value="16"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
 
        <InputPort name="*" queue="30" optional="true"/>
 

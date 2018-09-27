@@ -67,6 +67,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBNETsend = Cfg("BNETsend", cmd).AsBool(false);
    fBNETrecv = Cfg("BNETrecv", cmd).AsBool(false);
    fBNETbunch = Cfg("EB_EVENTS", cmd).AsInt(16);
+   fBNETNumRecv = Cfg("BNET_NUMRECEIVERS", cmd).AsInt(1);
+   fBNETNumSend = Cfg("BNET_NUMSENDERS", cmd).AsInt(1);
 
    fExtraDebug = Cfg("ExtraDebug", cmd).AsBool(true);
 
@@ -1228,11 +1230,11 @@ bool hadaq::CombinerModule::BuildEvent()
       fprintf(stderr, "BUILD:%6x\n", buildevid);
 #endif
 
-      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1)) {
+      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1) && (fBNETNumRecv>1)) {
          // check if we really lost these events
 
          if (diff > fBNETbunch) {
-            diff -= fBNETbunch * (NumInputs()-1);
+            diff -= fBNETbunch * (fBNETNumRecv-1);
             if (diff <= 0) diff = fBNETbunch;
          }
       }

@@ -217,6 +217,8 @@ namespace hadaq {
          bool               fBNETsend;  ///< indicate that combiner used as BNET sender
          bool               fBNETrecv;  ///< indicate that second-level event building is performed
          int                fBNETbunch; ///< number of events delivered to same event builder
+         int                fBNETNumSend; ///< number of BNET senders
+         int                fBNETNumRecv; ///< number of BNET receivers
 
          double             fFlushTimeout;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
