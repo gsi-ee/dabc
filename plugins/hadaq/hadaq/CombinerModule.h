@@ -276,6 +276,8 @@ namespace hadaq {
 
          bool BuildEvent();
 
+         bool BuildManyEvents(int cnt = 100);
+
          bool FlushOutputBuffer();
 
          void RegisterExportedCounters();
@@ -347,8 +349,8 @@ namespace hadaq {
          virtual void ModuleCleanup();
 
          virtual bool ProcessBuffer(unsigned port);
-         virtual bool ProcessRecv(unsigned port) { fInpCalls++; return BuildEvent(); }
-         virtual bool ProcessSend(unsigned port) { fOutCalls++; return BuildEvent(); }
+         virtual bool ProcessRecv(unsigned port) { fInpCalls++; return BuildManyEvents(); }
+         virtual bool ProcessSend(unsigned port) { fOutCalls++; return BuildManyEvents(); }
 
          virtual void ProcessTimerEvent(unsigned timer);
 

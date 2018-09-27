@@ -235,8 +235,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
    fTimerCalls++;
 
    // try to build event - just to keep event loop running
-   int cnt =100;
-   while (cnt > 0 && BuildEvent()) cnt--;
+   BuildManyEvents();
 
    // FIXME: should we keep it here ???
    ProcessOutputEvent(0);
@@ -247,13 +246,21 @@ bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
    fBufCalls++;
 
    // try to build event - just to keep event loop running
-   int cnt =100;
-   while (cnt > 0 && BuildEvent()) cnt--;
+   BuildManyEvents();
 
    // FIXME: should we keep it here ???
    ProcessOutputEvent(0);
    return false;
 }
+
+bool hadaq::CombinerModule::BuildManyEvents(int cnt)
+{
+   while (IsRunning() && (cnt-- > 0)) {
+      if (!BuildEvent()) return false;
+   }
+   return IsRunning();
+}
+
 
 
 void hadaq::CombinerModule::BeforeModuleStart()
