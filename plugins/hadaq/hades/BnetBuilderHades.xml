@@ -167,7 +167,7 @@ DAQDISK - switches disk demon mode on/off
 <!--      <Connection device="NetDev" output="dabc://localhost:12502/FirstLevel/Output0" input="Combiner/Input1"  pool="Pool"/> -->
      
      <!-- Terminal output like old event builder -->
-  <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="1" servport="0" showtrig="16"/>
+  <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="-1" servport="0" showtrig="16"/>
  
   </Context>
 
