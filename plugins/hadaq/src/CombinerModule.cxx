@@ -48,6 +48,10 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
+   fSpecialItemId = CreateUserItem("BuildEvents");
+   fSpecialFired = false;
+   fLastEventRate = 0.;
+
    fTotalRecvBytes = 0;
    fTotalBuildEvents = 0;
    fTotalDiscEvents = 0;
@@ -234,34 +238,51 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    fTimerCalls++;
 
-   // try to build event - just to keep event loop running
-   BuildManyEvents();
+   fLastEventRate = Par(fEventRateName).Value().AsDouble();
 
-   // FIXME: should we keep it here ???
-   ProcessOutputEvent(0);
+   // invoke event building, if necessary - reinjects events
+   StartEventsBuilding();
 }
 
 bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
 {
    fBufCalls++;
 
-   // try to build event - just to keep event loop running
-   BuildManyEvents();
+   // invoke event building, if necessary - reinjects events
+   StartEventsBuilding();
 
-   // FIXME: should we keep it here ???
-   ProcessOutputEvent(0);
    return false;
 }
 
-bool hadaq::CombinerModule::BuildManyEvents(int cnt)
+void hadaq::CombinerModule::StartEventsBuilding()
 {
+   int cnt = 10;
+   if (fLastEventRate > 1000) cnt = 20;
+   if (fLastEventRate > 30000) cnt = 50;
+
    while (IsRunning() && (cnt-- > 0)) {
-      if (!BuildEvent()) return false;
+      // no need to continue
+      if (!BuildEvent()) return;
    }
-   return IsRunning();
+
+   if (!fSpecialFired) {
+      fSpecialFired = true;
+      // DOUT0("Fire user event %d item %u", dabc::evntUser, fSpecialItemId);
+      FireEvent(dabc::evntUser, fSpecialItemId);
+   }
 }
 
+void hadaq::CombinerModule::ProcessUserEvent(unsigned item)
+{
+   if (fSpecialItemId == item) {
+      // DOUT0("Get user event");
+      fSpecialFired = false;
+   } else {
+      EOUT("Get wrong user event");
+   }
 
+   StartEventsBuilding();
+}
 
 void hadaq::CombinerModule::BeforeModuleStart()
 {

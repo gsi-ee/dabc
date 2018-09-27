@@ -835,6 +835,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
       case evntInputReinj:
       case evntOutputReinj:
       case evntTimeout:
+      case evntUser:
          if (IsRunning())
             ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
          break;

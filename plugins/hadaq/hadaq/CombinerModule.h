@@ -212,6 +212,10 @@ namespace hadaq {
 
          int                fNumReadBuffers; //< / SL: workaround counter, which indicates how many buffers were taken from queues
 
+         unsigned           fSpecialItemId;  ///< item used to create user events
+         bool               fSpecialFired;  ///< if user event was already fired
+         double             fLastEventRate; ///< last event rate
+
          bool               fCheckTag;
 
          bool               fBNETsend;  ///< indicate that combiner used as BNET sender
@@ -275,8 +279,6 @@ namespace hadaq {
          long              fTimerCalls{0}; ///< number of timer events calls
 
          bool BuildEvent();
-
-         bool BuildManyEvents(int cnt = 100);
 
          bool FlushOutputBuffer();
 
@@ -342,6 +344,8 @@ namespace hadaq {
          bool CheckDestination(uint32_t trignr);
          void UpdateBnetInfo();
 
+         void StartEventsBuilding();
+
       public:
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
@@ -349,10 +353,12 @@ namespace hadaq {
          virtual void ModuleCleanup();
 
          virtual bool ProcessBuffer(unsigned port);
-         virtual bool ProcessRecv(unsigned port) { fInpCalls++; return BuildManyEvents(); }
-         virtual bool ProcessSend(unsigned port) { fOutCalls++; return BuildManyEvents(); }
+         virtual bool ProcessRecv(unsigned port) { fInpCalls++; StartEventsBuilding(); return false; }
+         virtual bool ProcessSend(unsigned port) { fOutCalls++; StartEventsBuilding(); return false; }
 
          virtual void ProcessTimerEvent(unsigned timer);
+
+         virtual void ProcessUserEvent(unsigned item);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
