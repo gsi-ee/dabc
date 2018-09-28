@@ -186,6 +186,7 @@
             var code = "<div style='float:left'>";
             code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "' >"+"Clr</button>";
             if (!info.tdc) {
+               code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "' >"+info.trb.toString(16)+"_ErrorBits</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "' >"+info.trb.toString(16)+"_TrigType</button>";
                code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "' >"+info.trb.toString(16)+"_SubevSize</button>";
             } else {
