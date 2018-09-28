@@ -223,7 +223,7 @@ void hadaq::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "ObserverTimer") {
-      dabc::ProfilerGuard grd(fBldProfiler, 25, "export");
+      dabc::ProfilerGuard grd(fBldProfiler, "export", 25);
       UpdateExportedCounters();
       return;
    }
@@ -235,7 +235,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if (++fFlushCounter > 2) {
       fFlushCounter = 0;
-      dabc::ProfilerGuard grd(fBldProfiler, 30, "flush");
+      dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
       FlushOutputBuffer();
    }
 
@@ -425,7 +425,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 {
    fBldProfiler.MakeStatistic();
 
-   dabc::ProfilerGuard grd(fBldProfiler, 20, "info");
+   dabc::ProfilerGuard grd(fBldProfiler, "info", 20);
 
    if (fBNETrecv) {
 
@@ -802,7 +802,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
 
    DOUT5("CombinerModule::ShiftToNextSubEvent %d ", ninp);
 
-   InputCfg& cfg = fCfg[ninp];
+   InputCfg &cfg = fCfg[ninp];
 
 #ifdef HADAQ_DEBUG
    if (dropped && cfg.has_data)
@@ -827,7 +827,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
    // if (fast) DOUT0("FAST DROP on inp %d", ninp);
 
    while (!foundevent) {
-      ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
+      ReadIterator &iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
       bool res = true;
       if (doshift) res = iter.NextSubEvent();
@@ -993,7 +993,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
 
-   dabc::ProfilerGuard grd(fBldProfiler, 0, "bld");
+   dabc::ProfilerGuard grd(fBldProfiler, "bld", 0);
 
    fBldCalls++;
 
@@ -1233,11 +1233,11 @@ bool hadaq::CombinerModule::BuildEvent()
       }
    }
 
-   grd.Next("compl");
-
    // now we should be able to build event
    if (hasCompleteEvent) {
       // EVENT BUILDING IS HERE
+
+      grd.Next("compl");
 
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
       fTotalBuildEvents++;
@@ -1258,6 +1258,8 @@ bool hadaq::CombinerModule::BuildEvent()
       fEventIdCount[currentid & 0xF]++; // JAM: problem with spill bit?
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
 
+      grd.Next("main");
+
       // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].fEmpty && fSkipEmpty) continue;
@@ -1267,6 +1269,9 @@ bool hadaq::CombinerModule::BuildEvent()
             fOut.AddSubevent(fCfg[ninp].subevnt);
          DoInputSnapshot(ninp); // record current state of event tag and queue level for control system
       } // for ninp
+
+
+      grd.Next("after");
 
       fOut.FinishEvent();
 
@@ -1310,6 +1315,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastBuildTm.GetNow();
    } else {
+      grd.Next("lostl", 14);
       Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents += 1;
    } // ensure outputbuffer
@@ -1317,7 +1323,7 @@ bool hadaq::CombinerModule::BuildEvent()
    std::string debugmask;
    debugmask.resize(fCfg.size(), ' ');
 
-   grd.Next("shift");
+   grd.Next("shift", 15);
 
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
@@ -1362,13 +1368,15 @@ void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
 {
    // copy here input properties at the moment of event building to stats:
 
-   unsigned capacity = PortQueueCapacity(InputName(ninp));
+   unsigned capacity = InputQueueCapacity(ninp);
 
-   float ratio=0;
-   fCfg[ninp].fNumCanRecv = NumCanRecv(ninp);
-   if(capacity>0) ratio = 1. * fCfg[ninp].fNumCanRecv / capacity;
-   fCfg[ninp].fQueueLevel = ratio;
-   fCfg[ninp].fLastEvtBuildTrigId = (fCfg[ninp].fTrigNr << 8) |  (fCfg[ninp].fTrigTag & 0xff);
+   auto &cfg = fCfg[ninp];
+
+   float ratio = 0;
+   cfg.fNumCanRecv = NumCanRecv(ninp);
+   if(capacity>0) ratio = 1. * cfg.fNumCanRecv / capacity;
+   cfg.fQueueLevel = ratio;
+   cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
 }
 
 

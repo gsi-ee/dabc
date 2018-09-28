@@ -71,7 +71,7 @@ namespace dabc {
       Profiler::clock_t fLast;
 
    public:
-      ProfilerGuard(Profiler &prof, unsigned lvl = 0, const char *name = nullptr) : fProfiler(prof), fCnt(lvl)
+      ProfilerGuard(Profiler &prof, const char *name = nullptr, unsigned lvl = 0) : fProfiler(prof), fCnt(lvl)
       {
          if (!fProfiler.fActive || (fCnt >= fProfiler.fEntries.size()))
             return;
@@ -87,20 +87,21 @@ namespace dabc {
          Next();
       }
 
-      void Next(const char *name = nullptr)
+      void Next(const char *name = nullptr, unsigned lvl = 0)
       {
          if (!fProfiler.fActive || (fCnt >= fProfiler.fEntries.size()))
             return;
 
          auto now = fProfiler.GetClock();
 
-         auto &entry = fProfiler.fEntries[fCnt];
-         entry.fSum += (now - fLast);
-         if (name && entry.fName.empty())
-            entry.fName = name;
+         fProfiler.fEntries[fCnt].fSum += (now - fLast);
+
          fLast = now;
 
-         fCnt++;
+         if (lvl) fCnt = lvl; else fCnt++;
+
+         if (name && (fCnt < fProfiler.fEntries.size()) && fProfiler.fEntries[fCnt].fName.empty())
+            fProfiler.fEntries[fCnt].fName = name;
       }
 
    };

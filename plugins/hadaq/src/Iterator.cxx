@@ -394,7 +394,7 @@ bool hadaq::WriteIterator::AddSubevent(hadaq::RawSubevent* sub)
    return AddSubevent(dabc::Pointer(sub, sub->GetPaddedSize()));
 }
 
-bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent* evnt)
+bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent *evnt)
 {
    return AddSubevent(dabc::Pointer(evnt->FirstSubevent(), evnt->AllSubeventsSize()));
 }
