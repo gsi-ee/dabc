@@ -74,6 +74,7 @@ namespace hadaq {
          bool fDataError;        ///< indicates if subevent has data error bit set in header id
          bool fEmpty;            ///< indicates if input has empty data
          void* fInfo;            ///< Direct pointer on transport info, used only for debugging
+         int fQueueCapacity;     ///< capacity of input queue
          int fNumCanRecv;        ///< Number buffers can be received
          unsigned fLostTrig;     ///< number of lost triggers (never received by the combiner)
          unsigned fDroppedTrig;  ///< number of dropped triggers (received but dropped by the combiner)
@@ -108,6 +109,7 @@ namespace hadaq {
             fDataError(false),
             fEmpty(true),
             fInfo(0),
+            fQueueCapacity(0),
             fNumCanRecv(0),
             fLostTrig(0),
             fDroppedTrig(0),

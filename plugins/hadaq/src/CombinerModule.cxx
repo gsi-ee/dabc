@@ -300,13 +300,16 @@ void hadaq::CombinerModule::BeforeModuleStart()
    fLastProcTm.GetNow();
    fLastBuildTm.GetNow();
 
+
+
    // direct addon pointers can be used for terminal printout
-   if (!fBNETrecv)
-      for (unsigned n=0;n<fCfg.size();n++) {
-         dabc::Command cmd("GetHadaqTransportInfo");
-         cmd.SetInt("id", n);
-         SubmitCommandToTransport(InputName(n), Assign(cmd));
-      }
+   for (unsigned ninp=0;ninp<fCfg.size();ninp++) {
+      fCfg[ninp].fQueueCapacity = InputQueueCapacity(ninp);
+      if (fBNETrecv) continue;
+      dabc::Command cmd("GetHadaqTransportInfo");
+      cmd.SetInt("id", ninp);
+      SubmitCommandToTransport(InputName(ninp), Assign(cmd));
+   }
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
@@ -1368,14 +1371,10 @@ void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
 {
    // copy here input properties at the moment of event building to stats:
 
-   unsigned capacity = InputQueueCapacity(ninp);
-
    auto &cfg = fCfg[ninp];
 
-   float ratio = 0;
    cfg.fNumCanRecv = NumCanRecv(ninp);
-   if(capacity>0) ratio = 1. * cfg.fNumCanRecv / capacity;
-   cfg.fQueueLevel = ratio;
+   cfg.fQueueLevel = (cfg.fQueueCapacity > 0) ? 1. * cfg.fNumCanRecv / cfg.fQueueCapacity : 0.;
    cfg.fLastEvtBuildTrigId = (cfg.fTrigNr << 8) | (cfg.fTrigTag & 0xff);
 }
 
