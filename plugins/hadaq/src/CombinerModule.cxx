@@ -117,8 +117,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    // provide timeout with period/2, but trigger flushing after 3 counts
    // this will lead to effective flush time between FlushTimeout and FlushTimeout*1.5
-   if (fFlushTimeout > 0.)
-      CreateTimer("FlushTimer", fFlushTimeout/2.);
+   CreateTimer("FlushTimer", (fFlushTimeout > 0) ? fFlushTimeout/2. : 1.);
 
    //CreatePar("RunId");
    //Par("RunId").SetValue(fRunNumber); // to communicate with file components
@@ -233,7 +232,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
       return;
    }
 
-   if (++fFlushCounter > 2) {
+   if ((fFlushTimeout > 0) && (++fFlushCounter > 2)) {
       fFlushCounter = 0;
       dabc::ProfilerGuard grd(fBldProfiler, "flush", 30);
       FlushOutputBuffer();
@@ -299,8 +298,6 @@ void hadaq::CombinerModule::BeforeModuleStart()
 
    fLastProcTm.GetNow();
    fLastBuildTm.GetNow();
-
-
 
    // direct addon pointers can be used for terminal printout
    for (unsigned ninp=0;ninp<fCfg.size();ninp++) {
@@ -1293,8 +1290,18 @@ bool hadaq::CombinerModule::BuildEvent()
          // check if we really lost these events
 
          if (diff > fBNETbunch) {
+
+            long ncycles = diff / (fBNETbunch * fBNETNumRecv);
+
+            // substract big cycles
+            diff -= ncycles * (fBNETbunch * fBNETNumRecv);
+
+            // substract expected gap to previous cycle
             diff -= fBNETbunch * (fBNETNumRecv-1);
-            if (diff <= 0) diff = fBNETbunch;
+            if (diff <= 0) diff = fBNETbunch/2;
+
+            // add lost events from big cycles
+            diff += ncycles*fBNETbunch;
          }
       }
 
@@ -1308,6 +1315,7 @@ bool hadaq::CombinerModule::BuildEvent()
             DOUT1("Events gap %d", diff-1);
             fLastDebugTm.GetNow();
          }
+
          Par(fLostEventRateName).SetValue(diff-1);
          fTotalDiscEvents+=(diff-1);
       }
