@@ -363,7 +363,7 @@ bool hadaq::NewTransport::UpdateExportedCounters()
    SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), addon->fTotalRecvPacket);
    SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
    SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), addon->fTotalRecvBytes);
-   unsigned capacity = PortQueueCapacity(OutputName());
+   unsigned capacity = OutputQueueCapacity();
    float ratio = 100.;
    if (capacity>0) ratio -= 100.* NumCanSend()/capacity;
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);

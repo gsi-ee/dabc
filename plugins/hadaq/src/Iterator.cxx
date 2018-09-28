@@ -389,15 +389,22 @@ bool hadaq::WriteIterator::AddSubevent(const dabc::Pointer& source)
    return true;
 }
 
-bool hadaq::WriteIterator::AddSubevent(hadaq::RawSubevent* sub)
+bool hadaq::WriteIterator::AddSubevent(const void *ptr, unsigned len)
 {
-   return AddSubevent(dabc::Pointer(sub, sub->GetPaddedSize()));
+   if (fEvPtr.null()) return false;
+
+   if (fSubPtr.null())
+      fSubPtr.reset(fEvPtr, sizeof(hadaq::RawEvent));
+
+   if (fSubPtr.fullsize() < len) return false;
+
+   fSubPtr.copyfrom(ptr, len);
+
+   fSubPtr.shift(len);
+
+   return true;
 }
 
-bool hadaq::WriteIterator::AddAllSubevents(hadaq::RawEvent *evnt)
-{
-   return AddSubevent(dabc::Pointer(evnt->FirstSubevent(), evnt->AllSubeventsSize()));
-}
 
 bool hadaq::WriteIterator::FinishEvent()
 {

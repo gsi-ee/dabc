@@ -47,7 +47,7 @@ mbs::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) 
    double flushtmout = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(1.);
 
    for (unsigned n=0;n<NumInputs();n++) {
-      DOUT0(" MBS COMBINER  Port%u: Capacity %u", n, PortQueueCapacity(InputName(n)));
+      DOUT0(" MBS COMBINER  Port%u: Capacity %u", n, InputQueueCapacity(n));
 
       fInp.push_back(ReadIterator());
       fCfg.push_back(InputCfg());

@@ -114,9 +114,16 @@ namespace hadaq {
          bool NewSubevent(uint32_t minrawsize = 0, uint32_t trigger = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 
-         bool AddSubevent(const dabc::Pointer& source);
-         bool AddSubevent(hadaq::RawSubevent* sub);
-         bool AddAllSubevents(hadaq::RawEvent* evnt);
+         bool AddSubevent(const dabc::Pointer &source);
+         bool AddSubevent(const void *ptr, unsigned len);
+         bool AddSubevent(hadaq::RawSubevent* sub)
+         {
+            return AddSubevent(sub, sub->GetPaddedSize());
+         }
+         bool AddAllSubevents(hadaq::RawEvent *evnt)
+         {
+            return AddSubevent(evnt->FirstSubevent(), evnt->AllSubeventsSize());
+         }
          bool FinishEvent();
 
          dabc::Buffer Close();
