@@ -61,6 +61,8 @@ namespace dabc {
 
       void MakeStatistic();
 
+      std::string Format();
+
    };
 
    class ProfilerGuard {

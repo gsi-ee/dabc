@@ -583,7 +583,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.GetHChild("State").SetField("value", node_state);
    }
 
-   fBnetStat = dabc::format("BldStat: calls:%ld inp:%ld out:%ld buf:%ld timer:%ld", fBldCalls, fInpCalls, fOutCalls, fBufCalls, fTimerCalls);
+   fBnetStat = fBldProfiler.Format();
+
+   // fBnetStat = dabc::format("BldStat: calls:%ld inp:%ld out:%ld buf:%ld timer:%ld", fBldCalls, fInpCalls, fOutCalls, fBufCalls, fTimerCalls);
 
    fBldCalls = fInpCalls = fOutCalls = fBufCalls = fTimerCalls = 0;
 }

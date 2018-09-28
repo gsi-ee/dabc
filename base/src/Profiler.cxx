@@ -35,3 +35,33 @@ void dabc::Profiler::MakeStatistic()
 
    fLast = now;
 }
+
+
+std::string dabc::Profiler::Format()
+{
+   std::string res;
+
+   double total{0.};
+   int cnt{0};
+
+   for (auto &&entry : fEntries) {
+      if (entry.fRatio > 0) {
+         if (!res.empty()) res.append(" ");
+         total += entry.fRatio;
+         if (entry.fName.empty())
+            res.append(std::to_string(cnt));
+         else
+            res.append(entry.fName);
+         res.append(":");
+         res.append(std::to_string((int)(entry.fRatio*1000)));
+      }
+      cnt++;
+   }
+
+   if (total){
+      res.append(" total:");
+      res.append(std::to_string((int)(total*1000)));
+   }
+
+   return res;
+}
