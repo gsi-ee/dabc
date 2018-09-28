@@ -138,6 +138,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    CreatePar(fLostEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
    CreatePar(fDataDroppedRateName).SetRatemeter(false, 3.).SetUnits("MB");
 
+   fDataRateCnt = fEventRateCnt = fLostEventRateCnt = fDataDroppedRateCnt = 0;
+
    if (fBNETrecv) {
       CreatePar("RunFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
       CreatePar("LtsmFileSize").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
@@ -239,6 +241,13 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
    }
 
    fTimerCalls++;
+
+   Par(fDataRateName).SetValue(fDataRateCnt/1024./1024.);
+   Par(fEventRateName).SetValue(fEventRateCnt);
+   Par(fLostEventRateName).SetValue(fLostEventRateCnt);
+   Par(fDataDroppedRateName).SetValue(fDataDroppedRateCnt/1024./1024.);
+
+   fDataRateCnt = fEventRateCnt = fLostEventRateCnt = fDataDroppedRateCnt = 0;
 
    fLastEventRate = Par(fEventRateName).Value().AsDouble();
 
@@ -721,8 +730,8 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 
 bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
-   InputCfg& cfg = fCfg[ninp];
-   ReadIterator& iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
+   InputCfg &cfg = fCfg[ninp];
+   ReadIterator &iter = (cfg.fResortIndx < 0) ? cfg.fIter : cfg.fResortIter;
 
    while (true) {
 
@@ -1140,7 +1149,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
             // DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
-            Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
+            fDataDroppedRateCnt += droppedsize;
+
+            // Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
             fTotalDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
@@ -1307,7 +1318,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastTrigNr = buildevid;
 
-      Par(fEventRateName).SetValue(1);
+      fEventRateCnt+=1;
+      // Par(fEventRateName).SetValue(1);
 
       if (fEvnumDiffStatistics && (diff>1)) {
 
@@ -1316,18 +1328,21 @@ bool hadaq::CombinerModule::BuildEvent()
             fLastDebugTm.GetNow();
          }
 
-         Par(fLostEventRateName).SetValue(diff-1);
+         fLostEventRateCnt += (diff-1);
+         //Par(fLostEventRateName).SetValue(diff-1);
          fTotalDiscEvents+=(diff-1);
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
       fTotalRecvBytes += currentbytes;
-      Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
+      fDataRateCnt += currentbytes;
+      // Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
       fLastBuildTm.GetNow();
    } else {
       grd.Next("lostl", 14);
-      Par(fLostEventRateName).SetValue(1);
+      fLostEventRateCnt += 1;
+      // Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents += 1;
    } // ensure outputbuffer
 
