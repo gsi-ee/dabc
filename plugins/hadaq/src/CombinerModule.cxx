@@ -51,6 +51,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fSpecialItemId = CreateUserItem("BuildEvents");
    fSpecialFired = false;
    fLastEventRate = 0.;
+   fBldProfiler.Reserve(50);
 
    fTotalRecvBytes = 0;
    fTotalBuildEvents = 0;
@@ -222,6 +223,7 @@ void hadaq::CombinerModule::SetInfo(const std::string &info, bool forceinfo)
 void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "ObserverTimer") {
+      dabc::ProfilerGuard grd(fBldProfiler, 25, "export");
       UpdateExportedCounters();
       return;
    }
@@ -233,6 +235,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    if (++fFlushCounter > 2) {
       fFlushCounter = 0;
+      dabc::ProfilerGuard grd(fBldProfiler, 30, "flush");
       FlushOutputBuffer();
    }
 
@@ -420,6 +423,10 @@ void hadaq::CombinerModule::RegisterExportedCounters()
 
 void hadaq::CombinerModule::UpdateBnetInfo()
 {
+   fBldProfiler.MakeStatistic();
+
+   dabc::ProfilerGuard grd(fBldProfiler, 20, "info");
+
    if (fBNETrecv) {
 
       if (!fBnetFileCmd.null() && fBnetFileCmd.IsTimedout()) fBnetFileCmd.Reply(dabc::cmd_false);
@@ -983,6 +990,9 @@ bool hadaq::CombinerModule::BuildEvent()
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
 
+
+   dabc::ProfilerGuard grd(fBldProfiler, 0, "bld");
+
    fBldCalls++;
 
    if (fExtraDebug) {
@@ -997,6 +1007,8 @@ bool hadaq::CombinerModule::BuildEvent()
    uint32_t mineventid(0), maxeventid(0), buildevid(0);
    bool incomplete_data(false), any_data(false);
    int missing_inp(-1);
+
+   grd.Next("shft");
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (!fCfg[ninp].has_data)
@@ -1032,6 +1044,8 @@ bool hadaq::CombinerModule::BuildEvent()
          }
       }
    } // for ninp
+
+   grd.Next("drp");
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
    int diff = incomplete_data ? 0 : CalcTrigNumDiff(mineventid, maxeventid);
@@ -1076,6 +1090,9 @@ bool hadaq::CombinerModule::BuildEvent()
 
         return false; // retry on next set of buffers
      }
+
+
+   grd.Next("chkcomp");
 
    if (incomplete_data) return false;
 
@@ -1149,6 +1166,8 @@ bool hadaq::CombinerModule::BuildEvent()
       } // while foundsubevent
    } // for ninpt
 
+   grd.Next("buf");
+
    // here all inputs should be aligned to buildevid
 
    // for sync sequence number, check first if we have error from cts:
@@ -1211,6 +1230,8 @@ bool hadaq::CombinerModule::BuildEvent()
          hasCompleteEvent = false;
       }
    }
+
+   grd.Next("compl");
 
    // now we should be able to build event
    if (hasCompleteEvent) {
@@ -1293,6 +1314,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
    std::string debugmask;
    debugmask.resize(fCfg.size(), ' ');
+
+   grd.Next("shift");
 
    // FINAL loop: proceed to next subevents
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)

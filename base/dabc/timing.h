@@ -24,6 +24,8 @@
 
 namespace dabc {
 
+   class Profiler;
+
    /** \brief Class for acquiring and holding timestamps.
     *
     * \ingroup dabc_all_classes
@@ -38,6 +40,9 @@ namespace dabc {
     */
 
    struct TimeStamp {
+
+      friend class Profiler;
+
       protected:
          double fValue;  ///< time since start of the application in seconds
 

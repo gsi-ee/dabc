@@ -27,6 +27,10 @@
 #include "dabc/MemoryPool.h"
 #endif
 
+#ifndef DABC_Profiler
+#include "dabc/Profiler.h"
+#endif
+
 #include "hadaq/HadaqTypeDefs.h"
 
 #include "hadaq/Iterator.h"
@@ -277,6 +281,7 @@ namespace hadaq {
          long              fOutCalls{0};   ///< number of output processing calls
          long              fBufCalls{0};   ///< number of buffer processing calls
          long              fTimerCalls{0}; ///< number of timer events calls
+         dabc::Profiler    fBldProfiler;   ///< profiler of build event performance
 
          bool BuildEvent();
 
