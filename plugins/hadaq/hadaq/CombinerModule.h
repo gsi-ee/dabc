@@ -364,9 +364,9 @@ namespace hadaq {
 
          virtual void ModuleCleanup();
 
-         virtual bool ProcessBuffer(unsigned port);
-         virtual bool ProcessRecv(unsigned port) { fInpCalls++; StartEventsBuilding(); return false; }
-         virtual bool ProcessSend(unsigned port) { fOutCalls++; StartEventsBuilding(); return false; }
+         virtual void ProcessPoolEvent(unsigned) { fBufCalls++; StartEventsBuilding(); }
+         virtual void ProcessInputEvent(unsigned) { fInpCalls++; StartEventsBuilding(); }
+         virtual void ProcessOutputEvent(unsigned) { fOutCalls++; StartEventsBuilding(); }
 
          virtual void ProcessTimerEvent(unsigned timer);
 
@@ -376,7 +376,7 @@ namespace hadaq {
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
-         int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next);
+         int CalcTrigNumDiff(const uint32_t &prev, const uint32_t &next);
 
    };
 

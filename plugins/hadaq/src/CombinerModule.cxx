@@ -255,16 +255,6 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
    StartEventsBuilding();
 }
 
-bool hadaq::CombinerModule::ProcessBuffer(unsigned pool)
-{
-   fBufCalls++;
-
-   // invoke event building, if necessary - reinjects events
-   StartEventsBuilding();
-
-   return false;
-}
-
 void hadaq::CombinerModule::StartEventsBuilding()
 {
    int cnt = 10;

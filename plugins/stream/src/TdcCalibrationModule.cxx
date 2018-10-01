@@ -449,6 +449,7 @@ bool stream::TdcCalibrationModule::retransmit()
             EOUT("Error buffer type!!! %d", buf.GetTypeId());
          }
       }
+
       Send(buf);
 
       return true;
