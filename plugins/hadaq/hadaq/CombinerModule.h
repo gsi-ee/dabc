@@ -301,9 +301,9 @@ namespace hadaq {
 
          void DoInputSnapshot(unsigned ninp);
 
-         virtual void BeforeModuleStart();
+         void BeforeModuleStart() override;
 
-         virtual void AfterModuleStop();
+         void AfterModuleStop() override;
 
          bool ShiftToNextHadTu(unsigned ninp);
 
@@ -362,19 +362,19 @@ namespace hadaq {
          CombinerModule(const std::string &name, dabc::Command cmd = nullptr);
          virtual ~CombinerModule();
 
-         virtual void ModuleCleanup();
+         void ModuleCleanup() override;
 
-         virtual void ProcessPoolEvent(unsigned) { fBufCalls++; StartEventsBuilding(); }
-         virtual void ProcessInputEvent(unsigned) { fInpCalls++; StartEventsBuilding(); }
-         virtual void ProcessOutputEvent(unsigned) { fOutCalls++; StartEventsBuilding(); }
+         void ProcessPoolEvent(unsigned) override { fBufCalls++; StartEventsBuilding(); }
+         void ProcessInputEvent(unsigned) override { fInpCalls++; StartEventsBuilding(); }
+         void ProcessOutputEvent(unsigned) override { fOutCalls++; StartEventsBuilding(); }
 
-         virtual void ProcessTimerEvent(unsigned timer);
+         void ProcessTimerEvent(unsigned timer) override;
 
-         virtual void ProcessUserEvent(unsigned item);
+         void ProcessUserEvent(unsigned item) override;
 
-         virtual int ExecuteCommand(dabc::Command cmd);
+         int ExecuteCommand(dabc::Command cmd) override;
 
-         virtual bool ReplyCommand(dabc::Command cmd);
+         bool ReplyCommand(dabc::Command cmd) override;
 
          int CalcTrigNumDiff(const uint32_t &prev, const uint32_t &next);
 
