@@ -891,6 +891,17 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
       cfg.fTrigNr = (cfg.subevnt->GetTrigNr() >> 8) & fTriggerRangeMask;
       cfg.fTrigTag = cfg.subevnt->GetTrigNr() & 0xFF;
 
+      // try to fix problem with TRB2 readout
+      // Produced sequence of trigger numbers are: 0x2bffff, 0x2b0000, 0x2c0001 and repeated every 64k events
+
+      if (((cfg.fTrigNr & 0xffff) == 0) &&       // lower two bytes in trigger id are 0 (from 0x2b0000)
+           (fTriggerRangeMask > 0x100000) &&     // more than 4+16 bits used in trigger mask
+           (cfg.fResortIndx < 0) &&              // do not try to resort data, normally enabled for very special cases
+           (cfg.fLastTrigNr != 0xffffffff) &&    // last trigger is not dummy
+           ((cfg.fLastTrigNr & 0xffff) == 0xffff) &&  // lower byte of last trigger is 0xffff (from 0x2bffff)
+           ((cfg.fTrigNr & 0xffff0000) == (cfg.fLastTrigNr & 0xffff0000))) // high bytes are same in last and now (0x2b == 0x2b)
+         cfg.fTrigNr = (cfg.fLastTrigNr + 1) & fTriggerRangeMask;
+
 #ifdef HADAQ_DEBUG
       fprintf(stderr, "Input%u Trig:%6x Tag:%2x\n", ninp, cfg.fTrigNr, cfg.fTrigTag);
 #endif
