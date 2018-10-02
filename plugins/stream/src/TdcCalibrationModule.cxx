@@ -171,10 +171,14 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
 stream::TdcCalibrationModule::~TdcCalibrationModule()
 {
-   fTrbProc = 0;
+//   if (fOwnProcMgr && fProcMgr) {
+//      fProcMgr->UserPostLoop();
+//   }
+
+   fTrbProc = nullptr;
    if (fOwnProcMgr) delete fProcMgr;
    fOwnProcMgr = false;
-   fProcMgr = 0;
+   fProcMgr = nullptr;
 }
 
 void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
@@ -264,6 +268,8 @@ bool stream::TdcCalibrationModule::retransmit()
 {
    // method reads one buffer, calibrate it and send further
 
+   // dabc::ProfilerGuard grd(fProfiler, "checks", 0);
+
    // nothing to do
    if (CanSend() && CanRecv()) {
 
@@ -321,6 +327,8 @@ bool stream::TdcCalibrationModule::retransmit()
          if ((buf.GetTypeId() == hadaq::mbt_HadaqEvents) ||  // this is debug mode when processing events from the file
              (buf.GetTypeId() == hadaq::mbt_HadaqTransportUnit) || // this is normal operation mode
              (buf.GetTypeId() == hadaq::mbt_HadaqSubevents) || fDummy) { // this could be data after sorting
+
+            // grd.Next("auto");
 
             // this is special case when TDC should be created
 
@@ -384,6 +392,8 @@ bool stream::TdcCalibrationModule::retransmit()
                }
             }
 
+            // grd.Next("buf");
+
             // from here starts transformation of the data
 
             unsigned char* tgt = nullptr;
@@ -394,6 +404,8 @@ bool stream::TdcCalibrationModule::retransmit()
                tgt = (unsigned char*) resbuf.SegmentPtr();
                tgtlen = resbuf.SegmentSize();
             }
+
+            // grd.Next("main");
 
             hadaq::ReadIterator iter(buf);
             while (iter.NextSubeventsBlock()) {
@@ -427,6 +439,8 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
                }
             }
+
+            // grd.Next("finish");
 
             if (!fReplace) {
                resbuf.SetTotalSize(reslen);
@@ -540,12 +554,23 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 }
 
 
+void stream::TdcCalibrationModule::BeforeModuleStart()
+{
+   // fProfiler.Reserve(50);
+   // fProfiler.MakeStatistic();
+}
+
+
 void stream::TdcCalibrationModule::AfterModuleStop()
 {
+   //fProfiler.MakeStatistic();
+   //DOUT0("PROFILER %s", fProfiler.Format().c_str());
+
    if (fDebug == 2) {
       // just start explicit calculations
       dabc::Command cmd("TdcCalibrations");
       cmd.SetStr("mode", "stop");
       ExecuteCommand(cmd);
    }
+
 }

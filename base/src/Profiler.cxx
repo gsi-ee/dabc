@@ -13,11 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-
 #include "dabc/Profiler.h"
-
-#include "dabc/string.h"
-
 
 void dabc::Profiler::MakeStatistic()
 {

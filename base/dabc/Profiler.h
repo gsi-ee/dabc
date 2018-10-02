@@ -67,8 +67,8 @@ namespace dabc {
 
    class ProfilerGuard {
       Profiler &fProfiler;
-      unsigned fCnt;
-      Profiler::clock_t fLast;
+      unsigned fCnt{0};
+      Profiler::clock_t fLast{0};
 
    public:
       ProfilerGuard(Profiler &prof, const char *name = nullptr, unsigned lvl = 0) : fProfiler(prof), fCnt(lvl)

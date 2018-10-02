@@ -28,6 +28,11 @@
 #include "stream/DabcProcMgr.h"
 #endif
 
+//#ifndef DABC_Profiler
+//#include "dabc/Profiler.h"
+//#endif
+
+
 #include "hadaq/TrbProcessor.h"
 
 
@@ -73,23 +78,25 @@ namespace stream {
       int fNumCh{33};                         ///< configured number of channel
       int fEdges{1};                          ///< configured edges
 
+      // dabc::Profiler fProfiler;               ///< profiler of build event performance
+
       bool retransmit();
 
-      virtual int ExecuteCommand(dabc::Command cmd);
+      int ExecuteCommand(dabc::Command cmd) override;
 
    public:
 
       TdcCalibrationModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~TdcCalibrationModule();
 
-      virtual bool ProcessBuffer(unsigned) { return retransmit(); }
+      bool ProcessBuffer(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessRecv(unsigned) { return retransmit(); }
+      bool ProcessRecv(unsigned) override { return retransmit(); }
 
-      virtual bool ProcessSend(unsigned) { return retransmit(); }
+      bool ProcessSend(unsigned) override { return retransmit(); }
 
-      virtual void BeforeModuleStart() { DOUT2("START CALIBR MODULE"); }
-      virtual void AfterModuleStop();
+      void BeforeModuleStart() override;
+      void AfterModuleStop() override;
 
       static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress = 0, double *res_quality = 0, std::string *res_state = 0);
 
