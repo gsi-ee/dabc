@@ -521,10 +521,8 @@ bool stream::RunModule::RedistributeBuffers()
 
 bool stream::RunModule::ProcessRecv(unsigned port)
 {
-   if (fParallel<=0) {
-      if (CanRecv()) return ProcessNextBuffer();
-      return false;
-   }
+   if (fParallel<=0)
+      return ProcessNextBuffer();
 
    return RedistributeBuffers();
 }
