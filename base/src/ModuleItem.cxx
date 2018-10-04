@@ -157,11 +157,11 @@ dabc::ConnTimer::ConnTimer(Reference parent, const std::string &name, const std:
 
 double dabc::ConnTimer::ProcessTimeout(double)
 {
-   Module* m = dynamic_cast<Module*> (GetParent());
+   Module *m = dynamic_cast<Module *> (GetParent());
 
    // DOUT0("ConnTimer::ProcessTimeout m = %s", DNAME(m));
 
-   if (m==0) return -1;
+   if (!m) return -1;
 
    PortRef port = m->FindPort(fPortName);
    if (port.null()) return -1.;
