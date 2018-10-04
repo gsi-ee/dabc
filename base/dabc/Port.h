@@ -131,9 +131,8 @@ namespace dabc {
          {
             fReconnectPeriod = period;
             fReconnectLimit = numtry;
-            if ((fReconnectPeriod <= 0) && (fReconnectLimit>=0)) fReconnectPeriod = 1.; else
-            if ((fReconnectPeriod > 0) && (fReconnectLimit<0)) fReconnectLimit = 10; else
-
+            if ((fReconnectPeriod <= 0) && (fReconnectLimit >= 0)) fReconnectPeriod = 1.; else
+            // if ((fReconnectPeriod > 0) && (fReconnectLimit == -1)) fReconnectLimit = 10; else
             if (fReconnectPeriod <= 0) SetDoingReconnect(false);
          }
 

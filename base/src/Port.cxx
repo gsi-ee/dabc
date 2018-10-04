@@ -197,22 +197,19 @@ bool dabc::Port::TryNextReconnect(bool caused_by_error)
       return false;
    }
 
-   if ((fReconnectPeriod>0) && (--fReconnectLimit>=0)) return true;
+   if ((fReconnectPeriod>0) && ((fReconnectLimit < 0) || (fReconnectLimit-- > 0))) return true;
 
    SetDoingReconnect(false);
 
    if (fOnError == "none") {
       // do nothing
-   } else
-   if (fOnError == "stop") {
+   } else if (fOnError == "stop") {
       DOUT0("Stop module %s due to error on port %s", DNAME(GetParent()), ItemName().c_str());
       StopModule();
-   } else
-   if (fOnError == "exit") {
+   } else if (fOnError == "exit") {
       DOUT0("Exit application due to error on port %s", ItemName().c_str());
       dabc::mgr.StopApplication();
-   } else
-   if (fOnError == "abort") {
+   } else if (fOnError == "abort") {
       DOUT0("Abort application due to error on port %s", ItemName().c_str());
       abort();
    } else {
