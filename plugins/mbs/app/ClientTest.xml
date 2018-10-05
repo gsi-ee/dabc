@@ -5,14 +5,15 @@
       <lib value="libDabcMbs.so"/>
       <debuglevel value="1"/>
       <runtime value="50000000"/>
+      <loglimit value="50000000"/>
     </Run>
     <MemoryPool name="Pool">
-       <BufferSize value="465536"/>
+       <BufferSize value="2000000"/>
        <NumBuffers value="100"/>
     </MemoryPool>
     <Module name="Read" class="dabc::RepeaterModule">
        <!--InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/-->
-       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="5" rate="MbsData"/>
+       <InputPort name="Input0" url="mbs://localhost/Stream" reconnect="5" rate="MbsData"/>
        <OutputPort name="Output0" queue="10" auto="false"/>
        <MbsData width="5" prec="3" low="0" up="50" debug="1"/>
      </Module>
