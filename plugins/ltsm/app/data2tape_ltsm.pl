@@ -95,11 +95,11 @@ Usage:
 
 Examples:
 
-   Archive all hld files with prefixes 'st' and 'be' from sept 4th, 2010 to the archive hadessep10raw:
-      date2tape.pl -p be -p st -s 2010-09-04_00:00:00 -e 2010-09-04_23:59:59 -a hadessep10raw
+   Archive all hld files with prefixes 'st' and 'be' from sept 4th, 2018 for beamtime jul18:
+      date2tape_ltsm.pl -p be -p st -s 2018-09-04_00:00:00 -e 2018-09-04_23:59:59 -a jul18 -w <secret>
 
-   Archive all hld files from the list /home/hadaq/kgoebel.txt to archive "hadesuser/kgoebel/hld/":
-      date2tape.pl -a hadesuser -d kgoebel/hld -f /home/hadaq/kgoebel.txt
+   Archive all hld files from the list /home/hadaq/oper/diskfiles.txt to archive "jul18":
+      date2tape_ltsm.pl -a jul18  -f /home/hadaq/oper/diskfiles.txt -w <secret>
 
 EOF
 }
