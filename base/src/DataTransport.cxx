@@ -519,7 +519,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
             return true;
          case di_SkipBuffer:
             fCurrentBuf.Release();
-            DOUT4("Skip input buffer");
+            // DOUT4("Skip input buffer");
             ChangeState(inpInit);
             break;
          case di_EndOfStream:
@@ -688,8 +688,6 @@ bool dabc::OutputTransport::StopTransport()
 
 void dabc::OutputTransport::TransportCleanup()
 {
-   // DOUT0("CLEANUP OUTPUT TRANSPORT %s", GetName());
-
    CloseOutput();
 
    dabc::Transport::TransportCleanup();
@@ -697,7 +695,6 @@ void dabc::OutputTransport::TransportCleanup()
 
 void dabc::OutputTransport::CloseOnError()
 {
-
    if ((fRetryPeriod < 0.) || !fOutput || !fOutput->Write_Retry()) {
       ChangeState(outClosed);
       CloseOutput();
@@ -748,7 +745,7 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
 //   if (IsName("_OnlineServer_Output0_Transport_Slave0_Transport"))
 //      DOUT0("dabc::OutputTransport::ProcessRecv  %s state %u", GetName(), fOutState);
 
-   if (fOutput==0) {
+   if (!fOutput) {
       EOUT("Output object not specified");
       ChangeState(outError);
    }

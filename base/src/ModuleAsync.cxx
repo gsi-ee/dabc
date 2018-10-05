@@ -25,19 +25,19 @@ dabc::ModuleAsync::~ModuleAsync()
 
 bool dabc::ModuleAsync::RecvQueueFull(unsigned indx)
 {
-   InputPort* inp = Input(indx);
+   InputPort *inp = Input(indx);
    return inp ? inp->QueueFull() : false;
 }
 
 void dabc::ModuleAsync::SignalRecvWhenFull(unsigned indx)
 {
-   InputPort* inp = Input(indx);
+   InputPort *inp = Input(indx);
    if (inp) inp->SignalWhenFull();
 }
 
 dabc::Buffer dabc::ModuleAsync::RecvQueueItem(unsigned indx, unsigned nbuf)
 {
-   InputPort* inp = Input(indx);
+   InputPort *inp = Input(indx);
    if (inp) return inp->Item(nbuf);
    return dabc::Buffer();
 }

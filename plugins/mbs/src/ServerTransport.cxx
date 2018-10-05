@@ -236,7 +236,7 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
    if (sendsize == 0) return dabc::do_Skip;
 
    if (!fIter.null()) {
-      dabc::EventsIterator* iter = fIter();
+      dabc::EventsIterator *iter = fIter();
       sendsize = 0;
       iter->Assign(buf);
       unsigned rawsize = 0;
@@ -394,7 +394,7 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
          }
       }
 
-      ServerOutputAddon* addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
+      ServerOutputAddon *addon = new ServerOutputAddon(fd, fKind, iter, fSubevId);
       // FIXME: should we configure buffer size or could one ignore it???
       addon->FillServInfo(0x400000, true);
 
@@ -459,11 +459,12 @@ bool mbs::ServerTransport::SendNextBuffer()
       if (fDeliverAll) return false;
       // if server do not blocks, first wait until input queue will be filled
       if (!RecvQueueFull()) {
-         DOUT3("mbs::ServerTransport::ProcessRecv let input queue to be filled size:%u", NumCanRecv());
-         //dabc::SetDebugLevel(1);
+         // DOUT0("mbs::ServerTransport::ProcessRecv let input queue to be filled size:%u", NumCanRecv());
+         // dabc::SetDebugLevel(1);
          SignalRecvWhenFull();
          return false;
       }
+      // DOUT0("TRY TO SEND EVEN WHEN NOT POSSIBLE");
    }
 
    // this is normal situation when buffer can be send to all outputs

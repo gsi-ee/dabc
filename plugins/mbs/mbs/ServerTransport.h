@@ -36,9 +36,6 @@
 #include "mbs/MbsTypeDefs.h"
 #endif
 
-
-
-
 namespace mbs {
 
    /** \brief %Addon for output of server-side different kinds of MBS server */
@@ -109,7 +106,7 @@ namespace mbs {
    class ServerTransport : public dabc::Transport {
       protected:
 
-         int fKind;             ///< kind of transport, stream or transport
+         int fKind;             ///< kind: stream or transport
          int fPortNum;          ///< used port number (only for info)
          int fSlaveQueueLength; ///< queue length, used for slaves connections
          int fClientsLimit;     ///< maximum number of simultaneous clients
@@ -133,9 +130,9 @@ namespace mbs {
 
       public:
 
-         ServerTransport(dabc::Command cmd, const dabc::PortRef& outport,
+         ServerTransport(dabc::Command cmd, const dabc::PortRef &outport,
                          int kind, int portnum,
-                         dabc::SocketServerAddon* connaddon,
+                         dabc::SocketServerAddon *connaddon,
                          const dabc::Url& url);
          virtual ~ServerTransport();
 

@@ -45,7 +45,7 @@ dabc::Reference mbs::Factory::CreateObject(const std::string &classname, const s
    return dabc::Factory::CreateObject(classname, objname, cmd);
 }
 
-dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
+dabc::Module *mbs::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
 {
    dabc::Url url(typ);
 
@@ -68,11 +68,11 @@ dabc::Module* mbs::Factory::CreateTransport(const dabc::Reference& port, const s
 
       if (portnum==0) portnum = DefualtServerPort(kind);
 
-      dabc::SocketServerAddon* addon = dabc::SocketThread::CreateServerAddon(host, portnum);
+      dabc::SocketServerAddon *addon = dabc::SocketThread::CreateServerAddon(host, portnum);
 
-      if (addon==0) {
+      if (!addon) {
          DOUT3("Fail assign MBS server to port:%d", portnum);
-         return 0;
+         return nullptr;
       }
 
       return new mbs::ServerTransport(cmd, portref, kind, portnum, addon, url);
