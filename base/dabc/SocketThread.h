@@ -400,6 +400,7 @@ namespace dabc {
          virtual bool CompatibleClass(const std::string &clname) const;
 
          static bool SetNonBlockSocket(int fd);
+         static bool SetNoDelaySocket(int fd);
 
          static int StartClient(const std::string &host, int nport, bool nonblocking = true);
 

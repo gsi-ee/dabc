@@ -15,12 +15,15 @@
 
 #include "dabc/SocketThread.h"
 
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
 #include <sys/poll.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #include "dabc/logging.h"
@@ -1091,7 +1094,12 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
 }
 
 
-
+bool dabc::SocketThread::SetNoDelaySocket(int fd)
+{
+   int one = 1;
+   int res = setsockopt(fd,  IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+   return res == 0;
+}
 
 std::string dabc::SocketThread::DefineHostName(bool force)
 {
