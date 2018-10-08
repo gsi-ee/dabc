@@ -117,6 +117,7 @@ Usage:
                                     'number of days ago' until 'now'.
                                     will overrule options-s and -t 
    [-p|--prefix <prefix>]      : Look only for these prefixes.
+   [-c|--crc]                  : Check also crc of files (time consuming).
    [-a|--arch <archive>]       : Name of archive.
    [-w|--password <passwd>]    : TSM password for server.
    [-o|--out <tape|disk|all>]  : Print output format:
