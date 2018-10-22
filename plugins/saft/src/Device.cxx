@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -23,35 +23,28 @@
 #include "saftdabc/Definitions.h"
 #include "saftdabc/Input.h"
 
-
-
-
-
 saftdabc::Device::Device (const std::string &name, dabc::Command cmd) :
     dabc::Device (name),fConditionMutex(true)
 {
-  Gio::init(); // required at the beginnning !
-  fBoardName = Cfg (saftdabc::xmlDeviceName, cmd).AsStr (name);
+   Gio::init(); // required at the beginnning !
+   fBoardName = Cfg (saftdabc::xmlDeviceName, cmd).AsStr (name);
 
-  fGlibMainloop= Glib::MainLoop::create(); //Glib::MainLoop::create(true) to run immediately?
-  std::map<Glib::ustring, Glib::ustring> devices = saftlib::SAFTd_Proxy::create()->getDevices();
+   fGlibMainloop= Glib::MainLoop::create(); //Glib::MainLoop::create(true) to run immediately?
+   std::map<Glib::ustring, Glib::ustring> devices = saftlib::SAFTd_Proxy::create()->getDevices();
 
-  fTimingReceiver = saftlib::TimingReceiver_Proxy::create(devices[fBoardName]);
+   fTimingReceiver = saftlib::TimingReceiver_Proxy::create(devices[fBoardName]);
 
 
 // TODO: export some interactive commands for web interface
-     CreateCmdDef (saftdabc::commandRunMainloop);
-    CreatePar (saftdabc::parEventRate).SetRatemeter (false, 3.).SetUnits ("Events");
+   CreateCmdDef (saftdabc::commandRunMainloop);
+   CreatePar (saftdabc::parEventRate).SetRatemeter (false, 3.).SetUnits ("Events");
 
-    SetDevInfoParName("SaftDeviceInfo");
-    CreatePar(fDevInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
+   SetDevInfoParName("SaftDeviceInfo");
+   CreatePar(fDevInfoName, "info").SetSynchron(true, 2., false).SetDebugLevel(2);
    // PublishPars ("$CONTEXT$/SaftDevice");
 // note that access to web parameters is blocked after mainloop is executed in device thread!
 
-
-
-  DOUT1("Created SAFTDABC device %s\n",fBoardName.c_str());
-
+   DOUT1("Created SAFTDABC device %s\n",fBoardName.c_str());
 }
 
 void saftdabc::Device::OnThreadAssigned()
@@ -70,7 +63,6 @@ void saftdabc::Device::RunGlibMainLoop()
 {
   // TODO: put mainloop into background thread here?
 
-
   DOUT1("RunGlibMainLoop starts.");
   fGlibMainloop->run();
   DOUT1("RunGlibMainLoop after fGlibMainloop->run();");
@@ -79,18 +71,17 @@ void saftdabc::Device::RunGlibMainLoop()
 
 saftdabc::Device::~Device ()
 {
-  DOUT1("DDDDDDDDDDd saftdabc::Device destructor \n");
+  DOUT1("saftdabc::Device destructor \n");
   // NOTE: all time consuming cleanups and delete board is moved to object cleanup due to dabc shutdown mechanisms
 }
 
 bool saftdabc::Device::DestroyByOwnThread ()
 {
-
-  DOUT1("DDDDDDDDDDd saftdabc::Device DestroyByOwnThread()was called \n");
-  // optionally clenaup something here?
-  //ClearConditions();
-  fGlibMainloop->quit();
-  return dabc::Device::DestroyByOwnThread ();
+   DOUT1("saftdabc::Device DestroyByOwnThread()was called \n");
+   // optionally clenaup something here?
+   //ClearConditions();
+   fGlibMainloop->quit();
+   return dabc::Device::DestroyByOwnThread();
 }
 
 
@@ -98,13 +89,9 @@ bool saftdabc::Device::DestroyByOwnThread ()
 
 void saftdabc::Device::ObjectCleanup ()
 {
-  DOUT1("_______saftdabc::Device::ObjectCleanup...");
-
-  //ClearConditions();
-  //fGlibMainloop->quit();
-  dabc::Device::ObjectCleanup ();
-
-  DOUT1("_______saftdabc::Device::ObjectCleanup leaving.");
+   //ClearConditions();
+   //fGlibMainloop->quit();
+   dabc::Device::ObjectCleanup ();
 }
 
 int saftdabc::Device::ExecuteCommand (dabc::Command cmd)
