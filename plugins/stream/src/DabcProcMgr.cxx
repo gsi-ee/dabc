@@ -61,8 +61,31 @@ void stream::DabcProcMgr::SetTop(dabc::Hierarchy& top, bool withcmds)
    h.SetField("_icon", "dabcsys/plugins/stream/icons/stop.png");
    h.SetField("_fastcmd", "true");
    h.SetField("_numargs", "0");
+
+
+   h = fTop.CreateHChild("Control/RunLog");
+   h.SetField(dabc::prop_kind, "log");
+   h.EnableHistory(1000);
+
+   h = fTop.CreateHChild("Control/ErrLog");
+   h.SetField(dabc::prop_kind, "log");
+   h.EnableHistory(1000);
 }
 
+
+void stream::DabcProcMgr::AddRunLog(const char *msg)
+{
+   dabc::Hierarchy h = fTop.GetHChild("Control/RunLog");
+   h.SetField("value", msg);
+   h.MarkChangedItems();
+}
+
+void stream::DabcProcMgr::AddErrLog(const char *msg)
+{
+   dabc::Hierarchy h = fTop.GetHChild("Control/ErrLog");
+   h.SetField("value", msg);
+   h.MarkChangedItems();
+}
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {

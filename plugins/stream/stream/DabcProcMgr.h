@@ -48,6 +48,10 @@ namespace stream {
 
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
+         virtual void AddRunLog(const char *msg);
+         virtual void AddErrLog(const char *msg);
+         virtual bool DoLog() { return true; }
+
          virtual bool CallFunc(const char* funcname, void* arg);
 
          virtual bool CreateStore(const char* storename);
