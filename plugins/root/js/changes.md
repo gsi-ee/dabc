@@ -1,17 +1,72 @@
 # JSROOT changelog
 
-## Changes in dev
-1. Introduce JSROOT.StoreJSON() function. It creates JSON code for the 
+## Changes in 5.6.0
+1. By drawing outline speed up (factor 10) canvas with many small sub-pads 
+2. Let configure user click and double-click handlers, extend tooltip.htm example
+3. Implement workaround for standard THREE.SVGRenderer - no need for patched version  
+4. When producing 3D graphical images in batch, use normal THREE.CanvasRenderer
+5. Use WebGL renderer in Chrome headless mode for 3D images generation
+6. Provide possibility to create SVG files for canvas or frame (#172)
+7. Support text drawing with TH1 bar option
+8. Fix - when drawing text, reserve extra y range to show it correctly
+9. Migrate to Node.js 8, do not support older versions 
+
+
+## Changes in 5.5.2
+1. Fix - draw TH2Poly bins outline when no content specified
+2. Fix - always set axis interactive handlers (#170)
+3. Fix - take into account zaxis properties when drawing color palette (#171)
+
+
+## Changes in 5.5.1
+1. Fix - adjust v7 part to new class naming convention, started with R
+2. Fix - show RCanvas title
+3. New - implement 'nocache' option for JSROOT scripts loading. When specified in URL with
+   JSRootCore.js script, tries to avoid scripts caching problem by adding stamp parameter to all URLs
+4. New - provide simple drawing for TObjString (#164) 
+
+
+## Changes in 5.5.0
+1. Introduce JSROOT.StoreJSON() function. It creates JSON code for the
    TCanvas with all drawn objects inside. Allows to store current canvas state
 2. Support "item=img:file.png" parameter to insert images in existing layout (#151)
 3. Support TTree drawing into TGraph (#153), thanks @cozzyd
 4. Let configure "&toolbar=right" in URL to change position of tool buttons
-5. Let configure "&divsize=500x400" in URL of size of main div element (default - full browser)  
+5. Let configure "&divsize=500x400" in URL of size of main div element (default - full browser)
 6. Implement "optstat1001" and "optfit101" draw options for histograms
 7. Remove "autocol" options - standard "plc" should be used instead
 8. Provide drawing of artificial "$legend" item - it creates TLegend for all primitives in pad
-   Can be used when several histograms or several graphs superimposed.
+   Can be used when several histograms or several graphs superimposed
 9. Let configure "&toolbar=vert" in URL to change orientation of tool buttons
+10. Improve markers and error bars drawing for TH1/TProfile
+
+
+## Changes in 5.4.3
+1. Fix - draw functions also when histogram "same" option used (#159)
+2. Fix - when draw histogram as markers improve optimization algorithm
+3. Fix - correct histogram Y-axis range selection in logarithmic scale
+4. Fix - for TH2 draw options allow combination "colztext" (#162)
+5. Fix - PNG file generation with 3D drawings inside
+
+
+## Changes in 5.4.2
+1. Fix - take into account extra quotes in multipart http reply (#157)
+2. Fix - display of labels on X axis with TProfile
+3. Fix - support time display in TMultiGraph
+4. Fix - correctly parse "optstat" and "optfit" in URL
+5. Fix - correctly update TGraph drawing when X range is changing
+6. Fix - return only TF1/TF2 object when searching function (#158)
+
+
+## Changes in 5.4.1
+1. Fix - monitoring mode in draw.htm page
+2. Fix - zooming in colz palette
+3. Fix - support both 9.x and 10.x jsdom version in Node.js (#149)
+4. Fix - draw axis main line with appropriate attributes (#150)
+5. Fix - use axis color when drawing grids lines (#150)
+6. Fix - when set pad logx/logy, reset existing user ranges in pad
+7. Fix - avoid too deep calling stack when drawing many graphs or histos (#154)
+8. Fix - correctly (re)draw tooltips on canvas with many subpads
 
 
 ## Changes in 5.4.0
