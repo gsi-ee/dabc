@@ -57,7 +57,7 @@
       var frame = mdi.FindFrame(itemname, true);
       if (!frame) return null;
       
-      var divid = d3.select(frame).attr('id');
+      var frameid = d3.select(frame).attr('id');
       
       var item = hpainter.Find(itemname);
       var calarr = [];
@@ -122,7 +122,7 @@
       }
       
       var handler = setInterval(function() {
-         if ($("#"+divid+" .hadaq_info").length==0) {
+         if ($("#" + frameid + " .hadaq_info").length==0) {
             // if main element disapper (reset), stop handler 
             clearInterval(handler);
             return;
@@ -237,7 +237,7 @@
       var frame = mdi.FindFrame(itemname, true);
       if (!frame) return null;
       
-      var divid = d3.select(frame).attr('id');
+      var ffid = d3.select(frame).attr('id');
       
       var item = hpainter.Find(itemname + "/Status");
       var calarr = [];
@@ -282,7 +282,7 @@
       }
       
       var handler = setInterval(function() {
-         if ($("#"+divid+" .stream_info").length==0) {
+         if ($("#"+ffid+" .stream_info").length==0) {
             // if main element disapper (reset), stop handler 
             clearInterval(handler);
             return;
@@ -1032,13 +1032,13 @@
       }
       
       painter.DrawValue = function(val, force) {
-         var rect = d3.select("#"+this.divid).node().getBoundingClientRect();
+         var rect = this.select_main().node().getBoundingClientRect();
          var sz = Math.min(rect.height, rect.width);
          
          if ((sz > this.lastsz*1.2) || (sz < this.lastsz*0.9)) force = true; 
          
          if (force) {
-            d3.select("#"+this.divid).selectAll("*").remove();
+            this.select_main().selectAll("*").remove();
             this.gauge = null; 
          }
          
@@ -1058,8 +1058,8 @@
             
             if ('units' in obj) config['units'] = obj['units'] + "/s";
             
-            if (this.gauge == null)
-               this.gauge = new Gauge(this.divid, config);
+            if (!this.gauge)
+               this.gauge = new Gauge(this.select_main().attr('id'), config);
             else
                this.gauge.configure(config);
             
@@ -1095,12 +1095,13 @@
       var painter = new JSROOT.TBasePainter();
       painter.obj = obj;
       painter.history = (opt!="last") && ('log' in obj); // by default draw complete history
-      
-      var frame = d3.select("#"+ divid);
+
+      painter.SetDivId(divid, 1);
+
       if (painter.history) {
-         frame.html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
+         painter.select_main().html("<div style='overflow:auto; max-height: 100%; max-width: 100%; font-family:monospace'></div>");
       } else {
-         frame.html("<div></div>");
+         painter.select_main().html("<div></div>");
       }
       // set divid after child element created - only then we could set painter
       painter.SetDivId(divid);
@@ -1122,7 +1123,7 @@
             html += obj['fullitemname'] + "<br/>";
             html += "<h5>"+ this.obj.value +"</h5>";
          }
-         d3.select("#" + this.divid + " > div").html(html);
+         this.select_main().select("div").html(html);
       }
       
       painter.Draw();
@@ -1166,7 +1167,9 @@
       
       painter.ShowCommand = function() {
 
-         var frame = $("#" + this.divid);
+         var cmdelemid = this.select_main().attr('id');
+         
+         var frame = $("#" + cmdelemid);
 
          frame.empty();
 
@@ -1177,14 +1180,14 @@
 
          frame.append("<h3>" + this.jsonnode.fullitemname + "</h3>");
          
-         var entryInfo = "<input id='" + this.divid + "_button' type='button' title='Execute' value='Execute'/><br/>";
+         var entryInfo = "<input id='" + cmdelemid + "_button' type='button' title='Execute' value='Execute'/><br/>";
 
          for (var cnt=0;cnt<this.NumArgs();cnt++) {
             var argname = this.ArgName(cnt);
             var argkind = this.ArgKind(cnt);
             var argdflt = this.ArgDflt(cnt);
 
-            var argid = this.divid + "_arg" + cnt; 
+            var argid = cmdelemid + "_arg" + cnt; 
             var argwidth = (argkind=="int") ? "80px" : "170px";
 
             entryInfo += "Arg: " + argname + " "; 
@@ -1192,16 +1195,16 @@
             entryInfo += "<br/>";
          }
 
-         entryInfo += "<div id='" +this.divid + "_res'/>";
+         entryInfo += "<div id='" + cmdelemid + "_res'/>";
 
          frame.append(entryInfo);
          
          var pthis = this;
          
-         $("#"+ this.divid + "_button").click(function() { pthis.InvokeCommand(); });
+         $("#"+ cmdelemid + "_button").click(function() { pthis.InvokeCommand(); });
 
          for (var cnt=0;cnt<this.NumArgs();cnt++) {
-            var argid = this.divid + "_arg" + cnt;
+            var argid = cmdelemid + "_arg" + cnt;
             var argkind = this.ArgKind(cnt);
             var argmin = this.ArgMin(cnt);
             var argmax = this.ArgMax(cnt);
@@ -1214,13 +1217,15 @@
       painter.InvokeCommand = function() {
          if (this.req!=null) return;
 
-         var resdiv = $("#" + this.divid + "_res");
+         var cmdelemid = this.select_main().attr('id');
+
+         var resdiv = $("#" + cmdelemid + "_res");
          resdiv.html("<h5>Send command to server</h5>");
 
          var url = this.jsonnode.fullitemname + "/execute";
 
          for (var cnt=0;cnt<this.NumArgs();cnt++) {
-            var argid = this.divid + "_arg" + cnt;
+            var argid = cmdelemid + "_arg" + cnt;
             var argkind = this.ArgKind(cnt);
             var argmin = this.ArgMin(cnt);
             var argmax = this.ArgMax(cnt);
