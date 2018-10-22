@@ -900,12 +900,12 @@
    }
    
    DABC.MakeItemRequest = function(h, item, fullpath, option) {
-      item['fullitemname'] = fullpath;
+      item.fullitemname = fullpath;
       if (!('_history' in item) || (option=="gauge") || (option=='last')) return "get.json?compact=0"; 
       if (!('hlimit' in item)) item.hlimit = 100;
       var url = "get.json?compact=0&history=" + item.hlimit;
       if (('request_version' in item) && (item.request_version>0)) url += "&version=" + item.request_version;
-      item['request_version'] = 0;
+      item.request_version = 0;
       return url;      
    }
    
