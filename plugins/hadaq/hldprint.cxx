@@ -32,16 +32,16 @@ int usage(const char* errstr = 0)
       printf("Error: %s\n\n", errstr);
    }
 
-   printf("utility for printing HLD events\n");
-   printf("hldprint source [args]\n\n");
-   printf("Following source kinds are supported:\n");
+   printf("Utility for printing HLD events. 22.10.2018. S.Linev\n");
+   printf("   hldprint source [args]\n");
+   printf("Following sources are supported:\n");
    printf("   hld://path/file.hld         - HLD file reading\n");
    printf("   file.hld                    - HLD file reading (file extension MUST be '.hld')\n");
    printf("   dabcnode                    - DABC stream server\n");
    printf("   dabcnode:port               - DABC stream server with custom port\n");
    printf("   mbss://dabcnode/Transport   - DABC transport server\n");
    printf("   lmd://path/file.lmd         - LMD file reading\n");
-   printf("Additional arguments:\n");
+   printf("Arguments:\n");
    printf("   -tmout value            - maximal time in seconds for waiting next event (default 5)\n");
    printf("   -maxage value           - maximal age time for events, if expired queue are cleaned (default off)\n");
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
@@ -64,7 +64,11 @@ int usage(const char* errstr = 0)
    printf("   -bw                     - disable colors\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
-   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n");
+   printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
+   printf("Example - display only data from TDC 0x1226:\n\n");
+   printf("   hldprint localhost:6789 -num 1 -auto -onlytdc 0x1226\n\n");
+   printf("Show statistic over all events in HLD file:\n\n");
+   printf("   hldprint file.hld -all -stat\n");
 
    return errstr ? 1 : 0;
 }
