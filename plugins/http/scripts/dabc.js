@@ -947,7 +947,7 @@
       }
       
       if (obj._kind == "log") {
-         obj.log = DABC.ExtractSeries("value","string", obj, item.history);
+         obj.log = DABC.ExtractSeries("value", "string", obj, item.history);
          return;
       }
       
@@ -1117,7 +1117,7 @@
          
          if (this.history && ('log' in this.obj)) {
             for (var i in this.obj.log) {
-               html+="<pre>"+this.obj.log[i]+"</pre>";
+               html+="<pre style='margin-top:2px;margin-bottom:0px'>"+this.obj.log[i]+"</pre>";
             }
          } else {
             html += obj['fullitemname'] + "<br/>";
