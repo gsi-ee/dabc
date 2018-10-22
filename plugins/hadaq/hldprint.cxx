@@ -47,6 +47,7 @@ int usage(const char* errstr = 0)
    printf("   -num number             - number of events to print, 0 - all events (default 10)\n");
    printf("   -all                    - print all events (equivalent to -num 0)\n");
    printf("   -skip number            - number of events to skip before start printing\n");
+   printf("   -find id                - search for given event id before start analysis\n");
    printf("   -sub                    - try to scan for subsub events (default false)\n");
    printf("   -stat                   - accumulate different kinds of statistics (default false)\n");
    printf("   -raw                    - printout of raw data (default false)\n");
@@ -642,13 +643,16 @@ int main(int argc, char* argv[])
    if ((argc<2) || !strcmp(argv[1],"-help") || !strcmp(argv[1],"?")) return usage();
 
    long number(10), skip(0);
+   unsigned findid(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1);
+   bool dofind = false;
 
    int n = 1;
    while (++n<argc) {
       if ((strcmp(argv[n],"-num")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &number); } else
       if (strcmp(argv[n],"-all")==0) { number = 0; } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
+      if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &findid); dofind = true; } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
@@ -767,6 +771,12 @@ int main(int argc, char* argv[])
 
       if (skip>0) { skip--; continue; }
 
+      if (dofind) {
+         auto* sub = evnt->NextSubevent(nullptr);
+         if (!sub || ((sub->GetTrigNr() >> 8) != findid)) continue;
+         dofind = false; // disable
+      }
+
       printcnt++;
 
       bool print_header(false);
@@ -778,8 +788,8 @@ int main(int argc, char* argv[])
 
       char errbuf[100];
 
-      hadaq::RawSubevent* sub = 0;
-      while ((sub = evnt->NextSubevent(sub)) != 0) {
+      hadaq::RawSubevent* sub = nullptr;
+      while ((sub = evnt->NextSubevent(sub)) != nullptr) {
 
          bool print_sub_header(false);
          if ((onlytdc==0) && (onlyraw==0) && !showrate && !dostat && !only_errors) {
