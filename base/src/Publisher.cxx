@@ -19,7 +19,6 @@
 #include "dabc/Url.h"
 #include "dabc/HierarchyStore.h"
 
-
 void dabc::CmdGetNamesList::SetResNamesList(dabc::Command &cmd, Hierarchy &res)
 {
    if (res.null()) return;
@@ -59,6 +58,7 @@ void dabc::CmdGetNamesList::SetResNamesList(dabc::Command &cmd, Hierarchy &res)
    }
 }
 
+// ======================================================================
 
 dabc::Hierarchy dabc::CmdGetNamesList::GetResNamesList(dabc::Command &cmd)
 {
