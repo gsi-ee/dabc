@@ -105,7 +105,8 @@ int main(int argc, char* argv[]) {
             }
          }
 
-         f->mkdir(dirname.Data());
+         if (!f->GetDirectory(dirname.Data()))
+            f->mkdir(dirname.Data());
          f->cd(dirname.Data());
          currcnt = 0;
       }
