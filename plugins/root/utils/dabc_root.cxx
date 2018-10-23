@@ -16,6 +16,18 @@
 #include "TObjArray.h"
 #include "TAxis.h"
 
+void SetAxisLabels(TAxis *ax, std::string lbls, int nbins)
+{
+   if (lbls.empty() || !ax) return;
+   TObjArray *lst = TString(lbls.c_str()).Tokenize(",");
+
+   if (lst && (lst->GetSize() > 0))
+      for (int n=0;n<nbins;++n)
+         ax->SetBinLabel(n+1, (n < lst->GetSize()) ? lst->At(n)->GetName() : Form("bin%d",n));
+
+   delete lst;
+}
+
 int main(int argc, char* argv[]) {
 
    printf("dabc_root utility, v %s\n", DABC_RELEASE);
@@ -130,16 +142,8 @@ int main(int argc, char* argv[]) {
          TH1D* hist = new TH1D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins, item.Field("left").AsDouble(), item.Field("right").AsDouble());
 
-         std::string xlabels = item.Field("xlabels").AsStr();
-         if (!xlabels.empty()) {
-            TObjArray *lst = TString(xlabels.c_str()).Tokenize(",");
-            if (lst && (lst->GetSize() > 0)) {
-               for (int n=0;n<nbins;++n)
-                  hist->GetXaxis()->SetBinLabel(n+1, (n < lst->GetSize()) ? lst->At(n)->GetName() : Form("bin%d",n));
-            }
-
-            delete lst;
-         }
+         if (item.HasField("xlabels"))
+            SetAxisLabels(hist->GetXaxis(), item.Field("xlabels").AsStr(), nbins);
 
          for (int n=0;n<nbins+2;n++) hist->SetBinContent(n,bins[3+n]);
          hist->ResetStats(); // recalculate statistic
@@ -161,6 +165,12 @@ int main(int argc, char* argv[]) {
          TH2D* hist = new TH2D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins1, item.Field("left1").AsDouble(), item.Field("right1").AsDouble(),
                                nbins2, item.Field("left2").AsDouble(), item.Field("right2").AsDouble());
+
+         if (item.HasField("xlabels"))
+            SetAxisLabels(hist->GetXaxis(), item.Field("xlabels").AsStr(), nbins1);
+
+         if (item.HasField("ylabels"))
+            SetAxisLabels(hist->GetYaxis(), item.Field("ylabels").AsStr(), nbins2);
 
          for (int n=0;n<(nbins1+2)*(nbins2+2);n++) hist->SetBinContent(n,bins[6+n]);
          hist->ResetStats(); // recalculate statistic
