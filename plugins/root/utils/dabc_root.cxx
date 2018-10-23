@@ -13,6 +13,8 @@
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TObjArray.h"
+#include "TAxis.h"
 
 int main(int argc, char* argv[]) {
 
@@ -127,6 +129,17 @@ int main(int argc, char* argv[]) {
 
          TH1D* hist = new TH1D(item.GetName(), item.Field("_title").AsStr().c_str(),
                                nbins, item.Field("left").AsDouble(), item.Field("right").AsDouble());
+
+         std::string xlabels = item.Field("xlabels").AsStr();
+         if (!xlabels.empty()) {
+            TObjArray *lst = TString(xlabels.c_str()).Tokenize(",");
+            if (lst && (lst->GetSize() > 0)) {
+               for (int n=0;n<nbins;++n)
+                  hist->GetXaxis()->SetBinLabel(n+1, (n < lst->GetSize()) ? lst->At(n)->GetName() : Form("bin%d",n));
+            }
+
+            delete lst;
+         }
 
          for (int n=0;n<nbins+2;n++) hist->SetBinContent(n,bins[3+n]);
          hist->ResetStats(); // recalculate statistic
