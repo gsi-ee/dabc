@@ -772,8 +772,8 @@ int main(int argc, char* argv[])
       if (skip>0) { skip--; continue; }
 
       if (dofind) {
-         auto* sub = evnt->NextSubevent(nullptr);
-         if (!sub || ((sub->GetTrigNr() >> 8) != findid)) continue;
+         auto *sub = evnt->NextSubevent(nullptr);
+         if (!sub || (sub->GetTrigNr() != findid)) continue;
          dofind = false; // disable
       }
 
