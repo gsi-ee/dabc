@@ -33,7 +33,7 @@ hadaq::HldInput::HldInput(const dabc::Url& url) :
    if (url.HasOption("rfio"))
      fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("rfio::FileInterface"), true);
    else if (url.HasOption("ltsm"))
-   	  fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface"), true);
+     fFile.SetIO((dabc::FileInterface*) dabc::mgr.CreateAny("ltsm::FileInterface"), true);
 }
 
 hadaq::HldInput::~HldInput()
