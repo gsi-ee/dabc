@@ -5,7 +5,7 @@ Implemented in stream framework
 Requires DABC build with stream
 
      . path/streamlogin
-     make with-stream=1 -j8
+     make -j8
 
 Code initialized with attached first.C
 

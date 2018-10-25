@@ -31,8 +31,8 @@ void first()
    // set channels lookup table
    // 1. channel id
    // 2. strip id X:0..15 Y:100..115
-   proc->SetChannelsLookup(1, 1);
-   proc->SetChannelsLookup(16, 100);
+   proc->SetChannelsLookup1(1, 1);
+   proc->SetChannelsLookup1(16, 100);
 
    // create ROOT file store
    // base::ProcMgr::instance()->CreateStore("td.root");
