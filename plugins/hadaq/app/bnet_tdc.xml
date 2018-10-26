@@ -115,6 +115,7 @@
 
        <!-- special directory where calibrations copied every time when stored -->
        <CalibrDir value="calibrdir"/>
+       <CalibrPack value="echo"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>
@@ -240,6 +241,7 @@
        
        <!-- special directory where calibrations copied every time when stored -->
        <CalibrDir value="calibrdir"/>
+       <CalibrPack value="echo"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>

@@ -82,6 +82,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
 
    fBNETCalibrDir = Cfg("CalibrDir", cmd).AsStr();
+   fBNETCalibrPackScript = Cfg("CalibrPack", cmd).AsStr();
 
    fEpicsRunNumber = 0;
 
@@ -1489,6 +1490,17 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
    } else if (cmd.IsName("BnetCalibrControl")) {
 
+      if (!fBNETsend || fIsTerminating || (NumInputs()==0))
+         return dabc::cmd_true;
+
+      if (!fBnetCalibrCmd.null()) {
+         EOUT("Still calibration command running");
+         fBnetCalibrCmd.Reply(dabc::cmd_false);
+      }
+
+      fBnetCalibrCmd = cmd;
+      fBnetCalibrCmd.SetInt("#replies", NumInputs());
+
       std::string rundir = "";
       unsigned runid = cmd.GetUInt("runid");
 
@@ -1499,20 +1511,20 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
          std::string mkdir = "mkdir -p ";
          mkdir.append(rundir);
          system(mkdir.c_str());
+         fBnetCalibrCmd.SetStr("#rundir", rundir);
          rundir.append("/");
       }
 
       DOUT0("Combiner get BnetCalibrControl mode %s rundir %s", cmd.GetStr("mode").c_str(), rundir.c_str());
 
-      if (fBNETsend && !fIsTerminating)
-         for (unsigned n = 0; n < NumInputs(); n++) {
-            dabc::Command subcmd("TdcCalibrations");
-            subcmd.SetStr("mode", cmd.GetStr("mode"));
-            subcmd.SetStr("rundir", rundir);
-            SubmitCommandToTransport(InputName(n), subcmd);
-         }
+      for (unsigned n = 0; n < NumInputs(); n++) {
+         dabc::Command subcmd("TdcCalibrations");
+         subcmd.SetStr("mode", cmd.GetStr("mode"));
+         subcmd.SetStr("rundir", rundir);
+         SubmitCommandToTransport(InputName(n), Assign(subcmd));
+      }
 
-      return dabc::cmd_true;
+      return dabc::cmd_postponed;
    } else {
       return dabc::ModuleAsync::ExecuteCommand(cmd);
    }
@@ -1750,6 +1762,26 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          fBnetFileCmd.Reply(dabc::cmd_true);
       } else {
          fBnetFileCmd.SetInt("#replies", num-1);
+      }
+      return true;
+   } else if (cmd.IsName("TdcCalibrations")) {
+      int num = fBnetCalibrCmd.GetInt("#replies");
+      if (num == 1) {
+
+         std::string rundir = fBnetCalibrCmd.GetStr("#rundir");
+         DOUT0("COMBINER COMPLETE CALIBR PROCESSING dir %s", rundir.c_str());;
+
+         if (!fBNETCalibrPackScript.empty() && !rundir.empty() && (fBnetCalibrCmd.GetStr("mode") == "stop")) {
+            std::string exec = fBNETCalibrPackScript;
+            exec.append(" ");
+            exec.append(rundir);
+            DOUT0("EXEC %s", exec.c_str());
+            system(exec.c_str());
+         }
+
+         fBnetCalibrCmd.Reply(dabc::cmd_true);
+      } else {
+         fBnetCalibrCmd.SetInt("#replies", num-1);
       }
       return true;
    }

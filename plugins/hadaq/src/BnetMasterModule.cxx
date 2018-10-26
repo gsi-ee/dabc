@@ -430,9 +430,6 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       }
 
       if (!query.empty()) {
-
-         DOUT0("CALIBRATION query:%s", query.c_str());
-
          // trigger calibration start for all TDCs
          std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
 

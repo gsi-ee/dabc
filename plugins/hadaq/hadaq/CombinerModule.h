@@ -230,6 +230,8 @@ namespace hadaq {
          int                fBNETNumSend; ///< number of BNET senders
          int                fBNETNumRecv; ///< number of BNET receivers
          std::string        fBNETCalibrDir;   ///< name of extra directory where to store calibrations
+         std::string        fBNETCalibrPackScript;  ///< name of script to pack calibration files
+         dabc::Command      fBnetCalibrCmd;  ///< current running bnet calibration command
 
          double             fFlushTimeout;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
