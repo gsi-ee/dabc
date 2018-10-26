@@ -507,6 +507,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
 
       std::string subdir;
 
+      DOUT0("%s ENTER CALIBRATION Mode %s CalibrDir %s CalibrRunDir %s CalibrFile %s\n", GetName(), cmd.GetStr("mode").c_str(), fCalibrDir.c_str(), fCalibrRunDir.c_str(), fCalibrFile.c_str());
+
       if ((cmd.GetStr("mode") != "start") && !fCalibrDir.empty() && !fCalibrRunDir.empty() && !fCalibrFile.empty()) {
          subdir = fCalibrDir;
          subdir.append("/");
@@ -518,13 +520,14 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
          subdir.append(fCalibrFile);
       }
 
-      if (cmd.GetStr("mode") == "start")
-         DOUT0("%s START CALIBRATIONS autotdc %d", GetName(), fAutoTdcMode);
-      else
-         DOUT0("%s STORE CALIBRATIONS IN %s %s", GetName(), fCalibrFile.c_str(), subdir.c_str());
+      unsigned numtdc = fTrbProc->NumberOfTDC();
 
-      unsigned num = fTrbProc->NumberOfTDC();
-      for (unsigned indx=0;indx<num;++indx) {
+      if (cmd.GetStr("mode") == "start")
+         DOUT0("%s START CALIBRATIONS autotdc %d NumTDC %u", GetName(), fAutoTdcMode, numtdc);
+      else
+         DOUT0("%s STORE CALIBRATIONS IN %s %s NumTDC %u", GetName(), fCalibrFile.c_str(), subdir.c_str(), numtdc);
+
+      for (unsigned indx=0;indx<numtdc;++indx) {
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
 
          if (cmd.GetStr("mode") == "start") {
