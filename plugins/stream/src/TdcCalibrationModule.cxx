@@ -192,7 +192,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    std::vector<std::string> status;
 
    double p0(0), p1(1), worse_quality(1), worse_progress(1);
-   bool ready(true), explicitmode(true);
+   bool ready(true), explicitmode(true), is_any_progress(false);
    std::string worse_status = "Ready"; // overall status from all TDCs
 
    for (unsigned n=0;n<trb->NumberOfTDC();n++) {
@@ -222,7 +222,10 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
                ready = false;
             }
          } else {
-            if (progr < worse_progress) worse_progress = progr;
+            if ((progr > 0) && (progr < worse_progress)) {
+               worse_progress = progr;
+               is_any_progress = true;
+            }
          }
 
          tdcs.push_back(tdc->GetID());
@@ -239,6 +242,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
 
    if (!explicitmode) {
       worse_progress = ready ? p1 : -p0;
+      is_any_progress = true;
       // at the end check if auto-calibration can be done
       if (worse_progress > 0) {
          worse_status = "Ready";
@@ -246,6 +250,8 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
          worse_status = "Init";
       }
    }
+
+   if (!is_any_progress) worse_progress = 0;
 
    item.SetField("value", worse_status);
    item.SetField("progress", (int)(fabs(worse_progress)*100));
