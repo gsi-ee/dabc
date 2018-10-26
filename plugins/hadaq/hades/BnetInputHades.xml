@@ -170,7 +170,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <TriggerNumRange value="0x1000000"/>
 
        <!-- extra directory where calibrations for each calibration run will be stored  -->
-       <CalibrDir value="calibr_${MYHOST}"/>
+       <CalibrDir value="calibr"/>
        <!-- extra script called when calibration is finishes  -->
        <CalibrPack value="/home/hadaq/bin/archivecal_ltsm_jul18.sh"/>
 
