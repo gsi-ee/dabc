@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"

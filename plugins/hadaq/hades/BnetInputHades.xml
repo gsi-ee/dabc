@@ -171,8 +171,10 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
 
        <!-- extra directory where calibrations for each calibration run will be stored  -->
        <CalibrDir value="calibr"/>
+       <!-- extra script called when calibration is finishes  -->
+       <CalibrPack value="echo"/>
 
-<!--  specifies that trigger type should be extracted from configured CTS hub -->
+       <!--  specifies that trigger type should be extracted from configured CTS hub -->
        <HadesTriggerType value="true"/>
        <HadesTriggerHUB value="0x8800"/>
        
