@@ -2,8 +2,8 @@
 ############## archive TDC calibration files from data disk to ltsm archive #######
 ### v 0.2 26-oct-2018 by JAM (j.adamczewski@gsi.de)
 ######################################################################################
-RUN=$(echo $1 | /usr/bin/cut -d'/' -f1)
-CALIBDIR=$(echo $1 | /usr/bin/cut -d'/' -f2)
+RUN=$(echo $1 | /usr/bin/cut -d'/' -f2)
+CALIBDIR=$(echo $1 | /usr/bin/cut -d'/' -f1)
 FOLDER=${RUN}_${HOSTNAME}
 FILE=${FOLDER}.tar.gz
 DATE=$(/bin/date +"%d-%m-%Y %H:%M:%S")
