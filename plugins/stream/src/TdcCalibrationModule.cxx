@@ -140,7 +140,6 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fCountNormal = Cfg("CountNormal", cmd).AsInt(100000);
 
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
-   fCalibrDir = Cfg("CalibrDir", cmd).AsStr();
    if (!fCalibrFile.empty()) {
       if ((fAutoTdcMode < 0) && (fAutoCalibr>0))
          fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
@@ -503,22 +502,11 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       fDummyCounter = 0; // only for debugging
 
       fDoingTdcCalibr = (cmd.GetStr("mode") == "start");
-      if (fDoingTdcCalibr) fCalibrRunDir = cmd.GetStr("rundir");
 
-      std::string subdir;
+      std::string subdir = cmd.GetStr("rundir");
 
-      DOUT0("%s ENTER CALIBRATION Mode %s CalibrDir %s CalibrRunDir %s CalibrFile %s\n", GetName(), cmd.GetStr("mode").c_str(), fCalibrDir.c_str(), fCalibrRunDir.c_str(), fCalibrFile.c_str());
-
-      if ((cmd.GetStr("mode") != "start") && !fCalibrDir.empty() && !fCalibrRunDir.empty() && !fCalibrFile.empty()) {
-         subdir = fCalibrDir;
-         subdir.append("/");
-         subdir.append(fCalibrRunDir);
-         std::string mkdir = "mkdir -p ";
-         mkdir.append(subdir);
-         system(mkdir.c_str());
-         subdir.append("/");
-         subdir.append(fCalibrFile);
-      }
+      DOUT0("%s ENTER CALIBRATION Mode %s subdir %s\n", GetName(), cmd.GetStr("mode").c_str(), subdir.c_str());
+      if (!subdir.empty()) subdir.append(fCalibrFile);
 
       unsigned numtdc = fTrbProc->NumberOfTDC();
 

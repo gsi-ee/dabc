@@ -57,6 +57,11 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("value", "");
    item.SetField("_hidden", "true");
 
+   item = fWorkerHierarchy.CreateHChild("MasterRunId"); // runid configured by master when starting RUN
+   item.SetField(dabc::prop_kind, "Text");
+   item.SetField("value", "0");
+   item.SetField("_hidden", "true");
+
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
    CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("0.5");
 
@@ -383,6 +388,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       std::string query, prefix;
       unsigned runid = 0;
+      unsigned lastrunid = fWorkerHierarchy.GetHChild("MasterRunId").GetField("value").AsUInt();
       std::string lastprefix = fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr();
       if (isstart) {
          prefix = cmd.GetStr("prefix");
@@ -403,6 +409,8 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          query = "mode=stop";
       }
 
+      fWorkerHierarchy.GetHChild("MasterRunId").SetField("value", runid);
+
       if (isstart && !prefix.empty())
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
@@ -412,14 +420,13 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          publ.Submit(Assign(subcmd));
       }
 
-      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str());
+      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s lastrunid:%u", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str(), lastrunid);
 
       query = "";
-
       if (isstart && (prefix == "tc") && lastprefix.empty()) {
          query = dabc::format("mode=start&runid=%u", runid);
       } else if (!isstart && (lastprefix == "tc")) {
-         query = "mode=stop";
+         query = dabc::format("mode=stop&runid=%u", lastrunid);
       }
 
       if (!query.empty()) {

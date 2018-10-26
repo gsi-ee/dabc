@@ -69,10 +69,6 @@
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="4"/>
        
-       
-       <!-- special directory where calibrations copied every time when stored -->
-       <CalibrDir value="calibrdir"/>
-       
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
        
@@ -116,6 +112,9 @@
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
        <OutputPort name="Output*" optional="true" queue="30"/>
+
+       <!-- special directory where calibrations copied every time when stored -->
+       <CalibrDir value="calibrdir"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>
@@ -196,9 +195,6 @@
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="3"/>
 
-       <!-- special directory where calibrations copied every time when stored -->
-       <CalibrDir value="calibrdir"/>
-
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
 
@@ -241,6 +237,9 @@
 
        
        <OutputPort name="Output*" optional="true" queue="30"/>
+       
+       <!-- special directory where calibrations copied every time when stored -->
+       <CalibrDir value="calibrdir"/>
        
        <AccountLostEventDiff value="true"/>
        <ExtraDebug value="false"/>

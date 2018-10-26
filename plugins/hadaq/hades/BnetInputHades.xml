@@ -123,9 +123,6 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
 
-       <!-- extra directory where calibrations for each calibration run will be stored  -->
-       <CalibrDir value="calibr"/>
-       
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - array with trigger types -->
        <CalibrTrigger value="0xffff"/>
        
@@ -171,6 +168,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <ExtraDebug value="false"/>
        <FlushTimeout value="0.5"/>
        <TriggerNumRange value="0x1000000"/>
+
+       <!-- extra directory where calibrations for each calibration run will be stored  -->
+       <CalibrDir value="calibr"/>
 
 <!--  specifies that trigger type should be extracted from configured CTS hub -->
        <HadesTriggerType value="true"/>

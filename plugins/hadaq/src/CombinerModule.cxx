@@ -81,6 +81,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fSkipEmpty = Cfg("SkipEmpty", cmd).AsBool(true);
 
+   fBNETCalibrDir = Cfg("CalibrDir", cmd).AsStr();
+
    fEpicsRunNumber = 0;
 
    fLastTrigNr = 0xffffffff;
@@ -1487,7 +1489,18 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
    } else if (cmd.IsName("BnetCalibrControl")) {
 
-      std::string rundir = hadaq::FormatFilename(cmd.GetUInt("runid"));
+      std::string rundir = "";
+      unsigned runid = cmd.GetUInt("runid");
+
+      if ((cmd.GetStr("mode") != "start") && !fBNETCalibrDir.empty() && (runid != 0)) {
+         rundir = fBNETCalibrDir;
+         rundir.append("/");
+         rundir.append(hadaq::FormatFilename(runid));
+         std::string mkdir = "mkdir -p ";
+         mkdir.append(rundir);
+         system(mkdir.c_str());
+         rundir.append("/");
+      }
 
       DOUT0("Combiner get BnetCalibrControl mode %s rundir %s", cmd.GetStr("mode").c_str(), rundir.c_str());
 

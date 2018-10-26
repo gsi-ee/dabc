@@ -229,6 +229,7 @@ namespace hadaq {
          int                fBNETbunch; ///< number of events delivered to same event builder
          int                fBNETNumSend; ///< number of BNET senders
          int                fBNETNumRecv; ///< number of BNET receivers
+         std::string        fBNETCalibrDir;   ///< name of extra directory where to store calibrations
 
          double             fFlushTimeout;
          dabc::Command      fBnetFileCmd;  ///< current running bnet file command
