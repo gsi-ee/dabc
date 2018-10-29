@@ -127,7 +127,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    h.SetField("right", right);
    if (xtitle.length()>0) h.SetField("xtitle", xtitle);
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
-   if (fillcolor.length() > 0) h.SetField("fillcolor", fillcolor);
+   h.SetField("fillcolor", fillcolor.empty() ? std::string("3") : fillcolor);
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
 
    std::vector<double> bins;
