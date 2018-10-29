@@ -822,7 +822,7 @@
       
       if (res._kind == 'ROOT.TH1D') {
          JSROOT.Create("TH1D", obj);
-         JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
+         JSROOT.extend(obj, { fName: res._name, fTitle: res._title, fFillStyle: 1001 });
          
          JSROOT.extend(obj.fXaxis, { fNbins: res.nbins, fXmin: res.left,  fXmax: res.right });
          res.bins.splice(0,3); // 3 first items in array are not bins
@@ -841,8 +841,10 @@
          return;
       }
 
-      if ('xtitle' in res) obj.fXaxis.fTitle = res.xtitle;         
-      if ('ytitle' in res) obj.fYaxis.fTitle = res.ytitle;   
+      if (res.xtitle) obj.fXaxis.fTitle = res.xtitle;         
+      if (res.ytitle) obj.fYaxis.fTitle = res.ytitle;
+      if (res.fillcolor) obj.fFillColor = res.fillcolor;
+      if (res.drawopt) obj.fOption = res.drawopt;
       if ('xlabels' in res) {
          obj.fXaxis.fLabels = JSROOT.Create('THashList');
          var lbls = res.xlabels.split(",");

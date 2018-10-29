@@ -89,20 +89,22 @@ void stream::DabcProcMgr::AddErrLog(const char *msg)
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
-   std::string xtitle, xlbls;
+   std::string xtitle, xlbls, fillcolor, drawopt;
    bool reuse(false);
 
-   while (options!=0) {
+   while (options) {
       const char* separ = strchr(options,';');
       std::string part = options;
-      if (separ!=0) {
+      if (separ) {
          part.resize(separ-options);
          options = separ+1;
       } else {
-         options = 0;
+         options = nullptr;
       }
 
       if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
+      if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
+      if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
       if (part.find("kind:")==0) { } else
       if (part.find("reuse")==0) { reuse = true; } else
          xtitle = part;
@@ -113,7 +115,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 
    if (h.null()) h = fTop.CreateHChild(name);
-   if (h.null()) return 0;
+   if (h.null()) return nullptr;
 
    h.SetField("_kind","ROOT.TH1D");
    h.SetField("_title", title);
@@ -125,6 +127,8 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    h.SetField("right", right);
    if (xtitle.length()>0) h.SetField("xtitle", xtitle);
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
+   if (fillcolor.length() > 0) h.SetField("fillcolor", fillcolor);
+   if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
 
    std::vector<double> bins;
    bins.resize(nbins+5, 0.);
@@ -138,7 +142,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   std::string xtitle, ytitle, xlbls, ylbls;
+   std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt;
    bool reuse(false);
 
    while (options!=0) {
@@ -153,6 +157,8 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
 
       if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
       if (part.find("ybin:")==0) { ylbls = part; ylbls.erase(0, 5); } else
+      if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
+      if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
       if (part.find("kind:")==0) { } else
       if (part.find("reuse")==0) { reuse = true; } else
       if (xtitle.length()==0) xtitle = part; else ytitle = part;
@@ -163,7 +169,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 
    if (h.null()) h = fTop.CreateHChild(name);
-   if (h.null()) return 0;
+   if (h.null()) return nullptr;
 
    h.SetField("_kind","ROOT.TH2D");
    h.SetField("_title", title);
@@ -176,10 +182,12 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    h.SetField("nbins2", nbins2);
    h.SetField("left2", left2);
    h.SetField("right2", right2);
-   if (xtitle.length()>0) h.SetField("xtitle", xtitle);
-   if (ytitle.length()>0) h.SetField("ytitle", ytitle);
-   if (xlbls.length()>0) h.SetField("xlabels", xlbls);
-   if (ylbls.length()>0) h.SetField("ylabels", ylbls);
+   if (xtitle.length() > 0) h.SetField("xtitle", xtitle);
+   if (ytitle.length() > 0) h.SetField("ytitle", ytitle);
+   if (xlbls.length() > 0) h.SetField("xlabels", xlbls);
+   if (ylbls.length() > 0) h.SetField("ylabels", ylbls);
+   if (fillcolor.length() > 0) h.SetField("fillcolor", fillcolor);
+   h.SetField("drawopt", drawopt.empty() ? std::string("colz") : drawopt);
 
    std::vector<double> bins;
    bins.resize(6+(nbins1+2)*(nbins2+2), 0.);
