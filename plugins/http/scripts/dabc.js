@@ -845,6 +845,8 @@
       if (res.ytitle) obj.fYaxis.fTitle = res.ytitle;
       if (res.fillcolor) obj.fFillColor = res.fillcolor;
       if (res.drawopt) obj.fOption = res.drawopt;
+      if (res.hmin !== undefined) obj.fMinimum = res.hmin; 
+      if (res.hmax !== undefined) obj.fMaximum = res.hmax;
       if ('xlabels' in res) {
          obj.fXaxis.fLabels = JSROOT.Create('THashList');
          var lbls = res.xlabels.split(",");

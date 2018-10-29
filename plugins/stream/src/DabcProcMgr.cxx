@@ -20,6 +20,7 @@
 #include "dabc/Factory.h"
 #include "dabc/Manager.h"
 
+#include <cstdlib>
 #include <math.h>
 
 stream::DabcProcMgr::DabcProcMgr() :
@@ -89,7 +90,7 @@ void stream::DabcProcMgr::AddErrLog(const char *msg)
 
 base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* options)
 {
-   std::string xtitle, xlbls, fillcolor, drawopt;
+   std::string xtitle, ytitle, xlbls, fillcolor, drawopt, hmin, hmax;
    bool reuse(false);
 
    while (options) {
@@ -105,9 +106,11 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
       if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
       if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
       if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
+      if (part.find("hmin:")==0) { hmin = part; hmin.erase(0,5); } else
+      if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
       if (part.find("kind:")==0) { } else
       if (part.find("reuse")==0) { reuse = true; } else
-         xtitle = part;
+      if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
    dabc::Hierarchy h = fTop.GetHChild(name);
@@ -125,10 +128,13 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    h.SetField("nbins", nbins);
    h.SetField("left", left);
    h.SetField("right", right);
-   if (xtitle.length()>0) h.SetField("xtitle", xtitle);
+   if (!xtitle.empty()) h.SetField("xtitle", xtitle);
+   if (!ytitle.empty()) h.SetField("ytitle", ytitle);
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
-   h.SetField("fillcolor", fillcolor.empty() ? std::string("3") : fillcolor);
+   h.SetField("fillcolor", fillcolor.empty() ? 3 : std::atoi(fillcolor.c_str()));
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
+   if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
+   if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
 
    std::vector<double> bins;
    bins.resize(nbins+5, 0.);
@@ -142,7 +148,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt;
+   std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax;
    bool reuse(false);
 
    while (options!=0) {
@@ -159,9 +165,11 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       if (part.find("ybin:")==0) { ylbls = part; ylbls.erase(0, 5); } else
       if (part.find("fill:")==0) { fillcolor = part; fillcolor.erase(0,5); } else
       if (part.find("opt:")==0) { drawopt = part; drawopt.erase(0,4); } else
+      if (part.find("hmin:")==0) { hmin = part; hmin.erase(0,5); } else
+      if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
       if (part.find("kind:")==0) { } else
       if (part.find("reuse")==0) { reuse = true; } else
-      if (xtitle.length()==0) xtitle = part; else ytitle = part;
+      if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
 
    dabc::Hierarchy h = fTop.GetHChild(name);
@@ -182,12 +190,14 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    h.SetField("nbins2", nbins2);
    h.SetField("left2", left2);
    h.SetField("right2", right2);
-   if (xtitle.length() > 0) h.SetField("xtitle", xtitle);
-   if (ytitle.length() > 0) h.SetField("ytitle", ytitle);
+   if (!xtitle.empty()) h.SetField("xtitle", xtitle);
+   if (!ytitle.empty()) h.SetField("ytitle", ytitle);
    if (xlbls.length() > 0) h.SetField("xlabels", xlbls);
    if (ylbls.length() > 0) h.SetField("ylabels", ylbls);
-   if (fillcolor.length() > 0) h.SetField("fillcolor", fillcolor);
+   if (!fillcolor.empty()) h.SetField("fillcolor", std::atoi(fillcolor.c_str()));
    h.SetField("drawopt", drawopt.empty() ? std::string("colz") : drawopt);
+   if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
+   if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
 
    std::vector<double> bins;
    bins.resize(6+(nbins1+2)*(nbins2+2), 0.);
