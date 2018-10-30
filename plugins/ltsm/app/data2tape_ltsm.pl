@@ -26,7 +26,7 @@ my $opt_ltsmserv = "lxltsm01";
 my $opt_ltsmfs   = "/lustre/hebe";
 
 my $opt_ltsmnode = "hades";
-my $opt_ltsmpass; #  = "wDhgcvFF7";
+my $opt_ltsmpass; 
 my $opt_ltsmowner = "hadesdst";
 
 
