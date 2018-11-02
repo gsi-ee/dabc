@@ -358,7 +358,7 @@ void stream::RunModule::SaveHierarchy(dabc::Buffer buf)
 {
    if (buf.GetTotalSize()==0) return;
 
-   DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize(), buf.NumSegments());
+   DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
    {
       dabc::BinaryFile f;
       system("rm -f h.bin");

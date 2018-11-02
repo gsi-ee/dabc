@@ -19,6 +19,7 @@
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
 #include "dabc/Manager.h"
+#include "dabc/BinaryFile.h"
 
 #include <cstdlib>
 #include <math.h>
@@ -244,7 +245,34 @@ bool stream::DabcProcMgr::ClearAllHistograms(dabc::Hierarchy &folder)
 
 bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 {
-   return true;
+   dabc::Buffer buf = folder.SaveToBuffer();
+
+   if (buf.GetTotalSize()==0) return false;
+
+   DOUT0("store hierarchy size %d in temporary h.bin file", buf.GetTotalSize());
+   {
+      dabc::BinaryFile f;
+      system("rm -f h.bin");
+      if (f.OpenWriting("h.bin")) {
+         if (f.WriteBufHeader(buf.GetTotalSize(), buf.GetTypeId()))
+            for (unsigned n=0;n<buf.NumSegments();n++)
+               f.WriteBufPayload(buf.SegmentPtr(n), buf.SegmentSize(n));
+         f.Close();
+      }
+   }
+
+   std::string args("dabc_root -skip-zero -h h.bin -o dabc.root");
+
+   DOUT0("Calling: %s", args.c_str());
+
+   int res = system(args.c_str());
+
+   system("rm -f h.bin");
+
+   if (res!=0)
+      EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
+
+   return res == 0;
 }
 
 bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
