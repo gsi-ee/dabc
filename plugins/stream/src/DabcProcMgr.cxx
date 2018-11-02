@@ -20,6 +20,7 @@
 #include "dabc/Factory.h"
 #include "dabc/Manager.h"
 #include "dabc/BinaryFile.h"
+#include "dabc/timing.h"
 
 #include <cstdlib>
 #include <math.h>
@@ -261,7 +262,10 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
       }
    }
 
-   std::string args("dabc_root -skip-zero -h h.bin -o dabc.root");
+   dabc::DateTime dt;
+   dt.GetNow();
+
+   std::string args = dabc::format("dabc_root -skip-zero -h h.bin -o dabc-%s.root", dt.OnlyTimeAsString("-").c_str());
 
    DOUT0("Calling: %s", args.c_str());
 
