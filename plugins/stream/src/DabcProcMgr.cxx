@@ -49,6 +49,13 @@ void stream::DabcProcMgr::SetTop(dabc::Hierarchy& top, bool withcmds)
    h.SetField("_fastcmd", "true");
    h.SetField("_numargs", "0");
 
+   h = fTop.CreateHChild("Control/Save");
+   h.SetField("_kind","Command");
+   h.SetField("_title", "Save all histograms in the dabc.root file");
+   h.SetField("_icon", "dabcsys/plugins/stream/icons/save.png");
+   h.SetField("_fastcmd", "true");
+   h.SetField("_numargs", "0");
+
    h = fTop.CreateHChild("Control/Start");
    h.SetField("_kind","Command");
    h.SetField("_title", "Start processing of data");
@@ -235,6 +242,11 @@ bool stream::DabcProcMgr::ClearAllHistograms(dabc::Hierarchy &folder)
    return isany;
 }
 
+bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
+{
+   return true;
+}
+
 bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
 {
    std::string name = cmd.GetName();
@@ -249,6 +261,10 @@ bool stream::DabcProcMgr::ExecuteHCommand(dabc::Command cmd)
       if (item.IsName("Clear")) {
          DOUT0("Call CLEAR");
          ClearAllHistograms(fTop);
+         res = "true";
+      } else if (item.IsName("Save")) {
+         DOUT0("Call SAVE");
+         SaveAllHistograms(fTop);
          res = "true";
       } else if (item.IsName("Start")) {
          DOUT0("Call START");

@@ -35,6 +35,9 @@ namespace stream {
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
+         bool ClearAllHistograms(dabc::Hierarchy &folder);
+         bool SaveAllHistograms(dabc::Hierarchy &folder);
+
       public:
          DabcProcMgr();
          virtual ~DabcProcMgr();
@@ -63,8 +66,6 @@ namespace stream {
          virtual bool StoreEvent();
 
          bool ExecuteHCommand(dabc::Command cmd);
-
-         bool ClearAllHistograms(dabc::Hierarchy &folder);
 
          std::string GetStoreInfo() const { return fStoreInfo; }
    };
