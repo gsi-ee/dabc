@@ -235,10 +235,10 @@ namespace dabc {
          std::string AsJSString(int ndecimal = 3) const;
 
          /** \brief Fills only date as string */
-         std::string OnlyDateAsString() const;
+         std::string OnlyDateAsString(const char *separ = nullptr) const;
 
          /** \brief Fills only time as string */
-         std::string OnlyTimeAsString() const;
+         std::string OnlyTimeAsString(const char *separ = nullptr) const;
 
          /** \brief Set only date part from the string */
          bool SetOnlyDate(const char* sbuf);
