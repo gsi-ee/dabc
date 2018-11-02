@@ -27,7 +27,7 @@
    JSROOT.sources.push("v6");
 
    // identifier used in TWebCanvas painter
-   JSROOT.WebSnapIds = { kNone: 0,  kObject: 1, kSVG: 2, kSubPad: 3, kSpecial: 4 };
+   JSROOT.WebSnapIds = { kNone: 0,  kObject: 1, kSVG: 2, kSubPad: 3, kColors: 4 };
 
    // =======================================================================
 
@@ -853,6 +853,7 @@
       this.y_kind = 'normal'; // 'normal', 'log', 'time', 'labels'
       this.xmin = this.xmax = 0; // no scale specified, wait for objects drawing
       this.ymin = this.ymax = 0; // no scale specified, wait for objects drawing
+      this.ranges_set = false;
       this.axes_drawn = false;
       this.keys_handler = null;
       this.projection = 0; // different projections
@@ -998,6 +999,8 @@
    TFramePainter.prototype.SetAxesRanges = function(xaxis, xmin, xmax, yaxis, ymin, ymax, zaxis, zmin, zmax) {
       // if (this.axes_drawn) return;
 
+      this.ranges_set = true;
+
       this.xaxis = xaxis;
       this.xmin = xmin;
       this.xmax = xmax;
@@ -1124,6 +1127,11 @@
          }
       }
 
+      if ((this.zoom_ymin == this.zoom_ymax) && (opts.zoom_ymin != opts.zoom_ymax) && !this.zoom_changed_interactive) {
+         this.zoom_ymin = opts.zoom_ymin;
+         this.zoom_ymax = opts.zoom_ymax;
+      }
+
       if (this.zoom_xmin != this.zoom_xmax) {
          this.scale_xmin = this.zoom_xmin;
          this.scale_xmax = this.zoom_xmax;
@@ -1243,7 +1251,7 @@
 
    /** Set selected range back to TPad object */
    TFramePainter.prototype.SetRootPadRange = function(pad, is3d) {
-      if (!pad) return;
+      if (!pad || !this.ranges_set) return;
 
       if (is3d) {
          // this is fake values, algorithm should be copied from TView3D class of ROOT
@@ -1459,7 +1467,7 @@
             this.fillatt.SetSolidColor('white');
       }
 
-      if (pad && pad.fFrameLineColor!==undefined)
+      if (!tframe && pad && (pad.fFrameLineColor!==undefined))
          this.createAttLine({ color: pad.fFrameLineColor, width: pad.fFrameLineWidth, style: pad.fFrameLineStyle });
       else
          this.createAttLine({ attr: tframe, color: 'black' });
@@ -3104,13 +3112,9 @@
          if (!this.options || this.options.GlobalColors) // set global list of colors
             JSROOT.Painter.adoptRootColors(obj);
 
-         if (this.options && this.options.LocalColors) {
-            // copy existing colors and extend with new values
-            this.root_colors = [];
-            for (var n=0;n<JSROOT.Painter.root_colors.length;++n)
-               this.root_colors[n] = JSROOT.Painter.root_colors[n];
-            JSROOT.Painter.extendRootColors(this.root_colors, obj);
-         }
+         // copy existing colors and extend with new values
+         if (this.options && this.options.LocalColors)
+            this.root_colors = JSROOT.Painter.extendRootColors(null, obj);
          return true;
       }
 
@@ -3519,8 +3523,37 @@
             continue; // call next
          }
 
-         if (snap.fKind === JSROOT.WebSnapIds.kSpecial) { // specials like list of colors
-            this.CheckSpecial(snap.fSnapshot);
+         // list of colors
+         if (snap.fKind === JSROOT.WebSnapIds.kColors) {
+
+            var ListOfColors = [], arr = snap.fSnapshot.fOper.split(";");
+            for (var n=0;n<arr.length;++n) {
+               var name = arr[n], p = name.indexOf(":");
+               if (p>0) {
+                  ListOfColors[parseInt(name.substr(0,p))] = "rgb(" + name.substr(p+1) + ")";
+               } else {
+                  p = name.indexOf("=");
+                  ListOfColors[parseInt(name.substr(0,p))] = "rgba(" + name.substr(p+1) + ")";
+               }
+            }
+
+            // set global list of colors
+            if (!this.options || this.options.GlobalColors)
+               JSROOT.Painter.adoptRootColors(ListOfColors);
+
+            // copy existing colors and extend with new values
+            if (this.options && this.options.LocalColors)
+               this.root_colors = JSROOT.Painter.extendRootColors(null, ListOfColors);
+
+            // set palette
+            if (snap.fSnapshot.fBuf && (!this.options || !this.options.IgnorePalette)) {
+               var palette = [];
+               for (var n=0;n<snap.fSnapshot.fBuf.length;++n)
+                  palette[n] = ListOfColors[Math.round(snap.fSnapshot.fBuf[n])];
+
+               this.CanvasPalette = new JSROOT.ColorPalette(palette);
+            }
+
             continue;
          }
 
@@ -3760,14 +3793,14 @@
       var main = this.frame_painter_ref,
           p = this.svg_pad(this.this_pad_name);
 
-      r.ranges = main ? true : false; // indicate that ranges are assigned
+      r.ranges = main && main.ranges_set ? true : false; // indicate that ranges are assigned
 
-      r.ux1 = r.px1 = main ? main.scale_xmin : 0; // need to initialize for JSON reader
-      r.uy1 = r.py1 = main ? main.scale_ymin : 0;
-      r.ux2 = r.px2 = main ? main.scale_xmax : 0;
-      r.uy2 = r.py2 = main ? main.scale_ymax : 0;
+      r.ux1 = r.px1 = r.ranges ? main.scale_xmin : 0; // need to initialize for JSON reader
+      r.uy1 = r.py1 = r.ranges ? main.scale_ymin : 0;
+      r.ux2 = r.px2 = r.ranges ? main.scale_xmax : 0;
+      r.uy2 = r.py2 = r.ranges ? main.scale_ymax : 0;
 
-      if (!main || p.empty()) return true;
+      if (!r.ranges || p.empty()) return true;
 
       // calculate user range for full pad
       var same = function(x) { return x; },

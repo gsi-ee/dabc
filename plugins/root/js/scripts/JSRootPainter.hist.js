@@ -2270,6 +2270,8 @@
       fp.CreateXY({ ndim: this.Dimension(),
                     check_pad_range: this.check_pad_range,
                     create_canvas: this.create_canvas,
+                    zoom_ymin: this.zoom_ymin,
+                    zoom_ymax: this.zoom_ymax,
                     ymin_nz: this.ymin_nz,
                     swap_xy: (this.options.BarStyle >= 20),
                     reverse_x: this.options.RevX,
@@ -3032,13 +3034,13 @@
 
    THistPainter.prototype.FillPaletteMenu = function(menu) {
 
-      var curr = this.options.Palette;
+      var curr = this.options.Palette, hpainter = this;
       if ((curr===null) || (curr===0)) curr = JSROOT.gStyle.Palette;
 
       function change(arg) {
-         this.options.Palette = parseInt(arg);
-         this.GetPalette(true);
-         this.Redraw(); // redraw histogram
+         hpainter.options.Palette = parseInt(arg);
+         hpainter.GetPalette(true);
+         hpainter.Redraw(); // redraw histogram
       };
 
       function add(id, name, more) {
@@ -3347,10 +3349,16 @@
       histo.fReady = true;
    }
 
+   /** Scan content of 1-D histogram
+    *
+    * Detect min/max values for x and y axis
+    * @param when_axis_changed - true when only zooming was changed, some checks may be skipped
+    */
+
    TH1Painter.prototype.ScanContent = function(when_axis_changed) {
       // if when_axis_changed === true specified, content will be scanned after axis zoom changed
 
-      if (!this.nbinsx && when_axis_changed) when_axis_changed = false;
+      if (when_axis_changed && !this.nbinsx) when_axis_changed = false;
 
       if (this.IsTH1K()) this.ConvertTH1K();
 
@@ -3432,13 +3440,16 @@
 
       hmin = this.options.minimum;
       hmax = this.options.maximum;
-      var set_zoom = false;
 
       if ((hmin === hmax) && (hmin !== -1111)) {
-         hmin = hmin < 0 ? 2*hmin : 0;
-         hmax = hmax < 0 ? 0 : 2*hmax;
+         if (hmin < 0) {
+            hmin *= 2; hmax = 0;
+         } else {
+            hmin = 0; hmax*=2; if (!hmax) hmax = 1;
+         }
       }
 
+      var set_zoom = false;
       if ((hmin != -1111) && (hmax != -1111) && !this.draw_content) {
          this.ymin = hmin;
          this.ymax = hmax;
@@ -3451,9 +3462,14 @@
          }
       }
 
-      if (set_zoom && this.draw_content) {
-         this.zoom_ymin = (hmin == -1111) ? this.ymin : hmin;
-         this.zoom_ymax = (hmax == -1111) ? this.ymax : hmax;
+      if (!when_axis_changed) {
+         if (set_zoom && this.draw_content) {
+            this.zoom_ymin = (hmin == -1111) ? this.ymin : hmin;
+            this.zoom_ymax = (hmax == -1111) ? this.ymax : hmax;
+         } else {
+            delete this.zoom_ymin;
+            delete this.zoom_ymax;
+         }
       }
 
       // used in AllowDefaultYZooming
@@ -6431,28 +6447,27 @@
    }
 
    THStackPainter.prototype.GetMinMax = function(iserr, pad) {
-      var res = { min : 0, max : 0 },
+      var res = { min: 0, max: 0 },
           stack = this.GetObject();
 
       if (this.nostack) {
          for (var i = 0; i < stack.fHists.arr.length; ++i) {
             var resh = this.GetHistMinMax(stack.fHists.arr[i], iserr);
-            if (i==0) res = resh; else {
-               if (resh.min < res.min) res.min = resh.min;
-               if (resh.max > res.max) res.max = resh.max;
+            if (i==0) {
+               res = resh;
+             } else {
+               res.min = Math.min(res.min, resh.min);
+               res.max = Math.max(res.max, resh.max);
             }
          }
-
-         if (stack.fMaximum != -1111)
-            res.max = stack.fMaximum;
-         else
-            res.max *= 1.05;
-
-         if (stack.fMinimum != -1111) res.min = stack.fMinimum;
       } else {
          res.min = this.GetHistMinMax(stack.fStack.arr[0], iserr).min;
-         res.max = this.GetHistMinMax(stack.fStack.arr[stack.fStack.arr.length-1], iserr).max * 1.05;
+         res.max = this.GetHistMinMax(stack.fStack.arr[stack.fStack.arr.length-1], iserr).max;
       }
+
+      if (stack.fMaximum != -1111) res.max = stack.fMaximum;
+      res.max *= 1.05;
+      if (stack.fMinimum != -1111) res.min = stack.fMinimum;
 
       if (pad) {
          if (pad.fLogy) {

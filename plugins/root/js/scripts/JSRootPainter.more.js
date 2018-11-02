@@ -100,15 +100,13 @@
           fillatt = this.createAttFill(polyline),
           kPolyLineNDC = JSROOT.BIT(14),
           isndc = polyline.TestBit(kPolyLineNDC),
-          cmd = "";
+          cmd = "", func = this.AxisToSvgFunc(isndc);
 
       // create svg:g container for polyline drawing
       this.CreateG();
 
       for (var n=0;n<=polyline.fLastPoint;++n)
-         cmd += ((n>0) ? "L" : "M") +
-                this.AxisToSvg("x", polyline.fX[n], isndc) + "," +
-                this.AxisToSvg("y", polyline.fY[n], isndc);
+         cmd += ((n>0) ? "L" : "M") + func.x(polyline.fX[n]) + "," + func.y(polyline.fY[n]);
 
       if (polyline._typename != "TPolyLine") fillatt.SetSolidColor("none");
 
@@ -341,16 +339,14 @@
    function drawPolyMarker() {
       var poly = this.GetObject(),
           att = new JSROOT.TAttMarkerHandler(poly),
-          isndc = false;
+          func = this.AxisToSvgFunc(false),
+          path = "";
 
       // create svg:g container for box drawing
       this.CreateG();
 
-      var path = "";
-
       for (var n=0;n<poly.fN;++n)
-         path += att.create(this.AxisToSvg("x", poly.fX[n], isndc),
-                            this.AxisToSvg("y", poly.fY[n], isndc));
+         path += att.create(func.x(poly.fX[n]), func.y(poly.fY[n]));
 
       if (path)
          this.draw_g.append("svg:path")
@@ -3275,112 +3271,115 @@
          return true;
       }
 
+      painter.ReadAttr = function(str, names) {
+         var lastp = 0, obj = { _typename: "any" };
+         for (var k=0;k<names.length;++k) {
+            var p = str.indexOf(":", lastp+1);
+            obj[names[k]] = parseInt(str.substr(lastp+1, (p>lastp) ? p-lastp-1 : undefined));
+            lastp = p;
+         }
+         return obj;
+      }
+
       painter.Redraw = function() {
-         var obj = this.GetObject(), attr = null, indx = 0,
-             lineatt = null, fillatt = null, markeratt = null;
-         if (!obj || !obj.fOper) return;
+
+         var obj = this.GetObject(), func = this.AxisToSvgFunc(false);
+
+         if (!obj || !obj.fOper || !func) return;
+
+         var indx = 0, attr = {}, lastpath = null, lastkind = "none", d = "",
+             oper, k, npoints, n, arr = obj.fOper.split(";");
+
+         function check_attributes(painter, kind) {
+            if (kind == lastkind) return;
+
+            if (lastpath) {
+               lastpath.attr("d", d); // flush previous
+               d = ""; lastpath = null; lastkind = "none";
+            }
+
+            if (!kind) return;
+
+            lastkind = kind;
+            lastpath = painter.draw_g.append("svg:path");
+            switch (kind) {
+               case "f": lastpath.call(painter.fillatt.func).attr('stroke', 'none'); break;
+               case "l": lastpath.call(painter.lineatt.func).attr('fill', 'none'); break;
+               case "m": lastpath.call(painter.markeratt.func); break;
+            }
+         }
 
          this.CreateG();
 
-         for (var k=0;k<obj.fOper.arr.length;++k) {
-            var oper = obj.fOper.opt[k];
+         for (k=0;k<arr.length;++k) {
+            oper = arr[k][0];
             switch (oper) {
-               case "attr":
-                  attr = obj.fOper.arr[k];
-                  lineatt = fillatt = markeratt = null;
+               case "z":
+                  this.createAttLine({ attr: this.ReadAttr(arr[k], ["fLineColor", "fLineStyle", "fLineWidth"]), force: true });
+                  check_attributes();
                   continue;
-               case "rect":
-               case "box": {
-                  var x1 = this.AxisToSvg("x", obj.fBuf[indx++]),
-                      y1 = this.AxisToSvg("y", obj.fBuf[indx++]),
-                      x2 = this.AxisToSvg("x", obj.fBuf[indx++]),
-                      y2 = this.AxisToSvg("y", obj.fBuf[indx++]);
-
-                  var rect = this.draw_g
-                     .append("svg:rect")
-                     .attr("x", Math.min(x1,x2))
-                     .attr("y", Math.min(y1,y2))
-                     .attr("width", Math.abs(x2-x1))
-                     .attr("height", Math.abs(y1-y2));
-
-                  if (oper === "box") {
-                     if (!fillatt) fillatt = this.createAttFill(attr);
-                     rect.call(fillatt.func).style('stroke','none');
-                  } else {
-                     if (!lineatt) lineatt = new JSROOT.TAttLineHandler(attr);
-                     rect.call(lineatt.func).style('fill','none');
-                  }
-
+               case "y":
+                  this.createAttFill({ attr: this.ReadAttr(arr[k], ["fFillColor", "fFillStyle"]), force: true });
+                  check_attributes();
                   continue;
-               }
-               case "line":
-               case "linendc": {
+               case "x":
+                  this.createAttMarker({ attr: this.ReadAttr(arr[k], ["fMarkerColor", "fMarkerStyle", "fMarkerSize"]), force: true })
+                  check_attributes();
+                  continue;
+               case "o":
+                  attr = this.ReadAttr(arr[k], ["fTextColor", "fTextFont", "fTextSize", "fTextAlign", "fTextAngle" ]);
+                  if (attr.fTextSize < 0) attr.fTextSize *= -0.001;
+                  check_attributes();
+                  continue;
+               case "r":
+               case "b": {
 
-                  var isndc = (oper==="linendc"),
-                      x1 = this.AxisToSvg("x", obj.fBuf[indx++], isndc),
-                      y1 = this.AxisToSvg("y", obj.fBuf[indx++], isndc),
-                      x2 = this.AxisToSvg("x", obj.fBuf[indx++], isndc),
-                      y2 = this.AxisToSvg("y", obj.fBuf[indx++], isndc);
+                  check_attributes(this, (oper == "b") ? "f" : "l");
 
-                  if (!lineatt) lineatt = new JSROOT.TAttLineHandler(attr);
+                  var x1 = func.x(obj.fBuf[indx++]),
+                      y1 = func.y(obj.fBuf[indx++]),
+                      x2 = func.x(obj.fBuf[indx++]),
+                      y2 = func.y(obj.fBuf[indx++]);
 
-                  this.draw_g
-                      .append("svg:line").attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2)
-                      .call(lineatt.func);
+                  d += "M"+x1+","+y1+"h"+(x2-x1)+"v"+(y2-y1)+"h"+(x1-x2)+"z";
 
                   continue;
                }
-               case "polyline":
-               case "polylinendc":
-               case "fillarea":
-               case "fillareandc": {
+               case "l":
+               case "f": {
 
-                  var npoints = parseInt(obj.fOper.arr[k].fString),
-                      cmd = "", isndc = (oper.indexOf("ndc") > 0);
+                  check_attributes(this, oper);
 
-                  for (var n=0;n<npoints;++n)
-                     cmd += ((n>0) ? "L" : "M") +
-                            this.AxisToSvg("x", obj.fBuf[indx++], isndc) + "," +
-                            this.AxisToSvg("y", obj.fBuf[indx++], isndc);
+                  npoints = parseInt(arr[k].substr(1));
 
-                  if (oper.indexOf("fillarea") == 0) cmd+="Z";
+                  for (n=0;n<npoints;++n)
+                     d += ((n>0) ? "L" : "M") +
+                           func.x(obj.fBuf[indx++]) + "," + func.y(obj.fBuf[indx++]);
 
-                  var path = this.draw_g.append("svg:path").attr("d", cmd);
-
-                  if (oper.indexOf("fillarea") == 0) {
-                     if (!fillatt) fillatt = this.createAttFill(attr);
-                     path.call(fillatt.func).attr('stroke','none');
-                  } else {
-                     if (!lineatt) lineatt = new JSROOT.TAttLineHandler(attr);
-                     path.call(lineatt.func).attr('fill', 'none');
-                  }
+                  if (oper == "f") d+="Z";
 
                   continue;
                }
 
-               case "polymarker": {
-                  var npoints = parseInt(obj.fOper.arr[k].fString), cmd = "";
+               case "m": {
 
-                  if (!markeratt) markeratt = new JSROOT.TAttMarkerHandler(attr);
+                  check_attributes(this, oper);
 
-                  markeratt.reset_pos();
-                  for (var n=0;n<npoints;++n)
-                     cmd += markeratt.create(this.AxisToSvg("x", obj.fBuf[indx++], false),
-                                             this.AxisToSvg("y", obj.fBuf[indx++], false));
+                  npoints = parseInt(arr[k].substr(1));
 
-                  if (cmd)
-                     this.draw_g.append("svg:path").attr("d", cmd).call(markeratt.func);
+                  this.markeratt.reset_pos();
+                  for (n=0;n<npoints;++n)
+                     d += this.markeratt.create(func.x(obj.fBuf[indx++]), func.y(obj.fBuf[indx++]));
 
                   continue;
                }
 
-               case "text":
-               case "textndc": {
-                  var isndc = (oper==="textndc"),
-                      xx = this.AxisToSvg("x", obj.fBuf[indx++], isndc),
-                      yy = this.AxisToSvg("y", obj.fBuf[indx++], isndc);
+               case "h":
+               case "t": {
+                  if (attr.fTextSize) {
 
-                  if (attr) {
+                     check_attributes();
+
                      var height = (attr.fTextSize > 1) ? attr.fTextSize : this.pad_height() * attr.fTextSize;
 
                      var group = this.draw_g.append("svg:g");
@@ -3390,9 +3389,22 @@
                      var angle = attr.fTextAngle;
                      angle -= Math.floor(angle/360) * 360;
 
+                     var txt = arr[k].substr(1);
+
+                     if (oper == "h") {
+                        var res = "";
+                        for (n=0;n<txt.length;n+=2)
+                           res += String.fromCharCode(parseInt(txt.substr(n,2), 16));
+                        txt = res;
+                     }
+
                      // todo - correct support of angle
-                     this.DrawText({ align: attr.fTextAlign, x: xx, y: yy, rotate: angle,
-                                     text: obj.fOper.arr[k].fString, color: JSROOT.Painter.root_colors[attr.fTextColor], latex: 0, draw_g: group });
+                     this.DrawText({ align: attr.fTextAlign,
+                                     x: func.x(obj.fBuf[indx++]),
+                                     y: func.y(obj.fBuf[indx++]),
+                                     rotate: angle,
+                                     text: txt,
+                                     color: JSROOT.Painter.root_colors[attr.fTextColor], latex: 0, draw_g: group });
 
                      this.FinishTextDrawing(group);
                   }
@@ -3400,10 +3412,11 @@
                }
 
                default:
-                  console.log('unsupported operation', oper);
+                  console.log('unsupported operation ' + oper);
             }
-
          }
+
+         check_attributes();
       }
 
       painter.SetDivId(divid);
