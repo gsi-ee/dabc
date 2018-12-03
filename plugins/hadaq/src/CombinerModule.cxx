@@ -1069,9 +1069,10 @@ bool hadaq::CombinerModule::BuildEvent()
 //   DOUT0("Min:%8u Max:%8u diff:%5d", mineventid, maxeventid, diff);
 
    ///////////////////////////////////////////////////////////////////////////////
-   // check too large triggertag difference on input channels, flush input buffers
-   if (fLastDropTm.Expired(5.))
-     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || ((fEventBuildTimeout>0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size()>1))) {
+   // check too large triggertag difference on input channels or very long delay in building,
+   // to repair situation, try to flush all input buffers
+   if (fLastDropTm.Expired((fEventBuildTimeout > 0) ? 1.5*fEventBuildTimeout : 5.))
+     if (((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) || ((fEventBuildTimeout > 0) && fLastBuildTm.Expired(fEventBuildTimeout) && any_data && (fCfg.size() > 1))) {
 
         std::string msg;
         if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
