@@ -41,7 +41,8 @@ namespace hadaq {
 
          bool                fEpicsSlave;     ///< true if run id is controlled by epics master
          bool                fRunSlave;       ///< true if run id is controlled by combiner
-         uint32_t            fRunNumber;      ///< id number of current run
+         uint32_t            fLastRunNumber;  ///< id number of last written run
+         uint32_t            fRunNumber;      ///< id number of current run (can be 0 when data are ingored)
          uint16_t            fEBNumber;       ///< id of parent event builder process
          bool                fUseDaqDisk;     ///< true if /data number is taken from daq_disk (HADES setup)
          bool                fRfio;           ///< true if we write to rfio

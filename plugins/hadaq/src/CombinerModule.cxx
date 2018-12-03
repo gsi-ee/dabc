@@ -1455,7 +1455,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
          FlushOutputBuffer(); // need to ensure that all output data are moved to outputs
 
-         // submit dummy buffer to the HLD output to stop current file
+         // submit dummy buffer to the HLD outputs to stop current file
          for (unsigned k=1;k<NumOutputs();++k) {
             if (CanSend(k)) {
                dabc::Buffer eolbuf = TakeBuffer();

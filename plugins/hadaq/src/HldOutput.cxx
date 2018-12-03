@@ -34,6 +34,7 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
    fEpicsSlave(false),
    fRunSlave(false),
+   fLastRunNumber(0),
    fRunNumber(0),
    fEBNumber(0),
    fUseDaqDisk(false),
@@ -80,12 +81,8 @@ hadaq::HldOutput::~HldOutput()
    CloseFile();
 }
 
-//static int gggcnt = 0;
-
 bool hadaq::HldOutput::Write_Init()
 {
-//   gggcnt = 0;
-
    if (!dabc::FileOutput::Write_Init()) return false;
 
    if (fEpicsSlave || fRunSlave) {
@@ -140,7 +137,7 @@ bool hadaq::HldOutput::StartNewFile()
       }
    }
    // change file names according hades style:
-   std::string extens = hadaq::FormatFilename(fRunNumber,fEBNumber);
+   std::string extens = hadaq::FormatFilename(fRunNumber, fEBNumber);
    std::string fname = fFileName;
 
    if (!fLastPrefix.empty() && fRunSlave) {
@@ -192,8 +189,9 @@ bool hadaq::HldOutput::StartNewFile()
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
 
-   return true;
+   fLastRunNumber = fRunNumber;
 
+   return true;
 }
 
 bool hadaq::HldOutput::Write_Retry()
@@ -207,13 +205,12 @@ bool hadaq::HldOutput::Write_Retry()
 
 bool hadaq::HldOutput::CloseFile()
 {
-   DOUT3(" hadaq::HldOutput::CloseFile()");
-   if (fFile.isWriting()) ShowInfo(0, "HLD file is CLOSED");
-   fFile.Close();
+   if (fFile.isOpened()) {
+      ShowInfo(0, "HLD file is CLOSED");
+      fFile.Close();
+   }
    fCurrentFileSize = 0;
-
    fCurrentFileName = "";
-   //std::cout <<"Close File resets file size." << std::endl;
    return true;
 }
 
@@ -254,7 +251,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       return dabc::do_Close;
    }
 
-   bool is_eol = buf.GetTypeId() == hadaq::mbt_HadaqStopRun;
+   bool is_eol = (buf.GetTypeId() == hadaq::mbt_HadaqStopRun);
 
    if ((buf.GetTypeId() != hadaq::mbt_HadaqEvents) && !is_eol) {
       ShowInfo(-1, dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
@@ -284,8 +281,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
 //          ShowInfo(0, dabc::format("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
 //                     nextrunid, nextrunid, fRunNumber,fRunNumber));
-         DOUT1("HldOutput Finds New Runid %d (0x%x) from EPICS in event header (previous:%d (0x%x))",
-                  nextrunid, nextrunid, fRunNumber,fRunNumber);
+         DOUT1("HldOutput Finds New Runid %d or 0x%x from EPICS in event header (previous: %d or 0x%x)",
+                  nextrunid, nextrunid, fRunNumber, fRunNumber);
          fRunNumber = nextrunid;
          startnewfile = true;
          break;
@@ -293,7 +290,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       } // while bufiter
 
       // if current runid is still 0, just ignore buffer
-      if (!startnewfile && (fRunNumber==0)) return dabc::do_Ok;
+      if (!startnewfile && (fRunNumber == 0)) return dabc::do_Ok;
 
       if(startnewfile) {
          // first flush rest of previous run to old file:
@@ -320,8 +317,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          }// for
       }
 
-      //#endif // oldmode
-
       if (fLastUpdate.Expired(0.2) && (fEpicsSlave || fRunSlave) ) {
          dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
@@ -336,10 +331,16 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    } // epicsslave
 
    if(startnewfile) {
+
       if ((fEpicsSlave || fRunSlave) && (fRunNumber == 0)) {
          // in slave mode 0 runnumber means do nothing
          CloseFile();
          DOUT0("CLOSE FILE WRITING in slave mode");
+         return dabc::do_Ok;
+      }
+
+      if ((fLastRunNumber != 0) && (fLastRunNumber == fRunNumber)) {
+         DOUT0("Saw same runid %d 0x%u as previous - skip buffer", fLastRunNumber, fLastRunNumber);
          return dabc::do_Ok;
       }
 
@@ -354,8 +355,8 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    unsigned total_write_size(0);
 
-   for (unsigned n=0;n<buf.NumSegments();n++)
-   {
+   for (unsigned n=0;n<buf.NumSegments();n++) {
+
       unsigned write_size = buf.SegmentSize(n);
 
       if (cursor>=write_size) {
