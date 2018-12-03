@@ -168,6 +168,8 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <ExtraDebug value="false"/>
        <FlushTimeout value="0.5"/>
        <TriggerNumRange value="0x1000000"/>
+       
+       <BuildDropTimeout value="30.0"/>    
 
        <!-- extra directory where calibrations for each calibration run will be stored  -->
        <CalibrDir value="calibr"/>
