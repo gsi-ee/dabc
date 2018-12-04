@@ -265,7 +265,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
    dabc::DateTime dt;
    dt.GetNow();
 
-   std::string args = dabc::format("dabc_root -h h.bin -o dabc-%s-%s.root", dt.OnlyDateAsString("-"), dt.OnlyTimeAsString("-").c_str());
+   std::string args = dabc::format("dabc_root -h h.bin -o dabc-%s-%s.root", dt.OnlyDateAsString("-").c_str(), dt.OnlyTimeAsString("-").c_str());
 
    DOUT0("Calling: %s", args.c_str());
 
