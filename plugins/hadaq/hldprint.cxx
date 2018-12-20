@@ -63,6 +63,7 @@ int usage(const char* errstr = 0)
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -rate                   - display only events rate\n");
    printf("   -bw                     - disable colors\n");
+   printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
@@ -144,7 +145,7 @@ struct SubevStat {
 
 double tot_limit(20.);
 unsigned fine_min(31), fine_max(491);
-bool bubble_mode = false, only_errors = false, use_colors = true;
+bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false;
 
 const char *getCol(const char *col_name)
 {
@@ -520,7 +521,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                }
             }
 
-            if ((epoch_channel == -11) || (epoch_channel != (int) channel)) errmask |= tdcerr_MissEpoch;
+            if ((epoch_channel == -11) || (epoch_per_channel && (epoch_channel != (int) channel))) errmask |= tdcerr_MissEpoch;
 
             tm = ((epoch << 11) + (msg & 0x7FF)) * 5.; // coarse time
             fine = (msg >> 12) & 0x3FF;
@@ -676,6 +677,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
+      if (strcmp(argv[n],"-allepoch")==0) { epoch_per_channel = true; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
