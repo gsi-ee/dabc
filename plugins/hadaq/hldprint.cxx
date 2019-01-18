@@ -82,7 +82,8 @@ enum TdcMessageKind {
    tdckind_Epoch    = 0x60000000,
    tdckind_Mask     = 0xe0000000,
    tdckind_Hit      = 0x80000000,
-   tdckind_Hit1     = 0xa0000000,
+   tdckind_Hit1     = 0xa0000000, // calibrated message
+   tdckind_Hit2     = 0xc0000000,  // repaired message
    tdckind_Calibr   = 0xe0000000
 };
 
@@ -505,6 +506,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             break;
          case tdckind_Hit:
          case tdckind_Hit1:
+         case tdckind_Hit2:
             channel = (msg >> 22) & 0x7F;
             if (channel == 0) haschannel0 = true;
             if (epoch_channel==-1) epoch_channel = channel;
@@ -559,7 +561,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             }
 
             if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns%s\n",
-                                 ((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit ",
+                                 ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
                                  channel, isrising, (msg & 0x7FF), fine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
