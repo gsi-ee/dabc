@@ -81,9 +81,9 @@ enum TdcMessageKind {
    tdckind_Debug    = 0x40000000,
    tdckind_Epoch    = 0x60000000,
    tdckind_Mask     = 0xe0000000,
-   tdckind_Hit      = 0x80000000,
-   tdckind_Hit1     = 0xa0000000, // calibrated message
-   tdckind_Hit2     = 0xc0000000,  // repaired message
+   tdckind_Hit      = 0x80000000, // normal hit message
+   tdckind_Hit1     = 0xa0000000, // repaired hit message, instead of 0x3ff
+   tdckind_Hit2     = 0xc0000000, // calibrated message
    tdckind_Calibr   = 0xe0000000
 };
 
@@ -528,7 +528,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
             tm = ((epoch << 11) + (msg & 0x7FF)) * 5.; // coarse time
             fine = (msg >> 12) & 0x3FF;
             if (fine<0x3ff) {
-               if ((msg & tdckind_Mask) == tdckind_Hit1) {
+               if ((msg & tdckind_Mask) == tdckind_Hit2) {
                   if (isrising) {
                      tm -= fine*5e-3; // calibrated time, 5 ps/bin
                   } else {
