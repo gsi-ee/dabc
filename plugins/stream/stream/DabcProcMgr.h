@@ -51,6 +51,11 @@ namespace stream {
 
          virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
 
+         virtual void SetH1Title(base::H1handle h1, const char* title);
+
+         virtual void SetH2Title(base::H2handle h2, const char* title);
+
+
          virtual void AddRunLog(const char *msg);
          virtual void AddErrLog(const char *msg);
          virtual bool DoLog() { return true; }
