@@ -147,7 +147,11 @@ namespace dabc {
          /** \brief Return pointer on the object */
          inline Object* operator()() const { return fObj; }
 
-         inline bool null() const { return GetObject() == 0; }
+         /** \brief Returns true if reference contains nullptr */
+         inline bool null() const { return GetObject() == nullptr; }
+
+         /** \brief Returns true if reference contains nullptr */
+         inline bool operator!() const { return null(); }
 
          /** \brief Add child to list of object children */
          bool AddChild(Object* obj);
