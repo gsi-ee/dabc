@@ -393,12 +393,12 @@ namespace dabc {
       /** \brief Return child, if necessary creates with full subfolder
        * If force specified, missing childs and folders will be recreated
        * If allowslahes enabled, instead of subfolders item with coded name will be created */
-      Hierarchy GetHChild(const std::string &name, bool allowslahes = false, bool force = false);
+      Hierarchy GetHChild(const std::string &name, bool allowslahes = false, bool force = false, bool sortorder = false);
 
       /** \brief Create child item in hierarchy with specified name
        * If allowslahes enabled, instead of subfolders item with coded name will be created */
-      Hierarchy CreateHChild(const std::string &name, bool allowslahes = false)
-        { return GetHChild(name, allowslahes, true); }
+      Hierarchy CreateHChild(const std::string &name, bool allowslahes = false, bool sortorder = false)
+        { return GetHChild(name, allowslahes, true, sortorder); }
 
       /** Delete H item, including all empty parent folders */
       bool RemoveHChild(const std::string &name, bool allowslahes = false);
