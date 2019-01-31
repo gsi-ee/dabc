@@ -30,7 +30,8 @@ stream::DabcProcMgr::DabcProcMgr() :
    fTop(),
    fWorkingFlag(true),
    fStore(),
-   fStoreInfo("no store created")
+   fStoreInfo("no store created"),
+   fSortOrder(true)
 {
 }
 
@@ -126,7 +127,14 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (!h.null() && reuse && h.GetFieldPtr("bins"))
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 
-   if (h.null()) h = fTop.CreateHChild(name);
+   if (h.null()) {
+      std::string sname = name;
+      auto pos = sname.find_last_of("/");
+      if (pos != std::string::npos)
+         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, fSortOrder).CreateHChild(sname.substr(pos+1).c_str());
+      else
+         h = fTop.CreateHChild(name, false, fSortOrder);
+   }
    if (h.null()) return nullptr;
 
    h.SetField("_kind","ROOT.TH1D");
@@ -185,7 +193,14 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (!h.null() && reuse && h.GetFieldPtr("bins"))
       return (base::H1handle) h.GetFieldPtr("bins")->GetDoubleArr();
 
-   if (h.null()) h = fTop.CreateHChild(name);
+   if (h.null()) {
+      std::string sname = name;
+      auto pos = sname.find_last_of("/");
+      if (pos != std::string::npos)
+         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, fSortOrder).CreateHChild(sname.substr(pos+1).c_str());
+      else
+         h = fTop.CreateHChild(name, false, fSortOrder);
+   }
    if (h.null()) return nullptr;
 
    h.SetField("_kind","ROOT.TH2D");

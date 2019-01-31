@@ -32,6 +32,7 @@ namespace stream {
 
          dabc::LocalWorkerRef fStore;
          std::string fStoreInfo;  //!< last info about storage
+         bool fSortOrder; //!< sorting order
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
@@ -55,6 +56,8 @@ namespace stream {
 
          virtual void SetH2Title(base::H2handle h2, const char* title);
 
+         virtual void SetSortedOrder(bool on = true) { fSortOrder = on; }
+         virtual bool IsSortedOrder() { return fSortOrder; }
 
          virtual void AddRunLog(const char *msg);
          virtual void AddErrLog(const char *msg);
