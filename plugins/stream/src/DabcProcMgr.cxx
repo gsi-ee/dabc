@@ -130,10 +130,10 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (h.null()) {
       std::string sname = name;
       auto pos = sname.find_last_of("/");
-      if (pos != std::string::npos)
-         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, fSortOrder).CreateHChild(sname.substr(pos+1).c_str());
+      if ((pos != std::string::npos) && fSortOrder)
+         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
       else
-         h = fTop.CreateHChild(name, false, fSortOrder);
+         h = fTop.CreateHChild(name);
    }
    if (h.null()) return nullptr;
 
@@ -196,10 +196,10 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    if (h.null()) {
       std::string sname = name;
       auto pos = sname.find_last_of("/");
-      if (pos != std::string::npos)
-         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, fSortOrder).CreateHChild(sname.substr(pos+1).c_str());
+      if ((pos != std::string::npos) && fSortOrder)
+         h = fTop.CreateHChild(sname.substr(0,pos).c_str(), false, true).CreateHChild(sname.substr(pos+1).c_str());
       else
-         h = fTop.CreateHChild(name, false, fSortOrder);
+         h = fTop.CreateHChild(name);
    }
    if (h.null()) return nullptr;
 
