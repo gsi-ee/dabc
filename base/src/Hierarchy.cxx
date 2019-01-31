@@ -942,7 +942,7 @@ void dabc::Hierarchy::Create(const std::string &name, bool withmutex)
 }
 
 
-dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowslahes, bool force)
+dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowslahes, bool force, bool sortorder)
 {
    // DOUT0("GetHChild main:%p name:%s force %s", this, name.c_str(), DBOOL(force));
 
@@ -951,9 +951,9 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowsl
 
    size_t pos = name.rfind("/");
    if ((pos != std::string::npos) && !allowslahes) {
-      if (pos==0) return GetHChild(name.substr(1), allowslahes, force);
-      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), allowslahes, force);
-      return GetHChild(name.substr(0, pos), allowslahes, force).GetHChild(name.substr(pos+1), allowslahes, force);
+      if (pos==0) return GetHChild(name.substr(1), allowslahes, force, sortorder);
+      if (pos==name.length()-1) return GetHChild(name.substr(0, name.length()-1), allowslahes, force, sortorder);
+      return GetHChild(name.substr(0, pos), allowslahes, force, sortorder).GetHChild(name.substr(pos+1), allowslahes, force, sortorder);
    }
 
    std::string itemname = name;
@@ -969,29 +969,49 @@ dabc::Hierarchy dabc::Hierarchy::GetHChild(const std::string &name, bool allowsl
       dabc::Hierarchy res = FindChild(name.c_str());
       if (!res.null() && !res.HasField(dabc::prop_realname)) {
          return res;
-      } else if (res.null()) {
-         if (force) res = GetObject()->CreateChildAt(name, -1);
+      } else if (res.null() && !force) {
          return res;
       }
    }
 
+   int first_big = -1;
+
    for (unsigned n=0;n<NumChilds();n++) {
       dabc::Hierarchy res = GetChild(n);
-      if (res.GetField(dabc::prop_realname).AsStr() == name) return res;
+
+      std::string realname = res.GetName();
+      if (res.HasField(dabc::prop_realname))
+         realname = res.GetField(dabc::prop_realname).AsStr();
+
+      if (realname == name) return res;
+
+      if (sortorder && (first_big < 0) && (realname > name))
+         first_big = (int) n;
    }
 
    if (!force) return dabc::Hierarchy();
 
-   unsigned cnt = NumChilds();
-   std::string basename = itemname;
+   if (itemname != name) {
+      unsigned cnt = NumChilds();
+      std::string basename = itemname;
 
-   // prevent same item name
-   while (!FindChild(itemname.c_str()).null())
-      itemname = dabc::format("%s%u", basename.c_str(), cnt++);
+      // prevent same item name
+      while (!FindChild(itemname.c_str()).null())
+         itemname = basename + std::to_string(cnt++);
+   }
 
-   dabc::Hierarchy res = GetObject()->CreateChildAt(itemname, -1);
+   dabc::Hierarchy res = new dabc::HierarchyContainer(itemname);
 
-   res.SetField(dabc::prop_realname, name);
+   if (!sortorder || (first_big < 0))
+      GetObject()->AddChild(res.GetObject());
+   else
+      GetObject()->AddChildAt(res.GetObject(), first_big);
+
+   if (itemname != name)
+      res.SetField(dabc::prop_realname, name);
+
+   //fNamesChanged = true;
+   //fChildsChanged = true;
 
    return res;
 }
