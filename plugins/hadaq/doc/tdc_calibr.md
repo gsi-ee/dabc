@@ -65,20 +65,20 @@ This link shows shows typical distribution of fine-counter bins in the channel:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingFine;1>
 
-![Fine counter distribution](http://dabc.gsi.de/doc/images/finecounter.jpg "Fine counter distribution")
+![Fine counter distribution](http://web-docs.gsi.de/~dabc/doc/images/finecounter.jpg "Fine counter distribution")
 
 As result from such distribution calibration function is build:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1>
  
-![Fine counter calibration](http://dabc.gsi.de/doc/images/finecalibr.jpg "Fine counter calibration")
+![Fine counter calibration](http://web-docs.gsi.de/~dabc/doc/images/finecalibr.jpg "Fine counter calibration")
 
- 
-At the moment it is best-known method for calibration of fine counter. 
+
+At the moment it is best-known method for calibration of fine counter.
 
 But it has some disadvantages. First - it typically requires special measurements to perform calibration. Potentially one could use _normal_ hits, but not allways normal measurements provide enough statistic for all channels. With less statistic precision will be much worse. 
 
-Another problem of such calibration approach - significant size of produced calibration curves. For every channel one creates lookup table with approx 500 bins. If one uses setup with 1000 channels (not very big), every calibration set consume 1000 channels _X_ 500bins _X_ 4bytes = 2 MB of data.             
+Another problem of such calibration approach - significant size of produced calibration curves. For every channel one creates lookup table with approx 500 bins. If one uses setup with 1000 channels (not very big), every calibration set consume 1000 channels _X_ 500bins _X_ 4bytes = 2 MB of data.
 
 
 ## Effect of temparature on the measurements
@@ -134,16 +134,50 @@ Most simple example provided in [autotdc folder](https://subversion.gsi.de/go4/a
 ~~~~~~~~~~~~~~~{.c}
 void first()
 {
+   // configured when only first.C code should be executed
    base::ProcMgr::instance()->SetRawAnalysis(true);
+   
+   // In triggered mode create output data are created and calls processors from second.C
    // base::ProcMgr::instance()->SetTriggeredAnalysis(true);
 
+   // configure sorting of created folders, default is on
+   base::ProcMgr::instance()->SetSortedOrder(true);
+
    // all new instances get this value
+   // 0 - no histograms
+   // 1 - basic histograms in HLD/TRB
+   // 2 - generic histograms for each TDC
+   // 3 - include histograms for each active TDC channel
+   // 4 - also special time reference histograms for channels (when configured)
    base::ProcMgr::instance()->SetHistFilling(4);
 
    // this limits used for liner calibrations when nothing else is available
    hadaq::TdcMessage::SetFineLimits(31, 491);
 
-   // default channel numbers and edges mask
+   // Enable 1 or disable 0 errors logging from following enumeration
+   //  { 0x1: errNoHeader, 0x2: errChId, 0x4: errEpoch, 0x8: errFine, 
+   //    0x10: err3ff, 0x20: errCh0, 0x40: errMismatchDouble, 0x80: errUncknHdr, 0x100: errDesignId, 0x200: errMisc }
+   // hadaq::TdcProcessor::SetErrorMask(0xffffff);
+
+   // Create histograms for all channels immediately - even if channel never appear in data
+   // hadaq::TdcProcessor::SetAllHistos(true);
+
+   // Configure window (in nanoseconds), where time stamps from 0xD trigger will be accepted for calibration
+   // hadaq::TdcProcessor::SetTriggerDWindow(-25, 50);
+
+   // enable usage of 0xD trigger in reference histograms, default off
+   // hadaq::TdcProcessor::SetUseDTrigForRef(true);
+
+   // configure ToT calibration parameters
+   // first - minimal number of counts in ToT histogram
+   // second - maximal RMS value
+   hadaq::TdcProcessor::SetToTCalibr(100, 0.2);
+
+   // default channel numbers and edges usage
+   // 1 - use only rising edge, falling edge is ignore
+   // 2 - falling edge enabled and fully independent from rising edge
+   // 3 - falling edge enabled and uses calibration from rising edge
+   // 4 - falling edge enabled and common statistic is used for calibration
    hadaq::TrbProcessor::SetDefaults(49, 2);
 
    // [min..max] range for TDC ids
@@ -161,10 +195,13 @@ void first()
    // second parameter is hits count for autocalibration
    //     0 - only load calibration
    //    -1 - accumulate data and store calibrations only at the end
+   //    -77 - accumulate data and produce liner calibrations only at the end
    //    >0 - automatic calibration after N hits in each active channel
-   // third parameter is trigger type used for calibration
-   //   0xD - special trigger with internal pulser, used also for TOT calibration
-   //0xFFFF - all kind of trigger types will be used for calibration, no TOT calibration
+   //         if value ends with 77 like 10077 linear calibration will be calculated
+   // third parameter is trigger type mask used for calibration
+   //   (1 << 0xD) - special 0XD trigger with internal pulser, used also for TOT calibration
+   //    0x3FFF - all kinds of trigger types will be used for calibration (excluding 0xE and 0xF)
+   //   0x80000000 in mask enables usage of temperature correction
    hld->ConfigureCalibration("", 100000, (1 << 0xD));
 
    // only accept trigger type 0x1 when storing file
@@ -173,12 +210,46 @@ void first()
    // create ROOT file store
    // base::ProcMgr::instance()->CreateStore("td.root");
 
+   // Configure data which are created in first.C and stored to the file or delivered for second.C
    // 0 - disable store
    // 1 - std::vector<hadaq::TdcMessageExt> - includes original TDC message
    // 2 - std::vector<hadaq::MessageFloat>  - compact form, without channel 0, stamp as float (relative to ch0)
    // 3 - std::vector<hadaq::MessageDouble> - compact form, with channel 0, absolute time stamp as double
    base::ProcMgr::instance()->SetStoreKind(3);
 }
+
+// extern "C" required by DABC to find function from compiled code
+// function called once all TDC instances are created, here one can configure them
+
+extern "C" void after_create(hadaq::HldProcessor* hld)
+{
+   printf("Called after all sub-components are created\n");
+
+   if (hld==0) return;
+
+   for (unsigned k=0;k<hld->NumberOfTRB();k++) {
+      hadaq::TrbProcessor* trb = hld->GetTRB(k);
+      if (trb==0) continue;
+      printf("Configure %s!\n", trb->GetName());
+      trb->SetPrintErrors(10);
+   }
+
+   for (unsigned k=0;k<hld->NumberOfTDC();k++) {
+      hadaq::TdcProcessor* tdc = hld->GetTDC(k);
+      if (tdc==0) continue;
+
+      printf("Configure %s!\n", tdc->GetName());
+
+      // configure 0xD trigger width and hmin/hmax histogram range for 0xD trigger ToT
+      tdc->SetToTRange(30, 50., 80.);
+
+      // tdc->SetUseLastHit(true);
+      for (unsigned nch=2;nch<tdc->NumChannels();nch++)
+        tdc->SetRefChannel(nch, 1, 0xffff, 6000,  -20., 40.);
+   }
+}
+
+
 
 ~~~~~~~~~~~~~~~
 
