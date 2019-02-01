@@ -82,9 +82,9 @@ enum TdcMessageKind {
    tdckind_Epoch    = 0x60000000,
    tdckind_Mask     = 0xe0000000,
    tdckind_Hit      = 0x80000000, // normal hit message
-   tdckind_Hit1     = 0xa0000000, // repaired hit message, instead of 0x3ff
-   tdckind_Hit2     = 0xc0000000, // calibrated message
-   tdckind_Calibr   = 0xe0000000
+   tdckind_Hit1     = 0xa0000000, // hardware- corrected hit message, instead of 0x3ff
+   tdckind_Hit2     = 0xc0000000, // special hit message with regular fine time
+   tdckind_Calibr   = 0xe0000000  // extra calibration message for hits
 };
 
 enum { NumTdcErr = 6 };

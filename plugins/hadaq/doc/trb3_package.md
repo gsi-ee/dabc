@@ -20,8 +20,7 @@ There are two main parts of software:
   1. DABC which is required to take data from TRB3 and store to hld or lmd files
   2. ROOT/Go4/stream frameworks to analyse online/offline TRB3/TDC data
 
-The easiest way to install all necessary software components is use repository
-   https://subversion.gsi.de/dabc/trb3
+The easiest way to install all necessary software components is use repository https://subversion.gsi.de/dabc/trb3
 
 ---------------------------
 
@@ -97,7 +96,7 @@ To obtain newest version from repository do:
 
 To run DAQ, only DABC installation is required.
 
-Example configuration file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/EventBuilder.xml).
+Example configuration file can be found in [$DABCSYS/plugins/hadaq/app/EventBuilder.xml](https://github.com/linev/dabc/blob/master/plugins/hadaq/app/EventBuilder.xml).
 Copy it in any suitable place and modify for your needs.
 
 Main configuration parameters:
@@ -450,10 +449,9 @@ All details about TDC calibration in DABC or in Go4 can be found on [TDC calibra
 
 # Usage of hadaq API in other applications #     {#trb3_api} 
 
-hldprint is just program with originally about 150 lines of code 
-(now it is 500 due to many extra options). 
-Source code located in [$DABCSYS/plugins/hadaq/hldprint.cxx](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/hldprint.cxx). 
-There is also example in [$DABCSYS/applications/hadaq/](https://subversion.gsi.de/dabc/trunk/applications/hadaq/) directory, which can be copied and modified for the user needs.
+hldprint is just program with originally about 150 lines of code (now it is ~1000 due to many extra options).
+Source code located in [$DABCSYS/plugins/hadaq/hldprint.cxx](https://github.com/linev/dabc/blob/master/plugins/hadaq/hldprint.cxx). 
+There is also example in [$DABCSYS/applications/hadaq/](https://github.com/linev/dabc/tree/master/applications/hadaq) directory, which can be copied and modified for the user needs.
 
 In simplified form access to any data source (local file, remote file or online server) looks like:
 

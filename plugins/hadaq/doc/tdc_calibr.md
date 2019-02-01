@@ -127,9 +127,9 @@ copy on the [github](https://github.com/linev/stream)
 ## How to use `stream` framework for TRB/TDC
 
 Normally any analysis configured in `first.C` script.
-Example of such macros can be found in [applications folder](https://subversion.gsi.de/go4/app/stream/applications/).
+Example of such macros can be found in [applications folder](https://github.com/linev/stream/tree/master/applications).
 
-Most simple example provided in [autotdc folder](https://subversion.gsi.de/go4/app/stream/applications/autotdc/) and looks like:
+Most simple example provided in [autotdc folder](https://github.com/linev/stream/tree/master/applications/tdccal) and looks like:
 
 ~~~~~~~~~~~~~~~{.c}
 void first()
@@ -336,7 +336,7 @@ In all cases each TDC processor creates separate branch in the TTree, where corr
 |   2   | hadaq::MessageFloat | message includes channel id, edge code and stamp as float value (ns) relative channel 0  |
 |   3   | hadaq::MessageDouble | message includes channel id, edge code and absolute time stamp as double (s), including channel 0  |
 
-Definition of all message types can be found in [TdcSubEvent.h](https://subversion.gsi.de/go4/app/stream/include/hadaq/TdcSubEvent.h)
+Definition of all message types can be found in [TdcSubEvent.h](https://github.com/linev/stream/blob/master/include/hadaq/TdcSubEvent.h)
 
 
 ## Produce monitoring histograms
@@ -438,7 +438,7 @@ Such mode allows to produce HLD files with already calibrated values.
 
 ### Configuration
 
-There is example configuration file [$DABCSYS/plugins/hadaq/app/TdcEventBuilder.xml](https://subversion.gsi.de/dabc/trunk/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
+There is example configuration file [$DABCSYS/plugins/hadaq/app/TdcEventBuilder.xml](https://github.com/linev/dabc/blob/master/plugins/hadaq/app/TdcEventBuilder.xml), which shows how one could configure TRB, TDC and HUB ids for each input.
 This loook like:
 
        <InputPort name="Input0" url="hadaq://host:10101" urlopt1="trb=0x8000&tdc=[0x3000,0x3001,0x3002,0x3003]&hub=0x8010"/>
@@ -472,7 +472,7 @@ Or one could insert additional `calibr` message in the data stream, where calibr
 
 ### `hit2` message format
 
-It is to large extend similar with original `hit` message. There are two differences. First, it has 0xa0000000 message type insted of 0x80000000. Second, 10 bits of fine counter coding time used for coding of calibrated fine time value, which should be _SUBSTRUCTED_ from coarse time value. As in original hit message, value 0x3ff (or 1023) is error.
+It is to large extend similar with original `hit` message. There are two differences. First, it has 0xc0000000 message type insted of 0x80000000. Second, 10 bits of fine counter coding time used for coding of calibrated fine time value, which should be _SUBSTRUCTED_ from coarse time value. As in original hit message, value 0x3ff (or 1023) is error.
 
 Decoding of these 10 bits depend on the edge bit. For rising edge 5ps binning is used. For instance, value 26 means -130 ps, value 200 is -1ns. 
 
@@ -493,7 +493,7 @@ For falling edge hits time shift could be calculated as: value / 0x3ffe * 50ns o
 ### Using in hldprint and analysis 
 
 Both `hldprint` and `stream` analysis will recognize new message types and provide
-time stamp without need to apply any kind of calibration. 
+time stamp without need to apply any kind of calibration.
 
 
 ### Control with web interface
