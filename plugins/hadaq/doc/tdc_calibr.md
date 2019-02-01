@@ -19,7 +19,7 @@ Typical sub-subevebt, produced by FPGA TDC looks like (_using hldprint_):
 
 ~~~~~~~~~~~~~~~
 *** Event #0xcb1e71ea fullid=0x2001 runid=0x0eb0eb32 size 536 *** 
-   *** Subevent size    504 decoding 0x020011 id 0xc940 trig 0x7bb1e7e7 swapped align 4 *** 
+   *** Subevent size    504 decoding 0x020011 id 0xc940 trig 0x7bb1e7e7 swapped align 4 ***
       *** Subsubevent size  48 id 0x0940 full 00300940
          [  1] 21e70000  tdc header
          [  2] 63089e85  epoch 50896517 tm 5784258560.000 ns
@@ -30,7 +30,7 @@ Typical sub-subevebt, produced by FPGA TDC looks like (_using hldprint_):
          [  7] 63089e85  epoch 50896517 tm 5784258560.000 ns
          [  8] 808e2ae9  hit  ch: 2 isrising:1 tc:0x2e9 tf:0x0e2 tm:-74.435 ns
          [  9] 809372f3  hit  ch: 2 isrising:0 tc:0x2f3 tf:0x137 tm:-25.359 ns tot:49.076 ns
-      ...    
+      ...
 ~~~~~~~~~~~~~~~
  
 Such subevent starts with TDC header (not discussed here).
@@ -41,19 +41,19 @@ First is **coarse** counter (*tc* in printout), incremented with 200 MHz frequen
 Second is **fine** counter (*tf* in printout), which started with the hit detection and ends with the next 5ns period. To produce time stamp for registered hit we should use following equation:
 
     STAMP = (epoch*2048 + coarse)*5ns - Calibr(fine)
-    
+
 One should understand - larger value of **fine** counter means longer distance to the next 5ns edge and smaller value of resulted absolute time stamp.
 
 Form of **Calibr** function individual for each channel and can vary - for instance, because of temperature change.
-          
+
 
 ## Can one use liner approximation?
 
-In general yes - one could use liner approximation for **Calibr(fine)** function. Typically such function characterized by min and max value of **fine** counter bin. Minimal fine counter bin value (typically ~30) correspond to 0 shift, maximal fine counter (around 450-500) to -5 ns shift.   
+In general yes - one could use liner approximation for **Calibr(fine)** function. Typically such function characterized by min and max value of **fine** counter bin. Minimal fine counter bin value (typically ~30) correspond to 0 shift, maximal fine counter (around 450-500) to -5 ns shift.
 
-Main (and probably only) advantage of linear approximation - it is simple. 
+Main (and probably only) advantage of linear approximation - it is simple.
 
-But liner approximation has several drawbacks. First of al, it introduces error into stamp value in the order of ~100 ps. It could be acceptable for signals with worse resultion. But another typical effect of linear approximation - it introduces double-peak structure on the signals which does not have double peaks at all. Especially such effect can be very well seen with test pulses.   
+But liner approximation has several drawbacks. First of al, it introduces error into stamp value in the order of ~100 ps. It could be acceptable for signals with worse resultion. But another typical effect of linear approximation - it introduces double-peak structure on the signals which does not have double peaks at all. Especially such effect can be very well seen with test pulses.
 
 
 
@@ -61,17 +61,17 @@ But liner approximation has several drawbacks. First of al, it introduces error 
 
 Approach is very simple - for _every_ channel one measures many (~1e5) hits from _random_ signal and build distribution for fine-counter values. Higher value in such distribution - larger width of correspondent bin. While sum of all bins widths is 5 ns, one can very easily calculate time shift corresponding to each fine counter.
 
-This link shows shows typical distribution of fine-counter bins in the channel: 
+This link shows shows typical distribution of fine-counter bins in the channel:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingFine;1>
 
-![Fine counter distribution](http://dabc.gsi.de/doc/images/finecounter.jpg "Fine counter distribution") 
+![Fine counter distribution](http://dabc.gsi.de/doc/images/finecounter.jpg "Fine counter distribution")
 
 As result from such distribution calibration function is build:
 
 <http://jsroot.gsi.de/latest/?nobrowser&file=../files/temp44.root&item=Histograms/TDC_C100/Ch1/TDC_C100_Ch1_RisingCalibr;1>
  
-![Fine counter calibration](http://dabc.gsi.de/doc/images/finecalibr.jpg "Fine counter calibration") 
+![Fine counter calibration](http://dabc.gsi.de/doc/images/finecalibr.jpg "Fine counter calibration")
 
  
 At the moment it is best-known method for calibration of fine counter. 
@@ -99,7 +99,7 @@ FPGA TDC introducing time shifts for the falling edge of measured signals. Such 
 Most simple approach - use internal pulse generator, which actiavted with trigger type 0xD. This signal has 30 ns pulse width. If one measures distance between rising and falling edges in this test pulse, one could easily estimate time shift, which could be later applyed for every falling-edge stamp.  
 
 ---------------------------
-   
+
 
 # TDC calibration with `stream` frameowrk #   {#hadaq_tdc_calibr_stream}
 
@@ -387,26 +387,26 @@ For each input [TDC calibration module](@ref stream::TdcCalibrationModule) will 
     </Module>
 
 Comments for most parameters are provided in example file. 
-  
+
 
 ### Output formats
 
 When running, calibration modules extracts hits data, accumulate statistics and produce calibration.
 Calibration module use such calibrations to calculate correct value which correspond to the **fine time** counter. For falling edge also time shift is compensated.
 
-Result can be stored in two different ways. Either one replace **fine time**  in the hit message with calibrated value, and changes message type from `hit` to `hit1`. This corresponds to `<Replace value="true"/>` in configuration.
+Result can be stored in two different ways. Either one replace **fine time**  in the hit message with calibrated value, and changes message type from `hit` to `hit2`. This corresponds to `<Replace value="true"/>` in configuration.
 
 Or one could insert additional `calibr` message in the data stream, where calibrated value is stored. This increase size of HLD data (approx by 25%), but preserve original hits as they are. Such method is also more precise, while instead of 10 bits one could use 14 bits for storing result. Such method used when `<Replace value="false"/>` specified in configuration.        
 
 
-### `hit1` message format
+### `hit2` message format
 
 It is to large extend similar with original `hit` message. There are two differences. First, it has 0xa0000000 message type insted of 0x80000000. Second, 10 bits of fine counter coding time used for coding of calibrated fine time value, which should be _SUBSTRUCTED_ from coarse time value. As in original hit message, value 0x3ff (or 1023) is error.
 
 Decoding of these 10 bits depend on the edge bit. For rising edge 5ps binning is used. For instance, value 26 means -130 ps, value 200 is -1ns. 
 
-For falling edge lower 9 bits used to code value with 10ps binning. Means value 25 correspond to -250 ps time shift. When higher bit set, it indicates overflow of coarse counter due to time-shift compensation. In this case time for whole epoch (2048*5ns) should be substracted from global time stamp        
-  
+For falling edge lower 9 bits used to code value with 10ps binning. Means value 25 correspond to -250 ps time shift. When higher bit set, it indicates overflow of coarse counter due to time-shift compensation. In this case time for whole epoch (2048*5ns) should be substracted from global time stamp
+
 
 ### `calibr` message format
 
@@ -438,4 +438,3 @@ When terminal module is enabled in configuration file (default on), it also prov
     wget http://localhost:8090/EventBuilder/Terminal/State/value/get.json -O state.json
 
 If calibration peformed for all TDCs, "Ready" string will be returned, otherwise "Init"
-        
