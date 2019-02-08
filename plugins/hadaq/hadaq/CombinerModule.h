@@ -155,6 +155,7 @@ namespace hadaq {
             if (complete) fUdpPort = 0;
             fHubSizeTmCnt = 0;
             fHubLastSize = 0;
+            fHubPrevSize = 0;
          }
 
          void Close()
