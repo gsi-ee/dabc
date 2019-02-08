@@ -108,13 +108,13 @@ bool hadaq::NewAddon::ReadUdp()
    if (!fRunning) return false;
 
    hadaq::NewTransport* tr = dynamic_cast<hadaq::NewTransport*> (fWorker());
-   if (tr == 0) { EOUT("No transport assigned"); return false; }
+   if (!tr) { EOUT("No transport assigned"); return false; }
 
-   void* tgt = 0;
+   void *tgt = nullptr;
 
    if (fTgtPtr.null()) {
-      if (!tr->AssignNewBuffer(0,this)) {
-         if (fSkipCnt++<10) return false;
+      if (!tr->AssignNewBuffer(0, this)) {
+         if (fSkipCnt++<10) { fTotalArtificialSkip++; return false; }
          tgt = fMtuBuffer;
       }
    }

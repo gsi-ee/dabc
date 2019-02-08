@@ -50,6 +50,7 @@ namespace hadaq {
       uint64_t           fTotalDiscardPacket;
       uint64_t           fTotalDiscard32Packet;
       uint64_t           fTotalArtificialLosts;
+      uint64_t           fTotalArtificialSkip;
       uint64_t           fTotalRecvBytes;
       uint64_t           fTotalDiscardBytes;
       uint64_t           fTotalProducedBuffers;
@@ -60,12 +61,35 @@ namespace hadaq {
          fTotalDiscardPacket = 0;
          fTotalDiscard32Packet = 0;
          fTotalArtificialLosts = 0;
+         fTotalArtificialSkip = 0;
          fTotalRecvBytes = 0;
          fTotalDiscardBytes = 0;
          fTotalProducedBuffers = 0;
       }
 
       TransportInfo(int port) : fNPort(port) { ClearCounters(); }
+
+      std::string GetDiscardString()
+      {
+         std::string res = dabc::number_to_str(fTotalDiscardPacket);
+
+         if (fTotalArtificialLosts > 0)
+            res = std::string("*") + dabc::number_to_str(fTotalArtificialLosts);
+
+         return res;
+      }
+
+      std::string GetDiscard32String()
+      {
+
+         std::string res = dabc::number_to_str(fTotalDiscard32Packet);
+
+         if (fTotalArtificialSkip > 0)
+            res = std::string("#") + dabc::number_to_str(fTotalArtificialSkip);
+
+         return res;
+      }
+
    };
 
    // ==================================================================================

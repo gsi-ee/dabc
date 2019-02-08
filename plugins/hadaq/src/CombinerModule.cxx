@@ -525,8 +525,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                        dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
                        dabc::number_to_str(info->fTotalProducedBuffers).c_str(),
-                       dabc::number_to_str(info->fTotalDiscardPacket).c_str(),
-                       dabc::number_to_str(info->fTotalDiscard32Packet).c_str(),
+                       info->GetDiscardString().c_str(),
+                       info->GetDiscard32String().c_str(),
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
                        dabc::number_to_str(inp.fLostTrig,0).c_str());
 
