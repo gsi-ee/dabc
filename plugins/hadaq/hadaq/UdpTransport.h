@@ -49,6 +49,7 @@ namespace hadaq {
       uint64_t           fTotalRecvPacket;
       uint64_t           fTotalDiscardPacket;
       uint64_t           fTotalDiscard32Packet;
+      uint64_t           fTotalArtificialLosts;
       uint64_t           fTotalRecvBytes;
       uint64_t           fTotalDiscardBytes;
       uint64_t           fTotalProducedBuffers;
@@ -58,15 +59,14 @@ namespace hadaq {
          fTotalRecvPacket = 0;
          fTotalDiscardPacket = 0;
          fTotalDiscard32Packet = 0;
+         fTotalArtificialLosts = 0;
          fTotalRecvBytes = 0;
          fTotalDiscardBytes = 0;
          fTotalProducedBuffers = 0;
       }
 
-      TransportInfo(int port) :
-         fNPort(port) { ClearCounters(); }
+      TransportInfo(int port) : fNPort(port) { ClearCounters(); }
    };
-
 
    // ==================================================================================
 

@@ -144,7 +144,7 @@ bool hadaq::NewAddon::ReadUdp()
          return false;
       }
 
-      if (res<0) {
+      if (res < 0) {
          // socket do not have data, one should enable event processing
          // otherwise we need to poll for the new data
          if (errno == EAGAIN) break;
@@ -154,8 +154,9 @@ bool hadaq::NewAddon::ReadUdp()
 
       if ((fLostCnt > 0) && (--fLostCnt == 0)) {
          // artificial drop of received UDP packet
-         fLostCnt = (int) 1 / fLostRate * (0.5 + 1.* rand() / RAND_MAX);
+         fLostCnt = (int) (1 / fLostRate * (0.5 + 1.* rand() / RAND_MAX));
          if (fLostCnt < 3) fLostCnt = 3;
+         fTotalArtificialLosts++;
          continue;
       }
 
@@ -382,13 +383,13 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
    }
 
    if (cmd.IsName("ResetTransportStat")) {
-      NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
+      NewAddon *addon = dynamic_cast<NewAddon *> (fAddon());
       if (addon) addon->ClearCounters();
       return dabc::cmd_true;
    }
 
    if (cmd.IsName("GetHadaqTransportInfo")) {
-      TransportInfo *info = (TransportInfo*) (dynamic_cast<NewAddon*> (fAddon()));
+      TransportInfo *info = (TransportInfo *) (dynamic_cast<NewAddon*> (fAddon()));
       cmd.SetPtr("Info", info);
       cmd.SetUInt("UdpPort", info ? info->fNPort : 0);
       return dabc::cmd_true;

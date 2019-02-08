@@ -261,12 +261,17 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
          double rate = (info->fTotalRecvBytes - fCalibr[n].lastrecv)/delta;
 
+         std::string disc_str = dabc::number_to_str(info->fTotalDiscardPacket);
+
+         if (info->fTotalArtificialLosts > 0)
+            disc_str = std::string("*") + dabc::number_to_str(info->fTotalArtificialLosts);
+
          sbuf.append(dabc::format(" %5d %7s %9s %7.3f %6s %6s %6s",
                info->fNPort,
                dabc::number_to_str(info->fTotalRecvPacket,1).c_str(),
                dabc::size_to_str(info->fTotalRecvBytes).c_str(),
                rate/1024./1024.,
-               dabc::number_to_str(info->fTotalDiscardPacket).c_str(),
+               disc_str.c_str(),
                dabc::number_to_str(info->fTotalDiscard32Packet).c_str(),
                dabc::number_to_str(info->fTotalProducedBuffers).c_str()));
          fCalibr[n].lastrecv = info->fTotalRecvBytes;
