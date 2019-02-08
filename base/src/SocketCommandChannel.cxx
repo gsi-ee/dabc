@@ -476,7 +476,7 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
    SocketIOAddon* addon = dynamic_cast<SocketIOAddon*> (fAddon());
 
    if (addon==0) {
-      EOUT("Cannot send command %s", cmd.GetName());
+      EOUT("Cannot send command %s addon %p", cmd.GetName(), fAddon());
 
       CloseClient(true, "I/O object missing");
       return;
