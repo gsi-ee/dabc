@@ -542,6 +542,8 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
       dabc::Hierarchy item = fWorkerHierarchy.GetHChild("Status");
       SetTRBStatus(item, fTrbProc, &fProgress, &fQuality, &fState);
 
+      cmd.SetDouble("quality", fQuality);
+
       DOUT0("RESULT!!! %s PROGR %d QUALITY %5.3f STATE %s", GetName(), fProgress, fQuality, fState.c_str());
 
       return dabc::cmd_true;

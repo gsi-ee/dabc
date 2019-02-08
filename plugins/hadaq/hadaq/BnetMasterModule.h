@@ -39,6 +39,7 @@ namespace hadaq {
          dabc::Command fCurrentFileCmd; ///< currently running cmd to switch files
          int           fCmdCnt;     ///< just counter to avoid mismatch
          int           fCmdReplies; ///< number of replies for current command
+         double        fCmdQuality;  ///< current command quality, used when creating calibration
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
          int           fCtrlCnt;    ///< how many control replies are awaited

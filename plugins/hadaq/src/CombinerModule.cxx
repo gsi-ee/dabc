@@ -1510,6 +1510,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       fBnetCalibrCmd = cmd;
       fBnetCalibrCmd.SetInt("#replies", NumInputs());
+      fBnetCalibrCmd.SetDouble("quality", 1.0);
 
       std::string rundir = "";
       unsigned runid = cmd.GetUInt("runid");
@@ -1776,6 +1777,10 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       return true;
    } else if (cmd.IsName("TdcCalibrations")) {
       int num = fBnetCalibrCmd.GetInt("#replies");
+      double q = cmd.GetDouble("quality");
+      if (q < fBnetCalibrCmd.GetDouble("quality"))
+         fBnetCalibrCmd.SetDouble("quality", q);
+
       if (num == 1) {
 
          std::string rundir = fBnetCalibrCmd.GetStr("#rundir");

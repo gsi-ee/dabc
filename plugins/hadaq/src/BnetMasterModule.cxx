@@ -34,6 +34,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
 
    fCmdCnt = 1;
    fCmdReplies = 0;
+   fCmdQuality = 1.;
 
    fCtrlId = 1;
    fCtrlTm.GetNow();
@@ -242,11 +243,15 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          bool stop_calibr = fCurrentFileCmd.IsName("StopRun") && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr()=="tc");
 
-         if (--fCmdReplies<=0) {
+         if (stop_calibr && cmd.HasField("quality"))
+            if (cmd.GetDouble("quality") < fCmdQuality)
+               fCmdQuality = cmd.GetDouble("quality");
+
+         if (--fCmdReplies <= 0) {
 
             fCurrentFileCmd.Reply(dabc::cmd_true);
 
-            if (stop_calibr) PreserveLastCalibr(true, 1.);
+            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality);
          }
       }
 
@@ -428,6 +433,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCurrentFileCmd = cmd;
       fCmdCnt++;
       fCmdReplies = 0;
+      fCmdQuality = 1.;
 
       if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
 
