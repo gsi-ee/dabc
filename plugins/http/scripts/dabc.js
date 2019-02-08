@@ -394,6 +394,7 @@
               "<option value='tc'>TDC Calibration file</option>" +
               "</select>" +
               "<button class='bnet_stoprun' title='Stops run, close all opened files'>Stop</button>" +
+              "<button class='bnet_lastcalibr' title='Status of last calibration'>CALIBR</button>" +
               "<button class='bnet_resetdaq' title='Drop all DAQ buffers on all nodes'>Reset</button>" +
               "<button class='bnet_totalrate' title='Total data rate'>0.00 MB/s</button>" +
               "<button class='bnet_totalevents' title='Total build events'>0.0 Ev/s</button>" +
@@ -487,6 +488,9 @@
       if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
       jnode.find(".bnet_stoprun").button().click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
+      });
+      
+      jnode.find(".bnet_lastcalibr").button().click(function() {
       });
       
       jnode.find(".bnet_resetdaq").button().click(function() { 
@@ -720,13 +724,14 @@
       if (!res) return;
 
       var inp = null, bld = null, state = null, quality = null, drate, erate, lrate, ninp = [], 
-          nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "";
+          nbld = [], runid = "", runprefix = "", changed = false, lastprefix = "", lastcalibr = null;
       for (var k in res._childs) {
          var elem = res._childs[k];
          switch (elem._name) {
             case "Inputs": inp = elem.value; ninp = elem.nodes; break;
             case "Builders": bld = elem.value; nbld = elem.nodes; break;
             case "LastPrefix": lastprefix = elem.value; break;
+            case "LastCalibr": lastcalibr = elem; break;
             case "State": state = elem.value; break;
             case "Quality": quality = elem.value; break;
             case "DataRate": drate = elem.value; break;
@@ -755,6 +760,22 @@
       if (typeof lrate == 'number')
          $(this.frame).find(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").css('background-color', (lrate > 0) ? "yellow" : "lightgreen");
 
+      if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.tm == 'number')) {
+         var quality = lastcalibr.quality || 1,
+             dt = new Date(lastcalibr.tm), now = new Date(),
+             diff = (now.getTime() - dt.getTime())*1e-3, // seconds
+             info = "CALIBR", title = "";
+         if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
+            var h = Math.floor(diff/3600).toString(), m = Math.round((diff - h*3600)/60).toString();
+            if (m.length==1) m = "0"+m; 
+            info = h+"h"+m+"m";
+            if (h>72) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
+            if (h>24) { if (quality>0.6) quality = 0.6; title = "Consider to make calibration, "; }
+         }
+         if (!title) title = "Calibration ";
+         title += "last: " + lastcalibr.value;
+         $(this.frame).find(".bnet_lastcalibr").css('background-color', this.GetQualityColor(quality)).attr("title", title).text(info);
+      }
       
       $(this.frame).find(".bnet_runid_lbl").text(" RunId: " + runid);
       $(this.frame).find(".bnet_runprefix_lbl").text(" Prefix: " + runprefix);
