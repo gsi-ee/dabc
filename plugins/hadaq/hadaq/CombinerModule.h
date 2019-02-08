@@ -153,6 +153,8 @@ namespace hadaq {
             // do not clear last fill level and last trig id
             if (complete) fLastTrigNr = 0xffffffff;
             if (complete) fUdpPort = 0;
+            fHubSizeTmCnt = 0;
+            fHubLastSize = 0;
          }
 
          void Close()

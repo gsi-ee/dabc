@@ -111,7 +111,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    std::string ratesprefix = "Hadaq";
 
    for (unsigned n = 0; n < NumInputs(); n++) {
-      fCfg.push_back(InputCfg());
+      fCfg.emplace_back();
       fCfg[n].Reset(true);
       fCfg[n].fResort = FindPort(InputName(n)).Cfg("resort").AsBool(false);
       if (fCfg[n].fResort) DOUT0("Do resort on input %u",n);
@@ -506,16 +506,25 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (!info) {
             sinfo = "missing transport-info";
          } else {
-            rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
+
             inp.fHubSizeTmCnt++;
 
-            // last 10 seconds calculate rate with previous value
-            if ((rate==0.) && (inp.fHubSizeTmCnt<=10))
+            if (info->fTotalRecvBytes > inp.fHubLastSize)
+               rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
+            else if (inp.fHubSizeTmCnt <= 15)
                rate = (info->fTotalRecvBytes - inp.fHubPrevSize)/1024.0/1024.0/inp.fHubSizeTmCnt;
 
             if (inp.fHubLastSize != info->fTotalRecvBytes) {
                inp.fHubSizeTmCnt = 0;
                inp.fHubPrevSize = inp.fHubLastSize;
+            } else if ((inp.fHubSizeTmCnt > 0.75*fEventBuildTimeout) && (hub_quality > 0.1)) {
+               hub_state = "NoData";
+               hub_quality = 0.1;
+               hub_progress = 0;
+            } else if ((inp.fHubSizeTmCnt > 15) && (hub_quality > 0.6)) {
+               hub_state = "LowData";
+               hub_quality = 0.6;
+               hub_progress = 0;
             }
 
             inp.fHubLastSize = info->fTotalRecvBytes;
@@ -533,7 +542,6 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo += inp.TriggerRingAsStr(16);
          }
 
-         if (rate<=0) { hub_state = "NoData"; hub_quality = 0.1; hub_progress = 0; } else
          if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
             hub_state = inp.fCalibrState;
             hub_quality = inp.fCalibrQuality;
