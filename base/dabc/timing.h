@@ -233,7 +233,7 @@ namespace dabc {
          }
 
          /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
-         std::string AsString(int ndecimal = 0) const;
+         std::string AsString(int ndecimal = 0, bool localtime = false) const;
 
          /** \brief convert string into sec.frac format, can be interpret directly in JavaScript
           * ISO 8601 standard is used and produces string like  '2013-09-16T12:42:30.884Z'

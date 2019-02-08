@@ -163,7 +163,7 @@ uint64_t dabc::DateTime::AsJSDate() const
 }
 
 
-std::string dabc::DateTime::AsString(int ndecimal) const
+std::string dabc::DateTime::AsString(int ndecimal, bool localtime) const
 {
    if (null()) return std::string();
 
@@ -186,7 +186,10 @@ std::string dabc::DateTime::AsString(int ndecimal) const
 
    struct tm res;
 
-   gmtime_r(&src, &res);
+   if (localtime)
+      localtime_r(&src, &res);
+   else
+      gmtime_r(&src, &res);
 
    char sbuf[50];
 

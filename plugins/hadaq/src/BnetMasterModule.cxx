@@ -125,22 +125,22 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality)
 
    if (do_write) {
       tm.GetNow();
-      fprintf(f,"%f\n", tm.AsDouble());
+      fprintf(f,"%lu\n", (long unsigned) tm.AsJSDate());
       fprintf(f,"%f\n", quality);
    } else {
-      double tm_dbl = 0;
-      fscanf(f,"%lf", &tm_dbl);
-      tm.SetDouble(tm_dbl);
+      long unsigned tm_js = 0;
+      fscanf(f,"%lu", &tm_js);
+      tm.SetJSDate(tm_js);
       fscanf(f,"%lf", &quality);
    }
    fclose(f);
 
-   std::string info = dabc::format("%s quality = %5.2f", tm.AsString().c_str(), quality);
+   std::string info = dabc::format("%s quality = %5.2f", tm.AsString(0,true).c_str(), quality);
 
    DOUT0("CALIBR INFO %s", info.c_str());
 
    item.SetField("value", info);
-   item.SetField("tm", tm.AsDouble());
+   item.SetField("tm", tm.AsJSDate());
    item.SetField("quality", quality);
 }
 
