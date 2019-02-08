@@ -226,6 +226,12 @@ namespace dabc {
             tv_nsec = ((jsdate % 1000)*1000000);
          }
 
+         /** \brief Set value in form of double - seconds since 1.1.1970 */
+         void SetDouble(double v)
+         {
+            SetJSDate(v > 0 ? (uint64_t) v * 1000 : 0);
+         }
+
          /** \brief convert string into human-readable format, cannot be interpret directly in JavaScript */
          std::string AsString(int ndecimal = 0) const;
 

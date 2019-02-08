@@ -58,6 +58,11 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("value", "");
    item.SetField("_hidden", "true");
 
+   item = fWorkerHierarchy.CreateHChild("LastCalibr");
+   item.SetField(dabc::prop_kind, "Text");
+   item.SetField("value", "");
+   item.SetField("_hidden", "true");
+
    item = fWorkerHierarchy.CreateHChild("MasterRunId"); // runid configured by master when starting RUN
    item.SetField(dabc::prop_kind, "Text");
    item.SetField("value", "0");
@@ -81,6 +86,9 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
       CreateCmdDef("ResetDAQ");
    }
 
+   // read calibration from file
+   PreserveLastCalibr();
+
    // Publish(fWorkerHierarchy, "$CONTEXT$/BNET");
    PublishPars("$CONTEXT$/BNET");
 
@@ -103,6 +111,37 @@ void hadaq::BnetMasterModule::AddItem(std::vector<std::string> &items, std::vect
 
    items.emplace_back(item);
    nodes.emplace_back(node);
+}
+
+void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality)
+{
+   dabc::Hierarchy item  = fWorkerHierarchy.GetHChild("LastCalibr");
+   if (!item) return;
+
+   dabc::DateTime tm;
+
+   FILE* f = fopen("lastcalibr.txt", do_write ? "w" : "r");
+   if (!f) return;
+
+   if (do_write) {
+      tm.GetNow();
+      fprintf(f,"%f\n", tm.AsDouble());
+      fprintf(f,"%f\n", quality);
+   } else {
+      double tm_dbl = 0;
+      fscanf(f,"%lf", &tm_dbl);
+      tm.SetDouble(tm_dbl);
+      fscanf(f,"%lf", &quality);
+   }
+   fclose(f);
+
+   std::string info = dabc::format("%s quality = %5.2f", tm.AsString().c_str(), quality);
+
+   DOUT0("CALIBR INFO %s", info.c_str());
+
+   item.SetField("value", info);
+   item.SetField("tm", tm.AsDouble());
+   item.SetField("quality", quality);
 }
 
 
@@ -199,9 +238,17 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.GetInt("#bnet_cnt") == fCmdCnt) {
       // this commands used to send file requests
 
-      if (!fCurrentFileCmd.null())
-         if (--fCmdReplies<=0)
+      if (!fCurrentFileCmd.null()) {
+
+         bool stop_calibr = fCurrentFileCmd.IsName("StopRun") && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr()=="tc");
+
+         if (--fCmdReplies<=0) {
+
             fCurrentFileCmd.Reply(dabc::cmd_true);
+
+            if (stop_calibr) PreserveLastCalibr(true, 1.);
+         }
+      }
 
       return true;
 
@@ -380,7 +427,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       fCurrentFileCmd = cmd;
       fCmdCnt++;
-      fCmdReplies = builders.size();
+      fCmdReplies = 0;
 
       if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
 
@@ -415,6 +462,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       for (unsigned n=0; n<builders.size(); ++n) {
          dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
          subcmd.SetInt("#bnet_cnt", fCmdCnt);
+         fCmdReplies++;
          publ.Submit(Assign(subcmd));
       }
 
@@ -433,7 +481,9 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
          for (unsigned n=0; n<inputs.size(); ++n) {
             dabc::CmdGetBinary subcmd(inputs[n] + "/BnetCalibrControl", "execute", query);
-            publ.Submit(subcmd);
+            subcmd.SetInt("#bnet_cnt", fCmdCnt);
+            fCmdReplies++;
+            publ.Submit(Assign(subcmd));
          }
       }
 
