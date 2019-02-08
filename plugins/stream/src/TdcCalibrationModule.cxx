@@ -102,8 +102,8 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
          fTrbProc->CreateTDC(fTDCs[n]);
 
          hadaq::TdcProcessor *tdc = fTrbProc->GetTDC(fTDCs[n], true);
-         if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
-         if (fAutoToTRange>0) tdc->SetToTRange(10., 30., 60.);
+         if (fAutoTdcMode == 1) tdc->SetUseLinear(); // force linear
+         if (fAutoToTRange > 0) tdc->SetToTRange(10., 30., 60.);
          tdc->UseExplicitCalibration();
       }
       item.SetField("tdc", fTDCs);
@@ -141,7 +141,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    fCalibrFile = Cfg("CalibrFile", cmd).AsStr();
    if (!fCalibrFile.empty()) {
-      if ((fAutoTdcMode < 0) && (fAutoCalibr>0))
+      if ((fAutoTdcMode < 0) && (fAutoCalibr > 0))
          fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
       fTrbProc->LoadCalibrations(fCalibrFile.c_str());
    }
