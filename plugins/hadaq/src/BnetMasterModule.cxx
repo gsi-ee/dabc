@@ -33,6 +33,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fSameBuildersCnt = 0;
 
    fCmdCnt = 1;
+   fCmdReplies = 0;
 
    fCtrlId = 1;
    fCtrlTm.GetNow();
@@ -198,11 +199,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.GetInt("#bnet_cnt") == fCmdCnt) {
       // this commands used to send file requests
 
-      if (!fCurrentFileCmd.null()) {
-         int cnt = cmd.GetInt("#RetCnt");
-         cmd.SetInt("#RetCnt", cnt--);
-         if (cnt<=0) fCurrentFileCmd.Reply(dabc::cmd_true);
-      }
+      if (!fCurrentFileCmd.null())
+         if (--fCmdReplies<=0)
+            fCurrentFileCmd.Reply(dabc::cmd_true);
 
       return true;
 
@@ -381,10 +380,9 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 
       fCurrentFileCmd = cmd;
       fCmdCnt++;
+      fCmdReplies = builders.size();
 
       if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
-
-      cmd.SetInt("#RetCnt", builders.size());
 
       std::string query, prefix;
       unsigned runid = 0;

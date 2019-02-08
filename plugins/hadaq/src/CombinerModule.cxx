@@ -1785,8 +1785,8 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
             std::string exec = fBNETCalibrPackScript;
             exec.append(" ");
             exec.append(rundir);
-            DOUT0("EXEC %s", exec.c_str());
-            system(exec.c_str());
+            int res = system(exec.c_str());
+            DOUT0("EXEC %s res = %d", exec.c_str(), res);
          }
 
          fBnetCalibrCmd.Reply(dabc::cmd_true);
