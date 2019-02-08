@@ -31,6 +31,11 @@
        <NumBuffers value="300"/>
     </MemoryPool>
     
+    <Publisher name="publ">
+       <manager value="true"/>
+    </Publisher>
+
+    
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <!-- these are default parameters for TDC calibration modules -->
@@ -64,6 +69,10 @@
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="4"/>
        
+       
+       <!-- special directory where calibrations copied every time when stored -->
+       <CalibrDir value="calibrdir"/>
+       
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
        
@@ -91,17 +100,17 @@
        <BNETsend value="true"/>
        <!-- number of event send to same event builder -->
        <EB_EVENTS value="16"/>
-       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
-       <BNET_NUMSENDERS value="#${bnetsenders}"/>
-       
        <NumInputs value="#${hadaqports1}"/>
        <NumOutputs value="#${bnetreceivers}"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
 
-       <InputPort name="Input0" urlopt1="trb=0x8000&calibr=0"/>
-       <InputPort name="Input1" urlopt1="trb=0x8010&calibr=0"/>
-       <InputPort name="Input2" urlopt1="trb=0x8020&calibr=0"/>
+       <!-- calibr=-1 means TDC created directly, calibr=0 is automatic creation -->
+       <InputPort name="Input0" urlopt1="trb=0x8000&tdc=[0x7001,0x7002,0x7003]&calibr=-1"/>
+       <InputPort name="Input1" urlopt1="trb=0x8010&tdc=[0x7011,0x7012,0x7013]&calibr=-1"/>
+       <InputPort name="Input2" urlopt1="trb=0x8020&tdc=[0x7021,0x7022,0x7023]&calibr=-1"/>
 
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20&dummy"/>
 
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
@@ -124,7 +133,7 @@
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input0"/>
 
-     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="-1" servport="-1" showtrig="16"/>
      
 <!--      <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input0"/> -->
      
@@ -149,6 +158,10 @@
        <BufferSize value="200000"/>
        <NumBuffers value="300"/>
     </MemoryPool>
+
+    <Publisher name="publ">
+       <manager value="true"/>
+    </Publisher>
 
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
@@ -182,16 +195,19 @@
             3 - histograms for each active channel will be created, 
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="3"/>
-       
+
+       <!-- special directory where calibrations copied every time when stored -->
+       <CalibrDir value="calibrdir"/>
+
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
-       
+
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
        <CalibrTrigger value="0xffff"/>
-       
+
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
-       
+
        <!-- Number of counts in each channel to perform calibration, 0 - off -->
        <Auto value="0"/>
 
@@ -211,15 +227,15 @@
        <BNETsend value="true"/>
        <!-- number of event send to same event builder -->
        <EB_EVENTS value="16"/>
-       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
-       <BNET_NUMSENDERS value="#${bnetsenders}"/>
        <NumInputs value="#${hadaqports2}"/>
        <NumOutputs value="#${bnetreceivers}"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
 
-       <InputPort name="Input0" urlopt1="trb=0x8100&calibr=0"/>
-       <InputPort name="Input1" urlopt1="trb=0x8110&calibr=0"/>
+       <InputPort name="Input0" urlopt1="trb=0x8100&tdc=[0x7101,0x7102,0x7103]&calibr=-1"/>
+       <InputPort name="Input1" urlopt1="trb=0x8110&tdc=[0x7111,0x7112,0x7113]&calibr=-1"/>
 
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20&dummy"/>
 <!--        <InputPort name="Input0" url="nhadaq://host:50003"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50004"/> -->
 
@@ -242,7 +258,7 @@
      <Connection device="NetDev" list="${bnetreceivers}" 
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input1"/>
 
-     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
+     <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" fileport="-1" servport="-1" showtrig="16"/>
 
 <!--     <Connection device="NetDev" output="FirstLevel/Output0" input="dabc://localhost:12101/Combiner/Input1"/> -->
     
@@ -279,12 +295,11 @@
     <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
+       <NumInputs value="#${bnetsenders}"/>
+       <NumOutputs value="2"/>
        <EB_EVENTS value="16"/>
        <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
-       
-       <NumInputs value="#${bnetsenders}"/>
-       <NumOutputs value="2"/>
 
        <InputPort name="*" queue="30" optional="true"/>
 
