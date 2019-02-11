@@ -169,9 +169,10 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
          MakeCallback(dabc::do_Ok);
          fState = oWaitingBuffer;
          break;
+      case oSendingEvents:
       case oSendingLastEvent:
       case oSendingBuffer:
-         fHasExtraRequest = false;
+         fHasExtraRequest = true;
          break;
       default:
          EOUT("Get request at wrong state %d", fState);
