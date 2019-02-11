@@ -114,7 +114,7 @@ void hadaq::BnetMasterModule::AddItem(std::vector<std::string> &items, std::vect
    nodes.emplace_back(node);
 }
 
-void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality)
+void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, unsigned runid)
 {
    dabc::Hierarchy item  = fWorkerHierarchy.GetHChild("LastCalibr");
    if (!item) return;
@@ -128,21 +128,24 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality)
       tm.GetNow();
       fprintf(f,"%lu\n", (long unsigned) tm.AsJSDate());
       fprintf(f,"%f\n", quality);
+      fprintf(f,"%u\n", runid);
    } else {
       long unsigned tm_js = 0;
       fscanf(f,"%lu", &tm_js);
       tm.SetJSDate(tm_js);
       fscanf(f,"%lf", &quality);
+      fscanf(f,"%u", &runid);
    }
    fclose(f);
 
-   std::string info = dabc::format("%s quality = %5.2f", tm.AsString(0,true).c_str(), quality);
+   std::string info = dabc::format("%s quality = %5.2f run = %s", tm.AsString(0,true).c_str(), quality, hadaq::FormatFilename(runid,0).c_str());
 
    DOUT0("CALIBR INFO %s", info.c_str());
 
    item.SetField("value", info);
    item.SetField("tm", tm.AsJSDate());
    item.SetField("quality", quality);
+   item.SetField("runid", runid);
 }
 
 
@@ -251,7 +254,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
             fCurrentFileCmd.Reply(dabc::cmd_true);
 
-            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality);
+            if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, fCtrlRunId);
          }
       }
 

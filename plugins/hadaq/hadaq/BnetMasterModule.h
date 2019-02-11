@@ -63,7 +63,7 @@ namespace hadaq {
 
          void AddItem(std::vector<std::string> &items, std::vector<std::string> &nodes, const std::string &item, const std::string &node);
 
-         void PreserveLastCalibr(bool do_write = false, double quality = 1.);
+         void PreserveLastCalibr(bool do_write = false, double quality = 1., unsigned runid = 0);
 
       public:
 
