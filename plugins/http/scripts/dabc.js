@@ -375,7 +375,7 @@
    DABC.BnetPainter.prototype.RefreshHTML = function(lastprefix) {
       
       var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
-
+      
       html += "<fieldset style='margin:5px'>" +
               "<legend class='bnet_state'>Run control</legend>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
@@ -459,7 +459,8 @@
 
       html += "</div>";
       
-      var painter = this, main = d3.select(this.frame).html(html);
+      var painter = this, main = d3.select(this.frame).html(html),
+          ctrl_visible = JSROOT.GetUrlOption("browser") !== null ? "" : "none";
       
       main.classed("jsroot_fixed_frame", true);
       main.selectAll(".bnet_trb_clear").on("click", this.DisplayCalItem.bind(this,0,""));
@@ -480,20 +481,21 @@
       
       var jnode = $(main.node()); 
       
-      jnode.find(".bnet_startrun").button().click(function() {
+      jnode.find(".bnet_startrun").button().css("display", ctrl_visible).click(function() {
          DABC.InvokeCommand(itemname+"/StartRun", "prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
       });
       var sm = jnode.find(".bnet_selectrun");
       sm.selectmenu({ width: 150 });
       if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
-      jnode.find(".bnet_stoprun").button().click(function() { 
+      if (ctrl_visible == "none") sm.next('.ui-selectmenu-button').hide();
+      jnode.find(".bnet_stoprun").button().css("display", ctrl_visible).click(function() { 
          DABC.InvokeCommand(itemname+"/StopRun");
       });
       
       jnode.find(".bnet_lastcalibr").button().click(function() {
       });
       
-      jnode.find(".bnet_resetdaq").button().click(function() { 
+      jnode.find(".bnet_resetdaq").button().css("display", ctrl_visible).click(function() { 
          if (confirm("Really drop buffers on all BNET nodes"))
             DABC.InvokeCommand(itemname+"/ResetDAQ");
       });
@@ -515,7 +517,7 @@
          painter.ClearDisplay();
       });
 
-      jnode.find(".bnet_histclear").button().click(function() {
+      jnode.find(".bnet_histclear").button().css("display", ctrl_visible).click(function() {
          painter.ClearAllHistograms();
       });
 
