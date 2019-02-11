@@ -506,10 +506,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          if (!info) {
             sinfo = "missing transport-info";
          } else {
-
             inp.fHubSizeTmCnt++;
-
-            DOUT0("Input %u cnt %d total %ld last %ld prev %ld", n, (int) inp.fHubSizeTmCnt, (long) info->fTotalRecvBytes, (long) inp.fHubLastSize, (long) inp.fHubPrevSize);
 
             if (info->fTotalRecvBytes > inp.fHubLastSize)
                rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
@@ -1756,8 +1753,8 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
 
       std::string state = "File";
       double quality = 0.98;
-      if (Par(fEventRateName).Value().AsDouble() == 0) { state = "NoData"; quality = 0.1; } else
-      if ((runid==0) && runname.empty()) { state = "NoFile"; quality = 0.5; }
+      if ((Par(fEventRateName).Value().AsDouble() == 0) &&  (quality > 0.55)) { state = "NoData"; quality = 0.55; }
+      if ((runid==0) && runname.empty() && (quality > 0.5)) { state = "NoFile"; quality = 0.5; }
 
       fWorkerHierarchy.SetField("state", state);
       fWorkerHierarchy.SetField("quality", quality);
