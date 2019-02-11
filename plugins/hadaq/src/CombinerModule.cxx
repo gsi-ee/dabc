@@ -509,6 +509,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
             inp.fHubSizeTmCnt++;
 
+            DOUT0("Input %u cnt %d total %ld last %ld prev %ld", n, (int) inp.fHubSizeTmCnt, (long) info->fTotalRecvBytes, (long) inp.fHubLastSize, (long) inp.fHubPrevSize);
+
             if (info->fTotalRecvBytes > inp.fHubLastSize)
                rate = (info->fTotalRecvBytes - inp.fHubLastSize)/1024.0/1024.0;
             else if (inp.fHubSizeTmCnt <= 15)
@@ -521,7 +523,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
                hub_state = "NoData";
                hub_quality = 0.1;
                hub_progress = 0;
-            } else if ((inp.fHubSizeTmCnt > 15) && (hub_quality > 0.6)) {
+            } else if ((inp.fHubSizeTmCnt > 7) && (hub_quality > 0.6)) {
                hub_state = "LowData";
                hub_quality = 0.6;
                hub_progress = 0;
@@ -548,7 +550,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             hub_progress = inp.fCalibrProgr;
          }
 
-         if ((hub_progress>0) && ((node_progress==0) || (hub_progress<node_progress)))
+         if ((hub_progress > 0) && ((node_progress == 0) || (hub_progress < node_progress)))
             node_progress = hub_progress;
 
          if (hub_quality < node_quality) {
@@ -1490,6 +1492,9 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
          for (unsigned n = 0; n < NumInputs(); n++) {
             fCfg[n].fDroppedTrig = 0;
             fCfg[n].fLostTrig = 0;
+            fCfg[n].fHubSizeTmCnt = 0;
+            fCfg[n].fHubLastSize = 0;
+            fCfg[n].fHubPrevSize = 0;
             dabc::Command subcmd("ResetTransportStat");
             SubmitCommandToTransport(InputName(n), subcmd);
          }

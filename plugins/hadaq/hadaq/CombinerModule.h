@@ -151,11 +151,10 @@ namespace hadaq {
 //             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
 //                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
-            if (complete) fLastTrigNr = 0xffffffff;
-            if (complete) fUdpPort = 0;
-            fHubSizeTmCnt = 0;
-            fHubLastSize = 0;
-            fHubPrevSize = 0;
+            if (complete) {
+               fLastTrigNr = 0xffffffff;
+               fUdpPort = 0;
+            }
          }
 
          void Close()
