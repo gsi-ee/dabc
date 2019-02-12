@@ -1,6 +1,7 @@
 #!/bin/bash
 ############## archive TDC calibration files from data disk to ltsm archive #######
 ### v 0.2 26-oct-2018 by JAM (j.adamczewski@gsi.de)
+### 12-feb-2019 JAM changed to archive mar19 (to be optimized yet)
 ######################################################################################
 RUN=$(echo $1 | /usr/bin/cut -d'/' -f2)
 CALIBDIR=$(echo $1 | /usr/bin/cut -d'/' -f1)
@@ -9,7 +10,7 @@ FILE=${FOLDER}.tar.gz
 DATE=$(/bin/date +"%d-%m-%Y %H:%M:%S")
 DESC="manually archived with ltsmc on ${DATE} by ${USER} from ${HOSTNAME}"
 LTSMCBIN="/usr/local/bin/ltsmc"
-BEAMTIME="jul18"
+BEAMTIME="mar19"
 FILESYS="/lustre/hebe"
 ARCHIVEPATH=${FILESYS}/hades/raw/${BEAMTIME}/default/tsm/cal
 DISKPATH=/home/hadaq/oper/${CALIBDIR}
