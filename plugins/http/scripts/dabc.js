@@ -767,15 +767,14 @@
          var quality = lastcalibr.quality || 1,
              dt = new Date(lastcalibr.time), now = new Date(),
              diff = (now.getTime() - dt.getTime())*1e-3, // seconds
-             info = "CALIBR", title = "";
+             info = "CALIBR", title = "Calibration ";
          if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {
             var h = Math.floor(diff/3600).toString(), m = Math.round((diff - h*3600)/60).toString();
             if (m.length==1) m = "0"+m; 
             info = h+"h"+m+"m";
             if (h>72) { if (quality>0.1) quality = 0.1; title = "To long time without calibration, "; } else
-            if (h>24) { if (quality>0.6) quality = 0.6; title = "Consider to make calibration, "; }
+            if (h>24) { if (quality>0.6) quality = 0.6; title = "Consider to peform calibration, "; }
          }
-         if (!title) title = "Calibration ";
          title += "last: " + lastcalibr.value;
          $(this.frame).find(".bnet_lastcalibr").css('background-color', this.GetQualityColor(quality)).attr("title", title).text(info);
       }
