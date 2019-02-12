@@ -122,7 +122,10 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
    dabc::DateTime tm;
 
    FILE* f = fopen("lastcalibr.txt", do_write ? "w" : "r");
-   if (!f) return;
+   if (!f) {
+      EOUT("FAIL to open file lastcalibr.txt for %s", do_write ? "writing" : "reading");
+      return;
+   }
 
    if (do_write) {
       tm.GetNow();
