@@ -480,7 +480,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       double node_quality = 1;
       int node_progress = 0;
 
-      std::vector<uint64_t> hubs, ports, hubs_progress;
+      std::vector<uint64_t> hubs, ports, hubs_progress, recv_sizes, recv_bufs;
       std::vector<std::string> calibr, hubs_state, hubs_info;
       std::vector<double> hubs_quality;
       for (unsigned n=0;n<fCfg.size();n++) {
@@ -489,6 +489,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          hubs.push_back(inp.fHubId);
          ports.push_back(inp.fUdpPort);
          calibr.push_back(inp.fCalibr);
+
+         recv_bufs.push_back(NumCanRecv(n));
+         recv_sizes.push_back(TotalSizeCanRecv(n));
 
          if (!inp.fCalibrReq && !inp.fCalibr.empty()) {
             dabc::Command cmd("GetCalibrState");
@@ -499,7 +502,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          }
 
          std::string hub_state = "", sinfo = "";
-         hadaq::TransportInfo *info = (hadaq::TransportInfo*) inp.fInfo;
+         hadaq::TransportInfo *info = (hadaq::TransportInfo *) inp.fInfo;
          double rate = 0., hub_quality = 1;
          int hub_progress = 100;
 
@@ -589,6 +592,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
       fWorkerHierarchy.SetField("hubs_progress", hubs_progress);
+      fWorkerHierarchy.SetField("recv_bufs", recv_bufs);
+      fWorkerHierarchy.SetField("recv_sizes", recv_sizes);
 
       fWorkerHierarchy.GetHChild("State").SetField("value", node_state);
    }

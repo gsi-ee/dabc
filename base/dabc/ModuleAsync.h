@@ -84,6 +84,10 @@ namespace dabc {
          unsigned NumCanRecv(unsigned indx = 0) const
            { return indx < fInputs.size() ? fInputs[indx]->NumCanRecv() : 0; }
 
+         /** \brief Method return total size of buffers can be received via the port */
+         BufferSize_t TotalSizeCanRecv(unsigned indx = 0) const
+            { return indx < fInputs.size() ? fInputs[indx]->TotalSizeCanRecv() : 0; }
+
          /** \brief Methods receives buffers from the port */
          Buffer Recv(unsigned indx = 0)
             { return indx < fInputs.size() ? fInputs[indx]->Recv() : Buffer(); }

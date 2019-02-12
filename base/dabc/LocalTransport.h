@@ -113,6 +113,8 @@ namespace dabc {
 
          unsigned Size() const { LockGuard lock(QueueMutex()); return fQueue.Size(); }
 
+         BufferSize_t TotalBuffersSize() const { LockGuard lock(QueueMutex()); return fQueue.TotalBuffersSize(); }
+
          unsigned Full() const { LockGuard lock(QueueMutex()); return fQueue.Full(); }
 
          Buffer Item(unsigned indx) const { LockGuard lock(QueueMutex()); return fQueue.Item(indx); }
@@ -156,6 +158,8 @@ namespace dabc {
       void ConfirmEvent(bool isoutput) { if (GetObject()) GetObject()->ConfirmEvent(isoutput); }
 
       unsigned Size() const { return GetObject() ? GetObject()->Size() : 0; }
+
+      BufferSize_t TotalBuffersSize() const { return GetObject() ? GetObject()->TotalBuffersSize() : 0; }
 
       Buffer Item(unsigned indx) const { return GetObject() ? GetObject()->Item(indx) : Buffer(); }
 

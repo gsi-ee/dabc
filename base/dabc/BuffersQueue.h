@@ -92,7 +92,15 @@ namespace dabc {
           * one can create any kind of buffer copies from it */
          Buffer Item(unsigned n) const
          {
-            return this->vect[(n+front) % vect.size()];
+            return vect[(n+front) % vect.size()];
+         }
+
+         BufferSize_t TotalBuffersSize() const
+         {
+            BufferSize_t sum = 0;
+            for (unsigned n=0;n<Size();++n)
+               sum += vect[(n+front) % vect.size()].GetTotalSize();
+            return sum;
          }
 
    };

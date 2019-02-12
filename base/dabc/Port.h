@@ -261,6 +261,9 @@ namespace dabc {
          /** Defines how many buffers can be received */
          inline unsigned NumCanRecv() { return fQueue.Size(); }
 
+         /** Defines how many buffers can be received */
+         inline BufferSize_t TotalSizeCanRecv() { return fQueue.TotalBuffersSize(); }
+
          /** Returns true, when input queue is full and cannot get more buffers */
          bool QueueFull() { return fQueue.Full(); }
 
