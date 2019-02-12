@@ -184,13 +184,14 @@
          
          if ($(this).children().length == 0) {
             var code = "<div style='float:left'>";
-            code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "' >"+"Clr</button>";
+            code += "<button title='clear all TRB histograms' hist='" + makehname("TRB", info.trb) + "'>"+"Clr</button>";
             if (!info.tdc) {
-               code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "' >"+info.trb.toString(16)+"_ErrorBits</button>";
-               code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "' >"+info.trb.toString(16)+"_TrigType</button>";
-               code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "' >"+info.trb.toString(16)+"_SubevSize</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "ErrorBits") + "'>"+info.trb.toString(16)+"_ErrorBits</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>"+info.trb.toString(16)+"_TrigType</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "SubevSize") + "'>"+info.trb.toString(16)+"_SubevSize</button>";
             } else {
-               code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "' >"+info.trb.toString(16)+"</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "TrigType") + "'>TrigType</button>";
+               code += "<button hist='" + makehname("TRB", info.trb, "MsgPerTDC") + "'>MsgPerTDC</button>";
                for (var j in info.tdc)
                   code+="<button class='tdc_btn' tdc='" + info.tdc[j] + "' hist='" + makehname("TDC", info.tdc[j], "Channels") + "'>"+info.tdc[j].toString(16)+"</button>";
             }
