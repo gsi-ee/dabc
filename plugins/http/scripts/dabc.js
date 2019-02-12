@@ -763,9 +763,9 @@
       if (typeof lrate == 'number')
          $(this.frame).find(".bnet_lostevents").text(lrate.toFixed(1) + " Ev/s").css('background-color', (lrate > 0) ? "yellow" : "lightgreen");
 
-      if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.tm == 'number')) {
+      if (lastcalibr && (typeof lastcalibr.quality == 'number') && (typeof lastcalibr.time == 'string')) {
          var quality = lastcalibr.quality || 1,
-             dt = new Date(lastcalibr.tm), now = new Date(),
+             dt = new Date(lastcalibr.time), now = new Date(),
              diff = (now.getTime() - dt.getTime())*1e-3, // seconds
              info = "CALIBR", title = "";
          if (diff < 0) { info = "CHECK CALIBR"; if (quality>0.6) quality = 0.6; } else {

@@ -146,7 +146,7 @@ void hadaq::BnetMasterModule::PreserveLastCalibr(bool do_write, double quality, 
    DOUT0("CALIBR INFO %s", info.c_str());
 
    item.SetField("value", info);
-   item.SetField("tm", tm.AsJSDate());
+   item.SetField("time", tm.AsJSString());
    item.SetField("quality", quality);
    item.SetField("runid", runid);
 }
@@ -242,10 +242,12 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       return true;
 
-   } else if (cmd.GetInt("#bnet_cnt") == fCmdCnt) {
+   } else if (cmd.HasField("#bnet_cnt")) {
       // this commands used to send file requests
 
-      if (!fCurrentFileCmd.null()) {
+      DOUT0("Get %s reply id:%d expecting:%d replies:%d curr:%s", cmd.GetName(), cmd.GetInt("#bnet_cnt"), fCmdCnt, fCmdReplies, fCurrentFileCmd.null() ? "---" : fCurrentFileCmd.GetName());
+
+      if (!fCurrentFileCmd.null() && (cmd.GetInt("#bnet_cnt") == fCmdCnt)) {
 
          bool stop_calibr = fCurrentFileCmd.IsName("StopRun") && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr()=="tc");
 
