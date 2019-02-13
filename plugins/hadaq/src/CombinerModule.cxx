@@ -482,7 +482,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
       std::vector<uint64_t> hubs, ports, hubs_progress, recv_sizes, recv_bufs;
       std::vector<std::string> calibr, hubs_state, hubs_info;
-      std::vector<double> hubs_quality;
+      std::vector<double> hubs_quality, hubs_rates;
       for (unsigned n=0;n<fCfg.size();n++) {
          InputCfg &inp = fCfg[n];
 
@@ -570,6 +570,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          hubs_info.push_back(sinfo);
          hubs_quality.push_back(hub_quality);
          hubs_progress.push_back(hub_progress);
+         hubs_rates.push_back(rate);
       }
 
       std::string info = "BnetSend:";
@@ -600,6 +601,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
       fWorkerHierarchy.SetField("hubs_progress", hubs_progress);
+      fWorkerHierarchy.SetField("hubs_rates", hubs_rates);
       fWorkerHierarchy.SetField("recv_bufs", recv_bufs);
       fWorkerHierarchy.SetField("recv_sizes", recv_sizes);
 
