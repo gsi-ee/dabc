@@ -490,8 +490,16 @@ void hadaq::CombinerModule::UpdateBnetInfo()
          ports.push_back(inp.fUdpPort);
          calibr.push_back(inp.fCalibr);
 
-         recv_bufs.push_back(NumCanRecv(n));
-         recv_sizes.push_back(TotalSizeCanRecv(n));
+         unsigned nbuf = NumCanRecv(n);
+         uint64_t bufsz = TotalSizeCanRecv(n);
+
+         if (inp.fIter.IsData()) {
+            nbuf++;
+            bufsz += inp.fIter.remained_size();
+         }
+
+         recv_bufs.push_back(nbuf);
+         recv_sizes.push_back(bufsz);
 
          if (!inp.fCalibrReq && !inp.fCalibr.empty()) {
             dabc::Command cmd("GetCalibrState");
