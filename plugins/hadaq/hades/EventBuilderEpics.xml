@@ -172,7 +172,7 @@ This will be ruled by epics ioc parameter FILESIZE (see example at plugins/hadaq
    
    <Module name="Combiner">    
 
-      <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=true"/>
+      <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2&observer=true"/>
 
        <DoShmControl value="true"/>  
        <FlushTimeout value="2.0"/>

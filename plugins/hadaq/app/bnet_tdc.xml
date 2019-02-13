@@ -106,7 +106,7 @@
        <InputPort name="Input1" urlopt1="trb=0x8010&tdc=[0x7011,0x7012,0x7013]&calibr=-1"/>
        <InputPort name="Input2" urlopt1="trb=0x8020&tdc=[0x7021,0x7022,0x7023]&calibr=-1"/>
 
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#" urlopt="udpbuf=400000&mtu=65507&flush=0.5&observer=false&maxloop=20"/>
 
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
@@ -232,7 +232,7 @@
        <InputPort name="Input0" urlopt1="trb=0x8100&tdc=[0x7101,0x7102,0x7103]&calibr=-1"/>
        <InputPort name="Input1" urlopt1="trb=0x8110&tdc=[0x7111,0x7112,0x7113]&calibr=-1"/>
 
-       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=200000&mtu=64512&flush=0.5&observer=false&maxloop=20"/>
+       <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports2}#" urlopt="udpbuf=400000&mtu=65507&flush=0.5&observer=false&maxloop=20"/>
 <!--        <InputPort name="Input0" url="nhadaq://host:50003"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50004"/> -->
 

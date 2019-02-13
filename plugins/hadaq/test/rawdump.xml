@@ -25,7 +25,7 @@
        <InputPort name="Input2" url="hadaq://host:50002"/>
        <InputPort name="Input3" url="hadaq://host:50003"/>
        <InputPort name="Input4" url="hadaq://host:50004"/>
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&observer=false&maxloop=50" resort="false"/>
        <OutputPort name="Output0" url="bin://out0.bin"/>
        <OutputPort name="Output1" url="bin://out1.bin"/>
        <OutputPort name="Output2" url="bin://out2.bin"/>

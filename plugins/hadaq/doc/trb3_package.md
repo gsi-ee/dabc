@@ -118,7 +118,7 @@ For each input only correct UDP port number should be specified like:
 Here only port number 10101 is relevant, all other parameters could remain as is.
 Transport parameters typically speicfied in extra xml line for all ports together:
 
-     <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+     <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&observer=false&maxloop=50" resort="false"/>
 
 Following URL parameters can be used for UDP transport:
 

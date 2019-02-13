@@ -70,7 +70,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input3" url="hadaq://host:50003"/>
        <InputPort name="Input4" url="hadaq://host:50004"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=0.1&observer=false&maxloop=50" resort="false"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&observer=false&maxloop=50" resort="false"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>

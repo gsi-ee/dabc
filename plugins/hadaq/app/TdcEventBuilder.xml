@@ -95,7 +95,7 @@ This code is experimental, plese contact S.Linev if you want to use it
        <InputPort name="Input3" url="hadaq://host:50003" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
        <InputPort name="Input4" url="hadaq://host:50004" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=200000&mtu=64512&flush=2&observer=false&debug&dummy"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2&observer=false&debug&dummy"/>
 
        <ExtraDebug value="false"/>
 
