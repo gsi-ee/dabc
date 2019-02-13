@@ -245,7 +245,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.HasField("#bnet_cnt")) {
       // this commands used to send file requests
 
-      DOUT0("Get %s reply id:%d expecting:%d replies:%d curr:%s", cmd.GetName(), cmd.GetInt("#bnet_cnt"), fCmdCnt, fCmdReplies, fCurrentFileCmd.null() ? "---" : fCurrentFileCmd.GetName());
+      // DOUT0("Get %s reply id:%d expecting:%d replies:%d curr:%s", cmd.GetName(), cmd.GetInt("#bnet_cnt"), fCmdCnt, fCmdReplies, fCurrentFileCmd.null() ? "---" : fCurrentFileCmd.GetName());
 
       if (!fCurrentFileCmd.null() && (cmd.GetInt("#bnet_cnt") == fCmdCnt)) {
 
