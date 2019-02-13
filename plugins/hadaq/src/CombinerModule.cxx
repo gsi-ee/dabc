@@ -480,7 +480,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       double node_quality = 1;
       int node_progress = 0;
 
-      std::vector<uint64_t> hubs, ports, hubs_progress, recv_sizes, recv_bufs;
+      std::vector<uint64_t> hubs, ports, hubs_progress, recv_sizes, recv_bufs, hubs_dropev, hubs_lostev;
       std::vector<std::string> calibr, hubs_state, hubs_info;
       std::vector<double> hubs_quality, hubs_rates;
       for (unsigned n=0;n<fCfg.size();n++) {
@@ -552,6 +552,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             sinfo += inp.TriggerRingAsStr(16);
          }
 
+         hubs_dropev.push_back(inp.fDroppedTrig);
+         hubs_lostev.push_back(inp.fLostTrig);
+
          if (!inp.fCalibr.empty() && (inp.fCalibrQuality < hub_quality)) {
             hub_state = inp.fCalibrState;
             hub_quality = inp.fCalibrQuality;
@@ -598,6 +601,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
       fWorkerHierarchy.SetField("progress", node_progress);
       fWorkerHierarchy.SetField("nbuilders", NumOutputs());
       fWorkerHierarchy.SetField("queues", qsz);
+      fWorkerHierarchy.SetField("hubs_dropev",hubs_dropev);
+      fWorkerHierarchy.SetField("hubs_lostev",hubs_lostev);
       fWorkerHierarchy.SetField("hubs_state", hubs_state);
       fWorkerHierarchy.SetField("hubs_quality", hubs_quality);
       fWorkerHierarchy.SetField("hubs_progress", hubs_progress);
