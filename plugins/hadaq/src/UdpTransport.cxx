@@ -31,14 +31,15 @@
 #include "dabc/timing.h"
 #include "dabc/Manager.h"
 
-#define DEFAULT_MTU 63*1024
+// according to specification maximal UDP packet is 65,507 or 0xFFE3
+#define DEFAULT_MTU 0xFFF0
 
 hadaq::NewAddon::NewAddon(int fd, int nport, int mtu, bool debug, int maxloop, double reduce, double lost) :
    dabc::SocketAddon(fd),
    TransportInfo(nport),
    fTgtPtr(),
    fMTU(mtu > 0 ? mtu : DEFAULT_MTU),
-   fMtuBuffer(0),
+   fMtuBuffer(nullptr),
    fSkipCnt(0),
    fSendCnt(0),
    fMaxLoopCnt(maxloop > 1 ? maxloop : 1),
@@ -244,6 +245,8 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
       if (rcvBufLenRet < rcvbuflen) {
          EOUT("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvbuflen);
          rcvbuflen = rcvBufLenRet;
+      } else {
+         DOUT0("SO_RCVBUF   Configured %ld  Actual %ld", (long) rcvbuflen, (long) rcvBufLenRet);
       }
    }
 
