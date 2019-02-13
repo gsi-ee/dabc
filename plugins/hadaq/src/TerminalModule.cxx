@@ -129,7 +129,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    double delta = fLastTm.SpentTillNow(true);
 
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
-   if (delta>0) {
+   if (delta > 0) {
       rate1 = (comb->fTotalBuildEvents - fTotalBuildEvents) / delta;
       rate2 = (comb->fTotalRecvBytes - fTotalRecvBytes) / delta;
       rate3 = (comb->fTotalDiscEvents - fTotalDiscEvents) / delta;
@@ -137,7 +137,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    }
 
    if (fDoShow) {
-      if (delta>0) {
+      if (delta > 0) {
          unsigned nlines = comb->fCfg.size() + 4;
          if (fServPort>=0) nlines++;
          if (fFilePort>=0) nlines++;
@@ -259,7 +259,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          fCalibr[n].lastrecv = 0;
       } else {
 
-         double rate = (info->fTotalRecvBytes - fCalibr[n].lastrecv)/delta;
+         double rate = (delta > 0) ? (info->fTotalRecvBytes - fCalibr[n].lastrecv) / delta : 0.;
 
          sbuf.append(dabc::format(" %5d %7s %9s %7.3f %6s %6s %6s",
                info->fNPort,
