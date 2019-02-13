@@ -1325,7 +1325,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fprintf(stderr, "BUILD:%6x\n", buildevid);
 #endif
 
-      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1) && (fBNETNumRecv>1)) {
+      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1) && (fBNETNumRecv > 1)) {
          // check if we really lost these events
 
          if (diff > fBNETbunch) {
@@ -1337,7 +1337,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
             // substract expected gap to previous cycle
             diff -= fBNETbunch * (fBNETNumRecv-1);
-            if (diff <= 0) diff = fBNETbunch/2;
+            if (diff <= 0) diff = 0;
 
             // add lost events from big cycles
             diff += ncycles*fBNETbunch;
