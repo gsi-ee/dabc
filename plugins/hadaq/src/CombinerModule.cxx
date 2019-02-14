@@ -1046,8 +1046,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // DOUT0("hadaq::CombinerModule::BuildEvent() starts");
 
    unsigned masterchannel(0), min_inp(0);
-   uint32_t subeventssize = 0;
-   uint32_t mineventid(0), maxeventid(0), buildevid(0);
+   uint32_t subeventssize(0), mineventid(0), maxeventid(0), buildevid(0);
    bool incomplete_data(false), any_data(false);
    int missing_inp(-1);
 
@@ -1335,6 +1334,8 @@ bool hadaq::CombinerModule::BuildEvent()
 
          if (diff > fBNETbunch) {
 
+            // int diff0 = diff;
+
             long ncycles = diff / (fBNETbunch * fBNETNumRecv);
 
             // substract big cycles
@@ -1346,7 +1347,12 @@ bool hadaq::CombinerModule::BuildEvent()
 
             // add lost events from big cycles
             diff += ncycles*fBNETbunch;
+
+            //if (diff != 1) {
+            //   DOUT0("Large EVENT difference %d bunch %ld ncycles %ld final %d", diff0, fBNETbunch, ncycles, diff);
+            //}
          }
+
       }
 
       fLastTrigNr = buildevid;
@@ -1363,7 +1369,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
          fLostEventRateCnt += (diff-1);
          //Par(fLostEventRateName).SetValue(diff-1);
-         fTotalDiscEvents+=(diff-1);
+         fTotalDiscEvents += (diff-1);
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
