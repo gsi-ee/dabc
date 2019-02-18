@@ -88,7 +88,7 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
 
    if (fRecvBufSize > 0) {
       delete [] fRecvBuf;
-      fRecvBuf = 0;
+      fRecvBuf = nullptr;
       fRecvBufSize = 0;
    }
 
@@ -294,7 +294,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
    fRecvState = recvHeader;
    // first of all, sumbit next recv header operation
-   SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
+   SocketIOAddon *io = dynamic_cast<SocketIOAddon*> (fAddon());
    io->StartRecv(&fRecvHdr, sizeof(fRecvHdr));
 }
 
@@ -469,13 +469,13 @@ void dabc::SocketCommandClient::SendCommand(dabc::Command cmd, bool asreply)
 
    fSendHdr.data_cmdsize = fSendBuf.GetTotalSize(); // transport 0-terminated string as is
    fSendHdr.data_rawsize = fSendRawData.GetTotalSize();
-   void* rawdata = 0;
+   void* rawdata = nullptr;
    if (fSendHdr.data_rawsize > 0) rawdata = fSendRawData.SegmentPtr();
    fSendHdr.data_size = fSendHdr.data_cmdsize + fSendHdr.data_rawsize;
 
    SocketIOAddon* addon = dynamic_cast<SocketIOAddon*> (fAddon());
 
-   if (addon==0) {
+   if (!addon) {
       EOUT("Cannot send command %s addon %p", cmd.GetName(), fAddon());
 
       CloseClient(true, "I/O object missing");
