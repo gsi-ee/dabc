@@ -176,7 +176,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if ((fLastBuilders.size()>0) && (fLastBuilders == bbuild)) {
          fSameBuildersCnt++;
-         if (!fInitRunCmd.null() && (fSameBuildersCnt>cmd.GetInt("oninit"))) {
+         if (!fInitRunCmd.null() && (fSameBuildersCnt > cmd.GetInt("oninit"))) {
             DOUT0("DETECTED SAME BUILDERS %d", fSameBuildersCnt);
 
             fInitRunCmd.SetBool("#verified", true);
@@ -454,6 +454,8 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          cmd.SetTimeout(45.);
       }
 
+      double main_tmout = cmd.TimeTillTimeout() - 1;
+
       std::string query, prefix;
       unsigned runid = 0;
       unsigned lastrunid = fWorkerHierarchy.GetHChild("MasterRunId").GetField("value").AsUInt();
@@ -482,14 +484,16 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (isstart && !prefix.empty())
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
+      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s lastrunid:%u", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str(), lastrunid);
+
       for (unsigned n=0; n<builders.size(); ++n) {
          dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
          subcmd.SetInt("#bnet_cnt", fCmdCnt);
+         subcmd.SetTimeout(main_tmout);
          fCmdReplies++;
          publ.Submit(Assign(subcmd));
+         DOUT0("Submit bldr cmd %s %s %f", subcmd.GetName(), DBOOL(subcmd.IsTimeoutSet()), subcmd.TimeTillTimeout());
       }
-
-      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s lastrunid:%u", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str(), lastrunid);
 
       query = "";
       if (isstart && (prefix == "tc") && lastprefix.empty()) {
@@ -505,8 +509,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          for (unsigned n=0; n<inputs.size(); ++n) {
             dabc::CmdGetBinary subcmd(inputs[n] + "/BnetCalibrControl", "execute", query);
             subcmd.SetInt("#bnet_cnt", fCmdCnt);
+            subcmd.SetTimeout(main_tmout);
             fCmdReplies++;
             publ.Submit(Assign(subcmd));
+            DOUT0("Submit input cmd %s %s %f", subcmd.GetName(), DBOOL(subcmd.IsTimeoutSet()), subcmd.TimeTillTimeout());
          }
       }
 
