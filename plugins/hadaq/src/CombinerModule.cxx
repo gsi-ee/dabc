@@ -1812,7 +1812,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
       if (num == 1) {
 
          std::string rundir = fBnetCalibrCmd.GetStr("#rundir");
-         DOUT0("COMBINER COMPLETE CALIBR PROCESSING dir %s", rundir.c_str());;
+         DOUT0("COMBINER COMPLETE CALIBR PROCESSING quality %5.3f  dir %s", fBnetCalibrCmd.GetDouble("quality"), rundir.c_str());;
 
          if (!fBNETCalibrPackScript.empty() && !rundir.empty() && (fBnetCalibrCmd.GetStr("mode") == "stop")) {
             std::string exec = fBNETCalibrPackScript;
