@@ -450,7 +450,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCmdQuality = 1.;
 
       if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 45)) {
-         // DOUT0("INCREASE TIMEOUT %4.1f", cmd.TimeTillTimeout());
+         DOUT0("INCREASE cmd %s TIMEOUT from %4.1f to 45 sec", cmd.GetName(), cmd.TimeTillTimeout());
          cmd.SetTimeout(45.);
       }
 
