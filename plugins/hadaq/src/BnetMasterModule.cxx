@@ -248,7 +248,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
    } else if (cmd.HasField("#bnet_cnt")) {
       // this commands used to send file requests
 
-      // DOUT0("Get %s reply id:%d expecting:%d replies:%d curr:%s", cmd.GetName(), cmd.GetInt("#bnet_cnt"), fCmdCnt, fCmdReplies, fCurrentFileCmd.null() ? "---" : fCurrentFileCmd.GetName());
+      DOUT0("Get %s reply id:%d expecting:%d replies:%d cmd:%s", cmd.GetName(), cmd.GetInt("#bnet_cnt"), fCmdCnt, fCmdReplies, fCurrentFileCmd.GetName());
 
       if (!fCurrentFileCmd.null() && (cmd.GetInt("#bnet_cnt") == fCmdCnt)) {
 
@@ -484,7 +484,7 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (isstart && !prefix.empty())
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", prefix);
 
-      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s lastrunid:%u", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str(), lastrunid);
+      DOUT0("MASTER cmd:%s doing:%s query:%s prefix:%s lastprefix:%s lastrunid:%u cmdcnt:%d", cmd.GetName(), (isstart ? "START" : "STOP"), query.c_str(), prefix.c_str(), lastprefix.c_str(), lastrunid, fCmdCnt);
 
       for (unsigned n=0; n<builders.size(); ++n) {
          dabc::CmdGetBinary subcmd(builders[n] + "/BnetFileControl", "execute", query);
