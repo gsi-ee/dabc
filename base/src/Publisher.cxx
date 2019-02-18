@@ -595,8 +595,11 @@ dabc::Command dabc::Publisher::CreateExeCmd(const std::string &path, const std::
             if (dblvect.size()==vect.size()) res.SetField(parname, dblvect); else
             res.SetField(parname, vect);
 
+         } else if (parname == "tmout") {
+            double tmout = 10;
+            if (!str_to_double(parvalue.c_str(), &tmout)) tmout = 10;
+            res.SetTimeout(tmout);
          } else {
-
             double ddd;
             long iii;
             if (str_to_lint(parvalue.c_str(), &iii)) res.SetInt(parname, iii); else
