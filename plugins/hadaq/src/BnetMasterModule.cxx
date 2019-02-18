@@ -198,6 +198,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.GetHChild("Builders").SetField("value", bbuild);
       fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
+      // do not try to make new requests when start/stop run command is running
+      if (!fCurrentFileCmd.null()) return true;
+
       if (fCtrlCnt != 0) {
          if (!fCtrlTm.Expired()) return true;
          if (fCtrlCnt > 0) EOUT("Fail to get %d control records", fCtrlCnt);
@@ -399,12 +402,15 @@ void hadaq::BnetMasterModule::BeforeModuleStart()
 void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 {
    dabc::CmdGetNamesList cmd;
+
    dabc::WorkerRef publ = GetPublisher();
 
    publ.Submit(Assign(cmd));
 
-   if (!fCurrentFileCmd.null() && fCurrentFileCmd.IsTimedout())
+   if (!fCurrentFileCmd.null() && fCurrentFileCmd.IsTimedout()) {
+      EOUT("Abort run command %s", fCurrentFileCmd.GetName());
       fCurrentFileCmd.Reply(dabc::cmd_false);
+   }
 
    if (!fInitRunCmd.null() && fInitRunCmd.IsTimedout())
       fInitRunCmd.Reply(dabc::cmd_false);
@@ -443,7 +449,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCmdReplies = 0;
       fCmdQuality = 1.;
 
-      if (!cmd.IsTimeoutSet()) cmd.SetTimeout(10.);
+      if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 45)) {
+         // DOUT0("INCREASE TIMEOUT %4.1f", cmd.TimeTillTimeout());
+         cmd.SetTimeout(45.);
+      }
 
       std::string query, prefix;
       unsigned runid = 0;
