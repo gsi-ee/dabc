@@ -42,7 +42,7 @@
    
    DABC.InvokeCommand = function(itemname, args) {
       var url = itemname + "/execute";
-      if (args!=null) url += "?" + args; 
+      if (args && (typeof args == 'string')) url += "?" + args; 
       
       JSROOT.NewHttpRequest(url,"object").send();
    }
@@ -483,14 +483,14 @@
       var jnode = $(main.node()); 
       
       jnode.find(".bnet_startrun").button().css("display", ctrl_visible).click(function() {
-         DABC.InvokeCommand(itemname+"/StartRun", "prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
+         DABC.InvokeCommand(itemname+"/StartRun", "tmout=60&prefix=" + $(main.node()).find(".bnet_selectrun").selectmenu().val());
       });
       var sm = jnode.find(".bnet_selectrun");
       sm.selectmenu({ width: 150 });
       if (lastprefix) { sm.val(lastprefix); sm.selectmenu("refresh"); }
       if (ctrl_visible == "none") sm.next('.ui-selectmenu-button').hide();
       jnode.find(".bnet_stoprun").button().css("display", ctrl_visible).click(function() { 
-         DABC.InvokeCommand(itemname+"/StopRun");
+         DABC.InvokeCommand(itemname+"/StopRun", "tmout=60" );
       });
       
       jnode.find(".bnet_lastcalibr").button().click(function() {
