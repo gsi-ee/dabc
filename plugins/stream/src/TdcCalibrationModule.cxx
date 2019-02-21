@@ -296,7 +296,7 @@ bool stream::TdcCalibrationModule::retransmit()
          item.SetField("progress", fProgress);
 
          fQuality = 0;
-         if (fProgress > 0) fQuality = 100. + fProgress/100.;
+         if (fProgress > 0) fQuality = 0.7 + fProgress*1e-3;
 
          if (fProgress >= 100) {
             fQuality = 1;

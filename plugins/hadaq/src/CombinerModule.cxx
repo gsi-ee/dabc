@@ -506,7 +506,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             cmd.SetInt("indx",n);
             cmd.SetReceiver(inp.fCalibr);
             dabc::mgr.Submit(Assign(cmd));
-            fCfg[n].fCalibrReq = true;
+            inp.fCalibrReq = true;
          }
 
          std::string hub_state = "", sinfo = "";
