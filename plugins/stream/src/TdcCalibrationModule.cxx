@@ -191,7 +191,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    std::vector<double> tdc_quality;
    std::vector<std::string> status;
 
-   double p0(0), p1(1), worse_quality(1), worse_progress(1);
+   double p0(0), p1(1), worse_quality(1), worse_progress(1e10);
    bool ready(true), explicitmode(true), is_any_progress(false);
    std::string worse_status = "Ready"; // overall status from all TDCs
 
