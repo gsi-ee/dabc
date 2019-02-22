@@ -252,6 +252,7 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
    }
 
    if (!is_any_progress) worse_progress = 0;
+   if (worse_progress > 1.) worse_progress = 1.;
 
    item.SetField("value", worse_status);
    item.SetField("progress", (int)(fabs(worse_progress)*100));
