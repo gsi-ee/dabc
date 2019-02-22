@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<dabc version="2">
+
+<Context host="localhost" name="UserReadoutExample">
+		<Run>
+			<lib value="libDabcMbs.so" />
+      	<lib value="libDabcHttp.so"/>  
+      	<lib value="libDabcUser.so"/>  
+			<logfile value="UserReadout.log" />
+			<!-- <runtime value="20"/> -->
+			<debuglevel value="1"/>
+ 		  <publisher value="true"/>
+		</Run>
+
+		<MemoryPool name="Pool">
+			<BufferSize value="200000" />
+			<NumBuffers value="2000" />
+		</MemoryPool>
+
+		<HttpServer name="http">
+			<port value="8091" />
+		</HttpServer>
+
+		<Module name="Readout" class="dabc::MultiplexerModule">
+			<!-- these parameters will force to create inputs/oputputs of module -->
+			<NumInputs value="1" />
+			<NumOutputs value="1" />			
+         <publish value="$CONTEXT$/Readout"/>
+	      <InputPort name="Input0" url="user://host:12345" urlopt1="size=2000&cratid=1&procid=9&ctrlid=3&debug"/>
+			<OutputPort name="Output0" url="mbs://Stream:6900" />
+			<OutputPort name="Output1" url="lmd://myfile.lmd?maxsize=1500&log=2" />
+	 	   <DataRateName value="InputDataRate"/>
+   		<InputDataRate debug="1" interval="3" width="5"	prec="2" />
+
+		</Module>
+
+	</Context>
+</dabc>
