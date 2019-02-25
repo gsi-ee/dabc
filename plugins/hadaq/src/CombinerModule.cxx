@@ -1329,30 +1329,25 @@ bool hadaq::CombinerModule::BuildEvent()
       fprintf(stderr, "BUILD:%6x\n", buildevid);
 #endif
 
-      if (fBNETrecv && fEvnumDiffStatistics && (diff > 1) && (fBNETNumRecv > 1)) {
+      if (fBNETrecv && fEvnumDiffStatistics && (fBNETNumRecv > 1) && (diff > fBNETbunch)) {
          // check if we really lost these events
+         // int diff0 = diff;
 
-         if (diff > fBNETbunch) {
+         long ncycles = diff / (fBNETbunch * fBNETNumRecv);
 
-            // int diff0 = diff;
+         // substract big cycles
+         diff -= ncycles * (fBNETbunch * fBNETNumRecv);
 
-            long ncycles = diff / (fBNETbunch * fBNETNumRecv);
+         // substract expected gap to previous cycle
+         diff -= fBNETbunch * (fBNETNumRecv - 1);
+         if (diff <= 0) diff = 1;
 
-            // substract big cycles
-            diff -= ncycles * (fBNETbunch * fBNETNumRecv);
+         // add lost events from big cycles
+         diff += ncycles * fBNETbunch;
 
-            // substract expected gap to previous cycle
-            diff -= fBNETbunch * (fBNETNumRecv-1);
-            if (diff <= 0) diff = 0;
-
-            // add lost events from big cycles
-            diff += ncycles*fBNETbunch;
-
-            //if (diff != 1) {
-            //   DOUT0("Large EVENT difference %d bunch %ld ncycles %ld final %d", diff0, fBNETbunch, ncycles, diff);
-            //}
-         }
-
+         // if (diff != 1) {
+         //   DOUT0("Large EVENT difference %d bunch %ld ncycles %ld final %d", diff0, fBNETbunch, ncycles, diff);
+         //}
       }
 
       fLastTrigNr = buildevid;
@@ -1360,7 +1355,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fEventRateCnt+=1;
       // Par(fEventRateName).SetValue(1);
 
-      if (fEvnumDiffStatistics && (diff>1)) {
+      if (fEvnumDiffStatistics && (diff > 1)) {
 
          if (fExtraDebug && fLastDebugTm.Expired(1.)) {
             DOUT1("Events gap %d", diff-1);
