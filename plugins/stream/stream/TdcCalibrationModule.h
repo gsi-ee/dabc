@@ -82,6 +82,10 @@ namespace stream {
 
       int ExecuteCommand(dabc::Command cmd) override;
 
+      void ConfigureNewTDC(hadaq::TdcProcessor *tdc);
+
+      bool MatchTdcId(uint32_t tdcid);
+
    public:
 
       TdcCalibrationModule(const std::string &name, dabc::Command cmd = nullptr);
@@ -96,7 +100,7 @@ namespace stream {
       void BeforeModuleStart() override;
       void AfterModuleStop() override;
 
-      static void SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress = 0, double *res_quality = 0, std::string *res_state = 0);
+      static void SetTRBStatus(dabc::Hierarchy &item, hadaq::TrbProcessor *trb, int *res_progress = nullptr, double *res_quality = nullptr, std::string *res_state = nullptr);
 
    };
 

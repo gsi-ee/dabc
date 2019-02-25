@@ -160,7 +160,7 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    // in AutoTDCMode==0 no data is changed, but also no new buffer are required
    if ((fAutoTdcMode==0) && !fReplace) fReplace = true;
 
-   // one need additional buffers
+   // one need additionals buffers
    if (!fReplace) CreatePoolHandle(dabc::xmlWorkPool);
 
    if (fDebug) CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
@@ -270,6 +270,37 @@ void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::Tr
 }
 
 
+void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
+{
+   tdc->SetCalibrTriggerMask(fCalibrMask);
+
+   for (unsigned n=0;n<fDisabledCh.size();n++)
+      tdc->DisableCalibrationFor(fDisabledCh[n]);
+
+   tdc->SetAutoCalibration(fAutoCalibr);
+
+   if (!fCalibrFile.empty()) {
+      if (fAutoCalibr > 0)
+          tdc->SetWriteCalibration(fCalibrFile.c_str(), true);
+      tdc->LoadCalibration(fCalibrFile.c_str());
+   }
+
+   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
+   if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
+
+   tdc->UseExplicitCalibration();
+
+   fTDCs.emplace_back(tdc->GetID());
+   DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
+}
+
+bool stream::TdcCalibrationModule::MatchTdcId(uint32_t dataid)
+{
+   for (unsigned n=0;n<fTdcMin.size();++n)
+      if ((dataid>=fTdcMin[n]) && (dataid<fTdcMax[n])) return true;
+   return false;
+}
+
 bool stream::TdcCalibrationModule::retransmit()
 {
    // method reads one buffer, calibrate it and send further
@@ -349,6 +380,8 @@ bool stream::TdcCalibrationModule::retransmit()
 
                // special loop over data to create missing TDCs
 
+               std::vector<unsigned> ids;
+
                hadaq::ReadIterator iter0(buf);
                // take only first event - all other ignored
                if (iter0.NextSubeventsBlock()) {
@@ -357,43 +390,28 @@ bool stream::TdcCalibrationModule::retransmit()
                         EOUT("Creating TDCs HUB %u Wrong subevent header len %u maximial %u", fTrbProc->GetID(), iter0.subevnt()->GetPaddedSize(), iter0.rawdata_maxsize());
                         break;
                      }
-                     fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter0.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
+
+                     fTrbProc->CollectMissingTDCs((hadaqs::RawSubevent *)iter0.subevnt(), ids);
+
+                     // fTrbProc->CreateMissingTDC((hadaqs::RawSubevent*)iter0.subevnt(), fTdcMin, fTdcMax, fNumCh, fEdges);
                   }
                }
 
-
-               unsigned num = fTrbProc->NumberOfTDC();
-               for (unsigned indx=0;indx<num;++indx) {
-                  hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
-
-                  tdc->SetCalibrTriggerMask(fCalibrMask);
-
-                  for (unsigned n=0;n<fDisabledCh.size();n++)
-                     tdc->DisableCalibrationFor(fDisabledCh[n]);
-
-                  tdc->SetAutoCalibration(fAutoCalibr);
-
-                  if (!fCalibrFile.empty()) {
-                     if (fAutoCalibr > 0)
-                         tdc->SetWriteCalibration(fCalibrFile.c_str(), true);
-                     tdc->LoadCalibration(fCalibrFile.c_str());
+               unsigned numtdc = 0;
+               for (unsigned indx = 0; indx < ids.size(); ++indx) {
+                  if (MatchTdcId(ids[indx])) {
+                     hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(fTrbProc, ids[indx], fNumCh, fEdges);
+                     numtdc++;
+                     ConfigureNewTDC(tdc);
                   }
-
-                  if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
-                  if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
-
-                  tdc->UseExplicitCalibration();
-
-                  fTDCs.emplace_back(tdc->GetID());
-                  DOUT0("TRB 0x%04x created TDC 0x%04x", (unsigned) fTRB, tdc->GetID());
                }
 
-               if (num > 0) fTrbProc->CreatePerTDCHistos();
+               if (numtdc > 0) fTrbProc->CreatePerTDCHistos();
 
                // set field with TDCs
                fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
 
-               if (num==0) EOUT("No any TDC found");
+               if (numtdc==0) EOUT("No any TDC found");
 
                if (fDebug == 2) {
                   // just start explicit calculations
