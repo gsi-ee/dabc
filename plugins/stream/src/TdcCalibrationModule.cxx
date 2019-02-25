@@ -343,6 +343,10 @@ bool stream::TdcCalibrationModule::retransmit()
             bool auto_create = (fAutoTdcMode > 0) && (fTDCs.size() == 0) && (fTdcMin.size() > 0) && !fDummy;
 
             if (auto_create) {
+
+               // configure calibration mask before creation of TDC
+               fTrbProc->SetCalibrTriggerMask(fCalibrMask);
+
                // special loop over data to create missing TDCs
 
                hadaq::ReadIterator iter0(buf);
@@ -357,22 +361,23 @@ bool stream::TdcCalibrationModule::retransmit()
                   }
                }
 
-               fTrbProc->SetCalibrTriggerMask(fCalibrMask);
-
-               for (unsigned n=0;n<fDisabledCh.size();n++)
-                  fTrbProc->DisableCalibrationFor(fDisabledCh[n]);
-
-               fTrbProc->SetAutoCalibrations(fAutoCalibr);
-
-               if (!fCalibrFile.empty()) {
-                  if (fAutoCalibr > 0)
-                      fTrbProc->SetWriteCalibrations(fCalibrFile.c_str(), true);
-                  fTrbProc->LoadCalibrations(fCalibrFile.c_str());
-               }
 
                unsigned num = fTrbProc->NumberOfTDC();
                for (unsigned indx=0;indx<num;++indx) {
                   hadaq::TdcProcessor *tdc = fTrbProc->GetTDCWithIndex(indx);
+
+                  tdc->SetCalibrTriggerMask(fCalibrMask);
+
+                  for (unsigned n=0;n<fDisabledCh.size();n++)
+                     tdc->DisableCalibrationFor(fDisabledCh[n]);
+
+                  tdc->SetAutoCalibration(fAutoCalibr);
+
+                  if (!fCalibrFile.empty()) {
+                     if (fAutoCalibr > 0)
+                         tdc->SetWriteCalibration(fCalibrFile.c_str(), true);
+                     tdc->LoadCalibration(fCalibrFile.c_str());
+                  }
 
                   if (fAutoTdcMode==1) tdc->SetUseLinear(); // force linear
                   if (fAutoToTRange==1) tdc->SetToTRange(20., 30., 60.); // special mode for DiRICH
