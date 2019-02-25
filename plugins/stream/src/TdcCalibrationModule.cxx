@@ -165,6 +165,9 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
 
    if (fDebug) CreatePar("DataRate").SetRatemeter(false, 3.).SetUnits("MB");
 
+   if (fAutoTdcMode > 0)
+      CreateTimer("RecheckTimer", 5.);
+
    DOUT0("TdcCalibrationModule dummy %s autotdc %d histfill %d replace %s", DBOOL(fDummy), fAutoCalibr, hfill, DBOOL(fReplace));
 }
 
@@ -178,6 +181,11 @@ stream::TdcCalibrationModule::~TdcCalibrationModule()
    if (fOwnProcMgr) delete fProcMgr;
    fOwnProcMgr = false;
    fProcMgr = nullptr;
+}
+
+void stream::TdcCalibrationModule::ProcessTimerEvent(unsigned)
+{
+   fRecheckTdcs = (fAutoTdcMode > 0);
 }
 
 void stream::TdcCalibrationModule::SetTRBStatus(dabc::Hierarchy& item, hadaq::TrbProcessor* trb, int *res_progress, double *res_quality, std::string *res_state)
@@ -296,6 +304,7 @@ void stream::TdcCalibrationModule::ConfigureNewTDC(hadaq::TdcProcessor *tdc)
 
 bool stream::TdcCalibrationModule::MatchTdcId(uint32_t dataid)
 {
+   if (dataid == 0x5555) return false;
    for (unsigned n=0;n<fTdcMin.size();++n)
       if ((dataid>=fTdcMin[n]) && (dataid<fTdcMax[n])) return true;
    return false;
@@ -419,6 +428,8 @@ bool stream::TdcCalibrationModule::retransmit()
                   cmd.SetStr("mode", "start");
                   ExecuteCommand(cmd);
                }
+
+               fRecheckTdcs = false;
             }
 
             // grd.Next("buf");
@@ -433,6 +444,8 @@ bool stream::TdcCalibrationModule::retransmit()
                tgt = (unsigned char*) resbuf.SegmentPtr();
                tgtlen = resbuf.SegmentSize();
             }
+
+            std::vector<unsigned> newids;
 
             // grd.Next("main");
 
@@ -466,7 +479,7 @@ bool stream::TdcCalibrationModule::retransmit()
                         exit(7);
                      }
 
-                     sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0));
+                     sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0), fRecheckTdcs ? &newids : nullptr);
                   }
 
                   if (tgt) {
@@ -474,6 +487,25 @@ bool stream::TdcCalibrationModule::retransmit()
                      reslen += sublen;
                   }
                }
+
+               if (fRecheckTdcs) {
+                  fRecheckTdcs = false;
+                  unsigned numtdc = 0;
+                  for (unsigned indx = 0; indx < newids.size(); ++indx) {
+                     if (MatchTdcId(newids[indx])) {
+                        hadaq::TdcProcessor *tdc = new hadaq::TdcProcessor(fTrbProc, newids[indx], fNumCh, fEdges);
+                        numtdc++;
+                        ConfigureNewTDC(tdc);
+                     }
+                  }
+                  if (numtdc > 0) {
+                     fWorkerHierarchy.GetHChild("Status").SetField("tdc", fTDCs);
+                     fTrbProc->ClearFastTDCVector();
+                     // FIXME: not yet works
+                     // fTrbProc->CreatePerTDCHistos();
+                  }
+               }
+
             }
 
             // grd.Next("finish");

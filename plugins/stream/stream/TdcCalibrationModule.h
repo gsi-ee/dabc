@@ -75,6 +75,7 @@ namespace stream {
       std::vector<uint64_t> fTdcMax;          ///< configured max TDC id
       int fNumCh{33};                         ///< configured number of channel
       int fEdges{1};                          ///< configured edges
+      bool fRecheckTdcs{false};               ///< check for missing tdcs, done once 5 sec
 
       // dabc::Profiler fProfiler;               ///< profiler of build event performance
 
@@ -90,6 +91,8 @@ namespace stream {
 
       TdcCalibrationModule(const std::string &name, dabc::Command cmd = nullptr);
       virtual ~TdcCalibrationModule();
+
+      void ProcessTimerEvent(unsigned) override;
 
       bool ProcessBuffer(unsigned) override { return retransmit(); }
 
