@@ -15,7 +15,7 @@ my $opt_help = 0;
 my $opt_prefix = "";
 my $opt_startDate;
 my $opt_endDate;
-my $opt_arch = "jul18";
+my $opt_arch = "mar19";
 my $opt_output = "tape";  # tape|disk
 my $opt_rm;
 my $opt_ltsmserv = "lxltsm01";
