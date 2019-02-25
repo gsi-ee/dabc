@@ -441,7 +441,14 @@ bool stream::TdcCalibrationModule::retransmit()
                      iter.subevnt()->SetId(fTRB);
                      sublen = fTrbProc->EmulateTransform((hadaqs::RawSubevent*)iter.subevnt(), fDummyCounter);
                   } else {
-                     sublen = fTrbProc->TransformSubEvent((hadaqs::RawSubevent*)iter.subevnt(), tgt, tgtlen - reslen, (fAutoTdcMode==0));
+                     hadaqs::RawSubevent *sub = (hadaqs::RawSubevent *) iter.subevnt();
+
+                     if ((sub->Alignment()!=4) || !sub->IsSwapped()) {
+                        EOUT("UNEXPECTED TRB DATA FORMAT align %u swap %s - ABORT!!!\n", sub->Alignment(), DBOOL(sub->IsSwapped()));
+                        exit(7);
+                     }
+
+                     sublen = fTrbProc->TransformSubEvent(sub, tgt, tgtlen - reslen, (fAutoTdcMode==0));
                   }
 
                   if (tgt) {
