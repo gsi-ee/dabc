@@ -24,7 +24,7 @@ my $pname = "dabc_exe.head";
 my @out_list = `ps -C $pname`;
 &killKeyboardInterrupt(\@out_list, $pname);
 
-$pname = "dabc_exe.275";
+$pname = "dabc_exe.mar19";
 @out_list = `ps -C $pname`;
 &killKeyboardInterrupt(\@out_list, $pname);
 
