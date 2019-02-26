@@ -295,10 +295,13 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 
    int res = system(args.c_str());
 
-   system("rm -f h.bin");
-
-   if (res!=0)
-      EOUT("Fail to convert DABC histograms in ROOT file, check h.bin file");
+   if (res!=0) {
+      EOUT("Fail to convert DABC histograms in ROOT file, check h-date-time.bin file");
+      args = dabc::format("mv h.bin h-%s-%s.bin", dt.OnlyDateAsString("-").c_str(), dt.OnlyTimeAsString("-").c_str());
+      system(args.c_str());
+   } else {
+      system("rm -f h.bin");
+   }
 
    return res == 0;
 }
