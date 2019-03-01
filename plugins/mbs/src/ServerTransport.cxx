@@ -173,8 +173,6 @@ void mbs::ServerOutputAddon::OnRecvCompleted()
       case oSendingLastEvent:
       case oSendingBuffer:
          fHasExtraRequest = true;
-         // FIXME: it is only for debugging, remove it later
-         EOUT("Got extra request at state %d", fState);
          break;
       default:
          EOUT("Get request at wrong state %d", fState);
