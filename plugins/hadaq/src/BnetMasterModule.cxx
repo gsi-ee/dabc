@@ -240,8 +240,21 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          fCtrlCnt++;
       }
 
-      if (fCtrlCnt == 0)
+      if (fCtrlCnt == 0) {
+         fCtrlStateQuality = 0.;
+         fCtrlStateName = "NoNodes";
+      } else if (binp.size()==0) {
+         fCtrlStateQuality = 0.;
+         fCtrlStateName = "NoInputs";
+      } else if (bbuild.size() == 0) {
+         fCtrlStateQuality = 0.;
+         fCtrlStateName = "NoBuilders";
+      }
+
+      if (!fCtrlStateName.empty()) {
          SetParValue("State", "NoNodes");
+         SetParValue("Quality", fCtrlStateQuality);
+      }
 
       return true;
 
