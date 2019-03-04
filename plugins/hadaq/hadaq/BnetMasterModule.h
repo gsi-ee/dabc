@@ -43,6 +43,8 @@ namespace hadaq {
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
          int           fCtrlCnt;    ///< how many control replies are awaited
+         bool          fCtrlError;  ///< if there are error during current communication loop
+         int           fCtrlErrorCnt; ///< number of consequent control errors
          double        fCtrlStateQuality;  ///< <0.3 error, <0.7 warning, more is ok
          std::string   fCtrlStateName; ///< current name
          int           fCtrlInpNodesCnt; ///< count of recognized input nodes

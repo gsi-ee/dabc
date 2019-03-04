@@ -39,6 +39,8 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fCtrlId = 1;
    fCtrlTm.GetNow();
    fCtrlCnt = 0;
+   fCtrlError = false;
+   fCtrlErrorCnt = 0;
 
    fWorkerHierarchy.Create("Bnet");
 
@@ -203,11 +205,17 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if (fCtrlCnt != 0) {
          if (!fCtrlTm.Expired()) return true;
-         if (fCtrlCnt > 0) EOUT("Fail to get %d control records", fCtrlCnt);
+         if (fCtrlCnt > 0) { fCtrlError = true; EOUT("Fail to get %d control records", fCtrlCnt); }
       }
+
+      if (fCtrlError)
+         fCtrlErrorCnt++;
+      else
+         fCtrlErrorCnt = 0;
 
       fCtrlCnt = 0;
       fCtrlId++;
+      fCtrlError = false;
       fCtrlTm.GetNow(3.);
 
       fCtrlSzLimit = false;
@@ -229,6 +237,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       for (unsigned n=0;n<bbuild.size();++n) {
          dabc::CmdGetBinary subcmd(bbuild[n], "hierarchy", "childs");
          subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
+         subcmd.SetTimeout(10);
          publ.Submit(Assign(subcmd));
          fCtrlCnt++;
       }
@@ -236,6 +245,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       for (unsigned n=0;n<binp.size();++n) {
          dabc::CmdGetBinary subcmd(binp[n], "hierarchy", "childs");
          subcmd.SetInt("#bnet_ctrl_id", fCtrlId);
+         subcmd.SetTimeout(10);
          publ.Submit(Assign(subcmd));
          fCtrlCnt++;
       }
@@ -249,6 +259,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       } else if (bbuild.size() == 0) {
          fCtrlStateQuality = 0.;
          fCtrlStateName = "NoBuilders";
+      } else if (fCtrlErrorCnt > 5) {
+         fCtrlStateQuality = 0.1;
+         fCtrlStateName = "LostControl";
       }
 
       if (!fCtrlStateName.empty()) {
@@ -285,6 +298,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       // this commands used to send control requests
 
       fCtrlCnt--;
+
+      if (!cmd.GetResult() || cmd.IsTimedout()) fCtrlError = true;
 
       dabc::Hierarchy h = dabc::CmdGetNamesList::GetResNamesList(cmd);
       dabc::Iterator iter(h);
