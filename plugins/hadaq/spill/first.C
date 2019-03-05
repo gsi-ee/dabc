@@ -26,7 +26,10 @@ void first()
    proc->SetSpillDetect(0, 2, 3);
    
    // maximal spill length in seconds
-   proc->SetMaxSpillLength(10.);
+   proc->SetMaxSpillLength(20.);
+
+
+
 
   // set channels lookup table
   // 1. channel id
@@ -102,6 +105,11 @@ void first()
    proc->SetChannelsLookup3(31,216 );
 
 
+   /** Set channel id on third TDC, which should detect spill-start signal */
+   proc->SetSpillChannel(31);
+
+   /** Set special channel with trigger info */
+   proc->SetTriggerChannel(25);
                             
    // create ROOT file store
    // base::ProcMgr::instance()->CreateStore("td.root");
