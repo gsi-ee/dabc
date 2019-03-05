@@ -31,7 +31,8 @@ stream::DabcProcMgr::DabcProcMgr() :
    fWorkingFlag(true),
    fStore(),
    fStoreInfo("no store created"),
-   fSortOrder(true)
+   fSortOrder(true),
+   fDefaultFill(3)
 {
 }
 
@@ -148,7 +149,7 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
    if (!xtitle.empty()) h.SetField("xtitle", xtitle);
    if (!ytitle.empty()) h.SetField("ytitle", ytitle);
    if (xlbls.length()>0) h.SetField("xlabels", xlbls);
-   h.SetField("fillcolor", fillcolor.empty() ? 3 : std::atoi(fillcolor.c_str()));
+   h.SetField("fillcolor", fillcolor.empty() ? fDefaultFill : std::atoi(fillcolor.c_str()));
    if (drawopt.length() > 0) h.SetField("drawopt", drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));

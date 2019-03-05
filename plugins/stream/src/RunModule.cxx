@@ -42,9 +42,9 @@
 stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fParallel(0),
-   fInitFunc(0),
+   fInitFunc(nullptr),
    fStopMode(0),
-   fProcMgr(0),
+   fProcMgr(nullptr),
    fAsf(),
    fFileUrl(),
    fDidMerge(false),
@@ -54,12 +54,15 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 {
    fParallel = Cfg("parallel", cmd).AsInt(0);
 
+   fDefaultFill = Cfg("fillcolor", cmd).AsInt(3);
+
    // we need one input and no outputs
    EnsurePorts(1, fParallel<0 ? 0 : fParallel);
 
    fInitFunc = cmd.GetPtr("initfunc");
 
    fFileUrl = cmd.GetStr("fileurl");
+
 
    if ((fParallel>=0) && (fInitFunc==0)) {
       // first generate and load init func
@@ -161,7 +164,7 @@ stream::RunModule::~RunModule()
 {
    if (fProcMgr) {
       delete fProcMgr;
-      fProcMgr = 0;
+      fProcMgr = nullptr;
    }
 }
 
@@ -177,6 +180,7 @@ void stream::RunModule::OnThreadAssigned()
       entryfunc* func = (entryfunc*) fInitFunc;
 
       fProcMgr = new DabcProcMgr;
+      fProcMgr->SetDefaultFill(fDefaultFill);
       fProcMgr->SetTop(fWorkerHierarchy, fParallel==0);
 
       func();

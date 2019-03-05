@@ -33,16 +33,17 @@ namespace stream {
    class RunModule : public dabc::ModuleAsync {
 
    protected:
-      int          fParallel; // how many parallel processes to start
-      void        *fInitFunc; // init function
-      int          fStopMode; // for central module waiting that others finish
+      int          fParallel; /// how many parallel processes to start
+      void        *fInitFunc; /// init function
+      int          fStopMode; /// for central module waiting that others finish
       DabcProcMgr* fProcMgr;
       std::string  fAsf;
-      std::string  fFileUrl;  //!< configured file URL - module used to produce output
+      std::string  fFileUrl;  ///<! configured file URL - module used to produce output
       bool         fDidMerge;
       long unsigned fTotalSize;
       long unsigned fTotalEvnts;
       long unsigned fTotalOutEvnts;
+      int           fDefaultFill;   ///<! default fill color for 1-D histograms
 
       virtual int ExecuteCommand(dabc::Command cmd);
 

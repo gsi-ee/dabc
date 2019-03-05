@@ -31,8 +31,9 @@ namespace stream {
          bool fWorkingFlag;
 
          dabc::LocalWorkerRef fStore;
-         std::string fStoreInfo;  //!< last info about storage
-         bool fSortOrder; //!< sorting order
+         std::string fStoreInfo;   ///<! last info about storage
+         bool fSortOrder;          ///<! sorting order
+         int  fDefaultFill;        ///<! default fill color
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
@@ -44,6 +45,8 @@ namespace stream {
          virtual ~DabcProcMgr();
 
          void SetTop(dabc::Hierarchy& top, bool withcmds = false);
+
+         void SetDefaultFill(int fillcol = 3) { fDefaultFill = fillcol; }
 
          bool IsWorking() const { return fWorkingFlag; }
 

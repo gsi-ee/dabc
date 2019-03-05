@@ -120,10 +120,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
      </Module>
 
-
      <Module name="Run" class="stream::RunModule">
        <!--asf value="file.root"/-->
        <parallel value="0"/>
+       <fillcolor value="0"/>
        <InputPort name="Input0" url="Combiner/Output0"/>
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
