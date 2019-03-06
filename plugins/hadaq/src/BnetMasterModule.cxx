@@ -341,7 +341,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
                   fCtrlRunId = runid;
                   fCtrlRunPrefix = runprefix;
                } else if ((fCtrlRunId != runid) || (fCtrlRunPrefix != runprefix)) {
-                  if (fCtrlStateQuality>0) {
+                  if ((fCtrlStateQuality > 0) && fNewRunTm.Expired()) {
                      fCtrlStateName = "RunMismatch";
                      fCtrlStateQuality = 0;
                   }
@@ -480,9 +480,9 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCmdReplies = 0;
       fCmdQuality = 1.;
 
-      if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 45)) {
-         DOUT0("INCREASE cmd %s TIMEOUT from %4.1f to 45 sec", cmd.GetName(), cmd.TimeTillTimeout());
-         cmd.SetTimeout(45.);
+      if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 40)) {
+         DOUT0("INCREASE cmd %s TIMEOUT from %4.1f to 40 sec", cmd.GetName(), cmd.TimeTillTimeout());
+         cmd.SetTimeout(40.);
       }
 
       double main_tmout = cmd.TimeTillTimeout() - 1;
