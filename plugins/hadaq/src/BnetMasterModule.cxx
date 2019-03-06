@@ -37,10 +37,12 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fCmdQuality = 1.;
 
    fCtrlId = 1;
+   fNewRunTm.GetNow();
    fCtrlTm.GetNow();
    fCtrlCnt = 0;
    fCtrlError = false;
    fCtrlErrorCnt = 0;
+   fCtrlSzLimit = 0; // no need to do something
 
    fWorkerHierarchy.Create("Bnet");
 
@@ -200,9 +202,6 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fWorkerHierarchy.GetHChild("Builders").SetField("value", bbuild);
       fWorkerHierarchy.GetHChild("Builders").SetField("nodes", nodes_build);
 
-      // do not try to make new requests when start/stop run command is running
-      if (!fCurrentFileCmd.null()) return true;
-
       if (fCtrlCnt != 0) {
          if (!fCtrlTm.Expired()) return true;
          if (fCtrlCnt > 0) { fCtrlError = true; EOUT("Fail to get %d control records", fCtrlCnt); }
@@ -216,9 +215,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlCnt = 0;
       fCtrlId++;
       fCtrlError = false;
-      fCtrlTm.GetNow(3.);
+      fCtrlTm.GetNow(3.); // use 3 sec timeout for control requests
 
-      fCtrlSzLimit = false;
       fCtrlStateQuality = 1;
       fCtrlStateName = "";
       fCtrlData = 0.;
@@ -330,9 +328,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          }
 
          if (is_builder) {
-            // check maximal size
-            if ((fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
-               fCtrlSzLimit = true;
+            // check maximal size of the run
+            if (fNewRunTm.Expired() && (fCtrlSzLimit > 0) && (fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
+               fCtrlSzLimit = 2;
 
             // check current runid
             unsigned runid = item.GetField("runid").AsUInt();
@@ -402,19 +400,17 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          fWorkerHierarchy.GetHChild("LastPrefix").SetField("value", fCtrlRunPrefix);
 
-         DOUT3("BNET control sequence ready state %s limit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit));
+         DOUT3("BNET control sequence ready state %s overlimit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit>1));
 
          Par("DataRate").SetValue(fCtrlData);
          Par("EventsRate").SetValue(fCtrlEvents);
          Par("LostRate").SetValue(fCtrlLost);
 
-         if (fControl && fCtrlSzLimit && fCurrentFileCmd.null()) {
+         if (fControl && (fCtrlSzLimit > 1) && fCurrentFileCmd.null()) {
+            fCtrlSzLimit = 0;
             // this is a place, where new run automatically started
             dabc::Command newrun("StartRun");
-            newrun.SetTimeout(20);
-            fCtrlCnt = -1;
-            fCtrlId++;
-            fCtrlTm.GetNow(7.); // prevent to make next request very fast
+            newrun.SetTimeout(45);
             Submit(newrun);
          }
       }
@@ -436,7 +432,7 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
    publ.Submit(Assign(cmd));
 
    if (!fCurrentFileCmd.null() && fCurrentFileCmd.IsTimedout()) {
-      EOUT("Abort run command %s", fCurrentFileCmd.GetName());
+      EOUT("Abort RUN command %s", fCurrentFileCmd.GetName());
       fCurrentFileCmd.Reply(dabc::cmd_false);
    }
 
@@ -464,7 +460,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          return dabc::cmd_postponed;
       }
 
-      if (!fCurrentFileCmd.null()) fCurrentFileCmd.Reply(dabc::cmd_false);
+      if (!fCurrentFileCmd.null()) {
+         EOUT("Abort previous run command %s", fCurrentFileCmd.GetName());
+         fCurrentFileCmd.Reply(dabc::cmd_false);
+      }
 
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
       if (builders.size() == 0) return dabc::cmd_true;
@@ -473,6 +472,10 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       if (publ.null()) return dabc::cmd_false;
 
       fCurrentFileCmd = cmd;
+      if (isstart) {
+         fCtrlSzLimit = 1; // allow to control size limits
+         fNewRunTm.GetNow(5); // do not check new run earlier than after 5 seconds
+      }
       fCmdCnt++;
       fCmdReplies = 0;
       fCmdQuality = 1.;

@@ -42,6 +42,7 @@ namespace hadaq {
          double        fCmdQuality;  ///< current command quality, used when creating calibration
          int           fCtrlId;     ///< counter for control requests
          dabc::TimeStamp fCtrlTm;   ///< time when last control count was send
+         dabc::TimeStamp fNewRunTm;   ///< time when last control count was send
          int           fCtrlCnt;    ///< how many control replies are awaited
          bool          fCtrlError;  ///< if there are error during current communication loop
          int           fCtrlErrorCnt; ///< number of consequent control errors
@@ -51,7 +52,7 @@ namespace hadaq {
          int           fCtrlInpNodesExpect; ///< count of expected input nodes
          int           fCtrlBldNodesCnt; ///< count of recognized builder nodes
          int           fCtrlBldNodesExpect; ///< count of expected builder nodes
-         bool          fCtrlSzLimit; ///< when true, size limit was exceed
+         int           fCtrlSzLimit; ///< 0 - do nothing, 1 - start checking (after start run), 2 - exced
          double        fCtrlData;    ///< accumulated data rate
          double        fCtrlEvents;   ///< accumulated events rate
          double        fCtrlLost;     ///< accumulated lost rate
