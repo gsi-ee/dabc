@@ -78,7 +78,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("_hidden", "true");
 
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
-   CreatePar("Quality").SetValue("0.5");
+   CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("0.5");
 
    CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
    CreatePar("RunIdStr").SetFld(dabc::prop_kind, "Text").SetValue("--");
@@ -442,8 +442,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
             Par("LostRate").SetValue(fCtrlLost);
          }
 
-         Par("TotalEvents").SetValue(fTotalEvents);
-         Par("TotalLost").SetValue(fTotalLost);
+         SetParValue("TotalEvents", fTotalEvents);
+         SetParValue("TotalLost", fTotalLost);
 
          if (fControl && (fCtrlSzLimit > 1) && fCurrentFileCmd.null()) {
             fCtrlSzLimit = 0;
