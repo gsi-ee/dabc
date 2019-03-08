@@ -44,6 +44,10 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    fCtrlErrorCnt = 0;
    fCtrlSzLimit = 0; // no need to do something
 
+   // more fine measurement of events rate
+   fCurrentLost = fCurrentEvents = fCurrentData = fTotalLost = fTotalEvents = fTotalData = 0;
+   fLastRateTm.GetNow();
+
    fWorkerHierarchy.Create("Bnet");
 
    fWorkerHierarchy.SetField("_player","DABC.BnetControl");
@@ -74,7 +78,7 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("_hidden", "true");
 
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
-   CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("0.5");
+   CreatePar("Quality").SetValue("0.5");
 
    CreatePar("RunId").SetFld(dabc::prop_kind, "Text").SetValue("--");
    CreatePar("RunIdStr").SetFld(dabc::prop_kind, "Text").SetValue("--");
@@ -83,6 +87,9 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    CreatePar("DataRate").SetUnits("MB").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
    CreatePar("EventsRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
    CreatePar("LostRate").SetUnits("Ev").SetFld(dabc::prop_kind,"rate").SetFld("#record", true);
+
+   CreatePar("TotalEvents").SetValue("0");
+   CreatePar("TotalLost").SetValue("0");
 
    if (fControl) {
       CreateCmdDef("StartRun").AddArg("prefix", "string", true, "run")
@@ -230,6 +237,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
       fCtrlRunId = 0;
       fCtrlRunPrefix = "";
 
+      fCurrentLost = fCurrentEvents = fCurrentData = 0;
+
       dabc::WorkerRef publ = GetPublisher();
 
       for (unsigned n=0;n<bbuild.size();++n) {
@@ -328,6 +337,12 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          }
 
          if (is_builder) {
+            fCurrentLost += item.GetField("discard_events").AsUInt();
+            fCurrentEvents += item.GetField("build_events").AsUInt();
+            fCurrentData += item.GetField("build_data").AsUInt();
+
+            if (!fTotalData) DOUT0("FIRST TIME GET DATA %d %lu", fCtrlCnt, item.GetField("build_data").AsUInt());
+
             // check maximal size of the run
             if (fNewRunTm.Expired() && (fCtrlSzLimit > 0) && (fMaxRunSize > 0) && (item.GetField("runsize").AsUInt() > fMaxRunSize*1e6))
                fCtrlSzLimit = 2;
@@ -368,7 +383,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          // DOUT0("BNET reply from %s state %s sz %u", item.GetField("_bnet").AsStr().c_str(), item.GetField("state").AsStr().c_str(), item.GetField("runsize").AsUInt());
       }
 
-      if (fCtrlCnt==0) {
+      if (fCtrlCnt == 0) {
          if (fCtrlStateName.empty()) {
             fCtrlStateName = "Ready";
             fCtrlStateQuality = 1.;
@@ -402,9 +417,33 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          DOUT3("BNET control sequence ready state %s overlimit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit>1));
 
-         Par("DataRate").SetValue(fCtrlData);
-         Par("EventsRate").SetValue(fCtrlEvents);
-         Par("LostRate").SetValue(fCtrlLost);
+         bool do_set = true;
+
+         if ((fTotalEvents != 0) || (fTotalLost != 0)) {
+            double spent = fLastRateTm.SpentTillNow();
+            spent = (spent > 1e-3) ? 1./spent : 0.;
+
+            fCtrlLost = (fCurrentLost-fTotalLost)*spent;
+            fCtrlEvents = (fCurrentEvents-fTotalEvents)*spent;
+            fCtrlData = (fCurrentData-fTotalData)*spent/1024./1024.;
+         } else {
+            do_set = false;
+         }
+
+         fTotalLost = fCurrentLost;
+         fTotalEvents = fCurrentEvents;
+         fTotalData = fCurrentData;
+
+         fLastRateTm.GetNow();
+
+         if (do_set) {
+            Par("DataRate").SetValue(fCtrlData);
+            Par("EventsRate").SetValue(fCtrlEvents);
+            Par("LostRate").SetValue(fCtrlLost);
+         }
+
+         Par("TotalEvents").SetValue(fTotalEvents);
+         Par("TotalLost").SetValue(fTotalLost);
 
          if (fControl && (fCtrlSzLimit > 1) && fCurrentFileCmd.null()) {
             fCtrlSzLimit = 0;

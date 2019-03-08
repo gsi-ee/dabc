@@ -56,6 +56,13 @@ namespace hadaq {
          double        fCtrlData;    ///< accumulated data rate
          double        fCtrlEvents;   ///< accumulated events rate
          double        fCtrlLost;     ///< accumulated lost rate
+         uint64_t      fCurrentLost;   ///< current value
+         uint64_t      fCurrentEvents; ///< current value
+         uint64_t      fCurrentData; ///< current value
+         uint64_t      fTotalLost;    ///< last value
+         uint64_t      fTotalEvents;  ///< last value
+         uint64_t      fTotalData;  ///< last value
+         dabc::TimeStamp fLastRateTm;   ///< last time ratemeter was updated
          unsigned      fCtrlRunId;    ///< received run id from builders
          std::string   fCtrlRunPrefix; ///< received run prefix from builders
          std::vector<std::string> fLastBuilders; ///< last list of builder nodes

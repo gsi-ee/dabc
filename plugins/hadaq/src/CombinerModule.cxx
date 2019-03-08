@@ -169,7 +169,12 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fWorkerHierarchy.SetField("_player", "DABC.HadaqDAQControl");
 
    if (fBNETsend) fWorkerHierarchy.SetField("_bnet", "sender");
-   if (fBNETrecv) fWorkerHierarchy.SetField("_bnet", "receiver");
+   if (fBNETrecv) {
+      fWorkerHierarchy.SetField("_bnet", "receiver");
+      fWorkerHierarchy.SetField("build_events", 0);
+      fWorkerHierarchy.SetField("build_data", 0);
+      fWorkerHierarchy.SetField("discard_events", 0);
+   }
 
    if (fBNETsend || fBNETrecv) {
       CreateTimer("BnetTimer", 1.); // check BNET values
@@ -473,6 +478,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
       fWorkerHierarchy.SetField("queues", qsz);
       fWorkerHierarchy.SetField("ninputs", NumInputs());
+      fWorkerHierarchy.SetField("build_events", fTotalBuildEvents);
+      fWorkerHierarchy.SetField("build_data", fTotalRecvBytes);
+      fWorkerHierarchy.SetField("discard_events", fTotalDiscEvents);
    }
 
    if (fBNETsend) {
