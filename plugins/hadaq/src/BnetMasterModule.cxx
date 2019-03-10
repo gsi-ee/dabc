@@ -285,7 +285,7 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
       if (!fCurrentFileCmd.null() && (cmd.GetInt("#bnet_cnt") == fCmdCnt)) {
 
-         bool stop_calibr = fCurrentFileCmd.IsName("StopRun") && (fWorkerHierarchy.GetHChild("LastPrefix").GetField("value").AsStr()=="tc");
+         bool stop_calibr = fCurrentFileCmd.IsName("StopRun") && fCurrentFileCmd.GetBool("#calibr_run");
 
          if (stop_calibr && cmd.HasField("quality"))
             if (cmd.GetDouble("quality") < fCmdQuality)
@@ -573,6 +573,8 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       }
 
       if (!query.empty()) {
+         fCurrentFileCmd.SetBool("#calibr_run", true);
+
          // trigger calibration start for all TDCs
          std::vector<std::string> inputs = fWorkerHierarchy.GetHChild("Inputs").GetField("value").AsStrVect();
 
