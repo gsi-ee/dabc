@@ -151,6 +151,7 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
    fBrowser = Cfg("Browser", cmd).AsStr("");
    fDrawItem = Cfg("DrawItem", cmd).AsStr("");
    fDrawOpt = Cfg("DrawOpt", cmd).AsStr("");
+   fMonitoring = Cfg("Monitoring", cmd).AsInt(0);
 }
 
 http::Server::~Server()
@@ -350,6 +351,8 @@ bool http::Server::Process(const char* uri, const char* _query,
          cmd.AddHeader("_drawitem", fDrawItem);
          cmd.AddHeader("_drawopt", fDrawOpt);
       }
+      if (fMonitoring >= 100)
+         cmd.AddHeader("_monitoring", std::to_string(fMonitoring), false);
 
       dabc::WorkerRef wrk = GetPublisher();
 

@@ -24,6 +24,7 @@
        <Browser value="off"/>
        <DrawItem value="Master/BNET"/>
        <DrawOpt value=""/>
+       <Monitoring value="1000"/>
     </HttpServer>
 
     <Publisher name="publ">

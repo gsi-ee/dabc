@@ -57,6 +57,7 @@ namespace http {
          std::string fBrowser;     ///< _browser value in h.json
          std::string fDrawItem;    ///< _drawitem value in h.json, only for top page
          std::string fDrawOpt;     ///< _drawopt value in h.json, only for top page
+         int         fMonitoring;  ///< _monitoring value in h.json, only for top page
 
          /** Check if relative path below current dir - prevents file access to top directories via http */
          static bool VerifyFilePath(const char* fname);
