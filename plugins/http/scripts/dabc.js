@@ -378,7 +378,7 @@
       var html = "<div style='overflow:hidden;max-height:100%;max-width:100%'>";
       
       html += "<fieldset style='margin:5px'>" +
-              "<legend class='bnet_state'>Run control</legend>" +
+              "<legend class='bnet_state' style='font-size:200%'>Run control</legend>" +
               "<button class='bnet_startrun' title='Start run, write files on all event builders'>Start</button>" +
               "<select class='bnet_selectrun'>" +
               "<option>NO_FILE</option>" +
