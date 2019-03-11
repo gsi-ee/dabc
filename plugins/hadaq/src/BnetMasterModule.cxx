@@ -433,8 +433,9 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
          fTotalLost = fCurrentLost;
          fTotalEvents = fCurrentEvents;
          fTotalData = fCurrentData;
-
          fLastRateTm.GetNow();
+
+         if ((fCtrlEvents < 0) || (fCtrlEvents > 1e6) || (fCtrlLost<0) || (fCtrlLost > 1e6)) do_set = false;
 
          if (do_set) {
             Par("DataRate").SetValue(fCtrlData);
