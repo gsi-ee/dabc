@@ -985,6 +985,9 @@
 
       for (var k in obj) delete obj[k];  // delete all object keys
       
+      if (!x) x = [];
+      if (!y) y = [];
+      
       obj._typename = 'TGraph';
       JSROOT.Create('TGraph', obj);
       obj.fHistogram = JSROOT.CreateTH1(x.length);
@@ -992,7 +995,7 @@
       var _title = item._title || item.fullitemname;
       
       JSROOT.extend(obj, { fBits: 0x3000408, fName: item._name, fTitle: _title, 
-                           fX:x, fY:y, fNpoints: x.length,
+                           fX: x, fY: y, fNpoints: x.length,
                            fLineColor: 2, fLineWidth: 2 });
       
       var xrange = x[x.length-1] - x[0];
@@ -1001,6 +1004,8 @@
       obj.fHistogram.fXaxis.fXmax = x[x.length-1] + xrange*0.03;
       
       var ymin = Math.min.apply(null,y), ymax = Math.max.apply(null,y);  
+      
+      if (!ymin) ymin = 0; if (!ymax) ymax = 0;
       
       obj.fHistogram.fYaxis.fXmin = ymin - 0.05 * (ymax-ymin);
       obj.fHistogram.fYaxis.fXmax = ymax + 0.05 * (ymax-ymin);
