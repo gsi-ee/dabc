@@ -417,25 +417,23 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
          DOUT3("BNET control sequence ready state %s overlimit %s", fCtrlStateName.c_str(), DBOOL(fCtrlSzLimit>1));
 
-         bool do_set = true;
+         bool do_set = (fTotalEvents || fTotalLost) && (fCurrentLost >= fTotalLost) && (fCurrentEvents >= fTotalEvents) && (fCurrentData >= fTotalData);
 
-         if ((fTotalEvents != 0) || (fTotalLost != 0)) {
+         if (do_set) {
             double spent = fLastRateTm.SpentTillNow();
             spent = (spent > 1e-3) ? 1./spent : 0.;
 
             fCtrlLost = (fCurrentLost-fTotalLost)*spent;
             fCtrlEvents = (fCurrentEvents-fTotalEvents)*spent;
             fCtrlData = (fCurrentData-fTotalData)*spent/1024./1024.;
-         } else {
-            do_set = false;
+
+            if ((fCtrlEvents > 1e9) || (fCtrlLost > 1e9) || (fCtrlData > 1e9)) do_set = false;
          }
 
          fTotalLost = fCurrentLost;
          fTotalEvents = fCurrentEvents;
          fTotalData = fCurrentData;
          fLastRateTm.GetNow();
-
-         if ((fCtrlEvents < 0) || (fCtrlEvents > 1e6) || (fCtrlLost<0) || (fCtrlLost > 1e6)) do_set = false;
 
          if (do_set) {
             Par("DataRate").SetValue(fCtrlData);
