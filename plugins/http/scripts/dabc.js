@@ -336,8 +336,6 @@
    DABC.BnetPainter.prototype = Object.create(JSROOT.TBasePainter.prototype);
    
    DABC.BnetPainter.prototype.Cleanup = function(arg) {
-      console.log('CLEANUP DABC PAINTER');
-      
       JSROOT.TBasePainter.prototype.Cleanup.call(this, arg);
       
       if (this.main_timer) {
@@ -825,6 +823,7 @@
          if (painter.active()) {
             painter.RefreshHTML();
             painter.main_timer = setInterval(painter.SendMainRequest.bind(painter), 2000);
+            painter.DisplayItem("/"+painter.itemname+"/EventsRate");
          }
       });
    }
