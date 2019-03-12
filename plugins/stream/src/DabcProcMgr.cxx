@@ -166,17 +166,17 @@ base::H1handle stream::DabcProcMgr::MakeH1(const char* name, const char* title, 
 
 base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options)
 {
-   std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax;
+   std::string xtitle, ytitle, xlbls, ylbls, fillcolor, drawopt, hmin, hmax, h2poly;
    bool reuse(false);
 
-   while (options!=0) {
+   while (options != nullptr) {
       const char* separ = strchr(options,';');
       std::string part = options;
       if (separ!=0) {
          part.resize(separ-options);
          options = separ+1;
       } else {
-         options = 0;
+         options = nullptr;
       }
 
       if (part.find("xbin:")==0) { xlbls = part; xlbls.erase(0, 5); } else
@@ -186,6 +186,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
       if (part.find("hmin:")==0) { hmin = part; hmin.erase(0,5); } else
       if (part.find("hmax:")==0) { hmax = part; hmax.erase(0,5); } else
       if (part.find("kind:")==0) { } else
+      if (part.find("h2poly:")==0) { h2poly = part; h2poly.erase(0,7); } else
       if (part.find("reuse")==0) { reuse = true; } else
       if (xtitle.empty()) xtitle = part; else ytitle = part;
    }
@@ -204,7 +205,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    }
    if (!h) return nullptr;
 
-   h.SetField("_kind","ROOT.TH2D");
+   h.SetField("_kind", h2poly.empty() ? "ROOT.TH2D" : "ROOT.TH2Poly");
    h.SetField("_title", title);
    h.SetField("_dabc_hist", true); // indicate for browser that it is DABC histogram
    h.SetField("_make_request", "DABC.ReqH"); // provide proper request
@@ -223,6 +224,7 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    h.SetField("drawopt", drawopt.empty() ? std::string("colz") : drawopt);
    if (!hmin.empty()) h.SetField("hmin", std::atof(hmin.c_str()));
    if (!hmax.empty()) h.SetField("hmax", std::atof(hmax.c_str()));
+   if (!h2poly.empty()) h.SetField("h2poly", h2poly);
 
    std::vector<double> bins;
    bins.resize(6+(nbins1+2)*(nbins2+2), 0.);

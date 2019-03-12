@@ -854,11 +854,48 @@
          JSROOT.Create("TH2D", obj);
          JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
          
-         JSROOT.extend(obj.fXaxis, { fNbins:res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
-         JSROOT.extend(obj.fYaxis, { fNbins:res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
+         JSROOT.extend(obj.fXaxis, { fNbins: res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
+         JSROOT.extend(obj.fYaxis, { fNbins: res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
          res.bins.splice(0,6); // 6 first items in array are not bins
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
+      } else if (res._kind == 'ROOT.TH2Poly') {
+         JSROOT.Create("TH2D", obj);
+         JSROOT.extend(obj, { fName: res._name, fTitle: res._title });
+         JSROOT.extend(obj.fXaxis, { fNbins: res.nbins1, fXmin: res.left1,  fXmax: res.right1 });
+         JSROOT.extend(obj.fYaxis, { fNbins: res.nbins2, fXmin: res.left2,  fXmax: res.right2 });
+
+         res.bins.splice(0,6); // 6 first items in array are not bins
+         obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
+         obj.fArray = res.bins;
+
+         console.log('parsing', res.h2poly);
+         
+         var h2poly = JSON.parse(res.h2poly);
+         
+         var npoly = 0;
+         
+         obj.fBins = JSROOT.Create("TList");
+         
+         for (var n2 = 0; n2 < res.nbins2; ++n2)
+            for (var n1 = 0; n1 < res.nbins1; ++n1) {
+               if (npoly >= h2poly.length) break;
+               
+               var poly = h2poly[npoly++];
+               if (!poly || (poly.length !== 2)) continue;
+               
+               var bin = { 
+                  _typename: "TH2PolyBin",
+                  fNumber: 1,
+                  fContent: obj.getBinContent(n1+1, n2+1),
+                  fPoly: JSROOT.CreateTGraph(poly[0].length, poly[0], poly[1])
+               };
+               
+               obj.fBins.Add(bin);
+            }
+            
+         obj._typename = "TH2Poly";
+         
       } else {
          return;
       }
