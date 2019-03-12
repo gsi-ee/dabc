@@ -1686,12 +1686,15 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
 
 void hadaq::CombinerModule::ResetInfoCounters()
 {
-   fTotalRecvBytes = 0;
-   fTotalBuildEvents = 0;
-   fTotalDiscEvents = 0;
-   fTotalDroppedData = 0;
-   fTotalTagErrors = 0;
-   fTotalDataErrors = 0;
+   // DO NOT RESET COUNTERS IN BNET MODE
+   if (!fBNETsend && !fBNETrecv) {
+      fTotalRecvBytes = 0;
+      fTotalBuildEvents = 0;
+      fTotalDiscEvents = 0;
+      fTotalDroppedData = 0;
+      fTotalTagErrors = 0;
+      fTotalDataErrors = 0;
+   }
 
    if (!fBNETrecv && fWithObserver && !fIsTerminating)
       for (unsigned n = 0; n < NumInputs(); n++) {
