@@ -879,16 +879,35 @@
                var poly = h2poly[npoly++];
                if (!poly || (poly.length !== 2)) continue;
                
+               var xx = poly[0], yy = poly[1];
+                  
                var bin = { 
                   _typename: "TH2PolyBin",
                   fNumber: 1,
                   fContent: obj.getBinContent(n1+1, n2+1),
-                  fPoly: JSROOT.CreateTGraph(poly[0].length, poly[0], poly[1])
+                  fPoly: JSROOT.CreateTGraph(xx.length, xx, yy),
+                  fXmin: Math.min.apply(null, xx),
+                  fXmax: Math.max.apply(null, xx),
+                  fYmin: Math.min.apply(null, yy),
+                  fYmax: Math.max.apply(null, yy)
                };
+               // used of text position only, for triangle workaround
+               /* if (xx.length == 4) {
+                  var xsum = 0, ysum = 0;
+                  for (var k=0;k<xx.length;++k) {
+                     xsum += xx[k]; ysum += yy[k];
+                  }
+                  bin.fXmin = bin.fXmax = xsum / xx.length;
+                  bin.fYmin = bin.fYmax = ysum / xx.length;
+               }
+               */
                
                obj.fBins.Add(bin);
             }
 
+         obj.fMarkerColor = 1;
+         obj.fMarkerSize = 0.5;
+         
          // set at the end - we use getbincontent
          obj._typename = "TH2Poly";
          
