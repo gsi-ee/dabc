@@ -43,9 +43,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <logfile value="spill.log"/>
       <loglevel value="1"/>
       <loglimit value="1000"/>
-      <control value="true"/>
       <threads_layout value="balanced"/>
-      <master value="localhost:23456"/>
     </Run>
 
     <HttpServer name="http" port="8091"/>
@@ -60,23 +58,19 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <BufferSize value="2000000"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-	
-	 <Module name="Combiner" class="hadaq::CombinerModule">    
+
+    <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
 
        <InputPort name="Input0" url="hadaq://host:50096"/>
-       <InputPort name="Input1" url="hadaq://host:50001"/>
-       <InputPort name="Input2" url="hadaq://host:50002"/>
-       <InputPort name="Input3" url="hadaq://host:50003"/>
-       <InputPort name="Input4" url="hadaq://host:50004"/>
 
        <!-- InputPort name="Input*" queue="100" urlopt="udpbuf=2000000&mtu=64512&flush=1&observer=false&maxloop=50" resort="false"/ -->
        <InputPort name="Input*" queue="20" urlopt="udpbuf=2000000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
-       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+       <OutputPort name="Output1" url="mbs://Stream:7869?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output2" url="hld:///dl/data/spillmonitor/spill.hld?maxsize=2000"/>
@@ -106,10 +100,10 @@ When starting analysis from the go4 gui, one should specify stream server with p
 
        <!-- CheckTag: when true events will be discarded if tag mismatched between subevents  -->
        <CheckTag value="true"/>
-       
+
        <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
-       
+
        <!--  When event cannot be build too long, complete data drop will be performed -->
        <BuildDropTimeout value="2.0"/>
 
