@@ -869,14 +869,9 @@
          obj.fNcells = (res.nbins1+2) * (res.nbins2+2);
          obj.fArray = res.bins;
 
-         console.log('parsing', res.h2poly);
-         
-         var h2poly = JSON.parse(res.h2poly);
-         
-         var npoly = 0;
-         
          obj.fBins = JSROOT.Create("TList");
-         
+
+         var npoly = 0, h2poly = JSON.parse(res.h2poly);
          for (var n2 = 0; n2 < res.nbins2; ++n2)
             for (var n1 = 0; n1 < res.nbins1; ++n1) {
                if (npoly >= h2poly.length) break;
@@ -893,7 +888,8 @@
                
                obj.fBins.Add(bin);
             }
-            
+
+         // set at the end - we use getbincontent
          obj._typename = "TH2Poly";
          
       } else {
