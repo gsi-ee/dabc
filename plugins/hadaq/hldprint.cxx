@@ -60,6 +60,7 @@ int usage(const char* errstr = 0)
    printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff) \n");
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns) \n");
+   printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -rate                   - display only events rate\n");
    printf("   -bw                     - disable colors\n");
@@ -144,7 +145,7 @@ struct SubevStat {
 };
 
 
-double tot_limit(20.);
+double tot_limit(20.), tot_shift(20.);
 unsigned fine_min(31), fine_max(491);
 bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false;
 
@@ -428,6 +429,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned calibr[2] = { 0xffff, 0xffff };
    int ncalibr = 2;
    const char* hdrkind = "";
+   bool with_calibr = false;
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
@@ -527,6 +529,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             tm = ((epoch << 11) + (msg & 0x7FF)) * 5.; // coarse time
             fine = (msg >> 12) & 0x3FF;
+            with_calibr = false;
             if (fine<0x3ff) {
                if ((msg & tdckind_Mask) == tdckind_Hit2) {
                   if (isrising) {
@@ -535,12 +538,13 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                      tm -= (fine & 0x1FF)*10e-3; // for falling edge 10 ps binning is used
                      if (fine & 0x200) tm -= 0x800 * 5.; // in rare case time correction leads to epoch overflow
                   }
-               } else
-               if (ncalibr<2) {
+                  with_calibr = true;
+               } else if (ncalibr<2) {
                   // calibrated time, 5 ns correspond to value 0x3ffe or about 0.30521 ps/bin
                   double corr = calibr[ncalibr++]*5./0x3ffe;
                   if (!isrising) corr*=10.; // for falling edge correction 50 ns range is used
                   tm -= corr;
+                  with_calibr = true;
                } else {
                   tm -= 5.*(fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
                }
@@ -553,9 +557,9 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                last_falling[channel] = tm;
                if (last_rising[channel] > 0) {
                   double tot = last_falling[channel] - last_rising[channel];
-                  bool cond = ((tot >= 0) && (tot < tot_limit));
-                  if (cond) errmask |= tdcerr_ToT;
-                  snprintf(sbuf, sizeof(sbuf), " tot:%s%6.3f ns%s", getCol(cond ? col_RED : col_GREEN), tot, getCol(col_RESET));
+                  bool cond = with_calibr ? ((tot >= 0) && (tot < tot_limit)) : ((tot >= tot_shift) && (tot < tot_shift + tot_limit));
+                  if (!cond) errmask |= tdcerr_ToT;
+                  snprintf(sbuf, sizeof(sbuf), " tot:%s%6.3f ns%s", getCol(cond ? col_GREEN : col_RED), tot, getCol(col_RESET));
                   last_rising[channel] = 0;
                }
             }
@@ -667,6 +671,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
       if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
       if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
+      if ((strcmp(argv[n],"-stretcher")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_shift); } else
       if ((strcmp(argv[n],"-onlyraw")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlyraw); } else
       if ((strcmp(argv[n],"-adc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &adcmask); } else
       if ((strcmp(argv[n],"-fullid")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fullid); } else
