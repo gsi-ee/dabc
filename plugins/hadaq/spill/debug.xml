@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<!-- Debuggin of HADES SPILL monitor, take data from main application  -->
+
+<dabc version="2">
+  <Context host="localhost" name="EventBuilder">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>  
+      <lib value="libDabcStream.so"/>  
+      <lib value="libDabcHttp.so"/>  
+      <logfile value="spill.log"/>
+      <loglevel value="1"/>
+      <loglimit value="1000"/>
+      <threads_layout value="balanced"/>
+    </Run>
+
+    <HttpServer name="http" port="8091">
+      <TopTitle value="HADES spill monitor"/>
+      <!--  Browser value="off"/-->
+      <Layout value="grid4x4"/>
+      <Monitoring value="2000"/>
+      <!-- DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/ -->
+      <DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/>
+    </HttpServer>
+
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+
+    <MemoryPool name="Pool">
+       <BufferSize value="3000000"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+     <Module name="Run" class="stream::RunModule">
+       <!--asf value="file.root"/-->
+       <parallel value="0"/>
+       <fillcolor value="0"/>
+       <InputPort name="Input0" url="mbss://lxhadeb13:7788"/>
+       <OutputPort name="*" auto="false"/>
+       <Events width="4" prec="1" low="0" up="1000" debug="0"/>
+       <DataRate width="4" prec="2" low="0" up="10" debug="1"/>
+    </Module>
+
+     <!-- Terminal output like old event builder -->
+     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="1" servport="0" showtrig="16"/>
+
+  </Context>
+
+</dabc>

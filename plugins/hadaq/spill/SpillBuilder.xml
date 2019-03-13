@@ -1,37 +1,6 @@
 <?xml version="1.0"?>
 
-<!-- 
-This is example file how HADAQ event building should be configured in DABC.
-Event building process implemented in Combiner module of hadaq::CombinerModule class.
-Module can have several inputs, each with separate port number for receiving data 
-from TRB boards. For every input one could configure only UDP port number - host name is ignored.
-First output of combiner module used for delivering data to online analysis (if any). 
-Second output can be use to store data in hld files. 
-To enable HLD file storage one should specify NumOutputs for Combiner module
-and provide hld file name for Output1 port   
-
-     <NumOutputs value="2"/>
-     <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
-     
-File name fill be extended according to HADAQ naming convention.       
-
-By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
-put <HttpServer name="http" auto="false">. One could change http port number. 
-When dabc runs, in any browser address like
-http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
-  - ratemeters from EventBuilder
-  - log fields 
-  - commands to start/stop hld files storage from browser
-
-There is well-known problem with using VNC viewer and mbs stream server. 
-Both by default are using port 6002. One could change port number for stream server.
-Just set other number in configuration of first output port of combiner module, for instance:
-       <OutputPort name="Output0" url="mbs://Stream:6789?iter=hadaq_iter&subid=0x1f"/>
-In this case one should specify that port number when starting go4 analysis like:
-   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
-When starting analysis from the go4 gui, one should specify stream server with port number too.
-
--->
+<!-- HADES SPILL monitor  -->
 
 <dabc version="2">
   <Context host="localhost" name="EventBuilder">
@@ -51,6 +20,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
       <!--  Browser value="off"/-->
       <Layout value="grid4x4"/>
       <Monitoring value="2000"/>
+      <!-- DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/ -->
       <DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/>
     </HttpServer>
 
