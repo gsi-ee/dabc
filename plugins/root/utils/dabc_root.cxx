@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 
          cnt++; currcnt++;
       } else
-      if (item.Field("_kind").AsStr() == "ROOT.TH2D") {
+      if ((item.Field("_kind").AsStr() == "ROOT.TH2D") || (item.Field("_kind").AsStr() == "ROOT.TH2Poly"))  {
          int nbins1 = item.Field("nbins1").AsInt();
          int nbins2 = item.Field("nbins2").AsInt();
          double* bins = item.GetFieldPtr("bins")->GetDoubleArr();
