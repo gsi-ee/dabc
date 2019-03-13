@@ -149,6 +149,7 @@ http::Server::Server(const std::string &name, dabc::Command cmd) :
    fAutoLoad = Cfg("AutoLoad", cmd).AsStr("jq;httpsys/scripts/dabc.js;httpsys/scripts/gauge.js;");
    fTopTitle = Cfg("TopTitle", cmd).AsStr("DABC online server");
    fBrowser = Cfg("Browser", cmd).AsStr("");
+   fLayout = Cfg("Layout", cmd).AsStr("");
    fDrawItem = Cfg("DrawItem", cmd).AsStr("");
    fDrawOpt = Cfg("DrawOpt", cmd).AsStr("");
    fMonitoring = Cfg("Monitoring", cmd).AsInt(0);
@@ -347,6 +348,7 @@ bool http::Server::Process(const char* uri, const char* _query,
       if (!fAutoLoad.empty()) cmd.AddHeader("_autoload", fAutoLoad);
       if (!fTopTitle.empty()) cmd.AddHeader("_toptitle", fTopTitle);
       if (!fBrowser.empty()) cmd.AddHeader("_browser", fBrowser);
+      if (!fLayout.empty()) cmd.AddHeader("_layout", fLayout);
       if (!fDrawItem.empty() && (pathname=="/")) {
          cmd.AddHeader("_drawitem", fDrawItem);
          cmd.AddHeader("_drawopt", fDrawOpt);

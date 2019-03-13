@@ -55,6 +55,7 @@ namespace http {
          std::string fAutoLoad;    ///< _autoload value in h.json
          std::string fTopTitle;    ///< _toptitle value in h.json
          std::string fBrowser;     ///< _browser value in h.json
+         std::string fLayout;      ///< _layout value in h.json
          std::string fDrawItem;    ///< _drawitem value in h.json, only for top page
          std::string fDrawOpt;     ///< _drawopt value in h.json, only for top page
          int         fMonitoring;  ///< _monitoring value in h.json, only for top page
