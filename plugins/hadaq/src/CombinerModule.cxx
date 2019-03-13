@@ -54,7 +54,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fLastEventRate = 0.;
    fBldProfiler.Reserve(50);
 
-   fTotalRecvBytes = 0;
+   fRunRecvBytes = 0;
    fTotalBuildEvents = 0;
    fTotalDiscEvents = 0;
    fTotalDroppedData = 0;
@@ -671,7 +671,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    SetNetmemPar("nrOfMsgs", NumInputs());
    SetEvtbuildPar("evtsDiscarded", fTotalDiscEvents);
    SetEvtbuildPar("evtsComplete", fTotalBuildEvents);
-   SetEvtbuildPar("evtsDataError",fTotalDataErrors);
+   SetEvtbuildPar("evtsDataError", fTotalDataErrors);
    SetEvtbuildPar("evtsTagError", fTotalTagErrors);
 
    //SetEvtbuildPar("runId",fRunNumber);
@@ -1386,7 +1386,7 @@ bool hadaq::CombinerModule::BuildEvent()
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
-      fTotalRecvBytes += currentbytes;
+      fRunRecvBytes += currentbytes;
       fAllRecvBytes += currentbytes;
       fDataRateCnt += currentbytes;
       // Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
@@ -1690,16 +1690,16 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
    fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
    std::string filename = GenerateFileName(fRunNumber); // old run number defines old filename
    fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents));
-   fprintf(fp, "%s\n", Unit(fTotalRecvBytes));
+   fprintf(fp, "%s\n", Unit(fRunRecvBytes));
    fclose(fp);
-   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents),Unit(fTotalRecvBytes));
+   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents),Unit(fRunRecvBytes));
 
 }
 
 void hadaq::CombinerModule::ResetInfoCounters()
 {
    // DO NOT RESET COUNTERS IN BNET MODE
-   fTotalRecvBytes = 0;
+   fRunRecvBytes = 0;
    fTotalBuildEvents = 0;
    fTotalDiscEvents = 0;
    fTotalDroppedData = 0;

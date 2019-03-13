@@ -249,7 +249,7 @@ namespace hadaq {
          uint64_t           fEventRateCnt;
          uint64_t           fLostEventRateCnt;
 
-         uint64_t           fTotalRecvBytes;
+         uint64_t           fRunRecvBytes;
          uint64_t           fTotalBuildEvents;   ///< number of build events
          uint64_t           fTotalDroppedData;
          uint64_t           fTotalDiscEvents;

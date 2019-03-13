@@ -130,10 +130,10 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
    double rate1(0.), rate2(0.), rate3(0), rate4(0);
    if (delta > 0) {
-      rate1 = (comb->fTotalBuildEvents - fTotalBuildEvents) / delta;
-      rate2 = (comb->fTotalRecvBytes - fTotalRecvBytes) / delta;
-      rate3 = (comb->fTotalDiscEvents - fTotalDiscEvents) / delta;
-      rate4 = (comb->fTotalDroppedData - fTotalDroppedData) / delta;
+      rate1 = (comb->fAllBuildEvents - fTotalBuildEvents) / delta;
+      rate2 = (comb->fAllRecvBytes - fTotalRecvBytes) / delta;
+      rate3 = (comb->fAllDiscEvents - fTotalDiscEvents) / delta;
+      rate4 = (comb->fAllDroppedData - fTotalDroppedData) / delta;
    }
 
    if (fDoShow) {
