@@ -424,7 +424,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    int bubble_len = -1, nbubble = 0;
    unsigned bubble_ix = 0, bubble_ch = 0, bubble_eix = 0;
 
-   char sbuf[100];
+   char sbuf[100], sfine[100];
    unsigned calibr[2] = { 0xffff, 0xffff };
    int ncalibr = 2;
    const char* hdrkind = "";
@@ -555,14 +555,19 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                   double tot = last_falling[channel] - last_rising[channel];
                   bool cond = ((tot >= 0) && (tot < tot_limit));
                   if (cond) errmask |= tdcerr_ToT;
-                  sprintf(sbuf," tot:%s%6.3f ns%s", getCol(cond ? col_RED : col_GREEN), tot, getCol(col_RESET));
+                  snprintf(sbuf, sizeof(sbuf), " tot:%s%6.3f ns%s", getCol(cond ? col_RED : col_GREEN), tot, getCol(col_RESET));
                   last_rising[channel] = 0;
                }
             }
 
-            if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:0x%03x tm:%6.3f ns%s\n",
+            if ((fine >= 600) && (fine != 0x3ff))
+               snprintf(sfine, sizeof(sfine), "%s0x%03x%s", getCol(col_RED), fine, getCol(col_RESET));
+            else
+               snprintf(sfine, sizeof(sfine), "0x%03x", fine);
+
+            if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
                                  ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
-                                 channel, isrising, (msg & 0x7FF), fine, tm - ch0tm, sbuf);
+                                 channel, isrising, (msg & 0x7FF), sfine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:
