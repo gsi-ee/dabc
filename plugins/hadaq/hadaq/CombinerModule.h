@@ -251,16 +251,16 @@ namespace hadaq {
 
          uint64_t           fRunRecvBytes;
          uint64_t           fRunBuildEvents;   ///< number of build events
-         uint64_t           fTotalDroppedData;
+         uint64_t           fRunDroppedData;
          uint64_t           fRunDiscEvents;
-         uint64_t           fTotalTagErrors;
-         uint64_t           fTotalDataErrors;
-         uint64_t           fTotalFullDrops;   ///< number of complete drops
+         uint64_t           fRunTagErrors;
+         uint64_t           fRunDataErrors;
 
          uint64_t           fAllRecvBytes;
          uint64_t           fAllBuildEvents;   ///< number of build events
          uint64_t           fAllDiscEvents;
          uint64_t           fAllDroppedData;
+         uint64_t           fAllFullDrops;   ///< number of complete drops
 
          unsigned fEventIdCount[HADAQ_NEVTIDS];
 

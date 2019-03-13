@@ -175,8 +175,8 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
                         rate_to_str(rate3).c_str(),
                         dabc::size_to_str(fTotalDroppedData).c_str(), rate4/1024./1024.);
 
-   if (comb->fTotalFullDrops>0)
-      s += dabc::format(" Total:%s\n", dabc::size_to_str(comb->fTotalFullDrops, 1).c_str());
+   if (comb->fAllFullDrops>0)
+      s += dabc::format(" Total:%s\n", dabc::size_to_str(comb->fAllFullDrops, 1).c_str());
    else
       s += "\n";
 

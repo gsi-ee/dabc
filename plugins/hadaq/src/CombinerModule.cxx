@@ -57,9 +57,9 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fRunRecvBytes = 0;
    fRunBuildEvents = 0;
    fRunDiscEvents = 0;
-   fTotalDroppedData = 0;
-   fTotalTagErrors = 0;
-   fTotalDataErrors = 0;
+   fRunDroppedData = 0;
+   fRunTagErrors = 0;
+   fRunDataErrors = 0;
 
    fAllRecvBytes = 0;
    fAllBuildEvents = 0;
@@ -326,7 +326,7 @@ void hadaq::CombinerModule::AfterModuleStop()
 {
    std::string info = dabc::format(
       "HADAQ %s stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
-       GetName(), (int) fAllBuildEvents, (int) fAllDiscEvents , (int) fAllDroppedData, (int) fAllRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
+       GetName(), (int) fAllBuildEvents, (int) fAllDiscEvents , (int) fAllDroppedData, (int) fAllRecvBytes ,(int) fRunDataErrors ,(int) fRunTagErrors);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
@@ -671,8 +671,8 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    SetNetmemPar("nrOfMsgs", NumInputs());
    SetEvtbuildPar("evtsDiscarded", fRunDiscEvents);
    SetEvtbuildPar("evtsComplete", fRunBuildEvents);
-   SetEvtbuildPar("evtsDataError", fTotalDataErrors);
-   SetEvtbuildPar("evtsTagError", fTotalTagErrors);
+   SetEvtbuildPar("evtsDataError", fRunDataErrors);
+   SetEvtbuildPar("evtsTagError", fRunTagErrors);
 
    //SetEvtbuildPar("runId",fRunNumber);
    //SetEvtbuildPar("runId",Par("RunId").AsUInt()); // sync local parameter to observer export
@@ -1005,7 +1005,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    Par(fDataDroppedRateName).SetValue(droppeddata/1024./1024.);
    fRunDiscEvents += maxnumsubev;
    fAllDiscEvents += maxnumsubev;
-   fTotalDroppedData += droppeddata;
+   fRunDroppedData += droppeddata;
    fAllDroppedData += droppeddata;
 
    return true;
@@ -1138,7 +1138,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
         DropAllInputBuffers();
 
-        fTotalFullDrops++;
+        fAllFullDrops++;
 
         if (fExtraDebug && fLastDebugTm.Expired(1.)) {
            DOUT1("Drop all buffers");
@@ -1199,7 +1199,7 @@ bool hadaq::CombinerModule::BuildEvent()
             fDataDroppedRateCnt += droppedsize;
 
             // Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
-            fTotalDroppedData += droppedsize;
+            fRunDroppedData += droppedsize;
             fAllDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
@@ -1242,7 +1242,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       if (fBNETrecv) DOUT0("TAG error");
 
-      fTotalTagErrors++;
+      fRunTagErrors++;
    }
 
    // provide normal buffer
@@ -1303,8 +1303,8 @@ bool hadaq::CombinerModule::BuildEvent()
       fAllBuildEvents++;
 
       fOut.evnt()->SetDataError((dataError || tagError));
-      if (dataError) fTotalDataErrors++;
-      if (tagError) fTotalTagErrors++;
+      if (dataError) fRunDataErrors++;
+      if (tagError) fRunTagErrors++;
 
       unsigned trigtyp = 0;
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
@@ -1523,7 +1523,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    } else if (cmd.IsName("HCMD_DropAllBuffers")) {
 
       DropAllInputBuffers();
-      fTotalFullDrops++;
+      fAllFullDrops++;
       fLastDropTm.GetNow();
 
       if (fBNETsend && !fIsTerminating) {
@@ -1702,9 +1702,9 @@ void hadaq::CombinerModule::ResetInfoCounters()
    fRunRecvBytes = 0;
    fRunBuildEvents = 0;
    fRunDiscEvents = 0;
-   fTotalDroppedData = 0;
-   fTotalTagErrors = 0;
-   fTotalDataErrors = 0;
+   fRunDroppedData = 0;
+   fRunTagErrors = 0;
+   fRunDataErrors = 0;
 
    if (!fBNETrecv && fWithObserver && !fIsTerminating)
       for (unsigned n = 0; n < NumInputs(); n++) {
