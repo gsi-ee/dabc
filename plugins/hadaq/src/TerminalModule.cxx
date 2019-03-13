@@ -158,10 +158,10 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
       }
    }
 
-   fTotalBuildEvents = comb->fTotalBuildEvents;
-   fTotalRecvBytes = comb->fTotalRecvBytes;
-   fTotalDiscEvents = comb->fTotalDiscEvents;
-   fTotalDroppedData = comb->fTotalDroppedData;
+   fTotalBuildEvents = comb->fAllBuildEvents;
+   fTotalRecvBytes = comb->fAllRecvBytes;
+   fTotalDiscEvents = comb->fAllDiscEvents;
+   fTotalDroppedData = comb->fAllDroppedData;
 
    std::string s;
 

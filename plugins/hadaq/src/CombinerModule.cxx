@@ -61,6 +61,11 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fTotalTagErrors = 0;
    fTotalDataErrors = 0;
 
+   fAllRecvBytes = 0;
+   fAllBuildEvents = 0;
+   fAllDiscEvents = 0;
+   fAllDroppedData = 0;
+
    for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn)
       fErrorbitPattern[ptrn] = 0;
 
@@ -321,7 +326,7 @@ void hadaq::CombinerModule::AfterModuleStop()
 {
    std::string info = dabc::format(
       "HADAQ %s stopped. CompleteEvents:%d, BrokenEvents:%d, DroppedData:%d, RecvBytes:%d, data errors:%d, tag errors:%d",
-       GetName(), (int) fTotalBuildEvents, (int) fTotalDiscEvents , (int) fTotalDroppedData, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
+       GetName(), (int) fAllBuildEvents, (int) fAllDiscEvents , (int) fAllDroppedData, (int) fAllRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors);
 
    SetInfo(info, true);
    DOUT0(info.c_str());
@@ -478,9 +483,9 @@ void hadaq::CombinerModule::UpdateBnetInfo()
 
       fWorkerHierarchy.SetField("queues", qsz);
       fWorkerHierarchy.SetField("ninputs", NumInputs());
-      fWorkerHierarchy.SetField("build_events", fTotalBuildEvents);
-      fWorkerHierarchy.SetField("build_data", fTotalRecvBytes);
-      fWorkerHierarchy.SetField("discard_events", fTotalDiscEvents);
+      fWorkerHierarchy.SetField("build_events", fAllBuildEvents);
+      fWorkerHierarchy.SetField("build_data", fAllRecvBytes);
+      fWorkerHierarchy.SetField("discard_events", fAllDiscEvents);
    }
 
    if (fBNETsend) {
@@ -999,7 +1004,9 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
    Par(fLostEventRateName).SetValue(maxnumsubev);
    Par(fDataDroppedRateName).SetValue(droppeddata/1024./1024.);
    fTotalDiscEvents += maxnumsubev;
+   fAllDiscEvents += maxnumsubev;
    fTotalDroppedData += droppeddata;
+   fAllDroppedData += droppeddata;
 
    return true;
 }
@@ -1193,6 +1200,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
             // Par(fDataDroppedRateName).SetValue(droppedsize/1024./1024.);
             fTotalDroppedData += droppedsize;
+            fAllDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
                if (fExtraDebug && fLastDebugTm.Expired(2.)) {
@@ -1292,6 +1300,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
       fTotalBuildEvents++;
+      fAllBuildEvents++;
 
       fOut.evnt()->SetDataError((dataError || tagError));
       if (dataError) fTotalDataErrors++;
@@ -1373,10 +1382,12 @@ bool hadaq::CombinerModule::BuildEvent()
          fLostEventRateCnt += (diff-1);
          //Par(fLostEventRateName).SetValue(diff-1);
          fTotalDiscEvents += (diff-1);
+         fAllDiscEvents += (diff-1);
       }
 
       unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
       fTotalRecvBytes += currentbytes;
+      fAllRecvBytes += currentbytes;
       fDataRateCnt += currentbytes;
       // Par(fDataRateName).SetValue(currentbytes / 1024. / 1024.);
 
@@ -1386,6 +1397,7 @@ bool hadaq::CombinerModule::BuildEvent()
       fLostEventRateCnt += 1;
       // Par(fLostEventRateName).SetValue(1);
       fTotalDiscEvents += 1;
+      fAllDiscEvents += 1;
    } // ensure outputbuffer
 
    std::string debugmask;
@@ -1687,14 +1699,12 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
 void hadaq::CombinerModule::ResetInfoCounters()
 {
    // DO NOT RESET COUNTERS IN BNET MODE
-   if (!fBNETsend && !fBNETrecv) {
-      fTotalRecvBytes = 0;
-      fTotalBuildEvents = 0;
-      fTotalDiscEvents = 0;
-      fTotalDroppedData = 0;
-      fTotalTagErrors = 0;
-      fTotalDataErrors = 0;
-   }
+   fTotalRecvBytes = 0;
+   fTotalBuildEvents = 0;
+   fTotalDiscEvents = 0;
+   fTotalDroppedData = 0;
+   fTotalTagErrors = 0;
+   fTotalDataErrors = 0;
 
    if (!fBNETrecv && fWithObserver && !fIsTerminating)
       for (unsigned n = 0; n < NumInputs(); n++) {

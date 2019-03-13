@@ -257,6 +257,11 @@ namespace hadaq {
          uint64_t           fTotalDataErrors;
          uint64_t           fTotalFullDrops;   ///< number of complete drops
 
+         uint64_t           fAllRecvBytes;
+         uint64_t           fAllBuildEvents;   ///< number of build events
+         uint64_t           fAllDiscEvents;
+         uint64_t           fAllDroppedData;
+
          unsigned fEventIdCount[HADAQ_NEVTIDS];
 
          uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
