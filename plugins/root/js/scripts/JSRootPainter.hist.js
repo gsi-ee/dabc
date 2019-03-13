@@ -2172,6 +2172,9 @@
             histo.fNIn = obj.fNIn;
             histo.fReady = false;
          }
+         if (this.IsTH2Poly()) {
+            histo.fBins = obj.fBins;
+         }
 
          this.DecomposeTitle();
 
