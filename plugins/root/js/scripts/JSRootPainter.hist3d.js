@@ -33,6 +33,31 @@
    if (typeof JSROOT.THistPainter === 'undefined')
       throw new Error('JSROOT.THistPainter is not defined', 'JSRootPainter.hist3d.js');
 
+   JSROOT.TFramePainter.prototype.SetCameraPosition = function(pad, first_time) {
+      var max3d = Math.max(0.75*this.size_xy3d, this.size_z3d);
+
+      if (first_time)
+         this.camera.position.set(-1.6*max3d, -3.5*max3d, 1.4*this.size_z3d);
+
+      if (pad && (first_time || !this.zoom_changed_interactive))
+         if (!isNaN(pad.fTheta) && !isNaN(pad.fPhi) && ((pad.fTheta !== this.camera_Theta) || (pad.fPhi !== this.camera_Phi))) {
+            max3d = 3*Math.max(this.size_xy3d, this.size_z3d);
+            var phi = (-pad.fPhi-90)/180*Math.PI, theta = pad.fTheta/180*Math.PI;
+
+            this.camera_Phi = pad.fPhi;
+            this.camera_Theta = pad.fTheta;
+
+            this.camera.position.set(max3d*Math.cos(phi)*Math.cos(theta),
+                                     max3d*Math.sin(phi)*Math.cos(theta),
+                                     this.size_z3d + max3d*Math.sin(theta));
+
+            first_time = true;
+         }
+
+      if (first_time)
+         this.camera.lookAt(this.lookat);
+   }
+
    JSROOT.TFramePainter.prototype.Create3DScene = function(arg) {
 
       if ((arg!==undefined) && (arg<0)) {
@@ -87,6 +112,8 @@
 
          this.Resize3D(); // set actual sizes
 
+         this.SetCameraPosition(this.root_pad(), false);
+
          return;
       }
 
@@ -109,28 +136,17 @@
 
       this.camera = new THREE.PerspectiveCamera(45, this.scene_width / this.scene_height, 1, 40*this.size_z3d);
 
-      var max3d = Math.max(0.75*this.size_xy3d, this.size_z3d);
-      this.camera.position.set(-1.6*max3d, -3.5*max3d, 1.4*this.size_z3d);
-
-      var pad = this.root_pad();
-      if (pad && (pad.fTheta!==undefined) && (pad.fPhi!==undefined) && (pad.fTheta !== 30) || (pad.fPhi !== 30)) {
-         max3d = 3*Math.max(this.size_xy3d, this.size_z3d);
-         var phi = (-pad.fPhi-90)/180*Math.PI, theta = pad.fTheta/180*Math.PI;
-
-         this.camera.position.set(max3d*Math.cos(phi)*Math.cos(theta),
-                                  max3d*Math.sin(phi)*Math.cos(theta),
-                                  this.size_z3d + max3d*Math.sin(theta));
-      }
+      this.camera_Phi = 30;
+      this.camera_Theta = 30;
 
       this.pointLight = new THREE.PointLight(0xffffff,1);
       this.camera.add(this.pointLight);
       this.pointLight.position.set(this.size_xy3d/2, this.size_xy3d/2, this.size_z3d/2);
-
-      var lookat = new THREE.Vector3(0,0,0.8*this.size_z3d);
-
+      this.lookat = new THREE.Vector3(0,0,0.8*this.size_z3d);
       this.camera.up = new THREE.Vector3(0,0,1);
-      this.camera.lookAt(lookat);
       this.scene.add( this.camera );
+
+      this.SetCameraPosition(this.root_pad(), true);
 
       var res = JSROOT.Painter.Create3DRenderer(this.scene_width, this.scene_height, this.usesvg, (sz.can3d == 4));
 
@@ -140,11 +156,10 @@
 
       this.first_render_tm = 0;
       this.enable_highlight = false;
-      this.tooltip_allowed = (JSROOT.gStyle.Tooltip > 0);
 
       if (JSROOT.BatchMode) return;
 
-      this.control = JSROOT.Painter.CreateOrbitControl(this, this.camera, this.scene, this.renderer, lookat);
+      this.control = JSROOT.Painter.CreateOrbitControl(this, this.camera, this.scene, this.renderer, this.lookat);
 
       var axis_painter = this, obj_painter = this.main_painter();
 
@@ -212,16 +227,25 @@
       }
    }
 
-   JSROOT.TFramePainter.prototype.Render3D = function(tmout) {
-      // call 3D rendering of the histogram drawing
-      // tmout specified delay, after which actual rendering will be invoked
-      // Timeout used to avoid multiple rendering of the picture when several 3D drawings
-      // superimposed with each other.
-      // If tmeout<=0, rendering performed immediately
-      // Several special values are used:
-      //   -1111 - immediate rendering with SVG renderer
-      //   -2222 - rendering performed only if there were previous calls, which causes timeout activation
+   /** @brief Set frame activity flag
+    * @private */
 
+   JSROOT.TFramePainter.prototype.SetActive = function(on) {
+      if (this.control)
+         this.control.enableKeys = on;
+   }
+
+   /** @brief call 3D rendering of the histogram drawing
+     * @desc tmout specified delay, after which actual rendering will be invoked
+     * Timeout used to avoid multiple rendering of the picture when several 3D drawings
+     * superimposed with each other.
+     * If tmeout<=0, rendering performed immediately
+     * Several special values are used:
+     *  -1111 - immediate rendering with SVG renderer
+     *  -2222 - rendering performed only if there were previous calls, which causes timeout activation
+     * @private */
+
+   JSROOT.TFramePainter.prototype.Render3D = function(tmout) {
 
       if (tmout === -1111) {
          // special handling for direct SVG renderer
@@ -268,10 +292,9 @@
 
          if (this.first_render_tm === 0) {
             this.first_render_tm = tm2.getTime() - tm1.getTime();
-            this.enable_highlight = (this.first_render_tm < 1200) && this.tooltip_allowed;
+            this.enable_highlight = (this.first_render_tm < 1200) && this.IsTooltipAllowed();
             console.log('First render tm = ' + this.first_render_tm);
          }
-
 
          return;
       }
@@ -674,6 +697,8 @@
             var plane = new THREE.Plane(),
                 geom = this.geometry;
 
+            if (!geom || !geom.vertices) return undefined;
+
             plane.setFromCoplanarPoints(geom.vertices[0], geom.vertices[1], geom.vertices[2]);
             plane.applyMatrix4(this.matrixWorld);
 
@@ -696,7 +721,7 @@
          mesh.ShowSelection = function(pnt1,pnt2) {
             // used to show selection
 
-            var tgtmesh = this.children[0], gg, kind = this.zoom;
+            var tgtmesh = this.children ? this.children[0] : null, gg, kind = this.zoom;
             if (!pnt1 || !pnt2) {
                if (tgtmesh) {
                   this.remove(tgtmesh)
@@ -1317,6 +1342,7 @@
             var mesh2 = new THREE.Mesh(geom2, material2);
             mesh2.face_to_bins_index = face_to_bins_indx2;
             mesh2.painter = this;
+            mesh2.handle = mesh.handle;
             mesh2.tooltip = mesh.tooltip;
             mesh2.zmin = mesh.zmin;
             mesh2.zmax = mesh.zmax;

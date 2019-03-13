@@ -27,7 +27,7 @@
    JSROOT.sources.push("v6");
 
    // identifier used in TWebCanvas painter
-   JSROOT.WebSnapIds = { kNone: 0,  kObject: 1, kSVG: 2, kSubPad: 3, kColors: 4 };
+   JSROOT.WebSnapIds = { kNone: 0,  kObject: 1, kSVG: 2, kSubPad: 3, kColors: 4, kStyle: 5 };
 
    // =======================================================================
 
@@ -301,13 +301,15 @@
 
       if ((this.kind == "normal") && (handle.major.length > 0)) {
 
-         var maxorder = 0, minorder = 0;
+         var maxorder = 0, minorder = 0, exclorder3 = false;
 
          if (!optionNoexp) {
             var maxtick = Math.max(Math.abs(handle.major[0]),Math.abs(handle.major[handle.major.length-1])),
                 mintick = Math.min(Math.abs(handle.major[0]),Math.abs(handle.major[handle.major.length-1])),
                 ord1 = (maxtick > 0) ? Math.round(JSROOT.log10(maxtick)/3)*3 : 0,
                 ord2 = (mintick > 0) ? Math.round(JSROOT.log10(mintick)/3)*3 : 0;
+
+             exclorder3 = (maxtick < 2e4); // do not show 10^3 for values below 20000
 
              if (maxtick || mintick) {
                 maxorder = Math.max(ord1,ord2) + 3;
@@ -320,6 +322,7 @@
          var bestorder = 0, bestndig = this.ndig, bestlen = 1e10;
 
          for (var order = minorder; order <= maxorder; order+=3) {
+            if (exclorder3 && (order===3)) continue;
             this.order = order;
             this.ndig = 0;
             var lbls = [], indx = 0, totallen = 0;
@@ -577,7 +580,7 @@
       if (!disable_axis_drawing && !optionUnlab) {
 
          var label_color = this.get_color(axis.fLabelColor),
-             labeloffset = Math.round(axis.fLabelOffset*text_scaling_size),
+             labeloffset = Math.round(Math.abs(axis.fLabelOffset)*text_scaling_size),
              center_lbls = this.IsCenterLabels(),
              rotate_lbls = axis.TestBit(JSROOT.EAxisBits.kLabelsVert),
              textscale = 1, maxtextlen = 0, lbls_tilt = false, labelfont = null,
@@ -865,6 +868,12 @@
     * @private */
    TFramePainter.prototype.frame_painter = function() {
       return this;
+   }
+
+   /** @summary Set active flag for frame - can block some events
+    * @private */
+   TFramePainter.prototype.SetActive = function(on) {
+      // do nothing here - key handler is handled differently
    }
 
    TFramePainter.prototype.GetTipName = function(append) {
@@ -1531,6 +1540,8 @@
       this.CleanupAxes();
       this.CleanXY();
 
+      this.ranges_set = false;
+
       this.xmin = this.xmax = 0;
       this.ymin = this.ymax = 0;
       this.zmin = this.zmax = 0;
@@ -1709,7 +1720,7 @@
 
       var hintsg = this.hints_layer().select(".objects_hints");
       // if tooltips were visible before, try to reconstruct them after short timeout
-      if (!hintsg.empty() && this.tooltip_allowed && (hintsg.property("hints_pad") == this.pad_name))
+      if (!hintsg.empty() && this.IsTooltipAllowed() && (hintsg.property("hints_pad") == this.pad_name))
          setTimeout(this.ProcessTooltipEvent.bind(this, hintsg.property('last_point')), 10);
    }
 
@@ -1824,8 +1835,8 @@
          menu.add("separator");
       }
 
-      menu.addchk(this.tooltip_allowed, "Show tooltips", function() {
-         this.tooltip_allowed = !this.tooltip_allowed;
+      menu.addchk(this.IsTooltipAllowed(), "Show tooltips", function() {
+         this.SetTooltipAllowed("toggle");
       });
       this.FillAttContextMenu(menu,alone ? "" : "Frame ");
       menu.add("separator");
@@ -1889,10 +1900,9 @@
    }
 
    TFramePainter.prototype.ProcessKeyPress = function(evnt) {
+
       var main = this.select_main();
       if (main.empty()) return;
-      var isactive = main.attr('frame_active');
-      if (isactive && isactive!=='true') return;
 
       var key = "";
       switch (evnt.keyCode) {
@@ -1906,6 +1916,9 @@
          case 106: key = "*"; break;
          default: return false;
       }
+
+      var pp = this.pad_painter();
+      if (JSROOT.Painter.GetActivePad() !== pp) return;
 
       if (evnt.shiftKey) key = "Shift " + key;
       if (evnt.altKey) key = "Alt " + key;
@@ -1934,8 +1947,7 @@
          evnt.stopPropagation();
          evnt.preventDefault();
       } else {
-         var pp = this.pad_painter(),
-             func = pp ? pp.FindButton(key) : "";
+         var func = pp ? pp.FindButton(key) : "";
          if (func) {
             pp.PadButtonClick(func);
             evnt.stopPropagation();
@@ -2247,14 +2259,14 @@
 
       var last = this.zoom_changed_interactive;
 
-      if (dox || doy || dox) this.zoom_changed_interactive = 2;
+      if (dox || doy || doz) this.zoom_changed_interactive = 2;
 
       var changed = this.Zoom(dox ? 0 : undefined, dox ? 0 : undefined,
                               doy ? 0 : undefined, doy ? 0 : undefined,
                               doz ? 0 : undefined, doz ? 0 : undefined);
 
       // if unzooming has no effect, decrease counter
-      if ((dox || doy || dox) && !changed)
+      if ((dox || doy || doz) && !changed)
          this.zoom_changed_interactive = (!isNaN(last) && (last>0)) ? last - 1 : 0;
 
       return changed;
@@ -2556,7 +2568,7 @@
       //   return;
       //}
 
-      var menu_painter = this, frame_corner = false, fp = null; // object used to show context menu
+      var menu_painter = this, exec_painter = null, frame_corner = false, fp = null; // object used to show context menu
 
       if (!evnt) {
          d3.event.preventDefault();
@@ -2569,7 +2581,7 @@
                 pp = this.pad_painter(),
                 pnt = null, sel = null;
 
-            fp = this.frame_painter();
+            fp = this;
 
             if (tch.length === 1) pnt = { x: tch[0][0], y: tch[0][1], touch: true }; else
             if (ms.length === 2) pnt = { x: ms[0], y: ms[1], touch: false };
@@ -2584,17 +2596,20 @@
                   }
             }
 
-            if (sel!==null) menu_painter = sel; else
-            if (fp!==null) kind = "frame";
+            if (sel) menu_painter = sel; else kind = "frame";
 
-            if (pnt!==null) frame_corner = (pnt.x>0) && (pnt.x<20) && (pnt.y>0) && (pnt.y<20);
+            if (pnt) frame_corner = (pnt.x>0) && (pnt.x<20) && (pnt.y>0) && (pnt.y<20);
 
-            if (fp) fp.SetLastEventPos(pnt);
+            fp.SetLastEventPos(pnt);
+         } else if ((kind=="x") || (kind=="y") || (kind=="z")) {
+            exec_painter = this.main_painter(); // histogram painter delivers items for axis menu
          }
       }
 
       // one need to copy event, while after call back event may be changed
       menu_painter.ctx_menu_evnt = evnt;
+
+      if (!exec_painter) exec_painter = menu_painter;
 
       JSROOT.Painter.createMenu(menu_painter, function(menu) {
          var domenu = menu.painter.FillContextMenu(menu, kind, obj);
@@ -2604,10 +2619,10 @@
             domenu = fp.FillContextMenu(menu);
 
          if (domenu)
-            menu.painter.FillObjectExecMenu(menu, kind, function() {
+            exec_painter.FillObjectExecMenu(menu, kind, function() {
                 // suppress any running zooming
                 menu.painter.SwitchTooltip(false);
-                menu.show(menu.painter.ctx_menu_evnt, menu.painter.SwitchTooltip.bind(menu.painter, true) );
+                menu.show(menu.painter.ctx_menu_evnt, menu.painter.SwitchTooltip.bind(menu.painter, true));
             });
 
       });  // end menu creation
@@ -2742,33 +2757,55 @@
 
       delete this.frame_painter_ref;
       delete this.pads_cache;
+      delete this.custom_palette;
 
       this.painters = [];
       this.pad = null;
       this.this_pad_name = "";
       this.has_canvas = false;
 
+      JSROOT.Painter.SelectActivePad({ pp: this, active: false });
+
       JSROOT.TObjectPainter.prototype.Cleanup.call(this);
    }
+
+   /** @summary Cleanup primitives from pad - selector lets define which painters to remove
+    * @private
+    */
 
    TPadPainter.prototype.CleanPrimitives = function(selector) {
       if (!selector || (typeof selector !== 'function')) return;
 
-      for (var k=this.painters.length-1;k>=0;--k) {
-         var p = this.painters[k];
-         if (selector(p)) {
-            p.Cleanup();
-            this.painters.splice(k--, 1);
+      for (var k = this.painters.length-1; k >= 0; --k)
+         if (selector(this.painters[k])) {
+            this.painters[k].Cleanup();
+            this.painters.splice(k, 1);
          }
-      }
    }
 
    /** @summary Generates automatic color for some objects painters
     * @private
     */
    TPadPainter.prototype.CreateAutoColor = function() {
+      var pp = this.canv_painter(),
+          pad = this.root_pad(),
+          numprimitives = pad && pad.fPrimitves ? pad.fPrimitves.arr.length : 5;
+
+      var pal = this.get_palette(true);
+
       var indx = this._auto_color || 0;
-      this._auto_color = (indx + 1) % 8;
+      this._auto_color = indx+1;
+
+      if (pal) {
+         if (numprimitives<2) numprimitives = 2;
+         if (indx >= numprimitives) indx = numprimitives - 1;
+         var palindx = Math.round(indx * (pal.getLength()-3) / (numprimitives-1));
+         var colvalue = pal.getColor(palindx);
+         var colindx = this.add_color(colvalue);
+         return colindx;
+      }
+
+      this._auto_color = this._auto_color % 8;
       return indx+2;
    }
 
@@ -2791,16 +2828,6 @@
       return Math.round((!fact ? 1 : fact) * (this.iscan || !this.has_canvas ? 16 : 12));
    }
 
-   TPadPainter.prototype.IsTooltipAllowed = function() {
-      var fp = this.frame_painter();
-      return fp ? fp.tooltip_allowed : undefined;
-   }
-
-   TPadPainter.prototype.SetTooltipAllowed = function(on) {
-      var fp = this.frame_painter();
-      if (fp) fp.tooltip_allowed = on;
-   }
-
    /// Retrive different event when object selected or pad is redrawn
    TPadPainter.prototype.RegisterForPadEvents = function(receiver) {
       this.pad_events_receiver = receiver;
@@ -2814,6 +2841,8 @@
 
       if (pos && !istoppad)
          this.CalcAbsolutePosition(this.svg_pad(this.this_pad_name), pos);
+
+      JSROOT.Painter.SelectActivePad({ pp: pp, active: true });
 
       if (typeof canp.SelectActivePad == "function")
          canp.SelectActivePad(pp, _painter, pos);
@@ -2831,6 +2860,15 @@
          canp.pad_events_receiver({ what: "redraw", padpainter: pp, painter: _painter });
    }
 
+   /** @brief Called by framework when pad is supposed to be active and get focus
+    * @private */
+   TPadPainter.prototype.SetActive = function(on) {
+      var fp = this.frame_painter();
+      if (fp && (typeof fp.SetActive == 'function')) fp.SetActive(on);
+   }
+
+   /** @brief Draw pad active border
+    * @private */
    TPadPainter.prototype.DrawActiveBorder = function(svg_rect, is_active) {
       if (is_active !== undefined) {
          if (this.is_active_pad === is_active) return;
@@ -3106,7 +3144,7 @@
                if (!col) { console.log('Fail to create color for palette'); arr = null; break; }
                arr.push(col);
             }
-            if (arr) this.CanvasPalette = new JSROOT.ColorPalette(arr);
+            if (arr) this.custom_palette = new JSROOT.ColorPalette(arr);
          }
 
          if (!this.options || this.options.GlobalColors) // set global list of colors
@@ -3128,7 +3166,8 @@
                console.log('Missing color with index ' + n); missing = true;
             }
          }
-         if (!this.options || (!missing && !this.options.IgnorePalette)) this.CanvasPalette = new JSROOT.ColorPalette(arr);
+         if (!this.options || (!missing && !this.options.IgnorePalette))
+            this.custom_palette = new JSROOT.ColorPalette(arr);
          return true;
       }
 
@@ -3264,9 +3303,7 @@
       else
          menu.add("header: Canvas");
 
-      var tooltipon = this.IsTooltipAllowed();
-      if (tooltipon !== undefined)
-         menu.addchk(tooltipon, "Show tooltips", this.SetTooltipAllowed.bind(this, !tooltipon));
+      menu.addchk(this.IsTooltipAllowed(), "Show tooltips", this.SetTooltipAllowed.bind(this, "toggle"));
 
       if (!this._websocket) {
 
@@ -3435,6 +3472,9 @@
       this.pad.fLineStyle = obj.fLineStyle;
       this.pad.fLineWidth = obj.fLineWidth;
 
+      this.pad.fPhi = obj.fPhi;
+      this.pad.fTheta = obj.fTheta;
+
       if (this.iscan) this.CheckSpecialsInPrimitives(obj);
 
       var fp = this.frame_painter();
@@ -3523,6 +3563,12 @@
             continue; // call next
          }
 
+         // gStyle object
+         if (snap.fKind === JSROOT.WebSnapIds.kStyle) {
+            JSROOT.extend(JSROOT.gStyle, snap.fSnapshot);
+            continue;
+         }
+
          // list of colors
          if (snap.fKind === JSROOT.WebSnapIds.kColors) {
 
@@ -3551,7 +3597,7 @@
                for (var n=0;n<snap.fSnapshot.fBuf.length;++n)
                   palette[n] = ListOfColors[Math.round(snap.fSnapshot.fBuf[n])];
 
-               this.CanvasPalette = new JSROOT.ColorPalette(palette);
+               this.custom_palette = new JSROOT.ColorPalette(palette);
             }
 
             continue;
@@ -3690,7 +3736,7 @@
          this.CreatePadSvg(true);
       }
 
-      var isanyfound = false;
+      var isanyfound = false, isanyremove = false;
 
       // find and remove painters which no longer exists in the list
       for (var k=0;k<this.painters.length;++k) {
@@ -3705,10 +3751,13 @@
             // remove painter which does not found in the list of snaps
             this.painters.splice(k--,1);
             sub.Cleanup(); // cleanup such painter
+            isanyremove = true;
          }
       }
 
-      // return JSROOT.CallBack(call_back, padpainter);
+      if (isanyremove) {
+         delete this.pads_cache;
+      }
 
       if (!isanyfound) {
          var svg_p = this.svg_pad(this.this_pad_name),
@@ -4316,6 +4365,9 @@
       // we select current pad, where all drawing is performed
       var prev_name = painter.has_canvas ? painter.CurrentPadName(painter.this_pad_name) : undefined;
 
+      // set active pad
+      JSROOT.Painter.SelectActivePad({ pp: painter, active: true });
+
       // flag used to prevent immediate pad redraw during first draw
       painter.DrawPrimitives(0, function() {
          painter.ShowButtons();
@@ -4341,6 +4393,7 @@
    function TCanvasPainter(canvas) {
       TPadPainter.call(this, canvas, true);
       this._websocket = null;
+      this.tooltip_allowed = (JSROOT.gStyle.Tooltip > 0);
    }
 
    TCanvasPainter.prototype = Object.create(TPadPainter.prototype);
@@ -4402,7 +4455,7 @@
 
       if (kind) this.proj_painter = 1; // just indicator that drawing can be preformed
 
-      if (this.use_openui && this.ShowUI5ProjectionArea)
+      if (this.ShowUI5ProjectionArea)
          return this.ShowUI5ProjectionArea(kind, call_back);
 
       var layout = 'simple';
@@ -4440,7 +4493,7 @@
 
          canv.fPrimitives.Add(hist, "hist");
 
-         if (this.use_openui && this.DrawInUI5ProjectionArea) {
+         if (this.DrawInUI5ProjectionArea) {
             // copy frame attributes
             this.DrawInUI5ProjectionArea(canv, drawopt, function(painter) { pthis.proj_painter = painter; })
          } else {
@@ -4460,6 +4513,7 @@
    }
 
    TCanvasPainter.prototype.ShowMessage = function(msg) {
+      if (this.testUI5()) return;
       JSROOT.progress(msg, 7000);
    }
 
@@ -4480,9 +4534,12 @@
       this.CloseWebsocket(true);
    }
 
-   TCanvasPainter.prototype.SendWebsocket = function(msg, chid) {
-      if (this._websocket)
-         this._websocket.Send(msg, chid);
+   TCanvasPainter.prototype.SendWebsocket = function(msg) {
+      if (!this._websocket) return;
+      if (this._websocket.CanSend())
+         this._websocket.Send(msg);
+      else
+         console.warn("DROP SEND: " + msg);
    }
 
    TCanvasPainter.prototype.CloseWebsocket = function(force) {
@@ -4596,45 +4653,47 @@
       TPadPainter.prototype.PadButtonClick.call(this, funcname);
    }
 
-   TCanvasPainter.prototype.HasEventStatus = function() {
-      if (this.use_openui) return this.openuiHasEventStatus();
+   TCanvasPainter.prototype.testUI5 = function() {
+      if (!this.use_openui) return false;
+      console.warn("full ui5 should be used - not loaded yet? Please check!!");
+      return true;
+   }
 
+   TCanvasPainter.prototype.HasEventStatus = function() {
+      if (this.testUI5()) return false;
       return this.brlayout ? this.brlayout.HasStatus() : false;
    }
 
    TCanvasPainter.prototype.ActivateStatusBar = function(state) {
-      if (this.use_openui)
-         this.openuiToggleEventStatus(state);
-      else if (this.brlayout)
+      if (this.testUI5()) return;
+      if (this.brlayout)
          this.brlayout.CreateStatusLine(23, state);
-
       this.ProcessChanges("sbits", this);
    }
 
    TCanvasPainter.prototype.HasGed = function() {
-      if (this.use_openui)
-         return this.openuiHasGed();
-
+      if (this.testUI5()) return false;
       return this.brlayout ? this.brlayout.HasContent() : false;
    }
 
    TCanvasPainter.prototype.RemoveGed = function() {
-      if (typeof this.CleanupGed == 'function')
-         this.CleanupGed();
+      if (this.testUI5()) return;
+
+      this.RegisterForPadEvents(null);
+
+      if (this.ged_panelid) {
+         sap.ui.getCore().byId(this.ged_panelid).getController().cleanupGed();
+         delete this.ged_panelid;
+      }
       if (this.brlayout)
          this.brlayout.DeleteContent();
 
       this.ProcessChanges("sbits", this);
    }
 
-
    TCanvasPainter.prototype.ActivateGed = function(objpainter, kind, mode) {
-      // function used to actiavte GED
-
-      if (this.use_openui)
-         return this.openuiActivateGed(objpainter, kind, mode);
-
-      if (!this.brlayout) return;
+      // function used to activate GED
+      if (this.testUI5() || !this.brlayout) return;
 
       if (this.brlayout.HasContent()) {
          if ((mode === "toggle") || (mode === false))
@@ -4663,14 +4722,38 @@
       var pthis = this;
 
       JSROOT.AssertPrerequisites('openui5', function() {
-         pthis.ShowGed(objpainter);
-         pthis.ProcessChanges("sbits", pthis);
+
+         d3.select("#ged_placeholder").text("");
+
+         sap.ui.define(["sap/ui/model/json/JSONModel", "sap/ui/core/mvc/XMLView"],
+                       function(JSONModel,XMLView) {
+
+            pthis.ged_panelid = "CanvasGedId";
+
+            var oModel = new JSONModel({ handle: null });
+
+            sap.ui.getCore().setModel(oModel, pthis.ged_panelid);
+
+            XMLView.create({
+               id: pthis.ged_panelid,
+               viewName : "rootui5.canv.view.Ged"
+            }).then(function(oGed) {
+
+               oGed.placeAt("ged_placeholder");
+
+               // TODO: should be moved into Ged controller - it must be able to detect canvas painter itself
+               pthis.RegisterForPadEvents(oGed.getController().padEventsReceiver.bind(oGed.getController()));
+
+               pthis.SelectObjectPainter(objpainter);
+
+               pthis.ProcessChanges("sbits", pthis);
+            });
+         });
       });
    }
 
    TCanvasPainter.prototype.ShowSection = function(that, on) {
-      if (this.use_openui)
-         return this.fullShowSection(that, on);
+      if (this.testUI5()) return;
 
       console.log('Show section ' + that + ' flag = ' + on);
 
@@ -4700,7 +4783,8 @@
    /// method informs that something was changed in the canvas
    /// used to update information on the server (when used with web6gui)
    TCanvasPainter.prototype.ProcessChanges = function(kind, source_pad) {
-      if (!this._websocket) return;
+      // check if we could send at least one message more - for some meaningful actions
+      if (!this._websocket || !this._websocket.CanSend(2)) return;
 
       var msg = (kind == "sbits") ? "STATUSBITS:" + this.GetStatusBits() : "RANGES6:" + this.GetAllRanges();
 
@@ -4734,8 +4818,8 @@
          if (click_pos.dbl) arg.dbl = true;
       }
 
-      if (this._websocket && arg && ischanged)
-         this._websocket.Send("PADCLICKED:" + JSROOT.toJSON(arg));
+      if (arg && ischanged)
+         this.SendWebsocket("PADCLICKED:" + JSROOT.toJSON(arg));
    }
 
    TCanvasPainter.prototype.GetStatusBits = function() {
@@ -4799,6 +4883,9 @@
 
       if (nocanvas && opt.indexOf("noframe") < 0)
          JSROOT.Painter.drawFrame(divid, null);
+
+      // select global reference - required for keys handling
+      JSROOT.Painter.SelectActivePad({ pp: painter, active: true });
 
       painter.DrawPrimitives(0, function() { painter.ShowButtons(); painter.DrawingReady(); });
       return painter;

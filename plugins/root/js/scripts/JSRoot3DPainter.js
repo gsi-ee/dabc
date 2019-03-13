@@ -318,7 +318,10 @@
       if (JSROOT.gStyle.Zooming && JSROOT.gStyle.ZoomWheel)
          renderer.domElement.addEventListener( 'wheel', control_mousewheel);
 
-      if (JSROOT.gStyle.Zooming && JSROOT.gStyle.ZoomMouse) {
+      var enable_zoom = JSROOT.gStyle.Zooming && JSROOT.gStyle.ZoomMouse,
+          enable_select = typeof painter.ProcessMouseClick == "function";
+
+      if (enable_zoom || enable_select) {
          renderer.domElement.addEventListener( 'mousedown', control_mousedown);
          renderer.domElement.addEventListener( 'mouseup', control_mouseup);
       }
@@ -349,11 +352,13 @@
       control.control_changed = false;
       control.control_active = false;
       control.mouse_ctxt = { x:0, y: 0, on: false };
+      control.enable_zoom = enable_zoom;
+      control.enable_select = enable_select;
 
       control.Cleanup = function() {
          if (JSROOT.gStyle.Zooming && JSROOT.gStyle.ZoomWheel)
             this.domElement.removeEventListener( 'wheel', control_mousewheel);
-         if (JSROOT.gStyle.Zooming && JSROOT.gStyle.ZoomMouse) {
+         if (this.enable_zoom || this.enable_select) {
             this.domElement.removeEventListener( 'mousedown', control_mousedown);
             this.domElement.removeEventListener( 'mouseup', control_mouseup);
          }
@@ -387,7 +392,16 @@
          return mouse;
       }
 
-      control.GetIntersects = function(mouse) {
+      control.GetOriginDirectionIntersects = function(origin, direction) {
+         this.raycaster.set(origin, direction);
+         var intersects = this.raycaster.intersectObjects(this.scene.children, true);
+         // painter may want to filter intersects
+         if (typeof this.painter.FilterIntersects == 'function')
+            intersects = this.painter.FilterIntersects(intersects);
+         return intersects;
+      }
+
+      control.GetMouseIntersects = function(mouse) {
          // domElement gives correct coordinate with canvas render, but isn't always right for webgl renderer
          var sz = (this.renderer instanceof THREE.WebGLRenderer) ? this.renderer.getSize() : this.renderer.domElement;
          var pnt = { x: mouse.x / sz.width * 2 - 1, y: -mouse.y / sz.height * 2 + 1 };
@@ -406,7 +420,7 @@
 
       control.DetectZoomMesh = function(evnt) {
          var mouse = this.GetMousePos(evnt, {});
-         var intersects = this.GetIntersects(mouse);
+         var intersects = this.GetMouseIntersects(mouse);
          if (intersects)
             for (var n=0;n<intersects.length;++n)
                if (intersects[n].object.zoom)
@@ -425,9 +439,9 @@
          // this.painter.Render3D();
       }
 
-
       control.ChangeEvent = function() {
          this.mouse_ctxt.on = false; // disable context menu if any changes where done by orbit control
+         this.painter.zoom_changed_interactive = 1;
          this.painter.Render3D(0);
          this.control_changed = true;
       }
@@ -448,7 +462,7 @@
          this.control_active = false;
          if (this.mouse_ctxt.on) {
             this.mouse_ctxt.on = false;
-            this.ContextMenu(this.mouse_ctxt, this.GetIntersects(this.mouse_ctxt));
+            this.ContextMenu(this.mouse_ctxt, this.GetMouseIntersects(this.mouse_ctxt));
          } else
          if (this.control_changed) {
             // react on camera change when required
@@ -465,7 +479,7 @@
          if (this.block_ctxt)
             this.block_ctxt = false;
          else
-            this.ContextMenu(this.mouse_ctxt, this.GetIntersects(this.mouse_ctxt));
+            this.ContextMenu(this.mouse_ctxt, this.GetMouseIntersects(this.mouse_ctxt));
       }
 
       control.ContextMenu = function(pos, intersects) {
@@ -516,7 +530,7 @@
          evnt.preventDefault();
 
          var mouse = this.GetMousePos(evnt, {}),
-             intersects = this.GetIntersects(mouse),
+             intersects = this.GetMouseIntersects(mouse),
              tip = this.ProcessMouseMove(intersects),
              status_func = this.painter.GetShowStatusFunc();
 
@@ -534,11 +548,11 @@
          }
 
          this.cursor_changed = false;
-         if (tip && this.painter.tooltip_allowed) {
+         if (tip && this.painter && this.painter.IsTooltipAllowed()) {
             this.tooltip.check_parent(this.painter.select_main().node());
 
             this.tooltip.show(tip, mouse);
-            this.tooltip.pos(evnt)
+            this.tooltip.pos(evnt);
          } else {
             this.tooltip.hide();
             if (intersects)
@@ -593,6 +607,7 @@
       }
 
       function control_mousedown(evnt) {
+
          // function used to hide some events from orbit control and redirect them to zooming rect
 
          if (control.mouse_zoom_mesh) {
@@ -605,15 +620,23 @@
          if ((evnt.button!==undefined) && (evnt.button !==0)) return;
          if ((evnt.buttons!==undefined) && (evnt.buttons !== 1)) return;
 
-         control.mouse_zoom_mesh = control.DetectZoomMesh(evnt);
-         if (!control.mouse_zoom_mesh) return;
+         if (control.enable_zoom) {
+            control.mouse_zoom_mesh = control.DetectZoomMesh(evnt);
+            if (control.mouse_zoom_mesh) {
+               // just block orbit control
+               evnt.stopImmediatePropagation();
+               evnt.stopPropagation();
+               return;
+            }
+         }
 
-         // just block orbit control
-         evnt.stopImmediatePropagation();
-         evnt.stopPropagation();
+         if (control.enable_select) {
+            control.mouse_select_pnt = control.GetMousePos(evnt, {});
+         }
       }
 
       function control_mouseup(evnt) {
+
          if (control.mouse_zoom_mesh && control.mouse_zoom_mesh.point2 && control.painter.Get3DZoomCoord) {
 
             var kind = control.mouse_zoom_mesh.object.zoom,
@@ -633,7 +656,25 @@
          }
 
          // if selection was drawn, it should be removed and picture rendered again
-         control.RemoveZoomMesh();
+         if (control.enable_zoom)
+            control.RemoveZoomMesh();
+
+         // only left-button is considered
+         //if ((evnt.button!==undefined) && (evnt.button !==0)) return;
+         //if ((evnt.buttons!==undefined) && (evnt.buttons !== 1)) return;
+
+         if (control.enable_select && control.mouse_select_pnt) {
+
+            var pnt = control.GetMousePos(evnt, {});
+
+            var same_pnt = (pnt.x == control.mouse_select_pnt.x) && (pnt.y == control.mouse_select_pnt.y);
+            delete control.mouse_select_pnt;
+
+            if (same_pnt) {
+               var intersects = control.GetMouseIntersects(pnt);
+               control.painter.ProcessMouseClick(pnt, intersects, evnt);
+            }
+         }
       }
 
       control.MainProcessDblClick = function(evnt) {
@@ -656,6 +697,10 @@
 
       return control;
    }
+
+   /** Method cleanup three.js object as much as possible.
+    * Simplify JS engine to remove it from memory
+    * @private */
 
    JSROOT.Painter.DisposeThreejsObject = function(obj, only_childs) {
       if (!obj) return;
@@ -690,6 +735,7 @@
       delete obj.bins_index;
       delete obj.tooltip;
       delete obj.stack; // used in geom painter
+      delete obj.drawn_highlight; // special highlight object
 
       obj = undefined;
    }
@@ -766,6 +812,89 @@
    }
 
    // ==============================================================================
+
+   function InteractiveControl() {}
+
+   InteractiveControl.prototype.cleanup = function() {}
+
+   InteractiveControl.prototype.extractIndex = function(intersect) { return undefined; }
+
+   InteractiveControl.prototype.setSelected = function(col, indx) {}
+
+   InteractiveControl.prototype.setHighlight = function(col, indx) {}
+
+   InteractiveControl.prototype.checkHighlightIndex = function(indx) { return undefined; }
+
+   // ==============================================================================
+
+   /** Special class to control highliht and selection of single points, used in geo painter
+    * @private */
+   function PointsControl(mesh) {
+      InteractiveControl.call(this);
+      this.mesh = mesh;
+   }
+
+   PointsControl.prototype = Object.create(InteractiveControl.prototype);
+
+   PointsControl.prototype.cleanup = function() {
+      if (!this.mesh) return;
+      delete this.mesh.is_selected;
+      this.createSpecial(null);
+      delete this.mesh;
+   }
+
+   PointsControl.prototype.extractIndex = function(intersect) {
+      return intersect && intersect.index!==undefined ? intersect.index : undefined;
+   }
+
+   PointsControl.prototype.setSelected = function(col, indx) {
+      var m = this.mesh;
+      if ((m.select_col == col) && (m.select_indx == indx)) {
+         console.log("Reset selection");
+         col = null; indx = undefined;
+      }
+      m.select_col = col;
+      m.select_indx = indx;
+      this.createSpecial(col, indx);
+      return true;
+   }
+
+   PointsControl.prototype.setHighlight = function(col, indx) {
+      var m = this.mesh;
+      m.h_index = indx;
+      if (col)
+         this.createSpecial(col, indx);
+      else
+         this.createSpecial(m.select_col, m.select_indx);
+      return true;
+   }
+
+   PointsControl.prototype.createSpecial = function(color, index) {
+      var m = this.mesh;
+      if (!color) {
+         if (m.js_special) {
+            m.remove(m.js_special);
+            JSROOT.Painter.DisposeThreejsObject(m.js_special);
+            delete m.js_special;
+         }
+         return;
+      }
+
+      if (!m.js_special) {
+         var geom = new THREE.BufferGeometry();
+         geom.addAttribute( 'position', m.geometry.getAttribute("position"));
+         var material = new THREE.PointsMaterial( { size: m.material.size*2, color: color } );
+         material.sizeAttenuation = m.material.sizeAttenuation;
+
+         m.js_special = new THREE.Points(geom, material);
+         m.js_special.jsroot_special = true; // special object, exclude from intersections
+         m.add(m.js_special);
+      }
+
+      if (color) m.js_special.material.color = new THREE.Color(color);
+      if (index !== undefined) m.js_special.geometry.setDrawRange(index, 1);
+   }
+
 
    function PointsCreator(size, iswebgl, scale) {
       this.webgl = (iswebgl === undefined) ? true : iswebgl;
@@ -847,6 +976,8 @@
 
 
    JSROOT.Painter.PointsCreator = PointsCreator;
+   JSROOT.Painter.InteractiveControl = InteractiveControl;
+   JSROOT.Painter.PointsControl = PointsControl;
 
    JSROOT.Painter.drawPolyLine3D = drawPolyLine3D;
 

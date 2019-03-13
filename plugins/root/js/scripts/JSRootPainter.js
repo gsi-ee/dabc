@@ -96,7 +96,7 @@
       diamand: { path: "M256,0L384,256L256,511L128,256z" },
       rect: { path: "M80,80h352v352h-352z" },
       cross: { path: "M80,40l176,176l176,-176l40,40l-176,176l176,176l-40,40l-176,-176l-176,176l-40,-40l176,-176l-176,-176z" },
-
+      vrgoggles: { size: "245.82 141.73", path: 'M175.56,111.37c-22.52,0-40.77-18.84-40.77-42.07S153,27.24,175.56,27.24s40.77,18.84,40.77,42.07S198.08,111.37,175.56,111.37ZM26.84,69.31c0-23.23,18.25-42.07,40.77-42.07s40.77,18.84,40.77,42.07-18.26,42.07-40.77,42.07S26.84,92.54,26.84,69.31ZM27.27,0C11.54,0,0,12.34,0,28.58V110.9c0,16.24,11.54,30.83,27.27,30.83H99.57c2.17,0,4.19-1.83,5.4-3.7L116.47,118a8,8,0,0,1,12.52-.18l11.51,20.34c1.2,1.86,3.22,3.61,5.39,3.61h72.29c15.74,0,27.63-14.6,27.63-30.83V28.58C245.82,12.34,233.93,0,218.19,0H27.27Z'},
       CreateSVG : function(group,btn,size,title) {
          var svg = group.append("svg:svg")
                      .attr("class", "svg_toolbar_btn")
@@ -1191,6 +1191,11 @@
          case 3024: w = h = 16; fills = "M0,8v8h2v-8zM8,0v8h2v-8M4,14v2h12v-2z"; fills2 = "M0,2h8v6h4v-6h4v12h-12v-6h-4z"; break;
          case 3025: w = h = 18; fills = "M5,13v-8h8ZM18,0v18h-18l5,-5h8v-8Z"; break;
          default:
+            if ((this.pattern>3025) && (this.pattern<3100)) {
+               // same as 3002, see TGX11.cxx, line 2234
+               w = 4; h = 2; fills = "M1,0h1v1h-1zM3,1h1v1h-1z"; break;
+            }
+
             var code = this.pattern % 1000,
                 k = code % 10, j = ((code - k) % 100) / 10, i = (code - j*10 - k)/100;
             if (!i) break;
@@ -1747,6 +1752,53 @@
 
    // ========================================================================================
 
+   function FileDumpSocket(receiver) {
+      this.receiver = receiver;
+      this.protocol = [];
+      this.cnt = 0;
+      JSROOT.NewHttpRequest("protocol.json", "text", this.get_protocol.bind(this)).send();
+   }
+
+   FileDumpSocket.prototype.get_protocol = function(res) {
+      if (!res) return;
+      this.protocol = JSON.parse(res);
+      if (typeof this.onopen == 'function') this.onopen();
+      this.next_operation();
+   }
+
+   FileDumpSocket.prototype.send = function(str) {
+      if (this.protocol[this.cnt] == "send") {
+         this.cnt++;
+         setTimeout(this.next_operation.bind(this),10);
+      }
+   }
+
+   FileDumpSocket.prototype.close = function() {
+   }
+
+   FileDumpSocket.prototype.next_operation = function() {
+      // when file request running - just ignore
+      if (this.wait_for_file) return;
+      var fname = this.protocol[this.cnt];
+      if (!fname) return;
+      if (fname == "send") return; // waiting for send
+      // console.log("getting file", fname, "wait", this.wait_for_file);
+      this.wait_for_file = true;
+      JSROOT.NewHttpRequest(fname, (fname.indexOf(".bin") > 0 ? "buf" : "text"), this.get_file.bind(this, fname)).send();
+      this.cnt++;
+   }
+
+   FileDumpSocket.prototype.get_file = function(fname, res) {
+      // console.log('got file', fname, typeof res, !!res);
+      this.wait_for_file = false;
+      if (!res) return;
+      if (this.receiver.ProvideData)
+         this.receiver.ProvideData(res, 0);
+      setTimeout(this.next_operation.bind(this),10);
+   }
+
+   // ========================================================================================
+
 
    /** Client communication handle for TWebWindow.
     *
@@ -1762,7 +1814,7 @@
       this.ackn = 10;
    }
 
-   /** Set callbacks receiever.
+   /** Set callbacks reciever.
     *
     * Following function can be defined in receiver object:
     *    - OnWebsocketMsg
@@ -1789,12 +1841,12 @@
    /** Provide data for receiver. When no queue - do it directly.
     * @private */
    WebWindowHandle.prototype.ProvideData = function(_msg, _len) {
-      if (!this.msgqueue)
+      if (!this.msgqueue || !this.msgqueue.length)
          return this.InvokeReceiver("OnWebsocketMsg", _msg, _len);
       this.msgqueue.push({ ready: true, msg: _msg, len: _len});
    }
 
-   /** Reserver entry in queue for data, which is not yet decoded.
+   /** Reserve entry in queue for data, which is not yet decoded.
     * @private */
    WebWindowHandle.prototype.ReserveQueueItem = function() {
       if (!this.msgqueue) this.msgqueue = [];
@@ -1834,6 +1886,11 @@
          this._websocket.close();
          delete this._websocket;
       }
+   }
+
+   /** Returns if one can send text message to server. Checks number of send credits */
+   WebWindowHandle.prototype.CanSend = function(numsend) {
+      return (this.cansend >= (numsend || 1));
    }
 
    /** Send text message via the connection. */
@@ -1887,7 +1944,7 @@
 
          if (pthis.state != 0) return;
 
-         // if (!first_time) console.log("try connect window again" + (new Date()).getTime());
+         if (!first_time) console.log("try connect window again" + (new Date()).getTime());
 
          if (pthis._websocket) pthis._websocket.close();
          delete pthis._websocket;
@@ -1895,6 +1952,7 @@
          var conn = null;
          if (!href) {
             href = window.location.href;
+            if (href && href.indexOf("#")>0) href = href.substr(0, href.indexOf("#"));
             if (href && href.lastIndexOf("/")>0) href = href.substr(0, href.lastIndexOf("/")+1);
          }
          pthis.href = href;
@@ -1906,7 +1964,11 @@
 
          var path = href;
 
-         if ((pthis.kind === 'websocket') && first_time) {
+         if (pthis.kind == "file") {
+            path += "root.filedump";
+            conn = new FileDumpSocket(pthis);
+            console.log('configure protocol log ' + path);
+         } else if ((pthis.kind === 'websocket') && first_time) {
             path = path.replace("http://", "ws://").replace("https://", "wss://") + "root.websocket";
             if (args) path += "?" + args;
             console.log('configure websocket ' + path);
@@ -2076,7 +2138,6 @@
       if (arg.first_recv) {
          arg.receiver = {
             OnWebsocketOpened: function(handle) {
-               console.log('Connected');
             },
 
             OnWebsocketMsg: function(handle, msg) {
@@ -2112,7 +2173,6 @@
       } else if (!arg.first_recv) {
          JSROOT.CallBack(arg.callback, handle, arg);
       }
-
    }
 
    // ========================================================================================
@@ -2553,11 +2613,12 @@
     * @augments JSROOT.TBasePainter
     * @param {object} obj - object to draw
     */
-   function TObjectPainter(obj) {
+   function TObjectPainter(obj, opt) {
       TBasePainter.call(this);
       this.draw_g = null; // container for all drawn objects
       this.pad_name = ""; // name of pad where object is drawn
       this.main = null;  // main painter, received from pad
+      if (typeof opt == "string") this.options = { original: opt };
       this.AssignObject(obj);
    }
 
@@ -2735,6 +2796,41 @@
       jsarr.push(color);
       return jsarr.length-1;
    }
+
+   /** @summary returns tooltip allowed flag. Check canvas painter
+    * @private */
+   TObjectPainter.prototype.IsTooltipAllowed = function() {
+      var src = this.canv_painter() || this;
+      return src.tooltip_allowed ? true : false;
+   }
+
+   /** @summary returns tooltip allowed flag
+    * @private */
+   TObjectPainter.prototype.SetTooltipAllowed = function(on) {
+      var src = this.canv_painter() || this;
+      src.tooltip_allowed = (on == "toggle") ? !src.tooltip_allowed : on;
+   }
+
+   /** @summary returns custom palette for the object. If forced, will be created
+    * @private */
+   TObjectPainter.prototype.get_palette = function(force, palettedid) {
+      if (!palettedid) {
+         var pp = this.pad_painter();
+         if (!pp) return null;
+         if (pp.custom_palette) return pp.custom_palette;
+      }
+
+      var cp = this.canv_painter();
+      if (!cp) return null;
+      if (cp.custom_palette && !palettedid) return cp.custom_palette;
+
+      if (force && JSROOT.Painter.GetColorPalette)
+         cp.custom_palette = JSROOT.Painter.GetColorPalette(palettedid);
+
+      return cp.custom_palette;
+   }
+
+
 
    /** @summary Checks if draw elements were resized and drawing should be updated.
     *
@@ -3809,23 +3905,13 @@
    TObjectPainter.prototype.ExecuteMenuCommand = function(method) {
 
       if (method.fName == "Inspect") {
+         // primitve inspector, keep it here
          this.ShowInpsector();
          return true;
       }
 
       var canvp = this.canv_painter();
       if (!canvp) return false;
-
-      if ((method.fName == "FitPanel") && canvp.ActivateFitPanel) {
-         canvp.ActivateFitPanel(this);
-         return true;
-      }
-
-      if (canvp.ActivateGed && ((method.fName == "DrawPanel") || (method.fName == "SetLineAttributes")
-            || (method.fName == "SetFillAttributes") || (method.fName == "SetMarkerAttributes"))) {
-         canvp.ActivateGed(this); // activate GED
-         return true;
-      }
 
       return false;
    }
@@ -3840,19 +3926,20 @@
          return JSROOT.CallBack(call_back);
 
       function DoExecMenu(arg) {
-         var canvp = this.canv_painter(),
-             item = this.args_menu_items[parseInt(arg)];
+         var execp = this.exec_painter || this,
+             canvp = execp.canv_painter(),
+             item = execp.args_menu_items[parseInt(arg)];
 
          if (!item || !item.fName) return;
 
-         if (canvp.MethodsDialog && (item.fArgs!==undefined))
-            return canvp.MethodsDialog(this, item, this.args_menu_id);
+         if (typeof canvp.executeObjectMethod == 'function')
+            if (canvp.executeObjectMethod(execp, item, execp.args_menu_id)) return;
 
-         if (this.ExecuteMenuCommand(item)) return;
+         if (execp.ExecuteMenuCommand(item)) return;
 
-         if (canvp._websocket && this.args_menu_id) {
-            console.log('execute method ' + item.fExec + ' for object ' + this.args_menu_id);
-            canvp.SendWebsocket('OBJEXEC:' + this.args_menu_id + ":" + item.fExec);
+         if (canvp._websocket && execp.args_menu_id) {
+            console.log('execute method ' + item.fExec + ' for object ' + execp.args_menu_id);
+            canvp.SendWebsocket('OBJEXEC:' + execp.args_menu_id + ":" + item.fExec);
          }
       }
 
@@ -3894,6 +3981,10 @@
 
       var reqid = this.snapid;
       if (kind) reqid += "#" + kind; // use # to separate object id from member specifier like 'x' or 'z'
+
+      // if menu painter differs from this, remember it for further usage
+      if (menu.painter)
+         menu.painter.exec_painter = (menu.painter !== this) ? this : undefined;
 
       canvp._getmenu_callback = DoFillMenu.bind(this, menu, reqid, call_back);
 
@@ -4078,7 +4169,7 @@
 
       var pp = this.canv_painter(), res = JSROOT.Painter.ShowStatus;
 
-      if (pp && pp.use_openui && (typeof pp.fullShowStatus === 'function')) res = pp.fullShowStatus.bind(pp);
+      if (pp && (typeof pp.ShowCanvasStatus === 'function')) res = pp.ShowCanvasStatus.bind(pp);
 
       if (res && (this.enlarge_main('state')==='on')) res = null;
 
@@ -4333,12 +4424,16 @@
           svg_factor = 0,
           f = draw_g.property('text_factor'),
           font = draw_g.property('text_font'),
+          max_sz = draw_g.property('max_font_size'),
           font_size = font.size;
 
-      if ((f>0) && ((f<0.9) || (f>1.))) {
+      if ((f > 0) && ((f < 0.9) || (f > 1)))
          font.size = Math.floor(font.size/f);
-         if (draw_g.property('max_font_size') && (font.size > draw_g.property('max_font_size')))
-            font.size = draw_g.property('max_font_size');
+
+      if (max_sz && (font.size > max_sz))
+          font.size = max_sz;
+
+      if (font.size != font_size) {
          draw_g.call(font.func);
          font_size = font.size;
       }
@@ -5306,10 +5401,40 @@
 
    // ===========================================================
 
+   /** @summary Set active pad painter
+    *
+    * @desc Should be used to handle key press events, which are global in the web browser
+    *  @param {object} args - functions arguments
+    *  @param {object} args.pp - pad painter
+    *  @param {boolean} [args.active = false] - is pad activated or not
+    * @private */
+   Painter.SelectActivePad = function(args) {
+      if (args.active) {
+         if (this.$active_pp && (typeof this.$active_pp.SetActive == 'function'))
+            this.$active_pp.SetActive(false);
+
+         this.$active_pp = args.pp;
+
+         if (this.$active_pp && (typeof this.$active_pp.SetActive == 'function'))
+            this.$active_pp.SetActive(true);
+      } else if (this.$active_pp === args.pp) {
+         delete this.$active_pp;
+      }
+   }
+
+   /** @summary Returns current active pad
+    * @desc Should be used only for keyboard handling
+    * @private */
+
+   Painter.GetActivePad = function() {
+      return this.$active_pp;
+   }
+
+   // =====================================================================
+
    function TooltipHandler(obj) {
       JSROOT.TObjectPainter.call(this, obj);
       this.tooltip_enabled = true;  // this is internally used flag to temporary disbale/enable tooltip
-      this.tooltip_allowed = (JSROOT.gStyle.Tooltip > 0); // this is interactively changed property
    }
 
    TooltipHandler.prototype = Object.create(TObjectPainter.prototype);
@@ -5324,7 +5449,7 @@
 
    TooltipHandler.prototype.IsTooltipShown = function() {
       // return true if tooltip is shown, use to prevent some other action
-      if (!this.tooltip_allowed || !this.tooltip_enabled) return false;
+      if (!this.tooltip_enabled || !this.IsTooltipAllowed()) return false;
       var hintsg = this.hints_layer().select(".objects_hints");
       return hintsg.empty() ? false : hintsg.property("hints_pad") == this.pad_name;
    }
@@ -5355,7 +5480,7 @@
           pp = this.pad_painter(),
           font = JSROOT.Painter.getFontDetails(160, textheight),
           status_func = this.GetShowStatusFunc(),
-          disable_tootlips = !this.tooltip_allowed || !this.tooltip_enabled;
+          disable_tootlips = !this.IsTooltipAllowed() || !this.tooltip_enabled;
 
       if ((pnt === undefined) || (disable_tootlips && !status_func)) pnt = null;
       if (pnt && disable_tootlips) pnt.disabled = true; // indicate that highlighting is not required
@@ -5760,6 +5885,7 @@
    JSROOT.addDrawFunc({ name: /^TH1/, icon: "img_histo1d", prereq: "v6;hist", func: "JSROOT.Painter.drawHistogram1D", opt:";hist;P;P0;E;E1;E2;E3;E4;E1X0;L;LF2;B;B1;A;TEXT;LEGO;same", ctrl: "l" });
    JSROOT.addDrawFunc({ name: "TProfile", icon: "img_profile", prereq: "v6;hist", func: "JSROOT.Painter.drawHistogram1D", opt:";E0;E1;E2;p;AH;hist"});
    JSROOT.addDrawFunc({ name: "TH2Poly", icon: "img_histo2d", prereq: "v6;hist", func: "JSROOT.Painter.drawHistogram2D", opt:";COL;COL0;COLZ;LCOL;LCOL0;LCOLZ;LEGO;same", expand_item: "fBins", theonly: true });
+   JSROOT.addDrawFunc({ name: "TProfile2Poly", sameas: "TH2Poly" });
    JSROOT.addDrawFunc({ name: "TH2PolyBin", icon: "img_histo2d", draw_field: "fPoly" });
    JSROOT.addDrawFunc({ name: /^TH2/, icon: "img_histo2d", prereq: "v6;hist", func: "JSROOT.Painter.drawHistogram2D", opt:";COL;COLZ;COL0;COL1;COL0Z;COL1Z;COLA;BOX;BOX1;SCAT;TEXT;CONT;CONT1;CONT2;CONT3;CONT4;ARR;SURF;SURF1;SURF2;SURF4;SURF6;E;A;LEGO;LEGO0;LEGO1;LEGO2;LEGO3;LEGO4;same", ctrl: "colz" });
    JSROOT.addDrawFunc({ name: "TProfile2D", sameas: "TH2" });
@@ -6074,10 +6200,9 @@
 
       function performDraw() {
          if (handle.direct) {
-            painter = new TObjectPainter(obj);
+            painter = new TObjectPainter(obj, opt);
             painter.SetDivId(divid, 2);
             painter.Redraw = handle.func;
-            painter.options = { original: opt || "" };
             painter.Redraw();
             painter.DrawingReady();
          } else {

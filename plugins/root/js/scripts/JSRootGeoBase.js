@@ -105,78 +105,6 @@
       return ('fShape' in obj) && ('fTrans' in obj) ? 1 : 0;
    }
 
-   /** @memberOf JSROOT.GEO */
-   JSROOT.GEO.getNodeProperties = function(kind, node, visible) {
-      // function return different properties for specified node
-      // Only if node visible, material will be created
-
-      if (kind === 1) {
-         // special handling for EVE nodes
-
-         var prop = { name: JSROOT.GEO.ObjectName(node), nname: JSROOT.GEO.ObjectName(node), shape: node.fShape, material: null, chlds: null };
-
-         if (node.fElements !== null) prop.chlds = node.fElements.arr;
-
-         if (visible) {
-            var _transparent = false, _opacity = 1.0;
-            if ( node.fRGBA[3] < 1.0) {
-               _transparent = true;
-               _opacity = node.fRGBA[3];
-            }
-            prop.fillcolor = new THREE.Color( node.fRGBA[0], node.fRGBA[1], node.fRGBA[2] );
-            prop.material = new THREE.MeshLambertMaterial( { transparent: _transparent,
-                             opacity: _opacity, wireframe: false, color: prop.fillcolor,
-                             side: THREE.FrontSide /* THREE.DoubleSide*/, vertexColors: THREE.NoColors /*THREE.VertexColors */,
-                             overdraw: 0., depthWrite: !_transparent } );
-            prop.material.alwaysTransparent = _transparent;
-            prop.material.inherentOpacity = _opacity;
-         }
-
-         return prop;
-      }
-
-      var volume = node.fVolume;
-
-      var prop = { name: JSROOT.GEO.ObjectName(volume), nname: JSROOT.GEO.ObjectName(node), volume: node.fVolume, shape: volume.fShape, material: null, chlds: null };
-
-      if (node.fVolume.fNodes !== null) prop.chlds = node.fVolume.fNodes.arr;
-
-      if (visible) {
-         var _transparent = false, _opacity = 1.0;
-         if ((volume.fFillColor > 1) && (volume.fLineColor == 1))
-            prop.fillcolor = JSROOT.Painter.root_colors[volume.fFillColor];
-         else
-         if (volume.fLineColor >= 0)
-            prop.fillcolor = JSROOT.Painter.root_colors[volume.fLineColor];
-
-         if (volume.fMedium && volume.fMedium.fMaterial) {
-            var fillstyle = volume.fMedium.fMaterial.fFillStyle;
-            var transparency = (fillstyle < 3000 || fillstyle > 3100) ? 0 : fillstyle - 3000;
-            if (transparency > 0) {
-               _transparent = true;
-               _opacity = (100.0 - transparency) / 100.0;
-            }
-            if (prop.fillcolor === undefined)
-               prop.fillcolor = JSROOT.Painter.root_colors[volume.fMedium.fMaterial.fFillColor];
-         }
-         if (prop.fillcolor === undefined)
-            prop.fillcolor = "lightgrey";
-
-         prop.material = new THREE.MeshLambertMaterial( { transparent: _transparent,
-                              opacity: _opacity, wireframe: false, color: prop.fillcolor,
-                              side: THREE.FrontSide /* THREE.DoubleSide */, vertexColors: THREE.NoColors /*THREE.VertexColors*/,
-                              overdraw: 0., depthWrite: !_transparent } );
-         prop.material.alwaysTransparent = _transparent;
-         prop.material.inherentOpacity = _opacity;
-
-         //console.log('opacity', _opacity, 'transp', _transparent);
-         //console.log('material', prop.material);
-
-      }
-
-      return prop;
-   }
-
    JSROOT.GEO.CountNumShapes = function(shape) {
       if (!shape) return 0;
       if (shape._typename!=='TGeoCompositeShape') return 1;
@@ -1633,7 +1561,7 @@
             matrix.set(node.fTrans[0],  node.fTrans[4],  node.fTrans[8],  0,
                        node.fTrans[1],  node.fTrans[5],  node.fTrans[9],  0,
                        node.fTrans[2],  node.fTrans[6],  node.fTrans[10], 0,
-                                    0,               0,               0, 1);
+                                    0,               0,               0,  1);
             // second - set position with proper sign
             matrix.setPosition({ x: node.fTrans[12], y: node.fTrans[13], z: node.fTrans[14] });
          }
@@ -1662,7 +1590,7 @@
 
               matrix = new THREE.Matrix4();
 
-              switch (node.fFinder._typename.charAt[node.fFinder._typename.length-1]) {
+              switch (node.fFinder._typename[node.fFinder._typename.length-1]) {
                  case 'X': matrix.setPosition(new THREE.Vector3(_shift, 0, 0)); break;
                  case 'Y': matrix.setPosition(new THREE.Vector3(0, _shift, 0)); break;
                  case 'Z': matrix.setPosition(new THREE.Vector3(0, 0, _shift)); break;
@@ -1675,10 +1603,10 @@
 
               matrix = new THREE.Matrix4();
 
-              matrix.set(_cos, -_sin, 0,  0,
-                         _sin,  _cos, 0,  0,
-                            0,     0, 1,  0,
-                            0,     0, 0,  1);
+              matrix.set(_cos, -_sin,  0,  0,
+                         _sin,  _cos,  0,  0,
+                            0,     0,  1,  0,
+                            0,     0,  0,  1);
               break;
 
            case 'TGeoPatternCylR':
@@ -2093,6 +2021,31 @@
       return geom.vertices.length;
    }
 
+   /** Compares two stacks. Returns length where stacks are the same
+    * @memberOf JSROOT.GEO
+    * @private */
+   JSROOT.GEO.CompareStacks = function(stack1, stack2) {
+      if (!stack1 || !stack2) return 0;
+      if (stack1 === stack2) return stack1.length;
+      var len = Math.min(stack1.length, stack2.length);
+      for (var k=0;k<len;++k)
+         if (stack1[k] !== stack2[k]) return k;
+      return len;
+   }
+
+   /** Checks if two stack arrays are identical
+    * @memberOf JSROOT.GEO
+    * @private */
+   JSROOT.GEO.IsSameStack = function(stack1, stack2) {
+      if (!stack1 || !stack2) return false;
+      if (stack1 === stack2) return true;
+      if (stack1.length !== stack2.length) return false;
+      for (var k=0;k<stack1.length;++k)
+         if (stack1[k] !== stack2[k]) return false;
+      return true;
+   }
+
+
    // ====================================================================
 
    // class for working with cloned nodes
@@ -2242,10 +2195,12 @@
        // do sorting once
        sortarr.sort(function(a,b) { return b.vol - a.vol; });
 
-       // remember sort map
+       // remember sort map and also sortid
        this.sortmap = new Int32Array(this.nodes.length);
-       for (var n=0;n<this.nodes.length;++n)
+       for (var n=0;n<this.nodes.length;++n) {
           this.sortmap[n] = sortarr[n].id;
+          sortarr[n].sortid = n;
+       }
    }
 
 
@@ -2284,7 +2239,7 @@
                   }
                } else {
                   clone.vis = !JSROOT.GEO.TestBit(obj.fVolume, JSROOT.GEO.BITS.kVisNone) &&
-                               JSROOT.GEO.TestBit(obj.fVolume, JSROOT.GEO.BITS.kVisThis);
+                               JSROOT.GEO.TestBit(obj.fVolume, JSROOT.GEO.BITS.kVisThis) && !obj.fFinder;
                   if (!JSROOT.GEO.TestBit(obj.fVolume, JSROOT.GEO.BITS.kVisDaughters))
                      clone.depth = JSROOT.GEO.TestBit(obj.fVolume, JSROOT.GEO.BITS.kVisOneLevel) ? 1 : 0;
                }
@@ -2400,6 +2355,18 @@
       return res;
    }
 
+   /** Return node name with given id.
+    * Either original object or description is used
+    * @private */
+   JSROOT.GEO.ClonedNodes.prototype.GetNodeName = function(nodeid) {
+      if (this.origin) {
+         var obj = this.origin[nodeid];
+         return obj ? JSROOT.GEO.ObjectName(obj) : "";
+      }
+      var node = this.nodes[nodeid];
+      return node ? node.name : "";
+   }
+
    JSROOT.GEO.ClonedNodes.prototype.ResolveStack = function(stack, withmatrix) {
 
       var res = { id: 0, obj: null, node: this.nodes[0], name: this.name_prefix };
@@ -2411,19 +2378,24 @@
          if (res.node.matrix) res.matrix.fromArray(res.node.matrix);
       }
 
-      if (this.origin) res.obj = this.origin[0];
+      if (this.origin)
+         res.obj = this.origin[0];
+
+      //if (!res.name)
+      //   res.name = this.GetNodeName(0);
 
       if (stack)
          for(var lvl=0;lvl<stack.length;++lvl) {
             res.id = res.node.chlds[stack[lvl]];
             res.node = this.nodes[res.id];
-            if (this.origin) {
+
+            if (this.origin)
                res.obj = this.origin[res.id];
 
-               if (res.obj.fName) {
-                  if (res.name.length>0) res.name += "/";
-                  res.name += JSROOT.GEO.ObjectName(res.obj);
-               }
+            var subname = this.GetNodeName(res.id);
+            if (subname) {
+               if (res.name) res.name+="/";
+               res.name += subname;
             }
 
             if (withmatrix && res.node.matrix)
@@ -2433,23 +2405,63 @@
       return res;
    }
 
+   /** Create stack array based on nodes ids array.
+    * Ids list should correspond to existing nodes hierarchy */
+   JSROOT.GEO.ClonedNodes.prototype.MakeStackByIds = function(ids) {
+      var stack = [];
+
+      if (ids[0] !== 0) {
+         console.error('wrong ids - first should be 0');
+         return null;
+      }
+
+      var node = this.nodes[0];
+
+      for (var k=1;k<ids.length;++k) {
+         var nodeid = ids[k];
+         var chindx = node.chlds.indexOf(nodeid);
+         if (chindx < 0) {
+            console.error('wrong nodes ids ' + ids[k] + ' is not child of ' + ids[k-1]);
+            return null;
+         }
+
+         stack.push(chindx);
+         node = this.nodes[nodeid];
+      }
+
+      return stack;
+   }
+
+   /** Returns true if stack includes at any place provided nodeid */
+   JSROOT.GEO.ClonedNodes.prototype.IsNodeInStack = function(nodeid, stack) {
+
+      if (!nodeid) return true;
+
+      var node = this.nodes[0], id = 0;
+
+      for(var lvl = 0; lvl < stack.length; ++lvl) {
+         id = node.chlds[stack[lvl]];
+         if (id == nodeid) return true;
+         node = this.nodes[id];
+      }
+
+      return false;
+   }
+
+   /** find stack by name which include names of all parents */
    JSROOT.GEO.ClonedNodes.prototype.FindStackByName = function(fullname) {
-      if (!this.origin) return null;
 
-      var names = fullname.split('/'),
-          currid = 0, stack = [],
-          top = this.origin[0];
+      var names = fullname.split('/'), currid = 0, stack = [];
 
-      if (!top || (JSROOT.GEO.ObjectName(top)!==names[0])) return null;
+      if (this.GetNodeName(currid) !== names[0]) return null;
 
       for (var n=1;n<names.length;++n) {
          var node = this.nodes[currid];
          if (!node.chlds) return null;
 
          for (var k=0;k<node.chlds.length;++k) {
-            var chldid = node.chlds[k],
-                obj = this.origin[chldid];
-            if (obj && (JSROOT.GEO.ObjectName(obj) === names[n])) { stack.push(k); currid = chldid; break; }
+            var chldid = node.chlds[k];
+            if (this.GetNodeName(chldid) === names[n]) { stack.push(k); currid = chldid; break; }
          }
 
          // no new entry - not found stack
@@ -2457,6 +2469,92 @@
       }
 
       return stack;
+   }
+
+   /** returns different properties of draw entry nodeid */
+   JSROOT.GEO.ClonedNodes.prototype.getDrawEntryProperties = function(entry) {
+      // function return different properties for specified node
+      // Only if node visible, material will be created
+
+      var clone = this.nodes[entry.nodeid];
+      var visible = true;
+
+      if (clone.kind === 2) {
+         var prop = { name: clone.name, nname: clone.name, shape: null, material: null, chlds: null };
+         var _opacity = entry.opacity;
+         prop.fillcolor = new THREE.Color( entry.color ? "rgb(" + entry.color + ")" : "blue" );
+         prop.material = new THREE.MeshLambertMaterial( { transparent: _opacity < 1,
+                          opacity: _opacity, wireframe: false, color: prop.fillcolor,
+                          side: THREE.FrontSide /* THREE.DoubleSide*/, vertexColors: THREE.NoColors /*THREE.VertexColors */,
+                          overdraw: 0., depthWrite: _opacity == 1 } );
+         prop.material.inherentOpacity = _opacity;
+
+         return prop;
+      }
+
+      if (!this.origin) {
+         console.error('origin not there - kind', clone.kind, entry.nodeid, clone);
+         return null;
+      }
+
+      var node = this.origin[entry.nodeid];
+
+      if (clone.kind === 1) {
+         // special handling for EVE nodes
+
+         var prop = { name: JSROOT.GEO.ObjectName(node), nname: JSROOT.GEO.ObjectName(node), shape: node.fShape, material: null, chlds: null };
+
+         if (node.fElements !== null) prop.chlds = node.fElements.arr;
+
+         if (visible) {
+            var _opacity = Math.min(1, node.fRGBA[3]);
+            prop.fillcolor = new THREE.Color( node.fRGBA[0], node.fRGBA[1], node.fRGBA[2] );
+            prop.material = new THREE.MeshLambertMaterial( { transparent: _opacity < 1,
+                             opacity: _opacity, wireframe: false, color: prop.fillcolor,
+                             side: THREE.FrontSide /* THREE.DoubleSide*/, vertexColors: THREE.NoColors /*THREE.VertexColors */,
+                             overdraw: 0., depthWrite: _opacity == 1 } );
+            prop.material.inherentOpacity = _opacity;
+         }
+
+         return prop;
+      }
+
+      var volume = node.fVolume;
+
+      var prop = { name: JSROOT.GEO.ObjectName(volume), nname: JSROOT.GEO.ObjectName(node), volume: node.fVolume, shape: volume.fShape, material: null, chlds: null };
+
+      if (node.fVolume.fNodes !== null) prop.chlds = node.fVolume.fNodes.arr;
+
+      if (volume) prop.linewidth = volume.fLineWidth;
+
+      if (visible) {
+         var _opacity = 1.0;
+         if ((volume.fFillColor > 1) && (volume.fLineColor == 1))
+            prop.fillcolor = JSROOT.Painter.root_colors[volume.fFillColor];
+         else
+         if (volume.fLineColor >= 0)
+            prop.fillcolor = JSROOT.Painter.root_colors[volume.fLineColor];
+
+         if (volume.fMedium && volume.fMedium.fMaterial) {
+            var fillstyle = volume.fMedium.fMaterial.fFillStyle;
+            var transparency = (fillstyle < 3000 || fillstyle > 3100) ? 0 : fillstyle - 3000;
+            if (transparency > 0)
+               _opacity = (100.0 - transparency) / 100.0;
+            if (prop.fillcolor === undefined)
+               prop.fillcolor = JSROOT.Painter.root_colors[volume.fMedium.fMaterial.fFillColor];
+         }
+         if (prop.fillcolor === undefined)
+            prop.fillcolor = "lightgrey";
+
+         prop.material = new THREE.MeshLambertMaterial( { transparent: _opacity < 1,
+                              opacity: _opacity, wireframe: false, color: prop.fillcolor,
+                              side: THREE.FrontSide /* THREE.DoubleSide */, vertexColors: THREE.NoColors /*THREE.VertexColors*/,
+                              overdraw: 0., depthWrite: _opacity == 1 } );
+         prop.material.inherentOpacity = _opacity;
+
+      }
+
+      return prop;
    }
 
    JSROOT.GEO.ClonedNodes.prototype.CreateObject3D = function(stack, toplevel, options) {
@@ -2493,6 +2591,7 @@
          obj3d = new THREE.Object3D();
 
          if (node.matrix) {
+            // console.log(stack.toString(), lvl, 'matrix ', node.matrix.toString());
             obj3d.matrix.fromArray(node.matrix);
             obj3d.matrix.decompose( obj3d.position, obj3d.quaternion, obj3d.scale );
          }
@@ -2526,13 +2625,14 @@
 
          if ((options === 'mesh') || !mesh) return mesh;
 
+         var res = three_prnt;
          while (mesh && (mesh !== toplevel)) {
             three_prnt = mesh.parent;
             three_prnt.remove(mesh);
             mesh = (three_prnt.children.length == 0) ? three_prnt : null;
          }
 
-         return null;
+         return res;
       }
 
       if (three_prnt) {
@@ -2544,14 +2644,17 @@
    }
 
    JSROOT.GEO.ClonedNodes.prototype.GetVolumeBoundary = function(viscnt, facelimit, nodeslimit) {
+
+      var result = { min: 0, max: 1, sortidcut: 0 };
+
       if (!this.sortmap) {
          console.error('sorting map do not exist');
-         return { min: 0, max: 1 };
+         return result;
       }
 
-      var maxNode, currNode, cnt=0, facecnt = 0;
+      var maxNode, currNode, cnt=0, facecnt=0;
 
-      for (var n=0; (n<this.sortmap.length) && (cnt < nodeslimit) && (facecnt < facelimit);++n) {
+      for (var n = 0; (n < this.sortmap.length) && (cnt < nodeslimit) && (facecnt < facelimit); ++n) {
          var id = this.sortmap[n];
          if (viscnt[id] === 0) continue;
          currNode = this.nodes[id];
@@ -2562,14 +2665,15 @@
 
       if (!currNode) {
          console.error('no volumes selected');
-         return { min: 0, max: 1 };
+         return result;
       }
 
       // console.log('Volume boundary ' + currNode.vol + '  cnt ' + cnt + '  faces ' + facecnt);
-
-      return { min: currNode.vol, max: maxNode.vol };
+      result.max = maxNode.vol;
+      result.min = currNode.vol;
+      result.sortidcut = currNode.sortid; // latest node is not included
+      return result;
    }
-
 
    JSROOT.GEO.ClonedNodes.prototype.CollectVisibles = function(maxnumfaces, frustum, maxnumnodes) {
       // function collects visible nodes, using maxlimit
@@ -2590,7 +2694,7 @@
 
       for (var n=0;n<arg.viscnt.length;++n) arg.viscnt[n] = 0;
 
-      var total = this.ScanVisible(arg), minVol = 0, maxVol = 0, camVol = -1, camFact = 10;
+      var total = this.ScanVisible(arg), minVol = 0, maxVol = 0, camVol = -1, camFact = 10, sortidcut = this.nodes.length + 1;
 
       // console.log('Total visible nodes ' + total + ' numfaces ' + arg.facecnt);
 
@@ -2604,6 +2708,7 @@
 
          minVol = boundary.min;
          maxVol = boundary.max;
+         sortidcut = boundary.sortidcut;
 
          if (frustum) {
              arg.domatrix = true;
@@ -2637,7 +2742,7 @@
       arg.items = [];
 
       arg.func = function(node) {
-         if (node.vol > minVol) {
+         if (node.sortid < sortidcut) {
             this.items.push(this.CopyStack());
          } else
          if ((camVol >= 0) && (node.vol > camVol))
@@ -2676,7 +2781,6 @@
 
       return del; //
    }
-
 
    JSROOT.GEO.ClonedNodes.prototype.CollectShapes = function(lst) {
       // based on list of visible nodes, collect all uniques shapes which should be build
@@ -2719,8 +2823,10 @@
       // as last action set current shape id to each entry
       for (var i=0;i<lst.length;++i) {
          var entry = lst[i];
-         entry.shapeid = entry.shape.id; // keep only id for the entry
-         delete entry.shape; // remove direct references
+         if (entry.shape) {
+            entry.shapeid = entry.shape.id; // keep only id for the entry
+            delete entry.shape; // remove direct references
+         }
       }
 
       return shapes;
@@ -2846,8 +2952,33 @@
          if (shape.geom.type == 'BufferGeometry') {
 
             var pos = shape.geom.getAttribute('position').array,
-                norm = shape.geom.getAttribute('normal').array,
-                len = pos.length, n, shift = 0,
+                norm = shape.geom.getAttribute('normal').array;
+
+            var index = shape.geom.getIndex();
+
+            if (index) {
+               // we need to unfold all points to
+               var arr = index.array,
+                   i0 = shape.geom.drawRange.start,
+                   ilen = shape.geom.drawRange.count;
+               if (i0 + ilen > arr.length) ilen = arr.length - i0;
+
+               var dpos = new Float32Array(ilen*3), dnorm = new Float32Array(ilen*3);
+               for (var ii = 0; ii < ilen; ++ii) {
+                  var k = arr[i0 + ii];
+                  if ((k<0) || (k*3>=pos.length)) console.log('strange index', k*3, pos.length);
+                  dpos[ii*3] = pos[k*3];
+                  dpos[ii*3+1] = pos[k*3+1];
+                  dpos[ii*3+2] = pos[k*3+2];
+                  dnorm[ii*3] = norm[k*3];
+                  dnorm[ii*3+1] = norm[k*3+1];
+                  dnorm[ii*3+2] = norm[k*3+2];
+               }
+
+               pos = dpos; norm = dnorm;
+            }
+
+            var len = pos.length, n, shift = 0,
                 newpos = new Float32Array(len),
                 newnorm = new Float32Array(len);
 
@@ -2876,9 +3007,9 @@
 
             shape.geomZ.scale(flip.x, flip.y, flip.z);
 
-            var face, d;
-            for (var n=0;n<shape.geomZ.faces.length;++n) {
-               face = geom.faces[n];
+            var face, d, n = 0;
+            while(n < shape.geomZ.faces.length) {
+               face = geom.faces[n++];
                d = face.b; face.b = face.c; face.c = d;
             }
 
@@ -2896,6 +3027,20 @@
       return mesh;
    }
 
+   /** Cleanup shape entity
+    * @private */
+   JSROOT.GEO.cleanupShape = function(shape) {
+      if (!shape) return;
+
+      if (shape.geom && (typeof shape.geom.dispose == 'funciton'))
+         shape.geom.dispose();
+
+      if (shape.geomZ && (typeof shape.geomZ.dispose == 'funciton'))
+         shape.geomZ.dispose();
+
+      delete shape.geom;
+      delete shape.geomZ;
+   }
 
    JSROOT.GEO.produceRenderOrder = function(toplevel, origin, method, clones) {
       // function scans throug hierarchy of objects and try to set renderOrder
@@ -2954,7 +3099,7 @@
                mesh.$jsroot_box3 = box3 = JSROOT.GEO.getBoundingBox(mesh);
 
             if (method === 'size') {
-               mesh.$jsroot_distance = box3.getSize();
+               mesh.$jsroot_distance = box3.getSize(new THREE.Vector3());
                continue;
             }
 
@@ -3173,9 +3318,7 @@
             continue;
          }
 
-         var nodeobj = clones.origin[entry.nodeid];
-         var clone = clones.nodes[entry.nodeid];
-         var prop = JSROOT.GEO.getNodeProperties(clone.kind, nodeobj, true);
+         var prop = clones.getDrawEntryProperties(entry);
 
          opt.res_mesh++;
          opt.res_faces += shape.nfaces;
