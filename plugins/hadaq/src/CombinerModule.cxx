@@ -55,8 +55,8 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fBldProfiler.Reserve(50);
 
    fRunRecvBytes = 0;
-   fTotalBuildEvents = 0;
-   fTotalDiscEvents = 0;
+   fRunBuildEvents = 0;
+   fRunDiscEvents = 0;
    fTotalDroppedData = 0;
    fTotalTagErrors = 0;
    fTotalDataErrors = 0;
@@ -669,8 +669,8 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 
    SetEvtbuildPar("nrOfMsgs", NumInputs());
    SetNetmemPar("nrOfMsgs", NumInputs());
-   SetEvtbuildPar("evtsDiscarded", fTotalDiscEvents);
-   SetEvtbuildPar("evtsComplete", fTotalBuildEvents);
+   SetEvtbuildPar("evtsDiscarded", fRunDiscEvents);
+   SetEvtbuildPar("evtsComplete", fRunBuildEvents);
    SetEvtbuildPar("evtsDataError", fTotalDataErrors);
    SetEvtbuildPar("evtsTagError", fTotalTagErrors);
 
@@ -1003,7 +1003,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
 
    Par(fLostEventRateName).SetValue(maxnumsubev);
    Par(fDataDroppedRateName).SetValue(droppeddata/1024./1024.);
-   fTotalDiscEvents += maxnumsubev;
+   fRunDiscEvents += maxnumsubev;
    fAllDiscEvents += maxnumsubev;
    fTotalDroppedData += droppeddata;
    fAllDroppedData += droppeddata;
@@ -1232,7 +1232,7 @@ bool hadaq::CombinerModule::BuildEvent()
    // here all inputs should be aligned to buildevid
 
    // for sync sequence number, check first if we have error from cts:
-   uint32_t sequencenumber = fTotalBuildEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
+   uint32_t sequencenumber = fRunBuildEvents + 1; // HADES convention: sequencenumber 0 is "start event" of file
 
    if (fBNETsend)
       sequencenumber = (fCfg[masterchannel].fTrigNr << 8) | fCfg[masterchannel].fTrigTag;
@@ -1299,7 +1299,7 @@ bool hadaq::CombinerModule::BuildEvent()
       grd.Next("compl");
 
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
-      fTotalBuildEvents++;
+      fRunBuildEvents++;
       fAllBuildEvents++;
 
       fOut.evnt()->SetDataError((dataError || tagError));
@@ -1381,7 +1381,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
          fLostEventRateCnt += (diff-1);
          //Par(fLostEventRateName).SetValue(diff-1);
-         fTotalDiscEvents += (diff-1);
+         fRunDiscEvents += (diff-1);
          fAllDiscEvents += (diff-1);
       }
 
@@ -1396,7 +1396,7 @@ bool hadaq::CombinerModule::BuildEvent()
       grd.Next("lostl", 14);
       fLostEventRateCnt += 1;
       // Par(fLostEventRateName).SetValue(1);
-      fTotalDiscEvents += 1;
+      fRunDiscEvents += 1;
       fAllDiscEvents += 1;
    } // ensure outputbuffer
 
@@ -1689,10 +1689,10 @@ void hadaq::CombinerModule::StoreRunInfoStop(bool onexit, unsigned newrunid)
    strftime(ltime, 20, "%Y-%m-%d %H:%M:%S", localtime_r(&t, &tm_res));
    fp = fopen(fRunInfoToOraFilename.c_str(), "a+");
    std::string filename = GenerateFileName(fRunNumber); // old run number defines old filename
-   fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents));
+   fprintf(fp, "stop %u %d %s %s %s ", fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents));
    fprintf(fp, "%s\n", Unit(fRunRecvBytes));
    fclose(fp);
-   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fTotalBuildEvents),Unit(fRunRecvBytes));
+   DOUT1("Write run info to %s - stop: %lu %d %s %s %s %s", fRunInfoToOraFilename.c_str(), fRunNumber, fEBId, filename.c_str(), ltime, Unit(fRunBuildEvents),Unit(fRunRecvBytes));
 
 }
 
@@ -1700,8 +1700,8 @@ void hadaq::CombinerModule::ResetInfoCounters()
 {
    // DO NOT RESET COUNTERS IN BNET MODE
    fRunRecvBytes = 0;
-   fTotalBuildEvents = 0;
-   fTotalDiscEvents = 0;
+   fRunBuildEvents = 0;
+   fRunDiscEvents = 0;
    fTotalDroppedData = 0;
    fTotalTagErrors = 0;
    fTotalDataErrors = 0;
