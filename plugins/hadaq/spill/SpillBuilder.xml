@@ -68,7 +68,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
     <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="1"/>
-       <NumOutputs value="1"/>
+       <NumOutputs value="2"/>
 
        <InputPort name="Input0" url="hadaq://host:50096"/>
 
@@ -76,7 +76,7 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <InputPort name="Input*" queue="20" urlopt="udpbuf=2000000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
-       <OutputPort name="Output1" url="mbs://Stream:7869?iter=hadaq_iter&subid=0x1f"/>
+       <OutputPort name="Output1" url="mbs://Stream:7788?iter=hadaq_iter&subid=0x1f"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output2" url="hld:///dl/data/spillmonitor/spill.hld?maxsize=2000"/>
