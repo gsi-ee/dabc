@@ -78,6 +78,8 @@ namespace stream {
 
          bool ExecuteHCommand(dabc::Command cmd);
 
+         bool SaveAllHistograms() { return SaveAllHistograms(fTop); }
+
          std::string GetStoreInfo() const { return fStoreInfo; }
    };
 

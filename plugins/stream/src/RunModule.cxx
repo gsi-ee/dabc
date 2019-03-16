@@ -158,6 +158,9 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
    }
 
    Publish(fWorkerHierarchy, dabc::format("$CONTEXT$/%s", GetName()));
+
+   double interval = Cfg("AutoSave", cmd).AsDouble(0);
+   if (interval > 1) CreateTimer("AutoSave", interval);
 }
 
 stream::RunModule::~RunModule()
@@ -175,7 +178,7 @@ void stream::RunModule::OnThreadAssigned()
 {
    dabc::ModuleAsync::OnThreadAssigned();
 
-   if ((fInitFunc!=0) && (fParallel<=0)) {
+   if ((fInitFunc!=nullptr) && (fParallel<=0)) {
 
       entryfunc* func = (entryfunc*) fInitFunc;
 
@@ -185,7 +188,7 @@ void stream::RunModule::OnThreadAssigned()
 
       func();
 
-      if (fFileUrl.length()>0) {
+      if (fFileUrl.length() > 0) {
          dabc::Url url(fFileUrl);
 
          std::string fname = url.GetFullName();
@@ -213,7 +216,7 @@ void stream::RunModule::OnThreadAssigned()
          dabc::mgr.StopApplication();
       }
    } else
-   if ((fParallel>0) && (fInitFunc!=0))  {
+   if ((fParallel>0) && (fInitFunc!=nullptr))  {
       for (int n=0;n<fParallel;n++) {
          std::string mname = dabc::format("%s%03d", GetName(), n);
          dabc::CmdCreateModule cmd("stream::RunModule", mname);
@@ -307,7 +310,7 @@ int stream::RunModule::ExecuteCommand(dabc::Command cmd)
       return dabc::cmd_true;
    }
 
-   if (cmd.IsName (dabc::CmdHierarchyExec::CmdName ())) {
+   if (cmd.IsName(dabc::CmdHierarchyExec::CmdName())) {
       std::string cmdpath = cmd.GetStr("Item");
       DOUT0("Execute command %s", cmdpath.c_str());
 
@@ -531,10 +534,16 @@ bool stream::RunModule::ProcessRecv(unsigned port)
    return RedistributeBuffers();
 }
 
-void stream::RunModule::ProcessTimerEvent(unsigned)
+void stream::RunModule::ProcessTimerEvent(unsigned timer)
 {
-   hadaq::HldProcessor* hld = dynamic_cast<hadaq::HldProcessor*> (fProcMgr->FindProc("HLD"));
-   if (hld==0) return;
+   if (TimerName(timer) == "AutoSave") {
+      if (fProcMgr) fProcMgr->SaveAllHistograms();
+      return;
+   }
+
+
+   hadaq::HldProcessor *hld = dynamic_cast<hadaq::HldProcessor*> (fProcMgr->FindProc("HLD"));
+   if (!hld) return;
 
    dabc::Hierarchy folder = fWorkerHierarchy.FindChild("Status");
 
