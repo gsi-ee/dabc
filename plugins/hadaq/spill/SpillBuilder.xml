@@ -94,6 +94,7 @@
        <!--asf value="file.root"/-->
        <parallel value="0"/>
        <fillcolor value="0"/>
+       <AutoSave value="180"/>
        <InputPort name="Input0" url="Combiner/Output0"/>
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
