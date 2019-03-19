@@ -325,7 +325,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
    dabc::DateTime dt;
    dt.GetNow();
 
-   std::string args = dabc::format("dabc_root -h h.bin -o dabc-%s-%s.root", dt.OnlyDateAsString("-").c_str(), dt.OnlyTimeAsString("-").c_str());
+   std::string args = dabc::format("dabc_root -h h.bin -o dabc-%s-%s.root", dt.OnlyDateAsString("-", true).c_str(), dt.OnlyTimeAsString("-", true).c_str());
 
    DOUT0("Calling: %s", args.c_str());
 
@@ -333,7 +333,7 @@ bool stream::DabcProcMgr::SaveAllHistograms(dabc::Hierarchy &folder)
 
    if (res!=0) {
       EOUT("Fail to convert DABC histograms in ROOT file, check h-date-time.bin file");
-      args = dabc::format("mv h.bin h-%s-%s.bin", dt.OnlyDateAsString("-").c_str(), dt.OnlyTimeAsString("-").c_str());
+      args = dabc::format("mv h.bin h-%s-%s.bin", dt.OnlyDateAsString("-", true).c_str(), dt.OnlyTimeAsString("-", true).c_str());
       system(args.c_str());
    } else {
       system("rm -f h.bin");

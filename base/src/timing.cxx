@@ -252,12 +252,15 @@ std::string dabc::DateTime::AsJSString(int ndecimal) const
 }
 
 
-std::string dabc::DateTime::OnlyDateAsString(const char *separ) const
+std::string dabc::DateTime::OnlyDateAsString(const char *separ, bool localtime) const
 {
    if (null()) return std::string();
    time_t src = tv_sec;
    struct tm res;
-   gmtime_r(&src, &res);
+   if (localtime)
+      localtime_r(&src, &res);
+   else
+      gmtime_r(&src, &res);
    if (!separ) separ = "-";
    std::string fmt = std::string("%Y") + separ + "%m" + separ + "%d";
    char sbuf[200];
@@ -265,12 +268,15 @@ std::string dabc::DateTime::OnlyDateAsString(const char *separ) const
    return std::string(sbuf);
 }
 
-std::string dabc::DateTime::OnlyTimeAsString(const char *separ) const
+std::string dabc::DateTime::OnlyTimeAsString(const char *separ, bool localtime) const
 {
    if (null()) return std::string();
    time_t src = tv_sec;
    struct tm res;
-   gmtime_r(&src, &res);
+   if (localtime)
+      localtime_r(&src, &res);
+   else
+      gmtime_r(&src, &res);
    if (!separ) separ = ":";
    std::string fmt = std::string("%H") + separ + "%M" + separ + "%S";
    char sbuf[200];
