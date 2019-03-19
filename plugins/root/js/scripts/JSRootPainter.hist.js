@@ -6,7 +6,7 @@
       define( ['JSRootPainter', 'd3'], factory );
    } else
    if (typeof exports === 'object' && typeof module !== 'undefined') {
-       factory(require("./JSRootCore.js"), require("./d3.min.js"));
+       factory(require("./JSRootCore.js"), require("d3"));
    } else {
 
       if (typeof d3 != 'object')
@@ -2284,10 +2284,10 @@
       AssignFuncs(histo.fZaxis);
    }
 
+   /** @summary Create x,y objects which maps user coordinates into pixels
+    *  @desc Now moved into TFramePainter
+    *  @private */
    THistPainter.prototype.CreateXY = function() {
-      // Create x,y objects which maps user coordinates into pixels
-      // Now moved into TFramePainter
-
       if (!this.is_main_painter()) return;
 
       var histo = this.GetHisto(),
@@ -3156,9 +3156,10 @@
 
          var zaxis = this.GetHisto().fZaxis;
 
-         JSROOT.extend(pal.fAxis, { fTitle: zaxis.fTitle, fTitleSize: zaxis.fTitleSize, fTextColor: zaxis.fTitleColor, fChopt: "+",
+         JSROOT.extend(pal.fAxis, { fTitle: zaxis.fTitle, fTitleSize: zaxis.fTitleSize, fChopt: "+",
                                     fLineColor: zaxis.fAxisColor, fLineSyle: 1, fLineWidth: 1,
-                                    fTextAngle: 0, fTextSize: zaxis.fLabelSize, fTextAlign: 11, fTextColor: zaxis.fLabelColor, fTextFont: zaxis.fLabelFont });
+                                    fTextAngle: 0, fTextSize: zaxis.fLabelSize, fTextAlign: 11,
+                                    fTextColor: zaxis.fLabelColor, fTextFont: zaxis.fLabelFont });
 
          // place colz in the beginning, that stat box is always drawn on the top
          this.AddFunction(pal, true);
@@ -3399,12 +3400,9 @@
       histo.fReady = true;
    }
 
-   /** Scan content of 1-D histogram
-    *
-    * Detect min/max values for x and y axis
-    * @param when_axis_changed - true when only zooming was changed, some checks may be skipped
-    */
-
+   /** @summary Scan content of 1-D histogram
+    * @desc Detect min/max values for x and y axis
+    * @param when_axis_changed - true when only zooming was changed, some checks may be skipped */
    TH1Painter.prototype.ScanContent = function(when_axis_changed) {
       // if when_axis_changed === true specified, content will be scanned after axis zoom changed
 

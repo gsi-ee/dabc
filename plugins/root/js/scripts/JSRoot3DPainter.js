@@ -7,7 +7,7 @@
    } else
    if (typeof exports === 'object' && typeof module !== 'undefined') {
       var jsroot = require("./JSRootCore.js");
-      factory(jsroot, require("./d3.min.js"), require("./three.min.js"), require("./three.extra.min.js"),
+      factory(jsroot, require("d3"), require("three"), require("./three.extra.min.js"),
               jsroot.nodejs || (typeof document=='undefined') ? jsroot.nodejs_document : document);
    } else {
 
@@ -463,10 +463,9 @@
          if (this.mouse_ctxt.on) {
             this.mouse_ctxt.on = false;
             this.ContextMenu(this.mouse_ctxt, this.GetMouseIntersects(this.mouse_ctxt));
-         } else
-         if (this.control_changed) {
+         } /* else if (this.control_changed) {
             // react on camera change when required
-         }
+         } */
          this.control_changed = false;
       }
 

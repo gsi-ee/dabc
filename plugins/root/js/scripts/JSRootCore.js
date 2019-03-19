@@ -96,7 +96,7 @@
 
    "use strict";
 
-   JSROOT.version = "dev 13/03/2019";
+   JSROOT.version = "dev 18/03/2019";
 
    JSROOT.source_dir = "";
    JSROOT.source_min = false;
@@ -138,7 +138,7 @@
       JSROOT.browser.isFirefox = typeof InstallTrigger !== 'undefined';
       JSROOT.browser.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
       JSROOT.browser.isChrome = !!window.chrome && !JSROOT.browser.isOpera;
-      JSROOT.browser.isIE = false || !!document.documentMode;
+      JSROOT.browser.isIE = !!document.documentMode;
       JSROOT.browser.isWin = navigator.platform.indexOf('Win') >= 0;
       JSROOT.browser.isChromeHeadless = navigator.userAgent.indexOf('HeadlessChrome') >= 0;
    }
@@ -1380,9 +1380,14 @@
          debugout = 'simpleGUI';
          if (JSROOT.GetUrlOption('file') || JSROOT.GetUrlOption('files')) requirements += "io;";
          if (simplegui.getAttribute('nobrowser') && (simplegui.getAttribute('nobrowser')!="false")) nobrowser = true;
-      } else if (document.getElementById('onlineGUI')) { debugout = 'onlineGUI';
-      } else if (document.getElementById('drawGUI')) { debugout = 'drawGUI'; nobrowser = true;
-      } else requirements += "io;";
+      } else if (document.getElementById('onlineGUI')) {
+         debugout = 'onlineGUI';
+      } else if (document.getElementById('drawGUI')) {
+         debugout = 'drawGUI';
+         nobrowser = true;
+      } else {
+         requirements += "io;";
+      }
 
       if (user_scripts == 'check_existing_elements') {
          user_scripts = null;
@@ -2036,7 +2041,7 @@
             var axis1 = this.fXaxis, axis2 = this.fYaxis, axis3 = this.fZaxis,
                 bin1 = 1 + Math.floor((x - axis1.fXmin) / (axis1.fXmax - axis1.fXmin) * axis1.fNbins),
                 bin2 = 1 + Math.floor((y - axis2.fXmin) / (axis2.fXmax - axis2.fXmin) * axis2.fNbins),
-                bin2 = 1 + Math.floor((z - axis3.fXmin) / (axis3.fXmax - axis3.fXmin) * axis3.fNbins);
+                bin3 = 1 + Math.floor((z - axis3.fXmin) / (axis3.fXmax - axis3.fXmin) * axis3.fNbins);
             if (bin1 < 0) bin1 = 0; else
             if (bin1 > axis1.fNbins + 1) bin1 = axis1.fNbins + 1;
             if (bin2 < 0) bin2 = 0; else

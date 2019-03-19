@@ -8,7 +8,7 @@
    if (typeof exports === 'object' && typeof module !== 'undefined') {
       var jsroot = require("./JSRootCore.js");
       if (!jsroot.nodejs && (typeof window != 'undefined')) require("./dat.gui.min.js");
-      factory(jsroot, require("./d3.min.js"), require("./three.min.js"), require("./JSRoot3DPainter.js"), require("./JSRootGeoBase.js"),
+      factory(jsroot, require("d3"), require("three"), require("./JSRoot3DPainter.js"), require("./JSRootGeoBase.js"),
               jsroot.nodejs || (typeof document=='undefined') ? jsroot.nodejs_document : document);
    } else {
 
@@ -132,7 +132,9 @@
    };
 
    /**
-    * @class JSROOT.TGeoPainter Holder of different functions and classes for drawing geometries
+    * @class TGeoPainter
+    * @desc Holder of different functions and classes for drawing geometries
+    * @memberof JSROOT
     */
 
    function TGeoPainter(obj) {

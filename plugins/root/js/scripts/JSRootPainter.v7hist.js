@@ -6,7 +6,7 @@
       define( ['JSRootPainter', 'd3'], factory );
    } else
    if (typeof exports === 'object' && typeof module !== 'undefined') {
-       factory(require("./JSRootCore.js"), require("./d3.min.js"));
+       factory(require("./JSRootCore.js"), require("d3"));
    } else {
 
       if (typeof d3 != 'object')
@@ -3551,7 +3551,7 @@
       // draw new palette, resize frame if required
       // var pp = this.DrawColorPalette(this.options.Zscale && (this.options.Color || this.options.Contour), true);
 
-      if (this.DrawAxes());
+      if (this.DrawAxes())
          this.DrawBins();
 
       // redraw palette till the end when contours are available
