@@ -264,7 +264,7 @@ void stream::DabcProcMgr::TagH1Time(base::H1handle h1)
 {
    auto item = FindHistogram(h1);
    if (!item.null())
-      item.SetField("_time", dabc::DateTime().GetNow().AsJSString());
+      item.SetField("_time", dabc::DateTime().GetNow().AsString(3, true));
 }
 
 void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char *title)
@@ -278,7 +278,7 @@ void stream::DabcProcMgr::TagH2Time(base::H2handle h2)
 {
    auto item = FindHistogram(h2);
    if (!item.null())
-      item.SetField("_time", dabc::DateTime().GetNow().AsJSString());
+      item.SetField("_time", dabc::DateTime().GetNow().AsString(3, true));
 }
 
 bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
