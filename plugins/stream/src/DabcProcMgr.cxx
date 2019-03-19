@@ -246,8 +246,8 @@ dabc::Hierarchy stream::DabcProcMgr::FindHistogram(void *handle)
    dabc::Iterator iter(fTop);
    while (iter.next()) {
       dabc::Hierarchy item = iter.ref();
-      if (item.HasField("_dabc_hist") && (item.GetFieldPtr("bins")==handle)) return item;
-
+      if (item.HasField("_dabc_hist"))
+         if (item.GetFieldPtr("bins")->GetDoubleArr()==handle) return item;
    }
    return nullptr;
 }
@@ -256,15 +256,30 @@ dabc::Hierarchy stream::DabcProcMgr::FindHistogram(void *handle)
 void stream::DabcProcMgr::SetH1Title(base::H1handle h1, const char *title)
 {
    auto item = FindHistogram(h1);
-   if (!item.null()) item.SetField("_title", title);
+   if (!item.null())
+      item.SetField("_title", title);
+}
+
+void stream::DabcProcMgr::TagH1Time(base::H1handle h1)
+{
+   auto item = FindHistogram(h1);
+   if (!item.null())
+      item.SetField("_time", dabc::DateTime().GetNow().AsJSString());
 }
 
 void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char *title)
 {
    auto item = FindHistogram(h2);
-   if (!item.null()) item.SetField("_title", title);
+   if (!item.null())
+      item.SetField("_title", title);
 }
 
+void stream::DabcProcMgr::TagH2Time(base::H2handle h2)
+{
+   auto item = FindHistogram(h2);
+   if (!item.null())
+      item.SetField("_time", dabc::DateTime().GetNow().AsJSString());
+}
 
 bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 {

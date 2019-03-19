@@ -53,30 +53,32 @@ namespace stream {
          bool IsWorking() const { return fWorkingFlag; }
 
          // redefine only make procedure, fill and clear should work
-         virtual base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = 0);
+         base::H1handle MakeH1(const char* name, const char* title, int nbins, double left, double right, const char* xtitle = nullptr) override;
 
-         virtual base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = 0);
+         base::H2handle MakeH2(const char* name, const char* title, int nbins1, double left1, double right1, int nbins2, double left2, double right2, const char* options = nullptr) override;
 
-         virtual void SetH1Title(base::H1handle h1, const char* title);
+         void SetH1Title(base::H1handle h1, const char* title) override;
+         void TagH1Time(base::H1handle h1) override;
 
-         virtual void SetH2Title(base::H2handle h2, const char* title);
+         void SetH2Title(base::H2handle h2, const char* title) override;
+         void TagH2Time(base::H2handle h2) override;
 
-         virtual void SetSortedOrder(bool on = true) { fSortOrder = on; }
-         virtual bool IsSortedOrder() { return fSortOrder; }
+         void SetSortedOrder(bool on = true)  override { fSortOrder = on; }
+         bool IsSortedOrder() override { return fSortOrder; }
 
-         virtual void AddRunLog(const char *msg);
-         virtual void AddErrLog(const char *msg);
-         virtual bool DoLog() { return true; }
+         void AddRunLog(const char *msg) override;
+         void AddErrLog(const char *msg) override;
+         bool DoLog()  override { return true; }
 
-         virtual bool CallFunc(const char* funcname, void* arg);
+         bool CallFunc(const char* funcname, void* arg) override;
 
-         virtual bool CreateStore(const char* storename);
-         virtual bool CloseStore();
+         bool CreateStore(const char* storename) override;
+         bool CloseStore() override;
 
-         virtual bool CreateBranch(const char* name, const char* class_name, void** obj);
-         virtual bool CreateBranch(const char* name, void* member, const char* kind);
+         bool CreateBranch(const char* name, const char* class_name, void** obj) override;
+         bool CreateBranch(const char* name, void* member, const char* kind) override;
 
-         virtual bool StoreEvent();
+         bool StoreEvent() override;
 
          bool ExecuteHCommand(dabc::Command cmd);
 
