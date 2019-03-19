@@ -37,6 +37,8 @@ namespace stream {
 
          bool ClearHistogram(dabc::Hierarchy& item);
 
+         dabc::Hierarchy FindHistogram(void *handle);
+
          bool ClearAllHistograms(dabc::Hierarchy &folder);
          bool SaveAllHistograms(dabc::Hierarchy &folder);
 

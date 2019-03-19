@@ -239,18 +239,36 @@ base::H2handle stream::DabcProcMgr::MakeH2(const char* name, const char* title, 
    return (base::H2handle) h.GetFieldPtr("bins")->GetDoubleArr();
 }
 
-void stream::DabcProcMgr::SetH1Title(base::H1handle h1, const char* title)
+dabc::Hierarchy stream::DabcProcMgr::FindHistogram(void *handle)
 {
+   if (!handle) return nullptr;
+
+   dabc::Iterator iter(fTop);
+   while (iter.next()) {
+      dabc::Hierarchy item = iter.ref();
+      if (item.HasField("_dabc_hist") && (item.GetFieldPtr("bins")==handle)) return item;
+
+   }
+   return nullptr;
 }
 
-void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char* title)
+
+void stream::DabcProcMgr::SetH1Title(base::H1handle h1, const char *title)
 {
+   auto item = FindHistogram(h1);
+   if (!item.null()) item.SetField("_title", title);
+}
+
+void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char *title)
+{
+   auto item = FindHistogram(h2);
+   if (!item.null()) item.SetField("_title", title);
 }
 
 
-bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy& item)
+bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)
 {
-   if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins")==0)) return false;
+   if (!item.HasField("_dabc_hist") || (item.GetFieldPtr("bins")==nullptr)) return false;
 
    int indx = item.GetField("_kind").AsStr()=="ROOT.TH1D" ? 3 : 6;
 
