@@ -62,7 +62,7 @@ int usage(const char* errstr = 0)
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns) \n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns) \n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
-   printf("   -rate                   - display only events rate\n");
+   printf("   -rate                   - display only events and data rate\n");
    printf("   -bw                     - disable colors\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
@@ -730,11 +730,12 @@ int main(int argc, char* argv[])
 
    if (ref.null()) return 1;
 
-   hadaq::RawEvent* evnt(0);
+   hadaq::RawEvent *evnt = nullptr;
 
    std::map<unsigned,SubevStat> idstat; // events id counter
    std::map<unsigned,SubevStat> stat;   // subevents statistic
    long cnt(0), cnt0(0), lastcnt(0), printcnt(0);
+   uint64_t lastsz{0}, currsz{0};
    dabc::TimeStamp last = dabc::Now();
    dabc::TimeStamp first = last;
    dabc::TimeStamp lastevtm = last;
@@ -751,7 +752,7 @@ int main(int argc, char* argv[])
 
       dabc::TimeStamp curr = dabc::Now();
 
-      if (evnt!=0) {
+      if (evnt) {
 
          if (dostat) {
             idstat[evnt->GetId()].num++;
@@ -762,26 +763,30 @@ int main(int argc, char* argv[])
          if ((fullid!=0) && (evnt->GetId()!=fullid)) continue;
 
          cnt++;
+         currsz+=evnt->GetSize();
          lastevtm = curr;
-      } else
-      if (curr - lastevtm > tmout) { /*printf("TIMEOUT %ld\n", cnt0);*/ break; }
+      } else if (curr - lastevtm > tmout) {
+         /*printf("TIMEOUT %ld\n", cnt0);*/
+         break;
+      }
 
       if (showrate) {
 
          double tm = curr - last;
 
          if (tm>=0.3) {
-            printf("\rTm:%6.1fs  Ev:%8ld  Rate:%8.2f Ev/s", first.SpentTillNow(), cnt, (cnt-lastcnt)/tm);
+            printf("\rTm:%6.1fs  Ev:%8ld  Rate:%8.2f Ev/s  %6.2f MB/s", first.SpentTillNow(), cnt, (cnt-lastcnt)/tm, (currsz-lastsz)/tm/1024./1024.);
             fflush(stdout);
             last = curr;
             lastcnt = cnt;
+            lastsz = currsz;
          }
 
          // when showing rate, only with statistic one need to analyze event
          if (!dostat) continue;
       }
 
-      if (evnt==0) continue;
+      if (!evnt) continue;
 
       if (skip>0) { skip--; continue; }
 

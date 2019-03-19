@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 
-<!-- Debuggin of HADES SPILL monitor, take data from main application  -->
+<!-- Debugging of HADES SPILL monitor, take data from main application  -->
 
 <dabc version="2">
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcStream.so"/>  
-      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>
       <logfile value="spill.log"/>
       <loglevel value="1"/>
       <loglimit value="1000"/>
