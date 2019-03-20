@@ -6,9 +6,9 @@
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcStream.so"/>  
-      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>
       <logfile value="spill.log"/>
       <loglevel value="1"/>
       <loglimit value="1000"/>
@@ -21,7 +21,7 @@
       <Layout value="grid4x4"/>
       <Monitoring value="2000"/>
       <!-- DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/ -->
-      <DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow]"/>
+      <DrawItem value="[EventBuilder/Run/HLD/HLD_HitsFast,EventBuilder/Run/HLD/HLD_HitsSlow,EventBuilder/Run/HLD/HLD_TrendX,EventBuilder/Run/HLD/HLD_TrendY,EventBuilder/Run/HLD/HLD_BeamX,EventBuilder/Run/HLD/HLD_BeamY,EventBuilder/Run/HLD/HLD_VETO_Patt,EventBuilder/Run/HLD/HLD_QSlow,EventBuilder/Run/HLD/HLD_HALO_Patt,EventBuilder/Run/HLD/HLD_XHALOSlow,EventBuilder/Run/HLD/HLD_YHALOSlow,EventBuilder/Run/HLD/HLD_LastSpill_Q_factor,EventBuilder/Run/HLD/HLD_XSlow,EventBuilder/Run/HLD/HLD_YSlow,EventBuilder/Run/HLD/HLD_HitsSpill,EventBuilder/Run/HLD/HLD_HitsLastSpill]"/>
     </HttpServer>
 
     <!-- If uncommented, all internal manager structures will be published in the web server -->
@@ -50,11 +50,11 @@
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output2" url="hld:///dl/data/spillmonitor/spill.hld?maxsize=2000"/>
-       
+
        <!--  this is example of HLD file storage, which retries to create new files in case of error (disk full).
              transport runs in own thread to exclude blocking of other transports if file operation hangs -->
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000" retry="5" blocking="never" thread="FileThread"/-->
-       
+
        <!--  this is example of HLD file storage - RFIO -->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
 
@@ -65,7 +65,7 @@
        <ExtraDebug value="false"/>
 
        <!-- how often output will be flushed -->
-       <FlushTimeout value="2.5"/>   
+       <FlushTimeout value="2.5"/>
 
        <!-- TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
