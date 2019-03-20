@@ -32,7 +32,7 @@
 
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
-       <NumBuffers value="200"/>
+       <NumBuffers value="250"/>
     </MemoryPool>
 
     <Module name="Combiner" class="hadaq::CombinerModule">
@@ -40,7 +40,7 @@
        <NumInputs value="1"/>
        <NumOutputs value="2"/>
 
-       <InputPort name="Input0" url="hadaq://host:50096"/>
+       <InputPort name="Input0" url="hadaq://host:50096" queue="50"/>
 
        <!-- InputPort name="Input*" queue="100" urlopt="udpbuf=2000000&mtu=64512&flush=1&observer=false&maxloop=50" resort="false"/ -->
        <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
