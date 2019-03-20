@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 
 
-<!-- 
+<!--
 This is example file how HADAQ event building with builder network (BNET) should be configured in DABC.
 This file BnetInputHades.xml will configure the BNET-Input (first level and input of builder network)
 The eventbuilder layer (second level) is configured in corresponding file BnetBuilderHades.xml
 
 By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
-put <HttpServer name="http" auto="false">. One could change http port number. 
+put <HttpServer name="http" auto="false">. One could change http port number.
 When dabc runs, in any browser address like
-http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
+http://your_dabc_host_name:8090 can be opened. At the moment http server provides:
   - ratemeters from EventBuilder and Transmitter
-  - log fields 
+  - log fields
   - commands to start/stop hld and lmd files from browser
 
 
@@ -45,9 +45,9 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
   <Context host="${MYHOST}" name="BNET-IN-${BNINPNUM}" port="${BNINPPORT}">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>        
+      <lib value="libDabcHadaq.so"/>
      <!--  <lib value="libDabcRfio.so"/> -->
-      <lib value="libDabcStream.so"/>  
+      <lib value="libDabcStream.so"/>
       <logfile value="BNETIN_${BNINPNUM}.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
@@ -63,72 +63,76 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
     </Run>
 
     <Application ConnTimeout="60"/>
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
        <NumBuffers value="10000"/>
     </MemoryPool>
-    
+
     <Device name="NetDev" class="dabc::SocketDevice"/>
-    
+
     <!--  Thread name="SpecialThrd" affinity="+1"/-->
 
     <!-- special configuration for START detector -->
     <Module name="TRB888*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="17"/>
-    </Module>    
+    </Module>
 
     <!-- special configuration for ECAL HUBs -->
     <Module name="TRB8a*_TdcCal">
        <!-- number of TDC channels -->
        <NumChannels value="49"/>
-    </Module>    
-    
+    </Module>
+
     <!-- these are default parameters for TDC calibration modules -->
-    <Module name="TRB*_TdcCal">    
+    <Module name="TRB*_TdcCal">
        <!-- Minimal and maximal bins for linear calibration -->
        <FineMin value="31"/>
        <FineMax value="480"/>
-       
+
        <!-- number of TDC channels -->
        <NumChannels value="33"/>
-       
+
        <!-- this is configuration of input, connected with UdpTransport -->
-       <InputPort name="*" queue="300"/>       
-       
+       <InputPort name="*" queue="300"/>
+
        <!-- 1 - use only rising edge, falling edge is ignored
             2 - falling edge enabled and fully independent from rising edge
             3 - falling edge enabled and uses calibration from rising edge
             4 - falling edge enabled and common statistic is used for calibration -->
        <EdgeMask value="2"/>
-       
+
        <!-- when auto mode enabled - this is allowed range for TDC ids -->
        <TdcMin value="0x5000"/>
        <TdcMax value="0x8000"/>
-       
+
        <!-- Which calibration mode is used, when TDC created automatically:
-            0 - none, 1 - linear mode, 2 - with normal calibrations 
+            0 - none, 1 - linear mode, 2 - with normal calibrations
             In the URL it is coded as "calibr" parameter -->
        <Mode value="1"/>
-       
+
        <!-- histogram filling level
             0 - no histograms,
             1 - only generic statistic for TRB
             2 - basic statistic for TDC (like hits per channel)
-            3 - histograms for each active channel will be created, 
+            3 - histograms for each active channel will be created,
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="1"/>
-       
+
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
 
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - array with trigger types -->
        <CalibrTrigger value="0xffff"/>
-       
+
+       <!-- Hits around ch0 time selected for calibration -->
+       <TrigDWindowLow value="-100"/>
+       <TrigDWindowHigh value="100"/>
+
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
-       
+
        <!-- Number of counts in each channel to perform calibration, 0 - switch off auto calibration -->
        <Auto value="0"/>
 
@@ -141,35 +145,35 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
             When Replace==false, size of HLD data increased by 25%, but original data are preserved -->
        <Replace value="false"/>
     </Module>
-    
-    
-    <Module name="FirstLevel" class="hadaq::CombinerModule">    
+
+
+    <Module name="FirstLevel" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETsend value="true"/>
        <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
-       
+
         <!-- number of events send to the same event builder -->
        <EB_EVENTS value="16"/>
-       
+
        <NumInputs value="#${hadaqports}"/>
        <NumOutputs value="#${bnetreceivers}"/>
-       <InputPort name="Input*" queue="300" thread="${udpthreads}#" 
-                  url="nhadaq://host:${hadaqports}#" 
-                  urlopt1="calibr=${calibflags}#&trb=${subevents}#" 
+       <InputPort name="Input*" queue="300" thread="${udpthreads}#"
+                  url="nhadaq://host:${hadaqports}#"
+                  urlopt1="calibr=${calibflags}#&trb=${subevents}#"
                   urlopt="udpbuf=400000&mtu=65507&flush=0.1&observer=false&maxloop=30&reduce=0.5"/>
-       
+
 <!--        <InputPort name="Input0" url="nhadaq://host:50000"/> -->
 <!--        <InputPort name="Input1" url="nhadaq://host:50001"/> -->
 <!--        <InputPort name="Input2" url="nhadaq://host:50002"/> -->
        <OutputPort name="Output*" optional="true" queue="300"/>
-       
+
        <AccountLostEventDiff value="false"/>
        <ExtraDebug value="false"/>
        <FlushTimeout value="0.5"/>
        <TriggerNumRange value="0x1000000"/>
-       
-       <BuildDropTimeout value="150.0"/>    
+
+       <BuildDropTimeout value="150.0"/>
 
        <!-- extra directory where calibrations for each calibration run will be stored  -->
        <CalibrDir value="calibr"/>
@@ -179,26 +183,26 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <!--  specifies that trigger type should be extracted from configured CTS hub -->
        <HadesTriggerType value="true"/>
        <HadesTriggerHUB value="0x8800"/>
-       
+
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-       
+
      </Module>
-     
-     <Connection device="NetDev" list="${bnetreceivers}" 
+
+     <Connection device="NetDev" list="${bnetreceivers}"
                  output="FirstLevel/Output%id%" input="dabc://%name%/Combiner/Input${BNINPID}"/>
-     
+
      <Module name="Term" class="hadaq::TerminalModule" mname="FirstLevel" period="0.3" show="false" clear="false" showtrig="16"/>
-     
-     
+
+
   </Context>
 
 
 
-  
+
 
 
 </dabc>

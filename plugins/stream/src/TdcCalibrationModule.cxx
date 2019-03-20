@@ -57,6 +57,12 @@ stream::TdcCalibrationModule::TdcCalibrationModule(const std::string &name, dabc
    fTdcMin = Cfg("TdcMin", cmd).AsUIntVect();
    fTdcMax = Cfg("TdcMax", cmd).AsUIntVect();
 
+   // window for hits
+   double dlow = Cfg("TrigDWindowLow", cmd).AsDouble();
+   double dhigh = Cfg("TrigDWindowHigh", cmd).AsDouble();
+   if (dlow < dhigh-1) hadaq::TdcProcessor::SetTriggerDWindow(dlow, dhigh);
+
+
    std::vector<uint64_t> caltr = Cfg("CalibrTrigger", cmd).AsUIntVect();
 
    // default channel numbers and edges mask
