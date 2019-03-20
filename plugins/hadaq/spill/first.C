@@ -19,12 +19,12 @@ void first()
 
    // range which TDC
    proc->SetTdcRange(0x1000, 0x1100);
-   
+
    // 1. level to detect spill on
    // 2. level to detect spill of
    // 3. number of bins in HLD_Hits histogram to analyze
    proc->SetSpillDetect(0, 2, 3);
-   
+
    // maximal spill length in seconds
    proc->SetMaxSpillLength(22.);
 
@@ -52,57 +52,59 @@ void first()
    proc->SetChannelsLookup(14, 29);
    proc->SetChannelsLookup(15, 31);
 */
-                                  
-   proc->SetChannelsLookup1(1 ,1  );
-   proc->SetChannelsLookup1(3 ,2  );
-   proc->SetChannelsLookup1(5 ,3  );
-   proc->SetChannelsLookup1(7 ,4  );
-   proc->SetChannelsLookup1(9 ,5  );
-   proc->SetChannelsLookup1(11,6  );
-   proc->SetChannelsLookup1(13,7  );
-   proc->SetChannelsLookup1(15,8  );
-   proc->SetChannelsLookup1(17,9  );
-   proc->SetChannelsLookup1(19,10 );
-   proc->SetChannelsLookup1(21,11 );
-   proc->SetChannelsLookup1(23,12 );
-   proc->SetChannelsLookup1(25,13 );
-   proc->SetChannelsLookup1(27,14 );
-   proc->SetChannelsLookup1(29,15 );
-   proc->SetChannelsLookup1(31,16 );
-                             
-   proc->SetChannelsLookup2(1 ,101   );
-   proc->SetChannelsLookup2(3 ,102   );
-   proc->SetChannelsLookup2(5 ,103   );
-   proc->SetChannelsLookup2(7 ,104   );
-   proc->SetChannelsLookup2(9 ,105   );
-   proc->SetChannelsLookup2(11,106   );
-   proc->SetChannelsLookup2(13,107   );
-   proc->SetChannelsLookup2(15,108   );
-   proc->SetChannelsLookup2(17,109   );
-   proc->SetChannelsLookup2(19,110  );
-   proc->SetChannelsLookup2(21,111 );
-   proc->SetChannelsLookup2(23,112 );
-   proc->SetChannelsLookup2(25,113 );
-   proc->SetChannelsLookup2(27,114 );
-   proc->SetChannelsLookup2(29,115 );
-   proc->SetChannelsLookup2(31,116 );
 
-   proc->SetChannelsLookup3(1 ,201   );
-   proc->SetChannelsLookup3(3 ,202   );
-   proc->SetChannelsLookup3(5 ,203   );
-   proc->SetChannelsLookup3(7 ,204   );
-   proc->SetChannelsLookup3(9 ,205   );
-   proc->SetChannelsLookup3(11,206   );
-   proc->SetChannelsLookup3(13,207   );
-   proc->SetChannelsLookup3(15,208   );
-   proc->SetChannelsLookup3(17,209   );
-   proc->SetChannelsLookup3(19,210  );
-   proc->SetChannelsLookup3(21,211 );
-   proc->SetChannelsLookup3(23,212 );
-   proc->SetChannelsLookup3(25,213 );
-   proc->SetChannelsLookup3(27,214 );
-   proc->SetChannelsLookup3(29,215 );
-   proc->SetChannelsLookup3(31,216 );
+   proc->SetChannelsLookup1(1 ,1 ); // X strips
+   proc->SetChannelsLookup1(3 ,2 );
+   proc->SetChannelsLookup1(5 ,3 );
+   proc->SetChannelsLookup1(7 ,4 );
+   proc->SetChannelsLookup1(9 ,5 );
+   proc->SetChannelsLookup1(11,6 );
+   proc->SetChannelsLookup1(13,7 );
+   proc->SetChannelsLookup1(15,8 );
+   proc->SetChannelsLookup1(17,9 );
+   proc->SetChannelsLookup1(19,10);
+   proc->SetChannelsLookup1(21,11);
+   proc->SetChannelsLookup1(23,12);
+   proc->SetChannelsLookup1(25,13);
+   proc->SetChannelsLookup1(27,14);
+   proc->SetChannelsLookup1(29,15);
+   proc->SetChannelsLookup1(31,16);
+
+   proc->SetChannelsLookup2(1 ,101); // Y strips
+   proc->SetChannelsLookup2(3 ,102);
+   proc->SetChannelsLookup2(5 ,103);
+   proc->SetChannelsLookup2(7 ,104);
+   proc->SetChannelsLookup2(9 ,105);
+   proc->SetChannelsLookup2(11,106);
+   proc->SetChannelsLookup2(13,107);
+   proc->SetChannelsLookup2(15,108);
+   proc->SetChannelsLookup2(17,109);
+   proc->SetChannelsLookup2(19,110);
+   proc->SetChannelsLookup2(21,111);
+   proc->SetChannelsLookup2(23,112);
+   proc->SetChannelsLookup2(25,113);
+   proc->SetChannelsLookup2(27,114);
+   proc->SetChannelsLookup2(29,115);
+   proc->SetChannelsLookup2(31,116);
+
+   // VETO
+   proc->SetChannelsLookup3(1 ,201); // [1,2]
+   proc->SetChannelsLookup3(3 ,202); // [2,1]
+   proc->SetChannelsLookup3(5 ,203); // [1,0]
+   proc->SetChannelsLookup3(7 ,204); // [0,1]
+   proc->SetChannelsLookup3(9 ,205); // [0,2]
+   proc->SetChannelsLookup3(11,206); // [2,2]
+   proc->SetChannelsLookup3(13,207); // [2,0]
+   proc->SetChannelsLookup3(15,208); // [0,0]
+   // HALO
+   proc->SetChannelsLookup3(17,209); // up
+   proc->SetChannelsLookup3(19,210); // down
+   proc->SetChannelsLookup3(21,211); // left
+   proc->SetChannelsLookup3(23,212); // right
+   //proc->SetChannelsLookup3(25,213 );
+   //proc->SetChannelsLookup3(27,214 );
+   //proc->SetChannelsLookup3(29,215 );
+   //proc->SetChannelsLookup3(31,216 );
 
 
    /** Set channel id on third TDC, which should detect spill-start signal */
@@ -110,7 +112,7 @@ void first()
 
    /** Set special channel with trigger info */
    proc->SetTriggerChannel(25);
-                            
+
    // create ROOT file store
    // base::ProcMgr::instance()->CreateStore("td.root");
 
