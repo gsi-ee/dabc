@@ -263,8 +263,11 @@ void stream::DabcProcMgr::SetH1Title(base::H1handle h1, const char *title)
 void stream::DabcProcMgr::TagH1Time(base::H1handle h1)
 {
    auto item = FindHistogram(h1);
-   if (!item.null())
-      item.SetField("_time", dabc::DateTime().GetNow().AsString(3, true));
+   if (!item.null()) {
+      auto now = dabc::DateTime().GetNow();
+      item.SetField("_humantime", now.AsString(3, true));
+      item.SetField("_time", now.AsUTCSeconds());
+   }
 }
 
 void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char *title)
@@ -277,8 +280,11 @@ void stream::DabcProcMgr::SetH2Title(base::H2handle h2, const char *title)
 void stream::DabcProcMgr::TagH2Time(base::H2handle h2)
 {
    auto item = FindHistogram(h2);
-   if (!item.null())
-      item.SetField("_time", dabc::DateTime().GetNow().AsString(3, true));
+   if (!item.null()) {
+      auto now = dabc::DateTime().GetNow();
+      item.SetField("_humantime", now.AsString(3, true));
+      item.SetField("_time", now.AsUTCSeconds());
+   }
 }
 
 bool stream::DabcProcMgr::ClearHistogram(dabc::Hierarchy &item)

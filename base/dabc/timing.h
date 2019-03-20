@@ -219,6 +219,9 @@ namespace dabc {
          /** \brief Return date and time in JS format - number of millisecond  since 1.1.1970 */
          uint64_t AsJSDate() const;
 
+         /** \brief Returns only seconds since 1.1.1970 */
+         unsigned AsUTCSeconds() const { return tv_sec; }
+
          /** \brief Set value in form of JS date - milliseconds since 1.1.1970 */
          void SetJSDate(uint64_t jsdate)
          {
