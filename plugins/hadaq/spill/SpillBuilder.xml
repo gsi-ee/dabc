@@ -32,7 +32,7 @@
 
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
-       <NumBuffers value="100"/>
+       <NumBuffers value="200"/>
     </MemoryPool>
 
     <Module name="Combiner" class="hadaq::CombinerModule">
@@ -43,10 +43,12 @@
        <InputPort name="Input0" url="hadaq://host:50096"/>
 
        <!-- InputPort name="Input*" queue="100" urlopt="udpbuf=2000000&mtu=64512&flush=1&observer=false&maxloop=50" resort="false"/ -->
-       <InputPort name="Input*" queue="20" urlopt="udpbuf=2000000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
+       <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
+
+       <OutputPort name="Output0" queue="100"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
-       <OutputPort name="Output1" url="mbs://Stream:7788?iter=hadaq_iter&subid=0x1f"/>
+       <OutputPort name="Output1" url="mbs://Stream:7788?iter=hadaq_iter&subid=0x1f" queue="30"/>
 
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output2" url="hld:///dl/data/spillmonitor/spill.hld?maxsize=2000"/>
@@ -95,7 +97,7 @@
        <parallel value="0"/>
        <fillcolor value="0"/>
        <AutoSave value="180"/>
-       <InputPort name="Input0" url="Combiner/Output0"/>
+       <InputPort name="Input0" url="Combiner/Output0" queue="100"/>
        <OutputPort name="*" auto="false"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
        <DataRate width="4" prec="2" low="0" up="10" debug="1"/>
