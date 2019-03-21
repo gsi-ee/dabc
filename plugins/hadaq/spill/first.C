@@ -26,7 +26,7 @@ void first()
    proc->SetSpillDetect(0, 2, 3);
 
    // maximal spill length in seconds
-   proc->SetMaxSpillLength(22.);
+   proc->SetMaxSpillLength(20.);
 
 
 
