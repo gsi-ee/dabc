@@ -26,7 +26,7 @@
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
-int usage(const char* errstr = 0)
+int usage(const char* errstr = nullptr)
 {
    if (errstr!=0) {
       printf("Error: %s\n\n", errstr);
@@ -66,6 +66,7 @@ int usage(const char* errstr = 0)
    printf("   -rate                   - display only events and data rate\n");
    printf("   -bw                     - disable colors\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
+   printf("   -400                    - new 400 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
@@ -146,9 +147,9 @@ struct SubevStat {
 };
 
 
-double tot_limit(20.), tot_shift(20.);
+double tot_limit(20.), tot_shift(20.), coarse_tmlen(5.);
 unsigned fine_min(31), fine_max(491);
-bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false, use_calibr = true;
+bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
 
 const char *getCol(const char *col_name)
 {
@@ -405,7 +406,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    errmask = 0;
 
    bool haschannel0(false);
-   unsigned channel(0), maxch(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
+   unsigned channel(0), maxch(0), coarse(0), fine(0), ndebug(0), nheader(0), isrising(0), dkind(0), dvalue(0), rawtime(0);
    int epoch_channel(-11); // -11 no epoch, -1 - new epoch, 0..127 - epoch assigned with specified channel
 
    static unsigned NumCh = 66;
@@ -430,7 +431,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned calibr[2] = { 0xffff, 0xffff };
    int ncalibr = 2;
    const char* hdrkind = "";
-   bool with_calibr = false;
+   bool with_calibr = false, bad_fine = false;
 
    for (unsigned cnt=0;cnt<len;cnt++,ix++) {
       unsigned msg = sub->Data(ix);
@@ -528,10 +529,22 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             if ((epoch_channel == -11) || (epoch_per_channel && (epoch_channel != (int) channel))) errmask |= tdcerr_MissEpoch;
 
-            tm = ((epoch << 11) + (msg & 0x7FF)) * 5.; // coarse time
-            fine = (msg >> 12) & 0x3FF;
+            bad_fine = false;
+
+            if (use_400mhz) {
+               coarse = (msg & 0xFFF);
+               fine = (msg >> 13) & 0x1FF;
+               bad_fine = (fine == 0x1ff);
+            } else {
+               coarse = (msg & 0x7FF);
+               fine = (msg >> 12) & 0x3FF;
+               bad_fine = (fine == 0x3ff);
+            }
+
+            tm = (epoch << 11) * 5. +  coarse * coarse_tmlen; // coarse time
+
             with_calibr = false;
-            if (fine<0x3ff) {
+            if (!bad_fine) {
                if ((msg & tdckind_Mask) == tdckind_Hit2) {
                   if (isrising) {
                      tm -= fine*5e-3; // calibrated time, 5 ps/bin
@@ -547,7 +560,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                   tm -= corr;
                   with_calibr = true;
                } else {
-                  tm -= 5.*(fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
+                  tm -= coarse_tmlen * (fine > fine_min ? fine - fine_min : 0) / (0. + fine_max - fine_min); // simple approx of fine time from range 31-491
                }
             }
 
@@ -572,7 +585,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             if (prefix>0) printf("%s ch:%2u isrising:%u tc:0x%03x tf:%s tm:%6.3f ns%s\n",
                                  ((msg & tdckind_Mask) == tdckind_Hit) ? "hit " : (((msg & tdckind_Mask) == tdckind_Hit1) ? "hit1" : "hit2"),
-                                 channel, isrising, (msg & 0x7FF), sfine, tm - ch0tm, sbuf);
+                                 channel, isrising, coarse, sfine, tm - ch0tm, sbuf);
             if ((channel==0) && (ch0tm==0)) ch0tm = tm;
             break;
          default:
@@ -692,6 +705,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-ignorecalibr")==0) { use_calibr = false; } else
+      if (strcmp(argv[n],"-400")==0) { use_400mhz = true; coarse_tmlen = 2.5; fine_min = 0x5; fine_max = 0xc0; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
