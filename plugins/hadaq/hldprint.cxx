@@ -531,13 +531,14 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             bad_fine = false;
 
+            coarse = (msg & 0x7FF);
+            fine = (msg >> 12) & 0x3FF;
+            
             if (use_400mhz) {
-               coarse = (msg & 0xFFF);
-               fine = (msg >> 13) & 0x1FF;
+               coarse = (coarse << 1) | ((fine & 0x200) ? 1 : 0); 
+               fine = fine & 0x1FF;
                bad_fine = (fine == 0x1ff);
             } else {
-               coarse = (msg & 0x7FF);
-               fine = (msg >> 12) & 0x3FF;
                bad_fine = (fine == 0x3ff);
             }
 
