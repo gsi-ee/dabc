@@ -61,6 +61,7 @@ int usage(const char* errstr = 0)
    printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns) \n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns) \n");
+   printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
    printf("   -fullid value           - printout only events with specified fullid (default all) \n");
    printf("   -rate                   - display only events and data rate\n");
    printf("   -bw                     - disable colors\n");
@@ -147,7 +148,7 @@ struct SubevStat {
 
 double tot_limit(20.), tot_shift(20.);
 unsigned fine_min(31), fine_max(491);
-bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false;
+bool bubble_mode = false, only_errors = false, use_colors = true, epoch_per_channel = false, use_calibr = true;
 
 const char *getCol(const char *col_name)
 {
@@ -503,7 +504,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          case tdckind_Calibr:
             calibr[0] = msg & 0x3fff;
             calibr[1] = (msg >> 14) & 0x3fff;
-            ncalibr = 0;
+            if (use_calibr) ncalibr = 0;
             if (prefix>0) printf("tdc calibr v1 0x%04x v2 0x%04x\n", calibr[0], calibr[1]);
             break;
          case tdckind_Hit:
@@ -689,7 +690,8 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-stat")==0) { dostat = true; } else
       if (strcmp(argv[n],"-rate")==0) { showrate = true; reconnect = true; } else
       if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
-      if (strcmp(argv[n],"-allepoch")==0) { epoch_per_channel = true; } else
+      if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
+      if (strcmp(argv[n],"-ignorecalibr")==0) { use_calibr = false; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
