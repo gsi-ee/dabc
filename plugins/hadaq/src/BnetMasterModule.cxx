@@ -77,6 +77,11 @@ hadaq::BnetMasterModule::BnetMasterModule(const std::string &name, dabc::Command
    item.SetField("value", "0");
    item.SetField("_hidden", "true");
 
+   item = fWorkerHierarchy.CreateHChild("RunningCmd"); // currently running cmd
+   item.SetField(dabc::prop_kind, "Text");
+   item.SetField("value", "");
+   item.SetField("_hidden", "true");
+
    CreatePar("State").SetFld(dabc::prop_kind, "Text").SetValue("Init");
    CreatePar("Quality").SetFld(dabc::prop_kind, "Text").SetValue("0.5");
 
@@ -297,6 +302,8 @@ bool hadaq::BnetMasterModule::ReplyCommand(dabc::Command cmd)
 
             fCurrentFileCmd.Reply(dabc::cmd_true);
 
+            fWorkerHierarchy.GetHChild("RunningCmd").SetField("value","");
+
             if (stop_calibr) PreserveLastCalibr(true, fCmdQuality, rid);
          }
       }
@@ -474,6 +481,7 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
    if (!fCurrentFileCmd.null() && fCurrentFileCmd.IsTimedout()) {
       EOUT("Abort RUN command %s", fCurrentFileCmd.GetName());
       fCurrentFileCmd.Reply(dabc::cmd_false);
+      fWorkerHierarchy.GetHChild("RunningCmd").SetField("value","");
    }
 
    if (!fInitRunCmd.null() && fInitRunCmd.IsTimedout())
@@ -483,6 +491,11 @@ void hadaq::BnetMasterModule::ProcessTimerEvent(unsigned timer)
 int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("StartRun") || cmd.IsName("StopRun")) {
+
+      if (!fCurrentFileCmd.null()) {
+         EOUT("Ignore run command - previous %s not completed", fCurrentFileCmd.GetName());
+         return dabc::cmd_false;
+      }
 
       bool isstart = cmd.IsName("StartRun");
 
@@ -500,11 +513,6 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
          return dabc::cmd_postponed;
       }
 
-      if (!fCurrentFileCmd.null()) {
-         EOUT("Abort previous run command %s", fCurrentFileCmd.GetName());
-         fCurrentFileCmd.Reply(dabc::cmd_false);
-      }
-
       std::vector<std::string> builders = fWorkerHierarchy.GetHChild("Builders").GetField("value").AsStrVect();
       if (builders.size() == 0) return dabc::cmd_true;
 
@@ -520,9 +528,9 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       fCmdReplies = 0;
       fCmdQuality = 1.;
 
-      if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 40)) {
-         DOUT0("INCREASE cmd %s TIMEOUT from %4.1f to 40 sec", cmd.GetName(), cmd.TimeTillTimeout());
-         cmd.SetTimeout(40.);
+      if (!cmd.IsTimeoutSet() || (cmd.TimeTillTimeout() < 60)) {
+         DOUT0("INCREASE cmd %s TIMEOUT from %4.1f to 60 sec", cmd.GetName(), cmd.TimeTillTimeout());
+         cmd.SetTimeout(60.);
       }
 
       double main_tmout = cmd.TimeTillTimeout() - 1;
@@ -549,6 +557,11 @@ int hadaq::BnetMasterModule::ExecuteCommand(dabc::Command cmd)
       } else {
          query = "mode=stop";
       }
+
+      if (isstart)
+         fWorkerHierarchy.GetHChild("RunningCmd").SetField("value", dabc::format("Start %s %u", prefix.c_str(), runid));
+      else
+         fWorkerHierarchy.GetHChild("RunningCmd").SetField("value", dabc::format("Stop %s %u", lastprefix.c_str(), lastrunid));
 
       fWorkerHierarchy.GetHChild("MasterRunId").SetField("value", runid);
 
