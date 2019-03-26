@@ -57,8 +57,9 @@ int usage(const char* errstr = nullptr)
    printf("   -adc id                 - printout raw data as ADC subsubevent (default none) \n");
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
    printf("   -auto                   - automatically assign ID for TDCs (0x0zzz or 0x1zzz) and HUBs (0x8zzz) (default false)\n");
-   printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff) \n");
-   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none) \n");
+   printf("   -range mask             - select bits which are used to detect TDC or ADC (default 0xff)\n");
+   printf("   -onlytdc tdcid          - printout raw data only of specified tdc subsubevent (default none)\n");
+   printf("   -skipintdc nmsg         - skip in tdc first nmsgs (default 0)\n\n");
    printf("   -tot boundary           - minimal allowed value for ToT (default 20 ns) \n");
    printf("   -stretcher value        - approximate stretcher length for falling edge (default 20 ns) \n");
    printf("   -ignorecalibr           - ignore calibration messages (default off)\n");
@@ -148,7 +149,7 @@ struct SubevStat {
 
 
 double tot_limit(20.), tot_shift(20.), coarse_tmlen(5.);
-unsigned fine_min(31), fine_max(491);
+unsigned fine_min(31), fine_max(491), skip_msgs_in_tdc(0);
 bool bubble_mode{false}, only_errors{false}, use_colors{true}, epoch_per_channel{false}, use_calibr{true}, use_400mhz{false};
 
 const char *getCol(const char *col_name)
@@ -429,6 +430,7 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
    char sbuf[100], sfine[100];
    unsigned calibr[2] = { 0xffff, 0xffff };
+   unsigned skip = skip_msgs_in_tdc;
    int ncalibr = 2;
    const char* hdrkind = "";
    bool with_calibr = false, bad_fine = false;
@@ -461,7 +463,13 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
       if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
 
-      if ((cnt==0) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
+      if (skip > 0) {
+         skip--;
+         if (prefix>0) printf("skip\n");
+         continue;
+      }
+
+      if ((cnt==skip_msgs_in_tdc) && ((msg & tdckind_Mask) != tdckind_Header)) errmask |= tdcerr_MissHeader;
 
       switch (msg & tdckind_Mask) {
          case tdckind_Reserved:
@@ -533,9 +541,9 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 
             coarse = (msg & 0x7FF);
             fine = (msg >> 12) & 0x3FF;
-            
+
             if (use_400mhz) {
-               coarse = (coarse << 1) | ((fine & 0x200) ? 1 : 0); 
+               coarse = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
                fine = fine & 0x1FF;
                bad_fine = (fine == 0x1ff);
             } else {
@@ -683,6 +691,7 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
+      if ((strcmp(argv[n],"-skipintdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &skip_msgs_in_tdc); } else
       if ((strcmp(argv[n],"-fine-min")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_min); } else
       if ((strcmp(argv[n],"-fine-max")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &fine_max); } else
       if ((strcmp(argv[n],"-tot")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tot_limit); } else
