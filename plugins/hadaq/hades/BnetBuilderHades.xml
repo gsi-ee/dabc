@@ -1,31 +1,31 @@
 <?xml version="1.0"?>
 
-<!-- 
+<!--
 This is example file how HADAQ event building with builder network (BNET) should be configured in DABC.
 This file BnetBuilderHades.xml will configure the BNET-Eventbuilder (second level of builder network)
 The input layer (first level) is configured in corresponding file BnetInputHades.xml
 
 By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
-put <HttpServer name="http" auto="false">. One could change http port number. 
+put <HttpServer name="http" auto="false">. One could change http port number.
 When dabc runs, in any browser address like
-http://your_dabc_host_name:8090 can be opened. At the moment http server provides: 
+http://your_dabc_host_name:8090 can be opened. At the moment http server provides:
   - ratemeters from EventBuilder and Transmitter
-  - log fields 
+  - log fields
   - commands to start/stop hld and lmd files from browser
 
 It is also possible to attach go4 analysis to that server, that also histograms
-from online analysis will appear. For that one should specify 
+from online analysis will appear. For that one should specify
 "-dabc your_dabc_host_name" argument when starting analysis. Like:
    [shell] go4analysis -stream dabc_node -dabc dabc_node
-When launching analysis from the gui, extra arguments "-dabc your_dabc_host_name" 
+When launching analysis from the gui, extra arguments "-dabc your_dabc_host_name"
 should be specified.
 
-There is well-known problem with using VNC viewer and mbs stream server. 
+There is well-known problem with using VNC viewer and mbs stream server.
 Both by default are using port 6002. One could change port number for stream server.
 Just set other number in configuration of output port of transmitter module, for instance
        <OutputPort name="Output0" url="mbs://Stream:6789"/>
 In this case one should specify that port number when starting go4 analysis like:
-   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444 
+   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444
 When starting analysis from the go4 gui, one should specify stream server with port number too.
 
 Variables for hades multiple eventbuilder mode:
@@ -66,7 +66,7 @@ DAQDISK - switches disk demon mode on/off
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
       <lib value="libDabcRfio.so"/>
-      <lib value="libDabcLtsm.so"/> 
+      <lib value="libDabcLtsm.so"/>
       <logfile value="BNETEB_${BNEBNUM}.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>
@@ -78,23 +78,25 @@ DAQDISK - switches disk demon mode on/off
       <threads_layout value="balanced"/>
       <master value="${BNETMASTER}:23456"/>
       <publisher value="true"/>
-      <!--       <runtime value="50"/>  -->    
+      <halttime value="60"/>
+      <thrdstoptime value="20"/>
+      <!--       <runtime value="50"/>  -->
     </Run>
-    
+
      <!-- shmem control config -->
    <!--  <Observer name="shm">
        <DoShmControl value="true"/>
-       <NodeId value="${BNEBNUM}"/>     
+       <NodeId value="${BNEBNUM}"/>
     </Observer>   -->
-    
+
     <!-- If uncommented, all internal manager structures will be published in the web server -->
     <!-- Publisher name="publ" manager="true"/ -->
-    
+
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
-    
+
     <Application ConnTimeout="60"/>
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="2000000"/>
        <NumBuffers value="5000"/>
@@ -103,17 +105,17 @@ DAQDISK - switches disk demon mode on/off
     <Device name="NetDev" class="dabc::SocketDevice"/>
 
     <Module name="Combiner" class="hadaq::CombinerModule">
-    
-       <NodeId value="${BNEBNUM}"/>    
+
+       <NodeId value="${BNEBNUM}"/>
         <!-- these parameters will force to create inputs/outputs of module -->
        <BNETrecv value="true"/>
        <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
        <BNET_NUMSENDERS value="#${bnetsenders}"/>
        <EB_EVENTS value="16"/>
-       
+
        <NumInputs value="#${bnetsenders}"/>
        <NumOutputs value="${FILEOUTPUTS}"/>
-       
+
        <InputPort name="Input*" queue="300" optional="true"/>
 
        <OutputPort name="Output0" url="mbs://Stream:810${BNEBNUM}?iter=hadaq_iter&subid=0x1f"/>
@@ -129,7 +131,7 @@ DAQDISK - switches disk demon mode on/off
        <DoShmControl value="false"/>
        <RunIdFromEPICS value="false"/>
        <FlushTimeout value="0.5"/>
-       
+
        <!--  Not required in builder, Id is normally set to header -->
        <!--  <HadesTriggerType value="true"/> -->
 
@@ -141,16 +143,16 @@ DAQDISK - switches disk demon mode on/off
        <FlushBySync value="false"/>
        <!-- TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
        <TriggerNumRange value="0x1000000"/>
-       <!--  Do not throw away events when subevens TAGs are differ  --> 
+       <!--  Do not throw away events when subevens TAGs are differ  -->
        <CheckTag value="false"/>
 
        <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
-        
-       <BuildDropTimeout value="300.0"/>    
-          
-       <Runinfo2ora value="true"/>  
-    
+
+       <BuildDropTimeout value="300.0"/>
+
+       <Runinfo2ora value="true"/>
+
        <FilePrefix value="${PREFIX}"/>
 
        <!-- rate meters configuration, not seen with terminal module -->
@@ -158,17 +160,17 @@ DAQDISK - switches disk demon mode on/off
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
-       
+
      </Module>
-     
-     <Connection device="NetDev" list="${bnetsenders}" 
+
+     <Connection device="NetDev" list="${bnetsenders}"
                  output="dabc://%name%/FirstLevel/Output${BNEBID}" input="Combiner/Input%id%"/>
-     
+
 <!--      <Connection device="NetDev" output="dabc://localhost:12502/FirstLevel/Output0" input="Combiner/Input1"  pool="Pool"/> -->
-     
+
      <!-- Terminal output like old event builder -->
   <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="-1" servport="0" showtrig="16"/>
- 
+
   </Context>
 
 </dabc>
