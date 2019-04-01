@@ -680,6 +680,9 @@ namespace dabc {
          ThreadsLayout GetThreadsLayout() const
            { return null() ? layoutBalanced : GetObject()->GetThreadsLayout(); }
 
+         bool IsTerminated() const
+         { return null() ? true : !GetObject()->fMgrStoppedTime.null(); }
+
          /**\brief Request connection between two ports.
           * If both ports belong to local node, they will be connected immediately.
           * If both ports belong to remote nodes, nothing will happen.

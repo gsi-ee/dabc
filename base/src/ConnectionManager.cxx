@@ -69,6 +69,9 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 {
     // here one should analyze
 
+   // when application terminated - do not start with new connections
+   if (dabc::mgr.IsTerminated()) return;
+
    std::string value = evnt.ParValue();
 
    bool ispending = (value == ConnectionObject::GetStateName(ConnectionObject::sPending));
