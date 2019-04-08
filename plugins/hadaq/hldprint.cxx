@@ -67,7 +67,9 @@ int usage(const char* errstr = nullptr)
    printf("   -rate                   - display only events and data rate\n");
    printf("   -bw                     - disable colors\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
+   printf("   -400                    - new 400 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -340                    - new 340 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -mhz value              - new design with arbitrary MHz, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
@@ -679,7 +681,7 @@ int main(int argc, char* argv[])
 
    long number(10), skip(0);
    unsigned findid(0);
-   double tmout(-1.), maxage(-1.), debug_delay(-1);
+   double tmout(-1.), maxage(-1.), debug_delay(-1), mhz(400.);
    bool dofind = false;
 
    int n = 1;
@@ -703,6 +705,10 @@ int main(int argc, char* argv[])
       if ((strcmp(argv[n],"-tmout")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &tmout); } else
       if ((strcmp(argv[n],"-maxage")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &maxage); } else
       if ((strcmp(argv[n],"-delay")==0) && (n+1<argc)) { dabc::str_to_double(argv[++n], &debug_delay); } else
+      if ((strcmp(argv[n],"-mhz")==0) && (n+1<argc)) {
+         dabc::str_to_double(argv[++n], &mhz);
+         use_400mhz = true; coarse_tmlen = 1000./mhz; fine_min = 0x5; fine_max = 0xc0;
+      } else
       if (strcmp(argv[n],"-bubble")==0) { bubble_mode = true; } else
       if (strcmp(argv[n],"-bubb18")==0) { bubble_mode = true; BUBBLE_SIZE = 18; } else
       if (strcmp(argv[n],"-bubb19")==0) { bubble_mode = true; BUBBLE_SIZE = 19; } else
