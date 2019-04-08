@@ -67,7 +67,7 @@ int usage(const char* errstr = nullptr)
    printf("   -rate                   - display only events and data rate\n");
    printf("   -bw                     - disable colors\n");
    printf("   -allepoch               - epoch should be provided for each channel (default off)\n");
-   printf("   -400                    - new 400 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
+   printf("   -340                    - new 340 MHz design, 12bit coarse, 9bit fine, min = 0x5, max = 0xc0\n");
    printf("   -fine-min value         - minimal fine counter value, used for liner time calibration (default 31) \n");
    printf("   -fine-max value         - maximal fine counter value, used for liner time calibration (default 491) \n");
    printf("   -bubble                 - display TDC data as bubble, require 19 words in TDC subevent\n\n");
@@ -715,7 +715,8 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-bw")==0) { use_colors = false; } else
       if (strcmp(argv[n],"-sub")==0) { printsub = true; } else
       if (strcmp(argv[n],"-ignorecalibr")==0) { use_calibr = false; } else
-      if (strcmp(argv[n],"-400")==0) { use_400mhz = true; coarse_tmlen = 2.5; fine_min = 0x5; fine_max = 0xc0; } else
+      if (strcmp(argv[n],"-340")==0) { use_400mhz = true; coarse_tmlen = 1000./340.; fine_min = 0x5; fine_max = 0xc0; } else
+      if (strcmp(argv[n],"-400")==0) { use_400mhz = true; coarse_tmlen = 1000./400.; fine_min = 0x5; fine_max = 0xc0; } else
       if ((strcmp(argv[n],"-help")==0) || (strcmp(argv[n],"?")==0)) return usage(); else
       return usage("Unknown option");
    }
