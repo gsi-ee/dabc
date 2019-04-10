@@ -548,11 +548,11 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
                coarse = (coarse << 1) | ((fine & 0x200) ? 1 : 0);
                fine = fine & 0x1FF;
                bad_fine = (fine == 0x1ff);
+               tm = ((epoch << 12) | coarse) * coarse_tmlen; // coarse time
             } else {
                bad_fine = (fine == 0x3ff);
+               tm = ((epoch << 11) | coarse) * coarse_tmlen; // coarse time
             }
-
-            tm = (epoch << 11) * 5. +  coarse * coarse_tmlen; // coarse time
 
             with_calibr = false;
             if (!bad_fine) {
