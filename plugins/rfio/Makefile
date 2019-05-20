@@ -67,7 +67,7 @@ clean::
 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += Linux
 
-GCCMAJOR = $(shell $(CC) -dumpversion)
+GCCMAJOR = $(shell $(CC) -dumpversion | cut -f1 -d.)
 
 ifeq ($(shell test $(GCCMAJOR) -gt 7; echo $$?),0)
 $(RFIO_CO): CFLAGS += -Wno-stringop-overflow
