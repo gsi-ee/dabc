@@ -67,7 +67,13 @@ clean::
 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += Linux
 
-$(RFIO_O) : CXXFLAGS += -Wno-unused-variable
+GCCMAJOR = $(shell $(CC) -dumpversion)
+
+ifeq ($(shell test $(GCCMAJOR) -gt 7; echo $$?),0)
+$(RFIO_CO): CFLAGS += -Wno-stringop-overflow
+endif
+
+$(RFIO_O) : CXXFLAGS += -Wno-unused-variable 
 
 ifdef DABC_64BIT 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += SYSTEM64 
