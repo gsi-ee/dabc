@@ -212,8 +212,8 @@ namespace dabc {
             fInp->get(buf, maxsize, 0);
             maxsize = strlen(buf);
          } else {
-            if (maxsize>fInpStrLen) maxsize = fInpStrLen;
-            strncpy(buf, fInpStr, maxsize);
+            if (maxsize > fInpStrLen) maxsize = fInpStrLen;
+            if (maxsize > 0) strncpy(buf, fInpStr, maxsize);
             fInpStr+=maxsize;
             fInpStrLen-=maxsize;
          }
