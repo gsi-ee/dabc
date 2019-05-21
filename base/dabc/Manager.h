@@ -521,7 +521,7 @@ namespace dabc {
          Configuration* cfg() const { return fCfg; }
 
          /** Displays on std output list of running threads and modules */
-         void Print();
+         virtual void Print(int lvl = 0);
 
          /** Delete derived from Object class object in manager thread.
            * Useful as replacement of call "delete this;" */
