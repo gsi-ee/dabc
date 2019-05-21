@@ -189,7 +189,7 @@ namespace dabc {
     * For time measurement function like gettimeofday is used.
     */
 
-   struct DateTime {
+   class DateTime {
       protected:
          unsigned tv_sec;   // GMT time in seconds, since 1.1.1970
          unsigned tv_nsec;  // fractional part of time in nanoseconds
