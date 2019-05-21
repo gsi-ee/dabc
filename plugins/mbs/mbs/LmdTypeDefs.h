@@ -17,7 +17,12 @@
 #define MBS_LmdTypeDefs
 
 #include <stdint.h>
+
+#ifdef DABC_MAC
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
 
 namespace mbs {
 

@@ -19,7 +19,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#ifdef DABC_MAC
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
 
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
