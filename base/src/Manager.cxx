@@ -1322,16 +1322,16 @@ bool dabc::Manager::ReplyCommand(Command cmd)
    return dabc::Worker::ReplyCommand(cmd);
 }
 
-void dabc::Manager::Print()
+void dabc::Manager::Print(int)
 {
    Execute("Print");
 }
 
 bool dabc::Manager::DestroyObject(Reference ref)
 {
-   Object* obj = ref();
+   Object *obj = ref();
 
-   if (obj==0) return true;
+   if (!obj) return true;
 
    if (obj->IsLogging())
       DOUT0("dabc::Manager::DestroyObject %p %s", obj, obj->GetName());
