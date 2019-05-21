@@ -830,7 +830,7 @@ int dabc::Publisher::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("CmdUIKind")) {
 
-      bool islocal;
+      bool islocal = true;
       std::string item_name, request_name, uri = cmd.GetStr("uri");
 
       if (!uri.empty())

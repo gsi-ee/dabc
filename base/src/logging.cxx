@@ -346,8 +346,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
       if (str.length() > 0) {
          FILE* out = level < 0 ? stderr : stdout;
-         fprintf(out, str.c_str());
-         fprintf(out, "\n");
+         fprintf(out, "%s\n", str.c_str());
          fflush(out);
       }
    }
@@ -360,8 +359,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       std::string str;
       _FillString(str, fmask, entry);
       if (str.length()>0) {
-         fprintf(fFile, str.c_str());
-         fprintf(fFile, "\n");
+         fprintf(fFile, "%s\n", str.c_str());
          fflush(fFile);
          fLogFileModified = true;
       }
@@ -377,7 +375,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
    if (!syslogout.empty()) {
       openlog(fSyslogPrefix.c_str(), LOG_ODELAY, LOG_LOCAL1);
-      syslog(level < 0 ? LOG_ERR : LOG_INFO, syslogout.c_str());
+      syslog(level < 0 ? LOG_ERR : LOG_INFO, "%s", syslogout.c_str());
       closelog();
    }
 
