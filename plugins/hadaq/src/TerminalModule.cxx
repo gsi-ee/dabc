@@ -309,7 +309,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    }
 
    if (fDoShow)
-      fprintf(stdout, s.c_str());
+      fprintf(stdout, "%s", s.c_str());
 
    fWorkerHierarchy.GetHChild("State").SetField("value", isready ? "Ready" : "Init");
    fWorkerHierarchy.GetHChild("Output").SetField("value", s);

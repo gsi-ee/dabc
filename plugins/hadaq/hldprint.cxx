@@ -318,7 +318,7 @@ void PrintBubbleBinary(unsigned* bubble, int p1 = -1, int p2 = -1) {
    }
 
    *ptr++ = 0;
-   printf(sbuf);
+   printf("%s", sbuf);
 }
 
 
