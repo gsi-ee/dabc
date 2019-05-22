@@ -51,10 +51,10 @@ int main(int argc, char *argv[])
         while (1) {
            sz = recv(connfd, header, sizeof(header), MSG_WAITALL);
            if (sz == 0) continue;
-           if (sz != sizeof(header)) { printf("Error when receive header %u res %d\n", sizeof(header), sz); close(listenfd); return 0; }
+           if (sz != sizeof(header)) { printf("Error when receive header %lu res %ld\n", (long unsigned) sizeof(header), (long) sz); close(listenfd); return 0; }
 
            sz = recv(connfd, recvBuff, header[1], MSG_WAITALL);
-           if (sz != header[1]) { printf("Error when receive buffer %ld res %d\n", header[1], sz); close(listenfd); return 0; }
+           if (sz != header[1]) { printf("Error when receive buffer %ld res %ld\n", (long) header[1], (long) sz); close(listenfd); return 0; }
 
            // printf("get buffer %ld\n", header[1]);
 
