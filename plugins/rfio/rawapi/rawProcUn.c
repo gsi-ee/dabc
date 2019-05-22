@@ -6,7 +6,7 @@
  *   Germany
  * created 16. 5.1997 by Horst Goeringer
  *********************************************************************
- * rawProcUn.c 
+ * rawProcUn.c
  * Unix specific utility programs for gStore package: client and server
  *********************************************************************
  * rawGetDirEntries: get number of entries in FS (via opendir/readdir)
@@ -24,9 +24,9 @@
  *  4. 2.1998, H.G.: new entry rawGetFSfree
  *  6. 2.1998, H.G.: rawGetFSfree: ex shell-cmd via system()
  * 13. 4.1999, H.G.: mod. declaration of rawGetFileAttr
- * 22. 2.2000, H.G.: rawGetFileAttr: fix occurence of pipe message: 
+ * 22. 2.2000, H.G.: rawGetFileAttr: fix occurence of pipe message:
  *                   '\nYour .kshrc is not executable!'
- * 28. 7.2000, H.G.: rawGetFileList: ls -pdL -> ls 
+ * 28. 7.2000, H.G.: rawGetFileList: ls -pdL -> ls
  * 18. 6.2001, H.G.: rawGetFileList: check upper case in names
  * 21. 6.2001, H.G.: rawGetFileList: control acceptance of upper case
  * 31.10.2001, H.G.: rawGetFSfree added
@@ -46,7 +46,7 @@
  * 12.11.2008, H.G.: add suggestions of Hakan
  * 10. 2.2009, H.G.: rawGetFileList: don't stop scan if ls output
  *                   buffer starts with '\n'
- * 11. 2.2009, H.G.: rawGetFileList: stop scanning subdirs 
+ * 11. 2.2009, H.G.: rawGetFileList: stop scanning subdirs
  *               DDD for recursive filelist: remove stop + ident files
  * 22. 6.2008, H.G.: replace long->int if 64bit client (ifdef SYSTEM64)
  *  3. 9.2009, H.G.: rawGetFileList: MAX_STAGE_FILE_NO -> MAX_FILE_NO
@@ -65,11 +65,11 @@
  *                      reset errno after successful!! pclose
  *  7.12.2010, H.G.: remove fnmatch.h (Linux: not needed, Lynx: unavail)
  * 25. 7.2011, H.G.: new function rawGetRecEntryList
- * 12. 9.2011, H.G.: rawGetRecEntryList: new entry type 20: recursive 
+ * 12. 9.2011, H.G.: rawGetRecEntryList: new entry type 20: recursive
  *                   scan with fully qualified match string
  * 13. 9.2011, H.G.: rawGetRecEntryList, fully qualified match string:
  *                      allow wildcard chars in file and dir name
- * 21. 9.2011, H.G.: rawGetRecEntryList, new entry type 30: 
+ * 21. 9.2011, H.G.: rawGetRecEntryList, new entry type 30:
  *                     not recursive, wildcards in file/dir name allowed
  *  4.11.2011, H.G.: new function rawGetTopDir
  *  6.12.2011, H.G.: rawGetRecEntryList: separate args for no.s of
@@ -208,7 +208,7 @@ int rawGetDirEntryList(
    int *piFileList;                     /* points to first file name */
    srawFileList *psFileList;          /* points to current file name */
    srawFileList *psFileList0;           /* points to first file name */
-   
+
    char *pcFileList2;
    int *piFileList2; /* points to first file in reallocated filelist */
 
@@ -260,7 +260,7 @@ int rawGetDirEntryList(
       if (strcmp(pcEntryMask, "*") != 0)
          iMatch = 1;
    }
-   
+
    if (iEntryType == 0)
       strcpy(cEntryType, "entries");
    else if (iEntryType == 1)
@@ -339,7 +339,7 @@ int rawGetDirEntryList(
       {
          ii = iFileEntriesOld / iFileEntryMax;
          ii++;
-         iFileEntryMax *= ii; 
+         iFileEntryMax *= ii;
       }
       iFileEntryRem = iFileEntryMax - iFileEntriesOld;
 
@@ -405,7 +405,7 @@ int rawGetDirEntryList(
       {
          ii = iDirEntriesOld / iDirEntryMax;
          ii++;
-         iDirEntryMax *= ii; 
+         iDirEntryMax *= ii;
       }
       iDirEntryRem = iDirEntryMax - iDirEntriesOld;
 
@@ -538,7 +538,7 @@ int rawGetDirEntryList(
          iEntries, pEntry->d_name, iCheck, iStore, pEntry->d_type);
 
       /* check if matching with input mask */
-      if (iCheck) 
+      if (iCheck)
       {
          /* wildcards do not match '/' */
          if (fnmatch(pcEntryMask, pEntry->d_name, FNM_PATHNAME) == 0)
@@ -599,7 +599,7 @@ int rawGetDirEntryList(
 
                if (iDebug) fprintf(fLogFile,
                   "    new filelist buffer allocated (%d byte, %d entries)\n",
-                  ii, iFileEntryMax); 
+                  ii, iFileEntryMax);
 
                iFileEntryRem = iFileEntryMax - iFileEntries;
                piFileList2 = (int *) pcFileList2;
@@ -649,7 +649,7 @@ int rawGetDirEntryList(
 
             if (iDirEntryRem <= 0)
             {
-               fprintf(fLogFile, "DDD2 new space must be allocated\n"); 
+               fprintf(fLogFile, "DDD2 new space must be allocated\n");
             }
 
             psDirList++;
@@ -753,9 +753,9 @@ int rawGetRecEntryList(
                 =12: all subdirs matching => in spec. dir only
 
               >= 20: mask for fully qual file names (may be wildcarded)
-                =20: all matching entries (recursive), 
+                =20: all matching entries (recursive),
                 =30: all matching entries
-                     (NOT recursive, wildcarded dir in match string) 
+                     (NOT recursive, wildcarded dir in match string)
              */
        int iMaxFiles,               /* max no. of files in file list */
        char **ppFileList,                   /* ptr to entry list ptr */
@@ -795,7 +795,7 @@ int rawGetRecEntryList(
    int *piFileList;                     /* points to first file name */
    srawFileList *psFileList;          /* points to current file name */
    srawFileList *psFileList0;           /* points to first file name */
-   
+
    int iDirLoop = 0;
    int iDirEntryMax = 0;       /* max. no. of subdir names in buffer */
    int iDirEntryRem = 0;  /* remaining no. of subdir names in buffer */
@@ -1094,11 +1094,11 @@ int rawGetRecEntryList(
       {
          ii = iDirEntriesOld / iDirEntryMax;
          ii++;
-         iDirEntryMax *= ii; 
+         iDirEntryMax *= ii;
       }
       else if (iDirEntriesOld == iDirEntryMax)
       {
-         fprintf(fLogFile, "DDD1 new space must be allocated\n"); 
+         fprintf(fLogFile, "DDD1 new space must be allocated\n");
       }
 
       iDirEntryRem = iDirEntryMax - iDirEntriesOld;
@@ -1225,7 +1225,7 @@ int rawGetRecEntryList(
       {
          if (icurDirLevel < iMaskDirLevel)
          {
-            /* ignore files, check dirs */ 
+            /* ignore files, check dirs */
             if (pEntry->d_type == DT_DIR)
             {
                iCheck = 1;
@@ -1308,7 +1308,7 @@ int rawGetRecEntryList(
 
       /* check if matching with input mask: in all calls of fnmatch:
          wildcards do not match '/' due to option FNM_PATHNAME */
-      if (iCheck) 
+      if (iCheck)
       {
          iStore = 0;
          if (iFullMatch)
@@ -1399,8 +1399,8 @@ int rawGetRecEntryList(
             if (iFileEntryRem <= 0)
             {
                if (iDebug) fprintf(fLogFile,
-                  "-W- dir %s: max no. of %d file entries reached\n", 
-                  cDirName, iMaxFiles); 
+                  "-W- dir %s: max no. of %d file entries reached\n",
+                  cDirName, iMaxFiles);
                iRCE = -101;
                break;
             }
@@ -1436,7 +1436,7 @@ int rawGetRecEntryList(
             {
                if (iDebug) fprintf(fLogFile,
                   "-W- dir %s: max no. of %d subdir entries reached\n",
-                  cDirName, iMaxDirs); 
+                  cDirName, iMaxDirs);
                iRCE = -102;
                break;
             }
@@ -1501,7 +1501,7 @@ int rawGetRecEntryList(
       psDirList = (srawFileList *) piDirList;
    }
 
-   if ( (iRecursive == 0) && (iFullMatch) && 
+   if ( (iRecursive == 0) && (iFullMatch) &&
         ( ((icurDirLevel == iMaskDirLevel) && (iDirEntriesNew == 0)) ||
           (icurDirLevel > iMaskDirLevel) ) )
    {
@@ -1539,7 +1539,7 @@ int rawGetRecEntryList(
          if ( (iRC == -101) || (iRC == -102) )
          {
             if (iDebug)
-               fprintf(fLogFile, "-W- stop scanning\n"); 
+               fprintf(fLogFile, "-W- stop scanning\n");
 
             iRCE = iRC;
             break;
@@ -1551,7 +1551,7 @@ int rawGetRecEntryList(
    else if ( (iRCE == -101) || (iRCE == -102) )
    {
       if (iDebug)
-         fprintf(fLogFile, "-W- stop scanning\n"); 
+         fprintf(fLogFile, "-W- stop scanning\n");
    }
 
 gEndRecEntryList:
@@ -1671,21 +1671,21 @@ int rawGetFSfree(char *pcStageFS)
    if (system(NULL))
    {
       iRC = system(cCmd);
-      if (iRC) 
+      if (iRC)
       {
          fprintf(fLogFile, "-W- %s: system() failed, rc = %d\n",
                  cModule, iRC);
          return -1;
       }
-      else 
+      else
       {
-         if (iDebug) 
+         if (iDebug)
             fprintf(fLogFile,
                     "    shell command successfully executed\n");
       }
-   } 
-   else 
-   {   
+   }
+   else
+   {
       fprintf(fLogFile, "-W- %s: system() not available\n",
               cModule);
       return -1;
@@ -1835,7 +1835,7 @@ int rawGetFSSpace(char *pcFileSystem,
    {
       if (iDebug) fprintf(fLogFile,
          "    blocksize found %d byte\n", iBlockSize);
-      if (iBlockSize >= 1024) 
+      if (iBlockSize >= 1024)
          iBlockSize /= 1024;
       else
       {
@@ -1918,7 +1918,7 @@ int rawGetFileAttr(char *pcFile, unsigned long *plFileSize)
       fflush(fLogFile);
    }
 
-   iReclen = 0;            /* not available in Unix system */ 
+   iReclen = 0;            /* not available in Unix system */
 
    /* treat $ in file name */
    ploc = strchr(pcFile, *pcDollar);
@@ -2002,7 +2002,7 @@ int rawGetFileAttr(char *pcFile, unsigned long *plFileSize)
 
       if (icount == 2)
       {
-         /* check for leading string: 
+         /* check for leading string:
             '\nYour .kshrc is not executable!' */
          iRC = strcmp(pctoken, ".kshrc");
          if (iRC == 0)
@@ -2014,7 +2014,7 @@ int rawGetFileAttr(char *pcFile, unsigned long *plFileSize)
          }
       }
 
-      if (icount == ilocSize) 
+      if (icount == ilocSize)
       {
       /* test large file size  DDD
          strcpy(ctoken, "2000000000");
@@ -2052,7 +2052,7 @@ int rawGetFileAttr(char *pcFile, unsigned long *plFileSize)
          }
       }
 
-      if (icount == ilocFile) 
+      if (icount == ilocFile)
       {
          if ( (iRC = strcmp(pctoken, pcFile) ) != 0)
          {
@@ -2074,7 +2074,7 @@ int rawGetFileAttr(char *pcFile, unsigned long *plFileSize)
       errno = 0;
 
    *plFileSize = lFileSize;
-   if (iDebug) 
+   if (iDebug)
    {
       fprintf(fLogFile, "-D- end %s\n\n", cModule);
       fflush(fLogFile);
@@ -2117,7 +2117,7 @@ int rawGetFileList( char *pcFile,
                          /* mark directory names with / to skip them */
    /* char cCmd[CMDLEN] = "ls ";  was valid from 28.7.2000-18.6.2001 */
    char *pCmd;
-   char *pBuf; 
+   char *pBuf;
    char cBuf[MAX_FULL_FILE];   /* temp buffer for incompl file names */
    const char *pcDollar = "$"; /* requ. spec. treatment in file name */
 
@@ -2127,12 +2127,12 @@ int rawGetFileList( char *pcFile,
 
    /******************************************************************/
 
-   if (iDebug) 
+   if (iDebug)
       fprintf(fLogFile, "\n-D- begin %s\n", cModule);
 
    ploc = strchr(pcFile, *pcDollar);
    if (ploc != NULL)
-   { 
+   {
       if (iDebug)
          fprintf(fLogFile, "    '$' in file name found: %s\n", pcFile);
       ilen = strlen(pcFile);
@@ -2213,7 +2213,7 @@ gRead:
             irem = strlen(pcc0);
             pcc = strchr(pcc0, '\n');
             if (iDebug == 2) fprintf(fLogFile,
-               "\n    first length %d, total %d, remainder %d\n", 
+               "\n    first length %d, total %d, remainder %d\n",
                ipc, irem, grem);
 
             if (grem)     /* incompl. file name from previous buffer */
@@ -2264,7 +2264,7 @@ gRead:
                            }
                            psFileList0c++;
                         }
-                     } /* (iFilenoo) */ 
+                     } /* (iFilenoo) */
 
                      if (iIgnore == 0)
                      {
@@ -2287,7 +2287,7 @@ gRead:
                         fprintf(fLogFile,
                                 "    %s: NOT ALL files handled\n",
                                 cModule);
-                        goto gFinishList; 
+                        goto gFinishList;
                      }
                   }
                   else
@@ -2310,7 +2310,7 @@ gRead:
                memset(&cBuf, '\0', strlen(cBuf));
                grem = 0;
             } /* if (grem) */
-            else 
+            else
             {
                strncpy(cBuf, pcc0, (unsigned) ipc);
                strcat(cBuf, "\0");
@@ -2322,7 +2322,7 @@ gRead:
                   grem = 1;
                }
                else
-               { 
+               {
                   ii = strlen(cBuf);
 
                   /* after file names: subdir (marked by trailing ":") */
@@ -2385,12 +2385,12 @@ gRead:
                         if (iFileno >= MAX_FILE_NO)
                         {
                            fprintf(fLogFile,
-                              "-E- %s: List of files for archive/retrieve currently limited to %d entries\n", 
+                              "-E- %s: List of files for archive/retrieve currently limited to %d entries\n",
                               cModule, --iFileno);
                            fprintf(fLogFile,
                                    "    %s: NOT ALL files handled\n",
                                    cModule);
-                           goto gFinishList; 
+                           goto gFinishList;
                         }
                      }
                      else
@@ -2765,7 +2765,7 @@ int rawGetBaseDir(
             ii = 3;
          else
          {
-            fprintf(fLogFile, 
+            fprintf(fLogFile,
                "-E- dir %s: generic flag set, but no wildcard chars found\n",
                cBaseDir);
 
@@ -2860,8 +2860,7 @@ char *rawGetUserid()
 
    pclose(f_ifile);
 
-   if (iDebug) fprintf(fLogFile,
-      "-D- %s: user name (%lu bytes): %s\n", cModule, lr, pBuf0);
+   if (iDebug) fprintf(fLogFile,"-D- %s: user name (%u bytes): %s\n", cModule, lr, pBuf0);
 
    return(pBuf0);
 
