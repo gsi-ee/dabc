@@ -57,6 +57,11 @@ const char* hadaq::EvtbuildPrefix   = "Evtbuild";
 
 int hadaq::CoreAffinity(pid_t pid)
 {
+#ifdef DABC_MAC
+  (void) pid;
+  return 1; 
+#else
+
   // stolen from stats.c of old eventbuilders JAM
    unsigned long new_mask = 2;
    unsigned int len = sizeof(new_mask);
@@ -87,6 +92,7 @@ int hadaq::CoreAffinity(pid_t pid)
          break;
    }
    return i;
+#endif
 }
 
 std::string hadaq::FormatFilename (uint32_t runid, uint16_t ebid)
