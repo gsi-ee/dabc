@@ -4,9 +4,9 @@
  *   Planckstr. 1
  *   D-64291 Darmstadt
  *   Germany
- * created 14. 2.1996, Horst Goeringer 
+ * created 14. 2.1996, Horst Goeringer
  **********************************************************************
- * rawProcn.c 
+ * rawProcn.c
  *    utility programs for gStore package: client and server
  **********************************************************************
  * rawAddStrings:    add 2 messages avoiding overflows
@@ -122,7 +122,7 @@
  *  5.11.2010, H.G.: reset errno after error,
  *                   better error handling after recv/send
  * 18.11.2010, H.G.: rawRecvError: provide also incomplete msg
- * 25.08.2011, H.G.: rawRecv..., some broken connections: -E- -> -W- 
+ * 25.08.2011, H.G.: rawRecv..., some broken connections: -E- -> -W-
  *  5.09.2011, H.G.: rawCheckClientFile: allow wildcard chars in dirname
  *  1.12.2011, H.G.: rawGetFileSize: better msg handling
  * 24.12.2012, H.G.: rawQueryFile: enable query with variable hl
@@ -157,7 +157,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
-   
+
 #ifdef Lynx           /* Lynx */
 #include <sys/types.h>
 #include <socket.h>
@@ -199,7 +199,7 @@ int rawAddStrings(char *pcMsg1,       /* 1st string, always complete */
                   int iMaxLength1,          /* max length of string1 */
                   char *pcMsg2,        /* added string, possibly cut */
                   int iMaxLength2,          /* max length of string2 */
-                  int iErrno,   /* = 0: add contents of string2 
+                  int iErrno,   /* = 0: add contents of string2
                                    > 0: add system error msg (errno) */
                   char *pcMsgE,      /* error msg in case of problem */
                   int iMaxLengthE)     /* max length of error string */
@@ -207,13 +207,13 @@ int rawAddStrings(char *pcMsg1,       /* 1st string, always complete */
    char cModule[32]="rawAddStrings";
    int iDebug = 0;
 
-   int iRC = 0;   /* = 0: okay 
+   int iRC = 0;   /* = 0: okay
                      < 0: problem:
                         =-1: specified string too large
-                        =-2: string without contents provided 
-                        =-3: max length <=0 provided 
+                        =-2: string without contents provided
+                        =-3: max length <=0 provided
                         =-4: iErrno, but string2 < STATUS_LEN byte
-                        =-5: error string < STATUS_LEN byte provided 
+                        =-5: error string < STATUS_LEN byte provided
                      > 0: no. of chars cut from the 2nd string */
    int iString1 = 0;
    int iString2 = 0;
@@ -239,7 +239,7 @@ int rawAddStrings(char *pcMsg1,       /* 1st string, always complete */
             iString2, iMaxLength2, pcMsg2);
    }
 
-   if ( (iString1 <= iMaxLength1) && 
+   if ( (iString1 <= iMaxLength1) &&
         (iString2 <= iMaxLength2) )
    {
       if (iErrno)
@@ -337,7 +337,7 @@ gErrorMsg:
    else
    {
       if (iDebug)
-         fprintf(fLogFile, cMsg);
+         fprintf(fLogFile, "%s", cMsg);
       strcpy(pcMsgE, cMsg);
    }
 
@@ -345,7 +345,7 @@ gEndAddStrings:
    if (iDebug)
       fprintf(fLogFile, "-D- end %s: rc=%d\n\n", cModule, iRC);
 
-   return iRC; 
+   return iRC;
 
 } /* rawAddStrings */
 
@@ -568,7 +568,7 @@ int rawCheckClientFile(
    {
       fprintf(fLogFile,
          "-E- rel file name %s too long:\n    has %d chars, max allowed %d\n",
-         pdelim, strlen(pdelim), ii);
+         pdelim, (int) strlen(pdelim), ii);
       return(-1);
    }
 
@@ -639,18 +639,18 @@ int rawDelFile( int iSocket, srawComm *psComm)
    if (iDebug)
    {
       fprintf(fLogFile,
-         "    object %s%s%s found (objId %u-%u)", 
-         psComm->cNamefs, psComm->cNamehl, psComm->cNamell, 
+         "    object %s%s%s found (objId %u-%u)",
+         psComm->cNamefs, psComm->cNamehl, psComm->cNamell,
          ntohl(psComm->iObjHigh), ntohl(psComm->iObjLow));
       if (iFSidRC) fprintf(fLogFile,
          ", on %s in read cache FS %d\n", psComm->cNodeRC, iFSidRC);
       else
-         fprintf(fLogFile, "\n"); 
+         fprintf(fLogFile, "\n");
       if (iFSidWC) fprintf(fLogFile,
          "     on %s in write cache FS %d\n", psComm->cNodeWC, iFSidWC);
    }
 
-   psComm->iAction = htonl(REMOVE); 
+   psComm->iAction = htonl(REMOVE);
 
    pcc = (char *) psComm;
    if ( (iRC = send( iSocket, pcc, (unsigned) iBufComm, 0 )) < iBufComm)
@@ -703,9 +703,9 @@ int rawDelFile( int iSocket, srawComm *psComm)
          "-I- gStore object %s%s%s successfully deleted",
          psComm->cNamefs, psComm->cNamehl, psComm->cNamell);
       if (iFSidWC)
-         fprintf(fLogFile, " from write cache\n"); 
+         fprintf(fLogFile, " from write cache\n");
       else
-         fprintf(fLogFile, "\n"); 
+         fprintf(fLogFile, "\n");
 
       fprintf(fLogFile, "-D- end %s\n\n", cModule);
    }
@@ -727,7 +727,7 @@ int rawDelList( int iSocketMaster,
                 srawDataMoverAttr *pDataMover0,
                 srawComm *psComm,
                 char **pcFileList,
-                char **pcObjList) 
+                char **pcObjList)
 {
    char cModule[32] = "rawDelList";
    int iDebug = 0;
@@ -763,7 +763,7 @@ int rawDelList( int iSocketMaster,
       fprintf(fLogFile, "\n-D- begin %s\n", cModule);
       fprintf(fLogFile, "    initial %d files, first file %s\n",
          ifile, psFile0->cFile);
-   } 
+   }
 
    pDataMover = pDataMover0;
    pcol = *pcObjList;
@@ -997,17 +997,17 @@ char *rawGetFSpName( char *pcUser )
    else
       /* strncpy(cNamefs, pcObjDelim, 1); */
       /* in adsmcli session: beginning with 2nd invocation,
-         gives incorrect results due to missing \0 ! H.G. 27.10.97 */ 
+         gives incorrect results due to missing \0 ! H.G. 27.10.97 */
       strcpy(cNamefs, pcObjDelim);
 
-   if (isalpha(*pc) == 0)  
+   if (isalpha(*pc) == 0)
    {
       fprintf(fLogFile,
               "-E- archive name '%s' must start with a letter\n", pc);
       return(pcNull);
    }
 
-   strcat(cNamefs, pcUser); 
+   strcat(cNamefs, pcUser);
    if (iDebug) fprintf(fLogFile,
       "-D- end %s: FS %s\n", cNamefs, cModule);
 
@@ -1025,7 +1025,7 @@ char *rawGetFSpName( char *pcUser )
  *********************************************************************
  */
 
-char *rawGetHLName( char *pcPath) 
+char *rawGetHLName( char *pcPath)
 {
    char cModule[32]="rawGetHLName";
    int iDebug = 0;
@@ -1039,12 +1039,12 @@ char *rawGetHLName( char *pcPath)
       "\n-D- begin %s\n    path specified: %s\n", cModule, pcPath);
 
    pdelim = strchr(pcPath, *pcObjDelim);
-   if (pdelim != pcPath)     
+   if (pdelim != pcPath)
    {
       strcpy(cNamehl, pcObjDelim);
       if (iDebug) fprintf(fLogFile,
          "    delimiter '%s' inserted at begin of archive path\n",
-         pcObjDelim); 
+         pcObjDelim);
       strcat(cNamehl, pcPath);
    }
    else strcpy(cNamehl, pcPath);
@@ -1093,7 +1093,7 @@ char *rawGetHLName( char *pcPath)
    return(cNamehl);
 
 } /* rawGetHLName */
- 
+
 /*********************************************************************
  * rawGetLLName: get low level object name from file name
  *    PLATFORM DEPENDENT
@@ -1122,12 +1122,12 @@ int rawGetLLName( char *pcFile, const char *pcDelimiter,
    ploc = strrchr(pcFile, *pcFileDelim);
    if (ploc != NULL)
       strcat(cNamell, ++ploc);   /* begin copy after file delimiter */
-   else 
+   else
    {
       ploc = strrchr(pcFile, *pcObjDelimAlt);
       if (ploc != NULL)
          strcat(cNamell, ++ploc);/* begin copy after file delimiter */
-      else 
+      else
       {
 #ifdef VMS
          ploc = strrchr(pcFile, *pcDevDelim); /* look for disk device */
@@ -1223,7 +1223,7 @@ int rawGetFileSize(char *pcFile,
    {
       iRC = 0;
       if (iDebug) fprintf(fLogFile,
-         "    file %s: size %u, recl %d (byte)\n",
+         "    file %s: size %lu, recl %d (byte)\n",
          pcFile, iSize, iRecl);
    }
    else
@@ -1232,7 +1232,7 @@ int rawGetFileSize(char *pcFile,
       {
          iRC = 1;
          if (iDebug) fprintf(fLogFile,
-            "-W- %s is a directory, size %u\n", pcFile, iSize);
+            "-W- %s is a directory, size %lu\n", pcFile, iSize);
       }
 #ifndef WIN32
 #ifndef VMS
@@ -1240,7 +1240,7 @@ int rawGetFileSize(char *pcFile,
       {
          iRC = 2;
          if (iDebug) fprintf(fLogFile,
-            "-W- %s is a symbolic link, size %u\n", pcFile, iSize);
+            "-W- %s is a symbolic link, size %lu\n", pcFile, iSize);
       }
 #endif
 #endif
@@ -1248,7 +1248,7 @@ int rawGetFileSize(char *pcFile,
       {
          iRC = 3;
          if (iDebug) fprintf(fLogFile,
-            "-W- unexpected item %s, size %u\n", pcFile, iSize);
+            "-W- unexpected item %s, size %lu\n", pcFile, iSize);
       }
    }
 
@@ -1271,7 +1271,7 @@ int rawGetFileSize(char *pcFile,
  *********************************************************************
  */
 
-char *rawGetPathName( char *pcNamehl) 
+char *rawGetPathName( char *pcNamehl)
 {
    char cModule[32] = "rawGetPathName";
    int iDebug = 0;
@@ -1293,17 +1293,17 @@ char *rawGetPathName( char *pcNamehl)
    ploc1 = strchr(pcNamehl, *pcObjDelimAlt);
    if ( (ploc != pcc) && (ploc1 != pcc) )
    {
-      fprintf(fLogFile, 
+      fprintf(fLogFile,
 		      "-E- %s: invalid prefix in high level name %s\n",
               cModule, pcNamehl);
       return(pcNull);
    }
 
    strcpy(cPath, pcc);
-   if (iDebug) fprintf(fLogFile, 
+   if (iDebug) fprintf(fLogFile,
 		"-D- end %s: path %s\n\n", cModule, cPath);
 
-   return cPath; 
+   return cPath;
 
 } /* rawGetPathName */
 
@@ -1320,7 +1320,7 @@ int rawQueryFile(
        int iSocket,
        int iAltMaster,                          /* currently unused */
        srawComm *pCommBuf,
-       void **pQueryBuf) 
+       void **pQueryBuf)
 {
    char cModule[32] = "rawQueryFile";
    int iDebug = 0;
@@ -1348,14 +1348,14 @@ int rawQueryFile(
    int iFS = 0;
    int iMediaClass = 0;
 
-   srawComm *pComm; 
+   srawComm *pComm;
    srawQueryResult *pQuery;
    srawObjAttr *pObjAttr;
 
    /* query data space to be allocated, if several objects found */
    char *pcQueryBuffer;
    int iQueryBuffer = 0;
-   
+
    pComm = pCommBuf;
    iAction = ntohl(pComm->iAction);
    iATLServer = ntohl(pComm->iATLServer);
@@ -1432,7 +1432,7 @@ gNextReply:
       goto gEndQueryFile;
    }
 
-   pcc += HEAD_LEN;  
+   pcc += HEAD_LEN;
    iIdent = ntohl(pQuery->iIdent);
    iQuery = ntohl(pQuery->iObjCount);
    iAttrLen = ntohl(pQuery->iAttrLen);
@@ -1545,7 +1545,7 @@ gNextReply:
                   "-E- %s: connection to server broken, only %d bytes of query result (%d byte) received\n",
                   cModule, jj,  iQueryBuffer);
             }
-            
+
             if (errno)
             {
                fprintf(fLogFile, "    %s\n", strerror(errno));
@@ -1634,7 +1634,7 @@ gNextReply:
                      /* in GRC objIds should be available) */
 
                } /* file not in write cache */
-            } /* (iObjHigh == 0) && (iObjLow == 0) */ 
+            } /* (iObjHigh == 0) && (iObjLow == 0) */
             else
             {
                /* file in TSM storage */
@@ -1691,7 +1691,7 @@ gNextReply:
 
    if ( (iIdent == IDENT_QUERY) || (iIdent == IDENT_QUERY_ARCHDB) )
       goto gNextReply;
- 
+
 gEndQueryFile:
    switch (iQueryAll)
    {
@@ -1723,7 +1723,7 @@ gEndQueryFile:
       default:
          if ( (iQueryAll > 1) && (iNameVar == 0) )
          {
-            fprintf(fLogFile, "    %d versions of %s%s exist!\n", 
+            fprintf(fLogFile, "    %d versions of %s%s exist!\n",
                iQueryAll, pComm->cNamehl, pComm->cNamell);
          }
    } /* switch (iQueryAll) */
@@ -1789,7 +1789,7 @@ int rawRecvError(int iSocket, int iLen, char *pcMsg)
                pcc++;
                *pcc = '\n';
                pcc++;
-               if (iDebug) fprintf(fLogFile, 
+               if (iDebug) fprintf(fLogFile,
                   "-E- incomplete error message received:\n    %s", pcMsg);
             }
             fprintf(fLogFile,
@@ -2029,7 +2029,7 @@ int rawRecvHeadC(int iSocket,
          }
 
          if (iDebug)
-            fprintf(fLogFile, pcMsg);
+            fprintf(fLogFile, "%s", pcMsg);
 
          goto gEndRecvHeadC;
       }
@@ -2076,7 +2076,7 @@ int rawRecvHeadC(int iSocket,
             sprintf(pcMsg, "-E- %s: receiving error msg, rc=%d\n",
                cModule, iRC);
             if (iDebug)
-               fprintf(fLogFile, pcMsg);
+               fprintf(fLogFile, "%s", pcMsg);
 
             iRC = -3;
             goto gEndRecvHeadC;
@@ -2110,7 +2110,7 @@ int rawRecvHeadC(int iSocket,
             "-E- %s: unexpected header (ident %d) received\n",
             cModule, iIdent);
          if (iDebug)
-            fprintf(fLogFile, pcMsg);
+            fprintf(fLogFile, "%s", pcMsg);
 
          iRC = -4;
          goto gEndRecvHeadC;
@@ -2129,7 +2129,7 @@ int rawRecvHeadC(int iSocket,
                   "-E- %s: unexpected header (status %d) received\n",
                   cModule, iStatus);
                if (iDebug)
-                  fprintf(fLogFile, pcMsg);
+                  fprintf(fLogFile, "%s", pcMsg);
 
                iRC = -5;
                goto gEndRecvHeadC;
@@ -2162,7 +2162,7 @@ gEndRecvHeadC:
  */
 
 int rawRecvRequest(int iSocket,
-                   int *piSeekMode, 
+                   int *piSeekMode,
                    int *piOffset,
                    int *piBufferSize)
 {
@@ -2207,13 +2207,13 @@ int rawRecvRequest(int iSocket,
 
          goto gErrorRecvRequest;
       }
-      
+
       iBuf -= iRC;
       pcc += iRC;
 
    } /* while(iBuf > 0) */
 
-   if (iBuf < 0) 
+   if (iBuf < 0)
    {
       fprintf(fLogFile,
          "-E- %s: more buffer header data received than expected\n",
@@ -2231,7 +2231,7 @@ int rawRecvRequest(int iSocket,
    if ( (pRequest->iIdent != IDENT_NEXT_BUFFER) &&
         (pRequest->iIdent != IDENT_STATUS) )
    {
-      fprintf(fLogFile, "-E- %s: invalid buffer received (id %d)\n", 
+      fprintf(fLogFile, "-E- %s: invalid buffer received (id %d)\n",
               cModule, pRequest->iIdent);
       iError = -3;
       goto gErrorRecvRequest;
@@ -2271,13 +2271,13 @@ int rawRecvRequest(int iSocket,
 
          goto gErrorRecvRequest;
       }
-      
+
       iBuf -= iRC;
       pcc += iRC;
 
    } /* while(iBuf > 0) */
 
-   if (iBuf < 0) 
+   if (iBuf < 0)
    {
       fprintf(fLogFile, "-E- %s: more data received than expected\n",
          cModule);
@@ -2370,7 +2370,7 @@ gErrorRecvRequest:
  *********************************************************************
  */
 
-int rawRecvStatus(int iSocket, srawStatus *psStatus) 
+int rawRecvStatus(int iSocket, srawStatus *psStatus)
 {
    char cModule[32]="rawRecvStatus";
    int iDebug = 0;
@@ -2404,7 +2404,7 @@ int rawRecvStatus(int iSocket, srawStatus *psStatus)
                "-W- %s: connection to sender broken, %d byte of status header (%d byte) received\n",
                cModule, ii, iBufs);
          }
-      
+
          if (errno)
          {
             fprintf(fLogFile, "    %s\n", strerror(errno));
@@ -2420,7 +2420,7 @@ int rawRecvStatus(int iSocket, srawStatus *psStatus)
 
    } /* while(iBuf > 0) */
 
-   if (iBuf < 0) 
+   if (iBuf < 0)
    {
       fprintf(fLogFile,
          "-E- %s: more status header data received than expected\n",
@@ -2466,7 +2466,7 @@ int rawRecvStatus(int iSocket, srawStatus *psStatus)
                   "-W- %s: connection to sender broken, %d byte of status message (%d byte) received\n",
                   cModule, ii, iLen);
             }
-      
+
             if (errno)
             {
                fprintf(fLogFile, "    %s\n", strerror(errno));
@@ -2481,7 +2481,7 @@ int rawRecvStatus(int iSocket, srawStatus *psStatus)
 
       } /* while(iBuf > 0) */
 
-      if (iBuf < 0) 
+      if (iBuf < 0)
       {
          fprintf(fLogFile,
             "-E- %s: more status data received than expected\n",
@@ -2512,18 +2512,18 @@ int rawRecvStatus(int iSocket, srawStatus *psStatus)
  *********************************************************************
  */
 
-int rawSendRequest(int iSocket, 
+int rawSendRequest(int iSocket,
                    int iSeekMode,
                    int iOffset,
                    int iBufferSize)
 {
    char cModule[32]="rawSendRequest";
-   int iDebug = 0; 
+   int iDebug = 0;
 
    int iBuf, iRC;
    char *pcc;
 
-   srawRequest sRequest; 
+   srawRequest sRequest;
    int iRequSize = sizeof(srawRequest);
 
    if (iDebug) fprintf(fLogFile,
@@ -2582,10 +2582,10 @@ int rawSendRequest(int iSocket,
  *********************************************************************
  */
 
-int rawSendStatus( int iSocket, int iStatus, char *pcMsg) 
+int rawSendStatus( int iSocket, int iStatus, char *pcMsg)
 {
    char cModule[32]="rawSendStatus";
-   int iDebug = 0; 
+   int iDebug = 0;
 
    int iBuf = HEAD_LEN;
    int iRC, iMsgLen;
@@ -2665,13 +2665,13 @@ int rawTestFileName( char *pcFile)
    int ilen;
    int iError = 0;
    unsigned long lFileSize = 0;          /* dummy for rawGetFileSize */
-   int iSize = 0;                        /* dummy for rawGetFileSize */
+   unsigned int iSize = 0;                /* dummy for rawGetFileSize */
    char *pdir;
 
    if (iDebug) fprintf(fLogFile,
       "-D- begin %s: input file name %s\n", cModule, pcFile);
 
-   if ( (pdir = strrchr(pcFile, '*')) != NULL) 
+   if ( (pdir = strrchr(pcFile, '*')) != NULL)
    {
       fprintf(fLogFile,
          "-E- invalid file name '%s': '*' not allowed as part of file name\n",
@@ -2680,7 +2680,7 @@ int rawTestFileName( char *pcFile)
       goto gErrorTest;
    }
 
-   if ( (pdir = strrchr(pcFile, '?')) != NULL) 
+   if ( (pdir = strrchr(pcFile, '?')) != NULL)
    {
       fprintf(fLogFile,
          "-E- invalid file name '%s': '?' not allowed as part of file name\n",
@@ -2689,17 +2689,17 @@ int rawTestFileName( char *pcFile)
       goto gErrorTest;
    }
 
-   if ( (pdir = strrchr(pcFile, '/')) == NULL) 
+   if ( (pdir = strrchr(pcFile, '/')) == NULL)
    {
       if (iDebug)
          fprintf(fLogFile, "    name %s okay\n", pcFile);
    }
-   else       /* name contains '/' */ 
-   {  
+   else       /* name contains '/' */
+   {
       ilen = strlen(pdir);
       if (iDebug) fprintf(fLogFile,
          "    trailor %s (len %d)\n", pdir, ilen);
-      if (ilen == 1) 
+      if (ilen == 1)
       {
          strncpy(pdir, "\0", 1);
          if (iDebug)
@@ -2723,7 +2723,7 @@ int rawTestFileName( char *pcFile)
          if (iRC == 1)
             fprintf(fLogFile, " - is a directory\n");
          else if (iRC == 2)
-            fprintf(fLogFile, " - is a symbolic link\n");  
+            fprintf(fLogFile, " - is a symbolic link\n");
          else if (iRC == 3)
             fprintf(fLogFile, " - is not a regular file\n");
          else
