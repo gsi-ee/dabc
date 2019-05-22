@@ -3,18 +3,19 @@
 # Script to create a shared library.
 # Called by Makefile.
 
-LD=${1}
-RM=${2}
-MV=${3}
-LN=${4}
-LDFLAGS=${5}
-SOFLAGS=${6}
-SOSUFFIX=${7}
+DABC_OS=${1}
+LD=${2}
+RM=${3}
+MV=${4}
+LN=${5}
+LDFLAGS=${6}
+SOFLAGS=${7}
+SOSUFFIX=${8}
 
-LIBNAME=${8}
-LIBOBJS=${9}
-LIBDIR=${10}
-EXTRAOPT=${11}
+LIBNAME=${9}
+LIBOBJS=${10}
+LIBDIR=${11}
+EXTRAOPT=${12}
 
 #echo extra = ${EXTRAOPT}
 #echo libdir = $LIBDIR
@@ -27,9 +28,19 @@ else
    $RM $LIBNAME.$SOSUFFIX
 fi
 
+if [ "$DABC_OS" = "Mac" ]; then
+
+echo $LD $LDFLAGS $EXTRAOPT -O $LIBOBJS -o $LIBNAME.$SOSUFFIX
+
+$LD $LDFLAGS $EXTRAOPT -O $LIBOBJS -o $LIBNAME.$SOSUFFIX
+
+else
+
 echo $LD $SOFLAGS$LIBNAME.$SOSUFFIX $LDFLAGS $EXTRAOPT -O $LIBOBJS -o $LIBNAME.$SOSUFFIX
 
 $LD $SOFLAGS$LIBNAME.$SOSUFFIX $LDFLAGS $EXTRAOPT -O $LIBOBJS -o $LIBNAME.$SOSUFFIX
+
+fi
 
 # $LN $LIBNAME.$SOSUFFIX.$VESUFFIX $LIBNAME.$SOSUFFIX
 
@@ -38,7 +49,7 @@ if [ "x$LIBDIR" != "x" ]; then
       if [ "$LIBDIR" != `pwd` ]; then
          $MV $LIBNAME.$SOSUFFIX $LIBDIR
       fi
-   fi   
+   fi
 fi
 
 echo $LIBNAME.$SOSUFFIX 'done'

@@ -3,7 +3,7 @@
 # Script to generate a shared library.
 # Called by Makefile.
 
-GO4_OS=$1
+DABC_OS=$1
 
 SOSUFFIX=$2
 VESUFFIX=$3
@@ -15,7 +15,7 @@ if [ "x$LIBDIR" != "x" ]; then
    rm -f $LIBDIR/$LIBNAME.$SOSUFFIX.$VESUFFIX
    rm -f $LIBDIR/$LIBNAME.$SOSUFFIX
    rm -f $LIBDIR/$LIBNAME.$SOSUFFIX.*
-   if [ "$GO4_OS" = "WIN32" ]; then
+   if [ "$DABC_OS" = "WIN32" ]; then
       rm -f $LIBDIR/$LIBNAME.*
       if [ "$LIBDIR" = "lib" ]; then
          rm -f bin/$LIBNAME.dll
@@ -25,7 +25,7 @@ else
    rm -f $LIBNAME.$SOSUFFIX.$VESUFFIX
    rm -f $LIBNAME.$SOSUFFIX
    rm -f $LIBNAME.$SOSUFFIX.*
-   if [ "$GO4_OS" = "WIN32" ]; then
+   if [ "$DABC_OS" = "WIN32" ]; then
       rm -f $LIBNAME.*
    fi
 fi
