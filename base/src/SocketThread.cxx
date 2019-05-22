@@ -31,6 +31,14 @@
 #include "dabc/Buffer.h"
 #include "dabc/Configuration.h"
 
+#ifdef DABC_MAC
+#if !defined(MSG_NOSIGNAL)
+#define MSG_NOSIGNAL SO_NOSIGPIPE
+#endif
+#endif
+
+
+
 const char* SocketErr(int err)
 {
    switch (err) {
