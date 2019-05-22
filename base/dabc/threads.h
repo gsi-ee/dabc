@@ -28,6 +28,28 @@
 #include "dabc/logging.h"
 #endif
 
+#ifdef DABC_MAC
+// try to provide dummy wrapper for all using functions around affinity
+
+struct cpu_set_t {
+   unsigned flag{0};
+};
+
+#define CPU_ZERO(arg) arg->flag = 0
+
+#define CPU_SET(cpu, arg) arg->flag |= (1<<cpu)
+
+#define CPU_ISSET(cpu, arg) (arg->flag & (1<<cpu))
+
+#define CPU_CLR(cpu, arg) arg->flag = arg->flag & ~(1<<cpu)
+
+int sched_getaffinity(int, int, cpu_set_t* set) { set->flag = 0xFFFF; return 0; }
+
+int sched_setaffinity(int, int, cpu_set_t*) { return 0; }
+
+#endif
+
+
 namespace dabc {
 
    /** \brief posix pthread mutex
@@ -308,29 +330,6 @@ namespace dabc {
    // ___________________________________________________________
 
    typedef pthread_t Thread_t;
-
-
-#ifdef DABC_MAC
-// try to provide dummy wrapper for all using functions around affinity
-
-struct cpu_set_t {
-   unsigned flag{0};
-};
-
-#define CPU_ZERO(arg) arg->flag = 0
-
-#define CPU_SET(cpu, arg) arg->flag |= (1<<cpu)
-
-#define CPU_ISSET(cpu, arg) (arg->flag & (1<<cpu))
-
-#define CPU_CLR(cpu, arg) arg->flag = arg->flag & ~(1<<cpu)
-
-int sched_getaffinity(int, int, cpu_set_t* set) { set->flag = 0xFFFF; return 0; }
-
-int sched_setaffinity(int, int, cpu_set_t*) { return 0; }
-
-#endif
-
 
    /** \brief class represents posix pthread functionality
      *
