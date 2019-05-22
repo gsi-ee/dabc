@@ -242,7 +242,7 @@ namespace dabc {
          bool _IsNormalState();
 
          /** \brief Method used to create new item to be placed as child of the object */
-         virtual Object* CreateObject(const std::string &name) { return new Object(0, name); }
+         virtual Object *CreateInstance(const std::string &name) { return new Object(nullptr, name); }
 
          /** \brief Method called when new childs are add or old are removed */
          virtual void _ChildsChanged() {}

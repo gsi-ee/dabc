@@ -243,7 +243,7 @@ namespace dabc {
          /** \brief Enable time recording for hierarchy element every time when item is changed */
          void EnableTimeRecording(bool withchilds = true);
 
-         virtual Object* CreateObject(const std::string &name) { return new HierarchyContainer(name); }
+         virtual Object *CreateInstance(const std::string &name) { return new HierarchyContainer(name); }
 
          virtual void _ChildsChanged() { fNamesChanged = true; fChildsChanged = true; fNodeChanged = true;  }
 

@@ -794,11 +794,11 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
    {
       LockGuard guard(ref()->fObjectMutex);
 
-      dabc::Object* obj = (ref()->fObjectChilds==0) ? 0 : ref()->fObjectChilds->FindObject(name, ptok-name);
+      dabc::Object *obj = (ref()->fObjectChilds==nullptr) ? nullptr : ref()->fObjectChilds->FindObject(name, ptok-name);
 
       // create new object under parent mutex - no one can create double entries simultaneously
       if ((obj==0) && force) {
-         obj = ref()->CreateObject(std::string(name, ptok-name));
+         obj = ref()->CreateInstance(std::string(name, ptok-name));
          ref()->AddChild(obj, false);
       }
 
