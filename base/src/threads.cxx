@@ -349,7 +349,7 @@ void dabc::PosixThread::Start(Runnable* run)
       pthread_attr_t attr;
       pthread_attr_init(&attr);
 
-#if _POSIX_C_SOURCE >= 200112L
+#if !defined(DABC_MAC) && _POSIX_C_SOURCE >= 200112L
       pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &fCpuSet);
 #endif
 
@@ -432,14 +432,14 @@ bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
    if (maxbuf==0) return false;
 
    cpu_set_t mask;
-   cpu_set_t *arg;
+   cpu_set_t *arg = nullptr;
    CPU_ZERO(&mask);
 
-   if (!actual)
+   if (!actual) {
       arg = &fCpuSet;
-   else {
+   } else {
 
-   #if _POSIX_C_SOURCE >= 200112L
+   #if !defined(DABC_MAC) && _POSIX_C_SOURCE >= 200112L
       int s;
       pthread_attr_t attr;
       s = pthread_getattr_np(pthread_self(), &attr);
@@ -457,7 +457,6 @@ bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
       return false;
    #endif
    }
-
 
    unsigned last(0);
 
