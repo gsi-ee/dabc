@@ -35,13 +35,15 @@ struct cpu_set_t {
    unsigned flag{0};
 };
 
-#define CPU_ZERO(arg) arg->flag = 0
+#define CPU_SETSIZE 32
 
-#define CPU_SET(cpu, arg) arg->flag |= (1<<cpu)
+void CPU_ZERO(cpu_set_t *arg) { arg->flag = 0; }
 
-#define CPU_ISSET(cpu, arg) (arg->flag & (1<<cpu))
+void CPU_SET(int cpu, cpu_set_t *arg) { arg->flag |= (1<<cpu); }
 
-#define CPU_CLR(cpu, arg) arg->flag = arg->flag & ~(1<<cpu)
+bool CPU_ISSET(int cpu, cpu_set_t *arg) { return arg->flag & (1<<cpu); }
+
+void CPU_CLR(int cpu, cpu_set_t *arg) { arg->flag = arg->flag & ~(1<<cpu); }
 
 int sched_getaffinity(int, int, cpu_set_t* set) { set->flag = 0xFFFF; return 0; }
 
