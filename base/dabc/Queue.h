@@ -48,15 +48,15 @@ namespace dabc {
 
             friend class Queue<T,canexpand>;
 
-            Queue<T,canexpand>* prnt;
-            T* item;
-            unsigned loop;
+            Queue<T,canexpand>* prnt{nullptr};
+            T* item{nullptr};
+            unsigned loop{0};
 
             Iterator(Queue<T,canexpand>* _prnt, T* _item, unsigned _loop) : prnt(_prnt), item(_item), loop(_loop) {}
 
             public:
 
-            Iterator() : prnt(0), item(0) {}
+            Iterator() = default;
             Iterator(const Iterator& src) : prnt(src.prnt), item(src.item), loop(src.loop) {}
 
             T* operator()() const { return item; }
@@ -85,44 +85,28 @@ namespace dabc {
 
          friend class Queue<T,canexpand>::Iterator;
 
-         T*         fQueue;
-         T*         fBorder; // maximum pointer value
-         unsigned   fCapacity;
-         unsigned   fSize;
-         T*         fHead;
-         T*         fTail;
-         unsigned   fInitSize; ///< original size of the queue, restored then Reset() method is called
+         T*         fQueue{nullptr};
+         T*         fBorder{nullptr}; // maximum pointer value
+         unsigned   fCapacity{0};
+         unsigned   fSize{0};
+         T*         fHead{nullptr};
+         T*         fTail{nullptr};
+         unsigned   fInitSize{0}; ///< original size of the queue, restored then Reset() method is called
 
          T*         QueueItem(unsigned n) { return fQueue + n; }
 
       public:
-         Queue() :
-            fQueue(0),
-            fBorder(0),
-            fCapacity(0),
-            fSize(0),
-            fHead(0),
-            fTail(0),
-            fInitSize(0)
-         {
-         }
+         Queue() = default;
 
-         Queue(unsigned capacity) :
-            fQueue(0),
-            fBorder(0),
-            fCapacity(0),
-            fSize(0),
-            fHead(0),
-            fTail(0),
-            fInitSize(capacity)
+         Queue(unsigned capacity)
          {
-            Allocate(capacity);
+            Init(capacity);
          }
 
          virtual ~Queue()
          {
             delete[] fQueue;
-            fQueue = 0;
+            fQueue = nullptr;
          }
 
          void Init(unsigned capacity)
@@ -136,7 +120,7 @@ namespace dabc {
             if (fCapacity>0) {
                delete[] fQueue;
                fCapacity = 0;
-               fQueue = 0;
+               fQueue = nullptr;
                fBorder = 0;
             }
 
@@ -156,11 +140,11 @@ namespace dabc {
          {
             if (fSize>0) {
                if (fHead>fTail) {
-                  memcpy((void *)tgt, fTail, (fHead - fTail) * sizeof(T));
+                  memcpy((void *)tgt, (const void *)fTail, (fHead - fTail) * sizeof(T));
                } else {
                   unsigned sz = fBorder - fTail;
-                  memcpy((void *)tgt, fTail, sz * sizeof(T));
-                  memcpy((void *) (tgt + sz), fQueue, (fHead - fQueue) * sizeof(T));
+                  memcpy((void *)tgt, (const void *) fTail, sz * sizeof(T));
+                  memcpy((void *) (tgt + sz), (const void *) fQueue, (fHead - fQueue) * sizeof(T));
                }
             }
          }

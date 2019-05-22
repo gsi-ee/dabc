@@ -546,7 +546,7 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
       // add parameter event to the queue
       ParamRec* rec = fParsQueue.PushEmpty();
 
-      if (rec!=0) {
+      if (rec) {
          // memset(rec, 0, sizeof(ParamRec));
          rec->par << parref; // we are trying to avoid parameter locking under locked queue mutex
          rec->event = evid;

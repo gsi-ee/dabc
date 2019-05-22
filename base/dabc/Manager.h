@@ -364,6 +364,7 @@ namespace dabc {
          Mutex                *fMgrMutex; // main mutex to protect manager queues
 
          ReferencesVector     *fDestroyQueue;
+         // FIXME: use stl containers while RecordsQueue uses memcpy for struct with virtual table
          RecordsQueue<ParamRec> fParsQueue;
 
          // TODO: timed parameters should be seen in the special manager folder ?
