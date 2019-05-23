@@ -65,7 +65,7 @@ $(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf)
 
 $(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
 	@echo "Dependency: $@"
-	@$(MakeDepend) "$(CFLAGS)" $@  $<  $* 
+	@$(MakeDepend) "$(CFLAGS)" $@  $<  $*
 
 ## include in the end, if necessary, dependency and dummy.h file 
  
