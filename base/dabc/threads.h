@@ -28,7 +28,8 @@
 #include "dabc/logging.h"
 #endif
 
-#ifdef DABC_MAC
+#if defined(__MACH__) /* Apple OSX section */
+
 // try to provide dummy wrapper for all using functions around affinity
 
 struct cpu_set_t {

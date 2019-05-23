@@ -31,7 +31,7 @@
 #include "dabc/Buffer.h"
 #include "dabc/Configuration.h"
 
-#ifdef DABC_MAC
+#if defined(__MACH__) /* Apple OSX section */
 #if !defined(MSG_NOSIGNAL)
 #define MSG_NOSIGNAL SO_NOSIGPIPE
 #endif

@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-#ifdef DABC_MAC
+#if defined(__MACH__) /* Apple OSX section */
 #include <machine/endian.h>
 #else
 #include <endian.h>

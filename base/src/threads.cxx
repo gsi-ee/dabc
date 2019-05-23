@@ -23,7 +23,8 @@
 #include "dabc/logging.h"
 
 
-#ifdef DABC_MAC
+#if defined(__MACH__) /* Apple OSX section */
+
 // try to provide dummy wrapper for all using functions around affinity
 
 void CPU_ZERO(cpu_set_t *arg) { arg->flag = 0; }
@@ -370,7 +371,7 @@ void dabc::PosixThread::Start(Runnable* run)
       pthread_attr_t attr;
       pthread_attr_init(&attr);
 
-#if !defined(DABC_MAC) && _POSIX_C_SOURCE >= 200112L
+#if !defined(__MACH__) && _POSIX_C_SOURCE >= 200112L
       pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &fCpuSet);
 #endif
 
@@ -417,7 +418,7 @@ void dabc::PosixThread::Cancel()
 
 void dabc::PosixThread::SetThreadName(const char *thrdname)
 {
-#ifndef DABC_MAC
+#if !defined(__MACH__)
    pthread_setname_np(fThrd, thrdname);
 #endif
 }
@@ -462,7 +463,7 @@ bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
       arg = &fCpuSet;
    } else {
 
-   #if !defined(DABC_MAC) && _POSIX_C_SOURCE >= 200112L
+#if !defined(__MACH__) && _POSIX_C_SOURCE >= 200112L
       int s;
       pthread_attr_t attr;
       s = pthread_getattr_np(pthread_self(), &attr);
@@ -475,10 +476,10 @@ bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
       if (s != 0) EOUT("pthread_attr_destroy failed");
 
       arg = &mask;
-   #else
+#else
       buf[0] = 0;
       return false;
-   #endif
+#endif
    }
 
    unsigned last(0);
