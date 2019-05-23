@@ -55,7 +55,7 @@ $(DABCINCPATH)/%.h: $(MBSDIR)/%.h
 
 
 $(DABCMBS_LIB):   $(DABCMBS_O)
-	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) "-lDabcCore"
+	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) "-lDabcBase"
 
 $(MBSPRINT_EXE) : $(MBSPRINT_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB)
 	$(LD) -O $(MBSPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -o $(MBSPRINT_EXE)
