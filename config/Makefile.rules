@@ -21,8 +21,8 @@ endif
 clean::
 	@echo "Clean in $(CURDIR)" 
 	@for DIR in $(APPLICATIONS_DIRS); do ($(MAKE) clean -f $$DIR/Makefile DABCSYS=$(DABCSYS) _topdir_=$$DIR/) done
-	@for DIR in $(AUTO_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
-	@rm -rf $(BLD_DIR) 
+	@for DIR in $(AUTO_DIRS); do (if [ ! -f $$DIR ] ; then $(RMDIR) $$DIR; fi); done
+	@$(RMDIR) $(BLD_DIR) 
 
 clean-svn:
 	find . -name ".svn" -type d -exec rm -rf {} \;
@@ -79,6 +79,5 @@ endif
 -include $(BLD_DIR)/dummy.d
 
 endif
-	
+
 endif
-	
