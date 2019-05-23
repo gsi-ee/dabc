@@ -27,21 +27,14 @@ HADAQ_S           = $(wildcard $(HADAQDIRS)/*.$(SrcSuf))
 HADAQ_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(HADAQ_S))
 HADAQ_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(HADAQ_S))
 
-HADAQ_CS          = $(wildcard $(HADAQDIRS)/*.$(CSuf))
-HADAQ_CO          = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(HADAQ_CS))
-HADAQ_CD          = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(HADAQ_CS))
-
 HLDPRINT_EXES     = $(HADAQDIR)/hldprint.$(SrcSuf)
 HLDPRINT_EXEO     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(HLDPRINT_EXES))
 HLDPRINT_EXED     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(HLDPRINT_EXES))
 
-DABCHADAQ_O       = $(HADAQ_O) $(HADAQ_CO)
-DABCHADAQ_D       = $(HADAQ_D) $(HADAQ_CD)
-
 # used in the main Makefile
 
 ALLHDRS           += $(patsubst $(HADAQDIR)/%.h, $(DABCINCPATH)/%.h, $(HADAQ_H))
-ALLDEPENDENC      += $(DABCHADAQ_D) $(HLDPRINT_EXED)
+ALLDEPENDENC      += $(HADAQ_D) $(HLDPRINT_EXED)
 
 libs:: $(DABCHADAQ_LIB)
 
@@ -57,17 +50,15 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCHADAQ_LIB):   $(DABCHADAQ_O) $(DABCMBS_LIB)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt -lDabcMbs"
+$(DABCHADAQ_LIB):   $(HADAQ_O) $(DABCMBS_LIB)
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(HADAQ_O)" $(TGTDLLPATH) "-lrt -lDabcMbs"
 
 $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
 
 ########### extra rules #############
-$(HADAQ_CO) $(HADAQ_CD): C_INCLUDES += $(HADAQDIRI)
-
 ifdef hadaq-debug
-$(DABCHADAQ_O): DEFINITIONS += HADAQ_DEBUG 
+$(HADAQ_O): DEFINITIONS += HADAQ_DEBUG 
 endif
 
 include $(DABCSYS)/config/Makefile.rules
