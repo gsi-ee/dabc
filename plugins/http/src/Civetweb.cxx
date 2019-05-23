@@ -119,11 +119,11 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
    http::Civetweb* server = (http::Civetweb*) (request_info ? request_info->user_data : 0);
    if (server==0) return 0;
 
-   DOUT2("BEGIN_REQ: uri:%s query:%s", request_info->uri, request_info->query_string);
+   DOUT0("BEGIN_REQ: uri:%s query:%s", request_info->local_uri, request_info->query_string);
 
    std::string filename;
 
-   if (server->IsFileRequested(request_info->uri, filename)) {
+   if (server->IsFileRequested(request_info->local_uri, filename)) {
       mg_send_file(conn, filename.c_str());
       return 1;
    }
@@ -131,7 +131,7 @@ int http::Civetweb::begin_request_handler(struct mg_connection *conn, void* )
    std::string content_type, content_header, content_str;
    dabc::Buffer content_bin;
 
-   if (!server->Process(request_info->uri, request_info->query_string,
+   if (!server->Process(request_info->local_uri, request_info->query_string,
                         content_type, content_header, content_str, content_bin)) {
       mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
                       "Content-Length: 0\r\n"
