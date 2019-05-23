@@ -26,7 +26,7 @@ clean::
 	rm -f $(DABC_SHELLEXE)
 
 $(DABC_SHELLEXE) : $(DABC_SHELLEXEO) $(DABCBASE_LIB) 
-	$(LD) -Wl,--no-as-needed -O $(DABC_SHELLEXEO) $(LIBS_CORESET) -lpthread -ldl -lrt -lmenu -lncurses -o $(DABC_SHELLEXE)
+	$(LD) -Wl,--no-as-needed -O $(DABC_SHELLEXEO) $(LIBS_CORESET) -lmenu -lncurses -o $(DABC_SHELLEXE)
 
 
 include $(DABCSYS)/config/Makefile.rules

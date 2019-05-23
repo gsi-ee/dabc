@@ -80,7 +80,7 @@ $(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
 	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH) "$(LIBS_SYSSET)"
 
 #$(DABCSOCKET_LIB): $(BASE_SOCKET_O)
-#	@$(MakeLib) $(DABCSOCKET_LIBNAME) "$(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
+#	@$(MakeLib) $(DABCSOCKET_LIBNAME) "$(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl $(LIBRT)"
 #	@echo sockets: $(BLD_DIR) $(BASE_SOCKET_O)
 #	@echo base: $(BASE_O)
 
@@ -88,10 +88,10 @@ $(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
 #	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
 
 $(DABC_BASEEXE):  $(BASERUN_O) $(DABCBASE_LIB)
-	$(LD) -Wl,--no-as-needed -O $(BASERUN_O) $(LIBS_CORESET) -lpthread -ldl -lrt -o $(DABC_BASEEXE)
+	$(LD) -Wl,--no-as-needed -O $(BASERUN_O) $(LIBS_CORESET) -o $(DABC_BASEEXE)
 
 $(DABC_XMLEXE) : $(DABC_XMLEXEO) $(DABC_BASESUB_O) 
-	$(LD) -Wl,--no-as-needed -O $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread -lrt -o $(DABC_XMLEXE)
+	$(LD) -Wl,--no-as-needed -O $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread $(LIBRT) -o $(DABC_XMLEXE)
 
 $(DABC_BASESH): $(BASERUN_SH)
 	@echo "Produce $@"
