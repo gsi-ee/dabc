@@ -39,7 +39,6 @@ namespace hadaq {
    class HldOutput : public dabc::FileOutput {
       protected:
 
-         bool                fEpicsSlave;     ///< true if run id is controlled by epics master
          bool                fRunSlave;       ///< true if run id is controlled by combiner
          uint32_t            fLastRunNumber;  ///< id number of last written run
          uint32_t            fRunNumber;      ///< id number of current run (can be 0 when data are ingored)

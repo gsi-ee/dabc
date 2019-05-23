@@ -36,7 +36,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fCfg(),
    fOut(),
    fFlushCounter(0),
-   fEpicsSlave(false),
    fIsTerminating(false),
    fRunToOracle(false),
    fCheckTag(true),
@@ -93,10 +92,10 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fMaxHadaqTrigger = 0;
    fTriggerRangeMask = 0;
 
-   fEpicsSlave = Cfg(hadaq::xmlExternalRunid, cmd).AsBool(false);
-
-   if(fEpicsSlave || fBNETrecv || fBNETsend) fRunNumber = 0; // ignore data without valid run id at beginning!
-   else fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
+   if (fBNETrecv || fBNETsend)
+      fRunNumber = 0; // ignore data without valid run id at beginning!
+   else
+      fRunNumber = hadaq::CreateRunId(); // runid from configuration time.
 
    fMaxHadaqTrigger = Cfg(hadaq::xmlHadaqTrignumRange, cmd).AsUInt(0x1000000);
    fTriggerRangeMask = fMaxHadaqTrigger-1;

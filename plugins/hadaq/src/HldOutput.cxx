@@ -37,7 +37,6 @@
 
 hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    dabc::FileOutput(url,".hld"),
-   fEpicsSlave(false),
    fRunSlave(false),
    fLastRunNumber(0),
    fRunNumber(0),
@@ -50,7 +49,6 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fLastUpdate(),
    fFile()
 {
-   fEpicsSlave = url.HasOption("epicsctrl");
    fRunSlave = url.HasOption("slave");
    fEBNumber = url.GetOptionInt("ebnumber",0); // default is single eventbuilder
    fRunNumber = url.GetOptionInt("runid", 0); // if specified, use runid from url
@@ -90,7 +88,7 @@ bool hadaq::HldOutput::Write_Init()
 {
    if (!dabc::FileOutput::Write_Init()) return false;
 
-   if (fEpicsSlave || fRunSlave) {
+   if (fRunSlave) {
       // use parameters only in slave mode
 
       fLastUpdate.GetNow();
@@ -110,7 +108,7 @@ bool hadaq::HldOutput::StartNewFile()
    CloseFile();
 
    if (fRunNumber == 0) {
-      if (fEpicsSlave || fRunSlave) {
+      if (fRunSlave) {
          EOUT("Cannot start new file without valid RUNID");
          return false;
       }
@@ -167,7 +165,7 @@ bool hadaq::HldOutput::StartNewFile()
    }
    fCurrentFileName = fname;
 
-   if ((fEpicsSlave || fRunSlave) && fRfio)
+   if (fRunSlave && fRfio)
       DOUT1("Before open file %s for writing", CurrentFileName().c_str());
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber, fUrlOptions.c_str())) {
@@ -175,21 +173,8 @@ bool hadaq::HldOutput::StartNewFile()
       return false;
    }
 
-   if ((fEpicsSlave || fRunSlave) && fRfio)
+   if (fRunSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
-
-   if (fEpicsSlave && (fRfio || fLtsm)) {
-      // use parameters only in slave mode
-
-      int indx = fFile.GetIntPar("DataMoverIndx");// get actual number of data mover from file interface
-
-      char sbuf[100];
-      fFile.GetStrPar("DataMoverName", sbuf, sizeof(sbuf)); // can use data mover name here
-
-      dabc::CmdSetParameter cmd("Evtbuild-dataMover", indx);
-      dabc::mgr.FindModule("Combiner").Submit(cmd);
-      DOUT0("Connected to %s %s, Number:%d", (fRfio ? "Datamover" : "TSM Server") , sbuf, indx);
-   }
 
    ShowInfo(0, dabc::format("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber));
    DOUT0("%s open for writing runid %d", CurrentFileName().c_str(), fRunNumber);
@@ -204,7 +189,7 @@ bool hadaq::HldOutput::Write_Retry()
    // HLD output supports retry option
 
    CloseFile();
-   if (!fEpicsSlave && !fRunSlave) fRunNumber = 0;
+   if (!fRunSlave) fRunNumber = 0;
    return true;
 }
 
@@ -270,7 +255,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
       fRunNumber = 0;
       startnewfile = true;
       DOUT2("HLD output process EOL");
-   } else if (fEpicsSlave || fRunSlave) {
+   } else if (fRunSlave) {
 
       // scan event headers in buffer for run id change/consistency
       hadaq::ReadIterator bufiter(buf);
@@ -322,7 +307,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          }// for
       }
 
-      if (fLastUpdate.Expired(0.2) && (fEpicsSlave || fRunSlave) ) {
+      if (fLastUpdate.Expired(0.2) && fRunSlave) {
          dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
          dabc::mgr.FindModule("Combiner").Submit(cmd);
          fLastUpdate.GetNow();
@@ -337,7 +322,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if(startnewfile) {
 
-      if ((fEpicsSlave || fRunSlave) && (fRunNumber == 0)) {
+      if (fRunSlave && (fRunNumber == 0)) {
          // in slave mode 0 runnumber means do nothing
          CloseFile();
          DOUT0("CLOSE FILE WRITING in slave mode");
@@ -383,12 +368,12 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          cursor = 0;
       }
 
-      if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
+      if (fRunSlave && fRfio && startnewfile)
          DOUT1("HldOutput write %u bytes after new file was started", write_size);
 
       if (!fFile.WriteBuffer(write_ptr, write_size)) return dabc::do_Error;
 
-      if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
+      if (fRunSlave && fRfio && startnewfile)
          DOUT1("HldOutput did write %u bytes after new file was started", write_size);
 
       total_write_size += write_size;
@@ -397,7 +382,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    // TODO: in case of partial written buffer, account sizes to correct file
    AccountBuffer(total_write_size, hadaq::ReadIterator::NumEvents(buf));
 
-   if ((fEpicsSlave || fRunSlave) && fRfio && startnewfile)
+   if (fRunSlave && fRfio && startnewfile)
       DOUT1("HldOutput write complete first buffer after new file was started");
 
    return dabc::do_Ok;

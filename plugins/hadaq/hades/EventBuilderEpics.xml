@@ -93,7 +93,7 @@ EPICS control via shared memory is deprecated and was removed from DABC
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
 
-       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=1" queue="200"/>
+       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=1" queue="200"/>
 
        <!--  alternative setup for independent time tags on different eventbuilders: -->
        <!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=1" queue="200"/> -->
@@ -129,7 +129,7 @@ EPICS control via shared memory is deprecated and was removed from DABC
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6003?iter=hadaq_iter&subid=0x1f"/>
 
-      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&epicsctrl&ebnumber=2" queue="200"/>
+      <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=2" queue="200"/>
 
 <!--  alternative setup for independent time tags on different eventbuilders: -->
 <!--       <OutputPort name="Output1" url="hld:///home/joern/data/dabc.hld?maxsize=1000&ebnumber=2" queue="200"/> -->

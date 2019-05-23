@@ -211,7 +211,6 @@ namespace hadaq {
          int                fFlushCounter;
          int32_t            fEBId; ///<  eventbuilder id <- node id
          pid_t              fPID; ///<  process id of combiner module
-         bool               fEpicsSlave;
          bool               fIsTerminating;
          bool               fSkipEmpty;     ///< skip empty subevents in final event, default true
 
