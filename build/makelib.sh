@@ -28,7 +28,7 @@ else
    $RM $LIBNAME.$SOSUFFIX
 fi
 
-if [ "$DABC_OS" = "Mac" ]; then
+if [ "$DABC_OS" = "Darwin" ]; then
 
    echo $LD $SOFLAGS $LIBNAME.$SOSUFFIX $LDFLAGS $EXTRAOPT -O $LIBOBJS -o $LIBNAME.$SOSUFFIX
 
