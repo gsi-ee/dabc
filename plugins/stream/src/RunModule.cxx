@@ -93,10 +93,18 @@ stream::RunModule::RunModule(const std::string &name, dabc::Command cmd) :
 
       bool second = system("ls second.C >/dev/null 2>/dev/null") == 0;
 
-      std::string exec = dabc::format("g++ %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -std=c++11 -I. -I%s/include %s %s"
-            "-shared -Wl,-soname,librunstream.so -Wl,--no-as-needed -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
-            dabcsys, streamsys, extra_include.c_str(),
-            (second ? "-D_SECOND_ " : ""), dabcsys, streamsys);
+#if defined(__MACH__) /* Apple OSX section */
+      const char *compiler = "clang++";
+      const char *ldflags = "";
+#else
+      const char *compiler = "g++";
+      const char *ldflags = "-Wl,--no-as-needed";
+#endif
+
+      std::string exec = dabc::format("%s %s/plugins/stream/src/stream_engine.cpp -O2 -fPIC -Wall -std=c++11 -I. -I%s/include %s %s"
+            "-shared -Wl,-soname,librunstream.so %s -Wl,-rpath,%s/lib -Wl,-rpath,%s/lib  -o librunstream.so",
+            compiler, dabcsys, streamsys, extra_include.c_str(),
+            (second ? "-D_SECOND_ " : ""), ldflags, dabcsys, streamsys);
 
       system("rm -f ./librunstream.so");
 
