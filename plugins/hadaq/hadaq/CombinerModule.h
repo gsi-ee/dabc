@@ -347,16 +347,6 @@ namespace hadaq {
 
          void DoTerminalOutput();
 
-         /* helper methods to export ebctrl parameters */
-         std::string GetEvtbuildParName(const std::string &name);
-         void CreateEvtbuildPar(const std::string &name);
-         void SetEvtbuildPar(const std::string &name, unsigned value);
-         unsigned GetEvtbuildParValue(const std::string &name);
-
-         std::string GetNetmemParName(const std::string &name);
-         void CreateNetmemPar(const std::string &name);
-         void SetNetmemPar(const std::string &name, unsigned value);
-
          int DestinationPort(uint32_t trignr);
          bool CheckDestination(uint32_t trignr);
          void UpdateBnetInfo();

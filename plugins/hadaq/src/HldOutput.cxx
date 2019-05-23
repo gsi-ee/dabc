@@ -46,7 +46,6 @@ hadaq::HldOutput::HldOutput(const dabc::Url& url) :
    fLtsm(false),
    fUrlOptions(),
    fLastPrefix(),
-   fLastUpdate(),
    fFile()
 {
    fRunSlave = url.HasOption("slave");
@@ -90,11 +89,7 @@ bool hadaq::HldOutput::Write_Init()
 
    if (fRunSlave) {
       // use parameters only in slave mode
-
-      fLastUpdate.GetNow();
-
       fRunNumber = 0;
-
       ShowInfo(0, dabc::format("%s slave mode is enabled, waiting for runid", (fRunSlave ? "RUN" : "EPICS")));
       return true;
    }
@@ -305,12 +300,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
             payload -= write_size;
          }// for
-      }
-
-      if (fLastUpdate.Expired(0.2) && fRunSlave) {
-         dabc::CmdSetParameter cmd("Evtbuild-bytesWritten", (int)fCurrentFileSize);
-         dabc::mgr.FindModule("Combiner").Submit(cmd);
-         fLastUpdate.GetNow();
       }
 
    } else {

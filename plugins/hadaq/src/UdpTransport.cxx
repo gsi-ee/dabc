@@ -282,7 +282,6 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, double flush) :
    dabc::Transport(cmd, inpport, 0),
    fIdNumber(0),
-   fDataRateName(),
    fNumReadyBufs(0),
    fBufAssigned(false),
    fLastSendCnt(0)
@@ -307,21 +306,6 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 
 hadaq::NewTransport::~NewTransport()
 {
-}
-
-std::string  hadaq::NewTransport::GetNetmemParName(const std::string &name)
-{
-   return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
-}
-
-void hadaq::NewTransport::CreateNetmemPar(const std::string &name)
-{
-   CreatePar(GetNetmemParName(name));
-}
-
-void hadaq::NewTransport::SetNetmemPar(const std::string &name, unsigned value)
-{
-   Par(GetNetmemParName(name)).SetValue(value);
 }
 
 int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)

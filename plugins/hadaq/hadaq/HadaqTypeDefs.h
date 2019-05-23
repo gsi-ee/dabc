@@ -41,9 +41,6 @@ namespace hadaq {
    extern const char* xmlHadesTriggerType;
    extern const char* xmlHadesTriggerHUB;
 
-   extern const char* NetmemPrefix;
-   extern const char* EvtbuildPrefix;
-
    /*
     * Format a HADES-convention filename string
     * from a given run id and optional eventbuilder id

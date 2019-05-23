@@ -47,9 +47,6 @@ const char* hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
 const char* hadaq::xmlHadesTriggerType    = "HadesTriggerType";
 const char* hadaq::xmlHadesTriggerHUB     = "HadesTriggerHUB";
 
-const char* hadaq::NetmemPrefix     = "Netmem";
-const char* hadaq::EvtbuildPrefix   = "Evtbuild";
-
 
 std::string hadaq::FormatFilename (uint32_t runid, uint16_t ebid)
 {

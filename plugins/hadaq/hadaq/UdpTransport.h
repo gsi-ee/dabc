@@ -139,14 +139,9 @@ namespace hadaq {
       protected:
 
          int            fIdNumber;
-         std::string    fDataRateName;
          unsigned       fNumReadyBufs; ///< number of filled buffers which could be posted
          bool           fBufAssigned;  ///< if next buffer assigned
          int            fLastSendCnt;  ///< used for flushing
-
-         std::string GetNetmemParName(const std::string &name);
-         void CreateNetmemPar(const std::string &name);
-         void SetNetmemPar(const std::string &name, unsigned value);
 
          virtual void ProcessTimerEvent(unsigned timer);
 

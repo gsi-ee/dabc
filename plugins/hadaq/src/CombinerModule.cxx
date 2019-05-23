@@ -1261,7 +1261,6 @@ void hadaq::CombinerModule::DoErrorBitStatistics(unsigned ninp)
          fCfg[ninp].fErrorbitStats[ptrn]++;
          break;
       }
-
    }
 }
 
@@ -1428,42 +1427,6 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    }
 
    return cmd_bool(res);
-}
-
-
-std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string &name)
-{
-   return dabc::format("%s-%s",hadaq::EvtbuildPrefix,name.c_str());
-}
-
-void hadaq::CombinerModule::CreateEvtbuildPar(const std::string &name)
-{
-   CreatePar(GetEvtbuildParName(name)).SetSynchron(true, 0.2);
-}
-
-void hadaq::CombinerModule::SetEvtbuildPar(const std::string &name, unsigned value)
-{
-    Par(GetEvtbuildParName(name)).SetValue(value);
-}
-
-unsigned hadaq::CombinerModule::GetEvtbuildParValue(const std::string &name)
-{
-   return Par(GetEvtbuildParName(name)).Value().AsUInt();
-}
-
-std::string  hadaq::CombinerModule::GetNetmemParName(const std::string &name)
-{
-   return dabc::format("%s-%s",hadaq::NetmemPrefix,name.c_str());
-}
-
-void hadaq::CombinerModule::CreateNetmemPar(const std::string &name)
-{
-   CreatePar(GetNetmemParName(name)).SetSynchron(true, 0.2);
-}
-
-void hadaq::CombinerModule::SetNetmemPar(const std::string &name, unsigned value)
-{
-   Par(GetNetmemParName(name)).SetValue(value);
 }
 
 
