@@ -20,7 +20,7 @@
 #include "http/Server.h"
 #endif
 
-#include "civetweb.h"
+#include "../civetweb/civetweb.h"
 
 namespace http {
 
