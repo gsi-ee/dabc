@@ -4,7 +4,8 @@ about current functionality of the framework.
 
 23.05.2019
 1. Port of DABC code to modern Mac OS (excluding RFIO, IB verbs and threads affinity)
-   Declare as version 2.10.0
+2. Remove shared-memory module from HADAQ plugin, fully decouple from EPICS
+3. Declare as version 2.10.0
 
 
 22.10.2018
