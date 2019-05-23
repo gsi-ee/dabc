@@ -57,15 +57,18 @@ $(BLD_DIR)/%.$(ObjSuf): %.$(CSuf)
 
 $(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf)
 	@echo "Dependency: $@"
-	@$(MakeDepend) $(CXX) "$(CXXFLAGS)" $@  $<  $*
+#	@$(MakeDepend) $(CXX) "$(CXXFLAGS)" $@  $<  $*
+	@$(CXX) $(CXXFLAGS) $< -o $@ -MM -MT "$(BLD_DIR)/$*.o $(BLD_DIR)/$*.d"
 
 %.$(DepSuf): %.$(SrcSuf)
 	@echo "Dependency: $@"
-	@$(MakeDepend) $(CXX) "$(CXXFLAGS)" $@  $<  $*
+#	@$(MakeDepend) $(CXX) "$(CXXFLAGS)" $@  $<  $*
+	@$(CXX) $(CXXFLAGS) $< -o $@ -MM -MT "$*.o $*.d"
 
 $(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
 	@echo "Dependency: $@"
-	@$(MakeDepend) $(CC) "$(CFLAGS)" $@  $<  $*
+#	@$(MakeDepend) $(CC) "$(CFLAGS)" $@  $<  $*
+	@$(CC) $(CFLAGS) $< -o $@ -MM -MT "$(BLD_DIR)/$*.o $(BLD_DIR)/$*.d"
 
 ## include in the end, if necessary, dependency and dummy.h file 
  
