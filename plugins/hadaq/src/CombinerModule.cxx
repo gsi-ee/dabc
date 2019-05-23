@@ -19,7 +19,6 @@
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -421,17 +420,17 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    CreateEvtbuildPar("dataMover"); // rfio data mover number for epics gui
    SetEvtbuildPar("dataMover", 0); // default for testing!
 
+   CreateEvtbuildPar("PID");
    CreateEvtbuildPar("coreNr");
 
    // NOTE: this export has no effect, since pid is exported by default in worker mechanism
    // and worker names are not case sensitive!
    // thus epics will always take pid of the observer process that opens shared memory
-   CreateEvtbuildPar("PID");
    //fPID=getpid();
    //fPID= syscall(SYS_gettid);
 
-   SetEvtbuildPar("PID", (int) fPID);
-   SetEvtbuildPar("coreNr", hadaq::CoreAffinity(fPID));
+   SetEvtbuildPar("PID", 0);
+   SetEvtbuildPar("coreNr", 0);
 }
 
 void hadaq::CombinerModule::UpdateBnetInfo()
@@ -662,8 +661,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
    //    static int affcount=0;
    //    if(affcount++ % 20)
    //     {
-   //       SetEvtbuildPar("coreNr", hadaq::CoreAffinity(fPID));
-   //       //SetEvtbuildPar("coreNr", hadaq::CoreAffinity(0));
+   //       SetEvtbuildPar("coreNr", 1);
    //     }
 
 

@@ -55,46 +55,6 @@ const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";
 
 
-int hadaq::CoreAffinity(pid_t pid)
-{
-#ifdef DABC_MAC
-  (void) pid;
-  return 1; 
-#else
-
-  // stolen from stats.c of old eventbuilders JAM
-   unsigned long new_mask = 2;
-   unsigned int len = sizeof(new_mask);
-   cpu_set_t cur_mask;
-   CPU_ZERO(&cur_mask);
-   if(pid)
-   {
-      // this one for whole process:
-      sched_getaffinity(pid, len, &cur_mask);
-   }
-   else
-   {
-      // try if we can find out current thread affinity:
-      pthread_t thread=pthread_self();
-      int r=pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cur_mask);
-      if(r)
-      {
-         printf("Error %d in pthread_getaffinity_np for thread 0x%x!\n",r, (unsigned) thread);
-      }
-   }
-
-
-   int i;
-   for (i = 0; i < 24; i++) {
-      int cpu;
-      cpu = CPU_ISSET(i, &cur_mask);
-      if (cpu > 0)
-         break;
-   }
-   return i;
-#endif
-}
-
 std::string hadaq::FormatFilename (uint32_t runid, uint16_t ebid)
 {
    // same

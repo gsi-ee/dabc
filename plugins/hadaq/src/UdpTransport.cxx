@@ -329,10 +329,8 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
    // TODO: fix default pid export of worker ?
    CreateNetmemPar("PID");
 
-   pid_t  pid = syscall(SYS_gettid);          ///< process id
-
-   SetNetmemPar("PID", (int) pid);
-   SetNetmemPar("coreNr", hadaq::CoreAffinity(pid));
+   SetNetmemPar("PID", 1);
+   SetNetmemPar("coreNr", 1);
    CreateTimer("ObserverTimer", 1);
    DOUT3("hadaq::DataTransport created observer parameters");
 }
