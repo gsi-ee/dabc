@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
            tm = time(0);
            if (tm - lasttm > 3) {
-              printf("Bufs %6ld  Size %8.3f MB  Lost %3ld\n", totalbuf, totalsz*1e-6, totallost);
+              printf("Bufs %6lld  Size %8.3f MB  Lost %3lld\n", (long long) totalbuf, totalsz*1e-6, (long long) totallost);
               lasttm = tm;
            }
         }
