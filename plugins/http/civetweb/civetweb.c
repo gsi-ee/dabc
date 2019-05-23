@@ -162,7 +162,6 @@ _civet_clock_gettime(int clk_id, struct timespec *t)
 
       if (clock_start_time == 0) {
          kern_return_t mach_status = mach_timebase_info(&timebase_ifo);
-         DEBUG_ASSERT(mach_status == KERN_SUCCESS);
 
          /* appease "unused variable" warning for release builds */
          (void)mach_status;
