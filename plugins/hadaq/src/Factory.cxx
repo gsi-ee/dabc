@@ -34,7 +34,6 @@
 #include "hadaq/TerminalModule.h"
 #include "hadaq/BnetMasterModule.h"
 #include "hadaq/Iterator.h"
-#include "hadaq/Observer.h"
 #include "hadaq/api.h"
 
 
@@ -59,7 +58,7 @@ dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string &typ)
       return new hadaq::HldInput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string &typ)
@@ -70,7 +69,7 @@ dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string &typ)
       return new hadaq::HldOutput(url);
    }
 
-   return 0;
+   return nullptr;
 }
 
 dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string &typ, dabc::Command cmd)
@@ -201,21 +200,4 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string &classname, const s
       return new hadaq::BnetMasterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
-}
-
-
-void hadaq::Factory::Initialize()
-{
-   dabc::XMLNodePointer_t node = 0;
-
-   while (dabc::mgr()->cfg()->NextCreationNode(node, "Observer", true)) {
-
-      // const char* name = dabc::Xml::GetAttr(node, dabc::xmlNameAttr);
-
-      const char* thrdname = dabc::Xml::GetAttr(node, dabc::xmlThreadAttr);
-      if ((thrdname==0) || (*thrdname==0)) thrdname = "ShmThread";
-
-      dabc::WorkerRef w = new hadaq::Observer("/shm");
-      w.MakeThreadForWorker(thrdname);
-   }
 }

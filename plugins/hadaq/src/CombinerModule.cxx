@@ -26,7 +26,6 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
-#include "hadaq/Observer.h"
 #include "hadaq/UdpTransport.h"
 
 //#define HADERRBITDEBUG 1
@@ -382,7 +381,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
       if (pos!=std::string::npos)
          filename = filename.substr(pos+1, std::string::npos);
       //std::cout <<"!!!!!! Register prefix:"<<filename << std::endl;
-      SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(filename.c_str()));
+      // SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(filename.c_str()));
    }
 
    CreateEvtbuildPar("evtsDiscarded");
@@ -1808,7 +1807,7 @@ bool hadaq::CombinerModule::ReplyCommand(dabc::Command cmd)
          if (fRunNumber) StoreRunInfoStop(false, newrunid);
          std::string newprefix = fBnetFileCmd.GetStr("prefix");
          if(!newprefix.empty()) fPrefix = newprefix; // need to reset prefix here for run info JAM2018
-         SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(fPrefix.c_str())); // also export changed prefix to EPICS
+         // SetEvtbuildPar("prefix",hadaq::Observer::Args_prefixCode(fPrefix.c_str())); // also export changed prefix to EPICS
          fRunNumber = newrunid;
          ResetInfoCounters();
          StoreRunInfoStart();

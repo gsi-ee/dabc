@@ -83,12 +83,6 @@ DAQDISK - switches disk demon mode on/off
       <!--       <runtime value="50"/>  -->
     </Run>
 
-     <!-- shmem control config -->
-   <!--  <Observer name="shm">
-       <DoShmControl value="true"/>
-       <NodeId value="${BNEBNUM}"/>
-    </Observer>   -->
-
     <!-- If uncommented, all internal manager structures will be published in the web server -->
     <!-- Publisher name="publ" manager="true"/ -->
 
