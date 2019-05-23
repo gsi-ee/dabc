@@ -47,11 +47,6 @@ namespace hadaq {
    extern const char* NetmemPrefix;
    extern const char* EvtbuildPrefix;
 
-   /* helper function to evaluate core affinity for process pid_t
-    * mostly stolen from daqdata/hadaq/stats.c
-      we put it here since event structures are known almost everywhere*/
-   extern int CoreAffinity(pid_t pid);
-
    /*
     * Format a HADES-convention filename string
     * from a given run id and optional eventbuilder id
