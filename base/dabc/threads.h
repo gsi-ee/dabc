@@ -37,17 +37,17 @@ struct cpu_set_t {
 
 #define CPU_SETSIZE 32
 
-void CPU_ZERO(cpu_set_t *arg) { arg->flag = 0; }
+extern "C" void CPU_ZERO(cpu_set_t *arg);
 
-void CPU_SET(int cpu, cpu_set_t *arg) { arg->flag |= (1<<cpu); }
+extern "C" void CPU_SET(int cpu, cpu_set_t *arg);
 
-bool CPU_ISSET(int cpu, cpu_set_t *arg) { return arg->flag & (1<<cpu); }
+extern "C" bool CPU_ISSET(int cpu, cpu_set_t *arg);
 
-void CPU_CLR(int cpu, cpu_set_t *arg) { arg->flag = arg->flag & ~(1<<cpu); }
+extern "C" void CPU_CLR(int cpu, cpu_set_t *arg);
 
-int sched_getaffinity(int, int, cpu_set_t* set) { set->flag = 0xFFFF; return 0; }
+extern "C" int sched_getaffinity(int, int, cpu_set_t* set);
 
-int sched_setaffinity(int, int, cpu_set_t*) { return 0; }
+extern "C" int sched_setaffinity(int, int, cpu_set_t*);
 
 #endif
 

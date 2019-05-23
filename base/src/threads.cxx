@@ -22,6 +22,26 @@
 
 #include "dabc/logging.h"
 
+
+#ifdef DABC_MAC
+// try to provide dummy wrapper for all using functions around affinity
+
+void CPU_ZERO(cpu_set_t *arg) { arg->flag = 0; }
+
+void CPU_SET(int cpu, cpu_set_t *arg) { arg->flag |= (1<<cpu); }
+
+bool CPU_ISSET(int cpu, cpu_set_t *arg) { return arg->flag & (1<<cpu); }
+
+void CPU_CLR(int cpu, cpu_set_t *arg) { arg->flag = arg->flag & ~(1<<cpu); }
+
+int sched_getaffinity(int, int, cpu_set_t* set) { set->flag = 0xFFFF; return 0; }
+
+int sched_setaffinity(int, int, cpu_set_t*) { return 0; }
+
+#endif
+
+
+
 dabc::Mutex::Mutex(bool recursive)
 {
    if (recursive) {
@@ -30,8 +50,9 @@ dabc::Mutex::Mutex(bool recursive)
       pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
       pthread_mutex_init(&fMutex, &attr);
       pthread_mutexattr_destroy(&attr);
-   } else
+   } else {
       pthread_mutex_init(&fMutex, 0);
+   }
 }
 
 bool dabc::Mutex::TryLock()
