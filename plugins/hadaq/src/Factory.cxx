@@ -164,7 +164,6 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    double flush = url.GetOptionDouble(dabc::xml_flush, 1.);
    double reduce = url.GetOptionDouble("reduce", 1.);
    double lost_rate = url.GetOptionDouble("lost", 0);
-   bool observer = url.GetOptionBool("observer", false);
    bool debug = url.HasOption("debug");
    int udp_queue = url.GetOptionInt("upd_queue", 0);
 
@@ -173,7 +172,7 @@ dabc::Module* hadaq::Factory::CreateTransport(const dabc::Reference& port, const
    DOUT0("Start HADAQ UDP transport on %s", url.GetHostNameWithPort().c_str());
 
    NewAddon* addon = new NewAddon(fd, nport, mtu, debug, maxloop, reduce, lost_rate);
-	return new hadaq::NewTransport(cmd, portref, addon, observer, flush);
+	return new hadaq::NewTransport(cmd, portref, addon, flush);
 }
 
 

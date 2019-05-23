@@ -139,7 +139,6 @@ namespace hadaq {
       protected:
 
          int            fIdNumber;
-         bool           fWithObserver;
          std::string    fDataRateName;
          unsigned       fNumReadyBufs; ///< number of filled buffers which could be posted
          bool           fBufAssigned;  ///< if next buffer assigned
@@ -149,15 +148,12 @@ namespace hadaq {
          void CreateNetmemPar(const std::string &name);
          void SetNetmemPar(const std::string &name, unsigned value);
 
-         void RegisterExportedCounters();
-         bool UpdateExportedCounters();
-
          virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
-         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, bool observer, double flush = 1);
+         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, double flush = 1);
          virtual ~NewTransport();
 
          /** Methods activated by Port, when transport starts/stops. */

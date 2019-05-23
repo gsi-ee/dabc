@@ -277,13 +277,11 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 }
 
 
-
 // ========================================================================================
 
-hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, bool observer, double flush) :
+hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, double flush) :
    dabc::Transport(cmd, inpport, 0),
    fIdNumber(0),
-   fWithObserver(observer),
    fDataRateName(),
    fNumReadyBufs(0),
    fBufAssigned(false),
@@ -304,35 +302,7 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
    if (flush > 0)
       CreateTimer("FlushTimer", flush);
 
-   DOUT3("Starting hadaq::DataTransport %s %s id %d", GetName(), (fWithObserver ? "with observer" : ""), fIdNumber);
-
-   if(!fWithObserver) return;
-
-   // workaround to suppress problems with dim observer when this ratemeter is registered:
-   fDataRateName = dabc::format("%s-Datarate", inpport.GetName());
-   CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
-   //Par(fDataRateName).SetDebugLevel(1);
-   SetPortRatemeter(OutputName(), Par(fDataRateName));
-
-   CreateNetmemPar(dabc::format("pktsReceived%d",fIdNumber));
-   CreateNetmemPar(dabc::format("pktsDiscarded%d",fIdNumber));
-   CreateNetmemPar(dabc::format("msgsReceived%d",fIdNumber));
-   CreateNetmemPar(dabc::format("msgsDiscarded%d",fIdNumber));
-   CreateNetmemPar(dabc::format("bytesReceived%d",fIdNumber));
-   CreateNetmemPar(dabc::format("netmemBuff%d",fIdNumber));
-   CreateNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber));
-   CreateNetmemPar(dabc::format("portNr%d",fIdNumber));
-   SetNetmemPar(dabc::format("portNr%d",fIdNumber), addon->fNPort);
-
-   CreateNetmemPar("coreNr");
-   // exclude PID from shared mem not to interfere with default pid of observer
-   // TODO: fix default pid export of worker ?
-   CreateNetmemPar("PID");
-
-   SetNetmemPar("PID", 1);
-   SetNetmemPar("coreNr", 1);
-   CreateTimer("ObserverTimer", 1);
-   DOUT3("hadaq::DataTransport created observer parameters");
+   DOUT3("Starting hadaq::DataTransport %s id %d", GetName(), fIdNumber);
 }
 
 hadaq::NewTransport::~NewTransport()
@@ -354,35 +324,8 @@ void hadaq::NewTransport::SetNetmemPar(const std::string &name, unsigned value)
    Par(GetNetmemParName(name)).SetValue(value);
 }
 
-bool hadaq::NewTransport::UpdateExportedCounters()
-{
-   NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
-
-   if(!fWithObserver || (addon==0)) return false;
-
-   SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), addon->fTotalRecvPacket);
-   SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
-   SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), addon->fTotalRecvPacket);
-   SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), addon->fTotalDiscardPacket);
-   SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), addon->fTotalRecvBytes);
-   unsigned capacity = OutputQueueCapacity();
-   float ratio = 100.;
-   if (capacity>0) ratio -= 100.* NumCanSend()/capacity;
-   SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber), (unsigned) ratio);
-   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), (unsigned) (Par(fDataRateName).Value().AsDouble() * 1024 * 1024));
-
-   return true;
-}
-
 int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd.IsName("ResetExportedCounters")) {
-      NewAddon* addon = dynamic_cast<NewAddon*> (fAddon());
-      if (addon) addon->ClearCounters();
-      UpdateExportedCounters();
-      return dabc::cmd_true;
-   }
-
    if (cmd.IsName("ResetTransportStat")) {
       NewAddon *addon = dynamic_cast<NewAddon *> (fAddon());
       if (addon) addon->ClearCounters();
@@ -427,9 +370,6 @@ void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "FlushTimer") {
       FlushBuffer(false);
-   } else
-   if (TimerName(timer) == "ObserverTimer") {
-      UpdateExportedCounters();
    } else {
       dabc::Transport::ProcessTimerEvent(timer);
    }
