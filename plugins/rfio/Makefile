@@ -61,7 +61,7 @@ $(DABCRFIO_LIB):   $(DABCRFIO_O)
 	@$(MakeLib) $(DABCRFIO_LIBNAME) "$(DABCRFIO_O)" $(TGTDLLPATH)
 
 clean::
-#	rm -f $(RFIOFAPI_PACKAGE)
+#	$(RM) $(RFIOFAPI_PACKAGE)
 
 ########### extra rules #############
 

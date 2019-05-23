@@ -28,7 +28,7 @@ DABC_PLUGINS += $(wildcard applications/*)
 libs:: dabclogin
 
 clean:: clean-doxy
-	@rm -f $(DABCSYS)/config/Makefile.gener
+	@$(RM) $(DABCSYS)/config/Makefile.gener
 
 docs:: doxy
 
@@ -38,7 +38,7 @@ doxy:
 
 clean-doxy:
 	@echo "Clean doxygen documentation"
-	rm -rf html
+	@$(RMDIR) html
 
 dabclogin: build/dabclogin.sh config/Makefile.config
 	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(DABC_VERSION)|" \

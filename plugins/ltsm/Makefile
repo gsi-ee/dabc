@@ -69,7 +69,7 @@ $(DABCLTSM_LIB):   $(DABCLTSM_O)
 	@$(MakeLib) $(DABCLTSM_LIBNAME) "$(DABCLTSM_O)" $(TGTDLLPATH) "$(call lddiropt,$(TSM_LIBDIR)) $(TSM_LINKLIBS)"
 
 clean::
-#	rm -f $(LTSMFAPI_PACKAGE)
+#	$(RM) $(LTSMFAPI_PACKAGE)
 
 ########### extra rules #############
 

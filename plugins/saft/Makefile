@@ -34,7 +34,7 @@ ALLDEPENDENC      += $(SAFT_D)
 libs:: $(SAFT_LIB)
 
 clean::
-	@rm -f $(SAFTDIR)/go4/*.o $(SAFTDIR)/go4/*.d $(SAFTDIR)/go4/*.root $(SAFTDIR)/go4/*.so
+	@$(RM) $(SAFTDIR)/go4/*.o $(SAFTDIR)/go4/*.d $(SAFTDIR)/go4/*.root $(SAFTDIR)/go4/*.so
 
 
 ##### local rules #####

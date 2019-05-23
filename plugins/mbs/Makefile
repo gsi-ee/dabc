@@ -45,7 +45,7 @@ libs:: $(DABCMBS_LIB)
 exes::  $(MBSPRINT_EXE) $(MBSCMD_EXE)
 
 clean::
-	rm -f $(MBSPRINT_EXE) $(MBSCMD_EXE)
+	@$(RM) $(MBSPRINT_EXE) $(MBSCMD_EXE)
 
 ##### local rules #####
 

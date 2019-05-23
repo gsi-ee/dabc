@@ -28,19 +28,19 @@ package: clean
             --exclude=.svn --exclude=*.log --exclude=*.bak 
 	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(DABCPACK_VERS)
 	@mv $(DABCTAR_NAME) $(DABCDISTR_DIR)
-	@cd $(DABCDISTR_DIR); tar xf $(DABCTAR_NAME); rm -f $(DABCTAR_NAME)
+	@cd $(DABCDISTR_DIR); tar xf $(DABCTAR_NAME); $(RM) $(DABCTAR_NAME)
 #	@mv -f $(DABCDISTR_DIR)/doc/main-all.pdf $(DABCDISTR_DIR)/doc/dabcmanual.pdf
 	@cd $(DISTR_DIR); chmod u+w *; chmod u+w */*; chmod u+w */*/*; tar chf $(DABCTAR_NAME) $(DABCPACK_VERS) --exclude=$(DABCTAR_NAME)*; gzip -f $(DABCTAR_NAME)
 	@mkdir -p $(PACKAGE_DIR)
 	@mv -f $(DISTR_DIR)/$(DABCTAR_NAME).gz $(PACKAGE_DIR)
-	@rm -f -r $(DISTR_DIR)/*
+	@$(RM) -r $(DISTR_DIR)/*
 	@rmdir $(DISTR_DIR)
 	@echo "Package $(DABCTAR_NAME).gz done in $(PACKAGE_DIR)"
 
 src: clean
 	tar chf dabc.tar Makefile *.txt base config build script controls/simple dim controls/dimcontrol --exclude=.svn
 	tar rhf dabc.tar plugins applications gui/java --exclude=plugins/abb/linuxdrivers --exclude=.svn
-	rm -f dabc.tar.gz 
+	$(RM) dabc.tar.gz 
 	gzip dabc.tar
 	@mkdir -p $(PACKAGE_DIR); mv -f dabc.tar.gz $(PACKAGE_DIR)
 	@echo "Source package dabc.tar.gz done"  

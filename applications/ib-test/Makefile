@@ -64,7 +64,7 @@ endif
 
 
 clean::
-	rm -f $(IBTEST_LIB) $(IBTESTDIR)*.log
+	@$(RM) $(IBTEST_LIB) $(IBTESTDIR)*.log
 
 ifeq ($(USEOFEDVERBS),true)
 $(IBTEST_O) : DEFINITIONS += WITH_VERBS

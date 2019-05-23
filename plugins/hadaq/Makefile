@@ -41,7 +41,7 @@ libs:: $(DABCHADAQ_LIB)
 exes:: $(HLDPRINT_EXE)
 
 clean::
-	rm -f $(HLDPRINT_EXE)
+	@$(RM) $(HLDPRINT_EXE)
 
 
 ##### local rules #####
