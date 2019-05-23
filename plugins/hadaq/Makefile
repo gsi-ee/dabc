@@ -51,7 +51,7 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@cp -f $< $@
 
 $(DABCHADAQ_LIB):   $(HADAQ_O) $(DABCMBS_LIB)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(HADAQ_O)" $(TGTDLLPATH) "-lrt -lDabcMbs"
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(HADAQ_O)" $(TGTDLLPATH) "-lDabcCore -lDabcMbs"
 
 $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCBASE_LIB) $(DABCHADAQ_LIB)
 	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
