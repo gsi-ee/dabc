@@ -18,7 +18,7 @@
 
    DABC = {};
 
-   DABC.version = "2.9.9 25/06/2018";
+   DABC.version = "2.10.0 23/05/2019";
 
    DABC.source_dir = function(){
       var scripts = document.getElementsByTagName('script');

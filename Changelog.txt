@@ -1,22 +1,27 @@
-This is log of changes in the DABC project. 
-It is the best (and sometimes the only) place to find information 
+This is log of changes in the DABC project.
+It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
+23.05.2019
+1. Port of DABC code to modern Mac OS (excluding RFIO, IB verbs and threads affinity)
+   Declare as version 2.10.0
+
+
 22.10.2018
-1. Provide log/err output for stream framework. 
-   This is attempt to get exact place of errors in data stream. 
-2. Provide -find arguments in hldprint to locate specific event   
+1. Provide log/err output for stream framework.
+   This is attempt to get exact place of errors in data stream.
+2. Provide -find arguments in hldprint to locate specific event
 
 
 4.07.2018
 1. Fix problem with auto buffers delivery in memory pool.
-   It was stopped when number of buffers was not sufficient  
+   It was stopped when number of buffers was not sufficient
 
 
 25.06.2018
 1. Control number of input and builder nodes from master.
-   Set error state if some of nodes are missing 
-   
+   Set error state if some of nodes are missing
+
 
 21.08.2018
 1. Set thread name to be able monitor it in tools like htop
@@ -24,9 +29,9 @@ about current functionality of the framework.
 
 
 20.06.2018
-1. Implement implicit calibration mode for DABC. In this case calibration is started by 
-   the command from the control GUI and all hits are accumulated for calibration. 
- 
+1. Implement implicit calibration mode for DABC. In this case calibration is started by
+   the command from the control GUI and all hits are accumulated for calibration.
+
 
 25.05.2018
 1. Add connection timeout to Application configuration. Should be configured like:
@@ -38,14 +43,14 @@ about current functionality of the framework.
    To disable stream compilation, make nostream=1 should be used
 2. Provide method to clear histograms in DabcProcMgr
 3. Provide "oninit" parameter for StartRun command in BNET master.
-   When URL like StartRun/execute?prefix=te&oninit=true is submitted, 
+   When URL like StartRun/execute?prefix=te&oninit=true is submitted,
    command check at least 3 cycle that same and not-empty list of builder nodes is presented.
    Only then it start execution of the command
 
 
 23.05.2018
 1. Enable "reduce" parameter for hadaq::UdpTransport. Reduce allowed amount of buffer which
-   can be filled by transport. Should be between 0.1 and 1. 
+   can be filled by transport. Should be between 0.1 and 1.
 2. When "calibr=0" specified for UdpTransport, calibration module will only fill basic histograms
 
 
@@ -56,22 +61,22 @@ about current functionality of the framework.
 
 11.05.2018
 1. Provide dummy mode for hld file output. It is created, but not writes any files.
-   Required to dynamically stop/start preconfigured HLD outputs from BNet master  
-2. Implement run control from BNet master. One can start/stop run with changed prefix 
+   Required to dynamically stop/start preconfigured HLD outputs from BNet master
+2. Implement run control from BNet master. One can start/stop run with changed prefix
    from the master - all event builder just change file name and keep all other config.
 3. Provide "value.json" request to get value field of requested record.
 4. Create "State" record for each BNet node, use it in control GUI
-5. Implement automatic new file start when BNET master runs in control mode 
+5. Implement automatic new file start when BNET master runs in control mode
 
 
 4.05.2018
 1. Introduce hadaq::BnetMasterModule for implementing central controller of HADES BNet application.
-   It task will be monitor existing nodes, request regular statistc and probably, 
-   control data taking in bnet. 
+   It task will be monitor existing nodes, request regular statistc and probably,
+   control data taking in bnet.
 
 
 20.04.2018
-1. Add SkipEmpty flag to hadaq::CombinerModule. If false, when false, subevents without raw data will 
+1. Add SkipEmpty flag to hadaq::CombinerModule. If false, when false, subevents without raw data will
    not be skipped and inserted into final event. Default is true - empty subevents are dropped
 
 
@@ -83,24 +88,24 @@ about current functionality of the framework.
 25.01.2018
 1. Fix tiny problem with master-side Publisher
 2. Switch in compilation with c++11, supported starting from gcc 4.8,
-   let use more standard methods and containers 
+   let use more standard methods and containers
 
 
 5.12.2017
-1. Automatically recognize HUBs and TDCs in the hldprint. 
-2. Recognize rising/falling seuqence error and low ToT errors in hldprint 
+1. Automatically recognize HUBs and TDCs in the hldprint.
+2. Recognize rising/falling seuqence error and low ToT errors in hldprint
 3. Let printout data only with errors
 
 
 11.08.2017
-1. Add "thrdstoptime" parameter. Can be specified in <Run> section for all threads or 
+1. Add "thrdstoptime" parameter. Can be specified in <Run> section for all threads or
    individually for each thread. Default is 5 seconds.
-2. When processing Ctrl-C signal, do not reopen log file. Normally logfile flushed 
-   every 3 seconds by closing and opening it again. 
-     
+2. When processing Ctrl-C signal, do not reopen log file. Normally logfile flushed
+   every 3 seconds by closing and opening it again.
+
 
 11.05.2017
-1. For hadaq::CombinerModule new parameter "HadesTriggerType" is introduced. 
+1. For hadaq::CombinerModule new parameter "HadesTriggerType" is introduced.
    It should be set to true in all HADES setup. By default it is false and means,
    that TRB3 readout with TRB3 trigger type is used.
 2. Disbale buffers drops in setup with single readout
@@ -109,24 +114,24 @@ about current functionality of the framework.
 3.05.2017
 1. New: ltsm plugin for storage interface, first version. Uses light tivoli storage manager software
    by Thomas Stibor and Joerg Beherendt (https://github.com/tstibor/ltsm)
-2. Corrected mbs plugin lmd file to keep and use url options when opening a file. 
+2. Corrected mbs plugin lmd file to keep and use url options when opening a file.
    Required to test ltsm plugin with mbs random event generator.
 
 9.03.2017
 1. When UDP transport blocks, it starts read and discard single UDP packets.
    This seen as packets discarded due to formatting error.
-     
+
 
 2.12.2016
 1. When create HADAQ UDP transport, use specified hostname to bind UDP socket
-   with specified host address. Useful when many interfaces are exists. 
+   with specified host address. Useful when many interfaces are exists.
 
 
 29.11.2016
 1. Improve timeout handling of commands - let wait 0.5 s more than actual timeout.
    This gives executing instance to correctly treat and issue timeout.
 2. Let configure multiple connections in single <Connection> XML element.
-   With the "list" attribute one could specify several nodes or any other string arguments.      
+   With the "list" attribute one could specify several nodes or any other string arguments.
 3. Let use #${varname} in config file. Replaced with counts of entries in the variable.
    Can be 0 (for empty variable), 1 for non-array and N for array of any elements.
    Main function - create required number of ports for provided list of services
@@ -134,7 +139,7 @@ about current functionality of the framework.
    Index of each element predefined by framework. Namely used for indexing input/output ports.
    Example of usage with hadaq:
      <hadaqports1 value="[50000,50001,50002]"/>
-     <Module name="FirstLevel" class="hadaq::CombinerModule">    
+     <Module name="FirstLevel" class="hadaq::CombinerModule">
        <NumInputs value="#${hadaqports1}"/>
        <InputPort name="Input*" queue="10" url="nhadaq://host:${hadaqports1}#"/>
      </Module>
@@ -145,10 +150,10 @@ about current functionality of the framework.
 2. For MBS servers reintroduce "mbss" and "mbst" protocols names for
    streame and transport servers. Now one can clearly set hostname which
    should be bind for both server kinds. If mbs:// is used, still hostname
-   can determine protocol. 
+   can determine protocol.
 3. Application will be terminated if any module/transport/connection cannot be created.
 4. When connecting output port with input port, change server/client assignment.
-   Now output port will be server-side and await for connection. 
+   Now output port will be server-side and await for connection.
 5. In core socket classes call OnSocketError() also when coneection is closed.
    OnCloseConnection() method is obsolete.
 
@@ -156,38 +161,38 @@ about current functionality of the framework.
 25.11.2016
 1. Improve server-side socket creation - hostname can be directly specified.
 2. Let configure hostnname and port number used by socket device for connections.
-3. Let reuse command channel socket for other socket connections. 
+3. Let reuse command channel socket for other socket connections.
    If SocketDevice does not require special port/hostname, one just use
    same interface as command channel for the connections
 4. First working prototype of HADAQ BNET via network connections between
-   sender and receivers. 
+   sender and receivers.
 
 
 24.11.2016
 1. Introduce BNET modes in CombinerModule. This allows to implement
-   two-level events building. On the first level groups of subevents will 
-   be produced (BNETsend = true). On the second level complete event from 
-   such groups will be build (BNETrecv = true). BNET sender can distribute 
+   two-level events building. On the first level groups of subevents will
+   be produced (BNETsend = true). On the second level complete event from
+   such groups will be build (BNETrecv = true). BNET sender can distribute
    groups over several builders.
 
 
 23.11.2016
 1. Let configure priority for module, module items and sockets.
    This allow to increase priority for important I/O events,
-   which should be processed faster.  
+   which should be processed faster.
 2. Introduce new UDP transport for HADAQ, which directly derived
-   from dabc::Transport class. Main advantage compare to old - 
-   less events are required to handle transport. 
+   from dabc::Transport class. Main advantage compare to old -
+   less events are required to handle transport.
    Increase priority of socket events. First tests shows much less
    lost rate comare to old implementation.
 3. Provide option to discard HLD events if TAG is not matched in the subevents.
-   One should provide CheckTag value="true" in XML file. 
+   One should provide CheckTag value="true" in XML file.
    Default is now true - config for HADES event builders should be adjusted.
-   
+
 
 21.11.2016
 1. Introduce plugin for A1 DAQ (AQUA framework).
-   Preliminary client-side code - server should be provoded by AQUA 
+   Preliminary client-side code - server should be provoded by AQUA
 
 
 27.09.2016
@@ -196,7 +201,7 @@ about current functionality of the framework.
    Can be used as http://server:8090/Module/module.json
 2. Implement transport.json debug request. Return elementary state of transport,
    assigned with module input or output port. Can be used as
-      http://server:8090/Module/Input0/transport.json 
+      http://server:8090/Module/Input0/transport.json
 
 
 25.01.2016
@@ -206,14 +211,14 @@ about current functionality of the framework.
 
 16.11.2015
 1. Provide start/stop ROOT file commands in stream::RunModule
-2. Display run/file status 
-3. Correctly update TDC calibration progress   
+2. Display run/file status
+3. Correctly update TDC calibration progress
 
 
 13.11.2015
 1. First working version with root file store with stream output
 2. First web-based GUI for calibration code running in stream framework via RunModule
-   Reuse central components from interface for TdcCalibrationModule  
+   Reuse central components from interface for TdcCalibrationModule
 
 
 12.11.2015
@@ -221,16 +226,16 @@ about current functionality of the framework.
    without introducing linker dependencies. Will be used to provide tree storage for
    the stream plugin in DABC
 2. Introduce TreeStore in ROOT plugin. It is wrapper for use ROOT TTree functionality
-   in other plugins.     
-3. When creating transport via factory, use Module as return pointer. This allows to 
+   in other plugins.
+3. When creating transport via factory, use Module as return pointer. This allows to
    just create arbitrary module when creating transport via url parameters.
-   Such module automatically started when created 
+   Such module automatically started when created
 4. First try to create stream analysis as output transport. Idea to add TDC monitoring
-   and optional ROOT output directly into DABC application 
- 
+   and optional ROOT output directly into DABC application
+
 
 9.11.2015
-1. Support function call from DabcProcMgr. 
+1. Support function call from DabcProcMgr.
 
 
 5.11.2015
@@ -251,32 +256,32 @@ about current functionality of the framework.
 30.10.2015
 1. Introduce hadaq::SorterModule. It should sort subevents according trigger number.
 2. SorterModule can be created when "resort" url option for UDP transport specified
-   SorterModule can be combined (connected in chain) with TdcCalibrationModule.  
+   SorterModule can be combined (connected in chain) with TdcCalibrationModule.
 
 
 29.10.2015
 1. When making file input, once could specify "reduce" parameter in URL options.
-   It let reduce buffer size, which will be filled by reading. 
-   Used in hadaq::HldInput and mbs::LmdInput 
-2. Support "reduce" parameter also in hadaq::UdpTransport. 
+   It let reduce buffer size, which will be filled by reading.
+   Used in hadaq::HldInput and mbs::LmdInput
+2. Support "reduce" parameter also in hadaq::UdpTransport.
    In the future let us reformat data within single buffer
-3. Working version of recalibrate module - now one could 
+3. Working version of recalibrate module - now one could
    convert HLD files, either replacing hit messages or
    introducing additional calibration messages. File increase
    in second case about 26%.
 4. Support new message kind in hldprint
 5. Introduce new buffer kind mbt_HadaqSubevents. Use it when reformat hadTU data.
    Only subevents are stored in such buffer. Reduces memory usage.
-6. Support mbt_HadaqSubevents in combiner module     
+6. Support mbt_HadaqSubevents in combiner module
 7. Provide information about mbs server in terminal module
-   
+
 
 27.10.2015
 1. Add optional "resort" parameter for inputs of hadaq::CombinerModule.
    It indicates if combiner should try to resort events comming from TRB.
    May be helpful when TRB sends subevents not in order they appear or when
-   network switch may change order of the packets.  
-   
+   network switch may change order of the packets.
+
 
 23.10.2015
 1. Introduce stream::RecalibrateModule to allow recalibrate HLD files one again.
@@ -286,13 +291,13 @@ about current functionality of the framework.
 
 25.09.2015
 1. Replace gauge display with implementation from https://gist.github.com/tomerd/1499279
-   It is d3.js-based and like google gauge.  
+   It is d3.js-based and like google gauge.
 
 
 23.09.2015
 1. Allow multiple hub ids in the hldprint.
 2. Allow multiple TDC ids in the hldprint.
-3. Let configure multiple HUBs in TdcCalibrationModule.    
+3. Let configure multiple HUBs in TdcCalibrationModule.
 
 
 16.07.2015
@@ -308,23 +313,23 @@ about current functionality of the framework.
 
 
 9.07.2015
-1. Provide example how stream analysis can be run as additional module 
+1. Provide example how stream analysis can be run as additional module
    in event builder process. Histograms can be accessed via http channel
    from web browser or go4 GUI.
 2. Support ROOT-kind commands in hierarchy
-3. Implement Start/Stop/Clear commands for DabcProcMgr, let control worker from Go4GUI 
-4. Implement Clear command for individual histograms in DabcProcMgr 
+3. Implement Start/Stop/Clear commands for DabcProcMgr, let control worker from Go4GUI
+4. Implement Clear command for individual histograms in DabcProcMgr
 
 
 8.07.2015
-1. Allow to request statistic from the data transports. 
+1. Allow to request statistic from the data transports.
    Implemented in file transports
-2. Try to display file output information in the hadaq::TerminalModule   
+2. Try to display file output information in the hadaq::TerminalModule
 3. Add configurable "fileport" for terminal module
-4. Introduce DataOutput::Write_Retry() to verify that object support 
+4. Introduce DataOutput::Write_Retry() to verify that object support
    "retry" option which could be configured for output port. If returns true,
    after timeout DataTransport tries to reinitialize input again.
-   Provided in HldOutput 
+   Provided in HldOutput
 5. Introduce "blocking" parameter for the port. It defines that happens with
    the queue when it full - should port be blocked or one can send buffers into
    the queue, causing drop of data. Possible values are:
@@ -333,12 +338,12 @@ about current functionality of the framework.
        "never"        - queue never blocks, buffers can be lost
        "always"       - queue is always blocks
 6. Support custom histogram labels in JavaScript
-7. For DABC histograms, used in stream framework, set _make_request and 
-   _after_request fields. This let use standard JSROOT requests scheme. 
+7. For DABC histograms, used in stream framework, set _make_request and
+   _after_request fields. This let use standard JSROOT requests scheme.
 
 
 7.07.2015
-1. Make slow-time mode by default while it does not work correctly on 
+1. Make slow-time mode by default while it does not work correctly on
    multi-core machines. Only for special applications fast timing is important.
 2. Create stream plugin, where all stream-specific classes are collected.
    These are TdcCalibrationModule and runengine for stream framework. Plugin
@@ -347,7 +352,7 @@ about current functionality of the framework.
       path/to/item/cmd.json?command=name_of_command
    Such call will produce command name HCMD_name_of_command, which can
    be processed in the producer inside ExecuteCommand method. Result should
-   be returned as raw buffer 
+   be returned as raw buffer
 4. cmd.json method used to request mean/rms value for histograms, produced by
    DabcProcMgr. Requests looks like:
    http://localhost:8090/Stream/Run/HLD/HLD_EvSize/cmd.json?command=GetEntries
@@ -357,7 +362,7 @@ about current functionality of the framework.
 
 6.07.2015
 1. In dabc_root utility allow to skip empty histograms - with -skip-zero option
-2. In dabc_root delete directory without histograms (when -skip-zero option specified) 
+2. In dabc_root delete directory without histograms (when -skip-zero option specified)
 
 
 3.07.2015
@@ -371,7 +376,7 @@ about current functionality of the framework.
 1. Provide in hadaq::TerminalModule "Data" record with most fields
    which could be interesting for outside application
 2. When stopping hadaq::UdpTransport, notify addon component to correctly
-   shutdown all correspondent components by Ctrl-C   
+   shutdown all correspondent components by Ctrl-C
 
 
 22.05.2015
@@ -399,46 +404,46 @@ about current functionality of the framework.
 
 18.05.2015
 1. Fix compilation problems when make debug=4 called
-2. When printing hld events/subevents, show padding bytes (if any) 
+2. When printing hld events/subevents, show padding bytes (if any)
 
 
 8.04.2015
 1. nostat option should disable only TPaveStats drawings, other functions
    should be drawn
-    
+
 
 26.03.2015
 1. When drawing text with rescaling, hide only text itself and not container.
 2. When move/resize statbox or title, selection rect append to top svg:g
    container that during drawing update such rect not disappears.
-3. Improve position calculation of such rect - especially when cursor get out of window 
+3. Improve position calculation of such rect - especially when cursor get out of window
 4. One could modify title of the top folder, it is set into h.json file and
-   used and page title in the user interface 
-    
+   used and page title in the user interface
+
 
 25.03.2015
-1. For text drawing use 'dy' attribute to implement Y align. 
-   It can be specified in 'em' units. 
-2. Special handling for IE, where "dominant-baseline" = "middle" not work.    
+1. For text drawing use 'dy' attribute to implement Y align.
+   It can be specified in 'em' units.
+2. Special handling for IE, where "dominant-baseline" = "middle" not work.
 3. In TBufferJSON when float or double value equal to floor(value), than
    integer format is forced. Otherwise float conversion fails or is not optimal
 4. When drawing TGraph or TH1, fMinimum/fMaximum could be used for scale selection and
    not as zooming - zooming always interactive.
-   
+
 
 19.03.2015
 1. Revert usage of getBoundingClientRect() in SVG to define size. It takes into account
-   size of top SVG element, which is artificial for the MathJax text drawings 
+   size of top SVG element, which is artificial for the MathJax text drawings
 
 
 12.03.2015
 1. In collapsible and tabs layout drawing can be hidden. In such case client rect of
-   correspondent divs returns 0. To avoid problem with SVG drawing, one should just 
+   correspondent divs returns 0. To avoid problem with SVG drawing, one should just
    hide SVG element in such case. Similar problems appears during resize. Both problems
    now fixed.
-2. getBBox() for SVG elements makes problem for 'hidden' elements. 
-   Use getBoundingClientRect() instead - also returns required width and height 
-   
+2. getBBox() for SVG elements makes problem for 'hidden' elements.
+   Use getBoundingClientRect() instead - also returns required width and height
+
 
 11.03.2015
 1. Significant redesign of connection between ROOT and DABC application.
@@ -446,12 +451,12 @@ about current functionality of the framework.
    Thus root::Monitor class of DABC should be possible to use with any ROOT application,
    using THttpServer without need of specialization
 2. Implement lasy load for objects drawing. One could specify function from some other script,
-   which can be loaded and function (per name) invoked. 
+   which can be loaded and function (per name) invoked.
 3. Provide WhenReady method for the painter class. It allows to invoke callback,
-   when drawing is completed. Can be used for all JSROOT painters.    
-4. Via _drawfunc, _drawscript, _drawopt one could configure custom draw function for 
+   when drawing is completed. Can be used for all JSROOT painters.
+4. Via _drawfunc, _drawscript, _drawopt one could configure custom draw function for
    any other object.
- 
+
 
 10.03.2015
 1. In TRootSniffer handle list of streamer infos as another kind of object.
@@ -460,22 +465,22 @@ about current functionality of the framework.
 
 
 5.03.2015
-1. Adjust context menu position - do not get out of the window 
+1. Adjust context menu position - do not get out of the window
 2. Prevent monitoring of item where _player or _editor field specified.
    One also could specify '_no_monitor' property for each item
-3. Implement both vertical and horizontal separators, one could 
-   use later for status field. 
+3. Implement both vertical and horizontal separators, one could
+   use later for status field.
 
 
 4.03.2015
-1. First try of SVG output of MathJax. 
-   Produce SVG element extracted from MathJax output and 
+1. First try of SVG output of MathJax.
+   Produce SVG element extracted from MathJax output and
    and inserted in Canvas/Pad.
-2. Provide correct alignment for MathJax output, test with FF/IE/Chrome    
+2. Provide correct alignment for MathJax output, test with FF/IE/Chrome
 
 
 3.03.2015
-1. In TPaveText correctly handle TLatex. 
+1. In TPaveText correctly handle TLatex.
 2. Draw label in pave text
 3. Support TMathText, always use MathJax for it
 4. Provide separate examples for TLatex
@@ -485,61 +490,61 @@ about current functionality of the framework.
 2.03.2015
 1. When doing AssertPrerequisities, prevent loading same scripts
    twice. Second, third and more requests stored in the queue and
-   processed when previous is completed.  
-2. Fast complete  support of MathJax for Latex, 
+   processed when previous is completed.
+2. Fast complete  support of MathJax for Latex,
 3. Check first three examples for TLatex
- 
+
 
 27.02.2015
 1. When doing move and resize, do not react on right-mouse events.
 2. Better middle-position for MathJax inside foreignObject
 3. In CallBack allows to provide abstract pointer as this argument
-4. In LegendPainter rescale text after drawing to simplify 
-   work with MathJax 
+4. In LegendPainter rescale text after drawing to simplify
+   work with MathJax
 5. Introduce generic functions, which allow to draw many text entries
    with normal text or MathJax and than rescale them together.
-6. Apply new functionality of text drawing for TLegend, TPaveText, 
+6. Apply new functionality of text drawing for TLegend, TPaveText,
    TPaveLabel, TText, TLatex, TAxis
 7. Significantly simplify logic of move/resize, implement for TPaveLabel
 8. All latex-decoding can now be implemented in central place.
-    
+
 
 26.02.2015
 1. Move CreateDisplay and Tabs/Collapsible displays into jquery part
 2. In CheckResize one could use element ids
-3. Use DOM elements as frame handle in MDIDisplay 
+3. Use DOM elements as frame handle in MDIDisplay
 4. Separate jquery-dependent code from d3.js graphic.
    Now main 2-D graphic works without jquery  and jquery-ui at all!
 5. Implement nobrowser gui without jquery
 6. When invoking callback after HTTP request, set this pointer on request itself.
-   Can be used to keep request-specific information.    
+   Can be used to keep request-specific information.
 
 
 25.02.2015
 1. Mark JSROOT as version 3.3, start new version 3.4
 2. Support usage of minimized versions of .js and .css files.
    Minimized scripts used by default on web servers.
-3. Use window.onload to initialize all scripts 
+3. Use window.onload to initialize all scripts
 4. Implement JSROOT.extend instead of jQuery.extend, reduce
    usage of jquery in core JSROOT classes
-5. Fix problem in JSROOT - one could not combine window.onload in 
-   JSRootCore.js with body.onload initialization 
-6. Introduce JSRootPainter.jquery.js file, where all jquery-depended 
+5. Fix problem in JSROOT - one could not combine window.onload in
+   JSRootCore.js with body.onload initialization
+6. Introduce JSRootPainter.jquery.js file, where all jquery-depended
    code of painters will be collected. First try with context menu
 
 
 24.02.2015
 1. Detect major browser kinds in JSROOT
 2. Do not use foreignObjects in IE
-3. Workaround for positioning problem of foreignObjects in Chrome/Safari  
+3. Workaround for positioning problem of foreignObjects in Chrome/Safari
 4. Very first try to draw latex with MathJax (#frac in legend first)
-5. One can enable MathJax usage with mathjax url option. By default off. 
+5. One can enable MathJax usage with mathjax url option. By default off.
 
 
 20.02.2015
 1. Once again fix problem with escape symbols in TRootSnifferStoreJson,
-   TBufferJSON and dabc::Record  
-2. Let specify _layout item in httpcontrol.C, _drawitem and _drawopt 
+   TBufferJSON and dabc::Record
+2. Let specify _layout item in httpcontrol.C, _drawitem and _drawopt
    could be arrays
 3. Let display 'Text' item in draw.htm window too
 4. Support 'load' property in 'Text' to load arbitrary html code inside
@@ -547,22 +552,22 @@ about current functionality of the framework.
 
 19.02.2015
 1. When 'autozoom' specified in draw options, histogram zoomed into
-   non-empty content. Same command available via context menu. 
+   non-empty content. Same command available via context menu.
 2. One could use _same_ also in different items
-3. Publish in hadaq::TerminalModule general application state and 
-   generated debug output  
-4. One could create item of 'Text' kind, which will be displayed as 
-   plain text in the browser. 
+3. Publish in hadaq::TerminalModule general application state and
+   generated debug output
+4. One could create item of 'Text' kind, which will be displayed as
+   plain text in the browser.
 5. Use 'Text' kind in hadaq::TerminalModule for simple output
 6. Introduce MathJax support - first in 'Text' item one should specify
    property 'mathjax' to true.
-7. In droppable remove defualt-ui class - removes nasty coloring  
+7. In droppable remove defualt-ui class - removes nasty coloring
 8. In TRootSnifferStoreJson correctly handle all JSON escape symbols
 
 
 18.02.2015
-1. Let get object from online server even when item in hierarchy 
-   not exists 
+1. Let get object from online server even when item in hierarchy
+   not exists
 2. Integrate new RFIO version from Horst
 
 
@@ -576,23 +581,23 @@ about current functionality of the framework.
 16.02.2015
 1. All extra options of online server analyzed in JSRootInterface.js
 2. Let configure location of JSROOT in THttpServer, allows to use
-   newest JSROOT features in the future 
-3. Provide THttpServer::SetDefaultPage and SetDrawPage methods 
+   newest JSROOT features in the future
+3. Provide THttpServer::SetDefaultPage and SetDrawPage methods
 4. Provide THttpServer::SetIcon method
 
 
 13.02.2015
 1. Fix memory leak in TRootSniffer, consolidate usage of folders, objects,
-   items and properties in the sniffer. 
-2. By default, use everywhere Objects folder (if path not starts with slash).  
-3. Avoid special meaning for "extra" folder, 
+   items and properties in the sniffer.
+2. By default, use everywhere Objects folder (if path not starts with slash).
+3. Avoid special meaning for "extra" folder,
    one can set "_more" property directly for each item
-4. Resolve problem with keys of same name, but different class 
+4. Resolve problem with keys of same name, but different class
 5. Fix problem with setting fields for top item. Can be used in different
    custom application. For instance, autoload of files or start view
-6. Use string buffer when TRootSniffer produces string as output 
+6. Use string buffer when TRootSniffer produces string as output
 7. Implement get.json to request only fields of specified item.
-   Just for fun also make analog get.xml  
+   Just for fun also make analog get.xml
 8. Implement several fields for top element, which are analyzed in the gui:
       serv->SetItemField("/","_loadfile","/currentdir/hcopy.root");
       serv->SetItemField("/","_monitoring","2000");
@@ -603,28 +608,28 @@ about current functionality of the framework.
 
 12.02.2015
 1. Add protection for logx/logy scales. Introduce special
-   grx/gry function where value less than axis minimum treated specially 
-2. Automatically reconstruct file hierarchy when object from sub-subdirectory 
-   requested. When file monitoring enabled, just delete all buffered objects 
+   grx/gry function where value less than axis minimum treated specially
+2. Automatically reconstruct file hierarchy when object from sub-subdirectory
+   requested. When file monitoring enabled, just delete all buffered objects
 3. Use JSROOT.CallBack everywhere when call-back optionally should be invoked
 4. Fix problem when decoding draw options for histograms
 5. Simplify logic how TRootSniffer scans hierarchy,
-   do TDirectory/TKey handling in central place 
-6. In TRootSniffer change way how properties are set. It allows 
+   do TDirectory/TKey handling in central place
+6. In TRootSniffer change way how properties are set. It allows
    to set them not only for TFolder, but also for other registered objects
-    
+
 
 10.02.2015
 1. By default, files content monitored in no-browser mode.
    Or when 'files_monitoring' url option specified
 2. Correctly generate URL for reconstruct view in new window
-3. Assign own icons for online session and ROOT files  
-4. After objects loaded from the file hierarchy is rebuild to 
+3. Assign own icons for online session and ROOT files
+4. After objects loaded from the file hierarchy is rebuild to
    show read subdirectories
 5. With syntax item=file1.root/hpx+file2.root/hpx+file3.root/hpx
-   allow to superimpose many histograms at once 
+   allow to superimpose many histograms at once
 6. Implement 'autocol' draw option - histogram line colors will be numbered
-   automatically. Also 'nostat' draw options is implemented 
+   automatically. Also 'nostat' draw options is implemented
 7. One could use '_same_' identifier when superimposing several histograms.
    Than it will be replaced by item name from first drawn item
 8. Correctly handle recursion when drawing and than dropping items
@@ -633,7 +638,7 @@ about current functionality of the framework.
 9.02.2015
 1. Let load several ROOT files
 2. Implement 'simple' layout - use right division completely for the display
-3. When showing objects without browser still create HierarchyPainter 
+3. When showing objects without browser still create HierarchyPainter
    with 'simple' display - avoid duplication of many functions
 4. Eliminate BuildNoBrowserGUI, always use HierarchyPainter
 5. Allow to open ROOT files in online session
@@ -644,33 +649,33 @@ about current functionality of the framework.
 1. Simplify command registration in THttpServer. It could be
    any line which can be processed with the gROOT->ProcessLine
 2. Instead of simple callback function one also could invoke
-   object methods, specifying "/Objects/hpx/->Reset()". 
-   Here string '/->' is principle. 
+   object methods, specifying "/Objects/hpx/->Reset()".
+   Here string '/->' is principle.
 3. Provide animation of command execution with buttons
 4. Also allow to execute command with item click and via context menu,
-   use everywhere color animation 
+   use everywhere color animation
 5. Use '_hidden' attribute to hide hierarchy elements from default display
 6. Each element could have '_icon' attribute, which is used in hierarchy display
-7. Let register commands in any folders, hide StreamerInfo element 
-8. Remove custom zipping with root.bin request, 
+7. Let register commands in any folders, hide StreamerInfo element
+8. Remove custom zipping with root.bin request,
    it can be done with root.bin.gz request
 9. Do not draw functions when 'same' option was used or kNoStats bit is set
-10.Fix problem when parsing array in URL options 
-    
+10.Fix problem when parsing array in URL options
+
 
 5.02.2015
-1. With JSRootCore.js script location one could specify JSROOT 
+1. With JSRootCore.js script location one could specify JSROOT
    functionality to be loaded: '2d', '3d', 'io'. Old method with
    JSROOT.AssertPrerequisites will also work.
-2. One also could provide 'load' and 'onload' parameters in 
-   JSRootCore.js url.     
+2. One also could provide 'load' and 'onload' parameters in
+   JSRootCore.js url.
 3. Correctly account lost subevents in hadaq::CombinerModule
 4. Add possibility to create 'hierarchy items' in TRootSniffer.
-   They have similar meaning as dabc::Hierarchy class. 
+   They have similar meaning as dabc::Hierarchy class.
    Idea to represent commands and log messages in such items.
 5. Provide possibility to register commands in TRootSniffer.
-   If command marked with '_fastcmd' property, 
-   it appears as button in browser. 
+   If command marked with '_fastcmd' property,
+   it appears as button in browser.
 
 
 4.02.2015
@@ -680,15 +685,15 @@ about current functionality of the framework.
 3. Accumulate lost statistic for each data input
 4. In hldprint provide possibility to show only events with tot less than specified
 5. In hldprint show TDC time relative to channel 0
-6. Correctly account dropped subevents for each input, 
-   show it in the TerminalModule 
+6. Correctly account dropped subevents for each input,
+   show it in the TerminalModule
 
 
 3.02.2015
 1. Fix memory leak in TRootSniffer
 2. Implement exe.bin to be able use tree draw from Go4
 3. Fix problem with parsing hex constant with E inside
-4. Improve TDC calibration module, provide more information to web GUI 
+4. Improve TDC calibration module, provide more information to web GUI
 
 
 30.01.2015
@@ -706,66 +711,66 @@ about current functionality of the framework.
 
 26.01.2015
 1. Slightly change h.xml file format. Always code item name into _name attribute
-2. Make similar changes in ROOT store. Original format remain, new 
-   format available with 'generic' attribute. 
+2. Make similar changes in ROOT store. Original format remain, new
+   format available with 'generic' attribute.
 
 
 23.01.2015
-1. Improve hadaq web control GUI.  
+1. Improve hadaq web control GUI.
 2. In timing.h change signature of DateTime methods - all string conversion
    now returns std::string
 3. Implement 'history' draw option, which is now available via context menu
 4. In mbs::ServerTransport allow to use other kind of events. With special
    EventsInterator instance transport iterates over events in the buffer
    and automatically appends mbs event/subevent headers
-5. Remove from default HADAQ readout application transmitter module     
+5. Remove from default HADAQ readout application transmitter module
 
 
 22.01.2015
-1. Add support of mbs prompter to mbs::Monitor class. 
-   Only execution of normal MBS commands are supported. 
-2. One could put extra information in status record (like progress), 
+1. Add support of mbs prompter to mbs::Monitor class.
+   Only execution of normal MBS commands are supported.
+2. One could put extra information in status record (like progress),
    which could be displayed in custom GUI.
 3. In web gui for the hadaq::CombinerModule provide more information
    about calibration progress. With buttons allow fast show of most-important
-   histogram.  
+   histogram.
 4. Use progress information in hadaq::TrbProcessor to decide
-   when autocalibration will be performed 
+   when autocalibration will be performed
 
 
 21.01.2015
 1. Allow to activate player also with simple mouse click.
 2. Implement necessary parameters in the TdcCalibrationModule,
-   some of them can be specified from port url.  
+   some of them can be specified from port url.
 3. Implement multiget.json?items=[]&...  request in http::Server
    It allows to perform many get.json requests within one operation and
-   reduces communication latency. 
-4. Preliminary use of multiget.json in HADAQ control GUI 
+   reduces communication latency.
+4. Preliminary use of multiget.json in HADAQ control GUI
 
 
 20.01.2015
-1. Introduce 'virtual' DABC histogram class, which will be used to 
+1. Introduce 'virtual' DABC histogram class, which will be used to
    represent histograms in the hierarchy classes. For the moment
    available only in the  hadaq::TdcCalibrationModule
 2. Support DABC histogram in JavaScript. At the moment when histogram
    requested, DABC record converted into JSROOT.TH1 class
 3. Provide also emulation of TH2 class in DABC
-    
+
 
 19.01.2015
 1. For all files inputs one could provide 'loop' parameter, which
-   forces to read same file endless number of times. 
-2. Introduce hadaq::TdcCalibrationModule for automatic calibration of 
+   forces to read same file endless number of times.
+2. Introduce hadaq::TdcCalibrationModule for automatic calibration of
    fine time stamp in the TDC data, use code from stream framework.
    Will be compiled only when make with-stream=1 called
 3. In configuration for hadaq input one could activate tdc calibration,
-   specifying "hadaq://host:10101?tdccal" option. Rest of calibration 
+   specifying "hadaq://host:10101?tdccal" option. Rest of calibration
    parameters can be specified in Input0TdcCal module itself.
 4. Enable auto-calibration of TDC channels.
 
 
 16.01.2015
-1. Use exe.json.gz?compact=3 in TTreePlayer, update THttpServer docu 
+1. Use exe.json.gz?compact=3 in TTreePlayer, update THttpServer docu
 2. Add correct handling of '[' and ']' symbols in JSROOT and THttpServer,
    update docu concerning CORS access.
 
@@ -773,7 +778,7 @@ about current functionality of the framework.
 15.01.2015
 1. Finalize TTreePlayer, update JSROOT docu
 2. Introduce dummy hadaq::TdcCalibrationModule and provide possibility
-   to instantiate it via transport configuration 
+   to instantiate it via transport configuration
 
 
 14.01.2015
@@ -782,8 +787,8 @@ about current functionality of the framework.
      http://localhost:8080/Files/job1.root/ntuple/exe.json?method=GetTitle
    will return: "Demo ntuple"
 2. Provide possibility for executing TTree::Draw. One could access
-   object from gDirectory after command execution and return it as result 
-3. Implement TTreePlayer as TBasePainter  
+   object from gDirectory after command execution and return it as result
+3. Implement TTreePlayer as TBasePainter
 
 
 13.01.2015
@@ -791,7 +796,7 @@ about current functionality of the framework.
 
 
 12.01.2015
-1. In context menu provides possibility to select options for drawing 
+1. In context menu provides possibility to select options for drawing
 2. Provide list of draw options also for online server
 
 
@@ -812,11 +817,11 @@ about current functionality of the framework.
 4. When TBufferJSON recognize storage of multidimensional array, it converts
    it into correspondent JSON multidimensional array
 5. Even when several TH1/TGraph/TF1 objects with fill attribute overlap each other,
-   one able to get tooltip for underlying objects.  
+   one able to get tooltip for underlying objects.
 6. Use RZip.h in TRootSniffer
 7. In TRootSnifferStore some of the fields stored in native format (without quotes)
-   Make appropriate changes in root::Monitor as well  
- 
+   Make appropriate changes in root::Monitor as well
+
 
 6.01.2015
 1. Better support of STL containers in TBufferJSON, also as base class
@@ -827,7 +832,7 @@ about current functionality of the framework.
 1. More clear logic how special classes handled in TBufferJSON
 2. All STL containers are presented as JSON arrays
 3. Eliminate fN property from JS I/O - it is not exists in original ROOT classes
-4. Exclude 'fN' from array in TBufferJSON  
+4. Exclude 'fN' from array in TBufferJSON
 
 
 19.12.2014
@@ -835,7 +840,7 @@ about current functionality of the framework.
 2. When writing objects arrays, only disable post-processing.
 3. When use separator as jquery draggable, stop event propagation.
 4. In TBufferJSON provide possibility to redirect current output.
- 
+
 
 12.12.2014
 1. Remove unused HierarchyPainter.FindPainter method.
@@ -845,22 +850,22 @@ about current functionality of the framework.
 11.12.2014
 1. Use new draggable separator in dabc-specific main.htm
 2. Provide possibility to create special div for status information
-3. Eliminate usage of JSROOT.H() in JSRootInterface.js, hierarchy object 
+3. Eliminate usage of JSROOT.H() in JSRootInterface.js, hierarchy object
    remains also when reset button is pressed
 4. Disable caching in http::Server
 5. Completely eliminate usage of JSROOT.H()
-6. Use central function to handle vertical separator 
+6. Use central function to handle vertical separator
 
 
 10.12.2014
 1. Optimize file reading in JavaScript, use small header cache to read 1024 bytes
    of file data in advance
-2. Reuse TDirectory streamer for TFile, eliminate unused TFile::ReadHeader method    
+2. Reuse TDirectory streamer for TFile, eliminate unused TFile::ReadHeader method
 3. When convert string to integer check that no symbols like ',' or '.' present.
    Otherwise sscanf will return integer part without error message.
 4. If 'more' parameter specified in h.json query, it will be redirected to data source
-   to provide maximal information about object. Analog to _more property. 
-5. Export _title for data member when scanning objects members.      
+   to provide maximal information about object. Analog to _more property.
+5. Export _title for data member when scanning objects members.
 
 
 9.12.2014
@@ -868,16 +873,16 @@ about current functionality of the framework.
    correspondent SVG elements.
 2. Implement 'noselect' option to hide file-select elements in browser
 3. Chrome has problem with binary files cashing - lets help him.
-   Introduce extra stamp parameter in file requests to avoid cashing on the browser. 
+   Introduce extra stamp parameter in file requests to avoid cashing on the browser.
 
 
 8.12.2014
-1. Specify Cache-Control for most requests to the THttpServer, try to avoid cashing. 
+1. Specify Cache-Control for most requests to the THttpServer, try to avoid cashing.
 2. Implement separator between browser and drawing area with jQuery Draggable class
-3. Fix grid layout problems (hide table borders, hide possible overflow) 
+3. Fix grid layout problems (hide table borders, hide possible overflow)
 4. Use preserveAspectRatio = none attribute of SVG canvas to scale content when
    window is resized. It is much faster than recreating complete drawing once again.
-   If relative changes bigger than factor 2, redrawing will be performed anyway.  
+   If relative changes bigger than factor 2, redrawing will be performed anyway.
 
 
 5.12.2014
@@ -885,14 +890,14 @@ about current functionality of the framework.
 2. First try to specify "Cache-Control: max-age=3600", use for js and css files
 3. Perform content zipping in civetweb/fastcgi threads, reduce load on main thread
 4. For js/cs files specify optional zipping - when they are longer than 10K
-5. One could specify any number of additional headers in reply 
+5. One could specify any number of additional headers in reply
 
 
 4.12.2014
 1. In TBufferJSON try to write unstored data in _blob field, test with std::map
-2. Start JSROOT version 3.2, fix display problem in css. 
-3. Implement integration of primary hierarchy in online.htm page, 
-   avoid extra h.json request at the beginning.  
+2. Start JSROOT version 3.2, fix display problem in css.
+3. Implement integration of primary hierarchy in online.htm page,
+   avoid extra h.json request at the beginning.
 
 
 3.12.2014
@@ -908,7 +913,7 @@ about current functionality of the framework.
 
 
 1.12.2014
-1. Also getFontDetails return object, which could be applied with 
+1. Also getFontDetails return object, which could be applied with
    .call(font.func) method to all selected by d3 nodes.
 2. Preliminary fix in TBufferJSON concerning nested classes.
 
@@ -916,7 +921,7 @@ about current functionality of the framework.
 28.11.2014
 1. Implement 'P' and 'P0' draw options for TH1 histogram
 2. Put at one place generation of ROOT markers (decoding of TAttMarker)
-3. When drawing TGraph, specify translate attribute for central <g>    
+3. When drawing TGraph, specify translate attribute for central <g>
 4. Correctly handle canvas color
 5. Handle TAttFill with same method
 6. Introduce grid_layer for axis grids
@@ -926,10 +931,10 @@ about current functionality of the framework.
 
 27.11.2014
 1. Use similar optimize method for log and linear scale - distance between
-   display points should not be far than 0.5 pixels 
+   display points should not be far than 0.5 pixels
 2. First simple drawing of 2D histogram with html5 canvas
-3. Two different methods to draw color on canvas. 
-   col2 is pixel map, scaled to visible range while 
+3. Two different methods to draw color on canvas.
+   col2 is pixel map, scaled to visible range while
    col3 is real drawing of each pixel as rectangle
 4. One could specify default color method via 'col=N' parameter in URL.
 5. Implement moving and resize of TLegend
@@ -939,32 +944,32 @@ about current functionality of the framework.
 1. Improve range selection when using logy scale. One should use minimal non-zero value
    to get correct range
 2. When doing draw optimization, search max and than min values in optimized range.
-3. When doing draw optimization in logx scale, analyze pixel coordinates to 
+3. When doing draw optimization in logx scale, analyze pixel coordinates to
    detect interval where drawing could be optimized.
 4. Provide interactive url parameter, one could switch options like tooltip or context
-   menu or drga-and-drop functionality 
+   menu or drga-and-drop functionality
 5. In the item name one could use syntax item=item1+item2. In such case second item
    will be dropped on the first item and drawn with 'same' option
-6. Use <g> container in resize/move logic, avoid additional rect, 
+6. Use <g> container in resize/move logic, avoid additional rect,
    simplify problem of additional rectangle
-   
+
 
 25.11.2014
 1. Optimize dtree drawing - fix small errors, remove unused properties.
-   Main aim - all dtree properties should be exported to hierarchy. 
-   Later server should be able to (re)define all these properties to affect drawings.   
+   Main aim - all dtree properties should be exported to hierarchy.
+   Later server should be able to (re)define all these properties to affect drawings.
 2. Remove last dtree style names, use only hierarchy to store tree properties.
-3. First try to implement drag and drop, now only with TH1 histograms  
-4. Optimize text drawing - use pad coordinates only when really required 
+3. First try to implement drag and drop, now only with TH1 histograms
+4. Optimize text drawing - use pad coordinates only when really required
 5. Introduce two layers in the frame <g> element - one for drawings, another for axis
 6. Introduce three layers in the pad - for main, text and statistic
 
 
 24.11.2014
 1. Use <div> instead of <img> for building hierarchy. Solve problem with Chromium which
-   always draws boundary around img without src. 
+   always draws boundary around img without src.
 2. For logarithmic scales try to find optimal minimum to represent histograms like in ROOT
-3. Interpret logx/logy options when drawing histogram 
+3. Interpret logx/logy options when drawing histogram
 4. Introduce plus_minus class to handle clicks on plus/minus sign correctly.
 
 
@@ -972,58 +977,58 @@ about current functionality of the framework.
 1. Correctly locate $ROOTSYS/etc/http directory
 2. First step in using jQuery in hierarchy browser, some functions not yet working.
    One could exclude multiple global ids in html, all differences between
-   items now handled in click processing. No need for global JSROOT.H('root') element.   
+   items now handled in click processing. No need for global JSROOT.H('root') element.
 3. Trigger buttons and context menu in dtree also with jQuery
 4. Minimize html code, generated for dtree - overall reduce by about 40%.
-   For a moment significant amount of code is used by url to different small images. 
-   Should be optimized as well.    
-5. Replace major dtree icons with class definitions, further 10% reduction of html size 
+   For a moment significant amount of code is used by url to different small images.
+   Should be optimized as well.
+5. Replace major dtree icons with class definitions, further 10% reduction of html size
 6. Remove all images from root/dabc, integrate in future all small icons in css files.
 
 
 18.11.2014
 1. Keep tracking which elements where drawn, provide possibility
    to iterate over all painters in all frames
-2. Use TBasePainter for editors like param and cond editors, 
+2. Use TBasePainter for editors like param and cond editors,
    painter pointer is assigned to first child element in the frame
-3. Allow to draw several items in the same frame, keep possibility to 
-   update all of them independently.    
+3. Allow to draw several items in the same frame, keep possibility to
+   update all of them independently.
 4. Use DABC.HierarchyPainter when drawing single element with draw.htm
 5. Implement fancy workaround in condition painter to guess full histogram name
-6. Clear interface for monitoring parameters in both JSROOT and DABC painter 
-    
+6. Clear interface for monitoring parameters in both JSROOT and DABC painter
+
 
 17.11.2014
 1. Account histogram statistic under conditions
 2. Fill stat box for different conditions kinds
 3. Detect DABC.source_dir location when dabc.js script is loaded
-4. Load gauge scripts only when required 
+4. Load gauge scripts only when required
 5. Detect JSROOT.source_dir location when JSRootCore.js script is loaded
 
 
 14.11.2014
 1. When drawing single element, load all additional scripts as specified
-2. Export application state to hierarchy 
+2. Export application state to hierarchy
 3. Force export of ratemeter values into hierarchy.
-4. Provide possibility to load user scripts with JSROOT.BuildSimpleGUI 
+4. Provide possibility to load user scripts with JSROOT.BuildSimpleGUI
    and JSROOT.AssertPrerequisites, also with main index.htm
-5. Modify method how and when histogram statistic is calculated  
+5. Modify method how and when histogram statistic is calculated
 
 
 13.11.2014
 1. First draft of condition editor for go4. Load prepared html code and
    implement jquery-based guis
-2. Support 'editor' option for conditions - painter automatically starts editor mode.     
+2. Support 'editor' option for conditions - painter automatically starts editor mode.
 3. First dummy version of go4 parameter editor.
-4. Provide CompleteOnline method to perform actions as loading of extra scripts 
-   before any HTML elements will be created  
+4. Provide CompleteOnline method to perform actions as loading of extra scripts
+   before any HTML elements will be created
 5. Move condition and parameter editor with JavaScript into go4 project
 6. Check that same scripts tried load only once.
 
 
 12.11.2014
-1. In hierarchy fix error how history is provided - 
-   element with exact version number should not be delivered. 
+1. In hierarchy fix error how history is provided -
+   element with exact version number should not be delivered.
 2. Add simple statbox drawing for condition
 3. Fix drawing of zero-rate in dabc.js
 4. Update JSROOT docu
@@ -1032,7 +1037,7 @@ about current functionality of the framework.
 11.11.2014
 1. Make more flexible central index.htm in JSROOT.
    One could specify separately files list and path where files are.
-   'path' parameter also can be set in URL. 
+   'path' parameter also can be set in URL.
 2. First implementation of Go4WinPainter class in JS
 3. Implement TCutG painter in JSROOT
 4. Use it for TGo4PolyCond painter
@@ -1043,7 +1048,7 @@ about current functionality of the framework.
 
 10.11.2014
 1. Merge latest changes from Bertrand
-2. Use direct element pointer when executing command via button click  
+2. Use direct element pointer when executing command via button click
 3. Add filesdir as parameter in index.htm
 4. Improve drawoptions.htm (no read files when only build minimal list)
 
@@ -1051,27 +1056,27 @@ about current functionality of the framework.
 7.11.2014
 1. To avoid problem with CORS requests comment out "If-Modified-Since" header
 2. Support of fast buttons in DABC server and web browser
-3. Implement three commands in Go4 as fast buttons 
-4. Tag JSROOT as version 3, start 3.1 as developer version 
+3. Implement three commands in Go4 as fast buttons
+4. Tag JSROOT as version 3, start 3.1 as developer version
 
 
 6.11.2014
 1. When drawing TGraph as number of markers, preselect only visible markers
 2. Use polyline when drawing simple graph
-3. Size of font in TLatex is adjusted like in ROOT - by min from pad width or height 
-4. Automatically shrink frame from left when axis labels does not fit into canvas 
-5. Recover frame position if there is enough place again. 
+3. Size of font in TLatex is adjusted like in ROOT - by min from pad width or height
+4. Automatically shrink frame from left when axis labels does not fit into canvas
+5. Recover frame position if there is enough place again.
 6. When doing move or resize of title/statbox, limit it by pad boundaries.
 7. Move pave stats and drag box to the front always
- 
+
 
 5.11.2014
 1. Fix problem with TCanvas without TFrame
 2. Adopt changes from Bertrand
-3. Adjust drawing of moving rect of stat box, better placement of text is stat box 
-4. Use rounded point coordinates when drawing TGraph and 2D histograms 
+3. Adjust drawing of moving rect of stat box, better placement of text is stat box
+4. Use rounded point coordinates when drawing TGraph and 2D histograms
 5. Remove unnecessary circle elements for tooltips when drawing TGraph with markers.
-   Tooltips are specified for markers anyway.  
+   Tooltips are specified for markers anyway.
 6. When drawing TGraph as number of markers, filter out all markers from outside range.
 
 
@@ -1079,8 +1084,8 @@ about current functionality of the framework.
 1. Fix problem with disable/enable of tooltip when selecting region
 2. Fix warning in Firefox with "opacity" and "font-weight/style"
 3. Implement drawing of title via TPaveText object (like in ROOT),
-   solve problem with title resize 
-4. Fix problem when adjust font size to existing pave - one need to 
+   solve problem with title resize
+4. Fix problem when adjust font size to existing pave - one need to
    account empty spaces and font size is integer.
 
 
@@ -1088,7 +1093,7 @@ about current functionality of the framework.
 1. In http::Server add possibility to configure locations of files.
    It lets possibility to use some default location like /go4sys or
    one could assign item file like go4_condeditor.htm to $go4sys/html/condeditor.htm.
-2. Provide exe.txt method to execute any method of any registered object. 
+2. Provide exe.txt method to execute any method of any registered object.
 3. Provide in TRootSniffer possibility to redefine base object scan methods
 4. In JavaScript handle extra possibility to start context menu
 
@@ -1100,9 +1105,9 @@ about current functionality of the framework.
 
 29.10.2014
 1. Fix problem with nobrowser and several items drawing
-2. Process drawoptions when draw items from http server 
-3. Process immediately change of monitoring flag, 
-   do not submit next request for the object when previous not finished.  
+2. Process drawoptions when draw items from http server
+3. Process immediately change of monitoring flag,
+   do not submit next request for the object when previous not finished.
 4. Support nobrowser option for online GUI.
 
 
@@ -1119,24 +1124,24 @@ about current functionality of the framework.
    Solves problem with histogram update, when zoom rect goes below histogram
 5. Fix problem with 2D X axis drawing when automatically shrink frame due to colz.
 6. Prevent tooltip when doing zooming.
-   
+
 
 22.10.2014
 1. Exclude zeros from TProfile drawing
 2. Add possibility to 'expand' normal objects in the hierarchy browser.
-   For instance, this gives access to single elements of canvas, 
-   when whole canvas cannot be drawn. 
+   For instance, this gives access to single elements of canvas,
+   when whole canvas cannot be drawn.
 3. Correctly use colors map, provided with TCanvas.
-4. In TBufferJSON correctly process CheckObject method to enable store of 
-   colors map in the buffer. 
-5. Repair logic with canvas monitoring, implement monitoring of different text painters. 
+4. In TBufferJSON correctly process CheckObject method to enable store of
+   colors map in the buffer.
+5. Repair logic with canvas monitoring, implement monitoring of different text painters.
 6. TPaveText drawing use .attr("xml:space","preserve") to preserve multiple spaces in text.
 7. Introduce JSROOT.redraw() function which is capable to create or update object drawing.
 
 
 21.10.2014
-1. Fix problem with colz palette drawing from TCanvas. 
-2. Re-enable 3D drawing for 2D/3D histograms 
+1. Fix problem with colz palette drawing from TCanvas.
+2. Re-enable 3D drawing for 2D/3D histograms
 3. Extract 3D drawings into separate JSRoot3DPainter.js script
 4. Use newest three.mjs (r68) for 3D drawings, solves problem with Firefox.
 5. Introduce generic list of draw functions for all supported classes.
@@ -1144,13 +1149,13 @@ about current functionality of the framework.
 
 
 20.10.2014
-1. Major redesign of JS painting code. 
+1. Major redesign of JS painting code.
 2. Painter class provided for every drawn object
 3. As first argument of any draw function divid should be specified.
 4. Clear organization of SVG containers for TCanvas/TPad, TFrame and each object
 5. Clear assignment of painters lists to canvas/pad painters.
 6. Now correct dynamic update and resize of canvas is possible (should be intensively tested).
-7. Also simple way to cleanup drawings via jQuery empty() method.  
+7. Also simple way to cleanup drawings via jQuery empty() method.
 
 
 15.10.2014
@@ -1163,24 +1168,24 @@ about current functionality of the framework.
 1. Create drawoptions.htm page, showing all supported options.
 2. Decode options directly in JSROOT.HistPainter class.
 3. Implement JS custom streamer for TCanvas, restore aspect ratio when drawing
-4. Fix problem while clamp() excluded and log scale with negative values fails. 
-5. Optimize axis drawing, group related elements together in same <g> element 
+4. Fix problem while clamp() excluded and log scale with negative values fails.
+5. Optimize axis drawing, group related elements together in same <g> element
 
 
 13.10.2014
 1. Introduce docu files for JSROOT
 2. When one appends "+" to the filename, its content read completely with first I/O operation.
-3. When drawing TCanvas/TPad on empty frame, scale it's height according original ratio.    
+3. When drawing TCanvas/TPad on empty frame, scale it's height according original ratio.
 
 
 9.10.2014
-1. Remove clamp(true), when creating logx/logy scales.  
+1. Remove clamp(true), when creating logx/logy scales.
 
 
 8.10.2014
-1. Remove <dabc> node name from TRootSnifferStoreXml class, implement compact form. 
+1. Remove <dabc> node name from TRootSnifferStoreXml class, implement compact form.
 2. When drawing 2D histograms with 'col' or 'colz' options, always scale palette on
-   bins in selected range. 
+   bins in selected range.
 3. Show progress with scripts loading in the browser window
 
 
@@ -1193,23 +1198,23 @@ about current functionality of the framework.
    If specified as parameter, monitoring or history checkbox will be disabled.
 3. Try to prevent access to the files below httpsys, jsrootsys, dabcsys directories
 4. Evaluate 'monitoring' parameter for ROOT online server like:
-      http://localhost:8080/?monitoring=1000. 
+      http://localhost:8080/?monitoring=1000.
    Parameter defines how often displayed objects should be updated.
 5. Fix problem with zoom rectangle limits after frame resize.
 6. Implement 'opt' and 'opts' URL parameters for main page.
-   
+
 
 6.10.2014
 1. Several bugfixes in JSROOT.
 2. Add "shortcut icon" for DABC and ROOT servers
-3. Add demo of online THttpServer - shell script copies data from  
-   running httpserver.C macro on Apache webserver. 
+3. Add demo of online THttpServer - shell script copies data from
+   running httpserver.C macro on Apache webserver.
 
 
 26.09.2014
 1. Adjust dabc.js to the current JSROOT code, exclude DABC.Manager class completely.
 2. Cleanup code in TBufferJSON - remove dummy class
-3. Introduce THttpCallArg::CompressWithGzip() method, which can be used now outside THttpServer  
+3. Introduce THttpCallArg::CompressWithGzip() method, which can be used now outside THttpServer
 4. Also in online server process url options like "item", "items", "layout"
 5. Possibility to generate URL, which reproduces opened page with layout and drawn items
 
@@ -1223,55 +1228,55 @@ about current functionality of the framework.
 24.09.2014
 1. Provide JSROOT.RegisterForResize functions to unify method how window resize
    events handled in different scripts.
-2. Implement JSROOT.GetUrlOption to extract options from document URL. 
+2. Implement JSROOT.GetUrlOption to extract options from document URL.
 3. Provide example file.htm how read and display item from ROOT file.
-4. Provide in context menu possibility to draw single element from the file. 
-5. Remove hsimple.htm, provide in index.htm possibility to specify 
+4. Provide in context menu possibility to draw single element from the file.
+5. Remove hsimple.htm, provide in index.htm possibility to specify
    'file', 'layout', 'item' and 'items'  via url options like:
       http://web-docs.gsi.de/~linev/js/3.0/index.htm?file=files/hsimple.root&item=hpx;1
 6. Support direct reading of objects from subdirectories in JSROOT.TFile.
-7. Adjust callback interface when reading files, fix several problems, 
-   support of arbitrary sub-sub-directory level when reading objects 
+7. Adjust callback interface when reading files, fix several problems,
+   support of arbitrary sub-sub-directory level when reading objects
 
 
 23.09.2014
 1. Introduce painter class for TCanvas, support resize and update of canvas drawing.
 2. Move correspondent code into draw.htm, simplify it (no need for dummy hierarchy).
 3. Process resize event in the draw.htm
-4. Show wait cursor style while doing redraw of the picture 
-    
+4. Show wait cursor style while doing redraw of the picture
+
 
 22.09.2014
 1. Implement 'grid' display in ROOT JavaScript
 2. One could specify 'grid 3x3' or 'grid 4x2'.
-   Display object created at the moment when first draw is performed.   
-3. Correctly update content of TProfile object 
+   Display object created at the moment when first draw is performed.
+3. Correctly update content of TProfile object
 
 
 19.09.2014
 1. Correctly unregister worker from publisher - make it possible to register
-   worker under same path again. Important when application shutdown and restarted again. 
+   worker under same path again. Important when application shutdown and restarted again.
 2. Remove application as direct parent of modules, devices and pools.
-3. Introduce 'Transition' state. Use it to avoid situation that somebody 
-   (or Application iself) detect error while modules disappear while 'Running' state.  
+3. Introduce 'Transition' state. Use it to avoid situation that somebody
+   (or Application iself) detect error while modules disappear while 'Running' state.
 
 
 18.09.2014
 1. Eliminate code division between dabc::ApplicationBase and dabc::Application
-   Now generic functionality provided in dabc::Application class, user 
+   Now generic functionality provided in dabc::Application class, user
    can extend it by sub-classing
-2. Simplify logic behind state-machine in application. Now three states are 
-   defined - 'Halted', 'Ready' and 'Running'. There is only method called 
+2. Simplify logic behind state-machine in application. Now three states are
+   defined - 'Halted', 'Ready' and 'Running'. There is only method called
    DoTransition(), where state could be changed.
-3. There are several commands defined to switch between states.         
-4. Try to stop input/output transports at the suitable moment, when communication 
+3. There are several commands defined to switch between states.
+4. Try to stop input/output transports at the suitable moment, when communication
    with correspondent i/o object is in stable state. For instance, one should not
-   stop event processing when callback function is awaited.  
- 
+   stop event processing when callback function is awaited.
+
 
 17.09.2014
 1. In the dabc::Transport class reduce maximal number of input/output loops
-   per each port. This guarantee that after each data processing transport 
+   per each port. This guarantee that after each data processing transport
    returns to the main loop, which enables faster command processing or shutdown.
 
 
@@ -1281,10 +1286,10 @@ about current functionality of the framework.
 3. Provide way to select display kind ('collapsible', 'tabs') in the simple GUI.
 
 15.09.2014
-1. Add "halttime" parameter into configuration time. Defines maximal time which 
+1. Add "halttime" parameter into configuration time. Defines maximal time which
    can be spend in the halt process. By default it is 0.7 s.
-2. Introduce display class for MDI drawing. Provide two implementations - 
-   'collapsible' for old kind and 'tabs' for new kinds.  
+2. Introduce display class for MDI drawing. Provide two implementations -
+   'collapsible' for old kind and 'tabs' for new kinds.
 
 
 11.09.2014
@@ -1293,39 +1298,39 @@ about current functionality of the framework.
 
 
 10.09.2014
-1. In JS axis painter use actual number of ticks when drawing sub-ticks.  
+1. In JS axis painter use actual number of ticks when drawing sub-ticks.
 
 
 29.08.2014
-1. In hadaq::CombinerModule make configurable time, when module allowed to 
+1. In hadaq::CombinerModule make configurable time, when module allowed to
    drop all buffers. Required during HADES beamtime while pause between spills were
-   longer than default 10 s. 
-   
+   longer than default 10 s.
+
 
 20.08.2014
 1. Move HADAQ terminal output into separate module.
-2. Provide more statistic in the TerminalModule 
+2. Provide more statistic in the TerminalModule
 3. Deliver to the server title of the objects, display it as hint in the browser.
 4. Better handling of special characters in the hierarchies - allows to display
-   symbols like ' or " in the file structure. 
-5. Provide key cycle number when scanning TDirectory, 
-   makes look and feel as existing ROOT browser. 
+   symbols like ' or " in the file structure.
+5. Provide key cycle number when scanning TDirectory,
+   makes look and feel as existing ROOT browser.
 
 
 19.08.2014
 1. Generate HTML only for visible elements in the hierarchy tree. This increase
-   dramatically performance of navigation in the big structures. 
+   dramatically performance of navigation in the big structures.
 2. When toggle/update tree content, change whole line again and not single images or links.
    Reduces number of required ids, remove ids for images completely.
-3. In hadaq::UdpTransport print content of problematic packet when 'debug' option is specified. 
+3. In hadaq::UdpTransport print content of problematic packet when 'debug' option is specified.
 4. Implement TerminalMode for hadaq::CombinerModule. Reproduces output of old event builder.
-    
+
 
 18.08.2014
-1. Support different ROOT versions in ROOT plugin. Due to incompatible changes in 
-   TBuffer class one requires separate versions for TBUfferJSON class. 
-2. Use own code to generate hierarchical structure in HTML, replace dtree.js which is 
-   extremely slow for complex hierarchies 
+1. Support different ROOT versions in ROOT plugin. Due to incompatible changes in
+   TBuffer class one requires separate versions for TBUfferJSON class.
+2. Use own code to generate hierarchical structure in HTML, replace dtree.js which is
+   extremely slow for complex hierarchies
 
 
 15.08.2014
@@ -1340,48 +1345,48 @@ about current functionality of the framework.
 1. In hadaq plugin correctly account dropped data.
    Drop all data when at least one input gets some data.
 2. Ensure that hadaq::Combiner parameters produce change events after 0.2 s.
-   With default settings (1s) EPICS control time to time produced zero rates.  
+   With default settings (1s) EPICS control time to time produced zero rates.
 3. Implement Emulation mode in hadaq::Observer for debugging purposes.
 4. In JS work with streamer infos as with normal TList, support streamer info
    display in online and offline mode, use 'fName' and 'fTitle' instead
-   of 'name' and 'title' 
+   of 'name' and 'title'
 5. Fix several errors in JS TKey streamer, use member names as in ROOT itself.
 6. Load scripts for 3D graphic only when they required
 7. Load scripts for I/O only when required, for ROOT/DABC online monitoring this
    reduces number of used js scripts from 10 to 5!
 8. First working version of single element drawing in ROOT JS.
-   First working version of context menu in ROOT HPainter. 
-   From now ROOT JS is fully independent from additional features of dabc.js  
+   First working version of context menu in ROOT HPainter.
+   From now ROOT JS is fully independent from additional features of dabc.js
 9. When displaying single element, one could specify draw options and monitor property.
-       
+
 
 13.08.2014
-1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT. 
+1. Remove old hierarchy display from dabc.js, use HPainter from JSROOT.
 2. Remove binary-based requests with streamer infos from dabc.js.
    Only for very special cases user can use binary I/O directly,
-   JSROOT.ReconstructObject shows how object can be reconstructed. 
+   JSROOT.ReconstructObject shows how object can be reconstructed.
 3. Remove master name from all ROOT hierarchies.
 4. In hadaq plugin update netmem parameters with 0.2 sec period
    Drop all buffers and produce message when one input do not deliver data at all
 
 
 12.08.2014
-1. Use new JSROOT functionality in dabc.js. One loads necessary 
+1. Use new JSROOT functionality in dabc.js. One loads necessary
    ROOT scripts automatically from the beginning.
-2. Implement online hierarchy display for ROOT and DABC based on 
-   JSRootPainter.HPainter class. For DABC window management remains, 
-   for ROOT offline collapsible display reused. On the long run one could 
+2. Implement online hierarchy display for ROOT and DABC based on
+   JSRootPainter.HPainter class. For DABC window management remains,
+   for ROOT offline collapsible display reused. On the long run one could
    introduce many different window managers (collapsible, tabs, subpads),
    which could be easily exchanged with each other.
-3. Online display for ROOT is independent now from dabc.js. 
-   Main functionality in HPainter, window management in JSRootInterface.js. 
+3. Online display for ROOT is independent now from dabc.js.
+   Main functionality in HPainter, window management in JSRootInterface.js.
 
 
 11.08.2014
-1. Move scripts/styles loading into JSRootCore.js. 
+1. Move scripts/styles loading into JSRootCore.js.
    One can specify any list of files for loading.
 2. To construct simple GUI, one can use standard examples in JSRootInterface.js
-   or provide own list of scripts to load.     
+   or provide own list of scripts to load.
 3. Simplify and make more flexible method of simple GUI building
 
 
@@ -1398,71 +1403,71 @@ about current functionality of the framework.
    ROOT file with sub-directories and TTree are working.
 2. Support TList in HPainter
 3. Fix small error in hist painter.
-4. Support list of streamer infos in HPainter, also make example how to draw 
-   sinfo structure in other window.  
+4. Support list of streamer infos in HPainter, also make example how to draw
+   sinfo structure in other window.
 5. Support slashes in the item names.
-6. Remove old code with fixed dtree-based file display. Complete hierarchy 
-   of file keys and objects handled by HPainter class. dtree is just 
+6. Remove old code with fixed dtree-based file display. Complete hierarchy
+   of file keys and objects handled by HPainter class. dtree is just
    many alternatives how display can be implemented.
-   
+
 
 5.08.2014
 1. Adjust makefile for ROOT v6. For the moment own  TRootSniffer
    class will be used, later one can switch to the ROOT version.
-2. Fix small error in dtree.js - one should always set 
-   last sibling (_ls) property while tree can be dynamically changed  
-3. First try to read ROOT file inside dabc.js. Idea to extract common 
-   functionality and avoid strong coupling of I/O and graphics as it 
+2. Fix small error in dtree.js - one should always set
+   last sibling (_ls) property while tree can be dynamically changed
+3. First try to read ROOT file inside dabc.js. Idea to extract common
+   functionality and avoid strong coupling of I/O and graphics as it
    is now in JSRootIO.
-4. In JSRootCore.js make central function, which handles different kinds 
+4. In JSRootCore.js make central function, which handles different kinds
    of XMLHttpRequest. Use for ROOT and DABC data reading. Use only async
    requests, also for file header requests.
 5. Load  JSRootCore.js and JSRootPainter.js automatically, no nasty timeout
-   at the first draw.  
-    
+   at the first draw.
+
 
 4.08.2014
 1. Merge HJsonStore and HXmlStore into same HStore class.
-2. Implement dabc::Buffer and dabc::Reference as RecordFields. 
+2. Implement dabc::Buffer and dabc::Reference as RecordFields.
 3. Use new RecordFields capabilities in the dabc::Command
-   Remove ugly reference-to-string conversion.   
+   Remove ugly reference-to-string conversion.
 4. Minimal changes in hadaq plugin - debug output about events gap
-   only when ExtraDebug is enabled  
+   only when ExtraDebug is enabled
 
 
 1.08.2014.
-1. Remove old xml generation from hierarchy/history. 
-   HJsonStore and HXmlStore are mainline now. 
+1. Remove old xml generation from hierarchy/history.
+   HJsonStore and HXmlStore are mainline now.
 2. Use HStore classes for all kinds of text storage.
 3. Command transport between hosts implemented in binary form.
 4. Remove old xml generation in Record/Command class.
-   XML used directly only in reading of configuration 
-5. Process commands in root::Monitor, required by Go4 
-   
+   XML used directly only in reading of configuration
+5. Process commands in root::Monitor, required by Go4
+
 
 31.07.2014
-1. Implement several levels of compressions when creating JSON. 
+1. Implement several levels of compressions when creating JSON.
 2. Implement storage of hierarchy into JSON, including history.
 3. By new JSON/XML storage do not use intermediate binary buffer.
    Data directly written into string output. For XML case it also
    eliminates intermediate XML structures.
-4. Adjust TRootSnifferStoreJson to be compatible with DABC format.      
+4. Adjust TRootSnifferStoreJson to be compatible with DABC format.
 5. Data exchange between server and client always performed in JSON.
-   Always h.json for hierarchy and get.json for data are used. 
-   XML will be left just for historical reasons. 
-   Tested with DABC/ROOT/Go4.   
+   Always h.json for hierarchy and get.json for data are used.
+   XML will be left just for historical reasons.
+   Tested with DABC/ROOT/Go4.
 
 
 30.07.2014
 1. Introduce HStore class to store hierarchy structure in JSON/XML formats.
    Idea to make functionality comparable with TRootSnifferStore classes.
-   Later both ROOT and DABC should work with json-based descriptions.  
+   Later both ROOT and DABC should work with json-based descriptions.
 
 
 29.07.2014
-1. Move/resize of statbox works smoothly now also during updates. 
+1. Move/resize of statbox works smoothly now also during updates.
 2. Provide move/resize capability for title and colz options.
- 
+
 
 28.07.2014
 1. Improve layout of HTML page in GOSIP page, adjust sizes dynamically.
@@ -1470,7 +1475,7 @@ about current functionality of the framework.
 
 25.07.2014
 1. First version of gosip GUI with reading and writing of registers.
-   Many small layout problems need to be fixed. 
+   Many small layout problems need to be fixed.
 2. Implement newline in json format, used in gosip data dump.
 3. Implement all commands in GOSIP GUI
 
@@ -1478,22 +1483,22 @@ about current functionality of the framework.
 24.07.2014
 1. Correct treatment of quotes and double quotes in RecordField.
    Important when convertiong to JSON representation
-2. When publisher analyzes URL with arguments, it tries to convert 
+2. When publisher analyzes URL with arguments, it tries to convert
    each arguments to int or double first. Also each argument tested
    if it can be repersented as vector. Need to be able correctly receive commands
    with complex arguments via URL and to able respond with JSON.
-3. Introduce gosip.js, put there most JavaScript code.   
-4. First version of gosip command, reading complete setup  
+3. Introduce gosip.js, put there most JavaScript code.
+4. First version of gosip command, reading complete setup
 
 
 23.07.2014
 1. Introduce newest jquery-ui 1.11 for JSROOTIOm, also will be used for GOSIP gui
-2. Implement in TRootSniffer compression for binary data, 
+2. Implement in TRootSniffer compression for binary data,
    activated when "zipped" option specified in query. Used in communication with go4.
-3. Implement correct conversion of record data into JSON. Use double qoutes.   
+3. Implement correct conversion of record data into JSON. Use double qoutes.
 4. Return result of command execution in JSON form. It makes easier
    to operate with complex data in command execution.
-    
+
 
 22.07.2014
 1. Allow to read key objects from TFile in TRootSniffer
@@ -1504,17 +1509,17 @@ about current functionality of the framework.
 
 21.07.2014
 1. When doing syslog, add <E> for errors or <I> for other messages
-2. Suppress several errors messages 
+2. Suppress several errors messages
 3. In ROOT sniffer scan list of keys
 4. Introduce read-only flag in sniffer. Only if off, sniffer allowed to read
    objects and directories list from the files.
-5. From dabc.js allow to read sub-directories content in TFile 
-6. Fix error in XML parser - processing of &apos;  
+5. From dabc.js allow to read sub-directories content in TFile
+6. Fix error in XML parser - processing of &apos;
 
 
 18.07.2014
 1. Fix errors in TH1/TH2 statistic calculations
-2. Switch to newest jQuery 1.11.1, do not use 2.x while IE 6/7/8 not supported. 
+2. Switch to newest jQuery 1.11.1, do not use 2.x while IE 6/7/8 not supported.
 3. Switch to newest jQuery 2.1.1 - anyway IE 6/7/8 is not supported by JSRootIO
 
 
@@ -1529,11 +1534,11 @@ about current functionality of the framework.
 
 
 14.07.2014
-1. Provide example.htm, showing usage of JSRootIO graphics without any 
+1. Provide example.htm, showing usage of JSRootIO graphics without any
    dabc.js or JSRootInterface.js. Fix several small problems.
 2. Eliminate "#dialog" element for context menu - now such element created
    dynamically when context menu activated.
-3. Clarify CSS styles instantiation - move code from JSRootD3Painter.js to css files.  
+3. Clarify CSS styles instantiation - move code from JSRootD3Painter.js to css files.
 
 
 4.07.2014
@@ -1542,23 +1547,23 @@ about current functionality of the framework.
 
 
 2.07.2014
-1. Exclude usage of extra header in dabc.bin request. 
+1. Exclude usage of extra header in dabc.bin request.
    Extra information (like version number) placed into http header.
 2. Use ZLIB in http::Server to compress data, produced by requests.
-     
+
 
 1.07.2014
-1. In THttpServer implement compression of requested data with gzip. 
-2. Remove extra header from root.bin request. Now returned buffer 
-   can be directly used with TBufferFile to reconstruct object. 
-3. Streamer infos version is now packed into http response header 
-   with parameters "MVersion"  and "BVersion". 
-   Application (like JavaScript code in web browser) should analyze 
+1. In THttpServer implement compression of requested data with gzip.
+2. Remove extra header from root.bin request. Now returned buffer
+   can be directly used with TBufferFile to reconstruct object.
+3. Streamer infos version is now packed into http response header
+   with parameters "MVersion"  and "BVersion".
+   Application (like JavaScript code in web browser) should analyze
    this version to decide if streamer info need to be updated or not.
-4. Use root.bin.gz request in dabc.js. It makes no longer sense to continue 
+4. Use root.bin.gz request in dabc.js. It makes no longer sense to continue
    support of binary data transfer (root.bin.gz and root.json.gz has approx same size),
-   but functionality will remain for a while for demonstration purposes. 
-   
+   but functionality will remain for a while for demonstration purposes.
+
 
 25.06.2014
 1. Add simple applications, which uses hadaq/api.h. Mainly to demonstrate makefile.
@@ -1573,12 +1578,12 @@ about current functionality of the framework.
 
 20.05.2014
 1. In mbs/api.h and hadaq/api.h introduce 'maxage' parameter in NextEvent functions.
-   It used to skip events from the queue when event processing is too slow compared 
+   It used to skip events from the queue when event processing is too slow compared
    with server performance. Parameter used in two places. First, when iteration over
-   events in single buffer takes too long, buffer will be skipped 
-   and new buffer will be started. Second, if queue remained full 
+   events in single buffer takes too long, buffer will be skipped
+   and new buffer will be started. Second, if queue remained full
    for the long time (2x maxage), when complete queue will be cleaned.
-   Aim to use in hydra when processing could be slower than event rate. 
+   Aim to use in hydra when processing could be slower than event rate.
 
 
 15.05.2014
@@ -1603,87 +1608,87 @@ about current functionality of the framework.
 1. Implement additional options (-skip, -onlytdc, -onlyraw) in the hldprint.
 2. Implement option -stat for hldprint. By this different statistic is accumulated
    for hld data, including TDC errors
-3. Process Ctrl-C signal in hldprint and mbsprint to smoothely stop applications.    
+3. Process Ctrl-C signal in hldprint and mbsprint to smoothely stop applications.
 4. In dabc.js process correctly StreamerInfo when working in JSON format.
    For the future one should use in JSRootIO native names for members names.
-       
+
 
 30.04.2014
 1. Avoid direct usage of TASImage class in TRootSniffer.
 
 
 29.04.2014
-1. In FastCgi use "Status:" in the header - as defined in FastCgi documentation. 
+1. In FastCgi use "Status:" in the header - as defined in FastCgi documentation.
    See http://www.fastcgi.com/docs/faq.html#httpstatus Required by Apache.
-2. Rename function FCGI_send_file, which was duplicated in Http and Root plugins.   
+2. Rename function FCGI_send_file, which was duplicated in Http and Root plugins.
 
 
 11.04.2014
 1. Export pthread_self() value in threads hierarchy
-2. Introduce ExtraDebug flag in hadaq::CombinerModule, 
-   only when specified extra debug will be enabled 
-3. For input kinds support protocol mbss:// - stream server 
-   and mbst:// - transport. One could specify in mbsprint mbss://r4-5. 
+2. Introduce ExtraDebug flag in hadaq::CombinerModule,
+   only when specified extra debug will be enabled
+3. For input kinds support protocol mbss:// - stream server
+   and mbst:// - transport. One could specify in mbsprint mbss://r4-5.
 
 
 10.04.2014
 1. Add "onerror" property for the port. It defines, that happens when
-   error occured on the port and port cannot be reconnected. Allowed: 
+   error occured on the port and port cannot be reconnected. Allowed:
      "none" - do nothing
      "close" - close connection, cleanup queue (defualt)
      "stop"  - stop module
-     "exit"  - normal exit from DABC application 
-     "abort" - immediate abort of application 
+     "exit"  - normal exit from DABC application
+     "abort" - immediate abort of application
 2. When reconnect ports, reuse buffers queue (in LocalTransport) again.
-   Before each reconnection was recreating queue again.  
+   Before each reconnection was recreating queue again.
 3. Use localtime_r, which avoids usage of internal static variables.
-   Can cause to different effects in multithreaded environment. 
+   Can cause to different effects in multithreaded environment.
 4. In hldprint support -hub flag
 
 
 9.04.2014
-1. In ROOT THttpServer provide possibility to use authentication. 
+1. In ROOT THttpServer provide possibility to use authentication.
 2. Introduce mbs::MonitorHandle in "mbs/api.h" file to provide simple
    interface to end-user for mbs::Monitor. Allow to submit mbs command
    and retrieve logger information.
 3. Introduce mbscmd utitlity for submit MBS commnads from command line.
 4. Allow to specify maximum number of reconnect tries for the port.
-   If such number expired, application will be automatically braked.     
+   If such number expired, application will be automatically braked.
 
 
 8.04.2014
 1. Preliminary implementation of new remote command channel in MBS.
-   Using mbs::Monitor class, any kind of MBS commands can be submitted. 
+   Using mbs::Monitor class, any kind of MBS commands can be submitted.
 2. On MBS side one can specify exact IP address of allowed clients,
    no special configuration required on DABC side.
 3. Intoduce in Civetweb hook to allow authorized access for selected items only.
-   By default, when authorization file is configured, access to all items is 
+   By default, when authorization file is configured, access to all items is
    password-protected. One could disable default authentication (auth_default = false),
    and enable authentication by setting 'dabc:auth' property on some selected
    structures. Probably, functionality must be moved into http::Server to
-   make it available for FastCgi server as well. 
+   make it available for FastCgi server as well.
 4. In mbs::Monitor protect "MbsCmd" - means always authentication will be
-   requested when accessing such element in browser or via command line.        
+   requested when accessing such element in browser or via command line.
 5. Replace 'dabc:' prefix in property names by underscore symbol '_'.
    This mostly remove all DABC-based names from TRootSniffer.
-   Naming convention between ROOT and DABC remains. 
+   Naming convention between ROOT and DABC remains.
 
 
 6.04.2014
 1. Use mbs::MonitorSlowControl as base class for fesa::Monitor
 2. Rename mbs::Player -> mbs::Monitor, use MonitorSlowControl as base class.
-   As result, user can get MBS slow-control variables (rates for the moment) into analysis. 
+   As result, user can get MBS slow-control variables (rates for the moment) into analysis.
 3. Allow to use external RFIO library, specifying ADSMDIR variable
 
 
 3.04.2014
 1. Provide printout of SlowControlData in mbsprint command.
 2. In Module::EnsurePorts() method only when at least one input or output
-   port is created, memory pool handle will be created as well. 
+   port is created, memory pool handle will be created as well.
 3. Optimize Makefiles - correctly treat dependency between libraries,
-   link required shared libraries directly. Resolves several build problems. 
-4. Rename Player->Monitor in EPICS and DIM plugins. 
-5. Create slow-control data in fesa::Monitor (to be tested). 
+   link required shared libraries directly. Resolves several build problems.
+4. Rename Player->Monitor in EPICS and DIM plugins.
+5. Create slow-control data in fesa::Monitor (to be tested).
 6. Rename root::Player -> root::Monitor, correspondent changes in Go4.
 7. Introduce mbs::MonitorSlowControl which provides basic functionality to
    server slow control data to clients, use it first for dim::Monitor class.
@@ -1692,16 +1697,16 @@ about current functionality of the framework.
 
 2.04.2014
 1. Introduce mbs::SlowControlData class, which should pack/unpack slow-control
-   records into MBS subevents. Idea to use it in all cases like EPICS, DIM, FESA 
-   plugins. One also could use this class in analysis to unpack data.  
+   records into MBS subevents. Idea to use it in all cases like EPICS, DIM, FESA
+   plugins. One also could use this class in analysis to unpack data.
 2. Provide mbs::SlowControlData::Read function, which can be used in analysis.
 3. Intoroduce mbs::SlowControlData in DIM plugin.
 
 
 1.04.2014
 1. Publish DIM command in the hierarchy, execute them via generic
-   CmdHierarchyExec command. Provide optional string parameter 
-   for the command 
+   CmdHierarchyExec command. Provide optional string parameter
+   for the command
 2. In HldOutput always use CmdSetParameter to change Combiner parameter values
 3. For debug purposes introduce dummy blocking output. It can be used
    for testing of back-pressure. To configure, use:
@@ -1709,7 +1714,7 @@ about current functionality of the framework.
    One can specify block time per buffer and sleep/polling mode for blocking.
 4. Fix error in workers cleanup - thread reference was cleared, but
    thread mutex not. Leads to problem with publisher, which thread
-   destroyed before publisher itself, while all objects have direct reference to publisher. 
+   destroyed before publisher itself, while all objects have direct reference to publisher.
 
 
 31.03.2014
@@ -1723,7 +1728,7 @@ about current functionality of the framework.
 1. In xml file there are two alternatives to set array of some element.
    First is using json-like syntax:
        <Field value="[1, 2, 3, 4]"/>
-   Second is following structure:    
+   Second is following structure:
 	    <Field>
 	       <item value="1"/>
 	       <item value="2"/>
@@ -1734,24 +1739,24 @@ about current functionality of the framework.
 3. In dabc::Hierarchy implement GetHChild and CreateHChild methods.
    Internally all kind of subfolders and special symbols hadeled.
    Actual folder/item names in hierarchy may differ due to special symbols,
-   but GetHChild can recognize such situation.  
+   but GetHChild can recognize such situation.
 4. Print tdc messages in hldprint.
-5. Allow to specify topfolder for EPICS variables in ezca::Player, 
+5. Allow to specify topfolder for EPICS variables in ezca::Player,
    all variables should be in the folder. This should allow to run many
-   players, building one common hierarchy of variables.  
-6. Adjust old ezca::EpicsInput for usage of current xml syntax, 
+   players, building one common hierarchy of variables.
+6. Adjust old ezca::EpicsInput for usage of current xml syntax,
    where array of items can be used.
 7. Remove old DIM code completely, including DIM package itself.
-   Introduce dimc::Player class, which will be used to represent DIM 
+   Introduce dimc::Player class, which will be used to represent DIM
    variables in DABC hierarchies. DIM plugin is only compiled when
    DIM is installed and DIMDIR is correctly configured.
 
 
 27.03.2014
 1. Change naming convention for folders in the published structures.
-   To be able reproduce folder name, only application/context/manager names 
+   To be able reproduce folder name, only application/context/manager names
    will be used - no scoket or process id, no any host name.
-2. Default path for DABC application is /DABC/${Context}, 
+2. Default path for DABC application is /DABC/${Context},
    default path for Go4 analysis is /GO4/AnalysisName
 3. Introduce ezca::Player class. It will have two functions.
    First of all, it will provide data as ezca::EpicsInput.
@@ -1760,23 +1765,23 @@ about current functionality of the framework.
 
 
 26.03.2014
-1. Implement get.json request for DABC hieararchy classes. One could request 
+1. Implement get.json request for DABC hieararchy classes. One could request
    record itself or separate fields:
       wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/get.json
-   To get field 'value', one could specify   
+   To get field 'value', one could specify
         wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/value/dabc.json
         wget -q http://localhost:8090/Hadaq/Combiner/HadaqData/dabc.json?field=value
 2. Clear separation between dabc.json and root.json. Now this name propogated with
    CmdGetBinary, that each application can decide how to process it. In fact, any
-   worker, publishing new structures, can now define its own requests for processing. 
+   worker, publishing new structures, can now define its own requests for processing.
 3. Fix problem with hash value storage - it was overwritten when hierarchy was updated.
-   Now hash property (and any other) can be protected from update. 
-4. Let TRootSniffer process all requestes which are directed to ROOT, 
-   only for root.bin request use hash to verify if requester already has most recent object.  
-   
+   Now hash property (and any other) can be protected from update.
+4. Let TRootSniffer process all requestes which are directed to ROOT,
+   only for root.bin request use hash to verify if requester already has most recent object.
+
 
 25.03.2014
-1. Fix error in ReferencesVector::AddAt - expand of vector was not working correctly 
+1. Fix error in ReferencesVector::AddAt - expand of vector was not working correctly
 2. When searching object in xml hierarchy, one could exclude all perents from path
    For that flTopXmlLevel flag was introduced for Object. On the long run
    one can remove constrain about Application completely.
@@ -1784,14 +1789,14 @@ about current functionality of the framework.
    By this one can selectively extend information about each item without
    need of deep scan into folders, which should not happen from the main thread.
 4. First try to selectively publish thread information. For that one need to specify
-   in xml file:   <Thread name="*" publ="true"/>     
-5. Implement primitive profiling of dabc::Thread - by measuring relative time, 
+   in xml file:   <Thread name="*" publ="true"/>
+5. Implement primitive profiling of dabc::Thread - by measuring relative time,
    spent in the wait event function. Later one should use /proc filesystem to
    get precise thread information. To enable profiling, one should specify
-      <Thread name="*" prof="true"/> 
+      <Thread name="*" prof="true"/>
 6. Fix small problem in dabc.js - display of history with single element.
-7. Implement threads profiling with getrusage() function, 
-   display for the moment only CPU load. 
+7. Implement threads profiling with getrusage() function,
+   display for the moment only CPU load.
 
 
 24.03.2014
@@ -1802,55 +1807,55 @@ about current functionality of the framework.
 
 21.03.2014
 1. Remove all permanent parameter references from HldOutput.
-2. When running in slave mode, HldOutput extracts runid number only from buffer itself   
+2. When running in slave mode, HldOutput extracts runid number only from buffer itself
 3. Implement CmdSetParameter parameter, it should be used when
    value must be set from other thread. Later make it in SetValue logic.
 4. Introduce Parameter::SubmitSetValue, which submit command to the worker.
-   Used it in the hadaq::Observer 
+   Used it in the hadaq::Observer
 5. In hadaq::CombinerModule modify logic how events are build and how error condition detected.
-   Do not exit from the BuildEvent function when one needs to skip buffers on some input   
+   Do not exit from the BuildEvent function when one needs to skip buffers on some input
 6. In hadaq::CombinerModule drop all events not before 5 sec is runed
-7. In SocketThread introduce balancing counter, 
+7. In SocketThread introduce balancing counter,
    that each worker get equal chance to get new socket event.
-   
+
 
 20.03.2014
 1. Provide TBufferJson::JsonWriteMember method. It allows to stream any selected
    data member of the class. Supported are: basic data types, arrays of basic data types,
-   TString, TArray classes. Also any object kind can be streamed. 
-2. In get.json request provide possibility to stream also objects memebers into json. 
+   TString, TArray classes. Also any object kind can be streamed.
+2. In get.json request provide possibility to stream also objects memebers into json.
 3. When dump message to syslog, call openlog/closelog for each message
 
 
 18.03.2014
-1. In JSROOTIO optimize ReadClass and GetStreamer methods. 
-2. Eliminate ReadCollection - it is handled in ReadObject function 
-3. More clear management of directories list in the file, 
+1. In JSROOTIO optimize ReadClass and GetStreamer methods.
+2. Eliminate ReadCollection - it is handled in ReadObject function
+3. More clear management of directories list in the file,
    implement correct reading of objects from sub-sub-directories.
-4. Remove gFile from I/O part of JSRootIO. Set file pointer for each TBuffer instance. 
+4. Remove gFile from I/O part of JSRootIO. Set file pointer for each TBuffer instance.
 5. Add support of syslog. In "Context/Run" configurations one can
    specify "sysloglevel" and "syslog". First is logging level (as debug level),
    second is prefix of log messages.
-6. Implement custom reading of TObjString - hsimple.root do not provide streamer for it?  
- 
+6. Implement custom reading of TObjString - hsimple.root do not provide streamer for it?
+
 
 17.03.2014
 1. Integrate RFIO v8.0 from Horst.
 2. When creating RFIO file, one can specify following extra options in URL:
      rfioCopyMode, rfioCopyFrac,  rfioMaxFile, rfioPathConv, rfioLustrePath
-   If any options specified, rfio_fopen_gsidaq_dm will be used to create 
+   If any options specified, rfio_fopen_gsidaq_dm will be used to create
    RFIO file.
 3. In file interface provide possibility to request int or str parameter.
-   Use it for the rfio::FileInterface to request data mover parameters.  
+   Use it for the rfio::FileInterface to request data mover parameters.
 4. For special case preserve connection to RFIO server in the rfio::FileInterface
-5. In JSRootIO - correctly display collection elements.  
+5. In JSRootIO - correctly display collection elements.
 6. Fix error with class map in JSRootIO. Now it works correctly for lists example.
 
 
 14.03.2014
 1. Use TBuffer in reading of the file, fix display of streamer infos
 2. Completely switch to usage of JSROOT.TBuffer class, remove
-   many obsolete functions, significantely reduce code size.  
+   many obsolete functions, significantely reduce code size.
 3. Remove StreamerInfos class - it is just list of streamer elements
 4. Move fTagOffset to TBuffer class
 
@@ -1859,18 +1864,18 @@ about current functionality of the framework.
 1. Fix problem when only histogram errors should be drawn
 2. Correctly display fill colour of TF1
 3. Simplify logic in ReadObjectAny
-4. Introduce JSROOT.TBuffer class, which plays very similar role 
+4. Introduce JSROOT.TBuffer class, which plays very similar role
    as TBuffer in native ROOT I/O. Simplify logic in many places,
    reduce duplication of code in many places, fix errors.
    Main advantage - one could try to keep code synchronous.
-5. Read all streamer info classes via normal methods, remove 
+5. Read all streamer info classes via normal methods, remove
    many lines of duplication.
 
 
 12.03.2014
-1. In JSRootIO move class map into gFile instance. 
+1. In JSRootIO move class map into gFile instance.
    Fix several small errors in reading.
-2. Workaround for objects mapping - always map first object with id1. 
+2. Workaround for objects mapping - always map first object with id1.
 
 
 11.03.2014
@@ -1878,11 +1883,11 @@ about current functionality of the framework.
    always object with '_typename', 'name', 'arr' fields.
    For TList also 'opt' field is created.
 2. Due to this change remove old painter - it is too much changes.
-   Remove possibility to select painters.   
+   Remove possibility to select painters.
 3. Again exclude indexing of arrays from JSONR counter
 4. Introduce in JS code CheckByteCount, fails for hsimple.C file
 5. Fix problem with TF1 drawing - was incorrectly computed X coordinates
-6. With TBufferJSON process many complex canvas, 
+6. With TBufferJSON process many complex canvas,
    can3.root example works even better with TBufferJSON - seems to
    be JSRootIO has some hidden problem.
 7. Remove object clonning in JSRootIO - one can use fOptions correctly.
@@ -1890,54 +1895,54 @@ about current functionality of the framework.
 
 
 10.03.2014
-1. Implement correct indentation in TBufferJSON. 
+1. Implement correct indentation in TBufferJSON.
    Suppress as many spaces as possible in maximial compression level.
 2. In XML storage correctly translate special symbols like < > & ' "
 3. Correct handling of arrays like TStreamerInfo::kOffsetP,
-   also array of TString should works better now. 
+   also array of TString should works better now.
 
 
 7.03.2014
-1. Represent all TCollection classes as JSON array. 
-   Class information and optional collection name are lost, 
-   but simplifies JavaScript codes. 
+1. Represent all TCollection classes as JSON array.
+   Class information and optional collection name are lost,
+   but simplifies JavaScript codes.
 2. Account all arrays in TBufferJSON in reference counter, but
    only objects and collections can be referenced. Make appropriate
-   changes in JSONR_unref function.   
+   changes in JSONR_unref function.
 3. Process 'compact' parameter in get.json?compact=3 query.
-   Reduce number of spaces and new lines.   
+   Reduce number of spaces and new lines.
 4. Support get.json and get.xml in http::Server class.
-   For the moment implemented only in ROOT-related classes.  
+   For the moment implemented only in ROOT-related classes.
 5. All hierarchy-relevant requests are handled now by GetBinary command.
 
 
 6.03.2014
 1. First functional version of TBufferJSON. Works with histograms
-   and canvas, need intensive testing. One need many workarounds for 
+   and canvas, need intensive testing. One need many workarounds for
    different classes like TObject or TString or TArray, but one could
    improve custom streamers in the future.
 2. Many references on same objects are handled correctly. On JavaScript
    side adopt JSON-R code from https://github.com/graniteds/jsonr.
-   Use only unref part, exclude arrays from handling. 
+   Use only unref part, exclude arrays from handling.
 3. Derive TBufferJSON from TBuffer directly.
 4. Implement get.json and get.xml in THttpServer class.
 5. Provide support of JSON in dabc.js. Automaticaly provide
    methods for all ROOT objects - done in JSONR_unref method.
-6. First time TH1F transported in JSON form! 
-   Small details remains, one should adjust Bertrand I/O 
+6. First time TH1F transported in JSON form!
+   Small details remains, one should adjust Bertrand I/O
    code to make it compatible with normal streamer
 
 
 4.03.2014
 1. Start implementation of TBufferJSON class. Idea to convert any
-   object into JSON to avoid I/O functionality in the browser. 
+   object into JSON to avoid I/O functionality in the browser.
 
 
 3.03.2014
 1. Replace mongoose by https://github.com/sunsetbrew/civetweb webserver.
    Its main advantage - more liberal license, which is suited for ROOT.
    Seems to be, functionality and interface of civetweb fully corresponds
-   to the version of mongoose, used till now in DABC. 
+   to the version of mongoose, used till now in DABC.
 
 
 27.02.2014
@@ -1948,59 +1953,59 @@ about current functionality of the framework.
 4. Keep device reference in the transport, created by the device.
    When device destruction will be started, all dependent transports will be
    stopped as soon as possible. It is guarantied that transport will not
-   work when device is destroyed.  
+   work when device is destroyed.
 5. In hadaq::UdpTransport fix problem with cleanup.
 6. When Thread removes Worker from the list, it also reset fWorkerId and fThred
    reference that during destructor wrong calls to the thread not produced.
-7. Do not create connection manager for single node application. 
-    
+7. Do not create connection manager for single node application.
+
 
 26.02.2014
 1. Implement reconnecting of input transport. When "reconnect" option specified
    in URL, InputTransport will try to recreate DataInput object if it fail during
    running connection.
-2. Check reconnect with mbs::ClientTransport. 
-3. Support reconnect in mbsprint and hldprint programs.    
+2. Check reconnect with mbs::ClientTransport.
+3. Support reconnect in mbsprint and hldprint programs.
 
 
 25.02.2014
-1. When starting server socket, specify INADDR_ANY when bind socket. 
+1. When starting server socket, specify INADDR_ANY when bind socket.
    This should allow to react on connection request via any host address,
-   including localhost. 
+   including localhost.
 
 
 21.02.2014
-1. Introduce hldprint application, as data source 
-   online server and lmd/hld files are supported 
+1. Introduce hldprint application, as data source
+   online server and lmd/hld files are supported
 2. Fix small problems in TDabcEngine
 
 
 20.02.2014
-1. Provide mbs::ReadoutHandle class to work with mbs-based servers from 
+1. Provide mbs::ReadoutHandle class to work with mbs-based servers from
    arbitrary application. Simplified code looks like:
       mbs::ReadoutHandle handle = mbs::ReadoutHandle::Connect("mbs://r4-1/Stream");
-      while (handle.NextEvent()) 
+      while (handle.NextEvent())
          handle.GetEvent()->PrintHeader();
-      handle.Disconnect();   
+      handle.Disconnect();
 2. Implement mbsprint application, which uses mbs::Readout handle to read events
-   and print them out. At the moment reading of events from file 
+   and print them out. At the moment reading of events from file
    and stream/transport server are supported.
 3. Make LmdFileNew as default implementation for lmd files I/O.
-4. Remove old C-base API with fLmd.c 
+4. Remove old C-base API with fLmd.c
 
 
 19.02.2014
-1. Device will be created when specified in xml file. 
+1. Device will be created when specified in xml file.
    Fix error with parameters setting from xml file.
 2. When specifying url for tranposrt creation, one could use dev:// protocol
-   to refer device name like:     
+   to refer device name like:
        <OutputPort name="Output1" url="dev://user_device"/>
 
 
 18.02.2014
 1. When transport is created, url is provided with the syntax like:
        <OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/>
-   It's advantage - many parameters in one string. 
+   It's advantage - many parameters in one string.
    It's disadvantage - it is the only place there parameters can be specified.
    Therefore from now one can specify extra options for url via parameter
    name "urlopt", "urlopt1" or "urlopt2". It makes possible to
@@ -2011,21 +2016,21 @@ about current functionality of the framework.
 3. Provide Url::GetOptionBool and Url::GetOptionDouble methods
 4. When starting DABC, one could provide extra arguments to dabc_exe like:
        dabc_exe EventBuilder.xml xbuf=200000 mtu=62000
-   Such variables could be used with normal syntax in the xml files:         
+   Such variables could be used with normal syntax in the xml files:
        <InputPort name="Input*" queue="10" urlopt="udpbuffer=${xbuf}&mtu=${mtu}"/>
 5. Check that xml file do not exists and display proper error
-6. Always use HADAQ naming convention for HLD files. 
+6. Always use HADAQ naming convention for HLD files.
    When running in the slave mode, buffers will be skipt until runid is correctly set.
-   
+
 
 17.02.2014
-1. Test RFIO plugin 
+1. Test RFIO plugin
 2. Provide RFIO implementation for HLD output
 
 
 10.01.2014
 1. Make http::Server as base class for different implementations.
-2. Provide http::Mongoose for build-in web server 
+2. Provide http::Mongoose for build-in web server
 3. Implement http::FastCgi for fastcgi server in DABC
 4. Support "dabc:fastcgi:9000" in ROOT TDabcEngine
 5. Better support of HttpServer and FastCgiServer nodes in xml files.
@@ -2034,7 +2039,7 @@ about current functionality of the framework.
    One should use <Observer name="shm" auto="true"> node
 7. Implement several options in plain ROOT server, allow to specify name
    of top folder or number of mongoose threads.
-8. When DABC compiled with "make noroot=1", ROOT installation is ignored 
+8. When DABC compiled with "make noroot=1", ROOT installation is ignored
 
 
 9.01.2014
@@ -2042,29 +2047,29 @@ about current functionality of the framework.
    from DABC framework.
 2. Old DabcRoot:: static methods left for compatibility, it is
    recommended to use TDabcEngine and THttpServer.
-3. Add all classes from future libRHTTP.so library, 
+3. Add all classes from future libRHTTP.so library,
    if such library detected in ROOT installation - use it.
-4. In go4 use THttpServer and TDabcEngine classes. In future 
-   one could use plain ROOT http server without DABC. 
+4. In go4 use THttpServer and TDabcEngine classes. In future
+   one could use plain ROOT http server without DABC.
 
 
 3.01.2014
 1. Rename dabc_root::RootSniffer into dabc_root::Player class, while
    scanning (sniffing) of ROOT hierarchies now done in the TRootSniffer.
-2. Rename dabc_root namespace into root, use appropriate file names   
+2. Rename dabc_root namespace into root, use appropriate file names
 3. Update TRootSniffer, add THttpServer and THttpEngine classes,
-   which will be used for ROOT plugin. 
+   which will be used for ROOT plugin.
 
 
 26.12.2013
-1. Introduce TRootSniffer class, which can scan ROOT hierarchies 
+1. Introduce TRootSniffer class, which can scan ROOT hierarchies
 2. Provide store class, which create Hierarchy for ROOT objects
 3. Use new sniffer for ROOT plugin
-4. Provide get.png request, which is implemented in TRootSniffer   
+4. Provide get.png request, which is implemented in TRootSniffer
 5. In dabc.js handle new dabc:view attribute, which can define how to
    display element by default.
 6. Eliminate old BinaryProducer for ROOT objects
-   
+
 
 13.12.2013
 1. Limit number of elements in browser, displayed by default. If user wants to browse
@@ -2074,31 +2079,31 @@ about current functionality of the framework.
 12.12.2013
 1. Only mark objects in "extra" folder, that they could be expand in browser
 2. For all ROOT objects set class property, adjust dabc.js to draw only supported classes
-3. Several fixes concerning hierarchy version control. 
-4. Allow to explore all kind of ROOT collections. 
-   Allow to draw objects from such collections.   
+3. Several fixes concerning hierarchy version control.
+4. Allow to explore all kind of ROOT collections.
+   Allow to draw objects from such collections.
 5. Exclude enum and static variables from browsable items.
-   Later one can provide method to configure which data members should be browsable.   
-    
+   Later one can provide method to configure which data members should be browsable.
+
 
 11.12.2013
-1. First try of dynamical content in hiararchy browser. Idea to expand some 
+1. First try of dynamical content in hiararchy browser. Idea to expand some
    items only per request (click) of the user. Following changes were
-   done to implement such functionality. 
+   done to implement such functionality.
 2. More sophisticated, but more universal way to scan root structures.
    Special scan record is created, which keep all setting for current-level scan.
    Three different modes of scanning are implemented:
      - simple full hierarchy scan (without extras)
      - found object with specified name
      - locate specified folder and expand (if possible)
-   Last two methods can navigate through ROOT folders/directories even when 
-   hierarchy was not created. If specified, scan will use TClass information 
-   to access data members of arbitrary ROOT objects. 
+   Last two methods can navigate through ROOT folders/directories even when
+   hierarchy was not created. If specified, scan will use TClass information
+   to access data members of arbitrary ROOT objects.
 3. Publisher now can process request for items which are not exists in normal hierarchy.
    In such case it tries to guess which provider can process request.
-4. JavaScript code now able to process Expand request for items, which have dabc:more 
+4. JavaScript code now able to process Expand request for items, which have dabc:more
    property set. "full_item_name/h.xml" request is send to server and
-   than web browser just expanded. 
+   than web browser just expanded.
 5. First test with basic ROOT objects are done. For the moment, all objects registered
    in "extra" folder can be expanded in the browser. Means one should call:
       DabcRoot::Register("extra", my_event);
@@ -2110,7 +2115,7 @@ about current functionality of the framework.
 
 
 5.12.2013
-1. Support MBS event-spanning in mbs::ClientTransport. This allows to connect 
+1. Support MBS event-spanning in mbs::ClientTransport. This allows to connect
    any kind of MBS disregard of enbaled or disabled dabc mode.
 
 
@@ -2120,18 +2125,18 @@ about current functionality of the framework.
    Two new parameters are created:
       nonblock   - force server do not block, can be specified for transport
       blocking   - force server to block if client is not not exists
-      deliverall - force server to deliver all events to clients  
-   When last two options enabled, stream server bahaivers as transport    
+      deliverall - force server to deliver all events to clients
+   When last two options enabled, stream server bahaivers as transport
 2. Provide example in hadaq plugin, where stream server misused for transport
    of all data to client
-3. In hadaq::MbsTransmitterModule repair logic when buffer sending should be 
+3. In hadaq::MbsTransmitterModule repair logic when buffer sending should be
    peformed. At some conditions it just stops to process input even when it
    has possibility to send data to output.
-   
+
 
 2.12.2013
 1. Add DabcRoot::StartDabcServer() method. This allows to connect server
-   with go4 gui or any other program, which uses DABC API. DABC server 
+   with go4 gui or any other program, which uses DABC API. DABC server
    can be started in parallel with HTTP server.
 2. When add new item into hierarchy, by default check if name confirm to
    DABC rules. If not, item name will be changed, but dabc:realname property will
@@ -2141,7 +2146,7 @@ about current functionality of the framework.
    and actual item name will be stored in dabc:itemname attribute.
 4. As a result, it is allowed now to use '[' ']' symbols in histogram names
    and such symbols propogated correctly to HTTP syntax. Is a case for many
-   hydra histograms.         
+   hydra histograms.
 
 
 29.11.2013
@@ -2149,20 +2154,20 @@ about current functionality of the framework.
    to DABC folders, which than can be seen in ROOT/Objects/ subdirectory
    of web browser.
 2. Correctly register folders in cleanup lists, that when object is deleted,
-   it should automatically be removed from registered folders. 
+   it should automatically be removed from registered folders.
 3. Add DabcRoot::Unregister() method.
 
 
 28.11.2013
 1. Use in hadaq plugin DAQVERSION=2 (same as old evtbuild.c).
-   As a result, DABC HLD files will be absolutely the same.  
+   As a result, DABC HLD files will be absolutely the same.
 
 27.11.2013
 1. Create 2.6.0 tag, which is required for new Go4 4.6.0
 
 
 22.11.2013
-1. Fix error when displaying 0 in rate history. 
+1. Fix error when displaying 0 in rate history.
 2. When min and max are the same, TGraph displays range [min, min+1]
 3. Fix error in mbs::ServerTransport when client was disconnected
    shortly after connection was established.
@@ -2170,12 +2175,12 @@ about current functionality of the framework.
 
 
 21.11.2013
-1. In BinaryProducer disable zipping for older ROOT versions (<5.34.07). 
+1. In BinaryProducer disable zipping for older ROOT versions (<5.34.07).
    ZIP engine from older ROOT versions is not supported by JSROOTIO.
-2. Do not retry objects after failure. User should click once again.   
+2. Do not retry objects after failure. User should click once again.
 3. In root plugin generate image, using TASImage class.
    This is much more efficient, while can be done directly in memory.
-   
+
 
 19.11.2013
 1. Allow to specify address of dabc node in different styles:
@@ -2187,7 +2192,7 @@ about current functionality of the framework.
    do not tries again to detect to which node command should be submitted. Solves
    problem to distinguish between "nodename.gsi.de" and simply "nodename"
 3. In HTML set compatibility mode for IE, otherwise d3.js not working.
-   Need to check Chrome - it does not shows d3 graphics without click on pad. 
+   Need to check Chrome - it does not shows d3 graphics without click on pad.
 
 
 15.11.2013
@@ -2197,7 +2202,7 @@ about current functionality of the framework.
    reconnect to message logger. Logger also permanently sends dummy message
    and therefore can easily detect if client disconects. Thus, no messages will
    be lost if dabc restarted. Appropriate small changes in DABC classes.
-   It should be possible to use DABC also with older MBS versions. 
+   It should be possible to use DABC also with older MBS versions.
 
 
 5.11.2013
@@ -2207,7 +2212,7 @@ about current functionality of the framework.
 1.11.2013
 1. Create api.h, put there generic functions like create manager or connect
    with dabc node. Idea to have API, which is reused by ROOT or go4 or
-   command shell applications. 
+   command shell applications.
 
 
 30.10.2013
@@ -2215,7 +2220,7 @@ about current functionality of the framework.
    Class derived from Record, therefore directly from iterator one can
    access fields.
 2. Adjust command shell and go4gui access to dabc. One can request hierarchy
-   and single elements.    
+   and single elements.
 
 
 29.10.2013
@@ -2223,24 +2228,24 @@ about current functionality of the framework.
    But still some messages can be lost.
 2. Derived dabc::Publisher class from worker, create it automatically when
    http::Server is created. One can also specify <publisher value="true"/>
-   in the <Run> section.   
+   in the <Run> section.
 
 
 28.10.2013
-1. First try to readout MBS logger (port 6007). Working, but MBS itself 
+1. First try to readout MBS logger (port 6007). Working, but MBS itself
    do not allows reconnection. Need to change on MBS side.
 2. Implement mbs logger (port 6007) and mbs prompter (port 6006) as worker.
    Use normal SocketIOAddon with events redirection. This simplify
-   reconnection logic and simultaneous use of three sockets in mbs::Player.   
+   reconnection logic and simultaneous use of three sockets in mbs::Player.
 
 
 24.10.2013
 1. First try to implement communication with MBS prompter.
    In general works, one should decide that to do with commands like "$nodes"
    or "$file name", which return extra information.
-2. Make CommandDefinition derived from Record class that one can 
+2. Make CommandDefinition derived from Record class that one can
    publish commands directly in hierarchy. Up to now commands was possible
-   to publishe only via the parameter. 
+   to publishe only via the parameter.
 
 
 10.10.2013
@@ -2251,31 +2256,31 @@ about current functionality of the framework.
 9.10.2013
 1. Implement Start/Stop HldFile commands in hadaq::CombinerModule.
    This gives possibility to start HLD files from browser
-2. In CommandDef use RecordField class to specify dflt, min, max values 
+2. In CommandDef use RecordField class to specify dflt, min, max values
    for arguments.
 3. Add in dabc.js, CommandDrawElement support for min,max, dflt values.
-   Support simple string input for command argument.      
+   Support simple string input for command argument.
 4. Provide possibility to configure info parameter for module, port, transport.
-   This parameter can be used for debug or error output. Aim to replase 
-   DOUT/EOUT by IOUT macros, where all advantages for conditional compilation 
+   This parameter can be used for debug or error output. Aim to replase
+   DOUT/EOUT by IOUT macros, where all advantages for conditional compilation
    can be used.
-5. Remove arguments from DataOutput::Write_Init() method. 
-   Now all transport parameters should be extracted from url string. 
+5. Remove arguments from DataOutput::Write_Init() method.
+   Now all transport parameters should be extracted from url string.
 6. Provide info parameter in the hadaq transmitter module.
 
 
 8.10.2013
 1. Small adjustment in JSRootIO - block context menu when touch selection is
-   active. Also adjust css file. 
+   active. Also adjust css file.
 2. Remove most debug ouput in DabcRoot plugin. Debug ouput can be enabled
    via DabcRoot::EnableDebug() method.
 
 
 7.10.2013
 1. Create hsimple.htm for fast JSRootIO tests - it reads hsimple.root file
-   and shows automatically hpx histogram. 
+   and shows automatically hpx histogram.
 2. Introduce new handling of touches events - one could react on double-tap
-   and selection with two fingers. Not clear why coordinates in d3.touches 
+   and selection with two fingers. Not clear why coordinates in d3.touches
    are wrong, need to verify on iOS.
 
 
@@ -2298,10 +2303,10 @@ about current functionality of the framework.
 30.09.2013
 1. Implement primitive way to set arguments for the command. At the moment
    only int argument are supported.
-2. Also result of command execution is returned. At the moment full command is 
+2. Also result of command execution is returned. At the moment full command is
    stored in form of xml.
 3. Full functionality (with typing of arguments, ranges, info, return values)
-   will be implemented after clear formatting rule will be defined. 
+   will be implemented after clear formatting rule will be defined.
 
 
 27.09.2013
@@ -2311,40 +2316,40 @@ about current functionality of the framework.
       http://dabc_server:port/FESA/Test/CmdReset/execute
    At the first stage command created, based on its definition. Than it is submitted
    to the producer. Theoretically, any number of arguemnts and returns value can
-   be implemented in the future. 
-3. Provide preliminary draw element for command execution in dabc.js         
+   be implemented in the future.
+3. Provide preliminary draw element for command execution in dabc.js
 4. Delete CommandsSet class, any complex commands should be implemented individually.
 
 
 26.09.2013
 1. Generate 'hash' field for the binary data only when binary data is requested.
    If next request comes, new hash is calculated and compared with previous one.
-   Only if hash changed, new binary data is generated and returned. 'hash' attributes 
-   will be no longer propogated via names lists. 
+   Only if hash changed, new binary data is generated and returned. 'hash' attributes
+   will be no longer propogated via names lists.
 2. In JavaScript code make axis time format more like to original ROOT graphic.
 3. gStyle.OptimizeDraw = false by default, in dabc.js optimized will be used.
 4. Fill patterns in exclusion graphs (and not only) are working
    correctly now - pattern production is fixed.
 5. By THProfile drawing draw options is normal, before is lawys use DrawErrors=11.
    Now it is also similar to the original ROOT.
-6. Display correct "Entries" value in stat box. Use histo['fEntries] when specified. 
+6. Display correct "Entries" value in stat box. Use histo['fEntries] when specified.
 7. Adopt newest mangoose version - there all server requests handled via begin_request
    method. open_file() is removed. The only limitation - one need to implement
    alternative authentification method, now only global ".htdigest" file can be used.
-8. Send files via mg_send_file() function - skip cashing for the moment, can be 
+8. Send files via mg_send_file() function - skip cashing for the moment, can be
    reactivated later.
-   
+
 
 25.09.2013
-1. Make first tests with authentification. 
-   At the moment global authentification file can be specified, 
+1. Make first tests with authentification.
+   At the moment global authentification file can be specified,
    which than will be used to access all data on the server.
    First of all, ".htdigest" should be generated with the command:
      [shell] htdigest -c .htdigest your@domain  username1
      [shell] htdigest .htdigest your@domain  username2
      [shell] htdigest .htdigest your@domain  username3
-   For each user password will be requested. 
-   Name of created file and domain name need to be specified in configuration: 
+   For each user password will be requested.
+   Name of created file and domain name need to be specified in configuration:
     <HttpServer name="http">
        <enabled value="true"/>
        <port value="8090"/>
@@ -2353,7 +2358,7 @@ about current functionality of the framework.
     </HttpServer>
    After that when trying to open correspondent page in browser, one will
    be requested to type user and password for "your@domain". Was tested with Firefox.
-2. Small fix in mongoose.c to be able open file when creating context.   
+2. Small fix in mongoose.c to be able open file when creating context.
 3. Switch to mongoose 4.2 version, one problem is resolved there, another need to be fixed
 4. Fix few issues with mongoose 4.2 version, hope to get them fixed soon.
 5. Try to use https protocol. For that two parameters should be provided in config file:
@@ -2364,20 +2369,20 @@ about current functionality of the framework.
        </HttpServer>
    After that one could use address like:
       https://hostname:8091
-   Creation of valid certificate is still open question - fake certificate from 
-   mongoose web site IE does not like, but works 
-6. Link libDabcFesa with libDabcRoot directly when ROOT is used for compilation      
+   Creation of valid certificate is still open question - fake certificate from
+   mongoose web site IE does not like, but works
+6. Link libDabcFesa with libDabcRoot directly when ROOT is used for compilation
 
 
 23.09.2013
 1. First try to implement display of single element without hierarchy on the left side.
-   Works with several workarounds, which should be cleaned up later. 
-   Now one can specify as url name of element like: 
+   Works with several workarounds, which should be cleaned up later.
+   Now one can specify as url name of element like:
       http://dabc_server:port/FESA/Test/BeamRate/
    With additional switches one can enable/disable history view for the elements.
-2. In different tooltips use full path to the element - this is more clear 
+2. In different tooltips use full path to the element - this is more clear
    than relative path to current page.
-3. Fix small problem with log history display. 
+3. Fix small problem with log history display.
 
 
 19.09.2013
@@ -2392,8 +2397,8 @@ about current functionality of the framework.
        wget http://dabc_server:port/FESA/Test/BeamRate/get.xml
    One could specify version number and history length
 4. There is also "get.bin" and "image.png" - of course, it only will work for
-   items which really provide binary data.       
-5. Small changes in mongoose server to avoid that it reads files - only 
+   items which really provide binary data.
+5. Small changes in mongoose server to avoid that it reads files - only
    http::Server class will do files reading from preselected directories.
 6. In dTree add possibility to directly open subfolders (by clicking item)
 
@@ -2406,18 +2411,18 @@ about current functionality of the framework.
    Therefore to skip data for such object it is enough to read size and jump over data.
 2. For series extraction from files no-delete flag implemented for hierarchy streamer.
    In such case none of the existing elements in hierarchy will be deleted.
-3. Implementation of HierarchyReading is in very experimental state and 
+3. Implementation of HierarchyReading is in very experimental state and
    requires good user interface for testing. But major functions are there.
-   Open question is how to map all this story to SQL databases?       
+   Open question is how to map all this story to SQL databases?
 
 
 17.09.2013
 1. Implement FileInterface::mkdir method, which able to create new directory,
    including all missing parents directories. Normally one should not
-   use ".." symbol inside full path. 
+   use ".." symbol inside full path.
 2. Very first implementation of hieararchy storage in binary files.
    At the moment storage is triggered by the Publisher, but performed in
-   module where hierarchy is created. One can specify interval how often 
+   module where hierarchy is created. One can specify interval how often
    storage file should be recreated and full hierarchy must be dump again.
 3. Start implementation of HierarchyReading class to read data, stored in
    by HierarchyStorage
@@ -2432,50 +2437,50 @@ about current functionality of the framework.
    It is number of milliseconds since 1.1.1970 in GMT. When converted into
    string (xml), human-readable format (ISO 8601) is used. It is like
    '2013-09-16T12:42:30.884Z' and directly can be interpreted in the JavaScript,
-   using 'Date' class. 
-5. Introduce dabc::HierarchyStore class which will be used to write hierarchy 
+   using 'Date' class.
+5. Introduce dabc::HierarchyStore class which will be used to write hierarchy
    log into the binary files.
-   
+
 
 11.09.2013
-1. Major functionality of managing of published hierarchies implemented in 
+1. Major functionality of managing of published hierarchies implemented in
    dabc::Publisher class. It creates and updates central hierarchy (only nameslist),
-   which is later used to discover which entries are availible and to which 
+   which is later used to discover which entries are availible and to which
    modules/workers they are belong.
-2. Every slave connection provide dabc::Publisher with remote hierarchy, 
+2. Every slave connection provide dabc::Publisher with remote hierarchy,
    which mare anaged separately. As result, dabc::Publisher has N separate hierarchies,
    where top branches like /MBS or /FESA or /Go4 can be the same. Here main task
    of publisher correctly merge them in one big structure.
 3. dabc::PublisherRef::Get method implemented, which runs synchron (blocking) and
    return all fields of requested entry. Behind the scene publisher first identify
    node and module where entry is published, than redirect command to the module
-   and finally in respective module thread command is executed. 
-4. dabc::PublisherRef::Get also can be used to request recorded history for the 
+   and finally in respective module thread command is executed.
+4. dabc::PublisherRef::Get also can be used to request recorded history for the
    entry. The result returned in binary form and can be used for analysis.
 5. dabc::PublisherRef::GetBinary implemented to provide special data which is not
-   published as field. 
-6. As result, hierarchy management moved from http::Server and can be used 
+   published as field.
+6. As result, hierarchy management moved from http::Server and can be used
    in different parts of application code. In the future subscription (asynchron)
-   modus will be implemented.          
+   modus will be implemented.
 7. Remove old code with hierarchy, created in command channel and with "GetBinary"
-   request. Now everything handled via publisher with new and much more powerfull 
+   request. Now everything handled via publisher with new and much more powerfull
    interface.
-   
+
 
 5.09.2013
 1. Unify address convention of dabc application. Now any module in the system can
    be identify with address like: "dabc://nodename:port/module". Such address can
-   be supplied to any command as receiver. If command channel do not have 
-   connection to remote dabc node, it will try to establish it. 
+   be supplied to any command as receiver. If command channel do not have
+   connection to remote dabc node, it will try to establish it.
 2. In case of master/client connection client not necessarly have socket port open
    for connection. In such case address formed from nodename_pidNNN, where NNN is
-   process id (unique on the same host). Such address can only be used from the 
+   process id (unique on the same host). Such address can only be used from the
    master like: "dabc://nodename_pid127/module". Command channel will never try
    automatically create connection if port number in address is not specified.
 3. In hierarchy add additional version, which is changed only when names list is
    changed (so-called DNS version). It will be used to request only names list
-   (and its changes) by publisher.         
-4. First step in introducing publisher/subscriber mechanism for hierarchy 
+   (and its changes) by publisher.
+4. First step in introducing publisher/subscriber mechanism for hierarchy
    structure. Up to know only http::Server was managing global hierarchies, in future
    any module will be able to subscribe for any item in hierarchy. Also direct
    get methods will be implemented.
@@ -2485,33 +2490,33 @@ about current functionality of the framework.
    For instance, two mbs::StatusReadout modules could publish there hierarchies like:
        Publish(fHierarchy1,"/MBS/server1");
        Publish(fHierarchy2,"/MBS/server2");
-   Accordingly, subscriber will use global names disregard of actual server which 
-   provides structures. This will be the of publisher to collect necessary description 
+   Accordingly, subscriber will use global names disregard of actual server which
+   provides structures. This will be the of publisher to collect necessary description
    (names lists).
 6. Old scheme is still woring (for demonstarion purposes). I expect smooth transition
-   in next weeks from old to new scheme, adding more new features. 
+   in next weeks from old to new scheme, adding more new features.
 7. Main motivation for new functionality - also be able to provide clear storage facility
-   for all published hierarchies. 
+   for all published hierarchies.
 
 
 3.09.2013
 1. Use new dabc::Record class for hierarchy. Main change - now user explicitely
    should mark his/her changes in hierarchy. There is no autofield, which was
    used before to trigger version tagging and increment.
-2. History now preserved and recorded in binary form. Any kind of fields can 
+2. History now preserved and recorded in binary form. Any kind of fields can
    be recorded in history.
 3. Automatic creation of time field is now possible without history object.
 
 
 30.08.2013
 1. Introduce new RecordField, which can preserve native data types like int or
-   doubles. In addition, 1-dim arrays are supported. 
+   doubles. In addition, 1-dim arrays are supported.
 2. RecordFieldsMap organizes map between field name (std::string) and
-   field value, stored in RecordField class.      
-3. Introduce dabc::iostream class, which will be used to stream RecordField 
-   and RecordFieldsMap to/from binary form. Main motivation - in addition to xml 
+   field value, stored in RecordField class.
+3. Introduce dabc::iostream class, which will be used to stream RecordField
+   and RecordFieldsMap to/from binary form. Main motivation - in addition to xml
    representation one should be able to store Record in compact binary form.
-4. Use new record class for Command, Cfg and Parameter cases.    
+4. Use new record class for Command, Cfg and Parameter cases.
 
 
 27.08.2013
@@ -2527,10 +2532,10 @@ about current functionality of the framework.
       <item value="2"/>
       <item value="3"/>
       <item value="4"/>
-   </Array>     
+   </Array>
    Internally and on any transport cases array will be presented in JSON-like form.
-3. Introduce fesa::Monitor module, which can monitor any number of 
-   FESA services in asynchron mode. List of services should be specified in 
+3. Introduce fesa::Monitor module, which can monitor any number of
+   FESA services in asynchron mode. List of services should be specified in
    form of array in Services field of module. Example is:
    <Module name="fesa_monitor" class="fesa::Monitor">
        <Server value="DummyDevice_DU.linev.asl732"/>
@@ -2539,18 +2544,18 @@ about current functionality of the framework.
        <Services value="[GetMeasVoltage,GetMeasCurrent,GetMeasWeight]"/>
     </Module>
     As one could see, not necessaraly quotes should be used - only if special symbols
-    are necessary.   
+    are necessary.
 4. In fesa::Monitor module all availible fields in each service entry will be published.
    Maybe it is overkill and in the future only small fields (up to certain size) will be
    exported. Need to be tested.
-5. In fesa::Player remove asynchronous mode of parameter request.   
+5. In fesa::Player remove asynchronous mode of parameter request.
 6. For all dabc-relevant hierarchy attributes add 'dabc:' prefix. It allow
    to distinguish them from all other non-dabc attributes.
 
 
 23.08.2013
 1. First working code for synchronous readout of FESA variable from test server.
-2. Also asynchronous readout of FESA double variable is implemented. 
+2. Also asynchronous readout of FESA double variable is implemented.
    Introduce mutex to allow work from several threads.
 3. Show correct time format in tooltip (when time axis is specified).
    Fix problem for axis value near 0 - now it is shown as 0 in tooltip.
@@ -2559,7 +2564,7 @@ about current functionality of the framework.
 22.08.2013
 1. Fix small problem with gauge display.
 2. Introduce UTC time for any kind of time recording.
-3. Fix several problems with time display on JavaScript side. 
+3. Fix several problems with time display on JavaScript side.
 
 
 31.07.2013
@@ -2568,78 +2573,78 @@ about current functionality of the framework.
    Significant drawback - one never can be sure that object (like histogram or canvas)
    is consistent during such interrupted call, but there is no other chance to get
    in between. If user wants, he could always introduce gSystem->ProcessEvents call
-   and be on the safe side. 
+   and be on the safe side.
 2. In Hist1DPainter, when do optimization, draw maximum value from interval.
-   It is little bit longer, but shows real histogram content. Anyhow, 200000 bins 
+   It is little bit longer, but shows real histogram content. Anyhow, 200000 bins
    histogram drawn in 7 sec (old code was never finished)
-   
+
 
 30.07.2013
 1. Primitive, non-flexible but working way to generate png image from ROOT canvas.
    One could think to implement images generation with other kind of libraries in
-   the future, but for a momement just reuse existing ROOT ASImage functionality. 
+   the future, but for a momement just reuse existing ROOT ASImage functionality.
 
 
 29.07.2013
 1. In xml file in <Run> parameters list add <master> parameter. This activates
    connection to master DABC process. It works similar to ROOT or Go4 connections.
-2. Fix memory leak in dabc_root::BinaryProducer and improve command channel 
+2. Fix memory leak in dabc_root::BinaryProducer and improve command channel
    processing (avoid several intermediate buffers).
-3. Fix small error in XmlEngine.   
+3. Fix small error in XmlEngine.
 
 
 26.07.2013
-1. Introduce mbs::Player class to display MBS status record. 
-2. Copy code from MBS m_daq_rate to show different ratemeters, 
+1. Introduce mbs::Player class to display MBS status record.
+2. Copy code from MBS m_daq_rate to show different ratemeters,
    based on the status record. Provide four different logs for showing rate output.
 3. Found proper way to display log messages in browser, using <PRE> </PRE> tags
-4. Provide checkbox to enable/disable history drawing. 
-   Works for ratemeter and log messages. 
-5. Read MBS status via SocketAddon. This prevents from thread blocking due to any 
-   communication problem. 
-6. Add possibility to force log recording even when value is not 
+4. Provide checkbox to enable/disable history drawing.
+   Works for ratemeter and log messages.
+5. Read MBS status via SocketAddon. This prevents from thread blocking due to any
+   communication problem.
+6. Add possibility to force log recording even when value is not
    changed by next SetField call. Works only for so-called autofields.
 7. Extract all history-relevant variables into special class - it instantiated
    only when history is configured for the hierarchy item.
 8. Improve ratemeter drawing.
-        
+
 
 25.07.2013
 1. Introduce hidden flag for the object. It hides object from hierarchy scan.
    Use that flag for some special parameters like command definitions.
 2. Fix very old memory leak in XmlOutputStream. Need to be fixed in ROOT.
 3. Load ROOT scripts ourselfs, excluding duplication. Provide spinner to
-   be able change number of items in grid. 
-4. Introduce permanent flag for dabc::Hierarchy, which protect element from be 
+   be able change number of items in grid.
+4. Introduce permanent flag for dabc::Hierarchy, which protect element from be
    deleted when synchronization with other hierarchy is done.
-5. In dabc.js provide generic HistoryDrawElement which communicates with server to get 
+5. In dabc.js provide generic HistoryDrawElement which communicates with server to get
    history records. Specialized implementations like RateHistoryDrawElement and
    LogHistoryDrawElement provides specific output.
-6. Primitive but working implementation for LogHistoryDrawElement - 
-   show arbitrary log text in scrolled space. 
-7. Even more primitive LogDrawElement - just text output.    
-    
+6. Primitive but working implementation for LogHistoryDrawElement -
+   show arbitrary log text in scrolled space.
+7. Even more primitive LogDrawElement - just text output.
+
 
 24.07.2013
-1. In dabc::Url class provide method to extract options part like name?part1&var=3 
+1. In dabc::Url class provide method to extract options part like name?part1&var=3
 2. Implement history generation for simple hierarchy item with any attributes.
    Provide simple time stamp for each element in history
 3. Implement gethistory request for items, which are providing history.
-   One can limit number of items in request. One can detect if there is gap in history 
+   One can limit number of items in request. One can detect if there is gap in history
    data relative to previous dataset. Works only for local hierarchy objects. Request
-   look like:  http://server:8090/gethistory?/Server/App/Rate&ver=100&limit=100 
+   look like:  http://server:8090/gethistory?/Server/App/Rate&ver=100&limit=100
 4. In dabc.js implement drawing of history in form of TGraph object. Fix several issues
-   with graph update in painter.   
+   with graph update in painter.
 5. Implement automatic recording of history when selected attribute is changed.
    Normally "value" recorded, but can be any. By such feature not only
-   changes during hierarchy update can be detected (update done about every second), 
+   changes during hierarchy update can be detected (update done about every second),
    but also by arbitrary number of direct write operations. One can also record time.
-6. Implement duplication of history on server side - if gethistory request goes to 
-   remote node, local history cache will be produced first. By such feature 
+6. Implement duplication of history on server side - if gethistory request goes to
+   remote node, local history cache will be produced first. By such feature
    any browser requests between two hierarchy updates can be processed locally.
-7. As result, flexible history book-keeping is possible now. Depending from application 
-   needs, one could record and display history over arbitrary variable in the system 
-   with arbitrary (~ms) time precision. 
+7. As result, flexible history book-keeping is possible now. Depending from application
+   needs, one could record and display history over arbitrary variable in the system
+   with arbitrary (~ms) time precision.
 8. Cleanup code how http::Server produces binary and history requests. Now complex logic
    is moved to the place where it should be - to dabc::Hierarchy class. By this change
    one could easily reuse code in other than http implementations.
@@ -2648,39 +2653,39 @@ about current functionality of the framework.
 23.07.2013
 1. Remove transient flag in reference class. By this C++-conform code can be used.
    Main problem was assignment operator - it requires increment of reference counter.
-   But in most cases original object will be cleared and reference counter will be 
+   But in most cases original object will be cleared and reference counter will be
    decreased. To optimize this, transient flag in reference class was introduced.
    But one cannot really control code where and when reference from source object
-   can be MOVED and when COPIED. Therefore only left-shift operator allows to 
+   can be MOVED and when COPIED. Therefore only left-shift operator allows to
    move reference, all other operations will create copy of reference class. In most
    importnat case of dabc::Buffer class this does not lead to performance penalty,
    while dabc::Buffer is created without mutex - instance can be used only inside single
-   thread.   
+   thread.
 2. Remove owner flag from reference - ownership is only can be set for child objects.
    User can always call dabc::Reference::Destroy to initiate object destroy, but
    real destructor will be called only when all reference are disapper.
-3. Fix memory leak with Hierarchy class - in present state Reference could not 
-   automatically cleanup object, which has children. Will be implemented soon. 
+3. Fix memory leak with Hierarchy class - in present state Reference could not
+   automatically cleanup object, which has children. Will be implemented soon.
 4. Try to provide more logical methods to operate with childs in object. Now all kind
    of remove methods call RemoveChild or RemoveChilds. If cleanup flag specified (default),
    object will be destroyed when parent is owner of the object.
 5. Add DebugObject method, which could help to understand which objects are not
    cleaned correctly. Activated only with make extrachecks=true compile flags.
-   Actually, only this helped to find memory leak.    
+   Actually, only this helped to find memory leak.
 6. Provide automatic cleanup of objects with auto-destroy flag even if such objects
-   has childs. Before any child was blocking its parent while parent refcounter was always 
-   bigger than 1. Now cleanup can be started if refcounter equal to number of childs. 
+   has childs. Before any child was blocking its parent while parent refcounter was always
+   bigger than 1. Now cleanup can be started if refcounter equal to number of childs.
 7. Use auto-destroy with hierarchy classes - now any release will cause deletion of
-   not-used hierarchy structures - elegant solution for potential memory-leaks problem.     
+   not-used hierarchy structures - elegant solution for potential memory-leaks problem.
 8. Reduce number of Reference constructor signatures - there were too many.
    Special case of reference creation without mutex hidden in protected methods.
-   No need of Reference::Ref() method - now assignment operator works as expected 
-   (no any more transient objects) 
+   No need of Reference::Ref() method - now assignment operator works as expected
+   (no any more transient objects)
 9. Go back to non-recursive mutexes - using them, one has better chance to detect deadlocks.
-10.First step in implementing history recording for dabc::Hierarchy. 
+10.First step in implementing history recording for dabc::Hierarchy.
    If attribute of hierarchy item changes, one can produce diff string with only
    changed attributes and adding time stamp when change was record. Just in debug output.
-          
+
 
 22.07.2013
 1. Replace Hierarchy::BinData and Command::RawData by the dabc::Buffer class
@@ -2688,7 +2693,7 @@ about current functionality of the framework.
    other binary-data relevant fields are collected.
 3. In dabc.js script automatically unzip data, which are compressed on server side.
    Means, not only ROOT objects but any future components in DABC can be zipped
-   before transported to the browser. 
+   before transported to the browser.
 
 
 19.07.2013
@@ -2700,25 +2705,25 @@ about current functionality of the framework.
    this case new BufferContainer will be created and one can keep original
    buffer in sending thread. One should not forget - if buffers reference
    same memory, one not allowed to change memory from both threads.
-3. Buffer::CanSafelyChange() returns true when user can modify buffer 
-   content without any doubts. It happens when refcnt==1 for each memory segments. 
+3. Buffer::CanSafelyChange() returns true when user can modify buffer
+   content without any doubts. It happens when refcnt==1 for each memory segments.
 4. Main motivation for Buffer changes - allow to use Buffer class in other places
-   like RawData in command or BinData of hierarchy.  
+   like RawData in command or BinData of hierarchy.
 
 
 18.07.2013
 1. Introduce FESA plugin in DABC. At the moment it is just dummy code,
    which creates simple 2D beam profile array. Plugin demonstrates how
-   arbitrary binary data (not necessarly ROOT) can be created in DABC and 
-   exported to the browser. Version control is provided.    
-2. Provide in dabc.js code to display FESA.2D objects. 
+   arbitrary binary data (not necessarly ROOT) can be created in DABC and
+   exported to the browser. Version control is provided.
+2. Provide in dabc.js code to display FESA.2D objects.
    ROOT painter is used to draw profile in form of 2D histopgram in col mode
-3. In RootSniffer extract code which responds for master production and 
+3. In RootSniffer extract code which responds for master production and
    placed it in separate class BinaryProducer. Idea to reuse code at other places,
    where ROOT classes need to be involved
 4. Add in FESA plugin demonstrator showing how arbitrary ROOT objects
    can be add to hierarchy and provided to browser. This solution could simplify GUI
-   development - one could use ROOT graphics directly.  
+   development - one could use ROOT graphics directly.
 
 
 17.07.2013
@@ -2730,46 +2735,46 @@ about current functionality of the framework.
 1. Improve log-scales handling, add appropriate context-menu commands.
 2. Implement draw optimization for TH1 histograms - at maximum draw array
    with number of points on window will be created.
-3. Improve algorithm of loading necessary scripts. 
-4. Go away from ROOT style of drawing - one could not see more than one histogram. 
+3. Improve algorithm of loading necessary scripts.
+4. Go away from ROOT style of drawing - one could not see more than one histogram.
    First try to use HTML tabele to display more than one object at once.
-   
+
 
 15.07.2013
 1. Fix problem with stat-box drawing, fix cleanup problem by stat box redraw
 2. Implement toggling of col, colz, stat-box properly
-3. Improve zooming selection - now one could select only X or only Y axis. 
+3. Improve zooming selection - now one could select only X or only Y axis.
 4. Implement autozoom for 1-d and 2-d histograms
-5. Try to optimize 2-D histo draw - create bins array with necessary info. 
+5. Try to optimize 2-D histo draw - create bins array with necessary info.
 
 
 12.07.2013
 1. Provide optionally normal style for tooltips. In case of TH2 objects
-   improve drawing performace - avoid creation of double number of elements. 
-2. Add into context menu switch for "col" options. Fix problem with TH2 draw. 
+   improve drawing performace - avoid creation of double number of elements.
+2. Add into context menu switch for "col" options. Fix problem with TH2 draw.
 3. Fix drawing errors and problems with TH2 and TAxis classes.
-4. Bring together vis (svg:g)  frame(svg:frame)  and pad - all are collected 
+4. Bring together vis (svg:g)  frame(svg:frame)  and pad - all are collected
    in top svg:g entity. Therefore only single arguments need to be deliver in
-   all draw methods. This makes much more easier to understand logic behind. 
+   all draw methods. This makes much more easier to understand logic behind.
 5. Provide drawing (not yet update) of colz axis.
-6. Define central drawObjectInFrame function, where all different classes must be 
+6. Define central drawObjectInFrame function, where all different classes must be
    handled only once. Therefore from now it should be easy to add any new classes.
-7. Better drawing of stat box (alignment, 2d statistic)   
+7. Better drawing of stat box (alignment, 2d statistic)
 8. Normal filling of stat box for TH1/TH2 hsitograms
-   
+
 
 11.07.2013
-1. Implement drawing of THStack. 
+1. Implement drawing of THStack.
 2. Try to avoid bins array usage and generate draw elements directly and only
    required amount. Done as test for TH1 with line drawing
 3. Add support for TProfile - via normal hist painter.
-4. Fix several problems with TGraph draw, 
-   files/rf107.root, files/ct.root are now working. 
+4. Fix several problems with TGraph draw,
+   files/rf107.root, files/ct.root are now working.
 5. Add support for TF1 - create Func1DPainter class.
-6. Put protection when TF1.evalPar() returns NaN value. 
+6. Put protection when TF1.evalPar() returns NaN value.
    At least, fillrandom.root file with such funstion now working.
 7. Move functionality to draw TH2 histograms in 3D to Hist2DPainter.
-   One can reuse range, selected in 2D view. 
+   One can reuse range, selected in 2D view.
 
 
 10.07.2013
@@ -2779,38 +2784,38 @@ about current functionality of the framework.
 2. Split HistPainter on generic part and Hist1DPainter and Hist2DPainter.
    Many functions remain in basic class.
 3. Implement Hist2DPainter.  Linear code (no any long loops) for producing
-   tooltip information.   
-   
+   tooltip information.
+
 
 9.07.2013
 1. First approximation for HistPainter and PavePainter. One could select ranges,
    create and toggle stat box. Information in stat box can be updated.
-   One could extend menu items.  
-2. Remove tooltip from Bertrand - it eat full time and cannot be used as is.   
+   One could extend menu items.
+2. Remove tooltip from Bertrand - it eat full time and cannot be used as is.
 
 
 8.07.2013
-1. Experimental code in JSRootD3Painter.js. Try to zoom in without remake of drawn objects, 
+1. Experimental code in JSRootD3Painter.js. Try to zoom in without remake of drawn objects,
    but via d3.transition approach. One should get better control how objects are
    modified.
 2. Try to introduce gStyle object in JSRootD3Painter.js - use to create stat box for
-   histogram. 
-3. Provide possibility to select between experimental and normal painter.   
+   histogram.
+3. Provide possibility to select between experimental and normal painter.
 4. Very-very first HistPainter class in JSRootD3ExpPainter.js - try to move
    all graphical handling out of histogram itself. Painter will keep all options,
-   which we could change later interactive. 
+   which we could change later interactive.
 
 
 5.07.2013
 1. Implement context menu for drawn object. This allows to implement different
    functionality without complex gui with collapsibles.
-2. Change hist paint mathod - keep hist.redraw() as it was, 
-   introduce hist.rebuild() method which should recreate histogram.   
+2. Change hist paint mathod - keep hist.redraw() as it was,
+   introduce hist.rebuild() method which should recreate histogram.
 3. With few modifications allow to work with local files.
    Web server, which does not support ranges, should also work now.
 4. First try to generate stats box on browser side.
    Question, how far one should go with duplication of ROOT functionality?
-      
+
 
 4.07.2013
 1. Way to update histogram content was too simple and do not scale in the future.
@@ -2826,66 +2831,66 @@ about current functionality of the framework.
 1. In full browser do not automatically show hierarchy of remote clients.
    Only when clients="true" is specified, server will provide view of
    remote structures.
-2. Set default DABC command channel port to 1237.   
+2. Set default DABC command channel port to 1237.
 3. In JSRootIO found simple way to update histogram content on drawn object
    without redraw of complete canvas - it is really simple. Tested with TH1 objects,
    but should work with all kinds of objects beside TCanvas.
-   
+
 
 2.07.2013
 1. Fix error in command channel - submitted commands not always was send to remote.
 2. Tag version number 2.2.0 - this is mark for important milestone achieved.
-3. Implement compression/uncompression of ROOT data. 
+3. Implement compression/uncompression of ROOT data.
    Compression level can be configured (now only via xml file).
 4. Fix CPU consumption problem with MBS server transport.
 5. Add tmout argument to mbs generator input - reduce CPU load of examples.
-   
+
 
 1.07.2013
-1. Move DABC/ROOT interface methods to DabcRoot class (instead of using  
+1. Move DABC/ROOT interface methods to DabcRoot class (instead of using
    dabc_root namespace). It is necessary, while rootmap for libraries works only
    when at least one class is specified. All methods in DabcRoot are static.
    Actiavte http server in ROOT will look like:
      root [0] DabcRoot::StartHttpServer(8095);
    Actiavte connection to DABC master node:
      root [1] DabcRoot::ConnectMaster("localhost:4444");
-2. Adjustment to be able use RootSniffer and browser with go4.     
+2. Adjustment to be able use RootSniffer and browser with go4.
 3. Fix problem with thread usage when hierarchy was created. Now method really
-   called from the proper thread context and one not need to use locking.     
+   called from the proper thread context and one not need to use locking.
 
 
 28.06.2013
-1. Implement automatic reconnect of command channel when server disappears. 
+1. Implement automatic reconnect of command channel when server disappears.
 2. Objects request via command channel works! It means, one could access data
    from running ROOT analysis, which automatically connects to http server and
-   provides its hierarchy and objects via such connection. One could have many 
+   provides its hierarchy and objects via such connection. One could have many
    such connection in the http server. This if first, but most important step to
-   control many-node application (ROOT, Go4, DABC) via single http server!   
+   control many-node application (ROOT, Go4, DABC) via single http server!
 3. First real test to run two ROOT analsysis, connected to the same http server.
    Organize better folders for browser, suppress main debug output.
 4. Prepare DABC code for using within go4analysis. Idea to reuse RootSniffer
    and just provide information from go4 object manager.
 5. Today a first day when ROOT, Go4 and DABC with arbitrary combination of nodes
    can provide data via central DABC web server to any normal browser like Mozilla
-   or IE or Chrome. This allows to build complex heterogene  systems with unified 
+   or IE or Chrome. This allows to build complex heterogene  systems with unified
    user monitoring and control interface! It took only 17 days to implement!
-   A huge amount of work need to be done, but all building blocks are already exist 
+   A huge amount of work need to be done, but all building blocks are already exist
    and proved to be working.
-     
+
 
 27.06.2013
-1. In http::Server add possibility to select part of objects hierarchy, displayed 
+1. In http::Server add possibility to select part of objects hierarchy, displayed
    in the browser. One also can specify how top folder is called. This allows in case
-   of ROOT browser shows only ROOT-relevant structures with name "ROOT". 
+   of ROOT browser shows only ROOT-relevant structures with name "ROOT".
 2. Fix error in dabc.js, when object version number was kept in string form. In this
    case comparasion between versions was not working correctly. One should use
    explicit conversion to number like MyCall(Number(ver)).
-3. Change functions name which must be called from ROOT script. 
+3. Change functions name which must be called from ROOT script.
    Now user should do from ROOT session:
      root [0] gSystem->Load("libDabcRoot")
      root [1] dabc_root::StartHttpServer(8095);
      root [2] .x $ROOTSYS/tutorials/hsimple.C
-   Reduce debug output.   
+   Reduce debug output.
 4. First try to connect ROOT analysis with DABC application, which has web server running.
    With commands:
      root [0] gSystem->Load("libDabcRoot")
@@ -2896,25 +2901,25 @@ about current functionality of the framework.
    if objects exists in the same application as server or objects received from
    such special channel from remote.
 5. Fix error in version control of hierarchy. Now one really see in browser
-   all objects from slave process. Last small step remains - 
+   all objects from slave process. Last small step remains -
    provide getbinary request to remote node.
-    
+
 
 26.06.2013
 1. Now is possible define master for any item in the hierarchy. Idea of master item is
    that such master object should be updated together with item itself (when master is
    changed). Server-client protocol will provide information about actual master version
-   as well.  
+   as well.
 2. Browser request streamer info only when we sure that streamer info is required.
    Potentially many streamerinfos can be used - will be required when many ROOT analysis
-   connected to same http server. 
-3. First time continiousely running hsimple.C with web server! 
+   connected to same http server.
+3. First time continiousely running hsimple.C with web server!
    Now arbitrary ROOT script can be monitored via web broser!
-4. Add support of TProfile and, partially, TCanvas. TCanvas cannot be updated.   
+4. Add support of TProfile and, partially, TCanvas. TCanvas cannot be updated.
 5. Provide only browsing for TTree/TBranch/TLeaf classes
 6. When ROOT object requested from the browser, it is located again in ROOT structures.
    This is needed while object may disapper and full hierarchy scan may take too much time.
-   Commands from browser executed about every 0.1 s, hierarchy update performed once a 3 s. 
+   Commands from browser executed about every 0.1 s, hierarchy update performed once a 3 s.
 
 
 25.06.2013
@@ -2924,55 +2929,55 @@ about current functionality of the framework.
 
 24.06.2013
 1. Update hierarchy via xml file and build tree structure direct in the browser.
-   Use dtree.jquery for that. This will allow to fully customize look and fill 
-   of the hierarchy browser. The only communication format between server and browser 
+   Use dtree.jquery for that. This will allow to fully customize look and fill
+   of the hierarchy browser. The only communication format between server and browser
    will be xml.
-2. Made hierarchy.htm as main DABC page, remove no longer used files.   
-3. Enable display of streamer infos, assign images for ROOT objects. 
+2. Made hierarchy.htm as main DABC page, remove no longer used files.
+3. Enable display of streamer infos, assign images for ROOT objects.
 4. Smooth open/close logic, but it should be rewritten - dabc.js should
    fully control itself how items are open or closed.
 
 
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of
-   binary data in dabc::Hierarchy classes. Main motivation is to be able 
+   binary data in dabc::Hierarchy classes. Main motivation is to be able
    from any thread keep reference on binary data disregard of changes in hierarchy.
    BinData also simplifies version control of binary data.
 2. In case of RootSniffer special container is created, which interfaces TBuffer
    functionality. By that one do not require memcopy and duplication of memory.
-3. Implement GetBinary command for RootSniffer. By that step one completely decouples 
+3. Implement GetBinary command for RootSniffer. By that step one completely decouples
    http::Server from ROOT functionality.
 4. Now it is possible to draw root objects and ratemeters from hierarchy browser.
 5. Make more generic method to generate StreamerInfos. Test TGraph.
 6. First demonsrtation showing that simple redraw of the object is working.
 7. Introduce proper version control of the hierarchy components.
    For every element hash property could be set, which must be changed if object is changing.
-   If hash changed, version of that item will be changed. This change will be propogated 
+   If hash changed, version of that item will be changed. This change will be propogated
    over all dependent hierarchy structures. When browser requests object, it provides
-   version of last instance it has. Server compare browser object version with 
+   version of last instance it has. Server compare browser object version with
    local object version and if they match, returns empty reply. If not, binary buffer
-   will be requested first from producer and with current version number provided to the 
+   will be requested first from producer and with current version number provided to the
    browser. Little bit complex, but prevent gui from unnecessary redraw and prevent server
-   from extra load if nothing is changing. To force object retrieving, one must specify 
-   extremely high version number.      
+   from extra load if nothing is changing. To force object retrieving, one must specify
+   extremely high version number.
 
 
 20.06.2013
 1. Create DABC.Manager class for JavaScript applications (name is always the same :))
-   It should manage most (probably all) draw elements, produce requests and update 
-   draw elements. DABC.DrawElement class contains full description of drawn element - 
+   It should manage most (probably all) draw elements, produce requests and update
+   draw elements. DABC.DrawElement class contains full description of drawn element -
    item name, kind, draw object and so on.
 2. Create hierarchy of DABC.DrawElement classes to separate Gauge from Root canvas
-   from anything else. Only 'simple' classes handled in the main request, 
+   from anything else. Only 'simple' classes handled in the main request,
    rest will be treated by own-managed asynchronous requests.
-3. Extract DABC-specific JavaScript code to dabc.js. 
-4. Implement binary requests, central binary callback and  
-   first primitive version of drawing histogram from DABC browser!  
+3. Extract DABC-specific JavaScript code to dabc.js.
+4. Implement binary requests, central binary callback and
+   first primitive version of drawing histogram from DABC browser!
 
 19.06.2013
 1. Change logic how hierarchy is managed. There is dabc::Object::BuildHierarchy()
    method, which responsible to create hierarchy below. Method executed in thread
-   context of object. 
+   context of object.
 
 
 18.06.2013
@@ -2983,33 +2988,33 @@ about current functionality of the framework.
    is required to provide streamer infos to the browser. Nevertheless, it is
    prove of principal that web-server for arbitrary ROOT analysis can be implemented!
 2. Found simple way to generate streamer infos on server side.
-   Therefore special ff.root file no longer required. 
+   Therefore special ff.root file no longer required.
 3. Several fixes in JSRootIO to be able work with dummy JSROOTIO.RootFile.
 4. Introduce dabc_root::RootSniffer class, which will deliver ROOT objects hieararchy
-   to DABC framework.     
-         
+   to DABC framework.
+
 
 17.06.2013
 1. Principal possibility shown to transport ROOT-objects from DABC into browser
    without intermediate file. Around such feature one could build application,
-   which can deliver any object from running ROOT code into web browser.   
+   which can deliver any object from running ROOT code into web browser.
 
 
 14.06.2013
-1. First working ratemeter in the browser! 
-   Very simple JustGage element was used, can be always replaced by more advanced 
+1. First working ratemeter in the browser!
+   Very simple JustGage element was used, can be always replaced by more advanced
    widget. Basic logic of widgets organisations and data exchange between
    browser and server is exercised. Many other widget types (commands, info fields, ...)
-   can be done in similar way.    
-2. Version number switched to 2.1.1. 
-   Odd second number indicates that now many new features can appear - 
-   mostly in http interface. 
+   can be done in similar way.
+2. Version number switched to 2.1.1.
+   Odd second number indicates that now many new features can appear -
+   mostly in http interface.
 
 
 13.06.2013
-1. Put node hierarchy as separate request. In future can update it like gauge 
+1. Put node hierarchy as separate request. In future can update it like gauge
    periodically, one could easely insert hierarchy in many different pages.
-2. Understand how correctly select items in hierarchy and how react on click.   
+2. Understand how correctly select items in hierarchy and how react on click.
 
 
 12.06.2013
@@ -3021,19 +3026,19 @@ about current functionality of the framework.
 1. Mongoose web browser (from https://github.com/valenok/mongoose) integrated into
    DABC. New libDabcHttp plugin is introduced, which should provide http protocol
    to DABC applications. For a moment it is just helloword application, should
-   provide functionality similar to command shell, ncurses shell, go4-dabc browser. 
+   provide functionality similar to command shell, ncurses shell, go4-dabc browser.
 2. Show application hierarchy in form of xml file.
 
 
 10.06.2013
 1. Minimalistic structure browser in dabc_shell. Menus from ncurses library are used.
    Real functionality will be provided in parallel to other implementations.
-   Idea to show some rates, infos, submit commands in such shell. 
+   Idea to show some rates, infos, submit commands in such shell.
 
 
 7.06.2013
 1. Introduce primitive command shell to remote dabc node. Via command channel
-   any kind of command can be executed. 
+   any kind of command can be executed.
 2. First working code for transport and update of hierarchy structure over
    command channel. By this one should be able to inspect any remote dabc node
    in the future, even several of them simultaneous. This command shell will be
@@ -3041,48 +3046,48 @@ about current functionality of the framework.
    Later plugin for go4 will be done!
 3. Allow to transport raw data together with xml command description over command
    channel. This allows potentially to transport any kind of data via the channel -
-   not only xml-based representation, which is not veru efficient for big raw objects. 
+   not only xml-based representation, which is not veru efficient for big raw objects.
 
 
 6.06.2013
 1. Implement unreliable (datagram) socket communication.
    Idea to provide udp and multicast messages, where no any connections are required.
    Usage of datagram socket does not require connection manager and no any kind of control.
-   Include appropriate example in net-test.   
+   Include appropriate example in net-test.
 
 
 5.06.2013
-1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 
+1. Introduce new command channel, based on TCP sockets (old was using UDP). There is
    one worker per connection and all commands to remote node are sequentialized via that worker.
    At the moment functionality of old and new command channels are similar and they can be
    easily replaced. In future command channel can be used to communicate with dabc
-   nodes from external application (command shell, go4 plugin and so on). 
+   nodes from external application (command shell, go4 plugin and so on).
 2. Introduce ModuleAsync::ActivateOutput/ActivateInput to generate events for
    specified output/input ports. Required when processing of events was stopped
    when ProcessRecv/ProcessSend methods return false.
 3. ModuleAsync::TakeBuffer() not always requires handle to be created. In simple case
    direct call to default memory pool (with name "Pool") will be performed. This should
-   exclude complex rules when handle is required or not. From this moment meaning of handle 
+   exclude complex rules when handle is required or not. From this moment meaning of handle
    is provide self-filled queue of buffers, which can be used like any other input port.
 
 
 4.06.2013
 1. Fix (implement) missing cleanup in several components - Port, PoolHandle, NetworkTransport.
    Cleanup mostly required to correctly release cross-references before objects can be destroyed.
-   Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.  
+   Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.
 
 
 31.05.2013
 1. Provide version control of dabc::Hierarchy structure. Each element in hierarchy includes
    version number, which indicate when last changes were performed. This version gives
    possibility to extract only changed items relative to specified version in the past.
-2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct 
+2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct
    hierarchy from xml. This will allow to transport and reconstruct hierarchy on
    any remote location.
 
 
 28.05.2013
-1. Introduce dabc::Hierarchy class, which should represent in the future 
+1. Introduce dabc::Hierarchy class, which should represent in the future
    objects hierarchy of remote (or local) DABC process.
 
 
@@ -3108,22 +3113,22 @@ about current functionality of the framework.
 2. Create dabc::RepeaterModule. It's only functionality - translate data from each input to
    correspondent output. Thus number inputs and outputs should be the same.
 3. Remove old latex-based documentation, start long transition to doxygen-based one.
-   At least 1.8.0 version of doxygen is required. 
+   At least 1.8.0 version of doxygen is required.
    To generate documentation files, call "make doxy".
 4. Produce 2.0.2 tag - currently working version of HADAQ readout
 
 16.05.2013
 1. Allow to specify auto="false" for every input/output port to avoid automatic port connection.
-2. Adjust most of MBS examples to current modules creation logic. 
+2. Adjust most of MBS examples to current modules creation logic.
    Main advantage now - one do not need  special init functions for different use-cases.
 3. Remove mbs::GeneratorModule - one can use "lmd://Generator" input instead.
-4. Implement of automatic reconnection of any module input/output. 
+4. Implement of automatic reconnection of any module input/output.
    For that "reconnect" attribute should be specified for the port:
       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="3"/>
    Property specifies interval (in seconds) how often reconnect should be performed.
-   Reconnect will not be done when auto="false" specified.    
+   Reconnect will not be done when auto="false" specified.
 5. Fix error that MemoryPool was stopped when no any connection was available.
-   Thus when new connection was coming, pool failed to provide 
+   Thus when new connection was coming, pool failed to provide
    new buffer to modules and transports.
 
 
@@ -3131,22 +3136,22 @@ about current functionality of the framework.
 1. Make more comfortable way to specify affinity of the threads and complete process.
 2. Already before it was possible to specify taskset arguments for complete dabc process in
    <Run> section in the form like <taskset value="-c 10-15"/>. This is used in dabc_run script.
-3. One can specify default affinity for every new created thread, providing "affinity" 
+3. One can specify default affinity for every new created thread, providing "affinity"
    parameter in <Run> section. Value can be following:
        - unsigned value with processors mask
        - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
                   'x' - enabled, 'o' - disabled, 's' - special purpose
                      first element in string corresponds to first processor
-       - string like "-N" where N is processors number which should be reserved 
-                  for special purposes. These processors could be later assigned 
-                  with SetAffinity("+M") call (M<N) 
+       - string like "-N" where N is processors number which should be reserved
+                  for special purposes. These processors could be later assigned
+                  with SetAffinity("+M") call (M<N)
 4. For every thread attribute "affinity" could be specified. Allowed values:
        - unsigned value with processors mask
        - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
                first element in string corresponds to first processor
-       - string like "+M" where M is processor number in special processors set, 
-                before SetDfltAffinity("-N") should be called (M<N) 
-5. Mark current repository trunk as 2.0.1 version    
+       - string like "+M" where M is processor number in special processors set,
+                before SetDfltAffinity("-N") should be called (M<N)
+5. Mark current repository trunk as 2.0.1 version
 
 14.05.2013
 1. Add possibility to configure threads layout. Layout defines how many threads will be
@@ -3158,7 +3163,7 @@ about current functionality of the framework.
    Threads layout can be specified in <Run> section of xml file:
       <threads_layout value="permodule"/>
    Default kind of threads layout is balanced.
-2. Allow to configure "timeout", "thread", "device", "useackn" and "timeout" attributes 
+2. Allow to configure "timeout", "thread", "device", "useackn" and "timeout" attributes
    for port or for connection. These attributes will be used for transport creation for
    particular port. For instance, one could specify thread attribute:
       <InputPort name="Input0" url="lmd://file*.lmd" queue="10" thread="InputThrd0"/>
@@ -3167,7 +3172,7 @@ about current functionality of the framework.
 
 13.05.2013
 1. Add possibility to create devices and threads automatically via xml file.
-   Xml code should look like: 
+   Xml code should look like:
 
    <Thread name="thread1" class="dabc::SocketThread"/>
 
@@ -3187,34 +3192,34 @@ about current functionality of the framework.
 
 8.05.2013
 1. Memory pool, modules and connections between them could be created automatically,
-   based on information from xml file. For module one should specify class tag. 
-   In addition, thread tag can be provided. For instance: 
-   
+   based on information from xml file. For module one should specify class tag.
+   In addition, thread tag can be provided. For instance:
+
    <Module name="Combiner" class="hadaq::CombinerModule">
       ...
    </Module>
-   
+
    Local connection between modules can be configured via simplified url:
-   
+
    <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
      ...
      <InputPort name="Input0" url="Combiner/Output1" queue="10"/>
-     ...          
+     ...
    </Module>
-   
+
    As alternative, one could specify connection between modules in extra node:
-   
-   <Connection output="Combiner/Output1" input="OnlineServer/Input0"/> 
-   
+
+   <Connection output="Combiner/Output1" input="OnlineServer/Input0"/>
+
    hadaq plugin is first plugin with such examples.
-2. Provide new configuration files for hadaq plugin, showing auto-creation functionality  
+2. Provide new configuration files for hadaq plugin, showing auto-creation functionality
 3. Introduce BasicFile class, which only contains file descriptor and IO object.
    Used as basic class for dabc::BinaryFile, mbs::LmdFileNew, hadaq::HldFile.
 4. Change implementation of hadaq::HldFile file. Main change - use DABC IO class
    to be able switch to any other file system. Also when reading events, first read
    as much as possible and than rewind if non-complete events are read.
-   
-   
+
+
 7.05.2013
 1. Tag version 2.0.0 in repository.
 
@@ -3223,12 +3228,12 @@ about current functionality of the framework.
 1. Introduce mbs::LmdFileNew class, which should replace LmdFile in next future. Idea
    is to use same logic as with dabc::BinaryFile, where different low-level file I/O
    can be used. Also like dabc::BinaryFile, only appropriate includes will be required
-   to use mbs::LmdFileNew classes outside DABC. One more argument for mbs::LmdFileNew - 
+   to use mbs::LmdFileNew classes outside DABC. One more argument for mbs::LmdFileNew -
    reduce functionality of lmd storage to absolute minimum, remove never-used index table.
 2. Provide LMD random generator input, which could be configured in form
       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
-   It should replace MBS generator module in the near future. 
-3. Provide temporary "lmd2" file input and output classes, which are using 
+   It should replace MBS generator module in the near future.
+3. Provide temporary "lmd2" file input and output classes, which are using
    mbs::LmdFileNew. New lmd files can be used with go4 as well. Test it.
 4. Fix error with MemoryPool::TakeEmpty - pool reference was not set correctly
    in buffer, which leads to double delete of memory.
@@ -3264,53 +3269,53 @@ about current functionality of the framework.
       }
       f.Close();
 
-2. Replace FileIO class by FileInterface. FileInterface is wrapper for posix file 
+2. Replace FileIO class by FileInterface. FileInterface is wrapper for posix file
    functions with very similar functions. Already FileInterface itself provides
-   basic IO functions and used in BinaryFile class. Later RFIO or ROOTD can be 
-   implemented.    
+   basic IO functions and used in BinaryFile class. Later RFIO or ROOTD can be
+   implemented.
 3. Implement BinaryFileOutput which can be work as generic output for buffers in
    DABC. Syntax is "bin://test.bin?maxsize=30"
 4. Replace const char* arguments in several Factory methods.
 5. Implement BinaryFileInput.
 6. Eliminate outdated FileIO classes, now everything goes via FileInterface.
-   Eliminate extra ListMatchFiles - implemented via FileIO. 
+   Eliminate extra ListMatchFiles - implemented via FileIO.
 
 19.03.2013
-1. Modify dabc::Buffer class. Now it uses reference on MemoryPool to access 
-   its functionality. When release buffer, memory pool mutex will be locked twice - 
-   first time to release memory structures and second time to release reference 
-   on pool itself. Solves very nasty problem during application cleanup, 
+1. Modify dabc::Buffer class. Now it uses reference on MemoryPool to access
+   its functionality. When release buffer, memory pool mutex will be locked twice -
+   first time to release memory structures and second time to release reference
+   on pool itself. Solves very nasty problem during application cleanup,
    when memory pool potentially could remains hanging.
 2. Replace in many places const char* argument by const std::string&
-3. Remove direct pointer on module from module item, module is always must be 
+3. Remove direct pointer on module from module item, module is always must be
    direct parent of item.
 
 15.03.2013
 1. Make majority methods of Module and Port classes protected, some of them private.
    Only reference classes will provide public, thread-safe methods.
 2. Like Ports, now Timers and UserItems not accessible via pointer in the module.
-   From now only module methods should be used for any kind of send/recv/timer or 
+   From now only module methods should be used for any kind of send/recv/timer or
    user event generation.
 3. Remove InputPort.h OutputPort.h Timer.h PoolHandle.h files. All these classes are
    now "hidden" from normal user and should not be directly appear in the code.
 4. Make central dabc::Exception class with kind field to simplify handling of the exceptions.
 
 14.03.2013
-1. Change logic how factories are instantiated, 
+1. Change logic how factories are instantiated,
 2. Remove libraries handles list from the factory, it was used for symbols finding.
-3. Hide all PoolHandle methods from user, 
-   only Module methods can be used for correspondent functionality  
+3. Hide all PoolHandle methods from user,
+   only Module methods can be used for correspondent functionality
 4. Remove direct usage of InputPort/OutputPort classes in user code - everything done
-   via indexes or names. Later classes will be removed completely. Still one need to 
-   hide many module/ports methods 
+   via indexes or names. Later classes will be removed completely. Still one need to
+   hide many module/ports methods
 
 13.03.2013
 1. Change syntax of DOUT1(("something")) to DOUT1("something"). As before, command will not be
    compiled when make debug=0 command is used.
-   
+
 12.03.2013
 1. Modify EZCA plugin - remove static variables, use DataInput interface in proper way,
-   improve compilation 
+   improve compilation
 2. Fix timeout probelms in DataTransports
 3. Allow to change EZCA config parameters
 4. Use EZCA group operations - should improve performance when using many variables.
@@ -3320,7 +3325,7 @@ about current functionality of the framework.
 
 11.03.2013
 1. Next step to make PoolHandle like input port, which delivers buffers from the memory
-   pool. No any requests is necessary. Till now possible to request buffers directly from 
+   pool. No any requests is necessary. Till now possible to request buffers directly from
    the pool, but most of transport and standard modules will use new feature.
 2. Continue API transition, step by step hide direct port methods from user.
 
@@ -3330,47 +3335,47 @@ about current functionality of the framework.
 3. Start transition to module API, where user do not have access to pointers to the
    objects like I/O port, pool handle, timer and so on. Either port index or port name
    should be used. Also all main methods like Send/Recv should be protected to avoid
-   usage from outside module code.     
+   usage from outside module code.
 
 7.03.2013
-1. First workign setup with MBS combiner module. Main change - do not block event loop by 
+1. First workign setup with MBS combiner module. Main change - do not block event loop by
    event building forever. Use ProcessRecv/ProcessSend methods, they can reinject events itself.
-2. Strictly check version 2 of xml file.     
+2. Strictly check version 2 of xml file.
 3. In mbs::ServerTransport correctly treat second request from the client
 4. In epics plugin eliminate applications class - everything can be done with simple init
-   function. Simplify a lot class structure, still to be checked with epics. 
+   function. Simplify a lot class structure, still to be checked with epics.
 5. Adjust mbs plugin, remove old examples and old eventapi
 6. Remove old port, pool handle, transport and local transport classes.
 
 6.03.2013
 1. Adjust mbs plugin modules to new scheme, need to test them
-2. First tests working with hadaq simulators! 
+2. First tests working with hadaq simulators!
 3. Add possibility to balance performance between modules by limiting loop max count
    per port. In this case ProcessRecv/ProcessSend calling sequence will be broken and
    events are rescheduled. Probably, very important for hadaq
-4. Debug and improve hadaq::CombinerModule and hadaq::UspTransport classes. 
+4. Debug and improve hadaq::CombinerModule and hadaq::UspTransport classes.
    Now with minimal queue length everything works smoothly. Also correct treatment of
    events id overflow is implemented.
-5. Test hld and lmd output for hadaq event builder module - works!   
+5. Test hld and lmd output for hadaq event builder module - works!
 6. In hadaq transport use simple recv() function - socket is already bind to the port.
 
 5.03.2013
 1. Change const char* to std::string in modules constructors and all related methods
 2. Adjust hadaq plugin to new organization, need to be tested.
-3. By default, module creates input and output ports and pool handle (if conbfigured) 
+3. By default, module creates input and output ports and pool handle (if conbfigured)
 4. Allow to put configuration parameters as node attributes in xml files like
        <InputPort name="Input0" queue="11" url="hadaq://host:50000"/>
    Should significantly simplify xml files. Old syntax is also valid:
        <InputPort name="Input0">
          <queue value="11"/>
          <url value="hadaq://host:50000"/>
-       </InputPort>  
+       </InputPort>
 5. Start transition of roc::CombinerModule to new scheme, remove some old features.
 
-4.03.2013 
-1. For time been include roc-udp plugin into dabc2 - just for convenience duting 
+4.03.2013
+1. For time been include roc-udp plugin into dabc2 - just for convenience duting
    migration. Convert UdpTransport to SocketAddon.
-2. In NewDataInput allow to use queues of the buffers for transport addon. 
+2. In NewDataInput allow to use queues of the buffers for transport addon.
    Use such feature for the roc udp transport
 3. First debugging of the roc-udp plugin - seems to be, it is working!
 4. Eliminate SocketWorker classes - now all codes based on Addons.
@@ -3383,39 +3388,39 @@ about current functionality of the framework.
 1. Debug network transport for socket, including acknowledge feature. Is working now.
 2. Introduce verbs::WorkerAddon class, which replaces specialized verbs::Worker
    Redo all relevant verbs classes. Adjust NetworkTransport for verbs.
-   
+
 27.02.2013
 1. Refactor command channel, socket device, network transport and socket transport.
-   In all cases SocketAddon class used insted of SocketWorker. 
+   In all cases SocketAddon class used insted of SocketWorker.
    Still a lot of debugging to be done.
 
 26.02.2013
 1. Significant redesign of mbs::ServerTransport. Now it consists from ServerAddon, which
-   handles connection and OutputAddon which handles data transfer to client. 
+   handles connection and OutputAddon which handles data transfer to client.
    Many clients organized as many slave connection to server transport. Number of connections
-   can be increased or descreased dynamically. Tested with go4 and with dabc client. 
+   can be increased or descreased dynamically. Tested with go4 and with dabc client.
 
 22.02.2013
 1. Deliver disconnect events to module also in non-running state.
 2. First working version of mbs::ClientTransport.
 3. Split DataTransport on two independend InputTransport and OutputTransport.
-   Both classes should be used with DataInput/DataOutput classes. 
-4. Adjust DataInput interface to work not only with blocking interfaces but also 
+   Both classes should be used with DataInput/DataOutput classes.
+4. Adjust DataInput interface to work not only with blocking interfaces but also
    with call-back functionality - like DataInput already.
 
 21.02.2013
 1. Implementing full pallette of WorkerAddon for SocketThread. All new classes should
    replace SocketWorker classes in dabc.
 2. Rewrite mbs::ClientTransport class with SocketIOAddon. Try to use DataInputTransport.
-   Only implementation, not yet tested.  
+   Only implementation, not yet tested.
 
 20.02.2013
-1. First working implementation of NewDataTransport, based on NewTransport. 
+1. First working implementation of NewDataTransport, based on NewTransport.
    Here normal ModuleAsync is used to provide event loop, queues and so on.
    Dramatically simplifies way how port and transport connected and work together.
-2. First adoption of NewDataTransport to lmd file input/output. 
+2. First adoption of NewDataTransport to lmd file input/output.
    First running example with such new transports.
-3. Introduce di_DfltBufSize return value for DataInput object. Allows to use default 
+3. Introduce di_DfltBufSize return value for DataInput object. Allows to use default
    buffers, provided by the memory pool. Thus configuration can be shifted to memory pool.
 4. Allow to specify transport kind directly in the xml file - via url tag.
    By one string one can specify type of transport and basic parameters. Like
@@ -3433,14 +3438,14 @@ about current functionality of the framework.
       SignalOperation,  // next event can be produced when event consumer performs next operation
       SignalEvery       // every operation will produce event
    }
-2. By default use SignalConfirm kind for i/o ports. This kind is useful when in 
-   each event processsing function many buffers can be handled - is a situation in most cases.    
+2. By default use SignalConfirm kind for i/o ports. This kind is useful when in
+   each event processsing function many buffers can be handled - is a situation in most cases.
 3. Implement burst mode in memory pool. When module permanently requests buffers from the pool,
    maximum number of buffers will be send.
 4. Support of new pool handle in ModuleSync
 
 15.02.2013
-1. Introduce WorkerAddon class, which should contain all device-specific 
+1. Introduce WorkerAddon class, which should contain all device-specific
    code for sockets and IB.
 2. MemoryPool class now derived from ModuleAsync - means just another source of
    buffers. All requests now will be processed via ports, keep for the moment
@@ -3452,7 +3457,7 @@ about current functionality of the framework.
 3. Add support of new i/o ports into both modules kinds
 4. Generate i/o events only when consumer react on previous event
 5. Improve by factor 3 speed of buffers propogation over modules
-6. Exclude mutex from queue when ports comunicating in the same thread 
+6. Exclude mutex from queue when ports comunicating in the same thread
 7. Use thread for ModuleItems only when required. For instance i/o ports not
    necessary need to be assigned to the thread. Also in case of Timer,
    one can use Module thread. This should simplify start/stop procedure.
