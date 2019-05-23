@@ -1,36 +1,36 @@
 <?xml version="1.0"?>
 
-<!-- 
-This is example file how HADAQ event building could be combined with monitoring, 
+<!--
+This is example file how HADAQ event building could be combined with monitoring,
 performed with stream framework.
 
 In addition to normal event building, here special stream::RunModule is instantiated,
 which analyzes produced events and fills histograms, which can be monitored in
-web browser or with Go4 GUI.   
- 
+web browser or with Go4 GUI.
+
 -->
 
 <dabc version="2">
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcStream.so"/>  
-      <lib value="libDabcHttp.so"/>  
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcStream.so"/>
+      <lib value="libDabcHttp.so"/>
       <logfile value="monitor.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
       <threads_layout value="balanced"/>
     </Run>
-    
+
     <HttpServer name="http" port="8090"/>
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
-    
-    <Module name="Combiner" class="hadaq::CombinerModule">    
+
+    <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="5"/>
        <NumOutputs value="2"/>
@@ -41,7 +41,7 @@ web browser or with Go4 GUI.
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&observer=false&maxloop=50"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=0.1&maxloop=50"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
@@ -56,34 +56,34 @@ web browser or with Go4 GUI.
        <ExtraDebug value="false"/>
 
        <!-- how often output will be flushed -->
-       <FlushTimeout value="0.5"/>   
+       <FlushTimeout value="0.5"/>
 
        <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
-       
+
        <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
-       
+
        <!-- rate meters configuration -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
      </Module>
- 
+
     <Module name="Analysis" class="stream::RunModule">
        <!--  files first.C and second.C (optionally) should be present in directory where DABC is started -->
 
        <InputPort name="Input0" url="Combiner/Output1"/>
-     
+
        <!-- file name with histograms, stored at the end of application running
              empty name means that histograms will not be stored -->
        <asf value=""/>
-       <!-- how many analysis threads are running, for online (like here) should be always 0 --> 
+       <!-- how many analysis threads are running, for online (like here) should be always 0 -->
        <parallel value="0"/>
        <Events width="4" prec="1" low="0" up="1000" debug="0"/>
     </Module>
-      
+
     <!-- Terminal output like old event builder -->
     <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false" fileport="2"/>
 

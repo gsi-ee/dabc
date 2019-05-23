@@ -135,7 +135,7 @@ DAQDISK - switches disk demon mode on/off/co
        <InputPort name="Input33" url="hadaq://host:${UDP33}" thread="UdpThread4"/>
        <InputPort name="Input34" url="hadaq://host:${UDP34}" thread="UdpThread5"/>
 
-       <InputPort name="Input*" queue="30" urlopt="udpbuf=400000&mtu=65507&flush=0.2&observer=true&maxloop=1"/>
+       <InputPort name="Input*" queue="30" urlopt="udpbuf=400000&mtu=65507&flush=0.2&maxloop=1"/>
 
        <!--  this is stream server for online monitoring, normally always on -->
        <OutputPort name="Output0" url="mbs://Stream:810${EBNUM}?iter=hadaq_iter&subid=0x1f"/>

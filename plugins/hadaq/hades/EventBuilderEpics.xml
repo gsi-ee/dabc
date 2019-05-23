@@ -153,7 +153,7 @@ EPICS control via shared memory is deprecated and was removed from DABC
 
    <Module name="Combiner">
 
-      <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2&observer=true"/>
+      <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2"/>
 
        <DoShmControl value="true"/>
        <FlushTimeout value="2.0"/>

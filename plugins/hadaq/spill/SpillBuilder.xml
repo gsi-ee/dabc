@@ -42,8 +42,8 @@
 
        <InputPort name="Input0" url="hadaq://host:50096" queue="50"/>
 
-       <!-- InputPort name="Input*" queue="100" urlopt="udpbuf=2000000&mtu=64512&flush=1&observer=false&maxloop=50" resort="false"/ -->
-       <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65536&flush=2&observer=false&maxloop=50" resort="false"/>
+       <!-- InputPort name="Input*" queue="100" urlopt="udpbuf=2000000&mtu=64512&flush=1&maxloop=50" resort="false"/ -->
+       <InputPort name="Input*" queue="20" urlopt="udpbuf=400000&mtu=65536&flush=2&maxloop=50" resort="false"/>
 
        <OutputPort name="Output0" queue="100"/>
 

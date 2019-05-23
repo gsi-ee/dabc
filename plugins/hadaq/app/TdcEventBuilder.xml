@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!-- 
+<!--
 This is example file how HADAQ event building with TDC calibration could be configured in DABC.
 
 This code is experimental, plese contact S.Linev if you want to use it
@@ -11,70 +11,70 @@ This code is experimental, plese contact S.Linev if you want to use it
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <lib value="libDabcHadaq.so"/>  
-      <lib value="libDabcHttp.so"/>  
-      <lib value="libDabcRfio.so"/>  
-      <lib value="libDabcStream.so"/>  
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcHttp.so"/>
+      <lib value="libDabcRfio.so"/>
+      <lib value="libDabcStream.so"/>
       <logfile value="hadaqevtbuild.log"/>
       <loglevel value="-1"/>
       <loglimit value="1000"/>
       <control value="true"/>
       <threads_layout value="balanced"/>
     </Run>
-    
+
     <HttpServer name="http" port="8090"/>
-    
+
     <!-- If uncommented, all internal manager structures will be published in the web server -->
     <Publisher name="publ" manager="true"/>
-    
+
     <!-- If uncommented, profiling will be enabled for all threads -->
     <!-- Thread name="*" publ="true" prof="true"/ -->
-    
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
-    
+
     <!-- these are default parameters for TDC calibration modules -->
-    <Module name="TRB*_TdcCal">    
+    <Module name="TRB*_TdcCal">
        <!-- Minimal and maximal bins for linear calibration -->
        <FineMin value="31"/>
        <FineMax value="480"/>
-       
+
        <!-- number of TDC channels -->
        <NumChannels value="65"/>
-       
+
        <!-- 1 - use only rising edge, falling edge is ignore
             2 - falling edge enabled and fully independent from rising edge
             3 - falling edge enabled and uses calibration from rising edge
             4 - falling edge enabled and common statistic is used for calibration -->
        <EdgeMask value="1"/>
-       
+
        <!-- when auto mode enabled - this is allowed range for TDC ids -->
        <TdcMin value="0x0000"/>
        <TdcMax value="0x1000"/>
-       
-       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations 
+
+       <!-- If TDC created automatically, 0-off, 1 - with linear configuration, 2 - with normal calibrations
             In the URL it is coded as "calibr" parameter -->
        <Mode value="0"/>
-       
+
        <!-- histogram filling level
             0 - no histograms,
             1 - only generic statistic for TRB
             2 - basic statistic for TDC (like hits per channel)
-            3 - histograms for each active channel will be created, 
+            3 - histograms for each active channel will be created,
             4 - also reference histograms could be created (not yet available in DABC)  -->
        <HistFilling value="4"/>
-       
+
        <!-- file prefix where calibration will be stored or loaded -->
        <CalibrFile value="local"/>
-       
+
        <!-- Which trigger used for calibration. 0xffff - all triggers, 0xD - from internal pulser, [0x2, 0x3] - two trigger types -->
        <CalibrTrigger value="0xffff"/>
-       
+
        <!-- Which channels should be excluded from calibration - either file will be used or just linear function -->
        <!--  DisableCalibrationFor value="0"/-->
-       
+
        <!-- Number of counts in each channel to perform calibration, 0 - switch off autocalibration -->
        <Auto value="100000"/>
 
@@ -84,7 +84,7 @@ This code is experimental, plese contact S.Linev if you want to use it
        <Replace value="true"/>
     </Module>
 
-    <Module name="Combiner" class="hadaq::CombinerModule">    
+    <Module name="Combiner" class="hadaq::CombinerModule">
         <!-- these parameters will force to create inputs/outputs of module -->
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
@@ -95,7 +95,7 @@ This code is experimental, plese contact S.Linev if you want to use it
        <InputPort name="Input3" url="hadaq://host:50003" urlopt1="trb=0x8030&tdc=[0x3030,0x3031,0x3032,0x3033]"/>
        <InputPort name="Input4" url="hadaq://host:50004" urlopt1="trb=0x8040&tdc=[0x3040,0x3041,0x3042,0x3043]"/>
 
-       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2&observer=false&debug&dummy"/>
+       <InputPort name="Input*" queue="10" urlopt="udpbuf=400000&mtu=65507&flush=2&debug&dummy"/>
 
        <ExtraDebug value="false"/>
 
@@ -106,24 +106,24 @@ This code is experimental, plese contact S.Linev if you want to use it
        <!--OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/-->
        <!--OutputPort name="Output1" url="hld:///linev/path/dabc.hld?maxsize=1900&rfio"/-->
 
-       <FlushTimeout value="2.0"/>   
-       
+       <FlushTimeout value="2.0"/>
+
        <!--TriggerNumRange: defines when trigger sequence number wraps. only 16 bit for HADES EBs, 24 bit for trb3!  -->
        <TriggerNumRange value="0x1000000"/>
-       
+
        <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
        <AccountLostEventDiff value="true"/>
-       
+
        <!-- rate meters configuration -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
      </Module>
-     
+
      <!-- Terminal output like old event builder -->
      <Module name="Term" class="hadaq::TerminalModule" period="0.3" clear="false"/>
-     
+
   </Context>
 
 </dabc>
