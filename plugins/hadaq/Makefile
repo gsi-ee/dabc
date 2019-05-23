@@ -54,7 +54,7 @@ $(DABCHADAQ_LIB):  $(HADAQ_O) $(DABCBASE_LIB) $(DABCMBS_LIB)
 	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(HADAQ_O)" $(TGTDLLPATH) "-lDabcBase -lDabcMbs"
 
 $(HLDPRINT_EXE) : $(HLDPRINT_EXEO) $(DABCHADAQ_LIB)
-	$(LD) -O $(HLDPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
+	$(LD) $(LDFLAGSPRE) -O $(HLDPRINT_EXEO) $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HLDPRINT_EXE)
 
 ########### extra rules #############
 ifdef hadaq-debug

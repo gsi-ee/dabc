@@ -20,6 +20,6 @@ clean::
 	rm -f $(HADAQEXAMPLE_EXE)
 
 $(HADAQEXAMPLE_EXE) : $(HADAQEXAMPLE_O) $(DABCBASE_LIB) $(DABCMBS_LIB) $(DABCHADAQ_LIB)
-	$(LD) -Wl,--no-as-needed -O $(HADAQEXAMPLE_O) $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HADAQEXAMPLE_EXE)
+	$(LD) $(LDFLAGSPRE) -O $(HADAQEXAMPLE_O) $(LIBS_CORESET) -lDabcMbs -lDabcHadaq -o $(HADAQEXAMPLE_EXE)
 
 include $(DABCSYS)/config/Makefile.rules

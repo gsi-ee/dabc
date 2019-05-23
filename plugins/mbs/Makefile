@@ -58,9 +58,9 @@ $(DABCMBS_LIB):   $(DABCMBS_O) $(DABCBASE_LIB)
 	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) "-lDabcBase"
 
 $(MBSPRINT_EXE) : $(MBSPRINT_EXEO) $(DABCMBS_LIB)
-	$(LD) -O $(MBSPRINT_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -o $(MBSPRINT_EXE)
+	$(LD) $(LDFLAGSPRE) -O $(MBSPRINT_EXEO) $(LIBS_CORESET) -lDabcMbs -o $(MBSPRINT_EXE)
 
 $(MBSCMD_EXE) : $(MBSCMD_EXEO) $(DABCBASE_LIB) $(DABCMBS_LIB)
-	$(LD) -O $(MBSCMD_EXEO) -Wl,--no-as-needed $(LIBS_CORESET) -lDabcMbs -o $(MBSCMD_EXE)
+	$(LD) $(LDFLAGSPRE) -O $(MBSCMD_EXEO) $(LIBS_CORESET) -lDabcMbs -o $(MBSCMD_EXE)
 
 include $(DABCSYS)/config/Makefile.rules
