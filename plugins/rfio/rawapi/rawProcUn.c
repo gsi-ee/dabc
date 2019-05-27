@@ -90,9 +90,14 @@
 #ifndef Lynx
 #include <fnmatch.h>
 #include <sys/types.h>
-#include <sys/statfs.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
+#ifdef __MACH__
+#include <sys/param.h>
+#include <sys/mount.h>
+#else
+#include <sys/statfs.h>
+#endif
 #endif
 
 #include "rawcommn.h"
