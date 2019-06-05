@@ -40,7 +40,7 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string &classname, 
 {
    if (classname == "SocketCommandChannel") {
 
-      dabc::SocketServerAddon* addon = 0;
+      dabc::SocketServerAddon* addon = nullptr;
 
       if (cmd.GetBool("WithServer", true)) {
          std::string host = cmd.GetStr("ServerHost");

@@ -1171,25 +1171,23 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
       for (struct addrinfo *t = info; t; t = t->ai_next) {
 
          sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
-         if (sockfd >= 0) {
+         if (sockfd < 0) continue;
 
-            int opt = 1;
-            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+         int opt = 1;
+         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-            if (bind(sockfd, t->ai_addr, t->ai_addrlen) == 0) {
-               int ni = getnameinfo(t->ai_addr, t->ai_addrlen,
-                                    nameinfo, sizeof(nameinfo),
-                                    serviceinfo, sizeof(serviceinfo),
-                                    /*NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
+         if (bind(sockfd, t->ai_addr, t->ai_addrlen) == 0) {
+            int ni = getnameinfo(t->ai_addr, t->ai_addrlen,
+                                 nameinfo, sizeof(nameinfo),
+                                 serviceinfo, sizeof(serviceinfo),
+                                 /*NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
 
-               // if (ni==0) DOUT0("Get NAME INFO %s %s addrlen %d", nameinfo, serviceinfo, t->ai_addrlen);
-
-               if (host.empty() && (ni==0) && (strcmp(nameinfo,"0.0.0.0")!=0)) hostname = nameinfo;
-               break;
-            }
-            close(sockfd);
-            sockfd = -1;
+            if (host.empty() && (ni==0) && (strcmp(nameinfo,"0.0.0.0")!=0)) hostname = nameinfo;
+            break;
          }
+
+         close(sockfd);
+         sockfd = -1;
       }
 
       freeaddrinfo(info);

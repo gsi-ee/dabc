@@ -291,12 +291,13 @@ namespace dabc {
    class SocketServerAddon : public SocketConnectAddon {
       protected:
          std::string fServerHostName;
-         int  fServerPortNumber;
+         int  fServerPortNumber{0};
+         int  fAcceptErrors{0};
 
          virtual void OnClientConnected(int fd);
 
       public:
-         SocketServerAddon(int serversocket, const char* hostname = 0, int portnum = -1);
+         SocketServerAddon(int serversocket, const char* hostname = nullptr, int portnum = -1);
          virtual ~SocketServerAddon() {}
 
          virtual void ProcessEvent(const EventId&);
