@@ -293,11 +293,18 @@ namespace dabc {
          std::string fServerHostName;
          int  fServerPortNumber{0};
          int  fAcceptErrors{0};
+         int  ai_family{0};
+         int  ai_socktype{0};
+         int  ai_protocol{0};
+         socklen_t ai_addrlen{0};
+         struct sockaddr_storage ai_addr;
 
          virtual void OnClientConnected(int fd);
 
+         bool RecreateSocket();
+
       public:
-         SocketServerAddon(int serversocket, const char* hostname = nullptr, int portnum = -1);
+         SocketServerAddon(int serversocket, const char* hostname = nullptr, int portnum = -1, struct addrinfo *info = nullptr);
          virtual ~SocketServerAddon() {}
 
          virtual void ProcessEvent(const EventId&);

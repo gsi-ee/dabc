@@ -769,13 +769,21 @@ void dabc::SocketIOAddon::CancelIOOperations()
 
 // ___________________________________________________________________
 
-dabc::SocketServerAddon::SocketServerAddon(int serversocket, const char* hostname, int portnum) :
+dabc::SocketServerAddon::SocketServerAddon(int serversocket, const char* hostname, int portnum, struct addrinfo *info) :
    SocketConnectAddon(serversocket),
    fServerHostName(hostname ? hostname : ""),
    fServerPortNumber(portnum)
 {
    if (fServerHostName.empty())
       fServerHostName = dabc::SocketThread::DefineHostName(true);
+
+   if (info) {
+      ai_family = info->ai_family;
+      ai_socktype = info->ai_socktype;
+      ai_protocol = info->ai_protocol;
+      ai_addrlen = info->ai_addrlen;
+      memcpy(&ai_addr, info->ai_addr, info->ai_addrlen);
+   }
 
    SetDoingInput(true);
    listen(Socket(), 10);
@@ -793,10 +801,15 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
 
           int connfd = accept(Socket(), 0, 0);
 
-          if (connfd<0) {
+          if (connfd < 0) {
              EOUT("Error with accept");
              fAcceptErrors++;
-             if (fAcceptErrors > 1000) {
+             if (fAcceptErrors >= 1000) {
+                // try to recreate socket every 100 failure
+                if (fAcceptErrors % 100 == 0)
+                   RecreateSocket();
+             }
+             if (fAcceptErrors > 2000) {
                 EOUT("Fatal - too many accept errors, abort application");
                 exit(1);
              }
@@ -842,6 +855,30 @@ void dabc::SocketServerAddon::OnClientConnected(int fd)
       close(fd);
    }
 }
+
+bool dabc::SocketServerAddon::RecreateSocket()
+{
+   if (ai_addrlen == 0) return false;
+
+   CloseSocket();
+   int sockfd = socket(ai_family, ai_socktype, ai_protocol);
+   if (sockfd < 0) return false;
+
+   int opt = 1;
+   setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+   if (bind(sockfd, (struct sockaddr *) &ai_addr, ai_addrlen) == 0) {
+      if (dabc::SocketThread::SetNonBlockSocket(sockfd)) {
+         SetSocket(sockfd);
+         return true;
+      }
+   }
+
+   close(sockfd);
+   return false;
+}
+
+
 
 // _____________________________________________________________________
 
@@ -1141,6 +1178,8 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
 
    const char* hostname = host.empty() ? 0 : host.c_str();
 
+   SocketServerAddon *addon = nullptr;
+
    for(int ntest=0;ntest<numtests;ntest++) {
 
       int serviceid = (ntest==0) ? nport : portmin - 1 + ntest;
@@ -1183,7 +1222,10 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
                                  /*NI_NUMERICHOST | NI_NUMERICSERV */ NI_NOFQDN | NI_NUMERICSERV);
 
             if (host.empty() && (ni==0) && (strcmp(nameinfo,"0.0.0.0")!=0)) hostname = nameinfo;
-            break;
+            if (dabc::SocketThread::SetNonBlockSocket(sockfd)) {
+               addon = new SocketServerAddon(sockfd, hostname ? hostname : "localhost", serviceid, t);
+               break;
+            }
          }
 
          close(sockfd);
@@ -1192,12 +1234,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
 
       freeaddrinfo(info);
 
-      if (sockfd<0) continue;
-
-      if (dabc::SocketThread::SetNonBlockSocket(sockfd))
-         return new SocketServerAddon(sockfd, hostname ? hostname : "localhost", serviceid);
-
-      close(sockfd);
+      if (addon) return addon;
    }
 
    EOUT("Cannot bind server socket to port %d or find its in range %d:%d", nport, portmin, portmax);
