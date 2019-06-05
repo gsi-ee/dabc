@@ -795,8 +795,15 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
 
           if (connfd<0) {
              EOUT("Error with accept");
+             fAcceptErrors++;
+             if (fAcceptErrors > 1000) {
+                EOUT("Fatal - too many accept errors, abort application");
+                exit(1);
+             }
              return;
           }
+
+          fAcceptErrors = 0;
 
           listen(Socket(), 10);
 
@@ -1140,7 +1147,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
 
       if (serviceid < 0) continue;
 
-      struct addrinfo hints, *info = 0;
+      struct addrinfo hints, *info = nullptr;
 
       memset(&hints, 0, sizeof(hints));
       hints.ai_flags    = AI_PASSIVE;
@@ -1196,7 +1203,7 @@ dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(const std::string
    }
 
    EOUT("Cannot bind server socket to port %d or find its in range %d:%d", nport, portmin, portmax);
-   return 0;
+   return nullptr;
 }
 
 int dabc::SocketThread::StartClient(const std::string &host, int nport, bool nonblocking)
