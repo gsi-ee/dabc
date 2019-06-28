@@ -16,7 +16,7 @@ extern "C"
 #endif
 
 // JAM 12-jun-2019 use file system demon branch of ltsm library
-#define LTSM_USE_FSD 1
+//#define LTSM_USE_FSD 1
 
 
 namespace ltsm
