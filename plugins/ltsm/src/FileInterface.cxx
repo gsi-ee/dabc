@@ -9,6 +9,9 @@
 
 ltsm::FileInterface::FileInterface() :
    dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0)
+#ifdef LTSM_USE_FSD
+   ,fUseFileSystemDemon(false)
+#endif
 {
    DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
    api_msg_set_level(API_MSG_ERROR);
@@ -33,6 +36,17 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
     dabc::Url url;
     url.SetOptions(opt);
 
+#ifdef LTSM_USE_FSD
+    if (url.HasOption("ltsmUseFSD"))
+        {
+          fUseFileSystemDemon = url.GetOptionBool("ltsmUseFSD", fUseFileSystemDemon);
+	  DOUT0("tsm::FileInterface::fopen will use %s  from url options.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
+        }
+     else
+       {
+          DOUT0("tsm::FileInterface::fopen will use %s  from defaults.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
+       }
+#endif    
     //here optionally close current session if we exceed file counter:
 
     if (url.HasOption("ltsmMaxSessionFiles"))
@@ -71,9 +85,15 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
     if (strstr(mode, "w") != 0)
    {
-
-   int rc = tsm_fopen(fFsname.c_str(), (char*) fname,
-      (char*) fDescription.c_str(), fSession);
+     int rc;
+ #ifdef LTSM_USE_FSD   
+    if (fUseFileSystemDemon)
+      rc = fsd_tsm_fopen(fFsname.c_str(), (char*) fname,
+			 (char*) fDescription.c_str(), fSession);
+    else
+ #endif
+      rc = tsm_fopen(fFsname.c_str(), (char*) fname,
+		     (char*) fDescription.c_str(), fSession);
    if (rc)
        {
        EOUT(
@@ -157,7 +177,14 @@ void ltsm::FileInterface::fclose(Handle f)
       fServername.c_str(), fNode.c_str(), fFsname.c_str());
    }
 
-    int rc = tsm_fclose(fSession);
+    int rc;
+ #ifdef LTSM_USE_FSD   
+    if (fUseFileSystemDemon)
+      rc = fsd_tsm_fclose(fSession);
+    else
+ #endif     
+      rc = tsm_fclose(fSession);
+
     if (rc)
    {
    EOUT("Failed to close LTSM file: "
@@ -195,9 +222,13 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
       fServername.c_str(), fNode.c_str(), fFsname.c_str());
    return 0;
    }
-
-
-    int rc = tsm_fwrite(ptr, sz, nmemb, fSession);
+    int rc;
+ #ifdef LTSM_USE_FSD   
+    if (fUseFileSystemDemon)
+      rc = fsd_tsm_fwrite(ptr, sz, nmemb, fSession);
+    else
+ #endif
+      rc = tsm_fwrite(ptr, sz, nmemb, fSession);
     if (rc < 0)
    {
    EOUT("tsm_fwrite failed, handle:0x%x, size:%d, nmemb:%d", f, sz, nmemb);
@@ -331,7 +362,15 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
    while (connectcount++ <fSessionConnectRetries)
    {
        memset(fSession, 0, sizeof(struct session_t));
-       rc = tsm_fconnect(&tsmlogin, fSession);
+
+          
+#ifdef LTSM_USE_FSD   
+       if (fUseFileSystemDemon)
+	 rc = fsd_tsm_fconnect(&tsmlogin, fSession);
+       else
+#endif
+	 rc = tsm_fconnect(&tsmlogin, fSession);
+
        if (rc==0)
        {
          break;
@@ -370,11 +409,16 @@ bool ltsm::FileInterface::CloseTSMSession()
 {
    if (fSession) {
       //fclose(fSession->tsm_file);
+#ifdef LTSM_USE_FSD   
+    if (fUseFileSystemDemon)
+      fsd_tsm_fdisconnect(fSession);
+    else
+#endif     
       tsm_fdisconnect(fSession);
-      free(fSession);
-      fSession = 0;
-      fSessionFileCount=0;
-      return true;
+    free(fSession);
+    fSession = 0;
+    fSessionFileCount=0;
+    return true;
    }
    return false;
 }

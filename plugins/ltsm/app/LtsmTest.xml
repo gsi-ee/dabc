@@ -2,7 +2,7 @@
 <dabc version="2">
  
 
-  <Context host="lxhadeb02" name="Combiner">
+  <Context host="lxhadeb09" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
@@ -34,7 +34,7 @@
        <InputPort name="Input*" queue="5" timeout="5"/>
 <!--       <OutputPort name="Output0" url="mbs://Stream"/> -->
 <!-- 			<OutputPort name="Output0" url="lmd:///data01/data/tmp/dabc_generated_200k_3000_10k_local.lmd?maxsize=1000"/> -->       
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_single.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_single.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=false"/>
    
    
        <MbsData width="5" prec="2" low="5" up="50" debug="1"/>

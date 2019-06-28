@@ -15,6 +15,10 @@ extern "C"
 #include "dabc/string.h"
 #endif
 
+// JAM 12-jun-2019 use file system demon branch of ltsm library
+#define LTSM_USE_FSD 1
+
+
 namespace ltsm
     {
 
@@ -40,9 +44,10 @@ namespace ltsm
 	
 	
 	int fSessionFileCount; //< count number of files in current session
-	
-	
-	
+
+#ifdef LTSM_USE_FSD	
+	bool fUseFileSystemDemon; //< write to file system demon server instead of TSM server
+#endif	
 	
 	
 	/** Re-open session with parameters specified in dabc options string*/
