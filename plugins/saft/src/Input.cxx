@@ -216,11 +216,21 @@ unsigned saftdabc::Input::Read_Complete (dabc::Buffer& buf)
     return dabc::di_Error;
   }    // try
 
+  
+  #ifdef DABC_SAFT_USE_2_0
+catch (const saftbus::Error& error)
+  {
+    EOUT("saftdabc::Input::Read_Complete with saftbus error %s", error.what().c_str());
+    return dabc::di_Error;
+  }
+#else
   catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::Read_Complete with Glib error %s", error.what().c_str());
     return dabc::di_Error;
   }
+#endif
+
   catch (std::exception& ex)    // also handles std::exception
   {
     EOUT(" saftdabc::Input::Read_Complete with std exception %s ", ex.what());
@@ -442,11 +452,21 @@ bool saftdabc::Input::SetupConditions ()
     return true;
 
   }    // end try
+  
+  
+  #ifdef DABC_SAFT_USE_2_0
+catch (const saftbus::Error& error)
+  {
+    EOUT("SAFTbus error %s in SetupConditions", error.what().c_str());
+  }
+#else  
   catch (const Glib::Error& error)
   {
     EOUT("Glib error %s in SetupConditions", error.what().c_str());
     return false;
   }
+#endif
+
   catch (std::exception& ex)
    {
      EOUT("std exception %s in SetupConditions", ex.what());
@@ -456,8 +476,11 @@ bool saftdabc::Input::SetupConditions ()
   return true;
 }
 
-
+#ifdef DABC_SAFT_USE_2_0
+    void saftdabc::Input::EventHandler (uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags)
+#else
 void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags)
+#endif
 {
 
   DOUT3("saftdabc::Input::EventHandler...");
@@ -522,11 +545,19 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
     }    //  if (fUseCallbackMode &
 
   }    // try
-
-  catch (const Glib::Error& error)
+  
+#ifdef DABC_SAFT_USE_2_0
+catch (const saftbus::Error& error)
+  {
+    EOUT("saftdabc::Input::EventHandler with saftbus error %s", error.what().c_str());
+  }
+#else
+catch (const Glib::Error& error)
   {
     EOUT("saftdabc::Input::EventHandler with Glib error %s", error.what().c_str());
   }
+#endif  
+  
   catch (std::exception& ex)
   {
     EOUT(" saftdabc::Input::EventHandler with std exception %s ", ex.what());
@@ -536,7 +567,12 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 
 
 
+
+#ifdef DABC_SAFT_USE_2_0
+void saftdabc::Input::OverflowHandler(uint64_t count)
+#else
 void saftdabc::Input::OverflowHandler(guint64 count)
+#endif
 {
   DOUT3("saftdabc::Input::OverflowHandler with counts=%lu",count);
   dabc::LockGuard gard(fQueueMutex); // protect also the counter?

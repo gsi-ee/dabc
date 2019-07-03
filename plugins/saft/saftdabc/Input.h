@@ -28,11 +28,17 @@
 
 #include <iostream>
 //#include <iomanip>
-#include <giomm.h>
-#include <glib.h>
+
+
 
 #include "saftdabc/Device.h"
 #include "saftdabc/Definitions.h"
+
+#ifndef DABC_SAFT_USE_2_0
+#include <giomm.h>
+#include <glib.h>
+#endif
+
 
 namespace saftdabc
 {
@@ -181,14 +187,24 @@ public:
     return fTimeout;
   }
 
+#ifdef DABC_SAFT_USE_2_0
+ /** This is the signalhandler that treats condition events from saftlib*/
+    void EventHandler (uint64_t event, uint64_t param, uint64_t deadline, uint64_t executed, uint16_t flags = 0xF);
 
+
+    /** This is a signalhandler that treats overflow counter events*/
+    void OverflowHandler(uint64_t count);
+
+#else
     /** This is the signalhandler that treats condition events from saftlib*/
     void EventHandler (guint64 event, guint64 param, guint64 deadline, guint64 executed, guint16 flags = 0xF);
 
 
     /** This is a signalhandler that treats overflow counter events*/
     void OverflowHandler(guint64 count);
-
+#endif
+    
+    
 };
 
 }
