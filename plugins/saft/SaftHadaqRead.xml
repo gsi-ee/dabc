@@ -45,7 +45,7 @@
 	    
 	    <SaftHardwareInputNames>
 	       <item value="IO1"/>
-	       <item value="IO8"/>
+	     <!--  <item value="IO2"/>-->
 	    </SaftHardwareInputNames>
 
  		<SaftSnoopEventIds>

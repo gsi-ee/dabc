@@ -137,6 +137,10 @@ unsigned saftdabc::Input::Read_Size ()
   try
 {
   DOUT3("saftdabc::Input::Read_Size...");
+#ifdef  DABC_SAFT_USE_2_0
+   saftlib::wait_for_signal();
+#endif
+  
   if(fUseCallbackMode) return dabc::di_DfltBufSize;
 
   // here may do forwarding to callback or poll with timeout if no data in queues
@@ -158,6 +162,15 @@ unsigned saftdabc::Input::Read_Size ()
     EOUT(" saftdabc::Input::Read_Size with std exception %s ", ex.what());
     return dabc::di_Error;
   }
+#ifdef  DABC_SAFT_USE_2_0 
+ catch (const saftbus::Error& error)
+ {
+   /* Catch error(s) */
+   EOUT("saftdabc::Input::Read_Size with SAFTbus error %s ", error.what().c_str());
+   return false;
+
+ }
+#endif  
   return dabc::di_Error;
 }
 
@@ -483,7 +496,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
 #endif
 {
 
-  DOUT3("saftdabc::Input::EventHandler...");
+  DOUT5("saftdabc::Input::EventHandler...");
   /* This is the signalhandler that treats condition events from saftlib*/
   try
   {
@@ -494,7 +507,7 @@ void saftdabc::Input::EventHandler (guint64 event, guint64 param, guint64 deadli
       {
         deadline -= IO_CONDITION_OFFSET; // like in saft-io-ctl
       }
-
+ 
 
     if (fVerbose)
     {
@@ -574,7 +587,7 @@ void saftdabc::Input::OverflowHandler(uint64_t count)
 void saftdabc::Input::OverflowHandler(guint64 count)
 #endif
 {
-  DOUT3("saftdabc::Input::OverflowHandler with counts=%lu",count);
+  DOUT1("saftdabc::Input::OverflowHandler with counts=%lu",count);
   dabc::LockGuard gard(fQueueMutex); // protect also the counter?
   fOverflowCount=count;
   DOUT3("saftdabc::Input::OverflowHandler sees overflowcount=%lu, previous=%lu",fOverflowCount, fLastOverflowCount);
