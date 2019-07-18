@@ -56,6 +56,10 @@ INSTALLATION:
 
        nodim=1 - disable compilation of DIM plugin.
 
+       optimiz=1|2|3 - specify gcc optimization level (default 3)
+
+       debug=1|2|3  - include debug symbols, compile correspondent debug messages (default 1)
+
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used
 
