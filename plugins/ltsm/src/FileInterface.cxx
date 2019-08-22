@@ -10,7 +10,7 @@
 ltsm::FileInterface::FileInterface() :
    dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0)
 #ifdef LTSM_USE_FSD
-   ,fUseFileSystemDemon(false)
+   ,fUseFileSystemDemon(false), fServernameFSD("lxcopytool01.gsi.de"),fPortFSD(7625)
 #endif
 {
    DOUT3("tsm::FileInterface::FileInterface() ctor starts...");
@@ -36,17 +36,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
     dabc::Url url;
     url.SetOptions(opt);
 
-#ifdef LTSM_USE_FSD
-    if (url.HasOption("ltsmUseFSD"))
-        {
-          fUseFileSystemDemon = url.GetOptionBool("ltsmUseFSD", fUseFileSystemDemon);
-	  DOUT0("tsm::FileInterface::fopen will use %s  from url options.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
-        }
-     else
-       {
-          DOUT0("tsm::FileInterface::fopen will use %s  from defaults.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
-       }
-#endif    
+
     //here optionally close current session if we exceed file counter:
 
     if (url.HasOption("ltsmMaxSessionFiles"))
@@ -88,8 +78,12 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
      int rc;
  #ifdef LTSM_USE_FSD   
     if (fUseFileSystemDemon)
+      { 
       rc = fsd_tsm_fopen(fFsname.c_str(), (char*) fname,
 			 (char*) fDescription.c_str(), fSession);
+      // kludge for first test JAM:
+      fSession->tsm_file=(struct tsm_file_t*)(42);
+      }
     else
  #endif
       rc = tsm_fopen(fFsname.c_str(), (char*) fname,
@@ -119,7 +113,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 
     fCurrentFile = fname;
     fIsClosing = false;
-    return fSession->tsm_file; // pointer to file structure is the handle
+    return fSession->tsm_file; // pointer to file structure is the handle    
     }
 
 int ltsm::FileInterface::GetFileIntPar(Handle, const char* parname)
@@ -165,8 +159,11 @@ void ltsm::FileInterface::fclose(Handle f)
    }
     fIsClosing = true;
 
-    // todo: is this the right file handle here? fSession->tsm_file ?
+   
+
+    int rc;
     struct tsm_file_t* theHandle = (struct tsm_file_t*) f;
+ // todo: is this the right file handle here? fSession->tsm_file ?  
     if (theHandle != fSession->tsm_file)
    {
 
@@ -177,17 +174,17 @@ void ltsm::FileInterface::fclose(Handle f)
       fServername.c_str(), fNode.c_str(), fFsname.c_str());
    }
 
-    int rc;
+    
  #ifdef LTSM_USE_FSD   
     if (fUseFileSystemDemon)
       rc = fsd_tsm_fclose(fSession);
     else
- #endif     
+ #endif      
       rc = tsm_fclose(fSession);
 
     if (rc)
    {
-   EOUT("Failed to close LTSM file: "
+   EOUT("Failedto close LTSM file: "
       "File=%s, Servername=%s, Node=%s, Fsname=%s",
       fCurrentFile.c_str(), fServername.c_str(), fNode.c_str(),
       fFsname.c_str());
@@ -229,9 +226,10 @@ size_t ltsm::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb,
     else
  #endif
       rc = tsm_fwrite(ptr, sz, nmemb, fSession);
+    
     if (rc < 0)
    {
-   EOUT("tsm_fwrite failed, handle:0x%x, size:%d, nmemb:%d", f, sz, nmemb);
+     EOUT("tsm_fwrite failed, handle:0x%x, size:%d, nmemb:%d, rc=%d", f, sz, nmemb,rc);
    return 0;
    }
 
@@ -342,7 +340,40 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
         DOUT0("tsm::FileInterface::OpenTSMSession uses %d session connect retries from DEFAULTS.", fSessionConnectRetries);
        }
 
+#ifdef LTSM_USE_FSD
+    if (url.HasOption("ltsmUseFSD"))
+        {
+          fUseFileSystemDemon = url.GetOptionBool("ltsmUseFSD", fUseFileSystemDemon);
+	  DOUT0("tsm::FileInterface::OpenTSMSession will use %s  from url options.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
+        }
+     else
+       {
+          DOUT0("tsm::FileInterface::OpenTSMSession will use %s  from defaults.",fUseFileSystemDemon ? "file system demon" : "direct TSM connection");
+       }
 
+  if (fUseFileSystemDemon)
+    {
+      if (url.HasOption("ltsmFSDServerName"))
+        {
+          fServernameFSD = url.GetOptionStr("ltsmFSDServerName", fServernameFSD);
+	  DOUT0("tsm::FileInterface::OpenTSMSession with FSD server %s  from url options.",fServernameFSD.c_str());
+        }
+      else
+	{
+          DOUT0("tsm::FileInterface::OpenTSMSession with FSD server %s  from defaults.",fServernameFSD.c_str());
+	}
+      if (url.HasOption("ltsmFSDServerPort"))
+        {
+          fPortFSD = url.GetOptionInt("ltsmFSDServerPort", fPortFSD);
+	  DOUT0("tsm::FileInterface::OpenTSMSession with FSD server port %d  from url options.",fPortFSD);
+        }
+      else
+	{
+          DOUT0("tsm::FileInterface::OpenTSMSession with FSD server port %d  from defaults.",fPortFSD);
+	}
+
+    } //  if (fUseFileSystemDemon)
+#endif    
 
    DOUT2(
       "Prepare open LTSM file for writing -  "
@@ -351,11 +382,16 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
       fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
 
    struct login_t tsmlogin;
-
+#ifdef LTSM_USE_FSD
+   fsd_login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(),
+      fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
+		  fFsname.c_str(), DEFAULT_FSTYPE,
+		  fServernameFSD.c_str(), fPortFSD);
+#else   
    login_fill(&tsmlogin, fServername.c_str(), fNode.c_str(),
       fPassword.c_str(), fOwner.c_str(), LINUX_PLATFORM,
-      fFsname.c_str(), DEFAULT_FSTYPE);
-
+      fFsname.c_str(), DEFAULT_FSTYPE); 
+#endif
    fSession = (struct session_t*) malloc(sizeof(struct session_t)); // todo: may we use new instead?
    int connectcount=0;
    int rc=0;
@@ -400,6 +436,12 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
           "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s",
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str());
+
+     #ifdef LTSM_USE_FSD   
+       if (fUseFileSystemDemon)
+	DOUT0("Using FSD at server %s ,port %d",
+          fServernameFSD.c_str(), fPortFSD);
+       #endif
 
  return true;
 }

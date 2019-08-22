@@ -16,7 +16,7 @@ extern "C"
 #endif
 
 // JAM 12-jun-2019 use file system demon branch of ltsm library
-//#define LTSM_USE_FSD 1
+#define LTSM_USE_FSD 1
 
 
 namespace ltsm
@@ -42,11 +42,16 @@ namespace ltsm
 
 	bool fIsClosing; //< avoid double fclose on termination by this
 	
-	
+       
 	int fSessionFileCount; //< count number of files in current session
 
 #ifdef LTSM_USE_FSD	
 	bool fUseFileSystemDemon; //< write to file system demon server instead of TSM server
+
+	std::string fServernameFSD; //< name of the file system demon port
+	int fPortFSD;  //< port of file system demon connection
+
+	
 #endif	
 	
 	
