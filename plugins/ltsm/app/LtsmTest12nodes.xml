@@ -1,8 +1,18 @@
 <?xml version="1.0"?>
 <dabc version="2">
- 5
-5
-  <Context host="*" name="*"> 
+ 
+ <Variables>
+      <fsdon value="false"/>
+      <fsdserver value="lxcopytool01.gsi.de"/>
+      <fsdport value="7625"/>
+  </Variables>
+
+  
+<Context host="*" name="*">
+
+
+
+  
     <Run> 
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
@@ -60,7 +70,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 
@@ -82,7 +92,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 
@@ -104,7 +114,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 
@@ -127,7 +137,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 
@@ -150,7 +160,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
       
      </Module>
   </Context>
@@ -171,7 +181,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
       
      </Module>
   </Context>
@@ -192,7 +202,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
       
      </Module>
   </Context>
@@ -214,7 +224,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_2.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
       
      </Module>
   </Context>
@@ -251,7 +261,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
   
@@ -275,7 +285,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
   
@@ -297,7 +307,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb11_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
   
@@ -318,7 +328,7 @@
     
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'"/>
+  <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb08_3.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
   
