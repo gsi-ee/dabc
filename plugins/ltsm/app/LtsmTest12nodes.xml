@@ -2,8 +2,8 @@
 <dabc version="2">
  
  <Variables>
-      <fsdon value="false"/>
-      <fsdserver value="lxcopytool01.gsi.de"/>
+      <fsdon value="true"/>
+      <fsdserver value="lxltsm02-failover.gsi.de"/>
       <fsdport value="7625"/>
   </Variables>
 

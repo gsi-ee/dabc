@@ -73,7 +73,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
            fDescription = url.GetOptionStr("ltsmDescription", fDescription);
            }
 
-    if (strstr(mode, "w") != 0)
+    if (strstr(mode, "w") != 0) 
    {
      int rc;
  #ifdef LTSM_USE_FSD   
@@ -82,7 +82,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       rc = fsd_tsm_fopen(fFsname.c_str(), (char*) fname,
 			 (char*) fDescription.c_str(), fSession);
       // kludge for first test JAM:
-      fSession->tsm_file=(struct tsm_file_t*)(42);
+      //fSession->tsm_file=(struct tsm_file_t*)(42);
       }
     else
  #endif
