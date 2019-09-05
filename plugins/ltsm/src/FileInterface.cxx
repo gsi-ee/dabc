@@ -91,8 +91,8 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
    if (rc)
        {
        EOUT(
-          "Fail to open LTSM file for writing, using following arguments"
-             "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",
+          "Fail to open LTSM file for writing (returncode:%d), using following arguments"
+	  "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
           fname, fServername.c_str(), fNode.c_str(),
           fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
           fDescription.c_str());
@@ -413,8 +413,8 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
        }
        else
        {
-         EOUT("Fail to connect LTSM session using following arguments"
-          "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...",
+         EOUT("Fail to connect LTSM session (returncode:%d) using following arguments"
+	      "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s , retry again %d time...",rc,
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str(), connectcount);
          dabc::mgr.Sleep(1);
@@ -423,8 +423,8 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
    } // while
    if (rc)
        {
-       EOUT("Finally FAILED to connect LTSM session after %d retries!! -  using following arguments"
-          "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s", connectcount,
+       EOUT("Finally FAILED to connect LTSM session (returncode%d))after %d retries!! -  using following arguments"
+	    "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s", rc, connectcount,
           fServername.c_str(), fNode.c_str(), fPassword.c_str(),
           fOwner.c_str(), fFsname.c_str());
        free(fSession);
