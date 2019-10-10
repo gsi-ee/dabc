@@ -227,7 +227,7 @@ namespace dabc {
          /** \brief Indicates if pointer on thread is not zero; thread-safe */
          bool HasThread() const;
 
-         /** \brief Retutns true if called from thread. If thread not assigned, also returns true */
+         /** \brief Returns true if called from thread. If thread not assigned, also returns true */
          bool IsOwnThread() const;
 
          /** \brief Assign worker to thread, worker becomes active immediately */
@@ -378,8 +378,8 @@ namespace dabc {
 
          void WorkerSleep(double tmout);
 
-         /** Executes command in specified worker. Call allowed only from worker thred (therefore method protected).
-          * Makes it easy to recognise caller thread and keep its event loop running.
+         /** Executes command in specified worker. Call allowed only from worker thread (therefore method protected).
+          * Makes it easy to recognize caller thread and keep its event loop running.
           * Equivalent to dest->Execute(cmd). */
          bool ExecuteIn(Worker* dest, Command cmd);
 
@@ -598,7 +598,6 @@ namespace dabc {
             return Execute(Command(cmd));
          }
    };
-
 
 }
 

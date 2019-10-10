@@ -46,8 +46,8 @@ namespace dabc {
       const char*       GetAttrName(XMLAttrPointer_t xmlattr);
       const char*       GetAttrValue(XMLAttrPointer_t xmlattr);
       XMLNodePointer_t  NewChild(XMLNodePointer_t parent, XMLNsPointer_t ns,
-                                 const char* name, const char* content = 0);
-      XMLNsPointer_t    NewNS(XMLNodePointer_t xmlnode, const char* reference, const char* name = 0);
+                                 const char* name, const char* content = nullptr);
+      XMLNsPointer_t    NewNS(XMLNodePointer_t xmlnode, const char* reference, const char* name = nullptr);
       XMLNsPointer_t    GetNS(XMLNodePointer_t xmlnode);
       const char*       GetNSName(XMLNsPointer_t ns);
       const char*       GetNSReference(XMLNsPointer_t ns);
@@ -60,17 +60,17 @@ namespace dabc {
       bool              AddStyleSheet(XMLNodePointer_t parent,
                            const char* href,
                            const char* type = "text/css",
-                           const char* title = 0,
+                           const char* title = nullptr,
                            int alternate = -1,
-                           const char* media = 0,
-                           const char* charset = 0);
+                           const char* media = nullptr,
+                           const char* charset = nullptr);
       bool              AddDocStyleSheet(XMLDocPointer_t xmldoc,
                            const char* href,
                            const char* type = "text/css",
-                           const char* title = 0,
+                           const char* title = nullptr,
                            int alternate = -1,
-                           const char* media = 0,
-                           const char* charset = 0);
+                           const char* media = nullptr,
+                           const char* charset = nullptr);
       void              UnlinkNode(XMLNodePointer_t node);
       void              FreeNode(XMLNodePointer_t xmlnode);
       void              UnlinkFreeNode(XMLNodePointer_t xmlnode);
@@ -91,7 +91,7 @@ namespace dabc {
       XMLNodePointer_t  DocGetRootElement(XMLDocPointer_t xmldoc);
       XMLDocPointer_t   ParseFile(const char* filename, bool showerr = true);
       XMLDocPointer_t   ParseString(const char* xmlstring, bool showerr = true);
-      bool              ValidateVersion(XMLDocPointer_t doc, const char* version = 0);
+      bool              ValidateVersion(XMLDocPointer_t doc, const char* version = nullptr);
       void              SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout = 1);
       XMLNodePointer_t  ReadSingleNode(const char* src);
 
@@ -109,8 +109,6 @@ namespace dabc {
       XMLNodePointer_t  ReadNode(XMLNodePointer_t xmlparent, XmlInputStream* inp, int& resvalue);
       void              DisplayError(int error, int linenumber);
       XMLDocPointer_t   ParseStream(XmlInputStream* input, bool showerr);
-
-//   }
 
    }
 }

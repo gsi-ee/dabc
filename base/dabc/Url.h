@@ -40,7 +40,7 @@ namespace dabc {
          std::string fFileName; ///< file name
          std::string fOptions;  ///< list of options
 
-         bool GetOption(const std::string &optname, int optionnumber = -1, std::string* value = 0) const;
+         bool GetOption(const std::string &optname, int optionnumber = -1, std::string *value = nullptr) const;
 
       public:
          Url();
@@ -89,7 +89,5 @@ namespace dabc {
          static void ReplaceSpecialSymbols(std::string& opt);
    };
 }
-
-
 
 #endif
