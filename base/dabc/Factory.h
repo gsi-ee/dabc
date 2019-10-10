@@ -49,7 +49,7 @@ namespace dabc {
    class Transport;
    class FactoryPlugin;
 
-   /** \brief %Factory for user-specifc classes
+   /** \brief %Factory for user-specific classes
     *
     * \ingroup dabc_user_classes
     * \ingroup dabc_all_classes

@@ -54,25 +54,25 @@ namespace dabc {
 
    struct HistoryItem {
       public:
-         uint64_t version;          ///< version number
-         RecordFieldsMap* fields;   ///< all fields, which are preserved
-         HistoryItem() : version(0), fields(0) {}
+         uint64_t version{0};                ///< version number
+         RecordFieldsMap* fields{nullptr};   ///< all fields, which are preserved
+         HistoryItem() = default;
          ~HistoryItem() { reset(); }
-         void reset() { version = 0; delete fields; fields = 0; }
-         RecordFieldsMap* take() { RecordFieldsMap* res = fields; fields = 0; return res; }
+         void reset() { version = 0; delete fields; fields = nullptr; }
+         RecordFieldsMap* take() { auto res = fields; fields = nullptr; return res; }
    };
 
 
    class HistoryContainer : public Object {
       public:
 
-         bool        fEnabled;               ///< indicates if history recording is enabled
-         bool        fChildsEnabled;         ///< true if history recording also was enabled for childs
-         RecordFieldsMap* fPrev;             ///< map with previous set of attributes
-         RecordsQueue<HistoryItem> fArr;     ///< container with history items
-         uint64_t    fRemoteReqVersion;      ///< last version, which was taken from remote
-         uint64_t    fLocalReqVersion;       ///< local version, when request was done
-         bool        fCrossBoundary;         ///< flag set when recover from binary, indicates that history is complete for specified version
+         bool        fEnabled{false};         ///< indicates if history recording is enabled
+         bool        fChildsEnabled{false};   ///< true if history recording also was enabled for childs
+         RecordFieldsMap* fPrev{nullptr};     ///< map with previous set of attributes
+         RecordsQueue<HistoryItem> fArr;      ///< container with history items
+         uint64_t    fRemoteReqVersion{0};    ///< last version, which was taken from remote
+         uint64_t    fLocalReqVersion{0};     ///< local version, when request was done
+         bool        fCrossBoundary{false};   ///< flag set when recover from binary, indicates that history is complete for specified version
 
          HistoryContainer() :
             Object(0,"cont", flAutoDestroy | flIsOwner),
@@ -409,7 +409,6 @@ namespace dabc {
       /** \brief Produce history iterator */
       HistoryIter MakeHistoryIter();
    };
-
 
 }
 
