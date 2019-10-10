@@ -99,10 +99,10 @@ namespace dabc {
          /** \brief Reply all commands */
          void ReplyAll(int res);
 
-         /** \brief Reply timedout commands */
+         /** \brief Reply timed-out commands */
          void ReplyTimedout();
 
-         void Cleanup(Mutex* m = 0, Worker* proc = 0, int res = cmd_false);
+         void Cleanup(Mutex *m = nullptr, Worker *proc = nullptr, int res = cmd_false);
    };
 
 }

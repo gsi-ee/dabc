@@ -60,9 +60,9 @@ namespace dabc {
       protected:
 
          struct CallerRec {
-            Worker       *worker;      //! pointer on worker, do not use reference while worker will care about correct cleanup
-            bool         *exe_ready;   //! pointer on variable, which is used to indicate that execution is done
-            CallerRec() : worker(0), exe_ready(0) {}
+            Worker       *worker{nullptr};      //! pointer on worker, do not use reference while worker will care about correct cleanup
+            bool         *exe_ready{nullptr};   //! pointer on variable, which is used to indicate that execution is done
+            CallerRec() = default;
             CallerRec(Worker* w, bool* e) : worker(w), exe_ready(e) {}
             CallerRec(const CallerRec& src) : worker(src.worker), exe_ready(src.exe_ready) {}
 
@@ -218,7 +218,7 @@ namespace dabc {
          int GetPriority() const;
 
          /** \brief Show on debug output content of command */
-         void Print(int lvl=0, const char* from = 0) const;
+         void Print(int lvl=0, const char* from = nullptr) const;
 
          /** Replied on the command.
           * Only non-negative value should be set as result value.
