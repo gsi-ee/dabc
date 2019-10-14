@@ -205,10 +205,16 @@ namespace dabc {
 
       inline bool EndOfStream() { return EndOfFile() && (fCurrent>=fMaxAddr); }
 
+
+#if defined(__GNUC__) && (__GNUC__ >= 7)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
       int DoRead(char* buf, int maxsize)
       {
          if (EndOfFile()) return 0;
-         if (fInp!=0) {
+         if (fInp) {
             fInp->get(buf, maxsize, 0);
             maxsize = strlen(buf);
          } else {
@@ -219,6 +225,10 @@ namespace dabc {
          }
          return maxsize;
       }
+
+#if defined(__GNUC__) && (__GNUC__ >= 7)
+#pragma GCC diagnostic pop
+#endif
 
       bool ExpandStream(char *&curr)
       {
