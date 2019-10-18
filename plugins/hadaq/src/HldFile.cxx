@@ -187,8 +187,8 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       return true;
    }
 
-   size_t checkedsz = 0;
 
+   size_t checkedsz = 0;
 
    while (checkedsz < readsz) {
       // special case when event was read not completely
@@ -207,7 +207,7 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
          break;
       }
 
-      bool not_enough_place_for_next_event = checkedsz + restsize > readsz;
+      bool not_enough_place_for_next_event = (checkedsz + restsize) > readsz;
 
       if (not_enough_place_for_next_event || (onlyevent && (checkedsz>0))) {
 
