@@ -70,7 +70,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb09_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hades/dabctest/2019/dabctest_lxhadeb09_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 
@@ -92,7 +92,7 @@
 <!--     <Module name="Sender" class="dabc::RepeaterModule"> -->
   <Module name="Combiner" class="mbs::CombinerModule"> -->
 
-      <OutputPort name="Output0" url="lmd:///lustre/hebe/hades/dabctest/2019/dabctest_lxhadeb10_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre/hebe'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
+      <OutputPort name="Output0" url="lmd:///lustre/hades/dabctest/2019/dabctest_lxhadeb10_1.lmd?maxsize=2000&ltsm&ltsmOwner=hadaq&ltsmServer=lxltsm01&ltsmNode=hades&ltsmPass=wDhgcvFF7&ltsmFsname='/lustre'&ltsmUseFSD=${fsdon}&ltsmFSDServerName='${fsdserver}'&ltsmFSDServerPort=${fsdport}"/>
      </Module>
   </Context>
 

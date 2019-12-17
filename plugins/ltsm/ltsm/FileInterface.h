@@ -6,17 +6,28 @@
 #include "dabc/BinaryFile.h"
 #endif
 
+// JAM 12-jun-2019 use file system demon branch of ltsm library
+#define LTSM_USE_FSD 1
+
+
+
 extern "C"
     {
 #include "tsmapi.h"
     }
 
+#ifdef LTSM_USE_FSD
+extern "C"
+    {
+#include "fsdapi.h"
+    }
+#endif
+
+
 #ifndef DABC_string
 #include "dabc/string.h"
 #endif
 
-// JAM 12-jun-2019 use file system demon branch of ltsm library
-#define LTSM_USE_FSD 1
 
 
 namespace ltsm
@@ -51,6 +62,7 @@ namespace ltsm
 	std::string fServernameFSD; //< name of the file system demon port
 	int fPortFSD;  //< port of file system demon connection
 
+	struct fsd_session_t* fSessionFSD; //< keep fsd session open during several files
 	
 #endif	
 	
