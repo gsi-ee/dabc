@@ -34,7 +34,7 @@ mbs::TextInput::TextInput(const dabc::Url& url) :
    fNumHeaderLines(1),
    fCharBufferLength(1024),
    fFile(),
-   fCharBuffer(0),
+   fCharBuffer(nullptr),
    fEventCounter(0),
    fFormatId(0),
    fDataUnitSize(4)
@@ -49,7 +49,7 @@ mbs::TextInput::~TextInput()
 {
    CloseFile();
 
-   delete [] fCharBuffer; fCharBuffer = 0;
+   delete [] fCharBuffer; fCharBuffer = nullptr;
 }
 
 bool mbs::TextInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
@@ -127,7 +127,7 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
 
       // read next nonempty line into buffer
 
-      const char* sbuf = 0;
+      const char* sbuf = nullptr;
       do {
          if (fFile.eof())
          	if (!OpenNextFile()) return dabc::di_EndOfStream;
