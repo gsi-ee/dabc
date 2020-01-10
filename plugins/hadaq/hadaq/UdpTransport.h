@@ -94,7 +94,6 @@ namespace hadaq {
 
    // ==================================================================================
 
-
    class NewAddon : public dabc::SocketAddon,
                     public TransportInfo {
       protected:
@@ -133,6 +132,7 @@ namespace hadaq {
          static int OpenUdp(const std::string &host, int nport, int rcvbuflen);
    };
 
+   // ==================================================================================
 
    class NewTransport : public dabc::Transport {
 

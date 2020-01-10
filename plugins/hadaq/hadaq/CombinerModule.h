@@ -16,9 +16,6 @@
 #ifndef HADAQ_CombinerModule
 #define HADAQ_CombinerModule
 
-
-#include <sched.h>
-
 #ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
 #endif
@@ -31,9 +28,13 @@
 #include "dabc/Profiler.h"
 #endif
 
+#ifndef HADAQ_HadaqTypeDefs
 #include "hadaq/HadaqTypeDefs.h"
+#endif
 
+#ifndef HADAQ_Iterator
 #include "hadaq/Iterator.h"
+#endif
 
 #define HADAQ_NEVTIDS 64UL             /* must be 2^n */
 #define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
@@ -372,7 +373,6 @@ namespace hadaq {
          bool ReplyCommand(dabc::Command cmd) override;
 
          int CalcTrigNumDiff(const uint32_t &prev, const uint32_t &next);
-
    };
 
 }
