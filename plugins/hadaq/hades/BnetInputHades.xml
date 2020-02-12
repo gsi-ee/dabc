@@ -87,6 +87,18 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
        <NumChannels value="49"/>
     </Module>
 
+ <!-- special configuration for RPC TRB3 HUBs -->
+    <Module name="TRB84c*_TdcCal">
+       <!-- number of TDC channels -->
+       <NumChannels value="49"/>
+  </Module>
+
+  <!-- special configuration for TOF TRB3 HUBs -->
+    <Module name="TRB86c*_TdcCal">
+       <!-- number of TDC channels -->
+       <NumChannels value="49"/>
+  </Module>
+    
     <!-- these are default parameters for TDC calibration modules -->
     <Module name="TRB*_TdcCal">
        <!-- Minimal and maximal bins for linear calibration -->
