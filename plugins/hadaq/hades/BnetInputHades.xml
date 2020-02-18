@@ -96,7 +96,7 @@ HADAQPORTS - list of udp portnumbers for input streams, e.g. [50000,50001,50002]
   <!-- special configuration for TOF TRB3 HUBs -->
     <Module name="TRB86c*_TdcCal">
        <!-- number of TDC channels -->
-       <NumChannels value="49"/>
+       <NumChannels value="33"/>
     </Module>
  <!-- special configuration for TOF STS HUBs -->
     <Module name="TRB8b1*_TdcCal">
