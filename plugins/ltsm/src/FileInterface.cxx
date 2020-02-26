@@ -8,7 +8,7 @@
 #include "dabc/Manager.h"
 
 ltsm::FileInterface::FileInterface() :
-   dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0)
+  dabc::FileInterface(), fSession(0), fMaxFilesPerSession(10), fSessionConnectRetries(5), fIsClosing(false), fSessionFileCount(0), fUseDaysubfolders(false)
 #ifdef LTSM_USE_FSD
    ,fUseFileSystemDemon(false), fServernameFSD("lxcopytool01.gsi.de"),fPortFSD(7625),fSessionFSD(0)
 #endif
@@ -49,12 +49,46 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       DOUT0("tsm::FileInterface::fopen uses %d max session files from DEFAULTS.",fMaxFilesPerSession);
     }
 
+ if (url.HasOption("ltsmDaysubfolders"))
+    {
+      fUseDaysubfolders = url.GetOptionBool("ltsmDaysubfolders", fUseDaysubfolders);
+      DOUT0("tsm::FileInterface::fopen uses day prefix in path: %d from url options.",fUseDaysubfolders);
+    }
+  else
+    {
+      DOUT0("tsm::FileInterface::fopen uses  uses day prefix in path: %d from DEFAULTS.",fUseDaysubfolders);
+    }
+
+
+  
 
   if(fSessionFileCount >= fMaxFilesPerSession)
     {
       CloseTSMSession();
     }
 
+  // here optionally modify file path to contain year/day paths:
+  std::string fileName=fname;  
+  // TODO 2020
+  if(fUseDaysubfolders)
+    {
+      // JAM feb-2020: this is similar to the filename evaluation for hld files
+      char buf[128];
+      struct timeval tv;
+      struct tm tm_res;
+      gettimeofday(&tv, NULL);
+      strftime(buf, 128, "%y/%j/", localtime_r(&tv.tv_sec, &tm_res));
+      DOUT0("ltsm::FileInterface uses year day path %s",buf);
+      std::string insertpath(buf);
+      
+  size_t slash = fileName.rfind("/");
+      if (slash == std::string::npos)
+	slash=0;
+      fileName.insert(slash+1,insertpath);
+
+      DOUT0("ltsm::FileInterface uses new filename %s",fileName.c_str());
+
+     }
   // open session before first file is written, or if we have closed previous session to start tape migration on server
 #ifdef LTSM_USE_FSD   
   if (fUseFileSystemDemon)
@@ -91,14 +125,14 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 #ifdef LTSM_USE_FSD   
       if (fUseFileSystemDemon)
 	{ 
-	  rc = fsd_fopen(fFsname.c_str(), (char*) fname,
+	  rc = fsd_fopen(fFsname.c_str(), (char*) fileName.c_str(),
 			 (char*) fDescription.c_str(), fSessionFSD);	
 	  if (rc)
 	    {
 	      EOUT(
 		   "Fail to open LTSM file for writing to FSD (returncode:%d), using following arguments"
 		   "File=%s, FSD Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
-		   fname, fServernameFSD.c_str(), fNode.c_str(),
+		   fileName.c_str(), fServernameFSD.c_str(), fNode.c_str(),
 		   fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
 		   fDescription.c_str());
 
@@ -106,7 +140,7 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	      fSessionFSD = 0; // on failure we retry open the session. Or keep it?
 	      return 0;
 	    }
-	    fCurrentFile = fname;
+	    fCurrentFile = fileName.c_str();
 	    fSessionFileCount++;
 	    DOUT0("Opened LTSM file (session count %d) for writing to FSD: "
 	    "File=%s, FSD Servername=%s,  Description=%s", fSessionFileCount, fname,
@@ -116,14 +150,14 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
       else
 #endif
 	{
-	  rc = tsm_fopen(fFsname.c_str(), (char*) fname,
+	  rc = tsm_fopen(fFsname.c_str(), (char*) fileName.c_str(),
 			 (char*) fDescription.c_str(), fSession);   
 	  if (rc)
 	    {
 	      EOUT(
 		   "Fail to open LTSM file for writing (returncode:%d), using following arguments"
 		   "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",rc,
-		   fname, fServername.c_str(), fNode.c_str(),
+		   fileName.c_str(), fServername.c_str(), fNode.c_str(),
 		   fPassword.c_str(), fOwner.c_str(), fFsname.c_str(),
 		   fDescription.c_str());
 
@@ -131,10 +165,10 @@ dabc::FileInterface::Handle ltsm::FileInterface::fopen(const char* fname,
 	      fSession = 0; // on failure we retry open the session. Or keep it?
 	      return 0;
 	    }
-	    fCurrentFile = fname;
+	  fCurrentFile = fileName.c_str();
 	    fSessionFileCount++;
 	    DOUT0("Opened LTSM file (session count %d) for writing: "
-	    "File=%s, Servername=%s,  Description=%s", fSessionFileCount, fname,
+		  "File=%s, Servername=%s,  Description=%s", fSessionFileCount, fileName.c_str(),
 	    fServername.c_str(), fDescription.c_str());
 	   return fSession->tsm_file; // pointer to file structure is the handle    
 	}

@@ -56,6 +56,8 @@ namespace ltsm
        
 	int fSessionFileCount; //< count number of files in current session
 
+	bool fUseDaysubfolders; //< append number of day in year as subfolder if true
+
 #ifdef LTSM_USE_FSD	
 	bool fUseFileSystemDemon; //< write to file system demon server instead of TSM server
 
