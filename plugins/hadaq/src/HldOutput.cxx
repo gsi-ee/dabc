@@ -168,6 +168,16 @@ bool hadaq::HldOutput::StartNewFile()
       return false;
    }
 
+   // JAM2020: here we have to update the real filename in case that implementation changes it
+   // this can happen for ltsm io where we may add subfolders for year and day
+   char tmp[1024];
+   if(fFile.GetStrPar("RealFileName", tmp, 1024))
+     {
+       std::string previous=CurrentFileName();
+       fCurrentFileName=tmp;
+       DOUT0("Note: Original file name %s was changed by implementation to %s", previous.c_str(), CurrentFileName().c_str());
+     }
+   
    if (fRunSlave && fRfio)
       DOUT1("File %s is open for writing", CurrentFileName().c_str());
 

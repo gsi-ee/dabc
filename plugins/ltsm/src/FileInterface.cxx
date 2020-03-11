@@ -208,7 +208,12 @@ bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
    strncpy(sbuf, fNode.c_str(), sbuflen);
    return true;
    }
-
+    // JAM2020: this one will pass the real filename upward for display in logfile and gui
+    if (strcmp(parname, "RealFileName")==0)
+     {
+       strncpy(sbuf,fFsname.c_str(),sbuflen);
+       return true;
+      }
     return false;
     }
 
@@ -576,3 +581,5 @@ bool ltsm::FileInterface::CloseTSMSession()
   fSessionFileCount=0;
   return true;
 }
+
+
