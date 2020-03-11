@@ -45,6 +45,7 @@ namespace ltsm
 	std::string fOwner;
 	std::string fFsname;
 	std::string fDescription;
+    
 	
 	int fMaxFilesPerSession; //< set maximum number of files before re-opening session. For correct migration job on TSM server
 	

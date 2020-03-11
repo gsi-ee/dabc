@@ -211,7 +211,7 @@ bool ltsm::FileInterface::GetFileStrPar(Handle, const char* parname, char* sbuf,
     // JAM2020: this one will pass the real filename upward for display in logfile and gui
     if (strcmp(parname, "RealFileName")==0)
      {
-       strncpy(sbuf,fFsname.c_str(),sbuflen);
+       strncpy(sbuf,fCurrentFile.c_str(),sbuflen);
        return true;
       }
     return false;
