@@ -53,6 +53,7 @@ int usage(const char* errstr = nullptr)
    printf("   -raw                    - printout of raw data (default false)\n");
    printf("   -onlyraw subsubid       - printout of raw data only for specified subsubevent\n");
    printf("   -onlyerr                - printout only TDC data with errors\n");
+   printf("   -cts id                 - printout raw data as CTS subsubevent (default none)\n");
    printf("   -tdc id                 - printout raw data as TDC subsubevent (default none)\n");
    printf("   -adc id                 - printout raw data as ADC subsubevent (default none)\n");
    printf("   -hub id                 - identify hub inside subevent (default none) \n");
@@ -618,6 +619,96 @@ void PrintTdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    }
 }
 
+void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
+{
+   unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
+
+   if ((ix>=sz) || (len==0)) return;
+   if ((len==0) || (ix + len > sz)) len = sz - ix;
+
+   unsigned data = sub->Data(ix++); len--;
+   unsigned trigtype = (data & 0xFFFF);
+
+   unsigned nInputs = (data >> 16) & 0xf;
+   unsigned nTrigChannels = (data >> 20) & 0xf;
+   unsigned bIncludeLastIdle = (data >> 25) & 0x1;
+   unsigned bIncludeCounters = (data >> 26) & 0x1;
+   unsigned bIncludeTimestamp = (data >> 27) & 0x1;
+   unsigned nExtTrigFlag = (data >> 28) & 0x3;
+
+   unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
+                        bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
+
+   printf("%*sTrigger type: 0x%04x \n", prefix, "", trigtype);
+   printf("%*sTrigger channels: %u \n", prefix, "", nTrigChannels);
+   printf("%*sNumber of CTS words: %u \n", prefix, "", nCTSwords);
+   printf("%*sInclude last idle: %s\n", prefix, "", bIncludeLastIdle ? "true" : "false");
+   printf("%*sInclude counters: %s\n", prefix, "", bIncludeCounters ? "true" : "false");
+   printf("%*sInclude time stamp: %s\n", prefix, "", bIncludeTimestamp ? "true" : "false");
+
+   ix += nCTSwords;
+   len -= nCTSwords;
+   // TODO - print content of CTS words
+
+   printf("%*sExternal trigger flag: 0x%x ", prefix, "", nExtTrigFlag);
+   if(nExtTrigFlag==0x1) {
+      data = sub->Data(ix++); len--;
+      unsigned fTrigSyncId = (data & 0xFFFFFF);
+      unsigned fTrigSyncIdStatus = data >> 24; // untested
+      printf("MBS VULOM syncid 0x%06x status 0x%02x\n", fTrigSyncId, fTrigSyncIdStatus);
+   } else if(nExtTrigFlag==0x2) {
+      // ETM sends four words, is probably a Mainz A2 recv
+      data = sub->Data(ix++); len--;
+      unsigned fTrigSyncId = data; // full 32bits is trigger number
+      // get status word
+      data = sub->Data(ix++); len--;
+      unsigned fTrigSyncIdStatus = data;
+      // word 3+4 are 0xdeadbeef i.e. not used at the moment, so skip it
+      ix += 2;
+      len -= 2;
+
+      printf("MAINZ A2 recv syncid 0x%08x status 0x%08x\n", fTrigSyncId, fTrigSyncIdStatus);
+   } else if(nExtTrigFlag==0x0) {
+
+      printf("SYNC ");
+
+      if (sub->Data(ix) == 0xabad1dea) {
+         // [1]: D[31:16] -> sync pulse number
+         //      D[15:0]  -> absolute time D[47:32]
+         // [2]: D[31:0]  -> absolute time D[31:0]
+         // [3]: D[31:0]  -> period of sync pulse, in 10ns units
+         // [4]: D[31:0]  -> length of sync pulse, in 10ns units
+
+         unsigned fTrigSyncId = (sub->Data(ix+1) >> 16) & 0xffff;
+         long unsigned fTrigTm = (((uint64_t) (sub->Data(ix+1) & 0xffff)) << 32) | sub->Data(ix+2);
+         unsigned fSyncPulsePeriod = sub->Data(ix+3);
+         unsigned fSyncPulseLength = sub->Data(ix+4);
+
+         printf(" id 0x%04x tm %lu period %u lentgh %u\n", fTrigSyncId, fTrigTm, fSyncPulsePeriod, fSyncPulseLength);
+
+         ix += 5;
+         len -= 5;
+      } else {
+         printf("unknown ID found\n");
+      }
+   } else {
+      printf("  NOT RECOGNIZED!\n");
+   }
+
+/*
+   unsigned wlen = 2;
+   if (sz>99) wlen = 3; else
+   if (sz>999) wlen = 4;
+
+   for (unsigned cnt=0;cnt<len;cnt++,ix++) {
+      unsigned msg = sub->Data(ix);
+      if (prefix>0) printf("%*s[%*u] %08x  ",  prefix, "", wlen, ix, msg);
+      printf("\n");
+   }
+*/
+}
+
+
 void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned prefix)
 {
    unsigned sz = ((sub->GetSize() - sizeof(hadaq::RawSubevent)) / sub->Alignment());
@@ -637,9 +728,13 @@ void PrintAdcData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
 }
 
 bool printraw(false), printsub(false), showrate(false), reconnect(false), dostat(false), autoid(false);
-unsigned tdcmask(0), idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
-std::vector<unsigned> hubs;
-std::vector<unsigned> tdcs;
+unsigned idrange(0xff), onlytdc(0), onlyraw(0), hubmask(0), fullid(0), adcmask(0);
+std::vector<unsigned> hubs, tdcs, ctsids;
+
+bool is_cts(unsigned id)
+{
+   return std::find(ctsids.begin(), ctsids.end(), id) != ctsids.end();
+}
 
 bool is_hub(unsigned id)
 {
@@ -683,6 +778,7 @@ int main(int argc, char* argv[])
    unsigned findid(0);
    double tmout(-1.), maxage(-1.), debug_delay(-1), mhz(400.);
    bool dofind = false;
+   unsigned tdcmask(0), ctsid(0);
 
    int n = 1;
    while (++n<argc) {
@@ -690,6 +786,7 @@ int main(int argc, char* argv[])
       if (strcmp(argv[n],"-all")==0) { number = 0; } else
       if ((strcmp(argv[n],"-skip")==0) && (n+1<argc)) { dabc::str_to_lint(argv[++n], &skip); } else
       if ((strcmp(argv[n],"-find")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &findid); dofind = true; } else
+      if ((strcmp(argv[n],"-cts")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &ctsid); ctsids.push_back(ctsid); } else
       if ((strcmp(argv[n],"-tdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &tdcmask); tdcs.push_back(tdcmask); } else
       if ((strcmp(argv[n],"-range")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &idrange); } else
       if ((strcmp(argv[n],"-onlytdc")==0) && (n+1<argc)) { dabc::str_to_uint(argv[++n], &onlytdc); } else
@@ -867,7 +964,7 @@ int main(int argc, char* argv[])
                lasthhubid = 0;
             }
 
-            bool as_raw(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0) && !only_errors);
+            bool as_raw(false), as_cts(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0) && !only_errors);
 
             if (maxhublen>0) {
 
@@ -901,11 +998,11 @@ int main(int argc, char* argv[])
                if ((onlytdc!=0) && (datakind==onlytdc)) {
                   as_tdc = true;
                   print_subsubhdr = true;
-               } else
-               if (is_adc(datakind)) {
+               } else if (is_cts(datakind)) {
+                  as_cts = true;
+               } else if (is_adc(datakind)) {
                   as_adc = true;
-               } else
-               if ((maxhublen==0) && is_hub(datakind)) {
+               } else if ((maxhublen==0) && is_hub(datakind)) {
                   // this is hack - skip hub header, inside is normal subsub events structure
                   if (dostat) {
                      stat[datakind].num++;
@@ -918,12 +1015,10 @@ int main(int argc, char* argv[])
                   lasthubid = datakind;
                   lasthublen = datalen;
                   continue;
-               } else
-               if ((onlyraw!=0) && (datakind==onlyraw)) {
+               } else if ((onlyraw!=0) && (datakind==onlyraw)) {
                   as_raw = true;
                   print_subsubhdr = true;
-               } else
-               if (printraw) {
+               } else if (printraw) {
                   as_raw = (onlytdc==0) && (onlyraw==0);
                }
             }
@@ -968,12 +1063,14 @@ int main(int argc, char* argv[])
                if (print_subsubhdr) {
                   const char *kind = "Subsubevent";
                   if (as_tdc) kind = "TDC "; else
+                  if (as_cts) kind = "CTS "; else
                   if (as_adc) kind = "ADC ";
                   printf("%*s*** %s size %3u id 0x%04x full %08x%s\n", prefix-3, "", kind, datalen, datakind, data, errbuf);
                }
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, prefix, errmask); else
                if (as_adc) PrintAdcData(sub, ix, datalen, prefix); else
+               if (as_cts) PrintCtsData(sub, ix, datalen, prefix); else
                if (as_raw) sub->PrintRawData(ix, datalen, prefix);
 
                if (errmask!=0) {
