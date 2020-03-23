@@ -689,10 +689,15 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
          ix += 5;
          len -= 5;
       } else {
-         printf("unknown ID found\n");
+         printf("unknown word 0x%08x found, expects 0xabad1dea\n", sub->Data(ix));
       }
    } else {
       printf("  NOT RECOGNIZED!\n");
+   }
+
+   if ((len > 1) && ((sub->Data(ix) & tdckind_Header) == tdckind_Header)) {
+      unsigned errmask = 0;
+      PrintTdcData(sub, ix, len, prefix, errmask);
    }
 
 /*
