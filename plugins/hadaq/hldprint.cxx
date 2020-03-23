@@ -630,25 +630,49 @@ void PrintCtsData(hadaq::RawSubevent* sub, unsigned ix, unsigned len, unsigned p
    unsigned trigtype = (data & 0xFFFF);
 
    unsigned nInputs = (data >> 16) & 0xf;
-   unsigned nTrigChannels = (data >> 20) & 0xf;
-   unsigned bIncludeLastIdle = (data >> 25) & 0x1;
-   unsigned bIncludeCounters = (data >> 26) & 0x1;
+   unsigned nITCInputs = (data >> 20) & 0xf;
+   unsigned bIdleDeadTime = (data >> 25) & 0x1;
+   unsigned bTriggerStats = (data >> 26) & 0x1;
    unsigned bIncludeTimestamp = (data >> 27) & 0x1;
    unsigned nExtTrigFlag = (data >> 28) & 0x3;
 
-   unsigned nCTSwords = nInputs*2 + nTrigChannels*2 +
-                        bIncludeLastIdle*2 + bIncludeCounters*3 + bIncludeTimestamp*1;
+   printf("%*sITC status bitmask: 0x%04x \n", prefix, "", trigtype);
+   printf("%*sNumber of inputs counters: %u \n", prefix, "", nInputs);
+   printf("%*sNumber of ITC counters: %u \n", prefix, "", nITCInputs);
+   printf("%*sIdle/dead counter: %s\n", prefix, "", bIdleDeadTime ? "yes" : "no");
+   printf("%*sTrigger statistic: %s\n", prefix, "", bTriggerStats ? "yes" : "no");
+   printf("%*sTimestamp: %s\n", prefix, "", bIncludeTimestamp ? "yes" : "no");
 
-   printf("%*sTrigger type: 0x%04x \n", prefix, "", trigtype);
-   printf("%*sTrigger channels: %u \n", prefix, "", nTrigChannels);
-   printf("%*sNumber of CTS words: %u \n", prefix, "", nCTSwords);
-   printf("%*sInclude last idle: %s\n", prefix, "", bIncludeLastIdle ? "true" : "false");
-   printf("%*sInclude counters: %s\n", prefix, "", bIncludeCounters ? "true" : "false");
-   printf("%*sInclude time stamp: %s\n", prefix, "", bIncludeTimestamp ? "true" : "false");
+   // printing of inputs
+   for (unsigned ninp=0;ninp<nInputs;++ninp) {
+      unsigned wrd1 = sub->Data(ix++); len--;
+      unsigned wrd2 = sub->Data(ix++); len--;
+      printf("%*sInput %u level 0x%08x edge 0x%08x\n", prefix, "", ninp, wrd1, wrd2);
+   }
 
-   ix += nCTSwords;
-   len -= nCTSwords;
-   // TODO - print content of CTS words
+   for (unsigned ninp=0;ninp<nITCInputs;++ninp) {
+      unsigned wrd1 = sub->Data(ix++); len--;
+      unsigned wrd2 = sub->Data(ix++); len--;
+      printf("%*sITC Input %u level 0x%08x edge 0x%08x\n", prefix, "", ninp, wrd1, wrd2);
+   }
+
+   if (bIdleDeadTime) {
+      unsigned wrd1 = sub->Data(ix++); len--;
+      unsigned wrd2 = sub->Data(ix++); len--;
+      printf("%*sIdle 0x%08x dead 0x%08x time\n", prefix, "", wrd1, wrd2);
+   }
+
+   if (bTriggerStats) {
+      unsigned wrd1 = sub->Data(ix++); len--;
+      unsigned wrd2 = sub->Data(ix++); len--;
+      unsigned wrd3 = sub->Data(ix++); len--;
+      printf("%*sTrigger stats 0x%08x 0x%08x 0x%08x\n", prefix, "", wrd1, wrd2, wrd3);
+   }
+
+   if (bIncludeTimestamp) {
+      unsigned wrd1 = sub->Data(ix++); len--;
+      printf("%*sTimestamp 0x%08x\n", prefix, "", wrd1);
+   }
 
    printf("%*sExternal trigger flag: 0x%x ", prefix, "", nExtTrigFlag);
    if(nExtTrigFlag==0x1) {

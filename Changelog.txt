@@ -3,7 +3,7 @@ It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
 23.03.2020
-1. Provide basic support of CTS header in hldprint.
+1. Provide basic support of CTS header in hldprint, including builtin TDC
 
 
 23.05.2019
