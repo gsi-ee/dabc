@@ -2,6 +2,10 @@ This is log of changes in the DABC project.
 It is the best (and sometimes the only) place to find information
 about current functionality of the framework.
 
+23.03.2020
+1. Provide basic support of CTS header in hldprint.
+
+
 23.05.2019
 1. Port of DABC code to modern Mac OS (excluding RFIO, IB verbs and threads affinity)
 2. Remove shared-memory module from HADAQ plugin, fully decouple from EPICS
