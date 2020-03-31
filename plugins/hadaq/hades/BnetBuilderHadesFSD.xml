@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+
+<!--
+This is example file how HADAQ event building with builder network (BNET) should be configured in DABC.
+This file BnetBuilderHades.xml will configure the BNET-Eventbuilder (second level of builder network)
+The input layer (first level) is configured in corresponding file BnetInputHades.xml
+
+By default, HTTP server is enabled. Do disable it, remove <HttpServer> section or
+put <HttpServer name="http" auto="false">. One could change http port number.
+When dabc runs, in any browser address like
+http://your_dabc_host_name:8090 can be opened. At the moment http server provides:
+  - ratemeters from EventBuilder and Transmitter
+  - log fields
+  - commands to start/stop hld and lmd files from browser
+
+It is also possible to attach go4 analysis to that server, that also histograms
+from online analysis will appear. For that one should specify
+"-dabc your_dabc_host_name" argument when starting analysis. Like:
+   [shell] go4analysis -stream dabc_node -dabc dabc_node
+When launching analysis from the gui, extra arguments "-dabc your_dabc_host_name"
+should be specified.
+
+There is well-known problem with using VNC viewer and mbs stream server.
+Both by default are using port 6002. One could change port number for stream server.
+Just set other number in configuration of output port of transmitter module, for instance
+       <OutputPort name="Output0" url="mbs://Stream:6789"/>
+In this case one should specify that port number when starting go4 analysis like:
+   [shell] go4analysis -stream dabc_node:6789 -dabc dabc_node:4444
+When starting analysis from the go4 gui, one should specify stream server with port number too.
+
+Variables for hades multiple eventbuilder mode:
+BNETMASTER - hostname wher master controller module is running
+BNEBNUM   - number of event builder process (1...16)
+BNEBID    - index of event builder process (0...15)
+BNETSENDERS - list of first level bnet senders (input nodes and port)
+ e.g. [lxhadeb05:12501,lxhadeb02:12502, lxhadeb03:12503, lxhadeb04:12504]
+BNETRECEIVERS - list of second level bnet event builders (nodes and port)
+ e.g. [lxhadeb05:12101,lxhadeb02:12102, lxhadeb03:12103, lxhadeb04:12104]
+PREFIX  - run prefix for filename convention (be,te,co,..)
+OUTDIR - path to file output directory
+RFIOPATH - path to rfio tape archive
+RFIOLUSTREPATH - path to copy on lustre file system, e.g. /hera/hades/may14
+RFIOCOPYMODE - 0 no copy to Lustre/hera 1 copy to Lustre after the file is in the write cash, 2 copy in parallel to Lustre
+RFIOCOPYFRAC - 1 copy all
+
+RFIOMAXFILE  - Maxfile 100,
+RFIOPATHCONV - pathconvention=1 to create new subfolder on lustre after 100 events
+
+FILEOUTPUTS - number of fileoutputs 0-none 1-local file 2-local+rfio
+DAQDISK - switches disk demon mode on/off
+
+
+
+-->
+
+
+
+<dabc version="2">
+
+  <Variables>
+      <bnetsenders value="${BNETSENDERS}"/>
+      <bnetreceivers value="${BNETRECEIVERS}"/>
+      <hadaqports value="${HADAQPORTS}"/> 
+   
+  </Variables>
+      
+  </Variables>
+
+  <Context host="${MYHOST}" name="BNET-EB-${BNEBNUM}" port="${BNEBPORT}">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <lib value="libDabcRfio.so"/>
+      <lib value="libDabcLtsm.so"/>
+      <logfile value="BNETEB_${BNEBNUM}.log"/>
+      <loglevel value="1"/>
+      <debuglevel value="1"/>
+      <syslog value="DAQ"/>
+      <sysloglevel value="0"/>
+      <loglimit value="1000000"/>
+      <control value="true"/>
+     <!--    <affinity value="-1"/> -->
+      <threads_layout value="balanced"/>
+      <master value="${BNETMASTER}:23456"/>
+      <publisher value="true"/>
+      <halttime value="60"/>
+      <thrdstoptime value="20"/>
+      <!--       <runtime value="50"/>  -->
+    </Run>
+
+    <!-- If uncommented, all internal manager structures will be published in the web server -->
+    <!-- Publisher name="publ" manager="true"/ -->
+
+    <!-- If uncommented, profiling will be enabled for all threads -->
+    <!-- Thread name="*" publ="true" prof="true"/ -->
+
+    <Application ConnTimeout="60"/>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="2000000"/>
+       <NumBuffers value="5000"/>
+    </MemoryPool>
+
+    <Device name="NetDev" class="dabc::SocketDevice"/>
+
+    <Module name="Combiner" class="hadaq::CombinerModule">
+
+       <NodeId value="${BNEBNUM}"/>
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <BNETrecv value="true"/>
+       <BNET_NUMRECEIVERS value="#${bnetreceivers}"/>
+       <BNET_NUMSENDERS value="#${bnetsenders}"/>
+       <EB_EVENTS value="16"/>
+
+       <NumInputs value="#${bnetsenders}"/>
+       <NumOutputs value="${FILEOUTPUTS}"/>
+
+       <InputPort name="Input*" queue="300" optional="true"/>
+
+       <OutputPort name="Output0" url="mbs://Stream:810${BNEBNUM}?iter=hadaq_iter&subid=0x1f"/>
+       <OutputPort name="Output1" url="hld://${OUTDIR}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&diskdemon=${DAQDISK}&slave" queue="5000"/>
+
+      <!--   <OutputPort name="Output2" url="hld://${RFIOPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&rfio&rfioCopyMode=${RFIOCOPYMODE}&rfioCopyFrac=${RFIOCOPYFRAC}&rfioMaxFile=${RFIOMAXFILE}&rfioPathConv=${RFIOPATHCONV}&rfioLustrePath=${RFIOLUSTREPATH}" queue="500" onerror="exit" numreconn="3"/> -->
+
+       <OutputPort name="Output2" url="hld://${LTSMPATH}/${PREFIX}.hld?maxsize=1000&ebnumber=${BNEBNUM}&ltsm&ltsmServer=${LTSMSERVER}&ltsmNode=${LTSMNODE}&ltsmPass=${LTSMPASSWD}&ltsmFsname=${LTSMFSNAME}&ltsmOwner=hadesdst&ltsmUseFSD=${USEFSD}&ltsmFSDServerName='${FSDSERVER}'&ltsmFSDServerPort=${FSDPORT}&ltsmMaxSessionFiles=${LTSMSESSIONFILES}&ltsmDaysubfolders=false&slave" queue="5000" onerror="exit"/>
+       <ExtraDebug value="false"/>
+
+       <ExtraDebug value="false"/>
+
+       <DoShmControl value="false"/>
+       <RunIdFromEPICS value="false"/>
+       <FlushTimeout value="0.5"/>
+
+       <!--  Not required in builder, Id is normally set to header -->
+       <!--  <HadesTriggerType value="true"/> -->
+
+ <!-- take event sequence number from vulom/roc sync message at cts -->
+       <UseSyncSequenceNumber value="false"/>
+       <SyncSubeventId value="0x8000"/>
+       <SyncTriggerMask value="0x01"/>
+       <PrintSync value="false"/>
+       <FlushBySync value="false"/>
+       <!-- TriggerNumRange: defines when trigger sequence number wraps, only 22 bit for HADES EBs!  -->
+       <TriggerNumRange value="0x1000000"/>
+       <!--  Do not throw away events when subevens TAGs are differ  -->
+       <CheckTag value="false"/>
+
+       <!--AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <AccountLostEventDiff value="true"/>
+
+       <BuildDropTimeout value="300.0"/>
+
+       <Runinfo2ora value="true"/>
+
+       <FilePrefix value="${PREFIX}"/>
+
+       <!-- rate meters configuration, not seen with terminal module -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+
+     </Module>
+
+     <Connection device="NetDev" list="${bnetsenders}"
+                 output="dabc://%name%/FirstLevel/Output${BNEBID}" input="Combiner/Input%id%"/>
+
+<!--      <Connection device="NetDev" output="dabc://localhost:12502/FirstLevel/Output0" input="Combiner/Input1"  pool="Pool"/> -->
+
+     <!-- Terminal output like old event builder -->
+  <Module name="Term" class="hadaq::TerminalModule" period="0.3" show="false" clear="false" fileport="-1" servport="0" showtrig="16"/>
+
+  </Context>
+
+</dabc>
