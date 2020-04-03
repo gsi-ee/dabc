@@ -65,7 +65,7 @@ namespace hadaq {
          uint32_t fLastTrigNr;   ///< keeps previous trigger sequence number - used to control data lost
          uint32_t fTrigTag;      ///< keeps current trigger tag
          uint32_t fTrigType;     ///< current subevent trigger type
-         uint32_t fErrorBits;    ///< errorbit status word from payload end
+         unsigned fErrorBitsCnt{0}; ///< number of subevents with non-zero error bits
          unsigned fHubId{0};     ///< subevent id from given input
          unsigned fUdpPort{0};    ///< if configured, port id
          float fQueueLevel;      ///<  current input queue fill level
@@ -102,7 +102,6 @@ namespace hadaq {
             fLastTrigNr(0xffffffff),
             fTrigTag(0),
             fTrigType(0),
-            fErrorBits(0),
             fQueueLevel(0),
             fLastEvtBuildTrigId(0),
             fDataError(false),
@@ -140,7 +139,7 @@ namespace hadaq {
             fTrigNr = 0;
             fTrigTag = 0;
             fTrigType = 0;
-            fErrorBits = 0;
+            fErrorBitsCnt = 0;
             fDataError = false;
             // fHubId = 0;
             fEmpty = true;
@@ -293,8 +292,6 @@ namespace hadaq {
          bool BuildEvent();
 
          bool FlushOutputBuffer();
-
-         void DoErrorBitStatistics(unsigned ninp);
 
          void DoInputSnapshot(unsigned ninp);
 

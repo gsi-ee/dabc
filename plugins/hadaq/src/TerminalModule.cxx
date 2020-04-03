@@ -148,6 +148,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          fprintf(stdout,"HADAQ terminal info:\n"
                         "  disc  - all discarded packets in the UDP receiver\n"
                         "  err32 - 32-byte header does not match with 32-bytes footer\n"
+                        "  errbits - error bits not 0 and not 1\n"
                         "  bufs  - number of produced buffers\n"
                         "  qu    - input queue of combiner module\n"
                         "  drop  - dropped subevents (received by combiner but not useful)\n"
@@ -225,7 +226,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
         }
       }
 
-   s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu  drop  lost";
+   s += "inp port     pkt      data    MB/s   disc  err32  bufs  qu  errbits drop  lost";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
@@ -242,7 +243,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    ditem.SetField("LostEventsRate", rate3);
    ditem.SetField("LostDataRate", rate4);
 
-   std::vector<int64_t> ports, recvbytes, inpdrop, inplost;
+   std::vector<int64_t> ports, recvbytes, inperrbits, inpdrop, inplost;
    std::vector<double> inprates;
 
    for (unsigned n=0;n<comb->fCfg.size();n++) {
@@ -275,11 +276,13 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
          inprates.push_back(rate);
       }
 
-      sbuf.append(dabc::format(" %3d %5s %5s",
+      sbuf.append(dabc::format(" %3d %6s %5s %5s",
                    cfg.fNumCanRecv,
+                   dabc::number_to_str(cfg.fErrorBitsCnt,1).c_str(),
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 
+      inperrbits.push_back(cfg.fErrorBitsCnt);
       inpdrop.push_back(cfg.fDroppedTrig);
       inplost.push_back(cfg.fLostTrig);
 
@@ -316,8 +319,9 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
    ditem.SetField("inputs", ports);
    ditem.SetField("inprecv", recvbytes);
    ditem.SetField("inprates", inprates);
-   ditem.SetField("inplost", inplost);
+   ditem.SetField("inperrbits", inperrbits);
    ditem.SetField("inpdrop", inpdrop);
+   ditem.SetField("inplost", inplost);
 
    if (!fFileReqRunning && (fFilePort>=0)) {
       dabc::Command cmd("GetTransportStatistic");

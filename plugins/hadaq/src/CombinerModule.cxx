@@ -459,7 +459,7 @@ void hadaq::CombinerModule::UpdateBnetInfo()
             }
 
             inp.fHubLastSize = info->fTotalRecvBytes;
-            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s  ",
+            sinfo = dabc::format("port:%d %5.3f MB/s data:%s pkts:%s buf:%s disc:%s d32:%s drop:%s lost:%s errbits:%s ",
                        info->fNPort,
                        rate,
                        dabc::size_to_str(info->fTotalRecvBytes).c_str(),
@@ -468,7 +468,8 @@ void hadaq::CombinerModule::UpdateBnetInfo()
                        info->GetDiscardString().c_str(),
                        info->GetDiscard32String().c_str(),
                        dabc::number_to_str(inp.fDroppedTrig,0).c_str(),
-                       dabc::number_to_str(inp.fLostTrig,0).c_str());
+                       dabc::number_to_str(inp.fLostTrig,0).c_str(),
+                       dabc::number_to_str(inp.fErrorBitsCnt,0).c_str());
 
             sinfo += inp.TriggerRingAsStr(16);
          }
@@ -779,7 +780,10 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          cfg.fTrigType = 0;
       }
 
-      cfg.fErrorBits = cfg.subevnt->GetErrBits();
+      uint32_t errorBits = cfg.subevnt->GetErrBits();
+
+      if ((errorBits != 0) && (errorBits != 1))
+         cfg.fErrorBitsCnt++;
 
       int diff = 1;
       if (cfg.fLastTrigNr != 0xffffffff)
@@ -985,7 +989,6 @@ bool hadaq::CombinerModule::BuildEvent()
          uint32_t trigtag = fCfg[ninp].fTrigTag;
          bool isempty = fCfg[ninp].fEmpty;
          bool haserror = fCfg[ninp].fDataError;
-         DoErrorBitStatistics(ninp); // also for not complete events
          if (trignr == buildevid) {
 
             if (!isempty || !fSkipEmpty) {
@@ -1239,10 +1242,6 @@ bool hadaq::CombinerModule::BuildEvent()
    return true; // event is build successfully. try next one
 }
 
-void hadaq::CombinerModule::DoErrorBitStatistics(unsigned ninp)
-{
-// this is translation of how it is done in hadaq evtbuild code:
-}
 
 void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
 {
