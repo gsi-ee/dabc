@@ -28,9 +28,6 @@
 
 #include "hadaq/UdpTransport.h"
 
-//#define HADERRBITDEBUG 1
-
-
 hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fCfg(),
@@ -61,9 +58,6 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fAllBuildEvents = 0;
    fAllDiscEvents = 0;
    fAllDroppedData = 0;
-
-   for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn)
-      fErrorbitPattern[ptrn] = 0;
 
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;
@@ -785,11 +779,8 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp, bool fast, bool d
          cfg.fTrigType = 0;
       }
 
-#ifndef HADERRBITDEBUG
       cfg.fErrorBits = cfg.subevnt->GetErrBits();
-#else
-      cfg.fErrorBits = ninp;
-#endif
+
       int diff = 1;
       if (cfg.fLastTrigNr != 0xffffffff)
          diff = CalcTrigNumDiff(cfg.fLastTrigNr, cfg.fTrigNr);
@@ -1251,17 +1242,6 @@ bool hadaq::CombinerModule::BuildEvent()
 void hadaq::CombinerModule::DoErrorBitStatistics(unsigned ninp)
 {
 // this is translation of how it is done in hadaq evtbuild code:
-   for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn) {
-      if (fErrorbitPattern[ptrn] == 0) {
-         fErrorbitPattern[ptrn]=fCfg[ninp].fErrorBits;
-         fCfg[ninp].fErrorbitStats[ptrn]++;
-         break;
-      } else
-      if (fErrorbitPattern[ptrn] == fCfg[ninp].fErrorBits) {
-         fCfg[ninp].fErrorbitStats[ptrn]++;
-         break;
-      }
-   }
 }
 
 void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
@@ -1494,15 +1474,8 @@ void hadaq::CombinerModule::ResetInfoCounters()
       for (unsigned n = 0; n < NumInputs(); n++) {
          SubmitCommandToTransport(InputName(n), dabc::Command("ResetTransportStat"));
 
-         // JAM BUGFIX JUL14: errorbits not reset
-         for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS; ++ptrn)
-            fCfg[n].fErrorbitStats[ptrn] = 0;
-
          fCfg[n].fLastEvtBuildTrigId = 0;
       }
-
-   for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS; ++ptrn)
-      fErrorbitPattern[ptrn] = 0;
 
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;

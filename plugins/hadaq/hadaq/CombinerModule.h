@@ -38,7 +38,6 @@
 
 #define HADAQ_NEVTIDS 64UL             /* must be 2^n */
 #define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
-#define HADAQ_NUMERRPATTS 5
 #define HADAQ_RINGSIZE 100
 
 namespace hadaq {
@@ -67,7 +66,6 @@ namespace hadaq {
          uint32_t fTrigTag;      ///< keeps current trigger tag
          uint32_t fTrigType;     ///< current subevent trigger type
          uint32_t fErrorBits;    ///< errorbit status word from payload end
-         uint32_t fErrorbitStats[HADAQ_NUMERRPATTS]; ///< errorbit statistics counter
          unsigned fHubId{0};     ///< subevent id from given input
          unsigned fUdpPort{0};    ///< if configured, port id
          float fQueueLevel;      ///<  current input queue fill level
@@ -128,8 +126,6 @@ namespace hadaq {
             fHubPrevSize(0),
             fHubSizeTmCnt(0)
          {
-            for(int i=0;i<HADAQ_NUMERRPATTS;i++)
-               fErrorbitStats[i]=0;
             for (int i=0;i<HADAQ_RINGSIZE;i++)
                fTrigNumRing[i]=0;
          }
@@ -148,9 +144,6 @@ namespace hadaq {
             fDataError = false;
             // fHubId = 0;
             fEmpty = true;
-           // do not clear error bit statistics!
-//             for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-//                fErrorbitStats[i]=0;
             // do not clear last fill level and last trig id
             if (complete) {
                fLastTrigNr = 0xffffffff;
@@ -262,8 +255,6 @@ namespace hadaq {
          uint64_t           fAllFullDrops;   ///< number of complete drops
 
          unsigned fEventIdCount[HADAQ_NEVTIDS];
-
-         uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
 
          std::string fRunInfoToOraFilename;
          std::string fPrefix;
