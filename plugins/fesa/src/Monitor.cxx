@@ -16,7 +16,7 @@
 #include "fesa/Monitor.h"
 
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 #ifdef WITH_FESA
 #include <cmw-rda/RDAService.h>

@@ -15,7 +15,7 @@
 #include "dabc/Pointer.h"
 #include "user/Input.h"
 #include <unistd.h>
-#include <math.h>
+#include <cmath>
 
 #include "dabc/Port.h"
 #include "dabc/logging.h"

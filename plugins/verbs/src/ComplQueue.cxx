@@ -17,7 +17,7 @@
 #include "dabc/timing.h"
 
 #include <poll.h>
-#include <math.h>
+#include <cmath>
 #include <errno.h>
 
 verbs::ComplQueue::ComplQueue(ContextRef ctx, int size,

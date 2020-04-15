@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <math.h>
+#include <cmath>
 
 #include "dabc/SocketThread.h"
 #include "dabc/Pointer.h"

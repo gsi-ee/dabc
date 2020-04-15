@@ -16,7 +16,7 @@
 #include "mbs/GeneratorInput.h"
 
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"

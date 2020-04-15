@@ -16,7 +16,7 @@
 #include "mbs/MonitorSlowControl.h"
 
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 
 mbs::MonitorSlowControl::MonitorSlowControl(const std::string &name, const std::string &prefix, dabc::Command cmd) :

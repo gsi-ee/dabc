@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
-#include <math.h>
+#include <cmath>
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"

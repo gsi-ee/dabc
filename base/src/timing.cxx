@@ -16,7 +16,7 @@
 #include "dabc/timing.h"
 
 #include <ctime>
-#include <math.h>
+#include <cmath>
 #include <unistd.h>
 #include <cstring>
 

@@ -17,7 +17,7 @@
 
 #include <cstdlib>
 #include <cstdio>
-#include <math.h>
+#include <cmath>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>

@@ -15,7 +15,7 @@
 
 #include "dabc/statistic.h"
 
-#include <math.h>
+#include <cmath>
 #include <cstring>
 #include <unistd.h>
 

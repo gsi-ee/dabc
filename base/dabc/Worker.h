@@ -24,10 +24,6 @@
 #include "dabc/Thread.h"
 #endif
 
-#ifndef DABC_Command
-#include "dabc/Command.h"
-#endif
-
 #ifndef DABC_Parameter
 #include "dabc/Parameter.h"
 #endif

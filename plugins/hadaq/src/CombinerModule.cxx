@@ -15,7 +15,7 @@
 
 #include "hadaq/CombinerModule.h"
 
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>

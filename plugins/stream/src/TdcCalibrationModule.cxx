@@ -20,7 +20,7 @@
 
 #include "dabc/timing.h"
 
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 #include "hadaq/TdcProcessor.h"

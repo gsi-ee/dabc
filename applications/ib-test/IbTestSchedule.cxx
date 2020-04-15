@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
