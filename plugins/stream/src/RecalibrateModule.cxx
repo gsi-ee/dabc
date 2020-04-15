@@ -28,7 +28,7 @@
 #include "dabc/Buffer.h"
 #include "dabc/Publisher.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "base/Buffer.h"
 #include "base/StreamProc.h"

@@ -20,7 +20,7 @@
 #include "dabc/string.h"
 #include "dabc/logging.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <string.h>
 
 

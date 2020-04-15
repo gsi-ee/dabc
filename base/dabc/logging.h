@@ -16,9 +16,9 @@
 #ifndef DABC_logging
 #define DABC_logging
 
-#include <stdio.h>
+#include <cstdio>
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef DABC_string
 #include "dabc/string.h"

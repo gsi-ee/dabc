@@ -15,7 +15,7 @@
 
 #include "fesa/Monitor.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 
 #ifdef WITH_FESA

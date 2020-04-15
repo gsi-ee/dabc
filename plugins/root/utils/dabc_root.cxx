@@ -1,7 +1,7 @@
 // dedicated to convert DABC files to ROOT files
 // for instance, hierarchy stored in binary file, can be converted to ROOT histograms
 
-#include <stdio.h>
+#include <cstdio>
 #include <string.h>
 
 #include "dabc/version.h"

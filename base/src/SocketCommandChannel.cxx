@@ -15,7 +15,7 @@
 
 #include "dabc/SocketCommandChannel.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <list>
 

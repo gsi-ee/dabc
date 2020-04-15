@@ -15,8 +15,8 @@
 
 #include "dabc/api.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <signal.h>
 
 #include "dabc/Publisher.h"

@@ -15,9 +15,9 @@
 
 #include "mbs/Monitor.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <string.h>
-#include <stdio.h>
+#include <cstdio>
 #include <math.h>
 
 #include "dabc/SocketThread.h"

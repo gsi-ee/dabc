@@ -26,7 +26,7 @@
 
 #include <vector>
 #include <map>
-#include <stdint.h>
+#include <cstdint>
 
 namespace dabc {
 

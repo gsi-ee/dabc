@@ -16,8 +16,8 @@
 #ifndef DABC_BinaryFile
 #define DABC_BinaryFile
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 namespace dabc {
 

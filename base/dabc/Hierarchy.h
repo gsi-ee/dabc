@@ -32,7 +32,7 @@
 #include "dabc/timing.h"
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace dabc {
 

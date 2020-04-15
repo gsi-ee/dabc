@@ -32,7 +32,7 @@
 #include "dabc/Command.h"
 #endif
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <vector>
 

@@ -16,7 +16,7 @@
 #ifndef HADAQ_defines
 #define HADAQ_defines
 
-#include <stdint.h>
+#include <cstdint>
 #include <iostream>
 #include <string.h>
 #include <sched.h>

@@ -15,7 +15,7 @@
 
 #include "dabc/MemoryPool.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <list>
 
 #include "dabc/logging.h"

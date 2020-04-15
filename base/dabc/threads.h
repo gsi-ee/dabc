@@ -18,7 +18,7 @@
 
 #include <pthread.h>
 
-#include <stdio.h>
+#include <cstdio>
 
 #ifndef DABC_defines
 #include "dabc/defines.h"

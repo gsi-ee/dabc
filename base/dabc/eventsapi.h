@@ -16,7 +16,7 @@
 #ifndef DABC_eventsapi
 #define DABC_eventsapi
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef DABC_Object
 #include "dabc/Object.h"

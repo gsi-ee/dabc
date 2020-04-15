@@ -16,7 +16,7 @@
 #include "mbs/TextInput.h"
 
 #include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <sstream>
 
 #include "dabc/logging.h"

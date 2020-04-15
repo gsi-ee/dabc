@@ -20,7 +20,7 @@
 #include "dabc/Worker.h"
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace dabc {
 

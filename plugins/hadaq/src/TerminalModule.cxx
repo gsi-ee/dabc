@@ -15,7 +15,7 @@
 
 #include "hadaq/TerminalModule.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <sys/types.h>
 #include <vector>

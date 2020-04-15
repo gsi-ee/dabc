@@ -15,7 +15,7 @@
 
 #include "dabc/Worker.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 
 #include "dabc/ConfigBase.h"

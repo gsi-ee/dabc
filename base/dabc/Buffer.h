@@ -16,8 +16,8 @@
 #ifndef DABC_Buffer
 #define DABC_Buffer
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
 
 #ifndef DABC_Object
 #include "dabc/Object.h"

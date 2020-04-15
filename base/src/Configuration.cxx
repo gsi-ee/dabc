@@ -16,7 +16,7 @@
 #include "dabc/Configuration.h"
 
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <fnmatch.h>
 
 #include "dabc/logging.h"

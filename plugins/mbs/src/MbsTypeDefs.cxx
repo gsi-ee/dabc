@@ -16,7 +16,7 @@
 #include "mbs/MbsTypeDefs.h"
 
 #include <string.h>
-#include <stdio.h>
+#include <cstdio>
 
 #if defined(__APPLE__)
 // Mac OS X / Darwin features

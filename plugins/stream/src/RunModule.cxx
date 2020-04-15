@@ -31,7 +31,7 @@
 #include "hadaq/TrbProcessor.h"
 #include "hadaq/HldProcessor.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "base/Buffer.h"
 #include "base/StreamProc.h"

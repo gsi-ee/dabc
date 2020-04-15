@@ -16,7 +16,7 @@
 #ifndef DABC_timing
 #define DABC_timing
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef DABC_string
 #include "dabc/string.h"

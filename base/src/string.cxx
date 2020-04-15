@@ -17,8 +17,8 @@
 
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <locale.h>
 
 #include "dabc/ConfigBase.h"

@@ -1,7 +1,7 @@
 #ifndef IbTestDefines_H
 #define IbTestDefines_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <stdio.h>
 

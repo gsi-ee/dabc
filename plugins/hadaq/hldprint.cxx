@@ -14,7 +14,7 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <string.h>
 #include <map>
 #include <vector>

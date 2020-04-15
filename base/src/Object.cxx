@@ -15,7 +15,7 @@
 
 #include "dabc/Object.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <fnmatch.h>
 
 #include "dabc/Manager.h"
@@ -1126,7 +1126,7 @@ void dabc::Object::InspectGarbageCollector()
 #ifdef DABC_EXTRA_CHECKS
 
 #include <list>
-#include <stdio.h>
+#include <cstdio>
 #include <map>
 
 void dabc::Object::DebugObject(const char* classname, Object* instance, int kind)

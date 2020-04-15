@@ -19,8 +19,8 @@
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "dabc/Application.h"
 #include "dabc/Manager.h"

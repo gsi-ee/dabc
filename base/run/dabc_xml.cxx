@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 int main(int numc, char* args[])
 {

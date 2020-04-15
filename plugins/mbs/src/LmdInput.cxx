@@ -16,7 +16,7 @@
 #include "mbs/LmdInput.h"
 
 #include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"

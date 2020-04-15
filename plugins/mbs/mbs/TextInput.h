@@ -26,7 +26,7 @@
 
 #include <fstream>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace mbs {
 

@@ -15,7 +15,7 @@
 
 #include "mbs/MonitorSlowControl.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 
 

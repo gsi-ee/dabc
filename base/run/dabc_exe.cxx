@@ -13,7 +13,7 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <locale.h>
 
 #include "dabc/logging.h"

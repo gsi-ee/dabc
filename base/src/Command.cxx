@@ -15,7 +15,7 @@
 
 #include "dabc/Command.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/Manager.h"
 #include "dabc/Worker.h"

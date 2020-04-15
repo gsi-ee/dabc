@@ -15,7 +15,7 @@
 
 #include "fesa/Player.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 
 #include "dabc/Publisher.h"

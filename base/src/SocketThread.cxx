@@ -20,7 +20,7 @@
 #include <sys/poll.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

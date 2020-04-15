@@ -16,7 +16,7 @@
 #include "dabc/XmlEngine.h"
 
 #include <fstream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <string.h>
 
 #include "dabc/logging.h"

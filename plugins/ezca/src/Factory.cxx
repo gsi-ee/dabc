@@ -15,7 +15,7 @@
 
 #include "ezca/Factory.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/Command.h"
 #include "dabc/logging.h"

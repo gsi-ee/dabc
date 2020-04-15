@@ -19,8 +19,8 @@
 #include <errno.h>
 #include <math.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <sched.h>
 
 #include <netinet/in.h>

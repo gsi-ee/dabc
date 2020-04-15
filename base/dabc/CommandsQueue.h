@@ -22,7 +22,7 @@
 
 #include <list>
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace dabc {
 

@@ -1,7 +1,7 @@
 #ifndef IbTestSchedule_H
 #define IbTestSchedule_H
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <string>
 #include <vector>

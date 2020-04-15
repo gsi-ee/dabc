@@ -15,8 +15,8 @@
 
 #include <sys/poll.h>
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 #include <string.h>
 #include <netinet/in.h>

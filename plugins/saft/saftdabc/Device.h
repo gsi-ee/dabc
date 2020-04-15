@@ -48,7 +48,7 @@
 // for CommonFunctions:
    #include <time.h>
    #include <sys/time.h>
-   #include <stdio.h>
+   #include <cstdio>
    #include <string.h>
    #include <sstream>
    #include <iostream>

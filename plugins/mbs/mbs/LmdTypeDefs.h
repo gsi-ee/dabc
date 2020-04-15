@@ -16,7 +16,7 @@
 #ifndef MBS_LmdTypeDefs
 #define MBS_LmdTypeDefs
 
-#include <stdint.h>
+#include <cstdint>
 
 #if defined(__MACH__) /* Apple OSX section */
 #include <machine/endian.h>

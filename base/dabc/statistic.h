@@ -16,9 +16,9 @@
 #ifndef DABC_statistic
 #define DABC_statistic
 
-#include <stdio.h>
+#include <cstdio>
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <vector>
 

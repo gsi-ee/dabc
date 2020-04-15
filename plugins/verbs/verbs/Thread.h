@@ -23,7 +23,7 @@
 #endif
 
 #include <map>
-#include <stdint.h>
+#include <cstdint>
 
 struct ibv_comp_channel;
 struct ibv_wc;

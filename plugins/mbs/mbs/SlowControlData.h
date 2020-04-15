@@ -16,8 +16,8 @@
 #ifndef MBS_SlowControlData
 #define MBS_SlowControlData
 
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 #include <string.h>
 #include <string>
 #include <vector>

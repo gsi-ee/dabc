@@ -17,7 +17,7 @@
 
 #include "dabc/Publisher.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 gosip::Player::Player(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)

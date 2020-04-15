@@ -16,8 +16,8 @@
 #include "mbs/LmdOutput.h"
 
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 
 #if defined(__MACH__) /* Apple OSX section */

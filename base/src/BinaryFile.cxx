@@ -16,7 +16,7 @@
 #include "dabc/BinaryFile.h"
 
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <sys/types.h>

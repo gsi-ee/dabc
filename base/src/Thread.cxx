@@ -15,8 +15,8 @@
 
 #include "dabc/Thread.h"
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <math.h>
 #include <unistd.h>
 #include <sys/types.h>

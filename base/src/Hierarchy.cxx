@@ -16,7 +16,7 @@
 #include "dabc/Hierarchy.h"
 
 #include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/timing.h"
 #include "dabc/threads.h"

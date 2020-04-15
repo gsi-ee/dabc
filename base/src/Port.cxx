@@ -15,7 +15,7 @@
 
 #include "dabc/Port.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"

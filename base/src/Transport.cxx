@@ -15,7 +15,7 @@
 
 #include "dabc/Transport.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dabc/logging.h"
 #include "dabc/MemoryPool.h"

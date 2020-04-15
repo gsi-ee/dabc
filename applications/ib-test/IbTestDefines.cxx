@@ -1,6 +1,6 @@
 #include "IbTestDefines.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <math.h>
 
 int IbTestMatrixMean = 1000;
