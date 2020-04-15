@@ -24,10 +24,6 @@
 #include "dabc/NetworkTransport.h"
 #endif
 
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
 namespace dabc {
 
    /** \brief Specific implementation of network transport for socket
@@ -68,7 +64,6 @@ namespace dabc {
          virtual void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue);
          virtual void SubmitSend(uint32_t recid);
          virtual void SubmitRecv(uint32_t recid);
-
    };
 }
 

@@ -20,10 +20,6 @@
 #include "dabc/Device.h"
 #endif
 
-#ifndef DABC_SocketThread
-#include "dabc/SocketThread.h"
-#endif
-
 namespace dabc {
 
    class NewConnectRec;

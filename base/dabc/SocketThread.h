@@ -24,12 +24,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <netdb.h>
 
 struct pollfd;
