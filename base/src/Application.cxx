@@ -18,10 +18,8 @@
 #include <cstring>
 
 #include "dabc/Manager.h"
-#include "dabc/logging.h"
 #include "dabc/Configuration.h"
 #include "dabc/Url.h"
-#include "dabc/Hierarchy.h"
 
 dabc::Application::Application(const char* classname) :
    Worker(dabc::mgr(), xmlAppDfltName),

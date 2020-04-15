@@ -15,13 +15,8 @@
 
 #include "dabc/DataTransport.h"
 
-#include "dabc/Buffer.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/timing.h"
 #include "dabc/Publisher.h"
-
 
 dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner) :
    dabc::Transport(cmd, inpport, 0),

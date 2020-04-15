@@ -15,8 +15,6 @@
 
 #include "dabc/MultiplexerModule.h"
 
-#include "dabc/Manager.h"
-
 dabc::MultiplexerModule::MultiplexerModule(const std::string &name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fQueue(100),

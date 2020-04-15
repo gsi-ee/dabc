@@ -15,12 +15,8 @@
 
 #include "dabc/DataIO.h"
 
-#include "dabc/Buffer.h"
-
 #include "dabc/Manager.h"
-
 #include "dabc/BinaryFile.h"
-
 
 dabc::Buffer dabc::DataInput::ReadBuffer()
 {

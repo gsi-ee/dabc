@@ -16,13 +16,8 @@
 #include "dabc/MemoryPool.h"
 
 #include <cstdlib>
-#include <list>
 
-#include "dabc/logging.h"
-#include "dabc/threads.h"
 #include "dabc/defines.h"
-#include "dabc/Configuration.h"
-
 
 namespace dabc {
 

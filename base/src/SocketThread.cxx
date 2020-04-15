@@ -26,10 +26,6 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
-#include "dabc/logging.h"
-#include "dabc/defines.h"
-#include "dabc/Manager.h"
-#include "dabc/Buffer.h"
 #include "dabc/Configuration.h"
 
 #if defined(__MACH__) /* Apple OSX section */
@@ -37,8 +33,6 @@
 #define MSG_NOSIGNAL SO_NOSIGPIPE
 #endif
 #endif
-
-
 
 const char* SocketErr(int err)
 {

@@ -15,8 +15,6 @@
 
 #include "dabc/Manager.h"
 
-#include <list>
-#include <vector>
 #include <dirent.h>
 #include <fnmatch.h>
 #include <sys/types.h>
@@ -25,30 +23,18 @@
 #include <signal.h>
 #include <cmath>
 
-#include "dabc/logging.h"
-#include "dabc/timing.h"
-#include "dabc/threads.h"
 #include "dabc/api.h"
 #include "dabc/defines.h"
 
 #include "dabc/Transport.h"
-#include "dabc/Module.h"
-#include "dabc/Command.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/Device.h"
-#include "dabc/Url.h"
-#include "dabc/Thread.h"
-#include "dabc/Factory.h"
-#include "dabc/Application.h"
 #include "dabc/Iterator.h"
 #include "dabc/BinaryFileIO.h"
 #include "dabc/Configuration.h"
 #include "dabc/ConnectionManager.h"
-#include "dabc/ReferencesVector.h"
 #include "dabc/CpuInfoModule.h"
 #include "dabc/MultiplexerModule.h"
 #include "dabc/SocketFactory.h"
-#include "dabc/Hierarchy.h"
 #include "dabc/Publisher.h"
 
 namespace dabc {

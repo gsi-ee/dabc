@@ -17,8 +17,6 @@
 
 #include "dabc/Pointer.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/Manager.h"
-#include "dabc/logging.h"
 
 const dabc::BufferSize_t dabc::BufferSizeError = (dabc::BufferSize_t) -1;
 

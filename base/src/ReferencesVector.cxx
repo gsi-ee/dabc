@@ -17,8 +17,6 @@
 
 #include <cstring>
 
-#include "dabc/logging.h"
-
 #include "dabc/Object.h"
 
 dabc::ReferencesVector::ReferencesVector() throw() :

@@ -15,16 +15,10 @@
 
 #include "dabc/Record.h"
 
-#include "dabc/threads.h"
-#include "dabc/logging.h"
-#include "dabc/XmlEngine.h"
-#include "dabc/ConfigBase.h"
-#include "dabc/Manager.h"
-#include "dabc/Configuration.h"
-
-#include <map>
 #include <cstring>
 #include <fnmatch.h>
+
+#include "dabc/Manager.h"
 
 bool dabc::iostream::skip_object()
 {

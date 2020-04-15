@@ -15,17 +15,8 @@
 
 #include "dabc/Module.h"
 
-#include <vector>
-
-#include "dabc/logging.h"
-#include "dabc/threads.h"
-
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
-#include "dabc/Device.h"
-#include "dabc/Application.h"
-#include "dabc/ConfigBase.h"
-#include "dabc/Hierarchy.h"
 #include "dabc/Publisher.h"
 
 // __________________________________________________________________

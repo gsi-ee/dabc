@@ -24,12 +24,8 @@
 #include <sys/resource.h>
 //#include <linux/version.h>
 
-#include "dabc/Worker.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/string.h"
 #include "dabc/Configuration.h"
-
 
 
 #ifdef DABC_EXTRA_CHECKS

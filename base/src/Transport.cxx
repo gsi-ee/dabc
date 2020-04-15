@@ -17,8 +17,6 @@
 
 #include <cstdlib>
 
-#include "dabc/logging.h"
-#include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
 #include "dabc/Publisher.h"
 

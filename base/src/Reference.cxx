@@ -15,14 +15,12 @@
 
 #include "dabc/Reference.h"
 
-#include "dabc/Object.h"
-#include "dabc/Exception.h"
-#include "dabc/string.h"
-#include "dabc/logging.h"
-
 #include <cstdio>
 #include <cstring>
 
+#include "dabc/Object.h"
+#include "dabc/Exception.h"
+#include "dabc/logging.h"
 
 dabc::Reference::Reference(Object* obj) throw() :
    fObj(0)

@@ -15,9 +15,6 @@
 
 #include "dabc/ModuleSync.h"
 
-#include "dabc/logging.h"
-#include "dabc/CommandsQueue.h"
-
 dabc::ModuleSync::ModuleSync(const std::string &name, Command cmd) :
    Module(name, cmd),
    fTmoutExcept(false),

@@ -15,12 +15,8 @@
 
 #include "dabc/NetworkTransport.h"
 
-#include "dabc/logging.h"
-#include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
-#include "dabc/Device.h"
 #include "dabc/Pointer.h"
-
 
 dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport, bool useackn, WorkerAddon* addon) :
     dabc::Transport(cmd, inpport, outport),

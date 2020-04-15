@@ -15,13 +15,10 @@
 
 #include "dabc/ModuleAsync.h"
 
-#include "dabc/logging.h"
-#include "dabc/Buffer.h"
 
 dabc::ModuleAsync::~ModuleAsync()
 {
 }
-
 
 bool dabc::ModuleAsync::RecvQueueFull(unsigned indx)
 {

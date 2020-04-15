@@ -19,9 +19,7 @@
 #include <cstdlib>
 
 #include "dabc/defines.h"
-#include "dabc/timing.h"
 #include "dabc/threads.h"
-#include "dabc/logging.h"
 #include "dabc/Exception.h"
 #include "dabc/Command.h"
 #include "dabc/ConfigBase.h"

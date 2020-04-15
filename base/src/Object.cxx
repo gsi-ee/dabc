@@ -19,16 +19,7 @@
 #include <fnmatch.h>
 
 #include "dabc/Manager.h"
-#include "dabc/logging.h"
-#include "dabc/threads.h"
-#include "dabc/defines.h"
-#include "dabc/ConfigBase.h"
-#include "dabc/Worker.h"
-#include "dabc/Thread.h"
 #include "dabc/ReferencesVector.h"
-#include "dabc/Worker.h"
-#include "dabc/Thread.h"
-#include "dabc/Hierarchy.h"
 
 unsigned dabc::Object::gNumInstances = 0;
 unsigned dabc::Object::gNumCreated = 0;
@@ -1125,9 +1116,9 @@ void dabc::Object::InspectGarbageCollector()
 
 #ifdef DABC_EXTRA_CHECKS
 
-#include <list>
-#include <cstdio>
-#include <map>
+//#include <list>
+//#include <cstdio>
+//#include <map>
 
 void dabc::Object::DebugObject(const char* classname, Object* instance, int kind)
 {

@@ -18,15 +18,11 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "dabc/ConfigBase.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/ReferencesVector.h"
 #include "dabc/Publisher.h"
 #include "dabc/HierarchyStore.h"
 #include "dabc/Url.h"
 #include "dabc/defines.h"
-
 
 dabc::WorkerAddon::WorkerAddon(const std::string &name) :
    Object(0, name),

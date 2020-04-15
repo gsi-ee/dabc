@@ -15,9 +15,7 @@
 
 #include "dabc/ModuleItem.h"
 
-#include "dabc/Module.h"
 #include "dabc/Manager.h"
-
 
 dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string &name) :
    Worker(parent, name.c_str()),

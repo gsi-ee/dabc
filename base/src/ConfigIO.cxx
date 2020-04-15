@@ -16,12 +16,7 @@
 #include "dabc/ConfigIO.h"
 
 #include "dabc/Configuration.h"
-#include "dabc/Object.h"
 #include "dabc/Manager.h"
-#include "dabc/Record.h"
-
-#include "dabc/string.h"
-#include "dabc/logging.h"
 
 #include <fnmatch.h>
 #include <cstring>

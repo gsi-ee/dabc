@@ -17,15 +17,11 @@
 
 #include <cstdlib>
 #include <unistd.h>
-#include <list>
 
-#include "dabc/timing.h"
 #include "dabc/Manager.h"
-#include "dabc/Application.h"
 #include "dabc/Configuration.h"
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"
-
 #include "dabc/SocketDevice.h"
 
 dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string &name,

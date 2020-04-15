@@ -80,9 +80,6 @@ void DABC_GLOBAL_SigPipeHandler(int number)
   dabc::mgr()->ProcessPipeSignal();
 }
 
-
-
-
 bool dabc::InstallSignalHandlers()
 {
    if (DABC_SigThrd!=0) {

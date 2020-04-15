@@ -15,8 +15,6 @@
 
 #include "dabc/Device.h"
 
-#include "dabc/logging.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/Transport.h"
 

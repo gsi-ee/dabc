@@ -15,8 +15,6 @@
 
 #include "dabc/HierarchyStore.h"
 
-#include "dabc/logging.h"
-
 #include <algorithm>
 
 dabc::HierarchyStore::HierarchyStore() :

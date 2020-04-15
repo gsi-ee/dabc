@@ -20,8 +20,6 @@
 #include <errno.h>
 #include <cstring>
 
-#include "dabc/logging.h"
-
 
 #if defined(__MACH__) /* Apple OSX section */
 

@@ -15,11 +15,6 @@
 
 #include "dabc/BinaryFileIO.h"
 
-#include "dabc/logging.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Pointer.h"
-
-
 dabc::BinaryFileInput::BinaryFileInput(const dabc::Url& url) :
    FileInput(url),
    fFile(),

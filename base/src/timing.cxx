@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <cstring>
 
-#include "dabc/logging.h"
-
 bool dabc::TimeStamp::gFast = false;
 
 dabc::TimeStamp::slowclock_t dabc::TimeStamp::gSlowClockZero = dabc::TimeStamp::GetSlowClock();

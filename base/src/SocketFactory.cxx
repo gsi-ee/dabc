@@ -19,13 +19,9 @@
 #include <unistd.h>
 
 #include "dabc/SocketDevice.h"
-#include "dabc/SocketThread.h"
 #include "dabc/SocketTransport.h"
 #include "dabc/SocketCommandChannel.h"
-#include "dabc/NetworkTransport.h"
-#include "dabc/Port.h"
 #include "dabc/Url.h"
-#include "dabc/Manager.h"
 
 // as long as sockets integrated into libDabcBase, SocketFactory should be created directly by manager
 // dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));

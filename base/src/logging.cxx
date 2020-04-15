@@ -32,7 +32,7 @@
 #include "dabc/timing.h"
 #include "dabc/threads.h"
 
-dabc::Logger* dabc::Logger::gDebug = 0;
+dabc::Logger* dabc::Logger::gDebug = nullptr;
 
 dabc::Logger mydebug; // here is an instance of default debug output
 

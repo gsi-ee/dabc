@@ -19,11 +19,6 @@
 #include <cstdlib>
 
 #include "dabc/Manager.h"
-#include "dabc/logging.h"
-#include "dabc/Worker.h"
-#include "dabc/ConfigBase.h"
-#include "dabc/Hierarchy.h"
-#include "dabc/defines.h"
 
 dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string &name, const std::string &parkind, bool hidden) :
    dabc::RecordContainer(worker, name, flIsOwner | (hidden ? flHidden : 0)),
