@@ -90,7 +90,7 @@ void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)
 
    LockGuard lock(ObjectMutex());
 
-   CommandContainer::CallersList::iterator iter = cont->fCallers.begin();
+   auto iter = cont->fCallers.begin();
 
    while (iter != cont->fCallers.end()) {
 

@@ -16,10 +16,6 @@
 #ifndef DABC_Factory
 #define DABC_Factory
 
-#ifndef DABC_Object
-#include "dabc/Object.h"
-#endif
-
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif

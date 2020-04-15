@@ -74,11 +74,9 @@ namespace dabc {
             }
          };
 
-         typedef std::list<CallerRec> CallersList;
-
-         CallersList   fCallers;     ///< list of callers
-         TimeStamp     fTimeout;     ///< absolute time when timeout will be expired
-         bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
+         std::list<CallerRec> fCallers;     ///< list of callers
+         TimeStamp            fTimeout;     ///< absolute time when timeout will be expired
+         bool                 fCanceled;    ///< indicate if command was canceled ant not need to be executed further
 
          // make destructor protected that nobody can delete command directly
          CommandContainer(const std::string &name = "Command");
