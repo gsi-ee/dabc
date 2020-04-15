@@ -18,7 +18,7 @@
 
 #include <poll.h>
 #include <cmath>
-#include <errno.h>
+#include <cerrno>
 
 verbs::ComplQueue::ComplQueue(ContextRef ctx, int size,
                                     struct ibv_comp_channel *channel, bool useownchannel) :

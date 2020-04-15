@@ -14,7 +14,7 @@
  ************************************************************/
 
 #include <cstdlib>
-#include <locale.h>
+#include <clocale>
 
 #include "dabc/logging.h"
 #include "dabc/threads.h"

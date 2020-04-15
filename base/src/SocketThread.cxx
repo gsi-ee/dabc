@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <fcntl.h>
-#include <errno.h>
+#include <cerrno>
 #include <cstdlib>
 #include <unistd.h>
 #include <netinet/in.h>

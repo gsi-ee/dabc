@@ -16,10 +16,10 @@
 #include "dabc/string.h"
 
 #include <cstring>
-#include <stdarg.h>
+#include <cstdarg>
 #include <cstdint>
 #include <cstdio>
-#include <locale.h>
+#include <clocale>
 
 #include "dabc/ConfigBase.h"
 

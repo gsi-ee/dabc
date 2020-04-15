@@ -16,7 +16,7 @@
 #include "dabc/logging.h"
 
 #include <cstdio>
-#include <stdarg.h>
+#include <cstdarg>
 #include <cstring>
 #include <iostream>
 #include <list>

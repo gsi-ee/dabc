@@ -14,7 +14,7 @@
 #include "verbs/Context.h"
 
 #include <sys/poll.h>
-#include <errno.h>
+#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>

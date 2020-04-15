@@ -16,7 +16,7 @@
 
 #include "hadaq/UdpTransport.h"
 
-#include <errno.h>
+#include <cerrno>
 #include <cmath>
 #include <unistd.h>
 #include <cstdio>
