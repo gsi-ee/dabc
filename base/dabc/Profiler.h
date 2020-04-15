@@ -20,7 +20,6 @@
 #include "dabc/timing.h"
 #endif
 
-#include <string>
 #include <vector>
 
 namespace dabc {

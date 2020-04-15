@@ -24,10 +24,6 @@
 #include "dabc/Reference.h"
 #endif
 
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
 #ifndef DABC_ConfigIO
 #include "dabc/ConfigIO.h"
 #endif

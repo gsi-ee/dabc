@@ -20,8 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#include <list>
-
 namespace dabc {
 
    class PublisherRef;

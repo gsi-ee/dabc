@@ -16,20 +16,12 @@
 #ifndef DABC_Queue
 #define DABC_Queue
 
-#include <string.h>
+#include <cstring>
 
 #include <vector>
 
-#ifndef DABC_defines
-#include "dabc/defines.h"
-#endif
-
 #ifndef DABC_logging
 #include "dabc/logging.h"
-#endif
-
-#ifndef DABC_string
-#include "dabc/string.h"
 #endif
 
 namespace dabc {

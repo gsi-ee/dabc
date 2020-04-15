@@ -20,10 +20,6 @@
 #include "dabc/Record.h"
 #endif
 
-#ifndef DABC_Object
-#include "dabc/Object.h"
-#endif
-
 #ifndef DABC_timing
 #include "dabc/timing.h"
 #endif
@@ -32,7 +28,7 @@
 #include "dabc/threads.h"
 #endif
 
-#include <string.h>
+#include <cstring>
 
 namespace dabc {
 
@@ -171,7 +167,7 @@ namespace dabc {
 
       protected:
 
-         virtual const char* ParReferenceKind() { return 0; }
+         virtual const char* ParReferenceKind() { return nullptr; }
 
          /** Specifies that parameter produce 'modified' events synchronous with changes of parameter.
           * If on=false (asynchronous), events are produced by timeout from manager (with granularity of 1 sec).
@@ -192,9 +188,9 @@ namespace dabc {
          {
             // TODO: should we implement this method ???
             tgt = dynamic_cast<T*>(src);
-            if (tgt==0) return false;
+            if (!tgt) return false;
             const char* refkind = ParReferenceKind();
-            if (refkind==0) return true;
+            if (!refkind) return true;
             return tgt->Kind() == refkind;
          }
 

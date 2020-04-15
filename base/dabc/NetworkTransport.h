@@ -20,14 +20,6 @@
 #include "dabc/Transport.h"
 #endif
 
-#ifndef DABC_MemoryPool
-#include "dabc/MemoryPool.h"
-#endif
-
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
 namespace dabc {
 
    /** \brief Network interface
