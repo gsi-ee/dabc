@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "dabc/defines.h"
 #include "dabc/timing.h"
 #include "dabc/threads.h"
 #include "dabc/logging.h"

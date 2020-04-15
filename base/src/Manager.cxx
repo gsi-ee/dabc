@@ -29,6 +29,7 @@
 #include "dabc/timing.h"
 #include "dabc/threads.h"
 #include "dabc/api.h"
+#include "dabc/defines.h"
 
 #include "dabc/Transport.h"
 #include "dabc/Module.h"

@@ -23,6 +23,10 @@
 #include "dabc/Object.h"
 #endif
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
 namespace dabc {
 
    typedef uint32_t BufferSize_t;

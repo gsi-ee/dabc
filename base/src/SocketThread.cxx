@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 
 #include "dabc/logging.h"
+#include "dabc/defines.h"
 #include "dabc/Manager.h"
 #include "dabc/Buffer.h"
 #include "dabc/Configuration.h"

@@ -24,6 +24,10 @@
 #include "dabc/string.h"
 #endif
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
 #ifndef DEBUGLEVEL
 #define DEBUGLEVEL 1
 #endif

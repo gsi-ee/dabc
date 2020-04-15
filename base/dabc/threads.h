@@ -18,8 +18,6 @@
 
 #include <pthread.h>
 
-#include <cstdio>
-
 #ifndef DABC_defines
 #include "dabc/defines.h"
 #endif
@@ -268,7 +266,7 @@ namespace dabc {
          long int        fFiredCounter;
          bool            fWaiting;
       public:
-         Condition(Mutex* ext_mtx = 0);
+         Condition(Mutex* ext_mtx = nullptr);
          virtual ~Condition();
 
          inline void DoFire()
@@ -416,7 +414,7 @@ namespace dabc {
           *             reserved for special purposes, these processors could be
           *             later assigned with SetAffinity("+M") call (M<N)
           * \returns true if successful */
-         static bool SetDfltAffinity(const char* aff = 0);
+         static bool SetDfltAffinity(const char* aff = nullptr);
 
          /** \brief Returns default affinity mask in form "xxxooosss".
           *

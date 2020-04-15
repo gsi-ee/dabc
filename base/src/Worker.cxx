@@ -25,6 +25,7 @@
 #include "dabc/Publisher.h"
 #include "dabc/HierarchyStore.h"
 #include "dabc/Url.h"
+#include "dabc/defines.h"
 
 
 dabc::WorkerAddon::WorkerAddon(const std::string &name) :

@@ -24,6 +24,11 @@
 #include "dabc/logging.h"
 #endif
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
+
 namespace dabc {
 
    /** \brief Template of circular queue

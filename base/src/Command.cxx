@@ -20,6 +20,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Worker.h"
 #include "dabc/Url.h"
+#include "dabc/defines.h"
 #include "dabc/timing.h"
 #include "dabc/logging.h"
 #include "dabc/Exception.h"
