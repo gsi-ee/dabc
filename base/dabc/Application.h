@@ -20,16 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
-#include <vector>
-
 namespace dabc {
 
    class CmdStateTransition : public Command {

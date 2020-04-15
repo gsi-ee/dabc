@@ -20,12 +20,6 @@
 #include "dabc/ConfigBase.h"
 #endif
 
-#ifndef DABC_ConfigIO
-#include "dabc/ConfigIO.h"
-#endif
-
-#include <list>
-
 namespace dabc {
 
    class Object;

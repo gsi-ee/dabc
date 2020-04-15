@@ -16,15 +16,9 @@
 #ifndef DABC_ConfigIO
 #define DABC_ConfigIO
 
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
 #ifndef DABC_XmlEngine
 #include "dabc/XmlEngine.h"
 #endif
-
-#include <list>
 
 namespace dabc {
 

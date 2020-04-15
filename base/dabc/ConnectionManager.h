@@ -20,18 +20,9 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-#ifndef DABC_Command
-#include "dabc/Command.h"
-#endif
-
-#ifndef DABC_ConnectionRequest
-#include "dabc/ConnectionRequest.h"
-#endif
-
 #ifndef DABC_ReferencesVector
 #include "dabc/ReferencesVector.h"
 #endif
-
 
 namespace dabc {
 
