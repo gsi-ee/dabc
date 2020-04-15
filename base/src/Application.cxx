@@ -15,7 +15,7 @@
 
 #include "dabc/Application.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "dabc/Manager.h"
 #include "dabc/logging.h"

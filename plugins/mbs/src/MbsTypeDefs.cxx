@@ -15,7 +15,7 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-#include <string.h>
+#include <cstring>
 #include <cstdio>
 
 #if defined(__APPLE__)

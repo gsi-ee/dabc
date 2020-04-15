@@ -15,7 +15,7 @@
 
 #include "hadaq/HldInput.h"
 
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 
 #include "dabc/logging.h"

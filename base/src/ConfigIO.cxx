@@ -24,7 +24,7 @@
 #include "dabc/logging.h"
 
 #include <fnmatch.h>
-#include <string.h>
+#include <cstring>
 
 dabc::ConfigIO::ConfigIO(Configuration* cfg, int id) :
    fCfg(cfg),

@@ -17,7 +17,7 @@
 
 #include <cstdio>
 #include <sys/time.h>
-#include <time.h>
+#include <ctime>
 
 
 const char* hadaq::typeUdpDevice = "hadaq::UdpDevice";

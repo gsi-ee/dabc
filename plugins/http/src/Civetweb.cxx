@@ -15,7 +15,7 @@
 
 #include "http/Civetweb.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "dabc/Publisher.h"
 

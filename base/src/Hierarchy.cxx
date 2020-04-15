@@ -15,7 +15,7 @@
 
 #include "dabc/Hierarchy.h"
 
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 
 #include "dabc/timing.h"

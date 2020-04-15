@@ -23,7 +23,7 @@
 #include "dabc/Configuration.h"
 
 #include <map>
-#include <string.h>
+#include <cstring>
 #include <fnmatch.h>
 
 bool dabc::iostream::skip_object()

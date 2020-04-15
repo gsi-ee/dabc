@@ -17,7 +17,7 @@
 
 #include <cstdio>
 #include <stdarg.h>
-#include <string.h>
+#include <cstring>
 #include <iostream>
 #include <list>
 

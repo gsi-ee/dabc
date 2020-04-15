@@ -14,8 +14,8 @@
  ************************************************************/
 
 #include <cstdio>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 #include <vector>
 
 #include "dabc/string.h"

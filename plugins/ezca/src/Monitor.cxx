@@ -15,7 +15,7 @@
 
 #include "ezca/Monitor.h"
 
-#include <time.h>
+#include <ctime>
 
 #include "tsDefs.h"
 #include "cadef.h"

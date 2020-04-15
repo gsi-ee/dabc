@@ -16,7 +16,7 @@
 #include "dabc/statistic.h"
 
 #include <math.h>
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
 
 #include "dabc/logging.h"

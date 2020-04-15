@@ -15,7 +15,7 @@
 
 #include "mbs/LmdOutput.h"
 
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>

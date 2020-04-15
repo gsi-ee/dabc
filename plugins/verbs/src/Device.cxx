@@ -18,7 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 #include <netinet/in.h>
 
 

@@ -2,7 +2,7 @@
 // for instance, hierarchy stored in binary file, can be converted to ROOT histograms
 
 #include <cstdio>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/version.h"
 #include "dabc/Buffer.h"

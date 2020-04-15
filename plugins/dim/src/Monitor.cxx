@@ -15,7 +15,7 @@
 
 #include "dim/Monitor.h"
 
-#include <time.h>
+#include <ctime>
 
 #include "dabc/Publisher.h"
 #include "dabc/Url.h"

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 
 #include <ncurses.h>
 #include <menu.h>

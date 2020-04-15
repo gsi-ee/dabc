@@ -21,7 +21,7 @@
 #include "dabc/logging.h"
 
 #include <cstdio>
-#include <string.h>
+#include <cstring>
 
 
 dabc::Reference::Reference(Object* obj) throw() :

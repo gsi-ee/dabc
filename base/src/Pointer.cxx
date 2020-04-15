@@ -16,7 +16,7 @@
 #include "dabc/Pointer.h"
 
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/logging.h"
 #include "dabc/Exception.h"

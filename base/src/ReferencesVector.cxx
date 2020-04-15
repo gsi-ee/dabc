@@ -15,7 +15,7 @@
 
 #include "dabc/ReferencesVector.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "dabc/logging.h"
 

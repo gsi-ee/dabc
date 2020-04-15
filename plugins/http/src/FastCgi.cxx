@@ -15,7 +15,7 @@
 
 #include "http/FastCgi.h"
 
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
 
 #include "dabc/Publisher.h"

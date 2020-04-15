@@ -16,7 +16,7 @@
 #include "mbs/Monitor.h"
 
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 #include <cstdio>
 #include <math.h>
 

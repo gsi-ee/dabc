@@ -15,10 +15,10 @@
 
 #include "dabc/timing.h"
 
-#include <time.h>
+#include <ctime>
 #include <math.h>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/logging.h"
 

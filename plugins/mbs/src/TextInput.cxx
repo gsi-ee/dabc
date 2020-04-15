@@ -15,7 +15,7 @@
 
 #include "mbs/TextInput.h"
 
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 #include <sstream>
 

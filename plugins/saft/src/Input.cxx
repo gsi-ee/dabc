@@ -24,7 +24,7 @@
 
 #include "hadaq/Iterator.h"
 
-#include <time.h>
+#include <ctime>
 #include "dabc/Exception.h"
 
 

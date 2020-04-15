@@ -16,7 +16,7 @@
 #include "dabc/ConfigBase.h"
 
 #include <iostream>
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 
 int main(int numc, char* args[])

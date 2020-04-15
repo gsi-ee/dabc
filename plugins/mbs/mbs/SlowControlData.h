@@ -18,7 +18,7 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <vector>
 

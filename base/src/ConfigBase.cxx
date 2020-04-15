@@ -17,7 +17,7 @@
 
 #include <fnmatch.h>
 #include <cstdlib>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/logging.h"
 

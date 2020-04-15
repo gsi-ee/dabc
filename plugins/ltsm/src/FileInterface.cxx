@@ -1,6 +1,6 @@
 #include "ltsm/FileInterface.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "dabc/Url.h"
 #include "dabc/logging.h"

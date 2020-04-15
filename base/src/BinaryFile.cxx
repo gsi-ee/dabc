@@ -21,7 +21,7 @@
 #include <fnmatch.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/Object.h"
 #include "dabc/logging.h"

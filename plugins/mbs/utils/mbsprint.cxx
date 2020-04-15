@@ -14,8 +14,8 @@
  ************************************************************/
 
 #include <cstdio>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 
 #include "dabc/string.h"
 #include "dabc/Url.h"

@@ -15,7 +15,7 @@
 
 #include "dabc/string.h"
 
-#include <string.h>
+#include <cstring>
 #include <stdarg.h>
 #include <cstdint>
 #include <cstdio>

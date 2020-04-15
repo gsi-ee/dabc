@@ -24,7 +24,7 @@
 
 #include "ezca/Definitions.h"
 
-#include <time.h>
+#include <ctime>
 
 
 #include "tsDefs.h"

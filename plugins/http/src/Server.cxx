@@ -17,7 +17,7 @@
 
 //#include "dabc/threads.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "dabc/Hierarchy.h"
 #include "dabc/Manager.h"

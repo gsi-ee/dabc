@@ -18,7 +18,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <errno.h>
-#include <string.h>
+#include <cstring>
 
 #include "dabc/logging.h"
 
