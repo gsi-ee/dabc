@@ -21,9 +21,9 @@
 
 int main(int numc, char* args[])
 {
-   const char* configuration(0);
-   const char* workdir(0);
-   unsigned configid(0);
+   const char* configuration = nullptr;
+   const char* workdir = nullptr;
+   unsigned configid = 0;
 
    if(numc > 1) configuration = args[1];
 

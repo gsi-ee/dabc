@@ -16,16 +16,10 @@
 #include <cstdlib>
 #include <clocale>
 
-#include "dabc/logging.h"
-#include "dabc/threads.h"
 #include "dabc/Manager.h"
-#include "dabc/Application.h"
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
-#include "dabc/ReferencesVector.h"
 #include "dabc/api.h"
-
-#include "dabc/CpuInfoModule.h"
 
 bool CreateManagerControl(dabc::Configuration& cfg)
 {
@@ -83,7 +77,7 @@ int main(int numc, char* args[])
    if ((numc>1) and (strcmp(args[1],"cmd")==0))
       return command_shell(numc>2 ? args[2] : "");
 
-   const char* cfgfile(0);
+   const char *cfgfile = nullptr;
 
    if(numc > 1) cfgfile = args[1];
 
