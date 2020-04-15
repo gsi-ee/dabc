@@ -20,14 +20,6 @@
 #include "dabc/Transport.h"
 #endif
 
-#ifndef DABC_Worker
-#include "dabc/Worker.h"
-#endif
-
-#ifndef DABC_Device
-#include "dabc/Device.h"
-#endif
-
 #ifndef DABC_MemoryPool
 #include "dabc/MemoryPool.h"
 #endif

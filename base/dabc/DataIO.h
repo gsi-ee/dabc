@@ -16,14 +16,6 @@
 #ifndef DABC_DataIO
 #define DABC_DataIO
 
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
-#ifndef DABC_timing
-#include "dabc/timing.h"
-#endif
-
 #ifndef DABC_Worker
 #include "dabc/Worker.h"
 #endif
