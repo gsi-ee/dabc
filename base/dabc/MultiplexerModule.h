@@ -20,10 +20,6 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
 
 namespace dabc {
 

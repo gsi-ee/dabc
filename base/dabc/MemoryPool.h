@@ -20,22 +20,6 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
-#ifndef DABC_Command
-#include "dabc/Command.h"
-#endif
-
-#include <cstdlib>
-
-#include <vector>
-
 namespace dabc {
 
    class Mutex;

@@ -28,10 +28,6 @@
 #include "dabc/timing.h"
 #endif
 
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
 namespace dabc {
 
    class HierarchyStore {

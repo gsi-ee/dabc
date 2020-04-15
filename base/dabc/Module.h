@@ -20,18 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Command
-#include "dabc/Command.h"
-#endif
-
-#ifndef DABC_timing
-#include "dabc/timing.h"
-#endif
-
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
 #ifndef DABC_Port
 #include "dabc/Port.h"
 #endif

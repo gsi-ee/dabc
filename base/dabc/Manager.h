@@ -20,32 +20,12 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Thread
-#include "dabc/Thread.h"
-#endif
-
-#ifndef DABC_Command
-#include "dabc/Command.h"
-#endif
-
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
 #ifndef DABC_Application
 #include "dabc/Application.h"
 #endif
 
 #ifndef DABC_Module
 #include "dabc/Module.h"
-#endif
-
-#ifndef DABC_ConnectionRequest
-#include "dabc/ConnectionRequest.h"
-#endif
-
-#ifndef DABC_ConfigBase
-#include "dabc/ConfigBase.h"
 #endif
 
 namespace dabc {

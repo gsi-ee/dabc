@@ -20,15 +20,9 @@
 #include "dabc/Object.h"
 #endif
 
-#ifndef DABC_Reference
-#include "dabc/Reference.h"
-#endif
-
 #ifndef DABC_ReferencesVector
 #include "dabc/ReferencesVector.h"
 #endif
-
-#include <vector>
 
 namespace dabc {
 

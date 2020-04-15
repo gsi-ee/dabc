@@ -20,8 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#include <cstdint>
-
 namespace dabc {
 
    class Module;
