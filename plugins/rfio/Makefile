@@ -67,10 +67,11 @@ clean::
 
 $(RFIO_CO) $(RFIO_CD): C_DEFINITIONS += Linux
 
+ifneq ($(CC),clang)
 GCCMAJOR = $(shell $(CC) -dumpversion | cut -f1 -d.)
-
 ifeq ($(shell test $(GCCMAJOR) -gt 7; echo $$?),0)
 $(RFIO_CO): CFLAGS += -Wno-stringop-overflow
+endif
 endif
 
 $(RFIO_O) : CXXFLAGS += -Wno-unused-variable 
