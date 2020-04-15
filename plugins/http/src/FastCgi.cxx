@@ -18,8 +18,6 @@
 #include <cstring>
 #include <unistd.h>
 
-#include "dabc/Publisher.h"
-
 #ifndef DABC_WITHOUT_FASTCGI
 
 #include "fcgiapp.h"

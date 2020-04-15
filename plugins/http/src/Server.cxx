@@ -15,20 +15,14 @@
 
 #include "http/Server.h"
 
-//#include "dabc/threads.h"
-
 #include <cstring>
 
-#include "dabc/Hierarchy.h"
-#include "dabc/Manager.h"
 #include "dabc/Url.h"
 #include "dabc/Publisher.h"
 
 #ifndef DABC_WITHOUT_ZLIB
 #include "zlib.h"
 #endif
-
-
 
 const char* http::Server::GetMimeType(const char* path)
 {

@@ -20,14 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
-#endif
-
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
 #include <vector>
 
 namespace http {

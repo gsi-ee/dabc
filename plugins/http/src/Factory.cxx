@@ -17,7 +17,6 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
-#include "http/Server.h"
 #include "http/Civetweb.h"
 #include "http/FastCgi.h"
 

@@ -17,8 +17,6 @@
 
 #include <cstring>
 
-#include "dabc/Publisher.h"
-
 http::Civetweb::Civetweb(const std::string &name, dabc::Command cmd) :
    http::Server(name, cmd),
    fHttpPort(),
