@@ -15,10 +15,6 @@
 
 #include "mbs/ClientTransport.h"
 
-#include "dabc/Manager.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Device.h"
-#include "dabc/Pointer.h"
 #include "dabc/DataTransport.h"
 
 #include "mbs/Iterator.h"

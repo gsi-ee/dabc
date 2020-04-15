@@ -15,15 +15,6 @@
 
 #include "mbs/Factory.h"
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
-#include "dabc/SocketThread.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Url.h"
-#include "dabc/DataTransport.h"
-
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 #include "mbs/TextInput.h"
@@ -31,7 +22,6 @@
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
 #include "mbs/CombinerModule.h"
-#include "mbs/Monitor.h"
 #include "mbs/api.h"
 
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));

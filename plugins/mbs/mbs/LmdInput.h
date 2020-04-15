@@ -20,10 +20,6 @@
 #include "dabc/DataIO.h"
 #endif
 
-#ifndef DABC_Object
-#include "dabc/Object.h"
-#endif
-
 #ifndef MBS_LmdFile
 #include "mbs/LmdFile.h"
 #endif

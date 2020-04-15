@@ -24,9 +24,6 @@
 #include "mbs/Iterator.h"
 #endif
 
-#include <vector>
-
-
 namespace mbs {
 
    /** \brief Combiner of several MBS inputs - event building */

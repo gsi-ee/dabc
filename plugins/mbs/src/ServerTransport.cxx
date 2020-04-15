@@ -17,9 +17,9 @@
 
 #include <unistd.h>
 
-#include "dabc/logging.h"
+//#include "dabc/logging.h"
 #include "dabc/Manager.h"
-#include "dabc/MemoryPool.h"
+//#include "dabc/MemoryPool.h"
 #include "dabc/DataTransport.h"
 
 mbs::ServerOutputAddon::ServerOutputAddon(int fd, int kind, dabc::EventsIteratorRef& iter, uint32_t subid) :

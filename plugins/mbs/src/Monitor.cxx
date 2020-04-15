@@ -15,13 +15,13 @@
 
 #include "mbs/Monitor.h"
 
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
+//#include <cstdlib>
+//#include <cstring>
+//#include <cstdio>
 #include <cmath>
 
-#include "dabc/SocketThread.h"
-#include "dabc/Pointer.h"
+//#include "dabc/SocketThread.h"
+//#include "dabc/Pointer.h"
 #include "dabc/Publisher.h"
 
 #define SYS__read_meb         0

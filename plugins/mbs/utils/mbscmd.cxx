@@ -18,8 +18,6 @@
 #include <ctime>
 #include <vector>
 
-#include "dabc/string.h"
-
 #include "mbs/api.h"
 
 int usage(const char* errstr = 0)

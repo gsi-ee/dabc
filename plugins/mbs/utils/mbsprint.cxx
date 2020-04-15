@@ -17,14 +17,12 @@
 #include <cstring>
 #include <ctime>
 
-#include "dabc/string.h"
 #include "dabc/Url.h"
 #include "dabc/api.h"
 
 #include "mbs/api.h"
-#include "mbs/SlowControlData.h"
 
-int usage(const char* errstr = 0)
+int usage(const char* errstr = nullptr)
 {
    if (errstr!=0) {
       printf("Error: %s\n\n", errstr);

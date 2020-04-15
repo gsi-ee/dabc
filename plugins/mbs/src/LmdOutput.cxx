@@ -26,13 +26,8 @@
 #include <endian.h>
 #endif
 
-#include "dabc/logging.h"
-#include "dabc/Buffer.h"
 #include "dabc/Manager.h"
-#include "dabc/Parameter.h"
-#include "dabc/BinaryFile.h"
 
-#include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
 
 

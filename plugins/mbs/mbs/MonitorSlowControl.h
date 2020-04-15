@@ -20,10 +20,6 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-#ifndef DABC_Hierarchy
-#include "dabc/Hierarchy.h"
-#endif
-
 #ifndef MBS_Iterator
 #include "mbs/Iterator.h"
 #endif

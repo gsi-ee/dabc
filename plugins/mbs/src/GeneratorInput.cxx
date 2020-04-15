@@ -18,8 +18,6 @@
 #include <cstdlib>
 #include <cmath>
 
-#include "dabc/Application.h"
-#include "dabc/Manager.h"
 #include "mbs/Iterator.h"
 
 
