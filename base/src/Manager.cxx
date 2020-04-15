@@ -826,7 +826,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
 { \
    ReferencesVector factories; \
    GetFactoriesFolder().GetAllChildRef(&factories); \
-   Factory* factory = 0; \
+   Factory* factory = nullptr; \
    for (unsigned n=0; n<factories.GetSize(); n++) { \
       factory = dynamic_cast<Factory*> (factories.GetObject(n)); \
       if (factory==0) continue; \

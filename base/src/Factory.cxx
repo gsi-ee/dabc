@@ -19,6 +19,7 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
+#include "dabc/logging.h"
 #include "dabc/DataIO.h"
 #include "dabc/DataTransport.h"
 

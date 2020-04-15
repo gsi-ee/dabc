@@ -14,6 +14,7 @@
 #include "rfio/Factory.h"
 
 #include "rfio/FileInterface.h"
+#include "dabc/logging.h"
 
 dabc::FactoryPlugin rfiofactory(new rfio::Factory("rfio"));
 

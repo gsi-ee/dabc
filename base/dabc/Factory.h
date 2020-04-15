@@ -20,19 +20,9 @@
 #include "dabc/Object.h"
 #endif
 
-#ifndef DABC_Queue
-#include "dabc/Queue.h"
-#endif
-
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif
-
-#ifndef DABC_threads
-#include "dabc/threads.h"
-#endif
-
-#include <vector>
 
 /** \brief Core framework classes */
 
