@@ -1116,9 +1116,9 @@ void dabc::Object::InspectGarbageCollector()
 
 #ifdef DABC_EXTRA_CHECKS
 
-//#include <list>
-//#include <cstdio>
-//#include <map>
+#include <list>
+#include <cstdio>
+#include <map>
 
 void dabc::Object::DebugObject(const char* classname, Object* instance, int kind)
 {

@@ -20,15 +20,6 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_Queue
-//#include "dabc/Queue.h"
-#endif
-
-#ifndef DABC_Hierarchy
-//#include "dabc/Hierarchy.h"
-#endif
-
-
 namespace dabc {
 
 

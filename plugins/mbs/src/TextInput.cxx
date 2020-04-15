@@ -15,16 +15,10 @@
 
 #include "mbs/TextInput.h"
 
-//#include <cstring>
-//#include <cstdlib>
+#include <cstring>
+#include <cstdlib>
 #include <sstream>
 
-//#include "dabc/logging.h"
-//#include "dabc/Buffer.h"
-//#include "dabc/Manager.h"
-//#include "dabc/BinaryFile.h"
-
-//#include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
 
 mbs::TextInput::TextInput(const dabc::Url& url) :

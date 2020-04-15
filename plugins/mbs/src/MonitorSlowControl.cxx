@@ -15,9 +15,8 @@
 
 #include "mbs/MonitorSlowControl.h"
 
-//#include <cstdlib>
-//#include <cmath>
-
+#include <cstdlib>
+#include <cmath>
 
 mbs::MonitorSlowControl::MonitorSlowControl(const std::string &name, const std::string &prefix, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
