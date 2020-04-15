@@ -28,8 +28,6 @@
 #include <sys/socket.h>
 #include <sys/syscall.h>
 
-#include "dabc/timing.h"
-#include "dabc/Manager.h"
 
 // according to specification maximal UDP packet is 65,507 or 0xFFE3
 #define DEFAULT_MTU 0xFFF0

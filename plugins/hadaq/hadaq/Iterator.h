@@ -16,7 +16,9 @@
 #ifndef HADAQ_Iterator
 #define HADAQ_Iterator
 
+#ifndef HADAQ_HadaqTypeDefs
 #include "hadaq/HadaqTypeDefs.h"
+#endif
 
 #ifndef DABC_Buffer
 #include "dabc/Buffer.h"

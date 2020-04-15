@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <iostream>
 #include <cstring>
-#include <sched.h>
 
 /*
 //Description of the Event Structure

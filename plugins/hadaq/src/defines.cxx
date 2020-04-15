@@ -19,7 +19,6 @@
 #include <sys/time.h>
 #include <ctime>
 
-
 void hadaq::RawEvent::Dump()
 {
    char sbuf[50];

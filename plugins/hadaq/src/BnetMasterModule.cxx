@@ -15,7 +15,6 @@
 
 #include "hadaq/BnetMasterModule.h"
 
-#include "dabc/Manager.h"
 #include "dabc/Publisher.h"
 #include "dabc/Iterator.h"
 

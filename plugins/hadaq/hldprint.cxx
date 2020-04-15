@@ -22,7 +22,6 @@
 #include <ctime>
 
 #include "hadaq/api.h"
-#include "dabc/string.h"
 #include "dabc/Url.h"
 #include "dabc/api.h"
 

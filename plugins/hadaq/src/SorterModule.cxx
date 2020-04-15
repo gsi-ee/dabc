@@ -17,9 +17,6 @@
 
 #include <algorithm>
 
-#include "dabc/Manager.h"
-
-#include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
 
 

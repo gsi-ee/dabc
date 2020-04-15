@@ -22,9 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "dabc/Application.h"
 #include "dabc/Manager.h"
-#include "dabc/logging.h"
 
 #include "hadaq/UdpTransport.h"
 

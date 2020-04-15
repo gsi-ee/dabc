@@ -20,10 +20,6 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
-#ifndef DABC_MemoryPool
-#include "dabc/MemoryPool.h"
-#endif
-
 #ifndef DABC_Profiler
 #include "dabc/Profiler.h"
 #endif

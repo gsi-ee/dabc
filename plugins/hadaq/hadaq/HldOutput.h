@@ -20,14 +20,6 @@
 #include "dabc/DataIO.h"
 #endif
 
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
-#ifndef DABC_timing
-#include "dabc/timing.h"
-#endif
-
 #ifndef HADAQ_HldFile
 #include "hadaq/HldFile.h"
 #endif

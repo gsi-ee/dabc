@@ -15,17 +15,8 @@
 
 #include "hadaq/Factory.h"
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/SocketThread.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Configuration.h"
-#include "dabc/Port.h"
-#include "dabc/Url.h"
 
-#include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/HldInput.h"
 #include "hadaq/HldOutput.h"
 #include "hadaq/UdpTransport.h"
@@ -33,7 +24,6 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/TerminalModule.h"
 #include "hadaq/BnetMasterModule.h"
-#include "hadaq/Iterator.h"
 #include "hadaq/api.h"
 
 

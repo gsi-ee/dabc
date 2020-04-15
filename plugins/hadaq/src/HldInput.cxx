@@ -18,10 +18,7 @@
 #include <cstring>
 #include <cstdlib>
 
-#include "dabc/logging.h"
-#include "dabc/Buffer.h"
 #include "dabc/Manager.h"
-#include "dabc/BinaryFile.h"
 
 #include "hadaq/HadaqTypeDefs.h"
 

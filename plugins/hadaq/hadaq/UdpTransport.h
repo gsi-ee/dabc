@@ -21,10 +21,6 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_DataIO
-#include "dabc/DataIO.h"
-#endif
-
  #ifndef DABC_Pointer
 #include "dabc/Pointer.h"
 #endif

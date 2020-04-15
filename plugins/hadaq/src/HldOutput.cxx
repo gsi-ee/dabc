@@ -26,12 +26,8 @@
 #include <endian.h>
 #endif
 
-#include "dabc/logging.h"
-#include "dabc/Buffer.h"
 #include "dabc/Manager.h"
-#include "dabc/Parameter.h"
 
-#include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
 
 
