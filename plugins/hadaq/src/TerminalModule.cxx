@@ -278,7 +278,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
 
       sbuf.append(dabc::format(" %3d %6s %5s %5s",
                    cfg.fNumCanRecv,
-                   dabc::number_to_str(cfg.fErrorBitsCnt,1).c_str(),
+                   dabc::number_to_str(cfg.fErrorBitsCnt,0).c_str(),
                    dabc::number_to_str(cfg.fDroppedTrig,0).c_str(),
                    dabc::number_to_str(cfg.fLostTrig,0).c_str()));
 

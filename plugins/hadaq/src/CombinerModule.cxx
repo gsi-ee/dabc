@@ -1325,6 +1325,7 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
       if (fBNETsend && !fIsTerminating) {
          for (unsigned n = 0; n < NumInputs(); n++) {
+            fCfg[n].fErrorBitsCnt = 0;
             fCfg[n].fDroppedTrig = 0;
             fCfg[n].fLostTrig = 0;
             fCfg[n].fHubSizeTmCnt = 0;

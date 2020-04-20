@@ -135,7 +135,6 @@ namespace hadaq {
             fTrigNr = 0;
             fTrigTag = 0;
             fTrigType = 0;
-            fErrorBitsCnt = 0;
             fDataError = false;
             // fHubId = 0;
             fEmpty = true;
