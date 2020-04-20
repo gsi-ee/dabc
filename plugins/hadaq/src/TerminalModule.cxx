@@ -226,7 +226,7 @@ void hadaq::TerminalModule::ProcessTimerEvent(unsigned timer)
         }
       }
 
-   s += "inp port     pkt      data    MB/s   disc  err32  bufs  qu  errbits drop  lost";
+   s += "inp port     pkt      data    MB/s   disc  err32   bufs  qu errbits drop  lost";
    if (istdccal) s += "    TRB         TDC               progr   state";
    if (fRingSize>0) s += "   triggers";
    s += "\n";
