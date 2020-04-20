@@ -15,6 +15,8 @@
 
 #include "ltsm/FileInterface.h"
 
+#include "dabc/logging.h"
+
 dabc::FactoryPlugin ltsmfactory(new ltsm::Factory("ltsm"));
 
 void* ltsm::Factory::CreateAny(const std::string &classname, const std::string&, dabc::Command)

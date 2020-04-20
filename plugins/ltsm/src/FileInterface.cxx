@@ -472,8 +472,8 @@ bool ltsm::FileInterface::OpenTSMSession(const char* opt)
 
    DOUT2(
       "Prepare open LTSM file for writing -  "
-      "File=%s, Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",
-      fname, fServername.c_str(), fNode.c_str(), fPassword.c_str(),
+      "Servername=%s, Node=%s, Pass=%s, Owner=%s,Fsname=%s Description=%s",
+      fServername.c_str(), fNode.c_str(), fPassword.c_str(),
       fOwner.c_str(), fFsname.c_str(), fDescription.c_str());
 
   
