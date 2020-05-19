@@ -1,10 +1,7 @@
 find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
 find_library(VERBS_LIBRARIES ibverbs)
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(verbs DEFAULT_MSG VERBS_LIBRARIES VERBS_INCLUDE_DIR)
-
-if(VERBS_FOUND)
+if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
 #   do not make verbs includes public
 #   DABC_INSTALL_HEADERS(verbs)
 

@@ -1,6 +1,6 @@
 include(ExternalProject)
 
-set(applications core-test)
+set(applications core-test net-test hadaq ncurses)
 
 foreach(ex ${applications})
    ExternalProject_Add(${ex}

@@ -56,12 +56,15 @@ function(DABC_LINK_LIBRARY libname)
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
 
-   target_include_directories(${libname} PRIVATE ${CMAKE_BINARY_DIR}/include ${ARG_INCLUDES})
-   
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
-  endif()
-  
+     set(_main_incl ${CMAKE_BINARY_DIR}/include)
+   else()
+     set(_main_incl ${DABC_INCLUDE_DIR})
+   endif()
+
+   target_include_directories(${libname} PRIVATE ${_main_incl} ${ARG_INCLUDES})
+
   if(ARG_DEPENDENCIES)
      add_dependencies(${libname} ${ARG_DEPENDENCIES})
   endif()
@@ -74,9 +77,10 @@ endfunction()
 #                   LIBRARIES lib1 lib2        : direct linked libraries
 #                   DEFINITIONS def1 def2      : library definitions
 #                   DEPENDENCIES dep1 dep2     : dependencies
+# 
 #)
 function(DABC_EXECUTABLE exename)
-   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
 
    add_executable(${exename} ${ARG_SOURCES})
 
@@ -84,11 +88,14 @@ function(DABC_EXECUTABLE exename)
 
    target_link_libraries(${exename} ${ARG_LIBRARIES})
 
-   target_include_directories(${exename} PRIVATE ${CMAKE_BINARY_DIR}/include)
-
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
+     set(_main_incl ${CMAKE_BINARY_DIR}/include)
+  else()
+     set(_main_incl ${DABC_INCLUDE_DIR})
   endif()
+
+   target_include_directories(${exename} PRIVATE ${_main_incl} ${ARG_INCLUDES})
 
   if(ARG_DEPENDENCIES)
      add_dependencies(${exename} ${ARG_DEPENDENCIES})
