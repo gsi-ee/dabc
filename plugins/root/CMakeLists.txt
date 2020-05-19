@@ -1,5 +1,3 @@
-find_package(ROOT QUIET)
-
 if(ROOT_FOUND)
    include(${ROOT_USE_FILE})
 
@@ -18,7 +16,6 @@ if(ROOT_FOUND)
    DABC_EXECUTABLE(dabc_root
                 SOURCES utils/dabc_root.cxx
                 LIBRARIES DabcBase DabcRoot ${ROOT_LIBRARIES} ${ROOT_RHTTP_LIBRARY} ${ROOT_XMLIO_LIBRARY})
-
 
 endif()
 

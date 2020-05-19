@@ -8,6 +8,29 @@ set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library" FORCE)
 
 set(DABC_DEFINES "" CACHE STRING "DABC definitions" FORCE)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
+# ====== check ROOT and its c++ standard ==========
+find_package(ROOT QUIET)
+
+if(ROOT_FOUND)
+   string(FIND ${ROOT_CXX_FLAGS} "-std=c++11" _check_c11)
+   string(FIND ${ROOT_CXX_FLAGS} "-std=c++14" _check_c14)
+   string(FIND ${ROOT_CXX_FLAGS} "-std=c++17" _check_c17)
+   if(NOT ${_check_c11} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 11)
+   elseif(NOT ${_check_c14} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 14)
+   elseif(NOT ${_check_c17} EQUAL -1)
+      set(CMAKE_CXX_STANDARD 17)
+   endif()
+   message("FOUND ROOT with flags ${ROOT_CXX_FLAGS} DABC take standard ${CMAKE_CXX_STANDARD}")
+endif()
+
+set(DABC_CXX_STANDARD "${CMAKE_CXX_STANDARD}" CACHE STRING "DABC cxx standard" FORCE)
+
 if(debug)
   set(DABC_DEBUGLEVEL ${debug})
   set(DABC_DEFINES DEBUGLEVEL=${debug})

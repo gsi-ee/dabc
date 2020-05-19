@@ -1,5 +1,3 @@
-find_package(ROOT QUIET)
-
 if(ROOT_FOUND)
    include(${ROOT_USE_FILE})
 

@@ -52,6 +52,11 @@ function(DABC_LINK_LIBRARY libname)
 
    set_target_properties(${libname} PROPERTIES ${DABC_LIBRARY_PROPERTIES})
 
+#   if(NOT CMAKE_CXX_STANDARD)
+#     set_property(TARGET ${libname} PROPERTY CXX_STANDARD 11)
+#   endif()
+
+
    target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS} ${DABC_DEFINES})
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
@@ -68,6 +73,7 @@ function(DABC_LINK_LIBRARY libname)
   if(ARG_DEPENDENCIES)
      add_dependencies(${libname} ${ARG_DEPENDENCIES})
   endif()
+  
 endfunction()
 
 
