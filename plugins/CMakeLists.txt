@@ -6,7 +6,9 @@ add_subdirectory(verbs)
 
 add_subdirectory(http)
 add_subdirectory(root)
+add_subdirectory(mbs-root)
 
+add_subdirectory(stream)
 
 add_subdirectory(aqua)
 add_subdirectory(bnet)
@@ -16,3 +18,5 @@ add_subdirectory(fesa)
 add_subdirectory(gosip)
 add_subdirectory(ltsm)
 add_subdirectory(rfio)
+add_subdirectory(saft)
+add_subdirectory(user)

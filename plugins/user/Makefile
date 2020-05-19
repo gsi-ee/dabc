@@ -42,13 +42,10 @@ $(DABCINCPATH)/%.h: $(USERDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(USER_O) $(USER_D) : INCLUDES += $(USERSYS)/user/include  . 
+$(USER_O) $(USER_D) : INCLUDES += $(USERSYS)/user/include .
 
 $(USER_LIB):  $(USER_O) 
 	@$(MakeLib) $(USER_LIBNAME) "$(USER_O)" $(TGTDLLPATH) 
-	
-#	"-L$(USERSYS)/user/lib -lpexor "
-
 
 
 install: $(USER_LIB) 
