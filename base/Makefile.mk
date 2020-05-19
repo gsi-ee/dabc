@@ -15,9 +15,9 @@ BASE_O            = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BASE_S))
 BASE_D            = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASE_S))
 
 
-BASE_SOCKET_O     = $(filter $(BLD_DIR)/$(DABC_BASEDIRS)/Socket%, $(BASE_O))  
+BASE_SOCKET_O     = $(filter $(BLD_DIR)/$(DABC_BASEDIRS)/Socket%, $(BASE_O))
 
-BASE_CORE_O       = $(filter-out $(BASE_SOCKET_O), $(BASE_O))  
+BASE_CORE_O       = $(filter-out $(BASE_SOCKET_O), $(BASE_O))
 
 DABC_BASESUB_S    = $(DABC_BASEDIRS)/threads.$(SrcSuf) \
                     $(DABC_BASEDIRS)/timing.$(SrcSuf) \

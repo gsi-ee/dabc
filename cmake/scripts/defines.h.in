@@ -1,0 +1,12 @@
+#ifndef DABC_defines
+#define DABC_defines
+
+// Automatically generated file, do not change"
+
+#ifndef DEBUGLEVEL
+#define DEBUGLEVEL @DABC_DEBUGLEVEL@
+#endif
+
+@DABC_EXTRA_CHECKS@
+
+#endif
