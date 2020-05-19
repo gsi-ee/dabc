@@ -18,9 +18,9 @@
  
  Compilation
  ============
- Together with DABC actual version of ADSM library is distrubuted.
+ Together with DABC actual version of ADSM library is distributed.
  It is automatically compiled with all other plugins. One could use
- other version, setting ADSMDIR veriable during DABC compilation.
+ other version, setting ADSMDIR variable during DABC compilation.
  ADSMDIR should contain necessary includes and librawapiclin64.a.
  
      make ADSMDIR=/home/user/adsmv80
