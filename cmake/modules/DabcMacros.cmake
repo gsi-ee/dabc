@@ -62,7 +62,9 @@ function(DABC_LINK_LIBRARY libname)
      list(APPEND ARG_DEPENDENCIES move_headers)
   endif()
   
-  add_dependencies(${libname} ${ARG_DEPENDENCIES})
+  if(ARG_DEPENDENCIES)
+     add_dependencies(${libname} ${ARG_DEPENDENCIES})
+  endif()
 endfunction()
 
 
@@ -83,7 +85,7 @@ function(DABC_EXECUTABLE exename)
    target_link_libraries(${exename} ${ARG_LIBRARIES})
 
    target_include_directories(${exename} PRIVATE ${CMAKE_BINARY_DIR}/include)
-   
+
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
   endif()

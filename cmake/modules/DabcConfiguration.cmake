@@ -1,10 +1,12 @@
-set(DABC_VERSION "2.10.0" CACHE STRING "DABC version")
+set(DABC_VERSION "2.10.0" CACHE STRING "DABC version" FORCE)
 
-set(DABC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include" CACHE STRING "DABC include dir")
+set(DABC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include" CACHE STRING "DABC include dir" FORCE)
 
-set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library")
+set(DABC_LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib" CACHE STRING "DABC include dir" FORCE)
 
-set(DABC_DEFINES)
+set(DABC_LIBRARY "libDabcBase" CACHE STRING "DABC main library" FORCE)
+
+set(DABC_DEFINES "" CACHE STRING "DABC definitions" FORCE)
 
 if(debug)
   set(DABC_DEBUGLEVEL ${debug})
@@ -15,10 +17,6 @@ endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/DABCConfig.cmake.in
                ${CMAKE_BINARY_DIR}/DABCConfig.cmake @ONLY NEWLINE_STYLE UNIX)
-
-# configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/DABCUseFile.cmake.in
-#                ${CMAKE_BINARY_DIR}/DABCUseFile.cmake @ONLY NEWLINE_STYLE UNIX)
-
 
 if(extrachecks)
   set(DABC_EXTRA_CHECKS "#define DABC_EXTRA_CHECKS")
@@ -42,3 +40,10 @@ endforeach()
 if(NOT APPLE)
    find_library(DABC_RT_LIBRARY rt)
 endif()
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/modules/DabcMacros.cmake
+               ${CMAKE_BINARY_DIR}/DabcMacros.cmake COPYONLY)
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/scripts/DABCUseFile.cmake.in
+               ${CMAKE_BINARY_DIR}/DABCUseFile.cmake @ONLY NEWLINE_STYLE UNIX)
+

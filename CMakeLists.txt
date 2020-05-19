@@ -13,11 +13,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 #--- Load some basic macros ---
 include(DabcConfiguration)
 include(DabcMacros)
-include(ExternalProject)
 
 add_subdirectory(base)
 
 add_subdirectory(plugins)
+
+add_subdirectory(applications)
 
 # ================== Produce DABC headers ==========
 
