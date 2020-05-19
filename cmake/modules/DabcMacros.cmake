@@ -39,9 +39,10 @@ endfunction()
 #                     LIBRARIES lib1 lib2        : direct linked libraries
 #                     DEFINITIONS def1 def2      : library definitions
 #                     DEPENDENCIES dep1 dep2     : dependencies
+#                     INCLUDES dir1 dir2         : include directories
 #)
 function(DABC_LINK_LIBRARY libname)
-   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+   cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES;INCLUDES" ${ARGN})
 
    if(NOT ARG_SOURCES)
       file(GLOB ARG_SOURCES "src/*.cxx")
@@ -55,7 +56,7 @@ function(DABC_LINK_LIBRARY libname)
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
 
-   target_include_directories(${libname} PRIVATE ${CMAKE_BINARY_DIR}/include)
+   target_include_directories(${libname} PRIVATE ${CMAKE_BINARY_DIR}/include ${ARG_INCLUDES})
    
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)

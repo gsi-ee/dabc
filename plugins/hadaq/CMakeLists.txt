@@ -4,7 +4,7 @@ if(hadaq-debug)
   set(_def HADAQ_DEBUG)
 endif()
 
-DABC_LINK_LIBRARY(DabcHadaq 
+DABC_LINK_LIBRARY(DabcHadaq
                   LIBRARIES DabcBase DabcMbs 
                   DEFINITIONS ${_def})
 
