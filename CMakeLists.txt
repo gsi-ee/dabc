@@ -17,6 +17,8 @@ include(ExternalProject)
 
 add_subdirectory(base)
 
+add_subdirectory(plugins)
+
 # ================== Produce DABC headers ==========
 
 get_property(__allHeaders GLOBAL PROPERTY DABC_HEADER_TARGETS)

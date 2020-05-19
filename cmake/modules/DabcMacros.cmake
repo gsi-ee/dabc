@@ -35,13 +35,17 @@ endfunction()
 
 #---------------------------------------------------------------------------------------------------
 #---DABC_LINK_LIBRARY(libname
-#                     SOURCES src1 src2          : 
+#                     SOURCES src1 src2          : if not specified, taken "src/*.cxx"
 #                     LIBRARIES lib1 lib2        : direct linked libraries
 #                     DEFINITIONS def1 def2      : library definitions
 #                     DEPENDENCIES dep1 dep2     : dependencies
 #)
 function(DABC_LINK_LIBRARY libname)
    cmake_parse_arguments(ARG "" "" "SOURCES;LIBRARIES;DEFINITIONS;DEPENDENCIES" ${ARGN})
+
+   if(NOT ARG_SOURCES)
+      file(GLOB ARG_SOURCES "src/*.cxx")
+   endif()
 
    add_library(${libname} SHARED ${ARG_SOURCES})
 
