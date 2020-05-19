@@ -56,7 +56,6 @@ function(DABC_LINK_LIBRARY libname)
 #     set_property(TARGET ${libname} PROPERTY CXX_STANDARD 11)
 #   endif()
 
-
    target_compile_definitions(${libname} PRIVATE ${ARG_DEFINITIONS} ${DABC_DEFINES})
 
    target_link_libraries(${libname} ${ARG_LIBRARIES})
@@ -64,6 +63,7 @@ function(DABC_LINK_LIBRARY libname)
    if(CMAKE_PROJECT_NAME STREQUAL DABC)
      list(APPEND ARG_DEPENDENCIES move_headers)
      set(_main_incl ${CMAKE_BINARY_DIR}/include)
+     set_property(GLOBAL APPEND PROPERTY DABC_LIBRARY_TARGETS ${libname})
    else()
      set(_main_incl ${DABC_INCLUDE_DIR})
    endif()
