@@ -15,7 +15,7 @@ set(DABC_DEBUG_LEVEL @DABC_DEBUG_LEVEL@)
 set(DABC_USE_FILE ${CMAKE_CURRENT_LIST_DIR}/DABCUseFile.cmake)
 
 # search for DABC libraries
-foreach(_cpt DabcBase DabcHttp DabcMbs DabcHadaq)
+foreach(_cpt DabcBase DabcHttp DabcMbs DabcHadaq DabcVerbs)
   find_library(${_cpt}_LIBRARY ${_cpt} HINTS ${DABC_LIBRARY_DIR})
   if(${_cpt}_LIBRARY)
     mark_as_advanced(${_cpt}_LIBRARY)

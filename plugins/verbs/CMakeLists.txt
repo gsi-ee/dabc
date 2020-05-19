@@ -2,8 +2,7 @@ find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
 find_library(VERBS_LIBRARIES ibverbs)
 
 if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
-#   do not make verbs includes public
-#   DABC_INSTALL_HEADERS(verbs)
+   DABC_INSTALL_HEADERS(verbs)
 
    DABC_LINK_LIBRARY(DabcVerbs
                      SOURCES 
