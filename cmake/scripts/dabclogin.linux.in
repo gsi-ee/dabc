@@ -1,0 +1,7 @@
+export DABCSYS=@CMAKE_BINARY_DIR@
+
+export PATH=$DABCSYS/bin:$PATH
+
+export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
+
+echo Configure DABC @DABC_VERSION@ at $DABCSYS

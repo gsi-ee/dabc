@@ -1,0 +1,7 @@
+# DABC CMake Configuration File for External Projects
+
+set(DABC_VERSION @DABC_VERSION@)
+
+set(DABC_INCLUDE_DIR @DABC_INCLUDE_DIR@)
+
+set(DABC_LIBRARY @DABC_LIBRARY@)
