@@ -4,12 +4,12 @@ set(FESA_FOUND 0)
 
 if(NOT "$ENV{RDA_HOME}" STREQUAL "")
    find_library(FESA_LIB1 NAMES omniORB4 PATHS
-      $ENV{RDA_HOME}/lib/c86_64
+      $ENV{RDA_HOME}/lib/x86_64
       DOC "Searching FESA library"
    )
 
    find_library(FESA_LIB2 NAMES omnithread PATHS
-      $ENV{RDA_HOME}/lib/c86_64
+      $ENV{RDA_HOME}/lib/x86_64
       DOC "Searching FESA library"
    )
    
