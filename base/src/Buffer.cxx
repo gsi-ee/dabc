@@ -96,7 +96,7 @@ dabc::BufferSize_t dabc::Buffer::GetTotalSize() const
    return sz;
 }
 
-void dabc::Buffer::SetTotalSize(BufferSize_t len) throw()
+void dabc::Buffer::SetTotalSize(BufferSize_t len)
 {
    if (len==0) {
       Release();
@@ -136,8 +136,7 @@ void dabc::Buffer::SetTotalSize(BufferSize_t len) throw()
 }
 
 
-
-void dabc::Buffer::CutFromBegin(BufferSize_t len) throw()
+void dabc::Buffer::CutFromBegin(BufferSize_t len)
 {
    if (len==0) return;
 
@@ -223,7 +222,7 @@ bool dabc::Buffer::Prepend(Buffer& src, bool moverefs) throw()
    return Insert(0, src, moverefs);
 }
 
-bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
+bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs)
 {
    if (src.null() || (src.GetTotalSize()==0)) return true;
 
@@ -264,7 +263,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
    if (numrequired > GetObject()->fCapacity)
       throw dabc::Exception(dabc::ex_Buffer, "Required number of segments less than available in the buffer", dabc::format("Buffer numseg %u", NumSegments()));
 
-   MemSegment* segm = Segments();
+   MemSegment *segm = Segments();
 
    // first move complete segments to the end
    for (unsigned n=NumSegments(); n>tgtseg + (tgtpos>0 ? 1 : 0); ) {
@@ -278,7 +277,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
       segm[n].buffer = 0;
    }
 
-   MemSegment* srcsegm = ownbuf.Segments();
+   MemSegment *srcsegm = ownbuf.Segments();
    // copy all segments from external buffer
    for (unsigned n=0;n<ownbuf.NumSegments();n++) {
       // DOUT0("copy segm src[%u]->tgt[%u]", n, tgtseg + n + (tgtpos>0 ? 1 : 0));

@@ -42,13 +42,13 @@ namespace dabc {
          BufferSize_t      fRawSize;  ///< size of contiguous memory, pointed by fPtr
          BufferSize_t      fFullSize; ///< full size of memory from pointer till the end
 
-         void long_shift(BufferSize_t sz) throw();
+         void long_shift(BufferSize_t sz);
 
       public:
          inline Pointer() :
             fBuf(),
             fSegm(0),
-            fPtr(0),
+            fPtr(nullptr),
             fRawSize(0),
             fFullSize(0)
          {
@@ -192,14 +192,14 @@ namespace dabc {
          inline BufferSize_t copyfrom_shift(const Pointer& src, BufferSize_t sz = 0) throw()
             { return shift(copyfrom(src, sz)); }
 
-         BufferSize_t copyfrom(const void* src, BufferSize_t sz) throw();
+         BufferSize_t copyfrom(const void *src, BufferSize_t sz);
 
          inline BufferSize_t copyfrom_shift(const void* src, BufferSize_t sz) throw()
             { return shift(copyfrom(src, sz)); }
 
          BufferSize_t copyfromstr(const char* str, unsigned len = 0) throw();
 
-         int distance_to(const Pointer& child) const throw();
+         int distance_to(const Pointer& child) const;
 
          int distance_to_ownbuf() const { return fBuf.null() ? 0 : Pointer(fBuf).distance_to(*this); }
 

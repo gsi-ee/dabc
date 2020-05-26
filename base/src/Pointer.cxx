@@ -22,7 +22,7 @@
 #include "dabc/Exception.h"
 
 
-void dabc::Pointer::long_shift(BufferSize_t len) throw()
+void dabc::Pointer::long_shift(BufferSize_t len)
 {
    if (fFullSize == len) {
       fPtr += len;
@@ -107,9 +107,9 @@ dabc::BufferSize_t dabc::Pointer::copyto(void* tgt, BufferSize_t sz) const throw
    return Pointer(tgt, sz).copyfrom(*this, sz);
 }
 
-dabc::BufferSize_t dabc::Pointer::copyfrom(const void* src, BufferSize_t sz) throw()
+dabc::BufferSize_t dabc::Pointer::copyfrom(const void *src, BufferSize_t sz)
 {
-   if (src==0) return 0;
+   if (!src) return 0;
 
    if (sz > fullsize()) {
       EOUT("target pointer has no so much memory %lu", sz);
@@ -131,7 +131,7 @@ dabc::BufferSize_t dabc::Pointer::copyfromstr(const char* str, unsigned len) thr
    return str ? copyfrom(str, len ? len : strlen(str)) : 0;
 }
 
-int dabc::Pointer::distance_to(const Pointer& child) const throw()
+int dabc::Pointer::distance_to(const Pointer& child) const
 {
    if (fBuf != child.fBuf)
       throw dabc::Exception(ex_Pointer,"Pointer with wrong segment id is specified", "Pointer");

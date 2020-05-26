@@ -73,7 +73,7 @@ namespace dabc {
             fFree.Reset();
          }
 
-         bool Allocate(unsigned number, unsigned size, unsigned align) throw()
+         bool Allocate(unsigned number, unsigned size, unsigned align)
          {
             Release();
 
@@ -330,7 +330,7 @@ void dabc::MemoryPool::ReleaseRawBuffer(unsigned indx)
 }
 
 
-dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool reserve_memory) throw()
+dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool reserve_memory)
 {
    Buffer res;
 
@@ -396,7 +396,6 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
       cnt++;
    }
 
-
    res.GetObject()->fPool.SetObject(this, false);
 
    res.GetObject()->fNumSegments = cnt;
@@ -405,8 +404,6 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
 
    return res;
 }
-
-
 
 
 dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
@@ -422,7 +419,8 @@ dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
    return res;
 }
 
-void dabc::MemoryPool::IncreaseSegmRefs(MemSegment* segm, unsigned num) throw()
+
+void dabc::MemoryPool::IncreaseSegmRefs(MemSegment* segm, unsigned num)
 {
    LockGuard lock(ObjectMutex());
 
@@ -441,11 +439,11 @@ void dabc::MemoryPool::IncreaseSegmRefs(MemSegment* segm, unsigned num) throw()
    }
 }
 
-bool dabc::MemoryPool::IsSingleSegmRefs(MemSegment* segm, unsigned num) throw()
+bool dabc::MemoryPool::IsSingleSegmRefs(MemSegment* segm, unsigned num)
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0)
+   if (!fMem)
       throw dabc::Exception(ex_Pool, "Memory was not allocated in the pool", ItemName());
 
    for (unsigned cnt=0;cnt<num;cnt++) {
@@ -461,16 +459,16 @@ bool dabc::MemoryPool::IsSingleSegmRefs(MemSegment* segm, unsigned num) throw()
 }
 
 
-void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num) throw()
+void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num)
 {
    LockGuard lock(ObjectMutex());
 
-   if (fMem==0)
+   if (!fMem)
       throw dabc::Exception(ex_Pool, "Memory was not allocated in the pool", ItemName());
 
    for (unsigned cnt=0;cnt<num;cnt++) {
       unsigned id = segm[cnt].id;
-      if (id>fMem->fNumber)
+      if (id > fMem->fNumber)
          throw dabc::Exception(ex_Pool, "Wrong buffer id in the segments list of buffer", ItemName());
 
       if (fMem->fArr[id].refcnt == 0)

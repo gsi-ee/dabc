@@ -79,7 +79,7 @@ namespace dabc {
          void ReleaseRawBuffer(unsigned indx);
 
          /** Central method, which reserves memory from pool and fill structures of buffer */
-         Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true) throw();
+         Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true);
 
          /** Method to allocate memory for the pool, mutex should be locked */
          bool _Allocate(BufferSize_t bufsize = 0, unsigned number = 0) throw();
@@ -91,13 +91,13 @@ namespace dabc {
          void ReplyReadyRequests();
 
          /** Method increases ref.counuters of all segments */
-         void IncreaseSegmRefs(MemSegment* segm, unsigned num) throw();
+         void IncreaseSegmRefs(MemSegment* segm, unsigned num);
 
          /** Decrease references of specified segments */
-         void DecreaseSegmRefs(MemSegment* segm, unsigned num) throw();
+         void DecreaseSegmRefs(MemSegment* segm, unsigned num);
 
          /** Return true when all segments has refcnt==1 */
-         bool IsSingleSegmRefs(MemSegment* segm, unsigned num) throw();
+         bool IsSingleSegmRefs(MemSegment* segm, unsigned num);
 
          virtual void OnThreadAssigned()
          {

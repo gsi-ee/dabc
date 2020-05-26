@@ -217,11 +217,10 @@ namespace dabc {
 
       /** Set total length of the buffer to specified value
        *  Size cannot be bigger than original size of the buffer */
-      void SetTotalSize(BufferSize_t len) throw();
+      void SetTotalSize(BufferSize_t len);
 
       /** Remove part of buffer from the beginning */
-      void CutFromBegin(BufferSize_t len) throw();
-
+      void CutFromBegin(BufferSize_t len);
 
       /** \brief Append content of provided buffer.
        *
@@ -246,8 +245,7 @@ namespace dabc {
        * \param[in] src       buffer to insert
        * \param[in] moverefs  if true, references moved to the target and source buffer will be emptied
        * \returns false if operation failed, otherwise true */
-      bool Insert(BufferSize_t pos, Buffer& src, bool moverefs = true) throw();
-
+      bool Insert(BufferSize_t pos, Buffer& src, bool moverefs = true);
 
       /** \brief Convert content of the buffer into std::string */
       std::string AsStdString();
