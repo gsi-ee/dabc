@@ -22,7 +22,7 @@
 #include "dabc/Exception.h"
 #include "dabc/logging.h"
 
-dabc::Reference::Reference(Object* obj) throw() :
+dabc::Reference::Reference(Object* obj) :
    fObj(0)
 {
    // this is empty reference
@@ -34,7 +34,7 @@ dabc::Reference::Reference(Object* obj) throw() :
       throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", obj), obj->GetName() );
 }
 
-void dabc::Reference::SetObject(Object* obj, bool withmutex) throw()
+void dabc::Reference::SetObject(Object* obj, bool withmutex)
 {
    Release();
 
@@ -47,7 +47,7 @@ void dabc::Reference::SetObject(Object* obj, bool withmutex) throw()
       throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p"), DNAME(obj) );
 }
 
-void dabc::Reference::Assign(const Reference& src) throw()
+void dabc::Reference::Assign(const Reference& src)
 {
    if (src.fObj->IncReference())
       fObj = src.fObj;

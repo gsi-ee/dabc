@@ -82,7 +82,7 @@ namespace dabc {
          Mutex* ObjectMutex() const;
 
          /** \brief Method used in copy constructor and assigned operations */
-         void Assign(const Reference& src) throw();
+         void Assign(const Reference & src);
 
          /** \brief Special method, which allows to generate new reference when object mutex is locked.
           *   It may be necessary when non-recursive mutexes are used. */
@@ -95,7 +95,7 @@ namespace dabc {
       public:
 
          /** \brief Constructor, creates reference on the object. If not possible, exception is thrown */
-         Reference(Object* obj = 0) throw();
+         Reference(Object* obj = nullptr);
 
          /** \brief Copy constructor, if source is transient than source reference will be emptied */
          Reference(const Reference& src) throw();
@@ -109,7 +109,7 @@ namespace dabc {
 
          /** \brief Direct set of object to reference.
           * withmutex = false means that user already lock object mutex */
-         void SetObject(Object* obj, bool withmutex = true) throw();
+         void SetObject(Object* obj, bool withmutex = true);
 
          /** \brief Returns number of references on the object */
          unsigned NumReferences() const;
