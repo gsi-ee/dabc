@@ -552,8 +552,11 @@ int stream::TdcCalibrationModule::ExecuteCommand(dabc::Command cmd)
    if (fOwnProcMgr && fProcMgr && fProcMgr->ExecuteHCommand(cmd)) return dabc::cmd_true;
 
    if (cmd.IsName("ResetTransportStat")) {
+      if (fTrbProc)
+         fTrbProc->ClearDAQHistos();
       // redirect command to real transport
-      if (SubmitCommandToTransport(InputName(), cmd)) return dabc::cmd_postponed;
+      if (SubmitCommandToTransport(InputName(), cmd))
+         return dabc::cmd_postponed;
       return dabc::cmd_false;
    }
 
