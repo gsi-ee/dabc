@@ -26,8 +26,6 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 
 #ifndef  __NO_MULTICAST__
 #include "verbs/OpenSM.h"
-#else
-#include <infiniband/arch.h>
 #endif
 
 #include "dabc/timing.h"

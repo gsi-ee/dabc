@@ -19,12 +19,8 @@
 
 #include "dabc/logging.h"
 
-#include <infiniband/arch.h>
-
 #include "verbs/Device.h"
 #include "verbs/ComplQueue.h"
-
-
 
 uint32_t verbs::QueuePair::fQPCounter = 0;
 

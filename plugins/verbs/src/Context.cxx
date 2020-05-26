@@ -20,12 +20,11 @@
 #include <unistd.h>
 #include <cstring>
 #include <netinet/in.h>
+#include <endian.h>
 
 
 #ifndef  __NO_MULTICAST__
 #include "verbs/OpenSM.h"
-#else
-#include <infiniband/arch.h>
 #endif
 
 
@@ -235,7 +234,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
    }
 
    gid = ibv_get_device_guid(selected_device);
-   DOUT1( "Open device: %s  gid: %016lx",  devicename, ntohll(gid));
+   DOUT1( "Open device: %s  gid: %016lx",  devicename, be64toh(gid));
 
    fPD = ibv_alloc_pd(fContext);
    if (fPD==0) {
@@ -435,8 +434,8 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
    int ret = 0;
 
    DOUT5( "Search for gid in table: %016lx : %016lx  ",
-             ntohll(lookgid->global.subnet_prefix),
-             ntohll(lookgid->global.interface_id));
+         be64toh(lookgid->global.subnet_prefix),
+         be64toh(lookgid->global.interface_id));
 
    for (int i = 0; !ret; i++) {
       ret = ibv_query_gid(context(), IbPort(), i, &gid);
@@ -446,8 +445,8 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
       if (null_gid(&gid)) continue;
 
       DOUT5("   gid[%2d]: %016lx : %016lx  ", i,
-            ntohll(gid.global.subnet_prefix),
-            ntohll(gid.global.interface_id));
+            be64toh(gid.global.subnet_prefix),
+            be64toh(gid.global.interface_id));
 
       if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
    }
