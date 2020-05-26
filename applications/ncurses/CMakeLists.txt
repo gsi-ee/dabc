@@ -12,6 +12,6 @@ find_path(MENU_INCLUDE_DIR menu.h /usr/include /usr/include/ncurses)
 if(NCURSES_LIBRARY AND MENU_LIBRARY AND NCURSES_INCLUDE_DIR AND MENU_INCLUDE_DIR)
    DABC_EXECUTABLE(dabc_shell 
                     SOURCES dabc_shell.cxx 
-                    LIBRARIES ${DabcBase_LIBRARY} ${NCURSES_LIBRARY} ${MENU_LIBRARY}
+                    LIBRARIES ${DabcBase_LIBRARY} ${NCURSES_LIBRARY} ${MENU_LIBRARY} 
                     INCLUDES ${NCURSES_INCLUDE_DIR} ${MENU_INCLUDE_DIR})
 endif()

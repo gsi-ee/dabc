@@ -3,11 +3,17 @@ project(dabc-ib-test)
 find_package(DABC)
 include(${DABC_USE_FILE})
 
-find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
-find_library(VERBS_LIBRARIES ibverbs)
+if(DabcVerbs_LIBRARY)
+   find_path(VERBS_INCLUDE_DIR infiniband/verbs.h)
+   find_library(VERBS_LIBRARIES ibverbs)
+endif()
 
-if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR AND DabcVerbs_LIBRARY)
+if(VERBS_LIBRARIES AND VERBS_INCLUDE_DIR)
    set(VERBS_DEFS WITH_VERBS)
+   set(_lib ${DabcVerbs_LIBRARY}) 
+else()
+   set(VERBS_LIBRARIES)
+   set(VERBS_INCLUDE_DIR)
 endif()
 
 DABC_LINK_LIBRARY(DabcIbTest
@@ -17,6 +23,6 @@ DABC_LINK_LIBRARY(DabcIbTest
                       IbTestGPU.cxx
                       IbTestSchedule.cxx
                       IbTestWorkerModule.cxx
-                   LIBRARIES ${DabcBase_LIBRARY} ${DabcVerbs_LIBRARY} ${VERBS_LIBRARIES}
+                   LIBRARIES ${DabcBase_LIBRARY} ${_lib} ${VERBS_LIBRARIES}
                    INCLUDES ${VERBS_INCLUDE_DIR}
                    DEFINITIONS ${VERBS_DEFS})
