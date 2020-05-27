@@ -1,23 +1,66 @@
 # list of DABC plugins
 
-add_subdirectory(mbs)
-add_subdirectory(hadaq)
-add_subdirectory(verbs)
+if(mbs)
+   add_subdirectory(mbs)
+endif()
 
-add_subdirectory(http)
+if(hadaq)
+   add_subdirectory(hadaq)
+endif()
 
-add_subdirectory(root)
-add_subdirectory(mbs-root)
+if(verbs)
+   add_subdirectory(verbs)
+endif()
 
-add_subdirectory(stream)
+if(http)
+   add_subdirectory(http)
+endif()
 
-add_subdirectory(aqua)
-add_subdirectory(bnet)
-add_subdirectory(dim)
-add_subdirectory(ezca)
-add_subdirectory(fesa)
-add_subdirectory(gosip)
-add_subdirectory(ltsm)
-add_subdirectory(rfio)
-add_subdirectory(saft)
+if(root)
+   add_subdirectory(root)
+   if(mbsroot)
+      add_subdirectory(mbs-root)
+   endif()
+endif()
+
+if(stream)
+   add_subdirectory(stream)
+endif()
+
+if(aqua)
+   add_subdirectory(aqua)
+endif()
+
+if(bnet)
+   add_subdirectory(bnet)
+endif()
+
+if(dim)
+   add_subdirectory(dim)
+endif()
+
+if(ezca)
+   add_subdirectory(ezca)
+endif()
+
+if(fesa)
+   add_subdirectory(fesa)
+endif()
+
+if(gosip)
+   add_subdirectory(gosip)
+endif()
+
+if(ltsm)
+   add_subdirectory(ltsm)
+endif()
+
+if(rfio)
+   add_subdirectory(rfio)
+endif()
+
+if(saft)
+   add_subdirectory(saft)
+endif()
+
 add_subdirectory(user)

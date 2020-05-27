@@ -11,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 #--- Load some basic macros ---
+include(DabcBuildOptions)
 include(DabcConfiguration)
 include(DabcMacros)
 
@@ -25,3 +26,4 @@ add_subdirectory(applications)
 get_property(__allHeaders GLOBAL PROPERTY DABC_HEADER_TARGETS)
 add_custom_target(move_headers ALL DEPENDS ${__allHeaders})
 
+DABC_SHOW_ENABLED_OPTIONS()
