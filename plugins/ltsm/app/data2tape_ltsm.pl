@@ -23,7 +23,7 @@ my $opt_file;
 
 my $opt_arch; # jul18
 my $opt_ltsmserv = "lxltsm01";
-my $opt_ltsmfs   = "/lustre/hebe";
+my $opt_ltsmfs   = "/lustre";
 
 my $opt_ltsmnode = "hades";
 my $opt_ltsmpass; 
@@ -50,9 +50,10 @@ my $ltsmpath = "/hades/raw/";
 if (defined $opt_arch){
     $ltsmpath .= $opt_arch; 
 } else{
-    $ltsmpath .= "jul18";
+    $ltsmpath .= "jun20";
 }
-$ltsmpath .= "/default/tsm/";
+# JAM 2-jjun-20: kludge for only day of data taking. need to specify subfolders also on disk later?
+$ltsmpath .= "/20/153/";
 
 
 if(-1 == &checkArgs()){

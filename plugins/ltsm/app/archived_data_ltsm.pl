@@ -15,11 +15,11 @@ my $opt_help = 0;
 my $opt_prefix = "";
 my $opt_startDate;
 my $opt_endDate;
-my $opt_arch = "mar19";
+my $opt_arch = "jun20";
 my $opt_output = "tape";  # tape|disk
 my $opt_rm;
 my $opt_ltsmserv = "lxltsm01";
-my $opt_ltsmfs   = "/lustre/hebe";
+my $opt_ltsmfs   = "/lustre";
 
 my $opt_ltsmnode = "hades";
 my $opt_ltsmpass;
@@ -48,8 +48,8 @@ unless (defined $opt_ltsmpass)
     die "Please specify password for tsm node $opt_ltsmnode at server $opt_ltsmserv with option -w \n";
 }
 
-
-my $opt_ltsmpath = "/hades/raw/" . $opt_arch ."/default/tsm/";
+# JAM 2-jun-20: this is kludge for the only day we took data. need to loop over day subfolders now! TODO
+my $opt_ltsmpath = "/hades/raw/" . $opt_arch ."/20/153/";
 
 my %gstore_hash;
 my $gstore_href = \%gstore_hash;
