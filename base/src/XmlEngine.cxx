@@ -318,18 +318,18 @@ namespace dabc {
 
          char* curr = fCurrent;
 
-         do {
-            curr++;
-            while (curr+len>fMaxAddr)
+         while(true) {
+            while (curr+len > fMaxAddr)
                if (!ExpandStream(curr)) return -1;
-            char* chk0 = curr;
-            const char* chk = str;
+            const char *chk0 = curr;
+            const char *chk = str;
             bool find = true;
             while (*chk != 0)
                if (*chk++ != *chk0++) { find = false; break; }
             // if string found, shift to the next symbol after string
             if (find) return curr - fCurrent;
-         } while (curr<fMaxAddr);
+            curr++;
+         }
          return -1;
       }
 
@@ -1467,7 +1467,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
    // process comments before we start to analyze any node symbols
    while (inp->CheckFor("<!--")) {
       int commentlen = inp->SearchFor("-->");
-      if (commentlen<=0) { resvalue = -10; return 0; }
+      if (commentlen < 0) { resvalue = -10; return 0; }
 
       if (!inp->SkipComments()) {
          node = (SXmlNode_t*) AllocateNode(commentlen, xmlparent);
@@ -1631,7 +1631,7 @@ dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputS
       }
    } while (true);
 
-   return 0;
+   return nullptr;
 }
 
 //______________________________________________________________________________
