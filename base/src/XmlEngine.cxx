@@ -253,7 +253,7 @@ namespace dabc {
 
       bool ShiftStream()
       {
-         if (fCurrent<fLimitAddr) return true; // everything ok, can cntinue
+         if (fCurrent<fLimitAddr) return true; // everything ok, can continue
          if (EndOfFile()) return true;
          int rest_len = fMaxAddr - fCurrent;
          memmove(fBuf, fCurrent, rest_len);
@@ -517,7 +517,7 @@ void dabc::Xml::FreeAllAttr(XMLNodePointer_t xmlnode)
 //______________________________________________________________________________
 dabc::XMLAttrPointer_t dabc::Xml::GetFirstAttr(XMLNodePointer_t xmlnode)
 {
-   // return first attribute in the list, namespace (if exists) will be skiped
+   // return first attribute in the list, namespace (if exists) will be skipped
 
    if (xmlnode==0) return 0;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
@@ -821,7 +821,7 @@ bool dabc::Xml::AddDocStyleSheet(XMLDocPointer_t xmldoc,
 //______________________________________________________________________________
 void dabc::Xml::UnlinkNode(XMLNodePointer_t xmlnode)
 {
-   // unlink (dettach) xml node from parent
+   // unlink (detach) xml node from parent
 
    if (xmlnode==0) return;
    SXmlNode_t* node = (SXmlNode_t*) xmlnode;
@@ -846,7 +846,7 @@ void dabc::Xml::UnlinkNode(XMLNodePointer_t xmlnode)
 //______________________________________________________________________________
 void dabc::Xml::FreeNode(XMLNodePointer_t xmlnode)
 {
-   // release all memory, allocated fro this node and
+   // release all memory, allocated from this node and
    // destroyes node itself
 
    if (xmlnode==0) return;
