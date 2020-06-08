@@ -156,22 +156,27 @@ void verbs::Thread::CloseThread()
 
 
    #ifdef VERBS_USING_PIPE
-   if (fPipe[0] != 0) close(fPipe[0]); fPipe[0] = 0;
-   if (fPipe[1] != 0) close(fPipe[1]); fPipe[1] = 0;
-
+   if (fPipe[0] != 0) {
+      close(fPipe[0]);
+      fPipe[0] = 0;
+   }
+   if (fPipe[1] != 0) {
+      close(fPipe[1]);
+      fPipe[1] = 0;
+   }
    #else
-   if (fTimeout!=0) { delete fTimeout; fTimeout = 0; }
-   delete fLoopBackQP; fLoopBackQP = 0;
-   delete fLoopBackPool; fLoopBackPool = 0;
+   if (fTimeout) { delete fTimeout; fTimeout = nullptr; }
+   delete fLoopBackQP; fLoopBackQP = nullptr;
+   delete fLoopBackPool; fLoopBackPool = nullptr;
    #endif
 
-   if (fMainCQ!=0) { delete fMainCQ; fMainCQ = 0; }
+   if (fMainCQ) { delete fMainCQ; fMainCQ = nullptr; }
 
    ibv_destroy_comp_channel(fChannel);
 
-   if (fWCs!=0) {
+   if (fWCs) {
       delete [] fWCs;
-      fWCs = 0;
+      fWCs = nullptr;
       fWCSize = 0;
    }
 

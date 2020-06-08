@@ -99,7 +99,7 @@ verbs::ProtocolAddon::ProtocolAddon(QueuePair* qp) :
    fRemoteLID(0),
    fRemoteQPN(0),
    fRemotePSN(0),
-   fPool(0),
+   fPool(nullptr),
    fConnected(false)
 {
 }
@@ -108,7 +108,10 @@ verbs::ProtocolAddon::~ProtocolAddon()
 {
    fReqItem.clear();
 
-   if (fPool) delete fPool; fPool = 0;
+   if (fPool) {
+      delete fPool;
+      fPool = nullptr;
+   }
 
    CloseQP();
 }
