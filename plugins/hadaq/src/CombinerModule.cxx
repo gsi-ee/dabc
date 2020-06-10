@@ -886,7 +886,7 @@ bool hadaq::CombinerModule::BuildEvent()
          if (!ShiftToNextSubEvent(ninp)) {
             // could not get subevent data on any channel.
             // let framework do something before next try
-            if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+            if (fExtraDebug && fLastDebugTm.Expired(2.)) {
                DOUT1("Fail to build event while input %u is not ready numcanrecv %u maxtm = %5.3f ", ninp, NumCanRecv(ninp), fMaxProcDist);
                fLastDebugTm.GetNow();
                fMaxProcDist = 0;
@@ -1016,7 +1016,7 @@ bool hadaq::CombinerModule::BuildEvent()
             fAllDroppedData += droppedsize;
 
             if(!ShiftToNextSubEvent(ninp, false, true)) {
-               if (fExtraDebug && fLastDebugTm.Expired(1.)) {
+               if (fExtraDebug && fLastDebugTm.Expired(2.)) {
                   DOUT1("Cannot shift data from input %d", ninp);
                   fLastDebugTm.GetNow();
                }

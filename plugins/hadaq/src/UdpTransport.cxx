@@ -376,7 +376,7 @@ void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
       NewAddon *addon = (NewAddon *) fAddon();
 
       if (addon && addon->fDebug && fLastDebugTm.Expired(1.)) {
-         DOUT1("UDP %d NumReady:%u CanTake:%u BufAssigned:%s DoingInp %s maxlooptm = %5.3f", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned), DBOOL(addon->IsDoingInput()), addon->fMaxProcDist);
+         DOUT1("UDP %d NumReady:%u CanTake:%u BufAssigned:%s CanSend:%u DoingInp %s maxlooptm = %5.3f", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned), NumCanSend(0), DBOOL(addon->IsDoingInput()), addon->fMaxProcDist);
          fLastDebugTm.GetNow();
          addon->fMaxProcDist = 0;
       }
