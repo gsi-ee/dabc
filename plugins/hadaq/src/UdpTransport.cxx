@@ -72,7 +72,6 @@ long hadaq::NewAddon::Notify(const std::string &msg, int arg)
 {
    if (msg == "TransportWantToStart") {
       fLastProcTm.GetNow();
-      fLastDebugTm.GetNow();
       fMaxProcDist = 0;
       fRunning = true;
       SetDoingInput(true);
@@ -115,12 +114,6 @@ bool hadaq::NewAddon::ReadUdp()
    if (fDebug) {
       double tm = fLastProcTm.SpentTillNow(true);
       if (tm > fMaxProcDist) fMaxProcDist = tm;
-   }
-
-   if (fDebug && fLastDebugTm.Expired(1.)) {
-      DOUT1("UDP %s  maxlooptm = %5.3f", tr->GetExtraDebug().c_str(), fMaxProcDist);
-      fLastDebugTm.GetNow();
-      fMaxProcDist = 0;
    }
 
    void *tgt = nullptr;
@@ -343,9 +336,10 @@ int hadaq::NewTransport::ExecuteCommand(dabc::Command cmd)
    return dabc::Transport::ExecuteCommand(cmd);
 }
 
-
 bool hadaq::NewTransport::StartTransport()
 {
+   fLastDebugTm.GetNow();
+
    AssignNewBuffer(0); // provide immediately buffer - if possible
 
    fAddon.Notify("TransportWantToStart");
@@ -366,6 +360,15 @@ void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
 {
    if (TimerName(timer) == "FlushTimer") {
       FlushBuffer(false);
+
+      NewAddon *addon = dynamic_cast<NewAddon *> (fAddon());
+
+      if (addon && addon->fDebug && fLastDebugTm.Expired(1.)) {
+         DOUT1("UDP %d NumReady:%u CanTake:%u BufAssigned:%s maxlooptm = %5.3f", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned), addon->fMaxProcDist);
+         fLastDebugTm.GetNow();
+         addon->fMaxProcDist = 0;
+      }
+
    } else {
       dabc::Transport::ProcessTimerEvent(timer);
    }
@@ -395,12 +398,6 @@ bool hadaq::NewTransport::ProcessBuffer(unsigned pool)
 
    return false;
 }
-
-std::string hadaq::NewTransport::GetExtraDebug() const
-{
-   return dabc::format("%d NumReady:%u CanTake:%u BufAssigned:%s", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned));
-}
-
 
 bool hadaq::NewTransport::AssignNewBuffer(unsigned pool, NewAddon *addon)
 {
