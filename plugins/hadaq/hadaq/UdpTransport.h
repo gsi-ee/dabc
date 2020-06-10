@@ -147,7 +147,7 @@ namespace hadaq {
          virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
-         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, double flush = 1);
+         NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, double flush = 1, double heartbeat = -1);
          virtual ~NewTransport();
 
          /** Methods activated by Port, when transport starts/stops. */

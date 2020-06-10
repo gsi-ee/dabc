@@ -284,7 +284,7 @@ int hadaq::NewAddon::OpenUdp(const std::string &host, int nport, int rcvbuflen)
 
 // ========================================================================================
 
-hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, double flush) :
+hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inpport, NewAddon* addon, double flush, double heartbeat) :
    dabc::Transport(cmd, inpport, 0),
    fIdNumber(0),
    fNumReadyBufs(0),
@@ -305,6 +305,9 @@ hadaq::NewTransport::NewTransport(dabc::Command cmd, const dabc::PortRef& inppor
 
    if (flush > 0)
       CreateTimer("FlushTimer", flush);
+
+   if (heartbeat > 0)
+      CreateTimer("HeartbeatTimer", heartbeat);
 
    DOUT3("Starting hadaq::DataTransport %s id %d", GetName(), fIdNumber);
 }
@@ -358,10 +361,19 @@ bool hadaq::NewTransport::StopTransport()
 
 void hadaq::NewTransport::ProcessTimerEvent(unsigned timer)
 {
-   if (TimerName(timer) == "FlushTimer") {
+   std::string name = TimerName(timer);
+   if (name == "HeartbeatTimer") {
+      NewAddon *addon = (NewAddon *) fAddon();
+
+      if (addon) {
+         addon->ReadUdp();
+         addon->SetDoingInput(true);
+      }
+
+   } else if (name == "FlushTimer") {
       FlushBuffer(false);
 
-      NewAddon *addon = dynamic_cast<NewAddon *> (fAddon());
+      NewAddon *addon = (NewAddon *) fAddon();
 
       if (addon && addon->fDebug && fLastDebugTm.Expired(1.)) {
          DOUT1("UDP %d NumReady:%u CanTake:%u BufAssigned:%s DoingInp %s maxlooptm = %5.3f", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned), DBOOL(addon->IsDoingInput()), addon->fMaxProcDist);
