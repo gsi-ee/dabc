@@ -108,6 +108,10 @@ namespace hadaq {
          int                fLostCnt;         ///< counter used to drop buffers
          bool               fDebug;           ///< when true, produce more debug output
          bool               fRunning;         ///< is transport running
+         dabc::TimeStamp    fLastProcTm;      ///< last time when udp reading was performed
+         dabc::TimeStamp    fLastDebugTm;     ///< timer used to generate rare debugs output
+         double             fMaxProcDist;     ///< maximal time between calls to BuildEvent method
+
 
          virtual void ProcessEvent(const dabc::EventId&);
 
@@ -134,7 +138,7 @@ namespace hadaq {
 
       protected:
 
-         int            fIdNumber;
+         int            fIdNumber;     ///< input port item id
          unsigned       fNumReadyBufs; ///< number of filled buffers which could be posted
          bool           fBufAssigned;  ///< if next buffer assigned
          int            fLastSendCnt;  ///< used for flushing
@@ -147,6 +151,8 @@ namespace hadaq {
          NewTransport(dabc::Command, const dabc::PortRef& inpport, NewAddon* addon, double flush = 1);
          virtual ~NewTransport();
 
+         std::string GetExtraDebug() const;
+
          /** Methods activated by Port, when transport starts/stops. */
          virtual bool StartTransport();
          virtual bool StopTransport();
@@ -154,7 +160,7 @@ namespace hadaq {
          virtual bool ProcessSend(unsigned port);
          virtual bool ProcessBuffer(unsigned pool);
 
-         bool AssignNewBuffer(unsigned pool, NewAddon* addon = 0);
+         bool AssignNewBuffer(unsigned pool, NewAddon* addon = nullptr);
          void BufferReady();
          void FlushBuffer(bool onclose = false);
 

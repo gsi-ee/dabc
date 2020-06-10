@@ -71,6 +71,9 @@ void hadaq::NewAddon::ProcessEvent(const dabc::EventId& evnt)
 long hadaq::NewAddon::Notify(const std::string &msg, int arg)
 {
    if (msg == "TransportWantToStart") {
+      fLastProcTm.GetNow();
+      fLastDebugTm.GetNow();
+      fMaxProcDist = 0;
       fRunning = true;
       SetDoingInput(true);
       return 0;
@@ -108,6 +111,17 @@ bool hadaq::NewAddon::ReadUdp()
 
    hadaq::NewTransport* tr = dynamic_cast<hadaq::NewTransport*> (fWorker());
    if (!tr) { EOUT("No transport assigned"); return false; }
+
+   if (fDebug) {
+      double tm = fLastProcTm.SpentTillNow(true);
+      if (tm > fMaxProcDist) fMaxProcDist = tm;
+   }
+
+   if (fDebug && fLastDebugTm.Expired(1.)) {
+      DOUT1("UDP %s  maxlooptm = %5.3f", tr->GetExtraDebug().c_str(), fMaxProcDist);
+      fLastDebugTm.GetNow();
+      fMaxProcDist = 0;
+   }
 
    void *tgt = nullptr;
 
@@ -372,15 +386,23 @@ bool hadaq::NewTransport::ProcessBuffer(unsigned pool)
 {
    // check that required element available in the pool
 
-   NewAddon* addon = (NewAddon*) fAddon();
+   NewAddon* addon = (NewAddon *) fAddon();
 
-   if (AssignNewBuffer(pool, addon))
+   if (AssignNewBuffer(pool, addon)) {
       addon->ReadUdp();
+      addon->SetDoingInput(true);
+   }
 
    return false;
 }
 
-bool hadaq::NewTransport::AssignNewBuffer(unsigned pool, NewAddon* addon)
+std::string hadaq::NewTransport::GetExtraDebug() const
+{
+   return dabc::format("%d NumReady:%u CanTake:%u BufAssigned:%s", fIdNumber, fNumReadyBufs, NumCanTake(0), DBOOL(fBufAssigned));
+}
+
+
+bool hadaq::NewTransport::AssignNewBuffer(unsigned pool, NewAddon *addon)
 {
    // assign  new buffer to the addon
 
