@@ -81,6 +81,10 @@ int usage(const char* errstr = nullptr)
    return errstr ? 1 : 0;
 }
 
+enum TrbDecodeKind {
+   decode_SingleSubev = 0x8       // subevent contains single sub-sub event
+};
+
 enum TdcMessageKind {
    tdckind_Reserved = 0x00000000,
    tdckind_Header   = 0x20000000,
@@ -964,16 +968,23 @@ int main(int argc, char* argv[])
 
          unsigned trbSubEvSize = sub->GetSize() / 4 - 4, ix = 0,
                   maxhublen = 0, lasthubid = 0, lasthublen = 0,
-                  maxhhublen = 0, lasthhubid = 0, lasthhublen = 0;
+                  maxhhublen = 0, lasthhubid = 0, lasthhublen = 0,
+                  data, datalen, datakind;
 
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
-            unsigned data = sub->Data(ix++);
 
-            unsigned datalen = (data >> 16) & 0xFFFF;
-            unsigned datakind = data & 0xFFFF;
+            if (sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt) {
+               data = 0; // unused
+               datalen = trbSubEvSize;
+               datakind = sub->GetId();
+            } else {
+               data = sub->Data(ix++);
+               datalen = (data >> 16) & 0xFFFF;
+               datakind = data & 0xFFFF;
+            }
 
             errbuf[0] = 0;
-            if (maxhhublen>0) {
+            if (maxhhublen > 0) {
                if (datalen >= maxhhublen) datalen = maxhhublen-1;
                maxhhublen -= (datalen+1);
             } else {
@@ -982,13 +993,13 @@ int main(int argc, char* argv[])
 
             bool as_raw(false), as_cts(false), as_tdc(false), as_adc(false), print_subsubhdr((onlytdc==0) && (onlyraw==0) && !only_errors);
 
-            if (maxhublen>0) {
+            if (maxhublen > 0) {
 
                if (is_hub(datakind)) {
                   maxhublen--; // just decrement
                   if (dostat) {
                      stat[datakind].num++;
-                     stat[datakind].sizesum+=datalen;
+                     stat[datakind].sizesum += datalen;
                   } else
                   if (!showrate && print_subsubhdr) {
                      printf("         *** HHUB size %3u id 0x%04x full %08x\n", datalen, datakind, data);
@@ -1081,7 +1092,13 @@ int main(int argc, char* argv[])
                   if (as_tdc) kind = "TDC "; else
                   if (as_cts) kind = "CTS "; else
                   if (as_adc) kind = "ADC ";
-                  printf("%*s*** %s size %3u id 0x%04x full %08x%s\n", prefix-3, "", kind, datalen, datakind, data, errbuf);
+
+                  printf("%*s*** %s size %3u id 0x%04x", prefix-3, "", kind, datalen, datakind);
+                  if(sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt)
+                     printf(" alone");
+                  else
+                     printf(" full %08x", data);
+                  printf("%s\n", errbuf);
                }
 
                if (as_tdc) PrintTdcData(sub, ix, datalen, prefix, errmask); else
