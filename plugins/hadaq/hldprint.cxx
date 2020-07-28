@@ -971,11 +971,13 @@ int main(int argc, char* argv[])
                   maxhhublen = 0, lasthhubid = 0, lasthhublen = 0,
                   data, datalen, datakind;
 
+         bool standalone_subevnt = sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt;
+
          while ((ix < trbSubEvSize) && (printsub || dostat)) {
 
-            if (sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt) {
+            if (standalone_subevnt && (ix == 0)) {
                data = 0; // unused
-               datalen = trbSubEvSize;
+               datalen = trbSubEvSize - 2;
                datakind = sub->GetId();
             } else {
                data = sub->Data(ix++);
@@ -1094,7 +1096,7 @@ int main(int argc, char* argv[])
                   if (as_adc) kind = "ADC ";
 
                   printf("%*s*** %s size %3u id 0x%04x", prefix-3, "", kind, datalen, datakind);
-                  if(sub->GetDecoding() & hadaq::EvtDecoding_AloneSubevt)
+                  if(standalone_subevnt && (ix == 0))
                      printf(" alone");
                   else
                      printf(" full %08x", data);
