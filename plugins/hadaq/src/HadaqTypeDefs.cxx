@@ -44,6 +44,7 @@ const char* hadaq::xmlHadaqTrignumRange   = "TriggerNumRange";
 const char* hadaq::xmlHadaqTriggerTollerance = "TriggerTollerance";
 const char* hadaq::xmlHadaqDiffEventStats = "AccountLostEventDiff";
 const char* hadaq::xmlEvtbuildTimeout     = "BuildDropTimeout";
+const char* hadaq::xmlMaxNumBuildEvt      = "MaxNumBuildEvt";
 const char* hadaq::xmlHadesTriggerType    = "HadesTriggerType";
 const char* hadaq::xmlHadesTriggerHUB     = "HadesTriggerHUB";
 

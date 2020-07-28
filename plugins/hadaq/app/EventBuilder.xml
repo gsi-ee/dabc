@@ -111,6 +111,9 @@ When starting analysis from the go4 gui, one should specify stream server with p
        <!--  When event cannot be build too long, complete data drop will be performed -->
        <BuildDropTimeout value="20.0"/>
 
+       <!--  When non-zero value specified, event builder will stop DABC when required number of events are build -->
+       <MaxNumBuildEvt value="0"/>
+
        <!-- rate meters configuration, not seen with terminal module -->
        <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
        <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>

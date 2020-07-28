@@ -243,15 +243,16 @@ namespace hadaq {
          uint64_t           fRunDataErrors;
 
          uint64_t           fAllRecvBytes;
-         uint64_t           fAllBuildEvents;   ///< number of build events
+         uint64_t           fAllBuildEvents;       ///< number of build events
+         uint64_t           fAllBuildEventsLimit;  ///< maximal number events to build
          uint64_t           fAllDiscEvents;
          uint64_t           fAllDroppedData;
-         uint64_t           fAllFullDrops;   ///< number of complete drops
+         uint64_t           fAllFullDrops;         ///< number of complete drops
 
-         unsigned fEventIdCount[HADAQ_NEVTIDS];
+         unsigned           fEventIdCount[HADAQ_NEVTIDS];
 
-         std::string fRunInfoToOraFilename;
-         std::string fPrefix;
+         std::string        fRunInfoToOraFilename;
+         std::string        fPrefix;
 
          /** run id from timeofday for eventbuilding*/
          uint32_t           fRunNumber;
@@ -267,22 +268,22 @@ namespace hadaq {
             if false, do not account it (for multiple event builder mode)*/
          bool               fEvnumDiffStatistics;
 
-         bool              fExtraDebug;   ///< when true, extra debug output is created
-         dabc::TimeStamp   fLastDebugTm;  ///< timer used to generate rare debugs output
-         dabc::TimeStamp   fLastDropTm;   ///< timer used to avoid too often drop of data
-         dabc::TimeStamp   fLastProcTm;   ///< last time when event building was called
-         dabc::TimeStamp   fLastBuildTm;  ///< last time when complete event was build
-         double            fMaxProcDist;  ///< maximal time between calls to BuildEvent method
+         bool               fExtraDebug;   ///< when true, extra debug output is created
+         dabc::TimeStamp    fLastDebugTm;  ///< timer used to generate rare debugs output
+         dabc::TimeStamp    fLastDropTm;   ///< timer used to avoid too often drop of data
+         dabc::TimeStamp    fLastProcTm;   ///< last time when event building was called
+         dabc::TimeStamp    fLastBuildTm;  ///< last time when complete event was build
+         double             fMaxProcDist;  ///< maximal time between calls to BuildEvent method
 
-         std::string       fBnetInfo;     ///< info for showing of bnet sender
-         std::string       fBnetStat;     ///< gener-purpose statistic in text form
+         std::string        fBnetInfo;     ///< info for showing of bnet sender
+         std::string        fBnetStat;     ///< gener-purpose statistic in text form
 
-         long              fBldCalls{0};   ///< number of build event calls
-         long              fInpCalls{0};   ///< number of input processing calls
-         long              fOutCalls{0};   ///< number of output processing calls
-         long              fBufCalls{0};   ///< number of buffer processing calls
-         long              fTimerCalls{0}; ///< number of timer events calls
-         dabc::Profiler    fBldProfiler;   ///< profiler of build event performance
+         long               fBldCalls{0};   ///< number of build event calls
+         long               fInpCalls{0};   ///< number of input processing calls
+         long               fOutCalls{0};   ///< number of output processing calls
+         long               fBufCalls{0};   ///< number of buffer processing calls
+         long               fTimerCalls{0}; ///< number of timer events calls
+         dabc::Profiler     fBldProfiler;   ///< profiler of build event performance
 
          bool BuildEvent();
 

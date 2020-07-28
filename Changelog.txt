@@ -5,6 +5,8 @@ about current functionality of the framework.
 28.07.2020
 1. Add support of standalone sub-sub-event in hld print. Such sub-sub-event
    does not have typical header and uses full data of sub-event, inheriting its ID
+2. Introduce "MaxNumBuildEvt" parameter in HADAQ combiner module. DABC will be stopped
+   when specified number of events will be accumulated.
 
 
 23.03.2020

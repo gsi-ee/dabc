@@ -54,6 +54,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
 
    fAllRecvBytes = 0;
    fAllBuildEvents = 0;
+   fAllBuildEventsLimit = 0;
    fAllDiscEvents = 0;
    fAllDroppedData = 0;
 
@@ -97,6 +98,7 @@ hadaq::CombinerModule::CombinerModule(const std::string &name, dabc::Command cmd
    fTriggerNrTolerance = Cfg(hadaq::xmlHadaqTriggerTollerance, cmd).AsInt(-1);
    if (fTriggerNrTolerance == -1) fTriggerNrTolerance = fMaxHadaqTrigger / 4;
    fEventBuildTimeout = Cfg(hadaq::xmlEvtbuildTimeout, cmd).AsDouble(20.0); // 20 seconds configure this optionally from xml later
+   fAllBuildEventsLimit = Cfg(hadaq::xmlMaxNumBuildEvt, cmd).AsUInt(0);
    fHadesTriggerType = Cfg(hadaq::xmlHadesTriggerType, cmd).AsBool(false);
    fHadesTriggerHUB = Cfg(hadaq::xmlHadesTriggerHUB, cmd).AsUInt(0x8800);
 
@@ -243,6 +245,12 @@ void hadaq::CombinerModule::ProcessTimerEvent(unsigned timer)
 
    // invoke event building, if necessary - reinjects events
    StartEventsBuilding();
+
+   if ((fAllBuildEventsLimit > 0) && (fAllBuildEvents >= fAllBuildEventsLimit)) {
+      FlushOutputBuffer();
+      fAllBuildEventsLimit = 0; // invoke only once
+      dabc::mgr.StopApplication();
+   }
 }
 
 void hadaq::CombinerModule::StartEventsBuilding()
@@ -1182,7 +1190,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       fLastTrigNr = buildevid;
 
-      fEventRateCnt+=1;
+      fEventRateCnt++;
       // Par(fEventRateName).SetValue(1);
 
       if (fEvnumDiffStatistics && (diff > 1)) {
