@@ -977,7 +977,7 @@ int main(int argc, char* argv[])
 
             if (standalone_subevnt && (ix == 0)) {
                data = 0; // unused
-               datalen = trbSubEvSize - 2;
+               datalen = trbSubEvSize - 2; // whole subevent beside last 2 words with 0x5555 id
                datakind = sub->GetId();
             } else {
                data = sub->Data(ix++);
