@@ -112,7 +112,7 @@ namespace hadaq {
          bool IsBuffer() const { return !fBuffer.null(); }
          bool IsEmpty() const { return fFullSize == 0; }
          bool IsPlaceForEvent(uint32_t subeventsize);
-         bool NewEvent(uint32_t evtSeqNr=0, uint32_t runNr=0, uint32_t minsubeventsize=0);
+         bool NewEvent(uint32_t evtSeqNr = 0, uint32_t runNr = 0, uint32_t minsubeventsize = 0);
          bool NewSubevent(uint32_t minrawsize = 0, uint32_t trigger = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 

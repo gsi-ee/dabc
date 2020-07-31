@@ -24,6 +24,7 @@
 #include "hadaq/CombinerModule.h"
 #include "hadaq/TerminalModule.h"
 #include "hadaq/BnetMasterModule.h"
+#include "hadaq/MonitorModule.h"
 #include "hadaq/api.h"
 
 
@@ -188,6 +189,9 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string &classname, const s
 
    if (classname == "hadaq::BnetMasterModule")
       return new hadaq::BnetMasterModule(modulename, cmd);
+
+   if (classname == "hadaq::MonitorModule")
+      return new hadaq::MonitorModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

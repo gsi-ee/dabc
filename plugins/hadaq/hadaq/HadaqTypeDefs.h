@@ -22,7 +22,7 @@ namespace hadaq {
 
    enum EHadaqBufferTypes {
       mbt_HadaqEvents = 142,         // event/subevent structure
-      mbt_HadaqTransportUnit = 143,  //plain hadtu container with single subevents
+      mbt_HadaqTransportUnit = 143,  // plain hadtu container with single subevents
       mbt_HadaqSubevents = 144,      // only subevents, no event
       mbt_HadaqStopRun = 145         // buffer just indicates stop of current run
   };

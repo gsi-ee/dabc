@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<!--
+This is test file for trbnet monitor.
+It reads via trbcmd several registers and stroe them in hld structure
+-->
+
+<dabc version="2">
+  <Context host="localhost" name="EventBuilder">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>
+      <logfile value="monitor.log"/>
+      <loglevel value="-1"/>
+      <loglimit value="1000"/>
+      <threads_layout value="balanced"/>
+    </Run>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+
+    <Module name="Monitor" class="hadaq::MonitorModule">
+        <!-- these parameters will force to create inputs/outputs of module -->
+       <NumOutputs value="1"/>
+
+       <!--  this is stream server for online monitoring, normally always on -->
+       <OutputPort name="Output0" url="mbs://Stream:6002?iter=hadaq_iter&subid=0x1f"/>
+
+       <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
+
+       <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <Addrs value="[0x100,0x200,0x300,0x400]"/>
+
+     </Module>
+
+  </Context>
+
+</dabc>

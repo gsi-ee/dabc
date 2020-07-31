@@ -147,6 +147,8 @@ namespace hadaq {
          /** msb of decode word is always non zero...? */
          inline bool IsSwapped() const  { return  tuDecoding > 0xffffff; }
 
+         void SetDecoding(uint32_t dec) { tuDecoding = dec; }
+
          inline uint32_t Value(const uint32_t *member) const
          {
             return IsSwapped() ? ((*member & 0xFF) << 24) |
@@ -271,7 +273,7 @@ namespace hadaq {
             void SetTrigNr(uint32_t trigger) { SetValue(&subEvtTrigNr, trigger); }
 
             /* for trb3: each subevent contains trigger type in decoding word*/
-            uint8_t GetTrigTypeTrb3 () const { return (GetDecoding() & 0xF0) >> 4; }
+            uint8_t GetTrigTypeTrb3() const { return (GetDecoding() & 0xF0) >> 4; }
 
             void Init(uint32_t trigger = 0)
             {
