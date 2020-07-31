@@ -366,7 +366,7 @@ bool hadaq::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 
    if (rawdatasz > maxrawdatasize()) return false;
 
-   subevnt()->SetSize(rawdatasz);
+   subevnt()->SetSize(rawdatasz + sizeof(hadaq::RawSubevent));
 
    fSubPtr.shift(subevnt()->GetPaddedSize());
 
