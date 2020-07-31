@@ -31,8 +31,11 @@ It reads via trbcmd several registers and stroe them in hld structure
        <!--  this is example of HLD file storage - local, set NumOutputs=2 -->
        <OutputPort name="Output1" url="hld://dabc.hld?maxsize=2000"/>
 
-       <!-- AccountLostEventDiff: if true, missing trigger sequence number are added as lost events to stats. Disabled for multiple event builder mode!  -->
+       <!-- This is list of addresses readed be module -->
        <Addrs value="[0x100,0x200,0x300,0x400]"/>
+
+       <!-- Trigger type for generated event  -->
+       <TriggerType value="0xC"/>
 
      </Module>
 

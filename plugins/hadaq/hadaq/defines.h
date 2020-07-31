@@ -147,7 +147,7 @@ namespace hadaq {
          /** msb of decode word is always non zero...? */
          inline bool IsSwapped() const  { return  tuDecoding > 0xffffff; }
 
-         void SetDecoding(uint32_t dec) { tuDecoding = dec; }
+         void SetDecodingDirect(uint32_t dec) { tuDecoding = dec; }
 
          inline uint32_t Value(const uint32_t *member) const
          {
@@ -189,6 +189,8 @@ namespace hadaq {
          }
 
          void SetSize(uint32_t bytes) { SetValue(&tuSize, bytes); }
+
+         void SetDecoding(uint32_t decod) { SetValue(&tuDecoding, decod); }
    };
 
    // ======================================================================
@@ -275,6 +277,12 @@ namespace hadaq {
             /* for trb3: each subevent contains trigger type in decoding word*/
             uint8_t GetTrigTypeTrb3() const { return (GetDecoding() & 0xF0) >> 4; }
 
+            void SetTrigTypeTrb3(uint8_t typ)
+            {
+               uint32_t decod = GetDecoding();
+               SetDecoding((decod & ~0xF0) | (typ << 4));
+            }
+
             void Init(uint32_t trigger = 0)
             {
                SetTrigNr(trigger);
@@ -352,7 +360,7 @@ namespace hadaq {
 An event consists of an event header and of varying number of subevents, each with a subevent header. The size of the event header is fixed to 0x20 bytes
 
 Event header
-evtHeader
+evtHeaderc
 evtSize   evtDecoding    evtId    evtSeqNr    evtDate  evtTime  runNr    expId
 
     * evtSize - total size of the event including the event header, it is measured in bytes.

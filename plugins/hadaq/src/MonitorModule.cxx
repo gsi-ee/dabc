@@ -28,6 +28,8 @@ hadaq::MonitorModule::MonitorModule(const std::string &name, dabc::Command cmd) 
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
+   fTriggerType = Cfg("TriggerType", cmd).AsUInt(1);
+   if (fTriggerType > 0xF) fTriggerType = 0xF;
 
    fInterval = Cfg("Period", cmd).AsDouble(1.);
 
@@ -81,9 +83,14 @@ bool hadaq::MonitorModule::ReadAllVariables(dabc::Buffer &buf)
    if (!iter.NewEvent(fEventId, 0 ,fAddrs.size() * 8 + sizeof(hadaq::RawSubevent))) return false;
    if (!iter.NewSubevent(fAddrs.size() * 8, fEventId)) return false;
 
-   // iter.subevnt()->SetDecoding(0x020011);
+   // iter.evnt()->SetTrigTypeTrb3(0xC);
 
-   iter.subevnt()->SetDecoding(0x11000200); // swapped mode?
+   uint32_t id = iter.evnt()->GetId();
+   iter.evnt()->SetId((id & 0xfffffff0) | (fTriggerType & 0xf));
+
+   iter.subevnt()->SetDecodingDirect(0x11000200); // swapped mode
+   iter.subevnt()->SetTrigNr(fEventId); // assign again, otherwise swapping applyed wrong
+   iter.subevnt()->SetTrigTypeTrb3(fTriggerType);
 
    // write raw data
    uint32_t *rawdata = (uint32_t *) iter.rawdata();
